@@ -11,6 +11,7 @@ import {
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import {
+  assertCommentPrivateReplyFollowUpDeliverable,
   ChannelError,
   ChannelErrorCategory,
   contentTypes,
@@ -190,8 +191,17 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
       // the generic buildMessagePayload spread, which is for plain messages.
       // Known gap: a comment-anchored private reply whose first flow step is a
       // Messenger template is not covered — it falls back to the normal
-      // (messaging-window-gated) send below, same as before this fix.
+      // (messaging-window-gated) send below, same as before this fix. The
+      // guard makes that gap legible rather than silent: in a comment-triggered
+      // private run the template can only land inside the contact's own 24-hour
+      // window, so say so instead of letting Meta reject it.
       if (step.stepType === stepTypes.enum.sendMessengerTemplateMessage) {
+        if (commentAnchor?.replyChannel === "private") {
+          assertCommentPrivateReplyFollowUpDeliverable({
+            commentId: commentAnchor.commentId,
+            lastIncomingMessageAt: contact.lastIncomingMessageAt,
+          })
+        }
         const payload = buildMessengerTemplateSendRequest(
           props as SendFlowStepProps<
             MessengerAuthValue,
@@ -210,22 +220,32 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
       }
 
       const policy = resolveMessengerMessagingPolicy({ contact, sendFrom })
-      // Consumed by the first Facebook message yielded below, if a private
-      // comment anchor is present — a single flow step can yield more than
-      // one Facebook message (e.g. text + attachments), so only the very
-      // first send uses the comment_id-anchored API; the rest use the normal
-      // path (the private reply already opened a standard messaging window).
+      // Claimed by the first Facebook message yielded below, if an unspent
+      // private comment anchor is present — a single flow step can yield more
+      // than one Facebook message (e.g. text + attachments), so only the very
+      // first send uses the comment_id-anchored API. Everything after it — in
+      // this step or a later one, which arrives with `spent: true` — takes the
+      // normal path, gated by the guard below.
       // A "public" anchor is never honored here — it's delivered via the
       // comment channel's sendComment, not this message channel's
       // sendFlowStep (see send-flow-step.ts). This check is defense-in-depth
       // against a public anchor ever reaching this handler by mistake.
+      const isCommentPrivateRun = commentAnchor?.replyChannel === "private"
       let anchorCommentId =
-        commentAnchor?.replyChannel === "private"
+        isCommentPrivateRun && !commentAnchor.spent
           ? commentAnchor.commentId
           : undefined
       for await (const facebookMessage of convertFlowStepToFacebookMessage(
         props,
       )) {
+        // The comment bought exactly one anchored DM and it is gone; a normal
+        // DM only reaches the contact if they have messaged in the last 24h.
+        if (isCommentPrivateRun && !anchorCommentId) {
+          assertCommentPrivateReplyFollowUpDeliverable({
+            commentId: commentAnchor.commentId,
+            lastIncomingMessageAt: contact.lastIncomingMessageAt,
+          })
+        }
         const personaId = resolveMessengerPersonaId(
           ctx.integrationDetail as MessengerIntegrationDetail,
           contact,

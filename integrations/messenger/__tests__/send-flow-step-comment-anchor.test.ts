@@ -49,6 +49,19 @@ const contact = {
   lastIncomingMessageAt: new Date("2026-06-23T09:00:00.000Z"),
 } as never
 
+// Meta only accepts a normal DM inside the 24-hour window the contact's own
+// message opens, and a comment never opens one. `contact` above is a
+// comment-only contact (its last inbound message is long past), so any
+// follow-up after the comment's single anchored reply must fail; this one has
+// answered recently and can receive the rest of the flow.
+const recentlyRepliedContact = {
+  id: "contact-2",
+  sourceId: "psid-2",
+  lastIncomingMessageAt: new Date(Date.now() - 60 * 60 * 1000),
+} as never
+
+const ONE_PRIVATE_REPLY_PER_COMMENT = /one private reply per comment/i
+
 describe("messenger sendFlowStep — comment-anchored private reply", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -130,27 +143,27 @@ describe("messenger sendFlowStep — comment-anchored private reply", () => {
     expect(result).toEqual({ messageIds: ["m_normal-1"] })
   })
 
-  test("only the first Facebook message of a multi-message step uses the comment anchor", async () => {
-    const cards = Array.from({ length: 11 }, (_, i) => ({
+  // 11 cards chunked by 10 → 2 Facebook messages for this single step.
+  const multiMessageStep = {
+    id: "step-1",
+    nodeId: "node-1",
+    stepType: "sendCarousel",
+    cards: Array.from({ length: 11 }, (_, i) => ({
       title: `Card ${i}`,
       buttons: [],
-    }))
+    })),
+  }
 
+  test("only the first Facebook message of a multi-message step uses the comment anchor", async () => {
     const result = await sendFlowStep({
       ctx,
       data: {
-        contact,
+        contact: recentlyRepliedContact,
         commentAnchor: { commentId: "comment-1", replyChannel: "private" },
-        step: {
-          id: "step-1",
-          nodeId: "node-1",
-          stepType: "sendCarousel",
-          cards,
-        },
+        step: multiMessageStep,
       },
     } as never)
 
-    // 11 cards chunked by 10 → 2 Facebook messages for this single step
     expect(mockSendPrivateReplyMessage).toHaveBeenCalledTimes(1)
     expect(mockSendPrivateReplyMessage).toHaveBeenCalledWith(
       ctx.auth,
@@ -160,6 +173,116 @@ describe("messenger sendFlowStep — comment-anchored private reply", () => {
     )
     expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
     expect(result).toEqual({ messageIds: ["m_anchored-1", "m_normal-1"] })
+  })
+
+  test("fails the follow-up message when the commenter has never messaged the Page", async () => {
+    await expect(
+      sendFlowStep({
+        ctx,
+        data: {
+          contact,
+          commentAnchor: { commentId: "comment-1", replyChannel: "private" },
+          step: multiMessageStep,
+        },
+      } as never),
+    ).rejects.toThrow(ONE_PRIVATE_REPLY_PER_COMMENT)
+
+    // The anchored first message still went out; only the follow-up failed.
+    expect(mockSendPrivateReplyMessage).toHaveBeenCalledTimes(1)
+    expect(mockSendPageMessage).not.toHaveBeenCalled()
+  })
+
+  test("a spent anchor from an earlier step sends as a normal DM inside the 24h window", async () => {
+    const result = await sendFlowStep({
+      ctx,
+      data: {
+        contact: recentlyRepliedContact,
+        commentAnchor: {
+          commentId: "comment-1",
+          replyChannel: "private",
+          spent: true,
+        },
+        step: {
+          id: "step-2",
+          nodeId: "node-1",
+          stepType: "sendText",
+          text: "second message of the flow",
+          buttons: [],
+        },
+      },
+    } as never)
+
+    expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
+    expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+  })
+
+  test("a spent anchor outside the 24h window reports the one-reply-per-comment limit", async () => {
+    await expect(
+      sendFlowStep({
+        ctx,
+        data: {
+          contact,
+          commentAnchor: {
+            commentId: "comment-1",
+            replyChannel: "private",
+            spent: true,
+          },
+          step: {
+            id: "step-2",
+            nodeId: "node-1",
+            stepType: "sendText",
+            text: "second message of the flow",
+            buttons: [],
+          },
+        },
+      } as never),
+    ).rejects.toThrow(ONE_PRIVATE_REPLY_PER_COMMENT)
+
+    expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
+    expect(mockSendPageMessage).not.toHaveBeenCalled()
+  })
+
+  test("a contact who has never messaged at all is treated as outside the window", async () => {
+    await expect(
+      sendFlowStep({
+        ctx,
+        data: {
+          contact: { id: "contact-3", sourceId: "psid-3" },
+          commentAnchor: {
+            commentId: "comment-1",
+            replyChannel: "private",
+            spent: true,
+          },
+          step: {
+            id: "step-2",
+            nodeId: "node-1",
+            stepType: "sendText",
+            text: "second message of the flow",
+            buttons: [],
+          },
+        },
+      } as never),
+    ).rejects.toThrow(ONE_PRIVATE_REPLY_PER_COMMENT)
+  })
+
+  test("a plain flow send outside the window is untouched by the guard", async () => {
+    const result = await sendFlowStep({
+      ctx,
+      data: {
+        contact,
+        step: {
+          id: "step-1",
+          nodeId: "node-1",
+          stepType: "sendText",
+          text: "normal flow reply",
+          buttons: [],
+        },
+      },
+    } as never)
+
+    expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({ messageIds: ["m_normal-1"] })
   })
 })
 

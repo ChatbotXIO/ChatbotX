@@ -2524,7 +2524,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Cuando se adjuntan botones, TikTok solo envía los primeros 40 caracteres de este mensaje; el resto se recortará."
     },
-    "dataWasSaved": "Datos guardados"
+    "dataWasSaved": "Datos guardados",
+    "media": {
+      "stepUnsupportedOnChannel": "Este canal no puede enviar este tipo de contenido: el paso se omite allí. Quítalo o cambia el nodo a un canal que lo admita.",
+      "buttonsSkippedOnChannel": "Este canal no puede enviar botones junto con un mensaje multimedia: allí se omiten. Colócalos en un paso de texto posterior."
+    }
   },
   "folders": {
     "heading": {
@@ -3179,7 +3183,9 @@
     "waTemplateMpmTooManySections": "Un botón multiproducto puede tener como máximo 10 secciones. Elimina algunas secciones antes de publicar.",
     "waTemplateMpmTooManyProducts": "Un botón multiproducto puede tener como máximo 30 productos en total. Elimina algunos productos antes de publicar.",
     "waTemplateLtoExpirationRequired": "Elige una fecha de vencimiento para la oferta por tiempo limitado antes de enviar.",
-    "waTemplateMpmIncompleteProducts": "Cada sección necesita al menos un producto seleccionado: elimina las filas vacías o elige un producto."
+    "waTemplateMpmIncompleteProducts": "Cada sección necesita al menos un producto seleccionado: elimina las filas vacías o elige un producto.",
+    "mediaStepUnsupported": "Este canal no puede enviar este tipo de contenido. Quita el paso o apunta este nodo a un canal que lo admita.",
+    "mediaButtonsUnsupported": "Este canal no puede enviar botones junto con un mensaje multimedia. Quita los botones o muévelos a un paso de texto posterior."
   },
   "instagram": {
     "description": "This integración lets tú Crear Instagram bots.",

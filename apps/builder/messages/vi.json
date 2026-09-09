@@ -2524,7 +2524,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Khi có gắn nút, TikTok chỉ gửi tối đa 40 ký tự đầu của tin nhắn này — phần còn lại sẽ bị cắt bỏ."
     },
-    "dataWasSaved": "Đã lưu dữ liệu"
+    "dataWasSaved": "Đã lưu dữ liệu",
+    "media": {
+      "stepUnsupportedOnChannel": "Kênh này không gửi được loại media này — bước sẽ bị bỏ qua. Hãy xoá bước, hoặc đổi node sang kênh có hỗ trợ.",
+      "buttonsSkippedOnChannel": "Kênh này không gửi được nút kèm tin nhắn media — các nút sẽ bị bỏ qua. Hãy đặt chúng ở bước văn bản ngay sau."
+    }
   },
   "folders": {
     "heading": {
@@ -3179,7 +3183,9 @@
     "waTemplateMpmTooManySections": "Nút đa sản phẩm chỉ được có tối đa 10 phần. Hãy xóa bớt phần trước khi xuất bản.",
     "waTemplateMpmTooManyProducts": "Nút đa sản phẩm chỉ được có tối đa 30 sản phẩm. Hãy xóa bớt sản phẩm trước khi xuất bản.",
     "waTemplateLtoExpirationRequired": "Chọn thời điểm hết hạn cho ưu đãi có thời hạn trước khi gửi.",
-    "waTemplateMpmIncompleteProducts": "Mỗi nhóm cần ít nhất một sản phẩm đã chọn — xóa dòng trống hoặc chọn sản phẩm cho dòng đó."
+    "waTemplateMpmIncompleteProducts": "Mỗi nhóm cần ít nhất một sản phẩm đã chọn — xóa dòng trống hoặc chọn sản phẩm cho dòng đó.",
+    "mediaStepUnsupported": "Kênh này không gửi được loại media này. Hãy xoá bước, hoặc trỏ node này sang kênh có hỗ trợ.",
+    "mediaButtonsUnsupported": "Kênh này không gửi được nút kèm tin nhắn media. Hãy xoá các nút, hoặc chuyển sang một bước văn bản ngay sau bước này."
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

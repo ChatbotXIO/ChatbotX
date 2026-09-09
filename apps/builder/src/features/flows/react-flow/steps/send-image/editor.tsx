@@ -1,5 +1,6 @@
 import { MediaLibraryOrInsertLink } from "@/components/media-library-or-insert-link"
 import { ButtonGroupEditor } from "../button/editor"
+import { MediaStepNotice } from "../button/media-step-notice"
 
 type SendImageStepEditorProps = {
   parentName: string
@@ -12,6 +13,7 @@ const SendImageStepEditor = ({ parentName }: SendImageStepEditorProps) => (
     </div>
     <div className="bg-slate-200 px-3 py-2 dark:bg-neutral-900">
       <ButtonGroupEditor parentName={`${parentName}.buttons`} />
+      <MediaStepNotice parentName={parentName} />
     </div>
   </div>
 )

@@ -2,6 +2,7 @@ import { useParams } from "next/navigation"
 import { useFormContext } from "react-hook-form"
 import { MediaLibraryOrInsertLink } from "@/components/media-library-or-insert-link"
 import { ButtonGroupEditor } from "../button/editor"
+import { MediaStepNotice } from "../button/media-step-notice"
 
 type SendFileStepEditorProps = {
   parentName: string
@@ -26,6 +27,7 @@ const SendFileStepEditor = (props: SendFileStepEditorProps) => {
       </div>
       <div className="bg-slate-200 px-3 py-2">
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />
+        <MediaStepNotice parentName={parentName} />
       </div>
     </div>
   )

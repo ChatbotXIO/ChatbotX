@@ -10,6 +10,7 @@ const {
   mockIsWithinSchedule,
   mockFindDedup,
   mockInsertDedup,
+  mockDeleteDedup,
   mockIncrementRepliesCount,
   mockGetPriorContactInboxCount,
   mockHasRepliedOnOtherPost,
@@ -39,6 +40,7 @@ const {
   mockIsWithinSchedule: vi.fn(),
   mockFindDedup: vi.fn(),
   mockInsertDedup: vi.fn(),
+  mockDeleteDedup: vi.fn(),
   mockIncrementRepliesCount: vi.fn(),
   mockGetPriorContactInboxCount: vi.fn(),
   mockHasRepliedOnOtherPost: vi.fn(),
@@ -78,6 +80,7 @@ vi.mock("@chatbotx.io/business", () => ({
     isWithinSchedule: mockIsWithinSchedule,
     findDedup: mockFindDedup,
     insertDedup: mockInsertDedup,
+    deleteDedup: mockDeleteDedup,
     incrementRepliesCount: mockIncrementRepliesCount,
     getPriorContactInboxCount: mockGetPriorContactInboxCount,
     hasRepliedOnOtherPost: mockHasRepliedOnOtherPost,
@@ -192,6 +195,7 @@ type AutomationOverrides = {
   publicReply?: { type: string; value: string | null }
   privateReply?: { type: string; value: string | null }
   hideComments?: Record<string, unknown>
+  replyAfter?: { type: string; value: number }
 }
 
 function buildAutomation(overrides: AutomationOverrides = {}) {
@@ -222,12 +226,19 @@ function buildAutomation(overrides: AutomationOverrides = {}) {
       showCommentsAfter: "none",
       ...overrides.hideComments,
     },
-    replyAfter: { type: "immediately", value: 0 },
+    replyAfter: overrides.replyAfter ?? { type: "immediately", value: 0 },
   }
 }
 
+const ONE_DAY_SECONDS = 24 * 60 * 60
+
 function buildJobData(
-  overrides: { parentId?: string; postId?: string; message?: string } = {},
+  overrides: {
+    parentId?: string
+    postId?: string
+    message?: string
+    createdTime?: number
+  } = {},
 ) {
   return {
     integrationType: "messenger",
@@ -240,7 +251,10 @@ function buildJobData(
     parentId: overrides.parentId,
     fromId: "user-1",
     message: overrides.message ?? "2",
-    createdTime: 1_783_674_105,
+    // A fresh comment by default: private replies are gated by Meta's 7-day
+    // comment_id window, so a hardcoded past timestamp would silently turn
+    // every private-reply case into a skip as the fixture ages.
+    createdTime: overrides.createdTime ?? Math.floor(Date.now() / 1000) - 60,
   }
 }
 
@@ -286,6 +300,12 @@ beforeEach(() => {
     create: mockMessageCreate,
   })
   mockInsertDedup.mockResolvedValue(undefined)
+  mockDeleteDedup.mockResolvedValue(undefined)
+  // `clearAllMocks` wipes call history but keeps implementations, so a test
+  // that makes a sender reject would leak that into every later test.
+  mockSendPrivateReply.mockResolvedValue(undefined)
+  mockSendInstagramPrivateReply.mockResolvedValue(undefined)
+  mockSendInstagramFacebookPrivateReply.mockResolvedValue(undefined)
   mockChatQueueAdd.mockResolvedValue(undefined)
   mockAiAgentQueueAdd.mockResolvedValue(undefined)
   mockIntegrationQueueAdd.mockResolvedValue(undefined)
@@ -893,6 +913,246 @@ describe("processCommentAutomation flow public reply", () => {
   })
 })
 
+describe("processCommentAutomation dedup on partial dispatch failure", () => {
+  test("writes the dedup row when the public branch dispatched but the private one threw", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "text", value: "public answer" },
+        privateReply: { type: "text", value: "private answer" },
+      }),
+    ])
+    mockSendPrivateReply.mockRejectedValue(new Error("send failed"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    // Without the row, the contact's next comment would post the public reply
+    // a second time.
+    expect(mockInsertDedup).toHaveBeenCalledWith({
+      automationId: "automation-1",
+      contactId: "contact-1",
+      postId: POST_ID,
+      workspaceId: "workspace-1",
+    })
+    expect(mockIncrementRepliesCount).toHaveBeenCalledTimes(1)
+  })
+
+  test("does not write the dedup row when every configured branch failed", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "text", value: "private answer" },
+      }),
+    ])
+    mockSendPrivateReply.mockRejectedValue(new Error("send failed"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockInsertDedup).not.toHaveBeenCalled()
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+  })
+
+  test("still writes the dedup row for a like/hide-only automation that sends nothing", async () => {
+    mockFindActiveAutomations.mockResolvedValue([buildAutomation()])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockInsertDedup).toHaveBeenCalled()
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+  })
+})
+
+describe("processCommentAutomation private reply budget per comment", () => {
+  test("only the first matching automation spends the comment's single DM", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-1",
+        privateReply: { type: "text", value: "first DM" },
+      }),
+      buildAutomation({
+        id: "automation-2",
+        privateReply: { type: "text", value: "second DM" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockSendPrivateReply).toHaveBeenCalledTimes(1)
+    expect(mockSendPrivateReply).toHaveBeenCalledWith(
+      expect.anything(),
+      COMMENT_ID,
+      "first DM",
+    )
+    expect(mockLoggerInfo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        automationId: "automation-2",
+        reason: "private reply already claimed for this comment",
+      }),
+      "Comment automation skipped",
+    )
+  })
+
+  test("the skipped automation's public reply still goes out", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-1",
+        privateReply: { type: "text", value: "first DM" },
+      }),
+      buildAutomation({
+        id: "automation-2",
+        privateReply: { type: "text", value: "second DM" },
+        publicReply: { type: "text", value: "public answer" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "public answer" }),
+    )
+  })
+
+  test("a failed private reply does not consume the budget", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-1",
+        privateReply: { type: "text", value: "first DM" },
+      }),
+      buildAutomation({
+        id: "automation-2",
+        privateReply: { type: "text", value: "second DM" },
+      }),
+    ])
+    mockSendPrivateReply.mockRejectedValueOnce(new Error("send failed"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockSendPrivateReply).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe("processCommentAutomation private reply 7-day window", () => {
+  test("skips the DM for a comment older than 7 days and logs the reason", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "text", value: "too late" },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({
+        createdTime: Math.floor(Date.now() / 1000) - 8 * ONE_DAY_SECONDS,
+      }) as any,
+    )
+
+    expect(mockSendPrivateReply).not.toHaveBeenCalled()
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reason: "comment older than the 7-day private reply window",
+      }),
+      "Comment automation private reply skipped",
+    )
+    // Nothing was delivered, so the contact must stay eligible.
+    expect(mockInsertDedup).not.toHaveBeenCalled()
+  })
+
+  test("counts the reply delay: a 6-day-old comment with a 2-day delay is out of window", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "text", value: "too late" },
+        replyAfter: { type: "hours", value: 48 },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({
+        createdTime: Math.floor(Date.now() / 1000) - 6 * ONE_DAY_SECONDS,
+      }) as any,
+    )
+
+    expect(mockSendPrivateReply).not.toHaveBeenCalled()
+  })
+
+  test("still sends the public reply for an out-of-window comment", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "text", value: "public answer" },
+        privateReply: { type: "text", value: "too late" },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({
+        createdTime: Math.floor(Date.now() / 1000) - 8 * ONE_DAY_SECONDS,
+      }) as any,
+    )
+
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "public answer" }),
+    )
+    expect(mockInsertDedup).toHaveBeenCalled()
+  })
+
+  test("a comment just inside the window is still answered", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ privateReply: { type: "text", value: "in time" } }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({
+        createdTime: Math.floor(Date.now() / 1000) - 6 * ONE_DAY_SECONDS,
+      }) as any,
+    )
+
+    expect(mockSendPrivateReply).toHaveBeenCalledWith(
+      expect.anything(),
+      COMMENT_ID,
+      "in time",
+    )
+  })
+})
+
+describe("processCommentAutomation dedup key handed to async reply jobs", () => {
+  test("the AIAgent job carries the dedup row it has to roll back", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "AIAgent", value: "agent-1" } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockAiAgentQueueAdd).toHaveBeenCalledWith(
+      "commentAIReply",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          commentDedup: {
+            automationId: "automation-1",
+            contactId: "contact-1",
+            postId: POST_ID,
+            workspaceId: "workspace-1",
+          },
+        }),
+      }),
+      expect.anything(),
+    )
+  })
+})
+
+describe("processCommentAutomation missing incoming message row", () => {
+  test("warns and still dispatches the reply", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "text", value: "answer" } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ commentId: COMMENT_ID }),
+      "Comment automation: incoming comment message row not found, skipping like/hide and parent threading",
+    )
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "answer" }),
+    )
+  })
+})
+
 describe("processCommentAIReply", () => {
   beforeEach(() => {
     mockAiAgentFindBy.mockResolvedValue({ id: "agent-1", prompt: "hi" })
@@ -1040,6 +1300,83 @@ describe("processCommentAIReply", () => {
       expect.objectContaining({ conversationId: "conversation-1" }),
       "comment AI reply skipped: conversation not found",
     )
+  })
+
+  // The dispatcher writes the dedup row when it enqueues this job, so a job
+  // that answers nothing has to release it — otherwise replyOncePerUserPerPost
+  // blocks the contact on this post forever.
+  describe("dedup rollback", () => {
+    const COMMENT_DEDUP = {
+      automationId: "automation-1",
+      contactId: "contact-1",
+      postId: POST_ID,
+      workspaceId: "workspace-1",
+    }
+
+    test("releases the row when the agent is gone", async () => {
+      mockAiAgentFindBy.mockResolvedValue(undefined)
+
+      await processCommentAIReply(
+        buildAIJobData({ commentDedup: COMMENT_DEDUP }) as any,
+      )
+
+      expect(mockDeleteDedup).toHaveBeenCalledWith(COMMENT_DEDUP)
+    })
+
+    test("releases the row when the agent produces no text", async () => {
+      mockGenerateAIReplyText.mockResolvedValue(null)
+
+      await processCommentAIReply(
+        buildAIJobData({ commentDedup: COMMENT_DEDUP }) as any,
+      )
+
+      expect(mockDeleteDedup).toHaveBeenCalledWith(COMMENT_DEDUP)
+    })
+
+    test("releases the row for an image-only comment", async () => {
+      await processCommentAIReply(
+        buildAIJobData({ message: "", commentDedup: COMMENT_DEDUP }) as any,
+      )
+
+      expect(mockDeleteDedup).toHaveBeenCalledWith(COMMENT_DEDUP)
+    })
+
+    test("releases the row outside the workspace's active hours", async () => {
+      mockIsActiveNow.mockReturnValue(false)
+
+      await processCommentAIReply(
+        buildAIJobData({ commentDedup: COMMENT_DEDUP }) as any,
+      )
+
+      expect(mockDeleteDedup).toHaveBeenCalledWith(COMMENT_DEDUP)
+    })
+
+    test("keeps the row on the happy path", async () => {
+      await processCommentAIReply(
+        buildAIJobData({ commentDedup: COMMENT_DEDUP }) as any,
+      )
+
+      expect(mockDeleteDedup).not.toHaveBeenCalled()
+    })
+
+    test("is a no-op for an in-flight job enqueued before the field existed", async () => {
+      mockAiAgentFindBy.mockResolvedValue(undefined)
+
+      await processCommentAIReply(buildAIJobData() as any)
+
+      expect(mockDeleteDedup).not.toHaveBeenCalled()
+    })
+
+    test("a failed cleanup does not escalate into a job failure", async () => {
+      mockAiAgentFindBy.mockResolvedValue(undefined)
+      mockDeleteDedup.mockRejectedValue(new Error("db down"))
+
+      await expect(
+        processCommentAIReply(
+          buildAIJobData({ commentDedup: COMMENT_DEDUP }) as any,
+        ),
+      ).resolves.toBeUndefined()
+    })
   })
 
   test("passes the full conversation through to generateAIReplyText", async () => {

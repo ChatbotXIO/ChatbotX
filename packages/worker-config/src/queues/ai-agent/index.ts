@@ -76,6 +76,18 @@ const aiJobCommentAIReplySchema = z.object({
     message: z.string().optional(),
     parentMessageId: z.string().nullable().optional(),
     parentMessageCreatedAt: z.string().nullable().optional(),
+    // Dedup row written by `processCommentAutomation` when it enqueued this
+    // job. Carried so a job that bails out without delivering anything can roll
+    // it back instead of leaving the contact blocked forever by
+    // `replyOncePerUserPerPost`. Built once at dispatch, never recomposed here.
+    commentDedup: z
+      .object({
+        automationId: z.string().min(1),
+        contactId: z.string().min(1),
+        postId: z.string().min(1),
+        workspaceId: z.string().min(1),
+      })
+      .optional(),
   }),
 })
 

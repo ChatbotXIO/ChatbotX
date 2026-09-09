@@ -110,14 +110,26 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 |---|---|---|---|
 | `none` | — | no-op | no-op |
 | `text` | the text | Posts a public comment reply: message `type: "comment"` + `contentAttributes.replyToCommentId`, enqueued as `sendChannelMessage`. | `PRIVATE_REPLY_TEXT_SENDERS[channelType]` (`private-reply.ts`) → the channel's comment_id-anchored Send API DM. |
-| `flow` | flow id | Enqueues `sendFlow` with `flowId` and a `public` `commentAnchor`, so the flow's first step is posted as a comment reply. Runs on the **comment-anchored** conversation. | Same job with a `private` anchor: the flow's **first** message is sent through the comment_id-anchored Send API (comment window, not the 24-hour messaging window); later messages take the normal window-gated path. Runs on the **DM** conversation — see below. |
+| `flow` | flow id | Enqueues `sendFlow` with `flowId` and a `public` `commentAnchor`, so **every** message step of the run is posted as a comment reply — the anchor is not one-shot (`POST /{comment-id}/replies` can be called repeatedly). Runs on the **comment-anchored** conversation. | Same job with a `private` anchor: the flow's **first** message is sent through the comment_id-anchored Send API (comment window, not the 24-hour messaging window); later messages take the normal window-gated path, because Meta allows only one anchored DM per comment. Runs on the **DM** conversation — see below. |
 
 ### Which conversation a flow reply runs on
 
 Delivery and state are two different things, and a comment splits them:
 
-- **`commentAnchor` governs delivery.** It rides the `sendFlow` job and only decides
-  whether the *first* outgoing message goes out through the comment_id-anchored Send API.
+- **`commentAnchor` governs delivery.** It rides the `sendFlow` job and decides how each
+  outgoing message goes out. `replyChannel: "private"` is one-shot — the first
+  message-producing step claims it for the comment_id-anchored Send API, and the anchor
+  then keeps travelling marked `spent: true` (`executeMultipleStepsGenerator`, `flow.ts`).
+  Every message after that one — later in the same step, or in a later step — is a plain
+  DM, which Meta only accepts inside the 24-hour window the contact's own message opens.
+  A comment does not open one, so each channel's `sendFlowStep` calls
+  `assertCommentPrivateReplyFollowUpDeliverable` (`@chatbotx.io/sdk`) against
+  `contact.lastIncomingMessageAt` first: inside the window it sends normally, outside it
+  throws `comment_private_reply_already_used`, which `sendFlowStep`'s catch records as the
+  message's `sendError` so the inbox says why the rest of the flow never arrived. Before
+  this the Send API simply rejected the follow-up and the error was swallowed.
+  `replyChannel: "public"` is *not* consumed: it survives every step, node and re-enqueued
+  `sendFlow` job of the run, so the whole flow answers on the post.
 - **`conversationId` governs state.** The flow writes `currentStep` and
   `additionalAttributes.challenge` onto that conversation, and `resolveIncomingTextRouting`
   reads the challenge back off whichever conversation the contact's next message lands on.
@@ -159,6 +171,28 @@ send), and the comment handler owns the channel routing.
   conversation where no challenge exists. Nothing throws, no queue errors, no `sendError` —
   the routing simply falls through to `automatedResponse`. See
   [Which conversation a flow reply runs on](#which-conversation-a-flow-reply-runs-on).
+- **Instagram comment replies are text-only.** `POST /{ig-comment-id}/replies` accepts
+  nothing but `message`; there is no `attachment_url` (that is a Facebook Page comment
+  feature, used by `integrations/messenger`). A media step in a *public* reply flow
+  therefore cannot be delivered on either Instagram variant: `sendComment` throws
+  `ChannelError(PAYLOAD_INVALID)` so the failure lands on the message row as a `sendError`
+  the inbox shows. It used to `return { messageIds: [] }` with only a `logger.warn`, which
+  made the step vanish while the inbox still displayed it. On Messenger the same step does
+  post, carrying `attachments[0].url` as `attachment_url` — only the first attachment. To
+  deliver media in answer to a comment, use a **private** reply: the comment_id-anchored Send
+  API takes attachments and templates. (Corroborated by
+  [openreply](https://github.com/diwenne/openreply), an Instagram-Login project whose
+  `sendCommentReply` likewise posts only `{ message }`, and which routes everything richer
+  through a `recipient: { comment_id }` button template.)
+- **Everything in a public reply flow is public — including sub-flows.** The `public` anchor
+  is never consumed, so every message step of the run posts under the post, and that includes
+  steps reached through `startAnotherNode` / `startExternalFlow`. Do not point a public reply
+  at a flow written for a 1-to-1 DM: discount codes, personal details and personalised links
+  become publicly visible. Use `privateReply` for those.
+- **A public reply flow still loses its anchor across a Wait step.** `ContactOnSmartDelay`
+  has no column for `commentAnchor` and `buildSendFlowResumeJob` rebuilds the job from that
+  row alone, so steps after a wait fall back to a DM send. Documented at `step.ts`'s
+  `handleWait`; fixing it needs a schema change.
 - **`options.trackUserTags` is defined but not implemented** — the toggle has no effect.
 - **`getPriorContactInboxCount` counts `ContactInbox` rows**, so a contact who DM'd via
   another inbox is treated as "not new."

@@ -5,64 +5,91 @@ import type {
 } from "@chatbotx.io/flow-config"
 import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import { logger } from "../../../lib/logger"
-import type { InstagramAuthValue } from "../../../schemas"
-import { convertMediaType } from "./send-attachment"
+import type { InstagramAuthValue, InstagramSendMessage } from "../../../schemas"
+import { convertMediaType, getAttachmentTemplate } from "./send-attachment"
 import { convertCanonicalInstagramQuickReplies } from "./send-quick-replies"
 
+/**
+ * An image or video goes out as a bare attachment — the shape the inbox
+ * `sendMessage` path and `send-gif.ts` already use.
+ *
+ * The step's buttons are deliberately dropped. Instagram cannot attach buttons
+ * to a media message: the only way to pair the two is a template, and a
+ * template *replaces* the media with its own rendering. Every option is worse
+ * than sending the media plain — `template_type: "media"` does not exist on
+ * Instagram (it comes back as `100 / 2534015 Invalid message data`), a generic
+ * element renders a video as a still frame and needs a fake `title` an
+ * image/video step has no caption field to fill, and Meta documents both the
+ * generic and the button template as "not available in the web version". So
+ * the media stays media. Buttons that matter belong on a following `sendText`
+ * step, which does carry them (`send-text.ts`, button template).
+ *
+ * A dropped button set is logged rather than discarded quietly: a flow whose
+ * next node waits on one of those postbacks will stall, and that has to be
+ * diagnosable from the logs.
+ *
+ * No try/catch here on purpose: a failure has to reach `sendFlowStep` so
+ * `mapToChannelError` records it on the message row, instead of yielding
+ * nothing and turning the step into a silent no-op.
+ */
 export function* convertFlowStepMedia(
   props: SendFlowStepProps<
     InstagramAuthValue,
     SendImageStepSchema | SendVideoStepSchema
   >,
-) {
+): Generator<InstagramSendMessage> {
   const {
     data: { step },
   } = props
-  try {
-    const media_type = convertMediaType(step.stepType)
-    const quickReplies = props.data.quickReplies ?? []
 
-    yield {
-      attachments: [
-        {
-          type: media_type,
-          payload: {
-            url: step.url,
-          },
-        },
-      ],
-      ...(quickReplies.length > 0
-        ? {
-            quick_replies: convertCanonicalInstagramQuickReplies(quickReplies),
-          }
-        : {}),
-    }
-  } catch (error) {
-    logger.error(error, "Error uploading media")
+  if (step.buttons.length > 0) {
+    logger.warn(
+      {
+        stepId: step.id,
+        stepType: step.stepType,
+        buttonCount: step.buttons.length,
+      },
+      "Instagram cannot attach buttons to a media message — sending the media without them",
+    )
   }
+
+  yield withQuickReplies(props.data.quickReplies)({
+    attachment: getAttachmentTemplate(
+      step.url,
+      convertMediaType(step.stepType),
+    ),
+  })
 }
 
+/**
+ * One Send API call carrying several bare image attachments. Unlike the
+ * single-image path above, this sends the raw URL directly with no
+ * pre-upload/template — Instagram accepts `payload.url` without needing an
+ * `attachment_id`.
+ */
 export function* convertFlowStepMultipleImages(
   props: SendFlowStepProps<InstagramAuthValue, SendMultipleImagesStepSchema>,
-) {
+): Generator<InstagramSendMessage> {
   const {
     data: { step },
   } = props
-  try {
-    const quickReplies = props.data.quickReplies ?? []
 
-    yield {
-      attachments: step.images.map((image) => ({
-        type: "image" as const,
-        payload: { url: image.url },
-      })),
-      ...(quickReplies.length > 0
-        ? {
-            quick_replies: convertCanonicalInstagramQuickReplies(quickReplies),
-          }
-        : {}),
-    }
-  } catch (error) {
-    logger.error(error, "Error sending multiple images")
-  }
+  yield withQuickReplies(props.data.quickReplies)({
+    attachments: step.images.map((image) => ({
+      type: "image" as const,
+      payload: { url: image.url },
+    })),
+  })
 }
+
+const withQuickReplies =
+  (
+    quickReplies: SendFlowStepProps<InstagramAuthValue>["data"]["quickReplies"],
+  ) =>
+  (message: InstagramSendMessage): InstagramSendMessage =>
+    quickReplies && quickReplies.length > 0
+      ? {
+          ...message,
+          quick_replies: convertCanonicalInstagramQuickReplies(quickReplies),
+        }
+      : message

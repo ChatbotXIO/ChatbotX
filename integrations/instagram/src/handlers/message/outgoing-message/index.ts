@@ -10,6 +10,7 @@ import {
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import {
+  assertCommentPrivateReplyFollowUpDeliverable,
   ChannelError,
   ChannelErrorCategory,
   contentTypes,
@@ -308,21 +309,32 @@ export const sendFlowStep = async (
     let policy: InstagramMessagingPolicy | undefined
     const getPolicy = () =>
       (policy ??= resolveInstagramMessagingPolicy({ contact, sendFrom }))
-    // Consumed by the first Instagram message yielded below, if a private
-    // comment anchor is present — a single flow step can yield more than one
-    // message (e.g. text + attachments), so only the very first send uses the
-    // comment_id-anchored API; the rest use the normal window-gated path.
+    // Claimed by the first Instagram message yielded below, if an unspent
+    // private comment anchor is present — a single flow step can yield more
+    // than one message (e.g. text + attachments), so only the very first send
+    // uses the comment_id-anchored API. Everything after it — in this step or
+    // a later one, which arrives with `spent: true` — takes the normal path,
+    // gated by the guard below.
     // A "public" anchor is never honored here — it's delivered via the
     // comment channel's sendComment, not this message channel's sendFlowStep
     // (see send-flow-step.ts). This check is defense-in-depth against a
     // public anchor ever reaching this handler by mistake.
+    const isCommentPrivateRun = commentAnchor?.replyChannel === "private"
     let anchorCommentId =
-      commentAnchor?.replyChannel === "private"
+      isCommentPrivateRun && !commentAnchor.spent
         ? commentAnchor.commentId
         : undefined
     for await (const instagramMessage of convertFlowStepToInstagramMessage(
       props,
     )) {
+      // The comment bought exactly one anchored DM and it is gone; a normal DM
+      // only reaches the contact if they have messaged in the last 24h.
+      if (isCommentPrivateRun && !anchorCommentId) {
+        assertCommentPrivateReplyFollowUpDeliverable({
+          commentId: commentAnchor.commentId,
+          lastIncomingMessageAt: contact.lastIncomingMessageAt,
+        })
+      }
       const response = anchorCommentId
         ? await sendPrivateReplyMessage(
             ctx.auth,

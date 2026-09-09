@@ -2387,7 +2387,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Wenn Schaltflächen angehängt sind, sendet TikTok nur die ersten 40 Zeichen dieser Nachricht – der Rest wird abgeschnitten."
     },
-    "dataWasSaved": "Daten wurden gespeichert"
+    "dataWasSaved": "Daten wurden gespeichert",
+    "media": {
+      "stepUnsupportedOnChannel": "Dieser Kanal kann diesen Medientyp nicht senden – der Schritt wird dort übersprungen. Entferne ihn oder stelle den Node auf einen Kanal um, der ihn unterstützt.",
+      "buttonsSkippedOnChannel": "Dieser Kanal kann keine Buttons mit einer Mediennachricht senden – dort werden sie übersprungen. Platziere sie stattdessen in einem folgenden Textschritt."
+    }
   },
   "folders": {
     "heading": {
@@ -3179,7 +3183,9 @@
     "waTemplateMpmTooManySections": "Eine Multi-Produkt-Schaltfläche kann höchstens 10 Abschnitte haben. Entferne einige Abschnitte, bevor du veröffentlichst.",
     "waTemplateMpmTooManyProducts": "Eine Multi-Produkt-Schaltfläche kann insgesamt höchstens 30 Produkte haben. Entferne einige Produkte, bevor du veröffentlichst.",
     "waTemplateLtoExpirationRequired": "Wähle ein Ablaufdatum für das zeitlich begrenzte Angebot, bevor du sendest.",
-    "waTemplateMpmIncompleteProducts": "Jeder Abschnitt braucht mindestens ein ausgewähltes Produkt — entferne leere Zeilen oder wähle ein Produkt aus."
+    "waTemplateMpmIncompleteProducts": "Jeder Abschnitt braucht mindestens ein ausgewähltes Produkt — entferne leere Zeilen oder wähle ein Produkt aus.",
+    "mediaStepUnsupported": "Dieser Kanal kann diesen Medientyp nicht senden. Entferne den Schritt oder richte diesen Node auf einen Kanal aus, der ihn unterstützt.",
+    "mediaButtonsUnsupported": "Dieser Kanal kann keine Buttons mit einer Mediennachricht senden. Entferne die Buttons oder verschiebe sie in einen Textschritt nach diesem."
   },
   "instagram": {
     "description": "Mit dieser Integration können Sie Instagram-Bots erstellen.",

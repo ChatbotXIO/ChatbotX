@@ -398,9 +398,10 @@ export async function runStepsAndQuickReplies(
     (targetType === "button" || targetType === "quickReply") &&
     details.beforeStep?.stepType === stepTypes.enum.startAnotherNode
 
-  // Tracks whether the comment-anchored private-reply send is still available
-  // to be claimed by the first message-producing step. Forwarded across every
-  // re-enqueued sendFlow job below until a step consumes it (see
+  // Tracks the comment anchor's state. A `private` anchor is claimed by the
+  // first message-producing step and continues marked `spent`; a `public` one
+  // is never claimed and stays fully available for every step of the run.
+  // Forwarded across every re-enqueued sendFlow job below (see
   // `executeMultipleStepsGenerator`'s `MESSAGE_PRODUCING_STEP_TYPES` check).
   let remainingAnchor = props.commentAnchor
 
@@ -569,8 +570,10 @@ async function* executeMultipleStepsGenerator(
   props: ExecuteMultipleStepsProps,
 ) {
   const { steps, commentAnchor, ...rest } = props
-  // Consumed by the first message-producing step in this run (however many
-  // jobs/nodes it takes to reach one) — see MESSAGE_PRODUCING_STEP_TYPES.
+  // A `private` anchor is claimed by the first message-producing step in this
+  // run (however many jobs/nodes it takes to reach one) — see
+  // MESSAGE_PRODUCING_STEP_TYPES — and then continues as `spent`. A `public`
+  // one is never claimed: see the guard below.
   let anchorAvailable = commentAnchor
 
   for (const step of steps) {
@@ -588,8 +591,26 @@ async function* executeMultipleStepsGenerator(
       step.stepType as StepType,
     )
     const stepAnchor = isMessageProducingStep ? anchorAvailable : undefined
-    if (isMessageProducingStep) {
-      anchorAvailable = undefined
+    // Only a `private` anchor is one-shot: Meta allows a single
+    // comment_id-anchored DM per comment (a second one fails with "The comment
+    // is invalid for a private reply"), so the first message-producing step
+    // claims it and everything after takes the normal window-gated path.
+    // `POST /{comment-id}/replies` (public) can be called repeatedly, and
+    // dropping the anchor after the first step silently rerouted every later
+    // step of a public-reply flow into a normal DM — which a comment does not
+    // open a messaging window for, so the send was rejected and swallowed by
+    // `sendFlowStep`'s catch. Do not "restore" this to consume both channels.
+    //
+    // A spent `private` anchor keeps travelling rather than being dropped: the
+    // channel handler needs it to know this run started from a comment, so a
+    // follow-up outside the contact's 24-hour window fails with a readable
+    // reason instead of an opaque Send API rejection.
+    if (
+      isMessageProducingStep &&
+      anchorAvailable?.replyChannel === "private" &&
+      !anchorAvailable.spent
+    ) {
+      anchorAvailable = { ...anchorAvailable, spent: true }
     }
 
     const rawResult = await flowStepHandlers[step.stepType as StepType]?.({

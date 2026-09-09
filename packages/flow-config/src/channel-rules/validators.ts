@@ -1,5 +1,12 @@
 import { type StepType, stepTypes } from "../steps/step-action"
 import type { StepValidator } from "./channel-validator"
+import {
+  sendAudioValidator,
+  sendFileValidator,
+  sendGifValidator,
+  sendImageValidator,
+  sendVideoValidator,
+} from "./media-step-validators"
 import { sendCarouselValidator } from "./send-carousel-validator"
 import { sendTextValidator } from "./send-text-validator"
 import { sendWaTemplateMessageValidator } from "./send-wa-template-validator"
@@ -20,7 +27,12 @@ import { sendWaTemplateMessageValidator } from "./send-wa-template-validator"
 export const channelAwareStepValidators: Partial<
   Record<StepType, StepValidator>
 > = {
+  [stepTypes.enum.sendAudio]: sendAudioValidator,
   [stepTypes.enum.sendCarousel]: sendCarouselValidator,
+  [stepTypes.enum.sendFile]: sendFileValidator,
+  [stepTypes.enum.sendGif]: sendGifValidator,
+  [stepTypes.enum.sendImage]: sendImageValidator,
   [stepTypes.enum.sendText]: sendTextValidator,
+  [stepTypes.enum.sendVideo]: sendVideoValidator,
   [stepTypes.enum.sendWaTemplateMessage]: sendWaTemplateMessageValidator,
 }

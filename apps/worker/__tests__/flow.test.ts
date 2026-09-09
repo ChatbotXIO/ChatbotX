@@ -1554,7 +1554,13 @@ describe("runStepsAndQuickReplies — commentAnchor propagation", () => {
     replyChannel: "private" as const,
   }
 
-  test("forwards commentAnchor into the first message-producing step, and drops it from the next-step re-dispatch", async () => {
+  // A claimed private anchor keeps travelling marked `spent` instead of being
+  // dropped: the channel handler needs it to tell a comment-triggered follow-up
+  // (which Meta only delivers inside the contact's own 24h window) apart from a
+  // plain flow message.
+  const spentAnchor = { ...commentAnchor, spent: true }
+
+  test("forwards commentAnchor into the first message-producing step, then marks it spent for the next-step re-dispatch", async () => {
     const step1 = { ...makeStep("sendText"), id: "step-1" }
     const step2 = { ...makeStep("sendText"), id: "step-2" }
     const props = {
@@ -1576,9 +1582,9 @@ describe("runStepsAndQuickReplies — commentAnchor propagation", () => {
     expect(integrationQueueAdd).toHaveBeenCalledOnce()
     const [, nextJob] = integrationQueueAdd.mock.calls[0] as unknown as [
       string,
-      { data: { commentAnchor?: typeof commentAnchor } },
+      { data: { commentAnchor?: typeof spentAnchor } },
     ]
-    expect(nextJob.data.commentAnchor).toBeUndefined()
+    expect(nextJob.data.commentAnchor).toEqual(spentAnchor)
   })
 
   test("forwards commentAnchor through a non-message step to the next-step re-dispatch", async () => {
@@ -1627,7 +1633,7 @@ describe("runStepsAndQuickReplies — commentAnchor propagation", () => {
     expect(integrationQueueAdd).not.toHaveBeenCalled()
   })
 
-  test("does not forward commentAnchor to the next-node dispatch once a message step consumed it", async () => {
+  test("marks the anchor spent on the next-node dispatch once a message step claimed it", async () => {
     const nextNode: FlowNode = {
       id: "node-2",
       position: { x: 0, y: 0 },
@@ -1664,10 +1670,10 @@ describe("runStepsAndQuickReplies — commentAnchor propagation", () => {
     expect(integrationQueueAdd).toHaveBeenCalledOnce()
     const [, nextNodeJob] = integrationQueueAdd.mock.calls[0] as unknown as [
       string,
-      { data: { nodeId: string; commentAnchor?: typeof commentAnchor } },
+      { data: { nodeId: string; commentAnchor?: typeof spentAnchor } },
     ]
     expect(nextNodeJob.data.nodeId).toBe("node-2")
-    expect(nextNodeJob.data.commentAnchor).toBeUndefined()
+    expect(nextNodeJob.data.commentAnchor).toEqual(spentAnchor)
   })
 
   test("forwards commentAnchor to the next-node dispatch when no step consumed it", async () => {
@@ -1707,7 +1713,7 @@ describe("runStepsAndQuickReplies — commentAnchor propagation", () => {
     expect(nextNodeJob.data.commentAnchor).toEqual(commentAnchor)
   })
 
-  test("branch routing (step states) does not carry commentAnchor once the branching step consumed it", async () => {
+  test("branch routing (step states) carries the anchor marked spent once the branching step claimed it", async () => {
     const stateId = "state-success"
     const step = {
       ...makeStep("sendText", [{ id: stateId, stateType: "success" as const }]),
@@ -1743,10 +1749,134 @@ describe("runStepsAndQuickReplies — commentAnchor propagation", () => {
     expect(integrationQueueAdd).toHaveBeenCalledOnce()
     const [, branchJob] = integrationQueueAdd.mock.calls[0] as unknown as [
       string,
-      { data: { nodeId: string; commentAnchor?: typeof commentAnchor } },
+      { data: { nodeId: string; commentAnchor?: typeof spentAnchor } },
     ]
     expect(branchJob.data.nodeId).toBe("node-next")
-    expect(branchJob.data.commentAnchor).toBeUndefined()
+    expect(branchJob.data.commentAnchor).toEqual(spentAnchor)
+  })
+})
+
+describe("runStepsAndQuickReplies — public commentAnchor is never consumed", () => {
+  beforeEach(() => {
+    integrationQueueAdd.mockClear()
+    chatQueueAdd.mockClear()
+  })
+
+  const publicAnchor = {
+    commentId: "comment-1",
+    replyChannel: "public" as const,
+  }
+
+  // A public reply flow answers on the post for its whole run: unlike a private
+  // anchor (one comment_id-anchored DM per comment), `POST /{comment-id}/replies`
+  // takes repeated calls. Consuming it after the first step sent every later
+  // step to a DM whose recipient is the comment-scoped `from.id` — undeliverable
+  // and swallowed, so whichever step happened to be second silently vanished.
+  test.each([
+    ["sendText", "sendImage"],
+    ["sendImage", "sendText"],
+  ])("keeps a public commentAnchor for the next step's re-dispatch (%s then %s)", async (firstStepType, secondStepType) => {
+    const step1 = { ...makeStep(firstStepType), id: "step-1" }
+    const step2 = { ...makeStep(secondStepType), id: "step-2" }
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step1, step2] },
+      triggerNextNode: false,
+      commentAnchor: publicAnchor,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    const [, chatJob] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { commentAnchor?: typeof publicAnchor } },
+    ]
+    expect(chatJob.data.commentAnchor).toEqual(publicAnchor)
+
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, nextJob] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      {
+        data: {
+          startFromStepId: string
+          commentAnchor?: typeof publicAnchor
+        }
+      },
+    ]
+    expect(nextJob.data.startFromStepId).toBe("step-2")
+    expect(nextJob.data.commentAnchor).toEqual(publicAnchor)
+  })
+
+  test("forwards a public commentAnchor to the next-node dispatch after a message step", async () => {
+    const nextNode: FlowNode = {
+      id: "node-2",
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: { name: "Next", isStartNode: false, details: { steps: [] } },
+    }
+    const edges: EdgeSchema[] = [
+      {
+        id: "e1",
+        source: "node-1",
+        sourceHandle: "node-1",
+        target: "node-2",
+        targetHandle: "input",
+      },
+    ]
+    const flowVersion = makeFlowVersion([nextNode], edges)
+    const props = {
+      ...makeBaseProps(flowVersion),
+      details: { steps: [{ ...makeStep("sendText"), id: "step-1" }] },
+      triggerNextNode: true,
+      commentAnchor: publicAnchor,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, nextNodeJob] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string; commentAnchor?: typeof publicAnchor } },
+    ]
+    expect(nextNodeJob.data.nodeId).toBe("node-2")
+    expect(nextNodeJob.data.commentAnchor).toEqual(publicAnchor)
+  })
+
+  test("branch routing carries a public commentAnchor past the branching step", async () => {
+    const stateId = "state-success"
+    const step = {
+      ...makeStep("sendText", [{ id: stateId, stateType: "success" as const }]),
+      id: "step-1",
+    }
+    const flowVersion = makeFlowVersion(
+      [],
+      [
+        {
+          id: "e1",
+          source: "n1",
+          sourceHandle: stateId,
+          target: "node-next",
+          targetHandle: "input",
+        },
+      ],
+    )
+    const props = {
+      ...makeBaseProps(flowVersion),
+      steps: [step],
+      commentAnchor: publicAnchor,
+    }
+
+    await executeMultipleSteps(props)
+
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, branchJob] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string; commentAnchor?: typeof publicAnchor } },
+    ]
+    expect(branchJob.data.nodeId).toBe("node-next")
+    expect(branchJob.data.commentAnchor).toEqual(publicAnchor)
   })
 })
 
