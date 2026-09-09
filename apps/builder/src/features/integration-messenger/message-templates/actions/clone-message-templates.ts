@@ -12,7 +12,6 @@ import { SdkException } from "@chatbotx.io/sdk"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { chunk } from "remeda"
 import { z } from "zod"
-import { getAllWorkspaceMembers } from "@/features/workspace-members/queries"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { syncMessengerMessageTemplatesForIntegration } from "./sync-message-templates"
 
@@ -159,24 +158,18 @@ export const cloneMessengerMessageTemplateAction = workspaceActionClient
         workspaceId,
       })
 
-    // Resolve target rows by id (targets may live in OTHER workspaces).
-    const candidateTargets = await messengerIntegrationService.findByIds(
-      targetIntegrationMessengerIds,
-    )
-
-    // Authorize per target: the user must be an owner of the target's workspace,
-    // and the target must not be the source's own Facebook Page.
-    const { workspaceMembers } = await getAllWorkspaceMembers(user.id)
-    const ownerWorkspaceIds = new Set(
-      workspaceMembers
-        .filter((member) => member.role === "owner")
-        .map((member) => member.workspaceId),
-    )
-    const targets = candidateTargets.filter(
-      (target) =>
-        ownerWorkspaceIds.has(target.workspaceId) &&
-        target.pageId !== sourceIntegration?.pageId,
-    )
+    // Authorize per target: the user must be an admin (owner or superAdmin)
+    // of the target's workspace, and the target must not be the source's own
+    // Facebook Page. Memberships are read uncached so a just-revoked admin
+    // cannot clone across a workspace boundary.
+    const requested = new Set(targetIntegrationMessengerIds)
+    const cloneTargets =
+      await messengerIntegrationService.listCloneTargetsForUser({
+        userId: user.id,
+        excludePageId: sourceIntegration?.pageId,
+        authoritative: true,
+      })
+    const targets = cloneTargets.filter((target) => requested.has(target.id))
 
     if (targets.length === 0) {
       throw new Error("No authorized target channels found")

@@ -25,6 +25,8 @@ import {
   connectChannelIntegration,
   runConnectTransaction,
 } from "../inbox/connect-channel"
+import { isWorkspaceAdminMember } from "../workspace-member/predicates"
+import { workspaceMemberService } from "../workspace-member/service"
 
 export type ConnectPageInput = {
   actorUserId: string
@@ -57,16 +59,6 @@ class MessengerIntegrationService extends BaseService {
   findByIdForWorkspace(props: { id: string; workspaceId: string }) {
     return db.query.integrationMessengerModel.findFirst({
       where: { id: props.id, workspaceId: props.workspaceId },
-    })
-  }
-
-  /** No workspace scope — targets in a clone-across-workspaces flow may live in other workspaces. */
-  findByIds(ids: string[]) {
-    if (ids.length === 0) {
-      return Promise.resolve([])
-    }
-    return db.query.integrationMessengerModel.findMany({
-      where: { id: { in: ids } },
     })
   }
 
@@ -312,6 +304,46 @@ class MessengerIntegrationService extends BaseService {
       .update(integrationMessengerModel)
       .set(data)
       .where(eq(integrationMessengerModel.id, props.id))
+  }
+
+  /**
+   * Every Messenger page the user may clone a template onto: the pages of
+   * all workspaces where the user is an admin (owner or `superAdmin`),
+   * minus the source Facebook Page itself — it may be connected in more than
+   * one workspace, so the exclusion is by `pageId`, not by integration id.
+   * The same list feeds the picker and authorizes the clone action; the
+   * action passes `authoritative` so a just-revoked membership can never be
+   * served from cache across a workspace boundary.
+   */
+  async listCloneTargetsForUser(input: {
+    userId: string
+    excludePageId?: string | null
+    /** Read memberships uncached — required whenever the list authorizes a write. */
+    authoritative?: boolean
+  }): Promise<IntegrationMessengerModel[]> {
+    const members = input.authoritative
+      ? await workspaceMemberService.listByUserIdUncached({
+          userId: input.userId,
+        })
+      : await workspaceMemberService.listByUserId({ userId: input.userId })
+    const adminWorkspaceIds = Array.from(
+      new Set(
+        members
+          .filter(isWorkspaceAdminMember)
+          .map((member) => member.workspaceId),
+      ),
+    )
+    if (adminWorkspaceIds.length === 0) {
+      return []
+    }
+
+    return await db.query.integrationMessengerModel.findMany({
+      where: {
+        workspaceId: { in: adminWorkspaceIds },
+        pageId: input.excludePageId ? { ne: input.excludePageId } : undefined,
+      },
+      orderBy: { name: "asc" },
+    })
   }
 
   /**

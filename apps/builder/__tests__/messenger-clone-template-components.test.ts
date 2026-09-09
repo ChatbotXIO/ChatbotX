@@ -2,33 +2,35 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const resumableUploadImage = vi.fn(async () => "new-handle")
+const createPageMessageTemplate = vi.fn()
+const syncTemplates = vi.fn()
+const findByIdForWorkspace = vi.fn()
+const listCloneTargetsForUser = vi.fn()
+const findByIdForIntegration = vi.fn()
+
+// Captures the handler the safe-action chain wraps so the action's
+// authorization can be exercised directly.
+let cloneHandler: ((props: unknown) => Promise<unknown>) | null = null
 
 vi.mock("@chatbotx.io/integration-messenger/apis/upload", () => ({
   resumableUploadImage,
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {},
-  inArray: vi.fn(),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationMessengerModel: {},
-  messengerMessageTemplateModel: {},
-}))
-
 vi.mock("@chatbotx.io/business", () => ({
   messengerIntegrationService: {
-    findByIdForWorkspace: vi.fn(),
-    findByIds: vi.fn(),
+    findByIdForWorkspace: (...args: unknown[]) => findByIdForWorkspace(...args),
+    listCloneTargetsForUser: (...args: unknown[]) =>
+      listCloneTargetsForUser(...args),
   },
   messengerMessageTemplateService: {
-    findByIdForIntegration: vi.fn(),
+    findByIdForIntegration: (...args: unknown[]) =>
+      findByIdForIntegration(...args),
   },
 }))
 
 vi.mock("@chatbotx.io/integration-messenger/apis/message-templates", () => ({
-  createPageMessageTemplate: vi.fn(),
+  createPageMessageTemplate: (...args: unknown[]) =>
+    createPageMessageTemplate(...args),
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
@@ -38,21 +40,21 @@ vi.mock("@chatbotx.io/redis", () => ({
 vi.mock(
   "@/features/integration-messenger/message-templates/actions/sync-message-templates",
   () => ({
-    syncMessengerMessageTemplatesForIntegration: vi.fn(),
+    syncMessengerMessageTemplatesForIntegration: (...args: unknown[]) =>
+      syncTemplates(...args),
   }),
 )
 
-vi.mock("@/features/workspace-members/queries", () => ({
-  getAllWorkspaceMembers: vi.fn(),
-}))
-
 vi.mock("@/lib/safe-action", () => ({
   workspaceActionClient: {
-    bindArgsSchemas: vi.fn(() => ({
-      schema: vi.fn(() => ({
-        action: vi.fn(),
-      })),
-    })),
+    bindArgsSchemas: () => ({
+      schema: () => ({
+        action: (handler: (props: unknown) => Promise<unknown>) => {
+          cloneHandler = handler
+          return handler
+        },
+      }),
+    }),
   },
 }))
 
@@ -146,5 +148,107 @@ describe("prepareComponentsForClone", () => {
     expect(result[0].example).toEqual({
       header_handle: ["new-handle"],
     })
+  })
+})
+
+type CloneResult = {
+  succeeded: { channel: string }[]
+  failed: { channel: string; error: string }[]
+}
+
+const sourceTemplate = {
+  id: "tpl-src",
+  integrationMessengerId: "im-source",
+  name: "promo",
+  language: "vi",
+  category: "MARKETING",
+  parameterFormat: "POSITIONAL",
+  components: [{ type: "BODY", text: "Hi" }],
+}
+const target = (id: string, workspaceId = "ws-other") => ({
+  id,
+  name: `Page ${id}`,
+  workspaceId,
+  pageId: `page-${id}`,
+  auth: { accessToken: "token" },
+})
+
+const run = (targetIntegrationMessengerIds: string[]) => {
+  if (!cloneHandler) {
+    throw new Error("clone action handler was not captured")
+  }
+  return cloneHandler({
+    bindArgsParsedInputs: ["ws-source", "im-source", "tpl-src"],
+    parsedInput: { targetIntegrationMessengerIds },
+    ctx: { user: { id: "user-1" } },
+  }) as Promise<CloneResult>
+}
+
+describe("cloneMessengerMessageTemplateAction authorization", () => {
+  beforeEach(() => {
+    findByIdForIntegration.mockReset().mockResolvedValue(sourceTemplate)
+    findByIdForWorkspace
+      .mockReset()
+      .mockResolvedValue({ id: "im-source", pageId: "page-source" })
+    listCloneTargetsForUser.mockReset()
+    createPageMessageTemplate.mockReset().mockResolvedValue({
+      id: "meta-new",
+      status: "APPROVED",
+    })
+    syncTemplates.mockReset().mockResolvedValue(undefined)
+    resumableUploadImage.mockClear()
+  })
+
+  test("clones onto the requested pages the user administers, read uncached", async () => {
+    listCloneTargetsForUser.mockResolvedValue([
+      target("im-admin"),
+      target("im-owner", "ws-owner"),
+    ])
+
+    const result = await run(["im-admin", "im-owner"])
+
+    expect(listCloneTargetsForUser).toHaveBeenCalledWith({
+      userId: "user-1",
+      excludePageId: "page-source",
+      authoritative: true,
+    })
+    expect(createPageMessageTemplate).toHaveBeenCalledTimes(2)
+    expect(result.succeeded).toEqual([
+      { channel: "Page im-admin" },
+      { channel: "Page im-owner" },
+    ])
+    expect(result.failed).toEqual([])
+  })
+
+  test("drops requested pages outside the user's admin workspaces", async () => {
+    listCloneTargetsForUser.mockResolvedValue([target("im-admin")])
+
+    const result = await run(["im-admin", "im-foreign"])
+
+    expect(createPageMessageTemplate).toHaveBeenCalledTimes(1)
+    expect(result.succeeded).toEqual([{ channel: "Page im-admin" }])
+  })
+
+  test("fails when none of the requested pages is authorized", async () => {
+    listCloneTargetsForUser.mockResolvedValue([target("im-admin")])
+
+    await expect(run(["im-foreign"])).rejects.toThrow(
+      "No authorized target channels found",
+    )
+    expect(createPageMessageTemplate).not.toHaveBeenCalled()
+  })
+
+  test("reports a page whose Meta create fails without blocking the others", async () => {
+    listCloneTargetsForUser.mockResolvedValue([target("im-a"), target("im-b")])
+    createPageMessageTemplate
+      .mockRejectedValueOnce(new Error("rate limited"))
+      .mockResolvedValueOnce({ id: "meta-b", status: "APPROVED" })
+
+    const result = await run(["im-a", "im-b"])
+
+    expect(result.failed).toEqual([
+      { channel: "Page im-a", error: "rate limited" },
+    ])
+    expect(result.succeeded).toEqual([{ channel: "Page im-b" }])
   })
 })
