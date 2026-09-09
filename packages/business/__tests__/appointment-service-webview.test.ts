@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   cancelScheduled: vi.fn(),
   softDelete: vi.fn(),
   markCancelledByAppointment: vi.fn(),
+  contactInboxFindByIdForContact: vi.fn(),
   contactInboxFindByUncached: vi.fn(),
   defaultQueueRemove: vi.fn(),
   defaultQueueAdd: vi.fn(),
@@ -49,6 +50,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   appointmentReminderDispatchRepository: {
     markCancelledByAppointment: (...args: unknown[]) =>
       mocks.markCancelledByAppointment(...args),
+  },
+  contactInboxRepository: {
+    findByIdForContact: (...args: unknown[]) =>
+      mocks.contactInboxFindByIdForContact(...args),
   },
 }))
 
@@ -588,6 +593,7 @@ describe("appointmentService.completeWebviewBooking", () => {
     mocks.listFutureScheduledForContact.mockResolvedValue([])
     mocks.create.mockResolvedValue(createdAppointment)
     mocks.findBy.mockResolvedValue(fullAppointment)
+    mocks.contactInboxFindByIdForContact.mockResolvedValue(contactInbox)
     mocks.contactInboxFindByUncached.mockResolvedValue(contactInbox)
     mocks.defaultQueueAdd.mockResolvedValue(undefined)
     mocks.chatQueueAdd.mockResolvedValue(undefined)

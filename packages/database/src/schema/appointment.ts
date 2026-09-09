@@ -14,6 +14,7 @@ import {
 } from "../partials/shared"
 import { appointmentCalendarModel } from "./appointment-calendar"
 import { contactModel } from "./contact"
+import { contactInboxModel } from "./contact-inbox"
 import { conversationModel } from "./conversation"
 import { workspaceModel } from "./workspace"
 
@@ -64,6 +65,10 @@ export const appointmentModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
+    contactInboxId: bigintAsString().references(() => contactInboxModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
     startAt: timestamp(timestampConfig).notNull(),
     endAt: timestamp(timestampConfig).notNull(),
     inviteeTimezone: text().notNull(),
@@ -71,6 +76,8 @@ export const appointmentModel = pgTable(
     locationType: appointmentLocationTypeSnapshot().notNull(),
     locationDetail: text(),
     externalEventId: text(),
+    externalEventIntegrationId: bigintAsString(),
+    externalEventProviderCalendarId: text(),
     externalSyncStatus: appointmentExternalSyncStatus(),
     cancelledAt: timestamp(timestampConfig),
     deletedAt: timestamp(timestampConfig),

@@ -23,6 +23,10 @@ export const appointmentRelations = defineRelationsPart(schema, (r) => ({
       from: r.appointmentModel.conversationId,
       to: r.conversationModel.id,
     }),
+    contactInbox: r.one.contactInboxModel({
+      from: r.appointmentModel.contactInboxId,
+      to: r.contactInboxModel.id,
+    }),
     reminderDispatches: r.many.appointmentReminderDispatchModel({
       from: r.appointmentModel.id,
       to: r.appointmentReminderDispatchModel.appointmentId,

@@ -4813,10 +4813,19 @@
       "confirmationFlowId": "Confirmation Flow",
       "cancellationFlowId": "Cancellation Flow",
       "externalConnectionId": "External Calendar",
+      "externalEventTitleTemplate": "Event title template",
+      "externalEventDescriptionTemplate": "Event description template",
+      "externalEventAttendeesTemplate": "Attendees template",
       "reminders": "Reminders",
       "reminderTimingValue": "Value",
       "reminderTimingUnit": "Unit"
     },
+    "placeholders": {
+      "externalEventTitleTemplate": "Appointment: '{{booking_calendar}}'",
+      "externalEventDescriptionTemplate": "Add appointment details or variables",
+      "externalEventAttendeesTemplate": "one@example.com, another@example.com"
+    },
+    "externalEventDisclosure": "Template values and attendees are shared with the connected Google Calendar. Attendees receive Google invitations and cancellation updates.",
     "locationTypes": {
       "inPerson": "In-Person Meeting",
       "phoneCall": "Phone Call",

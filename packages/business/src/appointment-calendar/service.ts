@@ -9,6 +9,8 @@ import {
 import {
   type AppointmentScheduleWindowConfig,
   appointmentScheduleWindowConfigSchema,
+  defaultAppointmentExternalEventAttendeesTemplate,
+  defaultAppointmentExternalEventTitleTemplate,
 } from "@chatbotx.io/database/partials"
 import {
   appointmentCalendarRepository,
@@ -71,6 +73,9 @@ export type UpdateAppointmentCalendarInput = {
   confirmationFlowId?: string | null
   cancellationFlowId?: string | null
   externalConnectionId?: string | null
+  externalEventTitleTemplate?: string | null
+  externalEventDescriptionTemplate?: string | null
+  externalEventAttendeesTemplate?: string | null
   availability: AvailabilityIntervalInput[]
   reminders: ReminderInput[]
 }
@@ -525,6 +530,11 @@ export class AppointmentCalendarService extends BaseService {
             confirmationFlowId: source.confirmationFlowId,
             cancellationFlowId: source.cancellationFlowId,
             externalConnectionId: source.externalConnectionId,
+            externalEventTitleTemplate: source.externalEventTitleTemplate,
+            externalEventDescriptionTemplate:
+              source.externalEventDescriptionTemplate,
+            externalEventAttendeesTemplate:
+              source.externalEventAttendeesTemplate,
             active: false,
           },
           tx,
@@ -608,6 +618,18 @@ export class AppointmentCalendarService extends BaseService {
             confirmationFlowId: input.confirmationFlowId,
             cancellationFlowId: input.cancellationFlowId,
             externalConnectionId: input.externalConnectionId,
+            externalEventTitleTemplate:
+              input.externalEventTitleTemplate ??
+              (input.externalConnectionId
+                ? defaultAppointmentExternalEventTitleTemplate
+                : null),
+            externalEventDescriptionTemplate:
+              input.externalEventDescriptionTemplate,
+            externalEventAttendeesTemplate:
+              input.externalEventAttendeesTemplate ??
+              (input.externalConnectionId
+                ? defaultAppointmentExternalEventAttendeesTemplate
+                : null),
           },
           tx,
         )

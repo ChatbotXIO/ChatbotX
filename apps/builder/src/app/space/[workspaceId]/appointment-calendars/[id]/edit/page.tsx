@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { EditAppointmentCalendarForm } from "@/features/appointment-calendars/components/edit-appointment-calendar-form"
 import { getAppointmentCalendar } from "@/features/appointment-calendars/queries"
+import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { listExternalCalendarsForSelect } from "@/features/external-calendars/queries"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 
@@ -35,16 +36,18 @@ export default async function EditAppointmentCalendarPage({
           { label: calendar.name, href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
-        <EditAppointmentCalendarForm
-          calendar={calendar}
-          externalCalendarOptions={externalCalendars.map((connection) => ({
-            label: connection.label,
-            value: connection.id,
-          }))}
-          workspaceId={workspaceId}
-        />
-      </FlowStoreProvider>
+      <CustomFieldStoreProvider workspaceId={workspaceId}>
+        <FlowStoreProvider workspaceId={workspaceId}>
+          <EditAppointmentCalendarForm
+            calendar={calendar}
+            externalCalendarOptions={externalCalendars.map((connection) => ({
+              label: connection.label,
+              value: connection.id,
+            }))}
+            workspaceId={workspaceId}
+          />
+        </FlowStoreProvider>
+      </CustomFieldStoreProvider>
     </div>
   )
 }

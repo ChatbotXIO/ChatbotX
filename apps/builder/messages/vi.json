@@ -4622,10 +4622,19 @@
       "confirmationFlowId": "Flow xác nhận",
       "cancellationFlowId": "Flow huỷ lịch",
       "externalConnectionId": "Lịch bên ngoài",
+      "externalEventTitleTemplate": "Mẫu tiêu đề sự kiện",
+      "externalEventDescriptionTemplate": "Mẫu mô tả sự kiện",
+      "externalEventAttendeesTemplate": "Mẫu người tham dự",
       "reminders": "Nhắc hẹn",
       "reminderTimingValue": "Giá trị",
       "reminderTimingUnit": "Đơn vị"
     },
+    "placeholders": {
+      "externalEventTitleTemplate": "Lịch hẹn: '{{booking_calendar}}'",
+      "externalEventDescriptionTemplate": "Thêm chi tiết lịch hẹn hoặc biến",
+      "externalEventAttendeesTemplate": "mot@example.com, hai@example.com"
+    },
+    "externalEventDisclosure": "Giá trị mẫu và người tham dự sẽ được chia sẻ với Google Calendar đã kết nối. Người tham dự sẽ nhận lời mời và cập nhật huỷ lịch từ Google.",
     "locationTypes": {
       "inPerson": "Gặp trực tiếp",
       "phoneCall": "Gọi điện thoại",

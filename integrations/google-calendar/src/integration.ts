@@ -45,6 +45,7 @@ const config: IntegrationDefinition<
         startAt: props.startAt,
         endAt: props.endAt,
         timeZone: props.timeZone,
+        eventId: props.eventId,
         attendees: props.attendees,
       }),
     cancelEvent: async ({ ctx, props }) =>

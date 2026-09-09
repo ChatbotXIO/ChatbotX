@@ -7,6 +7,8 @@ import {
   appointmentReminderTimingUnits,
   appointmentScheduleWindowConfigSchema,
   appointmentScheduleWindowTypes,
+  defaultAppointmentExternalEventAttendeesTemplate,
+  defaultAppointmentExternalEventTitleTemplate,
 } from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { DatePickerField } from "@chatbotx.io/ui/components/form/date-picker-field"
@@ -70,6 +72,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
+import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-field"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { allTimezoneOptions } from "@/features/workspaces/schema/types"
 import { updateAppointmentCalendarAction } from "../actions/update-appointment-calendar.action"
@@ -183,6 +186,18 @@ function buildDefaultValues(
       calendar.cancellationFlowId ?? noAppointmentCalendarSelectionValue,
     externalConnectionId:
       calendar.externalConnectionId ?? noAppointmentCalendarSelectionValue,
+    externalEventTitleTemplate:
+      calendar.externalEventTitleTemplate ??
+      (calendar.externalConnectionId
+        ? defaultAppointmentExternalEventTitleTemplate
+        : ""),
+    externalEventDescriptionTemplate:
+      calendar.externalEventDescriptionTemplate ?? "",
+    externalEventAttendeesTemplate:
+      calendar.externalEventAttendeesTemplate ??
+      (calendar.externalConnectionId
+        ? defaultAppointmentExternalEventAttendeesTemplate
+        : ""),
     availability: calendar.availability.map((interval) => ({
       weekday: interval.weekday,
       ...normalizeAvailabilityMinuteInterval(interval),
@@ -410,7 +425,28 @@ export function EditAppointmentCalendarForm({
     | number
     | undefined
   const availabilityValues = form.watch("availability")
+  const externalConnectionId = form.watch("externalConnectionId")
   const reminderValues = form.watch("reminders") as AppointmentReminder[]
+
+  useEffect(() => {
+    if (externalConnectionId === noAppointmentCalendarSelectionValue) {
+      return
+    }
+    if (!form.getValues("externalEventTitleTemplate")) {
+      form.setValue(
+        "externalEventTitleTemplate",
+        defaultAppointmentExternalEventTitleTemplate,
+        { shouldDirty: true, shouldValidate: true },
+      )
+    }
+    if (!form.getValues("externalEventAttendeesTemplate")) {
+      form.setValue(
+        "externalEventAttendeesTemplate",
+        defaultAppointmentExternalEventAttendeesTemplate,
+        { shouldDirty: true, shouldValidate: true },
+      )
+    }
+  }, [externalConnectionId, form])
 
   const handleMaxAppointmentsUnlimitedChange = (checked: boolean) => {
     form.setValue("maxAppointmentsPerUser", checked ? null : 1, {
@@ -1031,6 +1067,52 @@ export function EditAppointmentCalendarForm({
                       "appointmentCalendars.noExternalConnections",
                     )}
                   />
+                  {externalConnectionId ===
+                  noAppointmentCalendarSelectionValue ? null : (
+                    <div className="mt-6 grid gap-4 border-t pt-6">
+                      <p className="max-w-xl text-muted-foreground text-sm">
+                        {t("appointmentCalendars.externalEventDisclosure")}
+                      </p>
+                      <PlainTextEditorField
+                        includeBotFieldVariables
+                        includeRawCustomFieldVariables
+                        inline
+                        label={t(
+                          "appointmentCalendars.fields.externalEventTitleTemplate",
+                        )}
+                        name="externalEventTitleTemplate"
+                        placeholder={t(
+                          "appointmentCalendars.placeholders.externalEventTitleTemplate",
+                        )}
+                        showEmojiPicker={false}
+                      />
+                      <PlainTextEditorField
+                        editorClassName="min-h-36"
+                        includeBotFieldVariables
+                        includeRawCustomFieldVariables
+                        label={t(
+                          "appointmentCalendars.fields.externalEventDescriptionTemplate",
+                        )}
+                        name="externalEventDescriptionTemplate"
+                        placeholder={t(
+                          "appointmentCalendars.placeholders.externalEventDescriptionTemplate",
+                        )}
+                        showEmojiPicker={false}
+                      />
+                      <PlainTextEditorField
+                        includeBotFieldVariables
+                        includeRawCustomFieldVariables
+                        label={t(
+                          "appointmentCalendars.fields.externalEventAttendeesTemplate",
+                        )}
+                        name="externalEventAttendeesTemplate"
+                        placeholder={t(
+                          "appointmentCalendars.placeholders.externalEventAttendeesTemplate",
+                        )}
+                        showEmojiPicker={false}
+                      />
+                    </div>
+                  )}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

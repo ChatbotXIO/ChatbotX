@@ -36,3 +36,14 @@ type AggregateGaxiosError = GoogleApisCommon.GaxiosError & {
 
 const isGaxiosError = (error: Error): error is AggregateGaxiosError =>
   "errors" in error && Array.isArray(error.errors)
+
+export const getGaxiosStatus = (error: unknown): number | null => {
+  if (!(error instanceof Error && "response" in error)) {
+    return null
+  }
+  const response = error.response
+  if (!response || typeof response !== "object" || !("status" in response)) {
+    return null
+  }
+  return typeof response.status === "number" ? response.status : null
+}
