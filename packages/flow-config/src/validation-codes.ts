@@ -15,6 +15,8 @@ export const flowValidationCodes = {
   whatsappCarouselButtonsMismatch: "whatsappCarouselButtonsMismatch",
   whatsappCarouselLinkButtonNotAlone: "whatsappCarouselLinkButtonNotAlone",
   tiktokCardTitleTooLong: "tiktokCardTitleTooLong",
+  mediaStepUnsupported: "mediaStepUnsupported",
+  mediaButtonsUnsupported: "mediaButtonsUnsupported",
   waTemplateMpmNoProducts: "waTemplateMpmNoProducts",
   waTemplateMpmTooManySections: "waTemplateMpmTooManySections",
   waTemplateMpmTooManyProducts: "waTemplateMpmTooManyProducts",

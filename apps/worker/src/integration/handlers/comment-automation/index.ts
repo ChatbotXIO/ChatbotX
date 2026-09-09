@@ -83,6 +83,11 @@ export async function processCommentAutomation(
     auth,
   })
 
+  // Meta allows a single comment_id-anchored DM per comment, and that budget is
+  // shared by every automation matching this one comment — so it is tracked
+  // across the loop, not per automation.
+  let privateReplyClaimed = false
+
   for (const automation of automations) {
     try {
       if (
@@ -254,12 +259,36 @@ export async function processCommentAutomation(
             "Failed to apply hide comments",
           ),
         )
+      } else {
+        // Liking, hiding and parent threading all hang off the incoming
+        // comment's message row. Losing it degrades all three without touching
+        // the reply — which used to happen with no trace at all.
+        logger.warn(
+          {
+            automationId: automation.id,
+            commentId,
+            conversationId,
+            workspaceId,
+          },
+          "Comment automation: incoming comment message row not found, skipping like/hide and parent threading",
+        )
       }
 
-      let dispatchFailed = false
+      // Built once here and threaded into every async reply job, so a job that
+      // gives up without delivering anything can roll the row back — see
+      // `fbCommentAutomationService.deleteDedup`.
+      const dedup = {
+        automationId: automation.id,
+        contactId: contactInbox.contactId,
+        postId,
+        workspaceId,
+      }
+
+      let publicDispatched = false
+      let privateDispatched = false
 
       try {
-        await executePublicReply(automation.publicReply, {
+        publicDispatched = await executePublicReply(automation.publicReply, {
           auth,
           automationId: automation.id,
           integrationType,
@@ -274,62 +303,80 @@ export async function processCommentAutomation(
           message,
           parentMessageId,
           parentMessageCreatedAt,
+          dedup,
         })
       } catch (err) {
         logger.error(
           { err, automationId: automation.id, commentId },
           "Failed to send public reply",
         )
-        if (willSendReply(automation.publicReply)) {
-          dispatchFailed = true
-        }
       }
 
-      try {
-        await executePrivateReply(automation.privateReply, {
-          auth,
+      // Meta accepts exactly one comment_id-anchored DM per comment, so a
+      // second automation matching the same comment would always be rejected by
+      // the Send API. Skip that dispatch here, with a reason in the log.
+      if (privateReplyClaimed && willSendReply(automation.privateReply)) {
+        logAutomationSkipped({
           automationId: automation.id,
-          integrationType,
-          integrationIdentifier,
           commentId,
-          channelType,
-          conversationId,
-          contactInboxId,
-          contactInbox,
+          postId,
           workspaceId,
-          delay,
-          message,
+          reason: "private reply already claimed for this comment",
         })
-      } catch (err) {
-        logger.error(
-          { err, automationId: automation.id, commentId },
-          "Failed to send private reply",
-        )
-        if (willSendReply(automation.privateReply)) {
-          dispatchFailed = true
+      } else {
+        try {
+          privateDispatched = await executePrivateReply(
+            automation.privateReply,
+            {
+              auth,
+              automationId: automation.id,
+              integrationType,
+              integrationIdentifier,
+              commentId,
+              channelType,
+              conversationId,
+              contactInboxId,
+              contactInbox,
+              workspaceId,
+              delay,
+              message,
+              createdTime,
+              dedup,
+            },
+          )
+          privateReplyClaimed ||= privateDispatched
+        } catch (err) {
+          logger.error(
+            { err, automationId: automation.id, commentId },
+            "Failed to send private reply",
+          )
         }
       }
 
       // Dedup/count fire once dispatch is *enqueued*, not once an async reply
-      // (flow, AIAgent) actually succeeds — a later failure inside that job
-      // (e.g. agent misconfigured, no auto-reply-enabled provider) still
-      // counts as "replied" here and won't be retried. Fixing this properly
-      // requires threading the dedup write into the async job itself for
-      // every async-dispatch reply type, which is out of scope for now.
-      if (!dispatchFailed) {
-        await fbCommentAutomationService.insertDedup({
-          automationId: automation.id,
-          contactId: contactInbox.contactId,
-          postId,
-          workspaceId,
-        })
+      // (flow, AIAgent) actually succeeds. Three rules, all deliberate:
+      //
+      // 1. One branch failing must NOT hold back the row when the other one
+      //    dispatched — skipping it there let the contact's next comment post
+      //    the successful branch a second time. A missed DM beats a duplicate.
+      // 2. An automation that sends nothing (like/hide only) still gets a row,
+      //    so `replyOncePerUserPerPost` keeps gating it once per user per post.
+      // 3. An async job that later gives up rolls the row back itself via
+      //    `deleteDedup` (see `dedup` above), so the contact is not blocked
+      //    forever. `sendFlow` is the exception: a flow can fail at any step
+      //    long after dispatch, and rolling back there would reopen the
+      //    duplicate-reply hole.
+      const anythingDispatched = publicDispatched || privateDispatched
+      const anythingConfigured =
+        willSendReply(automation.publicReply) ||
+        willSendReply(automation.privateReply)
 
-        if (
-          willSendReply(automation.publicReply) ||
-          willSendReply(automation.privateReply)
-        ) {
-          await fbCommentAutomationService.incrementRepliesCount(automation.id)
-        }
+      if (anythingDispatched || !anythingConfigured) {
+        await fbCommentAutomationService.insertDedup(dedup)
+      }
+
+      if (anythingDispatched) {
+        await fbCommentAutomationService.incrementRepliesCount(automation.id)
       }
     } catch (err) {
       logger.error(

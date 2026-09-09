@@ -249,7 +249,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Când sunt atașate butoane, TikTok trimite doar primele 40 de caractere din acest mesaj — restul va fi trunchiat."
     },
-    "dataWasSaved": "Datele au fost salvate"
+    "dataWasSaved": "Datele au fost salvate",
+    "media": {
+      "stepUnsupportedOnChannel": "Acest canal nu poate trimite acest tip de conținut media — pasul este ignorat acolo. Elimină-l sau schimbă nodul pe un canal compatibil.",
+      "buttonsSkippedOnChannel": "Acest canal nu poate trimite butoane împreună cu un mesaj media — acolo sunt ignorate. Adaugă-le într-un pas text ulterior."
+    }
   },
   "folders": {
     "heading": {
@@ -3179,7 +3183,9 @@
     "waTemplateMpmTooManySections": "Un buton multi-produs poate avea cel mult 10 secțiuni. Elimină câteva secțiuni înainte de publicare.",
     "waTemplateMpmTooManyProducts": "Un buton multi-produs poate avea în total cel mult 30 de produse. Elimină câteva produse înainte de publicare.",
     "waTemplateLtoExpirationRequired": "Alege o dată de expirare pentru oferta pe timp limitat înainte de a trimite.",
-    "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs."
+    "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs.",
+    "mediaStepUnsupported": "Acest canal nu poate trimite acest tip de conținut media. Elimină pasul sau îndreaptă acest nod spre un canal compatibil.",
+    "mediaButtonsUnsupported": "Acest canal nu poate trimite butoane împreună cu un mesaj media. Elimină butoanele sau mută-le într-un pas text de după acesta."
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",

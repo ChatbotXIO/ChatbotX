@@ -30,7 +30,18 @@ const ctx = {
   },
 } as never
 
+// A comment-only contact: no inbound message, so Meta's 24-hour standard
+// messaging window was never opened and only the comment's single anchored
+// reply can reach them.
 const contact = { id: "contact-1", sourceId: "igsid-1" } as never
+
+const recentlyRepliedContact = {
+  id: "contact-2",
+  sourceId: "igsid-2",
+  lastIncomingMessageAt: new Date(Date.now() - 60 * 60 * 1000),
+} as never
+
+const ONE_PRIVATE_REPLY_PER_COMMENT = /one private reply per comment/i
 
 const textStep = {
   id: "step-1",
@@ -102,27 +113,27 @@ describe("instagram-facebook sendFlowStep — comment-anchored private reply", (
     expect(result).toEqual({ messageIds: ["m_normal-1"] })
   })
 
-  test("only the first Instagram message of a multi-message step uses the comment anchor", async () => {
-    const cards = Array.from({ length: 11 }, (_, i) => ({
+  // 11 cards chunked by 10 → 2 Instagram messages for this single step.
+  const multiMessageStep = {
+    id: "step-1",
+    nodeId: "node-1",
+    stepType: "sendCarousel",
+    cards: Array.from({ length: 11 }, (_, i) => ({
       title: `Card ${i}`,
       buttons: [],
-    }))
+    })),
+  }
 
+  test("only the first Instagram message of a multi-message step uses the comment anchor", async () => {
     const result = await sendFlowStep({
       ctx,
       data: {
-        contact,
+        contact: recentlyRepliedContact,
         commentAnchor: { commentId: "comment-1", replyChannel: "private" },
-        step: {
-          id: "step-1",
-          nodeId: "node-1",
-          stepType: "sendCarousel",
-          cards,
-        },
+        step: multiMessageStep,
       },
     } as never)
 
-    // 11 cards chunked by 10 → 2 Instagram messages for this single step
     expect(mockSendPrivateReplyMessage).toHaveBeenCalledTimes(1)
     expect(mockSendPrivateReplyMessage).toHaveBeenCalledWith(
       ctx.auth,
@@ -131,5 +142,61 @@ describe("instagram-facebook sendFlowStep — comment-anchored private reply", (
     )
     expect(mockSendInstagramMessage).toHaveBeenCalledTimes(1)
     expect(result).toEqual({ messageIds: ["m_anchored-1", "m_normal-1"] })
+  })
+
+  test("fails the follow-up message when the commenter has never messaged the account", async () => {
+    await expect(
+      sendFlowStep({
+        ctx,
+        data: {
+          contact,
+          commentAnchor: { commentId: "comment-1", replyChannel: "private" },
+          step: multiMessageStep,
+        },
+      } as never),
+    ).rejects.toThrow(ONE_PRIVATE_REPLY_PER_COMMENT)
+
+    // The anchored first message still went out; only the follow-up failed.
+    expect(mockSendPrivateReplyMessage).toHaveBeenCalledTimes(1)
+    expect(mockSendInstagramMessage).not.toHaveBeenCalled()
+  })
+
+  test("a spent anchor from an earlier step sends as a normal DM inside the 24h window", async () => {
+    const result = await sendFlowStep({
+      ctx,
+      data: {
+        contact: recentlyRepliedContact,
+        commentAnchor: {
+          commentId: "comment-1",
+          replyChannel: "private",
+          spent: true,
+        },
+        step: textStep,
+      },
+    } as never)
+
+    expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
+    expect(mockSendInstagramMessage).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+  })
+
+  test("a spent anchor outside the 24h window reports the one-reply-per-comment limit", async () => {
+    await expect(
+      sendFlowStep({
+        ctx,
+        data: {
+          contact,
+          commentAnchor: {
+            commentId: "comment-1",
+            replyChannel: "private",
+            spent: true,
+          },
+          step: textStep,
+        },
+      } as never),
+    ).rejects.toThrow(ONE_PRIVATE_REPLY_PER_COMMENT)
+
+    expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
+    expect(mockSendInstagramMessage).not.toHaveBeenCalled()
   })
 })

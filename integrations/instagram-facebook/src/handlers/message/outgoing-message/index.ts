@@ -10,6 +10,7 @@ import {
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import {
+  assertCommentPrivateReplyFollowUpDeliverable,
   contentTypes,
   type MessageHandlers,
   type OutgoingContact,
@@ -158,9 +159,12 @@ const buildMessagePayload = (
   }
 }
 
+// Every converter below yields a whole message (`{ text }`, `{ attachment }`,
+// `{ attachments }`), never a bare attachment payload — so `sendFlowStep` can
+// stamp `quick_replies` on the last one it gets back.
 export async function* convertFlowStepToInstagramMessage(
   props: SendFlowStepProps<InstagramAuthValue>,
-): AsyncGenerator<InstagramMessageAttachmentPayload | InstagramSendMessage> {
+): AsyncGenerator<InstagramSendMessage> {
   const {
     data: { step },
   } = props
@@ -169,16 +173,16 @@ export async function* convertFlowStepToInstagramMessage(
     case stepTypes.enum.sendText:
       yield* convertFlowStepText(
         props as SendFlowStepProps<InstagramAuthValue, SendTextStepSchema>,
-      ) as Generator<InstagramMessageAttachmentPayload | InstagramSendMessage>
+      ) as Generator<InstagramSendMessage>
       break
     case stepTypes.enum.sendImage:
     case stepTypes.enum.sendVideo:
-      await (yield* convertFlowStepMedia(
+      yield* convertFlowStepMedia(
         props as SendFlowStepProps<
           InstagramAuthValue,
           SendImageStepSchema | SendVideoStepSchema
         >,
-      ))
+      )
       break
     case stepTypes.enum.sendMultipleImages:
       yield* convertFlowStepMultipleImages(
@@ -223,26 +227,54 @@ export const sendFlowStep = async (
 ) => {
   const {
     ctx,
-    data: { contact, commentAnchor },
+    data: { contact, commentAnchor, quickReplies },
   } = props
   const messageIds: string[] = []
   try {
-    // Consumed by the first Instagram message yielded below, if a private
+    // Collected up front rather than sent as they stream: Instagram renders
+    // the quick replies of the *last* message only, and which message is last
+    // isn't knowable mid-stream. A step yields at most a couple of messages,
+    // and each flow step is already its own job, so nothing is held for long.
+    // Without this the `quickReplies` the worker passes in
+    // (`sendFlowStepToChannel`) were dropped on every step but sendQuickReply.
+    const instagramMessages: InstagramSendMessage[] = []
+    for await (const instagramMessage of convertFlowStepToInstagramMessage(
+      props,
+    )) {
+      instagramMessages.push(instagramMessage)
+    }
+
+    const lastMessage = instagramMessages.at(-1)
+    if (lastMessage && quickReplies && quickReplies.length > 0) {
+      lastMessage.quick_replies =
+        convertCanonicalInstagramQuickReplies(quickReplies)
+    }
+
+    // Claimed by the first Instagram message sent below, if an unspent private
     // comment anchor is present — a single flow step can yield more than one
     // message (e.g. text + attachments), so only the very first send uses the
-    // comment_id-anchored API (exempt from the messaging window); the rest
-    // use the normal path. A "public" anchor is never honored here — it's
+    // comment_id-anchored API (exempt from the messaging window). Everything
+    // after it — in this step or a later one, which arrives with `spent: true`
+    // — takes the normal path, gated by the guard below.
+    // A "public" anchor is never honored here — it's
     // delivered via the comment channel's sendComment, not this message
     // channel's sendFlowStep (see send-flow-step.ts). This check is
     // defense-in-depth against a public anchor ever reaching this handler by
     // mistake.
+    const isCommentPrivateRun = commentAnchor?.replyChannel === "private"
     let anchorCommentId =
-      commentAnchor?.replyChannel === "private"
+      isCommentPrivateRun && !commentAnchor.spent
         ? commentAnchor.commentId
         : undefined
-    for await (const instagramMessage of convertFlowStepToInstagramMessage(
-      props,
-    )) {
+    for (const instagramMessage of instagramMessages) {
+      // The comment bought exactly one anchored DM and it is gone; a normal DM
+      // only reaches the contact if they have messaged in the last 24h.
+      if (isCommentPrivateRun && !anchorCommentId) {
+        assertCommentPrivateReplyFollowUpDeliverable({
+          commentId: commentAnchor.commentId,
+          lastIncomingMessageAt: contact.lastIncomingMessageAt,
+        })
+      }
       const response = anchorCommentId
         ? await sendPrivateReplyMessage(
             ctx.auth,

@@ -86,12 +86,27 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
    falls through to `automatedResponse`). Private uses
    `resolveDirectMessageConversationId`; public deliberately keeps `ctx.conversationId`,
    because the contact's next comment resolves back to that same conversation. Never
-   "unify" the two branches. `commentAnchor` is orthogonal — it only decides how the first
-   message is delivered.
+   "unify" the two branches. `commentAnchor` is orthogonal — it decides *delivery*: a
+   `private` anchor is one-shot (Meta allows one comment_id-anchored DM per comment, so the
+   first message-producing step claims it), a `public` one is never consumed and every step
+   of the run posts as a comment reply. A claimed private anchor is **not dropped** — it
+   rides on as `spent: true` so each channel's `sendFlowStep` can tell a comment-triggered
+   follow-up from a plain flow message and gate it on `contact.lastIncomingMessageAt` via
+   `assertCommentPrivateReplyFollowUpDeliverable` (`@chatbotx.io/sdk`): inside the 24h
+   window it sends as a normal DM, outside it throws
+   `comment_private_reply_already_used` → visible `sendError`. Never "restore" the drop;
+   that turns the failure back into a Send API rejection swallowed by `sendFlowStep`.
 
 8. **`options.trackUserTags` is a no-op** (defined, not implemented). Every other option
    (including `replyToUsersWhoCommentedOnOtherPosts`) IS enforced — see the option table in
    the docs.
+
+9. **Instagram comment replies carry text only.** `POST /{ig-comment-id}/replies` has no
+   `attachment_url` — that is Facebook-Page-only (`integrations/messenger`). Both Instagram
+   variants' `sendComment` throw `ChannelError(PAYLOAD_INVALID)` when the message has
+   attachments, so a media step of a public reply flow surfaces a `sendError` in the inbox
+   instead of disappearing behind a `logger.warn`. Never "fix" that back into an empty
+   `{ messageIds: [] }` return.
 
 ## Adding a new filter option (recipe)
 

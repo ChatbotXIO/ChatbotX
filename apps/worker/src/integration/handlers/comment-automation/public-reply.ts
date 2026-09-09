@@ -19,6 +19,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import type { CommentAutomationChannelType } from "./channel-type"
+import type { CommentAutomationDedup } from "./dedup"
 
 /**
  * Post a public Facebook comment reply: creates the outgoing DB message,
@@ -82,6 +83,11 @@ export async function postPublicCommentReply(props: {
   )
 }
 
+/**
+ * Returns whether a reply was actually dispatched. The caller uses that — not
+ * the automation's configuration — to decide whether to write the dedup row, so
+ * a branch that quietly declines to send never counts as a reply.
+ */
 export async function executePublicReply(
   publicReply: FBCommentReply,
   ctx: {
@@ -99,10 +105,11 @@ export async function executePublicReply(
     message?: string
     parentMessageId?: string | null
     parentMessageCreatedAt?: Date | null
+    dedup?: CommentAutomationDedup
   },
-) {
+): Promise<boolean> {
   if (publicReply.type === "none") {
-    return
+    return false
   }
 
   if (publicReply.type === "text" && publicReply.value) {
@@ -133,7 +140,7 @@ export async function executePublicReply(
       parentMessageCreatedAt: ctx.parentMessageCreatedAt,
       delay: ctx.delay,
     })
-    return
+    return true
   }
 
   if (publicReply.type === "flow" && publicReply.value) {
@@ -156,7 +163,7 @@ export async function executePublicReply(
       },
       { delay: ctx.delay },
     )
-    return
+    return true
   }
 
   if (publicReply.type === "AIAgent" && publicReply.value) {
@@ -179,6 +186,7 @@ export async function executePublicReply(
           parentMessageId: ctx.parentMessageId ?? null,
           parentMessageCreatedAt:
             ctx.parentMessageCreatedAt?.toISOString() ?? null,
+          commentDedup: ctx.dedup,
         },
       },
       {
@@ -186,5 +194,8 @@ export async function executePublicReply(
         jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-public`,
       },
     )
+    return true
   }
+
+  return false
 }

@@ -1137,6 +1137,38 @@ describe("sendFlowStep", () => {
     expect(mockSendMessageToChannel).toHaveBeenCalledOnce()
     expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
   })
+
+  // A public anchor now survives every step of the run, so a media step reaches
+  // the comment channel too — with its attachment on the row, which is what
+  // makes an unsupported send (Instagram comment replies are text-only) show up
+  // as a failed message in the inbox instead of vanishing.
+  test("routes a media step with a public commentAnchor through the comment channel, attachment included", async () => {
+    const instagramContactInbox = {
+      ...fakeContactInbox,
+      channel: "instagram",
+    } as unknown as typeof fakeContactInbox
+    mockFindContactInbox.mockResolvedValue(instagramContactInbox)
+
+    await sendFlowStep({
+      ...baseParams,
+      step: sendImageStep,
+      commentAnchor: { commentId: "comment-1", replyChannel: "public" },
+    })
+
+    expect(mockRepositoryCreateWithAttachments).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "comment",
+        contentAttributes: expect.objectContaining({
+          replyToCommentId: "comment-1",
+        }),
+      }),
+      expect.arrayContaining([
+        expect.objectContaining({ workspaceId: "ws-1" }),
+      ]),
+    )
+    expect(mockSendMessageToChannel).toHaveBeenCalledOnce()
+    expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+  })
 })
 
 describe("sendChatMessage", () => {

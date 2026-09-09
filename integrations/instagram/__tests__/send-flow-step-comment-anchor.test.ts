@@ -52,6 +52,8 @@ const textStep = {
   buttons: [],
 }
 
+const ONE_PRIVATE_REPLY_PER_COMMENT = /one private reply per comment/i
+
 describe("instagram sendFlowStep — comment-anchored private reply", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -161,5 +163,70 @@ describe("instagram sendFlowStep — comment-anchored private reply", () => {
     )
     expect(mockSendInstagramMessage).toHaveBeenCalledTimes(1)
     expect(result).toEqual({ messageIds: ["m_anchored-1", "m_normal-1"] })
+  })
+
+  test("fails the follow-up message when the commenter is outside the 24-hour window", async () => {
+    await expect(
+      sendFlowStep({
+        ctx,
+        data: {
+          contact: staleContact,
+          commentAnchor: { commentId: "comment-1", replyChannel: "private" },
+          step: {
+            id: "step-1",
+            nodeId: "node-1",
+            stepType: "sendCarousel",
+            cards: Array.from({ length: 11 }, (_, i) => ({
+              title: `Card ${i}`,
+              buttons: [],
+            })),
+          },
+        },
+      } as never),
+    ).rejects.toThrow(ONE_PRIVATE_REPLY_PER_COMMENT)
+
+    // The anchored first message still went out; only the follow-up failed,
+    // and with the comment-specific reason rather than the generic window one.
+    expect(mockSendPrivateReplyMessage).toHaveBeenCalledTimes(1)
+    expect(mockSendInstagramMessage).not.toHaveBeenCalled()
+  })
+
+  test("a spent anchor from an earlier step sends as a normal DM inside the 24h window", async () => {
+    const result = await sendFlowStep({
+      ctx,
+      data: {
+        contact: freshContact,
+        commentAnchor: {
+          commentId: "comment-1",
+          replyChannel: "private",
+          spent: true,
+        },
+        step: textStep,
+      },
+    } as never)
+
+    expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
+    expect(mockSendInstagramMessage).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+  })
+
+  test("a spent anchor outside the 24h window reports the one-reply-per-comment limit", async () => {
+    await expect(
+      sendFlowStep({
+        ctx,
+        data: {
+          contact: staleContact,
+          commentAnchor: {
+            commentId: "comment-1",
+            replyChannel: "private",
+            spent: true,
+          },
+          step: textStep,
+        },
+      } as never),
+    ).rejects.toThrow(ONE_PRIVATE_REPLY_PER_COMMENT)
+
+    expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
+    expect(mockSendInstagramMessage).not.toHaveBeenCalled()
   })
 })

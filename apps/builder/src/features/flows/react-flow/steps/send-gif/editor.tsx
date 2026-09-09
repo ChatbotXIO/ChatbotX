@@ -18,6 +18,7 @@ import { type SyntheticEvent, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { usePlatformCredentialsStore } from "@/features/platform-credentials/provider/platform-credentials-store-context"
 import { BaseStepEditor } from "../base/editor"
+import { MediaStepNotice } from "../button/media-step-notice"
 
 // Giphy SDK is heavy — load it only when the send-gif editor mounts.
 const GifFinder = dynamic(
@@ -92,7 +93,10 @@ export default function SendGifStepEditor({
 }) {
   return (
     <BaseStepEditor icon={ImagePlayIcon} title="GIF">
-      <FindGifDialog parentName={parentName} />
+      <div>
+        <FindGifDialog parentName={parentName} />
+        <MediaStepNotice parentName={parentName} />
+      </div>
     </BaseStepEditor>
   )
 }

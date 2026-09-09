@@ -2711,7 +2711,11 @@
     "sendText": {
       "tiktokTitleTruncated": "With buttons attached, TikTok only sends the first 40 characters of this message — the rest will be cut off."
     },
-    "dataWasSaved": "Data was saved"
+    "dataWasSaved": "Data was saved",
+    "media": {
+      "stepUnsupportedOnChannel": "This channel can't send this media type — the step is skipped there. Remove it, or switch the node to a channel that supports it.",
+      "buttonsSkippedOnChannel": "This channel can't send buttons with a media message — they are skipped there. Put them on a following text step instead."
+    }
   },
   "folders": {
     "heading": {
@@ -3366,7 +3370,9 @@
     "waTemplateMpmTooManySections": "A multi-product button can have at most 10 sections. Remove some sections before publishing.",
     "waTemplateMpmTooManyProducts": "A multi-product button can have at most 30 products in total. Remove some products before publishing.",
     "waTemplateLtoExpirationRequired": "Pick an expiration date for the limited-time offer before sending.",
-    "waTemplateMpmIncompleteProducts": "Every section needs at least one selected product — remove empty rows or pick a product for them."
+    "waTemplateMpmIncompleteProducts": "Every section needs at least one selected product — remove empty rows or pick a product for them.",
+    "mediaStepUnsupported": "This channel can't send this media type. Remove the step, or point this node at a channel that supports it.",
+    "mediaButtonsUnsupported": "This channel can't send buttons with a media message. Remove the buttons, or move them to a text step after this one."
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

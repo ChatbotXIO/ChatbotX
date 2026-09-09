@@ -2387,7 +2387,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Når der er tilføjet knapper, sender TikTok kun de første 40 tegn af denne besked — resten bliver klippet væk."
     },
-    "dataWasSaved": "Data blev gemt"
+    "dataWasSaved": "Data blev gemt",
+    "media": {
+      "stepUnsupportedOnChannel": "Denne kanal kan ikke sende denne medietype – trinnet springes over der. Fjern det, eller skift noden til en kanal der understøtter det.",
+      "buttonsSkippedOnChannel": "Denne kanal kan ikke sende knapper sammen med en mediebesked – de springes over der. Læg dem i stedet på et efterfølgende teksttrin."
+    }
   },
   "folders": {
     "heading": {
@@ -3179,7 +3183,9 @@
     "waTemplateMpmTooManySections": "En multiprodukt-knap kan højst have 10 sektioner. Fjern nogle sektioner før udgivelse.",
     "waTemplateMpmTooManyProducts": "En multiprodukt-knap kan højst have 30 produkter i alt. Fjern nogle produkter før udgivelse.",
     "waTemplateLtoExpirationRequired": "Vælg en udløbsdato for tilbuddet, før du sender.",
-    "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem."
+    "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem.",
+    "mediaStepUnsupported": "Denne kanal kan ikke sende denne medietype. Fjern trinnet, eller peg noden mod en kanal der understøtter det.",
+    "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette."
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",

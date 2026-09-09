@@ -26,6 +26,15 @@ import {
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import type { CommentAutomationChannelType } from "./channel-type"
+import type { CommentAutomationDedup } from "./dedup"
+
+/**
+ * Meta accepts a comment_id-anchored DM only within 7 days of the comment's
+ * creation (Instagram Live is stricter still: during the broadcast only). Past
+ * that the Send API rejects the call, so a backlogged queue or a long
+ * `replyAfter` would surface as an opaque channel error instead of a skip.
+ */
+const PRIVATE_REPLY_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 
 export type PrivateReplyAuth =
   | MessengerAuthValue
@@ -104,6 +113,11 @@ async function resolveDirectMessageConversationId(ctx: {
   }
 }
 
+/**
+ * Returns whether a DM was actually dispatched. The caller uses that — not the
+ * automation's configuration — to decide whether to write the dedup row and
+ * whether the comment's single private-reply budget has been spent.
+ */
 export async function executePrivateReply(
   privateReply: FBCommentReply,
   ctx: {
@@ -119,10 +133,29 @@ export async function executePrivateReply(
     workspaceId: string
     delay: number
     message?: string
+    createdTime: number
+    dedup?: CommentAutomationDedup
   },
-) {
+): Promise<boolean> {
   if (privateReply.type === "none") {
-    return
+    return false
+  }
+
+  // `delay` is added because the DM leaves only after the job's delay elapses,
+  // so a comment still inside the window now can fall outside it by then.
+  const commentAgeAtSendMs = Date.now() + ctx.delay - ctx.createdTime * 1000
+  if (commentAgeAtSendMs > PRIVATE_REPLY_WINDOW_MS) {
+    logger.warn(
+      {
+        automationId: ctx.automationId,
+        commentId: ctx.commentId,
+        workspaceId: ctx.workspaceId,
+        commentAgeAtSendMs,
+        reason: "comment older than the 7-day private reply window",
+      },
+      "Comment automation private reply skipped",
+    )
+    return false
   }
 
   if (privateReply.type === "text" && privateReply.value) {
@@ -148,7 +181,7 @@ export async function executePrivateReply(
       ctx.commentId,
       text,
     )
-    return
+    return true
   }
 
   if (privateReply.type === "flow" && privateReply.value) {
@@ -179,7 +212,7 @@ export async function executePrivateReply(
       },
       { delay: ctx.delay },
     )
-    return
+    return true
   }
 
   if (privateReply.type === "AIAgent" && privateReply.value) {
@@ -199,6 +232,7 @@ export async function executePrivateReply(
           replyChannel: "private",
           channelType: ctx.channelType,
           message: ctx.message,
+          commentDedup: ctx.dedup,
         },
       },
       {
@@ -206,5 +240,8 @@ export async function executePrivateReply(
         jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-private`,
       },
     )
+    return true
   }
+
+  return false
 }

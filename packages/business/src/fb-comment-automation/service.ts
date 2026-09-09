@@ -73,6 +73,30 @@ class FbCommentAutomationService extends BaseService {
       .onConflictDoNothing()
   }
 
+  /**
+   * Rolls back a dedup row written at dispatch time. `processCommentAutomation`
+   * inserts the row as soon as a reply is *enqueued* (so a duplicate webhook —
+   * common on ads/boosted posts — cannot trigger a second reply), which means an
+   * async reply job that later gives up without delivering anything would leave
+   * the contact permanently blocked by `replyOncePerUserPerPost`. A job that
+   * bails out calls this so the next comment gets another chance.
+   */
+  async deleteDedup(props: {
+    automationId: string
+    contactId: string
+    postId: string
+  }) {
+    await db
+      .delete(fbCommentAutomationReplyModel)
+      .where(
+        and(
+          eq(fbCommentAutomationReplyModel.automationId, props.automationId),
+          eq(fbCommentAutomationReplyModel.contactId, props.contactId),
+          eq(fbCommentAutomationReplyModel.postId, props.postId),
+        ),
+      )
+  }
+
   async hasRepliedOnOtherPost(props: {
     automationId: string
     contactId: string

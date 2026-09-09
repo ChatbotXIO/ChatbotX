@@ -2387,7 +2387,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Als er knoppen zijn toegevoegd, verstuurt TikTok alleen de eerste 40 tekens van dit bericht — de rest wordt afgekapt."
     },
-    "dataWasSaved": "Gegevens zijn opgeslagen"
+    "dataWasSaved": "Gegevens zijn opgeslagen",
+    "media": {
+      "stepUnsupportedOnChannel": "Dit kanaal kan dit mediatype niet verzenden — de stap wordt daar overgeslagen. Verwijder de stap of zet de node op een kanaal dat het ondersteunt.",
+      "buttonsSkippedOnChannel": "Dit kanaal kan geen knoppen bij een mediabericht verzenden — daar worden ze overgeslagen. Zet ze in plaats daarvan in een volgende tekststap."
+    }
   },
   "folders": {
     "heading": {
@@ -3179,7 +3183,9 @@
     "waTemplateMpmTooManySections": "Een multi-productknop kan maximaal 10 secties hebben. Verwijder enkele secties voordat je publiceert.",
     "waTemplateMpmTooManyProducts": "Een multi-productknop kan in totaal maximaal 30 producten hebben. Verwijder enkele producten voordat je publiceert.",
     "waTemplateLtoExpirationRequired": "Kies een vervaldatum voor de tijdelijke aanbieding voordat je verzendt.",
-    "waTemplateMpmIncompleteProducts": "Elke sectie heeft minstens één geselecteerd product nodig — verwijder lege rijen of kies er een product voor."
+    "waTemplateMpmIncompleteProducts": "Elke sectie heeft minstens één geselecteerd product nodig — verwijder lege rijen of kies er een product voor.",
+    "mediaStepUnsupported": "Dit kanaal kan dit mediatype niet verzenden. Verwijder de stap of richt deze node op een kanaal dat het ondersteunt.",
+    "mediaButtonsUnsupported": "Dit kanaal kan geen knoppen bij een mediabericht verzenden. Verwijder de knoppen of verplaats ze naar een tekststap hierna."
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",
