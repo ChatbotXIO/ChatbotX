@@ -669,7 +669,12 @@ class ConversationService extends BaseService {
     const updated = await tx
       .update(conversationModel)
       .set({ assignedUserId, assignedInboxTeamId })
-      .where(inArray(conversationModel.id, ids))
+      .where(
+        and(
+          eq(conversationModel.workspaceId, workspaceId),
+          inArray(conversationModel.id, ids),
+        ),
+      )
       .returning()
     await this.invalidate({ workspaceId, ids })
 

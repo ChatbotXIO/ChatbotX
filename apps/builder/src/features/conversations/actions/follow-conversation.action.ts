@@ -18,7 +18,10 @@ export const followConversationAction = workspaceActionClient
 export const followConversation = async (ctx: {
   workspaceId: string
   id: string
-  userId: string
+  // Optional: a workspace-token caller has no user (see
+  // docs/developer/workspace-api-tokens.md); the session path always passes
+  // `ctx.user.id` above.
+  userId?: string
 }) => {
   const conversation = await conversationService.findByOrFail({
     where: { id: ctx.id, workspaceId: ctx.workspaceId },

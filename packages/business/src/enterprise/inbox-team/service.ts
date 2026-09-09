@@ -66,15 +66,18 @@ class InboxTeamService extends BaseService {
   async create(props: {
     workspaceId: string
     data: { name: string; userIds: string[] }
-  }): Promise<void> {
+  }): Promise<InboxTeamModel> {
     const { workspaceId, data } = props
     const inboxTeamId = createId()
-    await db.transaction(async (tx) => {
-      await tx.insert(inboxTeamModel).values({
-        id: inboxTeamId,
-        name: data.name,
-        workspaceId,
-      })
+    const team = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(inboxTeamModel)
+        .values({
+          id: inboxTeamId,
+          name: data.name,
+          workspaceId,
+        })
+        .returning()
       if (data.userIds.length > 0) {
         await tx.insert(inboxTeamMemberModel).values(
           data.userIds.map((userId) => ({
@@ -85,9 +88,11 @@ class InboxTeamService extends BaseService {
           })),
         )
       }
+      return created
     })
     await this.invalidate({ workspaceId })
     await this.audit("create", `created a new team (#${inboxTeamId})`)
+    return team
   }
 
   async update(

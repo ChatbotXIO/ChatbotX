@@ -588,9 +588,59 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/contacts/{identifier}/upsert",
   },
   {
+    "method": "POST",
+    "operationId": "conversations.archive",
+    "path": "/v1/conversations/{id}/archive",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.assign",
+    "path": "/v1/conversations/{id}/assign",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.disableBot",
+    "path": "/v1/conversations/{id}/disable-bot",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.enableBot",
+    "path": "/v1/conversations/{id}/enable-bot",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.follow",
+    "path": "/v1/conversations/{id}/follow",
+  },
+  {
+    "method": "GET",
+    "operationId": "conversations.get",
+    "path": "/v1/conversations/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "conversations.list",
     "path": "/v1/conversations",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.read",
+    "path": "/v1/conversations/{id}/read",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.unarchive",
+    "path": "/v1/conversations/{id}/unarchive",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.unfollow",
+    "path": "/v1/conversations/{id}/unfollow",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.unread",
+    "path": "/v1/conversations/{id}/unread",
   },
   {
     "method": "POST",
@@ -773,9 +823,39 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/channels",
   },
   {
+    "method": "POST",
+    "operationId": "inboxTeams.addMembers",
+    "path": "/v1/teams/{id}/members",
+  },
+  {
+    "method": "POST",
+    "operationId": "inboxTeams.create",
+    "path": "/v1/teams",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "inboxTeams.delete",
+    "path": "/v1/teams/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboxTeams.get",
+    "path": "/v1/teams/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "inboxTeams.list",
     "path": "/v1/teams",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "inboxTeams.removeMembers",
+    "path": "/v1/teams/{id}/members",
+  },
+  {
+    "method": "PUT",
+    "operationId": "inboxTeams.update",
+    "path": "/v1/teams/{id}",
   },
   {
     "method": "PUT",
@@ -836,6 +916,36 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "keywords.updateStatus",
     "path": "/v1/keywords/{id}/status",
+  },
+  {
+    "method": "POST",
+    "operationId": "messages.changeAttributes",
+    "path": "/v1/conversations/{conversationId}/messages/{messageId}/attributes",
+  },
+  {
+    "method": "POST",
+    "operationId": "messages.create",
+    "path": "/v1/conversations/{conversationId}/messages",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "messages.delete",
+    "path": "/v1/conversations/{conversationId}/messages/{messageId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "messages.get",
+    "path": "/v1/conversations/{conversationId}/messages/{messageId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "messages.list",
+    "path": "/v1/conversations/{conversationId}/messages",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "messages.update",
+    "path": "/v1/conversations/{conversationId}/messages/{messageId}",
   },
   {
     "method": "POST",
@@ -908,9 +1018,29 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/ref-links/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "savedReplies.create",
+    "path": "/v1/saved-replies",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "savedReplies.delete",
+    "path": "/v1/saved-replies/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "savedReplies.get",
+    "path": "/v1/saved-replies/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "savedReplies.list",
     "path": "/v1/saved-replies",
+  },
+  {
+    "method": "PUT",
+    "operationId": "savedReplies.update",
+    "path": "/v1/saved-replies/{id}",
   },
   {
     "method": "GET",

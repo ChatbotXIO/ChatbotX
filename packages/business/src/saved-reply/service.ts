@@ -24,6 +24,17 @@ class SavedReplyService {
     return savedReply
   }
 
+  async findByIdOrFail(props: {
+    workspaceId: string
+    id: string
+  }): Promise<SavedReplyModel> {
+    return await findOrFail({
+      table: savedReplyModel,
+      where: { id: props.id, workspaceId: props.workspaceId },
+      message: "Saved reply not found",
+    })
+  }
+
   async update(
     ctx: { workspaceId: string; id: string },
     data: { shortcut: string; text: string },

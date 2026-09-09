@@ -21,7 +21,10 @@ export const assignConversation = async (props: {
   workspaceId: string
   contactIds: string[]
   assignedId: string | null | undefined
-  assignedBy: string
+  // Optional: a workspace-token caller has no user (see
+  // docs/developer/workspace-api-tokens.md); the session path always passes
+  // `ctx.user.id` below.
+  assignedBy?: string
 }) => {
   const { workspaceId, contactIds, assignedId, assignedBy } = props
 

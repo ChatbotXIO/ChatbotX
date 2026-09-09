@@ -13,7 +13,10 @@ import { workspaceActionClient } from "@/lib/safe-action"
 export const enableBotForConversations = async (props: {
   workspaceId: string
   ids: string[]
-  userId: string
+  // Optional: a workspace-token caller has no user (see
+  // docs/developer/workspace-api-tokens.md); the session path always passes
+  // `ctx.user.id` below.
+  userId?: string
 }) => {
   const conversations = await conversationService.findManyByIds({
     workspaceId: props.workspaceId,

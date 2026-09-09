@@ -1,7 +1,6 @@
 "use server"
 
 import { messageService } from "@chatbotx.io/business"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { decodeCursor, encodeCursor } from "@/lib/pagination/cursor-pagination"
 import type {
   FindMessageRequest,
@@ -44,8 +43,6 @@ export const listMessages = async (
 export const findMessage = async (
   input: FindMessageRequest,
 ): Promise<MessageResourceWithRelations> => {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
-
   const message = await messageService.findByIdWithUrls({
     workspaceId: input.workspaceId,
     id: input.id,

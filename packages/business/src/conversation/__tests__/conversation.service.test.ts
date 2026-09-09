@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   conversationFindMany: vi.fn(),
+  updateSet: vi.fn(),
+  updateWhere: vi.fn(),
+  updateReturning: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -11,10 +14,29 @@ vi.mock("@chatbotx.io/database/client", () => ({
         findMany: mocks.conversationFindMany,
       },
     },
+    // Tagged plain objects (not bare `vi.fn()`) so `.where(cond)` can be
+    // asserted on directly — mirrors `tag-service-soft-delete.test.ts`.
+    // This is what lets `updateAssignment`'s test below prove the
+    // `eq(workspaceId)` clause is actually present in the WHERE, not just
+    // that *some* condition was passed.
+    update: (..._args: unknown[]) => ({
+      set: (values: unknown) => {
+        mocks.updateSet(values)
+        return {
+          where: (cond: unknown) => {
+            mocks.updateWhere(cond)
+            return {
+              returning: (...rArgs: unknown[]) =>
+                mocks.updateReturning(...rArgs),
+            }
+          },
+        }
+      },
+    }),
   },
-  and: vi.fn(),
-  eq: vi.fn(),
-  inArray: vi.fn(),
+  and: (...args: unknown[]) => ({ and: args }),
+  eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
+  inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
   sql: vi.fn(),
 }))
 
@@ -38,6 +60,25 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn(),
+  invalidateCacheByTags: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/worker-config")>()
+  return {
+    ...actual,
+    chatQueue: { add: vi.fn() },
+    notificationQueue: { addBulk: vi.fn() },
+  }
+})
+
+vi.mock("@chatbotx.io/partysocket-config", () => ({
+  RealtimeEventType: {
+    conversationCreated: "conversationCreated",
+    conversationUpdated: "conversationUpdated",
+    conversationAssigned: "conversationAssigned",
+  },
 }))
 
 // `conversationService` now imports `contactService` (for the location write
@@ -72,6 +113,10 @@ const WORKSPACE_ID = "ws-1"
 
 beforeEach(() => {
   mocks.conversationFindMany.mockReset()
+  mocks.updateSet.mockReset()
+  mocks.updateWhere.mockReset()
+  mocks.updateReturning.mockReset()
+  mocks.updateReturning.mockResolvedValue([])
 })
 
 describe("ConversationService.findDMByContactIds", () => {
@@ -274,5 +319,33 @@ describe("ConversationService.findOrCreate concurrent insert", () => {
 
     expect(result).toEqual(existing)
     expect(returning).not.toHaveBeenCalled()
+  })
+})
+
+describe("ConversationService.updateAssignment", () => {
+  test("scopes the update WHERE clause to the workspace, not just the conversation ids", async () => {
+    // Regression test for a cross-tenant write: this method previously
+    // built its WHERE as `inArray(id, ids)` only, unlike its siblings
+    // `updateArchived`/`updateBotEnabled`, which both scope by workspaceId
+    // too. A caller passing ids from another workspace would have updated
+    // them. See packages/business/src/conversation/service.ts.
+    await conversationService.updateAssignment({
+      workspaceId: WORKSPACE_ID,
+      conversations: [{ id: "conv-1", contactId: "contact-1" }],
+      assignedUserId: "user-1",
+      assignedInboxTeamId: null,
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "test",
+        triggerType: "conversation_assigned",
+      },
+    })
+
+    expect(mocks.updateWhere).toHaveBeenCalledWith({
+      and: [
+        { eq: [undefined, WORKSPACE_ID] },
+        { inArray: [undefined, ["conv-1"]] },
+      ],
+    })
   })
 })
