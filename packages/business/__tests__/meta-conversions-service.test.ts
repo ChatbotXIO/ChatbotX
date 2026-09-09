@@ -555,6 +555,60 @@ describe("MetaConversionsService", () => {
     )
   })
 
+  test("restores the authoritative WABA scope cache after a failed refresh", async () => {
+    const previousCheckedAt = new Date("2026-08-09T12:00:00.000Z")
+    const claimAt = new Date("2026-08-10T12:00:00.000Z")
+    let waba = {
+      grantedScopes: ["business_management", "whatsapp_business_manage_events"],
+      scopeCheckedAt: previousCheckedAt,
+      revision: 7,
+    }
+    mocks.whatsappFindByIdForWorkspace.mockResolvedValue(whatsappIntegration)
+    mocks.whatsappBusinessAccountFindByWaba.mockImplementation(async () => waba)
+    mocks.whatsappBusinessAccountUpdateScopeCache.mockImplementation(
+      (input: {
+        grantedScopes: string[]
+        scopeCheckedAt: Date
+        expectedRevision: number
+      }) => {
+        if (input.expectedRevision !== waba.revision) {
+          return null
+        }
+        waba = {
+          grantedScopes: input.grantedScopes,
+          scopeCheckedAt: input.scopeCheckedAt,
+          revision: waba.revision + 1,
+        }
+        return waba
+      },
+    )
+
+    await expect(
+      metaConversionsService.refreshCapiScopeCache({
+        channel: "whatsapp",
+        integration: whatsappIntegration,
+        checkScope: vi.fn().mockRejectedValue(new Error("debug failed")),
+        now: claimAt,
+      }),
+    ).rejects.toMatchObject({ name: "CapiScopeRefreshError" })
+
+    expect(waba).toEqual({
+      grantedScopes: ["business_management", "whatsapp_business_manage_events"],
+      scopeCheckedAt: previousCheckedAt,
+      revision: 9,
+    })
+
+    const retryCheck = vi.fn().mockResolvedValue(true)
+    await metaConversionsService.refreshCapiScopeCache({
+      channel: "whatsapp",
+      integration: whatsappIntegration,
+      checkScope: retryCheck,
+      now: new Date("2026-08-10T12:00:00.001Z"),
+    })
+
+    expect(retryCheck).toHaveBeenCalledTimes(1)
+  })
+
   test("dispatches dataset provisioning through the instagram adapter", async () => {
     mocks.instagramUpdateDatasetIdIfNull.mockResolvedValueOnce({
       ...instagramFacebookIntegration,

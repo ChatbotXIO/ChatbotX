@@ -153,11 +153,34 @@ describe("connectWhatsappAction — follow-ups and unhandled failures", () => {
     test("serializes concurrent first connects so WABA provisioning runs once", async () => {
       const secondPhoneNumber = { ...selectedPhoneNumber, id: "phone-2" }
       let waba: { provisionedAt: Date | null; revision: number } | null = null
+      let sessionWorkspaceId: string | null = null
       let tail = Promise.resolve()
-      mocks.findActiveSignupSessionForUserMock.mockResolvedValue({
+      mocks.platformCredentialResolveMock.mockResolvedValue({
+        config: {
+          clientId: "client-1",
+          clientSecret: "secret-1",
+          configId: "config-1",
+          systemUserId: "system-user-1",
+          systemUserToken: "system-token-1",
+          businessName: "Business",
+          verifyToken: "verify-token",
+          version: "v23.0",
+          businessId: "credit-line-owner-1",
+        },
+      })
+      mocks.findActiveSignupSessionForUserMock.mockImplementation(async () => ({
         ...defaultSession,
-        workspaceId: "ws-1",
+        workspaceId: sessionWorkspaceId,
         candidatePhoneNumberIds: [selectedPhoneNumber.id, secondPhoneNumber.id],
+      }))
+      mocks.connectPhoneNumberMock.mockImplementation(() => {
+        sessionWorkspaceId = "ws-1"
+        return {
+          workspaceId: "ws-1",
+          createdWorkspace: false,
+          integrationRow,
+          wasCreated: true,
+        }
       })
       mocks.findWabaRecordMock.mockImplementation(async () => waba)
       mocks.upsertWabaCredentialMock.mockImplementation(() => {
@@ -204,6 +227,8 @@ describe("connectWhatsappAction — follow-ups and unhandled failures", () => {
       ])
 
       expect(mocks.addSystemUserMock).toHaveBeenCalledTimes(1)
+      expect(mocks.shareCreditLineMock).toHaveBeenCalledTimes(1)
+      expect(mocks.subscribeWebhookMock).toHaveBeenCalledTimes(1)
       expect(mocks.markWabaProvisionedMock).toHaveBeenCalledTimes(1)
     })
 

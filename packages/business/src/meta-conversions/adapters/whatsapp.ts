@@ -78,13 +78,28 @@ export const whatsappCapiReadinessAdapter: CapiReadinessAdapter<"whatsapp"> = {
   },
   async claimCapiScopeCacheRefresh(input, tx) {
     const { integration, ...claim } = input
-    if (integration.capiAccessToken) {
-      return tx
+    const claimPhoneScopeCache = async () => {
+      const claimed = tx
         ? await integrationWhatsappRepository.claimCapiScopeCacheRefresh(
             claim,
             tx,
           )
         : await integrationWhatsappRepository.claimCapiScopeCacheRefresh(claim)
+      return claimed
+        ? {
+            integration: claimed,
+            restore: {
+              ...claim,
+              hasCapiScope: integration.hasCapiScope,
+              capiScopeCheckedAt: input.expectedCapiScopeCheckedAt,
+              expectedCapiScopeCheckedAt: input.capiScopeCheckedAt,
+              claimToken: undefined,
+            },
+          }
+        : null
+    }
+    if (integration.capiAccessToken) {
+      return await claimPhoneScopeCache()
     }
 
     const currentWaba = await whatsappBusinessAccountService.findByWaba({
@@ -93,12 +108,7 @@ export const whatsappCapiReadinessAdapter: CapiReadinessAdapter<"whatsapp"> = {
       tx,
     })
     if (!currentWaba) {
-      return tx
-        ? await integrationWhatsappRepository.claimCapiScopeCacheRefresh(
-            claim,
-            tx,
-          )
-        : await integrationWhatsappRepository.claimCapiScopeCacheRefresh(claim)
+      return await claimPhoneScopeCache()
     }
 
     const waba = await whatsappBusinessAccountService.claimScopeCacheRefresh({
@@ -110,9 +120,21 @@ export const whatsappCapiReadinessAdapter: CapiReadinessAdapter<"whatsapp"> = {
     })
     return waba
       ? {
-          ...integration,
-          hasCapiScope: waba.grantedScopes.includes(WHATSAPP_CAPI_SCOPE),
-          capiScopeCheckedAt: waba.scopeCheckedAt,
+          integration: {
+            ...integration,
+            hasCapiScope: waba.grantedScopes.includes(WHATSAPP_CAPI_SCOPE),
+            capiScopeCheckedAt: waba.scopeCheckedAt,
+          },
+          restore: {
+            ...claim,
+            hasCapiScope: integration.hasCapiScope,
+            capiScopeCheckedAt: input.expectedCapiScopeCheckedAt,
+            expectedCapiScopeCheckedAt: input.capiScopeCheckedAt,
+            claimToken: {
+              grantedScopes: currentWaba.grantedScopes,
+              expectedRevision: waba.revision,
+            },
+          },
         }
       : null
   },
@@ -120,6 +142,46 @@ export const whatsappCapiReadinessAdapter: CapiReadinessAdapter<"whatsapp"> = {
     tx
       ? integrationWhatsappRepository.findByIdForWorkspace(input, tx)
       : integrationWhatsappRepository.findByIdForWorkspace(input),
+  async restoreCapiScopeCache(input, tx) {
+    const integration =
+      await whatsappCapiReadinessAdapter.findWorkspaceIntegration(input, tx)
+    const token = input.claimToken
+    if (
+      integration &&
+      !integration.capiAccessToken &&
+      input.capiScopeCheckedAt &&
+      token &&
+      typeof token === "object" &&
+      "grantedScopes" in token &&
+      "expectedRevision" in token &&
+      Array.isArray(token.grantedScopes) &&
+      typeof token.expectedRevision === "number"
+    ) {
+      const restored = await whatsappBusinessAccountService.updateScopeCache({
+        workspaceId: integration.workspaceId,
+        wabaId: integration.wabaId,
+        grantedScopes: token.grantedScopes,
+        scopeCheckedAt: input.capiScopeCheckedAt,
+        expectedRevision: token.expectedRevision,
+        tx,
+      })
+      return restored
+        ? {
+            ...integration,
+            hasCapiScope: restored.grantedScopes.includes(WHATSAPP_CAPI_SCOPE),
+            capiScopeCheckedAt: restored.scopeCheckedAt,
+          }
+        : await whatsappCapiReadinessAdapter.findWorkspaceIntegration(input, tx)
+    }
+
+    const { claimToken: _, ...phoneRestore } = input
+    return tx
+      ? await integrationWhatsappRepository.updateCapiScopeCache(
+          phoneRestore,
+          tx,
+        )
+      : await integrationWhatsappRepository.updateCapiScopeCache(phoneRestore)
+  },
   async updateCapiScopeCache(input, tx) {
     const integration =
       await whatsappCapiReadinessAdapter.findWorkspaceIntegration(input, tx)
@@ -134,12 +196,7 @@ export const whatsappCapiReadinessAdapter: CapiReadinessAdapter<"whatsapp"> = {
       wabaId: integration.wabaId,
       tx,
     })
-    // A failed refresh restores the phone-row claim only. The WABA cache
-    // remains authoritative until a successful scope check replaces it.
-    if (
-      !(waba && input.capiScopeCheckedAt) ||
-      input.capiScopeCheckedAt !== input.expectedCapiScopeCheckedAt
-    ) {
+    if (!(waba && input.capiScopeCheckedAt)) {
       return tx
         ? await integrationWhatsappRepository.updateCapiScopeCache(input, tx)
         : await integrationWhatsappRepository.updateCapiScopeCache(input)

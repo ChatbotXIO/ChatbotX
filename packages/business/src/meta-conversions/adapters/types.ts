@@ -25,6 +25,16 @@ type CapiScopeCacheClaim = WorkspaceIntegrationRef & {
   expectedCapiScopeCheckedAt: Date | null
 }
 
+type CapiScopeCacheRestore = CapiScopeCacheUpdate & {
+  /** Adapter-owned state captured before its successful claim. */
+  claimToken: unknown
+}
+
+type CapiScopeCacheClaimResult<TIntegration> = {
+  integration: TIntegration
+  restore: CapiScopeCacheRestore
+}
+
 type DatasetIdUpdate = WorkspaceIntegrationRef & {
   datasetId: string
 }
@@ -70,7 +80,9 @@ export interface CapiSendAdapter<
       integration: MetaConversionsIntegrationByChannel[TChannel]
     },
     tx?: DatabaseClient,
-  ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null>
+  ): Promise<CapiScopeCacheClaimResult<
+    MetaConversionsIntegrationByChannel[TChannel]
+  > | null>
   findWorkspaceIntegration(
     input: WorkspaceIntegrationRef,
     tx?: DatabaseClient,
@@ -81,6 +93,11 @@ export interface CapiSendAdapter<
   resolveCapiScopeState(
     integration: MetaConversionsIntegrationByChannel[TChannel],
   ): Promise<{ hasCapiScope: boolean; capiScopeCheckedAt: Date | null }>
+  /** Explicit rollback for a failed scope check, using the claim's own CAS state. */
+  restoreCapiScopeCache(
+    input: CapiScopeCacheRestore,
+    tx?: DatabaseClient,
+  ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null>
   /** Compare-and-swap write, safe to call from the concurrent send path. */
   updateCapiScopeCache(
     input: CapiScopeCacheUpdate,

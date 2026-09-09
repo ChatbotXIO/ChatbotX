@@ -347,9 +347,17 @@ async function finishPreparedWhatsappConnect({
 }): Promise<ConnectWhatsappResult> {
   const isManual = input.manualConnect
 
-  // Re-read while holding the WABA lock. `provisionedAt` is only written after
-  // Meta succeeds, so an error leaves the next attempt free to retry.
-  const targetWorkspaceId = session?.workspaceId ?? prepared.workspaceId
+  // The first signup-session connect can create and bind a workspace. Reload
+  // after acquiring the WABA lock so queued number connects see that binding.
+  const currentSession = session
+    ? await integrationWhatsappService.findActiveSignupSessionForUser({
+        id: session.id,
+        userId,
+      })
+    : undefined
+  // `provisionedAt` is only written after Meta succeeds, so an error leaves
+  // the next attempt free to retry.
+  const targetWorkspaceId = currentSession?.workspaceId ?? prepared.workspaceId
   const existingWaba =
     isManual || !targetWorkspaceId
       ? null

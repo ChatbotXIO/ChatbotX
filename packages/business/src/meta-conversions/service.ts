@@ -301,12 +301,7 @@ class MetaConversionsService extends BaseService {
         "meta-conversions: CAPI scope refresh failed",
       )
       await adapter
-        .updateCapiScopeCache({
-          ...ref,
-          hasCapiScope: input.integration.hasCapiScope,
-          capiScopeCheckedAt: expectedCapiScopeCheckedAt,
-          expectedCapiScopeCheckedAt: now,
-        })
+        .restoreCapiScopeCache(claimed.restore)
         .catch((restoreError) => {
           logger.warn(
             {
