@@ -30,6 +30,10 @@ const buildApi = (): AnalyticsApi =>
     refLinkContacts: vi.fn(),
     magicLinkStats: vi.fn(),
     magicLinkContacts: vi.fn(),
+    commentAutomationReplyStats: vi.fn(),
+    commentAutomationUserComments: vi.fn(),
+    commentAutomationBotReplies: vi.fn(),
+    commentAutomationErrors: vi.fn(),
   }) as AnalyticsApi
 
 const from = new Date("2026-08-01T00:00:00.000Z")
@@ -575,6 +579,127 @@ describe("analysis store", () => {
           from: nextFrom.toISOString(),
           to: nextTo.toISOString(),
         }),
+      )
+    })
+  })
+
+  describe("comment-automation dashboard", () => {
+    const commentSearchParams = {
+      workspaceId: "ws-1",
+      automationId: "automation-1",
+      automationName: "Launch post",
+      timezone: "UTC",
+    }
+
+    const stubCommentApi = (candidate: ReturnType<typeof buildApi>) => {
+      ;(
+        candidate.commentAutomationReplyStats as ReturnType<typeof vi.fn>
+      ).mockResolvedValue({ data: [{ dateReport: "2026-08-01", count: 3 }] })
+      for (const key of [
+        "commentAutomationUserComments",
+        "commentAutomationBotReplies",
+        "commentAutomationErrors",
+      ] as const) {
+        ;(candidate[key] as ReturnType<typeof vi.fn>).mockResolvedValue({
+          data: [],
+          total: 0,
+          page: 1,
+          pageCount: 0,
+        })
+      }
+    }
+
+    test("loadAnalysisData fetches all four panels and none of the dashboard ones", async () => {
+      stubCommentApi(api)
+
+      const store = createAnalysisStore({
+        api,
+        type: "comment-automation",
+        defaultSearchParams: commentSearchParams,
+        from,
+        to,
+      })
+
+      await store.getState().loadAnalysisData()
+
+      expect(api.commentAutomationReplyStats).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceId: "ws-1",
+          automationId: "automation-1",
+          timezone: "UTC",
+          startDate: from.toISOString(),
+          endDate: to.toISOString(),
+        }),
+      )
+      expect(api.commentAutomationUserComments).toHaveBeenCalledTimes(1)
+      expect(api.commentAutomationBotReplies).toHaveBeenCalledTimes(1)
+      expect(api.commentAutomationErrors).toHaveBeenCalledTimes(1)
+      expect(api.contactCountsPerDayAnalyticsAPI).not.toHaveBeenCalled()
+      expect(store.getState().commentAutomationReplyStats).toEqual([
+        { dateReport: "2026-08-01", count: 3 },
+      ])
+      expect(store.getState().loading).toBe(false)
+    })
+
+    test("setRange returns every paginated panel to page 1", async () => {
+      stubCommentApi(api)
+
+      const store = createAnalysisStore({
+        api,
+        type: "comment-automation",
+        defaultSearchParams: commentSearchParams,
+        from,
+        to,
+      })
+
+      await store.getState().setCommentAutomationUserCommentsPage(3)
+      await store.getState().setCommentAutomationBotRepliesPage(2)
+      await store.getState().setCommentAutomationErrorsPage(4)
+
+      await store
+        .getState()
+        .setRange({ from: new Date("2026-09-01"), to: new Date("2026-09-10") })
+
+      expect(store.getState().commentAutomationUserCommentsPage).toBe(1)
+      expect(store.getState().commentAutomationBotRepliesPage).toBe(1)
+      expect(store.getState().commentAutomationErrorsPage).toBe(1)
+    })
+
+    test("a new error-log search resets to page 1 and is sent as the keyword", async () => {
+      stubCommentApi(api)
+
+      const store = createAnalysisStore({
+        api,
+        type: "comment-automation",
+        defaultSearchParams: commentSearchParams,
+        from,
+        to,
+      })
+
+      await store.getState().setCommentAutomationErrorsPage(3)
+      await store.getState().setCommentAutomationErrorsKeyword("token")
+
+      expect(store.getState().commentAutomationErrorsPage).toBe(1)
+      expect(api.commentAutomationErrors).toHaveBeenLastCalledWith(
+        expect.objectContaining({ keyword: "token", page: 1 }),
+      )
+    })
+
+    test("an empty search sends no keyword rather than an empty string", async () => {
+      stubCommentApi(api)
+
+      const store = createAnalysisStore({
+        api,
+        type: "comment-automation",
+        defaultSearchParams: commentSearchParams,
+        from,
+        to,
+      })
+
+      await store.getState().setCommentAutomationErrorsKeyword("")
+
+      expect(api.commentAutomationErrors).toHaveBeenLastCalledWith(
+        expect.objectContaining({ keyword: undefined }),
       )
     })
   })

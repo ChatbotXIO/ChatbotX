@@ -270,6 +270,22 @@ export const registerSchedules = async () => {
     },
   )
 
+  // Same "retention applies to every edition" reasoning as `purgeErrorLogs`
+  // above; offset 15 minutes so the two chunked deletes do not contend.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeCommentAutomationEvents,
+    {
+      pattern: "15 3 * * *",
+    },
+    {
+      name: ScheduleJobData.purgeCommentAutomationEvents,
+      data: {
+        type: ScheduleJobData.purgeCommentAutomationEvents,
+        data: {},
+      },
+    },
+  )
+
   await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.purgeWhatsappSignupSessions,
     {

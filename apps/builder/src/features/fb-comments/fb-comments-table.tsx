@@ -22,6 +22,7 @@ import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
+  ChartColumnIcon,
   FolderUpIcon,
   MoreHorizontalIcon,
   PencilIcon,
@@ -209,6 +210,16 @@ export function FbCommentsTable({
                 >
                   <PencilIcon className="me-2" />
                   {t("actions.edit")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    router.push(
+                      `/space/${workspaceId}/fb-comments/${row.original.id}/analytics`,
+                    )
+                  }
+                >
+                  <ChartColumnIcon className="me-2" />
+                  {t("actions.viewAnalytics")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setRowAction({ row, variant: "update" })}

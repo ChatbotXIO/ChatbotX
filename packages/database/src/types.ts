@@ -134,6 +134,10 @@ export type FBCommentAutomationModel =
   typeof schema.fbCommentAutomationModel.$inferSelect
 export type FBCommentAutomationReplyModel =
   typeof schema.fbCommentAutomationReplyModel.$inferSelect
+export type FBCommentAutomationEventModel =
+  typeof schema.fbCommentAutomationEventModel.$inferSelect
+export type FBCommentAutomationEventInsert =
+  typeof schema.fbCommentAutomationEventModel.$inferInsert
 export type IgStoryAutomationModel =
   typeof schema.igStoryAutomationModel.$inferSelect
 export type AuditLogModel = typeof schema.auditLogModel.$inferSelect

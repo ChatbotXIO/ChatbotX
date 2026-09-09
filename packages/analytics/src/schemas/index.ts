@@ -1,5 +1,6 @@
 export * from "./bot-message"
 export * from "./broadcast-stats"
+export * from "./comment-automation"
 export * from "./common"
 export * from "./contact"
 export * from "./contact-event"

@@ -1878,7 +1878,16 @@
       "lastPage": "前往最後一頁"
     },
     "sessionsThroughTheRef": "每日透過 Ref「{ref}」產生的工作階段",
-    "sessionsThroughTheMagicLink": "透過 Magic Link「{ref}」產生的每日工作階段"
+    "sessionsThroughTheMagicLink": "透過 Magic Link「{ref}」產生的每日工作階段",
+    "repliesToComments": "留言回覆數",
+    "repliesByDate": "依日期統計回覆",
+    "userCommentsOnThisPost": "使用者在此貼文的留言",
+    "botRepliesToComments": "機器人的留言回覆",
+    "comment": "留言",
+    "message": "訊息",
+    "searchByDate": "依日期搜尋...",
+    "publicReply": "公開回覆",
+    "privateReply": "私訊回覆"
   },
   "flowAnalytics": {
     "nodes": {

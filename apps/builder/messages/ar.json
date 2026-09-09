@@ -265,7 +265,16 @@
       "lastPage": "الانتقال إلى الصفحة الأخيرة"
     },
     "sessionsThroughTheRef": "الجلسات عبر المرجع \"{ref}\" يوميًا",
-    "sessionsThroughTheMagicLink": "الجلسات عبر الرابط السحري \"{ref}\" يوميًا"
+    "sessionsThroughTheMagicLink": "الجلسات عبر الرابط السحري \"{ref}\" يوميًا",
+    "repliesToComments": "الردود على التعليقات",
+    "repliesByDate": "الردود حسب التاريخ",
+    "userCommentsOnThisPost": "تعليقات المستخدمين على هذا المنشور",
+    "botRepliesToComments": "ردود الروبوت على التعليقات",
+    "comment": "تعليق",
+    "message": "رسالة",
+    "searchByDate": "البحث حسب التاريخ...",
+    "publicReply": "رد عام",
+    "privateReply": "رد خاص"
   },
   "flowAnalytics": {
     "nodes": {

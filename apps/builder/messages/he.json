@@ -265,7 +265,16 @@
       "lastPage": "מעבר לעמוד האחרון"
     },
     "sessionsThroughTheRef": "הפעלות דרך ההפניה \"{ref}\" ליום",
-    "sessionsThroughTheMagicLink": "הפעלות דרך קישור הקסם \"{ref}\" ליום"
+    "sessionsThroughTheMagicLink": "הפעלות דרך קישור הקסם \"{ref}\" ליום",
+    "repliesToComments": "תגובות לתגובות",
+    "repliesByDate": "תגובות לפי תאריך",
+    "userCommentsOnThisPost": "תגובות משתמשים בפוסט זה",
+    "botRepliesToComments": "תגובות הבוט לתגובות",
+    "comment": "תגובה",
+    "message": "הודעה",
+    "searchByDate": "חיפוש לפי תאריך...",
+    "publicReply": "תגובה פומבית",
+    "privateReply": "תגובה פרטית"
   },
   "flowAnalytics": {
     "nodes": {

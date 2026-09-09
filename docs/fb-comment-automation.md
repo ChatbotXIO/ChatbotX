@@ -17,6 +17,7 @@ silent failures. It is the reference for anyone touching the comment-automation 
 |---|---|---|
 | `fbCommentAutomationModel` | [`packages/database/src/schema/fb-comment-automation.ts`](../packages/database/src/schema/fb-comment-automation.ts) | One automation config per row: post targeting, keyword filters, public/private reply, hide rules, schedule, options. |
 | `fbCommentAutomationReplyModel` | [`packages/database/src/schema/fb-comment-automation-reply.ts`](../packages/database/src/schema/fb-comment-automation-reply.ts) | Dedup ledger: one row per `(automationId, contactId, postId)` written after every successful reply. Unique index `FBCommentAutomationReply_dedup_idx`. |
+| `fbCommentAutomationEventModel` | [`packages/database/src/schema/fb-comment-automation-event.ts`](../packages/database/src/schema/fb-comment-automation-event.ts) | Analytics log: one row per `(automationId, commentId, replyChannel)` — the comment text, the text the bot sent, and `sent`/`failed`. Backs the per-automation **View Analytics** page. 30-day retention via the `purgeCommentAutomationEvents` cron. |
 
 Zod partials (option/reply/post/schedule shapes):
 [`packages/database/src/partials/fb-comment-automation.ts`](../packages/database/src/partials/fb-comment-automation.ts).
@@ -149,6 +150,25 @@ The `AIAgent` path deliberately does **not** reuse the DM auto-responder pipelin
 agent and always sends a DM. `generateAIReplyText` generates text only (no tools, no
 send), and the comment handler owns the channel routing.
 
+## Analytics
+
+Each automation has a **View Analytics** row action opening
+`space/{ws}/{fb,ig}-comments/{id}/analytics` — an area chart of replies per day, replies
+by date, grouped customer comments, grouped bot replies, and an automation-scoped Error
+Logs table. It is built on the shared reflink-analytics stack: service and repository in
+`packages/analytics`, oRPC routes plus the zustand store and charts in
+`packages/analytics-nextjs`, and a thin route shell in the builder.
+
+Two things to know before touching it:
+
+- **The data starts at deploy.** `FBCommentAutomationEvent` is the only source, and
+  nothing backfills it. `FBCommentAutomationReply` cannot substitute — it holds at most one
+  row per contact per post and carries no text, and `Message` has no `automationId` and no
+  row at all for a private DM.
+- **`repliesCount` and the event count differ by design.** `repliesCount` increments once
+  per comment even when both a public reply and a private DM went out; the event log has a
+  row per channel. Do not "reconcile" them.
+
 ## Known gaps & pitfalls
 
 - **`parent_id` = `post_id` for top-level comments.** Never treat a truthy `parentId` as
@@ -165,6 +185,12 @@ send), and the comment handler owns the channel routing.
   each toggle separately: the like switch renders only for `instagramFacebook`, while
   `hasImage`/`hasVideo` are hidden for both Instagram variants. Keep that pattern —
   hide an unsupported toggle rather than rendering a dead one.
+- **An AI reply records its analytics event in two places.** The dispatcher opens the row
+  with `replyText: null` (the text does not exist yet); `processCommentAIReply` settles it
+  with the generated text, or marks it `failed` with the bail-out reason. Every
+  `rollbackCommentDedup` in `ai-reply.ts` is paired with a settle through
+  `abandonAIReply` — miss one and a silent non-reply shows on the analytics page as a
+  success, which is exactly what the Error Logs panel exists to prevent.
 - **A private flow reply must be enqueued on the DM conversation.** Reusing the
   comment-anchored `conversationId` strands the flow: the first message is delivered, the
   flow parks on the post conversation, and the contact's reply arrives on the DM

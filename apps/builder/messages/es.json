@@ -265,7 +265,16 @@
       "lastPage": "Ir a la última página"
     },
     "sessionsThroughTheRef": "Sesiones diarias mediante la referencia «{ref}»",
-    "sessionsThroughTheMagicLink": "Sesiones diarias mediante el enlace mágico «{ref}»"
+    "sessionsThroughTheMagicLink": "Sesiones diarias mediante el enlace mágico «{ref}»",
+    "repliesToComments": "Respuestas a comentarios",
+    "repliesByDate": "Respuestas por fecha",
+    "userCommentsOnThisPost": "Comentarios de usuarios en esta publicación",
+    "botRepliesToComments": "Respuestas del bot a comentarios",
+    "comment": "Comentario",
+    "message": "Mensaje",
+    "searchByDate": "Buscar por fecha...",
+    "publicReply": "Respuesta pública",
+    "privateReply": "Respuesta privada"
   },
   "flowAnalytics": {
     "nodes": {

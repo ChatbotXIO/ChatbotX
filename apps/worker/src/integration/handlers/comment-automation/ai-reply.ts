@@ -1,3 +1,4 @@
+import { commentAutomationAnalyticsService } from "@chatbotx.io/analytics"
 import {
   aiAgentService,
   contactInboxService,
@@ -30,17 +31,39 @@ import { postPublicCommentReply } from "./public-reply"
  * block the contact for good. A *thrown* failure deliberately keeps the row:
  * BullMQ retries the job, and releasing it mid-retry would let the contact's
  * next comment trigger a second reply.
+ *
+ * Each bail-out also settles the analytics event the dispatcher opened with a
+ * null `replyText` (see `CommentReplyOutcome`), turning it into a `failed` row
+ * carrying the same reason. Without this, an AI reply that silently produced
+ * nothing would show on the analytics page as a successful reply — the exact
+ * class of failure the Error Logs panel exists to surface.
  */
+async function abandonAIReply(props: {
+  data: AIJobCommentAIReply["data"]
+  reason: string
+}): Promise<void> {
+  await Promise.all([
+    rollbackCommentDedup({
+      dedup: props.data.commentDedup,
+      commentId: props.data.commentId,
+      reason: props.reason,
+    }),
+    commentAutomationAnalyticsService.settleEvent({
+      automationId: props.data.automationId,
+      commentId: props.data.commentId,
+      replyChannel: props.data.replyChannel,
+      status: "failed",
+      errorDetail: props.reason,
+    }),
+  ])
+}
+
 export async function processCommentAIReply(
   data: AIJobCommentAIReply["data"],
 ): Promise<void> {
   if (!data.message?.trim()) {
     // Image/sticker-only comment: nothing for the agent to answer.
-    await rollbackCommentDedup({
-      dedup: data.commentDedup,
-      commentId: data.commentId,
-      reason: "comment has no text",
-    })
+    await abandonAIReply({ data, reason: "comment has no text" })
     return
   }
 
@@ -58,11 +81,7 @@ export async function processCommentAIReply(
       { workspaceId: data.workspaceId, commentId: data.commentId },
       "comment AI reply skipped: workspace outside active hours",
     )
-    await rollbackCommentDedup({
-      dedup: data.commentDedup,
-      commentId: data.commentId,
-      reason: "workspace outside active hours",
-    })
+    await abandonAIReply({ data, reason: "workspace outside active hours" })
     return
   }
 
@@ -75,11 +94,7 @@ export async function processCommentAIReply(
       },
       "comment AI reply skipped: agent not found",
     )
-    await rollbackCommentDedup({
-      dedup: data.commentDedup,
-      commentId: data.commentId,
-      reason: "agent not found",
-    })
+    await abandonAIReply({ data, reason: "agent not found" })
     return
   }
 
@@ -88,11 +103,7 @@ export async function processCommentAIReply(
       { contactInboxId: data.contactInboxId, commentId: data.commentId },
       "comment AI reply skipped: contactInbox not found",
     )
-    await rollbackCommentDedup({
-      dedup: data.commentDedup,
-      commentId: data.commentId,
-      reason: "contactInbox not found",
-    })
+    await abandonAIReply({ data, reason: "contactInbox not found" })
     return
   }
 
@@ -101,11 +112,7 @@ export async function processCommentAIReply(
       { conversationId: data.conversationId, commentId: data.commentId },
       "comment AI reply skipped: conversation not found",
     )
-    await rollbackCommentDedup({
-      dedup: data.commentDedup,
-      commentId: data.commentId,
-      reason: "conversation not found",
-    })
+    await abandonAIReply({ data, reason: "conversation not found" })
     return
   }
 
@@ -124,11 +131,7 @@ export async function processCommentAIReply(
       },
       "comment AI reply skipped: no text produced",
     )
-    await rollbackCommentDedup({
-      dedup: data.commentDedup,
-      commentId: data.commentId,
-      reason: "agent produced no text",
-    })
+    await abandonAIReply({ data, reason: "agent produced no text" })
     return
   }
 
@@ -145,6 +148,7 @@ export async function processCommentAIReply(
         ? new Date(data.parentMessageCreatedAt)
         : null,
     })
+    await settleAIReplySent({ data, text: generated.text })
     return
   }
 
@@ -160,4 +164,19 @@ export async function processCommentAIReply(
     data.commentId,
     generated.text,
   )
+  await settleAIReplySent({ data, text: generated.text })
+}
+
+/** Lands the generated text on the event row the dispatcher opened. */
+function settleAIReplySent(props: {
+  data: AIJobCommentAIReply["data"]
+  text: string
+}): Promise<void> {
+  return commentAutomationAnalyticsService.settleEvent({
+    automationId: props.data.automationId,
+    commentId: props.data.commentId,
+    replyChannel: props.data.replyChannel,
+    status: "sent",
+    replyText: props.text,
+  })
 }

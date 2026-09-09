@@ -265,7 +265,16 @@
       "lastPage": "Son sayfaya git"
     },
     "sessionsThroughTheRef": "Günlük \"{ref}\" referansı üzerinden oturumlar",
-    "sessionsThroughTheMagicLink": "Günlük \"{ref}\" Sihirli Bağlantısı üzerinden oturumlar"
+    "sessionsThroughTheMagicLink": "Günlük \"{ref}\" Sihirli Bağlantısı üzerinden oturumlar",
+    "repliesToComments": "Yorumlara verilen yanıtlar",
+    "repliesByDate": "Tarihe göre yanıtlar",
+    "userCommentsOnThisPost": "Bu gönderideki kullanıcı yorumları",
+    "botRepliesToComments": "Botun yorum yanıtları",
+    "comment": "Yorum",
+    "message": "Mesaj",
+    "searchByDate": "Tarihe göre ara...",
+    "publicReply": "Herkese açık yanıt",
+    "privateReply": "Özel yanıt"
   },
   "flowAnalytics": {
     "nodes": {

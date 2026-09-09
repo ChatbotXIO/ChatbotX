@@ -1,5 +1,6 @@
 export * from "./bot-message-analytics.service"
 export * from "./broadcast-analytics.service"
+export * from "./comment-automation-analytics.service"
 export * from "./contact-analytics.service"
 export * from "./conversation-analytics.service"
 export * from "./email-topic-analytics.service"

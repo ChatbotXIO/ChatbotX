@@ -265,7 +265,16 @@
       "lastPage": "Siirry viimeiselle sivulle"
     },
     "sessionsThroughTheRef": "Istunnot viitteen \"{ref}\" kautta päivässä",
-    "sessionsThroughTheMagicLink": "Istunnot taikalinkin \"{ref}\" kautta päivässä"
+    "sessionsThroughTheMagicLink": "Istunnot taikalinkin \"{ref}\" kautta päivässä",
+    "repliesToComments": "Vastaukset kommentteihin",
+    "repliesByDate": "Vastaukset päivittäin",
+    "userCommentsOnThisPost": "Käyttäjien kommentit tässä julkaisussa",
+    "botRepliesToComments": "Botin vastaukset kommentteihin",
+    "comment": "Kommentti",
+    "message": "Viesti",
+    "searchByDate": "Hae päivämäärällä...",
+    "publicReply": "Julkinen vastaus",
+    "privateReply": "Yksityinen vastaus"
   },
   "flowAnalytics": {
     "nodes": {

@@ -20,6 +20,7 @@ import {
 import { logger } from "../../../lib/logger"
 import type { CommentAutomationChannelType } from "./channel-type"
 import type { CommentAutomationDedup } from "./dedup"
+import { type CommentReplyOutcome, describeFlowReply } from "./reply-outcome"
 
 /**
  * Post a public Facebook comment reply: creates the outgoing DB message,
@@ -84,9 +85,10 @@ export async function postPublicCommentReply(props: {
 }
 
 /**
- * Returns whether a reply was actually dispatched. The caller uses that — not
- * the automation's configuration — to decide whether to write the dedup row, so
- * a branch that quietly declines to send never counts as a reply.
+ * Returns what was dispatched, or `null` when nothing was. The caller uses that
+ * — not the automation's configuration — to decide whether to write the dedup
+ * row, so a branch that quietly declines to send never counts as a reply. The
+ * outcome also carries the text for the analytics event.
  */
 export async function executePublicReply(
   publicReply: FBCommentReply,
@@ -107,9 +109,9 @@ export async function executePublicReply(
     parentMessageCreatedAt?: Date | null
     dedup?: CommentAutomationDedup
   },
-): Promise<boolean> {
+): Promise<CommentReplyOutcome | null> {
   if (publicReply.type === "none") {
-    return false
+    return null
   }
 
   if (publicReply.type === "text" && publicReply.value) {
@@ -140,7 +142,7 @@ export async function executePublicReply(
       parentMessageCreatedAt: ctx.parentMessageCreatedAt,
       delay: ctx.delay,
     })
-    return true
+    return { replyType: "text", replyText: text }
   }
 
   if (publicReply.type === "flow" && publicReply.value) {
@@ -163,7 +165,13 @@ export async function executePublicReply(
       },
       { delay: ctx.delay },
     )
-    return true
+    return {
+      replyType: "flow",
+      replyText: await describeFlowReply({
+        workspaceId: ctx.workspaceId,
+        flowId: publicReply.value,
+      }),
+    }
   }
 
   if (publicReply.type === "AIAgent" && publicReply.value) {
@@ -194,8 +202,8 @@ export async function executePublicReply(
         jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-public`,
       },
     )
-    return true
+    return { replyType: "AIAgent", replyText: null }
   }
 
-  return false
+  return null
 }

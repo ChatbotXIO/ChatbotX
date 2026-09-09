@@ -265,7 +265,16 @@
       "lastPage": "Zur letzten Seite"
     },
     "sessionsThroughTheRef": "Sitzungen über den Ref „{ref}“ pro Tag",
-    "sessionsThroughTheMagicLink": "Sitzungen über den Magic Link „{ref}“ pro Tag"
+    "sessionsThroughTheMagicLink": "Sitzungen über den Magic Link „{ref}“ pro Tag",
+    "repliesToComments": "Antworten auf Kommentare",
+    "repliesByDate": "Antworten nach Datum",
+    "userCommentsOnThisPost": "Nutzerkommentare zu diesem Beitrag",
+    "botRepliesToComments": "Bot-Antworten auf Kommentare",
+    "comment": "Kommentar",
+    "message": "Nachricht",
+    "searchByDate": "Nach Datum suchen...",
+    "publicReply": "Öffentliche Antwort",
+    "privateReply": "Private Antwort"
   },
   "flowAnalytics": {
     "nodes": {

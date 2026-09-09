@@ -265,7 +265,16 @@
       "lastPage": "Đi tới trang cuối"
     },
     "sessionsThroughTheRef": "Phiên qua Ref \"{ref}\" mỗi ngày",
-    "sessionsThroughTheMagicLink": "Phiên qua Magic Link \"{ref}\" mỗi ngày"
+    "sessionsThroughTheMagicLink": "Phiên qua Magic Link \"{ref}\" mỗi ngày",
+    "repliesToComments": "Lượt phản hồi bình luận",
+    "repliesByDate": "Phản hồi theo ngày",
+    "userCommentsOnThisPost": "Bình luận của khách trên bài viết",
+    "botRepliesToComments": "Tin nhắn bot đã trả lời",
+    "comment": "Bình luận",
+    "message": "Tin nhắn",
+    "searchByDate": "Tìm theo ngày...",
+    "publicReply": "Trả lời công khai",
+    "privateReply": "Trả lời riêng"
   },
   "flowAnalytics": {
     "nodes": {

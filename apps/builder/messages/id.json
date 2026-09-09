@@ -265,7 +265,16 @@
       "lastPage": "Buka halaman terakhir"
     },
     "sessionsThroughTheRef": "Sesi melalui Ref \"{ref}\" per hari",
-    "sessionsThroughTheMagicLink": "Sesi melalui Magic Link \"{ref}\" per hari"
+    "sessionsThroughTheMagicLink": "Sesi melalui Magic Link \"{ref}\" per hari",
+    "repliesToComments": "Balasan untuk komentar",
+    "repliesByDate": "Balasan per tanggal",
+    "userCommentsOnThisPost": "Komentar pengguna di postingan ini",
+    "botRepliesToComments": "Balasan bot untuk komentar",
+    "comment": "Komentar",
+    "message": "Pesan",
+    "searchByDate": "Cari berdasarkan tanggal...",
+    "publicReply": "Balasan publik",
+    "privateReply": "Balasan pribadi"
   },
   "flowAnalytics": {
     "nodes": {

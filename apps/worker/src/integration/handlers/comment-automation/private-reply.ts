@@ -27,6 +27,7 @@ import {
 import { logger } from "../../../lib/logger"
 import type { CommentAutomationChannelType } from "./channel-type"
 import type { CommentAutomationDedup } from "./dedup"
+import { type CommentReplyOutcome, describeFlowReply } from "./reply-outcome"
 
 /**
  * Meta accepts a comment_id-anchored DM only within 7 days of the comment's
@@ -115,9 +116,10 @@ async function resolveDirectMessageConversationId(ctx: {
 }
 
 /**
- * Returns whether a DM was actually dispatched. The caller uses that — not the
- * automation's configuration — to decide whether to write the dedup row and
- * whether the comment's single private-reply budget has been spent.
+ * Returns what was dispatched, or `null` when nothing was. The caller uses that
+ * — not the automation's configuration — to decide whether to write the dedup
+ * row and whether the comment's single private-reply budget has been spent. The
+ * outcome also carries the text for the analytics event.
  */
 export async function executePrivateReply(
   privateReply: FBCommentReply,
@@ -137,9 +139,9 @@ export async function executePrivateReply(
     createdTime: number
     dedup?: CommentAutomationDedup
   },
-): Promise<boolean> {
+): Promise<CommentReplyOutcome | null> {
   if (privateReply.type === "none") {
-    return false
+    return null
   }
 
   // `delay` is added because the DM leaves only after the job's delay elapses,
@@ -156,7 +158,7 @@ export async function executePrivateReply(
       },
       "Comment automation private reply skipped",
     )
-    return false
+    return null
   }
 
   if (privateReply.type === "text" && privateReply.value) {
@@ -182,7 +184,7 @@ export async function executePrivateReply(
       ctx.commentId,
       text,
     )
-    return true
+    return { replyType: "text", replyText: text }
   }
 
   if (privateReply.type === "flow" && privateReply.value) {
@@ -213,7 +215,13 @@ export async function executePrivateReply(
       },
       { delay: ctx.delay },
     )
-    return true
+    return {
+      replyType: "flow",
+      replyText: await describeFlowReply({
+        workspaceId: ctx.workspaceId,
+        flowId: privateReply.value,
+      }),
+    }
   }
 
   if (privateReply.type === "AIAgent" && privateReply.value) {
@@ -241,8 +249,8 @@ export async function executePrivateReply(
         jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-private`,
       },
     )
-    return true
+    return { replyType: "AIAgent", replyText: null }
   }
 
-  return false
+  return null
 }

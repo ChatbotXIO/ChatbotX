@@ -321,7 +321,16 @@
     "totalContacts": "Totalt antal kontakter",
     "uniqueConversationsByAdmins": "Unika konversationer per mänsklig agent",
     "uniqueConversationsByAdminsHelp": "Antal kontakter som en mänsklig agent har skickat minst ett meddelande till.",
-    "unknown": "Okänd"
+    "unknown": "Okänd",
+    "repliesToComments": "Svar på kommentarer",
+    "repliesByDate": "Svar per datum",
+    "userCommentsOnThisPost": "Användarkommentarer på det här inlägget",
+    "botRepliesToComments": "Bottens svar på kommentarer",
+    "comment": "Kommentar",
+    "message": "Meddelande",
+    "searchByDate": "Sök efter datum...",
+    "publicReply": "Offentligt svar",
+    "privateReply": "Privat svar"
   },
   "appointmentScheduling": {
     "description": "Skapa och hantera din tidsbokning.",

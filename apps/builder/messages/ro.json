@@ -1049,7 +1049,16 @@
       "lastPage": "Mergi la ultima pagină"
     },
     "sessionsThroughTheRef": "Sesiuni prin referința „{ref}” pe zi",
-    "sessionsThroughTheMagicLink": "Sesiuni prin linkul magic „{ref}” pe zi"
+    "sessionsThroughTheMagicLink": "Sesiuni prin linkul magic „{ref}” pe zi",
+    "repliesToComments": "Răspunsuri la comentarii",
+    "repliesByDate": "Răspunsuri după dată",
+    "userCommentsOnThisPost": "Comentariile utilizatorilor la această postare",
+    "botRepliesToComments": "Răspunsurile botului la comentarii",
+    "comment": "Comentariu",
+    "message": "Mesaj",
+    "searchByDate": "Caută după dată...",
+    "publicReply": "Răspuns public",
+    "privateReply": "Răspuns privat"
   },
   "flowAnalytics": {
     "nodes": {

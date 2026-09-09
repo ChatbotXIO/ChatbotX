@@ -265,7 +265,16 @@
       "lastPage": "Gå til sidste side"
     },
     "sessionsThroughTheRef": "Sessioner via referencen \"{ref}\" pr. dag",
-    "sessionsThroughTheMagicLink": "Sessioner via det magiske link \"{ref}\" pr. dag"
+    "sessionsThroughTheMagicLink": "Sessioner via det magiske link \"{ref}\" pr. dag",
+    "repliesToComments": "Svar på kommentarer",
+    "repliesByDate": "Svar efter dato",
+    "userCommentsOnThisPost": "Brugerkommentarer på dette opslag",
+    "botRepliesToComments": "Bottens svar på kommentarer",
+    "comment": "Kommentar",
+    "message": "Besked",
+    "searchByDate": "Søg efter dato...",
+    "publicReply": "Offentligt svar",
+    "privateReply": "Privat svar"
   },
   "flowAnalytics": {
     "nodes": {

@@ -66,8 +66,24 @@ const {
   mockContactVariableReplaceAll: vi.fn(),
 }))
 
+const mockLogProviderError = vi.fn().mockResolvedValue(undefined)
+const mockFlowFindBy = vi
+  .fn()
+  .mockResolvedValue({ id: "flow-1", name: "Flow 1" })
+const mockRecordEvent = vi.fn().mockResolvedValue(undefined)
+const mockSettleEvent = vi.fn().mockResolvedValue(undefined)
+
+vi.mock("@chatbotx.io/analytics", () => ({
+  commentAutomationAnalyticsService: {
+    recordEvent: mockRecordEvent,
+    settleEvent: mockSettleEvent,
+  },
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
+  logProviderError: mockLogProviderError,
+  flowService: { findBy: mockFlowFindBy },
   contactInboxService: { findBy: mockFindContactInboxBy },
   aiAgentService: { findBy: mockAiAgentFindBy },
   conversationService: {
@@ -1458,5 +1474,131 @@ describe("applyHideComments link detection", () => {
       "changeChannelMessageState",
       expect.anything(),
     )
+  })
+})
+
+describe("processCommentAutomation analytics events", () => {
+  test("records a sent event per dispatched branch, carrying the text that went out", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "text", value: "public answer" },
+        privateReply: { type: "text", value: "private answer" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordEvent).toHaveBeenCalledTimes(2)
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        automationId: "automation-1",
+        commentId: COMMENT_ID,
+        replyChannel: "public",
+        replyType: "text",
+        replyText: "public answer",
+        status: "sent",
+      }),
+    )
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyChannel: "private",
+        replyType: "text",
+        replyText: "private answer",
+        status: "sent",
+      }),
+    )
+  })
+
+  test("records a flow reply under the flow's name — a flow has no text of its own", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "flow", value: "flow-1" } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyType: "flow",
+        replyText: "Flow: Flow 1",
+        status: "sent",
+      }),
+    )
+  })
+
+  test("opens an AIAgent event with no text — the AI job settles it later", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "AIAgent", value: "agent-1" } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyType: "AIAgent",
+        replyText: null,
+        status: "sent",
+      }),
+    )
+  })
+
+  test("records a failed event and a workspace error log when a branch throws", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "text", value: "private answer" },
+      }),
+    ])
+    mockSendPrivateReply.mockRejectedValue(new Error("send failed"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyChannel: "private",
+        status: "failed",
+        errorDetail: "send failed",
+      }),
+    )
+    expect(mockLogProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "messenger",
+        workspaceId: "workspace-1",
+        contactId: "contact-1",
+      }),
+    )
+  })
+
+  test("a failing analytics write cannot cost the dedup row", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "text", value: "public answer" },
+        privateReply: { type: "text", value: "private answer" },
+      }),
+    ])
+    mockSendPrivateReply.mockRejectedValue(new Error("send failed"))
+    // The failure path runs inside a catch block that still owes the dedup
+    // write — bookkeeping must not be able to reopen the duplicate-reply hole.
+    mockLogProviderError.mockRejectedValueOnce(new Error("event bus down"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockInsertDedup).toHaveBeenCalledWith({
+      automationId: "automation-1",
+      contactId: "contact-1",
+      postId: POST_ID,
+      workspaceId: "workspace-1",
+    })
+  })
+
+  test("records no event for a branch that declined to send", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "none", value: null },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordEvent).not.toHaveBeenCalled()
   })
 })

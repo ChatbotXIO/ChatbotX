@@ -265,7 +265,16 @@
       "lastPage": "Go to last page"
     },
     "sessionsThroughTheRef": "Sessions through the Ref \"{ref}\" per day",
-    "sessionsThroughTheMagicLink": "Sessions through the Magic Link \"{ref}\" per day"
+    "sessionsThroughTheMagicLink": "Sessions through the Magic Link \"{ref}\" per day",
+    "repliesToComments": "Replies to comments",
+    "repliesByDate": "Replies by date",
+    "userCommentsOnThisPost": "User comments on this post",
+    "botRepliesToComments": "Bot replies to comments",
+    "comment": "Comment",
+    "message": "Message",
+    "searchByDate": "Search by date...",
+    "publicReply": "Public reply",
+    "privateReply": "Private reply"
   },
   "flowAnalytics": {
     "nodes": {

@@ -1716,7 +1716,16 @@
       "lastPage": "Vai all'ultima pagina"
     },
     "sessionsThroughTheRef": "Sessioni tramite il riferimento \"{ref}\" al giorno",
-    "sessionsThroughTheMagicLink": "Sessioni tramite il Magic Link \"{ref}\" al giorno"
+    "sessionsThroughTheMagicLink": "Sessioni tramite il Magic Link \"{ref}\" al giorno",
+    "repliesToComments": "Risposte ai commenti",
+    "repliesByDate": "Risposte per data",
+    "userCommentsOnThisPost": "Commenti degli utenti su questo post",
+    "botRepliesToComments": "Risposte del bot ai commenti",
+    "comment": "Commento",
+    "message": "Messaggio",
+    "searchByDate": "Cerca per data...",
+    "publicReply": "Risposta pubblica",
+    "privateReply": "Risposta privata"
   },
   "flowAnalytics": {
     "nodes": {

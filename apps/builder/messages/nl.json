@@ -265,7 +265,16 @@
       "lastPage": "Naar de laatste pagina"
     },
     "sessionsThroughTheRef": "Sessies via de referentie \"{ref}\" per dag",
-    "sessionsThroughTheMagicLink": "Sessies via de magische link \"{ref}\" per dag"
+    "sessionsThroughTheMagicLink": "Sessies via de magische link \"{ref}\" per dag",
+    "repliesToComments": "Reacties op opmerkingen",
+    "repliesByDate": "Reacties per datum",
+    "userCommentsOnThisPost": "Gebruikersreacties op dit bericht",
+    "botRepliesToComments": "Botreacties op opmerkingen",
+    "comment": "Opmerking",
+    "message": "Bericht",
+    "searchByDate": "Zoeken op datum...",
+    "publicReply": "Openbare reactie",
+    "privateReply": "Privéreactie"
   },
   "flowAnalytics": {
     "nodes": {

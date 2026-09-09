@@ -265,7 +265,16 @@
       "lastPage": "最後のページへ"
     },
     "sessionsThroughTheRef": "参照元「{ref}」経由の1日あたりのセッション数",
-    "sessionsThroughTheMagicLink": "マジックリンク「{ref}」経由の1日あたりのセッション数"
+    "sessionsThroughTheMagicLink": "マジックリンク「{ref}」経由の1日あたりのセッション数",
+    "repliesToComments": "コメントへの返信",
+    "repliesByDate": "日付別の返信",
+    "userCommentsOnThisPost": "この投稿へのユーザーコメント",
+    "botRepliesToComments": "ボットのコメント返信",
+    "comment": "コメント",
+    "message": "メッセージ",
+    "searchByDate": "日付で検索...",
+    "publicReply": "公開返信",
+    "privateReply": "非公開返信"
   },
   "flowAnalytics": {
     "nodes": {
