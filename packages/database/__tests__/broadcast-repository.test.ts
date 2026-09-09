@@ -94,43 +94,6 @@ describe("broadcastRepository.listWithRelations", () => {
   })
 })
 
-describe("broadcastRepository.findIdIfActive", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test("scopes to a non-deleted broadcast owned by the workspace", async () => {
-    mocks.findFirst.mockResolvedValue({ id: "broadcast-1" })
-
-    const result = await broadcastRepository.findIdIfActive({
-      id: "broadcast-1",
-      workspaceId: "ws-1",
-    })
-
-    expect(result).toEqual({ id: "broadcast-1" })
-    expect(mocks.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          id: "broadcast-1",
-          workspaceId: "ws-1",
-          deletedAt: { isNull: true },
-        },
-      }),
-    )
-  })
-
-  test("returns undefined when no row matches", async () => {
-    mocks.findFirst.mockResolvedValue(undefined)
-
-    const result = await broadcastRepository.findIdIfActive({
-      id: "missing",
-      workspaceId: "ws-1",
-    })
-
-    expect(result).toBeUndefined()
-  })
-})
-
 describe("broadcastRepository.listAudience / countAudience", () => {
   beforeEach(() => {
     vi.clearAllMocks()

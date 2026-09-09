@@ -97,7 +97,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   broadcastRepository: {
     listWithRelations: vi.fn(),
     count: vi.fn(),
-    findIdIfActive: vi.fn(),
     listAudience: vi.fn(),
     countAudience: vi.fn(),
     findByIdOrName: vi.fn(),

@@ -5,6 +5,7 @@ import { isSameContent } from "@/features/flows/flow-version-content"
 import { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
+import { isNotFoundException } from "@/lib/errors/validation-exception"
 
 type FlowPageProps = {
   params: Promise<{ workspaceId: string; id: string }>
@@ -24,8 +25,11 @@ export default async function FlowPage({ params }: FlowPageProps) {
       id: data.id,
       workspaceId: data.workspaceId,
     })
-  } catch {
-    return notFound()
+  } catch (error) {
+    if (isNotFoundException(error)) {
+      return notFound()
+    }
+    throw error
   }
 
   const draftFlowVersion = flow.flowVersions?.find((v) => v.isDraft)

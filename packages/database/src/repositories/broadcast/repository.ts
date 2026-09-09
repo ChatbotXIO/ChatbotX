@@ -74,27 +74,6 @@ export const broadcastRepository = {
     )
   },
 
-  /**
-   * Ownership gate before listing a broadcast's audience — scoped to a
-   * non-deleted broadcast owned by this workspace so a soft-deleted (or
-   * foreign) broadcast never leaks its audience, even if a future caller
-   * skips the `publicGetBroadcast` lookup the current API handler happens to
-   * run first.
-   */
-  async findIdIfActive(
-    input: { id: string; workspaceId: string },
-    tx: DatabaseClient = db,
-  ): Promise<{ id: string } | undefined> {
-    return await tx.query.broadcastModel.findFirst({
-      where: {
-        id: input.id,
-        workspaceId: input.workspaceId,
-        deletedAt: { isNull: true },
-      },
-      columns: { id: true },
-    })
-  },
-
   async listAudience(
     input: { broadcastId: string; limit: number; offset: number },
     tx: DatabaseClient = db,
@@ -130,25 +109,5 @@ export const broadcastRepository = {
     }
 
     return await tx.query.broadcastModel.findFirst({ where })
-  },
-
-  /**
-   * Reads only the stored `contactFilter` of a broadcast — used by the
-   * resend action to re-derive the pruned filter with the CURRENT caller's
-   * email/phone visibility, rather than trusting whatever was pruned into
-   * the original broadcast.
-   */
-  async findContactFilter(
-    input: { id: string; workspaceId: string },
-    tx: DatabaseClient = db,
-  ): Promise<{ contactFilter: unknown } | undefined> {
-    return await tx.query.broadcastModel.findFirst({
-      where: {
-        id: input.id,
-        workspaceId: input.workspaceId,
-        deletedAt: { isNull: true },
-      },
-      columns: { contactFilter: true },
-    })
   },
 }

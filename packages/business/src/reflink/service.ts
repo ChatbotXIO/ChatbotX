@@ -106,6 +106,7 @@ class ReflinkService extends BaseService {
           and(
             eq(reflinkModel.id, reflink.id),
             eq(reflinkModel.workspaceId, ctx.workspaceId),
+            eq(reflinkModel.type, "refLink"),
           ),
         )
         .returning()
@@ -152,6 +153,7 @@ class ReflinkService extends BaseService {
       .where(
         and(
           eq(reflinkModel.workspaceId, input.workspaceId),
+          eq(reflinkModel.type, "refLink"),
           inArray(reflinkModel.id, input.ids),
         ),
       )

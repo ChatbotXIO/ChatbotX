@@ -13,3 +13,15 @@ export function isValidationException(
 ): error is ChatbotXException & { code: "validation" } {
   return error instanceof ChatbotXException && error.code === "validation"
 }
+
+/**
+ * Narrows a caught error to a service-thrown `notFoundException`
+ * (`packages/business/src/errors.ts`). Use this to turn a missing row into a
+ * `notFound()` response while letting a DB connection failure or other
+ * Drizzle error propagate as a real 500 instead of being swallowed.
+ */
+export function isNotFoundException(
+  error: unknown,
+): error is ChatbotXException & { code: "notFound" } {
+  return error instanceof ChatbotXException && error.code === "notFound"
+}
