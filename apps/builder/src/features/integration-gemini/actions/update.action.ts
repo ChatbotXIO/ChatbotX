@@ -22,7 +22,7 @@ export const updateGeminiAction = workspaceActionClient
       parsedInput: UpdateGeminiRequest
       bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
-      await integrationGeminiService.update(workspaceId, parsedInput)
+      await integrationGeminiService.update({ workspaceId }, parsedInput)
 
       await aiIntegrationService.invalidateCache(workspaceId, "gemini")
     },

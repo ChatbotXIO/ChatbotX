@@ -165,7 +165,7 @@ vi.mock("@chatbotx.io/business", () => ({
     invalidateTracking: mockInvalidateTracking,
   },
   conversationService: {
-    findByIdWithContact: mockFindConversation,
+    findByIdWithContactUnscoped: mockFindConversation,
     invalidate: mockConversationInvalidate,
     recordOutboundFlowStep: mockRecordOutboundFlowStep,
     recordOutboundMessageActivity: mockRecordOutboundMessageActivity,

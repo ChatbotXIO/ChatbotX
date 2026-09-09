@@ -36,20 +36,22 @@ class IntegrationDeepSeekService extends BaseService {
     )
   }
 
-  async update(workspaceId: string, data: UpdateDeepSeekInput) {
-    const existing = await db.query.integrationDeepseekModel.findFirst({
-      where: { workspaceId },
-    })
+  async update(props: { workspaceId: string }, data: UpdateDeepSeekInput) {
+    const existing = await this.findByWorkspaceId(props.workspaceId)
     if (!existing) {
       throw new Error("Integration DeepSeek not found")
     }
 
-    await db
+    const result = await db
       .update(integrationDeepseekModel)
       .set(data)
       .where(eq(integrationDeepseekModel.id, existing.id))
+      .returning()
+      .then((rows) => rows[0])
 
     await this.audit("update", "updated the DeepSeek integration configuration")
+
+    return result
   }
 
   async disconnect(workspaceId: string) {

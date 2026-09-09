@@ -906,7 +906,15 @@ class ContactService extends BaseService {
     data: Partial<Pick<ContactModel, "emailVerified" | "emailOptIn">>,
     tx: DatabaseClient = db,
   ): Promise<void> {
-    await tx.update(contactModel).set(data).where(eq(contactModel.id, ctx.id))
+    await tx
+      .update(contactModel)
+      .set(data)
+      .where(
+        and(
+          eq(contactModel.id, ctx.id),
+          eq(contactModel.workspaceId, ctx.workspaceId),
+        ),
+      )
     await this.invalidate({ workspaceId: ctx.workspaceId, ids: [ctx.id] })
   }
 

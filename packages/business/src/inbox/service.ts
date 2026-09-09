@@ -311,9 +311,12 @@ class InboxService extends BaseService {
    * the relation survives inference (a bare `typeof db.query.inboxModel
    * .findFirst` with no call resolves to the no-`with` overload and drops
    * the relation — see `messenger-template-handler.ts`'s prior local
-   * workaround).
+   * workaround). Unscoped by `id` only — safe today because its sole caller
+   * (`messenger-template-handler.ts`) receives `inboxId` from a
+   * webhook-resolved, already workspace-scoped context and has no
+   * `workspaceId` in scope to filter by.
    */
-  async findWithIntegrationMessengerById(props: {
+  async findWithIntegrationMessengerByIdUnscoped(props: {
     id: string
     tx?: DatabaseClient
   }): Promise<
@@ -327,8 +330,14 @@ class InboxService extends BaseService {
     })
   }
 
-  /** Inbox + `integrationWhatsapp` relation — same explicit-return-type reasoning as above. */
-  async findWithIntegrationWhatsappById(props: {
+  /**
+   * Inbox + `integrationWhatsapp` relation — same explicit-return-type
+   * reasoning as above. Unscoped by `id` only — safe today because its sole
+   * caller (`wa-template-handler.ts`) receives `inboxId` from a
+   * webhook-resolved, already workspace-scoped context and has no
+   * `workspaceId` in scope to filter by.
+   */
+  async findWithIntegrationWhatsappByIdUnscoped(props: {
     id: string
     tx?: DatabaseClient
   }): Promise<

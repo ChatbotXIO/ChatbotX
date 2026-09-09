@@ -70,7 +70,7 @@ describe("CoexistSyncRunRepository", () => {
     mocks.isUniqueViolationError.mockReturnValue(false)
   })
 
-  test("claimRun only claims active init/running runs", async () => {
+  test("claimRunWithNewToken only claims active init/running runs", async () => {
     const returning = vi.fn().mockResolvedValue([{ id: "run-1" }])
     const where = vi.fn(() => ({ returning }))
     const set = vi.fn(() => ({ where }))
@@ -78,7 +78,7 @@ describe("CoexistSyncRunRepository", () => {
     const repository = new CoexistSyncRunRepository()
 
     await expect(
-      repository.claimRun({
+      repository.claimRunWithNewToken({
         runId: "run-1",
         tx: { update } as never,
       }),
@@ -108,7 +108,7 @@ describe("CoexistSyncRunRepository", () => {
 
     // Attempts alone used to be enough, so a healthy multi-hour backfill that
     // burned its retries was terminalized mid-import — taking its pending
-    // media patches with it. The same 10-minute staleness `claimRun` uses now
+    // media patches with it. The same 10-minute staleness `claimRunWithNewToken` uses now
     // gates it, so only a run nobody is driving can be failed.
     expect(mocks.isNull).toHaveBeenCalledWith("lastHeartbeatAt")
     expect(mocks.lt).toHaveBeenCalledWith("lastHeartbeatAt", expect.anything())
@@ -242,12 +242,12 @@ describe("CoexistSyncRunRepository", () => {
   })
 
   // --- Regression guards for the worker data-access refactor -------------
-  // `claimRunForSync` is deliberately NOT `claimRun`: the coexist sync claim
+  // `reclaimRunForRetry` is deliberately NOT `claimRunWithNewToken`: the coexist sync claim
   // omits the `status IN ('init','running')` filter so a retry can reclaim a
   // `failed`/`partial` run. Re-adding that filter silently breaks retry
   // recovery, so assert its absence explicitly.
 
-  test("claimRunForSync does NOT filter status IN ('init','running')", async () => {
+  test("reclaimRunForRetry does NOT filter status IN ('init','running')", async () => {
     const returning = vi.fn().mockResolvedValue([{ id: "run-1" }])
     const where = vi.fn(() => ({ returning }))
     const set = vi.fn(() => ({ where }))
@@ -255,7 +255,7 @@ describe("CoexistSyncRunRepository", () => {
     const repository = new CoexistSyncRunRepository()
 
     await expect(
-      repository.claimRunForSync({
+      repository.reclaimRunForRetry({
         runId: "run-1",
         touchUpdatedAt: true,
         tx: { update } as never,
@@ -274,7 +274,7 @@ describe("CoexistSyncRunRepository", () => {
     )
   })
 
-  test("claimRunForSync touches updatedAt only when asked (messenger-sync yes, whatsapp-flush no)", async () => {
+  test("reclaimRunForRetry touches updatedAt only when asked (messenger-sync yes, whatsapp-flush no)", async () => {
     const repository = new CoexistSyncRunRepository()
 
     const makeTx = () => {
@@ -285,7 +285,7 @@ describe("CoexistSyncRunRepository", () => {
     }
 
     const touched = makeTx()
-    await repository.claimRunForSync({
+    await repository.reclaimRunForRetry({
       runId: "run-1",
       touchUpdatedAt: true,
       tx: touched.tx,
@@ -293,7 +293,7 @@ describe("CoexistSyncRunRepository", () => {
     expect(touched.set.mock.calls[0]?.[0]).toHaveProperty("updatedAt")
 
     const untouched = makeTx()
-    await repository.claimRunForSync({
+    await repository.reclaimRunForRetry({
       runId: "run-1",
       touchUpdatedAt: false,
       tx: untouched.tx,

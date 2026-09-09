@@ -24,7 +24,7 @@ export const updateIntegrationClaudeAction = workspaceActionClient
       parsedInput: UpdateClaudeRequest
       bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
-      await integrationClaudeService.update(workspaceId, parsedInput)
+      await integrationClaudeService.update({ workspaceId }, parsedInput)
 
       await aiIntegrationService.invalidateCache(
         workspaceId,

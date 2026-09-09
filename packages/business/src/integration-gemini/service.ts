@@ -34,20 +34,22 @@ class IntegrationGeminiService extends BaseService {
     )
   }
 
-  async update(workspaceId: string, data: UpdateGeminiInput) {
-    const existing = await db.query.integrationGeminiModel.findFirst({
-      where: { workspaceId },
-    })
+  async update(props: { workspaceId: string }, data: UpdateGeminiInput) {
+    const existing = await this.findByWorkspaceId(props.workspaceId)
     if (!existing) {
       throw new Error("Integration Gemini not found")
     }
 
-    await db
+    const result = await db
       .update(integrationGeminiModel)
       .set(data)
       .where(eq(integrationGeminiModel.id, existing.id))
+      .returning()
+      .then((rows) => rows[0])
 
     await this.audit("update", "updated the Gemini integration configuration")
+
+    return result
   }
 
   async disconnect(workspaceId: string) {

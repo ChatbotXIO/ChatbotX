@@ -1,6 +1,6 @@
 import {
   inboxService,
-  messengerIntegrationService,
+  messengerMessageTemplateService,
 } from "@chatbotx.io/business"
 import type { MessengerMessageTemplateModel } from "@chatbotx.io/database/types"
 import type { MessengerTemplateParams } from "@chatbotx.io/flow-config"
@@ -50,7 +50,9 @@ export async function replaceMessengerTemplateVariables(props: {
 }
 
 type InboxWithIntegrationMessenger = NonNullable<
-  Awaited<ReturnType<typeof inboxService.findWithIntegrationMessengerById>>
+  Awaited<
+    ReturnType<typeof inboxService.findWithIntegrationMessengerByIdUnscoped>
+  >
 >
 
 export type ValidatedMessengerTemplate = {
@@ -73,7 +75,7 @@ export async function validateMessengerTemplate(
   templateId: string,
   inboxId: string,
 ): Promise<ValidatedMessengerTemplate | null> {
-  const inbox = await inboxService.findWithIntegrationMessengerById({
+  const inbox = await inboxService.findWithIntegrationMessengerByIdUnscoped({
     id: inboxId,
   })
 
@@ -82,9 +84,10 @@ export async function validateMessengerTemplate(
   }
 
   const template =
-    await messengerIntegrationService.findApprovedMessengerTemplate({
+    await messengerMessageTemplateService.findApprovedByIdForIntegration({
       id: templateId,
       integrationMessengerId: inbox.integrationMessenger.id,
+      workspaceId: inbox.workspaceId,
     })
 
   if (!template) {

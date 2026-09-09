@@ -326,7 +326,7 @@ export async function sendFlowStep({
   commentAnchor,
   appointmentId,
 }: ChatJobSendFlowStep["data"]) {
-  const conversation = await conversationService.findByIdWithContact({
+  const conversation = await conversationService.findByIdWithContactUnscoped({
     id: conversationId,
   })
   if (!conversation) {

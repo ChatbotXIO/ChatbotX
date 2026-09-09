@@ -65,7 +65,7 @@ const runInstagramCoexistPull = async <
     await failRun("Instagram integration not found or coexist disabled")
     return
   }
-  const claimed = await coexistService.claimRun({ runId })
+  const claimed = await coexistService.claimRunWithNewToken({ runId })
   if (!claimed) {
     logger.warn(
       { runId, integrationId },

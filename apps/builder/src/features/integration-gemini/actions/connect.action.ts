@@ -1,4 +1,5 @@
 "use server"
+import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { integrationGeminiService } from "@chatbotx.io/business"
 import { getTranslations } from "next-intl/server"
@@ -7,8 +8,8 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schema"
+import { verifyAiProviderApiKey } from "@/features/integration-ai/lib/verify-api-key"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { verifyGeminiApiKey } from "../lib"
 import {
   type ConnectGeminiRequest,
   connectGeminiRequest,
@@ -27,7 +28,12 @@ export const connectGeminiAction = workspaceActionClient
     }) => {
       const t = await getTranslations()
 
-      if (!(await verifyGeminiApiKey(parsedInput.apiKey))) {
+      if (
+        !(await verifyAiProviderApiKey(
+          aiProviders.enum.gemini,
+          parsedInput.apiKey,
+        ))
+      ) {
         return returnValidationErrors(connectGeminiRequest, {
           apiKey: {
             _errors: [t("validation.invalidApiKey")],
@@ -43,7 +49,10 @@ export const connectGeminiAction = workspaceActionClient
         maxOutputTokens: parsedInput.maxOutputTokens,
       })
 
-      await aiIntegrationService.invalidateCache(workspaceId, "gemini")
+      await aiIntegrationService.invalidateCache(
+        workspaceId,
+        aiProviders.enum.gemini,
+      )
 
       return
     },

@@ -211,7 +211,10 @@ describe("contactService.setFlowFlags", () => {
 
     expect(client.set).toHaveBeenCalledWith({ emailVerified: true })
     expect(client.where).toHaveBeenCalledWith({
-      __eq: ["contact.id", "contact-1"],
+      __and: [
+        { __eq: ["contact.id", "contact-1"] },
+        { __eq: ["contact.workspaceId", "ws-1"] },
+      ],
     })
     // The raw worker write skipped invalidation, leaving a stale cached
     // contact behind; routing through the service fixes that.

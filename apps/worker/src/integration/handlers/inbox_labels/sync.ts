@@ -43,13 +43,13 @@ async function assignLabel(
 
   // Link the workspace tag to the contacts; capture the newly-linked ones so we
   // emit "tag applied" exactly once per new pair (same as add-contact-tag).
-  const linked = await tagService.linkTagToContactsReturningNew({
+  const linked = await tagService.linkTagToContactsReturningNewUnscoped({
     tagId: mapping.tagId,
     contactIds: inboxes.map((inbox) => inbox.contactId),
   })
 
   // Record the per-channel assignment (used for reconciliation / detach).
-  await tagService.recordTagChannelAssignments({
+  await tagService.recordTagChannelAssignmentsUnscoped({
     tagId: mapping.tagId,
     tagChannelId: mapping.tagChannelId,
     contactInboxIds: inboxes.map((inbox) => inbox.id),
@@ -93,14 +93,14 @@ async function unassignLabel(
   }
 
   // Remove the per-channel assignment record.
-  await tagService.deleteTagChannelAssignments({
+  await tagService.deleteTagChannelAssignmentsUnscoped({
     tagChannelId: tagChannel.id,
     contactInboxIds: inboxes.map((inbox) => inbox.id),
   })
 
   // Remove the workspace tag from those contacts — same as remove-contact-tag.
   const contactIds = inboxes.map((inbox) => inbox.contactId)
-  await tagService.detachTagFromContacts({
+  await tagService.detachTagFromContactsUnscoped({
     tagId: tagChannel.tagId,
     contactIds,
   })

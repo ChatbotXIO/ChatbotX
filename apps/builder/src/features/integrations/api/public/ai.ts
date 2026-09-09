@@ -1,10 +1,16 @@
+import { aiProviders } from "@chatbotx.io/ai"
+import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import {
   integrationClaudeService,
   integrationDeepSeekService,
   integrationGeminiService,
   integrationOpenAIService,
 } from "@chatbotx.io/business"
-import { notFoundException } from "@chatbotx.io/business/errors"
+import {
+  notFoundException,
+  validationException,
+} from "@chatbotx.io/business/errors"
+import { verifyAiProviderApiKey } from "@/features/integration-ai/lib/verify-api-key"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
@@ -93,6 +99,11 @@ export const integrationsAiPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const service = aiProviderServices[input.provider]
+
+      if (!(await verifyAiProviderApiKey(input.provider, input.apiKey))) {
+        throw validationException("apiKey", "Invalid API key")
+      }
+
       await service.connect({
         workspaceId: context.workspace.id,
         apiKey: input.apiKey,
@@ -100,6 +111,12 @@ export const integrationsAiPublicRouter = {
         temperature: input.temperature,
         maxOutputTokens: input.maxOutputTokens,
       })
+
+      await aiIntegrationService.invalidateCache(
+        context.workspace.id,
+        aiProviders.enum[input.provider],
+      )
+
       const row = await service.findByWorkspaceId(context.workspace.id)
       if (!row) {
         throw notFoundException(`${input.provider} integration not found`)
@@ -113,11 +130,17 @@ export const integrationsAiPublicRouter = {
       path: "/v1/integrations/ai/{provider}",
       summary: "Disconnect an AI provider integration",
       tags: ["Integrations"],
+      successStatus: 204,
     })
     .input(getAiProviderRequest)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const service = aiProviderServices[input.provider]
       await service.disconnect(context.workspace.id)
+
+      await aiIntegrationService.invalidateCache(
+        context.workspace.id,
+        aiProviders.enum[input.provider],
+      )
     }),
 }

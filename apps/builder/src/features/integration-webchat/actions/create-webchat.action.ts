@@ -1,11 +1,13 @@
 "use server"
 
 import {
+  hasWorkspaceAccess,
   integrationWebchatService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ensureBrandingMenuEntry } from "@chatbotx.io/business/branding"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import { isCommunity } from "@/env"
 import { getTenantSettings } from "@/features/tenant/utils"
@@ -34,6 +36,9 @@ export const createWebchatAction = authActionClient
       let createdWorkspace = false
 
       if (workspaceId) {
+        if (!(await hasWorkspaceAccess({ workspaceId, user: ctx.user }))) {
+          throw new ChatbotXException("Workspace not found", "notFound", 404)
+        }
         const workspace = await workspaceService.findOrFail({
           where: { id: workspaceId },
         })

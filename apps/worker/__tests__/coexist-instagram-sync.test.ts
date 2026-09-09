@@ -44,7 +44,7 @@ const {
 
 vi.mock("@chatbotx.io/business", () => ({
   coexistService: {
-    claimRun: mockClaimRun,
+    claimRunWithNewToken: mockClaimRun,
     findIntegrationForCoexist: mockFindIntegration,
     findResumeCeiling: mockFindResumeCeiling,
     findRunById: mockFindRunById,

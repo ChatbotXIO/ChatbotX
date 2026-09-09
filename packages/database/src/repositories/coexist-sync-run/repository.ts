@@ -52,7 +52,7 @@ export const LIVE_RUN_STATUSES: CoexistRunStatus[] = [
  * Statuses the pull channels (Messenger/Instagram) claim from. They never enter
  * `waiting`, so their claim window is narrower than `LIVE_RUN_STATUSES` — the
  * one difference between the two claim call sites, expressed as data rather
- * than as a second `claimRun` implementation.
+ * than as a second `claimRunWithNewToken` implementation.
  */
 export const PULL_CLAIMABLE_STATUSES: CoexistRunStatus[] = ["init", "running"]
 
@@ -315,7 +315,7 @@ export class CoexistSyncRunRepository {
    *
    * @returns the claimed row, or null when this worker did not win it.
    */
-  async claimRun(input: {
+  async claimRunWithNewToken(input: {
     runId: string
     fromStatuses?: CoexistRunStatus[]
     tx?: DatabaseClient
@@ -353,7 +353,7 @@ export class CoexistSyncRunRepository {
   /**
    * Terminalizes runs the scheduler has retried to exhaustion.
    *
-   * Gated on the same 10-minute staleness `claimRun` uses: a run being driven
+   * Gated on the same 10-minute staleness `claimRunWithNewToken` uses: a run being driven
    * right now heartbeats every batch, and a healthy multi-hour backfill that
    * happens to have burned its attempts must not be killed mid-import — that
    * would strand its `pendingPatches` along with it. Only a run nobody has
@@ -772,13 +772,13 @@ export class CoexistSyncRunRepository {
   /**
    * Optimistic claim with a stale-heartbeat fallback, used by
    * `messenger-sync.ts` and `whatsapp-flush.ts`. Deliberately does NOT
-   * include `claimRun`'s `inArray(status, ["init","running"])` guard — both
+   * include `claimRunWithNewToken`'s `inArray(status, ["init","running"])` guard — both
    * callers reclaim `failed`/`partial` runs on retry, so adding that guard
    * would silently break retry recovery. `touchUpdatedAt` distinguishes the
    * two callers' SET clauses (messenger-sync also bumps `updatedAt`;
    * whatsapp-flush does not) — do not unify beyond this flag.
    */
-  async claimRunForSync(input: {
+  async reclaimRunForRetry(input: {
     runId: string
     touchUpdatedAt: boolean
     tx?: DatabaseClient

@@ -81,7 +81,7 @@ vi.mock("@chatbotx.io/business/coexist", () => {
     mockRunWrite(fields, guard)
   return {
     coexistService: {
-      claimRun: mockClaimRun,
+      claimRunWithNewToken: mockClaimRun,
       findLiveRun: mockFindLiveRun,
       updateProgress: ({
         fields,

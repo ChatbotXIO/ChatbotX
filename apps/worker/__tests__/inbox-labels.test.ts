@@ -10,19 +10,19 @@ const state = {
   contactInboxes: [] as { id: string; contactId: string }[],
   ensureTagByNameResult: undefined as string | undefined,
   ensureTagChannelResult: undefined as string | undefined,
-  linkTagToContactsReturningNewResult: [] as { contactId: string }[],
+  linkTagToContactsReturningNewUnscopedResult: [] as { contactId: string }[],
 }
 
 // ---------------------------------------------------------------------------
 // Mock: @chatbotx.io/business — tagService, tagSyncService, messenger/zalo
 // integration services
 // ---------------------------------------------------------------------------
-const linkTagToContactsReturningNew = vi.fn(
-  async () => state.linkTagToContactsReturningNewResult,
+const linkTagToContactsReturningNewUnscoped = vi.fn(
+  async () => state.linkTagToContactsReturningNewUnscopedResult,
 )
-const recordTagChannelAssignments = vi.fn(async () => undefined)
-const deleteTagChannelAssignments = vi.fn(async () => undefined)
-const detachTagFromContacts = vi.fn(async () => undefined)
+const recordTagChannelAssignmentsUnscoped = vi.fn(async () => undefined)
+const deleteTagChannelAssignmentsUnscoped = vi.fn(async () => undefined)
+const detachTagFromContactsUnscoped = vi.fn(async () => undefined)
 const findTagChannel = vi.fn(async () => state.tagChannel)
 const ensureTagByName = vi.fn(async () => state.ensureTagByNameResult)
 const ensureTagChannel = vi.fn(async () => state.ensureTagChannelResult)
@@ -34,14 +34,14 @@ const zaloFindByOaId = vi.fn(async () => state.zaloIntegration)
 
 vi.mock("@chatbotx.io/business", () => ({
   tagService: {
-    linkTagToContactsReturningNew: (...args: unknown[]) =>
-      linkTagToContactsReturningNew(...args),
-    recordTagChannelAssignments: (...args: unknown[]) =>
-      recordTagChannelAssignments(...args),
-    deleteTagChannelAssignments: (...args: unknown[]) =>
-      deleteTagChannelAssignments(...args),
-    detachTagFromContacts: (...args: unknown[]) =>
-      detachTagFromContacts(...args),
+    linkTagToContactsReturningNewUnscoped: (...args: unknown[]) =>
+      linkTagToContactsReturningNewUnscoped(...args),
+    recordTagChannelAssignmentsUnscoped: (...args: unknown[]) =>
+      recordTagChannelAssignmentsUnscoped(...args),
+    deleteTagChannelAssignmentsUnscoped: (...args: unknown[]) =>
+      deleteTagChannelAssignmentsUnscoped(...args),
+    detachTagFromContactsUnscoped: (...args: unknown[]) =>
+      detachTagFromContactsUnscoped(...args),
     findTagChannel: (...args: unknown[]) => findTagChannel(...args),
     ensureTagByName: (...args: unknown[]) => ensureTagByName(...args),
     ensureTagChannel: (...args: unknown[]) => ensureTagChannel(...args),
@@ -165,7 +165,7 @@ beforeEach(() => {
   state.contactInboxes = []
   state.ensureTagByNameResult = undefined
   state.ensureTagChannelResult = undefined
-  state.linkTagToContactsReturningNewResult = []
+  state.linkTagToContactsReturningNewUnscopedResult = []
   idCounter = 0
 
   vi.clearAllMocks()
@@ -179,8 +179,8 @@ beforeEach(() => {
   )
   ensureTagByName.mockImplementation(async () => state.ensureTagByNameResult)
   ensureTagChannel.mockImplementation(async () => state.ensureTagChannelResult)
-  linkTagToContactsReturningNew.mockImplementation(
-    async () => state.linkTagToContactsReturningNewResult,
+  linkTagToContactsReturningNewUnscoped.mockImplementation(
+    async () => state.linkTagToContactsReturningNewUnscopedResult,
   )
 })
 
@@ -200,7 +200,7 @@ describe("handleChannelLabelWebhook — dispatch", () => {
       expect.objectContaining({ channel: "telegram" }),
       "inbox labels: unsupported channel",
     )
-    expect(linkTagToContactsReturningNew).not.toHaveBeenCalled()
+    expect(linkTagToContactsReturningNewUnscoped).not.toHaveBeenCalled()
   })
 
   test("stops when integration is not found", async () => {
@@ -212,7 +212,7 @@ describe("handleChannelLabelWebhook — dispatch", () => {
         label: { id: LABEL_ID, page_label_name: LABEL_NAME },
       }),
     )
-    expect(linkTagToContactsReturningNew).not.toHaveBeenCalled()
+    expect(linkTagToContactsReturningNewUnscoped).not.toHaveBeenCalled()
     expect(loggerWarn).not.toHaveBeenCalled()
   })
 
@@ -227,7 +227,7 @@ describe("handleChannelLabelWebhook — dispatch", () => {
         label: { id: LABEL_ID, page_label_name: LABEL_NAME },
       }),
     )
-    expect(linkTagToContactsReturningNew).not.toHaveBeenCalled()
+    expect(linkTagToContactsReturningNewUnscoped).not.toHaveBeenCalled()
   })
 
   test("warns on invalid payload", async () => {
@@ -255,7 +255,7 @@ describe("handleChannelLabelWebhook — messenger", () => {
   test("add assigns + emits applied when the tag channel already exists", async () => {
     state.tagChannel = { id: "tc-1", tagId: "tag-1" }
     state.contactInboxes = [{ id: "ci-1", contactId: "c-1" }]
-    state.linkTagToContactsReturningNewResult = [{ contactId: "c-1" }] // newly linked
+    state.linkTagToContactsReturningNewUnscopedResult = [{ contactId: "c-1" }] // newly linked
 
     await handleChannelLabelWebhook(
       messengerData({
@@ -265,11 +265,11 @@ describe("handleChannelLabelWebhook — messenger", () => {
       }),
     )
 
-    expect(linkTagToContactsReturningNew).toHaveBeenCalledWith({
+    expect(linkTagToContactsReturningNewUnscoped).toHaveBeenCalledWith({
       tagId: "tag-1",
       contactIds: ["c-1"],
     })
-    expect(recordTagChannelAssignments).toHaveBeenCalledWith({
+    expect(recordTagChannelAssignmentsUnscoped).toHaveBeenCalledWith({
       tagId: "tag-1",
       tagChannelId: "tc-1",
       contactInboxIds: ["ci-1"],
@@ -281,7 +281,7 @@ describe("handleChannelLabelWebhook — messenger", () => {
     state.tagChannel = undefined
     state.ensureTagByNameResult = "tag-new"
     state.ensureTagChannelResult = "tc-new"
-    state.linkTagToContactsReturningNewResult = [{ contactId: "c-1" }]
+    state.linkTagToContactsReturningNewUnscopedResult = [{ contactId: "c-1" }]
     state.contactInboxes = [{ id: "ci-1", contactId: "c-1" }]
 
     await handleChannelLabelWebhook(
@@ -303,11 +303,11 @@ describe("handleChannelLabelWebhook — messenger", () => {
       integrationId: "intg-msg-1",
       externalLabelId: LABEL_ID,
     })
-    expect(linkTagToContactsReturningNew).toHaveBeenCalledWith({
+    expect(linkTagToContactsReturningNewUnscoped).toHaveBeenCalledWith({
       tagId: "tag-new",
       contactIds: ["c-1"],
     })
-    expect(recordTagChannelAssignments).toHaveBeenCalledWith({
+    expect(recordTagChannelAssignmentsUnscoped).toHaveBeenCalledWith({
       tagId: "tag-new",
       tagChannelId: "tc-new",
       contactInboxIds: ["ci-1"],
@@ -327,7 +327,7 @@ describe("handleChannelLabelWebhook — messenger", () => {
     )
 
     // page_label_name defaults to "" -> ensureTagByName is never a valid create path
-    expect(linkTagToContactsReturningNew).not.toHaveBeenCalled()
+    expect(linkTagToContactsReturningNewUnscoped).not.toHaveBeenCalled()
   })
 
   test("add without user is a no-op", async () => {
@@ -337,7 +337,7 @@ describe("handleChannelLabelWebhook — messenger", () => {
         label: { id: LABEL_ID, page_label_name: LABEL_NAME },
       }),
     )
-    expect(linkTagToContactsReturningNew).not.toHaveBeenCalled()
+    expect(linkTagToContactsReturningNewUnscoped).not.toHaveBeenCalled()
   })
 
   test("remove unassigns: deletes channel mapping + contact tag + emits removed", async () => {
@@ -352,11 +352,11 @@ describe("handleChannelLabelWebhook — messenger", () => {
       }),
     )
 
-    expect(deleteTagChannelAssignments).toHaveBeenCalledWith({
+    expect(deleteTagChannelAssignmentsUnscoped).toHaveBeenCalledWith({
       tagChannelId: "tc-1",
       contactInboxIds: ["ci-1"],
     })
-    expect(detachTagFromContacts).toHaveBeenCalledWith({
+    expect(detachTagFromContactsUnscoped).toHaveBeenCalledWith({
       tagId: "tag-1",
       contactIds: ["c-1"],
     })
@@ -367,7 +367,7 @@ describe("handleChannelLabelWebhook — messenger", () => {
     await handleChannelLabelWebhook(
       messengerData({ action: "remove", label: { id: LABEL_ID } }),
     )
-    expect(deleteTagChannelAssignments).not.toHaveBeenCalled()
+    expect(deleteTagChannelAssignmentsUnscoped).not.toHaveBeenCalled()
   })
 
   test("unknown action is a no-op", async () => {
@@ -378,8 +378,8 @@ describe("handleChannelLabelWebhook — messenger", () => {
         label: { id: LABEL_ID },
       }),
     )
-    expect(linkTagToContactsReturningNew).not.toHaveBeenCalled()
-    expect(deleteTagChannelAssignments).not.toHaveBeenCalled()
+    expect(linkTagToContactsReturningNewUnscoped).not.toHaveBeenCalled()
+    expect(deleteTagChannelAssignmentsUnscoped).not.toHaveBeenCalled()
   })
 })
 
@@ -397,7 +397,7 @@ describe("handleChannelLabelWebhook — zalo", () => {
       { id: "ci-1", contactId: "c-1" },
       { id: "ci-2", contactId: "c-2" },
     ]
-    state.linkTagToContactsReturningNewResult = [
+    state.linkTagToContactsReturningNewUnscopedResult = [
       { contactId: "c-1" },
       { contactId: "c-2" },
     ]
@@ -410,11 +410,11 @@ describe("handleChannelLabelWebhook — zalo", () => {
       }),
     )
 
-    expect(linkTagToContactsReturningNew).toHaveBeenCalledWith({
+    expect(linkTagToContactsReturningNewUnscoped).toHaveBeenCalledWith({
       tagId: "tag-1",
       contactIds: ["c-1", "c-2"],
     })
-    expect(recordTagChannelAssignments).toHaveBeenCalledWith({
+    expect(recordTagChannelAssignmentsUnscoped).toHaveBeenCalledWith({
       tagId: "tag-1",
       tagChannelId: "tc-1",
       contactInboxIds: ["ci-1", "ci-2"],
@@ -445,7 +445,7 @@ describe("handleChannelLabelWebhook — zalo", () => {
       integrationId: "intg-zalo-1",
       externalLabelId: LABEL_NAME,
     })
-    expect(linkTagToContactsReturningNew).not.toHaveBeenCalled()
+    expect(linkTagToContactsReturningNewUnscoped).not.toHaveBeenCalled()
   })
 
   test("remove_user_from_tag unassigns the batch", async () => {
@@ -463,11 +463,11 @@ describe("handleChannelLabelWebhook — zalo", () => {
       }),
     )
 
-    expect(deleteTagChannelAssignments).toHaveBeenCalledWith({
+    expect(deleteTagChannelAssignmentsUnscoped).toHaveBeenCalledWith({
       tagChannelId: "tc-1",
       contactInboxIds: ["ci-1", "ci-2"],
     })
-    expect(detachTagFromContacts).toHaveBeenCalledWith({
+    expect(detachTagFromContactsUnscoped).toHaveBeenCalledWith({
       tagId: "tag-1",
       contactIds: ["c-1", "c-2"],
     })
@@ -486,7 +486,7 @@ describe("handleChannelLabelWebhook — zalo", () => {
         tag: { name: LABEL_NAME },
       }),
     )
-    expect(deleteTagChannelAssignments).not.toHaveBeenCalled()
+    expect(deleteTagChannelAssignmentsUnscoped).not.toHaveBeenCalled()
   })
 
   test("remove_user_from_tag is a no-op when the tag channel is missing", async () => {
@@ -498,7 +498,7 @@ describe("handleChannelLabelWebhook — zalo", () => {
         tag: { name: LABEL_NAME, user_ids: ["u-1"] },
       }),
     )
-    expect(deleteTagChannelAssignments).not.toHaveBeenCalled()
+    expect(deleteTagChannelAssignmentsUnscoped).not.toHaveBeenCalled()
   })
 
   test("remove_tag enqueues a channel-scoped delete + keeps the workspace tag", async () => {
@@ -519,7 +519,7 @@ describe("handleChannelLabelWebhook — zalo", () => {
       integrationId: "intg-zalo-1",
     })
     // No workspace-wide tag delete from the webhook.
-    expect(detachTagFromContacts).not.toHaveBeenCalled()
+    expect(detachTagFromContactsUnscoped).not.toHaveBeenCalled()
   })
 
   test("remove_tag is a no-op when the label is not mapped locally", async () => {

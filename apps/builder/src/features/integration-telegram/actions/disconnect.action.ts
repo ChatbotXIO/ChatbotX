@@ -42,7 +42,6 @@ export const disconnectTelegramAction = workspaceActionClientAllowExpired
 
       await db.transaction(async (tx) => {
         await telegramIntegrationService.disconnect({
-          workspaceId,
           id: integrationTelegram.id,
           tx,
         })

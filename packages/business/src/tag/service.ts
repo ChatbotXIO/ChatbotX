@@ -1032,8 +1032,14 @@ class TagService extends BaseService {
     }
   }
 
-  /** Unlink one workspace tag from many contacts (inbox-label unassign). */
-  async detachTagFromContacts(props: {
+  /**
+   * Unlink one workspace tag from many contacts (inbox-label unassign).
+   * `ContactToTag` has no `workspaceId` column, so this cannot be scoped
+   * without an extra join — safe today because every caller
+   * (`inbox_labels/sync.ts`) resolves `tagId`/`contactIds` from a
+   * workspace-scoped `ensureTagChannel` + `ctx.inboxId` lookup first.
+   */
+  async detachTagFromContactsUnscoped(props: {
     tagId: string
     contactIds: string[]
     tx?: DatabaseClient
@@ -1055,9 +1061,12 @@ class TagService extends BaseService {
   /**
    * Link a workspace tag to many contacts, returning the NEWLY-linked
    * contact ids (untargeted `onConflictDoNothing()` — verbatim from
-   * `inbox_labels/sync.ts` `assignLabel`).
+   * `inbox_labels/sync.ts` `assignLabel`). `ContactToTag` has no
+   * `workspaceId` column, so this cannot be scoped without an extra join —
+   * safe today because the caller resolves `tagId`/`contactIds` from a
+   * workspace-scoped `ensureTagChannel` + `ctx.inboxId` lookup first.
    */
-  async linkTagToContactsReturningNew(props: {
+  async linkTagToContactsReturningNewUnscoped(props: {
     tagId: string
     contactIds: string[]
     tx?: DatabaseClient
@@ -1073,8 +1082,15 @@ class TagService extends BaseService {
       .returning({ contactId: contactsToTagsModel.contactId })
   }
 
-  /** Record per-channel tag assignments (used for reconciliation / detach). */
-  async recordTagChannelAssignments(props: {
+  /**
+   * Record per-channel tag assignments (used for reconciliation / detach).
+   * `ContactToTagChannel` has no `workspaceId` column, so this cannot be
+   * scoped without an extra join — safe today because the caller
+   * (`inbox_labels/sync.ts`) resolves `tagId`/`tagChannelId`/
+   * `contactInboxIds` from a workspace-scoped `ensureTagChannel` +
+   * `ctx.inboxId` lookup first.
+   */
+  async recordTagChannelAssignmentsUnscoped(props: {
     tagId: string
     tagChannelId: string
     contactInboxIds: string[]
@@ -1096,8 +1112,14 @@ class TagService extends BaseService {
       .onConflictDoNothing()
   }
 
-  /** Remove per-channel tag assignments (inbox-label unassign). */
-  async deleteTagChannelAssignments(props: {
+  /**
+   * Remove per-channel tag assignments (inbox-label unassign).
+   * `ContactToTagChannel` has no `workspaceId` column, so this cannot be
+   * scoped without an extra join — safe today because the caller
+   * (`inbox_labels/sync.ts`) resolves `tagChannelId`/`contactInboxIds` from a
+   * workspace-scoped `ensureTagChannel` + `ctx.inboxId` lookup first.
+   */
+  async deleteTagChannelAssignmentsUnscoped(props: {
     tagChannelId: string
     contactInboxIds: string[]
     tx?: DatabaseClient

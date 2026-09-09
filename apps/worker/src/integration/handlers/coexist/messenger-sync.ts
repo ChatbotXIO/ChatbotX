@@ -667,7 +667,7 @@ export const coexistMessengerSync = async (
   const attempts = initRow.attempts
 
   // Optimistic claim: only one worker may flip status→running at a time.
-  const claimedRun = await coexistService.claimRunForSync({
+  const claimedRun = await coexistService.reclaimRunForRetry({
     runId,
     touchUpdatedAt: true,
   })

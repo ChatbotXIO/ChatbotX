@@ -160,6 +160,22 @@ class MessengerMessageTemplateService extends BaseService {
     })
   }
 
+  /** Approved-only template lookup for outbound template sends, scoped by workspace through the integration relation. */
+  findApprovedByIdForIntegration(props: {
+    id: string
+    integrationMessengerId: string
+    workspaceId: string
+  }) {
+    return db.query.messengerMessageTemplateModel.findFirst({
+      where: {
+        id: props.id,
+        integrationMessengerId: props.integrationMessengerId,
+        integrationMessenger: { workspaceId: props.workspaceId },
+        status: "APPROVED",
+      },
+    })
+  }
+
   async delete(props: {
     id: string
     integrationMessengerId: string

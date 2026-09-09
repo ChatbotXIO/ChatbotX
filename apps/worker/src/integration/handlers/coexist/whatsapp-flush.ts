@@ -404,7 +404,7 @@ const resolveFinalStatus = async (
 /**
  * Hands the run back before the continuation is queued.
  *
- * `claimRun` refuses a run that is `running` with a heartbeat under 10 minutes
+ * `claimRunWithNewToken` refuses a run that is `running` with a heartbeat under 10 minutes
  * old — that is what stops two workers driving one run. A continuation
  * enqueued while this worker still holds the claim therefore loses its own
  * claim and abandons, so the chunk chain has to release ownership first: back
@@ -577,7 +577,7 @@ const logChunkComplete = (
  * popup. Idempotent: safe to re-run as more history arrives over the ~24h
  * window Meta uses to push it.
  *
- * EXCLUSIVE OWNERSHIP. `claimRun` mints a `claimToken` on the run; every write
+ * EXCLUSIVE OWNERSHIP. `claimRunWithNewToken` mints a `claimToken` on the run; every write
  * this handler makes afterwards is conditional on BOTH `status = 'running'` and
  * that token. A write that reports 0 rows therefore covers both ways the run
  * can move out from under us — a `disconnect`/`disable`/workspace teardown that

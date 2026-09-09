@@ -5,33 +5,37 @@ const VERIFY_TIMEOUT_MS = 10_000
 const UNAUTHORIZED_STATUSES = new Set([401, 403])
 
 type VerifyConfig = {
-  url: string
-  headers: (apiKey: string) => Record<string, string>
+  url: (apiKey: string) => string
+  headers?: (apiKey: string) => Record<string, string>
 }
 
 // Lightweight "list models" probes used purely to validate an API key.
 const verifyConfigByProvider: Partial<Record<AIProvider, VerifyConfig>> = {
   [aiProviders.enum.claude]: {
-    url: "https://api.anthropic.com/v1/models",
+    url: () => "https://api.anthropic.com/v1/models",
     headers: (apiKey) => ({
       "x-api-key": apiKey,
       "anthropic-version": "2023-06-01",
     }),
   },
   [aiProviders.enum.deepseek]: {
-    url: "https://api.deepseek.com/models",
+    url: () => "https://api.deepseek.com/models",
     headers: (apiKey) => ({
       Authorization: `Bearer ${apiKey}`,
     }),
   },
+  [aiProviders.enum.gemini]: {
+    url: (apiKey) =>
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+  },
   [aiProviders.enum.openai]: {
-    url: "https://api.openai.com/v1/models",
+    url: () => "https://api.openai.com/v1/models",
     headers: (apiKey) => ({
       Authorization: `Bearer ${apiKey}`,
     }),
   },
   [aiProviders.enum.openrouter]: {
-    url: "https://openrouter.ai/api/v1/key",
+    url: () => "https://openrouter.ai/api/v1/key",
     headers: (apiKey) => ({
       Authorization: `Bearer ${apiKey}`,
     }),
@@ -56,8 +60,8 @@ export async function verifyAiProviderApiKey(
   }
 
   try {
-    await ky.get(config.url, {
-      headers: config.headers(apiKey),
+    await ky.get(config.url(apiKey), {
+      headers: config.headers?.(apiKey),
       timeout: VERIFY_TIMEOUT_MS,
       retry: 0,
     })

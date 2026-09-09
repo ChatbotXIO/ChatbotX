@@ -58,6 +58,31 @@ vi.mock("@chatbotx.io/business/errors", () => ({
   notFoundException: vi.fn(
     (message: string) => new MockChatbotXException(message, "notFound"),
   ),
+  validationException: vi.fn(
+    (_field: string, message: string) =>
+      new MockChatbotXException(message, "validation"),
+  ),
+}))
+
+const aiIntegrationService = {
+  invalidateCache: vi.fn(),
+}
+
+vi.mock("@chatbotx.io/ai/server", () => ({ aiIntegrationService }))
+vi.mock("@chatbotx.io/ai", () => ({
+  aiProviders: {
+    enum: {
+      claude: "claude",
+      deepseek: "deepseek",
+      gemini: "gemini",
+      openai: "openai",
+    },
+  },
+}))
+
+const verifyAiProviderApiKey = vi.fn(async () => true)
+vi.mock("@/features/integration-ai/lib/verify-api-key", () => ({
+  verifyAiProviderApiKey,
 }))
 
 const integrationService = {
@@ -110,6 +135,7 @@ const findProcedure = (method: string, path: string) => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  verifyAiProviderApiKey.mockResolvedValue(true)
 })
 
 describe("GET /v1/integrations", () => {
@@ -297,6 +323,54 @@ describe("PUT /v1/integrations/ai/{provider}", () => {
     })
     expect(JSON.stringify(result)).not.toContain("sk-gemini-secret")
   })
+
+  test("invalidates the AI integration cache after connecting", async () => {
+    integrationGeminiService.connect.mockResolvedValueOnce(undefined)
+    integrationGeminiService.findByWorkspaceId.mockResolvedValueOnce({
+      id: "gemini-1",
+      model: "gemini-3.5-flash",
+      temperature: 0.4,
+      maxOutputTokens: 1024,
+      autoReply: false,
+      auth: { authType: "secretText", secretText: "sk-gemini-secret" },
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        provider: "gemini",
+        apiKey: "sk-gemini-secret",
+        model: "gemini-3.5-flash",
+        temperature: 0.4,
+        maxOutputTokens: 1024,
+      },
+    })
+
+    expect(aiIntegrationService.invalidateCache).toHaveBeenCalledWith(
+      "workspace-1",
+      "gemini",
+    )
+  })
+
+  test("rejects an invalid API key without persisting it", async () => {
+    verifyAiProviderApiKey.mockResolvedValueOnce(false)
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: {
+          provider: "gemini",
+          apiKey: "bad-key",
+          model: "gemini-3.5-flash",
+          temperature: 0.4,
+          maxOutputTokens: 1024,
+        },
+      }),
+    ).rejects.toThrow()
+
+    expect(integrationGeminiService.connect).not.toHaveBeenCalled()
+    expect(aiIntegrationService.invalidateCache).not.toHaveBeenCalled()
+  })
 })
 
 describe("DELETE /v1/integrations/ai/{provider}", () => {
@@ -313,5 +387,23 @@ describe("DELETE /v1/integrations/ai/{provider}", () => {
     expect(integrationDeepSeekService.disconnect).toHaveBeenCalledWith(
       "workspace-1",
     )
+  })
+
+  test("invalidates the AI integration cache after disconnecting", async () => {
+    integrationDeepSeekService.disconnect.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { provider: "deepseek" },
+    })
+
+    expect(aiIntegrationService.invalidateCache).toHaveBeenCalledWith(
+      "workspace-1",
+      "deepseek",
+    )
+  })
+
+  test("responds with 204 (no body)", () => {
+    expect(procedure.route.successStatus).toBe(204)
   })
 })

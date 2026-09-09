@@ -24,7 +24,7 @@ export const updateIntegrationDeepSeekAction = workspaceActionClient
       parsedInput: UpdateDeepSeekRequest
       bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
-      await integrationDeepSeekService.update(workspaceId, parsedInput)
+      await integrationDeepSeekService.update({ workspaceId }, parsedInput)
 
       await aiIntegrationService.invalidateCache(
         workspaceId,

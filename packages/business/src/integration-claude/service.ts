@@ -34,20 +34,22 @@ class IntegrationClaudeService extends BaseService {
     )
   }
 
-  async update(workspaceId: string, data: UpdateClaudeInput) {
-    const existing = await db.query.integrationClaudeModel.findFirst({
-      where: { workspaceId },
-    })
+  async update(props: { workspaceId: string }, data: UpdateClaudeInput) {
+    const existing = await this.findByWorkspaceId(props.workspaceId)
     if (!existing) {
       throw new Error("Integration Claude not found")
     }
 
-    await db
+    const result = await db
       .update(integrationClaudeModel)
       .set(data)
       .where(eq(integrationClaudeModel.id, existing.id))
+      .returning()
+      .then((rows) => rows[0])
 
     await this.audit("update", "updated the Claude integration configuration")
+
+    return result
   }
 
   async disconnect(workspaceId: string) {

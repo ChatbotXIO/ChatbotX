@@ -1157,8 +1157,14 @@ class ConversationService extends BaseService {
     await this.invalidateCacheTags(tags)
   }
 
-  /** Conversation + contact, for the hot send-flow-step path (do NOT use `findWithFullRelations` here — it fetches far more). */
-  async findByIdWithContact(props: {
+  /**
+   * Conversation + contact, for the hot send-flow-step path (do NOT use
+   * `findWithFullRelations` here — it fetches far more). Unscoped by `id`
+   * only — safe today because its sole caller (`send-flow-step.ts`) is the
+   * entry point that resolves the workspace *from* this conversation lookup,
+   * so no `workspaceId` exists yet to filter by.
+   */
+  async findByIdWithContactUnscoped(props: {
     id: string
     tx?: DatabaseClient
   }): Promise<

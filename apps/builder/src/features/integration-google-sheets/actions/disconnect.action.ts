@@ -11,9 +11,9 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schema"
 import { logger } from "@/lib/log"
-import { authActionClient } from "@/lib/safe-action"
+import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
-export const disconnectGoogleSheetsAction = authActionClient
+export const disconnectGoogleSheetsAction = workspaceActionClientAllowExpired
   .bindArgsSchemas(workspaceIdrequestParams)
   .action(
     async ({

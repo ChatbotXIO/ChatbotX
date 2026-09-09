@@ -42,7 +42,7 @@ vi.mock("@chatbotx.io/business/coexist", () => {
     mockRunWrite(fields, guard)
   return {
     coexistService: {
-      claimRun: mockClaimRun,
+      claimRunWithNewToken: mockClaimRun,
       findLiveRun: mockFindLiveRun,
       updateProgress: ({
         fields,
@@ -783,7 +783,7 @@ describe("coexistWhatsappFlush — run lifecycle", () => {
   })
 
   // ── the chunk chain must hand the run back before queueing the next one ──
-  // `claimRun` refuses a `running` run whose heartbeat is under 10 minutes
+  // `claimRunWithNewToken` refuses a `running` run whose heartbeat is under 10 minutes
   // old. A continuation queued while this worker still held the claim
   // therefore lost its own claim and abandoned, leaving the chain to the
   // scheduler's 1-hour stale sweep — one chunk per hour, then `failed`.

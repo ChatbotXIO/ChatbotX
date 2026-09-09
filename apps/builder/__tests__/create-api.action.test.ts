@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   connect: vi.fn(),
   findWorkspaceOrFail: vi.fn(),
   createWorkspace: vi.fn(),
+  hasWorkspaceAccess: vi.fn(async () => true),
   generateApiChannelToken: vi.fn(async () => ({
     token: "plain-token",
     tokenHash: "token-hash",
@@ -24,6 +25,7 @@ vi.mock("@/lib/safe-action", () => {
 
 vi.mock("@chatbotx.io/business", () => ({
   assertPublicUrl: mocks.assertPublicUrl,
+  hasWorkspaceAccess: mocks.hasWorkspaceAccess,
   integrationApiService: { connect: mocks.connect },
   workspaceService: {
     findOrFail: mocks.findWorkspaceOrFail,
@@ -52,6 +54,7 @@ type ActionHandler = (args: {
 describe("createApiAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.hasWorkspaceAccess.mockResolvedValue(true)
     mocks.findWorkspaceOrFail.mockResolvedValue({
       id: "workspace-1",
       ownerId: "owner-1",
@@ -91,5 +94,21 @@ describe("createApiAction", () => {
       workspaceId: "workspace-1",
       token: "plain-token",
     })
+  })
+
+  test("rejects a workspaceId the caller is not a member of", async () => {
+    mocks.hasWorkspaceAccess.mockResolvedValue(false)
+
+    await expect(
+      (createApiAction as unknown as ActionHandler)({
+        parsedInput: {
+          workspaceId: "workspace-1",
+          name: "Support API",
+        },
+        ctx: { user: { id: "intruder-1" } },
+      }),
+    ).rejects.toThrow()
+
+    expect(mocks.connect).not.toHaveBeenCalled()
   })
 })

@@ -1,4 +1,7 @@
-import { inboxService, integrationWhatsappService } from "@chatbotx.io/business"
+import {
+  inboxService,
+  whatsappMessageTemplateService,
+} from "@chatbotx.io/business"
 import type {
   IntegrationWhatsappModel,
   WhatsappMessageTemplateModel,
@@ -78,7 +81,9 @@ export async function replaceWhatsappTemplateVariables(props: {
 
 export type ValidatedWhatsappTemplate = {
   inbox: NonNullable<
-    Awaited<ReturnType<typeof inboxService.findWithIntegrationWhatsappById>>
+    Awaited<
+      ReturnType<typeof inboxService.findWithIntegrationWhatsappByIdUnscoped>
+    >
   > & {
     integrationWhatsapp: IntegrationWhatsappModel
   }
@@ -89,7 +94,7 @@ export async function validateWhatsappTemplate(
   templateId: string,
   inboxId: string,
 ): Promise<ValidatedWhatsappTemplate | null> {
-  const inbox = await inboxService.findWithIntegrationWhatsappById({
+  const inbox = await inboxService.findWithIntegrationWhatsappByIdUnscoped({
     id: inboxId,
   })
 
@@ -98,9 +103,10 @@ export async function validateWhatsappTemplate(
   }
 
   const template =
-    await integrationWhatsappService.findApprovedWhatsappTemplate({
+    await whatsappMessageTemplateService.findApprovedByIdForIntegration({
       id: templateId,
       integrationWhatsappId: inbox.integrationWhatsapp.id,
+      workspaceId: inbox.workspaceId,
     })
 
   if (!template) {

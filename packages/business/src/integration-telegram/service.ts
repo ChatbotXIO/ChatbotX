@@ -90,11 +90,7 @@ class TelegramIntegrationService extends BaseService {
     return { integrationId, wasCreated }
   }
 
-  async disconnect(props: {
-    workspaceId: string
-    id: string
-    tx: DatabaseClient
-  }) {
+  async disconnect(props: { id: string; tx: DatabaseClient }) {
     await props.tx
       .delete(integrationTelegramModel)
       .where(eq(integrationTelegramModel.id, props.id))

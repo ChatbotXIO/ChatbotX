@@ -48,6 +48,22 @@ class WhatsappMessageTemplateService extends BaseService {
     })
   }
 
+  /** Approved-only template lookup for outbound template sends, scoped by workspace through the integration relation. */
+  findApprovedByIdForIntegration(props: {
+    id: string
+    integrationWhatsappId: string
+    workspaceId: string
+  }) {
+    return db.query.whatsappMessageTemplateModel.findFirst({
+      where: {
+        id: props.id,
+        integrationWhatsappId: props.integrationWhatsappId,
+        integrationWhatsapp: { workspaceId: props.workspaceId },
+        status: "APPROVED",
+      },
+    })
+  }
+
   /** Full sync only — WhatsApp's template sync has no partial-match mode. */
   async syncFromMeta(props: {
     integrationWhatsappId: string

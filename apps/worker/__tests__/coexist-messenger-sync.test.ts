@@ -77,7 +77,7 @@ vi.mock("@chatbotx.io/business", () => ({
     findLastSyncedAt: mockFindLastSyncedAt,
     findInitState: mockFindInitState,
     findResumeCeiling: mockFindResumeCeiling,
-    claimRunForSync: mockClaimRunForSync,
+    reclaimRunForRetry: mockClaimRunForSync,
     updateProgress: mockUpdateProgress,
     incrementProgress: mockIncrementProgress,
     findTerminalCounters: mockFindTerminalCounters,
@@ -270,7 +270,7 @@ const wireSelectChain = (
 }
 
 /**
- * Wires `coexistService.claimRunForSync` — the optimistic claim that replaces
+ * Wires `coexistService.reclaimRunForRetry` — the optimistic claim that replaces
  * the old raw `db.update().set().where().returning()` chain. Default claim
  * result is the run row (handler treats the run as successfully claimed);
  * tests that need "already claimed" pass `wireUpdateChain(null)`.

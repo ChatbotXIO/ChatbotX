@@ -2,9 +2,11 @@
 
 import {
   assertPublicUrl,
+  hasWorkspaceAccess,
   integrationApiService,
   workspaceService,
 } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   generateApiChannelToken,
   generateSigningSecret,
@@ -24,6 +26,9 @@ export const createApiAction = authActionClient
     let ownerId = ctx.user.id
 
     if (workspaceId) {
+      if (!(await hasWorkspaceAccess({ workspaceId, user: ctx.user }))) {
+        throw new ChatbotXException("Workspace not found", "notFound", 404)
+      }
       const workspace = await workspaceService.findOrFail({
         where: { id: workspaceId },
       })
