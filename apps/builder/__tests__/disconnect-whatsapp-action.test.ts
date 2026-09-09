@@ -72,6 +72,7 @@ const integrationWhatsappServiceDisconnect = vi.fn(
       inboxId: props.integrationWhatsapp.inboxId,
       ownerId: props.ownerId,
       workspaceId: props.workspaceId,
+      reason: "manual",
       tx: props.tx,
     })
   },
