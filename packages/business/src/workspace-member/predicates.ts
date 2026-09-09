@@ -1,4 +1,30 @@
-import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import {
+  workspaceMemberPermissionsSchema,
+  workspaceMemberRoles,
+} from "@chatbotx.io/database/partials"
+import type {
+  WorkspaceMemberModel,
+  WorkspaceModel,
+} from "@chatbotx.io/database/types"
+
+/**
+ * "Admin" of a workspace: its owner, or any member granted the `superAdmin`
+ * permission. This is the bar for cross-workspace operations such as cloning
+ * a Messenger template onto another workspace's page — being a plain agent
+ * there is not enough. `permissions` is a jsonb column, so it is parsed
+ * rather than trusted.
+ */
+export function isWorkspaceAdminMember(
+  member: Pick<WorkspaceMemberModel, "role" | "permissions">,
+): boolean {
+  if (member.role === workspaceMemberRoles.enum.owner) {
+    return true
+  }
+  const permissions = workspaceMemberPermissionsSchema
+    .partial()
+    .safeParse(member.permissions)
+  return permissions.success && permissions.data.superAdmin === true
+}
 
 /**
  * Owner opt-in check. True while `Workspace.supportAccessUntil` is set and

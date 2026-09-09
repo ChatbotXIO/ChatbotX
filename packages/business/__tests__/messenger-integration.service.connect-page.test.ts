@@ -59,6 +59,12 @@ vi.mock("../src/inbox/connect-channel", () => ({
   runConnectTransaction: mocks.runConnectTransaction,
 }))
 
+// Only `listCloneTargetsForUser` reads memberships; keep the import chain
+// of this connect-page test as narrow as before.
+vi.mock("../src/workspace-member/service", () => ({
+  workspaceMemberService: {},
+}))
+
 const { messengerIntegrationService } = await import(
   "../src/integration-messenger/service"
 )
