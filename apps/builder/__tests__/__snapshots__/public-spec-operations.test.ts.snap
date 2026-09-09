@@ -23,6 +23,41 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/ai-agents",
   },
   {
+    "method": "PUT",
+    "operationId": "aiAgents.update",
+    "path": "/v1/ai-agents/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "aiTriggers.create",
+    "path": "/v1/ai-triggers",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "aiTriggers.delete",
+    "path": "/v1/ai-triggers/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "aiTriggers.duplicate",
+    "path": "/v1/ai-triggers/{id}/duplicate",
+  },
+  {
+    "method": "GET",
+    "operationId": "aiTriggers.get",
+    "path": "/v1/ai-triggers/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "aiTriggers.list",
+    "path": "/v1/ai-triggers",
+  },
+  {
+    "method": "PUT",
+    "operationId": "aiTriggers.update",
+    "path": "/v1/ai-triggers/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "analytics.activeContactsCount",
     "path": "/v1/analytics/active-contacts-count",
@@ -171,41 +206,6 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "analytics.uniqueConversationsByAdmin",
     "path": "/v1/analytics/unique-conversations-by-admin",
-  },
-  {
-    "method": "PUT",
-    "operationId": "aiAgents.update",
-    "path": "/v1/ai-agents/{id}",
-  },
-  {
-    "method": "POST",
-    "operationId": "aiTriggers.create",
-    "path": "/v1/ai-triggers",
-  },
-  {
-    "method": "DELETE",
-    "operationId": "aiTriggers.delete",
-    "path": "/v1/ai-triggers/{id}",
-  },
-  {
-    "method": "POST",
-    "operationId": "aiTriggers.duplicate",
-    "path": "/v1/ai-triggers/{id}/duplicate",
-  },
-  {
-    "method": "GET",
-    "operationId": "aiTriggers.get",
-    "path": "/v1/ai-triggers/{id}",
-  },
-  {
-    "method": "GET",
-    "operationId": "aiTriggers.list",
-    "path": "/v1/ai-triggers",
-  },
-  {
-    "method": "PUT",
-    "operationId": "aiTriggers.update",
-    "path": "/v1/ai-triggers/{id}",
   },
   {
     "method": "PUT",
