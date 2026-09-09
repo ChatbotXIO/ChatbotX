@@ -1,4 +1,6 @@
+import { contactRepository } from "@chatbotx.io/database/repositories"
 import type { MessageFailedPayload } from "@chatbotx.io/flow-config"
+import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { parsedErrorSchema } from "@chatbotx.io/sdk"
 import { toDate } from "../lib/date"
 import {
@@ -128,9 +130,31 @@ export class ContactAnalyticsService {
       return
     }
 
-    const contactIds = Array.from(contacts.keys())
-    const transitioned =
-      await contactStatsRepository.markContactsBlocked(contactIds)
+    // A batch can span multiple workspaces, so the scoped write and its
+    // cache invalidation run once per workspace rather than once overall.
+    const idsByWorkspace = new Map<string, string[]>()
+    for (const [contactId, row] of contacts) {
+      const ids = idsByWorkspace.get(row.workspaceId) ?? []
+      ids.push(contactId)
+      idsByWorkspace.set(row.workspaceId, ids)
+    }
+
+    const transitioned: { id: string }[] = []
+    for (const [workspaceId, ids] of idsByWorkspace) {
+      const blocked = await contactRepository.blockManyIfNotBlocked({
+        workspaceId,
+        ids,
+      })
+      if (blocked.length === 0) {
+        continue
+      }
+      transitioned.push(...blocked)
+      await invalidateCacheByTags([
+        "contacts",
+        `contacts:${workspaceId}`,
+        ...blocked.map((c) => `contacts:${c.id}`),
+      ])
+    }
 
     if (transitioned.length === 0) {
       return
