@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const findBy = vi.fn()
-const findFirst = vi.fn()
+const importFindWorkspaceId = vi.fn()
 const identify = vi.fn()
 const smartDelayFindById = vi.fn()
 const findWorkspaceId = vi.fn()
@@ -9,11 +9,9 @@ const findWorkspaceId = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: { findBy },
 }))
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { query: { importModel: { findFirst } } },
-}))
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createAiWorkspaceScopeRepository: () => ({ findWorkspaceId }),
+  importRepository: { findWorkspaceId: importFindWorkspaceId },
 }))
 vi.mock("@chatbotx.io/business/smart-delay", () => ({
   smartDelayService: { findById: smartDelayFindById },
@@ -28,7 +26,7 @@ const { resolveWorkspaceId } = await import("../src/lib/resolve-workspace-id")
 
 beforeEach(() => {
   findBy.mockReset()
-  findFirst.mockReset()
+  importFindWorkspaceId.mockReset()
   identify.mockReset()
   smartDelayFindById.mockReset()
   findWorkspaceId.mockReset()
@@ -70,7 +68,7 @@ describe("resolveWorkspaceId", () => {
   })
 
   test("resolves an import id", async () => {
-    findFirst.mockResolvedValue({ workspaceId: "workspace-from-import" })
+    importFindWorkspaceId.mockResolvedValue("workspace-from-import")
     await expect(resolveWorkspaceId({ importId: "import-1" })).resolves.toBe(
       "workspace-from-import",
     )

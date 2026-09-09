@@ -48,6 +48,15 @@ vi.mock("@chatbotx.io/redis", () => ({
   createRedisConnection: vi.fn(() => ({ on: vi.fn() })),
 }))
 
+// `conversationService` now imports `contactService` (for the location write
+// inside `recordInboundActivity`), which pulls the analytics package into the
+// import chain; its MAC tracking service reads `bloomFilter` off
+// `@chatbotx.io/redis` at module scope. Stub analytics rather than partially
+// mocking redis — matches the contact-service tests' convention.
+vi.mock("@chatbotx.io/analytics", () => ({
+  macAnalyticsService: {},
+}))
+
 const { conversationService } = await import("../src/conversation/service")
 
 /**

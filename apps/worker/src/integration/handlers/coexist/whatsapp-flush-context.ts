@@ -171,7 +171,7 @@ export const loadFlushContext = async (
   // Claim FIRST — avoids wasting the inbox lookup if another worker owns this
   // run. The claimed row carries the resume counters AND the fresh ownership
   // token, so no second read is needed.
-  const run = await coexistService.claimRun({
+  const run = await coexistService.claimRunWithNewToken({
     runId,
     fromStatuses: LIVE_RUN_STATUSES,
   })

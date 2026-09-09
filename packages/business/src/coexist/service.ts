@@ -173,11 +173,11 @@ class CoexistService extends BaseService {
    * WhatsApp flush passes `LIVE_RUN_STATUSES` so a run parked in `waiting` is
    * claimable too.
    */
-  claimRun(input: {
+  claimRunWithNewToken(input: {
     runId: string
     fromStatuses?: CoexistRunStatus[]
   }): Promise<CoexistSyncRunModel | null> {
-    return coexistSyncRunRepository.claimRun(input)
+    return coexistSyncRunRepository.claimRunWithNewToken(input)
   }
 
   findRunById(input: { runId: string }): Promise<CoexistSyncRunModel | null> {
@@ -306,6 +306,37 @@ class CoexistService extends BaseService {
     return coexistSyncRunRepository.findStrandedCoexistWhatsappIntegrations(
       input,
     )
+  }
+
+  findLastSyncedAt(input: {
+    runId: string
+  }): ReturnType<typeof coexistSyncRunRepository.findLastSyncedAt> {
+    return coexistSyncRunRepository.findLastSyncedAt(input)
+  }
+
+  incrementProgress(
+    input: Parameters<typeof coexistSyncRunRepository.incrementProgress>[0],
+  ): Promise<void> {
+    return coexistSyncRunRepository.incrementProgress(input)
+  }
+
+  findInitState(input: {
+    runId: string
+  }): ReturnType<typeof coexistSyncRunRepository.findInitState> {
+    return coexistSyncRunRepository.findInitState(input)
+  }
+
+  reclaimRunForRetry(input: {
+    runId: string
+    touchUpdatedAt: boolean
+  }): Promise<CoexistSyncRunModel | null> {
+    return coexistSyncRunRepository.reclaimRunForRetry(input)
+  }
+
+  findTerminalCounters(input: {
+    runId: string
+  }): ReturnType<typeof coexistSyncRunRepository.findTerminalCounters> {
+    return coexistSyncRunRepository.findTerminalCounters(input)
   }
 }
 

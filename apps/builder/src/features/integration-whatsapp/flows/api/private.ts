@@ -1,14 +1,12 @@
-import { buildContext } from "@chatbotx.io/business"
-import { findOrFail } from "@chatbotx.io/database/client"
 import {
-  integrationWhatsappModel,
-  whatsappFlowModel,
-} from "@chatbotx.io/database/schema"
+  buildContext,
+  integrationWhatsappService,
+  whatsappFlowService,
+} from "@chatbotx.io/business"
 import {
   type WhatsappAuthValue,
   integration as whatsappIntegration,
 } from "@chatbotx.io/integration-whatsapp"
-import { whatsappFlowService } from "@/features/integration-whatsapp/flows/queries"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import {
@@ -44,20 +42,16 @@ export const whatsappFlowInternalAPIs = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(getWhatsappFlowScreensResponse)
     .handler(async ({ input }) => {
-      const flow = await findOrFail({
-        table: whatsappFlowModel,
-        where: { id: input.flowId },
-        message: "Whatsapp flow not found",
-      })
+      const flow = await whatsappFlowService.findByIdUnscoped(input.flowId)
 
-      const integrationWhatsapp = await findOrFail({
-        table: integrationWhatsappModel,
-        where: {
+      const integrationWhatsapp =
+        await integrationWhatsappService.findByIdForWorkspace({
           id: flow.integrationWhatsappId,
           workspaceId: input.workspaceId,
-        },
-        message: "Whatsapp integration not found",
-      })
+        })
+      if (!integrationWhatsapp) {
+        throw new Error("Whatsapp integration not found")
+      }
 
       const ctx = await buildContext({
         workspaceId: input.workspaceId,

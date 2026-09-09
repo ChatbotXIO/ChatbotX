@@ -1,4 +1,11 @@
-import { and, db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
+import {
+  and,
+  type DatabaseClient,
+  db,
+  eq,
+  findOrFail,
+  sql,
+} from "@chatbotx.io/database/client"
 import type {
   InstagramPersistentMenu,
   IntegrationUserInfo,
@@ -269,6 +276,30 @@ class InstagramIntegrationService extends BaseService {
 
       return { integration, wasCreated }
     })
+  }
+
+  listByWorkspaceId(workspaceId: string) {
+    return db.query.integrationInstagramModel.findMany({
+      where: { workspaceId },
+      orderBy: { createdAt: "asc" },
+    })
+  }
+
+  async updateProfileFields(
+    props: { id: string },
+    data: Record<string, unknown>,
+    tx: DatabaseClient,
+  ) {
+    await tx
+      .update(integrationInstagramModel)
+      .set(data)
+      .where(eq(integrationInstagramModel.id, props.id))
+  }
+
+  async disconnect(props: { id: string; tx: DatabaseClient }) {
+    await props.tx
+      .delete(integrationInstagramModel)
+      .where(eq(integrationInstagramModel.id, props.id))
   }
 }
 

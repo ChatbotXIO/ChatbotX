@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { integrationGeminiService } from "@chatbotx.io/business"
 import type { IntegrationGeminiResource } from "../schema/resource"
 
 export const findIntegrationGemini = async ({
@@ -6,8 +6,4 @@ export const findIntegrationGemini = async ({
 }: {
   workspaceId: string
 }): Promise<IntegrationGeminiResource | null> =>
-  (await db.query.integrationGeminiModel.findFirst({
-    where: {
-      workspaceId,
-    },
-  })) ?? null
+  (await integrationGeminiService.findByWorkspaceId(workspaceId)) ?? null

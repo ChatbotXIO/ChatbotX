@@ -1,21 +1,15 @@
 "use server"
+import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
-import { auditService } from "@chatbotx.io/business/audit"
-import { db, eq } from "@chatbotx.io/database/client"
-import {
-  integrationGeminiModel,
-  integrationModel,
-} from "@chatbotx.io/database/schema"
-import { AuthType, type SecretTextAuthValue } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
+import { integrationGeminiService } from "@chatbotx.io/business"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schema"
+import { verifyAiProviderApiKey } from "@/features/integration-ai/lib/verify-api-key"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { verifyGeminiApiKey } from "../lib"
 import {
   type ConnectGeminiRequest,
   connectGeminiRequest,
@@ -34,7 +28,12 @@ export const connectGeminiAction = workspaceActionClient
     }) => {
       const t = await getTranslations()
 
-      if (!(await verifyGeminiApiKey(parsedInput.apiKey))) {
+      if (
+        !(await verifyAiProviderApiKey(
+          aiProviders.enum.gemini,
+          parsedInput.apiKey,
+        ))
+      ) {
         return returnValidationErrors(connectGeminiRequest, {
           apiKey: {
             _errors: [t("validation.invalidApiKey")],
@@ -42,63 +41,18 @@ export const connectGeminiAction = workspaceActionClient
         })
       }
 
-      const integrationGemini = await db.query.integrationGeminiModel.findFirst(
-        {
-          where: {
-            workspaceId,
-          },
-        },
-      )
-
-      await db.transaction(async (tx) => {
-        if (integrationGemini) {
-          await tx
-            .update(integrationGeminiModel)
-            .set({
-              model: parsedInput.model,
-              auth: {
-                authType: AuthType.secretText,
-                secretText: parsedInput.apiKey,
-              } as SecretTextAuthValue,
-              temperature: parsedInput.temperature,
-              maxOutputTokens: parsedInput.maxOutputTokens,
-            })
-            .where(eq(integrationGeminiModel.id, integrationGemini.id))
-        } else {
-          const integration = await tx
-            .insert(integrationModel)
-            .values({
-              workspaceId,
-              integrationType: "gemini",
-              id: createId(),
-            })
-            .returning()
-            .then((result) => result[0])
-
-          await tx.insert(integrationGeminiModel).values({
-            workspaceId,
-            model: parsedInput.model,
-            auth: {
-              authType: AuthType.secretText,
-              secretText: parsedInput.apiKey,
-            } as SecretTextAuthValue,
-            temperature: parsedInput.temperature,
-            maxOutputTokens: parsedInput.maxOutputTokens,
-            id: createId(),
-            integrationId: integration.id,
-          })
-        }
-      })
-
-      await aiIntegrationService.invalidateCache(workspaceId, "gemini")
-
-      await auditService.record({
+      await integrationGeminiService.connect({
         workspaceId,
-        action: integrationGemini ? "update" : "connect",
-        detail: integrationGemini
-          ? "updated the Gemini integration configuration"
-          : "connected a new Gemini integration",
+        apiKey: parsedInput.apiKey,
+        model: parsedInput.model,
+        temperature: parsedInput.temperature,
+        maxOutputTokens: parsedInput.maxOutputTokens,
       })
+
+      await aiIntegrationService.invalidateCache(
+        workspaceId,
+        aiProviders.enum.gemini,
+      )
 
       return
     },

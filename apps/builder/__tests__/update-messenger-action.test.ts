@@ -7,6 +7,14 @@ const mocks = vi.hoisted(() => {
   const txSet = vi.fn(() => ({ where: txWhere }))
   const txUpdate = vi.fn(() => ({ set: txSet }))
 
+  const updateProfileFields = vi.fn(
+    (
+      _props: { id: string },
+      _data: Record<string, unknown>,
+      tx: { update: typeof txUpdate },
+    ) => Promise.resolve(tx.update().set().where()),
+  )
+
   return {
     buildContext: vi.fn(),
     dbTransaction: vi.fn(
@@ -22,11 +30,15 @@ const mocks = vi.hoisted(() => {
     txSet,
     txUpdate,
     txWhere,
+    updateProfileFields,
   }
 })
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: mocks.buildContext,
+  messengerIntegrationService: {
+    updateProfileFields: mocks.updateProfileFields,
+  },
 }))
 
 vi.mock("@chatbotx.io/business/branding", () => ({

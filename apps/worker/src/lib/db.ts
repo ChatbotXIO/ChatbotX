@@ -1,4 +1,5 @@
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { flowService, flowVersionService } from "@chatbotx.io/business"
+import { findOrFail } from "@chatbotx.io/database/client"
 import {
   contactInboxModel,
   conversationModel,
@@ -56,26 +57,19 @@ export async function detectFlowVersion(props: {
 }> {
   let flowVersion: FlowVersionModel | null | undefined = null
   if (props.flowVersionId) {
-    flowVersion = await db.query.flowVersionModel.findFirst({
-      where: {
-        id: props.flowVersionId,
-        workspaceId: props.workspaceId,
-      },
+    flowVersion = await flowVersionService.findByIdForWorkspace({
+      versionId: props.flowVersionId,
+      workspaceId: props.workspaceId,
     })
   } else if (props.flowId) {
-    const flow = await db.query.flowModel.findFirst({
-      where: {
-        id: props.flowId,
-        workspaceId: props.workspaceId,
-        active: true,
-      },
+    const flow = await flowService.findActiveById({
+      id: props.flowId,
+      workspaceId: props.workspaceId,
     })
     if (flow?.currentVersionId) {
-      flowVersion = await db.query.flowVersionModel.findFirst({
-        where: {
-          id: flow.currentVersionId,
-          workspaceId: props.workspaceId,
-        },
+      flowVersion = await flowVersionService.findByIdForWorkspace({
+        versionId: flow.currentVersionId,
+        workspaceId: props.workspaceId,
       })
     }
   }

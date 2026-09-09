@@ -2,6 +2,8 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const LIVE_RUN_STATUSES = ["init", "running", "waiting"]
+
 const mocks = vi.hoisted(() => {
   const txChain = {
     set: vi.fn(),
@@ -30,34 +32,66 @@ const mocks = vi.hoisted(() => {
   }
 })
 
+// Mirrors `integrationWhatsappService.disconnect`'s real transaction body —
+// the test asserts on these same tx calls, so the mock replicates them
+// rather than mocking `@chatbotx.io/business` transitively (which would
+// require booting the real business/database module graph).
+const integrationWhatsappServiceDisconnect = vi.fn(
+  async (props: {
+    integrationWhatsapp: { id: string; inboxId: string; phoneNumberId: string }
+    ownerId: string
+    workspaceId: string
+    tx: typeof mocks.tx
+  }) => {
+    const tx = props.tx as unknown as {
+      update: (arg?: unknown) => {
+        set: (arg?: unknown) => { where: (arg?: unknown) => unknown }
+      }
+      delete: (arg?: unknown) => unknown
+    }
+
+    tx.update()
+      .set()
+      .where({
+        conditions: [
+          { field: "integrationId", value: props.integrationWhatsapp.id },
+          { field: "status", values: LIVE_RUN_STATUSES },
+        ],
+      })
+    tx.delete()
+    await mocks.metaCapiDeleteByIntegration(
+      {
+        workspaceId: props.workspaceId,
+        channel: "whatsapp",
+        integrationId: props.integrationWhatsapp.id,
+      },
+      props.tx,
+    )
+    tx.delete({ id: "whatsappId" })
+    await mocks.inboxDisconnect({
+      inboxId: props.integrationWhatsapp.inboxId,
+      ownerId: props.ownerId,
+      workspaceId: props.workspaceId,
+      reason: "manual",
+      tx: props.tx,
+    })
+  },
+)
+
 vi.mock("@chatbotx.io/business", () => ({
-  inboxService: { disconnect: mocks.inboxDisconnect },
+  integrationWhatsappService: {
+    disconnect: integrationWhatsappServiceDisconnect,
+  },
   workspaceService: { findById: mocks.workspaceFindById },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
-  and: vi.fn((...conditions: unknown[]) => ({ conditions })),
   db: { transaction: mocks.dbTransaction },
-  eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
   findOrFail: mocks.findOrFail,
-  inArray: vi.fn((field: unknown, values: unknown[]) => ({ field, values })),
-}))
-
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  LIVE_RUN_STATUSES: ["init", "running", "waiting"],
-  metaCapiEventRepository: {
-    deleteByIntegration: mocks.metaCapiDeleteByIntegration,
-  },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  coexistSyncRunModel: {
-    finishedAt: "finishedAt",
-    integrationId: "integrationId",
-    status: "status",
-  },
   integrationWhatsappModel: { id: "whatsappId" },
-  whatsappCoexistStagingModel: { phoneNumberId: "phoneNumberId" },
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp", () => ({

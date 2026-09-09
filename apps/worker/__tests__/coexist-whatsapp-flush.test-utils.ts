@@ -171,7 +171,7 @@ export function createFlushHarness(mocks: FlushHarnessMocks) {
   /**
    * Wires the production call graph:
    *   1. `integrationWhatsappRepository.findByPhoneNumberId` (select … limit 1)
-   *   2. `coexistService.claimRun` → the claimed run row + ownership token
+   *   2. `coexistService.claimRunWithNewToken` → the claimed run row + ownership token
    *   3. `whatsappCoexistStagingRepository.listPending` (select … orderBy … limit)
    *
    * The staged select returns `stagedRows` on the first batch call and `[]` on

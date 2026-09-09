@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { telegramIntegrationService } from "@chatbotx.io/business"
 import type { IntegrationTelegramModel } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
@@ -7,12 +7,7 @@ export const listIntegrationTelegrams = async ({
 }: {
   where: Partial<Pick<IntegrationTelegramModel, "workspaceId">>
 }): Promise<{ data: IntegrationTelegramModel[] }> => {
-  const data = await db.query.integrationTelegramModel.findMany({
-    where,
-    orderBy: {
-      createdAt: "asc",
-    },
-  })
+  const data = await telegramIntegrationService.listByWorkspaceId(where)
 
   return { data }
 }
@@ -25,9 +20,7 @@ export const findIntegrationTelegram = async ({
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
   return (
-    (await db.query.integrationTelegramModel.findFirst({
-      where: { workspaceId },
-    })) ?? null
+    (await telegramIntegrationService.findByWorkspaceId(workspaceId)) ?? null
   )
 }
 
@@ -37,6 +30,4 @@ export const findIntegrationTelegramByBotId = async ({
 }: {
   botId: string
 }): Promise<IntegrationTelegramModel | null> =>
-  (await db.query.integrationTelegramModel.findFirst({
-    where: { botId },
-  })) ?? null
+  (await telegramIntegrationService.findByBotId(botId)) ?? null

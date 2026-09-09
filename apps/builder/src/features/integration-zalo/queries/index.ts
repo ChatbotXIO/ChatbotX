@@ -1,5 +1,7 @@
-import type { IntegrationZaloResource } from "@chatbotx.io/business"
-import { db } from "@chatbotx.io/database/client"
+import {
+  type IntegrationZaloResource,
+  zaloIntegrationService,
+} from "@chatbotx.io/business"
 import type { IntegrationZaloModel } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
@@ -10,13 +12,7 @@ export const findIntegrationZalo = async ({
 }): Promise<IntegrationZaloResource | null> => {
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
-  return (
-    (await db.query.integrationZaloModel.findFirst({
-      where: {
-        workspaceId,
-      },
-    })) ?? null
-  )
+  return (await zaloIntegrationService.findByWorkspaceId(workspaceId)) ?? null
 }
 
 export const listIntegrationZalo = async ({
@@ -24,12 +20,7 @@ export const listIntegrationZalo = async ({
 }: {
   where: Partial<Pick<IntegrationZaloModel, "workspaceId" | "id">>
 }): Promise<{ data: IntegrationZaloModel[] }> => {
-  const data = await db.query.integrationZaloModel.findMany({
-    where,
-    orderBy: {
-      createdAt: "asc",
-    },
-  })
+  const data = await zaloIntegrationService.listByWorkspaceId(where)
 
   return { data }
 }

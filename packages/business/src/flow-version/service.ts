@@ -285,6 +285,23 @@ class FlowVersionService extends BaseService {
   async invalidateList(flowId: string): Promise<void> {
     await this.invalidateCacheTags(`flows:${flowId}:versions`)
   }
+
+  /**
+   * Version by explicit id, scoped only to workspace — no `flowId`, no
+   * `isDraft` filter, and never throws. Matches the worker's
+   * `detectFlowVersion` exact where-clause; do NOT reuse `findById` (which
+   * requires `flowId`, forces `isDraft: false`, and throws).
+   */
+  async findByIdForWorkspace(props: {
+    versionId: string
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<FlowVersionModel | undefined> {
+    const { versionId, workspaceId, tx = db } = props
+    return await tx.query.flowVersionModel.findFirst({
+      where: { id: versionId, workspaceId },
+    })
+  }
 }
 
 export const flowVersionService = new FlowVersionService()

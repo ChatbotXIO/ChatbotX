@@ -1,7 +1,7 @@
 import { aiTimeouts } from "@chatbotx.io/ai"
 import { aiContextService } from "@chatbotx.io/ai/server"
+import { aiAgentService } from "@chatbotx.io/business"
 import { logProviderError } from "@chatbotx.io/business/error-log"
-import { db } from "@chatbotx.io/database/client"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import {
   type AIAgentModelConfig,
@@ -30,7 +30,7 @@ export async function handleAIGenerateTextAgent({
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
   try {
-    const aiAgent = await db.query.aiAgentModel.findFirst({
+    const aiAgent = await aiAgentService.findBy({
       where: {
         id: step.aiAgentId,
         workspaceId: conversation.workspaceId,

@@ -1,7 +1,6 @@
 "use server"
 
-import { and, db, eq } from "@chatbotx.io/database/client"
-import { integrationZaloModel } from "@chatbotx.io/database/schema"
+import { zaloIntegrationService } from "@chatbotx.io/business"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
@@ -16,15 +15,11 @@ export const toggleZaloTagSyncAction = workspaceActionClient
       parsedInput: { enabled },
     } = props
 
-    await db
-      .update(integrationZaloModel)
-      .set({ syncTagEnabledAt: enabled ? new Date() : null })
-      .where(
-        and(
-          eq(integrationZaloModel.id, integrationId),
-          eq(integrationZaloModel.workspaceId, workspaceId),
-        ),
-      )
+    await zaloIntegrationService.updateTagSync({
+      workspaceId,
+      integrationId,
+      enabled,
+    })
 
     await invalidateCacheByTags([`workspaces:${workspaceId}#zalos`])
   })

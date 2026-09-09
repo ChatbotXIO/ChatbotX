@@ -2,16 +2,12 @@ import {
   coexistService,
   inboxService,
   instagramIntegrationService,
+  messengerIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { channelTypes } from "@chatbotx.io/database/partials"
+import { db } from "@chatbotx.io/database/client"
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
-import {
-  integrationMessengerModel,
-  tagChannelModel,
-} from "@chatbotx.io/database/schema"
 import {
   isDisconnectSafeError,
   type MessengerAuthValue,
@@ -25,16 +21,16 @@ export const disconnectMessenger = async (ctx: {
   id: string
 }) => {
   const [integrationMessenger, workspace] = await Promise.all([
-    findOrFail({
-      table: integrationMessengerModel,
-      where: {
-        id: ctx.id,
-        workspaceId: ctx.workspaceId,
-      },
-      message: "Integration Messenger not found",
+    messengerIntegrationService.findByIdForWorkspace({
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
     }),
     workspaceService.findById({ id: ctx.workspaceId }),
   ])
+
+  if (!integrationMessenger) {
+    throw new Error("Integration Messenger not found")
+  }
 
   const authValue = integrationMessenger.auth as MessengerAuthValue
 
@@ -90,16 +86,6 @@ export const disconnectMessenger = async (ctx: {
       tx,
     })
 
-    // Polymorphic FK cleanup — no DB-level cascade for TagChannel.integrationId
-    await tx
-      .delete(tagChannelModel)
-      .where(
-        and(
-          eq(tagChannelModel.channelType, channelTypes.enum.messenger),
-          eq(tagChannelModel.integrationId, integrationMessenger.id),
-        ),
-      )
-
     // Polymorphic FK cleanup — stale MetaCapiEvent rows would keep occupying
     // the (workspaceId, channel, sourceKey) dedup slot after a reconnect.
     await metaCapiEventRepository.deleteByIntegration(
@@ -111,9 +97,10 @@ export const disconnectMessenger = async (ctx: {
       tx,
     )
 
-    await tx
-      .delete(integrationMessengerModel)
-      .where(eq(integrationMessengerModel.id, integrationMessenger.id))
+    await messengerIntegrationService.disconnect({
+      id: integrationMessenger.id,
+      tx,
+    })
 
     await inboxService.disconnect({
       inboxId: integrationMessenger.inboxId,

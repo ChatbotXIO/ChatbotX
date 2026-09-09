@@ -1,7 +1,6 @@
 "use server"
 
-import { and, db, eq } from "@chatbotx.io/database/client"
-import { integrationMessengerModel } from "@chatbotx.io/database/schema"
+import { messengerIntegrationService } from "@chatbotx.io/business"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
@@ -16,22 +15,13 @@ export const toggleMessengerTagSyncAction = workspaceActionClient
       parsedInput: { enabled },
     } = props
 
-    const updated = await db
-      .update(integrationMessengerModel)
-      .set({ syncTagEnabledAt: enabled ? new Date() : null })
-      .where(
-        and(
-          eq(integrationMessengerModel.id, integrationId),
-          eq(integrationMessengerModel.workspaceId, workspaceId),
-        ),
-      )
-      .returning({
-        syncTagEnabledAt: integrationMessengerModel.syncTagEnabledAt,
-      })
+    const syncTagEnabledAt = await messengerIntegrationService.updateTagSync({
+      workspaceId,
+      integrationId,
+      enabled,
+    })
 
     await invalidateCacheByTags([`workspaces:${workspaceId}#messengers`])
 
-    return {
-      syncTagEnabledAt: updated[0]?.syncTagEnabledAt ?? null,
-    }
+    return { syncTagEnabledAt }
   })

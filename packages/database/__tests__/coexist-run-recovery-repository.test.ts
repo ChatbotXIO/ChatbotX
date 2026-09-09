@@ -364,14 +364,14 @@ describe("CoexistSyncRunRepository recovery queries", () => {
 
     // F5/M3: one claim for every channel — `fromStatuses` is the only
     // difference (WhatsApp may claim a run parked in `waiting`).
-    test("claimRun mints a fresh ownership token and returns the claimed row", async () => {
+    test("claimRunWithNewToken mints a fresh ownership token and returns the claimed row", async () => {
       const { tx, set } = wireUpdate([
         { id: "run-1", claimToken: "generated" } as never,
       ])
       const repository = new CoexistSyncRunRepository()
 
       await expect(
-        repository.claimRun({ runId: "run-1", tx }),
+        repository.claimRunWithNewToken({ runId: "run-1", tx }),
       ).resolves.toEqual({ id: "run-1", claimToken: "generated" })
 
       const written = set.mock.calls[0]?.[0] as Record<string, unknown>
@@ -387,7 +387,7 @@ describe("CoexistSyncRunRepository recovery queries", () => {
       const tokens: unknown[] = []
       for (let i = 0; i < 2; i += 1) {
         const { tx, set } = wireUpdate([{ id: "run-1" }])
-        await repository.claimRun({ runId: "run-1", tx })
+        await repository.claimRunWithNewToken({ runId: "run-1", tx })
         tokens.push(
           (set.mock.calls[0]?.[0] as Record<string, unknown>).claimToken,
         )
@@ -396,11 +396,11 @@ describe("CoexistSyncRunRepository recovery queries", () => {
       expect(new Set(tokens).size).toBe(2)
     })
 
-    test("claimRun widens to the live statuses when asked (WhatsApp)", async () => {
+    test("claimRunWithNewToken widens to the live statuses when asked (WhatsApp)", async () => {
       const { tx } = wireUpdate([{ id: "run-1" }])
       const repository = new CoexistSyncRunRepository()
 
-      await repository.claimRun({
+      await repository.claimRunWithNewToken({
         runId: "run-1",
         fromStatuses: LIVE_RUN_STATUSES,
         tx,
@@ -413,12 +413,12 @@ describe("CoexistSyncRunRepository recovery queries", () => {
       ])
     })
 
-    test("claimRun returns null when another worker holds the run", async () => {
+    test("claimRunWithNewToken returns null when another worker holds the run", async () => {
       const { tx } = wireUpdate([])
       const repository = new CoexistSyncRunRepository()
 
       await expect(
-        repository.claimRun({ runId: "run-1", tx }),
+        repository.claimRunWithNewToken({ runId: "run-1", tx }),
       ).resolves.toBeNull()
     })
   })

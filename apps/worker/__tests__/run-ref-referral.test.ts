@@ -19,11 +19,22 @@ vi.mock("@chatbotx.io/database/client", () => ({
   findOrFail,
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  flowModel: { id: "flowModel.id" },
-  flowVersionModel: { id: "flowVersionModel.id" },
-  reflinkModel: { id: "reflinkModel.id" },
-}))
+// `ref.ts` -> business/minigame -> ...-> contactService pulls in
+// `queries/contact-filter`, which touches many unrelated schema tables at
+// module scope. A Proxy sentinel satisfies vitest's "does this export
+// exist" check for any table name without listing the whole schema.
+vi.mock("@chatbotx.io/database/schema", () => {
+  const overrides = {
+    flowModel: { id: "flowModel.id" },
+    flowVersionModel: { id: "flowVersionModel.id" },
+    reflinkModel: { id: "reflinkModel.id" },
+  }
+  return new Proxy(overrides, {
+    get: (target, prop) =>
+      prop in target ? target[prop as keyof typeof target] : {},
+    has: () => true,
+  })
+})
 
 const emit = vi.fn()
 vi.mock("@chatbotx.io/event-bus", () => ({ emit }))

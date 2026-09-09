@@ -1,5 +1,4 @@
-import { findOrFail } from "@chatbotx.io/database/client"
-import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
+import { integrationWhatsappService } from "@chatbotx.io/business"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   type ConversationalAutomation,
@@ -13,14 +12,14 @@ export const findWhatsappAutomation = async (
 ): Promise<ConversationalAutomation> => {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const integrationWhatsapp = await findOrFail({
-    table: integrationWhatsappModel,
-    where: {
+  const integrationWhatsapp =
+    await integrationWhatsappService.findByIdForWorkspace({
       workspaceId: input.workspaceId,
       id: input.id,
-    },
-    message: "Whatsapp integration not found",
-  })
+    })
+  if (!integrationWhatsapp) {
+    throw new Error("Whatsapp integration not found")
+  }
 
   return await findConversationalAutomation(
     integrationWhatsapp.auth as WhatsappAuthValue,

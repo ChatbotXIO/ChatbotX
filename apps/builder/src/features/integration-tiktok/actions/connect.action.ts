@@ -1,14 +1,12 @@
 import {
-  connectChannelIntegration,
+  tiktokIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import type { TiktokCredential } from "@chatbotx.io/database/partials"
-import { integrationTiktokModel } from "@chatbotx.io/database/schema"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
-import { createId } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { integrations } from "@/integration"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
@@ -38,42 +36,17 @@ export async function connectTiktokHandler({
   const displayName = authValue.metadata.displayName
 
   const { ownerId } = await workspaceService.findById({ id: workspaceId })
-  const integrationId = createId()
 
   try {
     const { wasCreated, integration } = await db.transaction(async (tx) =>
-      connectChannelIntegration({
+      tiktokIntegrationService.connect({
         tx,
         ownerId,
-        inboxData: {
-          workspaceId,
-          name: displayName,
-          channel: "tiktok",
-          sourceId: authValue.metadata.username,
-        },
-        insertIntegration: async (inboxId) => {
-          const [integration] = await tx
-            .insert(integrationTiktokModel)
-            .values({
-              id: integrationId,
-              inboxId,
-              workspaceId,
-              openId,
-              name: displayName,
-              auth: authValue,
-            })
-            .onConflictDoUpdate({
-              target: [integrationTiktokModel.openId],
-              set: {
-                auth: authValue,
-                name: displayName,
-                tokenRefreshError: null,
-              },
-            })
-            .returning({ id: integrationTiktokModel.id })
-
-          return integration
-        },
+        workspaceId,
+        openId,
+        username: authValue.metadata.username,
+        displayName,
+        auth: authValue,
       }),
     )
 

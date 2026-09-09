@@ -39,6 +39,14 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   integrationMessengerModel: {
     pageId: "pageId",
   },
+  tagChannelModel: {
+    channelType: "channelType",
+    integrationId: "integrationId",
+  },
+}))
+
+vi.mock("@chatbotx.io/database/partials", () => ({
+  channelTypes: { enum: { messenger: "messenger" } },
 }))
 
 vi.mock("@chatbotx.io/utils", () => ({

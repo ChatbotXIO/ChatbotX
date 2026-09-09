@@ -1,13 +1,13 @@
 import {
   coexistService,
   inboxService,
+  instagramIntegrationService,
   messengerIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { db } from "@chatbotx.io/database/client"
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
-import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import {
   type InstagramAuthValue,
   isRevokedTokenError,
@@ -21,16 +21,16 @@ export const disconnectInstagram = async (ctx: {
   integrationInstagramId: string
 }) => {
   const [integrationInstagram, workspace] = await Promise.all([
-    findOrFail({
-      table: integrationInstagramModel,
-      where: {
-        id: ctx.integrationInstagramId,
-        workspaceId: ctx.workspaceId,
-      },
-      message: "Integration Instagram not found",
+    instagramIntegrationService.findByIdForWorkspace({
+      id: ctx.integrationInstagramId,
+      workspaceId: ctx.workspaceId,
     }),
     workspaceService.findById({ id: ctx.workspaceId }),
   ])
+
+  if (!integrationInstagram) {
+    throw new Error("Integration Instagram not found")
+  }
 
   const authValue = integrationInstagram.auth as InstagramAuthValue
   const isFacebook = integrationInstagram.type === "facebook"
@@ -91,9 +91,10 @@ export const disconnectInstagram = async (ctx: {
       tx,
     )
 
-    await tx
-      .delete(integrationInstagramModel)
-      .where(eq(integrationInstagramModel.id, integrationInstagram.id))
+    await instagramIntegrationService.disconnect({
+      id: integrationInstagram.id,
+      tx,
+    })
 
     await inboxService.disconnect({
       inboxId: integrationInstagram.inboxId,

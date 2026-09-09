@@ -1,8 +1,10 @@
 import { conversationService } from "@chatbotx.io/business"
 import { smartDelayService } from "@chatbotx.io/business/smart-delay"
-import { db } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
-import { createAiWorkspaceScopeRepository } from "@chatbotx.io/database/repositories"
+import {
+  createAiWorkspaceScopeRepository,
+  importRepository,
+} from "@chatbotx.io/database/repositories"
 import { integrationService } from "../services/integrations"
 
 const aiWorkspaceScopeRepository = createAiWorkspaceScopeRepository()
@@ -94,13 +96,7 @@ const recordIdResolvers: readonly RecordIdResolver[] = [
   },
   {
     field: "importId",
-    resolve: async (id) =>
-      (
-        await db.query.importModel.findFirst({
-          where: { id },
-          columns: { workspaceId: true },
-        })
-      )?.workspaceId,
+    resolve: (id) => importRepository.findWorkspaceId({ id }),
   },
 ]
 

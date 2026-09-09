@@ -17,7 +17,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   coexistSyncRunRepository: {
-    claimRun: vi.fn(),
+    claimRunWithNewToken: vi.fn(),
     createRun: mocks.createRun,
     findIntegrationForCoexist: mocks.findIntegrationForCoexist,
     findLiveRun: mocks.findLiveRun,

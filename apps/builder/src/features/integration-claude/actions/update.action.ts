@@ -2,9 +2,7 @@
 
 import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
-import { auditService } from "@chatbotx.io/business/audit"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { integrationClaudeModel } from "@chatbotx.io/database/schema"
+import { integrationClaudeService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -26,26 +24,11 @@ export const updateIntegrationClaudeAction = workspaceActionClient
       parsedInput: UpdateClaudeRequest
       bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
-      const integrationClaude = await findOrFail({
-        table: integrationClaudeModel,
-        where: { workspaceId },
-        message: "Integration Claude not found",
-      })
-
-      await db
-        .update(integrationClaudeModel)
-        .set(parsedInput)
-        .where(eq(integrationClaudeModel.id, integrationClaude.id))
+      await integrationClaudeService.update({ workspaceId }, parsedInput)
 
       await aiIntegrationService.invalidateCache(
         workspaceId,
         aiProviders.enum.claude,
       )
-
-      await auditService.record({
-        workspaceId,
-        action: "update",
-        detail: "updated the Claude integration configuration",
-      })
     },
   )

@@ -36,6 +36,40 @@ export type TokenRefreshErrorIntegration = {
 }
 
 class IntegrationService extends BaseService {
+  findByIdForWorkspace(props: {
+    id: string
+    workspaceId: string
+  }): Promise<IntegrationModel | undefined> {
+    return db.query.integrationModel.findFirst({
+      where: { id: props.id, workspaceId: props.workspaceId },
+    })
+  }
+
+  async listByWorkspaceIdAndTypes(props: {
+    workspaceId: string
+    integrationTypes: string[]
+  }): Promise<IntegrationModel[]> {
+    return await db.query.integrationModel.findMany({
+      where: {
+        integrationType: { in: props.integrationTypes },
+        workspaceId: props.workspaceId,
+      },
+    })
+  }
+
+  async existsByWorkspaceIdAndTypes(props: {
+    workspaceId: string
+    integrationTypes: string[]
+  }): Promise<boolean> {
+    const existing = await db.query.integrationModel.findFirst({
+      where: {
+        integrationType: { in: props.integrationTypes },
+        workspaceId: props.workspaceId,
+      },
+    })
+    return !!existing
+  }
+
   async listByWorkspaceId(workspaceId: string): Promise<IntegrationModel[]> {
     return await db
       .select()

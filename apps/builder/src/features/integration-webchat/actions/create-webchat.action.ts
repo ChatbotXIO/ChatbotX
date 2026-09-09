@@ -1,11 +1,14 @@
 "use server"
 
-import { inboxService, workspaceService } from "@chatbotx.io/business"
+import {
+  hasWorkspaceAccess,
+  integrationWebchatService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ensureBrandingMenuEntry } from "@chatbotx.io/business/branding"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
-import { integrationWebchatModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
 import { isCommunity } from "@/env"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { authActionClient } from "@/lib/safe-action"
@@ -33,6 +36,9 @@ export const createWebchatAction = authActionClient
       let createdWorkspace = false
 
       if (workspaceId) {
+        if (!(await hasWorkspaceAccess({ workspaceId, user: ctx.user }))) {
+          throw new ChatbotXException("Workspace not found", "notFound", 404)
+        }
         const workspace = await workspaceService.findOrFail({
           where: { id: workspaceId },
         })
@@ -51,30 +57,22 @@ export const createWebchatAction = authActionClient
         createdWorkspace = true
       }
 
-      const webchatId = createId()
-      const { inbox } = await inboxService.create({
-        tx,
-        ownerId,
-        data: {
-          id: webchatId,
+      const created = await integrationWebchatService.create(
+        {
           workspaceId,
-          channel: "webchat",
-          name: rest.name,
-          sourceId: webchatId,
+          ownerId,
+          data: {
+            ...rest,
+            persistentMenus,
+            authorizedDomains: authorizedDomains.map((domain) => domain.value),
+            auth: {},
+            customCss: rest.customCss ?? null,
+          },
         },
-      })
+        tx,
+      )
 
-      await tx.insert(integrationWebchatModel).values({
-        ...rest,
-        persistentMenus,
-        id: webchatId,
-        authorizedDomains: authorizedDomains.map((domain) => domain.value),
-        workspaceId,
-        inboxId: inbox.id,
-        auth: {},
-      })
-
-      return { workspaceId, createdWorkspace, webchatId }
+      return { workspaceId, createdWorkspace, webchatId: created.id }
     })
 
     if (result.createdWorkspace) {

@@ -1,10 +1,55 @@
 import { db, eq } from "@chatbotx.io/database/client"
-import { integrationModel } from "@chatbotx.io/database/schema"
+import {
+  integrationGeminiModel,
+  integrationModel,
+} from "@chatbotx.io/database/schema"
 import { BaseService } from "../base.service"
+import {
+  type ConnectAiProviderInput,
+  connectAiProviderIntegration,
+} from "../integration-ai-provider/connect"
+
+export type UpdateGeminiInput = { autoReply?: boolean }
 
 class IntegrationGeminiService extends BaseService {
   findByWorkspaceId(workspaceId: string) {
     return db.query.integrationGeminiModel.findFirst({ where: { workspaceId } })
+  }
+
+  async connect(input: ConnectAiProviderInput) {
+    const existing = await this.findByWorkspaceId(input.workspaceId)
+
+    await connectAiProviderIntegration({
+      table: integrationGeminiModel,
+      integrationType: "gemini",
+      input,
+      existing,
+    })
+
+    await this.audit(
+      existing ? "update" : "connect",
+      existing
+        ? "updated the Gemini integration configuration"
+        : "connected a new Gemini integration",
+    )
+  }
+
+  async update(props: { workspaceId: string }, data: UpdateGeminiInput) {
+    const existing = await this.findByWorkspaceId(props.workspaceId)
+    if (!existing) {
+      throw new Error("Integration Gemini not found")
+    }
+
+    const result = await db
+      .update(integrationGeminiModel)
+      .set(data)
+      .where(eq(integrationGeminiModel.id, existing.id))
+      .returning()
+      .then((rows) => rows[0])
+
+    await this.audit("update", "updated the Gemini integration configuration")
+
+    return result
   }
 
   async disconnect(workspaceId: string) {

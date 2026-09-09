@@ -37,43 +37,16 @@ vi.mock("@/features/workspace-members/queries", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock @chatbotx.io/database/client
-// Chainable builder: db.update(model).set(…).where(…).returning()
+// Mock @chatbotx.io/database/client — findOrFail is still reached by the
+// workspaceActionClient auth chain.
 // ---------------------------------------------------------------------------
-const returningResult: { current: { syncTagEnabledAt: Date | null }[] } = {
-  current: [],
-}
-
-const dbUpdateBuilder = {
-  set: vi.fn(),
-  where: vi.fn(),
-  returning: vi.fn(),
-}
-
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    update: vi.fn(),
-  },
   findOrFail: vi.fn(),
   isDatabaseError: vi.fn(() => false),
-  and: (...args: unknown[]) => args,
-  eq: (...args: unknown[]) => args,
 }))
 
 // ---------------------------------------------------------------------------
-// Mock @chatbotx.io/database/schema
-// ---------------------------------------------------------------------------
-vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationMessengerModel: {
-    id: "id",
-    workspaceId: "workspaceId",
-    syncTagEnabledAt: "syncTagEnabledAt",
-  },
-  userModel: { id: "id" },
-}))
-
-// ---------------------------------------------------------------------------
-// Mock @chatbotx.io/business (isPlatformAdmin) and errors
+// Mock @chatbotx.io/business (isPlatformAdmin, messengerIntegrationService) and errors
 //
 // This factory mock enumerates exports, so it must cover everything
 // `workspaceActionClient` reaches — not just what this action calls directly.
@@ -82,6 +55,8 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 // unrelated failure. `isWorkspaceScheduledForDeletion` is the deletion gate in
 // `lib/safe-action.ts`; `false` = an active workspace, this action's precondition.
 // ---------------------------------------------------------------------------
+const updateTagSync = vi.fn()
+
 vi.mock("@chatbotx.io/business", () => ({
   isPlatformAdmin: vi.fn(async () => false),
   isWorkspaceScheduledForDeletion: vi.fn(() => false),
@@ -95,6 +70,7 @@ vi.mock("@chatbotx.io/business", () => ({
       isSupportSession: false,
     }
   }),
+  messengerIntegrationService: { updateTagSync },
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
@@ -129,7 +105,7 @@ const { toggleMessengerTagSyncAction } = await import(
   "../toggle-tag-sync.action"
 )
 const { invalidateCacheByTags } = await import("@chatbotx.io/redis")
-const { db, findOrFail } = await import("@chatbotx.io/database/client")
+const { findOrFail } = await import("@chatbotx.io/database/client")
 const { getCurrentUserId } = await import("@/lib/auth/utils")
 const { getAllWorkspaceMembers } = await import(
   "@/features/workspace-members/queries"
@@ -138,7 +114,6 @@ const { getAllWorkspaceMembers } = await import(
 const invalidateCacheByTagsMock = invalidateCacheByTags as ReturnType<
   typeof vi.fn
 >
-const dbUpdate = db.update as ReturnType<typeof vi.fn>
 const findOrFailMock = findOrFail as ReturnType<typeof vi.fn>
 const getCurrentUserIdMock = getCurrentUserId as ReturnType<typeof vi.fn>
 const getAllWorkspaceMembersMock = getAllWorkspaceMembers as ReturnType<
@@ -173,52 +148,29 @@ describe("toggleMessengerTagSyncAction", () => {
       workspaceIds: [WORKSPACE_ID],
     })
 
-    // Re-wire the chainable DB builder
-    dbUpdateBuilder.set.mockReturnValue(dbUpdateBuilder)
-    dbUpdateBuilder.where.mockReturnValue(dbUpdateBuilder)
-    dbUpdateBuilder.returning.mockResolvedValue(returningResult.current)
-    dbUpdate.mockReturnValue(dbUpdateBuilder)
+    updateTagSync.mockResolvedValue(null)
   })
 
   // ── enabled: true ──────────────────────────────────────────────────────────
 
   describe("enabled: true", () => {
-    test("sets syncTagEnabledAt to a Date instance (not null)", async () => {
+    test("returns the Date instance from the service (not null)", async () => {
       const now = new Date()
-      returningResult.current = [{ syncTagEnabledAt: now }]
-      dbUpdateBuilder.returning.mockResolvedValue(returningResult.current)
+      updateTagSync.mockResolvedValue(now)
 
       const result = await invokeAction(true)
 
-      expect(dbUpdate).toHaveBeenCalledTimes(1)
-
-      const setArg = dbUpdateBuilder.set.mock.calls[0]?.[0] as {
-        syncTagEnabledAt: unknown
-      }
-      expect(setArg.syncTagEnabledAt).toBeInstanceOf(Date)
-      expect(setArg.syncTagEnabledAt).not.toBeNull()
-
-      // Return value exposes syncTagEnabledAt from the DB row
+      expect(updateTagSync).toHaveBeenCalledTimes(1)
+      expect(updateTagSync).toHaveBeenCalledWith({
+        workspaceId: WORKSPACE_ID,
+        integrationId: INTEGRATION_ID,
+        enabled: true,
+      })
       expect(result?.data?.syncTagEnabledAt).toBeInstanceOf(Date)
     })
 
-    test("scopes the WHERE clause by both workspaceId and integrationId", async () => {
-      returningResult.current = [{ syncTagEnabledAt: new Date() }]
-      dbUpdateBuilder.returning.mockResolvedValue(returningResult.current)
-
-      await invokeAction(true)
-
-      expect(dbUpdateBuilder.where).toHaveBeenCalledTimes(1)
-      // Our and() mock spreads its args into an array — the array should contain
-      // exactly two eq() predicate results (one per field).
-      const whereArg = dbUpdateBuilder.where.mock.calls[0]?.[0] as unknown[]
-      expect(Array.isArray(whereArg)).toBe(true)
-      expect(whereArg).toHaveLength(2)
-    })
-
     test("calls invalidateCacheByTags with the workspace-scoped messenger key", async () => {
-      returningResult.current = [{ syncTagEnabledAt: new Date() }]
-      dbUpdateBuilder.returning.mockResolvedValue(returningResult.current)
+      updateTagSync.mockResolvedValue(new Date())
 
       await invokeAction(true)
 
@@ -232,21 +184,20 @@ describe("toggleMessengerTagSyncAction", () => {
   // ── enabled: false ─────────────────────────────────────────────────────────
 
   describe("enabled: false", () => {
-    test("sets syncTagEnabledAt to null", async () => {
-      returningResult.current = [{ syncTagEnabledAt: null }]
-      dbUpdateBuilder.returning.mockResolvedValue(returningResult.current)
+    test("passes enabled: false to the service", async () => {
+      updateTagSync.mockResolvedValue(null)
 
       await invokeAction(false)
 
-      const setArg = dbUpdateBuilder.set.mock.calls[0]?.[0] as {
-        syncTagEnabledAt: unknown
-      }
-      expect(setArg.syncTagEnabledAt).toBeNull()
+      expect(updateTagSync).toHaveBeenCalledWith({
+        workspaceId: WORKSPACE_ID,
+        integrationId: INTEGRATION_ID,
+        enabled: false,
+      })
     })
 
     test("calls invalidateCacheByTags with the workspace-scoped messenger key", async () => {
-      returningResult.current = [{ syncTagEnabledAt: null }]
-      dbUpdateBuilder.returning.mockResolvedValue(returningResult.current)
+      updateTagSync.mockResolvedValue(null)
 
       await invokeAction(false)
 
@@ -254,35 +205,21 @@ describe("toggleMessengerTagSyncAction", () => {
         `workspaces:${WORKSPACE_ID}#messengers`,
       ])
     })
-
-    test("scopes the WHERE clause by both workspaceId and integrationId", async () => {
-      returningResult.current = [{ syncTagEnabledAt: null }]
-      dbUpdateBuilder.returning.mockResolvedValue(returningResult.current)
-
-      await invokeAction(false)
-
-      const whereArg = dbUpdateBuilder.where.mock.calls[0]?.[0] as unknown[]
-      expect(Array.isArray(whereArg)).toBe(true)
-      expect(whereArg).toHaveLength(2)
-    })
   })
 
   // ── no matching row ────────────────────────────────────────────────────────
 
-  describe("no matching row (returning empty array)", () => {
+  describe("no matching row (service returns null)", () => {
     test("returns { syncTagEnabledAt: null } without throwing", async () => {
-      returningResult.current = []
-      dbUpdateBuilder.returning.mockResolvedValue([])
+      updateTagSync.mockResolvedValue(null)
 
       const result = await invokeAction(true)
 
-      // updated[0] is undefined → falls back to null via `?? null`
       expect(result?.data?.syncTagEnabledAt).toBeNull()
     })
 
     test("still calls invalidateCacheByTags even when no row was updated", async () => {
-      returningResult.current = []
-      dbUpdateBuilder.returning.mockResolvedValue([])
+      updateTagSync.mockResolvedValue(null)
 
       await invokeAction(false)
 
