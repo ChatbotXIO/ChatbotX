@@ -6,7 +6,7 @@ import {
   type MetaConversionsChannel,
   type MetaConversionsIntegrationByChannel,
   metaConversionsService,
-  resolveCapiAccessToken,
+  resolveCapiAccessTokenForChannel,
   withBlockedOwnerGuard,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -364,7 +364,10 @@ export async function handleSendMetaCapiEvent(
         return
       }
 
-      const auth = await resolveCapiAccessToken(integration)
+      const auth = await resolveCapiAccessTokenForChannel(
+        event.channel,
+        integration,
+      )
       const integrationForSend =
         auth.source === "manual"
           ? integration
@@ -379,7 +382,7 @@ export async function handleSendMetaCapiEvent(
         return
       }
 
-      if (auth.source === "oauth" && !integrationForSend.hasCapiScope) {
+      if (auth.source !== "manual" && !integrationForSend.hasCapiScope) {
         await metaConversionsService.updateCapiStatus({
           id: event.id,
           workspaceId: event.workspaceId,

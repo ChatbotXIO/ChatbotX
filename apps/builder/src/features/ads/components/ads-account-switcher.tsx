@@ -24,6 +24,7 @@ export type AdsAccountSwitcherIntegration = {
   name: string
   displayPhoneNumber: string
   hasCapiScope: boolean
+  isCoexist: boolean
 }
 
 export function AdsAccountSwitcher({
@@ -111,6 +112,7 @@ export function AdsAccountSwitcher({
       {selectedStatus === "missingPermission" && (
         <WhatsappReconnectButton
           integrationWhatsappId={selectedIntegration.id}
+          isCoexist={selectedIntegration.isCoexist}
           oauthCallbackUrl={oauthCallbackUrl}
           settings={whatsappCredentialPublic}
           workspaceId={workspaceId}

@@ -41,8 +41,29 @@ export const instagramCapiReadinessAdapter: CapiReadinessAdapter<"instagram"> =
         resourceId: integration.igId,
       }
     },
-    claimCapiScopeCacheRefresh: (input, tx) =>
-      integrationInstagramRepository.claimCapiScopeCacheRefresh(input, tx),
+    resolveCapiAccessToken,
+    resolveCapiScopeState: (integration) => Promise.resolve(integration),
+    async claimCapiScopeCacheRefresh({ integration, ...input }, tx) {
+      const claimed =
+        await integrationInstagramRepository.claimCapiScopeCacheRefresh(
+          input,
+          tx,
+        )
+      return claimed
+        ? {
+            integration: claimed,
+            restore: {
+              ...input,
+              hasCapiScope: integration.hasCapiScope,
+              capiScopeCheckedAt: input.expectedCapiScopeCheckedAt,
+              expectedCapiScopeCheckedAt: input.capiScopeCheckedAt,
+              claimToken: undefined,
+            },
+          }
+        : null
+    },
+    restoreCapiScopeCache: ({ claimToken: _, ...input }, tx) =>
+      integrationInstagramRepository.updateCapiScopeCache(input, tx),
     findWorkspaceIntegration: (input, tx) =>
       integrationInstagramRepository.findWorkspaceIntegration(input, tx),
     updateCapiScopeCache: (input, tx) =>

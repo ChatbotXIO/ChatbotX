@@ -9,7 +9,11 @@ import { useAction } from "next-safe-action/hooks"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { reconnectWhatsappAction } from "../actions/reconnect.action"
-import { buildFacebookOAuthDialogUrl } from "../libs/embedded-signup"
+import {
+  buildFacebookOAuthDialogUrl,
+  EMBEDDED_SIGNUP_VERSIONS,
+  FACEBOOK_AUTH_TYPES,
+} from "../libs/embedded-signup"
 import { parseOAuthRelayResult } from "../libs/oauth-relay"
 
 export function WhatsappReconnectButton({
@@ -17,12 +21,20 @@ export function WhatsappReconnectButton({
   settings,
   workspaceId,
   disabled = false,
+  isCoexist = false,
   oauthCallbackUrl,
 }: {
   integrationWhatsappId: string
   settings: WhatsappCredentialPublic | null
   workspaceId: string
   disabled?: boolean
+  /**
+   * Whether this number lives on the WhatsApp Business app. Meta only offers
+   * "connect an existing WhatsApp Business app account" when the dialog asks
+   * for that flow, so without this such an account is missing from the list
+   * and the operator has nothing to reconnect to.
+   */
+  isCoexist?: boolean
   /**
    * Absolute callback URL registered with Meta for this credential — the
    * broker callback for inherited/platform credentials, or the reseller's
@@ -97,9 +109,20 @@ export function WhatsappReconnectButton({
         clientId: settings.clientId,
         configId: settings.configId,
         version: settings.version,
-        connectExisting: false,
+        // Selects Meta's WhatsApp Business app onboarding screen, which is
+        // where a coexistence account appears. A Cloud API number keeps the
+        // default WABA selection screen.
+        connectExisting: isCoexist,
         transferPhoneNumber: false,
         locale: document.documentElement.lang || undefined,
+        // A reconnect exists to pick up a permission the account is missing.
+        // Without this the dialog hands back the permissions it already
+        // granted and the operator sees no change.
+        authType: FACEBOOK_AUTH_TYPES.REREQUEST,
+        // Reconnect leads the move to v4, where CTWA and the WhatsApp
+        // Conversions API are products of the Login Configuration rather than
+        // `extras`. Connect stays on the unpinned default until it follows.
+        embeddedSignupVersion: EMBEDDED_SIGNUP_VERSIONS.V4,
       }),
       "_blank",
     )

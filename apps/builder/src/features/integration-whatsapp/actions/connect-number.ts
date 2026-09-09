@@ -4,6 +4,7 @@ import {
   integrationWhatsappService,
   platformCredentialService,
   type WhatsappSignupSessionAuthorized,
+  whatsappBusinessAccountService,
   workspaceMemberService,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -19,9 +20,10 @@ import {
   shareCreditLine,
   type WhatsappAuthValue,
 } from "@chatbotx.io/integration-whatsapp"
+import { appAccessToken } from "@chatbotx.io/integration-whatsapp/api/auth"
 import { normalizeWhatsappDisplayPhoneNumber } from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import { subscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
-import { invalidateCacheByTags } from "@chatbotx.io/redis"
+import { distributedLock, invalidateCacheByTags } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { toConnectActionFailure } from "@/features/channel-connect/lib/connect-action-outcomes"
 import { logger } from "@/lib/log"
@@ -31,6 +33,7 @@ import {
   checkWorkspaceOwnerAccess,
   workspaceAccessDenialException,
 } from "@/lib/workspace/authorize-workspace-access"
+import { getWhatsappGrantedScopes } from "../libs/capi-scope"
 import {
   CONNECT_WHATSAPP_RESULT_TYPES,
   type ConnectWhatsappResult,
@@ -266,6 +269,52 @@ async function provisionWabaResources({
   await subscribeWebhook({ auth: wabaAuth })
 }
 
+/**
+ * The WABA row is a best-effort rollout record: the phone-row credential
+ * remains authoritative until phase 5, so a storage failure must not undo a
+ * successfully connected number.
+ */
+async function persistConnectedWaba(input: {
+  accessToken: string
+  apiVersion: string
+  appAccessToken: string
+  businessId: string
+  provisioned: boolean
+  wabaId: string
+  workspaceId: string
+}): Promise<void> {
+  try {
+    const grantedScopes = await getWhatsappGrantedScopes({
+      accessToken: input.accessToken,
+      appAccessToken: input.appAccessToken,
+      wabaId: input.wabaId,
+    })
+    const row = await whatsappBusinessAccountService.upsertCurrentCredential({
+      workspaceId: input.workspaceId,
+      wabaId: input.wabaId,
+      businessId: input.businessId,
+      credential: {
+        accessToken: input.accessToken,
+        apiVersion: input.apiVersion,
+      },
+      grantedScopes,
+      scopeCheckedAt: new Date(),
+    })
+    if (input.provisioned && row) {
+      await whatsappBusinessAccountService.markProvisioned({
+        workspaceId: input.workspaceId,
+        wabaId: input.wabaId,
+        expectedRevision: row.revision,
+      })
+    }
+  } catch (err) {
+    logger.warn(
+      { err, workspaceId: input.workspaceId, wabaId: input.wabaId },
+      "Unable to persist WhatsApp Business Account credential after connect",
+    )
+  }
+}
+
 type PersistedWhatsappNumber = {
   integrationId: string
   integrationRow: IntegrationWhatsappModel
@@ -275,6 +324,126 @@ type PersistedWhatsappNumber = {
   verifyToken: string
   displayPhoneNumber: string
   phoneName: string
+}
+
+const WABA_PROVISION_LOCK_TIMEOUT_SECONDS = 60
+
+async function finishPreparedWhatsappConnect({
+  input,
+  ownerId,
+  session,
+  whatsappSettings,
+  originUrl,
+  prepared,
+  userId,
+}: {
+  input: ConnectWhatsappSchema
+  ownerId: string
+  session: WhatsappSignupSessionAuthorized | undefined
+  whatsappSettings: WhatsappCredential
+  originUrl: string
+  prepared: DirectConnectInput
+  userId: string
+}): Promise<ConnectWhatsappResult> {
+  const isManual = input.manualConnect
+
+  // The first signup-session connect can create and bind a workspace. Reload
+  // after acquiring the WABA lock so queued number connects see that binding.
+  const currentSession = session
+    ? await integrationWhatsappService.findActiveSignupSessionForUser({
+        id: session.id,
+        userId,
+      })
+    : undefined
+  // `provisionedAt` is only written after Meta succeeds, so an error leaves
+  // the next attempt free to retry.
+  const targetWorkspaceId = currentSession?.workspaceId ?? prepared.workspaceId
+  const existingWaba =
+    isManual || !targetWorkspaceId
+      ? null
+      : await whatsappBusinessAccountService.findByWaba({
+          workspaceId: targetWorkspaceId,
+          wabaId: prepared.wabaId,
+        })
+  const provisioned = !(isManual || existingWaba?.provisionedAt)
+  if (provisioned) {
+    await provisionWabaResources({ prepared, whatsappSettings, originUrl })
+  }
+
+  const { isCoexist, platformType } = await resolveCoexistState({
+    parsedInput: input,
+    phoneNumberId: prepared.phoneNumber.id,
+    accessToken: prepared.accessToken,
+    version: whatsappSettings.version,
+  })
+
+  const persisted = await persistWhatsappNumber({
+    prepared,
+    whatsappSettings,
+    originUrl,
+    isManual,
+    isCoexist,
+    platformType,
+    ownerId,
+    userId,
+  })
+  const { integrationRow, connectedWorkspaceId, phoneName } = persisted
+
+  if (!isManual) {
+    await persistConnectedWaba({
+      accessToken: prepared.accessToken,
+      apiVersion: whatsappSettings.version,
+      appAccessToken: appAccessToken(whatsappSettings),
+      businessId: prepared.businessId,
+      provisioned,
+      wabaId: prepared.wabaId,
+      workspaceId: connectedWorkspaceId,
+    })
+  }
+
+  const { warning, requiresPhoneVerification, registrationError } =
+    await runWhatsappPostConnect({
+      isCoexist,
+      isManual,
+      auth: persisted.auth,
+      whatsappSettings,
+      phoneNumber: prepared.phoneNumber,
+      integrationRow,
+      connectedWorkspaceId,
+      integrationId: persisted.integrationId,
+    })
+
+  await invalidateWorkspaceMembersCache(userId)
+
+  const extra = buildConnectedExtra({
+    warning,
+    registration: { requiresPhoneVerification, registrationError },
+    phoneNumber: prepared.phoneNumber,
+    manual: isManual
+      ? {
+          integrationId: integrationRow.id,
+          workspaceId: connectedWorkspaceId,
+          webhookUrl: persisted.webhookUrl,
+          verifyToken: persisted.verifyToken,
+        }
+      : undefined,
+  })
+
+  return {
+    type: CONNECT_WHATSAPP_RESULT_TYPES.CONNECTED,
+    workspaceId: connectedWorkspaceId,
+    isManual,
+    redirectUrl: `/space/${connectedWorkspaceId}`,
+    outcome: {
+      sourceId: prepared.phoneNumber.id,
+      name: phoneName,
+      status: "connected",
+      warning,
+      integrationId: integrationRow.id,
+      coexistEligible: isCoexist,
+      extra,
+    },
+  }
 }
 
 /**
@@ -397,8 +566,6 @@ export async function connectWhatsappNumber({
     const { ownerId, session, whatsappSettings, originUrl } =
       await resolveWhatsappConnectContext({ input, userId })
 
-    const isManual = input.manualConnect
-
     const prepared = await prepareConnectInput({
       input,
       whatsappSettings,
@@ -411,72 +578,28 @@ export async function connectWhatsappNumber({
       return prepared.result
     }
 
-    if (!isManual) {
-      await provisionWabaResources({ prepared, whatsappSettings, originUrl })
-    }
-
-    const { isCoexist, platformType } = await resolveCoexistState({
-      parsedInput: input,
-      phoneNumberId: prepared.phoneNumber.id,
-      accessToken: prepared.accessToken,
-      version: whatsappSettings.version,
-    })
-
-    const persisted = await persistWhatsappNumber({
-      prepared,
-      whatsappSettings,
-      originUrl,
-      isManual,
-      isCoexist,
-      platformType,
-      ownerId,
-      userId,
-    })
-    const { integrationRow, connectedWorkspaceId, phoneName } = persisted
-
-    const { warning, requiresPhoneVerification, registrationError } =
-      await runWhatsappPostConnect({
-        isCoexist,
-        isManual,
-        auth: persisted.auth,
+    const targetWorkspaceId = session?.workspaceId ?? prepared.workspaceId
+    const connect = async () =>
+      await finishPreparedWhatsappConnect({
+        input,
+        ownerId,
+        session,
         whatsappSettings,
-        phoneNumber: prepared.phoneNumber,
-        integrationRow,
-        connectedWorkspaceId,
-        integrationId: persisted.integrationId,
+        originUrl,
+        prepared,
+        userId,
       })
 
-    await invalidateWorkspaceMembersCache(userId)
-
-    const extra = buildConnectedExtra({
-      warning,
-      registration: { requiresPhoneVerification, registrationError },
-      phoneNumber: prepared.phoneNumber,
-      manual: isManual
-        ? {
-            integrationId: integrationRow.id,
-            workspaceId: connectedWorkspaceId,
-            webhookUrl: persisted.webhookUrl,
-            verifyToken: persisted.verifyToken,
-          }
-        : undefined,
-    })
-
-    return {
-      type: CONNECT_WHATSAPP_RESULT_TYPES.CONNECTED,
-      workspaceId: connectedWorkspaceId,
-      isManual,
-      redirectUrl: `/space/${connectedWorkspaceId}`,
-      outcome: {
-        sourceId: prepared.phoneNumber.id,
-        name: phoneName,
-        status: "connected",
-        warning,
-        integrationId: integrationRow.id,
-        coexistEligible: isCoexist,
-        extra,
-      },
+    if (input.manualConnect) {
+      return await connect()
     }
+
+    return await distributedLock.runExclusive({
+      key: `whatsapp:waba-provision:${targetWorkspaceId ?? ownerId}:${prepared.wabaId}`,
+      timeoutInSeconds: WABA_PROVISION_LOCK_TIMEOUT_SECONDS,
+      retryTimeoutInSeconds: WABA_PROVISION_LOCK_TIMEOUT_SECONDS,
+      fn: connect,
+    })
   } catch (error) {
     return toConnectActionFailure(error, {
       ...identity,

@@ -23,6 +23,127 @@ afterEach(() => {
 })
 
 describe("buildFacebookOAuthDialogUrl", () => {
+  test("asks for the WhatsApp Business app screen when reconnecting a coexistence number", async () => {
+    const { buildFacebookOAuthDialogUrl } = await loadWith({
+      NEXT_PUBLIC_BROKER_URL: BROKER_URL,
+    })
+
+    const extrasFor = (connectExisting: boolean) =>
+      JSON.parse(
+        new URL(
+          buildFacebookOAuthDialogUrl({
+            resellerOrigin: RESELLER_ORIGIN,
+            redirectUri: `${BROKER_URL}/integrations/whatsapp/callback`,
+            clientId: "client-1",
+            configId: "config-1",
+            version: "v21.0",
+            connectExisting,
+            transferPhoneNumber: false,
+          }),
+        ).searchParams.get("extras") ?? "{}",
+      )
+
+    // Meta only lists a WhatsApp Business app account behind this feature
+    // type; the default screen shows Cloud API WABAs and nothing else, which
+    // left such a number with nothing to select on reconnect.
+    expect(extrasFor(true).featureType).toBe("whatsapp_business_app_onboarding")
+    expect(extrasFor(false).featureType).toBeUndefined()
+  })
+
+  test("pins the reconnect flow to Embedded Signup v4", async () => {
+    const { buildFacebookOAuthDialogUrl, EMBEDDED_SIGNUP_VERSIONS } =
+      await loadWith({ NEXT_PUBLIC_BROKER_URL: BROKER_URL })
+
+    const result = new URL(
+      buildFacebookOAuthDialogUrl({
+        resellerOrigin: RESELLER_ORIGIN,
+        redirectUri: `${BROKER_URL}/integrations/whatsapp/callback`,
+        clientId: "client-1",
+        configId: "config-1",
+        version: "v21.0",
+        connectExisting: false,
+        transferPhoneNumber: false,
+        embeddedSignupVersion: EMBEDDED_SIGNUP_VERSIONS.V4,
+      }),
+    )
+    const extras = JSON.parse(result.searchParams.get("extras") ?? "{}")
+
+    expect(extras.version).toBe("v4")
+    // v4 dropped `marketing_messages_lite` as a feature — it is a Login
+    // Configuration product there — and only v2 needs `sessionInfoVersion`.
+    expect(extras.features).toBeUndefined()
+    expect(extras.sessionInfoVersion).toBeUndefined()
+  })
+
+  test("leaves an unpinned flow on the shape Meta accepted before v4", async () => {
+    const { buildFacebookOAuthDialogUrl } = await loadWith({
+      NEXT_PUBLIC_BROKER_URL: BROKER_URL,
+    })
+
+    const result = new URL(
+      buildFacebookOAuthDialogUrl({
+        resellerOrigin: RESELLER_ORIGIN,
+        redirectUri: `${BROKER_URL}/integrations/whatsapp/callback`,
+        clientId: "client-1",
+        configId: "config-1",
+        version: "v21.0",
+        connectExisting: false,
+        transferPhoneNumber: false,
+      }),
+    )
+    const extras = JSON.parse(result.searchParams.get("extras") ?? "{}")
+
+    expect(extras.version).toBeUndefined()
+    expect(extras.sessionInfoVersion).toBe(3)
+    expect(extras.features).toEqual(["marketing_messages_lite"])
+  })
+
+  test("omits auth_type on a first connect", async () => {
+    const { buildFacebookOAuthDialogUrl } = await loadWith({
+      NEXT_PUBLIC_BROKER_URL: BROKER_URL,
+    })
+
+    const result = new URL(
+      buildFacebookOAuthDialogUrl({
+        resellerOrigin: RESELLER_ORIGIN,
+        redirectUri: `${BROKER_URL}/integrations/whatsapp/callback`,
+        clientId: "client-1",
+        configId: "config-1",
+        version: "v21.0",
+        connectExisting: false,
+        transferPhoneNumber: false,
+      }),
+    )
+
+    expect(result.searchParams.get("auth_type")).toBeNull()
+  })
+
+  test("asks Meta to re-request permissions when the caller is reconnecting", async () => {
+    const { buildFacebookOAuthDialogUrl, FACEBOOK_AUTH_TYPES } = await loadWith(
+      {
+        NEXT_PUBLIC_BROKER_URL: BROKER_URL,
+      },
+    )
+
+    const result = new URL(
+      buildFacebookOAuthDialogUrl({
+        resellerOrigin: RESELLER_ORIGIN,
+        redirectUri: `${BROKER_URL}/integrations/whatsapp/callback`,
+        clientId: "client-1",
+        configId: "config-1",
+        version: "v21.0",
+        connectExisting: false,
+        transferPhoneNumber: false,
+        authType: FACEBOOK_AUTH_TYPES.REREQUEST,
+      }),
+    )
+
+    // Without it Meta returns a code carrying the permissions the account
+    // already granted, so a permission added to the Embedded Signup
+    // configuration is never offered and the reconnect looks like a no-op.
+    expect(result.searchParams.get("auth_type")).toBe("rerequest")
+  })
+
   test("opens the Facebook dialog with the caller-supplied redirect_uri", async () => {
     const { buildFacebookOAuthDialogUrl, decodeOAuthState } = await loadWith({
       NEXT_PUBLIC_BROKER_URL: BROKER_URL,

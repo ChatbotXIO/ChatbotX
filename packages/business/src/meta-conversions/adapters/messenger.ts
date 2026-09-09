@@ -31,8 +31,29 @@ export const messengerCapiReadinessAdapter: CapiReadinessAdapter<"messenger"> =
         resourceId: integration.pageId,
       }
     },
-    claimCapiScopeCacheRefresh: (input, tx) =>
-      integrationMessengerRepository.claimCapiScopeCacheRefresh(input, tx),
+    resolveCapiAccessToken,
+    resolveCapiScopeState: (integration) => Promise.resolve(integration),
+    async claimCapiScopeCacheRefresh({ integration, ...input }, tx) {
+      const claimed =
+        await integrationMessengerRepository.claimCapiScopeCacheRefresh(
+          input,
+          tx,
+        )
+      return claimed
+        ? {
+            integration: claimed,
+            restore: {
+              ...input,
+              hasCapiScope: integration.hasCapiScope,
+              capiScopeCheckedAt: input.expectedCapiScopeCheckedAt,
+              expectedCapiScopeCheckedAt: input.capiScopeCheckedAt,
+              claimToken: undefined,
+            },
+          }
+        : null
+    },
+    restoreCapiScopeCache: ({ claimToken: _, ...input }, tx) =>
+      integrationMessengerRepository.updateCapiScopeCache(input, tx),
     findWorkspaceIntegration: (input, tx) =>
       integrationMessengerRepository.findWorkspaceIntegration(input, tx),
     updateCapiScopeCache: (input, tx) =>

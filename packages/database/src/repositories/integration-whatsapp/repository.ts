@@ -44,6 +44,24 @@ type WorkspaceIntegrationRef = {
   workspaceId: string
 }
 
+export type IntegrationWhatsappClientResource = Pick<
+  IntegrationWhatsappModel,
+  | "id"
+  | "name"
+  | "inboxId"
+  | "displayPhoneNumber"
+  | "tokenRefreshError"
+  | "phoneNumberId"
+  | "wabaId"
+  | "hasCapiScope"
+  | "capiScopeCheckedAt"
+  | "datasetId"
+  | "workspaceId"
+  | "createdAt"
+> & {
+  inbox?: { id: string; name: string } | null
+}
+
 type UpdateWhatsappRegistrationInput = WorkspaceIntegrationRef & {
   values: Pick<
     typeof integrationWhatsappModel.$inferInsert,
@@ -135,6 +153,7 @@ class IntegrationWhatsappRepository {
       .select({
         id: integrationWhatsappModel.id,
         workspaceId: integrationWhatsappModel.workspaceId,
+        wabaId: integrationWhatsappModel.wabaId,
         auth: integrationWhatsappModel.auth,
       })
       .from(integrationWhatsappModel)
@@ -314,6 +333,35 @@ class IntegrationWhatsappRepository {
             id: true,
             name: true,
           },
+        },
+      },
+    })
+  }
+
+  listClientResourcesByWorkspaceId(
+    workspaceId: string,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappClientResource[]> {
+    return tx.query.integrationWhatsappModel.findMany({
+      columns: {
+        id: true,
+        name: true,
+        inboxId: true,
+        displayPhoneNumber: true,
+        tokenRefreshError: true,
+        phoneNumberId: true,
+        wabaId: true,
+        hasCapiScope: true,
+        capiScopeCheckedAt: true,
+        datasetId: true,
+        workspaceId: true,
+        createdAt: true,
+      },
+      where: { workspaceId },
+      orderBy: { createdAt: "asc" },
+      with: {
+        inbox: {
+          columns: { id: true, name: true },
         },
       },
     })

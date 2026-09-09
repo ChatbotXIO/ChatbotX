@@ -72,6 +72,11 @@ vi.mock("@chatbotx.io/business", () => ({
   platformCredentialService: {
     resolveForOwner: mocks.platformCredentialResolveMock,
   },
+  whatsappBusinessAccountService: {
+    findByWaba: mocks.findWabaRecordMock,
+    markProvisioned: mocks.markWabaProvisionedMock,
+    upsertCurrentCredential: mocks.upsertWabaCredentialMock,
+  },
   workspaceMemberService: {
     isMember: mocks.isMemberMock,
   },
@@ -91,6 +96,10 @@ vi.mock("@chatbotx.io/integration-whatsapp/api/auth", () => ({
   appAccessToken: (settings: { clientId: string; clientSecret: string }) =>
     `${settings.clientId}|${settings.clientSecret}`,
   debugToken: mocks.debugTokenMock,
+  // `getWhatsappGrantedScopes` reads the grant through this one, and
+  // `persistConnectedWaba` swallows its own failures — leaving it off the mock
+  // silently skipped the WABA record write instead of failing the test.
+  debugTokenOrThrow: mocks.debugTokenMock,
   exchangeAccessToken: mocks.exchangeAccessTokenMock,
 }))
 
@@ -118,6 +127,7 @@ vi.mock("@chatbotx.io/integration-whatsapp/api/webhook", () => ({
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: { runExclusive: mocks.distributedLockRunExclusiveMock },
   invalidateCacheByTags: mocks.invalidateCacheByTagsMock,
 }))
 
@@ -140,7 +150,89 @@ describe("connectWhatsappAction — follow-ups and unhandled failures", () => {
   })
 
   describe("WABA pre-work", () => {
-    test("runs before persist and is idempotent across two requests", async () => {
+    test("serializes concurrent first connects so WABA provisioning runs once", async () => {
+      const secondPhoneNumber = { ...selectedPhoneNumber, id: "phone-2" }
+      let waba: { provisionedAt: Date | null; revision: number } | null = null
+      let sessionWorkspaceId: string | null = null
+      let tail = Promise.resolve()
+      mocks.platformCredentialResolveMock.mockResolvedValue({
+        config: {
+          clientId: "client-1",
+          clientSecret: "secret-1",
+          configId: "config-1",
+          systemUserId: "system-user-1",
+          systemUserToken: "system-token-1",
+          businessName: "Business",
+          verifyToken: "verify-token",
+          version: "v23.0",
+          businessId: "credit-line-owner-1",
+        },
+      })
+      mocks.findActiveSignupSessionForUserMock.mockImplementation(async () => ({
+        ...defaultSession,
+        workspaceId: sessionWorkspaceId,
+        candidatePhoneNumberIds: [selectedPhoneNumber.id, secondPhoneNumber.id],
+      }))
+      mocks.connectPhoneNumberMock.mockImplementation(() => {
+        sessionWorkspaceId = "ws-1"
+        return {
+          workspaceId: "ws-1",
+          createdWorkspace: false,
+          integrationRow,
+          wasCreated: true,
+        }
+      })
+      mocks.findWabaRecordMock.mockImplementation(async () => waba)
+      mocks.upsertWabaCredentialMock.mockImplementation(() => {
+        waba ??= { provisionedAt: null, revision: 1 }
+        return waba
+      })
+      mocks.markWabaProvisionedMock.mockImplementation(() => {
+        waba = { provisionedAt: new Date(), revision: 2 }
+        return waba
+      })
+      mocks.distributedLockRunExclusiveMock.mockImplementation(
+        async ({ fn }: { fn: () => Promise<unknown> }) => {
+          const previous = tail
+          let release: (() => void) | undefined
+          tail = new Promise<void>((resolve) => {
+            release = resolve
+          })
+          await previous
+          try {
+            return await fn()
+          } finally {
+            release?.()
+          }
+        },
+      )
+
+      await Promise.all([
+        callConnectWhatsappAction({
+          ctx: { user: { id: "user-1" } },
+          parsedInput: {
+            ...BASE_INPUT,
+            phoneNumberId: selectedPhoneNumber.id,
+            signupSessionId: "signup-session-1",
+          },
+        }),
+        callConnectWhatsappAction({
+          ctx: { user: { id: "user-1" } },
+          parsedInput: {
+            ...BASE_INPUT,
+            phoneNumberId: secondPhoneNumber.id,
+            signupSessionId: "signup-session-1",
+          },
+        }),
+      ])
+
+      expect(mocks.addSystemUserMock).toHaveBeenCalledTimes(1)
+      expect(mocks.shareCreditLineMock).toHaveBeenCalledTimes(1)
+      expect(mocks.subscribeWebhookMock).toHaveBeenCalledTimes(1)
+      expect(mocks.markWabaProvisionedMock).toHaveBeenCalledTimes(1)
+    })
+
+    test("skips provisioning for a second number when the WABA is provisioned", async () => {
       const secondPhoneNumber = { ...selectedPhoneNumber, id: "phone-2" }
       mocks.findActiveSignupSessionForUserMock.mockResolvedValue({
         ...defaultSession,
@@ -187,6 +279,15 @@ describe("connectWhatsappAction — follow-ups and unhandled failures", () => {
 
       mocks.addSystemUserMock.mockClear()
       mocks.subscribeWebhookMock.mockClear()
+      mocks.findActiveSignupSessionForUserMock.mockResolvedValue({
+        ...defaultSession,
+        workspaceId: "ws-1",
+        candidatePhoneNumberIds: [selectedPhoneNumber.id, secondPhoneNumber.id],
+      })
+      mocks.findWabaRecordMock.mockResolvedValue({
+        id: "waba-row",
+        provisionedAt: new Date("2026-09-08T00:00:00.000Z"),
+      })
 
       await callConnectWhatsappAction({
         ctx: { user: { id: "user-1" } },
@@ -197,13 +298,12 @@ describe("connectWhatsappAction — follow-ups and unhandled failures", () => {
         },
       })
 
-      // Same request shape runs the same idempotent calls again — no
-      // state carried between requests that would skip them.
-      expect(mocks.addSystemUserMock).toHaveBeenCalledTimes(1)
-      // Plain subscribeWebhook now also runs once from the manual follow-up
-      // path on OTHER requests, but this is the non-manual pre-work call —
-      // exactly one per request here too.
-      expect(mocks.subscribeWebhookMock).toHaveBeenCalledTimes(1)
+      expect(mocks.addSystemUserMock).not.toHaveBeenCalled()
+      expect(mocks.subscribeWebhookMock).not.toHaveBeenCalled()
+      expect(mocks.findWabaRecordMock).toHaveBeenLastCalledWith({
+        workspaceId: "ws-1",
+        wabaId: "waba-1",
+      })
     })
 
     test("manual connect never runs WABA-level pre-work", async () => {

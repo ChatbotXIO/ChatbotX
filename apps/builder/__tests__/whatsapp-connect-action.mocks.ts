@@ -46,6 +46,7 @@ export const mocks = {
   findActiveSignupSessionForUserMock: vi.fn(),
   createIdMock: vi.fn(),
   debugTokenMock: vi.fn(),
+  distributedLockRunExclusiveMock: vi.fn(),
   exchangeAccessTokenMock: vi.fn(),
   findConnectedPhoneNumberIdsMock: vi.fn(),
   findWabaMock: vi.fn(),
@@ -65,6 +66,9 @@ export const mocks = {
   resolveProviderOriginMock: vi.fn(),
   shareCreditLineMock: vi.fn(),
   subscribeWebhookMock: vi.fn(),
+  findWabaRecordMock: vi.fn(),
+  markWabaProvisionedMock: vi.fn(),
+  upsertWabaCredentialMock: vi.fn(),
   updateAuthMock: vi.fn(),
   updateWorkspaceLogoMock: vi.fn(),
   workspaceFindMock: vi.fn(),
@@ -204,9 +208,21 @@ export function resetWhatsappConnectActionMocks() {
   mocks.buildContextMock.mockResolvedValue({})
   mocks.updateWorkspaceLogoMock.mockResolvedValue(undefined)
   mocks.subscribeWebhookMock.mockResolvedValue(undefined)
+  mocks.findWabaRecordMock.mockResolvedValue(null)
+  mocks.upsertWabaCredentialMock.mockResolvedValue({
+    id: "waba-row",
+    revision: 1,
+  })
+  mocks.markWabaProvisionedMock.mockResolvedValue({
+    id: "waba-row",
+    revision: 2,
+  })
   mocks.updateAuthMock.mockResolvedValue(undefined)
   mocks.invalidateCacheByTagsMock.mockResolvedValue(undefined)
   mocks.debugTokenMock.mockResolvedValue({ app_id: "app-123", is_valid: true })
+  mocks.distributedLockRunExclusiveMock.mockImplementation(
+    async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
+  )
 
   mocks.connectPhoneNumberMock.mockResolvedValue({
     workspaceId: "ws-1",

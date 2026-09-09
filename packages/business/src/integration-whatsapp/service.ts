@@ -26,14 +26,15 @@ import type { ChannelError } from "@chatbotx.io/sdk"
 import { z } from "zod"
 import { BaseService } from "../base.service"
 import { inboxService } from "../inbox/service"
-import { logger } from "../logger"
 import { createDatasetWithFallback } from "../meta-conversions/dataset-fallback"
-import { platformCredentialService } from "../platform-credential/service"
-import { workspaceService } from "../workspace/service"
 import {
-  WHATSAPP_CAPI_SCOPE_CACHE_TTL_MS,
-  whatsappAuthForCapiScopeSchema,
-} from "./auth-schema"
+  metaConversionsService,
+  resolveCapiScopeStateForChannel,
+} from "../meta-conversions/service"
+import { platformCredentialService } from "../platform-credential/service"
+import { whatsappBusinessAccountService } from "../whatsapp-business-account/service"
+import { workspaceService } from "../workspace/service"
+import { whatsappAuthForCapiScopeSchema } from "./auth-schema"
 import {
   type SetCoexistInput,
   type SetCoexistResult,
@@ -306,8 +307,15 @@ class IntegrationWhatsappService extends BaseService {
     })
   }
 
-  listByWorkspaceId(workspaceId: string) {
-    return integrationWhatsappRepository.listByWorkspaceId(workspaceId)
+  async listByWorkspaceId(workspaceId: string) {
+    const integrations =
+      await integrationWhatsappRepository.listByWorkspaceId(workspaceId)
+    return await Promise.all(
+      integrations.map(async (integration) => ({
+        ...integration,
+        ...(await resolveCapiScopeStateForChannel("whatsapp", integration)),
+      })),
+    )
   }
 
   findByIdForWorkspace(
@@ -381,56 +389,24 @@ class IntegrationWhatsappService extends BaseService {
   async refreshCapiScopeCache(
     input: RefreshCapiScopeCacheInput,
   ): Promise<IntegrationWhatsappModel | null> {
-    const now = input.now ?? new Date()
-    const maxAgeMs = input.maxAgeMs ?? WHATSAPP_CAPI_SCOPE_CACHE_TTL_MS
     const existing = await this.findWorkspaceIntegration(input)
     if (!existing) {
       return null
     }
-
-    if (
-      existing.capiScopeCheckedAt &&
-      now.getTime() - existing.capiScopeCheckedAt.getTime() < maxAgeMs
-    ) {
+    try {
+      return await metaConversionsService.refreshCapiScopeCache({
+        channel: "whatsapp",
+        integration: existing,
+        now: input.now,
+        maxAgeMs: input.maxAgeMs,
+        checkScope: async ({ accessToken, resourceId }) =>
+          await input.checkScope({ accessToken, wabaId: resourceId }),
+      })
+    } catch {
+      // This legacy public service has always treated a transient checker
+      // failure as stale readiness rather than surfacing an exception.
       return existing
     }
-
-    const expectedCapiScopeCheckedAt = existing.capiScopeCheckedAt ?? null
-    const claimed =
-      await integrationWhatsappRepository.claimCapiScopeCacheRefresh({
-        id: input.id,
-        workspaceId: input.workspaceId,
-        capiScopeCheckedAt: now,
-        expectedCapiScopeCheckedAt,
-      })
-    if (!claimed) {
-      return this.findWorkspaceIntegration(input)
-    }
-
-    const auth = whatsappAuthForCapiScopeSchema.parse(existing.auth)
-    let hasCapiScope: boolean
-    try {
-      hasCapiScope = await input.checkScope({
-        accessToken: auth.tokens.accessToken,
-        wabaId: existing.wabaId,
-      })
-    } catch (err) {
-      logger.warn(
-        { err, id: input.id, workspaceId: input.workspaceId },
-        "integration-whatsapp: CAPI scope refresh failed",
-      )
-      // Keep the claim timestamp so a transient Meta failure does not trigger a
-      // request-path retry storm; the previous scope value remains authoritative.
-      return claimed
-    }
-
-    return integrationWhatsappRepository.updateCapiScopeCache({
-      id: input.id,
-      workspaceId: input.workspaceId,
-      hasCapiScope,
-      capiScopeCheckedAt: now,
-      expectedCapiScopeCheckedAt: now,
-    })
   }
 
   async replaceAuth(
@@ -459,7 +435,7 @@ class IntegrationWhatsappService extends BaseService {
       throw new Error("WhatsApp integration not found")
     }
 
-    await this.audit("update", "reconnected the WhatsApp channel")
+    await this.audit("update", "re-authorized the WhatsApp Business Account")
 
     return updated
   }
@@ -699,6 +675,14 @@ class IntegrationWhatsappService extends BaseService {
     await tx
       .delete(integrationWhatsappModel)
       .where(eq(integrationWhatsappModel.id, integrationWhatsapp.id))
+
+    // The business-account credential outlives a single number, so it is only
+    // dropped once this workspace has no other number on that account.
+    await whatsappBusinessAccountService.deleteIfOrphaned({
+      workspaceId,
+      wabaId: integrationWhatsapp.wabaId,
+      tx,
+    })
 
     await inboxService.disconnect({
       inboxId: integrationWhatsapp.inboxId,

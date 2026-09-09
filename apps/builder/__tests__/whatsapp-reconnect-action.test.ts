@@ -19,22 +19,24 @@ const {
   findWorkspaceIntegrationMock,
   getCurrentUserAndTargetWorkspaceMock,
   resolveOwningWabaIdMock,
-  hasWhatsappCapiScopeMock,
+  getWhatsappGrantedScopesMock,
   listPhoneNumbersMock,
   platformCredentialResolveMock,
   replaceAuthMock,
   subscribeWebhookMock,
+  upsertCurrentCredentialMock,
 } = vi.hoisted(() => ({
   exchangeAccessTokenMock: vi.fn(),
   findWabaMock: vi.fn(),
   findWorkspaceIntegrationMock: vi.fn(),
   getCurrentUserAndTargetWorkspaceMock: vi.fn(),
   resolveOwningWabaIdMock: vi.fn(),
-  hasWhatsappCapiScopeMock: vi.fn(),
+  getWhatsappGrantedScopesMock: vi.fn(),
   listPhoneNumbersMock: vi.fn(),
   platformCredentialResolveMock: vi.fn(),
   replaceAuthMock: vi.fn(),
   subscribeWebhookMock: vi.fn(),
+  upsertCurrentCredentialMock: vi.fn(),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -59,7 +61,7 @@ vi.mock("@/lib/oauth-broker", () => ({
 }))
 
 vi.mock("@/features/integration-whatsapp/libs/capi-scope", () => ({
-  hasWhatsappCapiScope: hasWhatsappCapiScopeMock,
+  getWhatsappGrantedScopes: getWhatsappGrantedScopesMock,
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -69,6 +71,9 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   platformCredentialService: {
     resolveForOwner: platformCredentialResolveMock,
+  },
+  whatsappBusinessAccountService: {
+    upsertCurrentCredential: upsertCurrentCredentialMock,
   },
   WHATSAPP_CAPI_SCOPE: "whatsapp_business_manage_events",
 }))
@@ -137,7 +142,9 @@ describe("reconnectWhatsappAction", () => {
       },
     })
     resolveOwningWabaIdMock.mockResolvedValue("waba-1")
-    hasWhatsappCapiScopeMock.mockResolvedValue(true)
+    getWhatsappGrantedScopesMock.mockResolvedValue([
+      "whatsapp_business_manage_events",
+    ])
     listPhoneNumbersMock.mockResolvedValue({
       data: [
         {
@@ -157,6 +164,10 @@ describe("reconnectWhatsappAction", () => {
       },
     })
     replaceAuthMock.mockResolvedValue(undefined)
+    upsertCurrentCredentialMock.mockResolvedValue({
+      id: "waba-row",
+      revision: 1,
+    })
     subscribeWebhookMock.mockResolvedValue(undefined)
   })
 
@@ -203,6 +214,23 @@ describe("reconnectWhatsappAction", () => {
         metadata: expect.objectContaining({ wabaId: "waba-1" }),
       }),
       includeAutomaticEvents: true,
+    })
+  })
+
+  test("creates or updates one WABA credential from the validated grant", async () => {
+    await callReconnectWhatsappAction({
+      bindArgsParsedInputs: ["ws-1", "iw-1"],
+      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+      parsedInput: { code: "oauth-code-1" },
+    })
+
+    expect(upsertCurrentCredentialMock).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      wabaId: "waba-1",
+      businessId: "business-1",
+      credential: { accessToken: "access-token-1", apiVersion: "v23.0" },
+      grantedScopes: ["whatsapp_business_manage_events"],
+      scopeCheckedAt: expect.any(Date),
     })
   })
 

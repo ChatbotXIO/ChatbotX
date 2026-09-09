@@ -94,6 +94,8 @@ export type IntegrationOutlookCalendarModel =
   typeof schema.integrationOutlookCalendarModel.$inferSelect
 export type IntegrationWhatsappModel =
   typeof schema.integrationWhatsappModel.$inferSelect
+export type WhatsappBusinessAccountModel =
+  typeof schema.whatsappBusinessAccountModel.$inferSelect
 export type IntegrationZaloModel =
   typeof schema.integrationZaloModel.$inferSelect
 export type IntegrationTelegramModel =

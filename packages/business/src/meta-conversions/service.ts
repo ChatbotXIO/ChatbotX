@@ -101,6 +101,24 @@ function sendAdapterFor<TChannel extends MetaConversionsChannel>(
   return capiSendAdapters[channel] as CapiSendAdapter<TChannel>
 }
 
+export async function resolveCapiAccessTokenForChannel<
+  TChannel extends MetaConversionsChannel,
+>(
+  channel: TChannel,
+  integration: MetaConversionsIntegrationByChannel[TChannel],
+) {
+  return await sendAdapterFor(channel).resolveCapiAccessToken(integration)
+}
+
+export async function resolveCapiScopeStateForChannel<
+  TChannel extends MetaConversionsChannel,
+>(
+  channel: TChannel,
+  integration: MetaConversionsIntegrationByChannel[TChannel],
+) {
+  return await sendAdapterFor(channel).resolveCapiScopeState(integration)
+}
+
 // Connect-path adapters: messenger/instagram/whatsapp — see CapiConnectAdapter.
 const capiConnectAdapters = {
   messenger: messengerCapiReadinessAdapter,
@@ -244,21 +262,22 @@ class MetaConversionsService extends BaseService {
     const adapter = sendAdapterFor(input.channel)
     adapter.assertSupported(input.integration)
 
+    const scopeState = await adapter.resolveCapiScopeState(input.integration)
     if (
-      input.integration.capiScopeCheckedAt &&
-      now.getTime() - input.integration.capiScopeCheckedAt.getTime() < maxAgeMs
+      scopeState.capiScopeCheckedAt &&
+      now.getTime() - scopeState.capiScopeCheckedAt.getTime() < maxAgeMs
     ) {
-      return input.integration
+      return { ...input.integration, ...scopeState }
     }
 
-    const expectedCapiScopeCheckedAt =
-      input.integration.capiScopeCheckedAt ?? null
+    const expectedCapiScopeCheckedAt = scopeState.capiScopeCheckedAt ?? null
     const ref = {
       id: input.integration.id,
       workspaceId: input.integration.workspaceId,
     }
     const claimed = await adapter.claimCapiScopeCacheRefresh({
       ...ref,
+      integration: input.integration,
       capiScopeCheckedAt: now,
       expectedCapiScopeCheckedAt,
     })
@@ -269,7 +288,7 @@ class MetaConversionsService extends BaseService {
     let hasCapiScope: boolean
     try {
       hasCapiScope = await input.checkScope(
-        adapter.buildScopeCheckInput(input.integration),
+        await adapter.buildScopeCheckInput(input.integration),
       )
     } catch (err) {
       logger.warn(
@@ -282,12 +301,7 @@ class MetaConversionsService extends BaseService {
         "meta-conversions: CAPI scope refresh failed",
       )
       await adapter
-        .updateCapiScopeCache({
-          ...ref,
-          hasCapiScope: input.integration.hasCapiScope,
-          capiScopeCheckedAt: expectedCapiScopeCheckedAt,
-          expectedCapiScopeCheckedAt: now,
-        })
+        .restoreCapiScopeCache(claimed.restore)
         .catch((restoreError) => {
           logger.warn(
             {

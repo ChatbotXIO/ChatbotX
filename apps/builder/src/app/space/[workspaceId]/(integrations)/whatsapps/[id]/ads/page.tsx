@@ -2,6 +2,7 @@ import {
   integrationWhatsappService,
   metaConversionsService,
   platformCredentialService,
+  resolveCapiScopeStateForChannel,
   workspaceService,
 } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
@@ -58,6 +59,7 @@ export default async function WhatsappAdsPage(props: {
       : integrationWhatsapp
 
   const resolved = refreshed ?? integrationWhatsapp
+  const scopeState = await resolveCapiScopeStateForChannel("whatsapp", resolved)
   const oauthCallbackOrigin =
     await resolveProviderOriginForCredential(whatsappCredential)
 
@@ -71,7 +73,8 @@ export default async function WhatsappAdsPage(props: {
         name: resolved.name,
         displayPhoneNumber: resolved.displayPhoneNumber,
         wabaId: resolved.wabaId,
-        hasCapiScope: resolved.hasCapiScope,
+        hasCapiScope: scopeState.hasCapiScope,
+        isCoexist: resolved.isCoexist,
         datasetId: resolved.datasetId,
         capiTestEventCode: resolved.capiTestEventCode,
       }}

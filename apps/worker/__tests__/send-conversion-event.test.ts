@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   findContactInbox: vi.fn(),
   findContactByIdForWorkspace: vi.fn(),
   resolveCapiAccessToken: vi.fn(),
+  resolveCapiScopeState: vi.fn(),
   metaEnsureDatasetId: vi.fn(),
   metaEnsureDataset: vi.fn(),
   metaSendConversionEvent: vi.fn(),
@@ -56,7 +57,8 @@ vi.mock("@chatbotx.io/business", async () => {
       ensureDatasetId: mocks.metaEnsureDatasetId,
       refreshCapiScopeCache: mocks.refreshCapiScopeCache,
     },
-    resolveCapiAccessToken: mocks.resolveCapiAccessToken,
+    resolveCapiAccessTokenForChannel: mocks.resolveCapiAccessToken,
+    resolveCapiScopeStateForChannel: mocks.resolveCapiScopeState,
     withBlockedOwnerGuard: mocks.withBlockedOwnerGuard,
     workspaceService: {
       findById: mocks.findWorkspaceById,
@@ -154,6 +156,14 @@ describe("handleSendConversionEvent", () => {
     vi.clearAllMocks()
     mocks.findWorkspaceEvent.mockResolvedValue(pendingEvent)
     mocks.findWorkspaceIntegration.mockResolvedValue(integration)
+    mocks.resolveCapiAccessToken.mockResolvedValue({
+      accessToken: "token-1",
+      source: "oauth",
+    })
+    mocks.resolveCapiScopeState.mockResolvedValue({
+      hasCapiScope: true,
+      capiScopeCheckedAt: null,
+    })
     mocks.ensureDatasetId.mockResolvedValue("dataset-1")
     mocks.sendConversionEvent.mockResolvedValue(undefined)
     mocks.updateCapiStatus.mockResolvedValue({ id: "ace-1" })
@@ -265,6 +275,10 @@ describe("handleSendConversionEvent", () => {
     mocks.findWorkspaceIntegration.mockResolvedValue({
       ...integration,
       hasCapiScope: false,
+    })
+    mocks.resolveCapiScopeState.mockResolvedValue({
+      hasCapiScope: false,
+      capiScopeCheckedAt: null,
     })
 
     await handleSendConversionEvent(jobData)

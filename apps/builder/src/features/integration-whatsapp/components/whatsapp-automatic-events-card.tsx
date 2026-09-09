@@ -23,6 +23,7 @@ export type AutomaticEventsIntegration = {
   displayPhoneNumber: string
   wabaId: string
   hasCapiScope: boolean
+  isCoexist: boolean
 }
 
 export function WhatsappAutomaticEventsCard({
@@ -76,6 +77,7 @@ export function WhatsappAutomaticEventsCard({
           {status === "missingPermission" && (
             <WhatsappReconnectButton
               integrationWhatsappId={integrationWhatsapp.id}
+              isCoexist={integrationWhatsapp.isCoexist}
               oauthCallbackUrl={oauthCallbackUrl}
               settings={whatsappCredentialPublic}
               workspaceId={workspaceId}
