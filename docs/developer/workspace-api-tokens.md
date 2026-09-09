@@ -44,6 +44,10 @@ The `analytics` scope covers both `/v1/error-logs`
 analytics router, every `/v1/analytics/*` route
 (`apps/builder/src/features/analytics/api/public.ts`).
 
+The `appointments` scope existed in the enum and UI registry for some time
+before any endpoint used it — see "Appointments scope — endpoint-to-scope
+table" below for the full surface now behind it.
+
 ## The default token and `{{api_key}}`
 
 Exactly one row per workspace may have `isDefault = true` (partial unique
@@ -202,6 +206,60 @@ Two invariants to preserve when touching this surface:
   `triggerRepository.findWithConditions` rather than reintroducing a
   hardcoded `[]`.
 
+### Appointments scope — endpoint-to-scope table
+
+The `appointments` scope covers appointment calendars, appointments, reminder
+dispatch audit reads, and external (Google/Outlook) calendar connections.
+Every value below existed in `workspaceApiTokenScopes` and
+`workspaceApiTokenScopeRegistry` well before any endpoint used it — it was a
+reserved placeholder; this table documents the endpoints that finally consume
+it. Every handler calls the same `packages/business` service method the
+corresponding UI action or query calls.
+
+| Resource | Endpoint | Service method |
+| --- | --- | --- |
+| Appointment calendars | `GET /v1/appointment-calendars` | `appointmentCalendarService.list` |
+| Appointment calendars | `GET /v1/appointment-calendars/{id}` | `appointmentCalendarService.getForEdit` |
+| Appointment calendars | `POST /v1/appointment-calendars` | `appointmentCalendarService.create` |
+| Appointment calendars | `PUT /v1/appointment-calendars/{id}` | `appointmentCalendarService.update` |
+| Appointment calendars | `PATCH /v1/appointment-calendars/{id}/active` | `appointmentCalendarService.setActive` |
+| Appointment calendars | `POST /v1/appointment-calendars/{id}/duplicate` | `appointmentCalendarService.duplicate` |
+| Appointment calendars | `DELETE /v1/appointment-calendars/{id}` | `appointmentCalendarService.deleteMany` |
+| Appointment calendars | `GET /v1/appointment-calendars/{id}/availability` | `appointmentService.checkAvailability` |
+| Appointments | `GET /v1/appointments` | `appointmentService.list` |
+| Appointments | `GET /v1/appointments/{id}` | `appointmentService.findByOrFail` |
+| Appointments | `POST /v1/appointments` | `appointmentService.bookAppointment` |
+| Appointments | `POST /v1/appointments/{id}/cancel` | `appointmentService.cancelAppointmentById` |
+| Appointments | `DELETE /v1/appointments/{id}` | `appointmentService.deleteAppointmentById` |
+| Appointment reminders | `GET /v1/appointment-reminders` | `appointmentReminderService.listDispatches` |
+| Appointment external calendars | `GET /v1/appointment-external-calendars` | `appointmentExternalCalendarService.listWithConnectedCount` |
+| Appointment external calendars | `DELETE /v1/appointment-external-calendars/{integrationId}` | `appointmentExternalCalendarService.disconnect` |
+
+Three invariants to preserve when touching this surface:
+
+- **`appUrl` must be resolved with `resolveTenantSettings`, never a
+  `.query.ts` adapter.** `appointmentService.list` signs a per-row schedule
+  token using `appUrl`, and the private `list-appointments.query.ts` adapter
+  gets it via `assertCurrentUserCanAccessChatbot`, which resolves a
+  better-auth session — a Bearer-token request has none. The public `list`
+  handler in `features/appointments/api/public.ts` calls
+  `resolveTenantSettings({ workspaceId })` directly instead, exactly like the
+  invariant `public-list-queries-no-session.test.ts` pins for every other
+  resource.
+- **External calendars must use `listWithConnectedCount`, never `list`.**
+  `appointmentExternalCalendarService.list` returns raw `Integration` rows via
+  a relational query; the sibling `IntegrationGoogleCalendar` table holds the
+  OAuth token blob in its `auth` jsonb column.
+  `listWithConnectedCount` selects explicit columns and never touches `auth`
+  — it is the only safe shape to publish on this scope.
+- **Reminder dispatch listing must always pass `workspaceId` explicitly.**
+  `AppointmentReminderDispatchListInput.workspaceId` is optional at the
+  repository layer (it also backs the internal due-reminder scan across every
+  workspace), so the public handler in
+  `features/appointment-management/api/public.ts` must never omit it —
+  omitting it would return dispatch rows across every workspace, not just the
+  caller's.
+
 ## Adding a new scope value
 
 1. Add the value to `workspaceApiTokenScopes` in
@@ -245,6 +303,11 @@ these helpers — import from the business package directly.
 - `apps/builder/__tests__/workspace-token-scope-enforcement.test.ts`
 - `apps/builder/__tests__/workspace-token-scope-registry.test.ts`
 - `apps/builder/__tests__/broadcasts-workspace-token-scope.test.ts`
+- `apps/builder/__tests__/appointments-public-scope.test.ts`
+- `apps/builder/__tests__/appointment-calendars-public-api.test.ts`,
+  `appointments-public-api.test.ts`, `appointment-reminders-public-api.test.ts`,
+  `appointment-external-calendars-public-api.test.ts` — handler-behavior tests
+  for the appointments scope's four routers
 - `apps/builder/__tests__/contacts-public-scope.test.ts`
 - `apps/builder/__tests__/contacts-crud-public-api.test.ts`,
   `contacts-tags-and-fields-public-api.test.ts`,

@@ -2,6 +2,10 @@ import { inboxTeamsPublicRouter } from "@/enterprise/features/inbox-teams/api/pu
 import { aiAgentsPublicRouter } from "@/features/ai-agents/api/public"
 import { aiTriggersPublicRouter } from "@/features/ai-triggers/api/public"
 import { analyticsPublicRouter } from "@/features/analytics/api/public"
+import { appointmentCalendarsPublicRouter } from "@/features/appointment-calendars/api/public"
+import { appointmentExternalCalendarsPublicRouter } from "@/features/appointment-external-calendars/api/public"
+import { appointmentRemindersPublicRouter } from "@/features/appointment-management/api/public"
+import { appointmentsPublicRouter } from "@/features/appointments/api/public"
 import { keywordsPublicRouter } from "@/features/automated-response/api/public"
 import { botFieldsPublicRouter } from "@/features/bot-fields/api/public"
 import { broadcastsPublicRouter } from "@/features/broadcasts/api/public"
@@ -31,6 +35,10 @@ export const publicRouter = {
   aiAgents: aiAgentsPublicRouter,
   aiTriggers: aiTriggersPublicRouter,
   analytics: analyticsPublicRouter,
+  appointmentCalendars: appointmentCalendarsPublicRouter,
+  appointmentExternalCalendars: appointmentExternalCalendarsPublicRouter,
+  appointmentReminders: appointmentRemindersPublicRouter,
+  appointments: appointmentsPublicRouter,
   botFields: botFieldsPublicRouter,
   broadcasts: broadcastsPublicRouter,
   channels: channelsPublicRouter,

@@ -115,3 +115,65 @@ export const possibleErrorsOnDeletingResource = {
   notFound,
   businessError,
 } satisfies ErrorMap
+
+/**
+ * Booking/cancel/delete on appointments can throw five `ChatbotXException`
+ * codes at status 409 that no other route set covers — `slotUnavailable`,
+ * `appointmentAvailabilityChanged`, `appointmentAlreadyScheduled` (booking),
+ * `appointmentNotCancellable` (cancel), `appointmentDeleteBlocked` (delete).
+ * oRPC matches a thrown error to its declaration by code *and* exact status;
+ * on a miss it silently degrades to `defined: false` — the error still
+ * reaches the caller but never appears in the spec — so these must be
+ * declared explicitly rather than folded into `businessError`.
+ */
+const slotUnavailable = {
+  message: "Appointment slot is unavailable",
+  status: 409,
+}
+
+const appointmentAvailabilityChanged = {
+  message: "Appointment calendar availability changed. Please try again.",
+  status: 409,
+}
+
+const appointmentAlreadyScheduled = {
+  message: "Contact already has a scheduled appointment for this calendar",
+  status: 409,
+}
+
+const appointmentNotCancellable = {
+  message: "Appointment cannot be cancelled",
+  status: 409,
+}
+
+const appointmentDeleteBlocked = {
+  message: "Cancel upcoming appointments before deleting them",
+  status: 409,
+}
+
+export const possibleErrorsOnBookingAppointment = {
+  notFound,
+  businessError,
+  slotUnavailable,
+  appointmentAvailabilityChanged,
+  appointmentAlreadyScheduled,
+  appointmentNotCancellable,
+  appointmentDeleteBlocked,
+} satisfies ErrorMap
+
+/**
+ * Disconnecting an external (Google/Outlook) calendar connection that is
+ * still referenced by an appointment calendar throws `connectionInUse` (409)
+ * — see `getDisconnectableGoogleConnection` in
+ * `packages/business/src/appointment-external-calendar/service.ts`.
+ */
+const connectionInUse = {
+  message: "Connection is in use",
+  status: 409,
+}
+
+export const possibleErrorsOnDisconnectingExternalCalendar = {
+  notFound,
+  businessError,
+  connectionInUse,
+} satisfies ErrorMap

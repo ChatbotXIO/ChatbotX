@@ -208,6 +208,86 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/analytics/unique-conversations-by-admin",
   },
   {
+    "method": "POST",
+    "operationId": "appointmentCalendars.create",
+    "path": "/v1/appointment-calendars",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "appointmentCalendars.delete",
+    "path": "/v1/appointment-calendars/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "appointmentCalendars.duplicate",
+    "path": "/v1/appointment-calendars/{id}/duplicate",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointmentCalendars.get",
+    "path": "/v1/appointment-calendars/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointmentCalendars.getAvailability",
+    "path": "/v1/appointment-calendars/{id}/availability",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointmentCalendars.list",
+    "path": "/v1/appointment-calendars",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "appointmentCalendars.setActive",
+    "path": "/v1/appointment-calendars/{id}/active",
+  },
+  {
+    "method": "PUT",
+    "operationId": "appointmentCalendars.update",
+    "path": "/v1/appointment-calendars/{id}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "appointmentExternalCalendars.disconnect",
+    "path": "/v1/appointment-external-calendars/{integrationId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointmentExternalCalendars.list",
+    "path": "/v1/appointment-external-calendars",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointmentReminders.list",
+    "path": "/v1/appointment-reminders",
+  },
+  {
+    "method": "POST",
+    "operationId": "appointments.book",
+    "path": "/v1/appointments",
+  },
+  {
+    "method": "POST",
+    "operationId": "appointments.cancel",
+    "path": "/v1/appointments/{id}/cancel",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "appointments.delete",
+    "path": "/v1/appointments/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointments.get",
+    "path": "/v1/appointments/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointments.list",
+    "path": "/v1/appointments",
+  },
+  {
     "method": "PUT",
     "operationId": "botFields.bulkUpdate",
     "path": "/v1/bot-fields/bulk-update",
