@@ -1,5 +1,6 @@
 export * from "./ads-conversion"
 export * from "./ai-agent"
+export * from "./ai-file"
 export * from "./ai-function"
 export * from "./ai-mcp-server"
 export * from "./ai-trigger"
