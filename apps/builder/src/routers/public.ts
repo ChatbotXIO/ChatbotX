@@ -1,6 +1,7 @@
 import { inboxTeamsPublicRouter } from "@/enterprise/features/inbox-teams/api/public"
 import { aiAgentsPublicRouter } from "@/features/ai-agents/api/public"
 import { aiTriggersPublicRouter } from "@/features/ai-triggers/api/public"
+import { analyticsPublicRouter } from "@/features/analytics/api/public"
 import { keywordsPublicRouter } from "@/features/automated-response/api/public"
 import { botFieldsPublicRouter } from "@/features/bot-fields/api/public"
 import { broadcastsPublicRouter } from "@/features/broadcasts/api/public"
@@ -29,6 +30,7 @@ import { workspaceMembersPublicRouter } from "@/features/workspace-members/api/p
 export const publicRouter = {
   aiAgents: aiAgentsPublicRouter,
   aiTriggers: aiTriggersPublicRouter,
+  analytics: analyticsPublicRouter,
   botFields: botFieldsPublicRouter,
   broadcasts: broadcastsPublicRouter,
   channels: channelsPublicRouter,

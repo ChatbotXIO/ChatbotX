@@ -22,6 +22,45 @@ import type {
 import { BaseRepository } from "./base.repository"
 
 export class FlowStatsRepository extends BaseRepository {
+  async findAnalyticsSessionsByFlowIds(
+    flowIds: string[],
+  ): Promise<{ flowId: string; id: string }[]> {
+    return await db.query.flowAnalyticsSessionModel.findMany({
+      where: {
+        flowId: { in: flowIds },
+        deletedAt: { isNull: true },
+      },
+      columns: { flowId: true, id: true },
+    })
+  }
+
+  async findActiveAnalyticsSession(input: {
+    workspaceId: string
+    flowId: string
+  }): Promise<{ id: string } | undefined> {
+    return await db.query.flowAnalyticsSessionModel.findFirst({
+      where: {
+        workspaceId: input.workspaceId,
+        flowId: input.flowId,
+        deletedAt: { isNull: true },
+      },
+      columns: { id: true },
+    })
+  }
+
+  async findContactInboxesWithContact(contactInboxIds: string[]) {
+    return await db.query.contactInboxModel.findMany({
+      where: { id: { in: contactInboxIds } },
+      with: {
+        contact: {
+          columns: { id: true, firstName: true, lastName: true, avatar: true },
+        },
+        conversation: { columns: { id: true } },
+      },
+      columns: { id: true, sourceId: true, channel: true },
+    })
+  }
+
   /**
    * Aggregate per-node counts (delivered / failed / clicked) for every node in
    * one grouped query instead of per-node round-trips.

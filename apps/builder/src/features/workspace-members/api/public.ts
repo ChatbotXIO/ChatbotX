@@ -31,7 +31,6 @@ export const workspaceMembersPublicRouter = {
     .handler(
       async ({ context, input }) =>
         await listWorkspaceMembers({
-          keyword: null,
           ...input,
           workspaceId: context.workspace.id,
         }),

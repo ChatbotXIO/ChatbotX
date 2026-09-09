@@ -1,10 +1,13 @@
-import { db, sql } from "@chatbotx.io/database/client"
+import { and, db, inArray, isNull, sql } from "@chatbotx.io/database/client"
 // Narrow subpath, NOT the `queries` barrel: that barrel re-exports the
 // contact-filter modules, which dereference schema tables at module scope
 // and therefore crash any suite that mocks `@chatbotx.io/database/schema`
 // narrowly. Analytics only needs the one timezone helper.
 import { resolvedTimezone } from "@chatbotx.io/database/queries/date-bucket"
-import { analyticsContactEventModel } from "@chatbotx.io/database/schema"
+import {
+  analyticsContactEventModel,
+  contactModel,
+} from "@chatbotx.io/database/schema"
 import type { EventBusMessageMetadata } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import {
@@ -39,6 +42,19 @@ export type InsertContactEventRow = EventBusMessageMetadata & {
 }
 
 export class ContactStatsRepository extends BaseRepository {
+  async markContactsBlocked(contactIds: string[]): Promise<{ id: string }[]> {
+    return await db
+      .update(contactModel)
+      .set({ blockedAt: new Date() })
+      .where(
+        and(
+          inArray(contactModel.id, contactIds),
+          isNull(contactModel.blockedAt),
+        ),
+      )
+      .returning({ id: contactModel.id })
+  }
+
   async insertEvents(
     payloads: InsertContactEventRow[],
     eventType: ContactEventType,

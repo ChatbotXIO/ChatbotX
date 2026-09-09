@@ -1,4 +1,3 @@
-import { db } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   type ClickedPayload,
@@ -75,12 +74,9 @@ export class FlowAnalyticsService {
       return new Map()
     }
 
-    const analytics = await db.query.flowAnalyticsSessionModel.findMany({
-      where: {
-        flowId: { in: Array.from(flowIds) },
-        deletedAt: { isNull: true },
-      },
-    })
+    const analytics = await flowStatsRepository.findAnalyticsSessionsByFlowIds(
+      Array.from(flowIds),
+    )
 
     return new Map(analytics.map((a) => [a.flowId, a.id]))
   }
@@ -220,16 +216,11 @@ export class FlowAnalyticsService {
       return { data: [], total: 0, page: 1, pageCount: 0 }
     }
 
-    const analyticsSession = await db.query.flowAnalyticsSessionModel.findFirst(
-      {
-        where: {
-          workspaceId,
-          flowId,
-          deletedAt: { isNull: true },
-        },
-        columns: { id: true },
-      },
-    )
+    const analyticsSession =
+      await flowStatsRepository.findActiveAnalyticsSession({
+        workspaceId,
+        flowId,
+      })
 
     if (!analyticsSession) {
       return { data: [], total: 0, page: 1, pageCount: 0 }
@@ -252,16 +243,8 @@ export class FlowAnalyticsService {
       return { data: [], total: 0, page: 1, pageCount: 0 }
     }
 
-    const contactInboxes = await db.query.contactInboxModel.findMany({
-      where: { id: { in: contactInboxIds } },
-      with: {
-        contact: {
-          columns: { id: true, firstName: true, lastName: true, avatar: true },
-        },
-        conversation: { columns: { id: true } },
-      },
-      columns: { id: true, sourceId: true, channel: true },
-    })
+    const contactInboxes =
+      await flowStatsRepository.findContactInboxesWithContact(contactInboxIds)
 
     const data: FlowNodeContactData[] = contactInboxes.map((ci) => {
       const eventData = contactEventMap.get(ci.id)

@@ -202,25 +202,79 @@ describe("public API spec — operation naming guard", () => {
     }
   })
 
-  test("integrations.list, webhooks.list, and keywords.list responses never widen to include workspaceId", () => {
-    for (const operationId of [
-      "integrations.list",
-      "webhooks.list",
-      "keywords.list",
-    ]) {
-      const responseSchema = responseSchemasByOperationId[operationId]
-      expect(responseSchema, `${operationId} response schema`).toBeDefined()
+  test("no public operation response schema leaks workspaceId", () => {
+    // Add a commented, explicit exception list here ONLY if you find a
+    // legitimate need after auditing all operations — do not add exceptions
+    // preemptively.
+    const ALLOWED_WORKSPACE_ID_OPERATIONS = new Set<string>([
+      // `channels.me` legitimately echoes the authenticated token's own
+      // workspace/inbox identity — that IS the endpoint's purpose.
+      "channels.me",
 
-      const keys = new Set<string>()
-      collectSchemaPropertyKeys(
-        responseSchema,
-        componentSchemas,
-        keys,
-        new Set(),
+      // Pre-existing leaks, confirmed present on `main` before the analytics
+      // router this test was strengthened for (verified via a clean
+      // `main` worktree — none of these are touched by that change).
+      // Each response schema below includes `workspaceId` somewhere in its
+      // shape (often via a shared internal row schema reused as-is for the
+      // public response). This is a real minor information leak (the
+      // workspace's own id, not another tenant's), not a cross-tenant
+      // authorization bug, but it should still be cleaned up — tracked as
+      // follow-up work, out of scope for the analytics router PR that
+      // tightened this test from a 3-operation allow-list to a full sweep.
+      // Fix per operation by `.omit({ workspaceId: true })`-ing the
+      // offending row schema in that feature's `schema/public.ts`, mirroring
+      // how `apps/builder/src/features/analytics/schema/public.ts` does it.
+      "aiAgents.list",
+      "contacts.list",
+      "contacts.create",
+      "contacts.search",
+      "contacts.get",
+      "contacts.findByCustomField",
+      "contacts.upsert",
+      "contacts.listMessages",
+      "contacts.getMessage",
+      "contacts.refreshProfile",
+      "conversations.list",
+      "coupons.listTopics",
+      "coupons.createTopic",
+      "coupons.getTopic",
+      "coupons.updateTopic",
+      "coupons.deleteTopic",
+      "coupons.archiveTopic",
+      "coupons.unarchiveTopic",
+      "coupons.listCoupons",
+      "coupons.issueCoupon",
+      "coupons.markCouponUsed",
+      "errorLogs.list",
+      "folders.list",
+      "folders.create",
+      "folders.update",
+      "inboxTeams.list",
+      "products.list",
+      "products.create",
+      "products.get",
+      "reflinks.get",
+      "savedReplies.list",
+      "sequences.list",
+      "sequences.get",
+      "triggers.list",
+      "webhooks.create",
+      "workspaceMembers.list",
+      "workspaceMembers.get",
+    ])
+
+    const leaking = Object.entries(responseSchemasByOperationId)
+      .filter(
+        ([operationId]) => !ALLOWED_WORKSPACE_ID_OPERATIONS.has(operationId),
       )
+      .filter(([, schema]) => {
+        const keys = new Set<string>()
+        collectSchemaPropertyKeys(schema, componentSchemas, keys, new Set())
+        return keys.has("workspaceId")
+      })
+      .map(([operationId]) => operationId)
 
-      expect(keys.has("workspaceId")).toBe(false)
-    }
+    expect(leaking).toEqual([])
   })
 })
 

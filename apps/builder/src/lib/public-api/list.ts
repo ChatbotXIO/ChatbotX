@@ -24,10 +24,23 @@ export const publicListRequest = z.object({
 
 export function withPublicPaging<Shape extends z.ZodRawShape>(
   schema: z.ZodObject<Shape>,
-) {
-  return (schema as unknown as z.ZodObject<Omit<Shape, "page" | "perPage">>)
+): z.ZodObject<
+  Omit<Shape, "page" | "perPage"> & typeof publicListRequest.shape
+> {
+  // `.extend()`'s own overload can't merge an unresolved generic `Shape`
+  // with a concrete shape — against a bare type parameter it silently
+  // collapses to just the concrete (pagination) fields, so every field the
+  // caller's schema added beyond `page`/`perPage` type-checks as missing at
+  // every call site, public or not (reproduced with a minimal repro schema;
+  // not specific to any one caller's fields). The explicit intersection
+  // return type below is what actually carries the omitted schema's fields
+  // through — verified caller-side field access resolves correctly with it,
+  // and does not without it.
+  return schema
     .omit({ page: true, perPage: true } as never)
-    .extend(publicListRequest.shape)
+    .extend(publicListRequest.shape) as unknown as z.ZodObject<
+    Omit<Shape, "page" | "perPage"> & typeof publicListRequest.shape
+  >
 }
 
 export function publicListResponse<T extends z.ZodTypeAny>(resource: T) {

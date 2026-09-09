@@ -35,8 +35,11 @@ const refLinkStatsRepository = {
   getContactCount: vi.fn(),
 }
 
+const verifyRefLinkExists = vi.fn()
+
 vi.mock("../src/repositories/postgres/ref-link-stats.repository", () => ({
   refLinkStatsRepository,
+  verifyRefLinkExists,
 }))
 
 // ── listLinkContactStats mock ─────────────────────────────────────────────────

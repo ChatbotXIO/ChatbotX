@@ -21,6 +21,67 @@ import type { ContactEventData } from "../../schemas/common"
 import { BaseRepository } from "./base.repository"
 
 export class BroadcastStatsRepository extends BaseRepository {
+  async getUnreadBroadcastsForContactInboxes(input: {
+    broadcastIds: string[]
+    contactInboxIds: string[]
+  }): Promise<{ broadcastId: string; contactInboxId: string }[]> {
+    return await db.query.contactsOnBroadcastsModel.findMany({
+      where: {
+        broadcastId: { in: input.broadcastIds },
+        contactInboxId: { in: input.contactInboxIds },
+        isRead: false,
+      },
+      columns: {
+        broadcastId: true,
+        contactInboxId: true,
+      },
+    })
+  }
+
+  async updateOccurredAtBulk(
+    items: { broadcastId: string; contactInboxId: string; timestamp: Date }[],
+    updateField: "deliveredAt" | "seenAt",
+  ): Promise<void> {
+    if (items.length === 0) {
+      return
+    }
+
+    const cases = items.map(
+      (item) =>
+        sql`WHEN "broadcastId" = ${item.broadcastId} AND "contactInboxId" = ${item.contactInboxId} THEN ${item.timestamp}`,
+    )
+
+    const tuples = items.map(
+      (i) => sql`(${i.broadcastId}, ${i.contactInboxId})`,
+    )
+
+    await db.execute(sql`
+      UPDATE "ContactOnBroadcast"
+      SET ${sql.identifier(updateField)} = CASE ${sql.join(cases, sql` `)} ELSE ${sql.identifier(updateField)} END
+      WHERE ("broadcastId", "contactInboxId") IN (${sql.join(tuples, sql`, `)})
+    `)
+  }
+
+  async getUnreadBroadcastsWithWorkspace(contactInboxIds: string[]): Promise<
+    {
+      broadcastId: string
+      contactId: string
+      contactInboxId: string
+      broadcast: { id: string; workspaceId: string }
+    }[]
+  > {
+    return await db.query.contactsOnBroadcastsModel.findMany({
+      where: {
+        contactInboxId: { in: contactInboxIds },
+        isRead: false,
+      },
+      with: {
+        broadcast: { columns: { id: true, workspaceId: true } },
+      },
+      columns: { broadcastId: true, contactId: true, contactInboxId: true },
+    })
+  }
+
   async updateFailedBulk(
     items: BroadcastFailedBulkUpdateItem[],
   ): Promise<void> {

@@ -1,4 +1,3 @@
-import { db, sql } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   type MessageDeliveredPayload,
@@ -39,21 +38,12 @@ async function processSequenceEvents(
   const contactInboxIds = [...new Set(items.map((i) => i.contactInboxId))]
   const workspaceIds = [...new Set(items.map((i) => i.workspaceId))]
 
-  const dispatches = await db.query.sequenceDispatchModel.findMany({
-    where: {
-      workspaceId: { in: workspaceIds },
-      sequenceId: { in: sequenceIds },
-      stepId: { in: stepIds },
-      contactInboxId: { in: contactInboxIds },
-      ...(knownStatus ? { status: knownStatus } : {}),
-    },
-    columns: {
-      id: true,
-      workspaceId: true,
-      sequenceId: true,
-      stepId: true,
-      contactInboxId: true,
-    },
+  const dispatches = await sequenceStatsRepository.findDispatchesForUpdate({
+    workspaceIds,
+    sequenceIds,
+    stepIds,
+    contactInboxIds,
+    knownStatus,
   })
 
   if (dispatches.length === 0) {
@@ -84,21 +74,11 @@ async function processSequenceEvents(
     return
   }
 
-  const cases = updateItems.map(
-    (item) =>
-      sql`WHEN "id" = ${item.id} AND "workspaceId" = ${item.workspaceId} THEN ${item.timestamp.toISOString()}`,
+  await sequenceStatsRepository.updateOccurredAtBulk(
+    updateItems,
+    updateField,
+    knownStatus,
   )
-  const predicates = updateItems.map((item) =>
-    knownStatus
-      ? sql`("id" = ${item.id} AND "workspaceId" = ${item.workspaceId} AND "status" = ${knownStatus})`
-      : sql`("id" = ${item.id} AND "workspaceId" = ${item.workspaceId})`,
-  )
-
-  await db.execute(sql`
-    UPDATE "SequenceDispatch"
-    SET "${sql.raw(updateField)}" = CASE ${sql.join(cases, sql` `)} ELSE "${sql.raw(updateField)}" END
-    WHERE ${sql.join(predicates, sql` OR `)}
-  `)
 }
 
 export class SequenceAnalyticsService {
@@ -217,14 +197,11 @@ export class SequenceAnalyticsService {
         wsPayloads.map((p) => [p.context.contactInboxId, p]),
       )
 
-      const dispatches = await db.query.sequenceDispatchModel.findMany({
-        where: {
+      const dispatches =
+        await sequenceStatsRepository.findCompletedUnseenDispatches({
           workspaceId,
-          contactInboxId: { in: contactInboxIds },
-          status: { in: ["completed"] },
-          seenAt: { isNull: true },
-        },
-      })
+          contactInboxIds,
+        })
 
       if (dispatches.length === 0) {
         continue
@@ -265,10 +242,10 @@ export class SequenceAnalyticsService {
         ),
       ]
 
-      const sequenceSteps = await db.query.sequenceStepModel.findMany({
-        where: { id: { in: Array.from(sequenceStepIds) } },
-        columns: { id: true, sequenceId: true },
-      })
+      const sequenceSteps =
+        await sequenceStatsRepository.findSequenceStepsByIds(
+          Array.from(sequenceStepIds),
+        )
       const sequenceStepsMap = new Map<string, string>(
         sequenceSteps.map((s) => [s.id, s.sequenceId]),
       )

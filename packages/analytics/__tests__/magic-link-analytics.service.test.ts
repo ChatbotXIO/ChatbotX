@@ -35,8 +35,11 @@ const magicLinkStatsRepository = {
   getContactCount: vi.fn(),
 }
 
+const verifyMagicLinkExists = vi.fn()
+
 vi.mock("../src/repositories/postgres/magic-link-stats.repository", () => ({
   magicLinkStatsRepository,
+  verifyMagicLinkExists,
 }))
 
 // ── listLinkContactStats mock ─────────────────────────────────────────────────

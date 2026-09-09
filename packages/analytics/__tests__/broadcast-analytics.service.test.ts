@@ -1,30 +1,9 @@
 import type { MessageSeenPayload } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const findManySpy =
-  vi.fn<(args: { where: Record<string, unknown> }) => Promise<unknown[]>>()
-const executeSpy = vi.fn<(query: string) => Promise<unknown>>()
-
-function sql(strings: TemplateStringsArray, ...values: unknown[]): string {
-  return strings.reduce(
-    (acc, part, index) =>
-      `${acc}${part}${index < values.length ? String(values[index]) : ""}`,
-    "",
-  )
-}
-
-sql.identifier = (value: string) => `"${value}"`
-sql.join = (values: unknown[], separator: string) => values.join(separator)
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      contactsOnBroadcastsModel: { findMany: findManySpy },
-    },
-    execute: executeSpy,
-  },
-  sql,
-}))
+const getUnreadBroadcastsWithWorkspace = vi.fn()
+const getUnreadBroadcastsForContactInboxes = vi.fn()
+const updateOccurredAtBulk = vi.fn()
 
 vi.mock("@chatbotx.io/database/partials", () => ({
   channelTypes: { enum: { whatsapp: "whatsapp" } },
@@ -36,8 +15,11 @@ vi.mock("../src/repositories/postgres", () => ({
     getContactIdsPage: vi.fn(),
     getContacts: vi.fn(),
     getStats: vi.fn(),
+    getUnreadBroadcastsForContactInboxes,
+    getUnreadBroadcastsWithWorkspace,
     updateClickedBulk: vi.fn(),
     updateFailedBulk: vi.fn(),
+    updateOccurredAtBulk,
   },
 }))
 
@@ -52,38 +34,42 @@ const seenPayload = {
 
 beforeEach(() => {
   vi.resetModules()
-  findManySpy.mockReset()
-  executeSpy.mockReset().mockResolvedValue(undefined)
+  getUnreadBroadcastsWithWorkspace.mockReset()
+  getUnreadBroadcastsForContactInboxes.mockReset()
+  updateOccurredAtBulk.mockReset().mockResolvedValue(undefined)
 })
 
 describe("BroadcastAnalyticsService", () => {
   test("sets seenAt only when a broadcast contact is seen (no deliveredAt write)", async () => {
-    findManySpy
-      .mockResolvedValueOnce([
-        {
-          broadcastId: "broadcast-1",
-          contactId: "contact-1",
-          contactInboxId: "contact-inbox-1",
-          broadcast: { id: "broadcast-1", workspaceId: "workspace-1" },
-        },
-      ])
-      .mockResolvedValueOnce([
-        {
-          broadcastId: "broadcast-1",
-          contactInboxId: "contact-inbox-1",
-        },
-      ])
+    getUnreadBroadcastsWithWorkspace.mockResolvedValueOnce([
+      {
+        broadcastId: "broadcast-1",
+        contactId: "contact-1",
+        contactInboxId: "contact-inbox-1",
+        broadcast: { id: "broadcast-1", workspaceId: "workspace-1" },
+      },
+    ])
+    getUnreadBroadcastsForContactInboxes.mockResolvedValueOnce([
+      {
+        broadcastId: "broadcast-1",
+        contactInboxId: "contact-inbox-1",
+      },
+    ])
     const { broadcastAnalyticsService } = await import(
       "../src/services/broadcast-analytics.service"
     )
 
     await broadcastAnalyticsService.onSeen([seenPayload])
 
-    const query = executeSpy.mock.calls[0][0]
-    expect(query).toContain('"seenAt" = CASE')
+    expect(updateOccurredAtBulk).toHaveBeenCalledTimes(1)
+    const [items, updateField] = updateOccurredAtBulk.mock.calls[0]
     // A read receipt only updates seenAt; deliveredAt is owned by the send/delivery path.
-    expect(query).not.toContain('"deliveredAt"')
-    expect(query).toContain("broadcast-1")
-    expect(query).toContain("contact-inbox-1")
+    expect(updateField).toBe("seenAt")
+    expect(items).toEqual([
+      expect.objectContaining({
+        broadcastId: "broadcast-1",
+        contactInboxId: "contact-inbox-1",
+      }),
+    ])
   })
 })

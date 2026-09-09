@@ -1,5 +1,3 @@
-import { and, db, inArray, isNull } from "@chatbotx.io/database/client"
-import { contactModel } from "@chatbotx.io/database/schema"
 import type { MessageFailedPayload } from "@chatbotx.io/flow-config"
 import { parsedErrorSchema } from "@chatbotx.io/sdk"
 import { toDate } from "../lib/date"
@@ -131,16 +129,8 @@ export class ContactAnalyticsService {
     }
 
     const contactIds = Array.from(contacts.keys())
-    const transitioned = await db
-      .update(contactModel)
-      .set({ blockedAt: new Date() })
-      .where(
-        and(
-          inArray(contactModel.id, contactIds),
-          isNull(contactModel.blockedAt),
-        ),
-      )
-      .returning({ id: contactModel.id })
+    const transitioned =
+      await contactStatsRepository.markContactsBlocked(contactIds)
 
     if (transitioned.length === 0) {
       return

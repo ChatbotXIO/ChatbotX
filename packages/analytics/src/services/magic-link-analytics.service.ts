@@ -9,7 +9,10 @@ import {
 } from "@chatbotx.io/flow-config"
 import { startOfSecond } from "date-fns"
 import { toDate } from "../lib/date"
-import { magicLinkStatsRepository } from "../repositories/postgres/magic-link-stats.repository"
+import {
+  magicLinkStatsRepository,
+  verifyMagicLinkExists,
+} from "../repositories/postgres/magic-link-stats.repository"
 import type { ListFlowNodeContactsResponse } from "../schemas/flow-stats"
 import type {
   MagicLinkContactStatsInput,
@@ -90,13 +93,7 @@ export class MagicLinkAnalyticsService {
     return listLinkContactStats({
       params: input,
       repository: magicLinkStatsRepository,
-      verifyLink: async ({ workspaceId, linkId }) => {
-        const row = await db.query.magicLinkModel.findFirst({
-          where: { workspaceId, id: linkId },
-          columns: { id: true },
-        })
-        return Boolean(row)
-      },
+      verifyLink: verifyMagicLinkExists,
     })
   }
 }

@@ -1,29 +1,13 @@
 import type { MessageFailedPayload } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const transitionResult: { current: { id: string }[] } = { current: [] }
+
 vi.mock("../src/repositories/postgres", () => ({
   contactStatsRepository: {
     insertEvents: vi.fn(async () => undefined),
+    markContactsBlocked: vi.fn(async () => transitionResult.current),
   },
-}))
-
-const transitionResult: { current: { id: string }[] } = { current: [] }
-
-vi.mock("@chatbotx.io/database/client", () => {
-  const builder: Record<string, unknown> = {}
-  builder.set = vi.fn(() => builder)
-  builder.where = vi.fn(() => builder)
-  builder.returning = vi.fn(async () => transitionResult.current)
-  return {
-    db: { update: vi.fn(() => builder) },
-    and: (...args: unknown[]) => args,
-    inArray: (...args: unknown[]) => args,
-    isNull: (...args: unknown[]) => args,
-  }
-})
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  contactModel: { id: "id", blockedAt: "blockedAt" },
 }))
 
 const { contactStatsRepository } = await import("../src/repositories/postgres")
@@ -34,6 +18,8 @@ const { contactAnalyticsService } = await import(
 const insertEvents = contactStatsRepository.insertEvents as ReturnType<
   typeof vi.fn
 >
+const markContactsBlocked =
+  contactStatsRepository.markContactsBlocked as ReturnType<typeof vi.fn>
 
 function makePayload(
   errorData: unknown,
@@ -55,7 +41,9 @@ function makePayload(
 describe("ContactAnalyticsService.handleBlocked", () => {
   beforeEach(() => {
     insertEvents.mockClear()
+    markContactsBlocked.mockClear()
     transitionResult.current = [{ id: "c-1" }, { id: "c-2" }]
+    markContactsBlocked.mockImplementation(async () => transitionResult.current)
   })
 
   test("inserts contact_blocked event when category is user_blocked", async () => {

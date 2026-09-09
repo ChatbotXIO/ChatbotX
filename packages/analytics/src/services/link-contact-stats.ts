@@ -1,4 +1,3 @@
-import { db } from "@chatbotx.io/database/client"
 import { toDate } from "../lib/date"
 import type { LinkStatsRepository } from "../repositories/postgres/link-stats.repository"
 import type {
@@ -48,16 +47,8 @@ export async function listLinkContactStats(input: {
     return { data: [], total, page, pageCount: Math.ceil(total / perPage) }
   }
 
-  const contactInboxes = await db.query.contactInboxModel.findMany({
-    where: { id: { in: contactInboxIds } },
-    with: {
-      contact: {
-        columns: { id: true, firstName: true, lastName: true, avatar: true },
-      },
-      conversation: { columns: { id: true } },
-    },
-    columns: { id: true, sourceId: true, channel: true },
-  })
+  const contactInboxes =
+    await repository.findContactInboxesWithContact(contactInboxIds)
 
   const contactInboxesMap = new Map<string, (typeof contactInboxes)[0]>()
   for (const ci of contactInboxes) {

@@ -4,30 +4,9 @@ import type {
 } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const findManySpy =
-  vi.fn<(args: { where: Record<string, unknown> }) => Promise<unknown[]>>()
-const executeSpy = vi.fn<(query: string) => Promise<unknown>>()
-
-function sql(strings: TemplateStringsArray, ...values: unknown[]): string {
-  return strings.reduce(
-    (acc, part, index) =>
-      `${acc}${part}${index < values.length ? String(values[index]) : ""}`,
-    "",
-  )
-}
-
-sql.raw = (value: string) => value
-sql.join = (values: unknown[], separator: string) => values.join(separator)
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      sequenceDispatchModel: { findMany: findManySpy },
-    },
-    execute: executeSpy,
-  },
-  sql,
-}))
+const findDispatchesForUpdate = vi.fn()
+const findCompletedUnseenDispatches = vi.fn()
+const updateOccurredAtBulk = vi.fn()
 
 vi.mock("@chatbotx.io/database/partials", () => ({
   channelTypes: { enum: { whatsapp: "whatsapp" } },
@@ -35,9 +14,13 @@ vi.mock("@chatbotx.io/database/partials", () => ({
 
 vi.mock("../src/repositories/postgres", () => ({
   sequenceStatsRepository: {
+    findCompletedUnseenDispatches,
+    findDispatchesForUpdate,
+    findSequenceStepsByIds: vi.fn(),
     getContacts: vi.fn(),
     getStepStats: vi.fn(),
     updateFailedBulk: vi.fn(),
+    updateOccurredAtBulk,
   },
 }))
 
@@ -64,13 +47,14 @@ const seenPayload = {
 } as unknown as MessageSeenPayload
 
 beforeEach(() => {
-  findManySpy.mockReset()
-  executeSpy.mockReset().mockResolvedValue(undefined)
+  findDispatchesForUpdate.mockReset()
+  findCompletedUnseenDispatches.mockReset()
+  updateOccurredAtBulk.mockReset().mockResolvedValue(undefined)
 })
 
 describe("SequenceAnalyticsService dispatch updates", () => {
   test("updates delivered dispatches by id + workspaceId without guessing status", async () => {
-    findManySpy.mockResolvedValue([
+    findDispatchesForUpdate.mockResolvedValue([
       {
         id: "d1",
         workspaceId: "w1",
@@ -85,47 +69,61 @@ describe("SequenceAnalyticsService dispatch updates", () => {
 
     await sequenceAnalyticsService.onDelivered([deliveredPayload])
 
-    expect(findManySpy.mock.calls[0][0].where).toMatchObject({
-      workspaceId: { in: ["w1"] },
-      sequenceId: { in: ["s1"] },
-      stepId: { in: ["step1"] },
-      contactInboxId: { in: ["ci1"] },
+    expect(findDispatchesForUpdate).toHaveBeenCalledWith({
+      workspaceIds: ["w1"],
+      sequenceIds: ["s1"],
+      stepIds: ["step1"],
+      contactInboxIds: ["ci1"],
+      knownStatus: undefined,
     })
-    const query = executeSpy.mock.calls[0][0]
-    expect(query).toContain('"id" = d1 AND "workspaceId" = w1')
-    expect(query).not.toContain('"status" =')
+    expect(updateOccurredAtBulk).toHaveBeenCalledTimes(1)
+    const [items, updateField, knownStatus] = updateOccurredAtBulk.mock.calls[0]
+    expect(updateField).toBe("deliveredAt")
+    expect(knownStatus).toBeUndefined()
+    expect(items).toEqual([
+      expect.objectContaining({ id: "d1", workspaceId: "w1" }),
+    ])
   })
 
   test("adds status predicate only when caller selected completed dispatches", async () => {
-    findManySpy
-      .mockResolvedValueOnce([
-        {
-          sequenceId: "s1",
-          stepId: "step1",
-          contactInboxId: "ci1",
-        },
-      ])
-      .mockResolvedValueOnce([
-        {
-          id: "d1",
-          workspaceId: "w1",
-          sequenceId: "s1",
-          stepId: "step1",
-          contactInboxId: "ci1",
-        },
-      ])
+    findCompletedUnseenDispatches.mockResolvedValueOnce([
+      {
+        sequenceId: "s1",
+        stepId: "step1",
+        contactInboxId: "ci1",
+      },
+    ])
+    findDispatchesForUpdate.mockResolvedValueOnce([
+      {
+        id: "d1",
+        workspaceId: "w1",
+        sequenceId: "s1",
+        stepId: "step1",
+        contactInboxId: "ci1",
+      },
+    ])
     const { sequenceAnalyticsService } = await import(
       "../src/services/sequence-analytics.service"
     )
 
     await sequenceAnalyticsService.onSeen([seenPayload])
 
-    expect(findManySpy.mock.calls[1][0].where).toMatchObject({
-      workspaceId: { in: ["w1"] },
-      status: "completed",
+    expect(findCompletedUnseenDispatches).toHaveBeenCalledWith({
+      workspaceId: "w1",
+      contactInboxIds: ["ci1"],
     })
-    expect(executeSpy.mock.calls[0][0]).toContain(
-      '"id" = d1 AND "workspaceId" = w1 AND "status" = completed',
+    expect(findDispatchesForUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceIds: ["w1"],
+        knownStatus: "completed",
+      }),
     )
+    expect(updateOccurredAtBulk).toHaveBeenCalledTimes(1)
+    const [items, updateField, knownStatus] = updateOccurredAtBulk.mock.calls[0]
+    expect(updateField).toBe("seenAt")
+    expect(knownStatus).toBe("completed")
+    expect(items).toEqual([
+      expect.objectContaining({ id: "d1", workspaceId: "w1" }),
+    ])
   })
 })

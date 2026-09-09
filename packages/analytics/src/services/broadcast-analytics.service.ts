@@ -1,4 +1,3 @@
-import { db, sql } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   BROADCAST_PAYLOAD_TYPE,
@@ -31,17 +30,11 @@ async function processBroadcastEvents(
   const broadcastIds = [...new Set(items.map((i) => i.broadcastId))]
   const contactInboxIds = [...new Set(items.map((i) => i.contactInboxId))]
 
-  const unreadBroadcasts = await db.query.contactsOnBroadcastsModel.findMany({
-    where: {
-      broadcastId: { in: broadcastIds },
-      contactInboxId: { in: contactInboxIds },
-      isRead: false,
-    },
-    columns: {
-      broadcastId: true,
-      contactInboxId: true,
-    },
-  })
+  const unreadBroadcasts =
+    await broadcastStatsRepository.getUnreadBroadcastsForContactInboxes({
+      broadcastIds,
+      contactInboxIds,
+    })
 
   if (unreadBroadcasts.length === 0) {
     return
@@ -69,20 +62,7 @@ async function processBroadcastEvents(
     return
   }
 
-  const cases = updateItems.map(
-    (item) =>
-      sql`WHEN "broadcastId" = ${item.broadcastId} AND "contactInboxId" = ${item.contactInboxId} THEN ${item.timestamp}`,
-  )
-
-  const tuples = updateItems.map(
-    (i) => sql`(${i.broadcastId}, ${i.contactInboxId})`,
-  )
-
-  await db.execute(sql`
-    UPDATE "ContactOnBroadcast"
-    SET ${sql.identifier(updateField)} = CASE ${sql.join(cases, sql` `)} ELSE ${sql.identifier(updateField)} END
-    WHERE ("broadcastId", "contactInboxId") IN (${sql.join(tuples, sql`, `)})
-  `)
+  await broadcastStatsRepository.updateOccurredAtBulk(updateItems, updateField)
 }
 
 export class BroadcastAnalyticsService {
@@ -213,16 +193,9 @@ export class BroadcastAnalyticsService {
       )
 
       const unreadBroadcasts =
-        await db.query.contactsOnBroadcastsModel.findMany({
-          where: {
-            contactInboxId: { in: contactInboxIds },
-            isRead: false,
-          },
-          with: {
-            broadcast: { columns: { id: true, workspaceId: true } },
-          },
-          columns: { broadcastId: true, contactId: true, contactInboxId: true },
-        })
+        await broadcastStatsRepository.getUnreadBroadcastsWithWorkspace(
+          contactInboxIds,
+        )
 
       const filtered = unreadBroadcasts.filter(
         (b) => b.broadcast.workspaceId === workspaceId,

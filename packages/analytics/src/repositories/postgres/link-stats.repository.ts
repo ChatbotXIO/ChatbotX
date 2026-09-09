@@ -125,4 +125,17 @@ export class LinkStatsRepository extends BaseRepository {
       rows,
     }
   }
+
+  async findContactInboxesWithContact(contactInboxIds: string[]) {
+    return await db.query.contactInboxModel.findMany({
+      where: { id: { in: contactInboxIds } },
+      with: {
+        contact: {
+          columns: { id: true, firstName: true, lastName: true, avatar: true },
+        },
+        conversation: { columns: { id: true } },
+      },
+      columns: { id: true, sourceId: true, channel: true },
+    })
+  }
 }
