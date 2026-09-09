@@ -1,6 +1,9 @@
 "use client"
 
-import type { FolderType } from "@chatbotx.io/database/partials"
+import type {
+  AutomatedResponseType,
+  FolderType,
+} from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import type { Table } from "@tanstack/react-table"
 import { FolderUpIcon } from "lucide-react"
@@ -15,12 +18,14 @@ type AutomatedResponseTableToolbarActionsProps = {
   table: Table<AutomatedResponseResource>
   workspaceId: string
   folderType: FolderType
+  type: AutomatedResponseType
 }
 
 export function AutomatedResponseTableToolbarActions({
   table,
   workspaceId,
   folderType,
+  type,
 }: AutomatedResponseTableToolbarActionsProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -43,6 +48,7 @@ export function AutomatedResponseTableToolbarActions({
           router.refresh()
         }}
         open={openDeleteDialog}
+        type={type}
         workspaceId={workspaceId}
       />
       <ChangeFolderDialog

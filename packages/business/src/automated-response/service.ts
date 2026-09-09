@@ -38,6 +38,7 @@ export type UpdateAutomatedResponseRequest = {
 export type FindAutomatedResponseRequest = {
   workspaceId: string
   id: string
+  type: AutomatedResponseType
 }
 
 export type ListAutomatedResponsesRequest = {
@@ -60,6 +61,7 @@ class AutomatedResponseService extends BaseService {
       where: {
         workspaceId: input.workspaceId,
         id: input.id,
+        type: input.type,
       },
     })
   }
@@ -212,7 +214,7 @@ class AutomatedResponseService extends BaseService {
   }
 
   async update(
-    ctx: { id: string; workspaceId: string },
+    ctx: { id: string; workspaceId: string; type: AutomatedResponseType },
     data: UpdateAutomatedResponseRequest,
     tx?: DatabaseClient,
   ): Promise<AutomatedResponseModel> {
@@ -221,41 +223,75 @@ class AutomatedResponseService extends BaseService {
     // Fetched before the write so a Save that resubmits identical values
     // doesn't produce an "updated" audit entry.
     const existing = await client.query.automatedResponseModel.findFirst({
-      where: { id: ctx.id, workspaceId: ctx.workspaceId },
+      where: {
+        id: ctx.id,
+        workspaceId: ctx.workspaceId,
+        type: ctx.type,
+      },
       columns: { folderId: true, keywords: true, text: true, flowId: true },
     })
-    const nextKeywords = data.keywords?.map((m) => m.value) ?? []
+
+    // `text` and `flowId` are mutually exclusive: setting one nulls the
+    // other, mirroring `create`'s behavior. Validate `flowId` belongs to
+    // this workspace before persisting it.
+    let nextFlowId = data.flowId
+    let nextText = data.text
+    if (data.text?.length) {
+      nextFlowId = null
+    } else if (data.flowId) {
+      const flowExists = await flowService.exists(
+        ctx.workspaceId,
+        data.flowId,
+        tx,
+      )
+      if (!flowExists) {
+        throw validationException("flowId", "Flow not found")
+      }
+      nextText = null
+    }
+
+    const { keywords: _keywords, ...restData } = data
+    const updatePayload: Partial<AutomatedResponseModel> = {
+      ...restData,
+      text: nextText,
+      flowId: nextFlowId,
+    }
+    // Only touch the `keywords` column when the caller actually supplied a
+    // value — omitting it must never wipe existing keywords.
+    const nextKeywords = data.keywords?.map((m) => m.value)
+    if (nextKeywords !== undefined) {
+      updatePayload.keywords = nextKeywords
+    }
 
     const [updated] = await client
       .update(automatedResponseModel)
-      .set({
-        ...data,
-        keywords: nextKeywords,
-      })
+      .set(updatePayload)
       .where(
         and(
           eq(automatedResponseModel.id, ctx.id),
           eq(automatedResponseModel.workspaceId, ctx.workspaceId),
+          eq(automatedResponseModel.type, ctx.type),
         ),
       )
       .returning()
     await this.invalidateCache(ctx.workspaceId)
 
     if (!updated) {
-      return updated as unknown as AutomatedResponseModel
+      throw notFoundException("Automated response not found")
     }
 
     const keywordsChanged =
-      !existing ||
-      nextKeywords.length !== existing.keywords.length ||
-      nextKeywords.some(
-        (keyword, index) => keyword !== existing.keywords[index],
-      )
+      nextKeywords !== undefined &&
+      (!existing ||
+        nextKeywords.length !== existing.keywords.length ||
+        nextKeywords.some(
+          (keyword, index) => keyword !== existing.keywords[index],
+        ))
     const changed =
       !existing ||
       (data.folderId !== undefined && data.folderId !== existing.folderId) ||
-      (data.text !== undefined && data.text !== existing.text) ||
-      (data.flowId !== undefined && data.flowId !== existing.flowId) ||
+      (nextText !== undefined && nextText !== existing.text) ||
+      (nextFlowId !== undefined && nextFlowId !== existing.flowId) ||
       keywordsChanged
 
     if (!tx && changed) {
@@ -269,14 +305,18 @@ class AutomatedResponseService extends BaseService {
   }
 
   async setStatus(
-    ctx: { id: string; workspaceId: string },
+    ctx: { id: string; workspaceId: string; type: AutomatedResponseType },
     status: boolean,
     tx?: DatabaseClient,
   ): Promise<AutomatedResponseModel> {
     const client = tx ?? db
 
     const existing = await client.query.automatedResponseModel.findFirst({
-      where: { id: ctx.id, workspaceId: ctx.workspaceId },
+      where: {
+        id: ctx.id,
+        workspaceId: ctx.workspaceId,
+        type: ctx.type,
+      },
       columns: { status: true },
     })
 
@@ -287,6 +327,7 @@ class AutomatedResponseService extends BaseService {
         and(
           eq(automatedResponseModel.id, ctx.id),
           eq(automatedResponseModel.workspaceId, ctx.workspaceId),
+          eq(automatedResponseModel.type, ctx.type),
         ),
       )
       .returning()
@@ -309,6 +350,7 @@ class AutomatedResponseService extends BaseService {
   async deleteMany(
     workspaceId: string,
     ids: string[],
+    type: AutomatedResponseType,
     tx?: DatabaseClient,
   ): Promise<void> {
     await assertDeletable({
@@ -325,6 +367,7 @@ class AutomatedResponseService extends BaseService {
         and(
           eq(automatedResponseModel.workspaceId, workspaceId),
           inArray(automatedResponseModel.id, ids),
+          eq(automatedResponseModel.type, type),
         ),
       )
       .returning({ id: automatedResponseModel.id })

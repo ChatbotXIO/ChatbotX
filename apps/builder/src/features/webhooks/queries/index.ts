@@ -1,6 +1,5 @@
-import { and, count, db, eq, isNull } from "@chatbotx.io/database/client"
-import { rootFolderId } from "@chatbotx.io/database/partials"
-import { webhookModel } from "@chatbotx.io/database/schema"
+import { webhookService } from "@chatbotx.io/business"
+import { findWebhookWithConditions } from "@chatbotx.io/database/repositories"
 import type { WebhookModel } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { WebhookCollection } from "../schema"
@@ -11,83 +10,16 @@ export async function getWebhooks(
 ): Promise<WebhookCollection> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  // Build SQL conditions
-  const conditions = [eq(webhookModel.workspaceId, input.workspaceId)]
-
-  if (input.folderId !== undefined) {
-    const folderId =
-      input.folderId === null || input.folderId === rootFolderId
-        ? null
-        : input.folderId
-    if (folderId === null) {
-      conditions.push(isNull(webhookModel.folderId))
-    } else {
-      conditions.push(eq(webhookModel.folderId, folderId))
-    }
-  }
-
-  if (input.name) {
-    conditions.push(eq(webhookModel.name, input.name))
-  }
-
-  const whereClause = and(...conditions)
-
-  // Execute queries - fetch webhooks with SQL builder, then load conditions
-  const [webhooks, countResult] = await Promise.all([
-    db
-      .select()
-      .from(webhookModel)
-      .where(whereClause)
-      .limit(input.perPage)
-      .offset((input.page - 1) * input.perPage),
-    db.select({ count: count() }).from(webhookModel).where(whereClause),
-  ])
-
-  // Load conditions for webhooks
-  const webhookIds = webhooks.map((w) => w.id)
-  const conditionsData =
-    webhookIds.length > 0
-      ? await db.query.conditionModel.findMany({
-          where: { webhookId: { in: webhookIds } },
-        })
-      : []
-
-  // Merge webhooks with conditions
-  const data = webhooks.map((webhook) => ({
-    ...webhook,
-    conditions: conditionsData.filter((c) => c.webhookId === webhook.id),
-  }))
-
-  const total = countResult[0]?.count ?? 0
-  const pageCount = Math.ceil(total / input.perPage)
-
-  return { data, pageCount }
+  return await webhookService.list(input)
 }
 
 export async function findWebhook(params: {
   id?: string
   workspaceId?: string
 }): Promise<WebhookModel | null> {
-  const where: Record<string, unknown> = {}
-
-  if (params.id) {
-    where.id = params.id
-  }
-
-  if (params.workspaceId) {
-    where.workspaceId = params.workspaceId
-  }
-
-  if (Object.keys(where).length === 0) {
+  if (!(params.id || params.workspaceId)) {
     return null
   }
 
-  const result = await db.query.webhookModel.findFirst({
-    where,
-    with: {
-      conditions: true,
-    },
-  })
-
-  return result ?? null
+  return await findWebhookWithConditions(params)
 }

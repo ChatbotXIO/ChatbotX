@@ -134,6 +134,69 @@ enforces this split — it fails compile/test if a new submodule (wherever it
 lives) forgets to declare a scope, or if `messages.ts`'s procedures drift
 onto `contacts`.
 
+### Automation scope — endpoint-to-scope table
+
+The `automation` scope covers flows, triggers, keywords (automated
+responses), AI agents, ref links, and AI triggers — a full CRUD surface so an
+agent can build, publish, and inspect automations without human help via the
+builder UI. Every handler below calls the same `packages/business` service
+method the corresponding UI action calls (`.agents/rules/data-access.md`).
+
+| Resource | Endpoint | Service method |
+| --- | --- | --- |
+| Flows | `GET /v1/flows` | `flowService.list` |
+| Flows | `GET /v1/flows/{id}` | `flowService.findById` |
+| Flows | `POST /v1/flows` | `flowService.createDraft` |
+| Flows | `PATCH /v1/flows/{id}` | `flowService.update` |
+| Flows | `DELETE /v1/flows/{id}` | `flowService.deleteMany` |
+| Flows | `POST /v1/flows/{id}/duplicate` | `flowService.duplicate` |
+| Flows | `POST /v1/flows/{id}/publish` | `flowVersionService.publish` |
+| Flows | `PUT /v1/flows/{id}/draft` | `flowVersionService.updateDraftByFlowId` |
+| Flows | `GET /v1/flows/{id}/versions` | `flowVersionService.list` |
+| Flows | `POST /v1/flows/import` | `importService.startFlowImport` |
+| Triggers | `GET /v1/triggers` | `triggerRepository.listPaginatedWithConditions` |
+| Triggers | `GET /v1/triggers/{id}` | `triggerRepository.findWithConditions` |
+| Triggers | `POST /v1/triggers` | `triggerService.create` |
+| Triggers | `PUT /v1/triggers/{id}` | `triggerService.updateWithConditions` |
+| Triggers | `PATCH /v1/triggers/{id}/settings` | `triggerService.updateSettings` |
+| Triggers | `DELETE /v1/triggers/{id}` | `triggerService.deleteMany` |
+| Keywords | `GET /v1/keywords` | `automatedResponseService.list` |
+| Keywords | `GET /v1/keywords/{id}` | `automatedResponseService.findOrFail` |
+| Keywords | `POST /v1/keywords` | `automatedResponseService.create` |
+| Keywords | `PUT /v1/keywords/{id}` | `automatedResponseService.update` |
+| Keywords | `PATCH /v1/keywords/{id}/status` | `automatedResponseService.setStatus` |
+| Keywords | `DELETE /v1/keywords/{id}` | `automatedResponseService.deleteMany` |
+| AI agents | `GET /v1/ai-agents` | `aiAgentService.listAIAgents` |
+| AI agents | `GET /v1/ai-agents/{id}` | `aiAgentService.findBy` |
+| AI agents | `POST /v1/ai-agents` | `aiAgentService.create` |
+| AI agents | `PUT /v1/ai-agents/{id}` | `aiAgentService.updateAIAgent` |
+| AI agents | `DELETE /v1/ai-agents/{id}` | `aiAgentService.delete` |
+| Ref links | `GET /v1/ref-links` | `reflinkService.list` |
+| Ref links | `GET /v1/ref-links/{id}` | `reflinkService.findOrFail` |
+| Ref links | `POST /v1/ref-links` | `reflinkService.create` |
+| Ref links | `PUT /v1/ref-links/{id}` | `reflinkService.update` |
+| Ref links | `DELETE /v1/ref-links/{id}` | `reflinkService.deleteMany` |
+| AI triggers | `GET /v1/ai-triggers` | `aiTriggerService.list` |
+| AI triggers | `GET /v1/ai-triggers/{id}` | `aiTriggerService.findOrFail` |
+| AI triggers | `POST /v1/ai-triggers` | `aiTriggerService.create` |
+| AI triggers | `PUT /v1/ai-triggers/{id}` | `aiTriggerService.update` |
+| AI triggers | `POST /v1/ai-triggers/{id}/duplicate` | `aiTriggerService.duplicate` |
+| AI triggers | `DELETE /v1/ai-triggers/{id}` | `aiTriggerService.deleteMany` |
+
+Two invariants to preserve when touching this surface:
+
+- **Keywords `type` filter** — `AutomatedResponse` serves two `FolderType`s
+  off one table (`automatedResponse` for inbound/Contact,
+  `outboundAutomatedResponse` for outbound/Page), disambiguated by the `type`
+  column (invariant #17 in the root `AGENTS.md`). `type` must stay in the
+  where-clause on every keywords path — never let it become fully optional
+  in a way that drops the filter.
+- **`GET /v1/triggers` and `GET /v1/triggers/{id}` return real conditions and
+  actions**, not the empty arrays the routes returned before this scope was
+  widened. Any future trigger route must keep populating both via
+  `triggerRepository.findWithConditions` rather than reintroducing a
+  hardcoded `[]`.
+
 ## Adding a new scope value
 
 1. Add the value to `workspaceApiTokenScopes` in

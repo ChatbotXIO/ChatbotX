@@ -4,6 +4,7 @@ import {
   db,
   eq,
   inArray,
+  isUniqueViolationError,
   relationsFilterToSQL,
   type SQL,
   sql,
@@ -36,7 +37,11 @@ import {
   normalizeCustomFieldValueForStorage,
   type SourceTimezoneResolver,
 } from "../contact-custom-field/normalize"
-import { ChatbotXException, notFoundException } from "../errors"
+import {
+  ChatbotXException,
+  notFoundException,
+  validationException,
+} from "../errors"
 import { folderService } from "../folder/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import type { PaginatedResult } from "../types"
@@ -459,11 +464,19 @@ class BotFieldService extends BaseService {
       })
     }
 
-    const [updated] = await tx
-      .update(botFieldModel)
-      .set(data)
-      .where(eq(botFieldModel.id, existing.id))
-      .returning()
+    let updated: BotFieldModel
+    try {
+      ;[updated] = await tx
+        .update(botFieldModel)
+        .set(data)
+        .where(eq(botFieldModel.id, existing.id))
+        .returning()
+    } catch (error) {
+      if (isUniqueViolationError(error)) {
+        throw validationException("name", "Name is already taken")
+      }
+      throw error
+    }
 
     await this.invalidate({ workspaceId, ids: [existing.id] })
 
@@ -491,10 +504,18 @@ class BotFieldService extends BaseService {
       data,
     )
 
-    const [botField] = await tx
-      .insert(botFieldModel)
-      .values({ id: createId(), workspaceId, ...preparedData })
-      .returning()
+    let botField: BotFieldModel
+    try {
+      ;[botField] = await tx
+        .insert(botFieldModel)
+        .values({ id: createId(), workspaceId, ...preparedData })
+        .returning()
+    } catch (error) {
+      if (isUniqueViolationError(error)) {
+        throw validationException("name", "Name is already taken")
+      }
+      throw error
+    }
 
     await this.invalidate({ workspaceId })
     return botField

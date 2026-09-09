@@ -1,8 +1,10 @@
 import { db, eq } from "@chatbotx.io/database/client"
 import type {
+  TemplateCategory,
   TemplatePermissions,
   TemplateSelection,
 } from "@chatbotx.io/database/partials"
+import { templateSelectableResourceRepository } from "@chatbotx.io/database/repositories"
 import {
   templateInstallationModel,
   templateModel,
@@ -17,6 +19,22 @@ import { ChatbotXException, notFoundException } from "../errors"
 import { workspaceService } from "../workspace"
 import { generateShareToken } from "./share-token"
 import { buildTemplateSnapshot } from "./snapshot.service"
+
+const SELECTABLE_RESOURCE_PAGE_SIZE = 100
+const SELECTABLE_RESOURCE_ALL_IDS_CAP = 1000
+
+export type SelectableResourceItem = {
+  id: string
+  name: string
+  folderName?: string
+}
+
+export type ListSelectableResourcesResult = {
+  items: SelectableResourceItem[]
+  nextCursor: string | null
+  total: number
+  allIds?: string[]
+}
 
 export const templateShareDisabledException = () =>
   new ChatbotXException(
@@ -409,6 +427,191 @@ class TemplateService {
       .update(templateModel)
       .set({ deletedAt: new Date() })
       .where(eq(templateModel.id, input.templateId))
+  }
+
+  /**
+   * One unified query for the template picker's category tabs, so the
+   * picker depends on a single seam rather than each category's own
+   * incompatible list-query signature. Search is server-side `ilike`
+   * (never client-side `.toLowerCase()`, which is locale-broken for
+   * Vietnamese names). Returns `allIds` alongside page 1 whenever `total <=
+   * SELECTABLE_RESOURCE_ALL_IDS_CAP`, so a `mode:"all"` -> uncheck-one-row
+   * downgrade on the client can be exact instead of guessing at what "all"
+   * means.
+   */
+  async listSelectableResources(input: {
+    workspaceId: string
+    category: TemplateCategory
+    keyword?: string | null
+    cursor?: string | null
+    limit?: number | null
+  }): Promise<ListSelectableResourcesResult> {
+    const limit = input.limit ?? SELECTABLE_RESOURCE_PAGE_SIZE
+    const offset = input.cursor ? Number.parseInt(input.cursor, 10) || 0 : 0
+
+    const categoryInput = {
+      workspaceId: input.workspaceId,
+      keyword: input.keyword,
+      offset,
+      limit,
+    }
+
+    switch (input.category) {
+      case "flows":
+        return projectSelectableResourceRows(
+          await templateSelectableResourceRepository.listFlows(categoryInput),
+          offset,
+          limit,
+        )
+      case "tags":
+        return projectSelectableResourceRows(
+          await templateSelectableResourceRepository.listTags(categoryInput),
+          offset,
+          limit,
+        )
+      case "customFields":
+        return projectSelectableResourceRows(
+          await templateSelectableResourceRepository.listCustomFields(
+            categoryInput,
+          ),
+          offset,
+          limit,
+        )
+      case "products":
+        return projectSelectableResourceRows(
+          await templateSelectableResourceRepository.listProducts(
+            categoryInput,
+          ),
+          offset,
+          limit,
+        )
+      case "aiFunctions":
+        return projectSelectableResourceRows(
+          await templateSelectableResourceRepository.listAIFunctions(
+            categoryInput,
+          ),
+          offset,
+          limit,
+        )
+      case "aiAgents":
+        return projectSelectableResourceRows(
+          await templateSelectableResourceRepository.listAIAgents(
+            categoryInput,
+          ),
+          offset,
+          limit,
+        )
+      case "calendars":
+        return projectSelectableResourceRows(
+          await templateSelectableResourceRepository.listCalendars(
+            categoryInput,
+          ),
+          offset,
+          limit,
+        )
+      case "webchats":
+        return projectSelectableResourceRows(
+          await templateSelectableResourceRepository.listWebchats(
+            categoryInput,
+          ),
+          offset,
+          limit,
+        )
+      case "triggers":
+        return projectSelectableResourceRows(
+          await templateSelectableResourceRepository.listTriggers(
+            categoryInput,
+          ),
+          offset,
+          limit,
+        )
+      case "fbCommentAutomations":
+        return projectSelectableResourceRows(
+          await templateSelectableResourceRepository.listFbCommentAutomations(
+            categoryInput,
+          ),
+          offset,
+          limit,
+        )
+      case "keywords":
+        return projectSelectableResourceRows(
+          await templateSelectableResourceRepository.listKeywords(
+            categoryInput,
+          ),
+          offset,
+          limit,
+        )
+      case "entryPointLinks":
+        return projectSelectableResourceRows(
+          await templateSelectableResourceRepository.listEntryPointLinks(
+            categoryInput,
+          ),
+          offset,
+          limit,
+        )
+      case "settings":
+        return listSelectableSettings(
+          input.workspaceId,
+          input.keyword,
+          offset,
+          limit,
+        )
+      default:
+        return { items: [], nextCursor: null, total: 0 }
+    }
+  }
+}
+
+const projectSelectableResourceRows = (
+  result: { rows: SelectableResourceItem[]; total: number; allIds?: string[] },
+  offset: number,
+  limit: number,
+): ListSelectableResourcesResult => ({
+  items: result.rows,
+  nextCursor:
+    offset + result.rows.length < result.total ? String(offset + limit) : null,
+  total: result.total,
+  allIds: result.allIds,
+})
+
+/**
+ * `settings` bundles two tables (`SavedReply`, `BotField`) under one
+ * category, mirroring `settingsAdapter`'s two-kind entries. Search and
+ * pagination run in memory over the combined, name-sorted list — both
+ * tables are small, workspace-admin-configured settings, never large enough
+ * to warrant a real cross-table paginated query.
+ */
+const listSelectableSettings = async (
+  workspaceId: string,
+  keyword: string | null | undefined,
+  offset: number,
+  limit: number,
+): Promise<ListSelectableResourcesResult> => {
+  const { savedReplies, botFields } =
+    await templateSelectableResourceRepository.listSettings(workspaceId)
+
+  const all = [
+    ...savedReplies.map((row) => ({ id: row.id, name: row.shortcut })),
+    ...botFields.map((row) => ({ id: row.id, name: row.name })),
+  ].sort((a, b) => a.name.localeCompare(b.name))
+
+  const filtered = keyword
+    ? all.filter((row) =>
+        row.name.toLowerCase().includes(keyword.toLowerCase()),
+      )
+    : all
+
+  const total = filtered.length
+  const page = filtered.slice(offset, offset + limit)
+
+  return {
+    items: page,
+    nextCursor: offset + page.length < total ? String(offset + limit) : null,
+    total,
+    allIds:
+      offset === 0 && total <= SELECTABLE_RESOURCE_ALL_IDS_CAP
+        ? filtered.map((row) => row.id)
+        : undefined,
   }
 }
 

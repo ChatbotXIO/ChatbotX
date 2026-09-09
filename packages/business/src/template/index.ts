@@ -4,7 +4,9 @@ export {
   templateAllowDeleteViolationException,
 } from "./installed-resource.service"
 export {
+  type ListSelectableResourcesResult,
   type PublicTemplateProjection,
+  type SelectableResourceItem,
   templateCrossTenantInstallException,
   templateService,
   templateShareDisabledException,

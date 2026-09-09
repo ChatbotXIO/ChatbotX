@@ -1,5 +1,4 @@
 import { stepTypes } from "@chatbotx.io/flow-config"
-import type { FlowNode } from "../schema/flow-node"
 
 const LEGACY_STEP_TYPE_ALIASES: Record<string, readonly string[]> = {
   [stepTypes.enum.sendWaTemplateMessage]: ["WA_TM01"],
@@ -15,11 +14,18 @@ type StepWithTemplate = {
   template?: { id?: string }
 }
 
+type FlowNodeLike = {
+  data?: {
+    isStartNode?: boolean
+    details?: { steps?: StepWithTemplate[] }
+  }
+}
+
 type FlowWithNodeVersions = {
   flowVersions: Array<{ nodes: unknown }>
 }
 
-const isFlowNode = (node: unknown): node is FlowNode =>
+const isFlowNode = (node: unknown): node is FlowNodeLike =>
   typeof node === "object" && node !== null
 
 export function hasStartNode(nodes: unknown, stepType: string): boolean {

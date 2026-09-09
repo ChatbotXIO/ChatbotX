@@ -5,6 +5,7 @@ import {
   db,
   desc,
   eq,
+  findOrFail,
   gt,
   inArray,
   isNotNull,
@@ -31,6 +32,10 @@ import {
   pruneEmailPhoneFilterConditions,
 } from "@chatbotx.io/database/queries"
 import {
+  type BroadcastListInput,
+  broadcastRepository,
+} from "@chatbotx.io/database/repositories"
+import {
   broadcastModel,
   contactInboxModel,
   contactModel,
@@ -47,11 +52,20 @@ import type {
   IntegrationMessengerModel,
   IntegrationWhatsappModel,
 } from "@chatbotx.io/database/types"
-import { chunkById, likeContains } from "@chatbotx.io/database/utils"
+import {
+  chunkById,
+  getPaginationWithDefaults,
+  likeContains,
+} from "@chatbotx.io/database/utils"
 import type { WaTemplateParams } from "@chatbotx.io/flow-config"
+import { createId } from "@chatbotx.io/utils"
 import { startOfMinute } from "date-fns"
 import { BaseService } from "../base.service"
-import { ChatbotXException } from "../errors"
+import {
+  ChatbotXException,
+  notFoundException,
+  validationException,
+} from "../errors"
 import { inboxService } from "../inbox/service"
 import type {
   BroadcastAudienceInput,
@@ -125,6 +139,82 @@ export type BroadcastCalendarRow = BroadcastModel & {
 }
 
 class BroadcastService extends BaseService {
+  /**
+   * Paginated broadcast list with relations — shared by the public API
+   * (`GET /v1/broadcasts`) and the builder's broadcasts page.
+   */
+  async list(input: BroadcastListInput) {
+    const pagination = getPaginationWithDefaults(input)
+
+    const [data, total] = await Promise.all([
+      broadcastRepository.listWithRelations(input),
+      broadcastRepository.count(input),
+    ])
+
+    return { data, pageCount: Math.ceil(total / pagination.limit) }
+  }
+
+  /**
+   * Gates the audience read behind a non-deleted broadcast owned by this
+   * workspace (resolved by id-or-name), then returns the paginated audience
+   * rows. A single existence gate — callers must not re-resolve the
+   * broadcast separately before calling this.
+   */
+  async listAudience(input: {
+    idOrName: string
+    workspaceId: string
+    page?: number | null
+    perPage?: number | null
+  }) {
+    const { limit, offset } = getPaginationWithDefaults(input)
+
+    const broadcast = await broadcastRepository.findByIdOrName({
+      idOrName: input.idOrName,
+      workspaceId: input.workspaceId,
+    })
+
+    if (!broadcast) {
+      throw notFoundException("Broadcast not found")
+    }
+
+    const [rows, total] = await Promise.all([
+      broadcastRepository.listAudience({
+        broadcastId: broadcast.id,
+        limit,
+        offset,
+      }),
+      broadcastRepository.countAudience(broadcast.id),
+    ])
+
+    return {
+      data: rows.map((row) => ({
+        contactId: row.contactId,
+        contact: {
+          id: row.contact.id,
+          firstName: row.contact.firstName,
+          lastName: row.contact.lastName,
+          fullName: row.contact.fullName,
+          email: row.contact.email,
+          phoneNumber: row.contact.phoneNumber,
+          avatar: row.contact.avatar,
+          gender: row.contact.gender,
+        },
+        sent: row.sent,
+      })),
+      pageCount: Math.ceil(total / limit),
+    }
+  }
+
+  async findByIdOrName(input: { workspaceId: string; idOrName: string }) {
+    const broadcast = await broadcastRepository.findByIdOrName(input)
+
+    if (!broadcast) {
+      throw notFoundException("Broadcast not found")
+    }
+
+    return broadcast
+  }
+
   async findByIdForResponse(input: {
     workspaceId: string
     broadcastId: string
@@ -539,6 +629,28 @@ class BroadcastService extends BaseService {
       },
     })
     return row ?? null
+  }
+
+  /** Renames a broadcast. Distinct from `updateDraft`, which re-applies a full create payload. */
+  async update(
+    ctx: { workspaceId: string; id: string },
+    data: { name: string },
+  ): Promise<void> {
+    const broadcast = await findOrFail({
+      table: broadcastModel,
+      where: {
+        id: ctx.id,
+        workspaceId: ctx.workspaceId,
+        deletedAt: { isNull: true },
+      },
+    })
+
+    await db
+      .update(broadcastModel)
+      .set(data)
+      .where(eq(broadcastModel.id, broadcast.id))
+
+    await this.audit("update", `updated a broadcast (#${broadcast.id})`)
   }
 
   /**
@@ -1070,6 +1182,205 @@ class BroadcastService extends BaseService {
           .limit(chunkSize),
       { chunkSize, callback: onChunk },
     )
+  }
+
+  /**
+   * Validates channel/subaction/flow-or-template rules, verifies any
+   * integration ids and the flow/template actually belong to the workspace,
+   * resolves the broadcast's stored `name`, inserts it, and audits — the
+   * full `createBroadcastAction` body. Every validation failure throws
+   * `validationException(field, message)` so the action can re-map it to a
+   * `returnValidationErrors` payload on the same field.
+   */
+  async create(
+    input: UpdateDraftBroadcastData & {
+      workspaceId: string
+      canViewEmailAndPhone: boolean
+    },
+  ): Promise<BroadcastModel> {
+    const { workspaceId, canViewEmailAndPhone, buttons, saveAsDraft, ...rest } =
+      input
+
+    const capability = findBroadcastChannelCapability(rest.channel)
+    if (!capability) {
+      throw validationException("channel", "Unsupported broadcast channel")
+    }
+    if (!capability.subactions.includes(rest.subaction)) {
+      throw validationException("subaction", "Unsupported broadcast subaction")
+    }
+    if (!(rest.flowId || rest.templateId)) {
+      throw validationException(
+        "flowId",
+        "Either flow or template must be selected",
+      )
+    }
+    if (rest.templateId && !capability.supportsTemplateBroadcast) {
+      throw validationException(
+        "templateId",
+        "Template broadcasts are not supported for this channel",
+      )
+    }
+
+    // Never trust integration ids from the client: they scope the audience,
+    // so a foreign id would let a broadcast target another workspace's pages.
+    // Checked independently so the validation error lands on the field that
+    // actually failed (the original action validated each id on its own).
+    if (rest.integrationMessengerId) {
+      await this.assertBroadcastIntegrationsOwned({
+        workspaceId,
+        integrationMessengerId: rest.integrationMessengerId,
+      }).catch((error: unknown) => {
+        if (error instanceof ChatbotXException) {
+          throw validationException(
+            "integrationMessengerId",
+            "Integration not found",
+          )
+        }
+        throw error
+      })
+    }
+    if (rest.integrationWhatsappId) {
+      await this.assertBroadcastIntegrationsOwned({
+        workspaceId,
+        integrationWhatsappId: rest.integrationWhatsappId,
+      }).catch((error: unknown) => {
+        if (error instanceof ChatbotXException) {
+          throw validationException(
+            "integrationWhatsappId",
+            "Integration not found",
+          )
+        }
+        throw error
+      })
+    }
+
+    let broadcastName = DEFAULT_BROADCAST_NAME
+    if (rest.flowId) {
+      broadcastName = await this.requireFlowName(
+        workspaceId,
+        rest.flowId,
+      ).catch((error: unknown) => {
+        if (error instanceof ChatbotXException) {
+          throw validationException("flowId", "Flow not found")
+        }
+        throw error
+      })
+    }
+
+    if (rest.templateId) {
+      const templateBroadcastName = await this.resolveTemplateBroadcastName({
+        workspaceId,
+        channel: rest.channel,
+        templateId: rest.templateId,
+        integrationMessengerId: rest.integrationMessengerId,
+        integrationWhatsappId: rest.integrationWhatsappId,
+      })
+
+      if (!templateBroadcastName) {
+        throw validationException("templateId", "Template not found")
+      }
+
+      broadcastName = templateBroadcastName
+    }
+
+    const contactFilter = pruneEmailPhoneFilterConditions(
+      rest.contactFilter,
+      canViewEmailAndPhone,
+    )
+
+    const [broadcast] = await db
+      .insert(broadcastModel)
+      .values({
+        ...rest,
+        contactFilter,
+        name: broadcastName,
+        workspaceId,
+        status: saveAsDraft ? "draft" : "scheduled",
+        schedulesAt: startOfMinute(new Date(rest.schedulesAt ?? new Date())),
+        templateData: rest.templateData
+          ? {
+              ...(rest.templateData as Record<string, unknown>),
+              buttons: buttons ?? [],
+            }
+          : null,
+      })
+      .returning()
+
+    await this.audit("create", `created a new broadcast (#${broadcast.id})`)
+
+    // A draft is never launched — it only leaves `draft` through
+    // `scheduleBroadcastAction`, which records its own `launch` entry.
+    if (rest.schedulesType === "now" && !saveAsDraft) {
+      await this.audit("launch", `launched a broadcast (#${broadcast.id})`)
+    }
+
+    return broadcast
+  }
+
+  /**
+   * Clones a `sent`/`failed` broadcast as a new immediately-scheduled one.
+   * The transaction wraps a single insert — kept verbatim rather than
+   * simplified, to avoid any semantic argument about what belongs inside it.
+   */
+  /**
+   * Runs `resend`'s existence/status guards up front so the caller can
+   * safely read `contactFilter` for pruning before the resend write — a
+   * foreign or soft-deleted id, or a broadcast that isn't sent/failed,
+   * throws here instead of the caller processing a row it shouldn't see.
+   */
+  async assertResendable(input: {
+    workspaceId: string
+    id: string
+  }): Promise<BroadcastModel> {
+    const broadcast = await findOrFail({
+      table: broadcastModel,
+      where: {
+        id: input.id,
+        workspaceId: input.workspaceId,
+        deletedAt: { isNull: true },
+      },
+    })
+    if (broadcast.status !== "sent" && broadcast.status !== "failed") {
+      throw new ChatbotXException("Broadcast is not sent")
+    }
+    return broadcast
+  }
+
+  async resend(input: {
+    workspaceId: string
+    id: string
+    contactFilter?: ContactFilterCriteriaInput | null
+  }): Promise<BroadcastModel> {
+    const broadcast = await this.assertResendable(input)
+
+    const newBroadcast = await db.transaction(async (tx) => {
+      const inserted = await tx
+        .insert(broadcastModel)
+        .values({
+          workspaceId: input.workspaceId,
+          flowId: broadcast.flowId,
+          integrationWhatsappId: broadcast.integrationWhatsappId,
+          integrationMessengerId: broadcast.integrationMessengerId,
+          channel: broadcast.channel,
+          subaction: broadcast.subaction,
+          templateId: broadcast.templateId,
+          templateData: broadcast.templateData,
+          status: "scheduled",
+          schedulesType: "now",
+          schedulesAt: new Date(),
+          contactFilter: input.contactFilter,
+          name: `${broadcast.name} (Resend)`,
+          id: createId(),
+        })
+        .returning()
+        .then((result) => result[0])
+
+      return inserted
+    })
+
+    await this.audit("launch", `launched a broadcast (#${newBroadcast.id})`)
+
+    return newBroadcast
   }
 }
 

@@ -1,13 +1,16 @@
 import { flowAnalyticsService } from "@chatbotx.io/analytics"
+import { flowService } from "@chatbotx.io/business"
 import { smartDelayService } from "@chatbotx.io/business/smart-delay"
-import { db } from "@chatbotx.io/database/client"
 import type { FlowNode } from "@chatbotx.io/flow-config"
 import { notFound } from "next/navigation"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import { buildSmartDelayNodeStats } from "@/features/flows/analytics/smart-delay-node-stats"
 import { FlowAnalytics } from "@/features/flows/flow-analytics"
+import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+import { FlowTemplateStoreProvider } from "@/features/flows/react-flow/stores/flow-template-store-provider"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
+import { isNotFoundException } from "@/lib/errors/validation-exception"
 
 type FlowAnalyticsPageProps = {
   params: Promise<{ workspaceId: string; id: string }>
@@ -23,17 +26,17 @@ export default async function FlowAnalyticsPage({
 
   await requireWorkspacePermission(data.workspaceId, "flows")
 
-  const flow = await db.query.flowModel.findFirst({
-    where: {
+  let flow: Awaited<ReturnType<typeof flowService.findById>>
+  try {
+    flow = await flowService.findById({
       id: data.id,
       workspaceId: data.workspaceId,
-    },
-    with: {
-      flowVersions: true,
-    },
-  })
-  if (!flow) {
-    return notFound()
+    })
+  } catch (error) {
+    if (isNotFoundException(error)) {
+      return notFound()
+    }
+    throw error
   }
 
   const draftFlowVersion = flow.flowVersions?.find((v) => v.isDraft)
@@ -58,12 +61,16 @@ export default async function FlowAnalyticsPage({
 
   return (
     <div className="flex h-screen w-screen flex-col">
-      <FlowAnalytics
-        flow={flow}
-        flowVersion={draftFlowVersion as FlowVersionResource}
-        smartDelayStats={smartDelayStats}
-        stats={stats}
-      />
+      <FlowStoreProvider workspaceId={data.workspaceId}>
+        <FlowTemplateStoreProvider workspaceId={data.workspaceId}>
+          <FlowAnalytics
+            flow={flow}
+            flowVersion={draftFlowVersion as FlowVersionResource}
+            smartDelayStats={smartDelayStats}
+            stats={stats}
+          />
+        </FlowTemplateStoreProvider>
+      </FlowStoreProvider>
     </div>
   )
 }

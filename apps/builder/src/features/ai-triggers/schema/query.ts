@@ -21,9 +21,7 @@ export type ListAITriggersRequest = Awaited<
   workspaceId: string
 }
 
-export type AITriggerResource = AITriggerModel
-
 export type AITriggerCollection = {
-  data: AITriggerResource[]
+  data: AITriggerModel[]
   pageCount: number
 }

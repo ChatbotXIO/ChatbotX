@@ -61,7 +61,6 @@ async function createAndScheduleDispatch(
       client,
     })
 
-    // biome-ignore lint/correctness/useHookAtTopLevel: useExisting is not a React hook
     const redisClient = await sequenceConnections.useExisting()
     const scheduler = new SchedulerClient(redisClient)
     await scheduler.addToSchedule(
@@ -70,62 +69,6 @@ async function createAndScheduleDispatch(
       Number(dispatch.runAtMs),
     )
   }
-}
-
-export async function calculateNextRunAtBulk(
-  sequenceIds: string[],
-  enrolledAt: Date = new Date(),
-  tx?: DatabaseClient,
-): Promise<Map<string, { nextRunAt: Date; nextStepId: string | null }>> {
-  const client = tx ?? db
-
-  const firstSteps = await client.query.sequenceStepModel.findMany({
-    where: {
-      sequenceId: { in: sequenceIds },
-      order: 0,
-      isActive: true,
-    },
-    columns: {
-      id: true,
-      sequenceId: true,
-      delayDays: true,
-      delayMinutes: true,
-      delayUnit: true,
-      specificDateTime: true,
-    },
-  })
-
-  const stepMap = new Map(firstSteps.map((step) => [step.sequenceId, step]))
-
-  const resultMap = new Map<
-    string,
-    { nextRunAt: Date; nextStepId: string | null }
-  >()
-  for (const sequenceId of sequenceIds) {
-    const step = stepMap.get(sequenceId)
-    if (!step) {
-      resultMap.set(sequenceId, { nextRunAt: enrolledAt, nextStepId: null })
-      continue
-    }
-
-    if (step.delayUnit === "specificTime" && step.specificDateTime) {
-      resultMap.set(sequenceId, {
-        nextRunAt: step.specificDateTime,
-        nextStepId: step.id,
-      })
-      continue
-    }
-
-    const delayMs =
-      step.delayDays * 24 * 60 * 60 * 1000 + step.delayMinutes * 60 * 1000
-    resultMap.set(sequenceId, {
-      nextRunAt:
-        delayMs > 0 ? new Date(enrolledAt.getTime() + delayMs) : enrolledAt,
-      nextStepId: step.id,
-    })
-  }
-
-  return resultMap
 }
 
 function calculateDelayInMs(delayDays: number, delayMinutes: number): number {

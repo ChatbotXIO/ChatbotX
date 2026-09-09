@@ -2,6 +2,7 @@ export * from "./ads-conversion"
 export * from "./ai-agent"
 export * from "./ai-function"
 export * from "./ai-mcp-server"
+export * from "./ai-trigger"
 export * from "./appointment"
 export * from "./appointment-calendar"
 export * from "./appointment-external-calendar"
@@ -86,6 +87,12 @@ export { parseLiveCount } from "./quota-shared/live-counter-store"
 export * from "./referral"
 export * from "./reflink"
 export * from "./saved-reply"
+// Not barrel-exported: `sequenceService.upsertStep`/`deleteStep` reach
+// sequence-scheduler's `createDispatch`, which hashes with Node's `crypto`.
+// This barrel is traced into the builder's Edge Runtime bundle, where a Node
+// built-in is a hard compile error — see edge-safe-import-graph.test.ts and
+// the same pattern for `contact-sequence`. Import from
+// `@chatbotx.io/business/sequence` instead.
 export * from "./smart-delay"
 export * from "./spreadsheet"
 export * from "./tag"

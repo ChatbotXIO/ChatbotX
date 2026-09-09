@@ -3,9 +3,59 @@
 exports[`public API spec — operation naming guard > operation list (operationId, method, path) matches the committed snapshot 1`] = `
 [
   {
+    "method": "POST",
+    "operationId": "aiAgents.create",
+    "path": "/v1/ai-agents",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "aiAgents.delete",
+    "path": "/v1/ai-agents/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "aiAgents.get",
+    "path": "/v1/ai-agents/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "aiAgents.list",
     "path": "/v1/ai-agents",
+  },
+  {
+    "method": "PUT",
+    "operationId": "aiAgents.update",
+    "path": "/v1/ai-agents/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "aiTriggers.create",
+    "path": "/v1/ai-triggers",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "aiTriggers.delete",
+    "path": "/v1/ai-triggers/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "aiTriggers.duplicate",
+    "path": "/v1/ai-triggers/{id}/duplicate",
+  },
+  {
+    "method": "GET",
+    "operationId": "aiTriggers.get",
+    "path": "/v1/ai-triggers/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "aiTriggers.list",
+    "path": "/v1/ai-triggers",
+  },
+  {
+    "method": "PUT",
+    "operationId": "aiTriggers.update",
+    "path": "/v1/ai-triggers/{id}",
   },
   {
     "method": "PUT",
@@ -413,9 +463,54 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/external-webhooks",
   },
   {
+    "method": "POST",
+    "operationId": "flows.create",
+    "path": "/v1/flows",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "flows.delete",
+    "path": "/v1/flows/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "flows.duplicate",
+    "path": "/v1/flows/{id}/duplicate",
+  },
+  {
+    "method": "GET",
+    "operationId": "flows.get",
+    "path": "/v1/flows/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "flows.import",
+    "path": "/v1/flows/import",
+  },
+  {
     "method": "GET",
     "operationId": "flows.list",
     "path": "/v1/flows",
+  },
+  {
+    "method": "POST",
+    "operationId": "flows.publish",
+    "path": "/v1/flows/{id}/publish",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "flows.update",
+    "path": "/v1/flows/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "flows.updateDraft",
+    "path": "/v1/flows/{id}/draft",
+  },
+  {
+    "method": "GET",
+    "operationId": "flows.versions",
+    "path": "/v1/flows/{id}/versions",
   },
   {
     "method": "POST",
@@ -483,9 +578,34 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/integrations/status/token-errors",
   },
   {
+    "method": "POST",
+    "operationId": "keywords.create",
+    "path": "/v1/keywords",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "keywords.delete",
+    "path": "/v1/keywords/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "keywords.get",
+    "path": "/v1/keywords/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "keywords.list",
     "path": "/v1/keywords",
+  },
+  {
+    "method": "PUT",
+    "operationId": "keywords.update",
+    "path": "/v1/keywords/{id}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "keywords.updateStatus",
+    "path": "/v1/keywords/{id}/status",
   },
   {
     "method": "POST",
@@ -533,8 +653,28 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/products/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "reflinks.create",
+    "path": "/v1/ref-links",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "reflinks.delete",
+    "path": "/v1/ref-links/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "reflinks.get",
+    "path": "/v1/ref-links/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "reflinks.list",
+    "path": "/v1/ref-links",
+  },
+  {
+    "method": "PUT",
+    "operationId": "reflinks.update",
     "path": "/v1/ref-links/{id}",
   },
   {
@@ -583,9 +723,34 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/template-messages",
   },
   {
+    "method": "POST",
+    "operationId": "triggers.create",
+    "path": "/v1/triggers",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "triggers.delete",
+    "path": "/v1/triggers/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "triggers.get",
+    "path": "/v1/triggers/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "triggers.list",
     "path": "/v1/triggers",
+  },
+  {
+    "method": "PUT",
+    "operationId": "triggers.update",
+    "path": "/v1/triggers/{id}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "triggers.updateSettings",
+    "path": "/v1/triggers/{id}/settings",
   },
   {
     "method": "POST",

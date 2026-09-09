@@ -21,6 +21,7 @@ vi.mock("@chatbotx.io/business", () => ({
   isWorkspaceScheduledForDeletion,
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
+  broadcastService: { findByIdOrName: vi.fn() },
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -49,7 +50,6 @@ vi.mock("@/middlewares/auth", () => ({
 // test exercises, but the import chain must not try to open a connection.
 vi.mock("../src/features/broadcasts/queries", () => ({
   listBroadcasts: vi.fn(),
-  publicGetBroadcast: vi.fn(),
   listBroadcastAudience: vi.fn(),
 }))
 

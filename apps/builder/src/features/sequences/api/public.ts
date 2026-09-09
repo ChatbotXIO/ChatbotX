@@ -1,3 +1,4 @@
+import { sequenceService } from "@chatbotx.io/business/sequence"
 import z from "zod"
 import {
   possibleErrorsOnFindingResource,
@@ -5,7 +6,7 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { getSequence, listSequences } from "../queries"
+import { listSequences } from "../queries"
 import { listSequencesResponse } from "../schema/action"
 import { sequenceResource } from "../schema/resource"
 
@@ -42,6 +43,9 @@ export const sequencesPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(
       async ({ context, input }) =>
-        await getSequence(context.workspace.id, input.id),
+        await sequenceService.findWithSteps({
+          workspaceId: context.workspace.id,
+          id: input.id,
+        }),
     ),
 }

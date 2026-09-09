@@ -267,7 +267,7 @@ class ImportService extends BaseService {
    */
   async startFlowImport(input: {
     workspaceId: string
-    userId: string
+    userId: string | null
     fileId: string
     folderId?: string | null
   }): Promise<

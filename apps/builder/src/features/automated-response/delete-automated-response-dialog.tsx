@@ -1,5 +1,6 @@
 "use client"
 
+import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
 import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -28,6 +29,7 @@ type DeleteAutomatedResponsesDialogProps = ComponentPropsWithoutRef<
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
+  type: AutomatedResponseType
 }
 
 export function DeleteAutomatedResponsesDialog({
@@ -36,12 +38,13 @@ export function DeleteAutomatedResponsesDialog({
   showTrigger = true,
   onSuccess,
   onOpenChange,
+  type,
   ...props
 }: DeleteAutomatedResponsesDialogProps) {
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteAutomatedResponseAction.bind(null, workspaceId),
+    deleteAutomatedResponseAction.bind(null, workspaceId, type),
     {
       onSuccess: () => {
         toast.success(

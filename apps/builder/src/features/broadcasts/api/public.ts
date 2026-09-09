@@ -1,3 +1,4 @@
+import { broadcastService } from "@chatbotx.io/business"
 import z from "zod"
 import {
   possibleErrorsOnFindingResource,
@@ -5,11 +6,7 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import {
-  listBroadcastAudience,
-  listBroadcasts,
-  publicGetBroadcast,
-} from "../queries"
+import { listBroadcastAudience, listBroadcasts } from "../queries"
 import {
   listBroadcastAudienceResponse,
   publicListBroadcastsResponse,
@@ -51,7 +48,10 @@ export const broadcastsPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(
       async ({ context, input }) =>
-        await publicGetBroadcast(context.workspace.id, input.idOrName),
+        await broadcastService.findByIdOrName({
+          workspaceId: context.workspace.id,
+          idOrName: input.idOrName,
+        }),
     ),
 
   getAudience: workspaceTokenAuthAPI
@@ -70,16 +70,13 @@ export const broadcastsPublicRouter = {
     )
     .output(listBroadcastAudienceResponse)
     .errors(possibleErrorsOnFindingResource)
-    .handler(async ({ context, input }) => {
-      const broadcast = await publicGetBroadcast(
-        context.workspace.id,
-        input.idOrName,
-      )
-      return await listBroadcastAudience({
-        broadcastId: broadcast.id,
-        workspaceId: context.workspace.id,
-        page: input.page,
-        perPage: input.perPage,
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await listBroadcastAudience({
+          idOrName: input.idOrName,
+          workspaceId: context.workspace.id,
+          page: input.page,
+          perPage: input.perPage,
+        }),
+    ),
 }

@@ -90,6 +90,17 @@ vi.mock("@chatbotx.io/database/queries", () => ({
 vi.mock("@chatbotx.io/database/utils", () => ({
   chunkById: vi.fn(),
   likeContains: (value: string) => `%${value}%`,
+  getPaginationWithDefaults: vi.fn(() => ({ limit: 10, offset: 0 })),
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  broadcastRepository: {
+    listWithRelations: vi.fn(),
+    count: vi.fn(),
+    listAudience: vi.fn(),
+    countAudience: vi.fn(),
+    findByIdOrName: vi.fn(),
+  },
 }))
 
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))
