@@ -261,6 +261,64 @@ an endpoint's scope.
     not add it back; a client-supplied `sequenceId` that disagreed with the
     path would have nothing enforcing which one wins.
 
+### Ads scope — endpoint-to-scope table
+
+`ads` shipped in the enum/registry/i18n from day one (alongside `channels`,
+`minigames`, `appointments`, `media`) but carried no endpoints until this
+table's routes were added — a token scoped to `["ads"]` reached nothing
+before. It now covers Ads conversion-rule CRUD, the CTWA/CTM/CTID funnel and
+CAPI-delivery reads, the conversion export, ad-account reads, and the full
+messaging-ad campaign lifecycle (create/retry/publish/pause/delete + video
+upload). Every handler below calls the same `packages/business` service
+method the corresponding UI action/oRPC procedure calls
+(`.agents/rules/data-access.md`).
+
+| Resource | Endpoint | Service method |
+| --- | --- | --- |
+| Conversion rules | `GET /v1/ads/conversion-rules` | `adsConversionService.list` |
+| Conversion rules | `GET /v1/ads/conversion-rules/{id}` | `adsConversionService.findOrFail` |
+| Conversion rules | `POST /v1/ads/conversion-rules` | `adsConversionService.create` |
+| Conversion rules | `PUT /v1/ads/conversion-rules/{id}` | `adsConversionService.update` |
+| Conversion rules | `PATCH /v1/ads/conversion-rules/{id}/status` | `adsConversionService.toggleEnabled` |
+| Conversion rules | `DELETE /v1/ads/conversion-rules/{id}` | `adsConversionService.remove` |
+| Funnel | `GET /v1/ads/funnel` | `adsConversionService.getCtwaFunnel` |
+| Funnel | `GET /v1/ads/funnel/timeseries` | `adsConversionService.getCtwaFunnelTimeseries` |
+| CAPI delivery | `GET /v1/ads/capi-delivery` | `adsConversionService.getCapiDeliverySummary` |
+| Export | `GET /v1/ads/conversions/export` | `adsConversionService.listExportRows` / `listAllChannelExportRows` |
+| Ad accounts | `GET /v1/ads/{channel}/ad-accounts` | `resolveChannelAdAccountSources` |
+| Campaigns | `GET /v1/ads/campaigns` | `messagingAdCampaignService.list` |
+| Campaigns | `POST /v1/ads/campaigns/insights` | `messagingAdCampaignService.listInsights` |
+| Campaigns | `POST /v1/ads/campaigns` | `messagingAdCampaignService.createDraft` |
+| Campaigns | `POST /v1/ads/campaigns/{operationId}/retry` | `messagingAdCampaignService.retryDraft` |
+| Campaigns | `POST /v1/ads/campaigns/{operationId}/publish` | `messagingAdCampaignService.publish` |
+| Campaigns | `POST /v1/ads/campaigns/{operationId}/pause` | `messagingAdCampaignService.pause` |
+| Campaigns | `DELETE /v1/ads/campaigns/{operationId}` | `messagingAdCampaignService.deleteOperation` |
+| Campaigns | `POST /v1/ads/campaigns/upload-video` | `getMessagingAdsContextForIntegration` + `integration.runAction("uploadMessagingAdVideo")` |
+| Campaigns | `GET /v1/ads/campaigns/videos/{videoId}/status` | `integration.runAction("getMessagingAdVideoStatus")` |
+| Campaigns | `GET /v1/ads/campaigns/messenger-pages` | `messagingAdCampaignService.listMessengerPages` |
+| Campaigns | `GET /v1/ads/campaigns/{channel}/{integrationId}/ad-accounts` | `listCachedMessagingAdAccounts` |
+| Campaigns | `GET /v1/ads/campaigns/ad-accounts/{adAccountId}` | `getCachedMessagingAdAccountDetails` |
+| Campaigns | `GET /v1/ads/campaigns/prerequisites` | `messagingAdsConnectionService.findForIntegration` |
+
+Two invariants specific to this scope:
+
+- **The campaign-lifecycle mutations deliberately omit
+  `assertWorkspaceSuperAdmin`** — present on the private `adsCampaignAPI`
+  (`features/ads-campaign/api/private.ts`), it resolves the session user via
+  `getCurrentUserAndTargetWorkspace`. A workspace-token request never has a
+  session user (the token stack never runs `authMiddleware`), so the private
+  guard would throw `errors.superAdminRequired` on every token call. Per the
+  auth-flow section above, a workspace token authenticates the workspace,
+  not a member, and minting a token already required the caller to be a
+  workspace superAdmin — so the guard is correctly absent, not an oversight.
+  Any future ads-campaign endpoint copied from the private router must drop
+  this guard on the public path, the same way `features/coupons/api/public.ts`
+  and the contacts public surface never re-check member-level permissions.
+- **`createdBy` is `null`/omitted on every token-created campaign** — a token
+  has no associated user, mirroring the `createdById: null` precedent in
+  `features/coupons/api/public.ts`. Never resolve it from a session that
+  does not exist on this path.
+
 ## Adding a new scope value
 
 1. Add the value to `workspaceApiTokenScopes` in
@@ -320,8 +378,18 @@ these helpers — import from the business package directly.
   `folders-public-api.test.ts` — handler-behavior tests, one per public-API
   submodule (some under `features/contacts/api/public/`, some in the owning
   sibling feature's own `api/public.ts`)
+- `apps/builder/__tests__/ads-public-scope.test.ts` — real-router scope
+  wiring for both `features/ads/api/public.ts` and
+  `features/ads-campaign/api/public.ts` (merged into one `ads` router)
+- `apps/builder/__tests__/ads-public-api.test.ts`,
+  `ads-campaign-public-api.test.ts` — handler-behavior tests; the latter
+  asserts a campaign mutation succeeds with no session user in context (the
+  `assertWorkspaceSuperAdmin` regression guard) and that `createdBy` is never
+  set from one
 - `apps/builder/__tests__/create-workspace-token-action.test.ts`
 - `apps/builder/__tests__/delete-workspace-token-action.test.ts`
 - `apps/builder/__tests__/integration-api-token-hash.test.ts`
 - `packages/business/__tests__/workspace-api-token.service.test.ts`
+- `packages/business/__tests__/ads-conversion-rule.service.test.ts`
+  (`findOrFail`)
 - `packages/variables/__tests__/system-fields.test.ts` (`{{api_key}}`)

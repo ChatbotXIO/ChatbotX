@@ -3,6 +3,126 @@
 exports[`public API spec — operation naming guard > operation list (operationId, method, path) matches the committed snapshot 1`] = `
 [
   {
+    "method": "GET",
+    "operationId": "ads.checkCampaignPrerequisites",
+    "path": "/v1/ads/campaigns/prerequisites",
+  },
+  {
+    "method": "POST",
+    "operationId": "ads.createCampaign",
+    "path": "/v1/ads/campaigns",
+  },
+  {
+    "method": "POST",
+    "operationId": "ads.createRule",
+    "path": "/v1/ads/conversion-rules",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "ads.deleteCampaign",
+    "path": "/v1/ads/campaigns/{operationId}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "ads.deleteRule",
+    "path": "/v1/ads/conversion-rules/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.getCampaignAdAccountDetails",
+    "path": "/v1/ads/campaigns/ad-accounts/{adAccountId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "ads.getCampaignsInsights",
+    "path": "/v1/ads/campaigns/insights",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.getCampaignVideoStatus",
+    "path": "/v1/ads/campaigns/videos/{videoId}/status",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.getCapiDelivery",
+    "path": "/v1/ads/capi-delivery",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.getFunnel",
+    "path": "/v1/ads/funnel",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.getFunnelTimeseries",
+    "path": "/v1/ads/funnel/timeseries",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.getRule",
+    "path": "/v1/ads/conversion-rules/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.listCampaignAdAccounts",
+    "path": "/v1/ads/campaigns/{channel}/{integrationId}/ad-accounts",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.listCampaignMessengerPages",
+    "path": "/v1/ads/campaigns/messenger-pages",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.listCampaigns",
+    "path": "/v1/ads/campaigns",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.listChannelAdAccounts",
+    "path": "/v1/ads/{channel}/ad-accounts",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.listConversionExportRows",
+    "path": "/v1/ads/conversions/export",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.listRules",
+    "path": "/v1/ads/conversion-rules",
+  },
+  {
+    "method": "POST",
+    "operationId": "ads.pauseCampaign",
+    "path": "/v1/ads/campaigns/{operationId}/pause",
+  },
+  {
+    "method": "POST",
+    "operationId": "ads.publishCampaign",
+    "path": "/v1/ads/campaigns/{operationId}/publish",
+  },
+  {
+    "method": "POST",
+    "operationId": "ads.retryCampaign",
+    "path": "/v1/ads/campaigns/{operationId}/retry",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "ads.toggleRuleStatus",
+    "path": "/v1/ads/conversion-rules/{id}/status",
+  },
+  {
+    "method": "PUT",
+    "operationId": "ads.updateRule",
+    "path": "/v1/ads/conversion-rules/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "ads.uploadCampaignVideo",
+    "path": "/v1/ads/campaigns/upload-video",
+  },
+  {
     "method": "POST",
     "operationId": "aiAgents.create",
     "path": "/v1/ai-agents",

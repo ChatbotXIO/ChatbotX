@@ -630,6 +630,29 @@ describe("AdsConversionService", () => {
     )
   })
 
+  describe("findOrFail", () => {
+    test("returns the rule when it exists in the caller's workspace", async () => {
+      const rule = await adsConversionService.findOrFail({
+        id: "301",
+        workspaceId: "1",
+      })
+
+      expect(mocks.findWorkspaceRule).toHaveBeenCalledWith(
+        { id: "301", workspaceId: "1" },
+        undefined,
+      )
+      expect(rule).toMatchObject({ id: "301", workspaceId: "1" })
+    })
+
+    test("throws when the rule does not exist in the caller's workspace", async () => {
+      mocks.findWorkspaceRule.mockResolvedValueOnce(null)
+
+      await expect(
+        adsConversionService.findOrFail({ id: "999", workspaceId: "1" }),
+      ).rejects.toThrow("Ads conversion rule not found")
+    })
+  })
+
   test("maps automatic LeadSubmitted events to lead rows with attribution", async () => {
     await expect(
       adsConversionService.ingestAutomaticEvent({

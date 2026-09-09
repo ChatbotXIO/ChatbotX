@@ -814,6 +814,27 @@ class AdsConversionService extends BaseService {
     )
   }
 
+  /**
+   * Single-rule read, workspace-scoped. `removeAdsConversionRuleInput`'s
+   * `{ id, workspaceId }` shape is reused rather than adding a near-duplicate
+   * schema — every field it validates (both bigint-string ids) is exactly
+   * what this lookup needs. Not a repository call from the handler layer: a
+   * `GET` by id owns the not-found contract (same message as
+   * `update`/`toggleEnabled`/`remove`), which makes it business logic, not a
+   * pure read (`.agents/rules/data-access.md`).
+   */
+  async findOrFail(
+    input: RemoveAdsConversionRuleInput,
+    tx?: DatabaseClient,
+  ): Promise<AdsConversionRuleModel> {
+    const parsed = removeAdsConversionRuleInput.parse(input)
+    const rule = await adsConversionRuleRepository.findWorkspaceRule(parsed, tx)
+    if (!rule) {
+      throw new ChatbotXException("Ads conversion rule not found")
+    }
+    return rule
+  }
+
   async create(
     input: CreateAdsConversionRuleInput,
     tx?: DatabaseClient,
