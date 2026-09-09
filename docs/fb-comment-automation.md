@@ -200,6 +200,31 @@ send), and the comment handler owns the channel routing.
   you add a new filter, add a skip log too — otherwise production debugging is blind
   (`processCommentAutomation` returns `void`, so BullMQ always records `returnValue: null`
   regardless of what happened).
+- **Instagram-via-Facebook private replies go through the Page node, never the IG node.**
+  `sendPrivateReplyMessage`
+  ([`integrations/instagram-facebook/src/apis/comment.ts`](../integrations/instagram-facebook/src/apis/comment.ts))
+  must post to `/{pageId}/messages`. Meta exposes the `messages` edge only on the Page for
+  this login type; `/{igId}/messages` is rejected with `(#3) Application does not have the
+  capability to make this API call.` even when the app holds `instagram_manage_messages`,
+  `pages_messaging` and Human Agent at **Advanced Access** — code 3 means "this edge does
+  not exist here", not "permission missing", so chasing it in the App dashboard is a dead
+  end. This has regressed twice ([#875](https://github.com/ChatbotXIO/ChatbotX/pull/875)
+  moved it to `pageId`; [#945](https://github.com/ChatbotXIO/ChatbotX/pull/945) moved it
+  back to satisfy a stale test whose fixture had no `pageId`, so the endpoint silently
+  became `/undefined/messages`). The blast radius is every private reply on that channel —
+  automation `text`, `AIAgent`, the first message of a `flow` reply, **and** the agent's
+  manual private reply from the inbox, which enters through
+  `handlers/comment/outgoing-private-reply` instead of the automation loop. The Instagram
+  Login variant is different on purpose: it posts to `me/messages` on
+  `graph.instagram.com`. `send-private-reply.test.ts` now pins the node and asserts the IG
+  node is never called — do not "simplify" that away.
+- **The two Instagram packages log under the same module name.** Both
+  `integrations/instagram/src/lib/logger.ts` and
+  `integrations/instagram-facebook/src/lib/logger.ts` call
+  `getChildLogger("integration-instagram")`, so `module=integration-instagram` in
+  production does **not** tell you which login type failed. Use the request host
+  (`graph.facebook.com` = via Facebook, `graph.instagram.com` = Instagram Login) or the
+  stack trace path instead.
 
 ## Testing
 

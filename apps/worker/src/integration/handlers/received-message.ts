@@ -1524,7 +1524,11 @@ const createNewContactAndContactInbox = async (props: {
         }
       } catch (error) {
         logger.warn(
-          { error, sourceId: incomingContact.sourceId, channel: inbox.channel },
+          {
+            err: error,
+            sourceId: incomingContact.sourceId,
+            channel: inbox.channel,
+          },
           "detectContactAndConversation: getProfile failed, creating contact without profile data",
         )
         // No `contactId` — the contact does not exist yet at this point.
