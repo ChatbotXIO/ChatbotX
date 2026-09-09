@@ -228,7 +228,7 @@ export function AIMcpServersCreate({
   return (
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
       {trigger}
-      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
+      <DialogContent className="max-h-[90vh] w-[92vw] overflow-y-auto sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>

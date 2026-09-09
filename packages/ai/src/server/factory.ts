@@ -124,24 +124,29 @@ export function getAIModel(model: AIIntegrationModel, provider: string) {
 
 const legacyModelIdMap: Partial<Record<AIProvider, Record<string, string>>> = {
   [aiProviders.enum.claude]: {
+    "claude-3-5-sonnet-20241022": "claude-sonnet-4-6",
+    "claude-3-5-haiku-20241022": "claude-haiku-4-5-20251001",
+    "claude-3-opus-20240229": "claude-opus-4-8",
+    "claude-3-sonnet-20240229": "claude-sonnet-4-6",
+    "claude-3-haiku-20240307": "claude-haiku-4-5-20251001",
     "claude-opus-4.6": "claude-opus-4-6",
     "claude-4.5-haiku-20251001": "claude-haiku-4-5-20251001",
     "claude-4.5-sonnet-20250929": "claude-sonnet-4-5-20250929",
     "claude-sonnet-4.5-20250929": "claude-sonnet-4-5-20250929",
     "claude-4.5-opus-20251101": "claude-opus-4-5-20251101",
   },
-  [aiProviders.enum.deepseek]: {
-    "deepseek-chat": "deepseek-v4-flash",
-    "deepseek-reasoner": "deepseek-v4-pro",
+  [aiProviders.enum.gemini]: {
+    "gemini-3-flash": "gemini-3.5-flash",
+    "gemini-2.5-flash-lite": "gemini-3.5-flash",
+    "gemini-2.5-flash": "gemini-3.5-flash",
+    "gemini-2.5-pro": "gemini-3.5-flash",
+    "gemini-3.1-flash-image-preview": "gemini-3.1-flash-image",
+    "gemini-3-pro-image-preview": "gemini-3-pro-image",
   },
   [aiProviders.enum.openrouter]: {
     "anthropic/claude-3-5-sonnet": "anthropic/claude-sonnet-4.5",
     "anthropic/claude-3-5-haiku": "anthropic/claude-haiku-4.5",
-    "google/gemini-2.0-flash": "google/gemini-2.5-flash",
-    "meta-llama/llama-3.2-90b-vision-instruct":
-      "meta-llama/llama-3.2-11b-vision-instruct",
-    "deepseek/deepseek-chat": "deepseek/deepseek-v4-flash",
-    "qwen/qwen-2.5-72b-instruct": "qwen/qwen3-max",
+    "google/gemini-2.5-pro-preview": "google/gemini-2.5-pro",
   },
 }
 
@@ -149,6 +154,15 @@ export function normalizeAIModelId(provider: string, modelId: string) {
   const parsed = aiProviders.safeParse(provider)
   if (!parsed.success) {
     return modelId
+  }
+
+  if (
+    parsed.data === aiProviders.enum.deepseek &&
+    (modelId === "deepseek-chat" || modelId === "deepseek-reasoner")
+  ) {
+    throw new Error(
+      `DeepSeek legacy model ${modelId} requires a mode-aware migration`,
+    )
   }
 
   return legacyModelIdMap[parsed.data]?.[modelId] ?? modelId
@@ -183,8 +197,10 @@ export function createAIImageModelInstance(props: {
   // OpenAI removed `response_format` from the images endpoint. The AI SDK
   // still adds it for dall-e models, so we strip it and convert URL responses
   // to base64 inline so the SDK schema validation still passes.
+  const normalizedModelId = normalizeAIModelId(provider, modelId)
   const isDallE =
-    provider === aiProviders.enum.openai && modelId.startsWith("dall-e")
+    provider === aiProviders.enum.openai &&
+    normalizedModelId.startsWith("dall-e")
 
   const providerInstance = createProvider({
     apiKey: authParsed.data.secretText,
@@ -192,7 +208,7 @@ export function createAIImageModelInstance(props: {
   })
 
   if ("image" in providerInstance) {
-    return providerInstance.image(modelId) as ImageModel
+    return providerInstance.image(normalizedModelId) as ImageModel
   }
 
   throw new Error(`Provider ${provider} does not support image generation`)
