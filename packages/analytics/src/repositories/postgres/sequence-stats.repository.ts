@@ -73,7 +73,7 @@ export class SequenceStatsRepository extends BaseRepository {
 
     await db.execute(sql`
       UPDATE "SequenceDispatch"
-      SET "${sql.raw(updateField)}" = CASE ${sql.join(cases, sql` `)} ELSE "${sql.raw(updateField)}" END
+      SET ${sql.identifier(updateField)} = CASE ${sql.join(cases, sql` `)} ELSE ${sql.identifier(updateField)} END
       WHERE ${sql.join(predicates, sql` OR `)}
     `)
   }

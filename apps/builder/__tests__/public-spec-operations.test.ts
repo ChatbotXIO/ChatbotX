@@ -38,6 +38,7 @@ const LEGACY_API_SUFFIX_PATTERN = /[_.]api$/i
 
 let operations: SpecOperation[]
 let responseSchemasByOperationId: Record<string, unknown>
+let requestSchemasByOperationId: Record<string, unknown[]>
 let componentSchemas: Record<string, unknown>
 
 // Recursively collects every property key across a JSON schema, including
@@ -110,6 +111,7 @@ beforeAll(async () => {
 
   operations = []
   responseSchemasByOperationId = {}
+  requestSchemasByOperationId = {}
   for (const [path, methods] of Object.entries(spec.paths ?? {})) {
     for (const [method, operation] of Object.entries(
       methods as Record<string, unknown>,
@@ -119,6 +121,10 @@ beforeAll(async () => {
         summary?: string
         tags?: string[]
         security?: Record<string, string[]>[]
+        parameters?: { schema?: unknown }[]
+        requestBody?: {
+          content?: Record<string, { schema?: unknown }>
+        }
         responses?: Record<
           string,
           { content?: Record<string, { schema?: unknown }> }
@@ -144,6 +150,20 @@ beforeAll(async () => {
         successResponse?.content?.["application/json"]?.schema
       if (responseSchema) {
         responseSchemasByOperationId[op.operationId] = responseSchema
+      }
+
+      const requestSchemas: unknown[] = []
+      for (const param of op.parameters ?? []) {
+        if (param.schema) {
+          requestSchemas.push(param.schema)
+        }
+      }
+      const bodySchema = op.requestBody?.content?.["application/json"]?.schema
+      if (bodySchema) {
+        requestSchemas.push(bodySchema)
+      }
+      if (requestSchemas.length > 0) {
+        requestSchemasByOperationId[op.operationId] = requestSchemas
       }
     }
   }
@@ -272,6 +292,24 @@ describe("public API spec — operation naming guard", () => {
         collectSchemaPropertyKeys(schema, componentSchemas, keys, new Set())
         return keys.has("workspaceId")
       })
+      .map(([operationId]) => operationId)
+
+    expect(leaking).toEqual([])
+  })
+
+  test("no public operation request schema accepts a client-supplied workspaceId", () => {
+    // A route that *accepts* workspaceId is the actual cross-tenant vector —
+    // strictly worse than echoing one back in a response. Every
+    // `schema/public.ts` is expected to `.omit({ workspaceId: true })`; this
+    // is a full sweep, not a spot-check, so it should never need exceptions.
+    const leaking = Object.entries(requestSchemasByOperationId)
+      .filter(([, schemas]) =>
+        schemas.some((schema) => {
+          const keys = new Set<string>()
+          collectSchemaPropertyKeys(schema, componentSchemas, keys, new Set())
+          return keys.has("workspaceId")
+        }),
+      )
       .map(([operationId]) => operationId)
 
     expect(leaking).toEqual([])

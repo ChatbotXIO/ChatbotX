@@ -1,5 +1,3 @@
-import { db } from "@chatbotx.io/database/client"
-import { refLinkStatModel } from "@chatbotx.io/database/schema"
 import type { RefLinkStatModel } from "@chatbotx.io/database/types"
 import type { RefLinkPayload } from "@chatbotx.io/flow-config"
 import { startOfSecond } from "date-fns"
@@ -52,17 +50,7 @@ export class RefLinkAnalyticsService {
       createdAt: new Date(),
     }))
 
-    await db
-      .insert(refLinkStatModel)
-      .values(items)
-      .onConflictDoNothing({
-        target: [
-          refLinkStatModel.workspaceId,
-          refLinkStatModel.linkId,
-          refLinkStatModel.contactInboxId,
-          refLinkStatModel.occurredAt,
-        ],
-      })
+    await refLinkStatsRepository.insertStats(items)
   }
 
   async getRefLinkStatsByDateRange(input: MagicLinkStatsInput) {

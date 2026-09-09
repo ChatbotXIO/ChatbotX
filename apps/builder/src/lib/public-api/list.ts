@@ -27,6 +27,12 @@ export function withPublicPaging<Shape extends z.ZodRawShape>(
 ): z.ZodObject<
   Omit<Shape, "page" | "perPage"> & typeof publicListRequest.shape
 > {
+  // `.omit({ page: true, perPage: true })` throws "Unrecognized key" for any
+  // schema whose shape lacks one of those keys — destructuring them out of
+  // `.shape` instead (present or not) never throws, so a schema without
+  // built-in pagination fails at compile time (missing fields) rather than
+  // crashing every public route at module load.
+  //
   // `.extend()`'s own overload can't merge an unresolved generic `Shape`
   // with a concrete shape — against a bare type parameter it silently
   // collapses to just the concrete (pagination) fields, so every field the
@@ -36,9 +42,11 @@ export function withPublicPaging<Shape extends z.ZodRawShape>(
   // return type below is what actually carries the omitted schema's fields
   // through — verified caller-side field access resolves correctly with it,
   // and does not without it.
-  return schema
-    .omit({ page: true, perPage: true } as never)
-    .extend(publicListRequest.shape) as unknown as z.ZodObject<
+  const { page: _page, perPage: _perPage, ...rest } = schema.shape
+  return z.object({
+    ...rest,
+    ...publicListRequest.shape,
+  }) as unknown as z.ZodObject<
     Omit<Shape, "page" | "perPage"> & typeof publicListRequest.shape
   >
 }

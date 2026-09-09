@@ -488,6 +488,16 @@ describe("GET /v1/analytics/ref-links/contacts", () => {
       input: { linkId: "link-2", page: 1, perPage: 50 },
     })
 
+    expect(result.data).toEqual([
+      {
+        contactId: "c-2",
+        contactInboxId: "ci-2",
+        sourceId: "src-2",
+        channel: "whatsapp",
+        conversationId: "conv-2",
+        occurredAt: "2026-01-02T00:00:00.000Z",
+      },
+    ])
     expect(result.data[0]).not.toHaveProperty("firstName")
     expect(result.data[0]).not.toHaveProperty("lastName")
     expect(result.data[0]).not.toHaveProperty("avatar")

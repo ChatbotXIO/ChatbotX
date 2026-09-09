@@ -48,19 +48,6 @@ export class FlowStatsRepository extends BaseRepository {
     })
   }
 
-  async findContactInboxesWithContact(contactInboxIds: string[]) {
-    return await db.query.contactInboxModel.findMany({
-      where: { id: { in: contactInboxIds } },
-      with: {
-        contact: {
-          columns: { id: true, firstName: true, lastName: true, avatar: true },
-        },
-        conversation: { columns: { id: true } },
-      },
-      columns: { id: true, sourceId: true, channel: true },
-    })
-  }
-
   /**
    * Aggregate per-node counts (delivered / failed / clicked) for every node in
    * one grouped query instead of per-node round-trips.
@@ -409,6 +396,15 @@ export class FlowStatsRepository extends BaseRepository {
   }
 
   async resetStatsSession(input: RemoveFlowStatsRequest): Promise<void> {
+    const flow = await db.query.flowModel.findFirst({
+      where: { id: input.flowId, workspaceId: input.workspaceId },
+      columns: { id: true },
+    })
+
+    if (!flow) {
+      return
+    }
+
     await db.transaction(async (tx) => {
       await tx
         .update(flowAnalyticsSessionModel)

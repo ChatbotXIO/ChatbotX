@@ -1,5 +1,4 @@
 import {
-  botMessageAIProviderStatsSchema,
   botMessageStatsSchema,
   conversationArchivedStatsSchema,
   conversationAssignedByAdminStatsSchema,
@@ -9,8 +8,12 @@ import {
   flowNodeContactData,
   flowNodeStatsResponse,
   flowStatsRequest,
+  getBotMessagesAIProvidersResponseSchema,
   getBroadcastStatsRequest,
   getBroadcastStatsResponse,
+  getContactCountsResponseSchema,
+  getContactsByDimensionStatsResponseSchema,
+  getContactsCountResponseSchema,
   getSequenceStepStatsRequest,
   getSequenceStepStatsResponse,
   humanAgentStatsSchema,
@@ -50,29 +53,16 @@ export const contactsByDimensionPublicRequest = timeRangePublicRequest.extend({
 // Contact stats
 // ─────────────────────────────────────────────────────────────────────────
 
-export const contactCountsPublicResponse = z.object({
-  data: z.array(
-    z.object({
-      date: z.date(),
-      count: z.number(),
-    }),
-  ),
-})
+// `getContactCountsResponseSchema` has no `workspaceId` field — reused directly.
+export const contactCountsPublicResponse = getContactCountsResponseSchema
 
-export const contactsCountPublicResponse = z.object({
-  data: z.object({ count: z.number() }),
-})
+// `getContactsCountResponseSchema` has no `workspaceId` field — reused directly.
+export const contactsCountPublicResponse = getContactsCountResponseSchema
 
-export const contactsByDimensionPublicResponse = z.object({
-  // `contactsByDimensionSchema` has no `workspaceId` field — reused directly.
-  data: z.array(
-    z.object({
-      count: z.number(),
-      dimension: z.string(),
-      uniqueContacts: z.number(),
-    }),
-  ),
-})
+// `getContactsByDimensionStatsResponseSchema` has no `workspaceId` field —
+// reused directly.
+export const contactsByDimensionPublicResponse =
+  getContactsByDimensionStatsResponseSchema
 
 // ─────────────────────────────────────────────────────────────────────────
 // Message / human-agent stats (workspaceId omitted from the row)
@@ -130,10 +120,10 @@ export const botMessagesPublicResponse = z.object({
   data: z.array(botMessageStatsSchema.omit({ workspaceId: true })),
 })
 
-export const botMessagesAIProvidersPublicResponse = z.object({
-  // `botMessageAIProviderStatsSchema` has no `workspaceId` — reused directly.
-  data: z.array(botMessageAIProviderStatsSchema),
-})
+// `getBotMessagesAIProvidersResponseSchema` has no `workspaceId` — reused
+// directly.
+export const botMessagesAIProvidersPublicResponse =
+  getBotMessagesAIProvidersResponseSchema
 
 // ─────────────────────────────────────────────────────────────────────────
 // MAC (monthly active contacts)

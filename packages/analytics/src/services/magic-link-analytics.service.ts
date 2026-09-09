@@ -1,5 +1,3 @@
-import { db } from "@chatbotx.io/database/client"
-import { magicLinkStatModel } from "@chatbotx.io/database/schema"
 import type { MagicLinkStatModel } from "@chatbotx.io/database/types"
 import {
   type ClickedPayload,
@@ -62,17 +60,7 @@ export class MagicLinkAnalyticsService {
       createdAt: new Date(),
     }))
 
-    await db
-      .insert(magicLinkStatModel)
-      .values(items)
-      .onConflictDoNothing({
-        target: [
-          magicLinkStatModel.workspaceId,
-          magicLinkStatModel.linkId,
-          magicLinkStatModel.contactInboxId,
-          magicLinkStatModel.occurredAt,
-        ],
-      })
+    await magicLinkStatsRepository.insertStats(items)
   }
 
   async getMagicLinkStatsByDateRange(input: MagicLinkStatsInput) {
