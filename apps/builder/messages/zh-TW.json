@@ -958,7 +958,7 @@
       "datetime": "日期時間",
       "location": "位置",
       "anyInput": "任何輸入",
-      "locationDescription": "On WhatsApp this sends Meta's native Send location button and waits for the pin. Other channels send the prompt as text; a shared pin or typed lat,lng still completes the step."
+      "locationDescription": "在 WhatsApp 上，此步驟會傳送 Meta 原生的「傳送位置」按鈕並等待圖釘。其他管道以文字形式傳送提示；共享圖釘或輸入 lat,lng 也可完成此步驟。"
     },
     "workspaceMember": {
       "label": "工作區成員"

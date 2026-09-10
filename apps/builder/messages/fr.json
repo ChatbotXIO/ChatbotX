@@ -1645,7 +1645,7 @@
       "datetime": "Date et heure",
       "location": "Localisation",
       "anyInput": "Toute saisie",
-      "locationDescription": "On WhatsApp this sends Meta's native Send location button and waits for the pin. Other channels send the prompt as text; a shared pin or typed lat,lng still completes the step."
+      "locationDescription": "Sur WhatsApp, cela envoie le bouton natif Envoyer la position de Meta et attend l'épingle. Les autres canaux envoient l'invite en texte ; une épingle partagée ou des lat,lng saisis complètent aussi l'étape."
     },
     "workspaceMember": {
       "label": "Membre de l’espace de travail"

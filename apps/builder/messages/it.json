@@ -958,7 +958,7 @@
       "datetime": "Data e ora",
       "location": "Posizione",
       "anyInput": "Qualsiasi input",
-      "locationDescription": "On WhatsApp this sends Meta's native Send location button and waits for the pin. Other channels send the prompt as text; a shared pin or typed lat,lng still completes the step."
+      "locationDescription": "Su WhatsApp invia il pulsante nativo Invia posizione di Meta e attende il pin. Gli altri canali inviano il prompt come testo; un pin condiviso o lat,lng digitati completano comunque il passaggio."
     },
     "workspaceMember": {
       "label": "Membro dell'area di lavoro"
