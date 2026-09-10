@@ -20,7 +20,7 @@ const RESTRICTED_THREAD_ERROR = {
 }
 
 const EXPECTED_DETAIL =
-  "#(10 - 1893063) Application does not have permission for this action. Bạn tạm thời bị hạn chế gửi tin nhắn. Tìm hiểu thêm về thời gian và lý do chúng tôi hạn chế khả năng nhắn tin."
+  "(#10 - 1893063) Application does not have permission for this action. Bạn tạm thời bị hạn chế gửi tin nhắn. Tìm hiểu thêm về thời gian và lý do chúng tôi hạn chế khả năng nhắn tin."
 
 describe("parseOriginError message composition", () => {
   test("keeps the code pair and both sentences of a restricted-thread failure", () => {
@@ -58,7 +58,7 @@ describe("parseOriginError message composition", () => {
         },
       }),
     ).toMatchObject({
-      message: "#(100 - 2018001) Invalid parameter. Message not sent",
+      message: "(#100 - 2018001) Invalid parameter. Message not sent",
     })
   })
 

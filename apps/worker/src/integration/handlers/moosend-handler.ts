@@ -50,7 +50,7 @@ export class MoosendContactValidationError extends Error {
 export const addOrUpdateMoosendContact = async (
   props: ExecuteStepProps<MoosendCreateContactSchema>,
 ): Promise<ExecuteStepResult> => {
-  const { conversation, step } = props
+  const { conversation, contactInbox, step } = props
   const logContext = {
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
@@ -126,6 +126,7 @@ export const addOrUpdateMoosendContact = async (
       provider: "moosend",
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
+      sourceId: contactInbox.sourceId,
       error,
     })
     return { status: "error", result: null, errorMessage: normalized.message }

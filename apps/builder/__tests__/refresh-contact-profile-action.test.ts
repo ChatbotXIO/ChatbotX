@@ -230,7 +230,7 @@ describe("refreshContactProfileAction — channel capability gate", () => {
 })
 
 describe("refreshContactProfileAction — contactInbox forwarded to the service", () => {
-  test("forwards id, channel, contactId and the inbox's current language to contactProfileRefreshService.refresh", async () => {
+  test("forwards id, channel, contactId, language and the channel-side sourceId to contactProfileRefreshService.refresh", async () => {
     mocks.findContactInboxByUncached.mockResolvedValueOnce({
       id: "ci-1",
       contactId: "contact-1",
@@ -256,6 +256,9 @@ describe("refreshContactProfileAction — contactInbox forwarded to the service"
           channel: "messenger",
           contactId: "contact-1",
           language: "en",
+          // Forwarded so a profile-refresh failure can be attributed to the
+          // contact even when there is no `Contact` row to point at.
+          sourceId: "source-1",
         },
       }),
     )

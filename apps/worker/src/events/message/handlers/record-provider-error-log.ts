@@ -100,6 +100,8 @@ const toEligibleFailure = (
       provider: provider.data,
       workspaceId: payload.context.workspaceId,
       contactId: payload.context.contactId,
+      // Documented on `eventContextSchema.sourceId`.
+      sourceId: payload.context.sourceId,
       error: payload.errorData,
       httpCode: statusCode === undefined ? undefined : String(statusCode),
     },

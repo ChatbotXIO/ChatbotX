@@ -75,7 +75,7 @@ export const buildMailerLiteSubscriberProps = (
 export const addMailerLiteSubscriber = async (
   props: ExecuteStepProps<MailerLiteAddSubscriberSchema>,
 ): Promise<ExecuteStepResult> => {
-  const { conversation, step } = props
+  const { conversation, contactInbox, step } = props
   const logContext = {
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
@@ -133,6 +133,7 @@ export const addMailerLiteSubscriber = async (
       provider: "mailer-lite",
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
+      sourceId: contactInbox.sourceId,
       error,
     })
     return { status: "error", result: null, errorMessage: normalized.message }

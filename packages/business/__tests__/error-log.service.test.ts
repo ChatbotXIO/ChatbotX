@@ -103,6 +103,78 @@ describe("logProviderError", () => {
     expect(payload().contactId).toBeUndefined()
   })
 
+  it("passes the contact's channel-side sourceId through when given", async () => {
+    const logProviderError = await load()
+
+    await logProviderError({
+      provider: "messenger",
+      workspaceId: "ws-1",
+      sourceId: "psid-7",
+      error: new Error("boom"),
+    })
+
+    expect(payload()).toMatchObject({ sourceId: "psid-7" })
+  })
+
+  it("omits sourceId when it is null", async () => {
+    const logProviderError = await load()
+
+    await logProviderError({
+      provider: "messenger",
+      workspaceId: "ws-1",
+      sourceId: null,
+      error: new Error("boom"),
+    })
+
+    // `.optional()`, not `.nullable()`: an absent value must be absent so
+    // `JSON.stringify` drops the key rather than shipping a null.
+    expect(payload().sourceId).toBeUndefined()
+  })
+
+  it("carries sourceId with no contactId — the contact-creation path", async () => {
+    const logProviderError = await load()
+
+    await logProviderError({
+      provider: "messenger",
+      workspaceId: "ws-1",
+      sourceId: "psid-7",
+      error: new Error("getProfile failed"),
+    })
+
+    expect(payload()).toMatchObject({
+      sourceId: "psid-7",
+      contactId: undefined,
+    })
+  })
+
+  it("survives a JSON round trip unchanged, keys and all", async () => {
+    const logProviderError = await load()
+
+    await logProviderError({
+      provider: "messenger",
+      workspaceId: "ws-1",
+      sourceId: "psid-7",
+      error: new Error("boom"),
+    })
+
+    const entry = payload()
+    expect(JSON.parse(JSON.stringify(entry))).toEqual(entry)
+  })
+
+  it("truncates detail without touching sourceId", async () => {
+    const logProviderError = await load()
+
+    await logProviderError({
+      provider: "messenger",
+      workspaceId: "ws-1",
+      sourceId: "psid-7",
+      error: new Error("x".repeat(9000)),
+    })
+
+    expect(payload().error.message).toHaveLength(8192)
+    expect(payload().sourceId).toBe("psid-7")
+  })
+
   it("takes httpCode from an SdkException status", async () => {
     const logProviderError = await load()
 

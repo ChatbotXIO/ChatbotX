@@ -63,7 +63,11 @@ export async function handleSendMetaCapiEventStep(
         contentCategory: step.contentCategory,
         contentName: step.contentName,
       },
-      { contactId: conversation.contactId, resolved },
+      {
+        contactId: conversation.contactId,
+        sourceId: contactInbox.sourceId,
+        resolved,
+      },
     )
 
     return { status: "success", result: null }

@@ -72,7 +72,7 @@ export const buildGetResponseContactProps = (
 export const addGetResponseContact = async (
   props: ExecuteStepProps<GetResponseAddContactSchema>,
 ): Promise<ExecuteStepResult> => {
-  const { conversation, step } = props
+  const { conversation, contactInbox, step } = props
   const logContext = {
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
@@ -131,6 +131,7 @@ export const addGetResponseContact = async (
       provider: "get-response",
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
+      sourceId: contactInbox.sourceId,
       error,
     })
     return { status: "error", result: null, errorMessage: normalized.message }

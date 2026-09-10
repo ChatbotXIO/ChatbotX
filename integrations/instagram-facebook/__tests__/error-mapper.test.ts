@@ -11,7 +11,7 @@ import { isRevokedTokenError, mapToChannelError } from "../src/lib/error-mapper"
 describe("instagram-facebook error-mapper — code 3 (capability)", () => {
   const capabilityError = () =>
     new InstagramException(
-      "#(3) Application does not have the capability to make this API call.",
+      "(#3) Application does not have the capability to make this API call.",
       400,
       3,
       null,

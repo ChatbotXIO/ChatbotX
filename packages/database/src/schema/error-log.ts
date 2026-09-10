@@ -24,6 +24,28 @@ export const errorLogModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
+    /**
+     * The contact's channel-side id, mirroring `ContactInbox.sourceId` (a
+     * Messenger PSID, an IGSID, a WhatsApp `wa_id`). NOT the provider *message*
+     * id — that is what `Message.sourceId` and `messageAction.sourceId` mean.
+     *
+     * Exists because `contactId` is null exactly where it matters most: the
+     * contact row does not exist yet (a creation-path `getProfile` failure, a
+     * Lead Ads lead), and this is then the only thing identifying who the
+     * failure concerned.
+     *
+     * Deliberately no FK: `ContactInbox.sourceId` is unique only per `inboxId`,
+     * so there is no column to reference — and an FK would defeat the purpose,
+     * since the row must survive when no `ContactInbox` exists at all.
+     *
+     * Write-only today: no read surface renders it (the builder table shows
+     * `contactId` only), the list's keyword search skips it, and the
+     * `analytics`-scoped public route strips it from the response and refuses
+     * to sort by it. Anything that starts reading it needs an index — there is
+     * none below — and has to re-answer the scope question the public route
+     * settled.
+     */
+    sourceId: text(),
   },
   (table) => [
     // Serves the workspace error-log list: filter by workspace, newest first.

@@ -133,6 +133,7 @@ export async function handleAIGenerateTextAgent({
       provider: aiErrorLogProvider(step.provider),
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
+      sourceId: contactInbox.sourceId,
       error: err,
     })
     return { status: "error", errorMessage: error.message, result: null }

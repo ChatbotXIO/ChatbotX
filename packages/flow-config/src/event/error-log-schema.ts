@@ -31,6 +31,14 @@ export const errorLogRecordedPayloadSchema = z.object({
    * trip unchanged.
    */
   contactId: z.string().optional(),
+  /**
+   * The contact's channel-side id (`ContactInbox.sourceId`) — the fallback
+   * identity for a failure with no `contactId`. See the column doc on
+   * `packages/database/src/schema/error-log.ts` for why that case is the norm.
+   *
+   * `.optional()` for the same reason as `contactId` above.
+   */
+  sourceId: z.string().optional(),
   error: z.object({
     /**
      * The provider's message only. Deliberately never a stack — `ErrorLog` is

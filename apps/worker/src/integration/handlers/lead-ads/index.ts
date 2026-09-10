@@ -130,6 +130,16 @@ export async function processLeadgen(
     return
   }
 
+  // Hoisted out of the `try` so the `catch` can attribute the Error Log row to
+  // the lead: `psid` and `contact` are block-scoped below and the failure is
+  // only reported once BullMQ's retries are spent, long after the block has
+  // gone. Before this, the row carried no contact attribution at all.
+  let leadPsid: string | undefined
+  // Set once the contact exists and is linked to the claim, so a failure in
+  // the field-mapping or flow steps that follow still resolves to a real
+  // `Contact` in the builder table instead of only a raw PSID.
+  let leadContactId: string | undefined
+
   try {
     const auth = integrationRow.auth as MessengerAuthValue
     const lead = await getLead(
@@ -149,6 +159,8 @@ export async function processLeadgen(
       return
     }
 
+    leadPsid = psid
+
     const incomingContact: IncomingContact = {
       sourceId: psid,
       firstName: findValue(fieldData, "full_name"),
@@ -166,6 +178,8 @@ export async function processLeadgen(
       id: claim.id,
       contactId: contact.id,
     })
+
+    leadContactId = contact.id
 
     // Specific-form automations carry an explicit mapping; the "all forms"
     // automation auto-maps recognized standard fields.
@@ -229,6 +243,8 @@ export async function processLeadgen(
       await logProviderError({
         provider: "facebook-ads",
         workspaceId: inbox.workspaceId,
+        contactId: leadContactId,
+        sourceId: leadPsid,
         error,
       })
     }

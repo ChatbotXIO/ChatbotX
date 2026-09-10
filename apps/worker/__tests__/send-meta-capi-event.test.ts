@@ -537,6 +537,11 @@ describe("handleSendMetaCapiEvent", () => {
         provider: "meta-conversions",
         workspaceId: "ws-1",
         httpCode: "400",
+        // Both identities, not just the channel-side one: `contactId` is the
+        // field the builder's Error Log table renders, and it was already
+        // validated workspace-scoped before the send.
+        contactId: "contact-1",
+        sourceId: "psid-1",
       }),
     )
   })

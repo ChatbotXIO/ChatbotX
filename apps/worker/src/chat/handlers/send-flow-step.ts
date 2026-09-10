@@ -418,6 +418,7 @@ export async function sendFlowStep({
       channel: targetContactInbox.channel,
       contactInboxId: targetContactInbox.id,
       inboxId: targetContactInbox.inboxId,
+      sourceId: targetContactInbox.sourceId,
     },
     action: {
       flowId,

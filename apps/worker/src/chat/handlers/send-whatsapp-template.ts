@@ -189,6 +189,7 @@ export async function processWhatsappTemplate(
       channel: contactInbox.channel,
       contactInboxId: contactInbox.id,
       inboxId: contactInbox.inboxId,
+      sourceId: contactInbox.sourceId,
     },
     action: {
       flowId: flow?.id || "",
@@ -456,6 +457,7 @@ export async function sendWhatsappTemplateMessage(
       channel: contactInbox.channel,
       contactInboxId: contactInbox.id,
       inboxId: contactInbox.inboxId,
+      sourceId: contactInbox.sourceId,
     },
     action: {
       flowId: "",

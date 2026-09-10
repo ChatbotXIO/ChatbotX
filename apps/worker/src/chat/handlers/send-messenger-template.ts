@@ -128,6 +128,7 @@ export async function processMessengerTemplate(
       channel: contactInbox.channel,
       contactInboxId: contactInbox.id,
       inboxId: contactInbox.inboxId,
+      sourceId: contactInbox.sourceId,
     },
     action: {
       flowId: flow?.id || "",
@@ -365,6 +366,7 @@ export async function sendMessengerTemplateMessage(
       channel: contactInbox.channel,
       contactInboxId: contactInbox.id,
       inboxId: contactInbox.inboxId,
+      sourceId: contactInbox.sourceId,
     },
     action: {
       flowId: "",

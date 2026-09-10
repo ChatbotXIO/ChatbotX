@@ -216,6 +216,7 @@ ${schemaDescription}`
         provider: aiErrorLogProvider(step.provider),
         workspaceId: conversation.workspaceId,
         contactId: conversation.contactId,
+        sourceId: contactInbox.sourceId,
         error,
       })
       throw error

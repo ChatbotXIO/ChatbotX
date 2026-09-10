@@ -70,6 +70,11 @@ const createProps = () =>
       workspaceId: "workspace-1",
       contactId: "contact-1",
     },
+    contactInbox: {
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      sourceId: "psid-1",
+    },
     step: {
       ...mailerLiteAddSubscriberDefaultFn(),
       id: "step-1",

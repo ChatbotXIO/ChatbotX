@@ -52,7 +52,7 @@ export type RefreshContactProfileInput = {
   contactId: string
   contactInbox: Pick<
     ContactInboxModel,
-    "id" | "channel" | "contactId" | "language"
+    "id" | "channel" | "contactId" | "language" | "sourceId"
   >
   source: ContactProfileNameSource // decides cooldown policy via COOLDOWN_BY_PROFILE_SOURCE
   accessScope?: ContactAccessScope // builder passes it; worker omits
@@ -202,12 +202,20 @@ export const recordProfileRefreshFailure = async (input: {
   channel: string
   workspaceId: string
   contactId?: string
+  /**
+   * The contact's channel-side id (`ContactInbox.sourceId`). The creation-path
+   * caller has this and no `contactId` — the contact row does not exist until
+   * after the `getProfile` that just failed would have populated it — so this
+   * is the only identity such a row carries.
+   */
+  sourceId?: string | null
   error: unknown
 }): Promise<void> => {
   try {
     await logProviderErrorForChannel(input.channel, {
       workspaceId: input.workspaceId,
       contactId: input.contactId,
+      sourceId: input.sourceId,
       error: input.error,
     })
   } catch (error) {
@@ -368,6 +376,7 @@ const refresh = async (
       channel: contactInbox.channel,
       workspaceId,
       contactId,
+      sourceId: contactInbox.sourceId,
       error,
     })
     await startCooldownIfApplicable(source, contactInbox.id)
@@ -426,6 +435,7 @@ const refresh = async (
       channel: contactInbox.channel,
       workspaceId,
       contactId,
+      sourceId: contactInbox.sourceId,
       error,
     })
     await startCooldownIfApplicable(source, contactInbox.id)

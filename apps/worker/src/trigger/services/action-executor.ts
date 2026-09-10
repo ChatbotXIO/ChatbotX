@@ -398,6 +398,7 @@ export class ActionExecutor {
           await reportCapiInputFailure({
             workspaceId,
             contactId,
+            sourceId: contactInbox.sourceId,
             message: `Invalid Meta CAPI trigger action (trigger ${triggerId}):\n${detail}`,
           })
           break
@@ -405,7 +406,7 @@ export class ActionExecutor {
 
         // Trigger executor passes `contactInbox.id` (a string), not the full
         // model — `getContactInbox()` returns a narrow
-        // `ContactInboxWorkspaceRow` (id/channel/inboxId only), not a
+        // `ContactInboxWorkspaceRow` (id/channel/inboxId/sourceId only), not a
         // `ContactInboxModel`.
         const resolvedFields = await resolveContactVariablesDeep(
           contactId,
@@ -440,7 +441,11 @@ export class ActionExecutor {
             contentCategory: parsedAction.data.contentCategory,
             contentName: parsedAction.data.contentName,
           },
-          { contactId, resolved: resolvedFields },
+          {
+            contactId,
+            sourceId: contactInbox.sourceId,
+            resolved: resolvedFields,
+          },
         )
         break
       }

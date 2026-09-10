@@ -104,7 +104,7 @@ const adEligibleInboxChannelConfigs = {
 
 export type ContactInboxWorkspaceRow = Pick<
   ContactInboxModel,
-  "id" | "channel" | "inboxId"
+  "id" | "channel" | "inboxId" | "sourceId"
 >
 
 /**
@@ -196,6 +196,7 @@ export const contactInboxRepository = {
         id: contactInboxModel.id,
         channel: contactInboxModel.channel,
         inboxId: contactInboxModel.inboxId,
+        sourceId: contactInboxModel.sourceId,
       })
       .from(contactInboxModel)
       .innerJoin(
@@ -230,6 +231,7 @@ export const contactInboxRepository = {
         id: contactInboxModel.id,
         channel: contactInboxModel.channel,
         inboxId: contactInboxModel.inboxId,
+        sourceId: contactInboxModel.sourceId,
       })
       .from(contactInboxModel)
       .innerJoin(
@@ -269,6 +271,7 @@ export const contactInboxRepository = {
         id: contactInboxModel.id,
         channel: contactInboxModel.channel,
         inboxId: contactInboxModel.inboxId,
+        sourceId: contactInboxModel.sourceId,
       })
       .from(contactInboxModel)
       .innerJoin(
@@ -301,6 +304,7 @@ export const contactInboxRepository = {
         id: contactInboxModel.id,
         channel: contactInboxModel.channel,
         inboxId: contactInboxModel.inboxId,
+        sourceId: contactInboxModel.sourceId,
       })
       .from(contactInboxModel)
       .innerJoin(

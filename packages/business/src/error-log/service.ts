@@ -44,6 +44,15 @@ export type LogProviderErrorInput = {
   workspaceId: string
   /** Set whenever a contact was in scope at the point of failure. */
   contactId?: string | null
+  /**
+   * The contact's channel-side id (`ContactInbox.sourceId`). Set it whenever it
+   * is reachable, and *especially* when `contactId` is not: a failure on the
+   * contact-creation path has no `Contact` row yet, so this is the only thing
+   * that identifies who the failure concerned.
+   *
+   * Accepts `null` so callers holding a nullable value can forward it verbatim.
+   */
+  sourceId?: string | null
   /** The thrown value: an `Error`, an `SdkException`, a `ParsedError`, anything. */
   error: unknown
   /** Overrides the status derived from `error`. */
@@ -108,6 +117,7 @@ const toEntry = (input: LogProviderErrorInput): ErrorLogRecordedPayload => ({
   workspaceId: input.workspaceId,
   provider: input.provider,
   contactId: input.contactId ?? undefined,
+  sourceId: input.sourceId ?? undefined,
   // Only the provider's own message. `ErrorLog` is workspace-facing (the
   // builder table plus the workspace-token API), so the thrown value's stack
   // is deliberately dropped here: it leaks absolute server paths and our
@@ -289,6 +299,10 @@ export const listErrorLogs = async (
           OR: [
             { action: { ilike: likeContains(input.keyword) } },
             { detail: { ilike: likeContains(input.keyword) } },
+            // Deliberately NOT `sourceId`: the channel-side contact id is not
+            // rendered by this table, and the `analytics`-scoped public route
+            // omits it from the response, so an `ilike` over it would only be
+            // an existence oracle for an identity the caller cannot read.
             ...(providersByLabel.length > 0
               ? [{ action: { in: providersByLabel } }]
               : []),

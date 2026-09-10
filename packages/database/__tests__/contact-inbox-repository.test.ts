@@ -49,7 +49,12 @@ describe("contactInboxRepository.findByIdForWorkspace", () => {
     chain.innerJoin.mockReturnValue(chain)
     chain.where.mockReturnValue(chain)
     chain.limit.mockResolvedValue([
-      { id: "ci-1", channel: "whatsapp", inboxId: "inbox-1" },
+      {
+        id: "ci-1",
+        channel: "whatsapp",
+        inboxId: "inbox-1",
+        sourceId: "psid-1",
+      },
     ])
 
     const row = await contactInboxRepository.findByIdForWorkspace(
@@ -61,10 +66,17 @@ describe("contactInboxRepository.findByIdForWorkspace", () => {
       id: contactInboxModel.id,
       channel: contactInboxModel.channel,
       inboxId: contactInboxModel.inboxId,
+      // Selected so an error-log row can carry the channel-side contact id.
+      sourceId: contactInboxModel.sourceId,
     })
     expect(chain.innerJoin).toHaveBeenCalledWith(inboxModel, expect.anything())
     expect(chain.limit).toHaveBeenCalledWith(1)
-    expect(row).toEqual({ id: "ci-1", channel: "whatsapp", inboxId: "inbox-1" })
+    expect(row).toEqual({
+      id: "ci-1",
+      channel: "whatsapp",
+      inboxId: "inbox-1",
+      sourceId: "psid-1",
+    })
   })
 
   test("returns null when no row matches (missing id or wrong workspace)", async () => {

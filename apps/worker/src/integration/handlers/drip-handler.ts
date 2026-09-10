@@ -35,7 +35,7 @@ const splitFullName = (fullName: string) => {
 export const subscribeDripSubscriber = async (
   props: ExecuteStepProps<DripSubscribeSubscriberSchema>,
 ): Promise<ExecuteStepResult> => {
-  const { conversation, step } = props
+  const { conversation, contactInbox, step } = props
   const logContext = {
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
@@ -128,6 +128,7 @@ export const subscribeDripSubscriber = async (
       provider: "drip",
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
+      sourceId: contactInbox.sourceId,
       error,
     })
     return {

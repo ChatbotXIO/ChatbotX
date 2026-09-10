@@ -39,7 +39,7 @@ const readOptionalField = (
 export const syncActiveCampaignContact = async (
   props: ExecuteStepProps<ActiveCampaignSyncContactSchema>,
 ): Promise<ExecuteStepResult> => {
-  const { conversation, step } = props
+  const { conversation, contactInbox, step } = props
   const logContext = {
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
@@ -153,6 +153,7 @@ export const syncActiveCampaignContact = async (
       provider: "active-campaign",
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
+      sourceId: contactInbox.sourceId,
       error,
     })
     return {

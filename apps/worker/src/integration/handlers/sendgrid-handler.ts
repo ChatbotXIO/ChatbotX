@@ -54,7 +54,7 @@ const splitFullName = (fullName: string) => {
 export const addSendGridContact = async (
   props: ExecuteStepProps<SendGridAddContactSchema>,
 ): Promise<ExecuteStepResult> => {
-  const { conversation, step } = props
+  const { conversation, contactInbox, step } = props
   const logContext = {
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
@@ -219,6 +219,7 @@ export const addSendGridContact = async (
       provider: "sendgrid",
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
+      sourceId: contactInbox.sourceId,
       error,
     })
     return { status: "error", errorMessage: normalized.message, result: null }

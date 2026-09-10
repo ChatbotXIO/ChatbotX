@@ -107,6 +107,7 @@ export const handleFacebookCustomAudience = async (
       provider: "facebook-ads",
       workspaceId,
       contactId: conversation.contactId,
+      sourceId: contactInbox.sourceId,
       error,
     })
   }

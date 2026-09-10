@@ -128,6 +128,7 @@ export async function handleAIGenerateText({
       provider: aiErrorLogProvider(step.provider),
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
+      sourceId: contactInbox.sourceId,
       error: err,
     })
     if (APICallError.isInstance(err) && err.statusCode === 402) {

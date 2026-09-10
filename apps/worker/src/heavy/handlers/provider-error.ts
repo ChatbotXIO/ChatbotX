@@ -6,6 +6,8 @@ import { logger } from "../../lib/logger"
 
 export async function recordHeavyAIStepProviderError(input: {
   contactId: string
+  /** The contact's channel-side id (`ContactInbox.sourceId`). */
+  sourceId?: string | null
   error: unknown
   provider: AIStepProvider
   workspaceId: string
@@ -15,6 +17,7 @@ export async function recordHeavyAIStepProviderError(input: {
       provider: aiErrorLogProvider(input.provider),
       workspaceId: input.workspaceId,
       contactId: input.contactId,
+      sourceId: input.sourceId,
       error: normalizeError(input.error),
     })
   } catch (error) {

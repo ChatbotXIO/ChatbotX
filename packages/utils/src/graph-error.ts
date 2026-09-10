@@ -4,7 +4,7 @@
  * has no columns for them), and the developer-facing `message` was discarded
  * whenever `error_user_msg` was present.
  *
- * `#(10 - 1893063) Application does not have permission for this action. <the
+ * `(#10 - 1893063) Application does not have permission for this action. <the
  * sentence Meta wrote for the user>` keeps all four in the one `text` column
  * every surface already reads — the error-log table, the inbox's failed-message
  * tooltip, and the app logger.
@@ -21,7 +21,7 @@ export type GraphErrorSource = {
 
 /**
  * `UNKNOWN_ERROR` in `@chatbotx.io/sdk` uses -1 for "no code", and an
- * `SdkException` built without one reports -1 too. Printing `#(-1 - -1)` would
+ * `SdkException` built without one reports -1 too. Printing `(#-1 - -1)` would
  * dress up an absent code as a real one.
  */
 const UNKNOWN_CODE = -1
@@ -56,13 +56,14 @@ const codePrefix = (
     // reads exactly as it did before this format existed.
     return ""
   }
-  return subCode === undefined ? `#(${code}) ` : `#(${code} - ${subCode}) `
+  return subCode === undefined ? `(#${code}) ` : `(#${code} - ${subCode}) `
 }
 
 /**
- * Meta already opens most Graph messages with its own `(#100) `. Ours wins —
- * it is the only one that also carries the subcode — so its copy is stripped
- * rather than printed a second time as `#(100 - 2018001) (#100) …`.
+ * Meta already opens most Graph messages with its own `(#100) `, the same shape
+ * ours uses. Ours wins — it is the only one that also carries the subcode — so
+ * its copy is stripped rather than printed a second time as
+ * `(#100 - 2018001) (#100) …`.
  *
  * Only an exact code match is removed: a `(#190)` sitting in front of a body we
  * read the code `100` from is Meta quoting some other failure, not a duplicate.

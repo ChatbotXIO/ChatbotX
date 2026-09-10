@@ -308,6 +308,15 @@ describe("handleSendConversionEvent", () => {
         httpCode: "400",
       }),
     )
+    // Deliberately identity-free on this branch: `resolveWhatsappUserData`
+    // never returns the contact inbox it resolves, and `contactInboxId` is
+    // nullable here anyway. What failed is the `ctwaClid`/WABA, not a person.
+    expect(mocks.logProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactId: undefined,
+        sourceId: undefined,
+      }),
+    )
   })
 
   test("Codex #7 regression: the terminal-failure log NEVER serializes the raw error object (only a sanitized message+code record)", async () => {
@@ -706,6 +715,36 @@ describe("handleSendConversionEvent — messenger/instagram (Phase 3)", () => {
         contents: undefined,
       },
     })
+  })
+
+  test("messenger: a terminal failure logs both the contact and its channel-side id", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue(messengerEvent)
+    mocks.metaSendConversionEvent.mockRejectedValue(new Error("invalid token"))
+
+    await handleSendConversionEvent({
+      adsConversionEventId: "ace-2",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+      id: "ace-2",
+      workspaceId: "ws-1",
+      from: "pending",
+      to: "failed",
+    })
+    // Unlike the WhatsApp branch, this one validated the contact inbox
+    // workspace-scoped before sending, so both ids are safe to persist — and
+    // `contactId` is the only one the builder's Error Log table renders, so
+    // dropping it leaves the row with an empty Contact column.
+    expect(mocks.logProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "meta-conversions",
+        workspaceId: "ws-1",
+        httpCode: "400",
+        contactId: "contact-1",
+        sourceId: "psid-1",
+      }),
+    )
   })
 
   test("marks failed when the AdsConversionEvent has no contactInboxId", async () => {

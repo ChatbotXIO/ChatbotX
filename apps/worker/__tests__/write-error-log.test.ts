@@ -138,6 +138,34 @@ describe("writeErrorLogs", () => {
     ])
   })
 
+  it("persists the contact's channel-side sourceId when supplied", async () => {
+    const writeErrorLogs = await load()
+
+    await writeErrorLogs([payload({ sourceId: "psid-9" })])
+
+    expect(written()).toEqual([expect.objectContaining({ sourceId: "psid-9" })])
+  })
+
+  it("writes sourceId as null when the producer had none", async () => {
+    const writeErrorLogs = await load()
+
+    await writeErrorLogs([payload()])
+
+    expect(written()).toEqual([expect.objectContaining({ sourceId: null })])
+  })
+
+  it("keeps sourceId on a row that has no contact at all", async () => {
+    const writeErrorLogs = await load()
+
+    // The creation path: `getProfile` failed before the Contact row existed,
+    // so the channel-side id is the row's only identity.
+    await writeErrorLogs([payload({ sourceId: "psid-9" })])
+
+    expect(written()).toEqual([
+      expect.objectContaining({ contactId: null, sourceId: "psid-9" }),
+    ])
+  })
+
   it("writes the real httpCode instead of a hardcoded 500", async () => {
     const writeErrorLogs = await load()
 
@@ -202,12 +230,16 @@ describe("writeErrorLogs", () => {
       .mockResolvedValue(undefined)
 
     const result = await writeErrorLogs([
-      payload({ contactId: "deleted-contact" }),
+      payload({ contactId: "deleted-contact", sourceId: "psid-9" }),
     ])
 
     // batch, row, row without its contact
     expect(values).toHaveBeenCalledTimes(3)
-    expect(written(2)).toEqual([expect.objectContaining({ contactId: null })])
+    // Dropping the contact attribution must NOT drop the channel-side id —
+    // it is the only thing left identifying who the failure concerned.
+    expect(written(2)).toEqual([
+      expect.objectContaining({ contactId: null, sourceId: "psid-9" }),
+    ])
     // The row landed, so nothing is handed back for retry.
     expect(result).toBeUndefined()
   })

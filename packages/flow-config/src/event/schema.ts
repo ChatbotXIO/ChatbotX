@@ -21,6 +21,24 @@ export const eventContextSchema = z.object({
   contactInboxId: z.string().optional(),
   inboxId: z.string().optional(),
   sequenceStepId: z.string().optional(),
+  /**
+   * The contact's channel-side id (`ContactInbox.sourceId`) — a Messenger PSID,
+   * an IGSID, a WhatsApp `wa_id`. NOT the provider *message* id: that is
+   * `messageActionSchema.sourceId`, which lives on `action`, not here.
+   *
+   * Carried so `recordProviderErrorLog` can put it on `ErrorLog.sourceId`,
+   * which is the only thing attributing a failure that has no `Contact` row yet
+   * (a creation-path `getProfile` failure, a Lead Ads lead). No surface renders
+   * it today — the builder's table shows `contactId` only and the
+   * `analytics`-scoped public route strips it — so treat it as stored, not
+   * displayed. Every emit site builds `context` from a `ContactInbox` it
+   * already holds, so this costs no extra read.
+   *
+   * `.optional()` because `emit` serializes with `JSON.stringify`, which drops
+   * `undefined` keys — an absent source id must be absent, not null, to survive
+   * the round trip through the Redis stream unchanged.
+   */
+  sourceId: z.string().optional(),
 })
 
 export type EventContext = z.infer<typeof eventContextSchema>

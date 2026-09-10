@@ -254,6 +254,7 @@ export async function sendMessageToChannel(
         conversationId: conversation.id,
         channel: contactInbox.channel,
         contactInboxId: contactInbox.id,
+        sourceId: contactInbox.sourceId,
       },
       action: {
         messageId: message?.id ?? "",

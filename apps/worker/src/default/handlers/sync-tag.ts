@@ -423,6 +423,7 @@ async function syncTagDetach(props: {
       await logProviderErrorForChannel(row.channelType, {
         workspaceId,
         contactId,
+        sourceId: row.sourceId,
         error,
       })
     }

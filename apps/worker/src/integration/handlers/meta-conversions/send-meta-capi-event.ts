@@ -286,6 +286,13 @@ export async function handleSendMetaCapiEvent(
       id: event.workspaceId,
     })
 
+    // Hoisted out of the `try` purely so the `catch` can attribute the Error
+    // Log row to the contact: `contactInbox` itself is block-scoped below and
+    // the failure is reported after the block has gone. Assigned only *after*
+    // the workspace/inbox guard below — see the note there.
+    let contactSourceId: string | undefined
+    let contactId: string | undefined
+
     try {
       const contactInbox = await contactInboxService.findByUncached({
         where: { id: event.contactInboxId },
@@ -347,6 +354,18 @@ export async function handleSendMetaCapiEvent(
         )
         return
       }
+
+      // Only now, past the guard. `contactInbox` was looked up by id with no
+      // workspace scoping, so capturing its `sourceId` any earlier means a
+      // stale/foreign `contactInboxId` whose validation *throws* (rather than
+      // returning undefined — a DB blip on `contactService.findById`) lands in
+      // the `catch` below and persists another tenant's messaging identity into
+      // this workspace's `ErrorLog`.
+      contactSourceId = contactInbox.sourceId
+      // Same guard, same reason — and this is the id the builder's Error Log
+      // table actually renders, so a terminal failure here shows the contact
+      // rather than an empty cell.
+      contactId = contactInbox.contactId
 
       // A channel whose messaging identity is keyed to an ad click cannot
       // send without the click id, so gate BEFORE any token/scope/dataset
@@ -468,6 +487,8 @@ export async function handleSendMetaCapiEvent(
       await logProviderError({
         provider: "meta-conversions",
         workspaceId: event.workspaceId,
+        contactId,
+        sourceId: contactSourceId,
         error,
         httpCode: "400",
       })

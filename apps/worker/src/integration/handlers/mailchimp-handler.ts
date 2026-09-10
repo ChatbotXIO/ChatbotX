@@ -132,7 +132,7 @@ const formatMergeFieldValue = (
 export const addMailchimpMember = async (
   props: ExecuteStepProps<MailchimpAddMemberSchema>,
 ): Promise<ExecuteStepResult> => {
-  const { conversation, step } = props
+  const { conversation, contactInbox, step } = props
   const logContext = {
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
@@ -227,6 +227,7 @@ export const addMailchimpMember = async (
       provider: "mailchimp",
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
+      sourceId: contactInbox.sourceId,
       error,
     })
     return {
