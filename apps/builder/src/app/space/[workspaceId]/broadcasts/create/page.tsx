@@ -1,3 +1,4 @@
+import { integrationWhatsappService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
@@ -37,6 +38,17 @@ export default async function CreateBroadcastPage({
   )
 
   const prefill = parseCreateBroadcastPrefill(await searchParams)
+  // The Ads deep-link names a WhatsApp integration; the form targets pages
+  // (inboxes), so resolve it here — a foreign or deleted id preselects nothing.
+  const prefilledIntegration = prefill.integrationWhatsappId
+    ? await integrationWhatsappService.findByIdForWorkspace({
+        id: prefill.integrationWhatsappId,
+        workspaceId,
+      })
+    : null
+  const initialInboxIds = prefilledIntegration
+    ? [prefilledIntegration.inboxId]
+    : undefined
 
   const openaiCompatibleIntegrations = await listIntegrationOpenaiCompatible({
     workspaceId,
@@ -47,6 +59,7 @@ export default async function CreateBroadcastPage({
       <CustomFieldStoreProvider workspaceId={workspaceId}>
         <IntegrationStoreProvider workspaceId={workspaceId}>
           <FlowTemplateStoreProvider
+            includeAllTemplateStatuses
             openaiCompatibleIntegrations={openaiCompatibleIntegrations}
             workspaceId={workspaceId}
           >
@@ -62,9 +75,7 @@ export default async function CreateBroadcastPage({
                         canViewEmailAndPhone={canViewEmailAndPhone}
                         initialChannel={prefill.channel}
                         initialContactFilter={prefill.contactFilter}
-                        initialIntegrationWhatsappId={
-                          prefill.integrationWhatsappId
-                        }
+                        initialInboxIds={initialInboxIds}
                         workspaceId={workspaceId}
                       />
                     </ContactStoreProvider>

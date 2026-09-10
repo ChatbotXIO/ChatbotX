@@ -99,6 +99,7 @@ describe("captureTemplateFlowResponse", () => {
     expect(findBroadcastByIdForResponse).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       broadcastId: "11612473309626368",
+      inboxId: "inbox-1",
     })
     expect(applyWhatsappFlowResponse).toHaveBeenCalledWith({
       workspaceId: "ws-1",
@@ -112,6 +113,60 @@ describe("captureTemplateFlowResponse", () => {
         phone: "+84900000000",
       },
     })
+  })
+
+  test("applies a multi-page broadcast response with the responding page's params and no legacy integration", async () => {
+    // A multi-page broadcast keeps its params per target and leaves the
+    // legacy `integrationWhatsappId` null: the service resolves the params by
+    // the responding contact's inbox, and `applyResponse` falls back to that
+    // inbox's WhatsApp integration.
+    const param = makeFlowParam("wa-flow-page-b")
+    findBroadcastByIdForResponse.mockResolvedValue({
+      integrationWhatsappId: null,
+      templateData: { button: [param] },
+    })
+
+    const token = encodeTemplateFlowToken({
+      origin: TemplateFlowOrigin.Broadcast,
+      broadcastId: "11612473309626368",
+      buttonIndex: 0,
+    })
+
+    await captureTemplateFlowResponse(makeJobData(token))
+
+    expect(findBroadcastByIdForResponse).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      broadcastId: "11612473309626368",
+      inboxId: "inbox-1",
+    })
+    expect(applyWhatsappFlowResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactInbox,
+        integrationWhatsappId: null,
+        flowSourceId: "wa-flow-page-b",
+      }),
+    )
+  })
+
+  test("skips a multi-page broadcast response when the responding page has no params", async () => {
+    findBroadcastByIdForResponse.mockResolvedValue({
+      integrationWhatsappId: null,
+      templateData: null,
+    })
+
+    const token = encodeTemplateFlowToken({
+      origin: TemplateFlowOrigin.Broadcast,
+      broadcastId: "11612473309626368",
+      buttonIndex: 0,
+    })
+
+    await captureTemplateFlowResponse(makeJobData(token))
+
+    expect(applyWhatsappFlowResponse).not.toHaveBeenCalled()
+    expect(loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ broadcastId: "11612473309626368" }),
+      "[template-flow-response] broadcast FLOW button params not found",
+    )
   })
 
   test("applies response for broadcast-origin carousel FLOW button", async () => {

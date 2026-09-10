@@ -40,31 +40,36 @@ const getBroadcastTemplateDetailRequest = z.object({
   broadcastId: z.string(),
 })
 
-const broadcastTemplateDetailResponse = z
-  .discriminatedUnion("channel", [
-    z.object({
-      channel: z.literal("whatsapp"),
-      id: z.string(),
-      name: z.string(),
-      language: z.string(),
-      category: z.string(),
-      status: z.string(),
-      components: z.unknown(),
-      integrationName: z.string().nullable(),
-    }),
-    z.object({
-      channel: z.literal("messenger"),
-      id: z.string(),
-      name: z.string(),
-      language: z.string(),
-      category: z.string(),
-      status: z.string(),
-      parameterFormat: z.string(),
-      components: z.unknown(),
-      integrationName: z.string().nullable(),
-    }),
-  ])
-  .nullable()
+const broadcastTemplateDetailResource = z.discriminatedUnion("channel", [
+  z.object({
+    channel: z.literal("whatsapp"),
+    id: z.string(),
+    name: z.string(),
+    language: z.string(),
+    category: z.string(),
+    status: z.string(),
+    components: z.unknown(),
+    inboxId: z.string(),
+    integrationName: z.string().nullable(),
+  }),
+  z.object({
+    channel: z.literal("messenger"),
+    id: z.string(),
+    name: z.string(),
+    language: z.string(),
+    category: z.string(),
+    status: z.string(),
+    parameterFormat: z.string(),
+    components: z.unknown(),
+    inboxId: z.string(),
+    integrationName: z.string().nullable(),
+  }),
+])
+
+/** One entry per page the broadcast sends a template from; empty for flow sends. */
+const listBroadcastTemplateDetailsResponse = z.array(
+  broadcastTemplateDetailResource,
+)
 
 export const broadcastPrivateAPIs = {
   privateListBroadcastOptionsAPI: authorizedAPI
@@ -104,18 +109,18 @@ export const broadcastPrivateAPIs = {
       })
     }),
 
-  privateGetBroadcastTemplateDetailAPI: authorizedAPI
+  privateListBroadcastTemplateDetailsAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/workspaces/{workspaceId}/broadcasts/{broadcastId}/template-detail",
-      summary: "Get broadcast template detail",
+      path: "/workspaces/{workspaceId}/broadcasts/{broadcastId}/template-details",
+      summary: "List broadcast template details (one per page)",
       tags: ["Broadcasts"],
     })
     .input(getBroadcastTemplateDetailRequest)
-    .output(broadcastTemplateDetailResponse)
+    .output(listBroadcastTemplateDetailsResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(
-      async ({ input }) => await broadcastService.getTemplateDetail(input),
+      async ({ input }) => await broadcastService.listTemplateDetails(input),
     ),
 
   privateListBroadcastContactsAPI: authorizedAPI
@@ -133,11 +138,11 @@ export const broadcastPrivateAPIs = {
         input
       const totalValue = total ?? 0
 
-      const broadcast = await broadcastService.findByIdForResponse({
+      const [existingId] = await broadcastService.listExistingIds({
         workspaceId,
-        broadcastId,
+        ids: [broadcastId],
       })
-      if (!broadcast) {
+      if (!existingId) {
         throw notFoundException("Broadcast not found")
       }
 

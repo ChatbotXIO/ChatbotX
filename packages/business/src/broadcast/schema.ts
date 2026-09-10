@@ -7,6 +7,8 @@ import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
 export type BroadcastAudienceInput = {
   workspaceId: string
   channels?: ChannelType[] | null
+  /** Explicit target inboxes of a multi-page broadcast; wins over the legacy integration ids. */
+  inboxIds?: string[] | null
   integrationWhatsappId?: string | null
   integrationMessengerId?: string | null
   contactFilter?: ContactFilterCriteriaInput | null
@@ -34,6 +36,8 @@ type BroadcastBaseTemplateDetail = {
   category: string
   status: string
   components: unknown
+  /** The page (inbox) the template belongs to. */
+  inboxId: string
   integrationName: string | null
 }
 

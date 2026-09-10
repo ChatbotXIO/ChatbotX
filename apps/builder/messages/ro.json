@@ -2563,6 +2563,12 @@
     "messengerChannel": {
       "label": "Canal Messenger"
     },
+    "whatsappChannels": {
+      "label": "Canale WhatsApp"
+    },
+    "messengerChannels": {
+      "label": "Pagini Messenger"
+    },
     "messages": {
       "label": "Mesaje"
     },
@@ -3301,6 +3307,7 @@
         "result": {
           "title": "Rezultate duplicare",
           "succeededTitle": "Reușite",
+          "pendingTitle": "În așteptarea verificării Meta",
           "close": "Închide"
         }
       }

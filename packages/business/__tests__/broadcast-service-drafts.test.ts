@@ -6,6 +6,8 @@ const findFirstFlow = vi.fn()
 const findFirstIntegrationWhatsapp = vi.fn()
 const findFirstIntegrationMessenger = vi.fn()
 const updateReturning = vi.fn()
+const findManyBroadcastTarget = vi.fn()
+const deleteTargetsWhere = vi.fn()
 const pruneFilter = vi.fn()
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -34,6 +36,31 @@ vi.mock("@chatbotx.io/database/client", () => ({
         }),
       }),
     }),
+    // updateDraft rewrites the row and its target rows in one transaction;
+    // the tx mirrors `db.update` and treats the target writes as no-ops here
+    // (they are covered by broadcast-targets.test.ts).
+    transaction: (run: (tx: unknown) => Promise<unknown>) =>
+      run({
+        query: {
+          broadcastTargetModel: {
+            findMany: (...args: unknown[]) => findManyBroadcastTarget(...args),
+          },
+        },
+        update: () => ({
+          set: (values: Record<string, unknown>) => ({
+            where: (condition: unknown) => ({
+              returning: () => updateReturning({ values, condition }),
+            }),
+          }),
+        }),
+        delete: () => ({
+          where: (condition: unknown) => {
+            deleteTargetsWhere(condition)
+            return Promise.resolve()
+          },
+        }),
+        insert: () => ({ values: () => Promise.resolve() }),
+      }),
   },
   and: (...args: unknown[]) => ({ __and: args }),
   asc: vi.fn(),
@@ -41,7 +68,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   desc: vi.fn(),
   eq: (a: unknown, b: unknown) => ({ __eq: [a, b] }),
   gt: vi.fn(),
-  inArray: vi.fn(),
+  inArray: (a: unknown, b: unknown) => ({ __inArray: [a, b] }),
   isNotNull: (a: unknown) => ({ __isNotNull: a }),
   isNull: (a: unknown) => ({ __isNull: a }),
   or: (...args: unknown[]) => ({ __or: args }),
@@ -55,6 +82,11 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     handoffCompletedAt: "broadcast.handoffCompletedAt",
     deletedAt: "broadcast.deletedAt",
   },
+  broadcastTargetModel: {
+    broadcastId: "broadcastTarget.broadcastId",
+    inboxId: "broadcastTarget.inboxId",
+  },
+  inboxModel: {},
   flowModel: {},
   contactsOnBroadcastsModel: {
     broadcastId: "cob.broadcastId",
@@ -103,6 +135,8 @@ beforeEach(() => {
   findFirstIntegrationWhatsapp.mockReset()
   findFirstIntegrationMessenger.mockReset()
   updateReturning.mockReset()
+  findManyBroadcastTarget.mockReset().mockResolvedValue([])
+  deleteTargetsWhere.mockReset()
   pruneFilter.mockReset().mockImplementation((filter: unknown) => filter)
 })
 
@@ -143,6 +177,135 @@ describe("broadcastService.scheduleDraft", () => {
         schedulesAt: new Date(),
       }),
     ).rejects.toThrow("Broadcast is not a draft")
+  })
+
+  test("drops a page left without a template when scheduling, keeping the ready pages", async () => {
+    updateReturning.mockResolvedValue([{ id: "b-1", targetMode: "targets" }])
+    findManyBroadcastTarget.mockResolvedValue([
+      { inboxId: "inbox-a", flowId: null, templateId: "tpl-1" },
+      { inboxId: "inbox-b", flowId: null, templateId: null },
+    ])
+
+    const result = await broadcastService.scheduleDraft({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      schedulesType: "now",
+      schedulesAt: new Date(),
+    })
+
+    expect(result).toEqual({ id: "b-1" })
+    expect(deleteTargetsWhere).toHaveBeenCalledTimes(1)
+    // Only the template-less page is deleted; the ready page is kept.
+    expect(flatten(deleteTargetsWhere.mock.calls[0][0])).toEqual([
+      { __eq: ["broadcastTarget.broadcastId", "b-1"] },
+      { __inArray: ["broadcastTarget.inboxId", ["inbox-b"]] },
+    ])
+  })
+
+  test("keeps every page when they all carry a template (nothing to prune)", async () => {
+    updateReturning.mockResolvedValue([{ id: "b-1", targetMode: "targets" }])
+    findManyBroadcastTarget.mockResolvedValue([
+      { inboxId: "inbox-a", flowId: null, templateId: "tpl-1" },
+      { inboxId: "inbox-b", flowId: null, templateId: "tpl-2" },
+    ])
+
+    await broadcastService.scheduleDraft({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      schedulesType: "now",
+      schedulesAt: new Date(),
+    })
+
+    expect(deleteTargetsWhere).not.toHaveBeenCalled()
+  })
+
+  test("drops a page left without a flow when scheduling, keeping the flow page", async () => {
+    updateReturning.mockResolvedValue([{ id: "b-1", targetMode: "targets" }])
+    findManyBroadcastTarget.mockResolvedValue([
+      { inboxId: "inbox-a", flowId: "flow-1", templateId: null },
+      { inboxId: "inbox-b", flowId: null, templateId: null },
+    ])
+
+    const result = await broadcastService.scheduleDraft({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      schedulesType: "now",
+      schedulesAt: new Date(),
+    })
+
+    expect(result).toEqual({ id: "b-1" })
+    expect(deleteTargetsWhere).toHaveBeenCalledTimes(1)
+    expect(flatten(deleteTargetsWhere.mock.calls[0][0])).toEqual([
+      { __eq: ["broadcastTarget.broadcastId", "b-1"] },
+      { __inArray: ["broadcastTarget.inboxId", ["inbox-b"]] },
+    ])
+  })
+
+  test("rejects scheduling a flow send when not one page has a flow (would send to nobody)", async () => {
+    updateReturning.mockResolvedValue([{ id: "b-1", targetMode: "targets" }])
+    findManyBroadcastTarget.mockResolvedValue([
+      { inboxId: "inbox-a", flowId: null, templateId: null },
+      { inboxId: "inbox-b", flowId: null, templateId: null },
+    ])
+
+    await expect(
+      broadcastService.scheduleDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        schedulesType: "now",
+        schedulesAt: new Date(),
+      }),
+    ).rejects.toThrow("Select a template or flow for at least one page")
+    expect(deleteTargetsWhere).not.toHaveBeenCalled()
+  })
+
+  test("rejects scheduling when not one page has a template (would send to nobody)", async () => {
+    updateReturning.mockResolvedValue([{ id: "b-1", targetMode: "targets" }])
+    findManyBroadcastTarget.mockResolvedValue([
+      { inboxId: "inbox-a", flowId: null, templateId: null },
+      { inboxId: "inbox-b", flowId: null, templateId: null },
+    ])
+
+    await expect(
+      broadcastService.scheduleDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        schedulesType: "now",
+        schedulesAt: new Date(),
+      }),
+    ).rejects.toThrow("Select a template or flow for at least one page")
+    expect(deleteTargetsWhere).not.toHaveBeenCalled()
+  })
+
+  test("rejects scheduling a targets-mode draft whose pages all cascaded away (send to nobody)", async () => {
+    updateReturning.mockResolvedValue([{ id: "b-1", targetMode: "targets" }])
+    findManyBroadcastTarget.mockResolvedValue([])
+
+    await expect(
+      broadcastService.scheduleDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        schedulesType: "now",
+        schedulesAt: new Date(),
+      }),
+    ).rejects.toThrow("Select a template or flow for at least one page")
+    expect(deleteTargetsWhere).not.toHaveBeenCalled()
+  })
+
+  test("schedules a legacy channel-mode draft without touching targets", async () => {
+    updateReturning.mockResolvedValue([{ id: "b-1", targetMode: "channel" }])
+
+    const result = await broadcastService.scheduleDraft({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      schedulesType: "now",
+      schedulesAt: new Date(),
+    })
+
+    expect(result).toEqual({ id: "b-1" })
+    // A channel-mode broadcast has no target rows — never read, never pruned.
+    expect(findManyBroadcastTarget).not.toHaveBeenCalled()
+    expect(deleteTargetsWhere).not.toHaveBeenCalled()
   })
 })
 

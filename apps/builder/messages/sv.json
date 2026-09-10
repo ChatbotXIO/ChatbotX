@@ -2288,6 +2288,12 @@
     "messengerChannel": {
       "label": "Messenger-kanal"
     },
+    "whatsappChannels": {
+      "label": "WhatsApp-kanaler"
+    },
+    "messengerChannels": {
+      "label": "Messenger-sidor"
+    },
     "messengerTemplateId": {
       "label": "Messenger-mall"
     },
@@ -3792,6 +3798,7 @@
         "result": {
           "close": "Stäng",
           "succeededTitle": "Lyckades",
+          "pendingTitle": "Väntar på Metas granskning",
           "title": "Kloningsresultat"
         },
         "succeededCount": "{count} kanal(er) klonades",

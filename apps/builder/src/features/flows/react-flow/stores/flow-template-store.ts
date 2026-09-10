@@ -16,6 +16,11 @@ export type FlowTemplateState = {
 
   workspaceId: string
   integrationWhatsappId?: string
+  /**
+   * The flow editor only offers approved templates; the broadcast form needs
+   * every status so it can show pages whose clone is still under review.
+   */
+  includeAllTemplateStatuses: boolean
 
   loadingWhatsappTemplates: boolean
   whatsappTemplates: ListWhatsappMessageTemplatesResponse
@@ -53,6 +58,7 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
 
     workspaceId: "",
     integrationWhatsappId: undefined,
+    includeAllTemplateStatuses: false,
 
     loadingWhatsappTemplates: false,
     whatsappTemplates: [],
@@ -91,7 +97,8 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
     },
 
     fetchWhatsappTemplates: async () => {
-      const { workspaceId, integrationWhatsappId } = get()
+      const { workspaceId, integrationWhatsappId, includeAllTemplateStatuses } =
+        get()
 
       if (!workspaceId) {
         return
@@ -109,7 +116,9 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
           await client.whatsappMessageTemplateAPIs.listWhatsappMessageTemplatesInternalAPI(
             {
               workspaceId,
-              status: whatsappTemplateStatusSchema.enum.APPROVED,
+              status: includeAllTemplateStatuses
+                ? undefined
+                : whatsappTemplateStatusSchema.enum.APPROVED,
               integrationWhatsappId,
             },
             { signal },
@@ -134,7 +143,7 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
     },
 
     fetchMessengerTemplates: async () => {
-      const { workspaceId } = get()
+      const { workspaceId, includeAllTemplateStatuses } = get()
 
       if (!workspaceId || messengerFetching) {
         return
@@ -147,7 +156,9 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
           await client.messengerMessageTemplateAPIs.listMessengerMessageTemplatesInternalAPI(
             {
               workspaceId,
-              status: messengerTemplateStatusSchema.enum.APPROVED,
+              status: includeAllTemplateStatuses
+                ? undefined
+                : messengerTemplateStatusSchema.enum.APPROVED,
             },
           )
 

@@ -4,17 +4,22 @@ import {
   type BroadcastSubaction,
   broadcastFlowTypes,
   broadcastScheduleTypes,
+  broadcastSendsTemplate,
   broadcastSubactions,
   type ChannelType,
   channelTypes,
 } from "@chatbotx.io/database/partials"
-import type { BroadcastModel } from "@chatbotx.io/database/types"
+import type {
+  BroadcastModel,
+  BroadcastTargetModel,
+} from "@chatbotx.io/database/types"
 import { z } from "zod"
 import {
   type ContactFilterCriteria,
   contactFilterCriteriaSchema,
 } from "@/features/contact-filter/schema"
 import {
+  type BroadcastTargetRequest,
   broadcastTemplateButtonsSchema,
   broadcastTemplateDataSchema,
 } from "../schema/action"
@@ -31,7 +36,9 @@ export type CreateBroadcastDefaultValues = {
   channel: ChannelType | undefined
   flowId: undefined
   subaction: BroadcastSubaction | undefined
-  integrationWhatsappId: string | undefined
+  /** Form-only: the pages picked in the multi-select; `targets` mirrors it. */
+  inboxIds: string[]
+  targets: BroadcastTargetRequest[]
   schedulesType: "now"
   schedulesAt: null
   contactFilter: ContactFilterCriteria
@@ -48,9 +55,10 @@ export type CreateBroadcastDefaultValues = {
  */
 export function buildCreateBroadcastDefaultValues(input: {
   initialChannel?: ChannelType
-  initialIntegrationWhatsappId?: string
+  initialInboxIds?: string[]
   initialContactFilter?: ContactFilterCriteria
 }): CreateBroadcastDefaultValues {
+  const inboxIds = input.initialInboxIds ?? []
   return {
     channel: input.initialChannel,
     flowId: undefined,
@@ -58,7 +66,8 @@ export function buildCreateBroadcastDefaultValues(input: {
       input.initialChannel === channelTypes.enum.whatsapp
         ? broadcastSubactions.enum.whatsappTemplateMessage
         : undefined,
-    integrationWhatsappId: input.initialIntegrationWhatsappId,
+    inboxIds,
+    targets: inboxIds.map((inboxId) => ({ inboxId })),
     schedulesType: "now",
     schedulesAt: null,
     contactFilter: input.initialContactFilter ?? EMPTY_CONTACT_FILTER,
@@ -82,7 +91,15 @@ export type EditableBroadcastDraft = Pick<
   | "schedulesType"
   | "schedulesAt"
   | "contactFilter"
->
+> & {
+  targets: Pick<
+    BroadcastTargetModel,
+    "inboxId" | "flowId" | "templateId" | "templateData"
+  >[]
+  /** Inbox of the legacy integration columns, for drafts saved before targets existed. */
+  integrationWhatsapp?: { inboxId: string } | null
+  integrationMessenger?: { inboxId: string } | null
+}
 
 export type EditBroadcastDefaultValues = {
   channel: ChannelType
@@ -95,6 +112,9 @@ export type EditBroadcastDefaultValues = {
   integrationMessengerId: string | undefined
   templateData: BroadcastTemplateData | undefined
   buttons: BroadcastTemplateButtons
+  /** Form-only: the pages picked in the multi-select; `targets` mirrors it. */
+  inboxIds: string[]
+  targets: BroadcastTargetRequest[]
   schedulesType: BroadcastScheduleType
   schedulesAt: string | null
   contactFilter: ContactFilterCriteria
@@ -146,6 +166,54 @@ const splitTemplateData = (
   }
 }
 
+const toTargetRequest = (
+  target: Pick<
+    BroadcastTargetModel,
+    "inboxId" | "flowId" | "templateId" | "templateData"
+  >,
+): BroadcastTargetRequest => {
+  const { templateData, buttons } = splitTemplateData(target.templateData)
+  return {
+    inboxId: target.inboxId,
+    flowId: target.flowId ?? undefined,
+    templateId: target.templateId ?? undefined,
+    templateData,
+    buttons,
+  }
+}
+
+/**
+ * The pages of an edited draft. A draft saved as targets is used as-is; a
+ * legacy single-page draft (integration columns, no targets) becomes one
+ * target for that integration's inbox so it reopens in the same multi-page
+ * form — and is stored as a target on its next save. A legacy draft whose
+ * integration is gone yields no page, leaving the user to pick one.
+ */
+const resolveDraftTargets = (
+  draft: EditableBroadcastDraft,
+): BroadcastTargetRequest[] => {
+  if (draft.targets.length > 0) {
+    return draft.targets.map(toTargetRequest)
+  }
+
+  const legacyInboxId =
+    draft.integrationWhatsapp?.inboxId ?? draft.integrationMessenger?.inboxId
+  if (!legacyInboxId) {
+    return []
+  }
+  return [
+    toTargetRequest({
+      inboxId: legacyInboxId,
+      // Carry the legacy single-page flow/template onto its one target so a
+      // reopened legacy draft hydrates its flow (or template) instead of an
+      // empty card that validation would then reject.
+      flowId: draft.flowId ?? null,
+      templateId: draft.templateId,
+      templateData: draft.templateData,
+    }),
+  ]
+}
+
 /**
  * Seeds `CreateBroadcastForm`'s `defaultValues` from an existing draft so the
  * same form can edit it. Returns `null` when the stored channel or subaction is
@@ -168,7 +236,13 @@ export function buildEditBroadcastDefaultValues(
   const contactFilter = contactFilterCriteriaSchema.safeParse(
     draft.contactFilter,
   )
-  const { templateData, buttons } = splitTemplateData(draft.templateData)
+  const targets = resolveDraftTargets(draft)
+  // Once the draft has a page, its template lives on that target; the legacy
+  // single-template fields only survive for a draft that lost its page.
+  const keepsLegacyTemplate = targets.length === 0
+  const { templateData, buttons } = keepsLegacyTemplate
+    ? splitTemplateData(draft.templateData)
+    : { templateData: undefined, buttons: [] }
 
   return {
     id: draft.id,
@@ -176,15 +250,23 @@ export function buildEditBroadcastDefaultValues(
     defaultValues: {
       channel: channel.data,
       subaction: subaction.data,
-      templateType: draft.templateId
+      templateType: broadcastSendsTemplate(draft)
         ? broadcastFlowTypes.enum.template
         : broadcastFlowTypes.enum.flow,
       flowId: draft.flowId ?? undefined,
-      templateId: draft.templateId ?? undefined,
-      integrationWhatsappId: draft.integrationWhatsappId ?? undefined,
-      integrationMessengerId: draft.integrationMessengerId ?? undefined,
+      templateId: keepsLegacyTemplate
+        ? (draft.templateId ?? undefined)
+        : undefined,
+      integrationWhatsappId: keepsLegacyTemplate
+        ? (draft.integrationWhatsappId ?? undefined)
+        : undefined,
+      integrationMessengerId: keepsLegacyTemplate
+        ? (draft.integrationMessengerId ?? undefined)
+        : undefined,
       templateData,
       buttons,
+      inboxIds: targets.map((target) => target.inboxId),
+      targets,
       schedulesType: resolvedSchedulesType,
       schedulesAt: resolveSchedulesAt(draft, resolvedSchedulesType),
       contactFilter: contactFilter.success

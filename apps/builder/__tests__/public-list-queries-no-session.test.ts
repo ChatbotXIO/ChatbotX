@@ -58,6 +58,7 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 
 vi.mock("@chatbotx.io/database/partials", () => ({
   rootFolderId: "0",
+  withBroadcastTargets: { targets: true },
 }))
 
 vi.mock("@chatbotx.io/utils/error-log", () => ({

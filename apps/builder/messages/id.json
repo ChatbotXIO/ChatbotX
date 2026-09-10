@@ -1779,6 +1779,12 @@
     "messengerChannel": {
       "label": "Channel Messenger"
     },
+    "whatsappChannels": {
+      "label": "Saluran WhatsApp"
+    },
+    "messengerChannels": {
+      "label": "Halaman Messenger"
+    },
     "messages": {
       "label": "Pesan"
     },
@@ -3301,6 +3307,7 @@
         "result": {
           "title": "Hasil Kloning",
           "succeededTitle": "Berhasil",
+          "pendingTitle": "Menunggu tinjauan Meta",
           "close": "Tutup"
         }
       }

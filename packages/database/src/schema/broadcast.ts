@@ -8,7 +8,11 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core"
-import { broadcastScheduleTypes, broadcastStatuses } from "../partials"
+import {
+  broadcastScheduleTypes,
+  broadcastStatuses,
+  broadcastTargetModes,
+} from "../partials"
 import {
   bigintAsString,
   sharedColumns,
@@ -59,6 +63,15 @@ export const broadcastModel = pgTable(
     ),
     templateId: bigintAsString(),
     templateData: jsonb(),
+    /**
+     * Which layout scopes the audience and templates: `channel` (legacy —
+     * the integration columns above, else the whole channel) or `targets`
+     * (the `BroadcastTarget` rows). Persisted rather than derived from the
+     * presence of target rows, because those rows cascade away with their
+     * inbox and an empty target list must then mean "nobody", never
+     * "every page of the channel".
+     */
+    targetMode: text().notNull().default(broadcastTargetModes.enum.channel),
     status: broadcastStatus().notNull(),
     schedulesType: broadcastScheduleType().notNull(),
     schedulesAt: timestamp(timestampConfig).notNull(),

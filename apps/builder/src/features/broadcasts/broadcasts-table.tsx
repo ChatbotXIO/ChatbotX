@@ -28,6 +28,7 @@ import { useCopyToClipboard } from "usehooks-ts"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { useWorkspaceId } from "@/hooks/routing"
 import { BroadcastDetailDialog } from "./broadcast-detail-dialog"
+import { CloneBroadcastDialog } from "./clone-broadcast-dialog"
 import { BroadcastStatsCell } from "./components/broadcast-stats-cell"
 import { BroadcastStatusBadge } from "./components/broadcast-status-badge"
 import { BroadcastsEmptyState } from "./components/broadcasts-empty-state"
@@ -449,6 +450,15 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
           router.refresh()
         }}
         open={rowAction?.variant === "resend"}
+      />
+
+      <CloneBroadcastDialog
+        broadcast={rowAction?.row.original ?? null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "clone"}
       />
 
       <ScheduleBroadcastDialog

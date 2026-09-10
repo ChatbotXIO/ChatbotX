@@ -20,6 +20,7 @@ type BroadcastAudiencePreviewDialogProps = {
   total: number
   channel: ChannelType
   subaction: BroadcastSubaction
+  inboxIds?: string[]
   integrationWhatsappId?: string | null
   integrationMessengerId?: string | null
   contactFilter?: ContactFilterRequest["contactFilter"] | null
@@ -33,6 +34,7 @@ export const BroadcastAudiencePreviewDialog = memo(
     total,
     channel,
     subaction,
+    inboxIds,
     integrationWhatsappId,
     integrationMessengerId,
     contactFilter,
@@ -48,6 +50,7 @@ export const BroadcastAudiencePreviewDialog = memo(
               page,
               perPage,
               channels: [channel],
+              inboxIds,
               integrationWhatsappId: integrationWhatsappId ?? undefined,
               integrationMessengerId: integrationMessengerId ?? undefined,
               contactFilter: contactFilter ?? undefined,
@@ -60,6 +63,7 @@ export const BroadcastAudiencePreviewDialog = memo(
       [
         channel,
         contactFilter,
+        inboxIds,
         integrationMessengerId,
         integrationWhatsappId,
         subaction,

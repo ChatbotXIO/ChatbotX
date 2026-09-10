@@ -1092,6 +1092,12 @@
     "messengerChannel": {
       "label": "Canale Messenger"
     },
+    "whatsappChannels": {
+      "label": "Canali WhatsApp"
+    },
+    "messengerChannels": {
+      "label": "Pagine Messenger"
+    },
     "messages": {
       "label": "Messaggi"
     },
@@ -3301,6 +3307,7 @@
         "result": {
           "title": "Risultati della clonazione",
           "succeededTitle": "Operazione riuscita",
+          "pendingTitle": "In attesa di revisione Meta",
           "close": "Chiudi"
         }
       }

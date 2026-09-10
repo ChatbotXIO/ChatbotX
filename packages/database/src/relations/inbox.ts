@@ -41,6 +41,10 @@ export const inboxRelations = defineRelationsPart(schema, (r) => ({
       from: r.inboxModel.id,
       to: r.contactInboxModel.inboxId,
     }),
+    broadcastTargets: r.many.broadcastTargetModel({
+      from: r.inboxModel.id,
+      to: r.broadcastTargetModel.inboxId,
+    }),
     contactStats: r.one.inboxContactStatsModel({
       from: r.inboxModel.id,
       to: r.inboxContactStatsModel.inboxId,

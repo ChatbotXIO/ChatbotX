@@ -1779,6 +1779,12 @@
     "messengerChannel": {
       "label": "Messengerチャネル"
     },
+    "whatsappChannels": {
+      "label": "WhatsAppチャネル"
+    },
+    "messengerChannels": {
+      "label": "Messengerページ"
+    },
     "messages": {
       "label": "メッセージ"
     },
@@ -3280,6 +3286,7 @@
         "result": {
           "title": "複製結果",
           "succeededTitle": "成功",
+          "pendingTitle": "Metaの審査待ち",
           "close": "閉じる"
         }
       }

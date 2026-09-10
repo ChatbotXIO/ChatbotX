@@ -2296,6 +2296,12 @@
     "messengerChannel": {
       "label": "Messenger 频道"
     },
+    "whatsappChannels": {
+      "label": "WhatsApp 渠道"
+    },
+    "messengerChannels": {
+      "label": "Messenger 主页"
+    },
     "messengerTemplateId": {
       "label": "Messenger 范本"
     },
@@ -3792,6 +3798,7 @@
         "result": {
           "close": "关闭",
           "succeededTitle": "成功",
+          "pendingTitle": "等待 Meta 审核",
           "title": "拷贝结果"
         },
         "succeededCount": "{count} 频道已成功拷贝",
