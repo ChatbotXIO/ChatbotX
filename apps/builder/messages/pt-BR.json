@@ -3767,12 +3767,6 @@
       "label": "Cabeçalho do modelo"
     },
     "transferPhoneNumber": "Transferir telefone de outro provedor do WhatsApp",
-    "capi": {
-      "automaticEvents": {
-        "title": "Eventos Automáticos",
-        "description": "Envie automaticamente eventos de conversão deste número do WhatsApp para a Meta. Se a permissão estiver faltando, reconecte a conta para concedê-la."
-      }
-    },
     "selectPage": {
       "tryAgain": "Tentar reconectar"
     }

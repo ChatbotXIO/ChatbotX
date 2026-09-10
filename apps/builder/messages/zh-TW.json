@@ -3821,12 +3821,6 @@
       "label": "範本標頭"
     },
     "transferPhoneNumber": "從其他 Whatsapp 供應商轉接電話",
-    "capi": {
-      "automaticEvents": {
-        "title": "自動事件",
-        "description": "自動將此 WhatsApp 號碼的轉換事件傳送到 Meta。如果缺少權限,請重新連接帳號以授予權限。"
-      }
-    },
     "selectPage": {
       "tryAgain": "嘗試重新連接"
     }

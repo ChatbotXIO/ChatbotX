@@ -3788,12 +3788,6 @@
       "label": "Şablon Üst Bilgisi"
     },
     "transferPhoneNumber": "Telefonu başka bir WhatsApp sağlayıcısından aktar",
-    "capi": {
-      "automaticEvents": {
-        "title": "Otomatik Olaylar",
-        "description": "Bu WhatsApp numarasından dönüşüm etkinliklerini Meta’ya otomatik olarak gönderin. İzin eksikse, vermek için hesabı yeniden bağlayın."
-      }
-    },
     "selectPage": {
       "tryAgain": "Yeniden bağlanmayı dene"
     }

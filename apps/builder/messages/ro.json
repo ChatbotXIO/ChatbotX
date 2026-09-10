@@ -3788,12 +3788,6 @@
       "label": "Antet șablon"
     },
     "transferPhoneNumber": "Transferă numărul de telefon de la un alt furnizor WhatsApp",
-    "capi": {
-      "automaticEvents": {
-        "title": "Evenimente Automate",
-        "description": "Trimite automat evenimente de conversie de la acest număr WhatsApp către Meta. Dacă lipsește permisiunea, reconectează contul pentru a o acorda."
-      }
-    },
     "selectPage": {
       "tryAgain": "Încearcă să te reconectezi"
     }

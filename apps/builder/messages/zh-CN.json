@@ -5152,12 +5152,6 @@
       "label": "范本标头"
     },
     "transferPhoneNumber": "从其他 Whatsapp 供应商转接电话",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automatic Events",
-        "description": "自动将此 WhatsApp 号码的转化事件发送到 Meta。如果缺少权限,请重新连接账户以授予权限。"
-      }
-    },
     "selectPage": {
       "tryAgain": "尝试重新连接"
     }

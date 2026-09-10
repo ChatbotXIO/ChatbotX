@@ -3788,12 +3788,6 @@
       "label": "Tiêu đề mẫu"
     },
     "transferPhoneNumber": "Chuyển số điện thoại từ nhà cung cấp WhatsApp khác",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automatic Events",
-        "description": "Tự động gửi sự kiện chuyển đổi từ số WhatsApp này đến Meta. Nếu thiếu quyền, hãy kết nối lại tài khoản để cấp quyền."
-      }
-    },
     "selectPage": {
       "tryAgain": "Kết nối lại"
     }
