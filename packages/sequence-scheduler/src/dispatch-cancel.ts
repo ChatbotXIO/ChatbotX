@@ -11,13 +11,10 @@ import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 
 /**
- * Cancellation lives apart from `dispatch-manager` on purpose. Creating a
- * dispatch needs `calculateBucket`, which hashes with Node's `crypto`; cancelling
- * one never does. Keeping them in one module meant every consumer of the cancel
- * path — including `@chatbotx.io/business`, which the builder loads into the Edge
- * Runtime — dragged `crypto` along and failed to compile. Import this module (or
- * the `@chatbotx.io/sequence-scheduler/dispatch-cancel` subpath) from anywhere
- * that must stay Edge-safe.
+ * Cancellation lives apart from `dispatch-manager` by responsibility: creating a
+ * dispatch assigns a bucket and inserts a row, cancelling one only reads rows
+ * back and clears their schedule entries. Both modules are Edge-safe now that
+ * `dispatch-manager` bucketing no longer imports Node's `crypto`.
  */
 
 type DrizzleClient = typeof db | Transaction
