@@ -88,6 +88,26 @@ describe("calculateBucket", () => {
     // so this test can assert the non-collision behavior for known inputs.
     expect(bucketA).not.toBe(bucketB)
   })
+
+  test("spreads sequential ids across all 256 buckets", async () => {
+    const { calculateBucket } = await import("../src/dispatch-manager")
+
+    // Sequential ids are the worst case for a weak hash (e.g. taking one byte
+    // of an FNV hash leaves half the buckets empty). Workers scan every bucket,
+    // so an uneven spread here means idle shards and hot shards. Guards the
+    // pure-JS bucketing against a distribution regression.
+    const buckets = new Set<number>()
+    const load = new Array<number>(256).fill(0)
+    for (let index = 0; index < 5000; index++) {
+      const bucket = calculateBucket(`workspace-${index}`, `contact-${index}`)
+      buckets.add(bucket)
+      load[bucket] += 1
+    }
+
+    expect(buckets.size).toBe(256)
+    // ~19.5 dispatches per bucket on average; assert nothing is wildly hot/cold.
+    expect(Math.max(...load)).toBeLessThan(50)
+  })
 })
 
 describe("generateIdempotencyKey", () => {
