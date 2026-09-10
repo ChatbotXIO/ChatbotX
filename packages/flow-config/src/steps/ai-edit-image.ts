@@ -13,7 +13,7 @@ import { stepTypes } from "./step-action"
 export const AI_EDIT_IMAGE_DEFAULT_OPENAI_MODEL = "gpt-image-2" as const
 export const AI_EDIT_IMAGE_FALLBACK_OPENAI_MODEL = "gpt-image-1" as const
 export const AI_EDIT_IMAGE_DEFAULT_GEMINI_MODEL =
-  "gemini-3.1-flash-image-preview" as const
+  "gemini-3.1-flash-image" as const
 
 export const AI_EDIT_IMAGE_DEFAULT_OPENAI_SIZE = "1024x1024" as const
 export const AI_EDIT_IMAGE_DEFAULT_GEMINI_SIZE = "1:1" as const
