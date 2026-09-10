@@ -2092,7 +2092,8 @@
     "javascriptCode": {
       "description": "使用纯 JavaScript 并返回一个值。网络、文件、API 和外部库均不可用。可通过 `input` 对象访问联系人和系统数据。",
       "label": "JavaScript 代码",
-      "placeholder": "return (input.first_name || 'there').toUpperCase()"
+      "placeholder": "return (input.first_name || 'there').toUpperCase()",
+      "objectMapping": "将返回值中的任意 JSON 路径映射到任意自定义字段，方式与外部 API 请求相同。路径和字段由你选择。"
     },
     "jsonPath": {
       "placeholder": "输入 JSON 路径",
@@ -2381,7 +2382,9 @@
       "used": "已使用"
     },
     "outputCustomField": {
-      "label": "输出自订字段"
+      "label": "输出自订字段",
+      "javascriptOptional": "可选。保存整个返回值。使用上方的 JSON 路径映射写入各个字段。",
+      "javascriptDumpLabel": "完整 JSON 输出（可选）"
     },
     "outputFieldId": {
       "label": "将结果保存到自订字段"

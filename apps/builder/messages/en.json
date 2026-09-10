@@ -1429,12 +1429,15 @@
       "label": "Operation"
     },
     "outputCustomField": {
-      "label": "Output Custom Field"
+      "label": "Output Custom Field",
+      "javascriptOptional": "Optional. Stores the entire return value. Use the JSON path mapping above to write individual fields.",
+      "javascriptDumpLabel": "Full JSON output (optional)"
     },
     "javascriptCode": {
       "label": "JavaScript code",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Use pure JavaScript and return a value. Network, files, APIs, and external libraries are unavailable. Contact and system data is available on the `input` object."
+      "description": "Use pure JavaScript and return a value. Network, files, APIs, and external libraries are unavailable. Contact and system data is available on the `input` object.",
+      "objectMapping": "Map any JSON path from the returned value onto any custom field, the same way External API Request does. You choose the paths and the fields."
     },
     "httpMethod": {
       "label": "Method"

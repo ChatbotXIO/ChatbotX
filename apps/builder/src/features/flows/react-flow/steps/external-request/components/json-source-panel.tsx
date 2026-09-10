@@ -18,16 +18,23 @@ import { JsonTreeView } from "./json-tree-view"
 type JsonSourcePanelProps = {
   onSelectPath: (path: string) => void
   activeTargetLabel: string | null
+  /**
+   * External API Request can browse a live Test Now payload. Execute
+   * JavaScript has no HTTP round-trip, so it only offers Paste sample.
+   */
+  showTestResponseTab?: boolean
 }
 
 export const JsonSourcePanel = ({
   onSelectPath,
   activeTargetLabel,
+  showTestResponseTab = true,
 }: JsonSourcePanelProps) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const { pastedSample, setPastedSample, activeTab, setActiveTab, testResult } =
     useJsonSourceContext()
+  const effectiveTab = showTestResponseTab ? activeTab : "pasteSample"
 
   const testResponseParsed = useMemo(
     () => (testResult ? parseJsonSafely(testResult.responseBody) : undefined),
@@ -57,24 +64,26 @@ export const JsonSourcePanel = ({
       />
 
       <CollapsibleContent className="flex flex-col gap-2 pt-2">
-        <div className="flex gap-1">
-          <Button
-            onClick={() => setActiveTab("testResponse")}
-            size="sm"
-            type="button"
-            variant={activeTab === "testResponse" ? "secondary" : "ghost"}
-          >
-            {t("fields.jsonSource.tabs.testResponse")}
-          </Button>
-          <Button
-            onClick={() => setActiveTab("pasteSample")}
-            size="sm"
-            type="button"
-            variant={activeTab === "pasteSample" ? "secondary" : "ghost"}
-          >
-            {t("fields.jsonSource.tabs.pasteSample")}
-          </Button>
-        </div>
+        {showTestResponseTab && (
+          <div className="flex gap-1">
+            <Button
+              onClick={() => setActiveTab("testResponse")}
+              size="sm"
+              type="button"
+              variant={effectiveTab === "testResponse" ? "secondary" : "ghost"}
+            >
+              {t("fields.jsonSource.tabs.testResponse")}
+            </Button>
+            <Button
+              onClick={() => setActiveTab("pasteSample")}
+              size="sm"
+              type="button"
+              variant={effectiveTab === "pasteSample" ? "secondary" : "ghost"}
+            >
+              {t("fields.jsonSource.tabs.pasteSample")}
+            </Button>
+          </div>
+        )}
 
         {activeTargetLabel && (
           <p className="text-muted-foreground text-xs">
@@ -82,7 +91,7 @@ export const JsonSourcePanel = ({
           </p>
         )}
 
-        {activeTab === "pasteSample" && (
+        {effectiveTab === "pasteSample" && (
           <Textarea
             className="font-mono text-xs"
             onChange={(event) => setPastedSample(event.target.value)}
@@ -97,7 +106,7 @@ export const JsonSourcePanel = ({
             "max-h-48 overflow-auto rounded-md border bg-muted/50 p-2",
           )}
         >
-          {activeTab === "testResponse" && (
+          {effectiveTab === "testResponse" && (
             <TreeOrMessage
               emptyMessage={t("fields.jsonSource.noTestResponse")}
               invalidMessage={t("fields.jsonSource.invalidJson")}
@@ -105,7 +114,7 @@ export const JsonSourcePanel = ({
               parsed={testResponseParsed}
             />
           )}
-          {activeTab === "pasteSample" && (
+          {effectiveTab === "pasteSample" && (
             <TreeOrMessage
               emptyMessage={t("fields.jsonSource.pastePlaceholder")}
               invalidMessage={t("fields.jsonSource.invalidJson")}

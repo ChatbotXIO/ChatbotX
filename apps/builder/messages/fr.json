@@ -1283,12 +1283,15 @@
       "label": "Opération"
     },
     "outputCustomField": {
-      "label": "Champ personnalisé de sortie"
+      "label": "Champ personnalisé de sortie",
+      "javascriptOptional": "Facultatif. Enregistre la valeur renvoyée entière. Utilisez le mappage de chemins JSON ci-dessus pour écrire des champs individuels.",
+      "javascriptDumpLabel": "Sortie JSON complète (facultatif)"
     },
     "javascriptCode": {
       "label": "Code JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Utilisez du JavaScript pur et renvoyez une valeur. Le réseau, les fichiers, les API et les bibliothèques externes ne sont pas disponibles. Les données du contact et du système sont disponibles dans l'objet `input`."
+      "description": "Utilisez du JavaScript pur et renvoyez une valeur. Le réseau, les fichiers, les API et les bibliothèques externes ne sont pas disponibles. Les données du contact et du système sont disponibles dans l'objet `input`.",
+      "objectMapping": "Associez n’importe quel chemin JSON de la valeur renvoyée à n’importe quel champ personnalisé, comme pour la requête API externe. Vous choisissez les chemins et les champs."
     },
     "httpMethod": {
       "label": "Méthode"

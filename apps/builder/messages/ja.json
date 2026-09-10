@@ -1283,12 +1283,15 @@
       "label": "操作"
     },
     "outputCustomField": {
-      "label": "出力カスタムフィールド"
+      "label": "出力カスタムフィールド",
+      "javascriptOptional": "任意。戻り値全体を保存します。個別フィールドは上の JSON パス割り当てで書き込みます。",
+      "javascriptDumpLabel": "JSON 全体の出力（任意）"
     },
     "javascriptCode": {
       "label": "JavaScriptコード",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "純粋なJavaScriptを使用して値を返してください。ネットワーク、ファイル、API、外部ライブラリは利用できません。連絡先およびシステムデータは `input` オブジェクトから利用できます。"
+      "description": "純粋なJavaScriptを使用して値を返してください。ネットワーク、ファイル、API、外部ライブラリは利用できません。連絡先およびシステムデータは `input` オブジェクトから利用できます。",
+      "objectMapping": "返された値の任意の JSON パスを任意のカスタムフィールドに割り当てます。外部 API リクエストと同じです。パスとフィールドは自分で選びます。"
     },
     "httpMethod": {
       "label": "メソッド"

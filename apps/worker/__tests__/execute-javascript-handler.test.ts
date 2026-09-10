@@ -64,6 +64,7 @@ const createProps = () =>
       stepType: "executeJavascript",
       code: "return input.first_name",
       customFieldId: "field-1",
+      mapping: [],
       states: [],
     },
   }) as Parameters<typeof handleExecuteJavascript>[0]
@@ -106,9 +107,25 @@ describe("handleExecuteJavascript", () => {
     const call = mocks.executeAndMap.mock.calls[0]?.[0] as {
       code: string
       input: Record<string, unknown>
+      mapping: { jsonPath: string; outputFieldId: string }[]
     }
     // The sandbox receives the rewritten code, not the raw step.code.
     expect(call.code).toBe(rewrittenCode)
+    expect(call.mapping).toEqual([])
+  })
+
+  test("forwards the step JSON-path mapping to executeAndMap", async () => {
+    const props = createProps()
+    props.step.mapping = [
+      { jsonPath: "latitude", outputFieldId: "field-lat" },
+      { jsonPath: "longitude", outputFieldId: "field-lng" },
+    ]
+    await handleExecuteJavascript(props)
+
+    const call = mocks.executeAndMap.mock.calls[0]?.[0] as {
+      mapping: { jsonPath: string; outputFieldId: string }[]
+    }
+    expect(call.mapping).toEqual(props.step.mapping)
   })
 
   test("merges every resolved {{...}} name into the input object alongside the existing custom/system fields", async () => {

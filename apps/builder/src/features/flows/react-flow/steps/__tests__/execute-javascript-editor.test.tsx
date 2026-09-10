@@ -62,12 +62,61 @@ vi.mock("@/features/custom-fields/custom-field-select", () => ({
             >
               <option value="">--</option>
               <option value="field-1">Field 1</option>
+              <option value="field-lat">Latitude</option>
             </select>
           </label>
         )}
       />
     )
   },
+}))
+
+vi.mock("@chatbotx.io/ui/components/form/input-field", () => ({
+  InputField: ({
+    name,
+    placeholder,
+  }: {
+    name: string
+    placeholder?: string
+  }) => {
+    const form = useFormContext()
+    return (
+      <Controller
+        control={form.control}
+        name={name}
+        render={({ field }) => (
+          <input
+            data-testid={`input-${name}`}
+            onChange={field.onChange}
+            placeholder={placeholder}
+            value={field.value ?? ""}
+          />
+        )}
+      />
+    )
+  },
+}))
+
+vi.mock("../external-request/components/json-source-context", () => ({
+  JsonSourceProvider: ({ children }: { children: ReactNode }) => (
+    <>{children}</>
+  ),
+  useJsonSourceContext: () => ({
+    activeTargetIndex: 0,
+    setActiveTargetIndex: () => undefined,
+  }),
+}))
+
+vi.mock("../external-request/components/json-source-panel", () => ({
+  JsonSourcePanel: () => null,
+}))
+
+vi.mock("@chatbotx.io/ui/components/ui/label", () => ({
+  Label: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
+}))
+
+vi.mock("@chatbotx.io/ui/components/ui/separator", () => ({
+  Separator: () => <hr />,
 }))
 
 vi.mock("@chatbotx.io/ui/components/ui/button", () => ({
@@ -136,6 +185,16 @@ const setTextareaValue = (textarea: HTMLTextAreaElement, value: string) => {
   textarea.dispatchEvent(new Event("input", { bubbles: true }))
 }
 
+const setInputValue = (input: HTMLInputElement, value: string) => {
+  const setter = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    "value",
+  )?.set
+  setter?.call(input, value)
+  input.dispatchEvent(new Event("input", { bubbles: true }))
+  input.dispatchEvent(new Event("change", { bubbles: true }))
+}
+
 const emptyStep = {
   ...executeJavascriptStepDefaultFn(),
   id: "1",
@@ -169,7 +228,7 @@ describe("ExecuteJavascriptStepEditor", () => {
     )
   })
 
-  test("disables save while code or customFieldId is empty, enables once both are filled", async () => {
+  test("disables save until code is filled and a dump field or JSON-path mapping is set", async () => {
     act(() => {
       root.render(<Harness />)
     })
@@ -183,17 +242,18 @@ describe("ExecuteJavascriptStepEditor", () => {
     const codeInput = container.querySelector(
       '[data-testid="tiptap-code"]',
     ) as HTMLTextAreaElement
-    const customFieldSelect = container.querySelector(
-      '[data-testid="custom-field-customFieldId"]',
-    ) as HTMLSelectElement
 
     await act(async () => {
-      setTextareaValue(codeInput, "return input.first_name")
+      setTextareaValue(codeInput, "return { latitude: 1, longitude: 2 }")
       await Promise.resolve()
     })
     await flush()
+
     expect(submitButton.disabled).toBe(true)
 
+    const customFieldSelect = container.querySelector(
+      '[data-testid="custom-field-customFieldId"]',
+    ) as HTMLSelectElement
     await act(async () => {
       customFieldSelect.value = "field-1"
       customFieldSelect.dispatchEvent(new Event("change", { bubbles: true }))
@@ -254,6 +314,61 @@ describe("ExecuteJavascriptStepEditor", () => {
 
     expect(formApiRef.current?.getValues("step.code")).toBe(codeWithOperators)
     expect(formApiRef.current?.getValues("step.customFieldId")).toBe("field-1")
+  })
+
+  test("writes JSON-path mapping rows back onto the parent form on submit", async () => {
+    const formApiRef: {
+      current: UseFormReturn<{ step: typeof emptyStep }> | null
+    } = { current: null }
+
+    function ParentHarness() {
+      const form = useForm({
+        defaultValues: { step: emptyStep },
+      })
+      formApiRef.current = form
+      return (
+        <FormProvider {...form}>
+          <ExecuteJavascriptStepEditor parentName="step" />
+        </FormProvider>
+      )
+    }
+
+    act(() => {
+      root.render(<ParentHarness />)
+    })
+    await flush()
+
+    const codeInput = container.querySelector(
+      '[data-testid="tiptap-code"]',
+    ) as HTMLTextAreaElement
+    const jsonPathInput = container.querySelector(
+      '[data-testid="input-mapping.0.jsonPath"]',
+    ) as HTMLInputElement
+    const mappingFieldSelect = container.querySelector(
+      '[data-testid="custom-field-mapping.0.outputFieldId"]',
+    ) as HTMLSelectElement
+
+    await act(async () => {
+      setTextareaValue(codeInput, "return { latitude: 1 }")
+      setInputValue(jsonPathInput, "latitude")
+      mappingFieldSelect.value = "field-lat"
+      mappingFieldSelect.dispatchEvent(new Event("change", { bubbles: true }))
+      await Promise.resolve()
+    })
+    await flush()
+
+    const submitButton = container.querySelector(
+      'button[type="submit"]',
+    ) as HTMLButtonElement
+    await act(async () => {
+      submitButton.click()
+      await Promise.resolve()
+    })
+    await flush()
+
+    expect(formApiRef.current?.getValues("step.mapping")).toEqual([
+      { jsonPath: "latitude", outputFieldId: "field-lat" },
+    ])
   })
 
   // A leading-indentation round-trip test is intentionally omitted here: this

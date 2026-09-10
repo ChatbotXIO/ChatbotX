@@ -1283,12 +1283,15 @@
       "label": "Operation"
     },
     "outputCustomField": {
-      "label": "Output Brugerdefineret Felt"
+      "label": "Output Brugerdefineret Felt",
+      "javascriptOptional": "Valgfri. Gemmer hele returværdien. Brug JSON-stikortlægningen ovenfor til at skrive enkelte felter.",
+      "javascriptDumpLabel": "Fuld JSON-output (valgfri)"
     },
     "javascriptCode": {
       "label": "JavaScript-kode",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Brug ren JavaScript og returner en værdi. Netværk, filer, API'er og eksterne biblioteker er ikke tilgængelige. Kontakt- og systemdata er tilgængelige via `input`-objektet."
+      "description": "Brug ren JavaScript og returner en værdi. Netværk, filer, API'er og eksterne biblioteker er ikke tilgængelige. Kontakt- og systemdata er tilgængelige via `input`-objektet.",
+      "objectMapping": "Tilknyt en vilkårlig JSON-sti fra den returnerede værdi til et vilkårligt tilpasset felt, på samme måde som Ekstern API-anmodning. Du vælger stierne og felterne."
     },
     "httpMethod": {
       "label": "Method"

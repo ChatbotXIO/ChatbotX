@@ -1420,12 +1420,15 @@
       "label": "Operación"
     },
     "outputCustomField": {
-      "label": "Campo personalizado de salida"
+      "label": "Campo personalizado de salida",
+      "javascriptOptional": "Opcional. Guarda el valor completo. Usa el mapeo de rutas JSON de arriba para escribir campos individuales.",
+      "javascriptDumpLabel": "JSON completo de salida (opcional)"
     },
     "javascriptCode": {
       "label": "Código JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Usa JavaScript puro y devuelve un valor. La red, los archivos, las API y las bibliotecas externas no están disponibles. Los datos del contacto y del sistema están disponibles en el objeto `input`."
+      "description": "Usa JavaScript puro y devuelve un valor. La red, los archivos, las API y las bibliotecas externas no están disponibles. Los datos del contacto y del sistema están disponibles en el objeto `input`.",
+      "objectMapping": "Mapea cualquier ruta JSON del valor devuelto a cualquier campo personalizado, igual que en Solicitud de API externa. Tú eliges las rutas y los campos."
     },
     "httpMethod": {
       "label": "Método"

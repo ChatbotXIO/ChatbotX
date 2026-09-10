@@ -2067,12 +2067,15 @@
       "label": "Operațiune"
     },
     "outputCustomField": {
-      "label": "Câmp personalizat de ieșire"
+      "label": "Câmp personalizat de ieșire",
+      "javascriptOptional": "Opțional. Salvează întreaga valoare returnată. Folosește maparea căilor JSON de mai sus pentru a scrie câmpuri individuale.",
+      "javascriptDumpLabel": "Ieșire JSON completă (opțional)"
     },
     "javascriptCode": {
       "label": "Cod JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Utilizați JavaScript pur și returnați o valoare. Rețeaua, fișierele, API-urile și bibliotecile externe nu sunt disponibile. Datele contactului și ale sistemului sunt disponibile în obiectul `input`."
+      "description": "Utilizați JavaScript pur și returnați o valoare. Rețeaua, fișierele, API-urile și bibliotecile externe nu sunt disponibile. Datele contactului și ale sistemului sunt disponibile în obiectul `input`.",
+      "objectMapping": "Mapează orice cale JSON din valoarea returnată pe orice câmp personalizat, la fel ca la Cererea API externă. Tu alegi căile și câmpurile."
     },
     "httpMethod": {
       "label": "Metodă"
