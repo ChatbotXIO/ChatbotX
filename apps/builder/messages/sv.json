@@ -2534,7 +2534,8 @@
       "location": "Plats",
       "number": "Nummer",
       "phone": "Telefon",
-      "text": "Text"
+      "text": "Text",
+      "locationDescription": "På WhatsApp skickar detta Metas inbyggda knapp Skicka plats och väntar på nålen. Andra kanaler skickar prompten som text; en delad nål eller inmatad lat,lng slutför också steget."
     },
     "requestBody": {
       "keyPlaceholder": "Fält",

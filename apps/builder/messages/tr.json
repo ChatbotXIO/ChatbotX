@@ -1781,7 +1781,8 @@
       "date": "Tarih",
       "datetime": "Tarih ve Saat",
       "location": "Konum",
-      "anyInput": "Herhangi Bir Girdi"
+      "anyInput": "Herhangi Bir Girdi",
+      "locationDescription": "WhatsApp'ta bu, Meta'nın yerel Konum gönder düğmesini gönderir ve pini bekler. Diğer kanallar istemi metin olarak gönderir; paylaşılan bir pin veya yazılan lat,lng de adımı tamamlar."
     },
     "workspaceMember": {
       "label": "Çalışma Alanı Üyesi"

@@ -1748,7 +1748,8 @@
       "date": "Ngày",
       "datetime": "Ngày giờ",
       "location": "Vị trí",
-      "anyInput": "Mọi định dạng"
+      "anyInput": "Mọi định dạng",
+      "locationDescription": "Trên WhatsApp, bước này gửi nút Gửi vị trí gốc của Meta và chờ ghim. Kênh khác gửi lời nhắc dạng chữ; ghim hoặc lat,lng vẫn hoàn tất bước."
     },
     "workspaceMember": {
       "label": "Thành viên workspace"

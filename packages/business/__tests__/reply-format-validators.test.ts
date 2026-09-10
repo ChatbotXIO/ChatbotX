@@ -97,13 +97,49 @@ describe("replyFormatValidators", () => {
     ).toEqual(rejected("getUserData: invalid date"))
   })
 
-  test("accepts text and location formats as text passthrough", () => {
+  test("accepts text format as text passthrough", () => {
     expect(
       validateReplyInput(ReplyFormat.text, makeMessage({ text: "hello" })),
     ).toEqual(accepted("hello"))
+  })
+
+  test("accepts a location pin as latitude and longitude text", () => {
+    expect(
+      validateReplyInput(
+        ReplyFormat.location,
+        makeMessage({
+          contentType: "location",
+          contentAttributes: { latitude: 10.5, longitude: 106.75 },
+        }),
+      ),
+    ).toEqual(accepted("10.5,106.75", "location"))
+  })
+
+  test("accepts typed lat,lng coordinates for location format", () => {
+    expect(
+      validateReplyInput(
+        ReplyFormat.location,
+        makeMessage({ text: "10.5, 106.75" }),
+      ),
+    ).toEqual(accepted("10.5,106.75", "location"))
+  })
+
+  test("rejects free text that is not a location pin or coordinate pair", () => {
     expect(
       validateReplyInput(ReplyFormat.location, makeMessage({ text: "Hanoi" })),
-    ).toEqual(accepted("Hanoi"))
+    ).toEqual(rejected("getUserData: expected a location"))
+    expect(
+      validateReplyInput(
+        ReplyFormat.location,
+        makeMessage({ text: "Received location" }),
+      ),
+    ).toEqual(rejected("getUserData: expected a location"))
+  })
+
+  test("rejects out-of-range coordinate pairs", () => {
+    expect(
+      validateReplyInput(ReplyFormat.location, makeMessage({ text: "91,0" })),
+    ).toEqual(rejected("getUserData: invalid location"))
   })
 
   test("rejects attachment messages for text-based formats", () => {

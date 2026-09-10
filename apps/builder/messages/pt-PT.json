@@ -1644,7 +1644,8 @@
       "date": "Data",
       "datetime": "Data e hora",
       "location": "Localização",
-      "anyInput": "Qualquer entrada"
+      "anyInput": "Qualquer entrada",
+      "locationDescription": "No WhatsApp, envia o botão nativo Enviar localização da Meta e aguarda o pin. Noutros canais envia o pedido como texto; um pin partilhado ou lat,lng escritos também completam o passo."
     },
     "workspaceMember": {
       "label": "Membro do espaço de trabalho"

@@ -30,13 +30,16 @@ import {
 } from "@chatbotx.io/flow-config"
 import {
   IntegrationException,
+  NATIVE_LOCATION_REQUEST_CHANNELS,
   URL_QUICK_REPLY_CAPABLE_CHANNELS,
   type Variable,
+  WHATSAPP_NATIVE_LOCATION_REQUEST,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { add, isBefore } from "date-fns"
 import { logger } from "../../lib/logger"
+import { waitForChatJobCompletion } from "../utils/message"
 import type { ExecuteStepProps } from "./flow"
 import { enqueueFlowStepMessage } from "./flow-utils"
 import type { ExecuteStepResult } from "./step"
@@ -344,15 +347,17 @@ async function handleSkipOrError(
  * is silently dropped by the send path. For the webview formats
  * (date/datetime) a blank retry falls back to the step's main message so the
  * retry always re-offers the picker button — a silent retry would strand the
- * contact with no way back to the picker. Every other reply format keeps the
- * long-standing behavior (blank retry sends nothing): flows built before
- * this feature may rely on that silence, and typed input still works there.
+ * contact with no way back to the picker. Location (RF08) does the same so
+ * WhatsApp always re-sends Cloud API's native location-request button.
+ * Every other reply format keeps the long-standing behavior (blank retry
+ * sends nothing): flows built before this feature may rely on that silence,
+ * and typed input still works there.
  */
 function resolveRetryPromptText(step: GetUserDataStepSchema): string {
-  const isWebviewFormat = Boolean(
-    DATE_TIME_WEBVIEW_MODE_BY_REPLY_FORMAT[step.replyFormat],
-  )
-  return isWebviewFormat
+  const isNativePromptFormat =
+    Boolean(DATE_TIME_WEBVIEW_MODE_BY_REPLY_FORMAT[step.replyFormat]) ||
+    step.replyFormat === ReplyFormat.location
+  return isNativePromptFormat
     ? step.retryMessage.trim() || step.message
     : step.retryMessage
 }
@@ -498,6 +503,14 @@ async function sendMessage(
     return
   }
 
+  if (
+    step.replyFormat === ReplyFormat.location &&
+    NATIVE_LOCATION_REQUEST_CHANNELS.has(contactInbox.channel)
+  ) {
+    await sendWhatsappLocationRequestPrompt(props, text)
+    return
+  }
+
   const promptStep: SendTextStepSchema = {
     id: step.id,
     nodeId,
@@ -581,6 +594,64 @@ async function sendDateTimePrompt(
       trackingContext: props.trackingContext,
       metadata,
     },
+  })
+}
+
+const LOCATION_REQUEST_COPY = {
+  en: { sendLocation: "Send location" },
+  vi: { sendLocation: "Gửi vị trí" },
+} satisfies Record<string, { sendLocation: string }>
+
+function getLocationRequestCopy(input: {
+  language?: string | null
+}): { sendLocation: string } {
+  return normalizeLanguage(input.language) === "vi"
+    ? LOCATION_REQUEST_COPY.vi
+    : LOCATION_REQUEST_COPY.en
+}
+
+/**
+ * Sends getUserData RF08 on WhatsApp as Cloud API
+ * `location_request_message` (native "Send location" button) via the
+ * reserved {@link WHATSAPP_NATIVE_LOCATION_REQUEST} quick reply. The
+ * WhatsApp outgoing converter swaps that marker for the Graph payload;
+ * other channels never emit it (see {@link NATIVE_LOCATION_REQUEST_CHANNELS}).
+ * Waits for delivery the same way the text-prompt path does, so the flow
+ * does not return `wait` before the contact can tap the button.
+ */
+async function sendWhatsappLocationRequestPrompt(
+  props: ExecuteStepProps<GetUserDataStepSchema>,
+  text: string,
+): Promise<void> {
+  const { conversation, contactInbox, step, metadata } = props
+
+  const workspace = await workspaceService.findById({
+    id: conversation.workspaceId,
+  })
+  const copy = getLocationRequestCopy({ language: workspace.language })
+
+  const job = await chatQueue.add(ChatJobAction.sendChatMessage, {
+    type: ChatJobAction.sendChatMessage,
+    data: {
+      conversation,
+      contactInbox,
+      text,
+      quickReplies: [
+        {
+          id: WHATSAPP_NATIVE_LOCATION_REQUEST,
+          label: copy.sendLocation,
+          buttonType: "postback",
+          postback: WHATSAPP_NATIVE_LOCATION_REQUEST,
+        },
+      ],
+      trackingContext: props.trackingContext,
+      metadata,
+    },
+  })
+
+  await waitForChatJobCompletion(job, {
+    conversationId: conversation.id,
+    stepId: step.id,
   })
 }
 

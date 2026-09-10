@@ -225,8 +225,28 @@ export type InteractiveCarouselMessage = {
   }
 }
 
+/**
+ * Cloud API `location_request_message` — Meta's native "Send location"
+ * button. `whatsapp-api-js` does not model this interactive type, so it is
+ * posted raw like templates and carousels.
+ *
+ * @see https://developers.facebook.com/docs/whatsapp/cloud-api/messages/interactive-location-request-messages
+ */
+export type LocationRequestMessage = {
+  _type: "location_request"
+  type: "interactive"
+  interactive: {
+    type: "location_request_message"
+    body: { text: string }
+    action: { name: "send_location" }
+  }
+}
+
 /** Messages posted raw because whatsapp-api-js does not model their payloads. */
-export type RawWhatsappMessage = InteractiveCarouselMessage | TemplateMessage
+export type RawWhatsappMessage =
+  | InteractiveCarouselMessage
+  | LocationRequestMessage
+  | TemplateMessage
 
 export type WhatsappActions = {
   verifyAccessToken: Handler<

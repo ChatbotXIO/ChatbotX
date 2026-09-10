@@ -106,6 +106,11 @@ const GetUserDataStepForm = ({
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <SelectField
+          description={
+            replyFormat === ReplyFormat.location
+              ? t("fields.replyFormat.locationDescription")
+              : undefined
+          }
           label={t("fields.replyFormat.label")}
           name="replyFormat"
           options={replyFormatOptions}

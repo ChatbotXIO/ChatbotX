@@ -144,3 +144,34 @@ export const asIsoDate: TextCheck = (text) => {
 }
 
 export const asIs: TextCheck = (text) => accepted(text)
+
+const COORDINATE_PAIR_PATTERN =
+  /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/
+
+/**
+ * Typed "lat,lng" fallback for channels that cannot render a native location
+ * control. WhatsApp Cloud API pins still go through {@link fromLocation}.
+ */
+export const asCoordinatePair: TextCheck = (text) => {
+  const match = COORDINATE_PAIR_PATTERN.exec(text)
+  if (!match) {
+    return rejected("getUserData: expected a location")
+  }
+
+  const latitude = Number(match[1])
+  const longitude = Number(match[2])
+  if (
+    !(
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude) &&
+      latitude >= -90 &&
+      latitude <= 90 &&
+      longitude >= -180 &&
+      longitude <= 180
+    )
+  ) {
+    return rejected("getUserData: invalid location")
+  }
+
+  return accepted(`${latitude},${longitude}`, "location")
+}

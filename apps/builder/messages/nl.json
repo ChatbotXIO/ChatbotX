@@ -1457,7 +1457,8 @@
       "date": "Datum",
       "datetime": "Datum en tijd",
       "location": "Locatie",
-      "anyInput": "Elke invoer"
+      "anyInput": "Elke invoer",
+      "locationDescription": "Op WhatsApp stuurt dit Meta's native knop Locatie verzenden en wacht op de pin. Andere kanalen sturen de prompt als tekst; een gedeelde pin of ingevoerde lat,lng voltooit de stap ook."
     },
     "workspaceMember": {
       "label": "Werkruimtelid"

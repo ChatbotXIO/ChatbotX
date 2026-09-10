@@ -2537,7 +2537,8 @@
       "location": "位置",
       "number": "号码",
       "phone": "电话",
-      "text": "文本"
+      "text": "文本",
+      "locationDescription": "在 WhatsApp 上，此步骤会发送 Meta 原生的“发送位置”按钮并等待图钉。其他渠道以文本形式发送提示；共享图钉或输入 lat,lng 也可完成该步骤。"
     },
     "requestBody": {
       "keyPlaceholder": "字段",

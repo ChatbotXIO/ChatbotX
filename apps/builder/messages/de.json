@@ -1644,7 +1644,8 @@
       "date": "Datum",
       "datetime": "Datum und Uhrzeit",
       "location": "Standort",
-      "anyInput": "Beliebige Eingabe"
+      "anyInput": "Beliebige Eingabe",
+      "locationDescription": "Auf WhatsApp sendet dies Metas native Schaltfläche „Standort senden“ und wartet auf den Pin. Andere Kanäle senden die Aufforderung als Text; ein geteilter Pin oder eingegebenes lat,lng schließt den Schritt ebenfalls ab."
     },
     "workspaceMember": {
       "label": "Arbeitsbereichsmitglied"

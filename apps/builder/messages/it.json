@@ -957,7 +957,8 @@
       "date": "Data",
       "datetime": "Data e ora",
       "location": "Posizione",
-      "anyInput": "Qualsiasi input"
+      "anyInput": "Qualsiasi input",
+      "locationDescription": "Su WhatsApp invia il pulsante nativo Invia posizione di Meta e attende il pin. Gli altri canali inviano il prompt come testo; un pin condiviso o lat,lng digitati completano comunque il passaggio."
     },
     "workspaceMember": {
       "label": "Membro dell'area di lavoro"

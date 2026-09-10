@@ -1644,7 +1644,8 @@
       "date": "Date",
       "datetime": "Date et heure",
       "location": "Localisation",
-      "anyInput": "Toute saisie"
+      "anyInput": "Toute saisie",
+      "locationDescription": "Sur WhatsApp, cela envoie le bouton natif Envoyer la position de Meta et attend l'épingle. Les autres canaux envoient l'invite en texte ; une épingle partagée ou des lat,lng saisis complètent aussi l'étape."
     },
     "workspaceMember": {
       "label": "Membre de l’espace de travail"

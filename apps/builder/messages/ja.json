@@ -1644,7 +1644,8 @@
       "date": "日付",
       "datetime": "日時",
       "location": "位置情報",
-      "anyInput": "任意の入力"
+      "anyInput": "任意の入力",
+      "locationDescription": "WhatsAppでは、Metaのネイティブの「位置情報を送信」ボタンを送り、ピンを待ちます。他のチャネルではテキストでプロンプトを送信します。共有されたピンや入力されたlat,lngでもステップは完了します。"
     },
     "workspaceMember": {
       "label": "ワークスペースメンバー"

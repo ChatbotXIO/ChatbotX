@@ -2428,7 +2428,8 @@
       "date": "Dată",
       "datetime": "Dată și oră",
       "location": "Locație",
-      "anyInput": "Orice intrare"
+      "anyInput": "Orice intrare",
+      "locationDescription": "Pe WhatsApp trimite butonul nativ Trimite locația de la Meta și așteaptă pinul. Alte canale trimit solicitarea ca text; un pin partajat sau lat,lng introduse tot finalizează pasul."
     },
     "workspaceMember": {
       "label": "Membru al spațiului de lucru"

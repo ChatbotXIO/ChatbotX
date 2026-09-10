@@ -1644,7 +1644,8 @@
       "date": "Tanggal",
       "datetime": "Tanggal dan waktu",
       "location": "Lokasi",
-      "anyInput": "Input Apa Pun"
+      "anyInput": "Input Apa Pun",
+      "locationDescription": "Di WhatsApp ini mengirim tombol Kirim lokasi native Meta dan menunggu pin. Kanal lain mengirim prompt sebagai teks; pin yang dibagikan atau lat,lng yang diketik juga menyelesaikan langkah."
     },
     "workspaceMember": {
       "label": "Anggota Workspace"

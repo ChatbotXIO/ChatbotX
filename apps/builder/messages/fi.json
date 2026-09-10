@@ -1644,7 +1644,8 @@
       "date": "Päivämäärä",
       "datetime": "Päivämäärä ja aika",
       "location": "Sijainti",
-      "anyInput": "Mikä tahansa syöte"
+      "anyInput": "Mikä tahansa syöte",
+      "locationDescription": "WhatsAppissa tämä lähettää Metan alkuperäisen Lähetä sijainti -painikkeen ja odottaa nastaa. Muut kanavat lähettävät kehotteen tekstinä; jaettu nasta tai kirjoitettu lat,lng suorittaa vaiheen myös."
     },
     "workspaceMember": {
       "label": "Työtilan jäsen"

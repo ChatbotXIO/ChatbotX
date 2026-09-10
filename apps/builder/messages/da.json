@@ -1644,7 +1644,8 @@
       "date": "Dato",
       "datetime": "Datetime",
       "location": "Placering",
-      "anyInput": "Vilkårlig Input"
+      "anyInput": "Vilkårlig Input",
+      "locationDescription": "På WhatsApp sendes Metas native knap Send placering, og der ventes på pin'en. Andre kanaler sender prompten som tekst; en delt pin eller indtastet lat,lng fuldfører også trinnet."
     },
     "workspaceMember": {
       "label": "Arbejdsområde Member"
