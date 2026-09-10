@@ -25,6 +25,7 @@ export type ContactActions = {
   getContactInboxesCount: (params?: {
     contactFilter?: ContactFilterRequest["contactFilter"]
     channel?: ChannelType
+    inboxIds?: string[]
     integrationWhatsappId?: string
     integrationMessengerId?: string
     subaction?: BroadcastSubaction
@@ -103,6 +104,7 @@ export const createContactStore = (props: Partial<ContactState>) =>
             workspaceId,
             sort: [],
             channels: params?.channel ? [params.channel] : [],
+            inboxIds: params?.inboxIds,
             integrationWhatsappId: params?.integrationWhatsappId,
             integrationMessengerId: params?.integrationMessengerId,
             contactFilter: params?.contactFilter,

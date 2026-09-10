@@ -1092,6 +1092,12 @@
     "messengerChannel": {
       "label": "Messenger 頻道"
     },
+    "whatsappChannels": {
+      "label": "WhatsApp 頻道"
+    },
+    "messengerChannels": {
+      "label": "Messenger 粉絲專頁"
+    },
     "messages": {
       "label": "訊息"
     },
@@ -3271,6 +3277,7 @@
         "result": {
           "title": "複製結果",
           "succeededTitle": "成功",
+          "pendingTitle": "等待 Meta 審核",
           "close": "關閉"
         }
       }

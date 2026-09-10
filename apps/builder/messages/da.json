@@ -1779,6 +1779,12 @@
     "messengerChannel": {
       "label": "Messenger Kanal"
     },
+    "whatsappChannels": {
+      "label": "WhatsApp-kanaler"
+    },
+    "messengerChannels": {
+      "label": "Messenger-sider"
+    },
     "messages": {
       "label": "Beskeder"
     },
@@ -3238,6 +3244,7 @@
         "result": {
           "title": "Klon Results",
           "succeededTitle": "Succeeded",
+          "pendingTitle": "Afventer Metas gennemgang",
           "close": "Close"
         }
       }

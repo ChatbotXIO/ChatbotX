@@ -75,9 +75,15 @@ export async function listFlows(
     data = filterFlowsByStartStepType(data, input.startType)
 
     if (input.startType === stepTypes.enum.sendWaTemplateMessage) {
-      if (input.integrationWhatsappId) {
+      const integrationWhatsappIds = Array.from(
+        new Set([
+          ...(input.integrationWhatsappIds ?? []),
+          ...(input.integrationWhatsappId ? [input.integrationWhatsappId] : []),
+        ]),
+      )
+      if (integrationWhatsappIds.length > 0) {
         const templates = await db.query.whatsappMessageTemplateModel.findMany({
-          where: { integrationWhatsappId: input.integrationWhatsappId },
+          where: { integrationWhatsappId: { in: integrationWhatsappIds } },
           columns: { id: true },
         })
         const templateIds = templates.map((t) => t.id)

@@ -1,5 +1,6 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { db, eq, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { withBroadcastTargets } from "@chatbotx.io/database/partials"
 import {
   broadcastModel,
   contactsOnBroadcastsModel,
@@ -48,6 +49,7 @@ export async function listBroadcasts(
             name: true,
           },
         },
+        ...withBroadcastTargets,
       },
       ...pagination,
       orderBy,

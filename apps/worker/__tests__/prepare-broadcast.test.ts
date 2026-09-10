@@ -135,6 +135,8 @@ const baseBroadcast = () => ({
   contactFilter: null as unknown,
   templateId: null as string | null,
   resumeCount: 0,
+  targetMode: "channel" as string,
+  targets: [] as { inboxId: string }[],
 })
 
 beforeEach(() => {
@@ -200,11 +202,39 @@ describe("prepareBroadcast", () => {
       {
         workspaceId: WORKSPACE_ID,
         channels: ["whatsapp"],
+        inboxIds: undefined,
         integrationWhatsappId: "wa-int-1",
         integrationMessengerId: null,
         contactFilter,
         subaction: "whatsappWithin24Hours",
       },
+      expect.any(Function),
+    )
+  })
+
+  test("loads the target rows and forwards their inbox ids for a multi-page broadcast", async () => {
+    findFirstBroadcast.mockResolvedValue({
+      ...baseBroadcast(),
+      channel: "whatsapp",
+      subaction: "whatsappTemplateMessage",
+      targetMode: "targets",
+      targets: [{ inboxId: "inbox-a" }, { inboxId: "inbox-b" }],
+    })
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(findFirstBroadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        with: { targets: { columns: { inboxId: true } } },
+      }),
+    )
+    expect(forEachAudienceChunk).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channels: ["whatsapp"],
+        inboxIds: ["inbox-a", "inbox-b"],
+        integrationWhatsappId: null,
+        integrationMessengerId: null,
+      }),
       expect.any(Function),
     )
   })
@@ -278,6 +308,23 @@ describe("prepareBroadcast", () => {
       expect.objectContaining({
         integrationMessengerId: "messenger-int-1",
       }),
+      expect.any(Function),
+    )
+  })
+
+  test("scopes a targets-mode broadcast whose pages were all deleted to nobody, never the whole channel", async () => {
+    findFirstBroadcast.mockResolvedValue({
+      ...baseBroadcast(),
+      channel: "whatsapp",
+      subaction: "whatsappTemplateMessage",
+      targetMode: "targets",
+      targets: [],
+    })
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(forEachAudienceChunk).toHaveBeenCalledWith(
+      expect.objectContaining({ inboxIds: [] }),
       expect.any(Function),
     )
   })

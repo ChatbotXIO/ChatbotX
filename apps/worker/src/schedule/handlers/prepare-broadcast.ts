@@ -5,6 +5,7 @@ import {
   broadcastStatuses,
   broadcastSubactions,
   channelTypes,
+  resolveBroadcastTargetInboxIds,
 } from "@chatbotx.io/database/partials"
 import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
 import { purgeBroadcastRecipients } from "@chatbotx.io/database/repositories"
@@ -33,6 +34,7 @@ export const prepareBroadcast = async (broadcastId: string) => {
       status: "scheduled",
       deletedAt: { isNull: true },
     },
+    with: { targets: { columns: { inboxId: true } } },
   })
 
   if (!broadcast) {
@@ -93,6 +95,10 @@ export const prepareBroadcast = async (broadcastId: string) => {
     {
       workspaceId: broadcast.workspaceId,
       channels: parsedChannel.success ? [parsedChannel.data] : [],
+      // Targets mode scopes by the target pages (an empty list once every
+      // page is gone means nobody); channel mode leaves it undefined so the
+      // legacy integration columns / channel apply.
+      inboxIds: resolveBroadcastTargetInboxIds(broadcast),
       integrationWhatsappId: broadcast.integrationWhatsappId,
       integrationMessengerId,
       contactFilter:

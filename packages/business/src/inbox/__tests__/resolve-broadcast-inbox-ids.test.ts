@@ -50,6 +50,109 @@ beforeEach(() => {
 })
 
 describe("InboxService.resolveBroadcastInboxIds", () => {
+  test("explicit inboxIds win over integration ids and are scoped to the workspace and channel", async () => {
+    mocks.inboxFindMany.mockResolvedValue([
+      { id: "inbox-1" },
+      { id: "inbox-2" },
+    ])
+
+    const result = await inboxService.resolveBroadcastInboxIds({
+      workspaceId: "ws-1",
+      channels: ["whatsapp"],
+      inboxIds: ["inbox-1", "inbox-2", "inbox-foreign"],
+      integrationWhatsappId: "wa-1",
+      integrationMessengerId: "messenger-1",
+    })
+
+    expect(result).toEqual(["inbox-1", "inbox-2"])
+    expect(mocks.inboxFindMany).toHaveBeenCalledWith({
+      where: {
+        workspaceId: "ws-1",
+        id: { in: ["inbox-1", "inbox-2", "inbox-foreign"] },
+        channel: "whatsapp",
+      },
+      columns: { id: true },
+    })
+    expect(mocks.integrationFindFirst).not.toHaveBeenCalled()
+    expect(mocks.messengerIntegrationFindFirst).not.toHaveBeenCalled()
+  })
+
+  test("explicit inboxIds without a channel are scoped to the workspace only", async () => {
+    mocks.inboxFindMany.mockResolvedValue([{ id: "inbox-1" }])
+
+    const result = await inboxService.resolveBroadcastInboxIds({
+      workspaceId: "ws-1",
+      inboxIds: ["inbox-1"],
+    })
+
+    expect(result).toEqual(["inbox-1"])
+    expect(mocks.inboxFindMany).toHaveBeenCalledWith({
+      where: { workspaceId: "ws-1", id: { in: ["inbox-1"] } },
+      columns: { id: true },
+    })
+  })
+
+  test("explicit inboxIds with omnichannel are not narrowed by channel", async () => {
+    mocks.inboxFindMany.mockResolvedValue([{ id: "inbox-1" }])
+
+    const result = await inboxService.resolveBroadcastInboxIds({
+      workspaceId: "ws-1",
+      channels: ["omnichannel"],
+      inboxIds: ["inbox-1"],
+    })
+
+    expect(result).toEqual(["inbox-1"])
+    expect(mocks.inboxFindMany).toHaveBeenCalledWith({
+      where: { workspaceId: "ws-1", id: { in: ["inbox-1"] } },
+      columns: { id: true },
+    })
+  })
+
+  test("returns an empty list when none of the explicit inboxIds belong to the workspace", async () => {
+    mocks.inboxFindMany.mockResolvedValue([])
+
+    const result = await inboxService.resolveBroadcastInboxIds({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      inboxIds: ["inbox-foreign"],
+      integrationMessengerId: "messenger-1",
+    })
+
+    expect(result).toEqual([])
+    expect(mocks.messengerIntegrationFindFirst).not.toHaveBeenCalled()
+  })
+
+  test("an empty explicit inbox list targets nobody and never falls back to the channel", async () => {
+    // Targets mode whose pages were all deleted (cascade): the audience must
+    // be empty, not every page of the channel.
+    mocks.integrationFindFirst.mockResolvedValue({ inboxId: "inbox-wa" })
+
+    const result = await inboxService.resolveBroadcastInboxIds({
+      workspaceId: "ws-1",
+      channels: ["whatsapp"],
+      inboxIds: [],
+      integrationWhatsappId: "wa-1",
+    })
+
+    expect(result).toEqual([])
+    expect(mocks.inboxFindMany).not.toHaveBeenCalled()
+    expect(mocks.integrationFindFirst).not.toHaveBeenCalled()
+  })
+
+  test("an absent inbox list falls through to the legacy integration strategies", async () => {
+    mocks.integrationFindFirst.mockResolvedValue({ inboxId: "inbox-wa" })
+
+    const result = await inboxService.resolveBroadcastInboxIds({
+      workspaceId: "ws-1",
+      channels: ["whatsapp"],
+      inboxIds: undefined,
+      integrationWhatsappId: "wa-1",
+    })
+
+    expect(result).toEqual(["inbox-wa"])
+    expect(mocks.inboxFindMany).not.toHaveBeenCalled()
+  })
+
   test("returns the WhatsApp integration inbox when integrationWhatsappId is present", async () => {
     mocks.integrationFindFirst.mockResolvedValue({ inboxId: "inbox-wa" })
 

@@ -198,6 +198,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Push notifications (Expo Push Service, device tokens): `docs/push-notifications.md`
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`
 - Platform support access (super admin opening any workspace): `docs/support-access.md`
+- Broadcasts sending templates from several pages (`BroadcastTarget`, legacy fallbacks): `docs/broadcasts.md`
 
 When unsure, search the codebase for an existing feature that resembles the request and mirror its structure, imports, and error-handling style.
 

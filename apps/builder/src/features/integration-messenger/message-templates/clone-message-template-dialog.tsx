@@ -14,13 +14,17 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { CheckCircle2Icon, Loader2, XCircleIcon } from "lucide-react"
+import { CheckCircle2Icon, ClockIcon, Loader2, XCircleIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import { z } from "zod"
 import { cloneMessengerMessageTemplateAction } from "./actions/clone-message-templates"
+import {
+  type CloneMessengerTemplateResult,
+  MAX_CLONE_TARGETS,
+} from "./lib/clone-contract"
 import type { MessengerMessageTemplateResource } from "./schema/resource"
 
 type Channel = {
@@ -28,10 +32,10 @@ type Channel = {
   name: string
 }
 
-type CloneResult = {
-  succeeded: { channel: string }[]
-  failed: { channel: string; error: string }[]
-}
+type CloneResult = Pick<
+  CloneMessengerTemplateResult,
+  "succeeded" | "failed" | "pending"
+>
 
 type CloneMessageTemplateDialogProps = {
   cloneTarget: MessengerMessageTemplateResource | null
@@ -50,7 +54,10 @@ type CloneMessageTemplateFormProps = {
 }
 
 const cloneSchema = z.object({
-  targetIntegrationMessengerIds: z.array(zodBigintAsString()).min(1),
+  targetIntegrationMessengerIds: z
+    .array(zodBigintAsString())
+    .min(1)
+    .max(MAX_CLONE_TARGETS),
 })
 
 function CloneMessageTemplateForm({
@@ -188,6 +195,26 @@ function CloneResultDialog({
                       <span className="truncate">
                         {t(
                           "messenger.messageTemplate.clone.result.succeededTitle",
+                        )}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {result.pending.map((item) => (
+                <tr
+                  className="border-b border-dashed last:border-b-0"
+                  key={`pending-${item.channel}`}
+                >
+                  <td className="overflow-hidden text-ellipsis whitespace-nowrap py-3 pe-3 font-medium">
+                    {item.channel}
+                  </td>
+                  <td className="py-3 ps-3 text-start">
+                    <div className="flex w-full items-center gap-1.5 text-amber-600">
+                      <ClockIcon className="size-4 shrink-0" />
+                      <span className="truncate">
+                        {t(
+                          "messenger.messageTemplate.clone.result.pendingTitle",
                         )}
                       </span>
                     </div>

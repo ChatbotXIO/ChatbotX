@@ -7,6 +7,8 @@ import {
   broadcastSubactions,
   findBroadcastChannelCapability,
   isBroadcastOutcomeGraceElapsed,
+  isTargetsFlowSendWithoutFlow,
+  isTargetsTemplateSendWithoutTemplate,
   requiresRecentInteractionWindow,
   resolveBroadcastTerminalStatus,
 } from "../src/partials/broadcast"
@@ -167,5 +169,125 @@ describe("isBroadcastOutcomeGraceElapsed", () => {
         now,
       }),
     ).toBe(true)
+  })
+})
+
+describe("isTargetsTemplateSendWithoutTemplate", () => {
+  test("is true for a legacy top-level templateId with only empty targets (the edge this predicate closes)", () => {
+    expect(
+      isTargetsTemplateSendWithoutTemplate({
+        templateId: "legacy-template",
+        targets: [{ inboxId: "inbox-a" }, { inboxId: "inbox-b" }],
+      }),
+    ).toBe(true)
+  })
+
+  test("is true when no target carries a template and there is no legacy templateId either", () => {
+    expect(
+      isTargetsTemplateSendWithoutTemplate({
+        targets: [{ inboxId: "inbox-a" }, { inboxId: "inbox-b" }],
+      }),
+    ).toBe(true)
+  })
+
+  test("is false when at least one target carries a template", () => {
+    expect(
+      isTargetsTemplateSendWithoutTemplate({
+        targets: [
+          { inboxId: "inbox-a" },
+          { inboxId: "inbox-b", templateId: "template-b" },
+        ],
+      }),
+    ).toBe(false)
+  })
+
+  test("is false for a flow send even when no target has a template", () => {
+    expect(
+      isTargetsTemplateSendWithoutTemplate({
+        targets: [
+          { inboxId: "inbox-a", flowId: "flow-a" },
+          { inboxId: "inbox-b" },
+        ],
+      }),
+    ).toBe(false)
+  })
+
+  test("is false for a legacy channel-mode payload without any targets", () => {
+    expect(
+      isTargetsTemplateSendWithoutTemplate({
+        templateId: "legacy-template",
+        targets: [],
+      }),
+    ).toBe(false)
+    expect(isTargetsTemplateSendWithoutTemplate({})).toBe(false)
+  })
+
+  test("is false once a persisted row pins targetMode to channel, even with empty target rows", () => {
+    expect(
+      isTargetsTemplateSendWithoutTemplate({
+        targetMode: "channel",
+        targets: [{ inboxId: "inbox-a" }],
+      }),
+    ).toBe(false)
+  })
+})
+
+describe("isTargetsFlowSendWithoutFlow", () => {
+  test("is true for a legacy top-level flowId with only empty targets (the edge this predicate closes)", () => {
+    expect(
+      isTargetsFlowSendWithoutFlow({
+        flowId: "legacy-flow",
+        targets: [{ inboxId: "inbox-a" }, { inboxId: "inbox-b" }],
+      }),
+    ).toBe(true)
+  })
+
+  test("is true when no target carries a flow and there is no legacy flowId either", () => {
+    expect(
+      isTargetsFlowSendWithoutFlow({
+        targets: [{ inboxId: "inbox-a" }, { inboxId: "inbox-b" }],
+      }),
+    ).toBe(true)
+  })
+
+  test("is false when at least one target carries a flow", () => {
+    expect(
+      isTargetsFlowSendWithoutFlow({
+        targets: [
+          { inboxId: "inbox-a" },
+          { inboxId: "inbox-b", flowId: "flow-b" },
+        ],
+      }),
+    ).toBe(false)
+  })
+
+  test("is false for a template send even when no target has a flow", () => {
+    expect(
+      isTargetsFlowSendWithoutFlow({
+        targets: [
+          { inboxId: "inbox-a", templateId: "template-a" },
+          { inboxId: "inbox-b" },
+        ],
+      }),
+    ).toBe(false)
+  })
+
+  test("is false for a legacy channel-mode payload without any targets", () => {
+    expect(
+      isTargetsFlowSendWithoutFlow({
+        flowId: "legacy-flow",
+        targets: [],
+      }),
+    ).toBe(false)
+    expect(isTargetsFlowSendWithoutFlow({})).toBe(false)
+  })
+
+  test("is false once a persisted row pins targetMode to channel, even with empty target rows", () => {
+    expect(
+      isTargetsFlowSendWithoutFlow({
+        targetMode: "channel",
+        targets: [{ inboxId: "inbox-a" }],
+      }),
+    ).toBe(false)
   })
 })

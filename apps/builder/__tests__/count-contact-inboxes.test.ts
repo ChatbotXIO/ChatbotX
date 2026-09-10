@@ -46,6 +46,7 @@ describe("countContactInboxes", () => {
     const result = await countContactInboxes({
       workspaceId: "ws-1",
       channels: ["messenger"],
+      inboxIds: ["inbox-a", "inbox-b"],
       integrationWhatsappId: "wa-1",
       integrationMessengerId: "messenger-1",
       contactFilter,
@@ -57,6 +58,7 @@ describe("countContactInboxes", () => {
     expect(mocks.countAudience).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       channels: ["messenger"],
+      inboxIds: ["inbox-a", "inbox-b"],
       integrationWhatsappId: "wa-1",
       integrationMessengerId: "messenger-1",
       contactFilter,
@@ -81,6 +83,7 @@ describe("countContactInboxes", () => {
     expect(mocks.countAudience).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       channels: ["messenger"],
+      inboxIds: undefined,
       integrationWhatsappId: undefined,
       integrationMessengerId: undefined,
       contactFilter: undefined,
@@ -108,6 +111,7 @@ describe("countContactInboxes", () => {
     expect(mocks.listAudiencePreview).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       channels: ["messenger"],
+      inboxIds: undefined,
       integrationWhatsappId: undefined,
       integrationMessengerId: undefined,
       contactFilter: undefined,

@@ -11,6 +11,7 @@ const {
   mockWhatsappTemplateFindFirst,
   mockIntegrationMessengerFindFirst,
   mockIntegrationWhatsappFindFirst,
+  mockInboxFindMany,
   mockReturnValidationErrors,
   mockRecordAuditLog,
 } = vi.hoisted(() => {
@@ -33,6 +34,7 @@ const {
     mockWhatsappTemplateFindFirst: vi.fn(),
     mockIntegrationMessengerFindFirst: vi.fn(),
     mockIntegrationWhatsappFindFirst: vi.fn(),
+    mockInboxFindMany: vi.fn(),
     mockReturnValidationErrors,
     mockRecordAuditLog: vi.fn(),
   }
@@ -75,6 +77,7 @@ vi.mock("@chatbotx.io/database/client", async () => {
     // not throw when called.
     eq: (...args: unknown[]) => ({ eq: args }),
     and: (...args: unknown[]) => ({ and: args }),
+    inArray: (...args: unknown[]) => ({ inArray: args }),
     db: {
       query: {
         flowModel: { findFirst: mockFlowFindFirst },
@@ -84,8 +87,17 @@ vi.mock("@chatbotx.io/database/client", async () => {
         integrationWhatsappModel: {
           findFirst: mockIntegrationWhatsappFindFirst,
         },
+        inboxModel: { findMany: mockInboxFindMany },
       },
       insert: mockDbInsert,
+      // `broadcastService.create` writes the broadcast and its target rows in
+      // one transaction; the tx reuses the same insert spy so the existing
+      // "inserted values" assertions keep reading the broadcast row.
+      transaction: (run: (tx: unknown) => Promise<unknown>) =>
+        run({
+          insert: mockDbInsert,
+          delete: () => ({ where: () => Promise.resolve() }),
+        }),
       // BroadcastService.load{Whatsapp,Messenger}TemplateDetail() joins the
       // template to its integration via a select() chain rather than
       // query.*.findFirst() — the "found template" mocks below stand in for
@@ -127,6 +139,126 @@ const WORKSPACE_ID = "ws-1"
 beforeEach(() => {
   mockIntegrationMessengerFindFirst.mockResolvedValue({ id: "int-1" })
   mockIntegrationWhatsappFindFirst.mockResolvedValue({ id: "wa-int-1" })
+  mockInboxFindMany.mockResolvedValue([])
+})
+
+const whatsappTemplateRow = (id: string, inboxId: string, name = "promo") => ({
+  id,
+  name,
+  language: "en",
+  category: "MARKETING",
+  status: "APPROVED",
+  components: [],
+  inboxId,
+  integrationName: `Page ${inboxId}`,
+})
+
+describe("createBroadcastAction — multi-page targets", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockInsertValues.mockReturnValue({ returning: mockInsertReturning })
+    mockDbInsert.mockReturnValue({ values: mockInsertValues })
+    mockInsertReturning.mockResolvedValue([{ id: "bc-multi", name: "x" }])
+    mockInboxFindMany.mockResolvedValue([{ id: "inbox-a" }, { id: "inbox-b" }])
+    mockWhatsappTemplateFindFirst.mockResolvedValue(
+      whatsappTemplateRow("tpl-a", "inbox-a"),
+    )
+  })
+
+  const targets = [
+    { inboxId: "inbox-a", templateId: "tpl-a", templateData: { body: [] } },
+    { inboxId: "inbox-b", templateId: "tpl-b", templateData: { body: [] } },
+  ]
+
+  test("rejects a target inbox outside the workspace or channel", async () => {
+    mockInboxFindMany.mockResolvedValue([{ id: "inbox-a" }])
+
+    const result = await (
+      createBroadcastAction as (props: unknown) => Promise<unknown>
+    )({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        subaction: "whatsappTemplateMessage",
+        targets,
+      },
+    })
+
+    expect(result).toEqual({
+      __validationError: {
+        _errors: ["Validation Exception"],
+        targets: { _errors: ["Inbox not found"] },
+      },
+    })
+    expect(mockInboxFindMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["inbox-a", "inbox-b"] },
+        workspaceId: WORKSPACE_ID,
+        channel: "whatsapp",
+      },
+      columns: { id: true, name: true },
+    })
+    expect(mockDbInsert).not.toHaveBeenCalled()
+  })
+
+  test("rejects when a page's template is missing or belongs to another page", async () => {
+    // Only template A (on inbox-a) resolves; B is unknown.
+    const result = await (
+      createBroadcastAction as (props: unknown) => Promise<unknown>
+    )({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        subaction: "whatsappTemplateMessage",
+        targets,
+      },
+    })
+
+    expect(result).toEqual({
+      __validationError: {
+        _errors: ["Validation Exception"],
+        templateId: { _errors: ["Template not found"] },
+      },
+    })
+    expect(mockDbInsert).not.toHaveBeenCalled()
+  })
+
+  test("inserts the broadcast and one target row per page with a page-prefixed name", async () => {
+    const singleTarget = [targets[0]]
+
+    const result = await (
+      createBroadcastAction as (props: unknown) => Promise<unknown>
+    )({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        subaction: "whatsappTemplateMessage",
+        targets: singleTarget,
+      },
+    })
+
+    expect(result).toEqual({ id: "bc-multi", name: "x" })
+    const broadcastValues = mockInsertValues.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >
+    expect(broadcastValues).toMatchObject({
+      workspaceId: WORKSPACE_ID,
+      name: "Page inbox-a - promo",
+      status: "scheduled",
+      templateId: null,
+      templateData: null,
+    })
+    expect(mockInsertValues.mock.calls[1]?.[0]).toEqual([
+      {
+        broadcastId: "bc-multi",
+        inboxId: "inbox-a",
+        flowId: null,
+        templateId: "tpl-a",
+        templateData: { body: [], buttons: [] },
+      },
+    ])
+  })
 })
 
 const baseInput = {
@@ -214,7 +346,11 @@ describe("createBroadcastAction — messenger template validation", () => {
   })
 
   test("sets broadcastName to template.name when messenger template found", async () => {
-    const mockTemplate = { id: "tpl-1", name: "Promo Template" }
+    const mockTemplate = {
+      id: "tpl-1",
+      name: "Promo Template",
+      status: "APPROVED",
+    }
     mockMessengerTemplateFindFirst.mockResolvedValue(mockTemplate)
     const mockBroadcast = { id: "bc-2", name: "Promo Template" }
     mockInsertReturning.mockResolvedValue([mockBroadcast])
@@ -270,7 +406,7 @@ describe("createBroadcastAction — whatsapp template validation", () => {
   })
 
   test("sets broadcastName to template.name when whatsapp template found", async () => {
-    const mockTemplate = { id: "tpl-2", name: "WA Promo" }
+    const mockTemplate = { id: "tpl-2", name: "WA Promo", status: "APPROVED" }
     mockWhatsappTemplateFindFirst.mockResolvedValue(mockTemplate)
     const mockBroadcast = { id: "bc-3", name: "WA Promo" }
     mockInsertReturning.mockResolvedValue([mockBroadcast])
@@ -466,9 +602,12 @@ describe("createBroadcastAction — happy path insert", () => {
     expect(result).toMatchObject({ __validationError: expect.anything() })
   })
 
-  test("merges templateData with buttons when templateData is provided", async () => {
+  test("merges templateData with buttons when a template is selected", async () => {
     const mockBroadcast = { id: "bc-6", name: "Broadcast" }
     mockInsertReturning.mockResolvedValue([mockBroadcast])
+    mockWhatsappTemplateFindFirst.mockResolvedValue(
+      whatsappTemplateRow("tpl-1", "inbox-1"),
+    )
 
     const templateData = { language: "en", components: [] }
     const buttons = [{ id: "btn-1", label: "Click me" }]
@@ -477,7 +616,8 @@ describe("createBroadcastAction — happy path insert", () => {
       bindArgsParsedInputs: [WORKSPACE_ID],
       parsedInput: {
         ...baseInput,
-        flowId: "flow-1",
+        templateId: "tpl-1",
+        integrationWhatsappId: "wa-int-1",
         templateData,
         buttons,
       },
@@ -491,6 +631,26 @@ describe("createBroadcastAction — happy path insert", () => {
       components: [],
       buttons: [{ id: "btn-1", label: "Click me" }],
     })
+  })
+
+  test("drops templateData left behind on a flow broadcast (no template selected)", async () => {
+    const mockBroadcast = { id: "bc-6b", name: "Broadcast" }
+    mockInsertReturning.mockResolvedValue([mockBroadcast])
+
+    await (createBroadcastAction as (props: unknown) => Promise<unknown>)({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: {
+        ...baseInput,
+        flowId: "flow-1",
+        templateData: { language: "en", components: [] },
+        buttons: [{ id: "btn-1", label: "Click me" }],
+      },
+    })
+
+    const insertedValues = mockInsertValues.mock.calls[0]?.[0] as {
+      templateData: null
+    }
+    expect(insertedValues.templateData).toBeNull()
   })
 
   test("sets templateData to null when no templateData is provided", async () => {

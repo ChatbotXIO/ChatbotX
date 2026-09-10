@@ -53,9 +53,9 @@ export function BroadcastStatusPanel({
   }
 
   return (
-    <aside className="flex w-[280px] shrink-0 flex-col border-e bg-sidebar">
-      <div className="flex h-16 items-center justify-between ps-6 pe-4">
-        <h2 className="font-bold text-xl">{t("broadcasts.title")}</h2>
+    <aside className="flex w-[220px] shrink-0 flex-col border-e bg-sidebar">
+      <div className="flex h-14 items-center justify-between ps-4 pe-2">
+        <h2 className="font-bold text-lg">{t("broadcasts.title")}</h2>
         <Button
           aria-label={t("broadcasts.panel.collapse")}
           onClick={() => onOpenChange(false)}
@@ -65,14 +65,14 @@ export function BroadcastStatusPanel({
           <PanelLeftCloseIcon aria-hidden="true" />
         </Button>
       </div>
-      <nav className="flex flex-col gap-1 px-4 py-2">
+      <nav className="flex flex-col gap-0.5 px-2 py-1">
         {PANEL_ITEMS.map((item) => {
           const isActive = status === item.value
           return (
             <button
               aria-pressed={isActive}
               className={cn(
-                "flex h-11 items-center gap-3.5 rounded-md px-4 text-[15px] transition-colors",
+                "flex h-9 items-center gap-2.5 rounded-md px-3 text-sm transition-colors",
                 isActive
                   ? "bg-primary/10 font-medium text-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -88,7 +88,7 @@ export function BroadcastStatusPanel({
               <span
                 aria-hidden="true"
                 className={cn(
-                  "size-3 shrink-0 rounded-full",
+                  "size-2.5 shrink-0 rounded-full",
                   item.dotClassName,
                 )}
               />

@@ -74,21 +74,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/database/partials", () => ({
-  broadcastStatuses: {
-    enum: { scheduled: "scheduled", sending: "sending", sent: "sent" },
-  },
-  channelTypes: {
-    enum: {
-      omnichannel: "omnichannel",
-      whatsapp: "whatsapp",
-      messenger: "messenger",
-      instagram: "instagram",
-      telegram: "telegram",
-      tiktok: "tiktok",
-    },
-  },
-}))
+vi.mock("@chatbotx.io/database/partials", async () =>
+  vi.importActual("@chatbotx.io/database/partials"),
+)
 
 vi.mock("@chatbotx.io/flow-config", () => ({
   BROADCAST_PAYLOAD_TYPE: "broadcast",
@@ -138,7 +126,10 @@ const makeConversation = (id = "conv-1", contactId = "contact-1") => ({
   workspaceId: WORKSPACE_ID,
 })
 
-const makeContactInbox = (id = "ci-1") => ({ id })
+const makeContactInbox = (id = "ci-1", inboxId = "inbox-1") => ({
+  id,
+  inboxId,
+})
 
 const makeContactOnBroadcast = (overrides: Record<string, unknown> = {}) => ({
   broadcastId: BROADCAST_ID,
@@ -161,6 +152,13 @@ const makeBroadcast = (overrides: Record<string, unknown> = {}) => ({
   channel: null as string | null,
   templateData: null as unknown,
   resumeCount: 0,
+  targetMode: "channel" as string,
+  targets: [] as {
+    inboxId: string
+    flowId?: string | null
+    templateId: string | null
+    templateData: unknown
+  }[],
   ...overrides,
 })
 
@@ -393,6 +391,16 @@ describe("processBroadcastContacts", () => {
           status: "sending",
           deletedAt: { isNull: true },
         },
+        with: {
+          targets: {
+            columns: {
+              inboxId: true,
+              flowId: true,
+              templateId: true,
+              templateData: true,
+            },
+          },
+        },
       })
     })
 
@@ -569,6 +577,256 @@ describe("processBroadcastContacts", () => {
             errorContent: "missing conversation for flow send",
           }),
         }),
+      )
+    })
+
+    test("sends each contact with the template chosen for its own page", async () => {
+      findManyBroadcast.mockResolvedValue([
+        makeBroadcast({
+          channel: "whatsapp",
+          targetMode: "targets",
+          targets: [
+            {
+              inboxId: "inbox-a",
+              templateId: "template-a",
+              templateData: { body: ["A"] },
+            },
+            {
+              inboxId: "inbox-b",
+              templateId: "template-b",
+              templateData: { body: ["B"] },
+            },
+          ],
+        }),
+      ])
+      findManyContactsOnBroadcasts.mockResolvedValue([
+        makeContactOnBroadcast({
+          contactId: "contact-a",
+          contactInbox: makeContactInbox("ci-a", "inbox-a"),
+        }),
+        makeContactOnBroadcast({
+          contactId: "contact-b",
+          contactInbox: makeContactInbox("ci-b", "inbox-b"),
+        }),
+      ])
+
+      const result = await processBroadcastContacts(BROADCAST_ID)
+
+      expect(result).toEqual({ processed: 2 })
+      expect(chatAddSpy).toHaveBeenCalledTimes(2)
+      const payloads = chatAddSpy.mock.calls.map(
+        (call) => (call[1] as { data: Record<string, unknown> }).data,
+      )
+      expect(payloads).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            templateId: "template-a",
+            templateData: { body: ["A"] },
+            contactInbox: expect.objectContaining({ inboxId: "inbox-a" }),
+          }),
+          expect.objectContaining({
+            templateId: "template-b",
+            templateData: { body: ["B"] },
+            contactInbox: expect.objectContaining({ inboxId: "inbox-b" }),
+          }),
+        ]),
+      )
+      expect(updateCalls).toHaveLength(0)
+    })
+
+    test("separates per-page Messenger buttons from the target's template params", async () => {
+      findManyBroadcast.mockResolvedValue([
+        makeBroadcast({
+          channel: "messenger",
+          targetMode: "targets",
+          targets: [
+            {
+              inboxId: "inbox-a",
+              templateId: "template-a",
+              templateData: {
+                body: ["A"],
+                buttons: [{ id: "b1", label: "Go", flowId: "flow-1" }],
+              },
+            },
+          ],
+        }),
+      ])
+      findManyContactsOnBroadcasts.mockResolvedValue([
+        makeContactOnBroadcast({
+          contactInbox: makeContactInbox("ci-a", "inbox-a"),
+        }),
+      ])
+
+      await processBroadcastContacts(BROADCAST_ID)
+
+      expect(chatAddSpy).toHaveBeenCalledWith(
+        "sendMessengerTemplateMessage",
+        expect.objectContaining({
+          data: expect.objectContaining({
+            templateId: "template-a",
+            templateData: { body: ["A"] },
+            buttons: [{ id: "b1", label: "Go", flowId: "flow-1" }],
+          }),
+        }),
+        expect.anything(),
+      )
+    })
+
+    test("marks a contact failed when its page has no template in a multi-page broadcast", async () => {
+      findManyBroadcast.mockResolvedValue([
+        makeBroadcast({
+          channel: "whatsapp",
+          targetMode: "targets",
+          targets: [
+            {
+              inboxId: "inbox-a",
+              templateId: "template-a",
+              templateData: null,
+            },
+          ],
+        }),
+      ])
+      findManyContactsOnBroadcasts.mockResolvedValue([
+        makeContactOnBroadcast({
+          contactId: "contact-other",
+          contactInbox: makeContactInbox("ci-x", "inbox-other"),
+        }),
+      ])
+
+      const result = await processBroadcastContacts(BROADCAST_ID)
+
+      expect(result).toEqual({ processed: 0 })
+      expect(chatAddSpy).not.toHaveBeenCalled()
+      expect(markContactSentIfSending).not.toHaveBeenCalled()
+      expect(updateCalls).toHaveLength(1)
+      expect(updateCalls[0].values.errorContent).toBe(
+        "no template selected for the contact's page",
+      )
+    })
+
+    test("fails every contact of a targets-mode broadcast whose target rows are gone, without touching legacy columns", async () => {
+      findManyBroadcast.mockResolvedValue([
+        makeBroadcast({
+          channel: "whatsapp",
+          targetMode: "targets",
+          templateId: "stale-legacy",
+          templateData: { body: ["stale"] },
+          targets: [],
+        }),
+      ])
+      findManyContactsOnBroadcasts.mockResolvedValue([
+        makeContactOnBroadcast({
+          contactInbox: makeContactInbox("ci-a", "inbox-a"),
+        }),
+      ])
+
+      const result = await processBroadcastContacts(BROADCAST_ID)
+
+      expect(result).toEqual({ processed: 0 })
+      expect(chatAddSpy).not.toHaveBeenCalled()
+      expect(updateCalls[0].values.errorContent).toBe(
+        "no template selected for the contact's page",
+      )
+    })
+
+    test("runs each page's own flow in a targets-mode flow broadcast", async () => {
+      findManyBroadcast.mockResolvedValue([
+        makeBroadcast({
+          channel: "whatsapp",
+          targetMode: "targets",
+          targets: [
+            {
+              inboxId: "inbox-a",
+              flowId: "flow-a",
+              templateId: null,
+              templateData: null,
+            },
+            {
+              inboxId: "inbox-b",
+              flowId: "flow-b",
+              templateId: null,
+              templateData: null,
+            },
+          ],
+        }),
+      ])
+      findManyContactsOnBroadcasts.mockResolvedValue([
+        makeContactOnBroadcast({
+          contactId: "contact-a",
+          contactInbox: makeContactInbox("ci-a", "inbox-a"),
+        }),
+        makeContactOnBroadcast({
+          contactId: "contact-b",
+          contactInbox: makeContactInbox("ci-b", "inbox-b"),
+        }),
+      ])
+
+      const result = await processBroadcastContacts(BROADCAST_ID)
+
+      expect(result).toEqual({ processed: 2 })
+      const flowIds = integrationAddSpy.mock.calls.map(
+        (call) => (call[1] as { data: { flowId: string } }).data.flowId,
+      )
+      expect(flowIds).toEqual(expect.arrayContaining(["flow-a", "flow-b"]))
+      expect(chatAddSpy).not.toHaveBeenCalled()
+    })
+
+    test("fails a contact whose page lost its flow (deleted → set null) instead of marking it sent", async () => {
+      findManyBroadcast.mockResolvedValue([
+        makeBroadcast({
+          channel: "whatsapp",
+          targetMode: "targets",
+          targets: [
+            {
+              inboxId: "inbox-a",
+              flowId: null,
+              templateId: null,
+              templateData: null,
+            },
+          ],
+        }),
+      ])
+      findManyContactsOnBroadcasts.mockResolvedValue([
+        makeContactOnBroadcast({
+          contactInbox: makeContactInbox("ci-a", "inbox-a"),
+        }),
+      ])
+
+      const result = await processBroadcastContacts(BROADCAST_ID)
+
+      expect(result).toEqual({ processed: 0 })
+      expect(integrationAddSpy).not.toHaveBeenCalled()
+      expect(markContactSentIfSending).not.toHaveBeenCalled()
+      expect(updateCalls[0].values.errorContent).toBe(
+        "no flow or template selected for the contact's page",
+      )
+    })
+
+    test("keeps the legacy single-template path when the broadcast has no targets", async () => {
+      findManyBroadcast.mockResolvedValue([
+        makeBroadcast({
+          channel: "whatsapp",
+          templateId: "legacy-template",
+          templateData: { body: ["legacy"] },
+        }),
+      ])
+      findManyContactsOnBroadcasts.mockResolvedValue([
+        makeContactOnBroadcast({
+          contactInbox: makeContactInbox("ci-a", "inbox-any"),
+        }),
+      ])
+
+      await processBroadcastContacts(BROADCAST_ID)
+
+      expect(chatAddSpy).toHaveBeenCalledWith(
+        "sendWhatsappTemplateMessage",
+        expect.objectContaining({
+          data: expect.objectContaining({
+            templateId: "legacy-template",
+            templateData: { body: ["legacy"] },
+          }),
+        }),
+        expect.anything(),
       )
     })
 

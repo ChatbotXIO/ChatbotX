@@ -1592,6 +1592,12 @@
     "messengerChannel": {
       "label": "Messenger-kanaal"
     },
+    "whatsappChannels": {
+      "label": "WhatsApp-kanalen"
+    },
+    "messengerChannels": {
+      "label": "Messenger-pagina's"
+    },
     "messages": {
       "label": "Berichten"
     },
@@ -3238,6 +3244,7 @@
         "result": {
           "title": "Kloonresultaten",
           "succeededTitle": "Geslaagd",
+          "pendingTitle": "Wacht op beoordeling door Meta",
           "close": "Sluiten"
         }
       }

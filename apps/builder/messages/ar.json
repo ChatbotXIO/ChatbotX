@@ -1864,6 +1864,12 @@
     "messengerChannel": {
       "label": "قناة Messenger"
     },
+    "whatsappChannels": {
+      "label": "قنوات واتساب"
+    },
+    "messengerChannels": {
+      "label": "صفحات ماسنجر"
+    },
     "messages": {
       "label": "الرسائل"
     },
@@ -3238,6 +3244,7 @@
         "result": {
           "title": "نتائج الاستنساخ",
           "succeededTitle": "نجح",
+          "pendingTitle": "بانتظار مراجعة Meta",
           "close": "إغلاق"
         }
       }

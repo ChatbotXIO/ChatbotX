@@ -1,16 +1,16 @@
 "use server"
 
-import { buildContext } from "@chatbotx.io/business"
-import { db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import {
-  integrationMessengerModel,
-  messengerMessageTemplateModel,
-} from "@chatbotx.io/database/schema"
+  buildContext,
+  messengerMessageTemplateService,
+} from "@chatbotx.io/business"
+import { db, findOrFail } from "@chatbotx.io/database/client"
+import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { SdkException } from "@chatbotx.io/sdk"
-import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { integrations } from "@/integration"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -66,68 +66,22 @@ export async function syncMessengerMessageTemplatesForIntegration({
     return true
   })
 
+  // A full sync mirrors the page exactly; a partial sync (by id/name) only
+  // upserts what it fetched. Both go through the business service so the
+  // clone link written by a reservation survives every resync.
   await db.transaction(async (tx) => {
     if (!isPartialSync) {
-      const existingTemplates = await tx
-        .select({
-          id: messengerMessageTemplateModel.id,
-          sourceId: messengerMessageTemplateModel.sourceId,
-        })
-        .from(messengerMessageTemplateModel)
-        .where(
-          eq(
-            messengerMessageTemplateModel.integrationMessengerId,
-            integrationMessenger.id,
-          ),
-        )
-
-      const incomingSourceIds = new Set(templates.map((t) => t.id))
-
-      const templatesToDelete = existingTemplates.filter(
-        (t) => !incomingSourceIds.has(t.sourceId),
-      )
-
-      if (templatesToDelete.length > 0) {
-        await tx.delete(messengerMessageTemplateModel).where(
-          inArray(
-            messengerMessageTemplateModel.id,
-            templatesToDelete.map((t) => t.id),
-          ),
-        )
-      }
+      await messengerMessageTemplateService.deleteMissingForIntegration({
+        integrationMessengerId: integrationMessenger.id,
+        keepSourceIds: templates.map((template) => template.id),
+        tx,
+      })
     }
-
-    for (const template of templates) {
-      await tx
-        .insert(messengerMessageTemplateModel)
-        .values([
-          {
-            id: createId(),
-            name: template.name,
-            integrationMessengerId: integrationMessenger.id,
-            language: template.language,
-            category: template.category,
-            status: template.status,
-            parameterFormat: template.parameter_format ?? "POSITIONAL",
-            sourceId: template.id,
-            components: template.components,
-          },
-        ])
-        .onConflictDoUpdate({
-          target: [
-            messengerMessageTemplateModel.integrationMessengerId,
-            messengerMessageTemplateModel.sourceId,
-          ],
-          set: {
-            name: template.name,
-            language: template.language,
-            category: template.category,
-            status: template.status,
-            parameterFormat: template.parameter_format ?? "POSITIONAL",
-            components: template.components,
-          },
-        })
-    }
+    await messengerMessageTemplateService.upsertFromMeta({
+      integrationMessengerId: integrationMessenger.id,
+      templates,
+      tx,
+    })
   })
 }
 

@@ -4,7 +4,11 @@ import { client } from "@/lib/orpc/orpc"
 import { maxPerPage } from "@/lib/shared-request"
 import type { ListFlowsResponse } from "../schema/query"
 
-type FlowStateFilter = { startType?: string; integrationWhatsappId?: string }
+type FlowStateFilter = {
+  startType?: string
+  integrationWhatsappId?: string
+  integrationWhatsappIds?: string[]
+}
 
 export type FlowState = {
   loading: boolean

@@ -19,6 +19,7 @@ export const messengerMessageTemplateResource = createSelectSchema(
     components: true,
     parameterFormat: true,
     integrationMessengerId: true,
+    rejectionReason: true,
   })
   .extend({
     components: z.any(),

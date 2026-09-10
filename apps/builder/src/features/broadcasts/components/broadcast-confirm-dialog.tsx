@@ -15,6 +15,7 @@ export function BroadcastConfirmDialog({
   open,
   onOpenChange,
   count,
+  isValid,
   isSubmitting,
   isReceiversCountLoading,
   onPreviewReceivers,
@@ -22,6 +23,9 @@ export function BroadcastConfirmDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
   count: number
+  /** Mirrors the form's validity so an async revalidation after the dialog
+   * opened can't leave this submit enabled on an invalid form. */
+  isValid: boolean
   isSubmitting: boolean
   isReceiversCountLoading: boolean
   onPreviewReceivers: () => void
@@ -69,7 +73,7 @@ export function BroadcastConfirmDialog({
               {t("actions.cancel")}
             </Button>
             <Button
-              disabled={isSubmitting || isReceiversCountLoading}
+              disabled={isSubmitting || isReceiversCountLoading || !isValid}
               form="broadcast-form"
               type="submit"
             >

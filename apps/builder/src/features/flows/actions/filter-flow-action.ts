@@ -1,14 +1,5 @@
-import { stepTypes } from "@chatbotx.io/flow-config"
+import { resolveStepTypeMatches, stepTypes } from "@chatbotx.io/flow-config"
 import type { FlowNode } from "../schema/flow-node"
-
-const LEGACY_STEP_TYPE_ALIASES: Record<string, readonly string[]> = {
-  [stepTypes.enum.sendWaTemplateMessage]: ["WA_TM01"],
-}
-
-export const resolveStepTypeMatches = (stepType: string): readonly string[] => [
-  stepType,
-  ...(LEGACY_STEP_TYPE_ALIASES[stepType] ?? []),
-]
 
 type StepWithTemplate = {
   stepType?: string

@@ -49,7 +49,8 @@ export const listPageMessageTemplates = (
   const accessToken = auth.tokens.accessToken
 
   const searchParams = new URLSearchParams({
-    fields: "name,status,language,category,parameter_format,components",
+    fields:
+      "name,status,language,category,parameter_format,components,rejection_reason",
   })
   if (props.name) {
     searchParams.set("name", props.name)

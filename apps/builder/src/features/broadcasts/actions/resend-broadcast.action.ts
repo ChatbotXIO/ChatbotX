@@ -1,5 +1,6 @@
 "use server"
 
+import { broadcastService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, findOrFail } from "@chatbotx.io/database/client"
@@ -63,6 +64,9 @@ export const resendBroadcast = async (ctx: {
         subaction: broadcast.subaction,
         templateId: broadcast.templateId,
         templateData: broadcast.templateData,
+        // The layout must travel with the copied target rows, so a resent
+        // multi-page broadcast can never fall back to the whole channel.
+        targetMode: broadcast.targetMode,
         status: "scheduled",
         schedulesType: "now",
         schedulesAt: new Date(),
@@ -72,6 +76,13 @@ export const resendBroadcast = async (ctx: {
       })
       .returning()
       .then((result) => result[0])
+
+    // A multi-page broadcast keeps its per-page templates on target rows;
+    // a legacy row has none and this is a no-op.
+    await broadcastService.copyTargets(tx, {
+      sourceBroadcastId: broadcast.id,
+      broadcastId: newBroadcast.id,
+    })
 
     return newBroadcast
   })

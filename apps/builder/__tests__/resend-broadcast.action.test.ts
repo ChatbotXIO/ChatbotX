@@ -11,6 +11,7 @@ const {
   mockCreateId,
   MockChatbotXException,
   mockRecordAuditLog,
+  mockCopyTargets,
 } = vi.hoisted(() => {
   const mockTxInsertReturning = vi.fn()
   const mockTxInsertValues = vi.fn()
@@ -34,8 +35,15 @@ const {
     mockCreateId: vi.fn().mockReturnValue("new-bc-id"),
     MockChatbotXException,
     mockRecordAuditLog: vi.fn(),
+    mockCopyTargets: vi.fn(),
   }
 })
+
+vi.mock("@chatbotx.io/business", () => ({
+  broadcastService: {
+    copyTargets: (...args: unknown[]) => mockCopyTargets(...args),
+  },
+}))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
   auditService: { record: (...args: unknown[]) => mockRecordAuditLog(...args) },
@@ -99,6 +107,7 @@ const baseBroadcast = {
   flowId: "flow-1",
   integrationWhatsappId: "wa-1",
   integrationMessengerId: "msg-1",
+  targetMode: "channel" as const,
   subaction: "whatsappWithin24Hours" as const,
   templateId: null,
   templateData: null,
@@ -194,6 +203,33 @@ describe("resendBroadcast", () => {
     expect(insertedValues.schedulesType).toBe("now")
     expect(insertedValues.integrationWhatsappId).toBe("wa-1")
     expect(insertedValues.integrationMessengerId).toBe("msg-1")
+  })
+
+  test("carries the target layout onto the resent broadcast", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...baseBroadcast,
+      targetMode: "targets",
+      integrationWhatsappId: null,
+      integrationMessengerId: null,
+    })
+
+    await resendBroadcast({ workspaceId: WORKSPACE_ID, id: BROADCAST_ID })
+
+    const insertedValues = mockTxInsertValues.mock.calls[0]?.[0] as {
+      targetMode: string
+    }
+    expect(insertedValues.targetMode).toBe("targets")
+  })
+
+  test("copies the per-page target rows onto the resent broadcast inside the transaction", async () => {
+    mockFindOrFail.mockResolvedValue(baseBroadcast)
+
+    await resendBroadcast({ workspaceId: WORKSPACE_ID, id: BROADCAST_ID })
+
+    expect(mockCopyTargets).toHaveBeenCalledWith(
+      expect.objectContaining({ insert: mockTxInsert }),
+      { sourceBroadcastId: BROADCAST_ID, broadcastId: "new-bc-id" },
+    )
   })
 
   test("new broadcast uses a new id from createId", async () => {

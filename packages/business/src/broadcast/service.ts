@@ -2,10 +2,12 @@ import {
   and,
   asc,
   count,
+  type DatabaseClient,
   db,
   desc,
   eq,
   gt,
+  ilike,
   inArray,
   isNotNull,
   isNull,
@@ -18,11 +20,22 @@ import {
   type BroadcastStatus,
   type BroadcastSubaction,
   type BroadcastTerminalStatus,
+  broadcastSendsFlow,
+  broadcastSendsTemplate,
   broadcastStatuses,
   type ChannelType,
   dmConversationUsesSourceId,
   findBroadcastChannelCapability,
+  hasDuplicateBroadcastTarget,
+  hasFlowAndTemplate,
+  isTargetsFlowSendWithoutFlow,
+  isTargetsTemplateSendWithoutTemplate,
+  isTemplateSendWithoutPage,
   requiresRecentInteractionWindow,
+  resolveBroadcastTargetMode,
+  resolveBroadcastTemplateSend,
+  usesBroadcastTargets,
+  withBroadcastTargets,
 } from "@chatbotx.io/database/partials"
 import {
   buildContactInboxContactFilterSQL,
@@ -32,6 +45,7 @@ import {
 } from "@chatbotx.io/database/queries"
 import {
   broadcastModel,
+  broadcastTargetModel,
   contactInboxModel,
   contactModel,
   contactsOnBroadcastsModel,
@@ -43,12 +57,22 @@ import {
 } from "@chatbotx.io/database/schema"
 import type {
   BroadcastModel,
+  BroadcastTargetModel,
   FlowModel,
+  InboxModel,
   IntegrationMessengerModel,
   IntegrationWhatsappModel,
 } from "@chatbotx.io/database/types"
-import { chunkById, likeContains } from "@chatbotx.io/database/utils"
-import type { WaTemplateParams } from "@chatbotx.io/flow-config"
+import {
+  chunkById,
+  escapeLikePattern,
+  likeContains,
+} from "@chatbotx.io/database/utils"
+import {
+  findTemplateStartStep,
+  stepTypes,
+  type WaTemplateParams,
+} from "@chatbotx.io/flow-config"
 import { startOfMinute } from "date-fns"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
@@ -69,6 +93,26 @@ const MAX_PREVIEW_PER_PAGE = 50
 // Separates the page name from the template name in an auto-generated broadcast
 // name, e.g. "Acme WhatsApp - order_confirmation".
 const BROADCAST_NAME_SEPARATOR = " - "
+// Separates the per-page segments of a multi-page broadcast name.
+const BROADCAST_NAME_TARGET_SEPARATOR = " / "
+const BROADCAST_NAME_MAX_LENGTH = 255
+const APPROVED_TEMPLATE_STATUS = "APPROVED"
+
+// A clone is named `"<base> (Copy N)"`. The label is the literal text between
+// the base name and the copy number; the suffix regex strips an existing copy
+// tag so a clone of a clone keeps a single, incrementing suffix.
+const BROADCAST_COPY_LABEL = " (Copy "
+const BROADCAST_COPY_SUFFIX = / \(Copy \d+\)$/
+/** Escapes a string for safe interpolation into a `RegExp` source. */
+const escapeRegExp = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+
+// The template start step each template-capable channel's flows open with;
+// a channel without one has no page-bound flows to validate.
+const templateStepTypeByChannel: Partial<Record<ChannelType, string>> = {
+  whatsapp: stepTypes.enum.sendWaTemplateMessage,
+  messenger: stepTypes.enum.sendMessengerTemplateMessage,
+}
 
 type ContactInboxRow = typeof contactInboxModel.$inferSelect
 type SelectOptionRow = { id: string; name: string }
@@ -77,14 +121,62 @@ type SelectOptionRow = { id: string; name: string }
 // integration so a template can only be paired with its own page.
 type BroadcastTemplateLookup = {
   workspaceId: string
-  templateId: string
+  templateIds: string[]
   integrationWhatsappId?: string | null
   integrationMessengerId?: string | null
 }
 
 type BroadcastTemplateLoader = (
   lookup: BroadcastTemplateLookup,
-) => Promise<BroadcastTemplateDetail | null>
+) => Promise<BroadcastTemplateDetail[]>
+
+/**
+ * One chosen template of a broadcast. A multi-page broadcast pins each
+ * template to the page (`inboxId`) it was picked for; a legacy single-page
+ * broadcast scopes by the integration id columns instead.
+ */
+export type BroadcastTemplateSelection = {
+  templateId: string
+  inboxId?: string | null
+  integrationWhatsappId?: string | null
+  integrationMessengerId?: string | null
+}
+
+/** One page of a multi-page broadcast as submitted by the form. */
+export type BroadcastTargetInput = {
+  inboxId: string
+  /** The flow this page runs (a flow's template start step is bound to one page). */
+  flowId?: string
+  templateId?: string
+  templateData?: Record<string, unknown>
+  buttons?: BroadcastTemplateButton[]
+}
+
+/**
+ * What the ownership check loaded about a payload's pages and flows: reused
+ * by the name resolution so nothing is queried twice.
+ */
+type BroadcastTargetContext = {
+  inboxes: Pick<InboxModel, "id" | "name">[]
+  flows: Pick<FlowModel, "id" | "name">[]
+}
+
+const NO_TARGET_CONTEXT: BroadcastTargetContext = { inboxes: [], flows: [] }
+
+/**
+ * An editable draft: its target rows plus the inbox of each legacy
+ * integration column, so a single-page draft saved before targets existed
+ * can be reopened as a one-target form.
+ */
+export type BroadcastDraftRow = BroadcastModel & {
+  targets: BroadcastTargetModel[]
+  integrationWhatsapp: Pick<IntegrationWhatsappModel, "inboxId"> | null
+  integrationMessenger: Pick<IntegrationMessengerModel, "inboxId"> | null
+}
+
+type BroadcastTargetRow = BroadcastTargetModel & {
+  inbox: Pick<InboxModel, "id" | "name">
+}
 
 export type BroadcastAwaitingFinalization = Pick<
   BroadcastModel,
@@ -111,6 +203,8 @@ export type UpdateDraftBroadcastData = {
   integrationMessengerId?: string
   templateData?: Record<string, unknown>
   buttons?: BroadcastTemplateButton[]
+  /** Pages (with their own template) of a multi-page broadcast. */
+  targets?: BroadcastTargetInput[]
   subaction: BroadcastSubaction
   schedulesType: BroadcastScheduleType
   schedulesAt: string | null
@@ -122,12 +216,135 @@ export type BroadcastCalendarRow = BroadcastModel & {
   flow: Pick<FlowModel, "id" | "name"> | null
   integrationWhatsapp: Pick<IntegrationWhatsappModel, "id" | "name"> | null
   integrationMessenger: Pick<IntegrationMessengerModel, "id" | "name"> | null
+  targets: BroadcastTargetRow[]
+}
+
+/**
+ * Selections to validate/name a payload by: one per target that carries a
+ * template, else the legacy single template scoped by its integration ids.
+ */
+export const broadcastTemplateSelections = (
+  data: Pick<
+    UpdateDraftBroadcastData,
+    | "templateId"
+    | "integrationWhatsappId"
+    | "integrationMessengerId"
+    | "targets"
+  >,
+): BroadcastTemplateSelection[] => {
+  const targetSelections = (data.targets ?? []).flatMap((target) =>
+    target.templateId
+      ? [{ templateId: target.templateId, inboxId: target.inboxId }]
+      : [],
+  )
+  if (targetSelections.length > 0 || !data.templateId) {
+    return targetSelections
+  }
+  return [
+    {
+      templateId: data.templateId,
+      integrationWhatsappId: data.integrationWhatsappId,
+      integrationMessengerId: data.integrationMessengerId,
+    },
+  ]
+}
+
+// Only a template send stores params. Without a templateId the payload is a
+// flow send, so a `templateData` the form left behind (switching template ->
+// flow) must not survive.
+const buildStoredTemplateData = (input: {
+  templateId?: string | null
+  templateData?: Record<string, unknown> | null
+  buttons?: BroadcastTemplateButton[]
+}): Record<string, unknown> | null =>
+  input.templateId && input.templateData
+    ? { ...input.templateData, buttons: input.buttons ?? [] }
+    : null
+
+/** The request field a broadcast validation failure points at. */
+export type BroadcastValidationField =
+  | "channel"
+  | "subaction"
+  | "flowId"
+  | "templateId"
+  | "targets"
+  | "integrationWhatsappId"
+  | "integrationMessengerId"
+
+/**
+ * A rejected create/edit payload. Carries the offending field so the app
+ * layer can surface it as a field-level form error instead of a toast.
+ */
+export class BroadcastValidationException extends ChatbotXException {
+  readonly field: BroadcastValidationField
+
+  constructor(message: string, field: BroadcastValidationField) {
+    super(message, "validationError", 422)
+    this.field = field
+  }
+}
+
+type BroadcastPayloadRule = {
+  violated: boolean
+  message: string
+  field: BroadcastValidationField
+}
+
+/**
+ * The single normalization `create` and `updateDraft` both apply to an
+ * already-validated payload before it is persisted — ownership checks,
+ * naming, column build, and the target rows themselves all read from the
+ * result, never from the raw payload again. Only a TARGETS-FORM send is
+ * touched (template or flow, symmetrically):
+ * - A draft (`saveAsDraft`) keeps every target, empty ones included, so
+ *   reopening the draft preserves the page selection.
+ * - A non-draft (scheduled/sending) drops targets with neither a
+ *   `templateId` nor a `flowId` — they have nothing to deliver — and, if
+ *   that empties the list entirely, throws rather than falling through:
+ *   `buildBroadcastColumns`/`resolveBroadcastTargetMode` treats an empty
+ *   `targets` array as `targetMode: "channel"` and restores the legacy
+ *   single-page columns, which would blast the whole channel audience
+ *   instead of the intended pages. `assertDraftPayload`'s
+ *   `isTargetsTemplateSendWithoutTemplate`/`isTargetsFlowSendWithoutFlow`
+ *   rules already refuse this payload before it reaches here for anything
+ *   routed through `create`/`updateDraft`'s own validation; this throw is
+ *   defense-in-depth so no other caller of this helper can silently fall
+ *   back to channel mode.
+ * A legacy channel-mode payload (no targets at all) passes through
+ * unchanged.
+ */
+export const resolveBroadcastTargetsToPersist = (
+  data: UpdateDraftBroadcastData,
+): UpdateDraftBroadcastData => {
+  const targets = data.targets ?? []
+  const dropsEmptyTargets = targets.length > 0 && !data.saveAsDraft
+  if (!dropsEmptyTargets) {
+    return data
+  }
+
+  const readyTargets = targets.filter(
+    (target) => target.templateId || target.flowId,
+  )
+  if (readyTargets.length === 0) {
+    throw new BroadcastValidationException(
+      "Select a template or flow for at least one page",
+      "targets",
+    )
+  }
+  return { ...data, targets: readyTargets }
 }
 
 class BroadcastService extends BaseService {
+  /**
+   * The template params a contact on `inboxId` was sent with — a multi-page
+   * broadcast keeps them per target, a legacy row on the broadcast itself.
+   * `integrationWhatsappId` is the legacy column only; a multi-page broadcast
+   * leaves it null so the caller derives the integration from the inbox.
+   */
   async findByIdForResponse(input: {
     workspaceId: string
     broadcastId: string
+    inboxId: string
   }): Promise<{
     id: string
     integrationWhatsappId: string | null
@@ -142,7 +359,14 @@ class BroadcastService extends BaseService {
       columns: {
         id: true,
         integrationWhatsappId: true,
+        templateId: true,
         templateData: true,
+        targetMode: true,
+      },
+      with: {
+        targets: {
+          columns: { inboxId: true, templateId: true, templateData: true },
+        },
       },
     })
 
@@ -150,9 +374,12 @@ class BroadcastService extends BaseService {
       return null
     }
 
+    const templateSend = resolveBroadcastTemplateSend(row, input.inboxId)
     return {
-      ...row,
-      templateData: row.templateData as WaTemplateParams | null,
+      id: row.id,
+      integrationWhatsappId: row.integrationWhatsappId,
+      templateData: (templateSend?.templateData ??
+        null) as WaTemplateParams | null,
     }
   }
 
@@ -333,20 +560,75 @@ class BroadcastService extends BaseService {
     schedulesType: BroadcastScheduleType
     schedulesAt: Date
   }): Promise<{ id: string }> {
-    const [row] = await db
-      .update(broadcastModel)
-      .set({
-        status: broadcastStatuses.enum.scheduled,
-        schedulesType: input.schedulesType,
-        schedulesAt: input.schedulesAt,
-      })
-      .where(this.draftScope(input.workspaceId, input.broadcastId))
-      .returning({ id: broadcastModel.id })
+    return await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(broadcastModel)
+        .set({
+          status: broadcastStatuses.enum.scheduled,
+          schedulesType: input.schedulesType,
+          schedulesAt: input.schedulesAt,
+        })
+        .where(this.draftScope(input.workspaceId, input.broadcastId))
+        .returning({
+          id: broadcastModel.id,
+          targetMode: broadcastModel.targetMode,
+        })
 
-    if (!row) {
-      throw new ChatbotXException("Broadcast is not a draft")
+      if (!row) {
+        throw new ChatbotXException("Broadcast is not a draft")
+      }
+
+      // A draft keeps every picked page, empty ones included, so it can be
+      // reopened. Scheduling is the point of no return: a page left without a
+      // template (or flow) can deliver nothing, so it is dropped here — the
+      // same normalization `create`/`updateDraft` apply to a non-draft — and
+      // the worker never enrols, then fails, its recipients.
+      await this.dropUndeliverableTargets(tx, row)
+      return { id: row.id }
+    })
+  }
+
+  /**
+   * Removes a targets-mode broadcast's rows that can deliver nothing — neither
+   * a template nor a flow — so an unconfigured page is skipped at send time
+   * instead of failing every recipient on it. Throws rather than schedule a
+   * targets-mode broadcast with no deliverable page at all (an empty target
+   * list is a real "nobody" audience, not a channel fallback), including the
+   * case where every page's row has already cascaded away with its inbox. A
+   * legacy channel-mode broadcast has no target rows by design and is left
+   * untouched.
+   */
+  private async dropUndeliverableTargets(
+    tx: DatabaseClient,
+    broadcast: { id: string; targetMode: string | null },
+  ): Promise<void> {
+    if (!usesBroadcastTargets(broadcast)) {
+      return
     }
-    return row
+    const targets = await tx.query.broadcastTargetModel.findMany({
+      where: { broadcastId: broadcast.id },
+      columns: { inboxId: true, flowId: true, templateId: true },
+    })
+    const undeliverableInboxIds = targets
+      .filter((target) => !(target.templateId || target.flowId))
+      .map((target) => target.inboxId)
+    if (undeliverableInboxIds.length === targets.length) {
+      throw new BroadcastValidationException(
+        "Select a template or flow for at least one page",
+        "targets",
+      )
+    }
+    if (undeliverableInboxIds.length === 0) {
+      return
+    }
+    await tx
+      .delete(broadcastTargetModel)
+      .where(
+        and(
+          eq(broadcastTargetModel.broadcastId, broadcast.id),
+          inArray(broadcastTargetModel.inboxId, undeliverableInboxIds),
+        ),
+      )
   }
 
   /**
@@ -529,7 +811,7 @@ class BroadcastService extends BaseService {
   async findDraft(input: {
     workspaceId: string
     broadcastId: string
-  }): Promise<BroadcastModel | null> {
+  }): Promise<BroadcastDraftRow | null> {
     const row = await db.query.broadcastModel.findFirst({
       where: {
         id: input.broadcastId,
@@ -537,8 +819,259 @@ class BroadcastService extends BaseService {
         status: broadcastStatuses.enum.draft,
         deletedAt: { isNull: true },
       },
+      with: {
+        targets: true,
+        integrationWhatsapp: { columns: { inboxId: true } },
+        integrationMessenger: { columns: { inboxId: true } },
+      },
     })
     return row ?? null
+  }
+
+  /**
+   * Validates a create payload exactly like a draft edit (channel/subaction
+   * rules, page and integration ownership, template-to-page pairing, name)
+   * and inserts the broadcast together with its per-page targets in one
+   * transaction, so a broadcast can never exist with half of its pages.
+   * Throws `BroadcastValidationException` for a rejected payload.
+   */
+  async create(input: {
+    workspaceId: string
+    canViewEmailAndPhone: boolean
+    data: UpdateDraftBroadcastData
+  }): Promise<BroadcastModel> {
+    const { workspaceId } = input
+
+    this.assertDraftPayload(input.data)
+    const data = resolveBroadcastTargetsToPersist(input.data)
+    const context = await this.assertBroadcastTargetsOwned({
+      workspaceId,
+      data,
+    })
+    const name = await this.resolveDraftBroadcastName({
+      workspaceId,
+      data,
+      context,
+    })
+    const status = data.saveAsDraft
+      ? broadcastStatuses.enum.draft
+      : broadcastStatuses.enum.scheduled
+
+    return await db.transaction(async (tx) => {
+      const [broadcast] = await tx
+        .insert(broadcastModel)
+        .values({
+          workspaceId,
+          name,
+          status,
+          ...this.buildBroadcastColumns(data, input.canViewEmailAndPhone),
+        })
+        .returning()
+
+      await this.replaceTargets(tx, broadcast.id, data.targets ?? [])
+      return broadcast
+    })
+  }
+
+  /**
+   * The editable columns a create and a draft edit both write from the same
+   * payload. Once a payload carries targets, the pages and templates live on
+   * those rows: `targetMode` is pinned to `targets` and every legacy
+   * single-page column stays null, so no reader can fall back to a stale
+   * page even if the target rows are later cascaded away.
+   */
+  private buildBroadcastColumns(
+    data: UpdateDraftBroadcastData,
+    canViewEmailAndPhone: boolean,
+  ) {
+    const targetMode = resolveBroadcastTargetMode(data.targets)
+    const legacyColumns =
+      targetMode === "targets"
+        ? {
+            flowId: null,
+            templateId: null,
+            templateData: null,
+            integrationWhatsappId: null,
+            integrationMessengerId: null,
+          }
+        : {
+            flowId: data.flowId ?? null,
+            templateId: data.templateId ?? null,
+            templateData: buildStoredTemplateData(data),
+            integrationWhatsappId: data.integrationWhatsappId ?? null,
+            integrationMessengerId: data.integrationMessengerId ?? null,
+          }
+
+    return {
+      channel: data.channel,
+      subaction: data.subaction,
+      targetMode,
+      ...legacyColumns,
+      contactFilter:
+        pruneEmailPhoneFilterConditions(
+          data.contactFilter,
+          canViewEmailAndPhone,
+        ) ?? null,
+      schedulesType: data.schedulesType,
+      // Persist the minute-truncated time the schema validated against.
+      schedulesAt: startOfMinute(new Date(data.schedulesAt ?? new Date())),
+    }
+  }
+
+  /** Replaces the page rows of a broadcast; a delete + insert keeps removed pages from lingering. */
+  private async replaceTargets(
+    tx: DatabaseClient,
+    broadcastId: string,
+    targets: BroadcastTargetInput[],
+  ): Promise<void> {
+    await tx
+      .delete(broadcastTargetModel)
+      .where(eq(broadcastTargetModel.broadcastId, broadcastId))
+
+    if (targets.length === 0) {
+      return
+    }
+
+    await tx.insert(broadcastTargetModel).values(
+      targets.map((target) => ({
+        broadcastId,
+        inboxId: target.inboxId,
+        flowId: target.flowId ?? null,
+        templateId: target.templateId ?? null,
+        templateData: buildStoredTemplateData(target),
+      })),
+    )
+  }
+
+  /** Copies the page rows of `sourceBroadcastId` onto a new broadcast (resend). */
+  async copyTargets(
+    tx: DatabaseClient,
+    input: { sourceBroadcastId: string; broadcastId: string },
+  ): Promise<void> {
+    const targets = await tx.query.broadcastTargetModel.findMany({
+      where: { broadcastId: input.sourceBroadcastId },
+    })
+    if (targets.length === 0) {
+      return
+    }
+    await tx.insert(broadcastTargetModel).values(
+      targets.map(({ inboxId, flowId, templateId, templateData }) => ({
+        broadcastId: input.broadcastId,
+        inboxId,
+        flowId,
+        templateId,
+        templateData,
+      })),
+    )
+  }
+
+  /**
+   * Clones a broadcast into a NEW `draft`, copying its channel/subaction, the
+   * legacy single-page columns or the per-page `BroadcastTarget` rows (via
+   * `copyTargets`, so `targetMode` travels with them), the contact filter and
+   * the schedule. The copy starts with fresh send state — a new id, no
+   * counters, `draft` status — so it never inherits the source's delivery
+   * history, and its name continues the `(Copy N)` numbering of the source.
+   * The clone is editable and only leaves `draft` when the user sends it.
+   */
+  async cloneBroadcast(input: {
+    workspaceId: string
+    broadcastId: string
+    canViewEmailAndPhone: boolean
+  }): Promise<BroadcastModel> {
+    const source = await db.query.broadcastModel.findFirst({
+      where: {
+        id: input.broadcastId,
+        workspaceId: input.workspaceId,
+        deletedAt: { isNull: true },
+      },
+    })
+    if (!source) {
+      throw new ChatbotXException("Broadcast not found")
+    }
+
+    const name = await this.resolveCloneBroadcastName({
+      workspaceId: input.workspaceId,
+      sourceName: source.name,
+    })
+    const contactFilter =
+      pruneEmailPhoneFilterConditions(
+        source.contactFilter as ContactFilterCriteriaInput | null,
+        input.canViewEmailAndPhone,
+      ) ?? null
+
+    return await db.transaction(async (tx) => {
+      const [clone] = await tx
+        .insert(broadcastModel)
+        .values({
+          workspaceId: input.workspaceId,
+          name,
+          status: broadcastStatuses.enum.draft,
+          channel: source.channel,
+          subaction: source.subaction,
+          // The layout travels with the copied target rows, so a cloned
+          // multi-page broadcast can never fall back to the whole channel.
+          targetMode: source.targetMode,
+          flowId: source.flowId,
+          templateId: source.templateId,
+          templateData: source.templateData,
+          integrationWhatsappId: source.integrationWhatsappId,
+          integrationMessengerId: source.integrationMessengerId,
+          contactFilter,
+          // A draft keeps the source schedule verbatim; a past time is only
+          // rejected later, when the draft is scheduled or sent.
+          schedulesType: source.schedulesType,
+          schedulesAt: source.schedulesAt,
+        })
+        .returning()
+
+      await this.copyTargets(tx, {
+        sourceBroadcastId: source.id,
+        broadcastId: clone.id,
+      })
+      return clone
+    })
+  }
+
+  /**
+   * The name for a clone: the source name (stripped of any trailing
+   * `(Copy N)` so a clone of a clone keeps one suffix) with the next free
+   * copy number, continuing the sequence of existing copies of the same base.
+   *
+   * The highest existing number is taken in Postgres over an index-usable
+   * prefix filter (no leading wildcard), so the candidate names never leave the
+   * database and the scan stays cheap however many copies a workspace holds.
+   * `name` is not unique, so two concurrent clones can still pick the same
+   * number and produce duplicate names — acceptable for a manual, low-frequency
+   * action where the result is an editable draft.
+   */
+  private async resolveCloneBroadcastName(input: {
+    workspaceId: string
+    sourceName: string
+  }): Promise<string> {
+    const base = input.sourceName.replace(BROADCAST_COPY_SUFFIX, "")
+    // Prefix match `"<base> (Copy %"`; the exact `(Copy N)` shape and its
+    // number are extracted in SQL. `base` is escaped for both the LIKE pattern
+    // and the POSIX regex, and both are bound as parameters (no injection).
+    const namePrefix = `${escapeLikePattern(`${base}${BROADCAST_COPY_LABEL}`)}%`
+    const copyNumberPattern = `^${escapeRegExp(base)}${escapeRegExp(
+      BROADCAST_COPY_LABEL,
+    )}([0-9]+)\\)$`
+
+    const [row] = await db
+      .select({
+        highestCopy: sql<number>`coalesce(max(substring(${broadcastModel.name} from ${copyNumberPattern})::int), 0)`,
+      })
+      .from(broadcastModel)
+      .where(
+        and(
+          eq(broadcastModel.workspaceId, input.workspaceId),
+          isNull(broadcastModel.deletedAt),
+          ilike(broadcastModel.name, namePrefix),
+        ),
+      )
+
+    return `${base}${BROADCAST_COPY_LABEL}${(row?.highestCopy ?? 0) + 1})`
   }
 
   /**
@@ -554,49 +1087,40 @@ class BroadcastService extends BaseService {
     canViewEmailAndPhone: boolean
     data: UpdateDraftBroadcastData
   }): Promise<{ id: string; status: BroadcastStatus }> {
-    const { workspaceId, data } = input
+    const { workspaceId } = input
 
-    this.assertDraftPayload(data)
-    await this.assertBroadcastIntegrationsOwned({
+    this.assertDraftPayload(input.data)
+    const data = resolveBroadcastTargetsToPersist(input.data)
+    const context = await this.assertBroadcastTargetsOwned({
       workspaceId,
-      integrationWhatsappId: data.integrationWhatsappId,
-      integrationMessengerId: data.integrationMessengerId,
+      data,
     })
 
-    const name = await this.resolveDraftBroadcastName({ workspaceId, data })
+    const name = await this.resolveDraftBroadcastName({
+      workspaceId,
+      data,
+      context,
+    })
     const status = data.saveAsDraft
       ? broadcastStatuses.enum.draft
       : broadcastStatuses.enum.scheduled
 
-    const [row] = await db
-      .update(broadcastModel)
-      .set({
-        channel: data.channel,
-        subaction: data.subaction,
-        flowId: data.flowId ?? null,
-        templateId: data.templateId ?? null,
-        integrationWhatsappId: data.integrationWhatsappId ?? null,
-        integrationMessengerId: data.integrationMessengerId ?? null,
-        name,
-        contactFilter:
-          pruneEmailPhoneFilterConditions(
-            data.contactFilter,
-            input.canViewEmailAndPhone,
-          ) ?? null,
-        schedulesType: data.schedulesType,
-        // Persist the minute-truncated time the schema validated against.
-        schedulesAt: startOfMinute(new Date(data.schedulesAt ?? new Date())),
-        // Only a template broadcast stores params. Without a templateId the
-        // payload is a flow send, so a `templateData` the form left behind
-        // (switching template -> flow) must not survive the edit.
-        templateData:
-          data.templateId && data.templateData
-            ? { ...data.templateData, buttons: data.buttons ?? [] }
-            : null,
-        status,
-      })
-      .where(this.draftScope(workspaceId, input.broadcastId))
-      .returning({ id: broadcastModel.id })
+    const row = await db.transaction(async (tx) => {
+      const [updated] = await tx
+        .update(broadcastModel)
+        .set({
+          name,
+          status,
+          ...this.buildBroadcastColumns(data, input.canViewEmailAndPhone),
+        })
+        .where(this.draftScope(workspaceId, input.broadcastId))
+        .returning({ id: broadcastModel.id })
+
+      if (updated) {
+        await this.replaceTargets(tx, updated.id, data.targets ?? [])
+      }
+      return updated
+    })
 
     if (!row) {
       throw new ChatbotXException("Broadcast is not a draft")
@@ -613,86 +1137,277 @@ class BroadcastService extends BaseService {
    */
   private assertDraftPayload(data: UpdateDraftBroadcastData): void {
     const capability = findBroadcastChannelCapability(data.channel)
-    const rules: readonly { violated: boolean; message: string }[] = [
-      { violated: !capability, message: "Unsupported broadcast channel" },
+    const sendsFlow = broadcastSendsFlow(data)
+    const sendsTemplate = broadcastSendsTemplate(data)
+    const rules: readonly BroadcastPayloadRule[] = [
+      {
+        violated: !capability,
+        message: "Unsupported broadcast channel",
+        field: "channel",
+      },
       {
         violated: !capability?.subactions.includes(data.subaction),
         message: "Unsupported broadcast subaction",
+        field: "subaction",
       },
       {
-        violated: !(data.flowId || data.templateId),
+        violated: !(sendsFlow || sendsTemplate),
         message: "Either flow or template must be selected",
+        field: "flowId",
       },
       {
-        violated:
-          Boolean(data.templateId) && !capability?.supportsTemplateBroadcast,
+        violated: hasFlowAndTemplate(data),
+        message: "A broadcast sends either a flow or a template, not both",
+        field: "flowId",
+      },
+      {
+        violated: sendsTemplate && !capability?.supportsTemplateBroadcast,
         message: "Template broadcasts are not supported for this channel",
+        field: "templateId",
+      },
+      {
+        violated: isTargetsTemplateSendWithoutTemplate(data),
+        message: "Select a template for at least one page",
+        field: "targets",
+      },
+      {
+        violated: isTargetsFlowSendWithoutFlow(data),
+        message: "Select a flow for at least one page",
+        field: "targets",
+      },
+      {
+        violated: hasDuplicateBroadcastTarget(data),
+        message: "A page can only be selected once",
+        field: "targets",
+      },
+      {
+        violated: isTemplateSendWithoutPage(data),
+        message: "Select the page the template belongs to",
+        field: "targets",
       },
     ]
 
     const failed = rules.find((rule) => rule.violated)
     if (failed) {
-      throw new ChatbotXException(failed.message)
+      throw new BroadcastValidationException(failed.message, failed.field)
     }
   }
 
   /**
-   * Integration ids scope the audience, so a foreign id would let a broadcast
-   * target another workspace's pages. Never trust them from the client.
+   * Integration ids and target inboxes scope the audience, so a foreign id
+   * would let a broadcast target another workspace's pages. Never trust them
+   * from the client. Every target inbox must belong to the workspace and
+   * the broadcast's channel; a target's template must belong to that very
+   * page (checked by `resolveTemplateBroadcastName` through the selection's
+   * `inboxId`).
    */
-  private async assertBroadcastIntegrationsOwned(input: {
+  async assertBroadcastTargetsOwned(input: {
     workspaceId: string
-    integrationWhatsappId?: string
-    integrationMessengerId?: string
-  }): Promise<void> {
-    const [messenger, whatsapp] = await Promise.all([
-      input.integrationMessengerId
+    data: Pick<
+      UpdateDraftBroadcastData,
+      "channel" | "integrationWhatsappId" | "integrationMessengerId" | "targets"
+    >
+  }): Promise<BroadcastTargetContext> {
+    const { workspaceId, data } = input
+    const [messenger, whatsapp, inboxes, flows] = await Promise.all([
+      data.integrationMessengerId
         ? db.query.integrationMessengerModel.findFirst({
-            where: {
-              id: input.integrationMessengerId,
-              workspaceId: input.workspaceId,
-            },
+            where: { id: data.integrationMessengerId, workspaceId },
             columns: { id: true },
           })
         : true,
-      input.integrationWhatsappId
+      data.integrationWhatsappId
         ? db.query.integrationWhatsappModel.findFirst({
-            where: {
-              id: input.integrationWhatsappId,
-              workspaceId: input.workspaceId,
-            },
+            where: { id: data.integrationWhatsappId, workspaceId },
             columns: { id: true },
           })
         : true,
+      this.listOwnedTargetInboxes({
+        workspaceId,
+        channel: data.channel,
+        inboxIds: (data.targets ?? []).map((target) => target.inboxId),
+      }),
+      this.listOwnedTargetFlows({
+        workspaceId,
+        channel: data.channel,
+        targets: data.targets ?? [],
+      }),
     ])
 
-    if (!(messenger && whatsapp)) {
-      throw new ChatbotXException("Integration not found")
+    if (!messenger) {
+      throw new BroadcastValidationException(
+        "Integration not found",
+        "integrationMessengerId",
+      )
     }
+    if (!whatsapp) {
+      throw new BroadcastValidationException(
+        "Integration not found",
+        "integrationWhatsappId",
+      )
+    }
+
+    const ownedInboxIds = new Set(inboxes.map((inbox) => inbox.id))
+    const everyTargetOwned = (data.targets ?? []).every((target) =>
+      ownedInboxIds.has(target.inboxId),
+    )
+    if (!everyTargetOwned) {
+      throw new BroadcastValidationException("Inbox not found", "targets")
+    }
+
+    return { inboxes, flows }
   }
 
-  /** Same derivation as create: template name wins, else the flow's name. */
+  private async listOwnedTargetInboxes(input: {
+    workspaceId: string
+    channel: ChannelType
+    inboxIds: string[]
+  }): Promise<Pick<InboxModel, "id" | "name">[]> {
+    const inboxIds = Array.from(new Set(input.inboxIds))
+    if (inboxIds.length === 0) {
+      return []
+    }
+    return await db.query.inboxModel.findMany({
+      where: {
+        id: { in: inboxIds },
+        workspaceId: input.workspaceId,
+        channel: input.channel,
+      },
+      columns: { id: true, name: true },
+    })
+  }
+
+  /**
+   * The flows the targets run, loaded in one batch. Each must belong to the
+   * workspace, and its published version must start with the channel's
+   * template step whose template lives on that very page — the send handler
+   * would reject any other pairing per contact, so it is refused up front.
+   */
+  private async listOwnedTargetFlows(input: {
+    workspaceId: string
+    channel: ChannelType
+    targets: readonly BroadcastTargetInput[]
+  }): Promise<Pick<FlowModel, "id" | "name">[]> {
+    const flowTargets = input.targets.flatMap((target) =>
+      target.flowId ? [{ inboxId: target.inboxId, flowId: target.flowId }] : [],
+    )
+    if (flowTargets.length === 0) {
+      return []
+    }
+
+    const flows = await db.query.flowModel.findMany({
+      where: {
+        id: { in: Array.from(new Set(flowTargets.map((t) => t.flowId))) },
+        workspaceId: input.workspaceId,
+      },
+      columns: { id: true, name: true },
+      with: {
+        flowVersions: { where: { isLatest: true }, columns: { nodes: true } },
+      },
+    })
+    const flowsById = new Map(flows.map((flow) => [flow.id, flow]))
+    if (flowTargets.some((target) => !flowsById.has(target.flowId))) {
+      throw new BroadcastValidationException("Flow not found", "flowId")
+    }
+
+    const stepType = templateStepTypeByChannel[input.channel]
+    if (!stepType) {
+      return flows
+    }
+    const startTemplateIdByFlowId = new Map(
+      flows.map((flow) => [
+        flow.id,
+        findTemplateStartStep(flow.flowVersions[0]?.nodes, stepType)
+          ?.templateId,
+      ]),
+    )
+    const startTemplateIds = Array.from(
+      new Set(
+        flows.flatMap((flow) => {
+          const templateId = startTemplateIdByFlowId.get(flow.id)
+          return templateId ? [templateId] : []
+        }),
+      ),
+    )
+    const templates = await this.loadTemplateDetails(input.channel, {
+      workspaceId: input.workspaceId,
+      templateIds: startTemplateIds,
+    })
+    const inboxIdByTemplateId = new Map(
+      templates.map((template) => [template.id, template.inboxId]),
+    )
+
+    const everyFlowOnItsPage = flowTargets.every((target) => {
+      const templateId = startTemplateIdByFlowId.get(target.flowId)
+      return (
+        templateId !== undefined &&
+        inboxIdByTemplateId.get(templateId) === target.inboxId
+      )
+    })
+    if (!everyFlowOnItsPage) {
+      throw new BroadcastValidationException(
+        "The flow's template does not belong to the selected page",
+        "targets",
+      )
+    }
+
+    return flows.map(({ id, name }) => ({ id, name }))
+  }
+
+  /**
+   * The stored name: page-prefixed template names, else page-prefixed flow
+   * names (multi-page), else the legacy flow's name, else the default.
+   */
   private async resolveDraftBroadcastName(input: {
     workspaceId: string
     data: UpdateDraftBroadcastData
+    context?: BroadcastTargetContext
   }): Promise<string> {
-    const { data, workspaceId } = input
+    const { data, workspaceId, context = NO_TARGET_CONTEXT } = input
 
-    const flowName = data.flowId
+    const selections = broadcastTemplateSelections(data)
+    if (selections.length > 0) {
+      return await this.requireTemplateName({
+        workspaceId,
+        channel: data.channel,
+        selections,
+      })
+    }
+
+    const flowTargetName = this.resolveFlowTargetsName(data, context)
+    if (flowTargetName) {
+      return flowTargetName
+    }
+
+    return data.flowId
       ? await this.requireFlowName(workspaceId, data.flowId)
-      : null
+      : DEFAULT_BROADCAST_NAME
+  }
 
-    const templateName = data.templateId
-      ? await this.requireTemplateName({
-          workspaceId,
-          channel: data.channel,
-          templateId: data.templateId,
-          integrationWhatsappId: data.integrationWhatsappId,
-          integrationMessengerId: data.integrationMessengerId,
-        })
+  /** `"Page - flow"` per flow target, joined like the template naming. */
+  private resolveFlowTargetsName(
+    data: UpdateDraftBroadcastData,
+    context: BroadcastTargetContext,
+  ): string | null {
+    const inboxNameById = new Map(context.inboxes.map((i) => [i.id, i.name]))
+    const flowNameById = new Map(context.flows.map((f) => [f.id, f.name]))
+    const segments = (data.targets ?? []).flatMap((target) => {
+      const flowName = target.flowId ? flowNameById.get(target.flowId) : null
+      if (!flowName) {
+        return []
+      }
+      const pageName = inboxNameById.get(target.inboxId)
+      return [
+        pageName
+          ? `${pageName}${BROADCAST_NAME_SEPARATOR}${flowName}`
+          : flowName,
+      ]
+    })
+    return segments.length > 0
+      ? segments
+          .join(BROADCAST_NAME_TARGET_SEPARATOR)
+          .slice(0, BROADCAST_NAME_MAX_LENGTH)
       : null
-
-    return templateName ?? flowName ?? DEFAULT_BROADCAST_NAME
   }
 
   private async requireFlowName(
@@ -705,7 +1420,7 @@ class BroadcastService extends BaseService {
     })
 
     if (!flow) {
-      throw new ChatbotXException("Flow not found")
+      throw new BroadcastValidationException("Flow not found", "flowId")
     }
     return flow.name
   }
@@ -713,16 +1428,21 @@ class BroadcastService extends BaseService {
   private async requireTemplateName(input: {
     workspaceId: string
     channel: ChannelType
-    templateId: string
-    integrationWhatsappId?: string | null
-    integrationMessengerId?: string | null
+    selections: BroadcastTemplateSelection[]
   }): Promise<string> {
-    const name = await this.resolveTemplateBroadcastName(input)
-
-    if (!name) {
-      throw new ChatbotXException("Template not found")
+    const details = await this.resolveSelectedTemplates(input)
+    if (details.length === 0 || details.length !== input.selections.length) {
+      throw new BroadcastValidationException("Template not found", "templateId")
     }
-    return name
+    // A pending or rejected template is stored but must never be scheduled:
+    // the send handler would fail every recipient of that page.
+    if (details.some((detail) => detail.status !== APPROVED_TEMPLATE_STATUS)) {
+      throw new BroadcastValidationException(
+        "Template is not approved",
+        "targets",
+      )
+    }
+    return this.joinTemplateNames(details)
   }
 
   async listForCalendar(input: {
@@ -744,6 +1464,7 @@ class BroadcastService extends BaseService {
         flow: { columns: { id: true, name: true } },
         integrationWhatsapp: { columns: { id: true, name: true } },
         integrationMessenger: { columns: { id: true, name: true } },
+        ...withBroadcastTargets,
       },
       orderBy: { schedulesAt: "asc" },
       limit: CALENDAR_LIST_LIMIT,
@@ -778,6 +1499,7 @@ class BroadcastService extends BaseService {
     return inboxService.resolveBroadcastInboxIds({
       workspaceId: input.workspaceId,
       channels: input.channels,
+      inboxIds: input.inboxIds,
       integrationWhatsappId: input.integrationWhatsappId,
       integrationMessengerId: input.integrationMessengerId,
     })
@@ -904,19 +1626,21 @@ class BroadcastService extends BaseService {
     messenger: (lookup) => this.loadMessengerTemplateDetail(lookup),
   }
 
-  private loadTemplateDetail(
+  private loadTemplateDetails(
     channel: ChannelType,
     lookup: BroadcastTemplateLookup,
-  ): Promise<BroadcastTemplateDetail | null> {
-    const loadDetail = this.templateLoaders[channel]
-    return loadDetail ? loadDetail(lookup) : Promise.resolve(null)
+  ): Promise<BroadcastTemplateDetail[]> {
+    const loadDetails = this.templateLoaders[channel]
+    return loadDetails && lookup.templateIds.length > 0
+      ? loadDetails(lookup)
+      : Promise.resolve([])
   }
 
   private async loadWhatsappTemplateDetail(
     lookup: BroadcastTemplateLookup,
-  ): Promise<BroadcastTemplateDetail | null> {
+  ): Promise<BroadcastTemplateDetail[]> {
     const conditions = [
-      eq(whatsappMessageTemplateModel.id, lookup.templateId),
+      inArray(whatsappMessageTemplateModel.id, lookup.templateIds),
       eq(integrationWhatsappModel.workspaceId, lookup.workspaceId),
     ]
     if (lookup.integrationWhatsappId) {
@@ -928,7 +1652,7 @@ class BroadcastService extends BaseService {
       )
     }
 
-    const [template] = await db
+    const templates = await db
       .select({
         id: whatsappMessageTemplateModel.id,
         name: whatsappMessageTemplateModel.name,
@@ -936,6 +1660,7 @@ class BroadcastService extends BaseService {
         category: whatsappMessageTemplateModel.category,
         status: whatsappMessageTemplateModel.status,
         components: whatsappMessageTemplateModel.components,
+        inboxId: integrationWhatsappModel.inboxId,
         integrationName: integrationWhatsappModel.name,
       })
       .from(whatsappMessageTemplateModel)
@@ -947,16 +1672,16 @@ class BroadcastService extends BaseService {
         ),
       )
       .where(and(...conditions))
-      .limit(1)
+      .limit(lookup.templateIds.length)
 
-    return template ? { ...template, channel: "whatsapp" } : null
+    return templates.map((template) => ({ ...template, channel: "whatsapp" }))
   }
 
   private async loadMessengerTemplateDetail(
     lookup: BroadcastTemplateLookup,
-  ): Promise<BroadcastTemplateDetail | null> {
+  ): Promise<BroadcastTemplateDetail[]> {
     const conditions = [
-      eq(messengerMessageTemplateModel.id, lookup.templateId),
+      inArray(messengerMessageTemplateModel.id, lookup.templateIds),
       eq(integrationMessengerModel.workspaceId, lookup.workspaceId),
     ]
     if (lookup.integrationMessengerId) {
@@ -968,7 +1693,7 @@ class BroadcastService extends BaseService {
       )
     }
 
-    const [template] = await db
+    const templates = await db
       .select({
         id: messengerMessageTemplateModel.id,
         name: messengerMessageTemplateModel.name,
@@ -977,6 +1702,7 @@ class BroadcastService extends BaseService {
         status: messengerMessageTemplateModel.status,
         parameterFormat: messengerMessageTemplateModel.parameterFormat,
         components: messengerMessageTemplateModel.components,
+        inboxId: integrationMessengerModel.inboxId,
         integrationName: integrationMessengerModel.name,
       })
       .from(messengerMessageTemplateModel)
@@ -988,15 +1714,19 @@ class BroadcastService extends BaseService {
         ),
       )
       .where(and(...conditions))
-      .limit(1)
+      .limit(lookup.templateIds.length)
 
-    return template ? { ...template, channel: "messenger" } : null
+    return templates.map((template) => ({ ...template, channel: "messenger" }))
   }
 
-  async getTemplateDetail(input: {
+  /**
+   * The templates a broadcast sends, one per page, in target order — a
+   * legacy single-page broadcast yields one element. Empty for flow sends.
+   */
+  async listTemplateDetails(input: {
     workspaceId: string
     broadcastId: string
-  }): Promise<BroadcastTemplateDetail | null> {
+  }): Promise<BroadcastTemplateDetail[]> {
     const broadcast = await db.query.broadcastModel.findFirst({
       where: {
         id: input.broadcastId,
@@ -1005,45 +1735,96 @@ class BroadcastService extends BaseService {
       },
       columns: {
         templateId: true,
+        integrationWhatsappId: true,
+        integrationMessengerId: true,
         channel: true,
       },
+      with: { targets: { columns: { inboxId: true, templateId: true } } },
     })
 
-    if (!broadcast?.templateId) {
-      return null
+    if (!broadcast) {
+      return []
     }
 
-    return this.loadTemplateDetail(broadcast.channel as ChannelType, {
+    const selections = broadcastTemplateSelections({
+      templateId: broadcast.templateId ?? undefined,
+      integrationWhatsappId: broadcast.integrationWhatsappId ?? undefined,
+      integrationMessengerId: broadcast.integrationMessengerId ?? undefined,
+      targets: broadcast.targets.map((target) => ({
+        inboxId: target.inboxId,
+        templateId: target.templateId ?? undefined,
+      })),
+    })
+
+    return this.resolveSelectedTemplates({
       workspaceId: input.workspaceId,
-      templateId: broadcast.templateId,
+      channel: broadcast.channel as ChannelType,
+      selections,
     })
   }
 
-  // Builds the stored broadcast name from the chosen template, prefixed with the
-  // page name so broadcasts from different pages stay distinguishable in the
-  // list. Returns null when the template does not belong to the workspace/page,
-  // letting the caller surface a "template not found" validation error.
+  /**
+   * Loads every selected template in one query and pairs it back with its
+   * selection. A selection pinned to a page (`inboxId`) only matches the
+   * template of that page — a template picked for page A can never be sent
+   * from page B. Legacy selections are scoped by their integration ids in
+   * SQL. Returns fewer rows than selections when any is missing.
+   */
+  private async resolveSelectedTemplates(input: {
+    workspaceId: string
+    channel: ChannelType
+    selections: BroadcastTemplateSelection[]
+  }): Promise<BroadcastTemplateDetail[]> {
+    const { selections } = input
+    if (selections.length === 0) {
+      return []
+    }
+
+    const details = await this.loadTemplateDetails(input.channel, {
+      workspaceId: input.workspaceId,
+      templateIds: Array.from(
+        new Set(selections.map((selection) => selection.templateId)),
+      ),
+      integrationWhatsappId: selections[0].integrationWhatsappId,
+      integrationMessengerId: selections[0].integrationMessengerId,
+    })
+
+    return selections.flatMap((selection) => {
+      const detail = details.find(
+        (candidate) =>
+          candidate.id === selection.templateId &&
+          (!selection.inboxId || candidate.inboxId === selection.inboxId),
+      )
+      return detail ? [detail] : []
+    })
+  }
+
+  // Builds the stored broadcast name from the chosen templates, each prefixed
+  // with its page name so broadcasts from different pages stay distinguishable
+  // in the list ("Page A - promo / Page B - promo"). Returns null when any
+  // selected template does not belong to the workspace/page, letting the
+  // caller surface a "template not found" validation error.
   async resolveTemplateBroadcastName(input: {
     workspaceId: string
     channel: ChannelType
-    templateId: string
-    integrationWhatsappId?: string | null
-    integrationMessengerId?: string | null
+    selections: BroadcastTemplateSelection[]
   }): Promise<string | null> {
-    const detail = await this.loadTemplateDetail(input.channel, {
-      workspaceId: input.workspaceId,
-      templateId: input.templateId,
-      integrationWhatsappId: input.integrationWhatsappId,
-      integrationMessengerId: input.integrationMessengerId,
-    })
-
-    if (!detail) {
+    const details = await this.resolveSelectedTemplates(input)
+    if (details.length === 0 || details.length !== input.selections.length) {
       return null
     }
+    return this.joinTemplateNames(details)
+  }
 
-    return detail.integrationName
-      ? `${detail.integrationName}${BROADCAST_NAME_SEPARATOR}${detail.name}`
-      : detail.name
+  private joinTemplateNames(details: BroadcastTemplateDetail[]): string {
+    return details
+      .map((detail) =>
+        detail.integrationName
+          ? `${detail.integrationName}${BROADCAST_NAME_SEPARATOR}${detail.name}`
+          : detail.name,
+      )
+      .join(BROADCAST_NAME_TARGET_SEPARATOR)
+      .slice(0, BROADCAST_NAME_MAX_LENGTH)
   }
 
   async forEachAudienceChunk(

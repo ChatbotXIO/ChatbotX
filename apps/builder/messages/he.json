@@ -1355,6 +1355,7 @@
         "result": {
           "title": "תוצאות השכפול",
           "succeededTitle": "הצליח",
+          "pendingTitle": "ממתין לבדיקת Meta",
           "close": "סגירה"
         }
       }
@@ -4354,6 +4355,12 @@
     },
     "messengerChannel": {
       "label": "ערוץ Messenger"
+    },
+    "whatsappChannels": {
+      "label": "ערוצי WhatsApp"
+    },
+    "messengerChannels": {
+      "label": "דפי Messenger"
     },
     "messages": {
       "label": "הודעות"

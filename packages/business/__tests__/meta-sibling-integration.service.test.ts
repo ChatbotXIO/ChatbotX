@@ -24,6 +24,13 @@ vi.mock("@chatbotx.io/database/client", () => ({
   findOrFail: vi.fn(),
 }))
 
+// The Messenger service now reaches workspace memberships (clone targets);
+// this suite only exercises page lookups, so the membership service is stubbed
+// to keep the schema mock minimal.
+vi.mock("../src/workspace-member/service", () => ({
+  workspaceMemberService: {},
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   integrationInstagramModel: {
     id: "IntegrationInstagram.id",

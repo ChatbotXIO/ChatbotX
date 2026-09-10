@@ -7,6 +7,7 @@ import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createBroadcastRequest } from "../schema/action"
+import { withBroadcastValidationErrors } from "./broadcast-validation-error"
 
 /**
  * `status` is intentionally the widened column type rather than
@@ -35,13 +36,16 @@ export const updateDraftBroadcastAction = workspaceActionClient
 
     // The service owns the channel/subaction/ownership validation and the
     // `status = draft` conditional WHERE that makes a non-draft row unmatchable.
+    // A rejected payload surfaces as the same field-level error as on create.
     const result: UpdateDraftBroadcastResult =
-      await broadcastService.updateDraft({
-        workspaceId,
-        broadcastId: id,
-        canViewEmailAndPhone,
-        data: parsedInput,
-      })
+      await withBroadcastValidationErrors(() =>
+        broadcastService.updateDraft({
+          workspaceId,
+          broadcastId: id,
+          canViewEmailAndPhone,
+          data: parsedInput,
+        }),
+      )
 
     // Mirrors `createBroadcastAction`: only an immediate send is a launch. A
     // future schedule is audited as a launch when the send actually happens,

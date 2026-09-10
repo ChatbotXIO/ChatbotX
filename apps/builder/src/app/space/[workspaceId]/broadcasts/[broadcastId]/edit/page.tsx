@@ -11,7 +11,6 @@ import { FlowTemplateStoreProvider } from "@/features/flows/react-flow/stores/fl
 import { WhatsappFlowStoreProvider } from "@/features/flows/react-flow/stores/whatsapp-flow-store-provider"
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
-import { IntegrationStoreProvider } from "@/features/integration-whatsapp/provider/integration-store-context"
 import { SequenceStoreProvider } from "@/features/sequences/provider/sequence-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import { UserStoreProvider } from "@/features/users/provider/user-store-context"
@@ -56,34 +55,33 @@ export default async function EditBroadcastPage({
   return (
     <FlowStoreProvider workspaceId={workspaceId}>
       <CustomFieldStoreProvider workspaceId={workspaceId}>
-        <IntegrationStoreProvider workspaceId={workspaceId}>
-          <TagStoreProvider workspaceId={workspaceId}>
-            <FlowTemplateStoreProvider
-              openaiCompatibleIntegrations={openaiCompatibleIntegrations}
-              workspaceId={workspaceId}
-            >
-              <WhatsappFlowStoreProvider workspaceId={workspaceId}>
-                <InboxStoreProvider workspaceId={workspaceId}>
-                  <UserStoreProvider workspaceId={workspaceId}>
-                    <SequenceStoreProvider workspaceId={workspaceId}>
-                      <ContactStoreProvider
-                        autoInitialize={false}
+        <TagStoreProvider workspaceId={workspaceId}>
+          <FlowTemplateStoreProvider
+            includeAllTemplateStatuses
+            openaiCompatibleIntegrations={openaiCompatibleIntegrations}
+            workspaceId={workspaceId}
+          >
+            <WhatsappFlowStoreProvider workspaceId={workspaceId}>
+              <InboxStoreProvider workspaceId={workspaceId}>
+                <UserStoreProvider workspaceId={workspaceId}>
+                  <SequenceStoreProvider workspaceId={workspaceId}>
+                    <ContactStoreProvider
+                      autoInitialize={false}
+                      workspaceId={workspaceId}
+                    >
+                      <CreateBroadcastForm
+                        canViewEmailAndPhone={canViewEmailAndPhone}
+                        editDraft={editDraft}
+                        initialChannel={editDraft.channel}
                         workspaceId={workspaceId}
-                      >
-                        <CreateBroadcastForm
-                          canViewEmailAndPhone={canViewEmailAndPhone}
-                          editDraft={editDraft}
-                          initialChannel={editDraft.channel}
-                          workspaceId={workspaceId}
-                        />
-                      </ContactStoreProvider>
-                    </SequenceStoreProvider>
-                  </UserStoreProvider>
-                </InboxStoreProvider>
-              </WhatsappFlowStoreProvider>
-            </FlowTemplateStoreProvider>
-          </TagStoreProvider>
-        </IntegrationStoreProvider>
+                      />
+                    </ContactStoreProvider>
+                  </SequenceStoreProvider>
+                </UserStoreProvider>
+              </InboxStoreProvider>
+            </WhatsappFlowStoreProvider>
+          </FlowTemplateStoreProvider>
+        </TagStoreProvider>
       </CustomFieldStoreProvider>
     </FlowStoreProvider>
   )

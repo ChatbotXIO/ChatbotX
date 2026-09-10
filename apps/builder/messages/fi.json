@@ -1779,6 +1779,12 @@
     "messengerChannel": {
       "label": "Messenger-kanava"
     },
+    "whatsappChannels": {
+      "label": "WhatsApp-kanavat"
+    },
+    "messengerChannels": {
+      "label": "Messenger-sivut"
+    },
     "messages": {
       "label": "Viestit"
     },
@@ -3238,6 +3244,7 @@
         "result": {
           "title": "Kloonauksen tulokset",
           "succeededTitle": "Onnistui",
+          "pendingTitle": "Odottaa Metan tarkistusta",
           "close": "Sulje"
         }
       }

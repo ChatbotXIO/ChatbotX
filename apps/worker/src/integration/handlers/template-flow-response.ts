@@ -30,6 +30,8 @@ type TemplateFlowButtonResolver<TToken extends TemplateFlowToken> = (
   token: TToken,
   context: {
     workspaceId: string
+    /** The responding contact's inbox: a multi-page broadcast keeps its params per page. */
+    inboxId: string
   },
 ) => Promise<ResolvedTemplateFlowButton | null>
 
@@ -53,6 +55,7 @@ const resolveFromBroadcast: TemplateFlowButtonResolver<
   const broadcast = await broadcastService.findByIdForResponse({
     workspaceId: context.workspaceId,
     broadcastId: token.broadcastId,
+    inboxId: context.inboxId,
   })
   if (!broadcast) {
     logger.warn(
@@ -173,7 +176,10 @@ export async function captureTemplateFlowResponse(
   const resolver = buttonParamResolvers[
     token.origin
   ] as TemplateFlowButtonResolver<typeof token>
-  const resolved = await resolver(token, { workspaceId: data.workspaceId })
+  const resolved = await resolver(token, {
+    workspaceId: data.workspaceId,
+    inboxId: contactInbox.inboxId,
+  })
   if (!resolved) {
     return
   }
