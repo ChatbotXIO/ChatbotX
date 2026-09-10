@@ -26,6 +26,8 @@ import {
 import { appointmentExternalCalendarService } from "../appointment-external-calendar"
 import { appointmentReminderService } from "../appointment-reminder"
 import { BaseService } from "../base.service"
+import { contactService } from "../contact"
+import { conversationService } from "../conversation"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { resolveTenantSettings } from "../platform/settings"
@@ -272,6 +274,16 @@ class AppointmentService extends BaseService {
     inviteeTimezone?: string
     metadata?: MetadataPayload
   }) {
+    await contactService.findByIdOrFail({
+      workspaceId: input.workspaceId,
+      id: input.contactId,
+    })
+    if (input.conversationId != null) {
+      await conversationService.findByOrFail({
+        where: { workspaceId: input.workspaceId, id: input.conversationId },
+      })
+    }
+
     const availabilityContext =
       await appointmentCalendarService.prepareAvailabilityContext({
         workspaceId: input.workspaceId,

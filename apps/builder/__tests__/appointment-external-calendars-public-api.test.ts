@@ -53,7 +53,7 @@ const appointmentExternalCalendarService = {
 }
 vi.mock("@chatbotx.io/business", () => ({ appointmentExternalCalendarService }))
 
-await import("@/features/appointment-external-calendars/api/public")
+await import("@/features/external-calendars/api/public")
 
 const findProcedure = (method: string, path: string) => {
   const found = capturedProcedures.find(

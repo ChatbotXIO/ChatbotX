@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   buildContext: vi.fn(),
   parseAuth: vi.fn(),
   runAction: vi.fn(),
+  disconnectProvider: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/integration-google-calendar", () => ({
@@ -12,6 +13,7 @@ vi.mock("@chatbotx.io/integration-google-calendar", () => ({
   },
   integration: {
     runAction: (...args: unknown[]) => mocks.runAction(...args),
+    disconnect: (...args: unknown[]) => mocks.disconnectProvider(...args),
   },
 }))
 
@@ -79,5 +81,64 @@ describe("appointmentExternalCalendarService.getBusyIntervalsForAppointmentCalen
         end: new Date("2026-08-12T10:00:00.000Z").getTime(),
       },
     ])
+  })
+})
+
+describe("appointmentExternalCalendarService.disconnect", () => {
+  const connection = {
+    id: "google-calendar-row-1",
+    workspaceId: "workspace-1",
+    integrationId: "integration-1",
+    auth: { tokens: { accessToken: "token-1" } },
+    providerCalendarId: "provider-calendar-1",
+    email: "owner@example.test",
+    createdAt: new Date("2026-08-01T00:00:00.000Z"),
+    updatedAt: new Date("2026-08-01T00:00:00.000Z"),
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.parseAuth.mockImplementation((auth) => auth)
+    vi.spyOn(
+      appointmentExternalCalendarService,
+      "getDisconnectableGoogleConnection",
+    ).mockResolvedValue(connection as never)
+    vi.spyOn(
+      appointmentExternalCalendarService,
+      "deleteByIntegrationIds",
+    ).mockResolvedValue([{ id: "integration-1" }] as never)
+  })
+
+  test("revokes the Google-side grant before deleting the local row", async () => {
+    mocks.disconnectProvider.mockResolvedValueOnce(undefined)
+
+    await appointmentExternalCalendarService.disconnect({
+      workspaceId: "workspace-1",
+      integrationId: "integration-1",
+    })
+
+    expect(mocks.disconnectProvider).toHaveBeenCalledWith(connection.auth)
+    expect(
+      appointmentExternalCalendarService.deleteByIntegrationIds,
+    ).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      integrationIds: ["integration-1"],
+    })
+  })
+
+  test("still deletes the local row when the provider revoke fails", async () => {
+    mocks.disconnectProvider.mockRejectedValueOnce(new Error("provider outage"))
+
+    await appointmentExternalCalendarService.disconnect({
+      workspaceId: "workspace-1",
+      integrationId: "integration-1",
+    })
+
+    expect(
+      appointmentExternalCalendarService.deleteByIntegrationIds,
+    ).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      integrationIds: ["integration-1"],
+    })
   })
 })

@@ -12,8 +12,36 @@ import { appointmentCalendarResource } from "./resource"
 // client input (it comes from the token's resolved workspace) and never
 // echoed in a response; see `public-spec-operations.test.ts`'s full sweep.
 
+// Explicit allow-list, not the whole row: every field picked here becomes a
+// stable contract, so a new column added to the model does not leak until
+// deliberately added here. `deletedAt` is internal bookkeeping and
+// intentionally excluded.
 export const appointmentCalendarPublicResource =
-  appointmentCalendarResource.omit({ workspaceId: true })
+  appointmentCalendarResource.pick({
+    id: true,
+    name: true,
+    description: true,
+    active: true,
+    timezone: true,
+    durationMinutes: true,
+    bufferAfterMinutes: true,
+    locationType: true,
+    locationDetail: true,
+    scheduleWindowType: true,
+    scheduleWindowConfig: true,
+    maxAppointmentsPerUser: true,
+    dailyLimitEnabled: true,
+    maxPerDay: true,
+    allowGroupMeeting: true,
+    maxPerSlot: true,
+    confirmationMessage: true,
+    confirmationFlowId: true,
+    cancellationFlowId: true,
+    externalConnectionId: true,
+    publicLinkSlug: true,
+    createdAt: true,
+    updatedAt: true,
+  })
 export type AppointmentCalendarPublicResource = z.infer<
   typeof appointmentCalendarPublicResource
 >
@@ -28,7 +56,14 @@ const appointmentCalendarAvailabilityPublicResource = createSelectSchema(
     id: z.string(),
     calendarId: z.string(),
   },
-).omit({ calendarId: true })
+).pick({
+  id: true,
+  weekday: true,
+  startMinute: true,
+  endMinute: true,
+  createdAt: true,
+  updatedAt: true,
+})
 
 const appointmentCalendarReminderPublicResource = createSelectSchema(
   appointmentCalendarReminderModel,
@@ -37,7 +72,14 @@ const appointmentCalendarReminderPublicResource = createSelectSchema(
     calendarId: z.string(),
     flowId: z.string(),
   },
-).omit({ calendarId: true })
+).pick({
+  id: true,
+  flowId: true,
+  timingValue: true,
+  timingUnit: true,
+  createdAt: true,
+  updatedAt: true,
+})
 
 export const appointmentCalendarForEditPublicResource =
   appointmentCalendarPublicResource.extend({

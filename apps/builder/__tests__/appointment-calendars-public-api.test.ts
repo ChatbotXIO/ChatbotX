@@ -10,6 +10,7 @@ type RouteConfig = {
 
 type CapturedProcedure = {
   route: RouteConfig
+  errors?: Record<string, unknown>
   handler?: (...args: any[]) => any
 }
 
@@ -23,7 +24,10 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
     const chain = {
       input: vi.fn(() => chain),
       output: vi.fn(() => chain),
-      errors: vi.fn(() => chain),
+      errors: vi.fn((errorMap: Record<string, unknown>) => {
+        record.errors = errorMap
+        return chain
+      }),
       handler: vi.fn((fn: (...args: any[]) => any) => {
         record.handler = fn
         return { handler: fn }
@@ -161,6 +165,12 @@ describe("POST /v1/appointment-calendars", () => {
     })
     expect(result).toEqual({ id: "cal-1" })
   })
+
+  test("declares the nameAlreadyExists 409", () => {
+    expect(procedure.errors).toMatchObject({
+      nameAlreadyExists: { status: 409 },
+    })
+  })
 })
 
 describe("PUT /v1/appointment-calendars/{id}", () => {
@@ -193,6 +203,14 @@ describe("PUT /v1/appointment-calendars/{id}", () => {
         scheduleWindowType: "rollingDays",
       }),
     )
+  })
+
+  test("declares the nameAlreadyExists and duplicateReminder 409s", () => {
+    expect(procedure.errors).toMatchObject({
+      notFound: { status: 404 },
+      nameAlreadyExists: { status: 409 },
+      duplicateReminder: { status: 409 },
+    })
   })
 })
 
@@ -237,6 +255,13 @@ describe("POST /v1/appointment-calendars/{id}/duplicate", () => {
       id: "cal-1",
     })
     expect(result).toEqual({ id: "cal-2" })
+  })
+
+  test("declares the nameAlreadyExists 409", () => {
+    expect(procedure.errors).toMatchObject({
+      notFound: { status: 404 },
+      nameAlreadyExists: { status: 409 },
+    })
   })
 })
 

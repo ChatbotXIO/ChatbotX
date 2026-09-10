@@ -595,6 +595,30 @@ export class AppointmentCalendarService extends BaseService {
             tx,
           )
         }
+        // `confirmationFlowId`/`cancellationFlowId`/`reminders[].flowId` are
+        // client-settable (public API + builder form). A plain FK only
+        // checks the flow exists, not that it belongs to this workspace —
+        // without this, a caller could pin another workspace's flow id onto
+        // their calendar. Mirrors the `externalConnectionId` ownership check
+        // above.
+        const referencedFlowIds = [
+          ...new Set(
+            [
+              input.confirmationFlowId,
+              input.cancellationFlowId,
+              ...input.reminders.map((reminder) => reminder.flowId),
+            ].filter((flowId): flowId is string => flowId != null),
+          ),
+        ]
+        if (referencedFlowIds.length > 0) {
+          await flowService.assertAllExist(
+            {
+              workspaceId: input.workspaceId,
+              flowIds: referencedFlowIds,
+            },
+            tx,
+          )
+        }
         const row = await appointmentCalendarRepository.update(
           {
             workspaceId: input.workspaceId,
@@ -920,9 +944,11 @@ export class AppointmentCalendarService extends BaseService {
 
     const existingAppointments = await tx.query.appointmentModel.findMany({
       where: {
+        workspaceId: input.workspaceId,
         calendarId: input.calendarId,
         status: "scheduled",
         startAt: { gte: bounds.start, lte: bounds.end },
+        deletedAt: { isNull: true },
       },
       columns: { startAt: true },
     })

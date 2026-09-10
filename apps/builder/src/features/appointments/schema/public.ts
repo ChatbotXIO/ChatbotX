@@ -10,13 +10,32 @@ import { publicListRequest } from "@/lib/public-api/list"
 // client input (it comes from the token's resolved workspace) and never
 // echoed in a response; see `public-spec-operations.test.ts`'s full sweep.
 
+// Explicit allow-list, not the whole row: every field picked here becomes a
+// stable contract, so a new column added to the model does not leak until
+// deliberately added here. `deletedAt`/`externalSyncStatus` are internal
+// bookkeeping and intentionally excluded.
 const appointmentBaseResource = createSelectSchema(appointmentModel, {
   id: z.string(),
   workspaceId: z.string(),
   calendarId: z.string(),
   contactId: z.string(),
   conversationId: z.string().nullable(),
-}).omit({ workspaceId: true })
+}).pick({
+  id: true,
+  calendarId: true,
+  contactId: true,
+  conversationId: true,
+  startAt: true,
+  endAt: true,
+  inviteeTimezone: true,
+  status: true,
+  locationType: true,
+  locationDetail: true,
+  externalEventId: true,
+  cancelledAt: true,
+  createdAt: true,
+  updatedAt: true,
+})
 
 // The row shape returned by `appointmentService.findByOrFail`/
 // `bookAppointment`/`cancelAppointmentById`/`deleteAppointmentById` — the

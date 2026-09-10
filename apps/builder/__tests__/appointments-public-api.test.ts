@@ -10,6 +10,7 @@ type RouteConfig = {
 
 type CapturedProcedure = {
   route: RouteConfig
+  errors?: Record<string, unknown>
   handler?: (...args: any[]) => any
 }
 
@@ -23,7 +24,10 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
     const chain = {
       input: vi.fn(() => chain),
       output: vi.fn(() => chain),
-      errors: vi.fn(() => chain),
+      errors: vi.fn((errorMap: Record<string, unknown>) => {
+        record.errors = errorMap
+        return chain
+      }),
       handler: vi.fn((fn: (...args: any[]) => any) => {
         record.handler = fn
         return { handler: fn }
@@ -168,8 +172,18 @@ describe("POST /v1/appointments", () => {
     })
   })
 
+  // The workspace-scoping check for contactId/conversationId lives in
+  // appointmentService.bookAppointment itself, not this handler — see
+  // packages/business/__tests__/appointment-service-webview.test.ts for the
+  // cross-tenant regression coverage.
+
   test("declares the booking 409 error codes", () => {
-    expect(procedure.route.summary).toBe("Book an appointment")
+    expect(procedure.errors).toMatchObject({
+      notFound: { status: 404 },
+      slotUnavailable: { status: 409 },
+      appointmentAvailabilityChanged: { status: 409 },
+      appointmentAlreadyScheduled: { status: 409 },
+    })
   })
 })
 

@@ -21,9 +21,11 @@ import {
   integration as integrationGoogleCalendar,
 } from "@chatbotx.io/integration-google-calendar"
 import type { Oauth2AuthValue } from "@chatbotx.io/sdk"
+import { normalizeError } from "universal-error-normalizer"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { buildContext } from "../integration-context"
+import { logger } from "../logger"
 
 export type ExternalCalendarProviderType = "googleCalendar"
 
@@ -397,7 +399,21 @@ class AppointmentExternalCalendarService extends BaseService {
   }
 
   async disconnect(input: { workspaceId: string; integrationId: string }) {
-    await this.getDisconnectableGoogleConnection(input)
+    const connection = await this.getDisconnectableGoogleConnection(input)
+
+    try {
+      const auth = googleCalendarAuthSchema.parse(connection.auth)
+      await integrationGoogleCalendar.disconnect?.(auth)
+    } catch (error) {
+      logger.warn(
+        {
+          err: normalizeError(error),
+          workspaceId: input.workspaceId,
+          integrationId: input.integrationId,
+        },
+        "Failed to revoke Google Calendar token",
+      )
+    }
 
     const deleted = await this.deleteByIntegrationIds({
       workspaceId: input.workspaceId,

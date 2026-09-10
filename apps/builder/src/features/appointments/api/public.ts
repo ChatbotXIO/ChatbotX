@@ -83,6 +83,10 @@ export const appointmentsPublicRouter = {
     .errors(possibleErrorsOnBookingAppointment)
     .handler(
       async ({ context, input }) =>
+        // `bookAppointment` itself validates contactId/conversationId are
+        // workspace-scoped (service.ts) — no need to duplicate that check
+        // here, it already produces the same clean 404 before touching the
+        // booking transaction.
         await appointmentService.bookAppointment({
           workspaceId: context.workspace.id,
           calendarId: input.calendarId,

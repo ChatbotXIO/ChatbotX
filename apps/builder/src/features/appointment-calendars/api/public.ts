@@ -3,10 +3,11 @@ import {
   appointmentService,
 } from "@chatbotx.io/business"
 import {
-  possibleErrorsOnCreatingResource,
+  possibleErrorsOnCreatingAppointmentCalendar,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
+  possibleErrorsOnMutatingAppointmentCalendar,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListResponse } from "@/lib/public-api/list"
@@ -81,7 +82,7 @@ export const appointmentCalendarsPublicRouter = {
     })
     .input(createAppointmentCalendarRequest)
     .output(createAppointmentCalendarPublicResponse)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingAppointmentCalendar)
     .handler(async ({ context, input }) => {
       const id = await appointmentCalendarService.create({
         workspaceId: context.workspace.id,
@@ -100,7 +101,7 @@ export const appointmentCalendarsPublicRouter = {
     .input(
       updateAppointmentCalendarRequest.and(appointmentCalendarIdPublicRequest),
     )
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnMutatingAppointmentCalendar)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
       await appointmentCalendarService.update({
@@ -142,7 +143,7 @@ export const appointmentCalendarsPublicRouter = {
     })
     .input(appointmentCalendarIdPublicRequest)
     .output(createAppointmentCalendarPublicResponse)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnMutatingAppointmentCalendar)
     .handler(async ({ context, input }) => {
       const id = await appointmentCalendarService.duplicate({
         workspaceId: context.workspace.id,

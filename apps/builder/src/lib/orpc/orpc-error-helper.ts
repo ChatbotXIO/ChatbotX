@@ -177,3 +177,34 @@ export const possibleErrorsOnDisconnectingExternalCalendar = {
   businessError,
   connectionInUse,
 } satisfies ErrorMap
+
+/**
+ * Appointment calendar create/update/rename/duplicate can throw two more
+ * `ChatbotXException` codes at 409 — `nameAlreadyExists`
+ * (`throwMappedUniqueError` in
+ * `packages/business/src/appointment-calendar/service.ts`) and
+ * `duplicateReminder` (same file, `update`, on a duplicate reminder
+ * flow+timing). Same declare-or-vanish rule as
+ * `possibleErrorsOnBookingAppointment` above.
+ */
+const nameAlreadyExists = {
+  message: "Calendar name already exists",
+  status: 409,
+}
+
+const duplicateReminder = {
+  message: "Duplicate reminder: same flow and timing already exists",
+  status: 409,
+}
+
+export const possibleErrorsOnCreatingAppointmentCalendar = {
+  businessError,
+  nameAlreadyExists,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingAppointmentCalendar = {
+  notFound,
+  businessError,
+  nameAlreadyExists,
+  duplicateReminder,
+} satisfies ErrorMap
