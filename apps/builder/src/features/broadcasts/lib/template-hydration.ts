@@ -29,8 +29,11 @@ export type TemplateHydrationDecision =
  *    seed after the user picks a different template mid-edit.
  */
 export function resolveTemplateHydration(input: {
-  /** The subaction the calling effect handles. */
-  effectSubaction: BroadcastSubaction
+  /**
+   * The subaction the calling effect handles. Optional for an effect that is
+   * only mounted for the subaction it owns (the per-page target card).
+   */
+  effectSubaction?: BroadcastSubaction
   /** The subaction the form is currently on. */
   subaction: BroadcastSubaction
   /** Template id currently selected in the form. */
@@ -38,7 +41,9 @@ export function resolveTemplateHydration(input: {
   /** Template id the edited draft was hydrated with; absent when creating. */
   hydratedTemplateId?: string | null
 }): TemplateHydrationDecision {
-  if (input.subaction !== input.effectSubaction || !input.watchedTemplateId) {
+  const ownsSubaction =
+    !input.effectSubaction || input.subaction === input.effectSubaction
+  if (!(ownsSubaction && input.watchedTemplateId)) {
     return "skip"
   }
 

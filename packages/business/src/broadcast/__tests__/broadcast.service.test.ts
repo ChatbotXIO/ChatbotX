@@ -62,12 +62,22 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   integrationMessengerModel: {
     id: "IntegrationMessenger.id",
     name: "IntegrationMessenger.name",
+    inboxId: "IntegrationMessenger.inboxId",
     workspaceId: "IntegrationMessenger.workspaceId",
   },
   integrationWhatsappModel: {
     id: "IntegrationWhatsapp.id",
     name: "IntegrationWhatsapp.name",
+    inboxId: "IntegrationWhatsapp.inboxId",
     workspaceId: "IntegrationWhatsapp.workspaceId",
+  },
+  broadcastTargetModel: {
+    broadcastId: "BroadcastTarget.broadcastId",
+    inboxId: "BroadcastTarget.inboxId",
+  },
+  inboxModel: {
+    id: "Inbox.id",
+    name: "Inbox.name",
   },
   messengerMessageTemplateModel: {
     id: "MessengerMessageTemplate.id",
@@ -183,7 +193,9 @@ vi.mock("@chatbotx.io/database/utils", () => ({
   chunkById: mocks.chunkById,
 }))
 
-const { broadcastService } = await import("../service")
+const { broadcastService, broadcastTemplateSelections } = await import(
+  "../service"
+)
 
 const contactFilter = {
   operator: "and" as const,
@@ -362,6 +374,24 @@ describe("broadcastService.countAudience", () => {
 
     const where = mocks.count.mock.calls[0]?.[1] as { __and?: unknown[] }
     expect(where.__and).not.toContainEqual({ RAW: "recent-interaction" })
+  })
+
+  test("forwards explicit inboxIds when resolving the audience inboxes", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue([])
+
+    await broadcastService.countAudience({
+      workspaceId: "ws-1",
+      channels: ["whatsapp"],
+      inboxIds: ["inbox-a", "inbox-b"],
+    })
+
+    expect(mocks.resolveBroadcastInboxIds).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        channels: ["whatsapp"],
+        inboxIds: ["inbox-a", "inbox-b"],
+      }),
+    )
   })
 
   test("forwards integrationMessengerId when resolving the audience inboxes", async () => {
@@ -575,26 +605,42 @@ describe("broadcastService.listAudiencePreview", () => {
   })
 })
 
-describe("broadcastService.getTemplateDetail", () => {
-  test("returns null when the broadcast has no template", async () => {
+describe("broadcastService.listTemplateDetails", () => {
+  test("returns an empty list when the broadcast has no template", async () => {
     mocks.findBroadcast.mockResolvedValue({
       templateId: null,
       channel: "whatsapp",
+      targets: [],
     })
 
-    const detail = await broadcastService.getTemplateDetail({
+    const details = await broadcastService.listTemplateDetails({
       workspaceId: "ws-1",
       broadcastId: "broadcast-1",
     })
 
-    expect(detail).toBeNull()
+    expect(details).toEqual([])
     expect(mocks.selectWhere).not.toHaveBeenCalled()
   })
 
-  test("loads a whatsapp template scoped through its integration workspace", async () => {
+  test("returns an empty list when the broadcast is missing", async () => {
+    mocks.findBroadcast.mockResolvedValue(undefined)
+
+    const details = await broadcastService.listTemplateDetails({
+      workspaceId: "ws-1",
+      broadcastId: "broadcast-1",
+    })
+
+    expect(details).toEqual([])
+    expect(mocks.selectWhere).not.toHaveBeenCalled()
+  })
+
+  test("loads a legacy whatsapp template scoped through its integration workspace", async () => {
     mocks.findBroadcast.mockResolvedValue({
       templateId: "template-1",
+      integrationWhatsappId: null,
+      integrationMessengerId: null,
       channel: "whatsapp",
+      targets: [],
     })
     mocks.selectRows = [
       {
@@ -604,31 +650,32 @@ describe("broadcastService.getTemplateDetail", () => {
         category: "UTILITY",
         status: "APPROVED",
         components: [],
+        inboxId: "inbox-1",
         integrationName: "WhatsApp Main",
       },
     ]
 
-    const detail = await broadcastService.getTemplateDetail({
+    const details = await broadcastService.listTemplateDetails({
       workspaceId: "ws-1",
       broadcastId: "broadcast-1",
     })
 
-    expect(detail).toEqual({
-      ...mocks.selectRows[0],
-      channel: "whatsapp",
-    })
+    expect(details).toEqual([{ ...mocks.selectRows[0], channel: "whatsapp" }])
     expect(mocks.selectWhere).toHaveBeenCalledWith({
       __and: [
-        { __eq: ["WhatsappMessageTemplate.id", "template-1"] },
+        { __inArray: ["WhatsappMessageTemplate.id", ["template-1"]] },
         { __eq: ["IntegrationWhatsapp.workspaceId", "ws-1"] },
       ],
     })
   })
 
-  test("loads a messenger template with its integration name", async () => {
+  test("loads a legacy messenger template with its integration name", async () => {
     mocks.findBroadcast.mockResolvedValue({
       templateId: "template-2",
+      integrationWhatsappId: null,
+      integrationMessengerId: null,
       channel: "messenger",
+      targets: [],
     })
     mocks.selectRows = [
       {
@@ -639,25 +686,104 @@ describe("broadcastService.getTemplateDetail", () => {
         status: "APPROVED",
         parameterFormat: "POSITIONAL",
         components: [],
+        inboxId: "inbox-2",
         integrationName: "Messenger Page",
       },
     ]
 
-    const detail = await broadcastService.getTemplateDetail({
+    const details = await broadcastService.listTemplateDetails({
       workspaceId: "ws-1",
       broadcastId: "broadcast-1",
     })
 
-    expect(detail).toEqual({
-      ...mocks.selectRows[0],
-      channel: "messenger",
-    })
+    expect(details).toEqual([{ ...mocks.selectRows[0], channel: "messenger" }])
     expect(mocks.selectWhere).toHaveBeenCalledWith({
       __and: [
-        { __eq: ["MessengerMessageTemplate.id", "template-2"] },
+        { __inArray: ["MessengerMessageTemplate.id", ["template-2"]] },
         { __eq: ["IntegrationMessenger.workspaceId", "ws-1"] },
       ],
     })
+  })
+
+  test("returns one detail per target, in target order, each pinned to its own page", async () => {
+    mocks.findBroadcast.mockResolvedValue({
+      templateId: null,
+      integrationWhatsappId: null,
+      integrationMessengerId: null,
+      channel: "whatsapp",
+      targets: [
+        { inboxId: "inbox-b", templateId: "template-b" },
+        { inboxId: "inbox-a", templateId: "template-a" },
+      ],
+    })
+    const templateA = {
+      id: "template-a",
+      name: "promo",
+      language: "en",
+      category: "MARKETING",
+      status: "APPROVED",
+      components: [],
+      inboxId: "inbox-a",
+      integrationName: "Page A",
+    }
+    const templateB = {
+      ...templateA,
+      id: "template-b",
+      inboxId: "inbox-b",
+      integrationName: "Page B",
+    }
+    mocks.selectRows = [templateA, templateB]
+
+    const details = await broadcastService.listTemplateDetails({
+      workspaceId: "ws-1",
+      broadcastId: "broadcast-1",
+    })
+
+    expect(details.map((detail) => detail.id)).toEqual([
+      "template-b",
+      "template-a",
+    ])
+    expect(mocks.selectWhere).toHaveBeenCalledTimes(1)
+    expect(mocks.selectWhere).toHaveBeenCalledWith({
+      __and: [
+        {
+          __inArray: [
+            "WhatsappMessageTemplate.id",
+            ["template-b", "template-a"],
+          ],
+        },
+        { __eq: ["IntegrationWhatsapp.workspaceId", "ws-1"] },
+      ],
+    })
+  })
+
+  test("drops a target whose template belongs to a different page", async () => {
+    mocks.findBroadcast.mockResolvedValue({
+      templateId: null,
+      integrationWhatsappId: null,
+      integrationMessengerId: null,
+      channel: "whatsapp",
+      targets: [{ inboxId: "inbox-b", templateId: "template-a" }],
+    })
+    mocks.selectRows = [
+      {
+        id: "template-a",
+        name: "promo",
+        language: "en",
+        category: "MARKETING",
+        status: "APPROVED",
+        components: [],
+        inboxId: "inbox-a",
+        integrationName: "Page A",
+      },
+    ]
+
+    const details = await broadcastService.listTemplateDetails({
+      workspaceId: "ws-1",
+      broadcastId: "broadcast-1",
+    })
+
+    expect(details).toEqual([])
   })
 })
 
@@ -678,14 +804,15 @@ describe("broadcastService.resolveTemplateBroadcastName", () => {
     const name = await broadcastService.resolveTemplateBroadcastName({
       workspaceId: "ws-1",
       channel: "whatsapp",
-      templateId: "template-1",
-      integrationWhatsappId: "whatsapp-1",
+      selections: [
+        { templateId: "template-1", integrationWhatsappId: "whatsapp-1" },
+      ],
     })
 
     expect(name).toBe("Acme WhatsApp - order_confirmation")
     expect(mocks.selectWhere).toHaveBeenCalledWith({
       __and: [
-        { __eq: ["WhatsappMessageTemplate.id", "template-1"] },
+        { __inArray: ["WhatsappMessageTemplate.id", ["template-1"]] },
         { __eq: ["IntegrationWhatsapp.workspaceId", "ws-1"] },
         {
           __eq: ["WhatsappMessageTemplate.integrationWhatsappId", "whatsapp-1"],
@@ -711,14 +838,15 @@ describe("broadcastService.resolveTemplateBroadcastName", () => {
     const name = await broadcastService.resolveTemplateBroadcastName({
       workspaceId: "ws-1",
       channel: "messenger",
-      templateId: "template-2",
-      integrationMessengerId: "messenger-1",
+      selections: [
+        { templateId: "template-2", integrationMessengerId: "messenger-1" },
+      ],
     })
 
     expect(name).toBe("Acme Page - promo_update")
     expect(mocks.selectWhere).toHaveBeenCalledWith({
       __and: [
-        { __eq: ["MessengerMessageTemplate.id", "template-2"] },
+        { __inArray: ["MessengerMessageTemplate.id", ["template-2"]] },
         { __eq: ["IntegrationMessenger.workspaceId", "ws-1"] },
         {
           __eq: [
@@ -746,8 +874,9 @@ describe("broadcastService.resolveTemplateBroadcastName", () => {
     const name = await broadcastService.resolveTemplateBroadcastName({
       workspaceId: "ws-1",
       channel: "whatsapp",
-      templateId: "template-3",
-      integrationWhatsappId: "whatsapp-1",
+      selections: [
+        { templateId: "template-3", integrationWhatsappId: "whatsapp-1" },
+      ],
     })
 
     expect(name).toBe("standalone_template")
@@ -769,12 +898,12 @@ describe("broadcastService.resolveTemplateBroadcastName", () => {
     await broadcastService.resolveTemplateBroadcastName({
       workspaceId: "ws-1",
       channel: "whatsapp",
-      templateId: "template-4",
+      selections: [{ templateId: "template-4" }],
     })
 
     expect(mocks.selectWhere).toHaveBeenCalledWith({
       __and: [
-        { __eq: ["WhatsappMessageTemplate.id", "template-4"] },
+        { __inArray: ["WhatsappMessageTemplate.id", ["template-4"]] },
         { __eq: ["IntegrationWhatsapp.workspaceId", "ws-1"] },
       ],
     })
@@ -786,8 +915,9 @@ describe("broadcastService.resolveTemplateBroadcastName", () => {
     const name = await broadcastService.resolveTemplateBroadcastName({
       workspaceId: "ws-1",
       channel: "whatsapp",
-      templateId: "missing-template",
-      integrationWhatsappId: "whatsapp-1",
+      selections: [
+        { templateId: "missing-template", integrationWhatsappId: "whatsapp-1" },
+      ],
     })
 
     expect(name).toBeNull()
@@ -797,11 +927,155 @@ describe("broadcastService.resolveTemplateBroadcastName", () => {
     const name = await broadcastService.resolveTemplateBroadcastName({
       workspaceId: "ws-1",
       channel: "telegram",
-      templateId: "template-5",
+      selections: [{ templateId: "template-5" }],
     })
 
     expect(name).toBeNull()
     expect(mocks.selectWhere).not.toHaveBeenCalled()
+  })
+
+  test("returns null without querying when nothing is selected", async () => {
+    const name = await broadcastService.resolveTemplateBroadcastName({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      selections: [],
+    })
+
+    expect(name).toBeNull()
+    expect(mocks.selectWhere).not.toHaveBeenCalled()
+  })
+
+  test("joins one page-prefixed segment per target for a multi-page broadcast", async () => {
+    mocks.selectRows = [
+      {
+        id: "template-a",
+        name: "promo",
+        language: "en",
+        category: "MARKETING",
+        status: "APPROVED",
+        components: [],
+        inboxId: "inbox-a",
+        integrationName: "Page A",
+      },
+      {
+        id: "template-b",
+        name: "welcome",
+        language: "en",
+        category: "MARKETING",
+        status: "APPROVED",
+        components: [],
+        inboxId: "inbox-b",
+        integrationName: "Page B",
+      },
+    ]
+
+    const name = await broadcastService.resolveTemplateBroadcastName({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      selections: [
+        { templateId: "template-a", inboxId: "inbox-a" },
+        { templateId: "template-b", inboxId: "inbox-b" },
+      ],
+    })
+
+    expect(name).toBe("Page A - promo / Page B - welcome")
+    expect(mocks.selectWhere).toHaveBeenCalledTimes(1)
+  })
+
+  test("returns null when a target's template belongs to another page", async () => {
+    mocks.selectRows = [
+      {
+        id: "template-a",
+        name: "promo",
+        language: "en",
+        category: "MARKETING",
+        status: "APPROVED",
+        components: [],
+        inboxId: "inbox-a",
+        integrationName: "Page A",
+      },
+    ]
+
+    const name = await broadcastService.resolveTemplateBroadcastName({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      selections: [{ templateId: "template-a", inboxId: "inbox-b" }],
+    })
+
+    expect(name).toBeNull()
+  })
+
+  test("truncates a long multi-page name to 255 characters", async () => {
+    const longPageName = "P".repeat(200)
+    mocks.selectRows = [
+      {
+        id: "template-a",
+        name: "promo",
+        language: "en",
+        category: "MARKETING",
+        status: "APPROVED",
+        components: [],
+        inboxId: "inbox-a",
+        integrationName: longPageName,
+      },
+      {
+        id: "template-b",
+        name: "promo",
+        language: "en",
+        category: "MARKETING",
+        status: "APPROVED",
+        components: [],
+        inboxId: "inbox-b",
+        integrationName: longPageName,
+      },
+    ]
+
+    const name = await broadcastService.resolveTemplateBroadcastName({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      selections: [
+        { templateId: "template-a", inboxId: "inbox-a" },
+        { templateId: "template-b", inboxId: "inbox-b" },
+      ],
+    })
+
+    expect(name).toHaveLength(255)
+  })
+})
+
+describe("broadcastTemplateSelections", () => {
+  test("pins one selection per target that carries a template", () => {
+    expect(
+      broadcastTemplateSelections({
+        templateId: "legacy",
+        integrationWhatsappId: "wa-1",
+        targets: [
+          { inboxId: "inbox-a", templateId: "template-a" },
+          { inboxId: "inbox-flow" },
+        ],
+      }),
+    ).toEqual([{ templateId: "template-a", inboxId: "inbox-a" }])
+  })
+
+  test("falls back to the legacy single template scoped by its integration ids", () => {
+    expect(
+      broadcastTemplateSelections({
+        templateId: "legacy",
+        integrationWhatsappId: "wa-1",
+        integrationMessengerId: undefined,
+        targets: [],
+      }),
+    ).toEqual([
+      {
+        templateId: "legacy",
+        integrationWhatsappId: "wa-1",
+        integrationMessengerId: undefined,
+      },
+    ])
+  })
+
+  test("is empty for a flow broadcast", () => {
+    expect(broadcastTemplateSelections({ targets: [] })).toEqual([])
   })
 })
 
@@ -861,5 +1135,98 @@ describe("broadcastService.forEachAudienceChunk", () => {
       }),
     )
     expect(onChunk).toHaveBeenCalledWith(rows)
+  })
+})
+
+describe("broadcastService.findByIdForResponse", () => {
+  test("returns the legacy broadcast params when there are no targets", async () => {
+    mocks.findBroadcast.mockResolvedValue({
+      id: "broadcast-1",
+      integrationWhatsappId: "wa-1",
+      templateId: "template-1",
+      templateData: { body: ["legacy"] },
+      targets: [],
+    })
+
+    const row = await broadcastService.findByIdForResponse({
+      workspaceId: "ws-1",
+      broadcastId: "broadcast-1",
+      inboxId: "inbox-any",
+    })
+
+    expect(row).toEqual({
+      id: "broadcast-1",
+      integrationWhatsappId: "wa-1",
+      templateData: { body: ["legacy"] },
+    })
+  })
+
+  test("returns the params of the target matching the contact's inbox", async () => {
+    mocks.findBroadcast.mockResolvedValue({
+      id: "broadcast-1",
+      integrationWhatsappId: null,
+      templateId: null,
+      templateData: null,
+      targets: [
+        {
+          inboxId: "inbox-a",
+          templateId: "t-a",
+          templateData: { body: ["A"] },
+        },
+        {
+          inboxId: "inbox-b",
+          templateId: "t-b",
+          templateData: { body: ["B"] },
+        },
+      ],
+    })
+
+    const row = await broadcastService.findByIdForResponse({
+      workspaceId: "ws-1",
+      broadcastId: "broadcast-1",
+      inboxId: "inbox-b",
+    })
+
+    expect(row).toEqual({
+      id: "broadcast-1",
+      integrationWhatsappId: null,
+      templateData: { body: ["B"] },
+    })
+  })
+
+  test("returns null params when the contact's inbox is not a target", async () => {
+    mocks.findBroadcast.mockResolvedValue({
+      id: "broadcast-1",
+      integrationWhatsappId: null,
+      templateId: null,
+      templateData: null,
+      targets: [
+        {
+          inboxId: "inbox-a",
+          templateId: "t-a",
+          templateData: { body: ["A"] },
+        },
+      ],
+    })
+
+    const row = await broadcastService.findByIdForResponse({
+      workspaceId: "ws-1",
+      broadcastId: "broadcast-1",
+      inboxId: "inbox-z",
+    })
+
+    expect(row?.templateData).toBeNull()
+  })
+
+  test("returns null when the broadcast is missing", async () => {
+    mocks.findBroadcast.mockResolvedValue(undefined)
+
+    await expect(
+      broadcastService.findByIdForResponse({
+        workspaceId: "ws-1",
+        broadcastId: "missing",
+        inboxId: "inbox-a",
+      }),
+    ).resolves.toBeNull()
   })
 })

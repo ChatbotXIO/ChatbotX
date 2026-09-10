@@ -109,12 +109,19 @@ function FlowSelectDialog({
   )
 }
 
-export function MessengerBroadcastFlowButtons() {
+/**
+ * `name` is the form path of the button bindings — `buttons` for the legacy
+ * single-page form, `targets.{index}.buttons` for one page of a multi-page
+ * broadcast.
+ */
+export function MessengerBroadcastFlowButtons({
+  name = "buttons",
+}: {
+  name?: string
+}) {
   const { setValue, control } = useFormContext()
 
-  const buttons = useWatch({ control, name: "buttons" }) as
-    | ButtonItem[]
-    | undefined
+  const buttons = useWatch({ control, name }) as ButtonItem[] | undefined
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
@@ -130,7 +137,7 @@ export function MessengerBroadcastFlowButtons() {
 
   function handleSave(flowId: string) {
     if (editingIndex !== null) {
-      setValue(`buttons.${editingIndex}.flowId`, flowId)
+      setValue(`${name}.${editingIndex}.flowId`, flowId)
     }
     setEditingIndex(null)
   }

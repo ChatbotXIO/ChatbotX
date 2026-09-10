@@ -26,5 +26,9 @@ export const broadcastRelations = defineRelationsPart(schema, (r) => ({
       from: r.broadcastModel.integrationMessengerId,
       to: r.integrationMessengerModel.id,
     }),
+    targets: r.many.broadcastTargetModel({
+      from: r.broadcastModel.id,
+      to: r.broadcastTargetModel.broadcastId,
+    }),
   },
 }))

@@ -54,9 +54,29 @@ vi.mock("@/lib/safe-action", () => ({
   workspaceActionClient: workspaceActionClientChain,
   workspaceActionClientAllowExpired: workspaceActionClientAllowExpiredChain,
 }))
+const { MockBroadcastValidationException, returnValidationErrors } = vi.hoisted(
+  () => {
+    class MockBroadcastValidationException extends Error {
+      readonly field: string
+      constructor(message: string, field: string) {
+        super(message)
+        this.field = field
+      }
+    }
+    return {
+      MockBroadcastValidationException,
+      returnValidationErrors: vi.fn((_schema: unknown, errors: unknown) => ({
+        __validationError: errors,
+      })),
+    }
+  },
+)
+
 vi.mock("@chatbotx.io/business", () => ({
   broadcastService: { scheduleDraft, softDeleteBroadcasts, updateDraft },
+  BroadcastValidationException: MockBroadcastValidationException,
 }))
+vi.mock("next-safe-action", () => ({ returnValidationErrors }))
 vi.mock("@chatbotx.io/business/audit", () => ({
   auditService: { record: (...args: unknown[]) => recordAuditLog(...args) },
 }))
@@ -236,6 +256,33 @@ describe("updateDraftBroadcastAction", () => {
       data: parsedInput,
     })
     expect(result).toEqual({ id: "b-1", status: "draft" })
+  })
+
+  test("surfaces a rejected payload as a field-level error instead of a server error", async () => {
+    updateDraft.mockRejectedValue(
+      new MockBroadcastValidationException("Inbox not found", "targets"),
+    )
+
+    const result = await updateHandler({
+      bindArgsParsedInputs: ["ws-1", "b-1"],
+      parsedInput,
+    })
+
+    expect(result).toEqual({
+      __validationError: {
+        _errors: ["Validation Exception"],
+        targets: { _errors: ["Inbox not found"] },
+      },
+    })
+    expect(recordAuditLog).not.toHaveBeenCalled()
+  })
+
+  test("lets unexpected service errors propagate", async () => {
+    updateDraft.mockRejectedValue(new Error("database down"))
+
+    await expect(
+      updateHandler({ bindArgsParsedInputs: ["ws-1", "b-1"], parsedInput }),
+    ).rejects.toThrow("database down")
   })
 
   test("records a launch audit entry when the edit sends the broadcast now", async () => {

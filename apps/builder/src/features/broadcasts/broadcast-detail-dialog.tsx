@@ -2,8 +2,10 @@
 
 import type { BroadcastTemplateDetail } from "@chatbotx.io/business"
 import {
+  broadcastSendsTemplate,
   broadcastSubactions,
   channelTypes,
+  resolveBroadcastTemplateSend,
 } from "@chatbotx.io/database/partials"
 import type {
   MessengerTemplateComponent,
@@ -45,13 +47,17 @@ export function BroadcastDetailDialog({
   const t = useTranslations()
   const formatter = useFormatter()
   const workspaceId = useWorkspaceId()
-  const [templateDetail, setTemplateDetail] =
-    useState<BroadcastTemplateDetail | null>(null)
+  const [templateDetails, setTemplateDetails] = useState<
+    BroadcastTemplateDetail[]
+  >([])
   const [loadingTemplateDetail, setLoadingTemplateDetail] = useState(false)
 
+  const broadcastId = broadcast?.id
+  const sendsTemplate = broadcast ? broadcastSendsTemplate(broadcast) : false
+
   useEffect(() => {
-    if (!(open && broadcast?.templateId)) {
-      setTemplateDetail(null)
+    if (!(open && broadcastId && sendsTemplate)) {
+      setTemplateDetails([])
       setLoadingTemplateDetail(false)
       return
     }
@@ -60,18 +66,18 @@ export function BroadcastDetailDialog({
     setLoadingTemplateDetail(true)
 
     client.broadcastAPIs
-      .privateGetBroadcastTemplateDetailAPI({
+      .privateListBroadcastTemplateDetailsAPI({
         workspaceId,
-        broadcastId: broadcast.id,
+        broadcastId,
       })
-      .then((detail) => {
+      .then((details) => {
         if (isActive) {
-          setTemplateDetail(detail)
+          setTemplateDetails(details)
         }
       })
       .catch(() => {
         if (isActive) {
-          setTemplateDetail(null)
+          setTemplateDetails([])
         }
       })
       .finally(() => {
@@ -83,7 +89,7 @@ export function BroadcastDetailDialog({
     return () => {
       isActive = false
     }
-  }, [broadcast?.id, broadcast?.templateId, open, workspaceId])
+  }, [broadcastId, sendsTemplate, open, workspaceId])
 
   const contactFilter = useMemo(() => {
     const parsed = contactFilterCriteriaSchema.safeParse(
@@ -105,20 +111,11 @@ export function BroadcastDetailDialog({
     ? channel.data
     : channelTypes.enum.omnichannel
   const subaction = broadcastSubactions.safeParse(broadcast.subaction)
-  const templateData = broadcast.templateData as
-    | WaTemplateParams
-    | MessengerTemplateParams
-    | null
-    | undefined
 
-  // Omnichannel broadcasts target every connected page, so they have no single
-  // integration; otherwise show the connected page (inbox) name it sends to.
   const integrationValue =
     channelValue === channelTypes.enum.omnichannel
       ? t("fields.omnichannel.label")
-      : (broadcast.integrationWhatsapp?.name ??
-        broadcast.integrationMessenger?.name ??
-        "-")
+      : resolveBroadcastPageNames(broadcast)
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -180,7 +177,7 @@ export function BroadcastDetailDialog({
             />
             <DetailField
               label={t("fields.flowId.label")}
-              value={broadcast.flow?.name ?? broadcast.flowId ?? "-"}
+              value={resolveBroadcastFlowNames(broadcast)}
             />
           </div>
 
@@ -196,15 +193,48 @@ export function BroadcastDetailDialog({
               {t("broadcasts.detail.template")}
             </h3>
             <TemplateSection
+              broadcast={broadcast}
               loading={loadingTemplateDetail}
-              templateData={templateData}
-              templateDetail={templateDetail}
+              templateDetails={templateDetails}
             />
           </section>
         </div>
       </DialogContent>
     </Dialog>
   )
+}
+
+/**
+ * The page(s) a broadcast sends from: every target page of a multi-page
+ * broadcast, else the legacy integration's page, else a dash.
+ */
+function resolveBroadcastPageNames(
+  broadcast: BroadcastResourceWithRelations,
+): string {
+  const targetPageNames = (broadcast.targets ?? []).map(
+    (target) => target.inbox.name,
+  )
+  if (targetPageNames.length > 0) {
+    return targetPageNames.join(", ")
+  }
+  return (
+    broadcast.integrationWhatsapp?.name ??
+    broadcast.integrationMessenger?.name ??
+    "-"
+  )
+}
+
+/** The flow(s) a broadcast runs: one per page in targets mode, else the legacy flow. */
+function resolveBroadcastFlowNames(
+  broadcast: BroadcastResourceWithRelations,
+): string {
+  const pageFlows = (broadcast.targets ?? []).flatMap((target) =>
+    target.flow ? [`${target.inbox.name} - ${target.flow.name}`] : [],
+  )
+  if (pageFlows.length > 0) {
+    return pageFlows.join(", ")
+  }
+  return broadcast.flow?.name ?? broadcast.flowId ?? "-"
 }
 
 function DetailField({ label, value }: { label: string; value: ReactNode }) {
@@ -217,13 +247,13 @@ function DetailField({ label, value }: { label: string; value: ReactNode }) {
 }
 
 function TemplateSection({
+  broadcast,
   loading,
-  templateDetail,
-  templateData,
+  templateDetails,
 }: {
+  broadcast: BroadcastResourceWithRelations
   loading: boolean
-  templateDetail: BroadcastTemplateDetail | null
-  templateData: WaTemplateParams | MessengerTemplateParams | null | undefined
+  templateDetails: BroadcastTemplateDetail[]
 }) {
   const t = useTranslations()
 
@@ -236,7 +266,7 @@ function TemplateSection({
     )
   }
 
-  if (!templateDetail) {
+  if (templateDetails.length === 0) {
     return (
       <div className="text-muted-foreground text-sm">
         {t("broadcasts.detail.noTemplate")}
@@ -244,6 +274,36 @@ function TemplateSection({
     )
   }
 
+  // One block per page: each template is previewed with the params that
+  // page was sent with (a legacy row keeps them on the broadcast itself).
+  return (
+    <div className="space-y-6">
+      {templateDetails.map((templateDetail) => (
+        <TemplateDetailBlock
+          key={`${templateDetail.inboxId}-${templateDetail.id}`}
+          templateData={
+            resolveBroadcastTemplateSend(broadcast, templateDetail.inboxId)
+              ?.templateData as
+              | WaTemplateParams
+              | MessengerTemplateParams
+              | null
+              | undefined
+          }
+          templateDetail={templateDetail}
+        />
+      ))}
+    </div>
+  )
+}
+
+function TemplateDetailBlock({
+  templateDetail,
+  templateData,
+}: {
+  templateDetail: BroadcastTemplateDetail
+  templateData: WaTemplateParams | MessengerTemplateParams | null | undefined
+}) {
+  const t = useTranslations()
   const components = Array.isArray(templateDetail.components)
     ? templateDetail.components
     : []

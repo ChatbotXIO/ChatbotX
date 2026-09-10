@@ -15,6 +15,7 @@ export async function countContactInboxes(
   const total = await broadcastService.countAudience({
     workspaceId: input.workspaceId,
     channels: input.channels,
+    inboxIds: input.inboxIds,
     integrationWhatsappId: input.integrationWhatsappId,
     integrationMessengerId: input.integrationMessengerId,
     contactFilter: input.contactFilter,
@@ -35,6 +36,7 @@ export async function listAudienceInboxesPreview(
   const data = await broadcastService.listAudiencePreview({
     workspaceId: input.workspaceId,
     channels: input.channels,
+    inboxIds: input.inboxIds,
     integrationWhatsappId: input.integrationWhatsappId,
     integrationMessengerId: input.integrationMessengerId,
     contactFilter: input.contactFilter,

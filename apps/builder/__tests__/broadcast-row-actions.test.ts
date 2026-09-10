@@ -10,10 +10,10 @@ import {
 } from "@/features/broadcasts/lib/broadcast-row-actions"
 
 describe("ROW_ACTIONS_BY_STATUS", () => {
-  test("every status includes view and rename", () => {
+  test("every status includes view, rename and clone", () => {
     for (const status of broadcastStatuses.options) {
       expect(ROW_ACTIONS_BY_STATUS[status]).toEqual(
-        expect.arrayContaining(["view", "rename"]),
+        expect.arrayContaining(["view", "rename", "clone"]),
       )
     }
   })
@@ -33,45 +33,60 @@ describe("ROW_ACTIONS_BY_STATUS", () => {
     }
   })
 
-  test("draft: view, rename, edit, schedule, delete — no resend/moveToDraft/stop/resume", () => {
+  test("every status includes clone (a clone is always a fresh draft)", () => {
+    for (const status of broadcastStatuses.options) {
+      expect(ROW_ACTIONS_BY_STATUS[status]).toContain("clone")
+    }
+  })
+
+  test("draft: view, rename, clone, edit, schedule, delete — no resend/moveToDraft/stop/resume", () => {
     expect(ROW_ACTIONS_BY_STATUS.draft).toEqual([
       "view",
       "rename",
+      "clone",
       "edit",
       "schedule",
       "delete",
     ])
   })
 
-  test("scheduled: view, rename, moveToDraft, delete — no edit/stop/resume/resend", () => {
+  test("scheduled: view, rename, clone, moveToDraft, delete — no edit/stop/resume/resend", () => {
     expect(ROW_ACTIONS_BY_STATUS.scheduled).toEqual([
       "view",
       "rename",
+      "clone",
       "moveToDraft",
       "delete",
     ])
   })
 
-  test("sending: view, rename, stop — no delete", () => {
-    expect(ROW_ACTIONS_BY_STATUS.sending).toEqual(["view", "rename", "stop"])
+  test("sending: view, rename, clone, stop — no delete", () => {
+    expect(ROW_ACTIONS_BY_STATUS.sending).toEqual([
+      "view",
+      "rename",
+      "clone",
+      "stop",
+    ])
     expect(ROW_ACTIONS_BY_STATUS.sending).not.toContain("delete")
   })
 
-  test("cancelled: view, rename, resume, delete — no edit", () => {
+  test("cancelled: view, rename, clone, resume, delete — no edit", () => {
     expect(ROW_ACTIONS_BY_STATUS.cancelled).toEqual([
       "view",
       "rename",
+      "clone",
       "resume",
       "delete",
     ])
     expect(ROW_ACTIONS_BY_STATUS.cancelled).not.toContain("edit")
   })
 
-  test("sent and failed: view, rename, resend, delete", () => {
+  test("sent and failed: view, rename, clone, resend, delete", () => {
     for (const status of ["sent", "failed"] as const) {
       expect(ROW_ACTIONS_BY_STATUS[status]).toEqual([
         "view",
         "rename",
+        "clone",
         "resend",
         "delete",
       ])
@@ -101,10 +116,11 @@ describe("getBroadcastRowActions", () => {
     )
   })
 
-  test("falls back to view and rename only for an unknown status string", () => {
+  test("falls back to view, rename and clone only for an unknown status string", () => {
     expect(getBroadcastRowActions("not-a-real-status")).toEqual([
       "view",
       "rename",
+      "clone",
     ])
   })
 })
@@ -137,6 +153,7 @@ describe("filterBroadcastRowActions", () => {
     expect(filterBroadcastRowActions(actions, { contactCount: null })).toEqual([
       "view",
       "rename",
+      "clone",
       "delete",
     ])
   })
@@ -147,6 +164,7 @@ describe("filterBroadcastRowActions", () => {
     expect(filterBroadcastRowActions(actions, { contactCount: 10 })).toEqual([
       "view",
       "rename",
+      "clone",
       "resume",
       "delete",
     ])

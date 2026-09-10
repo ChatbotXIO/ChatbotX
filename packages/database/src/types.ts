@@ -44,6 +44,8 @@ export type ContactToTagChannelModel =
 export type FlowVersionModel = typeof schema.flowVersionModel.$inferSelect
 export type InvitationModel = typeof schema.invitationModel.$inferSelect
 export type BroadcastModel = typeof schema.broadcastModel.$inferSelect
+export type BroadcastTargetModel =
+  typeof schema.broadcastTargetModel.$inferSelect
 export type WorkspaceMemberModel =
   typeof schema.workspaceMemberModel.$inferSelect
 export type WorkspaceApiTokenModel =

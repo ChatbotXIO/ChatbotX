@@ -57,6 +57,7 @@ export default async function EditBroadcastPage({
       <CustomFieldStoreProvider workspaceId={workspaceId}>
         <IntegrationStoreProvider workspaceId={workspaceId}>
           <FlowTemplateStoreProvider
+            includeAllTemplateStatuses
             openaiCompatibleIntegrations={openaiCompatibleIntegrations}
             workspaceId={workspaceId}
           >

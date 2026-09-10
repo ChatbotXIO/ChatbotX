@@ -24,6 +24,8 @@ export type FlowTemplateProviderProps = {
   workspaceId: string
   openaiCompatibleIntegrations?: IntegrationOpenaiCompatibleResource[]
   autoInitialize?: boolean
+  /** Fetch pending/rejected templates too (the broadcast form shows their status). */
+  includeAllTemplateStatuses?: boolean
 }
 
 export function FlowTemplateStoreProvider({
@@ -31,12 +33,14 @@ export function FlowTemplateStoreProvider({
   workspaceId,
   openaiCompatibleIntegrations = [],
   autoInitialize = true,
+  includeAllTemplateStatuses = false,
 }: FlowTemplateProviderProps) {
   const storeRef = useRef<FlowTemplateStoreApi>(null)
   if (!storeRef.current) {
     storeRef.current = createFlowTemplateStore({
       workspaceId,
       openaiCompatibleIntegrations,
+      includeAllTemplateStatuses,
     })
   }
 

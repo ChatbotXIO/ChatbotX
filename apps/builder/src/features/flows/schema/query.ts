@@ -35,6 +35,8 @@ export const listFlowsRequest = basePaginationRequest.extend({
   active: z.boolean().nullish(),
   startType: z.string().nullish(),
   integrationWhatsappId: zodBigintAsString().nullish(),
+  /** Flows whose start template belongs to any of these integrations (multi-page broadcasts). */
+  integrationWhatsappIds: z.array(zodBigintAsString()).nullish(),
 })
 export type ListFlowsRequest = z.infer<typeof listFlowsRequest>
 

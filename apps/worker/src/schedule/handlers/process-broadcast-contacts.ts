@@ -1,6 +1,15 @@
 import { broadcastService } from "@chatbotx.io/business"
 import { and, db, eq, sql } from "@chatbotx.io/database/client"
-import { broadcastStatuses, channelTypes } from "@chatbotx.io/database/partials"
+import {
+  broadcastSendsFlow,
+  broadcastSendsTemplate,
+  broadcastStatuses,
+  channelTypes,
+  hasBroadcastSendForInbox,
+  resolveBroadcastFlowSend,
+  resolveBroadcastTemplateSend,
+  usesBroadcastTargets,
+} from "@chatbotx.io/database/partials"
 import { contactsOnBroadcastsModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -25,7 +34,21 @@ const BROADCAST_SEND_JOB_RETENTION_SECONDS = 3600
 
 type BroadcastForSend = Awaited<
   ReturnType<(typeof db.query.broadcastModel)["findMany"]>
->[number]
+>[number] & {
+  targets: {
+    inboxId: string
+    flowId: string | null
+    templateId: string | null
+    templateData: unknown
+  }[]
+}
+
+/** The reasons a recipient cannot be enqueued; stored as the row's `errorContent`. */
+const NO_TEMPLATE_FOR_PAGE_REASON =
+  "no template selected for the contact's page"
+const NO_FLOW_FOR_PAGE_REASON = "no flow selected for the contact's page"
+const NO_SEND_FOR_PAGE_REASON =
+  "no flow or template selected for the contact's page"
 
 type ContactOnBroadcastForSend = Awaited<
   ReturnType<(typeof db.query.contactsOnBroadcastsModel)["findMany"]>
@@ -54,23 +77,73 @@ const broadcastContactSendJobId = (
 ) =>
   `broadcast-send-contact-${broadcastId}-${contactId}-${type}-r${resumeCount}`
 
+/** One reason a recipient cannot be handed to its send job, checked in order. */
+type RecipientRule = {
+  violated: (
+    contactOnBroadcast: ContactOnBroadcastForSend,
+    broadcast: BroadcastForSend,
+  ) => boolean
+  reason: string
+}
+
+const inboxIdOf = (contactOnBroadcast: ContactOnBroadcastForSend) =>
+  contactOnBroadcast.contactInbox?.inboxId
+
+// A multi-page broadcast delivers each page with its own flow or template; a
+// page that ended up without one (a deleted flow, a contact outside every
+// target) is a per-recipient failure, never a reason to stall the broadcast.
+const recipientRules: readonly RecipientRule[] = [
+  {
+    violated: (contact, broadcast) =>
+      broadcastSendsFlow(broadcast) && !contact.conversationId,
+    reason: "missing conversation for flow send",
+  },
+  {
+    violated: (contact, broadcast) => {
+      const inboxId = inboxIdOf(contact)
+      return (
+        broadcastSendsFlow(broadcast) &&
+        !(inboxId && resolveBroadcastFlowSend(broadcast, inboxId))
+      )
+    },
+    reason: NO_FLOW_FOR_PAGE_REASON,
+  },
+  {
+    violated: (contact, broadcast) =>
+      broadcastSendsTemplate(broadcast) &&
+      !(contact.conversation && contact.contactInbox),
+    reason: "missing conversation/contactInbox for template send",
+  },
+  {
+    violated: (contact, broadcast) => {
+      const inboxId = inboxIdOf(contact)
+      return (
+        broadcastSendsTemplate(broadcast) &&
+        !(inboxId && resolveBroadcastTemplateSend(broadcast, inboxId))
+      )
+    },
+    reason: NO_TEMPLATE_FOR_PAGE_REASON,
+  },
+  // Last: nothing left to send for this page at all (every flow deleted,
+  // no template) — the specific reasons above did not apply.
+  {
+    violated: (contact, broadcast) => {
+      const inboxId = inboxIdOf(contact)
+      return (
+        usesBroadcastTargets(broadcast) &&
+        !(inboxId && hasBroadcastSendForInbox(broadcast, inboxId))
+      )
+    },
+    reason: NO_SEND_FOR_PAGE_REASON,
+  },
+]
+
 const invalidBroadcastContact = (
   contactOnBroadcast: ContactOnBroadcastForSend,
   broadcast: BroadcastForSend,
-): string | null => {
-  if (broadcast.flowId && !contactOnBroadcast.conversationId) {
-    return "missing conversation for flow send"
-  }
-
-  if (
-    broadcast.templateId &&
-    !(contactOnBroadcast.conversation && contactOnBroadcast.contactInbox)
-  ) {
-    return "missing conversation/contactInbox for template send"
-  }
-
-  return null
-}
+): string | null =>
+  recipientRules.find((rule) => rule.violated(contactOnBroadcast, broadcast))
+    ?.reason ?? null
 
 const markContactFailed = async (
   contactOnBroadcast: ContactOnBroadcastForSend,
@@ -97,13 +170,17 @@ const enqueueBroadcastContact = async (
   broadcast: BroadcastForSend,
   contactOnBroadcast: ContactOnBroadcastForSend,
 ) => {
-  if (broadcast.flowId) {
+  const contactInbox = contactOnBroadcast.contactInbox as ContactInboxModel
+  const flowId = broadcastSendsFlow(broadcast)
+    ? resolveBroadcastFlowSend(broadcast, contactInbox.inboxId)
+    : null
+  if (flowId) {
     await integrationQueue.add(
       IntegrationJobAction.sendFlow,
       {
         type: IntegrationJobAction.sendFlow,
         data: {
-          flowId: broadcast.flowId,
+          flowId,
           conversationId: contactOnBroadcast.conversationId,
           contactInboxId: contactOnBroadcast.contactInboxId,
           // The flow stop/resume guard's ONE authoritative "initial
@@ -129,7 +206,10 @@ const enqueueBroadcastContact = async (
     )
   }
 
-  if (!broadcast.templateId) {
+  const templateSend = broadcastSendsTemplate(broadcast)
+    ? resolveBroadcastTemplateSend(broadcast, contactInbox.inboxId)
+    : null
+  if (!templateSend) {
     return
   }
 
@@ -139,7 +219,7 @@ const enqueueBroadcastContact = async (
     type RawMessengerData = MessengerTemplateParams & {
       buttons?: Array<{ id: string; label: string; flowId?: string }>
     }
-    const rawMessengerData = broadcast.templateData as
+    const rawMessengerData = templateSend.templateData as
       | RawMessengerData
       | undefined
     const { buttons: broadcastButtons, ...cleanMessengerParams } =
@@ -151,8 +231,8 @@ const enqueueBroadcastContact = async (
         type: ChatJobAction.sendMessengerTemplateMessage,
         data: {
           conversation: contactOnBroadcast.conversation as ConversationModel,
-          contactInbox: contactOnBroadcast.contactInbox as ContactInboxModel,
-          templateId: broadcast.templateId,
+          contactInbox,
+          templateId: templateSend.templateId,
           broadcastId: broadcast.id,
           templateData:
             Object.keys(cleanMessengerParams).length > 0
@@ -184,10 +264,10 @@ const enqueueBroadcastContact = async (
       type: ChatJobAction.sendWhatsappTemplateMessage,
       data: {
         conversation: contactOnBroadcast.conversation as ConversationModel,
-        contactInbox: contactOnBroadcast.contactInbox as ContactInboxModel,
-        templateId: broadcast.templateId,
+        contactInbox,
+        templateId: templateSend.templateId,
         broadcastId: broadcast.id,
-        templateData: broadcast.templateData as WaTemplateParams | undefined,
+        templateData: templateSend.templateData as WaTemplateParams | undefined,
         metadata: {
           type: BROADCAST_PAYLOAD_TYPE,
           broadcastId: broadcast.id,
@@ -212,6 +292,16 @@ export const processBroadcastContacts = async (broadcastId: string) => {
       id: broadcastId,
       status: broadcastStatuses.enum.sending,
       deletedAt: { isNull: true },
+    },
+    with: {
+      targets: {
+        columns: {
+          inboxId: true,
+          flowId: true,
+          templateId: true,
+          templateData: true,
+        },
+      },
     },
   })
 

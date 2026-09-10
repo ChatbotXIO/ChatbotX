@@ -1916,6 +1916,12 @@
     "messengerChannel": {
       "label": "Messenger Kanalı"
     },
+    "whatsappChannels": {
+      "label": "WhatsApp Kanalları"
+    },
+    "messengerChannels": {
+      "label": "Messenger Sayfaları"
+    },
     "messages": {
       "label": "Mesajlar"
     },
@@ -3301,6 +3307,7 @@
         "result": {
           "title": "Klonlama Sonuçları",
           "succeededTitle": "Başarılı",
+          "pendingTitle": "Meta incelemesi bekleniyor",
           "close": "Kapat"
         }
       }

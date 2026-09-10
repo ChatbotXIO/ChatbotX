@@ -2,6 +2,7 @@ import type { BroadcastStatus } from "@chatbotx.io/database/partials"
 import {
   CalendarClockIcon,
   CircleStopIcon,
+  CopyIcon,
   EyeIcon,
   type LucideIcon,
   PencilIcon,
@@ -16,6 +17,7 @@ import { parseBroadcastStatus } from "./broadcast-status"
 export const BROADCAST_ROW_ACTION_VARIANTS = [
   "view",
   "rename",
+  "clone",
   "edit",
   "resend",
   "schedule",
@@ -43,6 +45,7 @@ export const ROW_ACTION_ITEMS: Record<
 > = {
   view: { icon: EyeIcon, labelKey: "actions.view" },
   rename: { icon: PencilIcon, labelKey: "actions.rename" },
+  clone: { icon: CopyIcon, labelKey: "actions.clone" },
   edit: { icon: SquarePenIcon, labelKey: "actions.edit" },
   resend: { icon: RotateCwIcon, labelKey: "actions.resend" },
   schedule: { icon: CalendarClockIcon, labelKey: "actions.schedule" },
@@ -55,11 +58,14 @@ export const ROW_ACTION_ITEMS: Record<
 const DEFAULT_ROW_ACTIONS: readonly BroadcastRowActionVariant[] = [
   "view",
   "rename",
+  "clone",
 ]
 
 /**
  * Which row-action variants are available per broadcast status. Every
- * status lists `view` and `rename`. `edit` reopens the create form on the
+ * status lists `view`, `rename` and `clone` (a clone is always a fresh
+ * `draft`, so it is offered regardless of the source status). `edit`
+ * reopens the create form on the
  * stored payload, so only a `draft` — the one status the service will still
  * update — may offer it. `sending` intentionally has no `delete` (the
  * service refuses to soft-delete an in-flight broadcast — stop it first);

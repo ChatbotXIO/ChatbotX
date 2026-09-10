@@ -74,6 +74,16 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: vi.fn(() => "generated-id"),
 }))
 
+vi.mock("@chatbotx.io/flow-config", () => ({
+  findTemplateStartStep: vi.fn(),
+  stepTypes: {
+    enum: {
+      sendWaTemplateMessage: "sendWaTemplateMessage",
+      sendMessengerTemplateMessage: "sendMessengerTemplateMessage",
+    },
+  },
+}))
+
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))
 
 vi.mock("../src/audit/dispatcher", () => ({

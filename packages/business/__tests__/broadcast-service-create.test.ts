@@ -20,20 +20,31 @@ const {
   mockDispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      flowModel: { findFirst: findFirstFlow },
-      integrationWhatsappModel: { findFirst: findFirstIntegrationWhatsapp },
-      integrationMessengerModel: { findFirst: findFirstIntegrationMessenger },
-    },
-    insert: () => ({
-      values: (values: Record<string, unknown>) => {
-        insertValues(values)
-        return { returning: () => insertReturning() }
-      },
-    }),
+const dbMock: {
+  query: Record<string, unknown>
+  insert: (...args: unknown[]) => unknown
+  delete: (...args: unknown[]) => unknown
+  transaction: (fn: (tx: typeof dbMock) => Promise<unknown>) => Promise<unknown>
+} = {
+  query: {
+    flowModel: { findFirst: findFirstFlow },
+    integrationWhatsappModel: { findFirst: findFirstIntegrationWhatsapp },
+    integrationMessengerModel: { findFirst: findFirstIntegrationMessenger },
+    inboxModel: { findMany: vi.fn().mockResolvedValue([]) },
+    broadcastTargetModel: { findMany: vi.fn().mockResolvedValue([]) },
   },
+  insert: () => ({
+    values: (values: Record<string, unknown>) => {
+      insertValues(values)
+      return { returning: () => insertReturning() }
+    },
+  }),
+  delete: () => ({ where: () => Promise.resolve() }),
+  transaction: (fn) => fn(dbMock),
+}
+
+vi.mock("@chatbotx.io/database/client", () => ({
+  db: dbMock,
   and: (...args: unknown[]) => ({ __and: args }),
   asc: vi.fn(),
   count: vi.fn(),
@@ -49,13 +60,74 @@ vi.mock("@chatbotx.io/database/client", () => ({
   sql: Object.assign(vi.fn(), { raw: vi.fn() }),
 }))
 
+type MinimalBroadcastPayload = {
+  flowId?: string | null
+  templateId?: string | null
+  integrationWhatsappId?: string | null
+  integrationMessengerId?: string | null
+  targetMode?: string | null
+  targets?:
+    | readonly {
+        inboxId: string
+        flowId?: string | null
+        templateId?: string | null
+      }[]
+    | null
+}
+
+const usesBroadcastTargetsStub = (
+  broadcast: Pick<MinimalBroadcastPayload, "targetMode" | "targets">,
+): boolean =>
+  broadcast.targetMode == null
+    ? (broadcast.targets ?? []).length > 0
+    : broadcast.targetMode === "targets"
+
+const sendsFlowStub = (broadcast: MinimalBroadcastPayload): boolean =>
+  Boolean(broadcast.flowId) ||
+  (broadcast.targets ?? []).some((target) => Boolean(target.flowId))
+
+const sendsTemplateStub = (broadcast: MinimalBroadcastPayload): boolean =>
+  Boolean(broadcast.templateId) ||
+  (broadcast.targets ?? []).some((target) => Boolean(target.templateId))
+
 vi.mock("@chatbotx.io/database/partials", () => ({
   broadcastStatuses: { enum: { draft: "draft", scheduled: "scheduled" } },
   findBroadcastChannelCapability: mockFindCapability,
+  broadcastSendsFlow: sendsFlowStub,
+  broadcastSendsTemplate: sendsTemplateStub,
+  hasFlowAndTemplate: (broadcast: MinimalBroadcastPayload) =>
+    sendsFlowStub(broadcast) && sendsTemplateStub(broadcast),
+  hasDuplicateBroadcastTarget: (broadcast: MinimalBroadcastPayload) => {
+    const targets = broadcast.targets ?? []
+    return (
+      new Set(targets.map((target) => target.inboxId)).size < targets.length
+    )
+  },
+  isTargetsTemplateSendWithoutTemplate: (broadcast: MinimalBroadcastPayload) =>
+    usesBroadcastTargetsStub(broadcast) &&
+    !sendsFlowStub(broadcast) &&
+    !(broadcast.targets ?? []).some((target) => Boolean(target.templateId)),
+  isTargetsFlowSendWithoutFlow: (broadcast: MinimalBroadcastPayload) =>
+    usesBroadcastTargetsStub(broadcast) &&
+    !sendsTemplateStub(broadcast) &&
+    !(broadcast.targets ?? []).some((target) => Boolean(target.flowId)),
+  isTemplateSendWithoutPage: (broadcast: MinimalBroadcastPayload) =>
+    sendsTemplateStub(broadcast) &&
+    !usesBroadcastTargetsStub(broadcast) &&
+    !(broadcast.integrationWhatsappId || broadcast.integrationMessengerId),
+  usesBroadcastTargets: usesBroadcastTargetsStub,
+  resolveBroadcastTargetMode: (
+    targets: readonly { inboxId: string }[] | null | undefined,
+  ) => ((targets ?? []).length > 0 ? "targets" : "channel"),
+  resolveBroadcastTemplateSend: vi.fn(),
+  withBroadcastTargets: {},
+  dmConversationUsesSourceId: vi.fn(() => false),
+  requiresRecentInteractionWindow: vi.fn(() => false),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   broadcastModel: {},
+  broadcastTargetModel: {},
   contactInboxModel: {},
   contactModel: {},
   contactsOnBroadcastsModel: {},
@@ -90,6 +162,16 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("@chatbotx.io/utils", () => ({
   createId: vi.fn(() => "generated-id"),
+}))
+
+vi.mock("@chatbotx.io/flow-config", () => ({
+  findTemplateStartStep: vi.fn(),
+  stepTypes: {
+    enum: {
+      sendWaTemplateMessage: "sendWaTemplateMessage",
+      sendMessengerTemplateMessage: "sendMessengerTemplateMessage",
+    },
+  },
 }))
 
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))
@@ -316,7 +398,11 @@ describe("broadcastService.create — validation branches", () => {
         // startOfMinute(...) — seconds/ms zeroed
         schedulesAt: new Date("2026-01-01T10:30:00.000Z"),
         contactFilter: { pruned: true },
-        templateData: { header: "hi", buttons: [{ label: "Click" }] },
+        // A flow send (no `templateId`) never stores stray `templateData` —
+        // `buildStoredTemplateData` only attaches params to a template send,
+        // so leftover template params from switching template -> flow do not
+        // survive the insert.
+        templateData: null,
       }),
     )
   })

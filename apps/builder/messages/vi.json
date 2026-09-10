@@ -1923,6 +1923,12 @@
     "messengerChannel": {
       "label": "Kênh Messenger"
     },
+    "whatsappChannels": {
+      "label": "Kênh WhatsApp"
+    },
+    "messengerChannels": {
+      "label": "Trang Messenger"
+    },
     "messages": {
       "label": "Tin nhắn"
     },
@@ -3301,6 +3307,7 @@
         "result": {
           "title": "Kết quả nhân bản",
           "succeededTitle": "Thành công",
+          "pendingTitle": "Đang chờ Meta duyệt",
           "close": "Đóng"
         }
       }

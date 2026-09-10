@@ -5,6 +5,7 @@ const {
   mockTxInsert,
   mockTxInsertValues,
   mockTxInsertReturning,
+  mockTxTargetFindMany,
   mockDbTransaction,
   mockCreateId,
   mockDispatchAuditRecord,
@@ -14,12 +15,14 @@ const {
     .fn()
     .mockReturnValue({ returning: mockTxInsertReturning })
   const mockTxInsert = vi.fn().mockReturnValue({ values: mockTxInsertValues })
+  const mockTxTargetFindMany = vi.fn().mockResolvedValue([])
 
   return {
     mockFindOrFail: vi.fn(),
     mockTxInsert,
     mockTxInsertValues,
     mockTxInsertReturning,
+    mockTxTargetFindMany,
     mockDbTransaction: vi.fn(),
     mockCreateId: vi.fn(() => "new-broadcast-id"),
     mockDispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
@@ -52,6 +55,7 @@ vi.mock("@chatbotx.io/database/partials", () => ({
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   broadcastModel: {},
+  broadcastTargetModel: {},
   contactInboxModel: {},
   contactModel: {},
   contactsOnBroadcastsModel: {},
@@ -88,6 +92,16 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: mockCreateId,
 }))
 
+vi.mock("@chatbotx.io/flow-config", () => ({
+  findTemplateStartStep: vi.fn(),
+  stepTypes: {
+    enum: {
+      sendWaTemplateMessage: "sendWaTemplateMessage",
+      sendMessengerTemplateMessage: "sendMessengerTemplateMessage",
+    },
+  },
+}))
+
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))
 
 vi.mock("../src/audit/dispatcher", () => ({
@@ -117,8 +131,18 @@ describe("broadcastService.resend", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockDbTransaction.mockImplementation(
-      async (fn: (tx: { insert: typeof mockTxInsert }) => Promise<unknown>) =>
-        fn({ insert: mockTxInsert }),
+      async (
+        fn: (tx: {
+          insert: typeof mockTxInsert
+          query: {
+            broadcastTargetModel: { findMany: typeof mockTxTargetFindMany }
+          }
+        }) => Promise<unknown>,
+      ) =>
+        fn({
+          insert: mockTxInsert,
+          query: { broadcastTargetModel: { findMany: mockTxTargetFindMany } },
+        }),
     )
     mockTxInsertReturning.mockResolvedValue([
       { id: "new-broadcast-id", name: "My Broadcast (Resend)" },

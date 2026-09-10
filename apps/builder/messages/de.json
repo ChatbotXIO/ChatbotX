@@ -1779,6 +1779,12 @@
     "messengerChannel": {
       "label": "Messenger-Kanal"
     },
+    "whatsappChannels": {
+      "label": "WhatsApp-Kanäle"
+    },
+    "messengerChannels": {
+      "label": "Messenger-Seiten"
+    },
     "messages": {
       "label": "Nachrichten"
     },
@@ -3301,6 +3307,7 @@
         "result": {
           "title": "Klonergebnisse",
           "succeededTitle": "Erfolgreich",
+          "pendingTitle": "Wartet auf Meta-Prüfung",
           "close": "Schließen"
         }
       }
