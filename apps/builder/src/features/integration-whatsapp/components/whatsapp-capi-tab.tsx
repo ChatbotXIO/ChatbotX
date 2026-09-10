@@ -29,7 +29,7 @@ import { connectWhatsappCustomCapiAction } from "../actions/connect-custom-capi.
 import { disconnectWhatsappCapiAction } from "../actions/disconnect-capi.action"
 import { provisionWhatsappCapiDatasetAction } from "../actions/provision-capi-dataset.action"
 import { setWhatsappCapiDatasetAction } from "../actions/set-capi-dataset.action"
-import { WhatsappAutomaticEventsCard } from "./whatsapp-automatic-events-card"
+import { WhatsappReconnectButton } from "./whatsapp-reconnect-button"
 
 type WhatsappCapiTabProps = {
   integrationWhatsapp: Pick<
@@ -63,11 +63,15 @@ function renderConnectionContent({
   integrationWhatsapp,
   workspaceId,
   notice,
+  whatsappCredentialPublic,
+  oauthCallbackUrl,
 }: {
   connectionState: CapiConnectionState
   integrationWhatsapp: WhatsappCapiTabProps["integrationWhatsapp"]
   workspaceId: string
   notice: string
+  whatsappCredentialPublic: WhatsappCredentialPublic | null
+  oauthCallbackUrl: string
 }) {
   if (connectionState === "disconnected") {
     return (
@@ -93,9 +97,21 @@ function renderConnectionContent({
         notice={connectionState === "awaitingScope" ? notice : undefined}
         workspaceId={workspaceId}
       />
-      {/* Sending needs the Meta scope or a manual token; while the scope is
-          still missing a test would only be skipped, so hide the card. */}
-      {connectionState === "awaitingScope" ? null : (
+      {/* Sending needs the Meta scope or a manual token. While the scope is
+          still missing, a test would only be skipped — so instead of the test
+          card, offer the reconnect that re-requests
+          `whatsapp_business_manage_events` (the scope CAPI sending needs). */}
+      {connectionState === "awaitingScope" ? (
+        <div>
+          <WhatsappReconnectButton
+            integrationWhatsappId={integrationWhatsapp.id}
+            isCoexist={integrationWhatsapp.isCoexist}
+            oauthCallbackUrl={oauthCallbackUrl}
+            settings={whatsappCredentialPublic}
+            workspaceId={workspaceId}
+          />
+        </div>
+      ) : (
         <CapiTestEventCard
           channel="whatsapp"
           datasetId={integrationWhatsapp.datasetId}
@@ -158,18 +174,14 @@ export function WhatsappCapiTab({
             integrationWhatsapp,
             workspaceId,
             notice: t("metaConversions.statusDescriptions.missingPermission"),
+            whatsappCredentialPublic,
+            oauthCallbackUrl,
           })}
           <p className="text-muted-foreground text-xs">
             {t("metaConversions.flowStep.whatsappNote")}
           </p>
         </CardContent>
       </Card>
-      <WhatsappAutomaticEventsCard
-        integrationWhatsapp={integrationWhatsapp}
-        oauthCallbackUrl={oauthCallbackUrl}
-        whatsappCredentialPublic={whatsappCredentialPublic}
-        workspaceId={workspaceId}
-      />
     </div>
   )
 }

@@ -3767,12 +3767,6 @@
       "label": "テンプレートのヘッダー"
     },
     "transferPhoneNumber": "別のWhatsAppプロバイダーから電話番号を移行",
-    "capi": {
-      "automaticEvents": {
-        "title": "自動イベント",
-        "description": "この WhatsApp 番号からコンバージョンイベントを Meta に自動送信します。権限がない場合は、アカウントを再接続して付与してください。"
-      }
-    },
     "selectPage": {
       "tryAgain": "再接続を試す"
     }

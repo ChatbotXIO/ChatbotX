@@ -5152,12 +5152,6 @@
       "label": "Mallens sidhuvud"
     },
     "transferPhoneNumber": "Överför telefonnummer från en annan WhatsApp-leverantör",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automatiska händelser",
-        "description": "Skicka konverteringshändelser från detta WhatsApp-nummer automatiskt till Meta. Om behörigheten saknas, återanslut kontot för att bevilja den."
-      }
-    },
     "selectPage": {
       "tryAgain": "Försök återansluta"
     }

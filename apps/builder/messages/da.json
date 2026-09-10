@@ -3788,12 +3788,6 @@
       "label": "Skabelon Overskrift"
     },
     "transferPhoneNumber": "Overfør telefon fra another Whatsapp udbyder",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automatiske hændelser",
-        "description": "Send automatisk konverteringshændelser fra dette WhatsApp-nummer til Meta. Hvis tilladelsen mangler, skal du gentilslutte kontoen for at give den."
-      }
-    },
     "selectPage": {
       "tryAgain": "Try reconnecting"
     }

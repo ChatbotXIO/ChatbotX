@@ -3788,12 +3788,6 @@
       "label": "Koptekst van sjabloon"
     },
     "transferPhoneNumber": "Telefoonnummer van een andere WhatsApp-provider overdragen",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automatische events",
-        "description": "Verstuur conversiegebeurtenissen van dit WhatsApp-nummer automatisch naar Meta. Ontbreekt de machtiging, verbind het account dan opnieuw om deze te verlenen."
-      }
-    },
     "selectPage": {
       "tryAgain": "Probeer opnieuw te koppelen"
     }

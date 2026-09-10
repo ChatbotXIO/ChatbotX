@@ -3975,12 +3975,6 @@
       "label": "Template Header"
     },
     "transferPhoneNumber": "Transfer phone from another Whatsapp provider",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automatic Events",
-        "description": "Automatically send conversion events from this WhatsApp number to Meta. If the permission is missing, reconnect the account to grant it."
-      }
-    },
     "selectPage": {
       "tryAgain": "Try reconnecting"
     }

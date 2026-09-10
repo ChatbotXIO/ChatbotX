@@ -3788,12 +3788,6 @@
       "label": "Mallin ylätunniste"
     },
     "transferPhoneNumber": "Siirrä puhelin toiselta WhatsApp-palveluntarjoajalta",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automaattiset tapahtumat",
-        "description": "Lähetä konversiotapahtumat tästä WhatsApp-numerosta automaattisesti Metalle. Jos lupa puuttuu, yhdistä tili uudelleen myöntääksesi sen."
-      }
-    },
     "selectPage": {
       "tryAgain": "Yritä yhdistää uudelleen"
     }
