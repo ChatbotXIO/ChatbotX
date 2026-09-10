@@ -247,6 +247,29 @@ export const MESSENGER_NATIVE_QUICK_REPLY = {
 } as const
 
 /**
+ * Reserved MessageButtonTemplate postback that asks the WhatsApp channel to
+ * send Cloud API `interactive.location_request_message` (Meta's native
+ * "Send location" button) instead of a text prompt. Only
+ * integrations/whatsapp's outgoing converter interprets this; every other
+ * channel would render it as an inert text button, so callers must gate
+ * emitting it to the WhatsApp channel.
+ *
+ * @see https://developers.facebook.com/docs/whatsapp/cloud-api/messages/interactive-location-request-messages
+ */
+export const WHATSAPP_NATIVE_LOCATION_REQUEST =
+  "whatsapp:native:location_request" as const
+
+/**
+ * Channels that can render a native "share your location" control for
+ * getUserData's location reply format (RF08). Callers must gate on this set
+ * and fall back to a plain-text prompt elsewhere — same contract as
+ * {@link URL_QUICK_REPLY_CAPABLE_CHANNELS}.
+ */
+export const NATIVE_LOCATION_REQUEST_CHANNELS: ReadonlySet<string> = new Set([
+  "whatsapp",
+])
+
+/**
  * Channels whose outgoing message converter renders a `MessageButtonTemplate`
  * with `buttonType: "url"` as an actual link-opening button (a real
  * clickable/tappable control the platform navigates from), verified by
@@ -286,6 +309,16 @@ export function getCanonicalReplyPayload(
 
   return button.postback ?? button.url
 }
+
+export const isWhatsappNativeLocationRequest = (
+  buttons: readonly MessageButtonTemplate[] | undefined,
+): boolean =>
+  Boolean(
+    buttons?.some(
+      (button) =>
+        getCanonicalReplyPayload(button) === WHATSAPP_NATIVE_LOCATION_REQUEST,
+    ),
+  )
 
 export type MessageCardTemplate = {
   id: string

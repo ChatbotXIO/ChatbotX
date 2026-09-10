@@ -460,6 +460,41 @@ describe("getUserData — validation logic", () => {
     })
   })
 
+  describe("location format", () => {
+    test("location pin → returns success with lat,lng", async () => {
+      lastMessage.current = makeIncomingMessage({
+        contentType: "location",
+        text: "Received location",
+        contentAttributes: { latitude: 10.5, longitude: 106.75 },
+      })
+
+      const result = await getUserData(makeProps(ReplyFormat.location))
+
+      expect(result.status).toBe("success")
+      expectCustomFieldWrite("10.5,106.75")
+    })
+
+    test("typed coordinate pair → returns success", async () => {
+      lastMessage.current = makeIncomingMessage({
+        text: "10.5, 106.75",
+      })
+
+      const result = await getUserData(makeProps(ReplyFormat.location))
+
+      expect(result.status).toBe("success")
+      expectCustomFieldWrite("10.5,106.75")
+    })
+
+    test("plain text without coordinates → returns retry", async () => {
+      lastMessage.current = makeIncomingMessage({ text: "Received location" })
+
+      const result = await getUserData(makeProps(ReplyFormat.location))
+
+      expect(result.status).toBe("retry")
+      expect(contactCustomFieldSetValueByKey).not.toHaveBeenCalled()
+    })
+  })
+
   describe("no message", () => {
     test("no last message → returns retry", async () => {
       lastMessage.current = null
@@ -853,12 +888,14 @@ function findChatJobCall(action: string) {
   return call[1] as {
     type: string
     data: {
+      text?: string
       quickReplies?: {
         id: string
         label: string
         buttonType: string
         url?: string
         messengerExtensions?: boolean
+        postback?: string
       }[]
     }
   }
@@ -1313,6 +1350,74 @@ describe("getUserData — non-date replyFormats keep the text prompt path (regre
   test("text replyFormat still enqueues via enqueueFlowStepMessage / sendFlowMessage", async () => {
     const props = makeProps(ReplyFormat.text)
     props.ctx = { variables: { conversation: {} } }
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    expect(chatQueueAdd).toHaveBeenCalledWith(
+      "sendFlowMessage",
+      expect.objectContaining({ type: "sendFlowMessage" }),
+    )
+    expect(chatQueueAdd).not.toHaveBeenCalledWith(
+      "sendChatMessage",
+      expect.anything(),
+    )
+  })
+})
+
+describe("getUserData — WhatsApp native location request (RF08)", () => {
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+  })
+
+  test("whatsapp location format sends the reserved native location-request marker", async () => {
+    const props = makeProps(ReplyFormat.location, {
+      message: "Please share your location",
+    })
+    props.ctx = { variables: { conversation: {} } }
+    props.contactInbox = { ...props.contactInbox, channel: "whatsapp" }
+
+    const result = await getUserData(props)
+
+    expect(result.status).toBe("wait")
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data).toMatchObject({
+      text: "Please share your location",
+      quickReplies: [
+        {
+          id: "whatsapp:native:location_request",
+          label: "Send location",
+          buttonType: "postback",
+          postback: "whatsapp:native:location_request",
+        },
+      ],
+    })
+    expect(chatQueueAdd).not.toHaveBeenCalledWith(
+      "sendFlowMessage",
+      expect.anything(),
+    )
+    expect(waitForChatJobCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "job-1" }),
+      { conversationId: "conv-1", stepId: "step-1" },
+    )
+  })
+
+  test("uses the Vietnamese inbox label when workspace.language is vi", async () => {
+    workspaceFindById.mockResolvedValueOnce({ language: "vi" })
+    const props = makeProps(ReplyFormat.location)
+    props.ctx = { variables: { conversation: {} } }
+    props.contactInbox = { ...props.contactInbox, channel: "whatsapp" }
+
+    await getUserData(props)
+
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data.quickReplies?.[0]?.label).toBe("Gửi vị trí")
+  })
+
+  test("non-whatsapp location format keeps the text prompt path", async () => {
+    const props = makeProps(ReplyFormat.location)
+    props.ctx = { variables: { conversation: {} } }
+    props.contactInbox = { ...props.contactInbox, channel: "messenger" }
 
     const result = await getUserData(props)
 

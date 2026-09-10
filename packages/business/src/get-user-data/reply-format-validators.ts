@@ -3,6 +3,7 @@ import {
   type ReplyFormat as ReplyFormatValue,
 } from "@chatbotx.io/flow-config"
 import {
+  asCoordinatePair,
   asEmail,
   asIs,
   asIsoDate,
@@ -35,7 +36,16 @@ export const replyFormatValidators: Record<ReplyFormatValue, ReplyValidator> = {
     fromTextWhenAttachmentAbsent(asIs),
   ),
   [ReplyFormat.link]: fromTextWhenAttachmentAbsent(asUrl),
-  [ReplyFormat.location]: fromTextWhenAttachmentAbsent(asIs),
+  // Prefer a real location pin (WhatsApp/Messenger/Zalo contentType). Typed
+  // "lat,lng" is the omnichannel fallback so webchat/API contacts can still
+  // complete RF08 without a native share-location control.
+  [ReplyFormat.location]: (message) => {
+    if (message.contentType === "location") {
+      return fromLocation(message)
+    }
+
+    return fromTextWhenAttachmentAbsent(asCoordinatePair)(message)
+  },
   [ReplyFormat.date]: fromTextWhenAttachmentAbsent(asIsoDate),
   [ReplyFormat.datetime]: fromTextWhenAttachmentAbsent(asIsoDate),
   [ReplyFormat.anyInput]: firstAccepted(

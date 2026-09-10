@@ -10,6 +10,8 @@ import {
 } from "@chatbotx.io/flow-config"
 import {
   contentTypes,
+  isWhatsappNativeLocationRequest,
+  type MessageButtonTemplate,
   type MessageHandlers,
   type OutgoingMessage,
 } from "@chatbotx.io/sdk"
@@ -27,7 +29,12 @@ import {
   isBsuidRecipient,
   resolveRecipientParams,
 } from "../../../lib/recipient"
-import type { RawWhatsappMessage, WhatsappAuthValue } from "../../../schema"
+import type {
+  LocationRequestMessage,
+  RawWhatsappMessage,
+  WhatsappAuthValue,
+} from "../../../schema"
+import { clampText, messageLimits } from "../message-limits"
 import { generateOutgoingMessages as convertFlowStepCarousel } from "./send-carousel"
 import {
   convertFlowStepImage,
@@ -38,9 +45,30 @@ import { convertFlowStepWaTemplate } from "./send-wa-template"
 import { convertFlowStepWhatsappFlow } from "./whatsapp-flow"
 import { convertFlowStepWhatsappOptionList } from "./whatsapp-option-list"
 
+function buildLocationRequestMessage(bodyText: string): LocationRequestMessage {
+  return {
+    _type: "location_request",
+    type: "interactive",
+    interactive: {
+      type: "location_request_message",
+      body: { text: clampText(bodyText, messageLimits.bodyText) },
+      action: { name: "send_location" },
+    },
+  }
+}
+
 function* convertMessageToWhatsappMessage(
   message: OutgoingMessage,
-): Generator<ClientMessage | null> {
+  quickReplies?: MessageButtonTemplate[],
+): Generator<ClientMessage | RawWhatsappMessage | null> {
+  if (isWhatsappNativeLocationRequest(quickReplies)) {
+    const bodyText = message.text?.trim()
+    if (bodyText) {
+      yield buildLocationRequestMessage(bodyText)
+    }
+    return
+  }
+
   if (message.contentType === contentTypes.enum.text) {
     if (message.text) {
       yield new Text(message.text)
@@ -156,11 +184,13 @@ function* convertFlowStepToWhatsappMessage(
   }
 }
 
-/** `whatsapp-api-js` models neither payload, so both are posted as-is. */
+/** `whatsapp-api-js` does not model these payloads, so they are posted as-is. */
 const isRawWhatsappMessage = (
   message: ClientMessage | RawWhatsappMessage,
 ): message is RawWhatsappMessage =>
-  message._type === "template" || message._type === "interactive_carousel"
+  message._type === "template" ||
+  message._type === "interactive_carousel" ||
+  message._type === "location_request"
 
 /**
  * Builds the Cloud API message-body fields (everything after
@@ -232,7 +262,7 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
   async (props) => {
     const {
       ctx,
-      data: { contact, message },
+      data: { contact, message, quickReplies },
     } = props
     const whatsappClient = getWhatsappClient(ctx.auth)
     const messageIds: string[] = []
@@ -240,7 +270,10 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
     const isBsuidKeyedRecipient = isBsuidRecipient(recipientParams)
 
     try {
-      for (const whatsappMessage of convertMessageToWhatsappMessage(message)) {
+      for (const whatsappMessage of convertMessageToWhatsappMessage(
+        message,
+        quickReplies,
+      )) {
         if (!whatsappMessage) {
           logger.error(message, "Unable to parse outgoing message")
           continue
@@ -254,18 +287,19 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
           },
           "sendMessage: dispatching outgoing message",
         )
-        const sendResponse = isBsuidKeyedRecipient
-          ? await postRawMessage({
-              client: whatsappClient,
-              phoneNumberId: ctx.auth.metadata.phoneNumber.id,
-              recipientParams,
-              message: whatsappMessage,
-            })
-          : await whatsappClient.sendMessage(
-              ctx.auth.metadata.phoneNumber.id,
-              contact.sourceId,
-              whatsappMessage,
-            )
+        const sendResponse =
+          isRawWhatsappMessage(whatsappMessage) || isBsuidKeyedRecipient
+            ? await postRawMessage({
+                client: whatsappClient,
+                phoneNumberId: ctx.auth.metadata.phoneNumber.id,
+                recipientParams,
+                message: whatsappMessage,
+              })
+            : await whatsappClient.sendMessage(
+                ctx.auth.metadata.phoneNumber.id,
+                contact.sourceId,
+                whatsappMessage,
+              )
 
         const serverError = sendResponse as ServerErrorResponse
 
