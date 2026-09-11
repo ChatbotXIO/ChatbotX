@@ -14,6 +14,11 @@ const { mockFindOrFail, mockUpdate, mockUpdateSet, mockDispatchAuditRecord } =
     }
   })
 
+vi.mock("@chatbotx.io/analytics", () => ({
+  broadcastAnalyticsService: { getContacts: vi.fn() },
+  sequenceAnalyticsService: { getContacts: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { update: mockUpdate },
   and: (...args: unknown[]) => ({ __and: args }),

@@ -57,8 +57,11 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 const broadcastService = {
+  list: vi.fn(),
+  listAudience: vi.fn(),
   findByIdOrName: vi.fn(),
   listExistingIds: vi.fn(),
+  listContactsPage: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   updateDraft: vi.fn(),
@@ -69,19 +72,9 @@ const broadcastService = {
   resendWithPruning: vi.fn(),
   softDeleteBroadcasts: vi.fn(),
 }
-const contactInboxService = { findManyByIds: vi.fn() }
 
 vi.mock("@chatbotx.io/business", () => ({
   broadcastService,
-  contactInboxService,
-}))
-
-const broadcastAnalyticsService = { getContacts: vi.fn() }
-vi.mock("@chatbotx.io/analytics", () => ({ broadcastAnalyticsService }))
-
-vi.mock("../src/features/broadcasts/queries", () => ({
-  listBroadcasts: vi.fn(),
-  listBroadcastAudience: vi.fn(),
 }))
 
 await import("@/features/broadcasts/api/public")
@@ -336,161 +329,57 @@ describe("DELETE /v1/broadcasts/{id}", () => {
 describe("GET /v1/broadcasts/{id}/contacts", () => {
   const procedure = findProcedure("GET", "/v1/broadcasts/{id}/contacts")
 
-  test("404s when the broadcast does not exist in this workspace", async () => {
-    broadcastService.listExistingIds.mockResolvedValueOnce([])
+  // The existence check, analytics/contact-inbox joins, and row shaping now
+  // live in `broadcastService.listContactsPage` (shared with the private
+  // route) — see `packages/business/__tests__` for coverage of that
+  // orchestration. This route's job is just to call it and pass the result
+  // through; `conversationId` is a superset the public response schema
+  // doesn't declare, so the handler returns it unfiltered and zod strips it.
+  test("propagates a not-found rejection from the service", async () => {
+    broadcastService.listContactsPage.mockRejectedValueOnce(
+      new Error("Broadcast not found"),
+    )
 
     await expect(
       procedure.handler?.({
         context: { workspace: { id: "ws-1" } },
         input: { id: "b-1", eventType: "message:sent", page: 1, perPage: 20 },
       }),
-    ).rejects.toThrow()
-
-    expect(broadcastAnalyticsService.getContacts).not.toHaveBeenCalled()
+    ).rejects.toThrow("Broadcast not found")
   })
 
-  test("returns an empty page without a contact-inbox lookup when there are no matching recipients", async () => {
-    broadcastService.listExistingIds.mockResolvedValueOnce(["b-1"])
-    broadcastAnalyticsService.getContacts.mockResolvedValueOnce({
-      contactInboxIds: [],
-      contactEventMap: new Map(),
-      total: 0,
-    })
-
-    const result = await procedure.handler?.({
-      context: { workspace: { id: "ws-1" } },
-      input: { id: "b-1", eventType: "message:sent", page: 1, perPage: 20 },
-    })
-
-    expect(result).toEqual({ data: [], pageCount: 0 })
-    expect(contactInboxService.findManyByIds).not.toHaveBeenCalled()
-  })
-
-  test("joins recipient events with contact-inbox details", async () => {
-    broadcastService.listExistingIds.mockResolvedValueOnce(["b-1"])
-    broadcastAnalyticsService.getContacts.mockResolvedValueOnce({
-      contactInboxIds: ["ci-1"],
-      contactEventMap: new Map([
-        [
-          "ci-1",
-          {
-            contactId: "contact-1",
-            occurredAt: "2026-01-01T00:00:00.000Z",
-            errorContent: null,
-          },
-        ],
-      ]),
+  test("scopes the lookup to the token's workspace and returns the service result", async () => {
+    const row = {
+      contactId: "contact-1",
+      contactInboxId: "ci-1",
+      firstName: "Ada",
+      lastName: "Lovelace",
+      fullName: "Ada Lovelace",
+      sourceId: "src-1",
+      avatar: null,
+      channel: "whatsapp",
+      errorContent: null,
+      occurredAt: "2026-01-01T00:00:00.000Z",
+      conversationId: "conv-1",
+    }
+    broadcastService.listContactsPage.mockResolvedValueOnce({
+      data: [row],
       total: 1,
+      pageCount: 1,
     })
-    contactInboxService.findManyByIds.mockResolvedValueOnce([
-      {
-        id: "ci-1",
-        sourceId: "src-1",
-        channel: "whatsapp",
-        contact: {
-          id: "contact-1",
-          firstName: "Ada",
-          lastName: "Lovelace",
-          fullName: "Ada Lovelace",
-          avatar: null,
-        },
-      },
-    ])
 
     const result = await procedure.handler?.({
       context: { workspace: { id: "ws-1" } },
       input: { id: "b-1", eventType: "message:sent", page: 1, perPage: 20 },
     })
 
-    expect(result).toEqual({
-      data: [
-        {
-          contactId: "contact-1",
-          contactInboxId: "ci-1",
-          firstName: "Ada",
-          lastName: "Lovelace",
-          fullName: "Ada Lovelace",
-          sourceId: "src-1",
-          avatar: null,
-          channel: "whatsapp",
-          errorContent: null,
-          occurredAt: "2026-01-01T00:00:00.000Z",
-        },
-      ],
-      pageCount: 1,
-    })
-    expect(contactInboxService.findManyByIds).toHaveBeenCalledWith({
+    expect(broadcastService.listContactsPage).toHaveBeenCalledWith({
       workspaceId: "ws-1",
-      ids: ["ci-1"],
+      broadcastId: "b-1",
+      eventType: "message:sent",
+      page: 1,
+      perPage: 20,
     })
-  })
-
-  test("drops a recipient whose contact-inbox no longer resolves, leaving pageCount driven by the DB total", async () => {
-    broadcastService.listExistingIds.mockResolvedValueOnce(["b-1"])
-    broadcastAnalyticsService.getContacts.mockResolvedValueOnce({
-      contactInboxIds: ["ci-1", "ci-gone"],
-      contactEventMap: new Map([
-        [
-          "ci-1",
-          {
-            contactId: "contact-1",
-            occurredAt: "2026-01-01T00:00:00.000Z",
-            errorContent: null,
-          },
-        ],
-        [
-          "ci-gone",
-          {
-            contactId: "contact-gone",
-            occurredAt: "2026-01-02T00:00:00.000Z",
-            errorContent: null,
-          },
-        ],
-      ]),
-      total: 2,
-    })
-    // `getContacts` scopes by `Broadcast.workspaceId` while `findManyByIds`
-    // scopes by `Contact.workspaceId`, so a contact deleted or moved out of
-    // the workspace after the send is counted in `total` but has no row here.
-    contactInboxService.findManyByIds.mockResolvedValueOnce([
-      {
-        id: "ci-1",
-        sourceId: "src-1",
-        channel: "whatsapp",
-        contact: {
-          id: "contact-1",
-          firstName: "Ada",
-          lastName: null,
-          fullName: "Ada",
-          avatar: null,
-        },
-      },
-    ])
-
-    const result = await procedure.handler?.({
-      context: { workspace: { id: "ws-1" } },
-      input: { id: "b-1", eventType: "message:sent", page: 1, perPage: 20 },
-    })
-
-    // Unresolvable rows are dropped rather than emitted as nulls, and
-    // `pageCount` stays anchored to the DB count — so `data.length` can be
-    // shorter than the total implies.
-    expect(result).toEqual({
-      data: [
-        {
-          contactId: "contact-1",
-          contactInboxId: "ci-1",
-          firstName: "Ada",
-          lastName: null,
-          fullName: "Ada",
-          sourceId: "src-1",
-          avatar: null,
-          channel: "whatsapp",
-          errorContent: null,
-          occurredAt: "2026-01-01T00:00:00.000Z",
-        },
-      ],
-      pageCount: 1,
-    })
+    expect(result).toEqual({ data: [row], pageCount: 1 })
   })
 })

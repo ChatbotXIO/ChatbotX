@@ -1,18 +1,16 @@
 import type { ContactEventData } from "@chatbotx.io/analytics/schemas"
-import type { ContactInboxWithAnalytics } from "@chatbotx.io/business"
 import type { ChannelType } from "@chatbotx.io/database/partials"
+import type { ContactInboxWithAnalytics } from "./service"
 
 // Shared row-shape across every "stats contacts" route that pairs a
 // `ContactEventData` with its `ContactInboxWithAnalytics` per
-// `contactInboxId` — broadcasts (`privateListBroadcastContactsAPI`,
-// `broadcastsPublicRouter.listContacts`) and sequences
-// (`privateListSequenceStepContactsAPI`). All feed the same
+// `contactInboxId` — broadcasts (`broadcastService.listContactsPage`) and
+// sequences (`sequenceService.listStepContactsPage`). All feed the same
 // `StatsContactsDialog` → `addContactTagAction` /
 // `bulkTagStatsContactsAction` path, which requires `contactId` to be the
 // real **Contact** id (`eventData.contactId`) — NOT the ContactInbox id
 // (`contactInbox.id`). A caller that emits the wrong one tags the wrong
-// contact silently; see the broadcasts/sequences private-route call sites
-// for how `conversationId` (only some callers need it) is layered on top.
+// contact silently.
 export type StatsContactRow = {
   contactId: string
   contactInboxId: string

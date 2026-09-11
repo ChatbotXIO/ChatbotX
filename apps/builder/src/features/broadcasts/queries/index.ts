@@ -8,12 +8,3 @@ export async function listBroadcasts(
 ): Promise<PaginatedResponse<BroadcastResourceWithRelations>> {
   return await broadcastService.list(input)
 }
-
-export async function listBroadcastAudience(input: {
-  idOrName: string
-  workspaceId: string
-  page?: number | null
-  perPage?: number | null
-}) {
-  return await broadcastService.listAudience(input)
-}

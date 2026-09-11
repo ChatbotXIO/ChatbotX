@@ -29,6 +29,11 @@ const {
   }
 })
 
+vi.mock("@chatbotx.io/analytics", () => ({
+  broadcastAnalyticsService: { getContacts: vi.fn() },
+  sequenceAnalyticsService: { getContacts: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     transaction: mockDbTransaction,

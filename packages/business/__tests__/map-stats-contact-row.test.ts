@@ -1,7 +1,7 @@
 import type { ContactEventData } from "@chatbotx.io/analytics/schemas"
-import type { ContactInboxWithAnalytics } from "@chatbotx.io/business"
 import { describe, expect, test } from "vitest"
-import { mapStatsContactRow } from "../map-stats-contact-row"
+import { mapStatsContactRow } from "../src/contact-inbox/map-stats-contact-row"
+import type { ContactInboxWithAnalytics } from "../src/contact-inbox/service"
 
 const eventData: ContactEventData = {
   contactId: "contact-1",

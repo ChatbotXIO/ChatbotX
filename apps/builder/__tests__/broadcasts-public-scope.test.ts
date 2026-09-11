@@ -22,8 +22,11 @@ vi.mock("@chatbotx.io/business", () => ({
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
   broadcastService: {
+    list: vi.fn(),
+    listAudience: vi.fn(),
     findByIdOrName: vi.fn(),
     listExistingIds: vi.fn(),
+    listContactsPage: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     updateDraft: vi.fn(),
@@ -34,11 +37,6 @@ vi.mock("@chatbotx.io/business", () => ({
     resendWithPruning: vi.fn(),
     softDeleteBroadcasts: vi.fn(),
   },
-  contactInboxService: { findManyByIds: vi.fn() },
-}))
-
-vi.mock("@chatbotx.io/analytics", () => ({
-  broadcastAnalyticsService: { getContacts: vi.fn() },
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -60,14 +58,6 @@ vi.mock("@/env", () => ({ isCloud: () => true }))
 // unit test. Same stub as workspace-token-scope-enforcement.test.ts.
 vi.mock("@/middlewares/auth", () => ({
   authMiddleware: vi.fn(),
-}))
-
-// The broadcasts router's queries hit the database at import time
-// (`@chatbotx.io/database/client`); never reached on the FORBIDDEN path this
-// test exercises, but the import chain must not try to open a connection.
-vi.mock("../src/features/broadcasts/queries", () => ({
-  listBroadcasts: vi.fn(),
-  listBroadcastAudience: vi.fn(),
 }))
 
 const { call } = await import("@orpc/server")
@@ -109,10 +99,8 @@ describe("real router: broadcasts public API scope wiring", () => {
 
   test("null scopes (unrestricted) passes the real GET /v1/broadcasts route", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(null))
-    const { listBroadcasts } = await import(
-      "../src/features/broadcasts/queries"
-    )
-    vi.mocked(listBroadcasts).mockResolvedValue({
+    const { broadcastService } = await import("@chatbotx.io/business")
+    vi.mocked(broadcastService.list).mockResolvedValue({
       data: [],
       pageCount: 1,
     } as never)
@@ -234,31 +222,13 @@ describe("real router: broadcasts public API scope wiring", () => {
       )
     })
 
-    test("listContacts scopes both the broadcast lookup and the contact-inbox lookup to the token's workspace", async () => {
-      const { broadcastService, contactInboxService } = await import(
-        "@chatbotx.io/business"
-      )
-      const { broadcastAnalyticsService } = await import(
-        "@chatbotx.io/analytics"
-      )
-      vi.mocked(broadcastService.listExistingIds).mockResolvedValue([
-        "999999",
-      ] as never)
-      vi.mocked(broadcastAnalyticsService.getContacts).mockResolvedValue({
-        contactInboxIds: ["ci-1"],
-        contactEventMap: new Map([
-          [
-            "ci-1",
-            {
-              contactId: "contact-1",
-              occurredAt: "2026-01-01T00:00:00.000Z",
-              errorContent: null,
-            },
-          ],
-        ]),
-        total: 1,
+    test("listContacts scopes the lookup to the token's workspace", async () => {
+      const { broadcastService } = await import("@chatbotx.io/business")
+      vi.mocked(broadcastService.listContactsPage).mockResolvedValue({
+        data: [],
+        total: 0,
+        pageCount: 0,
       } as never)
-      vi.mocked(contactInboxService.findManyByIds).mockResolvedValue([])
 
       await invoke(broadcastsPublicRouter.listContacts, {
         id: "999999",
@@ -267,13 +237,7 @@ describe("real router: broadcasts public API scope wiring", () => {
         perPage: 20,
       })
 
-      expect(broadcastService.listExistingIds).toHaveBeenCalledWith(
-        expect.objectContaining({ workspaceId: "ws-1" }),
-      )
-      expect(broadcastAnalyticsService.getContacts).toHaveBeenCalledWith(
-        expect.objectContaining({ workspaceId: "ws-1" }),
-      )
-      expect(contactInboxService.findManyByIds).toHaveBeenCalledWith(
+      expect(broadcastService.listContactsPage).toHaveBeenCalledWith(
         expect.objectContaining({ workspaceId: "ws-1" }),
       )
     })

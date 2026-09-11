@@ -7,6 +7,11 @@ const broadcastInsert = vi.fn()
 const targetInsert = vi.fn()
 const pruneFilter = vi.fn()
 
+vi.mock("@chatbotx.io/analytics", () => ({
+  broadcastAnalyticsService: { getContacts: vi.fn() },
+  sequenceAnalyticsService: { getContacts: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {

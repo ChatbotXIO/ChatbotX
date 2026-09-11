@@ -11,6 +11,11 @@ const deleteTargetsWhere = vi.fn()
 const pruneFilter = vi.fn()
 const mockDispatchAuditRecord = vi.fn().mockResolvedValue(undefined)
 
+vi.mock("@chatbotx.io/analytics", () => ({
+  broadcastAnalyticsService: { getContacts: vi.fn() },
+  sequenceAnalyticsService: { getContacts: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {

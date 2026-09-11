@@ -1,10 +1,8 @@
-import { broadcastAnalyticsService } from "@chatbotx.io/analytics"
-import { broadcastService, contactInboxService } from "@chatbotx.io/business"
+import { broadcastService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { broadcastStatuses } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
-import { mapStatsContactRow } from "@/features/common/lib/map-stats-contact-row"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -14,7 +12,6 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { listBroadcastAudience, listBroadcasts } from "../queries"
 import {
   createBroadcastRequest,
   resolveScheduleTime,
@@ -64,7 +61,7 @@ export const broadcastsPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
-        await listBroadcasts({
+        await broadcastService.list({
           workspaceId: context.workspace.id,
           ...input,
           sort: [{ id: "createdAt", desc: true }],
@@ -108,7 +105,7 @@ export const broadcastsPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(
       async ({ context, input }) =>
-        await listBroadcastAudience({
+        await broadcastService.listAudience({
           idOrName: input.idOrName,
           workspaceId: context.workspace.id,
           page: input.page,
@@ -132,44 +129,16 @@ export const broadcastsPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const { id, eventType, page, perPage } = input
-      const [existingId] = await broadcastService.listExistingIds({
+      const { data, pageCount } = await broadcastService.listContactsPage({
         workspaceId: context.workspace.id,
-        ids: [id],
+        broadcastId: id,
+        eventType,
+        page,
+        perPage,
       })
-      if (!existingId) {
-        throw notFoundException("Broadcast not found")
-      }
 
-      const { contactInboxIds, contactEventMap, total } =
-        await broadcastAnalyticsService.getContacts({
-          workspaceId: context.workspace.id,
-          broadcastId: id,
-          eventType,
-          page,
-          perPage,
-        })
-      const pageCount = Math.ceil(total / perPage)
-
-      if (contactInboxIds.length === 0) {
-        return { data: [], pageCount }
-      }
-
-      const contactInboxes = await contactInboxService.findManyByIds({
-        workspaceId: context.workspace.id,
-        ids: contactInboxIds,
-      })
-      const contactMap = new Map(contactInboxes.map((c) => [c.id, c]))
-
-      const data = contactInboxIds
-        .map((contactInboxId) =>
-          mapStatsContactRow(
-            contactInboxId,
-            contactEventMap.get(contactInboxId),
-            contactMap.get(contactInboxId),
-          ),
-        )
-        .filter((row) => row !== null)
-
+      // `conversationId` is a superset the public response schema doesn't
+      // declare — zod strips it silently, so returning it here is harmless.
       return { data, pageCount }
     }),
 

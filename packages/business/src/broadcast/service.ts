@@ -1,3 +1,5 @@
+import { broadcastAnalyticsService } from "@chatbotx.io/analytics"
+import type { BroadcastEventType } from "@chatbotx.io/analytics/schemas"
 import {
   and,
   asc,
@@ -83,6 +85,11 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { startOfMinute } from "date-fns"
 import { BaseService } from "../base.service"
+import {
+  mapStatsContactRow,
+  type StatsContactRow,
+} from "../contact-inbox/map-stats-contact-row"
+import { contactInboxService } from "../contact-inbox/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { inboxService } from "../inbox/service"
 import type {
@@ -569,6 +576,80 @@ class BroadcastService extends BaseService {
         ),
       )
     return rows.map((row) => row.id)
+  }
+
+  /**
+   * One page of a broadcast's recipients for a given delivery event, with
+   * contact display fields attached — shared by the public and private
+   * "list broadcast contacts" routes so both call the same orchestration
+   * (existence check → analytics lookup → contact-inbox fetch → row shape).
+   * `conversationId` is always included: it is a superset the public
+   * response schema simply doesn't declare (zod strips undeclared keys), so
+   * one method safely serves both callers.
+   */
+  async listContactsPage(input: {
+    workspaceId: string
+    broadcastId: string
+    eventType: BroadcastEventType
+    page: number
+    perPage: number
+  }): Promise<{
+    data: (StatsContactRow & { conversationId: string })[]
+    total: number
+    pageCount: number
+  }> {
+    const { workspaceId, broadcastId, eventType, page, perPage } = input
+
+    const [existingId] = await this.listExistingIds({
+      workspaceId,
+      ids: [broadcastId],
+    })
+    if (!existingId) {
+      throw notFoundException("Broadcast not found")
+    }
+
+    const { contactInboxIds, contactEventMap, total } =
+      await broadcastAnalyticsService.getContacts({
+        workspaceId,
+        broadcastId,
+        eventType,
+        page,
+        perPage,
+      })
+    const pageCount = Math.ceil(total / perPage)
+
+    if (contactInboxIds.length === 0) {
+      return { data: [], total, pageCount }
+    }
+
+    const contactInboxes = await contactInboxService.findManyByIds({
+      workspaceId,
+      ids: contactInboxIds,
+    })
+    const contactMap = new Map(contactInboxes.map((c) => [c.id, c]))
+
+    const data = contactInboxIds
+      .map((contactInboxId) => {
+        const row = mapStatsContactRow(
+          contactInboxId,
+          contactEventMap.get(contactInboxId),
+          contactMap.get(contactInboxId),
+        )
+        if (!row) {
+          return null
+        }
+        return {
+          ...row,
+          conversationId:
+            contactMap.get(contactInboxId)?.conversation?.id ?? "",
+        }
+      })
+      .filter(
+        (row): row is StatsContactRow & { conversationId: string } =>
+          row !== null,
+      )
+
+    return { data, total, pageCount }
   }
 
   /**

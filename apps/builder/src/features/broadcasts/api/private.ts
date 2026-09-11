@@ -4,11 +4,9 @@ import {
   listBroadcastContactsRequest,
   listBroadcastContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
-import { broadcastService, contactInboxService } from "@chatbotx.io/business"
-import { notFoundException } from "@chatbotx.io/business/errors"
+import { broadcastService } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
-import { mapStatsContactRow } from "@/features/common/lib/map-stats-contact-row"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 
@@ -137,56 +135,18 @@ export const broadcastPrivateAPIs = {
     .handler(async ({ input }) => {
       const { workspaceId, broadcastId, eventType, page, perPage } = input
 
-      const [existingId] = await broadcastService.listExistingIds({
-        workspaceId,
-        ids: [broadcastId],
-      })
-      if (!existingId) {
-        throw notFoundException("Broadcast not found")
-      }
-
       if (!eventType) {
         return { data: [], total: 0, page, pageCount: 0 }
       }
 
-      const { contactInboxIds, contactEventMap, total } =
-        await broadcastAnalyticsService.getContacts({
+      const { data, total, pageCount } =
+        await broadcastService.listContactsPage({
           workspaceId,
           broadcastId,
           eventType,
           page,
           perPage,
         })
-      const pageCount = Math.ceil(total / perPage)
-
-      if (contactInboxIds.length === 0) {
-        return { data: [], total, page, pageCount }
-      }
-
-      const contactInboxes = await contactInboxService.findManyByIds({
-        workspaceId,
-        ids: contactInboxIds,
-      })
-
-      const contactMap = new Map(contactInboxes.map((c) => [c.id, c]))
-
-      const data = contactInboxIds
-        .map((contactInboxId) => {
-          const row = mapStatsContactRow(
-            contactInboxId,
-            contactEventMap.get(contactInboxId),
-            contactMap.get(contactInboxId),
-          )
-          if (!row) {
-            return null
-          }
-          return {
-            ...row,
-            conversationId:
-              contactMap.get(contactInboxId)?.conversation?.id ?? "",
-          }
-        })
-        .filter((c) => c !== null)
 
       return { data, total, page, pageCount }
     }),
