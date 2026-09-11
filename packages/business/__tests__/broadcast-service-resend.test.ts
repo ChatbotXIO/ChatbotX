@@ -51,6 +51,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
 vi.mock("@chatbotx.io/database/partials", () => ({
   broadcastStatuses: { enum: { draft: "draft", scheduled: "scheduled" } },
   findBroadcastChannelCapability: vi.fn(),
+  // Mirrors the real `contactFilterFields` zod enum closely enough for
+  // `isContactFilterShape`'s `.safeParse(field).success` check: a known
+  // field name succeeds, anything else (including a renamed/removed field)
+  // fails, matching `z.enum([...]).safeParse` semantics.
+  contactFilterFields: {
+    safeParse: (value: unknown) => ({
+      success: value === "email" || value === "fullName",
+    }),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -108,6 +117,9 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
 
+const { pruneEmailPhoneFilterConditions } = await import(
+  "@chatbotx.io/database/queries"
+)
 const { broadcastService } = await import("../src/broadcast/service")
 
 const WS = "ws-1"
@@ -127,7 +139,7 @@ const sourceBroadcast = {
   name: "My Broadcast",
 }
 
-describe("broadcastService.resend", () => {
+describe("broadcastService.resendWithPruning", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockDbTransaction.mockImplementation(
@@ -149,11 +161,207 @@ describe("broadcastService.resend", () => {
     ])
   })
 
-  test("throws when the source broadcast status is not sent or failed", async () => {
+  test("passes the persisted contactFilter through to resend when it has the expected shape", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      contactFilter: { operator: "and", conditions: [] },
+    })
+
+    const result = await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(result).toEqual({
+      id: "new-broadcast-id",
+      name: "My Broadcast (Resend)",
+    })
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactFilter: { operator: "and", conditions: [] },
+      }),
+    )
+  })
+
+  test("passes undefined contactFilter when the source has none stored", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      contactFilter: null,
+    })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter: undefined }),
+    )
+  })
+
+  test("passes undefined contactFilter when the persisted value has an unexpected shape", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      contactFilter: { unexpected: true },
+    })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter: undefined }),
+    )
+  })
+
+  test.each([
+    ["xor", { operator: "xor", conditions: [] }],
+    ["AND (uppercase)", { operator: "AND", conditions: [] }],
+    ["a non-array conditions", { operator: "and", conditions: "nope" }],
+    ["a missing operator", { conditions: [] }],
+  ])("drops the persisted contactFilter when it has %s", async (_label, contactFilter) => {
+    mockFindOrFail.mockResolvedValue({ ...sourceBroadcast, contactFilter })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    // `applyContactFilter` branches only on `operator === "or"`, so any
+    // other value would silently degrade to AND and resend to a different
+    // audience than the filter describes. Dropping it reproduces the
+    // pre-refactor `safeParse` failure path: full eligible audience.
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter: undefined }),
+    )
+  })
+
+  test("passes the persisted contactFilter through when every condition has a known field", async () => {
+    const contactFilter = {
+      operator: "and",
+      conditions: [{ field: "email", operator: "eq", value: "a@b.com" }],
+    }
+    mockFindOrFail.mockResolvedValue({ ...sourceBroadcast, contactFilter })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter }),
+    )
+  })
+
+  test.each([
+    [
+      "one condition has an unrecognised field",
+      {
+        operator: "and",
+        conditions: [
+          { field: "email", operator: "eq", value: "a@b.com" },
+          { field: "aFieldThatWasRenamedOrRemoved", operator: "eq", value: 1 },
+        ],
+      },
+    ],
+    [
+      "every condition has an unrecognised field",
+      {
+        operator: "and",
+        conditions: [
+          { field: "aFieldThatWasRenamedOrRemoved", operator: "eq", value: 1 },
+        ],
+      },
+    ],
+    [
+      "a condition is missing its field",
+      { operator: "and", conditions: [{ operator: "eq", value: 1 }] },
+    ],
+    [
+      "a condition is not an object",
+      { operator: "and", conditions: ["not-an-object"] },
+    ],
+  ])(// A malformed *condition* must drop the whole filter, not just the bad
+  // condition: `buildConditionWhere`'s `default` case returns `{}` for an
+  // unrecognised field, `applyContactFilter` filters out every empty
+  // where, and if every condition is dropped it returns `{}` — i.e. NO
+  // filtering, silently widening the resend to the full workspace
+  // audience instead of throwing or narrowing. This is the regression
+  // `isContactFilterShape` must prevent.
+  "drops the persisted contactFilter when %s", async (_label, contactFilter) => {
+    mockFindOrFail.mockResolvedValue({ ...sourceBroadcast, contactFilter })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter: undefined }),
+    )
+  })
+
+  test("keeps an 'or' filter, which is a valid operator", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      contactFilter: { operator: "or", conditions: [] },
+    })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactFilter: { operator: "or", conditions: [] },
+      }),
+    )
+  })
+
+  test("prunes email/phone conditions when the caller may not view them", async () => {
+    const persisted = { operator: "and", conditions: [{ field: "email" }] }
+    const pruned = { operator: "and", conditions: [] }
+    vi.mocked(pruneEmailPhoneFilterConditions).mockReturnValueOnce(
+      pruned as never,
+    )
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      contactFilter: persisted,
+    })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: false,
+    })
+
+    expect(pruneEmailPhoneFilterConditions).toHaveBeenCalledWith(
+      persisted,
+      false,
+    )
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter: pruned }),
+    )
+  })
+
+  test("propagates a 'Broadcast is not sent' error from the existence/status guard", async () => {
     mockFindOrFail.mockResolvedValue({ ...sourceBroadcast, status: "draft" })
 
     await expect(
-      broadcastService.resend({ workspaceId: WS, id: SOURCE_ID }),
+      broadcastService.resendWithPruning({
+        workspaceId: WS,
+        id: SOURCE_ID,
+        canViewEmailAndPhone: true,
+      }),
     ).rejects.toThrow("Broadcast is not sent")
 
     expect(mockDbTransaction).not.toHaveBeenCalled()
@@ -162,9 +370,10 @@ describe("broadcastService.resend", () => {
   test("clones a 'sent' broadcast as a new scheduled-now broadcast, appending (Resend) to the name", async () => {
     mockFindOrFail.mockResolvedValue(sourceBroadcast)
 
-    const result = await broadcastService.resend({
+    const result = await broadcastService.resendWithPruning({
       workspaceId: WS,
       id: SOURCE_ID,
+      canViewEmailAndPhone: true,
     })
 
     expect(result).toEqual({
@@ -197,7 +406,11 @@ describe("broadcastService.resend", () => {
     mockFindOrFail.mockResolvedValue({ ...sourceBroadcast, status: "failed" })
 
     await expect(
-      broadcastService.resend({ workspaceId: WS, id: SOURCE_ID }),
+      broadcastService.resendWithPruning({
+        workspaceId: WS,
+        id: SOURCE_ID,
+        canViewEmailAndPhone: true,
+      }),
     ).resolves.toEqual({
       id: "new-broadcast-id",
       name: "My Broadcast (Resend)",

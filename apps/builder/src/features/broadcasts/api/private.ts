@@ -6,8 +6,9 @@ import {
 } from "@chatbotx.io/analytics/schemas"
 import { broadcastService, contactInboxService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
+import { mapStatsContactRow } from "@/features/common/lib/map-stats-contact-row"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 
@@ -134,9 +135,7 @@ export const broadcastPrivateAPIs = {
     .output(listBroadcastContactsResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { workspaceId, broadcastId, eventType, total, page, perPage } =
-        input
-      const totalValue = total ?? 0
+      const { workspaceId, broadcastId, eventType, page, perPage } = input
 
       const [existingId] = await broadcastService.listExistingIds({
         workspaceId,
@@ -147,10 +146,10 @@ export const broadcastPrivateAPIs = {
       }
 
       if (!eventType) {
-        return { data: [], total: totalValue, page, pageCount: 0 }
+        return { data: [], total: 0, page, pageCount: 0 }
       }
 
-      const { contactInboxIds, contactEventMap } =
+      const { contactInboxIds, contactEventMap, total } =
         await broadcastAnalyticsService.getContacts({
           workspaceId,
           broadcastId,
@@ -158,49 +157,37 @@ export const broadcastPrivateAPIs = {
           page,
           perPage,
         })
+      const pageCount = Math.ceil(total / perPage)
 
       if (contactInboxIds.length === 0) {
-        return {
-          data: [],
-          total: totalValue,
-          page,
-          pageCount: Math.ceil(totalValue / perPage),
-        }
+        return { data: [], total, page, pageCount }
       }
 
-      const contactInboxes =
-        await contactInboxService.findManyByIds(contactInboxIds)
+      const contactInboxes = await contactInboxService.findManyByIds({
+        workspaceId,
+        ids: contactInboxIds,
+      })
 
       const contactMap = new Map(contactInboxes.map((c) => [c.id, c]))
-      const pageCount = Math.ceil(totalValue / perPage)
 
       const data = contactInboxIds
         .map((contactInboxId) => {
-          const eventData = contactEventMap.get(contactInboxId)
-          if (!eventData) {
-            return null
-          }
-
-          const contactInbox = contactMap.get(contactInboxId)
-          if (!contactInbox) {
+          const row = mapStatsContactRow(
+            contactInboxId,
+            contactEventMap.get(contactInboxId),
+            contactMap.get(contactInboxId),
+          )
+          if (!row) {
             return null
           }
           return {
-            contactId: contactInbox.id,
-            contactInboxId,
-            firstName: contactInbox.contact.firstName ?? null,
-            lastName: contactInbox.contact.lastName ?? null,
-            fullName: contactInbox.contact.fullName ?? null,
-            sourceId: contactInbox.sourceId,
-            avatar: contactInbox.contact.avatar ?? null,
-            channel: contactInbox.channel as ChannelType,
-            conversationId: contactInbox.conversation?.id ?? "",
-            errorContent: eventData.errorContent ?? null,
-            occurredAt: eventData.occurredAt,
+            ...row,
+            conversationId:
+              contactMap.get(contactInboxId)?.conversation?.id ?? "",
           }
         })
         .filter((c) => c !== null)
 
-      return { data, total: totalValue, page, pageCount }
+      return { data, total, page, pageCount }
     }),
 }

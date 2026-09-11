@@ -376,6 +376,44 @@ describe("sequenceService.updateStep / deleteStep cross-workspace rejection", ()
       WS,
     )
   })
+
+  test("rejects a step that belongs to a different sequence than the one named", async () => {
+    mockStepFindFirst.mockResolvedValue({
+      id: "step-1",
+      sequenceId: "seq-OTHER",
+      sequence: { workspaceId: WS },
+    })
+
+    // Same workspace, so the workspace check passes — only the explicit
+    // parent assertion stops `DELETE /v1/sequences/seq-1/steps/step-1` from
+    // deleting a step of seq-OTHER. Masked as "not found" like the
+    // cross-workspace case.
+    await expect(
+      sequenceService.deleteStep({
+        workspaceId: WS,
+        sequenceId: "seq-1",
+        stepId: "step-1",
+      }),
+    ).rejects.toThrow("Step not found")
+
+    expect(mockStepDelete).not.toHaveBeenCalled()
+  })
+
+  test("deletes when the named parent sequence matches the step's own", async () => {
+    mockStepFindFirst.mockResolvedValue({
+      id: "step-1",
+      sequenceId: "seq-1",
+      sequence: { workspaceId: WS },
+    })
+
+    await sequenceService.deleteStep({
+      workspaceId: WS,
+      sequenceId: "seq-1",
+      stepId: "step-1",
+    })
+
+    expect(mockStepDelete).toHaveBeenCalled()
+  })
 })
 
 describe("sequenceService.upsertStep", () => {
@@ -401,6 +439,7 @@ describe("sequenceService.upsertStep", () => {
     mockStepFindFirst.mockResolvedValue({
       id: "step-1",
       order: 1,
+      sequenceId: "seq-1",
       sequence: { workspaceId: WS },
     })
     mockStepUpdateReturning.mockResolvedValue([{ id: "step-1" }])
@@ -426,6 +465,7 @@ describe("sequenceService.upsertStep", () => {
     mockStepFindFirst.mockResolvedValue({
       id: "step-1",
       order: 1,
+      sequenceId: "seq-1",
       sequence: { workspaceId: WS },
     })
     mockStepUpdateReturning.mockResolvedValue([{ id: "step-1" }])

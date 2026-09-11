@@ -21,10 +21,14 @@ class AuditService {
     const workspaceId = input.workspaceId ?? actor?.workspaceId
 
     if (!(userId && workspaceId)) {
-      // debug, not warn: this is also the by-design no-op path for Public
-      // API (workspace-token) calls, which never carry an admin actor —
-      // warn-level here would spam logs on every legitimate token request.
-      logger.debug(
+      // Every authenticated caller now supplies an actor: session-based
+      // callers via the explicit `userId`/`workspaceId` input, and
+      // workspace-token (Public API) callers via `withAuditContext` in
+      // `workspaceTokenAuthMidddleware`, which attributes the action to the
+      // workspace owner. Reaching this branch means some call site invoked
+      // `this.audit(...)` outside both — a real bug, not an expected path —
+      // so this is `warn`, not `debug`.
+      logger.warn(
         { action: input.action, source: input.source },
         "audit record dropped: missing userId or workspaceId",
       )

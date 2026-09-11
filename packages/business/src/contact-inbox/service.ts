@@ -350,9 +350,13 @@ class ContactInboxService extends BaseService {
     }
   }
 
-  async findManyByIds(ids: string[]): Promise<ContactInboxWithAnalytics[]> {
+  async findManyByIds(props: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<ContactInboxWithAnalytics[]> {
+    const { workspaceId, ids } = props
     return (await db.query.contactInboxModel.findMany({
-      where: { id: { in: ids } },
+      where: { id: { in: ids }, contact: { workspaceId } },
       columns: { id: true, contactId: true, sourceId: true, channel: true },
       with: {
         contact: {

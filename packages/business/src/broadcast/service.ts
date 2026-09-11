@@ -25,6 +25,7 @@ import {
   broadcastSendsTemplate,
   broadcastStatuses,
   type ChannelType,
+  contactFilterFields,
   dmConversationUsesSourceId,
   findBroadcastChannelCapability,
   hasDuplicateBroadcastTarget,
@@ -344,6 +345,60 @@ export const resolveBroadcastTargetsToPersist = (
   return { ...data, targets: readyTargets }
 }
 
+/**
+ * Runtime shape-check for `Broadcast.contactFilter`, an untyped jsonb column
+ * (`unknown`, not `ContactFilterCriteriaInput`) — used by
+ * `resendWithPruning` before handing a persisted filter to
+ * `pruneEmailPhoneFilterConditions`.
+ *
+ * `operator` is checked against the exact `"and" | "or"` union the type
+ * declares, not merely for presence: `applyContactFilter` branches only on
+ * `=== "or"`, so any other stored value would silently degrade to `AND` and
+ * resend to a *different* audience than the one the filter describes.
+ *
+ * Every condition's `field` is checked against `contactFilterFields`
+ * (`@chatbotx.io/database/partials`) — the same enum the SQL builder's
+ * `buildConditionWhere` switch is written against. This is NOT optional:
+ * `buildConditionWhere`'s `default` case returns `{}` for an unrecognised
+ * field, `applyContactFilter` then filters out every empty where, and an
+ * all-conditions-unknown filter collapses to `{}` — i.e. *no* filtering at
+ * all, silently sending to the full workspace audience instead of the
+ * narrower one the stored filter describes. Rejecting the whole filter here
+ * reproduces the pre-refactor behaviour, where a failed
+ * `contactFilterCriteriaSchema.safeParse` dropped the whole filter and the
+ * resend fell back to the full eligible audience — the same fallback, just
+ * reached deliberately instead of by accident.
+ *
+ * Per-field `value`/`timezone` shape (e.g. `timezone` string length) is
+ * still unvalidated here — the full per-condition schema lives in
+ * `apps/builder`, which this package cannot import — but an unknown/renamed
+ * `field` is exactly the case that previously produced a silently-widened
+ * audience, so it is the one this function must not let through.
+ */
+const isContactFilterShape = (
+  value: unknown,
+): value is ContactFilterCriteriaInput => {
+  if (typeof value !== "object" || value === null) {
+    return false
+  }
+  const { operator, conditions } = value as {
+    operator?: unknown
+    conditions?: unknown
+  }
+  if (
+    !((operator === "and" || operator === "or") && Array.isArray(conditions))
+  ) {
+    return false
+  }
+  return conditions.every((condition) => {
+    if (typeof condition !== "object" || condition === null) {
+      return false
+    }
+    const { field } = condition as { field?: unknown }
+    return contactFilterFields.safeParse(field).success
+  })
+}
+
 class BroadcastService extends BaseService {
   /**
    * Paginated broadcast list with relations — shared by the public API
@@ -646,7 +701,7 @@ class BroadcastService extends BaseService {
     schedulesType: BroadcastScheduleType
     schedulesAt: Date
   }): Promise<{ id: string }> {
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const [row] = await tx
         .update(broadcastModel)
         .set({
@@ -670,8 +725,24 @@ class BroadcastService extends BaseService {
       // same normalization `create`/`updateDraft` apply to a non-draft — and
       // the worker never enrols, then fails, its recipients.
       await this.dropUndeliverableTargets(tx, row)
+
       return { id: row.id }
     })
+
+    // Mirrors `createBroadcastAction`: only an immediate send is audited as a
+    // launch. A future-scheduled broadcast is NOT audited here, and the
+    // worker send path (`prepare-broadcast`/`enqueue-broadcast`/
+    // `process-broadcast-contacts`) emits no audit record either — so a
+    // future schedule currently produces no "launch" entry at any point.
+    // Reconstructing launch history from the audit log will miss those.
+    // Run post-commit (mirrors `update`/`updateDraft`/`resendWithPruning`) so
+    // the audit enqueue's Redis round-trip never holds the Postgres
+    // transaction — and its row locks — open.
+    if (input.schedulesType === "now") {
+      await this.audit("launch", `launched a broadcast (#${result.id})`)
+    }
+
+    return result
   }
 
   /**
@@ -742,6 +813,12 @@ class BroadcastService extends BaseService {
     if (!row) {
       throw new ChatbotXException("Broadcast is no longer scheduled")
     }
+
+    await this.audit(
+      "broadcast_moved_to_draft",
+      `moved broadcast (#${row.id}) to draft`,
+    )
+
     return row
   }
 
@@ -761,6 +838,9 @@ class BroadcastService extends BaseService {
     if (!row) {
       throw new ChatbotXException("Broadcast is not in progress")
     }
+
+    await this.audit("broadcast_stopped", `stopped a broadcast (#${row.id})`)
+
     return row
   }
 
@@ -805,6 +885,9 @@ class BroadcastService extends BaseService {
     if (!row) {
       throw new ChatbotXException("Broadcast is not stopped")
     }
+
+    await this.audit("broadcast_resumed", `resumed a broadcast (#${row.id})`)
+
     return row
   }
 
@@ -836,6 +919,12 @@ class BroadcastService extends BaseService {
         ),
       )
       .returning({ id: broadcastModel.id })
+
+    // Some requested ids can be silently skipped (already deleted, foreign,
+    // or `sending`) — only audit when something actually changed.
+    if (rows.length > 0) {
+      await this.audit("delete", `deleted ${rows.length} broadcast(s)`)
+    }
 
     return { deletedCount: rows.length, requestedCount }
   }
@@ -1243,6 +1332,17 @@ class BroadcastService extends BaseService {
 
     if (!row) {
       throw new ChatbotXException("Broadcast is not a draft")
+    }
+
+    // Mirrors `createBroadcastAction`: only an immediate send is audited as a
+    // launch, and an edit that stays a draft never launches at all. As in
+    // `scheduleDraft`, a future-scheduled broadcast produces no "launch"
+    // audit entry at any point — the worker send path emits none.
+    if (
+      status === broadcastStatuses.enum.scheduled &&
+      data.schedulesType === "now"
+    ) {
+      await this.audit("launch", `launched a broadcast (#${row.id})`)
     }
 
     // `status` is the value we just wrote, so it needs no unsafe narrowing of
@@ -1973,12 +2073,14 @@ class BroadcastService extends BaseService {
   }
 
   /**
-   * Runs `resend`'s existence/status guards up front so the caller can
+   * Runs the resend existence/status guards up front so the caller can
    * safely read `contactFilter` for pruning before the resend write — a
    * foreign or soft-deleted id, or a broadcast that isn't sent/failed,
    * throws here instead of the caller processing a row it shouldn't see.
+   * Private: the only caller is `resendWithPruning` below, and a caller
+   * with a pre-loaded row could otherwise bypass this guard entirely.
    */
-  async assertResendable(input: {
+  private async assertResendable(input: {
     workspaceId: string
     id: string
   }): Promise<BroadcastModel> {
@@ -1997,17 +2099,34 @@ class BroadcastService extends BaseService {
   }
 
   /**
-   * Clones a `sent`/`failed` broadcast as a new immediately-scheduled one.
+   * Clones a `sent`/`failed` broadcast as a new immediately-scheduled one,
+   * pruning the email/phone contact-filter fields the private
+   * `resendBroadcastAction` used to prune inline, so the public API and the
+   * builder UI share one code path (invariant #9). A caller with
+   * `canViewEmailAndPhone: true` (every workspace-token caller, per plan
+   * decision) short-circuits `pruneEmailPhoneFilterConditions` to
+   * `contactFilter ?? undefined` — the persisted filter still needs a
+   * minimal runtime shape-check first because `Broadcast.contactFilter` is
+   * an untyped jsonb column (`unknown`, not `ContactFilterCriteriaInput`).
    * The transaction wraps the insert plus a copy of the source's per-page
    * `BroadcastTarget` rows, so a multi-page broadcast resends to the same
    * pages instead of falling back to the whole channel.
    */
-  async resend(input: {
+  async resendWithPruning(input: {
     workspaceId: string
     id: string
-    contactFilter?: ContactFilterCriteriaInput | null
+    canViewEmailAndPhone: boolean
   }): Promise<BroadcastModel> {
-    const broadcast = await this.assertResendable(input)
+    const broadcast = await this.assertResendable({
+      workspaceId: input.workspaceId,
+      id: input.id,
+    })
+
+    const persisted = broadcast.contactFilter as unknown
+    const contactFilter = pruneEmailPhoneFilterConditions(
+      isContactFilterShape(persisted) ? persisted : undefined,
+      input.canViewEmailAndPhone,
+    )
 
     const newBroadcast = await db.transaction(async (tx) => {
       const inserted = await tx
@@ -2025,7 +2144,7 @@ class BroadcastService extends BaseService {
           status: "scheduled",
           schedulesType: "now",
           schedulesAt: new Date(),
-          contactFilter: input.contactFilter,
+          contactFilter,
           name: `${broadcast.name} (Resend)`,
           id: createId(),
         })

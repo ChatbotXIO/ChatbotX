@@ -47,7 +47,6 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
           workspaceId,
           broadcastId,
           eventType,
-          total,
           page,
           perPage,
         },
@@ -55,7 +54,7 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
 
       return result.data
     },
-    [broadcastId, eventType, total, workspaceId],
+    [broadcastId, eventType, workspaceId],
   )
 
   const onManualTag = useCallback(

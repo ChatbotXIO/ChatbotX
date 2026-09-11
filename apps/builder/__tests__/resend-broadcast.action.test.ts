@@ -2,17 +2,13 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const {
-  mockResend,
-  mockAssertResendable,
-  mockGetCurrentUserAndTargetWorkspace,
-} = vi.hoisted(() => ({
-  mockResend: vi.fn(),
-  mockAssertResendable: vi.fn().mockResolvedValue({ id: "bc-1" }),
-  mockGetCurrentUserAndTargetWorkspace: vi.fn().mockResolvedValue({
-    targetWorkspaceMember: { permissions: ["emailAndPhone"] },
-  }),
-}))
+const { mockResendWithPruning, mockGetCurrentUserAndTargetWorkspace } =
+  vi.hoisted(() => ({
+    mockResendWithPruning: vi.fn(),
+    mockGetCurrentUserAndTargetWorkspace: vi.fn().mockResolvedValue({
+      targetWorkspaceMember: { permissions: ["emailAndPhone"] },
+    }),
+  }))
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -23,15 +19,7 @@ vi.mock("@/lib/safe-action", () => {
 })
 
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastService: {
-    resend: mockResend,
-    assertResendable: mockAssertResendable,
-  },
-}))
-
-vi.mock("@chatbotx.io/database/queries/contact-filter/permission", () => ({
-  pruneEmailPhoneFilterConditions: (contactFilter: unknown) =>
-    contactFilter ?? undefined,
+  broadcastService: { resendWithPruning: mockResendWithPruning },
 }))
 
 vi.mock("@/lib/auth/utils", () => ({
@@ -42,88 +30,61 @@ vi.mock("@/features/contacts/permissions", () => ({
   canViewContactEmailAndPhone: vi.fn(() => true),
 }))
 
-vi.mock("@/features/contact-filter/schema", () => ({
-  contactFilterCriteriaSchema: {
-    safeParse: (value: unknown) => ({ success: true, data: value }),
-  },
-}))
-
-const { resendBroadcast } = await import(
+const { resendBroadcastAction: resendBroadcastActionUntyped } = await import(
   "../src/features/broadcasts/actions/resend-broadcast.action"
 )
+
+type Handler = (props: unknown) => Promise<unknown>
+const resendBroadcastAction = resendBroadcastActionUntyped as unknown as Handler
 
 const WORKSPACE_ID = "ws-1"
 const BROADCAST_ID = "bc-1"
 
-describe("resendBroadcast", () => {
+describe("resendBroadcastAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockAssertResendable.mockResolvedValue({
-      id: BROADCAST_ID,
-      contactFilter: null,
-    })
     mockGetCurrentUserAndTargetWorkspace.mockResolvedValue({
       targetWorkspaceMember: { permissions: ["emailAndPhone"] },
     })
   })
 
-  test("reads the source broadcast's contact filter from assertResendable and delegates to broadcastService.resend", async () => {
-    mockResend.mockResolvedValue({ id: "new-bc-id" })
-    mockAssertResendable.mockResolvedValue({
-      id: BROADCAST_ID,
-      contactFilter: { operator: "and", conditions: [] },
+  test("delegates to broadcastService.resendWithPruning with the caller's canViewEmailAndPhone", async () => {
+    mockResendWithPruning.mockResolvedValue({ id: "new-bc-id" })
+
+    const result = await resendBroadcastAction({
+      bindArgsParsedInputs: [WORKSPACE_ID, BROADCAST_ID],
     })
 
-    const result = await resendBroadcast({
+    expect(mockResendWithPruning).toHaveBeenCalledWith({
       workspaceId: WORKSPACE_ID,
       id: BROADCAST_ID,
-    })
-
-    expect(mockAssertResendable).toHaveBeenCalledWith({
-      workspaceId: WORKSPACE_ID,
-      id: BROADCAST_ID,
-    })
-    expect(mockResend).toHaveBeenCalledWith({
-      workspaceId: WORKSPACE_ID,
-      id: BROADCAST_ID,
-      contactFilter: { operator: "and", conditions: [] },
+      canViewEmailAndPhone: true,
     })
     expect(result).toEqual({ id: "new-bc-id" })
   })
 
-  test("propagates a 'Broadcast is not sent' error from assertResendable", async () => {
-    mockAssertResendable.mockRejectedValue(new Error("Broadcast is not sent"))
+  test("passes canViewEmailAndPhone: false when there is no current user/workspace", async () => {
+    mockGetCurrentUserAndTargetWorkspace.mockResolvedValue(null)
+    mockResendWithPruning.mockResolvedValue({ id: "new-bc-id" })
 
-    await expect(
-      resendBroadcast({ workspaceId: WORKSPACE_ID, id: BROADCAST_ID }),
-    ).rejects.toThrow("Broadcast is not sent")
-
-    expect(mockResend).not.toHaveBeenCalled()
-  })
-
-  test("propagates a not-found error when the source broadcast is missing", async () => {
-    mockAssertResendable.mockRejectedValue(new Error("Record not found"))
-
-    await expect(
-      resendBroadcast({ workspaceId: WORKSPACE_ID, id: BROADCAST_ID }),
-    ).rejects.toThrow("Record not found")
-
-    expect(mockResend).not.toHaveBeenCalled()
-  })
-
-  test("passes undefined contactFilter when the source has none stored", async () => {
-    mockResend.mockResolvedValue({ id: "new-bc-id" })
-    mockAssertResendable.mockResolvedValue({
-      id: BROADCAST_ID,
-      contactFilter: undefined,
+    await resendBroadcastAction({
+      bindArgsParsedInputs: [WORKSPACE_ID, BROADCAST_ID],
     })
 
-    await resendBroadcast({ workspaceId: WORKSPACE_ID, id: BROADCAST_ID })
-
-    expect(mockResend).toHaveBeenCalledWith({
+    expect(mockResendWithPruning).toHaveBeenCalledWith({
       workspaceId: WORKSPACE_ID,
       id: BROADCAST_ID,
-      contactFilter: undefined,
+      canViewEmailAndPhone: false,
     })
+  })
+
+  test("propagates an error from resendWithPruning", async () => {
+    mockResendWithPruning.mockRejectedValue(new Error("Broadcast is not sent"))
+
+    await expect(
+      resendBroadcastAction({
+        bindArgsParsedInputs: [WORKSPACE_ID, BROADCAST_ID],
+      }),
+    ).rejects.toThrow("Broadcast is not sent")
   })
 })

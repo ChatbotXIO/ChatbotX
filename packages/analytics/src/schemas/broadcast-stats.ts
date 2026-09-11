@@ -55,7 +55,6 @@ export const listBroadcastContactsRequest = z.object({
   workspaceId: z.string(),
   broadcastId: z.string(),
   eventType: broadcastEventType.optional(),
-  total: z.number().optional(),
   page: z.number().default(1),
   perPage: z.number().default(20),
 })

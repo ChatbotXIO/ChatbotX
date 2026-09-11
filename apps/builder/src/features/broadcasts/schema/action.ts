@@ -78,10 +78,14 @@ export const createBroadcastRequest = z
     inboxIds: z.array(zodBigintAsString()).optional(),
     subaction: broadcastSubactions,
     schedulesType: broadcastScheduleTypes,
-    schedulesAt: z
-      .string()
-      .refine(isFutureScheduleTime, { message: FUTURE_SCHEDULE_MESSAGE })
-      .nullable(),
+    // Future-ness is validated by the `superRefine` below, not here: that
+    // check has the full object (`schedulesType`, `saveAsDraft`) and is the
+    // only one that can tell a schedule actually being set (validate) from
+    // a draft merely carrying a stale or not-yet-chosen date (don't). A
+    // field-level `.refine` here ran unconditionally on any non-null value,
+    // so it blocked re-saving an untouched `future` draft once its
+    // previously-chosen `schedulesAt` elapsed.
+    schedulesAt: z.string().nullable(),
     contactFilter: contactFilterRequest.shape.contactFilter,
     saveAsDraft: z.boolean().optional(),
   })
@@ -111,6 +115,34 @@ export const createBroadcastRequest = z
   .refine((data) => !isTemplateSendWithoutPage(data), {
     message: "Select the page the template belongs to",
     path: ["inboxIds"],
+  })
+  // A `future` schedule that is actually being scheduled (`saveAsDraft` is
+  // false/undefined) must carry the time it is scheduled for. Without this,
+  // `create`/`updateDraft` fall back to `startOfMinute(new Date())` and
+  // persist `schedulesType: "future"` alongside an already-elapsed
+  // `schedulesAt` — an internally inconsistent row that `enqueueBroadcast`
+  // then picks up on its next tick, i.e. a silent send-now. Mirrors the
+  // equivalent check in `scheduleBroadcastSchema` below.
+  //
+  // `saveAsDraft: true` is exempt: a draft is never picked up by
+  // `enqueueBroadcast` (it only scans `status = scheduled`), so a draft
+  // saved with `schedulesType: "future"` and no date yet chosen — or one
+  // whose previously-chosen date has since elapsed while it sat unsent — is
+  // harmless and must remain saveable. Without this exemption, reopening and
+  // re-saving such a draft (with no schedule-related edit at all) fails
+  // validation until the user re-picks a future date.
+  .superRefine((data, ctx) => {
+    if (
+      !data.saveAsDraft &&
+      data.schedulesType === "future" &&
+      !(data.schedulesAt && isFutureScheduleTime(data.schedulesAt))
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["schedulesAt"],
+        message: FUTURE_SCHEDULE_MESSAGE,
+      })
+    }
   })
   // Send-blocking WhatsApp template rules (MPM sections, LTO expiration):
   // the flow editor enforces them at publish, this refinement covers the
@@ -160,3 +192,16 @@ export const scheduleBroadcastSchema = z
     }
   })
 export type ScheduleBroadcastSchema = z.infer<typeof scheduleBroadcastSchema>
+
+// A `now` draft gets `schedulesAt = startOfMinute(now) <= now`, so
+// `enqueueBroadcast`'s `schedulesAt <= startTime AND status = scheduled` scan
+// picks it up on its next minute tick — the same path a "send now" create takes.
+// Shared by `scheduleBroadcastAction` and the public API's `schedule` route.
+export const resolveScheduleTime = (
+  parsedInput: ScheduleBroadcastSchema,
+): Date =>
+  normalizeScheduleTime(
+    parsedInput.schedulesType === "future" && parsedInput.schedulesAt
+      ? parsedInput.schedulesAt
+      : new Date().toISOString(),
+  )

@@ -38,14 +38,12 @@ const {
   scheduleDraft,
   softDeleteBroadcasts,
   updateDraft,
-  recordAuditLog,
   getCurrentUserAndTargetWorkspace,
   canViewContactEmailAndPhone,
 } = vi.hoisted(() => ({
   scheduleDraft: vi.fn(),
   softDeleteBroadcasts: vi.fn(),
   updateDraft: vi.fn(),
-  recordAuditLog: vi.fn(),
   getCurrentUserAndTargetWorkspace: vi.fn(),
   canViewContactEmailAndPhone: vi.fn(),
 }))
@@ -77,9 +75,6 @@ vi.mock("@chatbotx.io/business", () => ({
   BroadcastValidationException: MockBroadcastValidationException,
 }))
 vi.mock("next-safe-action", () => ({ returnValidationErrors }))
-vi.mock("@chatbotx.io/business/audit", () => ({
-  auditService: { record: (...args: unknown[]) => recordAuditLog(...args) },
-}))
 vi.mock("@/lib/auth/utils", () => ({ getCurrentUserAndTargetWorkspace }))
 vi.mock("@/features/contacts/permissions", () => ({
   canViewContactEmailAndPhone,
@@ -101,7 +96,6 @@ beforeEach(() => {
   scheduleDraft.mockReset()
   softDeleteBroadcasts.mockReset()
   updateDraft.mockReset()
-  recordAuditLog.mockReset().mockResolvedValue(undefined)
   getCurrentUserAndTargetWorkspace
     .mockReset()
     .mockResolvedValue({ targetWorkspaceMember: { permissions: [] } })
@@ -186,11 +180,6 @@ describe("scheduleBroadcastAction", () => {
     })
     expect(input.schedulesAt.getSeconds()).toBe(0)
     expect(input.schedulesAt.getTime()).toBeLessThanOrEqual(Date.now())
-    expect(recordAuditLog).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      action: "launch",
-      detail: "launched a broadcast (#b-1)",
-    })
   })
 
   test("passes the chosen future time", async () => {
@@ -207,8 +196,6 @@ describe("scheduleBroadcastAction", () => {
     expect(scheduleDraft.mock.calls[0][0].schedulesAt.toISOString()).toBe(
       "2030-01-01T09:30:00.000Z",
     )
-    // A future schedule is not a launch yet — the send has not happened.
-    expect(recordAuditLog).not.toHaveBeenCalled()
   })
 })
 
@@ -274,7 +261,6 @@ describe("updateDraftBroadcastAction", () => {
         targets: { _errors: ["Inbox not found"] },
       },
     })
-    expect(recordAuditLog).not.toHaveBeenCalled()
   })
 
   test("lets unexpected service errors propagate", async () => {
@@ -285,46 +271,15 @@ describe("updateDraftBroadcastAction", () => {
     ).rejects.toThrow("database down")
   })
 
-  test("records a launch audit entry when the edit sends the broadcast now", async () => {
+  test("returns the service result unchanged, whatever status it resolves to", async () => {
     updateDraft.mockResolvedValue({ id: "b-1", status: "scheduled" })
 
-    await updateHandler({
+    const result = await updateHandler({
       bindArgsParsedInputs: ["ws-1", "b-1"],
       parsedInput: { ...parsedInput, saveAsDraft: false },
     })
 
-    expect(recordAuditLog).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      action: "launch",
-      detail: "launched a broadcast (#b-1)",
-    })
-  })
-
-  test("does not record a launch when the broadcast stays a draft", async () => {
-    updateDraft.mockResolvedValue({ id: "b-1", status: "draft" })
-
-    await updateHandler({
-      bindArgsParsedInputs: ["ws-1", "b-1"],
-      parsedInput,
-    })
-
-    expect(recordAuditLog).not.toHaveBeenCalled()
-  })
-
-  test("does not record a launch for a future schedule — the send has not happened", async () => {
-    updateDraft.mockResolvedValue({ id: "b-1", status: "scheduled" })
-
-    await updateHandler({
-      bindArgsParsedInputs: ["ws-1", "b-1"],
-      parsedInput: {
-        ...parsedInput,
-        saveAsDraft: false,
-        schedulesType: "future",
-        schedulesAt: "2030-01-01T09:30:00.000Z",
-      },
-    })
-
-    expect(recordAuditLog).not.toHaveBeenCalled()
+    expect(result).toEqual({ id: "b-1", status: "scheduled" })
   })
 
   test("treats a member without contact-info permission as canViewEmailAndPhone false", async () => {

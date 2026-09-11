@@ -51,6 +51,53 @@ describe("createBroadcastRequest.schedulesAt", () => {
     })
     expect(result.success).toBe(true)
   })
+
+  // `saveAsDraft: true` is exempt from the future-time check: a draft is
+  // never picked up by `enqueueBroadcast` (only `status = scheduled` rows
+  // are), so a `future` draft with no date chosen yet, or one whose
+  // previously-chosen date has since elapsed while it sat unsent, must
+  // remain saveable. Only an actual schedule attempt (`saveAsDraft` false or
+  // omitted) needs a valid future time.
+  test("accepts a draft with schedulesType future and no schedulesAt chosen yet", () => {
+    const result = createBroadcastRequest.safeParse({
+      ...base,
+      schedulesType: "future",
+      schedulesAt: null,
+      saveAsDraft: true,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  test("accepts re-saving a future draft whose previously-chosen time has elapsed", () => {
+    const schedulesAt = new Date(Date.now() - 60_000).toISOString()
+    const result = createBroadcastRequest.safeParse({
+      ...base,
+      schedulesType: "future",
+      schedulesAt,
+      saveAsDraft: true,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  test("still rejects scheduling (saveAsDraft false) with no schedulesAt chosen", () => {
+    const result = createBroadcastRequest.safeParse({
+      ...base,
+      schedulesType: "future",
+      schedulesAt: null,
+      saveAsDraft: false,
+    })
+    expect(result.success).toBe(false)
+  })
+
+  test("still rejects scheduling (saveAsDraft omitted) with an elapsed schedulesAt", () => {
+    const schedulesAt = new Date(Date.now() - 60_000).toISOString()
+    const result = createBroadcastRequest.safeParse({
+      ...base,
+      schedulesType: "future",
+      schedulesAt,
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe("createBroadcastRequest.targets", () => {
