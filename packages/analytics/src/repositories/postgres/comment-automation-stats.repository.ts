@@ -1,4 +1,5 @@
 import { db, sql } from "@chatbotx.io/database/client"
+import { resolvedTimezone } from "@chatbotx.io/database/queries/date-bucket"
 import { fbCommentAutomationEventModel } from "@chatbotx.io/database/schema"
 import type { FBCommentAutomationEventInsert } from "@chatbotx.io/database/types"
 import { BaseRepository } from "./base.repository"
@@ -121,9 +122,15 @@ export class CommentAutomationStatsRepository extends BaseRepository {
   ): Promise<{ dateReport: string; count: number }[]> {
     const { workspaceId, automationId, startDate, endDate, timezone } = input
 
+    // `resolvedTimezone`, never the caller's name verbatim: browsers still
+    // report legacy IANA names (`Asia/Saigon`, `Asia/Calcutta`, `Europe/Kiev`)
+    // and a PostgreSQL build packaged without the `backward` tzdata file
+    // aborts the whole statement on one — which took this chart (and the
+    // "replies by date" table that shares its data) down to an empty series
+    // while the three panels that never touch `timezone` kept working.
     const result = await db.execute(sql`
       SELECT
-        TO_CHAR(("occurredAt" AT TIME ZONE ${timezone})::date, 'YYYY-MM-DD') AS "dateReport",
+        TO_CHAR(("occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)})::date, 'YYYY-MM-DD') AS "dateReport",
         COUNT(*)::int AS count
       FROM "FBCommentAutomationEvent"
       WHERE "workspaceId" = ${workspaceId}
