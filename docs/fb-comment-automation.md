@@ -59,12 +59,28 @@ silent failures:
 | Field | Format | Example |
 |---|---|---|
 | `post_id` | `{pageId}_{storyId}` | `2094067177305463_2357494887629356` |
-| `comment_id` | `{storyId}_{commentId}` | `2357494887629356_1544045903933592` |
-| `parent_id` | **Always present.** For a **top-level** comment it equals `post_id`; only a **reply to another comment** carries that comment's id. | top-level → `2094067177305463_2357494887629356` |
+| `comment_id` | `{storyId}_{commentId}` — anchored to the story **even for a reply** | `2357494887629356_1544045903933592` |
+| `parent_id` | **Always present.** For a **top-level** comment it points at the post, but **not always as the same string as `post_id`** (see below); only a **reply to another comment** carries that comment's id. | top-level on a reel → `2094067177305463_2357494887629356` |
+
+**`parent_id` on a top-level comment varies by post type.** Production payloads from one
+Page (2026-09-11):
+
+| Post type | `post_id` | `parent_id` |
+|---|---|---|
+| Reel / video | `698869923319232_122151505431003083` | `698869923319232_122151505431003083` — identical |
+| Photo | `698869923319232_122101949313003083` | `39455509950714790_122101949313003083` — leading half is the **album**, not the Page |
+
+Only the trailing story id agrees in both. A photo post therefore breaks any
+`parentId !== postId` test, which reads every top-level comment as a reply and — with
+`ignoreCommentReplies` on by default — swallows the whole automation.
 
 - `parent_id` presence does **not** mean "this is a reply." Use
-  `isCommentReply(parentId, postId)` (`index.ts`), which is true only when
-  `parentId !== postId`.
+  `isCommentReply(parentId, postId, commentId)` (`index.ts`), which compares the
+  **trailing** ids via `normalizePostId` — never the raw strings.
+- A reply is safe to tell apart because `comment_id` stays anchored to the story: a reply
+  to `{storyId}_{parentCommentId}` is itself `{storyId}_{replyId}`, so the trailing half
+  of `parent_id` (the parent comment) is never the leading half of `comment_id` (the
+  story).
 - The post picker stores different formats per tab: **published/ads** store the composite
   `{pageId}_{postId}`; **reels** store a bare video id; **manual entry** is whatever the
   user pastes. `matchPost` normalizes both sides on the trailing story id
@@ -86,7 +102,7 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | `type` | `messenger` \| `instagram` \| `instagramFacebook` | `findActiveAutomations` filters `type === channelType`, which is the incoming `integrationType`. The builder writes it: `fb-comments` → `messenger`, `ig-comments` → the selected Instagram variant. |
 | `startTime`/`endTime` | Daily active window (workspace tz) | `isWithinSchedule` — lexicographic `"HH:mm"` compare, handles overnight windows; null → always within. |
 | `post` (`all` / `postIds`) | Which posts | `matchPost` — `all` always true; `postIds` matches via normalized trailing id. |
-| `options.ignoreCommentReplies` (default **true**) | Skip replies-to-comments | Skips only when `isCommentReply(parentId, postId)` is true. |
+| `options.ignoreCommentReplies` (default **true**) | Skip replies-to-comments | Skips only when `isCommentReply(parentId, postId, commentId)` is true. |
 | `includeKeywords` (`all`/`equal`/`contain`) | Text must match | `matchKeywords` — lowercased both sides. `equal` = whole comment equals a keyword; `contain` = substring. |
 | `excludeKeywords` | Text must not contain | `matchKeywords` — substring, lowercased. |
 | `options.replyToNewContactsOnly` | Only first-time contacts | `getPriorContactInboxCount(contactId) > 1` → skip. Counts `ContactInbox` rows. |
