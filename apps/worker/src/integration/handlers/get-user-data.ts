@@ -602,9 +602,9 @@ const LOCATION_REQUEST_COPY = {
   vi: { sendLocation: "Gửi vị trí" },
 } satisfies Record<string, { sendLocation: string }>
 
-function getLocationRequestCopy(input: {
-  language?: string | null
-}): { sendLocation: string } {
+function getLocationRequestCopy(input: { language?: string | null }): {
+  sendLocation: string
+} {
   return normalizeLanguage(input.language) === "vi"
     ? LOCATION_REQUEST_COPY.vi
     : LOCATION_REQUEST_COPY.en
