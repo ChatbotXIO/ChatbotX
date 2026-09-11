@@ -225,6 +225,25 @@ export class LiveCounterStore<TRow> {
     }
   }
 
+  /**
+   * Forget all volatile state for a scope: delete the live-counter hash and the
+   * cached row. Use when the underlying entity no longer exists (e.g. a deleted
+   * user), so a stale live key can't keep a reconcile job walking a ghost id.
+   * Never throws.
+   */
+  async clearLive(id: string): Promise<void> {
+    try {
+      const client = await cacheConnections.useExisting()
+      await client.del(this.liveKey(id))
+    } catch (err) {
+      logger.warn(
+        { err },
+        `${this.config.label}: clearLive failed to delete the live key`,
+      )
+    }
+    await this.invalidate(id)
+  }
+
   /** Increment the live counter (cold-seeding first so it starts from the DB base). */
   async incrementBy(
     id: string,

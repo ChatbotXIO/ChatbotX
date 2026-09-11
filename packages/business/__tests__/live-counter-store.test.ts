@@ -32,6 +32,7 @@ const redisClient = {
   hsetnx: vi.fn(async () => 1),
   hget: vi.fn(async () => null),
   hincrby: vi.fn(async () => 1),
+  del: vi.fn(async () => 1),
 }
 const cacheConnections = {
   useExisting: vi.fn(async () => redisClient),
@@ -47,6 +48,12 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 const { userQuotaService } = await import("../src/user-quota/service")
+
+const { distributedStore } = (await import(
+  "@chatbotx.io/redis"
+)) as unknown as {
+  distributedStore: { delete: ReturnType<typeof vi.fn> }
+}
 
 const USER = "user-1"
 
@@ -151,5 +158,24 @@ describe("LiveCounterStore.getLiveCounts (via getLiveUsage)", () => {
       monthlyBotMessages: 70,
     })
     expect(findFirstQuota).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("LiveCounterStore.clearLive (via clearLiveCounters)", () => {
+  test("deletes the live-counter hash and invalidates the cached row", async () => {
+    await userQuotaService.clearLiveCounters(USER)
+
+    expect(redisClient.del).toHaveBeenCalledWith(`user-quota-live:${USER}`)
+    expect(distributedStore.delete).toHaveBeenCalledTimes(1)
+  })
+
+  test("still invalidates the cache and never throws when the Redis delete fails", async () => {
+    redisClient.del.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(
+      userQuotaService.clearLiveCounters(USER),
+    ).resolves.toBeUndefined()
+    // invalidate still runs even after the live-key delete fails.
+    expect(distributedStore.delete).toHaveBeenCalledTimes(1)
   })
 })
