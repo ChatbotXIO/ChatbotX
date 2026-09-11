@@ -163,7 +163,6 @@ const scopedIdentityRowsByChannel: Partial<
   ],
 }
 
-// Inicia funcion (buildUserCodeField)
 const buildUserCodeField = (
   contactInbox: ContactInboxResource | undefined,
   t: (key: string) => string,
@@ -183,7 +182,6 @@ const buildUserCodeField = (
     },
   ]
 }
-// Finaliza funcion (buildUserCodeField)
 
 const buildScopedIdentityFields = (
   contactInbox: ContactInboxResource | undefined,
