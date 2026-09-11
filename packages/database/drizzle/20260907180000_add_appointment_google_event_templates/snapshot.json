@@ -42974,18 +42974,6 @@
       "table": "Contact"
     },
     {
-      "values": [
-        "init",
-        "running",
-        "succeeded",
-        "failed",
-        "partial"
-      ],
-      "name": "coexistRunStatus",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": false,

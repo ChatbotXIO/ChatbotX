@@ -3,7 +3,7 @@
   "dialect": "postgres",
   "id": "1aac0861-4c21-495f-8c16-29c820afb010",
   "prevIds": [
-    "e52fd6fb-fdc9-4bd9-8415-c5aeb3d138b7"
+    "a5937a4f-58d9-4116-96eb-26ebbc55d36d"
   ],
   "ddl": [
     {
@@ -42998,6 +42998,318 @@
       "entityType": "checks",
       "schema": "public",
       "table": "WhatsappSignupSession"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "WhatsappBusinessAccount",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "wabaId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "businessId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "credential",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "grantedScopes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "scopeCheckedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "provisionedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "creditLineId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "revision",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "wabaId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappBusinessAccount_workspaceId_wabaId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "WhatsappBusinessAccount_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "WhatsappBusinessAccount_pkey",
+      "schema": "public",
+      "table": "WhatsappBusinessAccount",
+      "entityType": "pks"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalEventIntegrationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalEventProviderCalendarId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Appointment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalEventTitleTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalEventDescriptionTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalEventAttendeesTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AppointmentCalendar"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "contactInboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "Appointment_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Appointment"
     }
   ],
   "renames": []
