@@ -23,6 +23,16 @@ function normalizePostId(id: string): string {
   return idx === -1 ? id : id.slice(idx + 1)
 }
 
+// The leading half of a composite id — the object the comment hangs off
+// (`{objectId}_{commentId}`). A bare id (Instagram) has no leading half and so
+// answers itself, which reduces the comparison in `isCommentReply` to
+// `parentId === commentId` — something no comment can satisfy. Instagram
+// therefore never takes that branch.
+function objectIdOf(id: string): string {
+  const idx = id.indexOf("_")
+  return idx === -1 ? id : id.slice(0, idx)
+}
+
 export function matchPost(post: FBCommentPost, postId: string): boolean {
   if (post.type !== "postIds") {
     return true
@@ -56,13 +66,42 @@ export function matchKeywords(
 }
 
 // Facebook feed webhooks set parent_id on every comment: for a top-level
-// comment it equals the post id, and only a reply to another comment carries
+// comment it points at the post, and only a reply to another comment carries
 // that comment's id instead.
+//
+// "Points at the post" is NOT reliably the same string as `post_id` — the
+// composite Facebook puts in `parent_id` varies by post type. Two production
+// payloads from one Page (2026-09-11):
+//
+//   reel   post_id   698869923319232_122151505431003083
+//          parent_id 698869923319232_122151505431003083   identical
+//   photo  post_id   698869923319232_122101949313003083
+//          parent_id 39455509950714790_122101949313003083  leading half is the
+//                                                          ALBUM, not the Page
+//
+// So a raw `parentId !== postId` reads every top-level comment on a photo post
+// as a reply and, with the default `ignoreCommentReplies`, silently drops the
+// whole automation. Both halves agree on the trailing story id, so compare on
+// that like `matchPost` does.
+//
+// The `objectIdOf` comparison is a safety net for a bare `parent_id`, a shape
+// no observed payload sends. It cannot misfire on a reply: a reply's
+// `comment_id` stays anchored to the story (`{storyId}_{replyId}`) while its
+// `parent_id` carries the parent comment's id, whose trailing half is that
+// comment — never the story.
 export function isCommentReply(
   parentId: string | undefined,
   postId: string,
+  commentId?: string,
 ): boolean {
-  return Boolean(parentId) && parentId !== postId
+  if (!parentId) {
+    return false
+  }
+  const parent = normalizePostId(parentId)
+  if (parent === normalizePostId(postId)) {
+    return false
+  }
+  return !(commentId && parent === objectIdOf(commentId))
 }
 
 export function willSendReply(reply: FBCommentReply): boolean {

@@ -209,6 +209,20 @@ const POST_ID = `${PAGE_ID}_${STORY_ID}`
 const COMMENT_ID = `${STORY_ID}_1544045903933592`
 const OTHER_COMMENT_ID = `${STORY_ID}_9999999999999999`
 
+// Ids captured from production `feed` webhooks on one Page (2026-09-11). The
+// shape of `parent_id` differs per post type and is the whole reason
+// `isCommentReply` cannot compare it to `post_id` verbatim, so these are kept
+// verbatim rather than reduced to a synthetic pattern.
+const REAL_PAGE_ID = "698869923319232"
+const PHOTO_STORY_ID = "122101949313003083"
+const PHOTO_POST_ID = `${REAL_PAGE_ID}_${PHOTO_STORY_ID}`
+const PHOTO_ALBUM_PARENT_ID = `39455509950714790_${PHOTO_STORY_ID}`
+const PHOTO_COMMENT_ID = `${PHOTO_STORY_ID}_1777723936764611`
+const PHOTO_REPLY_COMMENT_ID = `${PHOTO_STORY_ID}_1828228944833185`
+const REEL_STORY_ID = "122151505431003083"
+const REEL_POST_ID = `${REAL_PAGE_ID}_${REEL_STORY_ID}`
+const REEL_COMMENT_ID = `${REEL_STORY_ID}_1779826613208365`
+
 type AutomationOverrides = {
   id?: string
   options?: Record<string, boolean>
@@ -343,8 +357,54 @@ describe("isCommentReply", () => {
     expect(isCommentReply(POST_ID, POST_ID)).toBe(false)
   })
 
+  // Production payload: on a photo post the leading half of `parent_id` is the
+  // ALBUM, not the Page, so `parentId !== postId` read every top-level comment
+  // as a reply and — with `ignoreCommentReplies` on by default — swallowed the
+  // whole automation. Only the trailing story id agrees between the two.
+  test("photo post, top-level comment: parentId is {albumId}_{storyId}", () => {
+    expect(
+      isCommentReply(PHOTO_ALBUM_PARENT_ID, PHOTO_POST_ID, PHOTO_COMMENT_ID),
+    ).toBe(false)
+  })
+
+  // Production payload: a reel sends `parent_id` byte-identical to `post_id`.
+  test("reel post, top-level comment: parentId equals postId", () => {
+    expect(isCommentReply(REEL_POST_ID, REEL_POST_ID, REEL_COMMENT_ID)).toBe(
+      false,
+    )
+  })
+
+  // Production payload: a reply's own `comment_id` stays anchored to the story,
+  // never to the comment it answers — which is what keeps the `objectIdOf`
+  // safety net from misreading a reply as top-level.
+  test("reply: comment_id stays anchored to the story, parentId is the parent comment", () => {
+    expect(
+      isCommentReply(PHOTO_COMMENT_ID, PHOTO_POST_ID, PHOTO_REPLY_COMMENT_ID),
+    ).toBe(true)
+  })
+
+  // Production payloads: Instagram ids are bare and a top-level comment carries
+  // no `parent_id` at all, on both the IG-Login and the Facebook-Login variant.
+  test.each([
+    ["instagramFacebook", "17981236959118569", "17967295770157071"],
+    ["instagram", "18055975949799859", "17876890326629016"],
+  ])("%s top-level comment: no parentId", (_variant, mediaId, commentId) => {
+    expect(isCommentReply(undefined, mediaId, commentId)).toBe(false)
+  })
+
+  test("instagram reply: bare parent comment id is still a reply", () => {
+    expect(
+      isCommentReply(
+        "17967295770157071",
+        "17981236959118569",
+        "17967295770157099",
+      ),
+    ).toBe(true)
+  })
+
   test("reply: parentId is another comment id", () => {
     expect(isCommentReply(OTHER_COMMENT_ID, POST_ID)).toBe(true)
+    expect(isCommentReply(OTHER_COMMENT_ID, POST_ID, COMMENT_ID)).toBe(true)
   })
 
   test("no parentId", () => {
@@ -364,6 +424,18 @@ describe("processCommentAutomation reply filtering", () => {
       postId: POST_ID,
       workspaceId: "workspace-1",
     })
+  })
+
+  test("runs the automation for a top-level comment whose parentId is the bare story id", async () => {
+    mockFindActiveAutomations.mockResolvedValue([buildAutomation()])
+
+    await processCommentAutomation(buildJobData({ parentId: STORY_ID }) as any)
+
+    expect(mockInsertDedup).toHaveBeenCalled()
+    expect(mockLoggerInfo).not.toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "comment is a reply" }),
+      "Comment automation skipped",
+    )
   })
 
   test("skips a real comment reply when ignoreCommentReplies is on", async () => {

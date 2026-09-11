@@ -196,13 +196,18 @@ export async function processCommentAutomation(
       }
       if (
         automation.options.ignoreCommentReplies &&
-        isCommentReply(parentId, postId)
+        isCommentReply(parentId, postId, commentId)
       ) {
         logAutomationSkipped({
           automationId: automation.id,
           commentId,
           postId,
           workspaceId,
+          // The one skip whose cause is invisible without the raw id: Facebook
+          // varies the composite form of `parent_id` per post type, and a
+          // wrongly-classified top-level comment looks identical in the log to
+          // a genuine reply.
+          parentId,
           reason: "comment is a reply",
         })
         continue
@@ -822,16 +827,18 @@ const logAutomationSkipped = ({
   commentId,
   postId,
   workspaceId,
+  parentId,
   reason,
 }: {
   automationId: string
   commentId: string
   postId: string
   workspaceId: string
+  parentId?: string
   reason: string
 }) => {
   logger.info(
-    { automationId, commentId, postId, workspaceId, reason },
+    { automationId, commentId, postId, workspaceId, parentId, reason },
     "Comment automation skipped",
   )
 }
