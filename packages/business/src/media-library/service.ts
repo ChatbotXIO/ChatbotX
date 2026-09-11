@@ -114,7 +114,7 @@ class MediaLibraryService extends BaseService {
           await uploader.deleteObject(file.path)
         } catch (error) {
           logger.warn(
-            error,
+            { err: error },
             `deleteMediaLibraryFolder: S3 delete failed for ${file.path}`,
           )
         }
@@ -171,7 +171,7 @@ class MediaLibraryService extends BaseService {
       await uploader.deleteObject(file.path)
     } catch (error) {
       logger.warn(
-        error,
+        { err: error },
         `deleteMediaLibraryFile: S3 delete failed for ${file.path}`,
       )
     }
