@@ -318,7 +318,9 @@ export const ContactDetail = ({
 
       if (conversation?.contact) {
         const activeContactInbox = conversation.contactInboxes[0]
-        const channelContactId = activeContactInbox?.sourceId
+        // Contact ID is the workspace contact record id — not the channel
+        // sourceId (e.g. WhatsApp wa_id), which has its own scoped rows below.
+        const contactId = conversation.contact.id
         // The ad the contact clicked from (any ad-attributed inbox), shown as
         // a link right under Contact ID. Guarded to http(s) so a non-navigable
         // / `javascript:` referral value never becomes an anchor href.
@@ -331,10 +333,10 @@ export const ContactDetail = ({
             : null
         const tmpContactFields: ContactEditableField[] = [
           {
-            key: "channelContactId",
+            key: "contactId",
             icon: IdCardIcon,
             label: t("fields.contactId.label"),
-            value: channelContactId,
+            value: contactId,
             type: "shortText",
             readOnly: true,
           },
