@@ -31,6 +31,5 @@ export const publicBroadcastContactResource = z.object({
 
 export const publicListBroadcastContactsResponse = z.object({
   data: z.array(publicBroadcastContactResource),
-  page: z.number().int(),
-  perPage: z.number().int(),
+  pageCount: z.number().int(),
 })

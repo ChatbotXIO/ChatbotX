@@ -1,7 +1,6 @@
 import { broadcastAnalyticsService } from "@chatbotx.io/analytics"
 import { broadcastService, contactInboxService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
-import type { ChannelType } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import {
@@ -13,6 +12,7 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { mapBroadcastContactRow } from "../lib/map-broadcast-contact-row"
 import { listBroadcastAudience, listBroadcasts } from "../queries"
 import {
   createBroadcastRequest,
@@ -37,6 +37,17 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 // permission the builder UI derives per-session — every public create/edit
 // route treats the caller as fully privileged rather than silently pruning
 // the audience filter it was given.
+//
+// This flag governs *write-side filter-condition pruning only*
+// (`pruneEmailPhoneFilterConditions`, applied in `create`/`updateDraft`/
+// `resendWithPruning`). Reads are unaffected by it: `get`/`list`, and in
+// particular `getAudience` below, already return full contact PII (email,
+// phone, gender) for any `broadcasts`-scoped token — including a
+// `read_only` one — because a superAdmin who can mint the token already has
+// that PII in the builder UI. There is no field-level read gate to apply
+// here without diverging from the private route this public route mirrors
+// (invariant #9); see the "Broadcasts scope" table in
+// `docs/developer/workspace-api-tokens.md` for the caller-facing writeup.
 const TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE = true
 
 export const broadcastsPublicRouter = {
@@ -128,7 +139,7 @@ export const broadcastsPublicRouter = {
         throw notFoundException("Broadcast not found")
       }
 
-      const { contactInboxIds, contactEventMap } =
+      const { contactInboxIds, contactEventMap, total } =
         await broadcastAnalyticsService.getContacts({
           workspaceId: context.workspace.id,
           broadcastId: id,
@@ -136,38 +147,29 @@ export const broadcastsPublicRouter = {
           page,
           perPage,
         })
+      const pageCount = Math.ceil(total / perPage)
 
       if (contactInboxIds.length === 0) {
-        return { data: [], page, perPage }
+        return { data: [], pageCount }
       }
 
-      const contactInboxes =
-        await contactInboxService.findManyByIds(contactInboxIds)
+      const contactInboxes = await contactInboxService.findManyByIds({
+        workspaceId: context.workspace.id,
+        ids: contactInboxIds,
+      })
       const contactMap = new Map(contactInboxes.map((c) => [c.id, c]))
 
       const data = contactInboxIds
-        .map((contactInboxId) => {
-          const eventData = contactEventMap.get(contactInboxId)
-          const contactInbox = contactMap.get(contactInboxId)
-          if (!(eventData && contactInbox)) {
-            return null
-          }
-          return {
-            contactId: contactInbox.id,
+        .map((contactInboxId) =>
+          mapBroadcastContactRow(
             contactInboxId,
-            firstName: contactInbox.contact.firstName ?? null,
-            lastName: contactInbox.contact.lastName ?? null,
-            fullName: contactInbox.contact.fullName ?? null,
-            sourceId: contactInbox.sourceId,
-            avatar: contactInbox.contact.avatar ?? null,
-            channel: contactInbox.channel as ChannelType,
-            errorContent: eventData.errorContent ?? null,
-            occurredAt: eventData.occurredAt,
-          }
-        })
+            contactEventMap.get(contactInboxId),
+            contactMap.get(contactInboxId),
+          ),
+        )
         .filter((row) => row !== null)
 
-      return { data, page, perPage }
+      return { data, pageCount }
     }),
 
   create: workspaceTokenAuthAPI

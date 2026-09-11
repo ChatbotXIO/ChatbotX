@@ -335,6 +335,7 @@ describe("GET /v1/broadcasts/{id}/contacts", () => {
     broadcastAnalyticsService.getContacts.mockResolvedValueOnce({
       contactInboxIds: [],
       contactEventMap: new Map(),
+      total: 0,
     })
 
     const result = await procedure.handler?.({
@@ -342,7 +343,7 @@ describe("GET /v1/broadcasts/{id}/contacts", () => {
       input: { id: "b-1", eventType: "message:sent", page: 1, perPage: 20 },
     })
 
-    expect(result).toEqual({ data: [], page: 1, perPage: 20 })
+    expect(result).toEqual({ data: [], pageCount: 0 })
     expect(contactInboxService.findManyByIds).not.toHaveBeenCalled()
   })
 
@@ -353,9 +354,14 @@ describe("GET /v1/broadcasts/{id}/contacts", () => {
       contactEventMap: new Map([
         [
           "ci-1",
-          { occurredAt: "2026-01-01T00:00:00.000Z", errorContent: null },
+          {
+            contactId: "contact-1",
+            occurredAt: "2026-01-01T00:00:00.000Z",
+            errorContent: null,
+          },
         ],
       ]),
+      total: 1,
     })
     contactInboxService.findManyByIds.mockResolvedValueOnce([
       {
@@ -380,7 +386,7 @@ describe("GET /v1/broadcasts/{id}/contacts", () => {
     expect(result).toEqual({
       data: [
         {
-          contactId: "ci-1",
+          contactId: "contact-1",
           contactInboxId: "ci-1",
           firstName: "Ada",
           lastName: "Lovelace",
@@ -392,8 +398,11 @@ describe("GET /v1/broadcasts/{id}/contacts", () => {
           occurredAt: "2026-01-01T00:00:00.000Z",
         },
       ],
-      page: 1,
-      perPage: 20,
+      pageCount: 1,
+    })
+    expect(contactInboxService.findManyByIds).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["ci-1"],
     })
   })
 })

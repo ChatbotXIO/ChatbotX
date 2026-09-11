@@ -170,4 +170,109 @@ describe("real router: broadcasts public API scope wiring", () => {
     const { broadcastService } = await import("@chatbotx.io/business")
     expect(broadcastService.create).not.toHaveBeenCalled()
   })
+
+  // Cross-workspace isolation: `workspaceId` must always come from the
+  // authenticated token's `context.workspace.id`, never from client input —
+  // even when the client's `id` path param names a resource in a different
+  // workspace. These pin that down for the routes where a foreign id is
+  // most likely to slip a guard (a broadcast id resolved to a row before a
+  // status/existence check, per the plan's finding #5).
+  describe("cross-workspace isolation: workspaceId always comes from the token", () => {
+    beforeEach(() => {
+      findWorkspaceByTokenHash.mockResolvedValue(
+        authResult(null) /* unrestricted scope, full permission */,
+      )
+    })
+
+    test("resend scopes to the token's workspace, not any workspace implied by the id", async () => {
+      const { broadcastService } = await import("@chatbotx.io/business")
+      vi.mocked(broadcastService.resendWithPruning).mockResolvedValue({
+        id: "new-b-1",
+        name: "My broadcast (Resend)",
+        status: "scheduled",
+        schedulesType: "now",
+        schedulesAt: new Date("2026-01-01T00:00:00.000Z"),
+        flowId: "flow-1",
+        contactCount: 0,
+      } as never)
+
+      await invoke(broadcastsPublicRouter.resend, { id: "999999" })
+
+      expect(broadcastService.resendWithPruning).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceId: "ws-1",
+          id: "999999",
+        }),
+      )
+    })
+
+    test("updateDraft scopes to the token's workspace, not any workspace implied by the id", async () => {
+      const { broadcastService } = await import("@chatbotx.io/business")
+      vi.mocked(broadcastService.updateDraft).mockResolvedValue({
+        id: "999999",
+      } as never)
+
+      await invoke(broadcastsPublicRouter.updateDraft, {
+        id: "999999",
+        channel: "whatsapp",
+        flowId: "111111",
+        subaction: "whatsappTemplateMessage",
+        schedulesType: "now",
+        schedulesAt: null,
+        contactFilter: { operator: "and", conditions: [] },
+        saveAsDraft: true,
+      })
+
+      expect(broadcastService.updateDraft).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceId: "ws-1",
+          broadcastId: "999999",
+        }),
+      )
+    })
+
+    test("listContacts scopes both the broadcast lookup and the contact-inbox lookup to the token's workspace", async () => {
+      const { broadcastService, contactInboxService } = await import(
+        "@chatbotx.io/business"
+      )
+      const { broadcastAnalyticsService } = await import(
+        "@chatbotx.io/analytics"
+      )
+      vi.mocked(broadcastService.listExistingIds).mockResolvedValue([
+        "999999",
+      ] as never)
+      vi.mocked(broadcastAnalyticsService.getContacts).mockResolvedValue({
+        contactInboxIds: ["ci-1"],
+        contactEventMap: new Map([
+          [
+            "ci-1",
+            {
+              contactId: "contact-1",
+              occurredAt: "2026-01-01T00:00:00.000Z",
+              errorContent: null,
+            },
+          ],
+        ]),
+        total: 1,
+      } as never)
+      vi.mocked(contactInboxService.findManyByIds).mockResolvedValue([])
+
+      await invoke(broadcastsPublicRouter.listContacts, {
+        id: "999999",
+        eventType: "message:sent",
+        page: 1,
+        perPage: 20,
+      })
+
+      expect(broadcastService.listExistingIds).toHaveBeenCalledWith(
+        expect.objectContaining({ workspaceId: "ws-1" }),
+      )
+      expect(broadcastAnalyticsService.getContacts).toHaveBeenCalledWith(
+        expect.objectContaining({ workspaceId: "ws-1" }),
+      )
+      expect(contactInboxService.findManyByIds).toHaveBeenCalledWith(
+        expect.objectContaining({ workspaceId: "ws-1" }),
+      )
+    })
+  })
 })

@@ -71,8 +71,10 @@ export const sequencesPrivateAPI = {
         }
       }
 
-      const contactInboxes =
-        await contactInboxService.findManyByIds(contactInboxIds)
+      const contactInboxes = await contactInboxService.findManyByIds({
+        workspaceId,
+        ids: contactInboxIds,
+      })
 
       const contactMap = new Map(contactInboxes.map((c) => [c.id, c]))
       const pageCount = Math.ceil(totalValue / perPage)

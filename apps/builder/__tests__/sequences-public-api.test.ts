@@ -156,7 +156,6 @@ describe("PUT /v1/sequences/{id}/steps", () => {
       context: { workspace: { id: "ws-1" } },
       input: {
         id: "seq-1",
-        sequenceId: "seq-1",
         order: 0,
         flowId: "flow-1",
       },
@@ -183,7 +182,7 @@ describe("PUT /v1/sequences/{id}/steps", () => {
     await expect(
       procedure.handler?.({
         context: { workspace: { id: "ws-1" } },
-        input: { id: "seq-1", sequenceId: "seq-1", order: 0 },
+        input: { id: "seq-1", order: 0 },
       }),
     ).rejects.toThrow("Sequence not found")
 

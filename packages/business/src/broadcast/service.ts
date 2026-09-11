@@ -344,6 +344,24 @@ export const resolveBroadcastTargetsToPersist = (
   return { ...data, targets: readyTargets }
 }
 
+/**
+ * Minimal runtime shape-check for `Broadcast.contactFilter`, an untyped
+ * jsonb column (`unknown`, not `ContactFilterCriteriaInput`) — used by
+ * `resendWithPruning` before handing a persisted filter to
+ * `pruneEmailPhoneFilterConditions`. `conditions` is intentionally left
+ * unvalidated (`unknown[]` by design; each entry is checked downstream in
+ * the SQL builder), so this only confirms the outer shape, not every
+ * condition's structure.
+ */
+const isContactFilterShape = (
+  value: unknown,
+): value is ContactFilterCriteriaInput =>
+  typeof value === "object" &&
+  value !== null &&
+  "operator" in value &&
+  "conditions" in value &&
+  Array.isArray((value as { conditions: unknown }).conditions)
+
 class BroadcastService extends BaseService {
   /**
    * Paginated broadcast list with relations — shared by the public API
@@ -2013,12 +2031,14 @@ class BroadcastService extends BaseService {
   }
 
   /**
-   * Runs `resend`'s existence/status guards up front so the caller can
+   * Runs the resend existence/status guards up front so the caller can
    * safely read `contactFilter` for pruning before the resend write — a
    * foreign or soft-deleted id, or a broadcast that isn't sent/failed,
    * throws here instead of the caller processing a row it shouldn't see.
+   * Private: the only caller is `resendWithPruning` below, and a caller
+   * with a pre-loaded row could otherwise bypass this guard entirely.
    */
-  async assertResendable(input: {
+  private async assertResendable(input: {
     workspaceId: string
     id: string
   }): Promise<BroadcastModel> {
@@ -2037,17 +2057,34 @@ class BroadcastService extends BaseService {
   }
 
   /**
-   * Clones a `sent`/`failed` broadcast as a new immediately-scheduled one.
+   * Clones a `sent`/`failed` broadcast as a new immediately-scheduled one,
+   * pruning the email/phone contact-filter fields the private
+   * `resendBroadcastAction` used to prune inline, so the public API and the
+   * builder UI share one code path (invariant #9). A caller with
+   * `canViewEmailAndPhone: true` (every workspace-token caller, per plan
+   * decision) short-circuits `pruneEmailPhoneFilterConditions` to
+   * `contactFilter ?? undefined` — the persisted filter still needs a
+   * minimal runtime shape-check first because `Broadcast.contactFilter` is
+   * an untyped jsonb column (`unknown`, not `ContactFilterCriteriaInput`).
    * The transaction wraps the insert plus a copy of the source's per-page
    * `BroadcastTarget` rows, so a multi-page broadcast resends to the same
    * pages instead of falling back to the whole channel.
    */
-  async resend(input: {
+  async resendWithPruning(input: {
     workspaceId: string
     id: string
-    contactFilter?: ContactFilterCriteriaInput | null
+    canViewEmailAndPhone: boolean
   }): Promise<BroadcastModel> {
-    const broadcast = await this.assertResendable(input)
+    const broadcast = await this.assertResendable({
+      workspaceId: input.workspaceId,
+      id: input.id,
+    })
+
+    const persisted = broadcast.contactFilter as unknown
+    const contactFilter = pruneEmailPhoneFilterConditions(
+      isContactFilterShape(persisted) ? persisted : undefined,
+      input.canViewEmailAndPhone,
+    )
 
     const newBroadcast = await db.transaction(async (tx) => {
       const inserted = await tx
@@ -2065,7 +2102,7 @@ class BroadcastService extends BaseService {
           status: "scheduled",
           schedulesType: "now",
           schedulesAt: new Date(),
-          contactFilter: input.contactFilter,
+          contactFilter,
           name: `${broadcast.name} (Resend)`,
           id: createId(),
         })
@@ -2083,48 +2120,6 @@ class BroadcastService extends BaseService {
     await this.audit("launch", `launched a broadcast (#${newBroadcast.id})`)
 
     return newBroadcast
-  }
-
-  /**
-   * Wraps `resend` with the same existence/status guard + email/phone
-   * pruning the private `resendBroadcastAction` used to do inline, so the
-   * public API and the builder UI share one code path (invariant #9). A
-   * caller with `canViewEmailAndPhone: true` (every workspace-token caller,
-   * per plan decision) short-circuits `pruneEmailPhoneFilterConditions` to
-   * `contactFilter ?? undefined` — the persisted filter still needs a
-   * minimal runtime shape-check first because `Broadcast.contactFilter` is
-   * an untyped jsonb column (`unknown`, not `ContactFilterCriteriaInput`).
-   */
-  async resendWithPruning(input: {
-    workspaceId: string
-    id: string
-    canViewEmailAndPhone: boolean
-  }): Promise<BroadcastModel> {
-    const broadcast = await this.assertResendable({
-      workspaceId: input.workspaceId,
-      id: input.id,
-    })
-
-    const persisted = broadcast.contactFilter as unknown
-    const isContactFilterShape = (
-      value: unknown,
-    ): value is ContactFilterCriteriaInput =>
-      typeof value === "object" &&
-      value !== null &&
-      "operator" in value &&
-      "conditions" in value &&
-      Array.isArray((value as { conditions: unknown }).conditions)
-
-    const contactFilter = pruneEmailPhoneFilterConditions(
-      isContactFilterShape(persisted) ? persisted : undefined,
-      input.canViewEmailAndPhone,
-    )
-
-    return await this.resend({
-      workspaceId: input.workspaceId,
-      id: input.id,
-      contactFilter,
-    })
   }
 }
 

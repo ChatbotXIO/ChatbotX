@@ -89,6 +89,7 @@ export class BroadcastAnalyticsService {
   }): Promise<{
     contactInboxIds: string[]
     contactEventMap: Map<string, ContactEventData>
+    total: number
   }> {
     return broadcastStatsRepository.getContacts(input)
   }

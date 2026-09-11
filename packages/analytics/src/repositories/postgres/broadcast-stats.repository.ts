@@ -222,6 +222,7 @@ export class BroadcastStatsRepository extends BaseRepository {
   }): Promise<{
     contactInboxIds: string[]
     contactEventMap: Map<string, ContactEventData>
+    total: number
   }> {
     const { workspaceId, broadcastId, eventType, page, perPage } = input
     const offset = (page - 1) * perPage
@@ -229,26 +230,32 @@ export class BroadcastStatsRepository extends BaseRepository {
     const b = broadcastModel
 
     const { eventCondition, orderColumn } = this.buildEventFilter(eventType)
+    const whereCondition = sql`${t.broadcastId} = ${broadcastId} AND ${b.workspaceId} = ${workspaceId} AND ${eventCondition}`
 
-    const rows = await db
-      .select({
-        contactInboxId: t.contactInboxId,
-        contactId: t.contactId,
-        conversationId: t.conversationId,
-        deliveredAt: t.deliveredAt,
-        failedAt: t.failedAt,
-        seenAt: t.seenAt,
-        clickedAt: t.clickedAt,
-        errorContent: t.errorContent,
-      })
-      .from(t)
-      .innerJoin(b, eq(t.broadcastId, b.id))
-      .where(
-        sql`${t.broadcastId} = ${broadcastId} AND ${b.workspaceId} = ${workspaceId} AND ${eventCondition}`,
-      )
-      .orderBy(sql`${orderColumn} DESC NULLS LAST`)
-      .limit(perPage)
-      .offset(offset)
+    const [rows, [totalRow]] = await Promise.all([
+      db
+        .select({
+          contactInboxId: t.contactInboxId,
+          contactId: t.contactId,
+          conversationId: t.conversationId,
+          deliveredAt: t.deliveredAt,
+          failedAt: t.failedAt,
+          seenAt: t.seenAt,
+          clickedAt: t.clickedAt,
+          errorContent: t.errorContent,
+        })
+        .from(t)
+        .innerJoin(b, eq(t.broadcastId, b.id))
+        .where(whereCondition)
+        .orderBy(sql`${orderColumn} DESC NULLS LAST`)
+        .limit(perPage)
+        .offset(offset),
+      db
+        .select({ total: count() })
+        .from(t)
+        .innerJoin(b, eq(t.broadcastId, b.id))
+        .where(whereCondition),
+    ])
 
     const contactInboxIds = rows.map((r) => r.contactInboxId)
     const contactEventMap = new Map<string, ContactEventData>()
@@ -263,7 +270,7 @@ export class BroadcastStatsRepository extends BaseRepository {
       })
     }
 
-    return { contactInboxIds, contactEventMap }
+    return { contactInboxIds, contactEventMap, total: totalRow?.total ?? 0 }
   }
 
   async getContactIdsPage(input: {

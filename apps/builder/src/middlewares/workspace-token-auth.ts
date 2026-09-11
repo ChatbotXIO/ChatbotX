@@ -2,6 +2,7 @@ import {
   isWorkspaceScheduledForDeletion,
   workspaceApiTokenService,
 } from "@chatbotx.io/business"
+import { withAuditContext } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { hashToken } from "@chatbotx.io/business/workspace-api-token/credentials"
 import { ORPCError } from "@orpc/server"
@@ -131,11 +132,26 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       isDefault: apiToken.isDefault,
     }
 
-    return await next({
-      context: {
-        workspace,
-        apiToken: requestApiToken,
+    // There is no synthetic token user, and `AuditService.record` hard-
+    // requires both userId and workspaceId — so the workspace owner is the
+    // only truthful principal to attribute a token-driven change to.
+    // `source` carries the token id so it stays distinguishable from the
+    // owner's own UI actions in the audit trail.
+    return await withAuditContext(
+      {
+        userId: workspace.ownerId,
+        workspaceId: workspace.id,
+        ipAddress: getGuestClientIp(context.headers),
+        userAgent: context.headers.get("user-agent") ?? undefined,
+        source: `api-token:${requestApiToken.id}`,
       },
-    })
+      () =>
+        next({
+          context: {
+            workspace,
+            apiToken: requestApiToken,
+          },
+        }),
+    )
   },
 )

@@ -127,7 +127,7 @@ const sourceBroadcast = {
   name: "My Broadcast",
 }
 
-describe("broadcastService.resend", () => {
+describe("broadcastService.resendWithPruning", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockDbTransaction.mockImplementation(
@@ -143,74 +143,6 @@ describe("broadcastService.resend", () => {
           insert: mockTxInsert,
           query: { broadcastTargetModel: { findMany: mockTxTargetFindMany } },
         }),
-    )
-    mockTxInsertReturning.mockResolvedValue([
-      { id: "new-broadcast-id", name: "My Broadcast (Resend)" },
-    ])
-  })
-
-  test("throws when the source broadcast status is not sent or failed", async () => {
-    mockFindOrFail.mockResolvedValue({ ...sourceBroadcast, status: "draft" })
-
-    await expect(
-      broadcastService.resend({ workspaceId: WS, id: SOURCE_ID }),
-    ).rejects.toThrow("Broadcast is not sent")
-
-    expect(mockDbTransaction).not.toHaveBeenCalled()
-  })
-
-  test("clones a 'sent' broadcast as a new scheduled-now broadcast, appending (Resend) to the name", async () => {
-    mockFindOrFail.mockResolvedValue(sourceBroadcast)
-
-    const result = await broadcastService.resend({
-      workspaceId: WS,
-      id: SOURCE_ID,
-    })
-
-    expect(result).toEqual({
-      id: "new-broadcast-id",
-      name: "My Broadcast (Resend)",
-    })
-    expect(mockTxInsertValues).toHaveBeenCalledWith(
-      expect.objectContaining({
-        workspaceId: WS,
-        flowId: "flow-1",
-        integrationWhatsappId: "wa-1",
-        integrationMessengerId: null,
-        channel: "whatsapp",
-        subaction: "sendMessage",
-        templateId: null,
-        templateData: null,
-        status: "scheduled",
-        schedulesType: "now",
-        name: "My Broadcast (Resend)",
-        id: "new-broadcast-id",
-      }),
-    )
-    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
-      action: "launch",
-      detail: "launched a broadcast (#new-broadcast-id)",
-    })
-  })
-
-  test("clones a 'failed' broadcast too", async () => {
-    mockFindOrFail.mockResolvedValue({ ...sourceBroadcast, status: "failed" })
-
-    await expect(
-      broadcastService.resend({ workspaceId: WS, id: SOURCE_ID }),
-    ).resolves.toEqual({
-      id: "new-broadcast-id",
-      name: "My Broadcast (Resend)",
-    })
-  })
-})
-
-describe("broadcastService.resendWithPruning", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockDbTransaction.mockImplementation(
-      async (fn: (tx: { insert: typeof mockTxInsert }) => Promise<unknown>) =>
-        fn({ insert: mockTxInsert }),
     )
     mockTxInsertReturning.mockResolvedValue([
       { id: "new-broadcast-id", name: "My Broadcast (Resend)" },
@@ -286,5 +218,55 @@ describe("broadcastService.resendWithPruning", () => {
     ).rejects.toThrow("Broadcast is not sent")
 
     expect(mockDbTransaction).not.toHaveBeenCalled()
+  })
+
+  test("clones a 'sent' broadcast as a new scheduled-now broadcast, appending (Resend) to the name", async () => {
+    mockFindOrFail.mockResolvedValue(sourceBroadcast)
+
+    const result = await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(result).toEqual({
+      id: "new-broadcast-id",
+      name: "My Broadcast (Resend)",
+    })
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WS,
+        flowId: "flow-1",
+        integrationWhatsappId: "wa-1",
+        integrationMessengerId: null,
+        channel: "whatsapp",
+        subaction: "sendMessage",
+        templateId: null,
+        templateData: null,
+        status: "scheduled",
+        schedulesType: "now",
+        name: "My Broadcast (Resend)",
+        id: "new-broadcast-id",
+      }),
+    )
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "launch",
+      detail: "launched a broadcast (#new-broadcast-id)",
+    })
+  })
+
+  test("clones a 'failed' broadcast too", async () => {
+    mockFindOrFail.mockResolvedValue({ ...sourceBroadcast, status: "failed" })
+
+    await expect(
+      broadcastService.resendWithPruning({
+        workspaceId: WS,
+        id: SOURCE_ID,
+        canViewEmailAndPhone: true,
+      }),
+    ).resolves.toEqual({
+      id: "new-broadcast-id",
+      name: "My Broadcast (Resend)",
+    })
   })
 })

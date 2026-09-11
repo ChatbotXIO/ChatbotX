@@ -334,6 +334,63 @@ Three invariants to preserve when touching this surface:
   `userService.findByIdOrFail(context.user.id)` call on this path the way
   the private API needs one for `tenantId`.
 
+### Broadcasts scope — endpoint-to-scope table
+
+The `broadcasts` scope covers broadcasts, sequences, **and** WhatsApp message
+templates — three features share it because sequences and message templates
+are broadcast-adjacent operations, not because they were designed together.
+The token picker only shows the bare label "Broadcasts"
+(`fields.tokenScopes.broadcasts`), so a superAdmin minting a `broadcasts`
+token should know it also grants full sequence CRUD (including deleting
+sequences and steps) and WhatsApp template listing — there is no finer-grained
+scope to withhold just one of the three. Every handler below calls the same
+`packages/business`/`@chatbotx.io/analytics` service method the corresponding
+UI action or private route calls (invariant #9).
+
+| Resource | Endpoint | Service method |
+| --- | --- | --- |
+| Broadcasts | `GET /v1/broadcasts` | `listBroadcasts` (query) |
+| Broadcasts | `GET /v1/broadcasts/{idOrName}` | `broadcastService.findByIdOrName` |
+| Broadcasts | `GET /v1/broadcasts/{idOrName}/audience` | `listBroadcastAudience` (query) |
+| Broadcasts | `GET /v1/broadcasts/{id}/contacts` | `broadcastAnalyticsService.getContacts` |
+| Broadcasts | `POST /v1/broadcasts` | `broadcastService.create` |
+| Broadcasts | `PATCH /v1/broadcasts/{id}` | `broadcastService.update` |
+| Broadcasts | `PUT /v1/broadcasts/{id}/draft` | `broadcastService.updateDraft` |
+| Broadcasts | `POST /v1/broadcasts/{id}/schedule` | `broadcastService.scheduleDraft` |
+| Broadcasts | `POST /v1/broadcasts/{id}/move-to-draft` | `broadcastService.moveToDraft` |
+| Broadcasts | `POST /v1/broadcasts/{id}/stop` | `broadcastService.stopSending` |
+| Broadcasts | `POST /v1/broadcasts/{id}/resume` | `broadcastService.resumeSending` |
+| Broadcasts | `POST /v1/broadcasts/{id}/resend` | `broadcastService.resendWithPruning` |
+| Broadcasts | `DELETE /v1/broadcasts/{id}` | `broadcastService.softDeleteBroadcasts` |
+| Sequences | `GET /v1/sequences` | `listSequences` (query) |
+| Sequences | `GET /v1/sequences/{id}` | `sequenceService.findWithSteps` |
+| Sequences | `POST /v1/sequences` | `sequenceService.create` |
+| Sequences | `PATCH /v1/sequences/{id}` | `sequenceService.update` |
+| Sequences | `DELETE /v1/sequences/{id}` | `sequenceService.delete` |
+| Sequences | `PUT /v1/sequences/{id}/steps` | `sequenceService.upsertStep` |
+| Sequences | `DELETE /v1/sequences/{id}/steps/{stepId}` | `sequenceService.deleteStep` |
+| Message templates | `GET /v1/template-messages` | `whatsappMessageTemplateService.list` |
+
+Two things worth knowing when touching this surface:
+
+- **`GET /v1/broadcasts/{idOrName}/audience` returns full contact PII**
+  (email, phone, gender) with no field-level gating, including for a
+  `read_only` token — unlike the write paths (`create`/`updateDraft`/
+  `resendWithPruning`), which prune email/phone *filter conditions* through
+  `pruneEmailPhoneFilterConditions` before persisting. This is deliberate,
+  not an oversight: minting any workspace token already requires workspace
+  superAdmin, who has full contact PII in the UI regardless. A `read_only`
+  `broadcasts` token is still, in effect, a bulk contact-PII export path for
+  every broadcast's audience — call this out to anyone issuing such a token
+  for a narrower purpose.
+- **`upsertStep`'s request body has no `sequenceId` field** — the `{id}` path
+  segment is the sole source of truth for which sequence a step belongs to.
+  `publicUpsertSequenceStepRequest` (`features/sequences/schema/action.ts`)
+  omits `sequenceId` from the shared base shape the private
+  `upsertSequenceStepRequest` also uses. Do not add it back; a client-supplied
+  `sequenceId` that disagreed with the path would have nothing enforcing
+  which one wins.
+
 ## Adding a new scope value
 
 1. Add the value to `workspaceApiTokenScopes` in
@@ -376,7 +433,8 @@ these helpers — import from the business package directly.
 - `apps/builder/__tests__/workspace-token-auth-middleware.test.ts`
 - `apps/builder/__tests__/workspace-token-scope-enforcement.test.ts`
 - `apps/builder/__tests__/workspace-token-scope-registry.test.ts`
-- `apps/builder/__tests__/broadcasts-workspace-token-scope.test.ts`
+- `apps/builder/__tests__/broadcasts-public-scope.test.ts`,
+  `sequences-public-scope.test.ts`
 - `apps/builder/__tests__/appointments-public-scope.test.ts`
 - `apps/builder/__tests__/appointment-calendars-public-api.test.ts`,
   `appointments-public-api.test.ts`, `appointment-reminders-public-api.test.ts`,

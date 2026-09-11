@@ -149,4 +149,73 @@ describe("real router: sequences public API scope wiring", () => {
     const { sequenceService } = await import("@chatbotx.io/business/sequence")
     expect(sequenceService.create).not.toHaveBeenCalled()
   })
+
+  // Cross-workspace isolation: `workspaceId` must always come from the
+  // authenticated token's `context.workspace.id`, never from client input —
+  // even when the client's `{id}` path param names a sequence in a
+  // different workspace. `upsertStep` is the highest-risk route here: the
+  // request body has no `sequenceId` field of its own to disagree with the
+  // path (see `publicUpsertSequenceStepRequest`), so a regression that read
+  // `workspaceId` from anywhere but the token would be easy to miss.
+  describe("cross-workspace isolation: workspaceId always comes from the token", () => {
+    beforeEach(() => {
+      findWorkspaceByTokenHash.mockResolvedValue(
+        authResult(null) /* unrestricted scope, full permission */,
+      )
+    })
+
+    test("upsertStep scopes both assertOwned and upsertStep to the token's workspace, not any workspace implied by the id", async () => {
+      const { sequenceService } = await import("@chatbotx.io/business/sequence")
+      vi.mocked(sequenceService.assertOwned).mockResolvedValue(
+        undefined as never,
+      )
+      vi.mocked(sequenceService.upsertStep).mockResolvedValue({
+        stepId: "step-1",
+      } as never)
+
+      await invoke(sequencesPublicRouter.upsertStep, {
+        id: "888888",
+        order: 0,
+      })
+
+      expect(sequenceService.assertOwned).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceId: "ws-1",
+          sequenceId: "888888",
+        }),
+      )
+      expect(sequenceService.upsertStep).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceId: "ws-1",
+          sequenceId: "888888",
+        }),
+      )
+    })
+
+    test("deleteStep scopes both assertOwned and deleteStep to the token's workspace, not any workspace implied by the id", async () => {
+      const { sequenceService } = await import("@chatbotx.io/business/sequence")
+      vi.mocked(sequenceService.assertOwned).mockResolvedValue(
+        undefined as never,
+      )
+      vi.mocked(sequenceService.deleteStep).mockResolvedValue(undefined)
+
+      await invoke(sequencesPublicRouter.deleteStep, {
+        id: "888888",
+        stepId: "777777",
+      })
+
+      expect(sequenceService.assertOwned).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceId: "ws-1",
+          sequenceId: "888888",
+        }),
+      )
+      expect(sequenceService.deleteStep).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceId: "ws-1",
+          stepId: "777777",
+        }),
+      )
+    })
+  })
 })

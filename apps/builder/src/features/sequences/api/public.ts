@@ -14,8 +14,8 @@ import { listSequences } from "../queries"
 import {
   createSequenceRequest,
   listSequencesResponse,
+  publicUpsertSequenceStepRequest,
   updateSequenceSchema,
-  upsertSequenceStepRequest,
 } from "../schema/action"
 import { sequenceResource } from "../schema/resource"
 
@@ -121,14 +121,18 @@ export const sequencesPublicRouter = {
         "Pass stepId to update an existing step; omit it to create a new one.",
       tags: ["Sequences"],
     })
-    .input(upsertSequenceStepRequest.and(z.object({ id: zodBigintAsString() })))
+    .input(
+      publicUpsertSequenceStepRequest.and(
+        z.object({ id: zodBigintAsString() }),
+      ),
+    )
     .output(z.object({ stepId: z.string() }))
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      // `sequenceId` in the body must match the `{id}` path segment — the
-      // step-payload schema requires it, but the path is the source of
-      // truth for which sequence is being scoped/owned.
-      const { id, stepId, sequenceId: _sequenceId, ...data } = input
+      // The `{id}` path segment is the sole source of truth for which
+      // sequence is being scoped/owned — the body has no `sequenceId` field
+      // to reconcile against it (see `publicUpsertSequenceStepRequest`).
+      const { id, stepId, ...data } = input
       await sequenceService.assertOwned({
         workspaceId: context.workspace.id,
         sequenceId: id,
