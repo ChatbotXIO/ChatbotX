@@ -230,6 +230,8 @@ class SequenceService extends BaseService {
   async updateStep(input: {
     workspaceId: string
     stepId: string
+    /** See `deleteStep`'s `sequenceId` — same parent-assertion contract. */
+    sequenceId?: string
     data: SequenceStepPayloadInput
   }): Promise<{ previousOrder: number; step: SequenceStepModel }> {
     const step = await db.query.sequenceStepModel.findFirst({
@@ -249,6 +251,10 @@ class SequenceService extends BaseService {
       throw notFoundException("Step not found")
     }
 
+    if (input.sequenceId && step.sequenceId !== input.sequenceId) {
+      throw notFoundException("Step not found")
+    }
+
     const updateData = buildUpdateData(input.data)
 
     const [updated] = await db
@@ -263,6 +269,16 @@ class SequenceService extends BaseService {
   async deleteStep(input: {
     workspaceId: string
     stepId: string
+    /**
+     * Optional parent-sequence assertion. A caller whose URL names the
+     * parent (`DELETE /v1/sequences/{id}/steps/{stepId}`) must pass it, or
+     * the `{id}` segment is decorative: the step resolves by `stepId` alone,
+     * so a step belonging to a *different* sequence in the same workspace
+     * would be deleted while the URL claims otherwise. Omitted by callers
+     * that legitimately address a step without naming its parent (the
+     * builder's `deleteSequenceStepAction`).
+     */
+    sequenceId?: string
   }): Promise<void> {
     const step = await db.query.sequenceStepModel.findFirst({
       where: {
@@ -278,6 +294,10 @@ class SequenceService extends BaseService {
     }
 
     if (step.sequence.workspaceId !== input.workspaceId) {
+      throw notFoundException("Step not found")
+    }
+
+    if (input.sequenceId && step.sequenceId !== input.sequenceId) {
       throw notFoundException("Step not found")
     }
 
@@ -299,9 +319,13 @@ class SequenceService extends BaseService {
     data: SequenceStepPayloadInput
   }): Promise<{ stepId: string }> {
     if (input.stepId) {
+      // Pin the step to the sequence the caller named, so an update routed
+      // through `/v1/sequences/{id}/steps` cannot edit a step belonging to a
+      // different sequence in the same workspace.
       const { previousOrder, step } = await this.updateStep({
         workspaceId: input.workspaceId,
         stepId: input.stepId,
+        sequenceId: input.sequenceId,
         data: input.data,
       })
 

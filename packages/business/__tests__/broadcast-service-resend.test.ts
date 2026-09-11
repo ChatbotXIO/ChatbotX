@@ -108,6 +108,9 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
 
+const { pruneEmailPhoneFilterConditions } = await import(
+  "@chatbotx.io/database/queries"
+)
 const { broadcastService } = await import("../src/broadcast/service")
 
 const WS = "ws-1"
@@ -203,6 +206,74 @@ describe("broadcastService.resendWithPruning", () => {
 
     expect(mockTxInsertValues).toHaveBeenCalledWith(
       expect.objectContaining({ contactFilter: undefined }),
+    )
+  })
+
+  test.each([
+    ["xor", { operator: "xor", conditions: [] }],
+    ["AND (uppercase)", { operator: "AND", conditions: [] }],
+    ["a non-array conditions", { operator: "and", conditions: "nope" }],
+    ["a missing operator", { conditions: [] }],
+  ])("drops the persisted contactFilter when it has %s", async (_label, contactFilter) => {
+    mockFindOrFail.mockResolvedValue({ ...sourceBroadcast, contactFilter })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    // `applyContactFilter` branches only on `operator === "or"`, so any
+    // other value would silently degrade to AND and resend to a different
+    // audience than the filter describes. Dropping it reproduces the
+    // pre-refactor `safeParse` failure path: full eligible audience.
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter: undefined }),
+    )
+  })
+
+  test("keeps an 'or' filter, which is a valid operator", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      contactFilter: { operator: "or", conditions: [] },
+    })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactFilter: { operator: "or", conditions: [] },
+      }),
+    )
+  })
+
+  test("prunes email/phone conditions when the caller may not view them", async () => {
+    const persisted = { operator: "and", conditions: [{ field: "email" }] }
+    const pruned = { operator: "and", conditions: [] }
+    vi.mocked(pruneEmailPhoneFilterConditions).mockReturnValueOnce(
+      pruned as never,
+    )
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      contactFilter: persisted,
+    })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: false,
+    })
+
+    expect(pruneEmailPhoneFilterConditions).toHaveBeenCalledWith(
+      persisted,
+      false,
+    )
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter: pruned }),
     )
   })
 

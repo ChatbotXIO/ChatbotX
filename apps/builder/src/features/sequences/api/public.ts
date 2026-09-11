@@ -160,8 +160,12 @@ export const sequencesPublicRouter = {
         workspaceId: context.workspace.id,
         sequenceId: input.id,
       })
+      // `{id}` is not decorative: without it the step resolves by `stepId`
+      // alone and a step of another sequence in the same workspace would be
+      // deleted through this sequence's URL.
       await sequenceService.deleteStep({
         workspaceId: context.workspace.id,
+        sequenceId: input.id,
         stepId: input.stepId,
       })
     }),

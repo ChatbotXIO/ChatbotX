@@ -1,6 +1,7 @@
 import { broadcastAnalyticsService } from "@chatbotx.io/analytics"
 import { broadcastService, contactInboxService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
+import { broadcastStatuses } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import {
@@ -224,7 +225,11 @@ export const broadcastsPublicRouter = {
       tags: ["Broadcasts"],
     })
     .input(createBroadcastRequest.and(z.object({ id: zodBigintAsString() })))
-    .output(z.object({ id: z.string() }))
+    // `status` is what tells the caller whether `saveAsDraft: false` actually
+    // promoted the draft to `scheduled` — the service already computes it, so
+    // declaring it here avoids a follow-up GET (zod strips undeclared keys
+    // silently, so omitting it dropped the field from the response entirely).
+    .output(z.object({ id: z.string(), status: broadcastStatuses }))
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
@@ -349,9 +354,20 @@ export const broadcastsPublicRouter = {
     .input(z.object({ id: zodBigintAsString() }))
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      await broadcastService.softDeleteBroadcasts({
+      // `softDeleteBroadcasts` is a bulk method: it reports skipped ids via
+      // `deletedCount < requestedCount` rather than throwing, because a
+      // partially-applied bulk delete is still a success. A single-id REST
+      // DELETE is a different contract — returning 204 for an id that was
+      // nonexistent, foreign, already deleted, or still `sending` would tell
+      // the caller the broadcast is gone while it keeps delivering. Mirrors
+      // `sequenceService.delete`'s `findOrFail` and the products route's
+      // pre-delete existence check.
+      const { deletedCount } = await broadcastService.softDeleteBroadcasts({
         workspaceId: context.workspace.id,
         ids: [input.id],
       })
+      if (deletedCount === 0) {
+        throw notFoundException("Broadcast not found or cannot be deleted")
+      }
     }),
 }

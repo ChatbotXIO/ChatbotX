@@ -312,6 +312,25 @@ describe("DELETE /v1/broadcasts/{id}", () => {
       ids: ["b-1"],
     })
   })
+
+  test.each([
+    ["nonexistent, foreign, or already-deleted", 0],
+  ])("404s instead of a bare 204 when the id is %s", async (_label, deletedCount) => {
+    // `softDeleteBroadcasts` is tolerant by design (bulk semantics) and
+    // also skips a `sending` broadcast. A 204 there would tell the caller
+    // the broadcast is gone while it keeps delivering.
+    broadcastService.softDeleteBroadcasts.mockResolvedValueOnce({
+      deletedCount,
+      requestedCount: 1,
+    })
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "ws-1" } },
+        input: { id: "b-1" },
+      }),
+    ).rejects.toThrow("Broadcast not found or cannot be deleted")
+  })
 })
 
 describe("GET /v1/broadcasts/{id}/contacts", () => {
@@ -403,6 +422,75 @@ describe("GET /v1/broadcasts/{id}/contacts", () => {
     expect(contactInboxService.findManyByIds).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       ids: ["ci-1"],
+    })
+  })
+
+  test("drops a recipient whose contact-inbox no longer resolves, leaving pageCount driven by the DB total", async () => {
+    broadcastService.listExistingIds.mockResolvedValueOnce(["b-1"])
+    broadcastAnalyticsService.getContacts.mockResolvedValueOnce({
+      contactInboxIds: ["ci-1", "ci-gone"],
+      contactEventMap: new Map([
+        [
+          "ci-1",
+          {
+            contactId: "contact-1",
+            occurredAt: "2026-01-01T00:00:00.000Z",
+            errorContent: null,
+          },
+        ],
+        [
+          "ci-gone",
+          {
+            contactId: "contact-gone",
+            occurredAt: "2026-01-02T00:00:00.000Z",
+            errorContent: null,
+          },
+        ],
+      ]),
+      total: 2,
+    })
+    // `getContacts` scopes by `Broadcast.workspaceId` while `findManyByIds`
+    // scopes by `Contact.workspaceId`, so a contact deleted or moved out of
+    // the workspace after the send is counted in `total` but has no row here.
+    contactInboxService.findManyByIds.mockResolvedValueOnce([
+      {
+        id: "ci-1",
+        sourceId: "src-1",
+        channel: "whatsapp",
+        contact: {
+          id: "contact-1",
+          firstName: "Ada",
+          lastName: null,
+          fullName: "Ada",
+          avatar: null,
+        },
+      },
+    ])
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: { id: "b-1", eventType: "message:sent", page: 1, perPage: 20 },
+    })
+
+    // Unresolvable rows are dropped rather than emitted as nulls, and
+    // `pageCount` stays anchored to the DB count — so `data.length` can be
+    // shorter than the total implies.
+    expect(result).toEqual({
+      data: [
+        {
+          contactId: "contact-1",
+          contactInboxId: "ci-1",
+          firstName: "Ada",
+          lastName: null,
+          fullName: "Ada",
+          sourceId: "src-1",
+          avatar: null,
+          channel: "whatsapp",
+          errorContent: null,
+          occurredAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+      pageCount: 1,
     })
   })
 })

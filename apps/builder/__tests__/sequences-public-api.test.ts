@@ -206,8 +206,12 @@ describe("DELETE /v1/sequences/{id}/steps/{stepId}", () => {
       workspaceId: "ws-1",
       sequenceId: "seq-1",
     })
+    // `sequenceId` is forwarded so the service can reject a step that
+    // belongs to another sequence — without it the `{id}` path segment is
+    // decorative and the step resolves by `stepId` alone.
     expect(sequenceService.deleteStep).toHaveBeenCalledWith({
       workspaceId: "ws-1",
+      sequenceId: "seq-1",
       stepId: "step-1",
     })
   })

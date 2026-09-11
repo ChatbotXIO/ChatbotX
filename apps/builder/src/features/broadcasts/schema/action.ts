@@ -112,6 +112,24 @@ export const createBroadcastRequest = z
     message: "Select the page the template belongs to",
     path: ["inboxIds"],
   })
+  // A `future` schedule must carry the time it is scheduled for. Without
+  // this, `create`/`updateDraft` fall back to `startOfMinute(new Date())`
+  // and persist `schedulesType: "future"` alongside an already-elapsed
+  // `schedulesAt` — an internally inconsistent row that `enqueueBroadcast`
+  // then picks up on its next tick, i.e. a silent send-now. Mirrors the
+  // equivalent check in `scheduleBroadcastSchema` below.
+  .superRefine((data, ctx) => {
+    if (
+      data.schedulesType === "future" &&
+      !(data.schedulesAt && isFutureScheduleTime(data.schedulesAt))
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["schedulesAt"],
+        message: FUTURE_SCHEDULE_MESSAGE,
+      })
+    }
+  })
   // Send-blocking WhatsApp template rules (MPM sections, LTO expiration):
   // the flow editor enforces them at publish, this refinement covers the
   // broadcast surface with the same shared rule set — once for the legacy

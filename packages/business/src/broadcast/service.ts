@@ -345,22 +345,35 @@ export const resolveBroadcastTargetsToPersist = (
 }
 
 /**
- * Minimal runtime shape-check for `Broadcast.contactFilter`, an untyped
- * jsonb column (`unknown`, not `ContactFilterCriteriaInput`) — used by
+ * Runtime shape-check for `Broadcast.contactFilter`, an untyped jsonb column
+ * (`unknown`, not `ContactFilterCriteriaInput`) — used by
  * `resendWithPruning` before handing a persisted filter to
- * `pruneEmailPhoneFilterConditions`. `conditions` is intentionally left
- * unvalidated (`unknown[]` by design; each entry is checked downstream in
- * the SQL builder), so this only confirms the outer shape, not every
- * condition's structure.
+ * `pruneEmailPhoneFilterConditions`.
+ *
+ * `operator` is checked against the exact `"and" | "or"` union the type
+ * declares, not merely for presence: `applyContactFilter` branches only on
+ * `=== "or"`, so any other stored value would silently degrade to `AND` and
+ * resend to a *different* audience than the one the filter describes.
+ * Rejecting here reproduces the pre-refactor behaviour, where a failed
+ * `contactFilterCriteriaSchema.safeParse` dropped the whole filter and the
+ * resend fell back to the full eligible audience.
+ *
+ * `conditions` entries stay unvalidated (`unknown[]` by design; each is
+ * checked downstream in the SQL builder) — the full per-condition schema
+ * lives in `apps/builder`, which this package cannot import.
  */
 const isContactFilterShape = (
   value: unknown,
-): value is ContactFilterCriteriaInput =>
-  typeof value === "object" &&
-  value !== null &&
-  "operator" in value &&
-  "conditions" in value &&
-  Array.isArray((value as { conditions: unknown }).conditions)
+): value is ContactFilterCriteriaInput => {
+  if (typeof value !== "object" || value === null) {
+    return false
+  }
+  const { operator, conditions } = value as {
+    operator?: unknown
+    conditions?: unknown
+  }
+  return (operator === "and" || operator === "or") && Array.isArray(conditions)
+}
 
 class BroadcastService extends BaseService {
   /**

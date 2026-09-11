@@ -208,8 +208,11 @@ describe("real router: broadcasts public API scope wiring", () => {
 
     test("updateDraft scopes to the token's workspace, not any workspace implied by the id", async () => {
       const { broadcastService } = await import("@chatbotx.io/business")
+      // The route's output declares `status` alongside `id`, so the mock
+      // must return it too or oRPC's output validation rejects the response.
       vi.mocked(broadcastService.updateDraft).mockResolvedValue({
         id: "999999",
+        status: "draft",
       } as never)
 
       await invoke(broadcastsPublicRouter.updateDraft, {
