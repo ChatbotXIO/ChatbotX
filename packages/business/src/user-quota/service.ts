@@ -159,6 +159,16 @@ class UserQuotaService extends BaseService {
     await this.store.invalidate(userId)
   }
 
+  /**
+   * Drop the live counters and cached row for a user that no longer exists, so
+   * the quota reconcile job stops walking a stale live key (its `UserQuota` row
+   * is already gone via `ON DELETE CASCADE`). Safe to call from a future user
+   * delete flow too.
+   */
+  async clearLiveCounters(userId: string): Promise<void> {
+    await this.store.clearLive(userId)
+  }
+
   async getForUser(userId: string): Promise<UserQuotaModel | null> {
     const cached = await this.store.getCachedRow(userId)
     if (cached) {

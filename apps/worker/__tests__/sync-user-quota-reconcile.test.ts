@@ -24,15 +24,32 @@ const state = {
   hmgetResult: [null, null] as (string | null)[],
   // Owner MAC count returned by the (mocked) ContactActiveMonthly ledger.
   ledgerMac: 0,
+  // Existence filter: `null` means every id in the batch exists; a Set restricts
+  // which ids the User table "contains" (the rest are treated as deleted ghosts).
+  existingUserIds: null as Set<string> | null,
+  // When set, the UserQuota upsert rejects with this error, to exercise both the
+  // FK race (user deleted between filter and upsert) and unrelated failures.
+  insertRejectError: null as Error | null,
 }
 
 function makeSelectChain() {
   const chain: Record<string, unknown> = {}
   chain.from = vi.fn(() => chain)
   chain.innerJoin = vi.fn(() => chain)
-  chain.where = vi.fn(() =>
-    Promise.resolve([{ count: state.countResults.shift() ?? 0 }]),
-  )
+  chain.where = vi.fn((whereArg: { __in?: string[] }) => {
+    // The existence filter is the only query built with `inArray` (mocked to
+    // `{ __in }`); everything else is a scalar COUNT consumed from countResults.
+    if (whereArg && Array.isArray(whereArg.__in)) {
+      const rows = whereArg.__in
+        .filter(
+          (id) =>
+            state.existingUserIds === null || state.existingUserIds.has(id),
+        )
+        .map((id) => ({ id }))
+      return Promise.resolve(rows)
+    }
+    return Promise.resolve([{ count: state.countResults.shift() ?? 0 }])
+  })
   return chain
 }
 
@@ -40,6 +57,9 @@ function makeInsertChain() {
   const chain: Record<string, unknown> = {}
   chain.values = vi.fn(() => chain)
   chain.onConflictDoUpdate = vi.fn((arg: { set: Record<string, unknown> }) => {
+    if (state.insertRejectError) {
+      return Promise.reject(state.insertRejectError)
+    }
     state.capturedSets.push(arg.set)
     return Promise.resolve()
   })
@@ -58,6 +78,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
   count: vi.fn(() => ({ count: true })),
   countDistinct: mockCountDistinct,
   eq: vi.fn((a: unknown, b: unknown) => ({ eq: [a, b] })),
+  inArray: vi.fn((_column: unknown, values: string[]) => ({ __in: values })),
+  isForeignKeyViolationError: vi.fn(
+    (error: unknown) =>
+      error instanceof Error && error.message.includes("FK violation"),
+  ),
   ne: vi.fn((a: unknown, b: unknown) => ({ ne: [a, b] })),
   sql: (strings: TemplateStringsArray, ...vals: unknown[]) => ({
     __sql: strings.join("?"),
@@ -83,6 +108,7 @@ vi.mock("@chatbotx.io/business", () => ({
     countDistinctTeamMembersForOwner: vi.fn(
       async () => state.countResults.shift() ?? 0,
     ),
+    clearLiveCounters: vi.fn(async () => undefined),
   },
   // Non-reseller users: `findByOwner` returns nothing, so reconcileUser keeps
   // the per-user self-count path these tests exercise.
@@ -116,6 +142,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     role: "wm.role",
   },
   workspaceModel: { id: "ws.id", ownerId: "ws.ownerId" },
+  userModel: { id: "user.id" },
 }))
 
 const redisClient = {
@@ -157,7 +184,12 @@ const { tenantService, userQuotaService } = (await import(
   userQuotaService: {
     reconcileOwnerPoolUsage: ReturnType<typeof vi.fn>
     countDistinctTeamMembersForOwner: ReturnType<typeof vi.fn>
+    clearLiveCounters: ReturnType<typeof vi.fn>
   }
+}
+
+const { logger } = (await import("../src/lib/logger")) as unknown as {
+  logger: { info: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> }
 }
 
 describe("reconcileUser — contacts/teamMembers reflect the current count", () => {
@@ -417,5 +449,118 @@ describe("syncUserQuota — cold reseller owners are included via DB fallback", 
 
     expect(userQuotaService.reconcileOwnerPoolUsage).not.toHaveBeenCalled()
     expect(state.capturedSets).toHaveLength(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Regression: a live-counter key can outlive the user it belonged to (User
+// delete cascades UserQuota but not the Redis key). The sync must skip such
+// ghost ids and clean their stale keys, and tolerate a user deleted mid-run,
+// instead of violating UserQuota → User on every cron.
+// ---------------------------------------------------------------------------
+describe("syncUserQuota — skips and cleans up deleted (ghost) users", () => {
+  beforeEach(() => {
+    state.countResults = [0, 0, 0, 0]
+    state.capturedSets = []
+    state.hsetCalls = []
+    state.stored = {
+      contactsUsed: 0,
+      teamMembersUsed: 0,
+      workspacesUsed: 0,
+      channelsUsed: 0,
+      macUsed: 0,
+      periodStart: null,
+    }
+    state.existingUserIds = null
+    redisClient.scan.mockReset()
+    redisClient.scan.mockResolvedValue(["0", []])
+    tenantService.findByOwner.mockReset()
+    tenantService.findByOwner.mockResolvedValue(undefined)
+    tenantService.listActiveOwnerIds.mockReset()
+    tenantService.listActiveOwnerIds.mockResolvedValue([])
+    userQuotaService.clearLiveCounters.mockClear()
+  })
+
+  test("a live key for a deleted user is cleaned up and never reconciled", async () => {
+    redisClient.scan.mockResolvedValue([
+      "0",
+      ["user-quota-live:ghost-1", "user-quota-live:real-1"],
+    ])
+    // The User table only still has `real-1`.
+    state.existingUserIds = new Set(["real-1"])
+
+    await syncUserQuota()
+
+    // The ghost's stale live key is cleared and it never reaches reconcile.
+    expect(userQuotaService.clearLiveCounters).toHaveBeenCalledWith("ghost-1")
+    expect(userQuotaService.clearLiveCounters).not.toHaveBeenCalledWith(
+      "real-1",
+    )
+    // The surviving user is still reconciled (its upsert ran once).
+    expect(state.capturedSets).toHaveLength(1)
+  })
+})
+
+describe("reconcileUser — a user deleted mid-run is skipped, not error-logged", () => {
+  beforeEach(() => {
+    state.countResults = [0, 0, 0, 0]
+    state.capturedSets = []
+    state.hsetCalls = []
+    state.stored = null
+    state.insertRejectError = null
+    tenantService.findByOwner.mockReset()
+    tenantService.findByOwner.mockResolvedValue(undefined)
+    userQuotaService.clearLiveCounters.mockClear()
+    userQuotaService.reconcileOwnerPoolUsage.mockClear()
+    userQuotaService.reconcileOwnerPoolUsage.mockResolvedValue(undefined)
+    logger.info.mockClear()
+    logger.error.mockClear()
+  })
+
+  test("a foreign-key violation on the per-user upsert clears the stale key without throwing", async () => {
+    // The user vanished before the upsert committed.
+    state.insertRejectError = new Error("FK violation (test)")
+
+    await expect(reconcileUser("ghost-2")).resolves.toBeUndefined()
+
+    expect(userQuotaService.clearLiveCounters).toHaveBeenCalledWith("ghost-2")
+    expect(logger.error).not.toHaveBeenCalled()
+    expect(logger.info).toHaveBeenCalledWith(
+      { userId: "ghost-2" },
+      "user-quota: skipped reconcile for a user that no longer exists",
+    )
+  })
+
+  test("a foreign-key violation on the owner-pool upsert is skipped the same way", async () => {
+    // The owner branch (reconcileOwnerPoolUsage) throws the same FK — the shared
+    // catch must clear and skip it too, not just the per-user path.
+    tenantService.findByOwner.mockResolvedValueOnce({
+      id: "tenant-x",
+      ownerId: "owner-ghost",
+      status: "active",
+    })
+    userQuotaService.reconcileOwnerPoolUsage.mockRejectedValueOnce(
+      new Error("FK violation (test)"),
+    )
+
+    await expect(reconcileUser("owner-ghost")).resolves.toBeUndefined()
+
+    expect(userQuotaService.clearLiveCounters).toHaveBeenCalledWith(
+      "owner-ghost",
+    )
+    expect(logger.error).not.toHaveBeenCalled()
+  })
+
+  test("an unrelated failure still logs an error and does not clear the key", async () => {
+    // A non-FK error (e.g. a connection drop) must keep the old behavior.
+    state.insertRejectError = new Error("connection reset")
+
+    await expect(reconcileUser("user-live")).resolves.toBeUndefined()
+
+    expect(userQuotaService.clearLiveCounters).not.toHaveBeenCalled()
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-live" }),
+      "user-quota: failed to reconcile user quota",
+    )
   })
 })
