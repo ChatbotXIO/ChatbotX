@@ -8,6 +8,7 @@ const getPresignedUpload = vi.fn()
 const createFile = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
+  fileService: { createPending: createFile },
   isPlatformAdmin: vi.fn(),
   resolveTenantSettings: vi.fn(async () => ({
     storageUrl: "https://cdn.example.com",
@@ -15,10 +16,6 @@ vi.mock("@chatbotx.io/business", () => ({
   resolveTenantSettingsByDomain: vi.fn(async () => ({
     storageUrl: "https://cdn.example.com",
   })),
-}))
-
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  fileRepository: { create: createFile },
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
@@ -107,7 +104,7 @@ describe("POST /api/presigned-upload", () => {
       workspace: { id: "1" },
     })
     getPresignedUpload.mockResolvedValue("https://upload.example.com/signed")
-    createFile.mockResolvedValue(undefined)
+    createFile.mockResolvedValue({ id: "file-1" })
     assertWorkspaceSuperAdmin.mockResolvedValue(undefined)
   })
 

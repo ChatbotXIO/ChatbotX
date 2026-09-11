@@ -4,16 +4,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   assertCurrentUserCanAccessChatbot: vi.fn().mockResolvedValue(undefined),
-  listByWorkspace: vi.fn().mockResolvedValue([]),
-  countByFolder: vi.fn().mockResolvedValue([]),
+  listFolders: vi.fn().mockResolvedValue([]),
 }))
 
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  mediaLibraryFileRepository: {
-    countByFolder: mocks.countByFolder,
-  },
-  mediaLibraryFolderRepository: {
-    listByWorkspace: mocks.listByWorkspace,
+vi.mock("@chatbotx.io/business", () => ({
+  mediaLibraryService: {
+    listFolders: mocks.listFolders,
   },
 }))
 
@@ -28,10 +24,8 @@ const WS = "workspace-1"
 beforeEach(() => {
   mocks.assertCurrentUserCanAccessChatbot.mockClear()
   mocks.assertCurrentUserCanAccessChatbot.mockResolvedValue(undefined)
-  mocks.listByWorkspace.mockReset()
-  mocks.listByWorkspace.mockResolvedValue([])
-  mocks.countByFolder.mockReset()
-  mocks.countByFolder.mockResolvedValue([])
+  mocks.listFolders.mockReset()
+  mocks.listFolders.mockResolvedValue([])
 })
 
 describe("listMediaLibraryFolders", () => {
@@ -41,47 +35,41 @@ describe("listMediaLibraryFolders", () => {
     expect(mocks.assertCurrentUserCanAccessChatbot).toHaveBeenCalledWith(WS)
   })
 
-  test("scopes both the folder list and the file-count query to workspaceId", async () => {
-    await listMediaLibraryFolders({ workspaceId: WS })
+  test("does not reach the service when the access assertion rejects", async () => {
+    mocks.assertCurrentUserCanAccessChatbot.mockRejectedValue(
+      new Error("forbidden"),
+    )
 
-    expect(mocks.listByWorkspace).toHaveBeenCalledWith({ workspaceId: WS })
-    expect(mocks.countByFolder).toHaveBeenCalledWith({ workspaceId: WS })
+    await expect(listMediaLibraryFolders({ workspaceId: WS })).rejects.toThrow(
+      "forbidden",
+    )
+    expect(mocks.listFolders).not.toHaveBeenCalled()
   })
 
-  test("merges the matching fileCount onto each folder", async () => {
-    mocks.listByWorkspace.mockResolvedValue([
-      { id: "folder-1", name: "A" },
-      { id: "folder-2", name: "B" },
-    ])
-    mocks.countByFolder.mockResolvedValue([
-      { folderId: "folder-1", count: 3 },
-      { folderId: "folder-2", count: 0 },
-    ])
+  test("scopes the service call to workspaceId", async () => {
+    await listMediaLibraryFolders({ workspaceId: WS })
 
-    const result = await listMediaLibraryFolders({ workspaceId: WS })
+    expect(mocks.listFolders).toHaveBeenCalledWith({ workspaceId: WS })
+  })
 
-    expect(result.data).toEqual([
+  test("wraps the service result in the response envelope", async () => {
+    mocks.listFolders.mockResolvedValue([
       { id: "folder-1", name: "A", fileCount: 3 },
       { id: "folder-2", name: "B", fileCount: 0 },
     ])
-  })
-
-  test("defaults fileCount to 0 for a folder missing from the grouped counts", async () => {
-    mocks.listByWorkspace.mockResolvedValue([
-      { id: "folder-empty", name: "Empty" },
-    ])
-    mocks.countByFolder.mockResolvedValue([])
 
     const result = await listMediaLibraryFolders({ workspaceId: WS })
 
-    expect(result.data).toEqual([
-      { id: "folder-empty", name: "Empty", fileCount: 0 },
-    ])
+    expect(result).toEqual({
+      data: [
+        { id: "folder-1", name: "A", fileCount: 3 },
+        { id: "folder-2", name: "B", fileCount: 0 },
+      ],
+    })
   })
 
   test("returns an empty list when the workspace has no folders", async () => {
-    mocks.listByWorkspace.mockResolvedValue([])
-    mocks.countByFolder.mockResolvedValue([{ folderId: "orphan", count: 5 }])
+    mocks.listFolders.mockResolvedValue([])
 
     const result = await listMediaLibraryFolders({ workspaceId: WS })
 

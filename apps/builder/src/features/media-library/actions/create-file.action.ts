@@ -1,8 +1,8 @@
 "use server"
 
+import { mediaLibraryService } from "@chatbotx.io/business"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { createMediaLibraryFile } from "../queries/mutations"
 import { createFileInputSchema } from "../schema"
 
 export const createMediaLibraryFileAction = workspaceActionClient
@@ -10,5 +10,5 @@ export const createMediaLibraryFileAction = workspaceActionClient
   .inputSchema(createFileInputSchema)
   .action(async ({ bindArgsParsedInputs, parsedInput }) => {
     const [workspaceId] = bindArgsParsedInputs
-    return await createMediaLibraryFile({ ...parsedInput, workspaceId })
+    return await mediaLibraryService.createFile({ ...parsedInput, workspaceId })
   })

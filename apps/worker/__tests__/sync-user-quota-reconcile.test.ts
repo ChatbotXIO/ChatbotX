@@ -36,9 +36,8 @@ function makeSelectChain() {
   const chain: Record<string, unknown> = {}
   chain.from = vi.fn(() => chain)
   chain.innerJoin = vi.fn(() => chain)
-  // The existence filter moved to `userService.listExistingIds` (see the
-  // `@chatbotx.io/business` mock below) — every remaining `db.select` here
-  // is a scalar COUNT consumed from countResults.
+  // Every remaining `db.select` in the handler is a scalar COUNT; the existence
+  // filter moved to `userService.listExistingIds`.
   chain.where = vi.fn(() =>
     Promise.resolve([{ count: state.countResults.shift() ?? 0 }]),
   )
@@ -101,20 +100,21 @@ vi.mock("@chatbotx.io/business", () => ({
     ),
     clearLiveCounters: vi.fn(async () => undefined),
   },
+  // The ghost-id existence filter now lives on the service, not a raw
+  // `db.select` in the handler. `existingUserIds === null` means every id in the
+  // batch still has a User row.
+  userService: {
+    listExistingIds: vi.fn(async ({ ids }: { ids: string[] }) =>
+      ids.filter(
+        (id) => state.existingUserIds === null || state.existingUserIds.has(id),
+      ),
+    ),
+  },
   // Non-reseller users: `findByOwner` returns nothing, so reconcileUser keeps
   // the per-user self-count path these tests exercise.
   tenantService: {
     findByOwner: vi.fn(async () => undefined),
     listActiveOwnerIds: vi.fn(async () => [] as string[]),
-  },
-  // Existence filter: mirrors the same `state.existingUserIds` restriction
-  // the inline `db.select` used before this moved into the service.
-  userService: {
-    listExistingIds: vi.fn(async (userIds: string[]) =>
-      userIds.filter(
-        (id) => state.existingUserIds === null || state.existingUserIds.has(id),
-      ),
-    ),
   },
 }))
 

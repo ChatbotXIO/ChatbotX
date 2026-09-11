@@ -3,7 +3,10 @@ import {
   mediaLibraryFileRepository,
   mediaLibraryFolderRepository,
 } from "@chatbotx.io/database/repositories"
-import type { MediaLibraryFileModel } from "@chatbotx.io/database/types"
+import type {
+  MediaLibraryFileModel,
+  MediaLibraryFolderModel,
+} from "@chatbotx.io/database/types"
 import { uploader } from "@chatbotx.io/filesystem"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
@@ -19,7 +22,82 @@ type CreateFileInput = {
   size: number
 }
 
+type FolderWithFileCount = MediaLibraryFolderModel & { fileCount: number }
+
 class MediaLibraryService extends BaseService {
+  /**
+   * Folders for the sidebar, each carrying how many files it holds. The count
+   * comes from a grouped aggregate rather than a per-folder query so the list
+   * stays one round trip regardless of folder count.
+   */
+  async listFolders(input: {
+    workspaceId: string
+  }): Promise<FolderWithFileCount[]> {
+    const { workspaceId } = input
+    const [folders, fileCounts] = await Promise.all([
+      mediaLibraryFolderRepository.listByWorkspace({ workspaceId }),
+      mediaLibraryFileRepository.countByFolder({ workspaceId }),
+    ])
+
+    const fileCountByFolderId = new Map(
+      fileCounts.map((row) => [row.folderId, row.count]),
+    )
+
+    return folders.map((folder) => ({
+      ...folder,
+      fileCount: fileCountByFolderId.get(folder.id) ?? 0,
+    }))
+  }
+
+  async createFolder(input: {
+    workspaceId: string
+    name: string
+  }): Promise<MediaLibraryFolderModel> {
+    return await mediaLibraryFolderRepository.create({
+      id: createId(),
+      name: input.name,
+      workspaceId: input.workspaceId,
+    })
+  }
+
+  async renameFolder(input: {
+    workspaceId: string
+    folderId: string
+    name: string
+  }): Promise<void> {
+    await mediaLibraryFolderRepository.rename({
+      folderId: input.folderId,
+      workspaceId: input.workspaceId,
+      name: input.name,
+    })
+  }
+
+  async moveFiles(input: {
+    workspaceId: string
+    fileIds: string[]
+    folderId?: string | null
+  }): Promise<void> {
+    await mediaLibraryFileRepository.moveToFolder({
+      workspaceId: input.workspaceId,
+      fileIds: input.fileIds,
+      folderId: input.folderId ?? null,
+    })
+  }
+
+  /**
+   * Stamps `lastAccessedAt` so the "Recent" filter reflects real usage. Scoped
+   * by workspace, so a file id from another workspace touches nothing.
+   */
+  async recordFileAccess(input: {
+    workspaceId: string
+    fileId: string
+  }): Promise<void> {
+    await mediaLibraryFileRepository.touchLastAccessedAt({
+      workspaceId: input.workspaceId,
+      fileId: input.fileId,
+    })
+  }
+
   async deleteFolder(input: {
     workspaceId: string
     folderId: string

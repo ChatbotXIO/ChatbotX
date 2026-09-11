@@ -5,6 +5,7 @@ import {
   listBroadcastContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
 import { broadcastService } from "@chatbotx.io/business"
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
@@ -136,6 +137,13 @@ export const broadcastPrivateAPIs = {
       const { workspaceId, broadcastId, eventType, page, perPage } = input
 
       if (!eventType) {
+        const [existingId] = await broadcastService.listExistingIds({
+          workspaceId,
+          ids: [broadcastId],
+        })
+        if (!existingId) {
+          throw notFoundException("Broadcast not found")
+        }
         return { data: [], total: 0, page, pageCount: 0 }
       }
 

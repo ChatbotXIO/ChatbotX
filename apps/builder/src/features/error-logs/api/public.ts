@@ -1,7 +1,7 @@
+import { listErrorLogs } from "@chatbotx.io/business/error-log"
 import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { withPublicPaging } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { listErrorLogs } from "../queries"
 import {
   listErrorLogsRequest,
   publicListErrorLogsResponse,

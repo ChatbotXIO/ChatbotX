@@ -9,6 +9,12 @@ const mocks = vi.hoisted(() => ({
   findById: vi.fn(),
   deleteFileById: vi.fn(),
   setFavourite: vi.fn(),
+  listByWorkspace: vi.fn(),
+  countByFolder: vi.fn(),
+  createFolder: vi.fn(),
+  renameFolder: vi.fn(),
+  moveToFolder: vi.fn(),
+  touchLastAccessedAt: vi.fn(),
   deleteObject: vi.fn(),
   warn: vi.fn(),
 }))
@@ -27,9 +33,15 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findById: mocks.findById,
     deleteById: mocks.deleteFileById,
     setFavourite: mocks.setFavourite,
+    countByFolder: mocks.countByFolder,
+    moveToFolder: mocks.moveToFolder,
+    touchLastAccessedAt: mocks.touchLastAccessedAt,
   },
   mediaLibraryFolderRepository: {
     deleteById: mocks.deleteFolderById,
+    listByWorkspace: mocks.listByWorkspace,
+    create: mocks.createFolder,
+    rename: mocks.renameFolder,
   },
 }))
 
@@ -209,6 +221,140 @@ describe("mediaLibraryService.toggleFavourite", () => {
     expect(mocks.setFavourite).toHaveBeenCalledWith({
       id: "file-1",
       isFavourite: false,
+    })
+  })
+})
+
+describe("mediaLibraryService.listFolders", () => {
+  test("scopes both the folder list and the grouped file count to workspaceId", async () => {
+    mocks.listByWorkspace.mockResolvedValue([])
+    mocks.countByFolder.mockResolvedValue([])
+
+    await mediaLibraryService.listFolders({ workspaceId: "ws-1" })
+
+    expect(mocks.listByWorkspace).toHaveBeenCalledWith({ workspaceId: "ws-1" })
+    expect(mocks.countByFolder).toHaveBeenCalledWith({ workspaceId: "ws-1" })
+  })
+
+  test("merges the matching fileCount onto each folder", async () => {
+    mocks.listByWorkspace.mockResolvedValue([
+      { id: "folder-1", name: "A" },
+      { id: "folder-2", name: "B" },
+    ])
+    mocks.countByFolder.mockResolvedValue([
+      { folderId: "folder-1", count: 3 },
+      { folderId: "folder-2", count: 0 },
+    ])
+
+    const result = await mediaLibraryService.listFolders({
+      workspaceId: "ws-1",
+    })
+
+    expect(result).toEqual([
+      { id: "folder-1", name: "A", fileCount: 3 },
+      { id: "folder-2", name: "B", fileCount: 0 },
+    ])
+  })
+
+  test("defaults fileCount to 0 for a folder missing from the grouped counts", async () => {
+    mocks.listByWorkspace.mockResolvedValue([
+      { id: "folder-empty", name: "Empty" },
+    ])
+    mocks.countByFolder.mockResolvedValue([])
+
+    const result = await mediaLibraryService.listFolders({
+      workspaceId: "ws-1",
+    })
+
+    expect(result).toEqual([
+      { id: "folder-empty", name: "Empty", fileCount: 0 },
+    ])
+  })
+
+  test("ignores a count row whose folder is not in the workspace list", async () => {
+    mocks.listByWorkspace.mockResolvedValue([])
+    mocks.countByFolder.mockResolvedValue([{ folderId: "orphan", count: 5 }])
+
+    const result = await mediaLibraryService.listFolders({
+      workspaceId: "ws-1",
+    })
+
+    expect(result).toEqual([])
+  })
+})
+
+describe("mediaLibraryService.createFolder", () => {
+  test("mints the id and scopes the row to the workspace", async () => {
+    mocks.createFolder.mockResolvedValue({ id: "id-1" })
+
+    await mediaLibraryService.createFolder({
+      workspaceId: "ws-1",
+      name: "Campaign assets",
+    })
+
+    expect(mocks.createFolder).toHaveBeenCalledWith({
+      id: "id-1",
+      name: "Campaign assets",
+      workspaceId: "ws-1",
+    })
+  })
+})
+
+describe("mediaLibraryService.renameFolder", () => {
+  test("scopes the rename by workspaceId so a foreign folderId matches nothing", async () => {
+    await mediaLibraryService.renameFolder({
+      workspaceId: "ws-1",
+      folderId: "folder-1",
+      name: "Renamed",
+    })
+
+    expect(mocks.renameFolder).toHaveBeenCalledWith({
+      folderId: "folder-1",
+      workspaceId: "ws-1",
+      name: "Renamed",
+    })
+  })
+})
+
+describe("mediaLibraryService.moveFiles", () => {
+  test("passes the target folder through", async () => {
+    await mediaLibraryService.moveFiles({
+      workspaceId: "ws-1",
+      fileIds: ["file-1", "file-2"],
+      folderId: "folder-9",
+    })
+
+    expect(mocks.moveToFolder).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      fileIds: ["file-1", "file-2"],
+      folderId: "folder-9",
+    })
+  })
+
+  test("normalises an omitted folderId to null so files move to the root", async () => {
+    await mediaLibraryService.moveFiles({
+      workspaceId: "ws-1",
+      fileIds: ["file-1"],
+    })
+
+    expect(mocks.moveToFolder).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      fileIds: ["file-1"],
+      folderId: null,
+    })
+  })
+})
+
+describe("mediaLibraryService.recordFileAccess", () => {
+  test("scopes the touch by workspaceId", async () => {
+    await mediaLibraryService.recordFileAccess({
+      workspaceId: "ws-1",
+      fileId: "file-1",
+    })
+
+    expect(mocks.touchLastAccessedAt).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      fileId: "file-1",
     })
   })
 })

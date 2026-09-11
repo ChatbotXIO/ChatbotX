@@ -1,5 +1,6 @@
 "use client"
 
+import type { listErrorLogs } from "@chatbotx.io/business/error-log"
 import type { ErrorLogModel } from "@chatbotx.io/database/types"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
@@ -11,7 +12,6 @@ import { use, useMemo, useState } from "react"
 import { DeleteErrorLogsDialog } from "./delete-error-logs"
 import { getColumns } from "./error-logs-table-columns"
 import { ErrorLogsTableToolbarActions } from "./error-logs-table-toolbar-actions"
-import type { listErrorLogs } from "./queries"
 
 type ErrorLogsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listErrorLogs>>]>

@@ -217,7 +217,7 @@ describe("public list queries never depend on a session", () => {
   })
 
   test("listErrorLogs resolves without a session", async () => {
-    const { listErrorLogs } = await import("../src/features/error-logs/queries")
+    const { listErrorLogs } = await import("@chatbotx.io/business/error-log")
     await expect(listErrorLogs({ workspaceId: "ws-1" })).resolves.toBeDefined()
     expect(mocks.assertCurrentUserCanAccessChatbot).not.toHaveBeenCalled()
   })
