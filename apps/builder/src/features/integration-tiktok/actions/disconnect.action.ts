@@ -1,12 +1,10 @@
 "use server"
 
 import {
-  inboxService,
   tiktokIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import { db } from "@chatbotx.io/database/client"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
@@ -26,18 +24,11 @@ export const disconnectTiktokAction = workspaceActionClientAllowExpired
         workspaceService.findById({ id: workspaceId }),
       ])
 
-      await db.transaction(async (tx) => {
-        await tiktokIntegrationService.disconnect({
-          id: integrationTiktok.id,
-          tx,
-        })
-        await inboxService.disconnect({
-          inboxId: integrationTiktok.inboxId,
-          ownerId: workspace.ownerId,
-          workspaceId,
-          reason: "manual",
-          tx,
-        })
+      await tiktokIntegrationService.disconnect({
+        workspaceId,
+        id: integrationTiktok.id,
+        inboxId: integrationTiktok.inboxId,
+        ownerId: workspace.ownerId,
       })
 
       await auditService.record({

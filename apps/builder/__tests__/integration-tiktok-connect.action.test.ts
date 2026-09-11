@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   connect: vi.fn(),
   findWorkspaceById: vi.fn(),
-  transaction: vi.fn(),
   auditRecord: vi.fn(),
   handleRequest: vi.fn(),
   redirect: vi.fn(),
@@ -29,10 +28,6 @@ vi.mock("@chatbotx.io/business/errors", () => ({
       this.code = code
     }
   },
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: mocks.transaction },
 }))
 
 vi.mock("next/navigation", () => ({
@@ -60,9 +55,6 @@ describe("connectTiktokHandler", () => {
         username: "shop_1",
       },
     })
-    mocks.transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
-      fn({}),
-    )
   })
 
   test("records reconnect audit with the persisted TikTok integration id on conflict", async () => {
@@ -79,14 +71,16 @@ describe("connectTiktokHandler", () => {
       redirectUrl: "https://app.example.com/integrations/tiktok/callback",
     })
 
-    expect(mocks.connect).toHaveBeenCalledWith(
-      expect.objectContaining({
-        workspaceId: "workspace-1",
-        openId: "open-id-1",
-        username: "shop_1",
-        displayName: "TikTok Shop",
+    expect(mocks.connect).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ownerId: "owner-1",
+      openId: "open-id-1",
+      username: "shop_1",
+      displayName: "TikTok Shop",
+      auth: expect.objectContaining({
+        metadata: expect.objectContaining({ openId: "open-id-1" }),
       }),
-    )
+    })
     expect(mocks.auditRecord).toHaveBeenCalledTimes(1)
     expect(mocks.auditRecord).toHaveBeenCalledWith({
       userId: "admin-1",

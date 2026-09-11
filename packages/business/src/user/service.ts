@@ -1,4 +1,4 @@
-import { db, eq } from "@chatbotx.io/database/client"
+import { db, eq, inArray } from "@chatbotx.io/database/client"
 import { userModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
@@ -24,6 +24,25 @@ class UserService extends BaseService {
       throw notFoundException("User not found")
     }
     return user
+  }
+
+  /**
+   * Existing user ids from `userIds`. A Redis live-counter key can outlive
+   * the User it belonged to (deleting a User cascades its UserQuota row but
+   * not the Redis key) — callers use this to filter such ghost ids out
+   * before reconciling, instead of violating the UserQuota → User foreign
+   * key on every run.
+   */
+  async listExistingIds(userIds: string[]): Promise<string[]> {
+    if (userIds.length === 0) {
+      return []
+    }
+
+    const rows = await db
+      .select({ id: userModel.id })
+      .from(userModel)
+      .where(inArray(userModel.id, userIds))
+    return rows.map((row) => row.id)
   }
 }
 

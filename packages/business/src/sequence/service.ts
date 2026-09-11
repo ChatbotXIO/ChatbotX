@@ -1,3 +1,5 @@
+import { sequenceAnalyticsService } from "@chatbotx.io/analytics"
+import type { SequenceStepEventType } from "@chatbotx.io/analytics/schemas"
 import {
   and,
   db,
@@ -17,6 +19,11 @@ import type {
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import {
+  mapStatsContactRow,
+  type StatsContactRow,
+} from "../contact-inbox/map-stats-contact-row"
+import { contactInboxService } from "../contact-inbox/service"
 import { notFoundException, validationException } from "../errors"
 import {
   handleStepCreationImpact,
@@ -195,6 +202,98 @@ class SequenceService extends BaseService {
       },
       message: "Sequence not found",
     })
+  }
+
+  /**
+   * One page of a sequence step's recipients for a given delivery event,
+   * with contact display fields attached — shared by callers of the
+   * "list sequence step contacts" route so the orchestration (analytics
+   * lookup → contact-inbox fetch → row shape) lives in one place instead of
+   * being copy-pasted per handler.
+   *
+   * Unlike `broadcastService.listContactsPage` there is no up-front
+   * existence/ownership assertion, because every read below is already
+   * workspace-scoped in SQL (`sequenceStatsRepository.getContacts` filters on
+   * `workspaceId`, and `contactInboxService.findManyByIds` requires one). A
+   * foreign or non-existent `sequenceId` therefore yields an empty page
+   * rather than another workspace's rows — it just does not 404.
+   *
+   * `total` is caller-supplied rather than repository-computed: unlike
+   * broadcasts, `sequenceStatsRepository.getContacts` has no count query
+   * today, so trusting the client-reported total here preserves existing
+   * behaviour. Adding a server-computed count is a real analytics change
+   * and belongs in its own PR — don't "fix" this without one.
+   *
+   * @remarks Behavior change from the pre-refactor per-handler
+   * implementation: a contact-inbox row with no conversation used to be
+   * dropped entirely (`if (!conversationId) return []`). This method keeps
+   * the row and reports `conversationId: ""` instead, matching how
+   * `broadcastService.listContactsPage` has always handled the same case.
+   * `data.length` can no longer silently fall short of `total` for this
+   * reason. The dialog UI already guards on truthiness
+   * (`stats-contacts-dialog.tsx`), so an empty `conversationId` renders as
+   * plain text rather than a broken inbox link — but the contact becomes
+   * selectable/taggable where it previously was not shown at all.
+   */
+  async listStepContactsPage(input: {
+    workspaceId: string
+    sequenceId: string
+    stepId: string
+    eventType: SequenceStepEventType
+    total: number
+    page: number
+    perPage: number
+  }): Promise<{
+    data: (StatsContactRow & { conversationId: string })[]
+    total: number
+    pageCount: number
+  }> {
+    const { workspaceId, sequenceId, stepId, eventType, page, perPage } = input
+    const total = input.total || 0
+    const pageCount = Math.ceil(total / perPage)
+
+    const { contactInboxIds, contactEventMap } =
+      await sequenceAnalyticsService.getContacts({
+        workspaceId,
+        sequenceId,
+        stepId,
+        eventType,
+        page,
+        perPage,
+      })
+
+    if (contactInboxIds.length === 0) {
+      return { data: [], total, pageCount }
+    }
+
+    const contactInboxes = await contactInboxService.findManyByIds({
+      workspaceId,
+      ids: contactInboxIds,
+    })
+    const contactMap = new Map(contactInboxes.map((c) => [c.id, c]))
+
+    const data = contactInboxIds
+      .map((contactInboxId) => {
+        const row = mapStatsContactRow(
+          contactInboxId,
+          contactEventMap.get(contactInboxId),
+          contactMap.get(contactInboxId),
+        )
+        if (!row) {
+          return null
+        }
+        return {
+          ...row,
+          conversationId:
+            contactMap.get(contactInboxId)?.conversation?.id ?? "",
+        }
+      })
+      .filter(
+        (row): row is StatsContactRow & { conversationId: string } =>
+          row !== null,
+      )
+
+    return { data, total, pageCount }
   }
 
   async findWithSteps(input: { workspaceId: string; id: string }) {

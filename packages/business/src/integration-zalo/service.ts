@@ -1,11 +1,5 @@
-import {
-  and,
-  type DatabaseClient,
-  db,
-  eq,
-  findOrFail,
-  inArray,
-} from "@chatbotx.io/database/client"
+import type { DatabaseClient } from "@chatbotx.io/database/client"
+import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   integrationZaloModel,
@@ -13,84 +7,15 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { IntegrationZaloModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
+import { channelDuplicatedException } from "../errors"
 import { connectChannelIntegration } from "../inbox/connect-channel"
-
-export type ConnectZaloInput = {
-  tx: DatabaseClient
-  ownerId: string
-  workspaceId: string
-  oaId: string
-  oaName: string
-  auth: Record<string, unknown>
-}
+import { inboxService } from "../inbox/service"
+import { logger } from "../logger"
+import { tagSyncService } from "../tag/sync.service"
 
 class ZaloIntegrationService extends BaseService {
-  listByWorkspaceId(
-    where: Partial<Pick<IntegrationZaloModel, "workspaceId" | "id">>,
-  ) {
-    return db.query.integrationZaloModel.findMany({
-      where,
-      orderBy: { createdAt: "asc" },
-    })
-  }
-
   findByWorkspaceId(workspaceId: string) {
     return db.query.integrationZaloModel.findFirst({ where: { workspaceId } })
-  }
-
-  /**
-   * Returns `wasCreated: false` (no insert performed) when the OA is already
-   * connected elsewhere — the caller (app layer) decides whether to redirect;
-   * `redirect()` must not be called from inside a service.
-   */
-  async connect(
-    input: ConnectZaloInput,
-  ): Promise<{ integrationId: string | undefined; wasCreated: boolean }> {
-    let connectedIntegrationId: string | undefined
-
-    const { wasCreated } = await connectChannelIntegration({
-      tx: input.tx,
-      ownerId: input.ownerId,
-      inboxData: {
-        workspaceId: input.workspaceId,
-        name: input.oaName,
-        channel: "zalo",
-        sourceId: input.oaId,
-      },
-      insertIntegration: async (inboxId, insertWasCreated) => {
-        if (!insertWasCreated) {
-          return
-        }
-        const [row] = await input.tx
-          .insert(integrationZaloModel)
-          .values({
-            inboxId,
-            workspaceId: input.workspaceId,
-            oaId: input.oaId,
-            auth: input.auth,
-            name: input.oaName,
-          })
-          .returning({ id: integrationZaloModel.id })
-        connectedIntegrationId = row?.id
-      },
-    })
-
-    return { integrationId: connectedIntegrationId, wasCreated }
-  }
-
-  async disconnect(props: { id: string; tx: DatabaseClient }) {
-    // Polymorphic FK cleanup — no DB-level cascade for TagChannel.integrationId
-    await props.tx
-      .delete(tagChannelModel)
-      .where(
-        and(
-          eq(tagChannelModel.channelType, channelTypes.enum.zalo),
-          eq(tagChannelModel.integrationId, props.id),
-        ),
-      )
-    await props.tx
-      .delete(integrationZaloModel)
-      .where(eq(integrationZaloModel.id, props.id))
   }
 
   async updateTagSync(props: {
@@ -180,6 +105,129 @@ class ZaloIntegrationService extends BaseService {
     return db.query.integrationZaloModel.findFirst({
       where: { oaId: props.oaId },
     })
+  }
+
+  async listByWorkspace(
+    where: Partial<Pick<IntegrationZaloModel, "workspaceId" | "id">>,
+  ): Promise<IntegrationZaloModel[]> {
+    return await db.query.integrationZaloModel.findMany({
+      where,
+      orderBy: {
+        createdAt: "asc",
+      },
+    })
+  }
+
+  async connect(input: {
+    workspaceId: string
+    ownerId: string
+    oaId: string
+    name: string
+    auth: Record<string, unknown>
+  }): Promise<{ integrationId: string | undefined; wasCreated: boolean }> {
+    const { workspaceId, ownerId, oaId, name, auth } = input
+
+    let connectedIntegrationId: string | undefined
+    let channelWasCreated = false
+
+    await db.transaction(async (tx) => {
+      const { wasCreated } = await connectChannelIntegration({
+        tx,
+        ownerId,
+        inboxData: {
+          workspaceId,
+          name,
+          channel: "zalo",
+          sourceId: oaId,
+        },
+        insertIntegration: async (inboxId, insertWasCreated) => {
+          if (!insertWasCreated) {
+            throw channelDuplicatedException()
+          }
+          const [row] = await tx
+            .insert(integrationZaloModel)
+            .values({
+              inboxId,
+              workspaceId,
+              oaId,
+              auth,
+              name,
+            })
+            .returning({ id: integrationZaloModel.id })
+          connectedIntegrationId = row?.id
+        },
+      })
+      channelWasCreated = wasCreated
+    })
+
+    await this.invalidateCacheTags(`workspaces:${workspaceId}#zalos`)
+
+    // Import any tags already on the OA into local tags + mappings. The row is
+    // already committed, so a queue outage must not fail the connect — and must
+    // not run before the caller's audit record either, or a throw here would
+    // leave a connected channel with no audit trail.
+    if (connectedIntegrationId) {
+      await tagSyncService
+        .enqueueChannelScan({
+          workspaceId,
+          channelType: channelTypes.enum.zalo,
+          integrationId: connectedIntegrationId,
+        })
+        .catch((err) => {
+          logger.warn(
+            { err, workspaceId, integrationId: connectedIntegrationId },
+            "zalo connect: channel tag scan enqueue failed",
+          )
+        })
+    }
+
+    return {
+      integrationId: connectedIntegrationId,
+      wasCreated: channelWasCreated,
+    }
+  }
+
+  async disconnect(input: {
+    workspaceId: string
+    id: string
+    inboxId: string
+    ownerId: string
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, id, inboxId, ownerId, tx } = input
+
+    const run = async (client: DatabaseClient) => {
+      // Polymorphic FK cleanup — no DB-level cascade for TagChannel.integrationId
+      await client
+        .delete(tagChannelModel)
+        .where(
+          and(
+            eq(tagChannelModel.channelType, channelTypes.enum.zalo),
+            eq(tagChannelModel.integrationId, id),
+          ),
+        )
+      await client
+        .delete(integrationZaloModel)
+        .where(
+          and(
+            eq(integrationZaloModel.id, id),
+            eq(integrationZaloModel.workspaceId, workspaceId),
+          ),
+        )
+      await inboxService.disconnect({
+        inboxId,
+        ownerId,
+        workspaceId,
+        reason: "manual",
+        tx: client,
+      })
+    }
+
+    if (tx) {
+      await run(tx)
+      return
+    }
+    await db.transaction(run)
   }
 }
 

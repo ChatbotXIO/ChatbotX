@@ -4,6 +4,11 @@ const findManyBroadcast = vi.fn()
 const updateReturning = vi.fn()
 const dbSelectWhere = vi.fn()
 
+vi.mock("@chatbotx.io/analytics", () => ({
+  broadcastAnalyticsService: { getContacts: vi.fn() },
+  sequenceAnalyticsService: { getContacts: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {

@@ -10,7 +10,6 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { listSequences } from "../queries"
 import {
   createSequenceRequest,
   listSequencesResponse,
@@ -34,7 +33,7 @@ export const sequencesPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
-        await listSequences({
+        await sequenceService.list({
           ...input,
           workspaceId: context.workspace.id,
         }),

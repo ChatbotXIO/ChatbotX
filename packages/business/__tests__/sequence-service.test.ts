@@ -68,6 +68,15 @@ const {
   }
 })
 
+vi.mock("@chatbotx.io/analytics", () => ({
+  broadcastAnalyticsService: { getContacts: vi.fn() },
+  sequenceAnalyticsService: { getContacts: vi.fn() },
+}))
+
+vi.mock("../src/contact-inbox/service", () => ({
+  contactInboxService: { findManyByIds: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     insert: (model: unknown) =>

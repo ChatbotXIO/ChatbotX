@@ -19,6 +19,10 @@ const mocks = vi.hoisted(() => ({
   dispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock("@chatbotx.io/analytics", () => ({
+  broadcastAnalyticsService: { getContacts: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/redis", () => ({ invalidateCacheByTags: vi.fn() }))
 
 vi.mock("../../inbox/service", () => ({

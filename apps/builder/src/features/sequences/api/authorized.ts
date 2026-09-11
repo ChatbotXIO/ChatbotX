@@ -1,6 +1,6 @@
+import { sequenceService } from "@chatbotx.io/business/sequence"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { listSequences } from "../queries"
 import { listSequencesRequest, listSequencesResponse } from "../schema/action"
 
 export const sequencesWorkspaceAuthAPI = {
@@ -14,5 +14,5 @@ export const sequencesWorkspaceAuthAPI = {
     .input(listSequencesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listSequencesResponse)
-    .handler(async ({ input }) => await listSequences(input)),
+    .handler(async ({ input }) => await sequenceService.list(input)),
 }

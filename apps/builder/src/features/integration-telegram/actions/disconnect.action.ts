@@ -1,12 +1,10 @@
 "use server"
 
 import {
-  inboxService,
   telegramIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import { db } from "@chatbotx.io/database/client"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import {
   type WorkspaceIdAndIdRequestParams,
@@ -25,7 +23,7 @@ export const disconnectTelegramAction = workspaceActionClientAllowExpired
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
       const [integrationTelegram, workspace] = await Promise.all([
-        telegramIntegrationService.findByWorkspaceIdAndId({ workspaceId, id }),
+        telegramIntegrationService.findByIdForWorkspace({ id, workspaceId }),
         workspaceService.findById({ id: workspaceId }),
       ])
 
@@ -40,18 +38,11 @@ export const disconnectTelegramAction = workspaceActionClientAllowExpired
         )
       }
 
-      await db.transaction(async (tx) => {
-        await telegramIntegrationService.disconnect({
-          id: integrationTelegram.id,
-          tx,
-        })
-        await inboxService.disconnect({
-          inboxId: integrationTelegram.inboxId,
-          ownerId: workspace.ownerId,
-          workspaceId,
-          reason: "manual",
-          tx,
-        })
+      await telegramIntegrationService.disconnect({
+        workspaceId,
+        id: integrationTelegram.id,
+        inboxId: integrationTelegram.inboxId,
+        ownerId: workspace.ownerId,
       })
 
       await auditService.record({

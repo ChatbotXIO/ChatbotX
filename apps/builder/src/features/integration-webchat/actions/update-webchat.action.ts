@@ -31,6 +31,11 @@ export const updateWebchatAction = workspaceActionClient
       throw new Error("You need to be a super admin to update this webchat")
     }
 
+    const integration = await integrationWebchatService.findByIdForWorkspace({
+      id,
+      workspaceId,
+    })
+
     // Community keeps the "Built with" branding entry; silently re-add it
     // (same precedent as moveBrandingMenuLast in the messenger action).
     const persistentMenus =
@@ -41,9 +46,10 @@ export const updateWebchatAction = workspaceActionClient
           })
         : rest.persistentMenus
 
-    await integrationWebchatService.update(
-      { workspaceId, id },
-      {
+    await integrationWebchatService.update({
+      workspaceId,
+      id: integration.id,
+      data: {
         ...rest,
         persistentMenus,
         welcomeFlowId: welcomeFlowId?.length ? welcomeFlowId : null,
@@ -51,5 +57,5 @@ export const updateWebchatAction = workspaceActionClient
           ? authorizedDomains.map((domain) => domain.value)
           : undefined,
       },
-    )
+    })
   })

@@ -3,21 +3,26 @@ import {
   parseLiveCount,
   tenantService,
   userQuotaService,
+  userService,
   WORKSPACE_USAGE_LABEL,
   workspaceUsageService,
 } from "@chatbotx.io/business"
+// NOTE: this handler is only partially migrated to the service layer — the
+// ghost-id existence check now goes through `userService.listExistingIds`,
+// but the reconcile/count/upsert queries below still use `db` directly.
+// That's an intentional legacy exception (see `.agents/rules/data-access.md`
+// § "Existing exceptions"), not an inconsistency to "fix" incidentally —
+// migrating the rest is separate scope.
 import {
   count,
   db,
   eq,
-  inArray,
   isForeignKeyViolationError,
   sql,
 } from "@chatbotx.io/database/client"
 import {
   contactModel,
   inboxModel,
-  userModel,
   userQuotaModel,
   workspaceMemberModel,
   workspaceModel,
@@ -93,11 +98,7 @@ export const syncUserQuota = async (): Promise<void> => {
     // ghost id would violate the `UserQuota → User` foreign key on every run, so
     // filter the batch against the User table (one indexed lookup per 50 ids)
     // and drop the stale keys instead of walking them again.
-    const existingRows = await db
-      .select({ id: userModel.id })
-      .from(userModel)
-      .where(inArray(userModel.id, batch))
-    const existingIds = new Set(existingRows.map((row) => row.id))
+    const existingIds = new Set(await userService.listExistingIds(batch))
 
     await Promise.all(
       batch

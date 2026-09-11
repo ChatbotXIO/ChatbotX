@@ -1,25 +1,11 @@
-import {
-  type DatabaseClient,
-  db,
-  eq,
-  findOrFail,
-  inArray,
-} from "@chatbotx.io/database/client"
+import type { DatabaseClient } from "@chatbotx.io/database/client"
+import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import { integrationTiktokModel } from "@chatbotx.io/database/schema"
 import type { IntegrationTiktokModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { connectChannelIntegration } from "../inbox/connect-channel"
-
-export type ConnectTiktokInput = {
-  tx: DatabaseClient
-  ownerId: string
-  workspaceId: string
-  openId: string
-  username: string
-  displayName: string
-  auth: Record<string, unknown>
-}
+import { inboxService } from "../inbox/service"
 
 class TiktokIntegrationService extends BaseService {
   findById(props: { id: string; workspaceId: string }) {
@@ -28,67 +14,6 @@ class TiktokIntegrationService extends BaseService {
       where: { id: props.id, workspaceId: props.workspaceId },
       message: "Integration TikTok not found",
     })
-  }
-
-  listByWorkspaceId(
-    where: Partial<Pick<IntegrationTiktokModel, "workspaceId">>,
-  ) {
-    return db.query.integrationTiktokModel.findMany({
-      where,
-      orderBy: { createdAt: "asc" },
-    })
-  }
-
-  findByWorkspaceId(workspaceId: string) {
-    return db.query.integrationTiktokModel.findFirst({ where: { workspaceId } })
-  }
-
-  findByOpenId(openId: string) {
-    return db.query.integrationTiktokModel.findFirst({ where: { openId } })
-  }
-
-  async connect(input: ConnectTiktokInput) {
-    const integrationId = createId()
-
-    return await connectChannelIntegration({
-      tx: input.tx,
-      ownerId: input.ownerId,
-      inboxData: {
-        workspaceId: input.workspaceId,
-        name: input.displayName,
-        channel: "tiktok",
-        sourceId: input.username,
-      },
-      insertIntegration: async (inboxId) => {
-        const [integration] = await input.tx
-          .insert(integrationTiktokModel)
-          .values({
-            id: integrationId,
-            inboxId,
-            workspaceId: input.workspaceId,
-            openId: input.openId,
-            name: input.displayName,
-            auth: input.auth,
-          })
-          .onConflictDoUpdate({
-            target: [integrationTiktokModel.openId],
-            set: {
-              auth: input.auth,
-              name: input.displayName,
-              tokenRefreshError: null,
-            },
-          })
-          .returning({ id: integrationTiktokModel.id })
-
-        return integration
-      },
-    })
-  }
-
-  async disconnect(props: { id: string; tx: DatabaseClient }) {
-    await props.tx
-      .delete(integrationTiktokModel)
-      .where(eq(integrationTiktokModel.id, props.id))
   }
 
   findAll() {
@@ -127,6 +52,112 @@ class TiktokIntegrationService extends BaseService {
       .update(integrationTiktokModel)
       .set({ tokenRefreshError: error })
       .where(eq(integrationTiktokModel.id, id))
+  }
+
+  async listByWorkspace(
+    where: Partial<Pick<IntegrationTiktokModel, "workspaceId">>,
+  ): Promise<IntegrationTiktokModel[]> {
+    return await db.query.integrationTiktokModel.findMany({
+      where,
+      orderBy: {
+        createdAt: "asc",
+      },
+    })
+  }
+
+  async findByOpenId(openId: string): Promise<IntegrationTiktokModel | null> {
+    return (
+      (await db.query.integrationTiktokModel.findFirst({
+        where: { openId },
+      })) ?? null
+    )
+  }
+
+  async connect(input: {
+    workspaceId: string
+    ownerId: string
+    openId: string
+    username: string
+    displayName: string
+    auth: Record<string, unknown>
+  }): Promise<{
+    wasCreated: boolean
+    integration: { id: string } | undefined
+  }> {
+    const { workspaceId, ownerId, openId, username, displayName, auth } = input
+    const integrationId = createId()
+
+    const { wasCreated, integration } = await db.transaction(async (tx) =>
+      connectChannelIntegration({
+        tx,
+        ownerId,
+        inboxData: {
+          workspaceId,
+          name: displayName,
+          channel: "tiktok",
+          sourceId: username,
+        },
+        insertIntegration: async (inboxId) => {
+          const [row] = await tx
+            .insert(integrationTiktokModel)
+            .values({
+              id: integrationId,
+              inboxId,
+              workspaceId,
+              openId,
+              name: displayName,
+              auth,
+            })
+            .onConflictDoUpdate({
+              target: [integrationTiktokModel.openId],
+              set: {
+                auth,
+                name: displayName,
+                tokenRefreshError: null,
+              },
+            })
+            .returning({ id: integrationTiktokModel.id })
+
+          return row
+        },
+      }),
+    )
+
+    return { wasCreated, integration }
+  }
+
+  async disconnect(input: {
+    workspaceId: string
+    id: string
+    inboxId: string
+    ownerId: string
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, id, inboxId, ownerId, tx } = input
+
+    const run = async (client: DatabaseClient) => {
+      await client
+        .delete(integrationTiktokModel)
+        .where(
+          and(
+            eq(integrationTiktokModel.id, id),
+            eq(integrationTiktokModel.workspaceId, workspaceId),
+          ),
+        )
+      await inboxService.disconnect({
+        inboxId,
+        ownerId,
+        workspaceId,
+        reason: "manual",
+        tx: client,
+      })
+    }
+
+    if (tx) {
+      await run(tx)
+      return
+    }
+    await db.transaction(run)
   }
 }
 
