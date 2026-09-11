@@ -269,7 +269,7 @@ class AppointmentService extends BaseService {
     calendarId: string
     contactId: string
     conversationId?: string | null
-    contactInboxId: string
+    contactInboxId?: string
     startAt: Date
     inviteeTimezone?: string
     metadata?: MetadataPayload
