@@ -10,29 +10,6 @@ import {
 } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
-export const archiveConversations = async (props: {
-  workspaceId: string
-  ids: string[]
-  userId: string
-}) => {
-  const conversations = await conversationService.findManyByIds({
-    workspaceId: props.workspaceId,
-    ids: props.ids,
-  })
-
-  await conversationService.updateArchived({
-    workspaceId: props.workspaceId,
-    conversations,
-    archivedAt: new Date(),
-    userId: props.userId,
-    triggerContext: {
-      triggerSource: "api",
-      triggerHandler: "archiveConversationAction",
-      triggerType: "conversation_archived",
-    },
-  })
-}
-
 export const archiveConversationAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
@@ -46,10 +23,15 @@ export const archiveConversationAction = workspaceActionClient
       parsedInput: BulkUpdateIdsRequest
       ctx: { user: UserModel }
     }) => {
-      await archiveConversations({
+      await conversationService.archiveByIds({
         workspaceId,
         ids: parsedInput.ids,
         userId: ctx.user.id,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "archiveConversationAction",
+          triggerType: "conversation_archived",
+        },
       })
     },
   )

@@ -9,7 +9,6 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { endOfHour } from "date-fns"
 import z from "zod"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { decodeCursor, encodeCursor } from "@/lib/pagination"
 import type {
   ConversationContactInboxResource,
@@ -145,8 +144,6 @@ export const listConversations = async (
 export const findConversation = async (
   input: FindConversationRequest,
 ): Promise<FindConversationResponse> => {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
-
   const conversation = await conversationService.findWithFullRelations({
     where: input,
   })

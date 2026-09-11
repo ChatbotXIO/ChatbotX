@@ -13,6 +13,10 @@ import {
   type ConversationAttributes,
   dmConversationUsesSourceId,
 } from "@chatbotx.io/database/partials"
+import {
+  createMessageRepository,
+  getSafeSinceTime,
+} from "@chatbotx.io/database/repositories"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import type {
   AttachmentModel,
@@ -57,8 +61,10 @@ import type {
   ContactInboxTrackingInvalidation,
 } from "../contact-inbox/service"
 import { contactInboxService } from "../contact-inbox/service"
-import { notFoundException } from "../errors"
+import { inboxTeamService } from "../enterprise/inbox-team/service"
+import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
+import { workspaceMemberService } from "../workspace-member/service"
 
 export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
 
@@ -648,6 +654,227 @@ class ConversationService extends BaseService {
     }
   }
 
+  async archiveByIds(props: {
+    workspaceId: string
+    ids: string[]
+    userId?: string
+    triggerContext: TriggerContext
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, ids, userId, triggerContext, tx } = props
+    const conversations = await this.findManyByIds({ workspaceId, ids, tx })
+    await this.updateArchived({
+      workspaceId,
+      conversations,
+      archivedAt: new Date(),
+      userId,
+      triggerContext,
+      tx,
+    })
+  }
+
+  async unarchiveByIds(props: {
+    workspaceId: string
+    ids: string[]
+    userId?: string
+    triggerContext: TriggerContext
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, ids, userId, triggerContext, tx } = props
+    const conversations = await this.findManyByIds({ workspaceId, ids, tx })
+    await this.updateArchived({
+      workspaceId,
+      conversations,
+      archivedAt: null,
+      userId,
+      triggerContext,
+      tx,
+    })
+  }
+
+  // `onInvalid: "throw"` (API/action callers) rejects an unknown member, an
+  // unknown team, or an unrecognized prefix with `invalidAssignee`.
+  // `onInvalid: "ignore"` (worker trigger/flow-step callers) instead resolves
+  // that case to "no target" — preserving the worker's pre-existing silent
+  // no-op behavior on a stale/invalid assignee, which callers there rely on
+  // (a flow step must not hard-fail a whole execution over one bad id).
+  private async resolveAssignmentTarget(
+    workspaceId: string,
+    assignedId: string | null | undefined,
+    onInvalid: "throw" | "ignore" = "throw",
+  ): Promise<{
+    assignedUserId: string | null
+    assignedInboxTeamId: string | null
+  }> {
+    const updatedData: {
+      assignedUserId: string | null
+      assignedInboxTeamId: string | null
+    } = {
+      assignedUserId: null,
+      assignedInboxTeamId: null,
+    }
+
+    if (assignedId?.startsWith("u_")) {
+      const userId = assignedId.slice(2)
+      const workspaceMember =
+        await workspaceMemberService.findByWorkspaceIdAndUserId({
+          workspaceId,
+          userId,
+        })
+      if (workspaceMember) {
+        updatedData.assignedUserId = workspaceMember.userId
+      } else if (onInvalid === "throw") {
+        throw new ChatbotXException("User is not valid", "invalidAssignee", 400)
+      }
+    } else if (assignedId?.startsWith("t_")) {
+      const inboxTeamId = assignedId.slice(2)
+      if (onInvalid === "throw") {
+        const inboxTeam = await inboxTeamService.findByIdOrFail({
+          workspaceId,
+          inboxTeamId,
+        })
+        updatedData.assignedInboxTeamId = inboxTeam.id
+      } else {
+        const teamExists = await inboxTeamService.exists({
+          workspaceId,
+          id: inboxTeamId,
+        })
+        if (teamExists) {
+          updatedData.assignedInboxTeamId = inboxTeamId
+        }
+      }
+    } else if (assignedId != null && onInvalid === "throw") {
+      // Schema validation should already reject this shape, but guard here too
+      // so a caller can never silently unassign via an unrecognized prefix.
+      throw new ChatbotXException(
+        "assignedId must start with 'u_' or 't_'",
+        "invalidAssignee",
+        400,
+      )
+    }
+
+    return updatedData
+  }
+
+  async assignByContactIds(props: {
+    workspaceId: string
+    contactIds: string[]
+    assignedId: string | null | undefined
+    assignedBy?: string
+    triggerContext: Omit<TriggerContext, "triggerType">
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, contactIds, assignedId, assignedBy, tx } = props
+
+    const updatedData = await this.resolveAssignmentTarget(
+      workspaceId,
+      assignedId,
+    )
+
+    const conversations = await this.findManyByContactIds({
+      workspaceId,
+      contactIds,
+      tx,
+    })
+    if (conversations.length === 0) {
+      return
+    }
+
+    await this.updateAssignment({
+      workspaceId,
+      conversations,
+      assignedUserId: updatedData.assignedUserId,
+      assignedInboxTeamId: updatedData.assignedInboxTeamId,
+      assignedBy,
+      triggerContext: {
+        ...props.triggerContext,
+        triggerType:
+          updatedData.assignedUserId || updatedData.assignedInboxTeamId
+            ? "conversation_assigned"
+            : "conversation_unassigned",
+      },
+      tx,
+    })
+  }
+
+  // Single-conversation, path-addressed variant for the public API — assigns
+  // exactly the conversation given, not every conversation belonging to its
+  // contact (a contact can have a DM plus N comment-thread conversations, all
+  // sharing one `contactId`; see `assignByContactIds` above).
+  async assignOne(props: {
+    workspaceId: string
+    conversation: { id: string; contactId: string }
+    assignedId: string | null | undefined
+    assignedBy?: string
+    triggerContext: Omit<TriggerContext, "triggerType">
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, conversation, assignedId, assignedBy, tx } = props
+
+    const updatedData = await this.resolveAssignmentTarget(
+      workspaceId,
+      assignedId,
+    )
+
+    await this.updateAssignment({
+      workspaceId,
+      conversations: [conversation],
+      assignedUserId: updatedData.assignedUserId,
+      assignedInboxTeamId: updatedData.assignedInboxTeamId,
+      assignedBy,
+      triggerContext: {
+        ...props.triggerContext,
+        triggerType:
+          updatedData.assignedUserId || updatedData.assignedInboxTeamId
+            ? "conversation_assigned"
+            : "conversation_unassigned",
+      },
+      tx,
+    })
+  }
+
+  // Worker trigger-action/flow-step variant: an unrecognized or stale
+  // assignedId (deleted member, deleted team, malformed prefix) silently
+  // does nothing rather than throwing, matching the pre-existing behavior of
+  // `stepAssignConversation`/`ActionExecutor`'s assignConversation case —
+  // a single bad id in a flow/trigger must not hard-fail the whole run.
+  // `triggerContext` is taken as-is (unlike `assignOne`/`assignByContactIds`,
+  // which derive `triggerType` as "conversation_assigned"/"unassigned" for
+  // the API's DB-event taxonomy): worker callers here use a *different*
+  // `triggerType` axis — "trigger_action"/"flow_action", describing how the
+  // assignment fired, not what it did — and that value flows straight into
+  // `emit("analytics:dashboard", { metadata: { triggerContext } })` inside
+  // `updateAssignment` below, so overwriting it would silently corrupt the
+  // trigger/flow analytics event.
+  async assignOneOrSkip(props: {
+    workspaceId: string
+    conversation: { id: string; contactId: string }
+    assignedId: string
+    triggerContext: TriggerContext
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, conversation, assignedId, triggerContext, tx } = props
+
+    const updatedData = await this.resolveAssignmentTarget(
+      workspaceId,
+      assignedId,
+      "ignore",
+    )
+
+    if (!(updatedData.assignedUserId || updatedData.assignedInboxTeamId)) {
+      return
+    }
+
+    await this.updateAssignment({
+      workspaceId,
+      conversations: [conversation],
+      assignedUserId: updatedData.assignedUserId,
+      assignedInboxTeamId: updatedData.assignedInboxTeamId,
+      triggerContext,
+      tx,
+    })
+  }
+
   async updateAssignment(props: {
     workspaceId: string
     conversations: { id: string; contactId: string }[]
@@ -669,7 +896,12 @@ class ConversationService extends BaseService {
     const updated = await tx
       .update(conversationModel)
       .set({ assignedUserId, assignedInboxTeamId })
-      .where(inArray(conversationModel.id, ids))
+      .where(
+        and(
+          eq(conversationModel.workspaceId, workspaceId),
+          inArray(conversationModel.id, ids),
+        ),
+      )
       .returning()
     await this.invalidate({ workspaceId, ids })
 
@@ -820,6 +1052,69 @@ class ConversationService extends BaseService {
       occurredAt: new Date(),
       metadata: { triggerContext },
     })
+  }
+
+  async setFollowed(props: {
+    workspaceId: string
+    id: string
+    followed: boolean
+    userId?: string
+    triggerContext: TriggerContext
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, id, followed, userId, triggerContext, tx } = props
+    const conversation = await this.findByOrFail({
+      where: { id, workspaceId },
+      tx,
+    })
+
+    await this.updateFollowed({
+      workspaceId,
+      id,
+      contactId: conversation.contactId,
+      followed,
+      userId,
+      triggerContext,
+      tx,
+    })
+  }
+
+  async markUnread(props: {
+    workspaceId: string
+    id: string
+    tx?: DatabaseClient
+  }): Promise<{ agentLastReadAt: Date | null }> {
+    const { workspaceId, id, tx } = props
+    const conversation = await this.findByOrFail({
+      where: { id, workspaceId },
+      tx,
+    })
+
+    const messageRepository = await createMessageRepository()
+    const last2Messages = await messageRepository.findLastByConversation(
+      conversation.id,
+      {
+        messageTypes: ["incoming"],
+        limit: 2,
+        // Anchor on this conversation's own lastActivityAt, not a shared
+        // ContactInbox's lastMessageAt — a contact's ContactInbox is shared
+        // across their DM and every comment-thread conversation, so its
+        // lastMessageAt can reflect a different, more recently active
+        // conversation and push sinceTime past this conversation's real last
+        // message, causing the sharded scan to miss it.
+        sinceTime: getSafeSinceTime(
+          conversation.lastActivityAt ?? conversation.createdAt,
+          365 * 24 * 60 * 60 * 1000,
+        ),
+        workspaceId,
+      },
+    )
+    const lastMessage = last2Messages.at(-1)
+    const agentLastReadAt = lastMessage ? lastMessage.createdAt : null
+
+    await this.updateReadStatus({ workspaceId, id, agentLastReadAt, tx })
+
+    return { agentLastReadAt }
   }
 
   async updateReadStatus(props: {
@@ -1065,6 +1360,36 @@ class ConversationService extends BaseService {
         conversationId: conv.id,
         occurredAt: new Date(),
         metadata: { triggerContext: props.triggerContext },
+      })
+    }
+  }
+
+  async setBotEnabledByIds(props: {
+    workspaceId: string
+    ids: string[]
+    botEnabled: boolean
+    userId?: string
+    triggerContext: TriggerContext
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { workspaceId, ids, botEnabled, userId, triggerContext, tx } = props
+    const conversations = await this.findManyByIds({ workspaceId, ids, tx })
+
+    if (botEnabled) {
+      await this.enableBotState({
+        workspaceId,
+        conversations,
+        userId,
+        triggerContext,
+        tx,
+      })
+    } else {
+      await this.disableBotState({
+        workspaceId,
+        conversations,
+        userId,
+        triggerContext,
+        tx,
       })
     }
   }

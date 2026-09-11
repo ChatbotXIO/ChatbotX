@@ -16,6 +16,13 @@ const mocks = vi.hoisted(() => ({
   listByWorkspace: vi.fn().mockResolvedValue([]),
   findManyQuery: vi.fn().mockResolvedValue([]),
   findLastByConversation: vi.fn().mockResolvedValue([]),
+  findWithFullRelations: vi.fn().mockResolvedValue({
+    id: "conv-1",
+    contactId: "contact-1",
+    contactInboxes: [],
+    lastActivityAt: null,
+  }),
+  findByIdWithUrls: vi.fn().mockResolvedValue({ id: "msg-1" }),
   broadcastListWithRelations: vi.fn().mockResolvedValue([]),
   broadcastCount: vi.fn().mockResolvedValue(0),
   sequenceListWithCounts: vi.fn().mockResolvedValue([]),
@@ -67,7 +74,11 @@ vi.mock("@chatbotx.io/utils/error-log", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   inboxTeamService: { listByWorkspace: mocks.listByWorkspace },
-  conversationService: { findManyQuery: mocks.findManyQuery },
+  conversationService: {
+    findManyQuery: mocks.findManyQuery,
+    findWithFullRelations: mocks.findWithFullRelations,
+  },
+  messageService: { findByIdWithUrls: mocks.findByIdWithUrls },
   broadcastService: {
     list: async (input: { page?: number; perPage?: number }) => {
       const pagination = {
@@ -137,6 +148,13 @@ beforeEach(() => {
   mocks.listByWorkspace.mockResolvedValue([])
   mocks.findManyQuery.mockResolvedValue([])
   mocks.findLastByConversation.mockResolvedValue([])
+  mocks.findWithFullRelations.mockResolvedValue({
+    id: "conv-1",
+    contactId: "contact-1",
+    contactInboxes: [],
+    lastActivityAt: null,
+  })
+  mocks.findByIdWithUrls.mockResolvedValue({ id: "msg-1" })
   mocks.broadcastListWithRelations.mockResolvedValue([])
   mocks.broadcastCount.mockResolvedValue(0)
   mocks.sequenceListWithCounts.mockResolvedValue([])
@@ -219,6 +237,28 @@ describe("public list queries never depend on a session", () => {
         { workspaceId: "ws-1" },
         { includeEmailAndPhone: true },
       ),
+    ).resolves.toBeDefined()
+    expect(mocks.assertCurrentUserCanAccessChatbot).not.toHaveBeenCalled()
+  })
+
+  test("findConversation resolves without a session", async () => {
+    const { findConversation } = await import(
+      "../src/features/conversations/queries/list-conversations.query"
+    )
+    await expect(
+      findConversation({ workspaceId: "ws-1", id: "conv-1" }),
+    ).resolves.toBeDefined()
+    expect(mocks.assertCurrentUserCanAccessChatbot).not.toHaveBeenCalled()
+  })
+
+  test("findMessage resolves without a session", async () => {
+    const { findMessage } = await import("../src/features/messages/queries")
+    await expect(
+      findMessage({
+        workspaceId: "ws-1",
+        id: "msg-1",
+        createdAt: new Date(),
+      }),
     ).resolves.toBeDefined()
     expect(mocks.assertCurrentUserCanAccessChatbot).not.toHaveBeenCalled()
   })

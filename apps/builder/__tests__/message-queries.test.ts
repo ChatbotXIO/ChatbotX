@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  assertCurrentUserCanAccessChatbot: vi.fn().mockResolvedValue(undefined),
   listForConversation: vi.fn(),
   findByIdWithUrls: vi.fn(),
 }))
@@ -11,10 +10,6 @@ vi.mock("@chatbotx.io/business", () => ({
     listForConversation: mocks.listForConversation,
     findByIdWithUrls: mocks.findByIdWithUrls,
   },
-}))
-
-vi.mock("@/lib/auth/utils", () => ({
-  assertCurrentUserCanAccessChatbot: mocks.assertCurrentUserCanAccessChatbot,
 }))
 
 const { findMessage, listMessages } = await import(
@@ -33,12 +28,13 @@ describe("message queries adapter", () => {
     })
   })
 
-  test("findMessage asserts access before delegating to messageService", async () => {
+  test("findMessage delegates to messageService without resolving a session", async () => {
+    // A workspace-token request has no better-auth session — see
+    // public-list-queries-no-session.test.ts.
     const createdAt = new Date("2026-06-01T00:00:00Z")
 
     await findMessage({ id: "msg-1", workspaceId: "ws-1", createdAt })
 
-    expect(mocks.assertCurrentUserCanAccessChatbot).toHaveBeenCalledWith("ws-1")
     expect(mocks.findByIdWithUrls).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       id: "msg-1",

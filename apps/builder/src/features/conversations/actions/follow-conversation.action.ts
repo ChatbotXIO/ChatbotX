@@ -12,28 +12,15 @@ export const followConversationAction = workspaceActionClient
       ctx,
     } = props
 
-    await followConversation({ workspaceId, id, userId: ctx.user.id })
+    await conversationService.setFollowed({
+      workspaceId,
+      id,
+      followed: true,
+      userId: ctx.user.id,
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "followConversationAction",
+        triggerType: "conversation_followed",
+      },
+    })
   })
-
-export const followConversation = async (ctx: {
-  workspaceId: string
-  id: string
-  userId: string
-}) => {
-  const conversation = await conversationService.findByOrFail({
-    where: { id: ctx.id, workspaceId: ctx.workspaceId },
-  })
-
-  await conversationService.updateFollowed({
-    workspaceId: ctx.workspaceId,
-    id: ctx.id,
-    contactId: conversation.contactId,
-    followed: true,
-    userId: ctx.userId,
-    triggerContext: {
-      triggerSource: "api",
-      triggerHandler: "followConversationAction",
-      triggerType: "conversation_followed",
-    },
-  })
-}

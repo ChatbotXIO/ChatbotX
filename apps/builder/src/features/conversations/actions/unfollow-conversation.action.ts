@@ -9,28 +9,18 @@ export const unfollowConversationAction = workspaceActionClient
   .action(async (props) => {
     const {
       bindArgsParsedInputs: [workspaceId, id],
+      ctx,
     } = props
 
-    await unfollowConversation({ workspaceId, id })
+    await conversationService.setFollowed({
+      workspaceId,
+      id,
+      followed: false,
+      userId: ctx.user.id,
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "unfollowConversationAction",
+        triggerType: "conversation_unfollowed",
+      },
+    })
   })
-
-export const unfollowConversation = async (ctx: {
-  workspaceId: string
-  id: string
-}) => {
-  const conversation = await conversationService.findByOrFail({
-    where: { id: ctx.id, workspaceId: ctx.workspaceId },
-  })
-
-  await conversationService.updateFollowed({
-    workspaceId: ctx.workspaceId,
-    id: ctx.id,
-    contactId: conversation.contactId,
-    followed: false,
-    triggerContext: {
-      triggerSource: "api",
-      triggerHandler: "unfollowConversationAction",
-      triggerType: "conversation_unfollowed",
-    },
-  })
-}

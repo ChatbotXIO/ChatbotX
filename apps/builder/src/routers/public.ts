@@ -21,6 +21,7 @@ import { inboxesPublicRouter } from "@/features/inboxes/api/public"
 import { channelsPublicRouter } from "@/features/integration-api/api/public"
 import { templateMessagesPublicRouter } from "@/features/integration-whatsapp/message-templates/api/public"
 import { integrationsPublicRouter } from "@/features/integrations/api/public"
+import { messagesPublicRouter } from "@/features/messages/api/public"
 import { productCategoriesPublicRouter } from "@/features/product-categories/api/public"
 import { productsPublicRouter } from "@/features/products/api/public"
 import { reflinksPublicRouter } from "@/features/reflinks/api/public"
@@ -54,6 +55,7 @@ export const publicRouter = {
   inboxes: inboxesPublicRouter,
   integrations: integrationsPublicRouter,
   keywords: keywordsPublicRouter,
+  messages: messagesPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,
   reflinks: reflinksPublicRouter,

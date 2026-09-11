@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => ({
   deleteByCustomFieldId: vi.fn(),
   updateArchived: vi.fn(),
   updateAssignment: vi.fn(),
+  assignOneOrSkip: vi.fn(),
   disableBotState: vi.fn(),
   enableBotState: vi.fn(),
   enqueueAttach: vi.fn(),
@@ -100,6 +101,7 @@ vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     updateArchived: (...args: unknown[]) => mocks.updateArchived(...args),
     updateAssignment: (...args: unknown[]) => mocks.updateAssignment(...args),
+    assignOneOrSkip: (...args: unknown[]) => mocks.assignOneOrSkip(...args),
     disableBotState: (...args: unknown[]) => mocks.disableBotState(...args),
     enableBotState: (...args: unknown[]) => mocks.enableBotState(...args),
   },
@@ -328,8 +330,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
       )
       mocks.tagFindMany.mockResolvedValue([{ id: "tag-1" }])
       mocks.insertReturning.mockResolvedValue([{ tagId: "tag-1" }])
-      mocks.workspaceMemberFindFirst.mockResolvedValue({ id: "wm-1" })
-      mocks.inboxTeamFindFirst.mockResolvedValue({ id: "it-1" })
+      mocks.assignOneOrSkip.mockResolvedValue(undefined)
     })
 
     test.each([

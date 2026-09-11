@@ -302,48 +302,16 @@ export class ActionExecutor {
 
       case triggerActions.enum.assignConversation: {
         const assignedId = action.assignedId as string
-        let assignedUserId: string | null = null
-        let assignedInboxTeamId: string | null = null
-
-        if (assignedId.startsWith("u_")) {
-          const userId = assignedId.slice(2)
-          const workspaceMember = await db.query.workspaceMemberModel.findFirst(
-            {
-              where: {
-                userId,
-                workspaceId: conversation.workspaceId,
-              },
-            },
-          )
-          if (workspaceMember) {
-            assignedUserId = userId
-          }
-        } else if (assignedId.startsWith("t_")) {
-          const inboxTeamId = assignedId.slice(2)
-          const inboxTeam = await db.query.inboxTeamModel.findFirst({
-            where: {
-              id: inboxTeamId,
-              workspaceId: conversation.workspaceId,
-            },
-          })
-          if (inboxTeam) {
-            assignedInboxTeamId = inboxTeamId
-          }
-        }
-
-        if (assignedUserId || assignedInboxTeamId) {
-          await conversationService.updateAssignment({
-            workspaceId: conversation.workspaceId,
-            conversations: [conversation],
-            assignedUserId,
-            assignedInboxTeamId,
-            triggerContext: {
-              triggerSource: "worker",
-              triggerHandler: "actionExecutor.assignConversation",
-              triggerType: "trigger_action",
-            },
-          })
-        }
+        await conversationService.assignOneOrSkip({
+          workspaceId: conversation.workspaceId,
+          conversation,
+          assignedId,
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "actionExecutor.assignConversation",
+            triggerType: "trigger_action",
+          },
+        })
         break
       }
 

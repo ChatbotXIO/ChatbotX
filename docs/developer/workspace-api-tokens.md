@@ -260,6 +260,80 @@ Three invariants to preserve when touching this surface:
   omitting it would return dispatch rows across every workspace, not just the
   caller's.
 
+### Inbox scope — endpoint-to-scope table
+
+The `inbox` scope covers conversations, conversation-scoped messages,
+inboxes (channels), saved replies (canned responses), workspace members
+(agents), and — enterprise only — teams, so an integration can build a full
+helpdesk client without a human session. Every handler below calls the same
+`packages/business` service method the corresponding UI action calls
+(`.agents/rules/data-access.md`). Conversation and message mutations take a
+single resource id (`/v1/conversations/{id}/...`), not the private API's
+bulk-by-ids shape — and every one omits an actor (`assignedBy`/`userId`):
+a workspace token authenticates the workspace, not a user, and the
+underlying service methods already treat that field as optional.
+
+| Resource | Endpoint | Service method |
+| --- | --- | --- |
+| Conversations | `GET /v1/conversations` | `listConversations` (query) |
+| Conversations | `GET /v1/conversations/{id}` | `findConversation` (query) |
+| Conversations | `POST /v1/conversations/{id}/assign` | `conversationService.updateAssignment` |
+| Conversations | `POST /v1/conversations/{id}/archive` | `conversationService.updateArchived` |
+| Conversations | `POST /v1/conversations/{id}/unarchive` | `conversationService.updateArchived` |
+| Conversations | `POST /v1/conversations/{id}/read` | `conversationService.updateReadStatus` |
+| Conversations | `POST /v1/conversations/{id}/unread` | `conversationService.updateReadStatus` (via `unreadConversation`) |
+| Conversations | `POST /v1/conversations/{id}/follow` | `conversationService.updateFollowed` |
+| Conversations | `POST /v1/conversations/{id}/unfollow` | `conversationService.updateFollowed` |
+| Conversations | `POST /v1/conversations/{id}/enable-bot` | `conversationService.updateBotEnabled` |
+| Conversations | `POST /v1/conversations/{id}/disable-bot` | `conversationService.updateBotEnabled` |
+| Messages | `GET /v1/conversations/{conversationId}/messages` | `listMessages` (query) |
+| Messages | `GET /v1/conversations/{conversationId}/messages/{messageId}` | `messageService.findByIdWithUrls` |
+| Messages | `POST /v1/conversations/{conversationId}/messages` | `messageService.createOutgoing` |
+| Messages | `PATCH /v1/conversations/{conversationId}/messages/{messageId}` | `editMessage` |
+| Messages | `DELETE /v1/conversations/{conversationId}/messages/{messageId}` | `deleteMessage` |
+| Messages | `POST /v1/conversations/{conversationId}/messages/{messageId}/attributes` | `changeMessageAttributes` |
+| Inboxes | `GET /v1/inboxes` | `inboxService.list` (via `listInboxes`) |
+| Inboxes | `GET /v1/channels` (deprecated) | `inboxService.list` (via `listInboxes`) |
+| Saved replies | `GET /v1/saved-replies` | `savedReplyService.listByWorkspaceId` (via `listSavedReplies`) |
+| Saved replies | `GET /v1/saved-replies/{id}` | `savedReplyService.findByIdOrFail` |
+| Saved replies | `POST /v1/saved-replies` | `savedReplyService.create` |
+| Saved replies | `PUT /v1/saved-replies/{id}` | `savedReplyService.update` |
+| Saved replies | `DELETE /v1/saved-replies/{id}` | `savedReplyService.delete` |
+| Workspace members | `GET /v1/members` | `listWorkspaceMembers` (query) |
+| Workspace members | `GET /v1/members/{memberId}` | `getWorkspaceMember` (query) |
+| Teams (enterprise) | `GET /v1/teams` | `inboxTeamService.listByWorkspace` (via `listInboxTeams`) |
+| Teams (enterprise) | `GET /v1/teams/{id}` | `inboxTeamService.findByIdOrFail` |
+| Teams (enterprise) | `POST /v1/teams` | `inboxTeamService.create` |
+| Teams (enterprise) | `PUT /v1/teams/{id}` | `inboxTeamService.update` |
+| Teams (enterprise) | `DELETE /v1/teams/{id}` | `inboxTeamService.delete` |
+| Teams (enterprise) | `POST /v1/teams/{id}/members` | `inboxTeamService.addMembers` |
+| Teams (enterprise) | `DELETE /v1/teams/{id}/members` | `inboxTeamService.removeMembers` |
+
+Also `POST /v1/contacts/{identifier}/messages`, `GET .../messages`, and
+`GET .../messages/{messageId}` in `contacts/api/public/messages.ts` — see the
+contacts scope table above for why those live under `inbox` despite their
+path.
+
+Three invariants to preserve when touching this surface:
+
+- **`conversationService.updateAssignment` scopes its `WHERE` by
+  `workspaceId`, not just conversation id** — it was missing that clause
+  until this scope's public routes were added, which would have made a
+  bulk-by-ids assignment endpoint a cross-tenant write. Any future write on
+  this service must scope by `workspaceId` the same way
+  `updateArchived`/`updateBotEnabled` already do; don't reintroduce an
+  `inArray(id, ids)`-only `WHERE`.
+- **`findConversation`/`findMessage` never resolve a better-auth session** —
+  they used to call `assertCurrentUserCanAccessChatbot`, which throws for a
+  Bearer-token request (no session exists). `apps/builder/__tests__/public-list-queries-no-session.test.ts`
+  pins this for every public query function; add a new one there whenever a
+  query function gains a public caller.
+- **Public message `create` sends without a `user`** — `messageService
+  .createOutgoing`'s `user` param is optional specifically so a workspace
+  token (which has no user) can send; don't reintroduce a
+  `userService.findByIdOrFail(context.user.id)` call on this path the way
+  the private API needs one for `tenantId`.
+
 ## Adding a new scope value
 
 1. Add the value to `workspaceApiTokenScopes` in

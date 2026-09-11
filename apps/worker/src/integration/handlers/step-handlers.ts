@@ -75,38 +75,10 @@ export async function stepAssignConversation({
   conversation,
   step,
 }: ExecuteStepProps<AssignConversationStepSchema>) {
-  let assignedUserId: string | null = null
-  let assignedInboxTeamId: string | null = null
-
-  if (step.assignedId.startsWith("u_")) {
-    const userId = step.assignedId.slice(2)
-    const isMember = await workspaceMemberService.isMember({
-      workspaceId: conversation.workspaceId,
-      userId,
-    })
-    if (isMember) {
-      assignedUserId = userId
-    }
-  } else if (step.assignedId.startsWith("t_")) {
-    const inboxTeamId = step.assignedId.slice(2)
-    const teamExists = await inboxTeamService.exists({
-      workspaceId: conversation.workspaceId,
-      id: inboxTeamId,
-    })
-    if (teamExists) {
-      assignedInboxTeamId = inboxTeamId
-    }
-  }
-
-  if (!(assignedUserId || assignedInboxTeamId)) {
-    return
-  }
-
-  await conversationService.updateAssignment({
+  await conversationService.assignOneOrSkip({
     workspaceId: conversation.workspaceId,
-    conversations: [conversation],
-    assignedUserId,
-    assignedInboxTeamId,
+    conversation,
+    assignedId: step.assignedId,
     triggerContext: {
       triggerSource: "worker",
       triggerHandler: "stepAssignConversation",

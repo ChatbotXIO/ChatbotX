@@ -308,6 +308,29 @@ describe("public API spec — operation naming guard", () => {
       "triggers.get",
       "triggers.update",
       "triggers.updateSettings",
+
+      // Same pre-existing-shared-resource-schema leak pattern as above,
+      // introduced by completing the `inbox` scope's public surface (see
+      // the "Inbox scope" table in docs/developer/workspace-api-tokens.md).
+      // `conversations.get` reuses `listConversationsItemResource`, the same
+      // shared shape `conversations.list` already leaks through above.
+      // `inboxTeams.*`/`savedReplies.*` reuse `inboxTeamResource`/
+      // `savedReplyResource`, the same shapes `inboxTeams.list`/
+      // `savedReplies.list` already leak through above. `messages.*` reuses
+      // `messageResourceWithRelations`, shared with the private message API
+      // and with the already-public `contacts.listMessages`/`getMessage`.
+      "conversations.get",
+      "inboxTeams.create",
+      "inboxTeams.get",
+      "inboxTeams.update",
+      "inboxTeams.addMembers",
+      "inboxTeams.removeMembers",
+      "messages.list",
+      "messages.create",
+      "messages.get",
+      "savedReplies.create",
+      "savedReplies.get",
+      "savedReplies.update",
     ])
 
     const leaking = Object.entries(responseSchemasByOperationId)

@@ -10,28 +10,6 @@ import {
 } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
-export const enableBotForConversations = async (props: {
-  workspaceId: string
-  ids: string[]
-  userId: string
-}) => {
-  const conversations = await conversationService.findManyByIds({
-    workspaceId: props.workspaceId,
-    ids: props.ids,
-  })
-
-  await conversationService.enableBotState({
-    workspaceId: props.workspaceId,
-    conversations,
-    userId: props.userId,
-    triggerContext: {
-      triggerSource: "api",
-      triggerHandler: "enableBotAction",
-      triggerType: "conversation_transferred_to_bot",
-    },
-  })
-}
-
 export const enableBotAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
@@ -45,10 +23,16 @@ export const enableBotAction = workspaceActionClient
       parsedInput: BulkUpdateIdsRequest
       ctx: { user: UserModel }
     }) => {
-      await enableBotForConversations({
+      await conversationService.setBotEnabledByIds({
         workspaceId,
         ids: parsedInput.ids,
+        botEnabled: true,
         userId: ctx.user.id,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "enableBotAction",
+          triggerType: "conversation_transferred_to_bot",
+        },
       })
     },
   )

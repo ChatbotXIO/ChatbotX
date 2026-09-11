@@ -63,17 +63,23 @@ vi.mock("@/middlewares/auth", () => ({
   workspaceAuthorizedMidddleware: vi.fn(),
 }))
 
-const { archiveConversations, getAtLimitMap, getForUser, isCloud } = vi.hoisted(
-  () => ({
-    archiveConversations: vi.fn(),
-    getAtLimitMap: vi.fn(),
-    getForUser: vi.fn(),
-    isCloud: vi.fn(),
-  }),
-)
+const { archiveByIds, getAtLimitMap, getForUser, isCloud } = vi.hoisted(() => ({
+  archiveByIds: vi.fn(),
+  getAtLimitMap: vi.fn(),
+  getForUser: vi.fn(),
+  isCloud: vi.fn(),
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
-  conversationService: { updateReadStatus: vi.fn() },
+  conversationService: {
+    updateReadStatus: vi.fn(),
+    archiveByIds,
+    unarchiveByIds: vi.fn(),
+    assignByContactIds: vi.fn(),
+    setBotEnabledByIds: vi.fn(),
+    setFollowed: vi.fn(),
+    markUnread: vi.fn(),
+  },
   quotaEnforcementService: { getAtLimitMap },
   userQuotaService: { getForUser },
 }))
@@ -93,36 +99,6 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 
 vi.mock("@/env", () => ({ isCloud }))
 
-vi.mock("@/features/conversations/actions/archive-conversation.action", () => ({
-  archiveConversations,
-}))
-vi.mock("@/features/conversations/actions/assign-conversation.action", () => ({
-  assignConversation: vi.fn(),
-}))
-vi.mock("@/features/conversations/actions/disable-bot.action", () => ({
-  disableBotForConversations: vi.fn(),
-}))
-vi.mock("@/features/conversations/actions/enable-bot.action", () => ({
-  enableBotForConversations: vi.fn(),
-}))
-vi.mock("@/features/conversations/actions/follow-conversation.action", () => ({
-  followConversation: vi.fn(),
-}))
-vi.mock(
-  "@/features/conversations/actions/unarchive-conversation.action",
-  () => ({
-    unarchiveConversations: vi.fn(),
-  }),
-)
-vi.mock(
-  "@/features/conversations/actions/unfollow-conversation.action",
-  () => ({
-    unfollowConversation: vi.fn(),
-  }),
-)
-vi.mock("@/features/conversations/actions/unread-conversation.action", () => ({
-  unreadConversation: vi.fn(),
-}))
 vi.mock("@/features/conversations/queries/get-post-details.query", () => ({
   getPostDetailsQuery: vi.fn(),
 }))
@@ -167,13 +143,13 @@ describe("conversationsAuthenticatedAPI — trial-expired/MAC block gate", () =>
       httpStatusCode: 402,
     })
 
-    expect(archiveConversations).not.toHaveBeenCalled()
+    expect(archiveByIds).not.toHaveBeenCalled()
   })
 
   test("archiveConversationsAuthenticatedAPI proceeds when the owner is not blocked", async () => {
     getForUser.mockResolvedValue({ planStatus: "active", periodEnd: null })
     getAtLimitMap.mockResolvedValue({ mac: false })
-    archiveConversations.mockResolvedValue(undefined)
+    archiveByIds.mockResolvedValue(undefined)
 
     const handler = handlersByPath[ARCHIVE_PATH]
 
@@ -187,10 +163,15 @@ describe("conversationsAuthenticatedAPI — trial-expired/MAC block gate", () =>
       }),
     ).resolves.toEqual({ success: true })
 
-    expect(archiveConversations).toHaveBeenCalledWith({
+    expect(archiveByIds).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       ids: ["conversation-1"],
       userId: "user-1",
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "archiveConversationAction",
+        triggerType: "conversation_archived",
+      },
     })
   })
 })
