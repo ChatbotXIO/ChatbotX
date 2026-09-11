@@ -53,6 +53,7 @@ const inboxTeamService = {
   delete: vi.fn(),
   addMembers: vi.fn(),
   removeMembers: vi.fn(),
+  removeMembersByUserIds: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({ inboxTeamService }))
 
@@ -120,8 +121,8 @@ describe("POST /v1/teams", () => {
 describe("PUT /v1/teams/{id}", () => {
   const procedure = findProcedure("PUT", "/v1/teams/{id}")
 
-  test("updates then re-fetches the team by id", async () => {
-    inboxTeamService.findByIdOrFail.mockResolvedValueOnce({
+  test("delegates to inboxTeamService.update and returns its result", async () => {
+    inboxTeamService.update.mockResolvedValueOnce({
       id: "1",
       name: "Renamed",
     })
@@ -135,10 +136,7 @@ describe("PUT /v1/teams/{id}", () => {
       { workspaceId: "ws-1", inboxTeamId: "1" },
       { name: "Renamed" },
     )
-    expect(inboxTeamService.findByIdOrFail).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      inboxTeamId: "1",
-    })
+    expect(inboxTeamService.findByIdOrFail).not.toHaveBeenCalled()
     expect(result).toEqual({ id: "1", name: "Renamed" })
   })
 })
@@ -159,8 +157,8 @@ describe("DELETE /v1/teams/{id}", () => {
 describe("POST /v1/teams/{id}/members", () => {
   const procedure = findProcedure("POST", "/v1/teams/{id}/members")
 
-  test("adds members then re-fetches the team", async () => {
-    inboxTeamService.findByIdOrFail.mockResolvedValueOnce({ id: "1" })
+  test("delegates to inboxTeamService.addMembers and returns its result", async () => {
+    inboxTeamService.addMembers.mockResolvedValueOnce({ id: "1" })
 
     const result = await procedure.handler?.({
       context,
@@ -171,6 +169,7 @@ describe("POST /v1/teams/{id}/members", () => {
       { workspaceId: "ws-1", inboxTeamId: "1" },
       ["user-1", "user-2"],
     )
+    expect(inboxTeamService.findByIdOrFail).not.toHaveBeenCalled()
     expect(result).toEqual({ id: "1" })
   })
 })
@@ -178,18 +177,19 @@ describe("POST /v1/teams/{id}/members", () => {
 describe("DELETE /v1/teams/{id}/members", () => {
   const procedure = findProcedure("DELETE", "/v1/teams/{id}/members")
 
-  test("removes members then re-fetches the team", async () => {
-    inboxTeamService.findByIdOrFail.mockResolvedValueOnce({ id: "1" })
+  test("delegates to inboxTeamService.removeMembersByUserIds and returns its result", async () => {
+    inboxTeamService.removeMembersByUserIds.mockResolvedValueOnce({ id: "1" })
 
     const result = await procedure.handler?.({
       context,
-      input: { id: "1", memberIds: ["member-1"] },
+      input: { id: "1", userIds: ["user-1"] },
     })
 
-    expect(inboxTeamService.removeMembers).toHaveBeenCalledWith(
+    expect(inboxTeamService.removeMembersByUserIds).toHaveBeenCalledWith(
       { workspaceId: "ws-1", inboxTeamId: "1" },
-      ["member-1"],
+      ["user-1"],
     )
+    expect(inboxTeamService.findByIdOrFail).not.toHaveBeenCalled()
     expect(result).toEqual({ id: "1" })
   })
 })

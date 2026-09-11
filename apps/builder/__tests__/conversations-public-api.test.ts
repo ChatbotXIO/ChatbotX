@@ -62,10 +62,10 @@ vi.mock(
   }),
 )
 
-const assignConversation = vi.fn()
+const assignSingleConversation = vi.fn()
 vi.mock(
   "../src/features/conversations/actions/assign-conversation.action",
-  () => ({ assignConversation }),
+  () => ({ assignSingleConversation }),
 )
 
 const archiveConversations = vi.fn()
@@ -157,7 +157,7 @@ describe("GET /v1/conversations/{id}", () => {
 describe("POST /v1/conversations/{id}/assign", () => {
   const procedure = findProcedure("POST", "/v1/conversations/{id}/assign")
 
-  test("resolves the conversation's contactId and delegates to assignConversation without an actor", async () => {
+  test("resolves the conversation and delegates to assignSingleConversation without an actor", async () => {
     conversationService.findByOrFail.mockResolvedValueOnce({
       id: "1",
       contactId: "contact-1",
@@ -171,9 +171,9 @@ describe("POST /v1/conversations/{id}/assign", () => {
     expect(conversationService.findByOrFail).toHaveBeenCalledWith({
       where: { id: "1", workspaceId: "ws-1" },
     })
-    expect(assignConversation).toHaveBeenCalledWith({
+    expect(assignSingleConversation).toHaveBeenCalledWith({
       workspaceId: "ws-1",
-      contactIds: ["contact-1"],
+      conversation: { id: "1", contactId: "contact-1" },
       assignedId: "u_user-1",
     })
     expect(result).toEqual({ success: true })

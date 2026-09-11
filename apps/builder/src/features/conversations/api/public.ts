@@ -8,7 +8,7 @@ import z from "zod"
 import { successResponse } from "@/features/common/schema"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter"
 import { archiveConversations } from "@/features/conversations/actions/archive-conversation.action"
-import { assignConversation } from "@/features/conversations/actions/assign-conversation.action"
+import { assignSingleConversation } from "@/features/conversations/actions/assign-conversation.action"
 import { disableBotForConversations } from "@/features/conversations/actions/disable-bot.action"
 import { enableBotForConversations } from "@/features/conversations/actions/enable-bot.action"
 import { followConversation } from "@/features/conversations/actions/follow-conversation.action"
@@ -21,7 +21,6 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { cursorPaginationRequest } from "@/lib/pagination"
-import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 import {
@@ -135,15 +134,14 @@ export const conversationsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      await assertWorkspaceNotBlocked(context.workspace.ownerId)
 
       const conversation = await conversationService.findByOrFail({
         where: { id: input.id, workspaceId },
       })
 
-      await assignConversation({
+      await assignSingleConversation({
         workspaceId,
-        contactIds: [conversation.contactId],
+        conversation,
         assignedId: input.assignedId,
       })
       return { success: true as const }
@@ -160,9 +158,12 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+      const workspaceId = context.workspace.id
+      await conversationService.findByOrFail({
+        where: { id: input.id, workspaceId },
+      })
       await archiveConversations({
-        workspaceId: context.workspace.id,
+        workspaceId,
         ids: [input.id],
       })
       return { success: true as const }
@@ -179,9 +180,12 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+      const workspaceId = context.workspace.id
+      await conversationService.findByOrFail({
+        where: { id: input.id, workspaceId },
+      })
       await unarchiveConversations({
-        workspaceId: context.workspace.id,
+        workspaceId,
         ids: [input.id],
       })
       return { success: true as const }
@@ -198,15 +202,23 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+      const workspaceId = context.workspace.id
+      await conversationService.findByOrFail({
+        where: { id: input.id, workspaceId },
+      })
       await conversationService.updateReadStatus({
-        workspaceId: context.workspace.id,
+        workspaceId,
         id: input.id,
         agentLastReadAt: new Date(),
       })
       return { success: true as const }
     }),
 
+  // `unread`/`follow`/`unfollow` don't call `findByOrFail` at the handler
+  // layer like their siblings above and below — they don't need to, since
+  // `unreadConversation`/`followConversation`/`unfollowConversation` each
+  // already call `findByOrFail` (or `findOrFail`) internally and 404 on an
+  // unknown id. Keep it that way rather than adding a redundant check here.
   unread: workspaceTokenAuthAPI
     .route({
       method: "POST",
@@ -218,7 +230,6 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      await assertWorkspaceNotBlocked(context.workspace.ownerId)
       await unreadConversation({
         workspaceId: context.workspace.id,
         id: input.id,
@@ -237,7 +248,6 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      await assertWorkspaceNotBlocked(context.workspace.ownerId)
       await followConversation({
         workspaceId: context.workspace.id,
         id: input.id,
@@ -256,7 +266,6 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      await assertWorkspaceNotBlocked(context.workspace.ownerId)
       await unfollowConversation({
         workspaceId: context.workspace.id,
         id: input.id,
@@ -275,9 +284,12 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+      const workspaceId = context.workspace.id
+      await conversationService.findByOrFail({
+        where: { id: input.id, workspaceId },
+      })
       await enableBotForConversations({
-        workspaceId: context.workspace.id,
+        workspaceId,
         ids: [input.id],
       })
       return { success: true as const }
@@ -294,9 +306,12 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+      const workspaceId = context.workspace.id
+      await conversationService.findByOrFail({
+        where: { id: input.id, workspaceId },
+      })
       await disableBotForConversations({
-        workspaceId: context.workspace.id,
+        workspaceId,
         ids: [input.id],
       })
       return { success: true as const }

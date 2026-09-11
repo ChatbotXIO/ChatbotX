@@ -29,7 +29,7 @@ export const changeMessageAttributes = async (props: {
     createdAt,
     workspaceId,
   })
-  if (!message) {
+  if (!message || message.conversationId !== conversationId) {
     throw new ChatbotXException("Message not found")
   }
 

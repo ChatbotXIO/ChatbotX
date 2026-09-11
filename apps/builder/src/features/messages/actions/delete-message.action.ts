@@ -32,7 +32,7 @@ export const deleteMessage = async (props: {
     createdAt: new Date(createdAt),
     workspaceId,
   })
-  if (!message) {
+  if (!message || message.conversationId !== conversationId) {
     throw new ChatbotXException("Comment not found")
   }
 

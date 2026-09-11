@@ -162,7 +162,10 @@ describe("GET /v1/conversations/{conversationId}/messages/{messageId}", () => {
 
   test("delegates to messageService.findByIdWithUrls", async () => {
     const createdAt = new Date("2026-01-01T00:00:00Z")
-    messageService.findByIdWithUrls.mockResolvedValueOnce({ id: "msg-1" })
+    messageService.findByIdWithUrls.mockResolvedValueOnce({
+      id: "msg-1",
+      conversationId: "conv-1",
+    })
 
     const result = await procedure.handler?.({
       context,
@@ -174,7 +177,22 @@ describe("GET /v1/conversations/{conversationId}/messages/{messageId}", () => {
       id: "msg-1",
       createdAt,
     })
-    expect(result).toEqual({ id: "msg-1" })
+    expect(result).toEqual({ id: "msg-1", conversationId: "conv-1" })
+  })
+
+  test("404s when the message belongs to a different conversation", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    messageService.findByIdWithUrls.mockResolvedValueOnce({
+      id: "msg-1",
+      conversationId: "conv-other",
+    })
+
+    await expect(
+      procedure.handler?.({
+        context,
+        input: { conversationId: "conv-1", messageId: "msg-1", createdAt },
+      }),
+    ).rejects.toThrow("Message not found")
   })
 })
 
@@ -257,21 +275,19 @@ describe("DELETE /v1/conversations/{conversationId}/messages/{messageId}", () =>
   )
 
   test("delegates to deleteMessage with the id field it expects", async () => {
-    // The route's real `.input()` chain transforms the `{messageId}` path
-    // param onto `id` before the handler runs (see the router source) — this
-    // capture-spy harness stubs `.input()` as a no-op, so the fixture below
-    // is the already-transformed shape the handler actually receives.
+    // The route's input is `messageIdWithCreatedAtParam` — the handler maps
+    // its `messageId` field onto the `id` field `deleteMessage` expects.
     const createdAt = new Date("2026-01-01T00:00:00Z")
 
     await procedure.handler?.({
       context,
-      input: { conversationId: "conv-1", createdAt, id: "msg-1" },
+      input: { conversationId: "conv-1", messageId: "msg-1", createdAt },
     })
 
     expect(deleteMessage).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       conversationId: "conv-1",
-      parsedInput: { conversationId: "conv-1", createdAt, id: "msg-1" },
+      parsedInput: { id: "msg-1", createdAt },
     })
   })
 })

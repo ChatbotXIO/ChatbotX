@@ -40,7 +40,7 @@ export const editMessage = async (props: {
     workspaceId,
   })
 
-  if (!message) {
+  if (!message || message.conversationId !== conversationId) {
     throw new ChatbotXException("Comment not found")
   }
 

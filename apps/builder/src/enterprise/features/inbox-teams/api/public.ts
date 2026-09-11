@@ -91,11 +91,10 @@ export const inboxTeamsPublicRouter = {
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const { id, ...data } = input
-      await inboxTeamService.update({ workspaceId, inboxTeamId: id }, data)
-      return await inboxTeamService.findByIdOrFail({
-        workspaceId,
-        inboxTeamId: id,
-      })
+      return await inboxTeamService.update(
+        { workspaceId, inboxTeamId: id },
+        data,
+      )
     }),
 
   delete: workspaceTokenAuthAPI
@@ -125,17 +124,12 @@ export const inboxTeamsPublicRouter = {
     .input(addInboxTeamMemberRequest.and(inboxTeamIdPathParam))
     .output(inboxTeamResource)
     .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) => {
-      const workspaceId = context.workspace.id
-      await inboxTeamService.addMembers(
-        { workspaceId, inboxTeamId: input.id },
+    .handler(async ({ context, input }) =>
+      inboxTeamService.addMembers(
+        { workspaceId: context.workspace.id, inboxTeamId: input.id },
         input.userIds,
-      )
-      return await inboxTeamService.findByIdOrFail({
-        workspaceId,
-        inboxTeamId: input.id,
-      })
-    }),
+      ),
+    ),
 
   removeMembers: workspaceTokenAuthAPI
     .route({
@@ -144,22 +138,13 @@ export const inboxTeamsPublicRouter = {
       summary: "Remove members from a team",
       tags: ["Teams"],
     })
-    .input(
-      z
-        .object({ memberIds: z.array(zodBigintAsString()) })
-        .and(inboxTeamIdPathParam),
-    )
+    .input(addInboxTeamMemberRequest.and(inboxTeamIdPathParam))
     .output(inboxTeamResource)
     .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) => {
-      const workspaceId = context.workspace.id
-      await inboxTeamService.removeMembers(
-        { workspaceId, inboxTeamId: input.id },
-        input.memberIds,
-      )
-      return await inboxTeamService.findByIdOrFail({
-        workspaceId,
-        inboxTeamId: input.id,
-      })
-    }),
+    .handler(async ({ context, input }) =>
+      inboxTeamService.removeMembersByUserIds(
+        { workspaceId: context.workspace.id, inboxTeamId: input.id },
+        input.userIds,
+      ),
+    ),
 }
