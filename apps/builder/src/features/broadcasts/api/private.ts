@@ -8,9 +8,9 @@ import { broadcastService, contactInboxService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
+import { mapStatsContactRow } from "@/features/common/lib/map-stats-contact-row"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { mapBroadcastContactRow } from "../lib/map-broadcast-contact-row"
 
 const selectOptionResource = z.object({
   id: z.string(),
@@ -172,7 +172,7 @@ export const broadcastPrivateAPIs = {
 
       const data = contactInboxIds
         .map((contactInboxId) => {
-          const row = mapBroadcastContactRow(
+          const row = mapStatsContactRow(
             contactInboxId,
             contactEventMap.get(contactInboxId),
             contactMap.get(contactInboxId),

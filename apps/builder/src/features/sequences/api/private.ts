@@ -6,7 +6,7 @@ import {
   listSequenceStepContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
 import { contactInboxService } from "@chatbotx.io/business"
-import type { ChannelType } from "@chatbotx.io/database/partials"
+import { mapStatsContactRow } from "@/features/common/lib/map-stats-contact-row"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 
@@ -79,37 +79,28 @@ export const sequencesPrivateAPI = {
       const contactMap = new Map(contactInboxes.map((c) => [c.id, c]))
       const pageCount = Math.ceil(totalValue / perPage)
 
+      // Shared with the broadcasts private/public "stats contacts" routes —
+      // `contactId` must be the real Contact id (`eventData.contactId`), not
+      // the ContactInbox id, because both feed the same `StatsContactsDialog`
+      // → `addContactTagAction`/`bulkTagStatsContactsAction` path, which tags
+      // by Contact id.
       const data = contactInboxIds.flatMap((contactInboxId) => {
-        const eventData = contactEventMap.get(contactInboxId)
-        if (!eventData) {
-          return []
-        }
-
-        const contact = contactMap.get(contactInboxId)
-        if (!contact) {
-          return []
-        }
-
-        const conversationId = contact.conversation?.id
+        const contactInbox = contactMap.get(contactInboxId)
+        const conversationId = contactInbox?.conversation?.id
         if (!conversationId) {
           return []
         }
 
-        return [
-          {
-            contactId: contact.id,
-            contactInboxId,
-            firstName: contact.contact?.firstName ?? null,
-            lastName: contact.contact?.lastName ?? null,
-            fullName: contact.contact?.fullName ?? null,
-            sourceId: contact.sourceId as string | null,
-            avatar: contact.contact?.avatar ?? null,
-            channel: contact.channel as ChannelType,
-            conversationId,
-            errorContent: eventData.errorContent ?? null,
-            occurredAt: eventData.occurredAt,
-          },
-        ]
+        const row = mapStatsContactRow(
+          contactInboxId,
+          contactEventMap.get(contactInboxId),
+          contactInbox,
+        )
+        if (!row) {
+          return []
+        }
+
+        return [{ ...row, conversationId }]
       })
 
       return { data, total: totalValue, page, pageCount }

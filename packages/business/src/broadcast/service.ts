@@ -25,6 +25,7 @@ import {
   broadcastSendsTemplate,
   broadcastStatuses,
   type ChannelType,
+  contactFilterFields,
   dmConversationUsesSourceId,
   findBroadcastChannelCapability,
   hasDuplicateBroadcastTarget,
@@ -354,13 +355,25 @@ export const resolveBroadcastTargetsToPersist = (
  * declares, not merely for presence: `applyContactFilter` branches only on
  * `=== "or"`, so any other stored value would silently degrade to `AND` and
  * resend to a *different* audience than the one the filter describes.
- * Rejecting here reproduces the pre-refactor behaviour, where a failed
- * `contactFilterCriteriaSchema.safeParse` dropped the whole filter and the
- * resend fell back to the full eligible audience.
  *
- * `conditions` entries stay unvalidated (`unknown[]` by design; each is
- * checked downstream in the SQL builder) — the full per-condition schema
- * lives in `apps/builder`, which this package cannot import.
+ * Every condition's `field` is checked against `contactFilterFields`
+ * (`@chatbotx.io/database/partials`) — the same enum the SQL builder's
+ * `buildConditionWhere` switch is written against. This is NOT optional:
+ * `buildConditionWhere`'s `default` case returns `{}` for an unrecognised
+ * field, `applyContactFilter` then filters out every empty where, and an
+ * all-conditions-unknown filter collapses to `{}` — i.e. *no* filtering at
+ * all, silently sending to the full workspace audience instead of the
+ * narrower one the stored filter describes. Rejecting the whole filter here
+ * reproduces the pre-refactor behaviour, where a failed
+ * `contactFilterCriteriaSchema.safeParse` dropped the whole filter and the
+ * resend fell back to the full eligible audience — the same fallback, just
+ * reached deliberately instead of by accident.
+ *
+ * Per-field `value`/`timezone` shape (e.g. `timezone` string length) is
+ * still unvalidated here — the full per-condition schema lives in
+ * `apps/builder`, which this package cannot import — but an unknown/renamed
+ * `field` is exactly the case that previously produced a silently-widened
+ * audience, so it is the one this function must not let through.
  */
 const isContactFilterShape = (
   value: unknown,
@@ -372,7 +385,18 @@ const isContactFilterShape = (
     operator?: unknown
     conditions?: unknown
   }
-  return (operator === "and" || operator === "or") && Array.isArray(conditions)
+  if (
+    !((operator === "and" || operator === "or") && Array.isArray(conditions))
+  ) {
+    return false
+  }
+  return conditions.every((condition) => {
+    if (typeof condition !== "object" || condition === null) {
+      return false
+    }
+    const { field } = condition as { field?: unknown }
+    return contactFilterFields.safeParse(field).success
+  })
 }
 
 class BroadcastService extends BaseService {
@@ -677,7 +701,7 @@ class BroadcastService extends BaseService {
     schedulesType: BroadcastScheduleType
     schedulesAt: Date
   }): Promise<{ id: string }> {
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const [row] = await tx
         .update(broadcastModel)
         .set({
@@ -702,18 +726,23 @@ class BroadcastService extends BaseService {
       // the worker never enrols, then fails, its recipients.
       await this.dropUndeliverableTargets(tx, row)
 
-      // Mirrors `createBroadcastAction`: only an immediate send is audited as a
-      // launch. A future-scheduled broadcast is NOT audited here, and the
-      // worker send path (`prepare-broadcast`/`enqueue-broadcast`/
-      // `process-broadcast-contacts`) emits no audit record either — so a
-      // future schedule currently produces no "launch" entry at any point.
-      // Reconstructing launch history from the audit log will miss those.
-      if (input.schedulesType === "now") {
-        await this.audit("launch", `launched a broadcast (#${row.id})`)
-      }
-
       return { id: row.id }
     })
+
+    // Mirrors `createBroadcastAction`: only an immediate send is audited as a
+    // launch. A future-scheduled broadcast is NOT audited here, and the
+    // worker send path (`prepare-broadcast`/`enqueue-broadcast`/
+    // `process-broadcast-contacts`) emits no audit record either — so a
+    // future schedule currently produces no "launch" entry at any point.
+    // Reconstructing launch history from the audit log will miss those.
+    // Run post-commit (mirrors `update`/`updateDraft`/`resendWithPruning`) so
+    // the audit enqueue's Redis round-trip never holds the Postgres
+    // transaction — and its row locks — open.
+    if (input.schedulesType === "now") {
+      await this.audit("launch", `launched a broadcast (#${result.id})`)
+    }
+
+    return result
   }
 
   /**

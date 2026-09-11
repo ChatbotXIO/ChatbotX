@@ -51,6 +51,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
 vi.mock("@chatbotx.io/database/partials", () => ({
   broadcastStatuses: { enum: { draft: "draft", scheduled: "scheduled" } },
   findBroadcastChannelCapability: vi.fn(),
+  // Mirrors the real `contactFilterFields` zod enum closely enough for
+  // `isContactFilterShape`'s `.safeParse(field).success` check: a known
+  // field name succeeds, anything else (including a renamed/removed field)
+  // fails, matching `z.enum([...]).safeParse` semantics.
+  contactFilterFields: {
+    safeParse: (value: unknown) => ({
+      success: value === "email" || value === "fullName",
+    }),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -227,6 +236,73 @@ describe("broadcastService.resendWithPruning", () => {
     // other value would silently degrade to AND and resend to a different
     // audience than the filter describes. Dropping it reproduces the
     // pre-refactor `safeParse` failure path: full eligible audience.
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter: undefined }),
+    )
+  })
+
+  test("passes the persisted contactFilter through when every condition has a known field", async () => {
+    const contactFilter = {
+      operator: "and",
+      conditions: [{ field: "email", operator: "eq", value: "a@b.com" }],
+    }
+    mockFindOrFail.mockResolvedValue({ ...sourceBroadcast, contactFilter })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ contactFilter }),
+    )
+  })
+
+  test.each([
+    [
+      "one condition has an unrecognised field",
+      {
+        operator: "and",
+        conditions: [
+          { field: "email", operator: "eq", value: "a@b.com" },
+          { field: "aFieldThatWasRenamedOrRemoved", operator: "eq", value: 1 },
+        ],
+      },
+    ],
+    [
+      "every condition has an unrecognised field",
+      {
+        operator: "and",
+        conditions: [
+          { field: "aFieldThatWasRenamedOrRemoved", operator: "eq", value: 1 },
+        ],
+      },
+    ],
+    [
+      "a condition is missing its field",
+      { operator: "and", conditions: [{ operator: "eq", value: 1 }] },
+    ],
+    [
+      "a condition is not an object",
+      { operator: "and", conditions: ["not-an-object"] },
+    ],
+  ])(// A malformed *condition* must drop the whole filter, not just the bad
+  // condition: `buildConditionWhere`'s `default` case returns `{}` for an
+  // unrecognised field, `applyContactFilter` filters out every empty
+  // where, and if every condition is dropped it returns `{}` — i.e. NO
+  // filtering, silently widening the resend to the full workspace
+  // audience instead of throwing or narrowing. This is the regression
+  // `isContactFilterShape` must prevent.
+  "drops the persisted contactFilter when %s", async (_label, contactFilter) => {
+    mockFindOrFail.mockResolvedValue({ ...sourceBroadcast, contactFilter })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
     expect(mockTxInsertValues).toHaveBeenCalledWith(
       expect.objectContaining({ contactFilter: undefined }),
     )

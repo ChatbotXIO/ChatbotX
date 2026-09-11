@@ -125,271 +125,139 @@ permissions and calls the same `contactService.list` method — see
 contacts or contact-derived data, make the intended scope explicit in the
 API contract and tests.
 
-### Contacts scope — endpoint-to-scope table
+## Scope notes
 
-Contacts' public surface is split by concern across submodules — some in
-`features/contacts/api/public/` (`crud.ts`, `tags.ts`, `custom-fields.ts`,
-`bulk.ts`, `export.ts`, `refresh-profile.ts`, `messages.ts`), some in their
-own owning feature's `api/public.ts` (`contact-notes`, `contact-sequences`,
-`contact-inboxes`, `contact-filter`) that `features/contacts/api/public.ts`
-composes in alongside its own submodules — and every one of them other than
-`messages.ts` calls `workspaceTokenAuthAPIForScope("contacts")` exactly once
-at import. `messages.ts` is the one exception: sending/reading messages,
-auto-replies, and flows for a contact are conversation/automation operations
-even though they hang off `/v1/contacts/{identifier}/...`, so it uses `inbox`
-(`sendMessage`, `listMessages`, `getMessage`) and `automation`
-(`triggerAutoReply`, `sendFlow`) instead. `apps/builder/__tests__/contacts-public-scope.test.ts`
-enforces this split — it fails compile/test if a new submodule (wherever it
-lives) forgets to declare a scope, or if `messages.ts`'s procedures drift
-onto `contacts`.
+The full endpoint-to-scope mapping is generated, not hand-maintained here —
+see `/api/spec.json` (built from `apps/builder/src/routers/public.ts`) for
+the authoritative, current list, and
+`apps/builder/__tests__/*-public-scope.test.ts` for the tests that enforce
+each feature's scope assignment at compile/test time (e.g.
+`contacts-public-scope.test.ts`, `broadcasts-public-scope.test.ts`,
+`appointments-public-scope.test.ts`, `sequences-public-scope.test.ts`,
+`integrations-public-scope.test.ts`, `analytics-public-scope.test.ts`,
+`conversations-public-scope.test.ts`, `products-public-scope.test.ts`,
+`product-categories-public-scope.test.ts`, `coupons-public-scope.test.ts`).
 
-### Automation scope — endpoint-to-scope table
+What follows are the scope-assignment decisions and gotchas that aren't
+derivable from the code or those tests — read before adding or reassigning
+an endpoint's scope.
 
-The `automation` scope covers flows, triggers, keywords (automated
-responses), AI agents, ref links, and AI triggers — a full CRUD surface so an
-agent can build, publish, and inspect automations without human help via the
-builder UI. Every handler below calls the same `packages/business` service
-method the corresponding UI action calls (`.agents/rules/data-access.md`).
+- **Contacts** — Contacts' public surface is split by concern across
+  submodules — some in `features/contacts/api/public/` (`crud.ts`,
+  `tags.ts`, `custom-fields.ts`, `bulk.ts`, `export.ts`,
+  `refresh-profile.ts`, `messages.ts`), some in their own owning feature's
+  `api/public.ts` (`contact-notes`, `contact-sequences`, `contact-inboxes`,
+  `contact-filter`) that `features/contacts/api/public.ts` composes in
+  alongside its own submodules — and every one of them other than
+  `messages.ts` calls `workspaceTokenAuthAPIForScope("contacts")` exactly
+  once at import. `messages.ts` is the one exception: sending/reading
+  messages, auto-replies, and flows for a contact are conversation/automation
+  operations even though they hang off `/v1/contacts/{identifier}/...`, so it
+  uses `inbox` (`sendMessage`, `listMessages`, `getMessage`) and `automation`
+  (`triggerAutoReply`, `sendFlow`) instead.
+  `apps/builder/__tests__/contacts-public-scope.test.ts` enforces this split
+  — it fails compile/test if a new submodule (wherever it lives) forgets to
+  declare a scope, or if `messages.ts`'s procedures drift onto `contacts`.
 
-| Resource | Endpoint | Service method |
-| --- | --- | --- |
-| Flows | `GET /v1/flows` | `flowService.list` |
-| Flows | `GET /v1/flows/{id}` | `flowService.findById` |
-| Flows | `POST /v1/flows` | `flowService.createDraft` |
-| Flows | `PATCH /v1/flows/{id}` | `flowService.update` |
-| Flows | `DELETE /v1/flows/{id}` | `flowService.deleteMany` |
-| Flows | `POST /v1/flows/{id}/duplicate` | `flowService.duplicate` |
-| Flows | `POST /v1/flows/{id}/publish` | `flowVersionService.publish` |
-| Flows | `PUT /v1/flows/{id}/draft` | `flowVersionService.updateDraftByFlowId` |
-| Flows | `GET /v1/flows/{id}/versions` | `flowVersionService.list` |
-| Flows | `POST /v1/flows/import` | `importService.startFlowImport` |
-| Triggers | `GET /v1/triggers` | `triggerRepository.listPaginatedWithConditions` |
-| Triggers | `GET /v1/triggers/{id}` | `triggerRepository.findWithConditions` |
-| Triggers | `POST /v1/triggers` | `triggerService.create` |
-| Triggers | `PUT /v1/triggers/{id}` | `triggerService.updateWithConditions` |
-| Triggers | `PATCH /v1/triggers/{id}/settings` | `triggerService.updateSettings` |
-| Triggers | `DELETE /v1/triggers/{id}` | `triggerService.deleteMany` |
-| Keywords | `GET /v1/keywords` | `automatedResponseService.list` |
-| Keywords | `GET /v1/keywords/{id}` | `automatedResponseService.findOrFail` |
-| Keywords | `POST /v1/keywords` | `automatedResponseService.create` |
-| Keywords | `PUT /v1/keywords/{id}` | `automatedResponseService.update` |
-| Keywords | `PATCH /v1/keywords/{id}/status` | `automatedResponseService.setStatus` |
-| Keywords | `DELETE /v1/keywords/{id}` | `automatedResponseService.deleteMany` |
-| AI agents | `GET /v1/ai-agents` | `aiAgentService.listAIAgents` |
-| AI agents | `GET /v1/ai-agents/{id}` | `aiAgentService.findBy` |
-| AI agents | `POST /v1/ai-agents` | `aiAgentService.create` |
-| AI agents | `PUT /v1/ai-agents/{id}` | `aiAgentService.updateAIAgent` |
-| AI agents | `DELETE /v1/ai-agents/{id}` | `aiAgentService.delete` |
-| Ref links | `GET /v1/ref-links` | `reflinkService.list` |
-| Ref links | `GET /v1/ref-links/{id}` | `reflinkService.findOrFail` |
-| Ref links | `POST /v1/ref-links` | `reflinkService.create` |
-| Ref links | `PUT /v1/ref-links/{id}` | `reflinkService.update` |
-| Ref links | `DELETE /v1/ref-links/{id}` | `reflinkService.deleteMany` |
-| AI triggers | `GET /v1/ai-triggers` | `aiTriggerService.list` |
-| AI triggers | `GET /v1/ai-triggers/{id}` | `aiTriggerService.findOrFail` |
-| AI triggers | `POST /v1/ai-triggers` | `aiTriggerService.create` |
-| AI triggers | `PUT /v1/ai-triggers/{id}` | `aiTriggerService.update` |
-| AI triggers | `POST /v1/ai-triggers/{id}/duplicate` | `aiTriggerService.duplicate` |
-| AI triggers | `DELETE /v1/ai-triggers/{id}` | `aiTriggerService.deleteMany` |
+- **Automation** — covers flows, triggers, keywords (automated responses),
+  AI agents, ref links, and AI triggers — a full CRUD surface so an agent can
+  build, publish, and inspect automations without human help via the builder
+  UI. Two invariants:
+  - *Keywords `type` filter* — `AutomatedResponse` serves two `FolderType`s
+    off one table (`automatedResponse` for inbound/Contact,
+    `outboundAutomatedResponse` for outbound/Page), disambiguated by the
+    `type` column (invariant #17 in the root `AGENTS.md`). `type` must stay
+    in the where-clause on every keywords path — never let it become fully
+    optional in a way that drops the filter.
+  - *`GET /v1/triggers` and `GET /v1/triggers/{id}` return real conditions
+    and actions*, not the empty arrays the routes returned before this scope
+    was widened. Any future trigger route must keep populating both via
+    `triggerRepository.findWithConditions` rather than reintroducing a
+    hardcoded `[]`.
 
-Two invariants to preserve when touching this surface:
+- **Appointments** — covers appointment calendars, appointments, reminder
+  dispatch audit reads, and external (Google/Outlook) calendar connections.
+  Three invariants:
+  - *`appUrl` must be resolved with `resolveTenantSettings`, never a
+    `.query.ts` adapter.* `appointmentService.list` signs a per-row schedule
+    token using `appUrl`, and the private `list-appointments.query.ts`
+    adapter gets it via `assertCurrentUserCanAccessChatbot`, which resolves a
+    better-auth session — a Bearer-token request has none. The public `list`
+    handler in `features/appointments/api/public.ts` calls
+    `resolveTenantSettings({ workspaceId })` directly instead, exactly like
+    the invariant `public-list-queries-no-session.test.ts` pins for every
+    other resource.
+  - *External calendars must use `listWithConnectedCount`, never `list`.*
+    `appointmentExternalCalendarService.list` returns raw `Integration` rows
+    via a relational query; the sibling `IntegrationGoogleCalendar` table
+    holds the OAuth token blob in its `auth` jsonb column.
+    `listWithConnectedCount` selects explicit columns and never touches
+    `auth` — it is the only safe shape to publish on this scope.
+  - *Reminder dispatch listing must always pass `workspaceId` explicitly.*
+    `AppointmentReminderDispatchListInput.workspaceId` is optional at the
+    repository layer (it also backs the internal due-reminder scan across
+    every workspace), so the public handler in
+    `features/appointment-management/api/public.ts` must never omit it —
+    omitting it would return dispatch rows across every workspace, not just
+    the caller's.
 
-- **Keywords `type` filter** — `AutomatedResponse` serves two `FolderType`s
-  off one table (`automatedResponse` for inbound/Contact,
-  `outboundAutomatedResponse` for outbound/Page), disambiguated by the `type`
-  column (invariant #17 in the root `AGENTS.md`). `type` must stay in the
-  where-clause on every keywords path — never let it become fully optional
-  in a way that drops the filter.
-- **`GET /v1/triggers` and `GET /v1/triggers/{id}` return real conditions and
-  actions**, not the empty arrays the routes returned before this scope was
-  widened. Any future trigger route must keep populating both via
-  `triggerRepository.findWithConditions` rather than reintroducing a
-  hardcoded `[]`.
+- **Inbox** — covers conversations, conversation-scoped messages, inboxes
+  (channels), saved replies (canned responses), workspace members (agents),
+  and — enterprise only — teams, so an integration can build a full helpdesk
+  client without a human session. Conversation and message mutations take a
+  single resource id (`/v1/conversations/{id}/...`), not the private API's
+  bulk-by-ids shape — and every one omits an actor (`assignedBy`/`userId`):
+  a workspace token authenticates the workspace, not a user, and the
+  underlying service methods already treat that field as optional. Also on
+  this scope: `POST /v1/contacts/{identifier}/messages`, `GET .../messages`,
+  and `GET .../messages/{messageId}` in `contacts/api/public/messages.ts` —
+  see the Contacts note above for why those live under `inbox` despite their
+  path. Three invariants:
+  - *`conversationService.updateAssignment` scopes its `WHERE` by
+    `workspaceId`, not just conversation id* — it was missing that clause
+    until this scope's public routes were added, which would have made a
+    bulk-by-ids assignment endpoint a cross-tenant write. Any future write on
+    this service must scope by `workspaceId` the same way
+    `updateArchived`/`updateBotEnabled` already do; don't reintroduce an
+    `inArray(id, ids)`-only `WHERE`.
+  - *`findConversation`/`findMessage` never resolve a better-auth session* —
+    they used to call `assertCurrentUserCanAccessChatbot`, which throws for a
+    Bearer-token request (no session exists).
+    `apps/builder/__tests__/public-list-queries-no-session.test.ts` pins this
+    for every public query function; add a new one there whenever a query
+    function gains a public caller.
+  - *Public message `create` sends without a `user`* — `messageService
+    .createOutgoing`'s `user` param is optional specifically so a workspace
+    token (which has no user) can send; don't reintroduce a
+    `userService.findByIdOrFail(context.user.id)` call on this path the way
+    the private API needs one for `tenantId`.
 
-### Appointments scope — endpoint-to-scope table
-
-The `appointments` scope covers appointment calendars, appointments, reminder
-dispatch audit reads, and external (Google/Outlook) calendar connections.
-Every value below existed in `workspaceApiTokenScopes` and
-`workspaceApiTokenScopeRegistry` well before any endpoint used it — it was a
-reserved placeholder; this table documents the endpoints that finally consume
-it. Every handler calls the same `packages/business` service method the
-corresponding UI action or query calls.
-
-| Resource | Endpoint | Service method |
-| --- | --- | --- |
-| Appointment calendars | `GET /v1/appointment-calendars` | `appointmentCalendarService.list` |
-| Appointment calendars | `GET /v1/appointment-calendars/{id}` | `appointmentCalendarService.getForEdit` |
-| Appointment calendars | `POST /v1/appointment-calendars` | `appointmentCalendarService.create` |
-| Appointment calendars | `PUT /v1/appointment-calendars/{id}` | `appointmentCalendarService.update` |
-| Appointment calendars | `PATCH /v1/appointment-calendars/{id}/active` | `appointmentCalendarService.setActive` |
-| Appointment calendars | `POST /v1/appointment-calendars/{id}/duplicate` | `appointmentCalendarService.duplicate` |
-| Appointment calendars | `DELETE /v1/appointment-calendars/{id}` | `appointmentCalendarService.deleteMany` |
-| Appointment calendars | `GET /v1/appointment-calendars/{id}/availability` | `appointmentService.checkAvailability` |
-| Appointments | `GET /v1/appointments` | `appointmentService.list` |
-| Appointments | `GET /v1/appointments/{id}` | `appointmentService.findByOrFail` |
-| Appointments | `POST /v1/appointments` | `appointmentService.bookAppointment` |
-| Appointments | `POST /v1/appointments/{id}/cancel` | `appointmentService.cancelAppointmentById` |
-| Appointments | `DELETE /v1/appointments/{id}` | `appointmentService.deleteAppointmentById` |
-| Appointment reminders | `GET /v1/appointment-reminders` | `appointmentReminderService.listDispatches` |
-| Appointment external calendars | `GET /v1/appointment-external-calendars` | `appointmentExternalCalendarService.listWithConnectedCount` |
-| Appointment external calendars | `DELETE /v1/appointment-external-calendars/{integrationId}` | `appointmentExternalCalendarService.disconnect` |
-
-Three invariants to preserve when touching this surface:
-
-- **`appUrl` must be resolved with `resolveTenantSettings`, never a
-  `.query.ts` adapter.** `appointmentService.list` signs a per-row schedule
-  token using `appUrl`, and the private `list-appointments.query.ts` adapter
-  gets it via `assertCurrentUserCanAccessChatbot`, which resolves a
-  better-auth session — a Bearer-token request has none. The public `list`
-  handler in `features/appointments/api/public.ts` calls
-  `resolveTenantSettings({ workspaceId })` directly instead, exactly like the
-  invariant `public-list-queries-no-session.test.ts` pins for every other
-  resource.
-- **External calendars must use `listWithConnectedCount`, never `list`.**
-  `appointmentExternalCalendarService.list` returns raw `Integration` rows via
-  a relational query; the sibling `IntegrationGoogleCalendar` table holds the
-  OAuth token blob in its `auth` jsonb column.
-  `listWithConnectedCount` selects explicit columns and never touches `auth`
-  — it is the only safe shape to publish on this scope.
-- **Reminder dispatch listing must always pass `workspaceId` explicitly.**
-  `AppointmentReminderDispatchListInput.workspaceId` is optional at the
-  repository layer (it also backs the internal due-reminder scan across every
-  workspace), so the public handler in
-  `features/appointment-management/api/public.ts` must never omit it —
-  omitting it would return dispatch rows across every workspace, not just the
-  caller's.
-
-### Inbox scope — endpoint-to-scope table
-
-The `inbox` scope covers conversations, conversation-scoped messages,
-inboxes (channels), saved replies (canned responses), workspace members
-(agents), and — enterprise only — teams, so an integration can build a full
-helpdesk client without a human session. Every handler below calls the same
-`packages/business` service method the corresponding UI action calls
-(`.agents/rules/data-access.md`). Conversation and message mutations take a
-single resource id (`/v1/conversations/{id}/...`), not the private API's
-bulk-by-ids shape — and every one omits an actor (`assignedBy`/`userId`):
-a workspace token authenticates the workspace, not a user, and the
-underlying service methods already treat that field as optional.
-
-| Resource | Endpoint | Service method |
-| --- | --- | --- |
-| Conversations | `GET /v1/conversations` | `listConversations` (query) |
-| Conversations | `GET /v1/conversations/{id}` | `findConversation` (query) |
-| Conversations | `POST /v1/conversations/{id}/assign` | `conversationService.updateAssignment` |
-| Conversations | `POST /v1/conversations/{id}/archive` | `conversationService.updateArchived` |
-| Conversations | `POST /v1/conversations/{id}/unarchive` | `conversationService.updateArchived` |
-| Conversations | `POST /v1/conversations/{id}/read` | `conversationService.updateReadStatus` |
-| Conversations | `POST /v1/conversations/{id}/unread` | `conversationService.updateReadStatus` (via `unreadConversation`) |
-| Conversations | `POST /v1/conversations/{id}/follow` | `conversationService.updateFollowed` |
-| Conversations | `POST /v1/conversations/{id}/unfollow` | `conversationService.updateFollowed` |
-| Conversations | `POST /v1/conversations/{id}/enable-bot` | `conversationService.updateBotEnabled` |
-| Conversations | `POST /v1/conversations/{id}/disable-bot` | `conversationService.updateBotEnabled` |
-| Messages | `GET /v1/conversations/{conversationId}/messages` | `listMessages` (query) |
-| Messages | `GET /v1/conversations/{conversationId}/messages/{messageId}` | `messageService.findByIdWithUrls` |
-| Messages | `POST /v1/conversations/{conversationId}/messages` | `messageService.createOutgoing` |
-| Messages | `PATCH /v1/conversations/{conversationId}/messages/{messageId}` | `editMessage` |
-| Messages | `DELETE /v1/conversations/{conversationId}/messages/{messageId}` | `deleteMessage` |
-| Messages | `POST /v1/conversations/{conversationId}/messages/{messageId}/attributes` | `changeMessageAttributes` |
-| Inboxes | `GET /v1/inboxes` | `inboxService.list` (via `listInboxes`) |
-| Inboxes | `GET /v1/channels` (deprecated) | `inboxService.list` (via `listInboxes`) |
-| Saved replies | `GET /v1/saved-replies` | `savedReplyService.listByWorkspaceId` (via `listSavedReplies`) |
-| Saved replies | `GET /v1/saved-replies/{id}` | `savedReplyService.findByIdOrFail` |
-| Saved replies | `POST /v1/saved-replies` | `savedReplyService.create` |
-| Saved replies | `PUT /v1/saved-replies/{id}` | `savedReplyService.update` |
-| Saved replies | `DELETE /v1/saved-replies/{id}` | `savedReplyService.delete` |
-| Workspace members | `GET /v1/members` | `listWorkspaceMembers` (query) |
-| Workspace members | `GET /v1/members/{memberId}` | `getWorkspaceMember` (query) |
-| Teams (enterprise) | `GET /v1/teams` | `inboxTeamService.listByWorkspace` (via `listInboxTeams`) |
-| Teams (enterprise) | `GET /v1/teams/{id}` | `inboxTeamService.findByIdOrFail` |
-| Teams (enterprise) | `POST /v1/teams` | `inboxTeamService.create` |
-| Teams (enterprise) | `PUT /v1/teams/{id}` | `inboxTeamService.update` |
-| Teams (enterprise) | `DELETE /v1/teams/{id}` | `inboxTeamService.delete` |
-| Teams (enterprise) | `POST /v1/teams/{id}/members` | `inboxTeamService.addMembers` |
-| Teams (enterprise) | `DELETE /v1/teams/{id}/members` | `inboxTeamService.removeMembers` |
-
-Also `POST /v1/contacts/{identifier}/messages`, `GET .../messages`, and
-`GET .../messages/{messageId}` in `contacts/api/public/messages.ts` — see the
-contacts scope table above for why those live under `inbox` despite their
-path.
-
-Three invariants to preserve when touching this surface:
-
-- **`conversationService.updateAssignment` scopes its `WHERE` by
-  `workspaceId`, not just conversation id** — it was missing that clause
-  until this scope's public routes were added, which would have made a
-  bulk-by-ids assignment endpoint a cross-tenant write. Any future write on
-  this service must scope by `workspaceId` the same way
-  `updateArchived`/`updateBotEnabled` already do; don't reintroduce an
-  `inArray(id, ids)`-only `WHERE`.
-- **`findConversation`/`findMessage` never resolve a better-auth session** —
-  they used to call `assertCurrentUserCanAccessChatbot`, which throws for a
-  Bearer-token request (no session exists). `apps/builder/__tests__/public-list-queries-no-session.test.ts`
-  pins this for every public query function; add a new one there whenever a
-  query function gains a public caller.
-- **Public message `create` sends without a `user`** — `messageService
-  .createOutgoing`'s `user` param is optional specifically so a workspace
-  token (which has no user) can send; don't reintroduce a
-  `userService.findByIdOrFail(context.user.id)` call on this path the way
-  the private API needs one for `tenantId`.
-
-### Broadcasts scope — endpoint-to-scope table
-
-The `broadcasts` scope covers broadcasts, sequences, **and** WhatsApp message
-templates — three features share it because sequences and message templates
-are broadcast-adjacent operations, not because they were designed together.
-The token picker only shows the bare label "Broadcasts"
-(`fields.tokenScopes.broadcasts`), so a superAdmin minting a `broadcasts`
-token should know it also grants full sequence CRUD (including deleting
-sequences and steps) and WhatsApp template listing — there is no finer-grained
-scope to withhold just one of the three. Every handler below calls the same
-`packages/business`/`@chatbotx.io/analytics` service method the corresponding
-UI action or private route calls (invariant #9).
-
-| Resource | Endpoint | Service method |
-| --- | --- | --- |
-| Broadcasts | `GET /v1/broadcasts` | `listBroadcasts` (query) |
-| Broadcasts | `GET /v1/broadcasts/{idOrName}` | `broadcastService.findByIdOrName` |
-| Broadcasts | `GET /v1/broadcasts/{idOrName}/audience` | `listBroadcastAudience` (query) |
-| Broadcasts | `GET /v1/broadcasts/{id}/contacts` | `broadcastAnalyticsService.getContacts` |
-| Broadcasts | `POST /v1/broadcasts` | `broadcastService.create` |
-| Broadcasts | `PATCH /v1/broadcasts/{id}` | `broadcastService.update` |
-| Broadcasts | `PUT /v1/broadcasts/{id}/draft` | `broadcastService.updateDraft` |
-| Broadcasts | `POST /v1/broadcasts/{id}/schedule` | `broadcastService.scheduleDraft` |
-| Broadcasts | `POST /v1/broadcasts/{id}/move-to-draft` | `broadcastService.moveToDraft` |
-| Broadcasts | `POST /v1/broadcasts/{id}/stop` | `broadcastService.stopSending` |
-| Broadcasts | `POST /v1/broadcasts/{id}/resume` | `broadcastService.resumeSending` |
-| Broadcasts | `POST /v1/broadcasts/{id}/resend` | `broadcastService.resendWithPruning` |
-| Broadcasts | `DELETE /v1/broadcasts/{id}` | `broadcastService.softDeleteBroadcasts` |
-| Sequences | `GET /v1/sequences` | `listSequences` (query) |
-| Sequences | `GET /v1/sequences/{id}` | `sequenceService.findWithSteps` |
-| Sequences | `POST /v1/sequences` | `sequenceService.create` |
-| Sequences | `PATCH /v1/sequences/{id}` | `sequenceService.update` |
-| Sequences | `DELETE /v1/sequences/{id}` | `sequenceService.delete` |
-| Sequences | `PUT /v1/sequences/{id}/steps` | `sequenceService.upsertStep` |
-| Sequences | `DELETE /v1/sequences/{id}/steps/{stepId}` | `sequenceService.deleteStep` |
-| Message templates | `GET /v1/template-messages` | `whatsappMessageTemplateService.list` |
-
-Two things worth knowing when touching this surface:
-
-- **`GET /v1/broadcasts/{idOrName}/audience` returns full contact PII**
-  (email, phone, gender) with no field-level gating, including for a
-  `read_only` token — unlike the write paths (`create`/`updateDraft`/
-  `resendWithPruning`), which prune email/phone *filter conditions* through
-  `pruneEmailPhoneFilterConditions` before persisting. This is deliberate,
-  not an oversight: minting any workspace token already requires workspace
-  superAdmin, who has full contact PII in the UI regardless. A `read_only`
-  `broadcasts` token is still, in effect, a bulk contact-PII export path for
-  every broadcast's audience — call this out to anyone issuing such a token
-  for a narrower purpose.
-- **`upsertStep`'s request body has no `sequenceId` field** — the `{id}` path
-  segment is the sole source of truth for which sequence a step belongs to.
-  `publicUpsertSequenceStepRequest` (`features/sequences/schema/action.ts`)
-  omits `sequenceId` from the shared base shape the private
-  `upsertSequenceStepRequest` also uses. Do not add it back; a client-supplied
-  `sequenceId` that disagreed with the path would have nothing enforcing
-  which one wins.
+- **Broadcasts** — covers broadcasts, sequences, **and** WhatsApp message
+  templates — three features share it because sequences and message
+  templates are broadcast-adjacent operations, not because they were
+  designed together. The token picker only shows the bare label "Broadcasts"
+  (`fields.tokenScopes.broadcasts`), so a superAdmin minting a `broadcasts`
+  token should know it also grants full sequence CRUD (including deleting
+  sequences and steps) and WhatsApp template listing — there is no
+  finer-grained scope to withhold just one of the three. Two things worth
+  knowing:
+  - *`GET /v1/broadcasts/{idOrName}/audience` returns full contact PII*
+    (email, phone, gender) with no field-level gating, including for a
+    `read_only` token — unlike the write paths (`create`/`updateDraft`/
+    `resendWithPruning`), which prune email/phone *filter conditions*
+    through `pruneEmailPhoneFilterConditions` before persisting. This is
+    deliberate, not an oversight: minting any workspace token already
+    requires workspace superAdmin, who has full contact PII in the UI
+    regardless. A `read_only` `broadcasts` token is still, in effect, a bulk
+    contact-PII export path for every broadcast's audience — call this out
+    to anyone issuing such a token for a narrower purpose.
+  - *`upsertStep`'s request body has no `sequenceId` field* — the `{id}`
+    path segment is the sole source of truth for which sequence a step
+    belongs to. `publicUpsertSequenceStepRequest`
+    (`features/sequences/schema/action.ts`) omits `sequenceId` from the
+    shared base shape the private `upsertSequenceStepRequest` also uses. Do
+    not add it back; a client-supplied `sequenceId` that disagreed with the
+    path would have nothing enforcing which one wins.
 
 ## Adding a new scope value
 

@@ -4,6 +4,7 @@ import { notFoundException } from "@chatbotx.io/business/errors"
 import { broadcastStatuses } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
+import { mapStatsContactRow } from "@/features/common/lib/map-stats-contact-row"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -13,7 +14,6 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { mapBroadcastContactRow } from "../lib/map-broadcast-contact-row"
 import { listBroadcastAudience, listBroadcasts } from "../queries"
 import {
   createBroadcastRequest,
@@ -162,7 +162,7 @@ export const broadcastsPublicRouter = {
 
       const data = contactInboxIds
         .map((contactInboxId) =>
-          mapBroadcastContactRow(
+          mapStatsContactRow(
             contactInboxId,
             contactEventMap.get(contactInboxId),
             contactMap.get(contactInboxId),
