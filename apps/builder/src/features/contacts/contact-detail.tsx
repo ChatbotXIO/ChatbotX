@@ -163,6 +163,28 @@ const scopedIdentityRowsByChannel: Partial<
   ],
 }
 
+// Inicia funcion (buildUserCodeField)
+const buildUserCodeField = (
+  contactInbox: ContactInboxResource | undefined,
+  t: (key: string) => string,
+): ContactEditableField[] => {
+  const value = contactInbox?.sourceId
+  if (!value) {
+    return []
+  }
+  return [
+    {
+      key: "sourceId",
+      icon: PhoneIcon,
+      label: t("fields.userCode.label"),
+      value,
+      type: "shortText",
+      readOnly: true,
+    },
+  ]
+}
+// Finaliza funcion (buildUserCodeField)
+
 const buildScopedIdentityFields = (
   contactInbox: ContactInboxResource | undefined,
   t: (key: string) => string,
@@ -174,8 +196,7 @@ const buildScopedIdentityFields = (
   const rows = scopedIdentityRowsByChannel[parsedChannel.data] ?? []
   return rows.flatMap((row): ContactEditableField[] => {
     const value = contactInbox[row.key]
-    // Skip absent values, and a value that IS the Contact ID shown above
-    // (a scoped-id-keyed contact) — no duplicate row.
+    // Skip absent values, and scoped ids that duplicate {{user_code}} (sourceId).
     if (!value || value === contactInbox.sourceId) {
       return []
     }
@@ -318,9 +339,8 @@ export const ContactDetail = ({
 
       if (conversation?.contact) {
         const activeContactInbox = conversation.contactInboxes[0]
-        // Contact ID is the workspace contact record id — not the channel
-        // sourceId (e.g. WhatsApp wa_id), which has its own scoped rows below.
-        const contactId = conversation.contact.id
+        // {{user_id}} — workspace contact record id for API calls (GET /v1/contacts/id:{id}).
+        const userId = conversation.contact.id
         // The ad the contact clicked from (any ad-attributed inbox), shown as
         // a link right under Contact ID. Guarded to http(s) so a non-navigable
         // / `javascript:` referral value never becomes an anchor href.
@@ -333,13 +353,14 @@ export const ContactDetail = ({
             : null
         const tmpContactFields: ContactEditableField[] = [
           {
-            key: "contactId",
+            key: "userId",
             icon: IdCardIcon,
-            label: t("fields.contactId.label"),
-            value: contactId,
+            label: t("fields.userId.label"),
+            value: userId,
             type: "shortText",
             readOnly: true,
           },
+          ...buildUserCodeField(activeContactInbox, t),
           ...(adSourceUrl
             ? [
                 {

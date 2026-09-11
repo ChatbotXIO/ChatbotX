@@ -2293,6 +2293,9 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "userCode": {
+      "label": "Mã người dùng"
     }
   },
   "flows": {

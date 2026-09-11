@@ -2293,6 +2293,9 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "userCode": {
+      "label": "Kullanıcı kodu"
     }
   },
   "flows": {
