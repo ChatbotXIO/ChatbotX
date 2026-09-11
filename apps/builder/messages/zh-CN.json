@@ -829,6 +829,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "已发送",
+      "delivered": "已交付",
+      "seen": "已看过",
+      "clicked": "已点击",
+      "failed": "失败",
+      "noContacts": "找不到联系人",
+      "pageInfo": "第 {page} 页（共 {pageCount}）",
+      "selectedAll": "已全选",
+      "selectedCount": "{count}",
+      "tagAllDialogDescription": "标签将添加到所有已选联系人。",
+      "tagDialogDescription": "标签将添加到 {count} 位联系人。",
+      "tagQueued": "在后台标记 {count} 联系人。",
+      "loadingMore": "加载更多...",
+      "receivers": "接收器"
+    }
+  },
   "channels": {
     "duplicated": {
       "generic": "此帐户已连接到另一个工作区。",

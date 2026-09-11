@@ -17,9 +17,15 @@ vi.mock("@chatbotx.io/database/client", () => ({ db }))
 // ── repository mock ───────────────────────────────────────────────────────────
 
 const commentAutomationStatsRepository = {
-  insertEvents: vi.fn().mockResolvedValue(undefined),
-  settleEvent: vi.fn().mockResolvedValue(undefined),
-  deleteEvent: vi.fn().mockResolvedValue(undefined),
+  insertEvents: vi.fn().mockResolvedValue([]),
+  settleEvent: vi.fn().mockResolvedValue([]),
+  deleteEvent: vi.fn().mockResolvedValue([]),
+  markDelivered: vi.fn().mockResolvedValue([]),
+  markSeenForContactInboxes: vi.fn().mockResolvedValue([]),
+  markClickedForAutomationContacts: vi.fn().mockResolvedValue([]),
+  incrementCounters: vi.fn().mockResolvedValue(undefined),
+  getContacts: vi.fn(),
+  getContactIdsPage: vi.fn(),
   getRepliesByDate: vi.fn(),
   getUserCommentTotals: vi.fn(),
   getBotReplyTotals: vi.fn(),
@@ -52,6 +58,16 @@ beforeEach(() => {
   vi.clearAllMocks()
   findFirstAutomation.mockResolvedValue({ id: "automation-1" })
   findManyContacts.mockResolvedValue([])
+  commentAutomationStatsRepository.insertEvents.mockResolvedValue([])
+  commentAutomationStatsRepository.settleEvent.mockResolvedValue([])
+  commentAutomationStatsRepository.deleteEvent.mockResolvedValue([])
+  commentAutomationStatsRepository.markDelivered.mockResolvedValue([])
+  commentAutomationStatsRepository.markSeenForContactInboxes.mockResolvedValue(
+    [],
+  )
+  commentAutomationStatsRepository.markClickedForAutomationContacts.mockResolvedValue(
+    [],
+  )
 })
 
 describe("automation scoping", () => {
@@ -298,5 +314,324 @@ describe("listErrors", () => {
     await service.listErrors(PAGED)
 
     expect(findManyContacts).not.toHaveBeenCalled()
+  })
+})
+
+// ── lifetime counters ────────────────────────────────────────────────────────
+//
+// `FBCommentAutomationEvent` is purged after 30 days, so the numbers in the
+// list table come from counters on `FBCommentAutomation` instead. Every
+// increment is driven by the rows a conditional write actually returned — that
+// is the only thing standing between these counters and a redelivered webhook.
+
+const EVENT = {
+  workspaceId: "workspace-1",
+  automationId: "automation-1",
+  postId: "post-1",
+  commentId: "comment-1",
+  replyChannel: "public" as const,
+  replyType: "text" as const,
+  occurredAt: new Date("2026-03-01T00:00:00.000Z"),
+}
+
+function countersFor(automationId: string) {
+  const calls =
+    commentAutomationStatsRepository.incrementCounters.mock.calls.at(-1)
+  return (calls?.[0] as Map<string, Record<string, number>>)?.get(automationId)
+}
+
+describe("recordEvent counters", () => {
+  test("counts one attempt per row that was actually inserted", async () => {
+    commentAutomationStatsRepository.insertEvents.mockResolvedValue([
+      { automationId: "automation-1", status: "sent" },
+    ])
+
+    await service.recordEvent({ ...EVENT, status: "sent" })
+
+    expect(countersFor("automation-1")).toEqual({ sentCount: 1 })
+  })
+
+  test("a retry that hits the dedup index moves nothing", async () => {
+    commentAutomationStatsRepository.insertEvents.mockResolvedValue([])
+
+    await service.recordEvent({ ...EVENT, status: "sent" })
+
+    expect(countersFor("automation-1")).toBeUndefined()
+  })
+
+  test("a row born failed counts as both an attempt and a failure", async () => {
+    commentAutomationStatsRepository.insertEvents.mockResolvedValue([
+      { automationId: "automation-1", status: "failed" },
+    ])
+
+    await service.recordEvent({ ...EVENT, status: "failed" })
+
+    expect(countersFor("automation-1")).toEqual({
+      sentCount: 1,
+      failedCount: 1,
+    })
+  })
+
+  test("stamps failedAt on a row that is failed from birth, so it can be ordered and drilled into", async () => {
+    commentAutomationStatsRepository.insertEvents.mockResolvedValue([])
+
+    await service.recordEvent({ ...EVENT, status: "failed" })
+
+    const [rows] = commentAutomationStatsRepository.insertEvents.mock.calls[0]
+    expect((rows as { failedAt: Date | null }[])[0].failedAt).toBeInstanceOf(
+      Date,
+    )
+  })
+})
+
+describe("settleEvent counters", () => {
+  test("counts the failure only when the row actually flipped", async () => {
+    commentAutomationStatsRepository.settleEvent.mockResolvedValue([
+      { automationId: "automation-1" },
+    ])
+
+    await service.settleEvent({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "public",
+      status: "failed",
+    })
+
+    expect(countersFor("automation-1")).toEqual({ failedCount: 1 })
+  })
+
+  test("a second settle to failed is refused by the repository and moves nothing", async () => {
+    commentAutomationStatsRepository.settleEvent.mockResolvedValue([])
+
+    await service.settleEvent({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "public",
+      status: "failed",
+    })
+
+    expect(countersFor("automation-1")).toBeUndefined()
+  })
+
+  test("an AI reply landing its text changes no counter — the attempt was already counted", async () => {
+    commentAutomationStatsRepository.settleEvent.mockResolvedValue([
+      { automationId: "automation-1" },
+    ])
+
+    await service.settleEvent({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "private",
+      status: "sent",
+      replyText: "generated",
+    })
+
+    expect(
+      commentAutomationStatsRepository.incrementCounters,
+    ).not.toHaveBeenCalled()
+  })
+})
+
+describe("discardEvent counters", () => {
+  test("unwinds everything the discarded row had been counted as", async () => {
+    commentAutomationStatsRepository.deleteEvent.mockResolvedValue([
+      {
+        automationId: "automation-1",
+        status: "sent",
+        deliveredAt: new Date(),
+        seenAt: new Date(),
+        clickedAt: null,
+        failedAt: null,
+      },
+    ])
+
+    await service.discardEvent({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "private",
+    })
+
+    expect(countersFor("automation-1")).toEqual({
+      sentCount: -1,
+      deliveredCount: -1,
+      seenCount: -1,
+    })
+  })
+})
+
+describe("markDelivered", () => {
+  test("counts a delivery once, and not at all when the row was already delivered", async () => {
+    commentAutomationStatsRepository.markDelivered.mockResolvedValue([
+      { automationId: "automation-1" },
+    ])
+    await service.markDelivered({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "public",
+    })
+    expect(countersFor("automation-1")).toEqual({ deliveredCount: 1 })
+
+    commentAutomationStatsRepository.markDelivered.mockResolvedValue([])
+    await service.markDelivered({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "public",
+    })
+    expect(countersFor("automation-1")).toBeUndefined()
+  })
+})
+
+describe("onSeen", () => {
+  test("collapses several receipts for one inbox to its latest timestamp", async () => {
+    const earlier = new Date("2026-03-01T10:00:00.000Z")
+    const later = new Date("2026-03-01T11:00:00.000Z")
+
+    await service.onSeen([
+      { context: { contactInboxId: "inbox-1" }, occurredAt: later },
+      { context: { contactInboxId: "inbox-1" }, occurredAt: earlier },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ] as any)
+
+    expect(
+      commentAutomationStatsRepository.markSeenForContactInboxes,
+    ).toHaveBeenCalledWith([{ contactInboxId: "inbox-1", occurredAt: later }])
+  })
+
+  test("never queries for a payload with no inbox — a receipt without one names nothing", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await service.onSeen([{ context: {}, occurredAt: new Date() }] as any)
+
+    expect(
+      commentAutomationStatsRepository.markSeenForContactInboxes,
+    ).not.toHaveBeenCalled()
+  })
+})
+
+describe("onClicked", () => {
+  test("ignores clicks from broadcasts and sequences, which carry no automation id", async () => {
+    await service.onClicked([
+      {
+        action: { broadcastId: "broadcast-1" },
+        context: { contactInboxId: "inbox-1" },
+        occurredAt: new Date(),
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ] as any)
+
+    expect(
+      commentAutomationStatsRepository.markClickedForAutomationContacts,
+    ).not.toHaveBeenCalled()
+  })
+
+  test("counts a click once per row the repository actually claimed", async () => {
+    commentAutomationStatsRepository.markClickedForAutomationContacts.mockResolvedValue(
+      [{ automationId: "automation-1" }],
+    )
+
+    await service.onClicked([
+      {
+        action: { commentAutomationId: "automation-1" },
+        context: { contactInboxId: "inbox-1" },
+        occurredAt: new Date("2026-03-01T10:00:00.000Z"),
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ] as any)
+
+    expect(countersFor("automation-1")).toEqual({ clickedCount: 1 })
+  })
+})
+
+describe("never-throws contract", () => {
+  test("a counter write that fails does not take down the reply it was counting", async () => {
+    commentAutomationStatsRepository.insertEvents.mockResolvedValue([
+      { automationId: "automation-1", status: "sent" },
+    ])
+    commentAutomationStatsRepository.incrementCounters.mockRejectedValueOnce(
+      new Error("connection lost"),
+    )
+
+    await expect(
+      service.recordEvent({ ...EVENT, status: "sent" }),
+    ).resolves.toBeUndefined()
+  })
+})
+
+// A `flow` reply is several messages but ONE reply. `sendFlowStep` swallows a
+// step's error and carries on, so a 3-step reply can settle in either order.
+// The rule both ways round: any step through means delivered and not failed;
+// only every step failing counts as a failure.
+describe("multi-step flow reply: delivered and failed are mutually exclusive", () => {
+  test("a later step failing after one landed is not counted — the reply arrived", async () => {
+    // The repository refuses the write (`deliveredAt IS NULL` on the settle),
+    // so there is nothing to count.
+    commentAutomationStatsRepository.settleEvent.mockResolvedValue([])
+
+    await service.settleEvent({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "private",
+      status: "failed",
+      errorDetail: "step 3 threw",
+    })
+
+    expect(
+      commentAutomationStatsRepository.incrementCounters,
+    ).toHaveBeenCalledWith(new Map())
+  })
+
+  test("a step landing after an earlier one failed takes the failure back out", async () => {
+    commentAutomationStatsRepository.markDelivered.mockResolvedValue([
+      { automationId: "automation-1", clearedFailure: true },
+    ])
+
+    await service.markDelivered({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "private",
+    })
+
+    expect(countersFor("automation-1")).toEqual({
+      deliveredCount: 1,
+      failedCount: -1,
+    })
+  })
+
+  test("the first step landing costs no failure to unwind", async () => {
+    commentAutomationStatsRepository.markDelivered.mockResolvedValue([
+      { automationId: "automation-1", clearedFailure: false },
+    ])
+
+    await service.markDelivered({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "private",
+    })
+
+    expect(countersFor("automation-1")).toEqual({ deliveredCount: 1 })
+  })
+
+  test("every step failing counts exactly one failure, not three", async () => {
+    commentAutomationStatsRepository.settleEvent
+      .mockResolvedValueOnce([{ automationId: "automation-1" }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+
+    const settleFailure = (detail: string) =>
+      service.settleEvent({
+        automationId: "automation-1",
+        commentId: "comment-1",
+        replyChannel: "private",
+        status: "failed",
+        errorDetail: detail,
+      })
+
+    await settleFailure("step 1 threw")
+    expect(countersFor("automation-1")).toEqual({ failedCount: 1 })
+
+    await settleFailure("step 2 threw")
+    expect(countersFor("automation-1")).toBeUndefined()
+
+    await settleFailure("step 3 threw")
+    expect(countersFor("automation-1")).toBeUndefined()
   })
 })

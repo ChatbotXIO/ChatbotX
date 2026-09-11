@@ -1968,6 +1968,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Inviato",
+      "delivered": "Consegnato",
+      "seen": "Visualizzato",
+      "clicked": "Cliccato",
+      "failed": "Non riuscito",
+      "noContacts": "Nessun contatto trovato",
+      "pageInfo": "Pagina {page} di {pageCount}",
+      "selectedAll": "Tutti selezionati",
+      "selectedCount": "{count} selezionati",
+      "tagAllDialogDescription": "I tag verranno aggiunti a tutti i contatti selezionati.",
+      "tagDialogDescription": "I tag verranno aggiunti a {count} contatti.",
+      "tagQueued": "Aggiunta di tag a {count} contatti in background.",
+      "loadingMore": "Caricamento...",
+      "receivers": "Destinatari"
+    }
+  },
   "condition": {
     "yes": "Sì",
     "no": "No",

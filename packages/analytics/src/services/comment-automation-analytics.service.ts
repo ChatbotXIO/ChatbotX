@@ -5,11 +5,19 @@ import type {
   FBCommentReplyType,
 } from "@chatbotx.io/database/partials"
 import type { FBCommentAutomationEventInsert } from "@chatbotx.io/database/types"
+import type {
+  FlowClickedPayload,
+  MessageSeenPayload,
+} from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
+import { toDate } from "../lib/date"
 import { logger } from "../lib/logger"
 import { iterateTzDays } from "../lib/time-series"
+import type { MessageEventType } from "../repositories/postgres/base.repository"
 import { commentAutomationStatsRepository } from "../repositories/postgres/comment-automation-stats.repository"
 import type {
+  CommentAutomationCounterDeltas,
+  CommentAutomationCounterField,
   CommentAutomationErrorRow,
   CommentAutomationListInput,
   CommentAutomationStatsInput,
@@ -17,6 +25,7 @@ import type {
   ListCommentAutomationErrorsResponse,
   ListCommentAutomationTextTotalsResponse,
 } from "../schemas/comment-automation"
+import type { ContactEventData } from "../schemas/common"
 
 /** Matches `MAX_DETAIL_LENGTH` in `packages/business/src/error-log/service.ts`
  * so an error message is truncated the same way wherever it is stored. */
@@ -36,6 +45,12 @@ export type RecordCommentAutomationEventInput = {
   errorDetail?: string | null
   httpCode?: string | null
   occurredAt: Date
+  /**
+   * The inbox the reply went to. Optional only because a dispatch that failed
+   * before resolving one still deserves a row; without it the reply can never
+   * be marked seen, since a read receipt names no automation.
+   */
+  contactInboxId?: string | null
 }
 
 const emptyList = (page: number) => ({
@@ -44,6 +59,61 @@ const emptyList = (page: number) => ({
   page,
   pageCount: 0,
 })
+
+/**
+ * Folds `[{ automationId }, ...]` rows returned by a conditional write into the
+ * counter deltas they earned. Every caller passes rows a `WHERE <col> IS NULL`
+ * clause already filtered, so counting them is what makes the lifetime counters
+ * on `FBCommentAutomation` immune to webhook redelivery and BullMQ retries.
+ */
+function tallyCounters(
+  rows: { automationId: string }[],
+  field: CommentAutomationCounterField,
+  deltas: CommentAutomationCounterDeltas = new Map(),
+): CommentAutomationCounterDeltas {
+  for (const row of rows) {
+    const current = deltas.get(row.automationId) ?? {}
+    current[field] = (current[field] ?? 0) + 1
+    deltas.set(row.automationId, current)
+  }
+  return deltas
+}
+
+/**
+ * Reverses what a discarded row had already been counted as. `discardEvent`
+ * exists for an async job that turned out to be a deliberate skip, so the
+ * attempt it opened must leave no trace in the counters either.
+ */
+function tallyDiscard(
+  rows: {
+    automationId: string
+    status: string
+    deliveredAt: Date | null
+    seenAt: Date | null
+    clickedAt: Date | null
+    failedAt: Date | null
+  }[],
+): CommentAutomationCounterDeltas {
+  const deltas: CommentAutomationCounterDeltas = new Map()
+  for (const row of rows) {
+    const current = deltas.get(row.automationId) ?? {}
+    current.sentCount = (current.sentCount ?? 0) - 1
+    if (row.deliveredAt) {
+      current.deliveredCount = (current.deliveredCount ?? 0) - 1
+    }
+    if (row.seenAt) {
+      current.seenCount = (current.seenCount ?? 0) - 1
+    }
+    if (row.clickedAt) {
+      current.clickedCount = (current.clickedCount ?? 0) - 1
+    }
+    if (row.failedAt || row.status === "failed") {
+      current.failedCount = (current.failedCount ?? 0) - 1
+    }
+    deltas.set(row.automationId, current)
+  }
+  return deltas
+}
 
 export class CommentAutomationAnalyticsService {
   /**
@@ -87,8 +157,25 @@ export class CommentAutomationAnalyticsService {
           input.errorDetail?.slice(0, MAX_ERROR_DETAIL_LENGTH) ?? null,
         httpCode: input.httpCode ?? null,
         occurredAt: input.occurredAt,
+        contactInboxId: input.contactInboxId ?? null,
+        // A dispatch that never reached the channel is failed from birth; the
+        // timestamp is now, not `occurredAt` (which is when the customer
+        // commented, up to an hour earlier under `replyAfter`).
+        failedAt: input.status === "failed" ? new Date() : null,
       }
-      await commentAutomationStatsRepository.insertEvents([row])
+      const inserted = await commentAutomationStatsRepository.insertEvents([
+        row,
+      ])
+      // `sentCount` counts attempts, so every row that actually landed moves
+      // it — including one born `failed`, exactly as broadcast's
+      // `sent = delivered + failed` derivation does.
+      const deltas = tallyCounters(inserted, "sentCount")
+      tallyCounters(
+        inserted.filter((event) => event.status === "failed"),
+        "failedCount",
+        deltas,
+      )
+      await commentAutomationStatsRepository.incrementCounters(deltas)
     } catch (err) {
       logger.warn(
         {
@@ -119,7 +206,7 @@ export class CommentAutomationAnalyticsService {
     errorDetail?: string | null
   }): Promise<void> {
     try {
-      await commentAutomationStatsRepository.settleEvent({
+      const settled = await commentAutomationStatsRepository.settleEvent({
         automationId: input.automationId,
         commentId: input.commentId,
         replyChannel: input.replyChannel,
@@ -134,6 +221,15 @@ export class CommentAutomationAnalyticsService {
                 input.errorDetail?.slice(0, MAX_ERROR_DETAIL_LENGTH) ?? null,
             }),
       })
+      // Only a settle that actually flipped the row counts: `settleEvent`
+      // refuses a second failure, so `failedCount` moves once per reply.
+      // Settling back to `sent` (an AI reply landing its text) changes no
+      // counter — the attempt was already counted at dispatch.
+      if (input.status === "failed") {
+        await commentAutomationStatsRepository.incrementCounters(
+          tallyCounters(settled, "failedCount"),
+        )
+      }
     } catch (err) {
       logger.warn(
         {
@@ -159,7 +255,10 @@ export class CommentAutomationAnalyticsService {
     replyChannel: CommentAutomationReplyChannel
   }): Promise<void> {
     try {
-      await commentAutomationStatsRepository.deleteEvent(input)
+      const deleted = await commentAutomationStatsRepository.deleteEvent(input)
+      await commentAutomationStatsRepository.incrementCounters(
+        tallyDiscard(deleted),
+      )
     } catch (err) {
       logger.warn(
         {
@@ -171,6 +270,163 @@ export class CommentAutomationAnalyticsService {
         "[analytics:commentAutomation] failed to discard event",
       )
     }
+  }
+
+  /**
+   * The channel accepted the send. Called straight from the dispatch sites
+   * rather than off an event-bus subscription, because the acknowledgement is
+   * synchronous everywhere it matters: the Send API returns before the job
+   * ends, and a public comment reply gets no delivery webhook from Meta at all.
+   *
+   * Same never-throws contract as `recordEvent`.
+   */
+  async markDelivered(input: {
+    automationId: string
+    commentId: string
+    replyChannel: CommentAutomationReplyChannel
+    occurredAt?: Date
+  }): Promise<void> {
+    try {
+      const marked = await commentAutomationStatsRepository.markDelivered({
+        automationId: input.automationId,
+        commentId: input.commentId,
+        replyChannel: input.replyChannel,
+        occurredAt: input.occurredAt ?? new Date(),
+      })
+      const deltas = tallyCounters(marked, "deliveredCount")
+      // A step that failed before a later one landed had already been counted.
+      // The reply arrived, so take that failure back out.
+      for (const row of marked) {
+        if (!row.clearedFailure) {
+          continue
+        }
+        const current = deltas.get(row.automationId) ?? {}
+        current.failedCount = (current.failedCount ?? 0) - 1
+        deltas.set(row.automationId, current)
+      }
+      await commentAutomationStatsRepository.incrementCounters(deltas)
+    } catch (err) {
+      logger.warn(
+        {
+          err,
+          automationId: input.automationId,
+          commentId: input.commentId,
+          replyChannel: input.replyChannel,
+        },
+        "[analytics:commentAutomation] failed to mark delivered",
+      )
+    }
+  }
+
+  /**
+   * Read receipt. Unlike every other outcome this cannot be settled at the
+   * dispatch site — it arrives minutes or hours later on a webhook that names
+   * only the inbox, so the lookup runs the other way round. Private DMs only:
+   * a public comment reply has no reader.
+   */
+  async onSeen(payloads: MessageSeenPayload[]): Promise<void> {
+    const latestByInbox = new Map<string, Date>()
+    for (const payload of payloads) {
+      const contactInboxId = payload.context.contactInboxId
+      if (!contactInboxId) {
+        continue
+      }
+      const occurredAt = toDate(payload.occurredAt)
+      const current = latestByInbox.get(contactInboxId)
+      if (!current || occurredAt > current) {
+        latestByInbox.set(contactInboxId, occurredAt)
+      }
+    }
+
+    if (latestByInbox.size === 0) {
+      return
+    }
+
+    try {
+      const marked =
+        await commentAutomationStatsRepository.markSeenForContactInboxes(
+          [...latestByInbox].map(([contactInboxId, occurredAt]) => ({
+            contactInboxId,
+            occurredAt,
+          })),
+        )
+      await commentAutomationStatsRepository.incrementCounters(
+        tallyCounters(marked, "seenCount"),
+      )
+    } catch (err) {
+      logger.warn(
+        { err, contactInboxIds: [...latestByInbox.keys()] },
+        "[analytics:commentAutomation] failed to mark seen",
+      )
+    }
+  }
+
+  /**
+   * A link or button in a `flow` reply was tapped. Only flow replies can be
+   * tracked: the attribution rides in `encodeButtonPayload`, and a plain text
+   * reply carries no button and no magic link to attach it to.
+   */
+  async onClicked(payloads: FlowClickedPayload[]): Promise<void> {
+    const items = payloads
+      .filter((p) => p.action.commentAutomationId && p.context.contactInboxId)
+      .map((p) => ({
+        automationId: p.action.commentAutomationId as string,
+        contactInboxId: p.context.contactInboxId as string,
+        occurredAt: toDate(p.occurredAt),
+      }))
+
+    if (items.length === 0) {
+      return
+    }
+
+    try {
+      const marked =
+        await commentAutomationStatsRepository.markClickedForAutomationContacts(
+          items,
+        )
+      await commentAutomationStatsRepository.incrementCounters(
+        tallyCounters(marked, "clickedCount"),
+      )
+    } catch (err) {
+      logger.warn(
+        { err, automationIds: items.map((item) => item.automationId) },
+        "[analytics:commentAutomation] failed to mark clicked",
+      )
+    }
+  }
+
+  /**
+   * One page of the drill-down dialog behind a stat column. Workspace-scoped
+   * through the same `automationExists` guard every other read uses, so an id
+   * from another workspace returns empty rather than leaking rows.
+   */
+  async getContacts(input: {
+    workspaceId: string
+    automationId: string
+    eventType: MessageEventType
+    page: number
+    perPage: number
+  }): Promise<{
+    contactInboxIds: string[]
+    contactEventMap: Map<string, ContactEventData>
+  }> {
+    const exists = await this.automationExists(input)
+    if (!exists) {
+      return { contactInboxIds: [], contactEventMap: new Map() }
+    }
+    return await commentAutomationStatsRepository.getContacts(input)
+  }
+
+  /** Keyset page of contact ids, for the bulk-tag worker. */
+  getContactIdsPage(input: {
+    workspaceId: string
+    automationId: string
+    eventType: MessageEventType
+    cursor: string | null
+    limit: number
+    excludeContactIds?: string[]
+  }): Promise<{ id: string; contactId: string }[]> {
+    return commentAutomationStatsRepository.getContactIdsPage(input)
   }
 
   /**

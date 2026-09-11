@@ -38,6 +38,7 @@ import { ChangeFolderDialog } from "../folders/change-folder"
 import { BulkDeleteCommentAutomationsDialog } from "../shared/comment-automation/bulk-delete-comment-automations-dialog"
 import { BulkMoveCommentAutomationFolderDialog } from "../shared/comment-automation/bulk-move-comment-automation-folder-dialog"
 import { CommentAutomationScheduleDialog } from "../shared/comment-automation/comment-automation-schedule-dialog"
+import { buildCommentAutomationStatColumns } from "../shared/comment-automation/comment-automation-stat-columns"
 import { DeleteCommentAutomationDialog } from "../shared/comment-automation/delete-comment-automation-dialog"
 import { RenameCommentAutomationDialog } from "../shared/comment-automation/rename-comment-automation-dialog"
 import { deleteIgCommentAction } from "./actions/delete-ig-comment.action"
@@ -187,6 +188,11 @@ export function IgCommentsTable({
         ),
         size: 100,
       },
+      // See the Facebook table: `repliesCount` counts comments answered, these
+      // count reply attempts and their outcomes.
+      ...buildCommentAutomationStatColumns<
+        ListIgCommentsResponse["data"][number]
+      >({ workspaceId, t }),
       {
         id: "actions",
         header: () => (

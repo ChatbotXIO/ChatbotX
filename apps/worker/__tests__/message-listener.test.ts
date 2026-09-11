@@ -28,6 +28,7 @@ vi.mock("@chatbotx.io/analytics", () => ({
     "onDelivered",
     "onSeen",
   ]),
+  commentAutomationAnalyticsService: makeService(["onSeen"]),
   contactAnalyticsService: makeService(["handleBlocked"]),
   flowAnalyticsService: makeService([
     "onMessageSent",

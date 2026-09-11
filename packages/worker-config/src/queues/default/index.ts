@@ -1,5 +1,6 @@
 import type {
   BroadcastEventType,
+  CommentAutomationEventType,
   SequenceStepEventType,
 } from "@chatbotx.io/analytics/schemas"
 import type {
@@ -120,6 +121,11 @@ export type JobBulkTagContacts = {
         sequenceId: string
         stepId: string
         eventType: SequenceStepEventType
+      }
+    | {
+        source: "commentAutomation"
+        automationId: string
+        eventType: CommentAutomationEventType
       }
   )
 }

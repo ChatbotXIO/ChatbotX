@@ -510,6 +510,24 @@
       "description": "\"{name}\" sẽ tiếp tục gửi đến những người nhận chưa nhận được tin."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Đã gửi",
+      "delivered": "Đã giao",
+      "seen": "Đã xem",
+      "clicked": "Đã nhấp",
+      "failed": "Thất bại",
+      "noContacts": "Không có liên hệ nào",
+      "pageInfo": "Trang {page} / {pageCount}",
+      "selectedAll": "Đã chọn tất cả",
+      "selectedCount": "Đã chọn {count}",
+      "tagAllDialogDescription": "Thẻ sẽ được gắn cho tất cả liên hệ đã chọn.",
+      "tagDialogDescription": "Thẻ sẽ được gắn cho {count} liên hệ.",
+      "tagQueued": "Đang gắn thẻ cho {count} liên hệ trong nền.",
+      "loadingMore": "Đang tải thêm...",
+      "receivers": "Người nhận"
+    }
+  },
   "condition": {
     "yes": "Có",
     "no": "Không",

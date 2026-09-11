@@ -510,6 +510,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Gesendet",
+      "delivered": "Zugestellt",
+      "seen": "Gesehen",
+      "clicked": "Angeklickt",
+      "failed": "Fehlgeschlagen",
+      "noContacts": "Keine Kontakte gefunden",
+      "pageInfo": "Seite {page} von {pageCount}",
+      "selectedAll": "Alle ausgewählt",
+      "selectedCount": "{count} ausgewählt",
+      "tagAllDialogDescription": "Tags werden allen ausgewählten Kontakten hinzugefügt.",
+      "tagDialogDescription": "Tags werden {count} Kontakt(en) hinzugefügt.",
+      "tagQueued": "{count} Kontakte werden im Hintergrund mit Tags versehen.",
+      "loadingMore": "Weitere werden geladen...",
+      "receivers": "Empfänger"
+    }
+  },
   "condition": {
     "yes": "Ja",
     "no": "Nein",

@@ -1294,6 +1294,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Trimis",
+      "delivered": "Livrat",
+      "seen": "Văzut",
+      "clicked": "Accesat",
+      "failed": "Eșuat",
+      "noContacts": "Nu au fost găsite contacte",
+      "pageInfo": "Pagina {page} din {pageCount}",
+      "selectedAll": "Toate selectate",
+      "selectedCount": "{count} selectate",
+      "tagAllDialogDescription": "Etichetele vor fi adăugate tuturor contactelor selectate.",
+      "tagDialogDescription": "Etichetele vor fi adăugate la {count} contact(e).",
+      "tagQueued": "Etichetarea a {count} contacte se efectuează în fundal.",
+      "loadingMore": "Se încarcă mai multe...",
+      "receivers": "Destinatari"
+    }
+  },
   "condition": {
     "yes": "Da",
     "no": "Nu",

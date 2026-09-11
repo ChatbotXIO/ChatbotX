@@ -643,6 +643,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Skickat",
+      "delivered": "Levererat",
+      "seen": "Sett",
+      "clicked": "Klickat",
+      "failed": "Misslyckades",
+      "noContacts": "Inga kontakter hittades",
+      "pageInfo": "Sida {page} av {pageCount}",
+      "selectedAll": "Alla har markerats",
+      "selectedCount": "{count} har markerats",
+      "tagAllDialogDescription": "Taggar läggs till för alla markerade kontakter.",
+      "tagDialogDescription": "Taggar läggs till för {count} kontakt(er).",
+      "tagQueued": "{count} kontakter taggas i bakgrunden.",
+      "loadingMore": "Läser in fler...",
+      "receivers": "Mottagare"
+    }
+  },
   "channels": {
     "duplicated": {
       "generic": "Det här kontot är redan anslutet till en annan arbetsyta.",

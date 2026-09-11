@@ -185,6 +185,54 @@ Two things to know before touching it:
   per comment even when both a public reply and a private DM went out; the event log has a
   row per channel. Do not "reconcile" them.
 
+## Delivery stats (list columns)
+
+Both list tables carry five clickable columns after `repliesCount` —
+**Sent / Delivered / Seen / Clicked / Failed** — modelled on broadcast. Clicking a number
+opens the shared `StatsContactsDialog` with the contacts behind it.
+
+The numbers are **lifetime counters on `FBCommentAutomation`**
+(`sentCount`/`deliveredCount`/`seenCount`/`clickedCount`/`failedCount`), not an aggregate:
+a nightly cron purges `FBCommentAutomationEvent` after 30 days, so aggregating would make
+the columns shrink on their own. The event row's matching `*At` timestamp is what makes
+each counter exact — every increment is driven by the rows a conditional
+`UPDATE ... WHERE <col> IS NULL RETURNING` actually returned, so a redelivered webhook or a
+BullMQ retry moves nothing. The drill-down dialog reads the event rows, so it only reaches
+back 30 days while the counters keep going.
+
+| Column | When it moves | Where |
+|---|---|---|
+| **Sent** | An event row is inserted — i.e. a reply was attempted. Includes attempts that failed, the same way broadcast derives `sent = delivered + failed`. | `recordEvent` |
+| **Delivered** | The channel accepted the send. Meta reports **no** delivery receipt for a public comment reply, so this is that channel's only delivery signal; a private DM is acknowledged synchronously by the Send API, long before any webhook (and a private text DM writes no `Message` row for one to match). | `send-message.ts` success path, `send-flow-step.ts` success path, `executePrivateReply`, `processCommentAIReply` |
+| **Seen** | `private` only — a public comment has no reader. The one outcome that cannot be settled at the dispatch site: a read receipt names the inbox, never the reply, so the lookup runs the other way round, off `FBCommentAutomationEvent.contactInboxId`. | `commentAutomationAnalyticsService.onSeen`, on the `message:seen` bus |
+| **Clicked** | A link or button in a **`flow`** reply was tapped. Attribution rides in `encodeButtonPayload`'s 7th positional field (`ca`), so a plain `text` reply has no click to track — same limitation as broadcast, plus `appendCodeToMagicLink` only tags magic links, never arbitrary URLs. | `commentAutomationAnalyticsService.onClicked`, on the `flow:clicked` bus |
+| **Failed** | The dispatch threw, the async job gave up, or delivery was blocked before it could go out. First failure wins — a second settle is refused. | `recordEvent`, `settleCommentAutomationFailure` |
+
+**A multi-step `flow` reply is ONE reply.** `sendFlowStep` swallows a step's error and
+carries on, so a 3-step reply produces up to three outcomes for a single event row. The
+rule is *any step through means the reply arrived*, and it holds whichever order they
+settle in:
+
+- A step landing first, then two failing → `settleEvent` refuses the failure
+  (`deliveredAt IS NULL` guard). **Delivered 1, Failed 0.**
+- A step failing first, then one landing → `markDelivered` clears `failedAt`, puts the row
+  back to `sent`, and reports `clearedFailure` so the service takes `failedCount` back
+  down. **Delivered 1, Failed 0.** (`errorDetail` stays on the row — the step really did
+  fail, and the drill-down still shows it.)
+- Every step failing → the first settles, the rest are refused. **Delivered 0, Failed 1.**
+
+`Sent` counts attempts either way, so it stays 1 — the same relation broadcast derives as
+`sent = delivered + failed`.
+
+Two attribution caveats worth knowing:
+
+- **A click names the automation, not the reply.** A Facebook comment id is
+  `{storyId}_{commentId}` and the button payload carries bigints only, so
+  `markClickedForAutomationContacts` lands the click on the newest unclicked row for the
+  `(automationId, contactInboxId)` pair.
+- **A public flow reply loses its anchor across a Wait step** (`ContactOnSmartDelay` has no
+  column for it, see below), so steps after a Wait report nothing.
+
 ## Known gaps & pitfalls
 
 - **`parent_id` = `post_id` for top-level comments.** Never treat a truthy `parentId` as

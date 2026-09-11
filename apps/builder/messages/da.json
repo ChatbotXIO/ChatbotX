@@ -510,6 +510,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Sendt",
+      "delivered": "Leveret",
+      "seen": "Set",
+      "clicked": "Klikket",
+      "failed": "Mislykkedes",
+      "noContacts": "Ingen kontakter fundet",
+      "pageInfo": "Side {page} af {pageCount}",
+      "selectedAll": "Alle valgt",
+      "selectedCount": "{count} valgt",
+      "tagAllDialogDescription": "Der føjes tags til alle valgte kontakter.",
+      "tagDialogDescription": "Der føjes tags til {count} kontakt(er).",
+      "tagQueued": "Tagger {count} kontakter i baggrunden.",
+      "loadingMore": "Indlæser mere...",
+      "receivers": "Modtagere"
+    }
+  },
   "condition": {
     "yes": "Ja",
     "no": "Nej",

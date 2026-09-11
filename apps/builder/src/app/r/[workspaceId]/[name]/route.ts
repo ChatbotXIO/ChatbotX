@@ -154,6 +154,7 @@ export const GET = async (
       buttonId: decodedButton.buttonId,
       broadcastId: decodedButton.broadcastId,
       sequenceStepId: decodedButton.sequenceStepId,
+      commentAutomationId: decodedButton.commentAutomationId,
       magicLinkId: row.id,
       clickType: clickTypeSchema.enum.magic_link,
     },

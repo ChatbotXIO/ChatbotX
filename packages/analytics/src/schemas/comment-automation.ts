@@ -1,3 +1,8 @@
+import { channelTypes } from "@chatbotx.io/database/partials"
+import {
+  flowEventTypeSchema,
+  messageEventTypeSchema,
+} from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
 /**
@@ -96,4 +101,93 @@ export const listCommentAutomationErrorsResponse = z.object({
 })
 export type ListCommentAutomationErrorsResponse = z.infer<
   typeof listCommentAutomationErrorsResponse
+>
+
+// ---------------------------------------------------------------------------
+// Delivery stats — the Sent/Delivered/Seen/Clicked/Failed columns on the
+// fb-comments and ig-comments list tables.
+//
+// Deliberately the same event-type vocabulary as broadcast and sequences, so
+// `StatsContactsDialog` and the bulk-tag pipeline stay one implementation.
+// ---------------------------------------------------------------------------
+
+/**
+ * Narrower than `broadcastEventType` on purpose: only the five outcomes a
+ * comment automation actually records have a column behind them.
+ * `message:received` and `flow:ref` are meaningless here, and accepting them
+ * would mean a request the repository has no predicate for.
+ */
+export const commentAutomationEventType = z.enum([
+  messageEventTypeSchema.enum["message:sent"],
+  messageEventTypeSchema.enum["message:delivered"],
+  messageEventTypeSchema.enum["message:seen"],
+  messageEventTypeSchema.enum["message:failed"],
+  flowEventTypeSchema.enum["flow:clicked"],
+])
+
+export type CommentAutomationEventType = z.infer<
+  typeof commentAutomationEventType
+>
+
+export const listCommentAutomationContactsRequest = z.object({
+  workspaceId: z.string(),
+  automationId: z.string(),
+  eventType: commentAutomationEventType.optional(),
+  total: z.number().optional(),
+  page: z.number().default(1),
+  perPage: z.number().default(20),
+})
+
+export type ListCommentAutomationContactsRequest = z.infer<
+  typeof listCommentAutomationContactsRequest
+>
+
+export const commentAutomationContactData = z.object({
+  contactId: z.string(),
+  contactInboxId: z.string(),
+  firstName: z.string().nullable(),
+  lastName: z.string().nullable(),
+  fullName: z.string().nullable(),
+  sourceId: z.string().nullable(),
+  avatar: z.string().nullable(),
+  channel: z.enum(channelTypes.enum),
+  errorContent: z.string().nullable(),
+  conversationId: z.string(),
+  occurredAt: z.string(),
+})
+
+export type CommentAutomationContactData = z.infer<
+  typeof commentAutomationContactData
+>
+
+export const listCommentAutomationContactsResponse = z.object({
+  data: z.array(commentAutomationContactData),
+  total: z.number(),
+  page: z.number(),
+  pageCount: z.number(),
+})
+
+export type ListCommentAutomationContactsResponse = z.infer<
+  typeof listCommentAutomationContactsResponse
+>
+
+/**
+ * Which lifetime counter on `FBCommentAutomation` an event type moves. The
+ * event row's matching timestamp column is what gates the increment.
+ */
+export const commentAutomationCounterFields = [
+  "sentCount",
+  "deliveredCount",
+  "seenCount",
+  "clickedCount",
+  "failedCount",
+] as const
+
+export type CommentAutomationCounterField =
+  (typeof commentAutomationCounterFields)[number]
+
+/** `automationId` → how much to add to each counter. Negative for a discard. */
+export type CommentAutomationCounterDeltas = Map<
+  string,
+  Partial<Record<CommentAutomationCounterField, number>>
 >

@@ -949,6 +949,7 @@ async function runFlowAction(
         buttonId,
         broadcastId: parsedAction.broadcastId,
         sequenceStepId: parsedAction.sequenceStepId ?? "",
+        commentAutomationId: parsedAction.commentAutomationId,
         clickType: flowActionClickTypes[target.targetType],
       },
       occurredAt: new Date(),

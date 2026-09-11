@@ -510,6 +510,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Terkirim",
+      "delivered": "Tersampaikan",
+      "seen": "Dilihat",
+      "clicked": "Diklik",
+      "failed": "Gagal",
+      "noContacts": "Tidak ada kontak yang ditemukan",
+      "pageInfo": "Halaman {page} dari {pageCount}",
+      "selectedAll": "Semua dipilih",
+      "selectedCount": "{count} dipilih",
+      "tagAllDialogDescription": "Tag akan ditambahkan ke semua kontak yang dipilih.",
+      "tagDialogDescription": "Tag akan ditambahkan ke {count} kontak.",
+      "tagQueued": "Memberi tag pada {count} kontak di latar belakang.",
+      "loadingMore": "Memuat lainnya...",
+      "receivers": "Penerima"
+    }
+  },
   "condition": {
     "yes": "Ya",
     "no": "Tidak",

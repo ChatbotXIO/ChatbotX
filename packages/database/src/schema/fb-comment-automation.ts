@@ -46,6 +46,27 @@ export const fbCommentAutomationModel = pgTable(
     startTime: text(),
     endTime: text(),
     repliesCount: integer().notNull().default(0),
+    /**
+     * Lifetime delivery counters, deliberately separate from
+     * `FBCommentAutomationEvent`: that table is purged after
+     * `COMMENT_AUTOMATION_RETENTION_DAYS`, so aggregating it would make the
+     * numbers in the list table silently shrink every night.
+     *
+     * The event row's `deliveredAt`/`seenAt`/`clickedAt`/`failedAt` columns are
+     * what keeps these exact — every increment is paired with a conditional
+     * `UPDATE ... WHERE <col> IS NULL RETURNING`, so a redelivered webhook or a
+     * BullMQ retry moves the timestamp zero times and the counter with it.
+     *
+     * `sentCount` counts reply *attempts* (one per event row), which is
+     * `deliveredCount + failedCount` in the steady state — the same relation
+     * broadcast derives on the fly. It is NOT `repliesCount`: one comment
+     * answered both publicly and privately is 1 reply but 2 attempts.
+     */
+    sentCount: integer().notNull().default(0),
+    deliveredCount: integer().notNull().default(0),
+    seenCount: integer().notNull().default(0),
+    clickedCount: integer().notNull().default(0),
+    failedCount: integer().notNull().default(0),
     post: jsonb()
       .$type<FBCommentPost>()
       .notNull()

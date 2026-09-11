@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   index,
   pgEnum,
@@ -17,6 +18,7 @@ import {
   timestampConfig,
 } from "../partials/shared"
 import { contactModel } from "./contact"
+import { contactInboxModel } from "./contact-inbox"
 import { fbCommentAutomationModel } from "./fb-comment-automation"
 import { workspaceModel } from "./workspace"
 
@@ -70,6 +72,17 @@ export const fbCommentAutomationEventModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
+    /**
+     * The inbox the reply went to. Required for the read receipt: Meta's
+     * `message_reads` webhook identifies the reader by PSID only, and a private
+     * text DM leaves no `Message` row to join through — it goes straight out
+     * via `PRIVATE_REPLY_TEXT_SENDERS`. `contactId` cannot stand in: one contact
+     * can hold several inboxes.
+     */
+    contactInboxId: bigintAsString().references(() => contactInboxModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
     postId: text().notNull(),
     commentId: text().notNull(),
     /** The customer's comment. Null for an image/sticker-only comment. */
@@ -84,6 +97,25 @@ export const fbCommentAutomationEventModel = pgTable(
      */
     replyText: text(),
     status: commentAutomationEventStatus().notNull(),
+    /**
+     * Delivery timeline, mirroring `ContactOnBroadcast`. Four independent
+     * timestamps rather than more `status` values, because the outcomes are not
+     * a linear progression: a reply can be delivered and clicked, or delivered
+     * and only later reported failed.
+     *
+     * Each is written with `COALESCE`/`WHERE <col> IS NULL` so the first event
+     * wins and a redelivered webhook is a no-op — that is also what keeps the
+     * lifetime counters on `FBCommentAutomation` from double-counting.
+     *
+     * `deliveredAt` means the channel accepted the send (Graph API returned
+     * OK); Meta reports no delivery receipt for a public comment reply, so this
+     * is the only delivery signal available for the `public` channel.
+     * `seenAt` is `private` only — a public comment has no read receipt.
+     */
+    deliveredAt: timestamp(timestampConfig),
+    seenAt: timestamp(timestampConfig),
+    clickedAt: timestamp(timestampConfig),
+    failedAt: timestamp(timestampConfig),
     errorDetail: text(),
     httpCode: text(),
     /**
@@ -110,6 +142,19 @@ export const fbCommentAutomationEventModel = pgTable(
     // Serves the `onDelete: "set null"` FK scan Postgres runs on every
     // `Contact` delete, like every comparable contactId FK in the schema.
     index("FBCommentAutomationEvent_contactId_idx").on(table.contactId),
+    // Same FK-scan duty for `ContactInbox` deletes.
+    index("FBCommentAutomationEvent_contactInboxId_idx").on(
+      table.contactInboxId,
+    ),
+    // The read-receipt lookup, which runs for EVERY `message:seen` event on the
+    // platform — a read receipt carries no automation id, so the only way in is
+    // the inbox. Partial, like `ContactOnBroadcast_unsent_idx`: the rows that
+    // can still be marked seen are a vanishing fraction of the table.
+    index("FBCommentAutomationEvent_private_unseen_idx")
+      .on(table.contactInboxId)
+      .where(
+        sql`"replyChannel" = 'private' AND "deliveredAt" IS NOT NULL AND "seenAt" IS NULL`,
+      ),
     // Serves the `purgeCommentAutomationEvents` retention cron's age scan.
     index("FBCommentAutomationEvent_createdAt_idx").using(
       "btree",

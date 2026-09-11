@@ -510,6 +510,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "مُرسَل",
+      "delivered": "مُسلَّم",
+      "seen": "مُشاهَد",
+      "clicked": "منقور عليه",
+      "failed": "فشل",
+      "noContacts": "لم يتم العثور على جهات اتصال",
+      "pageInfo": "صفحة {page} من {pageCount}",
+      "selectedAll": "تم تحديد الكل",
+      "selectedCount": "تم تحديد {count}",
+      "tagAllDialogDescription": "ستتم إضافة الوسوم إلى جميع جهات الاتصال المحددة.",
+      "tagDialogDescription": "ستتم إضافة الوسوم إلى {count} جهة/جهات اتصال.",
+      "tagQueued": "جارٍ وسم {count} جهة اتصال في الخلفية.",
+      "loadingMore": "جارٍ تحميل المزيد...",
+      "receivers": "المستلمون"
+    }
+  },
   "condition": {
     "yes": "نعم",
     "no": "لا",

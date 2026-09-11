@@ -66,7 +66,7 @@ type StatsContactsDialogProps = {
   workspaceId: string
   title: string
   total: number
-  i18nNamespace: "broadcasts" | "sequences"
+  i18nNamespace: "broadcasts" | "sequences" | "commentAutomation"
   showErrors?: boolean
   fetchPage: (page: number, perPage: number) => Promise<StatsContactRow[]>
   onManualTag?: (contactIds: string[], tags: string[]) => Promise<void>
@@ -307,7 +307,7 @@ const StatsTagDialog = memo(function StatsTagDialog({
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  i18nNamespace: "broadcasts" | "sequences"
+  i18nNamespace: "broadcasts" | "sequences" | "commentAutomation"
   selectedCount: number
   selection: StatsSelection
   onManualTag: (contactIds: string[], tags: string[]) => Promise<void>

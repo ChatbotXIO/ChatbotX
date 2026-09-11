@@ -42,6 +42,8 @@ const { authorizedAPI, mocks, workspaceAuthorizedMidddleware } = vi.hoisted(
         listAdsPosts: vi.fn(),
         listReelsPosts: vi.fn(),
         loggerError: vi.fn(),
+        getCommentAutomationContacts: vi.fn(),
+        findContactInboxesByIds: vi.fn(),
         state,
       },
       workspaceAuthorizedMidddleware: vi.fn(),
@@ -58,6 +60,16 @@ vi.mock("@/lib/log", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   messengerIntegrationService: {
     findByWorkspaceId: mocks.findMessengerIntegrationsByWorkspaceId,
+  },
+  contactInboxService: { findManyByIds: mocks.findContactInboxesByIds },
+}))
+
+// `@chatbotx.io/analytics`'s barrel re-exports services that construct the
+// database pool on import, which reads server-only env and throws under jsdom.
+// The schemas entry is safe (zod only) and stays real.
+vi.mock("@chatbotx.io/analytics", () => ({
+  commentAutomationAnalyticsService: {
+    getContacts: mocks.getCommentAutomationContacts,
   },
 }))
 
@@ -163,5 +175,123 @@ describe("facebookPostsAPI", () => {
       expect.objectContaining({ integrationId: "integration-a" }),
       expect.stringContaining("Failed to list Facebook published posts"),
     )
+  })
+})
+
+const commentAutomationContactsHandler =
+  mocks.state.handlers[
+    "/workspaces/{workspaceId}/comment-automations/{automationId}/contacts"
+  ]
+
+describe("privateListCommentAutomationContactsAPI", () => {
+  const baseInput = {
+    workspaceId: "workspace-1",
+    automationId: "automation-1",
+    eventType: "message:delivered" as const,
+    total: 3,
+    page: 1,
+    perPage: 20,
+  }
+
+  test("returns the real Contact id, not the ContactInbox id, so the tag actions target the right rows", async () => {
+    mocks.getCommentAutomationContacts.mockResolvedValue({
+      contactInboxIds: ["inbox-1"],
+      contactEventMap: new Map([
+        [
+          "inbox-1",
+          {
+            contactId: "contact-1",
+            contactInboxId: "inbox-1",
+            occurredAt: "2026-09-11T00:00:00.000Z",
+          },
+        ],
+      ]),
+    })
+    mocks.findContactInboxesByIds.mockResolvedValue([
+      {
+        id: "inbox-1",
+        contactId: "contact-1",
+        sourceId: "psid-1",
+        channel: "messenger",
+        contact: {
+          id: "contact-1",
+          firstName: "Lan",
+          lastName: null,
+          fullName: "Lan",
+          avatar: null,
+        },
+        conversation: { id: "conversation-1" },
+      },
+    ])
+
+    const result = (await commentAutomationContactsHandler?.({
+      input: baseInput,
+    })) as { data: { contactId: string; contactInboxId: string }[] }
+
+    expect(result.data).toEqual([
+      expect.objectContaining({
+        contactId: "contact-1",
+        contactInboxId: "inbox-1",
+        conversationId: "conversation-1",
+      }),
+    ])
+  })
+
+  test("drops a row whose ContactInbox no longer resolves rather than rendering a blank contact", async () => {
+    mocks.getCommentAutomationContacts.mockResolvedValue({
+      contactInboxIds: ["inbox-1", "inbox-gone"],
+      contactEventMap: new Map([
+        [
+          "inbox-1",
+          {
+            contactId: "contact-1",
+            contactInboxId: "inbox-1",
+            occurredAt: "2026-09-11T00:00:00.000Z",
+          },
+        ],
+        [
+          "inbox-gone",
+          {
+            contactId: "contact-2",
+            contactInboxId: "inbox-gone",
+            occurredAt: "2026-09-11T00:00:00.000Z",
+          },
+        ],
+      ]),
+    })
+    mocks.findContactInboxesByIds.mockResolvedValue([
+      {
+        id: "inbox-1",
+        contactId: "contact-1",
+        sourceId: "psid-1",
+        channel: "messenger",
+        contact: {
+          id: "contact-1",
+          firstName: "Lan",
+          lastName: null,
+          fullName: "Lan",
+          avatar: null,
+        },
+        conversation: { id: "conversation-1" },
+      },
+    ])
+
+    const result = (await commentAutomationContactsHandler?.({
+      input: baseInput,
+    })) as { data: { contactInboxId: string }[]; pageCount: number }
+
+    expect(result.data).toHaveLength(1)
+    // `pageCount` still comes from the caller-supplied total, which is the
+    // number rendered on the column that was clicked.
+    expect(result.pageCount).toBe(1)
+  })
+
+  test("never queries when no event type is given", async () => {
+    const result = (await commentAutomationContactsHandler?.({
+      input: { ...baseInput, eventType: undefined },
+    })) as { data: unknown[]; pageCount: number }
+
+    expect(result).toEqual({ data: [], total: 3, page: 1, pageCount: 0 })
+    expect(mocks.getCommentAutomationContacts).not.toHaveBeenCalled()
   })
 })

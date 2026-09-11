@@ -2130,6 +2130,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "已傳送",
+      "delivered": "已交付",
+      "seen": "已看過",
+      "clicked": "已點擊",
+      "failed": "失敗",
+      "noContacts": "找不到聯絡人",
+      "pageInfo": "第 {page} 頁（共 {pageCount}）",
+      "selectedAll": "已全選",
+      "selectedCount": "{count}",
+      "tagAllDialogDescription": "標籤將新增到所有已選聯絡人。",
+      "tagDialogDescription": "標籤將新增到 {count} 位聯絡人。",
+      "tagQueued": "在後台標記 {count} 聯絡人。",
+      "loadingMore": "載入更多...",
+      "receivers": "接收器"
+    }
+  },
   "condition": {
     "yes": "是",
     "no": "否",

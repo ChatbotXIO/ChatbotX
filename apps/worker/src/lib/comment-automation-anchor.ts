@@ -49,6 +49,44 @@ export function readCommentAutomationAnchor(
 }
 
 /**
+ * Marks the event a comment-automation dispatch opened as delivered, once the
+ * channel has accepted the send.
+ *
+ * The mirror image of {@link settleCommentAutomationFailure} and swallows its
+ * own failures for the same reason: this runs on the success path of a send the
+ * customer has already received, and analytics bookkeeping must never turn a
+ * delivered reply into a job failure.
+ */
+export async function settleCommentAutomationDelivered(props: {
+  contentAttributes: MessageLikeContentAttributes | undefined
+  occurredAt?: Date
+}): Promise<void> {
+  const anchor = readCommentAutomationAnchor(props.contentAttributes)
+  if (!anchor) {
+    return
+  }
+
+  try {
+    await commentAutomationAnalyticsService.markDelivered({
+      automationId: anchor.automationId,
+      commentId: anchor.commentId,
+      replyChannel: anchor.replyChannel,
+      occurredAt: props.occurredAt ?? new Date(),
+    })
+  } catch (err) {
+    logger.error(
+      {
+        err,
+        automationId: anchor.automationId,
+        commentId: anchor.commentId,
+        replyChannel: anchor.replyChannel,
+      },
+      "Failed to settle a comment automation event after a successful send",
+    )
+  }
+}
+
+/**
  * Flips the optimistic `sent` event a comment-automation dispatch opened to
  * `failed`, once the channel send has terminally failed.
  *

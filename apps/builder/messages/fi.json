@@ -510,6 +510,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Lähetetty",
+      "delivered": "Toimitettu",
+      "seen": "Nähty",
+      "clicked": "Napsautettu",
+      "failed": "Epäonnistunut",
+      "noContacts": "Yhteystietoja ei löytynyt",
+      "pageInfo": "Sivu {page}/{pageCount}",
+      "selectedAll": "Kaikki valittu",
+      "selectedCount": "{count} valittu",
+      "tagAllDialogDescription": "Tunnisteet lisätään kaikkiin valittuihin yhteystietoihin.",
+      "tagDialogDescription": "Tunnisteet lisätään {count} yhteystietoon.",
+      "tagQueued": "{count} yhteystiedon tunnisteita lisätään taustalla.",
+      "loadingMore": "Ladataan lisää...",
+      "receivers": "Vastaanottajat"
+    }
+  },
   "condition": {
     "yes": "Kyllä",
     "no": "Ei",

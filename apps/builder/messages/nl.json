@@ -510,6 +510,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Verzonden",
+      "delivered": "Afgeleverd",
+      "seen": "Gezien",
+      "clicked": "Geklikt",
+      "failed": "Mislukt",
+      "noContacts": "Geen contacten gevonden",
+      "pageInfo": "Pagina {page} van {pageCount}",
+      "selectedAll": "Alles geselecteerd",
+      "selectedCount": "{count} geselecteerd",
+      "tagAllDialogDescription": "Tags worden aan alle geselecteerde contacten toegevoegd.",
+      "tagDialogDescription": "Tags worden aan {count} contact(en) toegevoegd.",
+      "tagQueued": "{count} contacten worden op de achtergrond getagd.",
+      "loadingMore": "Meer laden...",
+      "receivers": "Ontvangers"
+    }
+  },
   "fields": {
     "omnichannel": {
       "label": "Omnichannel"

@@ -1,3 +1,4 @@
+import { commentAutomationAnalyticsService } from "@chatbotx.io/analytics"
 import { conversationService } from "@chatbotx.io/business"
 import type {
   ChannelType,
@@ -208,6 +209,14 @@ export async function executePrivateReply(
       ctx.commentId,
       text,
     )
+    // Settled here rather than off a `message:delivered` webhook: this send
+    // leaves no `Message` row for a webhook to match, because it goes straight
+    // out through the comment_id-anchored Send API.
+    await commentAutomationAnalyticsService.markDelivered({
+      automationId: ctx.automationId,
+      commentId: ctx.commentId,
+      replyChannel: "private",
+    })
     return { replyType: "text", replyText: text }
   }
 
@@ -234,6 +243,9 @@ export async function executePrivateReply(
           commentAnchor: {
             commentId: ctx.commentId,
             replyChannel: "private" as const,
+            // Lets the flow runner report this reply's delivery and clicks
+            // back to the automation — see `settleCommentAutomationDelivered`.
+            automationId: ctx.automationId,
           },
         },
       },

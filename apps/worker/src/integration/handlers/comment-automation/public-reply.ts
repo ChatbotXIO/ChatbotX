@@ -174,7 +174,13 @@ export async function executePublicReply(
           contactInboxId: ctx.contactInboxId,
           flowId: publicReply.value,
           origin: webhookChannelOrigin(),
-          commentAnchor: { commentId: ctx.commentId, replyChannel: "public" },
+          commentAnchor: {
+            commentId: ctx.commentId,
+            replyChannel: "public",
+            // See the private branch: carries the automation into the flow
+            // runner so delivery and clicks can be reported back.
+            automationId: ctx.automationId,
+          },
         },
       },
       { delay: ctx.delay },

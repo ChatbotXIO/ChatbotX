@@ -32,7 +32,10 @@ import type {
   ChatJobSendTyping,
 } from "@chatbotx.io/worker-config"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
-import { settleCommentAutomationFailure } from "../../lib/comment-automation-anchor"
+import {
+  settleCommentAutomationDelivered,
+  settleCommentAutomationFailure,
+} from "../../lib/comment-automation-anchor"
 import { logger } from "../../lib/logger"
 import {
   allIntegrations,
@@ -201,6 +204,14 @@ export async function sendMessageToChannel(
       contactId: contactInbox.contactId,
       workspaceId: conversation.workspaceId,
       at: message.createdAt ?? new Date(),
+    })
+
+    // The other half of the cross-queue anchor: the integration worker recorded
+    // the attempt optimistically and only this handler knows the Graph API
+    // accepted it. Meta sends no delivery receipt for a public comment reply,
+    // so this is the automation's only delivery signal.
+    await settleCommentAutomationDelivered({
+      contentAttributes: message?.contentAttributes,
     })
 
     if (!isComment) {

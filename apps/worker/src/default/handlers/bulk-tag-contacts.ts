@@ -1,5 +1,6 @@
 import {
   broadcastAnalyticsService,
+  commentAutomationAnalyticsService,
   sequenceAnalyticsService,
 } from "@chatbotx.io/analytics"
 import { tagService } from "@chatbotx.io/business"
@@ -15,24 +16,36 @@ export async function handleBulkTagContacts(
   data: BulkTagContactsData,
   options: { attemptsMade?: number } = {},
 ): Promise<void> {
-  const fetchContactIdsPage = (cursor: string | null) =>
-    data.source === "broadcast"
-      ? broadcastAnalyticsService.getContactIdsPage({
+  const fetchContactIdsPage = (cursor: string | null) => {
+    const paging = {
+      cursor,
+      limit: loopableItemsCount,
+      excludeContactIds: data.excludedContactIds,
+    }
+    switch (data.source) {
+      case "broadcast":
+        return broadcastAnalyticsService.getContactIdsPage({
           broadcastId: data.broadcastId,
           eventType: data.eventType,
-          cursor,
-          limit: loopableItemsCount,
-          excludeContactIds: data.excludedContactIds,
+          ...paging,
         })
-      : sequenceAnalyticsService.getContactIdsPage({
+      case "sequenceStep":
+        return sequenceAnalyticsService.getContactIdsPage({
           workspaceId: data.workspaceId,
           sequenceId: data.sequenceId,
           stepId: data.stepId,
           eventType: data.eventType,
-          cursor,
-          limit: loopableItemsCount,
-          excludeContactIds: data.excludedContactIds,
+          ...paging,
         })
+      default:
+        return commentAutomationAnalyticsService.getContactIdsPage({
+          workspaceId: data.workspaceId,
+          automationId: data.automationId,
+          eventType: data.eventType,
+          ...paging,
+        })
+    }
+  }
 
   const accessScope = data.restrictToAssignedUserId
     ? {

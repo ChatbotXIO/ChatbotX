@@ -5039,6 +5039,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "נשלח",
+      "delivered": "נמסר",
+      "seen": "נצפה",
+      "clicked": "נלחץ",
+      "failed": "נכשל",
+      "noContacts": "לא נמצאו אנשי קשר",
+      "pageInfo": "עמוד {page} מתוך {pageCount}",
+      "selectedAll": "הכול נבחר",
+      "selectedCount": "נבחרו {count}",
+      "tagAllDialogDescription": "תגיות יתווספו לכל אנשי הקשר שנבחרו.",
+      "tagDialogDescription": "תגיות יתווספו ל-{count} אנשי קשר.",
+      "tagQueued": "מתבצע תיוג של {count} אנשי קשר ברקע.",
+      "loadingMore": "טוען עוד...",
+      "receivers": "נמענים"
+    }
+  },
   "condition": {
     "yes": "כן",
     "no": "לא",

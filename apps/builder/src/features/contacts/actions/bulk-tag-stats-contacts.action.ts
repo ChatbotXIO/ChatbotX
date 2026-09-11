@@ -1,5 +1,10 @@
 "use server"
 
+import type {
+  BroadcastEventType,
+  CommentAutomationEventType,
+  SequenceStepEventType,
+} from "@chatbotx.io/analytics/schemas"
 import { tagService } from "@chatbotx.io/business"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import {
@@ -12,6 +17,53 @@ import {
   type BulkTagStatsContactsRequest,
   bulkTagStatsContactsRequest,
 } from "../schema/contact-tag"
+
+/**
+ * The source-specific half of the job payload. The request and the job carry
+ * the same discriminant and the same per-source fields, so this is a narrowing,
+ * not a mapping — but they are declared in different packages, so the switch is
+ * what keeps them provably in step: a new source that only lands in one of the
+ * two unions fails to compile here.
+ */
+type BulkTagSource =
+  | { source: "broadcast"; broadcastId: string; eventType: BroadcastEventType }
+  | {
+      source: "sequenceStep"
+      sequenceId: string
+      stepId: string
+      eventType: SequenceStepEventType
+    }
+  | {
+      source: "commentAutomation"
+      automationId: string
+      eventType: CommentAutomationEventType
+    }
+
+function resolveBulkTagSource(
+  input: BulkTagStatsContactsRequest,
+): BulkTagSource {
+  switch (input.source) {
+    case "broadcast":
+      return {
+        source: "broadcast",
+        broadcastId: input.broadcastId,
+        eventType: input.eventType,
+      }
+    case "sequenceStep":
+      return {
+        source: "sequenceStep",
+        sequenceId: input.sequenceId,
+        stepId: input.stepId,
+        eventType: input.eventType,
+      }
+    default:
+      return {
+        source: "commentAutomation",
+        automationId: input.automationId,
+        eventType: input.eventType,
+      }
+  }
+}
 
 export const bulkTagStatsContactsAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -48,18 +100,7 @@ export const bulkTagStatsContactsAction = workspaceActionClient
                 restrictToAssignedUserId: accessScope.restrictToAssignedUserId,
               }
             : {}),
-          ...(parsedInput.source === "broadcast"
-            ? {
-                source: "broadcast",
-                broadcastId: parsedInput.broadcastId,
-                eventType: parsedInput.eventType,
-              }
-            : {
-                source: "sequenceStep",
-                sequenceId: parsedInput.sequenceId,
-                stepId: parsedInput.stepId,
-                eventType: parsedInput.eventType,
-              }),
+          ...resolveBulkTagSource(parsedInput),
         },
       })
     },

@@ -510,6 +510,24 @@
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
     }
   },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Gönderildi",
+      "delivered": "Teslim Edildi",
+      "seen": "Görüldü",
+      "clicked": "Tıklandı",
+      "failed": "Başarısız",
+      "noContacts": "Kişi bulunamadı",
+      "pageInfo": "{pageCount} sayfadan {page}. sayfa",
+      "selectedAll": "Tümü seçildi",
+      "selectedCount": "{count} seçildi",
+      "tagAllDialogDescription": "Etiketler seçili tüm kişilere eklenecek.",
+      "tagDialogDescription": "Etiketler {count} kişiye eklenecek.",
+      "tagQueued": "{count} kişi arka planda etiketleniyor.",
+      "loadingMore": "Daha fazlası yükleniyor...",
+      "receivers": "Alıcılar"
+    }
+  },
   "condition": {
     "yes": "Evet",
     "no": "Hayır",

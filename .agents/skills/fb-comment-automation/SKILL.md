@@ -34,6 +34,8 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 | Analytics event table | `packages/database/src/schema/fb-comment-automation-event.ts` |
 | Analytics read/write service | `packages/analytics/src/services/comment-automation-analytics.service.ts` |
 | Analytics dashboard | `packages/analytics-nextjs/src/components/comment-automation-analytics.tsx` |
+| Delivery-stat columns + dialog | `apps/builder/src/features/shared/comment-automation/comment-automation-stat-{columns,cell}.tsx`, `comment-automation-contacts-dialog.tsx` |
+| Cross-queue delivery/failure anchor | `apps/worker/src/lib/comment-automation-anchor.ts` |
 | Tests | `apps/worker/__tests__/comment-automation.test.ts` |
 
 ## Data-flow in one line
@@ -132,6 +134,36 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
     node is never called. Also note both Instagram packages log
     `module=integration-instagram`, so attribute production failures by request host, not
     module name.
+
+11. **The list columns read counters, the dialog reads events — never swap them.** The
+    Sent/Delivered/Seen/Clicked/Failed columns come from lifetime `*Count` columns on
+    `FBCommentAutomation`, NOT from aggregating `FBCommentAutomationEvent` the way
+    broadcast aggregates `ContactOnBroadcast`: a nightly cron purges event rows after
+    `COMMENT_AUTOMATION_RETENTION_DAYS`, so an aggregate would shrink every night. What
+    keeps the counters exact is that every increment counts the rows a conditional
+    `UPDATE ... WHERE "<col>At" IS NULL RETURNING "automationId"` actually returned — a
+    redelivered webhook or a BullMQ retry returns nothing and moves nothing. If you add
+    an outcome, add BOTH the timestamp column (for the drill-down and the guard) and the
+    counter, and drive the counter off the returned rows. Never increment on a call count.
+
+12. **A multi-step `flow` reply is ONE reply — its steps can settle in either order.**
+    `sendFlowStep` swallows a step's error and runs the next one, so one event row can
+    take several outcomes. Any step through means delivered and NOT failed, whichever way
+    round they land: `settleEvent` refuses to fail an already-delivered row, and
+    `markDelivered` clears an earlier `failedAt` and reports `clearedFailure` so the
+    service takes `failedCount` back down. Only every step failing counts as a failure.
+    Remove either half and a 3-step reply reports delivered + failed for the same reply,
+    pushing the column percentages (measured against attempts) past 100%.
+
+13. **Delivery is settled at each send site, not on the event bus.** There are four, and a
+    new reply type needs whichever apply: `send-message.ts` (public text/AI, via the
+    `contentAttributes.commentAutomation` anchor), `send-flow-step.ts` (both flow
+    branches, same anchor), `executePrivateReply` and `processCommentAIReply` (private,
+    sent inline through the Send API and leaving no `Message` row for a webhook to match).
+    Only **Seen** and **Clicked** ride the bus, because only they arrive later and name
+    something other than the reply. A `flow` reply carries its automation in
+    `CommentAnchor.automationId` — that is also what puts the id into
+    `encodeButtonPayload`'s 7th field so clicks can be attributed at all.
 
 ## Adding a new filter option (recipe)
 

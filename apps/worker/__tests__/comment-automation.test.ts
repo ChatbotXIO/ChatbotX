@@ -73,12 +73,14 @@ const mockFlowFindBy = vi
 const mockRecordEvent = vi.fn().mockResolvedValue(undefined)
 const mockSettleEvent = vi.fn().mockResolvedValue(undefined)
 const mockDiscardEvent = vi.fn().mockResolvedValue(undefined)
+const mockMarkDelivered = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("@chatbotx.io/analytics", () => ({
   commentAutomationAnalyticsService: {
     recordEvent: mockRecordEvent,
     settleEvent: mockSettleEvent,
     discardEvent: mockDiscardEvent,
+    markDelivered: mockMarkDelivered,
   },
 }))
 
@@ -804,7 +806,11 @@ describe("processCommentAutomation flow private reply", () => {
         type: "sendFlow",
         data: expect.objectContaining({
           flowId: "flow-1",
-          commentAnchor: { commentId: COMMENT_ID, replyChannel: "private" },
+          commentAnchor: {
+            automationId: "automation-1",
+            commentId: COMMENT_ID,
+            replyChannel: "private",
+          },
         }),
       }),
       expect.anything(),
@@ -832,7 +838,11 @@ describe("processCommentAutomation flow private reply", () => {
         type: "sendFlow",
         data: expect.objectContaining({
           flowId: "flow-1",
-          commentAnchor: { commentId: COMMENT_ID, replyChannel: "private" },
+          commentAnchor: {
+            automationId: "automation-1",
+            commentId: COMMENT_ID,
+            replyChannel: "private",
+          },
         }),
       }),
       expect.anything(),
@@ -860,7 +870,11 @@ describe("processCommentAutomation flow private reply", () => {
         type: "sendFlow",
         data: expect.objectContaining({
           flowId: "flow-1",
-          commentAnchor: { commentId: COMMENT_ID, replyChannel: "private" },
+          commentAnchor: {
+            automationId: "automation-1",
+            commentId: COMMENT_ID,
+            replyChannel: "private",
+          },
         }),
       }),
       expect.anything(),
@@ -890,7 +904,11 @@ describe("processCommentAutomation flow private reply DM conversation", () => {
         data: expect.objectContaining({
           conversationId: "dm-conversation-1",
           // The anchor still rides along untouched.
-          commentAnchor: { commentId: COMMENT_ID, replyChannel: "private" },
+          commentAnchor: {
+            automationId: "automation-1",
+            commentId: COMMENT_ID,
+            replyChannel: "private",
+          },
         }),
       }),
       expect.anything(),
@@ -958,7 +976,11 @@ describe("processCommentAutomation flow public reply", () => {
         type: "sendFlow",
         data: expect.objectContaining({
           flowId: "flow-1",
-          commentAnchor: { commentId: COMMENT_ID, replyChannel: "public" },
+          commentAnchor: {
+            automationId: "automation-1",
+            commentId: COMMENT_ID,
+            replyChannel: "public",
+          },
         }),
       }),
       expect.anything(),
@@ -979,7 +1001,11 @@ describe("processCommentAutomation flow public reply", () => {
       "sendFlow",
       expect.objectContaining({
         data: expect.objectContaining({
-          commentAnchor: { commentId: COMMENT_ID, replyChannel: "public" },
+          commentAnchor: {
+            automationId: "automation-1",
+            commentId: COMMENT_ID,
+            replyChannel: "public",
+          },
         }),
       }),
       expect.anything(),

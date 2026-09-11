@@ -107,3 +107,53 @@ describe("decodeButtonPayload bare flow ID", () => {
     expect(decodeButtonPayload("9999999999999999999:456:789")).toBeNull()
   })
 })
+
+describe("commentAutomationId in the button payload", () => {
+  test("round-trips through the 7th positional field", () => {
+    const encoded = encodeButtonPayload({
+      flowId: "123",
+      flowVersionId: "456",
+      buttonId: "789",
+      contactInboxId: "321",
+      commentAutomationId: "654",
+    })
+
+    expect(encoded).toBe("123:456:789:::321:654")
+    expect(decodeButtonPayload(encoded)).toEqual({
+      flowId: "123",
+      flowVersionId: "456",
+      buttonId: "789",
+      contactInboxId: "321",
+      commentAutomationId: "654",
+    })
+  })
+
+  test("is absent, not empty, when the flow is not a comment reply", () => {
+    const encoded = encodeButtonPayload({
+      flowId: "123",
+      buttonId: "789",
+    })
+
+    // The trailing-empty trim is what keeps this byte-identical to what the
+    // pre-`ca` encoder produced, so links already in the wild still resolve.
+    expect(encoded).toBe("123::789")
+    expect(decodeButtonPayload(encoded)).not.toHaveProperty(
+      "commentAutomationId",
+    )
+  })
+
+  test("a payload minted before the field existed still decodes", () => {
+    expect(decodeButtonPayload("123:456:789:111:222:333")).toEqual({
+      flowId: "123",
+      flowVersionId: "456",
+      buttonId: "789",
+      broadcastId: "111",
+      sequenceStepId: "222",
+      contactInboxId: "333",
+    })
+  })
+
+  test("a non-numeric automation id is rejected like every other segment", () => {
+    expect(decodeButtonPayload("123:456:789:::abc")).toBeNull()
+  })
+})

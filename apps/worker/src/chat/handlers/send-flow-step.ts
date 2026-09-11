@@ -55,6 +55,10 @@ import type {
   ChatJobSendFlowStep,
 } from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
+import {
+  settleCommentAutomationDelivered,
+  settleCommentAutomationFailure,
+} from "../../lib/comment-automation-anchor"
 import { logger } from "../../lib/logger"
 import {
   recordMessageSendError,
@@ -129,8 +133,21 @@ export const convertButtonsToTemplate = (props: {
   buttons: ButtonStepProps[]
   metadata?: MetadataPayload
   contactInboxId?: string
+  /**
+   * Set when this flow is a comment automation's reply. Broadcast and sequence
+   * attribution arrive through `metadata`; a comment reply has no metadata of
+   * its own, so it rides the `commentAnchor` instead.
+   */
+  commentAutomationId?: string
 }): MessageButtonTemplate[] => {
-  const { flowId, flowVersionId, buttons, metadata, contactInboxId } = props
+  const {
+    flowId,
+    flowVersionId,
+    buttons,
+    metadata,
+    contactInboxId,
+    commentAutomationId,
+  } = props
   const broadcastId = extractMetadata("broadcastId", metadata)
   const sequenceStepId = extractMetadata("sequenceStepId", metadata)
 
@@ -142,6 +159,7 @@ export const convertButtonsToTemplate = (props: {
       broadcastId,
       sequenceStepId,
       contactInboxId,
+      commentAutomationId,
     })
 
     if (button.buttonType === buttonTypes.enum.openWebsite) {
@@ -291,8 +309,16 @@ const convertCardsToTemplate = (props: {
   cards: SendCardStepSchema[]
   metadata?: MetadataPayload
   contactInboxId?: string
+  commentAutomationId?: string
 }): MessageCardTemplate[] => {
-  const { flowId, flowVersionId, cards, metadata, contactInboxId } = props
+  const {
+    flowId,
+    flowVersionId,
+    cards,
+    metadata,
+    contactInboxId,
+    commentAutomationId,
+  } = props
 
   return cards.map((card) => ({
     id: card.id,
@@ -307,6 +333,7 @@ const convertCardsToTemplate = (props: {
             buttons: card.buttons,
             metadata,
             contactInboxId,
+            commentAutomationId,
           })
         : undefined,
   }))
@@ -526,6 +553,7 @@ export async function sendFlowStep({
             buttons: quickRepliesWithSignedBookingLinks,
             metadata,
             contactInboxId: targetContactInbox.id,
+            commentAutomationId: commentAnchor?.automationId,
           })
         : undefined
 
@@ -538,6 +566,7 @@ export async function sendFlowStep({
             buttons: stepWithSignedBookingLinks.buttons,
             metadata,
             contactInboxId: targetContactInbox.id,
+            commentAutomationId: commentAnchor?.automationId,
           })
         : []
 
@@ -570,6 +599,7 @@ export async function sendFlowStep({
             cards: stepWithSignedBookingLinks.cards,
             metadata,
             contactInboxId: targetContactInbox.id,
+            commentAutomationId: commentAnchor?.automationId,
           }),
         },
         ...contentAttributes,
@@ -588,6 +618,23 @@ export async function sendFlowStep({
       contentAttributes = {
         ...contentAttributes,
         replyToCommentId: commentAnchor.commentId,
+      }
+    }
+
+    // The comment-automation anchor, stamped in exactly the shape
+    // `readCommentAutomationAnchor` expects (`lib/comment-automation-anchor.ts`)
+    // so a `flow` reply reports delivery and failures through the same path a
+    // `text` reply already does. `replyToCommentId` is part of that shape, so
+    // the private branch has to set it too — the public branch already did,
+    // above, for its own routing reasons.
+    if (commentAnchor?.automationId) {
+      contentAttributes = {
+        ...contentAttributes,
+        replyToCommentId: commentAnchor.commentId,
+        commentAutomation: {
+          automationId: commentAnchor.automationId,
+          replyChannel: commentAnchor.replyChannel,
+        },
       }
     }
 
@@ -749,6 +796,14 @@ export async function sendFlowStep({
       occurredAt: new Date(),
     })
 
+    // A `flow` comment reply reports delivery the same way a `text` one does.
+    // Only the first message of the run can settle it — `markDelivered` is
+    // gated on `deliveredAt IS NULL`, so the rest of the flow's steps are
+    // no-ops rather than inflating the count.
+    await settleCommentAutomationDelivered({
+      contentAttributes: message.contentAttributes,
+    })
+
     // Send contact tracking event
     emit("analytics:dashboard", {
       eventType: "message:bot_sent",
@@ -821,6 +876,14 @@ export async function sendFlowStep({
       message?.createdAt,
       parsedError.message,
     )
+
+    // Always terminal here, for the same reason the `message:failed` emit above
+    // says so: this catch swallows the error, so nothing will re-attempt the
+    // send and flipping the automation's event to `failed` cannot be premature.
+    await settleCommentAutomationFailure({
+      contentAttributes: message?.contentAttributes,
+      errorDetail: parsedError.message,
+    })
 
     if (trackingContext) {
       await emit("analytics:dashboard", {
