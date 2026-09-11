@@ -34,5 +34,8 @@ export const deleteAIMcpServer = async (ctx: {
     )
   }
 
-  await aiMcpServerService.delete(ctx.aiMcpServerId)
+  await aiMcpServerService.delete({
+    workspaceId: ctx.workspaceId,
+    id: ctx.aiMcpServerId,
+  })
 }

@@ -44,6 +44,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     update: mockUpdate,
   },
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
+  and: vi.fn((...args: unknown[]) => ({ and: args })),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -92,13 +93,16 @@ describe("aiMcpServerService audit messages", () => {
   })
 
   test("update logs by id", async () => {
-    await aiMcpServerService.update("mcp-server-1", request)
+    await aiMcpServerService.update(
+      { workspaceId, id: "mcp-server-1" },
+      request,
+    )
 
     expect(lastAuditDetail()).toBe("updated an MCP Server (#mcp-server-1)")
   })
 
   test("delete logs by id", async () => {
-    await aiMcpServerService.delete("mcp-server-1")
+    await aiMcpServerService.delete({ workspaceId, id: "mcp-server-1" })
 
     expect(lastAuditDetail()).toBe("deleted an MCP Server (#mcp-server-1)")
   })
@@ -106,7 +110,7 @@ describe("aiMcpServerService audit messages", () => {
   test("update does not audit when the id does not exist", async () => {
     mockUpdateReturning.mockResolvedValue([])
 
-    await aiMcpServerService.update("missing", request)
+    await aiMcpServerService.update({ workspaceId, id: "missing" }, request)
 
     expect(dispatchAuditRecord).not.toHaveBeenCalled()
   })
@@ -114,7 +118,7 @@ describe("aiMcpServerService audit messages", () => {
   test("delete does not audit when the id does not exist", async () => {
     mockDeleteReturning.mockResolvedValue([])
 
-    await aiMcpServerService.delete("missing")
+    await aiMcpServerService.delete({ workspaceId, id: "missing" })
 
     expect(dispatchAuditRecord).not.toHaveBeenCalled()
   })

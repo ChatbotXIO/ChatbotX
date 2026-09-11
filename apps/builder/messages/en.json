@@ -971,9 +971,6 @@
     "aiFunction": {
       "label": "AI Function"
     },
-    "aiTrigger": {
-      "label": "AI Trigger"
-    },
     "alphanumericLength": {
       "label": "Alphanumeric Length"
     },
@@ -3598,10 +3595,6 @@
     "agents": {
       "description": "AI Agents description",
       "title": "AI Agents"
-    },
-    "aiTriggers": {
-      "description": "AI Triggers description",
-      "title": "AI Triggers"
     },
     "automatedResponses": {
       "title": "Keywords"

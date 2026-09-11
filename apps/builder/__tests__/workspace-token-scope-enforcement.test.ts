@@ -163,7 +163,7 @@ describe("workspace API token resource-scope enforcement", () => {
     })
   })
 
-  test("an automation-scoped token can hit an automation write route (e.g. POST /v1/flows, POST /v1/ai-triggers)", async () => {
+  test("an automation-scoped token can hit an automation write route (e.g. POST /v1/flows, POST /v1/ai-functions)", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(["automation"]))
 
     const procedure = buildProcedure("automation", "POST")

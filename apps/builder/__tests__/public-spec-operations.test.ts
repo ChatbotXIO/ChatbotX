@@ -284,21 +284,26 @@ describe("public API spec — operation naming guard", () => {
 
       // Same pre-existing-shared-resource-schema leak pattern as above,
       // introduced by the automation public API (flows, triggers, keywords,
-      // ai-agents, reflinks, ai-triggers) — see PR that added
-      // `aiAgentsPublicRouter`/`aiTriggersPublicRouter`/etc. Each of these
-      // reuses a resource schema shared with private (non-public) callers,
-      // so `workspaceId` can't be omitted from the shared schema without
-      // breaking those callers. Fix per operation by giving the public
-      // router its own `.omit({ workspaceId: true })` output schema,
+      // ai-agents, ai-mcp-servers, ai-functions, ai-files, reflinks) — each
+      // of these reuses a resource schema shared with private (non-public)
+      // callers, so `workspaceId` can't be omitted from the shared schema
+      // without breaking those callers. Fix per operation by giving the
+      // public router its own `.omit({ workspaceId: true })` output schema,
       // mirroring `apps/builder/src/features/analytics/schema/public.ts`.
       "aiAgents.create",
       "aiAgents.get",
       "aiAgents.update",
-      "aiTriggers.list",
-      "aiTriggers.create",
-      "aiTriggers.get",
-      "aiTriggers.update",
-      "aiTriggers.duplicate",
+      "aiMcpServers.list",
+      "aiMcpServers.create",
+      "aiMcpServers.get",
+      "aiMcpServers.update",
+      "aiFunctions.list",
+      "aiFunctions.create",
+      "aiFunctions.get",
+      "aiFunctions.update",
+      "aiFiles.list",
+      "aiFiles.create",
+      "aiFiles.get",
       "flows.get",
       "flows.versions",
       "reflinks.list",

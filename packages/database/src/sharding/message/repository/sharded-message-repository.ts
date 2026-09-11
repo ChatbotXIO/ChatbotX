@@ -1262,6 +1262,7 @@ export class ShardedMessageRepository implements IMessageRepository {
         const existingWithAttachments = await this.findById({
           id: existing.id,
           createdAt: existing.createdAt,
+          conversationId: message.conversationId,
           workspaceId: message.workspaceId,
         })
         return {
@@ -1369,6 +1370,7 @@ export class ShardedMessageRepository implements IMessageRepository {
   async findById({
     id,
     createdAt,
+    conversationId,
     workspaceId,
   }: FindMessageByIdParams): Promise<MessageWithAttachments | null> {
     const shards = await this.getConversationReadShards(createdAt, workspaceId)
@@ -1389,6 +1391,9 @@ export class ShardedMessageRepository implements IMessageRepository {
                   eq(messageModel.id, id),
                   eq(messageModel.createdAt, createdAt),
                   eq(messageModel.workspaceId, workspaceId),
+                  conversationId
+                    ? eq(messageModel.conversationId, conversationId)
+                    : undefined,
                 ),
               )
               .limit(1)

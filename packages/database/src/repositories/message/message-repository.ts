@@ -118,6 +118,10 @@ export interface FindRichResponseByButtonParams {
 }
 
 export interface FindMessageByIdParams {
+  // Optional: when supplied, the lookup is scoped to this conversation too,
+  // so a message id/createdAt pair belonging to a different conversation in
+  // the same workspace returns null instead of leaking across conversations.
+  conversationId?: string
   createdAt: Date
   id: string
   workspaceId: string

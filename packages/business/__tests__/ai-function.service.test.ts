@@ -164,14 +164,51 @@ describe("aiFunctionService audit messages", () => {
     expect(dispatchAuditRecord).not.toHaveBeenCalled()
   })
 
-  test("list returns AI Functions scoped to the workspace", async () => {
+  test("listAIFunctions returns AI Functions scoped to the workspace", async () => {
     mockFindMany.mockResolvedValue([aiFunction])
 
-    const result = await aiFunctionService.list({ workspaceId })
+    const result = await aiFunctionService.listAIFunctions({ workspaceId })
 
-    expect(result).toEqual([aiFunction])
-    expect(mockFindMany).toHaveBeenCalledWith({
-      where: { workspaceId },
-    })
+    expect(result).toEqual({ data: [aiFunction], pageCount: 1 })
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { workspaceId } }),
+    )
+  })
+})
+
+describe("aiFunctionService without a translator (public API path)", () => {
+  test("updateAIFunction throws the plain-English fallback when missing", async () => {
+    mockFindFirst.mockResolvedValue(undefined)
+
+    await expect(
+      aiFunctionService.updateAIFunction(
+        { id: "missing", workspaceId },
+        request,
+      ),
+    ).rejects.toThrow("AI Function not found")
+  })
+
+  test("deleteAIFunction throws the plain-English fallback when missing", async () => {
+    mockFindFirst.mockResolvedValue(undefined)
+
+    await expect(
+      aiFunctionService.deleteAIFunction({
+        aiFunctionId: "missing",
+        workspaceId,
+      }),
+    ).rejects.toThrow("AI Function not found")
+  })
+
+  test("updateAIFunction resolves the updated row", async () => {
+    mockUpdateReturning.mockResolvedValue([
+      { id: "function-1", name: "Renamed" },
+    ])
+
+    const updated = await aiFunctionService.updateAIFunction(
+      { id: "function-1", workspaceId },
+      request,
+    )
+
+    expect(updated).toEqual({ id: "function-1", name: "Renamed" })
   })
 })

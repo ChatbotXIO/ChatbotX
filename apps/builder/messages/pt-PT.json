@@ -834,9 +834,6 @@
     "aiFunction": {
       "label": "Função de IA"
     },
-    "aiTrigger": {
-      "label": "Acionador de IA"
-    },
     "alphanumericLength": {
       "label": "Comprimento alfanumérico"
     },
@@ -3411,10 +3408,6 @@
     "agents": {
       "description": "Descrição dos agentes de IA",
       "title": "Agentes de IA"
-    },
-    "aiTriggers": {
-      "description": "Descrição dos acionadores de IA",
-      "title": "Acionadores de IA"
     },
     "automatedResponses": {
       "title": "Palavras-chave"

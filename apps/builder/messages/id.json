@@ -834,9 +834,6 @@
     "aiFunction": {
       "label": "Fungsi AI"
     },
-    "aiTrigger": {
-      "label": "Trigger AI"
-    },
     "alphanumericLength": {
       "label": "Panjang Alfanumerik"
     },
@@ -3411,10 +3408,6 @@
     "agents": {
       "description": "Deskripsi Agen AI",
       "title": "Agen AI"
-    },
-    "aiTriggers": {
-      "description": "Deskripsi Pemicu AI",
-      "title": "Pemicu AI"
     },
     "automatedResponses": {
       "title": "Kata Kunci"

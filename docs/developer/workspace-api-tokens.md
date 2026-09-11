@@ -160,9 +160,11 @@ an endpoint's scope.
   declare a scope, or if `messages.ts`'s procedures drift onto `contacts`.
 
 - **Automation** — covers flows, triggers, keywords (automated responses),
-  AI agents, ref links, and AI triggers — a full CRUD surface so an agent can
-  build, publish, and inspect automations without human help via the builder
-  UI. Two invariants:
+  AI agents, AI MCP servers, AI functions, AI files, and ref links — a full
+  CRUD surface so an agent can build, publish, and inspect automations
+  without human help via the builder UI. AI triggers were retired (dropped
+  from the schema and this scope) in favor of the AI files/functions/MCP
+  servers surface. Two invariants:
   - *Keywords `type` filter* — `AutomatedResponse` serves two `FolderType`s
     off one table (`automatedResponse` for inbound/Contact,
     `outboundAutomatedResponse` for outbound/Page), disambiguated by the

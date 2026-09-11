@@ -59,5 +59,8 @@ export const updateAIMcpServer = async (
     })
   }
 
-  await aiMcpServerService.update(mcpServer.id, parsedInput)
+  await aiMcpServerService.update(
+    { workspaceId: ctx.workspaceId, id: mcpServer.id },
+    parsedInput,
+  )
 }

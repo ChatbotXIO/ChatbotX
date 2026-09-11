@@ -834,9 +834,6 @@
     "aiFunction": {
       "label": "AI Function"
     },
-    "aiTrigger": {
-      "label": "AI Trigger"
-    },
     "alphanumericLength": {
       "label": "Alphanumeric Length"
     },
@@ -3411,10 +3408,6 @@
     "agents": {
       "description": "AI Agenter beskrivelse",
       "title": "AI-agenter"
-    },
-    "aiTriggers": {
-      "description": "AI Triggers beskrivelse",
-      "title": "AI Triggers"
     },
     "automatedResponses": {
       "title": "Nøgleord"

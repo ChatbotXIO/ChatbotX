@@ -1545,10 +1545,6 @@
       "description": "תיאור סוכני AI",
       "title": "סוכני AI"
     },
-    "aiTriggers": {
-      "description": "תיאור גורמים מפעילים של AI",
-      "title": "גורמים מפעילים של AI"
-    },
     "automatedResponses": {
       "title": "מילות מפתח"
     },
@@ -3520,9 +3516,6 @@
     },
     "aiFunction": {
       "label": "פונקציית AI"
-    },
-    "aiTrigger": {
-      "label": "גורם מפעיל של AI"
     },
     "alphanumericLength": {
       "label": "אורך אלפאנומרי"

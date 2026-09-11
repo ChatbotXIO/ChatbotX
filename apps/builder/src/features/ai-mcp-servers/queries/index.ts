@@ -10,9 +10,5 @@ export async function listAIMcpServers(
 ): Promise<ListAIMcpServersResponse & { pageCount: number }> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const data = await aiMcpServerService.list({
-    where: { workspaceId: input.workspaceId },
-  })
-
-  return { data, pageCount: 1 }
+  return await aiMcpServerService.listAIMcpServers(input)
 }

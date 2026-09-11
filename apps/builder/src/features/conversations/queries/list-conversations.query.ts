@@ -1,5 +1,3 @@
-"use server"
-
 import { conversationService } from "@chatbotx.io/business"
 import { resolveAdReferral } from "@chatbotx.io/business/ads-conversion/channel-fields"
 import { notFoundException } from "@chatbotx.io/business/errors"

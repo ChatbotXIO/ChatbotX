@@ -834,9 +834,6 @@
     "aiFunction": {
       "label": "AI-toiminto"
     },
-    "aiTrigger": {
-      "label": "AI-käynnistin"
-    },
     "alphanumericLength": {
       "label": "Aakkosnumeerinen pituus"
     },
@@ -3411,10 +3408,6 @@
     "agents": {
       "description": "AI-agenttien kuvaus",
       "title": "AI-agentit"
-    },
-    "aiTriggers": {
-      "description": "AI-käynnistimien kuvaus",
-      "title": "AI-käynnistimet"
     },
     "automatedResponses": {
       "title": "Avainsanat"

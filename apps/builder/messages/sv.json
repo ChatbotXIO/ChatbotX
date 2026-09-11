@@ -1563,9 +1563,6 @@
     "aiQueuedMessages": {
       "label": "Köade AI-meddelanden"
     },
-    "aiTrigger": {
-      "label": "AI-utlösare"
-    },
     "alphanumericLength": {
       "label": "Alfanumerisk längd"
     },
@@ -4636,10 +4633,6 @@
     "agents": {
       "description": "Beskrivning av AI-agenter",
       "title": "AI-agenter"
-    },
-    "aiTriggers": {
-      "description": "Beskrivning av AI-utlösare",
-      "title": "AI-utlösare"
     },
     "automatedResponses": {
       "title": "Nyckelord"

@@ -62,7 +62,6 @@ const DEFAULTS_MISSING_FROM_DATABASE = [
   "AIAssistant.aiTriggerIds",
   "AIAssistant.attachmentIds",
   "AIMCPServer.selectedTools",
-  "AITrigger.questions",
   "AutomatedResponse.keywords",
   "Folder.paths",
   "IntegrationInstagram.conversationStarters",
