@@ -354,7 +354,7 @@ beforeEach(() => {
 
 describe("isCommentReply", () => {
   test("top-level comment: parentId equals postId", () => {
-    expect(isCommentReply(POST_ID, POST_ID)).toBe(false)
+    expect(isCommentReply(POST_ID, POST_ID, COMMENT_ID)).toBe(false)
   })
 
   // Production payload: on a photo post the leading half of `parent_id` is the
@@ -403,12 +403,11 @@ describe("isCommentReply", () => {
   })
 
   test("reply: parentId is another comment id", () => {
-    expect(isCommentReply(OTHER_COMMENT_ID, POST_ID)).toBe(true)
     expect(isCommentReply(OTHER_COMMENT_ID, POST_ID, COMMENT_ID)).toBe(true)
   })
 
   test("no parentId", () => {
-    expect(isCommentReply(undefined, POST_ID)).toBe(false)
+    expect(isCommentReply(undefined, POST_ID, COMMENT_ID)).toBe(false)
   })
 })
 

@@ -92,7 +92,7 @@ export function matchKeywords(
 export function isCommentReply(
   parentId: string | undefined,
   postId: string,
-  commentId?: string,
+  commentId: string,
 ): boolean {
   if (!parentId) {
     return false
@@ -101,7 +101,7 @@ export function isCommentReply(
   if (parent === normalizePostId(postId)) {
     return false
   }
-  return !(commentId && parent === objectIdOf(commentId))
+  return parent !== objectIdOf(commentId)
 }
 
 export function willSendReply(reply: FBCommentReply): boolean {

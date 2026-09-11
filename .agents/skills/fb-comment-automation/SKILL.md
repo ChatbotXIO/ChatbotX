@@ -42,10 +42,16 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 
 ## The traps (read before editing)
 
-1. **`parent_id` is ALWAYS present and equals `post_id` for top-level comments.** A truthy
-   `parentId` does NOT mean "reply." Use `isCommentReply(parentId, postId)`
-   (`parentId !== postId`). Breaking this + default `ignoreCommentReplies: true` silently
-   drops every top-level comment.
+1. **`parent_id` is ALWAYS present, but it does NOT always equal `post_id` on a top-level
+   comment.** A truthy `parentId` does not mean "reply", and neither does
+   `parentId !== postId` — Facebook varies the composite per post type. A reel sends
+   `parent_id` byte-identical to `post_id`; a **photo post sends `{albumId}_{storyId}`**,
+   where only the trailing story id agrees. Use
+   `isCommentReply(parentId, postId, commentId)`, which compares the **trailing** ids via
+   `normalizePostId`. Testing the raw strings + default `ignoreCommentReplies: true`
+   silently drops every top-level comment on a photo post. A reply is still safe to spot
+   because `comment_id` stays anchored to the story (`{storyId}_{replyId}`) even for a
+   reply, so it can never collide with its own `parent_id`'s trailing half.
 
 2. **Post ids are composite `{pageId}_{storyId}`**; the picker stores 3 different formats
    (published/ads composite, reels bare id, manual free-text). Always compare through
