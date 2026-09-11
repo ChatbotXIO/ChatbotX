@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { integrationSmtpModel } from "@chatbotx.io/database/schema"
 import type {
@@ -114,12 +114,20 @@ class IntegrationSmtpService extends BaseService {
     fromAddress: string
     tx?: DatabaseClient
   }): Promise<IntegrationSmtpModel> {
-    const { id, auth, name, fromAddress, tx = db } = input
+    const { workspaceId, id, auth, name, fromAddress, tx = db } = input
 
+    // Scoped by workspace as well as id: callers already pre-check ownership
+    // via `findByIdForWorkspace`, but this method accepts a `workspaceId` and
+    // must honour it rather than trusting every future caller to guard first.
     const [updated] = await tx
       .update(integrationSmtpModel)
       .set({ auth, name, fromAddress })
-      .where(eq(integrationSmtpModel.id, id))
+      .where(
+        and(
+          eq(integrationSmtpModel.id, id),
+          eq(integrationSmtpModel.workspaceId, workspaceId),
+        ),
+      )
       .returning()
 
     if (!updated) {
@@ -141,7 +149,12 @@ class IntegrationSmtpService extends BaseService {
     const run = async (client: DatabaseClient) => {
       await client
         .delete(integrationSmtpModel)
-        .where(eq(integrationSmtpModel.id, id))
+        .where(
+          and(
+            eq(integrationSmtpModel.id, id),
+            eq(integrationSmtpModel.workspaceId, workspaceId),
+          ),
+        )
 
       await inboxService.disconnect({
         inboxId,

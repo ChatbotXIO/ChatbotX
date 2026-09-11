@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
-import { db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
+import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import { integrationTiktokModel } from "@chatbotx.io/database/schema"
 import type { IntegrationTiktokModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
@@ -138,7 +138,12 @@ class TiktokIntegrationService extends BaseService {
     const run = async (client: DatabaseClient) => {
       await client
         .delete(integrationTiktokModel)
-        .where(eq(integrationTiktokModel.id, id))
+        .where(
+          and(
+            eq(integrationTiktokModel.id, id),
+            eq(integrationTiktokModel.workspaceId, workspaceId),
+          ),
+        )
       await inboxService.disconnect({
         inboxId,
         ownerId,

@@ -73,6 +73,10 @@ vi.mock("../src/tag/sync.service", () => ({
   tagSyncService: { enqueueChannelScan: mockEnqueueChannelScan },
 }))
 
+vi.mock("../src/logger", () => ({
+  logger: { error: vi.fn(), warn: vi.fn() },
+}))
+
 const { zaloIntegrationService } = await import(
   "../src/integration-zalo/service"
 )
@@ -80,6 +84,10 @@ const { zaloIntegrationService } = await import(
 describe("zaloIntegrationService.connect", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // `clearAllMocks` clears calls but keeps implementations, so tests that
+    // install a failing/slow stub below must not leak into their neighbours.
+    mockInvalidateCacheByTags.mockResolvedValue(undefined)
+    mockEnqueueChannelScan.mockResolvedValue(undefined)
     mockInsertReturning.mockResolvedValue([{ id: "integration-1" }])
     mockTransaction.mockImplementation(
       async (callback: (tx: unknown) => unknown) =>
@@ -113,6 +121,91 @@ describe("zaloIntegrationService.connect", () => {
       "workspaces:ws-1#zalos",
     ])
     expect(result.wasCreated).toBe(true)
+  })
+
+  // The cache invalidation is a Redis round-trip; if it is not awaited the
+  // OAuth callback redirects before the tag is cleared and the channels page
+  // renders a stale list that omits the OA just connected.
+  test("awaits the cache invalidation before returning", async () => {
+    // The stub stays pending until `release()` is called, so `connect` can only
+    // settle if it actually awaits it. A fire-and-forget call would resolve the
+    // promise below while the invalidation is still in flight.
+    let release: () => void = () => undefined
+    let invalidationSettled = false
+    mockInvalidateCacheByTags.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          release = () => {
+            invalidationSettled = true
+            resolve()
+          }
+        }),
+    )
+    mockConnectChannelIntegration.mockImplementation(
+      async (props: {
+        insertIntegration: (
+          inboxId: string,
+          wasCreated: boolean,
+        ) => Promise<unknown>
+      }) => {
+        await props.insertIntegration("inbox-1", true)
+        return { wasCreated: true }
+      },
+    )
+
+    let connectResolved = false
+    const connecting = zaloIntegrationService
+      .connect({
+        workspaceId: "ws-1",
+        ownerId: "owner-1",
+        oaId: "oa-1",
+        name: "My OA",
+        auth: {},
+      })
+      .then((result) => {
+        connectResolved = true
+        return result
+      })
+
+    // Let every already-resolved microtask drain; `connect` must still be
+    // parked on the pending invalidation.
+    await new Promise((resolve) => setImmediate(resolve))
+    expect(connectResolved).toBe(false)
+
+    release()
+    await connecting
+
+    expect(invalidationSettled).toBe(true)
+  })
+
+  // The row is already committed by this point, so a queue outage must not
+  // fail the connect — the caller still has to write its audit record.
+  test("survives a channel-scan enqueue failure", async () => {
+    mockEnqueueChannelScan.mockRejectedValue(new Error("redis down"))
+    mockConnectChannelIntegration.mockImplementation(
+      async (props: {
+        insertIntegration: (
+          inboxId: string,
+          wasCreated: boolean,
+        ) => Promise<unknown>
+      }) => {
+        await props.insertIntegration("inbox-1", true)
+        return { wasCreated: true }
+      },
+    )
+
+    const result = await zaloIntegrationService.connect({
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+      oaId: "oa-1",
+      name: "My OA",
+      auth: {},
+    })
+
+    expect(result).toEqual({
+      integrationId: "integration-1",
+      wasCreated: true,
+    })
   })
 
   test("does not enqueue a channel scan when no integration id was produced", async () => {

@@ -11,6 +11,9 @@ const {
   mockParsePagination,
   mockRelationsFilterToSQL,
   mockTransaction,
+  mockUpdate,
+  mockUpdateSet,
+  mockUpdateWhere,
   mockWorkspaceCreate,
   mockWorkspaceFindOrFail,
 } = vi.hoisted(() => {
@@ -18,8 +21,14 @@ const {
   const mockInsertReturning = vi.fn(async () => [{ id: "webchat-1" }])
   const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
   const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
+  const mockUpdateWhere = vi.fn(async () => undefined)
+  const mockUpdateSet = vi.fn(() => ({ where: mockUpdateWhere }))
+  const mockUpdate = vi.fn(() => ({ set: mockUpdateSet }))
 
   return {
+    mockUpdate,
+    mockUpdateSet,
+    mockUpdateWhere,
     mockCount: vi.fn(async () => 25),
     mockCreateId: vi.fn(() => `id-${++createIdCallCount}`),
     mockFindFirst: vi.fn(),
@@ -46,6 +55,7 @@ const {
 })
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  and: vi.fn((...conditions: unknown[]) => ({ conditions })),
   db: {
     $count: mockCount,
     query: {
@@ -55,6 +65,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
       },
     },
     transaction: mockTransaction,
+    update: mockUpdate,
   },
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
   findOrFail: vi.fn(async ({ where }: { where: unknown }) => {
@@ -217,5 +228,46 @@ describe("integrationWebchatService.findByIdForWorkspaceOrNull", () => {
     })
 
     expect(result).toBeUndefined()
+  })
+})
+
+describe("integrationWebchatService.update", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // The action layer pre-checks ownership, but the method takes a
+  // `workspaceId` and must scope on it itself — a mismatched (id, workspaceId)
+  // pair must update nothing rather than another workspace's row.
+  test("scopes the update by workspaceId as well as id", async () => {
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { name: "Support" },
+    })
+
+    expect(mockUpdateWhere).toHaveBeenCalledWith({
+      conditions: [
+        { field: "id", value: "webchat-1" },
+        { field: "workspaceId", value: "ws-1" },
+      ],
+    })
+  })
+
+  // `workspaceId` scopes the row; writing it would let a mismatched pair move
+  // the webchat into another workspace.
+  test("never writes workspaceId into the update payload", async () => {
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { name: "Support" },
+    })
+
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.not.objectContaining({ workspaceId: expect.anything() }),
+    )
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Support" }),
+    )
   })
 })

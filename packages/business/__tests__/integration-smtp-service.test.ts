@@ -10,6 +10,7 @@ const {
   mockTransaction,
   mockUpdate,
   mockUpdateReturning,
+  mockUpdateWhere,
 } = vi.hoisted(() => {
   const mockDeleteWhere = vi.fn(async () => undefined)
   const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }))
@@ -33,10 +34,12 @@ const {
     ),
     mockUpdate,
     mockUpdateReturning,
+    mockUpdateWhere,
   }
 })
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  and: vi.fn((...conditions: unknown[]) => ({ conditions })),
   db: {
     delete: mockDelete,
     transaction: mockTransaction,
@@ -51,7 +54,7 @@ vi.mock("@chatbotx.io/database/partials", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationSmtpModel: { id: "id" },
+  integrationSmtpModel: { id: "id", workspaceId: "workspaceId" },
 }))
 
 vi.mock("@chatbotx.io/utils", () => ({
@@ -141,6 +144,30 @@ describe("integrationSmtpService.update", () => {
       id: "smtp-1",
       name: "updated",
       fromAddress: "a@b.com",
+    })
+  })
+
+  // The action layer pre-checks ownership via `findByIdForWorkspace`, but the
+  // method takes a `workspaceId` and must scope on it itself — otherwise a
+  // future caller that trusts the parameter writes across workspaces.
+  test("scopes the update by workspaceId as well as id", async () => {
+    mockUpdateReturning.mockResolvedValue([
+      { id: "smtp-1", name: "updated", fromAddress: "a@b.com" },
+    ])
+
+    await integrationSmtpService.update({
+      workspaceId: "ws-1",
+      id: "smtp-1",
+      auth,
+      name: "updated",
+      fromAddress: "a@b.com",
+    })
+
+    expect(mockUpdateWhere).toHaveBeenCalledWith({
+      conditions: [
+        { field: "id", value: "smtp-1" },
+        { field: "workspaceId", value: "ws-1" },
+      ],
     })
   })
 })

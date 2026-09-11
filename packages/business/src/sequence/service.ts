@@ -207,9 +207,16 @@ class SequenceService extends BaseService {
   /**
    * One page of a sequence step's recipients for a given delivery event,
    * with contact display fields attached — shared by callers of the
-   * "list sequence step contacts" route so the orchestration (ownership
-   * assertion → analytics lookup → contact-inbox fetch → row shape) lives
-   * in one place instead of being copy-pasted per handler.
+   * "list sequence step contacts" route so the orchestration (analytics
+   * lookup → contact-inbox fetch → row shape) lives in one place instead of
+   * being copy-pasted per handler.
+   *
+   * Unlike `broadcastService.listContactsPage` there is no up-front
+   * existence/ownership assertion, because every read below is already
+   * workspace-scoped in SQL (`sequenceStatsRepository.getContacts` filters on
+   * `workspaceId`, and `contactInboxService.findManyByIds` requires one). A
+   * foreign or non-existent `sequenceId` therefore yields an empty page
+   * rather than another workspace's rows — it just does not 404.
    *
    * `total` is caller-supplied rather than repository-computed: unlike
    * broadcasts, `sequenceStatsRepository.getContacts` has no count query

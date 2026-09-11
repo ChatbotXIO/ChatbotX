@@ -1,5 +1,6 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import {
+  and,
   db,
   eq,
   findOrFail,
@@ -149,7 +150,12 @@ class TelegramIntegrationService extends BaseService {
     const run = async (client: DatabaseClient) => {
       await client
         .delete(integrationTelegramModel)
-        .where(eq(integrationTelegramModel.id, id))
+        .where(
+          and(
+            eq(integrationTelegramModel.id, id),
+            eq(integrationTelegramModel.workspaceId, workspaceId),
+          ),
+        )
       await inboxService.disconnect({
         inboxId,
         ownerId,

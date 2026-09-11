@@ -39,6 +39,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     delete: mockDelete,
     transaction: mockTransaction,
   },
+  and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
   findOrFail: vi.fn(),
   inArray: vi.fn((field: unknown, values: unknown[]) => ({ field, values })),

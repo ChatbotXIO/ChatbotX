@@ -10,6 +10,7 @@ import { BaseService } from "../base.service"
 import { channelDuplicatedException } from "../errors"
 import { connectChannelIntegration } from "../inbox/connect-channel"
 import { inboxService } from "../inbox/service"
+import { logger } from "../logger"
 import { tagSyncService } from "../tag/sync.service"
 
 class ZaloIntegrationService extends BaseService {
@@ -159,15 +160,25 @@ class ZaloIntegrationService extends BaseService {
       channelWasCreated = wasCreated
     })
 
-    this.invalidateCacheTags(`workspaces:${workspaceId}#zalos`)
+    await this.invalidateCacheTags(`workspaces:${workspaceId}#zalos`)
 
-    // Import any tags already on the OA into local tags + mappings.
+    // Import any tags already on the OA into local tags + mappings. The row is
+    // already committed, so a queue outage must not fail the connect — and must
+    // not run before the caller's audit record either, or a throw here would
+    // leave a connected channel with no audit trail.
     if (connectedIntegrationId) {
-      await tagSyncService.enqueueChannelScan({
-        workspaceId,
-        channelType: channelTypes.enum.zalo,
-        integrationId: connectedIntegrationId,
-      })
+      await tagSyncService
+        .enqueueChannelScan({
+          workspaceId,
+          channelType: channelTypes.enum.zalo,
+          integrationId: connectedIntegrationId,
+        })
+        .catch((err) => {
+          logger.warn(
+            { err, workspaceId, integrationId: connectedIntegrationId },
+            "zalo connect: channel tag scan enqueue failed",
+          )
+        })
     }
 
     return {
@@ -197,7 +208,12 @@ class ZaloIntegrationService extends BaseService {
         )
       await client
         .delete(integrationZaloModel)
-        .where(eq(integrationZaloModel.id, id))
+        .where(
+          and(
+            eq(integrationZaloModel.id, id),
+            eq(integrationZaloModel.workspaceId, workspaceId),
+          ),
+        )
       await inboxService.disconnect({
         inboxId,
         ownerId,

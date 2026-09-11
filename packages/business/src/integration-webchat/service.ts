@@ -1,5 +1,6 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import {
+  and,
   db,
   eq,
   findOrFail,
@@ -252,15 +253,23 @@ class IntegrationWebchatService extends BaseService {
   }): Promise<void> {
     const { workspaceId, id, data, tx = db } = input
 
+    // `workspaceId` scopes the row, it is never written: assigning it in `set`
+    // would silently move the webchat to another workspace on a mismatched
+    // (id, workspaceId) pair. Callers pre-check via `findByIdForWorkspace`, but
+    // this method accepts a `workspaceId` and must enforce it on its own.
     await tx
       .update(integrationWebchatModel)
       .set({
         ...data,
-        workspaceId,
         conversationStarters: data.conversationStarters as never,
         persistentMenus: data.persistentMenus as never,
       })
-      .where(eq(integrationWebchatModel.id, id))
+      .where(
+        and(
+          eq(integrationWebchatModel.id, id),
+          eq(integrationWebchatModel.workspaceId, workspaceId),
+        ),
+      )
   }
 }
 
