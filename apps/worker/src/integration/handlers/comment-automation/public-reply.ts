@@ -28,9 +28,16 @@ import { type CommentReplyOutcome, describeFlowReply } from "./reply-outcome"
  * `text` reply type (dispatched immediately, sends after `delay`) and
  * `processCommentAIReply` (already runs inside a job delayed by the caller, so
  * no further `delay` applies).
+ *
+ * Nothing reaches Facebook here — `sendChannelMessage` makes the Graph API call
+ * in the chat worker. That is why `contentAttributes.commentAutomation` carries
+ * the automation anchor: the analytics event this dispatch opened is recorded
+ * `sent` optimistically, and only the chat worker knows whether the send
+ * actually landed (see `settleCommentAutomationFailure`).
  */
 export async function postPublicCommentReply(props: {
   text: string
+  automationId: string
   commentId: string
   conversationId: string
   contactInboxId: string
@@ -50,7 +57,13 @@ export async function postPublicCommentReply(props: {
     senderType: "bot" as const,
     text: props.text,
     type: "comment" as const,
-    contentAttributes: { replyToCommentId: props.commentId },
+    contentAttributes: {
+      replyToCommentId: props.commentId,
+      commentAutomation: {
+        automationId: props.automationId,
+        replyChannel: "public" as const,
+      },
+    },
     parentId: props.parentMessageId ?? null,
     createdAt: new Date(),
   }
@@ -133,6 +146,7 @@ export async function executePublicReply(
     }
     await postPublicCommentReply({
       text,
+      automationId: ctx.automationId,
       commentId: ctx.commentId,
       conversationId: ctx.conversationId,
       contactInboxId: ctx.contactInboxId,

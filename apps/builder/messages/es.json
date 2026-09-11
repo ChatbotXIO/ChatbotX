@@ -253,6 +253,7 @@
     "dateFilterPreset": "Filtro de fecha predefinido",
     "noResults": "Sin resultados.",
     "noData": "Sin datos",
+    "retentionNotice": "Solo se conservan los datos de los últimos {days} días.",
     "comingSoon": "Próximamente",
     "unknown": "Desconocido",
     "pagination": {
@@ -262,7 +263,8 @@
       "firstPage": "Ir a la primera página",
       "previousPage": "Ir a la página anterior",
       "nextPage": "Ir a la página siguiente",
-      "lastPage": "Ir a la última página"
+      "lastPage": "Ir a la última página",
+      "totalRows": "{total} fila(s)"
     },
     "sessionsThroughTheRef": "Sesiones diarias mediante la referencia «{ref}»",
     "sessionsThroughTheMagicLink": "Sesiones diarias mediante el enlace mágico «{ref}»",

@@ -37,6 +37,26 @@ import { type CommentReplyOutcome, describeFlowReply } from "./reply-outcome"
  */
 const PRIVATE_REPLY_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 
+/**
+ * Whether the DM would leave after Meta's 7-day comment window has closed.
+ *
+ * `delay` is part of the answer because the DM only leaves once the job's delay
+ * has elapsed, so a comment still inside the window *now* can fall outside it by
+ * then.
+ *
+ * Exported because the caller gates on this before dispatching, so it can
+ * record the blocked delivery on the automation's analytics timeline —
+ * `executePrivateReply` still checks it too, but by then there is no caller
+ * context to record with.
+ */
+export function isOutsidePrivateReplyWindow(props: {
+  createdTime: number
+  delay: number
+}): boolean {
+  const commentAgeAtSendMs = Date.now() + props.delay - props.createdTime * 1000
+  return commentAgeAtSendMs > PRIVATE_REPLY_WINDOW_MS
+}
+
 export type PrivateReplyAuth =
   | MessengerAuthValue
   | InstagramAuthValue
@@ -144,16 +164,20 @@ export async function executePrivateReply(
     return null
   }
 
-  // `delay` is added because the DM leaves only after the job's delay elapses,
-  // so a comment still inside the window now can fall outside it by then.
-  const commentAgeAtSendMs = Date.now() + ctx.delay - ctx.createdTime * 1000
-  if (commentAgeAtSendMs > PRIVATE_REPLY_WINDOW_MS) {
+  // Defence in depth: the caller already gates on this (and records the blocked
+  // delivery when it does), so reaching here means a new call site skipped the
+  // gate. Same predicate either way, so the two can never disagree.
+  if (
+    isOutsidePrivateReplyWindow({
+      createdTime: ctx.createdTime,
+      delay: ctx.delay,
+    })
+  ) {
     logger.warn(
       {
         automationId: ctx.automationId,
         commentId: ctx.commentId,
         workspaceId: ctx.workspaceId,
-        commentAgeAtSendMs,
         reason: "comment older than the 7-day private reply window",
       },
       "Comment automation private reply skipped",

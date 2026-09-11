@@ -105,6 +105,10 @@ export class CommentAutomationAnalyticsService {
   /**
    * Lands the outcome of an async reply on the row its dispatch already wrote.
    * Also never throws, for the same reason as `recordEvent`.
+   *
+   * Partial by design: an omitted `replyText`/`errorDetail` leaves that column
+   * as dispatch wrote it, so flipping a row to `failed` keeps the text the send
+   * was carrying. Pass `null` explicitly to clear one.
    */
   async settleEvent(input: {
     automationId: string
@@ -120,9 +124,15 @@ export class CommentAutomationAnalyticsService {
         commentId: input.commentId,
         replyChannel: input.replyChannel,
         status: input.status,
-        replyText: input.replyText ?? null,
-        errorDetail:
-          input.errorDetail?.slice(0, MAX_ERROR_DETAIL_LENGTH) ?? null,
+        ...(input.replyText === undefined
+          ? {}
+          : { replyText: input.replyText }),
+        ...(input.errorDetail === undefined
+          ? {}
+          : {
+              errorDetail:
+                input.errorDetail?.slice(0, MAX_ERROR_DETAIL_LENGTH) ?? null,
+            }),
       })
     } catch (err) {
       logger.warn(
@@ -133,6 +143,32 @@ export class CommentAutomationAnalyticsService {
           replyChannel: input.replyChannel,
         },
         "[analytics:commentAutomation] failed to settle event",
+      )
+    }
+  }
+
+  /**
+   * Removes the row a dispatch opened when the async job turned out to be a
+   * deliberate skip, not a failure. Same never-throws contract as the writes
+   * above: losing a discard leaves a stale row, which must not take down the
+   * job that decided to skip.
+   */
+  async discardEvent(input: {
+    automationId: string
+    commentId: string
+    replyChannel: CommentAutomationReplyChannel
+  }): Promise<void> {
+    try {
+      await commentAutomationStatsRepository.deleteEvent(input)
+    } catch (err) {
+      logger.warn(
+        {
+          err,
+          automationId: input.automationId,
+          commentId: input.commentId,
+          replyChannel: input.replyChannel,
+        },
+        "[analytics:commentAutomation] failed to discard event",
       )
     }
   }

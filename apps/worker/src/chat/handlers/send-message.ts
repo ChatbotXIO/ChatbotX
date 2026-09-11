@@ -31,6 +31,7 @@ import type {
   ChatJobSendTyping,
 } from "@chatbotx.io/worker-config"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
+import { settleCommentAutomationFailure } from "../../lib/comment-automation-anchor"
 import { logger } from "../../lib/logger"
 import {
   allIntegrations,
@@ -241,6 +242,11 @@ export async function sendMessageToChannel(
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
     const errorData = await parseSdkError(error)
+    const willRetry = willSendRetry({
+      error,
+      channel: contactInbox.channel,
+      willRetryOnThrow,
+    })
     await emit(messageEventTypeSchema.enum["message:failed"], {
       context: {
         workspaceId: conversation.workspaceId,
@@ -255,11 +261,7 @@ export async function sendMessageToChannel(
       errorData,
       occurredAt: new Date(),
       metadata,
-      willRetry: willSendRetry({
-        error,
-        channel: contactInbox.channel,
-        willRetryOnThrow,
-      }),
+      willRetry,
     })
     await recordMessageSendError(
       message?.id,
@@ -268,6 +270,14 @@ export async function sendMessageToChannel(
       message?.createdAt ? new Date(message.createdAt) : undefined,
       errorData.message,
     )
+    // Terminal failures only: an attempt that is about to be retried must not
+    // put a row in the automation's Error Logs for a reply that still lands.
+    if (!willRetry) {
+      await settleCommentAutomationFailure({
+        contentAttributes: message?.contentAttributes,
+        errorDetail: errorData.message,
+      })
+    }
     if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
       return { messageIds: [] }
     }

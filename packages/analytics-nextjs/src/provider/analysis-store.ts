@@ -88,17 +88,25 @@ export type AnalysisState = {
   magicLinkContactsPage: number
   magicLinkContactsPageCount: number
 
-  // comment-automation stats
+  // comment-automation stats. Each table keeps its own page/perPage/total:
+  // they hold unrelated result sets (45 days vs a handful of distinct comment
+  // bodies), so a shared page size would resize three cards at once.
   commentAutomationReplyStats: CommentAutomationTimeseriesRow[]
   commentAutomationUserComments: ListCommentAutomationTextTotalsResponse["data"]
   commentAutomationUserCommentsPage: number
+  commentAutomationUserCommentsPerPage: number
   commentAutomationUserCommentsPageCount: number
+  commentAutomationUserCommentsTotal: number
   commentAutomationBotReplies: ListCommentAutomationTextTotalsResponse["data"]
   commentAutomationBotRepliesPage: number
+  commentAutomationBotRepliesPerPage: number
   commentAutomationBotRepliesPageCount: number
+  commentAutomationBotRepliesTotal: number
   commentAutomationErrors: ListCommentAutomationErrorsResponse["data"]
   commentAutomationErrorsPage: number
+  commentAutomationErrorsPerPage: number
   commentAutomationErrorsPageCount: number
+  commentAutomationErrorsTotal: number
   commentAutomationErrorsKeyword: string
 }
 
@@ -145,8 +153,11 @@ export type AnalysisActions = {
   getCommentAutomationBotReplies: () => Promise<void>
   getCommentAutomationErrors: () => Promise<void>
   setCommentAutomationUserCommentsPage: (page: number) => Promise<void>
+  setCommentAutomationUserCommentsPerPage: (perPage: number) => Promise<void>
   setCommentAutomationBotRepliesPage: (page: number) => Promise<void>
+  setCommentAutomationBotRepliesPerPage: (perPage: number) => Promise<void>
   setCommentAutomationErrorsPage: (page: number) => Promise<void>
+  setCommentAutomationErrorsPerPage: (perPage: number) => Promise<void>
   setCommentAutomationErrorsKeyword: (keyword: string) => Promise<void>
 }
 
@@ -209,13 +220,19 @@ export const createAnalysisStore = (
     commentAutomationReplyStats: [],
     commentAutomationUserComments: [],
     commentAutomationUserCommentsPage: 1,
+    commentAutomationUserCommentsPerPage: COMMENT_AUTOMATION_PER_PAGE,
     commentAutomationUserCommentsPageCount: 0,
+    commentAutomationUserCommentsTotal: 0,
     commentAutomationBotReplies: [],
     commentAutomationBotRepliesPage: 1,
+    commentAutomationBotRepliesPerPage: COMMENT_AUTOMATION_PER_PAGE,
     commentAutomationBotRepliesPageCount: 0,
+    commentAutomationBotRepliesTotal: 0,
     commentAutomationErrors: [],
     commentAutomationErrorsPage: 1,
+    commentAutomationErrorsPerPage: COMMENT_AUTOMATION_PER_PAGE,
     commentAutomationErrorsPageCount: 0,
+    commentAutomationErrorsTotal: 0,
     commentAutomationErrorsKeyword: "",
 
     initialize: async () => {
@@ -863,6 +880,7 @@ export const createAnalysisStore = (
         api,
         defaultSearchParams,
         commentAutomationUserCommentsPage,
+        commentAutomationUserCommentsPerPage,
         from,
         to,
       } = get()
@@ -873,7 +891,7 @@ export const createAnalysisStore = (
           automationId: defaultSearchParams.automationId as string,
           timezone: defaultSearchParams.timezone as string,
           page: commentAutomationUserCommentsPage,
-          perPage: COMMENT_AUTOMATION_PER_PAGE,
+          perPage: commentAutomationUserCommentsPerPage,
           startDate: from.toISOString(),
           endDate: to.toISOString(),
         })
@@ -881,6 +899,7 @@ export const createAnalysisStore = (
         set({
           commentAutomationUserComments: result.data,
           commentAutomationUserCommentsPageCount: result.pageCount,
+          commentAutomationUserCommentsTotal: result.total,
         })
       } catch (error: unknown) {
         get().handleError("getCommentAutomationUserComments", error)
@@ -892,6 +911,7 @@ export const createAnalysisStore = (
         api,
         defaultSearchParams,
         commentAutomationBotRepliesPage,
+        commentAutomationBotRepliesPerPage,
         from,
         to,
       } = get()
@@ -902,7 +922,7 @@ export const createAnalysisStore = (
           automationId: defaultSearchParams.automationId as string,
           timezone: defaultSearchParams.timezone as string,
           page: commentAutomationBotRepliesPage,
-          perPage: COMMENT_AUTOMATION_PER_PAGE,
+          perPage: commentAutomationBotRepliesPerPage,
           startDate: from.toISOString(),
           endDate: to.toISOString(),
         })
@@ -910,6 +930,7 @@ export const createAnalysisStore = (
         set({
           commentAutomationBotReplies: result.data,
           commentAutomationBotRepliesPageCount: result.pageCount,
+          commentAutomationBotRepliesTotal: result.total,
         })
       } catch (error: unknown) {
         get().handleError("getCommentAutomationBotReplies", error)
@@ -921,6 +942,7 @@ export const createAnalysisStore = (
         api,
         defaultSearchParams,
         commentAutomationErrorsPage,
+        commentAutomationErrorsPerPage,
         commentAutomationErrorsKeyword,
         from,
         to,
@@ -932,7 +954,7 @@ export const createAnalysisStore = (
           automationId: defaultSearchParams.automationId as string,
           timezone: defaultSearchParams.timezone as string,
           page: commentAutomationErrorsPage,
-          perPage: COMMENT_AUTOMATION_PER_PAGE,
+          perPage: commentAutomationErrorsPerPage,
           keyword: commentAutomationErrorsKeyword || undefined,
           startDate: from.toISOString(),
           endDate: to.toISOString(),
@@ -941,6 +963,7 @@ export const createAnalysisStore = (
         set({
           commentAutomationErrors: result.data,
           commentAutomationErrorsPageCount: result.pageCount,
+          commentAutomationErrorsTotal: result.total,
         })
       } catch (error: unknown) {
         get().handleError("getCommentAutomationErrors", error)
@@ -954,6 +977,18 @@ export const createAnalysisStore = (
       await getCommentAutomationUserComments()
     },
 
+    // A new page size re-slices the whole result set, so page 1 — otherwise
+    // "50 per page" from page 4 of a 10-per-page list lands past the end.
+    setCommentAutomationUserCommentsPerPage: async (perPage: number) => {
+      set({
+        commentAutomationUserCommentsPerPage: perPage,
+        commentAutomationUserCommentsPage: 1,
+      })
+
+      const { getCommentAutomationUserComments } = get()
+      await getCommentAutomationUserComments()
+    },
+
     setCommentAutomationBotRepliesPage: async (page: number) => {
       set({ commentAutomationBotRepliesPage: page })
 
@@ -961,8 +996,28 @@ export const createAnalysisStore = (
       await getCommentAutomationBotReplies()
     },
 
+    setCommentAutomationBotRepliesPerPage: async (perPage: number) => {
+      set({
+        commentAutomationBotRepliesPerPage: perPage,
+        commentAutomationBotRepliesPage: 1,
+      })
+
+      const { getCommentAutomationBotReplies } = get()
+      await getCommentAutomationBotReplies()
+    },
+
     setCommentAutomationErrorsPage: async (page: number) => {
       set({ commentAutomationErrorsPage: page })
+
+      const { getCommentAutomationErrors } = get()
+      await getCommentAutomationErrors()
+    },
+
+    setCommentAutomationErrorsPerPage: async (perPage: number) => {
+      set({
+        commentAutomationErrorsPerPage: perPage,
+        commentAutomationErrorsPage: 1,
+      })
 
       const { getCommentAutomationErrors } = get()
       await getCommentAutomationErrors()

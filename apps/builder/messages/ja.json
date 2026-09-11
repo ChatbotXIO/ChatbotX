@@ -253,6 +253,7 @@
     "dateFilterPreset": "日付フィルターのプリセット",
     "noResults": "結果がありません。",
     "noData": "データがありません",
+    "retentionNotice": "データは直近{days}日間のみ保持されます。",
     "comingSoon": "近日公開",
     "unknown": "不明",
     "pagination": {
@@ -262,7 +263,8 @@
       "firstPage": "最初のページへ",
       "previousPage": "前のページへ",
       "nextPage": "次のページへ",
-      "lastPage": "最後のページへ"
+      "lastPage": "最後のページへ",
+      "totalRows": "{total} 行"
     },
     "sessionsThroughTheRef": "参照元「{ref}」経由の1日あたりのセッション数",
     "sessionsThroughTheMagicLink": "マジックリンク「{ref}」経由の1日あたりのセッション数",

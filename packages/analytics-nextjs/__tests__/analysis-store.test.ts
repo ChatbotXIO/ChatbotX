@@ -34,6 +34,13 @@ const buildApi = (): AnalyticsApi =>
     commentAutomationUserComments: vi.fn(),
     commentAutomationBotReplies: vi.fn(),
     commentAutomationErrors: vi.fn(),
+    // Not used by any store action, but `AnalyticsApi` is the full router
+    // client: leave one out and the cast below stops compiling.
+    macActiveContactCountByWorkspaceAPI: vi.fn(),
+    resetFlowAnalytics: vi.fn(),
+    getFlowAnalytics: vi.fn(),
+    getSequenceStepStatsAnalyticsAPI: vi.fn(),
+    getBroadcastStatsAnalyticsAPI: vi.fn(),
   }) as AnalyticsApi
 
 const from = new Date("2026-08-01T00:00:00.000Z")
@@ -683,6 +690,65 @@ describe("analysis store", () => {
       expect(api.commentAutomationErrors).toHaveBeenLastCalledWith(
         expect.objectContaining({ keyword: "token", page: 1 }),
       )
+    })
+
+    test("changing page size refetches from page 1 with the new size", async () => {
+      stubCommentApi(api)
+
+      const store = createAnalysisStore({
+        api,
+        type: "comment-automation",
+        defaultSearchParams: commentSearchParams,
+        from,
+        to,
+      })
+
+      await store.getState().setCommentAutomationErrorsPage(4)
+      await store.getState().setCommentAutomationErrorsPerPage(50)
+
+      // Page 4 of a 10-per-page list is past the end of a 50-per-page one.
+      expect(store.getState().commentAutomationErrorsPage).toBe(1)
+      expect(store.getState().commentAutomationErrorsPerPage).toBe(50)
+      expect(api.commentAutomationErrors).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 1, perPage: 50 }),
+      )
+    })
+
+    test("each table keeps its own page size", async () => {
+      stubCommentApi(api)
+
+      const store = createAnalysisStore({
+        api,
+        type: "comment-automation",
+        defaultSearchParams: commentSearchParams,
+        from,
+        to,
+      })
+
+      await store.getState().setCommentAutomationUserCommentsPerPage(50)
+
+      expect(store.getState().commentAutomationUserCommentsPerPage).toBe(50)
+      expect(store.getState().commentAutomationBotRepliesPerPage).toBe(10)
+      expect(store.getState().commentAutomationErrorsPerPage).toBe(10)
+    })
+
+    test("stores the total row count each panel reports", async () => {
+      stubCommentApi(api)
+      ;(
+        api.commentAutomationUserComments as ReturnType<typeof vi.fn>
+      ).mockResolvedValue({ data: [], total: 37, page: 1, pageCount: 4 })
+
+      const store = createAnalysisStore({
+        api,
+        type: "comment-automation",
+        defaultSearchParams: commentSearchParams,
+        from,
+        to,
+      })
+
+      await store.getState().loadAnalysisData()
+
+      expect(store.getState().commentAutomationUserCommentsTotal).toBe(37)
     })
 
     test("an empty search sends no keyword rather than an empty string", async () => {

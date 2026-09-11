@@ -200,7 +200,7 @@ export function FbCommentsTable({
                   </Button>
                 }
               />
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-auto">
                 <DropdownMenuItem
                   onClick={() =>
                     router.push(

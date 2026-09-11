@@ -72,11 +72,13 @@ const mockFlowFindBy = vi
   .mockResolvedValue({ id: "flow-1", name: "Flow 1" })
 const mockRecordEvent = vi.fn().mockResolvedValue(undefined)
 const mockSettleEvent = vi.fn().mockResolvedValue(undefined)
+const mockDiscardEvent = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("@chatbotx.io/analytics", () => ({
   commentAutomationAnalyticsService: {
     recordEvent: mockRecordEvent,
     settleEvent: mockSettleEvent,
+    discardEvent: mockDiscardEvent,
   },
 }))
 
@@ -192,6 +194,9 @@ const { isCommentReply, processCommentAutomation } = await import(
 )
 const { processCommentAIReply } = await import(
   "../src/integration/handlers/comment-automation/ai-reply"
+)
+const { IntegrationNotFoundError } = await import(
+  "../src/services/orphaned-integration-cleanup"
 )
 
 // ---------------------------------------------------------------------------
@@ -1060,11 +1065,12 @@ describe("processCommentAutomation private reply 7-day window", () => {
     )
 
     expect(mockSendPrivateReply).not.toHaveBeenCalled()
-    expect(mockLoggerWarn).toHaveBeenCalledWith(
+    // The gate now lives in the caller, so the skip is logged there.
+    expect(mockLoggerInfo).toHaveBeenCalledWith(
       expect.objectContaining({
         reason: "comment older than the 7-day private reply window",
       }),
-      "Comment automation private reply skipped",
+      "Comment automation skipped",
     )
     // Nothing was delivered, so the contact must stay eligible.
     expect(mockInsertDedup).not.toHaveBeenCalled()
@@ -1205,7 +1211,13 @@ describe("processCommentAIReply", () => {
       expect.objectContaining({
         type: "comment",
         text: "AI answer",
-        contentAttributes: { replyToCommentId: COMMENT_ID },
+        contentAttributes: {
+          replyToCommentId: COMMENT_ID,
+          commentAutomation: {
+            automationId: "automation-1",
+            replyChannel: "public",
+          },
+        },
       }),
     )
     expect(mockChatQueueAdd).toHaveBeenCalledWith(
@@ -1392,6 +1404,167 @@ describe("processCommentAIReply", () => {
           buildAIJobData({ commentDedup: COMMENT_DEDUP }) as any,
         ),
       ).resolves.toBeUndefined()
+    })
+  })
+
+  // A skip is not a failure: `FBCommentAutomationEvent` only counts work the
+  // automation actually attempted, so a deliberate decline must leave no row
+  // rather than one Error Logs entry per off-hours comment.
+  describe("skip vs failure on the analytics event", () => {
+    test("outside the workspace's active hours discards the event instead of failing it", async () => {
+      mockIsActiveNow.mockReturnValue(false)
+
+      await processCommentAIReply(buildAIJobData() as any)
+
+      expect(mockDiscardEvent).toHaveBeenCalledWith({
+        automationId: "automation-1",
+        commentId: COMMENT_ID,
+        replyChannel: "public",
+      })
+      expect(mockSettleEvent).not.toHaveBeenCalled()
+    })
+
+    test("an image-only comment discards the event", async () => {
+      await processCommentAIReply(buildAIJobData({ message: "" }) as any)
+
+      expect(mockDiscardEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ commentId: COMMENT_ID }),
+      )
+      expect(mockSettleEvent).not.toHaveBeenCalled()
+    })
+
+    test("a missing agent still fails the event — the workspace has to see it", async () => {
+      mockAiAgentFindBy.mockResolvedValue(undefined)
+
+      await processCommentAIReply(buildAIJobData() as any)
+
+      expect(mockSettleEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: "failed",
+          errorDetail: "agent not found",
+        }),
+      )
+      expect(mockDiscardEvent).not.toHaveBeenCalled()
+    })
+
+    test("an agent that produces no text still fails the event", async () => {
+      mockGenerateAIReplyText.mockResolvedValue(null)
+
+      await processCommentAIReply(buildAIJobData() as any)
+
+      expect(mockSettleEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: "failed",
+          errorDetail: "agent produced no text",
+        }),
+      )
+      expect(mockDiscardEvent).not.toHaveBeenCalled()
+    })
+  })
+
+  // Without this the row stays `sent` with a null replyText forever: the send
+  // threw, the job dead-lettered, and nothing ever revisited the event.
+  describe("a send that throws", () => {
+    test("private: records the failure with the generated text and rethrows", async () => {
+      mockSendPrivateReply.mockRejectedValue(new Error("token revoked"))
+
+      await expect(
+        processCommentAIReply(
+          buildAIJobData({ replyChannel: "private" }) as any,
+        ),
+      ).rejects.toThrow("token revoked")
+
+      expect(mockSettleEvent).toHaveBeenCalledWith({
+        automationId: "automation-1",
+        commentId: COMMENT_ID,
+        replyChannel: "private",
+        status: "failed",
+        replyText: "AI answer",
+        errorDetail: "token revoked",
+      })
+    })
+
+    test("does not record on an attempt that will be retried", async () => {
+      mockSendPrivateReply.mockRejectedValue(new Error("token revoked"))
+
+      await expect(
+        processCommentAIReply(
+          buildAIJobData({ replyChannel: "private" }) as any,
+          true,
+        ),
+      ).rejects.toThrow("token revoked")
+
+      expect(mockSettleEvent).not.toHaveBeenCalled()
+    })
+
+    test("generation that throws is recorded with no replyText — the row keeps its null", async () => {
+      mockGenerateAIReplyText.mockRejectedValue(new Error("bad provider key"))
+
+      await expect(
+        processCommentAIReply(buildAIJobData() as any),
+      ).rejects.toThrow("bad provider key")
+
+      expect(mockSettleEvent).toHaveBeenCalledWith({
+        automationId: "automation-1",
+        commentId: COMMENT_ID,
+        replyChannel: "public",
+        status: "failed",
+        errorDetail: "bad provider key",
+      })
+      const [settled] = mockSettleEvent.mock.calls[0]
+      expect(settled).not.toHaveProperty("replyText")
+    })
+
+    test("a lookup that throws is recorded too", async () => {
+      mockAiAgentFindBy.mockRejectedValue(new Error("db down"))
+
+      await expect(
+        processCommentAIReply(buildAIJobData() as any),
+      ).rejects.toThrow("db down")
+
+      expect(mockSettleEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "failed", errorDetail: "db down" }),
+      )
+      expect(mockGenerateAIReplyText).not.toHaveBeenCalled()
+    })
+
+    // `runWithOrphanedIntegrationCleanup` converts this into a BullMQ
+    // `UnrecoverableError` from outside this handler, so the attempt counter
+    // still says "retry coming" while BullMQ will in fact never run it again.
+    test("an orphaned integration is terminal even on a non-final attempt", async () => {
+      mockIdentifyInboxAndIntegrationAuth.mockRejectedValue(
+        new IntegrationNotFoundError("messenger" as never, PAGE_ID),
+      )
+
+      await expect(
+        processCommentAIReply(
+          buildAIJobData({ replyChannel: "private" }) as any,
+          true,
+        ),
+      ).rejects.toThrow("Integration not found")
+
+      expect(mockSettleEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: "failed",
+          replyText: "AI answer",
+        }),
+      )
+    })
+
+    test("public: a failure creating the outgoing message is recorded too", async () => {
+      mockMessageCreate.mockRejectedValue(new Error("shard down"))
+
+      await expect(
+        processCommentAIReply(buildAIJobData() as any),
+      ).rejects.toThrow("shard down")
+
+      expect(mockSettleEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          replyChannel: "public",
+          status: "failed",
+          errorDetail: "shard down",
+        }),
+      )
     })
   })
 
@@ -1600,5 +1773,177 @@ describe("processCommentAutomation analytics events", () => {
     await processCommentAutomation(buildJobData() as any)
 
     expect(mockRecordEvent).not.toHaveBeenCalled()
+  })
+})
+
+// An automation that blew up before either branch reported an outcome used to
+// leave nothing behind: no `sent`, no `failed`, and a customer with no reply.
+describe("processCommentAutomation pre-dispatch failure", () => {
+  test("records a failed event for every configured branch", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "text", value: "public answer" },
+        privateReply: { type: "flow", value: "flow-1" },
+        options: { replyToNewContactsOnly: true },
+      }),
+    ])
+    mockGetPriorContactInboxCount.mockRejectedValue(new Error("shard timeout"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordEvent).toHaveBeenCalledTimes(2)
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyChannel: "public",
+        replyType: "text",
+        status: "failed",
+        errorDetail: "shard timeout",
+        replyText: null,
+      }),
+    )
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyChannel: "private",
+        replyType: "flow",
+        status: "failed",
+        errorDetail: "shard timeout",
+      }),
+    )
+  })
+
+  test("does not report an internal failure as a third-party one", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "text", value: "public answer" },
+        options: { replyToNewContactsOnly: true },
+      }),
+    ])
+    mockGetPriorContactInboxCount.mockRejectedValue(new Error("shard timeout"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    // `ErrorLog.action` names the vendor that failed, and Meta was never called.
+    expect(mockLogProviderError).not.toHaveBeenCalled()
+  })
+
+  test("records nothing extra when the failure comes after both branches dispatched", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "text", value: "public answer" },
+        privateReply: { type: "text", value: "private answer" },
+      }),
+    ])
+    mockInsertDedup.mockRejectedValue(new Error("db down"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    // Two `sent` rows from dispatch; the catch's inserts lose to the unique
+    // index, so the service is asked at most once more per branch and the
+    // existing rows keep their status.
+    const failedCalls = mockRecordEvent.mock.calls.filter(
+      ([input]) => input.status === "failed",
+    )
+    expect(failedCalls).toHaveLength(2)
+    expect(
+      mockRecordEvent.mock.calls.filter(([input]) => input.status === "sent"),
+    ).toHaveLength(2)
+  })
+
+  test("records nothing for a like/hide-only automation", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "none", value: null },
+        options: { replyToNewContactsOnly: true },
+      }),
+    ])
+    mockGetPriorContactInboxCount.mockRejectedValue(new Error("shard timeout"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordEvent).not.toHaveBeenCalled()
+  })
+})
+
+// Neither of these is a filtered-out comment — it passed every filter and then
+// hit a Meta rule, so the workspace needs to be able to see it.
+describe("processCommentAutomation blocked private reply", () => {
+  test("records the 7-day window as a failed event", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ privateReply: { type: "text", value: "too late" } }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({
+        createdTime: Math.floor(Date.now() / 1000) - 8 * ONE_DAY_SECONDS,
+      }) as any,
+    )
+
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyChannel: "private",
+        replyType: "text",
+        status: "failed",
+        errorDetail:
+          "Private reply not sent: the comment is outside Meta's 7-day private reply window",
+      }),
+    )
+    expect(mockLogProviderError).not.toHaveBeenCalled()
+  })
+
+  test("records the claimed single-DM budget as a failed event on the second automation", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-1",
+        privateReply: { type: "text", value: "first" },
+      }),
+      buildAutomation({
+        id: "automation-2",
+        privateReply: { type: "text", value: "second" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        automationId: "automation-1",
+        replyChannel: "private",
+        status: "sent",
+      }),
+    )
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        automationId: "automation-2",
+        replyChannel: "private",
+        status: "failed",
+        errorDetail:
+          "Private reply not sent: another automation already used this comment's single private reply",
+      }),
+    )
+    expect(mockLogProviderError).not.toHaveBeenCalled()
+  })
+
+  test("the blocked automation's public reply still goes out", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "text", value: "public answer" },
+        privateReply: { type: "text", value: "too late" },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({
+        createdTime: Math.floor(Date.now() / 1000) - 8 * ONE_DAY_SECONDS,
+      }) as any,
+    )
+
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyChannel: "public",
+        status: "sent",
+        replyText: "public answer",
+      }),
+    )
   })
 })

@@ -253,6 +253,7 @@
     "dateFilterPreset": "Tarih filtresi ön ayarı",
     "noResults": "Sonuç yok.",
     "noData": "Veri yok",
+    "retentionNotice": "Yalnızca son {days} güne ait veriler saklanır.",
     "comingSoon": "Yakında",
     "unknown": "Bilinmiyor",
     "pagination": {
@@ -262,7 +263,8 @@
       "firstPage": "İlk sayfaya git",
       "previousPage": "Önceki sayfaya git",
       "nextPage": "Sonraki sayfaya git",
-      "lastPage": "Son sayfaya git"
+      "lastPage": "Son sayfaya git",
+      "totalRows": "{total} satır"
     },
     "sessionsThroughTheRef": "Günlük \"{ref}\" referansı üzerinden oturumlar",
     "sessionsThroughTheMagicLink": "Günlük \"{ref}\" Sihirli Bağlantısı üzerinden oturumlar",

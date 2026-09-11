@@ -61,6 +61,12 @@ export class CommentAutomationStatsRepository extends BaseRepository {
    * writes its row with a null `replyText` up front (so a job that never runs
    * still shows as attempted); the AI job then lands the generated text — or
    * the reason it gave up — on that same row.
+   *
+   * This is a PARTIAL update: `replyText` and `errorDetail` are only touched
+   * when the caller passes the key. Passing `null` explicitly clears the
+   * column; omitting it keeps whatever dispatch already wrote. Flipping a row
+   * to `failed` must not erase the text the customer was supposed to receive —
+   * the Error Logs panel needs it to show what the failed send was carrying.
    */
   async settleEvent(input: {
     automationId: string
@@ -70,12 +76,40 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     replyText?: string | null
     errorDetail?: string | null
   }): Promise<void> {
+    const assignments = [
+      sql`"status" = ${input.status}::"commentAutomationEventStatus"`,
+      sql`"updatedAt" = NOW()`,
+    ]
+    if (input.replyText !== undefined) {
+      assignments.push(sql`"replyText" = ${input.replyText}`)
+    }
+    if (input.errorDetail !== undefined) {
+      assignments.push(sql`"errorDetail" = ${input.errorDetail}`)
+    }
+
     await db.execute(sql`
       UPDATE "FBCommentAutomationEvent"
-      SET "status" = ${input.status}::"commentAutomationEventStatus",
-          "replyText" = ${input.replyText ?? null},
-          "errorDetail" = ${input.errorDetail ?? null},
-          "updatedAt" = NOW()
+      SET ${sql.join(assignments, sql`, `)}
+      WHERE "automationId" = ${input.automationId}
+        AND "commentId" = ${input.commentId}
+        AND "replyChannel" = ${input.replyChannel}::"commentAutomationReplyChannel"
+    `)
+  }
+
+  /**
+   * Drops the row a dispatch opened, for an async job that turned out to be a
+   * deliberate SKIP rather than a failure (outside business hours, nothing for
+   * the agent to answer). `FBCommentAutomationEvent` only ever counts work the
+   * automation actually attempted — see the partial's docblock — so a skip must
+   * leave no row at all rather than a `failed` one that floods Error Logs.
+   */
+  async deleteEvent(input: {
+    automationId: string
+    commentId: string
+    replyChannel: string
+  }): Promise<void> {
+    await db.execute(sql`
+      DELETE FROM "FBCommentAutomationEvent"
       WHERE "automationId" = ${input.automationId}
         AND "commentId" = ${input.commentId}
         AND "replyChannel" = ${input.replyChannel}::"commentAutomationReplyChannel"

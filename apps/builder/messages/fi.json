@@ -253,6 +253,7 @@
     "dateFilterPreset": "Päivämääräsuodattimen esiasetus",
     "noResults": "Ei tuloksia.",
     "noData": "Ei tietoja",
+    "retentionNotice": "Vain viimeisten {days} päivän tiedot säilytetään.",
     "comingSoon": "Tulossa pian",
     "unknown": "Tuntematon",
     "pagination": {
@@ -262,7 +263,8 @@
       "firstPage": "Siirry ensimmäiselle sivulle",
       "previousPage": "Siirry edelliselle sivulle",
       "nextPage": "Siirry seuraavalle sivulle",
-      "lastPage": "Siirry viimeiselle sivulle"
+      "lastPage": "Siirry viimeiselle sivulle",
+      "totalRows": "{total} riviä"
     },
     "sessionsThroughTheRef": "Istunnot viitteen \"{ref}\" kautta päivässä",
     "sessionsThroughTheMagicLink": "Istunnot taikalinkin \"{ref}\" kautta päivässä",

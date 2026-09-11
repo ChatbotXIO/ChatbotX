@@ -390,9 +390,9 @@ export function IgCommentForm({
                   {t("instagramCommentAutomation.excludeKeywords")}
                   <Tooltip>
                     <TooltipTrigger
-                      render={() => (
+                      render={
                         <InfoIcon className="size-3.5 cursor-help text-muted-foreground" />
-                      )}
+                      }
                     />
                     <TooltipContent className="max-w-sm">
                       {t(

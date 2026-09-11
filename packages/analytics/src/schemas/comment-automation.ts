@@ -1,5 +1,18 @@
 import { z } from "zod"
 
+/**
+ * How long a `FBCommentAutomationEvent` row lives. Matches `ErrorLog`'s window:
+ * both tables back the same Error Logs surface, and a comment event outliving
+ * the error log it pairs with would show a failure the workspace page can no
+ * longer explain.
+ *
+ * Shared rather than local to the purge cron on purpose: the date-range filter
+ * on the analytics page must not offer a window the data cannot cover. Zero-fill
+ * makes a purged day look exactly like a day with no replies, so an unbounded
+ * `lifeTime` preset reads as "this automation never worked".
+ */
+export const COMMENT_AUTOMATION_RETENTION_DAYS = 30
+
 export const commentAutomationStatsSchema = z.object({
   workspaceId: z.string(),
   automationId: z.string(),

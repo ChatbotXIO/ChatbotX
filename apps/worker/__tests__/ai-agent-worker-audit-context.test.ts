@@ -209,11 +209,22 @@ describe("ai-agent worker audit context", () => {
     ]
 
     for (const [index, data] of jobs.entries()) {
-      await mocks.processJob?.({ id: `job-${index}`, data })
+      // BullMQ attempt fields: `commentAIReply` reads them to decide whether a
+      // send failure is terminal (and so worth recording on the analytics row).
+      await mocks.processJob?.({
+        id: `job-${index}`,
+        data,
+        attemptsMade: 0,
+        opts: { attempts: 2 },
+      })
     }
 
     expect(mocks.processAutomatedResponse).toHaveBeenCalledWith(jobs[0]?.data)
-    expect(mocks.processCommentAIReply).toHaveBeenCalledWith(jobs[1]?.data)
+    // `true` — attempt 1 of 2, so a throw still has a retry coming.
+    expect(mocks.processCommentAIReply).toHaveBeenCalledWith(
+      jobs[1]?.data,
+      true,
+    )
     expect(mocks.processStoryReplyAutomation).toHaveBeenCalledWith(
       jobs[2]?.data,
     )
@@ -283,6 +294,8 @@ describe("ai-agent worker audit context", () => {
     await expect(
       mocks.processJob?.({
         id: "job-orphaned-comment-ai-reply",
+        attemptsMade: 1,
+        opts: { attempts: 2 },
         data: {
           type: "commentAIReply",
           data: {

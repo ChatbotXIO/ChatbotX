@@ -486,6 +486,7 @@
     "newContactsByCountry": "依国家／地区分类的新联系人",
     "newContactsBySource": "依来源分类的新联系人",
     "noData": "无数据",
+    "retentionNotice": "仅保留最近 {days} 天的数据。",
     "noResults": "无结果。",
     "pagination": {
       "firstPage": "前往第一页",
@@ -494,7 +495,8 @@
       "pageOf": "第 {page} 页（共 {pageCount}）",
       "previousPage": "前往上一页",
       "rowsPerPage": "每页列数",
-      "selectedRows": "已选取 {selected} / {total} 列。"
+      "selectedRows": "已选取 {selected} / {total} 列。",
+      "totalRows": "{total} 行"
     },
     "percentage": "百分比",
     "responseCount": "回应计数",

@@ -300,6 +300,7 @@
     "newContactsByCountry": "Nya kontakter per land",
     "newContactsBySource": "Nya kontakter per källa",
     "noData": "Inga data",
+    "retentionNotice": "Endast data från de senaste {days} dagarna sparas.",
     "noResults": "Inga resultat.",
     "pagination": {
       "firstPage": "Gå till första sidan",
@@ -308,7 +309,8 @@
       "pageOf": "Sida {page} av {pageCount}",
       "previousPage": "Gå till föregående sida",
       "rowsPerPage": "Rader per sida",
-      "selectedRows": "{selected} av {total} rad(er) har markerats."
+      "selectedRows": "{selected} av {total} rad(er) har markerats.",
+      "totalRows": "{total} rad(er)"
     },
     "percentage": "Procentandel",
     "responseCount": "Antal svar",

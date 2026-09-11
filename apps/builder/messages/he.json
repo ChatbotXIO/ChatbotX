@@ -253,6 +253,7 @@
     "dateFilterPreset": "הגדרה מוכנה של מסנן תאריכים",
     "noResults": "אין תוצאות.",
     "noData": "אין נתונים",
+    "retentionNotice": "נשמרים רק הנתונים מ-{days} הימים האחרונים.",
     "comingSoon": "בקרוב",
     "unknown": "לא ידוע",
     "pagination": {
@@ -262,7 +263,8 @@
       "firstPage": "מעבר לעמוד הראשון",
       "previousPage": "מעבר לעמוד הקודם",
       "nextPage": "מעבר לעמוד הבא",
-      "lastPage": "מעבר לעמוד האחרון"
+      "lastPage": "מעבר לעמוד האחרון",
+      "totalRows": "{total} שורות"
     },
     "sessionsThroughTheRef": "הפעלות דרך ההפניה \"{ref}\" ליום",
     "sessionsThroughTheMagicLink": "הפעלות דרך קישור הקסם \"{ref}\" ליום",

@@ -253,6 +253,7 @@
     "dateFilterPreset": "Date filter preset",
     "noResults": "No results.",
     "noData": "No data",
+    "retentionNotice": "Only the last {days} days of data are kept.",
     "comingSoon": "Coming soon",
     "unknown": "Unknown",
     "pagination": {
@@ -262,7 +263,8 @@
       "firstPage": "Go to first page",
       "previousPage": "Go to previous page",
       "nextPage": "Go to next page",
-      "lastPage": "Go to last page"
+      "lastPage": "Go to last page",
+      "totalRows": "{total} row(s)"
     },
     "sessionsThroughTheRef": "Sessions through the Ref \"{ref}\" per day",
     "sessionsThroughTheMagicLink": "Sessions through the Magic Link \"{ref}\" per day",

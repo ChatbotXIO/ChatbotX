@@ -1,12 +1,12 @@
+import { COMMENT_AUTOMATION_RETENTION_DAYS } from "@chatbotx.io/analytics/schemas"
 import { purgeCommentAutomationEvents as purgeEventRows } from "@chatbotx.io/database/repositories"
 import { getChildLogger } from "@chatbotx.io/logger"
 
 const log = getChildLogger("purge-comment-automation-events")
 
-/** Matches `ErrorLog`'s window: both tables back the same Error Logs surface,
- * and a comment event outliving the error log it pairs with would show a
- * failure the workspace page can no longer explain. */
-const RETENTION_DAYS = 30
+/** Shared with the analytics page's date filter, which must not offer a window
+ * wider than what is retained — see the constant's docblock. */
+const RETENTION_DAYS = COMMENT_AUTOMATION_RETENTION_DAYS
 const CHUNK_SIZE = 1000
 const INTER_CHUNK_DELAY_MS = 100
 /**

@@ -1866,6 +1866,7 @@
     "dateFilterPreset": "日期過濾器預設",
     "noResults": "無結果。",
     "noData": "無資料",
+    "retentionNotice": "僅保留最近 {days} 天的資料。",
     "comingSoon": "即將推出",
     "unknown": "未知",
     "pagination": {
@@ -1875,7 +1876,8 @@
       "firstPage": "前往第一頁",
       "previousPage": "前往上一頁",
       "nextPage": "前往下一頁",
-      "lastPage": "前往最後一頁"
+      "lastPage": "前往最後一頁",
+      "totalRows": "{total} 列"
     },
     "sessionsThroughTheRef": "每日透過 Ref「{ref}」產生的工作階段",
     "sessionsThroughTheMagicLink": "透過 Magic Link「{ref}」產生的每日工作階段",

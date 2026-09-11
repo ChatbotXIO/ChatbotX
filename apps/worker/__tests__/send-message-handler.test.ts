@@ -40,6 +40,12 @@ const {
   }
 })
 
+const mockSettleEvent = vi.fn().mockResolvedValue(undefined)
+
+vi.mock("@chatbotx.io/analytics", () => ({
+  commentAutomationAnalyticsService: { settleEvent: mockSettleEvent },
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: {
     recordOutboundMessageSent: mockRecordOutboundMessageSent,
@@ -594,5 +600,106 @@ describe("chat send-message handlers", () => {
         errorData: { message: "sdk error" },
       }),
     )
+  })
+
+  // A public comment-automation reply is recorded `sent` when it is enqueued —
+  // the Graph API call only happens here, so this is the only place that knows
+  // the reply never landed.
+  describe("comment automation analytics settlement", () => {
+    const commentReply = {
+      id: "msg-1",
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      contentType: "text",
+      messageType: "outgoing",
+      senderType: "bot",
+      type: "comment",
+      text: "hello",
+      contentAttributes: {
+        replyToCommentId: "comment-1",
+        commentAutomation: {
+          automationId: "automation-1",
+          replyChannel: "public",
+        },
+      },
+    }
+
+    test("flips the event to failed when the send terminally fails", async () => {
+      mockRunChannelHandler.mockRejectedValueOnce(
+        new ChannelError("token revoked", ChannelErrorCategory.AUTH_FAILED, {
+          code: "auth_failed",
+        }),
+      )
+
+      await expect(
+        sendMessageToChannel({
+          conversation: conversation as never,
+          contactInbox: contactInbox as never,
+          message: commentReply as never,
+        }),
+      ).resolves.toEqual({ messageIds: [] })
+
+      expect(mockSettleEvent).toHaveBeenCalledWith({
+        automationId: "automation-1",
+        commentId: "comment-1",
+        replyChannel: "public",
+        status: "failed",
+        errorDetail: "sdk error",
+      })
+    })
+
+    test("leaves the event alone while another attempt is still to come", async () => {
+      mockRunChannelHandler.mockRejectedValueOnce(
+        new ChannelError("rate limited", ChannelErrorCategory.RATE_LIMITED, {
+          code: "rate_limited",
+        }),
+      )
+
+      await expect(
+        sendMessageToChannel(
+          {
+            conversation: conversation as never,
+            contactInbox: { ...contactInbox, channel: "whatsapp" } as never,
+            message: commentReply as never,
+          },
+          0,
+          true,
+        ),
+      ).rejects.toThrow()
+
+      expect(mockSettleEvent).not.toHaveBeenCalled()
+    })
+
+    test("ignores a failed send that is not a comment-automation reply", async () => {
+      mockRunChannelHandler.mockRejectedValueOnce(
+        new ChannelError("token revoked", ChannelErrorCategory.AUTH_FAILED, {
+          code: "auth_failed",
+        }),
+      )
+
+      await expect(
+        sendMessageToChannel({
+          conversation: conversation as never,
+          contactInbox: contactInbox as never,
+          message: {
+            ...commentReply,
+            contentAttributes: { replyToCommentId: "comment-1" },
+          } as never,
+        }),
+      ).resolves.toEqual({ messageIds: [] })
+
+      expect(mockSettleEvent).not.toHaveBeenCalled()
+    })
+
+    test("does not settle a successful send", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: commentReply as never,
+      })
+
+      expect(mockSettleEvent).not.toHaveBeenCalled()
+    })
   })
 })

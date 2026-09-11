@@ -332,4 +332,40 @@ describe("DateRangePresetFilter", () => {
     const trigger = container.querySelector("#date-range-preset")
     expect(trigger?.textContent).toContain(expectedText)
   })
+
+  // A dashboard whose rows are purged on a retention window must not offer a
+  // range it can only answer with zeroes — that reads as "nothing happened".
+  describe("maxRangeDays", () => {
+    function menuItemLabels(target: HTMLDivElement) {
+      return Array.from(
+        target.querySelectorAll<HTMLButtonElement>("button[data-menu-item]"),
+      ).map((item) => item.textContent)
+    }
+
+    test("hides the presets that reach past the bound", async () => {
+      await act(async () => {
+        root.render(
+          <DateRangePresetFilter maxRangeDays={30} onChange={vi.fn()} />,
+        )
+        await flush()
+      })
+
+      const labels = menuItemLabels(container)
+      expect(labels).toContain("fields.last30days.label")
+      expect(labels).toContain("fields.customRange.label")
+      expect(labels).not.toContain("fields.lifeTime.label")
+      expect(labels).not.toContain("fields.lastMonth.label")
+    })
+
+    test("offers every preset when no bound is given", async () => {
+      await act(async () => {
+        root.render(<DateRangePresetFilter onChange={vi.fn()} />)
+        await flush()
+      })
+
+      const labels = menuItemLabels(container)
+      expect(labels).toContain("fields.lifeTime.label")
+      expect(labels).toContain("fields.lastMonth.label")
+    })
+  })
 })

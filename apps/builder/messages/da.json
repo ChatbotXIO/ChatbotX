@@ -253,6 +253,7 @@
     "dateFilterPreset": "Forudindstillet datofilter",
     "noResults": "Ingen resultater.",
     "noData": "Ingen data",
+    "retentionNotice": "Kun data fra de seneste {days} dage gemmes.",
     "comingSoon": "Kommer snart",
     "unknown": "Ukendt",
     "pagination": {
@@ -262,7 +263,8 @@
       "firstPage": "Gå til første side",
       "previousPage": "Gå til forrige side",
       "nextPage": "Gå til næste side",
-      "lastPage": "Gå til sidste side"
+      "lastPage": "Gå til sidste side",
+      "totalRows": "{total} række(r)"
     },
     "sessionsThroughTheRef": "Sessioner via referencen \"{ref}\" pr. dag",
     "sessionsThroughTheMagicLink": "Sessioner via det magiske link \"{ref}\" pr. dag",

@@ -19,6 +19,7 @@ vi.mock("@chatbotx.io/database/client", () => ({ db }))
 const commentAutomationStatsRepository = {
   insertEvents: vi.fn().mockResolvedValue(undefined),
   settleEvent: vi.fn().mockResolvedValue(undefined),
+  deleteEvent: vi.fn().mockResolvedValue(undefined),
   getRepliesByDate: vi.fn(),
   getUserCommentTotals: vi.fn(),
   getBotReplyTotals: vi.fn(),
@@ -145,6 +146,93 @@ describe("recordEvent", () => {
 
     const [rows] = commentAutomationStatsRepository.insertEvents.mock.calls[0]
     expect(rows[0].errorDetail).toHaveLength(8192)
+  })
+})
+
+describe("settleEvent", () => {
+  test("omitting replyText leaves the column alone — a failed send keeps the text it carried", async () => {
+    await service.settleEvent({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "public",
+      status: "failed",
+      errorDetail: "token revoked",
+    })
+
+    const [input] = commentAutomationStatsRepository.settleEvent.mock.calls[0]
+    expect(input).not.toHaveProperty("replyText")
+    expect(input.errorDetail).toBe("token revoked")
+  })
+
+  test("an explicit null still clears the column", async () => {
+    await service.settleEvent({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "public",
+      status: "failed",
+      replyText: null,
+    })
+
+    const [input] = commentAutomationStatsRepository.settleEvent.mock.calls[0]
+    expect(input.replyText).toBeNull()
+  })
+
+  test("truncates an oversized error detail", async () => {
+    await service.settleEvent({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "private",
+      status: "failed",
+      errorDetail: "x".repeat(9000),
+    })
+
+    const [input] = commentAutomationStatsRepository.settleEvent.mock.calls[0]
+    expect(input.errorDetail).toHaveLength(8192)
+  })
+
+  test("swallows a repository failure", async () => {
+    commentAutomationStatsRepository.settleEvent.mockRejectedValueOnce(
+      new Error("db down"),
+    )
+
+    await expect(
+      service.settleEvent({
+        automationId: "automation-1",
+        commentId: "comment-1",
+        replyChannel: "public",
+        status: "sent",
+      }),
+    ).resolves.toBeUndefined()
+  })
+})
+
+describe("discardEvent", () => {
+  test("deletes the row a deliberate skip opened", async () => {
+    await service.discardEvent({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "public",
+    })
+
+    expect(commentAutomationStatsRepository.deleteEvent).toHaveBeenCalledWith({
+      automationId: "automation-1",
+      commentId: "comment-1",
+      replyChannel: "public",
+    })
+  })
+
+  test("swallows a repository failure", async () => {
+    commentAutomationStatsRepository.deleteEvent.mockRejectedValueOnce(
+      new Error("db down"),
+    )
+
+    await expect(
+      service.discardEvent({
+        automationId: "automation-1",
+        commentId: "comment-1",
+        replyChannel: "public",
+      }),
+    ).resolves.toBeUndefined()
   })
 })
 
