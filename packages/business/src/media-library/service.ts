@@ -176,7 +176,10 @@ class MediaLibraryService extends BaseService {
       )
     }
 
-    await mediaLibraryFileRepository.deleteById({ id: input.fileId })
+    await mediaLibraryFileRepository.deleteById({
+      id: input.fileId,
+      workspaceId: input.workspaceId,
+    })
   }
 
   async toggleFavourite(input: {
@@ -193,6 +196,7 @@ class MediaLibraryService extends BaseService {
 
     await mediaLibraryFileRepository.setFavourite({
       id: input.fileId,
+      workspaceId: input.workspaceId,
       isFavourite: !file.isFavourite,
     })
   }

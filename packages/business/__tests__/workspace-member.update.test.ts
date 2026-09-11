@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   updateReturning: vi.fn(),
+  updateWhere: vi.fn(),
   updateSet: vi.fn(),
   update: vi.fn(),
   invalidateCacheByTags: vi.fn(),
@@ -53,8 +54,9 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.update.mockReturnValue({ set: mocks.updateSet })
   mocks.updateSet.mockReturnValue({
-    where: vi.fn(() => ({ returning: mocks.updateReturning })),
+    where: mocks.updateWhere,
   })
+  mocks.updateWhere.mockReturnValue({ returning: mocks.updateReturning })
 })
 
 describe("workspaceMemberService.update", () => {
@@ -86,5 +88,29 @@ describe("workspaceMemberService.update", () => {
     expect(mocks.invalidateCacheByTags).toHaveBeenCalledWith([
       workspaceMemberCacheTag("user-1"),
     ])
+  })
+
+  // Defense-in-depth: today's only caller pre-validates via
+  // `findByIdOrFail({ id, workspaceId })`, so this is not a live
+  // cross-workspace bug, but the method's own signature advertises workspace
+  // scoping — the WHERE clause must actually enforce it so a future caller
+  // that skips the pre-check can't update another workspace's member row.
+  test("scopes the update to both the member id and the workspace", async () => {
+    mocks.updateReturning.mockResolvedValue([
+      { id: "member-1", userId: "user-1" },
+    ])
+
+    await workspaceMemberService.update({
+      id: "member-1",
+      workspaceId: "ws-1",
+      data: { permissions: { superAdmin: true } },
+    })
+
+    expect(mocks.updateWhere).toHaveBeenCalledWith({
+      and: [
+        { eq: ["workspaceMember.id", "member-1"] },
+        { eq: ["workspaceMember.workspaceId", "ws-1"] },
+      ],
+    })
   })
 })

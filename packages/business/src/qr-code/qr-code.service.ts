@@ -88,27 +88,22 @@ function getListCacheKey(input: ListQrCodesInput): string {
   return `qr-codes:list:${keyParts}`
 }
 
-function getItemCacheKey(workspaceId: string, id: string): string {
-  return `qr-codes:item:${workspaceId}:${id}`
-}
-
 class QRCodeService extends BaseService {
+  // Deliberately uncached: this is also read by the public, unauthenticated
+  // `/l/[workspaceId]/[id]` QR landing page, whose whole job is to redirect a
+  // freshly scanned code to the right inbox link. Caching here (as `list`
+  // does) would let a renamed/re-pointed QR code route scans to the old
+  // destination for up to `QR_CODES_CACHE_TTL_SECONDS`. The authenticated
+  // builder edit page gets its own cache in `findQrCode`
+  // (apps/builder/src/features/qr-codes/queries/index.ts) instead.
   async find({ workspaceId, id }: { workspaceId: string; id: string }) {
-    return await withCache(
-      getItemCacheKey(workspaceId, id),
-      async () =>
-        await db.query.reflinkModel.findFirst({
-          where: {
-            id,
-            workspaceId,
-            type: "qrCode",
-          },
-        }),
-      {
-        ttl: QR_CODES_CACHE_TTL_SECONDS,
-        tags: [qrCodeWorkspaceCacheTag(workspaceId)],
+    return await db.query.reflinkModel.findFirst({
+      where: {
+        id,
+        workspaceId,
+        type: "qrCode",
       },
-    )
+    })
   }
 
   async create(input: {

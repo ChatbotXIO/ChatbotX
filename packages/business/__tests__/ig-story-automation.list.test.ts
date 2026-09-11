@@ -51,6 +51,18 @@ beforeEach(() => {
 })
 
 describe("igStoryAutomationService.list — folder filtering", () => {
+  test("scopes to the workspace and the ig-story type discriminator", async () => {
+    await igStoryAutomationService.list({
+      workspaceId: "ws-1",
+      page: 1,
+      perPage: 10,
+    })
+
+    const where = mocks.findMany.mock.calls[0]?.[0]?.where
+    expect(where.workspaceId).toBe("ws-1")
+    expect(where.type).toEqual({ in: ["instagram", "instagramFacebook"] })
+  })
+
   test("no folderId scopes to isNull", async () => {
     await igStoryAutomationService.list({
       workspaceId: "ws-1",
@@ -132,5 +144,22 @@ describe("igStoryAutomationService.findOrFail", () => {
     })
 
     expect(result).toEqual({ id: "story-1" })
+  })
+
+  test("scopes the lookup to the workspace and the ig-story type discriminator", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "story-1" })
+
+    await igStoryAutomationService.findOrFail({
+      workspaceId: "ws-1",
+      id: "story-1",
+    })
+
+    expect(mocks.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "story-1",
+        workspaceId: "ws-1",
+        type: { in: ["instagram", "instagramFacebook"] },
+      },
+    })
   })
 })

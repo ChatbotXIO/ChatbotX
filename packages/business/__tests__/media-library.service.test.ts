@@ -180,7 +180,10 @@ describe("mediaLibraryService.deleteFile", () => {
     })
 
     expect(mocks.warn).toHaveBeenCalled()
-    expect(mocks.deleteFileById).toHaveBeenCalledWith({ id: "file-1" })
+    expect(mocks.deleteFileById).toHaveBeenCalledWith({
+      id: "file-1",
+      workspaceId: "ws-1",
+    })
   })
 })
 
@@ -206,6 +209,7 @@ describe("mediaLibraryService.toggleFavourite", () => {
 
     expect(mocks.setFavourite).toHaveBeenCalledWith({
       id: "file-1",
+      workspaceId: "ws-1",
       isFavourite: true,
     })
   })
@@ -220,6 +224,7 @@ describe("mediaLibraryService.toggleFavourite", () => {
 
     expect(mocks.setFavourite).toHaveBeenCalledWith({
       id: "file-1",
+      workspaceId: "ws-1",
       isFavourite: false,
     })
   })

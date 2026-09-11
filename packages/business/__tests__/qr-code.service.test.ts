@@ -9,6 +9,9 @@ const mocks = vi.hoisted(() => ({
   insert: vi.fn(),
   invalidateCacheByTags: vi.fn(),
   withCache: vi.fn(),
+  findFirst: vi.fn(),
+  count: vi.fn(),
+  listWhere: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -16,22 +19,16 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     insert: mocks.insert,
     query: {
-      reflinkModel: { findFirst: vi.fn() },
+      reflinkModel: { findFirst: mocks.findFirst },
     },
     select: vi.fn(() => ({
       from: vi.fn(() => ({
         innerJoin: vi.fn(() => ({
-          where: vi.fn(() => ({
-            orderBy: vi.fn(() => ({
-              limit: vi.fn(() => ({
-                offset: vi.fn(() => Promise.resolve([])),
-              })),
-            })),
-          })),
+          where: mocks.listWhere,
         })),
       })),
     })),
-    $count: vi.fn(() => Promise.resolve(0)),
+    $count: mocks.count,
   },
   eq: mocks.eq,
   ilike: mocks.ilike,
@@ -76,6 +73,15 @@ beforeEach(() => {
   mocks.withCache.mockImplementation(
     async (_key: string, fn: () => unknown) => await fn(),
   )
+  mocks.findFirst.mockResolvedValue(undefined)
+  mocks.count.mockResolvedValue(0)
+  mocks.listWhere.mockReturnValue({
+    orderBy: vi.fn(() => ({
+      limit: vi.fn(() => ({
+        offset: vi.fn(() => Promise.resolve([])),
+      })),
+    })),
+  })
 })
 
 describe("qrCodeService.create", () => {
@@ -137,10 +143,8 @@ describe("qrCodeService.create", () => {
   })
 })
 
-describe("qrCodeService.list / find cache tags", () => {
+describe("qrCodeService.list — scoping and cache tags", () => {
   test("list scopes its cache tag to the workspace's qr-codes tag", async () => {
-    mocks.withCache.mockResolvedValue({ data: [], pageCount: 0 })
-
     await qrCodeService.list({
       workspaceId: "ws-1",
       page: 1,
@@ -154,15 +158,48 @@ describe("qrCodeService.list / find cache tags", () => {
     )
   })
 
-  test("find scopes its cache tag to the workspace's qr-codes tag", async () => {
-    mocks.withCache.mockResolvedValue(undefined)
+  test("list filters by workspaceId and the qrCode type discriminator", async () => {
+    await qrCodeService.list({
+      workspaceId: "ws-1",
+      page: 1,
+      perPage: 10,
+    })
 
+    // `and(...)` is mocked to capture its args verbatim; `eq(...)` likewise.
+    // Asserting the raw `and` call is what actually runs the query-building
+    // closure inside `withCache`, unlike stubbing `withCache` itself to
+    // resolve immediately.
+    const andArgs = mocks.and.mock.calls[0] as {
+      eq: [unknown, unknown]
+    }[]
+    const eqValues = andArgs
+      .filter((arg): arg is { eq: [unknown, unknown] } => Boolean(arg))
+      .map((arg) => arg.eq[1])
+    expect(eqValues).toEqual(["ws-1", "qrCode"])
+  })
+})
+
+describe("qrCodeService.find", () => {
+  // Deliberately uncached (see the service) — the public, unauthenticated QR
+  // landing page reads through this method directly, so a cache here would
+  // let a renamed QR code redirect scans to the old destination for up to an
+  // hour. The authenticated builder edit page caches around this call
+  // instead, in `findQrCode` (apps/builder/src/features/qr-codes/queries).
+  test("does not cache — reads straight from the database", async () => {
     await qrCodeService.find({ workspaceId: "ws-1", id: "qr-1" })
 
-    expect(mocks.withCache).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.any(Function),
-      expect.objectContaining({ tags: [qrCodeWorkspaceCacheTag("ws-1")] }),
-    )
+    expect(mocks.withCache).not.toHaveBeenCalled()
+  })
+
+  test("filters by workspaceId, id, and the qrCode type discriminator", async () => {
+    await qrCodeService.find({ workspaceId: "ws-1", id: "qr-1" })
+
+    expect(mocks.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "qr-1",
+        workspaceId: "ws-1",
+        type: "qrCode",
+      },
+    })
   })
 })

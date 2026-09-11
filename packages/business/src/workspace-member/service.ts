@@ -317,12 +317,17 @@ export class WorkspaceMemberService extends BaseService {
     workspaceId: string
     data: Partial<typeof workspaceMemberModel.$inferInsert>
   }): Promise<{ id: string } | undefined> {
-    const { tx = db, id, data } = input
+    const { tx = db, id, workspaceId, data } = input
 
     const updated = await tx
       .update(workspaceMemberModel)
       .set(data)
-      .where(eq(workspaceMemberModel.id, id))
+      .where(
+        and(
+          eq(workspaceMemberModel.id, id),
+          eq(workspaceMemberModel.workspaceId, workspaceId),
+        ),
+      )
       .returning({
         id: workspaceMemberModel.id,
         userId: workspaceMemberModel.userId,

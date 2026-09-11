@@ -131,12 +131,17 @@ export const mediaLibraryFileRepository = {
   },
 
   async deleteById(
-    input: { id: string },
+    input: { id: string; workspaceId: string },
     tx: DatabaseClient = db,
   ): Promise<void> {
     await tx
       .delete(mediaLibraryFileModel)
-      .where(eq(mediaLibraryFileModel.id, input.id))
+      .where(
+        and(
+          eq(mediaLibraryFileModel.id, input.id),
+          eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
+        ),
+      )
   },
 
   async deleteByFolder(
@@ -169,13 +174,18 @@ export const mediaLibraryFileRepository = {
   },
 
   async setFavourite(
-    input: { id: string; isFavourite: boolean },
+    input: { id: string; workspaceId: string; isFavourite: boolean },
     tx: DatabaseClient = db,
   ): Promise<void> {
     await tx
       .update(mediaLibraryFileModel)
       .set({ isFavourite: input.isFavourite })
-      .where(eq(mediaLibraryFileModel.id, input.id))
+      .where(
+        and(
+          eq(mediaLibraryFileModel.id, input.id),
+          eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
+        ),
+      )
   },
 
   async touchLastAccessedAt(
