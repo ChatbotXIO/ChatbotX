@@ -11,6 +11,9 @@ const mocks = vi.hoisted(() => ({
     async () =>
       ({ id: "field-name", name: "field-name", type: "shortText" }) as const,
   ),
+  findManyByIds: vi.fn(
+    async () => [] as { id: string; name: string; type: CustomFieldType }[],
+  ),
 }))
 
 vi.mock("../src/contact-custom-field/service", () => ({
@@ -18,7 +21,10 @@ vi.mock("../src/contact-custom-field/service", () => ({
 }))
 
 vi.mock("../src/custom-field/service", () => ({
-  customFieldService: { findBy: mocks.findBy },
+  customFieldService: {
+    findBy: mocks.findBy,
+    findManyByIds: mocks.findManyByIds,
+  },
 }))
 
 const { javascriptExecutionService } = await import(
@@ -51,6 +57,7 @@ beforeEach(() => {
     name: "field-name",
     type: "shortText",
   })
+  mocks.findManyByIds.mockResolvedValue([])
 })
 
 describe("javascriptExecutionService", () => {
@@ -441,6 +448,41 @@ describe("javascriptExecutionService", () => {
           fields: [{ customFieldId: "field-name", value: "" }],
         }),
       )
+    })
+  })
+
+  test("writes mapped JSON paths to the chosen custom fields in one call", async () => {
+    mocks.findManyByIds.mockResolvedValueOnce([
+      { id: "field-lat", name: "latitud", type: "number" },
+      { id: "field-lng", name: "longitud", type: "number" },
+    ])
+    respondWithValue({ latitude: 4.6097, longitude: -74.0817 })
+
+    await javascriptExecutionService.executeAndMap({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      code: "return { latitude: 4.6097, longitude: -74.0817 }",
+      input: {},
+      customFieldId: "",
+      mapping: [
+        { jsonPath: "latitude", outputFieldId: "field-lat" },
+        { jsonPath: "longitude", outputFieldId: "field-lng" },
+      ],
+    })
+
+    expect(mocks.findBy).not.toHaveBeenCalled()
+    expect(mocks.findManyByIds).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ids: ["field-lat", "field-lng"],
+    })
+    expect(mocks.setValues).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      fields: [
+        { customFieldId: "field-lat", value: "4.6097" },
+        { customFieldId: "field-lng", value: "-74.0817" },
+      ],
+      temporalInputParsing: "lenient",
     })
   })
 })

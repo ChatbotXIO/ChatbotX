@@ -2390,12 +2390,15 @@
       "used": "Använd"
     },
     "outputCustomField": {
-      "label": "Anpassat utdatafält"
+      "label": "Anpassat utdatafält",
+      "javascriptOptional": "Valfritt. Sparar hela returvärdet. Använd JSON-sökvägsmappningen ovan för att skriva enskilda fält.",
+      "javascriptDumpLabel": "Fullständig JSON-utdata (valfritt)"
     },
     "javascriptCode": {
       "label": "JavaScript-kod",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Använd ren JavaScript och returnera ett värde. Nätverk, filer, API:er och externa bibliotek är inte tillgängliga. Kontakt- och systemdata är tillgängliga via `input`-objektet."
+      "description": "Använd ren JavaScript och returnera ett värde. Nätverk, filer, API:er och externa bibliotek är inte tillgängliga. Kontakt- och systemdata är tillgängliga via `input`-objektet.",
+      "objectMapping": "Mappa valfri JSON-sökväg från returvärdet till valfritt anpassat fält, på samma sätt som Extern API-begäran. Du väljer sökvägar och fält."
     },
     "outputFieldId": {
       "label": "Spara resultatet i ett anpassat fält"

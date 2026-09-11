@@ -1431,12 +1431,15 @@
       "label": "İşlem"
     },
     "outputCustomField": {
-      "label": "Çıkış Özel Alanı"
+      "label": "Çıkış Özel Alanı",
+      "javascriptOptional": "İsteğe bağlı. Tüm dönüş değerini saklar. Tek tek alanları yazmak için yukarıdaki JSON yolu eşlemesini kullanın.",
+      "javascriptDumpLabel": "Tam JSON çıktısı (isteğe bağlı)"
     },
     "javascriptCode": {
       "label": "JavaScript kodu",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Saf JavaScript kullanın ve bir değer döndürün. Ağ, dosyalar, API'ler ve harici kitaplıklar kullanılamaz. Kişi ve sistem verileri `input` nesnesi üzerinden kullanılabilir."
+      "description": "Saf JavaScript kullanın ve bir değer döndürün. Ağ, dosyalar, API'ler ve harici kitaplıklar kullanılamaz. Kişi ve sistem verileri `input` nesnesi üzerinden kullanılabilir.",
+      "objectMapping": "Dönen değerdeki herhangi bir JSON yolunu herhangi bir özel alana eşleyin — Harici API İsteği ile aynı. Yolları ve alanları siz seçersiniz."
     },
     "httpMethod": {
       "label": "Yöntem"

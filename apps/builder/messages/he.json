@@ -3981,12 +3981,15 @@
       "label": "פעולה"
     },
     "outputCustomField": {
-      "label": "שדה פלט מותאם אישית"
+      "label": "שדה פלט מותאם אישית",
+      "javascriptOptional": "אופציונלי. שומר את כל ערך ההחזרה. השתמשו במיפוי נתיבי JSON למעלה כדי לכתוב שדות בודדים.",
+      "javascriptDumpLabel": "פלט JSON מלא (אופציונלי)"
     },
     "javascriptCode": {
       "label": "קוד JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "השתמשו ב-JavaScript טהור והחזירו ערך. רשת, קבצים, ממשקי API וספריות חיצוניות אינם זמינים. נתוני איש הקשר והמערכת זמינים באובייקט `input`."
+      "description": "השתמשו ב-JavaScript טהור והחזירו ערך. רשת, קבצים, ממשקי API וספריות חיצוניות אינם זמינים. נתוני איש הקשר והמערכת זמינים באובייקט `input`.",
+      "objectMapping": "מפו נתיב JSON כלשהו מהערך המוחזר לשדה מותאם אישית כלשהו, באותו אופן כמו בקשת API חיצונית. אתם בוחרים את הנתיבים ואת השדות."
     },
     "httpMethod": {
       "label": "שיטה"

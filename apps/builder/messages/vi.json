@@ -1404,12 +1404,15 @@
       "label": "Hoạt động"
     },
     "outputCustomField": {
-      "label": "Trường tùy chỉnh đầu ra"
+      "label": "Trường tùy chỉnh đầu ra",
+      "javascriptOptional": "Tùy chọn. Lưu toàn bộ giá trị trả về. Dùng ánh xạ đường dẫn JSON ở trên để ghi từng trường.",
+      "javascriptDumpLabel": "Toàn bộ JSON đầu ra (tùy chọn)"
     },
     "javascriptCode": {
       "label": "Mã JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Dùng JavaScript thuần túy và trả về một giá trị. Không thể dùng mạng, tệp, API hoặc thư viện bên ngoài. Dữ liệu liên hệ và hệ thống có sẵn trong đối tượng `input`."
+      "description": "Dùng JavaScript thuần túy và trả về một giá trị. Không thể dùng mạng, tệp, API hoặc thư viện bên ngoài. Dữ liệu liên hệ và hệ thống có sẵn trong đối tượng `input`.",
+      "objectMapping": "Ánh xạ bất kỳ đường dẫn JSON nào từ giá trị trả về sang bất kỳ trường tùy chỉnh nào, giống Yêu cầu API bên ngoài. Bạn chọn đường dẫn và trường."
     },
     "httpMethod": {
       "label": "Phương thức"

@@ -1294,12 +1294,15 @@
       "label": "Vorgang"
     },
     "outputCustomField": {
-      "label": "Benutzerdefiniertes Ausgabefeld"
+      "label": "Benutzerdefiniertes Ausgabefeld",
+      "javascriptOptional": "Optional. Speichert den gesamten Rückgabewert. Über die JSON-Pfadzuordnung oben einzelne Felder schreiben.",
+      "javascriptDumpLabel": "Vollständige JSON-Ausgabe (optional)"
     },
     "javascriptCode": {
       "label": "JavaScript-Code",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Verwenden Sie reines JavaScript und geben Sie einen Wert zurück. Netzwerk, Dateien, APIs und externe Bibliotheken stehen nicht zur Verfügung. Kontakt- und Systemdaten sind über das `input`-Objekt verfügbar."
+      "description": "Verwenden Sie reines JavaScript und geben Sie einen Wert zurück. Netzwerk, Dateien, APIs und externe Bibliotheken stehen nicht zur Verfügung. Kontakt- und Systemdaten sind über das `input`-Objekt verfügbar.",
+      "objectMapping": "Ordne einen beliebigen JSON-Pfad des Rückgabewerts einem beliebigen benutzerdefinierten Feld zu — wie bei Externer API-Anfrage. Du wählst Pfade und Felder."
     },
     "httpMethod": {
       "label": "Methode"

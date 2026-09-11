@@ -604,12 +604,15 @@
       "label": "操作"
     },
     "outputCustomField": {
-      "label": "輸出自訂欄位"
+      "label": "輸出自訂欄位",
+      "javascriptOptional": "選用。儲存整個回傳值。使用上方的 JSON 路徑對應來寫入個別欄位。",
+      "javascriptDumpLabel": "完整 JSON 輸出（選用）"
     },
     "javascriptCode": {
       "label": "JavaScript 程式碼",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "使用純 JavaScript 並回傳一個值。無法使用網路、檔案、API 或外部函式庫。聯絡人與系統資料可透過 `input` 物件取得。"
+      "description": "使用純 JavaScript 並回傳一個值。無法使用網路、檔案、API 或外部函式庫。聯絡人與系統資料可透過 `input` 物件取得。",
+      "objectMapping": "將回傳值中的任意 JSON 路徑對應到任意自訂欄位，方式與外部 API 請求相同。路徑與欄位由你選擇。"
     },
     "httpMethod": {
       "label": "方法"

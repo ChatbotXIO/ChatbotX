@@ -1107,12 +1107,15 @@
       "label": "Bewerking"
     },
     "outputCustomField": {
-      "label": "Aangepast uitvoerveld"
+      "label": "Aangepast uitvoerveld",
+      "javascriptOptional": "Optioneel. Slaat de volledige returnwaarde op. Gebruik de JSON-padtoewijzing hierboven om afzonderlijke velden te schrijven.",
+      "javascriptDumpLabel": "Volledige JSON-uitvoer (optioneel)"
     },
     "javascriptCode": {
       "label": "JavaScript-code",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Gebruik pure JavaScript en retourneer een waarde. Netwerk, bestanden, API's en externe bibliotheken zijn niet beschikbaar. Contact- en systeemgegevens zijn beschikbaar via het `input`-object."
+      "description": "Gebruik pure JavaScript en retourneer een waarde. Netwerk, bestanden, API's en externe bibliotheken zijn niet beschikbaar. Contact- en systeemgegevens zijn beschikbaar via het `input`-object.",
+      "objectMapping": "Wijs een willekeurig JSON-pad uit de returnwaarde toe aan een willekeurig aangepast veld, net als bij Externe API-aanvraag. Jij kiest de paden en de velden."
     },
     "httpMethod": {
       "label": "Methode"

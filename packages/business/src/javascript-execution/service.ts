@@ -8,7 +8,12 @@ import { contactCustomFieldService } from "../contact-custom-field/service"
 import { customFieldService } from "../custom-field/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { javascriptExecutionEnv } from "./keys"
-import { toValidatedCustomFieldValue } from "./output-value"
+import {
+  collectJavascriptOutputWrites,
+  completeJavascriptMapping,
+  type JavascriptJsonPathMapping,
+  type JavascriptOutputField,
+} from "./output-value"
 
 class JavascriptExecutionService extends BaseService {
   async execute(props: {
@@ -36,34 +41,55 @@ class JavascriptExecutionService extends BaseService {
     code: string
     input: Record<string, unknown>
     customFieldId: string
+    mapping?: JavascriptJsonPathMapping[]
   }): Promise<{ value: unknown }> {
+    const customFieldId = props.customFieldId.trim()
+    const mapping = completeJavascriptMapping(props.mapping)
     // Resolved before running the code so a step pointing at a deleted field
     // fails fast instead of burning a sandbox execution, and so a stale id
-    // is a visible error rather than writeValues' silent no-op.
-    const customField = await customFieldService.findBy({
-      where: { id: props.customFieldId, workspaceId: props.workspaceId },
-    })
-    if (!customField) {
+    // is a visible error rather than writeValues' silent no-op. An empty id
+    // is allowed when JSON-path mapping writes individual fields.
+    const primaryField = customFieldId
+      ? await customFieldService.findBy({
+          where: { id: customFieldId, workspaceId: props.workspaceId },
+        })
+      : null
+    if (customFieldId && !primaryField) {
       throw notFoundException(
         "The output custom field for this step no longer exists.",
       )
     }
 
+    const mappedRows =
+      mapping.length > 0
+        ? await customFieldService.findManyByIds({
+            workspaceId: props.workspaceId,
+            ids: mapping.map((entry) => entry.outputFieldId),
+          })
+        : []
+    const mappedFields = new Map<string, JavascriptOutputField>(
+      mappedRows.map((field) => [
+        field.id,
+        { id: field.id, name: field.name, type: field.type },
+      ]),
+    )
+
     const result = await this.execute({ code: props.code, input: props.input })
 
-    const value = toValidatedCustomFieldValue({
+    const fields = collectJavascriptOutputWrites({
       value: result.value,
-      type: customField.type,
-      fieldName: customField.name,
+      primaryField: primaryField ?? null,
+      mappedFields,
+      mapping,
     })
 
-    if (value !== null) {
+    if (fields.length > 0) {
       await contactCustomFieldService.setValues({
         workspaceId: props.workspaceId,
         contactId: props.contactId,
-        fields: [{ customFieldId: props.customFieldId, value }],
+        fields,
         // date/datetime were only pre-flighted for parseability in
-        // toValidatedCustomFieldValue; the authoritative, timezone-aware
+        // collectJavascriptOutputWrites; the authoritative, timezone-aware
         // normalization happens here, where the contact/workspace zone is
         // resolvable.
         temporalInputParsing: TemporalInputParsing.Lenient,

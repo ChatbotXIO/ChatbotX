@@ -571,6 +571,7 @@ export async function handleExecuteJavascript({
       code,
       input,
       customFieldId: step.customFieldId,
+      mapping: step.mapping ?? [],
     })
 
     return { status: "success", result: null }

@@ -596,12 +596,15 @@
       "label": "Operazione"
     },
     "outputCustomField": {
-      "label": "Campo personalizzato di output"
+      "label": "Campo personalizzato di output",
+      "javascriptOptional": "Facoltativo. Salva l’intero valore restituito. Usa la mappatura dei percorsi JSON sopra per scrivere i singoli campi.",
+      "javascriptDumpLabel": "Output JSON completo (facoltativo)"
     },
     "javascriptCode": {
       "label": "Codice JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Usa JavaScript puro e restituisci un valore. Rete, file, API e librerie esterne non sono disponibili. I dati del contatto e del sistema sono disponibili nell'oggetto `input`."
+      "description": "Usa JavaScript puro e restituisci un valore. Rete, file, API e librerie esterne non sono disponibili. I dati del contatto e del sistema sono disponibili nell'oggetto `input`.",
+      "objectMapping": "Mappa qualsiasi percorso JSON del valore restituito su qualsiasi campo personalizzato, come nella Richiesta API esterna. Scegli tu i percorsi e i campi."
     },
     "httpMethod": {
       "label": "Metodo"

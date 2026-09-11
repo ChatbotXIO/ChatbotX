@@ -1294,12 +1294,15 @@
       "label": "Operasi"
     },
     "outputCustomField": {
-      "label": "Output Kustom Field"
+      "label": "Output Kustom Field",
+      "javascriptOptional": "Opsional. Menyimpan seluruh nilai kembalian. Gunakan pemetaan jalur JSON di atas untuk menulis field individu.",
+      "javascriptDumpLabel": "Output JSON lengkap (opsional)"
     },
     "javascriptCode": {
       "label": "Kode JavaScript",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Gunakan JavaScript murni dan kembalikan sebuah nilai. Jaringan, file, API, dan pustaka eksternal tidak tersedia. Data kontak dan sistem tersedia melalui objek `input`."
+      "description": "Gunakan JavaScript murni dan kembalikan sebuah nilai. Jaringan, file, API, dan pustaka eksternal tidak tersedia. Data kontak dan sistem tersedia melalui objek `input`.",
+      "objectMapping": "Petakan jalur JSON apa pun dari nilai yang dikembalikan ke field kustom mana pun, sama seperti Permintaan API Eksternal. Anda memilih jalur dan field-nya."
     },
     "httpMethod": {
       "label": "Metode"

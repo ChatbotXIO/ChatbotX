@@ -1294,12 +1294,15 @@
       "label": "Operaatio"
     },
     "outputCustomField": {
-      "label": "Tulosteen mukautettu kenttä"
+      "label": "Tulosteen mukautettu kenttä",
+      "javascriptOptional": "Valinnainen. Tallentaa koko paluuarvon. Kirjoita yksittäiset kentät yllä olevalla JSON-polkukartoituksella.",
+      "javascriptDumpLabel": "Koko JSON-tuloste (valinnainen)"
     },
     "javascriptCode": {
       "label": "JavaScript-koodi",
       "placeholder": "return (input.first_name || 'there').toUpperCase()",
-      "description": "Käytä puhdasta JavaScriptiä ja palauta arvo. Verkko, tiedostot, API:t ja ulkoiset kirjastot eivät ole käytettävissä. Yhteystiedot ja järjestelmätiedot ovat saatavilla `input`-objektissa."
+      "description": "Käytä puhdasta JavaScriptiä ja palauta arvo. Verkko, tiedostot, API:t ja ulkoiset kirjastot eivät ole käytettävissä. Yhteystiedot ja järjestelmätiedot ovat saatavilla `input`-objektissa.",
+      "objectMapping": "Kartoita mikä tahansa JSON-polku paluuarvosta mihin tahansa mukautettuun kenttään, samoin kuin ulkoisessa API-pyynnössä. Sinä valitset polut ja kentät."
     },
     "httpMethod": {
       "label": "Menetelmä"
