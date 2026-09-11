@@ -24,9 +24,7 @@ vi.mock("../src/lib/logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
-const { sendMessage } = await import(
-  "../src/handlers/message/outgoing-message"
-)
+const { sendMessage } = await import("../src/handlers/message/outgoing-message")
 
 const PHONE_NUMBER_ID = "pn-1"
 const ctx = {

@@ -3,7 +3,6 @@ import {
   buildContext,
 } from "@chatbotx.io/business"
 import type { GoogleCredential } from "@chatbotx.io/database/partials"
-import type { IntegrationGoogleCalendarModel } from "@chatbotx.io/database/types"
 import {
   type GoogleCalendarAuthValue,
   googleCalendarAuthSchema,
@@ -65,25 +64,6 @@ export async function verifyGoogleCalendarId(input: {
       "Failed to verify Google Calendar ID",
     )
     throw error
-  }
-}
-
-export async function disconnectGoogleCalendarProvider(input: {
-  workspaceId: string
-  connection: IntegrationGoogleCalendarModel
-}) {
-  try {
-    const auth = googleCalendarAuthSchema.parse(input.connection.auth)
-    await integrationGoogleCalendar.disconnect?.(auth)
-  } catch (error) {
-    logger.warn(
-      {
-        err: normalizeError(error),
-        workspaceId: input.workspaceId,
-        integrationId: input.connection.integrationId,
-      },
-      "Failed to revoke Google Calendar token",
-    )
   }
 }
 

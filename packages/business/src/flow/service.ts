@@ -602,14 +602,20 @@ class FlowService extends BaseService {
   }
 
   /** Existence check for a set of flow ids, scoped to the workspace. */
-  async assertAllExist(input: {
-    workspaceId: string
-    flowIds: string[]
-  }): Promise<void> {
-    const ids = await flowRepository.listIdsByIds({
-      workspaceId: input.workspaceId,
-      ids: input.flowIds,
-    })
+  async assertAllExist(
+    input: {
+      workspaceId: string
+      flowIds: string[]
+    },
+    tx?: DatabaseClient,
+  ): Promise<void> {
+    const ids = await flowRepository.listIdsByIds(
+      {
+        workspaceId: input.workspaceId,
+        ids: input.flowIds,
+      },
+      tx,
+    )
 
     if (ids.length !== input.flowIds.length) {
       throw notFoundException("Flow does not exists.")

@@ -345,6 +345,67 @@ describe("appointmentCalendarService.generateAvailableSlots", () => {
     ])
   })
 
+  test("scopes the existing-appointments capacity query by workspaceId and excludes soft-deleted rows", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-08-01T00:00:00.000Z"))
+
+    const findManyAppointments = vi.fn().mockResolvedValue([])
+    const tx = {
+      query: {
+        appointmentCalendarModel: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: "calendar-1",
+            workspaceId: "workspace-1",
+            active: true,
+            timezone: "UTC",
+            scheduleWindowType: "specificDay",
+            scheduleWindowConfig: {
+              date: "2026-08-12",
+              minAdvanceDays: 0,
+            },
+            durationMinutes: 30,
+            bufferAfterMinutes: 0,
+            maxAppointmentsPerUser: null,
+            dailyLimitEnabled: false,
+            maxPerDay: null,
+            allowGroupMeeting: false,
+            maxPerSlot: null,
+          }),
+        },
+        appointmentCalendarAvailabilityModel: {
+          findMany: vi
+            .fn()
+            .mockResolvedValue([
+              { weekday: 3, startMinute: 540, endMinute: 600 },
+            ]),
+        },
+        appointmentModel: {
+          findMany: findManyAppointments,
+        },
+      },
+      $count: vi.fn(),
+    }
+
+    await appointmentCalendarService.generateAvailableSlots({
+      workspaceId: "workspace-1",
+      calendarId: "calendar-1",
+      startDate: new Date("2026-08-12T00:00:00.000Z"),
+      endDate: new Date("2026-08-12T23:59:59.999Z"),
+      externalBusyIntervals: [],
+      tx: tx as never,
+    })
+
+    expect(findManyAppointments).toHaveBeenCalledWith({
+      where: expect.objectContaining({
+        workspaceId: "workspace-1",
+        calendarId: "calendar-1",
+        status: "scheduled",
+        deletedAt: { isNull: true },
+      }),
+      columns: { startAt: true },
+    })
+  })
+
   test("returns empty listing results when external busy lookup fails", async () => {
     const prepareSpy = vi
       .spyOn(appointmentCalendarService, "prepareAvailabilityContext")

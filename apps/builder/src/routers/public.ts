@@ -2,6 +2,9 @@ import { inboxTeamsPublicRouter } from "@/enterprise/features/inbox-teams/api/pu
 import { aiAgentsPublicRouter } from "@/features/ai-agents/api/public"
 import { aiTriggersPublicRouter } from "@/features/ai-triggers/api/public"
 import { analyticsPublicRouter } from "@/features/analytics/api/public"
+import { appointmentCalendarsPublicRouter } from "@/features/appointment-calendars/api/public"
+import { appointmentRemindersPublicRouter } from "@/features/appointment-management/api/public"
+import { appointmentsPublicRouter } from "@/features/appointments/api/public"
 import { keywordsPublicRouter } from "@/features/automated-response/api/public"
 import { botFieldsPublicRouter } from "@/features/bot-fields/api/public"
 import { broadcastsPublicRouter } from "@/features/broadcasts/api/public"
@@ -10,6 +13,7 @@ import { conversationsPublicRouter } from "@/features/conversations/api/public"
 import { couponsPublicRouter } from "@/features/coupons/api/public"
 import { customFieldsPublicRouter } from "@/features/custom-fields/api/public"
 import { errorLogsPublicRouter } from "@/features/error-logs/api/public"
+import { appointmentExternalCalendarsPublicRouter } from "@/features/external-calendars/api/public"
 import { externalWebhooksPublicRouter } from "@/features/external-webhooks/api/public"
 import { flowsPublicRouter } from "@/features/flows/api/public"
 import { foldersPublicRouter } from "@/features/folders/api/public"
@@ -31,6 +35,10 @@ export const publicRouter = {
   aiAgents: aiAgentsPublicRouter,
   aiTriggers: aiTriggersPublicRouter,
   analytics: analyticsPublicRouter,
+  appointmentCalendars: appointmentCalendarsPublicRouter,
+  appointmentExternalCalendars: appointmentExternalCalendarsPublicRouter,
+  appointmentReminders: appointmentRemindersPublicRouter,
+  appointments: appointmentsPublicRouter,
   botFields: botFieldsPublicRouter,
   broadcasts: broadcastsPublicRouter,
   channels: channelsPublicRouter,
