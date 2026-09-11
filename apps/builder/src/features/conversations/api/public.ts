@@ -7,14 +7,6 @@ import {
 import z from "zod"
 import { successResponse } from "@/features/common/schema"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter"
-import { archiveConversations } from "@/features/conversations/actions/archive-conversation.action"
-import { assignSingleConversation } from "@/features/conversations/actions/assign-conversation.action"
-import { disableBotForConversations } from "@/features/conversations/actions/disable-bot.action"
-import { enableBotForConversations } from "@/features/conversations/actions/enable-bot.action"
-import { followConversation } from "@/features/conversations/actions/follow-conversation.action"
-import { unarchiveConversations } from "@/features/conversations/actions/unarchive-conversation.action"
-import { unfollowConversation } from "@/features/conversations/actions/unfollow-conversation.action"
-import { unreadConversation } from "@/features/conversations/actions/unread-conversation.action"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
@@ -139,10 +131,14 @@ export const conversationsPublicRouter = {
         where: { id: input.id, workspaceId },
       })
 
-      await assignSingleConversation({
+      await conversationService.assignOne({
         workspaceId,
         conversation,
         assignedId: input.assignedId,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "assignConversation",
+        },
       })
       return { success: true as const }
     }),
@@ -162,9 +158,14 @@ export const conversationsPublicRouter = {
       await conversationService.findByOrFail({
         where: { id: input.id, workspaceId },
       })
-      await archiveConversations({
+      await conversationService.archiveByIds({
         workspaceId,
         ids: [input.id],
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "archiveConversationAction",
+          triggerType: "conversation_archived",
+        },
       })
       return { success: true as const }
     }),
@@ -184,9 +185,14 @@ export const conversationsPublicRouter = {
       await conversationService.findByOrFail({
         where: { id: input.id, workspaceId },
       })
-      await unarchiveConversations({
+      await conversationService.unarchiveByIds({
         workspaceId,
         ids: [input.id],
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "unarchiveConversationAction",
+          triggerType: "conversation_unarchived",
+        },
       })
       return { success: true as const }
     }),
@@ -230,7 +236,7 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      await unreadConversation({
+      await conversationService.markUnread({
         workspaceId: context.workspace.id,
         id: input.id,
       })
@@ -248,9 +254,15 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      await followConversation({
+      await conversationService.setFollowed({
         workspaceId: context.workspace.id,
         id: input.id,
+        followed: true,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "followConversationAction",
+          triggerType: "conversation_followed",
+        },
       })
       return { success: true as const }
     }),
@@ -266,9 +278,15 @@ export const conversationsPublicRouter = {
     .output(successResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      await unfollowConversation({
+      await conversationService.setFollowed({
         workspaceId: context.workspace.id,
         id: input.id,
+        followed: false,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "unfollowConversationAction",
+          triggerType: "conversation_unfollowed",
+        },
       })
       return { success: true as const }
     }),
@@ -288,9 +306,15 @@ export const conversationsPublicRouter = {
       await conversationService.findByOrFail({
         where: { id: input.id, workspaceId },
       })
-      await enableBotForConversations({
+      await conversationService.setBotEnabledByIds({
         workspaceId,
         ids: [input.id],
+        botEnabled: true,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "enableBotAction",
+          triggerType: "conversation_transferred_to_bot",
+        },
       })
       return { success: true as const }
     }),
@@ -310,9 +334,15 @@ export const conversationsPublicRouter = {
       await conversationService.findByOrFail({
         where: { id: input.id, workspaceId },
       })
-      await disableBotForConversations({
+      await conversationService.setBotEnabledByIds({
         workspaceId,
         ids: [input.id],
+        botEnabled: false,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "disableBotAction",
+          triggerType: "conversation_transferred_to_human",
+        },
       })
       return { success: true as const }
     }),

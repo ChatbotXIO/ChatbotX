@@ -10,31 +10,6 @@ import {
 } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 
-export const disableBotForConversations = async (props: {
-  workspaceId: string
-  ids: string[]
-  // Optional: a workspace-token caller has no user (see
-  // docs/developer/workspace-api-tokens.md); the session path always passes
-  // `ctx.user.id` below.
-  userId?: string
-}) => {
-  const conversations = await conversationService.findManyByIds({
-    workspaceId: props.workspaceId,
-    ids: props.ids,
-  })
-
-  await conversationService.disableBotState({
-    workspaceId: props.workspaceId,
-    conversations,
-    userId: props.userId,
-    triggerContext: {
-      triggerSource: "api",
-      triggerHandler: "disableBotAction",
-      triggerType: "conversation_transferred_to_human",
-    },
-  })
-}
-
 export const disableBotAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
@@ -48,10 +23,16 @@ export const disableBotAction = workspaceActionClient
       parsedInput: BulkUpdateIdsRequest
       ctx: { user: UserModel }
     }) => {
-      await disableBotForConversations({
+      await conversationService.setBotEnabledByIds({
         workspaceId,
         ids: parsedInput.ids,
+        botEnabled: false,
         userId: ctx.user.id,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "disableBotAction",
+          triggerType: "conversation_transferred_to_human",
+        },
       })
     },
   )

@@ -49,6 +49,12 @@ vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 const conversationService = {
   findByOrFail: vi.fn(),
   updateReadStatus: vi.fn(),
+  assignOne: vi.fn(),
+  archiveByIds: vi.fn(),
+  unarchiveByIds: vi.fn(),
+  markUnread: vi.fn(),
+  setFollowed: vi.fn(),
+  setBotEnabledByIds: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({ conversationService }))
 
@@ -61,52 +67,6 @@ vi.mock(
     listConversations,
   }),
 )
-
-const assignSingleConversation = vi.fn()
-vi.mock(
-  "../src/features/conversations/actions/assign-conversation.action",
-  () => ({ assignSingleConversation }),
-)
-
-const archiveConversations = vi.fn()
-vi.mock(
-  "../src/features/conversations/actions/archive-conversation.action",
-  () => ({ archiveConversations }),
-)
-
-const unarchiveConversations = vi.fn()
-vi.mock(
-  "../src/features/conversations/actions/unarchive-conversation.action",
-  () => ({ unarchiveConversations }),
-)
-
-const unreadConversation = vi.fn()
-vi.mock(
-  "../src/features/conversations/actions/unread-conversation.action",
-  () => ({ unreadConversation }),
-)
-
-const followConversation = vi.fn()
-vi.mock(
-  "../src/features/conversations/actions/follow-conversation.action",
-  () => ({ followConversation }),
-)
-
-const unfollowConversation = vi.fn()
-vi.mock(
-  "../src/features/conversations/actions/unfollow-conversation.action",
-  () => ({ unfollowConversation }),
-)
-
-const enableBotForConversations = vi.fn()
-vi.mock("../src/features/conversations/actions/enable-bot.action", () => ({
-  enableBotForConversations,
-}))
-
-const disableBotForConversations = vi.fn()
-vi.mock("../src/features/conversations/actions/disable-bot.action", () => ({
-  disableBotForConversations,
-}))
 
 vi.mock("@/lib/workspace-quota", () => ({
   assertWorkspaceNotBlocked: vi.fn(),
@@ -157,7 +117,7 @@ describe("GET /v1/conversations/{id}", () => {
 describe("POST /v1/conversations/{id}/assign", () => {
   const procedure = findProcedure("POST", "/v1/conversations/{id}/assign")
 
-  test("resolves the conversation and delegates to assignSingleConversation without an actor", async () => {
+  test("resolves the conversation and delegates to conversationService.assignOne without an actor", async () => {
     conversationService.findByOrFail.mockResolvedValueOnce({
       id: "1",
       contactId: "contact-1",
@@ -171,10 +131,14 @@ describe("POST /v1/conversations/{id}/assign", () => {
     expect(conversationService.findByOrFail).toHaveBeenCalledWith({
       where: { id: "1", workspaceId: "ws-1" },
     })
-    expect(assignSingleConversation).toHaveBeenCalledWith({
+    expect(conversationService.assignOne).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       conversation: { id: "1", contactId: "contact-1" },
       assignedId: "u_user-1",
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "assignConversation",
+      },
     })
     expect(result).toEqual({ success: true })
   })
@@ -183,15 +147,20 @@ describe("POST /v1/conversations/{id}/assign", () => {
 describe("POST /v1/conversations/{id}/archive", () => {
   const procedure = findProcedure("POST", "/v1/conversations/{id}/archive")
 
-  test("delegates to archiveConversations for a single id, without an actor", async () => {
+  test("delegates to conversationService.archiveByIds for a single id, without an actor", async () => {
     const result = await procedure.handler?.({
       context,
       input: { id: "1" },
     })
 
-    expect(archiveConversations).toHaveBeenCalledWith({
+    expect(conversationService.archiveByIds).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       ids: ["1"],
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "archiveConversationAction",
+        triggerType: "conversation_archived",
+      },
     })
     expect(result).toEqual({ success: true })
   })
@@ -200,15 +169,20 @@ describe("POST /v1/conversations/{id}/archive", () => {
 describe("POST /v1/conversations/{id}/unarchive", () => {
   const procedure = findProcedure("POST", "/v1/conversations/{id}/unarchive")
 
-  test("delegates to unarchiveConversations for a single id", async () => {
+  test("delegates to conversationService.unarchiveByIds for a single id", async () => {
     const result = await procedure.handler?.({
       context,
       input: { id: "1" },
     })
 
-    expect(unarchiveConversations).toHaveBeenCalledWith({
+    expect(conversationService.unarchiveByIds).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       ids: ["1"],
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "unarchiveConversationAction",
+        triggerType: "conversation_unarchived",
+      },
     })
     expect(result).toEqual({ success: true })
   })
@@ -233,13 +207,13 @@ describe("POST /v1/conversations/{id}/read", () => {
 describe("POST /v1/conversations/{id}/unread", () => {
   const procedure = findProcedure("POST", "/v1/conversations/{id}/unread")
 
-  test("delegates to unreadConversation", async () => {
+  test("delegates to conversationService.markUnread", async () => {
     const result = await procedure.handler?.({
       context,
       input: { id: "1" },
     })
 
-    expect(unreadConversation).toHaveBeenCalledWith({
+    expect(conversationService.markUnread).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       id: "1",
     })
@@ -250,15 +224,21 @@ describe("POST /v1/conversations/{id}/unread", () => {
 describe("POST /v1/conversations/{id}/follow", () => {
   const procedure = findProcedure("POST", "/v1/conversations/{id}/follow")
 
-  test("delegates to followConversation without an actor", async () => {
+  test("delegates to conversationService.setFollowed without an actor", async () => {
     const result = await procedure.handler?.({
       context,
       input: { id: "1" },
     })
 
-    expect(followConversation).toHaveBeenCalledWith({
+    expect(conversationService.setFollowed).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       id: "1",
+      followed: true,
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "followConversationAction",
+        triggerType: "conversation_followed",
+      },
     })
     expect(result).toEqual({ success: true })
   })
@@ -267,15 +247,21 @@ describe("POST /v1/conversations/{id}/follow", () => {
 describe("POST /v1/conversations/{id}/unfollow", () => {
   const procedure = findProcedure("POST", "/v1/conversations/{id}/unfollow")
 
-  test("delegates to unfollowConversation", async () => {
+  test("delegates to conversationService.setFollowed", async () => {
     const result = await procedure.handler?.({
       context,
       input: { id: "1" },
     })
 
-    expect(unfollowConversation).toHaveBeenCalledWith({
+    expect(conversationService.setFollowed).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       id: "1",
+      followed: false,
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "unfollowConversationAction",
+        triggerType: "conversation_unfollowed",
+      },
     })
     expect(result).toEqual({ success: true })
   })
@@ -284,15 +270,21 @@ describe("POST /v1/conversations/{id}/unfollow", () => {
 describe("POST /v1/conversations/{id}/enable-bot", () => {
   const procedure = findProcedure("POST", "/v1/conversations/{id}/enable-bot")
 
-  test("delegates to enableBotForConversations without an actor", async () => {
+  test("delegates to conversationService.setBotEnabledByIds without an actor", async () => {
     const result = await procedure.handler?.({
       context,
       input: { id: "1" },
     })
 
-    expect(enableBotForConversations).toHaveBeenCalledWith({
+    expect(conversationService.setBotEnabledByIds).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       ids: ["1"],
+      botEnabled: true,
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "enableBotAction",
+        triggerType: "conversation_transferred_to_bot",
+      },
     })
     expect(result).toEqual({ success: true })
   })
@@ -301,15 +293,21 @@ describe("POST /v1/conversations/{id}/enable-bot", () => {
 describe("POST /v1/conversations/{id}/disable-bot", () => {
   const procedure = findProcedure("POST", "/v1/conversations/{id}/disable-bot")
 
-  test("delegates to disableBotForConversations without an actor", async () => {
+  test("delegates to conversationService.setBotEnabledByIds without an actor", async () => {
     const result = await procedure.handler?.({
       context,
       input: { id: "1" },
     })
 
-    expect(disableBotForConversations).toHaveBeenCalledWith({
+    expect(conversationService.setBotEnabledByIds).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       ids: ["1"],
+      botEnabled: false,
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "disableBotAction",
+        triggerType: "conversation_transferred_to_human",
+      },
     })
     expect(result).toEqual({ success: true })
   })

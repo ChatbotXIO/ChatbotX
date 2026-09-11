@@ -8,14 +8,6 @@ import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { archiveConversations } from "../actions/archive-conversation.action"
-import { assignConversation } from "../actions/assign-conversation.action"
-import { disableBotForConversations } from "../actions/disable-bot.action"
-import { enableBotForConversations } from "../actions/enable-bot.action"
-import { followConversation } from "../actions/follow-conversation.action"
-import { unarchiveConversations } from "../actions/unarchive-conversation.action"
-import { unfollowConversation } from "../actions/unfollow-conversation.action"
-import { unreadConversation } from "../actions/unread-conversation.action"
 import { getPostDetailsQuery } from "../queries/get-post-details.query"
 import {
   findConversation,
@@ -140,11 +132,15 @@ export const conversationsAuthenticatedAPI = {
     .handler(async ({ input, context }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
 
-      await assignConversation({
+      await conversationService.assignByContactIds({
         workspaceId: input.workspaceId,
         contactIds: input.contactIds,
         assignedId: input.assignedId,
         assignedBy: context.user.id,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "assignConversation",
+        },
       })
       return { success: true as const }
     }),
@@ -164,10 +160,15 @@ export const conversationsAuthenticatedAPI = {
     .handler(async ({ input, context }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
 
-      await archiveConversations({
+      await conversationService.archiveByIds({
         workspaceId: input.workspaceId,
         ids: input.ids,
         userId: context.user.id,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "archiveConversationAction",
+          triggerType: "conversation_archived",
+        },
       })
       return { success: true as const }
     }),
@@ -187,9 +188,15 @@ export const conversationsAuthenticatedAPI = {
     .handler(async ({ input, context }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
 
-      await unarchiveConversations({
+      await conversationService.unarchiveByIds({
         workspaceId: input.workspaceId,
         ids: input.ids,
+        userId: context.user.id,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "unarchiveConversationAction",
+          triggerType: "conversation_unarchived",
+        },
       })
       return { success: true as const }
     }),
@@ -209,10 +216,16 @@ export const conversationsAuthenticatedAPI = {
     .handler(async ({ input, context }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
 
-      await enableBotForConversations({
+      await conversationService.setBotEnabledByIds({
         workspaceId: input.workspaceId,
         ids: input.ids,
+        botEnabled: true,
         userId: context.user.id,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "enableBotAction",
+          triggerType: "conversation_transferred_to_bot",
+        },
       })
       return { success: true as const }
     }),
@@ -232,10 +245,16 @@ export const conversationsAuthenticatedAPI = {
     .handler(async ({ input, context }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
 
-      await disableBotForConversations({
+      await conversationService.setBotEnabledByIds({
         workspaceId: input.workspaceId,
         ids: input.ids,
+        botEnabled: false,
         userId: context.user.id,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "disableBotAction",
+          triggerType: "conversation_transferred_to_human",
+        },
       })
       return { success: true as const }
     }),
@@ -279,7 +298,7 @@ export const conversationsAuthenticatedAPI = {
     .handler(async ({ input, context }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
 
-      const result = await unreadConversation({
+      const result = await conversationService.markUnread({
         workspaceId: input.workspaceId,
         id: input.id,
       })
@@ -299,10 +318,16 @@ export const conversationsAuthenticatedAPI = {
     .handler(async ({ input, context }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
 
-      await followConversation({
+      await conversationService.setFollowed({
         workspaceId: input.workspaceId,
         id: input.id,
+        followed: true,
         userId: context.user.id,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "followConversationAction",
+          triggerType: "conversation_followed",
+        },
       })
       return { success: true as const }
     }),
@@ -320,9 +345,16 @@ export const conversationsAuthenticatedAPI = {
     .handler(async ({ input, context }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
 
-      await unfollowConversation({
+      await conversationService.setFollowed({
         workspaceId: input.workspaceId,
         id: input.id,
+        followed: false,
+        userId: context.user.id,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "unfollowConversationAction",
+          triggerType: "conversation_unfollowed",
+        },
       })
       return { success: true as const }
     }),
