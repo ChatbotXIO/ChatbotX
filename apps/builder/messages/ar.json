@@ -253,6 +253,7 @@
     "dateFilterPreset": "إعداد تصفية التاريخ المسبق",
     "noResults": "لا توجد نتائج.",
     "noData": "لا توجد بيانات",
+    "retentionNotice": "يتم الاحتفاظ ببيانات آخر {days} يومًا فقط.",
     "comingSoon": "قريبًا",
     "unknown": "غير معروف",
     "pagination": {
@@ -262,10 +263,20 @@
       "firstPage": "الانتقال إلى الصفحة الأولى",
       "previousPage": "الانتقال إلى الصفحة السابقة",
       "nextPage": "الانتقال إلى الصفحة التالية",
-      "lastPage": "الانتقال إلى الصفحة الأخيرة"
+      "lastPage": "الانتقال إلى الصفحة الأخيرة",
+      "totalRows": "{total} صف"
     },
     "sessionsThroughTheRef": "الجلسات عبر المرجع \"{ref}\" يوميًا",
-    "sessionsThroughTheMagicLink": "الجلسات عبر الرابط السحري \"{ref}\" يوميًا"
+    "sessionsThroughTheMagicLink": "الجلسات عبر الرابط السحري \"{ref}\" يوميًا",
+    "repliesToComments": "الردود على التعليقات",
+    "repliesByDate": "الردود حسب التاريخ",
+    "userCommentsOnThisPost": "تعليقات المستخدمين على هذا المنشور",
+    "botRepliesToComments": "ردود الروبوت على التعليقات",
+    "comment": "تعليق",
+    "message": "رسالة",
+    "searchByDate": "البحث حسب التاريخ...",
+    "publicReply": "رد عام",
+    "privateReply": "رد خاص"
   },
   "flowAnalytics": {
     "nodes": {

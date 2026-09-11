@@ -1,6 +1,7 @@
 import type {
   BotMessageAIProviderStats,
   BotMessageStats,
+  CommentAutomationTimeseriesRow,
   ContactCountsSchema,
   ContactsByDimension,
   ConversationArchivedStats,
@@ -9,6 +10,8 @@ import type {
   ConversationFollowUpStats,
   ConversationHandoffStats,
   HumanAgentStats,
+  ListCommentAutomationErrorsResponse,
+  ListCommentAutomationTextTotalsResponse,
   ListFlowNodeContactsResponse,
   MessagesByAdminStats,
   MessagesBySenderStats,
@@ -21,8 +24,13 @@ import { createStore } from "zustand/vanilla"
 import type { AnalyticsApi } from "./analytics-api-context"
 
 const REFLINK_CONTACTS_PER_PAGE = 10
+const COMMENT_AUTOMATION_PER_PAGE = 10
 
-export type AnalysisDashboardType = "dashboard" | "reflinks" | "magic-links"
+export type AnalysisDashboardType =
+  | "dashboard"
+  | "reflinks"
+  | "magic-links"
+  | "comment-automation"
 
 export type AnalysisState = {
   api: AnalyticsApi
@@ -79,6 +87,27 @@ export type AnalysisState = {
   magicLinkContacts: ListFlowNodeContactsResponse["data"]
   magicLinkContactsPage: number
   magicLinkContactsPageCount: number
+
+  // comment-automation stats. Each table keeps its own page/perPage/total:
+  // they hold unrelated result sets (45 days vs a handful of distinct comment
+  // bodies), so a shared page size would resize three cards at once.
+  commentAutomationReplyStats: CommentAutomationTimeseriesRow[]
+  commentAutomationUserComments: ListCommentAutomationTextTotalsResponse["data"]
+  commentAutomationUserCommentsPage: number
+  commentAutomationUserCommentsPerPage: number
+  commentAutomationUserCommentsPageCount: number
+  commentAutomationUserCommentsTotal: number
+  commentAutomationBotReplies: ListCommentAutomationTextTotalsResponse["data"]
+  commentAutomationBotRepliesPage: number
+  commentAutomationBotRepliesPerPage: number
+  commentAutomationBotRepliesPageCount: number
+  commentAutomationBotRepliesTotal: number
+  commentAutomationErrors: ListCommentAutomationErrorsResponse["data"]
+  commentAutomationErrorsPage: number
+  commentAutomationErrorsPerPage: number
+  commentAutomationErrorsPageCount: number
+  commentAutomationErrorsTotal: number
+  commentAutomationErrorsKeyword: string
 }
 
 export type AnalysisActions = {
@@ -118,6 +147,18 @@ export type AnalysisActions = {
   getMagicLinkStats: () => Promise<void>
   getMagicLinkContacts: () => Promise<void>
   setMagicLinkContactsPage: (page: number) => Promise<void>
+
+  getCommentAutomationReplyStats: () => Promise<void>
+  getCommentAutomationUserComments: () => Promise<void>
+  getCommentAutomationBotReplies: () => Promise<void>
+  getCommentAutomationErrors: () => Promise<void>
+  setCommentAutomationUserCommentsPage: (page: number) => Promise<void>
+  setCommentAutomationUserCommentsPerPage: (perPage: number) => Promise<void>
+  setCommentAutomationBotRepliesPage: (page: number) => Promise<void>
+  setCommentAutomationBotRepliesPerPage: (perPage: number) => Promise<void>
+  setCommentAutomationErrorsPage: (page: number) => Promise<void>
+  setCommentAutomationErrorsPerPage: (perPage: number) => Promise<void>
+  setCommentAutomationErrorsKeyword: (keyword: string) => Promise<void>
 }
 
 export type AnalysisStore = AnalysisState & AnalysisActions
@@ -175,6 +216,25 @@ export const createAnalysisStore = (
     magicLinkContactsPage: 1,
     magicLinkContactsPageCount: 0,
 
+    // Default comment-automation stats
+    commentAutomationReplyStats: [],
+    commentAutomationUserComments: [],
+    commentAutomationUserCommentsPage: 1,
+    commentAutomationUserCommentsPerPage: COMMENT_AUTOMATION_PER_PAGE,
+    commentAutomationUserCommentsPageCount: 0,
+    commentAutomationUserCommentsTotal: 0,
+    commentAutomationBotReplies: [],
+    commentAutomationBotRepliesPage: 1,
+    commentAutomationBotRepliesPerPage: COMMENT_AUTOMATION_PER_PAGE,
+    commentAutomationBotRepliesPageCount: 0,
+    commentAutomationBotRepliesTotal: 0,
+    commentAutomationErrors: [],
+    commentAutomationErrorsPage: 1,
+    commentAutomationErrorsPerPage: COMMENT_AUTOMATION_PER_PAGE,
+    commentAutomationErrorsPageCount: 0,
+    commentAutomationErrorsTotal: 0,
+    commentAutomationErrorsKeyword: "",
+
     initialize: async () => {
       const { loadAnalysisData } = get()
       await loadAnalysisData()
@@ -201,6 +261,24 @@ export const createAnalysisStore = (
         const { getRefLinkStats, getReflinkContacts } = get()
         set({ loading: true, errors: new Map<string, string>() })
         await Promise.all([getRefLinkStats(), getReflinkContacts()])
+        set({ loading: false })
+        return
+      }
+
+      if (type === "comment-automation") {
+        const {
+          getCommentAutomationReplyStats,
+          getCommentAutomationUserComments,
+          getCommentAutomationBotReplies,
+          getCommentAutomationErrors,
+        } = get()
+        set({ loading: true, errors: new Map<string, string>() })
+        await Promise.all([
+          getCommentAutomationReplyStats(),
+          getCommentAutomationUserComments(),
+          getCommentAutomationBotReplies(),
+          getCommentAutomationErrors(),
+        ])
         set({ loading: false })
         return
       }
@@ -269,7 +347,14 @@ export const createAnalysisStore = (
     },
 
     setRange: async (props: { from: Date; to: Date }) => {
-      set(props)
+      // Every paginated panel goes back to page 1: a new range is a new result
+      // set, and staying on page 3 of the old one shows an empty table.
+      set({
+        ...props,
+        commentAutomationUserCommentsPage: 1,
+        commentAutomationBotRepliesPage: 1,
+        commentAutomationErrorsPage: 1,
+      })
 
       const { loadAnalysisData } = get()
       await loadAnalysisData()
@@ -765,5 +850,188 @@ export const createAnalysisStore = (
 
       const { getMagicLinkContacts } = get()
       await getMagicLinkContacts()
+    },
+
+    // `automationId`/`timezone` are only present in `defaultSearchParams` when
+    // the comment-automation dashboard mounted the store (see
+    // `CommentAutomationAnalytics`), the only place these actions are wired up
+    // — the `as string` assertions below reflect that runtime contract, the
+    // same way the reflink actions above do.
+    getCommentAutomationReplyStats: async () => {
+      const { api, defaultSearchParams, from, to } = get()
+
+      try {
+        const { data } = await api.commentAutomationReplyStats({
+          workspaceId: defaultSearchParams.workspaceId,
+          automationId: defaultSearchParams.automationId as string,
+          timezone: defaultSearchParams.timezone as string,
+          startDate: from.toISOString(),
+          endDate: to.toISOString(),
+        })
+
+        set({ commentAutomationReplyStats: data })
+      } catch (error: unknown) {
+        get().handleError("getCommentAutomationReplyStats", error)
+      }
+    },
+
+    getCommentAutomationUserComments: async () => {
+      const {
+        api,
+        defaultSearchParams,
+        commentAutomationUserCommentsPage,
+        commentAutomationUserCommentsPerPage,
+        from,
+        to,
+      } = get()
+
+      try {
+        const result = await api.commentAutomationUserComments({
+          workspaceId: defaultSearchParams.workspaceId,
+          automationId: defaultSearchParams.automationId as string,
+          timezone: defaultSearchParams.timezone as string,
+          page: commentAutomationUserCommentsPage,
+          perPage: commentAutomationUserCommentsPerPage,
+          startDate: from.toISOString(),
+          endDate: to.toISOString(),
+        })
+
+        set({
+          commentAutomationUserComments: result.data,
+          commentAutomationUserCommentsPageCount: result.pageCount,
+          commentAutomationUserCommentsTotal: result.total,
+        })
+      } catch (error: unknown) {
+        get().handleError("getCommentAutomationUserComments", error)
+      }
+    },
+
+    getCommentAutomationBotReplies: async () => {
+      const {
+        api,
+        defaultSearchParams,
+        commentAutomationBotRepliesPage,
+        commentAutomationBotRepliesPerPage,
+        from,
+        to,
+      } = get()
+
+      try {
+        const result = await api.commentAutomationBotReplies({
+          workspaceId: defaultSearchParams.workspaceId,
+          automationId: defaultSearchParams.automationId as string,
+          timezone: defaultSearchParams.timezone as string,
+          page: commentAutomationBotRepliesPage,
+          perPage: commentAutomationBotRepliesPerPage,
+          startDate: from.toISOString(),
+          endDate: to.toISOString(),
+        })
+
+        set({
+          commentAutomationBotReplies: result.data,
+          commentAutomationBotRepliesPageCount: result.pageCount,
+          commentAutomationBotRepliesTotal: result.total,
+        })
+      } catch (error: unknown) {
+        get().handleError("getCommentAutomationBotReplies", error)
+      }
+    },
+
+    getCommentAutomationErrors: async () => {
+      const {
+        api,
+        defaultSearchParams,
+        commentAutomationErrorsPage,
+        commentAutomationErrorsPerPage,
+        commentAutomationErrorsKeyword,
+        from,
+        to,
+      } = get()
+
+      try {
+        const result = await api.commentAutomationErrors({
+          workspaceId: defaultSearchParams.workspaceId,
+          automationId: defaultSearchParams.automationId as string,
+          timezone: defaultSearchParams.timezone as string,
+          page: commentAutomationErrorsPage,
+          perPage: commentAutomationErrorsPerPage,
+          keyword: commentAutomationErrorsKeyword || undefined,
+          startDate: from.toISOString(),
+          endDate: to.toISOString(),
+        })
+
+        set({
+          commentAutomationErrors: result.data,
+          commentAutomationErrorsPageCount: result.pageCount,
+          commentAutomationErrorsTotal: result.total,
+        })
+      } catch (error: unknown) {
+        get().handleError("getCommentAutomationErrors", error)
+      }
+    },
+
+    setCommentAutomationUserCommentsPage: async (page: number) => {
+      set({ commentAutomationUserCommentsPage: page })
+
+      const { getCommentAutomationUserComments } = get()
+      await getCommentAutomationUserComments()
+    },
+
+    // A new page size re-slices the whole result set, so page 1 — otherwise
+    // "50 per page" from page 4 of a 10-per-page list lands past the end.
+    setCommentAutomationUserCommentsPerPage: async (perPage: number) => {
+      set({
+        commentAutomationUserCommentsPerPage: perPage,
+        commentAutomationUserCommentsPage: 1,
+      })
+
+      const { getCommentAutomationUserComments } = get()
+      await getCommentAutomationUserComments()
+    },
+
+    setCommentAutomationBotRepliesPage: async (page: number) => {
+      set({ commentAutomationBotRepliesPage: page })
+
+      const { getCommentAutomationBotReplies } = get()
+      await getCommentAutomationBotReplies()
+    },
+
+    setCommentAutomationBotRepliesPerPage: async (perPage: number) => {
+      set({
+        commentAutomationBotRepliesPerPage: perPage,
+        commentAutomationBotRepliesPage: 1,
+      })
+
+      const { getCommentAutomationBotReplies } = get()
+      await getCommentAutomationBotReplies()
+    },
+
+    setCommentAutomationErrorsPage: async (page: number) => {
+      set({ commentAutomationErrorsPage: page })
+
+      const { getCommentAutomationErrors } = get()
+      await getCommentAutomationErrors()
+    },
+
+    setCommentAutomationErrorsPerPage: async (perPage: number) => {
+      set({
+        commentAutomationErrorsPerPage: perPage,
+        commentAutomationErrorsPage: 1,
+      })
+
+      const { getCommentAutomationErrors } = get()
+      await getCommentAutomationErrors()
+    },
+
+    setCommentAutomationErrorsKeyword: async (keyword: string) => {
+      // A new filter is a new result set, so page 1 — otherwise a search from
+      // page 3 lands on an empty table.
+      set({
+        commentAutomationErrorsKeyword: keyword,
+        commentAutomationErrorsPage: 1,
+      })
+
+      const { getCommentAutomationErrors } = get()
+      await getCommentAutomationErrors()
     },
   }))

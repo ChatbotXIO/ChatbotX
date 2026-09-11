@@ -1037,6 +1037,7 @@
     "dateFilterPreset": "Presetare filtru de dată",
     "noResults": "Niciun rezultat.",
     "noData": "Nu există date",
+    "retentionNotice": "Se păstrează doar datele din ultimele {days} zile.",
     "comingSoon": "În curând",
     "unknown": "Necunoscut",
     "pagination": {
@@ -1046,10 +1047,20 @@
       "firstPage": "Mergi la prima pagină",
       "previousPage": "Mergi la pagina anterioară",
       "nextPage": "Mergi la pagina următoare",
-      "lastPage": "Mergi la ultima pagină"
+      "lastPage": "Mergi la ultima pagină",
+      "totalRows": "{total} rând(uri)"
     },
     "sessionsThroughTheRef": "Sesiuni prin referința „{ref}” pe zi",
-    "sessionsThroughTheMagicLink": "Sesiuni prin linkul magic „{ref}” pe zi"
+    "sessionsThroughTheMagicLink": "Sesiuni prin linkul magic „{ref}” pe zi",
+    "repliesToComments": "Răspunsuri la comentarii",
+    "repliesByDate": "Răspunsuri după dată",
+    "userCommentsOnThisPost": "Comentariile utilizatorilor la această postare",
+    "botRepliesToComments": "Răspunsurile botului la comentarii",
+    "comment": "Comentariu",
+    "message": "Mesaj",
+    "searchByDate": "Caută după dată...",
+    "publicReply": "Răspuns public",
+    "privateReply": "Răspuns privat"
   },
   "flowAnalytics": {
     "nodes": {

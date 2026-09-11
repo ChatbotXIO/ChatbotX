@@ -300,6 +300,7 @@
     "newContactsByCountry": "Nya kontakter per land",
     "newContactsBySource": "Nya kontakter per källa",
     "noData": "Inga data",
+    "retentionNotice": "Endast data från de senaste {days} dagarna sparas.",
     "noResults": "Inga resultat.",
     "pagination": {
       "firstPage": "Gå till första sidan",
@@ -308,7 +309,8 @@
       "pageOf": "Sida {page} av {pageCount}",
       "previousPage": "Gå till föregående sida",
       "rowsPerPage": "Rader per sida",
-      "selectedRows": "{selected} av {total} rad(er) har markerats."
+      "selectedRows": "{selected} av {total} rad(er) har markerats.",
+      "totalRows": "{total} rad(er)"
     },
     "percentage": "Procentandel",
     "responseCount": "Antal svar",
@@ -321,7 +323,16 @@
     "totalContacts": "Totalt antal kontakter",
     "uniqueConversationsByAdmins": "Unika konversationer per mänsklig agent",
     "uniqueConversationsByAdminsHelp": "Antal kontakter som en mänsklig agent har skickat minst ett meddelande till.",
-    "unknown": "Okänd"
+    "unknown": "Okänd",
+    "repliesToComments": "Svar på kommentarer",
+    "repliesByDate": "Svar per datum",
+    "userCommentsOnThisPost": "Användarkommentarer på det här inlägget",
+    "botRepliesToComments": "Bottens svar på kommentarer",
+    "comment": "Kommentar",
+    "message": "Meddelande",
+    "searchByDate": "Sök efter datum...",
+    "publicReply": "Offentligt svar",
+    "privateReply": "Privat svar"
   },
   "appointmentScheduling": {
     "description": "Skapa och hantera din tidsbokning.",

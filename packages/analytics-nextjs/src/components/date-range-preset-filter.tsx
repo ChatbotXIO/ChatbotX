@@ -58,6 +58,16 @@ export type DateRangePresetFilterProps = {
   initialTo?: number
   defaultPreset?: PresetOption
   workspaceCreatedAt?: Date
+  /**
+   * How far back the underlying data actually goes, in days. Presets reaching
+   * past it are hidden and the custom calendar refuses those days, so a
+   * dashboard whose rows are purged on a retention window cannot be asked for a
+   * range it can only answer with zeroes — which reads as "nothing ever
+   * happened" rather than "this data is gone".
+   *
+   * Omitted (the default) means unlimited: every existing caller is unchanged.
+   */
+  maxRangeDays?: number
   onChange: (range: DateRangeResult) => void
 }
 
@@ -137,6 +147,29 @@ const NAMED_PRESETS = Object.keys(PRESET_RANGE_BUILDERS) as Exclude<
   "custom"
 >[]
 
+/** Translation key per preset, so the trigger label and the dropdown items are
+ * driven by one list instead of two hand-maintained ladders that can drift. */
+const PRESET_LABEL_KEYS: Record<PresetOption, string> = {
+  today: "fields.today.label",
+  yesterday: "fields.yesterday.label",
+  last7: "fields.last7days.label",
+  last30: "fields.last30days.label",
+  thisMonth: "fields.thisMonth.label",
+  lastMonth: "fields.lastMonth.label",
+  lifeTime: "fields.lifeTime.label",
+  custom: "fields.customRange.label",
+}
+
+/** The oldest day a `maxRangeDays`-bounded filter may reach, or `null` when the
+ * caller set no bound. Inclusive: `maxRangeDays: 30` allows today plus the 29
+ * days before it, matching how `last30` is built. */
+function getEarliestSelectableDay(maxRangeDays?: number): Date | null {
+  if (!maxRangeDays || maxRangeDays <= 0) {
+    return null
+  }
+  return startOfDay(subDays(new Date(), maxRangeDays - 1))
+}
+
 const toLocalDateKey = (date: Date): string =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
     date.getDate(),
@@ -170,6 +203,7 @@ export function DateRangePresetFilter({
   initialTo,
   defaultPreset = "last7",
   workspaceCreatedAt,
+  maxRangeDays,
   onChange,
 }: DateRangePresetFilterProps) {
   const t = useTranslations()
@@ -239,6 +273,24 @@ export function DateRangePresetFilter({
 
   const canApplyCustom = !!(customRange?.from && customRange?.to)
 
+  const earliestSelectableDay = useMemo(
+    () => getEarliestSelectableDay(maxRangeDays),
+    [maxRangeDays],
+  )
+
+  /** Presets to offer: everything, minus the ones reaching past the retention
+   * bound. `custom` always stays — the calendar enforces the bound itself. */
+  const availablePresets = useMemo<PresetOption[]>(() => {
+    const named = earliestSelectableDay
+      ? NAMED_PRESETS.filter(
+          (option) =>
+            PRESET_RANGE_BUILDERS[option](workspaceCreatedAt).from >=
+            earliestSelectableDay,
+        )
+      : NAMED_PRESETS
+    return [...named, "custom"]
+  }, [earliestSelectableDay, workspaceCreatedAt])
+
   const clearRange = () => {
     setRange(null)
     setCustomRange(undefined)
@@ -270,43 +322,20 @@ export function DateRangePresetFilter({
                 variant="outline"
               >
                 <Calendar1Icon />
-                {preset === "today" && t("fields.today.label")}
-                {preset === "yesterday" && t("fields.yesterday.label")}
-                {preset === "last7" && t("fields.last7days.label")}
-                {preset === "last30" && t("fields.last30days.label")}
-                {preset === "thisMonth" && t("fields.thisMonth.label")}
-                {preset === "lastMonth" && t("fields.lastMonth.label")}
-                {preset === "lifeTime" && t("fields.lifeTime.label")}
-                {preset === "custom" && rangeText}
+                {preset === "custom" ? rangeText : t(PRESET_LABEL_KEYS[preset])}
               </Button>
             }
           />
           <DropdownMenuContent>
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => handlePresetChange("today")}>
-                {t("fields.today.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("yesterday")}>
-                {t("fields.yesterday.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("last7")}>
-                {t("fields.last7days.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("last30")}>
-                {t("fields.last30days.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("thisMonth")}>
-                {t("fields.thisMonth.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("lastMonth")}>
-                {t("fields.lastMonth.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("lifeTime")}>
-                {t("fields.lifeTime.label")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePresetChange("custom")}>
-                {t("fields.customRange.label")}
-              </DropdownMenuItem>
+              {availablePresets.map((option) => (
+                <DropdownMenuItem
+                  key={option}
+                  onClick={() => handlePresetChange(option)}
+                >
+                  {t(PRESET_LABEL_KEYS[option])}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -324,7 +353,11 @@ export function DateRangePresetFilter({
             <div className="p-1">
               <Calendar
                 className="w-full"
-                disabled={{ after: new Date() }}
+                disabled={
+                  earliestSelectableDay
+                    ? { after: new Date(), before: earliestSelectableDay }
+                    : { after: new Date() }
+                }
                 mode="range"
                 onSelect={(r) => {
                   if (!(r?.from && r?.to)) {

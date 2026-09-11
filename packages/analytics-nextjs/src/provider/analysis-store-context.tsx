@@ -8,7 +8,11 @@ import {
   useRef,
 } from "react"
 import { useStore } from "zustand"
-import type { AnalysisState, AnalysisStore } from "./analysis-store"
+import type {
+  AnalysisDashboardType,
+  AnalysisState,
+  AnalysisStore,
+} from "./analysis-store"
 import { createAnalysisStore } from "./analysis-store"
 import { useAnalyticsApi } from "./analytics-api-context"
 
@@ -19,7 +23,7 @@ export const AnalysisStoreContext = createContext<AnalysisStoreApi | undefined>(
 )
 
 export type AnalysisStoreProviderProps = {
-  type?: "dashboard" | "reflinks" | "magic-links"
+  type?: AnalysisDashboardType
   defaultSearchParams: AnalysisState["defaultSearchParams"]
   children: ReactNode
   autoInitialize?: boolean

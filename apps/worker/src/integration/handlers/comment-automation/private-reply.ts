@@ -27,6 +27,7 @@ import {
 import { logger } from "../../../lib/logger"
 import type { CommentAutomationChannelType } from "./channel-type"
 import type { CommentAutomationDedup } from "./dedup"
+import { type CommentReplyOutcome, describeFlowReply } from "./reply-outcome"
 
 /**
  * Meta accepts a comment_id-anchored DM only within 7 days of the comment's
@@ -35,6 +36,26 @@ import type { CommentAutomationDedup } from "./dedup"
  * `replyAfter` would surface as an opaque channel error instead of a skip.
  */
 const PRIVATE_REPLY_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+
+/**
+ * Whether the DM would leave after Meta's 7-day comment window has closed.
+ *
+ * `delay` is part of the answer because the DM only leaves once the job's delay
+ * has elapsed, so a comment still inside the window *now* can fall outside it by
+ * then.
+ *
+ * Exported because the caller gates on this before dispatching, so it can
+ * record the blocked delivery on the automation's analytics timeline —
+ * `executePrivateReply` still checks it too, but by then there is no caller
+ * context to record with.
+ */
+export function isOutsidePrivateReplyWindow(props: {
+  createdTime: number
+  delay: number
+}): boolean {
+  const commentAgeAtSendMs = Date.now() + props.delay - props.createdTime * 1000
+  return commentAgeAtSendMs > PRIVATE_REPLY_WINDOW_MS
+}
 
 export type PrivateReplyAuth =
   | MessengerAuthValue
@@ -115,9 +136,10 @@ async function resolveDirectMessageConversationId(ctx: {
 }
 
 /**
- * Returns whether a DM was actually dispatched. The caller uses that — not the
- * automation's configuration — to decide whether to write the dedup row and
- * whether the comment's single private-reply budget has been spent.
+ * Returns what was dispatched, or `null` when nothing was. The caller uses that
+ * — not the automation's configuration — to decide whether to write the dedup
+ * row and whether the comment's single private-reply budget has been spent. The
+ * outcome also carries the text for the analytics event.
  */
 export async function executePrivateReply(
   privateReply: FBCommentReply,
@@ -137,26 +159,30 @@ export async function executePrivateReply(
     createdTime: number
     dedup?: CommentAutomationDedup
   },
-): Promise<boolean> {
+): Promise<CommentReplyOutcome | null> {
   if (privateReply.type === "none") {
-    return false
+    return null
   }
 
-  // `delay` is added because the DM leaves only after the job's delay elapses,
-  // so a comment still inside the window now can fall outside it by then.
-  const commentAgeAtSendMs = Date.now() + ctx.delay - ctx.createdTime * 1000
-  if (commentAgeAtSendMs > PRIVATE_REPLY_WINDOW_MS) {
+  // Defence in depth: the caller already gates on this (and records the blocked
+  // delivery when it does), so reaching here means a new call site skipped the
+  // gate. Same predicate either way, so the two can never disagree.
+  if (
+    isOutsidePrivateReplyWindow({
+      createdTime: ctx.createdTime,
+      delay: ctx.delay,
+    })
+  ) {
     logger.warn(
       {
         automationId: ctx.automationId,
         commentId: ctx.commentId,
         workspaceId: ctx.workspaceId,
-        commentAgeAtSendMs,
         reason: "comment older than the 7-day private reply window",
       },
       "Comment automation private reply skipped",
     )
-    return false
+    return null
   }
 
   if (privateReply.type === "text" && privateReply.value) {
@@ -182,7 +208,7 @@ export async function executePrivateReply(
       ctx.commentId,
       text,
     )
-    return true
+    return { replyType: "text", replyText: text }
   }
 
   if (privateReply.type === "flow" && privateReply.value) {
@@ -213,7 +239,13 @@ export async function executePrivateReply(
       },
       { delay: ctx.delay },
     )
-    return true
+    return {
+      replyType: "flow",
+      replyText: await describeFlowReply({
+        workspaceId: ctx.workspaceId,
+        flowId: privateReply.value,
+      }),
+    }
   }
 
   if (privateReply.type === "AIAgent" && privateReply.value) {
@@ -241,8 +273,8 @@ export async function executePrivateReply(
         jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-private`,
       },
     )
-    return true
+    return { replyType: "AIAgent", replyText: null }
   }
 
-  return false
+  return null
 }

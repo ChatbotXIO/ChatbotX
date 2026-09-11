@@ -26,6 +26,7 @@ import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
 import { purgeAutomationThrottle } from "./handlers/purge-automation-throttle"
 import { purgeBroadcasts } from "./handlers/purge-broadcasts"
 import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
+import { purgeCommentAutomationEvents } from "./handlers/purge-comment-automation-events"
 import { purgeErrorLogs } from "./handlers/purge-error-logs"
 import { purgeWhatsappSignupSessions } from "./handlers/purge-whatsapp-signup-sessions"
 import { purgeWorkspaces } from "./handlers/purge-workspaces"
@@ -164,6 +165,10 @@ async function startScheduleWorker() {
             // excludes schedule crons other than the two broadcast handlers).
             case ScheduleJobData.purgeErrorLogs:
               await purgeErrorLogs()
+              return
+
+            case ScheduleJobData.purgeCommentAutomationEvents:
+              await purgeCommentAutomationEvents()
               return
 
             case ScheduleJobData.refreshChannelTokens:

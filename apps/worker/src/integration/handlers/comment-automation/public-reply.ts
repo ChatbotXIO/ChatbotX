@@ -20,6 +20,7 @@ import {
 import { logger } from "../../../lib/logger"
 import type { CommentAutomationChannelType } from "./channel-type"
 import type { CommentAutomationDedup } from "./dedup"
+import { type CommentReplyOutcome, describeFlowReply } from "./reply-outcome"
 
 /**
  * Post a public Facebook comment reply: creates the outgoing DB message,
@@ -27,9 +28,16 @@ import type { CommentAutomationDedup } from "./dedup"
  * `text` reply type (dispatched immediately, sends after `delay`) and
  * `processCommentAIReply` (already runs inside a job delayed by the caller, so
  * no further `delay` applies).
+ *
+ * Nothing reaches Facebook here — `sendChannelMessage` makes the Graph API call
+ * in the chat worker. That is why `contentAttributes.commentAutomation` carries
+ * the automation anchor: the analytics event this dispatch opened is recorded
+ * `sent` optimistically, and only the chat worker knows whether the send
+ * actually landed (see `settleCommentAutomationFailure`).
  */
 export async function postPublicCommentReply(props: {
   text: string
+  automationId: string
   commentId: string
   conversationId: string
   contactInboxId: string
@@ -49,7 +57,13 @@ export async function postPublicCommentReply(props: {
     senderType: "bot" as const,
     text: props.text,
     type: "comment" as const,
-    contentAttributes: { replyToCommentId: props.commentId },
+    contentAttributes: {
+      replyToCommentId: props.commentId,
+      commentAutomation: {
+        automationId: props.automationId,
+        replyChannel: "public" as const,
+      },
+    },
     parentId: props.parentMessageId ?? null,
     createdAt: new Date(),
   }
@@ -84,9 +98,10 @@ export async function postPublicCommentReply(props: {
 }
 
 /**
- * Returns whether a reply was actually dispatched. The caller uses that — not
- * the automation's configuration — to decide whether to write the dedup row, so
- * a branch that quietly declines to send never counts as a reply.
+ * Returns what was dispatched, or `null` when nothing was. The caller uses that
+ * — not the automation's configuration — to decide whether to write the dedup
+ * row, so a branch that quietly declines to send never counts as a reply. The
+ * outcome also carries the text for the analytics event.
  */
 export async function executePublicReply(
   publicReply: FBCommentReply,
@@ -107,9 +122,9 @@ export async function executePublicReply(
     parentMessageCreatedAt?: Date | null
     dedup?: CommentAutomationDedup
   },
-): Promise<boolean> {
+): Promise<CommentReplyOutcome | null> {
   if (publicReply.type === "none") {
-    return false
+    return null
   }
 
   if (publicReply.type === "text" && publicReply.value) {
@@ -131,6 +146,7 @@ export async function executePublicReply(
     }
     await postPublicCommentReply({
       text,
+      automationId: ctx.automationId,
       commentId: ctx.commentId,
       conversationId: ctx.conversationId,
       contactInboxId: ctx.contactInboxId,
@@ -140,7 +156,7 @@ export async function executePublicReply(
       parentMessageCreatedAt: ctx.parentMessageCreatedAt,
       delay: ctx.delay,
     })
-    return true
+    return { replyType: "text", replyText: text }
   }
 
   if (publicReply.type === "flow" && publicReply.value) {
@@ -163,7 +179,13 @@ export async function executePublicReply(
       },
       { delay: ctx.delay },
     )
-    return true
+    return {
+      replyType: "flow",
+      replyText: await describeFlowReply({
+        workspaceId: ctx.workspaceId,
+        flowId: publicReply.value,
+      }),
+    }
   }
 
   if (publicReply.type === "AIAgent" && publicReply.value) {
@@ -194,8 +216,8 @@ export async function executePublicReply(
         jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-public`,
       },
     )
-    return true
+    return { replyType: "AIAgent", replyText: null }
   }
 
-  return false
+  return null
 }

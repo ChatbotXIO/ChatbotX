@@ -253,6 +253,7 @@
     "dateFilterPreset": "Preset filter tanggal",
     "noResults": "Tidak ada hasil.",
     "noData": "Tidak ada data",
+    "retentionNotice": "Hanya data {days} hari terakhir yang disimpan.",
     "comingSoon": "Segera hadir",
     "unknown": "Tidak diketahui",
     "pagination": {
@@ -262,10 +263,20 @@
       "firstPage": "Buka halaman pertama",
       "previousPage": "Buka halaman sebelumnya",
       "nextPage": "Buka halaman berikutnya",
-      "lastPage": "Buka halaman terakhir"
+      "lastPage": "Buka halaman terakhir",
+      "totalRows": "{total} baris"
     },
     "sessionsThroughTheRef": "Sesi melalui Ref \"{ref}\" per hari",
-    "sessionsThroughTheMagicLink": "Sesi melalui Magic Link \"{ref}\" per hari"
+    "sessionsThroughTheMagicLink": "Sesi melalui Magic Link \"{ref}\" per hari",
+    "repliesToComments": "Balasan untuk komentar",
+    "repliesByDate": "Balasan per tanggal",
+    "userCommentsOnThisPost": "Komentar pengguna di postingan ini",
+    "botRepliesToComments": "Balasan bot untuk komentar",
+    "comment": "Komentar",
+    "message": "Pesan",
+    "searchByDate": "Cari berdasarkan tanggal...",
+    "publicReply": "Balasan publik",
+    "privateReply": "Balasan pribadi"
   },
   "flowAnalytics": {
     "nodes": {

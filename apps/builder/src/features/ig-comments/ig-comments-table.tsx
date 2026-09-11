@@ -22,6 +22,7 @@ import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
+  ChartColumnIcon,
   FolderUpIcon,
   MoreHorizontalIcon,
   PencilIcon,
@@ -129,14 +130,14 @@ export function IgCommentsTable({
           <div className="max-w-75 truncate">
             <Tooltip>
               <TooltipTrigger
-                render={() => (
+                render={
                   <Link
                     className="truncate"
                     href={`/space/${workspaceId}/ig-comments/${row.original.id}`}
                   >
                     {row.original.name ?? ""}
                   </Link>
-                )}
+                }
               />
               <TooltipContent>
                 <p>{row.original.name}</p>
@@ -195,14 +196,14 @@ export function IgCommentsTable({
           <div className="flex justify-center">
             <DropdownMenu>
               <DropdownMenuTrigger
-                render={() => (
+                render={
                   <Button size="icon" variant="ghost">
                     <MoreHorizontalIcon className="h-4 w-4" />
                     <span className="sr-only">Open menu</span>
                   </Button>
-                )}
+                }
               />
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-auto">
                 <DropdownMenuItem
                   onClick={() =>
                     router.push(
@@ -212,6 +213,16 @@ export function IgCommentsTable({
                 >
                   <PencilIcon className="me-2" />
                   {t("actions.edit")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    router.push(
+                      `/space/${workspaceId}/ig-comments/${row.original.id}/analytics`,
+                    )
+                  }
+                >
+                  <ChartColumnIcon className="me-2" />
+                  {t("actions.viewAnalytics")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setRowAction({ row, variant: "update" })}

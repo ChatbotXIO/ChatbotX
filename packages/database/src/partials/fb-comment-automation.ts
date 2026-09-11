@@ -19,8 +19,11 @@ export const fbCommentPostSchema = z.object({
 })
 export type FBCommentPost = z.infer<typeof fbCommentPostSchema>
 
+export const fbCommentReplyTypes = z.enum(["AIAgent", "text", "flow", "none"])
+export type FBCommentReplyType = z.infer<typeof fbCommentReplyTypes>
+
 export const fbCommentReplySchema = z.object({
-  type: z.enum(["AIAgent", "text", "flow", "none"]),
+  type: fbCommentReplyTypes,
   value: z.string().nullable(),
 })
 export type FBCommentReply = z.infer<typeof fbCommentReplySchema>

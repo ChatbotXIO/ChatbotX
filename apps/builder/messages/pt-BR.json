@@ -253,6 +253,7 @@
     "dateFilterPreset": "Predefinição do filtro de data",
     "noResults": "Nenhum resultado.",
     "noData": "Sem dados",
+    "retentionNotice": "Apenas os dados dos últimos {days} dias são mantidos.",
     "comingSoon": "Em breve",
     "unknown": "Desconhecido",
     "pagination": {
@@ -262,10 +263,20 @@
       "firstPage": "Ir para a primeira página",
       "previousPage": "Ir para a página anterior",
       "nextPage": "Ir para a próxima página",
-      "lastPage": "Ir para a última página"
+      "lastPage": "Ir para a última página",
+      "totalRows": "{total} linha(s)"
     },
     "sessionsThroughTheRef": "Sessões pela referência \"{ref}\" por dia",
-    "sessionsThroughTheMagicLink": "Sessões pelo link mágico \"{ref}\" por dia"
+    "sessionsThroughTheMagicLink": "Sessões pelo link mágico \"{ref}\" por dia",
+    "repliesToComments": "Respostas a comentários",
+    "repliesByDate": "Respostas por data",
+    "userCommentsOnThisPost": "Comentários de usuários nesta publicação",
+    "botRepliesToComments": "Respostas do bot a comentários",
+    "comment": "Comentário",
+    "message": "Mensagem",
+    "searchByDate": "Buscar por data...",
+    "publicReply": "Resposta pública",
+    "privateReply": "Resposta privada"
   },
   "flowAnalytics": {
     "nodes": {

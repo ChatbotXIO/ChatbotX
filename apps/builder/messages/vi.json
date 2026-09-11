@@ -253,6 +253,7 @@
     "dateFilterPreset": "Bộ lọc ngày đặt sẵn",
     "noResults": "Không có kết quả.",
     "noData": "Không có dữ liệu",
+    "retentionNotice": "Chỉ lưu dữ liệu trong {days} ngày gần nhất.",
     "comingSoon": "Sắp ra mắt",
     "unknown": "Không xác định",
     "pagination": {
@@ -262,10 +263,20 @@
       "firstPage": "Đi tới trang đầu",
       "previousPage": "Đi tới trang trước",
       "nextPage": "Đi tới trang sau",
-      "lastPage": "Đi tới trang cuối"
+      "lastPage": "Đi tới trang cuối",
+      "totalRows": "{total} hàng"
     },
     "sessionsThroughTheRef": "Phiên qua Ref \"{ref}\" mỗi ngày",
-    "sessionsThroughTheMagicLink": "Phiên qua Magic Link \"{ref}\" mỗi ngày"
+    "sessionsThroughTheMagicLink": "Phiên qua Magic Link \"{ref}\" mỗi ngày",
+    "repliesToComments": "Lượt phản hồi bình luận",
+    "repliesByDate": "Phản hồi theo ngày",
+    "userCommentsOnThisPost": "Bình luận của khách trên bài viết",
+    "botRepliesToComments": "Tin nhắn bot đã trả lời",
+    "comment": "Bình luận",
+    "message": "Tin nhắn",
+    "searchByDate": "Tìm theo ngày...",
+    "publicReply": "Trả lời công khai",
+    "privateReply": "Trả lời riêng"
   },
   "flowAnalytics": {
     "nodes": {

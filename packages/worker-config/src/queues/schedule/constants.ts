@@ -26,6 +26,7 @@ export const ScheduleJobData = {
   purgeBroadcasts: "purgeBroadcasts",
   purgeAutomationThrottle: "purgeAutomationThrottle",
   purgeErrorLogs: "purgeErrorLogs",
+  purgeCommentAutomationEvents: "purgeCommentAutomationEvents",
   refreshChannelTokens: "refreshChannelTokens",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
@@ -195,6 +196,11 @@ export type ScheduleJobPurgeErrorLogs = {
   data: Record<string, never>
 }
 
+export type ScheduleJobPurgeCommentAutomationEvents = {
+  type: typeof ScheduleJobData.purgeCommentAutomationEvents
+  data: Record<string, never>
+}
+
 export type ScheduleJobRefreshChannelTokens = {
   type: typeof ScheduleJobData.refreshChannelTokens
   // No `channels` = refresh every channel. The short-lived scheduler passes
@@ -237,6 +243,7 @@ export type ScheduleJobData =
   | ScheduleJobPurgeBroadcasts
   | ScheduleJobPurgeAutomationThrottle
   | ScheduleJobPurgeErrorLogs
+  | ScheduleJobPurgeCommentAutomationEvents
   | ScheduleJobRefreshChannelTokens
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial

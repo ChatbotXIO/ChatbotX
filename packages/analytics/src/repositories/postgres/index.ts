@@ -1,5 +1,6 @@
 export * from "./bot-message-stats.repository"
 export * from "./broadcast-stats.repository"
+export * from "./comment-automation-stats.repository"
 export * from "./contact-stats.repository"
 export * from "./conversation-stats.repository"
 export * from "./email-topic-stats.repository"

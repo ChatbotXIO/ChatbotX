@@ -253,6 +253,7 @@
     "dateFilterPreset": "Voorinstelling voor datumfilter",
     "noResults": "Geen resultaten.",
     "noData": "Geen gegevens",
+    "retentionNotice": "Alleen de gegevens van de afgelopen {days} dagen worden bewaard.",
     "comingSoon": "Binnenkort beschikbaar",
     "unknown": "Onbekend",
     "pagination": {
@@ -262,10 +263,20 @@
       "firstPage": "Naar de eerste pagina",
       "previousPage": "Naar de vorige pagina",
       "nextPage": "Naar de volgende pagina",
-      "lastPage": "Naar de laatste pagina"
+      "lastPage": "Naar de laatste pagina",
+      "totalRows": "{total} rij(en)"
     },
     "sessionsThroughTheRef": "Sessies via de referentie \"{ref}\" per dag",
-    "sessionsThroughTheMagicLink": "Sessies via de magische link \"{ref}\" per dag"
+    "sessionsThroughTheMagicLink": "Sessies via de magische link \"{ref}\" per dag",
+    "repliesToComments": "Reacties op opmerkingen",
+    "repliesByDate": "Reacties per datum",
+    "userCommentsOnThisPost": "Gebruikersreacties op dit bericht",
+    "botRepliesToComments": "Botreacties op opmerkingen",
+    "comment": "Opmerking",
+    "message": "Bericht",
+    "searchByDate": "Zoeken op datum...",
+    "publicReply": "Openbare reactie",
+    "privateReply": "Privéreactie"
   },
   "flowAnalytics": {
     "nodes": {

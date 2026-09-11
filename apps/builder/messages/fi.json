@@ -253,6 +253,7 @@
     "dateFilterPreset": "Päivämääräsuodattimen esiasetus",
     "noResults": "Ei tuloksia.",
     "noData": "Ei tietoja",
+    "retentionNotice": "Vain viimeisten {days} päivän tiedot säilytetään.",
     "comingSoon": "Tulossa pian",
     "unknown": "Tuntematon",
     "pagination": {
@@ -262,10 +263,20 @@
       "firstPage": "Siirry ensimmäiselle sivulle",
       "previousPage": "Siirry edelliselle sivulle",
       "nextPage": "Siirry seuraavalle sivulle",
-      "lastPage": "Siirry viimeiselle sivulle"
+      "lastPage": "Siirry viimeiselle sivulle",
+      "totalRows": "{total} riviä"
     },
     "sessionsThroughTheRef": "Istunnot viitteen \"{ref}\" kautta päivässä",
-    "sessionsThroughTheMagicLink": "Istunnot taikalinkin \"{ref}\" kautta päivässä"
+    "sessionsThroughTheMagicLink": "Istunnot taikalinkin \"{ref}\" kautta päivässä",
+    "repliesToComments": "Vastaukset kommentteihin",
+    "repliesByDate": "Vastaukset päivittäin",
+    "userCommentsOnThisPost": "Käyttäjien kommentit tässä julkaisussa",
+    "botRepliesToComments": "Botin vastaukset kommentteihin",
+    "comment": "Kommentti",
+    "message": "Viesti",
+    "searchByDate": "Hae päivämäärällä...",
+    "publicReply": "Julkinen vastaus",
+    "privateReply": "Yksityinen vastaus"
   },
   "flowAnalytics": {
     "nodes": {

@@ -12,6 +12,8 @@ export type AnalysisFilterFormProps = {
   initialTo?: number
   defaultPreset?: PresetOption
   workspaceCreatedAt?: Date
+  /** Retention bound for the dashboard's data — see `DateRangePresetFilter`. */
+  maxRangeDays?: number
   onChange?: (range: DateRangeResult) => void
   onSubmit?: (range: DateRangeResult) => void
 }
@@ -29,6 +31,7 @@ export default function AnalysisFilterForm({
   initialTo,
   defaultPreset = "today",
   workspaceCreatedAt,
+  maxRangeDays,
   onChange,
 }: AnalysisFilterFormProps) {
   const { setRange: setAnalysisRange } = useAnalysisStore((state) => state)
@@ -38,6 +41,7 @@ export default function AnalysisFilterForm({
       defaultPreset={defaultPreset}
       initialFrom={initialFrom}
       initialTo={initialTo}
+      maxRangeDays={maxRangeDays}
       onChange={(range) => {
         onChange?.(range)
         setAnalysisRange(range)

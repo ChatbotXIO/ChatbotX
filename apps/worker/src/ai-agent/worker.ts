@@ -23,6 +23,7 @@ import { runWithOrphanedIntegrationCleanup } from "../integration/job-context"
 import { closeChatQueueEvents } from "../integration/utils/message"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
+import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
@@ -102,7 +103,7 @@ async function startAIAgentWorker() {
               return
             case AIJobAction.commentAIReply:
               await runWithOrphanedIntegrationCleanup(() =>
-                processCommentAIReply(jobData.data),
+                processCommentAIReply(jobData.data, !isFinalAttempt(job)),
               )
               return
             case AIJobAction.processStoryReplyAutomation:
