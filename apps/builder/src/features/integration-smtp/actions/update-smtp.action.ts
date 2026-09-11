@@ -1,8 +1,6 @@
 "use server"
 
 import { integrationSmtpService } from "@chatbotx.io/business"
-import { auditService, isSameJsonValue } from "@chatbotx.io/business/audit"
-import type { SmtpAuthValue } from "@chatbotx.io/integration-smtp"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { resolveSmtpHostAndPort } from "../lib/smtp-host"
@@ -20,54 +18,18 @@ export const updateSmtpAction = workspaceActionClient
 
     await verifySmtpConnection(parsedInput)
 
-    const integration = await integrationSmtpService.findByIdForWorkspace({
+    // Host/port resolution needs `smtpHostMap` from `@chatbotx.io/integration-smtp`,
+    // which `packages/business` must not depend on — so it stays here and the
+    // service receives the already-resolved pair. Merging against the stored
+    // auth, the change diff and the audit record all live in the service.
+    const { host, port } = resolveSmtpHostAndPort(parsedInput.provider, {
+      host: parsedInput.host,
+      port: parsedInput.port,
+    })
+
+    return await integrationSmtpService.update({
+      workspaceId,
       id,
-      workspaceId,
+      data: { ...parsedInput, host, port },
     })
-
-    const currentAuth = integration.auth as SmtpAuthValue
-    const provider = parsedInput.provider ?? currentAuth.provider
-
-    const { host, port } = resolveSmtpHostAndPort(provider, {
-      host: parsedInput.host || currentAuth.host,
-      port: parsedInput.port || currentAuth.port,
-    })
-
-    const updatedAuth: SmtpAuthValue = {
-      authType: "custom",
-      provider,
-      host,
-      port,
-      username: parsedInput.username ?? currentAuth.username,
-      password: parsedInput.password ?? currentAuth.password,
-    }
-
-    const name = parsedInput.username ?? integration.name
-
-    const updated = await integrationSmtpService.update({
-      workspaceId,
-      id: integration.id,
-      auth: updatedAuth,
-      name,
-      fromAddress: parsedInput.fromAddress,
-    })
-
-    const hasChanged = !isSameJsonValue(
-      { auth: updatedAuth, name, fromAddress: parsedInput.fromAddress },
-      {
-        auth: currentAuth,
-        name: integration.name,
-        fromAddress: integration.fromAddress,
-      },
-    )
-
-    if (hasChanged) {
-      await auditService.record({
-        workspaceId,
-        action: "update",
-        detail: "updated the SMTP channel configuration",
-      })
-    }
-
-    return updated
   })

@@ -1,15 +1,16 @@
 // @vitest-environment node
 
+import { mediaLibraryService } from "@chatbotx.io/business"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // Every media-library action is a one-line `workspaceActionClient
 // .bindArgsSchemas(...).inputSchema(...).action(handler)` wrapper — the
-// business logic lives in `queries/mutations`. Mocking `.action()` to return
+// business logic lives in `mediaLibraryService`. Mocking `.action()` to return
 // the handler itself (instead of the real next-safe-action runtime) lets us
 // call the exported `xxxAction` directly with `{ bindArgsParsedInputs,
 // parsedInput }`, exercising exactly the wiring this file is responsible
 // for: does the handler bind `workspaceId` correctly and delegate to the
-// right mutation.
+// right service method.
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
   chain.bindArgsSchemas = vi.fn(() => chain)
@@ -18,27 +19,18 @@ vi.mock("@/lib/safe-action", () => {
   return { workspaceActionClient: chain }
 })
 
-vi.mock("@/features/media-library/queries/mutations", () => ({
-  createMediaLibraryFolder: vi.fn(),
-  renameMediaLibraryFolder: vi.fn(),
-  deleteMediaLibraryFolder: vi.fn(),
-  createMediaLibraryFile: vi.fn(),
-  deleteMediaLibraryFile: vi.fn(),
-  moveMediaLibraryFiles: vi.fn(),
-  toggleMediaLibraryFavourite: vi.fn(),
-  recordMediaLibraryFileAccess: vi.fn(),
+vi.mock("@chatbotx.io/business", () => ({
+  mediaLibraryService: {
+    createFolder: vi.fn(),
+    renameFolder: vi.fn(),
+    deleteFolder: vi.fn(),
+    createFile: vi.fn(),
+    deleteFile: vi.fn(),
+    moveFiles: vi.fn(),
+    toggleFavourite: vi.fn(),
+    recordFileAccess: vi.fn(),
+  },
 }))
-
-const {
-  createMediaLibraryFolder,
-  renameMediaLibraryFolder,
-  deleteMediaLibraryFolder,
-  createMediaLibraryFile,
-  deleteMediaLibraryFile,
-  moveMediaLibraryFiles,
-  toggleMediaLibraryFavourite,
-  recordMediaLibraryFileAccess,
-} = await import("../src/features/media-library/queries/mutations")
 
 const { createMediaLibraryFolderAction } = await import(
   "../src/features/media-library/actions/create-folder.action"
@@ -73,8 +65,8 @@ beforeEach(() => {
 
 describe("createMediaLibraryFolderAction", () => {
   test("binds workspaceId from bindArgsParsedInputs and forwards the name", async () => {
-    vi.mocked(createMediaLibraryFolder).mockResolvedValue(
-      {} as Awaited<ReturnType<typeof createMediaLibraryFolder>>,
+    vi.mocked(mediaLibraryService.createFolder).mockResolvedValue(
+      {} as Awaited<ReturnType<typeof mediaLibraryService.createFolder>>,
     )
 
     await (
@@ -84,7 +76,7 @@ describe("createMediaLibraryFolderAction", () => {
       }) => Promise<unknown>
     )({ bindArgsParsedInputs: [WS], parsedInput: { name: "Marketing" } })
 
-    expect(createMediaLibraryFolder).toHaveBeenCalledWith({
+    expect(mediaLibraryService.createFolder).toHaveBeenCalledWith({
       workspaceId: WS,
       name: "Marketing",
     })
@@ -103,7 +95,7 @@ describe("renameMediaLibraryFolderAction", () => {
       parsedInput: { folderId: "folder-1", name: "Renamed" },
     })
 
-    expect(renameMediaLibraryFolder).toHaveBeenCalledWith({
+    expect(mediaLibraryService.renameFolder).toHaveBeenCalledWith({
       workspaceId: WS,
       folderId: "folder-1",
       name: "Renamed",
@@ -120,7 +112,7 @@ describe("deleteMediaLibraryFolderAction", () => {
       }) => Promise<unknown>
     )({ bindArgsParsedInputs: [WS], parsedInput: "folder-1" })
 
-    expect(deleteMediaLibraryFolder).toHaveBeenCalledWith({
+    expect(mediaLibraryService.deleteFolder).toHaveBeenCalledWith({
       workspaceId: WS,
       folderId: "folder-1",
     })
@@ -129,8 +121,8 @@ describe("deleteMediaLibraryFolderAction", () => {
 
 describe("createMediaLibraryFileAction", () => {
   test("binds workspaceId and spreads the parsed file input", async () => {
-    vi.mocked(createMediaLibraryFile).mockResolvedValue(
-      {} as Awaited<ReturnType<typeof createMediaLibraryFile>>,
+    vi.mocked(mediaLibraryService.createFile).mockResolvedValue(
+      {} as Awaited<ReturnType<typeof mediaLibraryService.createFile>>,
     )
 
     await (
@@ -155,7 +147,7 @@ describe("createMediaLibraryFileAction", () => {
       },
     })
 
-    expect(createMediaLibraryFile).toHaveBeenCalledWith({
+    expect(mediaLibraryService.createFile).toHaveBeenCalledWith({
       workspaceId: WS,
       folderId: null,
       name: "logo.png",
@@ -175,7 +167,7 @@ describe("deleteMediaLibraryFileAction", () => {
       }) => Promise<unknown>
     )({ bindArgsParsedInputs: [WS], parsedInput: "file-1" })
 
-    expect(deleteMediaLibraryFile).toHaveBeenCalledWith({
+    expect(mediaLibraryService.deleteFile).toHaveBeenCalledWith({
       workspaceId: WS,
       fileId: "file-1",
     })
@@ -194,7 +186,7 @@ describe("moveMediaLibraryFilesAction", () => {
       parsedInput: { fileIds: ["file-1", "file-2"], folderId: "folder-9" },
     })
 
-    expect(moveMediaLibraryFiles).toHaveBeenCalledWith({
+    expect(mediaLibraryService.moveFiles).toHaveBeenCalledWith({
       workspaceId: WS,
       fileIds: ["file-1", "file-2"],
       folderId: "folder-9",
@@ -211,7 +203,7 @@ describe("toggleMediaLibraryFavouriteAction", () => {
       }) => Promise<unknown>
     )({ bindArgsParsedInputs: [WS], parsedInput: "file-1" })
 
-    expect(toggleMediaLibraryFavourite).toHaveBeenCalledWith({
+    expect(mediaLibraryService.toggleFavourite).toHaveBeenCalledWith({
       workspaceId: WS,
       fileId: "file-1",
     })
@@ -227,7 +219,7 @@ describe("recordMediaLibraryFileAccessAction", () => {
       }) => Promise<unknown>
     )({ bindArgsParsedInputs: [WS], parsedInput: "file-1" })
 
-    expect(recordMediaLibraryFileAccess).toHaveBeenCalledWith({
+    expect(mediaLibraryService.recordFileAccess).toHaveBeenCalledWith({
       workspaceId: WS,
       fileId: "file-1",
     })

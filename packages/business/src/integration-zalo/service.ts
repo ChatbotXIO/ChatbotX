@@ -7,7 +7,6 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { IntegrationZaloModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
-import { channelDuplicatedException } from "../errors"
 import { connectChannelIntegration } from "../inbox/connect-channel"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
@@ -141,8 +140,17 @@ class ZaloIntegrationService extends BaseService {
           sourceId: oaId,
         },
         insertIntegration: async (inboxId, insertWasCreated) => {
+          // `false` means the Inbox already existed *in this workspace* and is
+          // already `connected` — the owner is re-running OAuth for their own
+          // OA, not colliding with another workspace. Cross-workspace
+          // duplicates are rejected earlier by `connectChannelIntegration`'s
+          // `inboxService.isConnected` check, which throws
+          // `channelDuplicatedException` before we get here. So skip the insert
+          // and leave `connectedIntegrationId` undefined: throwing would roll
+          // back the whole transaction, discarding the disconnected→connected
+          // revival `inboxService.create` performs on the same path.
           if (!insertWasCreated) {
-            throw channelDuplicatedException()
+            return
           }
           const [row] = await tx
             .insert(integrationZaloModel)
@@ -160,12 +168,10 @@ class ZaloIntegrationService extends BaseService {
       channelWasCreated = wasCreated
     })
 
-    await this.invalidateCacheTags(`workspaces:${workspaceId}#zalos`)
-
     // Import any tags already on the OA into local tags + mappings. The row is
-    // already committed, so a queue outage must not fail the connect — and must
-    // not run before the caller's audit record either, or a throw here would
-    // leave a connected channel with no audit trail.
+    // already committed, so a queue outage must not fail the connect — hence
+    // the `.catch`, which also keeps the caller's audit record reachable: a
+    // throw here would leave a connected channel with no audit trail.
     if (connectedIntegrationId) {
       await tagSyncService
         .enqueueChannelScan({
@@ -180,6 +186,9 @@ class ZaloIntegrationService extends BaseService {
           )
         })
     }
+
+    // Last, so the cache is only dropped once every write above has settled.
+    await this.invalidateCacheTags(`workspaces:${workspaceId}#zalos`)
 
     return {
       integrationId: connectedIntegrationId,

@@ -4,33 +4,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   assertCurrentUserCanAccessChatbot: vi.fn().mockResolvedValue(undefined),
-  findManyFolders: vi.fn().mockResolvedValue([]),
+  listFolders: vi.fn().mockResolvedValue([]),
 }))
 
-function createGroupByChain(result: unknown) {
-  const chain = {
-    from: vi.fn(() => chain),
-    where: vi.fn(() => chain),
-    groupBy: vi.fn(() => Promise.resolve(result)),
-  }
-  return chain
-}
-
-const dbSelect = vi.fn()
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: { mediaLibraryFolderModel: { findMany: mocks.findManyFolders } },
-    select: dbSelect,
-  },
-  count: vi.fn(() => "COUNT(*)"),
-  eq: (...args: unknown[]) => args,
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  mediaLibraryFileModel: {
-    workspaceId: "file.workspaceId",
-    folderId: "file.folderId",
+vi.mock("@chatbotx.io/business", () => ({
+  mediaLibraryService: {
+    listFolders: mocks.listFolders,
   },
 }))
 
@@ -43,72 +22,54 @@ const { listMediaLibraryFolders } = await import("../folders")
 const WS = "workspace-1"
 
 beforeEach(() => {
-  dbSelect.mockReset()
   mocks.assertCurrentUserCanAccessChatbot.mockClear()
   mocks.assertCurrentUserCanAccessChatbot.mockResolvedValue(undefined)
-  mocks.findManyFolders.mockReset()
-  mocks.findManyFolders.mockResolvedValue([])
+  mocks.listFolders.mockReset()
+  mocks.listFolders.mockResolvedValue([])
 })
 
 describe("listMediaLibraryFolders", () => {
   test("asserts workspace access before querying", async () => {
-    dbSelect.mockReturnValue(createGroupByChain([]))
-
     await listMediaLibraryFolders({ workspaceId: WS })
 
     expect(mocks.assertCurrentUserCanAccessChatbot).toHaveBeenCalledWith(WS)
   })
 
-  test("scopes both the folder list and the file-count query to workspaceId", async () => {
-    const chain = createGroupByChain([])
-    dbSelect.mockReturnValue(chain)
-
-    await listMediaLibraryFolders({ workspaceId: WS })
-
-    expect(mocks.findManyFolders).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { workspaceId: WS } }),
+  test("does not reach the service when the access assertion rejects", async () => {
+    mocks.assertCurrentUserCanAccessChatbot.mockRejectedValue(
+      new Error("forbidden"),
     )
-    expect(chain.where).toHaveBeenCalledWith(["file.workspaceId", WS])
+
+    await expect(listMediaLibraryFolders({ workspaceId: WS })).rejects.toThrow(
+      "forbidden",
+    )
+    expect(mocks.listFolders).not.toHaveBeenCalled()
   })
 
-  test("merges the matching fileCount onto each folder", async () => {
-    mocks.findManyFolders.mockResolvedValue([
-      { id: "folder-1", name: "A" },
-      { id: "folder-2", name: "B" },
-    ])
-    dbSelect.mockReturnValue(
-      createGroupByChain([
-        { folderId: "folder-1", count: 3 },
-        { folderId: "folder-2", count: 0 },
-      ]),
-    )
+  test("scopes the service call to workspaceId", async () => {
+    await listMediaLibraryFolders({ workspaceId: WS })
 
-    const result = await listMediaLibraryFolders({ workspaceId: WS })
+    expect(mocks.listFolders).toHaveBeenCalledWith({ workspaceId: WS })
+  })
 
-    expect(result.data).toEqual([
+  test("wraps the service result in the response envelope", async () => {
+    mocks.listFolders.mockResolvedValue([
       { id: "folder-1", name: "A", fileCount: 3 },
       { id: "folder-2", name: "B", fileCount: 0 },
     ])
-  })
-
-  test("defaults fileCount to 0 for a folder missing from the grouped counts", async () => {
-    mocks.findManyFolders.mockResolvedValue([
-      { id: "folder-empty", name: "Empty" },
-    ])
-    dbSelect.mockReturnValue(createGroupByChain([]))
 
     const result = await listMediaLibraryFolders({ workspaceId: WS })
 
-    expect(result.data).toEqual([
-      { id: "folder-empty", name: "Empty", fileCount: 0 },
-    ])
+    expect(result).toEqual({
+      data: [
+        { id: "folder-1", name: "A", fileCount: 3 },
+        { id: "folder-2", name: "B", fileCount: 0 },
+      ],
+    })
   })
 
   test("returns an empty list when the workspace has no folders", async () => {
-    mocks.findManyFolders.mockResolvedValue([])
-    dbSelect.mockReturnValue(
-      createGroupByChain([{ folderId: "orphan", count: 5 }]),
-    )
+    mocks.listFolders.mockResolvedValue([])
 
     const result = await listMediaLibraryFolders({ workspaceId: WS })
 

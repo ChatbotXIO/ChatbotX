@@ -1,0 +1,1216 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`public API spec — operation naming guard > operation list (operationId, method, path) matches the committed snapshot 1`] = `
+[
+  {
+    "method": "POST",
+    "operationId": "aiAgents.create",
+    "path": "/v1/ai-agents",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "aiAgents.delete",
+    "path": "/v1/ai-agents/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "aiAgents.get",
+    "path": "/v1/ai-agents/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "aiAgents.list",
+    "path": "/v1/ai-agents",
+  },
+  {
+    "method": "PUT",
+    "operationId": "aiAgents.update",
+    "path": "/v1/ai-agents/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "aiTriggers.create",
+    "path": "/v1/ai-triggers",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "aiTriggers.delete",
+    "path": "/v1/ai-triggers/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "aiTriggers.duplicate",
+    "path": "/v1/ai-triggers/{id}/duplicate",
+  },
+  {
+    "method": "GET",
+    "operationId": "aiTriggers.get",
+    "path": "/v1/ai-triggers/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "aiTriggers.list",
+    "path": "/v1/ai-triggers",
+  },
+  {
+    "method": "PUT",
+    "operationId": "aiTriggers.update",
+    "path": "/v1/ai-triggers/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.activeContactsCount",
+    "path": "/v1/analytics/active-contacts-count",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.blockedContactsCount",
+    "path": "/v1/analytics/blocked-contacts-count",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.blockedContactsPerDay",
+    "path": "/v1/analytics/blocked-contacts-per-day",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.botMessagesAiProviders",
+    "path": "/v1/analytics/bot-messages-ai-providers",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.botMessagesByResult",
+    "path": "/v1/analytics/bot-messages-by-result",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.botMessagesNoResponse",
+    "path": "/v1/analytics/bot-messages-no-response",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.botMessagesWithResponse",
+    "path": "/v1/analytics/bot-messages-with-response",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.broadcastStats",
+    "path": "/v1/analytics/broadcasts/{broadcastId}/stats",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.contactCountsPerDay",
+    "path": "/v1/analytics/contact-counts-per-day",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.contactsByDimension",
+    "path": "/v1/analytics/contacts-by-dimension",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.contactsCount",
+    "path": "/v1/analytics/contacts-count",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.conversationArchived",
+    "path": "/v1/analytics/conversation-archived",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.conversationAssigned",
+    "path": "/v1/analytics/conversation-assigned",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.conversationAssignedByAdmin",
+    "path": "/v1/analytics/conversation-assigned-by-admin",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.conversationFollowUps",
+    "path": "/v1/analytics/conversation-followups",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.conversationHandoffs",
+    "path": "/v1/analytics/conversation-handoffs",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.flowStats",
+    "path": "/v1/analytics/flows/{flowId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.humanAgentStats",
+    "path": "/v1/analytics/human-agent-stats",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.macActiveContactCount",
+    "path": "/v1/analytics/mac/active-count",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.magicLinkContacts",
+    "path": "/v1/analytics/magic-links/contacts",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.magicLinkStats",
+    "path": "/v1/analytics/magic-links/stats",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.messagesByAdmin",
+    "path": "/v1/analytics/messages-by-admin",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.messagesBySender",
+    "path": "/v1/analytics/messages-by-sender",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.newContactCountsPerDay",
+    "path": "/v1/analytics/new-contact-counts-per-day",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.newContactsCount",
+    "path": "/v1/analytics/new-contacts-count",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.refLinkContacts",
+    "path": "/v1/analytics/ref-links/contacts",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.refLinkStats",
+    "path": "/v1/analytics/ref-links/stats",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "analytics.resetFlowStats",
+    "path": "/v1/analytics/flows/{flowId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.sequenceStepStats",
+    "path": "/v1/analytics/sequences/{sequenceId}/steps/{stepId}/stats",
+  },
+  {
+    "method": "GET",
+    "operationId": "analytics.uniqueConversationsByAdmin",
+    "path": "/v1/analytics/unique-conversations-by-admin",
+  },
+  {
+    "method": "POST",
+    "operationId": "appointmentCalendars.create",
+    "path": "/v1/appointment-calendars",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "appointmentCalendars.delete",
+    "path": "/v1/appointment-calendars/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "appointmentCalendars.duplicate",
+    "path": "/v1/appointment-calendars/{id}/duplicate",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointmentCalendars.get",
+    "path": "/v1/appointment-calendars/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointmentCalendars.getAvailability",
+    "path": "/v1/appointment-calendars/{id}/availability",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointmentCalendars.list",
+    "path": "/v1/appointment-calendars",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "appointmentCalendars.setActive",
+    "path": "/v1/appointment-calendars/{id}/active",
+  },
+  {
+    "method": "PUT",
+    "operationId": "appointmentCalendars.update",
+    "path": "/v1/appointment-calendars/{id}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "appointmentExternalCalendars.disconnect",
+    "path": "/v1/appointment-external-calendars/{integrationId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointmentExternalCalendars.list",
+    "path": "/v1/appointment-external-calendars",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointmentReminders.list",
+    "path": "/v1/appointment-reminders",
+  },
+  {
+    "method": "POST",
+    "operationId": "appointments.book",
+    "path": "/v1/appointments",
+  },
+  {
+    "method": "POST",
+    "operationId": "appointments.cancel",
+    "path": "/v1/appointments/{id}/cancel",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "appointments.delete",
+    "path": "/v1/appointments/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointments.get",
+    "path": "/v1/appointments/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "appointments.list",
+    "path": "/v1/appointments",
+  },
+  {
+    "method": "PUT",
+    "operationId": "botFields.bulkUpdate",
+    "path": "/v1/bot-fields/bulk-update",
+  },
+  {
+    "method": "POST",
+    "operationId": "botFields.create",
+    "path": "/v1/bot-fields",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "botFields.delete",
+    "path": "/v1/bot-fields/{idOrName}",
+  },
+  {
+    "method": "GET",
+    "operationId": "botFields.get",
+    "path": "/v1/bot-fields/{idOrName}",
+  },
+  {
+    "method": "GET",
+    "operationId": "botFields.list",
+    "path": "/v1/bot-fields",
+  },
+  {
+    "method": "PUT",
+    "operationId": "botFields.set",
+    "path": "/v1/bot-fields/{idOrName}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "botFields.setMany",
+    "path": "/v1/bot-fields",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.create",
+    "path": "/v1/broadcasts",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "broadcasts.delete",
+    "path": "/v1/broadcasts/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "broadcasts.get",
+    "path": "/v1/broadcasts/{idOrName}",
+  },
+  {
+    "method": "GET",
+    "operationId": "broadcasts.getAudience",
+    "path": "/v1/broadcasts/{idOrName}/audience",
+  },
+  {
+    "method": "GET",
+    "operationId": "broadcasts.list",
+    "path": "/v1/broadcasts",
+  },
+  {
+    "method": "GET",
+    "operationId": "broadcasts.listContacts",
+    "path": "/v1/broadcasts/{id}/contacts",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.moveToDraft",
+    "path": "/v1/broadcasts/{id}/move-to-draft",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.resend",
+    "path": "/v1/broadcasts/{id}/resend",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.resume",
+    "path": "/v1/broadcasts/{id}/resume",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.schedule",
+    "path": "/v1/broadcasts/{id}/schedule",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.stop",
+    "path": "/v1/broadcasts/{id}/stop",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "broadcasts.update",
+    "path": "/v1/broadcasts/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "broadcasts.updateDraft",
+    "path": "/v1/broadcasts/{id}/draft",
+  },
+  {
+    "method": "POST",
+    "operationId": "channels.deliveryStatus",
+    "path": "/v1/channels/api/delivery-status",
+  },
+  {
+    "method": "POST",
+    "operationId": "channels.markRead",
+    "path": "/v1/channels/api/read",
+  },
+  {
+    "method": "GET",
+    "operationId": "channels.me",
+    "path": "/v1/channels/api/me",
+  },
+  {
+    "method": "POST",
+    "operationId": "channels.sendMessage",
+    "path": "/v1/channels/api/messages",
+  },
+  {
+    "method": "POST",
+    "operationId": "channels.typing",
+    "path": "/v1/channels/api/typing",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.addTags",
+    "path": "/v1/contacts/{identifier}/tags",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.addTagsByName",
+    "path": "/v1/contacts/{identifier}/tags/by-name",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "contacts.applyCustomFieldOperations",
+    "path": "/v1/contacts/{identifier}/custom-fields",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.block",
+    "path": "/v1/contacts/{identifier}/block",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.bulkAddTags",
+    "path": "/v1/contacts/bulk/tags",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.bulkDelete",
+    "path": "/v1/contacts/bulk/delete",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.bulkSubscribeSequences",
+    "path": "/v1/contacts/bulk/sequences",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "contacts.clearCustomField",
+    "path": "/v1/contacts/{identifier}/custom-fields/{idOrName}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "contacts.clearCustomFields",
+    "path": "/v1/contacts/{identifier}/custom-fields",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.count",
+    "path": "/v1/contacts/count",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.create",
+    "path": "/v1/contacts",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.createNote",
+    "path": "/v1/contacts/{identifier}/notes",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "contacts.delete",
+    "path": "/v1/contacts/{identifier}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "contacts.deleteNote",
+    "path": "/v1/contacts/{identifier}/notes/{noteId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.export",
+    "path": "/v1/contacts/export",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.findByCustomField",
+    "path": "/v1/contacts/find-by-custom-field",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.get",
+    "path": "/v1/contacts/{identifier}",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.getCustomField",
+    "path": "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.getExportFile",
+    "path": "/v1/contacts/export-files/{fileId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.getMessage",
+    "path": "/v1/contacts/{identifier}/messages/{messageId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.import",
+    "path": "/v1/contacts/import",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.list",
+    "path": "/v1/contacts",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listCustomFields",
+    "path": "/v1/contacts/{identifier}/custom-fields",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listFilterFields",
+    "path": "/v1/contacts/filter-fields",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listInboxes",
+    "path": "/v1/contacts/{identifier}/inboxes",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listMessages",
+    "path": "/v1/contacts/{identifier}/messages",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listNotes",
+    "path": "/v1/contacts/{identifier}/notes",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listSequences",
+    "path": "/v1/contacts/{identifier}/sequences",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listTags",
+    "path": "/v1/contacts/{identifier}/tags",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.refreshProfile",
+    "path": "/v1/contacts/{identifier}/refresh-profile",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "contacts.removeTags",
+    "path": "/v1/contacts/{identifier}/tags",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.search",
+    "path": "/v1/contacts/search",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.sendFlow",
+    "path": "/v1/contacts/{identifier}/flows",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.sendMessage",
+    "path": "/v1/contacts/{identifier}/messages",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.setCustomField",
+    "path": "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contacts.setCustomFields",
+    "path": "/v1/contacts/{identifier}/custom-fields",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contacts.setSequences",
+    "path": "/v1/contacts/{identifier}/sequences",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contacts.setTags",
+    "path": "/v1/contacts/{identifier}/tags",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.subscribeSequences",
+    "path": "/v1/contacts/{identifier}/sequences",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.triggerAutoReply",
+    "path": "/v1/contacts/{identifier}/auto-replies",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.unblock",
+    "path": "/v1/contacts/{identifier}/unblock",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "contacts.unsubscribeSequences",
+    "path": "/v1/contacts/{identifier}/sequences",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contacts.update",
+    "path": "/v1/contacts/{identifier}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contacts.updateNote",
+    "path": "/v1/contacts/{identifier}/notes/{noteId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.upsert",
+    "path": "/v1/contacts/{identifier}/upsert",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.archive",
+    "path": "/v1/conversations/{id}/archive",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.assign",
+    "path": "/v1/conversations/{id}/assign",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.disableBot",
+    "path": "/v1/conversations/{id}/disable-bot",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.enableBot",
+    "path": "/v1/conversations/{id}/enable-bot",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.follow",
+    "path": "/v1/conversations/{id}/follow",
+  },
+  {
+    "method": "GET",
+    "operationId": "conversations.get",
+    "path": "/v1/conversations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "conversations.list",
+    "path": "/v1/conversations",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.read",
+    "path": "/v1/conversations/{id}/read",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.unarchive",
+    "path": "/v1/conversations/{id}/unarchive",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.unfollow",
+    "path": "/v1/conversations/{id}/unfollow",
+  },
+  {
+    "method": "POST",
+    "operationId": "conversations.unread",
+    "path": "/v1/conversations/{id}/unread",
+  },
+  {
+    "method": "POST",
+    "operationId": "coupons.archiveTopic",
+    "path": "/v1/coupon-topics/{id}/archive",
+  },
+  {
+    "method": "POST",
+    "operationId": "coupons.createTopic",
+    "path": "/v1/coupon-topics",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "coupons.deleteTopic",
+    "path": "/v1/coupon-topics/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "coupons.getTopic",
+    "path": "/v1/coupon-topics/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "coupons.issueCoupon",
+    "path": "/v1/coupon-topics/{id}/issue",
+  },
+  {
+    "method": "GET",
+    "operationId": "coupons.listContactCoupons",
+    "path": "/v1/contacts/{contactId}/coupons",
+  },
+  {
+    "method": "GET",
+    "operationId": "coupons.listCoupons",
+    "path": "/v1/coupons",
+  },
+  {
+    "method": "GET",
+    "operationId": "coupons.listTopics",
+    "path": "/v1/coupon-topics",
+  },
+  {
+    "method": "POST",
+    "operationId": "coupons.markCouponUsed",
+    "path": "/v1/coupon-topics/{id}/mark-used",
+  },
+  {
+    "method": "POST",
+    "operationId": "coupons.unarchiveTopic",
+    "path": "/v1/coupon-topics/{id}/unarchive",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "coupons.updateTopic",
+    "path": "/v1/coupon-topics/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "customFields.create",
+    "path": "/v1/custom-fields",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "customFields.delete",
+    "path": "/v1/custom-fields/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "customFields.get",
+    "path": "/v1/custom-fields/{idOrName}",
+  },
+  {
+    "method": "GET",
+    "operationId": "customFields.list",
+    "path": "/v1/custom-fields",
+  },
+  {
+    "method": "PUT",
+    "operationId": "customFields.update",
+    "path": "/v1/custom-fields/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "errorLogs.list",
+    "path": "/v1/error-logs",
+  },
+  {
+    "method": "POST",
+    "operationId": "externalWebhooks.create",
+    "path": "/v1/external-webhooks",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "externalWebhooks.delete",
+    "path": "/v1/external-webhooks/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "externalWebhooks.list",
+    "path": "/v1/external-webhooks",
+  },
+  {
+    "method": "POST",
+    "operationId": "flows.create",
+    "path": "/v1/flows",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "flows.delete",
+    "path": "/v1/flows/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "flows.duplicate",
+    "path": "/v1/flows/{id}/duplicate",
+  },
+  {
+    "method": "GET",
+    "operationId": "flows.get",
+    "path": "/v1/flows/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "flows.import",
+    "path": "/v1/flows/import",
+  },
+  {
+    "method": "GET",
+    "operationId": "flows.list",
+    "path": "/v1/flows",
+  },
+  {
+    "method": "POST",
+    "operationId": "flows.publish",
+    "path": "/v1/flows/{id}/publish",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "flows.update",
+    "path": "/v1/flows/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "flows.updateDraft",
+    "path": "/v1/flows/{id}/draft",
+  },
+  {
+    "method": "GET",
+    "operationId": "flows.versions",
+    "path": "/v1/flows/{id}/versions",
+  },
+  {
+    "method": "POST",
+    "operationId": "folders.create",
+    "path": "/v1/folders",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "folders.delete",
+    "path": "/v1/folders/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "folders.list",
+    "path": "/v1/folders",
+  },
+  {
+    "method": "PUT",
+    "operationId": "folders.update",
+    "path": "/v1/folders/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboxes.list",
+    "path": "/v1/inboxes",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboxes.listChannels",
+    "path": "/v1/channels",
+  },
+  {
+    "method": "POST",
+    "operationId": "inboxTeams.addMembers",
+    "path": "/v1/teams/{id}/members",
+  },
+  {
+    "method": "POST",
+    "operationId": "inboxTeams.create",
+    "path": "/v1/teams",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "inboxTeams.delete",
+    "path": "/v1/teams/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboxTeams.get",
+    "path": "/v1/teams/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboxTeams.list",
+    "path": "/v1/teams",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "inboxTeams.removeMembers",
+    "path": "/v1/teams/{id}/members",
+  },
+  {
+    "method": "PUT",
+    "operationId": "inboxTeams.update",
+    "path": "/v1/teams/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "integrations.connectAiProvider",
+    "path": "/v1/integrations/ai/{provider}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "integrations.disconnectAiProvider",
+    "path": "/v1/integrations/ai/{provider}",
+  },
+  {
+    "method": "GET",
+    "operationId": "integrations.get",
+    "path": "/v1/integrations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "integrations.getAiProvider",
+    "path": "/v1/integrations/ai/{provider}",
+  },
+  {
+    "method": "GET",
+    "operationId": "integrations.list",
+    "path": "/v1/integrations",
+  },
+  {
+    "method": "GET",
+    "operationId": "integrations.tokenErrors",
+    "path": "/v1/integrations/status/token-errors",
+  },
+  {
+    "method": "POST",
+    "operationId": "keywords.create",
+    "path": "/v1/keywords",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "keywords.delete",
+    "path": "/v1/keywords/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "keywords.get",
+    "path": "/v1/keywords/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "keywords.list",
+    "path": "/v1/keywords",
+  },
+  {
+    "method": "PUT",
+    "operationId": "keywords.update",
+    "path": "/v1/keywords/{id}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "keywords.updateStatus",
+    "path": "/v1/keywords/{id}/status",
+  },
+  {
+    "method": "POST",
+    "operationId": "messages.changeAttributes",
+    "path": "/v1/conversations/{conversationId}/messages/{messageId}/attributes",
+  },
+  {
+    "method": "POST",
+    "operationId": "messages.create",
+    "path": "/v1/conversations/{conversationId}/messages",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "messages.delete",
+    "path": "/v1/conversations/{conversationId}/messages/{messageId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "messages.get",
+    "path": "/v1/conversations/{conversationId}/messages/{messageId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "messages.list",
+    "path": "/v1/conversations/{conversationId}/messages",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "messages.update",
+    "path": "/v1/conversations/{conversationId}/messages/{messageId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "productCategories.create",
+    "path": "/v1/product-categories",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "productCategories.delete",
+    "path": "/v1/product-categories/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "productCategories.list",
+    "path": "/v1/product-categories",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "productCategories.update",
+    "path": "/v1/product-categories/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "products.create",
+    "path": "/v1/products",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "products.delete",
+    "path": "/v1/products/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "products.get",
+    "path": "/v1/products/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "products.list",
+    "path": "/v1/products",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "products.update",
+    "path": "/v1/products/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "reflinks.create",
+    "path": "/v1/ref-links",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "reflinks.delete",
+    "path": "/v1/ref-links/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "reflinks.get",
+    "path": "/v1/ref-links/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "reflinks.list",
+    "path": "/v1/ref-links",
+  },
+  {
+    "method": "PUT",
+    "operationId": "reflinks.update",
+    "path": "/v1/ref-links/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "savedReplies.create",
+    "path": "/v1/saved-replies",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "savedReplies.delete",
+    "path": "/v1/saved-replies/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "savedReplies.get",
+    "path": "/v1/saved-replies/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "savedReplies.list",
+    "path": "/v1/saved-replies",
+  },
+  {
+    "method": "PUT",
+    "operationId": "savedReplies.update",
+    "path": "/v1/saved-replies/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "sequences.create",
+    "path": "/v1/sequences",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "sequences.delete",
+    "path": "/v1/sequences/{id}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "sequences.deleteStep",
+    "path": "/v1/sequences/{id}/steps/{stepId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "sequences.get",
+    "path": "/v1/sequences/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "sequences.list",
+    "path": "/v1/sequences",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "sequences.update",
+    "path": "/v1/sequences/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "sequences.upsertStep",
+    "path": "/v1/sequences/{id}/steps",
+  },
+  {
+    "method": "POST",
+    "operationId": "tags.create",
+    "path": "/v1/tags",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "tags.delete",
+    "path": "/v1/tags/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "tags.get",
+    "path": "/v1/tags/{idOrName}",
+  },
+  {
+    "method": "GET",
+    "operationId": "tags.list",
+    "path": "/v1/tags",
+  },
+  {
+    "method": "PUT",
+    "operationId": "tags.update",
+    "path": "/v1/tags/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateMessages.list",
+    "path": "/v1/template-messages",
+  },
+  {
+    "method": "POST",
+    "operationId": "triggers.create",
+    "path": "/v1/triggers",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "triggers.delete",
+    "path": "/v1/triggers/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "triggers.get",
+    "path": "/v1/triggers/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "triggers.list",
+    "path": "/v1/triggers",
+  },
+  {
+    "method": "PUT",
+    "operationId": "triggers.update",
+    "path": "/v1/triggers/{id}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "triggers.updateSettings",
+    "path": "/v1/triggers/{id}/settings",
+  },
+  {
+    "method": "POST",
+    "operationId": "webhooks.create",
+    "path": "/v1/webhooks",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "webhooks.delete",
+    "path": "/v1/webhooks/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "webhooks.list",
+    "path": "/v1/webhooks",
+  },
+  {
+    "method": "GET",
+    "operationId": "workspaceMembers.get",
+    "path": "/v1/members/{memberId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "workspaceMembers.list",
+    "path": "/v1/members",
+  },
+]
+`;

@@ -26,22 +26,31 @@ class UserService extends BaseService {
     return user
   }
 
+  async findNameAndEmail(
+    userId: string,
+  ): Promise<{ name: string | null; email: string | null } | undefined> {
+    return await db.query.userModel.findFirst({
+      where: { id: userId },
+      columns: { name: true, email: true },
+    })
+  }
+
   /**
-   * Existing user ids from `userIds`. A Redis live-counter key can outlive
-   * the User it belonged to (deleting a User cascades its UserQuota row but
-   * not the Redis key) — callers use this to filter such ghost ids out
-   * before reconciling, instead of violating the UserQuota → User foreign
-   * key on every run.
+   * Of the given ids, the ones that still have a `User` row. Used to drop ids
+   * that outlived their user — a deleted `User` cascades its `UserQuota` row but
+   * not the Redis live-counter key, so reconciling such a ghost id would violate
+   * the `UserQuota → User` foreign key on every run.
    */
-  async listExistingIds(userIds: string[]): Promise<string[]> {
-    if (userIds.length === 0) {
+  async listExistingIds(input: { ids: string[] }): Promise<string[]> {
+    if (input.ids.length === 0) {
       return []
     }
 
     const rows = await db
       .select({ id: userModel.id })
       .from(userModel)
-      .where(inArray(userModel.id, userIds))
+      .where(inArray(userModel.id, input.ids))
+
     return rows.map((row) => row.id)
   }
 }

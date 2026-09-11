@@ -98,7 +98,9 @@ export const syncUserQuota = async (): Promise<void> => {
     // ghost id would violate the `UserQuota → User` foreign key on every run, so
     // filter the batch against the User table (one indexed lookup per 50 ids)
     // and drop the stale keys instead of walking them again.
-    const existingIds = new Set(await userService.listExistingIds(batch))
+    const existingIds = new Set(
+      await userService.listExistingIds({ ids: batch }),
+    )
 
     await Promise.all(
       batch

@@ -1,5 +1,5 @@
-import { flowVersionService } from "@chatbotx.io/business"
-import { db } from "@chatbotx.io/database/client"
+import { flowVersionService, magicLinkService } from "@chatbotx.io/business"
+import { contactInboxRepository } from "@chatbotx.io/database/repositories"
 import { emit } from "@chatbotx.io/event-bus"
 import {
   clickTypeSchema,
@@ -27,12 +27,7 @@ export const GET = async (
     )
   }
 
-  const row = await db.query.magicLinkModel.findFirst({
-    where: {
-      workspaceId,
-      name,
-    },
-  })
+  const row = await magicLinkService.findByName({ workspaceId, name })
 
   if (!row) {
     return NextResponse.json({ message: "Not found" }, { status: 404 })
@@ -68,13 +63,8 @@ export const GET = async (
     )
   }
 
-  const contactInbox = await db.query.contactInboxModel.findFirst({
-    where: {
-      id: decodedButton.contactInboxId,
-    },
-    with: {
-      conversation: true,
-    },
+  const contactInbox = await contactInboxRepository.findByIdWithConversation({
+    id: decodedButton.contactInboxId,
   })
 
   // `ContactInbox` has no `workspaceId` of its own and this id arrives inside the

@@ -1,12 +1,9 @@
 "use server"
 
 import { isDeepStrictEqual } from "node:util"
-import { workspaceMemberCacheTag } from "@chatbotx.io/business"
+import { userService, workspaceMemberService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { workspaceMemberModel } from "@chatbotx.io/database/schema"
-import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { isCommunity } from "@/env"
 import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
@@ -22,10 +19,9 @@ export const updateWorkspaceMemberAction = workspaceActionClient
   .inputSchema(updateWorkspaceMemberRequest)
   .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .action(async ({ bindArgsParsedInputs: [workspaceId, id], parsedInput }) => {
-    const workspaceMember = await findOrFail({
-      table: workspaceMemberModel,
-      where: { id, workspaceId },
-      message: "Workspace member not found",
+    const workspaceMember = await workspaceMemberService.findByIdOrFail({
+      id,
+      workspaceId,
     })
 
     const currentUserAndTargetChatbot =
@@ -77,30 +73,23 @@ export const updateWorkspaceMemberAction = workspaceActionClient
       return
     }
 
-    const updated = await db
-      .update(workspaceMemberModel)
-      .set(updateInput)
-      .where(eq(workspaceMemberModel.id, workspaceMember.id))
-      .returning({ id: workspaceMemberModel.id })
+    const updated = await workspaceMemberService.update({
+      id: workspaceMember.id,
+      workspaceId,
+      data: updateInput,
+    })
 
-    if (updated.length === 0) {
+    if (!updated) {
       return
     }
-
-    // The member's permissions/nav are served from the cached
-    // `listByUserId` result; bust it so the change takes effect immediately.
-    await invalidateCacheByTags([
-      workspaceMemberCacheTag(workspaceMember.userId),
-    ])
 
     // Only a real permissions/role change is in the audit-log spec for this
     // action — a save that only touches notification settings must not be
     // recorded as a "changed role" event.
     if (permissionsChanged) {
-      const targetUser = await db.query.userModel.findFirst({
-        where: { id: workspaceMember.userId },
-        columns: { name: true, email: true },
-      })
+      const targetUser = await userService.findNameAndEmail(
+        workspaceMember.userId,
+      )
 
       await auditService.record({
         action: "role_change",

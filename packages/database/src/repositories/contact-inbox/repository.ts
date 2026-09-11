@@ -536,4 +536,28 @@ export const contactInboxRepository = {
       },
     })
   },
+
+  /**
+   * Single-row load of a contact inbox by id together with its conversation —
+   * deliberately NOT workspace-scoped in the query itself. Used by the public
+   * `/r/[workspaceId]/[name]` magic-link route, which validates the caller's
+   * workspace by comparing `conversation.workspaceId` against the route's
+   * `workspaceId` at the call site instead: filtering by workspace here would
+   * make a cross-workspace inbox indistinguishable from "inbox gone" and lose
+   * the ability to log which workspace the mismatched inbox actually belongs
+   * to.
+   */
+  async findByIdWithConversation(
+    input: { id: string },
+    tx: DatabaseClient = db,
+  ): Promise<
+    (ContactInboxModel & { conversation: ConversationModel | null }) | undefined
+  > {
+    return await tx.query.contactInboxModel.findFirst({
+      where: { id: input.id },
+      with: {
+        conversation: true,
+      },
+    })
+  },
 }

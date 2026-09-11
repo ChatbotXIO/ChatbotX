@@ -77,6 +77,8 @@ vi.mock("../src/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn() },
 }))
 
+const { channelDuplicatedException } = await import("../src/errors")
+
 const { zaloIntegrationService } = await import(
   "../src/integration-zalo/service"
 )
@@ -222,7 +224,11 @@ describe("zaloIntegrationService.connect", () => {
     expect(mockEnqueueChannelScan).not.toHaveBeenCalled()
   })
 
-  test("throws channelDuplicatedException when insertIntegration receives wasCreated === false", async () => {
+  // `wasCreated === false` means the Inbox already existed in THIS workspace
+  // and is already connected — the owner re-ran OAuth for their own OA. That
+  // is not a duplicate, so `connect` resolves with no integration id and lets
+  // the caller redirect; throwing would roll back the transaction.
+  test("resolves without an integration id when insertIntegration receives wasCreated === false", async () => {
     mockConnectChannelIntegration.mockImplementation(
       async (props: {
         insertIntegration: (
@@ -233,6 +239,26 @@ describe("zaloIntegrationService.connect", () => {
         await props.insertIntegration("inbox-1", false)
         return { wasCreated: false }
       },
+    )
+
+    const result = await zaloIntegrationService.connect({
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+      oaId: "oa-1",
+      name: "My OA",
+      auth: {},
+    })
+
+    expect(result).toEqual({ integrationId: undefined, wasCreated: false })
+    expect(mockEnqueueChannelScan).not.toHaveBeenCalled()
+  })
+
+  // A genuine cross-workspace collision is rejected inside
+  // `connectChannelIntegration` (via `inboxService.isConnected`), never by the
+  // `insertIntegration` callback — `connect` must let that exception through.
+  test("propagates channelDuplicatedException thrown by connectChannelIntegration", async () => {
+    mockConnectChannelIntegration.mockRejectedValue(
+      channelDuplicatedException(),
     )
 
     await expect(

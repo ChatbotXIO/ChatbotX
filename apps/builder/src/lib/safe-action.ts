@@ -24,9 +24,22 @@ import {
 } from "@/lib/workspace/authorize-workspace-access"
 import { logger } from "./log"
 
+const SERVER_ERROR_STATUS_THRESHOLD = 500
+
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
     if (error instanceof ChatbotXException || error instanceof SdkException) {
+      // Expected client-facing 4xx (e.g. notFoundException, validationException)
+      // — warn rather than error so alerting stays quiet, but still keep the
+      // signal in the logs. A 5xx ChatbotXException still gets logged at error
+      // level below since findOrFail/generic throws land there too. Mirrors
+      // `mapKnownOrpcErrors` in orpc.ts, which applies the same split to the
+      // oRPC surface.
+      if (error.httpStatusCode < SERVER_ERROR_STATUS_THRESHOLD) {
+        logger.warn({ err: error }, "Action rejected request")
+      } else {
+        logger.error({ err: error }, "Action rejected request")
+      }
       return error.message
     }
 

@@ -55,6 +55,16 @@ export async function connectZaloHandler({
     throw error
   }
 
+  // No integration id means the OA was already connected in this very
+  // workspace (`insertIntegration` skipped the insert). Nothing failed, so the
+  // service does not throw — the app layer decides the UX, and `redirect()`
+  // must not be called from inside a service.
+  if (!result.integrationId) {
+    redirect(
+      `/space/${workspaceId}/settings/channels?channel=zalo&error=duplicated`,
+    )
+  }
+
   if (result.wasCreated) {
     await auditService.record({
       userId,

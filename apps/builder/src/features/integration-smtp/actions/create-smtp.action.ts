@@ -1,7 +1,6 @@
 "use server"
 
 import { integrationSmtpService, workspaceService } from "@chatbotx.io/business"
-import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -21,6 +20,8 @@ export const createSmtpAction = workspaceActionClient
 
     await verifySmtpConnection(parsedInput)
 
+    // `smtpHostMap` lives in `@chatbotx.io/integration-smtp`, which
+    // `packages/business` must not depend on — resolve here, pass the pair in.
     const { host, port } = resolveSmtpHostAndPort(provider, {
       host: rest.host,
       port: rest.port,
@@ -33,7 +34,7 @@ export const createSmtpAction = workspaceActionClient
       throw new ChatbotXException("Workspace not found")
     }
 
-    const { inbox, wasCreated } = await integrationSmtpService.connect({
+    const { inbox } = await integrationSmtpService.connect({
       workspaceId,
       ownerId: workspace.ownerId,
       name: username,
@@ -47,14 +48,6 @@ export const createSmtpAction = workspaceActionClient
         password,
       },
     })
-
-    if (wasCreated) {
-      await auditService.record({
-        workspaceId,
-        action: "connect",
-        detail: `connected a new SMTP channel (#${inbox.id})`,
-      })
-    }
 
     return {
       id: inbox.id,

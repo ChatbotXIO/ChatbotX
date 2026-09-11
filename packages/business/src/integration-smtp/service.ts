@@ -7,6 +7,7 @@ import type {
   IntegrationSmtpModel,
 } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
+import { isSameJsonValue } from "../audit/diff"
 import { BaseService } from "../base.service"
 import { ChatbotXException } from "../errors"
 import { connectChannelIntegration } from "../inbox/connect-channel"
@@ -28,6 +29,21 @@ type SmtpAuthInput = {
   username: string
   password: string
 }
+
+/**
+ * Every field is optional: the builder's update form submits only what the
+ * user touched, and each missing value falls back to the row's current auth.
+ * `host`/`port` must already be resolved against `smtpHostMap` by the caller
+ * (see the note above) — this service only fills them from the stored row.
+ */
+export type UpdateSmtpInput = Partial<{
+  provider: string
+  host: string
+  port: number
+  username: string
+  password: string
+  fromAddress: string
+}>
 
 class IntegrationSmtpService extends BaseService {
   find({
@@ -103,22 +119,45 @@ class IntegrationSmtpService extends BaseService {
       })
     })
 
+    if (wasCreated) {
+      await this.audit("connect", `connected a new SMTP channel (#${inbox.id})`)
+    }
+
     return { inbox, wasCreated }
   }
 
+  /**
+   * Merges `data` over the row's stored auth, writes it, and records an audit
+   * entry only when the resulting payload actually differs. Both the merge and
+   * the diff live here so any future caller (public API, worker) gets them for
+   * free — see `.agents/rules/data-access.md` on public and private paths
+   * sharing one service method.
+   */
   async update(input: {
     workspaceId: string
     id: string
-    auth: SmtpAuthInput
-    name: string
-    fromAddress: string
+    data: UpdateSmtpInput
     tx?: DatabaseClient
   }): Promise<IntegrationSmtpModel> {
-    const { workspaceId, id, auth, name, fromAddress, tx = db } = input
+    const { workspaceId, id, data, tx = db } = input
 
-    // Scoped by workspace as well as id: callers already pre-check ownership
-    // via `findByIdForWorkspace`, but this method accepts a `workspaceId` and
-    // must honour it rather than trusting every future caller to guard first.
+    const integration = await this.findByIdForWorkspace({ id, workspaceId })
+    const currentAuth = integration.auth as SmtpAuthInput
+
+    const auth: SmtpAuthInput = {
+      authType: "custom",
+      provider: data.provider ?? currentAuth.provider,
+      host: data.host || currentAuth.host,
+      port: data.port || currentAuth.port,
+      username: data.username ?? currentAuth.username,
+      password: data.password ?? currentAuth.password,
+    }
+    const name = data.username ?? integration.name
+    const fromAddress = data.fromAddress ?? integration.fromAddress
+
+    // Scoped by workspace as well as id: `findByIdForWorkspace` above already
+    // proves ownership, but this method accepts a `workspaceId` and must
+    // honour it rather than trusting every future caller to guard first.
     const [updated] = await tx
       .update(integrationSmtpModel)
       .set({ auth, name, fromAddress })
@@ -132,6 +171,19 @@ class IntegrationSmtpService extends BaseService {
 
     if (!updated) {
       throw new ChatbotXException("SMTP integration not found")
+    }
+
+    const hasChanged = !isSameJsonValue(
+      { auth, name, fromAddress },
+      {
+        auth: currentAuth,
+        name: integration.name,
+        fromAddress: integration.fromAddress,
+      },
+    )
+
+    if (hasChanged) {
+      await this.audit("update", "updated the SMTP channel configuration")
     }
 
     return updated
@@ -167,9 +219,11 @@ class IntegrationSmtpService extends BaseService {
 
     if (tx) {
       await run(tx)
-      return
+    } else {
+      await db.transaction(run)
     }
-    await db.transaction(run)
+
+    await this.audit("disconnect", `disconnected the SMTP channel (#${id})`)
   }
 }
 export const integrationSmtpService = new IntegrationSmtpService()

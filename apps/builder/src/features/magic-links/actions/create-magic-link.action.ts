@@ -1,8 +1,7 @@
 "use server"
 
-import { db, isUniqueViolationError } from "@chatbotx.io/database/client"
-import { magicLinkModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
+import { magicLinkService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
@@ -26,13 +25,9 @@ export const createMagicLinkAction = workspaceActionClient
       parsedInput: CreateMagicLinkRequest
     }) => {
       try {
-        await db.insert(magicLinkModel).values({
-          id: createId(),
-          workspaceId,
-          ...parsedInput,
-        })
+        await magicLinkService.create({ workspaceId, data: parsedInput })
       } catch (error) {
-        if (isUniqueViolationError(error)) {
+        if (error instanceof ChatbotXException && error.code === "validation") {
           return returnValidationErrors(createMagicLinkRequest, {
             _errors: ["Validation Exception"],
             name: { _errors: ["Name is already taken"] },

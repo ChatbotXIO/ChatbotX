@@ -5,6 +5,8 @@ const {
   mockConnectChannelIntegration,
   mockDelete,
   mockDisconnect,
+  mockDispatchAuditRecord,
+  mockFindOrFail,
   mockInsert,
   mockInsertValues,
   mockTransaction,
@@ -27,6 +29,8 @@ const {
     mockConnectChannelIntegration: vi.fn(),
     mockDelete,
     mockDisconnect: vi.fn(async () => undefined),
+    mockDispatchAuditRecord: vi.fn(async () => undefined),
+    mockFindOrFail: vi.fn(),
     mockInsert,
     mockInsertValues,
     mockTransaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
@@ -46,7 +50,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     update: mockUpdate,
   },
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
-  findOrFail: vi.fn(),
+  findOrFail: mockFindOrFail,
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
@@ -67,6 +71,10 @@ vi.mock("../src/inbox/connect-channel", () => ({
 
 vi.mock("../src/inbox/service", () => ({
   inboxService: { disconnect: mockDisconnect },
+}))
+
+vi.mock("../src/audit/dispatcher", () => ({
+  dispatchAuditRecord: mockDispatchAuditRecord,
 }))
 
 const { integrationSmtpService } = await import(
@@ -120,24 +128,70 @@ describe("integrationSmtpService.connect", () => {
       }),
     )
   })
+
+  // The audit record belongs to the service, not the calling action, so a
+  // public-API or worker caller gets it too.
+  test("records the connect audit when the channel was created", async () => {
+    mockConnectChannelIntegration.mockResolvedValue({
+      inbox: { id: "inbox-1" },
+      wasCreated: true,
+    })
+
+    await integrationSmtpService.connect({
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+      name: "user1",
+      fromAddress: "from@example.com",
+      auth,
+    })
+
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "connect",
+      detail: "connected a new SMTP channel (#inbox-1)",
+    })
+  })
+
+  test("records no audit when an existing inbox was reused", async () => {
+    mockConnectChannelIntegration.mockResolvedValue({
+      inbox: { id: "inbox-1" },
+      wasCreated: false,
+    })
+
+    await integrationSmtpService.connect({
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+      name: "user1",
+      fromAddress: "from@example.com",
+      auth,
+    })
+
+    expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
+  })
 })
 
 describe("integrationSmtpService.update", () => {
+  const existing = {
+    id: "smtp-1",
+    workspaceId: "ws-1",
+    inboxId: "inbox-1",
+    name: "user",
+    fromAddress: "from@example.com",
+    auth,
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  test("returns the updated row", async () => {
+    mockFindOrFail.mockResolvedValue(existing)
     mockUpdateReturning.mockResolvedValue([
       { id: "smtp-1", name: "updated", fromAddress: "a@b.com" },
     ])
+  })
 
+  test("returns the updated row", async () => {
     const result = await integrationSmtpService.update({
       workspaceId: "ws-1",
       id: "smtp-1",
-      auth,
-      name: "updated",
-      fromAddress: "a@b.com",
+      data: { username: "updated", fromAddress: "a@b.com" },
     })
 
     expect(result).toEqual({
@@ -151,16 +205,10 @@ describe("integrationSmtpService.update", () => {
   // method takes a `workspaceId` and must scope on it itself — otherwise a
   // future caller that trusts the parameter writes across workspaces.
   test("scopes the update by workspaceId as well as id", async () => {
-    mockUpdateReturning.mockResolvedValue([
-      { id: "smtp-1", name: "updated", fromAddress: "a@b.com" },
-    ])
-
     await integrationSmtpService.update({
       workspaceId: "ws-1",
       id: "smtp-1",
-      auth,
-      name: "updated",
-      fromAddress: "a@b.com",
+      data: { username: "updated", fromAddress: "a@b.com" },
     })
 
     expect(mockUpdateWhere).toHaveBeenCalledWith({
@@ -169,6 +217,57 @@ describe("integrationSmtpService.update", () => {
         { field: "workspaceId", value: "ws-1" },
       ],
     })
+  })
+
+  // Every omitted field falls back to the stored auth, so a partial form
+  // submission never blanks out a credential.
+  test("merges omitted fields from the stored auth", async () => {
+    await integrationSmtpService.update({
+      workspaceId: "ws-1",
+      id: "smtp-1",
+      data: { fromAddress: "a@b.com" },
+    })
+
+    expect(mockUpdateWhere).toHaveBeenCalled()
+    const setArg = (
+      mockUpdate.mock.results[0]?.value as { set: ReturnType<typeof vi.fn> }
+    ).set
+    expect(setArg).toHaveBeenCalledWith({
+      auth,
+      name: existing.name,
+      fromAddress: "a@b.com",
+    })
+  })
+
+  test("records the update audit when the payload actually changed", async () => {
+    await integrationSmtpService.update({
+      workspaceId: "ws-1",
+      id: "smtp-1",
+      data: { fromAddress: "changed@example.com" },
+    })
+
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "update",
+      detail: "updated the SMTP channel configuration",
+    })
+  })
+
+  // Re-submitting the form untouched must not spam the audit trail.
+  test("records no audit when the resolved payload is unchanged", async () => {
+    await integrationSmtpService.update({
+      workspaceId: "ws-1",
+      id: "smtp-1",
+      data: {
+        provider: auth.provider,
+        host: auth.host,
+        port: auth.port,
+        username: existing.name,
+        password: auth.password,
+        fromAddress: existing.fromAddress,
+      },
+    })
+
+    expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
   })
 })
 
@@ -199,5 +298,9 @@ describe("integrationSmtpService.disconnect", () => {
     })
 
     expect(callOrder).toEqual(["delete", "inbox-disconnect"])
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "disconnect",
+      detail: "disconnected the SMTP channel (#smtp-1)",
+    })
   })
 })

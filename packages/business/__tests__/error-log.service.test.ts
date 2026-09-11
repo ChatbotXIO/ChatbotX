@@ -7,6 +7,29 @@ vi.mock("@chatbotx.io/event-bus", () => ({
   emit: (...args: unknown[]) => emit(...args),
 }))
 
+// `listErrorLogs` (added alongside the existing logProviderError* free
+// functions) pulls in the database client/schema/utils at module scope —
+// stub them so this file's existing tests, which never exercise
+// `listErrorLogs`, don't pay the cost of the real modules (and never
+// importOriginal the schema module — it opens a real DB connection).
+vi.mock("@chatbotx.io/database/client", () => ({
+  db: {
+    query: { errorLogModel: { findMany: vi.fn() } },
+    $count: vi.fn(),
+  },
+  relationsFilterToSQL: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/database/schema", () => ({
+  errorLogModel: {},
+}))
+
+vi.mock("@chatbotx.io/database/utils", () => ({
+  getPaginationWithDefaults: vi.fn(() => ({ limit: 10, offset: 0 })),
+  likeContains: (value: string) => `%${value}%`,
+  parseOrderByAsObject: () => ({}),
+}))
+
 // The service short-circuits under `isNoRedisEnv()` — true by default in
 // vitest — exactly as `defaultQueue` falls back to `fakeQueue`. These tests
 // exercise the real emit path, so they opt out of that fallback.
