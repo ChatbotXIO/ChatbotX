@@ -4,6 +4,7 @@ import {
 } from "@chatbotx.io/business/minigame"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { bulkUpdateIdsRequest } from "@/features/common/schema"
 import {
   possibleErrorsOnCreatingMinigame,
   possibleErrorsOnDeletingResource,
@@ -21,6 +22,7 @@ import {
   listMinigamesPublicRequest,
   listMinigamesPublicResponse,
   minigamePublicResource,
+  patchMinigamePublicRequest,
   setMinigameEnabledPublicRequest,
   updateMinigamePublicRequest,
 } from "../schema/public"
@@ -106,6 +108,25 @@ export const minigamesPublicRouter = {
       })
     }),
 
+  patch: workspaceTokenAuthAPI
+    .route({
+      method: "PATCH",
+      path: "/v1/minigames/{id}",
+      summary: "Partially update a minigame",
+      tags,
+    })
+    .input(patchMinigamePublicRequest)
+    .output(minigamePublicResource)
+    .errors(possibleErrorsOnMutatingMinigame)
+    .handler(async ({ context, input }) => {
+      const { id, ...data } = input
+      return await minigameService.updatePartial({
+        ...data,
+        workspaceId: context.workspace.id,
+        id,
+      })
+    }),
+
   delete: workspaceTokenAuthAPI
     .route({
       method: "DELETE",
@@ -120,6 +141,23 @@ export const minigamesPublicRouter = {
       await minigameService.delete({
         workspaceId: context.workspace.id,
         id: input.id,
+      })
+    }),
+
+  deleteMany: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/minigames/bulk-delete",
+      summary: "Delete multiple minigames",
+      successStatus: 204,
+      tags,
+    })
+    .input(bulkUpdateIdsRequest)
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      await minigameService.deleteMany({
+        workspaceId: context.workspace.id,
+        ids: input.ids,
       })
     }),
 

@@ -57,7 +57,9 @@ const minigameService = {
   find: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
+  updatePartial: vi.fn(),
   delete: vi.fn(),
+  deleteMany: vi.fn(),
   setEnabled: vi.fn(),
 }
 const minigameContactService = { listPlays: vi.fn(), list: vi.fn() }
@@ -80,8 +82,13 @@ vi.mock("@/features/minigames/schema/public", () => ({
   listMinigamesPublicRequest: z.object({}),
   listMinigamesPublicResponse: z.object({}),
   minigamePublicResource: z.object({}),
+  patchMinigamePublicRequest: z.object({}),
   setMinigameEnabledPublicRequest: z.object({}),
   updateMinigamePublicRequest: z.object({}),
+}))
+
+vi.mock("@/features/common/schema", () => ({
+  bulkUpdateIdsRequest: z.object({}),
 }))
 
 vi.mock("@/lib/orpc/orpc-error-helper", () => ({
@@ -217,6 +224,28 @@ describe("PUT /v1/minigames/{id}", () => {
   })
 })
 
+describe("PATCH /v1/minigames/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/minigames/{id}")
+
+  test("partially updates a minigame, forwarding only the submitted fields", async () => {
+    const minigame = { id: "game-1" }
+    minigameService.updatePartial.mockResolvedValueOnce(minigame)
+
+    await expect(
+      procedure.handler?.({
+        context,
+        input: { id: "game-1", generalSettings: { name: "Renamed" } },
+      }),
+    ).resolves.toEqual(minigame)
+
+    expect(minigameService.updatePartial).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "game-1",
+      generalSettings: { name: "Renamed" },
+    })
+  })
+})
+
 describe("DELETE /v1/minigames/{id}", () => {
   const procedure = findProcedure("DELETE", "/v1/minigames/{id}")
 
@@ -241,6 +270,26 @@ describe("DELETE /v1/minigames/{id}", () => {
     await expect(
       procedure.handler?.({ context, input: { id: "missing" } }),
     ).rejects.toThrow("Minigame not found")
+  })
+})
+
+describe("POST /v1/minigames/bulk-delete", () => {
+  const procedure = findProcedure("POST", "/v1/minigames/bulk-delete")
+
+  test("deletes multiple minigames in the authenticated workspace", async () => {
+    minigameService.deleteMany.mockResolvedValueOnce(undefined)
+
+    await expect(
+      procedure.handler?.({
+        context,
+        input: { ids: ["game-1", "game-2"] },
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(minigameService.deleteMany).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ids: ["game-1", "game-2"],
+    })
   })
 })
 

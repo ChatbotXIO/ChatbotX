@@ -22,6 +22,17 @@ export const updateMinigamePublicRequest = updateMinigameRequest.extend({
   id: zodBigintAsString(),
 })
 
+export const patchMinigamePublicRequest = createMinigameRequest
+  .partial()
+  .extend({ id: zodBigintAsString() })
+  .refine(
+    (data) =>
+      Object.entries(data).some(
+        ([key, value]) => key !== "id" && value !== undefined,
+      ),
+    { message: "At least one field must be provided" },
+  )
+
 export const setMinigameEnabledPublicRequest = z.object({
   id: zodBigintAsString(),
   enabled: z.boolean(),

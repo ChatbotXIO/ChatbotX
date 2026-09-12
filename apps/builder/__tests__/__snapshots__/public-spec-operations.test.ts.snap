@@ -1328,6 +1328,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/minigames/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "minigames.deleteMany",
+    "path": "/v1/minigames/bulk-delete",
+  },
+  {
     "method": "GET",
     "operationId": "minigames.get",
     "path": "/v1/minigames/{id}",
@@ -1346,6 +1351,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "minigames.listPlays",
     "path": "/v1/minigames/{id}/plays",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "minigames.patch",
+    "path": "/v1/minigames/{id}",
   },
   {
     "method": "PATCH",

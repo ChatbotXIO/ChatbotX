@@ -44,6 +44,10 @@ type UpsertInput = {
   nonWinningMessageSettings: MinigameNonWinningMessageSettings
 }
 
+type PartialUpdateInput = { workspaceId: string; id: string } & Partial<
+  Omit<UpsertInput, "workspaceId">
+>
+
 /**
  * `quantity` is admin-editable config AND live inventory decremented by
  * `MinigameContactService.drawPrize` under a row lock. The builder form
@@ -220,6 +224,65 @@ class MinigameService extends BaseService {
               prizeSettings: reconciledPrizeSettings,
             }),
           )
+          .where(
+            and(
+              eq(minigameModel.id, input.id),
+              eq(minigameModel.workspaceId, input.workspaceId),
+            ),
+          )
+          .returning()
+
+        return updated
+      })
+    } catch (error) {
+      this.rethrowNameConflict(error)
+    }
+  }
+
+  /**
+   * Partial update for the public API's PATCH route: merges only the
+   * top-level settings objects the caller actually sent over the current
+   * row, so omitting `prizeSettings` preserves live, play-decremented stock
+   * instead of the full-replace `update()`'s "resubmit everything" contract.
+   * Never deep-merges into a jsonb settings object — a caller who sends
+   * `prizeSettings` sends the whole object, keeping
+   * `isMinigameProbabilityTotalValid`'s 100%-sum check meaningful.
+   */
+  async updatePartial(input: PartialUpdateInput): Promise<MinigameModel> {
+    try {
+      return await db.transaction(async (tx) => {
+        const [current] = await tx
+          .select()
+          .from(minigameModel)
+          .where(
+            and(
+              eq(minigameModel.id, input.id),
+              eq(minigameModel.workspaceId, input.workspaceId),
+            ),
+          )
+          .for("update")
+
+        if (!current) {
+          throw notFoundException("Minigame not found")
+        }
+
+        const merged: UpsertInput = {
+          workspaceId: input.workspaceId,
+          type: input.type ?? current.type,
+          generalSettings: input.generalSettings ?? current.generalSettings,
+          appearance: input.appearance ?? current.appearance,
+          playerSettings: input.playerSettings ?? current.playerSettings,
+          prizeSettings: input.prizeSettings ?? current.prizeSettings,
+          winningMessageSettings:
+            input.winningMessageSettings ?? current.winningMessageSettings,
+          nonWinningMessageSettings:
+            input.nonWinningMessageSettings ??
+            current.nonWinningMessageSettings,
+        }
+
+        const [updated] = await tx
+          .update(minigameModel)
+          .set(this.toColumns(merged))
           .where(
             and(
               eq(minigameModel.id, input.id),
