@@ -1,14 +1,5 @@
-// @vitest-environment node
-
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import {
-  type FacebookAdsContext,
-  getCachedAdAccounts,
-  getCachedAdInsights,
-  getCachedCustomAudiences,
-  getCachedDailyAdInsights,
-  getFacebookAdsContext,
-} from "../src/features/integration-facebook-ads/queries"
+import type { FacebookAdsContext } from "../src/integration-facebook-ads/graph-reads"
 
 const mocks = vi.hoisted(() => ({
   buildContext: vi.fn(),
@@ -19,8 +10,11 @@ const mocks = vi.hoisted(() => ({
   cacheKeys: [] as string[],
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
-  buildContext: mocks.buildContext,
+vi.mock("../src/integration-context", () => ({
+  buildContext: (...args: unknown[]) => mocks.buildContext(...args),
+}))
+
+vi.mock("../src/integration-facebook-ads/service", () => ({
   integrationFacebookAdsService: {
     findByWorkspaceIdOrFail: mocks.findByWorkspaceIdOrFail,
   },
@@ -58,6 +52,14 @@ vi.mock("@chatbotx.io/redis", () => ({
     return value
   },
 }))
+
+const {
+  getCachedAdAccounts,
+  getCachedAdInsights,
+  getCachedCustomAudiences,
+  getCachedDailyAdInsights,
+  buildFacebookAdsContext,
+} = await import("../src/integration-facebook-ads/graph-reads")
 
 describe("Facebook Ads cached queries", () => {
   beforeEach(() => {
@@ -111,14 +113,14 @@ describe("Facebook Ads cached queries", () => {
       adAccountId: "act_1",
       since: "2026-08-01",
       until: "2026-08-11",
-      getContext: () => getFacebookAdsContext("ws-1"),
+      getContext: () => buildFacebookAdsContext("ws-1"),
     })
     await getCachedAdInsights({
       workspaceId: "ws-2",
       adAccountId: "act_1",
       since: "2026-08-01",
       until: "2026-08-11",
-      getContext: () => getFacebookAdsContext("ws-2"),
+      getContext: () => buildFacebookAdsContext("ws-2"),
     })
 
     expect(mocks.cacheKeys).toContain("fb-ads:ad-accounts:ws-1")
@@ -139,14 +141,14 @@ describe("Facebook Ads cached queries", () => {
       adAccountId: "act_1",
       since: "2026-08-01",
       until: "2026-08-11",
-      getContext: () => getFacebookAdsContext("ws-1"),
+      getContext: () => buildFacebookAdsContext("ws-1"),
     })
     await getCachedDailyAdInsights({
       workspaceId: "ws-1",
       adAccountId: "act_1",
       since: "2026-08-01",
       until: "2026-08-11",
-      getContext: () => getFacebookAdsContext("ws-1"),
+      getContext: () => buildFacebookAdsContext("ws-1"),
     })
 
     expect(mocks.cacheKeys).toEqual([
@@ -166,12 +168,12 @@ describe("Facebook Ads cached queries", () => {
     })
   })
 
-  test("accepts a context resolver from a different source (e.g. a box's per-integration connection) — getContext is generic, not tied to getFacebookAdsContext", async () => {
+  test("accepts a context resolver from a different source (e.g. a box's per-integration connection) — getContext is generic, not tied to buildFacebookAdsContext", async () => {
     // Mirrors the shape `buildMessagingAdsContext`
     // (`@chatbotx.io/business/messaging-ads-connection`) produces — the Ads
-    // dashboard's per-source context routing (`analytics.ts`'s
+    // dashboard's per-source context routing (`ads-analytics/service.ts`'s
     // `buildContextResolverBySource`) passes resolvers like this one
-    // interchangeably with `getFacebookAdsContext`'s.
+    // interchangeably with `buildFacebookAdsContext`'s.
     const boxContext = {
       storagePrefix: "ws-1",
       auth: { authType: "custom" as const, accessToken: "box-token" },
@@ -197,7 +199,7 @@ describe("Facebook Ads cached queries", () => {
         until: "2026-08-11",
       },
     })
-    // The resolver used, not getFacebookAdsContext's own buildContext path.
+    // The resolver used, not buildFacebookAdsContext's own buildContext path.
     expect(mocks.buildContext).not.toHaveBeenCalled()
   })
 

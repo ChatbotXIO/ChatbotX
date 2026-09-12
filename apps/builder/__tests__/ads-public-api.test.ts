@@ -69,6 +69,7 @@ const adsConversionService = {
   getCapiDeliverySummary: vi.fn(),
   listExportRows: vi.fn(),
   listAllChannelExportRows: vi.fn(),
+  findWorkspaceEventOrFail: vi.fn(),
 }
 
 const messagingAdCampaignService = {
@@ -84,20 +85,60 @@ const messagingAdCampaignService = {
 
 const messagingAdsConnectionService = {
   findForIntegration: vi.fn(),
+  listForChannel: vi.fn(),
+  revokeAndDisconnect: vi.fn(),
 }
 
 const listCachedMessagingAdAccounts = vi.fn()
 const getCachedMessagingAdAccountDetails = vi.fn()
 const buildMessagingAdsContext = vi.fn()
+const getCachedCustomAudiences = vi.fn()
 
-vi.mock("@chatbotx.io/business", () => ({
-  adsConversionService,
-  messagingAdCampaignService,
-  messagingAdsConnectionService,
-  listCachedMessagingAdAccounts,
-  getCachedMessagingAdAccountDetails,
-  buildMessagingAdsContext,
-}))
+const resolveChannelAdAccountSources = vi.fn()
+
+const adsAnalyticsService = {
+  getOverview: vi.fn(),
+  getTimeseries: vi.fn(),
+  getCapiDelivery: vi.fn(),
+}
+
+const adsRetargetService = {
+  startAudienceSync: vi.fn(),
+}
+
+vi.mock("@chatbotx.io/business", async () => {
+  const { z } = await import("zod")
+  const startRetargetAudienceSyncShape = z.object({
+    workspaceId: z.string(),
+    segment: z.enum(["conversations", "leads", "purchases"]),
+    adId: z.string().trim().min(1).nullable().optional(),
+    channel: z
+      .enum(["whatsapp", "facebook", "messenger", "instagram"])
+      .optional(),
+    integrationWhatsappId: z.string().optional(),
+    integrationMessengerId: z.string().optional(),
+    integrationInstagramId: z.string().optional(),
+    since: z.coerce.date(),
+    until: z.coerce.date(),
+    adAccountId: z.string().trim().min(1),
+    audienceName: z.string().trim().min(1).optional(),
+    customAudienceId: z.string().trim().min(1).optional(),
+  })
+
+  return {
+    adsConversionService,
+    adsAnalyticsService,
+    adsRetargetService,
+    startRetargetAudienceSyncShape,
+    messagingAdCampaignService,
+    messagingAdsConnectionService,
+    listCachedMessagingAdAccounts,
+    getCachedMessagingAdAccountDetails,
+    getCachedCustomAudiences,
+    buildMessagingAdsContext,
+    resolveChannelAdAccountSources,
+  }
+})
 
 vi.mock("@chatbotx.io/integration-facebook-ads", async (importOriginal) => {
   const actual =
@@ -111,11 +152,6 @@ vi.mock("@chatbotx.io/integration-facebook-ads", async (importOriginal) => {
     },
   }
 })
-
-const resolveChannelAdAccountSources = vi.fn()
-vi.mock("@/features/ads/queries/channel-ad-accounts", () => ({
-  resolveChannelAdAccountSources,
-}))
 
 await import("@/features/ads/api/public")
 
@@ -276,5 +312,72 @@ describe("GET /v1/ads/{channel}/ad-accounts", () => {
       expect.objectContaining({ workspaceId: "workspace-1" }),
     )
     expect(result).toEqual({ data: [{ id: "act_1" }] })
+  })
+})
+
+describe("POST /v1/ads/retarget-audiences", () => {
+  const procedure = findProcedure("POST", "/v1/ads/retarget-audiences")
+
+  test("sources workspaceId from context, not input, and passes a supplied customAudienceId through unchanged", async () => {
+    adsRetargetService.startAudienceSync.mockResolvedValueOnce({
+      customAudienceId: "aud-existing",
+      enqueued: true,
+    })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        workspaceId: "attacker-workspace",
+        segment: "leads",
+        since: new Date("2026-01-01"),
+        until: new Date("2026-01-31"),
+        adAccountId: "act_1",
+        customAudienceId: "aud-existing",
+      },
+    })
+
+    expect(adsRetargetService.startAudienceSync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        customAudienceId: "aud-existing",
+      }),
+    )
+    expect(result).toEqual({
+      customAudienceId: "aud-existing",
+      enqueued: true,
+    })
+  })
+})
+
+describe("GET /v1/ads/conversions/{id}", () => {
+  const procedure = findProcedure("GET", "/v1/ads/conversions/{id}")
+
+  test("sources workspaceId from context, not input", async () => {
+    adsConversionService.findWorkspaceEventOrFail.mockResolvedValueOnce({
+      id: "evt-1",
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "evt-1" },
+    })
+
+    expect(adsConversionService.findWorkspaceEventOrFail).toHaveBeenCalledWith({
+      id: "evt-1",
+      workspaceId: "workspace-1",
+    })
+  })
+
+  test("a foreign-workspace id yields the service's not-found rejection, not the row", async () => {
+    adsConversionService.findWorkspaceEventOrFail.mockRejectedValueOnce(
+      new Error("Ads conversion event not found"),
+    )
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "evt-owned-by-another-workspace" },
+      }),
+    ).rejects.toThrow("Ads conversion event not found")
   })
 })

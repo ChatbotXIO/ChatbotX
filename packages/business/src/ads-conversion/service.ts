@@ -19,6 +19,7 @@ import type {
   adsConversionEventModel,
   adsConversionRuleModel,
 } from "@chatbotx.io/database/schema"
+import { adsConversionChannelSchema } from "@chatbotx.io/database/schema"
 import type {
   AdsConversionEventModel,
   AdsConversionRuleModel,
@@ -1598,6 +1599,12 @@ class AdsConversionService extends BaseService {
     parsed: ReturnType<typeof getCtwaFunnelInput.parse>,
     tx?: DatabaseClient,
   ) {
+    if (parsed.channel === adsConversionChannelSchema.enum.facebook) {
+      // See `buildConversationsPredicate` — facebook has no contact-scoped ad
+      // conversation, so the count is 0, never WhatsApp's ctwaClid population.
+      return []
+    }
+
     if (parsed.allChannels) {
       return adsConversionEventRepository.countAllChannelConversationsByAd(
         {
@@ -1631,6 +1638,12 @@ class AdsConversionService extends BaseService {
     parsed: ReturnType<typeof getCtwaFunnelInput.parse>,
     tx?: DatabaseClient,
   ) {
+    if (parsed.channel === adsConversionChannelSchema.enum.facebook) {
+      // See `buildConversationsPredicate` — facebook has no contact-scoped ad
+      // conversation, so the count is 0, never WhatsApp's ctwaClid population.
+      return []
+    }
+
     if (parsed.allChannels) {
       return adsConversionEventRepository.countAllChannelConversationsByDayAndAd(
         {
@@ -1854,6 +1867,31 @@ class AdsConversionService extends BaseService {
 
   findWorkspaceEvent(input: FindWorkspaceEventInput, tx?: DatabaseClient) {
     return adsConversionEventRepository.findWorkspaceEvent(input, tx)
+  }
+
+  /**
+   * Single-event read, workspace-scoped, for the public
+   * `GET /v1/ads/conversions/{id}` endpoint — a `GET` by id owns the
+   * not-found contract itself (mirrors `findOrFail` for conversion rules)
+   * rather than letting the handler return `findWorkspaceEvent`'s bare
+   * `null` as a 200.
+   */
+  async findWorkspaceEventOrFail(
+    input: FindWorkspaceEventInput,
+    tx?: DatabaseClient,
+  ): Promise<AdsConversionEventModel> {
+    const event = await adsConversionEventRepository.findWorkspaceEvent(
+      input,
+      tx,
+    )
+    if (!event) {
+      throw new ChatbotXException(
+        "Ads conversion event not found",
+        "notFound",
+        404,
+      )
+    }
+    return event
   }
 
   updateCapiStatus(input: UpdateAdsCapiStatusInput, tx?: DatabaseClient) {

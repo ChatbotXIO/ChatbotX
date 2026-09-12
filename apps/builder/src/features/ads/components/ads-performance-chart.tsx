@@ -1,5 +1,6 @@
 "use client"
 
+import type { AdsAnalyticsTimeseriesRow } from "@chatbotx.io/business"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import {
   type ChartConfig,
@@ -11,7 +12,6 @@ import {
 } from "@chatbotx.io/ui/components/ui/chart"
 import { useTranslations } from "next-intl"
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
-import type { AdsAnalyticsTimeseriesRow } from "../queries/analytics"
 
 type AdsPerformanceChartProps = {
   data: AdsAnalyticsTimeseriesRow[]

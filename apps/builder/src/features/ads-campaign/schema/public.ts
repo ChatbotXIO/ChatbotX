@@ -140,3 +140,35 @@ export const checkPrerequisitesPublicRequest = z.object({
   channel: messagingAdChannelSchema,
   integrationId: zodBigintAsString(),
 })
+
+// ─────────────────────────────────────────────────────────────────────────
+// Connections
+// ─────────────────────────────────────────────────────────────────────────
+
+export const listConnectionsPublicRequestParams = z.object({
+  channel: messagingAdChannelSchema,
+})
+
+// Never `auth` (an encrypted credential blob) or `workspaceId`.
+export const messagingAdsConnectionPublicResource = z.object({
+  id: z.string(),
+  // Plain `z.string()`, not `messagingAdChannelSchema`: the DB's
+  // `messagingAdChannel` pgEnum casts its options to `[string, ...string[]]`
+  // (see `schema/messaging-ads-connection.ts`), so drizzle infers this
+  // column as `string`, not the narrow union — matches the same widening
+  // `resource-mapper.ts` already works around for `MessagingAdOperation`.
+  channel: z.string(),
+  integrationId: z.string(),
+  status: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+})
+
+export const listConnectionsPublicResponse = z.object({
+  data: z.array(messagingAdsConnectionPublicResource),
+})
+
+export const disconnectConnectionPublicRequestParams = z.object({
+  channel: messagingAdChannelSchema,
+  integrationId: zodBigintAsString(),
+})

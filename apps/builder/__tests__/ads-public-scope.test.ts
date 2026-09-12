@@ -28,6 +28,17 @@ const adsConversionService = {
   getCapiDeliverySummary: vi.fn(),
   listExportRows: vi.fn(),
   listAllChannelExportRows: vi.fn(),
+  findWorkspaceEventOrFail: vi.fn(),
+}
+
+const adsAnalyticsService = {
+  getOverview: vi.fn(),
+  getTimeseries: vi.fn(),
+  getCapiDelivery: vi.fn(),
+}
+
+const adsRetargetService = {
+  startAudienceSync: vi.fn(),
 }
 
 const messagingAdCampaignService = {
@@ -44,21 +55,47 @@ const messagingAdCampaignService = {
 const messagingAdsConnectionService = {
   findForIntegration: vi.fn(),
   listForChannel: vi.fn(),
+  revokeAndDisconnect: vi.fn(),
 }
 
-vi.mock("@chatbotx.io/business", () => ({
-  workspaceApiTokenService: { findWorkspaceByTokenHash },
-  isWorkspaceScheduledForDeletion,
-  userQuotaService: { getAccessState },
-  quotaEnforcementService: { isAtLimit },
-  adsConversionService,
-  messagingAdCampaignService,
-  messagingAdsConnectionService,
-  listCachedMessagingAdAccounts: vi.fn(),
-  getCachedMessagingAdAccountDetails: vi.fn(),
-  buildMessagingAdsContext: vi.fn(),
-  integrationFacebookAdsService: { findByWorkspaceId: vi.fn() },
-}))
+vi.mock("@chatbotx.io/business", async () => {
+  const { z } = await import("zod")
+  const startRetargetAudienceSyncShape = z.object({
+    workspaceId: z.string(),
+    segment: z.enum(["conversations", "leads", "purchases"]),
+    adId: z.string().trim().min(1).nullable().optional(),
+    channel: z
+      .enum(["whatsapp", "facebook", "messenger", "instagram"])
+      .optional(),
+    integrationWhatsappId: z.string().optional(),
+    integrationMessengerId: z.string().optional(),
+    integrationInstagramId: z.string().optional(),
+    since: z.coerce.date(),
+    until: z.coerce.date(),
+    adAccountId: z.string().trim().min(1),
+    audienceName: z.string().trim().min(1).optional(),
+    customAudienceId: z.string().trim().min(1).optional(),
+  })
+
+  return {
+    workspaceApiTokenService: { findWorkspaceByTokenHash },
+    isWorkspaceScheduledForDeletion,
+    userQuotaService: { getAccessState },
+    quotaEnforcementService: { isAtLimit },
+    adsConversionService,
+    adsAnalyticsService,
+    adsRetargetService,
+    startRetargetAudienceSyncShape,
+    messagingAdCampaignService,
+    messagingAdsConnectionService,
+    resolveChannelAdAccountSources: vi.fn(),
+    getCachedCustomAudiences: vi.fn(),
+    listCachedMessagingAdAccounts: vi.fn(),
+    getCachedMessagingAdAccountDetails: vi.fn(),
+    buildMessagingAdsContext: vi.fn(),
+    integrationFacebookAdsService: { findByWorkspaceId: vi.fn() },
+  }
+})
 
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn((_key: string, loader: () => unknown) => loader()),
@@ -157,6 +194,23 @@ describe("real router: ads public API scope wiring", () => {
       message: "Token is not authorized for the 'ads' scope",
     })
   })
+
+  test("a contacts-scoped token is denied the real POST /v1/ads/retarget-audiences route with FORBIDDEN", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(["contacts"]))
+
+    await expect(
+      invoke(adsPublicRouter.startRetargetAudienceSync, {
+        segment: "leads",
+        since: "2026-08-01",
+        until: "2026-08-10",
+        adAccountId: "act_1",
+        audienceName: "Test audience",
+      }),
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Token is not authorized for the 'ads' scope",
+    })
+  })
 })
 
 describe("every ads submodule declares the ads scope", () => {
@@ -181,6 +235,11 @@ describe("every ads submodule declares the ads scope", () => {
         "getCapiDelivery",
         "listConversionExportRows",
         "listChannelAdAccounts",
+        "getAnalyticsOverview",
+        "getAnalyticsTimeseries",
+        "getConversion",
+        "listCustomAudiences",
+        "startRetargetAudienceSync",
         "createCampaign",
         "retryCampaign",
         "publishCampaign",
@@ -194,6 +253,8 @@ describe("every ads submodule declares the ads scope", () => {
         "getCampaignVideoStatus",
         "listCampaignMessengerPages",
         "checkCampaignPrerequisites",
+        "listConnections",
+        "disconnectConnection",
       ]),
     )
   })

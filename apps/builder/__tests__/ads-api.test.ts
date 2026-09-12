@@ -82,14 +82,11 @@ vi.mock("@chatbotx.io/business", () => ({
   adsConversionService: {
     list: mocks.listRules,
   },
+  resolveChannelAdAccountSources: mocks.resolveChannelAdAccountSources,
 }))
 
 vi.mock("@chatbotx.io/integration-facebook-ads", () => ({
   facebookAdAccountSchema: {},
-}))
-
-vi.mock("../src/features/ads/queries/channel-ad-accounts", () => ({
-  resolveChannelAdAccountSources: mocks.resolveChannelAdAccountSources,
 }))
 
 vi.mock("@/features/ads/schema/conversion-rule", () => {

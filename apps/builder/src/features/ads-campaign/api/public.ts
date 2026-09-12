@@ -24,8 +24,11 @@ import {
   adAccountDetailsPublicRequestParams,
   checkPrerequisitesPublicRequest,
   createMessagingAdPublicRequest,
+  disconnectConnectionPublicRequestParams,
   listAdAccountsPublicRequest,
   listAdAccountsPublicRequestParams,
+  listConnectionsPublicRequestParams,
+  listConnectionsPublicResponse,
   listMessagingAdsPublicRequest,
   listMessengerPagesPublicRequest,
   messagingAdsInsightsPublicRequest,
@@ -396,5 +399,54 @@ export const adsCampaignPublicRouter = {
       return {
         connected: Boolean(connection && connection.status === "active"),
       }
+    }),
+
+  listConnections: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/ads/connections",
+      summary: "List messaging-ads connections for a channel",
+      tags: ["Ads"],
+    })
+    .input(listConnectionsPublicRequestParams)
+    .output(listConnectionsPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) => {
+      const connections = await messagingAdsConnectionService.listForChannel({
+        workspaceId: context.workspace.id,
+        channel: input.channel,
+      })
+      return {
+        data: connections.map((connection) => ({
+          id: connection.id,
+          channel: connection.channel,
+          integrationId:
+            connection.integrationWhatsappId ??
+            connection.integrationMessengerId ??
+            connection.integrationInstagramId ??
+            "",
+          status: connection.status,
+          createdAt: connection.createdAt,
+          updatedAt: connection.updatedAt,
+        })),
+      }
+    }),
+
+  disconnectConnection: workspaceTokenAuthAPI
+    .route({
+      method: "DELETE",
+      path: "/v1/ads/connections/{channel}/{integrationId}",
+      summary:
+        "Disconnect a channel integration's messaging-ads connection — best-effort revokes the Graph token first",
+      successStatus: 204,
+      tags: ["Ads"],
+    })
+    .input(disconnectConnectionPublicRequestParams)
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      await messagingAdsConnectionService.revokeAndDisconnect({
+        ...input,
+        workspaceId: context.workspace.id,
+      })
     }),
 }

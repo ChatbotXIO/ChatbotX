@@ -137,6 +137,24 @@ describe("buildCtwaSegmentPredicate — conversations segment channel scoping", 
     expect(query.params).toContain("ig-1")
     expect(query.params).not.toContain("messenger")
   })
+
+  test("facebook (workspace-wide Lead Ads) produces an always-false predicate, never the any-channel fallback", () => {
+    const query = render(
+      buildCtwaSegmentPredicate({
+        segment: "conversations",
+        channel: "facebook",
+        since,
+        until,
+      }),
+    )
+
+    expect(query.sql.trim()).toBe("FALSE")
+    expect(query.params).toEqual([])
+    // Never the any-channel fallback (ctwaClid OR ad-referral for
+    // messenger/instagram) — facebook has no contact-scoped ad conversation.
+    expect(query.sql).not.toContain("ctwaClid")
+    expect(query.sql).not.toContain("referral")
+  })
 })
 
 describe("buildCtwaSegmentPredicate — leads/purchases segment channel scoping", () => {

@@ -1,26 +1,23 @@
-import {
-  integrationFacebookAdsService,
-  listCachedMessagingAdAccounts,
-  messagingAdsConnectionService,
-} from "@chatbotx.io/business"
 import type { FacebookAdAccount } from "@chatbotx.io/integration-facebook-ads"
 import { mapWithConcurrency } from "@chatbotx.io/utils"
 import type { AdsEligibleChannelType } from "@chatbotx.io/utils/channel"
-import { getCachedAdAccounts } from "@/features/integration-facebook-ads/queries"
-import { logger } from "@/lib/log"
+import { getCachedAdAccounts } from "../integration-facebook-ads/graph-reads"
+import { integrationFacebookAdsService } from "../integration-facebook-ads/service"
+import { logger } from "../logger"
+import { listCachedMessagingAdAccounts } from "../messaging-ads-connection/graph-reads"
+import { messagingAdsConnectionService } from "../messaging-ads-connection/service"
 
 // Facebook Graph API enforces per-access-token rate limits; capping the
 // per-integration-connection fan-out keeps a channel with many connected
 // integrations from bursting past them while resolving "All accounts".
-// Mirrors AD_INSIGHTS_FETCH_CONCURRENCY in ./analytics.ts.
+// Mirrors AD_INSIGHTS_FETCH_CONCURRENCY in ./service.ts.
 const CHANNEL_AD_ACCOUNTS_FETCH_CONCURRENCY = 5
 
 /**
  * Where one ad account in the union came from — INTERNAL to this module and
- * its callers in `apps/builder` (Codex MED-5): the oRPC layer strips this
- * before responding, the UI never needs it. Phase 3 (`analytics.ts`) reads
- * `sources[0]` to route each selected account's spend fetch to the token
- * that can see it.
+ * its callers (Codex MED-5): the oRPC layer strips this before responding,
+ * the UI never needs it. `service.ts` reads `sources[0]` to route each
+ * selected account's spend fetch to the token that can see it.
  */
 export type AdAccountSource =
   | { kind: "messaging"; integrationId: string }
@@ -135,9 +132,8 @@ export type ResolveChannelAdAccountSourcesInput = {
 
 /**
  * The Ads dashboard's channel-wide ad-account union (Codex HIGH-2/plan Phase
- * 1) — lives in the BUILDER feature layer (not `packages/business`) because
- * the workspace-wide leg (`getCachedAdAccounts`) is itself an app-layer
- * query that `packages/business` must not import.
+ * 1) — the shared union used by the dashboard, the private `adsAPI`, and the
+ * public `/v1/ads/{channel}/ad-accounts` endpoint.
  *
  * - `integrationId` given -> narrows to ONE channel integration's own
  *   messaging-ads connection (its `channel:integrationId` cache is reused,

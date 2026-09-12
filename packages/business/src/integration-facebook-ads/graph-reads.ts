@@ -1,8 +1,3 @@
-import {
-  buildContext,
-  type IntegrationContext,
-  integrationFacebookAdsService,
-} from "@chatbotx.io/business"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import {
   type FacebookAdInsight,
@@ -11,11 +6,15 @@ import {
   integration as facebookAdsIntegration,
 } from "@chatbotx.io/integration-facebook-ads"
 import { withCache } from "@chatbotx.io/redis"
+import { buildContext, type IntegrationContext } from "../integration-context"
+import { integrationFacebookAdsService } from "./service"
+
+export { integration as facebookAdsIntegration } from "@chatbotx.io/integration-facebook-ads"
 
 const FB_LIST_CACHE_TTL_SECONDS = 60
 const FB_INSIGHTS_CACHE_TTL_SECONDS = 60 * 60
 
-export const getFacebookAdsContext = async (workspaceId: string) => {
+export const buildFacebookAdsContext = async (workspaceId: string) => {
   const row =
     await integrationFacebookAdsService.findByWorkspaceIdOrFail(workspaceId)
   const auth = await encryptUtils.decryptObject(
@@ -30,20 +29,21 @@ export const getFacebookAdsContext = async (workspaceId: string) => {
 }
 
 // Deliberately the shared `IntegrationContext<FacebookAdsAuthValue>` shape,
-// not `Awaited<ReturnType<typeof getFacebookAdsContext>>` — `getContext`
+// not `Awaited<ReturnType<typeof buildFacebookAdsContext>>` — `getContext`
 // resolvers passed into `getCachedAdInsights`/`getCachedDailyAdInsights`
 // (below) also come from `buildMessagingAdsContext`
 // (`@chatbotx.io/business/messaging-ads-connection`, the box's per-integration
 // connection), which produces byte-identical shape via the same
-// `buildContextWithAuthStore` under the hood. See `apps/builder/src/features/
-// ads/queries/analytics.ts`'s `buildContextResolverBySource`.
+// `buildContextWithAuthStore` under the hood. See
+// `packages/business/src/ads-analytics/service.ts`'s
+// `buildContextResolverBySource`.
 export type FacebookAdsContext = IntegrationContext<FacebookAdsAuthValue>
 
 export function getCachedAdAccounts(workspaceId: string) {
   return withCache(
     `fb-ads:ad-accounts:${workspaceId}`,
     async () => {
-      const ctx = await getFacebookAdsContext(workspaceId)
+      const ctx = await buildFacebookAdsContext(workspaceId)
       return facebookAdsIntegration.runAction("getAdAccounts", { ctx })
     },
     { ttl: FB_LIST_CACHE_TTL_SECONDS },
@@ -57,7 +57,7 @@ export function getCachedCustomAudiences(input: {
   return withCache(
     `fb-ads:custom-audiences:${input.workspaceId}:${input.adAccountId}`,
     async () => {
-      const ctx = await getFacebookAdsContext(input.workspaceId)
+      const ctx = await buildFacebookAdsContext(input.workspaceId)
       return facebookAdsIntegration.runAction("getCustomAudiences", {
         ctx,
         props: { adAccountId: input.adAccountId },
@@ -69,12 +69,12 @@ export function getCachedCustomAudiences(input: {
 
 /**
  * HIGH-4: `getContext` is resolved by the caller (once per request, shared
- * across every account in the fan-out — see `memoizeOnce` in analytics.ts)
- * instead of being resolved here inside the cache callback. Resolving it
- * here would re-fetch + re-decrypt the same workspace credential once per
- * account on every cache-miss fan-out. The resolved context (holding a
- * decrypted access token) is only ever passed in-memory — never itself
- * stored in `withCache`/Redis.
+ * across every account in the fan-out — see `memoizeOnce` in
+ * `ads-analytics/service.ts`) instead of being resolved here inside the
+ * cache callback. Resolving it here would re-fetch + re-decrypt the same
+ * workspace credential once per account on every cache-miss fan-out. The
+ * resolved context (holding a decrypted access token) is only ever passed
+ * in-memory — never itself stored in `withCache`/Redis.
  */
 export function getCachedAdInsights(input: {
   workspaceId: string

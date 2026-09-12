@@ -6,6 +6,7 @@ import { type AnyColumn, eq, gte, lte, type SQL, sql } from "drizzle-orm"
 import type { AdEligibleInboxChannel } from "../../repositories/contact-inbox/repository"
 import {
   type AdsConversionChannel,
+  adsConversionChannelSchema,
   adsConversionEventModel,
   contactInboxModel,
   integrationInstagramModel,
@@ -220,6 +221,15 @@ export function buildCtwaSegmentPredicate(
  * channel — see the `channel` input doc above.
  */
 function buildConversationsPredicate(input: CtwaSegmentPredicateInput): SQL {
+  // `facebook` (workspace-wide Lead Ads) has conversion EVENTS but no
+  // contact-scoped ad conversation: no ContactInbox carries a `ctwaClid` or an
+  // ADS referral for it. Falling through to the `scopedChannel === null`
+  // branch below would return every whatsapp/messenger/instagram contact for
+  // a request that explicitly asked for facebook. Mirrors the narrowing at
+  // `packages/database/src/queries/contact-filter/index.ts:97-101`.
+  if (input.channel === adsConversionChannelSchema.enum.facebook) {
+    return sql`FALSE`
+  }
   // Channel semantics must mirror the leads/purchases branch above so a
   // saved filter/segment counts a consistent population across segments:
   //  - explicit "whatsapp"/"messenger"/"instagram" (or channel omitted +

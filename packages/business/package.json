@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./ads-analytics/date-range": "./src/ads-analytics/date-range.ts",
     "./ads-conversion/channel-fields": "./src/ads-conversion/channel-fields.ts",
     "./ads-conversion/schema": "./src/ads-conversion/schema.ts",
     "./audit": "./src/audit/index.ts",

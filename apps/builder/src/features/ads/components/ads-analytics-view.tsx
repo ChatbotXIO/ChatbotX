@@ -4,7 +4,11 @@ import {
   DateRangePresetFilter,
   resolvePresetOption,
 } from "@chatbotx.io/analytics-nextjs/components/date-range-preset-filter"
-import type { CapiDeliverySummary } from "@chatbotx.io/business"
+import type {
+  AdsAnalyticsData,
+  AdsAnalyticsTimeseriesRow,
+  CapiDeliverySummary,
+} from "@chatbotx.io/business"
 // Narrow subpath import (not the `@chatbotx.io/business` barrel) — this is a
 // "use client" component; see the comment atop `channel-fields.ts` for why.
 import {
@@ -72,8 +76,6 @@ import { retargetAdAction } from "../actions/retarget"
 import { useAdsRangeUrl } from "../hooks/use-ads-range-url"
 import { parseLocalDateKey } from "../lib/ads-date-key"
 import { buildWhatsappRetargetHref } from "../lib/build-whatsapp-retarget-href"
-import type { AdsAnalyticsData } from "../lib/merge-analytics"
-import type { AdsAnalyticsTimeseriesRow } from "../queries/analytics"
 import type { AdsAnalyticsSearchParams } from "../schema/analytics"
 import { AdAccountFilter } from "./ad-account-filter"
 import { AdsAccountFilter } from "./ads-account-filter"

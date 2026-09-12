@@ -63,7 +63,7 @@ export const messagingAdsConnectionRepository = {
    * Every `MessagingAdsConnection` row of one channel, workspace-scoped — the
    * per-channel union source for the Ads dashboard's ad-account filter/spend
    * fan-out (`resolveChannelAdAccountSources` in
-   * `apps/builder/src/features/ads/queries/channel-ad-accounts.ts`). Only
+   * `packages/business/src/ads-analytics/channel-ad-accounts.ts`). Only
    * `active` rows are returned: an `invalid` row (a prior Graph 190, or an
    * undecryptable auth blob — see `buildMessagingAdsContext`) cannot build a
    * box context, so including it here would just re-fail downstream on every

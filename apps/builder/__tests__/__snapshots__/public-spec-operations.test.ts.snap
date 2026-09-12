@@ -28,6 +28,21 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/ads/conversion-rules/{id}",
   },
   {
+    "method": "DELETE",
+    "operationId": "ads.disconnectConnection",
+    "path": "/v1/ads/connections/{channel}/{integrationId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.getAnalyticsOverview",
+    "path": "/v1/ads/analytics/overview",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.getAnalyticsTimeseries",
+    "path": "/v1/ads/analytics/timeseries",
+  },
+  {
     "method": "GET",
     "operationId": "ads.getCampaignAdAccountDetails",
     "path": "/v1/ads/campaigns/ad-accounts/{adAccountId}",
@@ -46,6 +61,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "ads.getCapiDelivery",
     "path": "/v1/ads/capi-delivery",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.getConversion",
+    "path": "/v1/ads/conversions/{id}",
   },
   {
     "method": "GET",
@@ -84,8 +104,18 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "ads.listConnections",
+    "path": "/v1/ads/connections",
+  },
+  {
+    "method": "GET",
     "operationId": "ads.listConversionExportRows",
     "path": "/v1/ads/conversions/export",
+  },
+  {
+    "method": "GET",
+    "operationId": "ads.listCustomAudiences",
+    "path": "/v1/ads/custom-audiences",
   },
   {
     "method": "GET",
@@ -106,6 +136,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "ads.retryCampaign",
     "path": "/v1/ads/campaigns/{operationId}/retry",
+  },
+  {
+    "method": "POST",
+    "operationId": "ads.startRetargetAudienceSync",
+    "path": "/v1/ads/retarget-audiences",
   },
   {
     "method": "PATCH",

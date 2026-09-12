@@ -2,10 +2,15 @@ import { isDatabaseError } from "@chatbotx.io/database/client"
 import type { MessagingAdChannel } from "@chatbotx.io/database/partials"
 import { messagingAdsConnectionRepository } from "@chatbotx.io/database/repositories"
 import type { MessagingAdsConnectionModel } from "@chatbotx.io/database/types"
-import { encryptUtils } from "@chatbotx.io/encryption"
-import type { FacebookAdsAuthValue } from "@chatbotx.io/integration-facebook-ads"
+import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
+import {
+  type FacebookAdsAuthValue,
+  facebookAdsAuthSchema,
+  integration as facebookAdsIntegration,
+} from "@chatbotx.io/integration-facebook-ads"
 import { createId } from "@chatbotx.io/utils"
 import { perChannelIntegrationIdsOrNull } from "../ads-conversion/channel-fields"
+import { logger } from "../logger"
 import { invalidateMessagingAdsCache } from "./graph-cache"
 
 const UNIQUE_CONSTRAINTS = new Set([
@@ -155,6 +160,37 @@ class MessagingAdsConnectionService {
       workspaceId: input.workspaceId,
     })
     await invalidateMessagingAdsCache(scopeOf(input))
+  }
+
+  /**
+   * Best-effort revokes the connection's Graph token, then deletes the row
+   * and invalidates its cached Graph reads. The revoke failing (expired/
+   * already-revoked token, undecryptable auth) must never block the delete
+   * — otherwise a workspace whose token Meta already invalidated could
+   * never disconnect.
+   */
+  async revokeAndDisconnect(input: MessagingAdsIntegrationRef): Promise<void> {
+    const connection = await this.findForIntegration(input)
+    if (connection) {
+      try {
+        const auth = await encryptUtils.decryptObject(
+          encryptedDataSchema.parse(connection.auth),
+          facebookAdsAuthSchema,
+        )
+        await facebookAdsIntegration.disconnect?.(auth)
+      } catch (err) {
+        logger.error(
+          {
+            err,
+            workspaceId: input.workspaceId,
+            integrationId: input.integrationId,
+          },
+          "Unable to revoke messaging-ads token",
+        )
+      }
+    }
+
+    await this.disconnect(input)
   }
 }
 

@@ -1,4 +1,10 @@
-import { adsConversionService } from "@chatbotx.io/business"
+import {
+  adsAnalyticsService,
+  adsConversionService,
+  adsRetargetService,
+  getCachedCustomAudiences,
+  resolveChannelAdAccountSources,
+} from "@chatbotx.io/business"
 import { z } from "zod"
 import { adsCampaignPublicRouter } from "@/features/ads-campaign/api/public"
 import {
@@ -10,8 +16,12 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { paginateInMemory } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { resolveChannelAdAccountSources } from "../queries/channel-ad-accounts"
 import {
+  adsAnalyticsOverviewPublicResponse,
+  adsAnalyticsPublicRequest,
+  adsAnalyticsTimeseriesPublicResponse,
+  adsConversionEventIdParams,
+  adsConversionEventPublicResource,
   adsConversionRuleIdParams,
   adsConversionRulePublicResource,
   capiDeliverySummaryPublicResponse,
@@ -25,6 +35,10 @@ import {
   listChannelAdAccountsPublicRequest,
   listChannelAdAccountsPublicRequestParams,
   listChannelAdAccountsPublicResponse,
+  listCustomAudiencesPublicRequest,
+  listCustomAudiencesPublicResponse,
+  startRetargetAudienceSyncPublicRequest,
+  startRetargetAudienceSyncPublicResponse,
   toggleAdsConversionRulePublicRequest,
   updateAdsConversionRulePublicRequest,
 } from "../schema/public"
@@ -253,6 +267,101 @@ const adsAnalyticsPublicRouter = {
         data: accounts.map(({ sources: _sources, ...account }) => account),
       }
     }),
+
+  getAnalyticsOverview: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/ads/analytics/overview",
+      summary:
+        "Merged ads analytics (funnel + Meta spend/ROAS/CPM) per ad, for one channel/account/date range. Fans out to Meta Graph and requires a connected ads account — for a free, DB-only funnel, see GET /v1/ads/funnel.",
+      tags: ["Ads"],
+    })
+    .input(adsAnalyticsPublicRequest)
+    .output(adsAnalyticsOverviewPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) =>
+      adsAnalyticsService.getOverview({
+        ...input,
+        workspaceId: context.workspace.id,
+      }),
+    ),
+
+  getAnalyticsTimeseries: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/ads/analytics/timeseries",
+      summary:
+        "Merged ads analytics (funnel + Meta spend), bucketed per day. Fans out to Meta Graph and requires a connected ads account — for a free, DB-only funnel, see GET /v1/ads/funnel/timeseries.",
+      tags: ["Ads"],
+    })
+    .input(adsAnalyticsPublicRequest)
+    .output(adsAnalyticsTimeseriesPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) => ({
+      data: await adsAnalyticsService.getTimeseries({
+        ...input,
+        workspaceId: context.workspace.id,
+      }),
+    })),
+
+  getConversion: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/ads/conversions/{id}",
+      summary: "Get a single Ads conversion event",
+      tags: ["Ads"],
+    })
+    .input(adsConversionEventIdParams)
+    .output(adsConversionEventPublicResource)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) =>
+      adsConversionService.findWorkspaceEventOrFail({
+        id: input.id,
+        workspaceId: context.workspace.id,
+      }),
+    ),
+
+  listCustomAudiences: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/ads/custom-audiences",
+      summary:
+        "List Facebook custom audiences for an ad account — makes startRetargetAudienceSync's customAudienceId discoverable",
+      tags: ["Ads"],
+    })
+    .input(listCustomAudiencesPublicRequest)
+    .output(listCustomAudiencesPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => ({
+      data: await getCachedCustomAudiences({
+        workspaceId: context.workspace.id,
+        adAccountId: input.adAccountId,
+      }),
+    })),
+
+  // `successStatus: 202` — the sync itself runs in the worker. A
+  // `read_only` token is already rejected for POST unless the path is in
+  // `READ_ONLY_TOKEN_ALLOWED_POST_PATHS`
+  // (`@/lib/workspace/authorize-workspace-access`), and this path is
+  // deliberately NOT added there.
+  startRetargetAudienceSync: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/ads/retarget-audiences",
+      summary:
+        "Sync a Facebook custom audience with contacts matching a CTWA retarget segment — runs in the worker",
+      successStatus: 202,
+      tags: ["Ads"],
+    })
+    .input(startRetargetAudienceSyncPublicRequest)
+    .output(startRetargetAudienceSyncPublicResponse)
+    .errors(possibleErrorsOnCreatingResource)
+    .handler(async ({ context, input }) =>
+      adsRetargetService.startAudienceSync({
+        ...input,
+        workspaceId: context.workspace.id,
+      }),
+    ),
 }
 
 export const adsPublicRouter = {

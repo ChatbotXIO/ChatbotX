@@ -44,12 +44,15 @@ type RetargetAdActionHandler = (args: {
   }
 }) => Promise<unknown>
 
-const { createRuleMock, getCurrentUserAndTargetWorkspaceMock } = vi.hoisted(
-  () => ({
-    createRuleMock: vi.fn(),
-    getCurrentUserAndTargetWorkspaceMock: vi.fn(),
-  }),
-)
+const {
+  createRuleMock,
+  getCurrentUserAndTargetWorkspaceMock,
+  startAudienceSyncMock,
+} = vi.hoisted(() => ({
+  createRuleMock: vi.fn(),
+  getCurrentUserAndTargetWorkspaceMock: vi.fn(),
+  startAudienceSyncMock: vi.fn(),
+}))
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -109,15 +112,32 @@ vi.mock("@chatbotx.io/business", async () => {
     enabled: z.boolean().optional(),
   })
 
+  const startRetargetAudienceSyncShape = z.object({
+    workspaceId: z.string(),
+    segment: z.enum(["conversations", "leads", "purchases"]),
+    adId: z.string().trim().min(1).nullable().optional(),
+    channel: z
+      .enum(["whatsapp", "facebook", "messenger", "instagram"])
+      .optional(),
+    integrationWhatsappId: z.string().optional(),
+    integrationMessengerId: z.string().optional(),
+    integrationInstagramId: z.string().optional(),
+    since: z.coerce.date(),
+    until: z.coerce.date(),
+    adAccountId: z.string().trim().min(1),
+    audienceName: z.string().trim().min(1).optional(),
+    customAudienceId: z.string().trim().min(1).optional(),
+  })
+
   return {
     adsConversionRuleResource: baseRule,
     adsConversionService: {
       create: createRuleMock,
     },
-    buildContext: vi.fn(),
-    integrationFacebookAdsService: {
-      findByWorkspaceIdOrFail: vi.fn(),
+    adsRetargetService: {
+      startAudienceSync: startAudienceSyncMock,
     },
+    startRetargetAudienceSyncShape,
     createAdsConversionRuleInput: createInput,
     listAdsConversionRulesInput: z.object({
       workspaceId: z.string(),
@@ -141,25 +161,6 @@ vi.mock("@chatbotx.io/business", async () => {
   }
 })
 
-vi.mock("@chatbotx.io/encryption", () => ({
-  encryptedDataSchema: { parse: vi.fn((value: unknown) => value) },
-  encryptUtils: {
-    decryptObject: vi.fn(),
-  },
-}))
-
-vi.mock("@chatbotx.io/integration-facebook-ads", () => ({
-  facebookAdsAuthSchema: {},
-  integration: { runAction: vi.fn() },
-}))
-
-vi.mock("@chatbotx.io/worker-config", () => ({
-  IntegrationJobAction: {
-    syncRetargetAudience: "syncRetargetAudience",
-  },
-  enqueueIntegrationJob: vi.fn(),
-}))
-
 vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: class ChatbotXException extends Error {},
 }))
@@ -176,15 +177,7 @@ const callCreateAdsConversionRuleAction =
 const callRetargetAdAction =
   retargetAdAction as unknown as RetargetAdActionHandler
 
-const { integrationFacebookAdsService } = await import("@chatbotx.io/business")
-const { encryptUtils } = await import("@chatbotx.io/encryption")
-const { enqueueIntegrationJob } = await import("@chatbotx.io/worker-config")
-const mockFindFacebookAdsIntegration =
-  integrationFacebookAdsService.findByWorkspaceIdOrFail as ReturnType<
-    typeof vi.fn
-  >
-const mockDecryptObject = encryptUtils.decryptObject as ReturnType<typeof vi.fn>
-const mockEnqueueRetargetJob = enqueueIntegrationJob as ReturnType<typeof vi.fn>
+const mockStartAudienceSync = startAudienceSyncMock
 
 describe("ads conversion rule actions", () => {
   beforeEach(() => {
@@ -378,57 +371,8 @@ describe("ads conversion rule actions", () => {
         },
       }),
     ).rejects.toThrow("errors.superAdminRequired")
-  })
 
-  test("threads channel + integrationMessengerId through the retarget job payload and jobId (Phase 3 widening)", async () => {
-    getCurrentUserAndTargetWorkspaceMock.mockResolvedValue({
-      targetWorkspaceMember: {
-        permissions: {
-          superAdmin: true,
-          analytics: true,
-          flows: true,
-          contacts: true,
-          onlyAssignedContacts: false,
-          emailAndPhone: true,
-          broadcast: true,
-          ecommerce: true,
-        },
-      },
-    })
-    mockFindFacebookAdsIntegration.mockResolvedValue({ auth: {} })
-    mockDecryptObject.mockResolvedValue({})
-    mockEnqueueRetargetJob.mockResolvedValue(undefined)
-
-    await callRetargetAdAction({
-      bindArgsParsedInputs: ["ws-1"],
-      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
-      parsedInput: {
-        segment: "conversations",
-        since: "2026-08-01",
-        until: "2026-08-10",
-        adAccountId: "act_1",
-        customAudienceId: "aud-1",
-        channel: "messenger",
-        integrationMessengerId: "im-1",
-      },
-    })
-
-    expect(mockEnqueueRetargetJob).toHaveBeenCalledWith(
-      {
-        type: "syncRetargetAudience",
-        data: expect.objectContaining({
-          workspaceId: "ws-1",
-          customAudienceId: "aud-1",
-          segment: "conversations",
-          channel: "messenger",
-          integrationMessengerId: "im-1",
-        }),
-      },
-      { jobId: expect.stringContaining("messenger") },
-    )
-    expect(mockEnqueueRetargetJob).toHaveBeenCalledWith(expect.anything(), {
-      jobId: expect.stringContaining("im-1"),
-    })
+    expect(mockStartAudienceSync).not.toHaveBeenCalled()
   })
 
   test("threads channel + integrationMessengerId through to adsConversionService.create for a messenger templateSent rule (Phase 5)", async () => {

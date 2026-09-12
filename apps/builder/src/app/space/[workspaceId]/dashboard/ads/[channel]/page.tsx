@@ -1,4 +1,5 @@
 import {
+  adsAnalyticsService,
   type CapiDeliverySummary,
   perChannelIntegrationIds,
 } from "@chatbotx.io/business"
@@ -11,10 +12,6 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AdsAnalyticsView } from "@/features/ads/components/ads-analytics-view"
 import { resolveChannelIntegrations } from "@/features/ads/lib/resolve-channel-integrations"
-import {
-  getAdsAnalyticsData,
-  getAdsAnalyticsTimeseries,
-} from "@/features/ads/queries/analytics"
 import { getAdsSwitcherData } from "@/features/ads/queries/switcher"
 import { adsAnalyticsSearchParamsCache } from "@/features/ads/schema/analytics"
 import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
@@ -68,21 +65,25 @@ export default async function AdsChannelAnalyticsPage(props: {
       (integration) => integration.id === requestedIntegrationId,
     ) ?? null
 
-  const analyticsRange = {
-    ...range,
+  const analyticsScope = {
+    workspaceId,
+    from: range.from,
+    to: range.to,
+    tz: range.tz,
     channel,
     ...perChannelIntegrationIds(channel, selectedChannelIntegration?.id),
+    adAccountId: range.adAccount,
   }
 
   const promises = Promise.all([
-    getAdsAnalyticsData(workspaceId, analyticsRange),
+    adsAnalyticsService.getOverview(analyticsScope),
     // TEMPORARILY HIDDEN (conversion tracking unfinished): the delivery card
     // that consumes this is commented out in `AdsAnalyticsView`, so running
     // the query would cost every dashboard load a round trip nothing renders.
     // A resolved zero summary keeps the tuple shape — and therefore the
     // component's `promises` prop type — unchanged, so restoring the card is
     // swapping this one line back for:
-    //   getCapiDeliveryData(workspaceId, analyticsRange),
+    //   adsAnalyticsService.getCapiDelivery(analyticsScope),
     Promise.resolve<CapiDeliverySummary>({
       sent: 0,
       pending: 0,
@@ -90,7 +91,7 @@ export default async function AdsChannelAnalyticsPage(props: {
       skippedNoScope: 0,
       skippedRegion: 0,
     }),
-    getAdsAnalyticsTimeseries(workspaceId, analyticsRange),
+    adsAnalyticsService.getTimeseries(analyticsScope),
   ])
 
   return (

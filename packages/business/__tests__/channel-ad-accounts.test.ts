@@ -1,7 +1,4 @@
-// @vitest-environment node
-
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import { resolveChannelAdAccountSources } from "../src/features/ads/queries/channel-ad-accounts"
 
 const mocks = vi.hoisted(() => ({
   listCachedMessagingAdAccounts: vi.fn(),
@@ -11,23 +8,33 @@ const mocks = vi.hoisted(() => ({
   warn: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
+vi.mock("../src/messaging-ads-connection/graph-reads", () => ({
   listCachedMessagingAdAccounts: mocks.listCachedMessagingAdAccounts,
+}))
+
+vi.mock("../src/messaging-ads-connection/service", () => ({
   messagingAdsConnectionService: {
     listForChannel: mocks.listForChannel,
   },
+}))
+
+vi.mock("../src/integration-facebook-ads/service", () => ({
   integrationFacebookAdsService: {
     findByWorkspaceId: mocks.findByWorkspaceId,
   },
 }))
 
-vi.mock("@/features/integration-facebook-ads/queries", () => ({
+vi.mock("../src/integration-facebook-ads/graph-reads", () => ({
   getCachedAdAccounts: mocks.getCachedAdAccounts,
 }))
 
-vi.mock("@/lib/log", () => ({
+vi.mock("../src/logger", () => ({
   logger: { warn: mocks.warn },
 }))
+
+const { resolveChannelAdAccountSources } = await import(
+  "../src/ads-analytics/channel-ad-accounts"
+)
 
 describe("resolveChannelAdAccountSources", () => {
   beforeEach(() => {

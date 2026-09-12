@@ -1,4 +1,10 @@
 import {
+  buildFacebookAdsContext,
+  getCachedAdAccounts,
+  getCachedAdInsights,
+  getCachedCustomAudiences,
+} from "@chatbotx.io/business"
+import {
   facebookAdAccountSchema,
   facebookAdInsightSchema,
   facebookCustomAudienceSchema,
@@ -7,12 +13,6 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import {
-  getCachedAdAccounts,
-  getCachedAdInsights,
-  getCachedCustomAudiences,
-  getFacebookAdsContext,
-} from "../queries"
 
 const workspaceInput = z.object({ workspaceId: zodBigintAsString() })
 
@@ -71,7 +71,7 @@ export const integrationFacebookAdsAPI = {
         adAccountId: input.adAccountId,
         since: input.since,
         until: input.until,
-        getContext: () => getFacebookAdsContext(input.workspaceId),
+        getContext: () => buildFacebookAdsContext(input.workspaceId),
       }),
     })),
 }

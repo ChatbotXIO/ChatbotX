@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 
-import type { CapiDeliverySummary } from "@chatbotx.io/business"
+import type {
+  AdsAnalyticsData,
+  AdsAnalyticsTimeseriesRow,
+  CapiDeliverySummary,
+} from "@chatbotx.io/business"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { AdsAnalyticsView } from "@/features/ads/components/ads-analytics-view"
-import type { AdsAnalyticsData } from "@/features/ads/lib/merge-analytics"
-import type { AdsAnalyticsTimeseriesRow } from "@/features/ads/queries/analytics"
 import type { AdsAnalyticsSearchParams } from "@/features/ads/schema/analytics"
 
 const mockExecute = vi.fn()
