@@ -37,9 +37,16 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
       try {
         const { eventType, data } = JSON.parse(e.data) as RealtimeEventData
         switch (eventType) {
-          case RealtimeEventType.messageCreated:
-            handleNewMessage(data as MessageResource)
+          case RealtimeEventType.messageCreated: {
+            const message = data as MessageResource
+            handleNewMessage(message)
+            // The worker only ever sends `typing: true`; clear the indicator
+            // once the bot reply itself arrives so the dots don't stay forever.
+            if (message.messageType === "outgoing") {
+              setIsTyping(false)
+            }
             break
+          }
           case RealtimeEventType.typing:
             setIsTyping(data.typing)
             break
