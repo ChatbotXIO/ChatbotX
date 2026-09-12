@@ -1,4 +1,8 @@
 import { assertPublicUrl } from "@chatbotx.io/business"
+import {
+  fetchFollowingSafeRedirects,
+  readBodyWithLimit,
+} from "@chatbotx.io/filesystem"
 import ky from "ky"
 import { ExpectedHeavyStepError } from "./errors"
 
@@ -42,43 +46,6 @@ function assertContentLengthWithinLimit(
   }
 }
 
-async function readBodyWithLimit(
-  response: Response,
-  label: string,
-  maxBytes: number,
-): Promise<Buffer> {
-  const body = response.body
-  if (!body) {
-    throw new ExpectedHeavyStepError(`${label} has no response body`)
-  }
-
-  const reader = body.getReader()
-  const chunks: Uint8Array[] = []
-  let total = 0
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) {
-      break
-    }
-    if (!value) {
-      continue
-    }
-
-    total += value.byteLength
-    if (total > maxBytes) {
-      await reader.cancel()
-      throw new ExpectedHeavyStepError(
-        `${label} body exceeds size limit: >${maxBytes} bytes`,
-      )
-    }
-
-    chunks.push(value)
-  }
-
-  return Buffer.concat(chunks, total)
-}
-
 async function assertSafeDownloadUrl(
   url: string,
   label: string,
@@ -90,54 +57,6 @@ async function assertSafeDownloadUrl(
   }
 }
 
-async function getFollowingSafeRedirects(input: {
-  redirectsLeft: number
-  request: Pick<DownloadWithByteLimitOptions, "label" | "signal" | "timeout">
-  url: string
-}): Promise<Response> {
-  await assertSafeDownloadUrl(input.url, input.request.label)
-
-  const response = await ky.get(input.url, {
-    redirect: "manual",
-    signal: input.request.signal,
-    throwHttpErrors: false,
-    timeout: input.request.timeout,
-  })
-
-  if (response.status < 300 || response.status >= 400) {
-    return response
-  }
-
-  if (input.redirectsLeft <= 0) {
-    throw new ExpectedHeavyStepError(
-      `${input.request.label} download exceeded redirect limit`,
-    )
-  }
-
-  const location = response.headers.get("location")
-  if (!location) {
-    throw new ExpectedHeavyStepError(
-      `${input.request.label} redirect has no location`,
-    )
-  }
-
-  let redirectUrl: string
-  try {
-    redirectUrl = new URL(location, input.url).href
-  } catch (error) {
-    throw new ExpectedHeavyStepError(
-      `${input.request.label} redirect has an invalid location`,
-      { cause: error },
-    )
-  }
-
-  return getFollowingSafeRedirects({
-    redirectsLeft: input.redirectsLeft - 1,
-    request: input.request,
-    url: redirectUrl,
-  })
-}
-
 export async function downloadWithByteLimit({
   allowedMimeTypes,
   label,
@@ -146,10 +65,30 @@ export async function downloadWithByteLimit({
   timeout,
   url,
 }: DownloadWithByteLimitOptions): Promise<DownloadedBuffer> {
-  const response = await getFollowingSafeRedirects({
-    redirectsLeft: MAX_REDIRECTS,
-    request: { label, signal, timeout },
+  const { response } = await fetchFollowingSafeRedirects({
+    errors: {
+      tooManyRedirects: () =>
+        new ExpectedHeavyStepError(`${label} download exceeded redirect limit`),
+      noLocationHeader: () =>
+        new ExpectedHeavyStepError(`${label} redirect has no location`),
+      invalidRedirectLocation: (_location, cause) =>
+        new ExpectedHeavyStepError(
+          `${label} redirect has an invalid location`,
+          {
+            cause,
+          },
+        ),
+    },
+    fetchImpl: (candidateUrl) =>
+      ky.get(candidateUrl, {
+        redirect: "manual",
+        signal,
+        throwHttpErrors: false,
+        timeout,
+      }),
+    maxRedirectHops: MAX_REDIRECTS,
     url,
+    validateUrl: (candidateUrl) => assertSafeDownloadUrl(candidateUrl, label),
   })
 
   if (!response.ok) {
@@ -170,6 +109,13 @@ export async function downloadWithByteLimit({
     )
   }
 
-  const buffer = await readBodyWithLimit(response, label, maxBytes)
+  const buffer = await readBodyWithLimit(
+    response,
+    maxBytes,
+    (limit) =>
+      new ExpectedHeavyStepError(
+        `${label} body exceeds size limit: >${limit} bytes`,
+      ),
+  )
   return { buffer, contentType, rawContentType }
 }
