@@ -61,17 +61,25 @@ type CsvExportRow = {
 
 /**
  * Shared CSV streaming mechanics for every export mode below — page through
- * `fetchPage` until a short page ends the pagination loop, same cursor
- * contract each mode's `listExportRows`/`listAllChannelExportRows` call uses.
- * `toCells` lets each mode decide its own column set (the legacy CTWA export
- * intentionally has no channel column — see the GET handler), so this streamer
- * hard-codes neither the columns nor any channel.
+ * `fetchPage` until it reports no further page, same cursor contract each
+ * mode's `listExportRows`/`listAllChannelExportRows` call uses. `toCells`
+ * lets each mode decide its own column set (the legacy CTWA export
+ * intentionally has no channel column — see the GET handler), so this
+ * streamer hard-codes neither the columns nor any channel.
+ *
+ * Stops on `fetchPage`'s own `hasMore` flag rather than `rows.length <
+ * EXPORT_PAGE_SIZE`: `hasMore` is derived from an over-fetch at the
+ * repository layer (`listExportSegmentRows`), which is the only place that
+ * knows whether another page exists independent of how many rows this page
+ * happened to contain.
  */
 function streamCsvResponse(input: {
   filename: string
   header: string[]
   toCells: (row: CsvExportRow) => (string | null)[]
-  fetchPage: (afterId: string | undefined) => Promise<CsvExportRow[]>
+  fetchPage: (
+    afterId: string | undefined,
+  ) => Promise<{ rows: CsvExportRow[]; hasMore: boolean }>
 }): Response {
   const encoder = new TextEncoder()
   const stream = new ReadableStream<Uint8Array>({
@@ -80,14 +88,14 @@ function streamCsvResponse(input: {
 
       let afterId: string | undefined
       for (;;) {
-        const rows = await input.fetchPage(afterId)
+        const { rows, hasMore } = await input.fetchPage(afterId)
 
         for (const row of rows) {
           controller.enqueue(encoder.encode(toCsvRow(input.toCells(row))))
         }
 
         afterId = rows.at(-1)?.id
-        if (rows.length < EXPORT_PAGE_SIZE || !afterId) {
+        if (!(hasMore && afterId)) {
           break
         }
       }
@@ -107,8 +115,15 @@ function streamCsvResponse(input: {
 
 // The channel-column cell set (explicit-channel + all-channel modes). The
 // legacy omitted-channel export uses `legacyCells` (no channel column) to
-// stay byte-identical to the pre-multichannel CSV that external consumers
-// already parse.
+// stay byte-identical to the pre-multichannel CSV SHAPE (column layout,
+// header, filename pattern) that external consumers already parse. This is
+// a shape guarantee only — it does NOT promise the same ROWS come back for
+// a given URL. A legacy URL that carries a messenger/instagram integration
+// id with no `channel` used to hit a contradictory predicate (whatsapp
+// default + a foreign integration id) and silently return zero rows; it now
+// correctly scopes to that integration and returns real rows, still in the
+// unchanged 4-column legacy shape. See
+// `apps/builder/__tests__/ads-analytics-export-route.test.ts`.
 const channelCells = (row: CsvExportRow): (string | null)[] => [
   row.contactName,
   row.phoneNumber,
@@ -162,28 +177,32 @@ export async function GET(
       header,
       toCells: channelCells,
       fetchPage: async (afterId) => {
-        const rows = await adsConversionService.listAllChannelExportRows({
-          workspaceId,
-          segment: parsed.data.segment,
-          adId: parsed.data.adId,
-          since,
-          until,
-          afterId,
-          limit: EXPORT_PAGE_SIZE,
-        })
+        const { rows, hasMore } =
+          await adsConversionService.listAllChannelExportRows({
+            workspaceId,
+            segment: parsed.data.segment,
+            adId: parsed.data.adId,
+            since,
+            until,
+            afterId,
+            limit: EXPORT_PAGE_SIZE,
+          })
 
         // Each row's REAL channel, not a single request-wide label — the
         // whole point of the "all channels" export mode.
-        return rows.map((row) => ({
-          id: row.id,
-          contactName: row.contactName,
-          phoneNumber: row.phoneNumber,
-          adId: row.adId,
-          occurredAt: row.occurredAt,
-          channelLabel: row.channel
-            ? t(`ads.conversionEvents.tabs.${row.channel}`)
-            : "",
-        }))
+        return {
+          rows: rows.map((row) => ({
+            id: row.id,
+            contactName: row.contactName,
+            phoneNumber: row.phoneNumber,
+            adId: row.adId,
+            occurredAt: row.occurredAt,
+            channelLabel: row.channel
+              ? t(`ads.conversionEvents.tabs.${row.channel}`)
+              : "",
+          })),
+          hasMore,
+        }
       },
     })
   }
@@ -195,12 +214,15 @@ export async function GET(
 
   const { since, until, from, to } = parseAnalyticsDateRange(parsed.data)
   const t = await getTranslations()
-  // Resolve the channel that SCOPES THE QUERY: a legacy no-channel URL must
-  // stay WhatsApp-scoped (mirrors `integrationWhatsappId` before it) — with
-  // `channel` omitted, the leads/purchases event predicate would apply no
-  // channel filter at all, mixing messenger/instagram events into rows a
-  // WhatsApp consumer expects.
-  const channel = parsed.data.channel ?? DEFAULT_ADS_CONVERSION_CHANNEL
+  // Label-only resolution: the CSV column/filename need SOME channel word
+  // even for a fully-unscoped legacy request. The query-scoping default (used
+  // when the service call omits both `channel` and every integration id) now
+  // lives in `adsConversionService.listExportRows` — a single shared rule
+  // instead of two divergent copies (see AGENTS.md invariant on
+  // `data-access.md`'s "no app-layer file holds a rule a worker/public API
+  // would also need"). This local mirrors that same default purely for
+  // display, and is never sent to the service.
+  const labelChannel = parsed.data.channel ?? DEFAULT_ADS_CONVERSION_CHANNEL
 
   // OUTPUT format is keyed on whether the request carried a `channel` param at
   // all, NOT on the resolved value. An omitted-channel request is a legacy/
@@ -209,7 +231,7 @@ export async function GET(
   // in-app export href sends `channel` explicitly (`buildExportHref`), so the
   // new 5-column `ads-<channel>-*.csv` format only reaches the new UI.
   const isLegacyExport = parsed.data.channel === undefined
-  const channelLabel = t(`ads.conversionEvents.tabs.${channel}`)
+  const channelLabel = t(`ads.conversionEvents.tabs.${labelChannel}`)
   const header = isLegacyExport
     ? [
         t("ads.analytics.csv.contactName"),
@@ -226,19 +248,22 @@ export async function GET(
       ]
   const filename = isLegacyExport
     ? `ctwa-${parsed.data.segment}-${from}-${to}.csv`
-    : `ads-${channel}-${parsed.data.segment}-${from}-${to}.csv`
+    : `ads-${labelChannel}-${parsed.data.segment}-${from}-${to}.csv`
 
   return streamCsvResponse({
     filename,
     header,
     toCells: isLegacyExport ? legacyCells : channelCells,
     fetchPage: async (afterId) => {
-      const rows = await adsConversionService.listExportRows({
+      // `channel` is passed through as the request sent it (undefined stays
+      // undefined) — the query-scoping default for the fully-unscoped case
+      // now lives in `adsConversionService.listExportRows`, not here.
+      const { rows, hasMore } = await adsConversionService.listExportRows({
         workspaceId,
         segment: parsed.data.segment,
         adId: parsed.data.adId,
         integrationWhatsappId: parsed.data.integrationWhatsappId,
-        channel,
+        channel: parsed.data.channel,
         integrationMessengerId: parsed.data.integrationMessengerId,
         integrationInstagramId: parsed.data.integrationInstagramId,
         since,
@@ -247,14 +272,17 @@ export async function GET(
         limit: EXPORT_PAGE_SIZE,
       })
 
-      return rows.map((row) => ({
-        id: row.id,
-        contactName: row.contactName,
-        phoneNumber: row.phoneNumber,
-        adId: row.adId,
-        occurredAt: row.occurredAt,
-        channelLabel,
-      }))
+      return {
+        rows: rows.map((row) => ({
+          id: row.id,
+          contactName: row.contactName,
+          phoneNumber: row.phoneNumber,
+          adId: row.adId,
+          occurredAt: row.occurredAt,
+          channelLabel,
+        })),
+        hasMore,
+      }
     },
   })
 }

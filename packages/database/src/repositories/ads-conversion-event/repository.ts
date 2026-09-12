@@ -59,12 +59,12 @@ export type AdsConversionEventAttribution = Pick<
  */
 export type AdReferralAttribution = Pick<ContactInboxModel, "id" | "referral">
 
-type FindWorkspaceEventInput = {
+export type FindWorkspaceEventInput = {
   id: string
   workspaceId: string
 }
 
-type UpdateCapiStatusInput = FindWorkspaceEventInput & {
+export type UpdateCapiStatusInput = FindWorkspaceEventInput & {
   from: Extract<AdsConversionCapiStatus, "pending">
   to: Exclude<AdsConversionCapiStatus, "pending">
   capiSentAt?: Date
@@ -152,6 +152,15 @@ export type AdsConversionExportRow = {
    * channel. Absent for every legacy (single-channel) export call.
    */
   channel?: string
+}
+
+export type ExportSegmentRowsResult = {
+  rows: Array<AdsConversionExportRow & { id: string }>
+  /**
+   * Whether another page exists, derived from a `limit + 1` over-fetch
+   * rather than `rows.length`.
+   */
+  hasMore: boolean
 }
 
 type DateRangeInput = {
@@ -1103,7 +1112,11 @@ export const adsConversionEventRepository = {
   async listExportSegmentRows(
     input: ExportSegmentInput,
     tx: DatabaseClient = db,
-  ): Promise<Array<AdsConversionExportRow & { id: string }>> {
+  ): Promise<ExportSegmentRowsResult> {
+    // Fetch one row beyond the requested page so `hasMore` reflects the RAW
+    // fetch rather than the post-slice row count.
+    const fetchLimit = input.limit + 1
+
     if (input.segment === "conversations") {
       const filters = and(
         // Contact is in this query's FROM, so scope by workspace here — the
@@ -1137,7 +1150,7 @@ export const adsConversionEventRepository = {
       // CSV column) — branched the same "add the column only when needed"
       // way as countConversionEventsByAd, keeping the legacy shape/rows
       // returned by every existing caller unchanged.
-      const rows = input.allChannels
+      const fetchedRows = input.allChannels
         ? await tx
             .select({ ...baseSelection, channel: contactInboxModel.channel })
             .from(contactInboxModel)
@@ -1147,7 +1160,7 @@ export const adsConversionEventRepository = {
             )
             .where(filters)
             .orderBy(asc(contactInboxModel.id))
-            .limit(input.limit)
+            .limit(fetchLimit)
         : await tx
             .select(baseSelection)
             .from(contactInboxModel)
@@ -1157,18 +1170,31 @@ export const adsConversionEventRepository = {
             )
             .where(filters)
             .orderBy(asc(contactInboxModel.id))
-            .limit(input.limit)
+            .limit(fetchLimit)
 
-      return rows.flatMap((row) =>
-        row.occurredAt
-          ? [
-              {
-                ...row,
-                occurredAt: row.occurredAt,
-              },
-            ]
-          : [],
-      )
+      const hasMore = fetchedRows.length > input.limit
+      const pageRows = hasMore ? fetchedRows.slice(0, input.limit) : fetchedRows
+
+      // `occurredAt` (aliased from `ContactInbox.firstInteractionAt`, a
+      // nullable column) is asserted non-null here rather than filtered: the
+      // `gte`/`lte` bounds `buildCtwaSegmentPredicate` puts on that same
+      // column exclude NULLs under normal SQL three-valued logic, so every
+      // row reaching this point already has one. Asserting (not silently
+      // dropping) means a future predicate change that broke that guarantee
+      // would surface as a thrown error instead of silently losing a row
+      // from the export and permanently mis-anchoring the `afterId` cursor
+      // (which is derived from this same page's last id by every caller).
+      return {
+        rows: pageRows.map((row) => {
+          if (!row.occurredAt) {
+            throw new Error(
+              "listExportSegmentRows: conversations row is missing firstInteractionAt despite the predicate's date-range bounds",
+            )
+          }
+          return { ...row, occurredAt: row.occurredAt }
+        }),
+        hasMore,
+      }
     }
 
     const eventFilters = and(
@@ -1195,7 +1221,7 @@ export const adsConversionEventRepository = {
       occurredAt: adsConversionEventModel.occurredAt,
     }
 
-    return input.allChannels
+    const fetchedEventRows = await (input.allChannels
       ? tx
           .select({
             ...baseEventSelection,
@@ -1212,7 +1238,7 @@ export const adsConversionEventRepository = {
           )
           .where(eventFilters)
           .orderBy(asc(adsConversionEventModel.id))
-          .limit(input.limit)
+          .limit(fetchLimit)
       : tx
           .select(baseEventSelection)
           .from(adsConversionEventModel)
@@ -1226,6 +1252,14 @@ export const adsConversionEventRepository = {
           )
           .where(eventFilters)
           .orderBy(asc(adsConversionEventModel.id))
-          .limit(input.limit)
+          .limit(fetchLimit))
+
+    const hasMoreEvents = fetchedEventRows.length > input.limit
+    return {
+      rows: hasMoreEvents
+        ? fetchedEventRows.slice(0, input.limit)
+        : fetchedEventRows,
+      hasMore: hasMoreEvents,
+    }
   },
 }

@@ -27,7 +27,7 @@ type ListExportRowsMock = (input: {
   until: Date
   afterId?: string
   limit: number
-}) => Promise<ExportRow[]>
+}) => Promise<{ rows: ExportRow[]; hasMore: boolean }>
 
 type AllChannelExportRow = ExportRow & { channel?: string }
 
@@ -39,7 +39,7 @@ type ListAllChannelExportRowsMock = (input: {
   until: Date
   afterId?: string
   limit: number
-}) => Promise<AllChannelExportRow[]>
+}) => Promise<{ rows: AllChannelExportRow[]; hasMore: boolean }>
 
 const {
   mockListExportRows,
@@ -80,8 +80,8 @@ describe("ads analytics export route", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockResolveGuardedWorkspaceId.mockResolvedValue("ws-1")
-    mockListExportRows.mockResolvedValue([])
-    mockListAllChannelExportRows.mockResolvedValue([])
+    mockListExportRows.mockResolvedValue({ rows: [], hasMore: false })
+    mockListAllChannelExportRows.mockResolvedValue({ rows: [], hasMore: false })
   })
 
   test("propagates workspace guard rejection without exporting rows", async () => {
@@ -120,11 +120,11 @@ describe("ads analytics export route", () => {
       adId: "ad-1",
       occurredAt: new Date("2026-08-05T09:30:00.000Z"),
     }
-    // A single row (< EXPORT_PAGE_SIZE) ends the pagination loop after one
+    // A single row (`hasMore: false`) ends the pagination loop after one
     // call — no second queued value needed (and queuing one would leak into
     // the next test's first call, since vi.clearAllMocks() doesn't clear a
     // still-queued mockResolvedValueOnce implementation).
-    mockListExportRows.mockResolvedValueOnce([row])
+    mockListExportRows.mockResolvedValueOnce({ rows: [row], hasMore: false })
 
     // No `channel` param → legacy/external consumer that already parses the
     // original 4-column CTWA CSV; the output must NOT gain the channel column.
@@ -150,10 +150,14 @@ describe("ads analytics export route", () => {
       segment: "leads",
       adId: undefined,
       integrationWhatsappId: "1234567890123",
-      // A legacy no-channel URL must stay WhatsApp-scoped: the route resolves
-      // `channel` to "whatsapp" before querying, so messenger/instagram
-      // events can never leak into rows the CSV labels "WhatsApp".
-      channel: "whatsapp",
+      // The route no longer resolves a `channel` default itself — that
+      // query-scoping rule now lives in `adsConversionService.listExportRows`
+      // (single source of truth, shared with the public API). Passing
+      // `channel: undefined` here is still WhatsApp-scoped end to end: the
+      // service defaults to whatsapp only when BOTH `channel` and every
+      // integration id are absent, and this request already carries
+      // `integrationWhatsappId`.
+      channel: undefined,
       integrationMessengerId: undefined,
       integrationInstagramId: undefined,
       since: new Date("2026-08-01T00:00:00.000Z"),
@@ -163,8 +167,58 @@ describe("ads analytics export route", () => {
     })
   })
 
+  // Pins a behavior change from this PR: previously a legacy (no `channel`)
+  // request carrying a messenger/instagram integration id produced a
+  // contradictory predicate (implicit whatsapp scope + a foreign integration
+  // id) and silently returned zero rows. It now scopes correctly to the
+  // given integration and returns real rows — still in the unchanged
+  // 4-column legacy CSV shape (no channel column, `ctwa-*` filename), since
+  // "byte-identical" is a shape guarantee, not a same-rows guarantee. See
+  // the route's `legacyCells`/`channelCells` comment.
+  test("legacy no-channel export with a messenger integration id now returns real rows in the legacy 4-column shape", async () => {
+    const row: ExportRow = {
+      id: "row-1",
+      contactId: "contact-1",
+      contactName: "Grace Hopper",
+      phoneNumber: null,
+      email: null,
+      adId: "ad-messenger-1",
+      occurredAt: new Date("2026-08-06T10:00:00.000Z"),
+    }
+    mockListExportRows.mockResolvedValueOnce({ rows: [row], hasMore: false })
+
+    const response = await callRoute(
+      "segment=leads&integrationMessengerId=555&from=2026-08-01&to=2026-08-10",
+    )
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-disposition")).toBe(
+      'attachment; filename="ctwa-leads-2026-08-01-2026-08-10.csv"',
+    )
+    await expect(response.text()).resolves.toBe(
+      [
+        "ads.analytics.csv.contactName,ads.analytics.csv.phone,ads.analytics.csv.adId,ads.analytics.csv.occurredAt",
+        "Grace Hopper,,ad-messenger-1,2026-08-06T10:00:00.000Z",
+        "",
+      ].join("\n"),
+    )
+    expect(mockListExportRows).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      segment: "leads",
+      adId: undefined,
+      integrationWhatsappId: undefined,
+      channel: undefined,
+      integrationMessengerId: "555",
+      integrationInstagramId: undefined,
+      since: new Date("2026-08-01T00:00:00.000Z"),
+      until: new Date("2026-08-10T23:59:59.999Z"),
+      afterId: undefined,
+      limit: 500,
+    })
+  })
+
   test("threads `tz` into the resolved [since, until] window so CSV rows match the on-screen viewer-local window", async () => {
-    mockListExportRows.mockResolvedValueOnce([])
+    mockListExportRows.mockResolvedValueOnce({ rows: [], hasMore: false })
 
     await callRoute(
       "segment=leads&from=2026-08-27&to=2026-08-27&tz=Asia%2FSaigon",
@@ -179,7 +233,7 @@ describe("ads analytics export route", () => {
   })
 
   test("falls back to UTC anchoring for an omitted `tz` (old export links keep working unchanged)", async () => {
-    mockListExportRows.mockResolvedValueOnce([])
+    mockListExportRows.mockResolvedValueOnce({ rows: [], hasMore: false })
 
     await callRoute("segment=leads&from=2026-08-01&to=2026-08-10")
 
@@ -192,17 +246,20 @@ describe("ads analytics export route", () => {
   })
 
   test("explicit channel=whatsapp gets the 5-column ads-whatsapp-* format", async () => {
-    mockListExportRows.mockResolvedValueOnce([
-      {
-        id: "row-1",
-        contactId: "contact-1",
-        contactName: "Ada Lovelace",
-        phoneNumber: "+12025550101",
-        email: "ada@example.com",
-        adId: "ad-1",
-        occurredAt: new Date("2026-08-05T09:30:00.000Z"),
-      },
-    ])
+    mockListExportRows.mockResolvedValueOnce({
+      rows: [
+        {
+          id: "row-1",
+          contactId: "contact-1",
+          contactName: "Ada Lovelace",
+          phoneNumber: "+12025550101",
+          email: "ada@example.com",
+          adId: "ad-1",
+          occurredAt: new Date("2026-08-05T09:30:00.000Z"),
+        },
+      ],
+      hasMore: false,
+    })
 
     const response = await callRoute(
       "segment=leads&channel=whatsapp&from=2026-08-01&to=2026-08-10",
@@ -231,11 +288,11 @@ describe("ads analytics export route", () => {
       adId: "ad-messenger-1",
       occurredAt: new Date("2026-08-06T10:00:00.000Z"),
     }
-    // A single row (< EXPORT_PAGE_SIZE) ends the pagination loop after one
+    // A single row (`hasMore: false`) ends the pagination loop after one
     // call — no second queued value needed (and queuing one would leak into
     // the next test's first call, since vi.clearAllMocks() doesn't clear a
     // still-queued mockResolvedValueOnce implementation).
-    mockListExportRows.mockResolvedValueOnce([row])
+    mockListExportRows.mockResolvedValueOnce({ rows: [row], hasMore: false })
 
     const response = await callRoute(
       "segment=leads&channel=messenger&integrationMessengerId=555&from=2026-08-01&to=2026-08-10",
@@ -297,7 +354,10 @@ describe("ads analytics export route", () => {
           channel: "messenger",
         },
       ]
-      mockListAllChannelExportRows.mockResolvedValueOnce(rows)
+      mockListAllChannelExportRows.mockResolvedValueOnce({
+        rows,
+        hasMore: false,
+      })
 
       const response = await callRoute(
         "segment=leads&channel=all&from=2026-08-01&to=2026-08-10",

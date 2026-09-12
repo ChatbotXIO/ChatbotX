@@ -273,33 +273,6 @@ upload). Every handler below calls the same `packages/business` service
 method the corresponding UI action/oRPC procedure calls
 (`.agents/rules/data-access.md`).
 
-| Resource | Endpoint | Service method |
-| --- | --- | --- |
-| Conversion rules | `GET /v1/ads/conversion-rules` | `adsConversionService.list` |
-| Conversion rules | `GET /v1/ads/conversion-rules/{id}` | `adsConversionService.findOrFail` |
-| Conversion rules | `POST /v1/ads/conversion-rules` | `adsConversionService.create` |
-| Conversion rules | `PUT /v1/ads/conversion-rules/{id}` | `adsConversionService.update` |
-| Conversion rules | `PATCH /v1/ads/conversion-rules/{id}/status` | `adsConversionService.toggleEnabled` |
-| Conversion rules | `DELETE /v1/ads/conversion-rules/{id}` | `adsConversionService.remove` |
-| Funnel | `GET /v1/ads/funnel` | `adsConversionService.getCtwaFunnel` |
-| Funnel | `GET /v1/ads/funnel/timeseries` | `adsConversionService.getCtwaFunnelTimeseries` |
-| CAPI delivery | `GET /v1/ads/capi-delivery` | `adsConversionService.getCapiDeliverySummary` |
-| Export | `GET /v1/ads/conversions/export` | `adsConversionService.listExportRows` / `listAllChannelExportRows` |
-| Ad accounts | `GET /v1/ads/{channel}/ad-accounts` | `resolveChannelAdAccountSources` |
-| Campaigns | `GET /v1/ads/campaigns` | `messagingAdCampaignService.list` |
-| Campaigns | `POST /v1/ads/campaigns/insights` | `messagingAdCampaignService.listInsights` |
-| Campaigns | `POST /v1/ads/campaigns` | `messagingAdCampaignService.createDraft` |
-| Campaigns | `POST /v1/ads/campaigns/{operationId}/retry` | `messagingAdCampaignService.retryDraft` |
-| Campaigns | `POST /v1/ads/campaigns/{operationId}/publish` | `messagingAdCampaignService.publish` |
-| Campaigns | `POST /v1/ads/campaigns/{operationId}/pause` | `messagingAdCampaignService.pause` |
-| Campaigns | `DELETE /v1/ads/campaigns/{operationId}` | `messagingAdCampaignService.deleteOperation` |
-| Campaigns | `POST /v1/ads/campaigns/upload-video` | `getMessagingAdsContextForIntegration` + `integration.runAction("uploadMessagingAdVideo")` |
-| Campaigns | `GET /v1/ads/campaigns/videos/{videoId}/status` | `integration.runAction("getMessagingAdVideoStatus")` |
-| Campaigns | `GET /v1/ads/campaigns/messenger-pages` | `messagingAdCampaignService.listMessengerPages` |
-| Campaigns | `GET /v1/ads/campaigns/{channel}/{integrationId}/ad-accounts` | `listCachedMessagingAdAccounts` |
-| Campaigns | `GET /v1/ads/campaigns/ad-accounts/{adAccountId}` | `getCachedMessagingAdAccountDetails` |
-| Campaigns | `GET /v1/ads/campaigns/prerequisites` | `messagingAdsConnectionService.findForIntegration` |
-
 Two invariants specific to this scope:
 
 - **The campaign-lifecycle mutations deliberately omit

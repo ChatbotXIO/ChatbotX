@@ -77,6 +77,7 @@ const adsConversionRulesPublicRouter = {
       method: "POST",
       path: "/v1/ads/conversion-rules",
       summary: "Create an Ads conversion rule",
+      successStatus: 201,
       tags: ["Ads"],
     })
     .input(createAdsConversionRulePublicRequest)
@@ -128,10 +129,10 @@ const adsConversionRulesPublicRouter = {
       method: "DELETE",
       path: "/v1/ads/conversion-rules/{id}",
       summary: "Delete an Ads conversion rule",
+      successStatus: 204,
       tags: ["Ads"],
     })
     .input(adsConversionRuleIdParams)
-    .output(z.void())
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await adsConversionService.remove({
@@ -208,7 +209,7 @@ const adsAnalyticsPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { allChannels, ...rest } = input
-      const rows = allChannels
+      const { rows, hasMore } = allChannels
         ? await adsConversionService.listAllChannelExportRows({
             ...rest,
             workspaceId: context.workspace.id,
@@ -219,8 +220,11 @@ const adsAnalyticsPublicRouter = {
           })
       return {
         data: rows,
-        nextAfterId:
-          rows.length === input.limit ? (rows.at(-1)?.id ?? null) : null,
+        // `hasMore` comes from the repository's own over-fetch (see
+        // `listExportSegmentRows`), not `rows.length === input.limit` — the
+        // repository is the only layer that knows whether another page
+        // exists independent of how many rows this page happened to return.
+        nextAfterId: hasMore ? (rows.at(-1)?.id ?? null) : null,
       }
     }),
 

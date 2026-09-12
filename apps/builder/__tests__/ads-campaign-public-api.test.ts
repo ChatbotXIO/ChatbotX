@@ -170,6 +170,37 @@ describe("POST /v1/ads/campaigns", () => {
     // The public resource never leaks workspaceId.
     expect(result).not.toHaveProperty("workspaceId")
   })
+
+  test("rejects a request failing the private re-validation with a 422 ORPCError, not a raw ZodError", async () => {
+    const call = procedure.handler?.({
+      context: { workspace: { id: "1001" } },
+      input: {
+        channel: "whatsapp",
+        integrationId: "1",
+        adAccountId: "act_1",
+        name: "Ad",
+        // `CREDIT` is accepted by the public schema's enum but rejected by
+        // `createMessagingAdRequest`'s refine (deprecated by Meta) — this is
+        // exactly the "private schema re-validation fails" case the handler
+        // must turn into an explicit 422, not let a raw ZodError bubble up.
+        campaign: { specialAdCategories: ["CREDIT"] },
+        adSet: {
+          dailyBudgetMinorUnits: 1000,
+          targeting: { countries: ["US"] },
+        },
+        creative: {
+          media: { kind: "video", videoId: "v1" },
+          welcomeMessage: { type: "default" },
+        },
+      },
+    })
+
+    await expect(call).rejects.toMatchObject({
+      code: "invalidRequestData",
+      status: 422,
+    })
+    expect(messagingAdCampaignService.createDraft).not.toHaveBeenCalled()
+  })
 })
 
 describe("POST /v1/ads/campaigns/{operationId}/publish", () => {
@@ -191,6 +222,54 @@ describe("POST /v1/ads/campaigns/{operationId}/publish", () => {
       workspaceId: "1001",
     })
     expect(result).not.toHaveProperty("workspaceId")
+  })
+})
+
+describe("POST /v1/ads/campaigns/insights", () => {
+  const procedure = findProcedure("POST", "/v1/ads/campaigns/insights")
+
+  test("a full-permission token's refresh:true is forwarded as forceRefresh", async () => {
+    messagingAdCampaignService.listInsights.mockResolvedValueOnce([])
+
+    await procedure.handler?.({
+      context: {
+        workspace: { id: "1001" },
+        apiToken: { permission: "full" },
+      },
+      input: {
+        channel: "whatsapp",
+        integrationId: "1",
+        adAccountId: "act_1",
+        adIds: ["ad_1"],
+        refresh: true,
+      },
+    })
+
+    expect(messagingAdCampaignService.listInsights).toHaveBeenCalledWith(
+      expect.objectContaining({ forceRefresh: true }),
+    )
+  })
+
+  test("a read_only token's refresh:true is NOT forwarded — it cannot force an uncached Graph call", async () => {
+    messagingAdCampaignService.listInsights.mockResolvedValueOnce([])
+
+    await procedure.handler?.({
+      context: {
+        workspace: { id: "1001" },
+        apiToken: { permission: "read_only" },
+      },
+      input: {
+        channel: "whatsapp",
+        integrationId: "1",
+        adAccountId: "act_1",
+        adIds: ["ad_1"],
+        refresh: true,
+      },
+    })
+
+    expect(messagingAdCampaignService.listInsights).toHaveBeenCalledWith(
+      expect.objectContaining({ forceRefresh: false }),
+    )
   })
 })
 

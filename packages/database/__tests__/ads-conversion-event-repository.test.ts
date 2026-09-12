@@ -206,17 +206,20 @@ describe("adsConversionEventRepository account filters", () => {
     )
 
     expect(chain.where).toHaveBeenCalledWith(expect.anything())
-    expect(result).toEqual([
-      {
-        id: "ci-1",
-        contactId: "c-1",
-        contactName: "Ada",
-        phoneNumber: "+84900000000",
-        email: null,
-        adId: "ad-1",
-        occurredAt: new Date("2026-07-15T00:00:00.000Z"),
-      },
-    ])
+    expect(result).toEqual({
+      rows: [
+        {
+          id: "ci-1",
+          contactId: "c-1",
+          contactName: "Ada",
+          phoneNumber: "+84900000000",
+          email: null,
+          adId: "ad-1",
+          occurredAt: new Date("2026-07-15T00:00:00.000Z"),
+        },
+      ],
+      hasMore: false,
+    })
   })
 
   test("listExportSegmentRows resolves leads/purchases via the shared ctwaRetarget predicate, keeping the same output shape", async () => {
@@ -244,17 +247,83 @@ describe("adsConversionEventRepository account filters", () => {
     )
 
     expect(chain.where).toHaveBeenCalledWith(expect.anything())
-    expect(result).toEqual([
+    expect(result).toEqual({
+      rows: [
+        {
+          id: "ace-1",
+          contactId: "c-2",
+          contactName: "Bob",
+          phoneNumber: "+84900000001",
+          email: "bob@example.com",
+          adId: "ad-2",
+          occurredAt: new Date("2026-07-20T00:00:00.000Z"),
+        },
+      ],
+      hasMore: false,
+    })
+  })
+
+  // Guards the `fetchLimit = input.limit + 1` over-fetch mechanic (repository.ts):
+  // if a future edit reverted `fetchLimit` back to `input.limit`, `hasMore`
+  // would become permanently `false` and every export would silently
+  // truncate to one page — with the rest of the suite (which only exercises
+  // exactly-`limit`-or-fewer results) still green.
+  test("listExportSegmentRows (conversations) requests limit+1 rows and reports hasMore when the page is over-full", async () => {
+    const overFullRows = Array.from({ length: 3 }, (_, i) => ({
+      id: `ci-${i + 1}`,
+      contactId: `c-${i + 1}`,
+      contactName: `Contact ${i + 1}`,
+      phoneNumber: `+8490000000${i}`,
+      email: null,
+      adId: "ad-1",
+      occurredAt: new Date("2026-07-15T00:00:00.000Z"),
+    }))
+    const chain = createQueryChain(overFullRows)
+
+    const result = await adsConversionEventRepository.listExportSegmentRows(
       {
-        id: "ace-1",
-        contactId: "c-2",
-        contactName: "Bob",
-        phoneNumber: "+84900000001",
-        email: "bob@example.com",
-        adId: "ad-2",
-        occurredAt: new Date("2026-07-20T00:00:00.000Z"),
+        workspaceId: "ws-1",
+        segment: "conversations",
+        since: new Date("2026-07-01T00:00:00.000Z"),
+        until: new Date("2026-07-31T23:59:59.999Z"),
+        limit: 2,
       },
-    ])
+      { select: chain.select } as never,
+    )
+
+    expect(chain.limit).toHaveBeenCalledWith(3)
+    expect(result.hasMore).toBe(true)
+    expect(result.rows).toHaveLength(2)
+    expect(result.rows.map((row) => row.id)).toEqual(["ci-1", "ci-2"])
+  })
+
+  test("listExportSegmentRows (leads/purchases) requests limit+1 rows and reports hasMore when the page is over-full", async () => {
+    const overFullRows = Array.from({ length: 3 }, (_, i) => ({
+      id: `ace-${i + 1}`,
+      contactId: `c-${i + 1}`,
+      contactName: `Contact ${i + 1}`,
+      phoneNumber: `+8490000000${i}`,
+      email: null,
+      adId: "ad-2",
+      occurredAt: new Date("2026-07-20T00:00:00.000Z"),
+    }))
+    const chain = createQueryChain(overFullRows)
+
+    const result = await adsConversionEventRepository.listExportSegmentRows(
+      {
+        workspaceId: "ws-1",
+        segment: "purchases",
+        since: new Date("2026-07-01T00:00:00.000Z"),
+        until: new Date("2026-07-31T23:59:59.999Z"),
+        limit: 2,
+      },
+      { select: chain.select } as never,
+    )
+
+    expect(chain.limit).toHaveBeenCalledWith(3)
+    expect(result.hasMore).toBe(true)
+    expect(result.rows).toHaveLength(2)
+    expect(result.rows.map((row) => row.id)).toEqual(["ace-1", "ace-2"])
   })
 })
 
@@ -1008,18 +1077,21 @@ describe("adsConversionEventRepository — allChannels ('All channels' Ads Analy
       { select: chain.select } as never,
     )
 
-    expect(result).toEqual([
-      {
-        id: "ci-1",
-        contactId: "c-1",
-        contactName: "Ada",
-        phoneNumber: "+84900000000",
-        email: null,
-        adId: "ad-1",
-        occurredAt: new Date("2026-07-15T00:00:00.000Z"),
-        channel: "instagram",
-      },
-    ])
+    expect(result).toEqual({
+      rows: [
+        {
+          id: "ci-1",
+          contactId: "c-1",
+          contactName: "Ada",
+          phoneNumber: "+84900000000",
+          email: null,
+          adId: "ad-1",
+          occurredAt: new Date("2026-07-15T00:00:00.000Z"),
+          channel: "instagram",
+        },
+      ],
+      hasMore: false,
+    })
   })
 
   test("listExportSegmentRows (leads/purchases) with allChannels selects the row's channel", async () => {
@@ -1048,18 +1120,21 @@ describe("adsConversionEventRepository — allChannels ('All channels' Ads Analy
       { select: chain.select } as never,
     )
 
-    expect(result).toEqual([
-      {
-        id: "ace-1",
-        contactId: "c-2",
-        contactName: "Bob",
-        phoneNumber: "+84900000001",
-        email: "bob@example.com",
-        adId: "ad-2",
-        occurredAt: new Date("2026-07-20T00:00:00.000Z"),
-        channel: "messenger",
-      },
-    ])
+    expect(result).toEqual({
+      rows: [
+        {
+          id: "ace-1",
+          contactId: "c-2",
+          contactName: "Bob",
+          phoneNumber: "+84900000001",
+          email: "bob@example.com",
+          adId: "ad-2",
+          occurredAt: new Date("2026-07-20T00:00:00.000Z"),
+          channel: "messenger",
+        },
+      ],
+      hasMore: false,
+    })
   })
 })
 

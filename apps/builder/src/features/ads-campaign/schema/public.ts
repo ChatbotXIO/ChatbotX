@@ -96,7 +96,20 @@ export const adAccountDetailsPublicRequest = z.object({
   refresh: z.boolean().optional(),
 })
 
-const MAX_VIDEO_BASE64_LENGTH = 140_000_000
+// Deliberately LOWER than the private route's 140MB cap
+// (`../schema/wizard.ts`). The private upload sits behind a session +
+// `assertWorkspaceSuperAdmin`, so a handful of concurrent uploads at the cap
+// is bounded by real logged-in users. The public route is reachable by any
+// workspace API token holding the `ads` scope and materializes the whole
+// video in builder process memory (`Buffer.from(input.base64, "base64")` in
+// `../api/public.ts`) before forwarding it to Meta — a few concurrent
+// requests at 140MB each would push the process toward memory exhaustion.
+// 25MB comfortably covers a short-form vertical ad creative (Meta's own
+// Ads Manager guidance targets well under this for feed/story placements)
+// while capping worst-case concurrent memory use an order of magnitude
+// lower than the private cap. Also bounded by the shared
+// `workspace-token-rate-limit` (120 req/10s per token, `api-rate-limit.ts`).
+const MAX_VIDEO_BASE64_LENGTH = 25_000_000
 const VIDEO_MIME_RE = /^video\/(mp4|quicktime)$/
 
 export const uploadAdVideoPublicRequest = z.object({

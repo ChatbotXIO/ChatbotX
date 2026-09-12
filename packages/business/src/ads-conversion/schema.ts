@@ -1,4 +1,5 @@
 import {
+  adsConversionCapiStatusSchema,
   adsConversionChannelSchema,
   adsConversionEventTypeSchema,
   adsConversionRuleModel,
@@ -326,6 +327,15 @@ export const listAllChannelAdsExportRowsInput = withOrderedDateRange(
 export type ListAllChannelAdsExportRowsInput = z.input<
   typeof listAllChannelAdsExportRowsInput
 >
+
+export const updateAdsCapiStatusInput = z.object({
+  id: z.string().min(1),
+  workspaceId: z.string().min(1),
+  from: z.literal("pending"),
+  to: adsConversionCapiStatusSchema.exclude(["pending"]),
+  capiSentAt: z.date().optional(),
+})
+export type UpdateAdsCapiStatusInput = z.infer<typeof updateAdsCapiStatusInput>
 
 export const retargetAdInput = z
   .object({

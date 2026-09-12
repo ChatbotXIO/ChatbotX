@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { facebookAdAccountSchema } from "@chatbotx.io/integration-facebook-ads"
+import { ORPCError } from "@orpc/server"
 import { z } from "zod"
 import {
   possibleErrorsOnCreatingResource,
@@ -15,6 +16,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { ADS_CAMPAIGNS_INSIGHTS_PATH } from "../lib/api-paths"
 import { getMessagingAdsContextForIntegration } from "../lib/facebook-ads-runner"
 import { toMessagingAdOperationResource } from "../lib/resource-mapper"
 import {
@@ -45,6 +47,23 @@ const messagingAdOperationPublicResource = messagingAdOperationResource.omit({
   workspaceId: true,
 })
 
+/**
+ * A read_only token must not be able to force an uncached Graph call on
+ * every request — every cached Graph-backed route below (`listCampaigns`,
+ * `getCampaignsInsights`, `listCampaignAdAccounts`,
+ * `getCampaignAdAccountDetails`) accepts a `refresh` param, and honoring it
+ * unconditionally would let a read_only caller bypass the cache at the
+ * token's full rate limit on every call — the exact cost/rate surface a
+ * read-only scope is meant to avoid. Only a full-permission token's
+ * `refresh` is honored; a read_only caller still gets a fresh page
+ * occasionally via the cache's own TTL.
+ */
+const resolveForceRefresh = (
+  context: { apiToken?: { permission?: string } },
+  refresh: boolean | undefined,
+): boolean | undefined =>
+  context.apiToken?.permission === "read_only" ? false : refresh
+
 const toPublicOperationResource = (
   row: Parameters<typeof toMessagingAdOperationResource>[0],
 ) => {
@@ -74,6 +93,7 @@ export const adsCampaignPublicRouter = {
       path: "/v1/ads/campaigns",
       summary:
         "Create a messaging ad (campaign + ad set + creative + ad, all PAUSED). Created without a `createdBy` — workspace API tokens have no associated user.",
+      successStatus: 201,
       tags: ["Ads"],
     })
     .input(createMessagingAdPublicRequest)
@@ -84,12 +104,23 @@ export const adsCampaignPublicRouter = {
       // single source of truth for this schema's rules — CREDIT rejection,
       // special-ad-category country, adSet time ordering, and the
       // imageKey-ownership refine that needs `workspaceId` in scope) after
-      // merging in the token's resolved workspace.
-      const parsed = createMessagingAdRequest.parse({
+      // merging in the token's resolved workspace. `safeParse` (not
+      // `.parse`) so a rejection here is an explicit 422 we control, rather
+      // than a raw `ZodError` bubbling up to the generic oRPC error handler
+      // (which does not remap it and would otherwise surface a 500 for what
+      // is really a client-input problem).
+      const result = createMessagingAdRequest.safeParse({
         ...input,
         workspaceId: context.workspace.id,
       })
-      const record = await messagingAdCampaignService.createDraft(parsed)
+      if (!result.success) {
+        throw new ORPCError("invalidRequestData", {
+          message: "Input validation failed",
+          status: 422,
+          data: { issues: result.error.issues },
+        })
+      }
+      const record = await messagingAdCampaignService.createDraft(result.data)
       return toPublicOperationResource({ ...record, effectiveStatus: null })
     }),
 
@@ -182,17 +213,22 @@ export const adsCampaignPublicRouter = {
       const rows = await messagingAdCampaignService.list({
         ...input,
         workspaceId: context.workspace.id,
-        forceRefresh: refresh,
+        forceRefresh: resolveForceRefresh(context, refresh),
       })
       return { data: rows.map(toPublicOperationResource) }
     }),
 
   getCampaignsInsights: workspaceTokenAuthAPI
     .route({
-      // POST (not GET) despite being read-only — `adIds` is an array; mirrors
-      // the private `getMessagingAdsInsights` POST-for-read precedent.
+      // POST (not GET) despite being read-only — `adIds` is an array of up
+      // to 500 entries, too large for a safe GET query string; mirrors the
+      // private `getMessagingAdsInsights` POST-for-read precedent. A
+      // read_only token can still call this: `ADS_CAMPAIGNS_INSIGHTS_PATH`
+      // is allowlisted in `READ_ONLY_TOKEN_ALLOWED_POST_PATHS`
+      // (`lib/workspace/authorize-workspace-access.ts`) — both sides read
+      // the same constant (`../lib/api-paths`), so they cannot drift.
       method: "POST",
-      path: "/v1/ads/campaigns/insights",
+      path: ADS_CAMPAIGNS_INSIGHTS_PATH,
       summary:
         "Ads Insights for a set of messaging ads (impressions/reach/spend/clicks/messaging conversations started/cost-per-conversation)",
       tags: ["Ads"],
@@ -207,7 +243,10 @@ export const adsCampaignPublicRouter = {
       data: await messagingAdCampaignService.listInsights({
         ...input,
         workspaceId: context.workspace.id,
-        forceRefresh: refresh,
+        // Up to MAX_INSIGHTS_AD_IDS (500) ad ids per call, at up to the
+        // token's own rate limit, is a real cost/rate surface even though it
+        // mutates no app data — see `resolveForceRefresh`.
+        forceRefresh: resolveForceRefresh(context, refresh),
       }),
     })),
 
@@ -226,7 +265,7 @@ export const adsCampaignPublicRouter = {
       data: await listCachedMessagingAdAccounts({
         ...input,
         workspaceId: context.workspace.id,
-        forceRefresh: refresh,
+        forceRefresh: resolveForceRefresh(context, refresh),
       }),
     })),
 
@@ -247,7 +286,7 @@ export const adsCampaignPublicRouter = {
       getCachedMessagingAdAccountDetails({
         ...input,
         workspaceId: context.workspace.id,
-        forceRefresh: refresh,
+        forceRefresh: resolveForceRefresh(context, refresh),
       }),
     ),
 

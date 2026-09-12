@@ -96,9 +96,14 @@ export type CtwaSegmentPredicateInput = {
    *    ad-referral predicate + `ContactInbox.channel` for
    *    messenger/instagram — there is no `ctwaClid` equivalent for
    *    CTM/CTID);
-   *  - omitted WITH `integrationWhatsappId`: legacy WhatsApp caller —
-   *    `ctwaClid`-keyed conversations, `channel='whatsapp'`-scoped events —
-   *    every pre-generalization caller keeps working unchanged;
+   *  - omitted WITH exactly one of `integrationWhatsappId` /
+   *    `integrationMessengerId` / `integrationInstagramId`: legacy caller for
+   *    that channel — scoped identically to passing the matching explicit
+   *    `channel` (every pre-generalization WhatsApp caller keeps working
+   *    unchanged, and a messenger/instagram integration id alone is enough to
+   *    scope both the `conversations` and `leads`/`purchases` branches — see
+   *    `buildConversationsPredicate`'s `isWhatsapp`/`isMessenger`/
+   *    `isInstagram`);
    *  - omitted with NO integration id: ANY channel (the saved
    *    contact-filter contract of `ctwaRetargetConditionSchema`) —
    *    `ctwaClid` OR ad-referral conversations, unfiltered-channel events.
@@ -161,13 +166,22 @@ export function buildCtwaSegmentPredicate(
   if (input.channel) {
     predicates.push(eq(adsConversionEventModel.channel, input.channel))
   } else if (input.integrationWhatsappId) {
-    // "channel omitted = WhatsApp behavior" must hold for the events branch
-    // too: a WhatsApp-scoped legacy caller (integration id, no channel) would
+    // "channel omitted = that channel's behavior" must hold for the events
+    // branch too: a legacy caller (integration id, no channel) would
     // otherwise match same-adId events from any channel. Callers that omit
-    // BOTH stay unfiltered on purpose — the saved contact-filter contract is
-    // "any channel" when no narrowing is chosen (see ctwaRetargetConditionSchema).
+    // every integration id AND `channel` stay unfiltered on purpose — the
+    // saved contact-filter contract is "any channel" when no narrowing is
+    // chosen (see ctwaRetargetConditionSchema).
     predicates.push(
       eq(adsConversionEventModel.channel, channelTypes.enum.whatsapp),
+    )
+  } else if (input.integrationMessengerId) {
+    predicates.push(
+      eq(adsConversionEventModel.channel, channelTypes.enum.messenger),
+    )
+  } else if (input.integrationInstagramId) {
+    predicates.push(
+      eq(adsConversionEventModel.channel, channelTypes.enum.instagram),
     )
   }
   if (input.integrationWhatsappId) {
@@ -208,23 +222,41 @@ export function buildCtwaSegmentPredicate(
 function buildConversationsPredicate(input: CtwaSegmentPredicateInput): SQL {
   // Channel semantics must mirror the leads/purchases branch above so a
   // saved filter/segment counts a consistent population across segments:
-  //  - explicit "whatsapp" (or the legacy channel-omitted +
-  //    integrationWhatsappId caller): ctwaClid-keyed, byte-for-byte the
-  //    pre-generalization predicate;
-  //  - explicit "messenger"/"instagram": ad-referral + ContactInbox.channel;
-  //  - BOTH channel and integration omitted: ANY channel — the saved
+  //  - explicit "whatsapp"/"messenger"/"instagram" (or channel omitted +
+  //    exactly that channel's integration id): scoped to that channel —
+  //    ctwaClid-keyed for whatsapp, ad-referral + ContactInbox.channel for
+  //    messenger/instagram — byte-for-byte the pre-generalization predicate
+  //    for the whatsapp case, and the events branch's per-integration-id
+  //    filter (`buildCtwaSegmentPredicate` above) for messenger/instagram;
+  //  - BOTH channel and every integration id omitted: ANY channel — the saved
   //    contact-filter contract (ctwaRetargetConditionSchema) — via the shared
   //    ctwaClid-OR-ad-referral predicate, matching the events branch which
   //    applies no channel filter in that case.
-  // The channel this segment is scoped to, or `null` for "any channel". The
-  // legacy caller passes no `channel`, only `integrationWhatsappId` — that is
-  // still WhatsApp, hence the literal rather than a bare `input.channel`.
+  // The channel this segment is scoped to, or `null` for "any channel". A
+  // legacy caller passes no `channel`, only one integration id — that still
+  // resolves to that integration's channel, hence the fallback below rather
+  // than a bare `input.channel`.
   const isWhatsapp =
     input.channel === channelTypes.enum.whatsapp ||
     (!input.channel && Boolean(input.integrationWhatsappId))
-  const scopedChannel: AdsEligibleChannelType | null = isWhatsapp
-    ? channelTypes.enum.whatsapp
-    : ((input.channel as AdsEligibleChannelType | undefined) ?? null)
+  const isMessenger =
+    input.channel === channelTypes.enum.messenger ||
+    (!input.channel && Boolean(input.integrationMessengerId))
+  const isInstagram =
+    input.channel === channelTypes.enum.instagram ||
+    (!input.channel && Boolean(input.integrationInstagramId))
+  const scopedChannel: AdsEligibleChannelType | null = (() => {
+    if (isWhatsapp) {
+      return channelTypes.enum.whatsapp
+    }
+    if (isMessenger) {
+      return channelTypes.enum.messenger
+    }
+    if (isInstagram) {
+      return channelTypes.enum.instagram
+    }
+    return null
+  })()
   const referralPredicate = (): SQL =>
     scopedChannel
       ? adConversationPredicate(scopedChannel)
@@ -266,7 +298,7 @@ function buildConversationsPredicate(input: CtwaSegmentPredicateInput): SQL {
         input.workspaceId,
       ),
     )
-  } else if (input.channel === "messenger" && input.integrationMessengerId) {
+  } else if (isMessenger && input.integrationMessengerId) {
     predicates.push(
       integrationInboxExists(
         integrationInboxModelFactoryByChannel.messenger(),
@@ -274,7 +306,7 @@ function buildConversationsPredicate(input: CtwaSegmentPredicateInput): SQL {
         input.workspaceId,
       ),
     )
-  } else if (input.channel === "instagram" && input.integrationInstagramId) {
+  } else if (isInstagram && input.integrationInstagramId) {
     predicates.push(
       integrationInboxExists(
         integrationInboxModelFactoryByChannel.instagram(),

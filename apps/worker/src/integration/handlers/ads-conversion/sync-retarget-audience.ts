@@ -98,7 +98,7 @@ async function syncRetargetAudiencePages(input: {
   let totalBatches = 0
 
   for (;;) {
-    const rows = await adsConversionService.listRetargetContacts({
+    const { rows, hasMore } = await adsConversionService.listRetargetContacts({
       workspaceId: input.data.workspaceId,
       segment: input.data.segment,
       adId: input.data.adId,
@@ -142,7 +142,7 @@ async function syncRetargetAudiencePages(input: {
     }
 
     afterId = rows.at(-1)?.id
-    if (rows.length < RETARGET_CONTACT_PAGE_SIZE || !afterId) {
+    if (!(hasMore && afterId)) {
       break
     }
   }

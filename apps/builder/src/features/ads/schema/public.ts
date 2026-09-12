@@ -96,21 +96,47 @@ const ctwaFunnelPublicShape = dateRangeShape.extend({
   timezone: z.string().optional(),
 })
 
+// Shared by the funnel and export public requests so the two endpoints
+// cannot silently disagree on the same input contract (see the export
+// refine below): `allChannels` is exclusive with `channel` and every
+// integration id, and at most one integration id may be given at once — a
+// caller combining, say, `integrationWhatsappId` and
+// `integrationMessengerId` would otherwise build an unsatisfiable
+// conjunction downstream and silently get zero rows back instead of a 422.
+const countIntegrationIds = (input: {
+  integrationWhatsappId?: string
+  integrationMessengerId?: string
+  integrationInstagramId?: string
+}): number =>
+  [
+    input.integrationWhatsappId,
+    input.integrationMessengerId,
+    input.integrationInstagramId,
+  ].filter((id) => id !== undefined).length
+
 export const getCtwaFunnelPublicRequest = withPublicDateRange(
   ctwaFunnelPublicShape,
-).refine(
-  (input) =>
-    !(
-      input.allChannels &&
-      (input.integrationWhatsappId ||
-        input.integrationMessengerId ||
-        input.integrationInstagramId)
-    ),
-  {
-    message: "allChannels cannot be combined with an integration id",
-    path: ["allChannels"],
-  },
 )
+  .refine(
+    (input) =>
+      !(
+        input.allChannels &&
+        (input.channel ||
+          input.integrationWhatsappId ||
+          input.integrationMessengerId ||
+          input.integrationInstagramId)
+      ),
+    {
+      message:
+        "allChannels cannot be combined with channel or an integration id",
+      path: ["allChannels"],
+    },
+  )
+  .refine((input) => countIntegrationIds(input) <= 1, {
+    message:
+      "Only one of integrationWhatsappId, integrationMessengerId, integrationInstagramId may be provided",
+    path: ["integrationWhatsappId"],
+  })
 
 const adsConversionExportPublicShape = dateRangeShape.extend({
   segment: adsConversionExportSegments,
@@ -126,10 +152,27 @@ const adsConversionExportPublicShape = dateRangeShape.extend({
 
 export const listAdsConversionExportRowsPublicRequest = withPublicDateRange(
   adsConversionExportPublicShape,
-).refine((input) => !(input.allChannels && input.channel), {
-  message: "allChannels cannot be combined with channel",
-  path: ["allChannels"],
-})
+)
+  .refine(
+    (input) =>
+      !(
+        input.allChannels &&
+        (input.channel ||
+          input.integrationWhatsappId ||
+          input.integrationMessengerId ||
+          input.integrationInstagramId)
+      ),
+    {
+      message:
+        "allChannels cannot be combined with channel or an integration id",
+      path: ["allChannels"],
+    },
+  )
+  .refine((input) => countIntegrationIds(input) <= 1, {
+    message:
+      "Only one of integrationWhatsappId, integrationMessengerId, integrationInstagramId may be provided",
+    path: ["integrationWhatsappId"],
+  })
 
 export const adsConversionExportRowPublicResource = z.object({
   id: z.string(),

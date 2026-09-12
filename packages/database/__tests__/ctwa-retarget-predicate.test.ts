@@ -101,4 +101,74 @@ describe("buildCtwaSegmentPredicate — conversations segment channel scoping", 
     expect(query.sql).toContain("ctwaClid")
     expect(query.sql).not.toContain('"ContactInbox"."channel" =')
   })
+
+  test("integrationMessengerId alone (no channel) still scopes to messenger — the legacy-caller fallback", () => {
+    const query = render(
+      buildCtwaSegmentPredicate({
+        segment: "conversations",
+        integrationMessengerId: "im-1",
+        workspaceId: "ws-1",
+        since,
+        until,
+      }),
+    )
+
+    expect(query.sql).toContain('"ContactInbox"."channel" =')
+    expect(query.sql).toContain("EXISTS")
+    expect(query.params).toContain("messenger")
+    expect(query.params).toContain("im-1")
+    expect(query.params).not.toContain("instagram")
+  })
+
+  test("integrationInstagramId alone (no channel) still scopes to instagram — the legacy-caller fallback", () => {
+    const query = render(
+      buildCtwaSegmentPredicate({
+        segment: "conversations",
+        integrationInstagramId: "ig-1",
+        workspaceId: "ws-1",
+        since,
+        until,
+      }),
+    )
+
+    expect(query.sql).toContain('"ContactInbox"."channel" =')
+    expect(query.sql).toContain("EXISTS")
+    expect(query.params).toContain("instagram")
+    expect(query.params).toContain("ig-1")
+    expect(query.params).not.toContain("messenger")
+  })
+})
+
+describe("buildCtwaSegmentPredicate — leads/purchases segment channel scoping", () => {
+  test("integrationMessengerId alone (no channel) scopes AdsConversionEvent.channel to messenger", () => {
+    const query = render(
+      buildCtwaSegmentPredicate({
+        segment: "leads",
+        integrationMessengerId: "im-1",
+        workspaceId: "ws-1",
+        since,
+        until,
+      }),
+    )
+
+    expect(query.sql).toContain('"AdsConversionEvent"."channel" =')
+    expect(query.params).toContain("messenger")
+    expect(query.params).not.toContain("instagram")
+  })
+
+  test("integrationInstagramId alone (no channel) scopes AdsConversionEvent.channel to instagram", () => {
+    const query = render(
+      buildCtwaSegmentPredicate({
+        segment: "purchases",
+        integrationInstagramId: "ig-1",
+        workspaceId: "ws-1",
+        since,
+        until,
+      }),
+    )
+
+    expect(query.sql).toContain('"AdsConversionEvent"."channel" =')
+    expect(query.params).toContain("instagram")
+    expect(query.params).not.toContain("messenger")
+  })
 })

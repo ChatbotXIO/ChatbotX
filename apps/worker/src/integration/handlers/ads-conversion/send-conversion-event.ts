@@ -1,6 +1,7 @@
 import {
   ADS_INTEGRATION_FK_BY_CHANNEL,
   type AdReferralChannel,
+  adsConversionService,
   contactInboxService,
   contactService,
   hashContactUserData,
@@ -15,7 +16,6 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { logProviderError } from "@chatbotx.io/business/error-log"
-import { adsConversionEventRepository } from "@chatbotx.io/database/repositories"
 import type { AdsConversionEventModel } from "@chatbotx.io/database/types"
 import {
   buildDatasetName,
@@ -81,7 +81,7 @@ const capiEventNameByEventType = {
 async function markEventFailed(
   event: Pick<AdsConversionEventModel, "id" | "workspaceId">,
 ): Promise<void> {
-  await adsConversionEventRepository.updateCapiStatus({
+  await adsConversionService.updateCapiStatus({
     id: event.id,
     workspaceId: event.workspaceId,
     ...failedStatus,
@@ -170,7 +170,7 @@ async function reportTerminalCapiFailure(input: {
 }): Promise<void> {
   const { event, error, provider } = input
 
-  await adsConversionEventRepository.updateCapiStatus({
+  await adsConversionService.updateCapiStatus({
     id: event.id,
     workspaceId: event.workspaceId,
     ...failedStatus,
@@ -248,7 +248,7 @@ async function handleSendWhatsappConversionEvent(
       },
       "AdsConversionEvent missing WhatsApp attribution fields; marking failed",
     )
-    await adsConversionEventRepository.updateCapiStatus({
+    await adsConversionService.updateCapiStatus({
       id: event.id,
       workspaceId: event.workspaceId,
       ...failedStatus,
@@ -273,7 +273,7 @@ async function handleSendWhatsappConversionEvent(
     integration,
   )
   if (auth.source !== "manual" && !scopeState.hasCapiScope) {
-    await adsConversionEventRepository.updateCapiStatus({
+    await adsConversionService.updateCapiStatus({
       id: event.id,
       workspaceId: event.workspaceId,
       ...skippedNoScopeStatus,
@@ -340,7 +340,7 @@ async function handleSendWhatsappConversionEvent(
     return
   }
 
-  await adsConversionEventRepository.updateCapiStatus({
+  await adsConversionService.updateCapiStatus({
     id: event.id,
     workspaceId: event.workspaceId,
     ...sentStatus,
@@ -473,7 +473,7 @@ async function handleSendMetaChannelConversionEvent(
         : await refreshScopeCache(channel, integration)
 
     if (auth.source === "manual" && !integrationForSend.datasetId) {
-      await adsConversionEventRepository.updateCapiStatus({
+      await adsConversionService.updateCapiStatus({
         id: event.id,
         workspaceId: event.workspaceId,
         ...skippedNoScopeStatus,
@@ -482,7 +482,7 @@ async function handleSendMetaChannelConversionEvent(
     }
 
     if (auth.source !== "manual" && !integrationForSend.hasCapiScope) {
-      await adsConversionEventRepository.updateCapiStatus({
+      await adsConversionService.updateCapiStatus({
         id: event.id,
         workspaceId: event.workspaceId,
         ...skippedNoScopeStatus,
@@ -545,7 +545,7 @@ async function handleSendMetaChannelConversionEvent(
     return
   }
 
-  await adsConversionEventRepository.updateCapiStatus({
+  await adsConversionService.updateCapiStatus({
     id: event.id,
     workspaceId: event.workspaceId,
     ...sentStatus,
@@ -557,7 +557,7 @@ export async function handleSendConversionEvent(
   data: SendConversionEventData,
 ): Promise<void> {
   await withBlockedOwnerGuard(data.workspaceId, async () => {
-    const event = await adsConversionEventRepository.findWorkspaceEvent({
+    const event = await adsConversionService.findWorkspaceEvent({
       id: data.adsConversionEventId,
       workspaceId: data.workspaceId,
     })

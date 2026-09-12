@@ -103,14 +103,16 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     }
 
     const method = procedure["~orpc"].route.method
+    const path = procedure["~orpc"].route.path
 
-    // Read-only tokens may only GET/HEAD — unlike the owner-quota gate below,
-    // DELETE is not exempt here: a read_only token must not be able to
-    // delete data. Checked before the owner-quota gate — no DB call needed
-    // to enforce this.
+    // Read-only tokens may only GET/HEAD (plus a narrow, explicit allowlist
+    // of POST-for-read routes — see `READ_ONLY_TOKEN_ALLOWED_POST_PATHS`) —
+    // unlike the owner-quota gate below, DELETE is not exempt here: a
+    // read_only token must not be able to delete data. Checked before the
+    // owner-quota gate — no DB call needed to enforce this.
     if (
       apiToken.permission === "read_only" &&
-      !isReadOnlyTokenAllowedMethod(method)
+      !isReadOnlyTokenAllowedMethod(method, path)
     ) {
       throw new ORPCError("FORBIDDEN", {
         message: "Read-only token cannot perform this operation",
