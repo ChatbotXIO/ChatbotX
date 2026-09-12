@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const {
   mockCount,
   mockCreateId,
+  mockDispatchAuditRecord,
   mockFindFirst,
   mockFindMany,
   mockInboxCreate,
@@ -31,6 +32,7 @@ const {
     mockUpdateWhere,
     mockCount: vi.fn(async () => 25),
     mockCreateId: vi.fn(() => `id-${++createIdCallCount}`),
+    mockDispatchAuditRecord: vi.fn(),
     mockFindFirst: vi.fn(),
     mockFindMany: vi.fn(async () => []),
     mockInboxCreate: vi.fn(async () => ({
@@ -94,6 +96,10 @@ vi.mock("../src/inbox/service", () => ({
   inboxService: { create: mockInboxCreate, disconnect: vi.fn() },
 }))
 
+vi.mock("../src/audit/dispatcher", () => ({
+  dispatchAuditRecord: mockDispatchAuditRecord,
+}))
+
 vi.mock("../src/template/installed-resource.service", () => ({
   assertDeletable: vi.fn(async () => undefined),
 }))
@@ -155,6 +161,12 @@ describe("integrationWebchatService.createWithWorkspace", () => {
     expect(mockWorkspaceCreate).not.toHaveBeenCalled()
     expect(withWorkspace.createdWorkspace).toBe(false)
     expect(withWorkspace.workspaceId).toBe("ws-1")
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      userId: "user-1",
+      workspaceId: "ws-1",
+      action: "connect",
+      detail: "connected a new Webchat channel (#webchat-1)",
+    })
 
     vi.clearAllMocks()
     mockTransaction.mockImplementation(
@@ -179,6 +191,12 @@ describe("integrationWebchatService.createWithWorkspace", () => {
     expect(mockWorkspaceCreate).toHaveBeenCalledTimes(1)
     expect(withoutWorkspace.createdWorkspace).toBe(true)
     expect(withoutWorkspace.workspaceId).toBe("ws-new")
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      userId: "user-1",
+      workspaceId: "ws-new",
+      action: "connect",
+      detail: "connected a new Webchat channel (#webchat-1)",
+    })
   })
 })
 
