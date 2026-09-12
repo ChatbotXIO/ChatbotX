@@ -6,7 +6,6 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { GoogleSheetsAuthValue } from "@chatbotx.io/integration-google-sheets"
 import { integration } from "@chatbotx.io/integration-google-sheets"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListWorksheetHeadersRequest,
   ListWorksheetsRequest,
@@ -17,8 +16,6 @@ export const listWorksheets = async (
 ): Promise<{
   data: string[]
 }> => {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
-
   const spreadsheet = await findOrFail({
     table: spreadsheetModel,
     where: {
@@ -59,8 +56,6 @@ export const listWorksheetHeaders = async (
 ): Promise<{
   data: string[]
 }> => {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
-
   const spreadsheet = await findOrFail({
     table: spreadsheetModel,
     where: {

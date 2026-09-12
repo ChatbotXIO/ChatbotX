@@ -1,8 +1,6 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { reflinkModel } from "@chatbotx.io/database/schema"
-import { invalidateCacheByTags } from "@chatbotx.io/redis"
+import { qrCodeService } from "@chatbotx.io/business"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -10,7 +8,6 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { getWorkspaceCacheTag } from "../queries"
 
 export const deleteQrCodesAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -23,16 +20,9 @@ export const deleteQrCodesAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await db
-        .delete(reflinkModel)
-        .where(
-          and(
-            eq(reflinkModel.workspaceId, workspaceId),
-            eq(reflinkModel.type, "qrCode"),
-            inArray(reflinkModel.id, parsedInput.ids),
-          ),
-        )
-
-      await invalidateCacheByTags([getWorkspaceCacheTag(workspaceId)])
+      await qrCodeService.deleteMany({
+        workspaceId,
+        ids: parsedInput.ids,
+      })
     },
   )

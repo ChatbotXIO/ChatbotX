@@ -4,6 +4,7 @@ import {
   db,
   eq,
   ilike,
+  inArray,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
 import { flowModel, reflinkModel } from "@chatbotx.io/database/schema"
@@ -16,7 +17,7 @@ import {
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { validationException } from "../errors"
+import { notFoundException, validationException } from "../errors"
 
 const QR_CODES_CACHE_TTL_SECONDS = 60 * 60
 
@@ -72,6 +73,8 @@ type CreateQrCodeData = Omit<
   name: string
 }
 
+type UpdateQrCodeData = Partial<CreateQrCodeData>
+
 function getListCacheKey(input: ListQrCodesInput): string {
   const parts: Record<string, string | number | null | undefined> = {
     workspaceId: input.workspaceId,
@@ -106,6 +109,14 @@ class QRCodeService extends BaseService {
     })
   }
 
+  async findOrFail({ workspaceId, id }: { workspaceId: string; id: string }) {
+    const qrCode = await this.find({ workspaceId, id })
+    if (!qrCode) {
+      throw notFoundException("QR Code not found")
+    }
+    return qrCode
+  }
+
   async create(input: {
     workspaceId: string
     data: CreateQrCodeData
@@ -134,6 +145,63 @@ class QRCodeService extends BaseService {
       }
       throw error
     }
+  }
+
+  async update(
+    ctx: { workspaceId: string; id: string },
+    data: UpdateQrCodeData,
+    duplicateNameMessage: string,
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    const qrCode = await this.findOrFail(ctx)
+    const { size, name, ...rest } = data
+    const qrStyles =
+      size === undefined
+        ? undefined
+        : { ...((qrCode.qrStyles as { size: number } | null) ?? {}), size }
+
+    try {
+      await tx
+        .update(reflinkModel)
+        .set({
+          ...rest,
+          ...(name === undefined ? {} : { name: `qr_${name}` }),
+          ...(qrStyles === undefined ? {} : { qrStyles }),
+        })
+        .where(
+          and(
+            eq(reflinkModel.id, qrCode.id),
+            eq(reflinkModel.workspaceId, ctx.workspaceId),
+            eq(reflinkModel.type, "qrCode"),
+          ),
+        )
+
+      await this.invalidateCacheTags(qrCodeWorkspaceCacheTag(ctx.workspaceId))
+    } catch (error) {
+      if (isUniqueViolationError(error)) {
+        throw validationException("name", duplicateNameMessage)
+      }
+      throw error
+    }
+  }
+
+  async deleteMany(input: {
+    workspaceId: string
+    ids: string[]
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { tx = db, workspaceId, ids } = input
+    await tx
+      .delete(reflinkModel)
+      .where(
+        and(
+          eq(reflinkModel.workspaceId, workspaceId),
+          eq(reflinkModel.type, "qrCode"),
+          inArray(reflinkModel.id, ids),
+        ),
+      )
+
+    await this.invalidateCacheTags(qrCodeWorkspaceCacheTag(workspaceId))
   }
 
   async list(input: ListQrCodesInput): Promise<ListQrCodesResult> {
