@@ -59,7 +59,6 @@ const DEFAULTS_MISSING_FROM_DATABASE = [
   "AIAgent.messages",
   "AIAgent.models",
   "AIAgent.tools",
-  "AIAssistant.aiTriggerIds",
   "AIAssistant.attachmentIds",
   "AIMCPServer.selectedTools",
   "AutomatedResponse.keywords",

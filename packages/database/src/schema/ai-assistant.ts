@@ -14,7 +14,6 @@ export const aiAssistantModel = pgTable("AIAssistant", {
   name: text().notNull(),
   prompt: text().notNull(),
   model: text().notNull(),
-  aiTriggerIds: text().array().notNull().default(sql`[]`),
   attachmentIds: text().array().notNull().default(sql`[]`),
   temperature: doublePrecision().notNull(),
 })
