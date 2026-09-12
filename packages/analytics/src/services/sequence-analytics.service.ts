@@ -100,6 +100,7 @@ export class SequenceAnalyticsService {
   }): Promise<{
     contactInboxIds: string[]
     contactEventMap: Map<string, ContactEventData>
+    total: number
   }> {
     return sequenceStatsRepository.getContacts(input)
   }

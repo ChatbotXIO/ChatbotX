@@ -45,6 +45,7 @@ describe("sequenceService.listStepContactsPage", () => {
     mocks.getContacts.mockResolvedValueOnce({
       contactInboxIds: [],
       contactEventMap: new Map(),
+      total: 0,
     })
 
     const result = await sequenceService.listStepContactsPage({
@@ -52,19 +53,19 @@ describe("sequenceService.listStepContactsPage", () => {
       sequenceId: "seq-1",
       stepId: "step-1",
       eventType: "message:sent",
-      total: 5,
       page: 1,
       perPage: 20,
     })
 
-    expect(result).toEqual({ data: [], total: 5, pageCount: 1 })
+    expect(result).toEqual({ data: [], total: 0, pageCount: 0 })
     expect(mocks.findManyByIds).not.toHaveBeenCalled()
   })
 
-  test("defaults a falsy total to 0", async () => {
+  test("takes total from the repository, not a caller-supplied value", async () => {
     mocks.getContacts.mockResolvedValueOnce({
       contactInboxIds: [],
       contactEventMap: new Map(),
+      total: 5,
     })
 
     const result = await sequenceService.listStepContactsPage({
@@ -72,13 +73,63 @@ describe("sequenceService.listStepContactsPage", () => {
       sequenceId: "seq-1",
       stepId: "step-1",
       eventType: "message:sent",
-      total: 0,
       page: 1,
       perPage: 20,
     })
 
-    expect(result.total).toBe(0)
-    expect(result.pageCount).toBe(0)
+    expect(result.total).toBe(5)
+    expect(result.pageCount).toBe(1)
+    expect(mocks.getContacts).toHaveBeenCalledWith(
+      expect.not.objectContaining({ total: expect.anything() }),
+    )
+  })
+
+  test("tracks total for event types outside getStepStats's five keys (flow:ref, message:received)", async () => {
+    mocks.getContacts.mockResolvedValueOnce({
+      contactInboxIds: ["ci-1"],
+      contactEventMap: new Map([
+        [
+          "ci-1",
+          {
+            contactId: "contact-1",
+            occurredAt: "2026-01-01T00:00:00.000Z",
+            errorContent: null,
+          },
+        ],
+      ]),
+      total: 1,
+    })
+    mocks.findManyByIds.mockResolvedValueOnce([
+      {
+        id: "ci-1",
+        sourceId: "src-1",
+        channel: "whatsapp",
+        conversation: { id: "conv-1" },
+        contact: {
+          id: "contact-1",
+          firstName: "Ada",
+          lastName: null,
+          fullName: "Ada",
+          avatar: null,
+        },
+      },
+    ])
+
+    const result = await sequenceService.listStepContactsPage({
+      workspaceId: "ws-1",
+      sequenceId: "seq-1",
+      stepId: "step-1",
+      eventType: "flow:ref",
+      page: 1,
+      perPage: 20,
+    })
+
+    // Previously this event type fell outside getStepStats's five keys and
+    // reported total: 0 alongside a non-empty page. Now total is derived
+    // from the same filter as the page itself.
+    expect(result.total).toBe(1)
+    expect(result.pageCount).toBe(1)
+    expect(result.data).toHaveLength(1)
   })
 
   test("joins recipient events with contact-inbox details, defaulting a missing conversationId to an empty string", async () => {
@@ -102,6 +153,7 @@ describe("sequenceService.listStepContactsPage", () => {
           },
         ],
       ]),
+      total: 2,
     })
     mocks.findManyByIds.mockResolvedValueOnce([
       {
@@ -137,7 +189,6 @@ describe("sequenceService.listStepContactsPage", () => {
       sequenceId: "seq-1",
       stepId: "step-1",
       eventType: "message:sent",
-      total: 2,
       page: 1,
       perPage: 20,
     })
@@ -160,7 +211,7 @@ describe("sequenceService.listStepContactsPage", () => {
     })
   })
 
-  test("drops a recipient whose contact-inbox no longer resolves, leaving pageCount driven by the caller-supplied total", async () => {
+  test("drops a recipient whose contact-inbox no longer resolves, leaving pageCount driven by the repository total", async () => {
     mocks.getContacts.mockResolvedValueOnce({
       contactInboxIds: ["ci-1", "ci-gone"],
       contactEventMap: new Map([
@@ -181,6 +232,7 @@ describe("sequenceService.listStepContactsPage", () => {
           },
         ],
       ]),
+      total: 2,
     })
     // `getContacts` scopes by the sequence's workspace while `findManyByIds`
     // scopes by `Contact.workspaceId`, so a contact deleted or moved out of
@@ -207,13 +259,12 @@ describe("sequenceService.listStepContactsPage", () => {
       sequenceId: "seq-1",
       stepId: "step-1",
       eventType: "message:sent",
-      total: 2,
       page: 1,
       perPage: 20,
     })
 
     // Unresolvable rows are dropped rather than emitted as nulls, and
-    // `pageCount` stays anchored to the caller-supplied total — so
+    // `pageCount` stays anchored to the repository-computed total — so
     // `data.length` can be shorter than the total implies.
     expect(result.data).toHaveLength(1)
     expect(result.total).toBe(2)
@@ -238,6 +289,7 @@ describe("sequenceService.listStepContactsPage", () => {
           },
         ],
       ]),
+      total: 1,
     })
     mocks.findManyByIds.mockResolvedValueOnce([
       {
@@ -260,7 +312,6 @@ describe("sequenceService.listStepContactsPage", () => {
       sequenceId: "seq-1",
       stepId: "step-1",
       eventType: "message:sent",
-      total: 1,
       page: 1,
       perPage: 20,
     })

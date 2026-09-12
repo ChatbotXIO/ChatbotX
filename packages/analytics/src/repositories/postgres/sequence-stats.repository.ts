@@ -188,30 +188,33 @@ export class SequenceStatsRepository extends BaseRepository {
   }): Promise<{
     contactInboxIds: string[]
     contactEventMap: Map<string, ContactEventData>
+    total: number
   }> {
     const { workspaceId, sequenceId, stepId, eventType, page, perPage } = input
     const offset = (page - 1) * perPage
     const t = sequenceDispatchModel
 
     const { eventCondition, orderColumn } = this.buildEventFilter(eventType)
+    const whereCondition = sql`${t.workspaceId} = ${workspaceId} AND ${t.sequenceId} = ${sequenceId} AND ${t.stepId} = ${stepId} AND ${eventCondition}`
 
-    const rows = await db
-      .select({
-        contactInboxId: t.contactInboxId,
-        contactId: t.contactId,
-        deliveredAt: t.deliveredAt,
-        seenAt: t.seenAt,
-        failedAt: t.failedAt,
-        clickedAt: t.clickedAt,
-        errorContent: t.errorContent,
-      })
-      .from(t)
-      .where(
-        sql`${t.workspaceId} = ${workspaceId} AND ${t.sequenceId} = ${sequenceId} AND ${t.stepId} = ${stepId} AND ${eventCondition}`,
-      )
-      .orderBy(sql`${orderColumn} DESC NULLS LAST`)
-      .limit(perPage)
-      .offset(offset)
+    const [rows, [totalRow]] = await Promise.all([
+      db
+        .select({
+          contactInboxId: t.contactInboxId,
+          contactId: t.contactId,
+          deliveredAt: t.deliveredAt,
+          seenAt: t.seenAt,
+          failedAt: t.failedAt,
+          clickedAt: t.clickedAt,
+          errorContent: t.errorContent,
+        })
+        .from(t)
+        .where(whereCondition)
+        .orderBy(sql`${orderColumn} DESC NULLS LAST`)
+        .limit(perPage)
+        .offset(offset),
+      db.select({ total: count() }).from(t).where(whereCondition),
+    ])
 
     const contactInboxIds = rows.map((r) => r.contactInboxId)
     const contactEventMap = new Map<string, ContactEventData>()
@@ -225,7 +228,7 @@ export class SequenceStatsRepository extends BaseRepository {
       })
     }
 
-    return { contactInboxIds, contactEventMap }
+    return { contactInboxIds, contactEventMap, total: totalRow?.total ?? 0 }
   }
 
   async getContactIdsPage(input: {

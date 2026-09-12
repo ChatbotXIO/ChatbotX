@@ -145,6 +145,8 @@ class EmailTopicService {
   }): Promise<EmailTopicModel> {
     const { workspaceId, id, data, tx = db } = props
 
+    await this.findOrFail({ workspaceId, id, tx })
+
     const existing = await tx.query.emailTopicModel.findFirst({
       columns: { id: true },
       where: { name: data.name, workspaceId, id: { ne: id } },

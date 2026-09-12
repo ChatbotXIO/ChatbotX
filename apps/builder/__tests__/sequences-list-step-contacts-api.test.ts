@@ -78,8 +78,8 @@ describe("privateListSequenceStepContactsAPI", () => {
   // The existence check, analytics/contact-inbox joins, and row shaping now
   // live in `sequenceService.listStepContactsPage` (shared orchestration —
   // see `packages/business/__tests__` for coverage of contactId mapping and
-  // the conversationId fallback). This route's job is just to call it,
-  // forward `total` from input, and pass the result through.
+  // the conversationId fallback). This route's job is just to call it and
+  // pass the result through — it must NOT forward a caller-supplied `total`.
   test("calls the service with the request params and returns its result", async () => {
     mocks.listStepContactsPage.mockResolvedValue({
       data: [
@@ -108,7 +108,6 @@ describe("privateListSequenceStepContactsAPI", () => {
         sequenceId: "seq-1",
         stepId: "step-1",
         eventType: "message:sent",
-        total: 1,
         page: 1,
         perPage: 20,
       },
@@ -119,7 +118,6 @@ describe("privateListSequenceStepContactsAPI", () => {
       sequenceId: "seq-1",
       stepId: "step-1",
       eventType: "message:sent",
-      total: 1,
       page: 1,
       perPage: 20,
     })
@@ -145,26 +143,28 @@ describe("privateListSequenceStepContactsAPI", () => {
     })
   })
 
-  test("defaults a missing total to 0 before calling the service", async () => {
+  test("does not forward a caller-supplied total; reports the service's own", async () => {
     mocks.listStepContactsPage.mockResolvedValue({
       data: [],
-      total: 0,
-      pageCount: 0,
+      total: 7,
+      pageCount: 1,
     })
 
-    await mocks.state.handler?.({
+    const result = await mocks.state.handler?.({
       input: {
         workspaceId: "ws-1",
         sequenceId: "seq-1",
         stepId: "step-1",
         eventType: "message:sent",
+        total: 999,
         page: 1,
         perPage: 20,
       },
     })
 
     expect(mocks.listStepContactsPage).toHaveBeenCalledWith(
-      expect.objectContaining({ total: 0 }),
+      expect.not.objectContaining({ total: expect.anything() }),
     )
+    expect(result).toMatchObject({ total: 7, pageCount: 1 })
   })
 })

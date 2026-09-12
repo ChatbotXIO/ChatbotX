@@ -1,5 +1,6 @@
 import { emailTopicService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
@@ -69,9 +70,13 @@ export const emailTopicsPublicRouter = {
     .output(z.object({ id: zodBigintAsString() }))
     .errors(possibleErrorsOnCreatingEmailTopic)
     .handler(async ({ context, input }) => {
+      const folderId =
+        input.folderId && input.folderId !== rootFolderId
+          ? input.folderId
+          : null
       const topic = await emailTopicService.create({
         workspaceId: context.workspace.id,
-        data: input,
+        data: { ...input, folderId },
       })
       return { id: topic.id }
     }),

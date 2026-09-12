@@ -1,5 +1,4 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { z } from "zod"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { createEmailTopicRequest, updateEmailTopicRequest } from "./action"
 import { emailTopicResource } from "./resource"
@@ -23,6 +22,6 @@ export const listEmailTopicsPublicResponse = publicListResponse(
 
 export const createEmailTopicPublicRequest = createEmailTopicRequest
 
-export const updateEmailTopicPublicRequest = updateEmailTopicRequest.and(
-  z.object({ id: zodBigintAsString() }),
-)
+export const updateEmailTopicPublicRequest = updateEmailTopicRequest.extend({
+  id: zodBigintAsString(),
+})

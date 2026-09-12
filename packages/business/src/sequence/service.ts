@@ -218,10 +218,10 @@ class SequenceService extends BaseService {
    * foreign or non-existent `sequenceId` therefore yields an empty page
    * rather than another workspace's rows — it just does not 404.
    *
-   * `total` is optional: the builder passes the total it already fetched
-   * with the step stats, but an API caller has none, so when omitted this
-   * derives it from the same stats source (`sequenceAnalyticsService
-   * .getStepStats`) rather than reporting `pageCount: 0`.
+   * `total` is repository-computed over the same filter as the page
+   * (`sequenceStatsRepository.getContacts`), matching
+   * `broadcastService.listContactsPage` — no caller-supplied `total`, no
+   * fallback to a different aggregate.
    *
    * @remarks Behavior change from the pre-refactor per-handler
    * implementation: a contact-inbox row with no conversation used to be
@@ -239,7 +239,6 @@ class SequenceService extends BaseService {
     sequenceId: string
     stepId: string
     eventType: SequenceStepEventType
-    total?: number
     page: number
     perPage: number
   }): Promise<{
@@ -248,33 +247,8 @@ class SequenceService extends BaseService {
     pageCount: number
   }> {
     const { workspaceId, sequenceId, stepId, eventType, page, perPage } = input
-    // The builder passes the total it already fetched with the step stats;
-    // an API caller has no such value, so derive it from the same stats
-    // source rather than reporting pageCount 0. `??` (not `||`): a step
-    // that legitimately has zero recipients for this event must keep its
-    // real `total: 0` rather than triggering an unnecessary re-fetch.
-    //
-    // `stats[eventType]` doesn't type-check directly: `SequenceStepEventType`
-    // is the union of `messageEventTypeSchema`/`flowEventTypeSchema` (7
-    // values, including `message:received`/`flow:ref`), a wider set than
-    // `getSequenceStepStatsResponse`'s five keys — so a plain index is an
-    // implicit-any error, and an event type outside those five keys is a
-    // real `undefined` at runtime, not just a type-checker gap. `?? 0`
-    // covers that case rather than propagating `NaN` into `pageCount` and
-    // failing this route's own `total: z.number().int()` output schema.
-    const total =
-      input.total ??
-      (
-        (await sequenceAnalyticsService.getStepStats({
-          workspaceId,
-          sequenceId,
-          stepId,
-        })) as Partial<Record<SequenceStepEventType, number>>
-      )[eventType] ??
-      0
-    const pageCount = Math.ceil(total / perPage)
 
-    const { contactInboxIds, contactEventMap } =
+    const { contactInboxIds, contactEventMap, total } =
       await sequenceAnalyticsService.getContacts({
         workspaceId,
         sequenceId,
@@ -283,6 +257,7 @@ class SequenceService extends BaseService {
         page,
         perPage,
       })
+    const pageCount = Math.ceil(total / perPage)
 
     if (contactInboxIds.length === 0) {
       return { data: [], total, pageCount }
