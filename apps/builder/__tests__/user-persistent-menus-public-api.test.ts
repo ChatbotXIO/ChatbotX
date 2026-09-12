@@ -48,22 +48,14 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
 
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
-const userPersistentMenuRepository = {
-  createUserPersistentMenu: vi.fn(),
-  deleteUserPersistentMenus: vi.fn(),
-  listUserPersistentMenusByWorkspace: vi.fn(),
-  updateUserPersistentMenu: vi.fn(),
+const userPersistentMenuService = {
+  listByWorkspace: vi.fn(),
+  findOrFail: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
 }
-vi.mock(
-  "@chatbotx.io/database/repositories",
-  () => userPersistentMenuRepository,
-)
-
-vi.mock("@chatbotx.io/business", () => ({}))
-
-vi.mock("@chatbotx.io/business/errors", () => ({
-  notFoundException: (message: string) => new Error(message),
-}))
+vi.mock("@chatbotx.io/business", () => ({ userPersistentMenuService }))
 
 vi.mock("@chatbotx.io/database/partials", async () => {
   const { z } = await import("zod")
@@ -110,21 +102,54 @@ test("registers the user persistent menus public router under the channels scope
 describe("GET /v1/user-persistent-menus", () => {
   const procedure = findProcedure("GET", "/v1/user-persistent-menus")
 
-  test("lists the token workspace's user persistent menus", async () => {
+  test("lists the token workspace's user persistent menus with pagination", async () => {
     const menus = [{ id: "menu-1", name: "Main menu" }]
-    userPersistentMenuRepository.listUserPersistentMenusByWorkspace.mockResolvedValueOnce(
-      menus,
+    userPersistentMenuService.listByWorkspace.mockResolvedValueOnce(menus)
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { page: 1, perPage: 50 },
+      }),
+    ).resolves.toEqual({ data: menus, pageCount: 1 })
+
+    expect(userPersistentMenuService.listByWorkspace).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+    })
+  })
+})
+
+describe("GET /v1/user-persistent-menus/{id}", () => {
+  const procedure = findProcedure("GET", "/v1/user-persistent-menus/{id}")
+
+  test("delegates to userPersistentMenuService.findOrFail", async () => {
+    const menu = { id: "menu-1", name: "Main menu" }
+    userPersistentMenuService.findOrFail.mockResolvedValueOnce(menu)
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "menu-1" },
+      }),
+    ).resolves.toEqual(menu)
+
+    expect(userPersistentMenuService.findOrFail).toHaveBeenCalledWith({
+      id: "menu-1",
+      workspaceId: "workspace-1",
+    })
+  })
+
+  test("propagates the service's not-found rejection", async () => {
+    userPersistentMenuService.findOrFail.mockRejectedValueOnce(
+      new Error("User persistent menu not found"),
     )
 
     await expect(
       procedure.handler?.({
         context: { workspace: { id: "workspace-1" } },
+        input: { id: "missing" },
       }),
-    ).resolves.toEqual({ data: menus })
-
-    expect(
-      userPersistentMenuRepository.listUserPersistentMenusByWorkspace,
-    ).toHaveBeenCalledWith({ workspaceId: "workspace-1" })
+    ).rejects.toThrow("User persistent menu not found")
   })
 })
 
@@ -134,9 +159,7 @@ describe("POST /v1/user-persistent-menus", () => {
   test("creates a menu in the token workspace and returns it", async () => {
     const persistentMenus: unknown[] = []
     const created = { id: "menu-1", name: "Main menu", menus: persistentMenus }
-    userPersistentMenuRepository.createUserPersistentMenu.mockResolvedValueOnce(
-      created,
-    )
+    userPersistentMenuService.create.mockResolvedValueOnce(created)
 
     await expect(
       procedure.handler?.({
@@ -145,9 +168,7 @@ describe("POST /v1/user-persistent-menus", () => {
       }),
     ).resolves.toEqual(created)
 
-    expect(
-      userPersistentMenuRepository.createUserPersistentMenu,
-    ).toHaveBeenCalledWith({
+    expect(userPersistentMenuService.create).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       name: "Main menu",
       menus: persistentMenus,
@@ -165,9 +186,7 @@ describe("PUT /v1/user-persistent-menus/{id}", () => {
       name: "Updated menu",
       menus: persistentMenus,
     }
-    userPersistentMenuRepository.updateUserPersistentMenu.mockResolvedValueOnce(
-      updated,
-    )
+    userPersistentMenuService.update.mockResolvedValueOnce(updated)
 
     await expect(
       procedure.handler?.({
@@ -176,9 +195,7 @@ describe("PUT /v1/user-persistent-menus/{id}", () => {
       }),
     ).resolves.toEqual(updated)
 
-    expect(
-      userPersistentMenuRepository.updateUserPersistentMenu,
-    ).toHaveBeenCalledWith({
+    expect(userPersistentMenuService.update).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "menu-1",
       name: "Updated menu",
@@ -186,9 +203,9 @@ describe("PUT /v1/user-persistent-menus/{id}", () => {
     })
   })
 
-  test("throws the declared not-found error when the menu does not exist", async () => {
-    userPersistentMenuRepository.updateUserPersistentMenu.mockResolvedValueOnce(
-      undefined,
+  test("propagates the service's not-found rejection", async () => {
+    userPersistentMenuService.update.mockRejectedValueOnce(
+      new Error("User persistent menu not found"),
     )
 
     await expect(
@@ -204,9 +221,7 @@ describe("DELETE /v1/user-persistent-menus/{id}", () => {
   const procedure = findProcedure("DELETE", "/v1/user-persistent-menus/{id}")
 
   test("deletes the menu from the token workspace", async () => {
-    userPersistentMenuRepository.deleteUserPersistentMenus.mockResolvedValueOnce(
-      undefined,
-    )
+    userPersistentMenuService.delete.mockResolvedValueOnce(undefined)
 
     await expect(
       procedure.handler?.({
@@ -215,9 +230,7 @@ describe("DELETE /v1/user-persistent-menus/{id}", () => {
       }),
     ).resolves.toBeUndefined()
 
-    expect(
-      userPersistentMenuRepository.deleteUserPersistentMenus,
-    ).toHaveBeenCalledWith({
+    expect(userPersistentMenuService.delete).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       ids: ["menu-1"],
     })

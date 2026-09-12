@@ -1,7 +1,6 @@
 "use client"
 
 import { channelTypes } from "@chatbotx.io/database/partials"
-import type { UserPersistentMenuModel } from "@chatbotx.io/database/repositories"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
@@ -23,10 +22,11 @@ import {
   createUserPersistentMenuRequest,
   updateUserPersistentMenuRequest,
 } from "../schema/action"
+import type { UserPersistentMenuResource } from "../schema/resource"
 
 type UserPersistentMenuFormProps = {
   workspaceId: string
-  menu?: UserPersistentMenuModel
+  menu?: UserPersistentMenuResource
 }
 
 export function UserPersistentMenuForm({

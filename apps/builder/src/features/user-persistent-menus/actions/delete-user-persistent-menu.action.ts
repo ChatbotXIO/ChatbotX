@@ -1,6 +1,6 @@
 "use server"
 
-import { deleteUserPersistentMenus } from "@chatbotx.io/database/repositories"
+import { userPersistentMenuService } from "@chatbotx.io/business"
 import {
   bulkUpdateIdsRequest,
   workspaceIdrequestParams,
@@ -16,5 +16,8 @@ export const deleteUserPersistentMenuAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
     } = props
 
-    await deleteUserPersistentMenus({ workspaceId, ids: parsedInput.ids })
+    await userPersistentMenuService.delete({
+      workspaceId,
+      ids: parsedInput.ids,
+    })
   })

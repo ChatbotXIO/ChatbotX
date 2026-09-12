@@ -9,10 +9,6 @@ export const userPersistentMenuPublicResource = userPersistentMenuResource.omit(
   { workspaceId: true },
 )
 
-export const listUserPersistentMenusPublicResponse = z.object({
-  data: z.array(userPersistentMenuPublicResource),
-})
-
 export const createUserPersistentMenuPublicRequest =
   createUserPersistentMenuRequest
 

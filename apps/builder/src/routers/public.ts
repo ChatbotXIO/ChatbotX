@@ -24,10 +24,15 @@ import { flowsPublicRouter } from "@/features/flows/api/public"
 import { foldersPublicRouter } from "@/features/folders/api/public"
 import { inboxesPublicRouter } from "@/features/inboxes/api/public"
 import { channelsPublicRouter } from "@/features/integration-api/api/public"
+import { messengerChannelsPublicRouter } from "@/features/integration-messenger/api/public"
+import { smtpIntegrationsPublicRouter } from "@/features/integration-smtp/api/public"
+import { webchatsPublicRouter } from "@/features/integration-webchat/api/public"
 import { templateMessagesPublicRouter } from "@/features/integration-whatsapp/message-templates/api/public"
+import { zaloChannelsPublicRouter } from "@/features/integration-zalo/api/public"
 import { integrationsPublicRouter } from "@/features/integrations/api/public"
 import { mediaLibraryPublicRouter } from "@/features/media-library/api/public"
 import { messagesPublicRouter } from "@/features/messages/api/public"
+import { messengerPersonasPublicRouter } from "@/features/personas/api/public"
 import { productCategoriesPublicRouter } from "@/features/product-categories/api/public"
 import { productsPublicRouter } from "@/features/products/api/public"
 import { reflinksPublicRouter } from "@/features/reflinks/api/public"
@@ -69,15 +74,20 @@ export const publicRouter = {
   keywords: keywordsPublicRouter,
   mediaLibrary: mediaLibraryPublicRouter,
   messages: messagesPublicRouter,
+  messengerChannels: messengerChannelsPublicRouter,
+  messengerPersonas: messengerPersonasPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,
   reflinks: reflinksPublicRouter,
   savedReplies: savedRepliesPublicRouter,
   sequences: sequencesPublicRouter,
+  smtpIntegrations: smtpIntegrationsPublicRouter,
   tags: tagsPublicRouter,
   templateMessages: templateMessagesPublicRouter,
   triggers: triggersPublicRouter,
   userPersistentMenus: userPersistentMenusPublicRouter,
+  webchats: webchatsPublicRouter,
   webhooks: webhooksPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,
+  zaloChannels: zaloChannelsPublicRouter,
 }

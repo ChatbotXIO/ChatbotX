@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { IntegrationZaloModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
+import { notFoundException } from "../errors"
 import { connectChannelIntegration } from "../inbox/connect-channel"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
@@ -21,8 +22,8 @@ class ZaloIntegrationService extends BaseService {
     workspaceId: string
     integrationId: string
     enabled: boolean
-  }) {
-    await db
+  }): Promise<Date | null> {
+    const updated = await db
       .update(integrationZaloModel)
       .set({ syncTagEnabledAt: props.enabled ? new Date() : null })
       .where(
@@ -31,6 +32,15 @@ class ZaloIntegrationService extends BaseService {
           eq(integrationZaloModel.workspaceId, props.workspaceId),
         ),
       )
+      .returning({ syncTagEnabledAt: integrationZaloModel.syncTagEnabledAt })
+
+    if (updated.length === 0) {
+      throw notFoundException("Zalo channel not found")
+    }
+
+    await this.invalidateCacheTags(`workspaces:${props.workspaceId}#zalos`)
+
+    return updated[0].syncTagEnabledAt
   }
   async findAll(): Promise<
     Array<{ id: string; workspaceId: string; auth: Record<string, unknown> }>

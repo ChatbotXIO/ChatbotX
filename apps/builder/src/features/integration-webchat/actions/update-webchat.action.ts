@@ -1,13 +1,11 @@
 "use server"
 
 import { integrationWebchatService } from "@chatbotx.io/business"
-import { ensureBrandingMenuEntry } from "@chatbotx.io/business/branding"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { isCommunity } from "@/env"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { BRANDING_TITLE, getBrandingUrl } from "../lib"
+import { applyWebchatBranding } from "../lib"
 import { updateWebchatRequest } from "../schema/mutation"
 
 export const updateWebchatAction = workspaceActionClient
@@ -36,15 +34,12 @@ export const updateWebchatAction = workspaceActionClient
       workspaceId,
     })
 
-    // Community keeps the "Built with" branding entry; silently re-add it
-    // (same precedent as moveBrandingMenuLast in the messenger action).
-    const persistentMenus =
-      isCommunity() && rest.persistentMenus
-        ? ensureBrandingMenuEntry(rest.persistentMenus, {
-            label: BRANDING_TITLE,
-            url: getBrandingUrl("webchat", (await getTenantSettings()).appUrl),
-          })
-        : rest.persistentMenus
+    const persistentMenus = rest.persistentMenus
+      ? applyWebchatBranding(
+          rest.persistentMenus,
+          (await getTenantSettings()).appUrl,
+        )
+      : rest.persistentMenus
 
     await integrationWebchatService.update({
       workspaceId,

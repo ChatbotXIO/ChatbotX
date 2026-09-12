@@ -10,6 +10,7 @@ import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import { parsePagination } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
+import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
 import { inboxService } from "../inbox/service"
 import { assertDeletable } from "../template/installed-resource.service"
@@ -188,6 +189,19 @@ class IntegrationWebchatService extends BaseService {
       const created = await this.create({ workspaceId, ownerId, data }, tx)
 
       return { workspaceId, createdWorkspace, webchatId: created.id }
+    })
+
+    // Sanctioned exception: `createWithWorkspace` is reachable from
+    // `authActionClient` (create-webchat.action.ts), which never puts
+    // `workspaceId` into the ALS actor — only workspace-scoped action
+    // clients do. `this.audit()` would silently no-op here, so bypass it
+    // with an explicit override, same pattern as
+    // `integrationApiService.connect`.
+    await dispatchAuditRecord({
+      userId: createdBy,
+      workspaceId: result.workspaceId,
+      action: "connect",
+      detail: `connected a new Webchat channel (#${result.webchatId})`,
     })
 
     return result

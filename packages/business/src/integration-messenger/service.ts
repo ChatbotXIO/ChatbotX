@@ -20,6 +20,7 @@ import {
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { notFoundException } from "../errors"
 import {
   auditChannelConnected,
   connectChannelIntegration,
@@ -292,7 +293,13 @@ class MessengerIntegrationService extends BaseService {
         syncTagEnabledAt: integrationMessengerModel.syncTagEnabledAt,
       })
 
-    return updated[0]?.syncTagEnabledAt ?? null
+    if (updated.length === 0) {
+      throw notFoundException("Messenger channel not found")
+    }
+
+    await this.invalidateCacheTags(`workspaces:${props.workspaceId}#messengers`)
+
+    return updated[0].syncTagEnabledAt
   }
 
   async updateProfileFields(

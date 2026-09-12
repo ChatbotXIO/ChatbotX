@@ -1,22 +1,21 @@
-import { notFoundException } from "@chatbotx.io/business/errors"
-import {
-  createUserPersistentMenu,
-  deleteUserPersistentMenus,
-  listUserPersistentMenusByWorkspace,
-  updateUserPersistentMenu,
-} from "@chatbotx.io/database/repositories"
+import { userPersistentMenuService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
+  possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
+import {
+  paginateInMemory,
+  publicListRequest,
+  publicListResponse,
+} from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   createUserPersistentMenuPublicRequest,
-  listUserPersistentMenusPublicResponse,
   updateUserPersistentMenuPublicRequest,
   userPersistentMenuPublicResource,
 } from "../schema/public"
@@ -31,14 +30,33 @@ export const userPersistentMenusPublicRouter = {
       summary: "List user persistent menus",
       tags: ["User Persistent Menus"],
     })
-    .output(listUserPersistentMenusPublicResponse)
+    .input(publicListRequest)
+    .output(publicListResponse(userPersistentMenuPublicResource))
     .errors(possibleErrorsOnListingResource)
-    .handler(async ({ context }) => {
-      const data = await listUserPersistentMenusByWorkspace({
+    .handler(async ({ context, input }) => {
+      const data = await userPersistentMenuService.listByWorkspace({
         workspaceId: context.workspace.id,
       })
-      return { data }
+      return paginateInMemory(data, input)
     }),
+
+  get: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/user-persistent-menus/{id}",
+      summary: "Get a user persistent menu by id",
+      tags: ["User Persistent Menus"],
+    })
+    .input(z.object({ id: zodBigintAsString() }))
+    .output(userPersistentMenuPublicResource)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(
+      async ({ context, input }) =>
+        await userPersistentMenuService.findOrFail({
+          id: input.id,
+          workspaceId: context.workspace.id,
+        }),
+    ),
 
   create: workspaceTokenAuthAPI
     .route({
@@ -51,17 +69,14 @@ export const userPersistentMenusPublicRouter = {
     .input(createUserPersistentMenuPublicRequest)
     .output(userPersistentMenuPublicResource)
     .errors(possibleErrorsOnCreatingResource)
-    .handler(async ({ context, input }) => {
-      const created = await createUserPersistentMenu({
-        workspaceId: context.workspace.id,
-        name: input.name,
-        menus: input.persistentMenus,
-      })
-      if (!created) {
-        throw new Error("Failed to create user persistent menu")
-      }
-      return created
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await userPersistentMenuService.create({
+          workspaceId: context.workspace.id,
+          name: input.name,
+          menus: input.persistentMenus,
+        }),
+    ),
 
   update: workspaceTokenAuthAPI
     .route({
@@ -73,18 +88,15 @@ export const userPersistentMenusPublicRouter = {
     .input(updateUserPersistentMenuPublicRequest)
     .output(userPersistentMenuPublicResource)
     .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) => {
-      const updated = await updateUserPersistentMenu({
-        workspaceId: context.workspace.id,
-        id: input.id,
-        name: input.name,
-        menus: input.persistentMenus,
-      })
-      if (!updated) {
-        throw notFoundException("User persistent menu not found")
-      }
-      return updated
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await userPersistentMenuService.update({
+          workspaceId: context.workspace.id,
+          id: input.id,
+          name: input.name,
+          menus: input.persistentMenus,
+        }),
+    ),
 
   delete: workspaceTokenAuthAPI
     .route({
@@ -97,7 +109,7 @@ export const userPersistentMenusPublicRouter = {
     .input(z.object({ id: zodBigintAsString() }))
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      await deleteUserPersistentMenus({
+      await userPersistentMenuService.delete({
         workspaceId: context.workspace.id,
         ids: [input.id],
       })

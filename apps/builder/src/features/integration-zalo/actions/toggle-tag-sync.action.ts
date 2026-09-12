@@ -1,7 +1,6 @@
 "use server"
 
 import { zaloIntegrationService } from "@chatbotx.io/business"
-import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -20,6 +19,4 @@ export const toggleZaloTagSyncAction = workspaceActionClient
       integrationId,
       enabled,
     })
-
-    await invalidateCacheByTags([`workspaces:${workspaceId}#zalos`])
   })
