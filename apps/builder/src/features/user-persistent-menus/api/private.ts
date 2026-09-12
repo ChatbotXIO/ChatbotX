@@ -1,6 +1,6 @@
+import { userPersistentMenuService } from "@chatbotx.io/business"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { listUserPersistentMenus } from "../queries"
 import {
   listUserPersistentMenusRequest,
   listUserPersistentMenusResponse,
@@ -17,5 +17,10 @@ export const userPersistentMenusAuthenticatedAPI = {
     .input(listUserPersistentMenusRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listUserPersistentMenusResponse)
-    .handler(async ({ input }) => await listUserPersistentMenus(input)),
+    .handler(async ({ input }) => {
+      const data = await userPersistentMenuService.listByWorkspace({
+        workspaceId: input.workspaceId,
+      })
+      return { data }
+    }),
 }

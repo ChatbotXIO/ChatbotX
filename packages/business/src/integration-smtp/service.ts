@@ -90,40 +90,40 @@ class IntegrationSmtpService extends BaseService {
     name: string
     fromAddress: string
     auth: SmtpAuthInput
-  }): Promise<{ inbox: InboxModel; wasCreated: boolean }> {
+  }): Promise<{ inbox: InboxModel; wasCreated: boolean; smtpId: string }> {
     const { workspaceId, ownerId, name, fromAddress, auth } = input
 
-    const { inbox, wasCreated } = await db.transaction(async (tx) => {
-      const smtpId = createId()
-
-      return await connectChannelIntegration({
-        tx,
-        ownerId,
-        inboxData: {
-          id: smtpId,
-          workspaceId,
-          channel: channelTypes.enum.smtp,
-          name,
-          sourceId: smtpId,
-        },
-        insertIntegration: async (inboxId) => {
-          await tx.insert(integrationSmtpModel).values({
+    const smtpId = createId()
+    const { inbox, wasCreated } = await db.transaction(
+      async (tx) =>
+        await connectChannelIntegration({
+          tx,
+          ownerId,
+          inboxData: {
             id: smtpId,
-            name,
             workspaceId,
-            inboxId,
-            fromAddress,
-            auth,
-          })
-        },
-      })
-    })
+            channel: channelTypes.enum.smtp,
+            name,
+            sourceId: smtpId,
+          },
+          insertIntegration: async (inboxId) => {
+            await tx.insert(integrationSmtpModel).values({
+              id: smtpId,
+              name,
+              workspaceId,
+              inboxId,
+              fromAddress,
+              auth,
+            })
+          },
+        }),
+    )
 
     if (wasCreated) {
       await this.audit("connect", `connected a new SMTP channel (#${inbox.id})`)
     }
 
-    return { inbox, wasCreated }
+    return { inbox, wasCreated, smtpId }
   }
 
   /**

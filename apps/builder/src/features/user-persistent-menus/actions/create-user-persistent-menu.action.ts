@@ -1,6 +1,6 @@
 "use server"
 
-import { createUserPersistentMenu } from "@chatbotx.io/database/repositories"
+import { userPersistentMenuService } from "@chatbotx.io/business"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createUserPersistentMenuRequest } from "../schema/action"
@@ -14,7 +14,7 @@ export const createUserPersistentMenuAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
     } = props
 
-    await createUserPersistentMenu({
+    await userPersistentMenuService.create({
       workspaceId,
       name: parsedInput.name,
       menus: parsedInput.persistentMenus,

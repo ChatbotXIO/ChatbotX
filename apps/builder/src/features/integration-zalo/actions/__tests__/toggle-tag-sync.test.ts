@@ -9,13 +9,6 @@ vi.mock("next/cache", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock @chatbotx.io/redis — intercept invalidateCacheByTags calls
-// ---------------------------------------------------------------------------
-vi.mock("@chatbotx.io/redis", () => ({
-  invalidateCacheByTags: vi.fn(),
-}))
-
-// ---------------------------------------------------------------------------
 // Mock auth utilities so workspaceActionClient never touches Next.js headers()
 // zodBigintAsString() returns z.string(), so IDs passed as bind args and parsed
 // by the middleware are plain strings.
@@ -55,6 +48,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // next-safe-action swallows it into a generic `serverError`, which reads like an
 // unrelated failure. `isWorkspaceScheduledForDeletion` is the deletion gate in
 // `lib/safe-action.ts`; `false` = an active workspace, this action's precondition.
+//
+// Cache invalidation now lives inside `zaloIntegrationService.updateTagSync`
+// itself (see `integration-tag-sync.service.test.ts`), so this action-level test
+// only needs to prove the action forwards to the service and surfaces its result.
 // ---------------------------------------------------------------------------
 const updateTagSync = vi.fn()
 
@@ -103,16 +100,13 @@ vi.mock("@/lib/log", () => ({
 // Lazy imports — must come after all vi.mock() calls
 // ---------------------------------------------------------------------------
 const { toggleZaloTagSyncAction } = await import("../toggle-tag-sync.action")
-const { invalidateCacheByTags } = await import("@chatbotx.io/redis")
+const { ChatbotXException } = await import("@chatbotx.io/business/errors")
 const { findOrFail } = await import("@chatbotx.io/database/client")
 const { getCurrentUserId } = await import("@/lib/auth/utils")
 const { getAllWorkspaceMembers } = await import(
   "@/features/workspace-members/queries"
 )
 
-const invalidateCacheByTagsMock = invalidateCacheByTags as ReturnType<
-  typeof vi.fn
->
 const findOrFailMock = findOrFail as ReturnType<typeof vi.fn>
 const getCurrentUserIdMock = getCurrentUserId as ReturnType<typeof vi.fn>
 const getAllWorkspaceMembersMock = getAllWorkspaceMembers as ReturnType<
@@ -161,15 +155,6 @@ describe("toggleZaloTagSyncAction", () => {
         enabled: true,
       })
     })
-
-    test("calls invalidateCacheByTags with the workspace-scoped zalo key", async () => {
-      await invokeAction(true)
-
-      expect(invalidateCacheByTagsMock).toHaveBeenCalledTimes(1)
-      expect(invalidateCacheByTagsMock).toHaveBeenCalledWith([
-        `workspaces:${WORKSPACE_ID}#zalos`,
-      ])
-    })
   })
 
   // ── enabled: false ─────────────────────────────────────────────────────────
@@ -184,38 +169,21 @@ describe("toggleZaloTagSyncAction", () => {
         enabled: false,
       })
     })
-
-    test("calls invalidateCacheByTags with the workspace-scoped zalo key", async () => {
-      await invokeAction(false)
-
-      expect(invalidateCacheByTagsMock).toHaveBeenCalledWith([
-        `workspaces:${WORKSPACE_ID}#zalos`,
-      ])
-    })
   })
 
-  // ── no matching row (no-op) ────────────────────────────────────────────────
-  // The service's update is a no-op at DB level when no row matches; the
-  // action still completes without throwing.
+  // ── unknown integration id ─────────────────────────────────────────────────
+  // The service now throws notFoundException instead of silently no-oping
+  // when no row matches — the action must surface that as a rejection.
 
-  describe("no matching row (no-op)", () => {
-    test("returns void (undefined data) without throwing", async () => {
-      updateTagSync.mockResolvedValue(undefined)
+  describe("unknown integration id", () => {
+    test("surfaces the service's notFound error as serverError", async () => {
+      updateTagSync.mockRejectedValue(
+        new ChatbotXException("Zalo channel not found"),
+      )
 
       const result = await invokeAction(true)
 
-      // toggleZaloTagSyncAction has no explicit return value → result.data is undefined
-      expect(result?.serverError).toBeUndefined()
-    })
-
-    test("still calls invalidateCacheByTags even when no row was updated", async () => {
-      updateTagSync.mockResolvedValue(undefined)
-
-      await invokeAction(false)
-
-      expect(invalidateCacheByTagsMock).toHaveBeenCalledWith([
-        `workspaces:${WORKSPACE_ID}#zalos`,
-      ])
+      expect(result?.serverError).toBe("Zalo channel not found")
     })
   })
 })

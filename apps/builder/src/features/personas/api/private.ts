@@ -1,6 +1,6 @@
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { listMessengerPersonaOptions } from "../queries"
+import { listMessengerPersonaOptions } from "../lib/persona-options"
 import {
   listMessengerPersonasRequest,
   listMessengerPersonasResponse,

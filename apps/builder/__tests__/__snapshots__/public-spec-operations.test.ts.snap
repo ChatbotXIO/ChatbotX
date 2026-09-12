@@ -1308,6 +1308,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/conversations/{conversationId}/messages/{messageId}",
   },
   {
+    "method": "PATCH",
+    "operationId": "messengerChannels.updateTagSync",
+    "path": "/v1/messenger-channels/{id}/tag-sync",
+  },
+  {
+    "method": "GET",
+    "operationId": "messengerPersonas.list",
+    "path": "/v1/messenger-personas",
+  },
+  {
     "method": "POST",
     "operationId": "productCategories.create",
     "path": "/v1/product-categories",
@@ -1439,6 +1449,31 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "smtpIntegrations.create",
+    "path": "/v1/smtp-integrations",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "smtpIntegrations.delete",
+    "path": "/v1/smtp-integrations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "smtpIntegrations.get",
+    "path": "/v1/smtp-integrations/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "smtpIntegrations.list",
+    "path": "/v1/smtp-integrations",
+  },
+  {
+    "method": "PUT",
+    "operationId": "smtpIntegrations.update",
+    "path": "/v1/smtp-integrations/{id}",
+  },
+  {
+    "method": "POST",
     "operationId": "tags.create",
     "path": "/v1/tags",
   },
@@ -1499,6 +1534,56 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "userPersistentMenus.create",
+    "path": "/v1/user-persistent-menus",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "userPersistentMenus.delete",
+    "path": "/v1/user-persistent-menus/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "userPersistentMenus.get",
+    "path": "/v1/user-persistent-menus/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "userPersistentMenus.list",
+    "path": "/v1/user-persistent-menus",
+  },
+  {
+    "method": "PUT",
+    "operationId": "userPersistentMenus.update",
+    "path": "/v1/user-persistent-menus/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "webchats.create",
+    "path": "/v1/webchats",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "webchats.delete",
+    "path": "/v1/webchats/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "webchats.get",
+    "path": "/v1/webchats/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "webchats.list",
+    "path": "/v1/webchats",
+  },
+  {
+    "method": "PUT",
+    "operationId": "webchats.update",
+    "path": "/v1/webchats/{id}",
+  },
+  {
+    "method": "POST",
     "operationId": "webhooks.create",
     "path": "/v1/webhooks",
   },
@@ -1521,6 +1606,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "workspaceMembers.list",
     "path": "/v1/members",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "zaloChannels.updateTagSync",
+    "path": "/v1/zalo-channels/{id}/tag-sync",
   },
 ]
 `;

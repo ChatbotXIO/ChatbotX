@@ -5,12 +5,10 @@ import {
   integrationWebchatService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
-import { ensureBrandingMenuEntry } from "@chatbotx.io/business/branding"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { isCommunity } from "@/env"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { authActionClient } from "@/lib/safe-action"
-import { BRANDING_TITLE, getBrandingUrl } from "../lib"
+import { applyWebchatBranding } from "../lib"
 import { createWebchatRequest } from "../schema/mutation"
 
 export const createWebchatAction = authActionClient
@@ -28,14 +26,10 @@ export const createWebchatAction = authActionClient
       throw new ChatbotXException("Workspace not found", "notFound", 404)
     }
 
-    // Community keeps the "Built with" branding entry; silently re-add it
-    // (same precedent as moveBrandingMenuLast in the messenger action).
-    const persistentMenus = isCommunity()
-      ? ensureBrandingMenuEntry(rest.persistentMenus, {
-          label: BRANDING_TITLE,
-          url: getBrandingUrl("webchat", (await getTenantSettings()).appUrl),
-        })
-      : rest.persistentMenus
+    const persistentMenus = applyWebchatBranding(
+      rest.persistentMenus,
+      (await getTenantSettings()).appUrl,
+    )
 
     const result = await integrationWebchatService.createWithWorkspace({
       workspaceId: parsedInput.workspaceId ?? undefined,
@@ -58,12 +52,6 @@ export const createWebchatAction = authActionClient
         detail: `created the workspace (#${result.workspaceId})`,
       })
     }
-
-    await auditService.record({
-      workspaceId: result.workspaceId,
-      action: "connect",
-      detail: `connected a new Webchat channel (#${result.webchatId})`,
-    })
 
     return {
       workspaceId: result.workspaceId,

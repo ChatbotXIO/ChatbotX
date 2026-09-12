@@ -9,13 +9,6 @@ vi.mock("next/cache", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock @chatbotx.io/redis — intercept invalidateCacheByTags calls
-// ---------------------------------------------------------------------------
-vi.mock("@chatbotx.io/redis", () => ({
-  invalidateCacheByTags: vi.fn(),
-}))
-
-// ---------------------------------------------------------------------------
 // Mock auth utilities so workspaceActionClient never touches Next.js headers()
 // zodBigintAsString() returns z.string(), so workspaceId parsed from bind arg
 // is a plain string.  The workspace mock must use string ids to match.
@@ -54,6 +47,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // next-safe-action swallows it into a generic `serverError`, which reads like an
 // unrelated failure. `isWorkspaceScheduledForDeletion` is the deletion gate in
 // `lib/safe-action.ts`; `false` = an active workspace, this action's precondition.
+//
+// Cache invalidation now lives inside `messengerIntegrationService.updateTagSync`
+// itself (see `integration-tag-sync.service.test.ts`), so this action-level test
+// only needs to prove the action forwards to the service and surfaces its result.
 // ---------------------------------------------------------------------------
 const updateTagSync = vi.fn()
 
@@ -104,16 +101,13 @@ vi.mock("@/lib/log", () => ({
 const { toggleMessengerTagSyncAction } = await import(
   "../toggle-tag-sync.action"
 )
-const { invalidateCacheByTags } = await import("@chatbotx.io/redis")
+const { ChatbotXException } = await import("@chatbotx.io/business/errors")
 const { findOrFail } = await import("@chatbotx.io/database/client")
 const { getCurrentUserId } = await import("@/lib/auth/utils")
 const { getAllWorkspaceMembers } = await import(
   "@/features/workspace-members/queries"
 )
 
-const invalidateCacheByTagsMock = invalidateCacheByTags as ReturnType<
-  typeof vi.fn
->
 const findOrFailMock = findOrFail as ReturnType<typeof vi.fn>
 const getCurrentUserIdMock = getCurrentUserId as ReturnType<typeof vi.fn>
 const getAllWorkspaceMembersMock = getAllWorkspaceMembers as ReturnType<
@@ -168,17 +162,6 @@ describe("toggleMessengerTagSyncAction", () => {
       })
       expect(result?.data?.syncTagEnabledAt).toBeInstanceOf(Date)
     })
-
-    test("calls invalidateCacheByTags with the workspace-scoped messenger key", async () => {
-      updateTagSync.mockResolvedValue(new Date())
-
-      await invokeAction(true)
-
-      expect(invalidateCacheByTagsMock).toHaveBeenCalledTimes(1)
-      expect(invalidateCacheByTagsMock).toHaveBeenCalledWith([
-        `workspaces:${WORKSPACE_ID}#messengers`,
-      ])
-    })
   })
 
   // ── enabled: false ─────────────────────────────────────────────────────────
@@ -195,37 +178,22 @@ describe("toggleMessengerTagSyncAction", () => {
         enabled: false,
       })
     })
-
-    test("calls invalidateCacheByTags with the workspace-scoped messenger key", async () => {
-      updateTagSync.mockResolvedValue(null)
-
-      await invokeAction(false)
-
-      expect(invalidateCacheByTagsMock).toHaveBeenCalledWith([
-        `workspaces:${WORKSPACE_ID}#messengers`,
-      ])
-    })
   })
 
-  // ── no matching row ────────────────────────────────────────────────────────
+  // ── unknown integration id ─────────────────────────────────────────────────
+  // The service now throws notFoundException instead of silently returning
+  // null when no row matches — the action must surface that as a rejection,
+  // not swallow it.
 
-  describe("no matching row (service returns null)", () => {
-    test("returns { syncTagEnabledAt: null } without throwing", async () => {
-      updateTagSync.mockResolvedValue(null)
+  describe("unknown integration id", () => {
+    test("surfaces the service's notFound error as serverError", async () => {
+      updateTagSync.mockRejectedValue(
+        new ChatbotXException("Messenger channel not found"),
+      )
 
       const result = await invokeAction(true)
 
-      expect(result?.data?.syncTagEnabledAt).toBeNull()
-    })
-
-    test("still calls invalidateCacheByTags even when no row was updated", async () => {
-      updateTagSync.mockResolvedValue(null)
-
-      await invokeAction(false)
-
-      expect(invalidateCacheByTagsMock).toHaveBeenCalledWith([
-        `workspaces:${WORKSPACE_ID}#messengers`,
-      ])
+      expect(result?.serverError).toBe("Messenger channel not found")
     })
   })
 })
