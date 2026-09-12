@@ -84,9 +84,6 @@ vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
 const { aiFunctionService } = await import("../src/ai-function/service")
 
 const workspaceId = "workspace-1"
-const t = ((key: string) => key) as unknown as Parameters<
-  typeof aiFunctionService.updateAIFunction
->[2]
 
 const aiFunction = {
   id: "function-1",
@@ -147,17 +144,16 @@ describe("aiFunctionService audit messages", () => {
     await aiFunctionService.updateAIFunction(
       { id: "function-1", workspaceId },
       request,
-      t,
     )
 
     expect(lastAuditDetail()).toBe("updated an AI Function (#function-1)")
   })
 
   test("deleteAIFunction logs by id", async () => {
-    await aiFunctionService.deleteAIFunction(
-      { aiFunctionId: "function-1", workspaceId },
-      t,
-    )
+    await aiFunctionService.deleteAIFunction({
+      aiFunctionId: "function-1",
+      workspaceId,
+    })
 
     expect(lastAuditDetail()).toBe("deleted an AI Function (#function-1)")
   })
@@ -169,7 +165,6 @@ describe("aiFunctionService audit messages", () => {
       aiFunctionService.updateAIFunction(
         { id: "missing", workspaceId },
         request,
-        t,
       ),
     ).rejects.toThrow()
 
@@ -180,10 +175,10 @@ describe("aiFunctionService audit messages", () => {
     mockFindFirst.mockResolvedValue(undefined)
 
     await expect(
-      aiFunctionService.deleteAIFunction(
-        { aiFunctionId: "missing", workspaceId },
-        t,
-      ),
+      aiFunctionService.deleteAIFunction({
+        aiFunctionId: "missing",
+        workspaceId,
+      }),
     ).rejects.toThrow()
 
     expect(dispatchAuditRecord).not.toHaveBeenCalled()
@@ -201,7 +196,7 @@ describe("aiFunctionService audit messages", () => {
   })
 })
 
-describe("aiFunctionService without a translator (public API path)", () => {
+describe("aiFunctionService plain-English errors (public API path)", () => {
   test("updateAIFunction throws the plain-English fallback when missing", async () => {
     mockFindFirst.mockResolvedValue(undefined)
 

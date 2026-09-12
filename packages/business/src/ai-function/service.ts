@@ -28,11 +28,6 @@ type FindByProps = {
   }>
 }
 
-type TranslationFn = (
-  key: string,
-  params?: Record<string, string | number | Date>,
-) => string
-
 export type CreateAIFunctionRequest = {
   name: string
   purpose?: string | null
@@ -91,22 +86,16 @@ class AiFunctionService extends BaseService {
     return existing ? existing.id !== excludeId : false
   }
 
-  async deleteAIFunction(
-    ctx: { workspaceId: string; aiFunctionId: string },
-    t?: TranslationFn,
-  ): Promise<void> {
+  async deleteAIFunction(ctx: {
+    workspaceId: string
+    aiFunctionId: string
+  }): Promise<void> {
     const aiFunction = await this.findBy({
       where: { id: ctx.aiFunctionId, workspaceId: ctx.workspaceId },
     })
 
     if (!aiFunction) {
-      throw notFoundException(
-        t
-          ? t("messages.featureNotFound", {
-              feature: t("fields.aiFunction.label"),
-            })
-          : "AI Function not found",
-      )
+      throw notFoundException("AI Function not found")
     }
 
     await assertDeletable({
@@ -123,31 +112,17 @@ class AiFunctionService extends BaseService {
   async updateAIFunction(
     ctx: { workspaceId: string; id: string },
     data: UpdateAIFunctionRequest,
-    t?: TranslationFn,
   ): Promise<AIFunctionModel> {
     const aiFunction = await this.findBy({
       where: { id: ctx.id, workspaceId: ctx.workspaceId },
     })
 
     if (!aiFunction) {
-      throw notFoundException(
-        t
-          ? t("messages.featureNotFound", {
-              feature: t("fields.aiFunction.label"),
-            })
-          : "AI Function not found",
-      )
+      throw notFoundException("AI Function not found")
     }
 
     if (await this.isNameTaken(ctx.workspaceId, data.name, ctx.id)) {
-      throw validationException(
-        "name",
-        t
-          ? t("messages.nameAlreadyExists", {
-              feature: t("fields.aiFunction.label"),
-            })
-          : "Name is already taken",
-      )
+      throw validationException("name", "Name is already taken")
     }
 
     const [updated] = await this.update(
@@ -174,17 +149,9 @@ class AiFunctionService extends BaseService {
     workspaceId: string,
     data: CreateAIFunctionRequest,
     tx?: DatabaseClient,
-    t?: TranslationFn,
   ) {
     if (!tx && (await this.isNameTaken(workspaceId, data.name))) {
-      throw validationException(
-        "name",
-        t
-          ? t("messages.nameAlreadyExists", {
-              feature: t("fields.aiFunction.label"),
-            })
-          : "Name is already taken",
-      )
+      throw validationException("name", "Name is already taken")
     }
 
     const client = tx ?? db

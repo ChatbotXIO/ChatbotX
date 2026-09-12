@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "0c5cda5e-9231-4d8d-86ff-981746f8cbf0",
+  "id": "c5fe4b13-c96b-4a20-8a7d-5469937fbddb",
   "prevIds": [
     "67a1186b-4cc6-469d-8ce3-e733a52116c6"
   ],
@@ -428,6 +428,35 @@
         "instagramFacebook"
       ],
       "name": "fbCommentAutomationType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "sent",
+        "failed"
+      ],
+      "name": "commentAutomationEventStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "public",
+        "private"
+      ],
+      "name": "commentAutomationReplyChannel",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "AIAgent",
+        "text",
+        "flow",
+        "none"
+      ],
+      "name": "commentAutomationReplyType",
       "entityType": "enums",
       "schema": "public"
     },
@@ -1217,6 +1246,12 @@
     {
       "isRlsEnabled": false,
       "name": "FBCommentAutomation",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "FBCommentAutomationEvent",
       "entityType": "tables",
       "schema": "public"
     },
@@ -12232,6 +12267,214 @@
       "entityType": "columns",
       "schema": "public",
       "table": "FBCommentAutomation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "automationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "postId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "commentId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "commentText",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "commentAutomationReplyChannel",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "replyChannel",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "commentAutomationReplyType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "replyType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "replyText",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "commentAutomationEventStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorDetail",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "httpCode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
     },
     {
       "type": "bigint",
@@ -30627,6 +30870,118 @@
           "opclass": null
         },
         {
+          "value": "commentId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "replyChannel",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FBCommentAutomationEvent_dedup_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "automationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": true,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FBCommentAutomationEvent_automation_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FBCommentAutomationEvent_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FBCommentAutomationEvent_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "automationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
           "value": "contactId",
           "isExpression": false,
           "asc": true,
@@ -38153,6 +38508,57 @@
     {
       "nameExplicit": false,
       "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "FBCommentAutomationEvent_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "automationId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "FBCommentAutomation",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "FBCommentAutomationEvent_LOfdyJGW0vJy_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "contactId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Contact",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "FBCommentAutomationEvent_contactId_Contact_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "automationId"
       ],
       "schemaTo": "public",
@@ -42301,6 +42707,16 @@
       "name": "FBCommentAutomation_pkey",
       "schema": "public",
       "table": "FBCommentAutomation",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "FBCommentAutomationEvent_pkey",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent",
       "entityType": "pks"
     },
     {

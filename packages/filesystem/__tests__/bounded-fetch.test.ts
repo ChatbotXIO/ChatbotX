@@ -53,6 +53,20 @@ describe("readBodyWithLimit", () => {
     )
     expect(result.byteLength).toBe(0)
   })
+
+  test("enforces the cap even when the response has no body stream", async () => {
+    const response = {
+      body: null,
+      arrayBuffer: async () => new Uint8Array(20).buffer,
+    } as unknown as Response
+    await expect(
+      readBodyWithLimit(
+        response,
+        10,
+        (limit) => new Error(`exceeded ${limit}`),
+      ),
+    ).rejects.toThrow("exceeded 10")
+  })
 })
 
 describe("fetchFollowingSafeRedirects", () => {

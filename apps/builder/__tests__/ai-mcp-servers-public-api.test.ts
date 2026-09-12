@@ -198,7 +198,7 @@ describe("DELETE /v1/ai-mcp-servers/{id}", () => {
   const procedure = findProcedure("DELETE", "/v1/ai-mcp-servers/{id}")
 
   test("delegates to aiMcpServerService.delete", async () => {
-    aiMcpServerService.delete.mockResolvedValueOnce(undefined)
+    aiMcpServerService.delete.mockResolvedValueOnce([{ id: "mcp-1" }])
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
@@ -209,5 +209,16 @@ describe("DELETE /v1/ai-mcp-servers/{id}", () => {
       workspaceId: "workspace-1",
       id: "mcp-1",
     })
+  })
+
+  test("throws not found when the mcp server does not exist", async () => {
+    aiMcpServerService.delete.mockResolvedValueOnce([])
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "missing" },
+      }),
+    ).rejects.toThrow("AI MCP server not found")
   })
 })

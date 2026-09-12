@@ -110,9 +110,12 @@ export const aiMcpServersPublicRouter = {
     .input(z.object({ id: zodBigintAsString() }))
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      await aiMcpServerService.delete({
+      const deleted = await aiMcpServerService.delete({
         workspaceId: context.workspace.id,
         id: input.id,
       })
+      if (deleted.length === 0) {
+        throw notFoundException("AI MCP server not found")
+      }
     }),
 }

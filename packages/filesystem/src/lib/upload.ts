@@ -100,7 +100,7 @@ export async function uploadFileFromUrl(
     response.headers.get("content-length") ?? "0",
     10,
   )
-  if (maxBytes && headerLength > maxBytes) {
+  if (maxBytes !== undefined && headerLength > maxBytes) {
     throw new UploadValidationError(
       `File exceeds the maximum allowed size of ${maxBytes} bytes`,
     )
@@ -117,16 +117,17 @@ export async function uploadFileFromUrl(
     logger.warn({ err: error }, "uploadFileFromUrl: invalid URL")
   }
 
-  const buffer = maxBytes
-    ? await readBodyWithLimit(
-        response,
-        maxBytes,
-        (limit) =>
-          new UploadValidationError(
-            `File exceeds the maximum allowed size of ${limit} bytes`,
-          ),
-      )
-    : Buffer.from(await response.arrayBuffer())
+  const buffer =
+    maxBytes === undefined
+      ? Buffer.from(await response.arrayBuffer())
+      : await readBodyWithLimit(
+          response,
+          maxBytes,
+          (limit) =>
+            new UploadValidationError(
+              `File exceeds the maximum allowed size of ${limit} bytes`,
+            ),
+        )
   // headerLength is the origin's self-reported content-length, used only as
   // an early-reject hint above — it can disagree with what was actually
   // streamed, and putObject's ContentLength must match the real buffer.

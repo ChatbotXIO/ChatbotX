@@ -1,13 +1,11 @@
 "use server"
 
-import {
-  aiMcpServerService,
-  type UpdateAIMcpServerRequest,
-} from "@chatbotx.io/business"
+import { aiMcpServerService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
+import { isValidationException } from "@/lib/errors/validation-exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { updateAIMcpServerRequest } from "../schema/action"
 
@@ -19,48 +17,35 @@ export const updateAIMcpServerAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
     } = props
+    const t = await getTranslations()
 
-    return await updateAIMcpServer({ workspaceId, id }, parsedInput)
-  })
-
-export const updateAIMcpServer = async (
-  ctx: { workspaceId: string; id: string },
-  parsedInput: UpdateAIMcpServerRequest,
-) => {
-  const t = await getTranslations()
-
-  const mcpServer = await aiMcpServerService.findBy({
-    where: {
-      id: ctx.id,
-      workspaceId: ctx.workspaceId,
-    },
-  })
-  if (!mcpServer) {
-    throw notFoundException(
-      t("messages.featureNotFound", { feature: "AIMcpServer" }),
-    )
-  }
-
-  const existing = await aiMcpServerService.findBy({
-    where: {
-      workspaceId: ctx.workspaceId,
-      name: parsedInput.name,
-    },
-  })
-  if (existing && existing.id !== mcpServer.id) {
-    return returnValidationErrors(updateAIMcpServerRequest, {
-      name: {
-        _errors: [
-          t("messages.nameAlreadyExists", {
-            feature: t("fields.mcpServer.label"),
-          }),
-        ],
+    const mcpServer = await aiMcpServerService.findBy({
+      where: {
+        id,
+        workspaceId,
       },
     })
-  }
+    if (!mcpServer) {
+      throw notFoundException(
+        t("messages.featureNotFound", { feature: t("fields.mcpServer.label") }),
+      )
+    }
 
-  await aiMcpServerService.update(
-    { workspaceId: ctx.workspaceId, id: mcpServer.id },
-    parsedInput,
-  )
-}
+    try {
+      await aiMcpServerService.update({ workspaceId, id }, parsedInput)
+    } catch (error) {
+      if (isValidationException(error)) {
+        return returnValidationErrors(updateAIMcpServerRequest, {
+          name: {
+            _errors: [
+              t("messages.nameAlreadyExists", {
+                feature: t("fields.mcpServer.label"),
+              }),
+            ],
+          },
+        })
+      }
+
+      throw error
+    }
+  })

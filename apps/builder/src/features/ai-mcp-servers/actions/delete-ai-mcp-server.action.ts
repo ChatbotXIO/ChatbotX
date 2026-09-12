@@ -30,7 +30,7 @@ export const deleteAIMcpServer = async (ctx: {
   })
   if (!mcpServer) {
     throw notFoundException(
-      t("messages.featureNotFound", { feature: "AIMcpServer" }),
+      t("messages.featureNotFound", { feature: t("fields.mcpServer.label") }),
     )
   }
 

@@ -19,7 +19,11 @@ export async function readBodyWithLimit(
 ): Promise<Buffer> {
   const body = response.body
   if (!body) {
-    return Buffer.from(await response.arrayBuffer())
+    const buffer = Buffer.from(await response.arrayBuffer())
+    if (buffer.byteLength > maxBytes) {
+      throw onLimitExceeded(maxBytes)
+    }
+    return buffer
   }
 
   const reader = body.getReader()
