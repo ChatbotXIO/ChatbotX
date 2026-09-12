@@ -6,7 +6,10 @@ import {
   relationsFilterToSQL,
   sql,
 } from "@chatbotx.io/database/client"
-import { igStoryAutomationTypes } from "@chatbotx.io/database/partials"
+import {
+  type IgStoryAutomationType,
+  igStoryAutomationTypes,
+} from "@chatbotx.io/database/partials"
 import { igStoryAutomationModel } from "@chatbotx.io/database/schema"
 import type { IgStoryAutomationModel } from "@chatbotx.io/database/types"
 import {
@@ -35,9 +38,12 @@ type ListIgStoriesResult = {
   pageCount: number
 }
 
+// `type` is deliberately excluded: it decides which shared-table rows every
+// read path scopes to, so it is set once at creation and never carried in an
+// update payload. Excluding it here turns any regression into a compile error.
 type IgStoryAutomationWriteData = Omit<
   typeof igStoryAutomationModel.$inferInsert,
-  "id" | "workspaceId"
+  "id" | "workspaceId" | "type"
 >
 
 class IgStoryAutomationService extends BaseService {
@@ -120,6 +126,7 @@ class IgStoryAutomationService extends BaseService {
 
   async create(input: {
     workspaceId: string
+    type: IgStoryAutomationType
     data: IgStoryAutomationWriteData
   }): Promise<IgStoryAutomationModel> {
     const [created] = await db
@@ -127,6 +134,7 @@ class IgStoryAutomationService extends BaseService {
       .values({
         id: createId(),
         workspaceId: input.workspaceId,
+        type: input.type,
         ...input.data,
       })
       .returning()

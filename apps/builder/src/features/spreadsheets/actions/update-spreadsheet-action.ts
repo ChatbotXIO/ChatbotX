@@ -30,8 +30,10 @@ export const updateSpreadsheetAction = workspaceActionClient
       })
     } catch (error) {
       if (error instanceof ChatbotXException && error.code === "validation") {
+        // Key on the field the service tagged so a validation added on any
+        // other field stops mis-rendering under the URL input.
         return returnValidationErrors(createSpreadsheetRequest, {
-          url: { _errors: [error.message] },
+          [error.field ?? "url"]: { _errors: [error.message] },
         })
       }
       throw error

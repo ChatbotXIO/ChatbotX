@@ -10,6 +10,32 @@ import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 
 const SPREADSHEET_ID_REGEX = /\/d\/([^/]+)\//
+const SPREADSHEET_HOST = "docs.google.com"
+const SPREADSHEET_PATH_PREFIX = "/spreadsheets/"
+
+/**
+ * Extracts the spreadsheet id from a Google Sheets URL, validating the parsed
+ * URL rather than a substring of the raw string. A substring test accepts
+ * `javascript:fetch(1)//docs.google.com/spreadsheets/d/ID/` and
+ * `https://evil.com/docs.google.com/spreadsheets/d/ID/`, both of which would
+ * persist to `Spreadsheet.url` and later render as a bare href.
+ */
+function parseSpreadsheetId(url: string): string | null {
+  if (!URL.canParse(url)) {
+    return null
+  }
+
+  const parsed = new URL(url)
+  if (
+    parsed.protocol !== "https:" ||
+    parsed.host !== SPREADSHEET_HOST ||
+    !parsed.pathname.startsWith(SPREADSHEET_PATH_PREFIX)
+  ) {
+    return null
+  }
+
+  return parsed.pathname.match(SPREADSHEET_ID_REGEX)?.[1] ?? null
+}
 
 export async function resolveSpreadsheetIdFromUrl(input: {
   workspaceId: string
@@ -24,11 +50,10 @@ export async function resolveSpreadsheetIdFromUrl(input: {
     throw validationException("url", messages.integrationMissing)
   }
 
-  const matches = new URL(url).pathname.match(SPREADSHEET_ID_REGEX)
-  if (!matches?.[1]) {
+  const spreadsheetId = parseSpreadsheetId(url)
+  if (!spreadsheetId) {
     throw validationException("url", messages.invalidUrl)
   }
-  const spreadsheetId = matches[1]
 
   try {
     const ctx = await buildContext({

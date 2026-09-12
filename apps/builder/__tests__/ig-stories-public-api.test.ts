@@ -173,9 +173,11 @@ describe("POST /v1/ig-stories", () => {
       created,
     )
 
+    const { type, ...data } = input
     expect(igStoryAutomationService.create).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
-      data: input,
+      type,
+      data,
     })
   })
 })
@@ -197,6 +199,22 @@ describe("PUT /v1/ig-stories/{id}", () => {
     expect(igStoryAutomationService.update).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", id: "story-1" },
       { name: "Renamed", isActive: false },
+    )
+  })
+
+  test("never forwards a client-supplied type into the update payload", async () => {
+    const input = {
+      id: "story-1",
+      name: "Renamed",
+      type: "instagramFacebook",
+    }
+    igStoryAutomationService.update.mockResolvedValueOnce({ ...input })
+
+    await procedure.handler?.({ context, input })
+
+    expect(igStoryAutomationService.update).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", id: "story-1" },
+      { name: "Renamed" },
     )
   })
 })

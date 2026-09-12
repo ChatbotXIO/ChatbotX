@@ -69,7 +69,8 @@ export function getSpreadsheetColumns({
                 <Link
                   className="truncate"
                   href={row.original.url}
-                  target="_black"
+                  rel="noopener noreferrer"
+                  target="_blank"
                 >
                   {row.original.url}
                 </Link>

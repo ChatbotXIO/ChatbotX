@@ -4,6 +4,9 @@ const mocks = vi.hoisted(() => ({
   and: vi.fn((...args: unknown[]) => ({ and: args })),
   eq: vi.fn((...args: unknown[]) => ({ eq: args })),
   ilike: vi.fn((...args: unknown[]) => ({ ilike: args })),
+  inArray: vi.fn((...args: unknown[]) => ({ inArray: args })),
+  delete: vi.fn(),
+  deleteWhere: vi.fn(),
   isUniqueViolationError: vi.fn(() => false),
   insertValues: vi.fn(),
   insert: vi.fn(),
@@ -26,6 +29,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     insert: mocks.insert,
     update: mocks.update,
+    delete: mocks.delete,
     query: {
       reflinkModel: { findFirst: mocks.findFirst },
     },
@@ -40,12 +44,18 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   eq: mocks.eq,
   ilike: mocks.ilike,
+  inArray: mocks.inArray,
   isUniqueViolationError: mocks.isUniqueViolationError,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   flowModel: {},
-  reflinkModel: { name: "reflink.name" },
+  reflinkModel: {
+    id: "reflink.id",
+    name: "reflink.name",
+    type: "reflink.type",
+    workspaceId: "reflink.workspaceId",
+  },
 }))
 
 vi.mock("@chatbotx.io/database/utils", () => ({
@@ -78,6 +88,8 @@ beforeEach(() => {
   mocks.isUniqueViolationError.mockReturnValue(false)
   mocks.insert.mockReturnValue({ values: mocks.insertValues })
   mocks.insertValues.mockResolvedValue(undefined)
+  mocks.delete.mockReturnValue({ where: mocks.deleteWhere })
+  mocks.deleteWhere.mockResolvedValue(undefined)
   mocks.flowExists.mockResolvedValue(true)
   mocks.withCache.mockImplementation(
     async (_key: string, fn: () => unknown) => await fn(),
@@ -190,6 +202,17 @@ describe("qrCodeService.update", () => {
     expect(set).toHaveBeenCalledWith(
       expect.objectContaining({ name: "qr_renamed" }),
     )
+
+    // `reflinkModel` is shared with `refLink`, so the `type` discriminator in
+    // the WHERE clause is what stops an update reaching a non-QR row of the
+    // same id. Assert it alongside the workspace and id predicates.
+    expect(where).toHaveBeenCalledWith({
+      and: [
+        { eq: ["reflink.id", "qr-1"] },
+        { eq: ["reflink.workspaceId", "ws-1"] },
+        { eq: ["reflink.type", "qrCode"] },
+      ],
+    })
   })
 
   test("rejects when flowId does not belong to the workspace", async () => {
@@ -209,6 +232,33 @@ describe("qrCodeService.update", () => {
     })
 
     expect(mocks.update).not.toHaveBeenCalled()
+  })
+})
+
+describe("qrCodeService.deleteMany", () => {
+  test("scopes the delete to the workspace, the qrCode type, and the given ids", async () => {
+    await qrCodeService.deleteMany({
+      workspaceId: "ws-1",
+      ids: ["qr-1", "qr-2"],
+    })
+
+    // Without the `type` predicate this would delete `refLink` rows sharing
+    // the `reflinkModel` table, so pin it explicitly.
+    expect(mocks.deleteWhere).toHaveBeenCalledWith({
+      and: [
+        { eq: ["reflink.workspaceId", "ws-1"] },
+        { eq: ["reflink.type", "qrCode"] },
+        { inArray: ["reflink.id", ["qr-1", "qr-2"]] },
+      ],
+    })
+  })
+
+  test("invalidates the qr-codes workspace cache tag", async () => {
+    await qrCodeService.deleteMany({ workspaceId: "ws-1", ids: ["qr-1"] })
+
+    expect(mocks.invalidateCacheByTags).toHaveBeenCalledWith([
+      qrCodeWorkspaceCacheTag("ws-1"),
+    ])
   })
 })
 

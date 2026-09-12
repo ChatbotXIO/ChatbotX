@@ -74,13 +74,14 @@ export const igStoriesPublicRouter = {
     .input(createIgStoryPublicRequest)
     .output(igStoryPublicResource)
     .errors(possibleErrorsOnCreatingResource)
-    .handler(
-      async ({ context, input }) =>
-        await igStoryAutomationService.create({
-          workspaceId: context.workspace.id,
-          data: input,
-        }),
-    ),
+    .handler(async ({ context, input }) => {
+      const { type, ...data } = input
+      return await igStoryAutomationService.create({
+        workspaceId: context.workspace.id,
+        type,
+        data,
+      })
+    }),
 
   update: workspaceTokenAuthAPI
     .route({
@@ -93,7 +94,7 @@ export const igStoriesPublicRouter = {
     .output(igStoryPublicResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const { id, ...data } = input
+      const { id, type: _type, ...data } = input
       return await igStoryAutomationService.update(
         { workspaceId: context.workspace.id, id },
         data,
