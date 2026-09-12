@@ -61,6 +61,12 @@ export const getQuestionnairePublicRequest = z.object({
   id: zodBigintAsString(),
 })
 
+export const getQuestionnaireSubmissionStatsPublicResponse = z.object({
+  totalApplicants: z.number().int(),
+  completed: z.number().int(),
+  completionRate: z.number(),
+})
+
 export const questionnairePublicResource = z.object({
   id: z.string(),
   name: z.string(),

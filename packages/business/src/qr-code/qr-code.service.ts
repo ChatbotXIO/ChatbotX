@@ -18,6 +18,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
+import { flowService } from "../flow/service"
 
 const QR_CODES_CACHE_TTL_SECONDS = 60 * 60
 
@@ -126,6 +127,14 @@ class QRCodeService extends BaseService {
     const { tx = db, workspaceId, data, duplicateNameMessage } = input
     const { size, name, ...rest } = data
     const id = createId()
+
+    if (
+      rest.flowId &&
+      !(await flowService.exists(workspaceId, rest.flowId, tx))
+    ) {
+      throw validationException("flowId", "Flow not found in this workspace")
+    }
+
     try {
       await tx.insert(reflinkModel).values({
         id,
@@ -147,21 +156,30 @@ class QRCodeService extends BaseService {
     }
   }
 
-  async update(
-    ctx: { workspaceId: string; id: string },
-    data: UpdateQrCodeData,
-    duplicateNameMessage: string,
-    tx: DatabaseClient = db,
-  ): Promise<void> {
-    const qrCode = await this.findOrFail(ctx)
+  async update(input: {
+    workspaceId: string
+    id: string
+    data: UpdateQrCodeData
+    duplicateNameMessage: string
+    tx?: DatabaseClient
+  }): Promise<ReflinkModel> {
+    const { tx = db, workspaceId, id, data, duplicateNameMessage } = input
+    const qrCode = await this.findOrFail({ workspaceId, id })
     const { size, name, ...rest } = data
     const qrStyles =
       size === undefined
         ? undefined
         : { ...((qrCode.qrStyles as { size: number } | null) ?? {}), size }
 
+    if (
+      rest.flowId &&
+      !(await flowService.exists(workspaceId, rest.flowId, tx))
+    ) {
+      throw validationException("flowId", "Flow not found in this workspace")
+    }
+
     try {
-      await tx
+      const [updated] = await tx
         .update(reflinkModel)
         .set({
           ...rest,
@@ -171,12 +189,15 @@ class QRCodeService extends BaseService {
         .where(
           and(
             eq(reflinkModel.id, qrCode.id),
-            eq(reflinkModel.workspaceId, ctx.workspaceId),
+            eq(reflinkModel.workspaceId, workspaceId),
             eq(reflinkModel.type, "qrCode"),
           ),
         )
+        .returning()
 
-      await this.invalidateCacheTags(qrCodeWorkspaceCacheTag(ctx.workspaceId))
+      await this.invalidateCacheTags(qrCodeWorkspaceCacheTag(workspaceId))
+
+      return updated
     } catch (error) {
       if (isUniqueViolationError(error)) {
         throw validationException("name", duplicateNameMessage)

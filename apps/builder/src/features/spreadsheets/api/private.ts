@@ -1,10 +1,7 @@
+import { spreadsheetService } from "@chatbotx.io/business"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { listSpreadsheets } from "../queries/list-spreadsheet.queries"
-import {
-  listWorksheetHeaders,
-  listWorksheets,
-} from "../queries/list-worksheet.queries"
+import { listWorksheetHeaders, listWorksheets } from "../lib/google-sheets"
 import {
   listSpreadsheetsRequest,
   listSpreadsheetsResponse,
@@ -25,7 +22,7 @@ export const spreadsheetsAuthenticatedAPI = {
     .input(listSpreadsheetsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listSpreadsheetsResponse)
-    .handler(async ({ input }) => await listSpreadsheets(input)),
+    .handler(async ({ input }) => await spreadsheetService.list(input)),
   listWorksheetsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",

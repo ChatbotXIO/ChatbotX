@@ -25,4 +25,13 @@ export const fbCommentResource = createSelectSchema(fbCommentAutomationModel, {
   hideComments: fbCommentHideCommentsSchema,
   replyAfter: fbCommentReplyAfterSchema,
 })
+
+export const facebookPostSchema = z.object({
+  id: z.string(),
+  message: z.string().optional(),
+  full_picture: z.string().optional(),
+  created_time: z.string(),
+  permalink_url: z.string().optional(),
+  pageId: z.string(),
+})
 export type FBCommentResource = z.infer<typeof fbCommentResource>

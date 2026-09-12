@@ -163,11 +163,13 @@ an endpoint's scope.
   declare a scope, or if `messages.ts`'s procedures drift onto `contacts`.
 
 - **Automation** — covers flows, triggers, keywords (automated responses),
-  AI agents, AI MCP servers, AI functions, AI files, and ref links — a full
-  CRUD surface so an agent can build, publish, and inspect automations
-  without human help via the builder UI. AI triggers were retired (dropped
-  from the schema and this scope) in favor of the AI files/functions/MCP
-  servers surface. Two invariants:
+  AI agents, AI MCP servers, AI functions, AI files, ref links, Facebook Lead
+  Ads automations, FB/IG comment automations, IG story automations, QR
+  codes, questionnaires (+ submissions), and spreadsheets — a full CRUD
+  surface so an agent can build, publish, and inspect automations without
+  human help via the builder UI. AI triggers were retired (dropped from the
+  schema and this scope) in favor of the AI
+  files/functions/MCP servers surface. Four invariants:
   - *Keywords `type` filter* — `AutomatedResponse` serves two `FolderType`s
     off one table (`automatedResponse` for inbound/Contact,
     `outboundAutomatedResponse` for outbound/Page), disambiguated by the
@@ -179,6 +181,15 @@ an endpoint's scope.
     was widened. Any future trigger route must keep populating both via
     `triggerRepository.findWithConditions` rather than reintroducing a
     hardcoded `[]`.
+  - *FB/IG comment `type` filter* — `FBCommentAutomation` serves fb-comments
+    (`messenger`) and ig-comments (`instagram`/`instagramFacebook`) off one
+    table. Every read and write must go through the `*Messenger`/`*Instagram`
+    service methods; a bare `workspaceId` + `id` where-clause lets
+    `/v1/fb-comments/{id}` mutate an IG automation.
+  - *List endpoints default to all folders* — the builder's list pages scope
+    to the root folder when no `folderId` is in the URL. Public list
+    handlers pass `includeAllFolders: true`; omit it and `GET /v1/fb-comments`
+    silently returns only unfiled automations.
 
 - **Appointments** — covers appointment calendars, appointments, reminder
   dispatch audit reads, and external (Google/Outlook) calendar connections.

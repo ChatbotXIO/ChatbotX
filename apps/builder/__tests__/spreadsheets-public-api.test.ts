@@ -5,6 +5,7 @@ type RouteConfig = {
   path: string
   summary: string
   tags: string[]
+  successStatus?: number
 }
 
 type CapturedProcedure = {
@@ -50,29 +51,47 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 vi.mock("@/lib/orpc/orpc-error-helper", () => ({
+  possibleErrorsOnCreatingResource: {},
+  possibleErrorsOnDeletingResource: {},
   possibleErrorsOnFindingResource: {},
   possibleErrorsOnListingResource: {},
+  possibleErrorsOnMutatingResource: {},
 }))
 
-const { listSpreadsheets, listWorksheets, listWorksheetHeaders } = vi.hoisted(
-  () => ({
-    listSpreadsheets: vi.fn(),
-    listWorksheets: vi.fn(),
-    listWorksheetHeaders: vi.fn(),
-  }),
-)
+const spreadsheetService = {
+  list: vi.fn(),
+  findByWorkspaceIdOrFail: vi.fn(),
+  deleteMany: vi.fn(),
+}
+vi.mock("@chatbotx.io/business", () => ({ spreadsheetService }))
 
-vi.mock("@/features/spreadsheets/queries/list-spreadsheet.queries", () => ({
-  listSpreadsheets,
+const { listWorksheets, listWorksheetHeaders } = vi.hoisted(() => ({
+  listWorksheets: vi.fn(),
+  listWorksheetHeaders: vi.fn(),
 }))
-vi.mock("@/features/spreadsheets/queries/list-worksheet.queries", () => ({
+vi.mock("@/features/spreadsheets/lib/google-sheets", () => ({
   listWorksheets,
   listWorksheetHeaders,
+}))
+
+const { createSpreadsheet, updateSpreadsheet } = vi.hoisted(() => ({
+  createSpreadsheet: vi.fn(),
+  updateSpreadsheet: vi.fn(),
+}))
+vi.mock("@/features/spreadsheets/lib/manage-spreadsheet", () => ({
+  createSpreadsheet,
+  updateSpreadsheet,
 }))
 
 vi.mock("@/features/spreadsheets/schema/public", () => ({
   listSpreadsheetsPublicRequest: {},
   listSpreadsheetsPublicResponse: {},
+  getSpreadsheetPublicRequest: {},
+  spreadsheetPublicResource: {},
+  createSpreadsheetPublicRequest: {},
+  createSpreadsheetPublicResponse: {},
+  updateSpreadsheetPublicRequest: {},
+  deleteSpreadsheetPublicRequest: {},
   listWorksheetHeadersPublicRequest: {},
   listWorksheetHeadersResponse: {},
   listWorksheetsPublicRequest: {},
@@ -93,6 +112,7 @@ const findProcedure = (method: string, path: string) => {
 }
 
 const scopeArgAtImport = workspaceTokenAuthAPIForScope.mock.calls[0]?.[0]
+const context = { workspace: { id: "workspace-1" } }
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -107,20 +127,99 @@ describe("GET /v1/spreadsheets", () => {
 
   test("lists the token workspace spreadsheets", async () => {
     const result = { data: [{ id: "spreadsheet-1" }], pageCount: 1 }
-    listSpreadsheets.mockResolvedValueOnce(result)
+    spreadsheetService.list.mockResolvedValueOnce(result)
 
     await expect(
       procedure.handler?.({
-        context: { workspace: { id: "workspace-1" } },
+        context,
         input: { page: 2, perPage: 25, name: "Sales" },
       }),
     ).resolves.toEqual(result)
 
-    expect(listSpreadsheets).toHaveBeenCalledWith({
+    expect(spreadsheetService.list).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       page: 2,
       perPage: 25,
       name: "Sales",
+    })
+  })
+})
+
+describe("GET /v1/spreadsheets/{id}", () => {
+  const procedure = findProcedure("GET", "/v1/spreadsheets/{id}")
+
+  test("gets a single spreadsheet in the token workspace", async () => {
+    const record = { id: "spreadsheet-1", name: "Sales" }
+    spreadsheetService.findByWorkspaceIdOrFail.mockResolvedValueOnce(record)
+
+    await expect(
+      procedure.handler?.({ context, input: { id: "spreadsheet-1" } }),
+    ).resolves.toEqual(record)
+
+    expect(spreadsheetService.findByWorkspaceIdOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "spreadsheet-1",
+    })
+  })
+})
+
+describe("POST /v1/spreadsheets", () => {
+  const procedure = findProcedure("POST", "/v1/spreadsheets")
+
+  test("creates a spreadsheet in the token workspace", async () => {
+    createSpreadsheet.mockResolvedValueOnce({ id: "spreadsheet-1" })
+    const input = { name: "Sales", url: "https://docs.google.com/x" }
+
+    await expect(procedure.handler?.({ context, input })).resolves.toEqual({
+      id: "spreadsheet-1",
+    })
+
+    expect(createSpreadsheet).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "workspace-1", data: input }),
+    )
+  })
+})
+
+describe("PUT /v1/spreadsheets/{id}", () => {
+  const procedure = findProcedure("PUT", "/v1/spreadsheets/{id}")
+
+  test("updates a spreadsheet in the token workspace", async () => {
+    const updated = { id: "spreadsheet-1", name: "Renamed" }
+    updateSpreadsheet.mockResolvedValueOnce(updated)
+
+    const input = {
+      id: "spreadsheet-1",
+      name: "Renamed",
+      url: "https://docs.google.com/x",
+    }
+
+    await expect(procedure.handler?.({ context, input })).resolves.toEqual(
+      updated,
+    )
+
+    expect(updateSpreadsheet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        id: "spreadsheet-1",
+        data: { name: "Renamed", url: "https://docs.google.com/x" },
+      }),
+    )
+  })
+})
+
+describe("DELETE /v1/spreadsheets/{id}", () => {
+  const procedure = findProcedure("DELETE", "/v1/spreadsheets/{id}")
+
+  test("deletes a spreadsheet in the token workspace", async () => {
+    spreadsheetService.deleteMany.mockResolvedValueOnce(undefined)
+
+    await expect(
+      procedure.handler?.({ context, input: { id: "spreadsheet-1" } }),
+    ).resolves.toBeUndefined()
+
+    expect(spreadsheetService.deleteMany).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ids: ["spreadsheet-1"],
     })
   })
 })
@@ -136,7 +235,7 @@ describe("GET /v1/spreadsheets/{spreadsheetId}/worksheets", () => {
 
     await expect(
       procedure.handler?.({
-        context: { workspace: { id: "workspace-1" } },
+        context,
         input: { spreadsheetId: "spreadsheet-1" },
       }),
     ).resolves.toEqual({ data: ["Sheet1"] })
@@ -153,7 +252,7 @@ describe("GET /v1/spreadsheets/{spreadsheetId}/worksheets", () => {
 
     await expect(
       procedure.handler?.({
-        context: { workspace: { id: "workspace-1" } },
+        context,
         input: { spreadsheetId: "missing-spreadsheet" },
       }),
     ).rejects.toThrow("Spreadsheet not found")
@@ -161,21 +260,21 @@ describe("GET /v1/spreadsheets/{spreadsheetId}/worksheets", () => {
   })
 })
 
-describe("GET /v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetId}/headers", () => {
+describe("GET /v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetName}/headers", () => {
   const procedure = findProcedure(
     "GET",
-    "/v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetId}/headers",
+    "/v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetName}/headers",
   )
 
-  test("lists headers using the worksheet path identifier as the sheet name", async () => {
+  test("lists headers using the worksheet name path segment as the sheet name", async () => {
     listWorksheetHeaders.mockResolvedValueOnce({ data: ["Email", "Name"] })
 
     await expect(
       procedure.handler?.({
-        context: { workspace: { id: "workspace-1" } },
+        context,
         input: {
           spreadsheetId: "spreadsheet-1",
-          worksheetId: "Leads",
+          worksheetName: "Leads",
         },
       }),
     ).resolves.toEqual({ data: ["Email", "Name"] })

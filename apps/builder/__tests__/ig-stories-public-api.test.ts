@@ -10,7 +10,7 @@ type RouteConfig = {
 
 type CapturedProcedure = {
   route: RouteConfig
-  handler?: (...args: unknown[]) => Promise<unknown>
+  handler?: (...args: unknown[]) => unknown
 }
 
 const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
@@ -24,7 +24,7 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
       input: vi.fn(() => chain),
       output: vi.fn(() => chain),
       errors: vi.fn(() => chain),
-      handler: vi.fn((fn: (...args: unknown[]) => Promise<unknown>) => {
+      handler: vi.fn((fn: (...args: unknown[]) => unknown) => {
         record.handler = fn
         return { handler: fn }
       }),
@@ -46,27 +46,24 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
 
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
+const igStoryAutomationService = {
+  list: vi.fn(),
+  findOrFail: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
 vi.mock("@chatbotx.io/business", () => ({
+  igStoryAutomationService,
   quotaEnforcementService: {},
   userQuotaService: {},
 }))
 
-const listIgStories = vi.fn()
-vi.mock("@/features/ig-stories/queries", () => ({ listIgStories }))
-
-const createIgStory = vi.fn()
-vi.mock("@/features/ig-stories/actions/create-ig-story.action", () => ({
-  createIgStory,
-}))
-
-const updateIgStory = vi.fn()
-vi.mock("@/features/ig-stories/actions/update-ig-story.action", () => ({
-  updateIgStory,
-}))
-
-const deleteIgStory = vi.fn()
-vi.mock("@/features/ig-stories/actions/delete-ig-story.action", () => ({
-  deleteIgStory,
+const listInstagramLoginStories = vi.fn()
+const listInstagramFacebookStories = vi.fn()
+vi.mock("@/features/ig-stories/lib/instagram-stories", () => ({
+  listInstagramLoginStories,
+  listInstagramFacebookStories,
 }))
 
 // The mock factory loads Zod after Vitest has applied module mocks.
@@ -106,6 +103,7 @@ const findProcedure = (method: string, path: string) => {
 }
 
 const scopeArgAtImport = workspaceTokenAuthAPIForScope.mock.calls[0]?.[0]
+const context = { workspace: { id: "workspace-1" } }
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -118,22 +116,41 @@ test("registers the IG stories public router under the automation scope", () => 
 describe("GET /v1/ig-stories", () => {
   const procedure = findProcedure("GET", "/v1/ig-stories")
 
-  test("lists the workspace's Instagram Story Automations", async () => {
+  test("lists the workspace's Instagram Story Automations across every folder", async () => {
     const response = { data: [{ id: "story-1" }], pageCount: 1 }
-    listIgStories.mockResolvedValueOnce(response)
+    igStoryAutomationService.list.mockResolvedValueOnce(response)
 
     await expect(
       procedure.handler?.({
-        context: { workspace: { id: "workspace-1" } },
+        context,
         input: { page: 1, perPage: 50, name: "Welcome" },
       }),
     ).resolves.toEqual(response)
 
-    expect(listIgStories).toHaveBeenCalledWith({
+    expect(igStoryAutomationService.list).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       page: 1,
       perPage: 50,
       name: "Welcome",
+      includeAllFolders: true,
+    })
+  })
+})
+
+describe("GET /v1/ig-stories/{id}", () => {
+  const procedure = findProcedure("GET", "/v1/ig-stories/{id}")
+
+  test("gets a single Instagram Story Automation in the token workspace", async () => {
+    const record = { id: "story-1", name: "Welcome" }
+    igStoryAutomationService.findOrFail.mockResolvedValueOnce(record)
+
+    await expect(
+      procedure.handler?.({ context, input: { id: "story-1" } }),
+    ).resolves.toEqual(record)
+
+    expect(igStoryAutomationService.findOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "story-1",
     })
   })
 })
@@ -150,16 +167,16 @@ describe("POST /v1/ig-stories", () => {
       includeKeywords: false,
     }
     const created = { id: "story-1", ...input }
-    createIgStory.mockResolvedValueOnce(created)
+    igStoryAutomationService.create.mockResolvedValueOnce(created)
 
-    await expect(
-      procedure.handler?.({
-        context: { workspace: { id: "workspace-1" } },
-        input,
-      }),
-    ).resolves.toEqual(created)
+    await expect(procedure.handler?.({ context, input })).resolves.toEqual(
+      created,
+    )
 
-    expect(createIgStory).toHaveBeenCalledWith("workspace-1", input)
+    expect(igStoryAutomationService.create).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      data: input,
+    })
   })
 })
 
@@ -168,16 +185,16 @@ describe("PUT /v1/ig-stories/{id}", () => {
 
   test("updates an Instagram Story Automation in the token workspace", async () => {
     const updated = { id: "story-1", name: "Renamed" }
-    updateIgStory.mockResolvedValueOnce(updated)
+    igStoryAutomationService.update.mockResolvedValueOnce(updated)
 
     await expect(
       procedure.handler?.({
-        context: { workspace: { id: "workspace-1" } },
+        context,
         input: { id: "story-1", name: "Renamed", isActive: false },
       }),
     ).resolves.toEqual(updated)
 
-    expect(updateIgStory).toHaveBeenCalledWith(
+    expect(igStoryAutomationService.update).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", id: "story-1" },
       { name: "Renamed", isActive: false },
     )
@@ -188,31 +205,55 @@ describe("DELETE /v1/ig-stories/{id}", () => {
   const procedure = findProcedure("DELETE", "/v1/ig-stories/{id}")
 
   test("deletes an Instagram Story Automation in the token workspace", async () => {
-    deleteIgStory.mockResolvedValueOnce(undefined)
+    igStoryAutomationService.delete.mockResolvedValueOnce(undefined)
 
     await expect(
-      procedure.handler?.({
-        context: { workspace: { id: "workspace-1" } },
-        input: { id: "story-1" },
-      }),
+      procedure.handler?.({ context, input: { id: "story-1" } }),
     ).resolves.toBeUndefined()
 
-    expect(deleteIgStory).toHaveBeenCalledWith({
+    expect(igStoryAutomationService.delete).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "story-1",
     })
   })
 
   test("propagates the declared not-found error", async () => {
-    deleteIgStory.mockRejectedValueOnce(
+    igStoryAutomationService.delete.mockRejectedValueOnce(
       new Error("Instagram Story Automation not found"),
     )
 
     await expect(
-      procedure.handler?.({
-        context: { workspace: { id: "workspace-1" } },
-        input: { id: "missing" },
-      }),
+      procedure.handler?.({ context, input: { id: "missing" } }),
     ).rejects.toThrow("Instagram Story Automation not found")
+  })
+})
+
+describe("GET /v1/ig-stories/instagram-stories", () => {
+  const procedure = findProcedure("GET", "/v1/ig-stories/instagram-stories")
+
+  test("lists Instagram Login stories when variant is instagram", async () => {
+    const response = { stories: [], pages: [] }
+    listInstagramLoginStories.mockResolvedValueOnce(response)
+
+    await expect(
+      procedure.handler?.({ context, input: { variant: "instagram" } }),
+    ).resolves.toEqual(response)
+
+    expect(listInstagramLoginStories).toHaveBeenCalledWith("workspace-1")
+    expect(listInstagramFacebookStories).not.toHaveBeenCalled()
+  })
+
+  test("lists Instagram-via-Facebook stories otherwise", async () => {
+    const response = { stories: [], pages: [] }
+    listInstagramFacebookStories.mockResolvedValueOnce(response)
+
+    await expect(
+      procedure.handler?.({
+        context,
+        input: { variant: "instagramFacebook" },
+      }),
+    ).resolves.toEqual(response)
+
+    expect(listInstagramFacebookStories).toHaveBeenCalledWith("workspace-1")
   })
 })

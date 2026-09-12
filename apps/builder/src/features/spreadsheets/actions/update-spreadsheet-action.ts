@@ -1,14 +1,16 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { spreadsheetModel } from "@chatbotx.io/database/schema"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { returnValidationErrors } from "next-safe-action"
 import { workspaceActionClient } from "@/lib/safe-action"
-import {
-  type CreateSpreadsheetRequest,
-  createSpreadsheetRequest,
-} from "../schema/mutation"
-import { verifyGoogleSheetsUrl } from "./util"
+import { updateSpreadsheet } from "../lib/manage-spreadsheet"
+import { createSpreadsheetRequest } from "../schema/mutation"
+
+const messages = {
+  integrationMissing: "You need to setup google sheets first.",
+  invalidUrl: "URL must be a valid, public or shareable Google Sheets link.",
+}
 
 export const updateSpreadsheetAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -19,41 +21,19 @@ export const updateSpreadsheetAction = workspaceActionClient
       parsedInput,
     } = props
 
-    return await updateSpreadsheet(
-      {
+    try {
+      return await updateSpreadsheet({
         workspaceId,
         id,
-      },
-      parsedInput,
-    )
+        data: parsedInput,
+        messages,
+      })
+    } catch (error) {
+      if (error instanceof ChatbotXException && error.code === "validation") {
+        return returnValidationErrors(createSpreadsheetRequest, {
+          url: { _errors: [error.message] },
+        })
+      }
+      throw error
+    }
   })
-
-export const updateSpreadsheet = async (
-  ctx: {
-    workspaceId: string
-    id: string
-  },
-  parsedInput: CreateSpreadsheetRequest,
-) => {
-  const spreadsheet = await findOrFail({
-    table: spreadsheetModel,
-    where: {
-      id: ctx.id,
-      workspaceId: ctx.workspaceId,
-    },
-    message: "Spreadsheet not found",
-  })
-
-  const spreadsheetId = await verifyGoogleSheetsUrl(
-    ctx.workspaceId,
-    parsedInput.url,
-  )
-
-  await db
-    .update(spreadsheetModel)
-    .set({
-      ...parsedInput,
-      spreadsheetId,
-    })
-    .where(eq(spreadsheetModel.id, spreadsheet.id))
-}

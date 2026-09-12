@@ -48,5 +48,37 @@ export const deleteFacebookLeadAdPublicRequest = z.object({
 })
 export const facebookLeadAdPublicDetailResource = facebookLeadAdPublicItem
 
+export const listFacebookLeadAdsPagesPublicResponse = z.object({
+  pages: z.array(
+    z.object({
+      pageId: z.string(),
+      pageName: z.string(),
+      eligible: z.boolean(),
+    }),
+  ),
+})
+
+export const listFacebookLeadAdsFormsPublicRequest = z.object({
+  pageId: z.string(),
+})
+
+const facebookLeadAdFormQuestion = z.object({
+  key: z.string(),
+  label: z.string(),
+  type: z.string(),
+  id: z.string(),
+})
+
+export const listFacebookLeadAdsFormsPublicResponse = z.object({
+  forms: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      status: z.string(),
+      questions: z.array(facebookLeadAdFormQuestion).optional(),
+    }),
+  ),
+})
+
 export const facebookLeadAdPublicResource =
   facebookLeadAdsAutomationResource.omit({ workspaceId: true })

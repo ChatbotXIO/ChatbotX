@@ -8,18 +8,28 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { createLeadAdAutomation } from "../lib/create-automation"
+import { listEligibleLeadAdsPages, listPageLeadForms } from "../lib/pages"
 import {
   createFacebookLeadAdPublicRequest,
   deleteFacebookLeadAdPublicRequest,
   facebookLeadAdPublicDetailResource,
   facebookLeadAdPublicResource,
   getFacebookLeadAdPublicRequest,
+  listFacebookLeadAdsFormsPublicRequest,
+  listFacebookLeadAdsFormsPublicResponse,
+  listFacebookLeadAdsPagesPublicResponse,
   listFacebookLeadAdsPublicRequest,
   listFacebookLeadAdsPublicResponse,
   updateFacebookLeadAdPublicRequest,
 } from "../schema/public"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
+
+const createMessages = {
+  subscribeError: "Failed to subscribe the page to lead webhooks. Try again.",
+  duplicateError: "An automation for this page and form already exists.",
+}
 
 export const facebookLeadAdsPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -66,6 +76,7 @@ export const facebookLeadAdsPublicRouter = {
       method: "POST",
       path: "/v1/facebook-lead-ads",
       summary: "Create a Facebook Lead Ads automation",
+      successStatus: 201,
       tags: ["Facebook Lead Ads"],
     })
     .input(createFacebookLeadAdPublicRequest)
@@ -73,15 +84,10 @@ export const facebookLeadAdsPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(
       async ({ context, input }) =>
-        await facebookLeadAdsAutomationService.create({
+        await createLeadAdAutomation({
           workspaceId: context.workspace.id,
-          name: input.name,
-          pageId: input.pageId,
-          pageName: input.pageName ?? null,
-          formId: input.formId,
-          formName: input.formName ?? null,
-          fieldMapping: input.fieldMapping,
-          flowId: input.flowId ?? null,
+          data: input,
+          messages: createMessages,
         }),
     ),
 
@@ -112,6 +118,7 @@ export const facebookLeadAdsPublicRouter = {
       method: "DELETE",
       path: "/v1/facebook-lead-ads/{id}",
       summary: "Delete a Facebook Lead Ads automation",
+      successStatus: 204,
       tags: ["Facebook Lead Ads"],
     })
     .input(deleteFacebookLeadAdPublicRequest)
@@ -122,4 +129,31 @@ export const facebookLeadAdsPublicRouter = {
         ids: [input.id],
       })
     }),
+
+  listPages: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/facebook-lead-ads/pages",
+      summary: "List Messenger pages eligible for Lead Ads",
+      tags: ["Facebook Lead Ads"],
+    })
+    .output(listFacebookLeadAdsPagesPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context }) => ({
+      pages: await listEligibleLeadAdsPages(context.workspace.id),
+    })),
+
+  listForms: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/facebook-lead-ads/forms",
+      summary: "List a page's lead forms",
+      tags: ["Facebook Lead Ads"],
+    })
+    .input(listFacebookLeadAdsFormsPublicRequest)
+    .output(listFacebookLeadAdsFormsPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) => ({
+      forms: await listPageLeadForms(context.workspace.id, input.pageId),
+    })),
 }

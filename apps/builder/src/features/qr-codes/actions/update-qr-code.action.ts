@@ -14,13 +14,14 @@ export const updateQrCodeAction = workspaceActionClient
   .action(async ({ bindArgsParsedInputs: [workspaceId, id], parsedInput }) => {
     const t = await getTranslations()
     try {
-      await qrCodeService.update(
-        { workspaceId, id },
-        parsedInput,
-        t("messages.nameAlreadyExists", {
+      await qrCodeService.update({
+        workspaceId,
+        id,
+        data: parsedInput,
+        duplicateNameMessage: t("messages.nameAlreadyExists", {
           feature: t("fields.qrCode.label"),
         }),
-      )
+      })
     } catch (error) {
       if (error instanceof ChatbotXException && error.code === "validation") {
         return returnValidationErrors(updateQrCodeRequest, {

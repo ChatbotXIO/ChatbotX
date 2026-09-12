@@ -8,9 +8,10 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import {
+  type FBCommentAutomationType,
   fbCommentAutomationTypes,
+  type IgCommentAutomationType,
   igCommentAutomationTypes,
-  rootFolderId,
 } from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
@@ -27,6 +28,7 @@ import { createId } from "@chatbotx.io/utils"
 import { formatInTimeZone } from "date-fns-tz"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
+import { resolveFolderIdFilter } from "../lib/folder-filter"
 import { assertDeletable } from "../template/installed-resource.service"
 
 type ListFbCommentsInput = {
@@ -35,6 +37,7 @@ type ListFbCommentsInput = {
   perPage?: number | null
   sort?: { id: string; desc: boolean }[] | null
   folderId?: string | null
+  includeAllFolders?: boolean
   name?: string | null
   isActive?: boolean | null
 }
@@ -44,15 +47,14 @@ type ListFbCommentsResult = {
   pageCount: number
 }
 
-function resolveFolderIdFilter(
-  folderId?: string | null,
-): string | { isNull: true } {
-  return !folderId || folderId === rootFolderId ? { isNull: true } : folderId
-}
-
 function resolveIsActiveFilter(isActive?: boolean | null): boolean | undefined {
   return isActive !== undefined && isActive !== null ? isActive : undefined
 }
+
+type FbCommentAutomationWriteData = Omit<
+  typeof fbCommentAutomationModel.$inferInsert,
+  "id" | "workspaceId" | "type"
+>
 
 class FbCommentAutomationService extends BaseService {
   findActiveAutomations(props: {
@@ -173,6 +175,7 @@ class FbCommentAutomationService extends BaseService {
   async deleteMany(input: {
     workspaceId: string
     ids: string[]
+    types: FBCommentAutomationType[]
   }): Promise<void> {
     if (input.ids.length === 0) {
       return
@@ -188,6 +191,7 @@ class FbCommentAutomationService extends BaseService {
         and(
           eq(fbCommentAutomationModel.workspaceId, input.workspaceId),
           inArray(fbCommentAutomationModel.id, input.ids),
+          inArray(fbCommentAutomationModel.type, input.types),
         ),
       )
   }
@@ -200,7 +204,7 @@ class FbCommentAutomationService extends BaseService {
     const where = {
       workspaceId: input.workspaceId,
       type: fbCommentAutomationTypes.enum.messenger,
-      folderId: resolveFolderIdFilter(input.folderId),
+      folderId: resolveFolderIdFilter(input.folderId, input.includeAllFolders),
       name: input.name ? { ilike: likeContains(input.name) } : undefined,
       isActive: resolveIsActiveFilter(input.isActive),
     }
@@ -244,6 +248,57 @@ class FbCommentAutomationService extends BaseService {
     return record
   }
 
+  async createMessenger(input: {
+    workspaceId: string
+    data: FbCommentAutomationWriteData
+  }): Promise<FBCommentAutomationModel> {
+    const [created] = await db
+      .insert(fbCommentAutomationModel)
+      .values({
+        id: createId(),
+        workspaceId: input.workspaceId,
+        type: fbCommentAutomationTypes.enum.messenger,
+        ...input.data,
+      })
+      .returning()
+    return created
+  }
+
+  async updateMessenger(
+    ctx: { workspaceId: string; id: string },
+    data: Partial<FbCommentAutomationWriteData>,
+  ): Promise<FBCommentAutomationModel> {
+    await this.findMessengerOrFail(ctx)
+
+    const [updated] = await db
+      .update(fbCommentAutomationModel)
+      .set(data)
+      .where(
+        and(
+          eq(fbCommentAutomationModel.id, ctx.id),
+          eq(fbCommentAutomationModel.workspaceId, ctx.workspaceId),
+          eq(
+            fbCommentAutomationModel.type,
+            fbCommentAutomationTypes.enum.messenger,
+          ),
+        ),
+      )
+      .returning()
+    return updated
+  }
+
+  async deleteMessenger(input: {
+    workspaceId: string
+    id: string
+  }): Promise<void> {
+    await this.findMessengerOrFail(input)
+    await this.deleteMany({
+      workspaceId: input.workspaceId,
+      ids: [input.id],
+      types: [fbCommentAutomationTypes.enum.messenger],
+    })
+  }
+
   async listIgComments(
     input: ListFbCommentsInput,
   ): Promise<ListFbCommentsResult> {
@@ -251,7 +306,7 @@ class FbCommentAutomationService extends BaseService {
     const where = {
       workspaceId: input.workspaceId,
       type: { in: [...igCommentAutomationTypes.options] },
-      folderId: resolveFolderIdFilter(input.folderId),
+      folderId: resolveFolderIdFilter(input.folderId, input.includeAllFolders),
       name: input.name ? { ilike: likeContains(input.name) } : undefined,
       isActive: resolveIsActiveFilter(input.isActive),
     }
@@ -293,6 +348,58 @@ class FbCommentAutomationService extends BaseService {
     }
 
     return record
+  }
+
+  async createInstagram(input: {
+    workspaceId: string
+    type: IgCommentAutomationType
+    data: FbCommentAutomationWriteData
+  }): Promise<FBCommentAutomationModel> {
+    const [created] = await db
+      .insert(fbCommentAutomationModel)
+      .values({
+        id: createId(),
+        workspaceId: input.workspaceId,
+        type: input.type,
+        ...input.data,
+      })
+      .returning()
+    return created
+  }
+
+  async updateInstagram(
+    ctx: { workspaceId: string; id: string },
+    data: Partial<FbCommentAutomationWriteData>,
+  ): Promise<FBCommentAutomationModel> {
+    await this.findInstagramOrFail(ctx)
+
+    const [updated] = await db
+      .update(fbCommentAutomationModel)
+      .set(data)
+      .where(
+        and(
+          eq(fbCommentAutomationModel.id, ctx.id),
+          eq(fbCommentAutomationModel.workspaceId, ctx.workspaceId),
+          inArray(
+            fbCommentAutomationModel.type,
+            igCommentAutomationTypes.options,
+          ),
+        ),
+      )
+      .returning()
+    return updated
+  }
+
+  async deleteInstagram(input: {
+    workspaceId: string
+    id: string
+  }): Promise<void> {
+    await this.findInstagramOrFail(input)
+    await this.deleteMany({
+      workspaceId: input.workspaceId,
+      ids: [input.id],
+      types: [...igCommentAutomationTypes.options],
+    })
   }
 }
 

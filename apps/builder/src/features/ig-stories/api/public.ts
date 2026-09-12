@@ -1,21 +1,25 @@
-import { zodBigintAsString } from "@chatbotx.io/utils"
-import { z } from "zod"
+import { igStoryAutomationService } from "@chatbotx.io/business"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
+  possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { createIgStory } from "../actions/create-ig-story.action"
-import { deleteIgStory } from "../actions/delete-ig-story.action"
-import { updateIgStory } from "../actions/update-ig-story.action"
-import { listIgStories } from "../queries"
+import {
+  listInstagramFacebookStories,
+  listInstagramLoginStories,
+} from "../lib/instagram-stories"
 import {
   createIgStoryPublicRequest,
+  deleteIgStoryPublicRequest,
+  getIgStoryPublicRequest,
   igStoryPublicResource,
   listIgStoriesPublicRequest,
   listIgStoriesPublicResponse,
+  listInstagramStoriesPublicRequest,
+  listInstagramStoriesPublicResponse,
   updateIgStoryPublicRequest,
 } from "../schema/public"
 
@@ -34,9 +38,28 @@ export const igStoriesPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
-        await listIgStories({
+        await igStoryAutomationService.list({
           ...input,
           workspaceId: context.workspace.id,
+          includeAllFolders: true,
+        }),
+    ),
+
+  get: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/ig-stories/{id}",
+      summary: "Get a specific Instagram Story Automation",
+      tags: ["IG Stories"],
+    })
+    .input(getIgStoryPublicRequest)
+    .output(igStoryPublicResource)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(
+      async ({ context, input }) =>
+        await igStoryAutomationService.findOrFail({
+          workspaceId: context.workspace.id,
+          id: input.id,
         }),
     ),
 
@@ -45,6 +68,7 @@ export const igStoriesPublicRouter = {
       method: "POST",
       path: "/v1/ig-stories",
       summary: "Create Instagram Story Automation",
+      successStatus: 201,
       tags: ["IG Stories"],
     })
     .input(createIgStoryPublicRequest)
@@ -52,7 +76,10 @@ export const igStoriesPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(
       async ({ context, input }) =>
-        await createIgStory(context.workspace.id, input),
+        await igStoryAutomationService.create({
+          workspaceId: context.workspace.id,
+          data: input,
+        }),
     ),
 
   update: workspaceTokenAuthAPI
@@ -67,7 +94,7 @@ export const igStoriesPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
-      return await updateIgStory(
+      return await igStoryAutomationService.update(
         { workspaceId: context.workspace.id, id },
         data,
       )
@@ -81,9 +108,28 @@ export const igStoriesPublicRouter = {
       successStatus: 204,
       tags: ["IG Stories"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(deleteIgStoryPublicRequest)
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      await deleteIgStory({ workspaceId: context.workspace.id, id: input.id })
+      await igStoryAutomationService.delete({
+        workspaceId: context.workspace.id,
+        id: input.id,
+      })
     }),
+
+  listStories: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/ig-stories/instagram-stories",
+      summary: "List Instagram stories eligible for IG story automation",
+      tags: ["IG Stories"],
+    })
+    .input(listInstagramStoriesPublicRequest)
+    .output(listInstagramStoriesPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) =>
+      input.variant === "instagram"
+        ? await listInstagramLoginStories(context.workspace.id)
+        : await listInstagramFacebookStories(context.workspace.id),
+    ),
 }

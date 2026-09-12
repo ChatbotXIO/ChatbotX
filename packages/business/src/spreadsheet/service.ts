@@ -1,12 +1,15 @@
 import {
+  and,
   type DatabaseClient,
   db,
+  eq,
   findOrFail,
+  inArray,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
 import { spreadsheetModel } from "@chatbotx.io/database/schema"
 import type { SpreadsheetModel } from "@chatbotx.io/database/types"
-import { parsePagination } from "@chatbotx.io/database/utils"
+import { likeContains, parsePagination } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 
@@ -19,6 +22,7 @@ type ListSpreadsheetsInput = {
   workspaceId: string
   page?: number
   perPage?: number
+  name?: string | null
 }
 
 type ListSpreadsheetsResult = {
@@ -43,19 +47,64 @@ class SpreadsheetService extends BaseService {
     spreadsheetId: string
     data: CreateSpreadsheetData
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<{ id: string }> {
     const { tx = db, workspaceId, spreadsheetId, data } = input
+    const id = createId()
     await tx.insert(spreadsheetModel).values({
       ...data,
-      id: createId(),
+      id,
       workspaceId,
       spreadsheetId,
     })
+    return { id }
+  }
+
+  async update(input: {
+    workspaceId: string
+    id: string
+    spreadsheetId: string
+    data: CreateSpreadsheetData
+    tx?: DatabaseClient
+  }): Promise<SpreadsheetModel> {
+    const { tx = db, workspaceId, id, spreadsheetId, data } = input
+    await this.findByWorkspaceIdOrFail({ id, workspaceId })
+
+    const [updated] = await tx
+      .update(spreadsheetModel)
+      .set({ ...data, spreadsheetId })
+      .where(
+        and(
+          eq(spreadsheetModel.id, id),
+          eq(spreadsheetModel.workspaceId, workspaceId),
+        ),
+      )
+      .returning()
+    return updated
+  }
+
+  async deleteMany(input: {
+    workspaceId: string
+    ids: string[]
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { tx = db, workspaceId, ids } = input
+    if (ids.length === 0) {
+      return
+    }
+    await tx
+      .delete(spreadsheetModel)
+      .where(
+        and(
+          eq(spreadsheetModel.workspaceId, workspaceId),
+          inArray(spreadsheetModel.id, ids),
+        ),
+      )
   }
 
   async list(input: ListSpreadsheetsInput): Promise<ListSpreadsheetsResult> {
     const where = {
       workspaceId: input.workspaceId,
+      name: input.name ? { ilike: likeContains(input.name) } : undefined,
     }
 
     const pagination = parsePagination(input)

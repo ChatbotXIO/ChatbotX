@@ -8,6 +8,8 @@ import type {
 export async function listIgStories(
   input: ListIgStoriesRequest,
 ): Promise<ListIgStoriesResponse> {
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
+
   return await igStoryAutomationService.list(input)
 }
 

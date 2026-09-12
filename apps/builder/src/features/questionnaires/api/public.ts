@@ -17,6 +17,7 @@ import {
   duplicateQuestionnairePublicRequest,
   getQuestionnairePublicRequest,
   getQuestionnaireSubmissionPublicRequest,
+  getQuestionnaireSubmissionStatsPublicResponse,
   listQuestionnaireSubmissionsPublicRequest,
   listQuestionnaireSubmissionsPublicResponse,
   listQuestionnairesPublicRequest,
@@ -208,4 +209,22 @@ export const questionnairesPublicRouter = {
         submissionId: input.submissionId,
       })
     }),
+
+  getSubmissionStats: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/questionnaires/{id}/submissions/stats",
+      summary: "Get questionnaire submission stats",
+      tags: ["Questionnaire submissions"],
+    })
+    .input(getQuestionnairePublicRequest)
+    .output(getQuestionnaireSubmissionStatsPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(
+      async ({ context, input }) =>
+        await questionnaireSubmissionService.dashboard({
+          workspaceId: context.workspace.id,
+          questionnaireId: input.id,
+        }),
+    ),
 }

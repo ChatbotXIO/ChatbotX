@@ -1,24 +1,22 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { publicListResponse, withPublicPaging } from "@/lib/public-api/list"
+import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { createQrCodeRequest, updateQrCodeRequest } from "./action"
 import { qrCodeResource } from "./resource"
 
 const qrCodeId = zodBigintAsString()
 
-export const publicListQrCodesRequest = withPublicPaging(
-  z.object({
-    keyword: z.string().optional(),
-    sort: z
-      .array(
-        z.object({
-          id: z.string(),
-          desc: z.boolean(),
-        }),
-      )
-      .optional(),
-  }),
-)
+export const publicListQrCodesRequest = publicListRequest.extend({
+  keyword: z.string().optional(),
+  sort: z
+    .array(
+      z.object({
+        id: z.string(),
+        desc: z.boolean(),
+      }),
+    )
+    .optional(),
+})
 
 const qrCodePublicItem = qrCodeResource.omit({ workspaceId: true }).and(
   z.object({

@@ -7,17 +7,25 @@ const mocks = vi.hoisted(() => ({
   isUniqueViolationError: vi.fn(() => false),
   insertValues: vi.fn(),
   insert: vi.fn(),
+  updateSet: vi.fn(),
+  update: vi.fn(),
   invalidateCacheByTags: vi.fn(),
   withCache: vi.fn(),
   findFirst: vi.fn(),
   count: vi.fn(),
   listWhere: vi.fn(),
+  flowExists: vi.fn(),
+}))
+
+vi.mock("../src/flow/service", () => ({
+  flowService: { exists: mocks.flowExists },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   and: mocks.and,
   db: {
     insert: mocks.insert,
+    update: mocks.update,
     query: {
       reflinkModel: { findFirst: mocks.findFirst },
     },
@@ -70,6 +78,7 @@ beforeEach(() => {
   mocks.isUniqueViolationError.mockReturnValue(false)
   mocks.insert.mockReturnValue({ values: mocks.insertValues })
   mocks.insertValues.mockResolvedValue(undefined)
+  mocks.flowExists.mockResolvedValue(true)
   mocks.withCache.mockImplementation(
     async (_key: string, fn: () => unknown) => await fn(),
   )
@@ -140,6 +149,66 @@ describe("qrCodeService.create", () => {
     })
 
     expect(result).toEqual({ id: expect.any(String) })
+  })
+
+  test("rejects when flowId does not belong to the workspace", async () => {
+    mocks.flowExists.mockResolvedValue(false)
+
+    await expect(
+      qrCodeService.create({
+        workspaceId: "ws-1",
+        data: { size: 256, name: "my-code", flowId: "other-workspace-flow" },
+        duplicateNameMessage: "Name already exists",
+      }),
+    ).rejects.toMatchObject({
+      code: "validation",
+      field: "flowId",
+    })
+
+    expect(mocks.insertValues).not.toHaveBeenCalled()
+  })
+})
+
+describe("qrCodeService.update", () => {
+  test("returns the updated row scoped to workspace, id, and the qrCode type", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "qr-1", qrStyles: null })
+    const returning = vi
+      .fn()
+      .mockResolvedValue([{ id: "qr-1", name: "qr_renamed" }])
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    mocks.update.mockReturnValue({ set })
+
+    const result = await qrCodeService.update({
+      workspaceId: "ws-1",
+      id: "qr-1",
+      data: { name: "renamed" },
+      duplicateNameMessage: "Name already exists",
+    })
+
+    expect(result).toEqual({ id: "qr-1", name: "qr_renamed" })
+    expect(set).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "qr_renamed" }),
+    )
+  })
+
+  test("rejects when flowId does not belong to the workspace", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "qr-1", qrStyles: null })
+    mocks.flowExists.mockResolvedValue(false)
+
+    await expect(
+      qrCodeService.update({
+        workspaceId: "ws-1",
+        id: "qr-1",
+        data: { flowId: "other-workspace-flow" },
+        duplicateNameMessage: "Name already exists",
+      }),
+    ).rejects.toMatchObject({
+      code: "validation",
+      field: "flowId",
+    })
+
+    expect(mocks.update).not.toHaveBeenCalled()
   })
 })
 

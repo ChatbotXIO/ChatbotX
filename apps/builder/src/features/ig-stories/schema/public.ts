@@ -1,3 +1,4 @@
+import { igStoryAutomationTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
@@ -19,3 +20,29 @@ export const createIgStoryPublicRequest = createIgStoryRequest
 export const updateIgStoryPublicRequest = updateIgStoryRequest.and(
   z.object({ id: zodBigintAsString() }),
 )
+
+export const getIgStoryPublicRequest = z.object({
+  id: zodBigintAsString(),
+})
+
+export const deleteIgStoryPublicRequest = z.object({
+  id: zodBigintAsString(),
+})
+
+export const listInstagramStoriesPublicRequest = z.object({
+  variant: igStoryAutomationTypes,
+})
+
+export const listInstagramStoriesPublicResponse = z.object({
+  stories: z.array(
+    z.object({
+      id: z.string(),
+      message: z.string().optional(),
+      full_picture: z.string().optional(),
+      created_time: z.string(),
+      permalink_url: z.string().optional(),
+      accountId: z.string(),
+    }),
+  ),
+  pages: z.array(z.object({ id: z.string(), name: z.string() })),
+})

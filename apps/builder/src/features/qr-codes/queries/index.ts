@@ -4,8 +4,6 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListQrCodesRequest, ListQrCodesResponse } from "../schema/query"
 import type { QrCodeResource } from "../schema/resource"
 
-export const getWorkspaceCacheTag = qrCodeWorkspaceCacheTag
-
 // 1 hour: this builder-only cache mirrors what `qrCodeService.find` cached
 // before it was made uncached for the public QR landing page (see that
 // service for why). `update-qr-code.action.ts` / `delete-qr-codes.action.ts`

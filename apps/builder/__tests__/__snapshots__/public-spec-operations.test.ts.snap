@@ -1093,6 +1093,16 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/facebook-lead-ads",
   },
   {
+    "method": "GET",
+    "operationId": "facebookLeadAds.listForms",
+    "path": "/v1/facebook-lead-ads/forms",
+  },
+  {
+    "method": "GET",
+    "operationId": "facebookLeadAds.listPages",
+    "path": "/v1/facebook-lead-ads/pages",
+  },
+  {
     "method": "PUT",
     "operationId": "facebookLeadAds.update",
     "path": "/v1/facebook-lead-ads/{id}",
@@ -1109,8 +1119,18 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "fbComments.get",
+    "path": "/v1/fb-comments/{id}",
+  },
+  {
+    "method": "GET",
     "operationId": "fbComments.list",
     "path": "/v1/fb-comments",
+  },
+  {
+    "method": "GET",
+    "operationId": "fbComments.listPosts",
+    "path": "/v1/fb-comments/facebook-posts",
   },
   {
     "method": "PUT",
@@ -1199,8 +1219,18 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "igComments.get",
+    "path": "/v1/ig-comments/{id}",
+  },
+  {
+    "method": "GET",
     "operationId": "igComments.list",
     "path": "/v1/ig-comments",
+  },
+  {
+    "method": "GET",
+    "operationId": "igComments.listMedia",
+    "path": "/v1/ig-comments/instagram-media",
   },
   {
     "method": "PUT",
@@ -1219,8 +1249,18 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "igStories.get",
+    "path": "/v1/ig-stories/{id}",
+  },
+  {
+    "method": "GET",
     "operationId": "igStories.list",
     "path": "/v1/ig-stories",
+  },
+  {
+    "method": "GET",
+    "operationId": "igStories.listStories",
+    "path": "/v1/ig-stories/instagram-stories",
   },
   {
     "method": "PUT",
@@ -1584,6 +1624,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "questionnaires.getSubmissionStats",
+    "path": "/v1/questionnaires/{id}/submissions/stats",
+  },
+  {
+    "method": "GET",
     "operationId": "questionnaires.list",
     "path": "/v1/questionnaires",
   },
@@ -1693,21 +1738,6 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/sequences/{id}/steps",
   },
   {
-    "method": "GET",
-    "operationId": "spreadsheets.list",
-    "path": "/v1/spreadsheets",
-  },
-  {
-    "method": "GET",
-    "operationId": "spreadsheets.listWorksheetHeaders",
-    "path": "/v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetId}/headers",
-  },
-  {
-    "method": "GET",
-    "operationId": "spreadsheets.listWorksheets",
-    "path": "/v1/spreadsheets/{spreadsheetId}/worksheets",
-  },
-  {
     "method": "POST",
     "operationId": "smtpIntegrations.create",
     "path": "/v1/smtp-integrations",
@@ -1731,6 +1761,41 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "smtpIntegrations.update",
     "path": "/v1/smtp-integrations/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "spreadsheets.create",
+    "path": "/v1/spreadsheets",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "spreadsheets.delete",
+    "path": "/v1/spreadsheets/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "spreadsheets.get",
+    "path": "/v1/spreadsheets/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "spreadsheets.list",
+    "path": "/v1/spreadsheets",
+  },
+  {
+    "method": "GET",
+    "operationId": "spreadsheets.listWorksheetHeaders",
+    "path": "/v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetName}/headers",
+  },
+  {
+    "method": "GET",
+    "operationId": "spreadsheets.listWorksheets",
+    "path": "/v1/spreadsheets/{spreadsheetId}/worksheets",
+  },
+  {
+    "method": "PUT",
+    "operationId": "spreadsheets.update",
+    "path": "/v1/spreadsheets/{id}",
   },
   {
     "method": "POST",

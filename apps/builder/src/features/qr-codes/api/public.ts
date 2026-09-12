@@ -64,6 +64,7 @@ export const qrCodesPublicRouter = {
       method: "POST",
       path: "/v1/qr-codes",
       summary: "Create a QR code",
+      successStatus: 201,
       tags,
     })
     .input(publicCreateQrCodeRequest)
@@ -86,14 +87,16 @@ export const qrCodesPublicRouter = {
       tags,
     })
     .input(publicUpdateQrCodeRequest)
+    .output(publicQrCodeResponse)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
-      await qrCodeService.update(
-        { workspaceId: context.workspace.id, id },
+      return await qrCodeService.update({
+        workspaceId: context.workspace.id,
+        id,
         data,
         duplicateNameMessage,
-      )
+      })
     }),
 
   delete: workspaceTokenAuthAPI

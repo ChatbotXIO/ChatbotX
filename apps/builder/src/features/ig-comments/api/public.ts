@@ -1,21 +1,25 @@
 import { fbCommentAutomationService } from "@chatbotx.io/business"
-import { zodBigintAsString } from "@chatbotx.io/utils"
-import { z } from "zod"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
+  possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { createIgComment } from "../actions/create-ig-comment.action"
-import { deleteIgComment } from "../actions/delete-ig-comment.action"
-import { updateIgComment } from "../actions/update-ig-comment.action"
+import {
+  listInstagramFacebookMedia,
+  listInstagramLoginMedia,
+} from "../lib/instagram-media"
 import {
   createIgCommentPublicRequest,
+  deleteIgCommentPublicRequest,
+  getIgCommentPublicRequest,
   igCommentPublicResource,
   listIgCommentsPublicRequest,
   listIgCommentsPublicResponse,
+  listInstagramMediaPublicRequest,
+  listInstagramMediaPublicResponse,
   updateIgCommentPublicRequest,
 } from "../schema/public"
 
@@ -37,6 +41,25 @@ export const igCommentsPublicRouter = {
         await fbCommentAutomationService.listIgComments({
           ...input,
           workspaceId: context.workspace.id,
+          includeAllFolders: true,
+        }),
+    ),
+
+  get: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/ig-comments/{id}",
+      summary: "Get a specific Instagram comment automation",
+      tags: ["IG Comments"],
+    })
+    .input(getIgCommentPublicRequest)
+    .output(igCommentPublicResource)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(
+      async ({ context, input }) =>
+        await fbCommentAutomationService.findInstagramOrFail({
+          workspaceId: context.workspace.id,
+          id: input.id,
         }),
     ),
 
@@ -45,15 +68,20 @@ export const igCommentsPublicRouter = {
       method: "POST",
       path: "/v1/ig-comments",
       summary: "Create an Instagram comment automation",
+      successStatus: 201,
       tags: ["IG Comments"],
     })
     .input(createIgCommentPublicRequest)
     .output(igCommentPublicResource)
     .errors(possibleErrorsOnCreatingResource)
-    .handler(
-      async ({ context, input }) =>
-        await createIgComment(context.workspace.id, input),
-    ),
+    .handler(async ({ context, input }) => {
+      const { type, ...data } = input
+      return await fbCommentAutomationService.createInstagram({
+        workspaceId: context.workspace.id,
+        type,
+        data,
+      })
+    }),
 
   update: workspaceTokenAuthAPI
     .route({
@@ -66,8 +94,8 @@ export const igCommentsPublicRouter = {
     .output(igCommentPublicResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const { id, ...data } = input
-      return await updateIgComment(
+      const { id, type: _type, ...data } = input
+      return await fbCommentAutomationService.updateInstagram(
         { workspaceId: context.workspace.id, id },
         data,
       )
@@ -81,9 +109,28 @@ export const igCommentsPublicRouter = {
       successStatus: 204,
       tags: ["IG Comments"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(deleteIgCommentPublicRequest)
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      await deleteIgComment({ workspaceId: context.workspace.id, id: input.id })
+      await fbCommentAutomationService.deleteInstagram({
+        workspaceId: context.workspace.id,
+        id: input.id,
+      })
     }),
+
+  listMedia: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/ig-comments/instagram-media",
+      summary: "List Instagram media eligible for IG comment automation",
+      tags: ["IG Comments"],
+    })
+    .input(listInstagramMediaPublicRequest)
+    .output(listInstagramMediaPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) =>
+      input.variant === "instagram"
+        ? await listInstagramLoginMedia(context.workspace.id)
+        : await listInstagramFacebookMedia(context.workspace.id),
+    ),
 }

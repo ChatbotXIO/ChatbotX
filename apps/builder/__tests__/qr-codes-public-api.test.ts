@@ -174,18 +174,22 @@ describe("PUT /v1/qr-codes/{id}", () => {
   const procedure = findProcedure("PUT", "/v1/qr-codes/{id}")
 
   test("updates a QR code in the token workspace", async () => {
-    qrCodeService.update.mockResolvedValueOnce(undefined)
+    const updated = { id: "qr-1", name: "welcome", size: 400 }
+    qrCodeService.update.mockResolvedValueOnce(updated)
 
-    await procedure.handler?.({
-      context: tokenContext,
-      input: { id: "qr-1", name: "welcome", size: 400 },
+    await expect(
+      procedure.handler?.({
+        context: tokenContext,
+        input: { id: "qr-1", name: "welcome", size: 400 },
+      }),
+    ).resolves.toEqual(updated)
+
+    expect(qrCodeService.update).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "qr-1",
+      data: { name: "welcome", size: 400 },
+      duplicateNameMessage: "QR Code name already exists",
     })
-
-    expect(qrCodeService.update).toHaveBeenCalledWith(
-      { workspaceId: "workspace-1", id: "qr-1" },
-      { name: "welcome", size: 400 },
-      "QR Code name already exists",
-    )
   })
 })
 

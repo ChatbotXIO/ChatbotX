@@ -1,16 +1,13 @@
+import { fbCommentAutomationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { createIgComment } from "../actions/create-ig-comment.action"
-import { deleteIgComment } from "../actions/delete-ig-comment.action"
-import { updateIgComment } from "../actions/update-ig-comment.action"
-import { listIgComments } from "../queries"
 import {
   listInstagramFacebookMedia,
   listInstagramLoginMedia,
-} from "../queries/instagram-media"
+} from "../lib/instagram-media"
 import {
   createIgCommentRequest,
   igCommentVariants,
@@ -31,7 +28,10 @@ export const igCommentsPrivateAPI = {
     .input(listIgCommentsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listIgCommentsResponse)
-    .handler(async ({ input }) => await listIgComments(input)),
+    .handler(
+      async ({ input }) =>
+        await fbCommentAutomationService.listIgComments(input),
+    ),
 
   createIgCommentAPI: authorizedAPI
     .route({
@@ -44,8 +44,12 @@ export const igCommentsPrivateAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(igCommentResource)
     .handler(async ({ input }) => {
-      const { workspaceId, ...rest } = input
-      return await createIgComment(workspaceId, rest)
+      const { workspaceId, type, ...data } = input
+      return await fbCommentAutomationService.createInstagram({
+        workspaceId,
+        type,
+        data,
+      })
     }),
 
   updateIgCommentAPI: authorizedAPI
@@ -63,8 +67,11 @@ export const igCommentsPrivateAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(igCommentResource)
     .handler(async ({ input }) => {
-      const { workspaceId, id, ...rest } = input
-      return await updateIgComment({ workspaceId, id }, rest)
+      const { workspaceId, id, type: _type, ...rest } = input
+      return await fbCommentAutomationService.updateInstagram(
+        { workspaceId, id },
+        rest,
+      )
     }),
 
   deleteIgCommentAPI: authorizedAPI
@@ -78,7 +85,10 @@ export const igCommentsPrivateAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.void())
     .handler(async ({ input }) => {
-      await deleteIgComment({ workspaceId: input.workspaceId, id: input.id })
+      await fbCommentAutomationService.deleteInstagram({
+        workspaceId: input.workspaceId,
+        id: input.id,
+      })
     }),
 
   instagramMediaAPI: authorizedAPI

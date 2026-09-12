@@ -23,6 +23,7 @@ export const bulkDeleteFbCommentsAction = workspaceActionClient
       await fbCommentAutomationService.deleteMany({
         workspaceId,
         ids: parsedInput.ids,
+        types: ["messenger"],
       })
     },
   )

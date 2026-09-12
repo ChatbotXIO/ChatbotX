@@ -64,6 +64,7 @@ const questionnaireSubmissionService = {
   list: vi.fn(),
   detail: vi.fn(),
   deleteSubmission: vi.fn(),
+  dashboard: vi.fn(),
 }
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -109,6 +110,7 @@ test("registers each questionnaire route with its public method and path", () =>
     ["GET", "/v1/questionnaires/{id}/submissions"],
     ["GET", "/v1/questionnaires/{id}/submissions/{submissionId}"],
     ["DELETE", "/v1/questionnaires/{id}/submissions/{submissionId}"],
+    ["GET", "/v1/questionnaires/{id}/submissions/stats"],
   ])
 })
 
@@ -309,6 +311,28 @@ describe("questionnaire submission handlers", () => {
       workspaceId: "workspace-1",
       questionnaireId: "q-1",
       submissionId: "s-1",
+    })
+  })
+
+  test("gets submission stats for a questionnaire", async () => {
+    const procedure = findProcedure(
+      "GET",
+      "/v1/questionnaires/{id}/submissions/stats",
+    )
+    const response = {
+      totalApplicants: 10,
+      completed: 4,
+      completionRate: 40,
+    }
+    questionnaireSubmissionService.dashboard.mockResolvedValueOnce(response)
+
+    await expect(
+      procedure.handler?.({ context, input: { id: "q-1" } }),
+    ).resolves.toEqual(response)
+
+    expect(questionnaireSubmissionService.dashboard).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      questionnaireId: "q-1",
     })
   })
 })

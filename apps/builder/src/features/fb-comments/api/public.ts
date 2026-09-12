@@ -2,17 +2,18 @@ import { fbCommentAutomationService } from "@chatbotx.io/business"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
+  possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { createFbComment } from "../actions/create-fb-comment.action"
-import { deleteFbComment } from "../actions/delete-fb-comment.action"
-import { updateFbComment } from "../actions/update-fb-comment.action"
+import { listFacebookPostsForAutomation } from "../lib/facebook-posts"
 import {
   createFbCommentPublicRequest,
   deleteFbCommentPublicRequest,
   fbCommentPublicResource,
+  getFbCommentPublicRequest,
+  listFacebookPostsPublicResponse,
   listFbCommentsPublicRequest,
   listFbCommentsPublicResponse,
   updateFbCommentPublicRequest,
@@ -36,6 +37,25 @@ export const fbCommentsPublicRouter = {
         await fbCommentAutomationService.list({
           ...input,
           workspaceId: context.workspace.id,
+          includeAllFolders: true,
+        }),
+    ),
+
+  get: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/fb-comments/{id}",
+      summary: "Get a specific FB comment automation",
+      tags: ["FB Comments"],
+    })
+    .input(getFbCommentPublicRequest)
+    .output(fbCommentPublicResource)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(
+      async ({ context, input }) =>
+        await fbCommentAutomationService.findMessengerOrFail({
+          workspaceId: context.workspace.id,
+          id: input.id,
         }),
     ),
 
@@ -52,7 +72,10 @@ export const fbCommentsPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(
       async ({ context, input }) =>
-        await createFbComment(context.workspace.id, input),
+        await fbCommentAutomationService.createMessenger({
+          workspaceId: context.workspace.id,
+          data: input,
+        }),
     ),
 
   update: workspaceTokenAuthAPI
@@ -67,7 +90,7 @@ export const fbCommentsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
-      return await updateFbComment(
+      return await fbCommentAutomationService.updateMessenger(
         { workspaceId: context.workspace.id, id },
         data,
       )
@@ -84,6 +107,23 @@ export const fbCommentsPublicRouter = {
     .input(deleteFbCommentPublicRequest)
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      await deleteFbComment({ workspaceId: context.workspace.id, id: input.id })
+      await fbCommentAutomationService.deleteMessenger({
+        workspaceId: context.workspace.id,
+        id: input.id,
+      })
     }),
+
+  listPosts: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/fb-comments/facebook-posts",
+      summary: "List Facebook posts eligible for FB comment automation",
+      tags: ["FB Comments"],
+    })
+    .output(listFacebookPostsPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(
+      async ({ context }) =>
+        await listFacebookPostsForAutomation(context.workspace.id),
+    ),
 }

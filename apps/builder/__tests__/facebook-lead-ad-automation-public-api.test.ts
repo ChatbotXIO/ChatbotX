@@ -50,7 +50,6 @@ vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 const facebookLeadAdsAutomationService = {
   list: vi.fn(),
   findById: vi.fn(),
-  create: vi.fn(),
   update: vi.fn(),
   deleteMany: vi.fn(),
 }
@@ -58,6 +57,18 @@ vi.mock("@chatbotx.io/business", () => ({ facebookLeadAdsAutomationService }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
   notFoundException: (message: string) => new Error(message),
+}))
+
+const createLeadAdAutomation = vi.fn()
+vi.mock("@/features/facebook-lead-ad-automation/lib/create-automation", () => ({
+  createLeadAdAutomation,
+}))
+
+const listEligibleLeadAdsPages = vi.fn()
+const listPageLeadForms = vi.fn()
+vi.mock("@/features/facebook-lead-ad-automation/lib/pages", () => ({
+  listEligibleLeadAdsPages,
+  listPageLeadForms,
 }))
 
 vi.mock("@/features/facebook-lead-ad-automation/schema/public", () => ({
@@ -69,6 +80,9 @@ vi.mock("@/features/facebook-lead-ad-automation/schema/public", () => ({
   deleteFacebookLeadAdPublicRequest: {},
   facebookLeadAdPublicDetailResource: {},
   facebookLeadAdPublicResource: {},
+  listFacebookLeadAdsPagesPublicResponse: {},
+  listFacebookLeadAdsFormsPublicRequest: {},
+  listFacebookLeadAdsFormsPublicResponse: {},
 }))
 
 await import("@/features/facebook-lead-ad-automation/api/public")
@@ -153,31 +167,28 @@ describe("GET /v1/facebook-lead-ads/{id}", () => {
 describe("POST /v1/facebook-lead-ads", () => {
   const procedure = findProcedure("POST", "/v1/facebook-lead-ads")
 
-  test("creates an automation without a session actor", async () => {
+  test("creates an automation via the subscribe-then-create lib, not the raw service", async () => {
     const automation = { id: "lead-ad-1" }
-    facebookLeadAdsAutomationService.create.mockResolvedValueOnce(automation)
+    createLeadAdAutomation.mockResolvedValueOnce(automation)
 
-    await expect(
-      procedure.handler?.({
-        context: workspaceContext,
-        input: {
-          name: "Newsletter leads",
-          pageId: "page-1",
-          formId: "form-1",
-          fieldMapping: [],
-        },
-      }),
-    ).resolves.toEqual(automation)
-
-    expect(facebookLeadAdsAutomationService.create).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
+    const input = {
       name: "Newsletter leads",
       pageId: "page-1",
-      pageName: null,
       formId: "form-1",
-      formName: null,
       fieldMapping: [],
-      flowId: null,
+    }
+
+    await expect(
+      procedure.handler?.({ context: workspaceContext, input }),
+    ).resolves.toEqual(automation)
+
+    expect(createLeadAdAutomation).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      data: input,
+      messages: expect.objectContaining({
+        subscribeError: expect.any(String),
+        duplicateError: expect.any(String),
+      }),
     })
   })
 })
@@ -231,5 +242,38 @@ describe("DELETE /v1/facebook-lead-ads/{id}", () => {
       workspaceId: "workspace-1",
       ids: ["lead-ad-1"],
     })
+  })
+})
+
+describe("GET /v1/facebook-lead-ads/pages", () => {
+  const procedure = findProcedure("GET", "/v1/facebook-lead-ads/pages")
+
+  test("lists eligible Messenger pages for the token workspace", async () => {
+    const pages = [{ pageId: "page-1", pageName: "Page One", eligible: true }]
+    listEligibleLeadAdsPages.mockResolvedValueOnce(pages)
+
+    await expect(
+      procedure.handler?.({ context: workspaceContext }),
+    ).resolves.toEqual({ pages })
+
+    expect(listEligibleLeadAdsPages).toHaveBeenCalledWith("workspace-1")
+  })
+})
+
+describe("GET /v1/facebook-lead-ads/forms", () => {
+  const procedure = findProcedure("GET", "/v1/facebook-lead-ads/forms")
+
+  test("lists a page's lead forms for the token workspace", async () => {
+    const forms = [{ id: "form-1", name: "Form One", status: "ACTIVE" }]
+    listPageLeadForms.mockResolvedValueOnce(forms)
+
+    await expect(
+      procedure.handler?.({
+        context: workspaceContext,
+        input: { pageId: "page-1" },
+      }),
+    ).resolves.toEqual({ forms })
+
+    expect(listPageLeadForms).toHaveBeenCalledWith("workspace-1", "page-1")
   })
 })
