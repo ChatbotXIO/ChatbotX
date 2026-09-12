@@ -9,7 +9,6 @@ import {
 } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { aiAgentModel } from "./ai-agent"
-import { aiAssistantModel } from "./ai-assistant"
 import { integrationModel } from "./integration-base"
 import { workspaceModel } from "./workspace"
 
@@ -37,10 +36,6 @@ export const integrationOpenaiModel = pgTable(
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
-    aiAssistantId: bigintAsString().references(() => aiAssistantModel.id, {
-      onDelete: "set null",
-      onUpdate: "cascade",
-    }),
     aiAgentId: bigintAsString().references(() => aiAgentModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",

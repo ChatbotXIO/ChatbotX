@@ -1,7 +1,6 @@
 import { adsConversionEventRelations } from "./ads-conversion-event"
 import { adsConversionRuleRelations } from "./ads-conversion-rule"
 import { aiAgentRelations } from "./ai-agent"
-import { aiAssistantRelations } from "./ai-assistant"
 import { aiConversationSourceRelations } from "./ai-conversation-source"
 import { aiEmbeddingRelations } from "./ai-embedding"
 import { aiFileRelations } from "./ai-file"
@@ -161,7 +160,6 @@ export const relations = {
   ...workspaceRelations,
   ...workspaceApiTokenRelations,
   ...aiAgentRelations,
-  ...aiAssistantRelations,
   ...aiConversationSourceRelations,
   ...aiFileRelations,
   ...flowRelations,

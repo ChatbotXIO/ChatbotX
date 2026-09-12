@@ -8,10 +8,6 @@ export const integrationOpenaiRelations = defineRelationsPart(schema, (r) => ({
       from: r.integrationOpenaiModel.aiAgentId,
       to: r.aiAgentModel.id,
     }),
-    aiAssistant: r.one.aiAssistantModel({
-      from: r.integrationOpenaiModel.aiAssistantId,
-      to: r.aiAssistantModel.id,
-    }),
     workspace: r.one.workspaceModel({
       from: r.integrationOpenaiModel.workspaceId,
       to: r.workspaceModel.id,
