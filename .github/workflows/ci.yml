@@ -40,7 +40,7 @@ jobs:
       # the pnpm binary to locate the store. v6 drops the deprecated Node 20
       # runtime; the version itself comes from `packageManager` in package.json.
       - name: Set up pnpm
-        uses: pnpm/action-setup@v6.0.10
+        uses: pnpm/action-setup@v6.1.0
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -71,7 +71,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v6.0.10
+        uses: pnpm/action-setup@v6.1.0
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -102,7 +102,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v6.0.10
+        uses: pnpm/action-setup@v6.1.0
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
