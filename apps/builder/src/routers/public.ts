@@ -17,6 +17,7 @@ import { conversationsPublicRouter } from "@/features/conversations/api/public"
 import { couponsPublicRouter } from "@/features/coupons/api/public"
 import { customFieldsPublicRouter } from "@/features/custom-fields/api/public"
 import { dynamicImagesPublicRouter } from "@/features/dynamic-images/api/public"
+import { emailTopicsPublicRouter } from "@/features/email-topics/api/public"
 import { errorLogsPublicRouter } from "@/features/error-logs/api/public"
 import { appointmentExternalCalendarsPublicRouter } from "@/features/external-calendars/api/public"
 import { externalWebhooksPublicRouter } from "@/features/external-webhooks/api/public"
@@ -65,6 +66,7 @@ export const publicRouter = {
   coupons: couponsPublicRouter,
   customFields: customFieldsPublicRouter,
   dynamicImages: dynamicImagesPublicRouter,
+  emailTopics: emailTopicsPublicRouter,
   errorLogs: errorLogsPublicRouter,
   externalWebhooks: externalWebhooksPublicRouter,
   flows: flowsPublicRouter,

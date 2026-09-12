@@ -1023,6 +1023,26 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/dynamic-images/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "emailTopics.create",
+    "path": "/v1/email-topics",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "emailTopics.delete",
+    "path": "/v1/email-topics/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "emailTopics.list",
+    "path": "/v1/email-topics",
+  },
+  {
+    "method": "PUT",
+    "operationId": "emailTopics.update",
+    "path": "/v1/email-topics/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "errorLogs.list",
     "path": "/v1/error-logs",
