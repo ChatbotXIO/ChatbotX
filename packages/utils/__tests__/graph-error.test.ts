@@ -13,7 +13,7 @@ describe("formatGraphErrorMessage", () => {
           "Bạn tạm thời bị hạn chế gửi tin nhắn. Tìm hiểu thêm về thời gian và lý do chúng tôi hạn chế khả năng nhắn tin.",
       }),
     ).toBe(
-      "#(10 - 1893063) Application does not have permission for this action. Bạn tạm thời bị hạn chế gửi tin nhắn. Tìm hiểu thêm về thời gian và lý do chúng tôi hạn chế khả năng nhắn tin.",
+      "(#10 - 1893063) Application does not have permission for this action. Bạn tạm thời bị hạn chế gửi tin nhắn. Tìm hiểu thêm về thời gian và lý do chúng tôi hạn chế khả năng nhắn tin.",
     )
   })
 
@@ -23,14 +23,14 @@ describe("formatGraphErrorMessage", () => {
         code: 190,
         message: "Access token expired",
       }),
-    ).toBe("#(190) Access token expired")
+    ).toBe("(#190) Access token expired")
   })
 
   it("writes no prefix at all when there is no code", () => {
     expect(formatGraphErrorMessage({ message: "boom" })).toBe("boom")
   })
 
-  it("treats the -1 unknown sentinel as no code, never as #(-1)", () => {
+  it("treats the -1 unknown sentinel as no code, never as (#-1)", () => {
     expect(
       formatGraphErrorMessage({ code: -1, subCode: -1, message: "boom" }),
     ).toBe("boom")
@@ -48,7 +48,7 @@ describe("formatGraphErrorMessage", () => {
   it("reads a numeric subcode sent as a string", () => {
     expect(
       formatGraphErrorMessage({ code: 100, subCode: "33", message: "boom" }),
-    ).toBe("#(100 - 33) boom")
+    ).toBe("(#100 - 33) boom")
   })
 
   it("prints a repeated sentence only once", () => {
@@ -67,13 +67,13 @@ describe("formatGraphErrorMessage", () => {
         message: "Rate limit reached.",
         userMessage: "Try again later.",
       }),
-    ).toBe("#(4) Rate limit reached. Try again later.")
+    ).toBe("(#4) Rate limit reached. Try again later.")
   })
 
   it("uses whichever sentence Meta sent when only one is present", () => {
     expect(
       formatGraphErrorMessage({ code: 10, userMessage: "Bạn bị hạn chế" }),
-    ).toBe("#(10) Bạn bị hạn chế")
+    ).toBe("(#10) Bạn bị hạn chế")
   })
 
   it("does not repeat the code Meta already put in front of its own message", () => {
@@ -83,7 +83,7 @@ describe("formatGraphErrorMessage", () => {
         subCode: 2_018_001,
         message: "(#100) Param recipient[id] must be a valid ID string",
       }),
-    ).toBe("#(100 - 2018001) Param recipient[id] must be a valid ID string")
+    ).toBe("(#100 - 2018001) Param recipient[id] must be a valid ID string")
   })
 
   it("keeps a bracketed code that belongs to some other failure", () => {
@@ -92,7 +92,7 @@ describe("formatGraphErrorMessage", () => {
         code: 100,
         message: "(#190) Access token expired",
       }),
-    ).toBe("#(100) (#190) Access token expired")
+    ).toBe("(#100) (#190) Access token expired")
   })
 
   it("falls back to the caller's text when the code prefix was the whole message", () => {

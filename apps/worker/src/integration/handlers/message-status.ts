@@ -127,6 +127,7 @@ export const handleMessageStatus = async (
         conversationId: contactInbox.conversation.id,
         channel: inbox.channel,
         contactInboxId: contactInbox.id,
+        sourceId: contactInbox.sourceId,
       },
       action: {
         messageId: message?.id,

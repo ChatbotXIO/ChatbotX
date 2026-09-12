@@ -1,6 +1,5 @@
 "use client"
 
-import type { ErrorLogModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -19,10 +18,11 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteErrorLogAction } from "./actions/delete-error-log-action"
+import type { ErrorLogResource } from "./schema"
 
 type DeleteErrorLogsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   workspaceId: string
-  errorLogs: Row<ErrorLogModel>["original"][]
+  errorLogs: Row<ErrorLogResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
 }

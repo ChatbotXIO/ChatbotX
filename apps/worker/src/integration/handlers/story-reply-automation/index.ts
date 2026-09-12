@@ -268,6 +268,7 @@ export async function processStoryReplyAutomation(
         provider: "instagram",
         workspaceId,
         contactId: contactInbox.contactId,
+        sourceId: contactInbox.sourceId,
         error: err,
       })
     }

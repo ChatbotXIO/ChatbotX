@@ -73,6 +73,18 @@ describe("listErrorLogs", () => {
     expect(or).toHaveLength(2)
   })
 
+  // `sourceId` is stored but neither rendered by this table nor returned by
+  // the `analytics`-scoped public route, so an `ilike` over it would only be
+  // an existence oracle for a channel identity the caller cannot read.
+  test("never searches the channel-side contact id", async () => {
+    await listErrorLogs({ workspaceId: "ws-1", keyword: "psid-1" })
+
+    expect(whereClause().OR).toEqual([
+      { action: { ilike: "%psid-1%" } },
+      { detail: { ilike: "%psid-1%" } },
+    ])
+  })
+
   test("applies no search terms without a keyword", async () => {
     await listErrorLogs({ workspaceId: "ws-1", page: 1, perPage: 10 })
 

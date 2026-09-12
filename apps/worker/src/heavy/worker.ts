@@ -161,6 +161,7 @@ async function runHeavyStep(jobData: HeavyStepJobData, job: Job<HeavyJobData>) {
       provider: jobData.data.step.provider,
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
+      sourceId: contactInbox.sourceId,
       error: err,
     })
 

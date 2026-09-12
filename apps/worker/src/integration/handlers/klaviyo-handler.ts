@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto"
 import { buildContext, integrationKlaviyoService } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import { systemFieldTypes } from "@chatbotx.io/database/partials"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { KlaviyoSyncProfileSchema } from "@chatbotx.io/flow-config"
@@ -15,7 +14,7 @@ import { distributedLock } from "@chatbotx.io/redis"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
 import { getContactFieldMap } from "./contact-field-map"
-import type { ExecuteStepProps } from "./flow-utils"
+import { type ExecuteStepProps, logStepProviderError } from "./flow-utils"
 import type { ExecuteStepResult } from "./step"
 
 export const KLAVIYO_LOCK_TIMEOUT_SECONDS = 30
@@ -137,12 +136,7 @@ export const syncKlaviyoProfile = async (
       { ...logContext, ...provider, err: normalized },
       "Klaviyo profile sync failed",
     )
-    await logProviderError({
-      provider: "klaviyo",
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      error,
-    })
+    await logStepProviderError("klaviyo", props, error)
     return { status: "error", result: null, errorMessage: normalized.message }
   }
 }

@@ -5,8 +5,8 @@ import {
   integrationGoogleSheetService,
   spreadsheetService,
 } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import type {
+  ContactInboxModel,
   ConversationModel,
   SpreadsheetModel,
 } from "@chatbotx.io/database/types"
@@ -32,6 +32,7 @@ import {
 } from "@chatbotx.io/utils/datetime"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
+import { logStepProviderError } from "./flow-utils"
 import { isMatchedRow } from "./operator-handler"
 import { resolveSpreadsheetLookup } from "./spreadsheet-lookup-values"
 import {
@@ -42,19 +43,17 @@ import type { ExecuteStepResult } from "./step"
 
 /**
  * Every step in this file fails the same way — one Google Sheets call, one
- * conversation in scope — so the attribution is identical at all five catch
- * sites. Kept local rather than generic: the provider is a constant here.
+ * conversation and contact inbox in scope — so the attribution is identical at
+ * all five catch sites. Kept local rather than calling `logStepProviderError`
+ * directly: what this saves is repeating the provider constant five times.
  */
 const logGoogleSheetsError = (
-  conversation: Pick<ConversationModel, "workspaceId" | "contactId">,
+  props: {
+    conversation: Pick<ConversationModel, "workspaceId" | "contactId">
+    contactInbox: Pick<ContactInboxModel, "sourceId">
+  },
   error: unknown,
-) =>
-  logProviderError({
-    provider: "google-sheets",
-    workspaceId: conversation.workspaceId,
-    contactId: conversation.contactId,
-    error,
-  })
+) => logStepProviderError("google-sheets", props, error)
 
 const findRowType = {
   SINGLE: "single",
@@ -169,7 +168,7 @@ export const getSpreadsheetRow = async (
     return { status: "success", result: null }
   } catch (error) {
     logger.error(error, "Error in getSpreadsheetRow")
-    await logGoogleSheetsError(props.conversation, error)
+    await logGoogleSheetsError(props, error)
     return {
       status: "error",
       errorMessage: "Failed to get spreadsheet row",
@@ -225,7 +224,7 @@ export const sendSpreadsheetData = async (
     return { status: "success", result: null }
   } catch (error) {
     logger.error(error, "Error in sendSpreadsheetData")
-    await logGoogleSheetsError(props.conversation, error)
+    await logGoogleSheetsError(props, error)
     return {
       status: "error",
       errorMessage: "Failed to send spreadsheet data",
@@ -292,7 +291,7 @@ export const updateSpreadsheetRow = async (
     return { status: "success", result: null }
   } catch (error) {
     logger.error(error, "Error in updateSpreadsheetRow")
-    await logGoogleSheetsError(props.conversation, error)
+    await logGoogleSheetsError(props, error)
     return {
       status: "error",
       errorMessage: "Failed to update spreadsheet row",
@@ -346,7 +345,7 @@ export const clearSpreadsheetRow = async (
     return { status: "success", result: null }
   } catch (error) {
     logger.error(error, "Error in clearSpreadsheetRow")
-    await logGoogleSheetsError(props.conversation, error)
+    await logGoogleSheetsError(props, error)
     return {
       status: "error",
       errorMessage: "Failed to clear spreadsheet row",
@@ -379,7 +378,7 @@ export const getSpreadsheetRandomRow = async (
     return { status: "success", result: null }
   } catch (error) {
     logger.error(error, "Error in getSpreadsheetRandomRow")
-    await logGoogleSheetsError(props.conversation, error)
+    await logGoogleSheetsError(props, error)
     return {
       status: "error",
       errorMessage: "Failed to get random spreadsheet row",

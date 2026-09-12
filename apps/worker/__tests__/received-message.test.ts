@@ -2333,7 +2333,17 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
 
     await receiveMessage(baseProps)
 
-    expect(mockRecordProfileRefreshFailure).toHaveBeenCalled()
+    // The creation-path failure is attributed by the channel-side id alone:
+    // there is no `Contact` row yet, so `sourceId` is the row's only identity.
+    expect(mockRecordProfileRefreshFailure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceId: "psid-123",
+        workspaceId: "ws-1",
+      }),
+    )
+    expect(
+      mockRecordProfileRefreshFailure.mock.calls[0]?.[0],
+    ).not.toHaveProperty("contactId")
     expect(mockContactProfileRefresh).toHaveBeenCalledWith(
       expect.objectContaining({ contactId: "contact-new" }),
     )

@@ -44,12 +44,15 @@ export function describeCapiInputValidationError(
 export async function reportCapiInputFailure(input: {
   workspaceId: string
   contactId?: string | null
+  /** The contact's channel-side id (`ContactInbox.sourceId`). */
+  sourceId?: string | null
   message: string
 }): Promise<void> {
   await logProviderError({
     provider: "meta-conversions",
     workspaceId: input.workspaceId,
     contactId: input.contactId,
+    sourceId: input.sourceId,
     error: new Error(input.message),
     httpCode: null,
   })
@@ -64,7 +67,12 @@ export async function reportCapiInputFailure(input: {
  */
 export async function enqueueCapiEvent(
   input: EnqueueEventInput,
-  context: { contactId: string; resolved: ResolvedCapiFields },
+  context: {
+    contactId: string
+    /** The contact's channel-side id (`ContactInbox.sourceId`). */
+    sourceId?: string | null
+    resolved: ResolvedCapiFields
+  },
 ): Promise<void> {
   try {
     await metaConversionsService.enqueueEvent(input)
@@ -73,6 +81,7 @@ export async function enqueueCapiEvent(
       await reportCapiInputFailure({
         workspaceId: input.workspaceId,
         contactId: context.contactId,
+        sourceId: context.sourceId,
         message: describeCapiInputValidationError(error, context.resolved),
       })
     }

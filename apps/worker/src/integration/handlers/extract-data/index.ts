@@ -1,6 +1,5 @@
 import { aiTimeouts } from "@chatbotx.io/ai"
 import { contactCustomFieldService } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import type { AIExtractDataSchema } from "@chatbotx.io/flow-config"
 import { contactVariableService } from "@chatbotx.io/variables"
 import { APICallError, generateObject } from "ai"
@@ -13,6 +12,7 @@ import {
   waitForChatJobCompletion,
 } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
+import { logStepProviderError } from "../flow-utils"
 import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
 import { resolveFlowAIModel } from "../shared/flow-ai-model-resolver"
 import type { ExecuteStepResult } from "../step"
@@ -212,12 +212,11 @@ ${schemaDescription}`
       abortSignal: controller.signal,
       schema: dynamicSchema,
     }).catch(async (error: unknown) => {
-      await logProviderError({
-        provider: aiErrorLogProvider(step.provider),
-        workspaceId: conversation.workspaceId,
-        contactId: conversation.contactId,
+      await logStepProviderError(
+        aiErrorLogProvider(step.provider),
+        { conversation, contactInbox },
         error,
-      })
+      )
       throw error
     })
 

@@ -61,6 +61,11 @@ const makeProps = (provider = "openai") =>
       workspaceId: "ws-1",
       contactId: "contact-1",
     },
+    contactInbox: {
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      sourceId: "psid-1",
+    },
     step: {
       id: "step-1",
       stepType: "aiExtractData",

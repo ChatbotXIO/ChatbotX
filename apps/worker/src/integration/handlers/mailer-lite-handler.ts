@@ -3,7 +3,6 @@ import {
   buildContext,
   integrationMailerLiteService,
 } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import { systemFieldTypes } from "@chatbotx.io/database/partials"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { MailerLiteAddSubscriberSchema } from "@chatbotx.io/flow-config"
@@ -18,6 +17,7 @@ import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
 import { getContactFieldMap } from "./contact-field-map"
 import type { ExecuteStepProps } from "./flow"
+import { logStepProviderError } from "./flow-utils"
 import type { ExecuteStepResult } from "./step"
 
 export const MAILER_LITE_LOCK_TIMEOUT_SECONDS = 30
@@ -129,12 +129,7 @@ export const addMailerLiteSubscriber = async (
       { ...logContext, ...provider, error: normalized },
       "MailerLite subscriber sync failed",
     )
-    await logProviderError({
-      provider: "mailer-lite",
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      error,
-    })
+    await logStepProviderError("mailer-lite", props, error)
     return { status: "error", result: null, errorMessage: normalized.message }
   }
 }

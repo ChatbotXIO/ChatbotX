@@ -105,7 +105,7 @@ describe("toPublicErrorMessage", () => {
     // WhatsApp's mapper folds `error_user_msg` into `ChannelError.message` and
     // still parks a copy on `originError` for its structured fields.
     const error = new ChannelError(
-      "#(133010) Phone number is not verified. Phone number is not verified through SMS or voice.",
+      "(#133010) Phone number is not verified. Phone number is not verified through SMS or voice.",
       ChannelErrorCategory.AUTH_FAILED,
       { code: 133_010 },
     ).setOriginError({
@@ -114,7 +114,7 @@ describe("toPublicErrorMessage", () => {
     })
 
     expect(toPublicErrorMessage(error, FALLBACK)).toBe(
-      "#(133010) Phone number is not verified. Phone number is not verified through SMS or voice.",
+      "(#133010) Phone number is not verified. Phone number is not verified through SMS or voice.",
     )
   })
 

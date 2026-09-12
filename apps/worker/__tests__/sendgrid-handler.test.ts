@@ -65,6 +65,11 @@ const createProps = () =>
       workspaceId: "workspace-1",
       contactId: "contact-1",
     },
+    contactInbox: {
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      sourceId: "psid-1",
+    },
     step: {
       id: "step-1",
       listId: "list-1",

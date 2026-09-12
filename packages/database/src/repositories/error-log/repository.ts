@@ -6,10 +6,39 @@ export type ErrorLogInsert = {
   id: string
   workspaceId: string
   contactId: string | null
+  /**
+   * The contact's channel-side id (`ContactInbox.sourceId`). Required rather
+   * than optional so the writer's `toRow` cannot quietly omit it.
+   */
+  sourceId: string | null
+  /**
+   * Stack frames, or `null`. Required rather than optional so the writer's
+   * `toRow` cannot quietly omit it — same reasoning as `sourceId` above.
+   */
+  stackTrace: string | null
   action: string
   detail: string
   httpCode: string | null
 }
+
+/** Resolves to `T` only when `T` is `never`, so a non-empty `T` is a type error. */
+type AssertNever<T extends never> = T
+
+/**
+ * `ErrorLogInsert` is hand-written rather than `$inferInsert` — the id is
+ * producer-minted and the shape is the event contract, not the table. This
+ * fails to compile if the table gains a column the insert type does not carry;
+ * without it the failure mode is silent, a column left NULL forever.
+ *
+ * The assertion has to be *used* to bite: a bare `X extends never ? true : …`
+ * alias resolves to its false branch and never errors.
+ */
+type _ErrorLogInsertCoversTable = AssertNever<
+  Exclude<
+    keyof typeof errorLogModel.$inferInsert,
+    keyof ErrorLogInsert | "createdAt" | "updatedAt"
+  >
+>
 
 /**
  * Inserts `ErrorLog` rows, ignoring ids that are already present.

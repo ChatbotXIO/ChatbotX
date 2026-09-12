@@ -31,11 +31,18 @@ export const errorLogRecordedPayloadSchema = z.object({
    * trip unchanged.
    */
   contactId: z.string().optional(),
+  /**
+   * The contact's channel-side id (`ContactInbox.sourceId`) — the fallback
+   * identity for a failure with no `contactId`. See the column doc on
+   * `packages/database/src/schema/error-log.ts` for why that case is the norm.
+   *
+   * `.optional()` for the same reason as `contactId` above.
+   */
+  sourceId: z.string().optional(),
   error: z.object({
     /**
-     * The provider's message only. Deliberately never a stack — `ErrorLog` is
-     * workspace-facing, and a stack leaks absolute server paths and our
-     * internal call chain. See `logProviderError` in `@chatbotx.io/business`.
+     * The provider's message only — never a stack, which travels separately in
+     * `stackTrace` below. See `logProviderError` in `@chatbotx.io/business`.
      */
     message: z.string(),
     /**
@@ -43,6 +50,19 @@ export const errorLogRecordedPayloadSchema = z.object({
      * HTTP error (a thrown `TypeError`, a timeout). Never a fabricated 500.
      */
     httpCode: z.string().nullable(),
+    /**
+     * Frame lines of the thrown value's stack, message prefix stripped and
+     * capped at 2048 chars. Absent when no real stack existed — see
+     * `resolveStackFrames` in `@chatbotx.io/utils/error-log`, which the
+     * producer applies to the thrown value unless the caller already captured
+     * the frames itself (`LogProviderErrorInput.stackTrace`).
+     *
+     * Developer-only: withheld from every read surface, so it reaches nobody
+     * but someone querying the database directly. `.optional()` for the same
+     * reason as `contactId` above, which also makes it backward-compatible
+     * with payloads already in flight on the stream at deploy time.
+     */
+    stackTrace: z.string().optional(),
   }),
 })
 

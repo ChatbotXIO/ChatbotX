@@ -79,6 +79,7 @@ export const refreshContactProfile = async (input: {
       channel,
       contactId: contactInbox.contactId,
       language: contactInbox.language,
+      sourceId: contactInbox.sourceId,
     },
     source: "channelApi",
     accessScope,

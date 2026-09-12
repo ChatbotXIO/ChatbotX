@@ -31,13 +31,28 @@ const toRow = (payload: ErrorLogPayload): ErrorLogInsert => ({
   id: payload.id,
   workspaceId: payload.workspaceId,
   contactId: payload.contactId ?? null,
+  // The channel-side id. Survives the contact-FK retry below by virtue of the
+  // spread there, which is the whole point: a row whose contact was deleted
+  // still names who the failure concerned.
+  //
+  // Accepted consequence: unlike `contactId` (nulled by the FK's
+  // `onDelete: "set null"`), this outlives the contact until the 30-day
+  // `purgeErrorLogs` window drops the row. Deliberate — the same trade
+  // `MessageCleanup.sourceId` makes — and the bound to revisit if contact
+  // deletion ever has to double as data erasure.
+  sourceId: payload.sourceId ?? null,
   // `action` is the provider verbatim. The operation name is deliberately
   // not recorded; what was attempted lives in `detail`.
   action: payload.provider,
   // The provider's message, raw and unredacted by explicit product decision.
-  // Never a stack: `ErrorLog` is read by workspace users.
+  // Never a stack: `ErrorLog.detail` is read by workspace users. The stack is
+  // in `stackTrace` below, which they never see.
   detail: payload.error.message,
   httpCode: payload.error.httpCode,
+  // Developer-only. Never rendered and never returned by any route — see the
+  // column doc. Rides the contact-FK retry via the spread below, like
+  // `sourceId`, and is NULL whenever the producer had no real stack.
+  stackTrace: payload.error.stackTrace ?? null,
 })
 
 const insertRow = async (row: ErrorLogInsert) => {

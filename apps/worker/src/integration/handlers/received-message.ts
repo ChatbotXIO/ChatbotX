@@ -1536,6 +1536,8 @@ const createNewContactAndContactInbox = async (props: {
         await recordProfileRefreshFailure({
           channel: inbox.channel,
           workspaceId: inbox.workspaceId,
+          // The only identity this row can carry: there is no contact yet.
+          sourceId: incomingContact.sourceId,
           error,
         })
       }

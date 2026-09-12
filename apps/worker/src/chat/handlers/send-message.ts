@@ -22,6 +22,7 @@ import {
   parseSdkError,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
+import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
 import type {
   ChatJobChangeChannelMessageState,
   ChatJobDeleteChannelMessage,
@@ -254,11 +255,15 @@ export async function sendMessageToChannel(
         conversationId: conversation.id,
         channel: contactInbox.channel,
         contactInboxId: contactInbox.id,
+        sourceId: contactInbox.sourceId,
       },
       action: {
         messageId: message?.id ?? "",
       },
       errorData,
+      // Captured here while the throw is still in hand: `errorData` is a
+      // stackless `ParsedError`, so `ErrorLog.stackTrace` has no other source.
+      errorStack: resolveStackFrames(error),
       occurredAt: new Date(),
       metadata,
       willRetry,

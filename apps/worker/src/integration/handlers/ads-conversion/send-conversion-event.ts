@@ -167,8 +167,27 @@ async function reportTerminalCapiFailure(input: {
    * destinations.
    */
   provider: ErrorLogProvider
+  /**
+   * The contact's channel-side id (`ContactInbox.sourceId`).
+   *
+   * Set on the messenger/instagram branch, which resolves and validates a
+   * contact inbox before sending. Deliberately unset on the WhatsApp branch:
+   * its only contact-inbox resolution happens inside `resolveWhatsappUserData`
+   * for best-effort enrichment and is never returned, and `event.contactInboxId`
+   * is nullable there anyway (an automatic event ingested without attribution).
+   * The identity that failed on that branch is the `ctwaClid`/WABA, not a person.
+   */
+  sourceId?: string | null
+  /**
+   * The contact this failure concerned. Set alongside `sourceId` on the
+   * messenger/instagram branch — that branch validates the contact inbox
+   * workspace-scoped before sending, so the id is safe to persist — and unset
+   * on the WhatsApp branch for the same reason `sourceId` is. This is the field
+   * the builder's Error Log table renders; `sourceId` is not shown anywhere.
+   */
+  contactId?: string | null
 }): Promise<void> {
-  const { event, error, provider } = input
+  const { contactId, event, error, provider, sourceId } = input
 
   await adsConversionService.updateCapiStatus({
     id: event.id,
@@ -178,6 +197,8 @@ async function reportTerminalCapiFailure(input: {
   await logProviderError({
     provider,
     workspaceId: event.workspaceId,
+    contactId,
+    sourceId,
     error,
     httpCode: "400",
   })
@@ -541,6 +562,9 @@ async function handleSendMetaChannelConversionEvent(
       event,
       error,
       provider: "meta-conversions",
+      // Both already validated by the workspace/inbox guard above.
+      contactId: contactInbox.contactId,
+      sourceId: contactInbox.sourceId,
     })
     return
   }

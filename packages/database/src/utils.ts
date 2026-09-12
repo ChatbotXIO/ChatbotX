@@ -56,6 +56,32 @@ export const getPaginationWithDefaults = (
   return pagination
 }
 
+/**
+ * Columns the caller permits ordering by. Omitting it accepts any column on the
+ * model, which is what every caller did before this parameter existed.
+ *
+ * Pass one whenever the resource has a column it does not return: ordering by a
+ * value the caller cannot read turns the sort into a lexicographic oracle over
+ * it. Enforced here rather than by each caller pre-filtering `input.sort`, so
+ * the guard lives in the mechanism every list shares.
+ *
+ * Deliberately opt-in, and today only `features/error-logs` opts in — it is the
+ * only list that withholds a column from its own response. A list that returns
+ * every column it can sort by has nothing to leak, so requiring an allow-list
+ * from all ~25 callers would buy nothing and rot on the next added column.
+ * Accepted on both helpers regardless of which currently has a caller: they are
+ * one API over one `isSortable`, and a resource that later withholds a column
+ * must not first have to widen the signature.
+ */
+type SortableColumns = ReadonlySet<string>
+
+const isSortable = (
+  modelSchema: PgTable,
+  id: string,
+  allowedColumns: SortableColumns | undefined,
+): boolean =>
+  id in modelSchema && (allowedColumns === undefined || allowedColumns.has(id))
+
 export const parseOrderBy = (
   modelSchema: PgTable,
   input: {
@@ -64,13 +90,15 @@ export const parseOrderBy = (
       id: string
     }[]
   },
+  /** See {@link SortableColumns}. */
+  allowedColumns?: SortableColumns,
 ): SQL[] => {
   if (!input.sort) {
     return []
   }
 
   return input.sort.reduce((acc, sortItem) => {
-    if (sortItem.id in modelSchema) {
+    if (isSortable(modelSchema, sortItem.id, allowedColumns)) {
       const column = (modelSchema as unknown as Record<string, unknown>)[
         sortItem.id
       ] as AnyColumn
@@ -90,6 +118,8 @@ export const parseOrderByAsObject = (
         }[]
       | null
   },
+  /** See {@link SortableColumns}. */
+  allowedColumns?: SortableColumns,
 ): Record<string, unknown> => {
   if (!input.sort) {
     return {}
@@ -97,7 +127,7 @@ export const parseOrderByAsObject = (
 
   return input.sort?.reduce(
     (acc, sortItem) => {
-      if (sortItem.id in modelSchema) {
+      if (isSortable(modelSchema, sortItem.id, allowedColumns)) {
         acc[sortItem.id] = sortItem.desc ? "desc" : "asc"
       }
       return acc

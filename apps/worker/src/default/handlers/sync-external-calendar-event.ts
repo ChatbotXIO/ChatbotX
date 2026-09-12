@@ -132,6 +132,13 @@ async function syncWithLock(
       await logProviderError({
         provider: "google-calendar",
         workspaceId: data.workspaceId,
+        // `appointment` is loaded workspace-scoped, so its `contactId` is
+        // already validated — pass it so the row is linkable in the builder
+        // table rather than showing an empty Contact column.
+        contactId: appointment.contactId,
+        // Nullable: `contactInboxId` is absent for appointments that predate
+        // the column, which the create path guards against but cancel does not.
+        sourceId: appointment.contactInbox?.sourceId,
         error,
       })
     }

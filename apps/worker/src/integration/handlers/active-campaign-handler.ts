@@ -3,7 +3,6 @@ import {
   buildContext,
   integrationActiveCampaignService,
 } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { ActiveCampaignSyncContactSchema } from "@chatbotx.io/flow-config"
 import {
@@ -17,6 +16,7 @@ import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
 import { getContactFieldMap } from "./contact-field-map"
 import type { ExecuteStepProps } from "./flow"
+import { logStepProviderError } from "./flow-utils"
 import type { ExecuteStepResult } from "./step"
 
 export const ACTIVE_CAMPAIGN_LOCK_TIMEOUT_SECONDS = 30
@@ -149,12 +149,7 @@ export const syncActiveCampaignContact = async (
       { ...logContext, err: normalized },
       "ActiveCampaign sync-contact step failed",
     )
-    await logProviderError({
-      provider: "active-campaign",
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      error,
-    })
+    await logStepProviderError("active-campaign", props, error)
     return {
       status: "error",
       errorMessage: normalized.message,

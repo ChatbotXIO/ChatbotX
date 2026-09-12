@@ -1,3 +1,4 @@
+import { withheldErrorLogColumns } from "@chatbotx.io/business/error-log-columns"
 import type { ErrorLogModel } from "@chatbotx.io/database/types"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
@@ -26,9 +27,13 @@ export const listErrorLogsRequest = basePaginationRequest.extend({
 
 export type ListErrorLogsRequest = z.infer<typeof listErrorLogsRequest>
 
+// The withheld columns are kept out of the internal route too, not just the
+// public one: the query never selects them (see `queries/index.ts`) and none is
+// sortable. The list of them lives on `./columns`, so this omission and the
+// query's projection cannot drift apart.
 export const listErrorLogsResponse = z.object({
   data: z.array(
-    errorLogResource.and(
+    errorLogResource.omit(withheldErrorLogColumns(true)).and(
       z.object({
         contact: contactResource
           .and(
@@ -44,8 +49,29 @@ export const listErrorLogsResponse = z.object({
 })
 export type ListErrorLogsResponse = z.infer<typeof listErrorLogsResponse>
 
+// Explicit allow-list, not the internal resource: `errorLogResource` is a
+// `createSelectSchema`, so anything picked here is a stable contract and
+// anything new on the table stays out until it is added deliberately. See
+// products/schema/public.ts for the same pattern.
+//
+// `sourceId` is the field this list is keeping out today: the route is gated by
+// the `analytics` scope, while the same channel identity (PSID / IGSID /
+// `wa_id`) is public only under `contacts`
+// (`features/contact-inboxes/api/public.ts`), so an analytics-only BI token
+// could otherwise page `/v1/error-logs` to harvest them.
 export const publicListErrorLogsResponse = z.object({
-  data: z.array(errorLogResource),
+  data: z.array(
+    errorLogResource.pick({
+      id: true,
+      workspaceId: true,
+      contactId: true,
+      action: true,
+      detail: true,
+      httpCode: true,
+      createdAt: true,
+      updatedAt: true,
+    }),
+  ),
   pageCount: z.number(),
 })
 export type PublicListErrorLogsResponse = z.infer<
