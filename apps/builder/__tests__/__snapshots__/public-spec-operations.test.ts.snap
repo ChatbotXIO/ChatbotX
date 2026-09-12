@@ -968,6 +968,36 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/custom-fields/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "dynamicImages.create",
+    "path": "/v1/dynamic-images",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "dynamicImages.delete",
+    "path": "/v1/dynamic-images/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "dynamicImages.get",
+    "path": "/v1/dynamic-images/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "dynamicImages.list",
+    "path": "/v1/dynamic-images",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "dynamicImages.setEnabled",
+    "path": "/v1/dynamic-images/{id}/enabled",
+  },
+  {
+    "method": "PUT",
+    "operationId": "dynamicImages.update",
+    "path": "/v1/dynamic-images/{id}",
+  },
+  {
     "method": "GET",
     "operationId": "errorLogs.list",
     "path": "/v1/error-logs",
@@ -1161,6 +1191,51 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "keywords.updateStatus",
     "path": "/v1/keywords/{id}/status",
+  },
+  {
+    "method": "POST",
+    "operationId": "mediaLibrary.createFile",
+    "path": "/v1/media-library/files",
+  },
+  {
+    "method": "POST",
+    "operationId": "mediaLibrary.createFolder",
+    "path": "/v1/media-library/folders",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "mediaLibrary.deleteFile",
+    "path": "/v1/media-library/files/{fileId}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "mediaLibrary.deleteFolder",
+    "path": "/v1/media-library/folders/{folderId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "mediaLibrary.listFiles",
+    "path": "/v1/media-library/files",
+  },
+  {
+    "method": "GET",
+    "operationId": "mediaLibrary.listFolders",
+    "path": "/v1/media-library/folders",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "mediaLibrary.moveFiles",
+    "path": "/v1/media-library/files/move",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "mediaLibrary.renameFolder",
+    "path": "/v1/media-library/folders/{folderId}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "mediaLibrary.toggleFavourite",
+    "path": "/v1/media-library/files/{fileId}/favourite",
   },
   {
     "method": "POST",

@@ -261,6 +261,14 @@ an endpoint's scope.
     not add it back; a client-supplied `sequenceId` that disagreed with the
     path would have nothing enforcing which one wins.
 
+- **Media** — this scope shipped in the enum/registry/i18n alongside `ads`
+  but, like `ads`, carried no endpoints for a while. It now covers real
+  workspace resources: the media library (folders/files CRUD, move,
+  favourite) and dynamic (templated) images CRUD. As with every other
+  scope, each public handler calls the same `packages/business` service
+  method the private/action code calls; no business logic was duplicated
+  to publish these.
+
 ### Ads scope — endpoint-to-scope table
 
 `ads` shipped in the enum/registry/i18n from day one (alongside `channels`,
