@@ -6,6 +6,7 @@ import type {
 import {
   encodeTemplateFlowToken,
   extractMetadata,
+  sanitizeWhatsappFlowActionData,
   TemplateFlowOrigin,
 } from "@chatbotx.io/flow-config"
 import type { MessageHandlers } from "@chatbotx.io/sdk"
@@ -109,7 +110,7 @@ function buildFlowButtonParameter(
   cardIndex?: number,
 ): WhatsAppTemplateComponentParameter {
   const flowToken = buildTemplateFlowToken(param, tokenContext, cardIndex)
-  const flowActionData = param.flow_action_data
+  const flowActionData = sanitizeWhatsappFlowActionData(param.flow_action_data)
   const hasFlowActionData =
     flowActionData && Object.keys(flowActionData).length > 0
 

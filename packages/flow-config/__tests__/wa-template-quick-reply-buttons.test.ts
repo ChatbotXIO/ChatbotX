@@ -8,7 +8,9 @@ import {
   seedWaTemplateStepButtons,
   sendWaTemplateMessageStepSchema,
   stepTypes,
+  templateHasFlowButton,
   type TemplateComponent,
+  WA_TEMPLATE_FLOW_COMPLETE_BUTTON_LABEL,
   WA_TEMPLATE_STATUS_BUTTON_COUNT,
 } from "../src"
 
@@ -147,6 +149,20 @@ describe("seedWaTemplateStepButtons", () => {
 
     expect(secondSeed[2].id).toBe(firstSeed[2].id)
     expect(secondSeed[2].label).toBe("Stop now")
+  })
+
+  test("appends a Flow completed branch when the template has a FLOW button", () => {
+    const flowTemplate = [
+      buttonsComponent([
+        { type: "FLOW", text: "Pedir taxi", flow_id: "1087995287052408" },
+      ]),
+    ]
+
+    const seeded = seedWaTemplateStepButtons(statusButtons, flowTemplate)
+
+    expect(templateHasFlowButton(flowTemplate)).toBe(true)
+    expect(seeded).toHaveLength(WA_TEMPLATE_STATUS_BUTTON_COUNT + 1)
+    expect(seeded[2].label).toBe(WA_TEMPLATE_FLOW_COMPLETE_BUTTON_LABEL)
   })
 
   test("switching to a template without quick replies drops the tail but keeps status branches", () => {

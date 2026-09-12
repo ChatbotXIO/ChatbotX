@@ -104,6 +104,7 @@ export const applyWhatsappFlowResponseSideEffects = async (props: {
     contactInbox: props.contactInbox,
     flowSourceId,
     fieldMappings: props.step.flow.fieldMappings,
+    responseDumpFieldId: props.step.flow.responseDumpFieldId ?? null,
     flowResponse: props.flowResponse,
   })
 }

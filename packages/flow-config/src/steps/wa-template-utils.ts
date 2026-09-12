@@ -221,6 +221,27 @@ const QUICK_REPLY_BUTTON_TYPE = "QUICK_REPLY"
  */
 export const WA_TEMPLATE_STATUS_BUTTON_COUNT = 2
 
+/** Routed when a template FLOW button is completed (not on delivery). */
+export const WA_TEMPLATE_FLOW_COMPLETE_BUTTON_LABEL = "Flow completed"
+
+const FLOW_BUTTON_TYPE = "FLOW"
+
+export function templateHasFlowButton(
+  components: TemplateComponent[],
+): boolean {
+  const buttonsComponent = components?.find(
+    (component) => component.type === "BUTTONS" && component.buttons,
+  )
+  return (buttonsComponent?.buttons ?? []).some(
+    (button) => button.type.toUpperCase() === FLOW_BUTTON_TYPE,
+  )
+}
+
+const isFlowCompleteBranchButton = <TButton extends { label?: string }>(
+  button: TButton | undefined,
+): button is TButton =>
+  button?.label === WA_TEMPLATE_FLOW_COMPLETE_BUTTON_LABEL
+
 export type TemplateQuickReplyButton = {
   /** Zero-based position of the button within the template's button list. */
   templateButtonIndex: number
@@ -243,20 +264,38 @@ export function extractTemplateQuickReplyButtons(
 
 export type WaTemplateStepButtonsSplit<TButton> = {
   statusButtons: TButton[]
+  flowCompleteButton: TButton | null
   quickReplyButtons: TButton[]
 }
+
+/** Leading buttons before template quick-reply tail (status + optional flow-complete). */
+export const getWaTemplateLeadingButtonCount = <
+  TButton extends { label?: string },
+>(
+  buttons: readonly TButton[],
+): number =>
+  WA_TEMPLATE_STATUS_BUTTON_COUNT +
+  (isFlowCompleteBranchButton(buttons[WA_TEMPLATE_STATUS_BUTTON_COUNT]) ? 1 : 0)
 
 /**
  * Single owner of the "first N buttons are status branches, the rest are
  * template quick replies" rule, so editor, viewer, seeding, and binding can
  * never disagree on where the split sits.
  */
-export function splitWaTemplateStepButtons<TButton>(
+export function splitWaTemplateStepButtons<TButton extends { label?: string }>(
   buttons: readonly TButton[],
 ): WaTemplateStepButtonsSplit<TButton> {
+  const statusButtons = buttons.slice(0, WA_TEMPLATE_STATUS_BUTTON_COUNT)
+  const maybeFlowComplete = buttons[WA_TEMPLATE_STATUS_BUTTON_COUNT]
+  const flowCompleteButton = isFlowCompleteBranchButton(maybeFlowComplete)
+    ? maybeFlowComplete
+    : null
+  const quickReplyOffset = getWaTemplateLeadingButtonCount(buttons)
+
   return {
-    statusButtons: buttons.slice(0, WA_TEMPLATE_STATUS_BUTTON_COUNT),
-    quickReplyButtons: buttons.slice(WA_TEMPLATE_STATUS_BUTTON_COUNT),
+    statusButtons,
+    flowCompleteButton,
+    quickReplyButtons: buttons.slice(quickReplyOffset),
   }
 }
 
@@ -272,8 +311,11 @@ export function seedWaTemplateStepButtons(
   existingButtons: ButtonStepProps[],
   components: TemplateComponent[],
 ): ButtonStepProps[] {
-  const { statusButtons, quickReplyButtons: previousQuickReplies } =
-    splitWaTemplateStepButtons(existingButtons)
+  const {
+    statusButtons,
+    flowCompleteButton: previousFlowComplete,
+    quickReplyButtons: previousQuickReplies,
+  } = splitWaTemplateStepButtons(existingButtons)
 
   const templateButtons = extractTemplateQuickReplyButtons(components).map(
     (quickReply) =>
@@ -282,8 +324,17 @@ export function seedWaTemplateStepButtons(
       }),
   )
 
+  const hasFlowButton = templateHasFlowButton(components)
+  const flowCompleteButton = hasFlowButton
+    ? (previousFlowComplete ??
+      buttonStepDefaultFn({
+        label: WA_TEMPLATE_FLOW_COMPLETE_BUTTON_LABEL,
+      }))
+    : null
+
   return [
-    ...statusButtons,
+    ...statusButtons.slice(0, WA_TEMPLATE_STATUS_BUTTON_COUNT),
+    ...(flowCompleteButton ? [flowCompleteButton] : []),
     ...mergeTemplateButtonsWithExisting(templateButtons, previousQuickReplies),
   ]
 }

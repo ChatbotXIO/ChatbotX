@@ -2467,7 +2467,15 @@
       "customField": "Campo personalizado",
       "selectCustomFieldPlaceholder": "Seleccionar personalizado campo",
       "addMapping": "Añadir Mapping",
-      "addCustomField": "Añadir Nuevo"
+      "addCustomField": "Añadir Nuevo",
+      "actionData": "Datos de inicio",
+      "actionDataPlaceholder": "{\n  \"nombre\": \"{{userName}}\"\n}",
+      "actionDataDescription": "Objeto JSON enviado al abrir el flujo. Usa {{variables}}. Las filas de listas con id vacío se omiten.",
+      "actionDataInvalidJson": "Los datos de inicio deben ser un objeto JSON o estar vacíos.",
+      "responseDumpEnabled": "Guardar respuesta completa del flujo",
+      "responseDumpDescription": "Guarda el JSON completo del nfm_reply en un campo personalizado de texto largo (por ejemplo flow_last_response). Los mapeos individuales de arriba siguen aplicándose.",
+      "responseDumpField": "Campo personalizado para la respuesta completa",
+      "responseDumpFieldRequired": "Selecciona un campo personalizado para la respuesta completa del flujo"
     },
     "sendCarousel": {
       "addSlide": "Añadir tarjeta",

@@ -13,8 +13,10 @@ import {
 } from "@chatbotx.io/flow-config"
 import {
   contactVariableService,
+  replaceContactVariablesDeep,
   type ReplaceVariableProps,
 } from "@chatbotx.io/variables"
+import { sanitizeWhatsappFlowActionData } from "@chatbotx.io/flow-config"
 
 export async function replaceWhatsappTemplateVariables(props: {
   templateParams: SendWaTemplateMessageStepSchema["template"]["params"]
@@ -66,13 +68,27 @@ export async function replaceWhatsappTemplateVariables(props: {
 
   if (templateParams.button) {
     replacedParams.button = await Promise.all(
-      templateParams.button.map(async (param) => ({
-        ...param,
-        text: await contactVariableService.replaceAll({
-          text: param.text || "",
-          variables,
-        }),
-      })),
+      templateParams.button.map(async (param) => {
+        const resolvedFlowActionData = param.flow_action_data
+          ? sanitizeWhatsappFlowActionData(
+              await replaceContactVariablesDeep(
+                param.flow_action_data,
+                variables,
+              ),
+            )
+          : undefined
+
+        return {
+          ...param,
+          text: await contactVariableService.replaceAll({
+            text: param.text || "",
+            variables,
+          }),
+          ...(resolvedFlowActionData
+            ? { flow_action_data: resolvedFlowActionData }
+            : {}),
+        }
+      }),
     )
   }
 
