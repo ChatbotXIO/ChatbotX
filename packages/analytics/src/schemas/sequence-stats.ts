@@ -40,7 +40,6 @@ export const listSequenceStepContactsRequest = z.object({
   sequenceId: z.string(),
   stepId: z.string(),
   eventType: sequenceStepEventTypes,
-  total: z.number().optional(),
   page: z.number().default(1),
   perPage: z.number().default(20),
 })

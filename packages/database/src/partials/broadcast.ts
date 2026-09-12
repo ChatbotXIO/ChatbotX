@@ -1,5 +1,22 @@
+import type { BroadcastSubaction } from "@chatbotx.io/utils/broadcast"
 import { z } from "zod"
 import type { ChannelType } from "./channel"
+
+/**
+ * `broadcastFlowTypes`/`broadcastSubactions`/`isTemplateBroadcastSubaction` are
+ * defined in `@chatbotx.io/utils/broadcast` so a "use client" component can use
+ * them without depending on the database layer. Re-exported here because this
+ * has long been the import site for the rest of the repo; both paths resolve
+ * to the same values. Mirrors the `channelTypes` precedent.
+ */
+export {
+  type BroadcastFlowType,
+  type BroadcastSubaction,
+  broadcastFlowTypes,
+  broadcastSubactions,
+  isTemplateBroadcastSubaction,
+  templateBroadcastSubactions,
+} from "@chatbotx.io/utils/broadcast"
 
 export const broadcastScheduleTypes = z.enum(["now", "future"])
 export type BroadcastScheduleType = z.infer<typeof broadcastScheduleTypes>
@@ -41,18 +58,6 @@ export const isBroadcastOutcomeGraceElapsed = (input: {
   input.now.getTime() - input.handoffCompletedAt.getTime() >=
   BROADCAST_OUTCOME_GRACE_MS
 
-export const broadcastSubactions = z.enum([
-  "allContacts",
-  "messengerActiveContacts",
-  "messengerTemplateMessage",
-  "whatsappTemplateMessage",
-  "whatsappWithin24Hours",
-  "instagramActiveContacts",
-  "telegramAllContacts",
-  "tiktokActiveContacts",
-])
-export type BroadcastSubaction = z.infer<typeof broadcastSubactions>
-
 type BroadcastAudienceRule = {
   requiresRecentInteractionWindow: boolean
 }
@@ -77,17 +82,6 @@ export const requiresRecentInteractionWindow = (
   subaction
     ? broadcastSubactionAudienceRules[subaction].requiresRecentInteractionWindow
     : false
-
-/** The subactions that deliver a template (one template per page in a multi-page broadcast). */
-export const templateBroadcastSubactions: readonly BroadcastSubaction[] = [
-  "messengerTemplateMessage",
-  "whatsappTemplateMessage",
-]
-
-export const isTemplateBroadcastSubaction = (
-  subaction: BroadcastSubaction | null | undefined,
-): boolean =>
-  subaction ? templateBroadcastSubactions.includes(subaction) : false
 
 export type BroadcastChannelCapability = {
   channel: ChannelType
@@ -150,9 +144,6 @@ export const findBroadcastChannelCapability = (
   broadcastChannelCapabilities.find(
     (capability) => capability.channel === channel,
   )
-
-export const broadcastFlowTypes = z.enum(["flow", "template"])
-export type BroadcastFlowType = z.infer<typeof broadcastFlowTypes>
 
 /**
  * Relation shape shared by every reader that shows which pages a broadcast

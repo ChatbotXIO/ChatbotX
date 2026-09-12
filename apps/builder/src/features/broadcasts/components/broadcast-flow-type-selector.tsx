@@ -1,11 +1,11 @@
 "use client"
 
+import type { BroadcastSubaction } from "@chatbotx.io/database/partials"
 import {
   type BroadcastFlowType,
-  type BroadcastSubaction,
   broadcastFlowTypes,
   isTemplateBroadcastSubaction,
-} from "@chatbotx.io/database/partials"
+} from "@chatbotx.io/utils/broadcast"
 import { useTranslations } from "next-intl"
 import { useCallback, useState } from "react"
 import { useFormContext } from "react-hook-form"

@@ -51,14 +51,13 @@ export const SequenceStepContactsDialog = memo(
             sequenceId,
             stepId,
             eventType,
-            total,
             page,
             perPage,
           })
 
         return result.data
       },
-      [eventType, sequenceId, stepId, total, workspaceId],
+      [eventType, sequenceId, stepId, workspaceId],
     )
 
     const onManualTag = useCallback(

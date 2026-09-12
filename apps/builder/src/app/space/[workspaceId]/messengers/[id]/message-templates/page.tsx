@@ -1,8 +1,10 @@
-import { messengerIntegrationService } from "@chatbotx.io/business"
+import {
+  messengerIntegrationService,
+  messengerMessageTemplateService,
+} from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { MessengerMessageTemplatesTable } from "@/features/integration-messenger/message-templates/message-templates-table"
-import { messengerMessageTemplateService } from "@/features/integration-messenger/message-templates/queries"
 import { listMessengerMessageTemplatesSearchParamsCache } from "@/features/integration-messenger/message-templates/schema/query"
 import { findIntegrationMessenger } from "@/features/integration-messenger/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"

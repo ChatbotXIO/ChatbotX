@@ -1,4 +1,4 @@
-import { messengerMessageTemplateService } from "@/features/integration-messenger/message-templates/queries"
+import { messengerMessageTemplateService } from "@chatbotx.io/business"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import {

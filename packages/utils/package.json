@@ -18,7 +18,10 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./broadcast": "./src/broadcast.ts",
     "./channel": "./src/channel.ts",
+    "./contact-filter-value-format": "./src/contact-filter-value-format.ts",
+    "./conversation": "./src/conversation.ts",
     "./crypto": "./src/crypto.ts",
     "./custom-field": "./src/custom-field.ts",
     "./datetime": "./src/datetime.ts",
