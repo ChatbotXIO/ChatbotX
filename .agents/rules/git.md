@@ -1,3 +1,11 @@
+---
+name: git
+description: >-
+  Commit message format (conventional commits enforced by lefthook),
+  branch naming, and CHANGELOG.md conventions. Read before committing or
+  opening a pull request.
+---
+
 # Git Conventions
 
 ## Commit Message Format

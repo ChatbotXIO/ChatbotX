@@ -1,3 +1,20 @@
+---
+name: no-dynamic-import
+description: >-
+  Static imports only in tsdown-built code (packages/*, integrations/*,
+  apps/worker, apps/cli, apps/mcp-server, apps/javascript-executor). Dynamic
+  import() remains fine in apps/builder (Next.js). Read before adding an
+  import() in a non-builder workspace.
+globs:
+  - packages/**/*.ts
+  - packages/**/*.tsx
+  - integrations/**/*.ts
+  - apps/worker/**/*.ts
+  - apps/cli/**/*.ts
+  - apps/mcp-server/**/*.ts
+  - apps/javascript-executor/**/*.ts
+---
+
 # Dynamic Imports Rule
 
 ## Principle
