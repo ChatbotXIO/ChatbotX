@@ -35,6 +35,7 @@ vi.mock("@chatbotx.io/business", () => ({
     stopSending: vi.fn(),
     resumeSending: vi.fn(),
     resendWithPruning: vi.fn(),
+    cloneBroadcast: vi.fn(),
     softDeleteBroadcasts: vi.fn(),
   },
 }))

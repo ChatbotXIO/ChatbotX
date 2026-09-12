@@ -1,6 +1,6 @@
+import { whatsappMessageTemplateService } from "@chatbotx.io/business"
 import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { whatsappMessageTemplateService } from "../queries"
 import {
   listWhatsappMessageTemplatesRequest,
   listWhatsappMessageTemplatesResponse,

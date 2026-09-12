@@ -5,12 +5,12 @@ import {
   instagramIntegrationService,
   integrationWhatsappService,
   messengerIntegrationService,
+  messengerMessageTemplateService,
+  whatsappMessageTemplateService,
 } from "@chatbotx.io/business"
 import { listAutomatedResponses } from "@/features/automated-response/queries"
 import type { AutomatedResponseResource } from "@/features/automated-response/schema/resource"
-import { messengerMessageTemplateService } from "@/features/integration-messenger/message-templates/queries"
 import type { ListMessengerMessageTemplatesResponse } from "@/features/integration-messenger/message-templates/schema/query"
-import { whatsappMessageTemplateService } from "@/features/integration-whatsapp/message-templates/queries"
 import type { ListWhatsappMessageTemplatesResponse } from "@/features/integration-whatsapp/message-templates/schema/query"
 import { listTags } from "@/features/tags/queries"
 import type { TagResource } from "@/features/tags/schema/resource"

@@ -218,11 +218,10 @@ class SequenceService extends BaseService {
    * foreign or non-existent `sequenceId` therefore yields an empty page
    * rather than another workspace's rows — it just does not 404.
    *
-   * `total` is caller-supplied rather than repository-computed: unlike
-   * broadcasts, `sequenceStatsRepository.getContacts` has no count query
-   * today, so trusting the client-reported total here preserves existing
-   * behaviour. Adding a server-computed count is a real analytics change
-   * and belongs in its own PR — don't "fix" this without one.
+   * `total` is repository-computed over the same filter as the page
+   * (`sequenceStatsRepository.getContacts`), matching
+   * `broadcastService.listContactsPage` — no caller-supplied `total`, no
+   * fallback to a different aggregate.
    *
    * @remarks Behavior change from the pre-refactor per-handler
    * implementation: a contact-inbox row with no conversation used to be
@@ -240,7 +239,6 @@ class SequenceService extends BaseService {
     sequenceId: string
     stepId: string
     eventType: SequenceStepEventType
-    total: number
     page: number
     perPage: number
   }): Promise<{
@@ -249,10 +247,8 @@ class SequenceService extends BaseService {
     pageCount: number
   }> {
     const { workspaceId, sequenceId, stepId, eventType, page, perPage } = input
-    const total = input.total || 0
-    const pageCount = Math.ceil(total / perPage)
 
-    const { contactInboxIds, contactEventMap } =
+    const { contactInboxIds, contactEventMap, total } =
       await sequenceAnalyticsService.getContacts({
         workspaceId,
         sequenceId,
@@ -261,6 +257,7 @@ class SequenceService extends BaseService {
         page,
         perPage,
       })
+    const pageCount = Math.ceil(total / perPage)
 
     if (contactInboxIds.length === 0) {
       return { data: [], total, pageCount }

@@ -1,13 +1,6 @@
 "use client"
 
-import {
-  type FormFieldType,
-  operatorTypes,
-} from "@chatbotx.io/database/partials"
-import {
-  isValidDateTimeFilterValue,
-  valueContainsVariablePlaceholder,
-} from "@chatbotx.io/database/queries/contact-filter/value-format"
+import type { FormFieldType } from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
@@ -24,7 +17,14 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { canonicalBooleanLiteral } from "@chatbotx.io/utils/custom-field"
+import {
+  isValidDateTimeFilterValue,
+  valueContainsVariablePlaceholder,
+} from "@chatbotx.io/utils/contact-filter-value-format"
+import {
+  canonicalBooleanLiteral,
+  operatorTypes,
+} from "@chatbotx.io/utils/custom-field"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useCallback, useMemo } from "react"
 import { useForm, useWatch } from "react-hook-form"

@@ -1276,7 +1276,7 @@ class BroadcastService extends BaseService {
       },
     })
     if (!source) {
-      throw new ChatbotXException("Broadcast not found")
+      throw notFoundException("Broadcast not found")
     }
 
     const name = await this.resolveCloneBroadcastName({

@@ -3,10 +3,6 @@ import { BaseService } from "../base.service"
 import { resolveTenantSettings } from "../platform/settings"
 import { getPublicFileUrl } from "../utils"
 
-// Mirrored in
-// apps/builder/src/features/media-library/constants.ts because
-// @chatbotx.io/business is backend-only and must not be imported from a
-// "use client" component. Keep both values in sync.
 export const MEDIA_LIBRARY_FILES_PAGE_SIZE = 60
 
 export type ListMediaLibraryFilesInput = {

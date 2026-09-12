@@ -40,15 +40,8 @@ export const sequencesPrivateAPI = {
     .output(listSequenceStepContactsResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const {
-        workspaceId,
-        sequenceId,
-        stepId,
-        eventType,
-        total,
-        page,
-        perPage,
-      } = input
+      const { workspaceId, sequenceId, stepId, eventType, page, perPage } =
+        input
 
       const {
         data,
@@ -59,7 +52,6 @@ export const sequencesPrivateAPI = {
         sequenceId,
         stepId,
         eventType,
-        total: total || 0,
         page,
         perPage,
       })

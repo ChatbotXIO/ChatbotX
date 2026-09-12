@@ -10,28 +10,9 @@ import z from "zod"
 export {
   type CustomFieldType,
   customFieldTypes,
+  type OperatorType,
+  operatorTypes,
 } from "@chatbotx.io/utils/custom-field"
-
-export const operatorTypes = z.enum([
-  "in",
-  "notIn",
-  "isEmpty",
-  "isNotEmpty",
-  "eq",
-  "ne",
-  "startsWith",
-  "endsWith",
-  "contains",
-  "notContains",
-  "lt",
-  "lte",
-  "gt",
-  "gte",
-  "isBetween",
-  "notBetween",
-  "used",
-])
-export type OperatorType = z.infer<typeof operatorTypes>
 
 export const formFieldTypes = z.enum([
   "multiSelect",

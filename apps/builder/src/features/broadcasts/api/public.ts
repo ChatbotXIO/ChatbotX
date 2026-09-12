@@ -38,9 +38,10 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 //
 // This flag governs *write-side filter-condition pruning only*
 // (`pruneEmailPhoneFilterConditions`, applied in `create`/`updateDraft`/
-// `resendWithPruning`). Reads are unaffected by it: `get`/`list`, and in
-// particular `getAudience` below, already return full contact PII (email,
-// phone, gender) for any `broadcasts`-scoped token — including a
+// `resendWithPruning`/`cloneBroadcast`). Reads are unaffected by it: `get`/
+// `list`, and in particular `getAudience` below, already return full
+// contact PII (email, phone, gender) for any `broadcasts`-scoped token —
+// including a
 // `read_only` one — because a superAdmin who can mint the token already has
 // that PII in the builder UI. There is no field-level read gate to apply
 // here without diverging from the private route this public route mirrors
@@ -306,6 +307,28 @@ export const broadcastsPublicRouter = {
         await broadcastService.resendWithPruning({
           workspaceId: context.workspace.id,
           id: input.id,
+          canViewEmailAndPhone: TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE,
+        }),
+    ),
+
+  clone: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/broadcasts/{id}/clone",
+      summary: "Clone a broadcast",
+      description:
+        "Copies the broadcast into a new draft with a deduplicated name, including its targets and audience filter.",
+      successStatus: 201,
+      tags: ["Broadcasts"],
+    })
+    .input(z.object({ id: zodBigintAsString() }))
+    .output(publicBroadcastResource)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(
+      async ({ context, input }) =>
+        await broadcastService.cloneBroadcast({
+          workspaceId: context.workspace.id,
+          broadcastId: input.id,
           canViewEmailAndPhone: TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE,
         }),
     ),

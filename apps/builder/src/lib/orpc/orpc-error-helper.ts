@@ -260,3 +260,27 @@ export const possibleErrorsOnMutatingMinigame = {
   businessError,
   nameAlreadyExists: minigameNameAlreadyExists,
 } satisfies ErrorMap
+
+/**
+ * Email topic create/update reject a duplicate name with `nameTaken` at 400
+ * (`packages/business/src/email-topic/service.ts`), and create surfaces a
+ * 404 when `folderId` names a folder that does not exist in the workspace
+ * (`folderService.ensureExists`). Same declare-or-vanish rule as
+ * `possibleErrorsOnBookingAppointment` above.
+ */
+const nameTaken = {
+  message: "Name is already taken",
+  status: 400,
+}
+
+export const possibleErrorsOnCreatingEmailTopic = {
+  notFound,
+  businessError,
+  nameTaken,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingEmailTopic = {
+  notFound,
+  businessError,
+  nameTaken,
+} satisfies ErrorMap

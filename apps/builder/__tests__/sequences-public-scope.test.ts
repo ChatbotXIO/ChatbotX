@@ -33,6 +33,7 @@ vi.mock("@chatbotx.io/business/sequence", () => ({
     assertOwned: vi.fn(),
     upsertStep: vi.fn(),
     deleteStep: vi.fn(),
+    listStepContactsPage: vi.fn(),
   },
 }))
 
@@ -119,7 +120,11 @@ describe("real router: sequences public API scope wiring", () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(["contacts"]))
 
     await expect(
-      invoke(sequencesPublicRouter[key], { id: "seq-1", stepId: "step-1" }),
+      invoke(sequencesPublicRouter[key], {
+        id: "seq-1",
+        stepId: "step-1",
+        eventType: "message:sent",
+      }),
     ).rejects.toMatchObject({
       code: "FORBIDDEN",
       message: "Token is not authorized for the 'broadcasts' scope",

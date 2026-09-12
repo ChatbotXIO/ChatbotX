@@ -22,6 +22,34 @@ export const customFieldTypes = z.enum([
 export type CustomFieldType = z.infer<typeof customFieldTypes>
 
 /**
+ * Contact-filter comparison operators. Lives here (not `@chatbotx.io/database`)
+ * so a "use client" component (e.g. the filter condition dialog) can read the
+ * enum without pulling in the database package. `@chatbotx.io/database/partials`
+ * re-exports this for existing backend importers. Mirrors the `channelTypes`
+ * precedent in `./channel.ts`.
+ */
+export const operatorTypes = z.enum([
+  "in",
+  "notIn",
+  "isEmpty",
+  "isNotEmpty",
+  "eq",
+  "ne",
+  "startsWith",
+  "endsWith",
+  "contains",
+  "notContains",
+  "lt",
+  "lte",
+  "gt",
+  "gte",
+  "isBetween",
+  "notBetween",
+  "used",
+])
+export type OperatorType = z.infer<typeof operatorTypes>
+
+/**
  * Canonical `(type, name)` identity used to match a flow export's custom-field
  * manifest against the target workspace's existing fields.
  *

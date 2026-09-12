@@ -3,6 +3,7 @@ import {
   type DatabaseClient,
   db,
   eq,
+  findOrFail,
   inArray,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
@@ -15,7 +16,7 @@ import {
   parsePagination,
 } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
-import { ChatbotXException } from "../errors"
+import { ChatbotXException, notFoundException } from "../errors"
 import { folderService } from "../folder/service"
 import type { PaginatedResult } from "../types"
 
@@ -51,6 +52,20 @@ class EmailTopicService {
     return row?.workspaceId
   }
 
+  async findOrFail(props: {
+    workspaceId: string
+    id: string
+    tx?: DatabaseClient
+  }): Promise<EmailTopicModel> {
+    const { workspaceId, id, tx = db } = props
+    return await findOrFail({
+      client: tx,
+      table: emailTopicModel,
+      where: { id, workspaceId },
+      message: "Email topic not found",
+    })
+  }
+
   async list(
     input: ListEmailTopicsInput,
   ): Promise<PaginatedResult<EmailTopicModel>> {
@@ -65,7 +80,13 @@ class EmailTopicService {
       name: input.name ? { ilike: likeContains(input.name) } : undefined,
     }
 
-    const orderBy = parseOrderByAsObject(emailTopicModel, input)
+    const requestedOrderBy = parseOrderByAsObject(emailTopicModel, input)
+    // Falls back to a deterministic order when no sort was requested (the
+    // public `GET /v1/email-topics` sends none), so paging cannot go unstable.
+    const orderBy =
+      Object.keys(requestedOrderBy).length > 0
+        ? requestedOrderBy
+        : { createdAt: "desc" as const }
     const pagination = parsePagination(input)
 
     const [data, total] = await Promise.all([
@@ -124,6 +145,8 @@ class EmailTopicService {
   }): Promise<EmailTopicModel> {
     const { workspaceId, id, data, tx = db } = props
 
+    await this.findOrFail({ workspaceId, id, tx })
+
     const existing = await tx.query.emailTopicModel.findFirst({
       columns: { id: true },
       where: { name: data.name, workspaceId, id: { ne: id } },
@@ -143,6 +166,9 @@ class EmailTopicService {
       )
       .returning()
 
+    if (!updated) {
+      throw notFoundException("Email topic not found")
+    }
     return updated
   }
 
@@ -150,10 +176,10 @@ class EmailTopicService {
     workspaceId: string
     ids: string[]
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<{ deletedCount: number }> {
     const { workspaceId, ids, tx = db } = props
 
-    await tx
+    const deleted = await tx
       .delete(emailTopicModel)
       .where(
         and(
@@ -161,6 +187,9 @@ class EmailTopicService {
           inArray(emailTopicModel.id, ids),
         ),
       )
+      .returning({ id: emailTopicModel.id })
+
+    return { deletedCount: deleted.length }
   }
 }
 
