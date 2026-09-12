@@ -8,7 +8,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { listContactTags } from "../../queries/list-contact-tags.query"
+import { listContactTags } from "../../lib/list-contact-tags"
 import {
   addTagsByNamePublicRequest,
   setAllContactTagsPublicRequest,

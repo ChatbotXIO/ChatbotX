@@ -61,12 +61,9 @@ vi.mock(
   }),
 )
 
-vi.mock(
-  "@/features/contact-scan/queries/get-contact-scan-status.query",
-  () => ({
-    getContactScanStatus: mocks.getContactScanStatus,
-  }),
-)
+vi.mock("@/features/contact-scan/lib/get-contact-scan-status", () => ({
+  getContactScanStatus: mocks.getContactScanStatus,
+}))
 
 const { contactScanAuthenticatedAPI } = await import(
   "@/features/contact-scan/api/private"

@@ -1,7 +1,7 @@
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import { getContactScanStatus } from "../lib/get-contact-scan-status"
 import { requireUnrestrictedContactsScope } from "../lib/require-unrestricted-contacts-scope"
-import { getContactScanStatus } from "../queries/get-contact-scan-status.query"
 import {
   getContactScanStatusRequest,
   getContactScanStatusResponse,

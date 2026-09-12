@@ -13,6 +13,10 @@ vi.mock("@chatbotx.io/business", () => ({
   tagService: { listActive: tagListActive },
 }))
 
+// Dynamic import (not a runtime-selected specifier): `vi.mock` above must
+// register before the module under test is evaluated, so the import is
+// deferred past the mock-setup statements — a static top-level import would
+// load the real `@chatbotx.io/business` before the mock replaces it.
 const { listContactFilterFieldsForAPI } = await import(
   "../list-contact-filter-fields"
 )

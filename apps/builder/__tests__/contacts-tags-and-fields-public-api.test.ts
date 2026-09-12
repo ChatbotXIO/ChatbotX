@@ -64,13 +64,13 @@ const addContactTags = vi.fn()
 
 const findContactCustomField = vi.fn()
 const listContactCustomFields = vi.fn()
-vi.mock("../src/features/contacts/queries/list-contact-fields.query", () => ({
+vi.mock("../src/features/contacts/lib/list-contact-fields", () => ({
   findContactCustomField,
   listContactCustomFields,
 }))
 
 const listContactTags = vi.fn()
-vi.mock("../src/features/contacts/queries/list-contact-tags.query", () => ({
+vi.mock("../src/features/contacts/lib/list-contact-tags", () => ({
   listContactTags,
 }))
 

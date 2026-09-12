@@ -1,4 +1,4 @@
-import { listContactFilterFieldsForAPI } from "@/features/contact-filter/queries/list-contact-filter-fields"
+import { listContactFilterFieldsForAPI } from "@/features/contact-filter/lib/list-contact-filter-fields"
 import { listContactFilterFieldsPublicResponse } from "@/features/contact-filter/schema/public"
 import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"

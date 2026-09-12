@@ -23,7 +23,7 @@ import { CONTACT_SCAN_TRIGGER_SOURCE } from "./constants"
 export type ContactScanScheduleInput = {
   workspaceId: string
   inboxId: string
-  requestedByUserId: string
+  requestedByUserId: string | null
   scanFromAt: Date
 }
 

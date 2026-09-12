@@ -2,6 +2,7 @@ import { contactsFilterFieldsPublicRouter } from "@/features/contact-filter/api/
 import { contactsInboxesPublicRouter } from "@/features/contact-inboxes/api/public"
 import { contactsNotesPublicRouter } from "@/features/contact-notes/api/public"
 import { contactsSequencesPublicRouter } from "@/features/contact-sequences/api/public"
+import { importPublicRouter } from "@/features/import/api/public"
 import { contactsBulkPublicRouter } from "./public/bulk"
 import { contactsCrudPublicRouter } from "./public/crud"
 import { contactsCustomFieldsPublicRouter } from "./public/custom-fields"
@@ -18,6 +19,7 @@ export const contactsPublicRouter = {
   ...contactsNotesPublicRouter,
   ...contactsSequencesPublicRouter,
   ...contactsInboxesPublicRouter,
+  ...importPublicRouter,
   ...contactsFilterFieldsPublicRouter,
   ...contactsBulkPublicRouter,
   ...contactsExportPublicRouter,
