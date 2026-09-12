@@ -88,10 +88,21 @@ class UserPersistentMenuService extends BaseService {
     ids: string[]
     tx?: DatabaseClient
   }): Promise<void> {
-    await deleteUserPersistentMenus(
+    const { deletedIds } = await deleteUserPersistentMenus(
       { workspaceId: input.workspaceId, ids: input.ids },
       input.tx,
     )
+
+    // A single-id delete (the public `DELETE /v1/user-persistent-menus/{id}`
+    // handler, and any other single-resource caller) must 404 on a
+    // nonexistent or cross-workspace id, matching `get`/`update` on the same
+    // resource — otherwise it silently returns 204 for nothing. A bulk
+    // delete legitimately expects some ids to already be gone (the private
+    // bulk-delete action), so this only fires when exactly one id was asked
+    // for and none were affected.
+    if (input.ids.length === 1 && deletedIds.length === 0) {
+      throw notFoundException("User persistent menu not found")
+    }
   }
 }
 

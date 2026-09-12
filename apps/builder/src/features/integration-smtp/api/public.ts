@@ -14,8 +14,7 @@ import {
   publicListResponse,
 } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { resolveSmtpHostAndPort } from "../lib/smtp-host"
-import { verifySmtpConnection } from "../lib/verify-connection"
+import { prepareSmtpAuth } from "../lib/prepare-smtp-auth"
 import { createSmtpRequest, updateSmtpRequest } from "../schema/mutation"
 import {
   type IntegrationSmtpResource,
@@ -89,12 +88,7 @@ export const smtpIntegrationsPublicRouter = {
     .output(integrationSmtpResource)
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
-      await verifySmtpConnection(input)
-
-      const { host, port } = resolveSmtpHostAndPort(input.provider, {
-        host: input.host,
-        port: input.port,
-      })
+      const { host, port } = await prepareSmtpAuth(input)
 
       const { smtpId } = await integrationSmtpService.connect({
         workspaceId: context.workspace.id,
@@ -131,12 +125,7 @@ export const smtpIntegrationsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...rest } = input
-      await verifySmtpConnection(rest)
-
-      const { host, port } = resolveSmtpHostAndPort(rest.provider, {
-        host: rest.host,
-        port: rest.port,
-      })
+      const { host, port } = await prepareSmtpAuth(rest)
 
       return toPublicResource(
         await integrationSmtpService.update({

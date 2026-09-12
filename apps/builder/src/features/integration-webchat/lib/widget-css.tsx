@@ -22,13 +22,20 @@ export const sanitizeWidgetCss = (css: string): string =>
  *
  * Security: `customCss` is gated by `requireWorkspacePermission(workspaceId,
  * "superAdmin")` on the edit page and by the matching check inside
- * `updateWebchatAction`. The widget itself renders in a cross-origin iframe,
- * so this CSS cannot execute script or reach the embedding page — the
- * residual risk (background-image exfiltration, chrome-spoofing overlays) is
- * accepted as part of letting a workspace admin style their own widget. It is
- * kept out of `WebchatClientConfig` deliberately: that DTO's allow-listed key
- * set is asserted by a test, and `customCss` is write-only data no component
- * reads, so it doesn't belong in client-held state.
+ * `updateWebchatAction`. The `channels`-scoped public API
+ * (`integration-webchat/api/public.ts`) accepts `customCss` too, with no
+ * equivalent in-handler permission check — that is intentional, not a gap:
+ * minting any workspace token already requires the caller to be a workspace
+ * superAdmin, so there is no lower-privileged caller left to gate against
+ * (same reasoning as the Ads scope's omitted `assertWorkspaceSuperAdmin`,
+ * see `docs/developer/workspace-api-tokens.md`). The widget itself renders in
+ * a cross-origin iframe, so this CSS cannot execute script or reach the
+ * embedding page — the residual risk (background-image exfiltration,
+ * chrome-spoofing overlays) is accepted as part of letting a workspace admin
+ * style their own widget. It is kept out of `WebchatClientConfig` deliberately:
+ * that DTO's allow-listed key set is asserted by a test, and `customCss` is
+ * write-only data no component reads, so it doesn't belong in client-held
+ * state.
  */
 export const CustomWidgetStyle = ({ css }: { css: string }) => (
   // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized superAdmin-authored widget CSS, see module doc above

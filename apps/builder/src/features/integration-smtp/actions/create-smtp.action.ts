@@ -4,8 +4,7 @@ import { integrationSmtpService, workspaceService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { resolveSmtpHostAndPort } from "../lib/smtp-host"
-import { verifySmtpConnection } from "../lib/verify-connection"
+import { prepareSmtpAuth } from "../lib/prepare-smtp-auth"
 import { createSmtpRequest } from "../schema/mutation"
 
 export const createSmtpAction = workspaceActionClient
@@ -16,16 +15,9 @@ export const createSmtpAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     } = props
-    const { fromAddress, username, password, provider, ...rest } = parsedInput
+    const { fromAddress, username, password, provider } = parsedInput
 
-    await verifySmtpConnection(parsedInput)
-
-    // `smtpHostMap` lives in `@chatbotx.io/integration-smtp`, which
-    // `packages/business` must not depend on — resolve here, pass the pair in.
-    const { host, port } = resolveSmtpHostAndPort(provider, {
-      host: rest.host,
-      port: rest.port,
-    })
+    const { host, port } = await prepareSmtpAuth(parsedInput)
 
     const workspace = await workspaceService.find({
       where: { id: workspaceId },

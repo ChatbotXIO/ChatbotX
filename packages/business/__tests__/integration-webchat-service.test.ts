@@ -5,6 +5,7 @@ const {
   mockCount,
   mockCreateId,
   mockDispatchAuditRecord,
+  mockFindActiveFlowById,
   mockFindFirst,
   mockFindMany,
   mockInboxCreate,
@@ -33,6 +34,10 @@ const {
     mockCount: vi.fn(async () => 25),
     mockCreateId: vi.fn(() => `id-${++createIdCallCount}`),
     mockDispatchAuditRecord: vi.fn(),
+    // `welcomeFlowId: null` in every existing fixture short-circuits before
+    // this is ever called; kept so a future test exercising a non-null id
+    // has something to mock against.
+    mockFindActiveFlowById: vi.fn(async () => ({ id: "flow-1" })),
     mockFindFirst: vi.fn(),
     mockFindMany: vi.fn(async () => []),
     mockInboxCreate: vi.fn(async () => ({
@@ -98,6 +103,10 @@ vi.mock("../src/inbox/service", () => ({
 
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
+}))
+
+vi.mock("../src/flow/service", () => ({
+  flowService: { findActiveById: mockFindActiveFlowById },
 }))
 
 vi.mock("../src/template/installed-resource.service", () => ({
@@ -287,5 +296,71 @@ describe("integrationWebchatService.update", () => {
     expect(mockUpdateSet).toHaveBeenCalledWith(
       expect.objectContaining({ name: "Support" }),
     )
+  })
+
+  // The public API handler spreads a partial update straight through, so an
+  // omitted `welcomeFlowId` must leave the stored value alone rather than
+  // being coerced to null — this is the "in" check in the service, not
+  // something either caller pre-normalizes.
+  test("leaves welcomeFlowId untouched when the field is absent from data", async () => {
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { name: "Support" },
+    })
+
+    expect(mockFindActiveFlowById).not.toHaveBeenCalled()
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.not.objectContaining({ welcomeFlowId: expect.anything() }),
+    )
+  })
+
+  test("normalizes an explicit falsy welcomeFlowId to null", async () => {
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { welcomeFlowId: "" },
+    })
+
+    expect(mockFindActiveFlowById).not.toHaveBeenCalled()
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ welcomeFlowId: null }),
+    )
+  })
+
+  test("validates a non-null welcomeFlowId belongs to the same workspace before writing it", async () => {
+    mockFindActiveFlowById.mockResolvedValueOnce({ id: "flow-1" })
+
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { welcomeFlowId: "flow-1" },
+    })
+
+    expect(mockFindActiveFlowById).toHaveBeenCalledWith({
+      id: "flow-1",
+      workspaceId: "ws-1",
+      tx: expect.anything(),
+    })
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ welcomeFlowId: "flow-1" }),
+    )
+  })
+
+  // Prevents a caller from pointing welcomeFlowId at another workspace's
+  // flow — findActiveById is itself workspace-scoped, so a foreign or
+  // nonexistent id resolves to undefined and must reject rather than write.
+  test("rejects a welcomeFlowId that does not belong to the workspace", async () => {
+    mockFindActiveFlowById.mockResolvedValueOnce(undefined)
+
+    await expect(
+      integrationWebchatService.update({
+        workspaceId: "ws-1",
+        id: "webchat-1",
+        data: { welcomeFlowId: "foreign-flow" },
+      }),
+    ).rejects.toThrow("Welcome flow not found")
+
+    expect(mockUpdateSet).not.toHaveBeenCalled()
   })
 })

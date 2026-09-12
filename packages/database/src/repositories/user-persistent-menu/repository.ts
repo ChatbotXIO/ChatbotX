@@ -77,11 +77,11 @@ export function updateUserPersistentMenu(
 export async function deleteUserPersistentMenus(
   params: { ids: string[]; workspaceId: string },
   client: DatabaseClient = db,
-): Promise<void> {
+): Promise<{ deletedIds: string[] }> {
   if (params.ids.length === 0) {
-    return
+    return { deletedIds: [] }
   }
-  await client
+  const deleted = await client
     .delete(userPersistentMenuModel)
     .where(
       and(
@@ -89,4 +89,6 @@ export async function deleteUserPersistentMenus(
         eq(userPersistentMenuModel.workspaceId, params.workspaceId),
       ),
     )
+    .returning({ id: userPersistentMenuModel.id })
+  return { deletedIds: deleted.map((row) => row.id) }
 }

@@ -12,6 +12,8 @@ import { parsePagination } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
+import { notFoundException } from "../errors"
+import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import { workspaceService } from "../workspace"
@@ -49,6 +51,40 @@ export type UpdateWebchatRequest = Partial<CreateWebchatRequest>
 
 class IntegrationWebchatService extends BaseService {
   /**
+   * Normalizes `welcomeFlowId` and validates that it belongs to the caller's
+   * workspace. Shared by `create` and `update` so the public API and the
+   * private action can never drift on this field (a divergence caught in
+   * review: the private action normalized falsy values to `null` but never
+   * validated ownership, and the public handler did neither).
+   *
+   * `undefined` means "field not present in this partial update" and is
+   * passed through as-is so the caller's `.set()` skips the column; an
+   * empty-string/falsy value normalizes to `null` (clear the welcome flow).
+   */
+  private async resolveWelcomeFlowId(
+    welcomeFlowId: string | null | undefined,
+    workspaceId: string,
+    tx?: DatabaseClient,
+  ): Promise<string | null | undefined> {
+    if (welcomeFlowId === undefined) {
+      return
+    }
+    if (!welcomeFlowId) {
+      return null
+    }
+
+    const flow = await flowService.findActiveById({
+      id: welcomeFlowId,
+      workspaceId,
+      tx,
+    })
+    if (!flow) {
+      throw notFoundException("Welcome flow not found")
+    }
+    return welcomeFlowId
+  }
+
+  /**
    * Provisions a new Inbox + IntegrationWebchat row together, mirroring
    * `createWebchatAction` (`apps/builder/src/features/integration-webchat/
    * actions/create-webchat.action.ts`) — a pre-minted id doubles as both the
@@ -73,6 +109,11 @@ class IntegrationWebchatService extends BaseService {
   ): Promise<IntegrationWebchatModel> {
     const { workspaceId, ownerId, data } = props
     const webchatId = createId()
+    const welcomeFlowId = await this.resolveWelcomeFlowId(
+      data.welcomeFlowId ?? null,
+      workspaceId,
+      tx,
+    )
 
     const { inbox } = await inboxService.create({
       tx,
@@ -103,7 +144,7 @@ class IntegrationWebchatService extends BaseService {
         showLogo: data.showLogo,
         hideMessageInput: data.hideMessageInput,
         customCss: data.customCss,
-        welcomeFlowId: data.welcomeFlowId ?? null,
+        welcomeFlowId: welcomeFlowId ?? null,
       })
       .returning()
 
@@ -267,6 +308,17 @@ class IntegrationWebchatService extends BaseService {
   }): Promise<void> {
     const { workspaceId, id, data, tx = db } = input
 
+    // `welcomeFlowId` is normalized (falsy -> null) and validated as
+    // workspace-owned here — not by callers — so the public API and the
+    // private action can't drift on this field, and a caller can't point it
+    // at another workspace's flow. `"welcomeFlowId" in data` distinguishes
+    // "field absent from this partial update" (leave column alone) from
+    // "field explicitly set to null/empty" (clear it).
+    const welcomeFlowId =
+      "welcomeFlowId" in data
+        ? await this.resolveWelcomeFlowId(data.welcomeFlowId, workspaceId, tx)
+        : undefined
+
     // `workspaceId` scopes the row, it is never written: assigning it in `set`
     // would silently move the webchat to another workspace on a mismatched
     // (id, workspaceId) pair. Callers pre-check via `findByIdForWorkspace`, but
@@ -277,6 +329,7 @@ class IntegrationWebchatService extends BaseService {
         ...data,
         conversationStarters: data.conversationStarters as never,
         persistentMenus: data.persistentMenus as never,
+        ...("welcomeFlowId" in data ? { welcomeFlowId } : {}),
       })
       .where(
         and(

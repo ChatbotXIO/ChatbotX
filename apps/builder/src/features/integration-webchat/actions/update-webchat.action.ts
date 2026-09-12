@@ -17,7 +17,7 @@ export const updateWebchatAction = workspaceActionClient
       parsedInput,
       ctx,
     } = props
-    const { authorizedDomains, welcomeFlowId, ...rest } = parsedInput
+    const { authorizedDomains, ...rest } = parsedInput
 
     // The edit page gates entry with requireWorkspacePermission(workspaceId,
     // "superAdmin"), but workspaceActionClient only verifies membership — a
@@ -47,7 +47,9 @@ export const updateWebchatAction = workspaceActionClient
       data: {
         ...rest,
         persistentMenus,
-        welcomeFlowId: welcomeFlowId?.length ? welcomeFlowId : null,
+        // Normalization (falsy -> null) and workspace-ownership validation
+        // now live in `integrationWebchatService.update` so this action and
+        // the public API handler cannot drift on this field.
         authorizedDomains: authorizedDomains
           ? authorizedDomains.map((domain) => domain.value)
           : undefined,
