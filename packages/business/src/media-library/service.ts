@@ -254,19 +254,19 @@ class MediaLibraryService extends BaseService {
   /**
    * Sets the explicit favourite state and returns the updated file with its
    * fetchable `url` — addressable by an API client, unlike a bare toggle.
+   *
+   * `preloadedFile` lets a caller that already fetched the row (e.g.
+   * `toggleFavourite`, which needs the current state to flip it) skip the
+   * redundant `findById` + `resolveTenantSettings` this method would
+   * otherwise repeat.
    */
   async setFavourite(input: {
     workspaceId: string
     fileId: string
     isFavourite: boolean
+    preloadedFile?: MediaLibraryFileWithUrl
   }): Promise<MediaLibraryFileWithUrl> {
-    const file = await mediaLibraryFileRepository.findById({
-      id: input.fileId,
-      workspaceId: input.workspaceId,
-    })
-    if (!file) {
-      throw notFoundException(`MediaLibraryFile ${input.fileId} not found`)
-    }
+    const file = input.preloadedFile ?? (await this.findFile(input))
 
     await mediaLibraryFileRepository.setFavourite({
       id: input.fileId,
@@ -274,14 +274,9 @@ class MediaLibraryService extends BaseService {
       isFavourite: input.isFavourite,
     })
 
-    const { storageUrl } = await resolveTenantSettings({
-      workspaceId: input.workspaceId,
-    })
-
     return {
       ...file,
       isFavourite: input.isFavourite,
-      url: getPublicFileUrl(file.path, storageUrl),
     }
   }
 
@@ -293,6 +288,7 @@ class MediaLibraryService extends BaseService {
     return await this.setFavourite({
       ...input,
       isFavourite: !file.isFavourite,
+      preloadedFile: file,
     })
   }
 }
