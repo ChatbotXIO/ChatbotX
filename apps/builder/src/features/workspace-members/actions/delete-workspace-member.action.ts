@@ -1,6 +1,7 @@
 "use server"
 
 import {
+  softphoneCredentialService,
   workspaceMemberCacheTag,
   workspaceMemberService,
 } from "@chatbotx.io/business"
@@ -55,4 +56,11 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
     await invalidateCacheByTags([
       workspaceMemberCacheTag(workspaceMember.userId),
     ])
+
+    // A removed member's softphone credential must never register again
+    // — revoke it in the same action a member loses access.
+    await softphoneCredentialService.revokeCredentials({
+      workspaceId,
+      userId: workspaceMember.userId,
+    })
   })

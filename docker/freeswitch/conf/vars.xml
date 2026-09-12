@@ -1,0 +1,81 @@
+<include>
+  <!--
+    ChatbotX delta from the vanilla vars.xml (fetched from
+    signalwire/freeswitch v1.10.12 conf/vanilla/vars.xml for comparison).
+    Only the params WhatsApp calling needs are overridden here; everything
+    else (sound_prefix, hold_music, presence_privacy, …) is inherited from
+    the vanilla file the entrypoint copies first.
+
+    The `<X-PRE-PROCESS cmd="include" .../>` directive below is the same
+    one freeswitch.xml itself uses to pull in this file
+    (`<X-PRE-PROCESS cmd="include" data="vars.xml"/>`), so nesting a
+    generated include here is the documented mechanism for injecting
+    runtime values, not a custom hack. The file is written by
+    docker-entrypoint.sh from FS_* environment variables on every
+    container start (FreeSWITCH re-reads the whole XML tree at start and
+    on `reloadxml`).
+  -->
+  <X-PRE-PROCESS cmd="include" data="chatbotx-vars-generated.xml"/>
+
+  <!-- Fallbacks so an unset FS_* var never leaves $${domain} etc. empty
+       (FreeSWITCH silently treats a missing var as an empty string,
+       which would make sip_profiles bind on nothing). -->
+  <X-PRE-PROCESS cmd="set" data="FS_SIP_DOMAIN=fs.local"/>
+  <X-PRE-PROCESS cmd="set" data="FS_PUBLIC_IP=127.0.0.1"/>
+  <X-PRE-PROCESS cmd="set" data="FS_NODE_ID=default"/>
+  <X-PRE-PROCESS cmd="set" data="FS_RECORDINGS_DIR=/recordings"/>
+  <X-PRE-PROCESS cmd="set" data="FS_RTP_START_PORT=16384"/>
+  <X-PRE-PROCESS cmd="set" data="FS_RTP_END_PORT=32768"/>
+  <X-PRE-PROCESS cmd="set" data="FS_MAX_SESSIONS=1000"/>
+  <X-PRE-PROCESS cmd="set" data="FS_SESSIONS_PER_SECOND=30"/>
+  <X-PRE-PROCESS cmd="set" data="FS_ESL_LISTEN_IP=0.0.0.0"/>
+
+  <!-- X-PRE-PROCESS "set" only takes effect the first time a var name is
+       set (vanilla vars.xml relies on the same ordering rule for
+       default_password etc.), so the generated include above — which
+       carries the real env values when present — MUST stay first in this
+       file; the fallbacks just above only apply when the env var was
+       unset. -->
+
+  <!-- switchname comes from FS_NODE_ID, not the OS hostname, so
+       every node in an FS_NODES fleet can share the same image
+       (switch.conf.xml `switchname` param, verified present as a
+       commented example in vanilla switch.conf.xml; `runtime.switchname`
+       overrides `gethostname()` for every mod_xml_curl POST and CDR). -->
+  <X-PRE-PROCESS cmd="set" data="switchname=$${FS_NODE_ID}"/>
+
+  <!-- domain / directory domain used by challenge-realm (the
+       inbound digest lookup domain = the challenge realm) and by the
+       agents profile's WSS directory lookups. -->
+  <X-PRE-PROCESS cmd="set" data="domain=$${FS_SIP_DOMAIN}"/>
+  <X-PRE-PROCESS cmd="set" data="domain_name=$${domain}"/>
+  <X-PRE-PROCESS cmd="set" data="hold_music=local_stream://moh"/>
+  <X-PRE-PROCESS cmd="set" data="use_profile=whatsapp"/>
+
+  <!-- external_sip_ip/external_rtp_ip — verified param names in
+       vanilla vars.xml (`external_rtp_ip`/`external_sip_ip`, normally fed
+       by the `stun-set` X-PRE-PROCESS cmd; we set them directly since
+       `-nonat` disables FreeSWITCH's own NAT auto-detection and STUN is
+       unreachable/unnecessary once the host has a routable public IP). -->
+  <X-PRE-PROCESS cmd="set" data="external_sip_ip=$${FS_PUBLIC_IP}"/>
+  <X-PRE-PROCESS cmd="set" data="external_rtp_ip=$${FS_PUBLIC_IP}"/>
+
+  <!-- TLS version restricted to 1.2/1.3 (vanilla ships a
+       `sip_tls_version` var consumed by sip_profiles/external.xml's
+       `tls-version` param — same name reused here for the whatsapp/agents
+       profiles). -->
+  <X-PRE-PROCESS cmd="set" data="sip_tls_version=tlsv1.2,tlsv1.3"/>
+
+  <!-- Meta's own FreeSWITCH example uses SDES with
+       `rtp_secure_media=mandatory` (no explicit suite list ⇒ FreeSWITCH's
+       built-in default suite order, `rtp_sdes_suites` in vanilla
+       vars.xml). Set globally so every leg (both profiles) defaults to
+       SDES-SRTP; the whatsapp inbound dialplan additionally pins the
+       exact suite (`AES_CM_128_HMAC_SHA1_80`). -->
+  <X-PRE-PROCESS cmd="set" data="rtp_secure_media=mandatory"/>
+
+  <!-- bare `OPUS` codec token first, G.711 as Meta's documented
+       `additional_codecs` fallback. -->
+  <X-PRE-PROCESS cmd="set" data="global_codec_prefs=OPUS,PCMU,PCMA"/>
+  <X-PRE-PROCESS cmd="set" data="outbound_codec_prefs=OPUS,PCMU,PCMA"/>
+</include>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Static fallback dialplan: dialplan/ holds ONLY this static
+  fallback — all real dialplan comes from mod_xml_curl. `<include>`,
+  `<context name="...">`, `<extension>`/`<condition>`/`<action>` syntax
+  copied from the fetched vanilla dialplan/default.xml.
+
+  This file is reached ONLY when mod_xml_curl's "dialplan" binding
+  returns `<result status="not found"/>` (or is unreachable) for the
+  `whatsapp_inbound`/`agents` context FreeSWITCH resolves per-profile
+  (the sofia profiles' `context=` params) — e.g. the builder is down, the
+  responder rejected an unrecognized number/hostname, or the request
+  otherwise fell through every dynamic binding. It never carries real
+  routing logic; it exists so a channel that reaches here is hung up
+  cleanly (with a cause Meta/the browser can act on) instead of the
+  call hanging silently.
+-->
+<include>
+  <context name="whatsapp_inbound">
+    <extension name="chatbotx-xml-curl-fallback">
+      <condition>
+        <action application="respond" data="503"/>
+        <action application="hangup" data="NORMAL_TEMPORARY_FAILURE"/>
+      </condition>
+    </extension>
+  </context>
+
+  <context name="agents">
+    <extension name="chatbotx-xml-curl-fallback">
+      <condition>
+        <action application="respond" data="404"/>
+        <action application="hangup" data="UNALLOCATED_NUMBER"/>
+      </condition>
+    </extension>
+  </context>
+</include>

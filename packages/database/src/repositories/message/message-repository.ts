@@ -321,6 +321,15 @@ export interface IMessageRepository {
     createdAt: Date,
   ): Promise<{ id: string } | null>
 
+  updateContentBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    patch: {
+      text?: string | null
+      contentAttributes?: Record<string, unknown> | null
+    },
+  ): Promise<{ id: string } | null>
+
   updateMessageAttributes(
     messageId: string,
     workspaceId: string,

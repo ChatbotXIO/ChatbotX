@@ -5,6 +5,7 @@ import {
   db,
   eq,
   inArray,
+  isNotNull,
   isNull,
   lt,
   or,
@@ -15,6 +16,7 @@ import {
   integrationWhatsappModel,
 } from "../../schema"
 import type { IntegrationWhatsappModel } from "../../types"
+import type { SipProvisioningStatus } from "../../partials"
 
 // `isCoexist`/`platformType` have column defaults (both `$inferInsert`
 // makes optional), but a connect must always state them explicitly — the
@@ -56,6 +58,7 @@ export type IntegrationWhatsappClientResource = Pick<
   | "hasCapiScope"
   | "capiScopeCheckedAt"
   | "datasetId"
+  | "sipProvisioningStatus"
   | "workspaceId"
   | "createdAt"
 > & {
@@ -109,6 +112,37 @@ type UpdateCapiTestEventCodeInput = WorkspaceIntegrationRef & {
 
 type UpdateCapiAccessTokenInput = WorkspaceIntegrationRef & {
   capiAccessToken: EncryptedData
+}
+
+type ClaimSipProvisioningInput = WorkspaceIntegrationRef & {
+  /** Opaque id identifying the caller holding the lease (e.g. worker replica id). */
+  claim: string
+  /** Lease expiry — a claim is only takeable by a new caller past this. */
+  leaseUntil: Date
+  now?: Date
+}
+
+type UpdateSipProvisioningInput = WorkspaceIntegrationRef & {
+  /** Ownership check: only the row's current claim holder may update it. */
+  claim: string
+  values: Partial<{
+    sipProvisioningStatus: SipProvisioningStatus
+    sipProvisioningClaim: string | null
+    sipProvisioningLeaseUntil: Date | null
+    sipProvisionedAt: Date | null
+    sipLastError: string | null
+    sipPasswordEncrypted: EncryptedData | null
+    sipGatewayName: string | null
+    sipNodeId: string | null
+  }>
+}
+
+type UpdateCallSettingsInput = WorkspaceIntegrationRef & {
+  values: Partial<{
+    callRecordingEnabled: boolean
+    callRecordingRetentionDays: number
+    callTranscriptionEnabled: boolean
+  }>
 }
 
 const workspaceIntegrationFilter = (input: WorkspaceIntegrationRef) =>
@@ -354,6 +388,7 @@ class IntegrationWhatsappRepository {
         hasCapiScope: true,
         capiScopeCheckedAt: true,
         datasetId: true,
+        sipProvisioningStatus: true,
         workspaceId: true,
         createdAt: true,
       },
@@ -660,6 +695,155 @@ class IntegrationWhatsappRepository {
       .returning()
 
     return row
+  }
+  /** Whether the number backing this inbox auto-records in-app calls. */
+  async isCallRecordingEnabledForInbox(
+    input: { workspaceId: string; inboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const [row] = await tx
+      .select({ enabled: integrationWhatsappModel.callRecordingEnabled })
+      .from(integrationWhatsappModel)
+      .where(
+        and(
+          eq(integrationWhatsappModel.inboxId, input.inboxId),
+          eq(integrationWhatsappModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .limit(1)
+    return row?.enabled === true
+  }
+
+  /** Toggle auto-recording of in-app calls for this number. */
+  async updateCallRecordingEnabled(
+    input: WorkspaceIntegrationRef & { enabled: boolean },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(integrationWhatsappModel)
+      .set({ callRecordingEnabled: input.enabled })
+      .where(workspaceIntegrationFilter(input))
+  }
+
+  /**
+   * Claims the FreeSWITCH SIP provisioning lease: only succeeds
+   * when the row is `none`, or `provisioning` with an expired/absent lease
+   * (a crashed prior attempt) — the conditional UPDATE is the single
+   * source of truth for "is this claimable right now", so concurrent
+   * callers contend on the same row and only one wins.
+   */
+  async claimSipProvisioning(
+    input: ClaimSipProvisioningInput,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const now = input.now ?? new Date()
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set({
+        sipProvisioningStatus: "provisioning",
+        sipProvisioningClaim: input.claim,
+        sipProvisioningLeaseUntil: input.leaseUntil,
+        sipLastError: null,
+      })
+      .where(
+        and(
+          workspaceIntegrationFilter(input),
+          or(
+            eq(integrationWhatsappModel.sipProvisioningStatus, "none"),
+            eq(integrationWhatsappModel.sipProvisioningStatus, "failed"),
+            and(
+              eq(
+                integrationWhatsappModel.sipProvisioningStatus,
+                "provisioning",
+              ),
+              or(
+                isNull(integrationWhatsappModel.sipProvisioningLeaseUntil),
+                lt(integrationWhatsappModel.sipProvisioningLeaseUntil, now),
+              ),
+            ),
+          ),
+        ),
+      )
+      .returning()
+
+    return row ?? null
+  }
+
+  /**
+   * Advances the provisioning state machine. Scoped by `claim` as an
+   * ownership check: only the caller currently holding the lease may write
+   * — a claim that expired and was re-taken by another worker replica can
+   * never have its result silently applied by the loser.
+   */
+  async updateSipProvisioning(
+    input: UpdateSipProvisioningInput,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set(input.values)
+      .where(
+        and(
+          workspaceIntegrationFilter(input),
+          eq(integrationWhatsappModel.sipProvisioningClaim, input.claim),
+        ),
+      )
+      .returning()
+
+    return row ?? null
+  }
+
+  /**
+   * All numbers pinned to `nodeId` with a live gateway — the xml_curl
+   * responder's `configuration/sofia.conf` renderer source. Includes
+   * `enabled` alongside `provisioned` because a number keeps its gateway
+   * once Meta's SIP settings are turned on.
+   */
+  listProvisionedForXml(
+    nodeId: string,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel[]> {
+    return tx
+      .select()
+      .from(integrationWhatsappModel)
+      .where(
+        and(
+          eq(integrationWhatsappModel.sipNodeId, nodeId),
+          isNotNull(integrationWhatsappModel.sipGatewayName),
+          or(
+            eq(integrationWhatsappModel.sipProvisioningStatus, "provisioned"),
+            eq(integrationWhatsappModel.sipProvisioningStatus, "enabled"),
+          ),
+        ),
+      )
+  }
+
+  /** Resolves the integration owning a FreeSWITCH gateway (`wa-<id>`), for ESL/xml_curl lookups. */
+  async findByGatewayName(
+    sipGatewayName: string,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .select()
+      .from(integrationWhatsappModel)
+      .where(eq(integrationWhatsappModel.sipGatewayName, sipGatewayName))
+      .limit(1)
+
+    return row ?? null
+  }
+
+  /** Updates recording/retention/transcription settings for a number (Calls card). */
+  async updateCallSettings(
+    input: UpdateCallSettingsInput,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set(input.values)
+      .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
   }
 }
 

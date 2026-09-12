@@ -29,6 +29,7 @@
     "./graph-error": "./src/graph-error.ts",
     "./id": "./src/id.ts",
     "./meta-capi": "./src/meta-capi.ts",
+    "./node-crypto": "./src/node-crypto.ts",
     "./referral": "./src/referral.ts",
     "./temporal-input": "./src/temporal-input/index.ts",
     "./timezone": "./src/timezone.ts",

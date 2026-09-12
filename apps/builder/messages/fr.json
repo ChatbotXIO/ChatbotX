@@ -2186,6 +2186,19 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Secret de l'application Meta (facultatif)",
+      "description": "Active la vérification de la signature du webhook pour cette connexion manuelle. Vous le trouverez dans le tableau de bord de votre application Meta, sous Paramètres > Général."
+    },
+    "aiTrigger": {
+      "label": "Déclencheur IA"
+    },
+    "lastCallRecorded": {
+      "label": "Dernier enregistrement d'appel"
+    },
+    "lastCallTranscript": {
+      "label": "Dernière transcription d'appel"
     }
   },
   "flows": {
@@ -2326,7 +2339,9 @@
       "import": "Importer le flux",
       "export": "Exporter",
       "importStarted": "Le flux est en cours d'importation. Consultez l'historique des imports pour voir les résultats.",
-      "importJsonOnly": "Fichiers JSON uniquement"
+      "importJsonOnly": "Fichiers JSON uniquement",
+      "whatsappCallButton": "Appeler sur WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "La somme totale doit être égale à 100 %.",
@@ -2442,6 +2457,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Ce canal ne peut pas envoyer ce type de média : l'étape y est ignorée. Supprimez-la ou basculez le nœud vers un canal qui le prend en charge.",
       "buttonsSkippedOnChannel": "Ce canal ne peut pas envoyer de boutons avec un message média : ils y sont ignorés. Placez-les plutôt dans une étape de texte suivante."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Modifier le bouton",
+      "buttonLabel": "Libellé du bouton"
     }
   },
   "folders": {
@@ -2663,7 +2682,8 @@
       "adAccountFilter": {
         "all": "Tous les comptes publicitaires",
         "label": "Compte publicitaire",
-        "unavailable": "Impossible de charger les comptes publicitaires — vérifiez la connexion Ads de cette intégration, ou la connexion Facebook Ads de l'espace de travail, dans les paramètres."
+        "unavailable": "Impossible de charger les comptes publicitaires — vérifiez la connexion Ads de cette intégration, ou la connexion Facebook Ads de l'espace de travail, dans les paramètres.",
+        "note": "Les annonces avec des conversions mais sans dépense ni diffusion sur la période sélectionnée sont masquées lors du filtrage par compte publicitaire."
       },
       "channelFilter": {
         "label": "Canal",
@@ -2980,7 +3000,8 @@
     "setting": {
       "label": "Make",
       "description": "Connectez votre compte Make.com pour envoyer des événements depuis vos flux et recevoir des données de contact par l’intermédiaire de scénarios Make.",
-      "notConfigured": "Aucun lien d’invitation Make trouvé. Ajoutez-en un dans les paramètres de la plateforme."
+      "notConfigured": "Aucun lien d’invitation Make trouvé. Ajoutez-en un dans les paramètres de la plateforme.",
+      "noWorkspaceToken": "Aucun jeton d’accès développeur trouvé pour cet espace de travail. Générez-en un dans la section des jetons de l’espace de travail ci-dessus, puis cliquez de nouveau sur Connecter."
     }
   },
   "integrations": {
@@ -3271,7 +3292,16 @@
     "waTemplateLtoExpirationRequired": "Choisissez une date d'expiration pour l'offre à durée limitée avant l'envoi.",
     "waTemplateMpmIncompleteProducts": "Chaque section doit contenir au moins un produit sélectionné — supprimez les lignes vides ou choisissez un produit.",
     "mediaStepUnsupported": "Ce canal ne peut pas envoyer ce type de média. Supprimez l'étape ou orientez ce nœud vers un canal qui le prend en charge.",
-    "mediaButtonsUnsupported": "Ce canal ne peut pas envoyer de boutons avec un message média. Supprimez les boutons ou déplacez-les vers une étape de texte suivante."
+    "mediaButtonsUnsupported": "Ce canal ne peut pas envoyer de boutons avec un message média. Supprimez les boutons ou déplacez-les vers une étape de texte suivante.",
+    "voiceCall": "Appel vocal",
+    "voiceCallDuration": "Appel vocal · {duration}",
+    "missedVoiceCall": "Appel vocal manqué",
+    "declinedVoiceCall": "Appel vocal refusé",
+    "acceptedCallPermission": "A accepté la demande d'autorisation d'appel",
+    "declinedCallPermission": "A refusé la demande d'autorisation d'appel",
+    "sendHumanAgentTag": "Envoyer un message avec l’étiquette HUMAN_AGENT",
+    "warning": "Attention !",
+    "humanAgentWarningDescription": "Vous pouvez répondre au message d’un utilisateur dans un délai de 7 jours uniquement si le problème ne peut raisonnablement pas être résolu sous 24 heures, notamment pendant les week-ends, les jours fériés ou lorsqu’un traitement de plusieurs jours est nécessaire. N’utilisez pas cette option pour une autre raison, car elle pourrait mettre en danger votre Page Facebook ou votre compte Instagram. En cas de doute, ne continuez pas."
   },
   "instagram": {
     "description": "Cette intégration permet de créer des bots Instagram.",
@@ -3402,7 +3432,8 @@
       "on": "Activée",
       "off": "Désactivée",
       "termsRequired": "L’administrateur de la Page doit accepter les Conditions relatives aux contacts des Pages Facebook :"
-    }
+    },
+    "selectFacebookPage": "Sélectionnez une Page Facebook"
   },
   "omnichannel": {
     "title": "Omnicanal"
@@ -3491,6 +3522,10 @@
     "deepseek": {
       "description": "Description de l’intégration DeepSeek",
       "title": "Intégration DeepSeek"
+    },
+    "aiTriggers": {
+      "description": "Description des déclencheurs IA",
+      "title": "Déclencheurs IA"
     }
   },
   "auth": {
@@ -3634,7 +3669,14 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "Paramètres de l’application WhatsApp introuvables.",
-        "wabaResolveFailed": "Impossible d’identifier le compte WhatsApp Business à partir de l’autorisation."
+        "wabaResolveFailed": "Impossible d’identifier le compte WhatsApp Business à partir de l’autorisation.",
+        "accessTokenRequired": "Le jeton d’accès WhatsApp est requis.",
+        "failedToPersistIntegration": "Échec de l’enregistrement de l’intégration WhatsApp.",
+        "noPhoneNumberFound": "Aucun numéro WhatsApp trouvé.",
+        "noPhoneNumbersFound": "Aucun numéro trouvé pour ce compte WhatsApp Business.",
+        "phoneNumberNotFound": "Le numéro WhatsApp sélectionné est introuvable.",
+        "unableToVerifyToken": "Impossible de vérifier le jeton WhatsApp.",
+        "wabaMismatch": "Le compte WhatsApp Business sélectionné ne correspond pas à l’autorisation."
       }
     },
     "reconnect": {
@@ -3734,7 +3776,8 @@
       "profile": "Profil",
       "usefulLinks": "Liens utiles",
       "conversionsApi": "Optimisation des publicités",
-      "settings": "Paramètres"
+      "settings": "Paramètres",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Gérer votre compte WhatsApp",
@@ -3866,6 +3909,87 @@
     "transferPhoneNumber": "Transférer le téléphone depuis un autre fournisseur WhatsApp",
     "selectPage": {
       "tryAgain": "Réessayer la connexion"
+    },
+    "manualAppSecretMissingNotice": "Les signatures des webhooks ne sont pas vérifiées jusqu'à ce que vous ajoutiez votre secret d'application Meta.",
+    "signupSessionExpired": "Votre session d’inscription WhatsApp a expiré. Recommencez la connexion.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Événements automatiques",
+        "description": "Envoyez automatiquement les événements de conversion de ce numéro WhatsApp vers Meta. Si l’autorisation manque, reconnectez le compte pour l’accorder."
+      }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta a refusé la modification des paramètres d'appel",
+        "bicUnavailable": "Les appels initiés par l'entreprise ne sont pas disponibles pour ce pays",
+        "callAlreadyInProgress": "Un appel avec ce contact est déjà en cours",
+        "hangupFailed": "Impossible de mettre fin à l'appel"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta a refusé la modification",
+      "callContact": "Appeler sur WhatsApp",
+      "dialing": "Appel en cours…",
+      "startCall": "Démarrer un appel WhatsApp",
+      "retentionLabel": "Conservation des enregistrements (jours)",
+      "retentionHelper": "Durée de conservation des enregistrements d'appel avant leur suppression définitive.",
+      "transcriptionLabel": "Transcrire les appels",
+      "transcriptionHelper": "Transcrit automatiquement les appels enregistrés à l'aide de votre fournisseur d'IA connecté.",
+      "sip": {
+        "provisioningLabel": "Provisionnement FreeSWITCH",
+        "provisionButton": "Provisionner",
+        "deprovisionButton": "Déprovisionner",
+        "status": {
+          "none": "Non provisionné",
+          "provisioning": "Provisionnement en cours…",
+          "provisioned": "Provisionné",
+          "enabled": "Activé",
+          "failed": "Échec"
+        },
+        "errors": {
+          "notProvisioned": "Provisionnez ce numéro pour les appels FreeSWITCH avant d'activer les appels dans l'application",
+          "readBackMismatch": "Meta n'a pas confirmé la modification des appels SIP — réessayez",
+          "provisionFailed": "Échec du provisionnement de ce numéro pour les appels FreeSWITCH",
+          "deprovisionFailed": "Échec du déprovisionnement des appels FreeSWITCH pour ce numéro"
+        }
+      },
+      "preflight": {
+        "title": "Éligibilité aux appels",
+        "appSubscriptionMissing": "Configurez d'abord le webhook WhatsApp de cette application dans le tableau de bord des applications Meta, puis réessayez.",
+        "appSubscriptionFailed": "Impossible de vérifier l'abonnement au webhook 'calls' de l'application. Réessayez dans un instant.",
+        "callsNotSubscribed": "Cette application n'est pas abonnée au champ webhook 'calls', donc les événements d'appel ne peuvent pas atteindre ChatbotX (erreur Meta 138018 : les conditions techniques préalables ne sont pas remplies — assurez-vous qu'au moins une application abonnée au WABA dispose également du champ webhook d'appels).",
+        "fixButton": "Corriger",
+        "fixSuccess": "L'application est désormais abonnée aux webhooks d'appel WhatsApp.",
+        "manualIntegrationNotice": "Ce numéro a été connecté manuellement et ne dispose d'aucun identifiant d'application ici. Abonnez le champ webhook 'calls' de votre application dans le tableau de bord des applications Meta.",
+        "coexistenceWarning": "Ce numéro utilise la coexistence avec l'application WhatsApp Business, que Meta ne prend pas en charge pour les appels. Basculez-le en Cloud API uniquement.",
+        "messagingLimitTooLow": "Le palier de limite de messagerie de ce numéro est inférieur au minimum requis par Meta pour les appels."
+      }
     }
   },
   "zalo": {
@@ -3878,7 +4002,8 @@
       "toggleSuccess": "Paramètre de synchronisation mis à jour.",
       "enabledSince": "Activée depuis le {date}",
       "disabled": "Désactivée"
-    }
+    },
+    "refreshPermissions": "Actualiser les autorisations"
   },
   "telegram": {
     "description": "Cette intégration permet de créer des bots Telegram.",
@@ -4015,7 +4140,9 @@
       "productRemovedFromCart": "Produit retiré du panier",
       "productOrdered": "Produit commandé",
       "contactReferredANewContact": "Le contact a recommandé un nouveau contact",
-      "contactReferredExistingContact": "Le contact a recommandé un contact existant"
+      "contactReferredExistingContact": "Le contact a recommandé un contact existant",
+      "callRecorded": "Appel enregistré",
+      "callTranscribed": "Appel transcrit"
     },
     "actions": {
       "addTag": "Ajouter une étiquette",
@@ -5591,7 +5718,8 @@
     "connectViaFacebook": "Connecter via Facebook",
     "unsupportedExplanation": "Ce compte Instagram a été connecté avec Instagram Business Login. Connectez le compte via Facebook pour utiliser Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "Les événements WhatsApp ne sont envoyés que pour les conversations démarrées à partir d’une publicité click-to-WhatsApp."
+      "whatsappNote": "Les événements WhatsApp ne sont envoyés que pour les conversations démarrées à partir d’une publicité click-to-WhatsApp.",
+      "description": "Mettez en file d’attente un événement LeadSubmitted pour Messenger, Instagram ou WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5847,7 +5975,10 @@
       "rulesDescription": "Description des règles",
       "openerTags": "Étiqueter les contacts qui ouvrent le lien du jeu",
       "playerTags": "Étiqueter les joueurs",
-      "newFriendTags": "Étiqueter les nouveaux amis"
+      "newFriendTags": "Étiqueter les nouveaux amis",
+      "shareEnabled": "Autoriser le partage avec des amis",
+      "shareMessage": "Message de partage",
+      "shareMessageHint": "Utilisez '{{shareUrl}}' pour insérer le lien réel du jeu — merci de ne pas le supprimer."
     },
     "appearance": {
       "backgroundColor": "Couleur de fond",

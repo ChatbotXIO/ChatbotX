@@ -1,4 +1,5 @@
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
+import { SdkException } from "@chatbotx.io/sdk"
 import { integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
 import {
@@ -9,8 +10,6 @@ import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { logWebhookRequestBody } from "@/lib/webhook-log"
 
-const SIGNATURE_HEADER = "x-hub-signature-256"
-const SIGNATURE_PREFIX = "sha256="
 const MAX_CHALLENGE_LENGTH = 256
 
 const json = (body: unknown, status: number) =>
@@ -70,22 +69,22 @@ const handleGet = async (req: NextRequest, integrationId: string) => {
   })
 }
 
+/**
+ * The actual HMAC verification (real cryptographic check, not just a header
+ * prefix look) happens inside `integration.handleRequest` — see
+ * `webhookHandler`/`verifyPostSignature` in
+ * `integrations/whatsapp/src/handlers/webhook.ts`, which rejects before any
+ * parse/log/enqueue. This route only checks the orthogonal "has this
+ * integration ever completed a GET handshake" gate; it must NOT log the
+ * request body before that verification succeeds.
+ */
 const handlePost = async (req: NextRequest, integrationId: string) => {
-  // Same "Webhook request body" log every other channel gets via the shared
-  // /integrations/[...integration] route — this dedicated route must match.
-  await logWebhookRequestBody("whatsapp", req)
-
   const result = await loadManualIntegration(integrationId)
   if (!result) {
     return json({ message: "Integration not found" }, 404)
   }
 
   const { auth } = result
-
-  const signature = req.headers.get(SIGNATURE_HEADER)
-  if (!signature?.startsWith(SIGNATURE_PREFIX)) {
-    return json({ message: "Missing signature" }, 401)
-  }
 
   const verified =
     Boolean(auth.metadata?.webhookVerifiedAt) ||
@@ -99,21 +98,36 @@ const handlePost = async (req: NextRequest, integrationId: string) => {
     return json({ message: "Method is not implemented" }, 400)
   }
 
+  // handleRequest consumes `req`'s body (raw bytes, one-shot stream) to
+  // verify the signature — clone BEFORE that read so the post-auth log below
+  // still has an unconsumed body to read from. `NextRequest#clone()` is typed
+  // as returning the base `Request` (unchanged from the Fetch API), even
+  // though it returns a real `NextRequest` at runtime.
+  const bodyForLogging = req.clone() as NextRequest
+
   try {
     const handlerResult = await integration.handleRequest({
       config: {
         verifyToken: auth.verifyToken,
         clientSecret: auth.clientSecret,
         manualIntegration: true,
+        integrationId,
         // biome-ignore lint/suspicious/noExplicitAny: pass-through config
       } as any,
       req,
       queue: integrationQueue,
     })
 
+    // Same "Webhook request body" log every other channel gets via the
+    // shared /integrations/[...integration] route — now logged only once
+    // signature verification has succeeded.
+    await logWebhookRequestBody("whatsapp", bodyForLogging)
+
     return new Response(handlerResult as BodyInit)
   } catch (e: unknown) {
-    return json({ message: (e as Error).message }, 400)
+    logger.warn({ integrationId, err: e }, "Whatsapp manual webhook rejected")
+    const status = e instanceof SdkException ? e.httpStatusCode : 400
+    return json({ message: (e as Error).message }, status)
   }
 }
 

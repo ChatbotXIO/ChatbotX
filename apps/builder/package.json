@@ -134,6 +134,7 @@
     "recharts": "^3.10.1",
     "remeda": "^2.34.0",
     "server-only": "^0.0.1",
+    "sip.js": "0.21.2",
     "sonner": "^2.0.7",
     "stripe": "^22.1.0",
     "tippy.js": "^6.3.7",

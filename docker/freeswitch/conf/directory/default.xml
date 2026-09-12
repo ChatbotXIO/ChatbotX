@@ -1,0 +1,13 @@
+<!--
+  ChatbotX delta: intentionally empty. The vanilla directory/default.xml
+  ships extensions 1000-1019 with `default_password` ("1234") under
+  domain `$${domain}` — vars.xml here binds `$${domain}` to the real
+  `FS_SIP_DOMAIN`, so leaving the vanilla file in place would put those
+  weak-credential test accounts on the production SIP domain. Real users
+  (business SIP credentials, agent softphone credentials) are served
+  entirely by mod_xml_curl's "directory" binding — this static
+  file exists only to shadow the vanilla one; the entrypoint copies
+  vanilla config first and then overlays this (empty) file over it on
+  first boot.
+-->
+<include/>

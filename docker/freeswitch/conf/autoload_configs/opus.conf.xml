@@ -1,0 +1,20 @@
+<!--
+  ChatbotX delta from vanilla autoload_configs/opus.conf.xml (params
+  verified present in the fetched vanilla file):
+    - use-vbr=0: B3 — VBR bitrate leaks call content over the wire; Meta's
+      SIP integration must run CBR.
+    - maxaveragebitrate=24000.
+    - keep-fec-enabled=1: already the vanilla default; kept explicit.
+  Every other param (complexity, mono, maxplaybackrate, …) is inherited
+  from vanilla unchanged.
+-->
+<configuration name="opus.conf">
+  <settings>
+    <param name="use-vbr" value="0"/>
+    <param name="complexity" value="10"/>
+    <param name="keep-fec-enabled" value="1"/>
+    <param name="maxaveragebitrate" value="24000"/>
+    <param name="maxplaybackrate" value="0"/>
+    <param name="mono" value="0"/>
+  </settings>
+</configuration>

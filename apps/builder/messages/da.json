@@ -2186,6 +2186,19 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta App Secret (valgfrit)",
+      "description": "Aktiverer webhook-signaturverificering for denne manuelle forbindelse. Find den i din Meta-apps dashboard under Indstillinger > Grundlæggende."
+    },
+    "aiTrigger": {
+      "label": "AI Trigger"
+    },
+    "lastCallRecorded": {
+      "label": "Seneste opkaldsoptagelse"
+    },
+    "lastCallTranscript": {
+      "label": "Seneste opkaldstransskription"
     }
   },
   "flows": {
@@ -2326,7 +2339,9 @@
       "import": "Importer flow",
       "export": "Eksporter",
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
-      "importJsonOnly": "Kun JSON-filer"
+      "importJsonOnly": "Kun JSON-filer",
+      "whatsappCallButton": "Ring på WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2442,6 +2457,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Denne kanal kan ikke sende denne medietype – trinnet springes over der. Fjern det, eller skift noden til en kanal der understøtter det.",
       "buttonsSkippedOnChannel": "Denne kanal kan ikke sende knapper sammen med en mediebesked – de springes over der. Læg dem i stedet på et efterfølgende teksttrin."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Rediger Knap",
+      "buttonLabel": "Knap Etiket"
     }
   },
   "folders": {
@@ -2663,7 +2682,8 @@
       "adAccountFilter": {
         "all": "Alle annoncekonti",
         "label": "Annoncekonto",
-        "unavailable": "Kunne ikke indlæse annoncekonti — tjek denne integrations Ads-forbindelse, eller workspacets Facebook Ads-forbindelse, i indstillingerne."
+        "unavailable": "Kunne ikke indlæse annoncekonti — tjek denne integrations Ads-forbindelse, eller workspacets Facebook Ads-forbindelse, i indstillingerne.",
+        "note": "Annoncer med konverteringer, men uden forbrug eller levering i den valgte periode, skjules ved filtrering efter annoncekonto."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -2980,7 +3000,8 @@
     "setting": {
       "label": "Make",
       "description": "Forbind din Make.com konto til send hændelser fra din flows og modtag kontakt data through Make scenarios.",
-      "notConfigured": "Nej Make invite link found. Venligst tilføj one i Platform Indstillinger."
+      "notConfigured": "Nej Make invite link found. Venligst tilføj one i Platform Indstillinger.",
+      "noWorkspaceToken": "Nej Developer Access Token found for denne arbejdsområde. Generér one i den Arbejdsområde token section above, then click Forbind again."
     }
   },
   "integrations": {
@@ -3271,7 +3292,16 @@
     "waTemplateLtoExpirationRequired": "Vælg en udløbsdato for tilbuddet, før du sender.",
     "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem.",
     "mediaStepUnsupported": "Denne kanal kan ikke sende denne medietype. Fjern trinnet, eller peg noden mod en kanal der understøtter det.",
-    "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette."
+    "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette.",
+    "voiceCall": "Taleopkald",
+    "voiceCallDuration": "Taleopkald · {duration}",
+    "missedVoiceCall": "Ubesvaret taleopkald",
+    "declinedVoiceCall": "Afvist taleopkald",
+    "acceptedCallPermission": "Accepterede anmodning om opkaldstilladelse",
+    "declinedCallPermission": "Afviste anmodning om opkaldstilladelse",
+    "sendHumanAgentTag": "Send one besked med HUMAN_AGENT tag",
+    "warning": "Warning!",
+    "humanAgentWarningDescription": "Du may respond til a user's besked within 7 dage kun når den issue kan ikke reasonably være resolved within 24 timer. Examples include weekends, holidays, eller cases at require mere than one day til complete. Do ikke use denne option for vilkårlig anden reason, as it could put din Facebook Page eller Instagram konto på risk. Hvis you're ikke sure, do ikke fortsæt."
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",
@@ -3402,7 +3432,8 @@
       "on": "På",
       "off": "Off",
       "termsRequired": "Page administrator must accept den Facebook Page Kontakt Terms:"
-    }
+    },
+    "selectFacebookPage": "Vælg Facebook Page"
   },
   "omnichannel": {
     "title": "Omnichannel"
@@ -3491,6 +3522,10 @@
     "deepseek": {
       "description": "DeepSeek integration beskrivelse",
       "title": "DeepSeek Integration"
+    },
+    "aiTriggers": {
+      "description": "AI Triggers beskrivelse",
+      "title": "AI Triggers"
     }
   },
   "auth": {
@@ -3634,7 +3669,14 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "WhatsApp app indstillinger were ikke found.",
-        "wabaResolveFailed": "Could ikke resolve den WhatsApp Business Konto fra den authorization."
+        "wabaResolveFailed": "Could ikke resolve den WhatsApp Business Konto fra den authorization.",
+        "accessTokenRequired": "WhatsApp access token er påkrævet.",
+        "failedToPersistIntegration": "Mislykkedes til gem den WhatsApp integration.",
+        "noPhoneNumberFound": "Ingen WhatsApp telefon nummer var found.",
+        "noPhoneNumbersFound": "Ingen telefon numbers were found for denne WhatsApp Business Konto.",
+        "phoneNumberNotFound": "Selected WhatsApp telefon nummer var ikke found.",
+        "unableToVerifyToken": "Unable til verify den WhatsApp token.",
+        "wabaMismatch": "Selected WhatsApp Business Konto does ikke match den authorization."
       }
     },
     "reconnect": {
@@ -3734,7 +3776,8 @@
       "profile": "Profil",
       "usefulLinks": "Useful Links",
       "conversionsApi": "Ads Optimization",
-      "settings": "Indstillinger"
+      "settings": "Indstillinger",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Administrer din WhatsApp konto",
@@ -3866,6 +3909,87 @@
     "transferPhoneNumber": "Overfør telefon fra another Whatsapp udbyder",
     "selectPage": {
       "tryAgain": "Try reconnecting"
+    },
+    "manualAppSecretMissingNotice": "Webhook-signaturer bliver ikke verificeret, før du tilføjer din Meta App Secret.",
+    "signupSessionExpired": "Din WhatsApp signup session har udløbet. Venligst start den forbindelse igen.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Automatiske hændelser",
+        "description": "Send automatisk konverteringshændelser fra dette WhatsApp-nummer til Meta. Hvis tilladelsen mangler, skal du gentilslutte kontoen for at give den."
+      }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta afviste ændringen af opkaldsindstillingerne",
+        "bicUnavailable": "Virksomhedsinitieret opkald er ikke tilgængeligt for dette land",
+        "callAlreadyInProgress": "Der er allerede et opkald i gang til denne kontakt",
+        "hangupFailed": "Kunne ikke afslutte opkaldet"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta afviste ændringen",
+      "callContact": "Ring via WhatsApp",
+      "dialing": "Ringer op…",
+      "startCall": "Start WhatsApp-opkald",
+      "retentionLabel": "Opbevaring af optagelser (dage)",
+      "retentionHelper": "Hvor længe optagelser af opkald opbevares, før de slettes permanent.",
+      "transcriptionLabel": "Transskriber opkald",
+      "transcriptionHelper": "Transskriberer automatisk optagede opkald med din tilsluttede AI-udbyder.",
+      "sip": {
+        "provisioningLabel": "FreeSWITCH-klargøring",
+        "provisionButton": "Klargør",
+        "deprovisionButton": "Fjern klargøring",
+        "status": {
+          "none": "Ikke klargjort",
+          "provisioning": "Klargør…",
+          "provisioned": "Klargjort",
+          "enabled": "Aktiveret",
+          "failed": "Mislykkedes"
+        },
+        "errors": {
+          "notProvisioned": "Klargør dette nummer til FreeSWITCH-opkald, før in-app-opkald aktiveres",
+          "readBackMismatch": "Meta bekræftede ikke ændringen af SIP-opkald — forsøg igen",
+          "provisionFailed": "Kunne ikke klargøre dette nummer til FreeSWITCH-opkald",
+          "deprovisionFailed": "Kunne ikke fjerne klargøring af FreeSWITCH-opkald for dette nummer"
+        }
+      },
+      "preflight": {
+        "title": "Opkaldsberettigelse",
+        "appSubscriptionMissing": "Konfigurer først WhatsApp-webhooken for denne app i Meta App Dashboard, og forsøg derefter igen.",
+        "appSubscriptionFailed": "Kunne ikke bekræfte appens 'calls'-webhook-abonnement. Forsøg igen om lidt.",
+        "callsNotSubscribed": "Denne app abonnerer ikke på 'calls'-webhookfeltet, så opkaldshændelser kan ikke nå ChatbotX (Meta-fejl 138018: tekniske forudsætninger er ikke opfyldt — sørg for, at mindst én app, der abonnerer på WABA'en, også har opkalds-webhookfeltet).",
+        "fixButton": "Ret",
+        "fixSuccess": "Appen abonnerer nu på WhatsApp-opkalds-webhooks.",
+        "manualIntegrationNotice": "Dette nummer blev forbundet manuelt og har ingen app-legitimationsoplysninger her. Abonnér på 'calls'-webhookfeltet for din app i Meta App Dashboard.",
+        "coexistenceWarning": "Dette nummer bruger coexistence med WhatsApp Business-appen, hvilket Meta ikke understøtter til opkald. Flyt det til kun Cloud API.",
+        "messagingLimitTooLow": "Dette nummers meddelelsesgrænse-niveau er under den minimumsgrænse, Meta kræver for opkald."
+      }
     }
   },
   "zalo": {
@@ -3878,7 +4002,8 @@
       "toggleSuccess": "Tag synkroniser setting updated.",
       "enabledSince": "Aktiveret since {date}",
       "disabled": "Deaktiveret"
-    }
+    },
+    "refreshPermissions": "Refresh tilladelser"
   },
   "telegram": {
     "description": "Denne integration lets du opret Telegram bots.",
@@ -4015,7 +4140,9 @@
       "productRemovedFromCart": "Product Removed Fra Cart",
       "productOrdered": "Product Ordered",
       "contactReferredANewContact": "Kontakt Referred A Ny Kontakt",
-      "contactReferredExistingContact": "Kontakt Referred Existing Kontakt"
+      "contactReferredExistingContact": "Kontakt Referred Existing Kontakt",
+      "callRecorded": "Opkald optaget",
+      "callTranscribed": "Opkald transskriberet"
     },
     "actions": {
       "addTag": "Tilføj tag",
@@ -5591,7 +5718,8 @@
     "connectViaFacebook": "Forbind via Facebook",
     "unsupportedExplanation": "Denne Instagram-konto blev forbundet med Instagram Business Login. Forbind kontoen via Facebook for at bruge Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "WhatsApp-hændelser sendes kun for samtaler, der er startet fra en click-to-WhatsApp-annonce."
+      "whatsappNote": "WhatsApp-hændelser sendes kun for samtaler, der er startet fra en click-to-WhatsApp-annonce.",
+      "description": "Sæt en LeadSubmitted-hændelse i kø til Messenger, Instagram eller WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5847,7 +5975,10 @@
       "rulesDescription": "Regelbeskrivelse",
       "openerTags": "Tag kontakter, der åbner spillinket",
       "playerTags": "Tag spillere",
-      "newFriendTags": "Tag nye venner"
+      "newFriendTags": "Tag nye venner",
+      "shareEnabled": "Tillad deling med venner",
+      "shareMessage": "Delingsbesked",
+      "shareMessageHint": "Brug '{{shareUrl}}' til at indsætte det faktiske spillink — fjern det venligst ikke."
     },
     "appearance": {
       "backgroundColor": "Baggrundsfarve",

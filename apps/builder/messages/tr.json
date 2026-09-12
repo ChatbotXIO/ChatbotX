@@ -2323,6 +2323,19 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta Uygulama Gizli Anahtarı (isteğe bağlı)",
+      "description": "Bu manuel bağlantı için webhook imza doğrulamasını etkinleştirir. Meta Uygulaması panonuzda Ayarlar > Temel altında bulabilirsiniz."
+    },
+    "aiTrigger": {
+      "label": "Yapay Zekâ Tetikleyicisi"
+    },
+    "lastCallRecorded": {
+      "label": "Son arama kaydı"
+    },
+    "lastCallTranscript": {
+      "label": "Son arama transkripti"
     }
   },
   "flows": {
@@ -2463,7 +2476,9 @@
       "import": "Akışı içe aktar",
       "export": "Dışa aktar",
       "importStarted": "Akış içe aktarılıyor. Sonuçlar için içe aktarma geçmişini kontrol edin.",
-      "importJsonOnly": "Yalnızca JSON dosyaları"
+      "importJsonOnly": "Yalnızca JSON dosyaları",
+      "whatsappCallButton": "WhatsApp'ta ara",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -2579,6 +2594,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Bu kanal bu medya türünü gönderemez; adım orada atlanır. Adımı kaldırın veya düğümü bunu destekleyen bir kanala geçirin.",
       "buttonsSkippedOnChannel": "Bu kanal, düğmeleri bir medya mesajıyla birlikte gönderemez; orada atlanır. Bunun yerine sonraki bir metin adımına ekleyin."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Butonu Düzenle",
+      "buttonLabel": "Buton Etiketi"
     }
   },
   "folders": {
@@ -2800,7 +2819,8 @@
       "adAccountFilter": {
         "all": "Tüm reklam hesapları",
         "label": "Reklam hesabı",
-        "unavailable": "Reklam hesapları yüklenemedi — bu entegrasyonun Ads bağlantısını veya çalışma alanının Facebook Ads bağlantısını ayarlardan kontrol edin."
+        "unavailable": "Reklam hesapları yüklenemedi — bu entegrasyonun Ads bağlantısını veya çalışma alanının Facebook Ads bağlantısını ayarlardan kontrol edin.",
+        "note": "Seçilen tarih aralığında dönüşümü olan ancak harcaması veya gösterimi sıfır olan reklamlar, reklam hesabına göre filtrelerken gizlenir."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -3117,7 +3137,8 @@
     "setting": {
       "label": "Make",
       "description": "Akışlarınızdan olay göndermek ve Make senaryoları aracılığıyla kişi verileri almak için Make.com hesabınızı bağlayın.",
-      "notConfigured": "Make davet bağlantısı bulunamadı. Lütfen Platform Ayarları'na bir tane ekleyin."
+      "notConfigured": "Make davet bağlantısı bulunamadı. Lütfen Platform Ayarları'na bir tane ekleyin.",
+      "noWorkspaceToken": "Bu çalışma alanı için Geliştirici Erişim Belirteci bulunamadı. Yukarıdaki Çalışma Alanı belirteci bölümünden bir tane oluşturun, ardından tekrar Bağlan'a tıklayın."
     }
   },
   "integrations": {
@@ -3271,7 +3292,16 @@
     "waTemplateLtoExpirationRequired": "Göndermeden önce sınırlı süreli teklif için bir bitiş tarihi seçin.",
     "waTemplateMpmIncompleteProducts": "Her bölümde en az bir seçili ürün olmalı — boş satırları silin veya onlara ürün seçin.",
     "mediaStepUnsupported": "Bu kanal bu medya türünü gönderemez. Adımı kaldırın veya bu düğümü destekleyen bir kanala yönlendirin.",
-    "mediaButtonsUnsupported": "Bu kanal, düğmeleri bir medya mesajıyla birlikte gönderemez. Düğmeleri kaldırın veya bundan sonraki bir metin adımına taşıyın."
+    "mediaButtonsUnsupported": "Bu kanal, düğmeleri bir medya mesajıyla birlikte gönderemez. Düğmeleri kaldırın veya bundan sonraki bir metin adımına taşıyın.",
+    "voiceCall": "Sesli arama",
+    "voiceCallDuration": "Sesli arama · {duration}",
+    "missedVoiceCall": "Cevapsız sesli arama",
+    "declinedVoiceCall": "Reddedilen sesli arama",
+    "acceptedCallPermission": "Arama izni isteğini kabul etti",
+    "declinedCallPermission": "Arama izni isteğini reddetti",
+    "sendHumanAgentTag": "HUMAN_AGENT etiketiyle bir mesaj gönder",
+    "warning": "Uyarı!",
+    "humanAgentWarningDescription": "Bir kullanıcının mesajına, sorunun 24 saat içinde makul şekilde çözülemediği durumlarda 7 gün içinde yanıt verebilirsiniz. Örnekler arasında hafta sonları, tatiller veya tamamlanması bir günden fazla süren durumlar yer alır. Bu seçeneği başka herhangi bir nedenle kullanmayın; aksi takdirde Facebook Sayfanız veya Instagram hesabınız risk altına girebilir. Emin değilseniz devam etmeyin."
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",
@@ -3402,7 +3432,8 @@
       "on": "Açık",
       "off": "Kapalı",
       "termsRequired": "Sayfa yöneticisi Facebook Sayfa İletişim Koşullarını kabul etmelidir:"
-    }
+    },
+    "selectFacebookPage": "Facebook Sayfası Seç"
   },
   "omnichannel": {
     "title": "Çok Kanallı"
@@ -3491,6 +3522,10 @@
     "deepseek": {
       "description": "DeepSeek entegrasyonu açıklaması",
       "title": "DeepSeek Entegrasyonu"
+    },
+    "aiTriggers": {
+      "description": "Yapay Zeka Tetikleyicileri açıklaması",
+      "title": "Yapay Zeka Tetikleyicileri"
     }
   },
   "auth": {
@@ -3634,7 +3669,14 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "WhatsApp uygulama ayarları bulunamadı.",
-        "wabaResolveFailed": "Yetkilendirmeden WhatsApp Business Hesabı çözümlenemedi."
+        "wabaResolveFailed": "Yetkilendirmeden WhatsApp Business Hesabı çözümlenemedi.",
+        "accessTokenRequired": "WhatsApp erişim token'ı gereklidir.",
+        "failedToPersistIntegration": "WhatsApp entegrasyonu kaydedilemedi.",
+        "noPhoneNumberFound": "WhatsApp telefon numarası bulunamadı.",
+        "noPhoneNumbersFound": "Bu WhatsApp Business Hesabı için telefon numarası bulunamadı.",
+        "phoneNumberNotFound": "Seçilen WhatsApp telefon numarası bulunamadı.",
+        "unableToVerifyToken": "WhatsApp token'ı doğrulanamıyor.",
+        "wabaMismatch": "Seçilen WhatsApp Business Hesabı yetkilendirmeyle eşleşmiyor."
       }
     },
     "reconnect": {
@@ -3734,7 +3776,8 @@
       "profile": "Profil",
       "usefulLinks": "Faydalı Bağlantılar",
       "conversionsApi": "Reklam Optimizasyonu",
-      "settings": "Ayarlar"
+      "settings": "Ayarlar",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "WhatsApp hesabınızı yönetin",
@@ -3866,6 +3909,87 @@
     "transferPhoneNumber": "Telefonu başka bir WhatsApp sağlayıcısından aktar",
     "selectPage": {
       "tryAgain": "Yeniden bağlanmayı dene"
+    },
+    "manualAppSecretMissingNotice": "Meta Uygulama Gizli Anahtarınızı eklemeden webhook imzaları doğrulanmaz.",
+    "signupSessionExpired": "WhatsApp kayıt oturumunuzun süresi doldu. Lütfen bağlantıyı yeniden başlatın.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Otomatik Olaylar",
+        "description": "Bu WhatsApp numarasından dönüşüm etkinliklerini Meta’ya otomatik olarak gönderin. İzin eksikse, vermek için hesabı yeniden bağlayın."
+      }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta, arama ayarları değişikliğini reddetti",
+        "bicUnavailable": "İşletme tarafından başlatılan aramalar bu ülke için kullanılamıyor",
+        "callAlreadyInProgress": "Bu kişiyle zaten devam eden bir arama var",
+        "hangupFailed": "Arama sonlandırılamadı"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta değişikliği reddetti",
+      "callContact": "WhatsApp'tan Ara",
+      "dialing": "Aranıyor…",
+      "startCall": "WhatsApp Araması Başlat",
+      "retentionLabel": "Kayıt saklama süresi (gün)",
+      "retentionHelper": "Arama kayıtlarının kalıcı olarak silinmeden önce ne kadar süreyle saklanacağı.",
+      "transcriptionLabel": "Aramaları yazıya dök",
+      "transcriptionHelper": "Bağlı yapay zeka sağlayıcınızı kullanarak kaydedilen aramaları otomatik olarak yazıya döker.",
+      "sip": {
+        "provisioningLabel": "FreeSWITCH sağlaması",
+        "provisionButton": "Sağla",
+        "deprovisionButton": "Sağlamayı Kaldır",
+        "status": {
+          "none": "Sağlanmadı",
+          "provisioning": "Sağlanıyor…",
+          "provisioned": "Sağlandı",
+          "enabled": "Etkin",
+          "failed": "Başarısız"
+        },
+        "errors": {
+          "notProvisioned": "Uygulama içi aramayı etkinleştirmeden önce bu numarayı FreeSWITCH araması için sağlayın",
+          "readBackMismatch": "Meta, SIP arama değişikliğini onaylamadı — tekrar deneyin",
+          "provisionFailed": "Bu numara FreeSWITCH araması için sağlanamadı",
+          "deprovisionFailed": "Bu numara için FreeSWITCH aramalarının sağlaması kaldırılamadı"
+        }
+      },
+      "preflight": {
+        "title": "Arama uygunluğu",
+        "appSubscriptionMissing": "Önce Meta Uygulama Panosunda bu uygulama için WhatsApp webhook'unu yapılandırın, ardından tekrar deneyin.",
+        "appSubscriptionFailed": "Uygulamanın 'calls' webhook aboneliği doğrulanamadı. Kısa süre sonra tekrar deneyin.",
+        "callsNotSubscribed": "Bu uygulama 'calls' webhook alanına abone değil, bu nedenle arama olayları ChatbotX'e ulaşamıyor (Meta hatası 138018: teknik ön koşullar karşılanmıyor — WABA'ya abone olan en az bir uygulamanın arama webhook alanına da sahip olduğundan emin olun).",
+        "fixButton": "Düzelt",
+        "fixSuccess": "Uygulama artık WhatsApp arama webhook'larına abone.",
+        "manualIntegrationNotice": "Bu numara manuel olarak bağlandı ve burada uygulama kimlik bilgisi yok. Meta Uygulama Panosunda uygulamanız için 'calls' webhook alanına abone olun.",
+        "coexistenceWarning": "Bu numara, Meta'nın aramalar için desteklemediği WhatsApp Business uygulaması birlikte kullanımını kullanıyor. Yalnızca Cloud API'ye taşıyın.",
+        "messagingLimitTooLow": "Bu numaranın mesajlaşma limiti seviyesi, Meta'nın aramalar için gerektirdiği minimumun altında."
+      }
     }
   },
   "zalo": {
@@ -3878,7 +4002,8 @@
       "toggleSuccess": "Etiket senkronizasyon ayarı güncellendi.",
       "enabledSince": "{date} tarihinden beri etkin",
       "disabled": "Devre dışı"
-    }
+    },
+    "refreshPermissions": "İzinleri yenile"
   },
   "telegram": {
     "description": "Bu entegrasyon, Telegram botları oluşturmanızı sağlar.",
@@ -4015,7 +4140,9 @@
       "productRemovedFromCart": "Ürün Sepetten Kaldırıldı",
       "productOrdered": "Ürün Sipariş Edildi",
       "contactReferredANewContact": "Kişi Yeni Bir Kişi Yönlendirdi",
-      "contactReferredExistingContact": "Kişi Mevcut Bir Kişiyi Yönlendirdi"
+      "contactReferredExistingContact": "Kişi Mevcut Bir Kişiyi Yönlendirdi",
+      "callRecorded": "Arama kaydedildi",
+      "callTranscribed": "Arama yazıya döküldü"
     },
     "actions": {
       "addTag": "Etiket Ekle",
@@ -5591,7 +5718,8 @@
     "connectViaFacebook": "Facebook üzerinden bağlan",
     "unsupportedExplanation": "Bu Instagram hesabı Instagram Business Girişi ile bağlandı. Meta Conversions API'yi kullanmak için hesabı Facebook üzerinden bağlayın.",
     "flowStep": {
-      "whatsappNote": "WhatsApp etkinlikleri yalnızca click-to-WhatsApp reklamından başlayan konuşmalar için gönderilir."
+      "whatsappNote": "WhatsApp etkinlikleri yalnızca click-to-WhatsApp reklamından başlayan konuşmalar için gönderilir.",
+      "description": "Messenger, Instagram veya WhatsApp için bir LeadSubmitted etkinliği kuyruğa alın."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5847,7 +5975,10 @@
       "rulesDescription": "Kural Açıklaması",
       "openerTags": "Oyun bağlantısını açan kişileri etiketle",
       "playerTags": "Oyuncuları etiketle",
-      "newFriendTags": "Yeni arkadaşları etiketle"
+      "newFriendTags": "Yeni arkadaşları etiketle",
+      "shareEnabled": "Arkadaşlarla paylaşmaya izin ver",
+      "shareMessage": "Paylaşım Mesajı",
+      "shareMessageHint": "Gerçek oyun bağlantısını eklemek için '{{shareUrl}}' kullanın — lütfen kaldırmayın."
     },
     "appearance": {
       "backgroundColor": "Arka Plan Rengi",

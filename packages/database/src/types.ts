@@ -185,6 +185,9 @@ export type WhatsappMessageTemplateModel =
 export type MessengerMessageTemplateModel =
   typeof schema.messengerMessageTemplateModel.$inferSelect
 export type WhatsappFlowModel = typeof schema.whatsappFlowModel.$inferSelect
+export type WhatsappCallModel = typeof schema.whatsappCallModel.$inferSelect
+export type WhatsappCallPermissionModel =
+  typeof schema.whatsappCallPermissionModel.$inferSelect
 export type FlowAnalyticsSessionModel =
   typeof schema.flowAnalyticsSessionModel.$inferSelect
 export type FlowNodeStatModel = typeof schema.flowNodeStatModel.$inferSelect
@@ -195,6 +198,12 @@ export type WhatsappCoexistStagingModel =
 export type CoexistSyncRunModel = typeof schema.coexistSyncRunModel.$inferSelect
 export type WhatsappSignupSessionModel =
   typeof schema.whatsappSignupSessionModel.$inferSelect
+export type UserSoftphoneCredentialModel =
+  typeof schema.userSoftphoneCredentialModel.$inferSelect
+export type AgentSipPresenceModel =
+  typeof schema.agentSipPresenceModel.$inferSelect
+export type WorkspaceSipNodeModel =
+  typeof schema.workspaceSipNodeModel.$inferSelect
 
 export type InboxWithIntegrations = InboxModel & {
   integrationApi?: IntegrationApiModel | null

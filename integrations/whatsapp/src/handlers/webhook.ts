@@ -3,6 +3,7 @@ import {
   type ReceivedMessageProps,
   SdkException,
 } from "@chatbotx.io/sdk"
+import { verifyHmacSha256Signature } from "@chatbotx.io/utils/node-crypto"
 import type { OnMessageArgs, OnStatusArgs } from "whatsapp-api-js/emitters"
 import { WhatsAppAPI as Middleware } from "whatsapp-api-js/middleware/next"
 import type { GetParams } from "whatsapp-api-js/types"
@@ -13,8 +14,13 @@ import {
   whatsappAutomaticEventNameSchema,
   whatsappAutomaticEventsValueSchema,
 } from "../lib/automatic-events"
+import {
+  extractCallEventPayloads,
+  type WhatsappCallEventPayload,
+} from "../lib/calls"
 import { logger } from "../lib/logger"
 import { extractWhatsappStatusRecipientUserId } from "../lib/raw-identity"
+import { resolveSignaturePolicy } from "../lib/signature-policy"
 import type { WhatsappConfig } from "../schema"
 
 /** One buffered Coexistence history slice keyed by its phone number. */
@@ -219,20 +225,23 @@ const handleGetHandshake = async (
   return await middleware.get(params)
 }
 
-const readVerifiedPostPayloads = async (
-  req: Request,
-): Promise<{
-  rawBodyBuffer: ArrayBuffer
+/**
+ * Parses the already-signature-verified raw body into the payload shapes the
+ * rest of the handler enqueues. Never throws — an unparseable body just
+ * yields empty payload lists so the webhook can still ACK Meta.
+ */
+const parsePostPayloads = (
+  rawBodyBuffer: ArrayBuffer,
+): {
   coexistPayloads: CoexistPayload[]
   automaticEventPayloads: AutomaticEventPayload[]
-}> => {
-  let rawBodyBuffer = new ArrayBuffer(0)
-  let rawBodyText = ""
+  callEventPayloads: WhatsappCallEventPayload[]
+} => {
   let coexistPayloads: CoexistPayload[] = []
   let automaticEventPayloads: AutomaticEventPayload[] = []
+  let callEventPayloads: WhatsappCallEventPayload[] = []
   try {
-    rawBodyBuffer = await req.arrayBuffer()
-    rawBodyText = new TextDecoder().decode(rawBodyBuffer)
+    const rawBodyText = new TextDecoder().decode(rawBodyBuffer)
     const rawBody = JSON.parse(rawBodyText) as unknown
     coexistPayloads = extractCoexistPayloads(rawBody)
     try {
@@ -243,11 +252,78 @@ const readVerifiedPostPayloads = async (
         "Whatsapp automatic event extraction failed; webhook will still acknowledge",
       )
     }
+    try {
+      callEventPayloads = extractCallEventPayloads(rawBody)
+    } catch (err) {
+      logger.error(
+        { err },
+        "Whatsapp call event extraction failed; webhook will still acknowledge",
+      )
+    }
   } catch {
     logger.debug("Whatsapp webhook raw body was not JSON; continuing")
   }
 
-  return { rawBodyBuffer, coexistPayloads, automaticEventPayloads }
+  return { coexistPayloads, automaticEventPayloads, callEventPayloads }
+}
+
+const HUB_SIGNATURE_HEADER = "x-hub-signature-256"
+
+type SignatureVerificationOutcome =
+  | { verified: true; rawBodyBuffer: ArrayBuffer }
+  | {
+      verified: false
+      rawBodyBuffer: ArrayBuffer
+      reason: "missing-secret" | "missing-signature" | "invalid-signature"
+    }
+
+/**
+ * Reads the raw request bytes exactly once and, per `resolveSignaturePolicy`
+ * (see `lib/signature-policy.ts`), either verifies the Meta
+ * `X-Hub-Signature-256` header against them with the app secret BEFORE any
+ * parsing, logging, or enqueueing happens (`"enforce"`), or accepts the
+ * request unverified — exactly as before this HMAC fix existed — for a
+ * manual integration with no app secret configured (`"legacy-unverified"`),
+ * logging once so the gap stays visible.
+ */
+const verifyPostSignature = async (
+  req: Request,
+  config: WhatsappConfig,
+): Promise<SignatureVerificationOutcome> => {
+  const rawBodyBuffer = await req.arrayBuffer()
+  const policy = resolveSignaturePolicy(config)
+
+  if (policy === "legacy-unverified") {
+    logger.warn(
+      {
+        reason: "manual-integration-without-app-secret",
+        integrationId: config.integrationId,
+      },
+      "Whatsapp webhook accepted unverified: manual integration has no app secret configured",
+    )
+    return { verified: true, rawBodyBuffer }
+  }
+
+  const clientSecret = config.clientSecret
+  if (!clientSecret) {
+    return { verified: false, rawBodyBuffer, reason: "missing-secret" }
+  }
+
+  const signatureHeader = req.headers.get(HUB_SIGNATURE_HEADER)
+  if (!signatureHeader) {
+    return { verified: false, rawBodyBuffer, reason: "missing-signature" }
+  }
+
+  const isValid = verifyHmacSha256Signature({
+    rawBody: new Uint8Array(rawBodyBuffer),
+    secret: clientSecret,
+    signatureHeader,
+  })
+  if (!isValid) {
+    return { verified: false, rawBodyBuffer, reason: "invalid-signature" }
+  }
+
+  return { verified: true, rawBodyBuffer }
 }
 
 const capturePostResult = async (input: {
@@ -354,6 +430,78 @@ const enqueueAutomaticEventPayloads = async (
   }
 }
 
+const callEventJobIdSuffix = (
+  event: WhatsappCallEventPayload["event"],
+): string => {
+  if (event.kind === "status") {
+    return `${event.kind}-${event.status}`
+  }
+  return event.kind
+}
+
+/**
+ * Terminate jobs are delayed slightly so interim status jobs (often enqueued
+ * in the same batch, and possibly from a concurrent webhook delivery) commit
+ * first — the terminate handler labels a FAILED call "declined" only when it
+ * can see a prior REJECTED status. The worker additionally lets a late
+ * REJECTED upgrade a finalized `failed` row, so this delay is a fast path,
+ * not the only defense.
+ */
+const TERMINATE_JOB_DELAY_MS = 2000
+
+/**
+ * Call jobs ride out transient DB/shard outages longer than the queue default
+ * (2 attempts / 5s): the webhook has already ACKed Meta, so a dropped job
+ * loses the call. Failed jobs are also aged out so their deterministic jobId
+ * stops suppressing a later Meta redelivery of the same event forever.
+ */
+const CALL_EVENT_JOB_RETRY_OPTIONS = {
+  attempts: 5,
+  backoff: { type: "exponential", delay: 30_000 },
+  removeOnFail: { age: 6 * 60 * 60 },
+} as const
+
+const enqueueCallEventPayloads = async (
+  queue: WebhookQueue,
+  callEventPayloads: WhatsappCallEventPayload[],
+): Promise<void> => {
+  // Per-event try/catch: one failed enqueue is logged and skipped without
+  // aborting the rest of the batch (same policy as automatic events).
+  for (const payload of callEventPayloads) {
+    try {
+      await queue?.add(
+        "whatsappCallEvent",
+        {
+          type: "whatsappCallEvent",
+          data: {
+            integrationType: "whatsapp",
+            integrationIdentifier: payload.phoneNumberId,
+            payload,
+          },
+        },
+        {
+          // Deduplicates Meta webhook redeliveries: one job per call id per
+          // lifecycle step (connect / status-RINGING / … / terminate).
+          jobId: `wa-call-${toBullMqSafeIdSegment(payload.event.wacid)}-${callEventJobIdSuffix(payload.event)}`,
+          ...CALL_EVENT_JOB_RETRY_OPTIONS,
+          ...(payload.event.kind === "terminate"
+            ? { delay: TERMINATE_JOB_DELAY_MS }
+            : {}),
+        },
+      )
+    } catch (err) {
+      logger.error(
+        {
+          err,
+          phoneNumberId: payload.phoneNumberId,
+          wacid: payload.event.wacid,
+        },
+        "Whatsapp call event enqueue failed; webhook will still acknowledge",
+      )
+    }
+  }
+}
+
 const dispatchWebhookResult = async (
   queue: WebhookQueue,
   result:
@@ -418,20 +566,44 @@ export const webhookHandler = async (
   }
 
   if (props.req.method === "POST") {
+    // Read the body once as raw bytes — HTTP body is a one-shot stream.
+    // Using arrayBuffer() preserves the exact bytes for HMAC verification;
+    // text() would silently re-encode, risking a signature mismatch on
+    // non-ASCII payloads. Verification happens BEFORE any parsing, logging,
+    // or enqueueing so a forged request never reaches the queue.
+    const signatureOutcome = await verifyPostSignature(props.req, props.config)
+
+    if (!signatureOutcome.verified) {
+      logger.warn(
+        {
+          reason: signatureOutcome.reason,
+          isManualIntegration: Boolean(props.config.manualIntegration),
+        },
+        "Whatsapp webhook rejected: signature verification failed",
+      )
+      throw new SdkException(
+        "Whatsapp webhook signature verification failed",
+        undefined,
+        401,
+      )
+    }
+
+    logger.info(
+      { contentLength: signatureOutcome.rawBodyBuffer.byteLength },
+      "Whatsapp webhook request body",
+    )
+
     try {
-      // Read the body once as raw bytes — HTTP body is a one-shot stream.
-      // Using arrayBuffer() preserves the exact bytes for HMAC verification;
-      // text() would silently re-encode, risking a signature mismatch on
-      // non-ASCII payloads. We decode to string only for JSON parsing.
-      const { rawBodyBuffer, coexistPayloads, automaticEventPayloads } =
-        await readVerifiedPostPayloads(props.req)
+      const { coexistPayloads, automaticEventPayloads, callEventPayloads } =
+        parsePostPayloads(signatureOutcome.rawBodyBuffer)
       const result = await capturePostResult({
         req: props.req,
-        rawBodyBuffer,
+        rawBodyBuffer: signatureOutcome.rawBodyBuffer,
         middleware,
       })
       await enqueueCoexistPayloads(props.queue, coexistPayloads)
       await enqueueAutomaticEventPayloads(props.queue, automaticEventPayloads)
+      await enqueueCallEventPayloads(props.queue, callEventPayloads)
       await dispatchWebhookResult(props.queue, result)
 
       return "ok"

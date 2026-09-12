@@ -219,7 +219,10 @@ export function EditWhatsappSettingsForm({
       zodResolver(whatsappCredentialUpdateSchema),
       {
         actionProps: {
-          onSuccess: () => {
+          onSuccess: ({ data }) => {
+            if (data?.callsSubscriptionWarning) {
+              toast.warning(data.callsSubscriptionWarning)
+            }
             onClose?.()
           },
           onError: ({ error }) => {

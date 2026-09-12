@@ -1,0 +1,32 @@
+<!--
+  ChatbotX delta from vanilla autoload_configs/switch.conf.xml. All params
+  below exist (several commented-out) in the fetched vanilla file:
+    - switchname: commented example in vanilla (a commented-out
+      "switchname" param line); uncommented here and wired
+      to $${FS_NODE_ID} so `mod_xml_curl`'s posted `hostname` field and
+      CDRs identify this node (sharding-by-workspace).
+    - max-sessions / sessions-per-second: present uncommented in vanilla
+      with defaults 1000/30; kept env-overridable for production sizing
+      (capacity math).
+    - rtp-start-port / rtp-end-port: commented in vanilla
+      (16384/32768 defaults); uncommented + env-driven so local compose
+      can narrow the range to the ports it actually publishes
+      (50700-50720) while production keeps the full range.
+-->
+<configuration name="switch.conf" description="Core Configuration">
+  <settings>
+    <param name="colorize-console" value="true"/>
+    <param name="dialplan-timestamps" value="false"/>
+    <param name="switchname" value="$${FS_NODE_ID}"/>
+    <param name="max-db-handles" value="50"/>
+    <param name="db-handle-timeout" value="10"/>
+    <param name="max-sessions" value="$${FS_MAX_SESSIONS}"/>
+    <param name="sessions-per-second" value="$${FS_SESSIONS_PER_SECOND}"/>
+    <param name="loglevel" value="info"/>
+    <param name="mailer-app" value="sendmail"/>
+    <param name="mailer-app-args" value="-t"/>
+    <param name="dump-cores" value="yes"/>
+    <param name="rtp-start-port" value="$${FS_RTP_START_PORT}"/>
+    <param name="rtp-end-port" value="$${FS_RTP_END_PORT}"/>
+  </settings>
+</configuration>

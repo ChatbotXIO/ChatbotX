@@ -1,0 +1,63 @@
+<!--
+  Agent-softphone-facing SIP profile (WSS/WS). Structural
+  shape and every <param> below (ws-binding, wss-binding, challenge-realm,
+  apply-candidate-acl, tls-cert-dir, …) verified present in vanilla
+  sip_profiles/internal.xml, the only vanilla profile that configures
+  WebSocket transports.
+
+  Directory users (`ag-<workspaceId>-<userId>`) and this profile's
+  gateway-free dialplan ("agents" context) both come from mod_xml_curl; nothing static here besides transport/security settings.
+-->
+<profile name="agents">
+  <gateways>
+    <!-- Intentionally empty — agents never dial through a gateway on
+         this profile; outbound business-initiated calls to Meta use the
+         `wa-<id>` gateway on the whatsapp profile via `bridge
+         sofia/gateway/wa-<id>/...` from this profile's dialplan. -->
+  </gateways>
+
+  <domains>
+    <domain name="all" alias="false" parse="true"/>
+  </domains>
+
+  <settings>
+    <!-- ws-binding is local-dev only: browsers on the same Docker network
+         can reach ws:// without TLS for faster iteration; production
+         terminates only wss ("ws-binding=:5066 (local only)"). -->
+    <param name="ws-binding" value=":5066"/>
+    <param name="wss-binding" value=":7443"/>
+
+    <param name="tls-cert-dir" value="/etc/freeswitch/certs"/>
+    <param name="tls-version" value="$${sip_tls_version}"/>
+
+    <param name="sip-ip" value="$${local_ip_v4}"/>
+    <param name="rtp-ip" value="$${local_ip_v4}"/>
+    <param name="ext-sip-ip" value="$${external_sip_ip}"/>
+    <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
+
+    <param name="inbound-codec-prefs" value="OPUS,PCMU,PCMA"/>
+    <param name="outbound-codec-prefs" value="OPUS,PCMU,PCMA"/>
+
+    <!-- digest auth against the directory; realm = the posted
+         hostname's domain, same rule as the whatsapp profile. -->
+    <param name="auth-calls" value="true"/>
+    <param name="challenge-realm" value="$${domain}"/>
+    <param name="accept-blind-auth" value="false"/>
+    <param name="accept-blind-reg" value="false"/>
+
+    <!-- Browser ICE candidates: WAN candidates only when off the local
+         Docker network — `wan_v4.auto`/`localnet.auto` are FreeSWITCH's
+         own auto-generated ACLs (`.auto` suffix), not defined by us in
+         acl.conf.xml. -->
+    <param name="apply-candidate-acl" value="wan_v4.auto"/>
+    <param name="apply-candidate-acl" value="localnet.auto"/>
+
+    <param name="enable-timer" value="false"/>
+    <param name="disable-hold" value="true"/>
+    <param name="rtp-timeout-sec" value="300"/>
+
+    <param name="context" value="agents"/>
+
+    <param name="manage-presence" value="true"/>
+  </settings>
+</profile>

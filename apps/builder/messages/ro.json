@@ -137,7 +137,9 @@
       "import": "Importă fluxul",
       "export": "Exportă",
       "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
-      "importJsonOnly": "Doar fișiere JSON"
+      "importJsonOnly": "Doar fișiere JSON",
+      "whatsappCallButton": "Sună pe WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -253,6 +255,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Acest canal nu poate trimite acest tip de conținut media — pasul este ignorat acolo. Elimină-l sau schimbă nodul pe un canal compatibil.",
       "buttonsSkippedOnChannel": "Acest canal nu poate trimite butoane împreună cu un mesaj media — acolo sunt ignorate. Adaugă-le într-un pas text ulterior."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Editează butonul",
+      "buttonLabel": "Eticheta butonului"
     }
   },
   "folders": {
@@ -474,7 +480,8 @@
       "adAccountFilter": {
         "all": "Toate conturile de anunțuri",
         "label": "Cont de anunțuri",
-        "unavailable": "Conturile de reclame nu au putut fi încărcate — verifică conexiunea Ads a acestei integrări sau conexiunea Facebook Ads a spațiului de lucru, din setări."
+        "unavailable": "Conturile de reclame nu au putut fi încărcate — verifică conexiunea Ads a acestei integrări sau conexiunea Facebook Ads a spațiului de lucru, din setări.",
+        "note": "Anunțurile cu conversii, dar cu cheltuieli zero sau livrare zero în intervalul de date selectat, sunt ascunse la filtrarea după contul de anunțuri."
       },
       "channelFilter": {
         "label": "Canal",
@@ -791,7 +798,8 @@
     "setting": {
       "label": "Make",
       "description": "Conectați contul Make.com pentru a trimite evenimente din fluxuri și a primi date despre contacte prin scenarii Make.",
-      "notConfigured": "Nu a fost găsit niciun link de invitație Make. Adăugați unul în Setările platformei."
+      "notConfigured": "Nu a fost găsit niciun link de invitație Make. Adăugați unul în Setările platformei.",
+      "noWorkspaceToken": "Nu a fost găsit niciun token de acces pentru dezvoltatori pentru acest spațiu de lucru. Generați unul în secțiunea pentru tokenul spațiului de lucru de mai sus, apoi apăsați din nou pe Conectare."
     }
   },
   "integrations": {
@@ -3005,6 +3013,19 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Secretul aplicației Meta (opțional)",
+      "description": "Activează verificarea semnăturii webhook pentru această conexiune manuală. Îl găsești în tabloul de bord al aplicației Meta, la Setări > De bază."
+    },
+    "aiTrigger": {
+      "label": "Declanșator AI"
+    },
+    "lastCallRecorded": {
+      "label": "Ultima înregistrare a apelului"
+    },
+    "lastCallTranscript": {
+      "label": "Ultima transcriere a apelului"
     }
   },
   "channels": {
@@ -3271,7 +3292,16 @@
     "waTemplateLtoExpirationRequired": "Alege o dată de expirare pentru oferta pe timp limitat înainte de a trimite.",
     "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs.",
     "mediaStepUnsupported": "Acest canal nu poate trimite acest tip de conținut media. Elimină pasul sau îndreaptă acest nod spre un canal compatibil.",
-    "mediaButtonsUnsupported": "Acest canal nu poate trimite butoane împreună cu un mesaj media. Elimină butoanele sau mută-le într-un pas text de după acesta."
+    "mediaButtonsUnsupported": "Acest canal nu poate trimite butoane împreună cu un mesaj media. Elimină butoanele sau mută-le într-un pas text de după acesta.",
+    "voiceCall": "Apel vocal",
+    "voiceCallDuration": "Apel vocal · {duration}",
+    "missedVoiceCall": "Apel vocal pierdut",
+    "declinedVoiceCall": "Apel vocal respins",
+    "acceptedCallPermission": "A acceptat cererea de permisiune pentru apel",
+    "declinedCallPermission": "A respins cererea de permisiune pentru apel",
+    "sendHumanAgentTag": "Trimite un mesaj cu eticheta HUMAN_AGENT",
+    "warning": "Avertisment!",
+    "humanAgentWarningDescription": "Poți răspunde la mesajul unui utilizator în termen de 7 zile doar atunci când problema nu poate fi rezolvată în mod rezonabil în 24 de ore. Exemple includ weekendurile, sărbătorile sau cazurile care necesită mai mult de o zi pentru a fi finalizate. Nu folosi această opțiune din niciun alt motiv, deoarece ar putea pune în pericol pagina ta de Facebook sau contul de Instagram. Dacă nu ești sigur, nu continua."
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",
@@ -3402,7 +3432,8 @@
       "on": "Pornit",
       "off": "Oprit",
       "termsRequired": "Administratorul paginii trebuie să accepte Termenii de contact ai paginii Facebook:"
-    }
+    },
+    "selectFacebookPage": "Selectează pagina Facebook"
   },
   "omnichannel": {
     "title": "Omnichannel"
@@ -3491,6 +3522,10 @@
     "deepseek": {
       "description": "Descrierea integrării DeepSeek",
       "title": "Integrare DeepSeek"
+    },
+    "aiTriggers": {
+      "description": "Descrierea declanșatoarelor IA",
+      "title": "Declanșatoare IA"
     }
   },
   "auth": {
@@ -3634,7 +3669,14 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "Setările aplicației WhatsApp nu au fost găsite.",
-        "wabaResolveFailed": "Contul WhatsApp Business nu a putut fi determinat din autorizație."
+        "wabaResolveFailed": "Contul WhatsApp Business nu a putut fi determinat din autorizație.",
+        "accessTokenRequired": "Tokenul de acces WhatsApp este necesar.",
+        "failedToPersistIntegration": "Salvarea integrării WhatsApp a eșuat.",
+        "noPhoneNumberFound": "Nu a fost găsit niciun număr de telefon WhatsApp.",
+        "noPhoneNumbersFound": "Nu au fost găsite numere de telefon pentru acest Cont WhatsApp Business.",
+        "phoneNumberNotFound": "Numărul de telefon WhatsApp selectat nu a fost găsit.",
+        "unableToVerifyToken": "Tokenul WhatsApp nu a putut fi verificat.",
+        "wabaMismatch": "Contul WhatsApp Business selectat nu corespunde autorizației."
       }
     },
     "reconnect": {
@@ -3734,7 +3776,8 @@
       "profile": "Profil",
       "usefulLinks": "Linkuri utile",
       "conversionsApi": "Optimizare anunțuri",
-      "settings": "Setări"
+      "settings": "Setări",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Gestionează-ți contul WhatsApp",
@@ -3866,6 +3909,87 @@
     "transferPhoneNumber": "Transferă numărul de telefon de la un alt furnizor WhatsApp",
     "selectPage": {
       "tryAgain": "Încearcă să te reconectezi"
+    },
+    "manualAppSecretMissingNotice": "Semnăturile webhook nu sunt verificate până când adaugi secretul aplicației Meta.",
+    "signupSessionExpired": "Sesiunea ta de înregistrare WhatsApp a expirat. Te rugăm să începi din nou conectarea.",
+    "capi": {
+      "automaticEvents": {
+        "title": "Evenimente Automate",
+        "description": "Trimite automat evenimente de conversie de la acest număr WhatsApp către Meta. Dacă lipsește permisiunea, reconectează contul pentru a o acorda."
+      }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta a respins modificarea setărilor de apelare",
+        "bicUnavailable": "Apelurile inițiate de afacere nu sunt disponibile pentru această țară",
+        "callAlreadyInProgress": "Există deja un apel în curs cu acest contact",
+        "hangupFailed": "Apelul nu a putut fi încheiat"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta a respins modificarea",
+      "callContact": "Apelează pe WhatsApp",
+      "dialing": "Se apelează…",
+      "startCall": "Începe apel WhatsApp",
+      "retentionLabel": "Retenția înregistrărilor (zile)",
+      "retentionHelper": "Cât timp sunt păstrate înregistrările apelurilor înainte de a fi șterse definitiv.",
+      "transcriptionLabel": "Transcrie apelurile",
+      "transcriptionHelper": "Transcrie automat apelurile înregistrate folosind furnizorul tău de AI conectat.",
+      "sip": {
+        "provisioningLabel": "Provizionare FreeSWITCH",
+        "provisionButton": "Provizionează",
+        "deprovisionButton": "Anulează provizionarea",
+        "status": {
+          "none": "Neprovizionat",
+          "provisioning": "Se provizionează…",
+          "provisioned": "Provizionat",
+          "enabled": "Activat",
+          "failed": "Eșuat"
+        },
+        "errors": {
+          "notProvisioned": "Provizionează acest număr pentru apeluri FreeSWITCH înainte de a activa apelurile în aplicație",
+          "readBackMismatch": "Meta nu a confirmat modificarea apelurilor SIP — încearcă din nou",
+          "provisionFailed": "Provizionarea acestui număr pentru apeluri FreeSWITCH a eșuat",
+          "deprovisionFailed": "Anularea provizionării apelurilor FreeSWITCH pentru acest număr a eșuat"
+        }
+      },
+      "preflight": {
+        "title": "Eligibilitate pentru apeluri",
+        "appSubscriptionMissing": "Configurează mai întâi webhook-ul WhatsApp pentru această aplicație în Meta App Dashboard, apoi încearcă din nou.",
+        "appSubscriptionFailed": "Nu s-a putut verifica abonarea aplicației la webhook-ul 'calls'. Încearcă din nou în scurt timp.",
+        "callsNotSubscribed": "Această aplicație nu este abonată la câmpul webhook 'calls', astfel încât evenimentele de apel nu pot ajunge la ChatbotX (eroare Meta 138018: cerințele tehnice preliminare nu sunt îndeplinite — asigură-te că cel puțin o aplicație abonată la WABA are și câmpul webhook pentru apeluri).",
+        "fixButton": "Remediază",
+        "fixSuccess": "Aplicația este acum abonată la webhook-urile de apeluri WhatsApp.",
+        "manualIntegrationNotice": "Acest număr a fost conectat manual și nu are acreditări de aplicație aici. Abonează câmpul webhook 'calls' pentru aplicația ta în Meta App Dashboard.",
+        "coexistenceWarning": "Acest număr folosește coexistența cu aplicația WhatsApp Business, pe care Meta nu o acceptă pentru apeluri. Mută-l doar pe Cloud API.",
+        "messagingLimitTooLow": "Nivelul limitei de mesagerie al acestui număr este sub minimul cerut de Meta pentru apeluri."
+      }
     }
   },
   "zalo": {
@@ -3878,7 +4002,8 @@
       "toggleSuccess": "Setarea de sincronizare a etichetelor a fost actualizată.",
       "enabledSince": "Activat din {date}",
       "disabled": "Dezactivat"
-    }
+    },
+    "refreshPermissions": "Reîmprospătează permisiunile"
   },
   "telegram": {
     "description": "Această integrare îți permite să creezi boți Telegram.",
@@ -4015,7 +4140,9 @@
       "productRemovedFromCart": "Produs eliminat din coș",
       "productOrdered": "Produs comandat",
       "contactReferredANewContact": "Contactul a recomandat un contact nou",
-      "contactReferredExistingContact": "Contactul a recomandat un contact existent"
+      "contactReferredExistingContact": "Contactul a recomandat un contact existent",
+      "callRecorded": "Apel înregistrat",
+      "callTranscribed": "Apel transcris"
     },
     "actions": {
       "addTag": "Adaugă etichetă",
@@ -5591,7 +5718,8 @@
     "connectViaFacebook": "Conectează prin Facebook",
     "unsupportedExplanation": "Acest cont Instagram a fost conectat cu Instagram Business Login. Conectează contul prin Facebook pentru a folosi Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "Evenimentele WhatsApp sunt trimise doar pentru conversațiile care au început dintr-un anunț click-to-WhatsApp."
+      "whatsappNote": "Evenimentele WhatsApp sunt trimise doar pentru conversațiile care au început dintr-un anunț click-to-WhatsApp.",
+      "description": "Pune în coadă un eveniment LeadSubmitted pentru Messenger, Instagram sau WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5847,7 +5975,10 @@
       "rulesDescription": "Descrierea regulilor",
       "openerTags": "Etichetează contactele care deschid linkul jocului",
       "playerTags": "Etichetează jucătorii",
-      "newFriendTags": "Etichetează prietenii noi"
+      "newFriendTags": "Etichetează prietenii noi",
+      "shareEnabled": "Permite distribuirea către prieteni",
+      "shareMessage": "Mesaj de distribuire",
+      "shareMessageHint": "Folosește '{{shareUrl}}' pentru a introduce linkul real al jocului — te rugăm să nu îl elimini."
     },
     "appearance": {
       "backgroundColor": "Culoare fundal",

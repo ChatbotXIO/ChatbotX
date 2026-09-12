@@ -1,0 +1,71 @@
+<!--
+  Meta-facing SIP profile. Structural shape (`<profile>`,
+  `<gateways>`, `<domains>`, `<settings>`) copied from vanilla
+  sip_profiles/external.xml; every <param name="..."> below is a verified
+  param name from that vanilla file except where the comment cites a
+  different source.
+
+  No static gateways: `mod_xml_curl`'s `configuration` binding answers
+  `sofia.conf` for this profile with per-integration `wa-<id>` gateways, so `startgw`/`killgw`/`rescan` are the only way gateways
+  ever change — never a file here.
+-->
+<profile name="whatsapp">
+  <gateways>
+    <!-- Intentionally empty: gateways come from mod_xml_curl's
+         "configuration" binding (sofia.conf), not from a static include. -->
+  </gateways>
+
+  <domains>
+    <domain name="all" alias="false" parse="true"/>
+  </domains>
+
+  <settings>
+    <!-- TLS 5061 is the only transport Meta speaks; no plain UDP/TCP
+         listener on this profile. -->
+    <param name="sip-port" value="5061"/>
+    <param name="tls" value="true"/>
+    <param name="tls-only" value="true"/>
+    <param name="tls-bind-params" value="transport=tls"/>
+    <param name="tls-sip-port" value="5061"/>
+    <param name="tls-cert-dir" value="/etc/freeswitch/certs"/>
+    <!-- `in`/`all` request a client certificate from the peer; Meta's
+         own doc says "your TLS server should not request Client
+         certificate" — never set this to `in` or `all` toward Meta.
+         `out` verifies *our* outbound requests against Meta's server
+         cert. The real-number gate must VERIFY that inbound Meta is not
+         asked for a client cert, else fall back to `none`. -->
+    <param name="tls-verify-policy" value="out"/>
+    <param name="tls-verify-date" value="true"/>
+    <param name="tls-version" value="$${sip_tls_version}"/>
+
+    <param name="sip-ip" value="$${local_ip_v4}"/>
+    <param name="rtp-ip" value="$${local_ip_v4}"/>
+    <param name="ext-sip-ip" value="$${external_sip_ip}"/>
+    <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
+
+    <!-- bare OPUS token, G.711 fallback (Meta's `additional_codecs`). -->
+    <param name="inbound-codec-prefs" value="OPUS,PCMU,PCMA"/>
+    <param name="outbound-codec-prefs" value="OPUS,PCMU,PCMA"/>
+
+    <!-- Meta digest-challenges us and recommends we challenge them
+         back; the inbound digest lookup domain = this realm. -->
+    <param name="auth-calls" value="true"/>
+    <param name="challenge-realm" value="$${domain}"/>
+    <param name="accept-blind-auth" value="false"/>
+    <param name="accept-blind-reg" value="false"/>
+
+    <!-- Meta never re-INVITEs and expects us not to either. -->
+    <param name="enable-timer" value="false"/>
+    <param name="session-timeout" value="0"/>
+    <param name="disable-hold" value="true"/>
+    <param name="rtp-timeout-sec" value="300"/>
+
+    <!-- Only Meta's published SIP edge may reach this
+         profile. -->
+    <param name="apply-inbound-acl" value="meta_sip"/>
+
+    <param name="context" value="whatsapp_inbound"/>
+
+    <param name="manage-presence" value="false"/>
+  </settings>
+</profile>

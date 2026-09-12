@@ -1459,6 +1459,19 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta 應用程式密鑰（選填）",
+      "description": "為此手動連接啟用 webhook 簽章驗證。您可以在 Meta 應用程式的儀表板中的「設定 > 基本」找到它。"
+    },
+    "aiTrigger": {
+      "label": "人工智慧觸發器"
+    },
+    "lastCallRecorded": {
+      "label": "最近通話錄音"
+    },
+    "lastCallTranscript": {
+      "label": "最近通話轉寫"
     }
   },
   "messages": {
@@ -1588,7 +1601,16 @@
     "waTemplateLtoExpirationRequired": "傳送前請為限時優惠選擇到期時間。",
     "waTemplateMpmIncompleteProducts": "每個分組至少需要一個已選擇的商品——請刪除空白列或為其選擇商品。",
     "mediaStepUnsupported": "此管道無法傳送該類型的媒體。請刪除該步驟，或將此節點指向支援的管道。",
-    "mediaButtonsUnsupported": "此管道無法隨媒體訊息傳送按鈕。請刪除按鈕，或移到此步驟之後的文字步驟中。"
+    "mediaButtonsUnsupported": "此管道無法隨媒體訊息傳送按鈕。請刪除按鈕，或移到此步驟之後的文字步驟中。",
+    "voiceCall": "語音通話",
+    "voiceCallDuration": "語音通話 · {duration}",
+    "missedVoiceCall": "未接語音通話",
+    "declinedVoiceCall": "已拒絕的語音通話",
+    "acceptedCallPermission": "已接受通話權限請求",
+    "declinedCallPermission": "已拒絕通話權限請求",
+    "sendHumanAgentTag": "傳送一封帶有 HUMAN_AGENT 標籤的訊息",
+    "warning": "警告！",
+    "humanAgentWarningDescription": "只有在問題無法於 24 小時內合理解決時，您才可以在 7 天內回覆使用者的訊息。例如週末、假日，或需要超過一天才能完成的案例。請勿因其他原因使用此選項，否則可能讓您的 Facebook 粉專或 Instagram 帳號面臨風險。如果您不確定，請不要繼續。"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
@@ -2625,7 +2647,9 @@
       "import": "匯入流程",
       "export": "匯出",
       "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
-      "importJsonOnly": "僅限 JSON 檔案"
+      "importJsonOnly": "僅限 JSON 檔案",
+      "whatsappCallButton": "透過 WhatsApp 通話",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -2741,6 +2765,10 @@
     "media": {
       "stepUnsupportedOnChannel": "此管道無法傳送該類型的媒體，此步驟會被略過。請刪除該步驟，或將節點切換到支援的管道。",
       "buttonsSkippedOnChannel": "此管道無法隨媒體訊息傳送按鈕，按鈕會被略過。請改放在後面的文字步驟中。"
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "編輯按鈕",
+      "buttonLabel": "按鈕標籤"
     }
   },
   "folders": {
@@ -2962,7 +2990,8 @@
       "adAccountFilter": {
         "all": "所有廣告帳戶",
         "label": "廣告帳戶",
-        "unavailable": "無法載入廣告帳號——請在設定中檢查此整合的 Ads 連線，或工作區的 Facebook Ads 連線。"
+        "unavailable": "無法載入廣告帳號——請在設定中檢查此整合的 Ads 連線，或工作區的 Facebook Ads 連線。",
+        "note": "以廣告帳戶篩選時，在所選日期範圍內有轉換但花費或曝光為零的廣告將被隱藏。"
       },
       "channelFilter": {
         "label": "頻道",
@@ -3279,7 +3308,8 @@
     "setting": {
       "label": "Make.com",
       "description": "連接您的 Make.com 帳戶，以便從流程傳送事件，並透過 Make 情境接收聯絡人資料。",
-      "notConfigured": "找不到邀請連結。請在平台設定新增一個。"
+      "notConfigured": "找不到邀請連結。請在平台設定新增一個。",
+      "noWorkspaceToken": "找不到此工作區的開發人員存取權杖。在上面的工作區權杖部分產生一個，然後再按一下連接。"
     }
   },
   "integrations": {
@@ -3435,7 +3465,8 @@
       "on": "開啟",
       "off": "關閉",
       "termsRequired": "頁面管理員必須接受Facebook頁聯絡人條款："
-    }
+    },
+    "selectFacebookPage": "選擇Facebook 頁"
   },
   "omnichannel": {
     "title": "全通路"
@@ -3524,6 +3555,10 @@
     "deepseek": {
       "description": "DeepSeek 整合說明",
       "title": "DeepSeek整合"
+    },
+    "aiTriggers": {
+      "description": "人工智慧觸發器描述",
+      "title": "人工智慧觸發器"
     }
   },
   "auth": {
@@ -3667,7 +3702,14 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "WhatsApp應用程式設定。",
-        "wabaResolveFailed": "無法從授權解析WhatsApp 企業帳號。"
+        "wabaResolveFailed": "無法從授權解析WhatsApp 企業帳號。",
+        "accessTokenRequired": "必須提供 WhatsApp Access Token。",
+        "failedToPersistIntegration": "無法儲存WhatsApp 整合。",
+        "noPhoneNumberFound": "找不到 WhatsApp 電話號碼。",
+        "noPhoneNumbersFound": "找不到此 WhatsApp 企業帳戶的電話號碼。",
+        "phoneNumberNotFound": "所選WhatsApp 電話號碼找不到。",
+        "unableToVerifyToken": "無法驗證WhatsApp 權杖。",
+        "wabaMismatch": "所選WhatsApp 企業帳戶與授權不符。"
       }
     },
     "reconnect": {
@@ -3767,7 +3809,8 @@
       "profile": "簡介",
       "usefulLinks": "有用連結",
       "conversionsApi": "廣告優化",
-      "settings": "設定"
+      "settings": "設定",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "管理您的WhatsApp帳戶",
@@ -3899,6 +3942,87 @@
     "transferPhoneNumber": "從其他 Whatsapp 供應商轉接電話",
     "selectPage": {
       "tryAgain": "嘗試重新連接"
+    },
+    "manualAppSecretMissingNotice": "在您新增 Meta 應用程式密鑰之前，webhook 簽章將不會被驗證。",
+    "signupSessionExpired": "您的WhatsApp註冊會話已過期。請重新開始連線。",
+    "capi": {
+      "automaticEvents": {
+        "title": "自動事件",
+        "description": "自動將此 WhatsApp 號碼的轉換事件傳送到 Meta。如果缺少權限,請重新連接帳號以授予權限。"
+      }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta 拒絕了通話設定的變更",
+        "bicUnavailable": "此國家不支援商家主動發起的通話",
+        "callAlreadyInProgress": "與此聯絡人的通話已在進行中",
+        "hangupFailed": "無法結束通話"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta 拒絕了此變更",
+      "callContact": "在 WhatsApp 上通話",
+      "dialing": "通話中…",
+      "startCall": "開始 WhatsApp 通話",
+      "retentionLabel": "錄音保留期限（天）",
+      "retentionHelper": "通話錄音在永久刪除前的保留時長。",
+      "transcriptionLabel": "轉錄通話",
+      "transcriptionHelper": "使用您已連接的 AI 提供者自動轉錄已錄製的通話。",
+      "sip": {
+        "provisioningLabel": "FreeSWITCH 佈建",
+        "provisionButton": "佈建",
+        "deprovisionButton": "取消佈建",
+        "status": {
+          "none": "未佈建",
+          "provisioning": "佈建中…",
+          "provisioned": "已佈建",
+          "enabled": "已啟用",
+          "failed": "失敗"
+        },
+        "errors": {
+          "notProvisioned": "啟用應用程式內通話前，請先為此號碼設定 FreeSWITCH 通話佈建",
+          "readBackMismatch": "Meta 未確認 SIP 通話變更 — 請再試一次",
+          "provisionFailed": "無法為此號碼佈建 FreeSWITCH 通話",
+          "deprovisionFailed": "無法取消此號碼的 FreeSWITCH 通話佈建"
+        }
+      },
+      "preflight": {
+        "title": "通話資格",
+        "appSubscriptionMissing": "請先在 Meta 應用程式儀表板中為此應用程式設定 WhatsApp webhook，然後再試一次。",
+        "appSubscriptionFailed": "無法驗證應用程式的「calls」webhook 訂閱狀態，請稍後再試。",
+        "callsNotSubscribed": "此應用程式未訂閱「calls」webhook 欄位，因此通話事件無法傳送至 ChatbotX（Meta 錯誤 138018：未滿足技術先決條件 — 請確保訂閱 WABA 的至少一個應用程式也具有通話 webhook 欄位）。",
+        "fixButton": "修復",
+        "fixSuccess": "此應用程式現已訂閱 WhatsApp 通話 webhook。",
+        "manualIntegrationNotice": "此號碼是手動連接的，此處沒有應用程式憑證。請在 Meta 應用程式儀表板中為您的應用程式訂閱「calls」webhook 欄位。",
+        "coexistenceWarning": "此號碼使用與 WhatsApp Business 應用程式的共存模式，而 Meta 不支援此模式進行通話。請將其僅移至 Cloud API。",
+        "messagingLimitTooLow": "此號碼的訊息限制等級低於 Meta 進行通話所要求的最低標準。"
+      }
     }
   },
   "zalo": {
@@ -3911,7 +4035,8 @@
       "toggleSuccess": "標籤同步設定已更新。",
       "enabledSince": "自 {date} 啟用",
       "disabled": "已停用"
-    }
+    },
+    "refreshPermissions": "刷新權限"
   },
   "telegram": {
     "description": "此整合可讓您建立Telegram 機器人。",
@@ -4048,7 +4173,9 @@
       "productRemovedFromCart": "產品已從購物車中刪除",
       "productOrdered": "已訂購產品",
       "contactReferredANewContact": "聯絡人推薦了新聯絡人",
-      "contactReferredExistingContact": "聯絡人引用現有聯絡人"
+      "contactReferredExistingContact": "聯絡人引用現有聯絡人",
+      "callRecorded": "通話已錄音",
+      "callTranscribed": "通話已轉寫"
     },
     "actions": {
       "addTag": "新增標籤",
@@ -5591,7 +5718,8 @@
     "connectViaFacebook": "透過 Facebook 連接",
     "unsupportedExplanation": "此 Instagram 帳戶是透過 Instagram Business Login 連接的。請透過 Facebook 連接該帳戶，以使用 Meta Conversions API。",
     "flowStep": {
-      "whatsappNote": "WhatsApp 事件僅會針對由點擊式 WhatsApp 廣告發起的對話傳送。"
+      "whatsappNote": "WhatsApp 事件僅會針對由點擊式 WhatsApp 廣告發起的對話傳送。",
+      "description": "為 Messenger、Instagram 或 WhatsApp 排入一筆 LeadSubmitted 事件。"
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5847,7 +5975,10 @@
       "rulesDescription": "規則說明",
       "openerTags": "為開啟遊戲連結的聯絡人加上標籤",
       "playerTags": "為參與者加上標籤",
-      "newFriendTags": "為新朋友加上標籤"
+      "newFriendTags": "為新朋友加上標籤",
+      "shareEnabled": "允許與朋友分享",
+      "shareMessage": "分享訊息",
+      "shareMessageHint": "使用 '{{shareUrl}}' 插入實際的遊戲連結，請勿移除。"
     },
     "appearance": {
       "backgroundColor": "背景顏色",

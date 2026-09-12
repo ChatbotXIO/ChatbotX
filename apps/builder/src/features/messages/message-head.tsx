@@ -16,6 +16,11 @@ import { enableBotAction } from "../conversations/actions/enable-bot.action"
 import { UpdateConversationAssignee } from "../conversations/components/update-conversation-assignee"
 import { ConversationAction } from "../conversations/conversation-action"
 import { isConversationActive } from "../conversations/utils/bot-state"
+import {
+  isCallingAvailableForConversation,
+  useCallingEnabledInboxIds,
+} from "../integration-whatsapp/calling/softphone/calling-availability"
+import { StartCallButton } from "../integration-whatsapp/calling/softphone/start-call-button"
 
 /**
  * `onBack` and `onOpenContact` are supplied only by the mobile inbox layout,
@@ -31,6 +36,7 @@ export default function MessageHead({
 }) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
+  const callingEnabledInboxIds = useCallingEnabledInboxIds()
 
   const {
     conversations,
@@ -85,6 +91,14 @@ export default function MessageHead({
             onChange={setAssignee}
           />
         </div>
+        <StartCallButton
+          contactName={activeConversation?.contact?.fullName}
+          conversationId={activeConversation.id}
+          sipCallingAvailable={isCallingAvailableForConversation(
+            activeConversation.contactInboxes,
+            callingEnabledInboxIds,
+          )}
+        />
         {!isConversationActive(activeConversation) && (
           <Tooltip>
             <TooltipTrigger

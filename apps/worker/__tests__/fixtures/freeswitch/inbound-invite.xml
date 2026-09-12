@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+<!--
+  Scenario: a TLS INVITE to the `whatsapp` profile
+  (port 5061) that must be 401-challenged, then (after the stub
+  directory's business-number credentials answer the challenge) proceed
+  to the `whatsapp_inbound` dialplan. Carries the `X-WA-Meta-WACID`
+  custom header FreeSWITCH turns into `sip_h_x-wa-meta-wacid`
+  (`sofia.c` `sofia_handle_sip_i_invite`) so the test can assert it
+  on the `CUSTOM cbx::call` event captured over ESL.
+-->
+<scenario name="Inbound INVITE, digest-challenged, custom WACID header">
+  <send retrans="500">
+    <![CDATA[
+      INVITE sip:[service]@[remote_ip]:[remote_port];transport=tls SIP/2.0
+      Via: SIP/2.0/TLS [local_ip]:[local_port];branch=[branch]
+      From: <sip:test-caller@[local_ip]>;tag=[call_number]
+      To: <sip:[service]@[remote_ip]>
+      Call-ID: [call_id]
+      CSeq: 1 INVITE
+      Contact: <sip:test-caller@[local_ip]:[local_port];transport=tls>
+      Max-Forwards: 70
+      X-WA-Meta-WACID: wacid.test1234567890
+      X-WA-Meta-User-Id: 1555009999
+      Content-Type: application/sdp
+      Content-Length: [len]
+
+      v=0
+      o=sipp 1 1 IN IP[local_ip_type] [local_ip]
+      s=-
+      c=IN IP[local_ip_type] [local_ip]
+      t=0 0
+      m=audio [media_port] RTP/SAVP 111
+      a=rtpmap:111 opus/48000/2
+      a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:PLACEHOLDERKEYPLACEHOLDERKEYPLACEHOLDER
+    ]]>
+  </send>
+
+  <recv response="401" auth="true"/>
+
+  <send retrans="500">
+    <![CDATA[
+      ACK sip:[service]@[remote_ip]:[remote_port];transport=tls SIP/2.0
+      Via: SIP/2.0/TLS [local_ip]:[local_port];branch=[branch]
+      From: <sip:test-caller@[local_ip]>;tag=[call_number]
+      To: <sip:[service]@[remote_ip]>[peer_tag_param]
+      Call-ID: [call_id]
+      CSeq: 1 ACK
+      Contact: <sip:test-caller@[local_ip]:[local_port];transport=tls>
+      Max-Forwards: 70
+      Content-Length: 0
+    ]]>
+  </send>
+
+  <send retrans="500">
+    <![CDATA[
+      INVITE sip:[service]@[remote_ip]:[remote_port];transport=tls SIP/2.0
+      Via: SIP/2.0/TLS [local_ip]:[local_port];branch=[branch]
+      From: <sip:test-caller@[local_ip]>;tag=[call_number]
+      To: <sip:[service]@[remote_ip]>
+      Call-ID: [call_id]
+      CSeq: 2 INVITE
+      Contact: <sip:test-caller@[local_ip]:[local_port];transport=tls>
+      Max-Forwards: 70
+      X-WA-Meta-WACID: wacid.test1234567890
+      X-WA-Meta-User-Id: 1555009999
+      [authentication username=test-caller password=stub-password]
+      Content-Type: application/sdp
+      Content-Length: [len]
+
+      v=0
+      o=sipp 1 1 IN IP[local_ip_type] [local_ip]
+      s=-
+      c=IN IP[local_ip_type] [local_ip]
+      t=0 0
+      m=audio [media_port] RTP/SAVP 111
+      a=rtpmap:111 opus/48000/2
+      a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:PLACEHOLDERKEYPLACEHOLDERKEYPLACEHOLDER
+    ]]>
+  </send>
+
+  <recv response="180" optional="true"/>
+  <recv response="200" crlf="true"/>
+
+  <send>
+    <![CDATA[
+      ACK sip:[service]@[remote_ip]:[remote_port];transport=tls SIP/2.0
+      Via: SIP/2.0/TLS [local_ip]:[local_port];branch=[branch]
+      From: <sip:test-caller@[local_ip]>;tag=[call_number]
+      To: <sip:[service]@[remote_ip]>[peer_tag_param]
+      Call-ID: [call_id]
+      CSeq: 2 ACK
+      Contact: <sip:test-caller@[local_ip]:[local_port];transport=tls>
+      Max-Forwards: 70
+      Content-Length: 0
+    ]]>
+  </send>
+
+  <pause milliseconds="2000"/>
+
+  <send retrans="500">
+    <![CDATA[
+      BYE sip:[service]@[remote_ip]:[remote_port];transport=tls SIP/2.0
+      Via: SIP/2.0/TLS [local_ip]:[local_port];branch=[branch]
+      From: <sip:test-caller@[local_ip]>;tag=[call_number]
+      To: <sip:[service]@[remote_ip]>[peer_tag_param]
+      Call-ID: [call_id]
+      CSeq: 3 BYE
+      X-WA-Meta-WACID: wacid.test1234567890
+      Max-Forwards: 70
+      Content-Length: 0
+    ]]>
+  </send>
+
+  <recv response="200"/>
+</scenario>
