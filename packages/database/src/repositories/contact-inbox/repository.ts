@@ -108,6 +108,19 @@ export type ContactInboxWorkspaceRow = Pick<
 >
 
 /**
+ * The projection producing a {@link ContactInboxWorkspaceRow}. Shared by the
+ * four queries that return one, so the row type and the columns actually
+ * selected cannot drift apart — adding a column to the type above is a compile
+ * error until it is added here too.
+ */
+const contactInboxWorkspaceRowColumns = {
+  id: contactInboxModel.id,
+  channel: contactInboxModel.channel,
+  inboxId: contactInboxModel.inboxId,
+  sourceId: contactInboxModel.sourceId,
+} satisfies Record<keyof ContactInboxWorkspaceRow, unknown>
+
+/**
  * The columns a coexist history patch needs to decide (a) which ContactInbox a
  * `wa_id` belongs to and (b) how far back it may safely read messages.
  */
@@ -192,12 +205,7 @@ export const contactInboxRepository = {
     tx: DatabaseClient = db,
   ): Promise<ContactInboxWorkspaceRow | null> {
     const [row] = await tx
-      .select({
-        id: contactInboxModel.id,
-        channel: contactInboxModel.channel,
-        inboxId: contactInboxModel.inboxId,
-        sourceId: contactInboxModel.sourceId,
-      })
+      .select(contactInboxWorkspaceRowColumns)
       .from(contactInboxModel)
       .innerJoin(
         inboxModel,
@@ -227,12 +235,7 @@ export const contactInboxRepository = {
     tx: DatabaseClient = db,
   ): Promise<ContactInboxWorkspaceRow | null> {
     const [row] = await tx
-      .select({
-        id: contactInboxModel.id,
-        channel: contactInboxModel.channel,
-        inboxId: contactInboxModel.inboxId,
-        sourceId: contactInboxModel.sourceId,
-      })
+      .select(contactInboxWorkspaceRowColumns)
       .from(contactInboxModel)
       .innerJoin(
         inboxModel,
@@ -267,12 +270,7 @@ export const contactInboxRepository = {
     tx: DatabaseClient = db,
   ): Promise<ContactInboxWorkspaceRow | null> {
     const [row] = await tx
-      .select({
-        id: contactInboxModel.id,
-        channel: contactInboxModel.channel,
-        inboxId: contactInboxModel.inboxId,
-        sourceId: contactInboxModel.sourceId,
-      })
+      .select(contactInboxWorkspaceRowColumns)
       .from(contactInboxModel)
       .innerJoin(
         inboxModel,
@@ -300,12 +298,7 @@ export const contactInboxRepository = {
     tx: DatabaseClient = db,
   ): Promise<ContactInboxWorkspaceRow | null> {
     const [row] = await tx
-      .select({
-        id: contactInboxModel.id,
-        channel: contactInboxModel.channel,
-        inboxId: contactInboxModel.inboxId,
-        sourceId: contactInboxModel.sourceId,
-      })
+      .select(contactInboxWorkspaceRowColumns)
       .from(contactInboxModel)
       .innerJoin(
         inboxModel,

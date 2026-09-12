@@ -2,7 +2,6 @@ import {
   buildContext,
   integrationMailchimpService,
 } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { MailchimpAddMemberSchema } from "@chatbotx.io/flow-config"
 import {
@@ -15,6 +14,7 @@ import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
 import { getContactFieldMap } from "./contact-field-map"
 import type { ExecuteStepProps } from "./flow"
+import { logStepProviderError } from "./flow-utils"
 import type { ExecuteStepResult } from "./step"
 
 const MAX_RETRIES = 3
@@ -132,7 +132,7 @@ const formatMergeFieldValue = (
 export const addMailchimpMember = async (
   props: ExecuteStepProps<MailchimpAddMemberSchema>,
 ): Promise<ExecuteStepResult> => {
-  const { conversation, contactInbox, step } = props
+  const { conversation, step } = props
   const logContext = {
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
@@ -223,13 +223,7 @@ export const addMailchimpMember = async (
       { ...logContext, error: normalized },
       "Mailchimp add-member step failed",
     )
-    await logProviderError({
-      provider: "mailchimp",
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      sourceId: contactInbox.sourceId,
-      error,
-    })
+    await logStepProviderError("mailchimp", props, error)
     return {
       status: "error",
       errorMessage: normalized.message,

@@ -17,13 +17,16 @@ export const errorLogsPublicRouter = {
       summary: "List error logs",
       tags: ["Error Logs"],
     })
-    // `sort` is dropped, unlike the private table: `parseOrderByAsObject` gates
-    // only on `sortItem.id in modelSchema`, so any real column is sortable —
-    // including the `sourceId` that `publicListErrorLogsResponse` deliberately
-    // strips. Ordering by a withheld column is an oracle over it (page through
-    // an ascending sort and the PSIDs fall out lexicographically), which undoes
-    // the allow-list. The order is pinned in the handler instead, the same way
-    // the tags/bot-fields/broadcasts public routes do it.
+    // `sort` is dropped, unlike the private table, and the order is pinned in
+    // the handler instead — the same way the tags/bot-fields/broadcasts public
+    // routes do it. A public list is paged by an integration that re-requests
+    // page N later, so one order backed by a covering index is the whole
+    // contract; there is no table header here to drive anything else.
+    //
+    // Note this is no longer what keeps a withheld column from being used as a
+    // sort oracle — `SORTABLE_COLUMNS` (`@chatbotx.io/business/error-log-columns`) does that for both
+    // routes, and `sourceId` is not selected on either. Re-exposing `sort` here
+    // would be safe on that count and still wrong on paging stability.
     .input(
       withPublicPaging(
         listErrorLogsRequest.omit({ sort: true, workspaceId: true }),
@@ -36,10 +39,11 @@ export const errorLogsPublicRouter = {
         await listErrorLogs({
           ...input,
           workspaceId: context.workspace.id,
-          // Not just a safe default: `listErrorLogs` has no fallback order, so
-          // without this the route would run with no ORDER BY at all and page
-          // unstably. Matches both the table's own default and the covering
-          // `ErrorLog_workspaceId_createdAt_idx`.
+          // Pinned here rather than left to the fallback order `listErrorLogs`
+          // applies when no sort survives: paging stability on a route that
+          // cannot pass `sort` is this route's contract, not something to
+          // inherit from the query layer's default. Matches both that default
+          // and the covering `ErrorLog_workspaceId_createdAt_idx`.
           sort: [{ id: "createdAt", desc: true }],
         }),
     ),

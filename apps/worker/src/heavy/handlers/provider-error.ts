@@ -18,7 +18,18 @@ export async function recordHeavyAIStepProviderError(input: {
       workspaceId: input.workspaceId,
       contactId: input.contactId,
       sourceId: input.sourceId,
-      error: normalizeError(input.error),
+      // Raw, never normalized: `normalizeError` returns a plain object, so the
+      // service's `error instanceof Error` check fails and `stackTrace` is
+      // written NULL — and its `status` field is not one of the keys the
+      // service reads for `httpCode`. `logStepProviderError` passes raw too.
+      //
+      // `detail` moves too, for the throws that are not `Error`s: the service's
+      // `resolveMessage` reads a top-level `message` and otherwise falls back to
+      // `UNKNOWN_ERROR_DETAIL`, where `normalizeError` also dug a message out of
+      // axios-shaped errors. Nothing on this path throws one — the heavy AI
+      // handlers throw AI-SDK `Error`s, which carry their own message — and the
+      // service is where an SDK shape should be taught, not here.
+      error: input.error,
     })
   } catch (error) {
     logger.warn(

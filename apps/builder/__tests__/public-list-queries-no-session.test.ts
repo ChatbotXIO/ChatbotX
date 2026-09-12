@@ -68,7 +68,10 @@ vi.mock("@chatbotx.io/database/utils", () => ({
     offset: ((input.page ?? 1) - 1) * (input.perPage ?? 10),
   }),
   likeContains: (value: string) => value,
-  parseOrderByAsObject: () => undefined,
+  // The real helper always returns an object (`{}` when nothing is sortable),
+  // never `undefined` — `listErrorLogs` reads its keys to decide whether to
+  // fall back to a deterministic order.
+  parseOrderByAsObject: () => ({}),
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({

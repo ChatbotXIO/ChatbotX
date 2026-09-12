@@ -224,10 +224,10 @@ describe("logProviderError", () => {
     expect(payload().error.httpCode).toBeNull()
   })
 
-  it("carries the message only and never the stack", async () => {
+  it("carries the stack frames without the message prefix", async () => {
     const logProviderError = await load()
     const error = new Error("boom")
-    error.stack = "Error: boom\n  at /srv/app/packages/business/src/x.ts:1:1"
+    error.stack = "Error: boom\n    at /srv/app/packages/business/src/x.ts:1:1"
 
     await logProviderError({
       provider: "drip",
@@ -235,10 +235,146 @@ describe("logProviderError", () => {
       error,
     })
 
+    // `detail` stays message-only; the stack rides `stackTrace` instead.
     expect(payload().error.message).toBe("boom")
-    // `ErrorLog` is workspace-facing; a stack would leak server paths.
-    expect(payload().error).not.toHaveProperty("stack")
-    expect(JSON.stringify(payload())).not.toContain("/srv/app/")
+    expect(payload().error.stackTrace).toBe(
+      "    at /srv/app/packages/business/src/x.ts:1:1",
+    )
+    // The prefix is stripped: the message is in `detail`, not stored twice.
+    expect(payload().error.stackTrace).not.toContain("boom")
+  })
+
+  it("keeps frames when a pathological message would fill the budget", async () => {
+    const logProviderError = await load()
+    const error = new Error("x".repeat(9000))
+    error.stack = `Error: ${"x".repeat(9000)}\n    at /srv/app/a.ts:1:1`
+
+    await logProviderError({
+      provider: "drip",
+      workspaceId: "ws-1",
+      error,
+    })
+
+    // The regression the prefix-strip exists for: truncating the raw stack
+    // would have spent all 2048 chars on the message and stored no frames.
+    expect(payload().error.stackTrace).toBe("    at /srv/app/a.ts:1:1")
+  })
+
+  it("caps the stored frames at 2048 characters", async () => {
+    const logProviderError = await load()
+    const error = new Error("boom")
+    error.stack = `Error: boom${"\n    at /srv/app/deep.ts:1:1".repeat(500)}`
+
+    await logProviderError({
+      provider: "drip",
+      workspaceId: "ws-1",
+      error,
+    })
+
+    expect(payload().error.stackTrace).toHaveLength(2048)
+    // Top frames are the ones kept — that is where the throw site is.
+    expect(
+      payload().error.stackTrace.startsWith("    at /srv/app/deep.ts"),
+    ).toBe(true)
+  })
+
+  it("skips frame-shaped lines that belong to the message", async () => {
+    const logProviderError = await load()
+    const inner = new Error("upstream 502")
+    inner.stack = "Error: upstream 502\n    at /srv/app/remote.ts:1:1"
+    // A wrapped error: the inner stack is now part of this error's *message*,
+    // so the first `at ` line in `stack` is not a frame of the real throw.
+    const error = new Error(`Provider failed: ${inner.stack}`)
+    error.stack = `Error: ${error.message}\n    at /srv/app/throw-site.ts:2:2`
+
+    await logProviderError({
+      provider: "drip",
+      workspaceId: "ws-1",
+      error,
+    })
+
+    expect(payload().error.stackTrace).toBe("    at /srv/app/throw-site.ts:2:2")
+    // The quoted inner stack stays in `detail` with the rest of the message.
+    expect(payload().error.stackTrace).not.toContain("remote.ts")
+    expect(payload().error.message).toContain("remote.ts")
+  })
+
+  it("omits the stack for a non-Error throwable", async () => {
+    const logProviderError = await load()
+
+    await logProviderError({
+      provider: "klaviyo",
+      workspaceId: "ws-1",
+      // The terminal-send path's shape: a ParsedError off a Redis stream, with
+      // no local throw and so no meaningful stack.
+      error: { message: "remote failure", statusCode: 400 },
+    })
+
+    expect(payload().error.stackTrace).toBeUndefined()
+  })
+
+  it("omits the stack when the Error carries no frames", async () => {
+    const logProviderError = await load()
+    const error = new Error("boom")
+    error.stack = "Error: boom"
+
+    await logProviderError({
+      provider: "klaviyo",
+      workspaceId: "ws-1",
+      error,
+    })
+
+    expect(payload().error.stackTrace).toBeUndefined()
+  })
+
+  // The terminal outbound-send path (`recordProviderErrorLog`) never holds the
+  // thrown `Error`: the emitter parsed it into a `ParsedError` before it went
+  // onto the Redis stream. The frames are captured at that emit site instead
+  // and handed here directly, so this input is the only way that path gets a
+  // stack at all.
+  it("prefers a caller-supplied stack over deriving one from the error", async () => {
+    const logProviderError = await load()
+
+    await logProviderError({
+      provider: "messenger",
+      workspaceId: "ws-1",
+      error: { message: "remote failure", statusCode: 401 },
+      stackTrace: "    at /srv/app/apps/worker/src/chat/handlers/x.ts:1:1",
+    })
+
+    expect(payload().error.stackTrace).toBe(
+      "    at /srv/app/apps/worker/src/chat/handlers/x.ts:1:1",
+    )
+  })
+
+  // The cap is re-applied rather than trusted: the caller extracted the frames
+  // in a different process, and the payload still rides the stream's byte
+  // budget from here.
+  it("caps a caller-supplied stack at 2048 characters", async () => {
+    const logProviderError = await load()
+
+    await logProviderError({
+      provider: "messenger",
+      workspaceId: "ws-1",
+      error: { message: "remote failure", statusCode: 401 },
+      stackTrace: "    at /srv/app/deep.ts:1:1\n".repeat(500),
+    })
+
+    expect(payload().error.stackTrace).toHaveLength(2048)
+  })
+
+  it("omits the stack when the Error has no stack at all", async () => {
+    const logProviderError = await load()
+    const error = new Error("boom")
+    error.stack = undefined
+
+    await logProviderError({
+      provider: "klaviyo",
+      workspaceId: "ws-1",
+      error,
+    })
+
+    expect(payload().error.stackTrace).toBeUndefined()
   })
 
   it("stringifies a non-Error throwable rather than losing it", async () => {
@@ -251,6 +387,35 @@ describe("logProviderError", () => {
     })
 
     expect(payload().error.message).toBe("plain string failure")
+  })
+
+  // `detail` is workspace-facing. Before the callers stopped pre-normalizing
+  // their throws, `normalizeError` produced a readable message for a shape like
+  // this; `String(error)` would now write "[object Object]" into the table.
+  it("does not write [object Object] for a message-less object throw", async () => {
+    const logProviderError = await load()
+
+    await logProviderError({
+      provider: "klaviyo",
+      workspaceId: "ws-1",
+      error: { code: 1 },
+    })
+
+    expect(payload().error.message).toBe("An unknown error occurred")
+  })
+
+  // The `message` key still wins over the fallback — the fallback is for when
+  // there is nothing to read, not a blanket replacement for object throws.
+  it("still prefers a message carried on a non-Error object", async () => {
+    const logProviderError = await load()
+
+    await logProviderError({
+      provider: "klaviyo",
+      workspaceId: "ws-1",
+      error: { message: "remote refused", code: 1 },
+    })
+
+    expect(payload().error.message).toBe("remote refused")
   })
 
   it("never throws when the event bus is unavailable", async () => {

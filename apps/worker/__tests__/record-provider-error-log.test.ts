@@ -110,6 +110,48 @@ describe("recordProviderErrorLog", () => {
     ])
   })
 
+  // `errorData` is a `ParsedError` — the emitter already threw the `Error` away,
+  // so the frames cannot be derived here and must ride the payload instead.
+  it("forwards the stack frames the emit site captured", async () => {
+    const recordProviderErrorLog = await load()
+
+    await recordProviderErrorLog([
+      payloadFor(
+        "messenger",
+        {
+          message: "(#190 - 460) Error validating access token",
+          statusCode: 401,
+          isRetryable: false,
+        },
+        {
+          errorStack:
+            "    at sendPageMessage (/srv/app/integrations/messenger/src/x.ts:114:12)",
+        },
+      ),
+    ] as never)
+
+    expect(loggedInputs()).toEqual([
+      expect.objectContaining({
+        stackTrace:
+          "    at sendPageMessage (/srv/app/integrations/messenger/src/x.ts:114:12)",
+      }),
+    ])
+  })
+
+  // A payload written before this shipped, or one from `message-status.ts`
+  // where the failure was remote and there is no local throw at all.
+  it("logs a row with no stack when the payload carries none", async () => {
+    const recordProviderErrorLog = await load()
+
+    await recordProviderErrorLog([
+      payloadFor("messenger", { message: "boom", isRetryable: false }),
+    ] as never)
+
+    expect(loggedInputs()).toEqual([
+      expect.objectContaining({ stackTrace: undefined }),
+    ])
+  })
+
   it("skips a retryable failure so retries do not each write a row", async () => {
     const recordProviderErrorLog = await load()
 

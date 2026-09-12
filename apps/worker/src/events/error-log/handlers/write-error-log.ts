@@ -45,9 +45,14 @@ const toRow = (payload: ErrorLogPayload): ErrorLogInsert => ({
   // not recorded; what was attempted lives in `detail`.
   action: payload.provider,
   // The provider's message, raw and unredacted by explicit product decision.
-  // Never a stack: `ErrorLog` is read by workspace users.
+  // Never a stack: `ErrorLog.detail` is read by workspace users. The stack is
+  // in `stackTrace` below, which they never see.
   detail: payload.error.message,
   httpCode: payload.error.httpCode,
+  // Developer-only. Never rendered and never returned by any route — see the
+  // column doc. Rides the contact-FK retry via the spread below, like
+  // `sourceId`, and is NULL whenever the producer had no real stack.
+  stackTrace: payload.error.stackTrace ?? null,
 })
 
 const insertRow = async (row: ErrorLogInsert) => {

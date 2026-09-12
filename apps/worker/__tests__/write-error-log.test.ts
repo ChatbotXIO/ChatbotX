@@ -138,12 +138,30 @@ describe("writeErrorLogs", () => {
     ])
   })
 
-  it("persists the contact's channel-side sourceId when supplied", async () => {
+  it("persists the stack frames the producer captured", async () => {
     const writeErrorLogs = await load()
 
-    await writeErrorLogs([payload({ sourceId: "psid-9" })])
+    await writeErrorLogs([
+      payload({
+        error: {
+          message: "boom",
+          httpCode: "400",
+          stackTrace: "    at /srv/app/x.ts:1:1",
+        },
+      }),
+    ])
 
-    expect(written()).toEqual([expect.objectContaining({ sourceId: "psid-9" })])
+    expect(written()).toEqual([
+      expect.objectContaining({ stackTrace: "    at /srv/app/x.ts:1:1" }),
+    ])
+  })
+
+  it("writes stackTrace as null when the producer had no stack", async () => {
+    const writeErrorLogs = await load()
+
+    await writeErrorLogs([payload()])
+
+    expect(written()).toEqual([expect.objectContaining({ stackTrace: null })])
   })
 
   it("writes sourceId as null when the producer had none", async () => {
@@ -154,7 +172,7 @@ describe("writeErrorLogs", () => {
     expect(written()).toEqual([expect.objectContaining({ sourceId: null })])
   })
 
-  it("keeps sourceId on a row that has no contact at all", async () => {
+  it("persists the channel-side sourceId on a row with no contact at all", async () => {
     const writeErrorLogs = await load()
 
     // The creation path: `getProfile` failed before the Contact row existed,

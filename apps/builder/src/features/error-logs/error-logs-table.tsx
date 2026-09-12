@@ -1,7 +1,6 @@
 "use client"
 
 import type { listErrorLogs } from "@chatbotx.io/business/error-log"
-import type { ErrorLogModel } from "@chatbotx.io/database/types"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
@@ -12,6 +11,7 @@ import { use, useMemo, useState } from "react"
 import { DeleteErrorLogsDialog } from "./delete-error-logs"
 import { getColumns } from "./error-logs-table-columns"
 import { ErrorLogsTableToolbarActions } from "./error-logs-table-toolbar-actions"
+import type { ErrorLogResource } from "./schema"
 
 type ErrorLogsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listErrorLogs>>]>
@@ -24,7 +24,7 @@ export function ErrorLogsTable({ promises, workspaceId }: ErrorLogsTableProps) {
 
   const [{ data, pageCount }] = use(promises)
   const [rowAction, setRowAction] =
-    useState<DataTableRowAction<ErrorLogModel> | null>(null)
+    useState<DataTableRowAction<ErrorLogResource> | null>(null)
 
   const columns = useMemo(() => getColumns({ setRowAction, t }), [t])
 

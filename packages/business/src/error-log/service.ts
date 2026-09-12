@@ -13,9 +13,16 @@ import {
   type ErrorLogProvider,
   errorLogProviders,
   errorLogProvidersMatchingLabel,
+  MAX_STACK_LENGTH,
+  resolveStackFrames,
 } from "@chatbotx.io/utils/error-log"
 import { isNoRedisEnv } from "@chatbotx.io/worker-config"
 import { logger } from "../logger"
+import {
+  SORTABLE_COLUMNS,
+  type WithheldErrorLogColumn,
+  withheldErrorLogColumns,
+} from "./columns"
 
 type ListErrorLogsInput = {
   workspaceId: string
@@ -25,7 +32,14 @@ type ListErrorLogsInput = {
   keyword?: string | null
 }
 
-type ErrorLogWithContactRow = ErrorLogModel & {
+/**
+ * Mirrors what the query actually selects: `columns:
+ * withheldErrorLogColumns(false)` drops the developer-only columns, so naming
+ * the full `ErrorLogModel` here would promise callers a `stackTrace` that is
+ * always `undefined` at runtime. The builder's `ErrorLogResource` is the same
+ * shape over the wire.
+ */
+type ErrorLogWithContactRow = Omit<ErrorLogModel, WithheldErrorLogColumn> & {
   contact:
     | (ContactModel & {
         conversation: { id: string } | null
@@ -57,6 +71,22 @@ export type LogProviderErrorInput = {
   error: unknown
   /** Overrides the status derived from `error`. */
   httpCode?: string | null
+  /**
+   * Overrides the frames derived from `error` — pre-extracted with
+   * {@link resolveStackFrames} by a caller that held the real `Error` when this
+   * one does not.
+   *
+   * The terminal outbound-send path is why this exists: the emitter parses the
+   * throw into a `ParsedError` (`packages/sdk/src/lib/schemas.ts`) before it
+   * goes onto the Redis stream, so `recordProviderErrorLog` receives a plain
+   * object and could never derive a stack from it. Capturing at the emit site
+   * and forwarding the frames here is the only way that path — the densest one
+   * in the system — records where in our code the send failed.
+   *
+   * `null` stores no stack, matching `httpCode`. Re-capped here regardless of
+   * what the caller did.
+   */
+  stackTrace?: string | null
 }
 
 const numericStatus = (value: unknown): number | undefined => {
@@ -90,8 +120,32 @@ const resolveHttpCode = (input: LogProviderErrorInput): string | null => {
  */
 const MAX_DETAIL_LENGTH = 8192
 
-const truncate = (value: string): string =>
-  value.length > MAX_DETAIL_LENGTH ? value.slice(0, MAX_DETAIL_LENGTH) : value
+const truncate = (value: string, max: number): string =>
+  value.length > max ? value.slice(0, max) : value
+
+/**
+ * An explicitly supplied stack wins over one derived from `error`, on the same
+ * `!== undefined` rule as {@link resolveHttpCode} — so `null` is "no stack",
+ * not "go derive one".
+ */
+const resolveStackTrace = (
+  input: LogProviderErrorInput,
+): string | undefined => {
+  if (input.stackTrace !== undefined) {
+    return input.stackTrace === null
+      ? undefined
+      : truncate(input.stackTrace, MAX_STACK_LENGTH)
+  }
+  return resolveStackFrames(input.error)
+}
+
+/**
+ * What `detail` says when the throw carries no readable message. `String()` on
+ * a plain object yields `"[object Object]"`, which is worse than useless in a
+ * workspace-facing column — it looks like a bug in us rather than a failure at
+ * the provider, and it tells the reader nothing the empty string would not.
+ */
+const UNKNOWN_ERROR_DETAIL = "An unknown error occurred"
 
 const resolveMessage = (error: unknown): string => {
   if (error instanceof Error) {
@@ -105,8 +159,16 @@ const resolveMessage = (error: unknown): string => {
     if (typeof message === "string" && message.length > 0) {
       return message
     }
+    // Deliberately shallow: `resolveHttpCode` reads `statusCode` /
+    // `httpStatusCode` off the top level and does not walk `response` either,
+    // so `detail` and `httpCode` agree on how deep an error shape is read. A
+    // provider whose SDK buries the message (axios's `response.data.message`)
+    // belongs in `numericStatus`/here together, not in one of them.
+    return UNKNOWN_ERROR_DETAIL
   }
-  return String(error)
+  return error === undefined || error === null
+    ? UNKNOWN_ERROR_DETAIL
+    : String(error)
 }
 
 const toEntry = (input: LogProviderErrorInput): ErrorLogRecordedPayload => ({
@@ -118,15 +180,16 @@ const toEntry = (input: LogProviderErrorInput): ErrorLogRecordedPayload => ({
   provider: input.provider,
   contactId: input.contactId ?? undefined,
   sourceId: input.sourceId ?? undefined,
-  // Only the provider's own message. `ErrorLog` is workspace-facing (the
-  // builder table plus the workspace-token API), so the thrown value's stack
-  // is deliberately dropped here: it leaks absolute server paths and our
-  // internal call chain to end users, and adds nothing they can act on. The
-  // full error, stack included, is still written to the app logger by the
-  // `catch` block that calls this.
+  // `detail` is the provider's own message and nothing else. The stack goes to
+  // `stackTrace`, which is developer-only: `ErrorLog` is workspace-facing (the
+  // builder table plus the workspace-token API), and a stack leaks absolute
+  // server paths and our internal call chain, so it is withheld from every
+  // read surface and must be read from the database directly. The full error
+  // is still written to the app logger by the `catch` block that calls this.
   error: {
-    message: truncate(resolveMessage(input.error)),
+    message: truncate(resolveMessage(input.error), MAX_DETAIL_LENGTH),
     httpCode: resolveHttpCode(input),
+    stackTrace: resolveStackTrace(input),
   },
 })
 
@@ -312,13 +375,28 @@ export const listErrorLogs = async (
   }
 
   const pagination = getPaginationWithDefaults(input)
-  const orderBy = parseOrderByAsObject(errorLogModel, input)
+
+  const requestedOrderBy = parseOrderByAsObject(
+    errorLogModel,
+    input,
+    SORTABLE_COLUMNS,
+  )
+  // Falls back to a deterministic order when every requested sort was rejected,
+  // so paging cannot go unstable on a withheld column.
+  const orderBy =
+    Object.keys(requestedOrderBy).length > 0
+      ? requestedOrderBy
+      : { createdAt: "desc" as const }
 
   const [data, totalRows] = await Promise.all([
     db.query.errorLogModel.findMany({
       where,
       ...pagination,
       orderBy,
+      // Exclude-mode selection, from the one list on `./columns`: the withheld
+      // columns are developer-only and must not cross the network, so they are
+      // never SELECTed in the first place.
+      columns: withheldErrorLogColumns(false),
       with: {
         contact: {
           with: {

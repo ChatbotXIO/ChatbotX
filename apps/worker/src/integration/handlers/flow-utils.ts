@@ -1,3 +1,4 @@
+import { logProviderError } from "@chatbotx.io/business/error-log"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -13,6 +14,7 @@ import {
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import type { CommentAnchor, Variables } from "@chatbotx.io/sdk"
+import type { ErrorLogProvider } from "@chatbotx.io/utils/error-log"
 import {
   type BotResponseTrackingContext,
   ChatJobAction,
@@ -155,3 +157,32 @@ export async function enqueueFlowStepMessage(
     stepId: data.step.id,
   })
 }
+
+/**
+ * Record a third-party failure from inside a flow step's `catch`.
+ *
+ * Every single-provider step handler attributes a failure identically — the
+ * workspace and contact off `conversation`, the contact's channel-side id off
+ * `contactInbox`, both already on `ExecuteStepProps` — so the object was
+ * hand-copied into a dozen catch blocks, and each new attribution column meant
+ * editing all of them with no compiler help for the one that got missed.
+ *
+ * Takes the props slice rather than the two models so a call site passes the
+ * `props` it already holds. `spreadsheet-handler.ts` keeps a thin local wrapper
+ * over this because it also pins the provider across its five catch sites.
+ */
+export const logStepProviderError = (
+  provider: ErrorLogProvider,
+  props: {
+    conversation: Pick<ConversationModel, "workspaceId" | "contactId">
+    contactInbox: Pick<ContactInboxModel, "sourceId">
+  },
+  error: unknown,
+): Promise<void> =>
+  logProviderError({
+    provider,
+    workspaceId: props.conversation.workspaceId,
+    contactId: props.conversation.contactId,
+    sourceId: props.contactInbox.sourceId,
+    error,
+  })

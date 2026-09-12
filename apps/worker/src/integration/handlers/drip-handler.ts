@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto"
 import { buildContext, integrationDripService } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import { systemFieldTypes } from "@chatbotx.io/database/partials"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { DripSubscribeSubscriberSchema } from "@chatbotx.io/flow-config"
@@ -15,6 +14,7 @@ import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
 import { getContactFieldMap } from "./contact-field-map"
 import type { ExecuteStepProps } from "./flow"
+import { logStepProviderError } from "./flow-utils"
 import type { ExecuteStepResult } from "./step"
 
 export const DRIP_LOCK_TIMEOUT_SECONDS = 30
@@ -35,7 +35,7 @@ const splitFullName = (fullName: string) => {
 export const subscribeDripSubscriber = async (
   props: ExecuteStepProps<DripSubscribeSubscriberSchema>,
 ): Promise<ExecuteStepResult> => {
-  const { conversation, contactInbox, step } = props
+  const { conversation, step } = props
   const logContext = {
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
@@ -124,13 +124,7 @@ export const subscribeDripSubscriber = async (
       { ...logContext, error: normalized },
       "Drip sync-subscriber step failed",
     )
-    await logProviderError({
-      provider: "drip",
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      sourceId: contactInbox.sourceId,
-      error,
-    })
+    await logStepProviderError("drip", props, error)
     return {
       status: "error",
       errorMessage: normalized.message,

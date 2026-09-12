@@ -1,7 +1,6 @@
 import { aiTimeouts } from "@chatbotx.io/ai"
 import { aiContextService } from "@chatbotx.io/ai/server"
 import { aiAgentService } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import {
   type AIAgentModelConfig,
@@ -13,6 +12,7 @@ import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { saveResultToCustomField } from "../../utils/contact"
 import type { ExecuteStepProps } from "../flow"
+import { logStepProviderError } from "../flow-utils"
 import { runAIAgentRunner } from "../shared/ai-agent-runner"
 import { aiErrorLogProvider } from "../shared/ai-error-log-provider"
 import type { ExecuteStepResult } from "../step"
@@ -129,13 +129,11 @@ export async function handleAIGenerateTextAgent({
     if (isMessageStorageError(err)) {
       throw err
     }
-    await logProviderError({
-      provider: aiErrorLogProvider(step.provider),
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      sourceId: contactInbox.sourceId,
-      error: err,
-    })
+    await logStepProviderError(
+      aiErrorLogProvider(step.provider),
+      { conversation, contactInbox },
+      err,
+    )
     return { status: "error", errorMessage: error.message, result: null }
   } finally {
     clearTimeout(timeoutId)

@@ -334,6 +334,44 @@ describe("chat send-message handlers", () => {
     })
   })
 
+  // `errorData` is whatever `parseSdkError` produced and carries no stack, so
+  // unless the frames are captured here — while the thrown value is still in
+  // hand — `ErrorLog.stackTrace` is NULL for every outbound send failure, the
+  // densest write path in the system.
+  test("emits the thrown error's stack frames alongside the failure", async () => {
+    const error = new ChannelError(
+      "expired human agent window",
+      ChannelErrorCategory.PAYLOAD_INVALID,
+      { code: "messenger_human_agent_window_expired" },
+    )
+    mockRunChannelHandler.mockRejectedValueOnce(error)
+
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        text: "hello",
+        createdAt: new Date("2026-07-09T08:37:21.108Z"),
+      } as never,
+    })
+
+    const failed = mockEmit.mock.calls.find(
+      (call: unknown[]) => call[0] === "message:failed",
+    )
+    const errorStack = (failed?.[1] as { errorStack?: string }).errorStack
+
+    expect(errorStack).toEqual(expect.stringContaining("    at "))
+    // Frames only: the message lives in `errorData`, not stored twice.
+    expect(errorStack).not.toContain("expired human agent window")
+  })
+
   test("does not throw non-retryable ChannelError after emitting failure", async () => {
     const error = new ChannelError(
       "expired human agent window",

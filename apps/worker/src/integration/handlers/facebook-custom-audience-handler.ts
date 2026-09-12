@@ -5,7 +5,6 @@ import {
   messengerIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { FacebookCustomAudienceSchema } from "@chatbotx.io/flow-config"
 import {
@@ -18,6 +17,7 @@ import {
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
+import { logStepProviderError } from "./flow-utils"
 
 // Fire-and-forget: the step never branches, so a failure is logged and the flow
 // continues to the next step (implicit success). See the "log and continue"
@@ -103,12 +103,6 @@ export const handleFacebookCustomAudience = async (
       { ...logContext, err: normalizeError(error) },
       "Facebook custom audience step failed",
     )
-    await logProviderError({
-      provider: "facebook-ads",
-      workspaceId,
-      contactId: conversation.contactId,
-      sourceId: contactInbox.sourceId,
-      error,
-    })
+    await logStepProviderError("facebook-ads", props, error)
   }
 }

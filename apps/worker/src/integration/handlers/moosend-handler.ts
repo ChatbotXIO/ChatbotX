@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto"
 import { buildContext, integrationMoosendService } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { MoosendCreateContactSchema } from "@chatbotx.io/flow-config"
 import {
@@ -15,6 +14,7 @@ import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
 import { getContactFieldMap } from "./contact-field-map"
 import type { ExecuteStepProps } from "./flow"
+import { logStepProviderError } from "./flow-utils"
 import {
   acquireMoosendSubscribePermit,
   MoosendRateLimitError,
@@ -50,7 +50,7 @@ export class MoosendContactValidationError extends Error {
 export const addOrUpdateMoosendContact = async (
   props: ExecuteStepProps<MoosendCreateContactSchema>,
 ): Promise<ExecuteStepResult> => {
-  const { conversation, contactInbox, step } = props
+  const { conversation, step } = props
   const logContext = {
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
@@ -122,13 +122,7 @@ export const addOrUpdateMoosendContact = async (
       { ...logContext, ...provider, err: normalized },
       "Moosend contact sync failed",
     )
-    await logProviderError({
-      provider: "moosend",
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      sourceId: contactInbox.sourceId,
-      error,
-    })
+    await logStepProviderError("moosend", props, error)
     return { status: "error", result: null, errorMessage: normalized.message }
   }
 }

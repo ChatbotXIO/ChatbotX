@@ -48,6 +48,7 @@ import {
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
 import { resolveContactVariablesDeep } from "@chatbotx.io/variables"
 import type {
   ChatJobSendChatMessage,
@@ -804,6 +805,9 @@ export async function sendFlowStep({
         flowId,
       },
       errorData: parsedError,
+      // Captured here while the throw is still in hand: `errorData` is a
+      // stackless `ParsedError`, so `ErrorLog.stackTrace` has no other source.
+      errorStack: resolveStackFrames(error),
       occurredAt: new Date(),
       // Always terminal: this catch swallows the error rather than rethrowing,
       // so the step's BullMQ job completes and nothing re-attempts the send.

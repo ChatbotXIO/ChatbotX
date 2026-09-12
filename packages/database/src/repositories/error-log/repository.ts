@@ -11,6 +11,11 @@ export type ErrorLogInsert = {
    * than optional so the writer's `toRow` cannot quietly omit it.
    */
   sourceId: string | null
+  /**
+   * Stack frames, or `null`. Required rather than optional so the writer's
+   * `toRow` cannot quietly omit it — same reasoning as `sourceId` above.
+   */
+  stackTrace: string | null
   action: string
   detail: string
   httpCode: string | null

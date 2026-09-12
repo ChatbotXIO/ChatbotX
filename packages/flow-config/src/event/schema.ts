@@ -87,6 +87,21 @@ export const sentPayloadSchema = baseMessagePayloadSchema.extend({})
 export const failedPayloadSchema = baseMessagePayloadSchema.extend({
   errorData: z.unknown(),
   /**
+   * Stack frames of the value that was actually thrown, captured at the emit
+   * site with `resolveStackFrames` and destined for `ErrorLog.stackTrace`.
+   *
+   * It rides beside `errorData` rather than inside it because `errorData` is
+   * whatever `parseSdkError` produced — a `ParsedError`, which has no `stack`
+   * and is also what the provider-facing shape is validated against. By the
+   * time `recordProviderErrorLog` reads this payload the `Error` is long gone,
+   * so a stack it did not carry can never be recovered.
+   *
+   * Optional: emitters with no local throw (a provider's async delivery status)
+   * leave it unset, as do in-flight payloads written before this shipped.
+   * `JSON.stringify` drops `undefined` keys, so absent must mean absent.
+   */
+  errorStack: z.string().optional(),
+  /**
    * Whether another `message:failed` for this same send is still to come — a
    * BullMQ attempt still in hand, or a caller that catches and re-emits.
    *

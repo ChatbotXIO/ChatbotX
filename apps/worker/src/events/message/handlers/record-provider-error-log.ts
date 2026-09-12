@@ -103,6 +103,10 @@ const toEligibleFailure = (
       // Documented on `eventContextSchema.sourceId`.
       sourceId: payload.context.sourceId,
       error: payload.errorData,
+      // Derivation is impossible here — `errorData` is a `ParsedError` off the
+      // stream, never an `Error` — so the emit site's capture is the only stack
+      // this path will ever have. Absent stays absent (no local throw).
+      stackTrace: payload.errorStack,
       httpCode: statusCode === undefined ? undefined : String(statusCode),
     },
   }

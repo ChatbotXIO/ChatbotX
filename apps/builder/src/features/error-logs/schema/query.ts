@@ -1,3 +1,4 @@
+import { withheldErrorLogColumns } from "@chatbotx.io/business/error-log-columns"
 import type { ErrorLogModel } from "@chatbotx.io/database/types"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
@@ -26,9 +27,13 @@ export const listErrorLogsRequest = basePaginationRequest.extend({
 
 export type ListErrorLogsRequest = z.infer<typeof listErrorLogsRequest>
 
+// The withheld columns are kept out of the internal route too, not just the
+// public one: the query never selects them (see `queries/index.ts`) and none is
+// sortable. The list of them lives on `./columns`, so this omission and the
+// query's projection cannot drift apart.
 export const listErrorLogsResponse = z.object({
   data: z.array(
-    errorLogResource.and(
+    errorLogResource.omit(withheldErrorLogColumns(true)).and(
       z.object({
         contact: contactResource
           .and(

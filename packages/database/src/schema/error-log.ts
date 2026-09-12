@@ -46,6 +46,29 @@ export const errorLogModel = pgTable(
      * settled.
      */
     sourceId: text(),
+    /**
+     * The frame lines of the thrown value's stack, message prefix stripped and
+     * capped at 2048 characters. `NULL` whenever no real stack existed: the
+     * thrown value was not an `Error`, or its `stack` carried no frames.
+     *
+     * The producer derives the frames from the value it was handed, so a path
+     * that parses its throw away before logging must capture them itself and
+     * pass them in — the outbound-send path does exactly that, emitting
+     * `errorStack` on `message:failed` because `recordProviderErrorLog` later
+     * sees only a stackless `ParsedError` off a Redis stream. A provider's
+     * async delivery-status callback still writes `NULL` here: the send left
+     * this worker long ago and no stack in this process points at it.
+     *
+     * Developer-only, and withheld more strictly than `sourceId`: it is never
+     * SELECTed by the builder's list query, omitted from both the internal and
+     * the public response schemas, and not sortable. It leaks absolute server
+     * paths and our internal call chain, so it must never reach a workspace
+     * user — read it from the database directly.
+     *
+     * No index: write-only. Anything that starts reading it needs one, and has
+     * to re-answer the exposure question this comment settles.
+     */
+    stackTrace: text(),
   },
   (table) => [
     // Serves the workspace error-log list: filter by workspace, newest first.

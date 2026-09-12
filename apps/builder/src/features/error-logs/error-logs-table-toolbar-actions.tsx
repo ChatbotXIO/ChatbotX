@@ -1,12 +1,12 @@
 "use client"
 
-import type { ErrorLogModel } from "@chatbotx.io/database/types"
 import type { Table } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import { DeleteErrorLogsDialog } from "./delete-error-logs"
+import type { ErrorLogResource } from "./schema"
 
 type ErrorLogsTableToolbarActionsProps = {
-  table: Table<ErrorLogModel>
+  table: Table<ErrorLogResource>
   workspaceId: string
 }
 

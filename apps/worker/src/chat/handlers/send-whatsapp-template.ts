@@ -28,6 +28,7 @@ import {
   shouldAddressBySourceUserId,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
 import { contactVariableService } from "@chatbotx.io/variables"
 import type {
   BotResponseTrackingContext,
@@ -414,6 +415,9 @@ export async function processWhatsappTemplate(
         flowId: flow?.id || "",
       },
       errorData,
+      // Captured here while the throw is still in hand: `errorData` is a
+      // stackless `ParsedError`, so `ErrorLog.stackTrace` has no other source.
+      errorStack: resolveStackFrames(error),
       occurredAt: new Date(),
       willRetry: willSendRetry({
         error,
@@ -481,6 +485,7 @@ export async function sendWhatsappTemplateMessage(
         ...eventLogData,
         action: { messageId: "", flowId: "" },
         errorData: await parseSdkError(error),
+        errorStack: resolveStackFrames(error),
         occurredAt: new Date(),
         willRetry: willSendRetry({
           error,

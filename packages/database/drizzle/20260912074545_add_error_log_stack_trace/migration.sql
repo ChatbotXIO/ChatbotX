@@ -1,0 +1,1 @@
+ALTER TABLE "ErrorLog" ADD COLUMN "stackTrace" text;

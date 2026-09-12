@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto"
 import { buildContext, integrationSendGridService } from "@chatbotx.io/business"
-import { logProviderError } from "@chatbotx.io/business/error-log"
 import { systemFieldTypes } from "@chatbotx.io/database/partials"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { SendGridAddContactSchema } from "@chatbotx.io/flow-config"
@@ -15,6 +14,7 @@ import { z } from "zod"
 import { logger } from "../../lib/logger"
 import { getContactFieldMap } from "./contact-field-map"
 import type { ExecuteStepProps } from "./flow"
+import { logStepProviderError } from "./flow-utils"
 import type { ExecuteStepResult } from "./step"
 
 const WHITESPACE_PATTERN = /\s+/
@@ -54,7 +54,7 @@ const splitFullName = (fullName: string) => {
 export const addSendGridContact = async (
   props: ExecuteStepProps<SendGridAddContactSchema>,
 ): Promise<ExecuteStepResult> => {
-  const { conversation, contactInbox, step } = props
+  const { conversation, step } = props
   const logContext = {
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
@@ -215,13 +215,7 @@ export const addSendGridContact = async (
       },
       "SendGrid add-contact step failed",
     )
-    await logProviderError({
-      provider: "sendgrid",
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      sourceId: contactInbox.sourceId,
-      error,
-    })
+    await logStepProviderError("sendgrid", props, error)
     return { status: "error", errorMessage: normalized.message, result: null }
   }
 }

@@ -154,3 +154,61 @@ export function errorLogProvidersMatchingLabel(
     .filter(([, label]) => label.toLowerCase().includes(needle))
     .map(([provider]) => provider as ErrorLogProvider)
 }
+
+/**
+ * Frames only — 2048 characters is roughly 20 of them, and Node's default
+ * `Error.stackTraceLimit` is 10, so a typical stack is stored whole. The cap
+ * guards the `events:error-log` stream's byte budget (see
+ * `packages/event-bus/src/error-log/event-bus.ts`) against a raised limit or
+ * pathologically long paths.
+ */
+export const MAX_STACK_LENGTH = 2048
+
+/** A frame line: indentation, then `at `. Line-anchored, so `\n` is not part of it. */
+const STACK_FRAME_LINE = /^[ \t]+at /m
+
+/**
+ * The frame lines of `error.stack`, without the `"<Name>: <message>"` prefix,
+ * capped at {@link MAX_STACK_LENGTH}. Destined for `ErrorLog.stackTrace`.
+ *
+ * The prefix is dropped rather than truncated along with the rest: a provider
+ * that embeds a response body into `message` would otherwise fill the whole
+ * budget and leave no frames at all — the same pathology the `detail` cap
+ * exists for. The message is already stored in `detail`.
+ *
+ * `undefined` when the value is not an `Error`, or when its stack carries no
+ * frames, so a NULL column always means "no stack was available here".
+ *
+ * Lives here rather than in `business/error-log` so the worker's `chat`
+ * handlers can capture frames inside their own `catch` — before `parseSdkError`
+ * turns the throw into a stackless `ParsedError` for the `message:failed`
+ * payload — without pulling the error-log service (and its event-bus and Redis
+ * dependencies) into a send path. Same reasoning as `errorLogProviders` above.
+ */
+export function resolveStackFrames(error: unknown): string | undefined {
+  if (!(error instanceof Error) || typeof error.stack !== "string") {
+    return
+  }
+  const { message, stack } = error
+  // Frames are searched for *after* the message, not from the start of `stack`:
+  // a wrapped error built as `new Error(`Failed: ${inner.stack}`)` — or any
+  // provider message that quotes a stack — carries frame-shaped lines inside
+  // its own message, and matching one of those would store message text as
+  // frames and push the real throw site past `MAX_STACK_LENGTH`.
+  //
+  // `indexOf` rather than a fixed `"<Name>: "` prefix length because `name` may
+  // have been reassigned; -1 (a `stack` that does not embed its own message —
+  // a non-V8 runtime, or a hand-set `stack`) falls back to searching the whole
+  // string, which is what a frames-only `stack` needs anyway.
+  const messageEnd = message.length > 0 ? stack.indexOf(message) : -1
+  const searchFrom = messageEnd === -1 ? 0 : messageEnd + message.length
+  const frameStart = stack.slice(searchFrom).search(STACK_FRAME_LINE)
+  if (frameStart === -1) {
+    return
+  }
+  // The match is line-anchored, so this keeps the first frame's indentation.
+  return stack.slice(
+    searchFrom + frameStart,
+    searchFrom + frameStart + MAX_STACK_LENGTH,
+  )
+}
