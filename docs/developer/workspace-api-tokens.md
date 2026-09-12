@@ -344,6 +344,14 @@ Two invariants specific to this scope:
   of `integrationWebchatService.update`/`.create` gets this for free and
   must not re-implement it upstream.
 
+- **Minigames** — this scope shipped in the enum/registry/i18n alongside
+  `ads` but, like `ads`, carried no endpoints for a while. It now
+  publishes minigame CRUD, enable/disable, and per-contact play-history
+  reads — also its first endpoints. As with every other scope, each
+  public handler calls the same `packages/business` service method the
+  private/action code calls; no business logic was duplicated to publish
+  these.
+
 ### Ads scope — endpoint-to-scope table
 
 `ads` shipped in the enum/registry/i18n from day one (alongside `channels`,

@@ -1319,6 +1319,41 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "minigames.create",
+    "path": "/v1/minigames",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "minigames.delete",
+    "path": "/v1/minigames/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "minigames.get",
+    "path": "/v1/minigames/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "minigames.list",
+    "path": "/v1/minigames",
+  },
+  {
+    "method": "GET",
+    "operationId": "minigames.listPlays",
+    "path": "/v1/minigames/{id}/plays",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "minigames.setEnabled",
+    "path": "/v1/minigames/{id}/enabled",
+  },
+  {
+    "method": "PUT",
+    "operationId": "minigames.update",
+    "path": "/v1/minigames/{id}",
+  },
+  {
+    "method": "POST",
     "operationId": "productCategories.create",
     "path": "/v1/product-categories",
   },
