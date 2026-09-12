@@ -125,6 +125,8 @@ export type IncomingMessage = {
     | MessageTemplateEntity
     | MessageWhatsappFlowResponseEntity
     | MessageStoryReplyEntity
+    | MessageWhatsappCallEntity
+    | MessageWhatsappCallPermissionReplyEntity
     | { [x: string]: unknown }
   attachments?: IncomingAttachment[]
   clientId?: string | null
@@ -153,6 +155,56 @@ export type MessageStoryReplyEntity = {
 }
 
 /**
+ * Carried on the call-activity message written into a conversation when a
+ * WhatsApp Business call terminates, so the inbox can render a localized
+ * "Voice call" / "Missed voice call" row instead of raw text. `status` is the
+ * terminal call status; a `failed` user-initiated call renders as missed.
+ */
+export type MessageWhatsappCallEntity = {
+  type: "whatsapp_call"
+  direction: "userInitiated" | "businessInitiated"
+  status: "completed" | "failed" | "rejected"
+  durationSeconds?: number
+}
+
+/**
+ * Carried on the message written when a contact answers a business-calling
+ * permission request (`interactive.type: "call_permission_reply"`). The
+ * worker persists the grant state from it and the inbox renders a localized
+ * label.
+ */
+export type MessageWhatsappCallPermissionReplyEntity = {
+  type: "whatsapp_call_permission_reply"
+  response: "accept" | "reject"
+  isPermanent?: boolean
+  /** Unix seconds; absent for permanent grants. */
+  expirationTimestamp?: number
+  responseSource?: string
+}
+
+/**
+ * Marks an outgoing message as a business-calling permission request. The
+ * WhatsApp send handler renders it as the `call_permission_request`
+ * interactive (with the message text as body) instead of a plain text.
+ */
+export type MessageWhatsappCallPermissionRequestEntity = {
+  type: "whatsapp_call_permission_request"
+}
+
+/** Shape-checked accessor for {@link MessageWhatsappCallPermissionRequestEntity}. */
+export const getWhatsappCallPermissionRequest = (
+  contentAttributes: unknown,
+): MessageWhatsappCallPermissionRequestEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string }
+  return attrs.type === "whatsapp_call_permission_request"
+    ? (contentAttributes as MessageWhatsappCallPermissionRequestEntity)
+    : undefined
+}
+
+/**
  * Extracts the story-reply payload from a message's contentAttributes,
  * accepting both the current `{ type: "story_reply", story }` shape and the
  * legacy `{ storyReply }` shape some already-persisted rows still carry.
@@ -171,6 +223,37 @@ export const getStoryReply = (
     storyReply?: MessageStoryReplyEntity["story"]
   }
   return attrs.type === "story_reply" ? attrs.story : attrs.storyReply
+}
+
+/**
+ * Extracts the WhatsApp call payload from a message's contentAttributes.
+ * Centralized so the worker (which writes it) and the inbox renderer (which
+ * localizes it) cannot drift on the shape check.
+ */
+export const getWhatsappCallEntity = (
+  contentAttributes: unknown,
+): MessageWhatsappCallEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string }
+  return attrs.type === "whatsapp_call"
+    ? (contentAttributes as MessageWhatsappCallEntity)
+    : undefined
+}
+
+/** Shape-checked accessor for {@link MessageWhatsappCallPermissionReplyEntity}. */
+export const getWhatsappCallPermissionReply = (
+  contentAttributes: unknown,
+): MessageWhatsappCallPermissionReplyEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string; response?: unknown }
+  return attrs.type === "whatsapp_call_permission_reply" &&
+    (attrs.response === "accept" || attrs.response === "reject")
+    ? (contentAttributes as MessageWhatsappCallPermissionReplyEntity)
+    : undefined
 }
 
 export const MessageEntitySchema = z.custom<IncomingMessage>(

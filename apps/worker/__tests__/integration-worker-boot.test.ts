@@ -3,12 +3,14 @@ import type { AdsConversionJobData } from "@chatbotx.io/worker-config"
 import { describe, expect, test, vi } from "vitest"
 
 // This test boots the real `src/integration/worker.ts` module (it starts
-// itself on import) to assert the TRUE single-queue merge: the integration
-// worker PROCESS boots exactly one BullMQ `Worker`, on the `integration`
-// queue, and the 4 ads-conversion job types route through that worker's
-// switch to the `dispatchAdsConversionJob` sub-registry — there is no
-// second Worker/queue. Every import worker.ts pulls in is mocked below so
-// this stays a fast, isolated unit test.
+// itself on import) to assert the integration worker PROCESS boots exactly
+// two BullMQ `Worker`s: the shared `integration` queue (every job type
+// except call transcription routes through its switch to the right
+// handler, including the 4 ads-conversion types via
+// `dispatchAdsConversionJob`), and a second, rate-limited `Worker` on the
+// dedicated `callTranscription` queue — no third Worker/queue.
+// Every import worker.ts pulls in is mocked below so this stays a fast,
+// isolated unit test.
 
 type CapturedWorker = {
   queueName: unknown
@@ -58,6 +60,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   queueNames: {
     enum: {
       integration: "integration",
+      callTranscription: "callTranscription",
     },
   },
 }))
@@ -68,6 +71,9 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: { ensureActive: vi.fn() },
+  withBlockedOwnerGuard: vi.fn(
+    async (_workspaceId: unknown, fn: () => Promise<unknown>) => await fn(),
+  ),
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({
@@ -80,7 +86,7 @@ vi.mock("@chatbotx.io/sdk", async (importOriginal) => ({
 }))
 
 vi.mock("../src/env", () => ({
-  env: { INTEGRATION_WORKER_CONCURRENCY: 10 },
+  env: { INTEGRATION_WORKER_CONCURRENCY: 10, CALL_TRANSCRIBE_PER_MIN: 10 },
 }))
 
 vi.mock("../src/lib/bootstrap", () => ({
@@ -190,25 +196,35 @@ vi.mock("../src/integration/utils/message", () => ({
 }))
 
 // Importing the worker module boots it exactly once (ESM module cache) —
-// the single `new Worker(...)` call happens as a side effect of this
-// import, so it must happen once, before any assertions, rather than
-// per-test.
+// the two `new Worker(...)` calls happen as a side effect of this import,
+// so they must happen once, before any assertions, rather than per-test.
 await import("../src/integration/worker")
 await vi.waitFor(() => {
-  expect(workerState.capturedWorkers).toHaveLength(1)
+  expect(workerState.capturedWorkers).toHaveLength(2)
 })
 
-describe("integration worker process boot (single shared queue)", () => {
-  test("boots exactly one Worker, on the integration queue", () => {
-    expect(workerState.capturedWorkers).toHaveLength(1)
+describe("integration worker process boot", () => {
+  test("boots exactly two Workers: the shared integration queue and the dedicated callTranscription queue", () => {
+    expect(workerState.capturedWorkers).toHaveLength(2)
     expect(workerState.capturedWorkers[0]?.queueName).toBe("integration")
+    expect(workerState.capturedWorkers[1]?.queueName).toBe("callTranscription")
   })
 
-  test("keeps the env-tunable concurrency and long coexist lock", () => {
+  test("keeps the env-tunable concurrency and long coexist lock on the integration worker", () => {
     const [integrationWorker] = workerState.capturedWorkers
 
     expect(integrationWorker?.options.concurrency).toBe(10)
     expect(integrationWorker?.options.lockDuration).toBe(10 * 60 * 1000)
+  })
+
+  test("the callTranscription worker carries the CALL_TRANSCRIBE_PER_MIN limiter", () => {
+    const [, transcriptionWorker] = workerState.capturedWorkers
+
+    expect(transcriptionWorker?.options.limiter).toEqual({
+      max: 10,
+      duration: 60_000,
+    })
+    expect(transcriptionWorker?.options.concurrency).toBe(1)
   })
 })
 

@@ -22,3 +22,21 @@ export const whatsappRegistrationStatuses = z.enum([
 export type WhatsappRegistrationStatus = z.infer<
   typeof whatsappRegistrationStatuses
 >
+
+/**
+ * Per-number FreeSWITCH SIP provisioning state machine (WhatsApp calling on
+ * FreeSWITCH): `none` → `provisioning` (lease claimed) →
+ * `provisioned` (Meta SIP credentials stored, gateway created) → `enabled`
+ * (Meta `sip.status: ENABLED` written back) or `failed`. The allowed
+ * transitions themselves (`SIP_PROVISIONING_TRANSITIONS`) live in
+ * `packages/business` — this enum only fixes the value set the column can
+ * hold.
+ */
+export const sipProvisioningStatuses = z.enum([
+  "none",
+  "provisioning",
+  "provisioned",
+  "enabled",
+  "failed",
+])
+export type SipProvisioningStatus = z.infer<typeof sipProvisioningStatuses>

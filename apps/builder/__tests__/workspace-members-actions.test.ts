@@ -14,6 +14,7 @@ const {
   mockInvalidateCacheByTags,
   mockIsCommunity,
   mockQuotaHasReachedLimit,
+  mockRevokeSoftphoneCredentials,
   mockUpdateReturning,
   mockUpdateSet,
   mockUserFindFirst,
@@ -45,6 +46,7 @@ const {
     mockInvalidateCacheByTags: vi.fn(),
     mockIsCommunity: vi.fn(),
     mockQuotaHasReachedLimit: vi.fn(),
+    mockRevokeSoftphoneCredentials: vi.fn(),
     mockUpdateReturning,
     mockUpdateSet,
     mockUpdateWhere,
@@ -83,6 +85,9 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   workspaceService: {
     findById: mockWorkspaceFindById,
+  },
+  softphoneCredentialService: {
+    revokeCredentials: mockRevokeSoftphoneCredentials,
   },
 }))
 

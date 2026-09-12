@@ -25,6 +25,7 @@
     "./error-log": "./src/error-log.ts",
     "./id": "./src/id.ts",
     "./meta-capi": "./src/meta-capi.ts",
+    "./node-crypto": "./src/node-crypto.ts",
     "./temporal-input": "./src/temporal-input/index.ts",
     "./variables": "./src/variables.ts",
     "./zod": "./src/zod.ts"

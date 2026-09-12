@@ -834,6 +834,7 @@ export const connectWhatsappAction = authActionClient
           phoneNumber,
           businessId,
           isManual,
+          manualAppSecret: parsedInput.manualAppSecret,
         })
 
         if (!isManual) {

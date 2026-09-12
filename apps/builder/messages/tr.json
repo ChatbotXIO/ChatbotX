@@ -716,6 +716,58 @@
       "button": "Tüm izinleri yenile",
       "resultSuccess": "{refreshed} kanal yenilendi.",
       "resultWithFailures": "{refreshed} kanal yenilendi, {failed} başarısız oldu."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Geçmiş senkronizasyonu başlatılıyor…",
+        "done": "Geçmiş senkronizasyonu başlatıldı",
+        "failed": "Geçmiş senkronizasyonu başarısız oldu"
+      },
+      "selectAll": "Tümünü seç",
+      "selected": "{count}/{max} seçildi",
+      "dialogTitleRunning": "{count} {feature} bağlanıyor…",
+      "dialogTitleDone": "{total} içinden {connected} bağlandı",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{total} içinden {done} tamamlandı",
+      "status": {
+        "waiting": "Bekliyor",
+        "connecting": "Bağlanıyor…",
+        "connected": "Bağlandı",
+        "duplicated": "Zaten bağlı",
+        "limitReached": "Sınıra ulaşıldı",
+        "failed": "Başarısız",
+        "timedOut": "Zaman aşımına uğradı",
+        "cancelled": "İptal edildi"
+      },
+      "reason": {
+        "notSelectable": "Bu öğe seçilemez.",
+        "channelLimit": "Kanal sınırına ulaşıldı.",
+        "workspaceLimit": "Çalışma alanı sınırına ulaşıldı.",
+        "providerRejected": "Sağlayıcı bu isteği reddetti.",
+        "unknown": "Bir şeyler ters gitti.",
+        "followUpFailed": "Kurulum tamamlanmadı — kanal ayarlarından tamamlayın."
+      },
+      "sessionError": {
+        "sessionExpired": "Oturumunuzun süresi doldu. Lütfen yeniden bağlanın.",
+        "notMember": "Artık bu çalışma alanının üyesi değilsiniz.",
+        "trialExpired": "Deneme süreniz sona erdi.",
+        "macLimitReached": "Hesap sınırınıza ulaştınız.",
+        "credentialMissing": "Kimlik bilgileri eksik. Lütfen yeniden bağlanın."
+      },
+      "cancelRemaining": "Kalanları iptal et",
+      "retryFailed": "Başarısız olanları yeniden dene ({count})",
+      "retry": "Yeniden dene",
+      "goToChannels": "Kanallara git",
+      "close": "Kapat",
+      "leaveNotice": "Ayrılabilirsiniz; bağlı hesaplar korunur",
+      "stepConnecting": "Bağlanıyor",
+      "stepCoexist": "Geçmişi senkronize et",
+      "validation": {
+        "min": "En az 1 seçin",
+        "max": "En fazla {max} seçebilirsiniz",
+        "duplicate": "Yinelenen seçim"
+      },
+      "progressLabel": "İlerleme"
     }
   },
   "workspace": {
@@ -747,6 +799,17 @@
       "pendingBlockedToast": "Bu çalışma alanının silinmesi planlandı. Erişimi geri yüklemek için bir çalışma alanı yöneticisiyle iletişime geçin.",
       "navDisabledTooltip": "Çalışma alanı silme işlemi planlıyken kullanılamaz",
       "badge": "Silme planlandı"
+    },
+    "supportAccess": {
+      "bannerTitle": "Platform destek oturumu",
+      "bannerDescription": "Bir platform destek temsilcisinin bu çalışma alanına {time} tarihine kadar geçici erişimi var.",
+      "cardTitle": "Platform destek erişimi",
+      "cardDescription": "Platform destek ekibinin bu çalışma alanını 7 gün boyunca tam erişimle açmasına izin verin. Bunu istediğiniz zaman kapatabilirsiniz.",
+      "enabledUntil": "{time} tarihine kadar etkin",
+      "permissionRequired": "Platform destek erişimini değiştirmek için süper yönetici olmanız gerekir.",
+      "enabledToast": "Platform destek erişimi etkinleştirildi.",
+      "disabledToast": "Platform destek erişimi devre dışı bırakıldı.",
+      "toggleError": "Bir şeyler ters gitti. Lütfen tekrar deneyin."
     }
   },
   "workspaces": {
@@ -878,6 +941,10 @@
     "accessToken": {
       "label": "Erişim Jetonu"
     },
+    "manualAppSecret": {
+      "label": "Meta Uygulama Gizli Anahtarı (isteğe bağlı)",
+      "description": "Bu manuel bağlantı için webhook imza doğrulamasını etkinleştirir. Meta Uygulaması panonuzda Ayarlar > Temel altında bulabilirsiniz."
+    },
     "botField": {
       "label": "Bot Alanı"
     },
@@ -885,7 +952,8 @@
       "label": "Temsilci"
     },
     "aiAgent": {
-      "label": "Yapay Zekâ Temsilcisi"
+      "label": "Yapay Zekâ Temsilcisi",
+      "loadError": "AI Ajanları yüklenemedi. Lütfen tekrar deneyin."
     },
     "aiQueuedMessages": {
       "label": "Kuyruğa Alınmış Yapay Zekâ Mesajları"
@@ -2188,6 +2256,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "Son arama kaydı"
+    },
+    "lastCallTranscript": {
+      "label": "Son arama transkripti"
+    },
+    "tokenPermission": {
+      "label": "İzin",
+      "full": "Tam erişim",
+      "readOnly": "Yalnızca okuma"
+    },
+    "tokenScopes": {
+      "label": "Kapsamlar",
+      "contacts": "Kişiler",
+      "inbox": "Gelen kutusu",
+      "automation": "Otomasyon",
+      "broadcasts": "Toplu mesajlar",
+      "analytics": "Analitik",
+      "ecommerce": "E-ticaret",
+      "integrations": "Entegrasyonlar",
+      "channels": "Kanallar",
+      "minigames": "Mini oyunlar",
+      "appointments": "Randevular",
+      "media": "Medya",
+      "ads": "Reklamlar"
     }
   },
   "flows": {
@@ -2328,7 +2422,9 @@
       "import": "Akışı içe aktar",
       "export": "Dışa aktar",
       "importStarted": "Akış içe aktarılıyor. Sonuçlar için içe aktarma geçmişini kontrol edin.",
-      "importJsonOnly": "Yalnızca JSON dosyaları"
+      "importJsonOnly": "Yalnızca JSON dosyaları",
+      "whatsappCallButton": "WhatsApp'ta ara",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -2440,7 +2536,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Butonlar eklendiğinde TikTok bu mesajın yalnızca ilk 40 karakterini gönderir — geri kalanı kesilir."
     },
-    "dataWasSaved": "Veriler kaydedildi"
+    "dataWasSaved": "Veriler kaydedildi",
+    "whatsappCallButton": {
+      "editButtonTitle": "Butonu Düzenle",
+      "buttonLabel": "Buton Etiketi"
+    }
   },
   "folders": {
     "heading": {
@@ -2626,7 +2726,8 @@
       "adAccountFilter": {
         "all": "Tüm reklam hesapları",
         "label": "Reklam hesabı",
-        "unavailable": "Reklam hesapları yüklenemedi — bu entegrasyonun Ads bağlantısını veya çalışma alanının Facebook Ads bağlantısını ayarlardan kontrol edin."
+        "unavailable": "Reklam hesapları yüklenemedi — bu entegrasyonun Ads bağlantısını veya çalışma alanının Facebook Ads bağlantısını ayarlardan kontrol edin.",
+        "note": "Seçilen tarih aralığında dönüşümü olan ancak harcaması veya gösterimi sıfır olan reklamlar, reklam hesabına göre filtrelerken gizlenir."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -3096,7 +3197,16 @@
     "waTemplateMpmTooManySections": "Çoklu ürün butonunda en fazla 10 bölüm olabilir. Yayınlamadan önce bazı bölümleri kaldırın.",
     "waTemplateMpmTooManyProducts": "Çoklu ürün butonunda toplamda en fazla 30 ürün olabilir. Yayınlamadan önce bazı ürünleri kaldırın.",
     "waTemplateLtoExpirationRequired": "Göndermeden önce sınırlı süreli teklif için bir bitiş tarihi seçin.",
-    "waTemplateMpmIncompleteProducts": "Her bölümde en az bir seçili ürün olmalı — boş satırları silin veya onlara ürün seçin."
+    "waTemplateMpmIncompleteProducts": "Her bölümde en az bir seçili ürün olmalı — boş satırları silin veya onlara ürün seçin.",
+    "voiceCall": "Sesli arama",
+    "voiceCallDuration": "Sesli arama · {duration}",
+    "missedVoiceCall": "Cevapsız sesli arama",
+    "declinedVoiceCall": "Reddedilen sesli arama",
+    "acceptedCallPermission": "Arama izni isteğini kabul etti",
+    "declinedCallPermission": "Arama izni isteğini reddetti",
+    "sendHumanAgentTag": "HUMAN_AGENT etiketiyle bir mesaj gönder",
+    "warning": "Uyarı!",
+    "humanAgentWarningDescription": "Bir kullanıcının mesajına, sorunun 24 saat içinde makul şekilde çözülemediği durumlarda 7 gün içinde yanıt verebilirsiniz. Örnekler arasında hafta sonları, tatiller veya tamamlanması bir günden fazla süren durumlar yer alır. Bu seçeneği başka herhangi bir nedenle kullanmayın; aksi takdirde Facebook Sayfanız veya Instagram hesabınız risk altına girebilir. Emin değilseniz devam etmeyin."
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",
@@ -3108,6 +3218,12 @@
     "tabs": {
       "generalSettings": "Genel Ayarlar",
       "conversionsApi": "Reklam Optimizasyonu"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Instagram hesabı bulunamadı",
+      "noAccountsDescription": "Yönettiğiniz Facebook Sayfalarında Instagram İşletme hesabı bulunamadı. Instagram'ı yeniden bağlayın ve istenen tüm izinleri verin.",
+      "alreadyConnectedNote": "Bu hesap zaten bağlı",
+      "tryAgain": "Yeniden bağlanmayı deneyin"
     }
   },
   "coexist": {
@@ -3369,7 +3485,8 @@
     "maxSize": "Dosya boyutu izin verilen maksimum sınırı aşıyor",
     "maxItemsReached": "Çalışma alanı başına en fazla {max} {feature} izin verilir",
     "invalidApiKey": "Geçersiz API anahtarı",
-    "maxMustBeGreaterThanMin": "{maxField}, {minField} değerinden büyük veya ona eşit olmalıdır"
+    "maxMustBeGreaterThanMin": "{maxField}, {minField} değerinden büyük veya ona eşit olmalıdır",
+    "maxCharacters": "En fazla {max} karakter."
   },
   "webchat": {
     "chatUnavailable": "Bu sohbet şu anda kullanılamıyor.",
@@ -3410,6 +3527,7 @@
       "label": "Buz Kırıcılar"
     },
     "manualConnect": "Sistem Kullanıcısı Erişim token'ı kullanarak manuel bağlan.",
+    "manualAppSecretMissingNotice": "Meta Uygulama Gizli Anahtarınızı eklemeden webhook imzaları doğrulanmaz.",
     "manualOnboarding": {
       "title": "WhatsApp gelen kutunuz hazır!",
       "description": "Meta Uygulamanızda webhook URL'sini ve doğrulama token'ını yapılandırın. Aşağıdaki değerleri kullanın.",
@@ -3417,7 +3535,8 @@
       "verifyToken": "Webhook doğrulama token'ı",
       "qrCodeHint": "Webhook URL'sini açmak için QR kodu tarayın",
       "moreSettings": "Daha fazla ayar",
-      "goToInbox": "Beni oraya götür"
+      "goToInbox": "Beni oraya götür",
+      "multipleTitle": "WhatsApp gelen kutularınız hazır!"
     },
     "phoneVerification": {
       "title": "WhatsApp telefon numarasını doğrula",
@@ -3430,7 +3549,8 @@
       "actions": {
         "sendCode": "Kodu gönder",
         "resendIn": "{seconds}sn içinde yeniden gönder",
-        "verify": "Doğrula ve kaydet"
+        "verify": "Doğrula ve kaydet",
+        "skip": "Atla"
       },
       "fields": {
         "code": {
@@ -3448,7 +3568,8 @@
         "codeNotSent": "WhatsApp doğrulama kodu gönderilemedi.",
         "codeNotVerified": "WhatsApp doğrulama kodu doğrulanamadı.",
         "registrationFailed": "WhatsApp telefon numarası doğrulaması başarısız oldu."
-      }
+      },
+      "queueProgress": "{total} içinden {current} doğrulanıyor"
     },
     "connect": {
       "errors": {
@@ -3560,7 +3681,8 @@
       "profile": "Profil",
       "usefulLinks": "Faydalı Bağlantılar",
       "conversionsApi": "Reklam Optimizasyonu",
-      "settings": "Ayarlar"
+      "settings": "Ayarlar",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "WhatsApp hesabınızı yönetin",
@@ -3696,6 +3818,82 @@
         "title": "Otomatik Olaylar",
         "description": "Bu WhatsApp numarasından dönüşüm etkinliklerini Meta’ya otomatik olarak gönderin. İzin eksikse, vermek için hesabı yeniden bağlayın."
       }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta, arama ayarları değişikliğini reddetti",
+        "bicUnavailable": "İşletme tarafından başlatılan aramalar bu ülke için kullanılamıyor",
+        "callAlreadyInProgress": "Bu kişiyle zaten devam eden bir arama var",
+        "hangupFailed": "Arama sonlandırılamadı"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta değişikliği reddetti",
+      "callContact": "WhatsApp'tan Ara",
+      "dialing": "Aranıyor…",
+      "startCall": "WhatsApp Araması Başlat",
+      "retentionLabel": "Kayıt saklama süresi (gün)",
+      "retentionHelper": "Arama kayıtlarının kalıcı olarak silinmeden önce ne kadar süreyle saklanacağı.",
+      "transcriptionLabel": "Aramaları yazıya dök",
+      "transcriptionHelper": "Bağlı yapay zeka sağlayıcınızı kullanarak kaydedilen aramaları otomatik olarak yazıya döker.",
+      "sip": {
+        "provisioningLabel": "FreeSWITCH sağlaması",
+        "provisionButton": "Sağla",
+        "deprovisionButton": "Sağlamayı Kaldır",
+        "status": {
+          "none": "Sağlanmadı",
+          "provisioning": "Sağlanıyor…",
+          "provisioned": "Sağlandı",
+          "enabled": "Etkin",
+          "failed": "Başarısız"
+        },
+        "errors": {
+          "notProvisioned": "Uygulama içi aramayı etkinleştirmeden önce bu numarayı FreeSWITCH araması için sağlayın",
+          "readBackMismatch": "Meta, SIP arama değişikliğini onaylamadı — tekrar deneyin",
+          "provisionFailed": "Bu numara FreeSWITCH araması için sağlanamadı",
+          "deprovisionFailed": "Bu numara için FreeSWITCH aramalarının sağlaması kaldırılamadı"
+        }
+      },
+      "preflight": {
+        "title": "Arama uygunluğu",
+        "appSubscriptionMissing": "Önce Meta Uygulama Panosunda bu uygulama için WhatsApp webhook'unu yapılandırın, ardından tekrar deneyin.",
+        "appSubscriptionFailed": "Uygulamanın 'calls' webhook aboneliği doğrulanamadı. Kısa süre sonra tekrar deneyin.",
+        "callsNotSubscribed": "Bu uygulama 'calls' webhook alanına abone değil, bu nedenle arama olayları ChatbotX'e ulaşamıyor (Meta hatası 138018: teknik ön koşullar karşılanmıyor — WABA'ya abone olan en az bir uygulamanın arama webhook alanına da sahip olduğundan emin olun).",
+        "fixButton": "Düzelt",
+        "fixSuccess": "Uygulama artık WhatsApp arama webhook'larına abone.",
+        "manualIntegrationNotice": "Bu numara manuel olarak bağlandı ve burada uygulama kimlik bilgisi yok. Meta Uygulama Panosunda uygulamanız için 'calls' webhook alanına abone olun.",
+        "coexistenceWarning": "Bu numara, Meta'nın aramalar için desteklemediği WhatsApp Business uygulaması birlikte kullanımını kullanıyor. Yalnızca Cloud API'ye taşıyın.",
+        "messagingLimitTooLow": "Bu numaranın mesajlaşma limiti seviyesi, Meta'nın aramalar için gerektirdiği minimumun altında."
+      }
+    },
+    "selectPage": {
+      "tryAgain": "Yeniden bağlanmayı deneyin"
     }
   },
   "zalo": {
@@ -3708,7 +3906,8 @@
       "toggleSuccess": "Etiket senkronizasyon ayarı güncellendi.",
       "enabledSince": "{date} tarihinden beri etkin",
       "disabled": "Devre dışı"
-    }
+    },
+    "refreshPermissions": "İzinleri yenile"
   },
   "telegram": {
     "description": "Bu entegrasyon, Telegram botları oluşturmanızı sağlar.",
@@ -3845,7 +4044,9 @@
       "productRemovedFromCart": "Ürün Sepetten Kaldırıldı",
       "productOrdered": "Ürün Sipariş Edildi",
       "contactReferredANewContact": "Kişi Yeni Bir Kişi Yönlendirdi",
-      "contactReferredExistingContact": "Kişi Mevcut Bir Kişiyi Yönlendirdi"
+      "contactReferredExistingContact": "Kişi Mevcut Bir Kişiyi Yönlendirdi",
+      "callRecorded": "Arama kaydedildi",
+      "callTranscribed": "Arama yazıya döküldü"
     },
     "actions": {
       "addTag": "Etiket Ekle",
@@ -3872,7 +4073,12 @@
   },
   "developerAccessToken": {
     "title": "API Erişim Token'ı",
-    "description": "Çalışma alanınızın genel API'lere erişmesine izin vermek için bir token oluşturun. Bu token'ı gizli tutun ve kimseyle paylaşmayın."
+    "description": "Çalışma alanınızın genel API'lere erişmesine izin vermek için bir token oluşturun. Bu token'ı gizli tutun ve kimseyle paylaşmayın.",
+    "createDialogTitle": "API belirteci oluştur",
+    "namePlaceholder": "örn. Zapier entegrasyonu",
+    "empty": "Henüz API belirteci yok.",
+    "defaultBadge": "Varsayılan",
+    "allScopes": "Tüm kapsamlar"
   },
   "contacts": {
     "title": "Kişiler",
@@ -4508,6 +4714,17 @@
     },
     "queues": {
       "title": "Kuyruklar"
+    },
+    "workspaces": {
+      "title": "Çalışma alanları",
+      "description": "Sahibi platform destek erişimini etkinleştirmiş çalışma alanları buradan açılabilir.",
+      "owner": "Sahip",
+      "tenant": "Kiracı",
+      "supportStatus": "Destek durumu",
+      "openAsSupport": "Destek olarak aç",
+      "supportEnabledUntil": "{time} tarihine kadar etkin",
+      "supportOff": "Kapalı",
+      "searchPlaceholder": "Ada, sahip e-postasına veya kimliğe göre ara"
     }
   },
   "platformCredentials": {
@@ -5340,7 +5557,8 @@
     "connectViaFacebook": "Facebook üzerinden bağlan",
     "unsupportedExplanation": "Bu Instagram hesabı Instagram Business Girişi ile bağlandı. Meta Conversions API'yi kullanmak için hesabı Facebook üzerinden bağlayın.",
     "flowStep": {
-      "whatsappNote": "WhatsApp etkinlikleri yalnızca click-to-WhatsApp reklamından başlayan konuşmalar için gönderilir."
+      "whatsappNote": "WhatsApp etkinlikleri yalnızca click-to-WhatsApp reklamından başlayan konuşmalar için gönderilir.",
+      "description": "Messenger, Instagram veya WhatsApp için bir LeadSubmitted etkinliği kuyruğa alın."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5587,7 +5805,8 @@
       "generalSettingsTitle": "Genel Ayar",
       "appearanceTitle": "Görünüm",
       "playerSettingsTitle": "Oyuncu Ayarları",
-      "prizeSettingsTitle": "Ödül Ayarları"
+      "prizeSettingsTitle": "Ödül Ayarları",
+      "validationFailed": "Kaydetmeden önce lütfen vurgulanan alanları düzeltin."
     },
     "generalSettings": {
       "showName": "Görünür",
@@ -5617,7 +5836,11 @@
       "resetPolicyLabel": "Çekilişleri sıfırla",
       "resetNever": "Çekiliş sayısını sıfırlama",
       "resetEveryNDays": "Çekiliş sayısını her şu kadar günde bir sıfırla",
-      "resetIntervalDaysSuffix": "gün"
+      "resetIntervalDaysSuffix": "gün",
+      "maxSharesPerPerson": "Referanslardan gelen maksimum bonus çekiliş",
+      "maxSharesPerPersonHint": "Bu oyuncunun davet bağlantısıyla katılan ve size mesaj gönderen her arkadaş, bu sınıra kadar ona 1 ekstra çekiliş hakkı kazandırır. Referans bonuslarını kapatmak için 0 olarak ayarlayın. Bonus çekilişler bir sonraki sıfırlamadan önce kullanılmalıdır.",
+      "sharingNode": "Paylaşım düğümü",
+      "sharingNodeHint": "Bir arkadaş bu oyuncunun paylaşım bağlantısını açtığında çalışan akış adımı. Paylaş düğmesini gizlemek için boş bırakın."
     },
     "publicUrl": {
       "label": "Genel URL",
@@ -5632,12 +5855,14 @@
       "forbiddenTitle": "Erişim reddedildi",
       "forbiddenDescription": "Bu bağlantı geçersiz veya süresi dolmuş.",
       "comingSoonTitle": "Çok yakında",
-      "comingSoonDescription": "Bu mini oyun türü henüz oynanamıyor."
+      "comingSoonDescription": "Bu mini oyun türü henüz oynanamıyor.",
+      "rateLimited": "Çok fazla istek. Lütfen bir dakika bekleyip tekrar deneyin."
     },
     "list": {
       "gamesPlayed": "Oynanan oyunlar",
       "participants": "Katılımcılar",
-      "winners": "Kazananlar"
+      "winners": "Kazananlar",
+      "shares": "Referanslar"
     },
     "history": {
       "title": "Geçmiş",
@@ -5654,7 +5879,8 @@
         "win": "Kazandı",
         "lose": "Ödül yok",
         "empty": "Henüz oyun kaydı yok"
-      }
+      },
+      "shares": "Referanslar"
     }
   },
   "mediaLibrary": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "Bot Alanları"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "Dosyadan içe aktar",
+      "automaticScan": "Otomatik Müşteri Taraması"
+    },
+    "title": "Otomatik Müşteri Taraması",
+    "submit": "Otomatik Tarama",
+    "fields": {
+      "inbox": "Gelen kutusu",
+      "scanFrom": "Gelen Kutusunu Şu Tarihten Tara"
+    },
+    "hint": {
+      "range": "Sistem, sayfaya {from} tarihinden şu ana kadar mesaj gönderen müşterileri tarayacak.",
+      "beforeChoose": "Taramadan sonra, bu özelliği yeniden kullanabilmek için 24 saat daha beklemeniz gerekir."
+    },
+    "status": {
+      "idle": "Bu gelen kutusu için henüz bir tarama çalıştırılmadı. Bir başlangıç tarihi seçin ve ilk Otomatik Müşteri Taramanızı çalıştırın.",
+      "running": "Sistem şu anda otomatik bir tarama gerçekleştiriyor; tahmini tamamlanma süresi {eta}.",
+      "nextScan": "Sonraki tarama zamanı: {at}",
+      "finished": "Sistem son müşteri tarama isteğini {at} tarihinde tamamladı.",
+      "total": "Taranan toplam müşteri sayısı: {count}",
+      "waitCooldown": "Bu özelliği yeniden kullanabilmek için 24 saat daha beklemeniz gerekir.",
+      "failed": "Son tarama başarısız oldu. Bekleme süresi bittiğinde tekrar deneyebilirsiniz.",
+      "partial": "Son tarama kısmen tamamlandı — bazı konuşmalar içe aktarılamadı."
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "Tarama başlangıç zamanı geçmişte olmalıdır.",
+      "contactScanInboxNotFound": "Gelen kutusu bulunamadı.",
+      "contactScanChannelUnsupported": "Bu kanal Otomatik Müşteri Taramasını desteklemiyor.",
+      "contactScanIntegrationDisconnected": "Bu gelen kutusu bağlı değil.",
+      "contactScanCooldown": "Bu gelen kutusu yakın zamanda tarandı. Yeniden taramadan önce lütfen bekleyin.",
+      "contactScanAlreadyRunning": "Bu gelen kutusu için zaten bir tarama çalışıyor.",
+      "contactScanForbidden": "Otomatik Müşteri Taraması çalıştırma izniniz yok."
+    },
+    "histories": {
+      "title": "Tarama Geçmişi",
+      "columns": {
+        "channel": "Kanal",
+        "scanFrom": "Şu tarihten tara",
+        "importedContacts": "İçe aktarılan kişiler",
+        "scannedConversations": "Taranan konuşmalar",
+        "finishedAt": "Tamamlanma zamanı",
+        "error": "Hata"
+      },
+      "status": {
+        "init": "Sırada",
+        "running": "Çalışıyor",
+        "succeeded": "Başarılı",
+        "partial": "Kısmi",
+        "failed": "Başarısız"
+      },
+      "empty": "Henüz hiç tarama çalıştırılmadı."
+    }
   }
 }

@@ -662,6 +662,58 @@
       "button": "Uppdatera alla behörigheter",
       "resultSuccess": "Uppdaterade {refreshed} kanal(er).",
       "resultWithFailures": "Uppdaterade {refreshed} kanal(er), {failed} misslyckades."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Startar historiksynkronisering…",
+        "done": "Historiksynkronisering startad",
+        "failed": "Historiksynkronisering misslyckades"
+      },
+      "selectAll": "Markera alla",
+      "selected": "{count}/{max} valda",
+      "dialogTitleRunning": "Ansluter {count} {feature}…",
+      "dialogTitleDone": "Anslutna {connected} av {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} av {total} klara",
+      "status": {
+        "waiting": "Väntar",
+        "connecting": "Ansluter…",
+        "connected": "Ansluten",
+        "duplicated": "Redan ansluten",
+        "limitReached": "Gränsen uppnådd",
+        "failed": "Misslyckades",
+        "timedOut": "Tidsgränsen överskreds",
+        "cancelled": "Avbruten"
+      },
+      "reason": {
+        "notSelectable": "Det här objektet kan inte väljas.",
+        "channelLimit": "Kanalgränsen har uppnåtts.",
+        "workspaceLimit": "Arbetsytans gräns har uppnåtts.",
+        "providerRejected": "Leverantören avvisade den här begäran.",
+        "unknown": "Något gick fel.",
+        "followUpFailed": "Konfigurationen är inte klar — slutför den i kanalinställningarna."
+      },
+      "sessionError": {
+        "sessionExpired": "Din session har gått ut. Anslut igen.",
+        "notMember": "Du är inte längre medlem i den här arbetsytan.",
+        "trialExpired": "Din provperiod har gått ut.",
+        "macLimitReached": "Du har nått din kontogräns.",
+        "credentialMissing": "Autentiseringsuppgifter saknas. Anslut igen."
+      },
+      "cancelRemaining": "Avbryt resterande",
+      "retryFailed": "Försök igen med misslyckade ({count})",
+      "retry": "Försök igen",
+      "goToChannels": "Gå till kanaler",
+      "close": "Stäng",
+      "leaveNotice": "Du kan lämna sidan; anslutna konton behålls",
+      "stepConnecting": "Ansluter",
+      "stepCoexist": "Synkronisera historik",
+      "validation": {
+        "min": "Välj minst 1",
+        "max": "Du kan välja upp till {max}",
+        "duplicate": "Dubblerat val"
+      },
+      "progressLabel": "Förlopp"
     }
   },
   "claude": {
@@ -987,6 +1039,11 @@
   },
   "developerAccessToken": {
     "description": "Generera en token som ger din arbetsyta åtkomst till de offentliga API:erna. Håll denna token hemlig och dela den inte med någon.",
+    "createDialogTitle": "Skapa API-token",
+    "namePlaceholder": "t.ex. Zapier-integration",
+    "empty": "Inga API-token än.",
+    "defaultBadge": "Standard",
+    "allScopes": "Alla omfattningar",
     "title": "API-åtkomsttoken"
   },
   "dialog": {
@@ -1230,7 +1287,8 @@
       "adAccountFilter": {
         "all": "Alla annonskonton",
         "label": "Annonskonto",
-        "unavailable": "Det gick inte att läsa in annonskonton — kontrollera den här integrationens Ads-anslutning, eller arbetsytans Facebook Ads-anslutning, i inställningarna."
+        "unavailable": "Det gick inte att läsa in annonskonton — kontrollera den här integrationens Ads-anslutning, eller arbetsytans Facebook Ads-anslutning, i inställningarna.",
+        "note": "Annonser med konverteringar men noll utgifter eller noll leverans i det valda datumintervallet döljs vid filtrering efter annonskonto."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -1414,6 +1472,10 @@
     "accessToken": {
       "label": "Åtkomsttoken"
     },
+    "manualAppSecret": {
+      "label": "Meta App Secret (valfritt)",
+      "description": "Aktiverar verifiering av webhook-signatur för denna manuella anslutning. Du hittar den i din Meta-apps instrumentpanel under Inställningar > Allmänt."
+    },
     "actions": {
       "label": "Åtgärder"
     },
@@ -1424,7 +1486,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "AI-agent"
+      "label": "AI-agent",
+      "loadError": "Det gick inte att läsa in AI-agenter. Försök igen."
     },
     "aiEditImage": {
       "inputFieldId": {
@@ -2838,6 +2901,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "Senaste samtalsinspelning"
+    },
+    "lastCallTranscript": {
+      "label": "Senaste samtalstranskription"
+    },
+    "tokenPermission": {
+      "label": "Behörighet",
+      "full": "Fullständig åtkomst",
+      "readOnly": "Endast läsbehörighet"
+    },
+    "tokenScopes": {
+      "label": "Omfattningar",
+      "contacts": "Kontakter",
+      "inbox": "Inkorg",
+      "automation": "Automatisering",
+      "broadcasts": "Utskick",
+      "analytics": "Analys",
+      "ecommerce": "E-handel",
+      "integrations": "Integrationer",
+      "channels": "Kanaler",
+      "minigames": "Minispel",
+      "appointments": "Bokningar",
+      "media": "Media",
+      "ads": "Annonser"
     }
   },
   "flowAnalytics": {
@@ -2965,7 +3054,9 @@
       "import": "Importera flöde",
       "export": "Exportera",
       "importStarted": "Flödet importeras. Kontrollera importhistoriken för resultat.",
-      "importJsonOnly": "Endast JSON-filer"
+      "importJsonOnly": "Endast JSON-filer",
+      "whatsappCallButton": "Ring på WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -3103,7 +3194,11 @@
     "sendText": {
       "tiktokTitleTruncated": "När knappar är kopplade skickar TikTok bara de första 40 tecknen i det här meddelandet — resten klipps bort."
     },
-    "dataWasSaved": "Uppgifterna sparades"
+    "dataWasSaved": "Uppgifterna sparades",
+    "whatsappCallButton": {
+      "editButtonTitle": "Redigera knapp",
+      "buttonLabel": "Knappetikett"
+    }
   },
   "folders": {
     "heading": {
@@ -3216,6 +3311,12 @@
     "tabs": {
       "generalSettings": "Allmänna inställningar",
       "conversionsApi": "Annonsoptimering"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Inga Instagram-konton hittades",
+      "noAccountsDescription": "Inga Instagram-företagskonton hittades på de Facebook-sidor du hanterar. Anslut Instagram igen och godkänn alla begärda behörigheter.",
+      "alreadyConnectedNote": "Det här kontot är redan anslutet",
+      "tryAgain": "Försök ansluta igen"
     }
   },
   "instagramCommentAutomation": {
@@ -3629,7 +3730,16 @@
     "waTemplateMpmTooManySections": "En flerproduktsknapp kan ha högst 10 sektioner. Ta bort några sektioner innan publicering.",
     "waTemplateMpmTooManyProducts": "En flerproduktsknapp kan ha högst 30 produkter totalt. Ta bort några produkter innan publicering.",
     "waTemplateLtoExpirationRequired": "Välj ett utgångsdatum för det tidsbegränsade erbjudandet innan du skickar.",
-    "waTemplateMpmIncompleteProducts": "Varje sektion behöver minst en vald produkt — ta bort tomma rader eller välj en produkt."
+    "waTemplateMpmIncompleteProducts": "Varje sektion behöver minst en vald produkt — ta bort tomma rader eller välj en produkt.",
+    "voiceCall": "Röstsamtal",
+    "voiceCallDuration": "Röstsamtal · {duration}",
+    "missedVoiceCall": "Missat röstsamtal",
+    "declinedVoiceCall": "Avvisat röstsamtal",
+    "acceptedCallPermission": "Accepterade begäran om samtalstillstånd",
+    "declinedCallPermission": "Avvisade begäran om samtalstillstånd",
+    "humanAgentWarningDescription": "Du får endast svara på en användares meddelande inom 7 dagar när problemet rimligen inte kan lösas inom 24 timmar. Exempel är helger, högtider eller ärenden som kräver mer än en dag. Använd inte detta alternativ av någon annan anledning, eftersom det kan utsätta din Facebook-sida eller ditt Instagram-konto för risk. Fortsätt inte om du är osäker.",
+    "sendHumanAgentTag": "Skicka ett meddelande med taggen HUMAN_AGENT",
+    "warning": "Varning!"
   },
   "messenger": {
     "botProfile": "Botprofil",
@@ -3923,6 +4033,17 @@
     },
     "queues": {
       "title": "Köer"
+    },
+    "workspaces": {
+      "title": "Arbetsytor",
+      "description": "Arbetsytor vars ägare har aktiverat åtkomst för plattformssupport kan öppnas här.",
+      "owner": "Ägare",
+      "tenant": "Klient",
+      "supportStatus": "Supportstatus",
+      "openAsSupport": "Öppna som support",
+      "supportEnabledUntil": "Aktiverad till {time}",
+      "supportOff": "Av",
+      "searchPlaceholder": "Sök på namn, ägarens e-post eller ID"
     }
   },
   "platformBranding": {
@@ -4629,7 +4750,9 @@
       "ticketStatusChanged": "Ärendets status har ändrats",
       "ticketValueChanged": "Ärendets värde har ändrats",
       "unsubscribedFromSequence": "Har avregistrerats från en sekvens",
-      "userAskedAboutProduct": "Användaren frågade om en produkt"
+      "userAskedAboutProduct": "Användaren frågade om en produkt",
+      "callRecorded": "Samtal inspelat",
+      "callTranscribed": "Samtal transkriberat"
     },
     "day": "Dag",
     "hour": "Timme",
@@ -4671,6 +4794,7 @@
     "invalidApiKey": "Ogiltig API-nyckel",
     "maxItemsReached": "Högst {max} {feature} tillåts per arbetsyta",
     "maxMustBeGreaterThanMin": "{maxField} måste vara större än eller lika med {minField}",
+    "maxCharacters": "Högst {max} tecken.",
     "maxSize": "Filstorleken överskrider maxgränsen"
   },
   "webchat": {
@@ -4856,9 +4980,11 @@
       "label": "Isbrytare"
     },
     "manualConnect": "Anslut manuellt med en systemanvändares åtkomsttoken.",
+    "manualAppSecretMissingNotice": "Webhook-signaturer verifieras inte förrän du lägger till din Meta App Secret.",
     "manualOnboarding": {
       "description": "Konfigurera webhook-URL:en och verifieringstoken i din Meta-app. Använd värdena nedan.",
       "goToInbox": "Ta mig dit",
+      "multipleTitle": "Dina WhatsApp-inkorgar är klara!",
       "moreSettings": "Fler inställningar",
       "qrCodeHint": "Skanna QR-koden för att öppna webhook-URL:en",
       "title": "Din WhatsApp-inkorg är klar!",
@@ -4935,7 +5061,8 @@
       "actions": {
         "resendIn": "Skicka igen om {seconds} s",
         "sendCode": "Skicka kod",
-        "verify": "Verifiera och registrera"
+        "verify": "Verifiera och registrera",
+        "skip": "Hoppa över"
       },
       "description": "Begär en verifieringskod från Meta, ange koden här så registreras telefonnumret automatiskt.",
       "errorTitle": "Telefonnumret måste verifieras",
@@ -4945,6 +5072,7 @@
         "integrationNotFound": "WhatsApp-integrationen hittades inte.",
         "registrationFailed": "Verifieringen av WhatsApp-telefonnumret misslyckades."
       },
+      "queueProgress": "Verifierar {current} av {total}",
       "fields": {
         "code": {
           "label": "Verifieringskod",
@@ -4987,7 +5115,8 @@
       "profile": "Profil",
       "usefulLinks": "Användbara länkar",
       "conversionsApi": "Annonsoptimering",
-      "settings": "Inställningar"
+      "settings": "Inställningar",
+      "calls": "Calls"
     },
     "templateFooter": {
       "label": "Mallens sidfot"
@@ -5001,6 +5130,82 @@
         "title": "Automatiska händelser",
         "description": "Skicka konverteringshändelser från detta WhatsApp-nummer automatiskt till Meta. Om behörigheten saknas, återanslut kontot för att bevilja den."
       }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta avvisade ändringen av samtalsinställningarna",
+        "bicUnavailable": "Företagsinitierade samtal är inte tillgängliga för detta land",
+        "callAlreadyInProgress": "Ett samtal med denna kontakt pågår redan",
+        "hangupFailed": "Kunde inte avsluta samtalet"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta avvisade ändringen",
+      "callContact": "Ring via WhatsApp",
+      "dialing": "Ringer…",
+      "startCall": "Starta WhatsApp-samtal",
+      "retentionLabel": "Lagring av inspelningar (dagar)",
+      "retentionHelper": "Hur länge samtalsinspelningar sparas innan de raderas permanent.",
+      "transcriptionLabel": "Transkribera samtal",
+      "transcriptionHelper": "Transkriberar automatiskt inspelade samtal med hjälp av din anslutna AI-leverantör.",
+      "sip": {
+        "provisioningLabel": "FreeSWITCH-etablering",
+        "provisionButton": "Etablera",
+        "deprovisionButton": "Ta bort etablering",
+        "status": {
+          "none": "Inte etablerad",
+          "provisioning": "Etablerar…",
+          "provisioned": "Etablerad",
+          "enabled": "Aktiverad",
+          "failed": "Misslyckades"
+        },
+        "errors": {
+          "notProvisioned": "Etablera detta nummer för FreeSWITCH-samtal innan du aktiverar samtal i appen",
+          "readBackMismatch": "Meta bekräftade inte ändringen av SIP-samtal — försök igen",
+          "provisionFailed": "Det gick inte att etablera detta nummer för FreeSWITCH-samtal",
+          "deprovisionFailed": "Det gick inte att ta bort etableringen av FreeSWITCH-samtal för detta nummer"
+        }
+      },
+      "preflight": {
+        "title": "Samtalsbehörighet",
+        "appSubscriptionMissing": "Konfigurera först WhatsApp-webhooken för denna app i Meta App Dashboard och försök sedan igen.",
+        "appSubscriptionFailed": "Kunde inte verifiera appens prenumeration på 'calls'-webhooken. Försök igen om en stund.",
+        "callsNotSubscribed": "Denna app prenumererar inte på webhookfältet 'calls', så samtalshändelser kan inte nå ChatbotX (Meta-fel 138018: tekniska förutsättningar är inte uppfyllda — se till att minst en app som prenumererar på WABA:n också har webhookfältet för samtal).",
+        "fixButton": "Åtgärda",
+        "fixSuccess": "Appen prenumererar nu på WhatsApp-samtalswebhooks.",
+        "manualIntegrationNotice": "Detta nummer anslöts manuellt och har inga appuppgifter här. Prenumerera på webhookfältet 'calls' för din app i Meta App Dashboard.",
+        "coexistenceWarning": "Detta nummer använder samexistens med WhatsApp Business-appen, vilket Meta inte stöder för samtal. Flytta det till endast Cloud API.",
+        "messagingLimitTooLow": "Detta nummers meddelandegränsnivå ligger under det minimum Meta kräver för samtal."
+      }
+    },
+    "selectPage": {
+      "tryAgain": "Försök ansluta igen"
     }
   },
   "workspace": {
@@ -5018,6 +5223,17 @@
       "schedule": "Ta bort arbetsyta",
       "title": "Ta bort arbetsyta",
       "undone": "Borttagningen av arbetsytan har avbrutits"
+    },
+    "supportAccess": {
+      "bannerTitle": "Plattformssupportsession",
+      "bannerDescription": "En supporttekniker från plattformen har tillfällig åtkomst till den här arbetsytan till och med {time}.",
+      "cardTitle": "Åtkomst för plattformssupport",
+      "cardDescription": "Låt plattformens supportteam öppna den här arbetsytan med full åtkomst under 7 dagar. Du kan stänga av det när du vill.",
+      "enabledUntil": "Aktiverad till {time}",
+      "permissionRequired": "Du måste vara superadministratör för att ändra åtkomst för plattformssupport.",
+      "enabledToast": "Åtkomst för plattformssupport aktiverad.",
+      "disabledToast": "Åtkomst för plattformssupport inaktiverad.",
+      "toggleError": "Något gick fel. Försök igen."
     },
     "schedule": {
       "activated": "Arbetsytan har aktiverats",
@@ -5052,7 +5268,8 @@
       "title": "Taggsynkronisering",
       "toggleSuccess": "Inställningen för taggsynkronisering har uppdaterats."
     },
-    "title": "Zalo OA"
+    "title": "Zalo OA",
+    "refreshPermissions": "Uppdatera behörigheter"
   },
   "bookingWebview": {
     "metadataTitle": "Boka tid",
@@ -5340,7 +5557,8 @@
     "connectViaFacebook": "Anslut via Facebook",
     "unsupportedExplanation": "Det här Instagram-kontot anslöts med Instagram Business Login. Anslut kontot via Facebook för att använda Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "WhatsApp-händelser skickas endast för konversationer som startade från en klicka-till-WhatsApp-annons."
+      "whatsappNote": "WhatsApp-händelser skickas endast för konversationer som startade från en klicka-till-WhatsApp-annons.",
+      "description": "Köa en LeadSubmitted-händelse för Messenger, Instagram eller WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5587,7 +5805,8 @@
       "generalSettingsTitle": "Allmänna inställningar",
       "appearanceTitle": "Utseende",
       "playerSettingsTitle": "Spelarinställningar",
-      "prizeSettingsTitle": "Prisinställningar"
+      "prizeSettingsTitle": "Prisinställningar",
+      "validationFailed": "Åtgärda de markerade fälten innan du sparar."
     },
     "generalSettings": {
       "showName": "Synlig",
@@ -5617,7 +5836,11 @@
       "resetPolicyLabel": "Återställ dragningar",
       "resetNever": "Återställ inte antalet dragningar",
       "resetEveryNDays": "Återställ antalet dragningar var",
-      "resetIntervalDaysSuffix": "dag(ar)"
+      "resetIntervalDaysSuffix": "dag(ar)",
+      "maxSharesPerPerson": "Max antal bonusdragningar från hänvisningar",
+      "maxSharesPerPersonHint": "Varje vän som går med via den här spelarens inbjudningslänk och skickar ett meddelande till dig ger dem 1 extra dragning, upp till den här gränsen. Ange 0 för att stänga av hänvisningsbonusar. Bonusdragningar måste användas innan nästa återställning.",
+      "sharingNode": "Delningssteg",
+      "sharingNodeHint": "Flödessteget som körs när en vän öppnar den här spelarens delningslänk. Lämna tomt för att dölja knappen Dela."
     },
     "publicUrl": {
       "label": "Offentlig URL",
@@ -5632,12 +5855,14 @@
       "forbiddenTitle": "Åtkomst nekad",
       "forbiddenDescription": "Den här länken är ogiltig eller har gått ut.",
       "comingSoonTitle": "Kommer snart",
-      "comingSoonDescription": "Den här typen av minispel går inte att spela än."
+      "comingSoonDescription": "Den här typen av minispel går inte att spela än.",
+      "rateLimited": "Alldeles för många förfrågningar. Vänta en stund och försök igen."
     },
     "list": {
       "gamesPlayed": "Spelade spel",
       "participants": "Deltagare",
-      "winners": "Vinnare"
+      "winners": "Vinnare",
+      "shares": "Hänvisningar"
     },
     "history": {
       "title": "Historik",
@@ -5654,7 +5879,8 @@
         "win": "Vann",
         "lose": "Ingen vinst",
         "empty": "Inga spelloggar ännu"
-      }
+      },
+      "shares": "Hänvisningar"
     }
   },
   "mediaLibrary": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "Botfält"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "Importera från fil",
+      "automaticScan": "Automatisk kundskanning"
+    },
+    "title": "Automatisk kundskanning",
+    "submit": "Automatisk skanning",
+    "fields": {
+      "inbox": "Inkorg",
+      "scanFrom": "Skanna inkorg från tidpunkt"
+    },
+    "hint": {
+      "range": "Systemet skannar kunder som har skickat meddelanden till sidan från {from} fram till nu.",
+      "beforeChoose": "Efter skanningen måste du vänta ytterligare 24 timmar innan du kan använda funktionen igen."
+    },
+    "status": {
+      "idle": "Ingen skanning har körts för den här inkorgen än. Välj ett startdatum och kör din första automatiska kundskanning.",
+      "running": "Systemet utför en automatisk skanning. Beräknad sluttid är {eta}.",
+      "nextScan": "Nästa skanningstillfälle: {at}",
+      "finished": "Systemet slutförde den senaste kundskanningen kl. {at}.",
+      "total": "Totalt antal skannade kunder: {count}",
+      "waitCooldown": "Du måste vänta ytterligare 24 timmar innan du kan använda funktionen igen.",
+      "failed": "Den senaste skanningen misslyckades. Du kan försöka igen när väntetiden är slut.",
+      "partial": "Den senaste skanningen slutfördes bara delvis — vissa konversationer kunde inte importeras."
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "Starttiden för skanningen måste ligga i det förflutna.",
+      "contactScanInboxNotFound": "Inkorgen hittades inte.",
+      "contactScanChannelUnsupported": "Den här kanalen stöder inte automatisk kundskanning.",
+      "contactScanIntegrationDisconnected": "Den här inkorgen är inte ansluten.",
+      "contactScanCooldown": "Den här inkorgen skannades nyligen. Vänta innan du skannar igen.",
+      "contactScanAlreadyRunning": "En skanning körs redan för den här inkorgen.",
+      "contactScanForbidden": "Du har inte behörighet att köra en automatisk kundskanning."
+    },
+    "histories": {
+      "title": "Skanningshistorik",
+      "columns": {
+        "channel": "Kanal",
+        "scanFrom": "Skanna från",
+        "importedContacts": "Importerade kontakter",
+        "scannedConversations": "Skannade konversationer",
+        "finishedAt": "Slutförd kl.",
+        "error": "Fel"
+      },
+      "status": {
+        "init": "I kö",
+        "running": "Körs",
+        "succeeded": "Lyckades",
+        "partial": "Delvis",
+        "failed": "Misslyckades"
+      },
+      "empty": "Inga skanningar har körts än."
+    }
   }
 }

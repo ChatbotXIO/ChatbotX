@@ -48,6 +48,10 @@ import {
   getLastCommentedPostText,
 } from "./helpers/integration-fields"
 import {
+  getContactLastCallRecording,
+  getContactLastCallTranscript,
+} from "./helpers/last-call"
+import {
   getContactLastInput,
   getContactLastInputType,
 } from "./helpers/last-input"
@@ -359,6 +363,10 @@ export const getSystemFieldValue = async (
       return await getContactLastInput(contact.id)
     case systemFieldTypes.enum.last_input_type:
       return await getContactLastInputType(contact.id)
+    case systemFieldTypes.enum.last_call_recorded:
+      return await getContactLastCallRecording(contact.id)
+    case systemFieldTypes.enum.last_call_transcript:
+      return await getContactLastCallTranscript(contact.id)
     case systemFieldTypes.enum.user_channel:
       return capitalizeFirstLetter(
         contactInbox?.channel ??

@@ -6,6 +6,7 @@ import type {
 } from "@chatbotx.io/sdk"
 import type { ServerMessage } from "whatsapp-api-js/types"
 import z from "zod"
+import type { WhatsappCallingSettings } from "./api/calling"
 import type {
   ConversationalAutomation,
   WhatsappPhoneNumber,
@@ -14,6 +15,18 @@ import type {
 export type WhatsappConfig = BaseConfig & {
   verifyToken?: string
   clientSecret?: string
+  /**
+   * Set by the manual-integration webhook route
+   * (`app/integrations/whatsapp/webhook/[integrationId]/route.ts`). Manual
+   * integrations may or may not carry a `clientSecret` (see
+   * `webhook-url.ts`'s `buildAuthValue` — it's populated only when the owner
+   * supplied a Meta App Secret on manual connect). Combined with an empty
+   * `clientSecret`, this selects the `legacy-unverified` signature policy —
+   * see `lib/signature-policy.ts`.
+   */
+  manualIntegration?: boolean
+  /** Set by the manual-integration webhook route, for log correlation only. */
+  integrationId?: string
 }
 
 export type WhatsappAuthValue = Oauth2AuthValue & {
@@ -225,8 +238,48 @@ export type InteractiveCarouselMessage = {
   }
 }
 
+/**
+ * Meta's `voice_call` interactive — body text plus one "Call on WhatsApp"
+ * button. Not modeled by whatsapp-api-js, so it's posted raw.
+ */
+export type InteractiveVoiceCallMessage = {
+  _type: "interactive_voice_call"
+  type: "interactive"
+  interactive: {
+    type: "voice_call"
+    body: { text: string }
+    action: {
+      name: "voice_call"
+      parameters: {
+        display_text: string
+        ttl_minutes?: number
+        payload?: string
+      }
+    }
+  }
+}
+
+/**
+ * Meta's `call_permission_request` interactive — asks the customer to allow
+ * business-initiated WhatsApp calls. Not modeled by whatsapp-api-js, so it's
+ * posted raw.
+ */
+export type InteractiveCallPermissionRequestMessage = {
+  _type: "interactive_call_permission_request"
+  type: "interactive"
+  interactive: {
+    type: "call_permission_request"
+    body: { text: string }
+    action: { name: "call_permission_request" }
+  }
+}
+
 /** Messages posted raw because whatsapp-api-js does not model their payloads. */
-export type RawWhatsappMessage = InteractiveCarouselMessage | TemplateMessage
+export type RawWhatsappMessage =
+  | InteractiveCarouselMessage
+  | InteractiveCallPermissionRequestMessage
+  | InteractiveVoiceCallMessage
+  | TemplateMessage
 
 export type WhatsappActions = {
   verifyAccessToken: Handler<
@@ -266,6 +319,19 @@ export type WhatsappActions = {
     {
       ctx: Context<WhatsappAuthValue>
       data: ConversationalAutomation
+    },
+    void
+  >
+  getCallingSettings: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+    },
+    WhatsappCallingSettings
+  >
+  updateCallingSettings: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      data: Partial<WhatsappCallingSettings>
     },
     void
   >

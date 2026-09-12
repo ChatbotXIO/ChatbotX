@@ -1,0 +1,23 @@
+<!--
+  ChatbotX delta from vanilla autoload_configs/xml_curl.conf.xml. Every
+  param name below is present (commented, as documentation) in the fetched
+  vanilla file: gateway-url, bindings, gateway-credentials, auth-scheme,
+  enable-cacert-check, timeout.
+
+  bindings="configuration|directory|dialplan" — the responder
+  (apps/builder/src/app/api/freeswitch/xml/route.ts) is
+  the single source for the sofia.conf gateway list, the SIP directory and
+  the dialplan; nothing is left in the static on-disk tree except the
+  fallback dialplan (dialplan/chatbotx-static.xml).
+-->
+<configuration name="xml_curl.conf" description="cURL XML Gateway">
+  <bindings>
+    <binding name="chatbotx">
+      <param name="gateway-url" value="$${CBX_XML_URL}" bindings="configuration|directory|dialplan"/>
+      <param name="gateway-credentials" value="$${FS_XML_BASIC_USER}:$${FS_XML_BASIC_PASS}"/>
+      <param name="auth-scheme" value="basic"/>
+      <param name="enable-cacert-check" value="true"/>
+      <param name="timeout" value="10"/>
+    </binding>
+  </bindings>
+</configuration>

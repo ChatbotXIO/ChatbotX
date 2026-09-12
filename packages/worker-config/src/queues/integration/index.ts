@@ -9,6 +9,7 @@ import type {
 } from "@chatbotx.io/flow-config"
 import type { CommentAnchor, OutgoingMessage } from "@chatbotx.io/sdk"
 import { type JobsOptions, Queue } from "bullmq"
+import { z } from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
@@ -48,6 +49,9 @@ export const IntegrationJobAction = {
   coexistInstagramSync: "coexistInstagramSync",
   coexistAttachmentDownload: "coexistAttachmentDownload",
   adsAutomaticEvent: "adsAutomaticEvent",
+  whatsappCallEvent: "whatsappCallEvent",
+  whatsappFreeswitchEvent: "whatsappFreeswitchEvent",
+  whatsappCallRecordingReady: "whatsappCallRecordingReady",
   updateContactAvatar: "updateContactAvatar",
   channelLabelChange: "channelLabelChange",
   processCommentAutomation: "processCommentAutomation",
@@ -394,6 +398,147 @@ export type IntegrationJobCoexistAttachmentDownload = {
   }
 }
 
+/**
+ * One normalized event from Meta's `calls` webhook field (WhatsApp Business
+ * Calling). Structurally mirrors `WhatsappCallEventPayload` from
+ * `@chatbotx.io/integration-whatsapp` (worker-config cannot depend on
+ * integration packages — same convention as `adsAutomaticEvent`).
+ */
+export type IntegrationJobWhatsappCallEvent = {
+  type: typeof IntegrationJobAction.whatsappCallEvent
+  data: {
+    integrationType: "whatsapp"
+    integrationIdentifier: string
+    payload: {
+      phoneNumberId: string
+      contact?: {
+        waId: string
+        userId?: string
+        name?: string
+      }
+      event:
+        | {
+            kind: "connect"
+            wacid: string
+            direction: "userInitiated" | "businessInitiated"
+            from?: string
+            to?: string
+            timestamp?: string
+          }
+        | {
+            kind: "terminate"
+            wacid: string
+            direction?: "userInitiated" | "businessInitiated"
+            status: "COMPLETED" | "FAILED"
+            from?: string
+            to?: string
+            timestamp?: string
+            startTime?: string
+            endTime?: string
+            durationSeconds?: number
+          }
+        | {
+            kind: "status"
+            wacid: string
+            status: "RINGING" | "ACCEPTED" | "REJECTED"
+            recipientId?: string
+            timestamp?: string
+          }
+    }
+  }
+}
+
+/**
+ * FreeSWITCH ESL event kinds the `freeswitch` worker enqueues.
+ * `event` names are the plain ESL event names it subscribes to;
+ * `CUSTOM:<subclass>` covers the custom events (`cbx::call`,
+ * `sofia::register|unregister|expire|gateway_state`) — a single
+ * discriminated string so `freeswitchEventHandlers` can stay a flat
+ * `Record<FreeswitchEventKind, Handler>` (no nested event/subclass
+ * branching). Channel-agnostic on purpose: this file and the ESL client know
+ * only these names, never WhatsApp semantics.
+ */
+export const freeswitchEventKinds = z.enum([
+  "CHANNEL_ANSWER",
+  "CHANNEL_HANGUP_COMPLETE",
+  "RECORD_STOP",
+  "CUSTOM:cbx::call",
+  "CUSTOM:sofia::register",
+  "CUSTOM:sofia::unregister",
+  "CUSTOM:sofia::expire",
+  "CUSTOM:sofia::gateway_state",
+])
+export type FreeswitchEventKind = z.infer<typeof freeswitchEventKinds>
+
+/**
+ * The selected FreeSWITCH channel variables the ESL worker's client-side
+ * keep-rule extracts before enqueueing — channel-agnostic
+ * (`cbx*`/generic SIP vars only). WhatsApp-specific header names are not
+ * parsed here; they are copied verbatim into `sipHeaders`, filtered by the
+ * producer to `x-wa-meta-*`/`X-CBX-*`, and interpreted only in
+ * `packages/business/src/whatsapp-call/**`.
+ */
+export const freeswitchEventVarsSchema = z.object({
+  sipFromUser: z.string().optional(),
+  sipToUser: z.string().optional(),
+  /** Custom SIP headers copied verbatim, filtered to `x-wa-meta-*`/`X-CBX-*` by the producer. */
+  sipHeaders: z.record(z.string(), z.string()).default({}),
+  hangupCause: z.string().optional(),
+  sipTermStatus: z.string().optional(),
+  otherLegUuid: z.string().optional(),
+  rootUuid: z.string().optional(),
+  attemptId: z.string().optional(),
+  recordFilePath: z.string().optional(),
+})
+export type FreeswitchEventVars = z.infer<typeof freeswitchEventVarsSchema>
+
+/**
+ * One FreeSWITCH ESL event forwarded from the node-local `freeswitch` worker
+ * to the shared `integration` queue for business-layer handling.
+ * Channel-agnostic envelope: `nodeId`/`workspaceId`/`integrationId`/`uuid`
+ * are generic; WhatsApp interpretation lives in
+ * `apps/worker/src/integration/handlers/whatsapp-freeswitch.ts`.
+ */
+export type IntegrationJobWhatsappFreeswitchEvent = {
+  type: typeof IntegrationJobAction.whatsappFreeswitchEvent
+  data: {
+    nodeId: string
+    workspaceId: string
+    integrationId: string
+    uuid: string
+    event: FreeswitchEventKind
+    vars: FreeswitchEventVars
+  }
+}
+
+/**
+ * A call recording landed in object storage. The handler stamps it onto the
+ * WhatsappCall row (looked up by the DB `callId`, never a channel-specific
+ * external id), drops an audio message into the conversation,
+ * fires the callRecorded event, and chains the transcription job.
+ */
+export type IntegrationJobWhatsappCallRecordingReady = {
+  type: typeof IntegrationJobAction.whatsappCallRecordingReady
+  data: {
+    /** `WhatsappCall.id` (bigint string) — never a wacid/attemptId. */
+    callId: string
+    /** Enables the worker-level blocked-owner guard. */
+    workspaceId: string
+    /** Object-storage path of the audio file (not a public URL). */
+    recordingPath: string
+    mimeType?: string
+    sizeBytes?: number
+    durationSeconds?: number
+    /** For logs only: `wacid ?? attemptId`, never used to look the row up. */
+    correlationId?: string
+  }
+}
+
+// Speech-to-text over a stored call recording moved to the dedicated
+// `callTranscription` queue (`CallTranscriptionJobTranscribeCall`
+// in `packages/worker-config/src/queues/call-transcription`), so it can carry
+// its own BullMQ `limiter` independent of this shared queue's traffic.
+
 export type IntegrationJobAdsAutomaticEvent = {
   type: typeof IntegrationJobAction.adsAutomaticEvent
   data: {
@@ -624,6 +769,9 @@ export type IntegrationJobData =
   | IntegrationJobCoexistInstagramSync
   | IntegrationJobCoexistAttachmentDownload
   | IntegrationJobAdsAutomaticEvent
+  | IntegrationJobWhatsappCallEvent
+  | IntegrationJobWhatsappFreeswitchEvent
+  | IntegrationJobWhatsappCallRecordingReady
   | IntegrationJobUpdateContactAvatar
   | IntegrationJobChannelLabelChange
   | IntegrationJobProcessCommentAutomation
@@ -652,7 +800,7 @@ export const integrationQueue = isNoRedisEnv()
 // note BullMQ processes *unprioritized* (priority 0, the default for the
 // ~30 existing integration actions) jobs before ANY prioritized job, so this
 // only orders ads-conversion jobs relative to each other, not ahead of the
-// rest of the integration queue. See BullMQ `priority` docs + plan §2.2/HIGH-1.
+// rest of the integration queue. See BullMQ `priority` docs.
 const CAPI_EVENT_PRIORITY = 1
 
 const adsConversionRetryOptions: JobsOptions = {

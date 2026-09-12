@@ -14,6 +14,7 @@ type ReconnectWhatsappActionHandler = (
 ) => Promise<unknown>
 
 const {
+  ensureAppWebhookFieldsMock,
   exchangeAccessTokenMock,
   findWabaMock,
   findWorkspaceIntegrationMock,
@@ -25,6 +26,7 @@ const {
   replaceAuthMock,
   subscribeWebhookMock,
 } = vi.hoisted(() => ({
+  ensureAppWebhookFieldsMock: vi.fn(),
   exchangeAccessTokenMock: vi.fn(),
   findWabaMock: vi.fn(),
   findWorkspaceIntegrationMock: vi.fn(),
@@ -94,6 +96,17 @@ vi.mock("@chatbotx.io/integration-whatsapp/api/webhook", () => ({
   subscribeWebhook: subscribeWebhookMock,
 }))
 
+vi.mock("@chatbotx.io/integration-whatsapp/api/app-subscriptions", () => ({
+  ensureAppWebhookFields: ensureAppWebhookFieldsMock,
+  WHATSAPP_APP_SUBSCRIPTION_OBJECT: {
+    WHATSAPP_BUSINESS_ACCOUNT: "whatsapp_business_account",
+  },
+  WHATSAPP_APP_WEBHOOK_FIELDS: {
+    CALLS: "calls",
+    ACCOUNT_SETTINGS_UPDATE: "account_settings_update",
+  },
+}))
+
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (key: string) => key),
 }))
@@ -151,6 +164,10 @@ describe("reconnectWhatsappAction", () => {
     })
     replaceAuthMock.mockResolvedValue(undefined)
     subscribeWebhookMock.mockResolvedValue(undefined)
+    ensureAppWebhookFieldsMock.mockResolvedValue({
+      status: "already-subscribed",
+      fields: ["calls"],
+    })
   })
 
   test("rejects non-super-admin members before reconnecting WhatsApp auth", async () => {
@@ -197,5 +214,34 @@ describe("reconnectWhatsappAction", () => {
       }),
       includeAutomaticEvents: true,
     })
+  })
+
+  test("ensures the app-level 'calls' webhook field after reconnect", async () => {
+    await callReconnectWhatsappAction({
+      bindArgsParsedInputs: ["ws-1", "iw-1"],
+      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+      parsedInput: { code: "oauth-code-1" },
+    })
+
+    expect(ensureAppWebhookFieldsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        appId: "client-1",
+        appSecret: "secret-1",
+        requiredFields: ["calls"],
+      }),
+    )
+  })
+
+  test("reconnect still succeeds when the app-level subscription call fails", async () => {
+    ensureAppWebhookFieldsMock.mockRejectedValue(new Error("network error"))
+
+    const result = await callReconnectWhatsappAction({
+      bindArgsParsedInputs: ["ws-1", "iw-1"],
+      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+      parsedInput: { code: "oauth-code-1" },
+    })
+
+    expect(replaceAuthMock).toHaveBeenCalled()
+    expect(result).toMatchObject({ ok: true })
   })
 })

@@ -804,6 +804,10 @@
     "accessToken": {
       "label": "Access Token"
     },
+    "manualAppSecret": {
+      "label": "Meta App Secret (valgfrit)",
+      "description": "Aktiverer webhook-signaturverificering for denne manuelle forbindelse. Find den i din Meta-apps dashboard under Indstillinger > Grundlæggende."
+    },
     "botField": {
       "label": "Bot Felt"
     },
@@ -811,7 +815,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "AI Agent"
+      "label": "AI Agent",
+      "loadError": "Kunne ikke indlæse AI-agenter. Prøv igen."
     },
     "aiQueuedMessages": {
       "label": "AI Queued Beskeder"
@@ -2114,6 +2119,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "Seneste opkaldsoptagelse"
+    },
+    "lastCallTranscript": {
+      "label": "Seneste opkaldstransskription"
+    },
+    "tokenPermission": {
+      "label": "Tilladelse",
+      "full": "Fuld adgang",
+      "readOnly": "Kun læsning"
+    },
+    "tokenScopes": {
+      "label": "Scopes",
+      "contacts": "Kontakter",
+      "inbox": "Indbakke",
+      "automation": "Automatisering",
+      "broadcasts": "Udsendelser",
+      "analytics": "Analyse",
+      "ecommerce": "E-handel",
+      "integrations": "Integrationer",
+      "channels": "Kanaler",
+      "minigames": "Minigames",
+      "appointments": "Aftaler",
+      "media": "Medier",
+      "ads": "Annoncer"
     }
   },
   "flows": {
@@ -2254,7 +2285,9 @@
       "import": "Importer flow",
       "export": "Eksporter",
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
-      "importJsonOnly": "Kun JSON-filer"
+      "importJsonOnly": "Kun JSON-filer",
+      "whatsappCallButton": "Ring på WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2366,7 +2399,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Når der er tilføjet knapper, sender TikTok kun de første 40 tegn af denne besked — resten bliver klippet væk."
     },
-    "dataWasSaved": "Data blev gemt"
+    "dataWasSaved": "Data blev gemt",
+    "whatsappCallButton": {
+      "editButtonTitle": "Rediger Knap",
+      "buttonLabel": "Knap Etiket"
+    }
   },
   "folders": {
     "heading": {
@@ -2552,7 +2589,8 @@
       "adAccountFilter": {
         "all": "Alle annoncekonti",
         "label": "Annoncekonto",
-        "unavailable": "Kunne ikke indlæse annoncekonti — tjek denne integrations Ads-forbindelse, eller workspacets Facebook Ads-forbindelse, i indstillingerne."
+        "unavailable": "Kunne ikke indlæse annoncekonti — tjek denne integrations Ads-forbindelse, eller workspacets Facebook Ads-forbindelse, i indstillingerne.",
+        "note": "Annoncer med konverteringer, men uden forbrug eller levering i den valgte periode, skjules ved filtrering efter annoncekonto."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -2927,6 +2965,58 @@
       "button": "Opdater alle tilladelser",
       "resultSuccess": "Opdaterede {refreshed} kanal(er).",
       "resultWithFailures": "Opdaterede {refreshed} kanal(er), {failed} mislykkedes."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Starter historik-synkronisering…",
+        "done": "Historik-synkronisering startet",
+        "failed": "Historik-synkronisering mislykkedes"
+      },
+      "selectAll": "Vælg alle",
+      "selected": "{count}/{max} valgt",
+      "dialogTitleRunning": "Forbinder {count} {feature}…",
+      "dialogTitleDone": "Forbundet {connected} af {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} af {total} afsluttet",
+      "status": {
+        "waiting": "Venter",
+        "connecting": "Forbinder…",
+        "connected": "Forbundet",
+        "duplicated": "Allerede forbundet",
+        "limitReached": "Grænse nået",
+        "failed": "Mislykkedes",
+        "timedOut": "Timeout",
+        "cancelled": "Annulleret"
+      },
+      "reason": {
+        "notSelectable": "Dette element kan ikke vælges.",
+        "channelLimit": "Kanalgrænsen er nået.",
+        "workspaceLimit": "Workspace-grænsen er nået.",
+        "providerRejected": "Udbyderen afviste denne anmodning.",
+        "unknown": "Noget gik galt.",
+        "followUpFailed": "Opsætning ikke afsluttet — færdiggør den i kanalindstillingerne."
+      },
+      "sessionError": {
+        "sessionExpired": "Din session er udløbet. Opret forbindelse igen.",
+        "notMember": "Du er ikke længere medlem af dette workspace.",
+        "trialExpired": "Din prøveperiode er udløbet.",
+        "macLimitReached": "Du har nået din kontogrænse.",
+        "credentialMissing": "Manglende loginoplysninger. Opret forbindelse igen."
+      },
+      "cancelRemaining": "Annuller resterende",
+      "retryFailed": "Prøv mislykkede igen ({count})",
+      "retry": "Prøv igen",
+      "goToChannels": "Gå til kanaler",
+      "close": "Luk",
+      "leaveNotice": "Du kan forlade siden; forbundne konti bevares",
+      "stepConnecting": "Forbinder",
+      "stepCoexist": "Synkroniser historik",
+      "validation": {
+        "min": "Vælg mindst 1",
+        "max": "Du kan vælge op til {max}",
+        "duplicate": "Duplikeret valg"
+      },
+      "progressLabel": "Fremskridt"
     }
   },
   "workspace": {
@@ -2958,6 +3048,17 @@
       "pendingBlockedToast": "Denne arbejdsområde er planlagt for deletion. Kontakt a arbejdsområde administrator til gendan access.",
       "navDisabledTooltip": "Unavailable while arbejdsområde deletion er planlagt",
       "badge": "Deletion planlagt"
+    },
+    "supportAccess": {
+      "bannerTitle": "Platformsupport-session",
+      "bannerDescription": "En platformsupportmedarbejder har midlertidig adgang til dette workspace indtil {time}.",
+      "cardTitle": "Adgang til platformsupport",
+      "cardDescription": "Lad platformsupportteamet åbne dette workspace med fuld adgang i 7 dage. Du kan slå det fra når som helst.",
+      "enabledUntil": "Aktiveret indtil {time}",
+      "permissionRequired": "Du skal være superadmin for at ændre adgang til platformsupport.",
+      "enabledToast": "Adgang til platformsupport aktiveret.",
+      "disabledToast": "Adgang til platformsupport deaktiveret.",
+      "toggleError": "Noget gik galt. Prøv igen."
     }
   },
   "workspaces": {
@@ -3096,7 +3197,16 @@
     "waTemplateMpmTooManySections": "En multiprodukt-knap kan højst have 10 sektioner. Fjern nogle sektioner før udgivelse.",
     "waTemplateMpmTooManyProducts": "En multiprodukt-knap kan højst have 30 produkter i alt. Fjern nogle produkter før udgivelse.",
     "waTemplateLtoExpirationRequired": "Vælg en udløbsdato for tilbuddet, før du sender.",
-    "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem."
+    "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem.",
+    "voiceCall": "Taleopkald",
+    "voiceCallDuration": "Taleopkald · {duration}",
+    "missedVoiceCall": "Ubesvaret taleopkald",
+    "declinedVoiceCall": "Afvist taleopkald",
+    "acceptedCallPermission": "Accepterede anmodning om opkaldstilladelse",
+    "declinedCallPermission": "Afviste anmodning om opkaldstilladelse",
+    "sendHumanAgentTag": "Send one besked med HUMAN_AGENT tag",
+    "warning": "Warning!",
+    "humanAgentWarningDescription": "Du may respond til a user's besked within 7 dage kun når den issue kan ikke reasonably være resolved within 24 timer. Examples include weekends, holidays, eller cases at require mere than one day til complete. Do ikke use denne option for vilkårlig anden reason, as it could put din Facebook Page eller Instagram konto på risk. Hvis you're ikke sure, do ikke fortsæt."
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",
@@ -3108,6 +3218,12 @@
     "tabs": {
       "generalSettings": "Generelt Indstillinger",
       "conversionsApi": "Ads Optimization"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Ingen Instagram-konti fundet",
+      "noAccountsDescription": "Der blev ikke fundet Instagram Business-konti på de Facebook-sider, du administrerer. Opret forbindelse til Instagram igen, og giv alle de anmodede tilladelser.",
+      "alreadyConnectedNote": "Denne konto er allerede forbundet",
+      "tryAgain": "Prøv at oprette forbindelse igen"
     }
   },
   "coexist": {
@@ -3369,7 +3485,8 @@
     "maxSize": "Fil størrelse exceeds maksimum limit",
     "maxItemsReached": "Maksimum {max} {feature} allowed per arbejdsområde",
     "invalidApiKey": "Ugyldig API-nøgle",
-    "maxMustBeGreaterThanMin": "{maxField} must være greater than eller equal til {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} must være greater than eller equal til {minField}",
+    "maxCharacters": "Maks. {max} tegn."
   },
   "webchat": {
     "chatUnavailable": "Denne chat er currently unavailable.",
@@ -3410,6 +3527,7 @@
       "label": "Icebreakers"
     },
     "manualConnect": "Manual forbind using System Bruger Adgangstoken.",
+    "manualAppSecretMissingNotice": "Webhook-signaturer bliver ikke verificeret, før du tilføjer din Meta App Secret.",
     "manualOnboarding": {
       "title": "Din Whatsapp indbakke er ready!",
       "description": "Configure den webhook URL og verification token i din Meta App. Use den values below.",
@@ -3417,7 +3535,8 @@
       "verifyToken": "Webhook verification token",
       "qrCodeHint": "Scan den QR kode til åbn den webhook URL",
       "moreSettings": "Flere indstillinger",
-      "goToInbox": "Take me there"
+      "goToInbox": "Take me there",
+      "multipleTitle": "Dine WhatsApp-indbakker er klar!"
     },
     "phoneVerification": {
       "title": "Verify WhatsApp telefon nummer",
@@ -3430,7 +3549,8 @@
       "actions": {
         "sendCode": "Send kode",
         "resendIn": "Send igen i {seconds}s",
-        "verify": "Verify og register"
+        "verify": "Verify og register",
+        "skip": "Spring over"
       },
       "fields": {
         "code": {
@@ -3448,7 +3568,8 @@
         "codeNotSent": "WhatsApp verification kode could ikke være sendt.",
         "codeNotVerified": "WhatsApp verification kode could ikke være verified.",
         "registrationFailed": "WhatsApp telefon nummer verification mislykkedes."
-      }
+      },
+      "queueProgress": "Bekræfter {current} af {total}"
     },
     "connect": {
       "errors": {
@@ -3560,7 +3681,8 @@
       "profile": "Profil",
       "usefulLinks": "Useful Links",
       "conversionsApi": "Ads Optimization",
-      "settings": "Indstillinger"
+      "settings": "Indstillinger",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Administrer din WhatsApp konto",
@@ -3696,6 +3818,82 @@
         "title": "Automatiske hændelser",
         "description": "Send automatisk konverteringshændelser fra dette WhatsApp-nummer til Meta. Hvis tilladelsen mangler, skal du gentilslutte kontoen for at give den."
       }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta afviste ændringen af opkaldsindstillingerne",
+        "bicUnavailable": "Virksomhedsinitieret opkald er ikke tilgængeligt for dette land",
+        "callAlreadyInProgress": "Der er allerede et opkald i gang til denne kontakt",
+        "hangupFailed": "Kunne ikke afslutte opkaldet"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta afviste ændringen",
+      "callContact": "Ring via WhatsApp",
+      "dialing": "Ringer op…",
+      "startCall": "Start WhatsApp-opkald",
+      "retentionLabel": "Opbevaring af optagelser (dage)",
+      "retentionHelper": "Hvor længe optagelser af opkald opbevares, før de slettes permanent.",
+      "transcriptionLabel": "Transskriber opkald",
+      "transcriptionHelper": "Transskriberer automatisk optagede opkald med din tilsluttede AI-udbyder.",
+      "sip": {
+        "provisioningLabel": "FreeSWITCH-klargøring",
+        "provisionButton": "Klargør",
+        "deprovisionButton": "Fjern klargøring",
+        "status": {
+          "none": "Ikke klargjort",
+          "provisioning": "Klargør…",
+          "provisioned": "Klargjort",
+          "enabled": "Aktiveret",
+          "failed": "Mislykkedes"
+        },
+        "errors": {
+          "notProvisioned": "Klargør dette nummer til FreeSWITCH-opkald, før in-app-opkald aktiveres",
+          "readBackMismatch": "Meta bekræftede ikke ændringen af SIP-opkald — forsøg igen",
+          "provisionFailed": "Kunne ikke klargøre dette nummer til FreeSWITCH-opkald",
+          "deprovisionFailed": "Kunne ikke fjerne klargøring af FreeSWITCH-opkald for dette nummer"
+        }
+      },
+      "preflight": {
+        "title": "Opkaldsberettigelse",
+        "appSubscriptionMissing": "Konfigurer først WhatsApp-webhooken for denne app i Meta App Dashboard, og forsøg derefter igen.",
+        "appSubscriptionFailed": "Kunne ikke bekræfte appens 'calls'-webhook-abonnement. Forsøg igen om lidt.",
+        "callsNotSubscribed": "Denne app abonnerer ikke på 'calls'-webhookfeltet, så opkaldshændelser kan ikke nå ChatbotX (Meta-fejl 138018: tekniske forudsætninger er ikke opfyldt — sørg for, at mindst én app, der abonnerer på WABA'en, også har opkalds-webhookfeltet).",
+        "fixButton": "Ret",
+        "fixSuccess": "Appen abonnerer nu på WhatsApp-opkalds-webhooks.",
+        "manualIntegrationNotice": "Dette nummer blev forbundet manuelt og har ingen app-legitimationsoplysninger her. Abonnér på 'calls'-webhookfeltet for din app i Meta App Dashboard.",
+        "coexistenceWarning": "Dette nummer bruger coexistence med WhatsApp Business-appen, hvilket Meta ikke understøtter til opkald. Flyt det til kun Cloud API.",
+        "messagingLimitTooLow": "Dette nummers meddelelsesgrænse-niveau er under den minimumsgrænse, Meta kræver for opkald."
+      }
+    },
+    "selectPage": {
+      "tryAgain": "Prøv at oprette forbindelse igen"
     }
   },
   "zalo": {
@@ -3708,7 +3906,8 @@
       "toggleSuccess": "Tag synkroniser setting updated.",
       "enabledSince": "Aktiveret since {date}",
       "disabled": "Deaktiveret"
-    }
+    },
+    "refreshPermissions": "Refresh tilladelser"
   },
   "telegram": {
     "description": "Denne integration lets du opret Telegram bots.",
@@ -3845,7 +4044,9 @@
       "productRemovedFromCart": "Product Removed Fra Cart",
       "productOrdered": "Product Ordered",
       "contactReferredANewContact": "Kontakt Referred A Ny Kontakt",
-      "contactReferredExistingContact": "Kontakt Referred Existing Kontakt"
+      "contactReferredExistingContact": "Kontakt Referred Existing Kontakt",
+      "callRecorded": "Opkald optaget",
+      "callTranscribed": "Opkald transskriberet"
     },
     "actions": {
       "addTag": "Tilføj tag",
@@ -3872,7 +4073,12 @@
   },
   "developerAccessToken": {
     "title": "API Access Token",
-    "description": "Generér a token til allow din arbejdsområde til access den public APIs. Keep denne token secret og do ikke share it med anyone."
+    "description": "Generér a token til allow din arbejdsområde til access den public APIs. Keep denne token secret og do ikke share it med anyone.",
+    "createDialogTitle": "Opret API-token",
+    "namePlaceholder": "f.eks. Zapier-integration",
+    "empty": "Ingen API-tokens endnu.",
+    "defaultBadge": "Standard",
+    "allScopes": "Alle scopes"
   },
   "contacts": {
     "title": "Kontakter",
@@ -4508,6 +4714,17 @@
     },
     "queues": {
       "title": "Queues"
+    },
+    "workspaces": {
+      "title": "Workspaces",
+      "description": "Workspaces, hvor ejeren har aktiveret adgang til platformsupport, kan åbnes her.",
+      "owner": "Ejer",
+      "tenant": "Tenant",
+      "supportStatus": "Supportstatus",
+      "openAsSupport": "Åbn som support",
+      "supportEnabledUntil": "Aktiveret indtil {time}",
+      "supportOff": "Fra",
+      "searchPlaceholder": "Søg efter navn, ejers e-mail eller ID"
     }
   },
   "platformCredentials": {
@@ -5340,7 +5557,8 @@
     "connectViaFacebook": "Forbind via Facebook",
     "unsupportedExplanation": "Denne Instagram-konto blev forbundet med Instagram Business Login. Forbind kontoen via Facebook for at bruge Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "WhatsApp-hændelser sendes kun for samtaler, der er startet fra en click-to-WhatsApp-annonce."
+      "whatsappNote": "WhatsApp-hændelser sendes kun for samtaler, der er startet fra en click-to-WhatsApp-annonce.",
+      "description": "Sæt en LeadSubmitted-hændelse i kø til Messenger, Instagram eller WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5587,7 +5805,8 @@
       "generalSettingsTitle": "Generelle indstillinger",
       "appearanceTitle": "Udseende",
       "playerSettingsTitle": "Spillerindstillinger",
-      "prizeSettingsTitle": "Gevinstindstillinger"
+      "prizeSettingsTitle": "Gevinstindstillinger",
+      "validationFailed": "Ret venligst de markerede felter, før du gemmer."
     },
     "generalSettings": {
       "showName": "Synlig",
@@ -5617,7 +5836,11 @@
       "resetPolicyLabel": "Nulstil antal træk",
       "resetNever": "Nulstil ikke antallet af træk",
       "resetEveryNDays": "Nulstil antallet af træk hver",
-      "resetIntervalDaysSuffix": "dag(e)"
+      "resetIntervalDaysSuffix": "dag(e)",
+      "maxSharesPerPerson": "Maks. bonustrækninger fra henvisninger",
+      "maxSharesPerPersonHint": "Hver ven, der tilmelder sig via denne spillers invitationslink og skriver til dig, giver dem 1 ekstra trækning, op til denne grænse. Sæt 0 for at deaktivere henvisningsbonusser. Bonustrækninger skal bruges før næste nulstilling.",
+      "sharingNode": "Delingstrin",
+      "sharingNodeHint": "Flow-trinnet, der køres, når en ven åbner denne spillers delingslink. Lad stå tomt for at skjule Del-knappen."
     },
     "publicUrl": {
       "label": "Offentlig URL",
@@ -5632,12 +5855,14 @@
       "forbiddenTitle": "Adgang nægtet",
       "forbiddenDescription": "Dette link er ugyldigt eller udløbet.",
       "comingSoonTitle": "Kommer snart",
-      "comingSoonDescription": "Denne minispiltype kan endnu ikke spilles."
+      "comingSoonDescription": "Denne minispiltype kan endnu ikke spilles.",
+      "rateLimited": "For mange anmodninger. Vent et øjeblik, og prøv igen."
     },
     "list": {
       "gamesPlayed": "Spillede spil",
       "participants": "Deltagere",
-      "winners": "Vindere"
+      "winners": "Vindere",
+      "shares": "Henvisninger"
     },
     "history": {
       "title": "Historik",
@@ -5654,7 +5879,8 @@
         "win": "Vandt",
         "lose": "Ingen præmie",
         "empty": "Ingen spiloptegnelser endnu"
-      }
+      },
+      "shares": "Henvisninger"
     }
   },
   "mediaLibrary": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "Bot Felter"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "Importer fra fil",
+      "automaticScan": "Automatisk kundescanning"
+    },
+    "title": "Automatisk kundescanning",
+    "submit": "Automatisk scanning",
+    "fields": {
+      "inbox": "Indbakke",
+      "scanFrom": "Scan indbakke fra tidspunkt"
+    },
+    "hint": {
+      "range": "Systemet vil scanne kunder, der har skrevet til siden fra {from} til nu.",
+      "beforeChoose": "Efter scanning skal du vente yderligere 24 timer, før du kan bruge denne funktion igen."
+    },
+    "status": {
+      "idle": "Der er endnu ikke kørt nogen scanning for denne indbakke. Vælg en startdato, og kør din første automatiske kundescanning.",
+      "running": "Systemet udfører en automatisk scanning; forventet færdiggørelsestidspunkt er {eta}.",
+      "nextScan": "Næste scanningstidspunkt: {at}",
+      "finished": "Systemet afsluttede den sidste kundescanning kl. {at}.",
+      "total": "Samlet antal scannede kunder: {count}",
+      "waitCooldown": "Du skal vente yderligere 24 timer, før du kan bruge denne funktion igen.",
+      "failed": "Den sidste scanning mislykkedes. Du kan prøve igen, når ventetiden er slut.",
+      "partial": "Den sidste scanning blev kun delvist afsluttet — nogle samtaler kunne ikke importeres."
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "Scan-fra-tidspunktet skal ligge i fortiden.",
+      "contactScanInboxNotFound": "Indbakke ikke fundet.",
+      "contactScanChannelUnsupported": "Denne kanal understøtter ikke automatisk kundescanning.",
+      "contactScanIntegrationDisconnected": "Denne indbakke er ikke forbundet.",
+      "contactScanCooldown": "Denne indbakke er blevet scannet for nylig. Vent, før du scanner igen.",
+      "contactScanAlreadyRunning": "Der køres allerede en scanning for denne indbakke.",
+      "contactScanForbidden": "Du har ikke tilladelse til at køre en automatisk kundescanning."
+    },
+    "histories": {
+      "title": "Scanningshistorik",
+      "columns": {
+        "channel": "Kanal",
+        "scanFrom": "Scan fra",
+        "importedContacts": "Importerede kontakter",
+        "scannedConversations": "Scannede samtaler",
+        "finishedAt": "Afsluttet kl.",
+        "error": "Fejl"
+      },
+      "status": {
+        "init": "I kø",
+        "running": "Kører",
+        "succeeded": "Gennemført",
+        "partial": "Delvis",
+        "failed": "Mislykkedes"
+      },
+      "empty": "Der er endnu ikke kørt nogen scanninger."
+    }
   }
 }

@@ -804,6 +804,10 @@
     "accessToken": {
       "label": "アクセストークン"
     },
+    "manualAppSecret": {
+      "label": "Meta アプリシークレット（省略可）",
+      "description": "この手動接続のWebhook署名検証を有効にします。Metaアプリのダッシュボードの「設定 > 基本」で確認できます。"
+    },
     "botField": {
       "label": "ボットフィールド"
     },
@@ -811,7 +815,8 @@
       "label": "エージェント"
     },
     "aiAgent": {
-      "label": "AIエージェント"
+      "label": "AIエージェント",
+      "loadError": "AIエージェントの読み込みに失敗しました。もう一度お試しください。"
     },
     "aiQueuedMessages": {
       "label": "AI待機中メッセージ"
@@ -2114,6 +2119,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "最後の通話録音"
+    },
+    "lastCallTranscript": {
+      "label": "最後の通話文字起こし"
+    },
+    "tokenPermission": {
+      "label": "権限",
+      "full": "フルアクセス",
+      "readOnly": "読み取り専用"
+    },
+    "tokenScopes": {
+      "label": "スコープ",
+      "contacts": "連絡先",
+      "inbox": "受信箱",
+      "automation": "オートメーション",
+      "broadcasts": "配信",
+      "analytics": "分析",
+      "ecommerce": "Eコマース",
+      "integrations": "連携",
+      "channels": "チャネル",
+      "minigames": "ミニゲーム",
+      "appointments": "予約",
+      "media": "メディア",
+      "ads": "広告"
     }
   },
   "flows": {
@@ -2254,7 +2285,9 @@
       "import": "フローをインポート",
       "export": "エクスポート",
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
-      "importJsonOnly": "JSONファイルのみ"
+      "importJsonOnly": "JSONファイルのみ",
+      "whatsappCallButton": "WhatsAppで通話",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2366,7 +2399,11 @@
     "sendText": {
       "tiktokTitleTruncated": "ボタンを追加すると、TikTokはこのメッセージの最初の40文字までしか送信しません。残りは切り捨てられます。"
     },
-    "dataWasSaved": "データが保存されました"
+    "dataWasSaved": "データが保存されました",
+    "whatsappCallButton": {
+      "editButtonTitle": "ボタンを編集",
+      "buttonLabel": "ボタンラベル"
+    }
   },
   "folders": {
     "heading": {
@@ -2552,7 +2589,8 @@
       "adAccountFilter": {
         "all": "すべての広告アカウント",
         "label": "広告アカウント",
-        "unavailable": "広告アカウントを読み込めませんでした。この連携のAds接続、またはワークスペースのFacebook Ads接続を設定で確認してください。"
+        "unavailable": "広告アカウントを読み込めませんでした。この連携のAds接続、またはワークスペースのFacebook Ads接続を設定で確認してください。",
+        "note": "広告アカウントで絞り込む場合、選択した期間内でコンバージョンはあるが広告費または配信が0の広告は非表示になります。"
       },
       "channelFilter": {
         "label": "チャネル",
@@ -2906,6 +2944,58 @@
       "button": "すべての権限を更新",
       "resultSuccess": "{refreshed} 件のチャネルを更新しました。",
       "resultWithFailures": "{refreshed} 件のチャネルを更新しました。{failed} 件は失敗しました。"
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "履歴の同期を開始しています…",
+        "done": "履歴の同期を開始しました",
+        "failed": "履歴の同期に失敗しました"
+      },
+      "selectAll": "すべて選択",
+      "selected": "{count}/{max} 件選択中",
+      "dialogTitleRunning": "{count} 件の{feature}を接続しています…",
+      "dialogTitleDone": "{total} 件中 {connected} 件を接続しました",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{total} 件中 {done} 件が完了しました",
+      "status": {
+        "waiting": "待機中",
+        "connecting": "接続中…",
+        "connected": "接続済み",
+        "duplicated": "接続済みです",
+        "limitReached": "上限に達しました",
+        "failed": "失敗",
+        "timedOut": "タイムアウト",
+        "cancelled": "キャンセル済み"
+      },
+      "reason": {
+        "notSelectable": "この項目は選択できません。",
+        "channelLimit": "チャネルの上限に達しました。",
+        "workspaceLimit": "ワークスペースの上限に達しました。",
+        "providerRejected": "提供元がこのリクエストを拒否しました。",
+        "unknown": "問題が発生しました。",
+        "followUpFailed": "設定が完了していません — チャネル設定で完了させてください。"
+      },
+      "sessionError": {
+        "sessionExpired": "セッションの有効期限が切れました。再接続してください。",
+        "notMember": "このワークスペースのメンバーではなくなりました。",
+        "trialExpired": "トライアル期間が終了しました。",
+        "macLimitReached": "アカウントの上限に達しました。",
+        "credentialMissing": "認証情報が見つかりません。再接続してください。"
+      },
+      "cancelRemaining": "残りをキャンセル",
+      "retryFailed": "失敗した項目を再試行 ({count})",
+      "retry": "再試行",
+      "goToChannels": "チャネルへ移動",
+      "close": "閉じる",
+      "leaveNotice": "このまま離れても問題ありません。接続済みのアカウントは保持されます",
+      "stepConnecting": "接続中",
+      "stepCoexist": "履歴を同期",
+      "validation": {
+        "min": "1件以上選択してください",
+        "max": "最大{max}件まで選択できます",
+        "duplicate": "選択が重複しています"
+      },
+      "progressLabel": "進行状況"
     }
   },
   "workspace": {
@@ -2937,6 +3027,17 @@
       "pendingBlockedToast": "このワークスペースは削除予定です。アクセスを復元するには、ワークスペース管理者にお問い合わせください。",
       "navDisabledTooltip": "ワークスペースの削除が予定されている間は利用できません",
       "badge": "削除予定"
+    },
+    "supportAccess": {
+      "bannerTitle": "プラットフォームサポートセッション",
+      "bannerDescription": "プラットフォームサポート担当者が{time}までこのワークスペースに一時的にアクセスできます。",
+      "cardTitle": "プラットフォームサポートアクセス",
+      "cardDescription": "プラットフォームサポートチームがこのワークスペースを7日間フルアクセスで開けるようにします。いつでも無効にできます。",
+      "enabledUntil": "{time}まで有効",
+      "permissionRequired": "プラットフォームサポートアクセスを変更するには、スーパー管理者である必要があります。",
+      "enabledToast": "プラットフォームサポートアクセスを有効にしました。",
+      "disabledToast": "プラットフォームサポートアクセスを無効にしました。",
+      "toggleError": "問題が発生しました。もう一度お試しください。"
     }
   },
   "workspaces": {
@@ -3075,7 +3176,16 @@
     "waTemplateMpmTooManySections": "マルチ商品ボタンには最大10個のセクションを設定できます。公開前にセクションを減らしてください。",
     "waTemplateMpmTooManyProducts": "マルチ商品ボタンには合計最大30個の商品を設定できます。公開前に商品を減らしてください。",
     "waTemplateLtoExpirationRequired": "送信する前に期間限定オファーの有効期限を選択してください。",
-    "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。"
+    "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。",
+    "voiceCall": "音声通話",
+    "voiceCallDuration": "音声通話 · {duration}",
+    "missedVoiceCall": "不在着信",
+    "declinedVoiceCall": "拒否された音声通話",
+    "acceptedCallPermission": "通話許可リクエストを承認しました",
+    "declinedCallPermission": "通話許可リクエストを拒否しました",
+    "sendHumanAgentTag": "HUMAN_AGENTタグを付けてメッセージを1件送信",
+    "warning": "警告！",
+    "humanAgentWarningDescription": "問題を24時間以内に解決することが合理的に困難な場合に限り、ユーザーのメッセージに7日以内で返信できます。たとえば、週末、祝日、または完了までに1日以上かかるケースです。それ以外の理由でこのオプションを使用すると、FacebookページまたはInstagramアカウントが危険にさらされる可能性があります。確信がない場合は続行しないでください。"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",
@@ -3087,6 +3197,12 @@
     "tabs": {
       "generalSettings": "一般設定",
       "conversionsApi": "広告最適化"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Instagramアカウントが見つかりません",
+      "noAccountsDescription": "管理しているFacebookページにInstagramビジネスアカウントが見つかりませんでした。Instagramを再接続し、要求されたすべての権限を許可してください。",
+      "alreadyConnectedNote": "このアカウントは既に接続されています",
+      "tryAgain": "再接続する"
     }
   },
   "coexist": {
@@ -3348,7 +3464,8 @@
     "maxSize": "ファイルサイズが上限を超えています",
     "maxItemsReached": "ワークスペースごとに許可される{feature}は最大{max}件です",
     "invalidApiKey": "APIキーが無効です",
-    "maxMustBeGreaterThanMin": "{maxField}は{minField}以上である必要があります"
+    "maxMustBeGreaterThanMin": "{maxField}は{minField}以上である必要があります",
+    "maxCharacters": "最大{max}文字まで。"
   },
   "webchat": {
     "chatUnavailable": "このチャットは現在利用できません。",
@@ -3389,6 +3506,7 @@
       "label": "会話のきっかけ"
     },
     "manualConnect": "システムユーザーアクセストークンを使用して手動接続します。",
+    "manualAppSecretMissingNotice": "Meta アプリシークレットを追加するまで、Webhookの署名は検証されません。",
     "manualOnboarding": {
       "title": "WhatsApp受信トレイの準備ができました！",
       "description": "MetaアプリでWebhook URLと検証トークンを設定してください。以下の値を使用します。",
@@ -3396,7 +3514,8 @@
       "verifyToken": "Webhook検証トークン",
       "qrCodeHint": "QRコードをスキャンしてWebhook URLを開く",
       "moreSettings": "その他の設定",
-      "goToInbox": "受信トレイへ移動"
+      "goToInbox": "受信トレイへ移動",
+      "multipleTitle": "WhatsAppの受信箱の準備が完了しました！"
     },
     "phoneVerification": {
       "title": "WhatsApp電話番号を確認",
@@ -3409,7 +3528,8 @@
       "actions": {
         "sendCode": "コードを送信",
         "resendIn": "{seconds}秒後に再送信",
-        "verify": "確認して登録"
+        "verify": "確認して登録",
+        "skip": "スキップ"
       },
       "fields": {
         "code": {
@@ -3427,7 +3547,8 @@
         "codeNotSent": "WhatsApp確認コードを送信できませんでした。",
         "codeNotVerified": "WhatsApp確認コードを検証できませんでした。",
         "registrationFailed": "WhatsApp電話番号の確認に失敗しました。"
-      }
+      },
+      "queueProgress": "{total}件中{current}件を確認中"
     },
     "connect": {
       "errors": {
@@ -3539,7 +3660,8 @@
       "profile": "プロフィール",
       "usefulLinks": "便利なリンク",
       "conversionsApi": "広告最適化",
-      "settings": "設定"
+      "settings": "設定",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "WhatsAppアカウントを管理",
@@ -3675,6 +3797,82 @@
         "title": "自動イベント",
         "description": "この WhatsApp 番号からコンバージョンイベントを Meta に自動送信します。権限がない場合は、アカウントを再接続して付与してください。"
       }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Metaが通話設定の変更を拒否しました",
+        "bicUnavailable": "この国では、企業が発信する通話は利用できません",
+        "callAlreadyInProgress": "この連絡先への通話は既に進行中です",
+        "hangupFailed": "通話を終了できませんでした"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Metaが変更を拒否しました",
+      "callContact": "WhatsAppで発信",
+      "dialing": "発信中…",
+      "startCall": "WhatsApp通話を開始",
+      "retentionLabel": "録音の保存期間（日数）",
+      "retentionHelper": "通話の録音が完全に削除されるまでの保存期間。",
+      "transcriptionLabel": "通話を文字起こし",
+      "transcriptionHelper": "接続済みのAIプロバイダーを使用して、録音された通話を自動的に文字起こしします。",
+      "sip": {
+        "provisioningLabel": "FreeSWITCHプロビジョニング",
+        "provisionButton": "プロビジョニング",
+        "deprovisionButton": "プロビジョニング解除",
+        "status": {
+          "none": "未プロビジョニング",
+          "provisioning": "プロビジョニング中…",
+          "provisioned": "プロビジョニング済み",
+          "enabled": "有効",
+          "failed": "失敗"
+        },
+        "errors": {
+          "notProvisioned": "アプリ内通話を有効にする前に、この番号をFreeSWITCH通話用にプロビジョニングしてください",
+          "readBackMismatch": "MetaがSIP通話の変更を確認できませんでした。再度お試しください",
+          "provisionFailed": "この番号のFreeSWITCH通話用のプロビジョニングに失敗しました",
+          "deprovisionFailed": "この番号のFreeSWITCH通話のプロビジョニング解除に失敗しました"
+        }
+      },
+      "preflight": {
+        "title": "通話の利用資格",
+        "appSubscriptionMissing": "まずMetaアプリダッシュボードでこのアプリのWhatsApp Webhookを設定してから、再度お試しください。",
+        "appSubscriptionFailed": "アプリの「calls」Webhookのサブスクリプションを確認できませんでした。しばらくしてから再度お試しください。",
+        "callsNotSubscribed": "このアプリは「calls」Webhookフィールドをサブスクライブしていないため、通話イベントがChatbotXに届きません（Metaエラー138018：技術的な前提条件が満たされていません。WABAにサブスクライブしているアプリのうち、少なくとも1つが通話Webhookフィールドを持つようにしてください）。",
+        "fixButton": "修正",
+        "fixSuccess": "アプリはWhatsApp通話Webhookに正常にサブスクライブされました。",
+        "manualIntegrationNotice": "この番号は手動で接続されており、ここにはアプリの認証情報がありません。Metaアプリダッシュボードでアプリの「calls」Webhookフィールドをサブスクライブしてください。",
+        "coexistenceWarning": "この番号はWhatsApp Businessアプリの併用（コイグジスタンス）を使用していますが、Metaは通話でこれをサポートしていません。Cloud APIのみに移行してください。",
+        "messagingLimitTooLow": "この番号のメッセージ送信上限レベルは、Metaが通話に必要とする最低限を下回っています。"
+      }
+    },
+    "selectPage": {
+      "tryAgain": "再接続する"
     }
   },
   "zalo": {
@@ -3687,7 +3885,8 @@
       "toggleSuccess": "タグ同期の設定を更新しました。",
       "enabledSince": "{date}から有効",
       "disabled": "無効"
-    }
+    },
+    "refreshPermissions": "権限を更新"
   },
   "telegram": {
     "description": "この連携を使用すると、Telegramボットを作成できます。",
@@ -3824,7 +4023,9 @@
       "productRemovedFromCart": "商品がカートから削除された",
       "productOrdered": "商品が注文された",
       "contactReferredANewContact": "連絡先が新しい連絡先を紹介した",
-      "contactReferredExistingContact": "連絡先が既存の連絡先を紹介した"
+      "contactReferredExistingContact": "連絡先が既存の連絡先を紹介した",
+      "callRecorded": "通話が録音されました",
+      "callTranscribed": "通話が文字起こしされました"
     },
     "actions": {
       "addTag": "タグを追加",
@@ -3851,7 +4052,12 @@
   },
   "developerAccessToken": {
     "title": "APIアクセストークン",
-    "description": "ワークスペースから公開APIにアクセスするためのトークンを生成します。このトークンは秘密にし、誰とも共有しないでください。"
+    "description": "ワークスペースから公開APIにアクセスするためのトークンを生成します。このトークンは秘密にし、誰とも共有しないでください。",
+    "createDialogTitle": "APIトークンを作成",
+    "namePlaceholder": "例: Zapier連携",
+    "empty": "APIトークンはまだありません。",
+    "defaultBadge": "デフォルト",
+    "allScopes": "すべてのスコープ"
   },
   "contacts": {
     "title": "連絡先",
@@ -4508,6 +4714,17 @@
     },
     "queues": {
       "title": "キュー"
+    },
+    "workspaces": {
+      "title": "ワークスペース",
+      "description": "所有者がプラットフォームサポートアクセスを有効にしたワークスペースをここから開けます。",
+      "owner": "所有者",
+      "tenant": "テナント",
+      "supportStatus": "サポート状況",
+      "openAsSupport": "サポートとして開く",
+      "supportEnabledUntil": "{time}まで有効",
+      "supportOff": "無効",
+      "searchPlaceholder": "名前、所有者のメール、またはIDで検索"
     }
   },
   "platformCredentials": {
@@ -5340,7 +5557,8 @@
     "connectViaFacebook": "Facebook 経由で連携",
     "unsupportedExplanation": "この Instagram アカウントは Instagram ビジネスログインで連携されています。Meta Conversions API を利用するには、Facebook 経由でアカウントを連携してください。",
     "flowStep": {
-      "whatsappNote": "WhatsApp のイベントは、Click-to-WhatsApp 広告から開始した会話でのみ送信されます。"
+      "whatsappNote": "WhatsApp のイベントは、Click-to-WhatsApp 広告から開始した会話でのみ送信されます。",
+      "description": "Messenger、Instagram、WhatsApp 向けに LeadSubmitted イベントをキューに追加します。"
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5587,7 +5805,8 @@
       "generalSettingsTitle": "一般設定",
       "appearanceTitle": "デザイン",
       "playerSettingsTitle": "プレイヤー設定",
-      "prizeSettingsTitle": "景品設定"
+      "prizeSettingsTitle": "景品設定",
+      "validationFailed": "保存する前に、強調表示されている項目を修正してください。"
     },
     "generalSettings": {
       "showName": "表示",
@@ -5617,7 +5836,11 @@
       "resetPolicyLabel": "抽選回数のリセット",
       "resetNever": "抽選回数をリセットしない",
       "resetEveryNDays": "抽選回数を次の日数ごとにリセットする",
-      "resetIntervalDaysSuffix": "日"
+      "resetIntervalDaysSuffix": "日",
+      "maxSharesPerPerson": "紹介による最大ボーナス抽選回数",
+      "maxSharesPerPersonHint": "このプレイヤーの招待リンクから参加し、あなたにメッセージを送った友達ごとに、この上限まで1回分の追加抽選が付与されます。0に設定すると紹介ボーナスをオフにできます。ボーナス抽選は次のリセットまでに使用する必要があります。",
+      "sharingNode": "共有ノード",
+      "sharingNodeHint": "友達がこのプレイヤーの共有リンクを開いたときに実行されるフローステップです。空にすると共有ボタンが非表示になります。"
     },
     "publicUrl": {
       "label": "公開URL",
@@ -5632,12 +5855,14 @@
       "forbiddenTitle": "アクセスが拒否されました",
       "forbiddenDescription": "このリンクは無効か、期限切れです。",
       "comingSoonTitle": "近日公開",
-      "comingSoonDescription": "このミニゲームの種類はまだプレイできません。"
+      "comingSoonDescription": "このミニゲームの種類はまだプレイできません。",
+      "rateLimited": "リクエストが多すぎます。少し待ってから再度お試しください。"
     },
     "list": {
       "gamesPlayed": "プレイ回数",
       "participants": "参加者数",
-      "winners": "当選者数"
+      "winners": "当選者数",
+      "shares": "紹介数"
     },
     "history": {
       "title": "履歴",
@@ -5654,7 +5879,8 @@
         "win": "当選",
         "lose": "ハズレ",
         "empty": "プレイ記録はまだありません"
-      }
+      },
+      "shares": "紹介数"
     }
   },
   "mediaLibrary": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "ボットフィールド"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "ファイルからインポート",
+      "automaticScan": "自動顧客スキャン"
+    },
+    "title": "自動顧客スキャン",
+    "submit": "自動スキャン",
+    "fields": {
+      "inbox": "受信箱",
+      "scanFrom": "スキャン開始時刻"
+    },
+    "hint": {
+      "range": "システムは{from}から現在までにページにメッセージを送った顧客をスキャンします。",
+      "beforeChoose": "スキャン後は、この機能を再度使用できるまで24時間待つ必要があります。"
+    },
+    "status": {
+      "idle": "この受信箱ではまだスキャンが実行されていません。開始日を選択し、最初の自動顧客スキャンを実行してください。",
+      "running": "システムが自動スキャンを実行しています。完了予定時刻は{eta}です。",
+      "nextScan": "次回のスキャン時刻: {at}",
+      "finished": "システムは前回の顧客スキャンリクエストを{at}に完了しました。",
+      "total": "スキャンした顧客の合計数: {count}",
+      "waitCooldown": "この機能を再度使用できるまで、あと24時間待つ必要があります。",
+      "failed": "前回のスキャンは失敗しました。クールダウンが終了すると再試行できます。",
+      "partial": "前回のスキャンは一部のみ完了しました — 一部の会話をインポートできませんでした。"
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "スキャン開始時刻は過去の時刻にしてください。",
+      "contactScanInboxNotFound": "受信箱が見つかりません。",
+      "contactScanChannelUnsupported": "このチャネルは自動顧客スキャンに対応していません。",
+      "contactScanIntegrationDisconnected": "この受信箱は接続されていません。",
+      "contactScanCooldown": "この受信箱は最近スキャンされました。再度スキャンする前にお待ちください。",
+      "contactScanAlreadyRunning": "この受信箱では既にスキャンが実行中です。",
+      "contactScanForbidden": "自動顧客スキャンを実行する権限がありません。"
+    },
+    "histories": {
+      "title": "スキャン履歴",
+      "columns": {
+        "channel": "チャネル",
+        "scanFrom": "スキャン開始",
+        "importedContacts": "インポートされた連絡先",
+        "scannedConversations": "スキャンされた会話",
+        "finishedAt": "完了日時",
+        "error": "エラー"
+      },
+      "status": {
+        "init": "待機中",
+        "running": "実行中",
+        "succeeded": "成功",
+        "partial": "一部",
+        "failed": "失敗"
+      },
+      "empty": "まだスキャンが実行されていません。"
+    }
   }
 }

@@ -804,6 +804,10 @@
     "accessToken": {
       "label": "Jeton d’accès"
     },
+    "manualAppSecret": {
+      "label": "Secret de l'application Meta (facultatif)",
+      "description": "Active la vérification de la signature du webhook pour cette connexion manuelle. Vous le trouverez dans le tableau de bord de votre application Meta, sous Paramètres > Général."
+    },
     "botField": {
       "label": "Champ du bot"
     },
@@ -811,7 +815,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "Agent IA"
+      "label": "Agent IA",
+      "loadError": "Impossible de charger les AI Agents. Veuillez réessayer."
     },
     "aiQueuedMessages": {
       "label": "Messages IA en file d’attente"
@@ -2114,6 +2119,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "Dernier enregistrement d'appel"
+    },
+    "lastCallTranscript": {
+      "label": "Dernière transcription d'appel"
+    },
+    "tokenPermission": {
+      "label": "Autorisation",
+      "full": "Accès complet",
+      "readOnly": "Lecture seule"
+    },
+    "tokenScopes": {
+      "label": "Portées",
+      "contacts": "Contacts",
+      "inbox": "Boîte de réception",
+      "automation": "Automatisation",
+      "broadcasts": "Diffusions",
+      "analytics": "Statistiques",
+      "ecommerce": "E-commerce",
+      "integrations": "Intégrations",
+      "channels": "Canaux",
+      "minigames": "Mini-jeux",
+      "appointments": "Rendez-vous",
+      "media": "Médias",
+      "ads": "Publicités"
     }
   },
   "flows": {
@@ -2254,7 +2285,9 @@
       "import": "Importer le flux",
       "export": "Exporter",
       "importStarted": "Le flux est en cours d'importation. Consultez l'historique des imports pour voir les résultats.",
-      "importJsonOnly": "Fichiers JSON uniquement"
+      "importJsonOnly": "Fichiers JSON uniquement",
+      "whatsappCallButton": "Appeler sur WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "La somme totale doit être égale à 100 %.",
@@ -2366,7 +2399,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Lorsque des boutons sont ajoutés, TikTok n'envoie que les 40 premiers caractères de ce message — le reste sera coupé."
     },
-    "dataWasSaved": "Les données ont été enregistrées"
+    "dataWasSaved": "Les données ont été enregistrées",
+    "whatsappCallButton": {
+      "editButtonTitle": "Modifier le bouton",
+      "buttonLabel": "Libellé du bouton"
+    }
   },
   "folders": {
     "heading": {
@@ -2552,7 +2589,8 @@
       "adAccountFilter": {
         "all": "Tous les comptes publicitaires",
         "label": "Compte publicitaire",
-        "unavailable": "Impossible de charger les comptes publicitaires — vérifiez la connexion Ads de cette intégration, ou la connexion Facebook Ads de l'espace de travail, dans les paramètres."
+        "unavailable": "Impossible de charger les comptes publicitaires — vérifiez la connexion Ads de cette intégration, ou la connexion Facebook Ads de l'espace de travail, dans les paramètres.",
+        "note": "Les annonces avec des conversions mais sans dépense ni diffusion sur la période sélectionnée sont masquées lors du filtrage par compte publicitaire."
       },
       "channelFilter": {
         "label": "Canal",
@@ -2927,6 +2965,58 @@
       "button": "Actualiser toutes les autorisations",
       "resultSuccess": "{refreshed} canal/canaux actualisé(s).",
       "resultWithFailures": "{refreshed} canal/canaux actualisé(s), {failed} en échec."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Synchronisation de l'historique en cours…",
+        "done": "Synchronisation de l'historique démarrée",
+        "failed": "La synchronisation de l'historique a échoué"
+      },
+      "selectAll": "Tout sélectionner",
+      "selected": "{count}/{max} sélectionné(s)",
+      "dialogTitleRunning": "Connexion de {count} {feature} en cours…",
+      "dialogTitleDone": "{connected} sur {total} connecté(s)",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} sur {total} terminé(s)",
+      "status": {
+        "waiting": "En attente",
+        "connecting": "Connexion en cours…",
+        "connected": "Connecté",
+        "duplicated": "Déjà connecté",
+        "limitReached": "Limite atteinte",
+        "failed": "Échec",
+        "timedOut": "Délai dépassé",
+        "cancelled": "Annulé"
+      },
+      "reason": {
+        "notSelectable": "Cet élément ne peut pas être sélectionné.",
+        "channelLimit": "Limite de canaux atteinte.",
+        "workspaceLimit": "Limite d'espace de travail atteinte.",
+        "providerRejected": "Le fournisseur a rejeté cette demande.",
+        "unknown": "Une erreur s'est produite.",
+        "followUpFailed": "Configuration incomplète — terminez-la depuis les paramètres du canal."
+      },
+      "sessionError": {
+        "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+        "notMember": "Vous n'êtes plus membre de cet espace de travail.",
+        "trialExpired": "Votre période d'essai a expiré.",
+        "macLimitReached": "Vous avez atteint la limite de votre compte.",
+        "credentialMissing": "Identifiants manquants. Veuillez vous reconnecter."
+      },
+      "cancelRemaining": "Annuler le reste",
+      "retryFailed": "Réessayer les échecs ({count})",
+      "retry": "Réessayer",
+      "goToChannels": "Aller aux canaux",
+      "close": "Fermer",
+      "leaveNotice": "Vous pouvez quitter la page ; les comptes connectés sont conservés",
+      "stepConnecting": "Connexion",
+      "stepCoexist": "Synchroniser l'historique",
+      "validation": {
+        "min": "Sélectionnez au moins 1",
+        "max": "Vous pouvez sélectionner jusqu'à {max}",
+        "duplicate": "Sélection en double"
+      },
+      "progressLabel": "Progression"
     }
   },
   "workspace": {
@@ -2958,6 +3048,17 @@
       "pendingBlockedToast": "La suppression de cet espace de travail est planifiée. Contactez un administrateur pour restaurer l’accès.",
       "navDisabledTooltip": "Indisponible tant que la suppression est planifiée",
       "badge": "Suppression planifiée"
+    },
+    "supportAccess": {
+      "bannerTitle": "Session d'assistance de la plateforme",
+      "bannerDescription": "Un agent d'assistance de la plateforme dispose d'un accès temporaire à cet espace de travail jusqu'à {time}.",
+      "cardTitle": "Accès de l'assistance de la plateforme",
+      "cardDescription": "Autorisez l'équipe d'assistance de la plateforme à ouvrir cet espace de travail avec un accès complet pendant 7 jours. Vous pouvez le désactiver à tout moment.",
+      "enabledUntil": "Activé jusqu'à {time}",
+      "permissionRequired": "Vous devez être super administrateur pour modifier l'accès de l'assistance de la plateforme.",
+      "enabledToast": "Accès de l'assistance de la plateforme activé.",
+      "disabledToast": "Accès de l'assistance de la plateforme désactivé.",
+      "toggleError": "Une erreur s'est produite. Veuillez réessayer."
     }
   },
   "workspaces": {
@@ -3096,7 +3197,16 @@
     "waTemplateMpmTooManySections": "Un bouton multi-produits peut comporter au maximum 10 sections. Supprimez des sections avant de publier.",
     "waTemplateMpmTooManyProducts": "Un bouton multi-produits peut comporter au maximum 30 produits au total. Supprimez des produits avant de publier.",
     "waTemplateLtoExpirationRequired": "Choisissez une date d'expiration pour l'offre à durée limitée avant l'envoi.",
-    "waTemplateMpmIncompleteProducts": "Chaque section doit contenir au moins un produit sélectionné — supprimez les lignes vides ou choisissez un produit."
+    "waTemplateMpmIncompleteProducts": "Chaque section doit contenir au moins un produit sélectionné — supprimez les lignes vides ou choisissez un produit.",
+    "voiceCall": "Appel vocal",
+    "voiceCallDuration": "Appel vocal · {duration}",
+    "missedVoiceCall": "Appel vocal manqué",
+    "declinedVoiceCall": "Appel vocal refusé",
+    "acceptedCallPermission": "A accepté la demande d'autorisation d'appel",
+    "declinedCallPermission": "A refusé la demande d'autorisation d'appel",
+    "sendHumanAgentTag": "Envoyer un message avec l’étiquette HUMAN_AGENT",
+    "warning": "Attention !",
+    "humanAgentWarningDescription": "Vous pouvez répondre au message d’un utilisateur dans un délai de 7 jours uniquement si le problème ne peut raisonnablement pas être résolu sous 24 heures, notamment pendant les week-ends, les jours fériés ou lorsqu’un traitement de plusieurs jours est nécessaire. N’utilisez pas cette option pour une autre raison, car elle pourrait mettre en danger votre Page Facebook ou votre compte Instagram. En cas de doute, ne continuez pas."
   },
   "instagram": {
     "description": "Cette intégration permet de créer des bots Instagram.",
@@ -3108,6 +3218,12 @@
     "tabs": {
       "generalSettings": "Paramètres généraux",
       "conversionsApi": "Optimisation des publicités"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Aucun compte Instagram trouvé",
+      "noAccountsDescription": "Aucun compte Instagram Business n'a été trouvé sur les Pages Facebook que vous gérez. Reconnectez Instagram et accordez toutes les autorisations demandées.",
+      "alreadyConnectedNote": "Ce compte est déjà connecté",
+      "tryAgain": "Réessayer la connexion"
     }
   },
   "coexist": {
@@ -3369,7 +3485,8 @@
     "maxSize": "La taille du fichier dépasse la limite maximale",
     "maxItemsReached": "Maximum de {max} {feature} autorisé par espace de travail",
     "invalidApiKey": "Clé API non valide",
-    "maxMustBeGreaterThanMin": "{maxField} doit être supérieur ou égal à {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} doit être supérieur ou égal à {minField}",
+    "maxCharacters": "Maximum {max} caractères."
   },
   "webchat": {
     "chatUnavailable": "Ce chat est actuellement indisponible.",
@@ -3410,6 +3527,7 @@
       "label": "Questions d’introduction"
     },
     "manualConnect": "Connexion manuelle avec le jeton d’accès de l’utilisateur système.",
+    "manualAppSecretMissingNotice": "Les signatures des webhooks ne sont pas vérifiées jusqu'à ce que vous ajoutiez votre secret d'application Meta.",
     "manualOnboarding": {
       "title": "Votre boîte de réception WhatsApp est prête !",
       "description": "Configurez l’URL du webhook et le jeton de vérification dans votre application Meta avec les valeurs ci-dessous.",
@@ -3417,7 +3535,8 @@
       "verifyToken": "Jeton de vérification du webhook",
       "qrCodeHint": "Scannez le code QR pour ouvrir l’URL du webhook",
       "moreSettings": "Plus de paramètres",
-      "goToInbox": "Accéder à la boîte de réception"
+      "goToInbox": "Accéder à la boîte de réception",
+      "multipleTitle": "Vos boîtes de réception WhatsApp sont prêtes !"
     },
     "phoneVerification": {
       "title": "Vérifier le numéro de téléphone WhatsApp",
@@ -3430,7 +3549,8 @@
       "actions": {
         "sendCode": "Envoyer le code",
         "resendIn": "Renvoyer dans {seconds} s",
-        "verify": "Vérifier et enregistrer"
+        "verify": "Vérifier et enregistrer",
+        "skip": "Ignorer"
       },
       "fields": {
         "code": {
@@ -3448,7 +3568,8 @@
         "codeNotSent": "Impossible d’envoyer le code de vérification WhatsApp.",
         "codeNotVerified": "Impossible de vérifier le code WhatsApp.",
         "registrationFailed": "Échec de la vérification du numéro WhatsApp."
-      }
+      },
+      "queueProgress": "Vérification de {current} sur {total}"
     },
     "connect": {
       "errors": {
@@ -3560,7 +3681,8 @@
       "profile": "Profil",
       "usefulLinks": "Liens utiles",
       "conversionsApi": "Optimisation des publicités",
-      "settings": "Paramètres"
+      "settings": "Paramètres",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Gérer votre compte WhatsApp",
@@ -3696,6 +3818,82 @@
         "title": "Événements automatiques",
         "description": "Envoyez automatiquement les événements de conversion de ce numéro WhatsApp vers Meta. Si l’autorisation manque, reconnectez le compte pour l’accorder."
       }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta a refusé la modification des paramètres d'appel",
+        "bicUnavailable": "Les appels initiés par l'entreprise ne sont pas disponibles pour ce pays",
+        "callAlreadyInProgress": "Un appel avec ce contact est déjà en cours",
+        "hangupFailed": "Impossible de mettre fin à l'appel"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta a refusé la modification",
+      "callContact": "Appeler sur WhatsApp",
+      "dialing": "Appel en cours…",
+      "startCall": "Démarrer un appel WhatsApp",
+      "retentionLabel": "Conservation des enregistrements (jours)",
+      "retentionHelper": "Durée de conservation des enregistrements d'appel avant leur suppression définitive.",
+      "transcriptionLabel": "Transcrire les appels",
+      "transcriptionHelper": "Transcrit automatiquement les appels enregistrés à l'aide de votre fournisseur d'IA connecté.",
+      "sip": {
+        "provisioningLabel": "Provisionnement FreeSWITCH",
+        "provisionButton": "Provisionner",
+        "deprovisionButton": "Déprovisionner",
+        "status": {
+          "none": "Non provisionné",
+          "provisioning": "Provisionnement en cours…",
+          "provisioned": "Provisionné",
+          "enabled": "Activé",
+          "failed": "Échec"
+        },
+        "errors": {
+          "notProvisioned": "Provisionnez ce numéro pour les appels FreeSWITCH avant d'activer les appels dans l'application",
+          "readBackMismatch": "Meta n'a pas confirmé la modification des appels SIP — réessayez",
+          "provisionFailed": "Échec du provisionnement de ce numéro pour les appels FreeSWITCH",
+          "deprovisionFailed": "Échec du déprovisionnement des appels FreeSWITCH pour ce numéro"
+        }
+      },
+      "preflight": {
+        "title": "Éligibilité aux appels",
+        "appSubscriptionMissing": "Configurez d'abord le webhook WhatsApp de cette application dans le tableau de bord des applications Meta, puis réessayez.",
+        "appSubscriptionFailed": "Impossible de vérifier l'abonnement au webhook 'calls' de l'application. Réessayez dans un instant.",
+        "callsNotSubscribed": "Cette application n'est pas abonnée au champ webhook 'calls', donc les événements d'appel ne peuvent pas atteindre ChatbotX (erreur Meta 138018 : les conditions techniques préalables ne sont pas remplies — assurez-vous qu'au moins une application abonnée au WABA dispose également du champ webhook d'appels).",
+        "fixButton": "Corriger",
+        "fixSuccess": "L'application est désormais abonnée aux webhooks d'appel WhatsApp.",
+        "manualIntegrationNotice": "Ce numéro a été connecté manuellement et ne dispose d'aucun identifiant d'application ici. Abonnez le champ webhook 'calls' de votre application dans le tableau de bord des applications Meta.",
+        "coexistenceWarning": "Ce numéro utilise la coexistence avec l'application WhatsApp Business, que Meta ne prend pas en charge pour les appels. Basculez-le en Cloud API uniquement.",
+        "messagingLimitTooLow": "Le palier de limite de messagerie de ce numéro est inférieur au minimum requis par Meta pour les appels."
+      }
+    },
+    "selectPage": {
+      "tryAgain": "Réessayer la connexion"
     }
   },
   "zalo": {
@@ -3708,7 +3906,8 @@
       "toggleSuccess": "Paramètre de synchronisation mis à jour.",
       "enabledSince": "Activée depuis le {date}",
       "disabled": "Désactivée"
-    }
+    },
+    "refreshPermissions": "Actualiser les autorisations"
   },
   "telegram": {
     "description": "Cette intégration permet de créer des bots Telegram.",
@@ -3845,7 +4044,9 @@
       "productRemovedFromCart": "Produit retiré du panier",
       "productOrdered": "Produit commandé",
       "contactReferredANewContact": "Le contact a recommandé un nouveau contact",
-      "contactReferredExistingContact": "Le contact a recommandé un contact existant"
+      "contactReferredExistingContact": "Le contact a recommandé un contact existant",
+      "callRecorded": "Appel enregistré",
+      "callTranscribed": "Appel transcrit"
     },
     "actions": {
       "addTag": "Ajouter une étiquette",
@@ -3872,7 +4073,12 @@
   },
   "developerAccessToken": {
     "title": "Jeton d’accès API",
-    "description": "Générez un jeton pour permettre à votre espace de travail d’accéder aux API publiques. Gardez ce jeton secret et ne le partagez avec personne."
+    "description": "Générez un jeton pour permettre à votre espace de travail d’accéder aux API publiques. Gardez ce jeton secret et ne le partagez avec personne.",
+    "createDialogTitle": "Créer un jeton API",
+    "namePlaceholder": "p. ex. intégration Zapier",
+    "empty": "Aucun jeton API pour le moment.",
+    "defaultBadge": "Par défaut",
+    "allScopes": "Toutes les portées"
   },
   "contacts": {
     "title": "Contacts",
@@ -4508,6 +4714,17 @@
     },
     "queues": {
       "title": "Files d’attente"
+    },
+    "workspaces": {
+      "title": "Espaces de travail",
+      "description": "Les espaces de travail dont le propriétaire a activé l'accès de l'assistance de la plateforme peuvent être ouverts ici.",
+      "owner": "Propriétaire",
+      "tenant": "Locataire",
+      "supportStatus": "Statut de l'assistance",
+      "openAsSupport": "Ouvrir en tant qu'assistance",
+      "supportEnabledUntil": "Activé jusqu'à {time}",
+      "supportOff": "Désactivé",
+      "searchPlaceholder": "Rechercher par nom, e-mail du propriétaire ou ID"
     }
   },
   "platformCredentials": {
@@ -5340,7 +5557,8 @@
     "connectViaFacebook": "Connecter via Facebook",
     "unsupportedExplanation": "Ce compte Instagram a été connecté avec Instagram Business Login. Connectez le compte via Facebook pour utiliser Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "Les événements WhatsApp ne sont envoyés que pour les conversations démarrées à partir d’une publicité click-to-WhatsApp."
+      "whatsappNote": "Les événements WhatsApp ne sont envoyés que pour les conversations démarrées à partir d’une publicité click-to-WhatsApp.",
+      "description": "Mettez en file d’attente un événement LeadSubmitted pour Messenger, Instagram ou WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5587,7 +5805,8 @@
       "generalSettingsTitle": "Paramètres généraux",
       "appearanceTitle": "Apparence",
       "playerSettingsTitle": "Paramètres du joueur",
-      "prizeSettingsTitle": "Paramètres des lots"
+      "prizeSettingsTitle": "Paramètres des lots",
+      "validationFailed": "Veuillez corriger les champs surlignés avant d'enregistrer."
     },
     "generalSettings": {
       "showName": "Visible",
@@ -5617,7 +5836,11 @@
       "resetPolicyLabel": "Réinitialiser les tirages",
       "resetNever": "Ne jamais réinitialiser le nombre de tirages",
       "resetEveryNDays": "Réinitialiser le nombre de tirages tous les",
-      "resetIntervalDaysSuffix": "jour(s)"
+      "resetIntervalDaysSuffix": "jour(s)",
+      "maxSharesPerPerson": "Nombre max. de tirages bonus par parrainage",
+      "maxSharesPerPersonHint": "Chaque ami qui rejoint via le lien d'invitation de ce joueur et vous envoie un message lui offre 1 tirage supplémentaire, jusqu'à cette limite. Définissez 0 pour désactiver les bonus de parrainage. Les tirages bonus doivent être utilisés avant la prochaine réinitialisation.",
+      "sharingNode": "Nœud de partage",
+      "sharingNodeHint": "L'étape du flux qui s'exécute lorsqu'un ami ouvre le lien de partage de ce joueur. Laissez vide pour masquer le bouton Partager."
     },
     "publicUrl": {
       "label": "URL publique",
@@ -5632,12 +5855,14 @@
       "forbiddenTitle": "Accès refusé",
       "forbiddenDescription": "Ce lien est invalide ou a expiré.",
       "comingSoonTitle": "Bientôt disponible",
-      "comingSoonDescription": "Ce type de minijeu n'est pas encore jouable."
+      "comingSoonDescription": "Ce type de minijeu n'est pas encore jouable.",
+      "rateLimited": "Trop de requêtes. Veuillez patienter un instant et réessayer."
     },
     "list": {
       "gamesPlayed": "Parties jouées",
       "participants": "Participants",
-      "winners": "Gagnants"
+      "winners": "Gagnants",
+      "shares": "Parrainages"
     },
     "history": {
       "title": "Historique",
@@ -5654,7 +5879,8 @@
         "win": "Gagné",
         "lose": "Pas de lot",
         "empty": "Aucun registre de parties pour le moment"
-      }
+      },
+      "shares": "Parrainages"
     }
   },
   "mediaLibrary": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "Champs du bot"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "Importer depuis un fichier",
+      "automaticScan": "Scan automatique des clients"
+    },
+    "title": "Scan automatique des clients",
+    "submit": "Scan automatique",
+    "fields": {
+      "inbox": "Boîte de réception",
+      "scanFrom": "Scanner la boîte de réception à partir de"
+    },
+    "hint": {
+      "range": "Le système analysera les clients ayant envoyé un message à la page depuis {from} jusqu'à maintenant.",
+      "beforeChoose": "Après le scan, vous devez attendre encore 24 heures avant de pouvoir réutiliser cette fonctionnalité."
+    },
+    "status": {
+      "idle": "Aucun scan n'a encore été effectué pour cette boîte de réception. Choisissez une date de début et lancez votre premier scan automatique des clients.",
+      "running": "Le système effectue un scan automatique ; l'heure d'achèvement estimée est {eta}.",
+      "nextScan": "Prochaine heure de scan : {at}",
+      "finished": "Le système a terminé la dernière demande de scan des clients à {at}.",
+      "total": "Total de clients scannés : {count}",
+      "waitCooldown": "Vous devez attendre encore 24 heures avant de pouvoir réutiliser cette fonctionnalité.",
+      "failed": "Le dernier scan a échoué. Vous pouvez réessayer une fois le délai d'attente terminé.",
+      "partial": "Le dernier scan s'est terminé partiellement — certaines conversations n'ont pas pu être importées."
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "L'heure de début du scan doit être antérieure à l'heure actuelle.",
+      "contactScanInboxNotFound": "Boîte de réception introuvable.",
+      "contactScanChannelUnsupported": "Ce canal ne prend pas en charge le scan automatique des clients.",
+      "contactScanIntegrationDisconnected": "Cette boîte de réception n'est pas connectée.",
+      "contactScanCooldown": "Cette boîte de réception a été scannée récemment. Veuillez attendre avant de scanner à nouveau.",
+      "contactScanAlreadyRunning": "Un scan est déjà en cours pour cette boîte de réception.",
+      "contactScanForbidden": "Vous n'avez pas la permission d'exécuter un scan automatique des clients."
+    },
+    "histories": {
+      "title": "Historique des scans",
+      "columns": {
+        "channel": "Canal",
+        "scanFrom": "Scan depuis",
+        "importedContacts": "Contacts importés",
+        "scannedConversations": "Conversations scannées",
+        "finishedAt": "Terminé le",
+        "error": "Erreur"
+      },
+      "status": {
+        "init": "En file d'attente",
+        "running": "En cours",
+        "succeeded": "Réussi",
+        "partial": "Partiel",
+        "failed": "Échoué"
+      },
+      "empty": "Aucun scan n'a encore été effectué."
+    }
   }
 }

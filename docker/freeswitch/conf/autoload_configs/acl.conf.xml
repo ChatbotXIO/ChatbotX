@@ -1,0 +1,42 @@
+<!--
+  ChatbotX delta from vanilla autoload_configs/acl.conf.xml. `<list
+  name="..." default="allow|deny"><node type="allow|deny" cidr="..."/>
+  </list>` is the exact structure in the fetched vanilla file (the `lan`
+  and `domains` example lists there are dropped — we don't use them).
+
+  meta_sip: source IP allowlist for the `whatsapp` profile's
+  `apply-inbound-acl`. Meta's own SIP doc says the SIP
+  allowlist "uses the same IP addresses as ... Webhooks", and the
+  Webhooks doc's only currently-documented method is a whois query
+  against AS32934 (see scripts/update-meta-sip-acl.sh) or the geofeed
+  CSV; there is no fixed short prefix list published for calling
+  specifically as of 2026-09-12 (flagged as a plan mismatch: the plan
+  text says "23 prefixes", not found verbatim on any fetchable Meta
+  page; the live AS32934 announcement is roughly 400 routes). The node
+  list is generated, see meta_sip_ranges.xml's header.
+
+  Update procedure: run `scripts/update-meta-sip-acl.sh` (regenerates
+  meta_sip_ranges.xml from the live whois query), review the diff, restart
+  or `sofia profile whatsapp restart` off-hours (ACL changes need a full
+  restart of the owning profile, not just `rescan` — B9's `rescan` only
+  re-reads mod_xml_curl-backed sofia.conf sections, not acl.conf.xml).
+
+  esl_clients: ESL (8021) source allowlist. Production:
+  loopback only (the co-located `freeswitch` worker connects from the
+  same host). Local compose: also allow the compose bridge subnet so the
+  sibling `worker` container (not sharing a network namespace) can reach
+  it; 172.16.0.0/12 covers Docker's default bridge allocation range.
+-->
+<configuration name="acl.conf" description="Network Lists">
+  <network-lists>
+    <list name="meta_sip" default="deny">
+      <X-PRE-PROCESS cmd="include" data="meta_sip_ranges.xml"/>
+    </list>
+
+    <list name="esl_clients" default="deny">
+      <node type="allow" cidr="127.0.0.0/8"/>
+      <node type="allow" cidr="::1/128"/>
+      <node type="allow" cidr="172.16.0.0/12"/>
+    </list>
+  </network-lists>
+</configuration>

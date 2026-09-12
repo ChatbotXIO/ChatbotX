@@ -363,4 +363,47 @@ export const registerSchedules = async () => {
       },
     )
   }
+
+  // WhatsApp FreeSWITCH calling.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeExpiredCallRecordings,
+    {
+      pattern: "0 5 * * *",
+    },
+    {
+      name: ScheduleJobData.purgeExpiredCallRecordings,
+      data: {
+        type: ScheduleJobData.purgeExpiredCallRecordings,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.sweepStaleWhatsappCalls,
+    {
+      pattern: "*/5 * * * *",
+    },
+    {
+      name: ScheduleJobData.sweepStaleWhatsappCalls,
+      data: {
+        type: ScheduleJobData.sweepStaleWhatsappCalls,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.expireAgentSipPresence,
+    {
+      pattern: "30 5 * * *",
+    },
+    {
+      name: ScheduleJobData.expireAgentSipPresence,
+      data: {
+        type: ScheduleJobData.expireAgentSipPresence,
+        data: {},
+      },
+    },
+  )
 }

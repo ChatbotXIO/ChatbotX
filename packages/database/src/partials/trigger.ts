@@ -36,6 +36,8 @@ export const triggerEventTypes = z.enum([
   "incomingCall",
   "missedAudioCall",
   "callEnded",
+  "callRecorded",
+  "callTranscribed",
   "ticketCreated",
   "ticketMovedToStage",
   "ticketValueChanged",

@@ -380,6 +380,7 @@ vi.mock("@chatbotx.io/sdk", () => ({
     Boolean(identity.sourceUserId) &&
     identity.sourceId === identity.sourceUserId,
   getStoryReply: () => undefined,
+  getWhatsappCallPermissionReply: () => undefined,
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
@@ -447,9 +448,20 @@ vi.mock("../src/services/integrations", () => ({
 // ---------------------------------------------------------------------------
 
 await import("../src/integration/worker")
+// The integration worker process now boots two BullMQ workers: the shared
+// `integration` queue and the rate-limited `callTranscription` queue.
 await vi.waitFor(() => {
-  expect(workerState.capturedWorkers).toHaveLength(1)
+  expect(workerState.capturedWorkers).toHaveLength(2)
 })
+const findIntegrationWorker = () => {
+  const captured = workerState.capturedWorkers.find(
+    (worker) => worker.queueName === "integration",
+  )
+  if (!captured) {
+    throw new Error("integration worker was not registered")
+  }
+  return captured
+}
 const { integrationService } = await import("../src/services/integrations")
 
 const fakeInbox = {
@@ -583,7 +595,7 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
   })
 
   test("the refresh's contactService.update resolves before automatedResponseService.enqueue is invoked", async () => {
-    const [integrationWorker] = workerState.capturedWorkers
+    const integrationWorker = findIntegrationWorker()
 
     await integrationWorker?.processor({
       data: {
@@ -621,7 +633,7 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
       ...fakeContactInbox,
       contact: { ...fakeContact, firstName: "Already Named" },
     })
-    const [integrationWorker] = workerState.capturedWorkers
+    const integrationWorker = findIntegrationWorker()
 
     await integrationWorker?.processor({
       data: {

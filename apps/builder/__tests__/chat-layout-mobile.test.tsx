@@ -1,5 +1,5 @@
 import { setViewportWidth } from "@chatbotx.io/vitest-config/setup-dom"
-import { act } from "react"
+import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -10,6 +10,17 @@ vi.mock("next-intl", () => ({
 vi.mock("@/features/chat/chat-realtime", () => ({
   ChatRealtime: () => <div data-testid="realtime" />,
 }))
+
+vi.mock("@/features/integration-whatsapp/calling/softphone/call-dock", () => ({
+  WhatsappCallDock: () => <div data-testid="call-dock" />,
+}))
+
+vi.mock(
+  "@/features/integration-whatsapp/calling/softphone/sip-user-provider",
+  () => ({
+    SipUserProvider: ({ children }: { children: ReactNode }) => children,
+  }),
+)
 
 const mockRouterReplace = vi.fn()
 

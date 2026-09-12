@@ -1,0 +1,35 @@
+<!--
+  ChatbotX delta from vanilla autoload_configs/modules.conf.xml, trimmed to
+  the module set the image actually installs (the Dockerfile's package list)
+  plus the handful of core modules every FreeSWITCH instance needs to
+  start and run a dialplan. Every `<load>` line below is present verbatim
+  (several already uncommented) in the fetched vanilla modules.conf.xml —
+  nothing here is a new module name.
+
+  mod_xml_curl is commented out in vanilla by default; uncommented here since it is our only XML source (no static directory/
+  dialplan/gateway config). mod_tone_stream stays loaded because the
+  inbound dialplan's `transfer_ringback=$${us-ring}` is a tone_stream
+  URI.
+-->
+<configuration name="modules.conf" description="Modules">
+  <modules>
+    <load module="mod_console"/>
+    <load module="mod_logfile"/>
+
+    <load module="mod_event_socket"/>
+    <load module="mod_xml_curl"/>
+
+    <load module="mod_sofia"/>
+
+    <load module="mod_commands"/>
+    <load module="mod_dptools"/>
+
+    <load module="mod_dialplan_xml"/>
+
+    <load module="mod_opus"/>
+
+    <load module="mod_sndfile"/>
+    <load module="mod_native_file"/>
+    <load module="mod_tone_stream"/>
+  </modules>
+</configuration>

@@ -11,6 +11,8 @@ export const RealtimeEventType = {
   notifyExportResult: "notifyExportResult",
   conversationCreated: "conversationCreated",
   conversationUpdated: "conversationUpdated",
+  whatsappCallRinging: "whatsappCallRinging",
+  whatsappCallEnded: "whatsappCallEnded",
 } as const
 
 export type RealtimeEventCreateMessage = {
@@ -117,6 +119,42 @@ export type RealtimeEventConversationUpdated = {
   }
 }
 
+/**
+ * Identifiers every in-app call event carries. `callId` is ALWAYS the
+ * `WhatsappCall` row id; `correlationId` is the external id (`wacid`, or the
+ * outbound `attemptId` until Meta assigns one); `rootUuid` is the FreeSWITCH
+ * A-leg uuid, also sent to the agent's softphone as the `X-CBX-Root-UUID`
+ * INVITE header so the browser can match the ringing SIP call to this event.
+ */
+export type RealtimeCallIdentity = {
+  callId: string
+  correlationId: string
+  rootUuid: string
+}
+
+/**
+ * A WhatsApp call is ringing on FreeSWITCH and eligible agents' softphones
+ * are being invited — the inbox enriches the incoming SIP call with the
+ * contact/conversation it belongs to.
+ */
+export type RealtimeEventWhatsappCallRinging = {
+  eventType: typeof RealtimeEventType.whatsappCallRinging
+  data: RealtimeCallIdentity & {
+    direction: "userInitiated" | "businessInitiated"
+    conversationId: string
+    contactInboxId: string
+    contactName?: string | null
+  }
+}
+
+/** The call left FreeSWITCH (any terminal status) — dismiss call UI. */
+export type RealtimeEventWhatsappCallEnded = {
+  eventType: typeof RealtimeEventType.whatsappCallEnded
+  data: RealtimeCallIdentity & {
+    status: "completed" | "rejected" | "failed"
+  }
+}
+
 export type RealtimeEventData =
   | RealtimeEventCreateMessage
   | RealtimeEventMessageDeleted
@@ -129,3 +167,5 @@ export type RealtimeEventData =
   | RealtimeEventNotifyExportResult
   | RealtimeEventConversationCreated
   | RealtimeEventConversationUpdated
+  | RealtimeEventWhatsappCallRinging
+  | RealtimeEventWhatsappCallEnded

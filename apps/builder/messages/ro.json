@@ -137,7 +137,9 @@
       "import": "Importă fluxul",
       "export": "Exportă",
       "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
-      "importJsonOnly": "Doar fișiere JSON"
+      "importJsonOnly": "Doar fișiere JSON",
+      "whatsappCallButton": "Sună pe WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -249,7 +251,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Când sunt atașate butoane, TikTok trimite doar primele 40 de caractere din acest mesaj — restul va fi trunchiat."
     },
-    "dataWasSaved": "Datele au fost salvate"
+    "dataWasSaved": "Datele au fost salvate",
+    "whatsappCallButton": {
+      "editButtonTitle": "Editează butonul",
+      "buttonLabel": "Eticheta butonului"
+    }
   },
   "folders": {
     "heading": {
@@ -435,7 +441,8 @@
       "adAccountFilter": {
         "all": "Toate conturile de anunțuri",
         "label": "Cont de anunțuri",
-        "unavailable": "Conturile de reclame nu au putut fi încărcate — verifică conexiunea Ads a acestei integrări sau conexiunea Facebook Ads a spațiului de lucru, din setări."
+        "unavailable": "Conturile de reclame nu au putut fi încărcate — verifică conexiunea Ads a acestei integrări sau conexiunea Facebook Ads a spațiului de lucru, din setări.",
+        "note": "Anunțurile cu conversii, dar cu cheltuieli zero sau livrare zero în intervalul de date selectat, sunt ascunse la filtrarea după contul de anunțuri."
       },
       "channelFilter": {
         "label": "Canal",
@@ -1585,6 +1592,10 @@
     "accessToken": {
       "label": "Token de acces"
     },
+    "manualAppSecret": {
+      "label": "Secretul aplicației Meta (opțional)",
+      "description": "Activează verificarea semnăturii webhook pentru această conexiune manuală. Îl găsești în tabloul de bord al aplicației Meta, la Setări > De bază."
+    },
     "botField": {
       "label": "Câmp bot"
     },
@@ -1592,7 +1603,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "Agent AI"
+      "label": "Agent AI",
+      "loadError": "Încărcarea agenților AI a eșuat. Vă rugăm să încercați din nou."
     },
     "aiQueuedMessages": {
       "label": "Mesaje AI în coadă"
@@ -2895,6 +2907,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "Ultima înregistrare a apelului"
+    },
+    "lastCallTranscript": {
+      "label": "Ultima transcriere a apelului"
+    },
+    "tokenPermission": {
+      "label": "Permisiune",
+      "full": "Acces complet",
+      "readOnly": "Doar citire"
+    },
+    "tokenScopes": {
+      "label": "Domenii",
+      "contacts": "Contacte",
+      "inbox": "Inbox",
+      "automation": "Automatizare",
+      "broadcasts": "Difuzări",
+      "analytics": "Analize",
+      "ecommerce": "Comerț electronic",
+      "integrations": "Integrări",
+      "channels": "Canale",
+      "minigames": "Minijocuri",
+      "appointments": "Programări",
+      "media": "Media",
+      "ads": "Reclame"
     }
   },
   "channels": {
@@ -2927,6 +2965,58 @@
       "button": "Reîmprospătează toate permisiunile",
       "resultSuccess": "{refreshed} canal(e) reîmprospătat(e).",
       "resultWithFailures": "{refreshed} canal(e) reîmprospătat(e), {failed} eșuat(e)."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Se pornește sincronizarea istoricului…",
+        "done": "Sincronizarea istoricului a fost pornită",
+        "failed": "Sincronizarea istoricului a eșuat"
+      },
+      "selectAll": "Selectează tot",
+      "selected": "{count}/{max} selectate",
+      "dialogTitleRunning": "Se conectează {count} {feature}…",
+      "dialogTitleDone": "Conectate {connected} din {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} din {total} finalizate",
+      "status": {
+        "waiting": "În așteptare",
+        "connecting": "Se conectează…",
+        "connected": "Conectat",
+        "duplicated": "Deja conectat",
+        "limitReached": "Limită atinsă",
+        "failed": "A eșuat",
+        "timedOut": "Timp expirat",
+        "cancelled": "Anulat"
+      },
+      "reason": {
+        "notSelectable": "Acest element nu poate fi selectat.",
+        "channelLimit": "S-a atins limita de canale.",
+        "workspaceLimit": "S-a atins limita spațiului de lucru.",
+        "providerRejected": "Furnizorul a respins această solicitare.",
+        "unknown": "A apărut o eroare.",
+        "followUpFailed": "Configurare incompletă — finalizați din setările canalului."
+      },
+      "sessionError": {
+        "sessionExpired": "Sesiunea dvs. a expirat. Vă rugăm să vă reconectați.",
+        "notMember": "Nu mai sunteți membru al acestui spațiu de lucru.",
+        "trialExpired": "Perioada de probă a expirat.",
+        "macLimitReached": "Ați atins limita contului.",
+        "credentialMissing": "Lipsesc datele de autentificare. Vă rugăm să vă reconectați."
+      },
+      "cancelRemaining": "Anulează restul",
+      "retryFailed": "Reîncearcă cele eșuate ({count})",
+      "retry": "Reîncearcă",
+      "goToChannels": "Mergi la canale",
+      "close": "Închide",
+      "leaveNotice": "Puteți părăsi pagina; conturile conectate vor fi păstrate",
+      "stepConnecting": "Se conectează",
+      "stepCoexist": "Sincronizează istoricul",
+      "validation": {
+        "min": "Selectați cel puțin 1",
+        "max": "Puteți selecta până la {max}",
+        "duplicate": "Selecție duplicată"
+      },
+      "progressLabel": "Progres"
     }
   },
   "workspace": {
@@ -2958,6 +3048,17 @@
       "pendingBlockedToast": "Acest spațiu de lucru este programat pentru ștergere. Contactează un administrator al spațiului de lucru pentru a restaura accesul.",
       "navDisabledTooltip": "Indisponibil cât timp ștergerea spațiului de lucru este programată",
       "badge": "Ștergere programată"
+    },
+    "supportAccess": {
+      "bannerTitle": "Sesiune de asistență a platformei",
+      "bannerDescription": "Un agent de asistență al platformei are acces temporar la acest spațiu de lucru până la {time}.",
+      "cardTitle": "Acces asistență platformă",
+      "cardDescription": "Permiteți echipei de asistență a platformei să deschidă acest spațiu de lucru cu acces complet timp de 7 zile. Puteți dezactiva această opțiune în orice moment.",
+      "enabledUntil": "Activat până la {time}",
+      "permissionRequired": "Trebuie să fiți super administrator pentru a modifica accesul de asistență al platformei.",
+      "enabledToast": "Accesul de asistență al platformei a fost activat.",
+      "disabledToast": "Accesul de asistență al platformei a fost dezactivat.",
+      "toggleError": "A apărut o eroare. Vă rugăm să încercați din nou."
     }
   },
   "workspaces": {
@@ -3096,7 +3197,16 @@
     "waTemplateMpmTooManySections": "Un buton multi-produs poate avea cel mult 10 secțiuni. Elimină câteva secțiuni înainte de publicare.",
     "waTemplateMpmTooManyProducts": "Un buton multi-produs poate avea în total cel mult 30 de produse. Elimină câteva produse înainte de publicare.",
     "waTemplateLtoExpirationRequired": "Alege o dată de expirare pentru oferta pe timp limitat înainte de a trimite.",
-    "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs."
+    "waTemplateMpmIncompleteProducts": "Fiecare secțiune are nevoie de cel puțin un produs selectat — elimină rândurile goale sau alege un produs.",
+    "voiceCall": "Apel vocal",
+    "voiceCallDuration": "Apel vocal · {duration}",
+    "missedVoiceCall": "Apel vocal pierdut",
+    "declinedVoiceCall": "Apel vocal respins",
+    "acceptedCallPermission": "A acceptat cererea de permisiune pentru apel",
+    "declinedCallPermission": "A respins cererea de permisiune pentru apel",
+    "sendHumanAgentTag": "Trimite un mesaj cu eticheta HUMAN_AGENT",
+    "warning": "Avertisment!",
+    "humanAgentWarningDescription": "Poți răspunde la mesajul unui utilizator în termen de 7 zile doar atunci când problema nu poate fi rezolvată în mod rezonabil în 24 de ore. Exemple includ weekendurile, sărbătorile sau cazurile care necesită mai mult de o zi pentru a fi finalizate. Nu folosi această opțiune din niciun alt motiv, deoarece ar putea pune în pericol pagina ta de Facebook sau contul de Instagram. Dacă nu ești sigur, nu continua."
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",
@@ -3108,6 +3218,12 @@
     "tabs": {
       "generalSettings": "Setări generale",
       "conversionsApi": "Optimizare anunțuri"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Nu s-a găsit niciun cont Instagram",
+      "noAccountsDescription": "Nu s-a găsit niciun cont Instagram Business pe paginile de Facebook pe care le administrați. Reconectați Instagram și acordați toate permisiunile solicitate.",
+      "alreadyConnectedNote": "Acest cont este deja conectat",
+      "tryAgain": "Încearcă să te reconectezi"
     }
   },
   "coexist": {
@@ -3369,7 +3485,8 @@
     "maxSize": "Dimensiunea fișierului depășește limita maximă",
     "maxItemsReached": "Sunt permise maximum {max} {feature} per spațiu de lucru",
     "invalidApiKey": "Cheie API invalidă",
-    "maxMustBeGreaterThanMin": "{maxField} trebuie să fie mai mare sau egal cu {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} trebuie să fie mai mare sau egal cu {minField}",
+    "maxCharacters": "Maximum {max} caractere."
   },
   "webchat": {
     "chatUnavailable": "Acest chat este momentan indisponibil.",
@@ -3410,6 +3527,7 @@
       "label": "Sparge-gheață"
     },
     "manualConnect": "Conectare manuală folosind tokenul de acces System User.",
+    "manualAppSecretMissingNotice": "Semnăturile webhook nu sunt verificate până când adaugi secretul aplicației Meta.",
     "manualOnboarding": {
       "title": "Mesajele tale primite WhatsApp sunt gata!",
       "description": "Configurează URL-ul webhook-ului și tokenul de verificare în aplicația ta Meta. Folosește valorile de mai jos.",
@@ -3417,7 +3535,8 @@
       "verifyToken": "Token de verificare webhook",
       "qrCodeHint": "Scanează codul QR pentru a deschide URL-ul webhook-ului",
       "moreSettings": "Mai multe setări",
-      "goToInbox": "Du-mă acolo"
+      "goToInbox": "Du-mă acolo",
+      "multipleTitle": "Inboxurile dvs. de WhatsApp sunt pregătite!"
     },
     "phoneVerification": {
       "title": "Verifică numărul de telefon WhatsApp",
@@ -3430,7 +3549,8 @@
       "actions": {
         "sendCode": "Trimite codul",
         "resendIn": "Retrimite în {seconds}s",
-        "verify": "Verifică și înregistrează"
+        "verify": "Verifică și înregistrează",
+        "skip": "Omite"
       },
       "fields": {
         "code": {
@@ -3448,7 +3568,8 @@
         "codeNotSent": "Codul de verificare WhatsApp nu a putut fi trimis.",
         "codeNotVerified": "Codul de verificare WhatsApp nu a putut fi verificat.",
         "registrationFailed": "Verificarea numărului de telefon WhatsApp a eșuat."
-      }
+      },
+      "queueProgress": "Se verifică {current} din {total}"
     },
     "connect": {
       "errors": {
@@ -3560,7 +3681,8 @@
       "profile": "Profil",
       "usefulLinks": "Linkuri utile",
       "conversionsApi": "Optimizare anunțuri",
-      "settings": "Setări"
+      "settings": "Setări",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Gestionează-ți contul WhatsApp",
@@ -3696,6 +3818,82 @@
         "title": "Evenimente Automate",
         "description": "Trimite automat evenimente de conversie de la acest număr WhatsApp către Meta. Dacă lipsește permisiunea, reconectează contul pentru a o acorda."
       }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta a respins modificarea setărilor de apelare",
+        "bicUnavailable": "Apelurile inițiate de afacere nu sunt disponibile pentru această țară",
+        "callAlreadyInProgress": "Există deja un apel în curs cu acest contact",
+        "hangupFailed": "Apelul nu a putut fi încheiat"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta a respins modificarea",
+      "callContact": "Apelează pe WhatsApp",
+      "dialing": "Se apelează…",
+      "startCall": "Începe apel WhatsApp",
+      "retentionLabel": "Retenția înregistrărilor (zile)",
+      "retentionHelper": "Cât timp sunt păstrate înregistrările apelurilor înainte de a fi șterse definitiv.",
+      "transcriptionLabel": "Transcrie apelurile",
+      "transcriptionHelper": "Transcrie automat apelurile înregistrate folosind furnizorul tău de AI conectat.",
+      "sip": {
+        "provisioningLabel": "Provizionare FreeSWITCH",
+        "provisionButton": "Provizionează",
+        "deprovisionButton": "Anulează provizionarea",
+        "status": {
+          "none": "Neprovizionat",
+          "provisioning": "Se provizionează…",
+          "provisioned": "Provizionat",
+          "enabled": "Activat",
+          "failed": "Eșuat"
+        },
+        "errors": {
+          "notProvisioned": "Provizionează acest număr pentru apeluri FreeSWITCH înainte de a activa apelurile în aplicație",
+          "readBackMismatch": "Meta nu a confirmat modificarea apelurilor SIP — încearcă din nou",
+          "provisionFailed": "Provizionarea acestui număr pentru apeluri FreeSWITCH a eșuat",
+          "deprovisionFailed": "Anularea provizionării apelurilor FreeSWITCH pentru acest număr a eșuat"
+        }
+      },
+      "preflight": {
+        "title": "Eligibilitate pentru apeluri",
+        "appSubscriptionMissing": "Configurează mai întâi webhook-ul WhatsApp pentru această aplicație în Meta App Dashboard, apoi încearcă din nou.",
+        "appSubscriptionFailed": "Nu s-a putut verifica abonarea aplicației la webhook-ul 'calls'. Încearcă din nou în scurt timp.",
+        "callsNotSubscribed": "Această aplicație nu este abonată la câmpul webhook 'calls', astfel încât evenimentele de apel nu pot ajunge la ChatbotX (eroare Meta 138018: cerințele tehnice preliminare nu sunt îndeplinite — asigură-te că cel puțin o aplicație abonată la WABA are și câmpul webhook pentru apeluri).",
+        "fixButton": "Remediază",
+        "fixSuccess": "Aplicația este acum abonată la webhook-urile de apeluri WhatsApp.",
+        "manualIntegrationNotice": "Acest număr a fost conectat manual și nu are acreditări de aplicație aici. Abonează câmpul webhook 'calls' pentru aplicația ta în Meta App Dashboard.",
+        "coexistenceWarning": "Acest număr folosește coexistența cu aplicația WhatsApp Business, pe care Meta nu o acceptă pentru apeluri. Mută-l doar pe Cloud API.",
+        "messagingLimitTooLow": "Nivelul limitei de mesagerie al acestui număr este sub minimul cerut de Meta pentru apeluri."
+      }
+    },
+    "selectPage": {
+      "tryAgain": "Încearcă să te reconectezi"
     }
   },
   "zalo": {
@@ -3708,7 +3906,8 @@
       "toggleSuccess": "Setarea de sincronizare a etichetelor a fost actualizată.",
       "enabledSince": "Activat din {date}",
       "disabled": "Dezactivat"
-    }
+    },
+    "refreshPermissions": "Reîmprospătează permisiunile"
   },
   "telegram": {
     "description": "Această integrare îți permite să creezi boți Telegram.",
@@ -3845,7 +4044,9 @@
       "productRemovedFromCart": "Produs eliminat din coș",
       "productOrdered": "Produs comandat",
       "contactReferredANewContact": "Contactul a recomandat un contact nou",
-      "contactReferredExistingContact": "Contactul a recomandat un contact existent"
+      "contactReferredExistingContact": "Contactul a recomandat un contact existent",
+      "callRecorded": "Apel înregistrat",
+      "callTranscribed": "Apel transcris"
     },
     "actions": {
       "addTag": "Adaugă etichetă",
@@ -3872,7 +4073,12 @@
   },
   "developerAccessToken": {
     "title": "Token de acces API",
-    "description": "Generează un token pentru a permite spațiului tău de lucru să acceseze API-urile publice. Păstrează acest token secret și nu-l distribui nimănui."
+    "description": "Generează un token pentru a permite spațiului tău de lucru să acceseze API-urile publice. Păstrează acest token secret și nu-l distribui nimănui.",
+    "createDialogTitle": "Creează token API",
+    "namePlaceholder": "de ex. integrare Zapier",
+    "empty": "Niciun token API încă.",
+    "defaultBadge": "Implicit",
+    "allScopes": "Toate domeniile"
   },
   "contacts": {
     "title": "Contacte",
@@ -4694,6 +4900,17 @@
     },
     "queues": {
       "title": "Cozi"
+    },
+    "workspaces": {
+      "title": "Spații de lucru",
+      "description": "Spațiile de lucru ale căror proprietari au activat accesul de asistență al platformei pot fi deschise aici.",
+      "owner": "Proprietar",
+      "tenant": "Chiriaș",
+      "supportStatus": "Stare asistență",
+      "openAsSupport": "Deschide ca asistență",
+      "supportEnabledUntil": "Activat până la {time}",
+      "supportOff": "Dezactivat",
+      "searchPlaceholder": "Căutare după nume, e-mail proprietar sau ID"
     }
   },
   "platformBranding": {
@@ -5340,7 +5557,8 @@
     "connectViaFacebook": "Conectează prin Facebook",
     "unsupportedExplanation": "Acest cont Instagram a fost conectat cu Instagram Business Login. Conectează contul prin Facebook pentru a folosi Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "Evenimentele WhatsApp sunt trimise doar pentru conversațiile care au început dintr-un anunț click-to-WhatsApp."
+      "whatsappNote": "Evenimentele WhatsApp sunt trimise doar pentru conversațiile care au început dintr-un anunț click-to-WhatsApp.",
+      "description": "Pune în coadă un eveniment LeadSubmitted pentru Messenger, Instagram sau WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5587,7 +5805,8 @@
       "generalSettingsTitle": "Setări generale",
       "appearanceTitle": "Aspect",
       "playerSettingsTitle": "Setări jucător",
-      "prizeSettingsTitle": "Setări premii"
+      "prizeSettingsTitle": "Setări premii",
+      "validationFailed": "Corectați câmpurile evidențiate înainte de a salva."
     },
     "generalSettings": {
       "showName": "Vizibil",
@@ -5617,7 +5836,11 @@
       "resetPolicyLabel": "Resetare trageri",
       "resetNever": "Nu reseta numărul de trageri",
       "resetEveryNDays": "Resetează numărul de trageri la fiecare",
-      "resetIntervalDaysSuffix": "zi(le)"
+      "resetIntervalDaysSuffix": "zi(le)",
+      "maxSharesPerPerson": "Extrageri bonus maxime din recomandări",
+      "maxSharesPerPersonHint": "Fiecare prieten care se alătură prin linkul de invitație al acestui jucător și vă trimite un mesaj îi aduce 1 extragere bonus, până la această limită. Setați 0 pentru a dezactiva bonusurile de recomandare. Extragerile bonus trebuie folosite înainte de următoarea resetare.",
+      "sharingNode": "Nod de partajare",
+      "sharingNodeHint": "Pasul din flux care se execută atunci când un prieten deschide linkul de partajare al acestui jucător. Lăsați necompletat pentru a ascunde butonul Partajează."
     },
     "publicUrl": {
       "label": "URL public",
@@ -5632,12 +5855,14 @@
       "forbiddenTitle": "Acces refuzat",
       "forbiddenDescription": "Acest link este invalid sau a expirat.",
       "comingSoonTitle": "În curând",
-      "comingSoonDescription": "Acest tip de minijoc nu poate fi jucat încă."
+      "comingSoonDescription": "Acest tip de minijoc nu poate fi jucat încă.",
+      "rateLimited": "Prea multe solicitări. Vă rugăm să așteptați un moment și să încercați din nou."
     },
     "list": {
       "gamesPlayed": "Jocuri jucate",
       "participants": "Participanți",
-      "winners": "Câștigători"
+      "winners": "Câștigători",
+      "shares": "Recomandări"
     },
     "history": {
       "title": "Istoric",
@@ -5654,7 +5879,8 @@
         "win": "A câștigat",
         "lose": "Fără premiu",
         "empty": "Nu există încă înregistrări de joc"
-      }
+      },
+      "shares": "Recomandări"
     }
   },
   "mediaLibrary": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "Câmpurile botului"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "Importă din fișier",
+      "automaticScan": "Scanare automată a clienților"
+    },
+    "title": "Scanare automată a clienților",
+    "submit": "Scanare automată",
+    "fields": {
+      "inbox": "Inbox",
+      "scanFrom": "Scanează inboxul din"
+    },
+    "hint": {
+      "range": "Sistemul va scana clienții care au trimis mesaje paginii din {from} până în prezent.",
+      "beforeChoose": "După scanare, trebuie să așteptați alte 24 de ore înainte de a putea folosi din nou această funcție."
+    },
+    "status": {
+      "idle": "Nu a fost efectuată încă nicio scanare pentru acest inbox. Alegeți o dată de început și rulați prima Scanare automată a clienților.",
+      "running": "Sistemul efectuează o scanare automată; ora estimată de finalizare este {eta}.",
+      "nextScan": "Următoarea scanare: {at}",
+      "finished": "Sistemul a finalizat ultima cerere de scanare a clienților la {at}.",
+      "total": "Total clienți scanați: {count}",
+      "waitCooldown": "Trebuie să mai așteptați 24 de ore înainte de a putea folosi din nou această funcție.",
+      "failed": "Ultima scanare a eșuat. Puteți încerca din nou după terminarea perioadei de așteptare.",
+      "partial": "Ultima scanare s-a finalizat parțial — unele conversații nu au putut fi importate."
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "Ora de început a scanării trebuie să fie în trecut.",
+      "contactScanInboxNotFound": "Inbox-ul nu a fost găsit.",
+      "contactScanChannelUnsupported": "Acest canal nu acceptă Scanarea automată a clienților.",
+      "contactScanIntegrationDisconnected": "Acest inbox nu este conectat.",
+      "contactScanCooldown": "Acest inbox a fost scanat recent. Vă rugăm să așteptați înainte de a scana din nou.",
+      "contactScanAlreadyRunning": "Este deja în curs o scanare pentru acest inbox.",
+      "contactScanForbidden": "Nu aveți permisiunea de a rula o Scanare automată a clienților."
+    },
+    "histories": {
+      "title": "Istoric scanări",
+      "columns": {
+        "channel": "Canal",
+        "scanFrom": "Scanează din",
+        "importedContacts": "Contacte importate",
+        "scannedConversations": "Conversații scanate",
+        "finishedAt": "Finalizat la",
+        "error": "Eroare"
+      },
+      "status": {
+        "init": "În așteptare",
+        "running": "În curs",
+        "succeeded": "Reușit",
+        "partial": "Parțial",
+        "failed": "Eșuat"
+      },
+      "empty": "Nu a fost efectuată încă nicio scanare."
+    }
   }
 }

@@ -144,6 +144,10 @@
     "accessToken": {
       "label": "訪問權杖"
     },
+    "manualAppSecret": {
+      "label": "Meta 應用程式密鑰（選填）",
+      "description": "為此手動連接啟用 webhook 簽章驗證。您可以在 Meta 應用程式的儀表板中的「設定 > 基本」找到它。"
+    },
     "botField": {
       "label": "機器人欄位"
     },
@@ -151,7 +155,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "AI Agent"
+      "label": "AI Agent",
+      "loadError": "無法載入 AI Agent，請再試一次。"
     },
     "aiQueuedMessages": {
       "label": "AI 排隊訊息"
@@ -1427,6 +1432,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "最近通話錄音"
+    },
+    "lastCallTranscript": {
+      "label": "最近通話轉寫"
+    },
+    "tokenPermission": {
+      "label": "權限",
+      "full": "完整存取權限",
+      "readOnly": "僅限讀取"
+    },
+    "tokenScopes": {
+      "label": "範圍",
+      "contacts": "聯絡人",
+      "inbox": "收件匣",
+      "automation": "自動化",
+      "broadcasts": "廣播",
+      "analytics": "分析",
+      "ecommerce": "電子商務",
+      "integrations": "整合",
+      "channels": "頻道",
+      "minigames": "小遊戲",
+      "appointments": "預約",
+      "media": "媒體",
+      "ads": "廣告"
     }
   },
   "messages": {
@@ -1554,7 +1585,16 @@
     "waTemplateMpmTooManySections": "多商品按鈕最多可包含 10 個版塊。請在發布前移除部分版塊。",
     "waTemplateMpmTooManyProducts": "多商品按鈕總共最多可包含 30 項商品。請在發布前移除部分商品。",
     "waTemplateLtoExpirationRequired": "傳送前請為限時優惠選擇到期時間。",
-    "waTemplateMpmIncompleteProducts": "每個分組至少需要一個已選擇的商品——請刪除空白列或為其選擇商品。"
+    "waTemplateMpmIncompleteProducts": "每個分組至少需要一個已選擇的商品——請刪除空白列或為其選擇商品。",
+    "voiceCall": "語音通話",
+    "voiceCallDuration": "語音通話 · {duration}",
+    "missedVoiceCall": "未接語音通話",
+    "declinedVoiceCall": "已拒絕的語音通話",
+    "acceptedCallPermission": "已接受通話權限請求",
+    "declinedCallPermission": "已拒絕通話權限請求",
+    "sendHumanAgentTag": "傳送一封帶有 HUMAN_AGENT 標籤的訊息",
+    "warning": "警告！",
+    "humanAgentWarningDescription": "只有在問題無法於 24 小時內合理解決時，您才可以在 7 天內回覆使用者的訊息。例如週末、假日，或需要超過一天才能完成的案例。請勿因其他原因使用此選項，否則可能讓您的 Facebook 粉專或 Instagram 帳號面臨風險。如果您不確定，請不要繼續。"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
@@ -2306,6 +2346,58 @@
       "button": "重新整理所有權限",
       "resultSuccess": "已重新整理 {refreshed} 個頻道。",
       "resultWithFailures": "已重新整理 {refreshed} 個頻道，{failed} 個失敗。"
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "正在開始同步歷史記錄…",
+        "done": "已開始同步歷史記錄",
+        "failed": "同步歷史記錄失敗"
+      },
+      "selectAll": "全選",
+      "selected": "已選擇 {count}/{max}",
+      "dialogTitleRunning": "正在連接 {count} 個{feature}…",
+      "dialogTitleDone": "已連接 {connected}/{total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "已完成 {done}/{total}",
+      "status": {
+        "waiting": "等待中",
+        "connecting": "連接中…",
+        "connected": "已連接",
+        "duplicated": "已連接過",
+        "limitReached": "已達上限",
+        "failed": "失敗",
+        "timedOut": "逾時",
+        "cancelled": "已取消"
+      },
+      "reason": {
+        "notSelectable": "此項目無法選取。",
+        "channelLimit": "已達頻道數量上限。",
+        "workspaceLimit": "已達工作區數量上限。",
+        "providerRejected": "供應商拒絕了此請求。",
+        "unknown": "發生錯誤。",
+        "followUpFailed": "設定尚未完成 — 請前往頻道設定完成設定。"
+      },
+      "sessionError": {
+        "sessionExpired": "您的登入已過期，請重新連接。",
+        "notMember": "您已不再是此工作區的成員。",
+        "trialExpired": "您的試用期已結束。",
+        "macLimitReached": "您已達到帳號上限。",
+        "credentialMissing": "缺少憑證，請重新連接。"
+      },
+      "cancelRemaining": "取消其餘項目",
+      "retryFailed": "重試失敗項目 ({count})",
+      "retry": "重試",
+      "goToChannels": "前往頻道",
+      "close": "關閉",
+      "leaveNotice": "您可以先離開；已連接的帳號會保留",
+      "stepConnecting": "連接中",
+      "stepCoexist": "同步歷史記錄",
+      "validation": {
+        "min": "請至少選擇 1 個",
+        "max": "最多可選擇 {max} 個",
+        "duplicate": "選擇重複"
+      },
+      "progressLabel": "進度"
     }
   },
   "workspace": {
@@ -2337,6 +2429,17 @@
       "pendingBlockedToast": "此工作區已排定刪除。請聯絡工作區管理員以還原存取。",
       "navDisabledTooltip": "排定刪除工作區時不可用",
       "badge": "排定刪除"
+    },
+    "supportAccess": {
+      "bannerTitle": "平台支援作業階段",
+      "bannerDescription": "平台支援人員在{time}前對此工作區擁有臨時存取權限。",
+      "cardTitle": "平台支援存取權限",
+      "cardDescription": "允許平台支援團隊在 7 天內以完整權限開啟此工作區。您可以隨時關閉此功能。",
+      "enabledUntil": "已啟用，至{time}為止",
+      "permissionRequired": "您必須是超級管理員才能變更平台支援存取權限。",
+      "enabledToast": "已啟用平台支援存取權限。",
+      "disabledToast": "已停用平台支援存取權限。",
+      "toggleError": "發生錯誤，請再試一次。"
     }
   },
   "workspaces": {
@@ -2488,7 +2591,9 @@
       "import": "匯入流程",
       "export": "匯出",
       "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
-      "importJsonOnly": "僅限 JSON 檔案"
+      "importJsonOnly": "僅限 JSON 檔案",
+      "whatsappCallButton": "透過 WhatsApp 通話",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -2600,7 +2705,11 @@
     "sendText": {
       "tiktokTitleTruncated": "附加按鈕後，TikTok 只會傳送這則訊息的前 40 個字元——其餘部分將被截斷。"
     },
-    "dataWasSaved": "資料已儲存"
+    "dataWasSaved": "資料已儲存",
+    "whatsappCallButton": {
+      "editButtonTitle": "編輯按鈕",
+      "buttonLabel": "按鈕標籤"
+    }
   },
   "folders": {
     "heading": {
@@ -2786,7 +2895,8 @@
       "adAccountFilter": {
         "all": "所有廣告帳戶",
         "label": "廣告帳戶",
-        "unavailable": "無法載入廣告帳號——請在設定中檢查此整合的 Ads 連線，或工作區的 Facebook Ads 連線。"
+        "unavailable": "無法載入廣告帳號——請在設定中檢查此整合的 Ads 連線，或工作區的 Facebook Ads 連線。",
+        "note": "以廣告帳戶篩選時，在所選日期範圍內有轉換但花費或曝光為零的廣告將被隱藏。"
       },
       "channelFilter": {
         "label": "頻道",
@@ -3141,6 +3251,12 @@
     "tabs": {
       "generalSettings": "一般設定",
       "conversionsApi": "廣告優化"
+    },
+    "selectPage": {
+      "noAccountsTitle": "找不到 Instagram 帳號",
+      "noAccountsDescription": "在您管理的 Facebook 粉絲專頁上找不到 Instagram 商業帳號。請重新連接 Instagram，並授予所有要求的權限。",
+      "alreadyConnectedNote": "此帳號已連接",
+      "tryAgain": "重新連接"
     }
   },
   "coexist": {
@@ -3402,7 +3518,8 @@
     "maxSize": "檔案大小超出上限",
     "maxItemsReached": "最大 {max}{feature}",
     "invalidApiKey": "API 金鑰無效",
-    "maxMustBeGreaterThanMin": "{maxField} 必須大於或等於 {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} 必須大於或等於 {minField}",
+    "maxCharacters": "最多 {max} 個字元。"
   },
   "webchat": {
     "chatUnavailable": "此聊天目前不可用。",
@@ -3443,6 +3560,7 @@
       "label": "破冰船"
     },
     "manualConnect": "使用系統使用者 Access Token 手動連接。",
+    "manualAppSecretMissingNotice": "在您新增 Meta 應用程式密鑰之前，webhook 簽章將不會被驗證。",
     "manualOnboarding": {
       "title": "您的 WhatsApp 收件匣已準備好！",
       "description": "在您的 Meta 應用程式中設定 webhook URL 和驗證權杖。使用下面的值。",
@@ -3450,7 +3568,8 @@
       "verifyToken": "Webhook 驗證權杖",
       "qrCodeHint": "掃描 QR Code 以開啟 webhook URL",
       "moreSettings": "更多設定",
-      "goToInbox": "帶我去那裡"
+      "goToInbox": "帶我去那裡",
+      "multipleTitle": "您的 WhatsApp 收件匣已準備就緒！"
     },
     "phoneVerification": {
       "title": "驗證WhatsApp電話號碼",
@@ -3463,7 +3582,8 @@
       "actions": {
         "sendCode": "傳送代碼",
         "resendIn": "在 {seconds} 內重新傳送",
-        "verify": "驗證並註冊"
+        "verify": "驗證並註冊",
+        "skip": "略過"
       },
       "fields": {
         "code": {
@@ -3481,7 +3601,8 @@
         "codeNotSent": "WhatsApp驗證碼無法傳送。",
         "codeNotVerified": "WhatsApp驗證碼無法驗證。",
         "registrationFailed": "WhatsApp 電話號碼驗證失敗。"
-      }
+      },
+      "queueProgress": "正在驗證第 {current} 個，共 {total} 個"
     },
     "connect": {
       "errors": {
@@ -3593,7 +3714,8 @@
       "profile": "簡介",
       "usefulLinks": "有用連結",
       "conversionsApi": "廣告優化",
-      "settings": "設定"
+      "settings": "設定",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "管理您的WhatsApp帳戶",
@@ -3729,6 +3851,82 @@
         "title": "自動事件",
         "description": "自動將此 WhatsApp 號碼的轉換事件傳送到 Meta。如果缺少權限,請重新連接帳號以授予權限。"
       }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta 拒絕了通話設定的變更",
+        "bicUnavailable": "此國家不支援商家主動發起的通話",
+        "callAlreadyInProgress": "與此聯絡人的通話已在進行中",
+        "hangupFailed": "無法結束通話"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta 拒絕了此變更",
+      "callContact": "在 WhatsApp 上通話",
+      "dialing": "通話中…",
+      "startCall": "開始 WhatsApp 通話",
+      "retentionLabel": "錄音保留期限（天）",
+      "retentionHelper": "通話錄音在永久刪除前的保留時長。",
+      "transcriptionLabel": "轉錄通話",
+      "transcriptionHelper": "使用您已連接的 AI 提供者自動轉錄已錄製的通話。",
+      "sip": {
+        "provisioningLabel": "FreeSWITCH 佈建",
+        "provisionButton": "佈建",
+        "deprovisionButton": "取消佈建",
+        "status": {
+          "none": "未佈建",
+          "provisioning": "佈建中…",
+          "provisioned": "已佈建",
+          "enabled": "已啟用",
+          "failed": "失敗"
+        },
+        "errors": {
+          "notProvisioned": "啟用應用程式內通話前，請先為此號碼設定 FreeSWITCH 通話佈建",
+          "readBackMismatch": "Meta 未確認 SIP 通話變更 — 請再試一次",
+          "provisionFailed": "無法為此號碼佈建 FreeSWITCH 通話",
+          "deprovisionFailed": "無法取消此號碼的 FreeSWITCH 通話佈建"
+        }
+      },
+      "preflight": {
+        "title": "通話資格",
+        "appSubscriptionMissing": "請先在 Meta 應用程式儀表板中為此應用程式設定 WhatsApp webhook，然後再試一次。",
+        "appSubscriptionFailed": "無法驗證應用程式的「calls」webhook 訂閱狀態，請稍後再試。",
+        "callsNotSubscribed": "此應用程式未訂閱「calls」webhook 欄位，因此通話事件無法傳送至 ChatbotX（Meta 錯誤 138018：未滿足技術先決條件 — 請確保訂閱 WABA 的至少一個應用程式也具有通話 webhook 欄位）。",
+        "fixButton": "修復",
+        "fixSuccess": "此應用程式現已訂閱 WhatsApp 通話 webhook。",
+        "manualIntegrationNotice": "此號碼是手動連接的，此處沒有應用程式憑證。請在 Meta 應用程式儀表板中為您的應用程式訂閱「calls」webhook 欄位。",
+        "coexistenceWarning": "此號碼使用與 WhatsApp Business 應用程式的共存模式，而 Meta 不支援此模式進行通話。請將其僅移至 Cloud API。",
+        "messagingLimitTooLow": "此號碼的訊息限制等級低於 Meta 進行通話所要求的最低標準。"
+      }
+    },
+    "selectPage": {
+      "tryAgain": "重新連接"
     }
   },
   "zalo": {
@@ -3741,7 +3939,8 @@
       "toggleSuccess": "標籤同步設定已更新。",
       "enabledSince": "自 {date} 啟用",
       "disabled": "已停用"
-    }
+    },
+    "refreshPermissions": "刷新權限"
   },
   "telegram": {
     "description": "此整合可讓您建立Telegram 機器人。",
@@ -3878,7 +4077,9 @@
       "productRemovedFromCart": "產品已從購物車中刪除",
       "productOrdered": "已訂購產品",
       "contactReferredANewContact": "聯絡人推薦了新聯絡人",
-      "contactReferredExistingContact": "聯絡人引用現有聯絡人"
+      "contactReferredExistingContact": "聯絡人引用現有聯絡人",
+      "callRecorded": "通話已錄音",
+      "callTranscribed": "通話已轉寫"
     },
     "actions": {
       "addTag": "新增標籤",
@@ -3905,7 +4106,12 @@
   },
   "developerAccessToken": {
     "title": "API 存取權杖",
-    "description": "產生權杖以允許您的工作區存取公共 API。請將此權杖保密，不要與任何人共享。"
+    "description": "產生權杖以允許您的工作區存取公共 API。請將此權杖保密，不要與任何人共享。",
+    "createDialogTitle": "建立 API 權杖",
+    "namePlaceholder": "例如：Zapier 整合",
+    "empty": "尚無 API 權杖。",
+    "defaultBadge": "預設",
+    "allScopes": "所有範圍"
   },
   "contacts": {
     "title": "聯絡人",
@@ -4541,6 +4747,17 @@
     },
     "queues": {
       "title": "佇列"
+    },
+    "workspaces": {
+      "title": "工作區",
+      "description": "擁有者已啟用平台支援存取權限的工作區可以在此開啟。",
+      "owner": "擁有者",
+      "tenant": "租戶",
+      "supportStatus": "支援狀態",
+      "openAsSupport": "以支援身分開啟",
+      "supportEnabledUntil": "已啟用，至{time}為止",
+      "supportOff": "關閉",
+      "searchPlaceholder": "依名稱、擁有者電子郵件或 ID 搜尋"
     }
   },
   "platformCredentials": {
@@ -5340,7 +5557,8 @@
     "connectViaFacebook": "透過 Facebook 連接",
     "unsupportedExplanation": "此 Instagram 帳戶是透過 Instagram Business Login 連接的。請透過 Facebook 連接該帳戶，以使用 Meta Conversions API。",
     "flowStep": {
-      "whatsappNote": "WhatsApp 事件僅會針對由點擊式 WhatsApp 廣告發起的對話傳送。"
+      "whatsappNote": "WhatsApp 事件僅會針對由點擊式 WhatsApp 廣告發起的對話傳送。",
+      "description": "為 Messenger、Instagram 或 WhatsApp 排入一筆 LeadSubmitted 事件。"
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5587,7 +5805,8 @@
       "generalSettingsTitle": "一般設定",
       "appearanceTitle": "外觀",
       "playerSettingsTitle": "玩家設定",
-      "prizeSettingsTitle": "獎項設定"
+      "prizeSettingsTitle": "獎項設定",
+      "validationFailed": "儲存前請先修正標記出來的欄位。"
     },
     "generalSettings": {
       "showName": "可見",
@@ -5617,7 +5836,11 @@
       "resetPolicyLabel": "重設抽獎次數",
       "resetNever": "不重設抽獎次數",
       "resetEveryNDays": "每隔以下天數重設抽獎次數",
-      "resetIntervalDaysSuffix": "天"
+      "resetIntervalDaysSuffix": "天",
+      "maxSharesPerPerson": "透過推薦獲得的最大加碼抽獎次數",
+      "maxSharesPerPersonHint": "每位透過此玩家的邀請連結加入並向您傳送訊息的朋友，都會為對方帶來 1 次額外抽獎機會，最多可累積至此上限。設為 0 即可關閉推薦獎勵。加碼抽獎次數必須在下次重設前使用完畢。",
+      "sharingNode": "分享節點",
+      "sharingNodeHint": "當朋友開啟此玩家的分享連結時所執行的流程步驟。留空則會隱藏分享按鈕。"
     },
     "publicUrl": {
       "label": "公開連結",
@@ -5632,12 +5855,14 @@
       "forbiddenTitle": "存取遭拒",
       "forbiddenDescription": "此連結無效或已過期。",
       "comingSoonTitle": "即將推出",
-      "comingSoonDescription": "此類型的小遊戲暫時無法遊玩。"
+      "comingSoonDescription": "此類型的小遊戲暫時無法遊玩。",
+      "rateLimited": "請求次數過多，請稍候片刻再試一次。"
     },
     "list": {
       "gamesPlayed": "遊戲次數",
       "participants": "參與人數",
-      "winners": "中獎人數"
+      "winners": "中獎人數",
+      "shares": "推薦次數"
     },
     "history": {
       "title": "歷史紀錄",
@@ -5654,7 +5879,8 @@
         "win": "中獎",
         "lose": "未中獎",
         "empty": "尚無遊戲紀錄"
-      }
+      },
+      "shares": "推薦次數"
     }
   },
   "mediaLibrary": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "機器人欄位"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "從檔案匯入",
+      "automaticScan": "自動客戶掃描"
+    },
+    "title": "自動客戶掃描",
+    "submit": "自動掃描",
+    "fields": {
+      "inbox": "收件匣",
+      "scanFrom": "掃描起始時間"
+    },
+    "hint": {
+      "range": "系統會掃描自{from}起至目前為止曾透過此頁面傳送訊息的客戶。",
+      "beforeChoose": "掃描完成後，您必須再等待 24 小時才能再次使用此功能。"
+    },
+    "status": {
+      "idle": "此收件匣尚未執行任何掃描。請選擇開始日期，並執行第一次自動客戶掃描。",
+      "running": "系統正在執行自動掃描，預計完成時間為 {eta}。",
+      "nextScan": "下次掃描時間：{at}",
+      "finished": "系統已於 {at} 完成上一次客戶掃描請求。",
+      "total": "已掃描的客戶總數：{count}",
+      "waitCooldown": "您必須再等待 24 小時才能再次使用此功能。",
+      "failed": "上一次掃描失敗。冷卻時間結束後即可再試一次。",
+      "partial": "上一次掃描僅部分完成 — 部分對話無法匯入。"
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "掃描起始時間必須是過去的時間。",
+      "contactScanInboxNotFound": "找不到收件匣。",
+      "contactScanChannelUnsupported": "此頻道不支援自動客戶掃描。",
+      "contactScanIntegrationDisconnected": "此收件匣尚未連接。",
+      "contactScanCooldown": "此收件匣最近已掃描過，請稍候再重新掃描。",
+      "contactScanAlreadyRunning": "此收件匣已有一個正在執行的掃描。",
+      "contactScanForbidden": "您沒有權限執行自動客戶掃描。"
+    },
+    "histories": {
+      "title": "掃描歷史記錄",
+      "columns": {
+        "channel": "頻道",
+        "scanFrom": "掃描起始時間",
+        "importedContacts": "已匯入的聯絡人",
+        "scannedConversations": "已掃描的對話",
+        "finishedAt": "完成時間",
+        "error": "錯誤"
+      },
+      "status": {
+        "init": "排隊中",
+        "running": "執行中",
+        "succeeded": "成功",
+        "partial": "部分",
+        "failed": "失敗"
+      },
+      "empty": "尚未執行任何掃描。"
+    }
   }
 }

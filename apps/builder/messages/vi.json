@@ -716,6 +716,58 @@
       "button": "Làm mới tất cả quyền",
       "resultSuccess": "Đã làm mới {refreshed} channel.",
       "resultWithFailures": "Đã làm mới {refreshed} channel, {failed} bị lỗi."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Đang bắt đầu đồng bộ lịch sử…",
+        "done": "Đã bắt đầu đồng bộ lịch sử",
+        "failed": "Đồng bộ lịch sử thất bại"
+      },
+      "selectAll": "Chọn tất cả",
+      "selected": "Đã chọn {count}/{max}",
+      "dialogTitleRunning": "Đang kết nối {count} {feature}…",
+      "dialogTitleDone": "Đã kết nối {connected}/{total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "Đã hoàn tất {done}/{total}",
+      "status": {
+        "waiting": "Đang chờ",
+        "connecting": "Đang kết nối…",
+        "connected": "Đã kết nối",
+        "duplicated": "Đã được kết nối",
+        "limitReached": "Đã đạt giới hạn",
+        "failed": "Thất bại",
+        "timedOut": "Hết thời gian chờ",
+        "cancelled": "Đã hủy"
+      },
+      "reason": {
+        "notSelectable": "Không thể chọn mục này.",
+        "channelLimit": "Đã đạt giới hạn kênh.",
+        "workspaceLimit": "Đã đạt giới hạn không gian làm việc.",
+        "providerRejected": "Nhà cung cấp đã từ chối yêu cầu này.",
+        "unknown": "Đã xảy ra lỗi.",
+        "followUpFailed": "Thiết lập chưa hoàn tất — hãy hoàn tất trong cài đặt kênh."
+      },
+      "sessionError": {
+        "sessionExpired": "Phiên của bạn đã hết hạn. Vui lòng kết nối lại.",
+        "notMember": "Bạn không còn là thành viên của không gian làm việc này.",
+        "trialExpired": "Thời gian dùng thử của bạn đã hết hạn.",
+        "macLimitReached": "Bạn đã đạt giới hạn tài khoản.",
+        "credentialMissing": "Thiếu thông tin xác thực. Vui lòng kết nối lại."
+      },
+      "cancelRemaining": "Hủy phần còn lại",
+      "retryFailed": "Thử lại ({count})",
+      "retry": "Thử lại",
+      "goToChannels": "Đến các kênh",
+      "close": "Đóng",
+      "leaveNotice": "Bạn có thể rời đi; các tài khoản đã kết nối vẫn được giữ lại",
+      "stepConnecting": "Đang kết nối",
+      "stepCoexist": "Đồng bộ lịch sử",
+      "validation": {
+        "min": "Chọn ít nhất 1",
+        "max": "Bạn có thể chọn tối đa {max}",
+        "duplicate": "Lựa chọn trùng lặp"
+      },
+      "progressLabel": "Tiến trình"
     }
   },
   "workspace": {
@@ -747,6 +799,17 @@
       "pendingBlockedToast": "Workspace này đã được lên lịch xóa. Hãy liên hệ quản trị viên workspace để khôi phục quyền truy cập.",
       "navDisabledTooltip": "Không khả dụng khi workspace đã được lên lịch xóa",
       "badge": "Đã lên lịch xóa"
+    },
+    "supportAccess": {
+      "bannerTitle": "Phiên hỗ trợ nền tảng",
+      "bannerDescription": "Một nhân viên hỗ trợ nền tảng có quyền truy cập tạm thời vào không gian làm việc này cho đến {time}.",
+      "cardTitle": "Quyền truy cập hỗ trợ nền tảng",
+      "cardDescription": "Cho phép nhóm hỗ trợ nền tảng mở không gian làm việc này với quyền truy cập đầy đủ trong 7 ngày. Bạn có thể tắt tính năng này bất cứ lúc nào.",
+      "enabledUntil": "Đã bật đến {time}",
+      "permissionRequired": "Bạn cần là quản trị viên cấp cao để thay đổi quyền truy cập hỗ trợ nền tảng.",
+      "enabledToast": "Đã bật quyền truy cập hỗ trợ nền tảng.",
+      "disabledToast": "Đã tắt quyền truy cập hỗ trợ nền tảng.",
+      "toggleError": "Đã xảy ra lỗi. Vui lòng thử lại."
     }
   },
   "workspaces": {
@@ -873,6 +936,10 @@
     "accessToken": {
       "label": "Token truy cập"
     },
+    "manualAppSecret": {
+      "label": "Meta App Secret (tuỳ chọn)",
+      "description": "Kích hoạt xác minh chữ ký webhook cho kết nối thủ công này. Tìm nó trong trang quản trị Meta App của bạn, tại Settings > Basic."
+    },
     "botField": {
       "label": "Trường bot"
     },
@@ -880,7 +947,8 @@
       "label": "Đại lý"
     },
     "aiAgent": {
-      "label": "AI Agent"
+      "label": "AI Agent",
+      "loadError": "Không thể tải danh sách AI Agent. Vui lòng thử lại."
     },
     "aiQueuedMessages": {
       "label": "Tin nhắn chờ AI"
@@ -2188,6 +2256,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "Bản ghi âm cuộc gọi gần nhất"
+    },
+    "lastCallTranscript": {
+      "label": "Bản chép lời cuộc gọi gần nhất"
+    },
+    "tokenPermission": {
+      "label": "Quyền",
+      "full": "Toàn quyền truy cập",
+      "readOnly": "Chỉ đọc"
+    },
+    "tokenScopes": {
+      "label": "Phạm vi",
+      "contacts": "Liên hệ",
+      "inbox": "Hộp thư đến",
+      "automation": "Tự động hóa",
+      "broadcasts": "Phát sóng",
+      "analytics": "Phân tích",
+      "ecommerce": "Thương mại điện tử",
+      "integrations": "Tích hợp",
+      "channels": "Kênh",
+      "minigames": "Minigame",
+      "appointments": "Lịch hẹn",
+      "media": "Phương tiện",
+      "ads": "Quảng cáo"
     }
   },
   "flows": {
@@ -2328,7 +2422,9 @@
       "import": "Nhập luồng",
       "export": "Xuất",
       "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
-      "importJsonOnly": "Chỉ tệp JSON"
+      "importJsonOnly": "Chỉ tệp JSON",
+      "whatsappCallButton": "Gọi qua WhatsApp",
+      "metaConversions": "API Chuyển đổi Meta"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2440,7 +2536,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Khi có gắn nút, TikTok chỉ gửi tối đa 40 ký tự đầu của tin nhắn này — phần còn lại sẽ bị cắt bỏ."
     },
-    "dataWasSaved": "Đã lưu dữ liệu"
+    "dataWasSaved": "Đã lưu dữ liệu",
+    "whatsappCallButton": {
+      "editButtonTitle": "Chỉnh sửa nút",
+      "buttonLabel": "Nhãn nút"
+    }
   },
   "folders": {
     "heading": {
@@ -2626,7 +2726,8 @@
       "adAccountFilter": {
         "all": "Tất cả tài khoản quảng cáo",
         "label": "Tài khoản quảng cáo",
-        "unavailable": "Không tải được tài khoản quảng cáo — hãy kiểm tra kết nối Ads của tích hợp này, hoặc kết nối Facebook Ads của workspace, trong phần cài đặt."
+        "unavailable": "Không tải được tài khoản quảng cáo — hãy kiểm tra kết nối Ads của tích hợp này, hoặc kết nối Facebook Ads của workspace, trong phần cài đặt.",
+        "note": "Ads có chuyển đổi nhưng không có chi tiêu trong khoảng thời gian sẽ bị ẩn khi lọc theo tài khoản quảng cáo."
       },
       "channelFilter": {
         "label": "Kênh",
@@ -3096,7 +3197,16 @@
     "waTemplateMpmTooManySections": "Nút đa sản phẩm chỉ được có tối đa 10 phần. Hãy xóa bớt phần trước khi xuất bản.",
     "waTemplateMpmTooManyProducts": "Nút đa sản phẩm chỉ được có tối đa 30 sản phẩm. Hãy xóa bớt sản phẩm trước khi xuất bản.",
     "waTemplateLtoExpirationRequired": "Chọn thời điểm hết hạn cho ưu đãi có thời hạn trước khi gửi.",
-    "waTemplateMpmIncompleteProducts": "Mỗi nhóm cần ít nhất một sản phẩm đã chọn — xóa dòng trống hoặc chọn sản phẩm cho dòng đó."
+    "waTemplateMpmIncompleteProducts": "Mỗi nhóm cần ít nhất một sản phẩm đã chọn — xóa dòng trống hoặc chọn sản phẩm cho dòng đó.",
+    "voiceCall": "Cuộc gọi thoại",
+    "voiceCallDuration": "Cuộc gọi thoại · {duration}",
+    "missedVoiceCall": "Cuộc gọi thoại nhỡ",
+    "declinedVoiceCall": "Cuộc gọi thoại bị từ chối",
+    "acceptedCallPermission": "Đã chấp nhận yêu cầu cấp quyền gọi",
+    "declinedCallPermission": "Đã từ chối yêu cầu cấp quyền gọi",
+    "sendHumanAgentTag": "Gửi một tin nhắn với thẻ HUMAN_AGENT",
+    "warning": "Warning!",
+    "humanAgentWarningDescription": "Bạn chỉ có thể trả lời tin nhắn của người dùng trong vòng 7 ngày khi vấn đề không thể giải quyết trong vòng 24 giờ. Ví dụ: cuối tuần, ngày lễ, hoặc các trường hợp cần hơn một ngày để xử lý. Không sử dụng tùy chọn này cho bất kỳ lý do nào khác vì có thể ảnh hưởng đến Trang Facebook hoặc tài khoản Instagram của bạn. Nếu bạn không chắc chắn, đừng tiếp tục."
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",
@@ -3108,6 +3218,12 @@
     "tabs": {
       "generalSettings": "Cài đặt chung",
       "conversionsApi": "Tối ưu quảng cáo"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Không tìm thấy tài khoản Instagram",
+      "noAccountsDescription": "Không tìm thấy tài khoản Instagram Doanh nghiệp nào trên các Trang Facebook bạn quản lý. Hãy kết nối lại Instagram và cấp tất cả quyền được yêu cầu.",
+      "alreadyConnectedNote": "Tài khoản này đã được kết nối",
+      "tryAgain": "Kết nối lại"
     }
   },
   "coexist": {
@@ -3369,7 +3485,8 @@
     "maxSize": "Kích thước tệp vượt quá giới hạn tối đa",
     "maxItemsReached": "Tối đa {max} {feature} cho mỗi workspace",
     "invalidApiKey": "API key không hợp lệ",
-    "maxMustBeGreaterThanMin": "{maxField} phải lớn hơn hoặc bằng {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} phải lớn hơn hoặc bằng {minField}",
+    "maxCharacters": "Tối đa {max} ký tự."
   },
   "webchat": {
     "chatUnavailable": "Cuộc trò chuyện này hiện không khả dụng.",
@@ -3410,6 +3527,7 @@
       "label": "Câu mở đầu"
     },
     "manualConnect": "Kết nối thủ công bằng token truy cập System User.",
+    "manualAppSecretMissingNotice": "Chữ ký webhook chưa được xác minh cho đến khi bạn thêm Meta App Secret.",
     "manualOnboarding": {
       "title": "Inbox WhatsApp của bạn đã sẵn sàng!",
       "description": "Cấu hình URL webhook và mã xác minh trong ứng dụng Meta của bạn. Sử dụng các giá trị bên dưới.",
@@ -3417,7 +3535,8 @@
       "verifyToken": "Mã xác minh webhook",
       "qrCodeHint": "Quét mã QR để mở URL webhook",
       "moreSettings": "Cài đặt thêm",
-      "goToInbox": "Đưa tôi đến đó"
+      "goToInbox": "Đưa tôi đến đó",
+      "multipleTitle": "Hộp thư WhatsApp của bạn đã sẵn sàng!"
     },
     "phoneVerification": {
       "title": "Xác minh số điện thoại WhatsApp",
@@ -3430,7 +3549,8 @@
       "actions": {
         "sendCode": "Gửi mã",
         "resendIn": "Gửi lại sau {seconds}s",
-        "verify": "Xác minh và đăng ký"
+        "verify": "Xác minh và đăng ký",
+        "skip": "Bỏ qua"
       },
       "fields": {
         "code": {
@@ -3448,7 +3568,8 @@
         "codeNotSent": "Không gửi được mã xác minh WhatsApp.",
         "codeNotVerified": "Không xác minh được mã WhatsApp.",
         "registrationFailed": "Xác minh số điện thoại WhatsApp không thành công."
-      }
+      },
+      "queueProgress": "Đang xác minh {current}/{total}"
     },
     "connect": {
       "errors": {
@@ -3560,7 +3681,8 @@
       "profile": "Hồ sơ",
       "usefulLinks": "Liên kết hữu ích",
       "conversionsApi": "Tối ưu quảng cáo",
-      "settings": "Cài đặt"
+      "settings": "Cài đặt",
+      "calls": "Cuộc gọi"
     },
     "accountHealths": {
       "title": "Quản lý tài khoản WhatsApp của bạn",
@@ -3696,6 +3818,82 @@
         "title": "Automatic Events",
         "description": "Tự động gửi sự kiện chuyển đổi từ số WhatsApp này đến Meta. Nếu thiếu quyền, hãy kết nối lại tài khoản để cấp quyền."
       }
+    },
+    "calls": {
+      "title": "Cuộc gọi WhatsApp",
+      "description": "Cho phép khách hàng gọi cho doanh nghiệp qua WhatsApp và điều khiển cách hoạt động của tính năng gọi cho số này.",
+      "enableLabel": "Bật tính năng gọi",
+      "enableHelper": "Cho phép các cuộc gọi WhatsApp đến và đi từ số doanh nghiệp này.",
+      "iconVisibilityLabel": "Hiện nút gọi",
+      "iconVisibilityHelper": "Hiển thị nút gọi trong cuộc trò chuyện và trên hồ sơ doanh nghiệp.",
+      "callbackPermissionLabel": "Yêu cầu quyền gọi lại",
+      "callbackPermissionHelper": "Tự động xin phép khách hàng để gọi lại sau cuộc gọi nhỡ hoặc đã hoàn thành.",
+      "propagationNote": "Thay đổi được Meta áp dụng ngay, nhưng ứng dụng WhatsApp của khách hàng có thể mất tới 7 ngày để cập nhật.",
+      "loadFailed": "Không tải được cài đặt cuộc gọi từ Meta. Kiểm tra kết nối của số này và thử lại.",
+      "errors": {
+        "notFound": "Không tìm thấy tích hợp WhatsApp",
+        "notWhatsappConversation": "Hội thoại này không thuộc kênh WhatsApp",
+        "callNotFound": "Không tìm thấy cuộc gọi",
+        "callNotReady": "Cuộc gọi chưa sẵn sàng để nghe — thử lại",
+        "inAppCallingUnavailable": "Máy chủ này chưa cấu hình gọi trong ứng dụng",
+        "noCallPermission": "Khách hàng chưa cấp quyền gọi",
+        "audioConnectFailed": "Không kết nối được âm thanh cuộc gọi",
+        "updateFailed": "Meta đã từ chối thay đổi cài đặt cuộc gọi",
+        "bicUnavailable": "Tính năng gọi từ doanh nghiệp chưa hỗ trợ cho quốc gia này",
+        "callAlreadyInProgress": "Đã có một cuộc gọi đến khách hàng này đang diễn ra",
+        "hangupFailed": "Không thể kết thúc cuộc gọi"
+      },
+      "permissionRequestTitle": "Xin quyền gọi điện",
+      "permissionRequestDescription": "Hỏi khách hàng này cho phép doanh nghiệp gọi qua WhatsApp. Meta giới hạn 1 yêu cầu mỗi 24 giờ và 2 yêu cầu mỗi 7 ngày cho mỗi khách hàng.",
+      "permissionRequestBodyLabel": "Tin nhắn",
+      "permissionRequestDefaultBody": "Chúng tôi muốn gọi cho bạn qua WhatsApp để hỗ trợ nhanh hơn. Bạn có cho phép chúng tôi gọi không?",
+      "permissionRequestSent": "Đã gửi yêu cầu xin quyền gọi",
+      "inAppCallingLabel": "Gọi trong ứng dụng (beta)",
+      "inAppCallingHelper": "Định tuyến cuộc gọi WhatsApp của số này vào inbox để agent nghe máy ngay trên trình duyệt.",
+      "recordingLabel": "Ghi âm cuộc gọi",
+      "recordingHelper": "Tự động ghi âm cuộc gọi trong ứng dụng và đính kèm audio vào hội thoại. Chuyển văn bản chạy khi đã kết nối tích hợp OpenAI.",
+      "incomingCall": "Cuộc gọi WhatsApp đến…",
+      "unknownCaller": "Người gọi không xác định",
+      "updateFailedTitle": "Meta đã từ chối thay đổi",
+      "callContact": "Gọi qua WhatsApp",
+      "dialing": "Đang gọi…",
+      "startCall": "Bắt đầu gọi WhatsApp",
+      "retentionLabel": "Thời gian lưu ghi âm (ngày)",
+      "retentionHelper": "Ghi âm cuộc gọi được lưu trong bao lâu trước khi bị xóa vĩnh viễn.",
+      "transcriptionLabel": "Chuyển văn bản cuộc gọi",
+      "transcriptionHelper": "Tự động chuyển ghi âm cuộc gọi thành văn bản bằng nhà cung cấp AI đã kết nối.",
+      "sip": {
+        "provisioningLabel": "Cấp phép FreeSWITCH",
+        "provisionButton": "Cấp phép",
+        "deprovisionButton": "Hủy cấp phép",
+        "status": {
+          "none": "Chưa cấp phép",
+          "provisioning": "Đang cấp phép…",
+          "provisioned": "Đã cấp phép",
+          "enabled": "Đã bật",
+          "failed": "Thất bại"
+        },
+        "errors": {
+          "notProvisioned": "Hãy cấp phép số này cho FreeSWITCH trước khi bật gọi trong ứng dụng",
+          "readBackMismatch": "Meta không xác nhận thay đổi cài đặt gọi SIP — hãy thử lại",
+          "provisionFailed": "Không thể cấp phép số này cho FreeSWITCH",
+          "deprovisionFailed": "Không thể hủy cấp phép FreeSWITCH cho số này"
+        }
+      },
+      "preflight": {
+        "title": "Điều kiện gọi điện",
+        "appSubscriptionMissing": "Hãy cấu hình webhook WhatsApp cho app này trong App Dashboard của Meta trước, sau đó thử lại.",
+        "appSubscriptionFailed": "Không xác minh được việc app đăng ký webhook 'calls'. Vui lòng thử lại sau.",
+        "callsNotSubscribed": "App này chưa đăng ký trường webhook 'calls', nên các sự kiện cuộc gọi không thể đến ChatbotX (lỗi Meta 138018: chưa đủ điều kiện kỹ thuật — cần có ít nhất một app đăng ký với WABA cũng có trường webhook calls).",
+        "fixButton": "Sửa",
+        "fixSuccess": "App đã được đăng ký webhook cuộc gọi WhatsApp.",
+        "manualIntegrationNotice": "Số này được kết nối thủ công và không có thông tin app ở đây. Hãy đăng ký trường webhook 'calls' cho app của bạn trong App Dashboard của Meta.",
+        "coexistenceWarning": "Số này đang dùng chế độ coexistence với ứng dụng WhatsApp Business, Meta không hỗ trợ tính năng gọi điện ở chế độ này. Hãy chuyển số này sang chỉ dùng Cloud API.",
+        "messagingLimitTooLow": "Hạn mức tin nhắn của số này thấp hơn mức tối thiểu Meta yêu cầu cho tính năng gọi điện."
+      }
+    },
+    "selectPage": {
+      "tryAgain": "Kết nối lại"
     }
   },
   "zalo": {
@@ -3708,7 +3906,8 @@
       "toggleSuccess": "Đã cập nhật cài đặt đồng bộ nhãn.",
       "enabledSince": "Đã bật từ {date}",
       "disabled": "Đã tắt"
-    }
+    },
+    "refreshPermissions": "Làm mới quyền"
   },
   "telegram": {
     "description": "Tích hợp này cho phép bạn tạo bot Telegram.",
@@ -3762,7 +3961,9 @@
       "productRemovedFromCart": "Sản phẩm xóa khỏi giỏ",
       "productOrdered": "Sản phẩm đã đặt",
       "contactReferredANewContact": "Liên hệ giới thiệu liên hệ mới",
-      "contactReferredExistingContact": "Liên hệ giới thiệu liên hệ hiện có"
+      "contactReferredExistingContact": "Liên hệ giới thiệu liên hệ hiện có",
+      "callRecorded": "Cuộc gọi đã ghi âm",
+      "callTranscribed": "Cuộc gọi đã chuyển văn bản"
     },
     "actions": {
       "addTag": "Thêm thẻ",
@@ -3785,7 +3986,12 @@
   },
   "developerAccessToken": {
     "title": "Token truy cập API",
-    "description": "Tạo token để cho phép workspace của bạn truy cập API công khai. Giữ token này bí mật và không chia sẻ với ai."
+    "description": "Tạo token để cho phép workspace của bạn truy cập API công khai. Giữ token này bí mật và không chia sẻ với ai.",
+    "createDialogTitle": "Tạo mã API",
+    "namePlaceholder": "vd: tích hợp Zapier",
+    "empty": "Chưa có mã API nào.",
+    "defaultBadge": "Mặc định",
+    "allScopes": "Tất cả phạm vi"
   },
   "contacts": {
     "title": "Liên hệ",
@@ -4686,6 +4892,17 @@
     },
     "queues": {
       "title": "Hàng chờ"
+    },
+    "workspaces": {
+      "title": "Không gian làm việc",
+      "description": "Các không gian làm việc mà chủ sở hữu đã bật quyền truy cập hỗ trợ nền tảng có thể được mở tại đây.",
+      "owner": "Chủ sở hữu",
+      "tenant": "Người thuê",
+      "supportStatus": "Trạng thái hỗ trợ",
+      "openAsSupport": "Mở với vai trò hỗ trợ",
+      "supportEnabledUntil": "Đã bật đến {time}",
+      "supportOff": "Tắt",
+      "searchPlaceholder": "Tìm kiếm theo tên, email chủ sở hữu hoặc ID"
     }
   },
   "platformCredentials": {
@@ -5340,7 +5557,8 @@
     "connectViaFacebook": "Kết nối qua Facebook",
     "unsupportedExplanation": "Tài khoản Instagram này được kết nối bằng Instagram Business Login. Hãy kết nối tài khoản qua Facebook để dùng Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "Sự kiện WhatsApp chỉ được gửi cho các hội thoại bắt đầu từ quảng cáo click-to-WhatsApp."
+      "whatsappNote": "Sự kiện WhatsApp chỉ được gửi cho các hội thoại bắt đầu từ quảng cáo click-to-WhatsApp.",
+      "description": "Đưa sự kiện LeadSubmitted cho Messenger, Instagram hoặc WhatsApp vào hàng đợi."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5587,7 +5805,8 @@
       "generalSettingsTitle": "Thiết lập chung",
       "appearanceTitle": "Giao diện",
       "playerSettingsTitle": "Cài đặt người chơi",
-      "prizeSettingsTitle": "Thiết lập giải thưởng"
+      "prizeSettingsTitle": "Thiết lập giải thưởng",
+      "validationFailed": "Vui lòng sửa các trường được đánh dấu trước khi lưu."
     },
     "generalSettings": {
       "showName": "Hiển thị",
@@ -5617,7 +5836,11 @@
       "resetPolicyLabel": "Đặt lại lượt quay",
       "resetNever": "Không đặt lại số lượt quay",
       "resetEveryNDays": "Đặt lại số lượt quay mỗi",
-      "resetIntervalDaysSuffix": "ngày"
+      "resetIntervalDaysSuffix": "ngày",
+      "maxSharesPerPerson": "Số lượt thưởng tối đa từ giới thiệu",
+      "maxSharesPerPersonHint": "Mỗi người bạn tham gia qua link mời của người chơi này và nhắn tin cho bạn sẽ giúp họ nhận thêm 1 lượt, tối đa bằng giới hạn này. Đặt 0 để tắt thưởng giới thiệu. Lượt thưởng phải dùng trước lần đặt lại kế tiếp.",
+      "sharingNode": "Bước chia sẻ",
+      "sharingNodeHint": "Bước flow sẽ chạy khi một người bạn mở link chia sẻ của người chơi này. Để trống để ẩn nút Chia sẻ."
     },
     "publicUrl": {
       "label": "URL công khai",
@@ -5632,12 +5855,14 @@
       "forbiddenTitle": "Không có quyền truy cập",
       "forbiddenDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
       "comingSoonTitle": "Sắp ra mắt",
-      "comingSoonDescription": "Loại minigame này chưa thể chơi được."
+      "comingSoonDescription": "Loại minigame này chưa thể chơi được.",
+      "rateLimited": "Bạn thao tác quá nhanh. Vui lòng đợi một lát rồi thử lại."
     },
     "list": {
       "gamesPlayed": "Lượt chơi",
       "participants": "Người tham gia",
-      "winners": "Người thắng cuộc"
+      "winners": "Người thắng cuộc",
+      "shares": "Lượt giới thiệu"
     },
     "history": {
       "title": "Lịch sử",
@@ -5654,7 +5879,8 @@
         "win": "Trúng thưởng",
         "lose": "Không trúng",
         "empty": "Chưa có bản ghi lượt chơi nào"
-      }
+      },
+      "shares": "Lượt giới thiệu"
     }
   },
   "mediaLibrary": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "Trường bot"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "Nhập từ tệp",
+      "automaticScan": "Quét Khách Hàng Tự Động"
+    },
+    "title": "Quét Khách Hàng Tự Động",
+    "submit": "Quét tự động",
+    "fields": {
+      "inbox": "Hộp thư",
+      "scanFrom": "Quét Inbox từ thời gian"
+    },
+    "hint": {
+      "range": "Hệ thống sẽ quét khách hàng đã từng inbox page từ {from} đến hiện tại.",
+      "beforeChoose": "Sau khi quét, bạn phải chờ sau 24h tiếp theo mới tiếp tục sử dụng được tính năng này."
+    },
+    "status": {
+      "idle": "Chưa có lượt quét nào được chạy cho hộp thư này. Chọn ngày bắt đầu và chạy lượt Quét khách hàng tự động đầu tiên.",
+      "running": "Hệ thống đang tự động quét, thời gian ước tính hoàn thành vào lúc {eta}",
+      "nextScan": "Thời gian quét tiếp theo: {at}",
+      "finished": "Hệ thống đã hoàn thành yêu cầu quét khách hàng lần cuối vào lúc {at}.",
+      "total": "Tổng số khách hàng quét được: {count}",
+      "waitCooldown": "Bạn phải chờ sau 24h tiếp theo mới tiếp tục sử dụng được tính năng này.",
+      "failed": "Lượt quét gần nhất đã thất bại. Bạn có thể thử lại sau khi hết thời gian chờ.",
+      "partial": "Lượt quét gần nhất chỉ hoàn tất một phần — một số cuộc hội thoại không thể nhập được."
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "Thời gian quét từ phải ở trong quá khứ.",
+      "contactScanInboxNotFound": "Không tìm thấy hộp thư.",
+      "contactScanChannelUnsupported": "Kênh này không hỗ trợ Quét khách hàng tự động.",
+      "contactScanIntegrationDisconnected": "Hộp thư này chưa được kết nối.",
+      "contactScanCooldown": "Hộp thư này vừa được quét gần đây. Vui lòng đợi trước khi quét lại.",
+      "contactScanAlreadyRunning": "Đã có một lượt quét đang chạy cho hộp thư này.",
+      "contactScanForbidden": "Bạn không có quyền chạy Quét khách hàng tự động."
+    },
+    "histories": {
+      "title": "Lịch sử quét",
+      "columns": {
+        "channel": "Kênh",
+        "scanFrom": "Quét từ",
+        "importedContacts": "Liên hệ đã nhập",
+        "scannedConversations": "Cuộc hội thoại đã quét",
+        "finishedAt": "Hoàn tất lúc",
+        "error": "Lỗi"
+      },
+      "status": {
+        "init": "Đang chờ",
+        "running": "Đang chạy",
+        "succeeded": "Thành công",
+        "partial": "Một phần",
+        "failed": "Thất bại"
+      },
+      "empty": "Chưa có lượt quét nào được chạy."
+    }
   }
 }

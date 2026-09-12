@@ -804,6 +804,10 @@
     "accessToken": {
       "label": "Token Akses"
     },
+    "manualAppSecret": {
+      "label": "Rahasia Aplikasi Meta (opsional)",
+      "description": "Mengaktifkan verifikasi tanda tangan webhook untuk koneksi manual ini. Temukan di dashboard Aplikasi Meta Anda di bagian Settings > Basic."
+    },
     "botField": {
       "label": "Kolom Bot"
     },
@@ -811,7 +815,8 @@
       "label": "Agen"
     },
     "aiAgent": {
-      "label": "Agen AI"
+      "label": "Agen AI",
+      "loadError": "Gagal memuat AI Agent. Silakan coba lagi."
     },
     "aiQueuedMessages": {
       "label": "Pesan AI dalam Antrean"
@@ -2114,6 +2119,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "Rekaman panggilan terakhir"
+    },
+    "lastCallTranscript": {
+      "label": "Transkrip panggilan terakhir"
+    },
+    "tokenPermission": {
+      "label": "Izin",
+      "full": "Akses penuh",
+      "readOnly": "Hanya baca"
+    },
+    "tokenScopes": {
+      "label": "Cakupan",
+      "contacts": "Kontak",
+      "inbox": "Kotak masuk",
+      "automation": "Otomasi",
+      "broadcasts": "Broadcast",
+      "analytics": "Analitik",
+      "ecommerce": "E-commerce",
+      "integrations": "Integrasi",
+      "channels": "Kanal",
+      "minigames": "Minigame",
+      "appointments": "Jadwal temu",
+      "media": "Media",
+      "ads": "Iklan"
     }
   },
   "flows": {
@@ -2254,7 +2285,9 @@
       "import": "Impor Alur",
       "export": "Ekspor",
       "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
-      "importJsonOnly": "Hanya file JSON"
+      "importJsonOnly": "Hanya file JSON",
+      "whatsappCallButton": "Telepon di WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -2366,7 +2399,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Saat tombol dilampirkan, TikTok hanya mengirim 40 karakter pertama pesan ini — sisanya akan terpotong."
     },
-    "dataWasSaved": "Data telah disimpan"
+    "dataWasSaved": "Data telah disimpan",
+    "whatsappCallButton": {
+      "editButtonTitle": "Edit Tombol",
+      "buttonLabel": "Label Tombol"
+    }
   },
   "folders": {
     "heading": {
@@ -2552,7 +2589,8 @@
       "adAccountFilter": {
         "all": "Semua akun iklan",
         "label": "Akun iklan",
-        "unavailable": "Tidak dapat memuat akun iklan — periksa koneksi Ads integrasi ini, atau koneksi Facebook Ads workspace, di pengaturan."
+        "unavailable": "Tidak dapat memuat akun iklan — periksa koneksi Ads integrasi ini, atau koneksi Facebook Ads workspace, di pengaturan.",
+        "note": "Iklan dengan konversi tetapi nol pengeluaran atau nol pengiriman dalam rentang tanggal yang dipilih akan disembunyikan saat memfilter berdasarkan akun iklan."
       },
       "channelFilter": {
         "label": "Saluran",
@@ -2927,6 +2965,58 @@
       "button": "Perbarui semua izin",
       "resultSuccess": "Berhasil menyegarkan {refreshed} channel.",
       "resultWithFailures": "Berhasil menyegarkan {refreshed} channel, {failed} gagal."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Memulai sinkronisasi riwayat…",
+        "done": "Sinkronisasi riwayat dimulai",
+        "failed": "Sinkronisasi riwayat gagal"
+      },
+      "selectAll": "Pilih semua",
+      "selected": "{count}/{max} dipilih",
+      "dialogTitleRunning": "Menghubungkan {count} {feature}…",
+      "dialogTitleDone": "Terhubung {connected} dari {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} dari {total} selesai",
+      "status": {
+        "waiting": "Menunggu",
+        "connecting": "Menghubungkan…",
+        "connected": "Terhubung",
+        "duplicated": "Sudah terhubung",
+        "limitReached": "Batas tercapai",
+        "failed": "Gagal",
+        "timedOut": "Waktu habis",
+        "cancelled": "Dibatalkan"
+      },
+      "reason": {
+        "notSelectable": "Item ini tidak dapat dipilih.",
+        "channelLimit": "Batas kanal tercapai.",
+        "workspaceLimit": "Batas ruang kerja tercapai.",
+        "providerRejected": "Penyedia menolak permintaan ini.",
+        "unknown": "Terjadi kesalahan.",
+        "followUpFailed": "Penyiapan belum selesai — selesaikan dari pengaturan kanal."
+      },
+      "sessionError": {
+        "sessionExpired": "Sesi Anda telah berakhir. Silakan hubungkan kembali.",
+        "notMember": "Anda bukan lagi anggota ruang kerja ini.",
+        "trialExpired": "Masa percobaan Anda telah berakhir.",
+        "macLimitReached": "Anda telah mencapai batas akun Anda.",
+        "credentialMissing": "Kredensial tidak ada. Silakan hubungkan kembali."
+      },
+      "cancelRemaining": "Batalkan yang tersisa",
+      "retryFailed": "Coba lagi yang gagal ({count})",
+      "retry": "Coba lagi",
+      "goToChannels": "Buka kanal",
+      "close": "Tutup",
+      "leaveNotice": "Anda boleh keluar; akun yang sudah terhubung tetap disimpan",
+      "stepConnecting": "Menghubungkan",
+      "stepCoexist": "Sinkronkan riwayat",
+      "validation": {
+        "min": "Pilih minimal 1",
+        "max": "Anda dapat memilih hingga {max}",
+        "duplicate": "Pilihan duplikat"
+      },
+      "progressLabel": "Progres"
     }
   },
   "workspace": {
@@ -2958,6 +3048,17 @@
       "pendingBlockedToast": "Ruang kerja ini dijadwalkan untuk dihapus. Hubungi admin ruang kerja untuk memulihkan akses.",
       "navDisabledTooltip": "Tidak tersedia saat penghapusan ruang kerja dijadwalkan",
       "badge": "Penghapusan dijadwalkan"
+    },
+    "supportAccess": {
+      "bannerTitle": "Sesi dukungan platform",
+      "bannerDescription": "Agen dukungan platform memiliki akses sementara ke ruang kerja ini hingga {time}.",
+      "cardTitle": "Akses dukungan platform",
+      "cardDescription": "Izinkan tim dukungan platform membuka ruang kerja ini dengan akses penuh selama 7 hari. Anda dapat menonaktifkannya kapan saja.",
+      "enabledUntil": "Diaktifkan hingga {time}",
+      "permissionRequired": "Anda harus menjadi super admin untuk mengubah akses dukungan platform.",
+      "enabledToast": "Akses dukungan platform diaktifkan.",
+      "disabledToast": "Akses dukungan platform dinonaktifkan.",
+      "toggleError": "Terjadi kesalahan. Silakan coba lagi."
     }
   },
   "workspaces": {
@@ -3096,7 +3197,16 @@
     "waTemplateMpmTooManySections": "Tombol multi-produk dapat memiliki maksimal 10 bagian. Hapus beberapa bagian sebelum memublikasikan.",
     "waTemplateMpmTooManyProducts": "Tombol multi-produk dapat memiliki maksimal total 30 produk. Hapus beberapa produk sebelum memublikasikan.",
     "waTemplateLtoExpirationRequired": "Pilih tanggal berakhir untuk penawaran waktu terbatas sebelum mengirim.",
-    "waTemplateMpmIncompleteProducts": "Setiap bagian membutuhkan minimal satu produk terpilih — hapus baris kosong atau pilih produknya."
+    "waTemplateMpmIncompleteProducts": "Setiap bagian membutuhkan minimal satu produk terpilih — hapus baris kosong atau pilih produknya.",
+    "voiceCall": "Panggilan suara",
+    "voiceCallDuration": "Panggilan suara · {duration}",
+    "missedVoiceCall": "Panggilan suara tak terjawab",
+    "declinedVoiceCall": "Panggilan suara ditolak",
+    "acceptedCallPermission": "Menerima permintaan izin panggilan",
+    "declinedCallPermission": "Menolak permintaan izin panggilan",
+    "sendHumanAgentTag": "Kirim satu pesan dengan tag HUMAN_AGENT",
+    "warning": "Peringatan!",
+    "humanAgentWarningDescription": "Anda hanya boleh menanggapi pesan pengguna dalam waktu 7 hari jika masalahnya tidak dapat diselesaikan secara wajar dalam 24 jam. Contohnya termasuk akhir pekan, hari libur, atau kasus yang memerlukan lebih dari satu hari untuk diselesaikan. Jangan gunakan opsi ini untuk alasan lain karena dapat membahayakan Halaman Facebook atau akun Instagram Anda. Jika tidak yakin, jangan lanjutkan."
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",
@@ -3108,6 +3218,12 @@
     "tabs": {
       "generalSettings": "Pengaturan Umum",
       "conversionsApi": "Optimasi Iklan"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Tidak ada akun Instagram ditemukan",
+      "noAccountsDescription": "Tidak ada akun Instagram Bisnis yang ditemukan di Halaman Facebook yang Anda kelola. Hubungkan kembali Instagram dan berikan semua izin yang diminta.",
+      "alreadyConnectedNote": "Akun ini sudah terhubung",
+      "tryAgain": "Coba hubungkan kembali"
     }
   },
   "coexist": {
@@ -3369,7 +3485,8 @@
     "maxSize": "Ukuran file melebihi batas maksimum",
     "maxItemsReached": "Maksimum {max} {feature} diizinkan per ruang kerja",
     "invalidApiKey": "Kunci API tidak valid",
-    "maxMustBeGreaterThanMin": "{maxField} harus lebih besar dari atau sama dengan {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} harus lebih besar dari atau sama dengan {minField}",
+    "maxCharacters": "Maksimal {max} karakter."
   },
   "webchat": {
     "chatUnavailable": "Obrolan ini saat ini tidak tersedia.",
@@ -3410,6 +3527,7 @@
       "label": "Pembuka percakapan"
     },
     "manualConnect": "Hubungkan secara manual menggunakan token akses Pengguna Sistem.",
+    "manualAppSecretMissingNotice": "Tanda tangan webhook tidak diverifikasi hingga Anda menambahkan Rahasia Aplikasi Meta Anda.",
     "manualOnboarding": {
       "title": "Kotak masuk WhatsApp Anda siap!",
       "description": "Konfigurasikan URL webhook dan token verifikasi di Aplikasi Meta Anda. Gunakan nilai di bawah.",
@@ -3417,7 +3535,8 @@
       "verifyToken": "Token verifikasi webhook",
       "qrCodeHint": "Pindai kode QR untuk membuka URL webhook",
       "moreSettings": "Pengaturan lainnya",
-      "goToInbox": "Bawa saya ke sana"
+      "goToInbox": "Bawa saya ke sana",
+      "multipleTitle": "Kotak masuk WhatsApp Anda sudah siap!"
     },
     "phoneVerification": {
       "title": "Verifikasi nomor telepon WhatsApp",
@@ -3430,7 +3549,8 @@
       "actions": {
         "sendCode": "Kirim kode",
         "resendIn": "Kirim ulang dalam {seconds} dtk",
-        "verify": "Verifikasi dan daftarkan"
+        "verify": "Verifikasi dan daftarkan",
+        "skip": "Lewati"
       },
       "fields": {
         "code": {
@@ -3448,7 +3568,8 @@
         "codeNotSent": "Kode verifikasi WhatsApp tidak dapat dikirim.",
         "codeNotVerified": "Kode verifikasi WhatsApp tidak dapat diverifikasi.",
         "registrationFailed": "Verifikasi nomor telepon WhatsApp gagal."
-      }
+      },
+      "queueProgress": "Memverifikasi {current} dari {total}"
     },
     "connect": {
       "errors": {
@@ -3560,7 +3681,8 @@
       "profile": "Profil",
       "usefulLinks": "Tautan Berguna",
       "conversionsApi": "Optimasi Iklan",
-      "settings": "Pengaturan"
+      "settings": "Pengaturan",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Kelola akun WhatsApp Anda",
@@ -3696,6 +3818,82 @@
         "title": "Peristiwa Otomatis",
         "description": "Kirim peristiwa konversi dari nomor WhatsApp ini ke Meta secara otomatis. Jika izin belum ada, sambungkan ulang akun untuk memberikannya."
       }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta menolak perubahan pengaturan panggilan",
+        "bicUnavailable": "Panggilan yang dimulai bisnis tidak tersedia untuk negara ini",
+        "callAlreadyInProgress": "Panggilan dengan kontak ini sudah sedang berlangsung",
+        "hangupFailed": "Tidak dapat mengakhiri panggilan"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta menolak perubahan",
+      "callContact": "Telepon di WhatsApp",
+      "dialing": "Menelepon…",
+      "startCall": "Mulai panggilan WhatsApp",
+      "retentionLabel": "Retensi rekaman (hari)",
+      "retentionHelper": "Berapa lama rekaman panggilan disimpan sebelum dihapus secara permanen.",
+      "transcriptionLabel": "Transkripsikan panggilan",
+      "transcriptionHelper": "Secara otomatis mentranskripsikan panggilan yang direkam menggunakan penyedia AI Anda yang terhubung.",
+      "sip": {
+        "provisioningLabel": "Provisi FreeSWITCH",
+        "provisionButton": "Provisikan",
+        "deprovisionButton": "Batalkan Provisi",
+        "status": {
+          "none": "Belum diprovisikan",
+          "provisioning": "Memprovisikan…",
+          "provisioned": "Diprovisikan",
+          "enabled": "Diaktifkan",
+          "failed": "Gagal"
+        },
+        "errors": {
+          "notProvisioned": "Provisikan nomor ini untuk panggilan FreeSWITCH sebelum mengaktifkan panggilan dalam aplikasi",
+          "readBackMismatch": "Meta tidak mengonfirmasi perubahan panggilan SIP — coba lagi",
+          "provisionFailed": "Gagal memprovisikan nomor ini untuk panggilan FreeSWITCH",
+          "deprovisionFailed": "Gagal membatalkan provisi panggilan FreeSWITCH untuk nomor ini"
+        }
+      },
+      "preflight": {
+        "title": "Kelayakan panggilan",
+        "appSubscriptionMissing": "Konfigurasikan dahulu webhook WhatsApp untuk aplikasi ini di Meta App Dashboard, lalu coba lagi.",
+        "appSubscriptionFailed": "Tidak dapat memverifikasi langganan webhook 'calls' aplikasi. Coba lagi sebentar.",
+        "callsNotSubscribed": "Aplikasi ini tidak berlangganan field webhook 'calls', sehingga peristiwa panggilan tidak dapat mencapai ChatbotX (error Meta 138018: prasyarat teknis belum terpenuhi — pastikan setidaknya satu aplikasi yang berlangganan WABA juga memiliki field webhook panggilan).",
+        "fixButton": "Perbaiki",
+        "fixSuccess": "Aplikasi sekarang berlangganan webhook panggilan WhatsApp.",
+        "manualIntegrationNotice": "Nomor ini terhubung secara manual dan tidak memiliki kredensial aplikasi di sini. Berlangganan field webhook 'calls' untuk aplikasi Anda di Meta App Dashboard.",
+        "coexistenceWarning": "Nomor ini menggunakan koeksistensi aplikasi WhatsApp Business, yang tidak didukung Meta untuk panggilan. Pindahkan ke Cloud API saja.",
+        "messagingLimitTooLow": "Tingkat batas pesan nomor ini di bawah minimum yang diwajibkan Meta untuk panggilan."
+      }
+    },
+    "selectPage": {
+      "tryAgain": "Coba hubungkan kembali"
     }
   },
   "zalo": {
@@ -3708,7 +3906,8 @@
       "toggleSuccess": "Pengaturan sinkronisasi tag diperbarui.",
       "enabledSince": "Diaktifkan sejak {date}",
       "disabled": "Dinonaktifkan"
-    }
+    },
+    "refreshPermissions": "Perbarui izin"
   },
   "telegram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Telegram.",
@@ -3845,7 +4044,9 @@
       "productRemovedFromCart": "Produk Dihapus dari Keranjang",
       "productOrdered": "Produk Dipesan",
       "contactReferredANewContact": "Kontak Mereferensikan Kontak Baru",
-      "contactReferredExistingContact": "Kontak Mereferensikan Kontak yang Sudah Ada"
+      "contactReferredExistingContact": "Kontak Mereferensikan Kontak yang Sudah Ada",
+      "callRecorded": "Panggilan direkam",
+      "callTranscribed": "Panggilan ditranskripsi"
     },
     "actions": {
       "addTag": "Tambahkan Tag",
@@ -3872,7 +4073,12 @@
   },
   "developerAccessToken": {
     "title": "Token Akses API",
-    "description": "Buat token agar ruang kerja Anda dapat mengakses API publik. Jaga kerahasiaan token ini dan jangan bagikan kepada siapa pun."
+    "description": "Buat token agar ruang kerja Anda dapat mengakses API publik. Jaga kerahasiaan token ini dan jangan bagikan kepada siapa pun.",
+    "createDialogTitle": "Buat token API",
+    "namePlaceholder": "mis. integrasi Zapier",
+    "empty": "Belum ada token API.",
+    "defaultBadge": "Default",
+    "allScopes": "Semua cakupan"
   },
   "contacts": {
     "title": "Kontak",
@@ -4508,6 +4714,17 @@
     },
     "queues": {
       "title": "Antrean"
+    },
+    "workspaces": {
+      "title": "Ruang kerja",
+      "description": "Ruang kerja yang pemiliknya mengaktifkan akses dukungan platform dapat dibuka di sini.",
+      "owner": "Pemilik",
+      "tenant": "Tenant",
+      "supportStatus": "Status dukungan",
+      "openAsSupport": "Buka sebagai dukungan",
+      "supportEnabledUntil": "Diaktifkan hingga {time}",
+      "supportOff": "Nonaktif",
+      "searchPlaceholder": "Cari berdasarkan nama, email pemilik, atau ID"
     }
   },
   "platformCredentials": {
@@ -5340,7 +5557,8 @@
     "connectViaFacebook": "Hubungkan via Facebook",
     "unsupportedExplanation": "Akun Instagram ini terhubung menggunakan Instagram Business Login. Hubungkan akun melalui Facebook untuk menggunakan Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "Peristiwa WhatsApp hanya dikirim untuk percakapan yang dimulai dari iklan click-to-WhatsApp."
+      "whatsappNote": "Peristiwa WhatsApp hanya dikirim untuk percakapan yang dimulai dari iklan click-to-WhatsApp.",
+      "description": "Antrekan peristiwa LeadSubmitted untuk Messenger, Instagram, atau WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5587,7 +5805,8 @@
       "generalSettingsTitle": "Pengaturan Umum",
       "appearanceTitle": "Tampilan",
       "playerSettingsTitle": "Pengaturan Pemain",
-      "prizeSettingsTitle": "Pengaturan Hadiah"
+      "prizeSettingsTitle": "Pengaturan Hadiah",
+      "validationFailed": "Perbaiki kolom yang ditandai sebelum menyimpan."
     },
     "generalSettings": {
       "showName": "Terlihat",
@@ -5617,7 +5836,11 @@
       "resetPolicyLabel": "Reset undian",
       "resetNever": "Jangan reset jumlah undian",
       "resetEveryNDays": "Reset jumlah undian setiap",
-      "resetIntervalDaysSuffix": "hari"
+      "resetIntervalDaysSuffix": "hari",
+      "maxSharesPerPerson": "Maksimal undian bonus dari referral",
+      "maxSharesPerPersonHint": "Setiap teman yang bergabung melalui tautan undangan pemain ini dan mengirim pesan kepada Anda memberi mereka 1 undian tambahan, hingga batas ini. Atur ke 0 untuk menonaktifkan bonus referral. Undian bonus harus digunakan sebelum reset berikutnya.",
+      "sharingNode": "Node berbagi",
+      "sharingNodeHint": "Langkah flow yang berjalan saat teman membuka tautan berbagi pemain ini. Biarkan kosong untuk menyembunyikan tombol Bagikan."
     },
     "publicUrl": {
       "label": "URL Publik",
@@ -5632,12 +5855,14 @@
       "forbiddenTitle": "Akses ditolak",
       "forbiddenDescription": "Tautan ini tidak valid atau telah kedaluwarsa.",
       "comingSoonTitle": "Segera hadir",
-      "comingSoonDescription": "Jenis minigame ini belum bisa dimainkan."
+      "comingSoonDescription": "Jenis minigame ini belum bisa dimainkan.",
+      "rateLimited": "Terlalu banyak permintaan. Silakan tunggu sebentar dan coba lagi."
     },
     "list": {
       "gamesPlayed": "Permainan dimainkan",
       "participants": "Peserta",
-      "winners": "Pemenang"
+      "winners": "Pemenang",
+      "shares": "Referral"
     },
     "history": {
       "title": "Riwayat",
@@ -5654,7 +5879,8 @@
         "win": "Menang",
         "lose": "Tidak menang",
         "empty": "Belum ada catatan permainan"
-      }
+      },
+      "shares": "Referral"
     }
   },
   "mediaLibrary": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "Kolom Bot"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "Impor dari file",
+      "automaticScan": "Pemindaian Pelanggan Otomatis"
+    },
+    "title": "Pemindaian Pelanggan Otomatis",
+    "submit": "Pindai Otomatis",
+    "fields": {
+      "inbox": "Kotak masuk",
+      "scanFrom": "Pindai kotak masuk dari waktu"
+    },
+    "hint": {
+      "range": "Sistem akan memindai pelanggan yang mengirim pesan ke halaman dari {from} hingga sekarang.",
+      "beforeChoose": "Setelah pemindaian, Anda harus menunggu 24 jam lagi sebelum dapat menggunakan fitur ini kembali."
+    },
+    "status": {
+      "idle": "Belum ada pemindaian yang dijalankan untuk kotak masuk ini. Pilih tanggal mulai dan jalankan Pemindaian Pelanggan Otomatis pertama Anda.",
+      "running": "Sistem sedang melakukan pemindaian otomatis; perkiraan waktu penyelesaian adalah {eta}.",
+      "nextScan": "Waktu pemindaian berikutnya: {at}",
+      "finished": "Sistem telah menyelesaikan permintaan pemindaian pelanggan terakhir pada {at}.",
+      "total": "Total pelanggan yang dipindai: {count}",
+      "waitCooldown": "Anda harus menunggu 24 jam lagi sebelum dapat menggunakan fitur ini kembali.",
+      "failed": "Pemindaian terakhir gagal. Anda dapat mencoba lagi setelah masa tunggu berakhir.",
+      "partial": "Pemindaian terakhir selesai sebagian — beberapa percakapan tidak dapat diimpor."
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "Waktu mulai pemindaian harus di masa lalu.",
+      "contactScanInboxNotFound": "Kotak masuk tidak ditemukan.",
+      "contactScanChannelUnsupported": "Kanal ini tidak mendukung Pemindaian Pelanggan Otomatis.",
+      "contactScanIntegrationDisconnected": "Kotak masuk ini tidak terhubung.",
+      "contactScanCooldown": "Kotak masuk ini baru saja dipindai. Silakan tunggu sebelum memindai lagi.",
+      "contactScanAlreadyRunning": "Pemindaian sudah berjalan untuk kotak masuk ini.",
+      "contactScanForbidden": "Anda tidak memiliki izin untuk menjalankan Pemindaian Pelanggan Otomatis."
+    },
+    "histories": {
+      "title": "Riwayat Pemindaian",
+      "columns": {
+        "channel": "Kanal",
+        "scanFrom": "Pindai dari",
+        "importedContacts": "Kontak yang diimpor",
+        "scannedConversations": "Percakapan yang dipindai",
+        "finishedAt": "Selesai pada",
+        "error": "Error"
+      },
+      "status": {
+        "init": "Dalam antrean",
+        "running": "Berjalan",
+        "succeeded": "Berhasil",
+        "partial": "Sebagian",
+        "failed": "Gagal"
+      },
+      "empty": "Belum ada pemindaian yang dijalankan."
+    }
   }
 }

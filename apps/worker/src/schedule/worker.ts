@@ -18,6 +18,7 @@ import {
   scanDateTimeWebhooks,
 } from "../webhook/datetime-webhook-scanner"
 import { enqueueBroadcast } from "./handlers/enqueue-broadcast"
+import { expireAgentSipPresence } from "./handlers/expire-agent-sip-presence"
 import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
 import { prepareBroadcast } from "./handlers/prepare-broadcast"
@@ -26,6 +27,7 @@ import { purgeAutomationThrottle } from "./handlers/purge-automation-throttle"
 import { purgeBroadcasts } from "./handlers/purge-broadcasts"
 import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
 import { purgeErrorLogs } from "./handlers/purge-error-logs"
+import { purgeExpiredCallRecordings } from "./handlers/purge-expired-call-recordings"
 import { purgeWhatsappSignupSessions } from "./handlers/purge-whatsapp-signup-sessions"
 import { purgeWorkspaces } from "./handlers/purge-workspaces"
 import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
@@ -36,6 +38,7 @@ import { registerSchedules } from "./handlers/register-schedules"
 import { scanAppointmentReminders } from "./handlers/scan-appointment-reminders"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
+import { sweepStaleWhatsappCalls } from "./handlers/sweep-stale-whatsapp-calls"
 import { syncUserQuota } from "./handlers/sync-user-quota"
 import { teardownExpiredTrial } from "./handlers/teardown-expired-trial"
 import { unsubscribeExpiredTrials } from "./handlers/unsubscribe-expired-trials"
@@ -154,6 +157,18 @@ async function startScheduleWorker() {
             // excludes schedule crons other than the two broadcast handlers).
             case ScheduleJobData.purgeErrorLogs:
               await purgeErrorLogs()
+              return
+
+            case ScheduleJobData.purgeExpiredCallRecordings:
+              await purgeExpiredCallRecordings()
+              return
+
+            case ScheduleJobData.sweepStaleWhatsappCalls:
+              await sweepStaleWhatsappCalls()
+              return
+
+            case ScheduleJobData.expireAgentSipPresence:
+              await expireAgentSipPresence()
               return
 
             case ScheduleJobData.refreshChannelTokens:

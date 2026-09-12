@@ -4,6 +4,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import type {
   IncomingMessage,
+  MessageWhatsappCallPermissionReplyEntity,
   MessageWhatsappFlowResponseEntity,
 } from "@chatbotx.io/sdk"
 import type {
@@ -102,6 +103,63 @@ const interactiveReplyReaders: InteractiveReplyReaders = {
 }
 
 /**
+ * WhatsApp Business Calling permission answers
+ * (`interactive.type: "call_permission_reply"`). Not modeled by
+ * whatsapp-api-js yet, so the shape is read off the raw payload here.
+ */
+type WhatsappCallPermissionReplyPayload = {
+  type: "call_permission_reply"
+  call_permission_reply: {
+    response: "accept" | "reject"
+    is_permanent?: boolean
+    expiration_timestamp?: number | string
+    response_source?: string
+  }
+}
+
+const asCallPermissionReply = (
+  reply: WhatsappInteractiveReply,
+): WhatsappCallPermissionReplyPayload["call_permission_reply"] | undefined => {
+  const raw = reply as unknown as Partial<WhatsappCallPermissionReplyPayload>
+  if (raw.type !== "call_permission_reply") {
+    return
+  }
+  const payload = raw.call_permission_reply
+  if (
+    payload &&
+    (payload.response === "accept" || payload.response === "reject")
+  ) {
+    return payload
+  }
+  return
+}
+
+const readCallPermissionReply = (
+  payload: WhatsappCallPermissionReplyPayload["call_permission_reply"],
+): WhatsappReply => {
+  const expiration = Number(payload.expiration_timestamp)
+  const entity: MessageWhatsappCallPermissionReplyEntity = {
+    type: "whatsapp_call_permission_reply",
+    response: payload.response,
+    isPermanent: payload.is_permanent === true,
+    expirationTimestamp: Number.isFinite(expiration) ? expiration : undefined,
+    responseSource: payload.response_source,
+  }
+
+  return {
+    postbackAction: null,
+    // English fallback for previews; the inbox renders a localized label
+    // from `contentAttributes` instead.
+    text:
+      payload.response === "accept"
+        ? "Accepted call permission request"
+        : "Declined call permission request",
+    buttonTitle: null,
+    contentAttributes: entity,
+  }
+}
+
+/**
  * Dispatch, keyed by `interactive.type`. The table's key *is* the discriminant
  * just read off `reply`, so the pairing is sound even though TypeScript can't
  * prove it through the lookup — one documented assertion, mirroring the
@@ -110,6 +168,11 @@ const interactiveReplyReaders: InteractiveReplyReaders = {
 export const readInteractiveReply = (
   reply: WhatsappInteractiveReply,
 ): WhatsappReply => {
+  const callPermissionReply = asCallPermissionReply(reply)
+  if (callPermissionReply) {
+    return readCallPermissionReply(callPermissionReply)
+  }
+
   const read = interactiveReplyReaders[reply.type]
   if (!read) {
     logger.warn({ interactive: reply }, "Unhandled WhatsApp interactive reply")

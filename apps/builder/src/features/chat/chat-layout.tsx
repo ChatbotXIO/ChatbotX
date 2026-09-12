@@ -19,6 +19,8 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useConversationIdParam } from "../conversations/hooks/use-conversation-id-param"
 import type { ConversationResource } from "../conversations/schema/resource"
+import { WhatsappCallDock } from "../integration-whatsapp/calling/softphone/call-dock"
+import { SipUserProvider } from "../integration-whatsapp/calling/softphone/sip-user-provider"
 import {
   ContactDetailPane,
   ConversationListPane,
@@ -97,12 +99,18 @@ export const ChatLayout = (props: ChatLayoutProps) => {
   }
 
   return (
-    <>
+    // Mounted once here so exactly one `SimpleUser` registers per open
+    // workspace: wraps both `WhatsappCallDock` and every
+    // `MessageThreadPane` (mobile and desktop), whose `MessageHead` renders
+    // `StartCallButton` — both consume this single SIP registration via
+    // context instead of each mounting their own.
+    <SipUserProvider>
       {/*
         Kept outside the panes: on mobile the message pane unmounts whenever the
         user goes back to the list, and the realtime socket must not go with it.
       */}
       <ChatRealtime />
+      <WhatsappCallDock />
       {isMobile === undefined && (
         <div className="flex h-64 items-center justify-center">
           <Loader2Icon className="animate-spin" />
@@ -151,41 +159,48 @@ export const ChatLayout = (props: ChatLayoutProps) => {
       {isMobile === false && (
         // `dvh` rather than `vh`: the panel group is the page's full-height
         // element, and `vh` overshoots the visible area while mobile browser
-        // chrome is showing.
-        <ResizablePanelGroup className="h-[100dvh] items-stretch">
-          {/* CONVERSATION LIST */}
-          <ResizablePanel
-            className="p-3"
-            defaultSize={`${layout[0] ?? 25}%`}
-            maxSize={"30%"}
-            minSize={"20%"}
-          >
-            <ConversationListPane
-              canViewEmailAndPhone={canViewEmailAndPhone}
-              workspaceId={workspaceId}
-            />
-          </ResizablePanel>
+        // chrome is showing. The height lives on a wrapper because the panel
+        // group sets an inline `height: 100%` that overrides any height class
+        // on itself — against an auto-height parent it collapses to content.
+        <div className="h-[100dvh]">
+          <ResizablePanelGroup className="items-stretch">
+            {/* CONVERSATION LIST */}
+            <ResizablePanel
+              className="p-3"
+              defaultSize={`${layout[0] ?? 25}%`}
+              maxSize={"30%"}
+              minSize={"20%"}
+            >
+              <ConversationListPane
+                canViewEmailAndPhone={canViewEmailAndPhone}
+                workspaceId={workspaceId}
+              />
+            </ResizablePanel>
 
-          <ResizableHandle withHandle />
+            <ResizableHandle withHandle />
 
-          {/* MESSAGE LIST */}
-          <ResizablePanel className="pt-3" defaultSize={`${layout[1] ?? 50}%`}>
-            <MessageThreadPane {...paneState} workspaceId={workspaceId} />
-          </ResizablePanel>
+            {/* MESSAGE LIST */}
+            <ResizablePanel
+              className="pt-3"
+              defaultSize={`${layout[1] ?? 50}%`}
+            >
+              <MessageThreadPane {...paneState} workspaceId={workspaceId} />
+            </ResizablePanel>
 
-          <ResizableHandle withHandle />
+            <ResizableHandle withHandle />
 
-          {/* CONTACT DETAIL */}
-          <ResizablePanel
-            className="overflow-y-auto! h-full min-h-0 px-4 py-3"
-            defaultSize={`${layout[2] ?? 25}%`}
-            maxSize={"30%"}
-            minSize={"20%"}
-          >
-            <ContactDetailPane {...paneState} workspaceId={workspaceId} />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+            {/* CONTACT DETAIL */}
+            <ResizablePanel
+              className="overflow-y-auto! h-full min-h-0 px-4 py-3"
+              defaultSize={`${layout[2] ?? 25}%`}
+              maxSize={"30%"}
+              minSize={"20%"}
+            >
+              <ContactDetailPane {...paneState} workspaceId={workspaceId} />
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
       )}
-    </>
+    </SipUserProvider>
   )
 }

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+<!--
+  UAS (server) scenario: stands in for wa.meta.vc. The
+  test's stub gateway (rendered by XmlCurlStubServer, see
+  xml-curl-stub-server.ts) points `proxy` at this sipp instance instead
+  of the real wa.meta.vc, so FreeSWITCH's outbound bridge
+  (`bridge sofia/gateway/wa-test/...`) lands here. Run with
+  `sipp -sf outbound-uas.xml -p <port> -bg` (background UAS mode); the
+  test captures sipp's own logs (`-trace_msg`) to assert Request-URI,
+  From host, Via transport, `a=crypto`, and codec order on the wire, and
+  waits 120s with no re-INVITE arriving before sending BYE.
+-->
+<scenario name="Outbound UAS — captures the INVITE FreeSWITCH sends to the gateway">
+  <recv request="INVITE" crlf="true"/>
+
+  <send retrans="500">
+    <![CDATA[
+      SIP/2.0 407 Proxy Authentication Required
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=[call_number]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Proxy-Authenticate: Digest realm="wa.meta.vc", nonce="[pid]/[call_number]"
+      Content-Length: 0
+    ]]>
+  </send>
+
+  <recv request="ACK" optional="true" rtd="true"/>
+
+  <recv request="INVITE"/>
+
+  <send retrans="500">
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:];tag=[call_number]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Contact: <sip:wa.meta.vc:[local_port];transport=tls>
+      Content-Type: application/sdp
+      Content-Length: [len]
+
+      v=0
+      o=sipp 1 1 IN IP[local_ip_type] [local_ip]
+      s=-
+      c=IN IP[local_ip_type] [local_ip]
+      t=0 0
+      m=audio [media_port] RTP/SAVP 111 0 8
+      a=rtpmap:111 opus/48000/2
+      a=rtpmap:0 PCMU/8000
+      a=rtpmap:8 PCMA/8000
+      a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:PLACEHOLDERKEYPLACEHOLDERKEYPLACEHOLDER
+    ]]>
+  </send>
+
+  <recv request="ACK"/>
+
+  <!-- No re-INVITE should arrive in this window (enable-timer=false,
+       session-timeout=0, disable-hold=true). sipp's own request counters
+       (checked by the test harness against the sipp -trace_stat CSV)
+       must show zero additional INVITEs on this dialog. -->
+  <pause milliseconds="120000"/>
+
+  <recv request="BYE"/>
+  <send>
+    <![CDATA[
+      SIP/2.0 200 OK
+      [last_Via:]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      [last_CSeq:]
+      Content-Length: 0
+    ]]>
+  </send>
+
+  <Reference variables="1"/>
+</scenario>

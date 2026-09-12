@@ -167,7 +167,7 @@ describe("WhatsApp receiveMessage — media", () => {
     // The refactor omits the `text` key when there is no caption, instead of
     // today's `message.text = undefined` (key present, value undefined).
     // Verified equivalent for every consumer (a truthiness check and a
-    // Drizzle insert) — see plan §5.2.
+    // Drizzle insert).
     expect(result.message).not.toHaveProperty("text")
   })
 
@@ -218,7 +218,7 @@ describe("WhatsApp receiveMessage — location / contacts / order", () => {
       }),
     )
 
-    // Was a dead-code `""` before the refactor (plan §5.4) — `join` never
+    // Was a dead-code `""` before the refactor — `join` never
     // returns null/undefined, so `?? "Received location"` never fired. Fixed
     // as an owner-approved edge case (2026-07-31).
     expect(result.message?.text).toBe("Received location")
@@ -371,8 +371,10 @@ describe('WhatsApp receiveMessage — carousel/template button taps (type: "butt
   })
 })
 
-describe("WhatsApp receiveMessage — unhandled interactive reply types", () => {
-  test("call_permission_reply falls back to a fixed label and logs a warning instead of silently dropping the tap", async () => {
+describe("WhatsApp receiveMessage — call permission replies", () => {
+  // Previously unhandled (fell back to "Received interactive (coming soon)");
+  // now parsed into a typed entity the worker persists as the grant state.
+  test("call_permission_reply is parsed into a whatsapp_call_permission_reply entity", async () => {
     const result = await receiveMessage(
       buildProps({
         type: "interactive",
@@ -381,9 +383,31 @@ describe("WhatsApp receiveMessage — unhandled interactive reply types", () => 
           call_permission_reply: {
             response: "accept",
             is_permanent: false,
-            expiration_timestamp: 0,
+            expiration_timestamp: 1_756_300_000,
             response_source: "user_action",
           },
+        },
+      }),
+    )
+
+    expect(result.message?.text).toBe("Accepted call permission request")
+    expect(result.postbackAction).toBeNull()
+    expect(result.message?.contentAttributes).toMatchObject({
+      type: "whatsapp_call_permission_reply",
+      response: "accept",
+      isPermanent: false,
+      expirationTimestamp: 1_756_300_000,
+    })
+    expect(logger.warn).not.toHaveBeenCalled()
+  })
+
+  test("an unknown interactive type still falls back with a warning", async () => {
+    const result = await receiveMessage(
+      buildProps({
+        type: "interactive",
+        interactive: {
+          type: "some_future_type",
+          some_future_type: {},
         },
       }),
     )

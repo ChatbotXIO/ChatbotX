@@ -22,6 +22,9 @@ export const integrationWhatsappResource = createSelectSchema(
   hasCapiScope: true,
   capiScopeCheckedAt: true,
   datasetId: true,
+  // Lets the inbox UI gate in-app calling without a per-conversation query
+  // (the call button shows only when SIP calling is `enabled`).
+  sipProvisioningStatus: true,
 })
 
 export type IntegrationWhatsappResource = z.infer<

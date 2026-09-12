@@ -617,6 +617,10 @@
     "accessToken": {
       "label": "Toegangstoken"
     },
+    "manualAppSecret": {
+      "label": "Meta App-geheim (optioneel)",
+      "description": "Schakelt webhook-handtekeningverificatie in voor deze handmatige verbinding. Te vinden in het dashboard van je Meta-app onder Instellingen > Algemeen."
+    },
     "botField": {
       "label": "Botveld"
     },
@@ -624,7 +628,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "AI-agent"
+      "label": "AI-agent",
+      "loadError": "AI-agents laden is mislukt. Probeer het opnieuw."
     },
     "aiQueuedMessages": {
       "label": "AI-berichten in wachtrij"
@@ -1927,6 +1932,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "Laatste gespreksopname"
+    },
+    "lastCallTranscript": {
+      "label": "Laatste gesprekstranscript"
+    },
+    "tokenPermission": {
+      "label": "Rechten",
+      "full": "Volledige toegang",
+      "readOnly": "Alleen lezen"
+    },
+    "tokenScopes": {
+      "label": "Bereiken",
+      "contacts": "Contacten",
+      "inbox": "Inbox",
+      "automation": "Automatisering",
+      "broadcasts": "Broadcasts",
+      "analytics": "Analyse",
+      "ecommerce": "E-commerce",
+      "integrations": "Integraties",
+      "channels": "Kanalen",
+      "minigames": "Minigames",
+      "appointments": "Afspraken",
+      "media": "Media",
+      "ads": "Advertenties"
     }
   },
   "condition": {
@@ -2254,7 +2285,9 @@
       "import": "Flow importeren",
       "export": "Exporteren",
       "importStarted": "De flow wordt geïmporteerd. Bekijk de importgeschiedenis voor de resultaten.",
-      "importJsonOnly": "Alleen JSON-bestanden"
+      "importJsonOnly": "Alleen JSON-bestanden",
+      "whatsappCallButton": "Bellen via WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -2366,7 +2399,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Als er knoppen zijn toegevoegd, verstuurt TikTok alleen de eerste 40 tekens van dit bericht — de rest wordt afgekapt."
     },
-    "dataWasSaved": "Gegevens zijn opgeslagen"
+    "dataWasSaved": "Gegevens zijn opgeslagen",
+    "whatsappCallButton": {
+      "editButtonTitle": "Knop bewerken",
+      "buttonLabel": "Knoplabel"
+    }
   },
   "folders": {
     "heading": {
@@ -2552,7 +2589,8 @@
       "adAccountFilter": {
         "all": "Alle advertentieaccounts",
         "label": "Advertentieaccount",
-        "unavailable": "Kan advertentieaccounts niet laden — controleer de Ads-koppeling van deze integratie, of de Facebook Ads-koppeling van de workspace, in de instellingen."
+        "unavailable": "Kan advertentieaccounts niet laden — controleer de Ads-koppeling van deze integratie, of de Facebook Ads-koppeling van de workspace, in de instellingen.",
+        "note": "Advertenties met conversies maar zonder uitgaven of levering in de geselecteerde periode worden verborgen bij filteren op advertentieaccount."
       },
       "channelFilter": {
         "label": "Kanaal",
@@ -2927,6 +2965,58 @@
       "button": "Alle machtigingen vernieuwen",
       "resultSuccess": "{refreshed} kanaal/kanalen vernieuwd.",
       "resultWithFailures": "{refreshed} kanaal/kanalen vernieuwd, {failed} mislukt."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Geschiedenissynchronisatie wordt gestart…",
+        "done": "Geschiedenissynchronisatie gestart",
+        "failed": "Geschiedenissynchronisatie mislukt"
+      },
+      "selectAll": "Alles selecteren",
+      "selected": "{count}/{max} geselecteerd",
+      "dialogTitleRunning": "{count} {feature} verbinden…",
+      "dialogTitleDone": "{connected} van {total} verbonden",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done} van {total} voltooid",
+      "status": {
+        "waiting": "Wachten",
+        "connecting": "Verbinden…",
+        "connected": "Verbonden",
+        "duplicated": "Al verbonden",
+        "limitReached": "Limiet bereikt",
+        "failed": "Mislukt",
+        "timedOut": "Time-out",
+        "cancelled": "Geannuleerd"
+      },
+      "reason": {
+        "notSelectable": "Dit item kan niet worden geselecteerd.",
+        "channelLimit": "Kanaallimiet bereikt.",
+        "workspaceLimit": "Werkruimtelimiet bereikt.",
+        "providerRejected": "De provider heeft dit verzoek afgewezen.",
+        "unknown": "Er is iets misgegaan.",
+        "followUpFailed": "Instellen niet voltooid — rond dit af in de kanaalinstellingen."
+      },
+      "sessionError": {
+        "sessionExpired": "Je sessie is verlopen. Maak opnieuw verbinding.",
+        "notMember": "Je bent geen lid meer van deze werkruimte.",
+        "trialExpired": "Je proefperiode is verlopen.",
+        "macLimitReached": "Je hebt je accountlimiet bereikt.",
+        "credentialMissing": "Inloggegevens ontbreken. Maak opnieuw verbinding."
+      },
+      "cancelRemaining": "Resterende annuleren",
+      "retryFailed": "Mislukte opnieuw proberen ({count})",
+      "retry": "Opnieuw proberen",
+      "goToChannels": "Naar kanalen",
+      "close": "Sluiten",
+      "leaveNotice": "Je kunt de pagina verlaten; verbonden accounts blijven behouden",
+      "stepConnecting": "Verbinden",
+      "stepCoexist": "Geschiedenis synchroniseren",
+      "validation": {
+        "min": "Selecteer minimaal 1",
+        "max": "Je kunt maximaal {max} selecteren",
+        "duplicate": "Dubbele selectie"
+      },
+      "progressLabel": "Voortgang"
     }
   },
   "workspace": {
@@ -2958,6 +3048,17 @@
       "pendingBlockedToast": "Deze workspace staat gepland voor verwijdering. Neem contact op met een workspacebeheerder om de toegang te herstellen.",
       "navDisabledTooltip": "Niet beschikbaar zolang de verwijdering van de workspace gepland staat",
       "badge": "Verwijdering gepland"
+    },
+    "supportAccess": {
+      "bannerTitle": "Platformondersteuningssessie",
+      "bannerDescription": "Een platformondersteuningsmedewerker heeft tot {time} tijdelijk toegang tot deze werkruimte.",
+      "cardTitle": "Toegang voor platformondersteuning",
+      "cardDescription": "Geef het platformondersteuningsteam 7 dagen volledige toegang tot deze werkruimte. Je kunt dit op elk moment uitschakelen.",
+      "enabledUntil": "Ingeschakeld tot {time}",
+      "permissionRequired": "Je moet superbeheerder zijn om de toegang voor platformondersteuning te wijzigen.",
+      "enabledToast": "Toegang voor platformondersteuning ingeschakeld.",
+      "disabledToast": "Toegang voor platformondersteuning uitgeschakeld.",
+      "toggleError": "Er is iets misgegaan. Probeer het opnieuw."
     }
   },
   "workspaces": {
@@ -3096,7 +3197,16 @@
     "waTemplateMpmTooManySections": "Een multi-productknop kan maximaal 10 secties hebben. Verwijder enkele secties voordat je publiceert.",
     "waTemplateMpmTooManyProducts": "Een multi-productknop kan in totaal maximaal 30 producten hebben. Verwijder enkele producten voordat je publiceert.",
     "waTemplateLtoExpirationRequired": "Kies een vervaldatum voor de tijdelijke aanbieding voordat je verzendt.",
-    "waTemplateMpmIncompleteProducts": "Elke sectie heeft minstens één geselecteerd product nodig — verwijder lege rijen of kies er een product voor."
+    "waTemplateMpmIncompleteProducts": "Elke sectie heeft minstens één geselecteerd product nodig — verwijder lege rijen of kies er een product voor.",
+    "voiceCall": "Spraakoproep",
+    "voiceCallDuration": "Spraakoproep · {duration}",
+    "missedVoiceCall": "Gemiste spraakoproep",
+    "declinedVoiceCall": "Geweigerde spraakoproep",
+    "acceptedCallPermission": "Verzoek om beltoestemming geaccepteerd",
+    "declinedCallPermission": "Verzoek om beltoestemming geweigerd",
+    "sendHumanAgentTag": "Eén bericht verzenden met de tag HUMAN_AGENT",
+    "warning": "Waarschuwing!",
+    "humanAgentWarningDescription": "Je mag alleen binnen 7 dagen op het bericht van een gebruiker reageren wanneer het probleem redelijkerwijs niet binnen 24 uur kan worden opgelost. Voorbeelden zijn weekenden, feestdagen of gevallen die meer dan één dag vereisen. Gebruik deze optie om geen enkele andere reden, omdat dit je Facebook-pagina of Instagram-account in gevaar kan brengen. Ga niet verder als je twijfelt."
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",
@@ -3108,6 +3218,12 @@
     "tabs": {
       "generalSettings": "Algemene instellingen",
       "conversionsApi": "Advertentie-optimalisatie"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Geen Instagram-accounts gevonden",
+      "noAccountsDescription": "Er zijn geen Instagram-bedrijfsaccounts gevonden op de Facebook-pagina's die je beheert. Maak opnieuw verbinding met Instagram en verleen alle gevraagde rechten.",
+      "alreadyConnectedNote": "Dit account is al verbonden",
+      "tryAgain": "Opnieuw verbinden proberen"
     }
   },
   "coexist": {
@@ -3369,7 +3485,8 @@
     "maxSize": "De bestandsgrootte overschrijdt de maximale limiet",
     "maxItemsReached": "Maximaal {max} {feature} toegestaan per workspace",
     "invalidApiKey": "Ongeldige API-sleutel",
-    "maxMustBeGreaterThanMin": "{maxField} moet groter zijn dan of gelijk zijn aan {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} moet groter zijn dan of gelijk zijn aan {minField}",
+    "maxCharacters": "Maximaal {max} tekens."
   },
   "webchat": {
     "chatUnavailable": "Deze chat is momenteel niet beschikbaar.",
@@ -3410,6 +3527,7 @@
       "label": "IJsbrekers"
     },
     "manualConnect": "Handmatig koppelen met een toegangstoken voor systeemgebruikers.",
+    "manualAppSecretMissingNotice": "Webhook-handtekeningen worden niet gecontroleerd totdat je je Meta App-geheim toevoegt.",
     "manualOnboarding": {
       "title": "Je WhatsApp-inbox is klaar!",
       "description": "Configureer de webhook-URL en het verificatietoken in je Meta-app. Gebruik de onderstaande waarden.",
@@ -3417,7 +3535,8 @@
       "verifyToken": "Webhook-verificatietoken",
       "qrCodeHint": "Scan de QR-code om de webhook-URL te openen",
       "moreSettings": "Meer instellingen",
-      "goToInbox": "Breng me erheen"
+      "goToInbox": "Breng me erheen",
+      "multipleTitle": "Je WhatsApp-inboxen zijn gereed!"
     },
     "phoneVerification": {
       "title": "WhatsApp-telefoonnummer verifiëren",
@@ -3430,7 +3549,8 @@
       "actions": {
         "sendCode": "Code verzenden",
         "resendIn": "Opnieuw verzenden over {seconds}s",
-        "verify": "Verifiëren en registreren"
+        "verify": "Verifiëren en registreren",
+        "skip": "Overslaan"
       },
       "fields": {
         "code": {
@@ -3448,7 +3568,8 @@
         "codeNotSent": "De WhatsApp-verificatiecode kon niet worden verzonden.",
         "codeNotVerified": "De WhatsApp-verificatiecode kon niet worden geverifieerd.",
         "registrationFailed": "Verificatie van het WhatsApp-telefoonnummer is mislukt."
-      }
+      },
+      "queueProgress": "{current} van {total} verifiëren"
     },
     "connect": {
       "errors": {
@@ -3560,7 +3681,8 @@
       "profile": "Profiel",
       "usefulLinks": "Nuttige links",
       "conversionsApi": "Advertentie-optimalisatie",
-      "settings": "Instellingen"
+      "settings": "Instellingen",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Je WhatsApp-account beheren",
@@ -3696,6 +3818,82 @@
         "title": "Automatische events",
         "description": "Verstuur conversiegebeurtenissen van dit WhatsApp-nummer automatisch naar Meta. Ontbreekt de machtiging, verbind het account dan opnieuw om deze te verlenen."
       }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta heeft de wijziging van de belinstellingen afgewezen",
+        "bicUnavailable": "Door het bedrijf geïnitieerde oproepen zijn niet beschikbaar voor dit land",
+        "callAlreadyInProgress": "Er is al een gesprek met dit contact gaande",
+        "hangupFailed": "Kan het gesprek niet beëindigen"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta heeft de wijziging afgewezen",
+      "callContact": "Bellen via WhatsApp",
+      "dialing": "Bellen…",
+      "startCall": "WhatsApp-gesprek starten",
+      "retentionLabel": "Bewaartermijn opnamen (dagen)",
+      "retentionHelper": "Hoe lang gespreksopnamen worden bewaard voordat ze permanent worden verwijderd.",
+      "transcriptionLabel": "Gesprekken transcriberen",
+      "transcriptionHelper": "Transcribeert automatisch opgenomen gesprekken via je verbonden AI-provider.",
+      "sip": {
+        "provisioningLabel": "FreeSWITCH-provisioning",
+        "provisionButton": "Provisioneren",
+        "deprovisionButton": "Provisioning ongedaan maken",
+        "status": {
+          "none": "Niet geprovisioneerd",
+          "provisioning": "Provisioneren…",
+          "provisioned": "Geprovisioneerd",
+          "enabled": "Ingeschakeld",
+          "failed": "Mislukt"
+        },
+        "errors": {
+          "notProvisioned": "Provisioneer dit nummer voor FreeSWITCH-bellen voordat je in-app bellen inschakelt",
+          "readBackMismatch": "Meta heeft de SIP-belwijziging niet bevestigd — probeer het opnieuw",
+          "provisionFailed": "Provisioneren van dit nummer voor FreeSWITCH-bellen mislukt",
+          "deprovisionFailed": "Ongedaan maken van FreeSWITCH-belprovisioning voor dit nummer mislukt"
+        }
+      },
+      "preflight": {
+        "title": "Belgeschiktheid",
+        "appSubscriptionMissing": "Configureer eerst de WhatsApp-webhook voor deze app in het Meta App Dashboard en probeer het daarna opnieuw.",
+        "appSubscriptionFailed": "Kan het 'calls'-webhookabonnement van de app niet verifiëren. Probeer het straks opnieuw.",
+        "callsNotSubscribed": "Deze app is niet geabonneerd op het 'calls'-webhookveld, waardoor oproepgebeurtenissen ChatbotX niet kunnen bereiken (Meta-fout 138018: technische vereisten zijn niet vervuld — zorg dat minstens één app die op de WABA is geabonneerd ook het webhookveld voor oproepen heeft).",
+        "fixButton": "Oplossen",
+        "fixSuccess": "De app is nu geabonneerd op WhatsApp-oproepwebhooks.",
+        "manualIntegrationNotice": "Dit nummer is handmatig verbonden en heeft hier geen app-gegevens. Abonneer het 'calls'-webhookveld van je app in het Meta App Dashboard.",
+        "coexistenceWarning": "Dit nummer gebruikt coexistentie met de WhatsApp Business-app, wat Meta niet ondersteunt voor bellen. Verplaats het naar alleen Cloud API.",
+        "messagingLimitTooLow": "Het berichtenlimietniveau van dit nummer ligt onder het minimum dat Meta vereist voor bellen."
+      }
+    },
+    "selectPage": {
+      "tryAgain": "Opnieuw verbinden proberen"
     }
   },
   "zalo": {
@@ -3708,7 +3906,8 @@
       "toggleSuccess": "Instelling voor tagsynchronisatie bijgewerkt.",
       "enabledSince": "Ingeschakeld sinds {date}",
       "disabled": "Uitgeschakeld"
-    }
+    },
+    "refreshPermissions": "Machtigingen vernieuwen"
   },
   "telegram": {
     "description": "Met deze integratie kun je Telegram-bots maken.",
@@ -3845,7 +4044,9 @@
       "productRemovedFromCart": "Product uit winkelwagen verwijderd",
       "productOrdered": "Product besteld",
       "contactReferredANewContact": "Contact heeft een nieuw contact doorverwezen",
-      "contactReferredExistingContact": "Contact heeft een bestaand contact doorverwezen"
+      "contactReferredExistingContact": "Contact heeft een bestaand contact doorverwezen",
+      "callRecorded": "Oproep opgenomen",
+      "callTranscribed": "Oproep getranscribeerd"
     },
     "actions": {
       "addTag": "Tag toevoegen",
@@ -3872,7 +4073,12 @@
   },
   "developerAccessToken": {
     "title": "API-toegangstoken",
-    "description": "Genereer een token waarmee je workspace toegang krijgt tot de openbare API's. Houd dit token geheim en deel het met niemand."
+    "description": "Genereer een token waarmee je workspace toegang krijgt tot de openbare API's. Houd dit token geheim en deel het met niemand.",
+    "createDialogTitle": "API-token maken",
+    "namePlaceholder": "bijv. Zapier-integratie",
+    "empty": "Nog geen API-tokens.",
+    "defaultBadge": "Standaard",
+    "allScopes": "Alle bereiken"
   },
   "contacts": {
     "title": "Contacten",
@@ -4508,6 +4714,17 @@
     },
     "queues": {
       "title": "Wachtrijen"
+    },
+    "workspaces": {
+      "title": "Werkruimten",
+      "description": "Werkruimten waarvan de eigenaar toegang voor platformondersteuning heeft ingeschakeld, kunnen hier worden geopend.",
+      "owner": "Eigenaar",
+      "tenant": "Tenant",
+      "supportStatus": "Ondersteuningsstatus",
+      "openAsSupport": "Openen als ondersteuning",
+      "supportEnabledUntil": "Ingeschakeld tot {time}",
+      "supportOff": "Uit",
+      "searchPlaceholder": "Zoeken op naam, e-mailadres van eigenaar of ID"
     }
   },
   "platformCredentials": {
@@ -5340,7 +5557,8 @@
     "connectViaFacebook": "Koppelen via Facebook",
     "unsupportedExplanation": "Dit Instagram-account is gekoppeld met Instagram Business Login. Koppel het account via Facebook om Meta Conversions API te kunnen gebruiken.",
     "flowStep": {
-      "whatsappNote": "WhatsApp-gebeurtenissen worden alleen verzonden voor gesprekken die zijn gestart vanuit een click-to-WhatsApp-advertentie."
+      "whatsappNote": "WhatsApp-gebeurtenissen worden alleen verzonden voor gesprekken die zijn gestart vanuit een click-to-WhatsApp-advertentie.",
+      "description": "Plaats een LeadSubmitted-gebeurtenis in de wachtrij voor Messenger, Instagram of WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5587,7 +5805,8 @@
       "generalSettingsTitle": "Algemene instellingen",
       "appearanceTitle": "Uiterlijk",
       "playerSettingsTitle": "Spelerinstellingen",
-      "prizeSettingsTitle": "Prijsinstellingen"
+      "prizeSettingsTitle": "Prijsinstellingen",
+      "validationFailed": "Corrigeer de gemarkeerde velden voordat je opslaat."
     },
     "generalSettings": {
       "showName": "Zichtbaar",
@@ -5617,7 +5836,11 @@
       "resetPolicyLabel": "Trekkingen resetten",
       "resetNever": "Aantal trekkingen niet resetten",
       "resetEveryNDays": "Reset het aantal trekkingen elke",
-      "resetIntervalDaysSuffix": "dag(en)"
+      "resetIntervalDaysSuffix": "dag(en)",
+      "maxSharesPerPerson": "Max. bonustrekkingen via verwijzingen",
+      "maxSharesPerPersonHint": "Elke vriend die zich aanmeldt via de uitnodigingslink van deze speler en je een bericht stuurt, geeft hem of haar 1 extra trekking, tot deze limiet. Stel in op 0 om verwijzingsbonussen uit te schakelen. Bonustrekkingen moeten worden gebruikt vóór de volgende reset.",
+      "sharingNode": "Deelstap",
+      "sharingNodeHint": "De flowstap die wordt uitgevoerd wanneer een vriend de deellink van deze speler opent. Laat leeg om de knop Delen te verbergen."
     },
     "publicUrl": {
       "label": "Openbare URL",
@@ -5632,12 +5855,14 @@
       "forbiddenTitle": "Toegang geweigerd",
       "forbiddenDescription": "Deze link is ongeldig of verlopen.",
       "comingSoonTitle": "Binnenkort beschikbaar",
-      "comingSoonDescription": "Dit type minispel is nog niet speelbaar."
+      "comingSoonDescription": "Dit type minispel is nog niet speelbaar.",
+      "rateLimited": "Te veel verzoeken. Wacht even en probeer het opnieuw."
     },
     "list": {
       "gamesPlayed": "Gespeelde spellen",
       "participants": "Deelnemers",
-      "winners": "Winnaars"
+      "winners": "Winnaars",
+      "shares": "Verwijzingen"
     },
     "history": {
       "title": "Geschiedenis",
@@ -5654,7 +5879,8 @@
         "win": "Gewonnen",
         "lose": "Geen prijs",
         "empty": "Nog geen speelrecords"
-      }
+      },
+      "shares": "Verwijzingen"
     }
   },
   "mediaLibrary": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "Botvelden"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "Importeren vanuit bestand",
+      "automaticScan": "Automatische klantscan"
+    },
+    "title": "Automatische klantscan",
+    "submit": "Automatisch scannen",
+    "fields": {
+      "inbox": "Inbox",
+      "scanFrom": "Inbox scannen vanaf"
+    },
+    "hint": {
+      "range": "Het systeem scant klanten die vanaf {from} tot nu een bericht naar de pagina hebben gestuurd.",
+      "beforeChoose": "Na het scannen moet je nog eens 24 uur wachten voordat je deze functie weer kunt gebruiken."
+    },
+    "status": {
+      "idle": "Voor deze inbox is nog geen scan uitgevoerd. Kies een startdatum en voer je eerste automatische klantscan uit.",
+      "running": "Het systeem voert een automatische scan uit; de geschatte voltooiingstijd is {eta}.",
+      "nextScan": "Volgende scantijd: {at}",
+      "finished": "Het systeem heeft de laatste klantscan voltooid om {at}.",
+      "total": "Totaal aantal gescande klanten: {count}",
+      "waitCooldown": "Je moet nog eens 24 uur wachten voordat je deze functie weer kunt gebruiken.",
+      "failed": "De laatste scan is mislukt. Je kunt het opnieuw proberen zodra de wachttijd is verstreken.",
+      "partial": "De laatste scan is slechts deels voltooid — sommige gesprekken konden niet worden geïmporteerd."
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "De starttijd van de scan moet in het verleden liggen.",
+      "contactScanInboxNotFound": "Inbox niet gevonden.",
+      "contactScanChannelUnsupported": "Dit kanaal ondersteunt geen automatische klantscan.",
+      "contactScanIntegrationDisconnected": "Deze inbox is niet verbonden.",
+      "contactScanCooldown": "Deze inbox is recent gescand. Wacht voordat je opnieuw scant.",
+      "contactScanAlreadyRunning": "Er wordt al een scan uitgevoerd voor deze inbox.",
+      "contactScanForbidden": "Je hebt geen toestemming om een automatische klantscan uit te voeren."
+    },
+    "histories": {
+      "title": "Scangeschiedenis",
+      "columns": {
+        "channel": "Kanaal",
+        "scanFrom": "Scannen vanaf",
+        "importedContacts": "Geïmporteerde contacten",
+        "scannedConversations": "Gescande gesprekken",
+        "finishedAt": "Voltooid om",
+        "error": "Fout"
+      },
+      "status": {
+        "init": "In wachtrij",
+        "running": "Actief",
+        "succeeded": "Geslaagd",
+        "partial": "Deels voltooid",
+        "failed": "Mislukt"
+      },
+      "empty": "Er zijn nog geen scans uitgevoerd."
+    }
   }
 }

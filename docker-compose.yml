@@ -107,6 +107,90 @@ services:
     volumes:
       - redis-ui-data:/data
 
+  # In-app WhatsApp calling (beta), FreeSWITCH SIP interconnect + WebRTC
+  # softphone bridge. Meta's SIP leg cannot reach localhost, so local
+  # testing exercises the container test harness
+  # (apps/worker/__tests__/freeswitch-container.test.ts, RUN_FS_CONTAINER=1)
+  # rather than a real Meta number — see docs/whatsapp-calling.md#local-development.
+  # Building requires a free SignalWire token (docker/freeswitch/Dockerfile);
+  # bound to loopback locally since there is no real TLS cert / Meta ACL to
+  # rely on for isolation the way production does.
+  freeswitch:
+    <<: *network
+    build:
+      context: ./docker/freeswitch
+      args:
+        SIGNALWIRE_TOKEN: ${SIGNALWIRE_TOKEN:-}
+    environment:
+      FS_SIP_DOMAIN: ${FS_SIP_DOMAIN:-fs.localhost}
+      FS_PUBLIC_IP: ${FS_PUBLIC_IP:-127.0.0.1}
+      FS_NODE_ID: ${FS_NODE_ID:-default}
+      FS_ESL_PASSWORD: ${FS_ESL_PASSWORD:-devcluecon}
+      FS_ESL_LISTEN_IP: 0.0.0.0
+      FS_XML_BASIC_USER: ${FS_XML_BASIC_USER:-fsxml}
+      FS_XML_BASIC_PASS: ${FS_XML_BASIC_PASS:-devsecret}
+      CBX_XML_URL: ${CBX_XML_URL:-http://host.docker.internal:3123/api/freeswitch/xml}
+      FS_RTP_START_PORT: "50700"
+      FS_RTP_END_PORT: "50720"
+      FS_MAX_SESSIONS: ${FS_MAX_SESSIONS:-1000}
+      FS_SESSIONS_PER_SECOND: ${FS_SESSIONS_PER_SECOND:-30}
+    depends_on:
+      redis:
+        condition: service_healthy
+    # Bound to loopback: no real Meta ACL / TLS cert locally, so the ports
+    # must never be reachable from the LAN.
+    ports:
+      - "127.0.0.1:5061:5061/tcp"
+      - "127.0.0.1:7443:7443/tcp"
+      - "127.0.0.1:5066:5066/tcp"
+      - "127.0.0.1:8021:8021/tcp"
+      - "127.0.0.1:50700-50720:50700-50720/udp"
+    volumes:
+      - fs-config:/etc/freeswitch
+      # Bind mount (not a named volume) so the host-run `worker:freeswitch`
+      # dev process can read the files FreeSWITCH writes (RECORDINGS_DIR in
+      # .env points at the same host directory; FS_RECORDINGS_DIR=/recordings).
+      - ${RECORDINGS_HOST_DIR:-./.data/recordings}:/recordings
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "fs_cli", "-x", "status"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Production-only ("production only, local uses host
+  # candidates"). Not started by default in local compose — enable with
+  # `--profile production`. The real production stack (Docker Swarm,
+  # host networking, wide RTP range) lives in the deployment repo, not here.
+  coturn:
+    profiles: ["production"]
+    image: coturn/coturn:4.18.0-alpine
+    # turnserver.conf does not expand ${} itself; the secret and realm are
+    # passed as CLI flags, which override the file's placeholder lines.
+    # TURN_STATIC_SECRET/FS_SIP_DOMAIN must be real values before this
+    # profile is actually started in production — `:-CHANGE_ME` here only
+    # keeps `docker compose config` usable without failing interpolation
+    # for a service local dev never starts.
+    #
+    # Host networking is required: the TURN relay range (49152-65535/udp)
+    # is thousands of ports and cannot be sensibly published through
+    # Docker's bridge network. The host firewall must open 3478/udp+tcp,
+    # 5349/udp+tcp, and 49152-65535/udp.
+    network_mode: host
+    command:
+      - "-c"
+      - "/etc/coturn/turnserver.conf"
+      - "--static-auth-secret=${TURN_STATIC_SECRET:-CHANGE_ME_TURN_STATIC_SECRET}"
+      - "--realm=${FS_SIP_DOMAIN:-fs.localhost}"
+    volumes:
+      - ./docker/coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+      # Must hold wss.pem/wss.key — the same certificate used by the
+      # FreeSWITCH WSS listener (see docker/freeswitch/conf/sip_profiles/
+      # whatsapp.xml and agents.xml, tls-cert-dir).
+      - ${FS_CERTS_DIR:-./.data/certs}:/etc/coturn/certs:ro
+
 networks:
   chatbotx-network:
     driver: bridge
@@ -116,3 +200,4 @@ volumes:
   filesystem-data:
   cache-data:
   redis-ui-data:
+  fs-config:

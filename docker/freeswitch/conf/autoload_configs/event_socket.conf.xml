@@ -1,0 +1,24 @@
+<!--
+  ChatbotX delta from vanilla autoload_configs/event_socket.conf.xml
+  (params confirmed present, `apply-inbound-acl` confirmed commented-out
+  by default, in the fetched vanilla file):
+    - listen-ip: ${FS_ESL_LISTEN_IP} (127.0.0.1 in production — 8021 is
+      loopback only; local compose sets it to 0.0.0.0 because
+      the `freeswitch` worker process connects from a sibling container,
+      not from inside this one — the compose network + apply-inbound-acl
+      below are what actually restrict access, not the bind address).
+    - password: $${FS_ESL_PASSWORD}, required — never left at the vanilla
+      "ClueCon" default.
+    - apply-inbound-acl: uncommented; points
+      at the `esl_clients` list defined in acl.conf.xml (loopback in
+      production, + the compose subnet locally).
+-->
+<configuration name="event_socket.conf" description="Socket Client">
+  <settings>
+    <param name="nat-map" value="false"/>
+    <param name="listen-ip" value="$${FS_ESL_LISTEN_IP}"/>
+    <param name="listen-port" value="8021"/>
+    <param name="password" value="$${FS_ESL_PASSWORD}"/>
+    <param name="apply-inbound-acl" value="esl_clients"/>
+  </settings>
+</configuration>

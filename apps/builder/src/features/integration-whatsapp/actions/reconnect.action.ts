@@ -19,6 +19,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { hasWhatsappCapiScope } from "@/features/integration-whatsapp/libs/capi-scope"
+import { ensureWhatsappCallsWebhookSubscribed } from "@/features/integration-whatsapp/libs/ensure-calls-webhook-subscribed"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { logger } from "@/lib/log"
 import { resolveProviderOriginForCredential } from "@/lib/provider-origin"
@@ -171,6 +172,7 @@ async function persistReconnectAuthAndResubscribe(input: {
   hasCapiScope: boolean
   integrationWhatsappId: string
   workspaceId: string
+  whatsappSettings: WhatsappCredential
 }): Promise<boolean> {
   await integrationWhatsappService.replaceAuth({
     id: input.integrationWhatsappId,
@@ -193,6 +195,27 @@ async function persistReconnectAuthAndResubscribe(input: {
         workspaceId: input.workspaceId,
       },
       "Unable to resubscribe WhatsApp webhook after reconnect",
+    )
+  }
+
+  // App-level `calls` field subscription — never blocks
+  // reconnect: the WABA `subscribed_apps` resubscribe above is unaffected by
+  // this, and a failure here only means the Calls-card preflight keeps
+  // showing "not subscribed" for a super-admin to retry via its Fix action.
+  try {
+    await ensureWhatsappCallsWebhookSubscribed({
+      appId: input.whatsappSettings.clientId,
+      appSecret: input.whatsappSettings.clientSecret,
+      verifyToken: input.auth.verifyToken ?? input.whatsappSettings.verifyToken,
+    })
+  } catch (err) {
+    logger.warn(
+      {
+        err,
+        integrationWhatsappId: input.integrationWhatsappId,
+        workspaceId: input.workspaceId,
+      },
+      "Unable to subscribe app-level 'calls' webhook field after reconnect",
     )
   }
 
@@ -245,6 +268,7 @@ async function reconnectWhatsapp(input: {
     hasCapiScope,
     integrationWhatsappId: input.integrationWhatsappId,
     workspaceId: input.workspaceId,
+    whatsappSettings,
   })
 
   return {

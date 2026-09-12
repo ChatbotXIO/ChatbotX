@@ -72,6 +72,11 @@ export const connectWhatsappSchema = z
     signupSessionId: z.string().nullish(),
     accessToken: z.string().nullish(),
     code: z.string().nullish(),
+    // Manual connect only, always optional: without it the manual
+    // integration's inbound webhook can never be signature-verified (see
+    // `webhook-url.ts`'s `buildAuthValue`). Lets an owner opt into real HMAC
+    // verification instead of leaving every manual integration unverifiable.
+    manualAppSecret: z.string().trim().nullish(),
   })
   .superRefine((data, ctx) => {
     if (data.manualConnect) {

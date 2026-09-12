@@ -229,7 +229,8 @@
       "adAccountFilter": {
         "all": "所有广告账号",
         "label": "广告账号",
-        "unavailable": "无法加载广告账户——请在设置中检查此集成的 Ads 连接，或工作区的 Facebook Ads 连接。"
+        "unavailable": "无法加载广告账户——请在设置中检查此集成的 Ads 连接，或工作区的 Facebook Ads 连接。",
+        "note": "按广告账号筛选时，在所选日期范围内有转化但花费为 0 或投放为 0 的广告会被隐藏。"
       },
       "channelFilter": {
         "label": "渠道",
@@ -848,6 +849,58 @@
       "cta": "重新连接",
       "description": "以下频道未能自动刷新其访问权杖。请重新连接，以持续收发消息。",
       "title": "紧急"
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "正在开始同步历史记录…",
+        "done": "已开始同步历史记录",
+        "failed": "历史记录同步失败"
+      },
+      "selectAll": "全选",
+      "selected": "已选择 {count}/{max}",
+      "dialogTitleRunning": "正在连接 {count} 个{feature}…",
+      "dialogTitleDone": "已连接 {connected}/{total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "已完成 {done}/{total}",
+      "status": {
+        "waiting": "等待中",
+        "connecting": "连接中…",
+        "connected": "已连接",
+        "duplicated": "已连接过",
+        "limitReached": "已达上限",
+        "failed": "失败",
+        "timedOut": "已超时",
+        "cancelled": "已取消"
+      },
+      "reason": {
+        "notSelectable": "该项目无法选择。",
+        "channelLimit": "已达渠道上限。",
+        "workspaceLimit": "已达工作区上限。",
+        "providerRejected": "服务提供方拒绝了此请求。",
+        "unknown": "出现问题。",
+        "followUpFailed": "设置未完成——请在渠道设置中完成。"
+      },
+      "sessionError": {
+        "sessionExpired": "您的会话已过期，请重新连接。",
+        "notMember": "您已不再是该工作区的成员。",
+        "trialExpired": "您的试用期已结束。",
+        "macLimitReached": "您已达到账户上限。",
+        "credentialMissing": "凭据缺失，请重新连接。"
+      },
+      "cancelRemaining": "取消其余项",
+      "retryFailed": "重试（{count}）",
+      "retry": "重试",
+      "goToChannels": "前往渠道",
+      "close": "关闭",
+      "leaveNotice": "您可以离开此页面，已连接的账号将保留",
+      "stepConnecting": "连接中",
+      "stepCoexist": "同步历史记录",
+      "validation": {
+        "min": "至少选择 1 个",
+        "max": "最多可选择 {max} 个",
+        "duplicate": "选择重复"
+      },
+      "progressLabel": "进度"
     }
   },
   "claude": {
@@ -1173,7 +1226,12 @@
   },
   "developerAccessToken": {
     "description": "产生权杖以允许您的工作区访问公共 API。请将此权杖保密，不要与任何人共享。",
-    "title": "API 访问权杖"
+    "title": "API 访问权杖",
+    "createDialogTitle": "创建 API 令牌",
+    "namePlaceholder": "例如：Zapier 集成",
+    "empty": "暂无 API 令牌。",
+    "defaultBadge": "默认",
+    "allScopes": "所有作用域"
   },
   "dialog": {
     "deleteConfirmation": "你确定吗？\n此操作无法撤销。\n这将从我们的服务器中永久删除您的 {feature}。"
@@ -1427,7 +1485,8 @@
       "label": "Agent"
     },
     "aiAgent": {
-      "label": "AI Agent"
+      "label": "AI Agent",
+      "loadError": "加载 AI 代理失败，请重试。"
     },
     "aiEditImage": {
       "inputFieldId": {
@@ -2141,6 +2200,10 @@
       "label": "活动",
       "placeholder": "输入事件名称并按 Enter"
     },
+    "manualAppSecret": {
+      "label": "Meta App Secret（可选）",
+      "description": "为此手动连接启用 Webhook 签名验证。可在 Meta App 控制台的 Settings > Basic 中找到。"
+    },
     "marketingFeatures": {
       "description": "客户可见的产品功能清单。显示在定价表中。",
       "label": "行销功能清单"
@@ -2841,6 +2904,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "最近通话录音"
+    },
+    "lastCallTranscript": {
+      "label": "最近通话转写"
+    },
+    "tokenPermission": {
+      "label": "权限",
+      "full": "完全访问",
+      "readOnly": "只读"
+    },
+    "tokenScopes": {
+      "label": "作用域",
+      "contacts": "联系人",
+      "inbox": "收件箱",
+      "automation": "自动化",
+      "broadcasts": "群发",
+      "analytics": "分析",
+      "ecommerce": "电子商务",
+      "integrations": "集成",
+      "channels": "渠道",
+      "minigames": "小游戏",
+      "appointments": "预约",
+      "media": "媒体",
+      "ads": "广告"
     }
   },
   "flowAnalytics": {
@@ -2968,7 +3057,9 @@
       "import": "导入流程",
       "export": "导出",
       "importStarted": "流程正在导入中，请稍后查看导入记录以获取结果。",
-      "importJsonOnly": "仅限 JSON 文件"
+      "importJsonOnly": "仅限 JSON 文件",
+      "whatsappCallButton": "通过 WhatsApp 通话",
+      "metaConversions": "Meta Conversions API"
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
@@ -3106,7 +3197,11 @@
     "sendText": {
       "tiktokTitleTruncated": "附加按钮后，TikTok 只会发送这条消息的前 40 个字符——其余部分将被截断。"
     },
-    "dataWasSaved": "数据已保存"
+    "dataWasSaved": "数据已保存",
+    "whatsappCallButton": {
+      "editButtonTitle": "编辑按钮",
+      "buttonLabel": "按钮标签"
+    }
   },
   "folders": {
     "heading": {
@@ -3216,6 +3311,12 @@
     "tabs": {
       "generalSettings": "常规设置",
       "conversionsApi": "广告优化"
+    },
+    "selectPage": {
+      "noAccountsTitle": "未找到 Instagram 账户",
+      "noAccountsDescription": "在您管理的 Facebook 主页中未找到 Instagram 商业账户。请重新连接 Instagram 并授予所有请求的权限。",
+      "alreadyConnectedNote": "该账户已连接",
+      "tryAgain": "尝试重新连接"
     }
   },
   "instagramCommentAutomation": {
@@ -3629,7 +3730,16 @@
     "waTemplateMpmTooManySections": "多商品按钮最多可包含 10 个版块。请在发布前移除部分版块。",
     "waTemplateMpmTooManyProducts": "多商品按钮总共最多可包含 30 个商品。请在发布前移除部分商品。",
     "waTemplateLtoExpirationRequired": "发送前请为限时优惠选择到期时间。",
-    "waTemplateMpmIncompleteProducts": "每个分组至少需要一个已选择的商品——请删除空行或为其选择商品。"
+    "waTemplateMpmIncompleteProducts": "每个分组至少需要一个已选择的商品——请删除空行或为其选择商品。",
+    "voiceCall": "语音通话",
+    "voiceCallDuration": "语音通话 · {duration}",
+    "missedVoiceCall": "未接语音通话",
+    "declinedVoiceCall": "已拒绝的语音通话",
+    "acceptedCallPermission": "已接受通话权限请求",
+    "declinedCallPermission": "已拒绝通话权限请求",
+    "humanAgentWarningDescription": "只有在问题无法于 24 小时内合理解决时，您才可以在 7 天内回复用户的消息。例如周末、假日，或需要超过一天才能完成的案例。请勿因其他原因使用此选项，否则可能让您的 Facebook 粉专或 Instagram 帐号面临风险。如果您不确定，请不要继续。",
+    "sendHumanAgentTag": "发送一封带有 HUMAN_AGENT 标签的消息",
+    "warning": "警告！"
   },
   "messenger": {
     "botProfile": "机器人个人数据",
@@ -3923,6 +4033,17 @@
     },
     "queues": {
       "title": "队列"
+    },
+    "workspaces": {
+      "title": "工作区",
+      "description": "所有者已启用平台支持访问的工作区可以在此处打开。",
+      "owner": "所有者",
+      "tenant": "租户",
+      "supportStatus": "支持状态",
+      "openAsSupport": "以支持身份打开",
+      "supportEnabledUntil": "已启用，至 {time}",
+      "supportOff": "已关闭",
+      "searchPlaceholder": "按名称、所有者邮箱或 ID 搜索"
     }
   },
   "platformBranding": {
@@ -4629,7 +4750,9 @@
       "ticketStatusChanged": "票证状态已更改",
       "ticketValueChanged": "票价已更改",
       "unsubscribedFromSequence": "取消订阅串行",
-      "userAskedAboutProduct": "用户询问产品"
+      "userAskedAboutProduct": "用户询问产品",
+      "callRecorded": "通话已录音",
+      "callTranscribed": "通话已转写"
     },
     "day": "日",
     "hour": "小时",
@@ -4671,7 +4794,8 @@
     "invalidApiKey": "API 密钥无效",
     "maxItemsReached": "最大 {max}{feature}",
     "maxMustBeGreaterThanMin": "{maxField} 必须大于或等于 {minField}",
-    "maxSize": "文件大小超出上限"
+    "maxSize": "文件大小超出上限",
+    "maxCharacters": "最多 {max} 个字符。"
   },
   "webchat": {
     "chatUnavailable": "此聊天目前不可用。",
@@ -4849,6 +4973,7 @@
       "label": "破冰船"
     },
     "manualConnect": "使用系统用户 Access Token 手动连接。",
+    "manualAppSecretMissingNotice": "在您添加 Meta App Secret 之前，Webhook 签名不会被验证。",
     "manualOnboarding": {
       "description": "在您的 Meta 应用程序中设置 webhook URL 和验证权杖。使用下面的值。",
       "goToInbox": "带我去那里",
@@ -4856,7 +4981,8 @@
       "qrCodeHint": "扫描 QR Code 以打开 webhook URL",
       "title": "您的 WhatsApp 收件匣已准备好！",
       "verifyToken": "Webhook 验证权杖",
-      "webhookUrl": "Webhook URL"
+      "webhookUrl": "Webhook URL",
+      "multipleTitle": "您的 WhatsApp 收件箱已就绪！"
     },
     "marketingMessageLite": "行销消息 Lite",
     "messageTemplate": {
@@ -4928,7 +5054,8 @@
       "actions": {
         "resendIn": "在 {seconds} 内重新发送",
         "sendCode": "发送代码",
-        "verify": "验证并注册"
+        "verify": "验证并注册",
+        "skip": "跳过"
       },
       "description": "向Meta要求验证码，在此输入验证码，电话号码将自动注册。",
       "errorTitle": "需要电话号码验证",
@@ -4953,7 +5080,8 @@
         "sms": "短信",
         "voice": "语音通话"
       },
-      "title": "验证WhatsApp电话号码"
+      "title": "验证WhatsApp电话号码",
+      "queueProgress": "正在验证 {current}/{total}"
     },
     "reconnect": {
       "errors": {
@@ -4987,7 +5115,8 @@
       "profile": "简介",
       "usefulLinks": "有用链接",
       "conversionsApi": "广告优化",
-      "settings": "设置"
+      "settings": "设置",
+      "calls": "Calls"
     },
     "templateFooter": {
       "label": "范本页脚"
@@ -5001,6 +5130,82 @@
         "title": "Automatic Events",
         "description": "自动将此 WhatsApp 号码的转化事件发送到 Meta。如果缺少权限,请重新连接账户以授予权限。"
       }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta rejected the calling settings change",
+        "bicUnavailable": "Business-initiated calling is not available for this country",
+        "callAlreadyInProgress": "A call to this contact is already in progress",
+        "hangupFailed": "Could not end the call"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta rejected the change",
+      "callContact": "Call on WhatsApp",
+      "dialing": "Calling…",
+      "startCall": "Start WhatsApp call",
+      "retentionLabel": "Recording retention (days)",
+      "retentionHelper": "How long call recordings are kept before they are permanently deleted.",
+      "transcriptionLabel": "Transcribe calls",
+      "transcriptionHelper": "Automatically transcribe recorded calls using your connected AI provider.",
+      "sip": {
+        "provisioningLabel": "FreeSWITCH provisioning",
+        "provisionButton": "Provision",
+        "deprovisionButton": "Deprovision",
+        "status": {
+          "none": "Not provisioned",
+          "provisioning": "Provisioning…",
+          "provisioned": "Provisioned",
+          "enabled": "Enabled",
+          "failed": "Failed"
+        },
+        "errors": {
+          "notProvisioned": "Provision this number for FreeSWITCH calling before enabling in-app calling",
+          "readBackMismatch": "Meta did not confirm the SIP calling change — try again",
+          "provisionFailed": "Failed to provision this number for FreeSWITCH calling",
+          "deprovisionFailed": "Failed to deprovision FreeSWITCH calling for this number"
+        }
+      },
+      "preflight": {
+        "title": "Calling eligibility",
+        "appSubscriptionMissing": "Configure the WhatsApp webhook for this app in the Meta App Dashboard first, then try again.",
+        "appSubscriptionFailed": "Could not verify the app's 'calls' webhook subscription. Try again shortly.",
+        "callsNotSubscribed": "This app is not subscribed to the 'calls' webhook field, so call events cannot reach ChatbotX (Meta error 138018: technical pre-requisites are not met — ensure at least one app subscribed to the WABA also has the calls webhook field).",
+        "fixButton": "Fix",
+        "fixSuccess": "The app is now subscribed to WhatsApp call webhooks.",
+        "manualIntegrationNotice": "This number was connected manually and has no app credentials here. Subscribe the 'calls' webhook field for your app in the Meta App Dashboard.",
+        "coexistenceWarning": "This number uses WhatsApp Business app coexistence, which Meta does not support for calling. Move it to Cloud API only.",
+        "messagingLimitTooLow": "This number's messaging limit tier is below the minimum Meta requires for calling."
+      }
+    },
+    "selectPage": {
+      "tryAgain": "尝试重新连接"
     }
   },
   "workspace": {
@@ -5032,6 +5237,17 @@
       "startTime": "开始时间",
       "timeRequired": "请选择开始时间与结束时间",
       "title": "设置活跃时间"
+    },
+    "supportAccess": {
+      "bannerTitle": "平台支持会话",
+      "bannerDescription": "平台支持人员对此工作区拥有临时访问权限，直到 {time}。",
+      "cardTitle": "平台支持访问",
+      "cardDescription": "允许平台支持团队在 7 天内以完全访问权限打开此工作区。您可以随时将其关闭。",
+      "enabledUntil": "已启用，至 {time}",
+      "permissionRequired": "您需要是超级管理员才能更改平台支持访问权限。",
+      "enabledToast": "已启用平台支持访问。",
+      "disabledToast": "已禁用平台支持访问。",
+      "toggleError": "出现问题，请重试。"
     }
   },
   "workspaceToken": {
@@ -5052,11 +5268,13 @@
       "title": "标签同步",
       "toggleSuccess": "标签同步设置已更新。"
     },
-    "title": "ZaloOA"
+    "title": "ZaloOA",
+    "refreshPermissions": "刷新权限"
   },
   "metaConversions": {
     "flowStep": {
-      "whatsappNote": "WhatsApp 事件仅针对由点击 WhatsApp 广告发起的对话发送。"
+      "whatsappNote": "WhatsApp 事件仅针对由点击 WhatsApp 广告发起的对话发送。",
+      "description": "为 Messenger、Instagram 或 WhatsApp 排队发送一个 LeadSubmitted 事件。"
     },
     "title": "Conversions API",
     "description": "将 Messenger、Instagram 和 WhatsApp 对话中的转化事件发送给 Meta。",
@@ -5563,7 +5781,8 @@
       "generalSettingsTitle": "常规设置",
       "appearanceTitle": "外观",
       "playerSettingsTitle": "玩家设置",
-      "prizeSettingsTitle": "奖品设置"
+      "prizeSettingsTitle": "奖品设置",
+      "validationFailed": "保存前请修正标红的字段。"
     },
     "generalSettings": {
       "showName": "可见",
@@ -5593,7 +5812,11 @@
       "resetPolicyLabel": "重置抽奖次数",
       "resetNever": "不重置抽奖次数",
       "resetEveryNDays": "每隔以下天数重置抽奖次数",
-      "resetIntervalDaysSuffix": "天"
+      "resetIntervalDaysSuffix": "天",
+      "maxSharesPerPerson": "推荐可获得的最多奖励次数",
+      "maxSharesPerPersonHint": "每有一位好友通过该玩家的邀请链接加入并给你发消息，该玩家就多获得 1 次抽奖机会，最多不超过此上限。设为 0 可关闭推荐奖励。奖励次数须在下次重置前使用。",
+      "sharingNode": "分享步骤",
+      "sharingNodeHint": "好友打开该玩家的分享链接时运行的流程步骤。留空则隐藏分享按钮。"
     },
     "publicUrl": {
       "label": "公开链接",
@@ -5608,12 +5831,14 @@
       "forbiddenTitle": "访问被拒绝",
       "forbiddenDescription": "此链接无效或已过期。",
       "comingSoonTitle": "即将推出",
-      "comingSoonDescription": "此类型的小游戏暂时无法玩。"
+      "comingSoonDescription": "此类型的小游戏暂时无法玩。",
+      "rateLimited": "请求过于频繁，请稍候再试。"
     },
     "list": {
       "gamesPlayed": "游戏次数",
       "participants": "参与人数",
-      "winners": "中奖人数"
+      "winners": "中奖人数",
+      "shares": "推荐人数"
     },
     "history": {
       "title": "历史记录",
@@ -5630,7 +5855,8 @@
         "win": "中奖",
         "lose": "未中奖",
         "empty": "暂无游戏记录"
-      }
+      },
+      "shares": "推荐人数"
     }
   },
   "userDataWebview": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "机器人字段"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "Import from File",
+      "automaticScan": "Automatic Customer Scan"
+    },
+    "title": "Automatic Customer Scan",
+    "submit": "Automatic Scan",
+    "fields": {
+      "inbox": "Inbox",
+      "scanFrom": "Scan Inbox from Time"
+    },
+    "hint": {
+      "range": "The system will scan customers who have messaged the page from {from} until now.",
+      "beforeChoose": "After scanning, you must wait another 24 hours before you can use this feature again."
+    },
+    "status": {
+      "idle": "No scan has been run yet for this inbox. Choose a start date and run your first Automatic Customer Scan.",
+      "running": "The system is performing an automatic scan; estimated completion time is {eta}.",
+      "nextScan": "Next scan time: {at}",
+      "finished": "The system completed the last customer scan request at {at}.",
+      "total": "Total customers scanned: {count}",
+      "waitCooldown": "You must wait another 24 hours before you can use this feature again.",
+      "failed": "The last scan failed. You can try again once the cooldown ends.",
+      "partial": "The last scan finished partially — some conversations could not be imported."
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "Scan-from time must be in the past.",
+      "contactScanInboxNotFound": "Inbox not found.",
+      "contactScanChannelUnsupported": "This channel does not support Automatic Customer Scan.",
+      "contactScanIntegrationDisconnected": "This inbox is not connected.",
+      "contactScanCooldown": "This inbox was scanned recently. Please wait before scanning again.",
+      "contactScanAlreadyRunning": "A scan is already running for this inbox.",
+      "contactScanForbidden": "You do not have permission to run an Automatic Customer Scan."
+    },
+    "histories": {
+      "title": "Scan History",
+      "columns": {
+        "channel": "Channel",
+        "scanFrom": "Scan from",
+        "importedContacts": "Imported contacts",
+        "scannedConversations": "Scanned conversations",
+        "finishedAt": "Finished at",
+        "error": "Error"
+      },
+      "status": {
+        "init": "Queued",
+        "running": "Running",
+        "succeeded": "Succeeded",
+        "partial": "Partial",
+        "failed": "Failed"
+      },
+      "empty": "No scans have been run yet."
+    }
   }
 }

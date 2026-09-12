@@ -14,6 +14,7 @@ export const FORM_FIELDS = {
   CONNECT_EXISTING: "connectExisting",
   TRANSFER_PHONE_NUMBER: "transferPhoneNumber",
   MANUAL_CONNECT: "manualConnect",
+  MANUAL_APP_SECRET: "manualAppSecret",
   MARKETING_MESSAGE_LITE: "marketingMessageLite",
   PHONE_NUMBER_ID: "phoneNumberId",
   BUSINESS_ID: "businessId",

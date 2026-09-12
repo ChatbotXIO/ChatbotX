@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { extractCoexistPayloads, webhookHandler } from "../src/handlers/webhook"
 
@@ -271,13 +272,24 @@ vi.mock("whatsapp-api-js/middleware/next", () => ({
   },
 }))
 
-/** Build a minimal Request that looks like a WhatsApp POST webhook. */
-const makePostRequest = (body: unknown) =>
-  new Request("https://example.com/webhook", {
+/** Matches `baseConfig.clientSecret` below — kept as its own constant so
+ * `makePostRequest` doesn't need to depend on `baseConfig`'s `never` cast. */
+const TEST_CLIENT_SECRET = "secret"
+
+/** Build a minimal Request that looks like a WhatsApp POST webhook, signed
+ * with `TEST_CLIENT_SECRET` so it passes HMAC verification. */
+const makePostRequest = (body: unknown) => {
+  const rawBody = JSON.stringify(body)
+  const signature = `sha256=${createHmac("sha256", TEST_CLIENT_SECRET).update(rawBody, "utf8").digest("hex")}`
+  return new Request("https://example.com/webhook", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers: {
+      "Content-Type": "application/json",
+      "x-hub-signature-256": signature,
+    },
+    body: rawBody,
   })
+}
 
 /** A minimal coexist body envelope with a history payload. */
 const coexistBody = {
@@ -297,7 +309,7 @@ const coexistBody = {
 }
 
 const baseConfig = {
-  clientSecret: "secret",
+  clientSecret: TEST_CLIENT_SECRET,
   verifyToken: "verify",
   version: "v20.0",
 } as never

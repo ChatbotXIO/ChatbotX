@@ -52,6 +52,14 @@ export async function buildAuthValue(params: {
   phoneNumber: WhatsappPhoneNumber
   businessId: string
   isManual: boolean
+  /**
+   * Manual connect only. When provided, the manual integration's inbound
+   * webhook can be HMAC-verified like a platform-credential one; when
+   * absent, `clientSecret` stays `""` and the webhook handler falls back to
+   * its `legacy-unverified` policy (see
+   * `integrations/whatsapp/src/handlers/webhook.ts`).
+   */
+  manualAppSecret?: string | null
 }): Promise<WhatsappAuthValue> {
   const {
     whatsappSettings,
@@ -63,6 +71,7 @@ export async function buildAuthValue(params: {
     phoneNumber,
     businessId,
     isManual,
+    manualAppSecret,
   } = params
 
   let redirectUrl = webhookUrl
@@ -90,7 +99,13 @@ export async function buildAuthValue(params: {
   if (isManual) {
     metadata.isManual = true
 
-    clientSecret = ""
+    // The reseller's own app secret never applies here — the app tied to a
+    // manual connection is derived below from the caller's access token, and
+    // may not be our app at all. Use the owner-supplied Meta App Secret when
+    // they gave one (enables real HMAC verification); otherwise stay "" and
+    // the webhook handler's `legacy-unverified` policy keeps this
+    // integration working exactly as before, just unverified.
+    clientSecret = manualAppSecret?.trim() ?? ""
 
     const tokenData = await debugToken(accessToken)
     clientId = tokenData?.app_id ?? ""

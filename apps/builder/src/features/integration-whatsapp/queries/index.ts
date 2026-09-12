@@ -28,6 +28,7 @@ const CLIENT_SAFE_COLUMNS = {
   hasCapiScope: true,
   capiScopeCheckedAt: true,
   datasetId: true,
+  sipProvisioningStatus: true,
   workspaceId: true,
   createdAt: true,
 } as const

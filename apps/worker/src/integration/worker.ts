@@ -1,8 +1,13 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
-import { conversationService } from "@chatbotx.io/business"
-import { emit } from "@chatbotx.io/event-bus"
-import { getStoryReply } from "@chatbotx.io/sdk"
 import {
+  conversationService,
+  withBlockedOwnerGuard,
+} from "@chatbotx.io/business"
+import { whatsappCallPermissionRepository } from "@chatbotx.io/database/repositories"
+import { emit } from "@chatbotx.io/event-bus"
+import { getStoryReply, getWhatsappCallPermissionReply } from "@chatbotx.io/sdk"
+import {
+  type CallTranscriptionJobData,
   closeIntegrationQueueEvents,
   defaultWorkerOptions,
   getRedisConnection,
@@ -54,6 +59,10 @@ import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { processStoryReplyAutomation } from "./handlers/story-reply-automation"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
 import { runWaitResume } from "./handlers/wait-resume"
+import { handleWhatsappCallEvent } from "./handlers/whatsapp-call"
+import { handleWhatsappCallRecordingReady } from "./handlers/whatsapp-call-recording"
+import { handleWhatsappCallTranscribe } from "./handlers/whatsapp-call-transcribe"
+import { handleWhatsappFreeswitchEvent } from "./handlers/whatsapp-freeswitch"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
 import { closeChatQueueEvents } from "./utils/message"
@@ -105,6 +114,23 @@ async function startIntegrationWorker() {
                 const isLocation = message.contentType === "location"
 
                 const storyReply = getStoryReply(message.contentAttributes)
+
+                const callPermissionReply = getWhatsappCallPermissionReply(
+                  message.contentAttributes,
+                )
+                if (isFromContact && callPermissionReply) {
+                  await whatsappCallPermissionRepository.upsertForContactInbox({
+                    workspaceId: conversation.workspaceId,
+                    contactInboxId: message.contactInboxId,
+                    response: callPermissionReply.response,
+                    isPermanent: callPermissionReply.isPermanent === true,
+                    expiresAt: callPermissionReply.expirationTimestamp
+                      ? new Date(callPermissionReply.expirationTimestamp * 1000)
+                      : null,
+                    respondedAt: message.createdAt,
+                  })
+                  return
+                }
 
                 if (isFromContact && storyReply) {
                   await integrationQueue.add(
@@ -283,6 +309,18 @@ async function startIntegrationWorker() {
                 await handleAdsAutomaticEvent(job.data.data)
                 return
               }
+              case IntegrationJobAction.whatsappCallEvent: {
+                await handleWhatsappCallEvent(job.data.data)
+                return
+              }
+              case IntegrationJobAction.whatsappFreeswitchEvent: {
+                await handleWhatsappFreeswitchEvent(job.data.data)
+                return
+              }
+              case IntegrationJobAction.whatsappCallRecordingReady: {
+                await handleWhatsappCallRecordingReady(job.data.data)
+                return
+              }
               case IntegrationJobAction.evaluateTemplateSent:
               case IntegrationJobAction.evaluateConversionTrigger:
               case IntegrationJobAction.sendConversionEvent:
@@ -358,6 +396,36 @@ async function startIntegrationWorker() {
     }
   })
 
+  // Dedicated, rate-limited consumer for call transcription:
+  // a second `Worker` instance in this same process, on its own queue, so
+  // its `limiter` bounds transcription throughput independent of the
+  // shared `integration` queue's traffic/concurrency.
+  const callTranscriptionWorker = new Worker(
+    queueNames.enum.callTranscription,
+    async (job: Job<CallTranscriptionJobData>) => {
+      const workspaceId = job.data.data.workspaceId
+      await withBlockedOwnerGuard(workspaceId, async () => {
+        await runJobWithAuditContext(
+          { workspaceId, source: `integration:${job.data.type}` },
+          async () => {
+            await handleWhatsappCallTranscribe(job.data.data)
+          },
+        )
+      })
+    },
+    {
+      connection: getRedisConnection(),
+      concurrency: 1,
+      limiter: { max: env.CALL_TRANSCRIBE_PER_MIN, duration: 60_000 },
+    },
+  )
+
+  callTranscriptionWorker.on("failed", (job, err) => {
+    if (job) {
+      logger.error({ err }, `Call transcription job ${job.id} has failed`)
+    }
+  })
+
   let isShuttingDown = false
   async function shutdown() {
     if (isShuttingDown) {
@@ -367,6 +435,7 @@ async function startIntegrationWorker() {
     try {
       await Promise.all([
         worker.close(),
+        callTranscriptionWorker.close(),
         closeChatQueueEvents(),
         closeIntegrationQueueEvents(),
       ])

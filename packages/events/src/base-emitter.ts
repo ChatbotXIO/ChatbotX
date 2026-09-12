@@ -5,6 +5,21 @@ import {
 } from "@chatbotx.io/database/partials"
 import { withContactInboxMetadata } from "./contact-inbox-context"
 
+/** Channel-neutral voice-call event metadata carried to triggers/webhooks. */
+export type CallEventMetadata = { callId: string }
+export type IncomingCallMetadata = CallEventMetadata & {
+  conversationId?: string
+}
+export type CallEndedMetadata = CallEventMetadata & {
+  durationSeconds?: number
+}
+export type CallRecordedMetadata = CallEventMetadata & {
+  recordingUrl?: string
+}
+export type CallTranscribedMetadata = CallEventMetadata & {
+  transcript?: string
+}
+
 /**
  * Base event emitter class with common functionality
  */
@@ -287,6 +302,69 @@ export abstract class BaseEventEmitter {
         conversationId,
         unassignedBy,
       },
+    })
+  }
+
+  // Voice-call events (channel-neutral: `metadata.callId` is the provider's
+  // call id — a WhatsApp WACID today). Recording/transcript events also carry
+  // the public recording URL / transcript text for webhook consumers.
+  async incomingCall(
+    workspaceId: string,
+    contactId: string,
+    metadata: IncomingCallMetadata,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.incomingCall, {
+      workspaceId,
+      contactId,
+      metadata,
+    })
+  }
+
+  async missedAudioCall(
+    workspaceId: string,
+    contactId: string,
+    metadata: IncomingCallMetadata,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.missedAudioCall, {
+      workspaceId,
+      contactId,
+      metadata,
+    })
+  }
+
+  async callEnded(
+    workspaceId: string,
+    contactId: string,
+    metadata: CallEndedMetadata,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.callEnded, {
+      workspaceId,
+      contactId,
+      metadata,
+    })
+  }
+
+  async callRecorded(
+    workspaceId: string,
+    contactId: string,
+    metadata: CallRecordedMetadata,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.callRecorded, {
+      workspaceId,
+      contactId,
+      metadata,
+    })
+  }
+
+  async callTranscribed(
+    workspaceId: string,
+    contactId: string,
+    metadata: CallTranscribedMetadata,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.callTranscribed, {
+      workspaceId,
+      contactId,
+      metadata,
     })
   }
 

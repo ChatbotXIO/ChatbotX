@@ -716,6 +716,58 @@
       "button": "تحديث كل الأذونات",
       "resultSuccess": "تم تحديث {refreshed} قناة.",
       "resultWithFailures": "تم تحديث {refreshed} قناة، وفشلت {failed}."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "جارٍ بدء مزامنة السجل…",
+        "done": "بدأت مزامنة السجل",
+        "failed": "فشلت مزامنة السجل"
+      },
+      "selectAll": "تحديد الكل",
+      "selected": "تم تحديد {count}/{max}",
+      "dialogTitleRunning": "جارٍ الاتصال بـ {count} {feature}…",
+      "dialogTitleDone": "تم الاتصال بـ {connected} من {total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "تم إنجاز {done} من {total}",
+      "status": {
+        "waiting": "في الانتظار",
+        "connecting": "جارٍ الاتصال…",
+        "connected": "متصل",
+        "duplicated": "متصل مسبقًا",
+        "limitReached": "تم الوصول إلى الحد الأقصى",
+        "failed": "فشل",
+        "timedOut": "انتهت المهلة",
+        "cancelled": "تم الإلغاء"
+      },
+      "reason": {
+        "notSelectable": "لا يمكن تحديد هذا العنصر.",
+        "channelLimit": "تم الوصول إلى حد القناة.",
+        "workspaceLimit": "تم الوصول إلى حد مساحة العمل.",
+        "providerRejected": "رفض مزود الخدمة هذا الطلب.",
+        "unknown": "حدث خطأ ما.",
+        "followUpFailed": "الإعداد غير مكتمل — أكمله من إعدادات القناة."
+      },
+      "sessionError": {
+        "sessionExpired": "انتهت صلاحية جلستك. يُرجى إعادة الاتصال.",
+        "notMember": "لم تعد عضوًا في مساحة العمل هذه.",
+        "trialExpired": "انتهت فترة تجربتك.",
+        "macLimitReached": "لقد وصلت إلى الحد الأقصى لحسابك.",
+        "credentialMissing": "بيانات الاعتماد مفقودة. يُرجى إعادة الاتصال."
+      },
+      "cancelRemaining": "إلغاء المتبقي",
+      "retryFailed": "إعادة المحاولة الفاشلة ({count})",
+      "retry": "إعادة المحاولة",
+      "goToChannels": "الانتقال إلى القنوات",
+      "close": "إغلاق",
+      "leaveNotice": "يمكنك المغادرة؛ ستبقى الحسابات المتصلة محفوظة",
+      "stepConnecting": "جارٍ الاتصال",
+      "stepCoexist": "مزامنة السجل",
+      "validation": {
+        "min": "حدد عنصرًا واحدًا على الأقل",
+        "max": "يمكنك تحديد ما يصل إلى {max}",
+        "duplicate": "تحديد مكرر"
+      },
+      "progressLabel": "التقدم"
     }
   },
   "workspace": {
@@ -747,6 +799,17 @@
       "pendingBlockedToast": "من المقرر حذف مساحة العمل هذه. تواصل مع مشرف مساحة العمل لاستعادة الوصول.",
       "navDisabledTooltip": "غير متاح أثناء جدولة حذف مساحة العمل",
       "badge": "تمت جدولة الحذف"
+    },
+    "supportAccess": {
+      "bannerTitle": "جلسة دعم المنصة",
+      "bannerDescription": "لدى أحد وكلاء دعم المنصة وصول مؤقت إلى مساحة العمل هذه حتى {time}.",
+      "cardTitle": "الوصول إلى دعم المنصة",
+      "cardDescription": "اسمح لفريق دعم المنصة بفتح مساحة العمل هذه بوصول كامل لمدة 7 أيام. يمكنك إيقاف ذلك في أي وقت.",
+      "enabledUntil": "مفعّل حتى {time}",
+      "permissionRequired": "يجب أن تكون مسؤولًا فائقًا لتغيير إمكانية الوصول إلى دعم المنصة.",
+      "enabledToast": "تم تفعيل الوصول إلى دعم المنصة.",
+      "disabledToast": "تم إيقاف الوصول إلى دعم المنصة.",
+      "toggleError": "حدث خطأ ما. يُرجى المحاولة مرة أخرى."
     }
   },
   "workspaces": {
@@ -878,6 +941,10 @@
     "accessToken": {
       "label": "رمز الوصول"
     },
+    "manualAppSecret": {
+      "label": "سر تطبيق Meta (اختياري)",
+      "description": "يفعّل التحقق من توقيع الـ webhook لهذا الاتصال اليدوي. يمكنك العثور عليه في لوحة تحكم تطبيق Meta ضمن الإعدادات > أساسي."
+    },
     "botField": {
       "label": "حقل البوت"
     },
@@ -885,7 +952,8 @@
       "label": "الوكيل"
     },
     "aiAgent": {
-      "label": "وكيل الذكاء الاصطناعي"
+      "label": "وكيل الذكاء الاصطناعي",
+      "loadError": "فشل تحميل وكلاء الذكاء الاصطناعي. يُرجى المحاولة مرة أخرى."
     },
     "aiQueuedMessages": {
       "label": "رسائل الذكاء الاصطناعي في قائمة الانتظار"
@@ -2188,6 +2256,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "آخر تسجيل مكالمة"
+    },
+    "lastCallTranscript": {
+      "label": "آخر تفريغ مكالمة"
+    },
+    "tokenPermission": {
+      "label": "الإذن",
+      "full": "وصول كامل",
+      "readOnly": "قراءة فقط"
+    },
+    "tokenScopes": {
+      "label": "النطاقات",
+      "contacts": "جهات الاتصال",
+      "inbox": "صندوق الوارد",
+      "automation": "الأتمتة",
+      "broadcasts": "الرسائل الجماعية",
+      "analytics": "التحليلات",
+      "ecommerce": "التجارة الإلكترونية",
+      "integrations": "التكاملات",
+      "channels": "القنوات",
+      "minigames": "الألعاب المصغّرة",
+      "appointments": "المواعيد",
+      "media": "الوسائط",
+      "ads": "الإعلانات"
     }
   },
   "flows": {
@@ -2328,7 +2422,9 @@
       "import": "استيراد التدفق",
       "export": "تصدير",
       "importStarted": "جارٍ استيراد التدفق. يرجى مراجعة سجل الاستيراد للحصول على النتائج.",
-      "importJsonOnly": "ملفات JSON فقط"
+      "importJsonOnly": "ملفات JSON فقط",
+      "whatsappCallButton": "الاتصال عبر واتساب",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -2440,7 +2536,11 @@
     "sendText": {
       "tiktokTitleTruncated": "عند إرفاق أزرار، يرسل TikTok أول 40 حرفًا فقط من هذه الرسالة، وسيتم قص الباقي."
     },
-    "dataWasSaved": "تم حفظ البيانات"
+    "dataWasSaved": "تم حفظ البيانات",
+    "whatsappCallButton": {
+      "editButtonTitle": "تعديل الزر",
+      "buttonLabel": "تسمية الزر"
+    }
   },
   "folders": {
     "heading": {
@@ -2626,7 +2726,8 @@
       "adAccountFilter": {
         "all": "جميع الحسابات الإعلانية",
         "label": "الحساب الإعلاني",
-        "unavailable": "تعذّر تحميل حسابات الإعلانات — تحقّق من اتصال الإعلانات الخاص بهذا التكامل، أو اتصال Facebook Ads الخاص بمساحة العمل، في الإعدادات."
+        "unavailable": "تعذّر تحميل حسابات الإعلانات — تحقّق من اتصال الإعلانات الخاص بهذا التكامل، أو اتصال Facebook Ads الخاص بمساحة العمل، في الإعدادات.",
+        "note": "تُخفى الإعلانات ذات التحويلات ولكن بإنفاق صفري أو توصيل صفري في النطاق الزمني المحدد عند التصفية حسب الحساب الإعلاني."
       },
       "channelFilter": {
         "label": "القناة",
@@ -3096,7 +3197,16 @@
     "waTemplateMpmTooManySections": "يمكن أن يحتوي زر المنتجات المتعددة على 10 أقسام كحد أقصى. أزل بعض الأقسام قبل النشر.",
     "waTemplateMpmTooManyProducts": "يمكن أن يحتوي زر المنتجات المتعددة على 30 منتجًا كحد أقصى إجمالاً. أزل بعض المنتجات قبل النشر.",
     "waTemplateLtoExpirationRequired": "اختر تاريخ انتهاء العرض المحدود المدة قبل الإرسال.",
-    "waTemplateMpmIncompleteProducts": "يحتاج كل قسم إلى منتج واحد محدد على الأقل — احذف الصفوف الفارغة أو اختر منتجًا لها."
+    "waTemplateMpmIncompleteProducts": "يحتاج كل قسم إلى منتج واحد محدد على الأقل — احذف الصفوف الفارغة أو اختر منتجًا لها.",
+    "voiceCall": "مكالمة صوتية",
+    "voiceCallDuration": "مكالمة صوتية · {duration}",
+    "missedVoiceCall": "مكالمة صوتية فائتة",
+    "declinedVoiceCall": "مكالمة صوتية مرفوضة",
+    "acceptedCallPermission": "تم قبول طلب إذن الاتصال",
+    "declinedCallPermission": "تم رفض طلب إذن الاتصال",
+    "sendHumanAgentTag": "إرسال رسالة واحدة باستخدام وسم HUMAN_AGENT",
+    "warning": "تحذير!",
+    "humanAgentWarningDescription": "لا يجوز لك الرد على رسالة المستخدم خلال 7 أيام إلا عندما يتعذر حل المشكلة بشكل معقول خلال 24 ساعة. تشمل الأمثلة عطلات نهاية الأسبوع والعطلات الرسمية والحالات التي تتطلب أكثر من يوم لإكمالها. لا تستخدم هذا الخيار لأي سبب آخر، فقد يعرّض صفحة Facebook أو حساب Instagram الخاص بك للخطر. إذا لم تكن متأكدًا، فلا تتابع."
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",
@@ -3108,6 +3218,12 @@
     "tabs": {
       "generalSettings": "الإعدادات العامة",
       "conversionsApi": "تحسين الإعلانات"
+    },
+    "selectPage": {
+      "noAccountsTitle": "لم يتم العثور على حسابات إنستغرام",
+      "noAccountsDescription": "لم يتم العثور على أي حسابات أعمال على إنستغرام في صفحات فيسبوك التي تديرها. أعد ربط إنستغرام ومنح جميع الأذونات المطلوبة.",
+      "alreadyConnectedNote": "هذا الحساب متصل مسبقًا",
+      "tryAgain": "إعادة المحاولة"
     }
   },
   "coexist": {
@@ -3369,7 +3485,8 @@
     "maxSize": "يتجاوز حجم الملف الحد الأقصى",
     "maxItemsReached": "الحد الأقصى المسموح به لكل مساحة عمل هو {max} من {feature}",
     "invalidApiKey": "مفتاح API غير صالح",
-    "maxMustBeGreaterThanMin": "يجب أن يكون {maxField} أكبر من أو يساوي {minField}"
+    "maxMustBeGreaterThanMin": "يجب أن يكون {maxField} أكبر من أو يساوي {minField}",
+    "maxCharacters": "الحد الأقصى {max} حرفًا."
   },
   "webchat": {
     "chatUnavailable": "هذه الدردشة غير متاحة حاليًا.",
@@ -3410,6 +3527,7 @@
       "label": "بدايات المحادثة"
     },
     "manualConnect": "اتصال يدوي باستخدام رمز وصول مستخدم النظام.",
+    "manualAppSecretMissingNotice": "لن يتم التحقق من توقيعات webhook حتى تضيف سر تطبيق Meta الخاص بك.",
     "manualOnboarding": {
       "title": "صندوق وارد WhatsApp جاهز!",
       "description": "أعدّ عنوان URL لخطاف الويب ورمز التحقق في تطبيق Meta باستخدام القيم أدناه.",
@@ -3417,7 +3535,8 @@
       "verifyToken": "رمز التحقق لخطاف الويب",
       "qrCodeHint": "امسح رمز QR لفتح عنوان URL لخطاف الويب",
       "moreSettings": "إعدادات إضافية",
-      "goToInbox": "الانتقال إلى صندوق الوارد"
+      "goToInbox": "الانتقال إلى صندوق الوارد",
+      "multipleTitle": "صناديق واتساب الخاصة بك جاهزة!"
     },
     "phoneVerification": {
       "title": "التحقق من رقم هاتف WhatsApp",
@@ -3430,7 +3549,8 @@
       "actions": {
         "sendCode": "إرسال الرمز",
         "resendIn": "إعادة الإرسال خلال {seconds} ث",
-        "verify": "التحقق والتسجيل"
+        "verify": "التحقق والتسجيل",
+        "skip": "تخطي"
       },
       "fields": {
         "code": {
@@ -3448,7 +3568,8 @@
         "codeNotSent": "تعذّر إرسال رمز تحقق WhatsApp.",
         "codeNotVerified": "تعذّر التحقق من رمز WhatsApp.",
         "registrationFailed": "فشل التحقق من رقم هاتف WhatsApp."
-      }
+      },
+      "queueProgress": "جارٍ التحقق من {current} من {total}"
     },
     "connect": {
       "errors": {
@@ -3560,7 +3681,8 @@
       "profile": "الملف التعريفي",
       "usefulLinks": "روابط مفيدة",
       "conversionsApi": "تحسين الإعلانات",
-      "settings": "الإعدادات"
+      "settings": "الإعدادات",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "إدارة حساب WhatsApp",
@@ -3696,6 +3818,82 @@
         "title": "الأحداث التلقائية",
         "description": "أرسل أحداث التحويل من رقم واتساب هذا إلى Meta تلقائيًا. إذا كان الإذن مفقودًا، فأعد ربط الحساب لمنحه."
       }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "رفضت Meta تغيير إعدادات المكالمات",
+        "bicUnavailable": "الاتصال الذي يبدأه النشاط التجاري غير متاح لهذا البلد",
+        "callAlreadyInProgress": "توجد مكالمة جارية مع جهة الاتصال هذه",
+        "hangupFailed": "تعذّر إنهاء المكالمة"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "رفضت Meta هذا التغيير",
+      "callContact": "الاتصال عبر WhatsApp",
+      "dialing": "جارٍ الاتصال…",
+      "startCall": "بدء مكالمة WhatsApp",
+      "retentionLabel": "مدة الاحتفاظ بالتسجيلات (أيام)",
+      "retentionHelper": "المدة التي يتم الاحتفاظ فيها بتسجيلات المكالمات قبل حذفها نهائيًا.",
+      "transcriptionLabel": "تحويل المكالمات إلى نص",
+      "transcriptionHelper": "يقوم تلقائيًا بتحويل المكالمات المسجّلة إلى نص باستخدام مزوّد الذكاء الاصطناعي المتصل.",
+      "sip": {
+        "provisioningLabel": "تزويد FreeSWITCH",
+        "provisionButton": "تزويد",
+        "deprovisionButton": "إلغاء التزويد",
+        "status": {
+          "none": "غير مزوَّد",
+          "provisioning": "جارٍ التزويد…",
+          "provisioned": "مزوَّد",
+          "enabled": "مفعّل",
+          "failed": "فشل"
+        },
+        "errors": {
+          "notProvisioned": "قم بتزويد هذا الرقم لمكالمات FreeSWITCH قبل تفعيل المكالمات داخل التطبيق",
+          "readBackMismatch": "لم تؤكد Meta تغيير مكالمات SIP — حاول مرة أخرى",
+          "provisionFailed": "فشل تزويد هذا الرقم لمكالمات FreeSWITCH",
+          "deprovisionFailed": "فشل إلغاء تزويد مكالمات FreeSWITCH لهذا الرقم"
+        }
+      },
+      "preflight": {
+        "title": "أهلية المكالمات",
+        "appSubscriptionMissing": "قم بتكوين webhook الخاص بـ WhatsApp لهذا التطبيق في لوحة تحكم تطبيق Meta أولاً، ثم حاول مرة أخرى.",
+        "appSubscriptionFailed": "تعذّر التحقق من اشتراك التطبيق في webhook الخاص بـ 'calls'. حاول مرة أخرى بعد قليل.",
+        "callsNotSubscribed": "هذا التطبيق غير مشترك في حقل webhook الخاص بـ 'calls'، لذا لا يمكن لأحداث المكالمات الوصول إلى ChatbotX (خطأ Meta 138018: المتطلبات التقنية غير مستوفاة — تأكد من أن تطبيقًا واحدًا على الأقل مشتركًا في WABA يحتوي أيضًا على حقل webhook الخاص بالمكالمات).",
+        "fixButton": "إصلاح",
+        "fixSuccess": "التطبيق مشترك الآن في webhooks مكالمات WhatsApp.",
+        "manualIntegrationNotice": "تم توصيل هذا الرقم يدويًا وليس لديه بيانات اعتماد تطبيق هنا. اشترك في حقل webhook الخاص بـ 'calls' لتطبيقك في لوحة تحكم تطبيق Meta.",
+        "coexistenceWarning": "يستخدم هذا الرقم تعايش تطبيق WhatsApp Business، وهو أمر لا تدعمه Meta للمكالمات. انقله إلى Cloud API فقط.",
+        "messagingLimitTooLow": "مستوى حد المراسلة لهذا الرقم أقل من الحد الأدنى الذي تتطلبه Meta للمكالمات."
+      }
+    },
+    "selectPage": {
+      "tryAgain": "إعادة المحاولة"
     }
   },
   "zalo": {
@@ -3708,7 +3906,8 @@
       "toggleSuccess": "تم تحديث إعداد مزامنة الوسوم.",
       "enabledSince": "مفعّلة منذ {date}",
       "disabled": "معطّلة"
-    }
+    },
+    "refreshPermissions": "تحديث الأذونات"
   },
   "telegram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Telegram.",
@@ -3845,7 +4044,9 @@
       "productRemovedFromCart": "تمت إزالة منتج من السلة",
       "productOrdered": "تم طلب منتج",
       "contactReferredANewContact": "أحالت جهة الاتصال جهة اتصال جديدة",
-      "contactReferredExistingContact": "أحالت جهة الاتصال جهة اتصال موجودة"
+      "contactReferredExistingContact": "أحالت جهة الاتصال جهة اتصال موجودة",
+      "callRecorded": "تم تسجيل المكالمة",
+      "callTranscribed": "تم تفريغ المكالمة"
     },
     "actions": {
       "addTag": "إضافة وسم",
@@ -3872,7 +4073,12 @@
   },
   "developerAccessToken": {
     "title": "رمز الوصول إلى ChatbotX API",
-    "description": "أنشئ رمزًا للسماح لمساحة عملك بالوصول إلى واجهات ChatbotX API. احتفظ بسرية هذا الرمز ولا تشاركه مع أي شخص."
+    "description": "أنشئ رمزًا للسماح لمساحة عملك بالوصول إلى واجهات ChatbotX API. احتفظ بسرية هذا الرمز ولا تشاركه مع أي شخص.",
+    "createDialogTitle": "إنشاء رمز API",
+    "namePlaceholder": "مثال: تكامل Zapier",
+    "empty": "لا توجد رموز API بعد.",
+    "defaultBadge": "الافتراضي",
+    "allScopes": "جميع النطاقات"
   },
   "contacts": {
     "title": "جهات الاتصال",
@@ -4343,6 +4549,17 @@
     },
     "queues": {
       "title": "قوائم الانتظار"
+    },
+    "workspaces": {
+      "title": "مساحات العمل",
+      "description": "يمكن فتح مساحات العمل التي فعّل مالكها إمكانية الوصول إلى دعم المنصة من هنا.",
+      "owner": "المالك",
+      "tenant": "المستأجر",
+      "supportStatus": "حالة الدعم",
+      "openAsSupport": "الفتح كدعم",
+      "supportEnabledUntil": "مفعّل حتى {time}",
+      "supportOff": "غير مفعّل",
+      "searchPlaceholder": "البحث بالاسم أو بريد المالك أو المعرّف"
     }
   },
   "platformCredentials": {
@@ -5340,7 +5557,8 @@
     "connectViaFacebook": "ربط عبر Facebook",
     "unsupportedExplanation": "تم ربط حساب Instagram هذا باستخدام تسجيل دخول Instagram للأعمال. اربط الحساب عبر Facebook لاستخدام Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "تُرسل أحداث WhatsApp فقط للمحادثات التي بدأت من إعلان النقر للمحادثة عبر WhatsApp."
+      "whatsappNote": "تُرسل أحداث WhatsApp فقط للمحادثات التي بدأت من إعلان النقر للمحادثة عبر WhatsApp.",
+      "description": "إضافة حدث LeadSubmitted إلى قائمة الانتظار لـ Messenger أو Instagram أو WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5587,7 +5805,8 @@
       "generalSettingsTitle": "الإعدادات العامة",
       "appearanceTitle": "المظهر",
       "playerSettingsTitle": "إعدادات اللاعب",
-      "prizeSettingsTitle": "إعدادات الجوائز"
+      "prizeSettingsTitle": "إعدادات الجوائز",
+      "validationFailed": "يُرجى تصحيح الحقول المُبرزة قبل الحفظ."
     },
     "generalSettings": {
       "showName": "مرئي",
@@ -5617,7 +5836,11 @@
       "resetPolicyLabel": "إعادة تعيين مرات السحب",
       "resetNever": "عدم إعادة تعيين عدد مرات السحب",
       "resetEveryNDays": "إعادة تعيين عدد مرات السحب كل",
-      "resetIntervalDaysSuffix": "يوم/أيام"
+      "resetIntervalDaysSuffix": "يوم/أيام",
+      "maxSharesPerPerson": "الحد الأقصى لسحوبات المكافأة من الإحالات",
+      "maxSharesPerPersonHint": "كل صديق ينضم عبر رابط دعوة هذا اللاعب ويراسلك يحصل على سحب إضافي واحد له، بحد أقصى يساوي هذا الحد. اضبط القيمة على 0 لإيقاف مكافآت الإحالة. يجب استخدام سحوبات المكافأة قبل إعادة الضبط التالية.",
+      "sharingNode": "عقدة المشاركة",
+      "sharingNodeHint": "خطوة التدفق التي تعمل عند فتح صديق لرابط مشاركة هذا اللاعب. اتركها فارغة لإخفاء زر المشاركة."
     },
     "publicUrl": {
       "label": "الرابط العام",
@@ -5632,12 +5855,14 @@
       "forbiddenTitle": "تم رفض الوصول",
       "forbiddenDescription": "هذا الرابط غير صالح أو منتهي الصلاحية.",
       "comingSoonTitle": "قريباً",
-      "comingSoonDescription": "هذا النوع من الألعاب غير قابل للعب بعد."
+      "comingSoonDescription": "هذا النوع من الألعاب غير قابل للعب بعد.",
+      "rateLimited": "عدد كبير جدًا من الطلبات. يُرجى الانتظار لحظة والمحاولة مرة أخرى."
     },
     "list": {
       "gamesPlayed": "عدد مرات اللعب",
       "participants": "المشاركون",
-      "winners": "الفائزون"
+      "winners": "الفائزون",
+      "shares": "الإحالات"
     },
     "history": {
       "title": "السجل",
@@ -5654,7 +5879,8 @@
         "win": "فاز",
         "lose": "بدون جائزة",
         "empty": "لا توجد سجلات لعب بعد"
-      }
+      },
+      "shares": "الإحالات"
     }
   },
   "mediaLibrary": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "حقول البوت"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "استيراد من ملف",
+      "automaticScan": "المسح التلقائي للعملاء"
+    },
+    "title": "المسح التلقائي للعملاء",
+    "submit": "مسح تلقائي",
+    "fields": {
+      "inbox": "صندوق الوارد",
+      "scanFrom": "مسح صندوق الوارد من وقت"
+    },
+    "hint": {
+      "range": "سيقوم النظام بمسح العملاء الذين راسلوا الصفحة من {from} حتى الآن.",
+      "beforeChoose": "بعد المسح، يجب عليك الانتظار 24 ساعة أخرى قبل أن تتمكن من استخدام هذه الميزة مرة أخرى."
+    },
+    "status": {
+      "idle": "لم يتم تشغيل أي مسح لهذا صندوق الوارد حتى الآن. اختر تاريخ بداية وشغّل أول مسح تلقائي للعملاء.",
+      "running": "يقوم النظام حاليًا بإجراء مسح تلقائي؛ الوقت المتوقع للاكتمال هو {eta}.",
+      "nextScan": "وقت المسح التالي: {at}",
+      "finished": "أكمل النظام آخر طلب مسح للعملاء في {at}.",
+      "total": "إجمالي العملاء الذين تم مسحهم: {count}",
+      "waitCooldown": "يجب عليك الانتظار 24 ساعة أخرى قبل أن تتمكن من استخدام هذه الميزة مرة أخرى.",
+      "failed": "فشل آخر مسح. يمكنك المحاولة مرة أخرى بعد انتهاء فترة الانتظار.",
+      "partial": "انتهى آخر مسح بشكل جزئي — لم يتمكن النظام من استيراد بعض المحادثات."
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "يجب أن يكون وقت بدء المسح في الماضي.",
+      "contactScanInboxNotFound": "لم يتم العثور على صندوق الوارد.",
+      "contactScanChannelUnsupported": "لا تدعم هذه القناة ميزة المسح التلقائي للعملاء.",
+      "contactScanIntegrationDisconnected": "صندوق الوارد هذا غير متصل.",
+      "contactScanCooldown": "تم مسح صندوق الوارد هذا مؤخرًا. يُرجى الانتظار قبل إعادة المسح.",
+      "contactScanAlreadyRunning": "يوجد مسح قيد التشغيل حاليًا لهذا صندوق الوارد.",
+      "contactScanForbidden": "لا تملك إذن تشغيل مسح تلقائي للعملاء."
+    },
+    "histories": {
+      "title": "سجل المسح",
+      "columns": {
+        "channel": "القناة",
+        "scanFrom": "المسح من",
+        "importedContacts": "جهات الاتصال المستوردة",
+        "scannedConversations": "المحادثات التي تم مسحها",
+        "finishedAt": "اكتمل في",
+        "error": "الخطأ"
+      },
+      "status": {
+        "init": "في قائمة الانتظار",
+        "running": "قيد التشغيل",
+        "succeeded": "نجح",
+        "partial": "جزئي",
+        "failed": "فشل"
+      },
+      "empty": "لم يتم تشغيل أي مسح حتى الآن."
+    }
   }
 }

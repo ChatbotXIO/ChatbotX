@@ -80,6 +80,7 @@ const CHANNEL_DELIVERABLE_STEP_TYPES = new Set<string>([
   stepTypes.enum.sendText,
   stepTypes.enum.sendVideo,
   stepTypes.enum.sendWaTemplateMessage,
+  stepTypes.enum.whatsappCallButton,
   stepTypes.enum.whatsappFlow,
   stepTypes.enum.whatsappOptionList,
 ])
@@ -91,6 +92,11 @@ const isBlankTextCarrierStep = (step: SendFlowStepData) => {
 
   if (step.stepType === stepTypes.enum.sendQuickReply) {
     return !step.message.trim()
+  }
+
+  // Meta rejects a voice_call interactive without a body.
+  if (step.stepType === stepTypes.enum.whatsappCallButton) {
+    return !step.text.trim()
   }
 
   return false
@@ -388,6 +394,21 @@ export async function sendFlowStep({
     return
   }
 
+  // The voice_call interactive only exists on WhatsApp — bail before any
+  // Message row is persisted so an omnichannel flow reaching another channel
+  // never shows a fully-worded phantom "sent" message (mirrors the
+  // sendWaTemplateMessage channel guard above).
+  if (
+    step.stepType === stepTypes.enum.whatsappCallButton &&
+    targetContactInbox.channel !== channelTypes.enum.whatsapp
+  ) {
+    logger.debug(
+      { conversationId, stepId: step.id, channel: targetContactInbox.channel },
+      "Skipping whatsappCallButton step on non-whatsapp channel",
+    )
+    return
+  }
+
   if (step.stepType === stepTypes.enum.sendMessengerTemplateMessage) {
     if (targetContactInbox.channel !== channelTypes.enum.messenger) {
       return
@@ -479,7 +500,10 @@ export async function sendFlowStep({
   }
 
   const messageText =
-    resolvedStep.stepType === stepTypes.enum.sendText ? resolvedStep.text : null
+    resolvedStep.stepType === stepTypes.enum.sendText ||
+    resolvedStep.stepType === stepTypes.enum.whatsappCallButton
+      ? resolvedStep.text
+      : null
 
   let message: MessageModel | MessageWithAttachments | undefined
 

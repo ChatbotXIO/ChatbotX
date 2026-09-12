@@ -215,6 +215,7 @@ export default function WhatsappCreate({
           accessToken: "",
           code: "",
           signupSessionId: "",
+          manualAppSecret: "",
         },
       },
     },
@@ -526,7 +527,11 @@ function ManualConnectSection({
   watchManualConnect,
 }: ManualConnectSectionProps) {
   const t = useTranslations()
-  const { setValue, getValues, formState } = useFormContext()
+  const { control, setValue, getValues, formState } = useFormContext()
+  const watchManualAppSecret = useWatch({
+    control,
+    name: FORM_FIELDS.MANUAL_APP_SECRET,
+  })
 
   const {
     phoneNumbers,
@@ -543,6 +548,7 @@ function ManualConnectSection({
       setValue(FORM_FIELDS.WABA_ID, "")
       setValue(FORM_FIELDS.ACCESS_TOKEN, "")
       setValue(FORM_FIELDS.PHONE_NUMBER_ID, "")
+      setValue(FORM_FIELDS.MANUAL_APP_SECRET, "")
     }
   }, [watchManualConnect, clearPhoneNumbers, setValue])
 
@@ -600,6 +606,17 @@ function ManualConnectSection({
                 name={FORM_FIELDS.ACCESS_TOKEN}
                 required
               />
+
+              <InputField
+                description={t("fields.manualAppSecret.description")}
+                label={t("fields.manualAppSecret.label")}
+                name={FORM_FIELDS.MANUAL_APP_SECRET}
+              />
+              {!watchManualAppSecret && (
+                <p className="text-muted-foreground text-xs">
+                  {t("whatsapp.manualAppSecretMissingNotice")}
+                </p>
+              )}
 
               <div className="flex items-center justify-end gap-2">
                 <Button

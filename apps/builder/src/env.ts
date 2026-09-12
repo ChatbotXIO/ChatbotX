@@ -19,6 +19,49 @@ export const env = createEnv({
     BETTER_AUTH_URL: z.url(),
     LICENSE_KEY: z.string().optional(),
     WHATSAPP_OVERRIDE_CALLBACK_URI: z.url().optional(),
+    // FreeSWITCH WhatsApp calling (docs/whatsapp-calling.md):
+    // `FS_NODES` is the multi-node JSON map `{ "<nodeId>": { sipDomain,
+    // wssUrl, turnUrl } }`; when unset, `parseFreeswitchNodes` (from
+    // `@chatbotx.io/business`) falls back to a single "default" node built
+    // from the scalar `FS_SIP_DOMAIN`/`FS_WSS_URL`/`TURN_URL` vars below — so
+    // a single-node deployment never needs to set `FS_NODES` at all.
+    FS_NODES: z.string().optional(),
+    FS_SIP_DOMAIN: z.string().optional(),
+    FS_WSS_URL: z.url().optional(),
+    TURN_URL: z.string().optional(),
+    TURN_STATIC_SECRET: z.string().optional(),
+    // HTTP Basic credentials + IP allowlist the `mod_xml_curl` responder
+    // (`/api/freeswitch/xml`) checks before ever touching the database.
+    FS_XML_BASIC_USER: z.string().optional(),
+    FS_XML_BASIC_PASS: z.string().optional(),
+    FS_XML_ALLOWED_IPS: z
+      .string()
+      .optional()
+      .transform((val) =>
+        val
+          ?.split(",")
+          .map((v) => v.trim())
+          .filter(Boolean),
+      ),
+    FS_MAX_RING_TARGETS: z.coerce.number().int().positive().default(8),
+    // Recordings path INSIDE the FreeSWITCH container — rendered literally
+    // into the dialplan's `record_session`. The `freeswitch`
+    // worker maps this prefix onto its own mount via its RECORDINGS_DIR.
+    FS_RECORDINGS_DIR: z.string().min(1).default("/recordings"),
+    // Reverse-proxy CIDRs trusted to prepend `X-Forwarded-For` hops in front
+    // of the real client IP (e.g. the ingress load balancer). Required for
+    // `FS_XML_ALLOWED_IPS` to mean anything — without it the header is
+    // attacker-controlled and the allowlist check is skipped entirely (see
+    // `freeswitch-xml-rate-limit.ts`).
+    FS_XML_TRUSTED_PROXY_CIDRS: z
+      .string()
+      .optional()
+      .transform((val) =>
+        val
+          ?.split(",")
+          .map((v) => v.trim())
+          .filter(Boolean),
+      ),
   },
   client: {
     NEXT_PUBLIC_BUILDER_URL: z.url(),

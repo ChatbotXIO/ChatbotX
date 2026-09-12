@@ -137,7 +137,19 @@ export type WhatsappHealthStatus = {
 export type WhatsappPhoneNumberDetail = {
   id: string
   quality_rating?: string
+  /** @deprecated Meta deprecated this field — read
+   * `whatsapp_business_manager_messaging_limit` instead. Kept only because
+   * `whatsapp-account-healths.tsx` still renders it; do not add new
+   * consumers. */
   messaging_limit_tier?: string
+  /**
+   * The current messaging-limit tier ("TIER_250", "TIER_1K", "TIER_10K",
+   * "TIER_100K", "TIER_UNLIMITED", …) — the field that replaces the
+   * deprecated `messaging_limit_tier` above.
+   *
+   * Reference: https://developers.facebook.com/docs/whatsapp/cloud-api/reference/phone-numbers
+   */
+  whatsapp_business_manager_messaging_limit?: string
   code_verification_status?: string
   account_mode?: string
   display_phone_number?: string
@@ -155,6 +167,7 @@ const PHONE_NUMBER_DETAIL_FIELDS = [
   "id",
   "quality_rating",
   "messaging_limit_tier",
+  "whatsapp_business_manager_messaging_limit",
   "code_verification_status",
   "account_mode",
   "display_phone_number",

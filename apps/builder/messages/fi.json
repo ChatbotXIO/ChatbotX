@@ -804,6 +804,10 @@
     "accessToken": {
       "label": "Käyttöoikeustunnus"
     },
+    "manualAppSecret": {
+      "label": "Meta-sovelluksen salaisuus (valinnainen)",
+      "description": "Ottaa käyttöön webhook-allekirjoituksen varmistuksen tälle manuaaliselle yhteydelle. Löydät sen Meta-sovelluksesi hallintapaneelista kohdasta Asetukset > Perustiedot."
+    },
     "botField": {
       "label": "Bottikenttä"
     },
@@ -811,7 +815,8 @@
       "label": "Agentti"
     },
     "aiAgent": {
-      "label": "AI-agentti"
+      "label": "AI-agentti",
+      "loadError": "AI-agenttien lataaminen epäonnistui. Yritä uudelleen."
     },
     "aiQueuedMessages": {
       "label": "AI:n jonossa olevat viestit"
@@ -2114,6 +2119,32 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "lastCallRecorded": {
+      "label": "Viimeisin puhelutallenne"
+    },
+    "lastCallTranscript": {
+      "label": "Viimeisin puhelulitterointi"
+    },
+    "tokenPermission": {
+      "label": "Käyttöoikeus",
+      "full": "Täysi käyttöoikeus",
+      "readOnly": "Vain luku"
+    },
+    "tokenScopes": {
+      "label": "Käyttöalat",
+      "contacts": "Yhteystiedot",
+      "inbox": "Postilaatikko",
+      "automation": "Automaatio",
+      "broadcasts": "Massaviestit",
+      "analytics": "Analytiikka",
+      "ecommerce": "Verkkokauppa",
+      "integrations": "Integraatiot",
+      "channels": "Kanavat",
+      "minigames": "Minipelit",
+      "appointments": "Tapaamiset",
+      "media": "Media",
+      "ads": "Mainokset"
     }
   },
   "flows": {
@@ -2254,7 +2285,9 @@
       "import": "Tuo vuo",
       "export": "Vie",
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
-      "importJsonOnly": "Vain JSON-tiedostot"
+      "importJsonOnly": "Vain JSON-tiedostot",
+      "whatsappCallButton": "Soita WhatsAppissa",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2366,7 +2399,11 @@
     "sendText": {
       "tiktokTitleTruncated": "Kun painikkeita on liitetty, TikTok lähettää vain tämän viestin ensimmäiset 40 merkkiä — loput katkaistaan."
     },
-    "dataWasSaved": "Tiedot tallennettiin"
+    "dataWasSaved": "Tiedot tallennettiin",
+    "whatsappCallButton": {
+      "editButtonTitle": "Muokkaa painiketta",
+      "buttonLabel": "Painikkeen teksti"
+    }
   },
   "folders": {
     "heading": {
@@ -2552,7 +2589,8 @@
       "adAccountFilter": {
         "all": "Kaikki mainostilit",
         "label": "Mainostili",
-        "unavailable": "Mainostilien lataus epäonnistui — tarkista tämän integraation Ads-yhteys tai työtilan Facebook Ads -yhteys asetuksista."
+        "unavailable": "Mainostilien lataus epäonnistui — tarkista tämän integraation Ads-yhteys tai työtilan Facebook Ads -yhteys asetuksista.",
+        "note": "Mainokset, joissa on konversioita mutta ei kulutusta tai toimituksia valitulla aikavälillä, piilotetaan suodatettaessa mainostilin mukaan."
       },
       "channelFilter": {
         "label": "Kanava",
@@ -2927,6 +2965,58 @@
       "button": "Päivitä kaikki käyttöoikeudet",
       "resultSuccess": "Päivitettiin {refreshed} kanava(a).",
       "resultWithFailures": "Päivitettiin {refreshed} kanava(a), {failed} epäonnistui."
+    },
+    "connectMany": {
+      "coexist": {
+        "running": "Aloitetaan historian synkronointia…",
+        "done": "Historian synkronointi aloitettu",
+        "failed": "Historian synkronointi epäonnistui"
+      },
+      "selectAll": "Valitse kaikki",
+      "selected": "{count}/{max} valittu",
+      "dialogTitleRunning": "Yhdistetään {count} {feature}…",
+      "dialogTitleDone": "Yhdistetty {connected}/{total}",
+      "progress": "{done}/{total}",
+      "progressAnnouncement": "{done}/{total} valmiina",
+      "status": {
+        "waiting": "Odottaa",
+        "connecting": "Yhdistetään…",
+        "connected": "Yhdistetty",
+        "duplicated": "Jo yhdistetty",
+        "limitReached": "Raja saavutettu",
+        "failed": "Epäonnistui",
+        "timedOut": "Aikakatkaisu",
+        "cancelled": "Peruutettu"
+      },
+      "reason": {
+        "notSelectable": "Tätä kohdetta ei voi valita.",
+        "channelLimit": "Kanavaraja on saavutettu.",
+        "workspaceLimit": "Työtilaraja on saavutettu.",
+        "providerRejected": "Palveluntarjoaja hylkäsi tämän pyynnön.",
+        "unknown": "Jokin menikin pieleen.",
+        "followUpFailed": "Asetukset kesken — viimeistele ne kanavan asetuksista."
+      },
+      "sessionError": {
+        "sessionExpired": "Istuntosi on vanhentunut. Muodosta yhteys uudelleen.",
+        "notMember": "Et ole enää tämän työtilan jäsen.",
+        "trialExpired": "Kokeilujaksosi on päättynyt.",
+        "macLimitReached": "Olet saavuttanut tilirajasi.",
+        "credentialMissing": "Kirjautumistiedot puuttuvat. Muodosta yhteys uudelleen."
+      },
+      "cancelRemaining": "Peruuta jäljellä olevat",
+      "retryFailed": "Yritä epäonnistuneita uudelleen ({count})",
+      "retry": "Yritä uudelleen",
+      "goToChannels": "Siirry kanaviin",
+      "close": "Sulje",
+      "leaveNotice": "Voit poistua; yhdistetyt tilit säilyvät",
+      "stepConnecting": "Yhdistetään",
+      "stepCoexist": "Synkronoi historia",
+      "validation": {
+        "min": "Valitse vähintään 1",
+        "max": "Voit valita enintään {max}",
+        "duplicate": "Kaksoisvalinta"
+      },
+      "progressLabel": "Edistyminen"
     }
   },
   "workspace": {
@@ -2958,6 +3048,17 @@
       "pendingBlockedToast": "Tämä työtila on ajastettu poistettavaksi. Pyydä työtilan ylläpitäjää palauttamaan käyttöoikeus.",
       "navDisabledTooltip": "Ei käytettävissä, kun työtilan poistaminen on ajastettu",
       "badge": "Poistaminen ajastettu"
+    },
+    "supportAccess": {
+      "bannerTitle": "Alustan tukiistunto",
+      "bannerDescription": "Alustan tukihenkilöllä on tilapäinen pääsy tähän työtilaan {time} saakka.",
+      "cardTitle": "Alustan tukioikeus",
+      "cardDescription": "Anna alustan tukitiimin avata tämä työtila täydellä käyttöoikeudella 7 päivän ajaksi. Voit poistaa sen käytöstä milloin tahansa.",
+      "enabledUntil": "Käytössä {time} saakka",
+      "permissionRequired": "Sinun täytyy olla pääkäyttäjä muuttaaksesi alustan tukioikeutta.",
+      "enabledToast": "Alustan tukioikeus otettu käyttöön.",
+      "disabledToast": "Alustan tukioikeus poistettu käytöstä.",
+      "toggleError": "Jokin menikin pieleen. Yritä uudelleen."
     }
   },
   "workspaces": {
@@ -3096,7 +3197,16 @@
     "waTemplateMpmTooManySections": "Usean tuotteen painikkeessa voi olla enintään 10 osiota. Poista osioita ennen julkaisua.",
     "waTemplateMpmTooManyProducts": "Usean tuotteen painikkeessa voi olla yhteensä enintään 30 tuotetta. Poista tuotteita ennen julkaisua.",
     "waTemplateLtoExpirationRequired": "Valitse määräaikaisen tarjouksen päättymisaika ennen lähettämistä.",
-    "waTemplateMpmIncompleteProducts": "Jokaisessa osiossa on oltava vähintään yksi valittu tuote — poista tyhjät rivit tai valitse niille tuote."
+    "waTemplateMpmIncompleteProducts": "Jokaisessa osiossa on oltava vähintään yksi valittu tuote — poista tyhjät rivit tai valitse niille tuote.",
+    "voiceCall": "Äänipuhelu",
+    "voiceCallDuration": "Äänipuhelu · {duration}",
+    "missedVoiceCall": "Vastaamaton äänipuhelu",
+    "declinedVoiceCall": "Hylätty äänipuhelu",
+    "acceptedCallPermission": "Hyväksyi soittolupapyynnön",
+    "declinedCallPermission": "Hylkäsi soittolupapyynnön",
+    "sendHumanAgentTag": "Lähetä yksi viesti HUMAN_AGENT-tunnisteella",
+    "warning": "Varoitus!",
+    "humanAgentWarningDescription": "Voit vastata käyttäjän viestiin 7 päivän kuluessa vain, jos ongelmaa ei kohtuudella voi ratkaista 24 tunnissa. Esimerkkejä ovat viikonloput, pyhäpäivät tai tapaukset, joiden ratkaiseminen kestää yli päivän. Älä käytä tätä vaihtoehtoa muusta syystä, sillä se voi vaarantaa Facebook-sivusi tai Instagram-tilisi. Jos olet epävarma, älä jatka."
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",
@@ -3108,6 +3218,12 @@
     "tabs": {
       "generalSettings": "Yleiset asetukset",
       "conversionsApi": "Mainosten optimointi"
+    },
+    "selectPage": {
+      "noAccountsTitle": "Instagram-tileja ei löytynyt",
+      "noAccountsDescription": "Hallinnoimiltasi Facebook-sivuilta ei löytynyt Instagram-yritystileja. Yhdistä Instagram uudelleen ja myönnä kaikki pyydetyt käyttöoikeudet.",
+      "alreadyConnectedNote": "Tämä tili on jo yhdistetty",
+      "tryAgain": "Yritä yhdistää uudelleen"
     }
   },
   "coexist": {
@@ -3369,7 +3485,8 @@
     "maxSize": "Tiedoston koko ylittää enimmäisrajan",
     "maxItemsReached": "Työtilassa sallitaan enintään {max} kohdetta {feature}",
     "invalidApiKey": "Virheellinen API-avain",
-    "maxMustBeGreaterThanMin": "Kentän {maxField} arvon on oltava vähintään kentän {minField} arvo"
+    "maxMustBeGreaterThanMin": "Kentän {maxField} arvon on oltava vähintään kentän {minField} arvo",
+    "maxCharacters": "Enintään {max} merkkiä."
   },
   "webchat": {
     "chatUnavailable": "Tämä keskustelu ei ole tällä hetkellä käytettävissä.",
@@ -3410,6 +3527,7 @@
       "label": "Keskustelunavaukset"
     },
     "manualConnect": "Yhdistä manuaalisesti järjestelmäkäyttäjän käyttöoikeustunnuksella.",
+    "manualAppSecretMissingNotice": "Webhook-allekirjoituksia ei vahvisteta, ennen kuin lisäät Meta-sovelluksen salaisuuden.",
     "manualOnboarding": {
       "title": "WhatsApp-saapuneet-kansiosi on valmis!",
       "description": "Määritä webhook-URL ja vahvistustunnus Meta-sovelluksessasi. Käytä alla olevia arvoja.",
@@ -3417,7 +3535,8 @@
       "verifyToken": "Webhook-vahvistustunnus",
       "qrCodeHint": "Avaa webhook-URL skannaamalla QR-koodi",
       "moreSettings": "Lisää asetuksia",
-      "goToInbox": "Siirry sinne"
+      "goToInbox": "Siirry sinne",
+      "multipleTitle": "WhatsApp-postilaatikkosi ovat valmiina!"
     },
     "phoneVerification": {
       "title": "Vahvista WhatsApp-puhelinnumero",
@@ -3430,7 +3549,8 @@
       "actions": {
         "sendCode": "Lähetä koodi",
         "resendIn": "Lähetä uudelleen {seconds} s kuluttua",
-        "verify": "Vahvista ja rekisteröi"
+        "verify": "Vahvista ja rekisteröi",
+        "skip": "Ohita"
       },
       "fields": {
         "code": {
@@ -3448,7 +3568,8 @@
         "codeNotSent": "WhatsApp-vahvistuskoodia ei voitu lähettää.",
         "codeNotVerified": "WhatsApp-vahvistuskoodia ei voitu vahvistaa.",
         "registrationFailed": "WhatsApp-puhelinnumeron vahvistus epäonnistui."
-      }
+      },
+      "queueProgress": "Vahvistetaan {current}/{total}"
     },
     "connect": {
       "errors": {
@@ -3560,7 +3681,8 @@
       "profile": "Profiili",
       "usefulLinks": "Hyödylliset linkit",
       "conversionsApi": "Mainosten optimointi",
-      "settings": "Asetukset"
+      "settings": "Asetukset",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Hallitse WhatsApp-tiliäsi",
@@ -3696,6 +3818,82 @@
         "title": "Automaattiset tapahtumat",
         "description": "Lähetä konversiotapahtumat tästä WhatsApp-numerosta automaattisesti Metalle. Jos lupa puuttuu, yhdistä tili uudelleen myöntääksesi sen."
       }
+    },
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta hylkäsi puheluasetusten muutoksen",
+        "bicUnavailable": "Yrityksen aloittamat puhelut eivät ole käytettävissä tässä maassa",
+        "callAlreadyInProgress": "Puhelu tähän yhteystietoon on jo käynnissä",
+        "hangupFailed": "Puhelua ei voitu lopettaa"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "updateFailedTitle": "Meta hylkäsi muutoksen",
+      "callContact": "Soita WhatsAppissa",
+      "dialing": "Soitetaan…",
+      "startCall": "Aloita WhatsApp-puhelu",
+      "retentionLabel": "Tallenteiden säilytysaika (päivää)",
+      "retentionHelper": "Kuinka pitkään puhelutallenteita säilytetään, ennen kuin ne poistetaan pysyvästi.",
+      "transcriptionLabel": "Tekstitä puhelut",
+      "transcriptionHelper": "Tekstittää automaattisesti tallennetut puhelut käyttäen yhdistettyä tekoälypalveluntarjoajaa.",
+      "sip": {
+        "provisioningLabel": "FreeSWITCH-käyttöönotto",
+        "provisionButton": "Ota käyttöön",
+        "deprovisionButton": "Poista käyttöönotto",
+        "status": {
+          "none": "Ei käyttöönotettu",
+          "provisioning": "Otetaan käyttöön…",
+          "provisioned": "Käyttöönotettu",
+          "enabled": "Käytössä",
+          "failed": "Epäonnistui"
+        },
+        "errors": {
+          "notProvisioned": "Ota tämä numero käyttöön FreeSWITCH-puheluille ennen sovelluksen sisäisten puheluiden käyttöönottoa",
+          "readBackMismatch": "Meta ei vahvistanut SIP-puhelumuutosta — yritä uudelleen",
+          "provisionFailed": "Tämän numeron käyttöönotto FreeSWITCH-puheluille epäonnistui",
+          "deprovisionFailed": "FreeSWITCH-puheluiden käyttöönoton poistaminen epäonnistui tälle numerolle"
+        }
+      },
+      "preflight": {
+        "title": "Puheluoikeus",
+        "appSubscriptionMissing": "Määritä ensin WhatsApp-webhook tälle sovellukselle Meta-sovelluspaneelissa ja yritä sitten uudelleen.",
+        "appSubscriptionFailed": "Sovelluksen 'calls'-webhook-tilausta ei voitu vahvistaa. Yritä pian uudelleen.",
+        "callsNotSubscribed": "Tämä sovellus ei ole tilannut 'calls'-webhook-kenttää, joten puhelutapahtumat eivät voi tavoittaa ChatbotX:ää (Meta-virhe 138018: tekniset edellytykset eivät täyty — varmista, että ainakin yhdellä WABA:an tilatulla sovelluksella on myös puhelujen webhook-kenttä).",
+        "fixButton": "Korjaa",
+        "fixSuccess": "Sovellus on nyt tilannut WhatsApp-puheluwebhookit.",
+        "manualIntegrationNotice": "Tämä numero yhdistettiin manuaalisesti, ja sillä ei ole sovellustunnuksia tässä. Tilaa 'calls'-webhook-kenttä sovellukselle Meta-sovelluspaneelissa.",
+        "coexistenceWarning": "Tämä numero käyttää rinnakkaiseloa WhatsApp Business -sovelluksen kanssa, jota Meta ei tue puheluissa. Siirrä se käyttämään vain Cloud APIa.",
+        "messagingLimitTooLow": "Tämän numeron viestirajataso on alle Metan puheluille vaatiman vähimmäistason."
+      }
+    },
+    "selectPage": {
+      "tryAgain": "Yritä yhdistää uudelleen"
     }
   },
   "zalo": {
@@ -3708,7 +3906,8 @@
       "toggleSuccess": "Tunnisteiden synkronointiasetus päivitettiin.",
       "enabledSince": "Käytössä alkaen {date}",
       "disabled": "Ei käytössä"
-    }
+    },
+    "refreshPermissions": "Päivitä käyttöoikeudet"
   },
   "telegram": {
     "description": "Tämän integraation avulla voit luoda Telegram-botteja.",
@@ -3845,7 +4044,9 @@
       "productRemovedFromCart": "Tuote poistettu ostoskorista",
       "productOrdered": "Tuote tilattu",
       "contactReferredANewContact": "Yhteystieto suositteli uutta yhteystietoa",
-      "contactReferredExistingContact": "Yhteystieto suositteli olemassa olevaa yhteystietoa"
+      "contactReferredExistingContact": "Yhteystieto suositteli olemassa olevaa yhteystietoa",
+      "callRecorded": "Puhelu tallennettu",
+      "callTranscribed": "Puhelu litteroitu"
     },
     "actions": {
       "addTag": "Lisää tunniste",
@@ -3872,7 +4073,12 @@
   },
   "developerAccessToken": {
     "title": "API-käyttöoikeustunnus",
-    "description": "Luo tunnus, jolla työtilasi voi käyttää julkisia API-rajapintoja. Pidä tunnus salassa äläkä jaa sitä kenellekään."
+    "description": "Luo tunnus, jolla työtilasi voi käyttää julkisia API-rajapintoja. Pidä tunnus salassa äläkä jaa sitä kenellekään.",
+    "createDialogTitle": "Luo API-avain",
+    "namePlaceholder": "esim. Zapier-integraatio",
+    "empty": "Ei API-avaimia vielä.",
+    "defaultBadge": "Oletus",
+    "allScopes": "Kaikki käyttöalat"
   },
   "contacts": {
     "title": "Yhteystiedot",
@@ -4508,6 +4714,17 @@
     },
     "queues": {
       "title": "Jonot"
+    },
+    "workspaces": {
+      "title": "Työtilat",
+      "description": "Tästä voi avata työtilat, joiden omistaja on ottanut käyttöön alustan tukioikeuden.",
+      "owner": "Omistaja",
+      "tenant": "Vuokralainen",
+      "supportStatus": "Tuen tila",
+      "openAsSupport": "Avaa tukihenkilönä",
+      "supportEnabledUntil": "Käytössä {time} saakka",
+      "supportOff": "Pois",
+      "searchPlaceholder": "Hae nimen, omistajan sähköpostin tai tunnuksen mukaan"
     }
   },
   "platformCredentials": {
@@ -5340,7 +5557,8 @@
     "connectViaFacebook": "Yhdistä Facebookin kautta",
     "unsupportedExplanation": "Tämä Instagram-tili yhdistettiin Instagram Business -kirjautumisella. Yhdistä tili Facebookin kautta käyttääksesi Meta Conversions API:a.",
     "flowStep": {
-      "whatsappNote": "WhatsApp-tapahtumat lähetetään vain keskusteluista, jotka alkoivat click-to-WhatsApp-mainoksesta."
+      "whatsappNote": "WhatsApp-tapahtumat lähetetään vain keskusteluista, jotka alkoivat click-to-WhatsApp-mainoksesta.",
+      "description": "Jonota LeadSubmitted-tapahtuma Messengerille, Instagramille tai WhatsAppille."
     },
     "status": {
       "title": "Meta Conversions API",
@@ -5587,7 +5805,8 @@
       "generalSettingsTitle": "Yleiset asetukset",
       "appearanceTitle": "Ulkoasu",
       "playerSettingsTitle": "Pelaaja-asetukset",
-      "prizeSettingsTitle": "Palkintoasetukset"
+      "prizeSettingsTitle": "Palkintoasetukset",
+      "validationFailed": "Korjaa korostetut kentät ennen tallentamista."
     },
     "generalSettings": {
       "showName": "Näkyvä",
@@ -5617,7 +5836,11 @@
       "resetPolicyLabel": "Nollaa arvonnat",
       "resetNever": "Älä nollaa arvontojen määrää",
       "resetEveryNDays": "Nollaa arvontojen määrä joka",
-      "resetIntervalDaysSuffix": "päivä"
+      "resetIntervalDaysSuffix": "päivä",
+      "maxSharesPerPerson": "Suositusten enimmäisbonusarvonnat",
+      "maxSharesPerPersonHint": "Jokainen ystävä, joka liittyy tämän pelaajan kutsulinkin kautta ja lähettää sinulle viestin, antaa hänelle 1 lisäarvonnan, tähän rajaan asti. Aseta arvoksi 0 poistaaksesi suositusbonukset käytöstä. Bonusarvonnat on käytettävä ennen seuraavaa nollausta.",
+      "sharingNode": "Jakamisvaihe",
+      "sharingNodeHint": "Flow-vaihe, joka suoritetaan, kun ystävä avaa tämän pelaajan jakamislinkin. Jätä tyhjäksi piilottaaksesi Jaa-painikkeen."
     },
     "publicUrl": {
       "label": "Julkinen URL",
@@ -5632,12 +5855,14 @@
       "forbiddenTitle": "Pääsy evätty",
       "forbiddenDescription": "Tämä linkki on virheellinen tai vanhentunut.",
       "comingSoonTitle": "Tulossa pian",
-      "comingSoonDescription": "Tätä minipelityyppiä ei voi vielä pelata."
+      "comingSoonDescription": "Tätä minipelityyppiä ei voi vielä pelata.",
+      "rateLimited": "Liikaa pyyntöjä. Odota hetki ja yritä uudelleen."
     },
     "list": {
       "gamesPlayed": "Pelatut pelit",
       "participants": "Osallistujat",
-      "winners": "Voittajat"
+      "winners": "Voittajat",
+      "shares": "Suositukset"
     },
     "history": {
       "title": "Historia",
@@ -5654,7 +5879,8 @@
         "win": "Voitti",
         "lose": "Ei palkintoa",
         "empty": "Ei pelitapahtumia vielä"
-      }
+      },
+      "shares": "Suositukset"
     }
   },
   "mediaLibrary": {
@@ -5872,5 +6098,59 @@
   },
   "accountFields": {
     "title": "Bottikentät"
+  },
+  "contactScan": {
+    "menu": {
+      "importFromFile": "Tuo tiedostosta",
+      "automaticScan": "Automaattinen asiakasskannaus"
+    },
+    "title": "Automaattinen asiakasskannaus",
+    "submit": "Automaattinen skannaus",
+    "fields": {
+      "inbox": "Postilaatikko",
+      "scanFrom": "Skannaa postilaatikko alkaen"
+    },
+    "hint": {
+      "range": "Järjestelmä skannaa asiakkaat, jotka ovat lähettäneet viestejä sivulle {from} alkaen tähän hetkeen asti.",
+      "beforeChoose": "Skannauksen jälkeen sinun täytyy odottaa 24 tuntia, ennen kuin voit käyttää tätä ominaisuutta uudelleen."
+    },
+    "status": {
+      "idle": "Tälle postilaatikolle ei ole vielä ajettu skannausta. Valitse aloituspäivä ja käynnistä ensimmäinen automaattinen asiakasskannaus.",
+      "running": "Järjestelmä suorittaa automaattista skannausta; arvioitu valmistumisaika on {eta}.",
+      "nextScan": "Seuraava skannausaika: {at}",
+      "finished": "Järjestelmä sai viimeisen asiakasskannauksen valmiiksi klo {at}.",
+      "total": "Skannattuja asiakkaita yhteensä: {count}",
+      "waitCooldown": "Sinun täytyy odottaa 24 tuntia, ennen kuin voit käyttää tätä ominaisuutta uudelleen.",
+      "failed": "Viimeisin skannaus epäonnistui. Voit yrittää uudelleen odotusajan päätyttyä.",
+      "partial": "Viimeisin skannaus valmistui vain osittain — joitakin keskusteluja ei voitu tuoda."
+    },
+    "errors": {
+      "contactScanFromTimeInvalid": "Skannauksen alkamisajan täytyy olla menneisyydessä.",
+      "contactScanInboxNotFound": "Postilaatikkoa ei löytynyt.",
+      "contactScanChannelUnsupported": "Tämä kanava ei tue automaattista asiakasskannausta.",
+      "contactScanIntegrationDisconnected": "Tätä postilaatikkoa ei ole yhdistetty.",
+      "contactScanCooldown": "Tämä postilaatikko skannattiin juuri. Odota ennen uutta skannausta.",
+      "contactScanAlreadyRunning": "Tälle postilaatikolle on jo käynnissä skannaus.",
+      "contactScanForbidden": "Sinulla ei ole oikeutta käynnistää automaattista asiakasskannausta."
+    },
+    "histories": {
+      "title": "Skannaushistoria",
+      "columns": {
+        "channel": "Kanava",
+        "scanFrom": "Skannaa alkaen",
+        "importedContacts": "Tuodut yhteystiedot",
+        "scannedConversations": "Skannatut keskustelut",
+        "finishedAt": "Valmistui klo",
+        "error": "Virhe"
+      },
+      "status": {
+        "init": "Jonossa",
+        "running": "Käynnissä",
+        "succeeded": "Onnistui",
+        "partial": "Osittainen",
+        "failed": "Epäonnistui"
+      },
+      "empty": "Skannauksia ei ole ajettu vielä."
+    }
   }
 }

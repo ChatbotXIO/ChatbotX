@@ -8,8 +8,6 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { IntegrationWhatsappRegistrationError } from "@chatbotx.io/database/schema"
 import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
 import {
-  mapToChannelError,
-  readWhatsappOriginErrorDetail,
   registerPhoneNumber,
   requestVerificationCode,
   verifyCode,
@@ -21,6 +19,7 @@ import { getTranslations } from "next-intl/server"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { toRegistrationOutcome } from "../libs/registration-outcome"
+import { throwWhatsappApiActionError } from "../libs/whatsapp-api-action-error"
 import {
   requestWhatsappVerificationCodeSchema,
   verifyWhatsappPhoneCodeSchema,
@@ -54,32 +53,6 @@ function buildActionErrorMessage(
     registrationError?.userTitle ??
     registrationError?.message ??
     fallbackMessage
-  )
-}
-
-function buildWhatsappApiActionErrorMessage(
-  error: unknown,
-  fallbackMessage: string,
-): string {
-  const channelError = mapToChannelError(error)
-  const originError = readWhatsappOriginErrorDetail(
-    channelError.getOriginError(),
-  )
-
-  return (
-    originError.userMessage ??
-    originError.userTitle ??
-    channelError.message ??
-    fallbackMessage
-  )
-}
-
-function throwWhatsappApiActionError(
-  error: unknown,
-  fallbackMessage: string,
-): never {
-  throw new ChatbotXException(
-    buildWhatsappApiActionErrorMessage(error, fallbackMessage),
   )
 }
 

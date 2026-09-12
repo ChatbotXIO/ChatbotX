@@ -54,3 +54,49 @@ export async function waitForIntegrationJobCompletion(
     // Best-effort ordering only — never rethrow.
   }
 }
+
+// --- Strict variant (synchronous ESL API contract) ---------------
+//
+// `waitForIntegrationJobCompletion` above is deliberately best-effort: it
+// swallows timeouts/failures because it only exists to preserve ordering.
+// Callers that need the job's actual RESULT (e.g. `freeswitchApiClient.run`
+// reading an ESL API reply) cannot use that semantics — a swallowed timeout
+// would silently return `undefined` and look like success. `waitForJobResult`
+// is the strict counterpart: it rejects on timeout or job failure.
+
+const queueEventsByName = new Map<string, QueueEvents>()
+
+/**
+ * Lazily creates (and memoizes per queue name) a `QueueEvents` instance —
+ * the same lazy-create pattern as `getIntegrationQueueEvents`, generalized
+ * so per-node FreeSWITCH queues (`freeswitch:<nodeId>`) don't each need
+ * their own hand-written singleton. Memoized instances live for the
+ * process lifetime — there is no close-on-shutdown path, since the set is
+ * bounded by the number of FreeSWITCH nodes, not by request volume.
+ */
+export function createQueueEvents(queueName: string): QueueEvents {
+  const existing = queueEventsByName.get(queueName)
+  if (existing) {
+    return existing
+  }
+  const queueEvents = new QueueEvents(queueName, {
+    connection: getRedisConnection().duplicate(),
+  })
+  queueEventsByName.set(queueName, queueEvents)
+  return queueEvents
+}
+
+/**
+ * Strict wait: resolves with the job's result, or REJECTS on timeout or job
+ * failure — unlike {@link waitForIntegrationJobCompletion}, callers must
+ * handle the rejection themselves (e.g. map it to a typed
+ * `FreeswitchApiError`). Used by `freeswitchApiClient.run` to read back an
+ * ESL API reply synchronously.
+ */
+export async function waitForJobResult<T>(
+  job: Job<unknown, T>,
+  queueEvents: QueueEvents,
+  timeoutMs: number,
+): Promise<T> {
+  return await job.waitUntilFinished(queueEvents, timeoutMs)
+}
