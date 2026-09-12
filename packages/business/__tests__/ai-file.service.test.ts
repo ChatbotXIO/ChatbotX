@@ -1,202 +1,338 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { ChatbotXException } from "../src/errors"
 
-// ---------------------------------------------------------------------------
-// aiFileService — create/delete/listWithEmbeddingStatus for the Knowledge
-// tab. `create` throws a "noEmbeddingProvider" marker when the workspace has
-// neither an OpenAI nor a Gemini integration; `delete` swallows errors and
-// logs a warning (the delete action must never reject); listWithEmbeddingStatus
-// derives status precedence error > processing > success/pending.
-// ---------------------------------------------------------------------------
+const {
+  mockAssertPublicUrl,
+  mockDeleteObject,
+  mockFindByWorkspaceIdGemini,
+  mockFindByWorkspaceIdOpenAI,
+  mockFindOrFail,
+  mockGetPresignedDownload,
+  mockInsert,
+  mockInsertReturning,
+  mockLoggerWarn,
+  mockQueueAdd,
+  mockTxDeleteWhere,
+  mockUploadFile,
+  mockUploadFileFromUrl,
+  mockFindManyAiFile,
+} = vi.hoisted(() => {
+  const mockInsertReturning = vi.fn()
+  const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
+  const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
 
-const mocks = vi.hoisted(() => ({
-  deleteObject: vi.fn(),
-  dispatchAuditRecord: vi.fn(),
-  findFirstAiFile: vi.fn(),
-  findFirstGemini: vi.fn(),
-  findFirstOpenai: vi.fn(),
-  findManyAiFile: vi.fn(async () => []),
-  getPresignedDownload: vi.fn(async () => "https://example.com/download"),
-  insertReturning: vi.fn(),
-  loggerWarn: vi.fn(),
-  normalizeError: vi.fn((error: unknown) => ({
-    message: error instanceof Error ? error.message : String(error),
-  })),
-  queueAdd: vi.fn(),
-  transaction: vi.fn(),
-  txDeleteWhere: vi.fn(),
-}))
-
-vi.mock("../src/audit/dispatcher", () => ({
-  dispatchAuditRecord: mocks.dispatchAuditRecord,
-}))
-
-vi.mock("../src/logger", () => ({
-  logger: { warn: mocks.loggerWarn },
-}))
-
-vi.mock("universal-error-normalizer", () => ({
-  normalizeError: (error: unknown) => mocks.normalizeError(error),
-}))
+  return {
+    mockAssertPublicUrl: vi.fn(async () => undefined),
+    mockDeleteObject: vi.fn(async () => undefined),
+    mockFindByWorkspaceIdGemini: vi.fn(),
+    mockFindByWorkspaceIdOpenAI: vi.fn(),
+    mockFindOrFail: vi.fn(),
+    mockGetPresignedDownload: vi.fn(
+      async () => "https://cdn.example.com/signed",
+    ),
+    mockInsert,
+    mockInsertReturning,
+    mockLoggerWarn: vi.fn(),
+    mockQueueAdd: vi.fn(),
+    mockTxDeleteWhere: vi.fn(),
+    mockUploadFile: vi.fn(),
+    mockUploadFileFromUrl: vi.fn(),
+    mockFindManyAiFile: vi.fn(async () => []),
+  }
+})
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
-    delete: vi.fn(() => ({ where: mocks.txDeleteWhere })),
-    insert: vi.fn(() => ({
-      values: vi.fn(() => ({ returning: mocks.insertReturning })),
-    })),
     query: {
       aiFileModel: {
-        findFirst: mocks.findFirstAiFile,
-        findMany: mocks.findManyAiFile,
+        findFirst: vi.fn(),
+        findMany: mockFindManyAiFile,
       },
-      integrationGeminiModel: { findFirst: mocks.findFirstGemini },
-      integrationOpenaiModel: { findFirst: mocks.findFirstOpenai },
     },
-    transaction: mocks.transaction,
+    insert: mockInsert,
+    transaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
+      callback({ delete: vi.fn(() => ({ where: mockTxDeleteWhere })) }),
+    ),
+    $count: vi.fn(async () => 0),
   },
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
+  findOrFail: mockFindOrFail,
+  relationsFilterToSQL: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  aiEmbeddingModel: { id: "id" },
-  aiFileModel: { id: "id" },
-}))
-
-vi.mock("@chatbotx.io/filesystem", () => ({
-  uploader: {
-    deleteObject: mocks.deleteObject,
-    getPresignedDownload: mocks.getPresignedDownload,
-  },
+  aiFileModel: { id: "id", workspaceId: "workspaceId", createdAt: "createdAt" },
+  aiEmbeddingModel: { id: "id", aiFileId: "aiFileId" },
 }))
 
 vi.mock("@chatbotx.io/utils", () => ({
   createId: () => "file-1",
 }))
 
+class MockUploadValidationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "UploadValidationError"
+  }
+}
+
+vi.mock("@chatbotx.io/filesystem", () => ({
+  uploader: {
+    getPresignedDownload: mockGetPresignedDownload,
+    deleteObject: mockDeleteObject,
+  },
+  uploadFile: mockUploadFile,
+  uploadFileFromUrl: mockUploadFileFromUrl,
+  UploadValidationError: MockUploadValidationError,
+}))
+
 vi.mock("@chatbotx.io/worker-config", () => ({
   HeavyJobAction: { processAIFile: "processAIFile" },
   getHeavyJobOptions: () => ({}),
-  heavyQueue: { add: mocks.queueAdd },
+  heavyQueue: { add: mockQueueAdd },
 }))
 
-const { aiFileService } = await import("../src/ai-file/service")
+vi.mock("@chatbotx.io/logger", () => ({
+  getChildLogger: () => ({
+    debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: mockLoggerWarn,
+  }),
+}))
+
+const dispatchAuditRecord = vi.fn()
+vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
+
+vi.mock("../src/net/ssrf-guard", () => ({
+  assertPublicUrl: mockAssertPublicUrl,
+}))
+
+vi.mock("../src/integration-openai/service", () => ({
+  integrationOpenAIService: { findByWorkspaceId: mockFindByWorkspaceIdOpenAI },
+}))
+
+vi.mock("../src/integration-gemini/service", () => ({
+  integrationGeminiService: { findByWorkspaceId: mockFindByWorkspaceIdGemini },
+}))
+
+const { aiFileService, AI_FILE_MAX_UPLOAD_BYTES } = await import(
+  "../src/ai-file/service"
+)
 
 const workspaceId = "workspace-1"
 
+function lastAuditDetail(): string {
+  return dispatchAuditRecord.mock.calls.at(-1)?.[0]?.detail
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.findFirstOpenai.mockResolvedValue(undefined)
-  mocks.findFirstGemini.mockResolvedValue(undefined)
-  mocks.insertReturning.mockResolvedValue([{ id: "file-1" }])
-  mocks.findFirstAiFile.mockResolvedValue({
+  mockFindByWorkspaceIdOpenAI.mockResolvedValue({ id: "openai-1" })
+  mockFindByWorkspaceIdGemini.mockResolvedValue(undefined)
+  mockInsertReturning.mockResolvedValue([
+    {
+      id: "file-1",
+      path: "workspaces/workspace-1/ai-files/uploaded.pdf",
+      name: "manual.pdf",
+      mimeType: "application/pdf",
+      size: 456,
+      workspaceId,
+    },
+  ])
+  mockGetPresignedDownload.mockResolvedValue("https://cdn.example.com/signed")
+  mockFindOrFail.mockResolvedValue({
     id: "file-1",
+    path: "workspaces/workspace-1/ai-files/file-1",
     workspaceId,
-    path: "path/to/file",
   })
-  mocks.transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
-    fn({ delete: vi.fn(() => ({ where: mocks.txDeleteWhere })) }),
-  )
 })
 
 describe("aiFileService.create", () => {
-  test("throws noEmbeddingProvider when neither OpenAI nor Gemini is connected", async () => {
-    await expect(
-      aiFileService.create({
-        workspaceId,
-        path: "path",
-        name: "manual.pdf",
-        mimeType: "application/pdf",
-        size: 100,
-      }),
-    ).rejects.toMatchObject({ code: "noEmbeddingProvider" })
-
-    expect(mocks.queueAdd).not.toHaveBeenCalled()
-    expect(mocks.dispatchAuditRecord).not.toHaveBeenCalled()
-  })
-
-  test("succeeds when an OpenAI integration exists: inserts, enqueues, audits", async () => {
-    mocks.findFirstOpenai.mockResolvedValue({ id: "openai-1" })
-
-    const result = await aiFileService.create({
-      workspaceId,
-      path: "path",
+  test("path mode inserts, enqueues the heavy job, and audits (matches today's private behavior)", async () => {
+    const result = await aiFileService.create(workspaceId, {
       name: "manual.pdf",
+      path: "workspaces/workspace-1/ai-files/uploaded.pdf",
       mimeType: "application/pdf",
-      size: 100,
+      size: 456,
     })
 
-    expect(result).toEqual({ id: "file-1" })
-    expect(mocks.queueAdd).toHaveBeenCalledWith(
+    expect(mockInsertReturning).toHaveBeenCalled()
+    expect(mockQueueAdd).toHaveBeenCalledWith(
       "processAIFile",
-      {
-        type: "processAIFile",
-        data: { aiFileId: "file-1" },
-      },
+      { type: "processAIFile", data: { aiFileId: "file-1" } },
       { jobId: "heavy-ai-file-file-1" },
     )
-    expect(mocks.dispatchAuditRecord).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: "create",
-        detail: "created a new Knowledge (#file-1)",
-      }),
+    expect(lastAuditDetail()).toBe("created a new Knowledge (#file-1)")
+    expect(result.processingStatus).toBe("pending")
+    expect(result.chunksCount).toBe(0)
+  })
+
+  test("file mode uploads the file and returns a pending resource", async () => {
+    const file = new File(["hello"], "manual.pdf", {
+      type: "application/pdf",
+    })
+    mockUploadFile.mockResolvedValue({
+      name: "manual.pdf",
+      mimeType: "application/pdf",
+      originPath: "workspaces/workspace-1/ai-files/file-1",
+      size: 5,
+      fileType: "file",
+    })
+
+    const result = await aiFileService.create(workspaceId, { file })
+
+    expect(mockUploadFile).toHaveBeenCalledWith(
+      file,
+      "workspaces/workspace-1/ai-files/file-1",
+      "private",
+    )
+    expect(result.processingStatus).toBe("pending")
+    expect(result.chunksCount).toBe(0)
+  })
+
+  test("url mode checks SSRF safety before downloading", async () => {
+    mockUploadFileFromUrl.mockResolvedValue({
+      name: "manual.pdf",
+      mimeType: "application/pdf",
+      originPath: "workspaces/workspace-1/ai-files/file-1",
+      size: 5,
+      fileType: "file",
+    })
+
+    await aiFileService.create(workspaceId, {
+      url: "https://example.com/manual.pdf",
+    })
+
+    expect(mockUploadFileFromUrl).toHaveBeenCalledWith(
+      "https://example.com/manual.pdf",
+      "workspaces/workspace-1/ai-files/file-1",
+      "private",
+      AI_FILE_MAX_UPLOAD_BYTES,
+      expect.any(Function),
+    )
+
+    // The guard runs inside uploadFileFromUrl (once per redirect hop), so
+    // assert the callback delegates rather than that the service called it
+    // directly.
+    const validate = mockUploadFileFromUrl.mock.calls[0][4]
+    await validate("https://example.com/redirected.pdf")
+    expect(mockAssertPublicUrl).toHaveBeenCalledWith(
+      "https://example.com/redirected.pdf",
+      "AI file URL",
     )
   })
 
-  test("succeeds when only a Gemini integration exists", async () => {
-    mocks.findFirstGemini.mockResolvedValue({ id: "gemini-1" })
+  test("url mode surfaces an SSRF rejection as a businessError without fetching", async () => {
+    mockAssertPublicUrl.mockRejectedValueOnce(new Error("blocked host"))
+    mockUploadFileFromUrl.mockImplementation(
+      async (
+        url: string,
+        _path: string,
+        _visibility: string,
+        _maxBytes: number,
+        validate: (candidateUrl: string) => Promise<void>,
+      ) => {
+        await validate(url)
+        throw new Error("unreachable: validate should have thrown")
+      },
+    )
 
-    const result = await aiFileService.create({
-      workspaceId,
-      path: "path",
-      name: "manual.pdf",
-      mimeType: "application/pdf",
-      size: 100,
-    })
+    const error = await aiFileService
+      .create(workspaceId, { url: "http://169.254.169.254/latest" })
+      .catch((caught: unknown) => caught)
 
-    expect(result).toEqual({ id: "file-1" })
+    expect(error).toBeInstanceOf(ChatbotXException)
+    expect((error as ChatbotXException).code).toBe("businessError")
+    // The guard's own message (which echoes the submitted URL) must never
+    // reach the caller — it is replaced with a safe, generic message.
+    expect((error as ChatbotXException).message).toBe(
+      "The provided URL is not allowed",
+    )
+    expect((error as ChatbotXException).message).not.toContain(
+      "169.254.169.254",
+    )
+  })
+
+  test("url mode reports an infrastructure failure as a generic 5xx without leaking details", async () => {
+    mockUploadFileFromUrl.mockRejectedValueOnce(
+      new Error("connect ECONNREFUSED 10.0.4.12:9000"),
+    )
+
+    const error = await aiFileService
+      .create(workspaceId, { url: "https://example.com/manual.pdf" })
+      .catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(ChatbotXException)
+    expect((error as ChatbotXException).code).toBe("systemError")
+    expect((error as ChatbotXException).httpStatusCode).toBe(502)
+    expect((error as ChatbotXException).message).not.toContain("ECONNREFUSED")
+    expect((error as ChatbotXException).message).not.toContain("10.0.4.12")
+  })
+
+  test("rejects when neither OpenAI nor Gemini is configured", async () => {
+    mockFindByWorkspaceIdOpenAI.mockResolvedValue(undefined)
+    mockFindByWorkspaceIdGemini.mockResolvedValue(undefined)
+
+    const error = await aiFileService
+      .create(workspaceId, {
+        name: "manual.pdf",
+        path: "workspaces/workspace-1/ai-files/uploaded.pdf",
+        mimeType: "application/pdf",
+        size: 456,
+      })
+      .catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(ChatbotXException)
+    expect((error as ChatbotXException).code).toBe("noEmbeddingProvider")
+    expect((error as ChatbotXException).message).toContain(
+      "No embedding provider configured",
+    )
+    expect(mockInsert).not.toHaveBeenCalled()
   })
 })
 
 describe("aiFileService.delete", () => {
-  test("deletes the object and both rows inside a transaction, then audits", async () => {
+  test("deletes storage, embeddings, and the row, then audits", async () => {
     await aiFileService.delete({ workspaceId, id: "file-1" })
 
-    expect(mocks.deleteObject).toHaveBeenCalledWith("path/to/file")
-    expect(mocks.transaction).toHaveBeenCalled()
-    expect(mocks.dispatchAuditRecord).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: "delete",
-        detail: "deleted a Knowledge (#file-1)",
-      }),
+    expect(mockDeleteObject).toHaveBeenCalledWith(
+      "workspaces/workspace-1/ai-files/file-1",
     )
+    expect(lastAuditDetail()).toBe("deleted a Knowledge (#file-1)")
   })
 
-  test("swallows a thrown error and logs a warning instead of rejecting", async () => {
-    mocks.deleteObject.mockRejectedValueOnce(new Error("s3 down"))
+  test("swallows a storage failure instead of throwing", async () => {
+    mockDeleteObject.mockRejectedValueOnce(new Error("s3 unavailable"))
 
     await expect(
       aiFileService.delete({ workspaceId, id: "file-1" }),
     ).resolves.toBeUndefined()
 
-    expect(mocks.loggerWarn).toHaveBeenCalled()
-    expect(mocks.dispatchAuditRecord).not.toHaveBeenCalled()
+    expect(mockLoggerWarn).toHaveBeenCalled()
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
   })
-})
 
-describe("Knowledge tab audit messages", () => {
+  test("throws when the file does not belong to the workspace", async () => {
+    mockFindOrFail.mockRejectedValueOnce(
+      new Error("AIFile with id file-1 not found"),
+    )
+
+    await expect(
+      aiFileService.delete({ workspaceId: "other-workspace", id: "file-1" }),
+    ).rejects.toThrow("AIFile with id file-1 not found")
+  })
+
   test("does not log the legacy AI Agent knowledge base message", async () => {
-    mocks.findFirstOpenai.mockResolvedValue({ id: "openai-1" })
-
-    await aiFileService.create({
-      workspaceId,
-      path: "path",
+    await aiFileService.create(workspaceId, {
       name: "manual.pdf",
+      path: "workspaces/workspace-1/ai-files/uploaded.pdf",
       mimeType: "application/pdf",
-      size: 100,
+      size: 456,
     })
     await aiFileService.delete({ workspaceId, id: "file-1" })
 
-    for (const call of mocks.dispatchAuditRecord.mock.calls) {
+    for (const call of dispatchAuditRecord.mock.calls) {
       expect(call[0].detail).not.toContain(
         "updated the AI Agent knowledge base",
       )
@@ -206,7 +342,7 @@ describe("Knowledge tab audit messages", () => {
 
 describe("aiFileService.listWithEmbeddingStatus", () => {
   test("maps status precedence: error beats pending beats success", async () => {
-    mocks.findManyAiFile.mockResolvedValue([
+    mockFindManyAiFile.mockResolvedValue([
       {
         id: "file-error",
         createdAt: new Date(),
@@ -270,6 +406,6 @@ describe("aiFileService.listWithEmbeddingStatus", () => {
     expect(result.find((f) => f.id === "file-empty")?.processingStatus).toBe(
       "pending",
     )
-    expect(mocks.getPresignedDownload).toHaveBeenCalledTimes(4)
+    expect(mockGetPresignedDownload).toHaveBeenCalledTimes(4)
   })
 })

@@ -163,9 +163,6 @@
     "aiFunction": {
       "label": "人工智慧功能"
     },
-    "aiTrigger": {
-      "label": "人工智慧觸發器"
-    },
     "alphanumericLength": {
       "label": "字母數字長度"
     },
@@ -3444,10 +3441,6 @@
     "agents": {
       "description": "AI Agent描述",
       "title": "AI Agent"
-    },
-    "aiTriggers": {
-      "description": "人工智慧觸發器描述",
-      "title": "人工智慧觸發器"
     },
     "automatedResponses": {
       "title": "關鍵字"

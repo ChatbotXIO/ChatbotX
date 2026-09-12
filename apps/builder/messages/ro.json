@@ -1618,9 +1618,6 @@
     "aiFunction": {
       "label": "Funcție AI"
     },
-    "aiTrigger": {
-      "label": "Declanșator AI"
-    },
     "alphanumericLength": {
       "label": "Lungime alfanumerică"
     },
@@ -3411,10 +3408,6 @@
     "agents": {
       "description": "Descrierea agenților IA",
       "title": "Agenți IA"
-    },
-    "aiTriggers": {
-      "description": "Descrierea declanșatoarelor IA",
-      "title": "Declanșatoare IA"
     },
     "automatedResponses": {
       "title": "Cuvinte cheie"

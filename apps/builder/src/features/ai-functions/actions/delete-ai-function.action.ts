@@ -2,7 +2,6 @@
 
 import { aiFunctionService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { getTranslations } from "next-intl/server"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteAIFunctionAction = workspaceActionClient
@@ -11,6 +10,8 @@ export const deleteAIFunctionAction = workspaceActionClient
     const {
       bindArgsParsedInputs: [workspaceId, aiFunctionId],
     } = props
-    const t = await getTranslations()
-    return aiFunctionService.deleteAIFunction({ workspaceId, aiFunctionId }, t)
+    return await aiFunctionService.deleteAIFunction({
+      workspaceId,
+      aiFunctionId,
+    })
   })

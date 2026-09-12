@@ -18,7 +18,17 @@ export const decodeCursor = (
   }
 
   const buff = Buffer.from(cursorStr, "base64")
-  const cursorJSON = JSON.parse(buff.toString("utf8"))
+
+  let cursorJSON: unknown
+  try {
+    cursorJSON = JSON.parse(buff.toString("utf8"))
+  } catch {
+    // Malformed input (not base64-encoded JSON) — treat like any other
+    // invalid cursor rather than letting a raw SyntaxError escape as an
+    // unhandled 500. See `toKnownOrpcError`, which only maps
+    // `ChatbotXException`/`ORPCError`.
+    return null
+  }
 
   const { success, data } = cursorPagination.safeParse(cursorJSON)
 

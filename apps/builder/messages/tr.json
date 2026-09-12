@@ -971,9 +971,6 @@
     "aiFunction": {
       "label": "Yapay Zekâ İşlevi"
     },
-    "aiTrigger": {
-      "label": "Yapay Zekâ Tetikleyicisi"
-    },
     "alphanumericLength": {
       "label": "Alfasayısal Uzunluk"
     },
@@ -3411,10 +3408,6 @@
     "agents": {
       "description": "Yapay Zeka Aracıları açıklaması",
       "title": "Yapay Zeka Aracıları"
-    },
-    "aiTriggers": {
-      "description": "Yapay Zeka Tetikleyicileri açıklaması",
-      "title": "Yapay Zeka Tetikleyicileri"
     },
     "automatedResponses": {
       "title": "Anahtar Kelimeler"

@@ -647,9 +647,6 @@
     "aiFunction": {
       "label": "AI-functie"
     },
-    "aiTrigger": {
-      "label": "AI-trigger"
-    },
     "alphanumericLength": {
       "label": "Alfanumerieke lengte"
     },
@@ -3411,10 +3408,6 @@
     "agents": {
       "description": "Beschrijving van AI-agents",
       "title": "AI-agents"
-    },
-    "aiTriggers": {
-      "description": "Beschrijving van AI-triggers",
-      "title": "AI-triggers"
     },
     "automatedResponses": {
       "title": "Trefwoorden"

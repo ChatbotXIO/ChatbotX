@@ -5,7 +5,11 @@
 // has no session, so any of these six query functions calling
 // `assertCurrentUserCanAccessChatbot` (which resolves the session) would 400
 // every public list call — see docs/developer/workspace-api-tokens.md.
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+
+const USE_SERVER_DIRECTIVE_RE = /^\s*["']use server["']/m
 
 const mocks = vi.hoisted(() => ({
   assertCurrentUserCanAccessChatbot: vi.fn(() => {
@@ -279,4 +283,28 @@ describe("public list queries never depend on a session", () => {
     ).resolves.toBeDefined()
     expect(mocks.assertCurrentUserCanAccessChatbot).not.toHaveBeenCalled()
   })
+})
+
+describe("findConversation/findMessage query files are not Next.js server actions", () => {
+  // These files export `findConversation`/`findMessage`, which deliberately
+  // skip `assertCurrentUserCanAccessChatbot` because their only callers
+  // (api/private.ts, api/public.ts) already sit behind oRPC middleware. A
+  // `"use server"` directive would turn every export into a callable Next.js
+  // server action reachable directly from client code with no middleware in
+  // front of it, reopening the auth gap this PR closed. See
+  // AGENTS.md invariant #9 and .agents/rules/data-access.md.
+  const queryFiles = [
+    "../src/features/conversations/queries/list-conversations.query.ts",
+    "../src/features/messages/queries/index.ts",
+  ]
+
+  for (const relativePath of queryFiles) {
+    test(`${relativePath} has no "use server" directive`, () => {
+      const source = readFileSync(
+        join(import.meta.dirname, relativePath),
+        "utf8",
+      )
+      expect(source).not.toMatch(USE_SERVER_DIRECTIVE_RE)
+    })
+  }
 })

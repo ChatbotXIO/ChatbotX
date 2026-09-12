@@ -834,9 +834,6 @@
     "aiFunction": {
       "label": "KI-Funktion"
     },
-    "aiTrigger": {
-      "label": "KI-Trigger"
-    },
     "alphanumericLength": {
       "label": "Alphanumerische Länge"
     },
@@ -3411,10 +3408,6 @@
     "agents": {
       "description": "Beschreibung der KI-Agenten",
       "title": "KI-Agenten"
-    },
-    "aiTriggers": {
-      "description": "Beschreibung der KI-Trigger",
-      "title": "KI-Trigger"
     },
     "automatedResponses": {
       "title": "Schlüsselwörter"

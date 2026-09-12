@@ -971,9 +971,6 @@
     "aiFunction": {
       "label": "وظيفة الذكاء الاصطناعي"
     },
-    "aiTrigger": {
-      "label": "مشغّل الذكاء الاصطناعي"
-    },
     "alphanumericLength": {
       "label": "طول الأحرف والأرقام"
     },
@@ -3411,10 +3408,6 @@
     "agents": {
       "description": "وصف وكلاء الذكاء الاصطناعي",
       "title": "وكلاء الذكاء الاصطناعي"
-    },
-    "aiTriggers": {
-      "description": "وصف مشغّلات الذكاء الاصطناعي",
-      "title": "مشغّلات الذكاء الاصطناعي"
     },
     "automatedResponses": {
       "title": "الكلمات المفتاحية"

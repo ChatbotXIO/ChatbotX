@@ -9,6 +9,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { paginateInMemory, publicListRequest } from "@/lib/public-api/list"
+import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listSavedReplies } from "../queries"
 import {
@@ -71,14 +72,14 @@ export const savedRepliesPublicRouter = {
     .input(createSavedReplyRequest)
     .output(savedReplyResource)
     .errors(possibleErrorsOnCreatingResource)
-    .handler(
-      async ({ context, input }) =>
-        await savedReplyService.create({
-          workspaceId: context.workspace.id,
-          shortcut: input.shortcut,
-          text: input.text,
-        }),
-    ),
+    .handler(async ({ context, input }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+      return await savedReplyService.create({
+        workspaceId: context.workspace.id,
+        shortcut: input.shortcut,
+        text: input.text,
+      })
+    }),
 
   update: workspaceTokenAuthAPI
     .route({
@@ -91,6 +92,7 @@ export const savedRepliesPublicRouter = {
     .output(savedReplyResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
       const { id, ...data } = input
       return await savedReplyService.update(
         { workspaceId: context.workspace.id, id },

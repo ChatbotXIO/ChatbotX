@@ -9,6 +9,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { paginateInMemory, publicListRequest } from "@/lib/public-api/list"
+import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listInboxTeams } from "../queries"
 import {
@@ -70,13 +71,13 @@ export const inboxTeamsPublicRouter = {
     .input(createInboxTeamRequest)
     .output(inboxTeamResource)
     .errors(possibleErrorsOnCreatingResource)
-    .handler(
-      async ({ context, input }) =>
-        await inboxTeamService.create({
-          workspaceId: context.workspace.id,
-          data: input,
-        }),
-    ),
+    .handler(async ({ context, input }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+      return await inboxTeamService.create({
+        workspaceId: context.workspace.id,
+        data: input,
+      })
+    }),
 
   update: workspaceTokenAuthAPI
     .route({
@@ -89,10 +90,10 @@ export const inboxTeamsPublicRouter = {
     .output(inboxTeamResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const workspaceId = context.workspace.id
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
       const { id, ...data } = input
       return await inboxTeamService.update(
-        { workspaceId, inboxTeamId: id },
+        { workspaceId: context.workspace.id, inboxTeamId: id },
         data,
       )
     }),
@@ -124,12 +125,13 @@ export const inboxTeamsPublicRouter = {
     .input(addInboxTeamMemberRequest.and(inboxTeamIdPathParam))
     .output(inboxTeamResource)
     .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) =>
-      inboxTeamService.addMembers(
+    .handler(async ({ context, input }) => {
+      await assertWorkspaceNotBlocked(context.workspace.ownerId)
+      return await inboxTeamService.addMembers(
         { workspaceId: context.workspace.id, inboxTeamId: input.id },
         input.userIds,
-      ),
-    ),
+      )
+    }),
 
   removeMembers: workspaceTokenAuthAPI
     .route({

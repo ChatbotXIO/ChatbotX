@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const {
   mockDelete,
   mockDeleteReturning,
+  mockDeleteWhere,
   mockFindFirst,
   mockFindMany,
   mockInstalledResourceFindMany,
@@ -12,6 +13,7 @@ const {
   mockInsertReturning,
   mockUpdate,
   mockUpdateReturning,
+  mockUpdateWhere,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn()
   const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
@@ -29,6 +31,7 @@ const {
   return {
     mockDelete,
     mockDeleteReturning,
+    mockDeleteWhere,
     mockFindFirst: vi.fn(),
     mockFindMany: vi.fn(async () => []),
     mockInstalledResourceFindMany: vi.fn(),
@@ -37,6 +40,7 @@ const {
     mockInsertReturning,
     mockUpdate,
     mockUpdateReturning,
+    mockUpdateWhere,
   }
 })
 
@@ -59,6 +63,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     update: mockUpdate,
   },
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
+  and: vi.fn((...args: unknown[]) => ({ and: args })),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -79,9 +84,6 @@ vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
 const { aiFunctionService } = await import("../src/ai-function/service")
 
 const workspaceId = "workspace-1"
-const t = ((key: string) => key) as unknown as Parameters<
-  typeof aiFunctionService.updateAIFunction
->[2]
 
 const aiFunction = {
   id: "function-1",
@@ -113,26 +115,45 @@ beforeEach(() => {
 
 describe("aiFunctionService audit messages", () => {
   test("create logs by id", async () => {
+    // `create` now pre-checks isNameTaken via the same findFirst mock; no
+    // existing row means the name is free.
+    mockFindFirst.mockResolvedValueOnce(undefined)
+
     await aiFunctionService.create(workspaceId, request)
 
     expect(lastAuditDetail()).toBe("created a new AI Function (#function-1)")
+  })
+
+  test("create throws when the name is already taken", async () => {
+    await expect(
+      aiFunctionService.create(workspaceId, request),
+    ).rejects.toThrow("Name is already taken")
+  })
+
+  test("create skips the name-taken check when a transaction is passed", async () => {
+    const tx = { insert: mockInsert } as unknown as Parameters<
+      typeof aiFunctionService.create
+    >[2]
+
+    await aiFunctionService.create(workspaceId, request, tx)
+
+    expect(mockFindFirst).not.toHaveBeenCalled()
   })
 
   test("updateAIFunction logs by id", async () => {
     await aiFunctionService.updateAIFunction(
       { id: "function-1", workspaceId },
       request,
-      t,
     )
 
     expect(lastAuditDetail()).toBe("updated an AI Function (#function-1)")
   })
 
   test("deleteAIFunction logs by id", async () => {
-    await aiFunctionService.deleteAIFunction(
-      { aiFunctionId: "function-1", workspaceId },
-      t,
-    )
+    await aiFunctionService.deleteAIFunction({
+      aiFunctionId: "function-1",
+      workspaceId,
+    })
 
     expect(lastAuditDetail()).toBe("deleted an AI Function (#function-1)")
   })
@@ -144,7 +165,6 @@ describe("aiFunctionService audit messages", () => {
       aiFunctionService.updateAIFunction(
         { id: "missing", workspaceId },
         request,
-        t,
       ),
     ).rejects.toThrow()
 
@@ -155,23 +175,100 @@ describe("aiFunctionService audit messages", () => {
     mockFindFirst.mockResolvedValue(undefined)
 
     await expect(
-      aiFunctionService.deleteAIFunction(
-        { aiFunctionId: "missing", workspaceId },
-        t,
-      ),
+      aiFunctionService.deleteAIFunction({
+        aiFunctionId: "missing",
+        workspaceId,
+      }),
     ).rejects.toThrow()
 
     expect(dispatchAuditRecord).not.toHaveBeenCalled()
   })
 
-  test("list returns AI Functions scoped to the workspace", async () => {
+  test("listAIFunctions returns AI Functions scoped to the workspace", async () => {
     mockFindMany.mockResolvedValue([aiFunction])
 
-    const result = await aiFunctionService.list({ workspaceId })
+    const result = await aiFunctionService.listAIFunctions({ workspaceId })
 
-    expect(result).toEqual([aiFunction])
-    expect(mockFindMany).toHaveBeenCalledWith({
-      where: { workspaceId },
+    expect(result).toEqual({ data: [aiFunction], pageCount: 1 })
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { workspaceId } }),
+    )
+  })
+})
+
+describe("aiFunctionService plain-English errors (public API path)", () => {
+  test("updateAIFunction throws the plain-English fallback when missing", async () => {
+    mockFindFirst.mockResolvedValue(undefined)
+
+    await expect(
+      aiFunctionService.updateAIFunction(
+        { id: "missing", workspaceId },
+        request,
+      ),
+    ).rejects.toThrow("AI Function not found")
+  })
+
+  test("deleteAIFunction throws the plain-English fallback when missing", async () => {
+    mockFindFirst.mockResolvedValue(undefined)
+
+    await expect(
+      aiFunctionService.deleteAIFunction({
+        aiFunctionId: "missing",
+        workspaceId,
+      }),
+    ).rejects.toThrow("AI Function not found")
+  })
+
+  test("updateAIFunction resolves the updated row", async () => {
+    mockUpdateReturning.mockResolvedValue([
+      { id: "function-1", name: "Renamed" },
+    ])
+
+    const updated = await aiFunctionService.updateAIFunction(
+      { id: "function-1", workspaceId },
+      request,
+    )
+
+    expect(updated).toEqual({ id: "function-1", name: "Renamed" })
+  })
+})
+
+describe("aiFunctionService cross-workspace isolation", () => {
+  test("update scopes its where-clause to the requesting workspace, not just the id", async () => {
+    await aiFunctionService.updateAIFunction(
+      { id: "function-1", workspaceId: "workspace-b" },
+      request,
+    )
+
+    const whereArgs = mockUpdateWhere.mock.calls.at(-1)?.[0]
+    expect(whereArgs).toEqual(
+      expect.objectContaining({
+        and: expect.arrayContaining([
+          expect.objectContaining({
+            field: "workspaceId",
+            value: "workspace-b",
+          }),
+        ]),
+      }),
+    )
+  })
+
+  test("delete scopes its where-clause to the requesting workspace, not just the id", async () => {
+    await aiFunctionService.deleteAIFunction({
+      aiFunctionId: "function-1",
+      workspaceId: "workspace-b",
     })
+
+    const whereArgs = mockDeleteWhere.mock.calls.at(-1)?.[0]
+    expect(whereArgs).toEqual(
+      expect.objectContaining({
+        and: expect.arrayContaining([
+          expect.objectContaining({
+            field: "workspaceId",
+            value: "workspace-b",
+          }),
+        ]),
+      }),
+    )
   })
 })

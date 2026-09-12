@@ -1,16 +1,23 @@
 import {
+  and,
   type DatabaseClient,
   db,
   eq,
   type RelationsFieldFilter,
+  relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
 import { aiFunctionModel } from "@chatbotx.io/database/schema"
 import type { AIFunctionModel } from "@chatbotx.io/database/types"
+import {
+  getPaginationWithDefaults,
+  parseOrderByAsObject,
+} from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { isSameJsonValue } from "../audit/diff"
 import { BaseService } from "../base.service"
-import { notFoundException } from "../errors"
+import { notFoundException, validationException } from "../errors"
 import { assertDeletable } from "../template/installed-resource.service"
+import type { PaginatedResult } from "../types"
 
 type FindByProps = {
   tx?: DatabaseClient
@@ -20,11 +27,6 @@ type FindByProps = {
     name?: RelationsFieldFilter<string>
   }>
 }
-
-type TranslationFn = (
-  key: string,
-  params?: Record<string, string | number | Date>,
-) => string
 
 export type CreateAIFunctionRequest = {
   name: string
@@ -44,6 +46,37 @@ class AiFunctionService extends BaseService {
     })
   }
 
+  async listAIFunctions(input: {
+    workspaceId: string
+    page?: number
+    perPage?: number
+  }): Promise<PaginatedResult<AIFunctionModel>> {
+    const where = { workspaceId: input.workspaceId }
+    const orderBy = parseOrderByAsObject(aiFunctionModel, {
+      sort: [{ id: "createdAt", desc: true }],
+    })
+
+    if (input.page === undefined && input.perPage === undefined) {
+      const data = await db.query.aiFunctionModel.findMany({
+        where,
+        orderBy,
+      })
+      return { data, pageCount: 1 }
+    }
+
+    const pagination = getPaginationWithDefaults(input)
+    const [data, total] = await Promise.all([
+      db.query.aiFunctionModel.findMany({
+        where,
+        orderBy,
+        limit: pagination.limit,
+        offset: pagination.offset,
+      }),
+      db.$count(aiFunctionModel, relationsFilterToSQL(aiFunctionModel, where)),
+    ])
+    return { data, pageCount: Math.ceil(total / pagination.limit) }
+  }
+
   async isNameTaken(
     workspaceId: string,
     name: string,
@@ -53,20 +86,16 @@ class AiFunctionService extends BaseService {
     return existing ? existing.id !== excludeId : false
   }
 
-  async deleteAIFunction(
-    ctx: { workspaceId: string; aiFunctionId: string },
-    t: TranslationFn,
-  ): Promise<void> {
+  async deleteAIFunction(ctx: {
+    workspaceId: string
+    aiFunctionId: string
+  }): Promise<void> {
     const aiFunction = await this.findBy({
       where: { id: ctx.aiFunctionId, workspaceId: ctx.workspaceId },
     })
 
     if (!aiFunction) {
-      throw notFoundException(
-        t("messages.featureNotFound", {
-          feature: t("fields.aiFunction.label"),
-        }),
-      )
+      throw notFoundException("AI Function not found")
     }
 
     await assertDeletable({
@@ -75,7 +104,7 @@ class AiFunctionService extends BaseService {
       resourceIds: [ctx.aiFunctionId],
     })
 
-    await this.delete(ctx.aiFunctionId)
+    await this.delete({ workspaceId: ctx.workspaceId, id: ctx.aiFunctionId })
 
     await this.audit("delete", `deleted an AI Function (#${aiFunction.id})`)
   }
@@ -83,21 +112,23 @@ class AiFunctionService extends BaseService {
   async updateAIFunction(
     ctx: { workspaceId: string; id: string },
     data: UpdateAIFunctionRequest,
-    t: TranslationFn,
-  ): Promise<void> {
+  ): Promise<AIFunctionModel> {
     const aiFunction = await this.findBy({
       where: { id: ctx.id, workspaceId: ctx.workspaceId },
     })
 
     if (!aiFunction) {
-      throw notFoundException(
-        t("messages.featureNotFound", {
-          feature: t("fields.aiFunction.label"),
-        }),
-      )
+      throw notFoundException("AI Function not found")
     }
 
-    await this.update(ctx.id, data)
+    if (await this.isNameTaken(ctx.workspaceId, data.name, ctx.id)) {
+      throw validationException("name", "Name is already taken")
+    }
+
+    const [updated] = await this.update(
+      { workspaceId: ctx.workspaceId, id: ctx.id },
+      data,
+    )
 
     const previous: UpdateAIFunctionRequest = {
       name: aiFunction.name,
@@ -110,6 +141,8 @@ class AiFunctionService extends BaseService {
     if (!isSameJsonValue(data, previous)) {
       await this.audit("update", `updated an AI Function (#${aiFunction.id})`)
     }
+
+    return updated
   }
 
   async create(
@@ -117,6 +150,10 @@ class AiFunctionService extends BaseService {
     data: CreateAIFunctionRequest,
     tx?: DatabaseClient,
   ) {
+    if (!tx && (await this.isNameTaken(workspaceId, data.name))) {
+      throw validationException("name", "Name is already taken")
+    }
+
     const client = tx ?? db
     const created = await client
       .insert(aiFunctionModel)
@@ -137,31 +174,35 @@ class AiFunctionService extends BaseService {
     return created
   }
 
-  async update(id: string, data: UpdateAIFunctionRequest, tx?: DatabaseClient) {
+  async update(
+    ctx: { workspaceId: string; id: string },
+    data: UpdateAIFunctionRequest,
+    tx?: DatabaseClient,
+  ) {
     const client = tx ?? db
     return await client
       .update(aiFunctionModel)
       .set(data)
-      .where(eq(aiFunctionModel.id, id))
+      .where(
+        and(
+          eq(aiFunctionModel.id, ctx.id),
+          eq(aiFunctionModel.workspaceId, ctx.workspaceId),
+        ),
+      )
       .returning()
   }
 
-  async delete(id: string, tx?: DatabaseClient) {
+  async delete(ctx: { workspaceId: string; id: string }, tx?: DatabaseClient) {
     const client = tx ?? db
     return await client
       .delete(aiFunctionModel)
-      .where(eq(aiFunctionModel.id, id))
+      .where(
+        and(
+          eq(aiFunctionModel.id, ctx.id),
+          eq(aiFunctionModel.workspaceId, ctx.workspaceId),
+        ),
+      )
       .returning()
-  }
-
-  async list(props: {
-    workspaceId: string
-    tx?: DatabaseClient
-  }): Promise<AIFunctionModel[]> {
-    const { tx = db, workspaceId } = props
-    return await tx.query.aiFunctionModel.findMany({
-      where: { workspaceId },
-    })
   }
 }
 

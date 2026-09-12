@@ -14,7 +14,7 @@ export const createAIFileAction = workspaceActionClient
     const [workspaceId] = bindArgsParsedInputs
 
     try {
-      await aiFileService.create({ workspaceId, ...parsedInput })
+      await aiFileService.create(workspaceId, parsedInput)
     } catch (error) {
       if (
         error instanceof ChatbotXException &&

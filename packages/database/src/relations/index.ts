@@ -7,7 +7,6 @@ import { aiEmbeddingRelations } from "./ai-embedding"
 import { aiFileRelations } from "./ai-file"
 import { aiFunctionRelations } from "./ai-function"
 import { aiMCPServerRelations } from "./ai-mcp-server"
-import { aiTriggerRelations } from "./ai-trigger"
 import {
   analyticsBotMessageEventRelations,
   analyticsBroadcastEventRelations,
@@ -146,7 +145,6 @@ import { workspaceMemberRelations } from "./workspace-member"
 
 export const relations = {
   ...integrationApiRelations,
-  ...aiTriggerRelations,
   ...adsConversionEventRelations,
   ...metaCapiEventRelations,
   ...messagingAdOperationRelations,

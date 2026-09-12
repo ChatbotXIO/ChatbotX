@@ -1566,9 +1566,6 @@
     "aiQueuedMessages": {
       "label": "AI 排队消息"
     },
-    "aiTrigger": {
-      "label": "人工智能触发器"
-    },
     "alphanumericLength": {
       "label": "字母数字长度"
     },
@@ -4636,10 +4633,6 @@
     "agents": {
       "description": "AI Agent描述",
       "title": "AI Agent"
-    },
-    "aiTriggers": {
-      "description": "人工智能触发器描述",
-      "title": "人工智能触发器"
     },
     "automatedResponses": {
       "title": "关键字"

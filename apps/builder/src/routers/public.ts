@@ -1,6 +1,8 @@
 import { inboxTeamsPublicRouter } from "@/enterprise/features/inbox-teams/api/public"
 import { aiAgentsPublicRouter } from "@/features/ai-agents/api/public"
-import { aiTriggersPublicRouter } from "@/features/ai-triggers/api/public"
+import { aiFilesPublicRouter } from "@/features/ai-files/api/public"
+import { aiFunctionsPublicRouter } from "@/features/ai-functions/api/public"
+import { aiMcpServersPublicRouter } from "@/features/ai-mcp-servers/api/public"
 import { analyticsPublicRouter } from "@/features/analytics/api/public"
 import { appointmentCalendarsPublicRouter } from "@/features/appointment-calendars/api/public"
 import { appointmentRemindersPublicRouter } from "@/features/appointment-management/api/public"
@@ -34,7 +36,9 @@ import { workspaceMembersPublicRouter } from "@/features/workspace-members/api/p
 
 export const publicRouter = {
   aiAgents: aiAgentsPublicRouter,
-  aiTriggers: aiTriggersPublicRouter,
+  aiFiles: aiFilesPublicRouter,
+  aiFunctions: aiFunctionsPublicRouter,
+  aiMcpServers: aiMcpServersPublicRouter,
   analytics: analyticsPublicRouter,
   appointmentCalendars: appointmentCalendarsPublicRouter,
   appointmentExternalCalendars: appointmentExternalCalendarsPublicRouter,

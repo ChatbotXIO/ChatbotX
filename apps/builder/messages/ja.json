@@ -834,9 +834,6 @@
     "aiFunction": {
       "label": "AI関数"
     },
-    "aiTrigger": {
-      "label": "AIトリガー"
-    },
     "alphanumericLength": {
       "label": "英数字の長さ"
     },
@@ -3390,10 +3387,6 @@
     "agents": {
       "description": "AIエージェントの説明",
       "title": "AIエージェント"
-    },
-    "aiTriggers": {
-      "description": "AIトリガーの説明",
-      "title": "AIトリガー"
     },
     "automatedResponses": {
       "title": "キーワード"
