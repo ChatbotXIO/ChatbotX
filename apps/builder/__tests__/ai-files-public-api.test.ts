@@ -79,6 +79,9 @@ vi.mock("@chatbotx.io/database/schema", () => {
 // Deferred until after `vi.mock` calls above are hoisted, so the router
 // module picks up the mocked `@/orpc`/`@chatbotx.io/business` bindings.
 await import("@/features/ai-files/api/public")
+const { createAIFilePublicRequest } = await import(
+  "@/features/ai-files/schema/public"
+)
 
 const findProcedure = (method: string, path: string) => {
   const found = capturedProcedures.find(
@@ -175,6 +178,49 @@ describe("POST /v1/ai-files", () => {
     expect(aiFileService.create).toHaveBeenCalledWith("workspace-1", {
       url: "https://example.com/manual.pdf",
     })
+  })
+})
+
+describe("createAIFilePublicRequest", () => {
+  const file = new File(["hello"], "manual.pdf", { type: "application/pdf" })
+
+  test("accepts file only", () => {
+    expect(createAIFilePublicRequest.safeParse({ file }).success).toBe(true)
+  })
+
+  test("accepts url only", () => {
+    expect(
+      createAIFilePublicRequest.safeParse({
+        url: "https://example.com/manual.pdf",
+      }).success,
+    ).toBe(true)
+  })
+
+  test("rejects a payload carrying both file and url instead of silently dropping one", () => {
+    const result = createAIFilePublicRequest.safeParse({
+      file,
+      url: "https://example.com/manual.pdf",
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(
+        "Provide either 'file' or 'url', not both.",
+      )
+    }
+  })
+
+  test("rejects a payload with neither file nor url", () => {
+    const result = createAIFilePublicRequest.safeParse({
+      name: "manual.pdf",
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(
+        "Provide either 'file' or 'url'.",
+      )
+    }
   })
 })
 

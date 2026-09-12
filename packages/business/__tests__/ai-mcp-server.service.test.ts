@@ -3,10 +3,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const {
   mockDelete,
   mockDeleteReturning,
+  mockDeleteWhere,
   mockInsert,
   mockInsertReturning,
   mockUpdate,
   mockUpdateReturning,
+  mockUpdateWhere,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn()
   const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
@@ -24,10 +26,12 @@ const {
   return {
     mockDelete,
     mockDeleteReturning,
+    mockDeleteWhere,
     mockInsert,
     mockInsertReturning,
     mockUpdate,
     mockUpdateReturning,
+    mockUpdateWhere,
   }
 })
 
@@ -120,6 +124,53 @@ describe("aiMcpServerService audit messages", () => {
 
     await aiMcpServerService.delete({ workspaceId, id: "missing" })
 
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+})
+
+describe("aiMcpServerService cross-workspace isolation", () => {
+  test("update scopes its where-clause to the requesting workspace, not just the id", async () => {
+    mockUpdateReturning.mockResolvedValue([])
+
+    await aiMcpServerService.update(
+      { workspaceId: "workspace-b", id: "mcp-server-1" },
+      request,
+    )
+
+    expect(mockUpdate).toHaveBeenCalled()
+    const whereArgs = mockUpdateWhere.mock.calls.at(-1)?.[0]
+    expect(whereArgs).toEqual(
+      expect.objectContaining({
+        and: expect.arrayContaining([
+          expect.objectContaining({
+            field: "workspaceId",
+            value: "workspace-b",
+          }),
+        ]),
+      }),
+    )
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("delete scopes its where-clause to the requesting workspace, not just the id", async () => {
+    mockDeleteReturning.mockResolvedValue([])
+
+    await aiMcpServerService.delete({
+      workspaceId: "workspace-b",
+      id: "mcp-server-1",
+    })
+
+    const whereArgs = mockDeleteWhere.mock.calls.at(-1)?.[0]
+    expect(whereArgs).toEqual(
+      expect.objectContaining({
+        and: expect.arrayContaining([
+          expect.objectContaining({
+            field: "workspaceId",
+            value: "workspace-b",
+          }),
+        ]),
+      }),
+    )
     expect(dispatchAuditRecord).not.toHaveBeenCalled()
   })
 })

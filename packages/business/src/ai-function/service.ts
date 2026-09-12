@@ -1,4 +1,5 @@
 import {
+  and,
   type DatabaseClient,
   db,
   eq,
@@ -114,7 +115,7 @@ class AiFunctionService extends BaseService {
       resourceIds: [ctx.aiFunctionId],
     })
 
-    await this.delete(ctx.aiFunctionId)
+    await this.delete({ workspaceId: ctx.workspaceId, id: ctx.aiFunctionId })
 
     await this.audit("delete", `deleted an AI Function (#${aiFunction.id})`)
   }
@@ -149,7 +150,10 @@ class AiFunctionService extends BaseService {
       )
     }
 
-    const [updated] = await this.update(ctx.id, data)
+    const [updated] = await this.update(
+      { workspaceId: ctx.workspaceId, id: ctx.id },
+      data,
+    )
 
     const previous: UpdateAIFunctionRequest = {
       name: aiFunction.name,
@@ -203,20 +207,34 @@ class AiFunctionService extends BaseService {
     return created
   }
 
-  async update(id: string, data: UpdateAIFunctionRequest, tx?: DatabaseClient) {
+  async update(
+    ctx: { workspaceId: string; id: string },
+    data: UpdateAIFunctionRequest,
+    tx?: DatabaseClient,
+  ) {
     const client = tx ?? db
     return await client
       .update(aiFunctionModel)
       .set(data)
-      .where(eq(aiFunctionModel.id, id))
+      .where(
+        and(
+          eq(aiFunctionModel.id, ctx.id),
+          eq(aiFunctionModel.workspaceId, ctx.workspaceId),
+        ),
+      )
       .returning()
   }
 
-  async delete(id: string, tx?: DatabaseClient) {
+  async delete(ctx: { workspaceId: string; id: string }, tx?: DatabaseClient) {
     const client = tx ?? db
     return await client
       .delete(aiFunctionModel)
-      .where(eq(aiFunctionModel.id, id))
+      .where(
+        and(
+          eq(aiFunctionModel.id, ctx.id),
+          eq(aiFunctionModel.workspaceId, ctx.workspaceId),
+        ),
+      )
       .returning()
   }
 }

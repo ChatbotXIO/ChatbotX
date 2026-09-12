@@ -12,6 +12,7 @@ import {
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import {
+  UploadValidationError,
   uploader,
   uploadFile,
   uploadFileFromUrl,
@@ -194,7 +195,15 @@ class AiFileService extends BaseService {
       path,
       "private",
       AI_FILE_MAX_UPLOAD_BYTES,
-      (candidateUrl) => assertPublicUrl(candidateUrl, "AI file URL"),
+      async (candidateUrl) => {
+        try {
+          await assertPublicUrl(candidateUrl, "AI file URL")
+        } catch {
+          // The guard's own message echoes the submitted URL; replace it with
+          // a safe, caller-fault message before it can reach the API response.
+          throw new UploadValidationError("The provided URL is not allowed")
+        }
+      },
     )
     return {
       name: input.name ?? uploaded.name,
@@ -214,10 +223,14 @@ class AiFileService extends BaseService {
     try {
       resolved = await this.resolveUpload(workspaceId, input)
     } catch (error) {
+      if (error instanceof UploadValidationError) {
+        throw new ChatbotXException(error.message, "businessError", 400)
+      }
+      logger.error({ err: error }, "Failed to store AI file")
       throw new ChatbotXException(
-        error instanceof Error ? error.message : "Failed to store AI file",
-        "businessError",
-        400,
+        "Failed to store AI file. Please try again later.",
+        "systemError",
+        502,
       )
     }
 

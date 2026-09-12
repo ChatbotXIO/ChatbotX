@@ -69,10 +69,14 @@ export const aiFilesPublicRouter = {
     .input(createAIFilePublicRequest)
     .output(publicAIFileResource)
     .errors(possibleErrorsOnCreatingResource)
-    .handler(
-      async ({ context, input }) =>
-        await aiFileService.create(context.workspace.id, input),
-    ),
+    .handler(async ({ context, input }) => {
+      // The schema's superRefine already guarantees exactly one of
+      // file/url is present; narrow here for aiFileService.create's
+      // discriminated CreateAIFileInput.
+      const { name, file, url } = input
+      const upload = file ? { name, file } : { name, url: url as string }
+      return await aiFileService.create(context.workspace.id, upload)
+    }),
 
   delete: workspaceTokenAuthAPI
     .route({

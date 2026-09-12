@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const {
   mockDelete,
   mockDeleteReturning,
+  mockDeleteWhere,
   mockFindFirst,
   mockFindMany,
   mockInstalledResourceFindMany,
@@ -12,6 +13,7 @@ const {
   mockInsertReturning,
   mockUpdate,
   mockUpdateReturning,
+  mockUpdateWhere,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn()
   const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
@@ -29,6 +31,7 @@ const {
   return {
     mockDelete,
     mockDeleteReturning,
+    mockDeleteWhere,
     mockFindFirst: vi.fn(),
     mockFindMany: vi.fn(async () => []),
     mockInstalledResourceFindMany: vi.fn(),
@@ -37,6 +40,7 @@ const {
     mockInsertReturning,
     mockUpdate,
     mockUpdateReturning,
+    mockUpdateWhere,
   }
 })
 
@@ -59,6 +63,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     update: mockUpdate,
   },
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
+  and: vi.fn((...args: unknown[]) => ({ and: args })),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -113,9 +118,29 @@ beforeEach(() => {
 
 describe("aiFunctionService audit messages", () => {
   test("create logs by id", async () => {
+    // `create` now pre-checks isNameTaken via the same findFirst mock; no
+    // existing row means the name is free.
+    mockFindFirst.mockResolvedValueOnce(undefined)
+
     await aiFunctionService.create(workspaceId, request)
 
     expect(lastAuditDetail()).toBe("created a new AI Function (#function-1)")
+  })
+
+  test("create throws when the name is already taken", async () => {
+    await expect(
+      aiFunctionService.create(workspaceId, request),
+    ).rejects.toThrow("Name is already taken")
+  })
+
+  test("create skips the name-taken check when a transaction is passed", async () => {
+    const tx = { insert: mockInsert } as unknown as Parameters<
+      typeof aiFunctionService.create
+    >[2]
+
+    await aiFunctionService.create(workspaceId, request, tx)
+
+    expect(mockFindFirst).not.toHaveBeenCalled()
   })
 
   test("updateAIFunction logs by id", async () => {
@@ -210,5 +235,45 @@ describe("aiFunctionService without a translator (public API path)", () => {
     )
 
     expect(updated).toEqual({ id: "function-1", name: "Renamed" })
+  })
+})
+
+describe("aiFunctionService cross-workspace isolation", () => {
+  test("update scopes its where-clause to the requesting workspace, not just the id", async () => {
+    await aiFunctionService.updateAIFunction(
+      { id: "function-1", workspaceId: "workspace-b" },
+      request,
+    )
+
+    const whereArgs = mockUpdateWhere.mock.calls.at(-1)?.[0]
+    expect(whereArgs).toEqual(
+      expect.objectContaining({
+        and: expect.arrayContaining([
+          expect.objectContaining({
+            field: "workspaceId",
+            value: "workspace-b",
+          }),
+        ]),
+      }),
+    )
+  })
+
+  test("delete scopes its where-clause to the requesting workspace, not just the id", async () => {
+    await aiFunctionService.deleteAIFunction({
+      aiFunctionId: "function-1",
+      workspaceId: "workspace-b",
+    })
+
+    const whereArgs = mockDeleteWhere.mock.calls.at(-1)?.[0]
+    expect(whereArgs).toEqual(
+      expect.objectContaining({
+        and: expect.arrayContaining([
+          expect.objectContaining({
+            field: "workspaceId",
+            value: "workspace-b",
+          }),
+        ]),
+      }),
+    )
   })
 })

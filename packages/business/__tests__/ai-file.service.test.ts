@@ -69,6 +69,13 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: () => "file-1",
 }))
 
+class MockUploadValidationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "UploadValidationError"
+  }
+}
+
 vi.mock("@chatbotx.io/filesystem", () => ({
   uploader: {
     getPresignedDownload: mockGetPresignedDownload,
@@ -76,6 +83,7 @@ vi.mock("@chatbotx.io/filesystem", () => ({
   },
   uploadFile: mockUploadFile,
   uploadFileFromUrl: mockUploadFileFromUrl,
+  UploadValidationError: MockUploadValidationError,
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -196,16 +204,22 @@ describe("aiFileService.create", () => {
       url: "https://example.com/manual.pdf",
     })
 
-    expect(mockAssertPublicUrl).toHaveBeenCalledWith(
-      "https://example.com/manual.pdf",
-      "AI file URL",
-    )
     expect(mockUploadFileFromUrl).toHaveBeenCalledWith(
       "https://example.com/manual.pdf",
       "workspaces/workspace-1/ai-files/file-1",
       "private",
       AI_FILE_MAX_UPLOAD_BYTES,
       expect.any(Function),
+    )
+
+    // The guard runs inside uploadFileFromUrl (once per redirect hop), so
+    // assert the callback delegates rather than that the service called it
+    // directly.
+    const validate = mockUploadFileFromUrl.mock.calls[0][4]
+    await validate("https://example.com/redirected.pdf")
+    expect(mockAssertPublicUrl).toHaveBeenCalledWith(
+      "https://example.com/redirected.pdf",
+      "AI file URL",
     )
   })
 
@@ -230,7 +244,30 @@ describe("aiFileService.create", () => {
 
     expect(error).toBeInstanceOf(ChatbotXException)
     expect((error as ChatbotXException).code).toBe("businessError")
-    expect((error as ChatbotXException).message).toBe("blocked host")
+    // The guard's own message (which echoes the submitted URL) must never
+    // reach the caller — it is replaced with a safe, generic message.
+    expect((error as ChatbotXException).message).toBe(
+      "The provided URL is not allowed",
+    )
+    expect((error as ChatbotXException).message).not.toContain(
+      "169.254.169.254",
+    )
+  })
+
+  test("url mode reports an infrastructure failure as a generic 5xx without leaking details", async () => {
+    mockUploadFileFromUrl.mockRejectedValueOnce(
+      new Error("connect ECONNREFUSED 10.0.4.12:9000"),
+    )
+
+    const error = await aiFileService
+      .create(workspaceId, { url: "https://example.com/manual.pdf" })
+      .catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(ChatbotXException)
+    expect((error as ChatbotXException).code).toBe("systemError")
+    expect((error as ChatbotXException).httpStatusCode).toBe(502)
+    expect((error as ChatbotXException).message).not.toContain("ECONNREFUSED")
+    expect((error as ChatbotXException).message).not.toContain("10.0.4.12")
   })
 
   test("rejects when neither OpenAI nor Gemini is configured", async () => {

@@ -1,8 +1,27 @@
 import type { ObjectCannedACL } from "@aws-sdk/client-s3"
+import { getChildLogger } from "@chatbotx.io/logger"
 import { createId } from "@chatbotx.io/utils"
+import { fetchFollowingSafeRedirects, readBodyWithLimit } from "./bounded-fetch"
 import { getImageDimensions, pathJoin } from "./helper"
 import { DEFAULT_MIME_TYPE, type UploadedFile } from "./schema"
 import { uploader } from "./uploader"
+
+const logger = getChildLogger("filesystem:upload")
+
+/**
+ * Distinguishes a caller-fault upload failure (oversized body, unreachable
+ * URL, too many redirects, SSRF rejection) from an infrastructure failure
+ * (storage outage, network error) — callers like
+ * `packages/business/src/ai-file/service.ts` need this to avoid surfacing
+ * internal error text (e.g. "connect ECONNREFUSED ...") as a 400 to the
+ * request's caller.
+ */
+export class UploadValidationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "UploadValidationError"
+  }
+}
 
 export async function uploadFile(
   file: File,
@@ -36,82 +55,6 @@ export async function uploadMultipleFiles(
   )
 }
 
-const MAX_REDIRECT_HOPS = 5
-
-/**
- * Reads a response body through a stream with a running byte counter,
- * aborting as soon as `maxBytes` is crossed instead of buffering the whole
- * body first — a lying or absent `content-length` header must not force an
- * unbounded amount of the response into memory before the cap is enforced.
- */
-async function readBodyWithLimit(
-  response: Response,
-  maxBytes: number,
-): Promise<Buffer> {
-  const body = response.body
-  if (!body) {
-    return Buffer.from(await response.arrayBuffer())
-  }
-
-  const reader = body.getReader()
-  const chunks: Uint8Array[] = []
-  let total = 0
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) {
-      break
-    }
-    if (!value) {
-      continue
-    }
-
-    total += value.byteLength
-    if (total > maxBytes) {
-      await reader.cancel()
-      throw new Error(
-        `File exceeds the maximum allowed size of ${maxBytes} bytes`,
-      )
-    }
-    chunks.push(value)
-  }
-
-  return Buffer.concat(chunks, total)
-}
-
-/**
- * Fetches `url`, manually following redirects so `validateUrl` re-runs on
- * every hop before it is requested — `fetch`'s own `redirect: "follow"`
- * would resolve and request each hop with zero re-validation, letting a
- * server that passes the first check redirect the download to a private/
- * internal address the caller's SSRF guard never saw.
- */
-async function fetchFollowingSafeRedirects(
-  url: string,
-  validateUrl: (url: string) => Promise<void>,
-  redirectsLeft = MAX_REDIRECT_HOPS,
-): Promise<{ response: Response; finalUrl: string }> {
-  await validateUrl(url)
-  const response = await fetch(url, { redirect: "manual" as const })
-
-  if (response.status < 300 || response.status >= 400) {
-    return { response, finalUrl: url }
-  }
-  if (redirectsLeft <= 0) {
-    throw new Error("Too many redirects while downloading file")
-  }
-  const location = response.headers.get("location")
-  if (!location) {
-    throw new Error("Redirect response has no Location header")
-  }
-
-  return fetchFollowingSafeRedirects(
-    new URL(location, url).href,
-    validateUrl,
-    redirectsLeft - 1,
-  )
-}
-
 export async function uploadFileFromUrl(
   url: string,
   path: string,
@@ -120,13 +63,34 @@ export async function uploadFileFromUrl(
   validateUrl?: (url: string) => Promise<void>,
 ): Promise<UploadedFile> {
   const { response, finalUrl } = validateUrl
-    ? await fetchFollowingSafeRedirects(url, validateUrl)
+    ? await fetchFollowingSafeRedirects({
+        errors: {
+          tooManyRedirects: () =>
+            new UploadValidationError(
+              "Too many redirects while downloading file",
+            ),
+          noLocationHeader: () =>
+            new UploadValidationError(
+              "Redirect response has no Location header",
+            ),
+          invalidRedirectLocation: (location) =>
+            new UploadValidationError(
+              `Redirect response has an invalid Location header: ${location}`,
+            ),
+        },
+        fetchImpl: (candidateUrl) =>
+          fetch(candidateUrl, { redirect: "manual" as const }),
+        url,
+        validateUrl,
+      })
     : {
         response: await fetch(url, { redirect: "follow" as const }),
         finalUrl: url,
       }
   if (!response.ok) {
-    throw new Error(`Failed to download file: ${response.status}`)
+    throw new UploadValidationError(
+      `Failed to download file: ${response.status}`,
+    )
   }
 
   const mimeType = (response.headers.get("content-type") || DEFAULT_MIME_TYPE)
@@ -137,7 +101,7 @@ export async function uploadFileFromUrl(
     10,
   )
   if (maxBytes && headerLength > maxBytes) {
-    throw new Error(
+    throw new UploadValidationError(
       `File exceeds the maximum allowed size of ${maxBytes} bytes`,
     )
   }
@@ -150,13 +114,23 @@ export async function uploadFileFromUrl(
       name = decodeURIComponent(last)
     }
   } catch (error) {
-    console.error("uploadFileFromUrl: invalid URL", error)
+    logger.warn({ err: error }, "uploadFileFromUrl: invalid URL")
   }
 
   const buffer = maxBytes
-    ? await readBodyWithLimit(response, maxBytes)
+    ? await readBodyWithLimit(
+        response,
+        maxBytes,
+        (limit) =>
+          new UploadValidationError(
+            `File exceeds the maximum allowed size of ${limit} bytes`,
+          ),
+      )
     : Buffer.from(await response.arrayBuffer())
-  const size = headerLength || buffer.byteLength
+  // headerLength is the origin's self-reported content-length, used only as
+  // an early-reject hint above — it can disagree with what was actually
+  // streamed, and putObject's ContentLength must match the real buffer.
+  const size = buffer.byteLength
 
   await uploader.putObject(path, buffer, {
     ACL: acl as ObjectCannedACL,

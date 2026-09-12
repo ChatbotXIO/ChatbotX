@@ -9,20 +9,33 @@ export const publicAIFileResource = aiFileResource.extend({
   processingStatus: aiEmbeddingStatuses,
 })
 
-export const createAIFilePublicRequest = z.union([
-  z.object({
+export const createAIFilePublicRequest = z
+  .object({
     name: z.string().trim().min(1).optional(),
     file: z
       .instanceof(File)
       .refine((file) => file.size <= AI_FILE_MAX_UPLOAD_BYTES, {
         message: "Max file size is 100MB.",
-      }),
-  }),
-  z.object({
-    name: z.string().trim().min(1).optional(),
-    url: z.url(),
-  }),
-])
+      })
+      .optional(),
+    url: z.url().optional(),
+  })
+  // A plain z.union resolves to the first matching branch and silently
+  // strips the other field as unknown, so `{ file, url }` would drop `url`
+  // with no error. A flat object + refine sees both fields at once.
+  .superRefine((value, ctx) => {
+    if (value.file !== undefined && value.url !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Provide either 'file' or 'url', not both.",
+      })
+    } else if (value.file === undefined && value.url === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Provide either 'file' or 'url'.",
+      })
+    }
+  })
 export type CreateAIFilePublicRequest = z.infer<
   typeof createAIFilePublicRequest
 >
