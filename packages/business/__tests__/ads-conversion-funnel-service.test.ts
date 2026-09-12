@@ -458,3 +458,59 @@ describe("AdsConversionService.getCtwaFunnelTimeseries — allChannels", () => {
     ])
   })
 })
+
+describe("AdsConversionService.getCtwaFunnel — facebook channel conversations", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("reports conversations: 0 without ever calling the WhatsApp ctwaClid repository method, while still reporting facebook leads", async () => {
+    mocks.countConversionEventsByAd.mockResolvedValue([
+      { adId: "ad-1", eventType: "lead", count: 4, purchaseValue: null },
+    ])
+
+    const result = await adsConversionService.getCtwaFunnel({
+      workspaceId: "1",
+      channel: "facebook",
+      since: new Date("2026-08-10T00:00:00.000Z"),
+      until: new Date("2026-08-11T23:59:59.999Z"),
+    })
+
+    // Never falls through to the WhatsApp-only repository method — that
+    // would silently count ctwaClid-populated WhatsApp conversations under
+    // a facebook-scoped query.
+    expect(mocks.countCtwaConversationsByAd).not.toHaveBeenCalled()
+    expect(mocks.countAllChannelConversationsByAd).not.toHaveBeenCalled()
+    expect(result.totals.conversations).toBe(0)
+    expect(result.totals.leads).toBe(4)
+    expect(result.perAd).toContainEqual(
+      expect.objectContaining({ adId: "ad-1", conversations: 0, leads: 4 }),
+    )
+  })
+
+  test("getCtwaFunnelTimeseries also reports zero conversations for facebook without the day-bucketed WhatsApp method", async () => {
+    mocks.countConversionEventsByDayAndAd.mockResolvedValue([
+      { date: "2026-08-10", adId: "ad-1", eventType: "lead", count: 2 },
+    ])
+
+    const result = await adsConversionService.getCtwaFunnelTimeseries({
+      workspaceId: "1",
+      channel: "facebook",
+      since: new Date("2026-08-10T00:00:00.000Z"),
+      until: new Date("2026-08-11T23:59:59.999Z"),
+    })
+
+    expect(mocks.countCtwaConversationsByDayAndAd).not.toHaveBeenCalled()
+    expect(mocks.countAllChannelConversationsByDayAndAd).not.toHaveBeenCalled()
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          date: "2026-08-10",
+          adId: "ad-1",
+          conversations: 0,
+          leads: 2,
+        }),
+      ]),
+    )
+  })
+})

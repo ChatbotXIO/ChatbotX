@@ -6,6 +6,7 @@ import {
   adsConversionEventRepository,
   adsConversionRuleRepository,
   contactInboxRepository,
+  type FindWorkspaceEventInput,
   integrationFacebookAdsRepository,
   integrationInstagramRepository,
   integrationMessengerRepository,
@@ -18,11 +19,13 @@ import type {
   adsConversionEventModel,
   adsConversionRuleModel,
 } from "@chatbotx.io/database/schema"
+import { adsConversionChannelSchema } from "@chatbotx.io/database/schema"
 import type {
   AdsConversionEventModel,
   AdsConversionRuleModel,
 } from "@chatbotx.io/database/types"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
+import { DEFAULT_ADS_CONVERSION_CHANNEL } from "@chatbotx.io/utils/channel"
 import {
   enqueueIntegrationJob,
   IntegrationJobAction,
@@ -63,7 +66,9 @@ import {
   removeAdsConversionRuleInput,
   type ToggleAdsConversionRuleInput,
   toggleAdsConversionRuleInput,
+  type UpdateAdsCapiStatusInput,
   type UpdateAdsConversionRuleInput,
+  updateAdsCapiStatusInput,
   updateAdsConversionRuleInput,
 } from "./schema"
 import {
@@ -814,6 +819,31 @@ class AdsConversionService extends BaseService {
     )
   }
 
+  /**
+   * Single-rule read, workspace-scoped. `removeAdsConversionRuleInput`'s
+   * `{ id, workspaceId }` shape is reused rather than adding a near-duplicate
+   * schema — every field it validates (both bigint-string ids) is exactly
+   * what this lookup needs. Not a repository call from the handler layer: a
+   * `GET` by id owns the not-found contract (same message as
+   * `update`/`toggleEnabled`/`remove`), which makes it business logic, not a
+   * pure read (`.agents/rules/data-access.md`).
+   */
+  async findOrFail(
+    input: RemoveAdsConversionRuleInput,
+    tx?: DatabaseClient,
+  ): Promise<AdsConversionRuleModel> {
+    const parsed = removeAdsConversionRuleInput.parse(input)
+    const rule = await adsConversionRuleRepository.findWorkspaceRule(parsed, tx)
+    if (!rule) {
+      throw new ChatbotXException(
+        "Ads conversion rule not found",
+        "notFound",
+        404,
+      )
+    }
+    return rule
+  }
+
   async create(
     input: CreateAdsConversionRuleInput,
     tx?: DatabaseClient,
@@ -838,7 +868,11 @@ class AdsConversionService extends BaseService {
       tx,
     )
     if (!existing) {
-      throw new ChatbotXException("Ads conversion rule not found")
+      throw new ChatbotXException(
+        "Ads conversion rule not found",
+        "notFound",
+        404,
+      )
     }
 
     const merged = {
@@ -879,7 +913,11 @@ class AdsConversionService extends BaseService {
       tx,
     )
     if (!updated) {
-      throw new ChatbotXException("Ads conversion rule not found")
+      throw new ChatbotXException(
+        "Ads conversion rule not found",
+        "notFound",
+        404,
+      )
     }
 
     await this.invalidateHasTriggerRuleCache(parsed.workspaceId)
@@ -900,7 +938,11 @@ class AdsConversionService extends BaseService {
       tx,
     )
     if (!updated) {
-      throw new ChatbotXException("Ads conversion rule not found")
+      throw new ChatbotXException(
+        "Ads conversion rule not found",
+        "notFound",
+        404,
+      )
     }
 
     await this.invalidateHasTriggerRuleCache(parsed.workspaceId)
@@ -914,7 +956,11 @@ class AdsConversionService extends BaseService {
     const parsed = removeAdsConversionRuleInput.parse(input)
     const deleted = await adsConversionRuleRepository.delete(parsed, tx)
     if (!deleted) {
-      throw new ChatbotXException("Ads conversion rule not found")
+      throw new ChatbotXException(
+        "Ads conversion rule not found",
+        "notFound",
+        404,
+      )
     }
 
     await this.invalidateHasTriggerRuleCache(parsed.workspaceId)
@@ -1553,6 +1599,12 @@ class AdsConversionService extends BaseService {
     parsed: ReturnType<typeof getCtwaFunnelInput.parse>,
     tx?: DatabaseClient,
   ) {
+    if (parsed.channel === adsConversionChannelSchema.enum.facebook) {
+      // See `buildConversationsPredicate` — facebook has no contact-scoped ad
+      // conversation, so the count is 0, never WhatsApp's ctwaClid population.
+      return []
+    }
+
     if (parsed.allChannels) {
       return adsConversionEventRepository.countAllChannelConversationsByAd(
         {
@@ -1586,6 +1638,12 @@ class AdsConversionService extends BaseService {
     parsed: ReturnType<typeof getCtwaFunnelInput.parse>,
     tx?: DatabaseClient,
   ) {
+    if (parsed.channel === adsConversionChannelSchema.enum.facebook) {
+      // See `buildConversationsPredicate` — facebook has no contact-scoped ad
+      // conversation, so the count is 0, never WhatsApp's ctwaClid population.
+      return []
+    }
+
     if (parsed.allChannels) {
       return adsConversionEventRepository.countAllChannelConversationsByDayAndAd(
         {
@@ -1780,9 +1838,67 @@ class AdsConversionService extends BaseService {
     return summary
   }
 
+  /**
+   * `buildCtwaSegmentPredicate` (`ctwa-retarget.ts`) applies NO channel
+   * filter when both `channel` and every integration id are omitted — that
+   * contract is correct for a saved contact filter ("any channel"), but an
+   * export request expects rows scoped to one channel. Default only in that
+   * fully-unscoped case; an explicit `channel`, or any integration id
+   * (messenger/instagram included), is left untouched so it keeps resolving
+   * its own channel. `listRetargetContacts` deliberately does NOT apply this
+   * default — the worker's audience sync follows the saved filter's "any
+   * channel" semantics when unscoped.
+   */
   listExportRows(input: ListAdsConversionExportRowsInput, tx?: DatabaseClient) {
     const parsed = listAdsConversionExportRowsInput.parse(input)
-    return adsConversionEventRepository.listExportSegmentRows(parsed, tx)
+    const channel =
+      parsed.channel ??
+      (parsed.integrationWhatsappId ||
+      parsed.integrationMessengerId ||
+      parsed.integrationInstagramId
+        ? undefined
+        : DEFAULT_ADS_CONVERSION_CHANNEL)
+
+    return adsConversionEventRepository.listExportSegmentRows(
+      { ...parsed, channel },
+      tx,
+    )
+  }
+
+  findWorkspaceEvent(input: FindWorkspaceEventInput, tx?: DatabaseClient) {
+    return adsConversionEventRepository.findWorkspaceEvent(input, tx)
+  }
+
+  /**
+   * Single-event read, workspace-scoped, for the public
+   * `GET /v1/ads/conversions/{id}` endpoint — a `GET` by id owns the
+   * not-found contract itself (mirrors `findOrFail` for conversion rules)
+   * rather than letting the handler return `findWorkspaceEvent`'s bare
+   * `null` as a 200.
+   */
+  async findWorkspaceEventOrFail(
+    input: FindWorkspaceEventInput,
+    tx?: DatabaseClient,
+  ): Promise<AdsConversionEventModel> {
+    const event = await adsConversionEventRepository.findWorkspaceEvent(
+      input,
+      tx,
+    )
+    if (!event) {
+      throw new ChatbotXException(
+        "Ads conversion event not found",
+        "notFound",
+        404,
+      )
+    }
+    return event
+  }
+
+  updateCapiStatus(input: UpdateAdsCapiStatusInput, tx?: DatabaseClient) {
+    return adsConversionEventRepository.updateCapiStatus(
+      updateAdsCapiStatusInput.parse(input),
+      tx,
+    )
   }
 
   /**

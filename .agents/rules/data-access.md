@@ -1,3 +1,19 @@
+---
+name: data-access
+description: >-
+  Enforces the action/API handler → service → repository → DB chain in
+  ChatbotX. Read before adding or reviewing code in apps/builder,
+  apps/worker, integrations/*, packages/business, or packages/database that
+  reads or writes data.
+globs:
+  - apps/builder/**
+  - apps/worker/**
+  - apps/mcp-server/**
+  - integrations/**
+  - packages/business/**
+  - packages/database/**
+---
+
 # Data Access Layer Rule
 
 ## Principle

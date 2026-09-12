@@ -16,6 +16,9 @@ const read = (relativePath) => readFile(path.join(root, relativePath), "utf8")
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
+const FRONTMATTER_BLOCK = /^---\n[\s\S]*?\n---\n/
+const stripFrontmatter = (content) => content.replace(FRONTMATTER_BLOCK, "")
+
 const markerPair = (name) => ({
   begin: `<!-- BEGIN GENERATED: ${name} -->`,
   end: `<!-- END GENERATED: ${name} -->`,
@@ -76,7 +79,7 @@ const updateFile = async (relativePath, updates) => {
 const main = async () => {
   const agents = await read("AGENTS.md")
   const invariants = extractMarkedSection(agents, "SHARED-INVARIANTS")
-  const gitRules = await read(".agents/rules/git.md")
+  const gitRules = stripFrontmatter(await read(".agents/rules/git.md"))
 
   await updateFile(".devin/rules/chatbotx.md", [
     { name: "SHARED-INVARIANTS", replacement: invariants },

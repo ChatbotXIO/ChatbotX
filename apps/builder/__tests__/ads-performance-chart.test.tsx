@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 
+import type { AdsAnalyticsTimeseriesRow } from "@chatbotx.io/business"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { AdsPerformanceChart } from "@/features/ads/components/ads-performance-chart"
-import type { AdsAnalyticsTimeseriesRow } from "@/features/ads/queries/analytics"
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,

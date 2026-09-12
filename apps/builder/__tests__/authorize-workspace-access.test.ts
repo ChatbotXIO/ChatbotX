@@ -29,10 +29,14 @@ vi.mock("@/env", () => ({ isCloud }))
 
 const {
   checkWorkspaceOwnerAccess,
+  isReadOnlyTokenAllowedMethod,
   isWorkspaceMutationMethod,
   workspaceAccessDenialException,
   workspaceAccessDenialOrpcError,
 } = await import("@/lib/workspace/authorize-workspace-access")
+const { ADS_CAMPAIGNS_INSIGHTS_PATH } = await import(
+  "@/features/ads-campaign/lib/api-paths"
+)
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -124,6 +128,36 @@ describe("isWorkspaceMutationMethod", () => {
     [undefined, true],
   ])("method %s → mutation=%s", (method, expected) => {
     expect(isWorkspaceMutationMethod(method)).toBe(expected)
+  })
+})
+
+describe("isReadOnlyTokenAllowedMethod", () => {
+  test("allows GET/HEAD regardless of path", () => {
+    expect(isReadOnlyTokenAllowedMethod("GET")).toBe(true)
+    expect(isReadOnlyTokenAllowedMethod("HEAD")).toBe(true)
+  })
+
+  test("allows POST to the allowlisted ads campaigns insights path", () => {
+    expect(
+      isReadOnlyTokenAllowedMethod("POST", ADS_CAMPAIGNS_INSIGHTS_PATH),
+    ).toBe(true)
+  })
+
+  test("rejects POST/PUT/PATCH to every other path", () => {
+    expect(isReadOnlyTokenAllowedMethod("POST", "/v1/ads/campaigns")).toBe(
+      false,
+    )
+    expect(
+      isReadOnlyTokenAllowedMethod("PUT", ADS_CAMPAIGNS_INSIGHTS_PATH),
+    ).toBe(false)
+    expect(
+      isReadOnlyTokenAllowedMethod("PATCH", ADS_CAMPAIGNS_INSIGHTS_PATH),
+    ).toBe(false)
+  })
+
+  test("rejects POST with no path at all", () => {
+    expect(isReadOnlyTokenAllowedMethod("POST")).toBe(false)
+    expect(isReadOnlyTokenAllowedMethod("POST", undefined)).toBe(false)
   })
 })
 

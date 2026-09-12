@@ -1,18 +1,12 @@
-// @vitest-environment node
-
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import {
-  getAdsAnalyticsData,
-  getAdsAnalyticsTimeseries,
-} from "../src/features/ads/queries/analytics"
 
-// HIGH-4: getFacebookAdsContext (credential fetch + AES decrypt) must be
+// HIGH-4: buildFacebookAdsContext (credential fetch + AES decrypt) must be
 // resolved at most once per multi-account fan-out, not once per account.
 // Unlike the other analytics test files, the mocked getCachedAdInsights /
 // getCachedDailyAdInsights below actually call the `getContext` thunk they
 // are given — mirroring the real implementation in
-// integration-facebook-ads/queries.ts — so this test can assert the
-// memoization the SUT (`analytics.ts`) is responsible for.
+// integration-facebook-ads/graph-reads.ts — so this test can assert the
+// memoization the SUT (`ads-analytics/service.ts`) is responsible for.
 //
 // `messagingAdsConnectionService.listForChannel` resolves to an empty array
 // throughout this file — every account here comes from the workspace-wide
@@ -23,35 +17,53 @@ const mocks = vi.hoisted(() => ({
   getCtwaFunnel: vi.fn(),
   getCtwaFunnelTimeseries: vi.fn(),
   listForChannel: vi.fn(),
-  getFacebookAdsContext: vi.fn(),
+  buildFacebookAdsContext: vi.fn(),
   getCachedAdAccounts: vi.fn(),
+  findByWorkspaceId: vi.fn(async () => ({ id: "ifa-1" })),
+  listCachedMessagingAdAccounts: vi.fn(),
+  buildMessagingAdsContext: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
+vi.mock("../src/ads-conversion", () => ({
   adsConversionService: {
     getCtwaFunnel: mocks.getCtwaFunnel,
     getCtwaFunnelTimeseries: mocks.getCtwaFunnelTimeseries,
   },
-  messagingAdsConnectionService: {
-    listForChannel: mocks.listForChannel,
-  },
-  listCachedMessagingAdAccounts: vi.fn(),
-  // The union's workspace-wide leg checks for the integration up front
-  // (absence is a normal state, not a logged failure) — these suites
-  // exercise the messaging leg, so report it as present.
-  integrationFacebookAdsService: {
-    findByWorkspaceId: vi.fn(async () => ({ id: "ifa-1" })),
-  },
-  buildMessagingAdsContext: vi.fn(),
   isAdsEligibleChannel: (channel: unknown) =>
     channel === "whatsapp" ||
     channel === "messenger" ||
     channel === "instagram",
-  filterAdAccountsByIds: <T extends { id: string }>(accounts: T[]) => accounts,
 }))
 
-vi.mock("@/features/integration-facebook-ads/queries", () => ({
-  getFacebookAdsContext: mocks.getFacebookAdsContext,
+vi.mock("../src/messaging-ads-connection/service", () => ({
+  messagingAdsConnectionService: {
+    listForChannel: mocks.listForChannel,
+  },
+}))
+
+vi.mock("../src/messaging-ads-connection/graph-reads", () => ({
+  listCachedMessagingAdAccounts: mocks.listCachedMessagingAdAccounts,
+}))
+
+vi.mock("../src/messaging-ads-connection/context", () => ({
+  buildMessagingAdsContext: mocks.buildMessagingAdsContext,
+}))
+
+// The union's workspace-wide leg checks for the integration up front
+// (absence is a normal state, not a logged failure) — these suites
+// exercise the messaging leg, so report it as present.
+vi.mock("../src/integration-facebook-ads/service", () => ({
+  integrationFacebookAdsService: {
+    findByWorkspaceId: mocks.findByWorkspaceId,
+  },
+}))
+
+vi.mock("../src/integration-facebook-ads/selection", () => ({
+  filterAdAccountsByIds: <T>(accounts: T[]) => accounts,
+}))
+
+vi.mock("../src/integration-facebook-ads/graph-reads", () => ({
+  buildFacebookAdsContext: mocks.buildFacebookAdsContext,
   getCachedAdAccounts: mocks.getCachedAdAccounts,
   getCachedAdInsights: async (input: {
     adAccountId: string
@@ -75,9 +87,11 @@ vi.mock("@/features/integration-facebook-ads/queries", () => ({
   },
 }))
 
-vi.mock("@/lib/log", () => ({
+vi.mock("../src/logger", () => ({
   logger: { warn: vi.fn() },
 }))
+
+const { adsAnalyticsService } = await import("../src/ads-analytics/service")
 
 describe("analytics context memoization (HIGH-4)", () => {
   beforeEach(() => {
@@ -88,32 +102,35 @@ describe("analytics context memoization (HIGH-4)", () => {
     })
     mocks.getCtwaFunnelTimeseries.mockResolvedValue([])
     mocks.listForChannel.mockResolvedValue([])
+    mocks.findByWorkspaceId.mockResolvedValue({ id: "ifa-1" })
     mocks.getCachedAdAccounts.mockResolvedValue([
       { id: "act_1", name: "One" },
       { id: "act_2", name: "Two" },
       { id: "act_3", name: "Three" },
     ])
-    mocks.getFacebookAdsContext.mockResolvedValue({ ctx: true })
+    mocks.buildFacebookAdsContext.mockResolvedValue({ ctx: true })
   })
 
   test("resolves the Facebook Ads context exactly once across a 3-account aggregate fan-out", async () => {
-    await getAdsAnalyticsData("ws-1", {
+    await adsAnalyticsService.getOverview({
+      workspaceId: "ws-1",
       from: "2026-08-01",
       to: "2026-08-11",
       channel: "whatsapp",
     })
 
-    expect(mocks.getFacebookAdsContext).toHaveBeenCalledTimes(1)
+    expect(mocks.buildFacebookAdsContext).toHaveBeenCalledTimes(1)
   })
 
   test("resolves the Facebook Ads context exactly once across a 3-account daily fan-out", async () => {
-    await getAdsAnalyticsTimeseries("ws-1", {
+    await adsAnalyticsService.getTimeseries({
+      workspaceId: "ws-1",
       from: "2026-08-01",
       to: "2026-08-03",
       channel: "whatsapp",
     })
 
-    expect(mocks.getFacebookAdsContext).toHaveBeenCalledTimes(1)
+    expect(mocks.buildFacebookAdsContext).toHaveBeenCalledTimes(1)
   })
 
   test("never resolves the context when there is no Facebook Ads integration", async () => {
@@ -121,12 +138,13 @@ describe("analytics context memoization (HIGH-4)", () => {
       new Error("no workspace-wide integration"),
     )
 
-    await getAdsAnalyticsData("ws-1", {
+    await adsAnalyticsService.getOverview({
+      workspaceId: "ws-1",
       from: "2026-08-01",
       to: "2026-08-11",
       channel: "whatsapp",
     })
 
-    expect(mocks.getFacebookAdsContext).not.toHaveBeenCalled()
+    expect(mocks.buildFacebookAdsContext).not.toHaveBeenCalled()
   })
 })

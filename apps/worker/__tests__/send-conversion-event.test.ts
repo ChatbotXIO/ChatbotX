@@ -37,6 +37,10 @@ vi.mock("@chatbotx.io/business", async () => {
   )
   return {
     ...actual,
+    adsConversionService: {
+      findWorkspaceEvent: mocks.findWorkspaceEvent,
+      updateCapiStatus: mocks.updateCapiStatus,
+    },
     integrationWhatsappService: {
       findWorkspaceIntegration: mocks.findWorkspaceIntegration,
       ensureDatasetId: mocks.ensureDatasetId,
@@ -65,13 +69,6 @@ vi.mock("@chatbotx.io/business", async () => {
     },
   }
 })
-
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  adsConversionEventRepository: {
-    findWorkspaceEvent: mocks.findWorkspaceEvent,
-    updateCapiStatus: mocks.updateCapiStatus,
-  },
-}))
 
 vi.mock("@chatbotx.io/integration-meta-conversions", () => ({
   buildDatasetName: (name: string) =>

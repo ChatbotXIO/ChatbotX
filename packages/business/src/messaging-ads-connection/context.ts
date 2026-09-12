@@ -10,7 +10,7 @@ import { buildContextWithAuthStore } from "../integration-context/build-context"
 import { messagingAdsConnectionService } from "./service"
 
 // Deliberately NOT re-exported here as `facebookAdsIntegration` — `../
-// messaging-ads/facebook-ads-context.ts` already re-exports it under that
+// integration-facebook-ads/graph-reads.ts` already re-exports it under that
 // name, and both modules are re-exported from the `@chatbotx.io/business`
 // barrel; a second same-named re-export would make it ambiguous through the
 // barrel. Callers that need the dispatcher import `integration` directly
@@ -34,7 +34,7 @@ export type BuildMessagingAdsContextInput = {
 /**
  * Resolves the decrypted `IntegrationContext` for ONE channel integration's
  * messaging-ads connection — the per-integration counterpart to
- * `buildFacebookAdsContext` (`../messaging-ads/facebook-ads-context.ts`,
+ * `buildFacebookAdsContext` (`../integration-facebook-ads/graph-reads.ts`,
  * which reads the workspace-wide `IntegrationFacebookAds` row instead).
  *
  * Deliberately does NOT go through `buildContext`'s `facebookAds` integration

@@ -1,53 +1,53 @@
-import {
-  type AdsEligibleChannel,
-  adsConversionService,
-  buildMessagingAdsContext,
-  type CapiDeliverySummary,
-  filterAdAccountsByIds,
-  isAdsEligibleChannel,
-} from "@chatbotx.io/business"
 import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
 import { mapWithConcurrency } from "@chatbotx.io/utils"
 import {
-  type FacebookAdsContext,
+  type AdsEligibleChannel,
+  adsConversionService,
+  type CapiDeliverySummary,
+  isAdsEligibleChannel,
+} from "../ads-conversion"
+import {
+  buildFacebookAdsContext,
   getCachedAdInsights,
   getCachedDailyAdInsights,
-  getFacebookAdsContext,
-} from "@/features/integration-facebook-ads/queries"
-import { logger } from "@/lib/log"
-import {
-  type AdsAnalyticsData,
-  type InsightSpendRow,
-  mergeAdsAnalytics,
-} from "../lib/merge-analytics"
-import { parseAnalyticsDateRange } from "../schema/analytics"
+} from "../integration-facebook-ads/graph-reads"
+import { filterAdAccountsByIds } from "../integration-facebook-ads/selection"
+import { logger } from "../logger"
+import { buildMessagingAdsContext } from "../messaging-ads-connection/context"
 import {
   type AdAccountSource,
   type ChannelAdAccount,
   resolveChannelAdAccountSources,
 } from "./channel-ad-accounts"
+import { parseAnalyticsDateRange } from "./date-range"
+import {
+  type AdsAnalyticsData,
+  type InsightSpendRow,
+  mergeAdsAnalytics,
+} from "./merge"
 
-type AdsAnalyticsRange = {
+export type AdsAnalyticsScope = {
+  workspaceId: string
+  /** Inclusive calendar-day keys, `YYYY-MM-DD`; clamped to MAX_ADS_ANALYTICS_RANGE_DAYS. */
   from: string
   to: string
-  // Viewer's IANA timezone (from the `tz` URL param) — resolved by
-  // `parseAnalyticsDateRange`/`resolveTimezone` to exact UTC instants for
-  // every DB-backed query below. Omitted/invalid resolves to "UTC", the
-  // pre-migration behavior.
+  /** Viewer IANA timezone; omitted/invalid resolves to "UTC". */
   tz?: string
-  adAccount?: string
-  integrationWhatsappId?: string
+  /** `act_<digits>`; anything else is ignored (no ad-account filter). */
+  adAccountId?: string
   // `channel`/`integrationMessengerId`/`integrationInstagramId` widen this
   // beyond WhatsApp (Phase 6 analytics UI) — additive next to
   // `integrationWhatsappId`, omitted keeps whatsapp-only behavior unchanged
-  // (mirrors `GetCtwaFunnelInput`/`ctwaFunnelShape` in the business layer).
+  // (mirrors `GetCtwaFunnelInput`/`ctwaFunnelShape` in the ads-conversion
+  // service).
   channel?: AdsConversionChannel
+  integrationWhatsappId?: string
   integrationMessengerId?: string
   integrationInstagramId?: string
-  // "All channels" (Ads Analytics default) — the page resolves `channel ===
-  // "all"` into this SEPARATE flag before ever building this range, so
+  // "All channels" (Ads Analytics default) — the caller resolves `channel ===
+  // "all"` into this SEPARATE flag before ever building this scope, so
   // `channel`/every integration id above are always undefined when this is
-  // true (see `page.tsx`'s `analyticsRange`).
+  // true.
   allChannels?: boolean
 }
 
@@ -56,30 +56,30 @@ const AD_ACCOUNT_ID_RE = /^act_\d+$/
 /**
  * Channel/integration scoping fields shared by every `adsConversionService`
  * call in this file (`getCtwaFunnel`, `getCapiDeliverySummary`,
- * `getCtwaFunnelTimeseries`) — lifted straight off `range` unchanged.
+ * `getCtwaFunnelTimeseries`) — lifted straight off `scope` unchanged.
  */
-function channelScope(range: AdsAnalyticsRange) {
+function channelScope(scope: AdsAnalyticsScope) {
   return {
-    integrationWhatsappId: range.integrationWhatsappId,
-    channel: range.channel,
-    integrationMessengerId: range.integrationMessengerId,
-    integrationInstagramId: range.integrationInstagramId,
-    allChannels: range.allChannels,
+    integrationWhatsappId: scope.integrationWhatsappId,
+    channel: scope.channel,
+    integrationMessengerId: scope.integrationMessengerId,
+    integrationInstagramId: scope.integrationInstagramId,
+    allChannels: scope.allChannels,
   }
 }
 
 /**
- * The one channel-integration id selected on `range`, whichever channel's FK
+ * The one channel-integration id selected on `scope`, whichever channel's FK
  * column it landed in — same "pick whichever of the three is set" shape
  * `channelScope` already threads to the funnel side; this is its spend-side
  * counterpart (Codex HIGH-3) for `resolveSelectedAdAccounts`'s
  * `integrationId` narrowing.
  */
-function selectedIntegrationId(range: AdsAnalyticsRange): string | undefined {
+function selectedIntegrationId(scope: AdsAnalyticsScope): string | undefined {
   return (
-    range.integrationWhatsappId ??
-    range.integrationMessengerId ??
-    range.integrationInstagramId
+    scope.integrationWhatsappId ??
+    scope.integrationMessengerId ??
+    scope.integrationInstagramId
   )
 }
 
@@ -111,14 +111,12 @@ type SelectedAdAccounts = {
  * connected integration's `MessagingAdsConnection` plus the workspace-wide
  * `IntegrationFacebookAds` fallback (`resolveChannelAdAccountSources`),
  * narrowed by `adAccountId` when it matches a listed account. Returns `null`
- * when the range has no resolvable ads-eligible channel or the account list
+ * when the scope has no resolvable ads-eligible channel or the account list
  * fails to load — callers should treat that as "no insights, no filter".
  *
- * Supersedes the retired Phase-6 "dashboard reads ONLY the workspace-wide
- * connection" contract: a workspace connected ONLY through a box (no
- * separate Facebook Ads integration) now yields spend too — see the
- * `adsCampaign.box.emptyDashboardNote` copy, now shown as the dashboard hint
- * on the Click to Message Ads tool page, updated to match.
+ * A workspace connected ONLY through a box (no separate Facebook Ads
+ * integration) yields spend too — see the `adsCampaign.box.emptyDashboardNote`
+ * copy shown as the dashboard hint on the Click to Message Ads tool page.
  */
 async function resolveSelectedAdAccounts(input: {
   workspaceId: string
@@ -166,16 +164,19 @@ async function resolveSelectedAdAccounts(input: {
  * Returns a per-account `getContext` for `getCachedAdInsights`/
  * `getCachedDailyAdInsights`, which both accept any resolver of the shared
  * `IntegrationContext<FacebookAdsAuthValue>` shape (workspace
- * `getFacebookAdsContext` and box `buildMessagingAdsContext` both produce
+ * `buildFacebookAdsContext` and box `buildMessagingAdsContext` both produce
  * it) — never resolved here eagerly, only handed through.
  */
 function buildContextResolverBySource(input: {
   workspaceId: string
   channel: AdsEligibleChannel
-}): (source: AdAccountSource | undefined) => () => Promise<FacebookAdsContext> {
-  const bySourceKey = new Map<string, () => Promise<FacebookAdsContext>>()
+}) {
+  const bySourceKey = new Map<
+    string,
+    () => ReturnType<typeof buildFacebookAdsContext>
+  >()
 
-  return (source) => {
+  return (source: AdAccountSource | undefined) => {
     const resolvedSource: AdAccountSource = source ?? { kind: "workspace" }
     const key =
       resolvedSource.kind === "workspace"
@@ -189,7 +190,7 @@ function buildContextResolverBySource(input: {
 
     const resolver = memoizeOnce(() =>
       resolvedSource.kind === "workspace"
-        ? getFacebookAdsContext(input.workspaceId)
+        ? buildFacebookAdsContext(input.workspaceId)
         : buildMessagingAdsContext({
             workspaceId: input.workspaceId,
             channel: input.channel,
@@ -325,64 +326,6 @@ async function listDailyInsightsForConnectedAdAccounts(input: {
   return { insights, adAccountFilterApplied }
 }
 
-export async function getAdsAnalyticsData(
-  workspaceId: string,
-  range: AdsAnalyticsRange,
-): Promise<AdsAnalyticsData> {
-  const { since, until, from, to } = parseAnalyticsDateRange(range)
-  const adAccountId = AD_ACCOUNT_ID_RE.test(range.adAccount ?? "")
-    ? range.adAccount
-    : undefined
-
-  const [funnel, insightsResult] = await Promise.all([
-    adsConversionService.getCtwaFunnel({
-      workspaceId,
-      since,
-      until,
-      ...channelScope(range),
-    }),
-    // `from`/`to` here are still raw date-KEYS (not the resolved UTC
-    // instants) — Meta Graph API's `insights` endpoint interprets them in
-    // the AD ACCOUNT's own reporting timezone, not the viewer's. This is
-    // unavoidable (no per-request override) and deliberately unchanged by
-    // the viewer-timezone migration — see the "RESIDUAL SEAM" note in
-    // `ads-date-key.ts`.
-    listInsightsForConnectedAdAccounts({
-      workspaceId,
-      channel: range.channel,
-      integrationId: selectedIntegrationId(range),
-      since: from,
-      until: to,
-      adAccountId,
-    }),
-  ])
-
-  return mergeAdsAnalytics({
-    funnel,
-    insights: insightsResult.insights,
-    integrationFilterActive: Boolean(
-      range.integrationWhatsappId ||
-        range.integrationMessengerId ||
-        range.integrationInstagramId,
-    ),
-    adAccountFilterActive: insightsResult.adAccountFilterApplied,
-  })
-}
-
-export function getCapiDeliveryData(
-  workspaceId: string,
-  range: AdsAnalyticsRange,
-): Promise<CapiDeliverySummary> {
-  const { since, until } = parseAnalyticsDateRange(range)
-
-  return adsConversionService.getCapiDeliverySummary({
-    workspaceId,
-    since,
-    until,
-    ...channelScope(range),
-  })
-}
-
 export type AdsAnalyticsTimeseriesRow = {
   date: string
   conversations: number
@@ -402,81 +345,135 @@ function enumerateDateKeys(from: string, to: string): string[] {
   return dates
 }
 
-export async function getAdsAnalyticsTimeseries(
-  workspaceId: string,
-  range: AdsAnalyticsRange,
-): Promise<AdsAnalyticsTimeseriesRow[]> {
-  const { since, until, from, to, timezone } = parseAnalyticsDateRange(range)
-  const adAccountId = AD_ACCOUNT_ID_RE.test(range.adAccount ?? "")
-    ? range.adAccount
-    : undefined
+class AdsAnalyticsService {
+  async getOverview(scope: AdsAnalyticsScope): Promise<AdsAnalyticsData> {
+    const { since, until, from, to } = parseAnalyticsDateRange(scope)
+    const adAccountId = AD_ACCOUNT_ID_RE.test(scope.adAccountId ?? "")
+      ? scope.adAccountId
+      : undefined
 
-  const [funnelRows, dailyInsightsResult] = await Promise.all([
-    adsConversionService.getCtwaFunnelTimeseries({
-      workspaceId,
+    const [funnel, insightsResult] = await Promise.all([
+      adsConversionService.getCtwaFunnel({
+        workspaceId: scope.workspaceId,
+        since,
+        until,
+        ...channelScope(scope),
+      }),
+      // `from`/`to` here are still raw date-KEYS (not the resolved UTC
+      // instants) — Meta Graph API's `insights` endpoint interprets them in
+      // the AD ACCOUNT's own reporting timezone, not the viewer's. This is
+      // unavoidable (no per-request override) and deliberately unchanged by
+      // the viewer-timezone migration.
+      listInsightsForConnectedAdAccounts({
+        workspaceId: scope.workspaceId,
+        channel: scope.channel,
+        integrationId: selectedIntegrationId(scope),
+        since: from,
+        until: to,
+        adAccountId,
+      }),
+    ])
+
+    return mergeAdsAnalytics({
+      funnel,
+      insights: insightsResult.insights,
+      integrationFilterActive: Boolean(
+        scope.integrationWhatsappId ||
+          scope.integrationMessengerId ||
+          scope.integrationInstagramId,
+      ),
+      adAccountFilterActive: insightsResult.adAccountFilterApplied,
+    })
+  }
+
+  getCapiDelivery(scope: AdsAnalyticsScope): Promise<CapiDeliverySummary> {
+    const { since, until } = parseAnalyticsDateRange(scope)
+
+    return adsConversionService.getCapiDeliverySummary({
+      workspaceId: scope.workspaceId,
       since,
       until,
-      timezone,
-      ...channelScope(range),
-    }),
-    // `from`/`to` date-KEYS, interpreted by Meta in the ad account's own
-    // reporting timezone — see the comment in `getAdsAnalyticsData` above.
-    listDailyInsightsForConnectedAdAccounts({
-      workspaceId,
-      channel: range.channel,
-      integrationId: selectedIntegrationId(range),
-      since: from,
-      until: to,
-      adAccountId,
-    }),
-  ])
-
-  // Same survivor semantics as mergeAdsAnalytics: when an ad-account filter
-  // is active, only keep funnel rows whose ad also appears in the selected
-  // account's daily insights — otherwise chart and tiles would disagree.
-  const survivingAdIds = dailyInsightsResult.adAccountFilterApplied
-    ? new Set(dailyInsightsResult.insights.map((row) => row.adId))
-    : null
-  const survivingFunnelRows = survivingAdIds
-    ? funnelRows.filter(
-        (row) => row.adId !== null && survivingAdIds.has(row.adId),
-      )
-    : funnelRows
-
-  const byDate = new Map<string, AdsAnalyticsTimeseriesRow>()
-  for (const dateKey of enumerateDateKeys(from, to)) {
-    byDate.set(dateKey, {
-      date: dateKey,
-      conversations: 0,
-      leads: 0,
-      purchases: 0,
-      spend: null,
+      ...channelScope(scope),
     })
   }
 
-  for (const row of survivingFunnelRows) {
-    const existing = byDate.get(row.date)
-    if (!existing) {
-      continue
+  async getTimeseries(
+    scope: AdsAnalyticsScope,
+  ): Promise<AdsAnalyticsTimeseriesRow[]> {
+    const { since, until, from, to, timezone } = parseAnalyticsDateRange(scope)
+    const adAccountId = AD_ACCOUNT_ID_RE.test(scope.adAccountId ?? "")
+      ? scope.adAccountId
+      : undefined
+
+    const [funnelRows, dailyInsightsResult] = await Promise.all([
+      adsConversionService.getCtwaFunnelTimeseries({
+        workspaceId: scope.workspaceId,
+        since,
+        until,
+        timezone,
+        ...channelScope(scope),
+      }),
+      // `from`/`to` date-KEYS, interpreted by Meta in the ad account's own
+      // reporting timezone — see the comment in `getOverview` above.
+      listDailyInsightsForConnectedAdAccounts({
+        workspaceId: scope.workspaceId,
+        channel: scope.channel,
+        integrationId: selectedIntegrationId(scope),
+        since: from,
+        until: to,
+        adAccountId,
+      }),
+    ])
+
+    // Same survivor semantics as mergeAdsAnalytics: when an ad-account filter
+    // is active, only keep funnel rows whose ad also appears in the selected
+    // account's daily insights — otherwise chart and tiles would disagree.
+    const survivingAdIds = dailyInsightsResult.adAccountFilterApplied
+      ? new Set(dailyInsightsResult.insights.map((row) => row.adId))
+      : null
+    const survivingFunnelRows = survivingAdIds
+      ? funnelRows.filter(
+          (row) => row.adId !== null && survivingAdIds.has(row.adId),
+        )
+      : funnelRows
+
+    const byDate = new Map<string, AdsAnalyticsTimeseriesRow>()
+    for (const dateKey of enumerateDateKeys(from, to)) {
+      byDate.set(dateKey, {
+        date: dateKey,
+        conversations: 0,
+        leads: 0,
+        purchases: 0,
+        spend: null,
+      })
     }
-    byDate.set(row.date, {
-      ...existing,
-      conversations: existing.conversations + row.conversations,
-      leads: existing.leads + row.leads,
-      purchases: existing.purchases + row.purchases,
-    })
-  }
 
-  for (const row of dailyInsightsResult.insights) {
-    const existing = byDate.get(row.date)
-    if (!existing) {
-      continue
+    for (const row of survivingFunnelRows) {
+      const existing = byDate.get(row.date)
+      if (!existing) {
+        continue
+      }
+      byDate.set(row.date, {
+        ...existing,
+        conversations: existing.conversations + row.conversations,
+        leads: existing.leads + row.leads,
+        purchases: existing.purchases + row.purchases,
+      })
     }
-    byDate.set(row.date, {
-      ...existing,
-      spend: (existing.spend ?? 0) + row.spend,
-    })
-  }
 
-  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date))
+    for (const row of dailyInsightsResult.insights) {
+      const existing = byDate.get(row.date)
+      if (!existing) {
+        continue
+      }
+      byDate.set(row.date, {
+        ...existing,
+        spend: (existing.spend ?? 0) + row.spend,
+      })
+    }
+
+    return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date))
+  }
 }
+
+export const adsAnalyticsService = new AdsAnalyticsService()

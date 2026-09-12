@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { mergeAdsAnalytics } from "@/features/ads/lib/merge-analytics"
+import { mergeAdsAnalytics } from "../src/ads-analytics/merge"
 
 describe("mergeAdsAnalytics", () => {
   test("merges matched, insight-only, event-only, and unattributed rows", () => {

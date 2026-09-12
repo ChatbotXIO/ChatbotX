@@ -73,13 +73,12 @@ vi.mock("@/features/ads/queries/switcher", () => ({
   getAdsSwitcherData: mockGetAdsSwitcherData,
 }))
 
-vi.mock("@/features/ads/queries/analytics", () => ({
-  getAdsAnalyticsData: mockGetAdsAnalyticsData,
-  getCapiDeliveryData: mockGetCapiDeliveryData,
-  getAdsAnalyticsTimeseries: mockGetAdsAnalyticsTimeseries,
-}))
-
 vi.mock("@chatbotx.io/business", () => ({
+  adsAnalyticsService: {
+    getOverview: mockGetAdsAnalyticsData,
+    getCapiDelivery: mockGetCapiDeliveryData,
+    getTimeseries: mockGetAdsAnalyticsTimeseries,
+  },
   perChannelIntegrationIds: (
     channel: string,
     integrationId: string | undefined,

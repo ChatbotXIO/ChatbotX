@@ -1,4 +1,5 @@
 import { inboxTeamsPublicRouter } from "@/enterprise/features/inbox-teams/api/public"
+import { adsPublicRouter } from "@/features/ads/api/public"
 import { aiAgentsPublicRouter } from "@/features/ai-agents/api/public"
 import { aiFilesPublicRouter } from "@/features/ai-files/api/public"
 import { aiFunctionsPublicRouter } from "@/features/ai-functions/api/public"
@@ -35,6 +36,7 @@ import { webhooksPublicRouter } from "@/features/webhooks/api/public"
 import { workspaceMembersPublicRouter } from "@/features/workspace-members/api/public"
 
 export const publicRouter = {
+  ads: adsPublicRouter,
   aiAgents: aiAgentsPublicRouter,
   aiFiles: aiFilesPublicRouter,
   aiFunctions: aiFunctionsPublicRouter,
