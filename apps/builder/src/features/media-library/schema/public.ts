@@ -1,6 +1,7 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { mediaLibraryFileResource, mediaLibraryFolderResource } from "../schema"
+import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
+import { mediaLibraryFileResource, mediaLibraryFolderResource } from "."
 
 export const mediaLibraryFolderPublicResource = mediaLibraryFolderResource.omit(
   { workspaceId: true },
@@ -9,9 +10,11 @@ export const mediaLibraryFolderPublicResource = mediaLibraryFolderResource.omit(
 export const mediaLibraryFolderListItemPublicResource =
   mediaLibraryFolderPublicResource.extend({ fileCount: z.number() })
 
-export const listMediaLibraryFoldersPublicResponse = z.object({
-  data: z.array(mediaLibraryFolderListItemPublicResource),
-})
+export const listMediaLibraryFoldersPublicRequest = publicListRequest
+
+export const listMediaLibraryFoldersPublicResponse = publicListResponse(
+  mediaLibraryFolderListItemPublicResource,
+)
 
 export const mediaLibraryFilePublicResource = mediaLibraryFileResource.omit({
   workspaceId: true,
@@ -19,12 +22,6 @@ export const mediaLibraryFilePublicResource = mediaLibraryFileResource.omit({
 
 export const mediaLibraryFileListItemPublicResource =
   mediaLibraryFilePublicResource.extend({ url: z.string() })
-
-export const listMediaLibraryFilesPublicResponse = z.object({
-  data: z.array(mediaLibraryFileListItemPublicResource),
-})
-
-export const listMediaLibraryFoldersPublicRequest = z.object({})
 
 export const createMediaLibraryFolderPublicRequest = z.object({
   name: z.string().min(1),
@@ -39,11 +36,34 @@ export const deleteMediaLibraryFolderPublicRequest = z.object({
   folderId: zodBigintAsString(),
 })
 
-export const listMediaLibraryFilesPublicRequest = z.object({
+export const listMediaLibraryFilesPublicRequest = publicListRequest.extend({
   folderId: zodBigintAsString().nullish(),
   search: z.string().optional(),
-  filter: z.enum(["recent", "favourite"]).optional(),
-  page: z.number().int().min(1).optional(),
+  filter: z
+    .enum(["all", "recent", "favourite"])
+    .optional()
+    .describe(
+      "`all` and `recent` span every folder (differing only in sort); `favourite` spans every folder and ignores `folderId`. Omit both `filter` and `folderId` to list root-level files only.",
+    ),
+})
+
+export const listMediaLibraryFilesPublicResponse = publicListResponse(
+  mediaLibraryFileListItemPublicResource,
+)
+
+export const createMediaLibraryUploadUrlPublicRequest = z.object({
+  fileName: z.string().min(1),
+  mimeType: z.string().min(1),
+})
+
+export const createMediaLibraryUploadUrlPublicResponse = z.object({
+  path: z.string(),
+  uploadUrl: z.string(),
+  publicUrl: z.string(),
+})
+
+export const getMediaLibraryFilePublicRequest = z.object({
+  fileId: zodBigintAsString(),
 })
 
 export const createMediaLibraryFilePublicRequest = z.object({
@@ -58,7 +78,12 @@ export const deleteMediaLibraryFilePublicRequest = z.object({
   fileId: zodBigintAsString(),
 })
 
-export const toggleMediaLibraryFavouritePublicRequest = z.object({
+export const setMediaLibraryFavouritePublicRequest = z.object({
+  fileId: zodBigintAsString(),
+  isFavourite: z.boolean(),
+})
+
+export const recordMediaLibraryFileAccessPublicRequest = z.object({
   fileId: zodBigintAsString(),
 })
 

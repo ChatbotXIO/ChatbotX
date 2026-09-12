@@ -322,6 +322,30 @@ class DynamicImageService extends BaseService {
   }
 
   /**
+   * Resolves each row's `backgroundUrl` storage key into a public URL,
+   * resolving tenant settings ONCE for the whole batch — the per-row
+   * `resolveBackgroundUrl` would re-resolve them for every element of a list
+   * page.
+   */
+  async resolveBackgroundUrls<
+    T extends Pick<DynamicImageModel, "backgroundUrl">,
+  >(input: {
+    workspaceId: string
+    rows: T[]
+  }): Promise<(Omit<T, "backgroundUrl"> & { backgroundUrl: string | null })[]> {
+    if (input.rows.length === 0) {
+      return []
+    }
+    const { storageUrl } = await resolveTenantSettings({
+      workspaceId: input.workspaceId,
+    })
+    return input.rows.map((row) => ({
+      ...row,
+      backgroundUrl: toPublicStorageUrl(row.backgroundUrl, storageUrl),
+    }))
+  }
+
+  /**
    * Public URL for the config's static background — served when the trigger
    * URL carries no `userId`, or one that resolves to no contact, so the
    * image still renders instead of erroring out.
@@ -329,13 +353,14 @@ class DynamicImageService extends BaseService {
   async resolveBackgroundUrl(
     input: Pick<DynamicImageModel, "workspaceId" | "backgroundUrl">,
   ): Promise<string | null> {
-    if (!input.backgroundUrl) {
-      return null
-    }
-    const settings = await resolveTenantSettings({
-      workspaceId: input.workspaceId,
-    })
-    return toPublicStorageUrl(input.backgroundUrl, settings.storageUrl)
+    return (
+      (
+        await this.resolveBackgroundUrls({
+          workspaceId: input.workspaceId,
+          rows: [input],
+        })
+      )[0]?.backgroundUrl ?? null
+    )
   }
 
   /**

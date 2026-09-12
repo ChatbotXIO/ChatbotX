@@ -56,9 +56,12 @@ const mediaLibraryService = {
   createFolder: vi.fn(),
   renameFolder: vi.fn(),
   deleteFolder: vi.fn(),
+  presignUpload: vi.fn(),
   createFile: vi.fn(),
   deleteFile: vi.fn(),
-  toggleFavourite: vi.fn(),
+  findFile: vi.fn(),
+  setFavourite: vi.fn(),
+  recordFileAccess: vi.fn(),
   moveFiles: vi.fn(),
 }
 const mediaLibraryFileService = { list: vi.fn() }
@@ -112,24 +115,31 @@ test("registers each media-library route", () => {
     ["POST", "/v1/media-library/folders"],
     ["PATCH", "/v1/media-library/folders/{folderId}"],
     ["DELETE", "/v1/media-library/folders/{folderId}"],
+    ["POST", "/v1/media-library/files/upload-url"],
     ["GET", "/v1/media-library/files"],
+    ["GET", "/v1/media-library/files/{fileId}"],
     ["POST", "/v1/media-library/files"],
     ["DELETE", "/v1/media-library/files/{fileId}"],
-    ["PATCH", "/v1/media-library/files/{fileId}/favourite"],
+    ["PUT", "/v1/media-library/files/{fileId}/favourite"],
+    ["POST", "/v1/media-library/files/{fileId}/access"],
     ["PATCH", "/v1/media-library/files/move"],
   ])
 })
 
 describe("folder routes", () => {
-  test("lists workspace folders", async () => {
+  test("lists workspace folders with in-memory pagination", async () => {
     const procedure = findProcedure("GET", "/v1/media-library/folders")
     const folders = [{ id: "folder-1", name: "Images", fileCount: 2 }]
     mediaLibraryService.listFolders.mockResolvedValueOnce(folders)
 
     await expect(
-      procedure.handler?.({ context: workspaceContext }),
+      procedure.handler?.({
+        context: workspaceContext,
+        input: { page: 1, perPage: 50 },
+      }),
     ).resolves.toEqual({
       data: folders,
+      pageCount: 1,
     })
     expect(mediaLibraryService.listFolders).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
@@ -190,27 +200,74 @@ describe("folder routes", () => {
 })
 
 describe("file routes", () => {
-  test("lists workspace files", async () => {
+  test("creates a presigned upload url", async () => {
+    const procedure = findProcedure(
+      "POST",
+      "/v1/media-library/files/upload-url",
+    )
+    const presigned = {
+      path: "public/space/workspace-1/media-library/id-1",
+      uploadUrl: "https://s3.example.test/presigned",
+      publicUrl:
+        "https://cdn.example.test/public/space/workspace-1/media-library/id-1",
+    }
+    mediaLibraryService.presignUpload.mockResolvedValueOnce(presigned)
+
+    await expect(
+      procedure.handler?.({
+        context: workspaceContext,
+        input: { fileName: "cat.png", mimeType: "image/png" },
+      }),
+    ).resolves.toEqual(presigned)
+    expect(mediaLibraryService.presignUpload).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      fileName: "cat.png",
+      mimeType: "image/png",
+    })
+  })
+
+  test("lists workspace files with pageCount", async () => {
     const procedure = findProcedure("GET", "/v1/media-library/files")
-    const response = { data: [{ id: "file-1", url: "https://cdn/file-1" }] }
+    const response = {
+      data: [{ id: "file-1", url: "https://cdn/file-1" }],
+      pageCount: 3,
+    }
     mediaLibraryFileService.list.mockResolvedValueOnce(response)
 
     await expect(
       procedure.handler?.({
         context: workspaceContext,
-        input: { filter: "favourite", page: 2 },
+        input: { filter: "favourite", page: 2, perPage: 25 },
       }),
     ).resolves.toEqual(response)
     expect(mediaLibraryFileService.list).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       filter: "favourite",
       page: 2,
+      perPage: 25,
+    })
+  })
+
+  test("gets a single workspace file", async () => {
+    const procedure = findProcedure("GET", "/v1/media-library/files/{fileId}")
+    const file = { id: "file-1", url: "https://cdn/file-1" }
+    mediaLibraryService.findFile.mockResolvedValueOnce(file)
+
+    await expect(
+      procedure.handler?.({
+        context: workspaceContext,
+        input: { fileId: "file-1" },
+      }),
+    ).resolves.toEqual(file)
+    expect(mediaLibraryService.findFile).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      fileId: "file-1",
     })
   })
 
   test("creates a workspace file", async () => {
     const procedure = findProcedure("POST", "/v1/media-library/files")
-    const file = { id: "file-1", name: "image.png" }
+    const file = { id: "file-1", name: "image.png", url: "https://cdn/file-1" }
     const input = {
       folderId: "folder-1",
       name: "image.png",
@@ -246,10 +303,31 @@ describe("file routes", () => {
     })
   })
 
-  test("toggles a workspace file's favourite status", async () => {
+  test("sets a workspace file's favourite status to the explicit value", async () => {
     const procedure = findProcedure(
-      "PATCH",
+      "PUT",
       "/v1/media-library/files/{fileId}/favourite",
+    )
+    const file = { id: "file-1", isFavourite: true }
+    mediaLibraryService.setFavourite.mockResolvedValueOnce(file)
+
+    await expect(
+      procedure.handler?.({
+        context: workspaceContext,
+        input: { fileId: "file-1", isFavourite: true },
+      }),
+    ).resolves.toEqual(file)
+    expect(mediaLibraryService.setFavourite).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      fileId: "file-1",
+      isFavourite: true,
+    })
+  })
+
+  test("records a workspace file's access", async () => {
+    const procedure = findProcedure(
+      "POST",
+      "/v1/media-library/files/{fileId}/access",
     )
 
     await procedure.handler?.({
@@ -257,7 +335,7 @@ describe("file routes", () => {
       input: { fileId: "file-1" },
     })
 
-    expect(mediaLibraryService.toggleFavourite).toHaveBeenCalledWith({
+    expect(mediaLibraryService.recordFileAccess).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       fileId: "file-1",
     })

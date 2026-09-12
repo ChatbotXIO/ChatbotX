@@ -57,7 +57,7 @@ export const mediaLibraryFileRepository = {
     search?: string | null
     page?: number
     perPage: number
-  }) {
+  }): Promise<{ data: MediaLibraryFileModel[]; total: number }> {
     const conditions: SQL[] = [
       eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
     ]
@@ -69,10 +69,15 @@ export const mediaLibraryFileRepository = {
     } else if (!input.filter) {
       conditions.push(isNull(mediaLibraryFileModel.folderId))
     }
+    // `filter` "recent"/"all" deliberately falls through with no folder
+    // condition: both mean "every file in the workspace", differing only in
+    // sort. No filter and no folderId means root-level files only.
 
     if (input.search) {
       conditions.push(ilike(mediaLibraryFileModel.name, `%${input.search}%`))
     }
+
+    const whereSQL = and(...conditions)
 
     const orderByColumn =
       input.filter === "recent"
@@ -81,15 +86,18 @@ export const mediaLibraryFileRepository = {
 
     const page = input.page ?? 1
 
-    const data = await db
-      .select()
-      .from(mediaLibraryFileModel)
-      .where(and(...conditions))
-      .orderBy(orderByColumn)
-      .limit(input.perPage)
-      .offset((page - 1) * input.perPage)
+    const [data, total] = await Promise.all([
+      db
+        .select()
+        .from(mediaLibraryFileModel)
+        .where(whereSQL)
+        .orderBy(orderByColumn)
+        .limit(input.perPage)
+        .offset((page - 1) * input.perPage),
+      db.$count(mediaLibraryFileModel, whereSQL),
+    ])
 
-    return data
+    return { data, total }
   },
 
   countByFolder(

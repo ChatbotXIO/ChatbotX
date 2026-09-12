@@ -5,24 +5,30 @@ import {
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
+  possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
+import { paginateInMemory } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   createMediaLibraryFilePublicRequest,
   createMediaLibraryFolderPublicRequest,
+  createMediaLibraryUploadUrlPublicRequest,
+  createMediaLibraryUploadUrlPublicResponse,
   deleteMediaLibraryFilePublicRequest,
   deleteMediaLibraryFolderPublicRequest,
+  getMediaLibraryFilePublicRequest,
   listMediaLibraryFilesPublicRequest,
   listMediaLibraryFilesPublicResponse,
   listMediaLibraryFoldersPublicRequest,
   listMediaLibraryFoldersPublicResponse,
-  mediaLibraryFilePublicResource,
+  mediaLibraryFileListItemPublicResource,
   mediaLibraryFolderPublicResource,
   moveMediaLibraryFilesPublicRequest,
+  recordMediaLibraryFileAccessPublicRequest,
   renameMediaLibraryFolderPublicRequest,
-  toggleMediaLibraryFavouritePublicRequest,
+  setMediaLibraryFavouritePublicRequest,
 } from "../schema/public"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("media")
@@ -40,11 +46,15 @@ export const mediaLibraryPublicRouter = {
     .input(listMediaLibraryFoldersPublicRequest)
     .output(listMediaLibraryFoldersPublicResponse)
     .errors(possibleErrorsOnListingResource)
-    .handler(async ({ context }) => ({
-      data: await mediaLibraryService.listFolders({
+    .handler(async ({ context, input }) => {
+      const folders = await mediaLibraryService.listFolders({
         workspaceId: context.workspace.id,
-      }),
-    })),
+      })
+      return paginateInMemory(folders, {
+        page: input.page,
+        perPage: input.perPage,
+      })
+    }),
 
   createFolder: workspaceTokenAuthAPI
     .route({
@@ -70,6 +80,7 @@ export const mediaLibraryPublicRouter = {
       method: "PATCH",
       path: "/v1/media-library/folders/{folderId}",
       summary: "Rename a media library folder",
+      successStatus: 204,
       tags,
     })
     .input(renameMediaLibraryFolderPublicRequest)
@@ -99,6 +110,28 @@ export const mediaLibraryPublicRouter = {
       })
     }),
 
+  createUploadUrl: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/media-library/files/upload-url",
+      summary: "Create a presigned upload URL for a media library file",
+      description:
+        "Returns a storage `path` and a presigned `uploadUrl` (a 5-minute PUT URL). PUT the file bytes to `uploadUrl`, then pass the same `path` to POST /v1/media-library/files to register the file.",
+      successStatus: 201,
+      tags,
+    })
+    .input(createMediaLibraryUploadUrlPublicRequest)
+    .output(createMediaLibraryUploadUrlPublicResponse)
+    .errors(possibleErrorsOnCreatingResource)
+    .handler(
+      async ({ context, input }) =>
+        await mediaLibraryService.presignUpload({
+          workspaceId: context.workspace.id,
+          fileName: input.fileName,
+          mimeType: input.mimeType,
+        }),
+    ),
+
   listFiles: workspaceTokenAuthAPI
     .route({
       method: "GET",
@@ -117,6 +150,24 @@ export const mediaLibraryPublicRouter = {
         }),
     ),
 
+  getFile: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/media-library/files/{fileId}",
+      summary: "Get a media library file",
+      tags,
+    })
+    .input(getMediaLibraryFilePublicRequest)
+    .output(mediaLibraryFileListItemPublicResource)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(
+      async ({ context, input }) =>
+        await mediaLibraryService.findFile({
+          workspaceId: context.workspace.id,
+          fileId: input.fileId,
+        }),
+    ),
+
   createFile: workspaceTokenAuthAPI
     .route({
       method: "POST",
@@ -126,7 +177,7 @@ export const mediaLibraryPublicRouter = {
       tags,
     })
     .input(createMediaLibraryFilePublicRequest)
-    .output(mediaLibraryFilePublicResource)
+    .output(mediaLibraryFileListItemPublicResource)
     .errors(possibleErrorsOnCreatingResource)
     .handler(
       async ({ context, input }) =>
@@ -153,17 +204,38 @@ export const mediaLibraryPublicRouter = {
       })
     }),
 
-  toggleFavourite: workspaceTokenAuthAPI
+  setFavourite: workspaceTokenAuthAPI
     .route({
-      method: "PATCH",
+      method: "PUT",
       path: "/v1/media-library/files/{fileId}/favourite",
-      summary: "Toggle a media library file's favourite status",
+      summary: "Set a media library file's favourite status",
       tags,
     })
-    .input(toggleMediaLibraryFavouritePublicRequest)
+    .input(setMediaLibraryFavouritePublicRequest)
+    .output(mediaLibraryFileListItemPublicResource)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(
+      async ({ context, input }) =>
+        await mediaLibraryService.setFavourite({
+          workspaceId: context.workspace.id,
+          fileId: input.fileId,
+          isFavourite: input.isFavourite,
+        }),
+    ),
+
+  recordAccess: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/media-library/files/{fileId}/access",
+      summary:
+        "Record that a media library file was used (feeds the recent filter)",
+      successStatus: 204,
+      tags,
+    })
+    .input(recordMediaLibraryFileAccessPublicRequest)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      await mediaLibraryService.toggleFavourite({
+      await mediaLibraryService.recordFileAccess({
         workspaceId: context.workspace.id,
         fileId: input.fileId,
       })
@@ -174,6 +246,7 @@ export const mediaLibraryPublicRouter = {
       method: "PATCH",
       path: "/v1/media-library/files/move",
       summary: "Move media library files to another folder",
+      successStatus: 204,
       tags,
     })
     .input(moveMediaLibraryFilesPublicRequest)

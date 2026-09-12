@@ -1203,6 +1203,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/media-library/folders",
   },
   {
+    "method": "POST",
+    "operationId": "mediaLibrary.createUploadUrl",
+    "path": "/v1/media-library/files/upload-url",
+  },
+  {
     "method": "DELETE",
     "operationId": "mediaLibrary.deleteFile",
     "path": "/v1/media-library/files/{fileId}",
@@ -1211,6 +1216,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "DELETE",
     "operationId": "mediaLibrary.deleteFolder",
     "path": "/v1/media-library/folders/{folderId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "mediaLibrary.getFile",
+    "path": "/v1/media-library/files/{fileId}",
   },
   {
     "method": "GET",
@@ -1228,13 +1238,18 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/media-library/files/move",
   },
   {
+    "method": "POST",
+    "operationId": "mediaLibrary.recordAccess",
+    "path": "/v1/media-library/files/{fileId}/access",
+  },
+  {
     "method": "PATCH",
     "operationId": "mediaLibrary.renameFolder",
     "path": "/v1/media-library/folders/{folderId}",
   },
   {
-    "method": "PATCH",
-    "operationId": "mediaLibrary.toggleFavourite",
+    "method": "PUT",
+    "operationId": "mediaLibrary.setFavourite",
     "path": "/v1/media-library/files/{fileId}/favourite",
   },
   {

@@ -55,6 +55,7 @@ const dynamicImageService = {
   update: vi.fn(),
   delete: vi.fn(),
   setEnabled: vi.fn(),
+  resolveBackgroundUrls: vi.fn(),
 }
 vi.mock("@chatbotx.io/business/dynamic-image", () => ({ dynamicImageService }))
 
@@ -67,6 +68,10 @@ vi.mock("@chatbotx.io/database/client", () => {
   })
   return { db: proxy }
 })
+
+vi.mock("@/lib/oauth-broker", () => ({
+  getBrokerOrigin: () => "https://broker.example.test",
+}))
 
 await import("@/features/dynamic-images/api/public")
 
@@ -93,9 +98,35 @@ const dynamicImage = {
   backgroundUrl: "public/dynamic-images/background.png",
   enabled: true,
 }
+const resolvedBackgroundUrl =
+  "https://cdn.example.test/dynamic-images/background.png"
+const expectedImageUrl =
+  "https://broker.example.test/dynamic-images?dynamicImageId=image-1&userId={{user_id}}"
+
+const {
+  workspaceId: _dynamicImageWorkspaceId,
+  ...dynamicImageWithoutWorkspaceId
+} = dynamicImage
+const publicDynamicImage = {
+  ...dynamicImageWithoutWorkspaceId,
+  backgroundUrl: resolvedBackgroundUrl,
+  imageUrl: expectedImageUrl,
+}
+// `resolveBackgroundUrls` is a real business-service method; the test stubs
+// its shape instead of re-deriving it, so each assertion below drives the
+// same `{ ...row, backgroundUrl }` mapping the real implementation performs.
+const resolveBackgroundUrlsStub = (
+  rows: (typeof dynamicImage)[],
+): (Omit<typeof dynamicImage, "backgroundUrl"> & {
+  backgroundUrl: string | null
+})[] => rows.map((row) => ({ ...row, backgroundUrl: resolvedBackgroundUrl }))
 
 beforeEach(() => {
   vi.clearAllMocks()
+  dynamicImageService.resolveBackgroundUrls.mockImplementation(
+    async ({ rows }: { rows: (typeof dynamicImage)[] }) =>
+      resolveBackgroundUrlsStub(rows),
+  )
 })
 
 test("registers the dynamic images public router under the media scope", () => {
@@ -105,7 +136,7 @@ test("registers the dynamic images public router under the media scope", () => {
 describe("GET /v1/dynamic-images", () => {
   const procedure = findProcedure("GET", "/v1/dynamic-images")
 
-  test("lists dynamic images for the token workspace", async () => {
+  test("lists dynamic images for the token workspace with resolved background/trigger urls", async () => {
     const result = { data: [dynamicImage], pageCount: 1 }
     dynamicImageService.list.mockResolvedValueOnce(result)
 
@@ -114,7 +145,10 @@ describe("GET /v1/dynamic-images", () => {
         context,
         input: { page: 2, perPage: 25, name: "Welcome" },
       }),
-    ).resolves.toEqual(result)
+    ).resolves.toEqual({
+      data: [publicDynamicImage],
+      pageCount: 1,
+    })
 
     expect(dynamicImageService.list).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
@@ -122,18 +156,32 @@ describe("GET /v1/dynamic-images", () => {
       perPage: 25,
       name: "Welcome",
     })
+    expect(dynamicImageService.resolveBackgroundUrls).toHaveBeenCalledTimes(1)
+    expect(dynamicImageService.resolveBackgroundUrls).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      rows: [dynamicImage],
+    })
+  })
+
+  test("resolves background urls once per request, not once per row", async () => {
+    const rows = [dynamicImage, { ...dynamicImage, id: "image-2" }]
+    dynamicImageService.list.mockResolvedValueOnce({ data: rows, pageCount: 1 })
+
+    await procedure.handler?.({ context, input: {} })
+
+    expect(dynamicImageService.resolveBackgroundUrls).toHaveBeenCalledTimes(1)
   })
 })
 
 describe("GET /v1/dynamic-images/{id}", () => {
   const procedure = findProcedure("GET", "/v1/dynamic-images/{id}")
 
-  test("gets a dynamic image for the token workspace", async () => {
+  test("gets a dynamic image with resolved background/trigger urls", async () => {
     dynamicImageService.find.mockResolvedValueOnce(dynamicImage)
 
     await expect(
       procedure.handler?.({ context, input: { id: "image-1" } }),
-    ).resolves.toEqual(dynamicImage)
+    ).resolves.toEqual(publicDynamicImage)
 
     expect(dynamicImageService.find).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
@@ -167,7 +215,7 @@ describe("POST /v1/dynamic-images", () => {
           data: dynamicImageData,
         },
       }),
-    ).resolves.toEqual(dynamicImage)
+    ).resolves.toEqual(publicDynamicImage)
 
     expect(dynamicImageService.create).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
@@ -194,7 +242,7 @@ describe("PUT /v1/dynamic-images/{id}", () => {
           data: dynamicImageData,
         },
       }),
-    ).resolves.toEqual(dynamicImage)
+    ).resolves.toEqual(publicDynamicImage)
 
     expect(dynamicImageService.update).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
@@ -237,7 +285,7 @@ describe("PATCH /v1/dynamic-images/{id}/enabled", () => {
         context,
         input: { id: "image-1", enabled: false },
       }),
-    ).resolves.toEqual({ ...dynamicImage, enabled: false })
+    ).resolves.toEqual({ ...publicDynamicImage, enabled: false })
 
     expect(dynamicImageService.setEnabled).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", id: "image-1" },

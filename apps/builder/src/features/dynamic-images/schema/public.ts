@@ -4,9 +4,19 @@ import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { createDynamicImageRequest, updateDynamicImageRequest } from "./action"
 import { dynamicImageResource } from "./resource"
 
-export const publicDynamicImageResource = dynamicImageResource.omit({
-  workspaceId: true,
-})
+export const publicDynamicImageResource = dynamicImageResource
+  .omit({ workspaceId: true, backgroundUrl: true })
+  .extend({
+    backgroundUrl: z
+      .string()
+      .nullable()
+      .describe("Public URL of the rendered static background."),
+    imageUrl: z
+      .string()
+      .describe(
+        "Trigger URL to embed. Replace `{{user_id}}` with the contact's channel-side id to get a personalized render; without it the static background is served.",
+      ),
+  })
 
 export const listDynamicImagesPublicRequest = publicListRequest.extend({
   name: z.string().optional(),

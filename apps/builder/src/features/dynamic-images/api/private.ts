@@ -1,8 +1,7 @@
-import { notFoundException } from "@chatbotx.io/business/errors"
+import { dynamicImageService } from "@chatbotx.io/business/dynamic-image"
 import { z } from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { findDynamicImage } from "../queries"
 import { dynamicImageResource } from "../schema/resource"
 
 export const dynamicImagesAuthenticatedAPI = {
@@ -16,11 +15,5 @@ export const dynamicImagesAuthenticatedAPI = {
     .input(z.object({ workspaceId: z.string(), id: z.string() }))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(dynamicImageResource)
-    .handler(async ({ input }) => {
-      const dynamicImage = await findDynamicImage(input)
-      if (!dynamicImage) {
-        throw notFoundException("Dynamic image not found")
-      }
-      return dynamicImage
-    }),
+    .handler(async ({ input }) => await dynamicImageService.find(input)),
 }
