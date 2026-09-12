@@ -57,10 +57,10 @@ const minigameService = {
   find: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
-  deleteMany: vi.fn(),
+  delete: vi.fn(),
   setEnabled: vi.fn(),
 }
-const minigameContactService = { listPlays: vi.fn() }
+const minigameContactService = { listPlays: vi.fn(), list: vi.fn() }
 
 vi.mock("@chatbotx.io/business/minigame", () => ({
   minigameService,
@@ -73,6 +73,8 @@ vi.mock("@/features/minigames/schema/resource", () => ({
 
 vi.mock("@/features/minigames/schema/public", () => ({
   createMinigamePublicRequest: z.object({}),
+  listMinigamePlayersPublicRequest: z.object({}),
+  listMinigamePlayersPublicResponse: z.object({}),
   listMinigamePlaysPublicRequest: z.object({}),
   listMinigamePlaysPublicResponse: z.object({}),
   listMinigamesPublicRequest: z.object({}),
@@ -83,11 +85,11 @@ vi.mock("@/features/minigames/schema/public", () => ({
 }))
 
 vi.mock("@/lib/orpc/orpc-error-helper", () => ({
-  possibleErrorsOnCreatingResource: {},
+  possibleErrorsOnCreatingMinigame: {},
   possibleErrorsOnDeletingResource: {},
   possibleErrorsOnFindingResource: {},
   possibleErrorsOnListingResource: {},
-  possibleErrorsOnMutatingResource: {},
+  possibleErrorsOnMutatingMinigame: {},
 }))
 
 await import("@/features/minigames/api/public")
@@ -127,7 +129,7 @@ test("registers the minigames public router under the minigames scope", () => {
 describe("GET /v1/minigames", () => {
   const procedure = findProcedure("GET", "/v1/minigames")
 
-  test("lists minigames in the authenticated workspace", async () => {
+  test("lists minigames in the authenticated workspace, pinned to createdAt desc", async () => {
     const result = { data: [{ id: "game-1" }], pageCount: 2 }
     minigameService.list.mockResolvedValueOnce(result)
 
@@ -143,6 +145,7 @@ describe("GET /v1/minigames", () => {
       page: 1,
       perPage: 50,
       name: "Prize",
+      sort: [{ id: "createdAt", desc: true }],
     })
   })
 })
@@ -194,15 +197,14 @@ describe("POST /v1/minigames", () => {
 describe("PUT /v1/minigames/{id}", () => {
   const procedure = findProcedure("PUT", "/v1/minigames/{id}")
 
-  test("updates a minigame and preserves the submitted prize baseline", async () => {
+  test("updates a minigame, honoring submitted prize quantities verbatim", async () => {
     const minigame = { id: "game-1" }
-    const originalPrizeQuantities = { "prize-1": 4 }
     minigameService.update.mockResolvedValueOnce(minigame)
 
     await expect(
       procedure.handler?.({
         context,
-        input: { id: "game-1", ...minigameInput, originalPrizeQuantities },
+        input: { id: "game-1", ...minigameInput },
       }),
     ).resolves.toEqual(minigame)
 
@@ -210,7 +212,7 @@ describe("PUT /v1/minigames/{id}", () => {
       workspaceId: "workspace-1",
       id: "game-1",
       ...minigameInput,
-      originalPrizeQuantities,
+      originalPrizeQuantities: null,
     })
   })
 })
@@ -219,16 +221,26 @@ describe("DELETE /v1/minigames/{id}", () => {
   const procedure = findProcedure("DELETE", "/v1/minigames/{id}")
 
   test("deletes the selected minigame in the authenticated workspace", async () => {
-    minigameService.deleteMany.mockResolvedValueOnce(undefined)
+    minigameService.delete.mockResolvedValueOnce(undefined)
 
     await expect(
       procedure.handler?.({ context, input: { id: "game-1" } }),
     ).resolves.toBeUndefined()
 
-    expect(minigameService.deleteMany).toHaveBeenCalledWith({
+    expect(minigameService.delete).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
-      ids: ["game-1"],
+      id: "game-1",
     })
+  })
+
+  test("rejects instead of silently succeeding when the minigame doesn't exist", async () => {
+    minigameService.delete.mockRejectedValueOnce(
+      new Error("Minigame not found"),
+    )
+
+    await expect(
+      procedure.handler?.({ context, input: { id: "missing" } }),
+    ).rejects.toThrow("Minigame not found")
   })
 })
 
@@ -271,6 +283,47 @@ describe("GET /v1/minigames/{id}/plays", () => {
       workspaceId: "workspace-1",
       minigameId: "game-1",
       contactId: "contact-1",
+    })
+  })
+})
+
+describe("GET /v1/minigames/{id}/players", () => {
+  const procedure = findProcedure("GET", "/v1/minigames/{id}/players")
+
+  test("lists players for the requested minigame", async () => {
+    const result = { data: [{ id: "player-1" }], pageCount: 3 }
+    minigameContactService.list.mockResolvedValueOnce(result)
+
+    await expect(
+      procedure.handler?.({
+        context,
+        input: { id: "game-1", page: 2, perPage: 10 },
+      }),
+    ).resolves.toEqual(result)
+
+    expect(minigameContactService.list).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      minigameId: "game-1",
+      page: 2,
+      perPage: 10,
+    })
+  })
+
+  test("forwards the optional name filter", async () => {
+    minigameContactService.list.mockResolvedValueOnce({
+      data: [],
+      pageCount: 0,
+    })
+
+    await procedure.handler?.({
+      context,
+      input: { id: "game-1", name: "Jane" },
+    })
+
+    expect(minigameContactService.list).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      minigameId: "game-1",
+      name: "Jane",
     })
   })
 })

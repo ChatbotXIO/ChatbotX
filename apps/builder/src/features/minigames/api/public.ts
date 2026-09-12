@@ -5,15 +5,17 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
-  possibleErrorsOnCreatingResource,
+  possibleErrorsOnCreatingMinigame,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
-  possibleErrorsOnMutatingResource,
+  possibleErrorsOnMutatingMinigame,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   createMinigamePublicRequest,
+  listMinigamePlayersPublicRequest,
+  listMinigamePlayersPublicResponse,
   listMinigamePlaysPublicRequest,
   listMinigamePlaysPublicResponse,
   listMinigamesPublicRequest,
@@ -42,7 +44,7 @@ export const minigamesPublicRouter = {
       const result = await minigameService.list({
         ...input,
         workspaceId: context.workspace.id,
-        name: input.name ?? undefined,
+        sort: [{ id: "createdAt", desc: true }],
       })
       return { data: result.data, pageCount: result.pageCount }
     }),
@@ -75,12 +77,12 @@ export const minigamesPublicRouter = {
     })
     .input(createMinigamePublicRequest)
     .output(minigamePublicResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingMinigame)
     .handler(
       async ({ context, input }) =>
         await minigameService.create({
-          workspaceId: context.workspace.id,
           ...input,
+          workspaceId: context.workspace.id,
         }),
     ),
 
@@ -93,13 +95,14 @@ export const minigamesPublicRouter = {
     })
     .input(updateMinigamePublicRequest)
     .output(minigamePublicResource)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnMutatingMinigame)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
       return await minigameService.update({
+        ...data,
         workspaceId: context.workspace.id,
         id,
-        ...data,
+        originalPrizeQuantities: null,
       })
     }),
 
@@ -114,9 +117,9 @@ export const minigamesPublicRouter = {
     .input(z.object({ id: zodBigintAsString() }))
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      await minigameService.deleteMany({
+      await minigameService.delete({
         workspaceId: context.workspace.id,
-        ids: [input.id],
+        id: input.id,
       })
     }),
 
@@ -129,7 +132,7 @@ export const minigamesPublicRouter = {
     })
     .input(setMinigameEnabledPublicRequest)
     .output(minigamePublicResource)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnMutatingMinigame)
     .handler(
       async ({ context, input }) =>
         await minigameService.setEnabled(
@@ -155,5 +158,27 @@ export const minigamesPublicRouter = {
         contactId: input.contactId,
       })
       return { data }
+    }),
+
+  listPlayers: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/minigames/{id}/players",
+      summary: "List a minigame's players",
+      tags,
+    })
+    .input(listMinigamePlayersPublicRequest)
+    .output(listMinigamePlayersPublicResponse)
+    // `minigameContactService.list` resolves the parent minigame through
+    // `minigameService.find` first (MinigameContact has no workspaceId), so a
+    // foreign or unknown id 404s.
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const { id, ...pagination } = input
+      return await minigameContactService.list({
+        ...pagination,
+        workspaceId: context.workspace.id,
+        minigameId: id,
+      })
     }),
 }

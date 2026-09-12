@@ -1,3 +1,4 @@
+import { isUniqueViolationError } from "@chatbotx.io/database/client"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const { mockSelectFor, mockUpdateReturning, mockUpdateSet, dbTransactionSpy } =
@@ -36,6 +37,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
   ilike: vi.fn(),
   inArray: vi.fn((field: unknown, values: unknown[]) => ({ field, values })),
+  isUniqueViolationError: vi.fn(() => false),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -128,5 +130,59 @@ describe("MinigameService.update — prize quantity reconciliation", () => {
         prizeSettings: { prizes: [], nonWinning: { loseRate: 100 } },
       } as never),
     ).rejects.toThrow()
+  })
+
+  test("honors submitted quantities verbatim when originalPrizeQuantities is null (public-API write)", async () => {
+    mockSelectFor.mockResolvedValue([
+      {
+        prizeSettings: {
+          prizes: [{ id: "p1", quantity: 3 }],
+          nonWinning: { loseRate: 25 },
+        },
+      },
+    ])
+
+    const { minigameService } = await import("../src/minigame/service")
+
+    await minigameService.update({
+      ...baseInput,
+      prizeSettings: {
+        prizes: [{ id: "p1", quantity: undefined }],
+        nonWinning: { loseRate: 25 },
+      },
+      originalPrizeQuantities: null,
+    } as never)
+
+    const setArg = mockUpdateSet.mock.calls.at(-1)?.[0] as {
+      prizeSettings: { prizes: { id: string; quantity?: number }[] }
+    }
+    expect(setArg.prizeSettings.prizes[0].quantity).toBeUndefined()
+  })
+
+  test("maps a unique-name violation to a 409 ChatbotXException", async () => {
+    mockSelectFor.mockResolvedValue([
+      {
+        prizeSettings: {
+          prizes: [{ id: "p1", quantity: 3 }],
+          nonWinning: { loseRate: 25 },
+        },
+      },
+    ])
+    mockUpdateReturning.mockRejectedValueOnce(new Error("unique violation"))
+
+    vi.mocked(isUniqueViolationError).mockReturnValueOnce(true)
+
+    const { minigameService } = await import("../src/minigame/service")
+
+    await expect(
+      minigameService.update({
+        ...baseInput,
+        prizeSettings: { prizes: [], nonWinning: { loseRate: 100 } },
+        originalPrizeQuantities: {},
+      } as never),
+    ).rejects.toMatchObject({
+      code: "nameAlreadyExists",
+      httpStatusCode: 409,
+    })
   })
 })

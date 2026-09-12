@@ -1339,6 +1339,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "minigames.listPlayers",
+    "path": "/v1/minigames/{id}/players",
+  },
+  {
+    "method": "GET",
     "operationId": "minigames.listPlays",
     "path": "/v1/minigames/{id}/plays",
   },

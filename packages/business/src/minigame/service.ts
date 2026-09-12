@@ -1,4 +1,11 @@
-import { and, db, eq, ilike, inArray } from "@chatbotx.io/database/client"
+import {
+  and,
+  db,
+  eq,
+  ilike,
+  inArray,
+  isUniqueViolationError,
+} from "@chatbotx.io/database/client"
 import type {
   MinigameAppearance,
   MinigameGeneralSettings,
@@ -16,7 +23,7 @@ import {
   parseOrderBy,
 } from "@chatbotx.io/database/utils"
 import { BaseService } from "../base.service"
-import { notFoundException } from "../errors"
+import { ChatbotXException, notFoundException } from "../errors"
 
 type ListInput = {
   workspaceId: string
@@ -134,60 +141,98 @@ class MinigameService extends BaseService {
     }
   }
 
-  async create(input: UpsertInput): Promise<MinigameModel> {
-    const [row] = await db
-      .insert(minigameModel)
-      .values({ workspaceId: input.workspaceId, ...this.toColumns(input) })
-      .returning()
+  /**
+   * `Minigame_workspaceId_name_key` is the only unique index on the table, so a
+   * unique violation from create/update is always a duplicate name. Mapped here
+   * (not in each caller) so the public API and the builder form get the same
+   * failure — see `possibleErrorsOnCreatingMinigame` in
+   * `apps/builder/src/lib/orpc/orpc-error-helper.ts`.
+   */
+  private rethrowNameConflict(error: unknown): never {
+    if (isUniqueViolationError(error)) {
+      throw new ChatbotXException(
+        "Minigame name already exists",
+        "nameAlreadyExists",
+        409,
+      )
+    }
+    throw error
+  }
 
-    return row
+  async create(input: UpsertInput): Promise<MinigameModel> {
+    try {
+      const [row] = await db
+        .insert(minigameModel)
+        .values({ workspaceId: input.workspaceId, ...this.toColumns(input) })
+        .returning()
+
+      return row
+    } catch (error) {
+      this.rethrowNameConflict(error)
+    }
   }
 
   async update(
     input: UpsertInput & {
       id: string
-      originalPrizeQuantities?: Record<string, number | undefined>
+      originalPrizeQuantities?: Record<string, number | undefined> | null
     },
   ): Promise<MinigameModel> {
     const { originalPrizeQuantities = {} } = input
 
-    return await db.transaction(async (tx) => {
-      const [current] = await tx
-        .select({ prizeSettings: minigameModel.prizeSettings })
-        .from(minigameModel)
-        .where(
-          and(
-            eq(minigameModel.id, input.id),
-            eq(minigameModel.workspaceId, input.workspaceId),
-          ),
-        )
-        .for("update")
+    try {
+      return await db.transaction(async (tx) => {
+        const [current] = await tx
+          .select({ prizeSettings: minigameModel.prizeSettings })
+          .from(minigameModel)
+          .where(
+            and(
+              eq(minigameModel.id, input.id),
+              eq(minigameModel.workspaceId, input.workspaceId),
+            ),
+          )
+          .for("update")
 
-      if (!current) {
-        throw notFoundException("Minigame not found")
-      }
+        if (!current) {
+          throw notFoundException("Minigame not found")
+        }
 
-      const reconciledPrizeSettings = reconcilePrizeQuantities(
-        input.prizeSettings,
-        current.prizeSettings,
-        originalPrizeQuantities,
-      )
+        // `null` = "no form-load baseline" (a public-API write, not the builder
+        // form): honor the submitted quantities verbatim, including clearing a
+        // tracked quantity back to `undefined`. `{}` (the builder default) means
+        // "baseline unknown for every prize", which `reconcilePrizeQuantities`
+        // reads as untouched and therefore keeps the DB's live, play-decremented
+        // value.
+        const reconciledPrizeSettings =
+          originalPrizeQuantities === null
+            ? input.prizeSettings
+            : reconcilePrizeQuantities(
+                input.prizeSettings,
+                current.prizeSettings,
+                originalPrizeQuantities,
+              )
 
-      const [updated] = await tx
-        .update(minigameModel)
-        .set(
-          this.toColumns({ ...input, prizeSettings: reconciledPrizeSettings }),
-        )
-        .where(
-          and(
-            eq(minigameModel.id, input.id),
-            eq(minigameModel.workspaceId, input.workspaceId),
-          ),
-        )
-        .returning()
+        const [updated] = await tx
+          .update(minigameModel)
+          .set(
+            this.toColumns({
+              ...input,
+              prizeSettings: reconciledPrizeSettings,
+            }),
+          )
+          .where(
+            and(
+              eq(minigameModel.id, input.id),
+              eq(minigameModel.workspaceId, input.workspaceId),
+            ),
+          )
+          .returning()
 
-      return updated
-    })
+        return updated
+      })
+    } catch (error) {
+      this.rethrowNameConflict(error)
+    }
   }
 
   async setEnabled(

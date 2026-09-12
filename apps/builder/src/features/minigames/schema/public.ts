@@ -20,9 +20,6 @@ export const createMinigamePublicRequest = createMinigameRequest
 
 export const updateMinigamePublicRequest = updateMinigameRequest.extend({
   id: zodBigintAsString(),
-  originalPrizeQuantities: z
-    .record(z.string(), z.number().int().min(0).optional())
-    .default({}),
 })
 
 export const setMinigameEnabledPublicRequest = z.object({
@@ -35,6 +32,33 @@ export const listMinigamePlaysPublicRequest = z.object({
   contactId: zodBigintAsString(),
 })
 
+export const listMinigamePlayersPublicRequest = publicListRequest.extend({
+  id: zodBigintAsString(),
+  name: z.string().trim().min(1).optional(),
+})
+
+export const minigamePlayerResource = z.object({
+  id: z.string(),
+  contactId: z.string(),
+  contactInboxId: z.string().nullable(),
+  played: z.number().int(),
+  remaining: z.number().int(),
+  sharesCount: z.number().int(),
+  openedAt: z.date(),
+  lastPlayedAt: z.date(),
+  contact: z.object({
+    id: z.string(),
+    fullName: z.string().nullable(),
+    firstName: z.string().nullable(),
+    lastName: z.string().nullable(),
+    avatar: z.string().nullable(),
+  }),
+})
+
+export const listMinigamePlayersPublicResponse = publicListResponse(
+  minigamePlayerResource,
+)
+
 export const minigamePlayResource = z.object({
   id: z.string(),
   isWinning: z.boolean(),
@@ -43,5 +67,9 @@ export const minigamePlayResource = z.object({
 })
 
 export const listMinigamePlaysPublicResponse = z.object({
-  data: z.array(minigamePlayResource),
+  data: z
+    .array(minigamePlayResource)
+    .describe(
+      "A contact's most recent plays, newest first, capped at 200 records.",
+    ),
 })

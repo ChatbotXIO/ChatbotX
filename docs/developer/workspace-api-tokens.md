@@ -345,12 +345,26 @@ Two invariants specific to this scope:
   must not re-implement it upstream.
 
 - **Minigames** — this scope shipped in the enum/registry/i18n alongside
-  `ads` but, like `ads`, carried no endpoints for a while. It now
-  publishes minigame CRUD, enable/disable, and per-contact play-history
-  reads — also its first endpoints. As with every other scope, each
-  public handler calls the same `packages/business` service method the
-  private/action code calls; no business logic was duplicated to publish
-  these.
+  `ads` but, like `ads`, carried no endpoints for a while. It now publishes
+  minigame CRUD, enable/disable, per-contact play-history reads, and a
+  players (participants) list — its first endpoints. As with every other
+  scope, each public handler calls the same `packages/business` service
+  method the private/action code calls; no business logic was duplicated to
+  publish these.
+  - *`GET /v1/minigames/{id}/players` returns contact display PII*
+    (`fullName`, `firstName`, `lastName`, `avatar` — no email/phone) with no
+    field-level gating, same rationale as the broadcasts-audience note
+    above.
+  - *`GET /v1/minigames/{id}/plays` is not paged* and is hard-capped at 200
+    records by `MAX_PLAY_RECORDS`
+    (`packages/business/src/minigame/minigame-contact-service.ts`).
+  - *`PUT /v1/minigames/{id}` passes `originalPrizeQuantities: null`*, so a
+    token write honors submitted prize quantities verbatim; the builder form
+    passes its load-time snapshot instead and keeps play-decremented stock.
+    Never expose that field on the public request schema.
+  - *A duplicate name is a `nameAlreadyExists`/409* from `minigameService`,
+    declared on both write routes — not the 500 the raw Postgres unique
+    violation used to produce.
 
 ### Ads scope — endpoint-to-scope table
 
