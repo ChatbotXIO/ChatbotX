@@ -1,7 +1,6 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { igStoryAutomationModel } from "@chatbotx.io/database/schema"
+import { igStoryAutomationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
@@ -21,17 +20,9 @@ export const bulkDeleteIgStoriesAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: { ids: string[] }
     }) => {
-      if (parsedInput.ids.length === 0) {
-        return
-      }
-
-      await db
-        .delete(igStoryAutomationModel)
-        .where(
-          and(
-            inArray(igStoryAutomationModel.id, parsedInput.ids),
-            eq(igStoryAutomationModel.workspaceId, workspaceId),
-          ),
-        )
+      await igStoryAutomationService.deleteMany({
+        workspaceId,
+        ids: parsedInput.ids,
+      })
     },
   )

@@ -1,16 +1,13 @@
+import { igStoryAutomationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { createIgStory } from "../actions/create-ig-story.action"
-import { deleteIgStory } from "../actions/delete-ig-story.action"
-import { updateIgStory } from "../actions/update-ig-story.action"
-import { listIgStories } from "../queries"
 import {
   listInstagramFacebookStories,
   listInstagramLoginStories,
-} from "../queries/instagram-stories"
+} from "../lib/instagram-stories"
 import {
   createIgStoryRequest,
   igStoryVariants,
@@ -31,7 +28,7 @@ export const igStoriesPrivateAPI = {
     .input(listIgStoriesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listIgStoriesResponse)
-    .handler(async ({ input }) => await listIgStories(input)),
+    .handler(async ({ input }) => await igStoryAutomationService.list(input)),
 
   createIgStoryAPI: authorizedAPI
     .route({
@@ -44,8 +41,8 @@ export const igStoriesPrivateAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(igStoryResource)
     .handler(async ({ input }) => {
-      const { workspaceId, ...rest } = input
-      return await createIgStory(workspaceId, rest)
+      const { workspaceId, type, ...data } = input
+      return await igStoryAutomationService.create({ workspaceId, type, data })
     }),
 
   updateIgStoryAPI: authorizedAPI
@@ -63,8 +60,8 @@ export const igStoriesPrivateAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(igStoryResource)
     .handler(async ({ input }) => {
-      const { workspaceId, id, ...rest } = input
-      return await updateIgStory({ workspaceId, id }, rest)
+      const { workspaceId, id, type: _type, ...rest } = input
+      return await igStoryAutomationService.update({ workspaceId, id }, rest)
     }),
 
   deleteIgStoryAPI: authorizedAPI
@@ -78,7 +75,10 @@ export const igStoriesPrivateAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.void())
     .handler(async ({ input }) => {
-      await deleteIgStory({ workspaceId: input.workspaceId, id: input.id })
+      await igStoryAutomationService.delete({
+        workspaceId: input.workspaceId,
+        id: input.id,
+      })
     }),
 
   instagramStoriesAPI: authorizedAPI

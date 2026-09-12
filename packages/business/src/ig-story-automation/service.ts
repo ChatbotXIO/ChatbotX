@@ -1,7 +1,14 @@
-import { db, eq, relationsFilterToSQL, sql } from "@chatbotx.io/database/client"
 import {
+  and,
+  db,
+  eq,
+  inArray,
+  relationsFilterToSQL,
+  sql,
+} from "@chatbotx.io/database/client"
+import {
+  type IgStoryAutomationType,
   igStoryAutomationTypes,
-  rootFolderId,
 } from "@chatbotx.io/database/partials"
 import { igStoryAutomationModel } from "@chatbotx.io/database/schema"
 import type { IgStoryAutomationModel } from "@chatbotx.io/database/types"
@@ -10,8 +17,10 @@ import {
   likeContains,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
+import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
+import { resolveFolderIdFilter } from "../lib/folder-filter"
 
 type ListIgStoriesInput = {
   workspaceId: string
@@ -19,6 +28,7 @@ type ListIgStoriesInput = {
   perPage?: number | null
   sort?: { id: string; desc: boolean }[] | null
   folderId?: string | null
+  includeAllFolders?: boolean
   name?: string | null
   isActive?: boolean | null
 }
@@ -27,6 +37,14 @@ type ListIgStoriesResult = {
   data: IgStoryAutomationModel[]
   pageCount: number
 }
+
+// `type` is deliberately excluded: it decides which shared-table rows every
+// read path scopes to, so it is set once at creation and never carried in an
+// update payload. Excluding it here turns any regression into a compile error.
+type IgStoryAutomationWriteData = Omit<
+  typeof igStoryAutomationModel.$inferInsert,
+  "id" | "workspaceId" | "type"
+>
 
 class IgStoryAutomationService extends BaseService {
   findActiveAutomations(props: {
@@ -56,15 +74,10 @@ class IgStoryAutomationService extends BaseService {
     // automations only — treating it the same as "not filtered at all" would
     // surface every automation regardless of which folder it had been moved
     // into (mirrors ig-comments' listIgComments).
-    const folderIdFilter: string | { isNull: true } =
-      !input.folderId || input.folderId === rootFolderId
-        ? { isNull: true }
-        : input.folderId
-
     const where = {
       workspaceId: input.workspaceId,
       type: { in: [...igStoryAutomationTypes.options] },
-      folderId: folderIdFilter,
+      folderId: resolveFolderIdFilter(input.folderId, input.includeAllFolders),
       name: input.name ? { ilike: likeContains(input.name) } : undefined,
       isActive:
         input.isActive !== undefined && input.isActive !== null
@@ -109,6 +122,66 @@ class IgStoryAutomationService extends BaseService {
     }
 
     return record
+  }
+
+  async create(input: {
+    workspaceId: string
+    type: IgStoryAutomationType
+    data: IgStoryAutomationWriteData
+  }): Promise<IgStoryAutomationModel> {
+    const [created] = await db
+      .insert(igStoryAutomationModel)
+      .values({
+        id: createId(),
+        workspaceId: input.workspaceId,
+        type: input.type,
+        ...input.data,
+      })
+      .returning()
+    return created
+  }
+
+  async update(
+    ctx: { workspaceId: string; id: string },
+    data: Partial<IgStoryAutomationWriteData>,
+  ): Promise<IgStoryAutomationModel> {
+    await this.findOrFail(ctx)
+
+    const [updated] = await db
+      .update(igStoryAutomationModel)
+      .set(data)
+      .where(
+        and(
+          eq(igStoryAutomationModel.id, ctx.id),
+          eq(igStoryAutomationModel.workspaceId, ctx.workspaceId),
+          inArray(igStoryAutomationModel.type, igStoryAutomationTypes.options),
+        ),
+      )
+      .returning()
+    return updated
+  }
+
+  async deleteMany(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<void> {
+    if (input.ids.length === 0) {
+      return
+    }
+    await db
+      .delete(igStoryAutomationModel)
+      .where(
+        and(
+          eq(igStoryAutomationModel.workspaceId, input.workspaceId),
+          inArray(igStoryAutomationModel.id, input.ids),
+          inArray(igStoryAutomationModel.type, igStoryAutomationTypes.options),
+        ),
+      )
+  }
+
+  async delete(input: { workspaceId: string; id: string }): Promise<void> {
+    await this.findOrFail(input)
+    await this.deleteMany({ workspaceId: input.workspaceId, ids: [input.id] })
   }
 }
 

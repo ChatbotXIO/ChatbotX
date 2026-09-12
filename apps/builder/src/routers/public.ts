@@ -21,8 +21,12 @@ import { emailTopicsPublicRouter } from "@/features/email-topics/api/public"
 import { errorLogsPublicRouter } from "@/features/error-logs/api/public"
 import { appointmentExternalCalendarsPublicRouter } from "@/features/external-calendars/api/public"
 import { externalWebhooksPublicRouter } from "@/features/external-webhooks/api/public"
+import { facebookLeadAdsPublicRouter } from "@/features/facebook-lead-ad-automation/api/public"
+import { fbCommentsPublicRouter } from "@/features/fb-comments/api/public"
 import { flowsPublicRouter } from "@/features/flows/api/public"
 import { foldersPublicRouter } from "@/features/folders/api/public"
+import { igCommentsPublicRouter } from "@/features/ig-comments/api/public"
+import { igStoriesPublicRouter } from "@/features/ig-stories/api/public"
 import { inboxesPublicRouter } from "@/features/inboxes/api/public"
 import { channelsPublicRouter } from "@/features/integration-api/api/public"
 import { messengerChannelsPublicRouter } from "@/features/integration-messenger/api/public"
@@ -37,9 +41,12 @@ import { minigamesPublicRouter } from "@/features/minigames/api/public"
 import { messengerPersonasPublicRouter } from "@/features/personas/api/public"
 import { productCategoriesPublicRouter } from "@/features/product-categories/api/public"
 import { productsPublicRouter } from "@/features/products/api/public"
+import { qrCodesPublicRouter } from "@/features/qr-codes/api/public"
+import { questionnairesPublicRouter } from "@/features/questionnaires/api/public"
 import { reflinksPublicRouter } from "@/features/reflinks/api/public"
 import { savedRepliesPublicRouter } from "@/features/saved-replies/api/public"
 import { sequencesPublicRouter } from "@/features/sequences/api/public"
+import { spreadsheetsPublicRouter } from "@/features/spreadsheets/api/public"
 import { tagsPublicRouter } from "@/features/tags/api/public"
 import { triggersPublicRouter } from "@/features/triggers/api/public"
 import { userPersistentMenusPublicRouter } from "@/features/user-persistent-menus/api/public"
@@ -69,8 +76,12 @@ export const publicRouter = {
   emailTopics: emailTopicsPublicRouter,
   errorLogs: errorLogsPublicRouter,
   externalWebhooks: externalWebhooksPublicRouter,
+  facebookLeadAds: facebookLeadAdsPublicRouter,
+  fbComments: fbCommentsPublicRouter,
   flows: flowsPublicRouter,
   folders: foldersPublicRouter,
+  igComments: igCommentsPublicRouter,
+  igStories: igStoriesPublicRouter,
   inboxTeams: inboxTeamsPublicRouter,
   inboxes: inboxesPublicRouter,
   integrations: integrationsPublicRouter,
@@ -82,10 +93,13 @@ export const publicRouter = {
   minigames: minigamesPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,
+  qrCodes: qrCodesPublicRouter,
+  questionnaires: questionnairesPublicRouter,
   reflinks: reflinksPublicRouter,
   savedReplies: savedRepliesPublicRouter,
   sequences: sequencesPublicRouter,
   smtpIntegrations: smtpIntegrationsPublicRouter,
+  spreadsheets: spreadsheetsPublicRouter,
   tags: tagsPublicRouter,
   templateMessages: templateMessagesPublicRouter,
   triggers: triggersPublicRouter,

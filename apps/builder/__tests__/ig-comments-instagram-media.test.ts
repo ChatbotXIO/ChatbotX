@@ -31,7 +31,7 @@ vi.mock("@/lib/log", () => ({
 }))
 
 const { listInstagramLoginMedia, listInstagramFacebookMedia } = await import(
-  "@/features/ig-comments/queries/instagram-media"
+  "@/features/ig-comments/lib/instagram-media"
 )
 
 function buildMedia(id: string, productType: string) {

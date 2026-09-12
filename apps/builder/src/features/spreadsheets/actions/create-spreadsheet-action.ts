@@ -1,16 +1,22 @@
 "use server"
 
-import { spreadsheetService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { createSpreadsheet } from "../lib/manage-spreadsheet"
 import {
   type CreateSpreadsheetRequest,
   createSpreadsheetRequest,
 } from "../schema/mutation"
-import { verifyGoogleSheetsUrl } from "./util"
+
+const messages = {
+  integrationMissing: "You need to setup google sheets first.",
+  invalidUrl: "URL must be a valid, public or shareable Google Sheets link.",
+}
 
 export const createSpreadsheetAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -23,15 +29,21 @@ export const createSpreadsheetAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateSpreadsheetRequest
     }) => {
-      const spreadsheetId = await verifyGoogleSheetsUrl(
-        workspaceId,
-        parsedInput.url,
-      )
-
-      await spreadsheetService.create({
-        workspaceId,
-        spreadsheetId,
-        data: parsedInput,
-      })
+      try {
+        return await createSpreadsheet({
+          workspaceId,
+          data: parsedInput,
+          messages,
+        })
+      } catch (error) {
+        if (error instanceof ChatbotXException && error.code === "validation") {
+          // Key on the field the service tagged so a validation added on any
+          // other field stops mis-rendering under the URL input.
+          return returnValidationErrors(createSpreadsheetRequest, {
+            [error.field ?? "url"]: { _errors: [error.message] },
+          })
+        }
+        throw error
+      }
     },
   )

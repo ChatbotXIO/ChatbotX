@@ -1074,6 +1074,71 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "facebookLeadAds.create",
+    "path": "/v1/facebook-lead-ads",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "facebookLeadAds.delete",
+    "path": "/v1/facebook-lead-ads/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "facebookLeadAds.get",
+    "path": "/v1/facebook-lead-ads/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "facebookLeadAds.list",
+    "path": "/v1/facebook-lead-ads",
+  },
+  {
+    "method": "GET",
+    "operationId": "facebookLeadAds.listForms",
+    "path": "/v1/facebook-lead-ads/forms",
+  },
+  {
+    "method": "GET",
+    "operationId": "facebookLeadAds.listPages",
+    "path": "/v1/facebook-lead-ads/pages",
+  },
+  {
+    "method": "PUT",
+    "operationId": "facebookLeadAds.update",
+    "path": "/v1/facebook-lead-ads/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "fbComments.create",
+    "path": "/v1/fb-comments",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "fbComments.delete",
+    "path": "/v1/fb-comments/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "fbComments.get",
+    "path": "/v1/fb-comments/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "fbComments.list",
+    "path": "/v1/fb-comments",
+  },
+  {
+    "method": "GET",
+    "operationId": "fbComments.listPosts",
+    "path": "/v1/fb-comments/facebook-posts",
+  },
+  {
+    "method": "PUT",
+    "operationId": "fbComments.update",
+    "path": "/v1/fb-comments/{id}",
+  },
+  {
+    "method": "POST",
     "operationId": "flows.create",
     "path": "/v1/flows",
   },
@@ -1141,6 +1206,66 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "folders.update",
     "path": "/v1/folders/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "igComments.create",
+    "path": "/v1/ig-comments",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "igComments.delete",
+    "path": "/v1/ig-comments/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "igComments.get",
+    "path": "/v1/ig-comments/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "igComments.list",
+    "path": "/v1/ig-comments",
+  },
+  {
+    "method": "GET",
+    "operationId": "igComments.listMedia",
+    "path": "/v1/ig-comments/instagram-media",
+  },
+  {
+    "method": "PUT",
+    "operationId": "igComments.update",
+    "path": "/v1/ig-comments/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "igStories.create",
+    "path": "/v1/ig-stories",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "igStories.delete",
+    "path": "/v1/ig-stories/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "igStories.get",
+    "path": "/v1/ig-stories/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "igStories.list",
+    "path": "/v1/ig-stories",
+  },
+  {
+    "method": "GET",
+    "operationId": "igStories.listStories",
+    "path": "/v1/ig-stories/instagram-stories",
+  },
+  {
+    "method": "PUT",
+    "operationId": "igStories.update",
+    "path": "/v1/ig-stories/{id}",
   },
   {
     "method": "GET",
@@ -1444,6 +1569,86 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "qrCodes.create",
+    "path": "/v1/qr-codes",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "qrCodes.delete",
+    "path": "/v1/qr-codes/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "qrCodes.get",
+    "path": "/v1/qr-codes/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "qrCodes.list",
+    "path": "/v1/qr-codes",
+  },
+  {
+    "method": "PUT",
+    "operationId": "qrCodes.update",
+    "path": "/v1/qr-codes/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "questionnaires.create",
+    "path": "/v1/questionnaires",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "questionnaires.delete",
+    "path": "/v1/questionnaires/{id}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "questionnaires.deleteSubmission",
+    "path": "/v1/questionnaires/{id}/submissions/{submissionId}",
+  },
+  {
+    "method": "POST",
+    "operationId": "questionnaires.duplicate",
+    "path": "/v1/questionnaires/{id}/duplicate",
+  },
+  {
+    "method": "GET",
+    "operationId": "questionnaires.get",
+    "path": "/v1/questionnaires/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "questionnaires.getSubmission",
+    "path": "/v1/questionnaires/{id}/submissions/{submissionId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "questionnaires.getSubmissionStats",
+    "path": "/v1/questionnaires/{id}/submissions/stats",
+  },
+  {
+    "method": "GET",
+    "operationId": "questionnaires.list",
+    "path": "/v1/questionnaires",
+  },
+  {
+    "method": "GET",
+    "operationId": "questionnaires.listSubmissions",
+    "path": "/v1/questionnaires/{id}/submissions",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "questionnaires.rename",
+    "path": "/v1/questionnaires/{id}/rename",
+  },
+  {
+    "method": "PUT",
+    "operationId": "questionnaires.update",
+    "path": "/v1/questionnaires/{id}",
+  },
+  {
+    "method": "POST",
     "operationId": "reflinks.create",
     "path": "/v1/ref-links",
   },
@@ -1556,6 +1761,41 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "smtpIntegrations.update",
     "path": "/v1/smtp-integrations/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "spreadsheets.create",
+    "path": "/v1/spreadsheets",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "spreadsheets.delete",
+    "path": "/v1/spreadsheets/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "spreadsheets.get",
+    "path": "/v1/spreadsheets/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "spreadsheets.list",
+    "path": "/v1/spreadsheets",
+  },
+  {
+    "method": "GET",
+    "operationId": "spreadsheets.listWorksheetHeaders",
+    "path": "/v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetName}/headers",
+  },
+  {
+    "method": "GET",
+    "operationId": "spreadsheets.listWorksheets",
+    "path": "/v1/spreadsheets/{spreadsheetId}/worksheets",
+  },
+  {
+    "method": "PUT",
+    "operationId": "spreadsheets.update",
+    "path": "/v1/spreadsheets/{id}",
   },
   {
     "method": "POST",

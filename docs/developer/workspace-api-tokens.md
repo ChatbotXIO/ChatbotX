@@ -163,11 +163,17 @@ an endpoint's scope.
   declare a scope, or if `messages.ts`'s procedures drift onto `contacts`.
 
 - **Automation** — covers flows, triggers, keywords (automated responses),
-  AI agents, AI MCP servers, AI functions, AI files, and ref links — a full
-  CRUD surface so an agent can build, publish, and inspect automations
-  without human help via the builder UI. AI triggers were retired (dropped
-  from the schema and this scope) in favor of the AI files/functions/MCP
-  servers surface. Two invariants:
+  AI agents, AI MCP servers, AI functions, AI files, ref links, Facebook Lead
+  Ads automations, FB/IG comment automations, IG story automations, QR
+  codes, questionnaires (+ submissions), and spreadsheets — a full CRUD
+  surface so an agent can build, publish, and inspect automations without
+  human help via the builder UI. AI triggers were retired (dropped from the
+  schema and this scope) in favor of the AI
+  files/functions/MCP servers surface. Note this scope **is a contact-PII
+  export path**: `GET /v1/questionnaires/{id}/submissions` returns the
+  submitting contact's email and phone, matching the broadcasts-audience and
+  minigames-players precedent (minting a token already requires workspace
+  superAdmin). Six invariants:
   - *Keywords `type` filter* — `AutomatedResponse` serves two `FolderType`s
     off one table (`automatedResponse` for inbound/Contact,
     `outboundAutomatedResponse` for outbound/Page), disambiguated by the
@@ -179,6 +185,28 @@ an endpoint's scope.
     was widened. Any future trigger route must keep populating both via
     `triggerRepository.findWithConditions` rather than reintroducing a
     hardcoded `[]`.
+  - *FB/IG comment `type` filter* — `FBCommentAutomation` serves fb-comments
+    (`messenger`) and ig-comments (`instagram`/`instagramFacebook`) off one
+    table. Every read and write must go through the `*Messenger`/`*Instagram`
+    service methods; a bare `workspaceId` + `id` where-clause lets
+    `/v1/fb-comments/{id}` mutate an IG automation.
+  - *List endpoints default to all folders* — the builder's list pages scope
+    to the root folder when no `folderId` is in the URL. Public list
+    handlers pass `includeAllFolders: true`; omit it and `GET /v1/fb-comments`
+    silently returns only unfiled automations.
+  - *`type` is immutable on update* — the same shared-table discriminator that
+    scopes reads also decides which worker consumer fires an automation, so a
+    client-supplied `type` must never reach an update payload. The update
+    request schemas still carry `type` (they derive from the create schema via
+    `.partial()`), so every handler destructures it away (`const { type: _type,
+    ...data } = input`) and `FbCommentAutomationWriteData` /
+    `IgStoryAutomationWriteData` `Omit` it so a regression is a compile error.
+  - *Every public router is scope-tested* — `apps/builder/__tests__/
+    automation-public-scope.test.ts` drives the **real** routers through
+    `call()` and asserts a non-`automation` token gets `FORBIDDEN` on every
+    exported procedure. It iterates `Object.keys(router)`, so a newly added
+    procedure is covered without a new test; a router wired to the wrong scope
+    fails there.
 
 - **Appointments** — covers appointment calendars, appointments, reminder
   dispatch audit reads, and external (Google/Outlook) calendar connections.

@@ -1,8 +1,6 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import { fbCommentAutomationModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
+import { fbCommentAutomationService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -12,24 +10,6 @@ import {
   type CreateIgCommentRequest,
   createIgCommentRequest,
 } from "../schema/action"
-
-export const createIgComment = async (
-  workspaceId: string,
-  input: CreateIgCommentRequest,
-) => {
-  const id = createId()
-
-  const [record] = await db
-    .insert(fbCommentAutomationModel)
-    .values({
-      id,
-      workspaceId,
-      ...input,
-    })
-    .returning()
-
-  return record
-}
 
 export const createIgCommentAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -42,7 +22,12 @@ export const createIgCommentAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateIgCommentRequest
     }) => {
-      const record = await createIgComment(workspaceId, parsedInput)
+      const { type, ...data } = parsedInput
+      const record = await fbCommentAutomationService.createInstagram({
+        workspaceId,
+        type,
+        data,
+      })
       return { id: record.id }
     },
   )

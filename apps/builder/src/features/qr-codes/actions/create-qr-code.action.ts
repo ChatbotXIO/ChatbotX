@@ -33,8 +33,11 @@ export const createQrCodeAction = workspaceActionClient
         })
       } catch (error) {
         if (error instanceof ChatbotXException && error.code === "validation") {
+          // The service tags each failure with the form field it belongs to
+          // (`name` or `flowId`); fall back to `name` only when it left the
+          // field unset.
           return returnValidationErrors(createQrCodeRequest, {
-            name: {
+            [error.field ?? "name"]: {
               _errors: [error.message],
             },
           })

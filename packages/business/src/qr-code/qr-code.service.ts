@@ -4,6 +4,7 @@ import {
   db,
   eq,
   ilike,
+  inArray,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
 import { flowModel, reflinkModel } from "@chatbotx.io/database/schema"
@@ -16,7 +17,8 @@ import {
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { validationException } from "../errors"
+import { notFoundException, validationException } from "../errors"
+import { flowService } from "../flow/service"
 
 const QR_CODES_CACHE_TTL_SECONDS = 60 * 60
 
@@ -72,6 +74,8 @@ type CreateQrCodeData = Omit<
   name: string
 }
 
+type UpdateQrCodeData = Partial<CreateQrCodeData>
+
 function getListCacheKey(input: ListQrCodesInput): string {
   const parts: Record<string, string | number | null | undefined> = {
     workspaceId: input.workspaceId,
@@ -106,6 +110,14 @@ class QRCodeService extends BaseService {
     })
   }
 
+  async findOrFail({ workspaceId, id }: { workspaceId: string; id: string }) {
+    const qrCode = await this.find({ workspaceId, id })
+    if (!qrCode) {
+      throw notFoundException("QR Code not found")
+    }
+    return qrCode
+  }
+
   async create(input: {
     workspaceId: string
     data: CreateQrCodeData
@@ -115,6 +127,14 @@ class QRCodeService extends BaseService {
     const { tx = db, workspaceId, data, duplicateNameMessage } = input
     const { size, name, ...rest } = data
     const id = createId()
+
+    if (
+      rest.flowId &&
+      !(await flowService.exists(workspaceId, rest.flowId, tx))
+    ) {
+      throw validationException("flowId", "Flow not found in this workspace")
+    }
+
     try {
       await tx.insert(reflinkModel).values({
         id,
@@ -134,6 +154,75 @@ class QRCodeService extends BaseService {
       }
       throw error
     }
+  }
+
+  async update(input: {
+    workspaceId: string
+    id: string
+    data: UpdateQrCodeData
+    duplicateNameMessage: string
+    tx?: DatabaseClient
+  }): Promise<ReflinkModel> {
+    const { tx = db, workspaceId, id, data, duplicateNameMessage } = input
+    const qrCode = await this.findOrFail({ workspaceId, id })
+    const { size, name, ...rest } = data
+    const qrStyles =
+      size === undefined
+        ? undefined
+        : { ...((qrCode.qrStyles as { size: number } | null) ?? {}), size }
+
+    if (
+      rest.flowId &&
+      !(await flowService.exists(workspaceId, rest.flowId, tx))
+    ) {
+      throw validationException("flowId", "Flow not found in this workspace")
+    }
+
+    try {
+      const [updated] = await tx
+        .update(reflinkModel)
+        .set({
+          ...rest,
+          ...(name === undefined ? {} : { name: `qr_${name}` }),
+          ...(qrStyles === undefined ? {} : { qrStyles }),
+        })
+        .where(
+          and(
+            eq(reflinkModel.id, qrCode.id),
+            eq(reflinkModel.workspaceId, workspaceId),
+            eq(reflinkModel.type, "qrCode"),
+          ),
+        )
+        .returning()
+
+      await this.invalidateCacheTags(qrCodeWorkspaceCacheTag(workspaceId))
+
+      return updated
+    } catch (error) {
+      if (isUniqueViolationError(error)) {
+        throw validationException("name", duplicateNameMessage)
+      }
+      throw error
+    }
+  }
+
+  async deleteMany(input: {
+    workspaceId: string
+    ids: string[]
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { tx = db, workspaceId, ids } = input
+    await tx
+      .delete(reflinkModel)
+      .where(
+        and(
+          eq(reflinkModel.workspaceId, workspaceId),
+          eq(reflinkModel.type, "qrCode"),
+          inArray(reflinkModel.id, ids),
+        ),
+      )
+
+    await this.invalidateCacheTags(qrCodeWorkspaceCacheTag(workspaceId))
   }
 
   async list(input: ListQrCodesInput): Promise<ListQrCodesResult> {

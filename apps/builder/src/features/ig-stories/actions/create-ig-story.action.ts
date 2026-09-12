@@ -1,8 +1,6 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import { igStoryAutomationModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
+import { igStoryAutomationService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -12,24 +10,6 @@ import {
   type CreateIgStoryRequest,
   createIgStoryRequest,
 } from "../schema/action"
-
-export const createIgStory = async (
-  workspaceId: string,
-  input: CreateIgStoryRequest,
-) => {
-  const id = createId()
-
-  const [record] = await db
-    .insert(igStoryAutomationModel)
-    .values({
-      id,
-      workspaceId,
-      ...input,
-    })
-    .returning()
-
-  return record
-}
 
 export const createIgStoryAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -42,7 +22,12 @@ export const createIgStoryAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateIgStoryRequest
     }) => {
-      const record = await createIgStory(workspaceId, parsedInput)
+      const { type, ...data } = parsedInput
+      const record = await igStoryAutomationService.create({
+        workspaceId,
+        type,
+        data,
+      })
       return { id: record.id }
     },
   )
