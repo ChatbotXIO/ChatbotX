@@ -5,11 +5,12 @@ type RouteConfig = {
   path: string
   summary: string
   tags: string[]
+  successStatus?: number
 }
 
 type PublicProcedureInput = {
   context: { workspace: { id: string } }
-  input: { inboxId: string }
+  input: Record<string, unknown>
 }
 
 type ProcedureHandler = (args: PublicProcedureInput) => Promise<unknown>
@@ -24,7 +25,10 @@ const {
   workspaceTokenAuthAPIForScope,
   capturedProcedures,
   possibleErrorsOnListingResource,
+  possibleErrorsOnSchedulingContactScan,
   getContactScanStatus,
+  listContactScanHistoryRows,
+  contactScanServiceSchedule,
 } = vi.hoisted(() => {
   const capturedProcedures: CapturedProcedure[] = []
   const possibleErrorsOnListingResource = {
@@ -33,7 +37,24 @@ const {
       status: 400,
     },
   }
+  const possibleErrorsOnSchedulingContactScan = {
+    businessError: {
+      message: "An error occurred while processing your request",
+      status: 400,
+    },
+    contactScanCooldown: {
+      message:
+        "This inbox was scanned recently. Please wait before scanning again.",
+      status: 409,
+    },
+    contactScanAlreadyRunning: {
+      message: "A scan is already running for this inbox.",
+      status: 409,
+    },
+  }
   const getContactScanStatus = vi.fn()
+  const listContactScanHistoryRows = vi.fn()
+  const contactScanServiceSchedule = vi.fn()
 
   const makeProcedure = (route: RouteConfig) => {
     const record: CapturedProcedure = { route }
@@ -64,7 +85,10 @@ const {
     ),
     capturedProcedures,
     possibleErrorsOnListingResource,
+    possibleErrorsOnSchedulingContactScan,
     getContactScanStatus,
+    listContactScanHistoryRows,
+    contactScanServiceSchedule,
   }
 })
 
@@ -72,14 +96,20 @@ vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 vi.mock("@/lib/orpc/orpc-error-helper", () => ({
   possibleErrorsOnListingResource,
+  possibleErrorsOnSchedulingContactScan,
 }))
 
-vi.mock(
-  "@/features/contact-scan/queries/get-contact-scan-status.query",
-  () => ({
-    getContactScanStatus,
-  }),
-)
+vi.mock("@/features/contact-scan/lib/get-contact-scan-status", () => ({
+  getContactScanStatus,
+}))
+
+vi.mock("@/features/contact-scan/lib/contact-scan-history", () => ({
+  listContactScanHistoryRows,
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
+  contactScanService: { schedule: contactScanServiceSchedule },
+}))
 
 await import("@/features/contact-scan/api/public")
 
@@ -140,5 +170,68 @@ describe("GET /v1/contact-scans/status", () => {
     ).rejects.toThrow("Status lookup failed")
 
     expect(procedure.errors).toBe(possibleErrorsOnListingResource)
+  })
+})
+
+describe("GET /v1/contact-scans", () => {
+  const procedure = findProcedure("GET", "/v1/contact-scans")
+
+  test("passes only workspaceId/page/perPage through, never a client-supplied workspaceId", async () => {
+    const result = { data: [], pageCount: 1 }
+    listContactScanHistoryRows.mockResolvedValueOnce(result)
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { page: 2, perPage: 25, workspaceId: "attacker-workspace" },
+      }),
+    ).resolves.toEqual(result)
+
+    expect(listContactScanHistoryRows).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      page: 2,
+      perPage: 25,
+    })
+  })
+
+  test("declares business errors from the shared history query", () => {
+    expect(procedure.errors).toBe(possibleErrorsOnListingResource)
+  })
+})
+
+describe("POST /v1/contact-scans", () => {
+  const procedure = findProcedure("POST", "/v1/contact-scans")
+
+  test("schedules a scan for the token workspace with no session user", async () => {
+    contactScanServiceSchedule.mockResolvedValueOnce({ runId: "run-1" })
+    const scanFromAt = new Date("2020-01-01T00:00:00Z")
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { inboxId: "inbox-1", scanFromAt },
+      }),
+    ).resolves.toEqual({ runId: "run-1" })
+
+    expect(contactScanServiceSchedule).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      inboxId: "inbox-1",
+      requestedByUserId: null,
+      scanFromAt,
+    })
+  })
+
+  test("declares scheduling errors and propagates a 409 from the service", async () => {
+    const error = new Error("A scan is already running for this inbox.")
+    contactScanServiceSchedule.mockRejectedValueOnce(error)
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { inboxId: "inbox-1", scanFromAt: new Date() },
+      }),
+    ).rejects.toThrow("A scan is already running for this inbox.")
+
+    expect(procedure.errors).toBe(possibleErrorsOnSchedulingContactScan)
   })
 })

@@ -843,9 +843,19 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/contacts/{identifier}/upsert",
   },
   {
+    "method": "POST",
+    "operationId": "contactScans.create",
+    "path": "/v1/contact-scans",
+  },
+  {
     "method": "GET",
     "operationId": "contactScans.getStatus",
     "path": "/v1/contact-scans/status",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactScans.list",
+    "path": "/v1/contact-scans",
   },
   {
     "method": "POST",

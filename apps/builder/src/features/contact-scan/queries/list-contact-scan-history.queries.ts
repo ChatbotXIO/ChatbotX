@@ -1,10 +1,7 @@
-import { contactScanService } from "@chatbotx.io/business"
-import type { ContactScanChannel } from "@chatbotx.io/utils/channel"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { listContactScanHistoryRows } from "../lib/contact-scan-history"
 import { requireUnrestrictedContactsScope } from "../lib/require-unrestricted-contacts-scope"
 import type {
-  ContactScanRunStatus,
-  ListContactScanHistoryItem,
   ListContactScanHistoryRequest,
   ListContactScanHistoryResponse,
 } from "../schema/query"
@@ -15,7 +12,9 @@ import type {
  * (`features/import/queries/list-imports.queries.ts`), plus the
  * unrestricted-contacts scope gate the scan page/action/status API already
  * enforce (plan §7 decision 10): an assigned-only member must not see
- * Page-wide scan history either.
+ * Page-wide scan history either. Delegates the actual service call to
+ * `listContactScanHistoryRows` (`../lib/contact-scan-history`), shared with
+ * the public `GET /v1/contact-scans` handler.
  */
 export async function listContactScanHistory(
   input: ListContactScanHistoryRequest & { workspaceId: string },
@@ -23,25 +22,10 @@ export async function listContactScanHistory(
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
   await requireUnrestrictedContactsScope(input.workspaceId)
 
-  const { data, pageCount } = await contactScanService.listHistory({
+  return await listContactScanHistoryRows({
     workspaceId: input.workspaceId,
     page: input.page ?? undefined,
     perPage: input.perPage ?? undefined,
     sort: input.sort ?? undefined,
   })
-
-  return {
-    data: data.map(
-      (item): ListContactScanHistoryItem => ({
-        ...item,
-        // A `type='contact_scan'` row can never carry the WhatsApp-only
-        // `waiting` status, nor any channel outside `CONTACT_SCAN_CHANNELS`
-        // — narrow both to the wire's scan-only types here, same as
-        // `getContactScanStatus`.
-        channel: item.channel as ContactScanChannel,
-        status: item.status as ContactScanRunStatus,
-      }),
-    ),
-    pageCount,
-  }
 }

@@ -208,3 +208,34 @@ export const possibleErrorsOnMutatingAppointmentCalendar = {
   nameAlreadyExists,
   duplicateReminder,
 } satisfies ErrorMap
+
+/**
+ * `ContactScanService.schedule` (packages/business/src/contact-scan/service.ts) throws six
+ * distinct `ChatbotXException` codes, two of them 409 — same declare-or-vanish rule as
+ * `possibleErrorsOnBookingAppointment` above.
+ */
+export const possibleErrorsOnSchedulingContactScan = {
+  businessError,
+  contactScanFromTimeInvalid: {
+    message: "Scan-from time must be in the past",
+    status: 400,
+  },
+  contactScanInboxNotFound: { message: "Inbox not found", status: 404 },
+  contactScanChannelUnsupported: {
+    message: "This channel does not support Automatic Customer Scan",
+    status: 400,
+  },
+  contactScanIntegrationDisconnected: {
+    message: "This inbox is not connected",
+    status: 400,
+  },
+  contactScanCooldown: {
+    message:
+      "This inbox was scanned recently. Please wait before scanning again.",
+    status: 409,
+  },
+  contactScanAlreadyRunning: {
+    message: "A scan is already running for this inbox.",
+    status: 409,
+  },
+} satisfies ErrorMap

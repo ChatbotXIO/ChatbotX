@@ -13,7 +13,7 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   findContactCustomField,
   listContactCustomFields,
-} from "../../queries/list-contact-fields.query"
+} from "../../lib/list-contact-fields"
 import {
   listPublicContactCustomFieldsResponse,
   publicContactCustomFieldResource,

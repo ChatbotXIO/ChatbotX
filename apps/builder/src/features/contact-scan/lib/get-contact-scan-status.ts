@@ -6,8 +6,9 @@ import type {
 } from "../schema/query"
 
 /**
- * Thin request adapter (no where-builders, no `db`) — shapes
- * `ContactScanService.getStatus`'s response into the wire contract.
+ * Shared status adapter for the private and public
+ * `GET .../contact-scans/status` handlers (no where-builders, no `db`) —
+ * shapes `ContactScanService.getStatus`'s response into the wire contract.
  */
 export async function getContactScanStatus(
   input: GetContactScanStatusRequest,

@@ -50,7 +50,7 @@ vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 const listContactFilterFieldsForAPI = vi.fn()
 vi.mock(
-  "../src/features/contact-filter/queries/list-contact-filter-fields",
+  "../src/features/contact-filter/lib/list-contact-filter-fields",
   () => ({
     listContactFilterFieldsForAPI,
   }),

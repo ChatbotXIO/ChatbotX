@@ -147,8 +147,11 @@ an endpoint's scope.
   `tags.ts`, `custom-fields.ts`, `bulk.ts`, `export.ts`,
   `refresh-profile.ts`, `messages.ts`), some in their own owning feature's
   `api/public.ts` (`contact-notes`, `contact-sequences`, `contact-inboxes`,
-  `contact-filter`) that `features/contacts/api/public.ts` composes in
-  alongside its own submodules — and every one of them other than
+  `contact-filter`, `import`) that `features/contacts/api/public.ts`
+  composes in alongside its own submodules, and `contact-scan` — the one
+  submodule composed directly into `apps/builder/src/routers/public.ts`
+  under its own `contactScans` top-level key instead of through
+  `features/contacts/api/public.ts`. Every one of them other than
   `messages.ts` calls `workspaceTokenAuthAPIForScope("contacts")` exactly
   once at import. `messages.ts` is the one exception: sending/reading
   messages, auto-replies, and flows for a contact are conversation/automation
@@ -348,6 +351,7 @@ these helpers — import from the business package directly.
   `contacts-inboxes-public-api.test.ts`, `contacts-filter-fields-public-api.test.ts`,
   `contacts-export-public-api.test.ts`, `contacts-export-files-public-api.test.ts`,
   `contacts-bulk-public-api.test.ts`, `contacts-refresh-profile-public-api.test.ts`,
+  `contacts-import-public-api.test.ts`, `contact-scan-public-api.test.ts`,
   `folders-public-api.test.ts` — handler-behavior tests, one per public-API
   submodule (some under `features/contacts/api/public/`, some in the owning
   sibling feature's own `api/public.ts`)

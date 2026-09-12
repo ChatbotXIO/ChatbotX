@@ -1,16 +1,12 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import { listContactCustomFields } from "@/features/contacts/queries/list-contact-fields.query"
+import { listContactCustomFields } from "@/features/contacts/lib/list-contact-fields"
 
 const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
-  findByIdOrFail: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  contactService: {
-    findByIdOrFail: mocks.findByIdOrFail,
-  },
   contactCustomFieldService: {
     listWithDefinitionByContact: mocks.findMany,
   },
@@ -19,7 +15,6 @@ vi.mock("@chatbotx.io/business", () => ({
 describe("listContactCustomFields", () => {
   beforeEach(() => {
     mocks.findMany.mockReset()
-    mocks.findByIdOrFail.mockReset()
   })
 
   test("returns temporal custom-field ISO values verbatim", async () => {

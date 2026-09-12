@@ -1,8 +1,4 @@
-import {
-  type ContactAccessScope,
-  contactCustomFieldService,
-  contactService,
-} from "@chatbotx.io/business"
+import { contactCustomFieldService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import type {
@@ -12,16 +8,8 @@ import type {
 } from "../schema/contact-custom-field"
 
 export async function listContactCustomFields(
-  input: ListContactCustomFieldsRequest & { accessScope?: ContactAccessScope },
+  input: ListContactCustomFieldsRequest,
 ): Promise<ListPublicContactCustomFieldsResponse> {
-  if (input.accessScope) {
-    await contactService.findByIdOrFail({
-      workspaceId: input.workspaceId,
-      id: input.contactId,
-      accessScope: input.accessScope,
-    })
-  }
-
   const data =
     await contactCustomFieldService.listWithDefinitionByContact(input)
 
