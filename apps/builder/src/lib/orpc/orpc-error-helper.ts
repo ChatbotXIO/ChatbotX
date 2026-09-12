@@ -239,3 +239,24 @@ export const possibleErrorsOnSchedulingContactScan = {
     status: 409,
   },
 } satisfies ErrorMap
+
+/**
+ * Minigame create/update enforce `Minigame_workspaceId_name_key`, surfaced by
+ * `minigameService.rethrowNameConflict` as `nameAlreadyExists`/409. Same
+ * declare-or-vanish rule as the appointment-calendar pair above.
+ */
+const minigameNameAlreadyExists = {
+  message: "Minigame name already exists",
+  status: 409,
+}
+
+export const possibleErrorsOnCreatingMinigame = {
+  businessError,
+  nameAlreadyExists: minigameNameAlreadyExists,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingMinigame = {
+  notFound,
+  businessError,
+  nameAlreadyExists: minigameNameAlreadyExists,
+} satisfies ErrorMap

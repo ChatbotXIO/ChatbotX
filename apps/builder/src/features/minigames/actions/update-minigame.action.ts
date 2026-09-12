@@ -1,7 +1,7 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { minigameService } from "@chatbotx.io/business/minigame"
-import { isUniqueViolationError } from "@chatbotx.io/database/client"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
@@ -46,7 +46,10 @@ export const updateMinigameAction = workspaceActionClient
           ...parsedInput,
         })
       } catch (error) {
-        if (isUniqueViolationError(error)) {
+        if (
+          error instanceof ChatbotXException &&
+          error.code === "nameAlreadyExists"
+        ) {
           return returnValidationErrors(updateMinigameRequest, {
             generalSettings: {
               name: {

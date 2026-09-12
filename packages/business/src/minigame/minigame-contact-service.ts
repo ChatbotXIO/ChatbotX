@@ -94,39 +94,63 @@ export function deriveRemaining(props: {
   return Math.max(0, playerSettings.drawsPerPerson + bonusDraws - played)
 }
 
+/**
+ * Every branch appends `minigameContactModel.id` as a deterministic
+ * tie-break — `desc(updatedAt)` alone can duplicate or skip rows across
+ * pages when two rows share a timestamp.
+ */
 export function getMinigameContactListOrder(sort?: MinigameContactListSort) {
   const activeSort = sort?.[0]
+  const tieBreak = asc(minigameContactModel.id)
   if (!activeSort) {
-    return desc(minigameContactModel.updatedAt)
+    return [desc(minigameContactModel.updatedAt), tieBreak]
   }
 
   switch (activeSort.id) {
     case "name":
-      return activeSort.desc
-        ? desc(contactModel.fullName)
-        : asc(contactModel.fullName)
+      return [
+        activeSort.desc
+          ? desc(contactModel.fullName)
+          : asc(contactModel.fullName),
+        tieBreak,
+      ]
     case "played":
-      return activeSort.desc
-        ? desc(minigameContactModel.played)
-        : asc(minigameContactModel.played)
+      return [
+        activeSort.desc
+          ? desc(minigameContactModel.played)
+          : asc(minigameContactModel.played),
+        tieBreak,
+      ]
     case "remaining":
-      return activeSort.desc
-        ? desc(minigameContactModel.remaining)
-        : asc(minigameContactModel.remaining)
+      return [
+        activeSort.desc
+          ? desc(minigameContactModel.remaining)
+          : asc(minigameContactModel.remaining),
+        tieBreak,
+      ]
     case "sharesCount":
-      return activeSort.desc
-        ? desc(minigameContactModel.sharesCount)
-        : asc(minigameContactModel.sharesCount)
+      return [
+        activeSort.desc
+          ? desc(minigameContactModel.sharesCount)
+          : asc(minigameContactModel.sharesCount),
+        tieBreak,
+      ]
     case "openedAt":
-      return activeSort.desc
-        ? desc(minigameContactModel.openedAt)
-        : asc(minigameContactModel.openedAt)
+      return [
+        activeSort.desc
+          ? desc(minigameContactModel.openedAt)
+          : asc(minigameContactModel.openedAt),
+        tieBreak,
+      ]
     case "lastPlayedAt":
-      return activeSort.desc
-        ? desc(minigameContactModel.updatedAt)
-        : asc(minigameContactModel.updatedAt)
+      return [
+        activeSort.desc
+          ? desc(minigameContactModel.updatedAt)
+          : asc(minigameContactModel.updatedAt),
+        tieBreak,
+      ]
     default:
-      return desc(minigameContactModel.updatedAt)
+      return [desc(minigameContactModel.updatedAt), tieBreak]
   }
 }
 
@@ -726,7 +750,7 @@ class MinigameContactService extends BaseService {
           eq(minigameContactModel.contactId, contactModel.id),
         )
         .where(whereSQL)
-        .orderBy(getMinigameContactListOrder(input.sort))
+        .orderBy(...getMinigameContactListOrder(input.sort))
         .limit(pagination.limit)
         .offset(pagination.offset),
       db

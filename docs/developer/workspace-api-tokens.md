@@ -344,6 +344,35 @@ Two invariants specific to this scope:
   of `integrationWebchatService.update`/`.create` gets this for free and
   must not re-implement it upstream.
 
+- **Minigames** — this scope shipped in the enum/registry/i18n alongside
+  `ads` but, like `ads`, carried no endpoints for a while. It now publishes
+  minigame CRUD, enable/disable, per-contact play-history reads, and a
+  players (participants) list — its first endpoints. As with every other
+  scope, each public handler calls the same `packages/business` service
+  method the private/action code calls; no business logic was duplicated to
+  publish these.
+  - *`GET /v1/minigames/{id}/players` returns contact display PII*
+    (`fullName`, `firstName`, `lastName`, `avatar` — no email/phone) with no
+    field-level gating, same rationale as the broadcasts-audience note
+    above.
+  - *`GET /v1/minigames/{id}/plays` is not paged* and is hard-capped at 200
+    records by `MAX_PLAY_RECORDS`
+    (`packages/business/src/minigame/minigame-contact-service.ts`).
+  - *`PUT /v1/minigames/{id}` is a full replace* and passes
+    `originalPrizeQuantities: null`, so a token write honors submitted prize
+    quantities verbatim — a GET → modify → PUT round-trip discards any prize
+    stock decremented by plays that happened in between. `PATCH
+    /v1/minigames/{id}` is the safe partial update: only the top-level
+    settings objects present in the request body are merged over the current
+    row, so omitting `prizeSettings` preserves live stock. Never expose
+    `originalPrizeQuantities` on the public request schema.
+  - *`POST /v1/minigames/bulk-delete`* deletes multiple minigames by id in
+    one call, mirroring `minigameService.deleteMany` (also used by the
+    private bulk-delete action).
+  - *A duplicate name is a `nameAlreadyExists`/409* from `minigameService`,
+    declared on all three write routes (`POST`, `PUT`, `PATCH`) — not the 500
+    the raw Postgres unique violation used to produce.
+
 ### Ads scope — endpoint-to-scope table
 
 `ads` shipped in the enum/registry/i18n from day one (alongside `channels`,
