@@ -272,7 +272,7 @@ const reconcileMac = async (
       )
     }
     if (ledgerMac !== dbMacUsed) {
-      await persistMacUsed(userId, ledgerMac)
+      await userQuotaService.persistMacUsed(userId, ledgerMac)
     }
     return
   }
@@ -297,13 +297,8 @@ const reconcileMac = async (
   }
 
   if (action.persistMacUsed !== null) {
-    await persistMacUsed(userId, action.persistMacUsed)
+    await userQuotaService.persistMacUsed(userId, action.persistMacUsed)
   }
-}
-
-/** Upsert `UserQuota.macUsed` to an absolute value. */
-const persistMacUsed = async (userId: string, value: number): Promise<void> => {
-  await userQuotaService.persistMacUsed(userId, value)
 }
 
 /** Live-counter hash field holding the running monthly-bot-messages count. */

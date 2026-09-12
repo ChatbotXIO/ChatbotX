@@ -135,6 +135,16 @@ describe("listSendingAwaitingHandoff", () => {
     const result = await broadcastService.listSendingAwaitingHandoff()
 
     expect(result).toEqual([{ id: "b-1" }])
+    expect(findManyBroadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: "sending",
+          handoffCompletedAt: { isNull: true },
+          deletedAt: { isNull: true },
+        }),
+        columns: { id: true },
+      }),
+    )
   })
 })
 
@@ -148,6 +158,16 @@ describe("findScheduledForPrepare", () => {
     })
 
     expect(result).toEqual(row)
+    expect(findFirstBroadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          id: "b-1",
+          status: "scheduled",
+          deletedAt: { isNull: true },
+        }),
+        with: { targets: { columns: { inboxId: true } } },
+      }),
+    )
   })
 })
 
@@ -188,18 +208,21 @@ describe("insertRecipients", () => {
   })
 
   test("bulk-inserts recipient rows with onConflictDoNothing", async () => {
-    await broadcastService.insertRecipients({
-      recipients: [
-        {
-          broadcastId: "b-1",
-          contactId: "c-1",
-          contactInboxId: "ci-1",
-          conversationId: "conv-1",
-        },
-      ],
-    })
+    const recipients = [
+      {
+        broadcastId: "b-1",
+        contactId: "c-1",
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+      },
+    ]
+
+    await broadcastService.insertRecipients({ recipients })
 
     expect(insertOnConflictDoNothing).toHaveBeenCalledTimes(1)
+    expect(insertOnConflictDoNothing).toHaveBeenCalledWith({
+      values: recipients,
+    })
   })
 })
 
@@ -211,7 +234,7 @@ describe("promoteAfterPrepare", () => {
       broadcastId: "b-1",
       status: "sending",
       contactCount: 5,
-      promotionEpoch: 0,
+      promotionEpoch: 3,
     })
 
     expect(result).toBe(true)
@@ -224,10 +247,34 @@ describe("promoteAfterPrepare", () => {
       broadcastId: "b-1",
       status: "sending",
       contactCount: 5,
-      promotionEpoch: 0,
+      promotionEpoch: 3,
     })
 
     expect(result).toBe(false)
+  })
+
+  test("builds the WHERE with id, scheduled status, not-deleted, and the resumeCount epoch guard", async () => {
+    updateReturning.mockReturnValue([{ id: "b-1" }])
+
+    await broadcastService.promoteAfterPrepare({
+      broadcastId: "b-1",
+      status: "sending",
+      contactCount: 5,
+      promotionEpoch: 3,
+    })
+
+    expect(updateWhere).toHaveBeenCalledWith(
+      expect.objectContaining({
+        condition: {
+          __and: [
+            { __eq: ["broadcast.id", "b-1"] },
+            { __eq: ["broadcast.status", "scheduled"] },
+            { __isNull: "broadcast.deletedAt" },
+            { __eq: ["broadcast.resumeCount", 3] },
+          ],
+        },
+      }),
+    )
   })
 })
 

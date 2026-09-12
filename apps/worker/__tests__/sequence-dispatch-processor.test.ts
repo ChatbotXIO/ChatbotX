@@ -1,46 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// ---------- db chain spies ----------
-const findFirstSpy = vi.fn()
-const updateSpy = vi.fn()
-const setSpy = vi.fn()
-const whereSpy = vi.fn()
-const returningSpy = vi.fn()
+const findWithRelationsSpy = vi.fn()
+const claimSpy = vi.fn()
 const { loggerErrorSpy } = vi.hoisted(() => ({
   loggerErrorSpy: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      sequenceDispatchModel: {
-        findFirst: (...args: unknown[]) => findFirstSpy(...args),
-      },
-    },
-    update: (table: unknown) => {
-      updateSpy(table)
-      return {
-        set: (values: unknown) => {
-          setSpy(values)
-          return {
-            where: (...args: unknown[]) => {
-              whereSpy(...args)
-              return { returning: (...a: unknown[]) => returningSpy(...a) }
-            },
-          }
-        },
-      }
-    },
-  },
-  and: (...args: unknown[]) => ({ __and: args }),
-  eq: (col: unknown, val: unknown) => ({ __eq: [col, val] }),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  sequenceDispatchModel: {
-    id: { __col: "id" },
-    workspaceId: { __col: "workspaceId" },
-    status: { __col: "status" },
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  sequenceDispatchRepository: {
+    findWithRelations: (...args: unknown[]) => findWithRelationsSpy(...args),
+    claim: (...args: unknown[]) => claimSpy(...args),
   },
 }))
 
@@ -70,18 +39,20 @@ function makeDispatch(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   vi.restoreAllMocks()
   loggerErrorSpy.mockReset()
-  findFirstSpy.mockResolvedValue(undefined)
-  returningSpy.mockResolvedValue([])
+  findWithRelationsSpy.mockReset()
+  claimSpy.mockReset()
+  findWithRelationsSpy.mockResolvedValue(null)
+  claimSpy.mockResolvedValue(false)
 })
 
 // ---------- tests ----------
 
 describe("DispatchProcessorService", () => {
   describe("fetchDispatch", () => {
-    test("returns the dispatch when db finds a record", async () => {
+    test("returns the dispatch when the repository finds a record", async () => {
       // Arrange
       const dispatch = makeDispatch()
-      findFirstSpy.mockResolvedValue(dispatch)
+      findWithRelationsSpy.mockResolvedValue(dispatch)
 
       // Act
       const result = await new DispatchProcessorService().fetchDispatch(
@@ -94,9 +65,9 @@ describe("DispatchProcessorService", () => {
       expect(result).toEqual(dispatch)
     })
 
-    test("returns null when db returns undefined (not found)", async () => {
+    test("returns null when the repository returns null (not found)", async () => {
       // Arrange
-      findFirstSpy.mockResolvedValue(undefined)
+      findWithRelationsSpy.mockResolvedValue(null)
 
       // Act
       const result = await new DispatchProcessorService().fetchDispatch(
@@ -109,10 +80,10 @@ describe("DispatchProcessorService", () => {
       expect(result).toBeNull()
     })
 
-    test("returns null and logs error when db throws", async () => {
+    test("returns null and logs error when the repository throws", async () => {
       // Arrange
       const consoleSpy = vi.spyOn(console, "error")
-      findFirstSpy.mockRejectedValue(new Error("connection refused"))
+      findWithRelationsSpy.mockRejectedValue(new Error("connection refused"))
 
       // Act
       const result = await new DispatchProcessorService().fetchDispatch(
@@ -130,9 +101,9 @@ describe("DispatchProcessorService", () => {
       )
     })
 
-    test("queries with id + status + workspaceId and fetches sequence/contact/enrollment relations", async () => {
+    test("queries with id + status + workspaceId", async () => {
       // Arrange
-      findFirstSpy.mockResolvedValue({ id: "d99" })
+      findWithRelationsSpy.mockResolvedValue({ id: "d99" })
 
       // Act
       await new DispatchProcessorService().fetchDispatch(
@@ -142,16 +113,11 @@ describe("DispatchProcessorService", () => {
       )
 
       // Assert
-      expect(findFirstSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            id: "d99",
-            status: "pending",
-            workspaceId: "ws1",
-          }),
-          with: { sequence: true, contact: true, enrollment: true },
-        }),
-      )
+      expect(findWithRelationsSpy).toHaveBeenCalledWith({
+        id: "d99",
+        status: "pending",
+        workspaceId: "ws1",
+      })
     })
   })
 
@@ -240,9 +206,9 @@ describe("DispatchProcessorService", () => {
   })
 
   describe("lockDispatch", () => {
-    test("returns true when a row is updated (lock acquired)", async () => {
+    test("returns true when the repository acquires the lock", async () => {
       // Arrange
-      returningSpy.mockResolvedValue([{ id: "d1" }])
+      claimSpy.mockResolvedValue(true)
       const dispatch = makeDispatch() as NonNullable<typeof makeDispatch>
 
       // Act
@@ -254,9 +220,9 @@ describe("DispatchProcessorService", () => {
       expect(result).toBe(true)
     })
 
-    test("returns false when no rows updated — optimistic lock lost", async () => {
+    test("returns false when the repository fails to acquire the lock", async () => {
       // Arrange
-      returningSpy.mockResolvedValue([])
+      claimSpy.mockResolvedValue(false)
       const dispatch = makeDispatch() as NonNullable<typeof makeDispatch>
 
       // Act
@@ -268,40 +234,22 @@ describe("DispatchProcessorService", () => {
       expect(result).toBe(false)
     })
 
-    test("sets status to running with a fresh lockedAt timestamp", async () => {
+    test("delegates to the repository with id, workspaceId, and a lock owner", async () => {
       // Arrange
-      returningSpy.mockResolvedValue([{ id: "d1" }])
+      claimSpy.mockResolvedValue(true)
       const dispatch = makeDispatch() as NonNullable<typeof makeDispatch>
 
       // Act
-      const before = Date.now()
       await new DispatchProcessorService().lockDispatch(
         dispatch as NonNullable<typeof dispatch>,
       )
-      const after = Date.now()
 
       // Assert
-      const setArg = setSpy.mock.calls[0][0] as Record<string, unknown>
-      expect(setArg.status).toBe("running")
-      expect(setArg.lockedAt).toBeInstanceOf(Date)
-      const ts = (setArg.lockedAt as Date).getTime()
-      expect(ts).toBeGreaterThanOrEqual(before)
-      expect(ts).toBeLessThanOrEqual(after)
-    })
-
-    test("WHERE clause uses id + workspaceId + status=pending for optimistic concurrency", async () => {
-      // Arrange
-      returningSpy.mockResolvedValue([])
-      const dispatch = makeDispatch() as NonNullable<typeof makeDispatch>
-
-      // Act
-      await new DispatchProcessorService().lockDispatch(
-        dispatch as NonNullable<typeof dispatch>,
-      )
-
-      // Assert — three conditions prevent double-claiming
-      const whereArg = whereSpy.mock.calls[0][0] as { __and: unknown[] }
-      expect(whereArg.__and).toHaveLength(3)
+      expect(claimSpy).toHaveBeenCalledWith({
+        id: "d1",
+        workspaceId: "ws1",
+        lockOwner: expect.any(String),
+      })
     })
   })
 })

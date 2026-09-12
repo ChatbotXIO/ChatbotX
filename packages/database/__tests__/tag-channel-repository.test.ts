@@ -22,6 +22,11 @@ const mocks = vi.hoisted(() => ({
   select: vi.fn(),
   findFirst: vi.fn(),
   findMany: vi.fn(),
+  createId: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/utils", () => ({
+  createId: mocks.createId,
 }))
 
 vi.mock("../src/client", () => ({
@@ -79,6 +84,9 @@ function insertChain(finalResult: unknown[] = []) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.createId.mockReset()
+  let callCount = 0
+  mocks.createId.mockImplementation(() => `generated-id-${++callCount}`)
 })
 
 describe("upsertLabelMapping", () => {
@@ -94,6 +102,7 @@ describe("upsertLabelMapping", () => {
     })
 
     expect(mocks.insert).toHaveBeenCalledTimes(1)
+    expect(mocks.createId).toHaveBeenCalledTimes(1)
   })
 
   test("exits early when the tagChannel upsert returns no row", async () => {
@@ -110,14 +119,19 @@ describe("upsertLabelMapping", () => {
     })
 
     expect(mocks.insert).toHaveBeenCalledTimes(2)
+    expect(mocks.createId).toHaveBeenCalledTimes(2)
   })
 
   test("links the contact-inbox to the tag and tagChannel when both upserts succeed", async () => {
+    const tagChain = insertChain([{ id: "tag-1" }])
+    const tagChannelChain = insertChain([{ id: "tc-1" }])
+    const contactsToTagsChain = insertChain([])
+    const contactToTagChannelChain = insertChain([])
     mocks.insert
-      .mockReturnValueOnce(insertChain([{ id: "tag-1" }]))
-      .mockReturnValueOnce(insertChain([{ id: "tc-1" }]))
-      .mockReturnValueOnce(insertChain([]))
-      .mockReturnValueOnce(insertChain([]))
+      .mockReturnValueOnce(tagChain)
+      .mockReturnValueOnce(tagChannelChain)
+      .mockReturnValueOnce(contactsToTagsChain)
+      .mockReturnValueOnce(contactToTagChannelChain)
 
     await tagChannelRepository.upsertLabelMapping({
       workspaceId: "ws-1",
@@ -127,7 +141,71 @@ describe("upsertLabelMapping", () => {
       contactInbox: { id: "ci-1", contactId: "c-1" },
     })
 
+    // Insert ordering + target tables: tag -> tagChannel -> contactsToTags -> contactToTagChannel.
     expect(mocks.insert).toHaveBeenCalledTimes(4)
+    expect(mocks.insert).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        workspaceId: "workspaceId",
+        name: "name",
+      }),
+    )
+    expect(mocks.insert).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        tagId: "tagId",
+        channelType: "channelType",
+        integrationId: "integrationId",
+      }),
+    )
+    expect(mocks.insert).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({ contactId: "contactId", tagId: "tagId" }),
+    )
+    expect(mocks.insert).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining({
+        tagId: "tagId",
+        tagChannelId: "tagChannelId",
+        contactInboxId: "contactInboxId",
+      }),
+    )
+
+    // Both link inserts use onConflictDoNothing — never onConflictDoUpdate.
+    expect(contactsToTagsChain.onConflictDoNothing).toHaveBeenCalledTimes(1)
+    expect(contactToTagChannelChain.onConflictDoNothing).toHaveBeenCalledTimes(
+      1,
+    )
+
+    // createId is called once for the tag row and once for the tagChannel row.
+    expect(mocks.createId).toHaveBeenCalledTimes(2)
+
+    expect(tagChain.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "generated-id-1",
+        name: "VIP",
+        workspaceId: "ws-1",
+      }),
+    )
+    expect(tagChannelChain.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "generated-id-2",
+        workspaceId: "ws-1",
+        tagId: "tag-1",
+        channelType: "messenger",
+        integrationId: "int-1",
+        externalLabelId: "ext-1",
+      }),
+    )
+    expect(contactsToTagsChain.values).toHaveBeenCalledWith({
+      contactId: "c-1",
+      tagId: "tag-1",
+    })
+    expect(contactToTagChannelChain.values).toHaveBeenCalledWith({
+      tagId: "tag-1",
+      tagChannelId: "tc-1",
+      contactInboxId: "ci-1",
+    })
   })
 })
 
