@@ -1,6 +1,7 @@
 import {
   and,
   count,
+  type DatabaseClient,
   db,
   desc,
   eq,
@@ -41,6 +42,25 @@ export type ImportCounters = {
   processed: number
   success: number
   failed: number
+}
+
+const importListSelection = {
+  id: importModel.id,
+  workspaceId: importModel.workspaceId,
+  userId: importModel.userId,
+  fileId: importModel.fileId,
+  fileName: fileModel.fileName,
+  type: importModel.type,
+  status: importModel.status,
+  totalCount: importModel.totalCount,
+  processedCount: importModel.processedCount,
+  successCount: importModel.successCount,
+  failedCount: importModel.failedCount,
+  errorMessage: importModel.errorMessage,
+  errorSample: importModel.errorSample,
+  completedAt: importModel.completedAt,
+  createdAt: importModel.createdAt,
+  updatedAt: importModel.updatedAt,
 }
 
 const ACTIVE_PRODUCT_IMPORT_CONSTRAINT = "Import_products_active_idx"
@@ -407,6 +427,28 @@ class ImportService extends BaseService {
       .where(eq(importModel.id, input.importId))
   }
 
+  async find(input: {
+    workspaceId: string
+    id: string
+    type: ImportType
+    tx?: DatabaseClient
+  }) {
+    const { workspaceId, id, type, tx = db } = input
+    const [result] = await tx
+      .select(importListSelection)
+      .from(importModel)
+      .innerJoin(fileModel, eq(importModel.fileId, fileModel.id))
+      .where(
+        and(
+          eq(importModel.id, id),
+          eq(importModel.workspaceId, workspaceId),
+          eq(importModel.type, type),
+        ),
+      )
+      .limit(1)
+    return result
+  }
+
   async list(input: {
     workspaceId: string
     type?: ImportType
@@ -436,24 +478,7 @@ class ImportService extends BaseService {
 
     const [data, totalResult] = await Promise.all([
       db
-        .select({
-          id: importModel.id,
-          workspaceId: importModel.workspaceId,
-          userId: importModel.userId,
-          fileId: importModel.fileId,
-          fileName: fileModel.fileName,
-          type: importModel.type,
-          status: importModel.status,
-          totalCount: importModel.totalCount,
-          processedCount: importModel.processedCount,
-          successCount: importModel.successCount,
-          failedCount: importModel.failedCount,
-          errorMessage: importModel.errorMessage,
-          errorSample: importModel.errorSample,
-          completedAt: importModel.completedAt,
-          createdAt: importModel.createdAt,
-          updatedAt: importModel.updatedAt,
-        })
+        .select(importListSelection)
         .from(importModel)
         .innerJoin(fileModel, eq(importModel.fileId, fileModel.id))
         .where(where)

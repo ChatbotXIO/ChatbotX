@@ -11,6 +11,7 @@ import { appointmentsPublicRouter } from "@/features/appointments/api/public"
 import { keywordsPublicRouter } from "@/features/automated-response/api/public"
 import { botFieldsPublicRouter } from "@/features/bot-fields/api/public"
 import { broadcastsPublicRouter } from "@/features/broadcasts/api/public"
+import { contactScanPublicRouter } from "@/features/contact-scan/api/public"
 import { contactsPublicRouter } from "@/features/contacts/api/public"
 import { conversationsPublicRouter } from "@/features/conversations/api/public"
 import { couponsPublicRouter } from "@/features/coupons/api/public"
@@ -49,6 +50,7 @@ export const publicRouter = {
   botFields: botFieldsPublicRouter,
   broadcasts: broadcastsPublicRouter,
   channels: channelsPublicRouter,
+  contactScans: contactScanPublicRouter,
   contacts: contactsPublicRouter,
   conversations: conversationsPublicRouter,
   coupons: couponsPublicRouter,

@@ -704,6 +704,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "contacts.getImport",
+    "path": "/v1/contacts/imports/{id}",
+  },
+  {
+    "method": "GET",
     "operationId": "contacts.getMessage",
     "path": "/v1/contacts/{identifier}/messages/{messageId}",
   },
@@ -726,6 +731,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "contacts.listFilterFields",
     "path": "/v1/contacts/filter-fields",
+  },
+  {
+    "method": "GET",
+    "operationId": "contacts.listImports",
+    "path": "/v1/contacts/imports",
   },
   {
     "method": "GET",
@@ -831,6 +841,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "contacts.upsert",
     "path": "/v1/contacts/{identifier}/upsert",
+  },
+  {
+    "method": "GET",
+    "operationId": "contactScans.getStatus",
+    "path": "/v1/contact-scans/status",
   },
   {
     "method": "POST",
