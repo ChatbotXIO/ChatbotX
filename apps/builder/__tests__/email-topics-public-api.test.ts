@@ -55,6 +55,7 @@ vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 const emailTopicService = {
   list: vi.fn(),
+  findOrFail: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
@@ -100,6 +101,10 @@ test("registers the expected public CRUD routes", () => {
   expect(capturedProcedures.map((procedure) => procedure.route)).toEqual(
     expect.arrayContaining([
       expect.objectContaining({ method: "GET", path: "/v1/email-topics" }),
+      expect.objectContaining({
+        method: "GET",
+        path: "/v1/email-topics/{id}",
+      }),
       expect.objectContaining({ method: "POST", path: "/v1/email-topics" }),
       expect.objectContaining({
         method: "PUT",
@@ -133,6 +138,27 @@ describe("GET /v1/email-topics", () => {
       perPage: 10,
       name: "News",
       folderId: "folder-1",
+    })
+  })
+})
+
+describe("GET /v1/email-topics/{id}", () => {
+  const procedure = findProcedure("GET", "/v1/email-topics/{id}")
+
+  test("gets an email topic in the token workspace", async () => {
+    const topic = { id: "topic-1", name: "News" }
+    emailTopicService.findOrFail.mockResolvedValueOnce(topic)
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "topic-1" },
+      }),
+    ).resolves.toEqual(topic)
+
+    expect(emailTopicService.findOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "topic-1",
     })
   })
 })
@@ -194,7 +220,7 @@ describe("DELETE /v1/email-topics/{id}", () => {
   const procedure = findProcedure("DELETE", "/v1/email-topics/{id}")
 
   test("deletes an email topic in the token workspace", async () => {
-    emailTopicService.delete.mockResolvedValueOnce(undefined)
+    emailTopicService.delete.mockResolvedValueOnce({ deletedCount: 1 })
 
     await expect(
       procedure.handler?.({
@@ -207,5 +233,16 @@ describe("DELETE /v1/email-topics/{id}", () => {
       workspaceId: "workspace-1",
       ids: ["topic-1"],
     })
+  })
+
+  test("rejects with not found when nothing was deleted", async () => {
+    emailTopicService.delete.mockResolvedValueOnce({ deletedCount: 0 })
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "missing" },
+      }),
+    ).rejects.toThrow("Email topic not found")
   })
 })

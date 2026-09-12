@@ -1,7 +1,7 @@
+import { whatsappMessageTemplateService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { WhatsappMessageTemplatesTable } from "@/features/integration-whatsapp/message-templates/message-templates-table"
-import { whatsappMessageTemplateService } from "@/features/integration-whatsapp/message-templates/queries"
 import {
   findIntegrationWhatsapp,
   toIntegrationWhatsappLinkable,

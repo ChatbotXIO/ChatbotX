@@ -1,5 +1,7 @@
-import { integrationMetaCatalogService } from "@chatbotx.io/business"
-import { whatsappMessageTemplateService } from "@/features/integration-whatsapp/message-templates/queries"
+import {
+  integrationMetaCatalogService,
+  whatsappMessageTemplateService,
+} from "@chatbotx.io/business"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import {

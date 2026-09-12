@@ -16,6 +16,10 @@ import {
   publicUpsertSequenceStepRequest,
   updateSequenceSchema,
 } from "../schema/action"
+import {
+  publicListSequenceStepContactsRequest,
+  publicListSequenceStepContactsResponse,
+} from "../schema/public"
 import { sequenceResource } from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
@@ -167,5 +171,35 @@ export const sequencesPublicRouter = {
         sequenceId: input.id,
         stepId: input.stepId,
       })
+    }),
+
+  listStepContacts: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/sequences/{id}/steps/{stepId}/contacts",
+      summary: "List sequence step recipients by event type",
+      tags: ["Sequences"],
+    })
+    .input(publicListSequenceStepContactsRequest)
+    .output(publicListSequenceStepContactsResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      // `{id}` is the ownership anchor: without `assertOwned`, a `stepId`
+      // belonging to another workspace's sequence would resolve through the
+      // analytics lookup instead of 404ing (same reason `deleteStep` asserts).
+      await sequenceService.assertOwned({
+        workspaceId: context.workspace.id,
+        sequenceId: input.id,
+      })
+      const { data, total, pageCount } =
+        await sequenceService.listStepContactsPage({
+          workspaceId: context.workspace.id,
+          sequenceId: input.id,
+          stepId: input.stepId,
+          eventType: input.eventType,
+          page: input.page,
+          perPage: input.perPage,
+        })
+      return { data, total, pageCount }
     }),
 }

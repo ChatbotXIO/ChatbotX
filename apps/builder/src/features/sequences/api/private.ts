@@ -59,7 +59,7 @@ export const sequencesPrivateAPI = {
         sequenceId,
         stepId,
         eventType,
-        total: total || 0,
+        total: total ?? undefined,
         page,
         perPage,
       })

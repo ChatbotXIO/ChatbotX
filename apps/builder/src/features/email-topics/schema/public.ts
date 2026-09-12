@@ -5,8 +5,12 @@ import { createEmailTopicRequest, updateEmailTopicRequest } from "./action"
 import { emailTopicResource } from "./resource"
 
 export const listEmailTopicsPublicRequest = publicListRequest.extend({
-  name: createEmailTopicRequest.shape.name.nullish(),
-  folderId: zodBigintAsString().nullish(),
+  name: createEmailTopicRequest.shape.name
+    .nullish()
+    .describe("Case-insensitive substring match on the topic name."),
+  folderId: zodBigintAsString()
+    .nullish()
+    .describe('Folder id to filter by. Pass "0" for topics in no folder.'),
 })
 
 export const emailTopicPublicResource = emailTopicResource.omit({

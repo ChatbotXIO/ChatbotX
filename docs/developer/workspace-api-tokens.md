@@ -237,15 +237,15 @@ an endpoint's scope.
     `userService.findByIdOrFail(context.user.id)` call on this path the way
     the private API needs one for `tenantId`.
 
-- **Broadcasts** — covers broadcasts, sequences, **and** WhatsApp message
-  templates — three features share it because sequences and message
-  templates are broadcast-adjacent operations, not because they were
-  designed together. The token picker only shows the bare label "Broadcasts"
-  (`fields.tokenScopes.broadcasts`), so a superAdmin minting a `broadcasts`
-  token should know it also grants full sequence CRUD (including deleting
-  sequences and steps) and WhatsApp template listing — there is no
-  finer-grained scope to withhold just one of the three. Two things worth
-  knowing:
+- **Broadcasts** — covers broadcasts, sequences, email topics, **and**
+  WhatsApp message templates — four features share it because sequences,
+  email topics, and message templates are broadcast-adjacent operations,
+  not because they were designed together. The token picker only shows the
+  bare label "Broadcasts" (`fields.tokenScopes.broadcasts`), so a
+  superAdmin minting a `broadcasts` token should know it also grants full
+  sequence CRUD (including deleting sequences and steps), full email topic
+  CRUD, and WhatsApp template listing — there is no finer-grained scope to
+  withhold just one of the four. Two things worth knowing:
   - *`GET /v1/broadcasts/{idOrName}/audience` returns full contact PII*
     (email, phone, gender) with no field-level gating, including for a
     `read_only` token — unlike the write paths (`create`/`updateDraft`/
