@@ -109,7 +109,7 @@
     "date-fns-tz": "^3.2.0",
     "dot-prop": "^10.1.0",
     "emoji-picker-react": "^4.19.1",
-    "hono": "^4.13.3",
+    "hono": "^4.13.5",
     "html-to-text": "^9.0.5",
     "ky": "^2.0.2",
     "libphonenumber-js": "^1.12.42",
