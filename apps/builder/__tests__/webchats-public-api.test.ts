@@ -90,6 +90,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 await import("@/features/integration-webchat/api/public")
+const { updateWebchatPublicRequest } = await import(
+  "@/features/integration-webchat/schema/public"
+)
 
 const findProcedure = (method: string, path: string) => {
   const found = capturedProcedures.find(
@@ -260,6 +263,33 @@ describe("PUT /v1/webchats/{id}", () => {
       workspaceId: "workspace-1",
       id: "wc-1",
       data: { name: "Renamed", persistentMenus: undefined },
+    })
+  })
+})
+
+describe("updateWebchatPublicRequest", () => {
+  test("omitting a defaulted boolean field leaves it undefined instead of resetting it to the create-time default", () => {
+    const parsed = updateWebchatPublicRequest.parse({ name: "Renamed" })
+
+    expect(parsed.hideHeader).toBeUndefined()
+    expect(parsed.showLogo).toBeUndefined()
+    expect(parsed.hideMessageInput).toBeUndefined()
+    expect(parsed.enable).toBeUndefined()
+  })
+
+  test("an explicitly supplied boolean field still parses through", () => {
+    const parsed = updateWebchatPublicRequest.parse({
+      hideHeader: true,
+      showLogo: false,
+      hideMessageInput: true,
+      enable: false,
+    })
+
+    expect(parsed).toMatchObject({
+      hideHeader: true,
+      showLogo: false,
+      hideMessageInput: true,
+      enable: false,
     })
   })
 })
