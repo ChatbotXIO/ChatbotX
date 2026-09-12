@@ -1499,6 +1499,26 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "userPersistentMenus.create",
+    "path": "/v1/user-persistent-menus",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "userPersistentMenus.delete",
+    "path": "/v1/user-persistent-menus/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "userPersistentMenus.list",
+    "path": "/v1/user-persistent-menus",
+  },
+  {
+    "method": "PUT",
+    "operationId": "userPersistentMenus.update",
+    "path": "/v1/user-persistent-menus/{id}",
+  },
+  {
+    "method": "POST",
     "operationId": "webhooks.create",
     "path": "/v1/webhooks",
   },

@@ -35,6 +35,7 @@ import { savedRepliesPublicRouter } from "@/features/saved-replies/api/public"
 import { sequencesPublicRouter } from "@/features/sequences/api/public"
 import { tagsPublicRouter } from "@/features/tags/api/public"
 import { triggersPublicRouter } from "@/features/triggers/api/public"
+import { userPersistentMenusPublicRouter } from "@/features/user-persistent-menus/api/public"
 import { webhooksPublicRouter } from "@/features/webhooks/api/public"
 import { workspaceMembersPublicRouter } from "@/features/workspace-members/api/public"
 
@@ -76,6 +77,7 @@ export const publicRouter = {
   tags: tagsPublicRouter,
   templateMessages: templateMessagesPublicRouter,
   triggers: triggersPublicRouter,
+  userPersistentMenus: userPersistentMenusPublicRouter,
   webhooks: webhooksPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,
 }

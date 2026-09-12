@@ -299,6 +299,13 @@ an endpoint's scope.
     — the same template the builder's edit page shows the user. Never
     publish the bare `backgroundUrl` column value.
 
+- **Channels** — this scope shipped in the enum/registry/i18n alongside
+  `ads` but, like `ads`, carried no endpoints for a while. It now
+  publishes user persistent menus (Messenger bot menu) CRUD — its first
+  endpoints. As with every other scope, each public handler calls the
+  same `packages/business` service method the private/action code calls;
+  no business logic was duplicated to publish these.
+
 ### Ads scope — endpoint-to-scope table
 
 `ads` shipped in the enum/registry/i18n from day one (alongside `channels`,
