@@ -264,6 +264,41 @@ an endpoint's scope.
     not add it back; a client-supplied `sequenceId` that disagreed with the
     path would have nothing enforcing which one wins.
 
+- **Media** — this scope shipped in the enum/registry/i18n alongside `ads`
+  but, like `ads`, carried no endpoints for a while. It now covers real
+  workspace resources: the media library (folders/files CRUD, move,
+  favourite) and dynamic (templated) images CRUD. As with every other
+  scope, each public handler calls the same `packages/business` service
+  method the private/action code calls; no business logic was duplicated
+  to publish these. Three things worth knowing:
+  - *Uploading a file is a three-step handshake, not a single call* —
+    `mediaLibraryService.createFile` only accepts a `path` already living
+    under the workspace's own storage prefix, and a workspace token has no
+    session to hit the session-authenticated `/api/presigned-upload` route.
+    `POST /v1/media-library/files/upload-url` mints a server-derived,
+    workspace-scoped key (`presignUpload`) plus a 5-minute presigned `PUT`
+    URL; the client `PUT`s the bytes to that URL, then calls
+    `POST /v1/media-library/files` with the same `path` to register it.
+    The key is never accepted from the caller — only the derived one is
+    valid, closing the same cross-workspace vector `createFile`'s prefix
+    check exists to guard.
+  - *`GET /v1/media-library/files`'s `filter`/`folderId` precedence* —
+    `filter: "favourite"` spans every folder and ignores `folderId`;
+    `filter: "all"` and `filter: "recent"` both span every folder,
+    differing only in sort order; omitting both `filter` and `folderId`
+    lists root-level files only. See the comment on
+    `mediaLibraryFileRepository.list`
+    (`packages/database/src/repositories/media-library-file/repository.ts`)
+    before changing this branch.
+  - *`dynamicImages.*` never returns a raw storage key* — the DB column
+    `DynamicImage.backgroundUrl` is a storage path, so every public route
+    resolves it to a fetchable URL via
+    `dynamicImageService.resolveBackgroundUrls` (batched once per request,
+    not once per row) and also stamps an `imageUrl` trigger URL
+    (`<brokerOrigin>/dynamic-images?dynamicImageId=<id>&userId={{user_id}}`)
+    — the same template the builder's edit page shows the user. Never
+    publish the bare `backgroundUrl` column value.
+
 ### Ads scope — endpoint-to-scope table
 
 `ads` shipped in the enum/registry/i18n from day one (alongside `channels`,

@@ -16,6 +16,7 @@ import { contactsPublicRouter } from "@/features/contacts/api/public"
 import { conversationsPublicRouter } from "@/features/conversations/api/public"
 import { couponsPublicRouter } from "@/features/coupons/api/public"
 import { customFieldsPublicRouter } from "@/features/custom-fields/api/public"
+import { dynamicImagesPublicRouter } from "@/features/dynamic-images/api/public"
 import { errorLogsPublicRouter } from "@/features/error-logs/api/public"
 import { appointmentExternalCalendarsPublicRouter } from "@/features/external-calendars/api/public"
 import { externalWebhooksPublicRouter } from "@/features/external-webhooks/api/public"
@@ -25,6 +26,7 @@ import { inboxesPublicRouter } from "@/features/inboxes/api/public"
 import { channelsPublicRouter } from "@/features/integration-api/api/public"
 import { templateMessagesPublicRouter } from "@/features/integration-whatsapp/message-templates/api/public"
 import { integrationsPublicRouter } from "@/features/integrations/api/public"
+import { mediaLibraryPublicRouter } from "@/features/media-library/api/public"
 import { messagesPublicRouter } from "@/features/messages/api/public"
 import { productCategoriesPublicRouter } from "@/features/product-categories/api/public"
 import { productsPublicRouter } from "@/features/products/api/public"
@@ -55,6 +57,7 @@ export const publicRouter = {
   conversations: conversationsPublicRouter,
   coupons: couponsPublicRouter,
   customFields: customFieldsPublicRouter,
+  dynamicImages: dynamicImagesPublicRouter,
   errorLogs: errorLogsPublicRouter,
   externalWebhooks: externalWebhooksPublicRouter,
   flows: flowsPublicRouter,
@@ -63,6 +66,7 @@ export const publicRouter = {
   inboxes: inboxesPublicRouter,
   integrations: integrationsPublicRouter,
   keywords: keywordsPublicRouter,
+  mediaLibrary: mediaLibraryPublicRouter,
   messages: messagesPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,

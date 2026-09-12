@@ -1,4 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
+import { fileContextTypes } from "@chatbotx.io/database/partials"
 import {
   mediaLibraryFileRepository,
   mediaLibraryFolderRepository,
@@ -11,7 +12,10 @@ import { uploader } from "@chatbotx.io/filesystem"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { fileService } from "../file/service"
 import { logger } from "../logger"
+import { resolveTenantSettings } from "../platform/settings"
+import { getPublicFileUrl } from "../utils"
 
 type CreateFileInput = {
   workspaceId: string
@@ -23,6 +27,8 @@ type CreateFileInput = {
 }
 
 type FolderWithFileCount = MediaLibraryFolderModel & { fileCount: number }
+
+export type MediaLibraryFileWithUrl = MediaLibraryFileModel & { url: string }
 
 class MediaLibraryService extends BaseService {
   /**
@@ -130,7 +136,7 @@ class MediaLibraryService extends BaseService {
     })
   }
 
-  async createFile(input: CreateFileInput): Promise<MediaLibraryFileModel> {
+  async createFile(input: CreateFileInput): Promise<MediaLibraryFileWithUrl> {
     // `path` is client-supplied and must be confirmed to live under this
     // workspace's own storage prefix before we persist it — otherwise a
     // workspace member could register another workspace's real S3 object as
@@ -144,7 +150,7 @@ class MediaLibraryService extends BaseService {
       throw new ChatbotXException("Invalid file path", "invalidPath", 400)
     }
 
-    return await mediaLibraryFileRepository.create({
+    const file = await mediaLibraryFileRepository.create({
       id: createId(),
       workspaceId: input.workspaceId,
       folderId: input.folderId ?? null,
@@ -153,6 +159,69 @@ class MediaLibraryService extends BaseService {
       mimeType: input.mimeType,
       size: input.size,
     })
+
+    const { storageUrl } = await resolveTenantSettings({
+      workspaceId: input.workspaceId,
+    })
+
+    return { ...file, url: getPublicFileUrl(file.path, storageUrl) }
+  }
+
+  /**
+   * Mints a workspace-scoped storage key plus a presigned PUT URL (5 minutes)
+   * for a Media Library upload. The key is derived here, never accepted from
+   * the caller — `createFile` only validates the workspace prefix, so a
+   * client-chosen key would be the cross-workspace vector that check exists
+   * to close. Mirrors the prefix the builder's DirectUploadButton uses
+   * (`public/space/<workspaceId>/media-library/...`) so token-uploaded and
+   * UI-uploaded objects share one namespace.
+   */
+  async presignUpload(input: {
+    workspaceId: string
+    fileName: string
+    mimeType: string
+  }): Promise<{ path: string; uploadUrl: string; publicUrl: string }> {
+    const path = `public/space/${input.workspaceId}/media-library/${createId()}`
+    const uploadUrl = await uploader.getPresignedUpload(path)
+    const { storageUrl } = await resolveTenantSettings({
+      workspaceId: input.workspaceId,
+    })
+    const publicUrl = getPublicFileUrl(path, storageUrl)
+
+    await fileService.createPending({
+      workspaceId: input.workspaceId,
+      userId: null,
+      contextType: fileContextTypes.enum.generic,
+      subType: "generic",
+      path,
+      fileName: input.fileName,
+      mimeType: input.mimeType,
+    })
+
+    return { path, uploadUrl, publicUrl }
+  }
+
+  /**
+   * Confirms a file exists in this workspace and returns it with a fetchable
+   * `url` — backs the public API's get-one endpoint.
+   */
+  async findFile(input: {
+    workspaceId: string
+    fileId: string
+  }): Promise<MediaLibraryFileWithUrl> {
+    const file = await mediaLibraryFileRepository.findById({
+      id: input.fileId,
+      workspaceId: input.workspaceId,
+    })
+    if (!file) {
+      throw notFoundException(`MediaLibraryFile ${input.fileId} not found`)
+    }
+
+    const { storageUrl } = await resolveTenantSettings({
+      workspaceId: input.workspaceId,
+    })
+
+    return { ...file, url: getPublicFileUrl(file.path, storageUrl) }
   }
 
   async deleteFile(input: {
@@ -182,22 +251,44 @@ class MediaLibraryService extends BaseService {
     })
   }
 
-  async toggleFavourite(input: {
+  /**
+   * Sets the explicit favourite state and returns the updated file with its
+   * fetchable `url` — addressable by an API client, unlike a bare toggle.
+   *
+   * `preloadedFile` lets a caller that already fetched the row (e.g.
+   * `toggleFavourite`, which needs the current state to flip it) skip the
+   * redundant `findById` + `resolveTenantSettings` this method would
+   * otherwise repeat.
+   */
+  async setFavourite(input: {
     workspaceId: string
     fileId: string
-  }): Promise<void> {
-    const file = await mediaLibraryFileRepository.findById({
-      id: input.fileId,
-      workspaceId: input.workspaceId,
-    })
-    if (!file) {
-      throw notFoundException(`MediaLibraryFile ${input.fileId} not found`)
-    }
+    isFavourite: boolean
+    preloadedFile?: MediaLibraryFileWithUrl
+  }): Promise<MediaLibraryFileWithUrl> {
+    const file = input.preloadedFile ?? (await this.findFile(input))
 
     await mediaLibraryFileRepository.setFavourite({
       id: input.fileId,
       workspaceId: input.workspaceId,
+      isFavourite: input.isFavourite,
+    })
+
+    return {
+      ...file,
+      isFavourite: input.isFavourite,
+    }
+  }
+
+  async toggleFavourite(input: {
+    workspaceId: string
+    fileId: string
+  }): Promise<MediaLibraryFileWithUrl> {
+    const file = await this.findFile(input)
+    return await this.setFavourite({
+      ...input,
       isFavourite: !file.isFavourite,
+      preloadedFile: file,
     })
   }
 }

@@ -35,7 +35,7 @@ beforeEach(() => {
 
 describe("mediaLibraryFileService.list", () => {
   test("passes the page size and input through to the repository", async () => {
-    mocks.list.mockResolvedValue([])
+    mocks.list.mockResolvedValue({ data: [], total: 0 })
 
     await mediaLibraryFileService.list({ workspaceId: WS, folderId: "f-1" })
 
@@ -46,11 +46,25 @@ describe("mediaLibraryFileService.list", () => {
     })
   })
 
+  test("passes an explicit perPage through instead of the default page size", async () => {
+    mocks.list.mockResolvedValue({ data: [], total: 0 })
+
+    await mediaLibraryFileService.list({ workspaceId: WS, perPage: 10 })
+
+    expect(mocks.list).toHaveBeenCalledWith({
+      workspaceId: WS,
+      perPage: 10,
+    })
+  })
+
   test("maps each row's path and the workspace's storageUrl into a public url", async () => {
-    mocks.list.mockResolvedValue([
-      { id: "file-1", path: "ws/1/a.png" },
-      { id: "file-2", path: "ws/1/b.png" },
-    ])
+    mocks.list.mockResolvedValue({
+      data: [
+        { id: "file-1", path: "ws/1/a.png" },
+        { id: "file-2", path: "ws/1/b.png" },
+      ],
+      total: 2,
+    })
 
     const result = await mediaLibraryFileService.list({ workspaceId: WS })
 
@@ -66,6 +80,17 @@ describe("mediaLibraryFileService.list", () => {
         url: "https://cdn.example.test/ws/1/b.png",
       },
     ])
+  })
+
+  test("derives pageCount from the repository's total and the effective perPage", async () => {
+    mocks.list.mockResolvedValue({ data: [], total: 25 })
+
+    const result = await mediaLibraryFileService.list({
+      workspaceId: WS,
+      perPage: 10,
+    })
+
+    expect(result.pageCount).toBe(3)
   })
 })
 

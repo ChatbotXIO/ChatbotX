@@ -16,6 +16,9 @@ const mocks = vi.hoisted(() => ({
   moveToFolder: vi.fn(),
   touchLastAccessedAt: vi.fn(),
   deleteObject: vi.fn(),
+  getPresignedUpload: vi.fn(),
+  resolveTenantSettings: vi.fn(),
+  createPending: vi.fn(),
   warn: vi.fn(),
 }))
 
@@ -46,15 +49,30 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("@chatbotx.io/filesystem", () => ({
-  uploader: { deleteObject: mocks.deleteObject },
+  uploader: {
+    deleteObject: mocks.deleteObject,
+    getPresignedUpload: mocks.getPresignedUpload,
+  },
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: () => "id-1",
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: () => "id-1",
+  }
+})
 
 vi.mock("../src/logger", () => ({
   logger: { warn: mocks.warn, error: vi.fn() },
+}))
+
+vi.mock("../src/platform/settings", () => ({
+  resolveTenantSettings: mocks.resolveTenantSettings,
+}))
+
+vi.mock("../src/file/service", () => ({
+  fileService: { createPending: mocks.createPending },
 }))
 
 const { mediaLibraryService } = await import("../src/media-library/service")
@@ -64,6 +82,9 @@ beforeEach(() => {
   mocks.transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
     fn({}),
   )
+  mocks.resolveTenantSettings.mockResolvedValue({
+    storageUrl: "https://cdn.example.test",
+  })
 })
 
 describe("mediaLibraryService.createFile", () => {
@@ -82,7 +103,10 @@ describe("mediaLibraryService.createFile", () => {
   })
 
   test("accepts a workspaces/<id>/ scoped path", async () => {
-    mocks.createFile.mockResolvedValue({ id: "file-1" })
+    mocks.createFile.mockResolvedValue({
+      id: "file-1",
+      path: "workspaces/ws-1/logo.png",
+    })
 
     await mediaLibraryService.createFile({
       workspaceId: "ws-1",
@@ -101,7 +125,10 @@ describe("mediaLibraryService.createFile", () => {
   })
 
   test("accepts a public/space/<id>/ scoped path", async () => {
-    mocks.createFile.mockResolvedValue({ id: "file-1" })
+    mocks.createFile.mockResolvedValue({
+      id: "file-1",
+      path: "public/space/ws-1/logo.png",
+    })
 
     await mediaLibraryService.createFile({
       workspaceId: "ws-1",
@@ -112,6 +139,27 @@ describe("mediaLibraryService.createFile", () => {
     })
 
     expect(mocks.createFile).toHaveBeenCalled()
+  })
+
+  test("returns the created file with a resolved public url", async () => {
+    mocks.createFile.mockResolvedValue({
+      id: "file-1",
+      path: "public/space/ws-1/logo.png",
+    })
+
+    const result = await mediaLibraryService.createFile({
+      workspaceId: "ws-1",
+      name: "logo.png",
+      path: "public/space/ws-1/logo.png",
+      mimeType: "image/png",
+      size: 100,
+    })
+
+    expect(result).toEqual({
+      id: "file-1",
+      path: "public/space/ws-1/logo.png",
+      url: "https://cdn.example.test/public/space/ws-1/logo.png",
+    })
   })
 })
 
@@ -200,7 +248,11 @@ describe("mediaLibraryService.toggleFavourite", () => {
   })
 
   test("flips isFavourite from false to true", async () => {
-    mocks.findById.mockResolvedValue({ id: "file-1", isFavourite: false })
+    mocks.findById.mockResolvedValue({
+      id: "file-1",
+      path: "workspaces/ws-1/a.png",
+      isFavourite: false,
+    })
 
     await mediaLibraryService.toggleFavourite({
       workspaceId: "ws-1",
@@ -215,7 +267,11 @@ describe("mediaLibraryService.toggleFavourite", () => {
   })
 
   test("flips isFavourite from true to false", async () => {
-    mocks.findById.mockResolvedValue({ id: "file-1", isFavourite: true })
+    mocks.findById.mockResolvedValue({
+      id: "file-1",
+      path: "workspaces/ws-1/a.png",
+      isFavourite: true,
+    })
 
     await mediaLibraryService.toggleFavourite({
       workspaceId: "ws-1",
@@ -226,6 +282,116 @@ describe("mediaLibraryService.toggleFavourite", () => {
       id: "file-1",
       workspaceId: "ws-1",
       isFavourite: false,
+    })
+  })
+})
+
+describe("mediaLibraryService.setFavourite", () => {
+  test("throws notFound when the file does not exist", async () => {
+    mocks.findById.mockResolvedValue(null)
+
+    await expect(
+      mediaLibraryService.setFavourite({
+        workspaceId: "ws-1",
+        fileId: "missing",
+        isFavourite: true,
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+
+    expect(mocks.setFavourite).not.toHaveBeenCalled()
+  })
+
+  test("sets the explicit value regardless of the file's current state", async () => {
+    mocks.findById.mockResolvedValue({
+      id: "file-1",
+      path: "workspaces/ws-1/a.png",
+      isFavourite: true,
+    })
+
+    const result = await mediaLibraryService.setFavourite({
+      workspaceId: "ws-1",
+      fileId: "file-1",
+      isFavourite: true,
+    })
+
+    expect(mocks.setFavourite).toHaveBeenCalledWith({
+      id: "file-1",
+      workspaceId: "ws-1",
+      isFavourite: true,
+    })
+    expect(result).toEqual({
+      id: "file-1",
+      path: "workspaces/ws-1/a.png",
+      isFavourite: true,
+      url: "https://cdn.example.test/workspaces/ws-1/a.png",
+    })
+  })
+})
+
+describe("mediaLibraryService.findFile", () => {
+  test("throws notFound when the file does not exist", async () => {
+    mocks.findById.mockResolvedValue(null)
+
+    await expect(
+      mediaLibraryService.findFile({
+        workspaceId: "ws-1",
+        fileId: "missing",
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+  })
+
+  test("returns the file scoped to the workspace with a resolved url", async () => {
+    mocks.findById.mockResolvedValue({
+      id: "file-1",
+      path: "workspaces/ws-1/a.png",
+    })
+
+    const result = await mediaLibraryService.findFile({
+      workspaceId: "ws-1",
+      fileId: "file-1",
+    })
+
+    expect(mocks.findById).toHaveBeenCalledWith({
+      id: "file-1",
+      workspaceId: "ws-1",
+    })
+    expect(result).toEqual({
+      id: "file-1",
+      path: "workspaces/ws-1/a.png",
+      url: "https://cdn.example.test/workspaces/ws-1/a.png",
+    })
+  })
+})
+
+describe("mediaLibraryService.presignUpload", () => {
+  test("derives a workspace-scoped key and records a pending file with a null userId", async () => {
+    mocks.getPresignedUpload.mockResolvedValue(
+      "https://s3.example.test/presigned",
+    )
+
+    const result = await mediaLibraryService.presignUpload({
+      workspaceId: "ws-1",
+      fileName: "cat.png",
+      mimeType: "image/png",
+    })
+
+    expect(mocks.getPresignedUpload).toHaveBeenCalledWith(
+      "public/space/ws-1/media-library/id-1",
+    )
+    expect(result).toEqual({
+      path: "public/space/ws-1/media-library/id-1",
+      uploadUrl: "https://s3.example.test/presigned",
+      publicUrl:
+        "https://cdn.example.test/public/space/ws-1/media-library/id-1",
+    })
+    expect(mocks.createPending).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      userId: null,
+      contextType: "generic",
+      subType: "generic",
+      path: "public/space/ws-1/media-library/id-1",
+      fileName: "cat.png",
+      mimeType: "image/png",
     })
   })
 })

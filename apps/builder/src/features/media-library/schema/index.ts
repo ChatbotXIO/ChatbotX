@@ -76,6 +76,7 @@ export const listFilesResponse = z.object({
       url: z.string(),
     }),
   ),
+  pageCount: z.number().int(),
 })
 export type ListFilesResponse = z.infer<typeof listFilesResponse>
 

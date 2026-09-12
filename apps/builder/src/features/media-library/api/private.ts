@@ -1,7 +1,9 @@
-import { mediaLibraryService } from "@chatbotx.io/business"
+import {
+  mediaLibraryFileService,
+  mediaLibraryService,
+} from "@chatbotx.io/business"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { listMediaLibraryFiles, listMediaLibraryFolders } from "../queries"
 import {
   createFileRequest,
   createFolderRequest,
@@ -28,7 +30,11 @@ export const mediaLibraryAuthenticatedAPI = {
     .input(listFoldersRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listFoldersResponse)
-    .handler(async ({ input }) => listMediaLibraryFolders(input)),
+    .handler(async ({ input }) => ({
+      data: await mediaLibraryService.listFolders({
+        workspaceId: input.workspaceId,
+      }),
+    })),
 
   createMediaLibraryFolder: authorizedAPI
     .route({
@@ -74,7 +80,7 @@ export const mediaLibraryAuthenticatedAPI = {
     .input(listFilesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listFilesResponse)
-    .handler(async ({ input }) => listMediaLibraryFiles(input)),
+    .handler(async ({ input }) => mediaLibraryFileService.list(input)),
 
   createMediaLibraryFile: authorizedAPI
     .route({

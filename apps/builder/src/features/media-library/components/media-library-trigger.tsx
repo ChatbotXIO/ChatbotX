@@ -6,7 +6,6 @@ import { ImageIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useRef, useState, useTransition } from "react"
 import { client } from "@/lib/orpc/orpc"
-import { MEDIA_LIBRARY_FILES_PAGE_SIZE } from "../constants"
 import type { ListFilesResponse, ListFoldersResponse } from "../schema"
 import { MediaLibraryDialog } from "./media-library-dialog"
 
@@ -83,7 +82,7 @@ export function MediaLibraryTrigger({
         ])
         setFolders(foldersData.data)
         setFiles(filesData.data)
-        setHasMoreFiles(filesData.data.length === MEDIA_LIBRARY_FILES_PAGE_SIZE)
+        setHasMoreFiles(pageRef.current < filesData.pageCount)
       })
     },
     [fetchFilesPage, searchQuery, workspaceId],
@@ -101,7 +100,7 @@ export function MediaLibraryTrigger({
       .then((filesData) => {
         pageRef.current = nextPage
         setFiles((current) => [...current, ...filesData.data])
-        setHasMoreFiles(filesData.data.length === MEDIA_LIBRARY_FILES_PAGE_SIZE)
+        setHasMoreFiles(nextPage < filesData.pageCount)
       })
       .finally(() => {
         loadMoreInFlightRef.current = false

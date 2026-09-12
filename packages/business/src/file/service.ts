@@ -9,7 +9,7 @@ import { BaseService } from "../base.service"
 
 type CreatePendingInput = {
   workspaceId?: string | null
-  userId: string
+  userId: string | null
   contextType: FileContextType
   /**
    * Free-text discriminator (`File.subType` is a plain text column). It carries
@@ -29,7 +29,8 @@ class FileService extends BaseService {
    * presign leaves a row the cleanup can find rather than an orphan S3 object.
    *
    * The caller owns authorization and path derivation — `path` must already
-   * come from an upload handler, never straight from the request body.
+   * come from an upload handler, never straight from the request body. A
+   * workspace-token caller has no user, so `userId` may be `null`.
    */
   async createPending(input: CreatePendingInput): Promise<FileModel> {
     return await fileRepository.create({
