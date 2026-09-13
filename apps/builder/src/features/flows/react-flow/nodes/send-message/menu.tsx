@@ -1,6 +1,7 @@
 import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
 import { stepTypes } from "@chatbotx.io/flow-config"
 import {
+  CheckCheckIcon,
   CreditCardIcon,
   ImageIcon,
   ImagePlayIcon,
@@ -10,6 +11,7 @@ import {
   MessageSquareIcon,
   PaperclipIcon,
   PictureInPicture2Icon,
+  SmileIcon,
   TextIcon,
   TimerIcon,
   VideoIcon,
@@ -94,6 +96,16 @@ const ALL_MENU_ITEMS = (
     icon: TimerIcon,
     stepType: stepTypes.enum.typing,
   },
+  markAsRead: {
+    label: t("flows.actions.markAsRead"),
+    icon: CheckCheckIcon,
+    stepType: stepTypes.enum.markAsRead,
+  },
+  reaction: {
+    label: t("flows.actions.reaction"),
+    icon: SmileIcon,
+    stepType: stepTypes.enum.reaction,
+  },
   sendFile: {
     label: t("flows.actions.sendFile"),
     icon: PaperclipIcon,
@@ -129,6 +141,8 @@ const BASE_MENU_ORDER = [
   "getUserData",
   "sendGif",
   "typing",
+  "markAsRead",
+  "reaction",
   "sendFile",
   "actions",
 ] as const
@@ -146,6 +160,8 @@ const WHATSAPP_MENU_ORDER = [
   "whatsappFlow",
   "whatsappOptionList",
   "typing",
+  "markAsRead",
+  "reaction",
   "sendFile",
   "actions",
 ] as const

@@ -2459,7 +2459,9 @@
       "import": "Nhập luồng",
       "export": "Xuất",
       "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
-      "importJsonOnly": "Chỉ tệp JSON"
+      "importJsonOnly": "Chỉ tệp JSON",
+      "markAsRead": "Đánh dấu đã đọc",
+      "reaction": "Bày tỏ cảm xúc"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2523,7 +2525,12 @@
       "typingSecondsLabel": "Thời gian nhập (giây)",
       "lookupColumnsLabel": "Cột tra cứu:",
       "filterModeAnd": "VÀ",
-      "filterModeOr": "HOẶC"
+      "filterModeOr": "HOẶC",
+      "markAsReadDescription": "Đánh dấu tin nhắn WhatsApp đến là đã đọc (dấu tích xanh).",
+      "reactionEmojiLabel": "Chọn một biểu tượng cảm xúc:",
+      "reactionEmojiCustomLabel": "Biểu tượng cảm xúc tùy chỉnh",
+      "reactionEmojiCustomDescription": "Chọn biểu tượng cảm xúc nhanh ở trên hoặc nhập biểu tượng cảm xúc hợp lệ vào đây.",
+      "reactionPreviewText": "Bày tỏ cảm xúc với {emoji}"
     },
     "operators": {
       "append": "Thêm vào cuối",

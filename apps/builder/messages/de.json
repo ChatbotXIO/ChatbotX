@@ -2322,7 +2322,9 @@
       "import": "Flow importieren",
       "export": "Exportieren",
       "importStarted": "Der Flow wird importiert. Ergebnisse im Importverlauf prüfen.",
-      "importJsonOnly": "Nur JSON-Dateien"
+      "importJsonOnly": "Nur JSON-Dateien",
+      "markAsRead": "Als gelesen markieren",
+      "reaction": "Reagieren"
     },
     "splitTraffic": {
       "balanceHint": "Die Gesamtsumme muss 100 % ergeben.",
@@ -2386,7 +2388,12 @@
       "typingSecondsLabel": "Tippen für (Sekunden)",
       "lookupColumnsLabel": "Suchspalten:",
       "filterModeAnd": "UND",
-      "filterModeOr": "ODER"
+      "filterModeOr": "ODER",
+      "markAsReadDescription": "Markiert die eingehende WhatsApp-Nachricht als gelesen (blaue Haken).",
+      "reactionEmojiLabel": "Emoji auswählen:",
+      "reactionEmojiCustomLabel": "Benutzerdefiniertes Emoji",
+      "reactionEmojiCustomDescription": "Wählen Sie oben ein Schnell-Emoji oder geben Sie hier ein beliebiges Emoji ein.",
+      "reactionPreviewText": "Reagieren mit {emoji}"
     },
     "operators": {
       "append": "Am Ende anhängen",

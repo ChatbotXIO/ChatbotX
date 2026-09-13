@@ -243,6 +243,18 @@ export type ConversationHandlers<IAuth extends AuthValue> = {
       ctx: Context<IAuth>
       data: {
         contact: OutgoingContact
+        messageId?: string
+      }
+    },
+    void
+  >
+  sendReaction?: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        contact: OutgoingContact
+        emoji: string
+        messageId?: string
       }
     },
     void

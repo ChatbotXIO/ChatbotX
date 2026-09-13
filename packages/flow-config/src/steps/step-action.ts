@@ -26,6 +26,8 @@ export const stepTypes = z.enum([
   "followUp",
   "getUserData",
   "typing",
+  "markAsRead",
+  "reaction",
 
   // Contact Operations (C_)
   "addContactTag",
