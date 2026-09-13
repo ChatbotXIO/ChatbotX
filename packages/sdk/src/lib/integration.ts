@@ -223,6 +223,7 @@ export type ConversationHandlers<IAuth extends AuthValue> = {
         contact: OutgoingContact
         typing: boolean
         seconds?: number
+        messageId?: string
       }
     },
     void
