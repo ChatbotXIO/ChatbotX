@@ -1711,7 +1711,7 @@
     "dateFilterPreset": "Intervallo predefinito del filtro data",
     "noResults": "Nessun risultato.",
     "noData": "Nessun dato",
-    "retentionNotice": "Vengono conservati solo i dati degli ultimi {days} giorni.",
+    "errorLogRetentionNotice": "Vengono conservati solo i log degli errori degli ultimi {days} giorni.",
     "comingSoon": "Prossimamente",
     "unknown": "Sconosciuto",
     "pagination": {
@@ -1966,6 +1966,35 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    }
+  },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Inviato",
+      "delivered": "Consegnato",
+      "seen": "Visualizzato",
+      "clicked": "Cliccato",
+      "failed": "Non riuscito",
+      "missed": "Mancati",
+      "noContacts": "Nessun contatto trovato",
+      "noComment": "(nessun testo)",
+      "pageInfo": "Pagina {page} di {pageCount}",
+      "selectedAll": "Tutti selezionati",
+      "selectedCount": "{count} selezionati",
+      "tagAllDialogDescription": "I tag verranno aggiunti a tutti i contatti selezionati.",
+      "tagDialogDescription": "I tag verranno aggiunti a {count} contatti.",
+      "tagQueued": "Aggiunta di tag a {count} contatti in background.",
+      "loadingMore": "Caricamento...",
+      "receivers": "Destinatari"
+    },
+    "missReasons": {
+      "outsideSchedule": "Fuori orario",
+      "postNotMatched": "Post non selezionato",
+      "commentIsReply": "Risposta a commento",
+      "keywordsNotMatched": "Parole chiave non corrispondenti",
+      "contactNotNew": "Il contatto non è nuovo",
+      "alreadyRepliedOnPost": "Già risposto su questo post",
+      "engagedOnOtherPost": "Ha già interagito su un altro post"
     }
   },
   "condition": {
@@ -4284,9 +4313,9 @@
     "trackCommentsOn": "Monitora i commenti su",
     "trackCommentsOnDescription": "Applica questa automazione a tutti i post della tua Pagina oppure limitala ai post specifici che selezioni.",
     "privateReply": "Risposta privata (posta in arrivo)",
-    "privateReplyDescription": "Invia un messaggio privato alla posta in arrivo dell'autore del commento. Scegli un agente IA, un modello di testo fisso (con supporto spintax), un flusso del chatbot oppure disabilita la risposta.",
+    "privateReplyDescription": "Invia un messaggio privato alla posta in arrivo dell'autore del commento. Scegli un agente IA, un modello di testo fisso, un flusso del chatbot oppure disabilita la risposta.",
     "publicReply": "Risposta pubblica al commento",
-    "publicReplyDescription": "Pubblica una risposta direttamente sotto il commento. Supporta fino a 10 modelli di testo (con supporto spintax), un agente IA, un flusso del chatbot oppure nessuna risposta.",
+    "publicReplyDescription": "Pubblica una risposta direttamente sotto il commento. Supporta fino a 10 modelli di testo, un agente IA, un flusso del chatbot oppure nessuna risposta. Ogni messaggio viene pubblicato come risposta separata.",
     "replyMessage": "Messaggio di risposta",
     "replyMessagePlaceholder": "Inserisci il messaggio di risposta...",
     "includeKeywordsType": "Rispondi a",
@@ -4354,8 +4383,8 @@
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continua a rispondere agli utenti che hanno già commentato altri tuoi post.",
       "ignoreCommentReplies": "Non rispondere alle risposte ai commenti",
       "ignoreCommentRepliesDescription": "Ignora l'automazione per i commenti che sono risposte ad altri commenti e non commenti di primo livello.",
-      "trackUserTags": "Monitora se un utente tagga altri utenti",
-      "trackUserTagsDescription": "Attiva l'automazione quando un utente tagga o menziona un altro utente nel proprio commento."
+      "trackUserTags": "Traccia se un utente tagga altri utenti",
+      "trackUserTagsDescription": "Usa '{{total_tagged}}' per sapere quanti utenti sono stati taggati. Usa '{{total_new_tagged}}' per sapere quante delle persone taggate non sono nell'elenco dei contatti."
     },
     "hideComments": {
       "all": "Nascondi tutti i commenti",
@@ -4387,9 +4416,9 @@
     "trackCommentsOn": "Monitora i commenti su",
     "trackCommentsOnDescription": "Applica questa automazione a tutti i post dell'account collegato oppure limitala ai post specifici che selezioni.",
     "privateReply": "Risposta privata (posta in arrivo)",
-    "privateReplyDescription": "Invia un messaggio privato alla posta in arrivo dell'autore del commento. Scegli un agente IA, un modello di testo fisso (con supporto spintax), un flusso del chatbot oppure disabilita la risposta.",
+    "privateReplyDescription": "Invia un messaggio privato alla posta in arrivo dell'autore del commento. Scegli un agente IA, un modello di testo fisso, un flusso del chatbot oppure disabilita la risposta.",
     "publicReply": "Risposta pubblica al commento",
-    "publicReplyDescription": "Pubblica una risposta direttamente sotto il commento. Supporta fino a 10 modelli di testo (con supporto spintax), un agente IA, un flusso del chatbot oppure nessuna risposta.",
+    "publicReplyDescription": "Pubblica una risposta direttamente sotto il commento. Supporta fino a 10 modelli di testo, un agente IA, un flusso del chatbot oppure nessuna risposta. Ogni messaggio viene pubblicato come risposta separata.",
     "replyMessage": "Messaggio di risposta",
     "replyMessagePlaceholder": "Inserisci il messaggio di risposta...",
     "includeKeywordsType": "Rispondi a",
@@ -4455,7 +4484,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "Rispondi agli utenti che hanno commentato altri post",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continua a rispondere agli utenti che hanno già commentato altri tuoi post.",
       "ignoreCommentReplies": "Non rispondere alle risposte ai commenti",
-      "ignoreCommentRepliesDescription": "Ignora l'automazione per i commenti che sono risposte ad altri commenti e non commenti di primo livello."
+      "ignoreCommentRepliesDescription": "Ignora l'automazione per i commenti che sono risposte ad altri commenti e non commenti di primo livello.",
+      "trackUserTags": "Traccia se un utente tagga altri utenti",
+      "trackUserTagsDescription": "Usa '{{total_tagged}}' per sapere quanti utenti sono stati taggati. Usa '{{total_new_tagged}}' per sapere quante delle persone taggate non sono nell'elenco dei contatti."
     },
     "hideComments": {
       "all": "Nascondi tutti i commenti",

@@ -68,6 +68,9 @@ export const getUserProfile = ({
     const result: IncomingContact = {
       sourceId: psid,
       firstName: response.name,
+      // Persisted so `@handle` mentions inside a comment can be resolved back
+      // to a known contact — Instagram gives no tagged-user ids, only handles.
+      sourceUsername: response.username,
     }
 
     if (response.profile_pic) {

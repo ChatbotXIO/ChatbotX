@@ -127,6 +127,10 @@ const handleWebhookEvent = async (
                   fromId: value.from.id,
                   fromName: value.from.name,
                   message: value.message,
+                  tags: value.message_tags?.map(({ id, name }) => ({
+                    id,
+                    name,
+                  })),
                   createdTime: value.created_time,
                 },
               },

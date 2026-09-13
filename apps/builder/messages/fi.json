@@ -253,7 +253,7 @@
     "dateFilterPreset": "Päivämääräsuodattimen esiasetus",
     "noResults": "Ei tuloksia.",
     "noData": "Ei tietoja",
-    "retentionNotice": "Vain viimeisten {days} päivän tiedot säilytetään.",
+    "errorLogRetentionNotice": "Vain viimeisten {days} päivän virhelokit säilytetään.",
     "comingSoon": "Tulossa pian",
     "unknown": "Tuntematon",
     "pagination": {
@@ -508,6 +508,35 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    }
+  },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Lähetetty",
+      "delivered": "Toimitettu",
+      "seen": "Nähty",
+      "clicked": "Napsautettu",
+      "failed": "Epäonnistunut",
+      "missed": "Ohitetut",
+      "noContacts": "Yhteystietoja ei löytynyt",
+      "noComment": "(ei tekstiä)",
+      "pageInfo": "Sivu {page}/{pageCount}",
+      "selectedAll": "Kaikki valittu",
+      "selectedCount": "{count} valittu",
+      "tagAllDialogDescription": "Tunnisteet lisätään kaikkiin valittuihin yhteystietoihin.",
+      "tagDialogDescription": "Tunnisteet lisätään {count} yhteystietoon.",
+      "tagQueued": "{count} yhteystiedon tunnisteita lisätään taustalla.",
+      "loadingMore": "Ladataan lisää...",
+      "receivers": "Vastaanottajat"
+    },
+    "missReasons": {
+      "outsideSchedule": "Aikataulun ulkopuolella",
+      "postNotMatched": "Julkaisua ei kohdennettu",
+      "commentIsReply": "Kommentin vastaus",
+      "keywordsNotMatched": "Avainsanat eivät täsmänneet",
+      "contactNotNew": "Kontakti ei ole uusi",
+      "alreadyRepliedOnPost": "Jo vastattu tässä julkaisussa",
+      "engagedOnOtherPost": "Jo vuorovaikutuksessa toisessa julkaisussa"
     }
   },
   "condition": {
@@ -4284,9 +4313,9 @@
     "trackCommentsOn": "Seuraa kommentteja",
     "trackCommentsOnDescription": "Käytä tätä automaatiota kaikkiin sivusi julkaisuihin tai rajaa se valitsemiisi julkaisuihin.",
     "privateReply": "Yksityinen vastaus (saapuneet)",
-    "privateReplyDescription": "Lähetä yksityisviesti kommentoijan saapuneet-kansioon. Valitse AI-agentti, kiinteä tekstimalli (spintax tuettu), chatbot-flow tai poista käytöstä.",
+    "privateReplyDescription": "Lähetä yksityisviesti kommentoijan saapuneet-kansioon. Valitse AI-agentti, kiinteä tekstimalli, chatbot-flow tai poista käytöstä.",
     "publicReply": "Julkinen vastaus kommenttiin",
-    "publicReplyDescription": "Julkaise julkinen vastaus suoraan kommentin alle. Tukee enintään 10 tekstimallia (spintax tuettu), AI-agenttia, chatbot-flow'ta tai ei vastausta.",
+    "publicReplyDescription": "Julkaise julkinen vastaus suoraan kommentin alle. Tukee enintään 10 tekstimallia, AI-agenttia, chatbot-flow'ta tai ei vastausta. Jokainen viesti julkaistaan omana vastauksenaan.",
     "replyMessage": "Vastausviesti",
     "replyMessagePlaceholder": "Kirjoita vastausviesti...",
     "includeKeywordsType": "Vastaa",
@@ -4355,7 +4384,7 @@
       "ignoreCommentReplies": "Älä vastaa kommenttien vastauksiin",
       "ignoreCommentRepliesDescription": "Ohita automaatio kommenteille, jotka ovat vastauksia muihin kommentteihin eivätkä ylätason kommentteja.",
       "trackUserTags": "Seuraa, merkitseekö käyttäjä muita käyttäjiä",
-      "trackUserTagsDescription": "Käynnistä automaatio, kun käyttäjä merkitsee tai mainitsee kommentissaan toisen käyttäjän."
+      "trackUserTagsDescription": "Käytä '{{total_tagged}}' nähdäksesi, kuinka monta käyttäjää merkittiin. Käytä '{{total_new_tagged}}' nähdäksesi, kuinka moni merkityistä henkilöistä ei ole yhteystietoluettelossa."
     },
     "hideComments": {
       "all": "Piilota kaikki kommentit",
@@ -4387,9 +4416,9 @@
     "trackCommentsOn": "Seuraa kommentteja",
     "trackCommentsOnDescription": "Käytä tätä automaatiota kaikkiin yhdistetyn tilisi julkaisuihin tai rajaa se valitsemiisi julkaisuihin.",
     "privateReply": "Yksityinen vastaus (saapuneet)",
-    "privateReplyDescription": "Lähetä yksityisviesti kommentoijan saapuneet-kansioon. Valitse AI-agentti, kiinteä tekstimalli (spintax tuettu), chatbot-flow tai poista käytöstä.",
+    "privateReplyDescription": "Lähetä yksityisviesti kommentoijan saapuneet-kansioon. Valitse AI-agentti, kiinteä tekstimalli, chatbot-flow tai poista käytöstä.",
     "publicReply": "Julkinen vastaus kommenttiin",
-    "publicReplyDescription": "Julkaise julkinen vastaus suoraan kommentin alle. Tukee enintään 10 tekstimallia (spintax tuettu), AI-agenttia, chatbot-flow'ta tai ei vastausta.",
+    "publicReplyDescription": "Julkaise julkinen vastaus suoraan kommentin alle. Tukee enintään 10 tekstimallia, AI-agenttia, chatbot-flow'ta tai ei vastausta. Jokainen viesti julkaistaan omana vastauksenaan.",
     "replyMessage": "Vastausviesti",
     "replyMessagePlaceholder": "Kirjoita vastausviesti...",
     "includeKeywordsType": "Vastaa",
@@ -4455,7 +4484,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "Vastaa muissa julkaisuissa kommentoineille käyttäjille",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Jatka vastaamista käyttäjille, jotka ovat jo kommentoineet muita julkaisujasi.",
       "ignoreCommentReplies": "Älä vastaa kommenttien vastauksiin",
-      "ignoreCommentRepliesDescription": "Ohita automaatio kommenteille, jotka ovat vastauksia muihin kommentteihin eivätkä ylätason kommentteja."
+      "ignoreCommentRepliesDescription": "Ohita automaatio kommenteille, jotka ovat vastauksia muihin kommentteihin eivätkä ylätason kommentteja.",
+      "trackUserTags": "Seuraa, merkitseekö käyttäjä muita käyttäjiä",
+      "trackUserTagsDescription": "Käytä '{{total_tagged}}' nähdäksesi, kuinka monta käyttäjää merkittiin. Käytä '{{total_new_tagged}}' nähdäksesi, kuinka moni merkityistä henkilöistä ei ole yhteystietoluettelossa."
     },
     "hideComments": {
       "all": "Piilota kaikki kommentit",

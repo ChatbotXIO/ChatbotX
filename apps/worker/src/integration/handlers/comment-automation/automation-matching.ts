@@ -1,8 +1,9 @@
-import type {
-  FBCommentIncludeKeywords,
-  FBCommentPost,
-  FBCommentReply,
-  FBCommentReplyAfter,
+import {
+  type FBCommentIncludeKeywords,
+  type FBCommentPost,
+  type FBCommentReply,
+  type FBCommentReplyAfter,
+  resolveReplyTexts,
 } from "@chatbotx.io/database/partials"
 
 const RANDOM_DELAY_MINUTES: Record<string, number> = {
@@ -108,7 +109,13 @@ export function willSendReply(reply: FBCommentReply): boolean {
   if (reply.type === "none") {
     return false
   }
-  // text/flow need a value; AIAgent needs the selected agent id in `value`.
+  // A `text` reply can hold several messages, so it goes through the shared
+  // resolver — reading `value` directly would call a multi-text reply empty and
+  // skip the automation without a word. `flow` needs a flow id and `AIAgent`
+  // the selected agent id, both in `value`.
+  if (reply.type === "text") {
+    return resolveReplyTexts(reply).length > 0
+  }
   return Boolean(reply.value)
 }
 

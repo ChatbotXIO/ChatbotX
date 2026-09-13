@@ -3,7 +3,11 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
-import { getCommentAttachment, getCommentAttachmentType } from "./apis/comment"
+import {
+  getCommentAttachment,
+  getCommentAttachmentType,
+  getCommentMessageTags,
+} from "./apis/comment"
 import {
   type CloneMessengerTemplateProps,
   clonePageMessageTemplate,
@@ -52,6 +56,7 @@ const config: IntegrationDefinition<
     getUserInboxLink,
     getCommentAttachmentType,
     getCommentAttachment,
+    getCommentMessageTags,
     listMessageTemplates: async ({ ctx, input }) =>
       listPageMessageTemplates(ctx.auth, input),
     cloneMessageTemplate: async ({

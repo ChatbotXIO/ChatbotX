@@ -1,12 +1,13 @@
-import { COMMENT_AUTOMATION_RETENTION_DAYS } from "@chatbotx.io/analytics/schemas"
-import { purgeCommentAutomationEvents as purgeEventRows } from "@chatbotx.io/database/repositories"
+import { COMMENT_AUTOMATION_ERROR_RETENTION_DAYS } from "@chatbotx.io/analytics/schemas"
+import { purgeFailedCommentAutomationEvents as purgeEventRows } from "@chatbotx.io/database/repositories"
 import { getChildLogger } from "@chatbotx.io/logger"
 
 const log = getChildLogger("purge-comment-automation-events")
 
-/** Shared with the analytics page's date filter, which must not offer a window
- * wider than what is retained — see the constant's docblock. */
-const RETENTION_DAYS = COMMENT_AUTOMATION_RETENTION_DAYS
+/** Shared with the analytics page's Error Logs panel, which spells the window
+ * out because it is the only panel that thins out — see the constant's
+ * docblock. */
+const RETENTION_DAYS = COMMENT_AUTOMATION_ERROR_RETENTION_DAYS
 const CHUNK_SIZE = 1000
 const INTER_CHUNK_DELAY_MS = 100
 /**
@@ -20,6 +21,10 @@ const MAX_RUN_DURATION_MS = 10 * 60 * 1000
 const MAX_CHUNKS_PER_RUN = 10_000
 
 /**
+ * Retention for the FAILED rows only. Successful rows are the per-automation
+ * analytics history and are kept forever; a failure is read by nothing but the
+ * Error Logs panel, which mirrors `ErrorLog`'s 30-day window.
+ *
  * `FBCommentAutomationEvent` grows one row per dispatched reply, and a busy
  * Page can add tens of thousands a day. Chunked so a long delete never blocks
  * the comment-automation loop writing a new event.
@@ -42,6 +47,6 @@ export async function purgeCommentAutomationEvents(): Promise<void> {
   }
 
   if (deleted > 0) {
-    log.info({ deleted }, "purgeCommentAutomationEvents: rows purged")
+    log.info({ deleted }, "purgeCommentAutomationEvents: failed rows purged")
   }
 }

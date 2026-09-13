@@ -1,0 +1,90 @@
+"use client"
+
+import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import type { ColumnDef } from "@tanstack/react-table"
+import {
+  type CommentAutomationStatField,
+  CommentAutomationStatsCell,
+  commentAutomationStatCounters,
+} from "./comment-automation-stats-cell"
+
+/** The counter columns every comment automation row carries. */
+export type CommentAutomationStatRow = {
+  id: string
+  /** Half of the Misses denominator; see `resolveDenominator`. */
+  repliesCount: number
+} & Record<
+  (typeof commentAutomationStatCounters)[CommentAutomationStatField],
+  number
+>
+
+const STAT_COLUMNS: { id: string; field: CommentAutomationStatField }[] = [
+  { id: "sent", field: "message:sent" },
+  { id: "delivered", field: "message:delivered" },
+  { id: "seen", field: "message:seen" },
+  { id: "clicked", field: "flow:clicked" },
+  { id: "failed", field: "message:failed" },
+  { id: "missed", field: "comment:missed" },
+]
+
+/**
+ * What each column's rate is measured against.
+ *
+ * The delivery columns divide by attempts. Misses cannot: a decline is not an
+ * attempt, and `sentCount` counts private DMs only, so dividing by it would
+ * compare two different populations. It divides instead by the comments the
+ * automation actually engaged with — answered, or passed on.
+ */
+function resolveDenominator(
+  field: CommentAutomationStatField,
+  row: CommentAutomationStatRow,
+): number {
+  if (field === "comment:missed") {
+    return row.repliesCount + row.missedCount
+  }
+  return row.sentCount
+}
+
+/**
+ * The six stat columns, shared by the Facebook and Instagram list tables — they
+ * render the same `FBCommentAutomation` rows and differ only in the URL prefix,
+ * so duplicating these definitions would only be two places to drift.
+ *
+ * Unlike broadcast's equivalent this needs no stats store: the counters are
+ * columns on the row itself, already in hand by the time the table renders.
+ */
+export function buildCommentAutomationStatColumns<
+  TRow extends CommentAutomationStatRow,
+>(props: {
+  workspaceId: string
+  t: (key: string) => string
+}): ColumnDef<TRow>[] {
+  const { workspaceId, t } = props
+
+  return STAT_COLUMNS.map(({ id, field }) => ({
+    id,
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        className="w-full justify-center"
+        column={column}
+        title={t(`commentAutomation.stats.${id}`)}
+      />
+    ),
+    cell: ({ row }) => (
+      <div className="text-center">
+        <CommentAutomationStatsCell
+          automationId={row.original.id}
+          denominator={resolveDenominator(field, row.original)}
+          field={field}
+          value={row.original[commentAutomationStatCounters[field]]}
+          workspaceId={workspaceId}
+        />
+      </div>
+    ),
+    meta: { label: t(`commentAutomation.stats.${id}`) },
+    // Counters are not part of the list query's sort surface, and the dialog is
+    // the drill-down, so neither sorting nor hiding has anything to act on.
+    enableSorting: false,
+    size: 110,
+  }))
+}

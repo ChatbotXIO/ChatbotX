@@ -18,6 +18,13 @@ export const fbCommentAutomationEventRelations = defineRelationsPart(
         to: r.contactModel.id,
         optional: true,
       }),
+      // Nullable for the same reason as `contact`: the FK is
+      // `onDelete: "set null"`.
+      contactInbox: r.one.contactInboxModel({
+        from: r.fbCommentAutomationEventModel.contactInboxId,
+        to: r.contactInboxModel.id,
+        optional: true,
+      }),
       workspace: r.one.workspaceModel({
         from: r.fbCommentAutomationEventModel.workspaceId,
         to: r.workspaceModel.id,

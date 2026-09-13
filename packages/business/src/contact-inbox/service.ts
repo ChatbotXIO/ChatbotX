@@ -350,6 +350,63 @@ class ContactInboxService extends BaseService {
     }
   }
 
+  /**
+   * How many of the given tagged identities already belong to a contact in
+   * this inbox. Backs `{{total_new_tagged}}`, which is the complement:
+   * tagged − known.
+   *
+   * Counts matched INPUT identities, not returned rows — a reconnected
+   * integration can leave several rows on one `sourceId`, and counting rows
+   * would report more known people than were tagged.
+   *
+   * `sourceUsernames` must arrive lowercased: Instagram is the only caller and
+   * Meta serves handles lowercased, so an exact match keeps the index in play
+   * where `lower()` would force a scan of the whole inbox.
+   *
+   * Uncached, like every identity lookup here — a stale miss would silently
+   * inflate the "new people reached" number the option exists to report.
+   */
+  async countExistingTaggedIdentities(props: {
+    tx?: DatabaseClient
+    inboxId: string
+    sourceIds: string[]
+    sourceUsernames: string[]
+  }): Promise<number> {
+    const { tx = db, inboxId, sourceIds, sourceUsernames } = props
+    if (sourceIds.length === 0 && sourceUsernames.length === 0) {
+      return 0
+    }
+
+    const identityPredicates = [
+      ...(sourceIds.length > 0
+        ? [inArray(contactInboxModel.sourceId, sourceIds)]
+        : []),
+      ...(sourceUsernames.length > 0
+        ? [inArray(contactInboxModel.sourceUsername, sourceUsernames)]
+        : []),
+    ]
+
+    const rows = await tx
+      .select({
+        sourceId: contactInboxModel.sourceId,
+        sourceUsername: contactInboxModel.sourceUsername,
+      })
+      .from(contactInboxModel)
+      .where(
+        and(eq(contactInboxModel.inboxId, inboxId), or(...identityPredicates)),
+      )
+
+    const knownSourceIds = new Set(rows.map((row) => row.sourceId))
+    const knownUsernames = new Set(
+      rows.flatMap((row) => (row.sourceUsername ? [row.sourceUsername] : [])),
+    )
+
+    return (
+      sourceIds.filter((sourceId) => knownSourceIds.has(sourceId)).length +
+      sourceUsernames.filter((username) => knownUsernames.has(username)).length
+    )
+  }
+
   async findManyByIds(props: {
     workspaceId: string
     ids: string[]

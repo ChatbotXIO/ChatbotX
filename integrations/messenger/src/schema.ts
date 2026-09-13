@@ -74,6 +74,10 @@ export type MessengerActions<
     ctx: Context<IAuth>
     input: { commentId: string }
   }) => Promise<{ type: string | null; attachment?: IncomingAttachment }>
+  getCommentMessageTags: (props: {
+    ctx: Context<IAuth>
+    input: { commentId: string }
+  }) => Promise<{ id: string; name?: string }[]>
   listMessageTemplates: Handler<
     { ctx: Context<IAuth>; input?: ListMessengerMessageTemplatesProps },
     ListMessengerMessageTemplatesResponse
@@ -243,6 +247,18 @@ export type MessengerInboxLabelsChange = z.infer<
   typeof messengerInboxLabelsChangeSchema
 >
 
+// Profiles tagged inside a comment's text. Facebook only includes the key when
+// the comment actually tags someone, so an absent key means "no tags" — it is
+// NOT a signal that the payload is truncated.
+export const messengerMessageTagSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  type: z.string().optional(),
+  offset: z.number().optional(),
+  length: z.number().optional(),
+})
+export type MessengerMessageTag = z.infer<typeof messengerMessageTagSchema>
+
 export const messengerFeedCommentValueSchema = z.object({
   item: z.literal("comment"),
   verb: z.enum(["add", "remove", "edited"]),
@@ -251,6 +267,7 @@ export const messengerFeedCommentValueSchema = z.object({
   parent_id: z.string().optional(),
   from: z.object({ id: z.string(), name: z.string().optional() }),
   message: z.string().optional(),
+  message_tags: z.array(messengerMessageTagSchema).optional(),
   created_time: z.number(),
 })
 export type MessengerFeedCommentValue = z.infer<

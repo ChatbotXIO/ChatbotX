@@ -1,11 +1,15 @@
 import { broadcastToWorkspaceParty } from "@chatbotx.io/business"
-import type { FBCommentReply } from "@chatbotx.io/database/partials"
+import {
+  type FBCommentReply,
+  resolveReplyTexts,
+} from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type {
   ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
+import { COMMENT_AUTOMATION_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { contactVariableService } from "@chatbotx.io/variables"
@@ -21,6 +25,13 @@ import { logger } from "../../../lib/logger"
 import type { CommentAutomationChannelType } from "./channel-type"
 import type { CommentAutomationDedup } from "./dedup"
 import { type CommentReplyOutcome, describeFlowReply } from "./reply-outcome"
+
+/**
+ * Gap between consecutive public comment replies of one automation. Long
+ * enough that the queue's parallel workers cannot reorder them, short enough
+ * that the set still reads as one answer.
+ */
+const PUBLIC_REPLY_SPACING_MS = 3000
 
 /**
  * Post a public Facebook comment reply: creates the outgoing DB message,
@@ -127,16 +138,22 @@ export async function executePublicReply(
     return null
   }
 
-  if (publicReply.type === "text" && publicReply.value) {
-    let text = publicReply.value
+  if (publicReply.type === "text") {
+    const texts = resolveReplyTexts(publicReply)
+    if (texts.length === 0) {
+      return null
+    }
+
+    // Variables are resolved once for the whole set — they describe the
+    // contact, not the message, and one lookup per text would be N round trips
+    // for identical data.
+    let variables: Awaited<
+      ReturnType<typeof contactVariableService.getAll>
+    > | null = null
     try {
-      const variables = await contactVariableService.getAll({
+      variables = await contactVariableService.getAll({
         contactId: ctx.contactInbox.contactId,
         contactInbox: ctx.contactInbox,
-      })
-      text = await contactVariableService.replaceAll({
-        text: publicReply.value,
-        variables,
       })
     } catch (err) {
       logger.warn(
@@ -144,79 +161,140 @@ export async function executePublicReply(
         "Failed to resolve variables in reply text, sending raw text",
       )
     }
-    await postPublicCommentReply({
-      text,
-      automationId: ctx.automationId,
-      commentId: ctx.commentId,
-      conversationId: ctx.conversationId,
-      contactInboxId: ctx.contactInboxId,
-      workspaceId: ctx.workspaceId,
-      contactInbox: ctx.contactInbox,
-      parentMessageId: ctx.parentMessageId,
-      parentMessageCreatedAt: ctx.parentMessageCreatedAt,
-      delay: ctx.delay,
-    })
-    return { replyType: "text", replyText: text }
+
+    const sent: string[] = []
+    for (const [index, rawText] of texts.entries()) {
+      let text = rawText
+      if (variables) {
+        try {
+          text = await contactVariableService.replaceAll({
+            text: rawText,
+            variables,
+          })
+        } catch (err) {
+          logger.warn(
+            { err, commentId: ctx.commentId },
+            "Failed to resolve variables in reply text, sending raw text",
+          )
+        }
+      }
+
+      await postPublicCommentReply({
+        text,
+        automationId: ctx.automationId,
+        commentId: ctx.commentId,
+        conversationId: ctx.conversationId,
+        contactInboxId: ctx.contactInboxId,
+        workspaceId: ctx.workspaceId,
+        contactInbox: ctx.contactInbox,
+        parentMessageId: ctx.parentMessageId,
+        parentMessageCreatedAt: ctx.parentMessageCreatedAt,
+        // Staggered, because nothing downstream preserves order: the chat
+        // queue runs `concurrency: 5` with no limiter, so N jobs sharing one
+        // delay are picked up in parallel and the replies land under the
+        // comment in whatever order Facebook happens to accept them. The
+        // spacing doubles as breathing room for Meta's spam heuristics.
+        delay: ctx.delay + index * PUBLIC_REPLY_SPACING_MS,
+      })
+      sent.push(text)
+    }
+
+    // One outcome for the set: N texts are many messages but ONE reply, the
+    // same rule a `flow` reply already follows. The joined text is what the
+    // analytics "Bot replies" table groups on, so it has to be everything the
+    // customer saw.
+    return { replyType: "text", replyText: sent.join("\n") }
   }
 
   if (publicReply.type === "flow" && publicReply.value) {
-    await integrationQueue.add(
-      IntegrationJobAction.sendFlow,
-      {
-        type: IntegrationJobAction.sendFlow,
-        data: {
-          // Deliberately the comment-anchored conversation, unlike the private
-          // branch (#1063): a public flow answers on the post, and the
-          // contact's next comment resolves back to this very conversation
-          // through `receiveComment`, so its flow state is reachable here.
-          // Do not "fix" this to the DM conversation.
-          conversationId: ctx.conversationId,
-          contactInboxId: ctx.contactInboxId,
-          flowId: publicReply.value,
-          origin: webhookChannelOrigin(),
-          commentAnchor: { commentId: ctx.commentId, replyChannel: "public" },
-        },
-      },
-      { delay: ctx.delay },
-    )
+    const flowId = publicReply.value
+
     return {
       replyType: "flow",
       replyText: await describeFlowReply({
         workspaceId: ctx.workspaceId,
-        flowId: publicReply.value,
+        flowId,
       }),
+      // Enqueued by the caller once the analytics row exists — see `dispatch`
+      // on `CommentReplyOutcome`.
+      dispatch: async () => {
+        await integrationQueue.add(
+          IntegrationJobAction.sendFlow,
+          {
+            type: IntegrationJobAction.sendFlow,
+            data: {
+              // Deliberately the comment-anchored conversation, unlike the
+              // private branch (#1063): a public flow answers on the post, and
+              // the contact's next comment resolves back to this very
+              // conversation through `receiveComment`, so its flow state is
+              // reachable here. Do not "fix" this to the DM conversation.
+              conversationId: ctx.conversationId,
+              contactInboxId: ctx.contactInboxId,
+              flowId,
+              origin: webhookChannelOrigin(),
+              // A public reply posts comments, which carry no buttons — but
+              // the public anchor is lost across a Wait step, and every step
+              // after that one sends as a normal DM, buttons included.
+              // `metadata` survives the wait, so those stay attributed.
+              metadata: {
+                type: COMMENT_AUTOMATION_PAYLOAD_TYPE,
+                commentAutomationId: ctx.automationId,
+                commentId: ctx.commentId,
+                replyChannel: "public" as const,
+              },
+              commentAnchor: {
+                commentId: ctx.commentId,
+                replyChannel: "public",
+                // See the private branch: carries the automation into the flow
+                // runner so delivery can be reported back.
+                automationId: ctx.automationId,
+              },
+            },
+          },
+          { delay: ctx.delay },
+        )
+      },
     }
   }
 
   if (publicReply.type === "AIAgent" && publicReply.value) {
-    await aiAgentQueue.add(
-      AIJobAction.commentAIReply,
-      {
-        type: AIJobAction.commentAIReply,
-        data: {
-          automationId: ctx.automationId,
-          integrationType: ctx.integrationType,
-          integrationIdentifier: ctx.integrationIdentifier,
-          workspaceId: ctx.workspaceId,
-          conversationId: ctx.conversationId,
-          contactInboxId: ctx.contactInboxId,
-          commentId: ctx.commentId,
-          agentId: publicReply.value,
-          replyChannel: "public",
-          channelType: ctx.channelType,
-          message: ctx.message,
-          parentMessageId: ctx.parentMessageId ?? null,
-          parentMessageCreatedAt:
-            ctx.parentMessageCreatedAt?.toISOString() ?? null,
-          commentDedup: ctx.dedup,
-        },
+    const agentId = publicReply.value
+
+    return {
+      replyType: "AIAgent",
+      replyText: null,
+      // Deferred for the same reason the flow branch is: `processCommentAIReply`
+      // settles its outcome onto the analytics row the caller writes next.
+      dispatch: async () => {
+        await aiAgentQueue.add(
+          AIJobAction.commentAIReply,
+          {
+            type: AIJobAction.commentAIReply,
+            data: {
+              automationId: ctx.automationId,
+              integrationType: ctx.integrationType,
+              integrationIdentifier: ctx.integrationIdentifier,
+              workspaceId: ctx.workspaceId,
+              conversationId: ctx.conversationId,
+              contactInboxId: ctx.contactInboxId,
+              commentId: ctx.commentId,
+              agentId,
+              replyChannel: "public",
+              channelType: ctx.channelType,
+              message: ctx.message,
+              parentMessageId: ctx.parentMessageId ?? null,
+              parentMessageCreatedAt:
+                ctx.parentMessageCreatedAt?.toISOString() ?? null,
+              commentDedup: ctx.dedup,
+            },
+          },
+          {
+            delay: ctx.delay,
+            jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-public`,
+          },
+        )
       },
-      {
-        delay: ctx.delay,
-        jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-public`,
-      },
-    )
-    return { replyType: "AIAgent", replyText: null }
+    }
   }
 
   return null

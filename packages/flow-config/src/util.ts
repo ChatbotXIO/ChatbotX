@@ -59,6 +59,7 @@ export const buttonPayloadSchema = z
     br: strictBigintAsString().optional(),
     ss: strictBigintAsString().optional(),
     cid: strictBigintAsString().optional(),
+    ca: strictBigintAsString().optional(),
   })
   .transform((data) => ({
     flowId: data.f,
@@ -67,6 +68,7 @@ export const buttonPayloadSchema = z
     ...(data.br ? { broadcastId: data.br } : {}),
     ...(data.ss ? { sequenceStepId: data.ss } : {}),
     ...(data.cid ? { contactInboxId: data.cid } : {}),
+    ...(data.ca ? { commentAutomationId: data.ca } : {}),
   }))
 export type ButtonPayload = z.infer<typeof buttonPayloadSchema>
 
@@ -85,6 +87,10 @@ export const encodeButtonPayload = (props: ButtonPayload): string => {
     props.broadcastId ?? "",
     props.sequenceStepId ?? "",
     props.contactInboxId ?? "",
+    // Appended last on purpose: the format is positional, and the trailing-empty
+    // trim below means every payload minted before this field existed still
+    // encodes and decodes byte-identically.
+    props.commentAutomationId ?? "",
   ]
   while (parts.length > 2 && parts.at(-1) === "") {
     parts.pop()
@@ -107,7 +113,7 @@ export const decodeButtonPayload = (
       return buttonPayloadSchema.parse({ f: payload })
     }
     if (payload.includes(":")) {
-      const [f, fv, b, br, ss, cid] = payload.split(":")
+      const [f, fv, b, br, ss, cid, ca] = payload.split(":")
       return buttonPayloadSchema.parse({
         f,
         fv: fv || undefined,
@@ -115,6 +121,7 @@ export const decodeButtonPayload = (
         br: br || undefined,
         ss: ss || undefined,
         cid: cid || undefined,
+        ca: ca || undefined,
       })
     }
     // Legacy format: base64+JSON (payloads encoded before the colon format)

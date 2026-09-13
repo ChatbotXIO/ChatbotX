@@ -4,6 +4,7 @@ import type {
 } from "@chatbotx.io/analytics"
 import {
   broadcastAnalyticsService,
+  commentAutomationAnalyticsService,
   contactAnalyticsService,
   flowAnalyticsService,
   macTrackingService,
@@ -337,6 +338,14 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
     {
       name: "sequence-ops",
       handler: sequenceAnalyticsService.onSeen.bind(sequenceAnalyticsService),
+    },
+    {
+      // The only comment-automation outcome that cannot be settled at the
+      // dispatch site: a read receipt names the inbox, never the reply.
+      name: "comment-automation-ops",
+      handler: commentAutomationAnalyticsService.onSeen.bind(
+        commentAutomationAnalyticsService,
+      ),
     },
   ],
   [messageEventTypeSchema.enum["message:received"]]: [

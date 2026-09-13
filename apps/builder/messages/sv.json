@@ -300,7 +300,7 @@
     "newContactsByCountry": "Nya kontakter per land",
     "newContactsBySource": "Nya kontakter per källa",
     "noData": "Inga data",
-    "retentionNotice": "Endast data från de senaste {days} dagarna sparas.",
+    "errorLogRetentionNotice": "Endast felloggar från de senaste {days} dagarna sparas.",
     "noResults": "Inga resultat.",
     "pagination": {
       "firstPage": "Gå till första sidan",
@@ -641,6 +641,35 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    }
+  },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Skickat",
+      "delivered": "Levererat",
+      "seen": "Sett",
+      "clicked": "Klickat",
+      "failed": "Misslyckades",
+      "missed": "Missade",
+      "noContacts": "Inga kontakter hittades",
+      "noComment": "(ingen text)",
+      "pageInfo": "Sida {page} av {pageCount}",
+      "selectedAll": "Alla har markerats",
+      "selectedCount": "{count} har markerats",
+      "tagAllDialogDescription": "Taggar läggs till för alla markerade kontakter.",
+      "tagDialogDescription": "Taggar läggs till för {count} kontakt(er).",
+      "tagQueued": "{count} kontakter taggas i bakgrunden.",
+      "loadingMore": "Läser in fler...",
+      "receivers": "Mottagare"
+    },
+    "missReasons": {
+      "outsideSchedule": "Utanför schemat",
+      "postNotMatched": "Inlägget är inte målinriktat",
+      "commentIsReply": "Kommentarssvar",
+      "keywordsNotMatched": "Nyckelorden matchade inte",
+      "contactNotNew": "Kontakten är inte ny",
+      "alreadyRepliedOnPost": "Redan besvarad på detta inlägg",
+      "engagedOnOtherPost": "Har redan interagerat på ett annat inlägg"
     }
   },
   "channels": {
@@ -1440,6 +1469,8 @@
     "options": {
       "ignoreCommentReplies": "Svara inte på svar på kommentarer",
       "ignoreCommentRepliesDescription": "Hoppa över automatisering för kommentarer som är svar på andra kommentarer och inte kommentarer på toppnivå.",
+      "trackUserTags": "Spåra om en användare taggar andra användare",
+      "trackUserTagsDescription": "Använd '{{total_tagged}}' för att se hur många användare som taggades. Använd '{{total_new_tagged}}' för att se hur många av de taggade personerna som inte finns i kontaktlistan.",
       "likeUserComment": "Gilla användarens kommentar",
       "likeUserCommentDescription": "Reagera automatiskt med en gilla-markering på kommentatorns kommentar.",
       "replyOncePerUserPerPost": "Svara endast en gång per användare och inlägg",
@@ -1447,9 +1478,7 @@
       "replyToNewContactsOnly": "Svara endast nya kontakter",
       "replyToNewContactsOnlyDescription": "Svara automatiskt endast personer som aldrig tidigare har varit en kontakt i din arbetsyta.",
       "replyToUsersWhoCommentedOnOtherPosts": "Svara användare som har kommenterat andra inlägg",
-      "replyToUsersWhoCommentedOnOtherPostsDescription": "Fortsätt svara användare som redan har kommenterat dina andra inlägg.",
-      "trackUserTags": "Spåra om en användare taggar andra användare",
-      "trackUserTagsDescription": "Utlös automatiseringen när en användare taggar eller nämner en annan användare i sin kommentar."
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Fortsätt svara användare som redan har kommenterat dina andra inlägg."
     },
     "postIdPlaceholder": "Ange ett inläggs-ID per rad...",
     "postIdTab": "Inläggs-ID",
@@ -1461,9 +1490,9 @@
       "specificPosts": "Specifika inlägg"
     },
     "privateReply": "Privat svar (inkorg)",
-    "privateReplyDescription": "Skicka ett privat meddelande till kommentatorns inkorg. Välj en AI-agent, en fast textmall (spintax stöds), ett chattbotflöde eller inaktivera.",
+    "privateReplyDescription": "Skicka ett privat meddelande till kommentatorns inkorg. Välj en AI-agent, en fast textmall, ett chattbotflöde eller inaktivera.",
     "publicReply": "Offentligt svar på kommentar",
-    "publicReplyDescription": "Publicera ett offentligt svar direkt under kommentaren. Stöder upp till 10 textmallar (spintax stöds), en AI-agent, ett chattbotflöde eller inget svar.",
+    "publicReplyDescription": "Publicera ett offentligt svar direkt under kommentaren. Stöder upp till 10 textmallar, en AI-agent, ett chattbotflöde eller inget svar. Varje meddelande publiceras som ett separat svar.",
     "replies": "Svar",
     "replyAfter": "Svara efter",
     "replyAfterType": {
@@ -3420,6 +3449,8 @@
     "options": {
       "ignoreCommentReplies": "Svara inte på svar på kommentarer",
       "ignoreCommentRepliesDescription": "Hoppa över automatisering för kommentarer som är svar på andra kommentarer och inte kommentarer på toppnivå.",
+      "trackUserTags": "Spåra om en användare taggar andra användare",
+      "trackUserTagsDescription": "Använd '{{total_tagged}}' för att se hur många användare som taggades. Använd '{{total_new_tagged}}' för att se hur många av de taggade personerna som inte finns i kontaktlistan.",
       "likeUserComment": "Gilla användarens kommentar",
       "likeUserCommentDescription": "Reagera automatiskt med en gilla-markering på kommentatorns kommentar.",
       "replyOncePerUserPerPost": "Svara endast en gång per användare och inlägg",
@@ -3438,9 +3469,9 @@
       "specificPosts": "Specifika inlägg"
     },
     "privateReply": "Privat svar (inkorg)",
-    "privateReplyDescription": "Skicka ett privat meddelande till kommentatorns inkorg. Välj en AI-agent, en fast textmall (spintax stöds), ett chattbotflöde eller inaktivera.",
+    "privateReplyDescription": "Skicka ett privat meddelande till kommentatorns inkorg. Välj en AI-agent, en fast textmall, ett chattbotflöde eller inaktivera.",
     "publicReply": "Offentligt svar på kommentar",
-    "publicReplyDescription": "Publicera ett offentligt svar direkt under kommentaren. Stöder upp till 10 textmallar (spintax stöds), en AI-agent, ett chattbotflöde eller inget svar.",
+    "publicReplyDescription": "Publicera ett offentligt svar direkt under kommentaren. Stöder upp till 10 textmallar, en AI-agent, ett chattbotflöde eller inget svar. Varje meddelande publiceras som ett separat svar.",
     "replies": "Svar",
     "replyAfter": "Svara efter",
     "replyAfterType": {

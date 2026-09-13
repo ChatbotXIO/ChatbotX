@@ -1,5 +1,6 @@
 import {
   broadcastAnalyticsService,
+  commentAutomationAnalyticsService,
   flowAnalyticsService,
   magicLinkAnalyticsService,
   refLinkAnalyticsService,
@@ -30,6 +31,12 @@ export const flowListeners: Partial<FlowEvenTypeMap> = {
       name: "magic-link-stats",
       handler: magicLinkAnalyticsService.onClicked.bind(
         magicLinkAnalyticsService,
+      ),
+    },
+    {
+      name: "comment-automation-ops",
+      handler: commentAutomationAnalyticsService.onClicked.bind(
+        commentAutomationAnalyticsService,
       ),
     },
   ],

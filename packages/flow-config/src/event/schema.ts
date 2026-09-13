@@ -62,6 +62,14 @@ export const flowClickActionSchema = z.object({
   nodeId: z.string().optional(),
   broadcastId: z.string().optional(),
   sequenceStepId: z.string().optional(),
+  /**
+   * Set when the flow that sent this button was a comment automation's reply.
+   * Unlike `broadcastId`/`sequenceStepId` it names the automation, not the
+   * exact reply — a Facebook comment id is `{storyId}_{commentId}` and the
+   * button payload carries bigints only. See
+   * `markClickedForAutomationContacts`.
+   */
+  commentAutomationId: z.string().optional(),
   magicLinkId: z.string().optional(),
   clickType: clickTypeSchema,
 })

@@ -253,7 +253,7 @@
     "dateFilterPreset": "Preset filter tanggal",
     "noResults": "Tidak ada hasil.",
     "noData": "Tidak ada data",
-    "retentionNotice": "Hanya data {days} hari terakhir yang disimpan.",
+    "errorLogRetentionNotice": "Hanya log kesalahan {days} hari terakhir yang disimpan.",
     "comingSoon": "Segera hadir",
     "unknown": "Tidak diketahui",
     "pagination": {
@@ -508,6 +508,35 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    }
+  },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Terkirim",
+      "delivered": "Tersampaikan",
+      "seen": "Dilihat",
+      "clicked": "Diklik",
+      "failed": "Gagal",
+      "missed": "Terlewat",
+      "noContacts": "Tidak ada kontak yang ditemukan",
+      "noComment": "(tanpa teks)",
+      "pageInfo": "Halaman {page} dari {pageCount}",
+      "selectedAll": "Semua dipilih",
+      "selectedCount": "{count} dipilih",
+      "tagAllDialogDescription": "Tag akan ditambahkan ke semua kontak yang dipilih.",
+      "tagDialogDescription": "Tag akan ditambahkan ke {count} kontak.",
+      "tagQueued": "Memberi tag pada {count} kontak di latar belakang.",
+      "loadingMore": "Memuat lainnya...",
+      "receivers": "Penerima"
+    },
+    "missReasons": {
+      "outsideSchedule": "Di luar jadwal",
+      "postNotMatched": "Postingan tidak ditargetkan",
+      "commentIsReply": "Balasan komentar",
+      "keywordsNotMatched": "Kata kunci tidak cocok",
+      "contactNotNew": "Kontak bukan baru",
+      "alreadyRepliedOnPost": "Sudah dibalas di postingan ini",
+      "engagedOnOtherPost": "Sudah berinteraksi di postingan lain"
     }
   },
   "condition": {
@@ -4284,9 +4313,9 @@
     "trackCommentsOn": "Lacak komentar pada",
     "trackCommentsOnDescription": "Terapkan otomatisasi ini ke semua postingan di Halaman Anda, atau batasi ke postingan tertentu yang Anda pilih.",
     "privateReply": "Balasan pribadi (kotak masuk)",
-    "privateReplyDescription": "Kirim pesan pribadi ke kotak masuk pemberi komentar. Pilih Agen AI, templat teks tetap (mendukung spintax), alur chatbot, atau nonaktifkan.",
+    "privateReplyDescription": "Kirim pesan pribadi ke kotak masuk pemberi komentar. Pilih Agen AI, templat teks tetap, alur chatbot, atau nonaktifkan.",
     "publicReply": "Balasan publik untuk komentar",
-    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks (mendukung spintax), Agen AI, alur chatbot, atau tanpa balasan.",
+    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks, Agen AI, alur chatbot, atau tanpa balasan. Setiap pesan diposting sebagai balasan terpisah.",
     "replyMessage": "Pesan balasan",
     "replyMessagePlaceholder": "Masukkan pesan balasan...",
     "includeKeywordsType": "Balas",
@@ -4355,7 +4384,7 @@
       "ignoreCommentReplies": "Jangan balas balasan komentar",
       "ignoreCommentRepliesDescription": "Lewati otomatisasi untuk komentar yang merupakan balasan atas komentar lain, bukan komentar tingkat teratas.",
       "trackUserTags": "Lacak jika pengguna menandai pengguna lain",
-      "trackUserTagsDescription": "Picu otomatisasi saat pengguna menandai atau menyebut pengguna lain dalam komentarnya."
+      "trackUserTagsDescription": "Gunakan '{{total_tagged}}' untuk mengetahui berapa banyak pengguna yang ditandai. Gunakan '{{total_new_tagged}}' untuk mengetahui berapa banyak orang yang ditandai belum ada di daftar kontak."
     },
     "hideComments": {
       "all": "Sembunyikan semua komentar",
@@ -4387,9 +4416,9 @@
     "trackCommentsOn": "Lacak komentar pada",
     "trackCommentsOnDescription": "Terapkan otomatisasi ini ke semua postingan di akun yang terhubung, atau batasi ke postingan tertentu yang Anda pilih.",
     "privateReply": "Balasan pribadi (kotak masuk)",
-    "privateReplyDescription": "Kirim pesan pribadi ke kotak masuk pemberi komentar. Pilih Agen AI, templat teks tetap (mendukung spintax), alur chatbot, atau nonaktifkan.",
+    "privateReplyDescription": "Kirim pesan pribadi ke kotak masuk pemberi komentar. Pilih Agen AI, templat teks tetap, alur chatbot, atau nonaktifkan.",
     "publicReply": "Balasan publik untuk komentar",
-    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks (mendukung spintax), Agen AI, alur chatbot, atau tanpa balasan.",
+    "publicReplyDescription": "Kirim balasan publik langsung di bawah komentar. Mendukung hingga 10 templat teks, Agen AI, alur chatbot, atau tanpa balasan. Setiap pesan diposting sebagai balasan terpisah.",
     "replyMessage": "Pesan balasan",
     "replyMessagePlaceholder": "Masukkan pesan balasan...",
     "includeKeywordsType": "Balas",
@@ -4455,7 +4484,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "Balas pengguna yang berkomentar di postingan lain",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Terus balas pengguna yang sudah berkomentar di postingan Anda yang lain.",
       "ignoreCommentReplies": "Jangan balas balasan komentar",
-      "ignoreCommentRepliesDescription": "Lewati otomatisasi untuk komentar yang merupakan balasan atas komentar lain, bukan komentar tingkat teratas."
+      "ignoreCommentRepliesDescription": "Lewati otomatisasi untuk komentar yang merupakan balasan atas komentar lain, bukan komentar tingkat teratas.",
+      "trackUserTags": "Lacak jika pengguna menandai pengguna lain",
+      "trackUserTagsDescription": "Gunakan '{{total_tagged}}' untuk mengetahui berapa banyak pengguna yang ditandai. Gunakan '{{total_new_tagged}}' untuk mengetahui berapa banyak orang yang ditandai belum ada di daftar kontak."
     },
     "hideComments": {
       "all": "Sembunyikan semua komentar",

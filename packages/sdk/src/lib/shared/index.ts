@@ -80,6 +80,16 @@ export type CommentAnchor = {
   commentId: string
   replyChannel: "public" | "private"
   /**
+   * The comment automation this reply belongs to, when one triggered it. Rides
+   * along so a `flow` reply can report its own delivery and clicks: the anchor
+   * is the only thing that survives the hop into the flow runner, and unlike a
+   * `Message` row it is also present for the private branch, which sends
+   * straight through the Send API and writes no message.
+   *
+   * Absent for a comment reply an agent sent by hand from the inbox.
+   */
+  automationId?: string
+  /**
    * `private` only: the comment's single anchored DM has already been sent by
    * an earlier message in this run. Every later message must go out as a normal
    * DM, which Meta only accepts inside the 24-hour window the contact's own

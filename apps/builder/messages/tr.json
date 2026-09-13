@@ -253,7 +253,7 @@
     "dateFilterPreset": "Tarih filtresi ön ayarı",
     "noResults": "Sonuç yok.",
     "noData": "Veri yok",
-    "retentionNotice": "Yalnızca son {days} güne ait veriler saklanır.",
+    "errorLogRetentionNotice": "Yalnızca son {days} güne ait hata kayıtları saklanır.",
     "comingSoon": "Yakında",
     "unknown": "Bilinmiyor",
     "pagination": {
@@ -508,6 +508,35 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    }
+  },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Gönderildi",
+      "delivered": "Teslim Edildi",
+      "seen": "Görüldü",
+      "clicked": "Tıklandı",
+      "failed": "Başarısız",
+      "missed": "Kaçırılan",
+      "noContacts": "Kişi bulunamadı",
+      "noComment": "(metin yok)",
+      "pageInfo": "{pageCount} sayfadan {page}. sayfa",
+      "selectedAll": "Tümü seçildi",
+      "selectedCount": "{count} seçildi",
+      "tagAllDialogDescription": "Etiketler seçili tüm kişilere eklenecek.",
+      "tagDialogDescription": "Etiketler {count} kişiye eklenecek.",
+      "tagQueued": "{count} kişi arka planda etiketleniyor.",
+      "loadingMore": "Daha fazlası yükleniyor...",
+      "receivers": "Alıcılar"
+    },
+    "missReasons": {
+      "outsideSchedule": "Program dışı",
+      "postNotMatched": "Gönderi hedeflenmedi",
+      "commentIsReply": "Yorum yanıtı",
+      "keywordsNotMatched": "Anahtar kelimeler eşleşmedi",
+      "contactNotNew": "Kişi yeni değil",
+      "alreadyRepliedOnPost": "Bu gönderide zaten yanıtlandı",
+      "engagedOnOtherPost": "Başka bir gönderide zaten etkileşime girdi"
     }
   },
   "condition": {
@@ -4284,9 +4313,9 @@
     "trackCommentsOn": "Şu yorumları takip et",
     "trackCommentsOnDescription": "Bu otomasyonu Sayfanızdaki tüm gönderilere uygulayın veya seçtiğiniz belirli gönderilerle sınırlayın.",
     "privateReply": "Özel yanıt (gelen kutusu)",
-    "privateReplyDescription": "Yorum yapan kişinin gelen kutusuna özel bir mesaj gönderin. AI Ajanı, sabit bir metin şablonu (spintax desteklenir), bir chatbot akışı seçin veya devre dışı bırakın.",
+    "privateReplyDescription": "Yorum yapan kişinin gelen kutusuna özel bir mesaj gönderin. AI Ajanı, sabit bir metin şablonu, bir chatbot akışı seçin veya devre dışı bırakın.",
     "publicReply": "Yoruma genel yanıt",
-    "publicReplyDescription": "Yorumun hemen altında genel bir yanıt paylaşın. En fazla 10 metin şablonunu (spintax desteklenir), AI Ajanını, bir chatbot akışını veya yanıt vermemeyi seçebilirsiniz.",
+    "publicReplyDescription": "Yorumun hemen altında genel bir yanıt paylaşın. En fazla 10 metin şablonunu, AI Ajanını, bir chatbot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir.",
     "replyMessage": "Yanıt mesajı",
     "replyMessagePlaceholder": "Yanıt mesajı girin...",
     "includeKeywordsType": "Şuna yanıt ver",
@@ -4354,8 +4383,8 @@
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Diğer gönderilerinize zaten yorum yapmış kullanıcılara yanıt vermeye devam et.",
       "ignoreCommentReplies": "Yorumlara verilen yanıtlara yanıt verme",
       "ignoreCommentRepliesDescription": "Üst düzey yorumlar değil, başka yorumlara verilen yanıtlar olan yorumlar için otomasyonu atla.",
-      "trackUserTags": "Bir kullanıcı başka kullanıcıları etiketlerse takip et",
-      "trackUserTagsDescription": "Bir kullanıcı yorumunda başka bir kullanıcıyı etiketlediğinde veya bahsettiğinde otomasyonu tetikle."
+      "trackUserTags": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
+      "trackUserTagsDescription": "Kaç kullanıcının etiketlendiğini öğrenmek için '{{total_tagged}}' kullanın. Etiketlenen kişilerden kaçının kişi listesinde olmadığını öğrenmek için '{{total_new_tagged}}' kullanın."
     },
     "hideComments": {
       "all": "Tüm yorumları gizle",
@@ -4387,9 +4416,9 @@
     "trackCommentsOn": "Şurada yorumları izle",
     "trackCommentsOnDescription": "Bu otomasyonu bağlı hesabınızdaki tüm gönderilere uygulayın veya seçtiğiniz belirli gönderilerle sınırlayın.",
     "privateReply": "Özel yanıt (gelen kutusu)",
-    "privateReplyDescription": "Yorum yapan kişinin gelen kutusuna özel bir mesaj gönderin. AI Ajanı, sabit bir metin şablonu (spintax desteklenir), bir bot akışı seçin veya devre dışı bırakın.",
+    "privateReplyDescription": "Yorum yapan kişinin gelen kutusuna özel bir mesaj gönderin. AI Ajanı, sabit bir metin şablonu, bir bot akışı seçin veya devre dışı bırakın.",
     "publicReply": "Yoruma genel yanıt",
-    "publicReplyDescription": "Yorumun hemen altına genel bir yanıt gönderin. En fazla 10 metin şablonunu (spintax desteklenir), AI Ajanını, bir bot akışını veya yanıt vermemeyi seçebilirsiniz.",
+    "publicReplyDescription": "Yorumun hemen altına genel bir yanıt gönderin. En fazla 10 metin şablonunu, AI Ajanını, bir bot akışını veya yanıt vermemeyi seçebilirsiniz. Her mesaj ayrı bir yanıt olarak gönderilir.",
     "replyMessage": "Yanıt mesajı",
     "replyMessagePlaceholder": "Yanıt mesajı girin...",
     "includeKeywordsType": "Şu yorumlara yanıt ver",
@@ -4455,7 +4484,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "Diğer gönderilere yorum yapan kullanıcılara yanıt ver",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Diğer gönderilerinize zaten yorum yapmış kullanıcılara yanıt vermeye devam et.",
       "ignoreCommentReplies": "Yorumlara verilen yanıtlara yanıt verme",
-      "ignoreCommentRepliesDescription": "Üst düzey yorumlar yerine başka yorumlara verilen yanıtlar olan yorumlar için otomasyonu atla."
+      "ignoreCommentRepliesDescription": "Üst düzey yorumlar yerine başka yorumlara verilen yanıtlar olan yorumlar için otomasyonu atla.",
+      "trackUserTags": "Bir kullanıcının başka kullanıcıları etiketleyip etiketlemediğini izle",
+      "trackUserTagsDescription": "Kaç kullanıcının etiketlendiğini öğrenmek için '{{total_tagged}}' kullanın. Etiketlenen kişilerden kaçının kişi listesinde olmadığını öğrenmek için '{{total_new_tagged}}' kullanın."
     },
     "hideComments": {
       "all": "Tüm yorumları gizle",

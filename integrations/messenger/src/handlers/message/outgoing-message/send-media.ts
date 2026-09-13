@@ -28,6 +28,12 @@ export async function* convertFlowStepMedia(
       flowId,
       flowVersionId,
       buttons: step.buttons,
+      // Same `metadata` every other button-bearing converter passes
+      // (`send-text.ts`, `send-carousel.ts`). Omitting it costs no compile
+      // error and renders identically — the buttons just encode an empty
+      // broadcast/sequence/commentAutomation id, so every tap on an
+      // image-or-video-with-buttons step reports nothing to any of the three.
+      metadata: props.data.metadata,
       contactInboxId: props.data.contact.id,
     })
     yield {

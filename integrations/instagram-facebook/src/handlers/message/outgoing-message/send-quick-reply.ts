@@ -1,6 +1,8 @@
 import {
   type ButtonStepProps,
   encodeButtonPayload,
+  extractMetadata,
+  type MetadataPayload,
   type SendQuickReplyStepSchema,
 } from "@chatbotx.io/flow-config"
 import type { SendFlowStepProps } from "@chatbotx.io/sdk"
@@ -26,6 +28,7 @@ export function* convertFlowStepQuickReply(
       flowId: props.data.flowId,
       flowVersionId: props.data.flowVersionId,
       buttons: step.buttons,
+      metadata: props.data.metadata,
     })
 
     yield {
@@ -39,6 +42,7 @@ export function convertInstagramQuickReplies(props: {
   flowId: string
   flowVersionId?: string
   buttons: ButtonStepProps[]
+  metadata?: MetadataPayload
 }): InstagramQuickReply[] {
   return props.buttons.map((button) => ({
     content_type: "text" as const,
@@ -47,6 +51,10 @@ export function convertInstagramQuickReplies(props: {
       flowId: props.flowId,
       flowVersionId: props.flowVersionId,
       buttonId: button.id,
+      commentAutomationId: extractMetadata(
+        "commentAutomationId",
+        props.metadata,
+      ),
     }),
   }))
 }

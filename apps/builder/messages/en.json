@@ -253,7 +253,7 @@
     "dateFilterPreset": "Date filter preset",
     "noResults": "No results.",
     "noData": "No data",
-    "retentionNotice": "Only the last {days} days of data are kept.",
+    "errorLogRetentionNotice": "Only the last {days} days of error logs are kept.",
     "comingSoon": "Coming soon",
     "unknown": "Unknown",
     "pagination": {
@@ -508,6 +508,35 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    }
+  },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "seen": "Seen",
+      "clicked": "Clicked",
+      "failed": "Failed",
+      "missed": "Misses",
+      "noContacts": "No contacts found",
+      "noComment": "(no text)",
+      "pageInfo": "Page {page} of {pageCount}",
+      "selectedAll": "All selected",
+      "selectedCount": "{count} selected",
+      "tagAllDialogDescription": "Tags will be added to all selected contacts.",
+      "tagDialogDescription": "Tags will be added to {count} contact(s).",
+      "tagQueued": "Tagging {count} contacts in the background.",
+      "loadingMore": "Loading more...",
+      "receivers": "Receivers"
+    },
+    "missReasons": {
+      "outsideSchedule": "Outside schedule",
+      "postNotMatched": "Post not targeted",
+      "commentIsReply": "Comment reply",
+      "keywordsNotMatched": "Keywords did not match",
+      "contactNotNew": "Contact is not new",
+      "alreadyRepliedOnPost": "Already replied on this post",
+      "engagedOnOtherPost": "Already engaged on another post"
     }
   },
   "condition": {
@@ -4514,9 +4543,9 @@
     "trackCommentsOn": "Track comments on",
     "trackCommentsOnDescription": "Apply this automation to all posts on your Page, or narrow it to specific posts you select.",
     "privateReply": "Private reply (inbox)",
-    "privateReplyDescription": "Send a private message to the commenter's inbox. Choose AI Agent, a fixed text template (spintax supported), a chatbot flow, or disable.",
+    "privateReplyDescription": "Send a private message to the commenter's inbox. Choose AI Agent, a fixed text template, a chatbot flow, or disable.",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Post a public reply directly under the comment. Supports up to 10 text templates (spintax supported), AI Agent, a chatbot flow, or no reply.",
+    "publicReplyDescription": "Post a public reply directly under the comment. Supports up to 10 text templates, AI Agent, a chatbot flow, or no reply. Each message is posted as a separate reply.",
     "replyMessage": "Reply message",
     "replyMessagePlaceholder": "Enter reply message...",
     "includeKeywordsType": "Reply to",
@@ -4585,7 +4614,7 @@
       "ignoreCommentReplies": "Don't reply to replies to comments",
       "ignoreCommentRepliesDescription": "Skip automation for comments that are replies to other comments, not top-level comments.",
       "trackUserTags": "Track if a user tags other users",
-      "trackUserTagsDescription": "Trigger automation when a user tags or mentions another user in their comment."
+      "trackUserTagsDescription": "Use '{{total_tagged}}' to find out many users was tagged. Use '{{total_new_tagged}}' to know how many people that aren't list of contacts have been tagged."
     },
     "hideComments": {
       "all": "Hide all comments",
@@ -4617,9 +4646,9 @@
     "trackCommentsOn": "Track comments on",
     "trackCommentsOnDescription": "Apply this automation to all posts on your connected account, or narrow it to specific posts you select.",
     "privateReply": "Private reply (inbox)",
-    "privateReplyDescription": "Send a private message to the commenter's inbox. Choose AI Agent, a fixed text template (spintax supported), a chatbot flow, or disable.",
+    "privateReplyDescription": "Send a private message to the commenter's inbox. Choose AI Agent, a fixed text template, a chatbot flow, or disable.",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Post a public reply directly under the comment. Supports up to 10 text templates (spintax supported), AI Agent, a chatbot flow, or no reply.",
+    "publicReplyDescription": "Post a public reply directly under the comment. Supports up to 10 text templates, AI Agent, a chatbot flow, or no reply. Each message is posted as a separate reply.",
     "replyMessage": "Reply message",
     "replyMessagePlaceholder": "Enter reply message...",
     "includeKeywordsType": "Reply to",
@@ -4685,7 +4714,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other posts",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continue replying to users who have already commented on your other posts.",
       "ignoreCommentReplies": "Don't reply to replies to comments",
-      "ignoreCommentRepliesDescription": "Skip automation for comments that are replies to other comments, not top-level comments."
+      "ignoreCommentRepliesDescription": "Skip automation for comments that are replies to other comments, not top-level comments.",
+      "trackUserTags": "Track if a user tags other users",
+      "trackUserTagsDescription": "Use '{{total_tagged}}' to find out many users was tagged. Use '{{total_new_tagged}}' to know how many people that aren't list of contacts have been tagged."
     },
     "hideComments": {
       "all": "Hide all comments",

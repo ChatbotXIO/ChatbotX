@@ -4,6 +4,7 @@ import {
   Card,
   CardAction,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -28,6 +29,7 @@ export type AnalyticsTableSearch = {
  */
 export function AnalyticsTableCard({
   title,
+  description,
   search,
   page,
   pageCount,
@@ -39,6 +41,9 @@ export function AnalyticsTableCard({
   children,
 }: {
   title: string
+  /** Sub-heading under the title — used for a per-table caveat the dashboard's
+   * shared date filter cannot express, e.g. Error Logs' retention window. */
+  description?: ReactNode
   search?: AnalyticsTableSearch
   page: number
   pageCount: number
@@ -53,6 +58,9 @@ export function AnalyticsTableCard({
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
+        {description && (
+          <CardDescription className="text-xs">{description}</CardDescription>
+        )}
         {search && (
           <CardAction>
             <Input

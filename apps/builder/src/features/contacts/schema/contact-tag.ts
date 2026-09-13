@@ -1,5 +1,6 @@
 import {
   broadcastEventType,
+  commentAutomationEventType,
   sequenceStepEventTypes,
 } from "@chatbotx.io/analytics/schemas"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -28,6 +29,13 @@ export const bulkTagStatsContactsRequest = z.discriminatedUnion("source", [
     sequenceId: zodBigintAsString(),
     stepId: zodBigintAsString(),
     eventType: sequenceStepEventTypes,
+    excludedContactIds,
+    tags: bulkTagNames,
+  }),
+  z.object({
+    source: z.literal("commentAutomation"),
+    automationId: zodBigintAsString(),
+    eventType: commentAutomationEventType,
     excludedContactIds,
     tags: bulkTagNames,
   }),

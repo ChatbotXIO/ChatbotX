@@ -261,6 +261,14 @@ async function generateAndDeliverAIReply(
       data.commentId,
       generated.text,
     )
+    // Inline send, no `Message` row: same reason `executePrivateReply` settles
+    // delivery here rather than waiting for a webhook. The public branch above
+    // is settled by the chat worker instead, once the Graph call lands.
+    await commentAutomationAnalyticsService.markDelivered({
+      automationId: data.automationId,
+      commentId: data.commentId,
+      replyChannel: "private",
+    })
   }
 
   await settleAIReplySent({ data, text: generated.text })

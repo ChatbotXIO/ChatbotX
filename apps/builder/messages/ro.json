@@ -1037,7 +1037,7 @@
     "dateFilterPreset": "Presetare filtru de dată",
     "noResults": "Niciun rezultat.",
     "noData": "Nu există date",
-    "retentionNotice": "Se păstrează doar datele din ultimele {days} zile.",
+    "errorLogRetentionNotice": "Se păstrează doar jurnalele de erori din ultimele {days} zile.",
     "comingSoon": "În curând",
     "unknown": "Necunoscut",
     "pagination": {
@@ -1292,6 +1292,35 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    }
+  },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Trimis",
+      "delivered": "Livrat",
+      "seen": "Văzut",
+      "clicked": "Accesat",
+      "failed": "Eșuat",
+      "missed": "Ratate",
+      "noContacts": "Nu au fost găsite contacte",
+      "noComment": "(fără text)",
+      "pageInfo": "Pagina {page} din {pageCount}",
+      "selectedAll": "Toate selectate",
+      "selectedCount": "{count} selectate",
+      "tagAllDialogDescription": "Etichetele vor fi adăugate tuturor contactelor selectate.",
+      "tagDialogDescription": "Etichetele vor fi adăugate la {count} contact(e).",
+      "tagQueued": "Etichetarea a {count} contacte se efectuează în fundal.",
+      "loadingMore": "Se încarcă mai multe...",
+      "receivers": "Destinatari"
+    },
+    "missReasons": {
+      "outsideSchedule": "În afara programului",
+      "postNotMatched": "Postare nevizată",
+      "commentIsReply": "Răspuns la comentariu",
+      "keywordsNotMatched": "Cuvintele cheie nu s-au potrivit",
+      "contactNotNew": "Contactul nu este nou",
+      "alreadyRepliedOnPost": "Deja s-a răspuns la această postare",
+      "engagedOnOtherPost": "A interacționat deja la altă postare"
     }
   },
   "condition": {
@@ -4430,6 +4459,8 @@
     "options": {
       "ignoreCommentReplies": "Nu răspunde la răspunsurile la comentarii",
       "ignoreCommentRepliesDescription": "Omite automatizarea pentru comentariile care sunt răspunsuri la alte comentarii, nu comentarii de nivel superior.",
+      "trackUserTags": "Urmărește dacă un utilizator etichetează alți utilizatori",
+      "trackUserTagsDescription": "Folosește '{{total_tagged}}' pentru a afla câți utilizatori au fost etichetați. Folosește '{{total_new_tagged}}' pentru a afla câte dintre persoanele etichetate nu sunt în lista de contacte.",
       "likeUserComment": "Apreciază comentariul utilizatorului",
       "likeUserCommentDescription": "Reacționează automat cu un like la comentariul persoanei care a comentat.",
       "replyOncePerUserPerPost": "Răspunde o singură dată fiecărui utilizator per postare",
@@ -4437,9 +4468,7 @@
       "replyToNewContactsOnly": "Răspunde doar contactelor noi",
       "replyToNewContactsOnlyDescription": "Răspunde automat doar persoanelor care nu au fost niciodată contact în spațiul tău de lucru.",
       "replyToUsersWhoCommentedOnOtherPosts": "Răspunde utilizatorilor care au comentat la alte postări",
-      "replyToUsersWhoCommentedOnOtherPostsDescription": "Continuă să răspunzi utilizatorilor care au comentat deja la alte postări ale tale.",
-      "trackUserTags": "Urmărește dacă un utilizator etichetează alți utilizatori",
-      "trackUserTagsDescription": "Declanșează automatizarea când un utilizator etichetează sau menționează un alt utilizator în comentariul său."
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Continuă să răspunzi utilizatorilor care au comentat deja la alte postări ale tale."
     },
     "postIdPlaceholder": "Introdu ID-urile postărilor, câte unul pe linie...",
     "postIdTab": "ID postare",
@@ -4451,9 +4480,9 @@
       "specificPosts": "Postări specifice"
     },
     "privateReply": "Răspuns privat (mesaje primite)",
-    "privateReplyDescription": "Trimite un mesaj privat în mesajele primite ale persoanei care a comentat. Alege Agent IA, un șablon de text fix (spintax acceptat), un flux de chatbot sau dezactivează.",
+    "privateReplyDescription": "Trimite un mesaj privat în mesajele primite ale persoanei care a comentat. Alege Agent IA, un șablon de text fix, un flux de chatbot sau dezactivează.",
     "publicReply": "Răspuns public la comentariu",
-    "publicReplyDescription": "Postează un răspuns public direct sub comentariu. Acceptă până la 10 șabloane de text (spintax acceptat), Agent IA, un flux de chatbot sau niciun răspuns.",
+    "publicReplyDescription": "Postează un răspuns public direct sub comentariu. Acceptă până la 10 șabloane de text, Agent IA, un flux de chatbot sau niciun răspuns. Fiecare mesaj este publicat ca un răspuns separat.",
     "replies": "Răspunsuri",
     "replyAfter": "Răspunde după",
     "replyAfterType": {
@@ -4585,6 +4614,8 @@
     "options": {
       "ignoreCommentReplies": "Nu răspunde la răspunsurile la comentarii",
       "ignoreCommentRepliesDescription": "Omite automatizarea pentru comentariile care sunt răspunsuri la alte comentarii, nu comentarii de nivel superior.",
+      "trackUserTags": "Urmărește dacă un utilizator etichetează alți utilizatori",
+      "trackUserTagsDescription": "Folosește '{{total_tagged}}' pentru a afla câți utilizatori au fost etichetați. Folosește '{{total_new_tagged}}' pentru a afla câte dintre persoanele etichetate nu sunt în lista de contacte.",
       "likeUserComment": "Apreciază comentariul utilizatorului",
       "likeUserCommentDescription": "Reacționează automat cu un like la comentariul persoanei care a comentat.",
       "replyOncePerUserPerPost": "Răspunde o singură dată fiecărui utilizator per postare",
@@ -4603,9 +4634,9 @@
       "specificPosts": "Postări specifice"
     },
     "privateReply": "Răspuns privat (mesaje primite)",
-    "privateReplyDescription": "Trimite un mesaj privat în mesajele primite ale persoanei care a comentat. Alege Agent IA, un șablon de text fix (spintax acceptat), un flux de chatbot sau dezactivează.",
+    "privateReplyDescription": "Trimite un mesaj privat în mesajele primite ale persoanei care a comentat. Alege Agent IA, un șablon de text fix, un flux de chatbot sau dezactivează.",
     "publicReply": "Răspuns public la comentariu",
-    "publicReplyDescription": "Postează un răspuns public direct sub comentariu. Acceptă până la 10 șabloane de text (spintax acceptat), Agent IA, un flux de chatbot sau niciun răspuns.",
+    "publicReplyDescription": "Postează un răspuns public direct sub comentariu. Acceptă până la 10 șabloane de text, Agent IA, un flux de chatbot sau niciun răspuns. Fiecare mesaj este publicat ca un răspuns separat.",
     "replies": "Răspunsuri",
     "replyAfter": "Răspunde după",
     "replyAfterType": {

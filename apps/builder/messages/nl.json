@@ -253,7 +253,7 @@
     "dateFilterPreset": "Voorinstelling voor datumfilter",
     "noResults": "Geen resultaten.",
     "noData": "Geen gegevens",
-    "retentionNotice": "Alleen de gegevens van de afgelopen {days} dagen worden bewaard.",
+    "errorLogRetentionNotice": "Alleen de foutlogboeken van de afgelopen {days} dagen worden bewaard.",
     "comingSoon": "Binnenkort beschikbaar",
     "unknown": "Onbekend",
     "pagination": {
@@ -508,6 +508,35 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    }
+  },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Verzonden",
+      "delivered": "Afgeleverd",
+      "seen": "Gezien",
+      "clicked": "Geklikt",
+      "failed": "Mislukt",
+      "missed": "Gemist",
+      "noContacts": "Geen contacten gevonden",
+      "noComment": "(geen tekst)",
+      "pageInfo": "Pagina {page} van {pageCount}",
+      "selectedAll": "Alles geselecteerd",
+      "selectedCount": "{count} geselecteerd",
+      "tagAllDialogDescription": "Tags worden aan alle geselecteerde contacten toegevoegd.",
+      "tagDialogDescription": "Tags worden aan {count} contact(en) toegevoegd.",
+      "tagQueued": "{count} contacten worden op de achtergrond getagd.",
+      "loadingMore": "Meer laden...",
+      "receivers": "Ontvangers"
+    },
+    "missReasons": {
+      "outsideSchedule": "Buiten schema",
+      "postNotMatched": "Bericht niet gericht",
+      "commentIsReply": "Reactie op reactie",
+      "keywordsNotMatched": "Trefwoorden kwamen niet overeen",
+      "contactNotNew": "Contact is niet nieuw",
+      "alreadyRepliedOnPost": "Al beantwoord op dit bericht",
+      "engagedOnOtherPost": "Al gereageerd op een ander bericht"
     }
   },
   "fields": {
@@ -4284,9 +4313,9 @@
     "trackCommentsOn": "Opmerkingen volgen op",
     "trackCommentsOnDescription": "Pas deze automatisering toe op alle berichten op je pagina of beperk deze tot specifieke berichten die je selecteert.",
     "privateReply": "Privéantwoord (inbox)",
-    "privateReplyDescription": "Stuur een privébericht naar de inbox van degene die de opmerking plaatste. Kies een AI-agent, een vaste tekstsjabloon (spintax wordt ondersteund), een chatbotflow of schakel dit uit.",
+    "privateReplyDescription": "Stuur een privébericht naar de inbox van degene die de opmerking plaatste. Kies een AI-agent, een vaste tekstsjabloon, een chatbotflow of schakel dit uit.",
     "publicReply": "Openbaar antwoord op opmerking",
-    "publicReplyDescription": "Plaats een openbaar antwoord direct onder de opmerking. Ondersteunt maximaal 10 tekstsjablonen (spintax wordt ondersteund), een AI-agent, een chatbotflow of geen antwoord.",
+    "publicReplyDescription": "Plaats een openbaar antwoord direct onder de opmerking. Ondersteunt maximaal 10 tekstsjablonen, een AI-agent, een chatbotflow of geen antwoord. Elk bericht wordt als een aparte reactie geplaatst.",
     "replyMessage": "Antwoordbericht",
     "replyMessagePlaceholder": "Voer een antwoordbericht in...",
     "includeKeywordsType": "Antwoorden op",
@@ -4354,8 +4383,8 @@
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Blijf gebruikers beantwoorden die al opmerkingen bij je andere berichten hebben geplaatst.",
       "ignoreCommentReplies": "Antwoorden op opmerkingen niet beantwoorden",
       "ignoreCommentRepliesDescription": "Sla de automatisering over voor opmerkingen die een antwoord zijn op andere opmerkingen en verwerk alleen opmerkingen op het hoogste niveau.",
-      "trackUserTags": "Volgen of een gebruiker andere gebruikers tagt",
-      "trackUserTagsDescription": "Activeer de automatisering wanneer een gebruiker een andere gebruiker tagt of vermeldt in een opmerking."
+      "trackUserTags": "Bijhouden of een gebruiker andere gebruikers tagt",
+      "trackUserTagsDescription": "Gebruik '{{total_tagged}}' om te zien hoeveel gebruikers zijn getagd. Gebruik '{{total_new_tagged}}' om te zien hoeveel van de getagde personen niet in de contactenlijst staan."
     },
     "hideComments": {
       "all": "Alle opmerkingen verbergen",
@@ -4387,9 +4416,9 @@
     "trackCommentsOn": "Opmerkingen volgen op",
     "trackCommentsOnDescription": "Pas deze automatisering toe op alle berichten van je gekoppelde account of beperk deze tot specifieke berichten die je selecteert.",
     "privateReply": "Privéantwoord (inbox)",
-    "privateReplyDescription": "Stuur een privébericht naar de inbox van degene die de opmerking plaatste. Kies een AI-agent, een vaste tekstsjabloon (spintax wordt ondersteund), een chatbotflow of schakel dit uit.",
+    "privateReplyDescription": "Stuur een privébericht naar de inbox van degene die de opmerking plaatste. Kies een AI-agent, een vaste tekstsjabloon, een chatbotflow of schakel dit uit.",
     "publicReply": "Openbaar antwoord op opmerking",
-    "publicReplyDescription": "Plaats een openbaar antwoord direct onder de opmerking. Ondersteunt maximaal 10 tekstsjablonen (spintax wordt ondersteund), een AI-agent, een chatbotflow of geen antwoord.",
+    "publicReplyDescription": "Plaats een openbaar antwoord direct onder de opmerking. Ondersteunt maximaal 10 tekstsjablonen, een AI-agent, een chatbotflow of geen antwoord. Elk bericht wordt als een aparte reactie geplaatst.",
     "replyMessage": "Antwoordbericht",
     "replyMessagePlaceholder": "Voer een antwoordbericht in...",
     "includeKeywordsType": "Antwoorden op",
@@ -4455,7 +4484,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "Gebruikers beantwoorden die opmerkingen bij andere berichten hebben geplaatst",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Blijf gebruikers beantwoorden die al opmerkingen bij je andere berichten hebben geplaatst.",
       "ignoreCommentReplies": "Antwoorden op opmerkingen niet beantwoorden",
-      "ignoreCommentRepliesDescription": "Sla de automatisering over voor opmerkingen die een antwoord zijn op andere opmerkingen en verwerk alleen opmerkingen op het hoogste niveau."
+      "ignoreCommentRepliesDescription": "Sla de automatisering over voor opmerkingen die een antwoord zijn op andere opmerkingen en verwerk alleen opmerkingen op het hoogste niveau.",
+      "trackUserTags": "Bijhouden of een gebruiker andere gebruikers tagt",
+      "trackUserTagsDescription": "Gebruik '{{total_tagged}}' om te zien hoeveel gebruikers zijn getagd. Gebruik '{{total_new_tagged}}' om te zien hoeveel van de getagde personen niet in de contactenlijst staan."
     },
     "hideComments": {
       "all": "Alle opmerkingen verbergen",

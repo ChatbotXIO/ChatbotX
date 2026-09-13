@@ -309,6 +309,18 @@ export interface IMessageRepository {
 
   updateAttachment(params: UpdateAttachmentParams): Promise<void>
 
+  /**
+   * Replaces `contentAttributes` wholesale — it is NOT a merge. Callers hold
+   * the row already and must spread the attributes they want to keep, or they
+   * will drop `postId` and break `{{last_post_id}}`.
+   */
+  updateContentAttributes(
+    messageId: string,
+    workspaceId: string,
+    contentAttributes: Record<string, unknown>,
+    createdAt: Date,
+  ): Promise<{ id: string } | null>
+
   updateMessageAttributes(
     messageId: string,
     workspaceId: string,

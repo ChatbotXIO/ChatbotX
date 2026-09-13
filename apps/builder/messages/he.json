@@ -253,7 +253,7 @@
     "dateFilterPreset": "הגדרה מוכנה של מסנן תאריכים",
     "noResults": "אין תוצאות.",
     "noData": "אין נתונים",
-    "retentionNotice": "נשמרים רק הנתונים מ-{days} הימים האחרונים.",
+    "errorLogRetentionNotice": "נשמרים רק יומני השגיאות מ-{days} הימים האחרונים.",
     "comingSoon": "בקרוב",
     "unknown": "לא ידוע",
     "pagination": {
@@ -2420,9 +2420,9 @@
     "trackCommentsOn": "מעקב אחר תגובות ב-",
     "trackCommentsOnDescription": "החילו אוטומציה זו על כל הפוסטים בדף שלכם, או הגבילו אותה לפוסטים מסוימים שתבחרו.",
     "privateReply": "תשובה פרטית (תיבת דואר נכנס)",
-    "privateReplyDescription": "שליחת הודעה פרטית לתיבת הדואר הנכנס של המגיב. בחרו סוכן AI, תבנית טקסט קבועה (עם תמיכה ב-spintax), תהליך צ'אטבוט או השבתה.",
+    "privateReplyDescription": "שליחת הודעה פרטית לתיבת הדואר הנכנס של המגיב. בחרו סוכן AI, תבנית טקסט קבועה, תהליך צ'אטבוט או השבתה.",
     "publicReply": "תשובה ציבורית לתגובה",
-    "publicReplyDescription": "פרסום תשובה ציבורית ישירות מתחת לתגובה. יש תמיכה בעד 10 תבניות טקסט (עם תמיכה ב-spintax), סוכן AI, תהליך צ'אטבוט או ללא תשובה.",
+    "publicReplyDescription": "פרסום תשובה ציבורית ישירות מתחת לתגובה. יש תמיכה בעד 10 תבניות טקסט, סוכן AI, תהליך צ'אטבוט או ללא תשובה. כל הודעה מתפרסמת כתגובה נפרדת.",
     "replyMessage": "הודעת תשובה",
     "replyMessagePlaceholder": "הזנת הודעת תשובה...",
     "includeKeywordsType": "להשיב ל-",
@@ -2490,8 +2490,8 @@
       "replyToUsersWhoCommentedOnOtherPostsDescription": "המשך מענה למשתמשים שכבר הגיבו לפוסטים אחרים שלכם.",
       "ignoreCommentReplies": "אין להשיב לתשובות לתגובות",
       "ignoreCommentRepliesDescription": "דילוג על האוטומציה בתגובות שהן תשובות לתגובות אחרות ואינן תגובות ברמה העליונה.",
-      "trackUserTags": "מעקב אחר תיוג משתמשים אחרים",
-      "trackUserTagsDescription": "הפעלת האוטומציה כאשר משתמש מתייג או מזכיר משתמש אחר בתגובה."
+      "trackUserTags": "עקוב אם משתמש מתייג משתמשים אחרים",
+      "trackUserTagsDescription": "השתמש ב-'{{total_tagged}}' כדי לדעת כמה משתמשים תויגו. השתמש ב-'{{total_new_tagged}}' כדי לדעת כמה מהאנשים שתויגו אינם ברשימת אנשי הקשר."
     },
     "hideComments": {
       "all": "הסתרת כל התגובות",
@@ -2523,9 +2523,9 @@
     "trackCommentsOn": "מעקב אחר תגובות ב-",
     "trackCommentsOnDescription": "החילו אוטומציה זו על כל הפוסטים בחשבון המחובר, או הגבילו אותה לפוסטים מסוימים שתבחרו.",
     "privateReply": "תשובה פרטית (תיבת דואר נכנס)",
-    "privateReplyDescription": "שליחת הודעה פרטית לתיבת הדואר הנכנס של המגיב. בחרו סוכן AI, תבנית טקסט קבועה (עם תמיכה ב-spintax), תהליך צ'אטבוט או השבתה.",
+    "privateReplyDescription": "שליחת הודעה פרטית לתיבת הדואר הנכנס של המגיב. בחרו סוכן AI, תבנית טקסט קבועה, תהליך צ'אטבוט או השבתה.",
     "publicReply": "תשובה ציבורית לתגובה",
-    "publicReplyDescription": "פרסום תשובה ציבורית ישירות מתחת לתגובה. יש תמיכה בעד 10 תבניות טקסט (עם תמיכה ב-spintax), סוכן AI, תהליך צ'אטבוט או ללא תשובה.",
+    "publicReplyDescription": "פרסום תשובה ציבורית ישירות מתחת לתגובה. יש תמיכה בעד 10 תבניות טקסט, סוכן AI, תהליך צ'אטבוט או ללא תשובה. כל הודעה מתפרסמת כתגובה נפרדת.",
     "replyMessage": "הודעת תשובה",
     "replyMessagePlaceholder": "הזנת הודעת תשובה...",
     "includeKeywordsType": "להשיב ל-",
@@ -2591,7 +2591,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "תשובה למשתמשים שהגיבו לפוסטים אחרים",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "המשך מענה למשתמשים שכבר הגיבו לפוסטים אחרים שלכם.",
       "ignoreCommentReplies": "אין להשיב לתשובות לתגובות",
-      "ignoreCommentRepliesDescription": "דילוג על האוטומציה בתגובות שהן תשובות לתגובות אחרות ואינן תגובות ברמה העליונה."
+      "ignoreCommentRepliesDescription": "דילוג על האוטומציה בתגובות שהן תשובות לתגובות אחרות ואינן תגובות ברמה העליונה.",
+      "trackUserTags": "עקוב אם משתמש מתייג משתמשים אחרים",
+      "trackUserTagsDescription": "השתמש ב-'{{total_tagged}}' כדי לדעת כמה משתמשים תויגו. השתמש ב-'{{total_new_tagged}}' כדי לדעת כמה מהאנשים שתויגו אינם ברשימת אנשי הקשר."
     },
     "hideComments": {
       "all": "הסתרת כל התגובות",
@@ -5037,6 +5039,35 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    }
+  },
+  "commentAutomation": {
+    "stats": {
+      "sent": "נשלח",
+      "delivered": "נמסר",
+      "seen": "נצפה",
+      "clicked": "נלחץ",
+      "failed": "נכשל",
+      "missed": "הוחמצו",
+      "noContacts": "לא נמצאו אנשי קשר",
+      "noComment": "(ללא טקסט)",
+      "pageInfo": "עמוד {page} מתוך {pageCount}",
+      "selectedAll": "הכול נבחר",
+      "selectedCount": "נבחרו {count}",
+      "tagAllDialogDescription": "תגיות יתווספו לכל אנשי הקשר שנבחרו.",
+      "tagDialogDescription": "תגיות יתווספו ל-{count} אנשי קשר.",
+      "tagQueued": "מתבצע תיוג של {count} אנשי קשר ברקע.",
+      "loadingMore": "טוען עוד...",
+      "receivers": "נמענים"
+    },
+    "missReasons": {
+      "outsideSchedule": "מחוץ ללוח הזמנים",
+      "postNotMatched": "הפוסט אינו ממוקד",
+      "commentIsReply": "תגובה לתגובה",
+      "keywordsNotMatched": "מילות המפתח לא תאמו",
+      "contactNotNew": "איש הקשר אינו חדש",
+      "alreadyRepliedOnPost": "כבר הושבה תשובה בפוסט זה",
+      "engagedOnOtherPost": "כבר היה מעורב בפוסט אחר"
     }
   },
   "condition": {

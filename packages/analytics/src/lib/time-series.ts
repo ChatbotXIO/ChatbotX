@@ -46,8 +46,26 @@ export function generateDaySeries(from: Date, to: Date) {
   return eachDayOfInterval({ start: fromDay, end: toDay })
 }
 
+export type RangeGranularity = "day" | "month"
+
+/**
+ * Bucket width a picked range should be drawn at: months past 60 days, days
+ * otherwise. Shared so a dashboard's query and its zero-fill cannot disagree —
+ * a series bucketed by month and filled by day comes back as one real point
+ * followed by a run of zeroes.
+ *
+ * The 60-day threshold is the same one `formatTimeRangeDate` switches its axis
+ * labels on in `@chatbotx.io/analytics-nextjs`.
+ */
+export function resolveRangeGranularity(
+  from: Date,
+  to: Date,
+): RangeGranularity {
+  return differenceInDays(to, from) > 60 ? "month" : "day"
+}
+
 export function shouldUseMonthlyGranularity(props: TimeRangeQuery): boolean {
-  return differenceInDays(props.to, props.from) > 60
+  return resolveRangeGranularity(props.from, props.to) === "month"
 }
 
 // cagg (_hourly) materializes only the last 7 days.

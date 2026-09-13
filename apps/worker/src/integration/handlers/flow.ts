@@ -26,6 +26,7 @@ import {
   type StepType,
   stepTypes,
 } from "@chatbotx.io/flow-config"
+import { logDiagnostic } from "@chatbotx.io/logger"
 import {
   type CommentAnchor,
   initVariables,
@@ -818,6 +819,28 @@ async function runFlowAction(
     return
   }
 
+  // The payload the contact ACTUALLY tapped, as minted by the channel's own
+  // encoder. `rawAction` is the decisive field: attribution missing here was
+  // never encoded into the button, so the search moves to the send side rather
+  // than to the click path. Pair it with the encoder diagnostic in
+  // `getButtonTemplate` to tell "never encoded" from "encoded and lost".
+  logDiagnostic(
+    logger,
+    () => ({
+      handler: handler.name,
+      rawAction: data.action,
+      flowId: parsedAction.flowId,
+      buttonId: parsedAction.buttonId ?? null,
+      contactInboxId: contactInbox.id,
+      payloadContactInboxId: parsedAction.contactInboxId ?? null,
+      commentAutomationId: parsedAction.commentAutomationId ?? null,
+      broadcastId: parsedAction.broadcastId ?? null,
+      sequenceStepId: parsedAction.sequenceStepId ?? null,
+      channel: contactInbox.channel,
+    }),
+    `${handler.name}: decoded action payload`,
+  )
+
   const { buttonId } = parsedAction
   if (!buttonId) {
     // A bare flow-ID payload (Messenger ad) can point at a since-deleted or
@@ -912,6 +935,7 @@ async function runFlowAction(
         buttonId,
         flowId: parsedAction.flowId,
         flowVersionId: flowVersion.id,
+        commentAutomationId: parsedAction.commentAutomationId ?? null,
       },
       `${handler.name}: action matches no button or quick reply, skipping`,
     )
@@ -949,6 +973,7 @@ async function runFlowAction(
         buttonId,
         broadcastId: parsedAction.broadcastId,
         sequenceStepId: parsedAction.sequenceStepId ?? "",
+        commentAutomationId: parsedAction.commentAutomationId,
         clickType: flowActionClickTypes[target.targetType],
       },
       occurredAt: new Date(),

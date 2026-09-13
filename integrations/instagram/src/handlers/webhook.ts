@@ -121,6 +121,7 @@ const handleWebhookEvent = async (
               parentId: value.parent_id,
               fromId: value.from.id,
               fromName: value.from.username ?? value.from.id,
+              fromUsername: value.from.username,
               message: value.text,
               createdTime: entry.time,
             },

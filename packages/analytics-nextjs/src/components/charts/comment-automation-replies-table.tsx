@@ -11,7 +11,7 @@ import {
 import { useLocale, useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { useAnalysisStore } from "../../provider/analysis-store-context"
-import { formatDateWithYear } from "../../utils/date-format"
+import { formatTimeRangeDateWithYear } from "../../utils/date-format"
 import { AnalyticsTableCard } from "./analytics-table-card"
 
 const DEFAULT_ROWS_PER_PAGE = 10
@@ -24,9 +24,11 @@ const DEFAULT_ROWS_PER_PAGE = 10
 export function CommentAutomationRepliesTable() {
   const t = useTranslations()
   const locale = useLocale()
-  const replyStats = useAnalysisStore(
-    (state) => state.commentAutomationReplyStats,
-  )
+  const {
+    commentAutomationReplyStats: replyStats,
+    from,
+    to,
+  } = useAnalysisStore((state) => state)
 
   const [keyword, setKeyword] = useState("")
   const [page, setPage] = useState(1)
@@ -42,11 +44,11 @@ export function CommentAutomationRepliesTable() {
     return replyStats.filter(
       (row) =>
         row.dateReport.toLowerCase().includes(needle) ||
-        formatDateWithYear(new Date(row.dateReport), locale)
+        formatTimeRangeDateWithYear(row.dateReport, from, to, locale)
           .toLowerCase()
           .includes(needle),
     )
-  }, [replyStats, keyword, locale])
+  }, [replyStats, keyword, locale, from, to])
 
   const pageCount = Math.ceil(rows.length / pageSize)
   const safePage = Math.min(page, Math.max(pageCount, 1))
@@ -86,7 +88,12 @@ export function CommentAutomationRepliesTable() {
             visibleRows.map((row) => (
               <TableRow key={row.dateReport}>
                 <TableCell>
-                  {formatDateWithYear(new Date(row.dateReport), locale)}
+                  {formatTimeRangeDateWithYear(
+                    row.dateReport,
+                    from,
+                    to,
+                    locale,
+                  )}
                 </TableCell>
                 <TableCell>{row.count}</TableCell>
               </TableRow>

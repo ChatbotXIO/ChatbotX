@@ -1,5 +1,7 @@
 "use client"
 
+import { normalizeReplyTexts } from "@chatbotx.io/database/partials"
+
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
@@ -38,7 +40,11 @@ export function EditIgCommentForm({
       folderId: initialData.folderId ?? undefined,
       post: initialData.post,
       privateReply: initialData.privateReply,
-      publicReply: initialData.publicReply,
+      // Normalized on read, not passed through: an automation saved before
+      // multi-text carries only `value`, and the field array would render an
+      // empty list — the text that is live right now would vanish from the
+      // screen.
+      publicReply: normalizeReplyTexts(initialData.publicReply),
       includeKeywords: initialData.includeKeywords,
       excludeKeywords: initialData.excludeKeywords,
       options: initialData.options,

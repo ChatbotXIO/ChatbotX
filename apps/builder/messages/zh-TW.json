@@ -1873,7 +1873,7 @@
     "dateFilterPreset": "日期過濾器預設",
     "noResults": "無結果。",
     "noData": "無資料",
-    "retentionNotice": "僅保留最近 {days} 天的資料。",
+    "errorLogRetentionNotice": "僅保留最近 {days} 天的錯誤紀錄。",
     "comingSoon": "即將推出",
     "unknown": "未知",
     "pagination": {
@@ -2128,6 +2128,35 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    }
+  },
+  "commentAutomation": {
+    "stats": {
+      "sent": "已傳送",
+      "delivered": "已交付",
+      "seen": "已看過",
+      "clicked": "已點擊",
+      "failed": "失敗",
+      "missed": "漏回",
+      "noContacts": "找不到聯絡人",
+      "noComment": "(無內容)",
+      "pageInfo": "第 {page} 頁（共 {pageCount}）",
+      "selectedAll": "已全選",
+      "selectedCount": "{count}",
+      "tagAllDialogDescription": "標籤將新增到所有已選聯絡人。",
+      "tagDialogDescription": "標籤將新增到 {count} 位聯絡人。",
+      "tagQueued": "在後台標記 {count} 聯絡人。",
+      "loadingMore": "載入更多...",
+      "receivers": "接收器"
+    },
+    "missReasons": {
+      "outsideSchedule": "不在時間段內",
+      "postNotMatched": "未選中該貼文",
+      "commentIsReply": "是留言回覆",
+      "keywordsNotMatched": "關鍵字不符",
+      "contactNotNew": "聯絡人不是新用戶",
+      "alreadyRepliedOnPost": "已在該貼文回覆過",
+      "engagedOnOtherPost": "已在其他貼文互動過"
     }
   },
   "condition": {
@@ -4317,9 +4346,9 @@
     "trackCommentsOn": "追蹤留言的對象",
     "trackCommentsOnDescription": "可套用到粉絲專頁上的所有貼文，或縮小範圍到您指定的特定貼文。",
     "privateReply": "私訊回覆（收件匣）",
-    "privateReplyDescription": "將私訊傳送到留言者的收件匣。可選擇 AI Agent、固定文字範本（支援 spintax）、聊天機器人流程，或停用。",
+    "privateReplyDescription": "將私訊傳送到留言者的收件匣。可選擇 AI Agent、固定文字範本、聊天機器人流程，或停用。",
     "publicReply": "公開回覆留言",
-    "publicReplyDescription": "直接在留言下方發表公開回覆。支援最多 10 個文字範本（支援 spintax）、AI Agent、聊天機器人流程，或不回覆。",
+    "publicReplyDescription": "直接在留言下方發表公開回覆。支援最多 10 個文字範本、AI Agent、聊天機器人流程，或不回覆。 每則訊息都會以獨立的回覆發佈。",
     "replyMessage": "回覆訊息",
     "replyMessagePlaceholder": "輸入回覆訊息...",
     "includeKeywordsType": "回覆對象",
@@ -4387,8 +4416,8 @@
       "replyToUsersWhoCommentedOnOtherPostsDescription": "若使用者曾在您其他貼文下留言，仍持續對其回覆。",
       "ignoreCommentReplies": "忽略留言底下的回覆",
       "ignoreCommentRepliesDescription": "若留言是對其他留言的回覆，而非頂層留言，則跳過自動化處理。",
-      "trackUserTags": "追蹤使用者是否標記其他人",
-      "trackUserTagsDescription": "當使用者在留言中標記或提及其他使用者時，觸發此自動化。"
+      "trackUserTags": "追蹤使用者是否標記了其他使用者",
+      "trackUserTagsDescription": "使用 '{{total_tagged}}' 查看有多少使用者被標記。使用 '{{total_new_tagged}}' 查看被標記的人當中有多少不在聯絡人清單中。"
     },
     "hideComments": {
       "all": "隱藏所有留言",
@@ -4420,9 +4449,9 @@
     "trackCommentsOn": "追蹤留言的對象",
     "trackCommentsOnDescription": "可套用到已連接帳號上的所有貼文，或縮小範圍到您指定的特定貼文。",
     "privateReply": "私訊回覆（收件匣）",
-    "privateReplyDescription": "將私訊傳送到留言者的收件匣。可選擇 AI Agent、固定文字範本（支援 spintax）、聊天機器人流程，或停用。",
+    "privateReplyDescription": "將私訊傳送到留言者的收件匣。可選擇 AI Agent、固定文字範本、聊天機器人流程，或停用。",
     "publicReply": "公開回覆留言",
-    "publicReplyDescription": "直接在留言下方發表公開回覆。支援最多 10 個文字範本（支援 spintax）、AI Agent、聊天機器人流程，或不回覆。",
+    "publicReplyDescription": "直接在留言下方發表公開回覆。支援最多 10 個文字範本、AI Agent、聊天機器人流程，或不回覆。 每則訊息都會以獨立的回覆發佈。",
     "replyMessage": "回覆訊息",
     "replyMessagePlaceholder": "輸入回覆訊息...",
     "includeKeywordsType": "回覆對象",
@@ -4488,7 +4517,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "回覆曾在其他貼文留言的使用者",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "若使用者曾在您其他貼文下留言，仍持續對其回覆。",
       "ignoreCommentReplies": "忽略留言底下的回覆",
-      "ignoreCommentRepliesDescription": "若留言是對其他留言的回覆，而非頂層留言，則跳過自動化處理。"
+      "ignoreCommentRepliesDescription": "若留言是對其他留言的回覆，而非頂層留言，則跳過自動化處理。",
+      "trackUserTags": "追蹤使用者是否標記了其他使用者",
+      "trackUserTagsDescription": "使用 '{{total_tagged}}' 查看有多少使用者被標記。使用 '{{total_new_tagged}}' 查看被標記的人當中有多少不在聯絡人清單中。"
     },
     "hideComments": {
       "all": "隱藏所有留言",

@@ -253,7 +253,7 @@
     "dateFilterPreset": "إعداد تصفية التاريخ المسبق",
     "noResults": "لا توجد نتائج.",
     "noData": "لا توجد بيانات",
-    "retentionNotice": "يتم الاحتفاظ ببيانات آخر {days} يومًا فقط.",
+    "errorLogRetentionNotice": "يتم الاحتفاظ بسجلات الأخطاء لآخر {days} يومًا فقط.",
     "comingSoon": "قريبًا",
     "unknown": "غير معروف",
     "pagination": {
@@ -508,6 +508,35 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    }
+  },
+  "commentAutomation": {
+    "stats": {
+      "sent": "مُرسَل",
+      "delivered": "مُسلَّم",
+      "seen": "مُشاهَد",
+      "clicked": "منقور عليه",
+      "failed": "فشل",
+      "missed": "التجاهلات",
+      "noContacts": "لم يتم العثور على جهات اتصال",
+      "noComment": "(بدون نص)",
+      "pageInfo": "صفحة {page} من {pageCount}",
+      "selectedAll": "تم تحديد الكل",
+      "selectedCount": "تم تحديد {count}",
+      "tagAllDialogDescription": "ستتم إضافة الوسوم إلى جميع جهات الاتصال المحددة.",
+      "tagDialogDescription": "ستتم إضافة الوسوم إلى {count} جهة/جهات اتصال.",
+      "tagQueued": "جارٍ وسم {count} جهة اتصال في الخلفية.",
+      "loadingMore": "جارٍ تحميل المزيد...",
+      "receivers": "المستلمون"
+    },
+    "missReasons": {
+      "outsideSchedule": "خارج الجدول الزمني",
+      "postNotMatched": "المنشور غير مستهدف",
+      "commentIsReply": "رد على تعليق",
+      "keywordsNotMatched": "الكلمات المفتاحية غير مطابقة",
+      "contactNotNew": "جهة الاتصال ليست جديدة",
+      "alreadyRepliedOnPost": "تم الرد مسبقًا على هذا المنشور",
+      "engagedOnOtherPost": "تفاعل مسبقًا على منشور آخر"
     }
   },
   "condition": {
@@ -4284,9 +4313,9 @@
     "trackCommentsOn": "تتبّع التعليقات على",
     "trackCommentsOnDescription": "طبّق هذه الأتمتة على جميع منشورات صفحتك، أو خصصها لمنشورات محددة تختارها.",
     "privateReply": "رد خاص (صندوق الوارد)",
-    "privateReplyDescription": "أرسل رسالة خاصة إلى صندوق وارد صاحب التعليق. اختر وكيل ذكاء اصطناعي، أو قالب نص ثابت (يدعم spintax)، أو مسار بوت، أو عطّل الرد.",
+    "privateReplyDescription": "أرسل رسالة خاصة إلى صندوق وارد صاحب التعليق. اختر وكيل ذكاء اصطناعي، أو قالب نص ثابت، أو مسار بوت، أو عطّل الرد.",
     "publicReply": "رد عام على التعليق",
-    "publicReplyDescription": "انشر ردًا عامًا أسفل التعليق مباشرةً. يدعم حتى 10 قوالب نصية (تدعم spintax)، أو وكيل ذكاء اصطناعي، أو مسار بوت، أو عدم الرد.",
+    "publicReplyDescription": "انشر ردًا عامًا أسفل التعليق مباشرةً. يدعم حتى 10 قوالب نصية، أو وكيل ذكاء اصطناعي، أو مسار بوت، أو عدم الرد. يتم نشر كل رسالة كرد منفصل.",
     "replyMessage": "رسالة الرد",
     "replyMessagePlaceholder": "أدخل رسالة الرد...",
     "includeKeywordsType": "الرد على",
@@ -4354,8 +4383,8 @@
       "replyToUsersWhoCommentedOnOtherPostsDescription": "مواصلة الرد على المستخدمين الذين سبق أن علّقوا على منشوراتك الأخرى.",
       "ignoreCommentReplies": "عدم الرد على الردود على التعليقات",
       "ignoreCommentRepliesDescription": "تخطي الأتمتة للتعليقات التي تكون ردودًا على تعليقات أخرى وليست تعليقات رئيسية.",
-      "trackUserTags": "تتبّع ما إذا كان المستخدم يشير إلى مستخدمين آخرين",
-      "trackUserTagsDescription": "تشغيل الأتمتة عندما يشير مستخدم إلى مستخدم آخر أو يذكره في تعليقه."
+      "trackUserTags": "تتبع ما إذا كان المستخدم يشير إلى مستخدمين آخرين",
+      "trackUserTagsDescription": "استخدم '{{total_tagged}}' لمعرفة عدد المستخدمين الذين تمت الإشارة إليهم. استخدم '{{total_new_tagged}}' لمعرفة عدد الأشخاص المشار إليهم غير الموجودين في قائمة جهات الاتصال."
     },
     "hideComments": {
       "all": "إخفاء جميع التعليقات",
@@ -4870,9 +4899,9 @@
     "trackCommentsOn": "تتبع التعليقات على",
     "trackCommentsOnDescription": "طبّق هذه الأتمتة على جميع المنشورات في حسابك المتصل، أو حدّدها بمنشورات معينة تختارها.",
     "privateReply": "رد خاص (البريد الوارد)",
-    "privateReplyDescription": "إرسال رسالة خاصة إلى صندوق وارد المعلّق. اختر وكيل الذكاء الاصطناعي، أو نموذج نصي ثابت (مع دعم spintax)، أو مسار روبوت محادثة، أو التعطيل.",
+    "privateReplyDescription": "إرسال رسالة خاصة إلى صندوق وارد المعلّق. اختر وكيل الذكاء الاصطناعي، أو نموذج نصي ثابت، أو مسار روبوت محادثة، أو التعطيل.",
     "publicReply": "رد علني على التعليق",
-    "publicReplyDescription": "نشر رد علني مباشرة أسفل التعليق. يدعم حتى 10 نماذج نصية (مع دعم spintax)، أو وكيل الذكاء الاصطناعي، أو مسار روبوت محادثة، أو بدون رد.",
+    "publicReplyDescription": "نشر رد علني مباشرة أسفل التعليق. يدعم حتى 10 نماذج نصية، أو وكيل الذكاء الاصطناعي، أو مسار روبوت محادثة، أو بدون رد. يتم نشر كل رسالة كرد منفصل.",
     "replyMessage": "رسالة الرد",
     "replyMessagePlaceholder": "أدخل رسالة الرد...",
     "includeKeywordsType": "الرد على",
@@ -4938,7 +4967,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "الرد على المستخدمين الذين علّقوا على منشورات أخرى",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "الاستمرار في الرد على المستخدمين الذين علّقوا سابقًا على منشوراتك الأخرى.",
       "ignoreCommentReplies": "عدم الرد على الردود على التعليقات",
-      "ignoreCommentRepliesDescription": "تجاوز الأتمتة للتعليقات التي هي ردود على تعليقات أخرى، وليست تعليقات من المستوى الأعلى."
+      "ignoreCommentRepliesDescription": "تجاوز الأتمتة للتعليقات التي هي ردود على تعليقات أخرى، وليست تعليقات من المستوى الأعلى.",
+      "trackUserTags": "تتبع ما إذا كان المستخدم يشير إلى مستخدمين آخرين",
+      "trackUserTagsDescription": "استخدم '{{total_tagged}}' لمعرفة عدد المستخدمين الذين تمت الإشارة إليهم. استخدم '{{total_new_tagged}}' لمعرفة عدد الأشخاص المشار إليهم غير الموجودين في قائمة جهات الاتصال."
     },
     "hideComments": {
       "all": "إخفاء جميع التعليقات",

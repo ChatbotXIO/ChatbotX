@@ -272,6 +272,21 @@ const getCommentMessagePostId = (
   return typeof postId === "string" ? postId : null
 }
 
+/**
+ * Tag counters written onto the comment message by the comment-automation
+ * worker, and only when that automation has `trackUserTags` on. Absent means
+ * "not tracked" rather than zero, so it stays null — a flow branching on
+ * `{{total_tagged}}` must be able to tell "nobody was tagged" from "we never
+ * looked".
+ */
+const getCommentMessageTagCount = (
+  message: MessageModel | null,
+  key: "totalTagged" | "totalNewTagged",
+): string | null => {
+  const count = message?.contentAttributes?.[key]
+  return typeof count === "number" ? String(count) : null
+}
+
 const getAppointment = async (
   context: ContactVariableContext,
 ): Promise<Awaited<ReturnType<typeof appointmentService.findBy>> | null> => {
@@ -513,10 +528,14 @@ export const getSystemFieldValue = async (
     }
     case systemFieldTypes.enum.last_comment_id:
       return (await getLastUserComment(context))?.sourceId ?? null
-    case systemFieldTypes.enum.total_new_tagged:
-      return null
-    case systemFieldTypes.enum.total_tagged:
-      return null
+    case systemFieldTypes.enum.total_new_tagged: {
+      const message = await getLastUserComment(context)
+      return getCommentMessageTagCount(message, "totalNewTagged")
+    }
+    case systemFieldTypes.enum.total_tagged: {
+      const message = await getLastUserComment(context)
+      return getCommentMessageTagCount(message, "totalTagged")
+    }
     case systemFieldTypes.enum.last_latitude:
       return getContactLocationValue(contact, "latitude")
     case systemFieldTypes.enum.last_longitude:

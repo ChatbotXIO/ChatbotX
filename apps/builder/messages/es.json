@@ -253,7 +253,7 @@
     "dateFilterPreset": "Filtro de fecha predefinido",
     "noResults": "Sin resultados.",
     "noData": "Sin datos",
-    "retentionNotice": "Solo se conservan los datos de los últimos {days} días.",
+    "errorLogRetentionNotice": "Solo se conservan los registros de errores de los últimos {days} días.",
     "comingSoon": "Próximamente",
     "unknown": "Desconocido",
     "pagination": {
@@ -508,6 +508,35 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    }
+  },
+  "commentAutomation": {
+    "stats": {
+      "sent": "Enviado",
+      "delivered": "Entregado",
+      "seen": "Visto",
+      "clicked": "Clicado",
+      "failed": "Falló",
+      "missed": "Omitidos",
+      "noContacts": "No se encontraron contactos",
+      "noComment": "(sin texto)",
+      "pageInfo": "Página {page} de {pageCount}",
+      "selectedAll": "Todos seleccionados",
+      "selectedCount": "{count} seleccionado",
+      "tagAllDialogDescription": "Las etiquetas se añadirán a todos los contactos seleccionados.",
+      "tagDialogDescription": "Las etiquetas se añadirán a {count} contacto(s).",
+      "tagQueued": "Etiquetando {count} contactos en segundo plano.",
+      "loadingMore": "Cargando más...",
+      "receivers": "Destinatarios"
+    },
+    "missReasons": {
+      "outsideSchedule": "Fuera del horario",
+      "postNotMatched": "Publicación no seleccionada",
+      "commentIsReply": "Respuesta a comentario",
+      "keywordsNotMatched": "Las palabras clave no coinciden",
+      "contactNotNew": "El contacto no es nuevo",
+      "alreadyRepliedOnPost": "Ya respondido en esta publicación",
+      "engagedOnOtherPost": "Ya interactuó en otra publicación"
     }
   },
   "condition": {
@@ -4284,9 +4313,9 @@
     "trackCommentsOn": "Track comentarios on",
     "trackCommentsOnDescription": "Apply este automatización un todos publicaciones en tu Página, o narrow it un specific publicaciones tú select.",
     "privateReply": "Private Responder (inbox)",
-    "privateReplyDescription": "Enviar un private mensaje un el comentarioer's inbox. Elegir AI Agent, un fixed texto template (spintax supported), un chatbot flujo, o desactivar.",
+    "privateReplyDescription": "Enviar un private mensaje un el comentarioer's inbox. Elegir AI Agent, un fixed texto template, un chatbot flujo, o desactivar.",
     "publicReply": "Public Responder un comentario",
-    "publicReplyDescription": "Publicación un public Responder directly under el comentario. Supports up un 10 texto templates (spintax supported), AI Agent, un chatbot flujo, o no respuesta.",
+    "publicReplyDescription": "Publicación un public Responder directly under el comentario. Supports up un 10 texto templates, AI Agent, un chatbot flujo, o no respuesta. Cada mensaje se publica como una respuesta independiente.",
     "replyMessage": "Responder mensaje",
     "replyMessagePlaceholder": "Introduce Responder mensaje...",
     "includeKeywordsType": "Responder to",
@@ -4354,8 +4383,8 @@
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continue respuestaing un usuarios who tiene already comentarioed en tu other publicaciones.",
       "ignoreCommentReplies": "Don't Responder un replies un comentarios",
       "ignoreCommentRepliesDescription": "Skip automatización para comentarios that son replies un other comentarios, not top-level comentarios.",
-      "trackUserTags": "Track si un usuario etiquetas other usuarios",
-      "trackUserTagsDescription": "Desencadenador automatización cuando un usuario etiquetas o mentions another usuario en their comentario."
+      "trackUserTags": "Registrar si un usuario etiqueta a otros usuarios",
+      "trackUserTagsDescription": "Usa '{{total_tagged}}' para saber cuántos usuarios fueron etiquetados. Usa '{{total_new_tagged}}' para saber cuántas de las personas etiquetadas no están en la lista de contactos."
     },
     "hideComments": {
       "all": "Hide todos comentarios",
@@ -4387,9 +4416,9 @@
     "trackCommentsOn": "Track comentarios on",
     "trackCommentsOnDescription": "Apply este automatización un todos publicaciones en tu connected cuenta, o narrow it un specific publicaciones tú select.",
     "privateReply": "Private Responder (inbox)",
-    "privateReplyDescription": "Enviar un private mensaje un el comentarioer's inbox. Elegir AI Agent, un fixed texto template (spintax supported), un chatbot flujo, o desactivar.",
+    "privateReplyDescription": "Enviar un private mensaje un el comentarioer's inbox. Elegir AI Agent, un fixed texto template, un chatbot flujo, o desactivar.",
     "publicReply": "Public Responder un comentario",
-    "publicReplyDescription": "Publicación un public Responder directly under el comentario. Supports up un 10 texto templates (spintax supported), AI Agent, un chatbot flujo, o no respuesta.",
+    "publicReplyDescription": "Publicación un public Responder directly under el comentario. Supports up un 10 texto templates, AI Agent, un chatbot flujo, o no respuesta. Cada mensaje se publica como una respuesta independiente.",
     "replyMessage": "Responder mensaje",
     "replyMessagePlaceholder": "Introduce Responder mensaje...",
     "includeKeywordsType": "Responder to",
@@ -4455,7 +4484,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "Responder un usuarios who comentarioed en other publicaciones",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continue respuestaing un usuarios who tiene already comentarioed en tu other publicaciones.",
       "ignoreCommentReplies": "Don't Responder un replies un comentarios",
-      "ignoreCommentRepliesDescription": "Skip automatización para comentarios that son replies un other comentarios, not top-level comentarios."
+      "ignoreCommentRepliesDescription": "Skip automatización para comentarios that son replies un other comentarios, not top-level comentarios.",
+      "trackUserTags": "Registrar si un usuario etiqueta a otros usuarios",
+      "trackUserTagsDescription": "Usa '{{total_tagged}}' para saber cuántos usuarios fueron etiquetados. Usa '{{total_new_tagged}}' para saber cuántas de las personas etiquetadas no están en la lista de contactos."
     },
     "hideComments": {
       "all": "Hide todos comentarios",

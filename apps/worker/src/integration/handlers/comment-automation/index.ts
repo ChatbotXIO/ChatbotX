@@ -6,6 +6,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import type {
+  CommentAutomationMissReason,
   CommentAutomationReplyChannel,
   FBCommentReply,
   FBCommentReplyType,
@@ -15,8 +16,10 @@ import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type {
   ContactInboxModel,
   ConversationModel,
+  FBCommentAutomationMissInsert,
 } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
+import { createId } from "@chatbotx.io/utils"
 import type { ErrorLogProvider } from "@chatbotx.io/utils/error-log"
 import {
   ChatJobAction,
@@ -37,6 +40,7 @@ import {
   createAttachmentInfoResolver,
   needsAttachmentInfo,
 } from "./comment-attachment"
+import { createTagInfoResolver } from "./comment-tags"
 import { applyHideComments } from "./hide-comments"
 import {
   executePrivateReply,
@@ -100,6 +104,7 @@ export async function processCommentAutomation(
     parentId,
     fromId: _fromId,
     message,
+    tags,
     createdTime,
   } = data
 
@@ -162,10 +167,45 @@ export async function processCommentAutomation(
     auth,
   })
 
+  const resolveTagInfo = createTagInfoResolver({
+    channelType,
+    workspaceId,
+    inboxId: integrationRow.inboxId,
+    commentId,
+    message,
+    tags,
+    integrationRow,
+    auth,
+  })
+
   // Meta allows a single comment_id-anchored DM per comment, and that budget is
   // shared by every automation matching this one comment — so it is tracked
   // across the loop, not per automation.
   let privateReplyClaimed = false
+
+  // Every automation that declines this comment, flushed in ONE insert after
+  // the loop. `findActiveAutomations` scopes by workspace + channel, not by
+  // post, so a single comment is shown to every active automation on the
+  // channel — writing a row per decline inside the loop would fire one
+  // statement per automation per comment on a busy Page.
+  const misses: FBCommentAutomationMissInsert[] = []
+  const collectMiss = (
+    automationId: string,
+    reason: CommentAutomationMissReason,
+  ) => {
+    misses.push({
+      id: createId(),
+      workspaceId,
+      automationId,
+      contactId: contactInbox.contactId,
+      contactInboxId: contactInbox.id,
+      postId,
+      commentId,
+      commentText: message ?? null,
+      reason,
+      occurredAt,
+    })
+  }
 
   for (const automation of automations) {
     try {
@@ -182,6 +222,7 @@ export async function processCommentAutomation(
           workspaceId,
           reason: "outside schedule",
         })
+        collectMiss(automation.id, "outsideSchedule")
         continue
       }
       if (!matchPost(automation.post, postId)) {
@@ -192,6 +233,7 @@ export async function processCommentAutomation(
           workspaceId,
           reason: "post does not match",
         })
+        collectMiss(automation.id, "postNotMatched")
         continue
       }
       if (
@@ -210,6 +252,7 @@ export async function processCommentAutomation(
           parentId,
           reason: "comment is a reply",
         })
+        collectMiss(automation.id, "commentIsReply")
         continue
       }
       if (
@@ -226,6 +269,7 @@ export async function processCommentAutomation(
           workspaceId,
           reason: "keywords do not match",
         })
+        collectMiss(automation.id, "keywordsNotMatched")
         continue
       }
 
@@ -242,6 +286,7 @@ export async function processCommentAutomation(
             workspaceId,
             reason: "contact is not new",
           })
+          collectMiss(automation.id, "contactNotNew")
           continue
         }
       }
@@ -260,6 +305,7 @@ export async function processCommentAutomation(
             workspaceId,
             reason: "already replied to this user on this post",
           })
+          collectMiss(automation.id, "alreadyRepliedOnPost")
           continue
         }
       }
@@ -279,6 +325,7 @@ export async function processCommentAutomation(
             workspaceId,
             reason: "user already engaged on another post",
           })
+          collectMiss(automation.id, "engagedOnOtherPost")
           continue
         }
       }
@@ -343,6 +390,33 @@ export async function processCommentAutomation(
             "Failed to apply hide comments",
           ),
         )
+
+        // Awaited, unlike the like/hide fire-and-forget above: the reply below
+        // renders `{{total_tagged}}`/`{{total_new_tagged}}` by reading these
+        // back off this very row, so racing the send would render an empty
+        // value on the first comment and the right one only on a retry.
+        if (automation.options.trackUserTags) {
+          try {
+            const { totalTagged, totalNewTagged } = await resolveTagInfo()
+            await messageRepo.updateContentAttributes(
+              dbMessage.id,
+              workspaceId,
+              {
+                ...dbMessage.contentAttributes,
+                totalTagged,
+                totalNewTagged,
+              },
+              dbMessage.createdAt,
+            )
+          } catch (err) {
+            // Not a skip — the reply still goes out, just with the two tag
+            // variables unresolved. Logged because nothing else would show it.
+            logger.error(
+              { err, automationId: automation.id, commentId, postId },
+              "Failed to resolve user tags for comment",
+            )
+          }
+        }
       } else {
         // Liking, hiding and parent threading all hang off the incoming
         // comment's message row. Losing it degrades all three without touching
@@ -412,7 +486,7 @@ export async function processCommentAutomation(
       // Outside the try on purpose: recording is bookkeeping, and a throw here
       // must not be caught as a dispatch failure and logged a second time.
       if (publicOutcome) {
-        await recordReplyEvent({
+        await recordAndDispatchReply({
           workspaceId,
           automationId: automation.id,
           contactInbox,
@@ -499,7 +573,7 @@ export async function processCommentAutomation(
       }
 
       if (privateOutcome) {
-        await recordReplyEvent({
+        await recordAndDispatchReply({
           workspaceId,
           automationId: automation.id,
           contactInbox,
@@ -535,7 +609,12 @@ export async function processCommentAutomation(
         await fbCommentAutomationService.insertDedup(dedup)
       }
 
-      if (anythingDispatched) {
+      // Replies counts DMs, not comment replies — same scope as the five
+      // delivery columns beside it, so a public-only automation reads as zero
+      // across the whole row rather than showing a reply count with no
+      // delivery stats under it. `anythingDispatched` above stays as it is:
+      // dedup guards against sending twice and has nothing to do with stats.
+      if (privateOutcome) {
         await fbCommentAutomationService.incrementRepliesCount(automation.id)
       }
     } catch (err) {
@@ -557,6 +636,12 @@ export async function processCommentAutomation(
       })
     }
   }
+
+  // One insert for every automation that passed on this comment. Outside the
+  // loop and outside its try/catch on purpose: a decline is bookkeeping, and
+  // `recordMisses` never throws, so this can neither fail a reply nor be
+  // skipped because some other automation in the list blew up.
+  await commentAutomationAnalyticsService.recordMisses(misses)
 }
 
 /**
@@ -604,6 +689,7 @@ function recordReplyEvent(
     workspaceId: props.workspaceId,
     automationId: props.automationId,
     contactId: props.contactInbox.contactId,
+    contactInboxId: props.contactInbox.id,
     postId: props.postId,
     commentId: props.commentId,
     commentText: props.message ?? null,
@@ -612,7 +698,59 @@ function recordReplyEvent(
     replyText: props.outcome.replyText,
     status: "sent",
     occurredAt: props.occurredAt,
+    // Non-null only for a send that already completed (a `text` reply). Born
+    // delivered, because the `markDelivered` that used to do this ran before
+    // this very row existed and matched nothing.
+    deliveredAt: props.outcome.deliveredAt ?? null,
   })
+}
+
+/**
+ * Writes the reply's analytics row, THEN enqueues whatever async work it stands
+ * for.
+ *
+ * The order is the point. The queued job settles delivery on this very row, and
+ * an automation with no `replyAfter` gives it a delay of 0 — so enqueuing first
+ * let the worker pick the job up and settle a row that had not been inserted
+ * yet, losing `deliveredAt` and, with it, `seenAt`. See `dispatch` on
+ * `CommentReplyOutcome`.
+ *
+ * A dispatch that throws flips the row it just wrote to `failed` rather than
+ * recording a fresh failure: the insert is keyed on `(automationId, commentId,
+ * replyChannel)`, so a second row would be dropped as a conflict and the
+ * failure would go unrecorded. The caller still treats the branch as
+ * dispatched, which keeps the dedup row — one missed reply beats replying to
+ * the contact's next comment twice.
+ */
+async function recordAndDispatchReply(
+  props: ReplyEventContext & { outcome: CommentReplyOutcome },
+): Promise<void> {
+  await recordReplyEvent(props)
+
+  if (!props.outcome.dispatch) {
+    return
+  }
+
+  try {
+    await props.outcome.dispatch()
+  } catch (err) {
+    logger.error(
+      {
+        err,
+        automationId: props.automationId,
+        commentId: props.commentId,
+        replyChannel: props.replyChannel,
+      },
+      "Failed to enqueue comment automation reply",
+    )
+    await commentAutomationAnalyticsService.settleEvent({
+      automationId: props.automationId,
+      commentId: props.commentId,
+      replyChannel: props.replyChannel,
+      status: "failed",
+      errorDetail: err instanceof Error ? err.message : String(err),
+    })
+  }
 }
 
 /**
@@ -642,6 +780,7 @@ async function recordReplyFailure(
         workspaceId: props.workspaceId,
         automationId: props.automationId,
         contactId: props.contactInbox.contactId,
+        contactInboxId: props.contactInbox.id,
         postId: props.postId,
         commentId: props.commentId,
         commentText: props.message ?? null,
@@ -733,6 +872,7 @@ async function recordBlockedPrivateReply(
       workspaceId: props.workspaceId,
       automationId: props.automationId,
       contactId: props.contactInbox.contactId,
+      contactInboxId: props.contactInbox.id,
       postId: props.postId,
       commentId: props.commentId,
       commentText: props.message ?? null,
@@ -802,6 +942,7 @@ async function recordConfiguredBranchFailures(
           workspaceId: props.workspaceId,
           automationId: props.automationId,
           contactId: props.contactInbox.contactId,
+          contactInboxId: props.contactInbox.id,
           postId: props.postId,
           commentId: props.commentId,
           commentText: props.message ?? null,

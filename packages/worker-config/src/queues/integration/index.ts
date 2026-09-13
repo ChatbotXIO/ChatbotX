@@ -80,6 +80,16 @@ export type IntegrationJobReceiveMessage = {
   }
 }
 
+/**
+ * Profiles tagged inside a comment. Facebook resolves these to real user ids
+ * (`message_tags` on the feed webhook); Instagram supplies nothing here and is
+ * resolved from `@handle` text instead — see `comment-automation/comment-tags`.
+ */
+export type CommentTag = {
+  id: string
+  name?: string
+}
+
 export type IntegrationJobReceiveComment = {
   type: typeof IntegrationJobAction.incomingComment
   data: {
@@ -91,7 +101,9 @@ export type IntegrationJobReceiveComment = {
       parentId?: string
       fromId: string
       fromName?: string
+      fromUsername?: string
       message?: string
+      tags?: CommentTag[]
       createdTime: number
     }
   }
@@ -554,6 +566,7 @@ export type IntegrationJobProcessCommentAutomation = {
     parentId?: string
     fromId: string
     message?: string
+    tags?: CommentTag[]
     createdTime: number
   }
 }
