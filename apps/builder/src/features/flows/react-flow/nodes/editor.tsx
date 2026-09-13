@@ -308,8 +308,13 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
     [],
   )
 
+  // `maxWait` is what bounds the loss. Without it, typing faster than every
+  // 700ms keeps rescheduling and the node data never reaches the flow, so the
+  // wrapper's autosave is never called at all — its own 4000ms ceiling can
+  // never fire. 2000ms stays under that ceiling, so the two debouncers compose
+  // into a bounded worst case.
   const pushToFlow = useMemo(
-    () => createDebouncedFn(pushNodeDetailsToFlow, 700),
+    () => createDebouncedFn(pushNodeDetailsToFlow, 700, 2000),
     [pushNodeDetailsToFlow],
   )
 
