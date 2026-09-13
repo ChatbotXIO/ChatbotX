@@ -3357,7 +3357,29 @@
     "sendHumanAgentTag": "HUMAN_AGENTタグを付けてメッセージを1件送信",
     "warning": "警告！",
     "humanAgentWarningDescription": "問題を24時間以内に解決することが合理的に困難な場合に限り、ユーザーのメッセージに7日以内で返信できます。たとえば、週末、祝日、または完了までに1日以上かかるケースです。それ以外の理由でこのオプションを使用すると、FacebookページまたはInstagramアカウントが危険にさらされる可能性があります。確信がない場合は続行しないでください。",
-    "callFailed": "通話の問題"
+    "callFailed": "通話の問題",
+    "activity": {
+      "customFieldChanged": "Custom field changed: {name}",
+      "customFieldCleared": "Custom field cleared: {name}",
+      "previousValue": "Previous value",
+      "newValue": "New value",
+      "unset": "unset",
+      "tagAdded": "Tag added: {tag}",
+      "tagAddedLabel": "Tag added",
+      "tagRemoved": "Tag removed: {tag}",
+      "tagRemovedLabel": "Tag removed",
+      "flowTriggered": "Automation {name} was triggered",
+      "flowTriggeredPrefix": "Automation",
+      "flowTriggeredSuffix": "was triggered",
+      "sequenceSubscribed": "Subscribed to sequence: {name}",
+      "sequenceSubscribedPrefix": "Subscribed to sequence:",
+      "sequenceUnsubscribed": "Unsubscribed from sequence: {name}",
+      "sequenceUnsubscribedPrefix": "Unsubscribed from sequence:",
+      "conversationClosed": "Conversation was closed",
+      "conversationReopened": "Conversation was reopened",
+      "toggleHideEvents": "Hide system events",
+      "toggleShowEvents": "Show system events"
+    }
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",

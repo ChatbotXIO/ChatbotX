@@ -3378,7 +3378,29 @@
     "sendHumanAgentTag": "Envoyer un message avec l’étiquette HUMAN_AGENT",
     "warning": "Attention !",
     "humanAgentWarningDescription": "Vous pouvez répondre au message d’un utilisateur dans un délai de 7 jours uniquement si le problème ne peut raisonnablement pas être résolu sous 24 heures, notamment pendant les week-ends, les jours fériés ou lorsqu’un traitement de plusieurs jours est nécessaire. N’utilisez pas cette option pour une autre raison, car elle pourrait mettre en danger votre Page Facebook ou votre compte Instagram. En cas de doute, ne continuez pas.",
-    "callFailed": "Problème d'appel"
+    "callFailed": "Problème d'appel",
+    "activity": {
+      "customFieldChanged": "Champ personnalisé modifié : {name}",
+      "customFieldCleared": "Champ personnalisé supprimé : {name}",
+      "previousValue": "Valeur précédente",
+      "newValue": "Nouvelle valeur",
+      "unset": "unset",
+      "tagAdded": "Tag ajouté : {tag}",
+      "tagAddedLabel": "Tag ajouté",
+      "tagRemoved": "Tag supprimé : {tag}",
+      "tagRemovedLabel": "Tag supprimé",
+      "flowTriggered": "L'automatisation {name} a été déclenchée",
+      "flowTriggeredPrefix": "L'automatisation",
+      "flowTriggeredSuffix": "a été déclenchée",
+      "sequenceSubscribed": "Abonné à la séquence : {name}",
+      "sequenceSubscribedPrefix": "Abonné à la séquence :",
+      "sequenceUnsubscribed": "Désabonné de la séquence : {name}",
+      "sequenceUnsubscribedPrefix": "Désabonné de la séquence :",
+      "conversationClosed": "La conversation a été fermée",
+      "conversationReopened": "La conversation a été rouverte",
+      "toggleHideEvents": "Masquer les événements système",
+      "toggleShowEvents": "Afficher les événements système"
+    }
   },
   "instagram": {
     "description": "Cette intégration permet de créer des bots Instagram.",

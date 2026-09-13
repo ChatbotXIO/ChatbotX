@@ -3420,7 +3420,29 @@
     "sendHumanAgentTag": "Gửi một tin nhắn với thẻ HUMAN_AGENT",
     "warning": "Warning!",
     "humanAgentWarningDescription": "Bạn chỉ có thể trả lời tin nhắn của người dùng trong vòng 7 ngày khi vấn đề không thể giải quyết trong vòng 24 giờ. Ví dụ: cuối tuần, ngày lễ, hoặc các trường hợp cần hơn một ngày để xử lý. Không sử dụng tùy chọn này cho bất kỳ lý do nào khác vì có thể ảnh hưởng đến Trang Facebook hoặc tài khoản Instagram của bạn. Nếu bạn không chắc chắn, đừng tiếp tục.",
-    "callFailed": "Sự cố cuộc gọi"
+    "callFailed": "Sự cố cuộc gọi",
+    "activity": {
+      "customFieldChanged": "Custom field changed: {name}",
+      "customFieldCleared": "Custom field cleared: {name}",
+      "previousValue": "Previous value",
+      "newValue": "New value",
+      "unset": "unset",
+      "tagAdded": "Tag added: {tag}",
+      "tagAddedLabel": "Tag added",
+      "tagRemoved": "Tag removed: {tag}",
+      "tagRemovedLabel": "Tag removed",
+      "flowTriggered": "Automation {name} was triggered",
+      "flowTriggeredPrefix": "Automation",
+      "flowTriggeredSuffix": "was triggered",
+      "sequenceSubscribed": "Subscribed to sequence: {name}",
+      "sequenceSubscribedPrefix": "Subscribed to sequence:",
+      "sequenceUnsubscribed": "Unsubscribed from sequence: {name}",
+      "sequenceUnsubscribedPrefix": "Unsubscribed from sequence:",
+      "conversationClosed": "Conversation was closed",
+      "conversationReopened": "Conversation was reopened",
+      "toggleHideEvents": "Hide system events",
+      "toggleShowEvents": "Show system events"
+    }
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

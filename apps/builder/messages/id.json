@@ -3378,7 +3378,29 @@
     "sendHumanAgentTag": "Kirim satu pesan dengan tag HUMAN_AGENT",
     "warning": "Peringatan!",
     "humanAgentWarningDescription": "Anda hanya boleh menanggapi pesan pengguna dalam waktu 7 hari jika masalahnya tidak dapat diselesaikan secara wajar dalam 24 jam. Contohnya termasuk akhir pekan, hari libur, atau kasus yang memerlukan lebih dari satu hari untuk diselesaikan. Jangan gunakan opsi ini untuk alasan lain karena dapat membahayakan Halaman Facebook atau akun Instagram Anda. Jika tidak yakin, jangan lanjutkan.",
-    "callFailed": "Masalah panggilan"
+    "callFailed": "Masalah panggilan",
+    "activity": {
+      "customFieldChanged": "Custom field changed: {name}",
+      "customFieldCleared": "Custom field cleared: {name}",
+      "previousValue": "Previous value",
+      "newValue": "New value",
+      "unset": "unset",
+      "tagAdded": "Tag added: {tag}",
+      "tagAddedLabel": "Tag added",
+      "tagRemoved": "Tag removed: {tag}",
+      "tagRemovedLabel": "Tag removed",
+      "flowTriggered": "Automation {name} was triggered",
+      "flowTriggeredPrefix": "Automation",
+      "flowTriggeredSuffix": "was triggered",
+      "sequenceSubscribed": "Subscribed to sequence: {name}",
+      "sequenceSubscribedPrefix": "Subscribed to sequence:",
+      "sequenceUnsubscribed": "Unsubscribed from sequence: {name}",
+      "sequenceUnsubscribedPrefix": "Unsubscribed from sequence:",
+      "conversationClosed": "Conversation was closed",
+      "conversationReopened": "Conversation was reopened",
+      "toggleHideEvents": "Hide system events",
+      "toggleShowEvents": "Show system events"
+    }
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",

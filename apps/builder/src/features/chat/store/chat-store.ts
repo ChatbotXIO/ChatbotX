@@ -149,6 +149,9 @@ export type ChatState = {
 
   // active facebook post (for comment conversations)
   activePost: PostDetails | null
+
+  // show/hide system activity events in chat
+  showSystemEvents: boolean
 }
 // `messages`/`nextCursorMessage`/`hasNextMessagePage`/`messagesConversationId`
 // must be seeded together or not at all: a `messages` seed without its
@@ -280,6 +283,9 @@ export type ChatActions = {
 
   // Contact actions
   updateContact: (contactId: string, data: Partial<ContactResource>) => void
+
+  // Activity events toggle
+  toggleSystemEvents: () => void
 }
 
 export type ChatStore = ChatState & ChatActions
@@ -510,6 +516,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       ...conversationListDefaults(),
       filters: {},
       ...messageThreadDefaults(),
+      showSystemEvents: true,
+
+      toggleSystemEvents: () =>
+        set((state) => ({ showSystemEvents: !state.showSystemEvents })),
 
       ...restInitialState,
       ...messagesSeed,
