@@ -2328,9 +2328,6 @@
       "label": "Secreto de la aplicación Meta (opcional)",
       "description": "Activa la verificación de la firma del webhook para esta conexión manual. Puedes encontrarlo en el panel de tu aplicación Meta, en Configuración > Básico."
     },
-    "aiTrigger": {
-      "label": "Desencadenador de IA"
-    },
     "lastCallRecorded": {
       "label": "Última grabación de llamada"
     },
@@ -3137,8 +3134,7 @@
     "setting": {
       "label": "Make",
       "description": "Conectar tu Make.com cuenta un Enviar eventoos desde tu flujos y receive contacto datos through Make scenarios.",
-      "notConfigured": "No Make invite enlace found. Por favor, Añadir one en Plataforma Ajustes.",
-      "noWorkspaceToken": "No Developer Access Token found para este espacio de trabajo. Generate one en el Espacio de trabajo token section above, then click Conectar again."
+      "notConfigured": "No Make invite enlace found. Por favor, Añadir one en Plataforma Ajustes."
     }
   },
   "integrations": {
@@ -3432,8 +3428,7 @@
       "on": "Activado",
       "off": "Desactivado",
       "termsRequired": "Página admin must accept el Facebook Página Contacto Terms:"
-    },
-    "selectFacebookPage": "Seleccionar Facebook Página"
+    }
   },
   "omnichannel": {
     "title": "Omnicanal"
@@ -3522,10 +3517,6 @@
     "deepseek": {
       "description": "DeepSeek integración descripción",
       "title": "DeepSeek Integración"
-    },
-    "aiTriggers": {
-      "description": "AI Triggers descripción",
-      "title": "Desencadenadores de IA"
     }
   },
   "auth": {
@@ -3669,14 +3660,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "WhatsApp app ajustes were no encontrado.",
-        "wabaResolveFailed": "Could not resolve el WhatsApp Empresa Cuenta desde el authorization.",
-        "accessTokenRequired": "WhatsApp access token es obligatorio.",
-        "failedToPersistIntegration": "Failed un Guardar el WhatsApp integración.",
-        "noPhoneNumberFound": "No WhatsApp teléfono number was found.",
-        "noPhoneNumbersFound": "No teléfono numbers were found para este WhatsApp Empresa Cuenta.",
-        "phoneNumberNotFound": "Selected WhatsApp teléfono number was no encontrado.",
-        "unableToVerifyToken": "Unable un verificar el WhatsApp token.",
-        "wabaMismatch": "Selected WhatsApp Empresa Cuenta hace not match el authorization."
+        "wabaResolveFailed": "Could not resolve el WhatsApp Empresa Cuenta desde el authorization."
       }
     },
     "reconnect": {
@@ -3911,13 +3895,6 @@
       "tryAgain": "Intenta volver a conectar"
     },
     "manualAppSecretMissingNotice": "Las firmas de los webhooks no se verifican hasta que agregues tu secreto de aplicación Meta.",
-    "signupSessionExpired": "Your WhatsApp signup session tiene caducado. Por favor, start el connection again.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Eventos automáticos",
-        "description": "Envía automáticamente eventos de conversión desde este número de WhatsApp a Meta. Si falta el permiso, vuelve a conectar la cuenta para concederlo."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Descripción de las reglas",
       "openerTags": "Etiquetar a los contactos que abren el enlace del juego",
       "playerTags": "Etiquetar a los jugadores",
-      "newFriendTags": "Etiquetar a los nuevos amigos",
-      "shareEnabled": "Permitir compartir con amigos",
-      "shareMessage": "Mensaje para compartir",
-      "shareMessageHint": "Usa '{{shareUrl}}' para insertar el enlace real del juego — por favor, no lo elimines."
+      "newFriendTags": "Etiquetar a los nuevos amigos"
     },
     "appearance": {
       "backgroundColor": "Color de fondo",

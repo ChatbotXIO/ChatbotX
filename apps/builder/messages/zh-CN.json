@@ -3061,9 +3061,6 @@
     "adSource": {
       "label": "Ad source"
     },
-    "aiTrigger": {
-      "label": "人工智能触发器"
-    },
     "manualAppSecret": {
       "label": "Meta App Secret（可选）",
       "description": "为此手动连接启用 Webhook 签名验证。可在 Meta App 控制台的 Settings > Basic 中找到。"
@@ -3735,8 +3732,7 @@
     "setting": {
       "description": "连接您的 Make.com 帐户，以便从流程发送事件，并通过 Make 情境接收联系人数据。",
       "label": "Make.com",
-      "notConfigured": "找不到邀请链接。请在平台设置添加一个。",
-      "noWorkspaceToken": "找不到此工作区的开发人员访问权杖。在上面的工作区权杖部分产生一个，然后再按一下连接。"
+      "notConfigured": "找不到邀请链接。请在平台设置添加一个。"
     },
     "title": "Make.com"
   },
@@ -3977,8 +3973,7 @@
     },
     "title": "Facebook Messenger",
     "welcomeMessage": "欢迎消息",
-    "welcomeMessageDescription": "这是用户将从您的机器人收到的第一则消息。当用户通过点击「开始」按钮第一次与机器人交互时，会发送此消息。",
-    "selectFacebookPage": "选择Facebook 页"
+    "welcomeMessageDescription": "这是用户将从您的机器人收到的第一则消息。当用户通过点击「开始」按钮第一次与机器人交互时，会发送此消息。"
   },
   "metaCatalog": {
     "catalogId": "Meta目录ID",
@@ -4750,11 +4745,7 @@
       "description": "OpenAI 集成说明",
       "title": "OpenAI集成"
     },
-    "title": "设置",
-    "aiTriggers": {
-      "description": "人工智能触发器描述",
-      "title": "人工智能触发器"
-    }
+    "title": "设置"
   },
   "smtp": {
     "errors": {
@@ -5105,14 +5096,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "WhatsApp应用程序设置。",
-        "wabaResolveFailed": "无法从授权解析WhatsApp 企业帐号。",
-        "accessTokenRequired": "必须提供 WhatsApp Access Token。",
-        "failedToPersistIntegration": "无法保存WhatsApp 集成。",
-        "noPhoneNumberFound": "找不到 WhatsApp 电话号码。",
-        "noPhoneNumbersFound": "找不到此 WhatsApp 企业帐户的电话号码。",
-        "phoneNumberNotFound": "所选WhatsApp 电话号码找不到。",
-        "unableToVerifyToken": "无法验证WhatsApp 权杖。",
-        "wabaMismatch": "所选WhatsApp 企业帐户与授权不符。"
+        "wabaResolveFailed": "无法从授权解析WhatsApp 企业帐号。"
       }
     },
     "connectExisting": "连接现有的 WhatsApp Business 帐号",
@@ -5279,13 +5263,6 @@
       "tryAgain": "尝试重新连接"
     },
     "manualAppSecretMissingNotice": "在您添加 Meta App Secret 之前，Webhook 签名不会被验证。",
-    "signupSessionExpired": "您的WhatsApp注册会话已过期。请重新开始连接。",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automatic Events",
-        "description": "自动将此 WhatsApp 号码的转化事件发送到 Meta。如果缺少权限,请重新连接账户以授予权限。"
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5951,10 +5928,7 @@
       "rulesDescription": "规则说明",
       "openerTags": "为打开游戏链接的联系人打标签",
       "playerTags": "为参与者打标签",
-      "newFriendTags": "为新好友打标签",
-      "shareEnabled": "允许与好友分享",
-      "shareMessage": "分享消息",
-      "shareMessageHint": "使用 '{{shareUrl}}' 插入实际的游戏链接，请勿删除。"
+      "newFriendTags": "为新好友打标签"
     },
     "appearance": {
       "backgroundColor": "背景颜色",

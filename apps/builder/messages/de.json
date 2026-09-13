@@ -2191,9 +2191,6 @@
       "label": "Meta App-Secret (optional)",
       "description": "Aktiviert die Verifizierung der Webhook-Signatur für diese manuelle Verbindung. Zu finden im Dashboard der Meta-App unter Einstellungen > Allgemein."
     },
-    "aiTrigger": {
-      "label": "KI-Trigger"
-    },
     "lastCallRecorded": {
       "label": "Letzte Anrufaufnahme"
     },
@@ -3000,8 +2997,7 @@
     "setting": {
       "label": "Make",
       "description": "Verbinden Sie Ihr Make.com-Konto, um Ereignisse aus Ihren Flows zu senden und Kontaktdaten über Make-Szenarien zu empfangen.",
-      "notConfigured": "Kein Make-Einladungslink gefunden. Fügen Sie einen in den Plattformeinstellungen hinzu.",
-      "noWorkspaceToken": "Für diesen Arbeitsbereich wurde kein Entwickler-Zugriffstoken gefunden. Generieren Sie eines im Abschnitt für Arbeitsbereichstoken oben und klicken Sie dann erneut auf „Verbinden“."
+      "notConfigured": "Kein Make-Einladungslink gefunden. Fügen Sie einen in den Plattformeinstellungen hinzu."
     }
   },
   "integrations": {
@@ -3432,8 +3428,7 @@
       "on": "Ein",
       "off": "Aus",
       "termsRequired": "Der Seiten-Admin muss die Kontaktbedingungen der Facebook-Seite akzeptieren:"
-    },
-    "selectFacebookPage": "Facebook-Seite auswählen"
+    }
   },
   "omnichannel": {
     "title": "Omnichannel"
@@ -3522,10 +3517,6 @@
     "deepseek": {
       "description": "Beschreibung der DeepSeek-Integration",
       "title": "DeepSeek-Integration"
-    },
-    "aiTriggers": {
-      "description": "Beschreibung der KI-Trigger",
-      "title": "KI-Trigger"
     }
   },
   "auth": {
@@ -3669,14 +3660,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "WhatsApp-App-Einstellungen wurden nicht gefunden.",
-        "wabaResolveFailed": "Das WhatsApp-Business-Konto konnte nicht aus der Autorisierung ermittelt werden.",
-        "accessTokenRequired": "WhatsApp-Zugriffstoken ist erforderlich.",
-        "failedToPersistIntegration": "Die WhatsApp-Integration konnte nicht gespeichert werden.",
-        "noPhoneNumberFound": "Keine WhatsApp-Telefonnummer gefunden.",
-        "noPhoneNumbersFound": "Für dieses WhatsApp-Business-Konto wurden keine Telefonnummern gefunden.",
-        "phoneNumberNotFound": "Die ausgewählte WhatsApp-Telefonnummer wurde nicht gefunden.",
-        "unableToVerifyToken": "Das WhatsApp-Token konnte nicht verifiziert werden.",
-        "wabaMismatch": "Das ausgewählte WhatsApp-Business-Konto stimmt nicht mit der Autorisierung überein."
+        "wabaResolveFailed": "Das WhatsApp-Business-Konto konnte nicht aus der Autorisierung ermittelt werden."
       }
     },
     "reconnect": {
@@ -3911,13 +3895,6 @@
       "tryAgain": "Erneute Verbindung versuchen"
     },
     "manualAppSecretMissingNotice": "Webhook-Signaturen werden erst überprüft, wenn das Meta App-Secret hinzugefügt wird.",
-    "signupSessionExpired": "Ihre WhatsApp-Registrierungssitzung ist abgelaufen. Starten Sie die Verbindung erneut.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automatische Ereignisse",
-        "description": "Conversion-Events dieser WhatsApp-Nummer automatisch an Meta senden. Fehlt die Berechtigung, verbinden Sie das Konto erneut, um sie zu erteilen."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Regelbeschreibung",
       "openerTags": "Kontakte markieren, die den Spiellink öffnen",
       "playerTags": "Spieler markieren",
-      "newFriendTags": "Neue Freunde markieren",
-      "shareEnabled": "Teilen mit Freunden erlauben",
-      "shareMessage": "Freigabenachricht",
-      "shareMessageHint": "Verwenden Sie '{{shareUrl}}', um den tatsächlichen Spiellink einzufügen — bitte nicht entfernen."
+      "newFriendTags": "Neue Freunde markieren"
     },
     "appearance": {
       "backgroundColor": "Hintergrundfarbe",

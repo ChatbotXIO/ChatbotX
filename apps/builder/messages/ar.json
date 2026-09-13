@@ -2328,9 +2328,6 @@
       "label": "سر تطبيق Meta (اختياري)",
       "description": "يفعّل التحقق من توقيع الـ webhook لهذا الاتصال اليدوي. يمكنك العثور عليه في لوحة تحكم تطبيق Meta ضمن الإعدادات > أساسي."
     },
-    "aiTrigger": {
-      "label": "مشغّل الذكاء الاصطناعي"
-    },
     "lastCallRecorded": {
       "label": "آخر تسجيل مكالمة"
     },
@@ -3137,8 +3134,7 @@
     "setting": {
       "label": "Make",
       "description": "اربط حساب Make.com الخاص بك لإرسال الأحداث من مساراتك واستقبال بيانات جهات الاتصال عبر سيناريوهات Make.",
-      "notConfigured": "لم يتم العثور على رابط دعوة لـ Make. يرجى إضافة واحد في إعدادات المنصة.",
-      "noWorkspaceToken": "لم يتم العثور على رمز وصول مطورين لمساحة العمل هذه. أنشئ واحدًا في قسم رمز مساحة العمل أعلاه، ثم انقر على \"اتصال\" مرة أخرى."
+      "notConfigured": "لم يتم العثور على رابط دعوة لـ Make. يرجى إضافة واحد في إعدادات المنصة."
     }
   },
   "integrations": {
@@ -3432,8 +3428,7 @@
       "on": "تشغيل",
       "off": "إيقاف",
       "termsRequired": "يجب على مسؤول الصفحة قبول شروط جهات اتصال صفحة Facebook:"
-    },
-    "selectFacebookPage": "اختيار صفحة Facebook"
+    }
   },
   "omnichannel": {
     "title": "متعدد القنوات"
@@ -3522,10 +3517,6 @@
     "deepseek": {
       "description": "وصف تكامل DeepSeek",
       "title": "تكامل DeepSeek"
-    },
-    "aiTriggers": {
-      "description": "وصف مشغّلات الذكاء الاصطناعي",
-      "title": "مشغّلات الذكاء الاصطناعي"
     }
   },
   "auth": {
@@ -3669,14 +3660,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "لم يتم العثور على إعدادات تطبيق WhatsApp.",
-        "wabaResolveFailed": "تعذّر تحديد حساب WhatsApp Business من التفويض.",
-        "accessTokenRequired": "رمز وصول WhatsApp مطلوب.",
-        "failedToPersistIntegration": "تعذّر حفظ تكامل WhatsApp.",
-        "noPhoneNumberFound": "لم يتم العثور على رقم هاتف WhatsApp.",
-        "noPhoneNumbersFound": "لم يتم العثور على أرقام هاتف لحساب WhatsApp Business هذا.",
-        "phoneNumberNotFound": "لم يتم العثور على رقم هاتف WhatsApp المحدد.",
-        "unableToVerifyToken": "تعذّر التحقق من رمز WhatsApp.",
-        "wabaMismatch": "حساب WhatsApp Business المحدد لا يطابق التفويض."
+        "wabaResolveFailed": "تعذّر تحديد حساب WhatsApp Business من التفويض."
       }
     },
     "reconnect": {
@@ -3911,13 +3895,6 @@
       "tryAgain": "محاولة إعادة الاتصال"
     },
     "manualAppSecretMissingNotice": "لن يتم التحقق من توقيعات webhook حتى تضيف سر تطبيق Meta الخاص بك.",
-    "signupSessionExpired": "انتهت صلاحية جلسة تسجيل WhatsApp. يُرجى بدء الاتصال من جديد.",
-    "capi": {
-      "automaticEvents": {
-        "title": "الأحداث التلقائية",
-        "description": "أرسل أحداث التحويل من رقم واتساب هذا إلى Meta تلقائيًا. إذا كان الإذن مفقودًا، فأعد ربط الحساب لمنحه."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "وصف القواعد",
       "openerTags": "وسم جهات الاتصال التي تفتح رابط اللعبة",
       "playerTags": "وسم اللاعبين",
-      "newFriendTags": "وسم الأصدقاء الجدد",
-      "shareEnabled": "السماح بالمشاركة مع الأصدقاء",
-      "shareMessage": "رسالة المشاركة",
-      "shareMessageHint": "استخدم '{{shareUrl}}' لإدراج رابط اللعبة الفعلي — يُرجى عدم إزالته."
+      "newFriendTags": "وسم الأصدقاء الجدد"
     },
     "appearance": {
       "backgroundColor": "لون الخلفية",

@@ -2191,9 +2191,6 @@
       "label": "Meta App Secret (valgfrit)",
       "description": "Aktiverer webhook-signaturverificering for denne manuelle forbindelse. Find den i din Meta-apps dashboard under Indstillinger > Grundlæggende."
     },
-    "aiTrigger": {
-      "label": "AI Trigger"
-    },
     "lastCallRecorded": {
       "label": "Seneste opkaldsoptagelse"
     },
@@ -3000,8 +2997,7 @@
     "setting": {
       "label": "Make",
       "description": "Forbind din Make.com konto til send hændelser fra din flows og modtag kontakt data through Make scenarios.",
-      "notConfigured": "Nej Make invite link found. Venligst tilføj one i Platform Indstillinger.",
-      "noWorkspaceToken": "Nej Developer Access Token found for denne arbejdsområde. Generér one i den Arbejdsområde token section above, then click Forbind again."
+      "notConfigured": "Nej Make invite link found. Venligst tilføj one i Platform Indstillinger."
     }
   },
   "integrations": {
@@ -3432,8 +3428,7 @@
       "on": "På",
       "off": "Off",
       "termsRequired": "Page administrator must accept den Facebook Page Kontakt Terms:"
-    },
-    "selectFacebookPage": "Vælg Facebook Page"
+    }
   },
   "omnichannel": {
     "title": "Omnichannel"
@@ -3522,10 +3517,6 @@
     "deepseek": {
       "description": "DeepSeek integration beskrivelse",
       "title": "DeepSeek Integration"
-    },
-    "aiTriggers": {
-      "description": "AI Triggers beskrivelse",
-      "title": "AI Triggers"
     }
   },
   "auth": {
@@ -3669,14 +3660,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "WhatsApp app indstillinger were ikke found.",
-        "wabaResolveFailed": "Could ikke resolve den WhatsApp Business Konto fra den authorization.",
-        "accessTokenRequired": "WhatsApp access token er påkrævet.",
-        "failedToPersistIntegration": "Mislykkedes til gem den WhatsApp integration.",
-        "noPhoneNumberFound": "Ingen WhatsApp telefon nummer var found.",
-        "noPhoneNumbersFound": "Ingen telefon numbers were found for denne WhatsApp Business Konto.",
-        "phoneNumberNotFound": "Selected WhatsApp telefon nummer var ikke found.",
-        "unableToVerifyToken": "Unable til verify den WhatsApp token.",
-        "wabaMismatch": "Selected WhatsApp Business Konto does ikke match den authorization."
+        "wabaResolveFailed": "Could ikke resolve den WhatsApp Business Konto fra den authorization."
       }
     },
     "reconnect": {
@@ -3911,13 +3895,6 @@
       "tryAgain": "Try reconnecting"
     },
     "manualAppSecretMissingNotice": "Webhook-signaturer bliver ikke verificeret, før du tilføjer din Meta App Secret.",
-    "signupSessionExpired": "Din WhatsApp signup session har udløbet. Venligst start den forbindelse igen.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automatiske hændelser",
-        "description": "Send automatisk konverteringshændelser fra dette WhatsApp-nummer til Meta. Hvis tilladelsen mangler, skal du gentilslutte kontoen for at give den."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Regelbeskrivelse",
       "openerTags": "Tag kontakter, der åbner spillinket",
       "playerTags": "Tag spillere",
-      "newFriendTags": "Tag nye venner",
-      "shareEnabled": "Tillad deling med venner",
-      "shareMessage": "Delingsbesked",
-      "shareMessageHint": "Brug '{{shareUrl}}' til at indsætte det faktiske spillink — fjern det venligst ikke."
+      "newFriendTags": "Tag nye venner"
     },
     "appearance": {
       "backgroundColor": "Baggrundsfarve",

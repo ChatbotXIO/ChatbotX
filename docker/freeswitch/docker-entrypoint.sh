@@ -64,7 +64,45 @@ seed_config_on_first_boot() {
   # 2) our deltas on top — never the reverse, so a file we don't ship keeps
   #    the vanilla default.
   cp -r "${CONF_DELTA_DIR}"/. "$CONF_DIR"/
+  # 3) drop vanilla's default SIP profiles: sofia.conf.xml auto-includes every
+  #    sip_profiles/*.xml, so leaving the stock internal/external profiles in
+  #    place would start them alongside ours (binding 5060/5080 for nothing).
+  #    This image serves only the `whatsapp` and `agents` profiles.
+  rm -f "$CONF_DIR"/sip_profiles/internal.xml \
+        "$CONF_DIR"/sip_profiles/internal-ipv6.xml \
+        "$CONF_DIR"/sip_profiles/external.xml \
+        "$CONF_DIR"/sip_profiles/external-ipv6.xml
+  rm -rf "$CONF_DIR"/sip_profiles/external "$CONF_DIR"/sip_profiles/external-ipv6
   touch "$FIRST_BOOT_MARKER"
+}
+
+ensure_tls_cert() {
+  # The whatsapp (TLS) and agents (WSS) profiles read wss.pem from
+  # `tls-cert-dir` (/etc/freeswitch/certs). Production mounts a real
+  # certificate there (FS_CERTS_DIR in docker-compose.yml); when nothing is
+  # mounted — local dev — sofia fails every TLS/WSS profile with "Bad WSS.PEM
+  # certificate" and no SIP transport comes up. Generate a self-signed pair so
+  # the stack is functional out of the box; a mounted real cert is left
+  # untouched (we only generate when wss.pem is absent).
+  local certs_dir="${CONF_DIR}/certs"
+  local pem="${certs_dir}/wss.pem"
+  mkdir -p "$certs_dir"
+  if [ -s "$pem" ]; then
+    return 0
+  fi
+  local key crt
+  key="$(mktemp)"
+  crt="$(mktemp)"
+  openssl req -x509 -newkey rsa:2048 -nodes \
+    -keyout "$key" -out "$crt" -days 3650 \
+    -subj "/CN=${FS_SIP_DOMAIN:-fs.localhost}" >/dev/null 2>&1
+  # FreeSWITCH wants the private key and certificate concatenated in one PEM;
+  # agent.pem is the TLS server cert, wss.pem the WSS listener cert — same
+  # self-signed pair locally.
+  cat "$key" "$crt" > "$pem"
+  cat "$key" "$crt" > "${certs_dir}/agent.pem"
+  rm -f "$key" "$crt"
+  chmod 600 "$pem" "${certs_dir}/agent.pem"
 }
 
 raise_fd_limit() {
@@ -87,6 +125,7 @@ main() {
 
   seed_config_on_first_boot
   render_generated_vars
+  ensure_tls_cert
   raise_fd_limit
 
   chown -R freeswitch:freeswitch "$CONF_DIR" /var/run/freeswitch /var/lib/freeswitch /var/log/freeswitch 2>/dev/null || true

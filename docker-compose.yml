@@ -154,7 +154,12 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD", "fs_cli", "-x", "status"]
+      # fs_cli must send our ESL password (event_socket.conf.xml sets it from
+      # FS_ESL_PASSWORD, never the vanilla "ClueCon" default); a bare
+      # `fs_cli -x status` sends ClueCon, is rejected, and reports unhealthy
+      # while FreeSWITCH is actually UP. CMD-SHELL + `$$` so the shell expands
+      # the container's FS_ESL_PASSWORD at runtime (not compose interpolation).
+      test: ["CMD-SHELL", "fs_cli -p \"$$FS_ESL_PASSWORD\" -x status | grep -q '^UP'"]
       interval: 15s
       timeout: 5s
       retries: 5

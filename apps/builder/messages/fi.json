@@ -2191,9 +2191,6 @@
       "label": "Meta-sovelluksen salaisuus (valinnainen)",
       "description": "Ottaa käyttöön webhook-allekirjoituksen varmistuksen tälle manuaaliselle yhteydelle. Löydät sen Meta-sovelluksesi hallintapaneelista kohdasta Asetukset > Perustiedot."
     },
-    "aiTrigger": {
-      "label": "AI-käynnistin"
-    },
     "lastCallRecorded": {
       "label": "Viimeisin puhelutallenne"
     },
@@ -3000,8 +2997,7 @@
     "setting": {
       "label": "Make",
       "description": "Yhdistä Make.com-tilisi lähettääksesi tapahtumia flow'istasi ja vastaanottaaksesi yhteystietoja Make-skenaarioiden kautta.",
-      "notConfigured": "Make-kutsulinkkiä ei löytynyt. Lisää se alusta-asetuksissa.",
-      "noWorkspaceToken": "Tälle työtilalle ei löytynyt kehittäjän käyttöoikeustunnusta. Luo tunnus yllä olevassa Työtilan tunnus -osiossa ja napsauta sitten Yhdistä uudelleen."
+      "notConfigured": "Make-kutsulinkkiä ei löytynyt. Lisää se alusta-asetuksissa."
     }
   },
   "integrations": {
@@ -3432,8 +3428,7 @@
       "on": "Käytössä",
       "off": "Ei käytössä",
       "termsRequired": "Sivun ylläpitäjän on hyväksyttävä Facebook-sivun yhteystietoehdot:"
-    },
-    "selectFacebookPage": "Valitse Facebook-sivu"
+    }
   },
   "omnichannel": {
     "title": "Monikanavainen"
@@ -3522,10 +3517,6 @@
     "deepseek": {
       "description": "DeepSeek-integraation kuvaus",
       "title": "DeepSeek-integraatio"
-    },
-    "aiTriggers": {
-      "description": "AI-käynnistimien kuvaus",
-      "title": "AI-käynnistimet"
     }
   },
   "auth": {
@@ -3669,14 +3660,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "WhatsApp-sovelluksen asetuksia ei löytynyt.",
-        "wabaResolveFailed": "WhatsApp Business -tiliä ei voitu selvittää valtuutuksesta.",
-        "accessTokenRequired": "WhatsApp-käyttöoikeustunnus vaaditaan.",
-        "failedToPersistIntegration": "WhatsApp-integraation tallentaminen epäonnistui.",
-        "noPhoneNumberFound": "WhatsApp-puhelinnumeroa ei löytynyt.",
-        "noPhoneNumbersFound": "Tälle WhatsApp Business -tilille ei löytynyt puhelinnumeroita.",
-        "phoneNumberNotFound": "Valittua WhatsApp-puhelinnumeroa ei löytynyt.",
-        "unableToVerifyToken": "WhatsApp-tunnusta ei voitu vahvistaa.",
-        "wabaMismatch": "Valittu WhatsApp Business -tili ei vastaa valtuutusta."
+        "wabaResolveFailed": "WhatsApp Business -tiliä ei voitu selvittää valtuutuksesta."
       }
     },
     "reconnect": {
@@ -3911,13 +3895,6 @@
       "tryAgain": "Yritä yhdistää uudelleen"
     },
     "manualAppSecretMissingNotice": "Webhook-allekirjoituksia ei vahvisteta, ennen kuin lisäät Meta-sovelluksen salaisuuden.",
-    "signupSessionExpired": "WhatsApp-rekisteröinti-istuntosi on vanhentunut. Aloita yhdistäminen uudelleen.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automaattiset tapahtumat",
-        "description": "Lähetä konversiotapahtumat tästä WhatsApp-numerosta automaattisesti Metalle. Jos lupa puuttuu, yhdistä tili uudelleen myöntääksesi sen."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Sääntöjen kuvaus",
       "openerTags": "Merkitse kontaktit, jotka avaavat pelin linkin",
       "playerTags": "Merkitse pelaajat",
-      "newFriendTags": "Merkitse uudet ystävät",
-      "shareEnabled": "Salli jakaminen ystävien kanssa",
-      "shareMessage": "Jakoviesti",
-      "shareMessageHint": "Käytä merkintää '{{shareUrl}}' lisätäksesi todellisen pelilinkin — älä poista sitä."
+      "newFriendTags": "Merkitse uudet ystävät"
     },
     "appearance": {
       "backgroundColor": "Taustaväri",

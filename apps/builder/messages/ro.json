@@ -798,8 +798,7 @@
     "setting": {
       "label": "Make",
       "description": "Conectați contul Make.com pentru a trimite evenimente din fluxuri și a primi date despre contacte prin scenarii Make.",
-      "notConfigured": "Nu a fost găsit niciun link de invitație Make. Adăugați unul în Setările platformei.",
-      "noWorkspaceToken": "Nu a fost găsit niciun token de acces pentru dezvoltatori pentru acest spațiu de lucru. Generați unul în secțiunea pentru tokenul spațiului de lucru de mai sus, apoi apăsați din nou pe Conectare."
+      "notConfigured": "Nu a fost găsit niciun link de invitație Make. Adăugați unul în Setările platformei."
     }
   },
   "integrations": {
@@ -3018,9 +3017,6 @@
       "label": "Secretul aplicației Meta (opțional)",
       "description": "Activează verificarea semnăturii webhook pentru această conexiune manuală. Îl găsești în tabloul de bord al aplicației Meta, la Setări > De bază."
     },
-    "aiTrigger": {
-      "label": "Declanșator AI"
-    },
     "lastCallRecorded": {
       "label": "Ultima înregistrare a apelului"
     },
@@ -3432,8 +3428,7 @@
       "on": "Pornit",
       "off": "Oprit",
       "termsRequired": "Administratorul paginii trebuie să accepte Termenii de contact ai paginii Facebook:"
-    },
-    "selectFacebookPage": "Selectează pagina Facebook"
+    }
   },
   "omnichannel": {
     "title": "Omnichannel"
@@ -3522,10 +3517,6 @@
     "deepseek": {
       "description": "Descrierea integrării DeepSeek",
       "title": "Integrare DeepSeek"
-    },
-    "aiTriggers": {
-      "description": "Descrierea declanșatoarelor IA",
-      "title": "Declanșatoare IA"
     }
   },
   "auth": {
@@ -3669,14 +3660,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "Setările aplicației WhatsApp nu au fost găsite.",
-        "wabaResolveFailed": "Contul WhatsApp Business nu a putut fi determinat din autorizație.",
-        "accessTokenRequired": "Tokenul de acces WhatsApp este necesar.",
-        "failedToPersistIntegration": "Salvarea integrării WhatsApp a eșuat.",
-        "noPhoneNumberFound": "Nu a fost găsit niciun număr de telefon WhatsApp.",
-        "noPhoneNumbersFound": "Nu au fost găsite numere de telefon pentru acest Cont WhatsApp Business.",
-        "phoneNumberNotFound": "Numărul de telefon WhatsApp selectat nu a fost găsit.",
-        "unableToVerifyToken": "Tokenul WhatsApp nu a putut fi verificat.",
-        "wabaMismatch": "Contul WhatsApp Business selectat nu corespunde autorizației."
+        "wabaResolveFailed": "Contul WhatsApp Business nu a putut fi determinat din autorizație."
       }
     },
     "reconnect": {
@@ -3911,13 +3895,6 @@
       "tryAgain": "Încearcă să te reconectezi"
     },
     "manualAppSecretMissingNotice": "Semnăturile webhook nu sunt verificate până când adaugi secretul aplicației Meta.",
-    "signupSessionExpired": "Sesiunea ta de înregistrare WhatsApp a expirat. Te rugăm să începi din nou conectarea.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Evenimente Automate",
-        "description": "Trimite automat evenimente de conversie de la acest număr WhatsApp către Meta. Dacă lipsește permisiunea, reconectează contul pentru a o acorda."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Descrierea regulilor",
       "openerTags": "Etichetează contactele care deschid linkul jocului",
       "playerTags": "Etichetează jucătorii",
-      "newFriendTags": "Etichetează prietenii noi",
-      "shareEnabled": "Permite distribuirea către prieteni",
-      "shareMessage": "Mesaj de distribuire",
-      "shareMessageHint": "Folosește '{{shareUrl}}' pentru a introduce linkul real al jocului — te rugăm să nu îl elimini."
+      "newFriendTags": "Etichetează prietenii noi"
     },
     "appearance": {
       "backgroundColor": "Culoare fundal",

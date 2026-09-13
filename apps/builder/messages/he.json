@@ -1090,8 +1090,7 @@
     "setting": {
       "label": "Make",
       "description": "חברו את חשבון Make.com שלכם כדי לשלוח אירועים מהתהליכים ולקבל נתוני אנשי קשר באמצעות תרחישי Make.",
-      "notConfigured": "לא נמצא קישור הזמנה ל-Make. הוסיפו קישור בהגדרות הפלטפורמה.",
-      "noWorkspaceToken": "לא נמצא אסימון גישה למפתחים עבור סביבת עבודה זו. צרו אסימון במקטע אסימון סביבת העבודה שלמעלה, ולאחר מכן לחצו שוב על חיבור."
+      "notConfigured": "לא נמצא קישור הזמנה ל-Make. הוסיפו קישור בהגדרות הפלטפורמה."
     }
   },
   "integrations": {
@@ -1496,8 +1495,7 @@
       "on": "מופעל",
       "off": "כבוי",
       "termsRequired": "מנהל הדף חייב לאשר את התנאים לאנשי קשר בדף Facebook:"
-    },
-    "selectFacebookPage": "בחירת דף Facebook"
+    }
   },
   "coexist": {
     "title": "לסנכרן אנשי קשר קיימים והיסטוריית צ'אט?",
@@ -1612,10 +1610,6 @@
     "deepseek": {
       "description": "תיאור שילוב DeepSeek",
       "title": "שילוב DeepSeek"
-    },
-    "aiTriggers": {
-      "description": "תיאור גורמים מפעילים של AI",
-      "title": "גורמים מפעילים של AI"
     }
   },
   "auth": {
@@ -1759,14 +1753,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "הגדרות אפליקציית WhatsApp לא נמצאו.",
-        "wabaResolveFailed": "לא ניתן היה לזהות את חשבון WhatsApp Business מתוך ההרשאה.",
-        "accessTokenRequired": "נדרש אסימון גישה של WhatsApp.",
-        "failedToPersistIntegration": "שמירת השילוב עם WhatsApp נכשלה.",
-        "noPhoneNumberFound": "לא נמצא מספר טלפון של WhatsApp.",
-        "noPhoneNumbersFound": "לא נמצאו מספרי טלפון עבור חשבון WhatsApp Business זה.",
-        "phoneNumberNotFound": "מספר הטלפון שנבחר ב-WhatsApp לא נמצא.",
-        "unableToVerifyToken": "לא ניתן לאמת את אסימון WhatsApp.",
-        "wabaMismatch": "חשבון WhatsApp Business שנבחר אינו תואם להרשאה."
+        "wabaResolveFailed": "לא ניתן היה לזהות את חשבון WhatsApp Business מתוך ההרשאה."
       }
     },
     "reconnect": {
@@ -2001,13 +1988,6 @@
       "tryAgain": "ניסיון חיבור מחדש"
     },
     "manualAppSecretMissingNotice": "חתימות ה-webhook לא מאומתות עד שתוסיף את סוד אפליקציית Meta שלך.",
-    "signupSessionExpired": "פג תוקף הפעלת ההרשמה ל-WhatsApp. התחילו את החיבור מחדש.",
-    "capi": {
-      "automaticEvents": {
-        "title": "אירועים אוטומטיים",
-        "description": "שלח אירועי המרה ממספר וואטסאפ זה אל Meta באופן אוטומטי. אם ההרשאה חסרה, חבר מחדש את החשבון כדי להעניק אותה."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -4996,9 +4976,6 @@
       "label": "סוד אפליקציית Meta (אופציונלי)",
       "description": "מפעיל אימות חתימת webhook לחיבור הידני הזה. ניתן למצוא אותו בלוח הבקרה של אפליקציית Meta שלך, בהגדרות > בסיסי."
     },
-    "aiTrigger": {
-      "label": "גורם מפעיל של AI"
-    },
     "lastCallRecorded": {
       "label": "הקלטת השיחה האחרונה"
     },
@@ -5975,10 +5952,7 @@
       "rulesDescription": "תיאור החוקים",
       "openerTags": "תיוג אנשי קשר שפותחים את קישור המשחק",
       "playerTags": "תיוג שחקנים",
-      "newFriendTags": "תיוג חברים חדשים",
-      "shareEnabled": "אפשרו שיתוף עם חברים",
-      "shareMessage": "הודעת שיתוף",
-      "shareMessageHint": "השתמשו ב-'{{shareUrl}}' כדי להוסיף את קישור המשחק בפועל — נא לא להסיר אותו."
+      "newFriendTags": "תיוג חברים חדשים"
     },
     "appearance": {
       "backgroundColor": "צבע רקע",

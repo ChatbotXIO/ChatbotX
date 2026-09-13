@@ -1464,9 +1464,6 @@
       "label": "Meta 應用程式密鑰（選填）",
       "description": "為此手動連接啟用 webhook 簽章驗證。您可以在 Meta 應用程式的儀表板中的「設定 > 基本」找到它。"
     },
-    "aiTrigger": {
-      "label": "人工智慧觸發器"
-    },
     "lastCallRecorded": {
       "label": "最近通話錄音"
     },
@@ -3308,8 +3305,7 @@
     "setting": {
       "label": "Make.com",
       "description": "連接您的 Make.com 帳戶，以便從流程傳送事件，並透過 Make 情境接收聯絡人資料。",
-      "notConfigured": "找不到邀請連結。請在平台設定新增一個。",
-      "noWorkspaceToken": "找不到此工作區的開發人員存取權杖。在上面的工作區權杖部分產生一個，然後再按一下連接。"
+      "notConfigured": "找不到邀請連結。請在平台設定新增一個。"
     }
   },
   "integrations": {
@@ -3465,8 +3461,7 @@
       "on": "開啟",
       "off": "關閉",
       "termsRequired": "頁面管理員必須接受Facebook頁聯絡人條款："
-    },
-    "selectFacebookPage": "選擇Facebook 頁"
+    }
   },
   "omnichannel": {
     "title": "全通路"
@@ -3555,10 +3550,6 @@
     "deepseek": {
       "description": "DeepSeek 整合說明",
       "title": "DeepSeek整合"
-    },
-    "aiTriggers": {
-      "description": "人工智慧觸發器描述",
-      "title": "人工智慧觸發器"
     }
   },
   "auth": {
@@ -3702,14 +3693,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "WhatsApp應用程式設定。",
-        "wabaResolveFailed": "無法從授權解析WhatsApp 企業帳號。",
-        "accessTokenRequired": "必須提供 WhatsApp Access Token。",
-        "failedToPersistIntegration": "無法儲存WhatsApp 整合。",
-        "noPhoneNumberFound": "找不到 WhatsApp 電話號碼。",
-        "noPhoneNumbersFound": "找不到此 WhatsApp 企業帳戶的電話號碼。",
-        "phoneNumberNotFound": "所選WhatsApp 電話號碼找不到。",
-        "unableToVerifyToken": "無法驗證WhatsApp 權杖。",
-        "wabaMismatch": "所選WhatsApp 企業帳戶與授權不符。"
+        "wabaResolveFailed": "無法從授權解析WhatsApp 企業帳號。"
       }
     },
     "reconnect": {
@@ -3944,13 +3928,6 @@
       "tryAgain": "嘗試重新連接"
     },
     "manualAppSecretMissingNotice": "在您新增 Meta 應用程式密鑰之前，webhook 簽章將不會被驗證。",
-    "signupSessionExpired": "您的WhatsApp註冊會話已過期。請重新開始連線。",
-    "capi": {
-      "automaticEvents": {
-        "title": "自動事件",
-        "description": "自動將此 WhatsApp 號碼的轉換事件傳送到 Meta。如果缺少權限,請重新連接帳號以授予權限。"
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "規則說明",
       "openerTags": "為開啟遊戲連結的聯絡人加上標籤",
       "playerTags": "為參與者加上標籤",
-      "newFriendTags": "為新朋友加上標籤",
-      "shareEnabled": "允許與朋友分享",
-      "shareMessage": "分享訊息",
-      "shareMessageHint": "使用 '{{shareUrl}}' 插入實際的遊戲連結，請勿移除。"
+      "newFriendTags": "為新朋友加上標籤"
     },
     "appearance": {
       "backgroundColor": "背景顏色",

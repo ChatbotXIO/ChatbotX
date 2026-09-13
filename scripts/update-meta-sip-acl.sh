@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerates docker/freeswitch/conf/autoload_configs/meta_sip_ranges.xml
+# Regenerates docker/freeswitch/conf/acl/meta_sip_ranges.xml
 # from the live AS32934 (Meta) route table.
 #
 # Source: Meta's SIP configuration doc says the SIP allowlist "uses the
@@ -14,7 +14,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUT_FILE="${ROOT_DIR}/docker/freeswitch/conf/autoload_configs/meta_sip_ranges.xml"
+OUT_FILE="${ROOT_DIR}/docker/freeswitch/conf/acl/meta_sip_ranges.xml"
 
 if ! command -v whois >/dev/null 2>&1; then
   echo "error: 'whois' is required (brew install whois / apt-get install whois)" >&2

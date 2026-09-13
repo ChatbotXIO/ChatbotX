@@ -91,6 +91,7 @@ RUN --mount=type=secret,id=signalwire_token,required=false \
   && apt-get -qq update \
   && apt-get install -y --no-install-recommends \
     "freeswitch-meta-vanilla=${FREESWITCH_VERSION}*" \
+    "freeswitch-conf-vanilla=${FREESWITCH_VERSION}*" \
     "freeswitch-mod-opus=${FREESWITCH_VERSION}*" \
     "freeswitch-mod-event-socket=${FREESWITCH_VERSION}*" \
     "freeswitch-mod-xml-curl=${FREESWITCH_VERSION}*" \
@@ -118,8 +119,14 @@ EXPOSE 16384-32768/udp
 VOLUME ["/etc/freeswitch"]
 VOLUME ["/tmp"]
 
+# fs_cli must authenticate with our ESL password (event_socket.conf.xml sets
+# it from FS_ESL_PASSWORD, never the vanilla "ClueCon" default), so the
+# healthcheck passes it explicitly — a bare `fs_cli -x status` would send
+# ClueCon, be rejected, and report the container unhealthy while FreeSWITCH
+# is actually UP. Shell form so $FS_ESL_PASSWORD expands from the container
+# env.
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s \
-  CMD fs_cli -x status | grep -q "^UP" || exit 1
+  CMD fs_cli -p "$FS_ESL_PASSWORD" -x status | grep -q "^UP" || exit 1
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["freeswitch"]

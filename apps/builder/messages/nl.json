@@ -2004,9 +2004,6 @@
       "label": "Meta App-geheim (optioneel)",
       "description": "Schakelt webhook-handtekeningverificatie in voor deze handmatige verbinding. Te vinden in het dashboard van je Meta-app onder Instellingen > Algemeen."
     },
-    "aiTrigger": {
-      "label": "AI-trigger"
-    },
     "lastCallRecorded": {
       "label": "Laatste gespreksopname"
     },
@@ -3000,8 +2997,7 @@
     "setting": {
       "label": "Make",
       "description": "Koppel je Make.com-account om gebeurtenissen vanuit je flows te verzenden en contactgegevens via Make-scenario's te ontvangen.",
-      "notConfigured": "Geen Make-uitnodigingslink gevonden. Voeg er een toe in Platforminstellingen.",
-      "noWorkspaceToken": "Geen Developer Access Token gevonden voor deze workspace. Genereer er een in het gedeelte voor workspacetokens hierboven en klik daarna opnieuw op Verbinden."
+      "notConfigured": "Geen Make-uitnodigingslink gevonden. Voeg er een toe in Platforminstellingen."
     }
   },
   "integrations": {
@@ -3432,8 +3428,7 @@
       "on": "Aan",
       "off": "Uit",
       "termsRequired": "De paginabeheerder moet de voorwaarden voor Facebook-paginacontacten accepteren:"
-    },
-    "selectFacebookPage": "Facebook-pagina selecteren"
+    }
   },
   "omnichannel": {
     "title": "Omnichannel"
@@ -3522,10 +3517,6 @@
     "deepseek": {
       "description": "Beschrijving van de DeepSeek-integratie",
       "title": "DeepSeek-integratie"
-    },
-    "aiTriggers": {
-      "description": "Beschrijving van AI-triggers",
-      "title": "AI-triggers"
     }
   },
   "auth": {
@@ -3669,14 +3660,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "De WhatsApp-appinstellingen zijn niet gevonden.",
-        "wabaResolveFailed": "Het WhatsApp Business-account kon niet uit de autorisatie worden bepaald.",
-        "accessTokenRequired": "Een WhatsApp-toegangstoken is vereist.",
-        "failedToPersistIntegration": "Opslaan van de WhatsApp-integratie is mislukt.",
-        "noPhoneNumberFound": "Er is geen WhatsApp-telefoonnummer gevonden.",
-        "noPhoneNumbersFound": "Er zijn geen telefoonnummers gevonden voor dit WhatsApp Business-account.",
-        "phoneNumberNotFound": "Het geselecteerde WhatsApp-telefoonnummer is niet gevonden.",
-        "unableToVerifyToken": "Het WhatsApp-token kan niet worden geverifieerd.",
-        "wabaMismatch": "Het geselecteerde WhatsApp Business-account komt niet overeen met de autorisatie."
+        "wabaResolveFailed": "Het WhatsApp Business-account kon niet uit de autorisatie worden bepaald."
       }
     },
     "reconnect": {
@@ -3911,13 +3895,6 @@
       "tryAgain": "Probeer opnieuw te koppelen"
     },
     "manualAppSecretMissingNotice": "Webhook-handtekeningen worden niet gecontroleerd totdat je je Meta App-geheim toevoegt.",
-    "signupSessionExpired": "Je WhatsApp-registratiesessie is verlopen. Start de koppeling opnieuw.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automatische events",
-        "description": "Verstuur conversiegebeurtenissen van dit WhatsApp-nummer automatisch naar Meta. Ontbreekt de machtiging, verbind het account dan opnieuw om deze te verlenen."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Spelregels",
       "openerTags": "Tag contacten die de spellink openen",
       "playerTags": "Tag spelers",
-      "newFriendTags": "Tag nieuwe vrienden",
-      "shareEnabled": "Delen met vrienden toestaan",
-      "shareMessage": "Deelbericht",
-      "shareMessageHint": "Gebruik '{{shareUrl}}' om de daadwerkelijke spellink in te voegen — verwijder dit niet."
+      "newFriendTags": "Tag nieuwe vrienden"
     },
     "appearance": {
       "backgroundColor": "Achtergrondkleur",

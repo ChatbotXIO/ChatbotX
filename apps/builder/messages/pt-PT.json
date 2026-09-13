@@ -2191,9 +2191,6 @@
       "label": "Segredo da aplicação Meta (opcional)",
       "description": "Ativa a verificação da assinatura do webhook para esta ligação manual. Encontra-o no painel da tua aplicação Meta em Definições > Básico."
     },
-    "aiTrigger": {
-      "label": "Acionador de IA"
-    },
     "lastCallRecorded": {
       "label": "Última gravação de chamada"
     },
@@ -3000,8 +2997,7 @@
     "setting": {
       "label": "Make",
       "description": "Ligue a sua conta Make.com para enviar eventos a partir dos seus fluxos e receber dados de contactos através de cenários do Make.",
-      "notConfigured": "Não foi encontrada nenhuma ligação de convite do Make. Adicione uma nas definições da plataforma.",
-      "noWorkspaceToken": "Não foi encontrado nenhum token de acesso de programador para este espaço de trabalho. Gere um na secção de tokens do espaço de trabalho acima e, em seguida, clique novamente em Ligar."
+      "notConfigured": "Não foi encontrada nenhuma ligação de convite do Make. Adicione uma nas definições da plataforma."
     }
   },
   "integrations": {
@@ -3432,8 +3428,7 @@
       "on": "Ativada",
       "off": "Desativada",
       "termsRequired": "O administrador da Página tem de aceitar os Termos de Contactos de Páginas do Facebook:"
-    },
-    "selectFacebookPage": "Selecionar Página do Facebook"
+    }
   },
   "omnichannel": {
     "title": "Omnicanal"
@@ -3522,10 +3517,6 @@
     "deepseek": {
       "description": "Descrição da integração DeepSeek",
       "title": "Integração DeepSeek"
-    },
-    "aiTriggers": {
-      "description": "Descrição dos acionadores de IA",
-      "title": "Acionadores de IA"
     }
   },
   "auth": {
@@ -3669,14 +3660,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "As definições da aplicação do WhatsApp não foram encontradas.",
-        "wabaResolveFailed": "Não foi possível identificar a conta do WhatsApp Business a partir da autorização.",
-        "accessTokenRequired": "O token de acesso do WhatsApp é obrigatório.",
-        "failedToPersistIntegration": "Não foi possível guardar a integração com o WhatsApp.",
-        "noPhoneNumberFound": "Não foi encontrado nenhum número de telefone do WhatsApp.",
-        "noPhoneNumbersFound": "Não foram encontrados números de telefone para esta conta do WhatsApp Business.",
-        "phoneNumberNotFound": "O número de telefone do WhatsApp selecionado não foi encontrado.",
-        "unableToVerifyToken": "Não foi possível verificar o token do WhatsApp.",
-        "wabaMismatch": "A conta do WhatsApp Business selecionada não corresponde à autorização."
+        "wabaResolveFailed": "Não foi possível identificar a conta do WhatsApp Business a partir da autorização."
       }
     },
     "reconnect": {
@@ -3911,13 +3895,6 @@
       "tryAgain": "Tentar ligar novamente"
     },
     "manualAppSecretMissingNotice": "As assinaturas de webhook não são verificadas até adicionares o teu Segredo da Aplicação Meta.",
-    "signupSessionExpired": "A sua sessão de registo no WhatsApp expirou. Inicie novamente a ligação.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Eventos Automáticos",
-        "description": "Envie automaticamente eventos de conversão deste número de WhatsApp para a Meta. Se a permissão estiver em falta, volte a ligar a conta para a conceder."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Descrição das Regras",
       "openerTags": "Etiquetar contactos que abrirem a ligação do jogo",
       "playerTags": "Etiquetar jogadores",
-      "newFriendTags": "Etiquetar novos amigos",
-      "shareEnabled": "Permitir partilha com amigos",
-      "shareMessage": "Mensagem de Partilha",
-      "shareMessageHint": "Utilize '{{shareUrl}}' para inserir a ligação real do jogo — não a remova."
+      "newFriendTags": "Etiquetar novos amigos"
     },
     "appearance": {
       "backgroundColor": "Cor de Fundo",

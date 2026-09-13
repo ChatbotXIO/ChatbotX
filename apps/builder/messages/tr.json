@@ -2328,9 +2328,6 @@
       "label": "Meta Uygulama Gizli Anahtarı (isteğe bağlı)",
       "description": "Bu manuel bağlantı için webhook imza doğrulamasını etkinleştirir. Meta Uygulaması panonuzda Ayarlar > Temel altında bulabilirsiniz."
     },
-    "aiTrigger": {
-      "label": "Yapay Zekâ Tetikleyicisi"
-    },
     "lastCallRecorded": {
       "label": "Son arama kaydı"
     },
@@ -3137,8 +3134,7 @@
     "setting": {
       "label": "Make",
       "description": "Akışlarınızdan olay göndermek ve Make senaryoları aracılığıyla kişi verileri almak için Make.com hesabınızı bağlayın.",
-      "notConfigured": "Make davet bağlantısı bulunamadı. Lütfen Platform Ayarları'na bir tane ekleyin.",
-      "noWorkspaceToken": "Bu çalışma alanı için Geliştirici Erişim Belirteci bulunamadı. Yukarıdaki Çalışma Alanı belirteci bölümünden bir tane oluşturun, ardından tekrar Bağlan'a tıklayın."
+      "notConfigured": "Make davet bağlantısı bulunamadı. Lütfen Platform Ayarları'na bir tane ekleyin."
     }
   },
   "integrations": {
@@ -3432,8 +3428,7 @@
       "on": "Açık",
       "off": "Kapalı",
       "termsRequired": "Sayfa yöneticisi Facebook Sayfa İletişim Koşullarını kabul etmelidir:"
-    },
-    "selectFacebookPage": "Facebook Sayfası Seç"
+    }
   },
   "omnichannel": {
     "title": "Çok Kanallı"
@@ -3522,10 +3517,6 @@
     "deepseek": {
       "description": "DeepSeek entegrasyonu açıklaması",
       "title": "DeepSeek Entegrasyonu"
-    },
-    "aiTriggers": {
-      "description": "Yapay Zeka Tetikleyicileri açıklaması",
-      "title": "Yapay Zeka Tetikleyicileri"
     }
   },
   "auth": {
@@ -3669,14 +3660,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "WhatsApp uygulama ayarları bulunamadı.",
-        "wabaResolveFailed": "Yetkilendirmeden WhatsApp Business Hesabı çözümlenemedi.",
-        "accessTokenRequired": "WhatsApp erişim token'ı gereklidir.",
-        "failedToPersistIntegration": "WhatsApp entegrasyonu kaydedilemedi.",
-        "noPhoneNumberFound": "WhatsApp telefon numarası bulunamadı.",
-        "noPhoneNumbersFound": "Bu WhatsApp Business Hesabı için telefon numarası bulunamadı.",
-        "phoneNumberNotFound": "Seçilen WhatsApp telefon numarası bulunamadı.",
-        "unableToVerifyToken": "WhatsApp token'ı doğrulanamıyor.",
-        "wabaMismatch": "Seçilen WhatsApp Business Hesabı yetkilendirmeyle eşleşmiyor."
+        "wabaResolveFailed": "Yetkilendirmeden WhatsApp Business Hesabı çözümlenemedi."
       }
     },
     "reconnect": {
@@ -3911,13 +3895,6 @@
       "tryAgain": "Yeniden bağlanmayı dene"
     },
     "manualAppSecretMissingNotice": "Meta Uygulama Gizli Anahtarınızı eklemeden webhook imzaları doğrulanmaz.",
-    "signupSessionExpired": "WhatsApp kayıt oturumunuzun süresi doldu. Lütfen bağlantıyı yeniden başlatın.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Otomatik Olaylar",
-        "description": "Bu WhatsApp numarasından dönüşüm etkinliklerini Meta’ya otomatik olarak gönderin. İzin eksikse, vermek için hesabı yeniden bağlayın."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Kural Açıklaması",
       "openerTags": "Oyun bağlantısını açan kişileri etiketle",
       "playerTags": "Oyuncuları etiketle",
-      "newFriendTags": "Yeni arkadaşları etiketle",
-      "shareEnabled": "Arkadaşlarla paylaşmaya izin ver",
-      "shareMessage": "Paylaşım Mesajı",
-      "shareMessageHint": "Gerçek oyun bağlantısını eklemek için '{{shareUrl}}' kullanın — lütfen kaldırmayın."
+      "newFriendTags": "Yeni arkadaşları etiketle"
     },
     "appearance": {
       "backgroundColor": "Arka Plan Rengi",

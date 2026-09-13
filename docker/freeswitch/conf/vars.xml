@@ -6,9 +6,13 @@
     else (sound_prefix, hold_music, presence_privacy, …) is inherited from
     the vanilla file the entrypoint copies first.
 
-    The `<X-PRE-PROCESS cmd="include" .../>` directive below is the same
+    The `X-PRE-PROCESS cmd="include" ...` directive below is the same
     one freeswitch.xml itself uses to pull in this file
-    (`<X-PRE-PROCESS cmd="include" data="vars.xml"/>`), so nesting a
+    (`X-PRE-PROCESS cmd="include" data="vars.xml"`), so nesting a
+    (The leading angle bracket is intentionally dropped in these prose
+    examples: FreeSWITCH's preprocessor is a raw text scanner that acts on
+    a literal X-PRE-PROCESS opening tag even inside an XML comment, which
+    would break config parsing.)
     generated include here is the documented mechanism for injecting
     runtime values, not a custom hack. The file is written by
     docker-entrypoint.sh from FS_* environment variables on every

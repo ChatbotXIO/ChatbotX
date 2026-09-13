@@ -2191,9 +2191,6 @@
       "label": "Rahasia Aplikasi Meta (opsional)",
       "description": "Mengaktifkan verifikasi tanda tangan webhook untuk koneksi manual ini. Temukan di dashboard Aplikasi Meta Anda di bagian Settings > Basic."
     },
-    "aiTrigger": {
-      "label": "Trigger AI"
-    },
     "lastCallRecorded": {
       "label": "Rekaman panggilan terakhir"
     },
@@ -3000,8 +2997,7 @@
     "setting": {
       "label": "Make",
       "description": "Hubungkan akun Make.com Anda untuk mengirim peristiwa dari alur dan menerima data kontak melalui skenario Make.",
-      "notConfigured": "Tautan undangan Make tidak ditemukan. Tambahkan tautan di Pengaturan Platform.",
-      "noWorkspaceToken": "Token Akses Developer tidak ditemukan untuk ruang kerja ini. Buat token di bagian token Ruang Kerja di atas, lalu klik Hubungkan lagi."
+      "notConfigured": "Tautan undangan Make tidak ditemukan. Tambahkan tautan di Pengaturan Platform."
     }
   },
   "integrations": {
@@ -3432,8 +3428,7 @@
       "on": "Aktif",
       "off": "Nonaktif",
       "termsRequired": "Admin Halaman harus menyetujui Ketentuan Kontak Halaman Facebook:"
-    },
-    "selectFacebookPage": "Pilih Halaman Facebook"
+    }
   },
   "omnichannel": {
     "title": "Omnichannel"
@@ -3522,10 +3517,6 @@
     "deepseek": {
       "description": "Deskripsi integrasi DeepSeek",
       "title": "Integrasi DeepSeek"
-    },
-    "aiTriggers": {
-      "description": "Deskripsi Pemicu AI",
-      "title": "Pemicu AI"
     }
   },
   "auth": {
@@ -3669,14 +3660,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "Pengaturan aplikasi WhatsApp tidak ditemukan.",
-        "wabaResolveFailed": "Tidak dapat menentukan Akun WhatsApp Business dari otorisasi.",
-        "accessTokenRequired": "Token akses WhatsApp diperlukan.",
-        "failedToPersistIntegration": "Gagal menyimpan integrasi WhatsApp.",
-        "noPhoneNumberFound": "Nomor telepon WhatsApp tidak ditemukan.",
-        "noPhoneNumbersFound": "Tidak ada nomor telepon yang ditemukan untuk Akun WhatsApp Business ini.",
-        "phoneNumberNotFound": "Nomor telepon WhatsApp yang dipilih tidak ditemukan.",
-        "unableToVerifyToken": "Tidak dapat memverifikasi token WhatsApp.",
-        "wabaMismatch": "Akun WhatsApp Business yang dipilih tidak cocok dengan otorisasi."
+        "wabaResolveFailed": "Tidak dapat menentukan Akun WhatsApp Business dari otorisasi."
       }
     },
     "reconnect": {
@@ -3911,13 +3895,6 @@
       "tryAgain": "Coba hubungkan kembali"
     },
     "manualAppSecretMissingNotice": "Tanda tangan webhook tidak diverifikasi hingga Anda menambahkan Rahasia Aplikasi Meta Anda.",
-    "signupSessionExpired": "Sesi pendaftaran WhatsApp Anda telah kedaluwarsa. Mulai kembali proses koneksi.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Peristiwa Otomatis",
-        "description": "Kirim peristiwa konversi dari nomor WhatsApp ini ke Meta secara otomatis. Jika izin belum ada, sambungkan ulang akun untuk memberikannya."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Deskripsi Aturan",
       "openerTags": "Beri tag kontak yang membuka tautan permainan",
       "playerTags": "Beri tag pemain",
-      "newFriendTags": "Beri tag teman baru",
-      "shareEnabled": "Izinkan berbagi ke teman",
-      "shareMessage": "Pesan Berbagi",
-      "shareMessageHint": "Gunakan '{{shareUrl}}' untuk menyisipkan tautan permainan yang sebenarnya — mohon jangan menghapusnya."
+      "newFriendTags": "Beri tag teman baru"
     },
     "appearance": {
       "backgroundColor": "Warna Latar Belakang",

@@ -2328,9 +2328,6 @@
       "label": "Meta App Secret (optional)",
       "description": "Enables webhook signature verification for this manual connection. Find it in your Meta App's dashboard under Settings > Basic."
     },
-    "aiTrigger": {
-      "label": "AI Trigger"
-    },
     "lastCallRecorded": {
       "label": "Last Call Recording"
     },
@@ -3325,8 +3322,7 @@
     "setting": {
       "label": "Make",
       "description": "Connect your Make.com account to send events from your flows and receive contact data through Make scenarios.",
-      "notConfigured": "No Make invite link found. Please add one in Platform Settings.",
-      "noWorkspaceToken": "No Developer Access Token found for this workspace. Generate one in the Workspace token section above, then click Connect again."
+      "notConfigured": "No Make invite link found. Please add one in Platform Settings."
     }
   },
   "integrations": {
@@ -3620,8 +3616,7 @@
       "on": "On",
       "off": "Off",
       "termsRequired": "Page admin must accept the Facebook Page Contact Terms:"
-    },
-    "selectFacebookPage": "Select Facebook Page"
+    }
   },
   "omnichannel": {
     "title": "Omnichannel"
@@ -3710,10 +3705,6 @@
     "deepseek": {
       "description": "DeepSeek integration description",
       "title": "DeepSeek Integration"
-    },
-    "aiTriggers": {
-      "description": "AI Triggers description",
-      "title": "AI Triggers"
     }
   },
   "auth": {
@@ -3857,14 +3848,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "WhatsApp app settings were not found.",
-        "wabaResolveFailed": "Could not resolve the WhatsApp Business Account from the authorization.",
-        "accessTokenRequired": "WhatsApp access token is required.",
-        "failedToPersistIntegration": "Failed to save the WhatsApp integration.",
-        "noPhoneNumberFound": "No WhatsApp phone number was found.",
-        "noPhoneNumbersFound": "No phone numbers were found for this WhatsApp Business Account.",
-        "phoneNumberNotFound": "Selected WhatsApp phone number was not found.",
-        "unableToVerifyToken": "Unable to verify the WhatsApp token.",
-        "wabaMismatch": "Selected WhatsApp Business Account does not match the authorization."
+        "wabaResolveFailed": "Could not resolve the WhatsApp Business Account from the authorization."
       }
     },
     "reconnect": {
@@ -4099,13 +4083,6 @@
       "tryAgain": "Try reconnecting"
     },
     "manualAppSecretMissingNotice": "Webhook signatures are not verified until you add your Meta App Secret.",
-    "signupSessionExpired": "Your WhatsApp signup session has expired. Please start the connection again.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automatic Events",
-        "description": "Automatically send conversion events from this WhatsApp number to Meta. If the permission is missing, reconnect the account to grant it."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Rules Description",
       "openerTags": "Tag contacts who open the game link",
       "playerTags": "Tag players",
-      "newFriendTags": "Tag new friends",
-      "shareEnabled": "Allow sharing with friends",
-      "shareMessage": "Sharing Message",
-      "shareMessageHint": "Use '{{shareUrl}}' to insert the actual game link — please don't remove it."
+      "newFriendTags": "Tag new friends"
     },
     "appearance": {
       "backgroundColor": "Background Color",

@@ -1464,9 +1464,6 @@
       "label": "Segreto app Meta (opzionale)",
       "description": "Attiva la verifica della firma del webhook per questa connessione manuale. Puoi trovarlo nella dashboard della tua app Meta, in Impostazioni > Generali."
     },
-    "aiTrigger": {
-      "label": "Trigger IA"
-    },
     "lastCallRecorded": {
       "label": "Ultima registrazione chiamata"
     },
@@ -3000,8 +2997,7 @@
     "setting": {
       "label": "Make",
       "description": "Collega il tuo account Make.com per inviare eventi dai flussi e ricevere dati dei contatti tramite gli scenari Make.",
-      "notConfigured": "Nessun link di invito Make trovato. Aggiungine uno nelle impostazioni della piattaforma.",
-      "noWorkspaceToken": "Nessun token di accesso per sviluppatori trovato per quest'area di lavoro. Generane uno nella sezione Token dell'area di lavoro qui sopra, quindi fai di nuovo clic su Collega."
+      "notConfigured": "Nessun link di invito Make trovato. Aggiungine uno nelle impostazioni della piattaforma."
     }
   },
   "integrations": {
@@ -3432,8 +3428,7 @@
       "on": "Attiva",
       "off": "Disattiva",
       "termsRequired": "L'amministratore della Pagina deve accettare le Condizioni sui contatti della Pagina Facebook:"
-    },
-    "selectFacebookPage": "Seleziona Pagina Facebook"
+    }
   },
   "omnichannel": {
     "title": "Omnicanale"
@@ -3522,10 +3517,6 @@
     "deepseek": {
       "description": "Descrizione dell'integrazione DeepSeek",
       "title": "Integrazione DeepSeek"
-    },
-    "aiTriggers": {
-      "description": "Descrizione dei trigger IA",
-      "title": "Trigger IA"
     }
   },
   "auth": {
@@ -3669,14 +3660,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "Le impostazioni dell'app WhatsApp non sono state trovate.",
-        "wabaResolveFailed": "Impossibile determinare l'account WhatsApp Business dall'autorizzazione.",
-        "accessTokenRequired": "Il token di accesso WhatsApp è obbligatorio.",
-        "failedToPersistIntegration": "Impossibile salvare l'integrazione WhatsApp.",
-        "noPhoneNumberFound": "Non è stato trovato alcun numero di telefono WhatsApp.",
-        "noPhoneNumbersFound": "Non è stato trovato alcun numero di telefono per questo account WhatsApp Business.",
-        "phoneNumberNotFound": "Il numero di telefono WhatsApp selezionato non è stato trovato.",
-        "unableToVerifyToken": "Impossibile verificare il token WhatsApp.",
-        "wabaMismatch": "L'account WhatsApp Business selezionato non corrisponde all'autorizzazione."
+        "wabaResolveFailed": "Impossibile determinare l'account WhatsApp Business dall'autorizzazione."
       }
     },
     "reconnect": {
@@ -3911,13 +3895,6 @@
       "tryAgain": "Prova a ricollegarti"
     },
     "manualAppSecretMissingNotice": "Le firme dei webhook non vengono verificate finché non aggiungi il tuo segreto app Meta.",
-    "signupSessionExpired": "La sessione di registrazione a WhatsApp è scaduta. Avvia nuovamente la connessione.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Eventi automatici",
-        "description": "Invia automaticamente gli eventi di conversione da questo numero WhatsApp a Meta. Se manca l’autorizzazione, ricollega l’account per concederla."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Descrizione delle regole",
       "openerTags": "Assegna un tag ai contatti che aprono il link del gioco",
       "playerTags": "Assegna un tag ai giocatori",
-      "newFriendTags": "Assegna un tag ai nuovi amici",
-      "shareEnabled": "Consenti la condivisione con gli amici",
-      "shareMessage": "Messaggio di condivisione",
-      "shareMessageHint": "Usa '{{shareUrl}}' per inserire il link effettivo del gioco — non rimuoverlo."
+      "newFriendTags": "Assegna un tag ai nuovi amici"
     },
     "appearance": {
       "backgroundColor": "Colore di sfondo",

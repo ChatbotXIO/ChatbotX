@@ -272,6 +272,19 @@ vi.mock("whatsapp-api-js/middleware/next", () => ({
   },
 }))
 
+// The H2 race tests below exercise the handle_post / 300 ms timeout race, not
+// signature verification (that is covered by webhook-hmac.test.ts). Stub the
+// verifier so it settles as a resolved microtask: the real Web Crypto
+// implementation resolves off the libuv threadpool, which
+// vi.advanceTimersByTimeAsync cannot flush — the handler's setTimeout(300)
+// would then be scheduled only after the test already advanced past it, and
+// awaiting the handler would hang. Other exports stay real; the
+// extractCoexistPayloads tests above never touch this module.
+vi.mock("@chatbotx.io/utils/crypto", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/utils/crypto")>()),
+  verifyHmacSha256Signature: vi.fn().mockResolvedValue(true),
+}))
+
 /** Matches `baseConfig.clientSecret` below — kept as its own constant so
  * `makePostRequest` doesn't need to depend on `baseConfig`'s `never` cast. */
 const TEST_CLIENT_SECRET = "secret"

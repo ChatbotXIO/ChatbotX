@@ -3062,9 +3062,6 @@
       "label": "Meta App Secret (valfritt)",
       "description": "Aktiverar verifiering av webhook-signatur för denna manuella anslutning. Du hittar den i din Meta-apps instrumentpanel under Inställningar > Allmänt."
     },
-    "aiTrigger": {
-      "label": "AI-utlösare"
-    },
     "lastCallRecorded": {
       "label": "Senaste samtalsinspelning"
     },
@@ -3735,8 +3732,7 @@
     "setting": {
       "description": "Anslut ditt Make.com-konto för att skicka händelser från dina flöden och ta emot kontaktdata via Make-scenarier.",
       "label": "Make",
-      "notConfigured": "Ingen inbjudningslänk för Make hittades. Lägg till en i Plattformsinställningar.",
-      "noWorkspaceToken": "Ingen åtkomsttoken för utvecklare hittades för den här arbetsytan. Generera en i avsnittet Arbetsytetoken ovan och klicka sedan på Anslut igen."
+      "notConfigured": "Ingen inbjudningslänk för Make hittades. Lägg till en i Plattformsinställningar."
     },
     "title": "Make"
   },
@@ -3977,8 +3973,7 @@
     },
     "title": "Facebook Messenger",
     "welcomeMessage": "Välkomstmeddelande",
-    "welcomeMessageDescription": "Det här är det första meddelandet som användaren får från din bot. Meddelandet skickas när användaren interagerar med boten för första gången genom att klicka på knappen Kom igång.",
-    "selectFacebookPage": "Välj Facebook-sida"
+    "welcomeMessageDescription": "Det här är det första meddelandet som användaren får från din bot. Meddelandet skickas när användaren interagerar med boten för första gången genom att klicka på knappen Kom igång."
   },
   "metaCatalog": {
     "catalogId": "Meta-katalog-ID",
@@ -4750,11 +4745,7 @@
       "description": "Beskrivning av OpenAI-integrationen",
       "title": "OpenAI-integration"
     },
-    "title": "Inställningar",
-    "aiTriggers": {
-      "description": "Beskrivning av AI-utlösare",
-      "title": "AI-utlösare"
-    }
+    "title": "Inställningar"
   },
   "smtp": {
     "errors": {
@@ -5105,14 +5096,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "Inställningarna för WhatsApp-appen hittades inte.",
-        "wabaResolveFailed": "Det gick inte att fastställa WhatsApp Business-kontot från auktoriseringen.",
-        "accessTokenRequired": "En åtkomsttoken för WhatsApp krävs.",
-        "failedToPersistIntegration": "Det gick inte att spara WhatsApp-integrationen.",
-        "noPhoneNumberFound": "Inget WhatsApp-telefonnummer hittades.",
-        "noPhoneNumbersFound": "Inga telefonnummer hittades för det här WhatsApp Business-kontot.",
-        "phoneNumberNotFound": "Det valda WhatsApp-telefonnumret hittades inte.",
-        "unableToVerifyToken": "Det gick inte att verifiera WhatsApp-token.",
-        "wabaMismatch": "Det valda WhatsApp Business-kontot matchar inte auktoriseringen."
+        "wabaResolveFailed": "Det gick inte att fastställa WhatsApp Business-kontot från auktoriseringen."
       }
     },
     "reconnect": {
@@ -5279,13 +5263,6 @@
       "tryAgain": "Försök återansluta"
     },
     "manualAppSecretMissingNotice": "Webhook-signaturer verifieras inte förrän du lägger till din Meta App Secret.",
-    "signupSessionExpired": "Din registreringssession för WhatsApp har löpt ut. Starta anslutningen igen.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Automatiska händelser",
-        "description": "Skicka konverteringshändelser från detta WhatsApp-nummer automatiskt till Meta. Om behörigheten saknas, återanslut kontot för att bevilja den."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Regelbeskrivning",
       "openerTags": "Tagga kontakter som öppnar spellänken",
       "playerTags": "Tagga spelare",
-      "newFriendTags": "Tagga nya vänner",
-      "shareEnabled": "Tillåt delning med vänner",
-      "shareMessage": "Delningsmeddelande",
-      "shareMessageHint": "Använd '{{shareUrl}}' för att infoga den faktiska spellänken — ta inte bort den."
+      "newFriendTags": "Tagga nya vänner"
     },
     "appearance": {
       "backgroundColor": "Bakgrundsfärg",

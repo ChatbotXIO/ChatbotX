@@ -3,7 +3,7 @@ import {
   type ReceivedMessageProps,
   SdkException,
 } from "@chatbotx.io/sdk"
-import { verifyHmacSha256Signature } from "@chatbotx.io/utils/node-crypto"
+import { verifyHmacSha256Signature } from "@chatbotx.io/utils/crypto"
 import type { OnMessageArgs, OnStatusArgs } from "whatsapp-api-js/emitters"
 import { WhatsAppAPI as Middleware } from "whatsapp-api-js/middleware/next"
 import type { GetParams } from "whatsapp-api-js/types"
@@ -314,7 +314,7 @@ const verifyPostSignature = async (
     return { verified: false, rawBodyBuffer, reason: "missing-signature" }
   }
 
-  const isValid = verifyHmacSha256Signature({
+  const isValid = await verifyHmacSha256Signature({
     rawBody: new Uint8Array(rawBodyBuffer),
     secret: clientSecret,
     signatureHeader,

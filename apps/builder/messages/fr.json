@@ -2191,9 +2191,6 @@
       "label": "Secret de l'application Meta (facultatif)",
       "description": "Active la vérification de la signature du webhook pour cette connexion manuelle. Vous le trouverez dans le tableau de bord de votre application Meta, sous Paramètres > Général."
     },
-    "aiTrigger": {
-      "label": "Déclencheur IA"
-    },
     "lastCallRecorded": {
       "label": "Dernier enregistrement d'appel"
     },
@@ -3000,8 +2997,7 @@
     "setting": {
       "label": "Make",
       "description": "Connectez votre compte Make.com pour envoyer des événements depuis vos flux et recevoir des données de contact par l’intermédiaire de scénarios Make.",
-      "notConfigured": "Aucun lien d’invitation Make trouvé. Ajoutez-en un dans les paramètres de la plateforme.",
-      "noWorkspaceToken": "Aucun jeton d’accès développeur trouvé pour cet espace de travail. Générez-en un dans la section des jetons de l’espace de travail ci-dessus, puis cliquez de nouveau sur Connecter."
+      "notConfigured": "Aucun lien d’invitation Make trouvé. Ajoutez-en un dans les paramètres de la plateforme."
     }
   },
   "integrations": {
@@ -3432,8 +3428,7 @@
       "on": "Activée",
       "off": "Désactivée",
       "termsRequired": "L’administrateur de la Page doit accepter les Conditions relatives aux contacts des Pages Facebook :"
-    },
-    "selectFacebookPage": "Sélectionnez une Page Facebook"
+    }
   },
   "omnichannel": {
     "title": "Omnicanal"
@@ -3522,10 +3517,6 @@
     "deepseek": {
       "description": "Description de l’intégration DeepSeek",
       "title": "Intégration DeepSeek"
-    },
-    "aiTriggers": {
-      "description": "Description des déclencheurs IA",
-      "title": "Déclencheurs IA"
     }
   },
   "auth": {
@@ -3669,14 +3660,7 @@
     "connect": {
       "errors": {
         "appSettingsNotFound": "Paramètres de l’application WhatsApp introuvables.",
-        "wabaResolveFailed": "Impossible d’identifier le compte WhatsApp Business à partir de l’autorisation.",
-        "accessTokenRequired": "Le jeton d’accès WhatsApp est requis.",
-        "failedToPersistIntegration": "Échec de l’enregistrement de l’intégration WhatsApp.",
-        "noPhoneNumberFound": "Aucun numéro WhatsApp trouvé.",
-        "noPhoneNumbersFound": "Aucun numéro trouvé pour ce compte WhatsApp Business.",
-        "phoneNumberNotFound": "Le numéro WhatsApp sélectionné est introuvable.",
-        "unableToVerifyToken": "Impossible de vérifier le jeton WhatsApp.",
-        "wabaMismatch": "Le compte WhatsApp Business sélectionné ne correspond pas à l’autorisation."
+        "wabaResolveFailed": "Impossible d’identifier le compte WhatsApp Business à partir de l’autorisation."
       }
     },
     "reconnect": {
@@ -3911,13 +3895,6 @@
       "tryAgain": "Réessayer la connexion"
     },
     "manualAppSecretMissingNotice": "Les signatures des webhooks ne sont pas vérifiées jusqu'à ce que vous ajoutiez votre secret d'application Meta.",
-    "signupSessionExpired": "Votre session d’inscription WhatsApp a expiré. Recommencez la connexion.",
-    "capi": {
-      "automaticEvents": {
-        "title": "Événements automatiques",
-        "description": "Envoyez automatiquement les événements de conversion de ce numéro WhatsApp vers Meta. Si l’autorisation manque, reconnectez le compte pour l’accorder."
-      }
-    },
     "calls": {
       "title": "WhatsApp Calls",
       "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
@@ -5975,10 +5952,7 @@
       "rulesDescription": "Description des règles",
       "openerTags": "Étiqueter les contacts qui ouvrent le lien du jeu",
       "playerTags": "Étiqueter les joueurs",
-      "newFriendTags": "Étiqueter les nouveaux amis",
-      "shareEnabled": "Autoriser le partage avec des amis",
-      "shareMessage": "Message de partage",
-      "shareMessageHint": "Utilisez '{{shareUrl}}' pour insérer le lien réel du jeu — merci de ne pas le supprimer."
+      "newFriendTags": "Étiqueter les nouveaux amis"
     },
     "appearance": {
       "backgroundColor": "Couleur de fond",

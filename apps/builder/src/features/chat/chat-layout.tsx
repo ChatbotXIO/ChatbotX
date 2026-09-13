@@ -157,49 +157,44 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         </div>
       )}
       {isMobile === false && (
-        // `dvh` rather than `vh`: the panel group is the page's full-height
-        // element, and `vh` overshoots the visible area while mobile browser
-        // chrome is showing. The height lives on a wrapper because the panel
-        // group sets an inline `height: 100%` that overrides any height class
-        // on itself — against an auto-height parent it collapses to content.
-        <div className="h-[100dvh]">
-          <ResizablePanelGroup className="items-stretch">
-            {/* CONVERSATION LIST */}
-            <ResizablePanel
-              className="p-3"
-              defaultSize={`${layout[0] ?? 25}%`}
-              maxSize={"30%"}
-              minSize={"20%"}
-            >
-              <ConversationListPane
-                canViewEmailAndPhone={canViewEmailAndPhone}
-                workspaceId={workspaceId}
-              />
-            </ResizablePanel>
+        // Height comes from `flex-1`, never a `height` class: `PanelGroup`
+        // hard-codes an inline `height: 100%`, which beats any stylesheet rule,
+        // so `h-[100dvh]`/`h-full` here are silently dead and the group
+        // collapses to its panes' content height — a short inbox with dead
+        // space under it on a tall viewport.
+        <ResizablePanelGroup className="min-h-0 flex-1 items-stretch">
+          {/* CONVERSATION LIST */}
+          <ResizablePanel
+            className="p-3"
+            defaultSize={`${layout[0] ?? 25}%`}
+            maxSize={"30%"}
+            minSize={"20%"}
+          >
+            <ConversationListPane
+              canViewEmailAndPhone={canViewEmailAndPhone}
+              workspaceId={workspaceId}
+            />
+          </ResizablePanel>
 
-            <ResizableHandle withHandle />
+          <ResizableHandle withHandle />
 
-            {/* MESSAGE LIST */}
-            <ResizablePanel
-              className="pt-3"
-              defaultSize={`${layout[1] ?? 50}%`}
-            >
-              <MessageThreadPane {...paneState} workspaceId={workspaceId} />
-            </ResizablePanel>
+          {/* MESSAGE LIST */}
+          <ResizablePanel className="pt-3" defaultSize={`${layout[1] ?? 50}%`}>
+            <MessageThreadPane {...paneState} workspaceId={workspaceId} />
+          </ResizablePanel>
 
-            <ResizableHandle withHandle />
+          <ResizableHandle withHandle />
 
-            {/* CONTACT DETAIL */}
-            <ResizablePanel
-              className="overflow-y-auto! h-full min-h-0 px-4 py-3"
-              defaultSize={`${layout[2] ?? 25}%`}
-              maxSize={"30%"}
-              minSize={"20%"}
-            >
-              <ContactDetailPane {...paneState} workspaceId={workspaceId} />
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </div>
+          {/* CONTACT DETAIL */}
+          <ResizablePanel
+            className="overflow-y-auto! h-full min-h-0 px-4 py-3"
+            defaultSize={`${layout[2] ?? 25}%`}
+            maxSize={"30%"}
+            minSize={"20%"}
+          >
+            <ContactDetailPane {...paneState} workspaceId={workspaceId} />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       )}
     </SipUserProvider>
   )

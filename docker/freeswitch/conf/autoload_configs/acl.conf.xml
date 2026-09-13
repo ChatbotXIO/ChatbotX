@@ -30,7 +30,13 @@
 <configuration name="acl.conf" description="Network Lists">
   <network-lists>
     <list name="meta_sip" default="deny">
-      <X-PRE-PROCESS cmd="include" data="meta_sip_ranges.xml"/>
+      <!-- The node list lives OUTSIDE autoload_configs/ on purpose: files in
+           autoload_configs/ are globbed by freeswitch.xml's
+           `autoload_configs/*.xml` as standalone configs, so a bare fragment
+           of <node> elements dropped there would also be spliced into the
+           configuration section and corrupt the XML. Include path is
+           relative to this file's directory. -->
+      <X-PRE-PROCESS cmd="include" data="../acl/meta_sip_ranges.xml"/>
     </list>
 
     <list name="esl_clients" default="deny">
