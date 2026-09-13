@@ -1,5 +1,6 @@
 import {
   getPublicHostFromRequest,
+  getPublicPortFromRequest,
   getPublicProtocolFromRequest,
 } from "@chatbotx.io/utils"
 import { env } from "@/env"
@@ -67,7 +68,7 @@ export async function rewriteAuthRedirectToPublicHost(
 
   target.host = publicHost
   target.protocol = publicProtocol
-  target.port = ""
+  target.port = getPublicPortFromRequest(request)
 
   const headers = new Headers(response.headers)
   headers.set("location", target.toString())
