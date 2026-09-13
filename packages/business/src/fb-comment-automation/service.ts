@@ -259,9 +259,9 @@ class FbCommentAutomationService extends BaseService {
    * the installer out, which quietly wrote drifted rows — and a row whose
    * `value` disagrees with its `values` sends the wrong text with no error.
    */
-  private withNormalizedReplies<T extends Partial<FbCommentAutomationWriteData>>(
-    data: T,
-  ): T {
+  private withNormalizedReplies<
+    T extends Partial<FbCommentAutomationWriteData>,
+  >(data: T): T {
     if (!data.publicReply) {
       return data
     }

@@ -3,7 +3,7 @@
   "dialect": "postgres",
   "id": "9be222e7-c929-490f-ad28-d518524b6cfb",
   "prevIds": [
-    "67a1186b-4cc6-469d-8ce3-e733a52116c6"
+    "5a13a7f8-ce93-4c29-bd95-9631f89abac2"
   ],
   "ddl": [
     {
@@ -873,12 +873,6 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "AIAssistant",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
       "name": "AIConversationEmbedding",
       "entityType": "tables",
       "schema": "public"
@@ -910,18 +904,6 @@
     {
       "isRlsEnabled": false,
       "name": "AIMCPServer",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "AITrigger",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "AITriggerToIntegrationOpenai",
       "entityType": "tables",
       "schema": "public"
     },
@@ -2795,136 +2777,6 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "AIAssistant"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AIAssistant"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AIAssistant"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workspaceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AIAssistant"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AIAssistant"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "prompt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AIAssistant"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "model",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AIAssistant"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 1,
-      "default": "",
-      "generated": null,
-      "identity": null,
-      "name": "aiTriggerIds",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AIAssistant"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 1,
-      "default": "",
-      "generated": null,
-      "identity": null,
-      "name": "attachmentIds",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AIAssistant"
-    },
-    {
-      "type": "double precision",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "temperature",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AIAssistant"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
       "table": "AIConversationEmbedding"
     },
     {
@@ -3706,149 +3558,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "AIMCPServer"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AITrigger"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AITrigger"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AITrigger"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workspaceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AITrigger"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AITrigger"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "description",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AITrigger"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "flowId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AITrigger"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 1,
-      "default": "",
-      "generated": null,
-      "identity": null,
-      "name": "questions",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AITrigger"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "finalMessage",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AITrigger"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "aiTriggerId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AITriggerToIntegrationOpenai"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "integrationOpenaiId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AITriggerToIntegrationOpenai"
     },
     {
       "type": "text",
@@ -11852,6 +11561,32 @@
       "table": "ErrorLog"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ErrorLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "stackTrace",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ErrorLog"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -12320,71 +12055,6 @@
       "table": "FBCommentAutomation"
     },
     {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "sentCount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "deliveredCount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "seenCount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "clickedCount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "failedCount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomation"
-    },
-    {
       "type": "jsonb",
       "typeSchema": null,
       "notNull": true,
@@ -12567,19 +12237,6 @@
       "table": "FBCommentAutomationEvent"
     },
     {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "contactInboxId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomationEvent"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -12666,58 +12323,6 @@
       "generated": null,
       "identity": null,
       "name": "status",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomationEvent"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "deliveredAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomationEvent"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "seenAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomationEvent"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "clickedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FBCommentAutomationEvent"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "failedAt",
       "entityType": "columns",
       "schema": "public",
       "table": "FBCommentAutomationEvent"
@@ -17034,19 +16639,6 @@
       "generated": null,
       "identity": null,
       "name": "integrationId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "IntegrationOpenai"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "aiAssistantId",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationOpenai"
@@ -26818,6 +26410,136 @@
       "table": "WorkspaceMember"
     },
     {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "sentCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomation"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "deliveredCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomation"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "seenCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomation"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "clickedCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomation"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "failedCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deliveredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "seenAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "clickedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "failedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
       "nameExplicit": true,
       "columns": [
         {
@@ -31231,48 +30953,6 @@
       "method": "btree",
       "concurrently": false,
       "name": "FBCommentAutomationEvent_contactId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "FBCommentAutomationEvent"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "contactInboxId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "FBCommentAutomationEvent_contactInboxId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "FBCommentAutomationEvent"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "contactInboxId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": "\"replyChannel\" = 'private' AND \"deliveredAt\" IS NOT NULL AND \"seenAt\" IS NULL",
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "FBCommentAutomationEvent_private_unseen_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "FBCommentAutomationEvent"
@@ -36640,6 +36320,48 @@
       "table": "WorkspaceApiToken"
     },
     {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FBCommentAutomationEvent_contactInboxId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"replyChannel\" = 'private' AND \"deliveredAt\" IS NOT NULL AND \"seenAt\" IS NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FBCommentAutomationEvent_private_unseen_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FBCommentAutomationEvent"
+    },
+    {
       "nameExplicit": false,
       "columns": [
         "shardId"
@@ -36846,23 +36568,6 @@
     {
       "nameExplicit": false,
       "columns": [
-        "workspaceId"
-      ],
-      "schemaTo": "public",
-      "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "AIAssistant_workspaceId_Workspace_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "AIAssistant"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
         "sourceId"
       ],
       "schemaTo": "public",
@@ -37046,74 +36751,6 @@
       "entityType": "fks",
       "schema": "public",
       "table": "AIMCPServer"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "workspaceId"
-      ],
-      "schemaTo": "public",
-      "tableTo": "Workspace",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "AITrigger_workspaceId_Workspace_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "AITrigger"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "flowId"
-      ],
-      "schemaTo": "public",
-      "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "CASCADE",
-      "onDelete": "SET NULL",
-      "name": "AITrigger_flowId_Flow_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "AITrigger"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "aiTriggerId"
-      ],
-      "schemaTo": "public",
-      "tableTo": "AITrigger",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "AITriggerToIntegrationOpenai_aiTriggerId_AITrigger_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "AITriggerToIntegrationOpenai"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "integrationOpenaiId"
-      ],
-      "schemaTo": "public",
-      "tableTo": "IntegrationOpenai",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "AITriggerToIntegrationOpenai_rSgeY7c25Tng_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "AITriggerToIntegrationOpenai"
     },
     {
       "nameExplicit": false,
@@ -38954,23 +38591,6 @@
     {
       "nameExplicit": false,
       "columns": [
-        "contactInboxId"
-      ],
-      "schemaTo": "public",
-      "tableTo": "ContactInbox",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "CASCADE",
-      "onDelete": "SET NULL",
-      "name": "FBCommentAutomationEvent_contactInboxId_ContactInbox_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "FBCommentAutomationEvent"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
         "automationId"
       ],
       "schemaTo": "public",
@@ -40069,23 +39689,6 @@
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationOpenai_integrationId_Integration_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "IntegrationOpenai"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "aiAssistantId"
-      ],
-      "schemaTo": "public",
-      "tableTo": "AIAssistant",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "CASCADE",
-      "onDelete": "SET NULL",
-      "name": "IntegrationOpenai_aiAssistantId_AIAssistant_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "IntegrationOpenai"
@@ -42388,15 +41991,21 @@
       "table": "WorkspaceMember"
     },
     {
-      "columns": [
-        "aiTriggerId",
-        "integrationOpenaiId"
-      ],
       "nameExplicit": false,
-      "name": "AITriggerToIntegrationOpenai_pkey",
-      "entityType": "pks",
+      "columns": [
+        "contactInboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "FBCommentAutomationEvent_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
       "schema": "public",
-      "table": "AITriggerToIntegrationOpenai"
+      "table": "FBCommentAutomationEvent"
     },
     {
       "columns": [
@@ -42677,16 +42286,6 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "AIAssistant_pkey",
-      "schema": "public",
-      "table": "AIAssistant",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
       "name": "AIConversationEmbedding_pkey",
       "schema": "public",
       "table": "AIConversationEmbedding",
@@ -42740,16 +42339,6 @@
       "name": "AIMCPServer_pkey",
       "schema": "public",
       "table": "AIMCPServer",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "AITrigger_pkey",
-      "schema": "public",
-      "table": "AITrigger",
       "entityType": "pks"
     },
     {
