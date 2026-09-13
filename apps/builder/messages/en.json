@@ -2290,6 +2290,9 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "userCode": {
+      "label": "User Code"
     }
   },
   "metaConversions": {
@@ -2648,7 +2651,15 @@
       "customField": "Custom Field",
       "selectCustomFieldPlaceholder": "Select custom field",
       "addMapping": "Add Mapping",
-      "addCustomField": "Add New"
+      "addCustomField": "Add New",
+      "actionData": "Start data",
+      "actionDataPlaceholder": "{\n  \"nombre\": \"{{userName}}\"\n}",
+      "actionDataDescription": "JSON object sent when the flow opens. Use {{variables}}. Dropdown items with an empty id are omitted.",
+      "actionDataInvalidJson": "Start data must be a JSON object or empty.",
+      "responseDumpEnabled": "Save full flow response",
+      "responseDumpDescription": "Stores the complete nfm_reply JSON in a long-text custom field (for example flow_last_response). Individual mappings above still apply.",
+      "responseDumpField": "Full response custom field",
+      "responseDumpFieldRequired": "Select a custom field for the full flow response"
     },
     "sendCarousel": {
       "addSlide": "Add slide",

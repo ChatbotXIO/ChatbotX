@@ -1455,6 +1455,9 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "userCode": {
+      "label": "使用者代碼"
     }
   },
   "messages": {

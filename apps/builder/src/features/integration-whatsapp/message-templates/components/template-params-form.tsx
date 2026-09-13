@@ -5,7 +5,9 @@ import {
   dateToExpirationTimeMs,
   expirationTimeMsToDate,
   extractParameterInfos,
+  parseWhatsappFlowActionDataJson,
   type ParameterInfo,
+  stringifyWhatsappFlowActionData,
   type TemplateComponent,
   type WhatsappFlowFieldMapping,
 } from "@chatbotx.io/flow-config"
@@ -19,9 +21,12 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
+import { Switch } from "@chatbotx.io/ui/components/ui/switch"
+import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { Pencil } from "lucide-react"
 import { useTranslations } from "next-intl"
 import {
+  type ChangeEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -215,6 +220,9 @@ function TemplateFlowFieldMappings({
   const [loadingScreens, setLoadingScreens] = useState(false)
   const [screenError, setScreenError] = useState(false)
   const [open, setOpen] = useState(false)
+  const [actionDataJson, setActionDataJson] = useState("")
+  const [actionDataError, setActionDataError] = useState<string | null>(null)
+  const [responseDumpEnabled, setResponseDumpEnabled] = useState(false)
 
   const flow = useMemo(
     () =>
@@ -226,7 +234,6 @@ function TemplateFlowFieldMappings({
 
   const mappings =
     (watch(`${fieldName}.fieldMappings`) as WhatsappFlowFieldMapping[]) ?? []
-
   const handleCustomFieldCreated = useCallback(() => {
     getAllCustomFields()
   }, [getAllCustomFields])
@@ -278,6 +285,49 @@ function TemplateFlowFieldMappings({
       },
     )
   }, [fieldName, getValues, screens, setValue])
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+    const currentActionData = getValues(`${fieldName}.flow_action_data`)
+    setActionDataJson(stringifyWhatsappFlowActionData(currentActionData))
+    setActionDataError(null)
+    const dumpFieldId =
+      (getValues(`${fieldName}.responseDumpFieldId`) as string | null) ?? null
+    setResponseDumpEnabled(Boolean(dumpFieldId))
+  }, [fieldName, getValues, open])
+
+  const handleActionDataChange = useCallback(
+    (event: ChangeEvent<HTMLTextAreaElement>) => {
+      const nextValue = event.target.value
+      setActionDataJson(nextValue)
+      const parsed = parseWhatsappFlowActionDataJson(nextValue)
+      if (!parsed.success) {
+        setActionDataError(t("flows.whatsappFlow.actionDataInvalidJson"))
+        return
+      }
+      setActionDataError(null)
+      setValue(`${fieldName}.flow_action_data`, parsed.data, {
+        shouldDirty: true,
+        shouldValidate: true,
+      })
+    },
+    [fieldName, setValue, t],
+  )
+
+  const handleResponseDumpEnabledChange = useCallback(
+    (enabled: boolean) => {
+      setResponseDumpEnabled(enabled)
+      if (!enabled) {
+        setValue(`${fieldName}.responseDumpFieldId`, null, {
+          shouldDirty: true,
+          shouldValidate: true,
+        })
+      }
+    },
+    [fieldName, setValue],
+  )
 
   if (!param.flowSourceId) {
     return null
@@ -398,7 +448,54 @@ function TemplateFlowFieldMappings({
               <Input disabled value={startScreenLabel} />
             </div>
 
+            <div className="space-y-2">
+              <Label className="text-xs">
+                {t("flows.whatsappFlow.actionData")}
+              </Label>
+              <p className="text-muted-foreground text-xs">
+                {t("flows.whatsappFlow.actionDataDescription")}
+              </p>
+              <Textarea
+                aria-invalid={Boolean(actionDataError)}
+                className="min-h-40 font-mono text-xs"
+                onChange={handleActionDataChange}
+                placeholder={t("flows.whatsappFlow.actionDataPlaceholder")}
+                value={actionDataJson}
+              />
+              {actionDataError ? (
+                <p className="text-destructive text-xs">{actionDataError}</p>
+              ) : null}
+            </div>
+
             {renderMappingSection()}
+
+            <div className="space-y-3 rounded-md border p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">
+                    {t("flows.whatsappFlow.responseDumpEnabled")}
+                  </Label>
+                  <p className="text-muted-foreground text-xs">
+                    {t("flows.whatsappFlow.responseDumpDescription")}
+                  </p>
+                </div>
+                <Switch
+                  aria-label={t("flows.whatsappFlow.responseDumpEnabled")}
+                  checked={responseDumpEnabled}
+                  onCheckedChange={handleResponseDumpEnabledChange}
+                />
+              </div>
+              {responseDumpEnabled ? (
+                <CustomFieldSelect
+                  allowCreate={false}
+                  label={t("flows.whatsappFlow.responseDumpField")}
+                  name={`${fieldName}.responseDumpFieldId`}
+                  placeholder={t(
+                    "flows.whatsappFlow.selectCustomFieldPlaceholder",
+                  )}
+                />
+              ) : null}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

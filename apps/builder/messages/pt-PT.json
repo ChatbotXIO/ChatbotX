@@ -2153,6 +2153,9 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "userCode": {
+      "label": "Código do utilizador"
     }
   },
   "flows": {

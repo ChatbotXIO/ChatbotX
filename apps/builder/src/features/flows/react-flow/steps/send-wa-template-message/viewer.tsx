@@ -31,9 +31,8 @@ export const SendWaTemplateMessageStepViewer = (
   props: SendWaTemplateMessageStepViewerProps,
 ) => {
   const { data } = props
-  const { statusButtons, quickReplyButtons } = splitWaTemplateStepButtons(
-    data.buttons,
-  )
+  const { statusButtons, flowCompleteButton, quickReplyButtons } =
+    splitWaTemplateStepButtons(data.buttons)
 
   return (
     <Card className="overflow-hidden p-0">
@@ -64,6 +63,18 @@ export const SendWaTemplateMessageStepViewer = (
               />
             </div>
           ))}
+
+          {flowCompleteButton ? (
+            <div className="flex justify-end" key={flowCompleteButton.id}>
+              <StateHandle
+                borderClass="border-blue-500"
+                fillClass="bg-blue-500"
+                label={flowCompleteButton.label}
+                labelClassName="font-medium text-blue-600 text-sm"
+                stateId={flowCompleteButton.id}
+              />
+            </div>
+          ) : null}
 
           {quickReplyButtons.map((button) => (
             <ButtonStepViewer data={button} key={button.id} />

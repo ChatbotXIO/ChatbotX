@@ -1,6 +1,7 @@
 import {
   encodeButtonPayload,
   extractMetadata,
+  sanitizeWhatsappFlowActionData,
   WHATSAPP_FLOW_BUTTON_MAX,
   type WhatsappFlowStepSchema,
 } from "@chatbotx.io/flow-config"
@@ -38,6 +39,14 @@ export function* convertFlowStepWhatsappFlow(
   })
 
   const cta = button.label.trim().slice(0, WHATSAPP_FLOW_BUTTON_MAX)
+  const actionData = sanitizeWhatsappFlowActionData(step.flow.actionData)
+  const flowActionPayload: { screen: string; data?: Record<string, unknown> } =
+    {
+      screen: step.flow.startScreenId,
+    }
+  if (actionData) {
+    flowActionPayload.data = actionData
+  }
 
   yield new Interactive(
     new ActionFlow({
@@ -46,9 +55,7 @@ export function* convertFlowStepWhatsappFlow(
       flow_token: flowToken,
       flow_cta: cta,
       flow_action: "navigate",
-      flow_action_payload: {
-        screen: step.flow.startScreenId,
-      },
+      flow_action_payload: flowActionPayload,
     }),
     generateBody(step.text),
   )

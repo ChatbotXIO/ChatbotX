@@ -1,6 +1,8 @@
 "use client"
 
 import {
+  parseWhatsappFlowActionDataJson,
+  stringifyWhatsappFlowActionData,
   WHATSAPP_FLOW_BUTTON_MAX,
   type WhatsappFlowDialogFormValues,
   type WhatsappFlowFieldMapping,
@@ -22,9 +24,19 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
+import { Switch } from "@chatbotx.io/ui/components/ui/switch"
+import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
-import { memo, useCallback, useEffect, useMemo, useState } from "react"
+import {
+  type ChangeEvent,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 import {
   FormProvider,
   useFieldArray,
@@ -84,6 +96,17 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
   const currentFieldMappings = parentForm.watch(
     `${parentName}.flow.fieldMappings`,
   ) as WhatsappFlowFieldMapping[]
+  const currentResponseDumpFieldId = parentForm.watch(
+    `${parentName}.flow.responseDumpFieldId`,
+  ) as string | null | undefined
+  const [actionDataJson, setActionDataJson] = useState("")
+  const [actionDataError, setActionDataError] = useState<string | null>(null)
+  const [responseDumpFieldError, setResponseDumpFieldError] = useState<
+    string | null
+  >(null)
+  const [responseDumpEnabled, setResponseDumpEnabled] = useState(
+    Boolean(currentResponseDumpFieldId),
+  )
 
   const whatsappFlows = useMemo(() => {
     const published = whatsappFlowsAll.filter(
@@ -105,6 +128,7 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
         sourceId: currentSourceId ?? "",
         startScreenId: currentStartScreenId ?? null,
         fieldMappings: currentFieldMappings ?? [],
+        responseDumpFieldId: currentResponseDumpFieldId ?? null,
       },
     },
     values: {
@@ -138,6 +162,36 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
   const handleCustomFieldCreated = useCallback(() => {
     getAllCustomFields()
   }, [getAllCustomFields])
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+    const currentActionData = parentForm.getValues(
+      `${parentName}.flow.actionData`,
+    )
+    setActionDataJson(stringifyWhatsappFlowActionData(currentActionData))
+    setActionDataError(null)
+    setResponseDumpFieldError(null)
+    const dumpFieldId =
+      parentForm.getValues(`${parentName}.flow.responseDumpFieldId`) ?? null
+    form.setValue("flow.responseDumpFieldId", dumpFieldId, {
+      shouldDirty: false,
+    })
+    setResponseDumpEnabled(Boolean(dumpFieldId))
+  }, [open, parentForm, parentName, form])
+
+  const handleActionDataChange = useCallback(
+    (event: ChangeEvent<HTMLTextAreaElement>) => {
+      const nextValue = event.target.value
+      setActionDataJson(nextValue)
+      const parsed = parseWhatsappFlowActionDataJson(nextValue)
+      setActionDataError(
+        parsed.success ? null : t("flows.whatsappFlow.actionDataInvalidJson"),
+      )
+    },
+    [t],
+  )
 
   useEffect(() => {
     if (!(open && selectedFlowId)) {
@@ -241,6 +295,8 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
         })
         form.setValue("flow.startScreenId", "", { shouldDirty: true })
         replace([])
+        setActionDataJson("")
+        setActionDataError(null)
       }
     },
     [whatsappFlows, form, replace],
@@ -248,6 +304,11 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
 
   const onSubmit = useCallback(
     (values: WhatsappFlowDialogFormValues) => {
+      const parsedActionData = parseWhatsappFlowActionDataJson(actionDataJson)
+      if (!parsedActionData.success) {
+        setActionDataError(t("flows.whatsappFlow.actionDataInvalidJson"))
+        return
+      }
       const selectedScreen = screens.find(
         (screen) => screen.id === values.flow.startScreenId,
       )
@@ -262,6 +323,15 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
           customFieldId: existing?.customFieldId ?? null,
         }
       })
+      const dumpFieldId = form.getValues("flow.responseDumpFieldId")
+      if (responseDumpEnabled && !dumpFieldId) {
+        setResponseDumpFieldError(
+          t("flows.whatsappFlow.responseDumpFieldRequired"),
+        )
+        return
+      }
+      setResponseDumpFieldError(null)
+
       const setOptions = { shouldDirty: true, shouldValidate: true }
 
       parentForm.setValue(
@@ -281,13 +351,43 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
         setOptions,
       )
       parentForm.setValue(
+        `${parentName}.flow.actionData`,
+        parsedActionData.data,
+        setOptions,
+      )
+      parentForm.setValue(
         `${parentName}.flow.fieldMappings`,
         fieldMappings,
         setOptions,
       )
+      parentForm.setValue(
+        `${parentName}.flow.responseDumpFieldId`,
+        responseDumpEnabled ? dumpFieldId : null,
+        setOptions,
+      )
       onOpenChange(false)
     },
-    [parentForm, parentName, onOpenChange, screens],
+    [
+      actionDataJson,
+      parentForm,
+      parentName,
+      onOpenChange,
+      form,
+      responseDumpEnabled,
+      screens,
+      t,
+    ],
+  )
+
+  const handleResponseDumpEnabledChange = useCallback(
+    (enabled: boolean) => {
+      setResponseDumpEnabled(enabled)
+      setResponseDumpFieldError(null)
+      if (!enabled) {
+        form.setValue("flow.responseDumpFieldId", null, { shouldDirty: true })
+      }
+    },
+    [form],
   )
 
   return (
@@ -346,6 +446,32 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
                 />
               ))}
 
+            {selectedStartScreenId && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="whatsapp-flow-action-data">
+                  {t("flows.whatsappFlow.actionData")}
+                </Label>
+                <p
+                  className="text-muted-foreground text-sm"
+                  id="whatsapp-flow-action-data-desc"
+                >
+                  {t("flows.whatsappFlow.actionDataDescription")}
+                </p>
+                <Textarea
+                  aria-describedby="whatsapp-flow-action-data-desc"
+                  aria-invalid={Boolean(actionDataError)}
+                  className="min-h-40 font-mono text-sm"
+                  id="whatsapp-flow-action-data"
+                  onChange={handleActionDataChange}
+                  placeholder={t("flows.whatsappFlow.actionDataPlaceholder")}
+                  value={actionDataJson}
+                />
+                {actionDataError ? (
+                  <p className="text-destructive text-sm">{actionDataError}</p>
+                ) : null}
+              </div>
+            )}
+
             {selectedStartScreenId && fields.length > 0 && (
               <div className="mt-6 flex flex-col gap-2 space-y-4">
                 <div className="flex items-center justify-between">
@@ -399,6 +525,43 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
               </div>
             )}
 
+            {selectedStartScreenId && (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    aria-label={t("flows.whatsappFlow.responseDumpEnabled")}
+                    checked={responseDumpEnabled}
+                    id="whatsapp-flow-response-dump"
+                    onCheckedChange={handleResponseDumpEnabledChange}
+                  />
+                  <Label htmlFor="whatsapp-flow-response-dump">
+                    {t("flows.whatsappFlow.responseDumpEnabled")}
+                  </Label>
+                </div>
+                <p
+                  className="text-muted-foreground text-sm"
+                  id="whatsapp-flow-response-dump-desc"
+                >
+                  {t("flows.whatsappFlow.responseDumpDescription")}
+                </p>
+                {responseDumpEnabled ? (
+                  <CustomFieldSelect
+                    allowCreate={false}
+                    label={t("flows.whatsappFlow.responseDumpField")}
+                    name="flow.responseDumpFieldId"
+                    placeholder={t(
+                      "flows.whatsappFlow.selectCustomFieldPlaceholder",
+                    )}
+                  />
+                ) : null}
+                {responseDumpFieldError ? (
+                  <p className="text-destructive text-sm">
+                    {responseDumpFieldError}
+                  </p>
+                ) : null}
+              </div>
+            )}
+
             <DialogFooter>
               <DialogClose
                 render={
@@ -408,7 +571,7 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
                 }
               />
               <Button
-                disabled={!form.formState.isValid}
+                disabled={!form.formState.isValid || Boolean(actionDataError)}
                 size="sm"
                 type="submit"
               >

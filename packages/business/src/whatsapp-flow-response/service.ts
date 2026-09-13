@@ -12,6 +12,7 @@ type ApplyWhatsappFlowResponseInput = {
   integrationWhatsappId?: string | null
   flowSourceId: string
   fieldMappings: WhatsappFlowFieldMapping[]
+  responseDumpFieldId?: string | null
   flowResponse: Record<string, unknown>
 }
 
@@ -55,7 +56,11 @@ class WhatsappFlowResponseService {
   private async applyFieldMappings(
     input: Pick<
       ApplyWhatsappFlowResponseInput,
-      "workspaceId" | "contactId" | "fieldMappings" | "flowResponse"
+      | "workspaceId"
+      | "contactId"
+      | "fieldMappings"
+      | "responseDumpFieldId"
+      | "flowResponse"
     >,
   ): Promise<void> {
     const fields = input.fieldMappings.flatMap((mapping) => {
@@ -68,6 +73,16 @@ class WhatsappFlowResponseService {
         ? []
         : [{ customFieldId: mapping.customFieldId, value }]
     })
+
+    if (input.responseDumpFieldId) {
+      const dumpValue = serializeFlowValue(input.flowResponse)
+      if (dumpValue !== null) {
+        fields.push({
+          customFieldId: input.responseDumpFieldId,
+          value: dumpValue,
+        })
+      }
+    }
 
     if (fields.length === 0) {
       return

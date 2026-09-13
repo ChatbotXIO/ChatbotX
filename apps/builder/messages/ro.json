@@ -2937,6 +2937,9 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "userCode": {
+      "label": "Cod utilizator"
     }
   },
   "channels": {

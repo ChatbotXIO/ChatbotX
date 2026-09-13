@@ -67,6 +67,17 @@ const deepReplaceStrings = async <T>(
  * Recursively replaces `{{var}}` in every string leaf. Loads contact data once
  * when any placeholder exists; otherwise returns the input unchanged.
  */
+/** Replaces `{{var}}` in every string leaf using pre-loaded variable values. */
+export const replaceContactVariablesDeep = async <T>(
+  value: T,
+  variables: ReplaceVariableProps,
+): Promise<T> => {
+  if (!valueContainsVariablePlaceholder(value)) {
+    return value
+  }
+  return deepReplaceStrings(value, variables)
+}
+
 export const resolveContactVariablesDeep = async <T>(
   contactId: string,
   value: T,

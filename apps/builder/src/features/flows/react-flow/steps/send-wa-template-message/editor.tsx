@@ -4,10 +4,10 @@ import {
   type ButtonStepProps,
   extractParameterInfos,
   extractTemplateParams,
+  getWaTemplateLeadingButtonCount,
   type ParameterInfo,
   seedWaTemplateStepButtons,
   type TemplateComponent,
-  WA_TEMPLATE_STATUS_BUTTON_COUNT,
 } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -52,9 +52,12 @@ function SendWaTemplateMessageStepEditor(
     control,
     name: `${parentName}.buttons`,
   })
+  const leadingButtonCount = getWaTemplateLeadingButtonCount(
+    stepButtonFields as ButtonStepProps[],
+  )
   const quickReplySlotCount = Math.max(
     0,
-    stepButtonFields.length - WA_TEMPLATE_STATUS_BUTTON_COUNT,
+    stepButtonFields.length - leadingButtonCount,
   )
   // Keeps the leading status branches (Delivered/Failed) and reseeds the
   // quick-reply tail so each template quick reply gets a connectable handle.
@@ -237,7 +240,7 @@ function SendWaTemplateMessageStepEditor(
                 }}
                 // biome-ignore lint/suspicious/noArrayIndexKey: stable seeded list
                 key={index}
-                parentName={`${parentName}.buttons.${WA_TEMPLATE_STATUS_BUTTON_COUNT + index}`}
+                parentName={`${parentName}.buttons.${leadingButtonCount + index}`}
               />
             ))}
           </div>

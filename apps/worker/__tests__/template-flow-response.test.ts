@@ -1,16 +1,22 @@
 import {
+  buttonStepDefaultFn,
   encodeTemplateFlowToken,
   TemplateFlowOrigin,
+  WA_TEMPLATE_FLOW_COMPLETE_BUTTON_LABEL,
 } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const findBroadcastByIdForResponse = vi.fn()
 const applyWhatsappFlowResponse = vi.fn(async () => undefined)
+const enqueueFlowAction = vi.fn(async () => undefined)
 const detectConversationAndContactInbox = vi.fn()
 const detectFlowVersion = vi.fn()
 const loggerWarn = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
+  automatedResponseService: {
+    enqueueFlowAction: (...args: unknown[]) => enqueueFlowAction(...args),
+  },
   broadcastService: {
     findByIdForResponse: (...args: unknown[]) =>
       findBroadcastByIdForResponse(...args),
@@ -62,12 +68,19 @@ const makeFlowParam = (flowSourceId = "wa-flow-1") => ({
   fieldMappings: [{ paramKey: "email", customFieldId: "cf-email" }],
 })
 
-const makeSendTemplateStep = (params: unknown) => ({
+const makeSendTemplateStep = (props: {
+  button?: unknown[]
+  buttons?: unknown[]
+}) => ({
   id: "11612473309626370",
   stepType: "sendWaTemplateMessage",
   template: {
-    params,
+    params: { button: props.button },
   },
+  buttons: props.buttons ?? [
+    buttonStepDefaultFn({ label: "Delivered" }),
+    buttonStepDefaultFn({ label: "Failed" }),
+  ],
 })
 
 describe("captureTemplateFlowResponse", () => {
@@ -199,14 +212,30 @@ describe("captureTemplateFlowResponse", () => {
   })
 
   test("applies response for flow-step-origin FLOW button", async () => {
-    const param = makeFlowParam("wa-flow-step")
+    const param = {
+      ...makeFlowParam("wa-flow-step"),
+      responseDumpFieldId: "cf-dump",
+    }
+    const flowCompleteButton = buttonStepDefaultFn({
+      id: "btn-flow-complete",
+      label: WA_TEMPLATE_FLOW_COMPLETE_BUTTON_LABEL,
+    })
     detectFlowVersion.mockResolvedValue({
       flowVersion: {
         nodes: [
           {
             data: {
               details: {
-                steps: [makeSendTemplateStep({ button: [param] })],
+                steps: [
+                  makeSendTemplateStep({
+                    button: [param],
+                    buttons: [
+                      buttonStepDefaultFn({ label: "Delivered" }),
+                      buttonStepDefaultFn({ label: "Failed" }),
+                      flowCompleteButton,
+                    ],
+                  }),
+                ],
               },
             },
           },
@@ -234,6 +263,15 @@ describe("captureTemplateFlowResponse", () => {
         integrationWhatsappId: undefined,
         flowSourceId: "wa-flow-step",
         fieldMappings: param.fieldMappings,
+        responseDumpFieldId: "cf-dump",
+      }),
+    )
+    expect(enqueueFlowAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "postback",
+        data: expect.objectContaining({
+          action: expect.stringContaining("btn-flow-complete"),
+        }),
       }),
     )
   })

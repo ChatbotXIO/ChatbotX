@@ -26,6 +26,7 @@ export const waTemplateButtonParamSchema = z.object({
   flowSourceId: z.string().optional(),
   navigateScreenId: z.string().optional(),
   fieldMappings: z.array(whatsappFlowFieldMappingSchema).optional(),
+  responseDumpFieldId: zodBigintAsString().nullable().optional(),
   thumbnail_product_retailer_id: z.string().optional(),
   sections: z
     .array(
@@ -243,6 +244,7 @@ function extractButtonParams(
         flowSourceId: toOptionalString(button.flow_id),
         navigateScreenId: toOptionalString(button.navigate_screen),
         fieldMappings: [],
+        responseDumpFieldId: null,
       })
     } else if (buttonType === "CATALOG") {
       buttonParams.push({
