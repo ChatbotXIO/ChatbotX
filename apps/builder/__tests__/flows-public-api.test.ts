@@ -73,6 +73,17 @@ vi.mock("@chatbotx.io/business/errors", () => ({
     new Error(`${field}: ${message}`),
 }))
 
+const getFlowAuthoringContext = vi.fn(async () => ({
+  templatesByName: new Map(),
+  inboxesByName: new Map(),
+  tagsByName: new Map(),
+  customFieldsByName: new Map(),
+  flowsByName: new Map(),
+}))
+vi.mock("@chatbotx.io/business/capabilities", () => ({
+  getFlowAuthoringContext,
+}))
+
 vi.mock("@chatbotx.io/worker-config", () => ({
   DefaultJobAction: { runImport: "runImport" },
   defaultQueue: { add: vi.fn() },
@@ -280,6 +291,55 @@ describe("POST /v1/flows/{id}/publish", () => {
       edges: [],
     })
   })
+
+  test("compiles a { spec } input into nodes/edges before publishing", async () => {
+    flowVersionService.publish.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        id: "flow-1",
+        spec: {
+          formatVersion: 1,
+          name: "Spec flow",
+          steps: [{ type: "send", text: "Hello!" }],
+        },
+      },
+    })
+
+    expect(getFlowAuthoringContext).toHaveBeenCalledWith("workspace-1")
+    expect(flowVersionService.publish).toHaveBeenCalledTimes(1)
+    const call = flowVersionService.publish.mock.calls[0][0]
+    expect(call.workspaceId).toBe("workspace-1")
+    expect(call.flowId).toBe("flow-1")
+    expect(call.nodes).toHaveLength(1)
+    expect(call.nodes[0].type).toBe("sendMessage")
+    expect(call.edges).toEqual([])
+  })
+})
+
+describe("POST /v1/flows/validate", () => {
+  const procedure = findProcedure("POST", "/v1/flows/validate")
+
+  test("compiles a spec and returns the graph without persisting anything", async () => {
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        spec: {
+          formatVersion: 1,
+          name: "Spec flow",
+          steps: [{ type: "send", text: "Hello!" }],
+        },
+      },
+    })
+
+    expect(getFlowAuthoringContext).toHaveBeenCalledWith("workspace-1")
+    expect(result.nodes).toHaveLength(1)
+    expect(result.nodes[0].type).toBe("sendMessage")
+    expect(result.edges).toEqual([])
+    expect(flowVersionService.publish).not.toHaveBeenCalled()
+    expect(flowVersionService.updateDraftByFlowId).not.toHaveBeenCalled()
+  })
 })
 
 describe("PUT /v1/flows/{id}/draft", () => {
@@ -299,6 +359,31 @@ describe("PUT /v1/flows/{id}/draft", () => {
       nodes: [],
       edges: [],
     })
+  })
+
+  test("compiles a { spec } input into nodes/edges before updating the draft", async () => {
+    flowVersionService.updateDraftByFlowId.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        id: "flow-1",
+        spec: {
+          formatVersion: 1,
+          name: "Spec flow",
+          steps: [{ type: "send", text: "Hello!" }],
+        },
+      },
+    })
+
+    expect(getFlowAuthoringContext).toHaveBeenCalledWith("workspace-1")
+    expect(flowVersionService.updateDraftByFlowId).toHaveBeenCalledTimes(1)
+    const call = flowVersionService.updateDraftByFlowId.mock.calls[0][0]
+    expect(call.workspaceId).toBe("workspace-1")
+    expect(call.flowId).toBe("flow-1")
+    expect(call.nodes).toHaveLength(1)
+    expect(call.nodes[0].type).toBe("sendMessage")
+    expect(call.edges).toEqual([])
   })
 })
 

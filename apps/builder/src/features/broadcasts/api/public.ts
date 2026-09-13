@@ -3,6 +3,7 @@ import { notFoundException } from "@chatbotx.io/business/errors"
 import { broadcastStatuses } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -55,7 +56,10 @@ export const broadcastsPublicRouter = {
       method: "GET",
       path: "/v1/broadcasts",
       summary: "Get all broadcasts",
+      description:
+        "Lists broadcasts in the workspace across every status (draft, scheduled, sending, sent, cancelled), newest first.",
       tags: ["Broadcasts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(publicListRequest)
     .output(publicListBroadcastsResponse)
@@ -148,8 +152,11 @@ export const broadcastsPublicRouter = {
       method: "POST",
       path: "/v1/broadcasts",
       summary: "Create a broadcast",
+      description:
+        "Creates a broadcast as a draft (or immediately scheduled, depending on the payload) targeting the given audience filter.",
       successStatus: 201,
       tags: ["Broadcasts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createBroadcastRequest)
     .output(publicBroadcastResource)
@@ -218,6 +225,7 @@ export const broadcastsPublicRouter = {
       summary: "Schedule a draft broadcast",
       description: "Only matches a broadcast whose status is draft.",
       tags: ["Broadcasts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(scheduleBroadcastSchema.and(z.object({ id: zodBigintAsString() })))
     .output(z.object({ id: z.string() }))
@@ -258,6 +266,7 @@ export const broadcastsPublicRouter = {
       summary: "Stop a broadcast that is currently sending",
       description: "Only matches a broadcast whose status is sending.",
       tags: ["Broadcasts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(z.object({ id: zodBigintAsString() }))
     .output(z.object({ id: z.string() }))

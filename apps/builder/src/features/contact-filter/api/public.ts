@@ -1,5 +1,6 @@
 import { listContactFilterFieldsForAPI } from "@/features/contact-filter/lib/list-contact-filter-fields"
 import { listContactFilterFieldsPublicResponse } from "@/features/contact-filter/schema/public"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
@@ -14,6 +15,7 @@ export const contactsFilterFieldsPublicRouter = {
       description:
         "Returns the static fields available for `contactFilter` conditions (with each field's supported operators), plus the workspace's actual custom fields, bot fields, and tags so a filter condition can reference a real id/name instead of guessing one. Use this before building a `contactFilter` for `contacts.search` or `contacts.count`.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .output(listContactFilterFieldsPublicResponse)
     .errors(possibleErrorsOnListingResource)

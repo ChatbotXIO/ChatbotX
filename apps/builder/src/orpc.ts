@@ -4,10 +4,13 @@ import {
 } from "@chatbotx.io/business/errors"
 import { ModelNotfoundException } from "@chatbotx.io/database/errors"
 import type { WorkspaceApiTokenScope } from "@chatbotx.io/database/partials"
+import { FlowAuthoringException } from "@chatbotx.io/flow-config"
 import { SdkException } from "@chatbotx.io/sdk"
+import { oo } from "@orpc/openapi"
 import { ORPCError, onError, ValidationError } from "@orpc/server"
 import { ActionValidationError } from "next-safe-action"
 import { logger } from "./lib/log"
+import type { OperationObjectWithMcp } from "./lib/orpc/mcp-annotations"
 import { commonApiErrors } from "./lib/orpc/orpc-error-helper"
 import { authMiddleware } from "./middlewares/auth"
 import { channelApiTokenAuthMidddleware } from "./middlewares/channel-api-token-auth"
@@ -73,6 +76,19 @@ function toKnownOrpcError(
       message: error.message,
       status: 422,
       data: error.validationErrors,
+    })
+  }
+
+  // `compileFlowSpec` (`@chatbotx.io/flow-config`) rejects an agent-authored
+  // flow spec with every error it found (unknown template/flow names, an
+  // unreachable step, a bad `goto` target, ...) — same 422 shape as
+  // `ActionValidationError` above so a caller has one error contract to
+  // handle, not two.
+  if (error instanceof FlowAuthoringException) {
+    return new ORPCError("invalidRequestData", {
+      message: error.message,
+      status: 422,
+      data: error.errors,
     })
   }
 
@@ -149,12 +165,26 @@ const requireTokenScope = (scope: WorkspaceApiTokenScope) =>
 
 /**
  * Every workspace-token endpoint must declare its resource scope — there is
- * no unscoped variant. This is deliberate: removing a bare
- * `workspaceTokenAuthAPI` export makes every current and future endpoint
- * fail to compile until it picks a scope, turning the compile error itself
- * into the router-sweep checklist.
+ * no default. `oo.spec` proxies `requireTokenScope(scope)` so the OpenAPI
+ * generator's `applyCustomOpenAPIOperation` (which walks
+ * `contract["~orpc"].middlewares`) stamps `x-mcp.scope` on every operation
+ * that chains through this middleware — one edit here instead of touching
+ * every one of the ~450 scoped route files. By the time this extender runs,
+ * `current` already reflects the route's own `.route({ spec: mcpSpec(...) })`
+ * (applied earlier, during operation generation), so spreading
+ * `current["x-mcp"]` before writing `scope` keeps a route's declared
+ * `visibility` while `scope` always comes from this middleware — a route
+ * can never spoof its own scope.
  */
 export const workspaceTokenAuthAPIForScope = (scope: WorkspaceApiTokenScope) =>
-  publicAPI.use(workspaceTokenAuthMidddleware).use(requireTokenScope(scope))
+  publicAPI.use(workspaceTokenAuthMidddleware).use(
+    oo.spec(requireTokenScope(scope), (current): OperationObjectWithMcp => {
+      const existing = (current as OperationObjectWithMcp)["x-mcp"]
+      return {
+        ...current,
+        "x-mcp": { ...existing, scope },
+      }
+    }),
+  )
 
 export const channelApiTokenAPI = publicAPI.use(channelApiTokenAuthMidddleware)

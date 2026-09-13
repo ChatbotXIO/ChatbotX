@@ -2,6 +2,7 @@ import { contactService, tagService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { publicTagResource } from "@/features/tags/schema/resource"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
@@ -43,8 +44,11 @@ export const contactsTagsPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/tags",
       summary: "Add tags to the contact",
+      description:
+        "Attaches the given tag ids to the contact identified by `identifier`; tags already on the contact are left as-is. Use `tags.list`/`tags.create` first to resolve names to ids.",
       successStatus: 204,
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({

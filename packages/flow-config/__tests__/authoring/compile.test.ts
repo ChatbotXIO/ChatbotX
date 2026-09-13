@@ -1,0 +1,512 @@
+import { describe, expect, test } from "vitest"
+import { z } from "zod"
+import {
+  compileFlowSpec,
+  edgeSchema,
+  type FlowAuthoringContext,
+  FlowAuthoringException,
+  type FlowSpec,
+  type FlowStepSpec,
+  flowVersionSchema,
+  nodeTypeSchema,
+  parseFlowExport,
+  refineStepsByChannel,
+  stepTypes,
+} from "../../src"
+
+const emptyCtx: FlowAuthoringContext = {
+  templatesByName: new Map(),
+  inboxesByName: new Map(),
+  tagsByName: new Map(),
+  customFieldsByName: new Map(),
+  flowsByName: new Map(),
+}
+
+const ctx: FlowAuthoringContext = {
+  templatesByName: new Map([
+    ["welcome_promo", { id: "1001", language: "en", status: "approved" }],
+  ]),
+  inboxesByName: new Map(),
+  tagsByName: new Map(),
+  customFieldsByName: new Map([["Plan", { id: "1002", type: "text" }]]),
+  flowsByName: new Map([["Nurture", { id: "1003" }]]),
+}
+
+const spec = (
+  steps: FlowStepSpec[],
+  overrides: Partial<FlowSpec> = {},
+): FlowSpec => ({
+  formatVersion: 1,
+  name: "Test flow",
+  steps,
+  ...overrides,
+})
+
+/** Asserts the compiled graph is schema-valid exactly as publish requires. */
+function expectPublishable(nodes: unknown, edges: unknown): void {
+  const nodesResult = z
+    .array(flowVersionSchema)
+    .superRefine(refineStepsByChannel)
+    .safeParse(nodes)
+  expect(nodesResult.success, JSON.stringify(nodesResult.error?.issues)).toBe(
+    true,
+  )
+  const edgesResult = z.array(edgeSchema).safeParse(edges)
+  expect(edgesResult.success, JSON.stringify(edgesResult.error?.issues)).toBe(
+    true,
+  )
+}
+
+describe("compileFlowSpec — one node per step type", () => {
+  test("send (text)", () => {
+    const compiled = compileFlowSpec(
+      spec([{ type: "send", text: "Hello!" }]),
+      emptyCtx,
+    )
+    expect(compiled.nodes).toHaveLength(1)
+    const node = compiled.nodes[0]
+    expect(node?.type).toBe(nodeTypeSchema.enum.sendMessage)
+    expect(compiled.startNodeId).toBe(node?.id)
+    expect(node?.data.isStartNode).toBe(true)
+    if (node?.type === "sendMessage") {
+      expect(node.data.details.steps[0]).toMatchObject({
+        stepType: stepTypes.enum.sendText,
+        text: "Hello!",
+      })
+    }
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("send (image)", () => {
+    const compiled = compileFlowSpec(
+      spec([{ type: "send", imageUrl: "https://example.com/a.png" }]),
+      emptyCtx,
+    )
+    const node = compiled.nodes[0]
+    if (node?.type === "sendMessage") {
+      expect(node.data.details.steps[0]).toMatchObject({
+        stepType: stepTypes.enum.sendImage,
+        url: "https://example.com/a.png",
+      })
+    }
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("send (file)", () => {
+    const compiled = compileFlowSpec(
+      spec([{ type: "send", fileUrl: "https://example.com/a.pdf" }]),
+      emptyCtx,
+    )
+    const node = compiled.nodes[0]
+    if (node?.type === "sendMessage") {
+      expect(node.data.details.steps[0]).toMatchObject({
+        stepType: stepTypes.enum.sendFile,
+        url: "https://example.com/a.pdf",
+      })
+    }
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("sendTemplate resolves the template by name", () => {
+    const compiled = compileFlowSpec(
+      spec([{ type: "sendTemplate", templateName: "welcome_promo" }]),
+      ctx,
+    )
+    const node = compiled.nodes[0]
+    expect(node?.type).toBe(nodeTypeSchema.enum.sendMessage)
+    if (node?.type === "sendMessage") {
+      expect(node.data.details.beforeStep.channel).toBe("whatsapp")
+      expect(node.data.details.steps[0]).toMatchObject({
+        stepType: stepTypes.enum.sendWaTemplateMessage,
+        template: { id: "1001", name: "welcome_promo", language: "en" },
+      })
+    }
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("sendTemplate reports an unknown template with candidates", () => {
+    try {
+      compileFlowSpec(
+        spec([{ type: "sendTemplate", templateName: "welcom_promo" }]),
+        ctx,
+      )
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      const authoringError = (error as FlowAuthoringException).errors[0]
+      expect(authoringError?.path).toBe("steps[0].templateName")
+      expect(authoringError?.code).toBe("unknownTemplate")
+      expect(authoringError?.candidates).toContain("welcome_promo")
+    }
+  })
+
+  test("wait", () => {
+    const compiled = compileFlowSpec(
+      spec([{ type: "wait", duration: 2, unit: "hours" }]),
+      emptyCtx,
+    )
+    const node = compiled.nodes[0]
+    expect(node?.type).toBe(nodeTypeSchema.enum.wait)
+    if (node?.type === "wait") {
+      expect(node.data.details.steps[0]).toMatchObject({
+        duration: 2,
+        unit: "hours",
+      })
+    }
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test.each([
+    ["addTags", { tagNames: ["VIP"] }, stepTypes.enum.addContactTag],
+    ["removeTags", { tagNames: ["VIP"] }, stepTypes.enum.removeContactTag],
+    [
+      "setCustomField",
+      { customFieldName: "Plan", value: "premium" },
+      stepTypes.enum.setCustomField,
+    ],
+    [
+      "assignConversation",
+      { assigneeId: "user-1" },
+      stepTypes.enum.assignConversation,
+    ],
+    ["archiveConversation", {}, stepTypes.enum.archiveConversation],
+  ] as const)("action %s compiles to a performAction node", (action, extra, expectedStepType) => {
+    const compiled = compileFlowSpec(
+      spec([{ type: "action", action, ...extra } as FlowStepSpec]),
+      ctx,
+    )
+    const node = compiled.nodes[0]
+    expect(node?.type).toBe(nodeTypeSchema.enum.performAction)
+    if (node?.type === "performAction") {
+      expect(node.data.details.steps[0]?.stepType).toBe(expectedStepType)
+    }
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("startFlow resolves the target flow by name", () => {
+    const compiled = compileFlowSpec(
+      spec([{ type: "startFlow", flowName: "Nurture" }]),
+      ctx,
+    )
+    const node = compiled.nodes[0]
+    expect(node?.type).toBe(nodeTypeSchema.enum.startFlow)
+    if (node?.type === "startFlow") {
+      expect(node.data.details.beforeStep.flowId).toBe("1003")
+    }
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("startFlow reports an unknown flow with candidates", () => {
+    try {
+      compileFlowSpec(spec([{ type: "startFlow", flowName: "Nurtur" }]), ctx)
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      const authoringError = (error as FlowAuthoringException).errors[0]
+      expect(authoringError?.path).toBe("steps[0].flowName")
+      expect(authoringError?.code).toBe("unknownFlow")
+      expect(authoringError?.candidates).toContain("Nurture")
+    }
+  })
+
+  test("addNote", () => {
+    const compiled = compileFlowSpec(
+      spec([{ type: "addNote", note: "Called back" }]),
+      emptyCtx,
+    )
+    const node = compiled.nodes[0]
+    expect(node?.type).toBe(nodeTypeSchema.enum.addNotes)
+    if (node?.type === "addNotes") {
+      expect(node.data.details.beforeStep.text).toBe("Called back")
+    }
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("branch compiles to a condition node with cases and otherwise", () => {
+    const compiled = compileFlowSpec(
+      spec([
+        {
+          type: "branch",
+          cases: [
+            {
+              when: [{ field: "email", operator: "isNotEmpty" }],
+              // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+              then: [{ type: "addNote", note: "has email" }],
+            },
+          ],
+          otherwise: [{ type: "addNote", note: "no email" }],
+        },
+      ]),
+      emptyCtx,
+    )
+    expect(compiled.nodes).toHaveLength(3)
+    const branchNode = compiled.nodes[0]
+    expect(branchNode?.type).toBe(nodeTypeSchema.enum.condition)
+    if (branchNode?.type === "condition") {
+      const conditionStep = branchNode.data.details.steps[0]
+      expect(conditionStep?.cases).toHaveLength(1)
+      expect(conditionStep?.cases[0]?.conditions[0]).toMatchObject({
+        field: "email",
+        operator: "isNotEmpty",
+      })
+      const caseEdge = compiled.edges.find(
+        (edge) => edge.sourceHandle === conditionStep?.cases[0]?.id,
+      )
+      const otherwiseEdge = compiled.edges.find(
+        (edge) => edge.sourceHandle === conditionStep?.otherwiseId,
+      )
+      expect(caseEdge).toBeDefined()
+      expect(otherwiseEdge).toBeDefined()
+    }
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+})
+
+describe("compileFlowSpec — a realistic multi-step flow", () => {
+  test("send → wait 1h → branch → sendTemplate", () => {
+    const compiled = compileFlowSpec(
+      spec(
+        [
+          { type: "send", text: "Hi! Thanks for reaching out." },
+          { type: "wait", duration: 1, unit: "hours" },
+          {
+            type: "branch",
+            cases: [
+              {
+                when: [{ field: "country", operator: "eq", value: "US" }],
+                // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+                then: [{ type: "sendTemplate", templateName: "welcome_promo" }],
+              },
+            ],
+          },
+        ],
+        { channel: "whatsapp" },
+      ),
+      ctx,
+    )
+
+    expect(compiled.nodes.map((node) => node.type)).toEqual([
+      "sendMessage",
+      "wait",
+      "condition",
+      "sendMessage",
+    ])
+    // send -> wait -> branch chained by Continue edges (source === sourceHandle === node id).
+    const [sendNode, waitNode, branchNode] = compiled.nodes
+    expect(
+      compiled.edges.find(
+        (edge) =>
+          edge.source === sendNode?.id && edge.sourceHandle === sendNode?.id,
+      )?.target,
+    ).toBe(waitNode?.id)
+    expect(
+      compiled.edges.find(
+        (edge) =>
+          edge.source === waitNode?.id && edge.sourceHandle === waitNode?.id,
+      )?.target,
+    ).toBe(branchNode?.id)
+
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+})
+
+describe("compileFlowSpec — button routing", () => {
+  test("a routed button writes both the node's beforeStep and a matching edge", () => {
+    const compiled = compileFlowSpec(
+      spec([
+        {
+          type: "send",
+          text: "Want a discount?",
+          buttons: [
+            // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+            { text: "Yes", then: [{ type: "addNote", note: "said yes" }] },
+            { text: "No" },
+          ],
+        },
+      ]),
+      emptyCtx,
+    )
+
+    const sendNode = compiled.nodes[0]
+    expect(sendNode?.type).toBe("sendMessage")
+    if (sendNode?.type !== "sendMessage") {
+      throw new Error("expected sendMessage node")
+    }
+    const [yesButton, noButton] = sendNode.data.details.steps[0]?.buttons ?? []
+    const noteNode = compiled.nodes[1]
+
+    // Routed button: beforeStep points at the new node...
+    expect(yesButton?.buttonType).toBe("startAnotherNode")
+    if (yesButton?.buttonType === "startAnotherNode") {
+      expect(yesButton.beforeStep.nodeId).toBe(noteNode?.id)
+    }
+    // ...and an edge exists for the same handle, to the same target.
+    const edge = compiled.edges.find((e) => e.sourceHandle === yesButton?.id)
+    expect(edge).toMatchObject({
+      source: sendNode.id,
+      target: noteNode?.id,
+      targetHandle: noteNode?.id,
+    })
+
+    // Unrouted button stays inert — no beforeStep, no edge.
+    expect(noButton?.buttonType).toBeNull()
+    expect(
+      compiled.edges.find((e) => e.sourceHandle === noButton?.id),
+    ).toBeUndefined()
+
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+})
+
+describe("compileFlowSpec — goto", () => {
+  test("jumps to an earlier step's node instead of creating a new one", () => {
+    const compiled = compileFlowSpec(
+      spec([
+        { type: "addNote", id: "greet", note: "greeted" },
+        { type: "wait", duration: 1, unit: "days" },
+        { type: "goto", targetId: "greet" },
+      ]),
+      emptyCtx,
+    )
+
+    // "goto" creates no node of its own.
+    expect(compiled.nodes).toHaveLength(2)
+    const [greetNode, waitNode] = compiled.nodes
+    const gotoEdge = compiled.edges.find(
+      (edge) =>
+        edge.source === waitNode?.id && edge.sourceHandle === waitNode?.id,
+    )
+    expect(gotoEdge?.target).toBe(greetNode?.id)
+  })
+
+  test("rejects goto as the first step", () => {
+    expect(() =>
+      compileFlowSpec(spec([{ type: "goto", targetId: "x" }]), emptyCtx),
+    ).toThrow(FlowAuthoringException)
+  })
+
+  test("rejects a goto to an unknown step id", () => {
+    try {
+      compileFlowSpec(
+        spec([
+          { type: "addNote", note: "hi" },
+          { type: "goto", targetId: "does-not-exist" },
+        ]),
+        emptyCtx,
+      )
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      const authoringError = (error as FlowAuthoringException).errors[0]
+      expect(authoringError?.code).toBe("invalidGotoTarget")
+      expect(authoringError?.path).toBe("steps[1].targetId")
+    }
+  })
+})
+
+describe("compileFlowSpec — structural validation", () => {
+  test("reports an unreachable step after a terminal branch", () => {
+    try {
+      compileFlowSpec(
+        spec([
+          {
+            type: "branch",
+            cases: [
+              {
+                when: [{ field: "email", operator: "isNotEmpty" }],
+                // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+                then: [{ type: "addNote", note: "x" }],
+              },
+            ],
+          },
+          { type: "addNote", note: "unreachable" },
+        ]),
+        emptyCtx,
+      )
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      const authoringError = (error as FlowAuthoringException).errors[0]
+      expect(authoringError?.code).toBe("unreachableStep")
+      expect(authoringError?.path).toBe("steps[1]")
+    }
+  })
+
+  test("reports duplicate step ids anywhere in the spec", () => {
+    try {
+      compileFlowSpec(
+        spec([
+          { type: "addNote", id: "dup", note: "a" },
+          { type: "addNote", id: "dup", note: "b" },
+        ]),
+        emptyCtx,
+      )
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      const codes = (error as FlowAuthoringException).errors.map((e) => e.code)
+      expect(codes).toEqual(["duplicateStepId", "duplicateStepId"])
+    }
+  })
+})
+
+describe("compileFlowSpec — layout determinism", () => {
+  test("compiling the same spec twice produces identical positions", () => {
+    const buildSpec = () =>
+      spec([
+        { type: "send", text: "Hi" },
+        {
+          type: "branch",
+          cases: [
+            {
+              when: [{ field: "email", operator: "isNotEmpty" }],
+              // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+              then: [{ type: "addNote", note: "a" }],
+            },
+          ],
+          otherwise: [{ type: "addNote", note: "b" }],
+        },
+      ])
+
+    const first = compileFlowSpec(buildSpec(), emptyCtx)
+    const second = compileFlowSpec(buildSpec(), emptyCtx)
+
+    const positionsByOrder = (nodes: typeof first.nodes) =>
+      nodes.map((node) => node.position)
+    expect(positionsByOrder(first.nodes)).toEqual(
+      positionsByOrder(second.nodes),
+    )
+  })
+})
+
+describe("compileFlowSpec — round-trip through the export schema", () => {
+  test("a compiled graph parses as a valid flow export", () => {
+    const compiled = compileFlowSpec(
+      spec([
+        { type: "send", text: "Hi!" },
+        { type: "wait", duration: 1, unit: "hours" },
+      ]),
+      emptyCtx,
+    )
+
+    const result = parseFlowExport({
+      formatVersion: 2,
+      exportedAt: new Date().toISOString(),
+      source: { workspaceId: "1", flowId: "1" },
+      flows: [
+        {
+          name: "Test flow",
+          active: true,
+          enableInInbox: false,
+          startNodeId: compiled.startNodeId,
+          nodes: compiled.nodes,
+          edges: compiled.edges,
+        },
+      ],
+      customFields: {},
+      botFields: {},
+    })
+
+    expect(result.ok, result.ok ? undefined : result.reason).toBe(true)
+  })
+})

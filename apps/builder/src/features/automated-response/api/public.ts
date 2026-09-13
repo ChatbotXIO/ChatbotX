@@ -2,6 +2,7 @@ import { automatedResponseService } from "@chatbotx.io/business"
 import { automatedResponseTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -21,7 +22,10 @@ export const keywordsPublicRouter = {
       method: "GET",
       path: "/v1/keywords",
       summary: "List keywords (automated responses)",
+      description:
+        "Lists keyword-triggered automated responses in the workspace, filterable by `type` (inbound/comment).",
       tags: ["Keywords"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       publicListRequest.extend({
@@ -71,8 +75,11 @@ export const keywordsPublicRouter = {
       method: "POST",
       path: "/v1/keywords",
       summary: "Create a keyword automation",
+      description:
+        "Creates a keyword automation that replies with text or starts a flow when any of `keywords` is matched in an inbound message or comment.",
       successStatus: 201,
       tags: ["Keywords"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({

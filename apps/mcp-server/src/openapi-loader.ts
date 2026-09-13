@@ -5,6 +5,15 @@ interface OpenAPISpec {
   servers?: Array<{ url: string }>
 }
 
+interface McpOperationMeta {
+  alwaysVisible?: boolean
+  destructiveHint?: boolean
+  idempotentHint?: boolean
+  readOnlyHint?: boolean
+  scope?: string
+  visibility?: "default" | "hidden"
+}
+
 interface OpenAPIOperation {
   deprecated?: boolean
   description?: string
@@ -20,6 +29,7 @@ interface OpenAPIOperation {
   }
   security?: Record<string, string[]>[]
   summary?: string
+  "x-mcp"?: McpOperationMeta
 }
 
 // Workspace-token security schemes only — a channel-token op (or any scheme
@@ -74,7 +84,15 @@ interface OpenAPISchemaObject {
   type?: string
 }
 
+export interface DynamicToolAnnotations {
+  destructiveHint: boolean
+  idempotentHint: boolean
+  readOnlyHint: boolean
+}
+
 export interface DynamicTool {
+  alwaysVisible: boolean
+  annotations: DynamicToolAnnotations
   baseUrl: string
   bodyParamNames: string[]
   description: string
@@ -88,6 +106,8 @@ export interface DynamicTool {
   pathParamNames: string[]
   pathTemplate: string
   queryParamNames: string[]
+  scope?: string
+  visibility: "default" | "hidden"
 }
 
 let cachedTools: DynamicTool[] | null = null
@@ -113,6 +133,28 @@ export function toSnakeCase(str: string): string {
 function extractPathParamNames(pathTemplate: string): string[] {
   const matches = pathTemplate.match(/\{([^}]+)\}/g)
   return matches ? matches.map((m) => m.slice(1, -1)) : []
+}
+
+/**
+ * `x-mcp` hints override; otherwise inferred from the HTTP method — a GET is
+ * read-only and idempotent by convention, a DELETE is destructive (and still
+ * idempotent: deleting twice is a no-op), everything else (POST/PUT/PATCH)
+ * defaults to none of the three.
+ */
+function buildAnnotations(
+  method: string,
+  meta: McpOperationMeta | undefined,
+): DynamicToolAnnotations {
+  const upperMethod = method.toUpperCase()
+  return {
+    readOnlyHint: meta?.readOnlyHint ?? upperMethod === "GET",
+    destructiveHint: meta?.destructiveHint ?? upperMethod === "DELETE",
+    idempotentHint:
+      meta?.idempotentHint ??
+      (upperMethod === "GET" ||
+        upperMethod === "PUT" ||
+        upperMethod === "DELETE"),
+  }
 }
 
 /**
@@ -206,6 +248,7 @@ function parseToolsFromSpec(spec: OpenAPISpec): DynamicTool[] {
       const { schema, bodyParamNames, queryParamNames } =
         buildInputSchema(operation)
 
+      const meta = operation["x-mcp"]
       tools.push({
         name: toSnakeCase(operation.operationId),
         description: buildToolDescription(operation),
@@ -216,6 +259,10 @@ function parseToolsFromSpec(spec: OpenAPISpec): DynamicTool[] {
         pathParamNames,
         bodyParamNames,
         queryParamNames,
+        visibility: meta?.visibility === "default" ? "default" : "hidden",
+        alwaysVisible: meta?.alwaysVisible === true,
+        scope: meta?.scope,
+        annotations: buildAnnotations(httpMethod, meta),
       })
     }
   }
@@ -309,4 +356,60 @@ export async function refreshOpenApiSpecIfStale(): Promise<DynamicTool[]> {
 
 export function getCachedTools(): DynamicTool[] {
   return cachedTools ?? []
+}
+
+export type TokenScopeIntrospection = {
+  permission: "read_only" | "full"
+  scopes: string[] | null
+}
+
+// Plan carve-out: a read-only token still needs the handful of POST
+// endpoints that are reads in disguise (a filter body instead of query
+// params) — `contacts_search` mirrors `contacts_list` exactly.
+const READ_ONLY_ALLOWED_POST_TOOLS: Record<string, true> = {
+  contacts_search: true,
+}
+
+function isVisibleForScope(
+  tool: DynamicTool,
+  introspection: TokenScopeIntrospection | null,
+): boolean {
+  // Fail OPEN: introspection unavailable (network blip, unexpected
+  // response) must not hide every tool — enforcement of scope/permission
+  // still happens server-side on the actual call; this is a `tools/list`
+  // display concern only.
+  if (introspection === null) {
+    return true
+  }
+
+  if (
+    introspection.permission === "read_only" &&
+    tool.method !== "GET" &&
+    !READ_ONLY_ALLOWED_POST_TOOLS[tool.name]
+  ) {
+    return false
+  }
+
+  // `alwaysVisible` (discovery endpoints like `capabilities.get`/`token.get`)
+  // and an unrestricted token (`scopes: null`) both skip the scope check.
+  if (tool.alwaysVisible || introspection.scopes === null) {
+    return true
+  }
+
+  return tool.scope !== undefined && introspection.scopes.includes(tool.scope)
+}
+
+/**
+ * The `tools/list` surface — `visibility: "default"` operations only,
+ * further narrowed to what `introspection` (the calling token's
+ * permission/scopes, from `GET /v1/token`) allows when provided. Everything
+ * excluded here is still reachable via `search_tools` / `call_tool` against
+ * `getCachedTools()`, which is never filtered.
+ */
+export function getVisibleTools(
+  introspection?: TokenScopeIntrospection | null,
+): DynamicTool[] {
+  return getCachedTools()
+    .filter((tool) => tool.visibility === "default")
+    .filter((tool) => isVisibleForScope(tool, introspection ?? null))
 }

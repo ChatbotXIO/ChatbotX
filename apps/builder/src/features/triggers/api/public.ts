@@ -4,6 +4,7 @@ import { folderTypes } from "@chatbotx.io/database/partials"
 import type { TriggerModel } from "@chatbotx.io/database/types"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -41,6 +42,7 @@ export const triggersPublicRouter = {
       summary: "List triggers",
       description: "Lists triggers with their real conditions and actions.",
       tags: ["Triggers"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(publicListRequest)
     .output(publicListResponse(triggerResource))
@@ -85,6 +87,7 @@ export const triggersPublicRouter = {
         "Creates an empty trigger. Use PUT /v1/triggers/{id} to attach conditions and actions.",
       successStatus: 201,
       tags: ["Triggers"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createTriggerSchema)
     .output(triggerResource)

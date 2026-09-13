@@ -1,3 +1,4 @@
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listInboxes } from "../queries"
@@ -18,6 +19,7 @@ export const inboxesPublicRouter = {
       description:
         "List connected inboxes with their internal IDs. Use `id` as the `inboxId` parameter when sending messages or flows to a contact.",
       tags: ["Channels"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(publishInboxesRequest)
     .output(publicListInboxResponse)

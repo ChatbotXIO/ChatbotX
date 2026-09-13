@@ -1,6 +1,7 @@
 import { tagService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -22,7 +23,10 @@ export const tagsPublicRouter = {
       method: "GET",
       path: "/v1/tags",
       summary: "Get all tags",
+      description:
+        "Lists every tag in the workspace. Use `tags.create` to add one, or `contacts.addTags` to attach existing ones to a contact.",
       tags: ["Tags"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(publicListRequest)
     .output(publicListTagsResponse)
@@ -41,8 +45,10 @@ export const tagsPublicRouter = {
       method: "POST",
       path: "/v1/tags",
       summary: "Create a new tag",
+      description: "Creates a new tag in the workspace, returned with its id.",
       successStatus: 201,
       tags: ["Tags"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createTagRequest.pick({ name: true }))
     .output(publicTagResource)

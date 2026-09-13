@@ -1,0 +1,204 @@
+import { type DynamicTool, getCachedTools } from "../openapi-loader"
+import { executeTool, type ToolCallResult } from "./execute-tool"
+
+/**
+ * Static tool definitions for the two meta-tools that give an agent access
+ * to the ~300 operations excluded from `tools/list` by `visibility: "hidden"`
+ * (see `apps/builder/src/lib/orpc/mcp-annotations.ts`). These never come
+ * from the OpenAPI spec — they are the fixed entry point into it.
+ */
+export const META_TOOLS = [
+  {
+    name: "search_tools",
+    description:
+      "Search the full ChatbotX API for tools not listed in tools/list. " +
+      "Returns each match's name, description and inputSchema. " +
+      "Use when no listed tool fits — then run it with call_tool.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "What you want to do, in plain language.",
+        },
+        limit: {
+          type: "number",
+          description: "Max results (default 10, max 25).",
+        },
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "call_tool",
+    description:
+      "Execute any ChatbotX tool by name, including ones not in tools/list.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "Exact tool name from search_tools.",
+        },
+        arguments: { type: "object", description: "Arguments for that tool." },
+      },
+      required: ["name"],
+    },
+  },
+] as const
+
+export const META_TOOL_NAMES: Record<string, true> = {
+  search_tools: true,
+  call_tool: true,
+}
+
+const DEFAULT_SEARCH_LIMIT = 10
+const MAX_SEARCH_LIMIT = 25
+// A name/description-token match is worth less than a whole-phrase match,
+// and a name match outweighs a description match — a query naming the
+// resource ("tags") should rank `tags_list` over an unrelated tool whose
+// long description happens to mention tags in passing.
+const NAME_TOKEN_WEIGHT = 2
+const DESCRIPTION_TOKEN_WEIGHT = 1
+const PHRASE_MATCH_BONUS = 3
+
+function tokenize(text: string): string[] {
+  return text.toLowerCase().match(/[a-z0-9]+/g) ?? []
+}
+
+function scoreTool(
+  tool: DynamicTool,
+  queryTokens: string[],
+  queryPhrase: string,
+): number {
+  const nameTokens = tokenize(tool.name)
+  const descriptionTokens = tokenize(tool.description)
+
+  let score = 0
+  for (const token of queryTokens) {
+    if (nameTokens.includes(token)) {
+      score += NAME_TOKEN_WEIGHT
+    }
+    if (descriptionTokens.includes(token)) {
+      score += DESCRIPTION_TOKEN_WEIGHT
+    }
+  }
+
+  if (
+    queryPhrase.length > 0 &&
+    `${tool.name} ${tool.description}`.toLowerCase().includes(queryPhrase)
+  ) {
+    score += PHRASE_MATCH_BONUS
+  }
+
+  return score
+}
+
+/**
+ * Ranks every cached tool (not just the `visibility: "default"` set —
+ * that's the whole point) against the query and returns the top matches.
+ * Zero-scoring tools are dropped rather than padded in at the tail: an
+ * agent acting on a bad match is worse than an agent getting an empty list
+ * and rephrasing.
+ */
+export function searchTools(query: string, limit?: number): DynamicTool[] {
+  const queryPhrase = query.trim().toLowerCase()
+  const queryTokens = tokenize(query)
+  const cappedLimit = Math.min(
+    Math.max(limit ?? DEFAULT_SEARCH_LIMIT, 1),
+    MAX_SEARCH_LIMIT,
+  )
+
+  return getCachedTools()
+    .map((tool) => ({ tool, score: scoreTool(tool, queryTokens, queryPhrase) }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score
+      }
+      // Tie-break: a read fits more agent intents safely than a write, and
+      // a shorter name is usually the more general/canonical operation
+      // (`tags_list` over `contacts_list_tags`).
+      const aIsGet = a.tool.method === "GET"
+      const bIsGet = b.tool.method === "GET"
+      if (aIsGet !== bIsGet) {
+        return aIsGet ? -1 : 1
+      }
+      return a.tool.name.length - b.tool.name.length
+    })
+    .slice(0, cappedLimit)
+    .map(({ tool }) => tool)
+}
+
+export function findToolByName(name: string): DynamicTool | undefined {
+  return getCachedTools().find((tool) => tool.name === name)
+}
+
+/**
+ * `search_tools` handler — validates the raw MCP `arguments` object and
+ * returns each match's name/description/inputSchema as JSON text, the same
+ * shape a `tools/list` entry has, so an agent can go straight from a match
+ * to a `call_tool` invocation.
+ */
+export function handleSearchTools(
+  args: Record<string, unknown>,
+): ToolCallResult {
+  const query = args.query
+  if (typeof query !== "string" || query.trim().length === 0) {
+    return {
+      isError: true,
+      content: [
+        {
+          type: "text",
+          text: "search_tools requires a non-empty 'query' string.",
+        },
+      ],
+    }
+  }
+  const limit = typeof args.limit === "number" ? args.limit : undefined
+
+  const matches = searchTools(query, limit).map((tool) => ({
+    name: tool.name,
+    description: tool.description,
+    inputSchema: tool.inputSchema,
+  }))
+
+  return {
+    content: [{ type: "text", text: JSON.stringify(matches, null, 2) }],
+  }
+}
+
+/**
+ * `call_tool` handler — looks up `name` against the *entire* cached tool
+ * list (no `visibility` filter; that filter only governs `tools/list`) and
+ * executes it exactly like a direct `tools/call` would.
+ */
+export async function handleCallTool(
+  args: Record<string, unknown>,
+  apiKey: string,
+): Promise<ToolCallResult> {
+  const name = args.name
+  if (typeof name !== "string" || name.trim().length === 0) {
+    return {
+      isError: true,
+      content: [
+        { type: "text", text: "call_tool requires a non-empty 'name' string." },
+      ],
+    }
+  }
+
+  const tool = findToolByName(name)
+  if (!tool) {
+    return {
+      isError: true,
+      content: [{ type: "text", text: `Unknown tool: ${name}` }],
+    }
+  }
+
+  const toolArguments =
+    args.arguments && typeof args.arguments === "object"
+      ? (args.arguments as Record<string, unknown>)
+      : {}
+
+  return await executeTool(tool, toolArguments, apiKey)
+}

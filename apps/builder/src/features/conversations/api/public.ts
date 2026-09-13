@@ -7,6 +7,7 @@ import {
 import z from "zod"
 import { successResponse } from "@/features/common/schema"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
@@ -73,7 +74,10 @@ export const conversationsPublicRouter = {
       method: "GET",
       path: "/v1/conversations",
       summary: "List conversations",
+      description:
+        "Lists conversations in the workspace with optional filters (status, channel, assignee, tags, contact filter). Use `conversations.get` for the full detail of one.",
       tags: ["Conversations"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(listConversationsQueryRequest)
     .output(listConversationsResponse)
@@ -96,7 +100,10 @@ export const conversationsPublicRouter = {
       method: "GET",
       path: "/v1/conversations/{id}",
       summary: "Get a conversation by id",
+      description:
+        "Returns the full detail of a single conversation, including its contact, channel, assignee, and status.",
       tags: ["Conversations"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(conversationIdPathParam)
     .output(getConversationPublicResponse)
@@ -119,7 +126,10 @@ export const conversationsPublicRouter = {
       method: "POST",
       path: "/v1/conversations/{id}/assign",
       summary: "Assign or unassign a conversation to a user or inbox team",
+      description:
+        "Sets the conversation's assignee. Pass a user id, an inbox team id, or `null`/omit `assignedId` to unassign.",
       tags: ["Conversations"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(assignConversationPublicRequest.and(conversationIdPathParam))
     .output(successResponse)
@@ -148,7 +158,10 @@ export const conversationsPublicRouter = {
       method: "POST",
       path: "/v1/conversations/{id}/archive",
       summary: "Archive a conversation",
+      description:
+        "Archives the conversation, removing it from the default inbox view. Use `conversations.list` with the appropriate filter to find archived conversations again.",
       tags: ["Conversations"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(conversationIdPathParam)
     .output(successResponse)

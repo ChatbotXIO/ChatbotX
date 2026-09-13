@@ -1,6 +1,7 @@
 import { contactService, importService, UNSCOPED } from "@chatbotx.io/business"
 import { contactSources, genderTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnFindingResource,
@@ -40,6 +41,7 @@ export const contactsCrudPublicRouter = {
       description:
         "List contacts in the workspace, with optional keyword search and filter. Supports `include` to shrink the response (e.g. `include=tags`) and `withCount=false` to skip the total-count query when you only need the rows.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(listContactsPublicRequest)
     .output(listContactsResponse)
@@ -63,6 +65,7 @@ export const contactsCrudPublicRouter = {
       description:
         "Same as `GET /v1/contacts` but accepts the filter as a JSON request body instead of query parameters — use this when `contactFilter` is large or deeply nested. Supports the same `include`/`withCount` options.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(listContactsPublicRequest)
     .output(listContactsResponse)
@@ -83,7 +86,10 @@ export const contactsCrudPublicRouter = {
       method: "GET",
       path: "/v1/contacts/count",
       summary: "Count contacts matching a filter",
+      description:
+        "Counts contacts matching the same filter shape as `contacts.list`/`contacts.search`, without paginating the rows.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(countContactsPublicRequest)
     .output(countContactsPublicResponse)
@@ -103,7 +109,10 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts/{identifier}",
       summary:
         "Get contact by identifier (id:123, email:user@example.com, phone:+84...)",
+      description:
+        "Looks up a single contact by a prefixed identifier: `id:<contactId>`, `email:<address>`, or `phone:<e164Number>`.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(z.object({ identifier: z.string().min(1) }))
     .output(contactResponse)
@@ -124,7 +133,10 @@ export const contactsCrudPublicRouter = {
       method: "POST",
       path: "/v1/contacts",
       summary: "Create a contact",
+      description:
+        "Creates a new contact directly in the workspace (not via a channel conversation). At least one of email or phoneNumber is typically required for later messaging.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createContactRequest)
     .output(contactResponse)
@@ -187,8 +199,11 @@ export const contactsCrudPublicRouter = {
       method: "PUT",
       path: "/v1/contacts/{identifier}",
       summary: "Update contact fields",
+      description:
+        "Overwrites the given standard and/or custom fields on the contact identified by `identifier`; fields omitted from the body are left unchanged.",
       successStatus: 204,
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z
@@ -277,7 +292,10 @@ export const contactsCrudPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/upsert",
       summary: "Upsert a contact by identifier",
+      description:
+        "Creates the contact identified by `identifier` if it doesn't exist yet, otherwise updates the given fields on the existing one.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({

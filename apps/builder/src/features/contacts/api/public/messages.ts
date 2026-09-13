@@ -11,6 +11,7 @@ import { listMessages } from "@/features/messages/queries"
 import { createMessageRequest } from "@/features/messages/schema/mutation"
 import { listMessagesResponse } from "@/features/messages/schema/query"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
@@ -30,8 +31,11 @@ export const contactsMessagesPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/messages",
       summary: "Send message to contact",
+      description:
+        "Sends a text/media message to the contact identified by `identifier` on their existing conversation, creating one if none exists yet. Requires the contact to have an inbox they can be reached on (see `inboxes.list`).",
       successStatus: 204,
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       createMessageRequest.and(
@@ -182,8 +186,11 @@ export const contactsMessagesPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/flows",
       summary: "Send flow to contact",
+      description:
+        "Starts the given flow for the contact identified by `identifier`, delivering its first message on their existing (or newly created) conversation.",
       successStatus: 204,
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({

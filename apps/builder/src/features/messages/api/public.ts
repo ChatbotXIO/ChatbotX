@@ -12,6 +12,7 @@ import {
 } from "@/features/messages/schema/mutation"
 import { listMessagesResponse } from "@/features/messages/schema/query"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -50,7 +51,10 @@ export const messagesPublicRouter = {
       method: "GET",
       path: "/v1/conversations/{conversationId}/messages",
       summary: "List messages on a conversation",
+      description:
+        "Lists messages on the given conversation, newest-related pagination via `cursor`. Use `conversations.get` first if you only have a contact identifier.",
       tags: ["Messages"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(listConversationMessagesPublicRequest)
     .output(listMessagesResponse)
@@ -106,8 +110,11 @@ export const messagesPublicRouter = {
       method: "POST",
       path: "/v1/conversations/{conversationId}/messages",
       summary: "Send a message on a conversation",
+      description:
+        "Sends an outgoing text/media message on an existing conversation. To message a contact without first resolving their conversation id, use `contacts.sendMessage` instead.",
       successStatus: 201,
       tags: ["Messages"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createMessageRequest.and(conversationIdPathParam))
     .output(messageResourceWithRelations.nullable())

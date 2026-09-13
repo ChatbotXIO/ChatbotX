@@ -8,6 +8,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { z } from "zod"
 import { flowVersionResource } from "@/features/flow-versions/schema/resource"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -17,10 +18,13 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { compileSpecToGraph } from "../lib/compile-spec-to-graph"
 import {
   createFlowSchema,
+  flowSpecRequest,
+  publishFlowRequest,
   publishFlowSchema,
-  updateDraftFlowVersionSchema,
+  updateDraftFlowRequest,
   updateFlowSchema,
 } from "../schema/action"
 import { flowResource, flowWithVersionsResource } from "../schema/resource"
@@ -35,6 +39,7 @@ export const flowsPublicRouter = {
       summary: "List flows",
       description: "Lists active flows in the workspace.",
       tags: ["Flows"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       publicListRequest.extend({
@@ -61,6 +66,7 @@ export const flowsPublicRouter = {
       summary: "Get a flow by id",
       description: "Returns a flow with its list of versions.",
       tags: ["Flows"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(z.object({ id: zodBigintAsString() }))
     .output(flowWithVersionsResource)
@@ -82,6 +88,7 @@ export const flowsPublicRouter = {
         "Creates a new draft flow seeded with a single default start node.",
       successStatus: 201,
       tags: ["Flows"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createFlowSchema)
     .output(z.object({ id: z.string() }))
@@ -153,20 +160,47 @@ export const flowsPublicRouter = {
       path: "/v1/flows/{id}/publish",
       summary: "Publish a flow",
       description:
-        "Publishes the given nodes/edges as a new immutable version and syncs the draft to match.",
+        "Publishes a new immutable version and syncs the draft to match. Accepts either the raw `{ nodes, edges }` graph the builder UI sends, or `{ spec }` — a flow-spec DSL object (see `GET /v1/schemas/flow-spec`) compiled server-side into that same graph before publishing.",
       tags: ["Flows"],
+      spec: mcpSpec({ visibility: "default" }),
     })
-    .input(publishFlowSchema.and(z.object({ id: zodBigintAsString() })))
+    .input(publishFlowRequest.and(z.object({ id: zodBigintAsString() })))
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const { id, nodes, edges } = input
+      const { id } = input
+      const workspaceId = context.workspace.id
+      const { nodes, edges } =
+        "spec" in input
+          ? publishFlowSchema.parse(
+              await compileSpecToGraph(input.spec, workspaceId),
+            )
+          : input
       await flowVersionService.publish({
-        workspaceId: context.workspace.id,
+        workspaceId,
         flowId: id,
         nodes,
         edges,
       })
     }),
+
+  validate: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/flows/validate",
+      summary: "Compile and validate a flow spec without publishing it",
+      description:
+        "Compiles a flow-spec DSL object (see `GET /v1/schemas/flow-spec`) and validates the result exactly like `flows.publish` would, without persisting anything. On success, returns the compiled node/edge graph. On failure, returns a 422 with structured errors (`path`/`code`/`message`/`hint`/`candidates`) — fix and retry before calling `flows.publish`.",
+      tags: ["Flows"],
+      spec: mcpSpec({ visibility: "default" }),
+    })
+    .input(flowSpecRequest)
+    .output(publishFlowSchema)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) =>
+      publishFlowSchema.parse(
+        await compileSpecToGraph(input.spec, context.workspace.id),
+      ),
+    ),
 
   updateDraft: workspaceTokenAuthAPI
     .route({
@@ -174,17 +208,20 @@ export const flowsPublicRouter = {
       path: "/v1/flows/{id}/draft",
       summary: "Update a flow's draft version",
       description:
-        "Overwrites the draft version's nodes/edges in place, without publishing.",
+        "Overwrites the draft version's nodes/edges in place, without publishing. Accepts either the raw `{ nodes, edges }` graph the builder UI sends, or `{ spec }` compiled server-side into that same graph — draft nodes are not otherwise validated (see `flows.validate` to check a spec before writing it).",
       tags: ["Flows"],
     })
-    .input(
-      updateDraftFlowVersionSchema.and(z.object({ id: zodBigintAsString() })),
-    )
+    .input(updateDraftFlowRequest.and(z.object({ id: zodBigintAsString() })))
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const { id, nodes, edges } = input
+      const { id } = input
+      const workspaceId = context.workspace.id
+      const { nodes, edges } =
+        "spec" in input
+          ? await compileSpecToGraph(input.spec, workspaceId)
+          : input
       await flowVersionService.updateDraftByFlowId({
-        workspaceId: context.workspace.id,
+        workspaceId,
         flowId: id,
         nodes,
         edges,

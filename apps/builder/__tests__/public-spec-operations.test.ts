@@ -230,6 +230,10 @@ describe("public API spec — operation naming guard", () => {
       // `channels.me` legitimately echoes the authenticated token's own
       // workspace/inbox identity — that IS the endpoint's purpose.
       "channels.me",
+      // `token.get` legitimately echoes the calling token's own workspace
+      // id, permission, and scopes — that IS the endpoint's purpose (P2.3
+      // token introspection), same rationale as `channels.me`.
+      "token.get",
 
       // Pre-existing leaks, confirmed present on `main` before the analytics
       // router this test was strengthened for (verified via a clean

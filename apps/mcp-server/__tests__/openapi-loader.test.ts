@@ -272,3 +272,270 @@ describe("refreshOpenApiSpecIfStale", () => {
     expect(result1).toBe(result2)
   })
 })
+
+describe("x-mcp visibility, scope, and annotations", () => {
+  const originalFetch = globalThis.fetch
+
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+  })
+
+  const specWithOperation = (operation: Record<string, unknown>) => ({
+    ok: true,
+    headers: { get: () => null },
+    json: async () => ({
+      servers: [{ url: "https://api.example.com" }],
+      paths: {
+        "/v1/tags": { get: { operationId: "tags.list", ...operation } },
+      },
+    }),
+  })
+
+  test("an operation with no x-mcp is hidden", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithOperation({})) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+    expect(tool?.visibility).toBe("hidden")
+  })
+
+  test("x-mcp.visibility: 'default' makes the tool visible; scope is carried through", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithOperation({
+        "x-mcp": { visibility: "default", scope: "contacts" },
+      }),
+    ) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+    expect(tool?.visibility).toBe("default")
+    expect(tool?.scope).toBe("contacts")
+  })
+
+  test("annotations default from the HTTP method when x-mcp doesn't override them", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithOperation({})) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+    expect(tool?.annotations).toEqual({
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    })
+  })
+
+  test("x-mcp annotation hints override the method-inferred defaults", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithOperation({
+        "x-mcp": { visibility: "default", destructiveHint: true },
+      }),
+    ) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+    expect(tool?.annotations.destructiveHint).toBe(true)
+    // readOnlyHint/idempotentHint still fall back to the GET-method default.
+    expect(tool?.annotations.readOnlyHint).toBe(true)
+  })
+
+  test("a DELETE operation defaults to destructive and idempotent, not read-only", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: { "/v1/tags/{id}": { delete: { operationId: "tags.delete" } } },
+      }),
+    }) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+    expect(tool?.annotations).toEqual({
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+    })
+  })
+})
+
+describe("getVisibleTools", () => {
+  const originalFetch = globalThis.fetch
+
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+  })
+
+  test("returns only visibility: 'default' tools, independent of getCachedTools", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/tags": {
+            get: {
+              operationId: "tags.list",
+              summary: "List tags",
+              "x-mcp": { visibility: "default" },
+            },
+          },
+          "/v1/minigames": {
+            get: { operationId: "minigames.list", summary: "List minigames" },
+          },
+        },
+      }),
+    }) as unknown as typeof fetch
+
+    const { loadOpenApiSpec, getCachedTools, getVisibleTools } = await import(
+      "../src/openapi-loader"
+    )
+    await loadOpenApiSpec()
+
+    expect(
+      getCachedTools()
+        .map((t) => t.name)
+        .sort(),
+    ).toEqual(["minigames_list", "tags_list"])
+    expect(getVisibleTools().map((t) => t.name)).toEqual(["tags_list"])
+  })
+
+  const specWithScopedTools = () => ({
+    ok: true,
+    headers: { get: () => null },
+    json: async () => ({
+      servers: [{ url: "https://api.example.com" }],
+      paths: {
+        "/v1/tags": {
+          get: {
+            operationId: "tags.list",
+            summary: "List tags",
+            "x-mcp": { visibility: "default", scope: "contacts" },
+          },
+        },
+        "/v1/flows": {
+          get: {
+            operationId: "flows.list",
+            summary: "List flows",
+            "x-mcp": { visibility: "default", scope: "automation" },
+          },
+        },
+        "/v1/contacts/search": {
+          post: {
+            operationId: "contacts.search",
+            summary: "Search contacts",
+            "x-mcp": { visibility: "default", scope: "contacts" },
+          },
+        },
+        "/v1/tags/{id}": {
+          delete: {
+            operationId: "tags.delete",
+            summary: "Delete a tag",
+            "x-mcp": { visibility: "default", scope: "contacts" },
+          },
+        },
+        "/v1/capabilities": {
+          get: {
+            operationId: "capabilities.get",
+            summary: "Discover capabilities",
+            "x-mcp": {
+              visibility: "default",
+              scope: "contacts",
+              alwaysVisible: true,
+            },
+          },
+        },
+      },
+    }),
+  })
+
+  test("introspection: null (fetch failed) fails open — no scope filtering", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithScopedTools()) as unknown as typeof fetch
+    const { loadOpenApiSpec, getVisibleTools } = await import(
+      "../src/openapi-loader"
+    )
+    await loadOpenApiSpec()
+
+    expect(
+      getVisibleTools(null)
+        .map((t) => t.name)
+        .sort(),
+    ).toEqual([
+      "capabilities_get",
+      "contacts_search",
+      "flows_list",
+      "tags_delete",
+      "tags_list",
+    ])
+  })
+
+  test("scopes: null means unrestricted — every default tool stays visible", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithScopedTools()) as unknown as typeof fetch
+    const { loadOpenApiSpec, getVisibleTools } = await import(
+      "../src/openapi-loader"
+    )
+    await loadOpenApiSpec()
+
+    expect(
+      getVisibleTools({ permission: "full", scopes: null })
+        .map((t) => t.name)
+        .sort(),
+    ).toEqual([
+      "capabilities_get",
+      "contacts_search",
+      "flows_list",
+      "tags_delete",
+      "tags_list",
+    ])
+  })
+
+  test("a scoped token only sees tools whose scope it holds, plus alwaysVisible tools", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithScopedTools()) as unknown as typeof fetch
+    const { loadOpenApiSpec, getVisibleTools } = await import(
+      "../src/openapi-loader"
+    )
+    await loadOpenApiSpec()
+
+    expect(
+      getVisibleTools({ permission: "full", scopes: ["automation"] })
+        .map((t) => t.name)
+        .sort(),
+    ).toEqual(["capabilities_get", "flows_list"])
+  })
+
+  test("a read_only token only sees GET tools plus the read-disguised-as-POST allowlist", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithScopedTools()) as unknown as typeof fetch
+    const { loadOpenApiSpec, getVisibleTools } = await import(
+      "../src/openapi-loader"
+    )
+    await loadOpenApiSpec()
+
+    expect(
+      getVisibleTools({
+        permission: "read_only",
+        scopes: ["contacts", "automation"],
+      })
+        .map((t) => t.name)
+        .sort(),
+    ).toEqual([
+      "capabilities_get",
+      "contacts_search",
+      "flows_list",
+      "tags_list",
+    ])
+  })
+})

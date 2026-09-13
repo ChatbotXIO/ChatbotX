@@ -1,6 +1,7 @@
 import { sequenceService } from "@chatbotx.io/business/sequence"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -30,7 +31,10 @@ export const sequencesPublicRouter = {
       method: "GET",
       path: "/v1/sequences",
       summary: "List sequences",
+      description:
+        "Lists sequences in the workspace. Use `sequences.get`/`contacts.subscribeSequences` next to inspect steps or enroll a contact.",
       tags: ["Sequences"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(publicListRequest)
     .output(listSequencesResponse)
@@ -66,8 +70,11 @@ export const sequencesPublicRouter = {
       method: "POST",
       path: "/v1/sequences",
       summary: "Create a sequence",
+      description:
+        "Creates an empty sequence. Add steps afterward via the builder UI or `sequences.upsertStep`.",
       successStatus: 201,
       tags: ["Sequences"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createSequenceRequest)
     .output(z.object({ sequenceId: z.string() }))

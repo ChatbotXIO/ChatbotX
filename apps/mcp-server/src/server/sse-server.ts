@@ -10,12 +10,25 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { env } from "../env"
 import type { CreateMcpServerOptions } from "./create-mcp-server"
 
+/**
+ * Mutable holder for a session's current workspace token. The token
+ * captured at connect time (GET `/sse`, or POST `/messages` `initialize`)
+ * seeds `current`; every later request routed to the same session can
+ * overwrite it if — and only if — that request itself carries a token (see
+ * `updateApiKeyStateFromRequest`). `createMcpServer`'s `getApiKey` reads
+ * `current` lazily on every tool call, so a token rotated or swapped
+ * mid-session takes effect on the next call without a reconnect.
+ */
+type ApiKeyState = { current: string }
+
 type SseSession = {
+  apiKeyState: ApiKeyState
   server: McpServer
   transport: StreamableHTTPServerTransport
 }
 
 type LegacySseSession = {
+  apiKeyState: ApiKeyState
   server: McpServer
   transport: SSEServerTransport
 }
@@ -25,7 +38,9 @@ const legacySseSessions = new Map<string, LegacySseSession>()
 
 const apiTokenHeaderNames = ["x-workspace-token", "x-chatbo-token"] as const
 
-const resolveHeaderValue = (value: string | string[] | undefined): string => {
+export const resolveHeaderValue = (
+  value: string | string[] | undefined,
+): string => {
   if (typeof value === "string") {
     return value.trim()
   }
@@ -42,7 +57,9 @@ const resolveHeaderValue = (value: string | string[] | undefined): string => {
   return ""
 }
 
-const getApiTokenFromRequest = (req: IncomingMessage): string | undefined => {
+export const getApiTokenFromRequest = (
+  req: IncomingMessage,
+): string | undefined => {
   const url = new URL(req.url ?? "", "http://localhost")
   const urlToken = (
     url.searchParams.get("workspace_token") ?? url.searchParams.get("token")
@@ -59,13 +76,33 @@ const getApiTokenFromRequest = (req: IncomingMessage): string | undefined => {
   }
 }
 
-const makeGetApiKey = (req: IncomingMessage): (() => string) => {
-  const token = getApiTokenFromRequest(req) || env.CHATBOTX_API_KEY
-  return () => token
+export const makeApiKeyState = (req: IncomingMessage): ApiKeyState => ({
+  current: getApiTokenFromRequest(req) || env.CHATBOTX_API_KEY,
+})
+
+/**
+ * Priority order is unchanged from connect time
+ * (`?workspace_token=`/`?token=` → `x-workspace-token` → `x-chatbo-token`) —
+ * only applied per-request instead of once. A request that carries no token
+ * of its own (e.g. a bare Streamable HTTP GET for server-initiated
+ * messages) leaves `state.current` as it was, so the connect-time or
+ * previously-overwritten token keeps serving until a request explicitly
+ * supplies a new one.
+ */
+export const updateApiKeyStateFromRequest = (
+  state: ApiKeyState,
+  req: IncomingMessage,
+): void => {
+  const token = getApiTokenFromRequest(req)
+  if (token) {
+    state.current = token
+  }
 }
 
+const getApiKeyFromState = (state: ApiKeyState) => (): string => state.current
+
 const enableCors = (res: ServerResponse): void => {
-  res.setHeader("Access-Control-Allow-Origin", "*")
+  res.setHeader("Access-Control-Allow-Origin", env.CHATBOTX_MCP_CORS_ORIGIN)
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
   res.setHeader("Access-Control-Allow-Headers", "*")
 }
@@ -142,12 +179,19 @@ const handleSseRequest = async (
 
   // No session ID → old SSE protocol (Claude Desktop, Claude CLI -t sse)
   if (!sessionId) {
-    const server = createMcpServer({ getApiKey: makeGetApiKey(req) })
+    const apiKeyState = makeApiKeyState(req)
+    const server = createMcpServer({
+      getApiKey: getApiKeyFromState(apiKeyState),
+    })
     const transport = new SSEServerTransport(
       env.CHATBOTX_MCP_MESSAGES_PATH,
       res,
     )
-    legacySseSessions.set(transport.sessionId, { server, transport })
+    legacySseSessions.set(transport.sessionId, {
+      apiKeyState,
+      server,
+      transport,
+    })
     res.on("close", () => legacySseSessions.delete(transport.sessionId))
     await server.connect(transport)
     return
@@ -160,6 +204,7 @@ const handleSseRequest = async (
     return
   }
 
+  updateApiKeyStateFromRequest(session.apiKeyState, req)
   setSessionIdHeader(req, sessionId)
   await session.transport.handleRequest(req, res)
 }
@@ -188,6 +233,7 @@ const handleMessagesRequest = async (
     if (sessionId) {
       const streamableSession = sseSessions.get(sessionId)
       if (streamableSession) {
+        updateApiKeyStateFromRequest(streamableSession.apiKeyState, req)
         setSessionIdHeader(req, sessionId)
         await streamableSession.transport.handleRequest(req, res, parsedBody)
         return
@@ -195,6 +241,7 @@ const handleMessagesRequest = async (
 
       const legacySession = legacySseSessions.get(sessionId)
       if (legacySession) {
+        updateApiKeyStateFromRequest(legacySession.apiKeyState, req)
         await legacySession.transport.handlePostMessage(req, res, parsedBody)
         return
       }
@@ -212,13 +259,20 @@ const handleMessagesRequest = async (
       return
     }
 
+    const apiKeyState = makeApiKeyState(req)
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       onsessioninitialized: (initializedSessionId) => {
-        sseSessions.set(initializedSessionId, { server, transport })
+        sseSessions.set(initializedSessionId, {
+          apiKeyState,
+          server,
+          transport,
+        })
       },
     })
-    const server = createMcpServer({ getApiKey: makeGetApiKey(req) })
+    const server = createMcpServer({
+      getApiKey: getApiKeyFromState(apiKeyState),
+    })
 
     transport.onclose = () => {
       const activeSessionId = transport.sessionId

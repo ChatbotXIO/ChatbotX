@@ -13,6 +13,7 @@ import {
 } from "@chatbotx.io/analytics"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import type { z } from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
@@ -175,7 +176,10 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/new-contacts-count",
       summary: "Get new contacts count",
+      description:
+        "Counts contacts first created within the given `from`/`to` time range.",
       tags: ["Analytics"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(timeRangePublicRequest)
     .output(contactsCountPublicResponse)
@@ -206,7 +210,10 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/contacts-count",
       summary: "Get contacts count",
+      description:
+        "Counts all contacts that existed at any point within the given `from`/`to` time range.",
       tags: ["Analytics"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(timeRangePublicRequest)
     .output(contactsCountPublicResponse)

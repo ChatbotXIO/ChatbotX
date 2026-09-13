@@ -4,6 +4,7 @@ import {
 } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
@@ -107,8 +108,11 @@ export const contactsCustomFieldsPublicRouter = {
       method: "PUT",
       path: "/v1/contacts/{identifier}/custom-fields",
       summary: "Set multiple custom field values for a contact",
+      description:
+        "Sets each given custom field to its value on the contact identified by `identifier`; fields not listed are left unchanged. Use `customFields.list`/`customFields.create` first to resolve names to ids.",
       successStatus: 204,
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({
