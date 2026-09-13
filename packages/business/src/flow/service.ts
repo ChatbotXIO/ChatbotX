@@ -573,7 +573,8 @@ class FlowService extends BaseService {
 
   /**
    * Active flow by id, scoped to workspace. Used by worker's
-   * `detectFlowVersion` to resolve the current version off `currentVersionId`.
+   * `detectFlowVersion` to resolve the current version off `currentVersionId`,
+   * and by `trigger/services/action-executor.ts` startAnotherFlow.
    */
   async findActiveById(props: {
     id: string

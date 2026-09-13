@@ -1,5 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
-import { broadcastStatuses } from "@chatbotx.io/database/partials"
+import { broadcastService } from "@chatbotx.io/business"
 import { distributedLock } from "@chatbotx.io/redis"
 import {
   broadcastSendJobId,
@@ -15,13 +14,7 @@ export const reconcileBroadcasts = async () =>
     key: LOCK_KEY,
     timeoutInSeconds: LOCK_TTL_SECONDS,
     fn: async () => {
-      const broadcasts = await db.query.broadcastModel.findMany({
-        where: {
-          status: broadcastStatuses.enum.sending,
-          handoffCompletedAt: { isNull: true },
-          deletedAt: { isNull: true },
-        },
-      })
+      const broadcasts = await broadcastService.listSendingAwaitingHandoff()
 
       for (const broadcast of broadcasts) {
         await scheduleQueue.add(

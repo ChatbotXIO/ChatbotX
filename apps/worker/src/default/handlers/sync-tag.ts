@@ -1,17 +1,18 @@
-import { buildContext } from "@chatbotx.io/business"
+import {
+  buildContext,
+  tagService,
+  zaloIntegrationService,
+} from "@chatbotx.io/business"
 import {
   logProviderError,
   logProviderErrorForChannel,
 } from "@chatbotx.io/business/error-log"
-import { and, db, eq, inArray, isNotNull } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
-  contactInboxModel,
-  contactsToTagsModel,
-  contactToTagChannelModel,
-  tagChannelModel,
-  tagModel,
-} from "@chatbotx.io/database/schema"
+  contactInboxRepository,
+  integrationMessengerRepository,
+  tagChannelRepository,
+} from "@chatbotx.io/database/repositories"
 import type {
   ContactInboxModel,
   IntegrationMessengerModel,
@@ -23,13 +24,20 @@ import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/sche
 import { integration as integrationZalo } from "@chatbotx.io/integration-zalo"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo/schema"
 import { distributedLock } from "@chatbotx.io/redis"
-import { createId } from "@chatbotx.io/utils"
 import type { JobSyncTag } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 
 const DELETE_CHUNK_SIZE = 500
 
 type TagWithName = { id: string; name: string; workspaceId: string }
+
+// This handler calls tagChannelRepository / contactInboxRepository /
+// integrationMessengerRepository methods directly rather than through a
+// service. These are named, documented, tx-accepting repository methods with
+// no cache/event/validation logic of their own (moved verbatim off inline
+// db.* calls) — matching the existing main pattern in export-coupons.ts and
+// send-messenger-template.ts. Deliberate choice, not an oversight; see PR
+// #1101 review, A6.
 
 /**
  * Single entry point for every tag-sync job. The `action` discriminator selects
@@ -65,10 +73,7 @@ async function syncTagCreate(props: {
 }): Promise<void> {
   const { workspaceId, tagId } = props
 
-  const tag = await db.query.tagModel.findFirst({
-    where: { id: tagId, workspaceId },
-    columns: { id: true, name: true },
-  })
+  const tag = await tagService.findById({ workspaceId, id: tagId })
   if (!tag) {
     logger.warn({ tagId }, "syncTag(create): tag missing")
     return
@@ -76,9 +81,7 @@ async function syncTagCreate(props: {
 
   // Messenger: create the page-level Custom Label on every enabled page.
   const messengerIntegrations =
-    await db.query.integrationMessengerModel.findMany({
-      where: { workspaceId },
-    })
+    await integrationMessengerRepository.listByWorkspace({ workspaceId })
   for (const integration of messengerIntegrations) {
     if (!integration.syncTagEnabledAt) {
       continue
@@ -104,30 +107,20 @@ async function syncTagCreate(props: {
   // Zalo: there is no create-empty-tag API — tags materialize on the first
   // tagfollower call. Record the mapping (name-based) on every enabled OA so
   // future assignments + reconciliation resolve correctly; no API call here.
-  const zaloIntegrations = await db.query.integrationZaloModel.findMany({
-    where: { workspaceId },
+  const zaloIntegrations = await zaloIntegrationService.listByWorkspace({
+    workspaceId,
   })
   for (const integration of zaloIntegrations) {
     if (!integration.syncTagEnabledAt) {
       continue
     }
-    await db
-      .insert(tagChannelModel)
-      .values({
-        id: createId(),
-        workspaceId,
-        tagId: tag.id,
-        channelType: channelTypes.enum.zalo,
-        integrationId: integration.id,
-        externalLabelId: tag.name,
-      })
-      .onConflictDoNothing({
-        target: [
-          tagChannelModel.tagId,
-          tagChannelModel.channelType,
-          tagChannelModel.integrationId,
-        ],
-      })
+    await tagChannelRepository.insertIfAbsent({
+      workspaceId,
+      tagId: tag.id,
+      channelType: channelTypes.enum.zalo,
+      integrationId: integration.id,
+      externalLabelId: tag.name,
+    })
   }
 }
 
@@ -146,14 +139,11 @@ async function createMessengerLabel(props: {
     key: lockKey,
     timeoutInSeconds: 30,
     fn: async () => {
-      const existing = await db.query.tagChannelModel.findFirst({
-        where: {
-          tagId: tag.id,
-          workspaceId,
-          channelType: channelTypes.enum.messenger,
-          integrationId: integration.id,
-        },
-        columns: { id: true },
+      const existing = await tagChannelRepository.findByTagAndIntegration({
+        tagId: tag.id,
+        workspaceId,
+        channelType: channelTypes.enum.messenger,
+        integrationId: integration.id,
       })
 
       const { id: externalLabelId } =
@@ -163,30 +153,20 @@ async function createMessengerLabel(props: {
         })
 
       if (existing) {
-        await db
-          .update(tagChannelModel)
-          .set({ externalLabelId })
-          .where(eq(tagChannelModel.id, existing.id))
+        await tagChannelRepository.updateExternalLabelId({
+          id: existing.id,
+          externalLabelId,
+        })
         return
       }
 
-      await db
-        .insert(tagChannelModel)
-        .values({
-          id: createId(),
-          workspaceId,
-          tagId: tag.id,
-          channelType: channelTypes.enum.messenger,
-          integrationId: integration.id,
-          externalLabelId,
-        })
-        .onConflictDoNothing({
-          target: [
-            tagChannelModel.tagId,
-            tagChannelModel.channelType,
-            tagChannelModel.integrationId,
-          ],
-        })
+      await tagChannelRepository.insertIfAbsent({
+        workspaceId,
+        tagId: tag.id,
+        channelType: channelTypes.enum.messenger,
+        integrationId: integration.id,
+        externalLabelId,
+      })
     },
   })
 }
@@ -202,17 +182,14 @@ async function syncTagAttach(props: {
 }): Promise<void> {
   const { workspaceId, contactId, tagId } = props
 
-  const tag = await db.query.tagModel.findFirst({
-    where: { id: tagId, workspaceId },
-    columns: { id: true, name: true, workspaceId: true },
-  })
+  const tag = await tagService.findById({ workspaceId, id: tagId })
   if (!tag) {
     logger.warn({ tagId }, "syncTag(attach): tag missing")
     return
   }
 
-  const contactInboxes = await db.query.contactInboxModel.findMany({
-    where: { contactId },
+  const contactInboxes = await contactInboxRepository.listByContactId({
+    contactId,
   })
 
   for (const contactInbox of contactInboxes) {
@@ -230,8 +207,8 @@ async function attachOnMessenger(props: {
   contactInbox: ContactInboxModel
 }): Promise<void> {
   const { workspaceId, tag, contactInbox } = props
-  const integration = await db.query.integrationMessengerModel.findFirst({
-    where: { inboxId: contactInbox.inboxId },
+  const integration = await integrationMessengerRepository.findByInboxId({
+    inboxId: contactInbox.inboxId,
   })
   if (!integration?.syncTagEnabledAt) {
     return
@@ -244,13 +221,11 @@ async function attachOnMessenger(props: {
     key: lockKey,
     timeoutInSeconds: 30,
     fn: async () => {
-      const existing = await db.query.tagChannelModel.findFirst({
-        where: {
-          tagId: tag.id,
-          workspaceId,
-          channelType: channelTypes.enum.messenger,
-          integrationId: integration.id,
-        },
+      const existing = await tagChannelRepository.findByTagAndIntegration({
+        tagId: tag.id,
+        workspaceId,
+        channelType: channelTypes.enum.messenger,
+        integrationId: integration.id,
       })
       if (existing) {
         return existing
@@ -262,34 +237,12 @@ async function attachOnMessenger(props: {
           data: { pageId: integration.pageId, name: tag.name },
         })
 
-      const inserted = await db
-        .insert(tagChannelModel)
-        .values({
-          id: createId(),
-          workspaceId,
-          tagId: tag.id,
-          channelType: channelTypes.enum.messenger,
-          integrationId: integration.id,
-          externalLabelId,
-        })
-        .onConflictDoNothing({
-          target: [
-            tagChannelModel.tagId,
-            tagChannelModel.channelType,
-            tagChannelModel.integrationId,
-          ],
-        })
-        .returning()
-      if (inserted[0]) {
-        return inserted[0]
-      }
-      return await db.query.tagChannelModel.findFirst({
-        where: {
-          tagId: tag.id,
-          workspaceId,
-          channelType: channelTypes.enum.messenger,
-          integrationId: integration.id,
-        },
+      return await tagChannelRepository.insertOrFetch({
+        workspaceId,
+        tagId: tag.id,
+        channelType: channelTypes.enum.messenger,
+        integrationId: integration.id,
+        externalLabelId,
       })
     },
   })
@@ -310,14 +263,11 @@ async function attachOnMessenger(props: {
     },
   })
 
-  await db
-    .insert(contactToTagChannelModel)
-    .values({
-      tagId: tag.id,
-      tagChannelId: tagChannel.id,
-      contactInboxId: contactInbox.id,
-    })
-    .onConflictDoNothing()
+  await tagChannelRepository.linkContactInbox({
+    tagId: tag.id,
+    tagChannelId: tagChannel.id,
+    contactInboxId: contactInbox.id,
+  })
 }
 
 async function attachOnZalo(props: {
@@ -326,8 +276,8 @@ async function attachOnZalo(props: {
   contactInbox: ContactInboxModel
 }): Promise<void> {
   const { workspaceId, tag, contactInbox } = props
-  const integration = await db.query.integrationZaloModel.findFirst({
-    where: { inboxId: contactInbox.inboxId },
+  const integration = await zaloIntegrationService.findByInboxId({
+    inboxId: contactInbox.inboxId,
   })
   if (!integration?.syncTagEnabledAt) {
     return
@@ -341,38 +291,23 @@ async function attachOnZalo(props: {
     tagName: tag.name,
   })
 
-  const [tagChannel] = await db
-    .insert(tagChannelModel)
-    .values({
-      id: createId(),
-      workspaceId,
-      tagId: tag.id,
-      channelType: channelTypes.enum.zalo,
-      integrationId: integration.id,
-      externalLabelId: tag.name,
-    })
-    .onConflictDoUpdate({
-      target: [
-        tagChannelModel.tagId,
-        tagChannelModel.channelType,
-        tagChannelModel.integrationId,
-      ],
-      set: { externalLabelId: tag.name },
-    })
-    .returning()
+  const tagChannel = await tagChannelRepository.upsertByTagAndIntegration({
+    workspaceId,
+    tagId: tag.id,
+    channelType: channelTypes.enum.zalo,
+    integrationId: integration.id,
+    externalLabelId: tag.name,
+  })
 
   if (!tagChannel) {
     return
   }
 
-  await db
-    .insert(contactToTagChannelModel)
-    .values({
-      tagId: tag.id,
-      tagChannelId: tagChannel.id,
-      contactInboxId: contactInbox.id,
-    })
-    .onConflictDoNothing()
+  await tagChannelRepository.linkContactInbox({
+    tagId: tag.id,
+    tagChannelId: tagChannel.id,
+    contactInboxId: contactInbox.id,
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -387,30 +322,10 @@ async function syncTagDetach(props: {
 }): Promise<void> {
   const { workspaceId, contactId, tagId } = props
 
-  const rows = await db
-    .select({
-      tagChannelId: contactToTagChannelModel.tagChannelId,
-      contactInboxId: contactToTagChannelModel.contactInboxId,
-      channelType: tagChannelModel.channelType,
-      integrationId: tagChannelModel.integrationId,
-      externalLabelId: tagChannelModel.externalLabelId,
-      sourceId: contactInboxModel.sourceId,
-    })
-    .from(contactToTagChannelModel)
-    .innerJoin(
-      tagChannelModel,
-      eq(contactToTagChannelModel.tagChannelId, tagChannelModel.id),
-    )
-    .innerJoin(
-      contactInboxModel,
-      eq(contactToTagChannelModel.contactInboxId, contactInboxModel.id),
-    )
-    .where(
-      and(
-        eq(contactToTagChannelModel.tagId, tagId),
-        eq(contactInboxModel.contactId, contactId),
-      ),
-    )
+  const rows = await tagChannelRepository.listContactTagChannelRows({
+    tagId,
+    contactId,
+  })
 
   for (const row of rows) {
     try {
@@ -428,14 +343,10 @@ async function syncTagDetach(props: {
       })
     }
     // Delete the local mapping regardless of sync state / API outcome.
-    await db
-      .delete(contactToTagChannelModel)
-      .where(
-        and(
-          eq(contactToTagChannelModel.tagChannelId, row.tagChannelId),
-          eq(contactToTagChannelModel.contactInboxId, row.contactInboxId),
-        ),
-      )
+    await tagChannelRepository.unlinkContactInbox({
+      tagChannelId: row.tagChannelId,
+      contactInboxId: row.contactInboxId,
+    })
   }
 }
 
@@ -494,14 +405,11 @@ async function syncTagDelete(props: JobSyncTagDelete): Promise<void> {
   // workspace Tag and every other channel intact. The channel already removed
   // the label, so we do NOT call its API again (callApi: false).
   if (channelType && integrationId) {
-    const channels = await db.query.tagChannelModel.findMany({
-      where: { tagId, workspaceId, channelType, integrationId },
-      columns: {
-        id: true,
-        channelType: true,
-        integrationId: true,
-        externalLabelId: true,
-      },
+    const channels = await tagChannelRepository.listByTag({
+      workspaceId,
+      tagId,
+      channelType,
+      integrationId,
     })
     for (const channel of channels) {
       await deleteTagOnChannel({ workspaceId, tagId, channel, callApi: false })
@@ -555,15 +463,11 @@ async function deleteTagOnChannel(props: {
   // channel rows + the workspace tag for those contacts as we go.
   await chunkById(
     (lastId) =>
-      db.query.contactToTagChannelModel
-        .findMany({
-          where: {
-            tagChannelId: { in: [channel.id] },
-            ...(lastId ? { contactInboxId: { gt: lastId } } : {}),
-          },
-          orderBy: { contactInboxId: "asc" },
+      tagChannelRepository
+        .listContactInboxIdsForChannelPage({
+          tagChannelId: channel.id,
+          afterContactInboxId: lastId ?? undefined,
           limit: DELETE_CHUNK_SIZE,
-          columns: { contactInboxId: true },
         })
         .then((rows) => rows.map((row) => ({ id: row.contactInboxId }))),
     {
@@ -571,37 +475,28 @@ async function deleteTagOnChannel(props: {
       callback: async (batch) => {
         const contactInboxIds = batch.map((row) => row.id)
 
-        const inboxes = await db.query.contactInboxModel.findMany({
-          where: { id: { in: contactInboxIds } },
-          columns: { contactId: true },
+        const inboxes = await contactInboxRepository.listContactIdsByIds({
+          ids: contactInboxIds,
         })
         const contactIds = [...new Set(inboxes.map((inbox) => inbox.contactId))]
 
-        await db
-          .delete(contactToTagChannelModel)
-          .where(
-            and(
-              eq(contactToTagChannelModel.tagChannelId, channel.id),
-              inArray(contactToTagChannelModel.contactInboxId, contactInboxIds),
-            ),
-          )
+        await tagChannelRepository.deleteLinksForChannel({
+          tagChannelId: channel.id,
+          contactInboxIds,
+        })
 
         if (contactIds.length > 0) {
-          await db
-            .delete(contactsToTagsModel)
-            .where(
-              and(
-                eq(contactsToTagsModel.tagId, tagId),
-                inArray(contactsToTagsModel.contactId, contactIds),
-              ),
-            )
+          await tagChannelRepository.deleteContactTagsForContacts({
+            tagId,
+            contactIds,
+          })
         }
         return true
       },
     },
   )
 
-  await db.delete(tagChannelModel).where(eq(tagChannelModel.id, channel.id))
+  await tagChannelRepository.deleteById({ id: channel.id })
 }
 
 /**
@@ -614,15 +509,7 @@ async function deleteTagOnChannels(props: {
 }): Promise<void> {
   const { workspaceId, tagId } = props
 
-  const channels = await db.query.tagChannelModel.findMany({
-    where: { tagId, workspaceId },
-    columns: {
-      id: true,
-      channelType: true,
-      integrationId: true,
-      externalLabelId: true,
-    },
-  })
+  const channels = await tagChannelRepository.listByTag({ workspaceId, tagId })
 
   // Isolate per-channel failures so one bad channel can't block the others or
   // the final Tag delete.
@@ -643,43 +530,27 @@ async function deleteTagOnChannels(props: {
   // has a composite PK (no `id`), so page by contactId.
   await chunkById(
     (lastId) =>
-      db.query.contactsToTagsModel
-        .findMany({
-          where: {
-            tagId,
-            ...(lastId ? { contactId: { gt: lastId } } : {}),
-          },
-          orderBy: { contactId: "asc" },
+      tagChannelRepository
+        .listTaggedContactIdsPage({
+          tagId,
+          afterContactId: lastId ?? undefined,
           limit: DELETE_CHUNK_SIZE,
-          columns: { contactId: true },
         })
         .then((rows) => rows.map((row) => ({ id: row.contactId }))),
     {
       chunkSize: DELETE_CHUNK_SIZE,
       callback: async (batch) => {
         const contactIds = batch.map((row) => row.id)
-        await db
-          .delete(contactsToTagsModel)
-          .where(
-            and(
-              eq(contactsToTagsModel.tagId, tagId),
-              inArray(contactsToTagsModel.contactId, contactIds),
-            ),
-          )
+        await tagChannelRepository.deleteContactTagsForContacts({
+          tagId,
+          contactIds,
+        })
         return true
       },
     },
   )
 
-  await db
-    .delete(tagModel)
-    .where(
-      and(
-        eq(tagModel.id, tagId),
-        eq(tagModel.workspaceId, workspaceId),
-        isNotNull(tagModel.deletedAt),
-      ),
-    )
+  await tagService.hardDeleteSoftDeleted({ workspaceId, tagId })
 }
 
 async function deleteLabelOnChannel(props: {
@@ -761,8 +632,8 @@ async function getMessengerSyncContext(props: {
   workspaceId: string
   integrationId: string
 }) {
-  const integration = await db.query.integrationMessengerModel.findFirst({
-    where: { id: props.integrationId },
+  const integration = await integrationMessengerRepository.findById({
+    id: props.integrationId,
   })
   if (!integration?.syncTagEnabledAt) {
     return null
@@ -778,8 +649,8 @@ async function getZaloSyncContext(props: {
   workspaceId: string
   integrationId: string
 }) {
-  const integration = await db.query.integrationZaloModel.findFirst({
-    where: { id: props.integrationId },
+  const integration = await zaloIntegrationService.findByIdUnscoped({
+    id: props.integrationId,
   })
   if (!integration?.syncTagEnabledAt) {
     return null
