@@ -458,7 +458,11 @@ class PlatformCredentialService extends BaseService {
     const schema = credentialSchemas[row.type] as unknown as z.ZodType<
       CredentialByType[T]
     >
-    const config = await encryptUtils.decryptObject(blob, schema)
+    const aad =
+      row.userId === null
+        ? `platform:${row.type}:${row.livemode}`
+        : `user:${row.userId}:${row.type}:${row.livemode}`
+    const config = await encryptUtils.decryptObject(blob, schema, aad)
     return {
       id: row.id,
       userId: row.userId ?? null,
