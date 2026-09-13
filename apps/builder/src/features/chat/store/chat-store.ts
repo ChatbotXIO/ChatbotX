@@ -66,6 +66,9 @@ export type ChatState = {
 
   // active facebook post (for comment conversations)
   activePost: PostDetails | null
+
+  // show/hide system activity events in chat
+  showSystemEvents: boolean
 }
 
 export type ChatActions = {
@@ -133,6 +136,9 @@ export type ChatActions = {
 
   // Contact actions
   updateContact: (contactId: string, data: Partial<ContactResource>) => void
+
+  // Activity events toggle
+  toggleSystemEvents: () => void
 }
 
 export type ChatStore = ChatState & ChatActions
@@ -184,6 +190,10 @@ export const createChatStore = () => {
     replyToMessage: null,
     isPrivateReply: false,
     activePost: null,
+    showSystemEvents: true,
+
+    toggleSystemEvents: () =>
+      set((state) => ({ showSystemEvents: !state.showSystemEvents })),
 
     prependConversation: (newConversation: ListConversationItemResource) =>
       set((state) => ({

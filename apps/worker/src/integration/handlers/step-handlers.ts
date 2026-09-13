@@ -3,6 +3,7 @@ import {
   contactService,
   conversationService,
   inboxTeamService,
+  messageService,
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import { gte, type SQL } from "@chatbotx.io/database/client"
@@ -22,6 +23,7 @@ import {
   type UnfollowConversationStepSchema,
 } from "@chatbotx.io/flow-config"
 import { subHours } from "date-fns"
+import { logger } from "../../lib/logger"
 import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
@@ -43,6 +45,7 @@ export async function stepBlockContact({
 
 export async function stepArchiveConversation({
   conversation,
+  contactInbox,
 }: ExecuteStepProps<ArchiveConversationStepSchema>) {
   await conversationService.updateArchived({
     workspaceId: conversation.workspaceId,
@@ -54,10 +57,28 @@ export async function stepArchiveConversation({
       triggerType: "flow_action",
     },
   })
+
+  if (conversation.id && contactInbox?.id) {
+    await messageService
+      .createActivity({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        text: "Conversation was closed",
+        contentAttributes: {
+          activityType: "conversation_status_changed",
+          status: "closed",
+        },
+      })
+      .catch((err) => {
+        logger.warn({ err }, "Failed to create archive activity message")
+      })
+  }
 }
 
 export async function stepUnarchiveConversation({
   conversation,
+  contactInbox,
 }: ExecuteStepProps<UnarchiveConversationStepSchema>) {
   await conversationService.updateArchived({
     workspaceId: conversation.workspaceId,
@@ -69,6 +90,23 @@ export async function stepUnarchiveConversation({
       triggerType: "flow_action",
     },
   })
+
+  if (conversation.id && contactInbox?.id) {
+    await messageService
+      .createActivity({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        text: "Conversation was reopened",
+        contentAttributes: {
+          activityType: "conversation_status_changed",
+          status: "open",
+        },
+      })
+      .catch((err) => {
+        logger.warn({ err }, "Failed to create unarchive activity message")
+      })
+  }
 }
 
 export async function stepAssignConversation({

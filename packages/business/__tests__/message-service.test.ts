@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => {
   const repo = {
+    create: vi.fn(),
     findById: vi.fn(),
     findLastByConversation: vi.fn(),
     hardDeleteAllByContactInbox: vi.fn(),
@@ -11,6 +12,7 @@ const mocks = vi.hoisted(() => {
     db: { query: { messageModel: { findFirst: vi.fn(), findMany: vi.fn() } } },
     repo,
     createMessageRepository: vi.fn().mockResolvedValue(repo),
+    broadcastToWorkspaceParty: vi.fn(async () => undefined),
     withCache: vi.fn(
       async (
         _key: string,
@@ -38,11 +40,16 @@ vi.mock("@chatbotx.io/redis", () => ({
 // wired in as a class field (module-scope import), not because any test here
 // exercises it — this file only covers the pre-existing read/delete methods.
 vi.mock("@chatbotx.io/filesystem", () => ({}))
-vi.mock("@chatbotx.io/partysocket-config", () => ({}))
+vi.mock("@chatbotx.io/partysocket-config", () => ({
+  RealtimeEventType: { messageCreated: "messageCreated" },
+}))
 vi.mock("@chatbotx.io/worker-config", () => ({}))
 vi.mock("../src/contact-inbox/service", () => ({ contactInboxService: {} }))
 vi.mock("../src/conversation/service", () => ({ conversationService: {} }))
 vi.mock("../src/platform/settings", () => ({ resolveTenantSettings: vi.fn() }))
+vi.mock("../src/platform/realtime-broadcast", () => ({
+  broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
+}))
 
 const { messageService } = await import("../src/message/service")
 
@@ -186,5 +193,55 @@ describe("messageService", () => {
       workspaceId: "ws-1",
     })
     expect(result).toEqual({ attachmentPaths: ["origin.jpg", "thumb.jpg"] })
+  })
+
+  test("createActivity persists an activity message and broadcasts it", async () => {
+    const createdMessage = {
+      id: "msg-act-1",
+      text: "Custom field changed: city",
+      messageType: "activity",
+      senderType: "system",
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      createdAt: new Date(),
+    }
+    mocks.repo.create.mockResolvedValue(createdMessage)
+
+    const result = await messageService.createActivity({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      text: "Custom field changed: city",
+      contentAttributes: {
+        activityType: "custom_field_changed",
+        fieldName: "city",
+      },
+    })
+
+    expect(mocks.createMessageRepository).toHaveBeenCalledTimes(1)
+    expect(mocks.repo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: "Custom field changed: city",
+        messageType: "activity",
+        senderType: "system",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        contentAttributes: {
+          activityType: "custom_field_changed",
+          fieldName: "city",
+        },
+      }),
+    )
+    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageCreated",
+      data: {
+        ...createdMessage,
+        attachments: [],
+      },
+    })
+    expect(result).toBe(createdMessage)
   })
 })

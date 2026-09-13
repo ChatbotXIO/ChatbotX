@@ -3185,7 +3185,29 @@
     "waTemplateLtoExpirationRequired": "Choisissez une date d'expiration pour l'offre à durée limitée avant l'envoi.",
     "waTemplateMpmIncompleteProducts": "Chaque section doit contenir au moins un produit sélectionné — supprimez les lignes vides ou choisissez un produit.",
     "mediaStepUnsupported": "Ce canal ne peut pas envoyer ce type de média. Supprimez l'étape ou orientez ce nœud vers un canal qui le prend en charge.",
-    "mediaButtonsUnsupported": "Ce canal ne peut pas envoyer de boutons avec un message média. Supprimez les boutons ou déplacez-les vers une étape de texte suivante."
+    "mediaButtonsUnsupported": "Ce canal ne peut pas envoyer de boutons avec un message média. Supprimez les boutons ou déplacez-les vers une étape de texte suivante.",
+    "activity": {
+      "customFieldChanged": "Champ personnalisé modifié : {name}",
+      "customFieldCleared": "Champ personnalisé supprimé : {name}",
+      "previousValue": "Valeur précédente",
+      "newValue": "Nouvelle valeur",
+      "unset": "unset",
+      "tagAdded": "Tag ajouté : {tag}",
+      "tagAddedLabel": "Tag ajouté",
+      "tagRemoved": "Tag supprimé : {tag}",
+      "tagRemovedLabel": "Tag supprimé",
+      "flowTriggered": "L'automatisation {name} a été déclenchée",
+      "flowTriggeredPrefix": "L'automatisation",
+      "flowTriggeredSuffix": "a été déclenchée",
+      "sequenceSubscribed": "Abonné à la séquence : {name}",
+      "sequenceSubscribedPrefix": "Abonné à la séquence :",
+      "sequenceUnsubscribed": "Désabonné de la séquence : {name}",
+      "sequenceUnsubscribedPrefix": "Désabonné de la séquence :",
+      "conversationClosed": "La conversation a été fermée",
+      "conversationReopened": "La conversation a été rouverte",
+      "toggleHideEvents": "Masquer les événements système",
+      "toggleShowEvents": "Afficher les événements système"
+    }
   },
   "instagram": {
     "description": "Cette intégration permet de créer des bots Instagram.",

@@ -6,7 +6,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
-import { ArrowLeftIcon, BotIcon, UserRoundIcon } from "lucide-react"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import {
+  ActivityIcon,
+  ArrowLeftIcon,
+  BotIcon,
+  UserRoundIcon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
@@ -37,6 +43,8 @@ export default function MessageHead({
     activeConversationId,
     setAssignee,
     updateConversation,
+    showSystemEvents,
+    toggleSystemEvents,
   } = useChatStore((state) => state)
 
   const activeConversation = conversations.find(
@@ -116,6 +124,34 @@ export default function MessageHead({
             <UserRoundIcon />
           </Button>
         )}
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                aria-label={
+                  showSystemEvents
+                    ? t("messages.activity.toggleHideEvents")
+                    : t("messages.activity.toggleShowEvents")
+                }
+                className={cn(
+                  !showSystemEvents && "text-muted-foreground opacity-50",
+                )}
+                onClick={toggleSystemEvents}
+                size="icon"
+                variant="ghost"
+              >
+                <ActivityIcon className="size-4" />
+              </Button>
+            }
+          />
+          <TooltipContent>
+            <p>
+              {showSystemEvents
+                ? t("messages.activity.toggleHideEvents")
+                : t("messages.activity.toggleShowEvents")}
+            </p>
+          </TooltipContent>
+        </Tooltip>
         <ConversationAction conversation={activeConversation} />
       </div>
     )

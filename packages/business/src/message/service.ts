@@ -5,8 +5,11 @@ import {
   type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
 import type { MessageModel } from "@chatbotx.io/database/types"
+import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
+import { logger } from "../logger"
+import { broadcastToWorkspaceParty } from "../platform/realtime-broadcast"
 import { createOutgoing } from "./create-outgoing"
 import {
   findByIdWithUrls,
@@ -159,6 +162,54 @@ class MessageService extends BaseService {
     const { tx = db, ...params } = props
     const repo = await createMessageRepository(tx)
     return await repo.hardDeleteAllByContactInbox(params)
+  }
+
+  async createActivity(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    conversationId: string
+    contactInboxId: string
+    text: string
+    contentAttributes?: Record<string, unknown>
+  }): Promise<MessageModel> {
+    const {
+      tx = db,
+      workspaceId,
+      conversationId,
+      contactInboxId,
+      text,
+      contentAttributes,
+    } = props
+    const repo = await createMessageRepository(tx)
+    const createdAt = new Date()
+
+    const message = await repo.create({
+      text,
+      messageType: "activity",
+      workspaceId,
+      conversationId,
+      senderType: "system",
+      senderId: null,
+      contactInboxId,
+      contentType: "text",
+      createdAt,
+      contentAttributes: contentAttributes ?? null,
+    })
+
+    broadcastToWorkspaceParty(workspaceId, {
+      eventType: RealtimeEventType.messageCreated,
+      data: {
+        ...message,
+        attachments: [],
+      },
+    }).catch((err) => {
+      logger.warn(
+        { err, workspaceId, conversationId },
+        "Failed to broadcast activity messageCreated",
+      )
+    })
+
+    return message
   }
 }
 
