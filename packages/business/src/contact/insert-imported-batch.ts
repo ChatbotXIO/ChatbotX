@@ -7,6 +7,9 @@ import {
   conversationModel,
 } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
+// contact-custom-field/service.ts imports contactService back from
+// ../contact/service, a pre-existing cycle on main; this import re-enters it
+// via this module. Known and accepted — see PR #1101 review, I3.
 import { contactCustomFieldService } from "../contact-custom-field/service"
 import { messageCleanupService } from "../message-cleanup/service"
 

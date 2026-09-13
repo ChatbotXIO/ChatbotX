@@ -31,6 +31,14 @@ const DELETE_CHUNK_SIZE = 500
 
 type TagWithName = { id: string; name: string; workspaceId: string }
 
+// This handler calls tagChannelRepository / contactInboxRepository /
+// integrationMessengerRepository methods directly rather than through a
+// service. These are named, documented, tx-accepting repository methods with
+// no cache/event/validation logic of their own (moved verbatim off inline
+// db.* calls) — matching the existing main pattern in export-coupons.ts and
+// send-messenger-template.ts. Deliberate choice, not an oversight; see PR
+// #1101 review, A6.
+
 /**
  * Single entry point for every tag-sync job. The `action` discriminator selects
  * the operation: create the channel labels for a new tag, attach/detach a tag

@@ -93,19 +93,33 @@ describe("claim", () => {
     const set = vi.fn(() => ({ where }))
     mocks.update.mockReturnValue({ set })
 
+    const beforeMs = Date.now()
     const result = await sequenceDispatchRepository.claim({
       id: "d-1",
       workspaceId: "ws-1",
       lockOwner: "host-1",
     })
+    const afterMs = Date.now()
 
     expect(result).toBe(true)
     expect(set).toHaveBeenCalledWith(
       expect.objectContaining({ status: "running", lockOwner: "host-1" }),
     )
+    const setArg = set.mock.calls[0][0] as { lockedAt: Date }
+    expect(setArg.lockedAt).toBeInstanceOf(Date)
+    expect(setArg.lockedAt.getTime()).toBeGreaterThanOrEqual(beforeMs)
+    expect(setArg.lockedAt.getTime()).toBeLessThanOrEqual(afterMs)
     // The pending-status predicate must be part of the WHERE — never a
     // read-then-write.
     expect(mocks.eq).toHaveBeenCalledWith("status", "pending")
+    // The claim's idempotency guard is the full (id, workspaceId, status)
+    // conjunction — never scope by id alone or drop workspaceId, or one
+    // tenant's scheduler could claim another tenant's pending dispatch.
+    expect(mocks.and).toHaveBeenCalledWith(
+      { eq: ["id", "d-1"] },
+      { eq: ["workspaceId", "ws-1"] },
+      { eq: ["status", "pending"] },
+    )
   })
 
   test("returns false when the row was no longer pending (lost the race)", async () => {

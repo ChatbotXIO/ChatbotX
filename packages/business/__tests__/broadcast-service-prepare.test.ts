@@ -347,5 +347,17 @@ describe("markContactFailed", () => {
         }),
       }),
     )
+    // Scoping must be exactly (broadcastId, contactId) — dropping either
+    // condition from the conjunction would let this update touch another
+    // broadcast's or another contact's row.
+    const { condition } = updateWhere.mock.calls[0][0] as {
+      condition: { __and: unknown[] }
+    }
+    expect(condition).toEqual({
+      __and: [
+        { __eq: ["cob.broadcastId", "b-1"] },
+        { __eq: ["cob.contactId", "c-1"] },
+      ],
+    })
   })
 })

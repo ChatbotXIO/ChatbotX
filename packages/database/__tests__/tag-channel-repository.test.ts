@@ -341,3 +341,110 @@ describe("deleteById", () => {
     expect(mocks.eq).toHaveBeenCalledWith("id", "tc-1")
   })
 })
+
+describe("findByTagAndIntegration", () => {
+  test("scopes the lookup by tagId, workspaceId, channelType, and integrationId", async () => {
+    mocks.findFirst.mockResolvedValue({ id: "tc-1" })
+
+    const result = await tagChannelRepository.findByTagAndIntegration({
+      workspaceId: "ws-1",
+      tagId: "tag-1",
+      channelType: "zalo",
+      integrationId: "int-1",
+    })
+
+    expect(result).toEqual({ id: "tc-1" })
+    expect(mocks.findFirst).toHaveBeenCalledWith({
+      where: {
+        tagId: "tag-1",
+        workspaceId: "ws-1",
+        channelType: "zalo",
+        integrationId: "int-1",
+      },
+    })
+  })
+})
+
+describe("updateExternalLabelId", () => {
+  test("updates only the row matching the given id", async () => {
+    const where = vi.fn(() => Promise.resolve(undefined))
+    const set = vi.fn(() => ({ where }))
+    mocks.update.mockReturnValue({ set })
+
+    await tagChannelRepository.updateExternalLabelId({
+      id: "tc-1",
+      externalLabelId: "new-label",
+    })
+
+    expect(set).toHaveBeenCalledWith({ externalLabelId: "new-label" })
+    expect(mocks.eq).toHaveBeenCalledWith("id", "tc-1")
+  })
+})
+
+describe("upsertByTagAndIntegration", () => {
+  test("targets the (tagId, channelType, integrationId) conflict key and returns the row", async () => {
+    const chain = insertChain([{ id: "tc-1", externalLabelId: "ext-1" }])
+    mocks.insert.mockReturnValue(chain)
+
+    const result = await tagChannelRepository.upsertByTagAndIntegration({
+      workspaceId: "ws-1",
+      tagId: "tag-1",
+      channelType: "zalo",
+      integrationId: "int-1",
+      externalLabelId: "ext-1",
+    })
+
+    expect(result).toEqual({ id: "tc-1", externalLabelId: "ext-1" })
+    expect(chain.onConflictDoUpdate).toHaveBeenCalledWith({
+      target: ["tagId", "channelType", "integrationId"],
+      set: { externalLabelId: "ext-1" },
+    })
+  })
+})
+
+describe("listByTag", () => {
+  test("scopes by tagId and workspaceId with no optional filters", async () => {
+    mocks.findMany.mockResolvedValue([])
+
+    await tagChannelRepository.listByTag({
+      workspaceId: "ws-1",
+      tagId: "tag-1",
+    })
+
+    expect(mocks.findMany).toHaveBeenCalledWith({
+      where: { tagId: "tag-1", workspaceId: "ws-1" },
+      columns: {
+        id: true,
+        channelType: true,
+        integrationId: true,
+        externalLabelId: true,
+      },
+    })
+  })
+
+  test("adds channelType/integrationId filters only when provided", async () => {
+    mocks.findMany.mockResolvedValue([])
+
+    await tagChannelRepository.listByTag({
+      workspaceId: "ws-1",
+      tagId: "tag-1",
+      channelType: "messenger",
+      integrationId: "int-1",
+    })
+
+    expect(mocks.findMany).toHaveBeenCalledWith({
+      where: {
+        tagId: "tag-1",
+        workspaceId: "ws-1",
+        channelType: "messenger",
+        integrationId: "int-1",
+      },
+      columns: {
+        id: true,
+        channelType: true,
+        integrationId: true,
+        externalLabelId: true,
+      },
+    })
+  })
+})
