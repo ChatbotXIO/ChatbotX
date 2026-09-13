@@ -1,2 +1,2 @@
 export type { PurgeCommentAutomationEventsOptions } from "./repository"
-export { purgeCommentAutomationEvents } from "./repository"
+export { purgeFailedCommentAutomationEvents } from "./repository"

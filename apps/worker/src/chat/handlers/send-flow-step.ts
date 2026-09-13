@@ -39,6 +39,7 @@ import {
   type SendCardStepSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
+import { logDiagnostic } from "@chatbotx.io/logger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
   IntegrationException,
@@ -133,23 +134,15 @@ export const convertButtonsToTemplate = (props: {
   buttons: ButtonStepProps[]
   metadata?: MetadataPayload
   contactInboxId?: string
-  /**
-   * Set when this flow is a comment automation's reply. Broadcast and sequence
-   * attribution arrive through `metadata`; a comment reply has no metadata of
-   * its own, so it rides the `commentAnchor` instead.
-   */
-  commentAutomationId?: string
 }): MessageButtonTemplate[] => {
-  const {
-    flowId,
-    flowVersionId,
-    buttons,
-    metadata,
-    contactInboxId,
-    commentAutomationId,
-  } = props
+  const { flowId, flowVersionId, buttons, metadata, contactInboxId } = props
   const broadcastId = extractMetadata("broadcastId", metadata)
   const sequenceStepId = extractMetadata("sequenceStepId", metadata)
+  // Read the same way as the two above, and — critically — the same way each
+  // integration's own encoder reads it. The channel re-encodes the payload the
+  // contact actually taps, so any attribution that lives only here is invisible
+  // to the click. See `send-button.ts` in messenger/instagram{,-facebook}.
+  const commentAutomationId = extractMetadata("commentAutomationId", metadata)
 
   return buttons.map((button) => {
     const buttonPayload = encodeButtonPayload({
@@ -309,16 +302,8 @@ const convertCardsToTemplate = (props: {
   cards: SendCardStepSchema[]
   metadata?: MetadataPayload
   contactInboxId?: string
-  commentAutomationId?: string
 }): MessageCardTemplate[] => {
-  const {
-    flowId,
-    flowVersionId,
-    cards,
-    metadata,
-    contactInboxId,
-    commentAutomationId,
-  } = props
+  const { flowId, flowVersionId, cards, metadata, contactInboxId } = props
 
   return cards.map((card) => ({
     id: card.id,
@@ -333,7 +318,6 @@ const convertCardsToTemplate = (props: {
             buttons: card.buttons,
             metadata,
             contactInboxId,
-            commentAutomationId,
           })
         : undefined,
   }))
@@ -369,6 +353,25 @@ export async function sendFlowStep({
   if (!targetContactInbox) {
     return
   }
+
+  // What the job actually carried. `metadata` is the carrier the button
+  // encoders read; `commentAnchor` only decides delivery. Note the resolved
+  // inbox may differ from the job's `contactInboxId` (see findTargetContactInbox)
+  // — and it is the RESOLVED one that gets encoded into button payloads.
+  logDiagnostic(
+    logger,
+    () => ({
+      conversationId,
+      jobContactInboxId: contactInboxId ?? null,
+      resolvedContactInboxId: targetContactInbox.id,
+      channel: targetContactInbox.channel,
+      flowId,
+      stepType: step.stepType,
+      metadata: metadata ?? null,
+      commentAnchor: commentAnchor ?? null,
+    }),
+    "sendFlowStep: job received",
+  )
 
   if (step.stepType === stepTypes.enum.sendWaTemplateMessage) {
     if (targetContactInbox.channel !== channelTypes.enum.whatsapp) {
@@ -553,7 +556,6 @@ export async function sendFlowStep({
             buttons: quickRepliesWithSignedBookingLinks,
             metadata,
             contactInboxId: targetContactInbox.id,
-            commentAutomationId: commentAnchor?.automationId,
           })
         : undefined
 
@@ -566,7 +568,6 @@ export async function sendFlowStep({
             buttons: stepWithSignedBookingLinks.buttons,
             metadata,
             contactInboxId: targetContactInbox.id,
-            commentAutomationId: commentAnchor?.automationId,
           })
         : []
 
@@ -599,7 +600,6 @@ export async function sendFlowStep({
             cards: stepWithSignedBookingLinks.cards,
             metadata,
             contactInboxId: targetContactInbox.id,
-            commentAutomationId: commentAnchor?.automationId,
           }),
         },
         ...contentAttributes,

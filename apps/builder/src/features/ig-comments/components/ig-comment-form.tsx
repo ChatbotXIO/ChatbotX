@@ -34,6 +34,7 @@ import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { useWorkspaceId } from "@/hooks/routing"
 import type { CreateIgCommentRequest, IgCommentVariant } from "../schema/action"
 import { SelectInstagramPostsDialog } from "./select-instagram-posts-dialog"
@@ -305,15 +306,13 @@ export function IgCommentForm({
               required
             />
             {publicReplyType === "text" && (
-              <TiptapEditorField
-                channels={["instagram"]}
-                includeBotFieldVariables
+              <ReplyTextsField
+                channel="instagram"
                 label={t("instagramCommentAutomation.replyMessage")}
-                name="publicReply.value"
+                name="publicReply"
                 placeholder={t(
                   "instagramCommentAutomation.replyMessagePlaceholder",
                 )}
-                required
               />
             )}
             {publicReplyType === "flow" && (
@@ -471,6 +470,15 @@ export function IgCommentForm({
                 "instagramCommentAutomation.options.ignoreCommentReplies",
               )}
               name="options.ignoreCommentReplies"
+              required
+            />
+            <SwitchField
+              description={t(
+                "instagramCommentAutomation.options.trackUserTagsDescription",
+              )}
+              descriptionType="tooltip"
+              label={t("instagramCommentAutomation.options.trackUserTags")}
+              name="options.trackUserTags"
               required
             />
           </div>

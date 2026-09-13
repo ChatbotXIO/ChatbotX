@@ -1,7 +1,18 @@
-import { db, sql } from "@chatbotx.io/database/client"
+import {
+  and,
+  countDistinct,
+  db,
+  eq,
+  gt,
+  isNotNull,
+  notInArray,
+  or,
+  sql,
+} from "@chatbotx.io/database/client"
 import { resolvedTimezone } from "@chatbotx.io/database/queries/date-bucket"
 import { fbCommentAutomationEventModel } from "@chatbotx.io/database/schema"
 import type { FBCommentAutomationEventInsert } from "@chatbotx.io/database/types"
+import type { RangeGranularity } from "../../lib/time-series"
 import type { CommentAutomationCounterDeltas } from "../../schemas/comment-automation"
 import type { ContactEventData } from "../../schemas/common"
 import { BaseRepository, type MessageEventType } from "./base.repository"
@@ -32,6 +43,12 @@ type ErrorEventRow = {
   occurredAt: Date
 }
 
+/**
+ * The only channel the delivery counters — and so the drill-down behind them —
+ * measure. See `countsTowardStats` in the service for why.
+ */
+const PRIVATE_REPLY_CHANNEL = "private"
+
 /** What a discarded row was counted as, so the caller can unwind its counters. */
 type DeletedEventRow = {
   automationId: string
@@ -48,21 +65,20 @@ type MarkDeliveredRow = {
   clearedFailure: boolean
 }
 
-type ContactPageRow = {
-  contactInboxId: string | null
-  contactId: string | null
-  deliveredAt: Date | null
-  seenAt: Date | null
-  clickedAt: Date | null
-  failedAt: Date | null
-  errorDetail: string | null
-}
-
 /**
- * Raw query layer over `FBCommentAutomationEvent`, the append-only log the
- * per-automation analytics page reads. Mirrors `LinkStatsRepository` in shape
- * (raw `db.execute(sql...)`, one method per panel) but is not parameterised by
- * table — unlike RefLinkStat/MagicLinkStat there is only one table here.
+ * Query layer over `FBCommentAutomationEvent`, the append-only log the
+ * per-automation analytics page and the delivery-stat columns read. Mirrors
+ * `LinkStatsRepository` in shape (one method per panel) but is not
+ * parameterised by table — unlike RefLinkStat/MagicLinkStat there is only one
+ * table here.
+ *
+ * **Anything returning a timestamp goes through the query builder, never
+ * `db.execute(sql...)`.** Raw execute hands back the driver's own values with
+ * no column mapping, so a `timestamptz` arrives as a string; a hand-written
+ * `as SomeRow[]` cast then claims it is a `Date` and the first `.toISOString()`
+ * downstream throws at runtime. The text/count panels below may stay raw —
+ * `getErrorEvents` is the one that straddles it, which is why its caller wraps
+ * `occurredAt` in `new Date(...)`.
  *
  * Every method filters on BOTH `workspaceId` and `automationId`; the service
  * verifies the automation belongs to the workspace before calling in.
@@ -76,7 +92,9 @@ export class CommentAutomationStatsRepository extends BaseRepository {
    */
   async insertEvents(
     rows: FBCommentAutomationEventInsert[],
-  ): Promise<{ automationId: string; status: string }[]> {
+  ): Promise<
+    { automationId: string; status: string; deliveredAt: Date | null }[]
+  > {
     if (rows.length === 0) {
       return []
     }
@@ -93,6 +111,9 @@ export class CommentAutomationStatsRepository extends BaseRepository {
       .returning({
         automationId: fbCommentAutomationEventModel.automationId,
         status: fbCommentAutomationEventModel.status,
+        // Returned so the caller can count a row that was born delivered — a
+        // synchronous send has no later `markDelivered` to do it.
+        deliveredAt: fbCommentAutomationEventModel.deliveredAt,
       })
   }
 
@@ -138,6 +159,14 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     ]
     if (isFailure) {
       assignments.push(sql`"failedAt" = NOW()`)
+    } else {
+      // Cleared, not merely left behind. An AI reply that records a failure and
+      // later settles to `sent` would otherwise keep a non-null `failedAt`, and
+      // `buildEventFilter("message:failed")` selects on exactly that — so a
+      // reply that succeeded would still be listed under Failed, and a later
+      // discard would decrement `failedCount` for a failure no longer counted.
+      // Mirrors what markDelivered already does.
+      assignments.push(sql`"failedAt" = NULL`)
     }
     if (input.replyText !== undefined) {
       assignments.push(sql`"replyText" = ${input.replyText}`)
@@ -171,21 +200,28 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     commentId: string
     replyChannel: string
   }): Promise<DeletedEventRow[]> {
-    const result = await db.execute(sql`
-      DELETE FROM "FBCommentAutomationEvent"
-      WHERE "automationId" = ${input.automationId}
-        AND "commentId" = ${input.commentId}
-        AND "replyChannel" = ${input.replyChannel}::"commentAutomationReplyChannel"
-      RETURNING
-        "automationId"::text AS "automationId",
-        "status"::text AS "status",
-        "deliveredAt",
-        "seenAt",
-        "clickedAt",
-        "failedAt"
-    `)
+    const event = fbCommentAutomationEventModel
 
-    return result.rows as DeletedEventRow[]
+    // Query builder, like `getContacts`: this returns timestamps, and a raw
+    // `db.execute` would hand them back unmapped for a hand-written cast to
+    // misdescribe as `Date`.
+    return await db
+      .delete(event)
+      .where(
+        and(
+          eq(event.automationId, input.automationId),
+          eq(event.commentId, input.commentId),
+          sql`${event.replyChannel} = ${input.replyChannel}::"commentAutomationReplyChannel"`,
+        ),
+      )
+      .returning({
+        automationId: event.automationId,
+        status: event.status,
+        deliveredAt: event.deliveredAt,
+        seenAt: event.seenAt,
+        clickedAt: event.clickedAt,
+        failedAt: event.failedAt,
+      })
   }
 
   /**
@@ -260,6 +296,12 @@ export class CommentAutomationStatsRepository extends BaseRepository {
    * Served by `FBCommentAutomationEvent_private_unseen_idx` — this runs for
    * EVERY read receipt on the platform, so the predicate must match that index
    * exactly.
+   *
+   * `"deliveredAt" <= input."occurredAt"` is what keeps the watermark honest. A
+   * receipt says "everything up to T has been read", so a reply delivered AFTER
+   * T cannot be one of them — a receipt for an older DM would otherwise mark a
+   * reply the contact has not opened, inflating `seenCount` and showing the
+   * drill-down a read time earlier than the send time.
    */
   async markSeenForContactInboxes(
     items: { contactInboxId: string; occurredAt: Date }[],
@@ -268,21 +310,25 @@ export class CommentAutomationStatsRepository extends BaseRepository {
       return []
     }
 
-    const cases = items.map(
+    const values = items.map(
       (item) =>
-        sql`WHEN "contactInboxId" = ${item.contactInboxId} THEN ${item.occurredAt.toISOString()}::timestamptz`,
+        sql`(${item.contactInboxId}::bigint, ${item.occurredAt.toISOString()}::timestamptz)`,
     )
-    const ids = items.map((item) => sql`${item.contactInboxId}`)
 
     const result = await db.execute(sql`
-      UPDATE "FBCommentAutomationEvent"
-      SET "seenAt" = CASE ${sql.join(cases, sql` `)} ELSE NOW() END,
+      WITH input("contactInboxId", "occurredAt") AS (
+        VALUES ${sql.join(values, sql`, `)}
+      )
+      UPDATE "FBCommentAutomationEvent" event
+      SET "seenAt" = input."occurredAt",
           "updatedAt" = NOW()
-      WHERE "replyChannel" = 'private'
-        AND "deliveredAt" IS NOT NULL
-        AND "seenAt" IS NULL
-        AND "contactInboxId" IN (${sql.join(ids, sql`, `)})
-      RETURNING "automationId"::text AS "automationId"
+      FROM input
+      WHERE event."contactInboxId" = input."contactInboxId"
+        AND event."replyChannel" = 'private'
+        AND event."deliveredAt" IS NOT NULL
+        AND event."seenAt" IS NULL
+        AND event."deliveredAt" <= input."occurredAt"
+      RETURNING event."automationId"::text AS "automationId"
     `)
 
     return result.rows as { automationId: string }[]
@@ -298,6 +344,12 @@ export class CommentAutomationStatsRepository extends BaseRepository {
    * exact reply cannot be named. In practice a contact has at most one live
    * reply per automation, so the newest unclicked row is the right one; when it
    * is not, the click still lands on the right automation.
+   *
+   * `replyChannel = 'private'` for the same reason `markSeenForContactInboxes`
+   * carries it — the counters measure the DM only. Easy to miss here:
+   * `executePublicReply` deliberately stamps `metadata.commentAutomationId` on
+   * a PUBLIC flow reply's buttons too, so without this predicate a tap under
+   * the post would still move `clickedCount`.
    */
   async markClickedForAutomationContacts(
     items: { automationId: string; contactInboxId: string; occurredAt: Date }[],
@@ -323,6 +375,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
           FROM "FBCommentAutomationEvent" event
           WHERE event."automationId" = input."automationId"
             AND event."contactInboxId" = input."contactInboxId"
+            AND event."replyChannel" = 'private'
             AND event."clickedAt" IS NULL
           ORDER BY event."occurredAt" DESC
           LIMIT 1
@@ -332,6 +385,11 @@ export class CommentAutomationStatsRepository extends BaseRepository {
       SET "clickedAt" = targets."occurredAt", "updatedAt" = NOW()
       FROM targets
       WHERE event."id" = targets."id"
+        -- Repeated from the LATERAL on purpose, exactly as markDelivered
+        -- does: this is the predicate Postgres re-checks after taking the row
+        -- lock. Without it two clicks arriving at once both snapshot the same
+        -- unclicked row, both UPDATEs succeed, and one click is counted twice.
+        AND event."clickedAt" IS NULL
       RETURNING event."automationId"::text AS "automationId"
     `)
 
@@ -356,7 +414,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
 
     const rows = entries.map(
       ([automationId, fields]) =>
-        sql`(${automationId}::bigint, ${fields.sentCount ?? 0}::int, ${fields.deliveredCount ?? 0}::int, ${fields.seenCount ?? 0}::int, ${fields.clickedCount ?? 0}::int, ${fields.failedCount ?? 0}::int)`,
+        sql`(${automationId}::bigint, ${fields.sentCount ?? 0}::int, ${fields.deliveredCount ?? 0}::int, ${fields.seenCount ?? 0}::int, ${fields.clickedCount ?? 0}::int, ${fields.failedCount ?? 0}::int, ${fields.missedCount ?? 0}::int)`,
     )
 
     await db.execute(sql`
@@ -365,21 +423,32 @@ export class CommentAutomationStatsRepository extends BaseRepository {
           "deliveredCount" = GREATEST(0, automation."deliveredCount" + delta."delivered"),
           "seenCount" = GREATEST(0, automation."seenCount" + delta."seen"),
           "clickedCount" = GREATEST(0, automation."clickedCount" + delta."clicked"),
-          "failedCount" = GREATEST(0, automation."failedCount" + delta."failed")
+          "failedCount" = GREATEST(0, automation."failedCount" + delta."failed"),
+          "missedCount" = GREATEST(0, automation."missedCount" + delta."missed")
       FROM (VALUES ${sql.join(rows, sql`, `)})
-        AS delta("id", "sent", "delivered", "seen", "clicked", "failed")
+        AS delta("id", "sent", "delivered", "seen", "clicked", "failed", "missed")
       WHERE automation."id" = delta."id"
     `)
   }
 
   /**
-   * One page of the drill-down dialog. Same contract as
-   * `BroadcastStatsRepository.getContacts` so the shared `StatsContactsDialog`
-   * and its hydration step work unchanged.
+   * One page of the drill-down dialog: ONE ROW PER EVENT, newest first. The
+   * same contact appears as many times as it has events for this column — a
+   * contact who commented on Monday and Thursday is two rows with two times.
+   *
+   * That is why each row carries the event id as `rowKey`: `StatsContactsDialog`
+   * de-duplicates and keys its list by it, and keying by `contactId` (as the
+   * broadcast list can, being unique per contact) would silently drop every
+   * repeat occurrence on the second page onward.
    *
    * Rows with no `contactInboxId` are excluded: they predate this column or
    * lost it to a `ContactInbox` delete, and the dialog has nothing to render
    * without one.
+   *
+   * `private` only, matching the counters this dialog drills into. Not
+   * cosmetic: leave it out and the dialog lists more rows than the column it
+   * opened from claims, and "select all" tags people who only ever got a
+   * public comment reply.
    */
   async getContacts(input: {
     workspaceId: string
@@ -389,40 +458,76 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     perPage: number
   }): Promise<{
     contactInboxIds: string[]
-    contactEventMap: Map<string, ContactEventData>
+    events: (ContactEventData & { rowKey: string })[]
+    contactTotal: number
   }> {
     const { workspaceId, automationId, eventType, page, perPage } = input
     const offset = (page - 1) * perPage
     const { condition, orderColumn } = this.buildEventFilter(eventType)
+    const event = fbCommentAutomationEventModel
 
-    const result = await db.execute(sql`
-      SELECT
-        "contactInboxId"::text AS "contactInboxId",
-        "contactId"::text AS "contactId",
-        "deliveredAt",
-        "seenAt",
-        "clickedAt",
-        "failedAt",
-        "errorDetail"
-      FROM "FBCommentAutomationEvent"
-      WHERE "workspaceId" = ${workspaceId}
-        AND "automationId" = ${automationId}
-        AND "contactInboxId" IS NOT NULL
-        AND ${condition}
-      ORDER BY ${orderColumn} DESC NULLS LAST
-      LIMIT ${perPage} OFFSET ${offset}
-    `)
+    const scope = and(
+      eq(event.workspaceId, workspaceId),
+      eq(event.automationId, automationId),
+      eq(event.replyChannel, PRIVATE_REPLY_CHANNEL),
+      isNotNull(event.contactInboxId),
+      // Matches `contactTotal` below, which counts DISTINCT contactId and so
+      // ignores NULLs, and `getContactIdsPage`, which filters the same way.
+      // `contactId` is ON DELETE SET NULL, so without this a deleted contact's
+      // events are still listed while being counted by neither — the dialog
+      // shows more rows than "select all" promises to tag.
+      isNotNull(event.contactId),
+      condition,
+    )
 
-    const rows = result.rows as ContactPageRow[]
+    // The query builder, not `db.execute(sql...)` like the panels above: those
+    // return text/counts, this returns timestamps. Raw execute hands back the
+    // driver's own values with no column mapping, so the timestamps arrive as
+    // strings — and `getOccurredAt` calls `.toISOString()` on them. A
+    // hand-written `as` cast is what let that lie compile; selecting through
+    // the model makes the row type real.
+    // `contactTotal` counts PEOPLE while the rows count occurrences. Tagging
+    // acts on contacts, so "select all" must promise the number it will really
+    // tag — 5 rows from 2 commenters is 2 tags, not 5.
+    const [rows, contactTotals] = await Promise.all([
+      db
+        .select({
+          id: event.id,
+          contactInboxId: event.contactInboxId,
+          contactId: event.contactId,
+          deliveredAt: event.deliveredAt,
+          seenAt: event.seenAt,
+          clickedAt: event.clickedAt,
+          failedAt: event.failedAt,
+          errorDetail: event.errorDetail,
+        })
+        .from(event)
+        .where(scope)
+        // `event.id` breaks ties. The order column is a timestamp, and a burst
+        // of replies to one post routinely shares one to the millisecond —
+        // LIMIT/OFFSET over an unstable order then re-returns a row on the next
+        // page and drops another. `appendContacts` in the dialog discards the
+        // repeat as a duplicate rowKey, so the dropped row is simply never
+        // rendered and the list silently comes up short.
+        .orderBy(sql`${orderColumn} DESC NULLS LAST, ${event.id} DESC`)
+        .limit(perPage)
+        .offset(offset),
+      db
+        .select({ total: countDistinct(event.contactId) })
+        .from(event)
+        .where(scope),
+    ])
+
     const contactInboxIds: string[] = []
-    const contactEventMap = new Map<string, ContactEventData>()
+    const events: (ContactEventData & { rowKey: string })[] = []
 
     for (const row of rows) {
       if (!row.contactInboxId) {
         continue
       }
       contactInboxIds.push(row.contactInboxId)
-      contactEventMap.set(row.contactInboxId, {
+      events.push({
+        rowKey: row.id,
         contactId: row.contactId ?? "",
         contactInboxId: row.contactInboxId,
         occurredAt: this.getOccurredAt(row, eventType),
@@ -430,10 +535,15 @@ export class CommentAutomationStatsRepository extends BaseRepository {
       })
     }
 
-    return { contactInboxIds, contactEventMap }
+    return {
+      contactInboxIds,
+      events,
+      contactTotal: contactTotals[0]?.total ?? 0,
+    }
   }
 
-  /** Keyset page of contact ids for the bulk-tag worker. */
+  /** Keyset page of contact ids for the bulk-tag worker. `private` only, for
+   * the same reason `getContacts` is — this is what "select all" acts on. */
   async getContactIdsPage(input: {
     workspaceId: string
     automationId: string
@@ -443,31 +553,33 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     excludeContactIds?: string[]
   }): Promise<{ id: string; contactId: string }[]> {
     const { condition } = this.buildEventFilter(input.eventType)
-    const cursorFilter = input.cursor
-      ? sql` AND "contactId" > ${input.cursor}`
-      : sql``
-    const excludeFilter = input.excludeContactIds?.length
-      ? sql` AND "contactId" NOT IN (${sql.join(
-          input.excludeContactIds.map((id) => sql`${id}`),
-          sql`, `,
-        )})`
-      : sql``
+    const event = fbCommentAutomationEventModel
 
-    const result = await db.execute(sql`
-      SELECT DISTINCT "contactId"::text AS "contactId"
-      FROM "FBCommentAutomationEvent"
-      WHERE "workspaceId" = ${input.workspaceId}
-        AND "automationId" = ${input.automationId}
-        AND "contactId" IS NOT NULL
-        AND ${condition}${cursorFilter}${excludeFilter}
-      ORDER BY "contactId" ASC
-      LIMIT ${input.limit}
-    `)
+    const rows = await db
+      .selectDistinct({ contactId: event.contactId })
+      .from(event)
+      .where(
+        and(
+          eq(event.workspaceId, input.workspaceId),
+          eq(event.automationId, input.automationId),
+          eq(event.replyChannel, PRIVATE_REPLY_CHANNEL),
+          isNotNull(event.contactId),
+          condition,
+          input.cursor ? gt(event.contactId, input.cursor) : undefined,
+          input.excludeContactIds?.length
+            ? notInArray(event.contactId, input.excludeContactIds)
+            : undefined,
+        ),
+      )
+      .orderBy(event.contactId)
+      .limit(input.limit)
 
-    return (result.rows as { contactId: string }[]).map((row) => ({
-      id: row.contactId,
-      contactId: row.contactId,
-    }))
+    return rows
+      .filter((row) => row.contactId !== null)
+      .map((row) => ({
+        id: row.contactId as string,
+        contactId: row.contactId as string,
+      }))
   }
 
   /**
@@ -475,41 +587,81 @@ export class CommentAutomationStatsRepository extends BaseRepository {
    * it reads as "delivered or failed" rather than a column of its own — the
    * same derivation `BroadcastStatsRepository.buildEventFilter` uses. A row
    * that is neither yet (an AI reply still generating) is deliberately out.
+   *
+   * Says nothing about the channel: both callers add `private` to their own
+   * scope, so this stays purely about the outcome.
    */
   private buildEventFilter(eventType: MessageEventType) {
+    const event = fbCommentAutomationEventModel
     switch (eventType) {
       case "message:delivered":
         return {
-          condition: sql`"deliveredAt" IS NOT NULL`,
-          orderColumn: sql`"deliveredAt"`,
+          condition: isNotNull(event.deliveredAt),
+          orderColumn: event.deliveredAt,
         }
       case "message:seen":
-        return {
-          condition: sql`"seenAt" IS NOT NULL`,
-          orderColumn: sql`"seenAt"`,
-        }
+        return { condition: isNotNull(event.seenAt), orderColumn: event.seenAt }
       case "message:failed":
         return {
-          condition: sql`"failedAt" IS NOT NULL`,
-          orderColumn: sql`"failedAt"`,
+          condition: isNotNull(event.failedAt),
+          orderColumn: event.failedAt,
         }
       case "flow:clicked":
         return {
-          condition: sql`"clickedAt" IS NOT NULL`,
-          orderColumn: sql`"clickedAt"`,
+          condition: isNotNull(event.clickedAt),
+          orderColumn: event.clickedAt,
         }
       default:
         return {
-          condition: sql`("deliveredAt" IS NOT NULL OR "failedAt" IS NOT NULL)`,
-          orderColumn: sql`COALESCE("deliveredAt", "failedAt")`,
+          condition: or(
+            isNotNull(event.deliveredAt),
+            isNotNull(event.failedAt),
+          ),
+          orderColumn: sql`COALESCE(${event.deliveredAt}, ${event.failedAt})`,
         }
     }
   }
 
-  async getRepliesByDate(
+  /**
+   * Monthly buckets, for a range too wide to draw a point per day. The key
+   * stays a full `YYYY-MM-01` date rather than `YYYY-MM` so the client can
+   * parse it with the same call it uses for a daily key.
+   */
+  private async getRepliesByMonth(
     input: RangeInput & { timezone: string },
   ): Promise<{ dateReport: string; count: number }[]> {
     const { workspaceId, automationId, startDate, endDate, timezone } = input
+
+    const result = await db.execute(sql`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', ("occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)})::date), 'YYYY-MM-01') AS "dateReport",
+        COUNT(*)::int AS count
+      FROM "FBCommentAutomationEvent"
+      WHERE "workspaceId" = ${workspaceId}
+        AND "automationId" = ${automationId}
+        AND "status" = 'sent'
+        AND "occurredAt" >= ${startDate}
+        AND "occurredAt" <= ${endDate}
+      GROUP BY 1
+      ORDER BY 1 ASC
+    `)
+
+    return result.rows as { dateReport: string; count: number }[]
+  }
+
+  /**
+   * Replies per bucket. `granularity` is passed in rather than derived here so
+   * the service's zero-fill and this query cannot disagree about the bucket
+   * width — see `resolveRangeGranularity`.
+   */
+  async getRepliesByDate(
+    input: RangeInput & { timezone: string; granularity?: RangeGranularity },
+  ): Promise<{ dateReport: string; count: number }[]> {
+    const { workspaceId, automationId, startDate, endDate, timezone } = input
+
+    if (input.granularity === "month") {
+      return await this.getRepliesByMonth(input)
+    }
 
     // `resolvedTimezone`, never the caller's name verbatim: browsers still
     // report legacy IANA names (`Asia/Saigon`, `Asia/Calcutta`, `Europe/Kiev`)

@@ -12,6 +12,7 @@ import {
   fbCommentAutomationTypes,
   type IgCommentAutomationType,
   igCommentAutomationTypes,
+  normalizeReplyTexts,
 } from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
@@ -248,6 +249,25 @@ class FbCommentAutomationService extends BaseService {
     return record
   }
 
+  /**
+   * Keeps a reply's `value` and `values` describing the same thing on the way
+   * in — see `normalizeReplyTexts`.
+   *
+   * Applied HERE rather than at each caller because every write to this table
+   * funnels through the four methods below: the builder actions, the private
+   * and public APIs, and the template installer. Normalizing per call site left
+   * the installer out, which quietly wrote drifted rows — and a row whose
+   * `value` disagrees with its `values` sends the wrong text with no error.
+   */
+  private withNormalizedReplies<T extends Partial<FbCommentAutomationWriteData>>(
+    data: T,
+  ): T {
+    if (!data.publicReply) {
+      return data
+    }
+    return { ...data, publicReply: normalizeReplyTexts(data.publicReply) }
+  }
+
   async createMessenger(input: {
     workspaceId: string
     data: FbCommentAutomationWriteData
@@ -258,7 +278,7 @@ class FbCommentAutomationService extends BaseService {
         id: createId(),
         workspaceId: input.workspaceId,
         type: fbCommentAutomationTypes.enum.messenger,
-        ...input.data,
+        ...this.withNormalizedReplies(input.data),
       })
       .returning()
     return created
@@ -272,7 +292,7 @@ class FbCommentAutomationService extends BaseService {
 
     const [updated] = await db
       .update(fbCommentAutomationModel)
-      .set(data)
+      .set(this.withNormalizedReplies(data))
       .where(
         and(
           eq(fbCommentAutomationModel.id, ctx.id),
@@ -361,7 +381,7 @@ class FbCommentAutomationService extends BaseService {
         id: createId(),
         workspaceId: input.workspaceId,
         type: input.type,
-        ...input.data,
+        ...this.withNormalizedReplies(input.data),
       })
       .returning()
     return created
@@ -375,7 +395,7 @@ class FbCommentAutomationService extends BaseService {
 
     const [updated] = await db
       .update(fbCommentAutomationModel)
-      .set(data)
+      .set(this.withNormalizedReplies(data))
       .where(
         and(
           eq(fbCommentAutomationModel.id, ctx.id),

@@ -679,18 +679,99 @@ describe("getSystemFieldValue", () => {
     ).resolves.toBe("https://example.com/ad")
   })
 
-  // total_new_tagged / total_tagged have no upstream data source yet — the
-  // resolver hardcodes null. This locks that in so wiring them up is deliberate.
-  test("tag counters stay null until a data source exists", async () => {
-    await expect(
-      getSystemFieldValue(
-        createContext(),
-        systemFieldTypes.enum.total_new_tagged,
-      ),
-    ).resolves.toBeNull()
-    await expect(
-      getSystemFieldValue(createContext(), systemFieldTypes.enum.total_tagged),
-    ).resolves.toBeNull()
+  // The comment-automation worker writes these onto the comment message, and
+  // only when that automation has `trackUserTags` on.
+  describe("tag counters", () => {
+    const messageCreatedAt = new Date("2026-01-04T03:04:05.000Z")
+    const trackingInbox = {
+      ...contactInbox,
+      lastCommentMessageId: "message-1",
+      lastCommentMessageAt: messageCreatedAt,
+    } as ContactInboxModel
+
+    const mockCommentMessage = (
+      contentAttributes: Record<string, unknown>,
+    ): void => {
+      mockMessageFindById.mockResolvedValue({
+        id: "message-1",
+        createdAt: messageCreatedAt,
+        sourceId: "user-comment-1",
+        text: "tagging my friends",
+        contentAttributes,
+        type: "comment",
+        messageType: "incoming",
+      })
+    }
+
+    test("resolve from the comment message the worker stamped", async () => {
+      mockCommentMessage({
+        postId: "post-1",
+        totalTagged: 3,
+        totalNewTagged: 2,
+      })
+
+      await expect(
+        getSystemFieldValue(
+          createContext({ contactInbox: trackingInbox }),
+          systemFieldTypes.enum.total_tagged,
+        ),
+      ).resolves.toBe("3")
+      await expect(
+        getSystemFieldValue(
+          createContext({ contactInbox: trackingInbox }),
+          systemFieldTypes.enum.total_new_tagged,
+        ),
+      ).resolves.toBe("2")
+    })
+
+    // Zero is a real answer ("nobody was tagged") and must survive as "0" —
+    // returning null here would render an empty string in the reply instead.
+    test("keep a zero count distinct from an absent one", async () => {
+      mockCommentMessage({
+        postId: "post-1",
+        totalTagged: 0,
+        totalNewTagged: 0,
+      })
+
+      await expect(
+        getSystemFieldValue(
+          createContext({ contactInbox: trackingInbox }),
+          systemFieldTypes.enum.total_tagged,
+        ),
+      ).resolves.toBe("0")
+    })
+
+    test("stay null when the automation never tracked tags", async () => {
+      mockCommentMessage({ postId: "post-1" })
+
+      await expect(
+        getSystemFieldValue(
+          createContext({ contactInbox: trackingInbox }),
+          systemFieldTypes.enum.total_tagged,
+        ),
+      ).resolves.toBeNull()
+      await expect(
+        getSystemFieldValue(
+          createContext({ contactInbox: trackingInbox }),
+          systemFieldTypes.enum.total_new_tagged,
+        ),
+      ).resolves.toBeNull()
+    })
+
+    test("stay null when the contact has no comment at all", async () => {
+      await expect(
+        getSystemFieldValue(
+          createContext(),
+          systemFieldTypes.enum.total_new_tagged,
+        ),
+      ).resolves.toBeNull()
+      await expect(
+        getSystemFieldValue(
+          createContext(),
+          systemFieldTypes.enum.total_tagged,
+        ),
+      ).resolves.toBeNull()
+    })
   })
 
   test("user_id resolves to the contact id even without a contact inbox", async () => {

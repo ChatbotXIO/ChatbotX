@@ -253,7 +253,7 @@
     "dateFilterPreset": "Période prédéfinie",
     "noResults": "Aucun résultat.",
     "noData": "Aucune donnée",
-    "retentionNotice": "Seules les données des {days} derniers jours sont conservées.",
+    "errorLogRetentionNotice": "Seuls les journaux d'erreurs des {days} derniers jours sont conservés.",
     "comingSoon": "Bientôt disponible",
     "unknown": "Inconnu",
     "pagination": {
@@ -517,7 +517,9 @@
       "seen": "Vu",
       "clicked": "Cliqué",
       "failed": "Échec",
+      "missed": "Manqués",
       "noContacts": "Aucun contact trouvé",
+      "noComment": "(aucun texte)",
       "pageInfo": "Page {page} sur {pageCount}",
       "selectedAll": "Tous sélectionnés",
       "selectedCount": "{count} sélectionné(s)",
@@ -526,6 +528,15 @@
       "tagQueued": "Étiquetage de {count} contacts en arrière-plan.",
       "loadingMore": "Chargement...",
       "receivers": "Destinataires"
+    },
+    "missReasons": {
+      "outsideSchedule": "Hors des horaires",
+      "postNotMatched": "Publication non ciblée",
+      "commentIsReply": "Réponse à un commentaire",
+      "keywordsNotMatched": "Mots-clés non correspondants",
+      "contactNotNew": "Le contact n'est pas nouveau",
+      "alreadyRepliedOnPost": "Déjà répondu sur cette publication",
+      "engagedOnOtherPost": "A déjà interagi sur une autre publication"
     }
   },
   "condition": {
@@ -4302,9 +4313,9 @@
     "trackCommentsOn": "Suivre les commentaires sur",
     "trackCommentsOnDescription": "Appliquez cette automatisation à toutes les publications de votre Page ou uniquement aux publications sélectionnées.",
     "privateReply": "Réponse privée (boîte de réception)",
-    "privateReplyDescription": "Envoyez un message privé dans la boîte de réception de l’auteur du commentaire. Choisissez un agent IA, un modèle de texte fixe (spintax pris en charge), un flux de chatbot ou désactivez la réponse.",
+    "privateReplyDescription": "Envoyez un message privé dans la boîte de réception de l’auteur du commentaire. Choisissez un agent IA, un modèle de texte fixe, un flux de chatbot ou désactivez la réponse.",
     "publicReply": "Réponse publique au commentaire",
-    "publicReplyDescription": "Publiez une réponse directement sous le commentaire. Prend en charge jusqu’à 10 modèles de texte (spintax), un agent IA, un flux de chatbot ou aucune réponse.",
+    "publicReplyDescription": "Publiez une réponse directement sous le commentaire. Prend en charge jusqu’à 10 modèles de texte, un agent IA, un flux de chatbot ou aucune réponse. Chaque message est publié comme une réponse distincte.",
     "replyMessage": "Message de réponse",
     "replyMessagePlaceholder": "Saisissez le message de réponse...",
     "includeKeywordsType": "Répondre à",
@@ -4372,8 +4383,8 @@
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continuer à répondre aux utilisateurs ayant déjà commenté vos autres publications.",
       "ignoreCommentReplies": "Ne pas répondre aux réponses aux commentaires",
       "ignoreCommentRepliesDescription": "Ignorer l’automatisation pour les réponses à d’autres commentaires plutôt que les commentaires de premier niveau.",
-      "trackUserTags": "Détecter si un utilisateur identifie d’autres utilisateurs",
-      "trackUserTagsDescription": "Déclencher l’automatisation lorsqu’un utilisateur identifie ou mentionne un autre utilisateur dans son commentaire."
+      "trackUserTags": "Suivre si un utilisateur identifie d'autres utilisateurs",
+      "trackUserTagsDescription": "Utilisez '{{total_tagged}}' pour savoir combien d'utilisateurs ont été identifiés. Utilisez '{{total_new_tagged}}' pour savoir combien de personnes identifiées ne figurent pas dans la liste de contacts."
     },
     "hideComments": {
       "all": "Masquer tous les commentaires",
@@ -4405,9 +4416,9 @@
     "trackCommentsOn": "Suivre les commentaires sur",
     "trackCommentsOnDescription": "Appliquez cette automatisation à toutes les publications de votre compte connecté ou uniquement aux publications sélectionnées.",
     "privateReply": "Réponse privée (boîte de réception)",
-    "privateReplyDescription": "Envoyez un message privé dans la boîte de réception de l’auteur du commentaire. Choisissez un agent IA, un modèle de texte fixe (spintax pris en charge), un flux de chatbot ou désactivez la réponse.",
+    "privateReplyDescription": "Envoyez un message privé dans la boîte de réception de l’auteur du commentaire. Choisissez un agent IA, un modèle de texte fixe, un flux de chatbot ou désactivez la réponse.",
     "publicReply": "Réponse publique au commentaire",
-    "publicReplyDescription": "Publiez une réponse directement sous le commentaire. Prend en charge jusqu’à 10 modèles de texte (spintax), un agent IA, un flux de chatbot ou aucune réponse.",
+    "publicReplyDescription": "Publiez une réponse directement sous le commentaire. Prend en charge jusqu’à 10 modèles de texte, un agent IA, un flux de chatbot ou aucune réponse. Chaque message est publié comme une réponse distincte.",
     "replyMessage": "Message de réponse",
     "replyMessagePlaceholder": "Saisissez le message de réponse...",
     "includeKeywordsType": "Répondre à",
@@ -4473,7 +4484,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "Répondre aux utilisateurs ayant commenté d’autres publications",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continuer à répondre aux utilisateurs ayant déjà commenté vos autres publications.",
       "ignoreCommentReplies": "Ne pas répondre aux réponses aux commentaires",
-      "ignoreCommentRepliesDescription": "Ignorer l’automatisation pour les réponses à d’autres commentaires plutôt que les commentaires de premier niveau."
+      "ignoreCommentRepliesDescription": "Ignorer l’automatisation pour les réponses à d’autres commentaires plutôt que les commentaires de premier niveau.",
+      "trackUserTags": "Suivre si un utilisateur identifie d'autres utilisateurs",
+      "trackUserTagsDescription": "Utilisez '{{total_tagged}}' pour savoir combien d'utilisateurs ont été identifiés. Utilisez '{{total_new_tagged}}' pour savoir combien de personnes identifiées ne figurent pas dans la liste de contacts."
     },
     "hideComments": {
       "all": "Masquer tous les commentaires",

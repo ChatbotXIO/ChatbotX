@@ -53,6 +53,10 @@ export function convertFacebookQuickReplies(props: {
       buttonId: button.id,
       broadcastId: extractMetadata("broadcastId", props.metadata),
       sequenceStepId: extractMetadata("sequenceStepId", props.metadata),
+      commentAutomationId: extractMetadata(
+        "commentAutomationId",
+        props.metadata,
+      ),
     }),
   }))
 }

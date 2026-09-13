@@ -34,6 +34,7 @@ import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { useWorkspaceId } from "@/hooks/routing"
 import type { CreateFbCommentRequest } from "../schema/action"
 import { SelectFacebookPostsDialog } from "./select-facebook-posts-dialog"
@@ -297,15 +298,13 @@ export function FbCommentForm({
               required
             />
             {publicReplyType === "text" && (
-              <TiptapEditorField
-                channels={["messenger"]}
-                includeBotFieldVariables
+              <ReplyTextsField
+                channel="messenger"
                 label={t("facebookCommentAutomation.replyMessage")}
-                name="publicReply.value"
+                name="publicReply"
                 placeholder={t(
                   "facebookCommentAutomation.replyMessagePlaceholder",
                 )}
-                required
               />
             )}
             {publicReplyType === "flow" && (
@@ -460,7 +459,7 @@ export function FbCommentForm({
               name="options.ignoreCommentReplies"
               required
             />
-            {/* <SwitchField
+            <SwitchField
               description={t(
                 "facebookCommentAutomation.options.trackUserTagsDescription",
               )}
@@ -468,7 +467,7 @@ export function FbCommentForm({
               label={t("facebookCommentAutomation.options.trackUserTags")}
               name="options.trackUserTags"
               required
-            /> */}
+            />
           </div>
         </CardContent>
       </Card>

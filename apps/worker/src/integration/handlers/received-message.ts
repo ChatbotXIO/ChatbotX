@@ -960,6 +960,10 @@ export const receiveComment = async (
     sourceId: commentData.fromId,
     sourceConversationId: commentData.postId,
     firstName: commentData.fromName,
+    // Instagram only: the handle is the sole way to match an `@mention` in a
+    // comment back to a known contact, since its webhook carries no tagged-user
+    // ids. Facebook sends no username here and matches on `sourceId` instead.
+    sourceUsername: commentData.fromUsername,
   }
 
   const detected = await detectContactAndConversation({
@@ -1060,6 +1064,7 @@ export const receiveComment = async (
         parentId: commentData.parentId,
         fromId: commentData.fromId,
         message: commentData.message,
+        tags: commentData.tags,
         createdTime: commentData.createdTime,
       },
     },

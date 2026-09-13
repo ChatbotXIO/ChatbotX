@@ -253,7 +253,7 @@
     "dateFilterPreset": "Predefinição do filtro de data",
     "noResults": "Nenhum resultado.",
     "noData": "Sem dados",
-    "retentionNotice": "Apenas os dados dos últimos {days} dias são mantidos.",
+    "errorLogRetentionNotice": "Apenas os registros de erros dos últimos {days} dias são mantidos.",
     "comingSoon": "Em breve",
     "unknown": "Desconhecido",
     "pagination": {
@@ -517,7 +517,9 @@
       "seen": "Visualizado",
       "clicked": "Clicado",
       "failed": "Falhou",
+      "missed": "Perdidos",
       "noContacts": "Nenhum contato encontrado",
+      "noComment": "(sem texto)",
       "pageInfo": "Página {page} de {pageCount}",
       "selectedAll": "Todos selecionados",
       "selectedCount": "{count} selecionados",
@@ -526,6 +528,15 @@
       "tagQueued": "Adicionando tags a {count} contatos em segundo plano.",
       "loadingMore": "Carregando mais...",
       "receivers": "Destinatários"
+    },
+    "missReasons": {
+      "outsideSchedule": "Fora do horário",
+      "postNotMatched": "Publicação não segmentada",
+      "commentIsReply": "Resposta a comentário",
+      "keywordsNotMatched": "Palavras-chave não corresponderam",
+      "contactNotNew": "O contato não é novo",
+      "alreadyRepliedOnPost": "Já respondido nesta publicação",
+      "engagedOnOtherPost": "Já interagiu em outra publicação"
     }
   },
   "condition": {
@@ -4195,9 +4206,9 @@
     "trackCommentsOn": "Rastrear comentários em",
     "trackCommentsOnDescription": "Aplique esta automação a todas as publicações da sua Página ou limite-a a publicações específicas selecionadas por você.",
     "privateReply": "Resposta privada (caixa de entrada)",
-    "privateReplyDescription": "Envie uma mensagem privada para a caixa de entrada de quem comentou. Escolha um agente de IA, um modelo de texto fixo (com suporte a spintax), um fluxo de chatbot ou desative a resposta.",
+    "privateReplyDescription": "Envie uma mensagem privada para a caixa de entrada de quem comentou. Escolha um agente de IA, um modelo de texto fixo, um fluxo de chatbot ou desative a resposta.",
     "publicReply": "Resposta pública ao comentário",
-    "publicReplyDescription": "Publique uma resposta pública diretamente abaixo do comentário. Compatível com até 10 modelos de texto (com suporte a spintax), agente de IA, fluxo de chatbot ou nenhuma resposta.",
+    "publicReplyDescription": "Publique uma resposta pública diretamente abaixo do comentário. Compatível com até 10 modelos de texto, agente de IA, fluxo de chatbot ou nenhuma resposta. Cada mensagem é publicada como uma resposta separada.",
     "replyMessage": "Mensagem de resposta",
     "replyMessagePlaceholder": "Digite a mensagem de resposta...",
     "includeKeywordsType": "Responder a",
@@ -4265,8 +4276,8 @@
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continuar respondendo a usuários que já comentaram em suas outras publicações.",
       "ignoreCommentReplies": "Não responder a respostas de comentários",
       "ignoreCommentRepliesDescription": "Ignorar a automação para comentários que sejam respostas a outros comentários, e não comentários de nível superior.",
-      "trackUserTags": "Rastrear quando um usuário marca outros usuários",
-      "trackUserTagsDescription": "Acionar a automação quando um usuário marcar ou mencionar outro usuário em seu comentário."
+      "trackUserTags": "Rastrear se um usuário marca outros usuários",
+      "trackUserTagsDescription": "Use '{{total_tagged}}' para saber quantos usuários foram marcados. Use '{{total_new_tagged}}' para saber quantas das pessoas marcadas não estão na lista de contatos."
     },
     "hideComments": {
       "all": "Ocultar todos os comentários",
@@ -4298,9 +4309,9 @@
     "trackCommentsOn": "Rastrear comentários em",
     "trackCommentsOnDescription": "Aplique esta automação a todas as publicações da conta conectada ou limite-a a publicações específicas selecionadas por você.",
     "privateReply": "Resposta privada (caixa de entrada)",
-    "privateReplyDescription": "Envie uma mensagem privada para a caixa de entrada de quem comentou. Escolha um agente de IA, um modelo de texto fixo (com suporte a spintax), um fluxo de chatbot ou desative a resposta.",
+    "privateReplyDescription": "Envie uma mensagem privada para a caixa de entrada de quem comentou. Escolha um agente de IA, um modelo de texto fixo, um fluxo de chatbot ou desative a resposta.",
     "publicReply": "Resposta pública ao comentário",
-    "publicReplyDescription": "Publique uma resposta pública diretamente abaixo do comentário. Compatível com até 10 modelos de texto (com suporte a spintax), agente de IA, fluxo de chatbot ou nenhuma resposta.",
+    "publicReplyDescription": "Publique uma resposta pública diretamente abaixo do comentário. Compatível com até 10 modelos de texto, agente de IA, fluxo de chatbot ou nenhuma resposta. Cada mensagem é publicada como uma resposta separada.",
     "replyMessage": "Mensagem de resposta",
     "replyMessagePlaceholder": "Digite a mensagem de resposta...",
     "includeKeywordsType": "Responder a",
@@ -4366,7 +4377,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "Responder a usuários que comentaram em outras publicações",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continuar respondendo a usuários que já comentaram em suas outras publicações.",
       "ignoreCommentReplies": "Não responder a respostas de comentários",
-      "ignoreCommentRepliesDescription": "Ignorar a automação para comentários que sejam respostas a outros comentários, e não comentários de nível superior."
+      "ignoreCommentRepliesDescription": "Ignorar a automação para comentários que sejam respostas a outros comentários, e não comentários de nível superior.",
+      "trackUserTags": "Rastrear se um usuário marca outros usuários",
+      "trackUserTagsDescription": "Use '{{total_tagged}}' para saber quantos usuários foram marcados. Use '{{total_new_tagged}}' para saber quantas das pessoas marcadas não estão na lista de contatos."
     },
     "hideComments": {
       "all": "Ocultar todos os comentários",

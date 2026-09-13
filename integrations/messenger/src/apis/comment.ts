@@ -184,6 +184,40 @@ export const getCommentAttachmentType = (props: {
 }
 
 /**
+ * Fetches the profiles tagged inside a comment's text.
+ *
+ * Only used as a fallback: the `feed` webhook already carries `message_tags`
+ * when a comment tags someone, so this costs a Graph call only when the
+ * webhook omitted the key. Returns `[]` — never null — because an untagged
+ * comment and a comment whose tags we failed to read must not be told apart by
+ * the caller; a failed read is surfaced by `rescue` throwing instead.
+ */
+export const getCommentMessageTags = (props: {
+  ctx: Context<MessengerAuthValue>
+  input: { commentId: string }
+}): Promise<{ id: string; name?: string }[]> => {
+  const { ctx, input } = props
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+  const endpoint = `${version}/${input.commentId}`
+
+  return rescue(endpoint, async () => {
+    const res = await facebookGraphClient.get<{
+      message_tags?: { id?: string; name?: string }[]
+    }>(endpoint, {
+      headers: {
+        Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+      },
+      searchParams: {
+        fields: "message_tags",
+      },
+    })
+    return (res.message_tags ?? []).flatMap(({ id, name }) =>
+      id ? [{ id, name }] : [],
+    )
+  })
+}
+
+/**
  * Fetches a comment's attachment and, for photo attachments, downloads and
  * uploads it to storage as an IncomingAttachment. Other attachment types
  * (video_inline, share, animated_image_share) are reported by type only —

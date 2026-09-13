@@ -34,6 +34,9 @@ const {
   mockLoggerWarn,
   mockContactVariableGetAll,
   mockContactVariableReplaceAll,
+  mockMessengerRunAction,
+  mockCountExistingTaggedIdentities,
+  mockUpdateContentAttributes,
 } = vi.hoisted(() => ({
   mockFindContactInboxBy: vi.fn(),
   mockFindActiveAutomations: vi.fn(),
@@ -64,6 +67,9 @@ const {
   mockLoggerWarn: vi.fn(),
   mockContactVariableGetAll: vi.fn(),
   mockContactVariableReplaceAll: vi.fn(),
+  mockMessengerRunAction: vi.fn(),
+  mockCountExistingTaggedIdentities: vi.fn(),
+  mockUpdateContentAttributes: vi.fn(),
 }))
 
 const mockLogProviderError = vi.fn().mockResolvedValue(undefined)
@@ -74,6 +80,7 @@ const mockRecordEvent = vi.fn().mockResolvedValue(undefined)
 const mockSettleEvent = vi.fn().mockResolvedValue(undefined)
 const mockDiscardEvent = vi.fn().mockResolvedValue(undefined)
 const mockMarkDelivered = vi.fn().mockResolvedValue(undefined)
+const mockRecordMisses = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("@chatbotx.io/analytics", () => ({
   commentAutomationAnalyticsService: {
@@ -81,6 +88,7 @@ vi.mock("@chatbotx.io/analytics", () => ({
     settleEvent: mockSettleEvent,
     discardEvent: mockDiscardEvent,
     markDelivered: mockMarkDelivered,
+    recordMisses: mockRecordMisses,
   },
 }))
 
@@ -88,7 +96,11 @@ vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
   logProviderError: mockLogProviderError,
   flowService: { findBy: mockFlowFindBy },
-  contactInboxService: { findBy: mockFindContactInboxBy },
+  buildContext: vi.fn().mockResolvedValue({}),
+  contactInboxService: {
+    findBy: mockFindContactInboxBy,
+    countExistingTaggedIdentities: mockCountExistingTaggedIdentities,
+  },
   aiAgentService: { findBy: mockAiAgentFindBy },
   conversationService: {
     findBy: mockConversationFindBy,
@@ -169,6 +181,11 @@ vi.mock("../src/services/integrations", () => ({
     identifyInboxAndIntegrationAuthFromIdentifier:
       mockIdentifyInboxAndIntegrationAuth,
   },
+  // Reached only by the `trackUserTags` fallback lookup; every other test
+  // leaves the option off and never touches it.
+  allIntegrations: {
+    messenger: { runAction: mockMessengerRunAction },
+  },
 }))
 
 vi.mock(
@@ -229,6 +246,8 @@ type AutomationOverrides = {
   id?: string
   options?: Record<string, boolean>
   post?: { type: string; value: string[] }
+  includeKeywords?: { type: string; value: string[] }
+  excludeKeywords?: string[]
   publicReply?: { type: string; value: string | null }
   privateReply?: { type: string; value: string | null }
   hideComments?: Record<string, unknown>
@@ -239,8 +258,8 @@ function buildAutomation(overrides: AutomationOverrides = {}) {
   return {
     id: overrides.id ?? "automation-1",
     post: overrides.post ?? { type: "all", value: [] },
-    includeKeywords: { type: "all", value: [] },
-    excludeKeywords: [],
+    includeKeywords: overrides.includeKeywords ?? { type: "all", value: [] },
+    excludeKeywords: overrides.excludeKeywords ?? [],
     publicReply: overrides.publicReply ?? { type: "none", value: null },
     privateReply: overrides.privateReply ?? { type: "none", value: null },
     options: {
@@ -274,6 +293,7 @@ function buildJobData(
     parentId?: string
     postId?: string
     message?: string
+    tags?: { id: string; name?: string }[]
     createdTime?: number
   } = {},
 ) {
@@ -288,6 +308,7 @@ function buildJobData(
     parentId: overrides.parentId,
     fromId: "user-1",
     message: overrides.message ?? "2",
+    tags: overrides.tags,
     // A fresh comment by default: private replies are gated by Meta's 7-day
     // comment_id window, so a hardcoded past timestamp would silently turn
     // every private-reply case into a skip as the fixture ages.
@@ -335,7 +356,11 @@ beforeEach(() => {
   mockCreateMessageRepository.mockResolvedValue({
     findBySourceId: vi.fn().mockResolvedValue(null),
     create: mockMessageCreate,
+    updateContentAttributes: mockUpdateContentAttributes,
   })
+  mockCountExistingTaggedIdentities.mockResolvedValue(0)
+  mockUpdateContentAttributes.mockResolvedValue({ id: "message-1" })
+  mockMessengerRunAction.mockResolvedValue([])
   mockInsertDedup.mockResolvedValue(undefined)
   mockDeleteDedup.mockResolvedValue(undefined)
   // `clearAllMocks` wipes call history but keeps implementations, so a test
@@ -1051,7 +1076,10 @@ describe("processCommentAutomation dedup on partial dispatch failure", () => {
       postId: POST_ID,
       workspaceId: "workspace-1",
     })
-    expect(mockIncrementRepliesCount).toHaveBeenCalledTimes(1)
+    // Dedup and Replies answer different questions: dedup asks "did anything go
+    // out", Replies counts DMs only. The DM is exactly the branch that threw
+    // here, so the dedup row is written and the counter is not.
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
   })
 
   test("does not write the dedup row when every configured branch failed", async () => {
@@ -2041,6 +2069,501 @@ describe("processCommentAutomation blocked private reply", () => {
         status: "sent",
         replyText: "public answer",
       }),
+    )
+  })
+})
+
+// The anchor above names the automation, but it never reaches the code that
+// encodes the button payload: `sendFlowStep` hands the channel the raw step and
+// each integration re-encodes from it, seeing only `metadata`. Without these
+// the "Clicked" column silently stays at zero for every flow reply.
+describe("processCommentAutomation flow reply click attribution", () => {
+  const expectCommentAutomationMetadata = (replyChannel: string) => {
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          metadata: {
+            type: "commentAutomation",
+            commentAutomationId: "automation-1",
+            commentId: COMMENT_ID,
+            replyChannel,
+          },
+        }),
+      }),
+      expect.anything(),
+    )
+  }
+
+  // The analytics row and the queued job settle the SAME row, and with no
+  // `replyAfter` the job's delay is 0 — so enqueuing first let the worker pick
+  // it up and settle a row that had not been inserted yet. Delivered (and Seen,
+  // which needs `deliveredAt IS NOT NULL`) was then lost, silently: the
+  // analytics layer swallows every error by design.
+  test("writes the analytics row BEFORE enqueuing the flow that settles it", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "flow", value: "flow-1" },
+        publicReply: { type: "none", value: null },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordEvent).toHaveBeenCalledTimes(1)
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledTimes(1)
+    expect(mockRecordEvent.mock.invocationCallOrder[0]).toBeLessThan(
+      mockIntegrationQueueAdd.mock.invocationCallOrder[0],
+    )
+  })
+
+  test("a private flow reply carries the automation in metadata, not only on the anchor", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "flow", value: "flow-1" },
+        publicReply: { type: "none", value: null },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expectCommentAutomationMetadata("private")
+  })
+
+  test("a public flow reply carries it too — the public anchor is lost across a Wait, metadata is not", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "none", value: null },
+        publicReply: { type: "flow", value: "flow-1" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expectCommentAutomationMetadata("public")
+  })
+})
+
+// A `text` private reply goes straight out through the comment_id-anchored Send
+// API, so no `Message` row exists for a webhook to settle against later. It used
+// to call `markDelivered` right after sending — but the analytics row is written
+// by the CALLER, afterwards, so that UPDATE matched nothing and Delivered (and
+// therefore Seen) stayed at zero for the most common configuration there is.
+describe("processCommentAutomation private text reply delivery", () => {
+  test("records the row already delivered instead of settling it afterwards", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "text", value: "private answer" },
+        publicReply: { type: "none", value: null },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyChannel: "private",
+        replyType: "text",
+        deliveredAt: expect.any(Date),
+      }),
+    )
+    // Nothing left to settle: an UPDATE here would be the bug this replaces.
+    expect(mockMarkDelivered).not.toHaveBeenCalled()
+  })
+
+  test("a flow reply is not born delivered — its delivery is still settled by the send", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "flow", value: "flow-1" },
+        publicReply: { type: "none", value: null },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ replyChannel: "private", deliveredAt: null }),
+    )
+  })
+})
+
+// `{{total_tagged}}`/`{{total_new_tagged}}` are read back off the comment
+// message row by the variable resolver, so the counters have to land there
+// before the reply renders — and only when the automation asked for them.
+describe("processCommentAutomation trackUserTags", () => {
+  const withCommentMessageRow = () => {
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+        contentAttributes: { postId: POST_ID },
+      }),
+      create: mockMessageCreate,
+      updateContentAttributes: mockUpdateContentAttributes,
+    })
+  }
+
+  test("does not look up tags while the option is off", async () => {
+    withCommentMessageRow()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ options: { trackUserTags: false } }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ tags: [{ id: "user-a" }] }) as any,
+    )
+
+    expect(mockCountExistingTaggedIdentities).not.toHaveBeenCalled()
+    expect(mockUpdateContentAttributes).not.toHaveBeenCalled()
+  })
+
+  test("writes both counters onto the comment message when the option is on", async () => {
+    withCommentMessageRow()
+    mockCountExistingTaggedIdentities.mockResolvedValue(1)
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ options: { trackUserTags: true } }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ tags: [{ id: "user-a" }, { id: "user-b" }] }) as any,
+    )
+
+    expect(mockUpdateContentAttributes).toHaveBeenCalledWith(
+      "message-1",
+      "workspace-1",
+      { postId: POST_ID, totalTagged: 2, totalNewTagged: 1 },
+      expect.any(Date),
+    )
+  })
+
+  // Dropping `postId` here would silently break `{{last_post_id}}` and
+  // `{{last_commented_post_text}}`, which read the same jsonb column.
+  test("keeps the existing content attributes intact", async () => {
+    withCommentMessageRow()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ options: { trackUserTags: true } }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ tags: [{ id: "user-a" }] }) as any,
+    )
+
+    const [, , attributes] = mockUpdateContentAttributes.mock.calls[0]
+    expect(attributes).toMatchObject({ postId: POST_ID })
+  })
+
+  test("records zeroes when nobody was tagged, so the variables read 0 not blank", async () => {
+    withCommentMessageRow()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ options: { trackUserTags: true } }),
+    ])
+
+    await processCommentAutomation(buildJobData({ tags: [] }) as any)
+
+    expect(mockUpdateContentAttributes).toHaveBeenCalledWith(
+      "message-1",
+      "workspace-1",
+      { postId: POST_ID, totalTagged: 0, totalNewTagged: 0 },
+      expect.any(Date),
+    )
+  })
+
+  // Tag tracking is decoration on top of the reply — losing it must not cost
+  // the customer their reply.
+  test("still sends the reply when the tag lookup fails", async () => {
+    withCommentMessageRow()
+    mockCountExistingTaggedIdentities.mockRejectedValue(new Error("db down"))
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        options: { trackUserTags: true },
+        publicReply: { type: "text", value: "thanks" },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ tags: [{ id: "user-a" }] }) as any,
+    )
+
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "sendChannelMessage",
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+})
+
+// A `text` public reply can hold several messages, each posted as its own
+// comment reply. The set is still ONE reply for bookkeeping — the same rule a
+// `flow` reply follows — so the analytics event and `repliesCount` move once.
+describe("processCommentAutomation multi-text public reply", () => {
+  const multiText = {
+    type: "text",
+    value: "first",
+    values: [{ value: "first" }, { value: "second" }, { value: "third" }],
+  }
+
+  test("posts one comment reply per text, in order, spaced so the queue cannot reorder them", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: multiText }),
+    ])
+    mockContactVariableReplaceAll.mockImplementation(
+      ({ text }: { text: string }) => Promise.resolve(text),
+    )
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockMessageCreate).toHaveBeenCalledTimes(3)
+    expect(mockMessageCreate.mock.calls.map(([input]) => input.text)).toEqual([
+      "first",
+      "second",
+      "third",
+    ])
+
+    // Staggered: the chat queue runs concurrency 5 with no limiter, so equal
+    // delays would let the replies land in any order.
+    const delays = mockChatQueueAdd.mock.calls.map(
+      ([, , options]) => options?.delay,
+    )
+    expect(delays).toEqual([0, 3000, 6000])
+  })
+
+  test("counts as ONE reply: a single analytics event for the whole set", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: multiText }),
+    ])
+    mockContactVariableReplaceAll.mockImplementation(
+      ({ text }: { text: string }) => Promise.resolve(text),
+    )
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordEvent).toHaveBeenCalledTimes(1)
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyChannel: "public",
+        replyType: "text",
+        // Everything the customer saw — this is what the "Bot replies" panel
+        // groups on.
+        replyText: "first\nsecond\nthird",
+      }),
+    )
+    // Replies counts DMs, the same scope as the five delivery columns beside
+    // it, so a public-only automation reads as zero across the whole row rather
+    // than showing a reply count with no delivery stats under it.
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+  })
+
+  test("an automation saved before multi-text still sends its single reply", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      // No `values` key at all — the shape every existing row still has.
+      buildAutomation({ publicReply: { type: "text", value: "legacy" } }),
+    ])
+    mockContactVariableReplaceAll.mockImplementation(
+      ({ text }: { text: string }) => Promise.resolve(text),
+    )
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockMessageCreate).toHaveBeenCalledTimes(1)
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "legacy" }),
+    )
+  })
+
+  test("blank entries are dropped, and an all-blank list sends nothing", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: {
+          type: "text",
+          value: "",
+          values: [{ value: "  " }, { value: "kept" }, { value: "" }],
+        },
+      }),
+    ])
+    mockContactVariableReplaceAll.mockImplementation(
+      ({ text }: { text: string }) => Promise.resolve(text),
+    )
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockMessageCreate).toHaveBeenCalledTimes(1)
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "kept" }),
+    )
+
+    mockMessageCreate.mockClear()
+    mockRecordEvent.mockClear()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "text", value: "", values: [{ value: "   " }] },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockMessageCreate).not.toHaveBeenCalled()
+    expect(mockRecordEvent).not.toHaveBeenCalled()
+  })
+})
+
+describe("processCommentAutomation misses", () => {
+  const missesFor = (call: number) =>
+    mockRecordMisses.mock.calls[call]?.[0] as
+      | { automationId: string; reason: string; commentText: string | null }[]
+      | undefined
+
+  // One case per `continue` in the filter chain. A gate added without a case
+  // here is a gate whose declines the Misses column silently never counts.
+  const gateCases: {
+    reason: string
+    automation: AutomationOverrides
+    arrange?: () => void
+    job?: Parameters<typeof buildJobData>[0]
+  }[] = [
+    {
+      reason: "outsideSchedule",
+      automation: {},
+      arrange: () => mockIsWithinSchedule.mockReturnValue(false),
+    },
+    {
+      reason: "postNotMatched",
+      automation: { post: { type: "postIds", value: ["999_888"] } },
+    },
+    {
+      reason: "commentIsReply",
+      automation: {},
+      // A reply carries its parent comment's id, which never shares the
+      // trailing half with the comment's own id.
+      job: { parentId: OTHER_COMMENT_ID },
+    },
+    {
+      reason: "keywordsNotMatched",
+      automation: { includeKeywords: { type: "contain", value: ["buy"] } },
+      job: { message: "just browsing" },
+    },
+    {
+      reason: "contactNotNew",
+      automation: { options: { replyToNewContactsOnly: true } },
+      arrange: () => mockGetPriorContactInboxCount.mockResolvedValue(2),
+    },
+    {
+      reason: "alreadyRepliedOnPost",
+      automation: { options: { replyOncePerUserPerPost: true } },
+      arrange: () => mockFindDedup.mockResolvedValue({ id: "dedup-1" }),
+    },
+    {
+      reason: "engagedOnOtherPost",
+      automation: { options: { replyToUsersWhoCommentedOnOtherPosts: false } },
+      arrange: () => mockHasRepliedOnOtherPost.mockResolvedValue(true),
+    },
+  ]
+
+  test.each(gateCases)("$reason records one miss and sends nothing", async ({
+    reason,
+    automation,
+    arrange,
+    job,
+  }) => {
+    arrange?.()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        ...automation,
+        publicReply: { type: "text", value: "answer" },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData(job) as any)
+
+    expect(missesFor(0)).toEqual([
+      expect.objectContaining({
+        automationId: "automation-1",
+        commentId: COMMENT_ID,
+        postId: POST_ID,
+        reason,
+      }),
+    ])
+    // A miss is a decline, never an attempt: it must not reach the
+    // delivery-stat table or the customer.
+    expect(mockRecordEvent).not.toHaveBeenCalled()
+    expect(mockMessageCreate).not.toHaveBeenCalled()
+  })
+
+  test("stores the comment text so the drill-down can show what was said", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        includeKeywords: { type: "contain", value: ["buy"] },
+        publicReply: { type: "text", value: "answer" },
+      }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ message: "how much is it?" }) as any,
+    )
+
+    expect(missesFor(0)).toEqual([
+      expect.objectContaining({
+        reason: "keywordsNotMatched",
+        commentText: "how much is it?",
+        contactId: "contact-1",
+        contactInboxId: "contact-inbox-1",
+      }),
+    ])
+  })
+
+  test("flushes every automation's decline in ONE call", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-1",
+        includeKeywords: { type: "contain", value: ["buy"] },
+      }),
+      buildAutomation({
+        id: "automation-2",
+        post: { type: "postIds", value: ["999_888"] },
+      }),
+    ])
+
+    await processCommentAutomation(buildJobData({ message: "hello" }) as any)
+
+    expect(mockRecordMisses).toHaveBeenCalledTimes(1)
+    expect(missesFor(0)).toEqual([
+      expect.objectContaining({
+        automationId: "automation-1",
+        reason: "keywordsNotMatched",
+      }),
+      expect.objectContaining({
+        automationId: "automation-2",
+        reason: "postNotMatched",
+      }),
+    ])
+  })
+
+  test("an automation that replies records no miss", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "text", value: "answer" } }),
+    ])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(missesFor(0)).toEqual([])
+  })
+
+  test("a blocked private reply is a failure, not a miss — it was attempted", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: { type: "text", value: "private answer" },
+      }),
+    ])
+
+    // Older than Meta's 7-day comment_id-anchored DM window.
+    await processCommentAutomation(
+      buildJobData({
+        createdTime: Math.floor(Date.now() / 1000) - 8 * ONE_DAY_SECONDS,
+      }) as any,
+    )
+
+    expect(missesFor(0)).toEqual([])
+    expect(mockRecordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ replyChannel: "private", status: "failed" }),
     )
   })
 })

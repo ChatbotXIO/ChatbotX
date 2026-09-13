@@ -18,6 +18,7 @@ export const commentAutomationStatCounters = {
   "message:seen": "seenCount",
   "flow:clicked": "clickedCount",
   "message:failed": "failedCount",
+  "comment:missed": "missedCount",
 } as const satisfies Partial<Record<CommentAutomationEventType, string>>
 
 export type CommentAutomationStatField =
@@ -28,7 +29,13 @@ type Props = {
   automationId: string
   field: CommentAutomationStatField
   value: number
-  sent: number
+  /**
+   * What this column's rate is measured against. The delivery columns divide by
+   * attempts (`sentCount`); Misses divides by the comments the automation
+   * engaged with (`repliesCount + missedCount`), because an attempt and a
+   * decline are different events and `sentCount` counts private DMs only.
+   */
+  denominator: number
 }
 
 export const CommentAutomationStatsCell = memo(
@@ -37,7 +44,7 @@ export const CommentAutomationStatsCell = memo(
     automationId,
     field,
     value,
-    sent,
+    denominator,
   }: Props) {
     const formatter = useFormatter()
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -50,11 +57,19 @@ export const CommentAutomationStatsCell = memo(
       setDialogOpen(open)
     }, [])
 
-    // Every rate is against attempts, so Sent itself has nothing to compare to.
-    const percentage =
-      field === "message:sent" || !value || !sent
-        ? null
-        : ((value / sent) * 100).toFixed(1)
+    // Sent IS the denominator for the delivery columns, so it has nothing to
+    // compare itself to. Misses suppresses its rate whenever the denominator is
+    // nothing but the misses themselves — a bare "100%" on an automation that
+    // replies publicly only (which counts zero replies by design) says nothing
+    // true about it, while the raw count still does.
+    const rateIsMeaningless =
+      field === "message:sent" ||
+      !value ||
+      !denominator ||
+      (field === "comment:missed" && denominator === value)
+    const percentage = rateIsMeaningless
+      ? null
+      : ((value / denominator) * 100).toFixed(1)
 
     return (
       <>

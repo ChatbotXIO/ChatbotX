@@ -1,6 +1,7 @@
 "use client"
 
 import type { CommentAutomationErrorRow } from "@chatbotx.io/analytics"
+import { COMMENT_AUTOMATION_ERROR_RETENTION_DAYS } from "@chatbotx.io/analytics/schemas"
 import {
   Avatar,
   AvatarFallback,
@@ -82,6 +83,9 @@ export function CommentAutomationErrorLogsTable() {
 
   return (
     <AnalyticsTableCard
+      description={t("analytics.errorLogRetentionNotice", {
+        days: COMMENT_AUTOMATION_ERROR_RETENTION_DAYS,
+      })}
       loading={loading}
       onPageChange={setPage}
       onPageSizeChange={setPageSize}

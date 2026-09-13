@@ -1,7 +1,5 @@
 "use client"
 
-import { COMMENT_AUTOMATION_RETENTION_DAYS } from "@chatbotx.io/analytics/schemas"
-import { useTranslations } from "next-intl"
 import type { AnalysisStoreProviderProps } from "../provider/analysis-store-context"
 import { AnalysisStoreProvider } from "../provider/analysis-store-context"
 import { CommentAutomationBotRepliesTable } from "./charts/comment-automation-bot-replies-table"
@@ -16,27 +14,17 @@ export function CommentAutomationAnalytics({
 }: {
   defaultSearchParams: AnalysisStoreProviderProps["defaultSearchParams"]
 }) {
-  const t = useTranslations()
-
   return (
     <AnalysisStoreProvider
       defaultSearchParams={defaultSearchParams}
       type="comment-automation"
     >
-      {/* The filter is capped at the retention window and the cap is spelled
-          out next to it: rows older than that are purged, and every chart
-          zero-fills, so an unbounded range would draw a flat line that reads as
-          "this automation never replied" instead of "that data is gone". */}
+      {/* Deliberately unbounded: a successful reply is kept for the life of
+          the automation, so every range down to `lifeTime` has real data
+          behind it. Only FAILED rows are purged, and that window is spelled
+          out on the Error Logs card itself — the one panel it applies to. */}
       <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-        <p className="text-muted-foreground text-xs">
-          {t("analytics.retentionNotice", {
-            days: COMMENT_AUTOMATION_RETENTION_DAYS,
-          })}
-        </p>
-        <AnalysisFilterForm
-          defaultPreset="last7"
-          maxRangeDays={COMMENT_AUTOMATION_RETENTION_DAYS}
-        />
+        <AnalysisFilterForm defaultPreset="last7" />
       </div>
 
       <div className="flex flex-col gap-6">

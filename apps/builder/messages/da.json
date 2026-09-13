@@ -253,7 +253,7 @@
     "dateFilterPreset": "Forudindstillet datofilter",
     "noResults": "Ingen resultater.",
     "noData": "Ingen data",
-    "retentionNotice": "Kun data fra de seneste {days} dage gemmes.",
+    "errorLogRetentionNotice": "Kun fejllogs fra de seneste {days} dage gemmes.",
     "comingSoon": "Kommer snart",
     "unknown": "Ukendt",
     "pagination": {
@@ -517,7 +517,9 @@
       "seen": "Set",
       "clicked": "Klikket",
       "failed": "Mislykkedes",
+      "missed": "Oversete",
       "noContacts": "Ingen kontakter fundet",
+      "noComment": "(ingen tekst)",
       "pageInfo": "Side {page} af {pageCount}",
       "selectedAll": "Alle valgt",
       "selectedCount": "{count} valgt",
@@ -526,6 +528,15 @@
       "tagQueued": "Tagger {count} kontakter i baggrunden.",
       "loadingMore": "Indlæser mere...",
       "receivers": "Modtagere"
+    },
+    "missReasons": {
+      "outsideSchedule": "Uden for tidsplan",
+      "postNotMatched": "Opslag ikke målrettet",
+      "commentIsReply": "Kommentarsvar",
+      "keywordsNotMatched": "Nøgleord matchede ikke",
+      "contactNotNew": "Kontakten er ikke ny",
+      "alreadyRepliedOnPost": "Allerede besvaret på dette opslag",
+      "engagedOnOtherPost": "Har allerede interageret på et andet opslag"
     }
   },
   "condition": {
@@ -4302,9 +4313,9 @@
     "trackCommentsOn": "Track kommentarer på",
     "trackCommentsOnDescription": "Apply denne automatisering til alle opslag på din Side, eller narrow it til specific opslag du vælg.",
     "privateReply": "Private svar (indbakke)",
-    "privateReplyDescription": "Send a private besked til den commenter's indbakke. Choose AI Agent, a fixed tekst skabelon (spintax supported), a chatbot flow, eller deaktivér.",
+    "privateReplyDescription": "Send a private besked til den commenter's indbakke. Choose AI Agent, a fixed tekst skabelon, a chatbot flow, eller deaktivér.",
     "publicReply": "Public svar til kommentar",
-    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates (spintax supported), AI Agent, a chatbot flow, eller ingen svar.",
+    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates, AI Agent, a chatbot flow, eller ingen svar. Hver besked sendes som et separat svar.",
     "replyMessage": "Svar besked",
     "replyMessagePlaceholder": "Indtast svar besked...",
     "includeKeywordsType": "Svar til",
@@ -4372,8 +4383,8 @@
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Fortsæt replying til brugere who har already commented på din anden opslag.",
       "ignoreCommentReplies": "Don't svar til replies til kommentarer",
       "ignoreCommentRepliesDescription": "Spring over automatisering for kommentarer at er replies til anden kommentarer, ikke top-level kommentarer.",
-      "trackUserTags": "Track hvis a bruger tags anden brugere",
-      "trackUserTagsDescription": "Udløser automatisering når a bruger tags eller mentions another bruger i their kommentar."
+      "trackUserTags": "Spor om en bruger tagger andre brugere",
+      "trackUserTagsDescription": "Brug '{{total_tagged}}' til at se, hvor mange brugere der blev tagget. Brug '{{total_new_tagged}}' til at se, hvor mange af de taggede personer der ikke er på kontaktlisten."
     },
     "hideComments": {
       "all": "Hide alle kommentarer",
@@ -4405,9 +4416,9 @@
     "trackCommentsOn": "Track kommentarer på",
     "trackCommentsOnDescription": "Apply denne automatisering til alle opslag på din connected konto, eller narrow it til specific opslag du vælg.",
     "privateReply": "Private svar (indbakke)",
-    "privateReplyDescription": "Send a private besked til den commenter's indbakke. Choose AI Agent, a fixed tekst skabelon (spintax supported), a chatbot flow, eller deaktivér.",
+    "privateReplyDescription": "Send a private besked til den commenter's indbakke. Choose AI Agent, a fixed tekst skabelon, a chatbot flow, eller deaktivér.",
     "publicReply": "Public svar til kommentar",
-    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates (spintax supported), AI Agent, a chatbot flow, eller ingen svar.",
+    "publicReplyDescription": "Opslag a public svar directly under den kommentar. Supports up til 10 tekst templates, AI Agent, a chatbot flow, eller ingen svar. Hver besked sendes som et separat svar.",
     "replyMessage": "Svar besked",
     "replyMessagePlaceholder": "Indtast svar besked...",
     "includeKeywordsType": "Svar til",
@@ -4473,7 +4484,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "Svar til brugere who commented på anden opslag",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Fortsæt replying til brugere who har already commented på din anden opslag.",
       "ignoreCommentReplies": "Don't svar til replies til kommentarer",
-      "ignoreCommentRepliesDescription": "Spring over automatisering for kommentarer at er replies til anden kommentarer, ikke top-level kommentarer."
+      "ignoreCommentRepliesDescription": "Spring over automatisering for kommentarer at er replies til anden kommentarer, ikke top-level kommentarer.",
+      "trackUserTags": "Spor om en bruger tagger andre brugere",
+      "trackUserTagsDescription": "Brug '{{total_tagged}}' til at se, hvor mange brugere der blev tagget. Brug '{{total_new_tagged}}' til at se, hvor mange af de taggede personer der ikke er på kontaktlisten."
     },
     "hideComments": {
       "all": "Hide alle kommentarer",

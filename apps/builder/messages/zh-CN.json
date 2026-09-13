@@ -486,7 +486,7 @@
     "newContactsByCountry": "依国家／地区分类的新联系人",
     "newContactsBySource": "依来源分类的新联系人",
     "noData": "无数据",
-    "retentionNotice": "仅保留最近 {days} 天的数据。",
+    "errorLogRetentionNotice": "仅保留最近 {days} 天的错误日志。",
     "noResults": "无结果。",
     "pagination": {
       "firstPage": "前往第一页",
@@ -836,7 +836,9 @@
       "seen": "已看过",
       "clicked": "已点击",
       "failed": "失败",
+      "missed": "漏回",
       "noContacts": "找不到联系人",
+      "noComment": "(无内容)",
       "pageInfo": "第 {page} 页（共 {pageCount}）",
       "selectedAll": "已全选",
       "selectedCount": "{count}",
@@ -845,6 +847,15 @@
       "tagQueued": "在后台标记 {count} 联系人。",
       "loadingMore": "加载更多...",
       "receivers": "接收器"
+    },
+    "missReasons": {
+      "outsideSchedule": "不在时间段内",
+      "postNotMatched": "未选中该帖子",
+      "commentIsReply": "是评论回复",
+      "keywordsNotMatched": "关键词不匹配",
+      "contactNotNew": "联系人不是新用户",
+      "alreadyRepliedOnPost": "已在该帖子回复过",
+      "engagedOnOtherPost": "已在其他帖子互动过"
     }
   },
   "channels": {
@@ -1461,6 +1472,8 @@
     "options": {
       "ignoreCommentReplies": "忽略留言底下的回复",
       "ignoreCommentRepliesDescription": "若留言是对其他留言的回复，而非顶层留言，则跳过自动化处理。",
+      "trackUserTags": "追踪用户是否标记了其他用户",
+      "trackUserTagsDescription": "使用 '{{total_tagged}}' 查看有多少用户被标记。使用 '{{total_new_tagged}}' 查看被标记的人中有多少不在联系人列表中。",
       "likeUserComment": "对用户留言按赞",
       "likeUserCommentDescription": "自动对留言者的留言按赞。",
       "replyOncePerUserPerPost": "每则贴文对每位用户只回复一次",
@@ -1468,9 +1481,7 @@
       "replyToNewContactsOnly": "仅回复新联系人",
       "replyToNewContactsOnlyDescription": "仅自动回复过去从未成为此工作区联系人的人。",
       "replyToUsersWhoCommentedOnOtherPosts": "回复曾在其他贴文留言的用户",
-      "replyToUsersWhoCommentedOnOtherPostsDescription": "若用户曾在您其他贴文下留言，仍持续对其回复。",
-      "trackUserTags": "追踪用户是否标记其他人",
-      "trackUserTagsDescription": "当用户在留言中标记或提及其他用户时，触发此自动化。"
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "若用户曾在您其他贴文下留言，仍持续对其回复。"
     },
     "postIdPlaceholder": "输入贴文 ID，每行一笔...",
     "postIdTab": "贴文 ID",
@@ -1482,9 +1493,9 @@
       "specificPosts": "指定贴文"
     },
     "privateReply": "私讯回复（收件匣）",
-    "privateReplyDescription": "将私讯发送到留言者的收件匣。可选择 AI Agent、固定文本范本（支持 spintax）、聊天机器人流程，或停用。",
+    "privateReplyDescription": "将私讯发送到留言者的收件匣。可选择 AI Agent、固定文本范本、聊天机器人流程，或停用。",
     "publicReply": "公开回复留言",
-    "publicReplyDescription": "直接在留言下方发表公开回复。支持最多 10 个文本范本（支持 spintax）、AI Agent、聊天机器人流程，或不回复。",
+    "publicReplyDescription": "直接在留言下方发表公开回复。支持最多 10 个文本范本、AI Agent、聊天机器人流程，或不回复。 每条消息都会作为独立的回复发布。",
     "replies": "回复",
     "replyAfter": "回复时间",
     "replyAfterType": {
@@ -3438,6 +3449,8 @@
     "options": {
       "ignoreCommentReplies": "忽略留言底下的回复",
       "ignoreCommentRepliesDescription": "若留言是对其他留言的回复，而非顶层留言，则跳过自动化处理。",
+      "trackUserTags": "追踪用户是否标记了其他用户",
+      "trackUserTagsDescription": "使用 '{{total_tagged}}' 查看有多少用户被标记。使用 '{{total_new_tagged}}' 查看被标记的人中有多少不在联系人列表中。",
       "likeUserComment": "对用户留言按赞",
       "likeUserCommentDescription": "自动对留言者的留言按赞。",
       "replyOncePerUserPerPost": "每则贴文对每位用户只回复一次",
@@ -3456,9 +3469,9 @@
       "specificPosts": "指定贴文"
     },
     "privateReply": "私讯回复（收件匣）",
-    "privateReplyDescription": "将私讯发送到留言者的收件匣。可选择 AI Agent、固定文本范本（支持 spintax）、聊天机器人流程，或停用。",
+    "privateReplyDescription": "将私讯发送到留言者的收件匣。可选择 AI Agent、固定文本范本、聊天机器人流程，或停用。",
     "publicReply": "公开回复留言",
-    "publicReplyDescription": "直接在留言下方发表公开回复。支持最多 10 个文本范本（支持 spintax）、AI Agent、聊天机器人流程，或不回复。",
+    "publicReplyDescription": "直接在留言下方发表公开回复。支持最多 10 个文本范本、AI Agent、聊天机器人流程，或不回复。 每条消息都会作为独立的回复发布。",
     "replies": "回复",
     "replyAfter": "回复时间",
     "replyAfterType": {

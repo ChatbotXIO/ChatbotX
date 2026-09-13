@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { memo, useCallback } from "react"
+import { memo, useCallback, useEffect, useState } from "react"
 import {
   type StatsContactRow,
   StatsContactsDialog,
@@ -17,6 +17,7 @@ const eventTypeToLabel: Record<CommentAutomationStatField, string> = {
   "message:seen": "seen",
   "flow:clicked": "clicked",
   "message:failed": "failed",
+  "comment:missed": "missed",
 }
 
 type Props = {
@@ -43,6 +44,16 @@ export const CommentAutomationContactsDialog = memo(
     total,
   }: Props) {
     const t = useTranslations()
+    // Rows count occurrences; tagging counts people. The server reports how
+    // many distinct contacts are behind the list so "select all" promises the
+    // number it will actually tag.
+    const [contactTotal, setContactTotal] = useState<number | undefined>()
+
+    useEffect(() => {
+      if (!open) {
+        setContactTotal(undefined)
+      }
+    }, [open])
 
     const fetchPage = useCallback(
       async (page: number, perPage: number): Promise<StatsContactRow[]> => {
@@ -56,6 +67,7 @@ export const CommentAutomationContactsDialog = memo(
             perPage,
           })
 
+        setContactTotal(result.contactTotal)
         return result.data
       },
       [automationId, eventType, total, workspaceId],
@@ -98,12 +110,14 @@ export const CommentAutomationContactsDialog = memo(
 
     return (
       <StatsContactsDialog
+        contactTotal={contactTotal}
         fetchPage={fetchPage}
         i18nNamespace="commentAutomation"
         onBulkTag={onBulkTag}
         onManualTag={onManualTag}
         onOpenChange={onOpenChange}
         open={open}
+        showComments={eventType === "comment:missed"}
         showErrors={eventType === "message:failed"}
         title={t(`commentAutomation.stats.${eventTypeToLabel[eventType]}`)}
         total={total}

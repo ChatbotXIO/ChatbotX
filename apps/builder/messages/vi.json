@@ -253,7 +253,7 @@
     "dateFilterPreset": "Bộ lọc ngày đặt sẵn",
     "noResults": "Không có kết quả.",
     "noData": "Không có dữ liệu",
-    "retentionNotice": "Chỉ lưu dữ liệu trong {days} ngày gần nhất.",
+    "errorLogRetentionNotice": "Chỉ lưu nhật ký lỗi trong {days} ngày gần nhất.",
     "comingSoon": "Sắp ra mắt",
     "unknown": "Không xác định",
     "pagination": {
@@ -517,7 +517,9 @@
       "seen": "Đã xem",
       "clicked": "Đã nhấp",
       "failed": "Thất bại",
+      "missed": "Bỏ lỡ",
       "noContacts": "Không có liên hệ nào",
+      "noComment": "(không có nội dung)",
       "pageInfo": "Trang {page} / {pageCount}",
       "selectedAll": "Đã chọn tất cả",
       "selectedCount": "Đã chọn {count}",
@@ -526,6 +528,15 @@
       "tagQueued": "Đang gắn thẻ cho {count} liên hệ trong nền.",
       "loadingMore": "Đang tải thêm...",
       "receivers": "Người nhận"
+    },
+    "missReasons": {
+      "outsideSchedule": "Ngoài khung giờ",
+      "postNotMatched": "Không thuộc bài viết",
+      "commentIsReply": "Là comment trả lời",
+      "keywordsNotMatched": "Sai từ khoá",
+      "contactNotNew": "Contact không mới",
+      "alreadyRepliedOnPost": "Đã trả lời ở bài viết này",
+      "engagedOnOtherPost": "Đã tương tác ở bài viết khác"
     }
   },
   "condition": {
@@ -4341,9 +4352,9 @@
     "trackCommentsOn": "Theo dõi bình luận trên",
     "trackCommentsOnDescription": "Áp dụng tự động hóa cho tất cả bài viết trên trang, hoặc chỉ các bài viết cụ thể bạn chọn.",
     "privateReply": "Trả lời riêng tư (inbox)",
-    "privateReplyDescription": "Gửi tin nhắn riêng vào inbox của người comment. Chọn AI Agent, mẫu văn bản cố định (hỗ trợ spintax), chatbot flow, hoặc tắt.",
+    "privateReplyDescription": "Gửi tin nhắn riêng vào inbox của người comment. Chọn AI Agent, mẫu văn bản cố định, chatbot flow, hoặc tắt.",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản (hỗ trợ spintax), AI Agent, chatbot flow, hoặc không phản hồi.",
+    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng.",
     "replyMessage": "Nội dung trả lời",
     "replyMessagePlaceholder": "Nhập nội dung trả lời...",
     "includeKeywordsType": "Trả lời cho",
@@ -4411,8 +4422,8 @@
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Tiếp tục phản hồi với những người đã comment ở các bài viết khác của bạn.",
       "ignoreCommentReplies": "Không trả lời các reply bình luận",
       "ignoreCommentRepliesDescription": "Bỏ qua tự động hóa với các bình luận là reply vào comment khác (không phải comment gốc).",
-      "trackUserTags": "Theo dõi khi người dùng tag người khác",
-      "trackUserTagsDescription": "Kích hoạt tự động hóa khi người dùng tag hoặc mention người khác trong bình luận."
+      "trackUserTags": "Theo dõi khi người dùng gắn thẻ người khác",
+      "trackUserTagsDescription": "Dùng '{{total_tagged}}' để biết có bao nhiêu người được gắn thẻ. Dùng '{{total_new_tagged}}' để biết có bao nhiêu người được gắn thẻ chưa nằm trong danh sách liên hệ."
     },
     "hideComments": {
       "all": "Ẩn tất cả bình luận",
@@ -4444,9 +4455,9 @@
     "trackCommentsOn": "Theo dõi bình luận trên",
     "trackCommentsOnDescription": "Áp dụng tự động hóa cho tất cả bài viết trên tài khoản đã kết nối, hoặc chỉ các bài viết cụ thể bạn chọn.",
     "privateReply": "Trả lời riêng tư (inbox)",
-    "privateReplyDescription": "Gửi tin nhắn riêng vào inbox của người comment. Chọn AI Agent, mẫu văn bản cố định (hỗ trợ spintax), chatbot flow, hoặc tắt.",
+    "privateReplyDescription": "Gửi tin nhắn riêng vào inbox của người comment. Chọn AI Agent, mẫu văn bản cố định, chatbot flow, hoặc tắt.",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản (hỗ trợ spintax), AI Agent, chatbot flow, hoặc không phản hồi.",
+    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản, AI Agent, chatbot flow, hoặc không phản hồi. Mỗi đoạn được đăng thành một bình luận trả lời riêng.",
     "replyMessage": "Nội dung trả lời",
     "replyMessagePlaceholder": "Nhập nội dung trả lời...",
     "includeKeywordsType": "Trả lời cho",
@@ -4512,7 +4523,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "Trả lời người đã bình luận bài khác",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Tiếp tục phản hồi với những người đã comment ở các bài viết khác của bạn.",
       "ignoreCommentReplies": "Không trả lời các reply bình luận",
-      "ignoreCommentRepliesDescription": "Bỏ qua tự động hóa với các bình luận là reply vào comment khác (không phải comment gốc)."
+      "ignoreCommentRepliesDescription": "Bỏ qua tự động hóa với các bình luận là reply vào comment khác (không phải comment gốc).",
+      "trackUserTags": "Theo dõi khi người dùng gắn thẻ người khác",
+      "trackUserTagsDescription": "Dùng '{{total_tagged}}' để biết có bao nhiêu người được gắn thẻ. Dùng '{{total_new_tagged}}' để biết có bao nhiêu người được gắn thẻ chưa nằm trong danh sách liên hệ."
     },
     "hideComments": {
       "all": "Ẩn tất cả bình luận",

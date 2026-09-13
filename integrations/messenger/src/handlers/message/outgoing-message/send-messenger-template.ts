@@ -184,6 +184,12 @@ function buildButtonParameters(
   const { flowId = "", flowVersionId, metadata } = flowContext ?? {}
   const broadcastId = extractMetadata("broadcastId", metadata)
   const sequenceStepId = extractMetadata("sequenceStepId", metadata)
+  // The third button encoder in this package, after `send-button.ts` and
+  // `send-quick-reply.ts`. A `sendMessengerTemplateMessage` step inside a
+  // comment automation's flow reply reaches here (see the `commentAnchor`
+  // branch in `outgoing-message/index.ts`), so it needs the same attribution or
+  // its taps report nothing.
+  const commentAutomationId = extractMetadata("commentAutomationId", metadata)
 
   for (const button of flowContext?.flowButtons ?? []) {
     while (usedIndexes.has(nextPostbackIndex)) {
@@ -196,6 +202,7 @@ function buildButtonParameters(
             flowId: button.beforeStep.flowId,
             broadcastId,
             sequenceStepId,
+            commentAutomationId,
           })
         : encodeButtonPayload({
             flowId,
@@ -203,6 +210,7 @@ function buildButtonParameters(
             buttonId: button.id,
             broadcastId,
             sequenceStepId,
+            commentAutomationId,
           })
 
     indexedParameters.push({

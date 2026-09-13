@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
   transpilePackages: [
     "@chatbotx.io/integration-facebook-ads",
     "@chatbotx.io/business",
+    "@chatbotx.io/analytics",
   ],
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],

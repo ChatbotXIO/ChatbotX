@@ -6,8 +6,10 @@ import {
   extractMetadata,
   type MetadataPayload,
 } from "@chatbotx.io/flow-config"
+import { logDiagnostic } from "@chatbotx.io/logger"
 import { chunk } from "remeda"
 import { MAX_BUTTONS } from "../../../constants"
+import { logger } from "../../../lib/logger"
 import type { FacebookButton } from "../../../schema"
 
 export function getButtonTemplate(props: {
@@ -19,6 +21,11 @@ export function getButtonTemplate(props: {
 }): FacebookButton {
   const { flowId, flowVersionId, button, metadata, contactInboxId } = props
 
+  // This is the payload the contact actually taps — `convertButtonsToTemplate`
+  // in the worker encodes its own copy for the `Message` row only, so the two
+  // must stay in step. Attribution that reaches only one of them is invisible
+  // to either the click or the inbox.
+  const commentAutomationId = extractMetadata("commentAutomationId", metadata)
   const buttonPayload = encodeButtonPayload({
     flowId,
     flowVersionId,
@@ -26,7 +33,26 @@ export function getButtonTemplate(props: {
     broadcastId: extractMetadata("broadcastId", metadata),
     sequenceStepId: extractMetadata("sequenceStepId", metadata),
     contactInboxId,
+    commentAutomationId,
   })
+
+  // The payload the contact will actually tap. Logged next to the worker's
+  // mirror copy (`convertButtonsToTemplate`) so a build of this package that
+  // predates the attribution field is visible as a difference between the two,
+  // rather than as a click that quietly counts nothing.
+  logDiagnostic(
+    logger,
+    () => ({
+      flowId,
+      buttonId: button.id,
+      buttonType: button.buttonType,
+      contactInboxId: contactInboxId ?? null,
+      commentAutomationId: commentAutomationId ?? null,
+      hasMetadata: Boolean(metadata),
+      payload: buttonPayload,
+    }),
+    "messenger getButtonTemplate: encoded button payload (tapped copy)",
+  )
 
   switch (button.buttonType) {
     case buttonTypes.enum.openWebsite:

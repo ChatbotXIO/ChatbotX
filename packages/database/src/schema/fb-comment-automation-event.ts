@@ -155,10 +155,13 @@ export const fbCommentAutomationEventModel = pgTable(
       .where(
         sql`"replyChannel" = 'private' AND "deliveredAt" IS NOT NULL AND "seenAt" IS NULL`,
       ),
-    // Serves the `purgeCommentAutomationEvents` retention cron's age scan.
-    index("FBCommentAutomationEvent_createdAt_idx").using(
-      "btree",
-      table.createdAt.asc().nullsLast(),
-    ),
+    // Serves the `purgeFailedCommentAutomationEvents` retention cron's age
+    // scan. Partial on purpose: only failed rows are ever purged, and the
+    // successful ones — kept for the life of the automation — would otherwise
+    // form an ever-growing prefix the oldest-first select has to walk past on
+    // every run.
+    index("FBCommentAutomationEvent_failed_createdAt_idx")
+      .using("btree", table.createdAt.asc().nullsLast())
+      .where(sql`"status" = 'failed'`),
   ],
 )

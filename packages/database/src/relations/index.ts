@@ -56,6 +56,7 @@ import { facebookLeadAdsAutomationRelations } from "./facebook-lead-ads-automati
 import { facebookLeadAdsLeadRelations } from "./facebook-lead-ads-lead"
 import { fbCommentAutomationRelations } from "./fb-comment-automation"
 import { fbCommentAutomationEventRelations } from "./fb-comment-automation-event"
+import { fbCommentAutomationMissRelations } from "./fb-comment-automation-miss"
 import { fbCommentAutomationReplyRelations } from "./fb-comment-automation-reply"
 import { fileRelations } from "./file"
 import { flowRelations } from "./flow"
@@ -206,6 +207,7 @@ export const relations = {
   ...facebookLeadAdsLeadRelations,
   ...fbCommentAutomationRelations,
   ...fbCommentAutomationEventRelations,
+  ...fbCommentAutomationMissRelations,
   ...fbCommentAutomationReplyRelations,
   ...auditLogRelations,
   ...sessionRelations,

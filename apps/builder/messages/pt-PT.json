@@ -253,7 +253,7 @@
     "dateFilterPreset": "Predefinição do filtro de data",
     "noResults": "Nenhum resultado.",
     "noData": "Sem dados",
-    "retentionNotice": "Apenas os dados dos últimos {days} dias são mantidos.",
+    "errorLogRetentionNotice": "Apenas os registos de erros dos últimos {days} dias são mantidos.",
     "comingSoon": "Brevemente",
     "unknown": "Desconhecido",
     "pagination": {
@@ -517,7 +517,9 @@
       "seen": "Visto",
       "clicked": "Clicado",
       "failed": "Falhou",
+      "missed": "Perdidos",
       "noContacts": "Nenhum contacto encontrado",
+      "noComment": "(sem texto)",
       "pageInfo": "Página {page} de {pageCount}",
       "selectedAll": "Todos selecionados",
       "selectedCount": "{count} selecionados",
@@ -526,6 +528,15 @@
       "tagQueued": "A adicionar etiquetas a {count} contactos em segundo plano.",
       "loadingMore": "A carregar mais...",
       "receivers": "Destinatários"
+    },
+    "missReasons": {
+      "outsideSchedule": "Fora do horário",
+      "postNotMatched": "Publicação não segmentada",
+      "commentIsReply": "Resposta a comentário",
+      "keywordsNotMatched": "Palavras-chave não corresponderam",
+      "contactNotNew": "O contacto não é novo",
+      "alreadyRepliedOnPost": "Já respondido nesta publicação",
+      "engagedOnOtherPost": "Já interagiu noutra publicação"
     }
   },
   "condition": {
@@ -4298,9 +4309,9 @@
     "trackCommentsOn": "Monitorizar comentários em",
     "trackCommentsOnDescription": "Aplique esta automatização a todas as publicações da sua Página ou limite-a às publicações específicas que selecionar.",
     "privateReply": "Resposta privada (caixa de entrada)",
-    "privateReplyDescription": "Envie uma mensagem privada para a caixa de entrada do autor do comentário. Escolha um agente de IA, um modelo de texto fixo (suporta spintax), um fluxo do chatbot ou desative a resposta.",
+    "privateReplyDescription": "Envie uma mensagem privada para a caixa de entrada do autor do comentário. Escolha um agente de IA, um modelo de texto fixo, um fluxo do chatbot ou desative a resposta.",
     "publicReply": "Resposta pública ao comentário",
-    "publicReplyDescription": "Publique uma resposta pública diretamente sob o comentário. Suporta até 10 modelos de texto (com spintax), um agente de IA, um fluxo do chatbot ou nenhuma resposta.",
+    "publicReplyDescription": "Publique uma resposta pública diretamente sob o comentário. Suporta até 10 modelos de texto, um agente de IA, um fluxo do chatbot ou nenhuma resposta. Cada mensagem é publicada como uma resposta separada.",
     "replyMessage": "Mensagem de resposta",
     "replyMessagePlaceholder": "Introduza a mensagem de resposta...",
     "includeKeywordsType": "Responder a",
@@ -4368,8 +4379,8 @@
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continuar a responder a utilizadores que já comentaram noutras publicações suas.",
       "ignoreCommentReplies": "Não responder a respostas a comentários",
       "ignoreCommentRepliesDescription": "Ignorar a automatização em comentários que sejam respostas a outros comentários e não comentários de nível superior.",
-      "trackUserTags": "Monitorizar se um utilizador identifica outros utilizadores",
-      "trackUserTagsDescription": "Acionar a automatização quando um utilizador identifica ou menciona outro utilizador no respetivo comentário."
+      "trackUserTags": "Registar se um utilizador marca outros utilizadores",
+      "trackUserTagsDescription": "Use '{{total_tagged}}' para saber quantos utilizadores foram marcados. Use '{{total_new_tagged}}' para saber quantas das pessoas marcadas não estão na lista de contactos."
     },
     "hideComments": {
       "all": "Ocultar todos os comentários",
@@ -4401,9 +4412,9 @@
     "trackCommentsOn": "Monitorizar comentários em",
     "trackCommentsOnDescription": "Aplique esta automatização a todas as publicações da sua conta ligada ou limite-a às publicações específicas que selecionar.",
     "privateReply": "Resposta privada (caixa de entrada)",
-    "privateReplyDescription": "Envie uma mensagem privada para a caixa de entrada do autor do comentário. Escolha um agente de IA, um modelo de texto fixo (suporta spintax), um fluxo do chatbot ou desative a resposta.",
+    "privateReplyDescription": "Envie uma mensagem privada para a caixa de entrada do autor do comentário. Escolha um agente de IA, um modelo de texto fixo, um fluxo do chatbot ou desative a resposta.",
     "publicReply": "Resposta pública ao comentário",
-    "publicReplyDescription": "Publique uma resposta pública diretamente sob o comentário. Suporta até 10 modelos de texto (com spintax), um agente de IA, um fluxo do chatbot ou nenhuma resposta.",
+    "publicReplyDescription": "Publique uma resposta pública diretamente sob o comentário. Suporta até 10 modelos de texto, um agente de IA, um fluxo do chatbot ou nenhuma resposta. Cada mensagem é publicada como uma resposta separada.",
     "replyMessage": "Mensagem de resposta",
     "replyMessagePlaceholder": "Introduza a mensagem de resposta...",
     "includeKeywordsType": "Responder a",
@@ -4469,7 +4480,9 @@
       "replyToUsersWhoCommentedOnOtherPosts": "Responder a utilizadores que comentaram noutras publicações",
       "replyToUsersWhoCommentedOnOtherPostsDescription": "Continuar a responder a utilizadores que já comentaram noutras publicações suas.",
       "ignoreCommentReplies": "Não responder a respostas a comentários",
-      "ignoreCommentRepliesDescription": "Ignorar a automatização em comentários que sejam respostas a outros comentários e não comentários de nível superior."
+      "ignoreCommentRepliesDescription": "Ignorar a automatização em comentários que sejam respostas a outros comentários e não comentários de nível superior.",
+      "trackUserTags": "Registar se um utilizador marca outros utilizadores",
+      "trackUserTagsDescription": "Use '{{total_tagged}}' para saber quantos utilizadores foram marcados. Use '{{total_new_tagged}}' para saber quantas das pessoas marcadas não estão na lista de contactos."
     },
     "hideComments": {
       "all": "Ocultar todos os comentários",

@@ -511,6 +511,21 @@ export class ShardedMessageRepository implements IMessageRepository {
     })
   }
 
+  updateContentAttributes(
+    messageId: string,
+    workspaceId: string,
+    contentAttributes: Record<string, unknown>,
+    createdAt: Date,
+  ): Promise<{ id: string } | null> {
+    return this.updateAcrossShards(
+      messageId,
+      workspaceId,
+      { contentAttributes },
+      "updateContentAttributes",
+      createdAt,
+    )
+  }
+
   updateMessageAttributes(
     messageId: string,
     workspaceId: string,

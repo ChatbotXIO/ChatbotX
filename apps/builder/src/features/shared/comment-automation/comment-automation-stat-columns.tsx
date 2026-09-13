@@ -11,6 +11,8 @@ import {
 /** The counter columns every comment automation row carries. */
 export type CommentAutomationStatRow = {
   id: string
+  /** Half of the Misses denominator; see `resolveDenominator`. */
+  repliesCount: number
 } & Record<
   (typeof commentAutomationStatCounters)[CommentAutomationStatField],
   number
@@ -22,12 +24,31 @@ const STAT_COLUMNS: { id: string; field: CommentAutomationStatField }[] = [
   { id: "seen", field: "message:seen" },
   { id: "clicked", field: "flow:clicked" },
   { id: "failed", field: "message:failed" },
+  { id: "missed", field: "comment:missed" },
 ]
 
 /**
- * The five delivery columns, shared by the Facebook and Instagram list tables —
- * they render the same `FBCommentAutomation` rows and differ only in the URL
- * prefix, so duplicating these definitions would only be two places to drift.
+ * What each column's rate is measured against.
+ *
+ * The delivery columns divide by attempts. Misses cannot: a decline is not an
+ * attempt, and `sentCount` counts private DMs only, so dividing by it would
+ * compare two different populations. It divides instead by the comments the
+ * automation actually engaged with — answered, or passed on.
+ */
+function resolveDenominator(
+  field: CommentAutomationStatField,
+  row: CommentAutomationStatRow,
+): number {
+  if (field === "comment:missed") {
+    return row.repliesCount + row.missedCount
+  }
+  return row.sentCount
+}
+
+/**
+ * The six stat columns, shared by the Facebook and Instagram list tables — they
+ * render the same `FBCommentAutomation` rows and differ only in the URL prefix,
+ * so duplicating these definitions would only be two places to drift.
  *
  * Unlike broadcast's equivalent this needs no stats store: the counters are
  * columns on the row itself, already in hand by the time the table renders.
@@ -53,8 +74,8 @@ export function buildCommentAutomationStatColumns<
       <div className="text-center">
         <CommentAutomationStatsCell
           automationId={row.original.id}
+          denominator={resolveDenominator(field, row.original)}
           field={field}
-          sent={row.original.sentCount}
           value={row.original[commentAutomationStatCounters[field]]}
           workspaceId={workspaceId}
         />

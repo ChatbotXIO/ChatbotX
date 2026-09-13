@@ -1,3 +1,4 @@
+import { listCommentAutomationContactsResponse } from "@chatbotx.io/analytics/schemas"
 import { describe, expect, test, vi } from "vitest"
 
 type RouteConfig = {
@@ -195,17 +196,16 @@ describe("privateListCommentAutomationContactsAPI", () => {
 
   test("returns the real Contact id, not the ContactInbox id, so the tag actions target the right rows", async () => {
     mocks.getCommentAutomationContacts.mockResolvedValue({
+      contactTotal: 1,
       contactInboxIds: ["inbox-1"],
-      contactEventMap: new Map([
-        [
-          "inbox-1",
-          {
-            contactId: "contact-1",
-            contactInboxId: "inbox-1",
-            occurredAt: "2026-09-11T00:00:00.000Z",
-          },
-        ],
-      ]),
+      events: [
+        {
+          rowKey: "event-1",
+          contactId: "contact-1",
+          contactInboxId: "inbox-1",
+          occurredAt: "2026-09-11T00:00:00.000Z",
+        },
+      ],
     })
     mocks.findContactInboxesByIds.mockResolvedValue([
       {
@@ -235,29 +235,33 @@ describe("privateListCommentAutomationContactsAPI", () => {
         conversationId: "conversation-1",
       }),
     ])
+    // Pinned because the shape is easy to get wrong across a rebase: the
+    // service takes `{ workspaceId, ids }`, and passing a bare array silently
+    // hydrates nothing — which renders as an empty dialog, not an error.
+    expect(mocks.findContactInboxesByIds).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ids: ["inbox-1"],
+    })
   })
 
   test("drops a row whose ContactInbox no longer resolves rather than rendering a blank contact", async () => {
     mocks.getCommentAutomationContacts.mockResolvedValue({
+      contactTotal: 2,
       contactInboxIds: ["inbox-1", "inbox-gone"],
-      contactEventMap: new Map([
-        [
-          "inbox-1",
-          {
-            contactId: "contact-1",
-            contactInboxId: "inbox-1",
-            occurredAt: "2026-09-11T00:00:00.000Z",
-          },
-        ],
-        [
-          "inbox-gone",
-          {
-            contactId: "contact-2",
-            contactInboxId: "inbox-gone",
-            occurredAt: "2026-09-11T00:00:00.000Z",
-          },
-        ],
-      ]),
+      events: [
+        {
+          rowKey: "event-1",
+          contactId: "contact-1",
+          contactInboxId: "inbox-1",
+          occurredAt: "2026-09-11T00:00:00.000Z",
+        },
+        {
+          rowKey: "event-2",
+          contactId: "contact-2",
+          contactInboxId: "inbox-gone",
+          occurredAt: "2026-09-11T00:00:00.000Z",
+        },
+      ],
     })
     mocks.findContactInboxesByIds.mockResolvedValue([
       {
@@ -286,12 +290,198 @@ describe("privateListCommentAutomationContactsAPI", () => {
     expect(result.pageCount).toBe(1)
   })
 
+  test("the handler's output satisfies the procedure's response schema", async () => {
+    // `.output()` is stubbed out by the mocked `authorizedAPI` above, so the
+    // real schema has to be applied here — otherwise a field that oRPC rejects
+    // at runtime surfaces only as an empty dialog, since `StatsContactsDialog`
+    // swallows the failure into `console.error`.
+    mocks.getCommentAutomationContacts.mockResolvedValue({
+      contactTotal: 1,
+      contactInboxIds: ["inbox-1"],
+      events: [
+        {
+          rowKey: "event-1",
+          contactId: "contact-1",
+          contactInboxId: "inbox-1",
+          occurredAt: "2026-09-11T00:00:00.000Z",
+          errorContent: "token expired",
+        },
+      ],
+    })
+    mocks.findContactInboxesByIds.mockResolvedValue([
+      {
+        id: "inbox-1",
+        contactId: "contact-1",
+        sourceId: null,
+        channel: "messenger",
+        contact: {
+          id: "contact-1",
+          firstName: null,
+          lastName: null,
+          fullName: null,
+          avatar: null,
+        },
+        conversation: null,
+      },
+    ])
+
+    const result = await commentAutomationContactsHandler?.({
+      input: { ...baseInput, eventType: "message:failed" as const },
+    })
+
+    expect(() =>
+      listCommentAutomationContactsResponse.parse(result),
+    ).not.toThrow()
+  })
+
   test("never queries when no event type is given", async () => {
     const result = (await commentAutomationContactsHandler?.({
       input: { ...baseInput, eventType: undefined },
     })) as { data: unknown[]; pageCount: number }
 
-    expect(result).toEqual({ data: [], total: 3, page: 1, pageCount: 0 })
+    expect(result).toEqual({
+      data: [],
+      total: 3,
+      contactTotal: 0,
+      page: 1,
+      pageCount: 0,
+    })
     expect(mocks.getCommentAutomationContacts).not.toHaveBeenCalled()
+  })
+})
+
+describe("privateListCommentAutomationContactsAPI repeat occurrences", () => {
+  const baseInput = {
+    workspaceId: "workspace-1",
+    automationId: "automation-1",
+    eventType: "message:delivered" as const,
+    total: 3,
+    page: 1,
+    perPage: 20,
+  }
+
+  test("lists the same contact once per event, newest first, each with its own rowKey", async () => {
+    // Contact A at 12h, B at 11h, A again at 10h — the order the repository
+    // returned. A row per occurrence is the whole point; collapsing by
+    // `contactId` anywhere in the chain would lose A's second line.
+    mocks.getCommentAutomationContacts.mockResolvedValue({
+      contactTotal: 2,
+      contactInboxIds: ["inbox-a", "inbox-b", "inbox-a"],
+      events: [
+        {
+          rowKey: "event-3",
+          contactId: "contact-a",
+          contactInboxId: "inbox-a",
+          occurredAt: "2026-09-12T00:00:00.000Z",
+        },
+        {
+          rowKey: "event-2",
+          contactId: "contact-b",
+          contactInboxId: "inbox-b",
+          occurredAt: "2026-09-11T00:00:00.000Z",
+        },
+        {
+          rowKey: "event-1",
+          contactId: "contact-a",
+          contactInboxId: "inbox-a",
+          occurredAt: "2026-09-10T00:00:00.000Z",
+        },
+      ],
+    })
+    mocks.findContactInboxesByIds.mockResolvedValue(
+      ["a", "b"].map((suffix) => ({
+        id: `inbox-${suffix}`,
+        contactId: `contact-${suffix}`,
+        sourceId: `psid-${suffix}`,
+        channel: "messenger",
+        contact: {
+          id: `contact-${suffix}`,
+          firstName: suffix.toUpperCase(),
+          lastName: null,
+          fullName: suffix.toUpperCase(),
+          avatar: null,
+        },
+        conversation: { id: `conversation-${suffix}` },
+      })),
+    )
+
+    const result = (await commentAutomationContactsHandler?.({
+      input: { ...baseInput, eventType: "flow:clicked" as const },
+    })) as { data: { contactId: string; rowKey: string; occurredAt: string }[] }
+
+    expect(result.data.map((row) => [row.contactId, row.occurredAt])).toEqual([
+      ["contact-a", "2026-09-12T00:00:00.000Z"],
+      ["contact-b", "2026-09-11T00:00:00.000Z"],
+      ["contact-a", "2026-09-10T00:00:00.000Z"],
+    ])
+    // Distinct per row, so the list neither drops nor mis-keys the repeat.
+    expect(new Set(result.data.map((row) => row.rowKey)).size).toBe(3)
+    // One lookup per inbox, not per row.
+    expect(mocks.findContactInboxesByIds).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ids: ["inbox-a", "inbox-b"],
+    })
+  })
+})
+
+describe("privateListCommentAutomationContactsAPI contactTotal", () => {
+  test("reports people, not rows, so select-all tags what it promises", async () => {
+    // 3 rows from 2 commenters. The column (and the dialog title) says 3
+    // events; tagging acts on contacts, so the selection counter must say 2.
+    mocks.getCommentAutomationContacts.mockResolvedValue({
+      contactTotal: 2,
+      contactInboxIds: ["inbox-a", "inbox-b", "inbox-a"],
+      events: [
+        {
+          rowKey: "event-3",
+          contactId: "contact-a",
+          contactInboxId: "inbox-a",
+          occurredAt: "2026-09-12T00:00:00.000Z",
+        },
+        {
+          rowKey: "event-2",
+          contactId: "contact-b",
+          contactInboxId: "inbox-b",
+          occurredAt: "2026-09-11T00:00:00.000Z",
+        },
+        {
+          rowKey: "event-1",
+          contactId: "contact-a",
+          contactInboxId: "inbox-a",
+          occurredAt: "2026-09-10T00:00:00.000Z",
+        },
+      ],
+    })
+    mocks.findContactInboxesByIds.mockResolvedValue(
+      ["a", "b"].map((suffix) => ({
+        id: `inbox-${suffix}`,
+        contactId: `contact-${suffix}`,
+        sourceId: `psid-${suffix}`,
+        channel: "messenger",
+        contact: {
+          id: `contact-${suffix}`,
+          firstName: suffix.toUpperCase(),
+          lastName: null,
+          fullName: suffix.toUpperCase(),
+          avatar: null,
+        },
+        conversation: { id: `conversation-${suffix}` },
+      })),
+    )
+
+    const result = (await commentAutomationContactsHandler?.({
+      input: {
+        workspaceId: "workspace-1",
+        automationId: "automation-1",
+        eventType: "message:sent" as const,
+        total: 3,
+        page: 1,
+        perPage: 20,
+      },
+    })) as { data: unknown[]; total: number; contactTotal: number }
+
+    expect(result.data).toHaveLength(3)
+    expect(result.total).toBe(3)
+    expect(result.contactTotal).toBe(2)
   })
 })

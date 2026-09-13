@@ -1,4 +1,3 @@
-import { commentAutomationAnalyticsService } from "@chatbotx.io/analytics"
 import { conversationService } from "@chatbotx.io/business"
 import type {
   ChannelType,
@@ -6,6 +5,7 @@ import type {
 } from "@chatbotx.io/database/partials"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
+import { COMMENT_AUTOMATION_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
 import {
   type InstagramAuthValue,
   sendPrivateReply as sendInstagramLoginPrivateReply,
@@ -209,15 +209,12 @@ export async function executePrivateReply(
       ctx.commentId,
       text,
     )
-    // Settled here rather than off a `message:delivered` webhook: this send
-    // leaves no `Message` row for a webhook to match, because it goes straight
-    // out through the comment_id-anchored Send API.
-    await commentAutomationAnalyticsService.markDelivered({
-      automationId: ctx.automationId,
-      commentId: ctx.commentId,
-      replyChannel: "private",
-    })
-    return { replyType: "text", replyText: text }
+    // Delivered from birth rather than settled by a follow-up `markDelivered`:
+    // this send leaves no `Message` row for a webhook to match (it goes
+    // straight out through the comment_id-anchored Send API), and the caller
+    // has not written the analytics row yet — so an UPDATE here would match
+    // nothing at all. See `deliveredAt` on `CommentReplyOutcome`.
+    return { replyType: "text", replyText: text, deliveredAt: new Date() }
   }
 
   if (privateReply.type === "flow" && privateReply.value) {
@@ -225,67 +222,93 @@ export async function executePrivateReply(
     // replies arrive; only its first message's *delivery* is anchored to the
     // comment. See resolveDirectMessageConversationId.
     const conversationId = await resolveDirectMessageConversationId(ctx)
+    const flowId = privateReply.value
 
-    await integrationQueue.add(
-      IntegrationJobAction.sendFlow,
-      {
-        type: IntegrationJobAction.sendFlow,
-        data: {
-          conversationId,
-          contactInboxId: ctx.contactInboxId,
-          flowId: privateReply.value,
-          origin: webhookChannelOrigin(),
-          // The anchor lets the channel deliver the flow's first message via
-          // Meta's comment_id-anchored Send API (7-day comment window) instead
-          // of a normal DM gated by the 24-hour messaging window. Supported on
-          // all comment-automation channels (messenger, instagram,
-          // instagramFacebook).
-          commentAnchor: {
-            commentId: ctx.commentId,
-            replyChannel: "private" as const,
-            // Lets the flow runner report this reply's delivery and clicks
-            // back to the automation — see `settleCommentAutomationDelivered`.
-            automationId: ctx.automationId,
-          },
-        },
-      },
-      { delay: ctx.delay },
-    )
     return {
       replyType: "flow",
       replyText: await describeFlowReply({
         workspaceId: ctx.workspaceId,
-        flowId: privateReply.value,
+        flowId,
       }),
+      // Enqueued by the caller once the analytics row exists — see `dispatch`
+      // on `CommentReplyOutcome`.
+      dispatch: async () => {
+        await integrationQueue.add(
+          IntegrationJobAction.sendFlow,
+          {
+            type: IntegrationJobAction.sendFlow,
+            data: {
+              conversationId,
+              contactInboxId: ctx.contactInboxId,
+              flowId,
+              origin: webhookChannelOrigin(),
+              // Carries the automation to the code that encodes button
+              // payloads. The anchor below names it too, but `sendFlowStep`
+              // hands each integration the raw step and they re-encode from
+              // `metadata` alone — `extractMetadata("commentAutomationId", …)`
+              // — so without this every button ships an empty `ca` and the
+              // Clicked column can never leave zero.
+              metadata: {
+                type: COMMENT_AUTOMATION_PAYLOAD_TYPE,
+                commentAutomationId: ctx.automationId,
+                commentId: ctx.commentId,
+                replyChannel: "private" as const,
+              },
+              // The anchor lets the channel deliver the flow's first message
+              // via Meta's comment_id-anchored Send API (7-day comment window)
+              // instead of a normal DM gated by the 24-hour messaging window.
+              // Supported on all comment-automation channels (messenger,
+              // instagram, instagramFacebook).
+              commentAnchor: {
+                commentId: ctx.commentId,
+                replyChannel: "private" as const,
+                // Lets the flow runner report this reply's delivery back to
+                // the automation — see `settleCommentAutomationDelivered`.
+                automationId: ctx.automationId,
+              },
+            },
+          },
+          { delay: ctx.delay },
+        )
+      },
     }
   }
 
   if (privateReply.type === "AIAgent" && privateReply.value) {
-    await aiAgentQueue.add(
-      AIJobAction.commentAIReply,
-      {
-        type: AIJobAction.commentAIReply,
-        data: {
-          automationId: ctx.automationId,
-          integrationType: ctx.integrationType,
-          integrationIdentifier: ctx.integrationIdentifier,
-          workspaceId: ctx.workspaceId,
-          conversationId: ctx.conversationId,
-          contactInboxId: ctx.contactInboxId,
-          commentId: ctx.commentId,
-          agentId: privateReply.value,
-          replyChannel: "private",
-          channelType: ctx.channelType,
-          message: ctx.message,
-          commentDedup: ctx.dedup,
-        },
+    const agentId = privateReply.value
+
+    return {
+      replyType: "AIAgent",
+      replyText: null,
+      // Deferred for the same reason the flow branch is: `processCommentAIReply`
+      // settles its outcome onto the analytics row the caller writes next.
+      dispatch: async () => {
+        await aiAgentQueue.add(
+          AIJobAction.commentAIReply,
+          {
+            type: AIJobAction.commentAIReply,
+            data: {
+              automationId: ctx.automationId,
+              integrationType: ctx.integrationType,
+              integrationIdentifier: ctx.integrationIdentifier,
+              workspaceId: ctx.workspaceId,
+              conversationId: ctx.conversationId,
+              contactInboxId: ctx.contactInboxId,
+              commentId: ctx.commentId,
+              agentId,
+              replyChannel: "private",
+              channelType: ctx.channelType,
+              message: ctx.message,
+              commentDedup: ctx.dedup,
+            },
+          },
+          {
+            delay: ctx.delay,
+            jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-private`,
+          },
+        )
       },
-      {
-        delay: ctx.delay,
-        jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-private`,
-      },
-    )
-    return { replyType: "AIAgent", replyText: null }
+    }
   }
 
   return null

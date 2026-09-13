@@ -117,13 +117,19 @@ export const fbCommentsPrivateAPI = {
       // column it clicked — so the page never re-counts. Same contract as
       // `privateListBroadcastContactsAPI`.
       const totalValue = total ?? 0
-      const emptyPage = { data: [], total: totalValue, page, pageCount: 0 }
+      const emptyPage = {
+        data: [],
+        total: totalValue,
+        contactTotal: 0,
+        page,
+        pageCount: 0,
+      }
 
       if (!eventType) {
         return emptyPage
       }
 
-      const { contactInboxIds, contactEventMap } =
+      const { contactInboxIds, events, contactTotal } =
         await commentAutomationAnalyticsService.getContacts({
           workspaceId,
           automationId,
@@ -132,26 +138,34 @@ export const fbCommentsPrivateAPI = {
           perPage,
         })
 
-      if (contactInboxIds.length === 0) {
+      if (events.length === 0) {
         return emptyPage
       }
 
-      const contactInboxes =
-        await contactInboxService.findManyByIds(contactInboxIds)
+      // Workspace-scoped: the service joins through `Contact.workspaceId`, so a
+      // row whose inbox belongs to another tenant resolves to nothing rather
+      // than being hydrated into this response.
+      const contactInboxes = await contactInboxService.findManyByIds({
+        workspaceId,
+        ids: [...new Set(contactInboxIds)],
+      })
       const inboxById = new Map(contactInboxes.map((c) => [c.id, c]))
       const pageCount = Math.ceil(totalValue / perPage)
 
-      const data = contactInboxIds
-        .map((contactInboxId) => {
-          const eventData = contactEventMap.get(contactInboxId)
-          const contactInbox = inboxById.get(contactInboxId)
-          if (!(eventData && contactInbox)) {
+      // One entry per EVENT, newest first — the same contact appears once per
+      // occurrence. Several rows can share a `contactInbox`, which is why the
+      // hydration is a lookup rather than a join over unique ids.
+      const data = events
+        .map((event) => {
+          const contactInbox = inboxById.get(event.contactInboxId)
+          if (!contactInbox) {
             return null
           }
           return {
+            rowKey: event.rowKey,
             // The real `Contact.id`, which is what the tag actions expect.
             contactId: contactInbox.contactId,
-            contactInboxId,
+            contactInboxId: event.contactInboxId,
             firstName: contactInbox.contact.firstName ?? null,
             lastName: contactInbox.contact.lastName ?? null,
             fullName: contactInbox.contact.fullName ?? null,
@@ -159,13 +173,18 @@ export const fbCommentsPrivateAPI = {
             avatar: contactInbox.contact.avatar ?? null,
             channel: contactInbox.channel as ChannelType,
             conversationId: contactInbox.conversation?.id ?? "",
-            errorContent: eventData.errorContent ?? null,
-            occurredAt: eventData.occurredAt,
+            errorContent: event.errorContent ?? null,
+            occurredAt: event.occurredAt,
+            // Only a `comment:missed` row carries these; a delivery row
+            // describes the reply, so they stay null and the dialog renders
+            // its error column instead.
+            commentText: event.commentText ?? null,
+            missReason: event.missReason ?? null,
           }
         })
         .filter((row) => row !== null)
 
-      return { data, total: totalValue, page, pageCount }
+      return { data, total: totalValue, contactTotal, page, pageCount }
     }),
 
   facebookPostsAPI: authorizedAPI

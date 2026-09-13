@@ -60,7 +60,13 @@ export const logDiagnostic = (
   buildData: () => Record<string, unknown>,
   message: string,
 ): void => {
-  if (logger.isLevelEnabled(diagnosticLevel)) {
+  // Optional call, because the repo is full of hand-rolled logger doubles in
+  // tests (`{ debug, warn, error }`) that do not model level checks. A real
+  // pino logger always implements this, so production behaviour is unchanged;
+  // a double that does not simply opts out of diagnostics instead of throwing
+  // `isLevelEnabled is not a function` and failing tests that never asked to
+  // assert on diagnostics at all.
+  if (logger.isLevelEnabled?.(diagnosticLevel)) {
     logger[diagnosticLevel](buildData(), message)
   }
 }

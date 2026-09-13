@@ -1,4 +1,7 @@
-import { channelTypes } from "@chatbotx.io/database/partials"
+import {
+  channelTypes,
+  commentAutomationMissReasons,
+} from "@chatbotx.io/database/partials"
 import {
   flowEventTypeSchema,
   messageEventTypeSchema,
@@ -6,17 +9,21 @@ import {
 import { z } from "zod"
 
 /**
- * How long a `FBCommentAutomationEvent` row lives. Matches `ErrorLog`'s window:
- * both tables back the same Error Logs surface, and a comment event outliving
- * the error log it pairs with would show a failure the workspace page can no
- * longer explain.
+ * How long a FAILED `FBCommentAutomationEvent` row lives. Matches `ErrorLog`'s
+ * window: both tables back the same Error Logs surface, and a comment failure
+ * outliving the error log it pairs with would show a failure the workspace page
+ * can no longer explain.
  *
- * Shared rather than local to the purge cron on purpose: the date-range filter
- * on the analytics page must not offer a window the data cannot cover. Zero-fill
- * makes a purged day look exactly like a day with no replies, so an unbounded
- * `lifeTime` preset reads as "this automation never worked".
+ * Retention applies to `status = 'failed'` rows ONLY — a successful reply is
+ * kept forever, so the replies chart, the replies-by-date table and the
+ * user-comment/bot-reply panels stay complete for the whole life of the
+ * automation and the date filter is deliberately unbounded.
+ *
+ * Shared rather than local to the purge cron on purpose: the Error Logs panel
+ * spells the window out, because that panel (and only that panel) thins out
+ * past it.
  */
-export const COMMENT_AUTOMATION_RETENTION_DAYS = 30
+export const COMMENT_AUTOMATION_ERROR_RETENTION_DAYS = 30
 
 export const commentAutomationStatsSchema = z.object({
   workspaceId: z.string(),
@@ -112,10 +119,22 @@ export type ListCommentAutomationErrorsResponse = z.infer<
 // ---------------------------------------------------------------------------
 
 /**
- * Narrower than `broadcastEventType` on purpose: only the five outcomes a
- * comment automation actually records have a column behind them.
- * `message:received` and `flow:ref` are meaningless here, and accepting them
- * would mean a request the repository has no predicate for.
+ * Comment automation's own event vocabulary for the Misses column. It is not a
+ * message event and never will be — nothing was sent — so it has no home in
+ * `messageEventTypeSchema`, which broadcast and sequences share.
+ */
+export const COMMENT_AUTOMATION_MISSED_EVENT = "comment:missed"
+
+/**
+ * Narrower than `broadcastEventType` on purpose: only the outcomes a comment
+ * automation actually records have a column behind them. `message:received`
+ * and `flow:ref` are meaningless here, and accepting them would mean a request
+ * the repository has no predicate for.
+ *
+ * `comment:missed` is the odd one out: it is served by
+ * `FBCommentAutomationMiss`, a different table, so every read that accepts this
+ * enum has to route it away from `CommentAutomationStatsRepository` before it
+ * reaches `buildEventFilter` (which has no predicate for it).
  */
 export const commentAutomationEventType = z.enum([
   messageEventTypeSchema.enum["message:sent"],
@@ -123,6 +142,7 @@ export const commentAutomationEventType = z.enum([
   messageEventTypeSchema.enum["message:seen"],
   messageEventTypeSchema.enum["message:failed"],
   flowEventTypeSchema.enum["flow:clicked"],
+  COMMENT_AUTOMATION_MISSED_EVENT,
 ])
 
 export type CommentAutomationEventType = z.infer<
@@ -143,6 +163,12 @@ export type ListCommentAutomationContactsRequest = z.infer<
 >
 
 export const commentAutomationContactData = z.object({
+  /**
+   * The event id. One contact can appear several times in this list — once per
+   * occurrence — so the dialog keys and de-duplicates rows by this, never by
+   * `contactId`.
+   */
+  rowKey: z.string(),
   contactId: z.string(),
   contactInboxId: z.string(),
   firstName: z.string().nullable(),
@@ -154,6 +180,13 @@ export const commentAutomationContactData = z.object({
   errorContent: z.string().nullable(),
   conversationId: z.string(),
   occurredAt: z.string(),
+  /**
+   * The customer's comment, and why the automation passed on it. Only the
+   * `comment:missed` drill-down fills these in — for a delivery stat the row
+   * describes the reply, and the comment text lives on the analytics page.
+   */
+  commentText: z.string().nullable().optional(),
+  missReason: commentAutomationMissReasons.nullable().optional(),
 })
 
 export type CommentAutomationContactData = z.infer<
@@ -163,6 +196,12 @@ export type CommentAutomationContactData = z.infer<
 export const listCommentAutomationContactsResponse = z.object({
   data: z.array(commentAutomationContactData),
   total: z.number(),
+  /**
+   * Distinct contacts behind `total` rows. Tagging acts per contact, so this is
+   * what the selection counter and its toast report — five replies to two
+   * commenters is two tags.
+   */
+  contactTotal: z.number(),
   page: z.number(),
   pageCount: z.number(),
 })
@@ -181,6 +220,9 @@ export const commentAutomationCounterFields = [
   "seenCount",
   "clickedCount",
   "failedCount",
+  // The odd one out: gated by a row existing in `FBCommentAutomationMiss`
+  // rather than by a timestamp column, since a miss has no timeline.
+  "missedCount",
 ] as const
 
 export type CommentAutomationCounterField =

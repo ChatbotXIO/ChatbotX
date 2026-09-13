@@ -18,6 +18,25 @@ import { logger } from "../../../lib/logger"
 export type CommentReplyOutcome = {
   replyType: FBCommentReplyType
   replyText: string | null
+  /**
+   * Set only when the send already completed synchronously (a `text` reply,
+   * which goes straight out through the Send API). The analytics row is then
+   * written already delivered instead of being settled by a follow-up
+   * `markDelivered` — that UPDATE ran before the row existed and matched
+   * nothing, which is why Delivered and Seen stayed at zero.
+   */
+  deliveredAt?: Date
+  /**
+   * Enqueues the async work this reply stands for, for the branches that have
+   * any (`flow`, `AIAgent`).
+   *
+   * Deliberately NOT done inside the executor. The queued job settles delivery
+   * on the analytics row the caller has not written yet, and with no
+   * `replyAfter` the job's delay is 0 — so the worker could pick it up first
+   * and settle a row that did not exist. The caller writes the row, then calls
+   * this. Ordering is structural rather than a race the delay happens to win.
+   */
+  dispatch?: () => Promise<void>
 }
 
 /**
