@@ -45,6 +45,10 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
     useGuestSessionStore((state) => state)
 
   useEffect(() => {
+    if (!parentOrigin) {
+      return
+    }
+
     const clientEmbeddingOrigin = getClientEmbeddingOrigin()
     if (clientEmbeddingOrigin) {
       setEmbeddingOrigin(clientEmbeddingOrigin)
