@@ -2326,7 +2326,9 @@
       "import": "Importer flow",
       "export": "Eksporter",
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
-      "importJsonOnly": "Kun JSON-filer"
+      "importJsonOnly": "Kun JSON-filer",
+      "markAsRead": "Marker som læst",
+      "reaction": "Reager"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2390,7 +2392,12 @@
       "typingSecondsLabel": "Typing for (sekunder)",
       "lookupColumnsLabel": "Lookup Kolonner:",
       "filterModeAnd": "Og",
-      "filterModeOr": "Eller"
+      "filterModeOr": "Eller",
+      "markAsReadDescription": "Marker den indgående WhatsApp-besked som læst (blå flueben).",
+      "reactionEmojiLabel": "Vælg en emoji:",
+      "reactionEmojiCustomLabel": "Brugerdefineret emoji",
+      "reactionEmojiCustomDescription": "Vælg en hurtig emoji ovenfor, eller indtast en gyldig emoji her.",
+      "reactionPreviewText": "Reager med {emoji}"
     },
     "operators": {
       "append": "Append til den slut",

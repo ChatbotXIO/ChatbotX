@@ -2463,7 +2463,9 @@
       "import": "استيراد التدفق",
       "export": "تصدير",
       "importStarted": "جارٍ استيراد التدفق. يرجى مراجعة سجل الاستيراد للحصول على النتائج.",
-      "importJsonOnly": "ملفات JSON فقط"
+      "importJsonOnly": "ملفات JSON فقط",
+      "markAsRead": "تحديد كمقروء",
+      "reaction": "تفاعل"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -2527,7 +2529,12 @@
       "typingSecondsLabel": "الكتابة لمدة (بالثواني)",
       "lookupColumnsLabel": "أعمدة البحث:",
       "filterModeAnd": "و",
-      "filterModeOr": "أو"
+      "filterModeOr": "أو",
+      "markAsReadDescription": "تحديد رسالة واتساب الواردة كمقروءة (علامات زرقاء).",
+      "reactionEmojiLabel": "اختر رمزاً تعبيرياً:",
+      "reactionEmojiCustomLabel": "رمز تعبيري مخصص",
+      "reactionEmojiCustomDescription": "اختر رمزاً تعبيرياً سريعاً بالأعلى أو أدخل أي رمز تعبيري صالح هنا.",
+      "reactionPreviewText": "تفاعل مع {emoji}"
     },
     "operators": {
       "append": "إضافة في النهاية",

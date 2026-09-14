@@ -45,12 +45,14 @@ import { klaviyoSyncProfileStep } from "./klaviyo-sync-profile"
 import { mailchimpAddMemberStep } from "./mailchimp-add-member"
 import { mailerLiteAddSubscriberStep } from "./mailer-lite-add-subscriber"
 import { makeStep } from "./make"
+import markAsReadStep from "./mark-as-read"
 import { markEmailVerifiedStep } from "./mark-email-verified"
 import { moosendCreateContactStep } from "./moosend-create-contact"
 import { openWebsiteStep } from "./open-website"
 import { optInEmailStep } from "./opt-in-email"
 import { optOutEmailStep } from "./opt-out-email"
 import { questionnairesStep } from "./questionnaires"
+import reactionStep from "./reaction"
 import { removeContactTagStep } from "./remove-contact-tag"
 import sendAudioStep from "./send-audio"
 import { sendCarouselStep } from "./send-carousel"
@@ -184,6 +186,8 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.sendQuickReply]: undefined,
   [stepTypes.enum.email]: emailStep,
   [stepTypes.enum.typing]: typingStep,
+  [stepTypes.enum.markAsRead]: markAsReadStep,
+  [stepTypes.enum.reaction]: reactionStep,
   [stepTypes.enum.whatsappOptionList]: whatsappOptionListStep,
   [stepTypes.enum.whatsappFlow]: whatsappFlowStep,
   [stepTypes.enum.setMessengerUserPersistentMenu]:

@@ -2326,7 +2326,9 @@
       "import": "フローをインポート",
       "export": "エクスポート",
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
-      "importJsonOnly": "JSONファイルのみ"
+      "importJsonOnly": "JSONファイルのみ",
+      "markAsRead": "既読にする",
+      "reaction": "リアクション"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2390,7 +2392,12 @@
       "typingSecondsLabel": "入力中の表示時間（秒）",
       "lookupColumnsLabel": "検索列:",
       "filterModeAnd": "AND",
-      "filterModeOr": "OR"
+      "filterModeOr": "OR",
+      "markAsReadDescription": "受信したWhatsAppメッセージを既読にします（青いチェック）。",
+      "reactionEmojiLabel": "絵文字を選択:",
+      "reactionEmojiCustomLabel": "カスタム絵文字",
+      "reactionEmojiCustomDescription": "上のクイック絵文字を選択するか、ここに有効な絵文字を入力してください。",
+      "reactionPreviewText": "{emoji} でリアクション"
     },
     "operators": {
       "append": "末尾に追加",

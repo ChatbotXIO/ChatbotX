@@ -2625,7 +2625,9 @@
       "import": "匯入流程",
       "export": "匯出",
       "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
-      "importJsonOnly": "僅限 JSON 檔案"
+      "importJsonOnly": "僅限 JSON 檔案",
+      "markAsRead": "標記為已讀",
+      "reaction": "回應表情"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -2689,7 +2691,12 @@
       "typingSecondsLabel": "鍵入（秒）",
       "lookupColumnsLabel": "尋找列：",
       "filterModeAnd": "和",
-      "filterModeOr": "或"
+      "filterModeOr": "或",
+      "markAsReadDescription": "將收到的 WhatsApp 訊息標記為已讀（藍勾）。",
+      "reactionEmojiLabel": "選擇一個表情：",
+      "reactionEmojiCustomLabel": "自訂表情",
+      "reactionEmojiCustomDescription": "在上方選擇快捷表情或在此輸入任何有效表情。",
+      "reactionPreviewText": "用 {emoji} 回應"
     },
     "operators": {
       "append": "追加到末尾",

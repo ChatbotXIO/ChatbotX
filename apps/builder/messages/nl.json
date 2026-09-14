@@ -2326,7 +2326,9 @@
       "import": "Flow importeren",
       "export": "Exporteren",
       "importStarted": "De flow wordt geïmporteerd. Bekijk de importgeschiedenis voor de resultaten.",
-      "importJsonOnly": "Alleen JSON-bestanden"
+      "importJsonOnly": "Alleen JSON-bestanden",
+      "markAsRead": "Markeren als gelezen",
+      "reaction": "Reageren"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -2390,7 +2392,12 @@
       "typingSecondsLabel": "Typen gedurende (seconden)",
       "lookupColumnsLabel": "Zoekkolommen:",
       "filterModeAnd": "EN",
-      "filterModeOr": "OF"
+      "filterModeOr": "OF",
+      "markAsReadDescription": "Markeert het inkomende WhatsApp-bericht als gelezen (blauwe vinkjes).",
+      "reactionEmojiLabel": "Kies een emoji:",
+      "reactionEmojiCustomLabel": "Aangepaste emoji",
+      "reactionEmojiCustomDescription": "Kies hierboven een snelle emoji of voer hier een geldige emoji in.",
+      "reactionPreviewText": "Reageren met {emoji}"
     },
     "operators": {
       "append": "Aan het einde toevoegen",

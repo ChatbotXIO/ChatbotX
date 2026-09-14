@@ -2326,7 +2326,9 @@
       "import": "Importar fluxo",
       "export": "Exportar",
       "importStarted": "O fluxo está sendo importado. Verifique o histórico de importações para ver os resultados.",
-      "importJsonOnly": "Somente arquivos JSON"
+      "importJsonOnly": "Somente arquivos JSON",
+      "markAsRead": "Marcar como lido",
+      "reaction": "Reagir"
     },
     "splitTraffic": {
       "balanceHint": "A soma total deve ser igual a 100%.",
@@ -2390,7 +2392,12 @@
       "typingSecondsLabel": "Digitando por (segundos)",
       "lookupColumnsLabel": "Colunas de pesquisa:",
       "filterModeAnd": "E",
-      "filterModeOr": "OU"
+      "filterModeOr": "OU",
+      "markAsReadDescription": "Marca a mensagem recebida do WhatsApp como lida (tiques azuis).",
+      "reactionEmojiLabel": "Escolha um emoji:",
+      "reactionEmojiCustomLabel": "Emoji personalizado",
+      "reactionEmojiCustomDescription": "Escolha um emoji rápido acima ou digite qualquer emoji válido aqui.",
+      "reactionPreviewText": "Reagir com {emoji}"
     },
     "operators": {
       "append": "Adicionar ao final",

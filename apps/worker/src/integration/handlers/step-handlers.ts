@@ -3,6 +3,7 @@ import {
   contactService,
   conversationService,
   inboxTeamService,
+  messageService,
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import { gte, type SQL } from "@chatbotx.io/database/client"
@@ -16,12 +17,15 @@ import {
   type DisableBotStepSchema,
   type EnableBotStepSchema,
   type FollowConversationStepSchema,
+  type MarkAsReadStepSchema,
+  type ReactionStepSchema,
   type TypingStepSchema,
   type UnarchiveConversationStepSchema,
   type UnassignConversationStepSchema,
   type UnfollowConversationStepSchema,
 } from "@chatbotx.io/flow-config"
-import { subHours } from "date-fns"
+import { subDays, subHours } from "date-fns"
+import { logger } from "../../lib/logger"
 import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
@@ -326,6 +330,105 @@ export const stepSendTyping = async (
       contact: contactInbox,
       typing: true,
       seconds: props.step.seconds,
+    },
+  })
+}
+
+export const stepMarkAsRead = async (
+  props: ExecuteStepProps<MarkAsReadStepSchema>,
+) => {
+  const { conversation, contactInbox: baseContactInbox } = props
+
+  const contactInbox =
+    baseContactInbox ||
+    (await contactInboxService.findRecentByContactId({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+    }))
+
+  if (!contactInbox) {
+    return
+  }
+
+  if (!allIntegrations[contactInbox.channel]) {
+    return
+  }
+
+  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+  })
+
+  let messageId: string | undefined
+  try {
+    const lastIncoming = await messageService.findLatestIncomingMessage({
+      conversationId: conversation.id,
+      workspaceId: conversation.workspaceId,
+      sinceTime: subDays(new Date(), 30),
+    })
+    messageId = lastIncoming?.sourceId ?? undefined
+  } catch (err) {
+    logger.debug(
+      { err, conversationId: conversation.id },
+      "Failed to find latest incoming message for mark as read step",
+    )
+  }
+
+  await integration.runChannelHandler("conversation", "agentMarkAsRead", {
+    ctx,
+    data: {
+      contact: contactInbox,
+      messageId,
+    },
+  })
+}
+
+export const stepSendReaction = async (
+  props: ExecuteStepProps<ReactionStepSchema>,
+) => {
+  const { conversation, contactInbox: baseContactInbox } = props
+
+  const contactInbox =
+    baseContactInbox ||
+    (await contactInboxService.findRecentByContactId({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+    }))
+
+  if (!contactInbox) {
+    return
+  }
+
+  if (!allIntegrations[contactInbox.channel]) {
+    return
+  }
+
+  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+  })
+
+  let messageId: string | undefined
+  try {
+    const lastIncoming = await messageService.findLatestIncomingMessage({
+      conversationId: conversation.id,
+      workspaceId: conversation.workspaceId,
+      sinceTime: subDays(new Date(), 30),
+    })
+    messageId = lastIncoming?.sourceId ?? undefined
+  } catch (err) {
+    logger.debug(
+      { err, conversationId: conversation.id },
+      "Failed to find latest incoming message for reaction step",
+    )
+  }
+
+  await integration.runChannelHandler("conversation", "sendReaction", {
+    ctx,
+    data: {
+      contact: contactInbox,
+      emoji: props.step.emoji,
+      messageId,
     },
   })
 }
