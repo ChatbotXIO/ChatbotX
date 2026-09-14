@@ -10,8 +10,8 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import {
   CONNECT_CHANNEL_REGISTRY,
-  CONNECT_RETRY_HREF,
   type ConnectPickerChannel,
+  getConnectRetryHref,
 } from "../lib/registry"
 import { SESSION_ERROR_MESSAGE_KEYS } from "../lib/row-status"
 
@@ -24,9 +24,11 @@ import { SESSION_ERROR_MESSAGE_KEYS } from "../lib/row-status"
 export function ConnectSessionErrorAlert({
   channel,
   code,
+  workspaceId,
 }: {
   channel: ConnectPickerChannel
   code: ConnectSessionErrorCode
+  workspaceId?: string | null
 }) {
   const t = useTranslations()
 
@@ -36,7 +38,7 @@ export function ConnectSessionErrorAlert({
       <AlertDescription>
         <Link
           className="underline decoration-dotted underline-offset-2"
-          href={CONNECT_RETRY_HREF}
+          href={getConnectRetryHref(workspaceId)}
         >
           {t(CONNECT_CHANNEL_REGISTRY[channel].tryAgainKey)}
         </Link>
