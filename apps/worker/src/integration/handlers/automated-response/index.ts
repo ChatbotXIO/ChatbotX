@@ -271,6 +271,7 @@ export async function processAutomatedResponse(
         contactInbox,
         typing: true,
         seconds: 5,
+        messageId: triggerMessage?.sourceId ?? undefined,
       }).catch((err) => {
         logger.debug(
           { err, conversationId: conversation.id },

@@ -3,6 +3,7 @@ import {
   contactService,
   conversationService,
   inboxTeamService,
+  messageService,
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import { gte, type SQL } from "@chatbotx.io/database/client"
@@ -21,7 +22,8 @@ import {
   type UnassignConversationStepSchema,
   type UnfollowConversationStepSchema,
 } from "@chatbotx.io/flow-config"
-import { subHours } from "date-fns"
+import { subDays, subHours } from "date-fns"
+import { logger } from "../../lib/logger"
 import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
@@ -320,12 +322,34 @@ export const stepSendTyping = async (
     contactInbox,
   })
 
+  let messageId: string | undefined
+  try {
+    const lastIncoming = await messageService.findLatestIncomingMessage({
+      conversationId: conversation.id,
+      workspaceId: conversation.workspaceId,
+      sinceTime: subDays(new Date(), 30),
+    })
+    messageId = lastIncoming?.sourceId ?? undefined
+  } catch (err) {
+    logger.debug(
+      { err, conversationId: conversation.id },
+      "Failed to find latest incoming message for typing step",
+    )
+  }
+
   await integration.runChannelHandler("conversation", "sendTyping", {
     ctx,
     data: {
       contact: contactInbox,
       typing: true,
       seconds: props.step.seconds,
+      messageId,
     },
   })
+
+  const seconds = props.step.seconds
+  if (typeof seconds === "number" && seconds > 0) {
+    const delayMs = Math.min(Math.max(seconds, 1), 60) * 1000
+    await new Promise((resolve) => setTimeout(resolve, delayMs))
+  }
 }

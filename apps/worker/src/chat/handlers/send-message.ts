@@ -1,4 +1,8 @@
-import { contactInboxService, contactService } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  contactService,
+  messageService,
+} from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { whatsappFlowModel } from "@chatbotx.io/database/schema"
@@ -32,6 +36,7 @@ import type {
   ChatJobSendTyping,
 } from "@chatbotx.io/worker-config"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
+import { subDays } from "date-fns"
 import {
   settleCommentAutomationDelivered,
   settleCommentAutomationFailure,
@@ -448,7 +453,13 @@ export async function changeMessageStateOnChannel(
 }
 
 export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
-  const { conversation, contactInbox, typing, seconds } = data
+  const {
+    conversation,
+    contactInbox,
+    typing,
+    seconds,
+    messageId: providedMessageId,
+  } = data
 
   if (!allIntegrations[contactInbox.channel]) {
     // Typing is best-effort; missing integration is logged but not fatal.
@@ -458,6 +469,23 @@ export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
     return
   }
 
+  let messageId = providedMessageId
+  if (!messageId && contactInbox.channel === "whatsapp") {
+    try {
+      const lastIncoming = await messageService.findLatestIncomingMessage({
+        conversationId: conversation.id,
+        workspaceId: conversation.workspaceId,
+        sinceTime: subDays(new Date(), 30),
+      })
+      messageId = lastIncoming?.sourceId ?? undefined
+    } catch (err) {
+      logger.debug(
+        { err, conversationId: conversation.id },
+        "Failed to find latest incoming message for sendTypingToChannel",
+      )
+    }
+  }
+
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
     contactInbox,
@@ -465,7 +493,7 @@ export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
 
   await integration.runChannelHandler("conversation", "sendTyping", {
     ctx,
-    data: { contact: contactInbox, typing, seconds },
+    data: { contact: contactInbox, typing, seconds, messageId },
   })
 }
 
