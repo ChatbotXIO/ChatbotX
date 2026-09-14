@@ -44,9 +44,11 @@ function InboxSelectCard({
 
   const handleInboxSelect = useCallback(
     (channel: ChannelType) => {
-      router.push(
-        `/channels/create?${searchParams.toString()}&channel=${channel}`,
-      )
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete("error")
+      params.set("channel", channel)
+
+      router.push(`/channels/create?${params.toString()}`)
     },
     [router, searchParams],
   )
