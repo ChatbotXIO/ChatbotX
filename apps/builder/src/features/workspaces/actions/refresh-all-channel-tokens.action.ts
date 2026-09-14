@@ -50,21 +50,9 @@ export const refreshAllChannelTokensAction = authActionClient.action(
       return { refreshed: 0, failed: 0 }
     }
 
-    const summaries = await Promise.all(
-      workspaceIds.map((workspaceId) =>
-        channelTokenRefreshService.refreshWorkspace({
-          workspaceId,
-          ...channelTokenRefreshCallbacks,
-        }),
-      ),
-    )
-
-    return summaries.reduce(
-      (summary, next) => ({
-        refreshed: summary.refreshed + next.refreshed,
-        failed: summary.failed + next.failed,
-      }),
-      { refreshed: 0, failed: 0 },
-    )
+    return await channelTokenRefreshService.refreshWorkspaces({
+      workspaceIds,
+      ...channelTokenRefreshCallbacks,
+    })
   },
 )

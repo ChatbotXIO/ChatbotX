@@ -22,7 +22,7 @@ const workspaceMemberService = {
   findByIdOrFail: vi.fn(),
   findByIdWithUser: vi.fn(),
   listPaginated: vi.fn(),
-  update: vi.fn(),
+  updateMember: vi.fn(),
 }
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -177,7 +177,7 @@ describe("real router: workspace members public API scope wiring", () => {
     })
 
     expect(invitationService.create).not.toHaveBeenCalled()
-    expect(workspaceMemberService.update).not.toHaveBeenCalled()
+    expect(workspaceMemberService.updateMember).not.toHaveBeenCalled()
     expect(workspaceMemberService.delete).not.toHaveBeenCalled()
   })
 
@@ -201,7 +201,7 @@ describe("real router: workspace members public API scope wiring", () => {
     await expect(run()).rejects.toMatchObject({ code: "FORBIDDEN" })
 
     expect(invitationService.create).not.toHaveBeenCalled()
-    expect(workspaceMemberService.update).not.toHaveBeenCalled()
+    expect(workspaceMemberService.updateMember).not.toHaveBeenCalled()
     expect(workspaceMemberService.delete).not.toHaveBeenCalled()
   })
 
@@ -233,8 +233,7 @@ describe("real router: workspace members public API scope wiring", () => {
 
   test("a workspace-scoped token can call update", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(["workspace"]))
-    workspaceMemberService.findByIdOrFail.mockResolvedValue({ id: MEMBER_ID })
-    workspaceMemberService.update.mockRejectedValue(
+    workspaceMemberService.updateMember.mockRejectedValue(
       new Error("Workspace member update failed"),
     )
 
@@ -242,11 +241,7 @@ describe("real router: workspace members public API scope wiring", () => {
       invoke(workspaceMembersPublicRouter.update, updateInput),
     ).rejects.toThrow("Workspace member update failed")
 
-    expect(workspaceMemberService.findByIdOrFail).toHaveBeenCalledWith({
-      id: MEMBER_ID,
-      workspaceId: "ws-1",
-    })
-    expect(workspaceMemberService.update).toHaveBeenCalledWith({
+    expect(workspaceMemberService.updateMember).toHaveBeenCalledWith({
       id: MEMBER_ID,
       workspaceId: "ws-1",
       data: {
@@ -255,6 +250,8 @@ describe("real router: workspace members public API scope wiring", () => {
         notificationChannels: updateInput.notificationChannels,
       },
     })
+    // A failed update must never reach the post-update read.
+    expect(workspaceMemberService.findByIdOrFail).not.toHaveBeenCalled()
   })
 
   test("a workspace-scoped token can call remove", async () => {

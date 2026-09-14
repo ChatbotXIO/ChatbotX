@@ -6,6 +6,7 @@ import { createId, SymbolicSnowflakeIDs } from "@chatbotx.io/utils"
 import { addDays } from "date-fns"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceService } from "../workspace/service"
 import { normalizeWorkspaceMemberPermissions } from "../workspace-member/permissions"
@@ -45,10 +46,17 @@ class InvitationService extends BaseService {
       .returning()
 
     if (!props.tx) {
-      await this.audit(
-        "invite",
-        `invited a new ${permissions.superAdmin ? "admin" : "member"}`,
-      )
+      try {
+        await this.audit(
+          "invite",
+          `invited a new ${permissions.superAdmin ? "admin" : "member"}`,
+        )
+      } catch (err) {
+        logger.warn(
+          { err, workspaceId, invitationId: invitation.id },
+          "Failed to record audit log for workspace invitation",
+        )
+      }
     }
 
     return invitation

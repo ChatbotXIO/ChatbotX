@@ -118,11 +118,10 @@ const refreshOneZalo = async (
   })
 
 const refreshZaloIntegrations = async (
-  workspaceId: string,
+  workspaceIds: string[],
 ): Promise<RefreshSummary> => {
-  const integrations = await zaloIntegrationService.findAllByWorkspaceIds([
-    workspaceId,
-  ])
+  const integrations =
+    await zaloIntegrationService.findAllByWorkspaceIds(workspaceIds)
   return toSummary(
     await runInBatches(integrations, (integration) =>
       refreshOneZalo(integration.id, integration.workspaceId),
@@ -181,11 +180,10 @@ const refreshOneTiktok = async (
   })
 
 const refreshTiktokIntegrations = async (
-  workspaceId: string,
+  workspaceIds: string[],
 ): Promise<RefreshSummary> => {
-  const integrations = await tiktokIntegrationService.findAllByWorkspaceIds([
-    workspaceId,
-  ])
+  const integrations =
+    await tiktokIntegrationService.findAllByWorkspaceIds(workspaceIds)
   return toSummary(
     await runInBatches(integrations, (integration) =>
       refreshOneTiktok(integration.id, integration.workspaceId),
@@ -237,16 +235,16 @@ const refreshOneInstagram = async (
   })
 
 const refreshInstagramIntegrations = async (
-  workspaceId: string,
+  workspaceIds: string[],
   refreshAuth: ChannelRefreshAuthCallback | undefined,
 ): Promise<RefreshSummary> => {
   if (!refreshAuth) {
     return { refreshed: 0, failed: 0 }
   }
   const integrations =
-    await instagramIntegrationService.findForTokenRefreshByWorkspaceIds([
-      workspaceId,
-    ])
+    await instagramIntegrationService.findForTokenRefreshByWorkspaceIds(
+      workspaceIds,
+    )
   return toSummary(
     await runInBatches(integrations, (integration) =>
       refreshOneInstagram(integration.id, integration.workspaceId, refreshAuth),
@@ -298,7 +296,7 @@ const refreshOneInstagramFacebook = async (
   })
 
 const refreshInstagramFacebookIntegrations = async (
-  workspaceId: string,
+  workspaceIds: string[],
   refreshAuth: ChannelRefreshAuthCallback | undefined,
 ): Promise<RefreshSummary> => {
   if (!refreshAuth) {
@@ -306,7 +304,7 @@ const refreshInstagramFacebookIntegrations = async (
   }
   const integrations =
     await instagramIntegrationService.findFacebookForTokenRefreshByWorkspaceIds(
-      [workspaceId],
+      workspaceIds,
     )
   return toSummary(
     await runInBatches(integrations, (integration) =>
@@ -363,16 +361,16 @@ const refreshOneMessenger = async (
   })
 
 const refreshMessengerIntegrations = async (
-  workspaceId: string,
+  workspaceIds: string[],
   refreshAuth: ChannelRefreshAuthCallback | undefined,
 ): Promise<RefreshSummary> => {
   if (!refreshAuth) {
     return { refreshed: 0, failed: 0 }
   }
   const integrations =
-    await messengerIntegrationService.findForTokenRefreshByWorkspaceIds([
-      workspaceId,
-    ])
+    await messengerIntegrationService.findForTokenRefreshByWorkspaceIds(
+      workspaceIds,
+    )
   return toSummary(
     await runInBatches(integrations, (integration) =>
       refreshOneMessenger(integration.id, integration.workspaceId, refreshAuth),
@@ -431,16 +429,16 @@ const refreshOneWhatsapp = async (
   })
 
 const refreshWhatsappIntegrations = async (
-  workspaceId: string,
+  workspaceIds: string[],
   refreshAuth: ChannelRefreshAuthCallback | undefined,
 ): Promise<RefreshSummary> => {
   if (!refreshAuth) {
     return { refreshed: 0, failed: 0 }
   }
   const integrations =
-    await integrationWhatsappService.findForTokenRefreshByWorkspaceIds([
-      workspaceId,
-    ])
+    await integrationWhatsappService.findForTokenRefreshByWorkspaceIds(
+      workspaceIds,
+    )
   return toSummary(
     await runInBatches(integrations, (integration) =>
       refreshOneWhatsapp(integration.id, integration.workspaceId, refreshAuth),
@@ -452,23 +450,45 @@ class ChannelTokenRefreshService {
   async refreshWorkspace(
     props: { workspaceId: string } & ChannelTokenRefreshCallbacks,
   ): Promise<RefreshSummary> {
+    const { workspaceId, ...callbacks } = props
+    return await this.refreshWorkspaces({
+      workspaceIds: [workspaceId],
+      ...callbacks,
+    })
+  }
+
+  /**
+   * Batches every provider's lookup across all `workspaceIds` in one query
+   * per provider (6 total), then refreshes the combined integration set in
+   * `BATCH_SIZE`-sized concurrent batches — instead of one lookup set per
+   * workspace. Callers refreshing many workspaces at once (e.g. a bulk
+   * "refresh all my workspaces" action) must call this once with the full
+   * id list rather than mapping `refreshWorkspace` over each id.
+   */
+  async refreshWorkspaces(
+    props: { workspaceIds: string[] } & ChannelTokenRefreshCallbacks,
+  ): Promise<RefreshSummary> {
     const {
-      workspaceId,
+      workspaceIds,
       refreshInstagramAuth,
       refreshInstagramFacebookAuth,
       refreshMessengerAuth,
       refreshWhatsappAuth,
     } = props
+    if (workspaceIds.length === 0) {
+      return { refreshed: 0, failed: 0 }
+    }
+
     const summaries = await Promise.all([
-      refreshZaloIntegrations(workspaceId),
-      refreshTiktokIntegrations(workspaceId),
-      refreshInstagramIntegrations(workspaceId, refreshInstagramAuth),
+      refreshZaloIntegrations(workspaceIds),
+      refreshTiktokIntegrations(workspaceIds),
+      refreshInstagramIntegrations(workspaceIds, refreshInstagramAuth),
       refreshInstagramFacebookIntegrations(
-        workspaceId,
+        workspaceIds,
         refreshInstagramFacebookAuth,
       ),
-      refreshMessengerIntegrations(workspaceId, refreshMessengerAuth),
-      refreshWhatsappIntegrations(workspaceId, refreshWhatsappAuth),
+      refreshMessengerIntegrations(workspaceIds, refreshMessengerAuth),
+      refreshWhatsappIntegrations(workspaceIds, refreshWhatsappAuth),
     ])
 
     return summaries.reduce(

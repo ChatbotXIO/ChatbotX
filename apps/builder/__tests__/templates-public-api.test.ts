@@ -57,9 +57,7 @@ const templateService = {
   listSelectableResources: vi.fn(),
   listInstallations: vi.fn(),
   createOrUpdate: vi.fn(),
-  assertInstallable: vi.fn(),
-  createInstallationRecord: vi.fn(),
-  markInstallationFailed: vi.fn(),
+  enqueueInstallation: vi.fn(),
   findByIdOrFail: vi.fn(),
   softDelete: vi.fn(),
   updateShareSettings: vi.fn(),
@@ -67,15 +65,6 @@ const templateService = {
 }
 
 vi.mock("@chatbotx.io/business", () => ({ templateService }))
-
-const { defaultQueue } = vi.hoisted(() => ({
-  defaultQueue: { add: vi.fn() },
-}))
-
-vi.mock("@chatbotx.io/worker-config", () => ({
-  DefaultJobAction: { installTemplate: "installTemplate" },
-  defaultQueue,
-}))
 
 vi.mock("@/features/templates/schema/public", () => ({
   createTemplatePublicRequest: z.object({}),
@@ -297,71 +286,29 @@ describe("POST /v1/templates", () => {
 describe("POST /v1/templates/installations", () => {
   const procedure = findProcedure("POST", "/v1/templates/installations")
 
-  test("registers HTTP 202 semantics and queues an installation", async () => {
-    templateService.assertInstallable.mockResolvedValueOnce({ template })
-    templateService.createInstallationRecord.mockResolvedValueOnce(installation)
-    defaultQueue.add.mockResolvedValueOnce(undefined)
+  test("registers HTTP 202 semantics and forwards to the install-lifecycle service method", async () => {
+    templateService.enqueueInstallation.mockResolvedValueOnce(installation)
 
     await expect(
       procedure.handler?.({ context, input: { shareToken: "share-token" } }),
     ).resolves.toEqual({ installationId: "installation-1", status: "pending" })
 
     expect(procedure.route.successStatus).toBe(202)
-    expect(templateService.assertInstallable).toHaveBeenCalledWith({
+    expect(templateService.enqueueInstallation).toHaveBeenCalledWith({
       shareToken: "share-token",
-      targetWorkspaceId: "workspace-1",
-    })
-    expect(templateService.createInstallationRecord).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       installedBy: null,
-      template,
     })
-    expect(defaultQueue.add).toHaveBeenCalledWith(
-      "installTemplate",
-      {
-        type: "installTemplate",
-        data: { installationId: "installation-1", workspaceId: "workspace-1" },
-      },
-      { jobId: "install-template-installation-1" },
-    )
   })
 
-  test("marks the installation failed before rethrowing a queue error", async () => {
-    const queueError = new Error("queue unavailable")
-    let releaseMarkInstallationFailure: (() => void) | undefined
-    const markInstallationFailure = new Promise<void>((resolve) => {
-      releaseMarkInstallationFailure = resolve
-    })
-    templateService.assertInstallable.mockResolvedValueOnce({ template })
-    templateService.createInstallationRecord.mockResolvedValueOnce(installation)
-    defaultQueue.add.mockRejectedValueOnce(queueError)
-    templateService.markInstallationFailed.mockReturnValueOnce(
-      markInstallationFailure,
+  test("propagates an install-lifecycle failure instead of swallowing it", async () => {
+    templateService.enqueueInstallation.mockRejectedValueOnce(
+      new Error("Unable to queue template install"),
     )
 
-    const handlerPromise = procedure.handler?.({
-      context,
-      input: { shareToken: "share-token" },
-    })
-    let rejected = false
-    handlerPromise?.catch(() => {
-      rejected = true
-    })
-
-    await vi.waitFor(() => {
-      expect(templateService.markInstallationFailed).toHaveBeenCalledWith({
-        installationId: "installation-1",
-        errorMessage: "Unable to queue template install",
-      })
-    })
-    expect(rejected).toBe(false)
-
-    if (!releaseMarkInstallationFailure) {
-      throw new Error("Expected markInstallationFailed to be called")
-    }
-    releaseMarkInstallationFailure()
-
-    await expect(handlerPromise).rejects.toThrow("queue unavailable")
+    await expect(
+      procedure.handler?.({ context, input: { shareToken: "share-token" } }),
+    ).rejects.toThrow("Unable to queue template install")
   })
 })
 

@@ -168,7 +168,7 @@ export const workspaceTokenAuthAPIForScope = (scope: WorkspaceApiTokenScope) =>
  * not mint. This stack is used only by the `/v1/api-tokens` routes.
  */
 const requireUnrestrictedToken = base.middleware(async ({ context, next }) => {
-  if (context.apiToken?.scopes != null) {
+  if (!context.apiToken || context.apiToken.scopes != null) {
     throw new ORPCError("FORBIDDEN", {
       message:
         "Only an unrestricted (All scopes) token can manage workspace API tokens",

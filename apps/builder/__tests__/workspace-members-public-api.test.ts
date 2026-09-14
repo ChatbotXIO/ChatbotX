@@ -56,7 +56,7 @@ const invitationService = { create: vi.fn() }
 const workspaceMemberService = {
   delete: vi.fn(),
   findByIdOrFail: vi.fn(),
-  update: vi.fn(),
+  updateMember: vi.fn(),
 }
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -223,20 +223,16 @@ describe("PUT /v1/members/{memberId}", () => {
 
   test("updates and re-reads the member in the authenticated workspace", async () => {
     const updatedMember = { id: "member-1", user: { id: "user-1" } }
-    workspaceMemberService.findByIdOrFail
-      .mockResolvedValueOnce({ id: "member-1" })
-      .mockResolvedValueOnce(updatedMember)
-    workspaceMemberService.update.mockResolvedValueOnce({ id: "member-1" })
+    workspaceMemberService.updateMember.mockResolvedValueOnce({
+      id: "member-1",
+    })
+    workspaceMemberService.findByIdOrFail.mockResolvedValueOnce(updatedMember)
 
     await expect(
       procedure.handler?.({ context, input: updateInput }),
     ).resolves.toEqual(updatedMember)
 
-    expect(workspaceMemberService.findByIdOrFail).toHaveBeenNthCalledWith(1, {
-      id: "member-1",
-      workspaceId: "workspace-1",
-    })
-    expect(workspaceMemberService.update).toHaveBeenCalledWith({
+    expect(workspaceMemberService.updateMember).toHaveBeenCalledWith({
       id: "member-1",
       workspaceId: "workspace-1",
       data: {
@@ -245,7 +241,7 @@ describe("PUT /v1/members/{memberId}", () => {
         notificationChannels: updateInput.notificationChannels,
       },
     })
-    expect(workspaceMemberService.findByIdOrFail).toHaveBeenNthCalledWith(2, {
+    expect(workspaceMemberService.findByIdOrFail).toHaveBeenCalledWith({
       id: "member-1",
       workspaceId: "workspace-1",
     })

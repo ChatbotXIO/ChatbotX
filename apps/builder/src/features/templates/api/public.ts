@@ -3,7 +3,6 @@ import type {
   TemplateInstallationModel,
   TemplateModel,
 } from "@chatbotx.io/database/types"
-import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -163,35 +162,11 @@ export const templatesPublicRouter = {
     .output(installTemplatePublicResponse)
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
-      const { template } = await templateService.assertInstallable({
+      const installation = await templateService.enqueueInstallation({
         shareToken: input.shareToken,
-        targetWorkspaceId: context.workspace.id,
-      })
-      const installation = await templateService.createInstallationRecord({
         workspaceId: context.workspace.id,
         installedBy: null,
-        template,
       })
-
-      try {
-        await defaultQueue.add(
-          DefaultJobAction.installTemplate,
-          {
-            type: DefaultJobAction.installTemplate,
-            data: {
-              installationId: installation.id,
-              workspaceId: context.workspace.id,
-            },
-          },
-          { jobId: `install-template-${installation.id}` },
-        )
-      } catch (error) {
-        await templateService.markInstallationFailed({
-          installationId: installation.id,
-          errorMessage: "Unable to queue template install",
-        })
-        throw error
-      }
 
       return {
         installationId: installation.id,

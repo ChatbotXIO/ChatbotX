@@ -6,6 +6,7 @@ import { withAuditContext } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { hashToken } from "@chatbotx.io/business/workspace-api-token/credentials"
 import { ORPCError } from "@orpc/server"
+import { WORKSPACE_DELETION_PATH } from "@/features/workspaces/lib/api-paths"
 import { logger } from "@/lib/log"
 import { assertApiNotRateLimited } from "@/lib/rate-limit/api-rate-limit"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
@@ -96,14 +97,24 @@ export const workspaceTokenAuthMidddleware = base.middleware(
 
     await assertNotRateLimited(workspace.id)
 
-    if (isWorkspaceScheduledForDeletion(workspace)) {
+    const method = procedure["~orpc"].route.method
+    const path = procedure["~orpc"].route.path
+
+    // The cancel-deletion route must stay reachable on an already-scheduled
+    // workspace — it is the only way a workspace-token caller can reach
+    // `DELETE /v1/workspace/deletion` at all, since every other route is
+    // correctly locked out once deletion is scheduled.
+    const isCancelDeletionRequest =
+      method === "DELETE" && path === WORKSPACE_DELETION_PATH
+
+    if (
+      !isCancelDeletionRequest &&
+      isWorkspaceScheduledForDeletion(workspace)
+    ) {
       throw new ORPCError("FORBIDDEN", {
         message: "Workspace deletion scheduled",
       })
     }
-
-    const method = procedure["~orpc"].route.method
-    const path = procedure["~orpc"].route.path
 
     // Read-only tokens may only GET/HEAD (plus a narrow, explicit allowlist
     // of POST-for-read routes — see `READ_ONLY_TOKEN_ALLOWED_POST_PATHS`) —
@@ -120,10 +131,13 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     }
 
     // Owner-quota/trial gate — mirrors workspaceActionClient in safe-action.ts.
-    // Reads and deletes stay open (invariant #14).
+    // Reads and deletes stay open (invariant #14); `path` additionally
+    // exempts the deletion-lifecycle POST route (see
+    // `OWNER_ACCESS_EXEMPT_PATHS`).
     await assertWorkspaceOwnerAccessForMethod({
       method,
       ownerId: workspace.ownerId,
+      path,
     })
 
     const requestApiToken: RequestApiToken = {

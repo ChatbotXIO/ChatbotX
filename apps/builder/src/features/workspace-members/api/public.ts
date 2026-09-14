@@ -112,11 +112,7 @@ export const workspaceMembersPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { memberId, ...data } = input
-      await workspaceMemberService.findByIdOrFail({
-        id: memberId,
-        workspaceId: context.workspace.id,
-      })
-      await workspaceMemberService.update({
+      await workspaceMemberService.updateMember({
         id: memberId,
         workspaceId: context.workspace.id,
         data,

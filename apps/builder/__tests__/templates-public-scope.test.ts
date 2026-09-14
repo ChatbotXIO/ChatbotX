@@ -21,9 +21,7 @@ const templateService = {
   listSelectableResources: vi.fn(),
   listInstallations: vi.fn(),
   createOrUpdate: vi.fn(),
-  assertInstallable: vi.fn(),
-  createInstallationRecord: vi.fn(),
-  markInstallationFailed: vi.fn(),
+  enqueueInstallation: vi.fn(),
   findByIdOrFail: vi.fn(),
   softDelete: vi.fn(),
   updateShareSettings: vi.fn(),
@@ -36,15 +34,6 @@ vi.mock("@chatbotx.io/business", () => ({
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
   templateService,
-}))
-
-const { defaultQueue } = vi.hoisted(() => ({
-  defaultQueue: { add: vi.fn() },
-}))
-
-vi.mock("@chatbotx.io/worker-config", () => ({
-  DefaultJobAction: { installTemplate: "installTemplate" },
-  defaultQueue,
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -155,7 +144,6 @@ beforeEach(() => {
   getAccessState.mockResolvedValue({ blocked: false })
   isAtLimit.mockResolvedValue(false)
   assertApiNotRateLimited.mockResolvedValue(undefined)
-  defaultQueue.add.mockResolvedValue(undefined)
 })
 
 describe("real router: templates public API scope wiring", () => {
@@ -229,8 +217,7 @@ describe("real router: templates public API scope wiring", () => {
     await expect(run()).rejects.toMatchObject({ code: "FORBIDDEN" })
 
     expect(templateService.createOrUpdate).not.toHaveBeenCalled()
-    expect(templateService.assertInstallable).not.toHaveBeenCalled()
-    expect(templateService.createInstallationRecord).not.toHaveBeenCalled()
+    expect(templateService.enqueueInstallation).not.toHaveBeenCalled()
     expect(templateService.softDelete).not.toHaveBeenCalled()
     expect(templateService.updateShareSettings).not.toHaveBeenCalled()
     expect(templateService.updateInstallationAutoUpdate).not.toHaveBeenCalled()
@@ -249,8 +236,7 @@ describe("real router: templates public API scope wiring", () => {
       })
       templateService.listInstallations.mockResolvedValue([installation])
       templateService.createOrUpdate.mockResolvedValue(template)
-      templateService.assertInstallable.mockResolvedValue({ template })
-      templateService.createInstallationRecord.mockResolvedValue(installation)
+      templateService.enqueueInstallation.mockResolvedValue(installation)
       templateService.findByIdOrFail.mockResolvedValue(template)
       templateService.softDelete.mockResolvedValue(undefined)
       templateService.updateShareSettings.mockResolvedValue(template)
@@ -300,14 +286,10 @@ describe("real router: templates public API scope wiring", () => {
         tenantId: "tenant-1",
         createdBy: null,
       })
-      expect(templateService.assertInstallable).toHaveBeenCalledWith({
+      expect(templateService.enqueueInstallation).toHaveBeenCalledWith({
         shareToken: "share-token",
-        targetWorkspaceId: "ws-1",
-      })
-      expect(templateService.createInstallationRecord).toHaveBeenCalledWith({
         workspaceId: "ws-1",
         installedBy: null,
-        template,
       })
       expect(templateService.findByIdOrFail).toHaveBeenCalledWith({
         workspaceId: "ws-1",

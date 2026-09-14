@@ -1,8 +1,7 @@
 "use server"
 
 import { isDeepStrictEqual } from "node:util"
-import { userService, workspaceMemberService } from "@chatbotx.io/business"
-import { auditService } from "@chatbotx.io/business/audit"
+import { workspaceMemberService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
@@ -60,7 +59,7 @@ export const updateWorkspaceMemberAction = workspaceActionClient
       return
     }
 
-    const updated = await workspaceMemberService.update({
+    const updated = await workspaceMemberService.updateMember({
       id: workspaceMember.id,
       workspaceId,
       data: updateInput,
@@ -68,19 +67,5 @@ export const updateWorkspaceMemberAction = workspaceActionClient
 
     if (!updated) {
       return
-    }
-
-    // Only a real permissions/role change is in the audit-log spec for this
-    // action — a save that only touches notification settings must not be
-    // recorded as a "changed role" event.
-    if (permissionsChanged) {
-      const targetUser = await userService.findNameAndEmail(
-        workspaceMember.userId,
-      )
-
-      await auditService.record({
-        action: "role_change",
-        detail: `changed role of ${targetUser?.name ?? targetUser?.email ?? "a member"} to ${updateInput.permissions.superAdmin ? "admin" : "member"}`,
-      })
     }
   })
