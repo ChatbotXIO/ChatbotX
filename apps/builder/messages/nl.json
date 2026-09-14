@@ -1985,7 +1985,8 @@
       "minigames": "Minigames",
       "appointments": "Afspraken",
       "media": "Media",
-      "ads": "Advertenties"
+      "ads": "Advertenties",
+      "workspace": "Werkruimte"
     },
     "adReferral": {
       "label": "Ads",

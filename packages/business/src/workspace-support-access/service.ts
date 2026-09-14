@@ -53,7 +53,7 @@ export class WorkspaceSupportAccessService extends BaseService {
   private auditAndLog(props: {
     action: SupportAccessAuditAction
     detail: string
-    userId: string
+    userId?: string
     workspaceId: string
   }) {
     const { action, detail, userId, workspaceId } = props
@@ -69,7 +69,7 @@ export class WorkspaceSupportAccessService extends BaseService {
    */
   async enable(props: {
     workspaceId: string
-    actorUserId: string
+    actorUserId: string | null
   }): Promise<void> {
     const { workspaceId, actorUserId } = props
 
@@ -89,7 +89,7 @@ export class WorkspaceSupportAccessService extends BaseService {
     await this.auditAndLog({
       action: "support_access_enabled",
       detail: `enabled platform support access for workspace ${workspaceId} until ${supportAccessUntil.toISOString()}`,
-      userId: actorUserId,
+      userId: actorUserId ?? undefined,
       workspaceId,
     })
   }
@@ -102,7 +102,7 @@ export class WorkspaceSupportAccessService extends BaseService {
    */
   async disable(props: {
     workspaceId: string
-    actorUserId: string
+    actorUserId: string | null
   }): Promise<void> {
     const { workspaceId, actorUserId } = props
 
@@ -120,7 +120,7 @@ export class WorkspaceSupportAccessService extends BaseService {
     await this.auditAndLog({
       action: "support_access_disabled",
       detail: `disabled platform support access for workspace ${workspaceId}`,
-      userId: actorUserId,
+      userId: actorUserId ?? undefined,
       workspaceId,
     })
   }

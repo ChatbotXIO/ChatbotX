@@ -24,7 +24,7 @@ const RAW_BASE_ALLOWLIST = new Set([
 ])
 
 const AUTHENTICATED_BASE =
-  /\b(authorizedAPI|workspaceTokenAuthAPIForScope|channelApiTokenAPI)\b/
+  /\b(authorizedAPI|workspaceTokenAuthAPIForScope|workspaceTokenAdminAPI|channelApiTokenAPI)\b/
 
 const PROCEDURE_HANDLER = /\.handler\(/
 
@@ -61,11 +61,12 @@ describe("/rpc router auth surface", () => {
     )
 
     // Adding an export here means adding a way to mount a procedure. If it is
-    // not one of these three, it must carry its own auth middleware — and this
+    // not one of these four, it must carry its own auth middleware — and this
     // test is where that decision gets recorded.
     expect(exported.sort()).toEqual([
       "authorizedAPI",
       "channelApiTokenAPI",
+      "workspaceTokenAdminAPI",
       "workspaceTokenAuthAPIForScope",
     ])
   })

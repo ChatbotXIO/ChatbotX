@@ -163,7 +163,7 @@ class TemplateService {
   async createOrUpdate(input: {
     workspaceId: string
     tenantId: string
-    createdBy: string
+    createdBy: string | null
     name: string
     description?: string | null
     imageUrl?: string | null
@@ -318,7 +318,7 @@ class TemplateService {
    */
   async createInstallationRecord(input: {
     workspaceId: string
-    installedBy: string
+    installedBy: string | null
     template: TemplateModel
   }): Promise<TemplateInstallationModel> {
     const [installation] = await db

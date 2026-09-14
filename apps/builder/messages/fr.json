@@ -2172,7 +2172,8 @@
       "minigames": "Mini-jeux",
       "appointments": "Rendez-vous",
       "media": "Médias",
-      "ads": "Publicités"
+      "ads": "Publicités",
+      "workspace": "Espace de travail"
     },
     "adReferral": {
       "label": "Ads",

@@ -1445,7 +1445,8 @@
       "minigames": "小遊戲",
       "appointments": "預約",
       "media": "媒體",
-      "ads": "廣告"
+      "ads": "廣告",
+      "workspace": "工作區"
     },
     "adReferral": {
       "label": "Ads",

@@ -21,6 +21,7 @@ import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
 import { workspaceUsageService } from "../workspace-usage/service"
+import { normalizeWorkspaceMemberPermissions } from "./permissions"
 
 type ListWorkspaceMembersInput = {
   workspaceId: string
@@ -311,6 +312,19 @@ export class WorkspaceMemberService extends BaseService {
     return member
   }
 
+  normalizeUpdateData<
+    Data extends Partial<typeof workspaceMemberModel.$inferInsert>,
+  >(data: Data): Data {
+    if (!data.permissions) {
+      return data
+    }
+
+    return {
+      ...data,
+      permissions: normalizeWorkspaceMemberPermissions(data.permissions),
+    } as Data
+  }
+
   async update(input: {
     tx?: DatabaseClient
     id: string
@@ -318,10 +332,11 @@ export class WorkspaceMemberService extends BaseService {
     data: Partial<typeof workspaceMemberModel.$inferInsert>
   }): Promise<{ id: string } | undefined> {
     const { tx = db, id, workspaceId, data } = input
+    const normalizedData = this.normalizeUpdateData(data)
 
     const updated = await tx
       .update(workspaceMemberModel)
-      .set(data)
+      .set(normalizedData)
       .where(
         and(
           eq(workspaceMemberModel.id, id),

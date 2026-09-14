@@ -1,4 +1,5 @@
 import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
+import { isCommunity } from "../keys"
 
 /**
  * Every `WorkspaceMemberPermissions` flag set to `true`. Used by the
@@ -17,3 +18,18 @@ export const FULL_WORKSPACE_MEMBER_PERMISSIONS: WorkspaceMemberPermissions =
     broadcast: true,
     ecommerce: true,
   })
+
+export const normalizeWorkspaceMemberPermissions = (
+  permissions: WorkspaceMemberPermissions,
+): WorkspaceMemberPermissions => {
+  if (isCommunity()) {
+    return { ...FULL_WORKSPACE_MEMBER_PERMISSIONS }
+  }
+
+  return {
+    ...permissions,
+    onlyAssignedContacts: permissions.contacts
+      ? false
+      : permissions.onlyAssignedContacts,
+  }
+}

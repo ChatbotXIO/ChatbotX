@@ -1,3 +1,4 @@
+import { auditLogsPublicRouter } from "@/enterprise/features/audit-logs/api/public"
 import { inboxTeamsPublicRouter } from "@/enterprise/features/inbox-teams/api/public"
 import { adsPublicRouter } from "@/features/ads/api/public"
 import { aiAgentsPublicRouter } from "@/features/ai-agents/api/public"
@@ -48,10 +49,13 @@ import { savedRepliesPublicRouter } from "@/features/saved-replies/api/public"
 import { sequencesPublicRouter } from "@/features/sequences/api/public"
 import { spreadsheetsPublicRouter } from "@/features/spreadsheets/api/public"
 import { tagsPublicRouter } from "@/features/tags/api/public"
+import { templatesPublicRouter } from "@/features/templates/api/public"
 import { triggersPublicRouter } from "@/features/triggers/api/public"
 import { userPersistentMenusPublicRouter } from "@/features/user-persistent-menus/api/public"
 import { webhooksPublicRouter } from "@/features/webhooks/api/public"
 import { workspaceMembersPublicRouter } from "@/features/workspace-members/api/public"
+import { workspacePublicRouter } from "@/features/workspaces/api/public"
+import { apiTokensPublicRouter } from "@/features/workspaces/api/public/api-tokens"
 
 export const publicRouter = {
   ads: adsPublicRouter,
@@ -60,10 +64,12 @@ export const publicRouter = {
   aiFunctions: aiFunctionsPublicRouter,
   aiMcpServers: aiMcpServersPublicRouter,
   analytics: analyticsPublicRouter,
+  apiTokens: apiTokensPublicRouter,
   appointmentCalendars: appointmentCalendarsPublicRouter,
   appointmentExternalCalendars: appointmentExternalCalendarsPublicRouter,
   appointmentReminders: appointmentRemindersPublicRouter,
   appointments: appointmentsPublicRouter,
+  auditLogs: auditLogsPublicRouter,
   botFields: botFieldsPublicRouter,
   broadcasts: broadcastsPublicRouter,
   channels: channelsPublicRouter,
@@ -102,10 +108,12 @@ export const publicRouter = {
   spreadsheets: spreadsheetsPublicRouter,
   tags: tagsPublicRouter,
   templateMessages: templateMessagesPublicRouter,
+  templates: templatesPublicRouter,
   triggers: triggersPublicRouter,
   userPersistentMenus: userPersistentMenusPublicRouter,
   webchats: webchatsPublicRouter,
   webhooks: webhooksPublicRouter,
+  workspace: workspacePublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,
   zaloChannels: zaloChannelsPublicRouter,
 }

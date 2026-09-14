@@ -5,8 +5,6 @@ import {
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { findOrFail } from "@chatbotx.io/database/client"
-import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
@@ -20,10 +18,9 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
       bindArgsParsedInputs: [workspaceId, id],
     } = props
 
-    const workspaceMember = await findOrFail({
-      table: workspaceMemberModel,
-      where: { id, workspaceId },
-      message: "Workspace member not found",
+    const workspaceMember = await workspaceMemberService.findByIdOrFail({
+      id,
+      workspaceId,
     })
 
     if (workspaceMember.role === "owner") {

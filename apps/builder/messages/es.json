@@ -2309,7 +2309,8 @@
       "minigames": "Minijuegos",
       "appointments": "Citas",
       "media": "Medios",
-      "ads": "Anuncios"
+      "ads": "Anuncios",
+      "workspace": "Espacio de trabajo"
     },
     "adReferral": {
       "label": "Ads",

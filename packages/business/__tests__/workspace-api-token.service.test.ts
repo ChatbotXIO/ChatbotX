@@ -14,6 +14,9 @@ const listByWorkspaceId = vi.fn(async () => [] as unknown[])
 const countByWorkspaceId = vi.fn(async (): Promise<number> => 0)
 const lockWorkspaceTokens = vi.fn(async (): Promise<void> => undefined)
 const deleteByIdForWorkspace = vi.fn(async (): Promise<boolean> => false)
+const findByIdForWorkspace = vi.fn(async (): Promise<unknown> => null)
+const updateByIdForWorkspace = vi.fn(async (): Promise<unknown> => null)
+const rotateTokenById = vi.fn(async (): Promise<unknown> => null)
 const insert = vi.fn(async () => ({
   id: "t-1",
   workspaceId: "ws-1",
@@ -33,6 +36,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     countByWorkspaceId,
     lockWorkspaceTokens,
     deleteByIdForWorkspace,
+    findByIdForWorkspace,
+    updateByIdForWorkspace,
+    rotateTokenById,
     insert,
     findDefaultByWorkspaceId,
     insertDefault,
@@ -108,6 +114,9 @@ beforeEach(() => {
   countByWorkspaceId.mockResolvedValue(0)
   lockWorkspaceTokens.mockResolvedValue(undefined)
   deleteByIdForWorkspace.mockResolvedValue(false)
+  findByIdForWorkspace.mockResolvedValue(null)
+  updateByIdForWorkspace.mockResolvedValue(null)
+  rotateTokenById.mockResolvedValue(null)
   workspaceService.findById.mockResolvedValue({
     id: "ws-1",
     name: "Acme",
@@ -375,6 +384,123 @@ describe("workspaceApiTokenService.createToken", () => {
       }),
     ).resolves.toMatchObject({ id: "t-1" })
     expect(logger.warn).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("workspaceApiTokenService.updateToken", () => {
+  test("updates the supplied fields and invalidates the workspace token cache", async () => {
+    findByIdForWorkspace.mockResolvedValue({
+      id: "t-1",
+      workspaceId: "ws-1",
+      isDefault: false,
+    })
+    const updatedToken = {
+      id: "t-1",
+      workspaceId: "ws-1",
+      name: "Renamed token",
+      permission: "full",
+      scopes: null,
+    }
+    updateByIdForWorkspace.mockResolvedValue(updatedToken)
+
+    await expect(
+      workspaceApiTokenService.updateToken({
+        workspaceId: "ws-1",
+        id: "t-1",
+        name: "Renamed token",
+      }),
+    ).resolves.toEqual(updatedToken)
+
+    expect(updateByIdForWorkspace).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws-1",
+        id: "t-1",
+        name: "Renamed token",
+        permission: undefined,
+        scopes: undefined,
+      },
+      db,
+    )
+    expect(invalidateCacheByTags).toHaveBeenCalledWith([
+      workspaceApiTokenCacheTag("ws-1"),
+    ])
+  })
+
+  test("rejects a default token before updating it", async () => {
+    findByIdForWorkspace.mockResolvedValue({
+      id: "t-default",
+      workspaceId: "ws-1",
+      isDefault: true,
+    })
+
+    await expect(
+      workspaceApiTokenService.updateToken({
+        workspaceId: "ws-1",
+        id: "t-default",
+        name: "Renamed token",
+      }),
+    ).rejects.toMatchObject({ code: "workspaceApiTokenImmutable" })
+
+    expect(updateByIdForWorkspace).not.toHaveBeenCalled()
+  })
+})
+
+describe("workspaceApiTokenService.rotateToken", () => {
+  test("rotates credentials and invalidates the workspace token cache", async () => {
+    findByIdForWorkspace.mockResolvedValue({
+      id: "t-1",
+      workspaceId: "ws-1",
+      isDefault: false,
+    })
+    const rotatedToken = {
+      id: "t-1",
+      workspaceId: "ws-1",
+      name: "Rotated token",
+      permission: "full",
+      scopes: null,
+    }
+    rotateTokenById.mockResolvedValue(rotatedToken)
+
+    await expect(
+      workspaceApiTokenService.rotateToken({
+        workspaceId: "ws-1",
+        id: "t-1",
+        tokenHash: TOKEN_HASH,
+        tokenPrefix: "cbx_ws_rotated",
+      }),
+    ).resolves.toEqual(rotatedToken)
+
+    expect(rotateTokenById).toHaveBeenCalledWith(
+      {
+        workspaceId: "ws-1",
+        id: "t-1",
+        tokenHash: TOKEN_HASH,
+        tokenPrefix: "cbx_ws_rotated",
+      },
+      db,
+    )
+    expect(invalidateCacheByTags).toHaveBeenCalledWith([
+      workspaceApiTokenCacheTag("ws-1"),
+    ])
+  })
+
+  test("rejects a default token before rotating it", async () => {
+    findByIdForWorkspace.mockResolvedValue({
+      id: "t-default",
+      workspaceId: "ws-1",
+      isDefault: true,
+    })
+
+    await expect(
+      workspaceApiTokenService.rotateToken({
+        workspaceId: "ws-1",
+        id: "t-default",
+        tokenHash: TOKEN_HASH,
+        tokenPrefix: "cbx_ws_rotated",
+      }),
+    ).rejects.toMatchObject({ code: "workspaceApiTokenImmutable" })
+
+    expect(rotateTokenById).not.toHaveBeenCalled()
   })
 })
 

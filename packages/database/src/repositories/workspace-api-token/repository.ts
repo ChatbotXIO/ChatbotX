@@ -32,6 +32,22 @@ type SetEncryptedTokenInput = {
   encryptedToken: EncryptedData
 }
 
+type UpdateWorkspaceApiTokenInput = {
+  id: string
+  workspaceId: string
+  name?: string
+  permission?: WorkspaceApiTokenPermission
+  // undefined = leave unchanged; null = unrestricted ("All scopes")
+  scopes?: WorkspaceApiTokenScope[] | null
+}
+
+type RotateWorkspaceApiTokenInput = {
+  id: string
+  workspaceId: string
+  tokenHash: TokenHash
+  tokenPrefix: string
+}
+
 class WorkspaceApiTokenRepository {
   async findByTokenHash(
     tokenHash: TokenHash,
@@ -79,6 +95,73 @@ class WorkspaceApiTokenRepository {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`,
     )
+  }
+
+  async findByIdForWorkspace(
+    input: { id: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<WorkspaceApiTokenModel | null> {
+    const row = await tx.query.workspaceApiTokenModel.findFirst({
+      where: { id: input.id, workspaceId: input.workspaceId },
+    })
+
+    return row ?? null
+  }
+
+  async updateByIdForWorkspace(
+    input: UpdateWorkspaceApiTokenInput,
+    tx: DatabaseClient = db,
+  ): Promise<WorkspaceApiTokenModel | null> {
+    const values: {
+      name?: string
+      permission?: WorkspaceApiTokenPermission
+      scopes?: WorkspaceApiTokenScope[] | null
+    } = {}
+
+    if (input.name !== undefined) {
+      values.name = input.name
+    }
+    if (input.permission !== undefined) {
+      values.permission = input.permission
+    }
+    if (input.scopes !== undefined) {
+      values.scopes = input.scopes
+    }
+
+    if (Object.keys(values).length === 0) {
+      return await this.findByIdForWorkspace(input, tx)
+    }
+
+    const [row] = await tx
+      .update(workspaceApiTokenModel)
+      .set(values)
+      .where(
+        and(
+          eq(workspaceApiTokenModel.id, input.id),
+          eq(workspaceApiTokenModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .returning()
+
+    return row ?? null
+  }
+
+  async rotateTokenById(
+    input: RotateWorkspaceApiTokenInput,
+    tx: DatabaseClient = db,
+  ): Promise<WorkspaceApiTokenModel | null> {
+    const [row] = await tx
+      .update(workspaceApiTokenModel)
+      .set({ tokenHash: input.tokenHash, tokenPrefix: input.tokenPrefix })
+      .where(
+        and(
+          eq(workspaceApiTokenModel.id, input.id),
+          eq(workspaceApiTokenModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .returning()
+
+    return row ?? null
   }
 
   async deleteByIdForWorkspace(

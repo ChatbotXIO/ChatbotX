@@ -4,15 +4,10 @@ import { isDeepStrictEqual } from "node:util"
 import { userService, workspaceMemberService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { isCommunity } from "@/env"
 import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import {
-  getSuperAdminPermissions,
-  normalizeContactsPermissions,
-} from "../helpers"
 import { updateWorkspaceMemberRequest } from "../schema/mutation"
 
 export const updateWorkspaceMemberAction = workspaceActionClient
@@ -40,15 +35,7 @@ export const updateWorkspaceMemberAction = workspaceActionClient
       )
     }
 
-    const updateInput = isCommunity()
-      ? {
-          ...parsedInput,
-          permissions: getSuperAdminPermissions(),
-        }
-      : {
-          ...parsedInput,
-          permissions: normalizeContactsPermissions(parsedInput.permissions),
-        }
+    const updateInput = workspaceMemberService.normalizeUpdateData(parsedInput)
 
     const permissionsChanged = !isDeepStrictEqual(
       workspaceMember.permissions,
