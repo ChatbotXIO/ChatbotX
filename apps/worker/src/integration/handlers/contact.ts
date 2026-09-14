@@ -2,6 +2,7 @@ import {
   contactCustomFieldService,
   contactNoteService,
   contactService,
+  messageService,
   tagService,
 } from "@chatbotx.io/business"
 import { contactSequenceService } from "@chatbotx.io/business/contact-sequence"
@@ -61,6 +62,24 @@ export async function setContactCustomField({
       allowBotFields: true,
       operation: step.operation,
     })
+
+    if (conversation.id && contactInbox.id) {
+      await messageService
+        .createActivity({
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          contactInboxId: contactInbox.id,
+          text: `Custom field changed: ${step.inputFieldId}\nNew value: ${resolvedValue}`,
+          contentAttributes: {
+            activityType: "custom_field_changed",
+            fieldKeyword: step.inputFieldId,
+            newValue: resolvedValue,
+          },
+        })
+        .catch((err) => {
+          logger.warn({ err }, "Failed to create custom field activity message")
+        })
+    }
   } catch (error: unknown) {
     // Steps run one-per-BullMQ-job and the next step is only enqueued after
     // this one returns — a thrown error (e.g. an invalid number value) would
@@ -91,6 +110,23 @@ export async function clearContactCustomField({
     contactInboxId: contactInbox.id,
     allowBotFields: true,
   })
+
+  if (conversation.id && contactInbox.id) {
+    await messageService
+      .createActivity({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        text: `Custom field cleared: ${step.inputFieldId}`,
+        contentAttributes: {
+          activityType: "custom_field_cleared",
+          fieldKeyword: step.inputFieldId,
+        },
+      })
+      .catch((err) => {
+        logger.warn({ err }, "Failed to create clear field activity message")
+      })
+  }
 }
 
 export async function addContactNotes({
@@ -143,6 +179,23 @@ export async function addContactTag({
     step.tags,
     contactInbox,
   )
+
+  if (step.tags.length > 0 && conversation.id && contactInbox.id) {
+    await messageService
+      .createActivity({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        text: `Tag added: ${step.tags.join(", ")}`,
+        contentAttributes: {
+          activityType: "tag_added",
+          tags: step.tags,
+        },
+      })
+      .catch((err) => {
+        logger.warn({ err }, "Failed to create tag added activity message")
+      })
+  }
 }
 
 /**
@@ -185,6 +238,23 @@ export async function removeContactTag({
     step.tags,
     contactInbox,
   )
+
+  if (step.tags.length > 0 && conversation.id && contactInbox.id) {
+    await messageService
+      .createActivity({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        text: `Tag removed: ${step.tags.join(", ")}`,
+        contentAttributes: {
+          activityType: "tag_removed",
+          tags: step.tags,
+        },
+      })
+      .catch((err) => {
+        logger.warn({ err }, "Failed to create tag removed activity message")
+      })
+  }
 }
 
 export async function detachTagsByNames(
@@ -226,6 +296,23 @@ export async function addContactSequence({
     sequenceId: step.sequenceId,
     contactInboxId: contactInbox.id,
   })
+
+  if (conversation.id && contactInbox.id) {
+    await messageService
+      .createActivity({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        text: "Subscribed to sequence",
+        contentAttributes: {
+          activityType: "sequence_subscribed",
+          sequenceId: step.sequenceId,
+        },
+      })
+      .catch((err) => {
+        logger.warn({ err }, "Failed to create sequence activity message")
+      })
+  }
 }
 
 export async function removeContactSequence({
@@ -244,6 +331,26 @@ export async function removeContactSequence({
     reason: "unsubscribed_via_flow",
     contactInboxId: contactInbox.id,
   })
+
+  if (conversation.id && contactInbox.id) {
+    await messageService
+      .createActivity({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        text: "Unsubscribed from sequence",
+        contentAttributes: {
+          activityType: "sequence_unsubscribed",
+          sequenceId: step.sequenceId,
+        },
+      })
+      .catch((err) => {
+        logger.warn(
+          { err },
+          "Failed to create unsubscribe sequence activity message",
+        )
+      })
+  }
 }
 
 export async function subscribeBroadcast({

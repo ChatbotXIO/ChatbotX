@@ -3271,7 +3271,29 @@
     "waTemplateLtoExpirationRequired": "Vælg en udløbsdato for tilbuddet, før du sender.",
     "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem.",
     "mediaStepUnsupported": "Denne kanal kan ikke sende denne medietype. Fjern trinnet, eller peg noden mod en kanal der understøtter det.",
-    "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette."
+    "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette.",
+    "activity": {
+      "customFieldChanged": "Custom field changed: {name}",
+      "customFieldCleared": "Custom field cleared: {name}",
+      "previousValue": "Previous value",
+      "newValue": "New value",
+      "unset": "unset",
+      "tagAdded": "Tag added: {tag}",
+      "tagAddedLabel": "Tag added",
+      "tagRemoved": "Tag removed: {tag}",
+      "tagRemovedLabel": "Tag removed",
+      "flowTriggered": "Automation {name} was triggered",
+      "flowTriggeredPrefix": "Automation",
+      "flowTriggeredSuffix": "was triggered",
+      "sequenceSubscribed": "Subscribed to sequence: {name}",
+      "sequenceSubscribedPrefix": "Subscribed to sequence:",
+      "sequenceUnsubscribed": "Unsubscribed from sequence: {name}",
+      "sequenceUnsubscribedPrefix": "Unsubscribed from sequence:",
+      "conversationClosed": "Conversation was closed",
+      "conversationReopened": "Conversation was reopened",
+      "toggleHideEvents": "Hide system events",
+      "toggleShowEvents": "Show system events"
+    }
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",

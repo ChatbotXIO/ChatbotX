@@ -1,5 +1,9 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
-import { broadcastService } from "@chatbotx.io/business"
+import {
+  broadcastService,
+  flowService,
+  messageService,
+} from "@chatbotx.io/business"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { contactsOnBroadcastsModel } from "@chatbotx.io/database/schema"
@@ -278,6 +282,33 @@ export const runFlowNode = async (
     targetType = "node"
     targetId = targetNode.id
     targetNodeId = targetNode.id
+
+    const isInitialFlowStart =
+      !props.startFromStepId && (!props.nodeId || targetNode.data.isStartNode)
+
+    if (isInitialFlowStart && conversation.id && contactInbox.id) {
+      try {
+        const flow = await flowService.findBy({
+          id: props.flowId,
+          workspaceId: conversation.workspaceId,
+        })
+        if (flow?.name) {
+          await messageService.createActivity({
+            workspaceId: conversation.workspaceId,
+            conversationId: conversation.id,
+            contactInboxId: contactInbox.id,
+            text: `Automation "${flow.name}" was triggered`,
+            contentAttributes: {
+              activityType: "flow_triggered",
+              flowId: flow.id,
+              flowName: flow.name,
+            },
+          })
+        }
+      } catch (err) {
+        logger.warn({ err }, "Failed to create flow_triggered activity message")
+      }
+    }
   }
 
   try {

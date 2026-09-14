@@ -3145,6 +3145,28 @@
     "title": "Editar perfil"
   },
   "messages": {
+    "activity": {
+      "customFieldChanged": "Campo personalizado cambiado: {name}",
+      "customFieldCleared": "Campo personalizado eliminado: {name}",
+      "previousValue": "Valor anterior",
+      "newValue": "Nuevo valor",
+      "unset": "unset",
+      "tagAdded": "Etiqueta añadida: {tag}",
+      "tagAddedLabel": "Etiqueta añadida",
+      "tagRemoved": "Etiqueta eliminada: {tag}",
+      "tagRemovedLabel": "Etiqueta eliminada",
+      "flowTriggered": "La automatización {name} se activó",
+      "flowTriggeredPrefix": "La automatización",
+      "flowTriggeredSuffix": "se activó",
+      "sequenceSubscribed": "Suscrito a secuencia: {name}",
+      "sequenceSubscribedPrefix": "Suscrito a secuencia:",
+      "sequenceUnsubscribed": "Desuscrito de secuencia: {name}",
+      "sequenceUnsubscribedPrefix": "Desuscrito de secuencia:",
+      "conversationClosed": "La conversación fue cerrada",
+      "conversationReopened": "La conversación fue reabierta",
+      "toggleHideEvents": "Ocultar eventos del sistema",
+      "toggleShowEvents": "Mostrar eventos del sistema"
+    },
     "moveFeature": "Mover {feature}",
     "poweredBy": "Con tecnología de {name}",
     "noGiphyApiKey": "No GIPHY API clave found. Por favor, Añadir one en Platform Ajustes.",

@@ -43,6 +43,7 @@ import { useState } from "react"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentUrl } from "@/features/attachments/utils"
 import type { MessageResourceWithRelations } from "../schema/resource"
+import { ActivityMessageItem } from "./activity-message-item"
 import { MessageActions, MessageActionsEditor } from "./message-actions"
 import { MessageBubble } from "./message-bubble"
 
@@ -89,6 +90,10 @@ export const MessageItem = (props: MessageItemProps) => {
   } = props
   const t = useTranslations("messages")
   const [isEditing, setIsEditing] = useState(false)
+
+  if (message.messageType === "activity") {
+    return <ActivityMessageItem message={message} />
+  }
 
   const variants: Record<"left" | "right" | "full", string> = {
     left: "px-4 py-3 rounded-xl bg-secondary",

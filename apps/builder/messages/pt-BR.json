@@ -3250,7 +3250,29 @@
     "waTemplateLtoExpirationRequired": "Escolha uma data de expiração para a oferta por tempo limitado antes de enviar.",
     "waTemplateMpmIncompleteProducts": "Cada seção precisa de pelo menos um produto selecionado — remova linhas vazias ou escolha um produto.",
     "mediaStepUnsupported": "Este canal não consegue enviar esse tipo de mídia. Remova a etapa ou aponte este nó para um canal compatível.",
-    "mediaButtonsUnsupported": "Este canal não consegue enviar botões junto com uma mensagem de mídia. Remova os botões ou mova-os para uma etapa de texto depois desta."
+    "mediaButtonsUnsupported": "Este canal não consegue enviar botões junto com uma mensagem de mídia. Remova os botões ou mova-os para uma etapa de texto depois desta.",
+    "activity": {
+      "customFieldChanged": "Campo personalizado alterado: {name}",
+      "customFieldCleared": "Campo personalizado removido: {name}",
+      "previousValue": "Valor anterior",
+      "newValue": "Novo valor",
+      "unset": "unset",
+      "tagAdded": "Tag adicionada: {tag}",
+      "tagAddedLabel": "Tag adicionada",
+      "tagRemoved": "Tag removida: {tag}",
+      "tagRemovedLabel": "Tag removida",
+      "flowTriggered": "A automação {name} foi iniciada",
+      "flowTriggeredPrefix": "A automação",
+      "flowTriggeredSuffix": "foi iniciada",
+      "sequenceSubscribed": "Inscrito na sequência: {name}",
+      "sequenceSubscribedPrefix": "Inscrito na sequência:",
+      "sequenceUnsubscribed": "Cancelada inscrição da sequência: {name}",
+      "sequenceUnsubscribedPrefix": "Cancelada inscrição da sequência:",
+      "conversationClosed": "A conversa foi encerrada",
+      "conversationReopened": "A conversa foi reaberta",
+      "toggleHideEvents": "Ocultar eventos do sistema",
+      "toggleShowEvents": "Mostrar eventos do sistema"
+    }
   },
   "instagram": {
     "description": "Esta integração permite criar bots do Instagram.",

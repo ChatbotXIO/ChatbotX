@@ -24,6 +24,7 @@ export function MessageList() {
 
   const {
     messages,
+    showSystemEvents,
     loadMoreMessages,
     isLoadMoreMessage,
     hasNextMessagePage,
@@ -235,6 +236,10 @@ export function MessageList() {
     loadMoreMessages(workspaceId, MESSAGE_LIST_PER_PAGE)
   }
 
+  const filteredMessages = showSystemEvents
+    ? messages
+    : messages.filter((m) => m.messageType !== "activity")
+
   return (
     // `min-h-0`: Virtuoso's scroller is `height: 100%`, so without it this item
     // is floored at the full list height and pushes the composer below the fold
@@ -246,7 +251,7 @@ export function MessageList() {
           List: MessageComponentList,
           Header: MessageComponentHeader,
         }}
-        data={messages}
+        data={filteredMessages}
         firstItemIndex={firstItemIndex}
         followOutput
         initialTopMostItemIndex={{ index: "LAST" }}
