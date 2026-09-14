@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url"
 // tests observe production serialization, not a `vi.fn()` shaped like it.
 import { ResponseCookies } from "next/dist/server/web/spec-extension/cookies"
 import { describe, expect, test, vi } from "vitest"
-import { CONNECT_RETRY_HREF } from "@/features/channel-connect/lib/registry"
+import { getConnectRetryHref } from "@/features/channel-connect/lib/registry"
 import {
   FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE,
   FB_INSTAGRAM_PENDING_AUTH_COOKIE,
@@ -238,6 +238,6 @@ describe("the pending-auth cookie's Path covers every path that reads it", () =>
   })
 
   test("the session-expired retry route receives the cookie", () => {
-    expect(pathMatches(CONNECT_RETRY_HREF, writtenCookiePath())).toBe(true)
+    expect(pathMatches(getConnectRetryHref(), writtenCookiePath())).toBe(true)
   })
 })

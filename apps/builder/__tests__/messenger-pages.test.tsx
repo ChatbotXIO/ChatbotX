@@ -161,6 +161,23 @@ describe("MessengerPages", () => {
     expect(container.textContent).toContain(
       "messenger.selectPage.noConnectablePagesDescription",
     )
+    const retryLink = Array.from(container.querySelectorAll("a")).find(
+      (link) => link.textContent === "messenger.selectPage.tryAgain",
+    )
+    expect(retryLink?.getAttribute("href")).toBe(
+      "/channels/create?workspaceId=ws-1",
+    )
+  })
+
+  test("empty picker retry preserves workspace ID", () => {
+    renderPages([])
+
+    const retryLink = Array.from(container.querySelectorAll("a")).find(
+      (link) => link.textContent === "messenger.selectPage.tryAgain",
+    )
+    expect(retryLink?.getAttribute("href")).toBe(
+      "/channels/create?workspaceId=ws-1",
+    )
   })
 
   test("does not show the not-admin warning when every page is merely already connected", () => {
@@ -354,6 +371,9 @@ describe("MessengerPages", () => {
       (link) => link.textContent === "messenger.selectPage.tryAgain",
     )
     expect(tryAgainLink).not.toBeUndefined()
+    expect(tryAgainLink?.getAttribute("href")).toBe(
+      "/channels/create?workspaceId=ws-1",
+    )
     // The form (and its checkboxes) stays mounted — the operator can still
     // retry the selection instead of being dead-ended.
     expect(checkboxes().length).toBeGreaterThan(0)

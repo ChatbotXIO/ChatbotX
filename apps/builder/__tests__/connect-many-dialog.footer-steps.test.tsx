@@ -292,6 +292,32 @@ describe("ConnectManyDialog — footer and steps", () => {
     expect(
       buttonByText("channels.connectMany.goToChannels"),
     ).not.toBeUndefined()
+    expect(
+      document.body.querySelector('a[href="/channels/create?workspaceId=ws-1"]'),
+    ).not.toBeNull()
+  })
+
+  test("a workspace-less session error retry stays on the bare channel-create route", async () => {
+    const { connectOne, controllers } = controllableConnectOne()
+    render({
+      connectOne,
+      items: [{ id: "a", name: "A" }],
+      workspaceId: "",
+    })
+
+    await act(async () => {
+      await flush()
+      controllers.get("a")?.resolve({
+        kind: "sessionError",
+        code: "sessionExpired",
+      })
+      await flush()
+    })
+
+    expect(document.body.querySelector('a[href="/channels/create"]')).not.toBeNull()
+    expect(
+      document.body.querySelector('a[href*="workspaceId="]'),
+    ).toBeNull()
   })
 
   test("Progress carries the motion-reduce class and the connecting spinner carries motion-safe:animate-spin", async () => {
