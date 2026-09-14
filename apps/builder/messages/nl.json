@@ -1999,6 +1999,9 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "userCode": {
+      "label": "Gebruikerscode"
     }
   },
   "condition": {

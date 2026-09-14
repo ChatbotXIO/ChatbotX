@@ -3056,6 +3056,9 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "userCode": {
+      "label": "Användarkod"
     }
   },
   "flowAnalytics": {
