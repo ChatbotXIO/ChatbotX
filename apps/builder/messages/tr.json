@@ -864,6 +864,10 @@
     "deleteConfirmation": "Kesinlikle emin misiniz?\nBu işlem geri alınamaz.\nBu, {feature} öğenizi sunucularımızdan kalıcı olarak silecektir."
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "Pazarlama Mesajları Yapılandırma Kimliği",
+      "description": "marketing_messages_messenger iznini istemek için kullanılan Facebook Login for Business yapılandırma kimliği."
+    },
     "omnichannel": {
       "label": "Çok Kanallı"
     },
@@ -2595,6 +2599,41 @@
   },
   "general": {
     "title": "Genel"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Bu, kampanyayı yalnızca ChatbotX'ten kaldırır. Meta mesaj kampanyası çalışmaya devam eder — Reklam Yöneticisi'nde duraklatın veya silin.",
+    "title": "Facebook Pazarlama Mesajları",
+    "description": "Messenger'da kişiselleştirilmiş tanıtım mesajlarıyla etkileşimi ve satışları artırın.",
+    "create": "Yeni Oluştur",
+    "grantTitle": "Facebook erişimi ver",
+    "grantDescription": "Pazarlama Mesajları özelliğini kullanmak için lütfen erişim izni verin",
+    "grantAction": "Erişim ver",
+    "reconnect": "Yeniden bağlan",
+    "expiredWarning": "Facebook erişiminiz sona erdi veya iptal edildi. Kampanya oluşturmak veya düzenlemek için yeniden bağlanın. Mevcut kampanyalar aşağıda gösterilir ve yeniden bağlanana kadar salt okunurdur.",
+    "fields": {
+      "image": "Görsel",
+      "video": "Video",
+      "page": "Facebook Sayfası",
+      "adAccount": "Reklam hesabı",
+      "budgetType": "Bütçe türü",
+      "budget": "Bütçe",
+      "daily": "Günlük bütçe",
+      "lifetime": "Toplam bütçe",
+      "templateType": "Mesaj türü",
+      "text": "Metin",
+      "button": "Düğme",
+      "media": "Medya",
+      "generic": "Genel",
+      "greeting": "Karşılama",
+      "quickReplies": "Hızlı yanıtlar",
+      "elements": "Kartlar"
+    },
+    "errors": {
+      "notConfigured": "Facebook Pazarlama Mesajları yapılandırılmadı. Yöneticinizden Pazarlama Mesajları Yapılandırma Kimliği'ni ayarlamasını isteyin.",
+      "notGranted": "Pazarlama Mesajları özelliğini kullanmak için lütfen erişim izni verin.",
+      "tosNotAccepted": "Bu özelliği kullanmak için {url} adresinde özel nesne koşullarını kabul edin",
+      "notFound": "Pazarlama mesajı bulunamadı."
+    }
   },
   "facebookAds": {
     "title": "Facebook Ads",

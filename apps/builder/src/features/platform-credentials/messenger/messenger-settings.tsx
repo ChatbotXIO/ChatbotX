@@ -214,6 +214,8 @@ export function EditMessengerSettingsForm({
             version: publicConfig?.version ?? "v25.0",
             verifyToken: publicConfig?.verifyToken ?? "",
             clientSecret: "",
+            marketingMessagesConfigId:
+              publicConfig?.marketingMessagesConfigId ?? "",
           } satisfies MessengerCredentialUpdate,
         },
       },
@@ -253,6 +255,12 @@ export function EditMessengerSettingsForm({
           label={t("fields.apiVersion.label")}
           name="version"
           required
+        />
+
+        <InputField
+          description={t("fields.marketingMessagesConfigId.description")}
+          label={t("fields.marketingMessagesConfigId.label")}
+          name="marketingMessagesConfigId"
         />
 
         <div className="flex items-center justify-between gap-2">

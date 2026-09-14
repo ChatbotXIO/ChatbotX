@@ -1,5 +1,9 @@
 {
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "ID configurazione Messaggi di marketing",
+      "description": "ID configurazione di Facebook Login for Business utilizzato per richiedere l'autorizzazione marketing_messages_messenger."
+    },
     "omnichannel": {
       "label": "Omnicanale"
     },
@@ -2458,6 +2462,41 @@
   },
   "general": {
     "title": "Generale"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Questo rimuove la campagna solo da ChatbotX. La campagna di messaggi Meta resta attiva: mettila in pausa o eliminala in Gestione inserzioni.",
+    "title": "Facebook Marketing Messages",
+    "description": "Aumenta il coinvolgimento e le vendite con messaggi promozionali personalizzati su Messenger.",
+    "create": "Crea nuovo",
+    "grantTitle": "Concedi l'accesso a Facebook",
+    "grantDescription": "Concedi l'accesso per utilizzare la funzione Messaggi di marketing",
+    "grantAction": "Concedi l'accesso",
+    "reconnect": "Riconnetti",
+    "expiredWarning": "Il tuo accesso a Facebook è scaduto o è stato revocato. Riconnettiti per creare o modificare le campagne. Le campagne esistenti sono mostrate di seguito e sono in sola lettura fino alla riconnessione.",
+    "fields": {
+      "image": "Immagine",
+      "video": "Video",
+      "page": "Pagina Facebook",
+      "adAccount": "Account pubblicitario",
+      "budgetType": "Tipo di budget",
+      "budget": "Budget",
+      "daily": "Budget giornaliero",
+      "lifetime": "Budget totale",
+      "templateType": "Tipo di messaggio",
+      "text": "Testo",
+      "button": "Pulsante",
+      "media": "Media",
+      "generic": "Generico",
+      "greeting": "Saluto",
+      "quickReplies": "Risposte rapide",
+      "elements": "Schede"
+    },
+    "errors": {
+      "notConfigured": "Facebook Marketing Messages non è configurato. Chiedi al tuo amministratore di impostare l'ID configurazione Messaggi di marketing.",
+      "notGranted": "Concedi l'accesso per utilizzare la funzione Messaggi di marketing.",
+      "tosNotAccepted": "Per utilizzare questa funzione, accetta i termini per gli oggetti personalizzati su {url}",
+      "notFound": "Messaggio di marketing non trovato."
+    }
   },
   "facebookAds": {
     "title": "Inserzioni Facebook",

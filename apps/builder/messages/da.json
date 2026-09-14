@@ -727,6 +727,10 @@
     }
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "Konfigurations-ID for marketingbeskeder",
+      "description": "Konfigurations-ID til Facebook Login for Business, der bruges til at anmode om tilladelsen marketing_messages_messenger."
+    },
     "omnichannel": {
       "label": "Omnichannel"
     },
@@ -2458,6 +2462,41 @@
   },
   "general": {
     "title": "Generelt"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Dette fjerner kun kampagnen fra ChatbotX. Meta-beskedkampagnen kører videre — sæt den på pause eller slet den i Ads Manager.",
+    "title": "Facebook Marketing Messages",
+    "description": "Øg engagement og salg med personlige kampagnebeskeder på Messenger.",
+    "create": "Opret ny",
+    "grantTitle": "Giv Facebook-adgang",
+    "grantDescription": "Giv adgang for at bruge funktionen Marketingbeskeder",
+    "grantAction": "Giv adgang",
+    "reconnect": "Tilslut igen",
+    "expiredWarning": "Din Facebook-adgang er udløbet eller blev tilbagekaldt. Tilslut igen for at oprette eller redigere kampagner. Eksisterende kampagner vises nedenfor og er skrivebeskyttede, indtil du tilslutter igen.",
+    "fields": {
+      "image": "Billede",
+      "video": "Video",
+      "page": "Facebook-side",
+      "adAccount": "Annoncekonto",
+      "budgetType": "Budgettype",
+      "budget": "Budget",
+      "daily": "Dagligt budget",
+      "lifetime": "Samlet budget",
+      "templateType": "Beskedtype",
+      "text": "Tekst",
+      "button": "Knap",
+      "media": "Medie",
+      "generic": "Generisk",
+      "greeting": "Hilsen",
+      "quickReplies": "Hurtige svar",
+      "elements": "Kort"
+    },
+    "errors": {
+      "notConfigured": "Facebook Marketing Messages er ikke konfigureret. Bed din administrator om at angive konfigurations-id'et for marketingbeskeder.",
+      "notGranted": "Giv adgang for at bruge funktionen Marketingbeskeder.",
+      "tosNotAccepted": "For at bruge denne funktion skal du acceptere vilkårene for tilpassede objekter på {url}",
+      "notFound": "Marketingbesked blev ikke fundet."
+    }
   },
   "facebookAds": {
     "title": "Facebook Annoncer",

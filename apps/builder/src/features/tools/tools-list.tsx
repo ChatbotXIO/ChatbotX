@@ -61,6 +61,13 @@ export const TOOLS_CONFIG = [
     getLink: (id: string) => `/space/${id}/fb-lead-ads`,
   },
   {
+    id: "facebook-marketing-messages",
+    labelKey: "facebookMarketingMessages.title",
+    descriptionKey: "facebookMarketingMessages.description",
+    icon: SiFacebook,
+    getLink: (id: string) => `/space/${id}/fb-marketing-messages`,
+  },
+  {
     id: "click-to-message-ads",
     labelKey: "clickToMessageAds.title",
     descriptionKey: "clickToMessageAds.description",

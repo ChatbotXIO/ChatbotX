@@ -727,6 +727,10 @@
     }
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "マーケティングメッセージ構成ID",
+      "description": "marketing_messages_messenger権限をリクエストするために使用するFacebookログイン（ビジネス用）の構成IDです。"
+    },
     "omnichannel": {
       "label": "オムニチャネル"
     },
@@ -2458,6 +2462,41 @@
   },
   "general": {
     "title": "一般"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "これはChatbotXからキャンペーンを削除するだけです。Metaのメッセージキャンペーンは実行され続けます — 広告マネージャで一時停止または削除してください。",
+    "title": "Facebookマーケティングメッセージ",
+    "description": "Messengerでパーソナライズされたプロモーションメッセージを送り、エンゲージメントと売上を高めます。",
+    "create": "新規作成",
+    "grantTitle": "Facebookへのアクセスを許可",
+    "grantDescription": "マーケティングメッセージ機能を使用するにはアクセスを許可してください",
+    "grantAction": "アクセスを許可",
+    "reconnect": "再接続",
+    "expiredWarning": "Facebookへのアクセスが期限切れまたは取り消されました。キャンペーンを作成・編集するには再接続してください。既存のキャンペーンは以下に表示され、再接続するまで読み取り専用です。",
+    "fields": {
+      "image": "画像",
+      "video": "動画",
+      "page": "Facebookページ",
+      "adAccount": "広告アカウント",
+      "budgetType": "予算タイプ",
+      "budget": "予算",
+      "daily": "1日の予算",
+      "lifetime": "通算予算",
+      "templateType": "メッセージタイプ",
+      "text": "テキスト",
+      "button": "ボタン",
+      "media": "メディア",
+      "generic": "汎用",
+      "greeting": "あいさつ",
+      "quickReplies": "クイック返信",
+      "elements": "カード"
+    },
+    "errors": {
+      "notConfigured": "Facebookマーケティングメッセージが構成されていません。管理者にマーケティングメッセージ構成IDの設定を依頼してください。",
+      "notGranted": "マーケティングメッセージ機能を使用するにはアクセスを許可してください。",
+      "tosNotAccepted": "この機能を使用するには、{url} でカスタムオブジェクトの規約に同意してください",
+      "notFound": "マーケティングメッセージが見つかりません。"
+    }
   },
   "facebookAds": {
     "title": "Facebook広告",

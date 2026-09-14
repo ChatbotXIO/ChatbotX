@@ -727,6 +727,10 @@
     }
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "ID de configuration des messages marketing",
+      "description": "ID de configuration Facebook Login for Business utilisé pour demander l'autorisation marketing_messages_messenger."
+    },
     "omnichannel": {
       "label": "Omnicanal"
     },
@@ -2458,6 +2462,41 @@
   },
   "general": {
     "title": "Général"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Cela supprime la campagne uniquement de ChatbotX. La campagne de messages Meta continue — mettez-la en pause ou supprimez-la dans le Gestionnaire de publicités.",
+    "title": "Facebook Marketing Messages",
+    "description": "Stimulez l'engagement et les ventes avec des messages promotionnels personnalisés sur Messenger.",
+    "create": "Créer",
+    "grantTitle": "Accorder l'accès Facebook",
+    "grantDescription": "Veuillez accorder l'accès pour utiliser la fonctionnalité Messages marketing",
+    "grantAction": "Accorder l'accès",
+    "reconnect": "Reconnecter",
+    "expiredWarning": "Votre accès Facebook a expiré ou a été révoqué. Reconnectez-vous pour créer ou modifier des campagnes. Les campagnes existantes sont affichées ci-dessous en lecture seule jusqu'à la reconnexion.",
+    "fields": {
+      "image": "Image",
+      "video": "Vidéo",
+      "page": "Page Facebook",
+      "adAccount": "Compte publicitaire",
+      "budgetType": "Type de budget",
+      "budget": "Budget",
+      "daily": "Budget quotidien",
+      "lifetime": "Budget total",
+      "templateType": "Type de message",
+      "text": "Texte",
+      "button": "Bouton",
+      "media": "Média",
+      "generic": "Générique",
+      "greeting": "Message d'accueil",
+      "quickReplies": "Réponses rapides",
+      "elements": "Cartes"
+    },
+    "errors": {
+      "notConfigured": "Facebook Marketing Messages n'est pas configuré. Demandez à votre administrateur de définir l'ID de configuration des messages marketing.",
+      "notGranted": "Veuillez accorder l'accès pour utiliser la fonctionnalité Messages marketing.",
+      "tosNotAccepted": "Pour utiliser cette fonctionnalité, veuillez accepter les conditions relatives aux objets personnalisés sur {url}",
+      "notFound": "Message marketing introuvable."
+    }
   },
   "facebookAds": {
     "title": "Publicités Facebook",

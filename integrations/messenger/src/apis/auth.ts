@@ -264,6 +264,52 @@ export function generateLeadAdsAuthUrl({
   return `${FACEBOOK_OAUTH_BASE}/${version}/dialog/oauth?${params.toString()}`
 }
 
+export const MARKETING_MESSAGES_SCOPE = "marketing_messages_messenger"
+
+/**
+ * OAuth dialog for the Marketing Messages grant.
+ *
+ * Unlike `generateLeadAdsAuthUrl` this passes NO `scope`: the permission set
+ * comes from the Facebook Login for Business `config_id` configured on the
+ * Messenger platform credential. `app_id` is sent alongside `client_id`
+ * because the Login-for-Business dialog reads the former.
+ *
+ * `auth_type=rerequest` is required for the same reason it is on the catalog
+ * flow: without it Facebook silently skips a previously declined permission
+ * and returns a token missing `marketing_messages_messenger`, so the grant
+ * looks successful and every later call fails.
+ */
+export function generateMarketingMessagesAuthUrl({
+  clientId,
+  configId,
+  version = DEFAULT_API_VERSION,
+  redirectUrl,
+  stateParams,
+}: {
+  clientId: string
+  configId: string
+  version?: string
+  redirectUrl: string
+  stateParams?: Record<string, unknown>
+}): string {
+  const params = new URLSearchParams({
+    app_id: clientId,
+    client_id: clientId,
+    config_id: configId,
+    auth_type: "rerequest",
+    override_default_response_type: "true",
+    redirect_uri: redirectUrl,
+    response_type: "code",
+    state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
+  })
+  return `${FACEBOOK_OAUTH_BASE}/${version}/dialog/oauth?${params.toString()}`
+}
+
+/** Whether a `/debug_token` scope list carries the Marketing Messages grant. */
+export function hasMarketingMessages(scopes?: string[]): boolean {
+  return scopes?.includes(MARKETING_MESSAGES_SCOPE) ?? false
+}
+
 export type DebugTokenData = {
   scopes?: string[]
   is_valid?: boolean

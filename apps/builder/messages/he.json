@@ -566,6 +566,41 @@
   "general": {
     "title": "כללי"
   },
+  "facebookMarketingMessages": {
+    "deleteWarning": "פעולה זו מסירה את הקמפיין מ-ChatbotX בלבד. קמפיין ההודעות של Meta ממשיך לפעול — השהה או מחק אותו במנהל המודעות.",
+    "title": "Facebook Marketing Messages",
+    "description": "הגדל מעורבות ומכירות בעזרת הודעות קידום מותאמות אישית ב-Messenger.",
+    "create": "צור חדש",
+    "grantTitle": "הענק גישה ל-Facebook",
+    "grantDescription": "יש להעניק הרשאה כדי להשתמש בתכונת ההודעות השיווקיות",
+    "grantAction": "הענק גישה",
+    "reconnect": "התחבר מחדש",
+    "expiredWarning": "הגישה שלך ל-Facebook פגה או בוטלה. התחבר מחדש כדי ליצור או לערוך קמפיינים. הקמפיינים הקיימים מוצגים למטה והם לקריאה בלבד עד להתחברות מחדש.",
+    "fields": {
+      "image": "תמונה",
+      "video": "וידאו",
+      "page": "דף Facebook",
+      "adAccount": "חשבון פרסום",
+      "budgetType": "סוג תקציב",
+      "budget": "תקציב",
+      "daily": "תקציב יומי",
+      "lifetime": "תקציב כולל",
+      "templateType": "סוג הודעה",
+      "text": "טקסט",
+      "button": "כפתור",
+      "media": "מדיה",
+      "generic": "גנרי",
+      "greeting": "ברכה",
+      "quickReplies": "תשובות מהירות",
+      "elements": "כרטיסים"
+    },
+    "errors": {
+      "notConfigured": "‏Facebook Marketing Messages אינו מוגדר. בקש מהמנהל להגדיר את מזהה התצורה של הודעות שיווקיות.",
+      "notGranted": "יש להעניק הרשאה כדי להשתמש בתכונת ההודעות השיווקיות.",
+      "tosNotAccepted": "כדי להשתמש בתכונה זו, יש לאשר את תנאי האובייקט המותאם בכתובת {url}",
+      "notFound": "ההודעה השיווקית לא נמצאה."
+    }
+  },
   "facebookAds": {
     "title": "מודעות Facebook",
     "setting": {
@@ -3383,6 +3418,10 @@
     }
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "מזהה תצורה של הודעות שיווקיות",
+      "description": "מזהה תצורה של Facebook Login for Business המשמש לבקשת ההרשאה marketing_messages_messenger."
+    },
     "omnichannel": {
       "label": "רב-ערוצי"
     },
