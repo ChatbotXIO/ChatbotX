@@ -4,16 +4,16 @@ import type { OpenAPI } from "@orpc/openapi"
  * `"default"` = shipped in `tools/list` on every MCP connection. `"hidden"`
  * (or the field absent — see `mcpSpec` below) = reachable only through the
  * `search_tools` / `call_tool` meta-tools. We cannot ask every one of the
- * ~346 public operations to opt out individually, so the polarity is
+ * ~350 public operations to opt out individually, so the polarity is
  * inverted: opt IN to `"default"` on the ~40 that should always be visible.
  */
-export type McpVisibility = "default" | "hidden"
+type McpVisibility = "default" | "hidden"
 
 export type McpRouteMeta = {
   /** Absent ⇒ treated as `"hidden"` by the mcp-server loader. */
   visibility?: McpVisibility
   /**
-   * Exempts this operation from scope-based `tools/list` filtering (P2.3) —
+   * Exempts this operation from scope-based `tools/list` filtering —
    * reserved for the small set of discovery endpoints (`capabilities.get`,
    * `token.get`) that a token must be able to *see* even when it lacks the
    * scope those endpoints themselves require, so the 403 body is visible to

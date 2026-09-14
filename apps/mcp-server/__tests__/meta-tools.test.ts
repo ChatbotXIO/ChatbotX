@@ -40,10 +40,7 @@ describe("META_TOOLS", () => {
       "search_tools",
       "call_tool",
     ])
-    expect(Object.keys(META_TOOL_NAMES).sort()).toEqual([
-      "call_tool",
-      "search_tools",
-    ])
+    expect([...META_TOOL_NAMES].sort()).toEqual(["call_tool", "search_tools"])
   })
 })
 

@@ -260,6 +260,9 @@ const handleMessagesRequest = async (
     }
 
     const apiKeyState = makeApiKeyState(req)
+    const server = createMcpServer({
+      getApiKey: getApiKeyFromState(apiKeyState),
+    })
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       onsessioninitialized: (initializedSessionId) => {
@@ -269,9 +272,6 @@ const handleMessagesRequest = async (
           transport,
         })
       },
-    })
-    const server = createMcpServer({
-      getApiKey: getApiKeyFromState(apiKeyState),
     })
 
     transport.onclose = () => {

@@ -47,6 +47,16 @@ describe("introspectToken", () => {
     await expect(introspectToken("token-bad")).resolves.toBeNull()
   })
 
+  test("returns null when the response body doesn't match the expected shape", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ permission: "not-a-real-permission" }),
+    }) as unknown as typeof fetch
+
+    const { introspectToken } = await import("../src/token-introspection")
+    await expect(introspectToken("token-malformed")).resolves.toBeNull()
+  })
+
   test("returns null when the fetch itself rejects", async () => {
     globalThis.fetch = vi
       .fn()
@@ -111,5 +121,28 @@ describe("introspectToken", () => {
     await introspectToken("token-ttl")
 
     expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  test("evicts expired cache entries once a subsequent lookup inserts a new one", async () => {
+    vi.useFakeTimers()
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        workspaceId: "workspace-1",
+        permission: "full",
+        scopes: null,
+      }),
+    })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const { introspectToken } = await import("../src/token-introspection")
+    await introspectToken("token-old")
+    // Default CHATBOTX_SPEC_TTL_MS is 300_000ms.
+    vi.advanceTimersByTime(300_001)
+
+    const deleteSpy = vi.spyOn(Map.prototype, "delete")
+    await introspectToken("token-new")
+
+    expect(deleteSpy).toHaveBeenCalledWith("token-old")
   })
 })

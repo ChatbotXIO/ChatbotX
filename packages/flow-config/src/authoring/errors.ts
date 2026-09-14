@@ -1,8 +1,8 @@
 import type { z } from "zod"
 
 /**
- * Structured compiler diagnostics for the flow-spec DSL (P1.2). Deliberately
- * NOT routed through `flowValidationCodes`/`resolveFlowValidationMessageKey`
+ * Structured compiler diagnostics for the flow-spec DSL. Deliberately NOT
+ * routed through `flowValidationCodes`/`resolveFlowValidationMessageKey`
  * (`../validation-codes`) — that mechanism maps a fixed set of codes to a
  * `messages.<code>` i18n key across 20 locales for the builder UI. A
  * flow-spec authoring error is API-consumer-facing (an agent, not a person
@@ -18,6 +18,7 @@ export type FlowAuthoringErrorCode =
   | "unknownCustomField"
   | "invalidGotoTarget"
   | "duplicateStepId"
+  | "invalidStep"
   | "compileFailed"
 
 export type FlowAuthoringError = {
@@ -43,7 +44,10 @@ export class FlowAuthoringException extends Error {
   }
 }
 
-const formatZodPathSegment = (acc: string, segment: PropertyKey): string => {
+export const formatZodPathSegment = (
+  acc: string,
+  segment: PropertyKey,
+): string => {
   if (typeof segment === "number") {
     return `${acc}[${segment}]`
   }
@@ -52,16 +56,20 @@ const formatZodPathSegment = (acc: string, segment: PropertyKey): string => {
 }
 
 /**
- * Converts a `flowSpecSchema` parse failure straight into
- * `FlowAuthoringError[]` — the issue paths are already spec-relative since
- * they come from validating the spec itself, not a compiled node graph.
+ * Converts a `flowSpecSchema`/`publishFlowSchema` parse failure into
+ * `FlowAuthoringError[]`. Without `mapPath`, issue paths are used verbatim —
+ * correct when validating the spec itself, where paths are already
+ * spec-relative. `compileAndValidateSpec` (`apps/builder`) passes `mapPath`
+ * when validating the *compiled* node graph instead, to translate a
+ * node-graph path back to the spec-relative path an agent actually wrote.
  */
 export function zodErrorToFlowAuthoringErrors(
   error: z.ZodError,
   code: FlowAuthoringErrorCode = "invalidSpec",
+  mapPath?: (issuePath: PropertyKey[]) => string | undefined,
 ): FlowAuthoringError[] {
   return error.issues.map((issue) => ({
-    path: issue.path.reduce(formatZodPathSegment, ""),
+    path: mapPath?.(issue.path) ?? issue.path.reduce(formatZodPathSegment, ""),
     code,
     message: issue.message,
   }))

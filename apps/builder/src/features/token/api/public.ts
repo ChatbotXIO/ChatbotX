@@ -11,9 +11,9 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 // Same scope and rationale as `capabilities.get`
 // (`features/capabilities/api/public.ts`): endpoint discovery, not a
 // resource read, so it reuses the most common scope rather than adding a
-// 13th one just for this. `alwaysVisible` (P2.3) exempts it from
-// scope-based `tools/list` filtering — a token missing `contacts` still
-// sees this tool, whose whole job is telling it exactly that.
+// 13th one just for this. `alwaysVisible` exempts it from scope-based
+// `tools/list` filtering — a token missing `contacts` still sees this
+// tool, whose whole job is telling it exactly that.
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
 const tokenPublicResponse = z.object({

@@ -31,24 +31,18 @@ import { waitStepDefaultFn } from "../steps/wait"
 import type { FlowAuthoringError, FlowAuthoringErrorCode } from "./errors"
 import { closestNames, FlowAuthoringException } from "./errors"
 import { type LayoutPosition, layoutNodes } from "./layout"
-import {
-  type FlowSpec,
-  type FlowStepSpec,
-  TERMINAL_STEP_TYPES,
-} from "./spec-schema"
+import type { FlowSpec, FlowStepSpec } from "./spec-schema"
 
 /**
  * Reference data the compiler resolves DSL names against. Populated from the
- * capabilities service (P2.1) — kept as plain `Map`s so the compiler never
- * touches the database directly (this package has no such dependency).
+ * capabilities service — kept as plain `Map`s so the compiler never touches
+ * the database directly (this package has no such dependency).
  */
 export type FlowAuthoringContext = {
   templatesByName: ReadonlyMap<
     string,
     { id: string; language: string; status: string }
   >
-  inboxesByName: ReadonlyMap<string, { id: string; channel: string }>
-  tagsByName: ReadonlyMap<string, { id: string }>
   customFieldsByName: ReadonlyMap<string, { id: string; type: string }>
   flowsByName: ReadonlyMap<string, { id: string }>
 }
@@ -57,13 +51,22 @@ export type CompiledFlow = {
   startNodeId: string
   nodes: FlowVersionSchema[]
   edges: EdgeSchema[]
+  /** Compiled node id -> the spec-relative path (e.g. `steps[2]`) that produced it. */
+  specPathByNodeId: ReadonlyMap<string, string>
 }
+
+/** Step `type`s that end their step list — nothing may follow them. */
+const TERMINAL_STEP_TYPES: ReadonlySet<FlowStepSpec["type"]> = new Set([
+  "branch",
+  "goto",
+])
 
 type CompileState = {
   nodes: FlowVersionSchema[]
   edges: EdgeSchema[]
   routeUpdates: FlowRouteUpdate[]
   stepIdToNodeId: Map<string, string>
+  specPathByNodeId: Map<string, string>
   errors: FlowAuthoringError[]
   ctx: FlowAuthoringContext
   channel?: string
@@ -143,8 +146,10 @@ const registerNode = (
   state: CompileState,
   specStepId: string | undefined,
   node: FlowVersionSchema,
+  stepPath: string,
 ): string => {
   state.nodes.push(node)
+  state.specPathByNodeId.set(node.id, stepPath)
   if (specStepId) {
     state.stepIdToNodeId.set(specStepId, node.id)
   }
@@ -222,7 +227,7 @@ function compileSendStep(
   // encounter order (this node, then whatever its buttons route to) instead
   // of the reverse — `node` is a reference, so mutating its `data.details`
   // below still updates the array element already pushed.
-  const nodeId = registerNode(state, step.id, node)
+  const nodeId = registerNode(state, step.id, node, stepPath)
 
   const buttons = (step.buttons ?? []).map((buttonSpec, buttonIndex) =>
     compileSendButton(
@@ -290,12 +295,12 @@ function compileSendTemplateStep(
   })
   node.data.details.steps = [templateStep]
 
-  return registerNode(state, step.id, node)
+  return registerNode(state, step.id, node, stepPath)
 }
 
 function compileWaitStep(
   step: Extract<FlowStepSpec, { type: "wait" }>,
-  _stepPath: string,
+  stepPath: string,
   state: CompileState,
 ): string {
   const waitStep = {
@@ -305,12 +310,12 @@ function compileWaitStep(
   }
   const node = waitNodeDefaultFn({})
   node.data.details.steps = [waitStep]
-  return registerNode(state, step.id, node)
+  return registerNode(state, step.id, node, stepPath)
 }
 
 function compileActionStep(
   step: Extract<FlowStepSpec, { type: "action" }>,
-  _stepPath: string,
+  stepPath: string,
   state: CompileState,
 ): string {
   const actionStep = (() => {
@@ -322,27 +327,35 @@ function compileActionStep(
           ...removeContactTagStepDefaultFn(),
           tags: step.tagNames ?? [],
         }
-      case "setCustomField":
+      case "setCustomField": {
+        const customField = resolveCustomField(
+          step.customFieldName ?? "",
+          `${stepPath}.customFieldName`,
+          state,
+        )
         return {
           ...setCustomFieldStepDefaultFn(),
-          inputFieldId: step.customFieldName ?? "",
+          inputFieldId: customField?.id ?? "",
           operation: FieldOperationType.set,
           value: step.value ?? "",
         }
+      }
       case "assignConversation":
         return assignConversationStepDefaultFn({
           assignedId: step.assigneeId ?? "",
         })
       case "archiveConversation":
         return archiveConversationStepDefaultFn()
-      default:
-        return archiveConversationStepDefaultFn()
+      default: {
+        const _exhaustive: never = step.action
+        throw new Error(`Unhandled action type: ${String(_exhaustive)}`)
+      }
     }
   })()
 
   const node = performActionNodeDefaultFn({})
   node.data.details.steps = [actionStep]
-  return registerNode(state, step.id, node)
+  return registerNode(state, step.id, node, stepPath)
 }
 
 function compileStartFlowStep(
@@ -370,18 +383,18 @@ function compileStartFlowStep(
       beforeStep: startExternalFlowStepDefaultFn({ flowId: targetFlow.id }),
     },
   })
-  return registerNode(state, step.id, node)
+  return registerNode(state, step.id, node, stepPath)
 }
 
 function compileAddNoteStep(
   step: Extract<FlowStepSpec, { type: "addNote" }>,
-  _stepPath: string,
+  stepPath: string,
   state: CompileState,
 ): string {
   const node = addNotesNodeDefaultFn({
     detailProps: { beforeStep: addNotesStepDefaultFn({ text: step.note }) },
   })
-  return registerNode(state, step.id, node)
+  return registerNode(state, step.id, node, stepPath)
 }
 
 const BOT_FIELD_CONDITION_PREFIX = "botField:"
@@ -398,6 +411,29 @@ type CompiledCondition = {
   operator: string
   value?: BranchConditionSpec["value"]
   customFieldId?: string
+}
+
+/** Resolves a workspace custom field by name, recording an `unknownCustomField` error on a miss. */
+function resolveCustomField(
+  name: string,
+  path: string,
+  state: CompileState,
+): { id: string; type: string } | null {
+  const customField = state.ctx.customFieldsByName.get(name)
+  if (!customField) {
+    addError(
+      state,
+      path,
+      "unknownCustomField",
+      `No custom field named "${name}" in this workspace.`,
+      {
+        hint: "Call contacts.listFilterFields and pick a custom field name from the results.",
+        candidates: closestNames(name, state.ctx.customFieldsByName.keys()),
+      },
+    )
+    return null
+  }
+  return customField
 }
 
 function resolveBranchCondition(
@@ -417,18 +453,8 @@ function resolveBranchCondition(
 
   if (condition.field.startsWith(CUSTOM_FIELD_CONDITION_PREFIX)) {
     const name = condition.field.slice(CUSTOM_FIELD_CONDITION_PREFIX.length)
-    const customField = state.ctx.customFieldsByName.get(name)
+    const customField = resolveCustomField(name, `${path}.field`, state)
     if (!customField) {
-      addError(
-        state,
-        `${path}.field`,
-        "unknownCustomField",
-        `No custom field named "${name}" in this workspace.`,
-        {
-          hint: "Call contacts.listFilterFields and pick a custom field name from the results.",
-          candidates: closestNames(name, state.ctx.customFieldsByName.keys()),
-        },
-      )
       return null
     }
     return {
@@ -458,7 +484,7 @@ function compileBranchStep(
   }
   // Registered before compiling case/otherwise chains — see the identical
   // note on `compileSendStep`.
-  const nodeId = registerNode(state, step.id, node)
+  const nodeId = registerNode(state, step.id, node, stepPath)
 
   conditionStep.cases = step.cases.map((branchCase, caseIndex) => {
     const caseDefault = conditionCaseDefaultFn()
@@ -542,8 +568,10 @@ function compileStep(
       return compileAddNoteStep(step, stepPath, state)
     case "goto":
       return compileGotoStep(step, stepPath, state)
-    default:
-      return null
+    default: {
+      const _exhaustive: never = step
+      throw new Error(`Unhandled step type: ${(step as FlowStepSpec).type}`)
+    }
   }
 }
 
@@ -565,7 +593,7 @@ function compileChain(
 
   steps.forEach((step, index) => {
     const stepPath = `${pathPrefix}[${index}]`
-    const isTerminal = Boolean(TERMINAL_STEP_TYPES[step.type])
+    const isTerminal = TERMINAL_STEP_TYPES.has(step.type)
 
     if (index < steps.length - 1 && isTerminal) {
       addError(
@@ -638,6 +666,7 @@ export function compileFlowSpec(
     edges: [],
     routeUpdates: [],
     stepIdToNodeId: new Map(),
+    specPathByNodeId: new Map(),
     errors: [],
     ctx,
     channel: spec.channel,
@@ -670,6 +699,12 @@ export function compileFlowSpec(
     ])
   }
 
+  // `state.nodes` are `FlowVersionSchema` (this package's compiler-output
+  // type); `applyRouteUpdatesInNodes` operates on reactflow's generic
+  // `FlowNode = Node<FlowVersionSchema["data"]>`, a structurally different
+  // shape (position/measured/type are generic there, not the discriminated
+  // union). The double cast crosses that boundary; node `id`s — what
+  // `specPathByNodeId` keys on below — are preserved through it either way.
   const routedNodes = applyRouteUpdatesInNodes(
     state.nodes as unknown as FlowNode[],
     state.routeUpdates,
@@ -689,5 +724,10 @@ export function compileFlowSpec(
     ),
   )
 
-  return { startNodeId, nodes, edges: state.edges }
+  return {
+    startNodeId,
+    nodes,
+    edges: state.edges,
+    specPathByNodeId: state.specPathByNodeId,
+  }
 }

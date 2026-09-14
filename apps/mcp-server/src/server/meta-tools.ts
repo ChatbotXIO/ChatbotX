@@ -47,10 +47,9 @@ export const META_TOOLS = [
   },
 ] as const
 
-export const META_TOOL_NAMES: Record<string, true> = {
-  search_tools: true,
-  call_tool: true,
-}
+export const META_TOOL_NAMES: ReadonlySet<string> = new Set(
+  META_TOOLS.map((tool) => tool.name),
+)
 
 const DEFAULT_SEARCH_LIMIT = 10
 const MAX_SEARCH_LIMIT = 25
@@ -66,20 +65,41 @@ function tokenize(text: string): string[] {
   return text.toLowerCase().match(/[a-z0-9]+/g) ?? []
 }
 
+type ToolTokens = { name: Set<string>; description: Set<string> }
+
+// Keyed by the `DynamicTool` object itself (not its name): `openapi-loader`
+// hands out a fresh array of tool objects on every spec refresh, so a stale
+// entry is naturally unreachable and garbage-collected — no manual
+// invalidation needed when the spec changes.
+const toolTokensCache = new WeakMap<DynamicTool, ToolTokens>()
+
+function getToolTokens(tool: DynamicTool): ToolTokens {
+  const cached = toolTokensCache.get(tool)
+  if (cached) {
+    return cached
+  }
+  const tokens: ToolTokens = {
+    name: new Set(tokenize(tool.name)),
+    description: new Set(tokenize(tool.description)),
+  }
+  toolTokensCache.set(tool, tokens)
+  return tokens
+}
+
 function scoreTool(
   tool: DynamicTool,
   queryTokens: string[],
   queryPhrase: string,
 ): number {
-  const nameTokens = tokenize(tool.name)
-  const descriptionTokens = tokenize(tool.description)
+  const { name: nameTokens, description: descriptionTokens } =
+    getToolTokens(tool)
 
   let score = 0
   for (const token of queryTokens) {
-    if (nameTokens.includes(token)) {
+    if (nameTokens.has(token)) {
       score += NAME_TOKEN_WEIGHT
     }
-    if (descriptionTokens.includes(token)) {
+    if (descriptionTokens.has(token)) {
       score += DESCRIPTION_TOKEN_WEIGHT
     }
   }

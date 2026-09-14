@@ -1,7 +1,6 @@
 // Export all definitions
 export * from "./authoring/compile"
 export * from "./authoring/errors"
-export * from "./authoring/layout"
 export * from "./authoring/spec-schema"
 export * from "./channel-rules/channel-step-refinement"
 export * from "./channel-rules/channel-validator"

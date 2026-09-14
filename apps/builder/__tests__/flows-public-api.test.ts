@@ -1,4 +1,7 @@
+import { FlowAuthoringException } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+
+const SPEC_STEP_PATH_PATTERN = /^steps\[/
 
 type RouteConfig = {
   method: string
@@ -75,8 +78,6 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 
 const getFlowAuthoringContext = vi.fn(async () => ({
   templatesByName: new Map(),
-  inboxesByName: new Map(),
-  tagsByName: new Map(),
   customFieldsByName: new Map(),
   flowsByName: new Map(),
 }))
@@ -316,6 +317,40 @@ describe("POST /v1/flows/{id}/publish", () => {
     expect(call.nodes[0].type).toBe("sendMessage")
     expect(call.edges).toEqual([])
   })
+
+  test("throws FlowAuthoringException (not a raw 500) when the compiled spec fails channel refinement", async () => {
+    const input = {
+      id: "flow-1",
+      spec: {
+        formatVersion: 1,
+        name: "Spec flow",
+        channel: "instagram",
+        steps: [
+          {
+            type: "send",
+            imageUrl: "https://example.com/a.png",
+            buttons: [{ text: "Yes" }],
+          },
+        ],
+      },
+    }
+
+    let caught: unknown
+    try {
+      await procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input,
+      })
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toBeInstanceOf(FlowAuthoringException)
+    expect((caught as FlowAuthoringException).errors[0]?.path).toMatch(
+      SPEC_STEP_PATH_PATTERN,
+    )
+    expect(flowVersionService.publish).not.toHaveBeenCalled()
+  })
 })
 
 describe("POST /v1/flows/validate", () => {
@@ -339,6 +374,29 @@ describe("POST /v1/flows/validate", () => {
     expect(result.edges).toEqual([])
     expect(flowVersionService.publish).not.toHaveBeenCalled()
     expect(flowVersionService.updateDraftByFlowId).not.toHaveBeenCalled()
+  })
+
+  test("throws FlowAuthoringException for an unknown template name", async () => {
+    let caught: unknown
+    try {
+      await procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: {
+          spec: {
+            formatVersion: 1,
+            name: "Spec flow",
+            steps: [{ type: "sendTemplate", templateName: "does_not_exist" }],
+          },
+        },
+      })
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toBeInstanceOf(FlowAuthoringException)
+    expect((caught as FlowAuthoringException).errors[0]?.code).toBe(
+      "unknownTemplate",
+    )
   })
 })
 

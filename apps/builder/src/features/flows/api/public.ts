@@ -18,7 +18,10 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { compileSpecToGraph } from "../lib/compile-spec-to-graph"
+import {
+  compileAndValidateSpec,
+  compileSpecToGraph,
+} from "../lib/compile-spec-to-graph"
 import {
   createFlowSchema,
   flowSpecRequest,
@@ -171,9 +174,7 @@ export const flowsPublicRouter = {
       const workspaceId = context.workspace.id
       const { nodes, edges } =
         "spec" in input
-          ? publishFlowSchema.parse(
-              await compileSpecToGraph(input.spec, workspaceId),
-            )
+          ? await compileAndValidateSpec(input.spec, workspaceId)
           : input
       await flowVersionService.publish({
         workspaceId,
@@ -197,9 +198,7 @@ export const flowsPublicRouter = {
     .output(publishFlowSchema)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) =>
-      publishFlowSchema.parse(
-        await compileSpecToGraph(input.spec, context.workspace.id),
-      ),
+      compileAndValidateSpec(input.spec, context.workspace.id),
     ),
 
   updateDraft: workspaceTokenAuthAPI

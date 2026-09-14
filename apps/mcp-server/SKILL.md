@@ -224,7 +224,7 @@ chatbotx error-logs list                             # [--page --perPage --sort 
 
 ## MCP Tools (for AI agents)
 
-Tool names are the OpenAPI `operationId` converted to `snake_case`. `tools/list` returns a curated **default set of 44 tools** — not the full ~300-operation API — plus two meta-tools that reach everything else:
+Tool names are the OpenAPI `operationId` converted to `snake_case`. `tools/list` returns a curated **default set of 44 tools** — not the full ~350-operation API — plus two meta-tools that reach everything else:
 
 | Tool | Description |
 |---|---|

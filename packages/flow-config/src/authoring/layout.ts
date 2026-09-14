@@ -1,3 +1,5 @@
+import type { EdgeSchema } from "../nodes/index"
+
 // Node width/height mirror `defaultNodeData()`'s `measured` in `../nodes/base.ts`
 // — every node type shares the same default footprint, so layout can use one
 // fixed cell size instead of asking each node for its own.
@@ -9,7 +11,6 @@ const COLUMN_WIDTH = NODE_WIDTH + COLUMN_GAP
 const ROW_HEIGHT = NODE_HEIGHT + ROW_GAP
 const ORIGIN = { x: 100, y: 100 }
 
-export type LayoutEdge = { source: string; target: string }
 export type LayoutPosition = { x: number; y: number }
 
 /**
@@ -22,7 +23,7 @@ export type LayoutPosition = { x: number; y: number }
  */
 export function layoutNodes(
   nodeIds: readonly string[],
-  edges: readonly LayoutEdge[],
+  edges: readonly Pick<EdgeSchema, "source" | "target">[],
   startNodeId: string,
 ): Map<string, LayoutPosition> {
   const childrenBySource = new Map<string, string[]>()

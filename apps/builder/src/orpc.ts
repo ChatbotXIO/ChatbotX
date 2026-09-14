@@ -9,6 +9,7 @@ import { SdkException } from "@chatbotx.io/sdk"
 import { oo } from "@orpc/openapi"
 import { ORPCError, onError, ValidationError } from "@orpc/server"
 import { ActionValidationError } from "next-safe-action"
+import { z } from "zod"
 import { logger } from "./lib/log"
 import type { OperationObjectWithMcp } from "./lib/orpc/mcp-annotations"
 import { commonApiErrors } from "./lib/orpc/orpc-error-helper"
@@ -109,6 +110,17 @@ function toKnownOrpcError(
     })
   }
 
+  // Safety net for a raw `ZodError` a handler lets escape directly (e.g.
+  // `someSchema.parse(...)` outside oRPC's own input validation) — same 422
+  // shape as the mapped cases above, instead of falling through to a 500.
+  if (error instanceof z.ZodError) {
+    return new ORPCError("invalidRequestData", {
+      message: error.message,
+      status: 422,
+      data: error.issues,
+    })
+  }
+
   return
 }
 
@@ -169,7 +181,7 @@ const requireTokenScope = (scope: WorkspaceApiTokenScope) =>
  * generator's `applyCustomOpenAPIOperation` (which walks
  * `contract["~orpc"].middlewares`) stamps `x-mcp.scope` on every operation
  * that chains through this middleware — one edit here instead of touching
- * every one of the ~450 scoped route files. By the time this extender runs,
+ * every one of the ~70 scoped route files. By the time this extender runs,
  * `current` already reflects the route's own `.route({ spec: mcpSpec(...) })`
  * (applied earlier, during operation generation), so spreading
  * `current["x-mcp"]` before writing `scope` keeps a route's declared

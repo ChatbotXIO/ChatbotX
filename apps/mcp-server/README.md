@@ -8,7 +8,7 @@ On startup the server fetches `{CHATBOTX_API_URL}/public-spec.json` and register
 
 ### Default tools vs. the full API
 
-ChatbotX's public API has ~300 operations. Listing all of them as MCP tools overwhelms an agent's context and its ability to pick the right one, so `tools/list` returns only a curated default set (see below) plus two meta-tools:
+ChatbotX's public API has ~350 operations. Listing all of them as MCP tools overwhelms an agent's context and its ability to pick the right one, so `tools/list` returns only a curated default set (see below) plus two meta-tools:
 
 | Tool | Description |
 |---|---|
@@ -22,7 +22,7 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 `tools/list` is further narrowed to what the calling token can actually use, resolved once per token via `GET /v1/token` (`introspectToken`, cached per token value for `CHATBOTX_SPEC_TTL_MS`):
 
 - A token missing a scope never sees that scope's tools (they still exist for `search_tools`/`call_tool`, which always hit the real API and get a real 403 if unauthorized).
-- A `read_only` token only sees `GET` tools, plus a small allowlist of POST endpoints that are reads in disguise (currently `contacts_search`, a filter-body search).
+- A `read_only` token only sees tools whose `readOnlyHint` annotation is true — every `GET` by default, plus any POST explicitly marked `x-mcp.readOnlyHint: true` for endpoints that are reads in disguise (currently `contacts_search`, a filter-body search).
 - `capabilities_get` and `token_get` are always visible regardless of scope — an agent needs them to discover what it *can* do and what its token allows before anything else works.
 - If token introspection itself fails (network blip, unreachable API), filtering fails open — `tools/list` falls back to the full default set. The actual API call still enforces the token's real permissions either way.
 

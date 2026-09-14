@@ -65,7 +65,11 @@ export const contactsCrudPublicRouter = {
       description:
         "Same as `GET /v1/contacts` but accepts the filter as a JSON request body instead of query parameters — use this when `contactFilter` is large or deeply nested. Supports the same `include`/`withCount` options.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
+      // A POST that reads, not writes — `readOnlyHint: true` keeps it
+      // visible to a `read_only` token (`isVisibleForScope` in
+      // `apps/mcp-server/src/openapi-loader.ts`), which would otherwise
+      // hide every non-GET tool.
+      spec: mcpSpec({ visibility: "default", readOnlyHint: true }),
     })
     .input(listContactsPublicRequest)
     .output(listContactsResponse)

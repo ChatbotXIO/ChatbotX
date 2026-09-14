@@ -231,8 +231,8 @@ describe("public API spec — operation naming guard", () => {
       // workspace/inbox identity — that IS the endpoint's purpose.
       "channels.me",
       // `token.get` legitimately echoes the calling token's own workspace
-      // id, permission, and scopes — that IS the endpoint's purpose (P2.3
-      // token introspection), same rationale as `channels.me`.
+      // id, permission, and scopes — that IS the endpoint's purpose (token
+      // introspection), same rationale as `channels.me`.
       "token.get",
 
       // Pre-existing leaks, confirmed present on `main` before the analytics

@@ -13,8 +13,8 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 // exactly like `GET /v1/contacts/filter-fields` (see
 // `features/contact-filter/api/public.ts`): the most common scope, and this
 // only ever returns metadata (ids/names), never contact data. `alwaysVisible`
-// (P2.3) exempts it from scope-based `tools/list` filtering so a token
-// missing `contacts` still sees this tool and its 403, instead of the tool
+// exempts it from scope-based `tools/list` filtering so a token missing
+// `contacts` still sees this tool and its 403, instead of the tool
 // disappearing without a trace.
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
@@ -69,6 +69,12 @@ const includeQueryParam = z.preprocess((value) => {
 }, z.array(z.enum(CAPABILITIES_INCLUDES)).optional())
 
 const flowSpecJsonSchemaConverter = new ZodToJsonSchemaConverter()
+// `flowSpecSchema` is static — converted once at module load rather than on
+// every `schemas.flowSpec` request.
+const [, flowSpecJsonSchema] = flowSpecJsonSchemaConverter.convert(
+  flowSpecSchema,
+  { strategy: "input" },
+)
 
 export const capabilitiesPublicRouter = {
   get: workspaceTokenAuthAPI
@@ -108,13 +114,5 @@ export const schemasPublicRouter = {
     .input(z.object({}))
     .output(z.record(z.string(), z.unknown()))
     .errors(possibleErrorsOnListingResource)
-    .handler(() => {
-      const [, jsonSchema] = flowSpecJsonSchemaConverter.convert(
-        flowSpecSchema,
-        {
-          strategy: "input",
-        },
-      )
-      return jsonSchema as Record<string, unknown>
-    }),
+    .handler(() => flowSpecJsonSchema as Record<string, unknown>),
 }

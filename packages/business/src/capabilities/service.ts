@@ -5,6 +5,7 @@ import type {
 } from "@chatbotx.io/flow-config"
 import {
   extractTemplateParams,
+  flowSpecStepTypes,
   waitStepDelayUnits,
 } from "@chatbotx.io/flow-config"
 import { channelTypes } from "@chatbotx.io/utils/channel"
@@ -19,10 +20,10 @@ import { whatsappMessageTemplateService } from "../whatsapp-message-template/ser
 
 /**
  * Caps every list this service gathers. This output is fed straight into an
- * LLM's context window (P2.1's design constraint, not a DB/perf one) — a
- * workspace with thousands of tags or custom fields must never blow up the
- * response; an agent that needs more than this can page through the
- * resource's own list endpoint (`tags.list`, `customFields.list`, ...).
+ * LLM's context window — a workspace with thousands of tags or custom
+ * fields must never blow up the response; an agent that needs more than
+ * this can page through the resource's own list endpoint (`tags.list`,
+ * `customFields.list`, ...).
  */
 const CAPABILITIES_LIST_LIMIT = 200
 
@@ -39,10 +40,13 @@ export const CAPABILITIES_INCLUDES = [
 ] as const
 export type CapabilitiesInclude = (typeof CAPABILITIES_INCLUDES)[number]
 
-// The default set returned when `include` is omitted — the flow-authoring
-// essentials (P1.2's `FlowAuthoringContext` resolves against exactly these
-// names). `aiAgents` is left out of the default: it's rarely needed to build
-// a flow and the same information is one `ai_agents_list` call away.
+// The default set returned when `include` is omitted — flow-authoring
+// essentials (`FlowAuthoringContext` resolves against the `templates`,
+// `customFields`, and `flows` names in here) plus the read-only reference
+// lists (`inboxes`, `botFields`, `tags`, `sequences`) an agent typically
+// needs alongside them. `aiAgents` is left out of the default: it's rarely
+// needed to build a flow and the same information is one `ai_agents_list`
+// call away.
 const DEFAULT_INCLUDES: readonly CapabilitiesInclude[] = [
   "inboxes",
   "templates",
@@ -83,47 +87,13 @@ export type CapabilitiesResponse = {
   flowSpec?: CapabilitiesFlowSpec
 }
 
-// Mirrors the `.describe()` text on each `flowStepSpecSchema` member in
-// `@chatbotx.io/flow-config`'s `authoring/spec-schema.ts` — kept as a short,
-// hand-written summary here rather than derived from the zod schema, since
-// this list is meant to be skimmed inline in `capabilities.get`'s response,
-// while `GET /v1/schemas/flow-spec` (P2.2) is the full, authoritative JSON
-// Schema for actually authoring a step.
-const FLOW_SPEC_STEP_TYPES: CapabilitiesFlowSpecStepType[] = [
-  {
-    type: "send",
-    description:
-      "Send one text/image/file message, optionally with up to 3 quick-reply buttons.",
-  },
-  {
-    type: "sendTemplate",
-    description: "Send an existing WhatsApp message template by name.",
-  },
-  { type: "wait", description: "Pause the flow for a fixed duration." },
-  {
-    type: "branch",
-    description:
-      "Split the flow by contact-filter-style conditions (see contacts.listFilterFields).",
-  },
-  {
-    type: "action",
-    description:
-      "Perform a workspace action: addTags, removeTags, setCustomField, assignConversation, or archiveConversation.",
-  },
-  {
-    type: "startFlow",
-    description: "Start another flow for the contact, by name.",
-  },
-  {
-    type: "addNote",
-    description: "Add an internal note to the conversation.",
-  },
-  {
-    type: "goto",
-    description:
-      "Jump to an already-defined step (by its `id`) instead of continuing linearly. Must be the last step in its list.",
-  },
-]
+function toCapabilitiesField(field: {
+  id: string
+  name: string
+  type: string
+}): CapabilitiesField {
+  return { id: field.id, name: field.name, type: field.type }
+}
 
 async function listInboxes(workspaceId: string): Promise<CapabilitiesInbox[]> {
   const { data } = await inboxService.list({
@@ -159,11 +129,7 @@ async function listCustomFields(
     workspaceId,
     perPage: CAPABILITIES_LIST_LIMIT,
   })
-  return data.map((field) => ({
-    id: field.id,
-    name: field.name,
-    type: field.type,
-  }))
+  return data.map(toCapabilitiesField)
 }
 
 async function listBotFields(
@@ -173,11 +139,7 @@ async function listBotFields(
     workspaceId,
     perPage: CAPABILITIES_LIST_LIMIT,
   })
-  return data.map((field) => ({
-    id: field.id,
-    name: field.name,
-    type: field.type,
-  }))
+  return data.map(toCapabilitiesField)
 }
 
 async function listTags(
@@ -221,7 +183,7 @@ async function listFlows(
 
 function getFlowSpecCapabilities(): CapabilitiesFlowSpec {
   return {
-    stepTypes: FLOW_SPEC_STEP_TYPES,
+    stepTypes: flowSpecStepTypes,
     waitUnits: [...waitStepDelayUnits.options],
     channels: [...channelTypes.options],
   }
@@ -245,13 +207,13 @@ const CAPABILITY_LOADERS: {
 }
 
 /**
- * Workspace capability discovery for MCP agents (P2.1) — the same shape of
- * problem `listContactFilterFieldsForAPI` already solves for contact
- * filters: gather every named workspace entity an agent needs to reference
- * by id, in parallel, compact. Reused directly by both `GET /v1/capabilities`
- * (P2.2) and the flow-spec compiler's `FlowAuthoringContext` (P1.2/P1.3) —
- * the latter via `getFlowAuthoringContext` below, so the two never drift on
- * what a "known template/flow/tag/custom field" is.
+ * Workspace capability discovery for MCP agents — the same shape of problem
+ * `listContactFilterFieldsForAPI` already solves for contact filters:
+ * gather every named workspace entity an agent needs to reference by id, in
+ * parallel, compact. Reused directly by both `GET /v1/capabilities` and the
+ * flow-spec compiler's `FlowAuthoringContext` — the latter via
+ * `getFlowAuthoringContext` below, so the two never drift on what a "known
+ * template/flow/custom field" is.
  */
 export async function getCapabilities(props: {
   workspaceId: string
@@ -279,10 +241,8 @@ export async function getCapabilities(props: {
 export async function getFlowAuthoringContext(
   workspaceId: string,
 ): Promise<FlowAuthoringContext> {
-  const [inboxes, templates, tags, customFields, flows] = await Promise.all([
-    listInboxes(workspaceId),
+  const [templates, customFields, flows] = await Promise.all([
     listTemplates(workspaceId),
-    listTags(workspaceId),
     listCustomFields(workspaceId),
     listFlows(workspaceId),
   ])
@@ -298,13 +258,6 @@ export async function getFlowAuthoringContext(
         },
       ]),
     ),
-    inboxesByName: new Map(
-      inboxes.map((inbox) => [
-        inbox.name,
-        { id: inbox.id, channel: inbox.channel },
-      ]),
-    ),
-    tagsByName: new Map(tags.map((tag) => [tag.name, { id: tag.id }])),
     customFieldsByName: new Map(
       customFields.map((field) => [
         field.name,

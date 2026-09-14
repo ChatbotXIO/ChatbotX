@@ -16,8 +16,6 @@ import {
 
 const emptyCtx: FlowAuthoringContext = {
   templatesByName: new Map(),
-  inboxesByName: new Map(),
-  tagsByName: new Map(),
   customFieldsByName: new Map(),
   flowsByName: new Map(),
 }
@@ -26,8 +24,6 @@ const ctx: FlowAuthoringContext = {
   templatesByName: new Map([
     ["welcome_promo", { id: "1001", language: "en", status: "approved" }],
   ]),
-  inboxesByName: new Map(),
-  tagsByName: new Map(),
   customFieldsByName: new Map([["Plan", { id: "1002", type: "text" }]]),
   flowsByName: new Map([["Nurture", { id: "1003" }]]),
 }
@@ -178,9 +174,38 @@ describe("compileFlowSpec — one node per step type", () => {
     const node = compiled.nodes[0]
     expect(node?.type).toBe(nodeTypeSchema.enum.performAction)
     if (node?.type === "performAction") {
-      expect(node.data.details.steps[0]?.stepType).toBe(expectedStepType)
+      const compiledStep = node.data.details.steps[0]
+      expect(compiledStep?.stepType).toBe(expectedStepType)
+      if (action === "setCustomField") {
+        expect((compiledStep as { inputFieldId?: string })?.inputFieldId).toBe(
+          "1002",
+        )
+      }
     }
     expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("action setCustomField reports an unknown custom field with candidates", () => {
+    try {
+      compileFlowSpec(
+        spec([
+          {
+            type: "action",
+            action: "setCustomField",
+            customFieldName: "Pln",
+            value: "premium",
+          },
+        ]),
+        ctx,
+      )
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      const authoringError = (error as FlowAuthoringException).errors[0]
+      expect(authoringError?.path).toBe("steps[0].customFieldName")
+      expect(authoringError?.code).toBe("unknownCustomField")
+      expect(authoringError?.candidates).toContain("Plan")
+    }
   })
 
   test("startFlow resolves the target flow by name", () => {
@@ -508,5 +533,69 @@ describe("compileFlowSpec — round-trip through the export schema", () => {
     })
 
     expect(result.ok, result.ok ? undefined : result.reason).toBe(true)
+  })
+})
+
+describe("compileFlowSpec — specPathByNodeId", () => {
+  test("maps a top-level step's node back to its spec path", () => {
+    const compiled = compileFlowSpec(
+      spec([{ type: "addNote", note: "Called back" }]),
+      emptyCtx,
+    )
+    const node = compiled.nodes[0]
+    expect(node && compiled.specPathByNodeId.get(node.id)).toBe("steps[0]")
+  })
+
+  test("maps a button's nested chain to its buttons[].then path", () => {
+    const compiled = compileFlowSpec(
+      spec([
+        {
+          type: "send",
+          text: "Pick one",
+          buttons: [
+            {
+              text: "Yes",
+              // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+              then: [{ type: "addNote", note: "said yes" }],
+            },
+          ],
+        },
+      ]),
+      emptyCtx,
+    )
+    const nestedNode = compiled.nodes.find(
+      (node) => node.type === nodeTypeSchema.enum.addNotes,
+    )
+    expect(nestedNode && compiled.specPathByNodeId.get(nestedNode.id)).toBe(
+      "steps[0].buttons[0].then[0]",
+    )
+  })
+
+  test("maps a branch case's nested chain to its cases[].then path", () => {
+    const compiled = compileFlowSpec(
+      spec([
+        {
+          type: "branch",
+          cases: [
+            {
+              when: [{ field: "email", operator: "isNotEmpty" }],
+              // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+              then: [{ type: "addNote", note: "has email" }],
+            },
+          ],
+        },
+      ]),
+      emptyCtx,
+    )
+    const branchNode = compiled.nodes[0]
+    const nestedNode = compiled.nodes.find(
+      (node) => node.type === nodeTypeSchema.enum.addNotes,
+    )
+    expect(branchNode && compiled.specPathByNodeId.get(branchNode.id)).toBe(
+      "steps[0]",
+    )
+    expect(nestedNode && compiled.specPathByNodeId.get(nestedNode.id)).toBe(
+      "steps[0].cases[0].then[0]",
+    )
   })
 })

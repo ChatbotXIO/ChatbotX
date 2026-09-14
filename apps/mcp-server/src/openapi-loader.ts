@@ -1,4 +1,5 @@
 import { env } from "./env"
+import type { TokenIntrospection } from "./token-introspection"
 
 interface OpenAPISpec {
   paths?: Record<string, Record<string, OpenAPIOperation>>
@@ -84,7 +85,7 @@ interface OpenAPISchemaObject {
   type?: string
 }
 
-export interface DynamicToolAnnotations {
+interface DynamicToolAnnotations {
   destructiveHint: boolean
   idempotentHint: boolean
   readOnlyHint: boolean
@@ -358,21 +359,9 @@ export function getCachedTools(): DynamicTool[] {
   return cachedTools ?? []
 }
 
-export type TokenScopeIntrospection = {
-  permission: "read_only" | "full"
-  scopes: string[] | null
-}
-
-// Plan carve-out: a read-only token still needs the handful of POST
-// endpoints that are reads in disguise (a filter body instead of query
-// params) — `contacts_search` mirrors `contacts_list` exactly.
-const READ_ONLY_ALLOWED_POST_TOOLS: Record<string, true> = {
-  contacts_search: true,
-}
-
 function isVisibleForScope(
   tool: DynamicTool,
-  introspection: TokenScopeIntrospection | null,
+  introspection: TokenIntrospection | null,
 ): boolean {
   // Fail OPEN: introspection unavailable (network blip, unexpected
   // response) must not hide every tool — enforcement of scope/permission
@@ -382,10 +371,12 @@ function isVisibleForScope(
     return true
   }
 
+  // `readOnlyHint` (method-inferred for GET, or explicit `x-mcp.readOnlyHint`
+  // for a POST that's a read in disguise, e.g. `contacts_search`) is the
+  // single source of truth here — no separate allowlist to keep in sync.
   if (
     introspection.permission === "read_only" &&
-    tool.method !== "GET" &&
-    !READ_ONLY_ALLOWED_POST_TOOLS[tool.name]
+    !tool.annotations.readOnlyHint
   ) {
     return false
   }
@@ -407,7 +398,7 @@ function isVisibleForScope(
  * `getCachedTools()`, which is never filtered.
  */
 export function getVisibleTools(
-  introspection?: TokenScopeIntrospection | null,
+  introspection?: TokenIntrospection | null,
 ): DynamicTool[] {
   return getCachedTools()
     .filter((tool) => tool.visibility === "default")

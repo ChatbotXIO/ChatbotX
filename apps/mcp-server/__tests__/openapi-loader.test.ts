@@ -430,7 +430,11 @@ describe("getVisibleTools", () => {
           post: {
             operationId: "contacts.search",
             summary: "Search contacts",
-            "x-mcp": { visibility: "default", scope: "contacts" },
+            "x-mcp": {
+              visibility: "default",
+              scope: "contacts",
+              readOnlyHint: true,
+            },
           },
         },
         "/v1/tags/{id}": {
@@ -487,7 +491,7 @@ describe("getVisibleTools", () => {
     await loadOpenApiSpec()
 
     expect(
-      getVisibleTools({ permission: "full", scopes: null })
+      getVisibleTools({ permission: "full", scopes: null, workspaceId: "ws-1" })
         .map((t) => t.name)
         .sort(),
     ).toEqual([
@@ -509,13 +513,17 @@ describe("getVisibleTools", () => {
     await loadOpenApiSpec()
 
     expect(
-      getVisibleTools({ permission: "full", scopes: ["automation"] })
+      getVisibleTools({
+        permission: "full",
+        scopes: ["automation"],
+        workspaceId: "ws-1",
+      })
         .map((t) => t.name)
         .sort(),
     ).toEqual(["capabilities_get", "flows_list"])
   })
 
-  test("a read_only token only sees GET tools plus the read-disguised-as-POST allowlist", async () => {
+  test("a read_only token only sees GET tools plus readOnlyHint POST tools", async () => {
     globalThis.fetch = vi
       .fn()
       .mockResolvedValue(specWithScopedTools()) as unknown as typeof fetch
@@ -528,6 +536,7 @@ describe("getVisibleTools", () => {
       getVisibleTools({
         permission: "read_only",
         scopes: ["contacts", "automation"],
+        workspaceId: "ws-1",
       })
         .map((t) => t.name)
         .sort(),

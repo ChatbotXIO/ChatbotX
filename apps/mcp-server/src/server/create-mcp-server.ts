@@ -74,6 +74,12 @@ export const createMcpServer = (
     const { name, arguments: args } = request.params
     const toolArgs = (args ?? {}) as Record<string, unknown>
 
+    // `search_tools` is read-only discovery over the cached tool list — it
+    // needs no workspace token, unlike `call_tool` and every regular tool.
+    if (name === "search_tools") {
+      return handleSearchTools(toolArgs)
+    }
+
     const apiKey = getApiKey()
     if (!apiKey) {
       return {
@@ -82,10 +88,8 @@ export const createMcpServer = (
       }
     }
 
-    if (name in META_TOOL_NAMES) {
-      return name === "search_tools"
-        ? handleSearchTools(toolArgs)
-        : await handleCallTool(toolArgs, apiKey)
+    if (META_TOOL_NAMES.has(name)) {
+      return await handleCallTool(toolArgs, apiKey)
     }
 
     const tool = findToolByName(name)

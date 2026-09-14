@@ -103,6 +103,7 @@ export const publicRouter = {
   questionnaires: questionnairesPublicRouter,
   reflinks: reflinksPublicRouter,
   savedReplies: savedRepliesPublicRouter,
+  schemas: schemasPublicRouter,
   sequences: sequencesPublicRouter,
   smtpIntegrations: smtpIntegrationsPublicRouter,
   spreadsheets: spreadsheetsPublicRouter,
@@ -115,5 +116,4 @@ export const publicRouter = {
   webhooks: webhooksPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,
   zaloChannels: zaloChannelsPublicRouter,
-  schemas: schemasPublicRouter,
 }

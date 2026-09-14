@@ -3,12 +3,11 @@ import { z } from "zod"
 import { waitStepDelayUnits } from "../steps/wait"
 
 /**
- * The agent-facing flow DSL (P1.2 of the MCP Agent-First plan). A small,
- * deliberately curated subset of the full node/step surface — the goal is an
- * agent reliably building a *working* flow, not exposing every editor
- * feature. Every field carries `.describe()`: this schema is also the source
- * for `GET /v1/schemas/flow-spec` (P2.2), so the description IS the
- * documentation an LLM sees.
+ * The agent-facing flow DSL. A small, deliberately curated subset of the
+ * full node/step surface — the goal is an agent reliably building a working
+ * flow, not exposing every editor feature. Every field carries `.describe()`:
+ * this schema is also the source for `GET /v1/schemas/flow-spec`, so the
+ * description IS the documentation an LLM sees.
  *
  * Hand-written recursive TS type first (`send.buttons[].then` and
  * `branch.cases[].then`/`.otherwise` reference the step array itself) so
@@ -177,7 +176,7 @@ const branchConditionSpecSchema = z.object({
     .string()
     .min(1)
     .describe(
-      "A static field name from `GET /v1/contacts/filter-fields`, or `customField:<name>` / `botField:<name>` to reference a workspace custom/bot field by name (resolved automatically — use the exact name from `contacts.listFilterFields`).",
+      "A static field name from `GET /v1/contacts/filter-fields`, or `customField:<name>` to reference a workspace custom field by name (resolved automatically — use the exact name from `contacts.listFilterFields`). `botField:<name>` is not yet supported.",
     ),
   operator: z
     .string()
@@ -345,34 +344,35 @@ const gotoStepSpecSchema = z
     "Terminal — routes to an already-defined step instead of continuing. Must be the last step in its list.",
   )
 
+export const flowStepSpecOptions = [
+  sendStepSpecSchema,
+  sendTemplateStepSpecSchema,
+  waitStepSpecSchema,
+  branchStepSpecSchema,
+  actionStepSpecSchema,
+  startFlowStepSpecSchema,
+  addNoteStepSpecSchema,
+  gotoStepSpecSchema,
+] as const
+
 export const flowStepSpecSchema: z.ZodType<FlowStepSpec> = z.discriminatedUnion(
   "type",
-  [
-    sendStepSpecSchema,
-    sendTemplateStepSpecSchema,
-    waitStepSpecSchema,
-    branchStepSpecSchema,
-    actionStepSpecSchema,
-    startFlowStepSpecSchema,
-    addNoteStepSpecSchema,
-    gotoStepSpecSchema,
-  ],
+  flowStepSpecOptions,
 )
 
-/** Step `type`s that end their step list — nothing may follow them. */
-export const TERMINAL_STEP_TYPES: Record<
-  FlowStepSpec["type"],
-  true | undefined
-> = {
-  send: undefined,
-  sendTemplate: undefined,
-  wait: undefined,
-  branch: true,
-  action: undefined,
-  startFlow: undefined,
-  addNote: undefined,
-  goto: true,
-}
+export type FlowSpecStepType = { type: string; description: string }
+
+/**
+ * Derived from each step schema's own `.describe()` — the same text `GET
+ * /v1/schemas/flow-spec` surfaces — rather than a hand-maintained list that
+ * can silently drift from the schema.
+ */
+export const flowSpecStepTypes: FlowSpecStepType[] = flowStepSpecOptions.map(
+  (option) => ({
+    type: option.shape.type.value,
+    description: option.description ?? "",
+  }),
+)
 
 export const flowSpecSchema = z.object({
   formatVersion: z.literal(1).describe("DSL format version. Always 1."),
