@@ -12,7 +12,7 @@ import type {
 import { encryptUtils } from "@chatbotx.io/encryption"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
-import { ChatbotXException } from "../errors"
+import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { workspaceService } from "../workspace/service"
 import { generateWorkspaceToken } from "./credentials"
@@ -29,6 +29,10 @@ const WORKSPACE_API_TOKEN_CACHE_TTL_SECONDS = 300
 
 export const workspaceApiTokenCacheTag = (workspaceId: string) =>
   `workspace-api-tokens:${workspaceId}`
+
+const scopeSummary = (
+  scopes: WorkspaceApiTokenScope[] | null | undefined,
+): string => (scopes?.length ? scopes.join(",") : "all")
 
 class WorkspaceApiTokenService extends BaseService {
   async findWorkspaceByTokenHash(props: {
@@ -106,6 +110,124 @@ class WorkspaceApiTokenService extends BaseService {
     return await workspaceApiTokenRepository.listByWorkspaceId(workspaceId, tx)
   }
 
+  async findTokenOrFail(props: {
+    workspaceId: string
+    id: string
+    tx?: DatabaseClient
+  }): Promise<WorkspaceApiTokenModel> {
+    const token = await workspaceApiTokenRepository.findByIdForWorkspace(
+      { workspaceId: props.workspaceId, id: props.id },
+      props.tx,
+    )
+    if (!token) {
+      throw notFoundException("Workspace API token not found")
+    }
+
+    return token
+  }
+
+  async updateToken(props: {
+    workspaceId: string
+    id: string
+    name?: string
+    permission?: WorkspaceApiTokenPermission
+    scopes?: WorkspaceApiTokenScope[] | null
+    tx?: DatabaseClient
+  }): Promise<WorkspaceApiTokenModel> {
+    const { workspaceId, id, name, permission, scopes, tx = db } = props
+    const token = await this.findTokenOrFail({ workspaceId, id, tx })
+    if (token.isDefault) {
+      throw new ChatbotXException(
+        "The default workspace API token cannot be modified",
+        "workspaceApiTokenImmutable",
+      )
+    }
+
+    const updatedToken =
+      await workspaceApiTokenRepository.updateByIdForWorkspace(
+        { workspaceId, id, name, permission, scopes },
+        tx,
+      )
+    if (!updatedToken) {
+      throw notFoundException("Workspace API token not found")
+    }
+
+    try {
+      await this.invalidateCacheTags(workspaceApiTokenCacheTag(workspaceId))
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId, id },
+        "Failed to invalidate workspace API token cache; update still applied",
+      )
+    }
+
+    if (!props.tx) {
+      try {
+        await this.audit(
+          "update",
+          `updated workspace API token "${updatedToken.name}" (${updatedToken.permission}, scopes: ${scopeSummary(updatedToken.scopes)})`,
+        )
+      } catch (err) {
+        logger.warn(
+          { err, workspaceId, tokenId: updatedToken.id },
+          "Failed to record audit log for workspace API token update",
+        )
+      }
+    }
+
+    return updatedToken
+  }
+
+  async rotateToken(props: {
+    workspaceId: string
+    id: string
+    tokenHash: TokenHash
+    tokenPrefix: string
+    tx?: DatabaseClient
+  }): Promise<WorkspaceApiTokenModel> {
+    const { workspaceId, id, tokenHash, tokenPrefix, tx = db } = props
+    const token = await this.findTokenOrFail({ workspaceId, id, tx })
+    if (token.isDefault) {
+      throw new ChatbotXException(
+        "The default workspace API token cannot be rotated",
+        "workspaceApiTokenImmutable",
+      )
+    }
+
+    const rotatedToken = await workspaceApiTokenRepository.rotateTokenById(
+      { workspaceId, id, tokenHash, tokenPrefix },
+      tx,
+    )
+    if (!rotatedToken) {
+      throw notFoundException("Workspace API token not found")
+    }
+
+    try {
+      await this.invalidateCacheTags(workspaceApiTokenCacheTag(workspaceId))
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId, id },
+        "Failed to invalidate workspace API token cache; rotation still applied",
+      )
+    }
+
+    if (!props.tx) {
+      try {
+        await this.audit(
+          "update",
+          `rotated workspace API token "${rotatedToken.name}" (#${id})`,
+        )
+      } catch (err) {
+        logger.warn(
+          { err, workspaceId, tokenId: rotatedToken.id },
+          "Failed to record audit log for workspace API token rotation",
+        )
+      }
+    }
+
+    return rotatedToken
+  }
+
   async createToken(props: {
     workspaceId: string
     name: string
@@ -169,11 +291,9 @@ class WorkspaceApiTokenService extends BaseService {
     // committed create into a user-visible error.
     if (!props.tx) {
       try {
-        const scopeSummary =
-          scopes && scopes.length > 0 ? scopes.join(",") : "all"
         await this.audit(
           "create",
-          `created workspace API token "${name}" (${permission}, scopes: ${scopeSummary})`,
+          `created workspace API token "${name}" (${permission}, scopes: ${scopeSummary(scopes)})`,
         )
       } catch (err) {
         logger.warn(

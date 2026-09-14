@@ -5,7 +5,10 @@ import {
   eq,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
-import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
+import {
+  type WorkspaceMemberPermissions,
+  workspaceMemberRoles,
+} from "@chatbotx.io/database/partials"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import type {
   UserModel,
@@ -20,7 +23,28 @@ import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
+import { userService } from "../user/service"
 import { workspaceUsageService } from "../workspace-usage/service"
+import { normalizeWorkspaceMemberPermissions } from "./permissions"
+
+/**
+ * Field-by-field comparison of the fixed-shape `WorkspaceMemberPermissions`
+ * object — deliberately not `node:util`'s `isDeepStrictEqual`: this module
+ * is reachable from the barrel traced into the Edge Runtime build (see
+ * `__tests__/edge-safe-import-graph.test.ts`), which forbids Node built-ins.
+ */
+const permissionsEqual = (
+  a: WorkspaceMemberPermissions,
+  b: WorkspaceMemberPermissions,
+): boolean =>
+  a.superAdmin === b.superAdmin &&
+  a.analytics === b.analytics &&
+  a.flows === b.flows &&
+  a.contacts === b.contacts &&
+  a.onlyAssignedContacts === b.onlyAssignedContacts &&
+  a.emailAndPhone === b.emailAndPhone &&
+  a.broadcast === b.broadcast &&
+  a.ecommerce === b.ecommerce
 
 type ListWorkspaceMembersInput = {
   workspaceId: string
@@ -311,6 +335,19 @@ export class WorkspaceMemberService extends BaseService {
     return member
   }
 
+  normalizeUpdateData<
+    Data extends Partial<typeof workspaceMemberModel.$inferInsert>,
+  >(data: Data): Data {
+    if (!data.permissions) {
+      return data
+    }
+
+    return {
+      ...data,
+      permissions: normalizeWorkspaceMemberPermissions(data.permissions),
+    } as Data
+  }
+
   async update(input: {
     tx?: DatabaseClient
     id: string
@@ -318,10 +355,11 @@ export class WorkspaceMemberService extends BaseService {
     data: Partial<typeof workspaceMemberModel.$inferInsert>
   }): Promise<{ id: string } | undefined> {
     const { tx = db, id, workspaceId, data } = input
+    const normalizedData = this.normalizeUpdateData(data)
 
     const updated = await tx
       .update(workspaceMemberModel)
-      .set(data)
+      .set(normalizedData)
       .where(
         and(
           eq(workspaceMemberModel.id, id),
@@ -343,6 +381,50 @@ export class WorkspaceMemberService extends BaseService {
     await this.invalidateCacheTags(workspaceMemberCacheTag(row.userId))
 
     return { id: row.id }
+  }
+
+  /**
+   * Diff + audit wrapper around `update`, shared by the private
+   * `updateWorkspaceMemberAction` and the public `/v1/members/{memberId}`
+   * route so a permissions change is recorded as a `role_change` audit
+   * event from either caller — see AGENTS.md invariant #4 (public/private
+   * parity). Only a `permissions` change is audited; other fields
+   * (notification settings) update silently.
+   */
+  async updateMember(input: {
+    tx?: DatabaseClient
+    id: string
+    workspaceId: string
+    data: Partial<typeof workspaceMemberModel.$inferInsert>
+  }): Promise<{ id: string } | undefined> {
+    const { tx, id, workspaceId, data } = input
+    const normalizedData = this.normalizeUpdateData(data)
+
+    const existing = await this.findByIdOrFail({ id, workspaceId, tx })
+
+    const updated = await this.update({
+      tx,
+      id,
+      workspaceId,
+      data: normalizedData,
+    })
+    if (!updated) {
+      return
+    }
+
+    const permissionsChanged =
+      normalizedData.permissions !== undefined &&
+      !permissionsEqual(existing.permissions, normalizedData.permissions)
+
+    if (permissionsChanged && !tx) {
+      const targetUser = await userService.findNameAndEmail(existing.userId)
+      await this.audit(
+        "role_change",
+        `changed role of ${targetUser?.name ?? targetUser?.email ?? "a member"} to ${normalizedData.permissions?.superAdmin ? "admin" : "member"}`,
+      )
+    }
+
+    return updated
   }
 
   async listPaginated(

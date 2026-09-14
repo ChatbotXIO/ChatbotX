@@ -3046,7 +3046,8 @@
       "minigames": "Minispel",
       "appointments": "Bokningar",
       "media": "Media",
-      "ads": "Annonser"
+      "ads": "Annonser",
+      "workspace": "Arbetsyta"
     },
     "adReferral": {
       "label": "Ads",

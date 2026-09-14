@@ -7,6 +7,7 @@ import type { HTTPMethod } from "@orpc/server"
 import { ORPCError } from "@orpc/server"
 import { isCloud } from "@/env"
 import { ADS_CAMPAIGNS_INSIGHTS_PATH } from "@/features/ads-campaign/lib/api-paths"
+import { WORKSPACE_DELETION_PATH } from "@/features/workspaces/lib/api-paths"
 
 export type WorkspaceAccessDenialReason = "trialExpired" | "macLimitReached"
 
@@ -52,6 +53,18 @@ const READ_ONLY_TOKEN_ALLOWED_METHODS = new Set<HTTPMethod>(["GET", "HEAD"])
 const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = new Set<string>([
   ADS_CAMPAIGNS_INSIGHTS_PATH,
 ])
+
+/**
+ * Deletion-lifecycle paths stay reachable regardless of the owner's
+ * quota/trial state, mirroring `workspaceActionClientAllowExpired`
+ * (AGENTS.md invariant #14: delete/lifecycle actions stay available after
+ * expiry). `POST /v1/workspace/deletion` (schedule) is the only mutation
+ * method this affects — DELETE (cancel) is already exempt via
+ * `isWorkspaceMutationMethod`.
+ */
+const OWNER_ACCESS_EXEMPT_PATHS: Record<string, true> = {
+  [WORKSPACE_DELETION_PATH]: true,
+}
 
 /**
  * Distinct from `isWorkspaceMutationMethod`: that predicate treats DELETE as
@@ -142,8 +155,13 @@ export const workspaceAccessDenialOrpcError = (
 export async function assertWorkspaceOwnerAccessForMethod(props: {
   method: HTTPMethod | undefined
   ownerId: string
+  path?: string
 }): Promise<void> {
   if (!isWorkspaceMutationMethod(props.method)) {
+    return
+  }
+
+  if (props.path && Object.hasOwn(OWNER_ACCESS_EXEMPT_PATHS, props.path)) {
     return
   }
 

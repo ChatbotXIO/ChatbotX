@@ -404,6 +404,36 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "apiTokens.create",
+    "path": "/v1/api-tokens",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "apiTokens.delete",
+    "path": "/v1/api-tokens/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "apiTokens.get",
+    "path": "/v1/api-tokens/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "apiTokens.list",
+    "path": "/v1/api-tokens",
+  },
+  {
+    "method": "POST",
+    "operationId": "apiTokens.rotate",
+    "path": "/v1/api-tokens/{id}/rotate",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "apiTokens.update",
+    "path": "/v1/api-tokens/{id}",
+  },
+  {
+    "method": "POST",
     "operationId": "appointmentCalendars.create",
     "path": "/v1/appointment-calendars",
   },
@@ -481,6 +511,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "appointments.list",
     "path": "/v1/appointments",
+  },
+  {
+    "method": "GET",
+    "operationId": "auditLogs.list",
+    "path": "/v1/audit-logs",
   },
   {
     "method": "PUT",
@@ -1829,6 +1864,56 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "templates.create",
+    "path": "/v1/templates",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "templates.delete",
+    "path": "/v1/templates/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.get",
+    "path": "/v1/templates/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "templates.install",
+    "path": "/v1/templates/installations",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.list",
+    "path": "/v1/templates",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.listInstallations",
+    "path": "/v1/templates/installations",
+  },
+  {
+    "method": "GET",
+    "operationId": "templates.listSelectableResources",
+    "path": "/v1/templates/selectable-resources",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "templates.update",
+    "path": "/v1/templates/{id}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "templates.updateInstallationAutoUpdate",
+    "path": "/v1/templates/installations/{id}/auto-update",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "templates.updateShareSettings",
+    "path": "/v1/templates/{id}/share-settings",
+  },
+  {
+    "method": "POST",
     "operationId": "triggers.create",
     "path": "/v1/triggers",
   },
@@ -1923,14 +2008,64 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/webhooks",
   },
   {
+    "method": "DELETE",
+    "operationId": "workspace.cancelDeletion",
+    "path": "/v1/workspace/deletion",
+  },
+  {
+    "method": "GET",
+    "operationId": "workspace.get",
+    "path": "/v1/workspace",
+  },
+  {
+    "method": "POST",
+    "operationId": "workspace.refreshChannelTokens",
+    "path": "/v1/workspace/channel-tokens/refresh",
+  },
+  {
+    "method": "POST",
+    "operationId": "workspace.scheduleDeletion",
+    "path": "/v1/workspace/deletion",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "workspace.update",
+    "path": "/v1/workspace",
+  },
+  {
+    "method": "PUT",
+    "operationId": "workspace.updateStatus",
+    "path": "/v1/workspace/status",
+  },
+  {
+    "method": "PUT",
+    "operationId": "workspace.updateSupportAccess",
+    "path": "/v1/workspace/support-access",
+  },
+  {
     "method": "GET",
     "operationId": "workspaceMembers.get",
     "path": "/v1/members/{memberId}",
   },
   {
+    "method": "POST",
+    "operationId": "workspaceMembers.invite",
+    "path": "/v1/members/invitations",
+  },
+  {
     "method": "GET",
     "operationId": "workspaceMembers.list",
     "path": "/v1/members",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "workspaceMembers.remove",
+    "path": "/v1/members/{memberId}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "workspaceMembers.update",
+    "path": "/v1/members/{memberId}",
   },
   {
     "method": "PATCH",

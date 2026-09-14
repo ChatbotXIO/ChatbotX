@@ -15,6 +15,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import { parseTemplateExport } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
+import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { ChatbotXException, notFoundException } from "../errors"
 import { workspaceService } from "../workspace"
 import { generateShareToken } from "./share-token"
@@ -163,7 +164,7 @@ class TemplateService {
   async createOrUpdate(input: {
     workspaceId: string
     tenantId: string
-    createdBy: string
+    createdBy: string | null
     name: string
     description?: string | null
     imageUrl?: string | null
@@ -318,7 +319,7 @@ class TemplateService {
    */
   async createInstallationRecord(input: {
     workspaceId: string
-    installedBy: string
+    installedBy: string | null
     template: TemplateModel
   }): Promise<TemplateInstallationModel> {
     const [installation] = await db
@@ -358,6 +359,52 @@ class TemplateService {
         completedAt: new Date(),
       })
       .where(eq(templateInstallationModel.id, input.installationId))
+  }
+
+  /**
+   * Full install-lifecycle sequence shared by the private
+   * `installTemplateAction` and the public `POST /v1/templates/installations`
+   * route: validate installability, create the `pending` tracking row, then
+   * enqueue the worker job — marking the row `failed` (and rethrowing) if
+   * the enqueue itself throws, so it is never left stuck at `pending`.
+   */
+  async enqueueInstallation(input: {
+    shareToken: string
+    workspaceId: string
+    installedBy: string | null
+  }): Promise<TemplateInstallationModel> {
+    const { template } = await this.assertInstallable({
+      shareToken: input.shareToken,
+      targetWorkspaceId: input.workspaceId,
+    })
+
+    const installation = await this.createInstallationRecord({
+      workspaceId: input.workspaceId,
+      installedBy: input.installedBy,
+      template,
+    })
+
+    try {
+      await defaultQueue.add(
+        DefaultJobAction.installTemplate,
+        {
+          type: DefaultJobAction.installTemplate,
+          data: {
+            installationId: installation.id,
+            workspaceId: input.workspaceId,
+          },
+        },
+        { jobId: `install-template-${installation.id}` },
+      )
+    } catch (error) {
+      await this.markInstallationFailed({
+        installationId: installation.id,
+        errorMessage: "Unable to queue template install",
+      })
+      throw error
+    }
+
+    return installation
   }
 
   /**

@@ -2176,7 +2176,8 @@
       "minigames": "Minispil",
       "appointments": "Aftaler",
       "media": "Medier",
-      "ads": "Annoncer"
+      "ads": "Annoncer",
+      "workspace": "Arbejdsområde"
     },
     "adReferral": {
       "label": "Ads",

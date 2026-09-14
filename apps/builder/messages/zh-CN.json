@@ -3049,7 +3049,8 @@
       "minigames": "小游戏",
       "appointments": "预约",
       "media": "媒体",
-      "ads": "广告"
+      "ads": "广告",
+      "workspace": "工作区"
     },
     "adReferral": {
       "label": "Ads",

@@ -97,6 +97,16 @@ export const possibleErrorsOnListingResource = {
   businessError,
 } satisfies ErrorMap
 
+const enterpriseFeatureRequired = {
+  message: "This feature requires an enterprise license",
+  status: 403,
+}
+
+export const possibleErrorsOnListingEnterpriseResource = {
+  businessError,
+  enterpriseFeatureRequired,
+} satisfies ErrorMap
+
 /**
  * Per-router sets carry only what varies by operation shape. The auth,
  * rate-limit, and both validation codes come from `commonApiErrors`, attached
@@ -114,6 +124,26 @@ export const possibleErrorsOnMutatingResource = {
 export const possibleErrorsOnDeletingResource = {
   notFound,
   businessError,
+} satisfies ErrorMap
+
+const workspaceApiTokenLimitReached = {
+  message: "Workspace has reached the maximum number of API tokens",
+  status: 400,
+}
+const workspaceApiTokenImmutable = {
+  message: "The default workspace API token cannot be modified",
+  status: 400,
+}
+
+export const possibleErrorsOnCreatingWorkspaceApiToken = {
+  businessError,
+  workspaceApiTokenLimitReached,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingWorkspaceApiToken = {
+  notFound,
+  businessError,
+  workspaceApiTokenImmutable,
 } satisfies ErrorMap
 
 /**

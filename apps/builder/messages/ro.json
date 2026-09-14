@@ -2995,7 +2995,8 @@
       "minigames": "Minijocuri",
       "appointments": "Programări",
       "media": "Media",
-      "ads": "Reclame"
+      "ads": "Reclame",
+      "workspace": "Spațiu de lucru"
     },
     "adReferral": {
       "label": "Ads",

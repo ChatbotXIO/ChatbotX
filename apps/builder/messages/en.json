@@ -2313,7 +2313,8 @@
       "minigames": "Minigames",
       "appointments": "Appointments",
       "media": "Media",
-      "ads": "Ads"
+      "ads": "Ads",
+      "workspace": "Workspace"
     },
     "adReferral": {
       "label": "Ads",

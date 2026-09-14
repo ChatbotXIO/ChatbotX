@@ -2176,7 +2176,8 @@
       "minigames": "Minigame",
       "appointments": "Janji Temu",
       "media": "Media",
-      "ads": "Iklan"
+      "ads": "Iklan",
+      "workspace": "Workspace"
     },
     "adReferral": {
       "label": "Ads",

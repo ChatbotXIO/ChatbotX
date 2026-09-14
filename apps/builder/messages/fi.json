@@ -2176,7 +2176,8 @@
       "minigames": "Minipelit",
       "appointments": "Tapaamiset",
       "media": "Media",
-      "ads": "Mainokset"
+      "ads": "Mainokset",
+      "workspace": "Työtila"
     },
     "adReferral": {
       "label": "Ads",

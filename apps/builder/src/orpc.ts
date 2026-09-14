@@ -157,4 +157,28 @@ const requireTokenScope = (scope: WorkspaceApiTokenScope) =>
 export const workspaceTokenAuthAPIForScope = (scope: WorkspaceApiTokenScope) =>
   publicAPI.use(workspaceTokenAuthMidddleware).use(requireTokenScope(scope))
 
+/**
+ * Guards `/v1/api-tokens` on top of `workspaceTokenAuthAPIForScope("workspace")`.
+ * A token that can mint tokens is a privilege-escalation vector, so a token
+ * carrying an explicit scope allow-list — even one listing `workspace` — is
+ * denied; only an "All scopes" (`scopes: null`) token reaches this stack, and
+ * it can therefore never mint a token broader than itself. `read_only` is
+ * still enforced by `workspaceTokenAuthMidddleware` (GET/HEAD plus the
+ * POST-for-read allow-list), so a read-only unrestricted token may list but
+ * not mint. This stack is used only by the `/v1/api-tokens` routes.
+ */
+const requireUnrestrictedToken = base.middleware(async ({ context, next }) => {
+  if (!context.apiToken || context.apiToken.scopes != null) {
+    throw new ORPCError("FORBIDDEN", {
+      message:
+        "Only an unrestricted (All scopes) token can manage workspace API tokens",
+    })
+  }
+  return await next()
+})
+
+export const workspaceTokenAdminAPI = workspaceTokenAuthAPIForScope(
+  "workspace",
+).use(requireUnrestrictedToken)
+
 export const channelApiTokenAPI = publicAPI.use(channelApiTokenAuthMidddleware)

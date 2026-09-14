@@ -23,6 +23,7 @@ export const workspaceApiTokenScopeRegistry: Record<
   appointments: { labelKey: "fields.tokenScopes.appointments", order: 9 },
   media: { labelKey: "fields.tokenScopes.media", order: 10 },
   ads: { labelKey: "fields.tokenScopes.ads", order: 11 },
+  workspace: { labelKey: "fields.tokenScopes.workspace", order: 12 },
 }
 
 export const orderedWorkspaceApiTokenScopes = (

@@ -3,7 +3,6 @@
 import { templateService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { installTemplateRequest } from "../schema/mutation"
@@ -17,9 +16,9 @@ import { installTemplateRequest } from "../schema/mutation"
  * `templateService.assertInstallable` then enforces the same-tenant gate on
  * top of that membership check.
  *
- * Follows the `import-products.action.ts` shape: create the tracking row
- * first, enqueue inside a try, and mark the row failed on enqueue failure
- * so it is never left stuck at `pending`.
+ * The install/enqueue/failure-compensation sequence itself lives in
+ * `templateService.enqueueInstallation`, shared with the public
+ * `POST /v1/templates/installations` route.
  */
 export const installTemplateAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString()])
@@ -42,36 +41,11 @@ export const installTemplateAction = workspaceActionClient
         )
       }
 
-      const { template } = await templateService.assertInstallable({
+      const installation = await templateService.enqueueInstallation({
         shareToken: parsedInput.shareToken,
-        targetWorkspaceId,
-      })
-
-      const installation = await templateService.createInstallationRecord({
         workspaceId: targetWorkspaceId,
         installedBy: user.id,
-        template,
       })
-
-      try {
-        await defaultQueue.add(
-          DefaultJobAction.installTemplate,
-          {
-            type: DefaultJobAction.installTemplate,
-            data: {
-              installationId: installation.id,
-              workspaceId: targetWorkspaceId,
-            },
-          },
-          { jobId: `install-template-${installation.id}` },
-        )
-      } catch (error) {
-        await templateService.markInstallationFailed({
-          installationId: installation.id,
-          errorMessage: "Unable to queue template install",
-        })
-        throw error
-      }
 
       return { installationId: installation.id }
     },

@@ -2313,7 +2313,8 @@
       "minigames": "Minigame",
       "appointments": "Lịch hẹn",
       "media": "Phương tiện",
-      "ads": "Quảng cáo"
+      "ads": "Quảng cáo",
+      "workspace": "Không gian làm việc"
     },
     "adReferral": {
       "label": "Ads",
