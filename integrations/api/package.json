@@ -24,7 +24,7 @@
     "./**/*": "./src/**/*.ts"
   },
   "scripts": {
-    "check-types": "tsc --noEmit",
+    "check-types": "node --max-old-space-size=8192 ../../node_modules/typescript/bin/tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   }
