@@ -44,9 +44,16 @@ function InboxSelectCard({
 
   const handleInboxSelect = useCallback(
     (channel: ChannelType) => {
-      router.push(
-        `/channels/create?${searchParams.toString()}&channel=${channel}`,
-      )
+      const params = new URLSearchParams(searchParams.toString())
+      // The reason for a stumble does not travel to the next channel:
+      // explaining a Messenger failure on the Telegram screen describes
+      // something that did not happen there.
+      params.delete("error")
+      // `set`, not append: concatenating `&channel=` onto a query string that
+      // may already carry one yields two, which Next parses into an array
+      // while `CreateChannelPageProps` declares `channel?: string | null`.
+      params.set("channel", channel)
+      router.push(`/channels/create?${params.toString()}`)
     },
     [router, searchParams],
   )
