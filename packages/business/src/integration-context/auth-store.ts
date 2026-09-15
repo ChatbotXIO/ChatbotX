@@ -1,7 +1,15 @@
 import { db, eq, sql } from "@chatbotx.io/database/client"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { inboxModel } from "@chatbotx.io/database/schema"
 import { distributedLock } from "@chatbotx.io/redis"
-import { type AuthStore, type AuthValue, SdkException } from "@chatbotx.io/sdk"
+import {
+  type AuthStore,
+  type AuthValue,
+  type ConnectionHealth,
+  SdkException,
+} from "@chatbotx.io/sdk"
+import { connectionStateService } from "../connection/state-service"
+import { workspaceMemberService } from "../workspace-member/service"
 
 const REFRESH_LOCK_TIMEOUT_SECONDS = 10
 
@@ -44,6 +52,26 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
   integration: AuthStoreIntegrationRow,
 ): AuthStore<TAuth> => {
   const lockKey = `auth:refresh:${lockKeyPrefix}:${integration.id}`
+  /**
+   * Resolves the `Connection` row mirroring this `Integration<Channel>` (or
+   * workspace-integration satellite) row, so `markOffline`/`recordHealth`
+   * can route through `connectionStateService` instead of writing `Inbox`
+   * directly. Returns `undefined` for a row predating the Phase 1 backfill
+   * — callers fall back to the legacy direct write in that case.
+   */
+  const resolveConnection = async () => {
+    if (integration.inboxId) {
+      return await connectionRepository.findByInboxId({
+        inboxId: integration.inboxId,
+      })
+    }
+    if (integration.integrationId) {
+      return await connectionRepository.findByIntegrationId({
+        integrationId: integration.integrationId,
+      })
+    }
+    return
+  }
 
   return {
     load: async () => {
@@ -61,6 +89,19 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
       await db.execute(
         sql`UPDATE ${sql.identifier(tableName)} SET auth = ${JSON.stringify(auth)}::jsonb WHERE "id" = ${integration.id}`,
       )
+      const connection = await resolveConnection()
+      if (!connection) {
+        // Pre-backfill fallback: no `Connection` row to mirror onto yet.
+        return
+      }
+      const authExpiresAt =
+        auth.authType === "oauth2" && auth.tokens.expiresAt
+          ? new Date(auth.tokens.expiresAt)
+          : null
+      await connectionStateService.recordAuthSaved({
+        connectionId: connection.id,
+        authExpiresAt,
+      })
     },
     withLock: (fn) =>
       distributedLock.runExclusive({
@@ -69,6 +110,20 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
         fn,
       }),
     markOffline: async () => {
+      const connection = await resolveConnection()
+      if (connection) {
+        const ownerId =
+          await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+            workspaceId: connection.workspaceId,
+          })
+        await connectionStateService.markUnhealthy({
+          connectionId: connection.id,
+          ownerId,
+        })
+        return
+      }
+      // Pre-backfill fallback: no `Connection` row exists yet for this
+      // integration — fall back to the legacy direct `Inbox` write.
       if (!integration.inboxId) {
         // Workspace-level integration (no inbox) — nothing to disconnect.
         return
@@ -77,6 +132,37 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
         .update(inboxModel)
         .set({ status: "disconnected" })
         .where(eq(inboxModel.id, integration.inboxId))
+    },
+    recordHealth: async (health: ConnectionHealth) => {
+      const connection = await resolveConnection()
+      if (!connection) {
+        // Pre-backfill fallback: nothing to mirror the health check onto yet.
+        return
+      }
+      if (health.ok) {
+        await connectionStateService.transition({
+          connectionId: connection.id,
+          event: "verify.ok",
+        })
+        return
+      }
+      const ownerId = await workspaceMemberService.findOwnerUserIdByWorkspaceId(
+        { workspaceId: connection.workspaceId },
+      )
+      if (health.revoked) {
+        await connectionStateService.markUnhealthy({
+          connectionId: connection.id,
+          reason: "token_revoked",
+          ownerId,
+        })
+        return
+      }
+      await connectionStateService.transition({
+        connectionId: connection.id,
+        event: "verify.failed_non_auth",
+        reason: "verify_failed",
+        ownerId,
+      })
     },
   }
 }

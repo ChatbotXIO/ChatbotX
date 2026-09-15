@@ -22,6 +22,7 @@ vi.mock("@/lib/safe-action", () => {
   chain.action = (fn: unknown) => fn
   return {
     workspaceActionClient: chain,
+    workspaceActionClientAllowExpired: chain,
   }
 })
 

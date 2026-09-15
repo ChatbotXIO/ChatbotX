@@ -44,6 +44,54 @@ const config: IntegrationDefinition<
   MailerLiteActions
 > = {
   name: "mailerLite",
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiKey",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.mailerLite.fields.apiKey",
+      },
+    ],
+    describe: () => ({
+      // MailerLite auth contains no stable account identifier; this is workspace-scoped.
+      sourceId: "workspace",
+      displayName: "MailerLite",
+    }),
+    verify: async ({ auth }) => {
+      try {
+        await mailerLiteRequest(
+          auth,
+          MAILER_LITE_GROUPS_PATH,
+          mailerLiteGroupsResponseSchema,
+          { searchParams: pageSearchParams({ page: 1, limit: 1 }) },
+          [200],
+        )
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked:
+            typeof error === "object" &&
+            error !== null &&
+            "statusCode" in error &&
+            (error.statusCode === 401 || error.statusCode === 403),
+          error:
+            error instanceof Error
+              ? error.message
+              : "MailerLite credential verification failed",
+        }
+      }
+    },
+    isRevokedTokenError: (error) =>
+      typeof error === "object" &&
+      error !== null &&
+      "statusCode" in error &&
+      (error.statusCode === 401 || error.statusCode === 403),
+  },
   actions: {
     validateCredentials: async ({ props }) => {
       const auth = createMailerLiteAuth(props.apiKey)

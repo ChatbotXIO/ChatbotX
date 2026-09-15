@@ -75,7 +75,7 @@ vi.mock("../src/features/integration-claude/lib", () => ({
 vi.mock("../src/features/integration-deepseek/lib", () => ({
   verifyDeepSeekApiKey: mocks.verifyDeepSeekApiKey,
 }))
-vi.mock("../src/features/integration-ai/lib/verify-api-key", () => ({
+vi.mock("@chatbotx.io/business/integration-ai-provider/verify", () => ({
   verifyAiProviderApiKey: mocks.verifyAiProviderApiKey,
 }))
 

@@ -3,12 +3,13 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
-import { connect, deleteWebhook, registerWebhook } from "./apis/bot"
+import { connect, deleteWebhook, getMe, registerWebhook } from "./apis/bot"
 import { TelegramAPIException } from "./exception"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
+import { isRevokedTokenError } from "./lib/error-mapper"
 import type {
   TelegramActions,
   TelegramAuthValue,
@@ -39,6 +40,29 @@ const config: IntegrationDefinition<
     },
     registerWebhook: async ({ botToken, webhookUrl }) =>
       registerWebhook({ botToken, webhookUrl }),
+  },
+  connection: {
+    kind: "channel",
+    strategy: "token",
+    multiAccount: true,
+    configFields: [
+      {
+        name: "secretText",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.telegram.fields.secretText",
+      },
+    ],
+    describe: () => ({
+      // TelegramAuthValue stores only the bot token; the bot ID lives outside auth.
+      sourceId: "workspace",
+      displayName: "Telegram bot",
+    }),
+    verify: async ({ auth }) => {
+      await getMe(auth)
+      return { ok: true }
+    },
+    isRevokedTokenError,
   },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")

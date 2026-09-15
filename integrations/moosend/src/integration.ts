@@ -22,6 +22,52 @@ const config: IntegrationDefinition<
   MoosendActions
 > = {
   name: "moosend",
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiKey",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.moosend.fields.apiKey",
+      },
+    ],
+    describe: () => ({
+      // Moosend auth contains no stable account identifier; this is workspace-scoped.
+      sourceId: "workspace",
+      displayName: "Moosend",
+    }),
+    verify: async ({ auth }) => {
+      try {
+        await moosendRequest(
+          auth,
+          moosendListsPagePath(1, 1),
+          moosendMailingListsResponseSchema,
+        )
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked:
+            typeof error === "object" &&
+            error !== null &&
+            "kind" in error &&
+            error.kind === "invalid_credentials",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Moosend credential verification failed",
+        }
+      }
+    },
+    isRevokedTokenError: (error) =>
+      typeof error === "object" &&
+      error !== null &&
+      "kind" in error &&
+      error.kind === "invalid_credentials",
+  },
   actions: {
     validateCredentials: async ({ props }) => {
       const auth = createMoosendAuth(props.apiKey)

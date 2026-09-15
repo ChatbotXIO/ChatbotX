@@ -95,13 +95,14 @@ describe("connect routes", () => {
   test("the Messenger route passes the signed-in user and the page id, and nothing else", async () => {
     const result = await call(
       integrationMessengerConnectAPIs.connectMessengerPageAPI,
-      { pageId: "page-1" },
+      { sessionId: "session-1", pageId: "page-1" },
       { context: stubContext },
     )
 
     expect(result).toEqual(connectedOutcome)
     expect(mockConnectMessengerPage).toHaveBeenCalledWith({
       userId: "user-1",
+      sessionId: "session-1",
       pageId: "page-1",
     })
   })
@@ -109,12 +110,13 @@ describe("connect routes", () => {
   test("the Instagram-via-Facebook route passes the signed-in user and the account id", async () => {
     await call(
       integrationInstagramConnectAPIs.connectInstagramFacebookAccountAPI,
-      { igId: "ig-1" },
+      { sessionId: "session-1", igId: "ig-1" },
       { context: stubContext },
     )
 
     expect(mockConnectInstagramAccountViaFacebook).toHaveBeenCalledWith({
       userId: "user-1",
+      sessionId: "session-1",
       igId: "ig-1",
     })
   })
@@ -122,12 +124,13 @@ describe("connect routes", () => {
   test("the Instagram direct route passes the signed-in user and the account id", async () => {
     await call(
       integrationInstagramConnectAPIs.connectInstagramAccountAPI,
-      { igId: "ig-1" },
+      { sessionId: "session-1", igId: "ig-1" },
       { context: stubContext },
     )
 
     expect(mockConnectInstagramAccount).toHaveBeenCalledWith({
       userId: "user-1",
+      sessionId: "session-1",
       igId: "ig-1",
     })
   })
@@ -142,7 +145,7 @@ describe("connect routes", () => {
     await expect(
       call(
         integrationMessengerConnectAPIs.connectMessengerPageAPI,
-        { pageId: "page-1" },
+        { sessionId: "session-1", pageId: "page-1" },
         { context: stubContext },
       ),
     ).resolves.toEqual(sessionError)
@@ -155,7 +158,7 @@ describe("connect routes", () => {
 
     const error = await call(
       integrationMessengerConnectAPIs.connectMessengerPageAPI,
-      { pageId: "page-1" },
+      { sessionId: "session-1", pageId: "page-1" },
       { context: stubContext },
     ).catch((thrown: { status?: number }) => thrown)
 
@@ -276,7 +279,7 @@ describe("connect routes", () => {
 
     await call(
       integrationMessengerConnectAPIs.connectMessengerPageAPI,
-      { pageId: "page-1" },
+      { sessionId: "session-1", pageId: "page-1" },
       {
         context: {
           headers: new Headers({
@@ -305,12 +308,12 @@ describe("connect routes", () => {
 
     await call(
       integrationInstagramConnectAPIs.connectInstagramFacebookAccountAPI,
-      { igId: "ig-1" },
+      { sessionId: "session-1", igId: "ig-1" },
       { context: stubContext },
     )
     await call(
       integrationInstagramConnectAPIs.connectInstagramAccountAPI,
-      { igId: "ig-1" },
+      { sessionId: "session-1", igId: "ig-1" },
       { context: stubContext },
     )
     await call(

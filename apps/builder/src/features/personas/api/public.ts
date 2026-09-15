@@ -3,7 +3,7 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listMessengerPersonaOptions } from "../lib/persona-options"
 import { listMessengerPersonasResponse } from "../schema/query"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("channels")
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("connections")
 
 export const messengerPersonasPublicRouter = {
   list: workspaceTokenAuthAPI

@@ -40,6 +40,54 @@ const config: IntegrationDefinition<
   KlaviyoActions
 > = {
   name: "klaviyo",
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiKey",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.klaviyo.fields.apiKey",
+      },
+    ],
+    describe: () => ({
+      // Klaviyo auth contains no stable account identifier; this is workspace-scoped.
+      sourceId: "workspace",
+      displayName: "Klaviyo",
+    }),
+    verify: async ({ auth }) => {
+      try {
+        await klaviyoRequest(
+          auth,
+          KLAVIYO_LISTS_PATH,
+          klaviyoListsResponseSchema,
+          { searchParams: pageSearchParams({ size: 1 }) },
+          [200],
+        )
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked:
+            typeof error === "object" &&
+            error !== null &&
+            "statusCode" in error &&
+            (error.statusCode === 401 || error.statusCode === 403),
+          error:
+            error instanceof Error
+              ? error.message
+              : "Klaviyo credential verification failed",
+        }
+      }
+    },
+    isRevokedTokenError: (error) =>
+      typeof error === "object" &&
+      error !== null &&
+      "statusCode" in error &&
+      (error.statusCode === 401 || error.statusCode === 403),
+  },
   actions: {
     validateCredentials: async ({ props }) => {
       const auth = createKlaviyoAuth(props.apiKey)

@@ -35,6 +35,7 @@ export const integrationMessengerConnectAPIs = {
       ({ input, context }): Promise<ConnectActionResultWire> =>
         connectMessengerPage({
           userId: context.user.id,
+          sessionId: input.sessionId,
           pageId: input.pageId,
         }),
     ),

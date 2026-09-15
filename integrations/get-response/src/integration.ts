@@ -46,6 +46,47 @@ const config: IntegrationDefinition<
   GetResponseActions
 > = {
   name: "getResponse",
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiKey",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.getResponse.fields.apiKey",
+      },
+    ],
+    describe: () => ({
+      // GetResponse auth has no stable account id; this is workspace-singleton.
+      sourceId: "workspace",
+      displayName: "GetResponse",
+    }),
+    verify: async ({ auth }) => {
+      try {
+        await getResponseRequest(
+          auth,
+          GET_RESPONSE_ACCOUNTS_PATH,
+          getResponseAccountsResponseSchema,
+          undefined,
+          [200],
+        )
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to verify GetResponse credentials",
+        }
+      }
+    },
+    // TODO(connection-phase2): refine once GetResponse revoked-token error shape is confirmed.
+    isRevokedTokenError: () => false,
+  },
   actions: {
     validateCredentials: async ({ props }) => {
       const auth = createGetResponseAuth(props.apiKey)

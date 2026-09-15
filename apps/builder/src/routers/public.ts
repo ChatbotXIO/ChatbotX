@@ -15,6 +15,10 @@ import {
   capabilitiesPublicRouter,
   schemasPublicRouter,
 } from "@/features/capabilities/api/public"
+  connectionProvidersPublicRouter,
+  connectionsPublicRouter,
+  connectSessionsPublicRouter,
+} from "@/features/connections/api/public"
 import { contactScanPublicRouter } from "@/features/contact-scan/api/public"
 import { contactsPublicRouter } from "@/features/contacts/api/public"
 import { conversationsPublicRouter } from "@/features/conversations/api/public"
@@ -76,6 +80,9 @@ export const publicRouter = {
   broadcasts: broadcastsPublicRouter,
   capabilities: capabilitiesPublicRouter,
   channels: channelsPublicRouter,
+  connectionProviders: connectionProvidersPublicRouter,
+  connections: connectionsPublicRouter,
+  connectSessions: connectSessionsPublicRouter,
   contactScans: contactScanPublicRouter,
   contacts: contactsPublicRouter,
   conversations: conversationsPublicRouter,

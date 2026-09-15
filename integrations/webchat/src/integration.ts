@@ -22,6 +22,21 @@ const config: IntegrationDefinition<
     },
   },
   actions: {},
+  connection: {
+    kind: "channel",
+    strategy: "self_serve",
+    multiAccount: true,
+    configFields: [],
+    describe: () => ({
+      // Webchat has no external account identity.
+      sourceId: "workspace",
+      displayName: "Webchat",
+    }),
+    // Webchat is self-hosted, so there is no external provider to verify.
+    verify: async () => ({ ok: true }),
+    // TODO(connection-phase2): refine once Webchat revoked-token error shape is confirmed.
+    isRevokedTokenError: () => false,
+  },
   handleRequest(
     _props: HandleRequestProps<BaseConfig>,
   ): Promise<string | number | Oauth2AuthValue> {

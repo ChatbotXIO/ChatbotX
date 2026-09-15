@@ -1,11 +1,9 @@
 import {
+  connectionStateService,
   customDomainService,
   platformCredentialService,
   tenantService,
 } from "@chatbotx.io/business"
-import { db, eq } from "@chatbotx.io/database/client"
-import { inboxStatuses } from "@chatbotx.io/database/partials"
-import { inboxModel } from "@chatbotx.io/database/schema"
 import { getSafeErrorDetails } from "@chatbotx.io/integration-threads"
 import type {
   TiktokAuthValue,
@@ -379,13 +377,14 @@ const handleTiktokWebhook = async (req: NextRequest) => {
   }
 
   if (eventType === "authorization.removed") {
-    await db
-      .update(inboxModel)
-      .set({ status: inboxStatuses.enum.disconnected })
-      .where(eq(inboxModel.id, integrationTiktok.inboxId))
+    await connectionStateService.markUnhealthyByIdentifier({
+      provider: "tiktok",
+      identifier: userOpenId,
+      reason: "token_revoked",
+    })
     logger.info(
       { openId: userOpenId },
-      "TikTok authorization removed — inbox marked disconnected",
+      "TikTok authorization removed — connection marked unhealthy",
     )
     return new Response("ok")
   }

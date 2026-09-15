@@ -38,6 +38,10 @@ vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: vi.fn(),
 }))
 
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { list: vi.fn() },
+}))
+
 const { integrationService } = await import("../src/integration/service")
 
 beforeEach(() => {

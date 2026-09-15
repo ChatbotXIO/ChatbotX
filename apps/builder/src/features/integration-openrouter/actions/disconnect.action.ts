@@ -9,6 +9,7 @@ export const disconnectOpenRouterAction = createDisconnectAction(
   integrationOpenRouterService,
   {
     name: "OpenRouter",
+    provider: "openrouter",
     log: false,
     afterDisconnect: async (workspaceId) => {
       await aiIntegrationService.invalidateCache(

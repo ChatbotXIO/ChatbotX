@@ -1,4 +1,5 @@
 import {
+  AuthType,
   Integration,
   type IntegrationDefinition,
   SdkException,
@@ -20,7 +21,11 @@ import {
   getAudienceMarketingMessagesPage,
   mutateAudienceUsers,
 } from "./apis/audience-users"
-import { revokeToken } from "./apis/auth"
+import {
+  exchangeCodeForToken,
+  exchangeLongLivedToken,
+  revokeToken,
+} from "./apis/auth"
 import {
   createCampaign,
   getCampaign,
@@ -29,7 +34,8 @@ import {
 } from "./apis/campaigns"
 import { createCustomAudience } from "./apis/custom-audiences"
 import { getAdInsights, getMessagingAdsInsightsByAdIds } from "./apis/insights"
-import { FacebookAdsException } from "./exception"
+import { DEFAULT_API_VERSION, FACEBOOK_ADS_SCOPES } from "./constants"
+import { FacebookAdsException, getGraphErrorCode } from "./exception"
 import type {
   FacebookAdsActions,
   FacebookAdsAuthValue,
@@ -42,6 +48,58 @@ const config: IntegrationDefinition<
   FacebookAdsActions
 > = {
   name: "facebookAds",
+  connection: {
+    kind: "integration",
+    strategy: "oauth_redirect",
+    multiAccount: false,
+    configFields: [],
+    // Bypasses `generateAdsAuthUrl` deliberately: that legacy helper
+    // base64-JSON-encodes state for its cookie flow, while the Connection
+    // domain callback hub matches the raw `"{sessionId}.{nonce}"` string.
+    authorizeUrl: ({ credential, callbackUrl, state }) => {
+      const config = credential as FacebookAdsConfig
+      const params = new URLSearchParams({
+        client_id: config.clientId,
+        redirect_uri: callbackUrl,
+        scope: FACEBOOK_ADS_SCOPES.join(","),
+        response_type: "code",
+        state,
+      })
+      const version = config.version ?? DEFAULT_API_VERSION
+      return `https://www.facebook.com/${version}/dialog/oauth?${params.toString()}`
+    },
+    exchangeCode: async ({ code, callbackUrl, credential }) => {
+      const config = credential as FacebookAdsConfig
+      const shortLivedToken = await exchangeCodeForToken(
+        config,
+        code,
+        callbackUrl,
+      )
+      const longLivedToken = await exchangeLongLivedToken(
+        config,
+        shortLivedToken,
+      )
+      return {
+        authType: AuthType.custom,
+        accessToken: longLivedToken.accessToken,
+        version: config.version,
+        expiresAt: longLivedToken.expiresIn
+          ? new Date(Date.now() + longLivedToken.expiresIn * 1000).toISOString()
+          : undefined,
+      } satisfies FacebookAdsAuthValue
+    },
+    describe: (auth) => ({
+      // Facebook Ads auth does not retain an ad-account identifier.
+      sourceId: "workspace",
+      displayName: "Facebook Ads",
+      authExpiresAt: auth.expiresAt,
+    }),
+    verify: async ({ auth }) => {
+      await getAdAccounts(auth.accessToken, auth.version)
+      return { ok: true, authExpiresAt: auth.expiresAt }
+    },
+    isRevokedTokenError: (error) => getGraphErrorCode(error) === 190,
+  },
   actions: {
     getAdAccounts: ({ ctx }) =>
       getAdAccounts(ctx.auth.accessToken, ctx.auth.version),

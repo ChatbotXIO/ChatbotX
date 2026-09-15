@@ -1,25 +1,51 @@
-import { getInstagramAccount } from "@chatbotx.io/integration-instagram"
 import { redirect } from "next/navigation"
+import { resolveConnectSession } from "@/features/channel-connect/lib/resolve-connect-session"
 import { SelectAccount } from "@/features/integration-instagram/components/select-accounts"
-import {
-  FB_INSTAGRAM_PENDING_AUTH_COOKIE,
-  readPendingAuth,
-} from "@/lib/facebook-pending-auth"
+import { getCurrentUserId } from "@/lib/auth/utils"
 
 export const dynamic = "force-dynamic"
 
-export default async function InstagramSelectPage() {
-  const auth = await readPendingAuth(FB_INSTAGRAM_PENDING_AUTH_COOKIE)
-
-  if (!auth) {
+/**
+ * `session.targets` always has exactly one entry for the direct-login
+ * provider (its `exchangeCode` returns the final per-account auth directly,
+ * with no `listCandidates` step) — no live `getInstagramAccount` re-fetch.
+ */
+export default async function InstagramSelectPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ session?: string }>
+}) {
+  const { session: sessionId } = await searchParams
+  if (!sessionId) {
     redirect("/channels/create")
   }
 
-  const account = await getInstagramAccount(auth.userToken)
-
-  if (!account) {
+  const userId = await getCurrentUserId()
+  if (!userId) {
     redirect("/channels/create")
   }
 
-  return <SelectAccount account={account} workspaceId={auth.workspaceId} />
+  const resolved = await resolveConnectSession({
+    userId,
+    sessionId,
+    credentialType: "instagram",
+    brandingChannel: "instagram",
+  })
+
+  const target = resolved.session.targets[0]
+  if (!target) {
+    redirect("/channels/create")
+  }
+
+  return (
+    <SelectAccount
+      account={{
+        id: target.id,
+        name: target.name,
+        avatarUrl: target.avatarUrl,
+      }}
+      sessionId={sessionId}
+      workspaceId={resolved.workspace.id}
+    />
+  )
 }

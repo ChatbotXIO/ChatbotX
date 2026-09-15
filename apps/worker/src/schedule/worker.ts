@@ -29,6 +29,7 @@ import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
 import { purgeCommentAutomationEvents } from "./handlers/purge-comment-automation-events"
 import { purgeErrorLogs } from "./handlers/purge-error-logs"
 import { purgeExpiredCallRecordings } from "./handlers/purge-expired-call-recordings"
+import { purgeExpiredConnectSessions } from "./handlers/purge-expired-connect-sessions"
 import { purgeWhatsappSignupSessions } from "./handlers/purge-whatsapp-signup-sessions"
 import { purgeWorkspaces } from "./handlers/purge-workspaces"
 import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
@@ -145,6 +146,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.purgeWhatsappSignupSessions:
               await purgeWhatsappSignupSessions()
+              return
+
+            case ScheduleJobData.purgeExpiredConnectSessions:
+              await purgeExpiredConnectSessions()
               return
 
             case ScheduleJobData.purgeWorkspaces:
