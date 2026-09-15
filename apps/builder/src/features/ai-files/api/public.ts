@@ -45,9 +45,17 @@ export const aiFilesPublicRouter = {
       method: "GET",
       path: "/v1/ai-files/{id}",
       summary: "Get an AI file by id",
+      description:
+        "Returns one AI knowledge-base file's metadata and processing status. Use `aiFiles.list` to find its id first.",
       tags: ["AI Files"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "AI file id. Get it from `aiFiles.list`.",
+        ),
+      }),
+    )
     .output(publicAIFileResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -87,10 +95,18 @@ export const aiFilesPublicRouter = {
       method: "DELETE",
       path: "/v1/ai-files/{id}",
       summary: "Delete an AI file",
+      description:
+        "Permanently deletes an AI file. Use `aiFiles.list` to find its id first.",
       successStatus: 204,
       tags: ["AI Files"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "AI file id. Get it from `aiFiles.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await aiFileService.delete({
