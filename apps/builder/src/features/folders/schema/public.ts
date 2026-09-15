@@ -12,27 +12,39 @@ export const contactsFolderTypes = z.enum(["tag", "customField"])
 export type ContactsFolderType = z.infer<typeof contactsFolderTypes>
 
 export const listFoldersPublicRequest = z.object({
-  folderType: contactsFolderTypes,
-  parentId: z.string().optional(),
+  folderType: contactsFolderTypes.describe(
+    "Folder category to list, `tag` or `customField`.",
+  ),
+  parentId: z
+    .string()
+    .optional()
+    .describe(
+      "Restrict to sub-folders of this parent. Omit for top-level folders.",
+    ),
 })
-export type ListFoldersPublicRequest = z.infer<typeof listFoldersPublicRequest>
 
 export const listFoldersPublicResponse = z.object({
   data: z.array(folderResource),
 })
 
 export const createFolderPublicRequest = z.object({
-  name: createFolderSchema.shape.name,
-  folderType: contactsFolderTypes,
-  parentId: z.string().nullable().optional(),
+  name: createFolderSchema.shape.name.describe("Folder name."),
+  folderType: contactsFolderTypes.describe(
+    "Folder category, `tag` or `customField`.",
+  ),
+  parentId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Parent folder id, or null/omit for a top-level folder."),
 })
 export type CreateFolderPublicRequest = z.infer<
   typeof createFolderPublicRequest
 >
 
 export const updateFolderPublicRequest = z.object({
-  id: zodBigintAsString(),
-  name: createFolderSchema.shape.name,
+  id: zodBigintAsString().describe("Folder id. Get it from `folders.list`."),
+  name: createFolderSchema.shape.name.describe("New folder name."),
 })
 export type UpdateFolderPublicRequest = z.infer<
   typeof updateFolderPublicRequest

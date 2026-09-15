@@ -61,6 +61,8 @@ export const productCategoriesPublicRouter = {
       method: "PATCH",
       path: "/v1/product-categories/{id}",
       summary: "Update a product category",
+      description:
+        "Changes an existing category's name or reparents it. Use `productCategories.list` to find its id first.",
       tags: ["Product Categories"],
     })
     .input(updateProductCategoryPublicRequest)
@@ -87,10 +89,18 @@ export const productCategoriesPublicRouter = {
       method: "DELETE",
       path: "/v1/product-categories/{id}",
       summary: "Delete a product category",
+      description:
+        "Permanently deletes a product category. Use `productCategories.list` to find its id first.",
       successStatus: 204,
       tags: ["Product Categories"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Product category id. Get it from `productCategories.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await productCategoryService.delete({

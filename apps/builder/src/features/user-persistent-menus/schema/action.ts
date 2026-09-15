@@ -4,8 +4,11 @@ import { z } from "zod"
 import { userPersistentMenuResource } from "./resource"
 
 const userPersistentMenuRequest = z.object({
-  name: z.string().trim().min(1).max(255),
-  persistentMenus: z.array(messengerPersistentMenuSchema).max(20),
+  name: z.string().trim().min(1).max(255).describe("Persistent menu name."),
+  persistentMenus: z
+    .array(messengerPersistentMenuSchema)
+    .max(20)
+    .describe("Menu items shown to channel users."),
 })
 
 export const createUserPersistentMenuRequest = userPersistentMenuRequest

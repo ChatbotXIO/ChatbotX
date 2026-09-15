@@ -12,8 +12,12 @@ export const getContactScanStatusPublicRequest =
 export { getContactScanStatusResponse } from "./query"
 
 export const scheduleContactScanPublicRequest = z.object({
-  inboxId: zodBigintAsString(),
-  scanFromAt: z.coerce.date(),
+  inboxId: zodBigintAsString().describe(
+    "Inbox id. Get it from `inboxes.list`.",
+  ),
+  scanFromAt: z.coerce
+    .date()
+    .describe("Only scan conversations started on or after this date."),
 })
 
 export const scheduleContactScanPublicResponse = z.object({

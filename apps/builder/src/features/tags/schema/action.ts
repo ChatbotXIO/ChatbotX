@@ -3,8 +3,10 @@ import { z } from "zod"
 import { tagResource } from "./resource"
 
 export const createTagRequest = z.object({
-  name: z.string().trim().min(1).max(255),
-  folderId: zodBigintAsString().nullish(),
+  name: z.string().trim().min(1).max(255).describe("Tag name."),
+  folderId: zodBigintAsString()
+    .nullish()
+    .describe("Folder to place the tag in, or null for root-level."),
 })
 export type CreateTagRequest = z.input<typeof createTagRequest>
 

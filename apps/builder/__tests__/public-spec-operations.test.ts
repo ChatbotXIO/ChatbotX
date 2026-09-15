@@ -58,22 +58,14 @@ const LEGACY_API_SUFFIX_PATTERN = /[_.]api$/i
 
 const DESCRIPTION_BACKLOG = new Set<string>([
   "channels.",
-  "contactScans.",
-  "customFields.",
   "fbComments.",
-  "folders.",
   "igComments.",
   "igStories.",
   "integrations.",
   "messengerChannels.",
   "messengerPersonas.",
-  "productCategories.",
-  "products.",
-  "reflinks.",
   "smtpIntegrations.",
-  "tags.",
   "templateMessages.",
-  "userPersistentMenus.",
   "webchats.",
   "zaloChannels.",
 ])

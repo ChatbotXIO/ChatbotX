@@ -26,12 +26,20 @@ export const publicProductCategoryWriteResource = z.object({
 })
 
 export const createProductCategoryPublicRequest = z.object({
-  name: z.string().trim().min(1).max(255),
-  parentId: zodBigintAsString().nullish(),
-  rank: z.number().int().optional(),
+  name: z.string().trim().min(1).max(255).describe("Category name."),
+  parentId: zodBigintAsString()
+    .nullish()
+    .describe("Parent category id, or omit/null for a top-level category."),
+  rank: z
+    .number()
+    .int()
+    .optional()
+    .describe("Sort order among sibling categories."),
 })
 
 export const updateProductCategoryPublicRequest =
   createProductCategoryPublicRequest.extend({
-    id: zodBigintAsString(),
+    id: zodBigintAsString().describe(
+      "Product category id. Get it from `productCategories.list`.",
+    ),
   })

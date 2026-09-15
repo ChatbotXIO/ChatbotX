@@ -27,6 +27,8 @@ export const productsPublicRouter = {
       method: "GET",
       path: "/v1/products",
       summary: "List products",
+      description:
+        "Use this to find product ids before inspecting one with `products.get` or changing one with `products.update`. Returns products in this workspace.",
       tags: ["Products"],
     })
     .input(withPublicPaging(listProductsRequest.omit({ sort: true })))
@@ -49,7 +51,13 @@ export const productsPublicRouter = {
         "Returns full product detail, including variant options, variants, and addons.",
       tags: ["Products"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Product id. Get it from `products.list`.",
+        ),
+      }),
+    )
     .output(publicProductDetailResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
@@ -62,6 +70,8 @@ export const productsPublicRouter = {
       method: "POST",
       path: "/v1/products",
       summary: "Create a product",
+      description:
+        "Adds a product, including its variant options, variants, and addons, in one call.",
       tags: ["Products"],
     })
     .input(createProductPublicRequest)
@@ -85,7 +95,13 @@ export const productsPublicRouter = {
       tags: ["Products"],
     })
     .input(
-      updateProductPublicRequest.and(z.object({ id: zodBigintAsString() })),
+      updateProductPublicRequest.and(
+        z.object({
+          id: zodBigintAsString().describe(
+            "Product id. Get it from `products.list`.",
+          ),
+        }),
+      ),
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
@@ -102,10 +118,18 @@ export const productsPublicRouter = {
       method: "DELETE",
       path: "/v1/products/{id}",
       summary: "Delete a product",
+      description:
+        "Permanently deletes a product and its variants/addons. Use `products.list` to find its id first.",
       successStatus: 204,
       tags: ["Products"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Product id. Get it from `products.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       // findById throws notFoundException (-> 404) for a missing id, so the

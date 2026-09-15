@@ -65,9 +65,17 @@ export const tagsPublicRouter = {
       method: "GET",
       path: "/v1/tags/{idOrName}",
       summary: "Get tag by id or name",
+      description:
+        "Returns one tag's id and name. Use `tags.list` to find its id or name first.",
       tags: ["Tags"],
     })
-    .input(z.object({ idOrName: z.string() }))
+    .input(
+      z.object({
+        idOrName: z
+          .string()
+          .describe("Tag id or name. Get it from `tags.list`."),
+      }),
+    )
     .output(tagResource.pick({ id: true, name: true }))
     .errors(possibleErrorsOnFindingResource)
     .handler(
@@ -83,12 +91,16 @@ export const tagsPublicRouter = {
       method: "PUT",
       path: "/v1/tags/{id}",
       summary: "Update tag",
+      description:
+        "Renames an existing tag. Use `tags.list` to find its id first.",
       tags: ["Tags"],
     })
     .input(
-      createTagRequest
-        .pick({ name: true })
-        .and(z.object({ id: zodBigintAsString() })),
+      createTagRequest.pick({ name: true }).and(
+        z.object({
+          id: zodBigintAsString().describe("Tag id. Get it from `tags.list`."),
+        }),
+      ),
     )
     .output(publicTagResource)
     .errors(possibleErrorsOnMutatingResource)
@@ -105,10 +117,16 @@ export const tagsPublicRouter = {
       method: "DELETE",
       path: "/v1/tags/{id}",
       summary: "Delete tag",
+      description:
+        "Removes a tag from the workspace. Use `tags.list` to find its id first.",
       successStatus: 204,
       tags: ["Tags"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe("Tag id. Get it from `tags.list`."),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const { id } = input
