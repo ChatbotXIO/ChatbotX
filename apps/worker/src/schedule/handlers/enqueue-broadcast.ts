@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { broadcastService } from "@chatbotx.io/business"
 import { ScheduleJobData, scheduleQueue } from "@chatbotx.io/worker-config"
 import { startOfMinute } from "date-fns"
 
@@ -6,14 +6,8 @@ const ENQUEUE_BULK_SIZE = 500
 
 export const enqueueBroadcast = async () => {
   const startTime = startOfMinute(new Date().toString())
-  const broadcasts = await db.query.broadcastModel.findMany({
-    where: {
-      schedulesAt: {
-        lte: startTime,
-      },
-      status: "scheduled",
-      deletedAt: { isNull: true },
-    },
+  const broadcasts = await broadcastService.listDueScheduled({
+    dueAt: startTime,
   })
 
   if (broadcasts.length === 0) {

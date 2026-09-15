@@ -21,6 +21,18 @@ vi.mock("@chatbotx.io/database/partials", async () =>
   vi.importActual("@chatbotx.io/database/partials"),
 )
 
+// Prevent the repositories barrel from being evaluated — it reaches
+// contact-inbox/repository.ts, which needs a fuller @chatbotx.io/database/schema
+// mock than this file provides.
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactRepository: {
+    listForExportPage: vi.fn(),
+  },
+  fileRepository: {
+    updateForWorkspace: vi.fn(),
+  },
+}))
+
 vi.mock("@chatbotx.io/database/queries", () => ({
   applyContactFilter: (criteria: unknown) => ({ __filter: criteria }),
   pruneEmailPhoneFilterConditions: (criteria: unknown) => criteria,

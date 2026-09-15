@@ -3,28 +3,23 @@ import type { MatchableEventType } from "@chatbotx.io/events"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import type { WebhookWithConditions } from "../src/webhook/types"
 
-const { assertPublicUrl, contactFindById, listCustomFields, tagFindFirst } =
-  vi.hoisted(() => ({
-    assertPublicUrl: vi.fn().mockResolvedValue(undefined),
-    contactFindById: vi.fn(),
-    listCustomFields: vi.fn(),
-    tagFindFirst: vi.fn(),
-  }))
+const {
+  assertPublicUrl,
+  contactFindById,
+  listCustomFields,
+  findNameByIdForWorkspace,
+} = vi.hoisted(() => ({
+  assertPublicUrl: vi.fn().mockResolvedValue(undefined),
+  contactFindById: vi.fn(),
+  listCustomFields: vi.fn(),
+  findNameByIdForWorkspace: vi.fn(),
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
   assertPublicUrl,
   contactCustomFieldService: { listWithDefinitions: listCustomFields },
   contactService: { findById: contactFindById },
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      tagModel: {
-        findFirst: tagFindFirst,
-      },
-    },
-  },
+  tagService: { findNameByIdForWorkspace },
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -47,11 +42,10 @@ const webhook = {
   url: "https://example.com/webhook",
 } as WebhookWithConditions
 
-type TagQuery = { where: { id: string; workspaceId?: string } }
-
 // Tag ids are globally unique, so an id-only lookup resolves a row from any
-// workspace. These rows let the mock mimic SQL semantics — a `where` without
-// `workspaceId` matches across workspaces — instead of hiding the difference.
+// workspace. This mock mimics the real repository's SQL semantics — a lookup
+// scoped to a `workspaceId` that doesn't own the row resolves to nothing —
+// instead of hiding the difference.
 const tagRows = [
   { id: "tag-1", workspaceId: "workspace-1", name: "VIP" },
   {
@@ -237,7 +231,7 @@ describe("WebhookExecutor payloads", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }))
-    tagFindFirst.mockResolvedValue({ name: "VIP" })
+    findNameByIdForWorkspace.mockResolvedValue("VIP")
     contactFindById.mockResolvedValue({
       id: "contact-1",
       fullName: "Ada Lovelace",
@@ -274,15 +268,15 @@ describe("WebhookExecutor payloads", () => {
   // to the workspace the webhook is registered under. An id-only lookup would
   // put another tenant's tag name in this workspace's outbound payload.
   test("does not leak a tag that belongs to another workspace", async () => {
-    tagFindFirst.mockImplementation((query: TagQuery) =>
-      Promise.resolve(
-        tagRows.find(
-          (row) =>
-            row.id === query.where.id &&
-            (query.where.workspaceId === undefined ||
-              row.workspaceId === query.where.workspaceId),
-        ),
-      ),
+    findNameByIdForWorkspace.mockImplementation(
+      (query: { workspaceId: string; id: string }) => {
+        const row = tagRows.find(
+          (candidate) =>
+            candidate.id === query.id &&
+            candidate.workspaceId === query.workspaceId,
+        )
+        return Promise.resolve(row?.name ?? null)
+      },
     )
 
     const payload = await buildWebhookPayload({

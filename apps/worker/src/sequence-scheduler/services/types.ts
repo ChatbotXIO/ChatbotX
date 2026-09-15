@@ -1,4 +1,4 @@
-import type { db } from "@chatbotx.io/database/client"
+export type { DispatchWithRelations } from "@chatbotx.io/database/repositories"
 
 export interface ConsumerConfig {
   groupId: string
@@ -7,16 +7,6 @@ export interface ConsumerConfig {
   maxWaitTimeInMs: number
   sessionTimeout: number
 }
-
-type DispatchQueryResult = Awaited<
-  ReturnType<
-    typeof db.query.sequenceDispatchModel.findFirst<{
-      with: { sequence: true; contact: true; enrollment: true }
-    }>
-  >
->
-
-export type DispatchWithRelations = NonNullable<DispatchQueryResult>
 
 export type DispatchMessage = {
   dispatchId: string

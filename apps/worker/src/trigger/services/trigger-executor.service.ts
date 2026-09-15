@@ -1,10 +1,5 @@
-import { db, sql } from "@chatbotx.io/database/client"
-import {
-  triggerContactHistoryModel,
-  triggerStatsModel,
-} from "@chatbotx.io/database/schema"
+import { triggerService } from "@chatbotx.io/business"
 import { setTriggerExecutionContext } from "@chatbotx.io/events"
-import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 import type { TriggerExecutionInput, TriggerWithConditions } from "../types"
 import { ActionExecutor } from "./action-executor"
@@ -45,12 +40,10 @@ export class TriggerExecutorService {
         }
       }
 
-      await db.insert(triggerContactHistoryModel).values({
-        id: createId(),
+      await triggerService.recordContactHistory({
         triggerId,
         contactId,
         workspaceId,
-        firstEnteredAt: new Date(),
       })
 
       await this.updateStats(triggerId, workspaceId, true)
@@ -78,30 +71,11 @@ export class TriggerExecutorService {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    await db
-      .insert(triggerStatsModel)
-      .values({
-        id: createId(),
-        triggerId,
-        workspaceId,
-        date: today,
-        totalContacts: 1,
-        totalExecutions: 1,
-        successCount: success ? 1 : 0,
-        failureCount: success ? 0 : 1,
-      })
-      .onConflictDoUpdate({
-        target: [triggerStatsModel.triggerId, triggerStatsModel.date],
-        set: {
-          totalContacts: sql`${triggerStatsModel.totalContacts} + 1`,
-          totalExecutions: sql`${triggerStatsModel.totalExecutions} + 1`,
-          successCount: success
-            ? sql`${triggerStatsModel.successCount} + 1`
-            : triggerStatsModel.successCount,
-          failureCount: success
-            ? triggerStatsModel.failureCount
-            : sql`${triggerStatsModel.failureCount} + 1`,
-        },
-      })
+    await triggerService.incrementStats({
+      triggerId,
+      workspaceId,
+      date: today,
+      success,
+    })
   }
 }

@@ -3,15 +3,23 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 // Design notes:
 //
+// The handler no longer touches `db.*` directly — it calls
+// `contactInboxRepository.listByInboxPage`, `integrationMessengerRepository
+// .findById`, `zaloIntegrationService.findByIdUnscoped`, and
+// `tagChannelRepository.upsertLabelMapping`. The SQL-shape assertions for
+// `upsertLabelMapping` itself (insert order, onConflict targets, early
+// returns) already live in
+// `packages/database/__tests__/tag-channel-repository.test.ts` — this file
+// only asserts the handler calls that repository method with the right
+// arguments, and preserves every handler-level behavior (routing, scan
+// pagination, per-user error isolation, error-log collapsing).
+//
 // - chunkById is mocked to call queryBuilder(null) then stop (single chunk).
 //   Dedicated pagination tests override this mock per-test with a two-call
-//   sequence so we can assert cursor-pagination args against findMany.
-// - Each insert builder is a shared chainable stub; state.* slots let tests
-//   override what .returning() resolves to.
-// - insertCalls[] tracks the table-name sequence across a single test run and
-//   is reset in beforeEach.
-// - vi.mock() factories run once (hoisted), so state mutations happen through
-//   the shared `state` object — NOT through re-declaring mocks.
+//   sequence so we can assert cursor-pagination args against
+//   contactInboxRepository.listByInboxPage.
+// - upsertLabelMappingCalls[] tracks call arguments in order per test and is
+//   reset in beforeEach.
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
@@ -20,93 +28,39 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const state = {
   messengerIntegration: null as Record<string, unknown> | null,
   zaloIntegration: null as Record<string, unknown> | null,
-  // findMany returns this list once, then returns [] on subsequent calls
-  // (unless a test overrides the spy directly).
+  // listByInboxPage returns this list once, then returns [] on subsequent
+  // calls (unless a test overrides the spy directly).
   contactInboxRows: [] as Record<string, unknown>[],
-  tagReturning: [{ id: "tag-1" }] as { id: string }[],
-  tagChannelReturning: [{ id: "tc-1" }] as { id: string }[],
 }
 
-// Track insert table names in call order.
-const insertCalls: string[] = []
-
 // ---------------------------------------------------------------------------
-// Chainable insert builder — shared instances, returning-result driven by state
+// Mock: @chatbotx.io/database/repositories
 // ---------------------------------------------------------------------------
-type InsertBuilder = {
-  values: ReturnType<typeof vi.fn>
-  onConflictDoUpdate: ReturnType<typeof vi.fn>
-  onConflictDoNothing: ReturnType<typeof vi.fn>
-  returning: ReturnType<typeof vi.fn>
-}
+const listByInboxPageSpy = vi.fn()
+const upsertLabelMappingSpy = vi.fn(async () => undefined)
+const findMessengerByIdSpy = vi.fn(async () => state.messengerIntegration)
 
-function makeBuilder(getResult: () => unknown[]): InsertBuilder {
-  const b = {} as InsertBuilder
-  b.values = vi.fn(() => b)
-  b.onConflictDoUpdate = vi.fn(() => b)
-  b.onConflictDoNothing = vi.fn(() => Promise.resolve([]))
-  b.returning = vi.fn(() => Promise.resolve(getResult()))
-  return b
-}
-
-const tagBuilder = makeBuilder(() => state.tagReturning)
-const tagChannelBuilder = makeBuilder(() => state.tagChannelReturning)
-const contactsToTagsBuilder = makeBuilder(() => [])
-const contactToTagChannelBuilder = makeBuilder(() => [])
-
-// ---------------------------------------------------------------------------
-// Mock: @chatbotx.io/database/client
-// ---------------------------------------------------------------------------
-const findManySpy = vi.fn()
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      integrationMessengerModel: {
-        findFirst: vi.fn(async () => state.messengerIntegration),
-      },
-      integrationZaloModel: {
-        findFirst: vi.fn(async () => state.zaloIntegration),
-      },
-      contactInboxModel: {
-        findMany: findManySpy,
-      },
-    },
-    insert: vi.fn((model: { tableName?: string }) => {
-      const name = model.tableName ?? String(model)
-      insertCalls.push(name)
-      if (name === "Tag") {
-        return tagBuilder
-      }
-      if (name === "TagChannel") {
-        return tagChannelBuilder
-      }
-      if (name === "ContactToTag") {
-        return contactsToTagsBuilder
-      }
-      if (name === "ContactToTagChannel") {
-        return contactToTagChannelBuilder
-      }
-      return tagBuilder
-    }),
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactInboxRepository: {
+    listByInboxPage: (...args: unknown[]) => listByInboxPageSpy(...args),
   },
-  sql: vi.fn((strings: TemplateStringsArray) => strings.raw.join("")),
-  isNull: (...args: unknown[]) => args,
+  integrationMessengerRepository: {
+    findById: (...args: unknown[]) => findMessengerByIdSpy(...args),
+  },
+  tagChannelRepository: {
+    upsertLabelMapping: (...args: unknown[]) => upsertLabelMappingSpy(...args),
+  },
 }))
 
 // ---------------------------------------------------------------------------
-// Mock: @chatbotx.io/database/schema
+// Mock: @chatbotx.io/business — buildContext + zaloIntegrationService
 // ---------------------------------------------------------------------------
-vi.mock("@chatbotx.io/database/schema", () => ({
-  tagModel: { tableName: "Tag", workspaceId: "workspaceId", name: "name" },
-  tagChannelModel: {
-    tableName: "TagChannel",
-    tagId: "tagId",
-    channelType: "channelType",
-    integrationId: "integrationId",
+const findZaloUnscopedSpy = vi.fn(async () => state.zaloIntegration)
+vi.mock("@chatbotx.io/business", () => ({
+  buildContext: vi.fn(async () => ({ ctx: "mocked-context" })),
+  zaloIntegrationService: {
+    findByIdUnscoped: (...args: unknown[]) => findZaloUnscopedSpy(...args),
   },
-  contactsToTagsModel: { tableName: "ContactToTag" },
-  contactToTagChannelModel: { tableName: "ContactToTagChannel" },
 }))
 
 // ---------------------------------------------------------------------------
@@ -159,13 +113,6 @@ vi.mock("@chatbotx.io/integration-zalo", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock: @chatbotx.io/business
-// ---------------------------------------------------------------------------
-vi.mock("@chatbotx.io/business", () => ({
-  buildContext: vi.fn(async () => ({ ctx: "mocked-context" })),
-}))
-
-// ---------------------------------------------------------------------------
 // Mock: @chatbotx.io/business/error-log
 // ---------------------------------------------------------------------------
 const logProviderError = vi.fn(async () => undefined)
@@ -173,17 +120,9 @@ vi.mock("@chatbotx.io/business/error-log", () => ({
   logProviderError: (...args: unknown[]) => logProviderError(...args),
 }))
 
-// ---------------------------------------------------------------------------
-// Mock: @chatbotx.io/utils — partial, preserve zodBigintAsString etc.
-// ---------------------------------------------------------------------------
-let idCounter = 0
-vi.mock("@chatbotx.io/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
-  return {
-    ...actual,
-    createId: vi.fn(() => `gen-id-${++idCounter}`),
-  }
-})
+vi.mock("../src/lib/logger", () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}))
 
 // ---------------------------------------------------------------------------
 // Import SUT — AFTER all vi.mock() calls
@@ -254,18 +193,26 @@ beforeEach(() => {
   state.messengerIntegration = null
   state.zaloIntegration = null
   state.contactInboxRows = []
-  state.tagReturning = [{ id: "tag-1" }]
-  state.tagChannelReturning = [{ id: "tc-1" }]
-  insertCalls.length = 0
-  idCounter = 0
   chunkByIdImpl = singleChunkImpl
 
-  // Default findMany: return rows on first call, [] on subsequent calls.
-  findManySpy.mockImplementation(() => {
+  listByInboxPageSpy.mockReset()
+  upsertLabelMappingSpy.mockReset()
+  findMessengerByIdSpy.mockReset()
+  findZaloUnscopedSpy.mockReset()
+  runChannelHandlerMock.mockReset()
+  runActionMock.mockReset()
+  logProviderError.mockReset()
+
+  upsertLabelMappingSpy.mockResolvedValue(undefined)
+  findMessengerByIdSpy.mockImplementation(
+    async () => state.messengerIntegration,
+  )
+  findZaloUnscopedSpy.mockImplementation(async () => state.zaloIntegration)
+
+  // Default listByInboxPage: return rows on first call, [] on subsequent
+  // calls (unless a test overrides the spy directly).
+  listByInboxPageSpy.mockImplementation(() => {
     const rows = state.contactInboxRows
-    // After the first call resolves, swap to returning [] so pagination stops.
-    // We use mockImplementationOnce to override just the first call; the
-    // fallback is already the singleChunk behaviour but we keep it explicit.
     return Promise.resolve(rows)
   })
 })
@@ -283,7 +230,7 @@ describe("handleSyncChannelLabels — routing", () => {
     ).resolves.toBeUndefined()
 
     expect(runChannelHandlerMock).not.toHaveBeenCalled()
-    expect(insertCalls).toHaveLength(0)
+    expect(upsertLabelMappingSpy).not.toHaveBeenCalled()
   })
 
   test("zalo integration not found → warns and returns without scanning", async () => {
@@ -292,35 +239,29 @@ describe("handleSyncChannelLabels — routing", () => {
     await expect(handleSyncChannelLabels(zaloJob())).resolves.toBeUndefined()
 
     expect(runActionMock).not.toHaveBeenCalled()
-    expect(insertCalls).toHaveLength(0)
+    expect(upsertLabelMappingSpy).not.toHaveBeenCalled()
   })
 
-  test("messenger route queries integrationMessengerModel.findFirst with correct integrationId", async () => {
+  test("messenger route queries integrationMessengerRepository.findById with correct integrationId", async () => {
     state.messengerIntegration = makeMessengerIntegration()
-    const { db } = await import("@chatbotx.io/database/client")
-    const spy = db.query.integrationMessengerModel.findFirst as ReturnType<
-      typeof vi.fn
-    >
-    spy.mockClear()
 
     await handleSyncChannelLabels(messengerJob("integration-msn-1"))
 
-    expect(spy).toHaveBeenCalledOnce()
-    expect(spy).toHaveBeenCalledWith({ where: { id: "integration-msn-1" } })
+    expect(findMessengerByIdSpy).toHaveBeenCalledOnce()
+    expect(findMessengerByIdSpy).toHaveBeenCalledWith({
+      id: "integration-msn-1",
+    })
   })
 
-  test("zalo route queries integrationZaloModel.findFirst with correct integrationId", async () => {
+  test("zalo route queries zaloIntegrationService.findByIdUnscoped with correct integrationId", async () => {
     state.zaloIntegration = makeZaloIntegration()
-    const { db } = await import("@chatbotx.io/database/client")
-    const spy = db.query.integrationZaloModel.findFirst as ReturnType<
-      typeof vi.fn
-    >
-    spy.mockClear()
 
     await handleSyncChannelLabels(zaloJob("integration-zalo-1"))
 
-    expect(spy).toHaveBeenCalledOnce()
-    expect(spy).toHaveBeenCalledWith({ where: { id: "integration-zalo-1" } })
+    expect(findZaloUnscopedSpy).toHaveBeenCalledOnce()
+    expect(findZaloUnscopedSpy).toHaveBeenCalledWith({
+      id: "integration-zalo-1",
+    })
   })
 })
 
@@ -341,17 +282,17 @@ describe("runMessengerScan — listLabels happy path", () => {
     })
   })
 
-  test("listLabels returns [] → no insert calls", async () => {
+  test("listLabels returns [] → no upsertLabelMapping calls", async () => {
     state.messengerIntegration = makeMessengerIntegration()
     state.contactInboxRows = [makeContactInbox()]
     runChannelHandlerMock.mockResolvedValue([])
 
     await handleSyncChannelLabels(messengerJob())
 
-    expect(insertCalls).toHaveLength(0)
+    expect(upsertLabelMappingSpy).not.toHaveBeenCalled()
   })
 
-  test("listLabels returns N labels → N tag inserts + N tagChannel inserts + N association inserts each", async () => {
+  test("listLabels returns N labels → N upsertLabelMapping calls", async () => {
     state.messengerIntegration = makeMessengerIntegration()
     state.contactInboxRows = [
       makeContactInbox({ id: "ci-1", contactId: "contact-1" }),
@@ -363,15 +304,10 @@ describe("runMessengerScan — listLabels happy path", () => {
 
     await handleSyncChannelLabels(messengerJob())
 
-    expect(insertCalls.filter((n) => n === "Tag")).toHaveLength(2)
-    expect(insertCalls.filter((n) => n === "TagChannel")).toHaveLength(2)
-    expect(insertCalls.filter((n) => n === "ContactToTag")).toHaveLength(2)
-    expect(insertCalls.filter((n) => n === "ContactToTagChannel")).toHaveLength(
-      2,
-    )
+    expect(upsertLabelMappingSpy).toHaveBeenCalledTimes(2)
   })
 
-  test("externalLabelId in tagChannel insert equals the FB label id", async () => {
+  test("upsertLabelMapping called with FB label id as externalLabelId", async () => {
     state.messengerIntegration = makeMessengerIntegration({
       id: "integration-msn-1",
     })
@@ -384,42 +320,31 @@ describe("runMessengerScan — listLabels happy path", () => {
 
     await handleSyncChannelLabels(messengerJob())
 
-    expect(tagChannelBuilder.values).toHaveBeenCalledWith(
+    expect(upsertLabelMappingSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        externalLabelId: "fb-label-42",
+        workspaceId: "ws-1",
         channelType: "messenger",
         integrationId: "integration-msn-1",
-        workspaceId: "ws-1",
-        tagId: "tag-1",
+        label: { externalLabelId: "fb-label-42", name: "VIP" },
+        contactInbox: { id: "ci-1", contactId: "contact-1" },
       }),
     )
   })
 
-  test("contactsToTags insert uses correct contactId and tagId", async () => {
+  test("upsertLabelMapping uses correct contactId and contactInboxId", async () => {
     state.messengerIntegration = makeMessengerIntegration()
-    state.contactInboxRows = [makeContactInbox({ contactId: "contact-99" })]
+    state.contactInboxRows = [
+      makeContactInbox({ id: "ci-77", contactId: "contact-99" }),
+    ]
     runChannelHandlerMock.mockResolvedValue([{ id: "fb-42", name: "Gold" }])
 
     await handleSyncChannelLabels(messengerJob())
 
-    expect(contactsToTagsBuilder.values).toHaveBeenCalledWith({
-      contactId: "contact-99",
-      tagId: "tag-1",
-    })
-  })
-
-  test("contactToTagChannel insert uses correct tagId, tagChannelId, contactInboxId", async () => {
-    state.messengerIntegration = makeMessengerIntegration()
-    state.contactInboxRows = [makeContactInbox({ id: "ci-77" })]
-    runChannelHandlerMock.mockResolvedValue([{ id: "fb-42", name: "Gold" }])
-
-    await handleSyncChannelLabels(messengerJob())
-
-    expect(contactToTagChannelBuilder.values).toHaveBeenCalledWith({
-      tagId: "tag-1",
-      tagChannelId: "tc-1",
-      contactInboxId: "ci-77",
-    })
+    expect(upsertLabelMappingSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactInbox: { id: "ci-77", contactId: "contact-99" },
+      }),
+    )
   })
 
   test("multiple contacts → listLabels called once per contact with each sourceId", async () => {
@@ -517,80 +442,8 @@ describe("runMessengerScan — per-user error isolation", () => {
 })
 
 // ---------------------------------------------------------------------------
-describe("upsertLabelMapping — early-return branches", () => {
-  test("tag insert returns [] → tagChannel NOT inserted (early return)", async () => {
-    state.messengerIntegration = makeMessengerIntegration()
-    state.contactInboxRows = [makeContactInbox()]
-    state.tagReturning = []
-    runChannelHandlerMock.mockResolvedValue([{ id: "fb-1", name: "VIP" }])
-
-    await handleSyncChannelLabels(messengerJob())
-
-    expect(insertCalls).toEqual(["Tag"])
-    expect(insertCalls.filter((n) => n === "TagChannel")).toHaveLength(0)
-    expect(insertCalls.filter((n) => n === "ContactToTag")).toHaveLength(0)
-    expect(insertCalls.filter((n) => n === "ContactToTagChannel")).toHaveLength(
-      0,
-    )
-  })
-
-  test("tagChannel insert returns [] → contactsToTags and contactToTagChannel NOT inserted", async () => {
-    state.messengerIntegration = makeMessengerIntegration()
-    state.contactInboxRows = [makeContactInbox()]
-    state.tagReturning = [{ id: "tag-1" }]
-    state.tagChannelReturning = []
-    runChannelHandlerMock.mockResolvedValue([{ id: "fb-1", name: "VIP" }])
-
-    await handleSyncChannelLabels(messengerJob())
-
-    expect(insertCalls).toEqual(["Tag", "TagChannel"])
-    expect(insertCalls.filter((n) => n === "ContactToTag")).toHaveLength(0)
-    expect(insertCalls.filter((n) => n === "ContactToTagChannel")).toHaveLength(
-      0,
-    )
-  })
-
-  test("happy path: inserts fire in order Tag → TagChannel → ContactToTag → ContactToTagChannel", async () => {
-    state.messengerIntegration = makeMessengerIntegration()
-    state.contactInboxRows = [makeContactInbox()]
-    state.tagReturning = [{ id: "tag-1" }]
-    state.tagChannelReturning = [{ id: "tc-1" }]
-    runChannelHandlerMock.mockResolvedValue([{ id: "fb-1", name: "Gold" }])
-
-    await handleSyncChannelLabels(messengerJob())
-
-    expect(insertCalls).toEqual([
-      "Tag",
-      "TagChannel",
-      "ContactToTag",
-      "ContactToTagChannel",
-    ])
-  })
-
-  test("contactsToTags uses onConflictDoNothing", async () => {
-    state.messengerIntegration = makeMessengerIntegration()
-    state.contactInboxRows = [makeContactInbox()]
-    runChannelHandlerMock.mockResolvedValue([{ id: "fb-1", name: "VIP" }])
-
-    await handleSyncChannelLabels(messengerJob())
-
-    expect(contactsToTagsBuilder.onConflictDoNothing).toHaveBeenCalled()
-  })
-
-  test("contactToTagChannel uses onConflictDoNothing", async () => {
-    state.messengerIntegration = makeMessengerIntegration()
-    state.contactInboxRows = [makeContactInbox()]
-    runChannelHandlerMock.mockResolvedValue([{ id: "fb-1", name: "VIP" }])
-
-    await handleSyncChannelLabels(messengerJob())
-
-    expect(contactToTagChannelBuilder.onConflictDoNothing).toHaveBeenCalled()
-  })
-})
-
-// ---------------------------------------------------------------------------
 describe("workspace isolation", () => {
-  test("workspaceId is threaded into tag insert values", async () => {
+  test("workspaceId is threaded into upsertLabelMapping", async () => {
     state.messengerIntegration = makeMessengerIntegration({ id: "int-A" })
     state.contactInboxRows = [makeContactInbox()]
     runChannelHandlerMock.mockResolvedValue([{ id: "fb-1", name: "VIP" }])
@@ -601,12 +454,12 @@ describe("workspace isolation", () => {
       integrationId: "int-A",
     })
 
-    expect(tagBuilder.values).toHaveBeenCalledWith(
+    expect(upsertLabelMappingSpy).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: "ws-isolated" }),
     )
   })
 
-  test("workspaceId is threaded into tagChannel insert values", async () => {
+  test("integrationId is threaded into upsertLabelMapping", async () => {
     state.messengerIntegration = makeMessengerIntegration({ id: "int-A" })
     state.contactInboxRows = [makeContactInbox()]
     runChannelHandlerMock.mockResolvedValue([{ id: "fb-1", name: "VIP" }])
@@ -617,8 +470,8 @@ describe("workspace isolation", () => {
       integrationId: "int-A",
     })
 
-    expect(tagChannelBuilder.values).toHaveBeenCalledWith(
-      expect.objectContaining({ workspaceId: "ws-isolated" }),
+    expect(upsertLabelMappingSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ integrationId: "int-A" }),
     )
   })
 })
@@ -644,34 +497,35 @@ describe("chunkById pagination — cursor behaviour", () => {
     }
   }
 
-  test("first findMany call uses no gt filter (lastId = null)", async () => {
+  test("first listByInboxPage call uses no afterId (lastId = null)", async () => {
     chunkByIdImpl = twoChunkImpl
     state.messengerIntegration = makeMessengerIntegration({
       inboxId: "inbox-1",
     })
     runChannelHandlerMock.mockResolvedValue([])
 
-    findManySpy
+    listByInboxPageSpy
       .mockResolvedValueOnce([makeContactInbox({ id: "ci-1" })])
       .mockResolvedValueOnce([])
 
     await handleSyncChannelLabels(messengerJob())
 
-    const firstCallArgs = findManySpy.mock.calls[0]?.[0] as {
-      where: { id?: { gt: string }; inboxId: string }
+    const firstCallArgs = listByInboxPageSpy.mock.calls[0]?.[0] as {
+      inboxId: string
+      afterId?: string
     }
-    expect(firstCallArgs.where).not.toHaveProperty("id")
-    expect(firstCallArgs.where.inboxId).toBe("inbox-1")
+    expect(firstCallArgs.afterId).toBeUndefined()
+    expect(firstCallArgs.inboxId).toBe("inbox-1")
   })
 
-  test("second findMany call carries gt: last id from first batch", async () => {
+  test("second listByInboxPage call carries afterId: last id from first batch", async () => {
     chunkByIdImpl = twoChunkImpl
     state.messengerIntegration = makeMessengerIntegration({
       inboxId: "inbox-1",
     })
     runChannelHandlerMock.mockResolvedValue([])
 
-    findManySpy
+    listByInboxPageSpy
       .mockResolvedValueOnce([
         makeContactInbox({ id: "ci-10" }),
         makeContactInbox({ id: "ci-20" }),
@@ -680,24 +534,24 @@ describe("chunkById pagination — cursor behaviour", () => {
 
     await handleSyncChannelLabels(messengerJob())
 
-    const secondCallArgs = findManySpy.mock.calls[1]?.[0] as {
-      where: { id?: { gt: string } }
+    const secondCallArgs = listByInboxPageSpy.mock.calls[1]?.[0] as {
+      afterId?: string
     }
-    expect(secondCallArgs.where.id).toEqual({ gt: "ci-20" })
+    expect(secondCallArgs.afterId).toBe("ci-20")
   })
 
-  test("findMany is always scoped to the integration's inboxId", async () => {
+  test("listByInboxPage is always scoped to the integration's inboxId", async () => {
     chunkByIdImpl = twoChunkImpl
     state.messengerIntegration = makeMessengerIntegration({
       inboxId: "inbox-XYZ",
     })
-    findManySpy.mockResolvedValue([])
+    listByInboxPageSpy.mockResolvedValue([])
 
     await handleSyncChannelLabels(messengerJob())
 
-    for (const call of findManySpy.mock.calls) {
-      const args = call[0] as { where: { inboxId: string } }
-      expect(args.where.inboxId).toBe("inbox-XYZ")
+    for (const call of listByInboxPageSpy.mock.calls) {
+      const args = call[0] as { inboxId: string }
+      expect(args.inboxId).toBe("inbox-XYZ")
     }
   })
 
@@ -705,7 +559,7 @@ describe("chunkById pagination — cursor behaviour", () => {
     chunkByIdImpl = twoChunkImpl
     state.messengerIntegration = makeMessengerIntegration()
 
-    findManySpy
+    listByInboxPageSpy
       .mockResolvedValueOnce([
         makeContactInbox({ id: "ci-A", sourceId: "psid-A" }),
       ])
@@ -749,7 +603,7 @@ describe("runZaloScan — getUserDetail happy path", () => {
 
     await handleSyncChannelLabels(zaloJob())
 
-    expect(insertCalls).toHaveLength(0)
+    expect(upsertLabelMappingSpy).not.toHaveBeenCalled()
   })
 
   test("tags_and_notes_info present but tag_names undefined → no upsert", async () => {
@@ -759,10 +613,10 @@ describe("runZaloScan — getUserDetail happy path", () => {
 
     await handleSyncChannelLabels(zaloJob())
 
-    expect(insertCalls).toHaveLength(0)
+    expect(upsertLabelMappingSpy).not.toHaveBeenCalled()
   })
 
-  test("tag_names array → one upsert mapping per tag name", async () => {
+  test("tag_names array → one upsertLabelMapping call per tag name", async () => {
     state.zaloIntegration = makeZaloIntegration()
     state.contactInboxRows = [
       makeContactInbox({
@@ -777,15 +631,10 @@ describe("runZaloScan — getUserDetail happy path", () => {
 
     await handleSyncChannelLabels(zaloJob())
 
-    expect(insertCalls.filter((n) => n === "Tag")).toHaveLength(2)
-    expect(insertCalls.filter((n) => n === "TagChannel")).toHaveLength(2)
-    expect(insertCalls.filter((n) => n === "ContactToTag")).toHaveLength(2)
-    expect(insertCalls.filter((n) => n === "ContactToTagChannel")).toHaveLength(
-      2,
-    )
+    expect(upsertLabelMappingSpy).toHaveBeenCalledTimes(2)
   })
 
-  test("for zalo, externalLabelId in tagChannel equals the tag name string", async () => {
+  test("for zalo, externalLabelId in upsertLabelMapping equals the tag name string", async () => {
     state.zaloIntegration = makeZaloIntegration({ id: "integration-zalo-1" })
     state.contactInboxRows = [makeContactInbox({ channel: "zalo" })]
     runActionMock.mockResolvedValue({
@@ -794,16 +643,16 @@ describe("runZaloScan — getUserDetail happy path", () => {
 
     await handleSyncChannelLabels(zaloJob())
 
-    expect(tagChannelBuilder.values).toHaveBeenCalledWith(
+    expect(upsertLabelMappingSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        externalLabelId: "PremiumUser",
         channelType: "zalo",
         integrationId: "integration-zalo-1",
+        label: { externalLabelId: "PremiumUser", name: "PremiumUser" },
       }),
     )
   })
 
-  test("for zalo, name in tag insert equals the tag name string", async () => {
+  test("for zalo, name in upsertLabelMapping equals the tag name string", async () => {
     state.zaloIntegration = makeZaloIntegration()
     state.contactInboxRows = [makeContactInbox({ channel: "zalo" })]
     runActionMock.mockResolvedValue({
@@ -812,8 +661,10 @@ describe("runZaloScan — getUserDetail happy path", () => {
 
     await handleSyncChannelLabels(zaloJob())
 
-    expect(tagBuilder.values).toHaveBeenCalledWith(
-      expect.objectContaining({ name: "SpecialTag" }),
+    expect(upsertLabelMappingSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: expect.objectContaining({ name: "SpecialTag" }),
+      }),
     )
   })
 })
@@ -878,47 +729,6 @@ describe("buildContext — integration type forwarding", () => {
         workspaceId: "ws-2",
         integrationType: "zalo",
       }),
-    )
-  })
-})
-
-// ---------------------------------------------------------------------------
-describe("createId — called for generated ids", () => {
-  test("createId called twice per label (tag row + tagChannel row)", async () => {
-    state.messengerIntegration = makeMessengerIntegration()
-    state.contactInboxRows = [makeContactInbox()]
-    runChannelHandlerMock.mockResolvedValue([
-      { id: "fb-1", name: "Alpha" },
-      { id: "fb-2", name: "Beta" },
-    ])
-
-    const { createId } = await import("@chatbotx.io/utils")
-    const spy = createId as ReturnType<typeof vi.fn>
-    spy.mockClear()
-
-    await handleSyncChannelLabels(messengerJob())
-
-    // 2 labels × 2 createId calls = 4
-    expect(spy).toHaveBeenCalledTimes(4)
-  })
-
-  test("generated ids are injected into tag and tagChannel insert values", async () => {
-    state.messengerIntegration = makeMessengerIntegration()
-    state.contactInboxRows = [makeContactInbox()]
-    runChannelHandlerMock.mockResolvedValue([{ id: "fb-1", name: "VIP" }])
-
-    const { createId } = await import("@chatbotx.io/utils")
-    const spy = createId as ReturnType<typeof vi.fn>
-    spy.mockClear()
-    spy.mockReturnValueOnce("tag-gen-id").mockReturnValueOnce("tc-gen-id")
-
-    await handleSyncChannelLabels(messengerJob())
-
-    expect(tagBuilder.values).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "tag-gen-id" }),
-    )
-    expect(tagChannelBuilder.values).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "tc-gen-id" }),
     )
   })
 })

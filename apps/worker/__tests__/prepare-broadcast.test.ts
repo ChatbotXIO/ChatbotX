@@ -1,31 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const findFirstBroadcast = vi.fn()
-const findFirstMessengerTemplate = vi.fn()
+const findScheduledForPrepare = vi.fn()
+const resolveTemplateIntegrationMessengerId = vi.fn()
 const findDMByContactIds = vi.fn()
 const forEachAudienceChunk = vi.fn()
+const insertRecipients = vi.fn()
+const promoteAfterPrepare = vi.fn()
 const scheduleAddSpy = vi.fn()
 const loggerInfoSpy = vi.fn()
 const loggerWarnSpy = vi.fn()
 const purgeBroadcastRecipientsSpy = vi.fn()
 const blockedWorkspaceIds = new Set<string>()
 
-type UpdateCall = {
-  table: unknown
-  values: Record<string, unknown>
-  condition: unknown
-}
-const updateCalls: UpdateCall[] = []
-
-type InsertCall = { table: unknown; values: unknown }
-const insertCalls: InsertCall[] = []
-
-const onConflictSpy = vi.fn()
-
-// Rows returned by the promotion UPDATE's `.returning()`. Defaults to a
-// match (promotion succeeded) so existing enqueue-path tests keep passing;
+// Whether the promotion CAS should report success. Defaults to true
+// (promotion succeeded) so existing enqueue-path tests keep passing;
 // individual tests override this to simulate a lost promotion race.
-let promotionReturningRows: Array<{ id: string }> = [{ id: "broadcast-1" }]
+let promotionSucceeds = true
 
 vi.mock("@chatbotx.io/business", () => ({
   withBlockedOwnerGuard: async (
@@ -34,6 +24,12 @@ vi.mock("@chatbotx.io/business", () => ({
   ) => (blockedWorkspaceIds.has(String(workspaceId)) ? undefined : fn()),
   broadcastService: {
     forEachAudienceChunk: (...args: unknown[]) => forEachAudienceChunk(...args),
+    findScheduledForPrepare: (...args: unknown[]) =>
+      findScheduledForPrepare(...args),
+    resolveTemplateIntegrationMessengerId: (...args: unknown[]) =>
+      resolveTemplateIntegrationMessengerId(...args),
+    insertRecipients: (...args: unknown[]) => insertRecipients(...args),
+    promoteAfterPrepare: (...args: unknown[]) => promoteAfterPrepare(...args),
   },
   conversationService: {
     findDMByContactIds: (...args: unknown[]) => findDMByContactIds(...args),
@@ -44,57 +40,9 @@ vi.mock("@chatbotx.io/database/partials", async () =>
   vi.importActual("@chatbotx.io/database/partials"),
 )
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  broadcastModel: {
-    id: "Broadcast.id",
-    status: "Broadcast.status",
-    deletedAt: "Broadcast.deletedAt",
-    resumeCount: "Broadcast.resumeCount",
-    __name: "broadcastModel",
-  },
-  contactsOnBroadcastsModel: { __name: "contactsOnBroadcastsModel" },
-}))
-
 vi.mock("@chatbotx.io/database/repositories", () => ({
   purgeBroadcastRecipients: (...args: unknown[]) =>
     purgeBroadcastRecipientsSpy(...args),
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      broadcastModel: {
-        findFirst: (...args: unknown[]) => findFirstBroadcast(...args),
-      },
-      messengerMessageTemplateModel: {
-        findFirst: (...args: unknown[]) => findFirstMessengerTemplate(...args),
-      },
-    },
-    update: (table: unknown) => ({
-      set: (values: Record<string, unknown>) => ({
-        where: (condition: unknown) => {
-          updateCalls.push({ table, values, condition })
-          return {
-            returning: () => Promise.resolve(promotionReturningRows),
-          }
-        },
-      }),
-    }),
-    insert: (table: unknown) => ({
-      values: (vals: unknown) => {
-        insertCalls.push({ table, values: vals })
-        return {
-          onConflictDoNothing: () => {
-            onConflictSpy()
-            return Promise.resolve()
-          },
-        }
-      },
-    }),
-  },
-  eq: (left: unknown, right: unknown) => ({ __eq: [left, right] }),
-  and: (...args: unknown[]) => ({ __and: args }),
-  isNull: (value: unknown) => ({ __isNull: value }),
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -140,45 +88,46 @@ const baseBroadcast = () => ({
 })
 
 beforeEach(() => {
-  updateCalls.length = 0
-  insertCalls.length = 0
-  findFirstBroadcast.mockResolvedValue(undefined)
-  findFirstMessengerTemplate.mockResolvedValue(undefined)
+  findScheduledForPrepare.mockResolvedValue(undefined)
+  resolveTemplateIntegrationMessengerId.mockResolvedValue(null)
   findDMByContactIds.mockResolvedValue([])
   forEachAudienceChunk.mockResolvedValue(undefined)
+  insertRecipients.mockResolvedValue(undefined)
+  promoteAfterPrepare.mockImplementation(() =>
+    Promise.resolve(promotionSucceeds),
+  )
   scheduleAddSpy.mockReset()
   loggerInfoSpy.mockReset()
   loggerWarnSpy.mockReset()
-  onConflictSpy.mockReset()
   purgeBroadcastRecipientsSpy.mockReset()
   purgeBroadcastRecipientsSpy.mockResolvedValue({
     deleted: 0,
     stopReason: "drained",
   })
-  promotionReturningRows = [{ id: BROADCAST_ID }]
+  promotionSucceeds = true
   blockedWorkspaceIds.clear()
 })
 
 describe("prepareBroadcast", () => {
   test("returns without db writes or queue enqueues when the broadcast is missing", async () => {
-    findFirstBroadcast.mockResolvedValue(undefined)
+    findScheduledForPrepare.mockResolvedValue(undefined)
 
     await prepareBroadcast(BROADCAST_ID)
 
-    expect(updateCalls).toHaveLength(0)
-    expect(insertCalls).toHaveLength(0)
+    expect(insertRecipients).not.toHaveBeenCalled()
+    expect(promoteAfterPrepare).not.toHaveBeenCalled()
     expect(forEachAudienceChunk).not.toHaveBeenCalled()
     expect(scheduleAddSpy).not.toHaveBeenCalled()
   })
 
   test("returns without db writes or queue enqueues when the workspace is frozen", async () => {
-    findFirstBroadcast.mockResolvedValue(baseBroadcast())
+    findScheduledForPrepare.mockResolvedValue(baseBroadcast())
     blockedWorkspaceIds.add(WORKSPACE_ID)
 
     await prepareBroadcast(BROADCAST_ID)
 
-    expect(updateCalls).toHaveLength(0)
-    expect(insertCalls).toHaveLength(0)
+    expect(insertRecipients).not.toHaveBeenCalled()
+    expect(promoteAfterPrepare).not.toHaveBeenCalled()
     expect(forEachAudienceChunk).not.toHaveBeenCalled()
     expect(scheduleAddSpy).not.toHaveBeenCalled()
   })
@@ -188,7 +137,7 @@ describe("prepareBroadcast", () => {
       operator: "and",
       conditions: [{ field: "fullName", operator: "contains", value: "Ada" }],
     }
-    findFirstBroadcast.mockResolvedValue({
+    findScheduledForPrepare.mockResolvedValue({
       ...baseBroadcast(),
       channel: "whatsapp",
       integrationWhatsappId: "wa-int-1",
@@ -213,7 +162,7 @@ describe("prepareBroadcast", () => {
   })
 
   test("loads the target rows and forwards their inbox ids for a multi-page broadcast", async () => {
-    findFirstBroadcast.mockResolvedValue({
+    findScheduledForPrepare.mockResolvedValue({
       ...baseBroadcast(),
       channel: "whatsapp",
       subaction: "whatsappTemplateMessage",
@@ -223,11 +172,9 @@ describe("prepareBroadcast", () => {
 
     await prepareBroadcast(BROADCAST_ID)
 
-    expect(findFirstBroadcast).toHaveBeenCalledWith(
-      expect.objectContaining({
-        with: { targets: { columns: { inboxId: true } } },
-      }),
-    )
+    expect(findScheduledForPrepare).toHaveBeenCalledWith({
+      broadcastId: BROADCAST_ID,
+    })
     expect(forEachAudienceChunk).toHaveBeenCalledWith(
       expect.objectContaining({
         channels: ["whatsapp"],
@@ -240,24 +187,19 @@ describe("prepareBroadcast", () => {
   })
 
   test("derives Messenger template integration id and forwards it to the audience input", async () => {
-    findFirstBroadcast.mockResolvedValue({
+    findScheduledForPrepare.mockResolvedValue({
       ...baseBroadcast(),
       channel: "messenger",
       subaction: "messengerTemplateMessage",
       templateId: "template-1",
     })
-    findFirstMessengerTemplate.mockResolvedValue({
-      integrationMessengerId: "messenger-int-1",
-    })
+    resolveTemplateIntegrationMessengerId.mockResolvedValue("messenger-int-1")
 
     await prepareBroadcast(BROADCAST_ID)
 
-    expect(findFirstMessengerTemplate).toHaveBeenCalledWith({
-      where: {
-        id: "template-1",
-        integrationMessenger: { workspaceId: WORKSPACE_ID },
-      },
-      columns: { integrationMessengerId: true },
+    expect(resolveTemplateIntegrationMessengerId).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      templateId: "template-1",
     })
     expect(forEachAudienceChunk).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -271,7 +213,7 @@ describe("prepareBroadcast", () => {
   })
 
   test("forwards the persisted Messenger integration id for flow broadcasts without a template", async () => {
-    findFirstBroadcast.mockResolvedValue({
+    findScheduledForPrepare.mockResolvedValue({
       ...baseBroadcast(),
       channel: "messenger",
       subaction: "messengerTemplateMessage",
@@ -281,7 +223,7 @@ describe("prepareBroadcast", () => {
 
     await prepareBroadcast(BROADCAST_ID)
 
-    expect(findFirstMessengerTemplate).not.toHaveBeenCalled()
+    expect(resolveTemplateIntegrationMessengerId).not.toHaveBeenCalled()
     expect(forEachAudienceChunk).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId: WORKSPACE_ID,
@@ -293,7 +235,7 @@ describe("prepareBroadcast", () => {
   })
 
   test("prefers the persisted Messenger integration id over template derivation", async () => {
-    findFirstBroadcast.mockResolvedValue({
+    findScheduledForPrepare.mockResolvedValue({
       ...baseBroadcast(),
       channel: "messenger",
       subaction: "messengerTemplateMessage",
@@ -303,7 +245,7 @@ describe("prepareBroadcast", () => {
 
     await prepareBroadcast(BROADCAST_ID)
 
-    expect(findFirstMessengerTemplate).not.toHaveBeenCalled()
+    expect(resolveTemplateIntegrationMessengerId).not.toHaveBeenCalled()
     expect(forEachAudienceChunk).toHaveBeenCalledWith(
       expect.objectContaining({
         integrationMessengerId: "messenger-int-1",
@@ -313,7 +255,7 @@ describe("prepareBroadcast", () => {
   })
 
   test("scopes a targets-mode broadcast whose pages were all deleted to nobody, never the whole channel", async () => {
-    findFirstBroadcast.mockResolvedValue({
+    findScheduledForPrepare.mockResolvedValue({
       ...baseBroadcast(),
       channel: "whatsapp",
       subaction: "whatsappTemplateMessage",
@@ -330,7 +272,7 @@ describe("prepareBroadcast", () => {
   })
 
   test("fails closed for invalid persisted channel and subaction values", async () => {
-    findFirstBroadcast.mockResolvedValue({
+    findScheduledForPrepare.mockResolvedValue({
       ...baseBroadcast(),
       channel: "bad-channel",
       subaction: "bad-subaction",
@@ -345,14 +287,13 @@ describe("prepareBroadcast", () => {
       }),
       expect.any(Function),
     )
-    expect(updateCalls[0].values).toMatchObject({
-      status: "sent",
-      contactCount: 0,
-    })
+    expect(promoteAfterPrepare).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "sent", contactCount: 0 }),
+    )
   })
 
   test("inserts recipients with DM conversations, skips missing conversations, and enqueues sendBroadcast", async () => {
-    findFirstBroadcast.mockResolvedValue(baseBroadcast())
+    findScheduledForPrepare.mockResolvedValue(baseBroadcast())
     findDMByContactIds.mockResolvedValue([
       { id: "conv-1", contactId: "contact-1" },
     ])
@@ -377,25 +318,25 @@ describe("prepareBroadcast", () => {
       contactIds: ["contact-1", "contact-2"],
       channel: "messenger",
     })
-    expect(insertCalls).toHaveLength(1)
-    expect(onConflictSpy).toHaveBeenCalledTimes(1)
-    expect(insertCalls[0].values).toEqual([
-      {
-        broadcastId: BROADCAST_ID,
-        contactId: "contact-1",
-        contactInboxId: "ci-1",
-        conversationId: "conv-1",
-      },
-    ])
+    expect(insertRecipients).toHaveBeenCalledTimes(1)
+    expect(insertRecipients).toHaveBeenCalledWith({
+      recipients: [
+        {
+          broadcastId: BROADCAST_ID,
+          contactId: "contact-1",
+          contactInboxId: "ci-1",
+          conversationId: "conv-1",
+        },
+      ],
+    })
     expect(loggerInfoSpy).toHaveBeenCalledWith(
       { broadcastId: BROADCAST_ID, skippedCount: 1 },
       "Skipped broadcast contacts without a DM conversation",
     )
-    expect(updateCalls).toHaveLength(1)
-    expect(updateCalls[0].values).toMatchObject({
-      status: "sending",
-      contactCount: 1,
-    })
+    expect(promoteAfterPrepare).toHaveBeenCalledTimes(1)
+    expect(promoteAfterPrepare).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "sending", contactCount: 1 }),
+    )
     expect(scheduleAddSpy).toHaveBeenCalledWith(
       "sendBroadcast",
       expect.objectContaining({
@@ -412,7 +353,7 @@ describe("prepareBroadcast", () => {
   })
 
   test("passes the broadcast channel to the DM conversation lookup so TikTok resolves by sourceId", async () => {
-    findFirstBroadcast.mockResolvedValue({
+    findScheduledForPrepare.mockResolvedValue({
       ...baseBroadcast(),
       channel: "tiktok",
     })
@@ -440,7 +381,7 @@ describe("prepareBroadcast", () => {
   })
 
   test("does not insert or enqueue when all audience contacts lack a DM conversation", async () => {
-    findFirstBroadcast.mockResolvedValue(baseBroadcast())
+    findScheduledForPrepare.mockResolvedValue(baseBroadcast())
     findDMByContactIds.mockResolvedValue([])
     forEachAudienceChunk.mockImplementation(
       async (
@@ -455,12 +396,11 @@ describe("prepareBroadcast", () => {
 
     await prepareBroadcast(BROADCAST_ID)
 
-    expect(insertCalls).toHaveLength(0)
-    expect(updateCalls).toHaveLength(1)
-    expect(updateCalls[0].values).toMatchObject({
-      status: "sent",
-      contactCount: 0,
-    })
+    expect(insertRecipients).not.toHaveBeenCalled()
+    expect(promoteAfterPrepare).toHaveBeenCalledTimes(1)
+    expect(promoteAfterPrepare).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "sent", contactCount: 0 }),
+    )
     expect(scheduleAddSpy).not.toHaveBeenCalled()
     expect(loggerInfoSpy).toHaveBeenCalledWith(
       { broadcastId: BROADCAST_ID, skippedCount: 1 },
@@ -469,23 +409,22 @@ describe("prepareBroadcast", () => {
   })
 
   test("marks sent with contactCount zero and does not enqueue when the audience is empty", async () => {
-    findFirstBroadcast.mockResolvedValue(baseBroadcast())
+    findScheduledForPrepare.mockResolvedValue(baseBroadcast())
     forEachAudienceChunk.mockResolvedValue(undefined)
 
     await prepareBroadcast(BROADCAST_ID)
 
-    expect(insertCalls).toHaveLength(0)
-    expect(updateCalls).toHaveLength(1)
-    expect(updateCalls[0].values).toMatchObject({
-      status: "sent",
-      contactCount: 0,
-    })
+    expect(insertRecipients).not.toHaveBeenCalled()
+    expect(promoteAfterPrepare).toHaveBeenCalledTimes(1)
+    expect(promoteAfterPrepare).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "sent", contactCount: 0 }),
+    )
     expect(scheduleAddSpy).not.toHaveBeenCalled()
   })
 
   describe("stale recipient cleanup", () => {
     test("purges any existing ContactOnBroadcast rows before rebuilding the audience", async () => {
-      findFirstBroadcast.mockResolvedValue(baseBroadcast())
+      findScheduledForPrepare.mockResolvedValue(baseBroadcast())
       forEachAudienceChunk.mockResolvedValue(undefined)
 
       await prepareBroadcast(BROADCAST_ID)
@@ -501,11 +440,11 @@ describe("prepareBroadcast", () => {
     })
 
     test("does not purge when the broadcast is missing or the workspace is blocked", async () => {
-      findFirstBroadcast.mockResolvedValue(undefined)
+      findScheduledForPrepare.mockResolvedValue(undefined)
       await prepareBroadcast(BROADCAST_ID)
       expect(purgeBroadcastRecipientsSpy).not.toHaveBeenCalled()
 
-      findFirstBroadcast.mockResolvedValue(baseBroadcast())
+      findScheduledForPrepare.mockResolvedValue(baseBroadcast())
       blockedWorkspaceIds.add(WORKSPACE_ID)
       await prepareBroadcast(BROADCAST_ID)
       expect(purgeBroadcastRecipientsSpy).not.toHaveBeenCalled()
@@ -513,8 +452,8 @@ describe("prepareBroadcast", () => {
   })
 
   describe("promotion-epoch pin", () => {
-    test("pins the promotion UPDATE to id, status, deletedAt, and the resumeCount read at the start of the run", async () => {
-      findFirstBroadcast.mockResolvedValue({
+    test("passes the broadcastId, computed status/contactCount, and the resumeCount read at the start of the run", async () => {
+      findScheduledForPrepare.mockResolvedValue({
         ...baseBroadcast(),
         resumeCount: 3,
       })
@@ -522,18 +461,16 @@ describe("prepareBroadcast", () => {
 
       await prepareBroadcast(BROADCAST_ID)
 
-      expect(updateCalls[0].condition).toEqual({
-        __and: [
-          { __eq: ["Broadcast.id", BROADCAST_ID] },
-          { __eq: ["Broadcast.status", "scheduled"] },
-          { __isNull: "Broadcast.deletedAt" },
-          { __eq: ["Broadcast.resumeCount", 3] },
-        ],
+      expect(promoteAfterPrepare).toHaveBeenCalledWith({
+        broadcastId: BROADCAST_ID,
+        status: "sent",
+        contactCount: 0,
+        promotionEpoch: 3,
       })
     })
 
-    test("skips the sendBroadcast enqueue when the promotion UPDATE matches 0 rows (lost the race)", async () => {
-      findFirstBroadcast.mockResolvedValue(baseBroadcast())
+    test("skips the sendBroadcast enqueue when promoteAfterPrepare reports the CAS lost (the race)", async () => {
+      findScheduledForPrepare.mockResolvedValue(baseBroadcast())
       findDMByContactIds.mockResolvedValue([
         { id: "conv-1", contactId: "contact-1" },
       ])
@@ -547,7 +484,7 @@ describe("prepareBroadcast", () => {
           await onChunk([{ id: "ci-1", contactId: "contact-1" }])
         },
       )
-      promotionReturningRows = []
+      promotionSucceeds = false
 
       await prepareBroadcast(BROADCAST_ID)
 
@@ -558,8 +495,8 @@ describe("prepareBroadcast", () => {
       )
     })
 
-    test("still enqueues sendBroadcast when the promotion UPDATE matches", async () => {
-      findFirstBroadcast.mockResolvedValue(baseBroadcast())
+    test("still enqueues sendBroadcast when promoteAfterPrepare reports the CAS won", async () => {
+      findScheduledForPrepare.mockResolvedValue(baseBroadcast())
       findDMByContactIds.mockResolvedValue([
         { id: "conv-1", contactId: "contact-1" },
       ])
@@ -573,7 +510,7 @@ describe("prepareBroadcast", () => {
           await onChunk([{ id: "ci-1", contactId: "contact-1" }])
         },
       )
-      promotionReturningRows = [{ id: BROADCAST_ID }]
+      promotionSucceeds = true
 
       await prepareBroadcast(BROADCAST_ID)
 

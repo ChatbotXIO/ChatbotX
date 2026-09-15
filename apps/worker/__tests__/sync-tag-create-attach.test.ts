@@ -1,19 +1,20 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// ── Query spies ───────────────────────────────────────────────────────────────
-const findTagFirst = vi.fn()
+// ── Repository / service spies ────────────────────────────────────────────────
+const findTag = vi.fn()
 const findManyMessengerIntegrations = vi.fn()
 const findManyZaloIntegrations = vi.fn()
-const findTagChannelFirst = vi.fn()
+const findTagChannelByTagAndIntegration = vi.fn()
 const findManyContactInboxes = vi.fn()
-const findMessengerIntegrationFirst = vi.fn()
-const findZaloIntegrationFirst = vi.fn()
+const findMessengerIntegrationByInboxId = vi.fn()
+const findZaloIntegrationByInboxId = vi.fn()
 
 // ── Mutation spies ────────────────────────────────────────────────────────────
-const insertValues = vi.fn()
-const insertReturning = vi.fn()
-const updateSet = vi.fn()
-const updateWhere = vi.fn()
+const tagChannelInsertIfAbsent = vi.fn()
+const tagChannelUpdateExternalLabelId = vi.fn()
+const tagChannelInsertOrFetch = vi.fn()
+const tagChannelUpsertByTagAndIntegration = vi.fn()
+const tagChannelLinkContactInbox = vi.fn()
 
 // ── Integration API spies ─────────────────────────────────────────────────────
 const messengerCreateLabel = vi.fn()
@@ -21,69 +22,40 @@ const messengerAssignLabel = vi.fn()
 const zaloTagFollower = vi.fn()
 const zaloRunAction = vi.fn()
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      tagModel: { findFirst: (...args: unknown[]) => findTagFirst(...args) },
-      integrationMessengerModel: {
-        findMany: (...args: unknown[]) =>
-          findManyMessengerIntegrations(...args),
-        findFirst: (...args: unknown[]) =>
-          findMessengerIntegrationFirst(...args),
-      },
-      integrationZaloModel: {
-        findMany: (...args: unknown[]) => findManyZaloIntegrations(...args),
-        findFirst: (...args: unknown[]) => findZaloIntegrationFirst(...args),
-      },
-      tagChannelModel: {
-        findFirst: (...args: unknown[]) => findTagChannelFirst(...args),
-      },
-      contactInboxModel: {
-        findMany: (...args: unknown[]) => findManyContactInboxes(...args),
-      },
-    },
-    insert: () => ({
-      values: (vals: unknown) => {
-        insertValues(vals)
-        return {
-          onConflictDoNothing: () => ({
-            returning: () => insertReturning(),
-          }),
-          onConflictDoUpdate: () => ({
-            returning: () => insertReturning(),
-          }),
-        }
-      },
-    }),
-    update: () => ({
-      set: (vals: unknown) => {
-        updateSet(vals)
-        return {
-          where: (cond: unknown) => {
-            updateWhere(cond)
-            return Promise.resolve()
-          },
-        }
-      },
-    }),
-  },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
-  inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
-  isNotNull: (col: unknown) => ({ isNotNull: col }),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  tagModel: { __name: "Tag" },
-  tagChannelModel: { __name: "TagChannel" },
-  contactToTagChannelModel: { __name: "ContactToTagChannel" },
-  contactInboxModel: { __name: "ContactInbox" },
-  integrationMessengerModel: { __name: "IntegrationMessenger" },
-  integrationZaloModel: { __name: "IntegrationZalo" },
-}))
-
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: vi.fn().mockResolvedValue({ auth: {}, workspaceId: "ws-1" }),
+  tagService: {
+    findById: (...args: unknown[]) => findTag(...args),
+  },
+  zaloIntegrationService: {
+    listByWorkspace: (...args: unknown[]) => findManyZaloIntegrations(...args),
+    findByInboxId: (...args: unknown[]) =>
+      findZaloIntegrationByInboxId(...args),
+  },
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  tagChannelRepository: {
+    insertIfAbsent: (...args: unknown[]) => tagChannelInsertIfAbsent(...args),
+    findByTagAndIntegration: (...args: unknown[]) =>
+      findTagChannelByTagAndIntegration(...args),
+    updateExternalLabelId: (...args: unknown[]) =>
+      tagChannelUpdateExternalLabelId(...args),
+    insertOrFetch: (...args: unknown[]) => tagChannelInsertOrFetch(...args),
+    upsertByTagAndIntegration: (...args: unknown[]) =>
+      tagChannelUpsertByTagAndIntegration(...args),
+    linkContactInbox: (...args: unknown[]) =>
+      tagChannelLinkContactInbox(...args),
+  },
+  contactInboxRepository: {
+    listByContactId: (...args: unknown[]) => findManyContactInboxes(...args),
+  },
+  integrationMessengerRepository: {
+    listByWorkspace: (...args: unknown[]) =>
+      findManyMessengerIntegrations(...args),
+    findByInboxId: (...args: unknown[]) =>
+      findMessengerIntegrationByInboxId(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({
@@ -117,17 +89,10 @@ vi.mock("@chatbotx.io/redis", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
-  return { ...actual, createId: () => "generated-id" }
-})
-
-vi.mock("@chatbotx.io/database/partials", async () => {
-  const actual = await vi.importActual<
-    typeof import("@chatbotx.io/database/partials")
-  >("@chatbotx.io/database/partials")
-  return actual
-})
+vi.mock("@chatbotx.io/business/error-log", () => ({
+  logProviderError: vi.fn(),
+  logProviderErrorForChannel: vi.fn(),
+}))
 
 vi.mock("../src/lib/logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -178,17 +143,18 @@ const ZALO_CONTACT_INBOX = {
 }
 
 beforeEach(() => {
-  findTagFirst.mockReset()
+  findTag.mockReset()
   findManyMessengerIntegrations.mockReset()
   findManyZaloIntegrations.mockReset()
-  findTagChannelFirst.mockReset()
+  findTagChannelByTagAndIntegration.mockReset()
   findManyContactInboxes.mockReset()
-  findMessengerIntegrationFirst.mockReset()
-  findZaloIntegrationFirst.mockReset()
-  insertValues.mockReset()
-  insertReturning.mockReset()
-  updateSet.mockReset()
-  updateWhere.mockReset()
+  findMessengerIntegrationByInboxId.mockReset()
+  findZaloIntegrationByInboxId.mockReset()
+  tagChannelInsertIfAbsent.mockReset()
+  tagChannelUpdateExternalLabelId.mockReset()
+  tagChannelInsertOrFetch.mockReset()
+  tagChannelUpsertByTagAndIntegration.mockReset()
+  tagChannelLinkContactInbox.mockReset()
   messengerCreateLabel.mockReset()
   messengerAssignLabel.mockReset()
   zaloTagFollower.mockReset()
@@ -199,7 +165,11 @@ beforeEach(() => {
   messengerCreateLabel.mockResolvedValue({ id: "fb-label-123", name: "VIP" })
   messengerAssignLabel.mockResolvedValue(undefined)
   zaloTagFollower.mockResolvedValue(undefined)
-  insertReturning.mockResolvedValue([TAG_CHANNEL])
+  tagChannelInsertIfAbsent.mockResolvedValue(undefined)
+  tagChannelUpdateExternalLabelId.mockResolvedValue(undefined)
+  tagChannelInsertOrFetch.mockResolvedValue(TAG_CHANNEL)
+  tagChannelUpsertByTagAndIntegration.mockResolvedValue(TAG_CHANNEL)
+  tagChannelLinkContactInbox.mockResolvedValue(undefined)
 })
 
 // ── syncTagCreate / createMessengerLabel ──────────────────────────────────────
@@ -208,9 +178,9 @@ describe("syncTagCreate — Messenger (createMessengerLabel)", () => {
     handleSyncTag({ action: "create", workspaceId: WS, tagId: TAG_ID })
 
   test("always calls createLabel API regardless of existing TagChannel", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyMessengerIntegrations.mockResolvedValue([MESSENGER_INTEGRATION])
-    findTagChannelFirst.mockResolvedValue(TAG_CHANNEL)
+    findTagChannelByTagAndIntegration.mockResolvedValue(TAG_CHANNEL)
 
     await runCreate()
 
@@ -218,27 +188,30 @@ describe("syncTagCreate — Messenger (createMessengerLabel)", () => {
   })
 
   test("when TagChannel exists: updates externalLabelId, does NOT insert", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyMessengerIntegrations.mockResolvedValue([MESSENGER_INTEGRATION])
-    findTagChannelFirst.mockResolvedValue(TAG_CHANNEL)
+    findTagChannelByTagAndIntegration.mockResolvedValue(TAG_CHANNEL)
     messengerCreateLabel.mockResolvedValue({ id: "new-fb-label", name: "VIP" })
 
     await runCreate()
 
-    expect(updateSet).toHaveBeenCalledWith(
-      expect.objectContaining({ externalLabelId: "new-fb-label" }),
+    expect(tagChannelUpdateExternalLabelId).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: TAG_CHANNEL.id,
+        externalLabelId: "new-fb-label",
+      }),
     )
-    expect(insertValues).not.toHaveBeenCalled()
+    expect(tagChannelInsertIfAbsent).not.toHaveBeenCalled()
   })
 
   test("when TagChannel does not exist: inserts new row, does NOT update", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyMessengerIntegrations.mockResolvedValue([MESSENGER_INTEGRATION])
-    findTagChannelFirst.mockResolvedValue(null)
+    findTagChannelByTagAndIntegration.mockResolvedValue(null)
 
     await runCreate()
 
-    expect(insertValues).toHaveBeenCalledWith(
+    expect(tagChannelInsertIfAbsent).toHaveBeenCalledWith(
       expect.objectContaining({
         tagId: TAG_ID,
         externalLabelId: "fb-label-123",
@@ -246,11 +219,11 @@ describe("syncTagCreate — Messenger (createMessengerLabel)", () => {
         integrationId: INTEGRATION_ID,
       }),
     )
-    expect(updateSet).not.toHaveBeenCalled()
+    expect(tagChannelUpdateExternalLabelId).not.toHaveBeenCalled()
   })
 
   test("skips integration with syncTagEnabledAt = null", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyMessengerIntegrations.mockResolvedValue([
       { ...MESSENGER_INTEGRATION, syncTagEnabledAt: null },
     ])
@@ -261,7 +234,7 @@ describe("syncTagCreate — Messenger (createMessengerLabel)", () => {
   })
 
   test("returns early when tag not found", async () => {
-    findTagFirst.mockResolvedValue(null)
+    findTag.mockResolvedValue(null)
 
     await runCreate()
 
@@ -271,12 +244,12 @@ describe("syncTagCreate — Messenger (createMessengerLabel)", () => {
 
   test("continues to next integration when one throws", async () => {
     const INT_2 = { ...MESSENGER_INTEGRATION, id: "int-2" }
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyMessengerIntegrations.mockResolvedValue([
       MESSENGER_INTEGRATION,
       INT_2,
     ])
-    findTagChannelFirst.mockResolvedValue(null)
+    findTagChannelByTagAndIntegration.mockResolvedValue(null)
     messengerCreateLabel
       .mockRejectedValueOnce(new Error("Facebook API error"))
       .mockResolvedValueOnce({ id: "fb-2", name: "VIP" })
@@ -288,12 +261,12 @@ describe("syncTagCreate — Messenger (createMessengerLabel)", () => {
 
   test("calls createLabel once per enabled integration", async () => {
     const INT_2 = { ...MESSENGER_INTEGRATION, id: "int-2" }
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyMessengerIntegrations.mockResolvedValue([
       MESSENGER_INTEGRATION,
       INT_2,
     ])
-    findTagChannelFirst.mockResolvedValue(null)
+    findTagChannelByTagAndIntegration.mockResolvedValue(null)
 
     await runCreate()
 
@@ -307,12 +280,12 @@ describe("syncTagCreate — Zalo (no API, insert tagChannel mapping)", () => {
     handleSyncTag({ action: "create", workspaceId: WS, tagId: TAG_ID })
 
   test("inserts tagChannelModel for Zalo using tag name as externalLabelId", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyZaloIntegrations.mockResolvedValue([ZALO_INTEGRATION])
 
     await runCreate()
 
-    expect(insertValues).toHaveBeenCalledWith(
+    expect(tagChannelInsertIfAbsent).toHaveBeenCalledWith(
       expect.objectContaining({
         tagId: TAG_ID,
         channelType: "zalo",
@@ -323,7 +296,7 @@ describe("syncTagCreate — Zalo (no API, insert tagChannel mapping)", () => {
   })
 
   test("no Zalo API call — just DB insert", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyZaloIntegrations.mockResolvedValue([ZALO_INTEGRATION])
 
     await runCreate()
@@ -333,24 +306,24 @@ describe("syncTagCreate — Zalo (no API, insert tagChannel mapping)", () => {
   })
 
   test("skips Zalo integration with syncTagEnabledAt = null", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyZaloIntegrations.mockResolvedValue([
       { ...ZALO_INTEGRATION, syncTagEnabledAt: null },
     ])
 
     await runCreate()
 
-    expect(insertValues).not.toHaveBeenCalled()
+    expect(tagChannelInsertIfAbsent).not.toHaveBeenCalled()
   })
 
   test("inserts for each enabled Zalo integration", async () => {
     const ZALO_2 = { ...ZALO_INTEGRATION, id: "zalo-int-2" }
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyZaloIntegrations.mockResolvedValue([ZALO_INTEGRATION, ZALO_2])
 
     await runCreate()
 
-    expect(insertValues).toHaveBeenCalledTimes(2)
+    expect(tagChannelInsertIfAbsent).toHaveBeenCalledTimes(2)
   })
 })
 
@@ -365,10 +338,10 @@ describe("syncTagAttach — Messenger (attachOnMessenger)", () => {
     })
 
   const setupMessengerAttach = () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyContactInboxes.mockResolvedValue([MESSENGER_CONTACT_INBOX])
-    findMessengerIntegrationFirst.mockResolvedValue(MESSENGER_INTEGRATION)
-    findTagChannelFirst.mockResolvedValue(TAG_CHANNEL)
+    findMessengerIntegrationByInboxId.mockResolvedValue(MESSENGER_INTEGRATION)
+    findTagChannelByTagAndIntegration.mockResolvedValue(TAG_CHANNEL)
   }
 
   test("does NOT call createLabel when TagChannel already exists", async () => {
@@ -380,13 +353,11 @@ describe("syncTagAttach — Messenger (attachOnMessenger)", () => {
   })
 
   test("calls createLabel when TagChannel does not exist", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyContactInboxes.mockResolvedValue([MESSENGER_CONTACT_INBOX])
-    findMessengerIntegrationFirst.mockResolvedValue(MESSENGER_INTEGRATION)
-    findTagChannelFirst
-      .mockResolvedValueOnce(null) // lock: no existing → create
-      .mockResolvedValue(null) // fallback findFirst after conflict
-    insertReturning.mockResolvedValueOnce([TAG_CHANNEL]) // insert returns row
+    findMessengerIntegrationByInboxId.mockResolvedValue(MESSENGER_INTEGRATION)
+    findTagChannelByTagAndIntegration.mockResolvedValue(null) // lock: no existing → create
+    tagChannelInsertOrFetch.mockResolvedValueOnce(TAG_CHANNEL) // insert returns row
 
     await runAttach()
 
@@ -409,26 +380,24 @@ describe("syncTagAttach — Messenger (attachOnMessenger)", () => {
     )
   })
 
-  test("inserts contactToTagChannel row after assignLabel", async () => {
+  test("links contactInbox to tagChannel after assignLabel", async () => {
     setupMessengerAttach()
 
     await runAttach()
 
-    expect(insertValues).toHaveBeenCalledWith(
-      expect.objectContaining({
-        tagId: TAG_ID,
-        tagChannelId: TAG_CHANNEL.id,
-        contactInboxId: MESSENGER_CONTACT_INBOX.id,
-      }),
-    )
+    expect(tagChannelLinkContactInbox).toHaveBeenCalledWith({
+      tagId: TAG_ID,
+      tagChannelId: TAG_CHANNEL.id,
+      contactInboxId: MESSENGER_CONTACT_INBOX.id,
+    })
   })
 
   test("skips when tagChannel cannot be resolved (lock returns null)", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyContactInboxes.mockResolvedValue([MESSENGER_CONTACT_INBOX])
-    findMessengerIntegrationFirst.mockResolvedValue(MESSENGER_INTEGRATION)
-    findTagChannelFirst.mockResolvedValue(null)
-    insertReturning.mockResolvedValue([]) // insert conflict, nothing returned
+    findMessengerIntegrationByInboxId.mockResolvedValue(MESSENGER_INTEGRATION)
+    findTagChannelByTagAndIntegration.mockResolvedValue(null)
+    tagChannelInsertOrFetch.mockResolvedValue(undefined) // insert conflict, nothing returned
 
     await runAttach()
 
@@ -436,9 +405,9 @@ describe("syncTagAttach — Messenger (attachOnMessenger)", () => {
   })
 
   test("skips when integration has syncTagEnabledAt = null", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyContactInboxes.mockResolvedValue([MESSENGER_CONTACT_INBOX])
-    findMessengerIntegrationFirst.mockResolvedValue({
+    findMessengerIntegrationByInboxId.mockResolvedValue({
       ...MESSENGER_INTEGRATION,
       syncTagEnabledAt: null,
     })
@@ -449,7 +418,7 @@ describe("syncTagAttach — Messenger (attachOnMessenger)", () => {
   })
 
   test("skips when tag not found", async () => {
-    findTagFirst.mockResolvedValue(null)
+    findTag.mockResolvedValue(null)
 
     await runAttach()
 
@@ -457,7 +426,7 @@ describe("syncTagAttach — Messenger (attachOnMessenger)", () => {
   })
 
   test("skips when no contact inboxes", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyContactInboxes.mockResolvedValue([])
 
     await runAttach()
@@ -486,10 +455,10 @@ describe("syncTagAttach — Zalo (attachOnZalo)", () => {
   }
 
   const setupZaloAttach = () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyContactInboxes.mockResolvedValue([ZALO_CONTACT_INBOX])
-    findZaloIntegrationFirst.mockResolvedValue(ZALO_INTEGRATION)
-    insertReturning.mockResolvedValue([ZALO_TAG_CHANNEL])
+    findZaloIntegrationByInboxId.mockResolvedValue(ZALO_INTEGRATION)
+    tagChannelUpsertByTagAndIntegration.mockResolvedValue(ZALO_TAG_CHANNEL)
   }
 
   test("calls tagFollower Zalo action", async () => {
@@ -506,12 +475,12 @@ describe("syncTagAttach — Zalo (attachOnZalo)", () => {
     )
   })
 
-  test("upserts tagChannelModel with onConflictDoUpdate", async () => {
+  test("upserts tagChannelModel via upsertByTagAndIntegration", async () => {
     setupZaloAttach()
 
     await runAttach()
 
-    expect(insertValues).toHaveBeenCalledWith(
+    expect(tagChannelUpsertByTagAndIntegration).toHaveBeenCalledWith(
       expect.objectContaining({
         tagId: TAG_ID,
         channelType: "zalo",
@@ -521,35 +490,33 @@ describe("syncTagAttach — Zalo (attachOnZalo)", () => {
     )
   })
 
-  test("inserts contactToTagChannel row after upsert", async () => {
+  test("links contactInbox to tagChannel after upsert", async () => {
     setupZaloAttach()
 
     await runAttach()
 
-    // Second insert call is for contactToTagChannelModel
-    expect(insertValues).toHaveBeenCalledWith(
-      expect.objectContaining({
-        tagId: TAG_ID,
-        tagChannelId: ZALO_TAG_CHANNEL.id,
-        contactInboxId: ZALO_CONTACT_INBOX.id,
-      }),
-    )
+    expect(tagChannelLinkContactInbox).toHaveBeenCalledWith({
+      tagId: TAG_ID,
+      tagChannelId: ZALO_TAG_CHANNEL.id,
+      contactInboxId: ZALO_CONTACT_INBOX.id,
+    })
   })
 
-  test("skips contactToTagChannel insert when tagChannel upsert returns nothing", async () => {
+  test("skips contactInbox link when tagChannel upsert returns nothing", async () => {
     setupZaloAttach()
-    insertReturning.mockResolvedValue([]) // upsert returns empty (unexpected)
+    tagChannelUpsertByTagAndIntegration.mockResolvedValue(undefined) // upsert returns empty (unexpected)
 
     await runAttach()
 
-    // Only the tagChannel insert fires; no contactToTagChannel insert
-    expect(insertValues).toHaveBeenCalledTimes(1)
+    // The upsert still fires; no link call
+    expect(tagChannelUpsertByTagAndIntegration).toHaveBeenCalledTimes(1)
+    expect(tagChannelLinkContactInbox).not.toHaveBeenCalled()
   })
 
   test("skips when integration has syncTagEnabledAt = null", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyContactInboxes.mockResolvedValue([ZALO_CONTACT_INBOX])
-    findZaloIntegrationFirst.mockResolvedValue({
+    findZaloIntegrationByInboxId.mockResolvedValue({
       ...ZALO_INTEGRATION,
       syncTagEnabledAt: null,
     })
@@ -560,15 +527,15 @@ describe("syncTagAttach — Zalo (attachOnZalo)", () => {
   })
 
   test("routes messenger and zalo inboxes independently in the same attach", async () => {
-    findTagFirst.mockResolvedValue(TAG)
+    findTag.mockResolvedValue(TAG)
     findManyContactInboxes.mockResolvedValue([
       MESSENGER_CONTACT_INBOX,
       ZALO_CONTACT_INBOX,
     ])
-    findMessengerIntegrationFirst.mockResolvedValue(MESSENGER_INTEGRATION)
-    findTagChannelFirst.mockResolvedValue(TAG_CHANNEL)
-    findZaloIntegrationFirst.mockResolvedValue(ZALO_INTEGRATION)
-    insertReturning.mockResolvedValue([TAG_CHANNEL])
+    findMessengerIntegrationByInboxId.mockResolvedValue(MESSENGER_INTEGRATION)
+    findTagChannelByTagAndIntegration.mockResolvedValue(TAG_CHANNEL)
+    findZaloIntegrationByInboxId.mockResolvedValue(ZALO_INTEGRATION)
+    tagChannelUpsertByTagAndIntegration.mockResolvedValue(TAG_CHANNEL)
 
     await runAttach()
 

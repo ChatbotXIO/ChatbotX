@@ -1,5 +1,4 @@
-import { workspaceService } from "@chatbotx.io/business"
-import { db } from "@chatbotx.io/database/client"
+import { triggerService, workspaceService } from "@chatbotx.io/business"
 import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { matchableConditionTypesFor } from "@chatbotx.io/events"
@@ -32,14 +31,8 @@ export class TriggerMatcherService {
 
     const sourceId = metadata.sourceId as string | undefined
 
-    const triggers = await db.query.triggerModel.findMany({
-      where: {
-        workspaceId,
-        active: true,
-      },
-      with: {
-        conditions: true,
-      },
+    const triggers = await triggerService.listActiveWithConditions({
+      workspaceId,
     })
 
     // Filter triggers that have matching conditions

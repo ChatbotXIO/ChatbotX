@@ -8,29 +8,16 @@ const findManyCustomFields = vi.fn()
 const updateSet = vi.fn()
 const updateWhere = vi.fn()
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      contactModel: {
-        findMany: (...args: unknown[]) => findManyContacts(...args),
-      },
-      tagModel: {
-        findMany: (...args: unknown[]) => findManyTags(...args),
-      },
-      customFieldModel: {
-        findMany: (...args: unknown[]) => findManyCustomFields(...args),
-      },
-    },
-    update: () => ({
-      set: (values: unknown) => {
-        updateSet(values)
-        return { where: (cond: unknown) => updateWhere(cond) }
-      },
-    }),
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactRepository: {
+    listForExportPage: (...args: unknown[]) => findManyContacts(...args),
   },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
-  isNull: (column: unknown) => ({ isNull: column }),
+  fileRepository: {
+    updateForWorkspace: (input: { values: unknown }) => {
+      updateSet(input.values)
+      return updateWhere(input)
+    },
+  },
 }))
 
 vi.mock("@chatbotx.io/database/partials", async () =>
@@ -44,11 +31,12 @@ vi.mock("@chatbotx.io/database/queries", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceService: { find: vi.fn(async () => ({ timezone: "UTC" })) },
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  contactCustomFieldModel: {},
-  fileModel: { id: "File.id", workspaceId: "File.workspaceId" },
+  tagService: {
+    findManyByIds: (...args: unknown[]) => findManyTags(...args),
+  },
+  customFieldService: {
+    findManyByIds: (...args: unknown[]) => findManyCustomFields(...args),
+  },
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -191,7 +179,7 @@ describe("buildSelectedFields", () => {
       expect(result).toEqual([{ type: "tag", value: "t1", header: "VIP" }])
     })
 
-    test("queries tagModel.findMany with the correct workspaceId in the where clause", async () => {
+    test("scopes the tagService lookup to the workspace and the requested tag ids", async () => {
       // Arrange
       findManyTags.mockResolvedValueOnce([{ id: "t1", name: "VIP" }])
 
@@ -201,10 +189,11 @@ describe("buildSelectedFields", () => {
       // Assert
       expect(findManyTags).toHaveBeenCalledOnce()
       const callArg = findManyTags.mock.calls[0][0] as {
-        where: { id: { in: string[] }; workspaceId: string }
+        workspaceId: string
+        ids: string[]
       }
-      expect(callArg.where.workspaceId).toBe(WORKSPACE_ID)
-      expect(callArg.where.id.in).toContain("t1")
+      expect(callArg.workspaceId).toBe(WORKSPACE_ID)
+      expect(callArg.ids).toContain("t1")
     })
 
     test("falls back to the raw tag id when no matching row is returned", async () => {
@@ -219,7 +208,7 @@ describe("buildSelectedFields", () => {
       ])
     })
 
-    test("does NOT call tagModel.findMany when there are no tag fields", async () => {
+    test("does NOT call tagService.findManyByIds when there are no tag fields", async () => {
       // Arrange
       const fields = ["sys:email"]
 
@@ -250,7 +239,7 @@ describe("buildSelectedFields", () => {
       ])
     })
 
-    test("queries customFieldModel.findMany with the correct workspaceId", async () => {
+    test("scopes the customFieldService lookup to the workspace and the requested ids", async () => {
       // Arrange
       findManyCustomFields.mockResolvedValueOnce([{ id: "c1", name: "Plan" }])
 
@@ -260,10 +249,11 @@ describe("buildSelectedFields", () => {
       // Assert
       expect(findManyCustomFields).toHaveBeenCalledOnce()
       const callArg = findManyCustomFields.mock.calls[0][0] as {
-        where: { id: { in: string[] }; workspaceId: string }
+        workspaceId: string
+        ids: string[]
       }
-      expect(callArg.where.workspaceId).toBe(WORKSPACE_ID)
-      expect(callArg.where.id.in).toContain("c1")
+      expect(callArg.workspaceId).toBe(WORKSPACE_ID)
+      expect(callArg.ids).toContain("c1")
     })
 
     test("falls back to the raw custom field id when no matching row is returned", async () => {

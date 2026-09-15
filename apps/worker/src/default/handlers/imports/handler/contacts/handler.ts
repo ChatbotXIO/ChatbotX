@@ -1,28 +1,22 @@
 import {
   botFieldService,
-  contactCustomFieldService,
   contactInboxService,
-  messageCleanupService,
+  contactService,
+  customFieldService,
+  inboxService,
   quotaEnforcementService,
+  tagService,
   workspaceService,
   workspaceUsageService,
 } from "@chatbotx.io/business"
 import { validateCustomFieldValue } from "@chatbotx.io/business/javascript-execution"
-import { db, inArray } from "@chatbotx.io/database/client"
-import {
-  type ContactImportFieldMapping,
-  type ContactImportMeta,
-  type CustomFieldType,
-  contactImportMetaSchema,
-  contactSources,
+import type {
+  ContactImportFieldMapping,
+  ContactImportMeta,
+  CustomFieldType,
 } from "@chatbotx.io/database/partials"
-import {
-  contactInboxModel,
-  contactModel,
-  contactsToTagsModel,
-  conversationModel,
-  type inboxModel,
-} from "@chatbotx.io/database/schema"
+import { contactImportMetaSchema } from "@chatbotx.io/database/partials"
+import type { inboxModel } from "@chatbotx.io/database/schema"
 import {
   FieldReferenceKind,
   parseFieldReference,
@@ -94,21 +88,18 @@ const prepareContacts = async ({
 
   const [inbox, workspace, tag, fields, botFields] = await Promise.all([
     row.inboxId
-      ? db.query.inboxModel.findFirst({
+      ? inboxService.find({
           where: { id: row.inboxId, workspaceId: row.workspaceId },
         })
       : null,
     workspaceService.find({ where: { id: row.workspaceId } }),
     meta.tagId
-      ? db.query.tagModel.findFirst({
-          where: { id: meta.tagId, workspaceId: row.workspaceId },
-          columns: { id: true },
-        })
+      ? tagService.findById({ workspaceId: row.workspaceId, id: meta.tagId })
       : null,
     customFieldIds.length
-      ? db.query.customFieldModel.findMany({
-          where: { id: { in: customFieldIds }, workspaceId: row.workspaceId },
-          columns: { id: true, type: true },
+      ? customFieldService.findManyByIds({
+          workspaceId: row.workspaceId,
+          ids: customFieldIds,
         })
       : [],
     // Batched once here (not per-row) so `processContactRow` can validate
@@ -265,111 +256,22 @@ const insertContactBatch = async (
     return 0
   }
 
-  return db.transaction(async (tx) => {
-    await tx.insert(contactModel).values(
-      accepted.map(({ contactId, row }) => ({
-        id: contactId,
-        workspaceId: ctx.row.workspaceId,
-        phoneNumber: row.phoneNumber,
-        email: row.email,
-        firstName: row.firstName,
-        lastName: row.lastName,
-      })),
-    )
-
-    // A duplicate should already have been removed by the re-check, but a
-    // non-import path (e.g. a concurrent inbound message creating the same
-    // (inboxId, sourceId)) can still win the race in the window between
-    // that re-check and this insert. `onConflictDoNothing` skips those rows;
-    // we then continue with only the contacts whose link actually inserted,
-    // so a single late conflict can no longer fail the entire batch while
-    // still guaranteeing no contact is created without its inbox row.
-    const insertedContactInboxes = await tx
-      .insert(contactInboxModel)
-      .values(
-        accepted.map(({ contactId, contactInboxId, row }) => {
-          // C-2: externalId is guaranteed non-null here by processContactBatch,
-          // but assert explicitly rather than casting to catch future regressions.
-          if (!row.externalId) {
-            throw new Error("Invariant: externalId must be set before insert")
-          }
-          return {
-            id: contactInboxId,
-            originalContactId: contactId,
-            contactId,
-            inboxId: deps.inbox.id,
-            channel: deps.inbox.channel,
-            source: contactSources.enum.imported,
-            sourceId: row.externalId,
-            sourceUserId: row.sourceUserId ?? null,
-          }
-        }),
-      )
-      .onConflictDoNothing()
-      .returning({ contactId: contactInboxModel.contactId })
-
-    const insertedContactIds = new Set(
-      insertedContactInboxes.map((inboxRow) => inboxRow.contactId),
-    )
-    const survivors = accepted.filter(({ contactId }) =>
-      insertedContactIds.has(contactId),
-    )
-
-    // Re-created contacts keep their history: cancel any pending message
-    // cleanup recorded when contacts with these inbox identities were deleted.
-    await messageCleanupService.cancelByInboxSource({
-      inboxId: deps.inbox.id,
-      sourceIds: survivors.flatMap(({ row }) =>
-        row.externalId ? [row.externalId] : [],
-      ),
-      tx,
-    })
-
-    // Prune the orphan Contact rows whose link lost the conflict so we never
-    // leave a contact without a channel row (cascades clean up any partial
-    // children).
-    if (survivors.length !== accepted.length) {
-      const orphanIds = accepted
-        .filter(({ contactId }) => !insertedContactIds.has(contactId))
-        .map(({ contactId }) => contactId)
-      await tx.delete(contactModel).where(inArray(contactModel.id, orphanIds))
-      logger.warn(
-        { inboxId: deps.inbox.id, conflicts: orphanIds.length },
-        "Import contact source conflict: skipped already-linked contacts",
-      )
-    }
-
-    if (survivors.length === 0) {
-      return 0
-    }
-
-    await tx.insert(conversationModel).values(
-      survivors.map(({ contactId }) => ({
-        id: createId(),
-        workspaceId: ctx.row.workspaceId,
-        contactId,
-      })),
-    )
-
-    await contactCustomFieldService.insertNormalizedValuesForNewContacts({
+  const { inserted, orphanCount } =
+    await contactService.insertImportedContactBatch({
       workspaceId: ctx.row.workspaceId,
-      entries: survivors.map(({ contactId, row }) => ({
-        contactId,
-        fields: row.customFields,
-      })),
-      tx,
+      inbox: { id: deps.inbox.id, channel: deps.inbox.channel },
+      accepted,
+      tagId: ctx.meta.tagId,
     })
 
-    if (ctx.meta.tagId) {
-      const tagId = ctx.meta.tagId
-      await tx
-        .insert(contactsToTagsModel)
-        .values(survivors.map(({ contactId }) => ({ contactId, tagId })))
-        .onConflictDoNothing()
-    }
+  if (orphanCount > 0) {
+    logger.warn(
+      { inboxId: deps.inbox.id, conflicts: orphanCount },
+      "Import contact source conflict: skipped already-linked contacts",
+    )
+  }
 
-    return survivors.length
-  })
+  return inserted
 }
 
 const processContactBatch = async (

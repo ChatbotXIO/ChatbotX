@@ -376,4 +376,25 @@ export const integrationMessengerRepository = {
       where: { pageId: props.pageId },
     })
   },
+
+  /** `sync-tag.ts` attach path: resolve the Messenger integration owning an inbox. */
+  async findByInboxId(
+    input: { inboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationMessengerModel | null> {
+    const row = await tx.query.integrationMessengerModel.findFirst({
+      where: { inboxId: input.inboxId },
+    })
+    return row ?? null
+  },
+
+  /** `sync-tag.ts` create path: every Messenger integration in the workspace, full rows. */
+  async listByWorkspace(
+    input: { workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationMessengerModel[]> {
+    return await tx.query.integrationMessengerModel.findMany({
+      where: { workspaceId: input.workspaceId },
+    })
+  },
 }
