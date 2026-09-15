@@ -1,4 +1,3 @@
-const PARENT_ORIGIN_PARAM = "parentOrigin"
 const LEADING_DOTS_REGEX = /^\.+/
 const TRAILING_DOTS_REGEX = /\.+$/
 const PROTOCOL_PREFIX_REGEX = /^[a-z]+:\/\//i
@@ -53,31 +52,5 @@ export const isOriginAuthorized = (
 
   return domains.some(
     (domain) => host === domain || host.endsWith(`.${domain}`),
-  )
-}
-
-export const getParentOriginFromUrl = (url: string | null | undefined) => {
-  if (!url) {
-    return null
-  }
-
-  try {
-    return new URL(url).searchParams.get(PARENT_ORIGIN_PARAM)
-  } catch {
-    return null
-  }
-}
-
-export const getClientEmbeddingOrigin = () => {
-  if (typeof window === "undefined") {
-    return null
-  }
-
-  const searchParams = new URLSearchParams(window.location.search)
-  return (
-    searchParams.get(PARENT_ORIGIN_PARAM) ||
-    searchParams.get("domain") ||
-    document.referrer ||
-    null
   )
 }

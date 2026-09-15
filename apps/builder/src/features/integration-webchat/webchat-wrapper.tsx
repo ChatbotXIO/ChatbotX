@@ -9,13 +9,7 @@ import { WebchatMessageInput } from "./webchat-message-input"
 import { WebchatMessageList } from "./webchat-message-list"
 import { WebchatRealtime } from "./webchat-realtime"
 
-export const WebchatWrapper = ({
-  referral,
-  parentOrigin,
-}: {
-  referral?: string
-  parentOrigin?: string | null
-}) => {
+export const WebchatWrapper = ({ referral }: { referral?: string }) => {
   const { guestConversationId, accessToken, config } = useGuestSessionStore(
     (state) => state,
   )
@@ -32,7 +26,6 @@ export const WebchatWrapper = ({
       {!config.hideMessageInput && (
         <WebchatMessageInput
           accessToken={accessToken}
-          parentOrigin={parentOrigin}
           referral={referral}
           webchatId={config.id}
           workspaceId={config.workspaceId}
@@ -41,7 +34,6 @@ export const WebchatWrapper = ({
       <WebchatRef
         accessToken={accessToken}
         guestConversationId={guestConversationId ?? ""}
-        parentOrigin={parentOrigin}
         webchatId={config.id}
         workspaceId={config.workspaceId}
       />

@@ -4,12 +4,12 @@ import { useAction } from "next-safe-action/hooks"
 import { useEffect, useState } from "react"
 import { createWebchatMessageAction } from "@/features/messages/actions/create-webchat-message.action"
 import { getWebchatProfileFields } from "../browser-profile-fields"
+import { useGuestSessionStore } from "../providers/store/guest-session-provider"
 
 type WebchatRefProps = {
   workspaceId: string
   webchatId: string
   guestConversationId: string
-  parentOrigin?: string | null
   accessToken?: string | null
 }
 
@@ -17,9 +17,9 @@ export default function WebchatRef({
   workspaceId,
   webchatId,
   guestConversationId,
-  parentOrigin,
   accessToken,
 }: WebchatRefProps) {
+  const embeddingOrigin = useGuestSessionStore((state) => state.embeddingOrigin)
   const searchParams = useSearchParams()
   const [initialized, setInitialized] = useState(false)
 
@@ -40,7 +40,7 @@ export default function WebchatRef({
       ...(ref ? { initRef: ref } : { init: true }),
       ...getWebchatProfileFields(),
       accessToken: accessToken ?? undefined,
-      parentOrigin: parentOrigin ?? undefined,
+      parentOrigin: embeddingOrigin ?? undefined,
     })
   }, [
     searchParams,
@@ -49,7 +49,7 @@ export default function WebchatRef({
     workspaceId,
     webchatId,
     guestConversationId,
-    parentOrigin,
+    embeddingOrigin,
     accessToken,
   ])
 

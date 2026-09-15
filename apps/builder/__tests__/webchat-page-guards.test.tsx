@@ -152,6 +152,32 @@ describe("WebchatPage", () => {
     )
   })
 
+  test("threads the referer as embeddingOrigin into the store and drops parentOrigin from WebchatWrapper", async () => {
+    setReferer("https://allowed.example/page")
+
+    const element = await WebchatPage({
+      searchParams: Promise.resolve(searchParams),
+    })
+
+    const providerProps = (
+      element as { props: { embeddingOrigin?: string | null } }
+    ).props
+    expect(providerProps.embeddingOrigin).toBe("https://allowed.example/page")
+
+    const children = (element as { props: { children: unknown } }).props
+      .children
+    const wrapperElement = (
+      Array.isArray(children) ? children : [children]
+    ).find(
+      (child) =>
+        Boolean(child) &&
+        (child as { type?: { name?: string } }).type?.name === "WebchatWrapper",
+    ) as { props: Record<string, unknown> } | undefined
+
+    expect(wrapperElement).toBeDefined()
+    expect(wrapperElement?.props).not.toHaveProperty("parentOrigin")
+  })
+
   test("shows the unauthorized-domain message for a third-party referer not in authorizedDomains", async () => {
     setReferer("https://attacker.test")
 

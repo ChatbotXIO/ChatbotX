@@ -27,6 +27,14 @@ export type GuestSessionStoreProviderProps = {
   serverGuestConversationId: string
   /** Resolved server-side; see GuestSessionState.workspaceLogoUrl. */
   workspaceLogoUrl?: string
+  /**
+   * The origin the server minted `accessToken` for. Only the first
+   * render's value is used — the store freezes it in the `useRef` below —
+   * so later re-renders passing a different value (e.g. an RSC refresh
+   * after the guest-init action changes the referer) are intentionally
+   * ignored. See GuestSessionState.embeddingOrigin.
+   */
+  embeddingOrigin?: string | null
 }
 
 export const GuestSessionStoreProvider = ({
@@ -35,6 +43,7 @@ export const GuestSessionStoreProvider = ({
   accessToken = null,
   serverGuestConversationId,
   workspaceLogoUrl,
+  embeddingOrigin = null,
 }: GuestSessionStoreProviderProps) => {
   const storeRef = useRef<GuestSessionStoreApi>(null)
   if (!storeRef.current) {
@@ -42,6 +51,7 @@ export const GuestSessionStoreProvider = ({
       config,
       accessToken,
       workspaceLogoUrl,
+      embeddingOrigin,
     )
   }
 

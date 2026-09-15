@@ -6,9 +6,9 @@ const TOKEN_TTL_SECONDS = 30 * 60
 
 type WebchatAccessTokenPayload = {
   exp: number
-  // Normalized host (not the raw origin/referer string) so mint-time values
-  // (a full referer URL with path) and verify-time values (a bare
-  // `window.location.origin`) compare equal — see getHostFromOrigin.
+  // Normalized host (not the raw origin/referer string) so mint-time and
+  // verify-time values — both raw referer strings, potentially with a path
+  // — compare equal regardless of shape — see getHostFromOrigin.
   originHost: string | null
   webchatId: string
   workspaceId: string
@@ -86,17 +86,18 @@ export const verifyWebchatAccessToken = async ({
     // for (captured from the referer at page-load time), and every caller
     // must present a matching host to use it — this holds regardless of
     // whether the webchat has an admin-configured authorizedDomains
-    // allowlist. Compare normalized hosts (not raw strings) since mint-time
-    // (referer header, may include a path) and verify-time
-    // (window.location.origin, bare) values differ in shape even for the
-    // same site.
+    // allowlist. Compare normalized hosts (not raw strings) since the
+    // verify-time value is the same referer string echoed back by the
+    // client (frozen at first render — see GuestSessionState.embeddingOrigin)
+    // but may still differ in shape from the mint-time referer header (e.g.
+    // trailing path segments) even for the same site.
     //
     // Threat model: the `origin` passed in here at verify time is
     // client-supplied (a request body/query field), not read from a
     // server-trusted header, and the mint-time `referer` can itself be
     // forged by a direct (non-browser) caller. So this check stops a
     // *passive* leaked/replayed token from being reused from a genuinely
-    // different origin (that origin's real `window.location.origin` won't
+    // different origin (that origin's own embeddingOrigin won't
     // match the host baked into someone else's token) — it does NOT stop an
     // *active* attacker who controls both the mint request's Referer and the
     // verify request's origin field and can simply keep them consistent.

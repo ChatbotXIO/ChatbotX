@@ -1,11 +1,9 @@
 // @vitest-environment node
 
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
+import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import {
-  getParentOriginFromUrl,
-  isOriginAuthorized,
-} from "@/features/integration-webchat/lib/authorized-domain"
+import { isOriginAuthorized } from "@/features/integration-webchat/lib/authorized-domain"
 import { createGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
 import {
   createWebchatAccessToken,
@@ -30,6 +28,31 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
   return { ...actual, createId: vi.fn(() => "generated-id") }
 })
+
+type MockKyPostOptions = {
+  json?: Record<string, unknown>
+  headers?: Record<string, string>
+}
+
+const mockKy = vi.hoisted(() => ({
+  get: vi.fn(
+    (_url: string, _options?: { headers?: Record<string, string> }) => ({
+      json: () => Promise.resolve({ data: [], nextCursor: null }),
+    }),
+  ),
+  post: vi.fn((_url: string, _options?: MockKyPostOptions) =>
+    Promise.resolve({}),
+  ),
+}))
+
+vi.mock("ky", () => ({
+  default: {
+    get: (url: string, options?: { headers?: Record<string, string> }) =>
+      mockKy.get(url, options),
+    post: (url: string, options?: MockKyPostOptions) =>
+      mockKy.post(url, options),
+  },
+}))
 
 const createLocalStorageMock = (initial: Record<string, string> = {}) => {
   const items = new Map(Object.entries(initial))
@@ -191,6 +214,59 @@ describe("webchat guest session store", () => {
   })
 })
 
+describe("webchat guest session store — embeddingOrigin freeze", () => {
+  const postbackButton: MessageButtonTemplate = {
+    id: "btn-1",
+    label: "Yes",
+    buttonType: "postback",
+    postback: "YES",
+  }
+
+  beforeEach(() => {
+    vi.unstubAllGlobals()
+    vi.clearAllMocks()
+    vi.stubGlobal("localStorage", createLocalStorageMock())
+  })
+
+  test("threads the frozen embeddingOrigin into sendPostback and loadMoreMessages requests", async () => {
+    const store = createGuestSessionStore(
+      createWebchatConfig(),
+      "token-1",
+      undefined,
+      "https://www.example.com",
+    )
+
+    await store.getState().sendPostback(postbackButton)
+    await store.getState().sendPostback(postbackButton)
+
+    expect(mockKy.post).toHaveBeenCalledTimes(2)
+    for (const [, options] of mockKy.post.mock.calls) {
+      expect(options?.json?.parentOrigin).toBe("https://www.example.com")
+    }
+
+    await store.getState().loadMoreMessages("guest-1", 20)
+    const [url] = mockKy.get.mock.calls.at(-1) ?? []
+    expect(url).toContain("parentOrigin=https%3A%2F%2Fwww.example.com")
+  })
+
+  test("omits parentOrigin from every request when minted with no referrer (no-referrer policy)", async () => {
+    const store = createGuestSessionStore(
+      createWebchatConfig(),
+      "token-1",
+      undefined,
+      null,
+    )
+
+    await store.getState().sendPostback(postbackButton)
+    const [, postOptions] = mockKy.post.mock.calls[0]
+    expect(postOptions?.json?.parentOrigin).toBeUndefined()
+
+    await store.getState().loadMoreMessages("guest-1", 20)
+    const [url] = mockKy.get.mock.calls[0]
+    expect(url).not.toContain("parentOrigin")
+  })
+})
+
 describe("webchat authorized domains", () => {
   test("rejects origins when no domains are configured (fail closed)", () => {
     expect(isOriginAuthorized("https://example.com", [])).toBe(false)
@@ -218,14 +294,6 @@ describe("webchat authorized domains", () => {
   test("allows a missing origin even when domains are configured (direct, non-embedded access)", () => {
     expect(isOriginAuthorized(null, ["example.com"])).toBe(true)
     expect(isOriginAuthorized(undefined, ["example.com"])).toBe(true)
-  })
-
-  test("extracts a parent origin from a webchat referer URL", () => {
-    expect(
-      getParentOriginFromUrl(
-        "https://builder.test/webchat?parentOrigin=https%3A%2F%2Fexample.com",
-      ),
-    ).toBe("https://example.com")
   })
 })
 
@@ -477,6 +545,27 @@ describe("webchat access token", () => {
     const result = await verifyWebchatAccessToken({
       ...baseInput,
       origin: null,
+      token,
+    })
+
+    expect(result.authorized).toBe(true)
+  })
+
+  test("authorizes a no-referrer session where the client's embeddingOrigin is null and it presents no origin field at all", async () => {
+    // Regression: under `Referrer-Policy: no-referrer` embeddingOrigin is
+    // frozen to null in the store (see the "no-referrer policy" store
+    // tests above), so sendPostback/loadMoreMessages omit `parentOrigin`
+    // entirely rather than sending it as an explicit null. Verify must
+    // treat that omission (`origin: undefined`) the same as the mint-time
+    // null, not as a mismatch.
+    const token = await createWebchatAccessToken({
+      ...baseInput,
+      origin: null,
+    })
+
+    const result = await verifyWebchatAccessToken({
+      ...baseInput,
+      origin: undefined,
       token,
     })
 

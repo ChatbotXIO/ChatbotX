@@ -8,7 +8,6 @@ import type { ListMessagesResponse } from "@/features/messages/schema/query"
 import type { MessageResource } from "@/features/messages/schema/resource"
 import type { UserResource } from "@/features/users/schema/resource"
 import { getWebchatProfileFields } from "../../browser-profile-fields"
-import { getClientEmbeddingOrigin } from "../../lib/authorized-domain"
 import {
   buildGuestStorageKey,
   readLegacyGuestId,
@@ -24,6 +23,13 @@ export type GuestSessionState = {
   guestConversationId: string | null
   isNewGuestSession: boolean
   accessToken: string | null
+  /**
+   * The embedding origin the `accessToken` was minted for (raw referer
+   * string, or null for a direct/non-embedded open). Frozen at store
+   * creation — see guest-session-provider.tsx — so it always matches the
+   * held token's host, unlike a value re-resolved on every render/request.
+   */
+  embeddingOrigin: string | null
   /**
    * Resolved workspace logo URL, already gated server-side on
    * `config.showLogo` (undefined when the flag is off or no logo is set).
@@ -67,12 +73,14 @@ export const createGuestSessionStore = (
   props: WebchatClientConfig,
   accessToken: string | null = null,
   workspaceLogoUrl?: string,
+  embeddingOrigin: string | null = null,
 ) => {
   return createStore<GuestSessionStore>((set, get) => ({
     // default state
     guestConversationId: null,
     isNewGuestSession: false,
     accessToken,
+    embeddingOrigin,
     workspaceLogoUrl,
     user: null,
     config: props,
@@ -124,6 +132,7 @@ export const createGuestSessionStore = (
         messages,
         config,
         accessToken,
+        embeddingOrigin,
       } = get()
 
       if (isLoadMoreMessage || !hasNextMessagePage) {
@@ -140,9 +149,8 @@ export const createGuestSessionStore = (
           workspaceId: config.workspaceId,
           webchatId: config.id,
         })
-        const parentOrigin = getClientEmbeddingOrigin()
-        if (parentOrigin) {
-          params.set("parentOrigin", parentOrigin)
+        if (embeddingOrigin) {
+          params.set("parentOrigin", embeddingOrigin)
         }
 
         const { data, nextCursor } = await ky
@@ -200,7 +208,13 @@ export const createGuestSessionStore = (
     },
 
     sendPostback: async (button: MessageButtonTemplate) => {
-      const { appendMessage, config, guestConversationId, accessToken } = get()
+      const {
+        appendMessage,
+        config,
+        guestConversationId,
+        accessToken,
+        embeddingOrigin,
+      } = get()
 
       const newMessage = appendMessage({
         text: button.label,
@@ -220,7 +234,7 @@ export const createGuestSessionStore = (
               webchatId: config.id,
               ...getWebchatProfileFields(),
               accessToken: accessToken ?? undefined,
-              parentOrigin: getClientEmbeddingOrigin() ?? undefined,
+              parentOrigin: embeddingOrigin ?? undefined,
             } as CreateWebchatMessageRequest,
             headers: accessToken
               ? { Authorization: `Bearer ${accessToken}` }

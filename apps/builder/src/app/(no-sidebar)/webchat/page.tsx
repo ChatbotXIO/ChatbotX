@@ -122,6 +122,10 @@ export default async function WebchatPage(props: WebchatPageProps) {
     data.guestConversationId ??
     createGuestConversationId(targetWebchat.workspaceId)
 
+  // The RSC refresh after the guest-init action changes the referer to the
+  // iframe's own URL, so this re-mints a token bound to the app host that
+  // GuestSessionStoreProvider discards — both accessToken and
+  // embeddingOrigin below are frozen client-side at first render.
   const accessToken = await createWebchatAccessToken({
     origin: embeddingOrigin,
     webchatId: targetWebchat.id,
@@ -153,13 +157,14 @@ export default async function WebchatPage(props: WebchatPageProps) {
     <GuestSessionStoreProvider
       accessToken={accessToken}
       config={config}
+      embeddingOrigin={embeddingOrigin}
       serverGuestConversationId={guestConversationId}
       workspaceLogoUrl={workspaceLogoUrl}
     >
       {targetWebchat.customCss && (
         <CustomWidgetStyle css={targetWebchat.customCss} />
       )}
-      <WebchatWrapper parentOrigin={embeddingOrigin} referral={data.ref} />
+      <WebchatWrapper referral={data.ref} />
     </GuestSessionStoreProvider>
   )
 }

@@ -7,13 +7,7 @@ import { createId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { PaperclipIcon, SendHorizonalIcon } from "lucide-react"
-import {
-  type KeyboardEvent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
+import { type KeyboardEvent, useEffect, useMemo, useRef } from "react"
 import { Controller, useWatch } from "react-hook-form"
 import { createWebchatMessageAction } from "../messages/actions/create-webchat-message.action"
 import EmojiPicker from "../messages/components/emoji-picker"
@@ -21,39 +15,19 @@ import { FileUploadPreview } from "../messages/components/file-upload"
 import { createWebchatMessageRequest } from "../messages/schema/mutation"
 import { getWebchatProfileFields } from "./browser-profile-fields"
 import WebchatMessageMenu from "./components/webchat-message-menu"
-import { getClientEmbeddingOrigin } from "./lib/authorized-domain"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 type WebchatMessageInputProps = {
   workspaceId: string
   webchatId: string
   referral?: string | undefined
-  parentOrigin?: string | null
   accessToken?: string | null
 }
 
 export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
-  const {
-    workspaceId,
-    webchatId,
-    referral = "",
-    parentOrigin,
-    accessToken,
-  } = props
-  const [embeddingOrigin, setEmbeddingOrigin] = useState(parentOrigin)
-  const { sendMessage, guestConversationId, appendMessage } =
+  const { workspaceId, webchatId, referral = "", accessToken } = props
+  const { sendMessage, guestConversationId, appendMessage, embeddingOrigin } =
     useGuestSessionStore((state) => state)
-
-  useEffect(() => {
-    if (!parentOrigin) {
-      return
-    }
-
-    const clientEmbeddingOrigin = getClientEmbeddingOrigin()
-    if (clientEmbeddingOrigin) {
-      setEmbeddingOrigin(clientEmbeddingOrigin)
-    }
-  }, [])
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const defaultValues = useMemo(
@@ -205,7 +179,6 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
             <div className="flex-1">
               <WebchatMessageMenu
                 accessToken={accessToken}
-                parentOrigin={embeddingOrigin}
                 webchatId={webchatId}
                 workspaceId={workspaceId}
               />
