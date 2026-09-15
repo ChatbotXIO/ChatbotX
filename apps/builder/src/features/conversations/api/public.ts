@@ -43,28 +43,61 @@ function jsonQueryParam<T>(schema: z.ZodType<T>) {
 }
 
 const listConversationsQueryRequest = z.object({
-  botCategory: conversationBotCategories.optional(),
-  assignedId: z.string().nullable().optional(),
-  channel: channelTypes.optional(),
-  status: jsonQueryParam(z.array(conversationStatuses).optional()),
-  keyword: z.string().optional(),
-  botEnabled: z.preprocess((val) => {
-    if (val === "true") {
-      return true
-    }
-    if (val === "false") {
-      return false
-    }
-    return val
-  }, z.boolean().nullish()),
+  botCategory: conversationBotCategories
+    .optional()
+    .describe("Restrict to conversations in this bot lifecycle category."),
+  assignedId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "Restrict to conversations assigned to this user/inbox-team id (`u_<id>`/`t_<id>`), or null for unassigned.",
+    ),
+  channel: channelTypes
+    .optional()
+    .describe("Restrict to conversations on this channel."),
+  status: jsonQueryParam(
+    z
+      .array(conversationStatuses)
+      .optional()
+      .describe(
+        "Restrict to conversations in one of these statuses. Sent as a JSON-encoded array.",
+      ),
+  ),
+  keyword: z
+    .string()
+    .optional()
+    .describe(
+      "Case-insensitive substring match against the conversation's contact.",
+    ),
+  botEnabled: z
+    .preprocess((val) => {
+      if (val === "true") {
+        return true
+      }
+      if (val === "false") {
+        return false
+      }
+      return val
+    }, z.boolean().nullish())
+    .describe("Restrict to conversations with the bot enabled or disabled."),
   tags: jsonQueryParam(
     z
       .array(
         z.enum(["noAdminReply", "unread", "followUp", "archived", "blocked"]),
       )
-      .optional(),
+      .optional()
+      .describe(
+        "Restrict to conversations matching one of these system tags. Sent as a JSON-encoded array.",
+      ),
   ),
-  contactFilter: jsonQueryParam(contactFilterCriteriaSchema.optional()),
+  contactFilter: jsonQueryParam(
+    contactFilterCriteriaSchema
+      .optional()
+      .describe(
+        "Structured filter for advanced matching on the conversation's contact. Sent as a JSON-encoded object. See `contacts.listFilterFields` for the field/operator reference.",
+      ),
+  ),
   ...cursorPaginationRequest.shape,
 })
 
@@ -187,6 +220,8 @@ export const conversationsPublicRouter = {
       method: "POST",
       path: "/v1/conversations/{id}/unarchive",
       summary: "Unarchive a conversation",
+      description:
+        "Reverses `conversations.archive`, restoring the conversation to the default inbox view.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -214,6 +249,8 @@ export const conversationsPublicRouter = {
       method: "POST",
       path: "/v1/conversations/{id}/read",
       summary: "Mark a conversation as read",
+      description:
+        "Clears the unread indicator on a conversation for the workspace.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -242,6 +279,8 @@ export const conversationsPublicRouter = {
       method: "POST",
       path: "/v1/conversations/{id}/unread",
       summary: "Mark a conversation as unread",
+      description:
+        "Reverses `conversations.read`, flagging the conversation as unread again.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -260,6 +299,8 @@ export const conversationsPublicRouter = {
       method: "POST",
       path: "/v1/conversations/{id}/follow",
       summary: "Follow a conversation",
+      description:
+        "Subscribes the calling actor to updates on a conversation. Use `conversations.unfollow` to reverse.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -284,6 +325,8 @@ export const conversationsPublicRouter = {
       method: "POST",
       path: "/v1/conversations/{id}/unfollow",
       summary: "Unfollow a conversation",
+      description:
+        "Reverses `conversations.follow`, unsubscribing from conversation updates.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -308,6 +351,8 @@ export const conversationsPublicRouter = {
       method: "POST",
       path: "/v1/conversations/{id}/enable-bot",
       summary: "Re-enable the bot for a conversation",
+      description:
+        "Turns the bot back on for a conversation after it was handed off to a human with `conversations.disableBot`.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -336,6 +381,8 @@ export const conversationsPublicRouter = {
       method: "POST",
       path: "/v1/conversations/{id}/disable-bot",
       summary: "Disable the bot for a conversation (hand off to a human)",
+      description:
+        "Turns the bot off for a conversation so a human agent takes over. Use `conversations.enableBot` to reverse.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)

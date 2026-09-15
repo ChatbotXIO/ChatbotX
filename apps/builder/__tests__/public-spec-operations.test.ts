@@ -68,7 +68,6 @@ const DESCRIPTION_BACKLOG = new Set<string>([
   "capabilities.",
   "channels.",
   "contactScans.",
-  "conversations.",
   "coupons.",
   "customFields.",
   "dynamicImages.",
