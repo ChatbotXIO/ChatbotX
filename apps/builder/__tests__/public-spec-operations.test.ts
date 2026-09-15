@@ -69,8 +69,6 @@ const DESCRIPTION_BACKLOG = new Set<string>([
   "customFields.",
   "dynamicImages.",
   "emailTopics.",
-  "errorLogs.",
-  "externalWebhooks.",
   "facebookLeadAds.",
   "fbComments.",
   "folders.",
@@ -90,11 +88,8 @@ const DESCRIPTION_BACKLOG = new Set<string>([
   "spreadsheets.",
   "tags.",
   "templateMessages.",
-  "token.",
   "userPersistentMenus.",
   "webchats.",
-  "webhooks.",
-  "workspaceMembers.",
   "zaloChannels.",
 ])
 

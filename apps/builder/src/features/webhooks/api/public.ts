@@ -27,6 +27,8 @@ export const webhooksPublicRouter = {
       method: "GET",
       path: "/v1/webhooks",
       summary: "List webhooks",
+      description:
+        "Use this to find registered webhook ids before removing one with `webhooks.delete`. Returns webhooks registered in this workspace.",
       tags: ["Webhooks"],
     })
     .input(publicListRequest)
@@ -53,9 +55,19 @@ export const webhooksPublicRouter = {
     })
     .input(
       z.object({
-        name: z.string().trim().min(1).max(255),
-        url: z.string().trim().url().max(1000),
-        conditions: z.array(conditionSchema).min(1),
+        name: z.string().trim().min(1).max(255).describe("Webhook name."),
+        url: z
+          .string()
+          .trim()
+          .url()
+          .max(1000)
+          .describe(
+            "URL to receive HTTP POST requests when a matching event occurs.",
+          ),
+        conditions: z
+          .array(conditionSchema)
+          .min(1)
+          .describe("Event conditions that trigger this webhook."),
       }),
     )
     .output(webhookResource)
@@ -76,10 +88,18 @@ export const webhooksPublicRouter = {
       method: "DELETE",
       path: "/v1/webhooks/{id}",
       summary: "Unregister a webhook",
+      description:
+        "Permanently deletes a registered webhook. Use `webhooks.list` to find its id first.",
       successStatus: 204,
       tags: ["Webhooks"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Webhook id. Get it from `webhooks.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await webhookService.unregister({

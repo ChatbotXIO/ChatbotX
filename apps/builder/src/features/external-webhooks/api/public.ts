@@ -54,9 +54,21 @@ export const externalWebhooksPublicRouter = {
     })
     .input(
       z.object({
-        url: z.string().trim().url(),
-        event: z.string().trim().min(1).max(100),
-        provider: z.enum(["make", "n8n"]).default("make"),
+        url: z
+          .string()
+          .trim()
+          .url()
+          .describe("URL to receive HTTP POST requests."),
+        event: z
+          .string()
+          .trim()
+          .min(1)
+          .max(100)
+          .describe("Event name to subscribe to."),
+        provider: z
+          .enum(["make", "n8n"])
+          .default("make")
+          .describe("Automation platform registering this webhook."),
       }),
     )
     .output(externalWebhookResource)
@@ -76,10 +88,18 @@ export const externalWebhooksPublicRouter = {
       method: "DELETE",
       path: "/v1/external-webhooks/{id}",
       summary: "Unregister an external webhook",
+      description:
+        "Permanently deletes a registered external webhook. Use `externalWebhooks.list` to find its id first.",
       successStatus: 204,
       tags: ["External Webhooks"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "External webhook id. Get it from `externalWebhooks.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await externalWebhookService.unregister({

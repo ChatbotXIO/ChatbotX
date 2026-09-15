@@ -21,6 +21,8 @@ export const workspaceMembersPublicRouter = {
       method: "GET",
       path: "/v1/members",
       summary: "List workspace members",
+      description:
+        "Use this to find workspace member ids before inspecting one with `workspaceMembers.get`. Returns members in this workspace.",
       tags: ["Members"],
     })
     .input(
@@ -41,6 +43,8 @@ export const workspaceMembersPublicRouter = {
       method: "GET",
       path: "/v1/members/{memberId}",
       summary: "Get workspace member by id",
+      description:
+        "Returns one workspace member. Use `workspaceMembers.list` to find its id first.",
       tags: ["Members"],
     })
     .input(getWorkspaceMemberRequest.omit({ workspaceId: true }))
