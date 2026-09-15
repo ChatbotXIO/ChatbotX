@@ -3,9 +3,15 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const createDynamicImageRequest = z.object({
-  name: z.string().min(1).max(100),
-  customFieldId: zodBigintAsString().nullish(),
-  data: dynamicImageDocument,
+  name: z.string().min(1).max(100).describe("Dynamic image name."),
+  customFieldId: zodBigintAsString()
+    .nullish()
+    .describe(
+      "Custom field id whose per-contact value personalizes the render.",
+    ),
+  data: dynamicImageDocument.describe(
+    "Image template document (layers, text, positioning).",
+  ),
 })
 export type CreateDynamicImageRequest = z.infer<
   typeof createDynamicImageRequest
