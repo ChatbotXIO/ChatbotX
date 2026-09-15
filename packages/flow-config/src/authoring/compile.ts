@@ -1,7 +1,7 @@
 import { createId } from "@chatbotx.io/utils"
 import { addNotesNodeDefaultFn } from "../nodes/add-notes"
 import { conditionNodeDefaultFn } from "../nodes/condition"
-import type { EdgeSchema, FlowNode, FlowVersionSchema } from "../nodes/index"
+import type { EdgeSchema, FlowVersionSchema } from "../nodes/index"
 import { performActionNodeDefaultFn } from "../nodes/perform-action"
 import { sendMessageNodeDefaultFn } from "../nodes/send-message"
 import { startFlowNodeDefaultFn } from "../nodes/start-flow"
@@ -16,7 +16,10 @@ import { archiveConversationStepDefaultFn } from "../steps/archive-conversation"
 import { assignConversationStepDefaultFn } from "../steps/assign-conversation"
 import { type ButtonStepProps, buttonStepDefaultFn } from "../steps/button"
 import { chooseChannelStepDefaultFn } from "../steps/choose-channel"
-import { conditionCaseDefaultFn } from "../steps/condition"
+import {
+  conditionCaseDefaultFn,
+  conditionStepDefaultFn,
+} from "../steps/condition"
 import { removeContactTagStepDefaultFn } from "../steps/remove-contact-tag"
 import { sendFileStepDefaultFn } from "../steps/send-file"
 import { sendImageStepDefaultFn } from "../steps/send-image"
@@ -55,11 +58,17 @@ export type CompiledFlow = {
   specPathByNodeId: ReadonlyMap<string, string>
 }
 
-/** Step `type`s that end their step list — nothing may follow them. */
-const TERMINAL_STEP_TYPES: ReadonlySet<FlowStepSpec["type"]> = new Set([
-  "branch",
-  "goto",
-])
+/** Whether a step ends its step list — nothing may follow it. */
+const ENDS_STEP_LIST: Record<FlowStepSpec["type"], boolean> = {
+  send: false,
+  sendTemplate: false,
+  wait: false,
+  branch: true,
+  action: false,
+  startFlow: false,
+  addNote: false,
+  goto: true,
+}
 
 type CompileState = {
   nodes: FlowVersionSchema[]
@@ -72,6 +81,39 @@ type CompileState = {
   channel?: string
 }
 
+type ResolveByNameOptions = {
+  code: FlowAuthoringErrorCode
+  label: string
+  hint: string
+}
+
+type ChildChain = {
+  steps: readonly FlowStepSpec[]
+  pathSuffix: string
+}
+
+const TEMPLATE_NAME_RESOLUTION = {
+  code: "unknownTemplate",
+  label: "WhatsApp template",
+  hint: "Call capabilities.get and pick a name from its templates list.",
+} as const satisfies ResolveByNameOptions
+
+const FLOW_NAME_RESOLUTION = {
+  code: "unknownFlow",
+  label: "flow",
+  hint: "Call flows.list and pick a name from the results.",
+} as const satisfies ResolveByNameOptions
+
+const CUSTOM_FIELD_NAME_RESOLUTION = {
+  code: "unknownCustomField",
+  label: "custom field",
+  hint: "Call contacts.listFilterFields and pick a custom field name from the results.",
+} as const satisfies ResolveByNameOptions
+
+// Matches the WhatsApp template status enum in
+// packages/database/src/partials/integration-whatsapp.ts.
+const APPROVED_TEMPLATE_STATUS = "APPROVED"
+
 const addError = (
   state: CompileState,
   path: string,
@@ -82,52 +124,93 @@ const addError = (
   state.errors.push({ path, code, message, ...extra })
 }
 
-/** Every explicit `id` a spec declares, recursively, for the pre-pass uniqueness check. */
-function collectExplicitStepIds(
-  steps: readonly FlowStepSpec[],
-  seen: Map<string, string[]>,
-  pathPrefix: string,
-): void {
-  steps.forEach((step, index) => {
-    const stepPath = `${pathPrefix}[${index}]`
-    if (step.type !== "goto" && step.id) {
-      const paths = seen.get(step.id)
-      if (paths) {
-        paths.push(stepPath)
-      } else {
-        seen.set(step.id, [stepPath])
-      }
-    }
+function resolveByName<T>(
+  state: CompileState,
+  map: ReadonlyMap<string, T>,
+  name: string,
+  path: string,
+  { code, label, hint }: ResolveByNameOptions,
+): T | null {
+  const value = map.get(name)
+  if (!value) {
+    addError(
+      state,
+      path,
+      code,
+      `No ${label} named "${name}" in this workspace.`,
+      { hint, candidates: closestNames(name, map.keys()) },
+    )
+    return null
+  }
+  return value
+}
 
-    if (step.type === "send") {
-      step.buttons?.forEach((button, buttonIndex) => {
-        if (button.then) {
-          collectExplicitStepIds(
-            button.then,
-            seen,
-            `${stepPath}.buttons[${buttonIndex}].then`,
-          )
-        }
-      })
+/**
+ * Nested step lists owned by one step, with their path relative to that step.
+ * The compiler itself cannot consume this directly because it needs each
+ * child's handle id while it compiles the child chain.
+ */
+function childChains(step: FlowStepSpec): ChildChain[] {
+  switch (step.type) {
+    case "send":
+      return (step.buttons ?? []).flatMap((button, index) =>
+        button.then
+          ? [{ steps: button.then, pathSuffix: `.buttons[${index}].then` }]
+          : [],
+      )
+    case "branch":
+      return [
+        ...step.cases.map((branchCase, index) => ({
+          steps: branchCase.then,
+          pathSuffix: `.cases[${index}].then`,
+        })),
+        ...(step.otherwise
+          ? [{ steps: step.otherwise, pathSuffix: ".otherwise" }]
+          : []),
+      ]
+    case "sendTemplate":
+    case "wait":
+    case "action":
+    case "startFlow":
+    case "addNote":
+    case "goto":
+      return []
+    default: {
+      const _exhaustive: never = step
+      return _exhaustive
     }
-    if (step.type === "branch") {
-      step.cases.forEach((branchCase, caseIndex) => {
-        collectExplicitStepIds(
-          branchCase.then,
-          seen,
-          `${stepPath}.cases[${caseIndex}].then`,
-        )
-      })
-      if (step.otherwise) {
-        collectExplicitStepIds(step.otherwise, seen, `${stepPath}.otherwise`)
-      }
-    }
+  }
+}
+
+/** Every explicit `id` a spec declares, recursively, for the pre-pass uniqueness check. */
+function explicitStepIds(
+  steps: readonly FlowStepSpec[],
+  pathPrefix: string,
+): Array<{ id: string; path: string }> {
+  return steps.flatMap((step, index) => {
+    const stepPath = `${pathPrefix}[${index}]`
+    return [
+      ...(step.type !== "goto" && step.id
+        ? [{ id: step.id, path: stepPath }]
+        : []),
+      ...childChains(step).flatMap(({ steps: childSteps, pathSuffix }) =>
+        explicitStepIds(childSteps, `${stepPath}${pathSuffix}`),
+      ),
+    ]
   })
 }
 
 function assertNoDuplicateStepIds(spec: FlowSpec, state: CompileState): void {
   const seen = new Map<string, string[]>()
-  collectExplicitStepIds(spec.steps, seen, "steps")
+  for (const { id, path } of explicitStepIds(spec.steps, "steps")) {
+    const paths = seen.get(id)
+    if (paths) {
+      paths.push(path)
+    } else {
+      seen.set(id, [path])
+    }
+  }
+
   for (const [id, paths] of seen) {
     if (paths.length > 1) {
       for (const path of paths) {
@@ -147,27 +230,18 @@ const registerNode = (
   specStepId: string | undefined,
   node: FlowVersionSchema,
   stepPath: string,
+  options?: { insertAt?: number },
 ): string => {
-  state.nodes.push(node)
+  if (options?.insertAt === undefined) {
+    state.nodes.push(node)
+  } else {
+    state.nodes.splice(options.insertAt, 0, node)
+  }
   state.specPathByNodeId.set(node.id, stepPath)
   if (specStepId) {
     state.stepIdToNodeId.set(specStepId, node.id)
   }
   return node.id
-}
-
-const addContinueEdge = (
-  state: CompileState,
-  source: string,
-  target: string,
-): void => {
-  state.edges.push({
-    id: createId(),
-    source,
-    sourceHandle: source,
-    target,
-    targetHandle: target,
-  })
 }
 
 const addHandleEdge = (
@@ -184,6 +258,28 @@ const addHandleEdge = (
     targetHandle: target,
   })
 }
+
+const addContinueEdge = (
+  state: CompileState,
+  source: string,
+  target: string,
+): void => addHandleEdge(state, source, source, target)
+
+type NodeWithSteps = Extract<
+  FlowVersionSchema,
+  { data: { details: { steps: unknown[] } } }
+>
+
+const withSteps = <T extends NodeWithSteps>(
+  node: T,
+  steps: T["data"]["details"]["steps"],
+): T => ({
+  ...node,
+  data: {
+    ...node.data,
+    details: { ...node.data.details, steps },
+  },
+})
 
 // ---- Per-step-type node builders -----------------------------------------
 
@@ -216,19 +312,8 @@ function compileSendStep(
   stepPath: string,
   state: CompileState,
 ): string {
-  const node = sendMessageNodeDefaultFn({
-    detailProps: {
-      beforeStep: chooseChannelStepDefaultFn({
-        channel: state.channel ?? "omnichannel",
-      }),
-    },
-  })
-  // Registered before compiling nested button chains so `state.nodes` keeps
-  // encounter order (this node, then whatever its buttons route to) instead
-  // of the reverse — `node` is a reference, so mutating its `data.details`
-  // below still updates the array element already pushed.
-  const nodeId = registerNode(state, step.id, node, stepPath)
-
+  const nodeId = createId()
+  const insertAt = state.nodes.length
   const buttons = (step.buttons ?? []).map((buttonSpec, buttonIndex) =>
     compileSendButton(
       buttonSpec,
@@ -237,7 +322,6 @@ function compileSendStep(
       state,
     ),
   )
-
   const contentStep = (() => {
     if (step.text) {
       return { ...sendTextStepDefaultFn({ text: step.text }), buttons }
@@ -247,11 +331,19 @@ function compileSendStep(
     }
     return { ...sendFileStepDefaultFn(), url: step.fileUrl ?? "", buttons }
   })()
+  const node = withSteps(
+    sendMessageNodeDefaultFn({
+      nodeProps: { id: nodeId },
+      detailProps: {
+        beforeStep: chooseChannelStepDefaultFn({
+          channel: state.channel ?? "omnichannel",
+        }),
+      },
+    }),
+    [contentStep],
+  )
 
-  node.data.details.steps = [contentStep]
-  node.data.details.quickReplies = []
-
-  return nodeId
+  return registerNode(state, step.id, node, stepPath, { insertAt })
 }
 
 function compileSendTemplateStep(
@@ -259,19 +351,24 @@ function compileSendTemplateStep(
   stepPath: string,
   state: CompileState,
 ): string | null {
-  const template = state.ctx.templatesByName.get(step.templateName)
+  const template = resolveByName(
+    state,
+    state.ctx.templatesByName,
+    step.templateName,
+    `${stepPath}.templateName`,
+    TEMPLATE_NAME_RESOLUTION,
+  )
   if (!template) {
+    return null
+  }
+  if (template.status !== APPROVED_TEMPLATE_STATUS) {
     addError(
       state,
       `${stepPath}.templateName`,
-      "unknownTemplate",
-      `No WhatsApp template named "${step.templateName}" in this workspace.`,
+      "templateNotApproved",
+      `WhatsApp template "${step.templateName}" must have status APPROVED.`,
       {
-        hint: "Call capabilities.get and pick a name from its templates list.",
-        candidates: closestNames(
-          step.templateName,
-          state.ctx.templatesByName.keys(),
-        ),
+        hint: "Pick a template whose status is APPROVED in capabilities.get's templates list.",
       },
     )
     return null
@@ -285,15 +382,16 @@ function compileSendTemplateStep(
       params: {},
     },
   })
-
-  const node = sendMessageNodeDefaultFn({
-    detailProps: {
-      // A WA template step only ever sends over WhatsApp — pin the channel
-      // regardless of the flow's own default channel.
-      beforeStep: chooseChannelStepDefaultFn({ channel: "whatsapp" }),
-    },
-  })
-  node.data.details.steps = [templateStep]
+  const node = withSteps(
+    sendMessageNodeDefaultFn({
+      detailProps: {
+        // A WA template step only ever sends over WhatsApp — pin the channel
+        // regardless of the flow's own default channel.
+        beforeStep: chooseChannelStepDefaultFn({ channel: "whatsapp" }),
+      },
+    }),
+    [templateStep],
+  )
 
   return registerNode(state, step.id, node, stepPath)
 }
@@ -308,9 +406,12 @@ function compileWaitStep(
     duration: step.duration,
     unit: step.unit,
   }
-  const node = waitNodeDefaultFn({})
-  node.data.details.steps = [waitStep]
-  return registerNode(state, step.id, node, stepPath)
+  return registerNode(
+    state,
+    step.id,
+    withSteps(waitNodeDefaultFn({}), [waitStep]),
+    stepPath,
+  )
 }
 
 function compileActionStep(
@@ -353,9 +454,12 @@ function compileActionStep(
     }
   })()
 
-  const node = performActionNodeDefaultFn({})
-  node.data.details.steps = [actionStep]
-  return registerNode(state, step.id, node, stepPath)
+  return registerNode(
+    state,
+    step.id,
+    withSteps(performActionNodeDefaultFn({}), [actionStep]),
+    stepPath,
+  )
 }
 
 function compileStartFlowStep(
@@ -363,18 +467,14 @@ function compileStartFlowStep(
   stepPath: string,
   state: CompileState,
 ): string | null {
-  const targetFlow = state.ctx.flowsByName.get(step.flowName)
+  const targetFlow = resolveByName(
+    state,
+    state.ctx.flowsByName,
+    step.flowName,
+    `${stepPath}.flowName`,
+    FLOW_NAME_RESOLUTION,
+  )
   if (!targetFlow) {
-    addError(
-      state,
-      `${stepPath}.flowName`,
-      "unknownFlow",
-      `No flow named "${step.flowName}" in this workspace.`,
-      {
-        hint: "Call flows.list and pick a name from the results.",
-        candidates: closestNames(step.flowName, state.ctx.flowsByName.keys()),
-      },
-    )
     return null
   }
 
@@ -419,21 +519,13 @@ function resolveCustomField(
   path: string,
   state: CompileState,
 ): { id: string; type: string } | null {
-  const customField = state.ctx.customFieldsByName.get(name)
-  if (!customField) {
-    addError(
-      state,
-      path,
-      "unknownCustomField",
-      `No custom field named "${name}" in this workspace.`,
-      {
-        hint: "Call contacts.listFilterFields and pick a custom field name from the results.",
-        candidates: closestNames(name, state.ctx.customFieldsByName.keys()),
-      },
-    )
-    return null
-  }
-  return customField
+  return resolveByName(
+    state,
+    state.ctx.customFieldsByName,
+    name,
+    path,
+    CUSTOM_FIELD_NAME_RESOLUTION,
+  )
 }
 
 function resolveBranchCondition(
@@ -477,16 +569,10 @@ function compileBranchStep(
   stepPath: string,
   state: CompileState,
 ): string {
-  const node = conditionNodeDefaultFn({})
-  const conditionStep = node.data.details.steps[0]
-  if (!conditionStep) {
-    throw new Error("conditionNodeDefaultFn produced no condition step")
-  }
-  // Registered before compiling case/otherwise chains — see the identical
-  // note on `compileSendStep`.
-  const nodeId = registerNode(state, step.id, node, stepPath)
-
-  conditionStep.cases = step.cases.map((branchCase, caseIndex) => {
+  const nodeId = createId()
+  const insertAt = state.nodes.length
+  const otherwiseId = createId()
+  const cases = step.cases.map((branchCase, caseIndex) => {
     const caseDefault = conditionCaseDefaultFn()
     const casePath = `${stepPath}.cases[${caseIndex}]`
     const conditions = branchCase.when
@@ -518,11 +604,15 @@ function compileBranchStep(
       state,
     )
     if (entryNodeId) {
-      addHandleEdge(state, nodeId, conditionStep.otherwiseId, entryNodeId)
+      addHandleEdge(state, nodeId, otherwiseId, entryNodeId)
     }
   }
 
-  return nodeId
+  const node = withSteps(
+    conditionNodeDefaultFn({ nodeProps: { id: nodeId } }),
+    [conditionStepDefaultFn({ cases, otherwiseId })],
+  )
+  return registerNode(state, step.id, node, stepPath, { insertAt })
 }
 
 function compileGotoStep(
@@ -593,7 +683,7 @@ function compileChain(
 
   steps.forEach((step, index) => {
     const stepPath = `${pathPrefix}[${index}]`
-    const isTerminal = TERMINAL_STEP_TYPES.has(step.type)
+    const isTerminal = ENDS_STEP_LIST[step.type]
 
     if (index < steps.length - 1 && isTerminal) {
       addError(
@@ -639,39 +729,21 @@ function withLayoutPosition<T extends FlowVersionSchema>(
   return { ...node, position, data: { ...node.data, isStartNode } }
 }
 
-/**
- * Compiles a `flowSpecSchema`-shaped spec into `{ startNodeId, nodes, edges }`
- * ready for `publishFlowSchema.parse` / `flowVersionService.publish`.
- *
- * Every node comes from its canonical `*NodeDefaultFn` so it can never drift
- * from the builder's own defaults (position/measured are overwritten by
- * `layoutNodes` afterward; everything else — `data`, default sub-steps — is
- * exactly what the builder itself would create). Button routing is never
- * hand-assembled: routes are collected as `FlowRouteUpdate`s and applied in
- * one call to `applyRouteUpdatesInNodes`, the same helper the builder UI
- * uses, so a future change to how routes are stored is picked up here for
- * free.
- *
- * Throws `FlowAuthoringException` (never a partial result) when compilation
- * hits any error — reference-name lookups, duplicate ids, or structural
- * issues (an unreachable step, a `goto` to an unknown id). Every error found
- * is collected before throwing, not just the first.
- */
-export function compileFlowSpec(
+const createCompileState = (
   spec: FlowSpec,
   ctx: FlowAuthoringContext,
-): CompiledFlow {
-  const state: CompileState = {
-    nodes: [],
-    edges: [],
-    routeUpdates: [],
-    stepIdToNodeId: new Map(),
-    specPathByNodeId: new Map(),
-    errors: [],
-    ctx,
-    channel: spec.channel,
-  }
+): CompileState => ({
+  nodes: [],
+  edges: [],
+  routeUpdates: [],
+  stepIdToNodeId: new Map(),
+  specPathByNodeId: new Map(),
+  errors: [],
+  ctx,
+  channel: spec.channel,
+})
 
+const validateStructure = (spec: FlowSpec, state: CompileState): void => {
   assertNoDuplicateStepIds(spec, state)
 
   if (spec.steps[0]?.type === "goto") {
@@ -682,13 +754,14 @@ export function compileFlowSpec(
       '"goto" cannot be the first step — there is no earlier step yet to jump from.',
     )
   }
+}
 
-  const startNodeId = compileChain(spec.steps, "steps", state)
-
-  if (state.errors.length > 0) {
-    throw new FlowAuthoringException(state.errors)
-  }
-
+const finalizeGraph = (
+  state: CompileState,
+  startNodeId: string | null,
+): CompiledFlow => {
+  // `flowSpecSchema` requires steps, but a TypeScript caller can bypass parsing
+  // and pass `steps: []`; the finalized graph must still have a start node.
   if (!startNodeId) {
     throw new FlowAuthoringException([
       {
@@ -699,23 +772,12 @@ export function compileFlowSpec(
     ])
   }
 
-  // `state.nodes` are `FlowVersionSchema` (this package's compiler-output
-  // type); `applyRouteUpdatesInNodes` operates on reactflow's generic
-  // `FlowNode = Node<FlowVersionSchema["data"]>`, a structurally different
-  // shape (position/measured/type are generic there, not the discriminated
-  // union). The double cast crosses that boundary; node `id`s — what
-  // `specPathByNodeId` keys on below — are preserved through it either way.
-  const routedNodes = applyRouteUpdatesInNodes(
-    state.nodes as unknown as FlowNode[],
-    state.routeUpdates,
-  ) as unknown as FlowVersionSchema[]
-
+  const routedNodes = applyRouteUpdatesInNodes(state.nodes, state.routeUpdates)
   const positions = layoutNodes(
     routedNodes.map((node) => node.id),
     state.edges,
     startNodeId,
   )
-
   const nodes = routedNodes.map((node, index) =>
     withLayoutPosition(
       node,
@@ -730,4 +792,36 @@ export function compileFlowSpec(
     edges: state.edges,
     specPathByNodeId: state.specPathByNodeId,
   }
+}
+
+/**
+ * Compiles a `flowSpecSchema`-shaped spec into `{ startNodeId, nodes, edges }`
+ * ready for `publishFlowSchema.parse` / `flowVersionService.publish`.
+ *
+ * Every node comes from its canonical `*NodeDefaultFn` so it can never drift
+ * from the builder's own defaults (only `position` is overwritten by
+ * `layoutNodes`; `measured`, `data`, and default sub-steps are exactly what
+ * the builder itself would create). Button routing is never hand-assembled:
+ * routes are collected as `FlowRouteUpdate`s and applied in one call to
+ * `applyRouteUpdatesInNodes`, the same helper the builder UI uses, so a
+ * future change to how routes are stored is picked up here for free.
+ *
+ * Throws `FlowAuthoringException` (never a partial result) when compilation
+ * hits any error — reference-name lookups, duplicate ids, or structural
+ * issues (an unreachable step, a `goto` to an unknown id). Every error found
+ * is collected before throwing, not just the first.
+ */
+export function compileFlowSpec(
+  spec: FlowSpec,
+  ctx: FlowAuthoringContext,
+): CompiledFlow {
+  const state = createCompileState(spec, ctx)
+  validateStructure(spec, state)
+  const startNodeId = compileChain(spec.steps, "steps", state)
+
+  if (state.errors.length > 0) {
+    throw new FlowAuthoringException(state.errors)
+  }
+
+  return finalizeGraph(state, startNodeId)
 }

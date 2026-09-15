@@ -1,10 +1,10 @@
+import { DEFAULT_NODE_MEASURED } from "../nodes/base"
 import type { EdgeSchema } from "../nodes/index"
 
-// Node width/height mirror `defaultNodeData()`'s `measured` in `../nodes/base.ts`
-// — every node type shares the same default footprint, so layout can use one
-// fixed cell size instead of asking each node for its own.
-const NODE_WIDTH = 288
-const NODE_HEIGHT = 100
+// Every node type uses the same default footprint, so layout can use one fixed
+// cell size instead of asking each node for its own.
+const NODE_WIDTH = DEFAULT_NODE_MEASURED.width
+const NODE_HEIGHT = DEFAULT_NODE_MEASURED.height
 const COLUMN_GAP = 120
 const ROW_GAP = 80
 const COLUMN_WIDTH = NODE_WIDTH + COLUMN_GAP

@@ -22,7 +22,7 @@ const emptyCtx: FlowAuthoringContext = {
 
 const ctx: FlowAuthoringContext = {
   templatesByName: new Map([
-    ["welcome_promo", { id: "1001", language: "en", status: "approved" }],
+    ["welcome_promo", { id: "1001", language: "en", status: "APPROVED" }],
   ]),
   customFieldsByName: new Map([["Plan", { id: "1002", type: "text" }]]),
   flowsByName: new Map([["Nurture", { id: "1003" }]]),
@@ -105,7 +105,9 @@ describe("compileFlowSpec — one node per step type", () => {
 
   test("sendTemplate resolves the template by name", () => {
     const compiled = compileFlowSpec(
-      spec([{ type: "sendTemplate", templateName: "welcome_promo" }]),
+      spec([{ type: "sendTemplate", templateName: "welcome_promo" }], {
+        channel: "messenger",
+      }),
       ctx,
     )
     const node = compiled.nodes[0]
@@ -118,6 +120,28 @@ describe("compileFlowSpec — one node per step type", () => {
       })
     }
     expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("send uses the flow channel or defaults to omnichannel", () => {
+    const whatsapp = compileFlowSpec(
+      spec([{ type: "send", text: "Hello!" }], { channel: "whatsapp" }),
+      emptyCtx,
+    )
+    const omnichannel = compileFlowSpec(
+      spec([{ type: "send", text: "Hello!" }]),
+      emptyCtx,
+    )
+
+    expect(
+      whatsapp.nodes[0]?.type === "sendMessage"
+        ? whatsapp.nodes[0].data.details.beforeStep.channel
+        : undefined,
+    ).toBe("whatsapp")
+    expect(
+      omnichannel.nodes[0]?.type === "sendMessage"
+        ? omnichannel.nodes[0].data.details.beforeStep.channel
+        : undefined,
+    ).toBe("omnichannel")
   })
 
   test("sendTemplate reports an unknown template with candidates", () => {
@@ -285,6 +309,90 @@ describe("compileFlowSpec — one node per step type", () => {
     }
     expectPublishable(compiled.nodes, compiled.edges)
   })
+
+  test("rejects bot fields in branch conditions", () => {
+    try {
+      compileFlowSpec(
+        spec([
+          {
+            type: "branch",
+            cases: [
+              {
+                when: [{ field: "botField:email", operator: "isNotEmpty" }],
+                // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+                then: [{ type: "addNote", note: "has email" }],
+              },
+            ],
+          },
+        ]),
+        emptyCtx,
+      )
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      const authoringError = (error as FlowAuthoringException).errors[0]
+      expect(authoringError?.code).toBe("invalidSpec")
+      expect(authoringError?.path).toBe("steps[0].cases[0].when[0].field")
+    }
+  })
+})
+
+describe("compileFlowSpec — reference resolution", () => {
+  test("accumulates invalid names in spec order", () => {
+    try {
+      compileFlowSpec(
+        spec([
+          { type: "sendTemplate", templateName: "missing template" },
+          {
+            type: "action",
+            action: "setCustomField",
+            customFieldName: "missing field",
+            value: "value",
+          },
+          { type: "startFlow", flowName: "missing flow" },
+        ]),
+        emptyCtx,
+      )
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      expect(
+        (error as FlowAuthoringException).errors.map(({ code, path }) => ({
+          code,
+          path,
+        })),
+      ).toEqual([
+        { code: "unknownTemplate", path: "steps[0].templateName" },
+        { code: "unknownCustomField", path: "steps[1].customFieldName" },
+        { code: "unknownFlow", path: "steps[2].flowName" },
+      ])
+    }
+  })
+
+  test("rejects a resolved template that is not approved", () => {
+    const pendingTemplateCtx: FlowAuthoringContext = {
+      ...emptyCtx,
+      templatesByName: new Map([
+        ["pending", { id: "1004", language: "en", status: "PENDING" }],
+      ]),
+    }
+
+    try {
+      compileFlowSpec(
+        spec([{ type: "sendTemplate", templateName: "pending" }]),
+        pendingTemplateCtx,
+      )
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      const authoringError = (error as FlowAuthoringException).errors[0]
+      expect(authoringError?.code).toBe("templateNotApproved")
+      expect(authoringError?.path).toBe("steps[0].templateName")
+      expect(authoringError?.hint).toBe(
+        "Pick a template whose status is APPROVED in capabilities.get's templates list.",
+      )
+    }
+  })
 })
 
 describe("compileFlowSpec — a realistic multi-step flow", () => {
@@ -402,12 +510,51 @@ describe("compileFlowSpec — goto", () => {
         edge.source === waitNode?.id && edge.sourceHandle === waitNode?.id,
     )
     expect(gotoEdge?.target).toBe(greetNode?.id)
+    for (const node of compiled.nodes) {
+      expect(node.position.x).toEqual(expect.any(Number))
+      expect(node.position.y).toEqual(expect.any(Number))
+    }
+  })
+
+  test("wires a nested chain opening with goto directly to its target", () => {
+    const compiled = compileFlowSpec(
+      spec([
+        { type: "addNote", id: "target", note: "target" },
+        {
+          type: "branch",
+          cases: [
+            {
+              when: [{ field: "email", operator: "isNotEmpty" }],
+              // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+              then: [{ type: "goto", targetId: "target" }],
+            },
+          ],
+        },
+      ]),
+      emptyCtx,
+    )
+
+    expect(compiled.nodes).toHaveLength(2)
+    const [targetNode, branchNode] = compiled.nodes
+    if (branchNode?.type !== "condition") {
+      throw new Error("expected condition node")
+    }
+    const caseId = branchNode.data.details.steps[0]?.cases[0]?.id
+    expect(
+      compiled.edges.find((edge) => edge.sourceHandle === caseId)?.target,
+    ).toBe(targetNode?.id)
   })
 
   test("rejects goto as the first step", () => {
-    expect(() =>
-      compileFlowSpec(spec([{ type: "goto", targetId: "x" }]), emptyCtx),
-    ).toThrow(FlowAuthoringException)
+    try {
+      compileFlowSpec(spec([{ type: "goto", targetId: "x" }]), emptyCtx)
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      const authoringError = (error as FlowAuthoringException).errors[0]
+      expect(authoringError?.code).toBe("invalidFirstStep")
+      expect(authoringError?.path).toBe("steps[0]")
+    }
   })
 
   test("rejects a goto to an unknown step id", () => {
@@ -471,6 +618,55 @@ describe("compileFlowSpec — structural validation", () => {
       expect(error).toBeInstanceOf(FlowAuthoringException)
       const codes = (error as FlowAuthoringException).errors.map((e) => e.code)
       expect(codes).toEqual(["duplicateStepId", "duplicateStepId"])
+    }
+  })
+
+  test("reports duplicate ids across nesting levels", () => {
+    try {
+      compileFlowSpec(
+        spec([
+          {
+            type: "branch",
+            id: "dup",
+            cases: [
+              {
+                when: [{ field: "email", operator: "isNotEmpty" }],
+                // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+                then: [{ type: "addNote", id: "dup", note: "nested" }],
+              },
+            ],
+          },
+        ]),
+        emptyCtx,
+      )
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      expect(
+        (error as FlowAuthoringException).errors.map(({ code, path }) => ({
+          code,
+          path,
+        })),
+      ).toEqual([
+        { code: "duplicateStepId", path: "steps[0]" },
+        {
+          code: "duplicateStepId",
+          path: "steps[0].cases[0].then[0]",
+        },
+      ])
+    }
+  })
+
+  test("guards the compiler invariant when an unparsed spec has no steps", () => {
+    // `FlowSpec` cannot encode flowSpecSchema's runtime `.min(1)` constraint.
+    try {
+      compileFlowSpec(spec([]), emptyCtx)
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      const authoringError = (error as FlowAuthoringException).errors[0]
+      expect(authoringError?.code).toBe("compileFailed")
+      expect(authoringError?.path).toBe("steps")
     }
   })
 })

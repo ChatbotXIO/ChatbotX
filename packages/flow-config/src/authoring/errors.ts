@@ -20,6 +20,7 @@ export type FlowAuthoringErrorCode =
   | "duplicateStepId"
   | "invalidStep"
   | "compileFailed"
+  | "templateNotApproved"
 
 export type FlowAuthoringError = {
   /** Spec-relative path, e.g. `steps[2].templateName` — never a compiled-node path. */
@@ -56,16 +57,16 @@ export const formatZodPathSegment = (
 }
 
 /**
- * Converts a `flowSpecSchema`/`publishFlowSchema` parse failure into
- * `FlowAuthoringError[]`. Without `mapPath`, issue paths are used verbatim —
- * correct when validating the spec itself, where paths are already
- * spec-relative. `compileAndValidateSpec` (`apps/builder`) passes `mapPath`
- * when validating the *compiled* node graph instead, to translate a
- * node-graph path back to the spec-relative path an agent actually wrote.
+ * Converts a parse failure into `FlowAuthoringError[]` using the caller's
+ * diagnostic code. Without `mapPath`, issue paths are used verbatim — correct
+ * when validating the spec itself, where paths are already spec-relative.
+ * `compileAndValidateSpec` (`apps/builder`) passes `mapPath` when validating
+ * the *compiled* node graph instead, to translate a node-graph path back to
+ * the spec-relative path an agent actually wrote.
  */
 export function zodErrorToFlowAuthoringErrors(
   error: z.ZodError,
-  code: FlowAuthoringErrorCode = "invalidSpec",
+  code: FlowAuthoringErrorCode,
   mapPath?: (issuePath: PropertyKey[]) => string | undefined,
 ): FlowAuthoringError[] {
   return error.issues.map((issue) => ({
@@ -111,22 +112,27 @@ function levenshteinDistance(a: string, b: string): number {
 // match, or an edit distance small relative to name length (typo-tolerant
 // without matching two genuinely unrelated short names).
 const MAX_EDIT_DISTANCE_RATIO = 0.34
+const PREFIX_MATCH_BASE_SCORE = 1000
+const SUBSTRING_MATCH_BASE_SCORE = 500
+const MIN_ALLOWED_EDIT_DISTANCE = 2
 
 function nameSimilarity(target: string, candidate: string): number {
   if (target === candidate) {
     return Number.POSITIVE_INFINITY
   }
   if (candidate.startsWith(target) || target.startsWith(candidate)) {
-    return 1000 - Math.abs(candidate.length - target.length)
+    return PREFIX_MATCH_BASE_SCORE - Math.abs(candidate.length - target.length)
   }
   if (candidate.includes(target) || target.includes(candidate)) {
-    return 500 - Math.abs(candidate.length - target.length)
+    return (
+      SUBSTRING_MATCH_BASE_SCORE - Math.abs(candidate.length - target.length)
+    )
   }
 
   const distance = levenshteinDistance(target, candidate)
   const maxLength = Math.max(target.length, candidate.length)
   const allowedDistance = Math.max(
-    2,
+    MIN_ALLOWED_EDIT_DISTANCE,
     Math.ceil(maxLength * MAX_EDIT_DISTANCE_RATIO),
   )
   return distance <= allowedDistance ? maxLength - distance : 0
