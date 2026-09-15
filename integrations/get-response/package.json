@@ -5,9 +5,9 @@
   "type": "module",
   "dependencies": {
     "@chatbotx.io/sdk": "workspace:*",
-    "ky": "^2.0.2",
+    "ky": "^2.1.0",
     "universal-error-normalizer": "^1.0.0",
-    "zod": "^4.3.6"
+    "zod": "^4.6.2"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",

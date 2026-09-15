@@ -12,7 +12,7 @@
   "dependencies": {
     "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
-    "zod": "^4.3.6"
+    "zod": "^4.6.2"
   },
   "exports": {
     ".": "./src/index.ts"
