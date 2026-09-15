@@ -51,6 +51,8 @@ const adsConversionRulesPublicRouter = {
       method: "GET",
       path: "/v1/ads/conversion-rules",
       summary: "List Ads conversion rules",
+      description:
+        "Use this to find conversion rule ids before inspecting one with `ads.getRule` or changing one with `ads.updateRule`. Returns rules configured in this workspace.",
       tags: ["Ads"],
     })
     .input(listAdsConversionRulesPublicRequest)
@@ -74,6 +76,8 @@ const adsConversionRulesPublicRouter = {
       method: "GET",
       path: "/v1/ads/conversion-rules/{id}",
       summary: "Get an Ads conversion rule",
+      description:
+        "Returns one conversion rule's configuration. Use `ads.listRules` to find its id first.",
       tags: ["Ads"],
     })
     .input(adsConversionRuleIdParams)
@@ -91,6 +95,8 @@ const adsConversionRulesPublicRouter = {
       method: "POST",
       path: "/v1/ads/conversion-rules",
       summary: "Create an Ads conversion rule",
+      description:
+        "Adds a rule mapping a channel event to a conversion. Use `ads.listRules` first to avoid duplicating an existing rule.",
       successStatus: 201,
       tags: ["Ads"],
     })
@@ -109,6 +115,8 @@ const adsConversionRulesPublicRouter = {
       method: "PUT",
       path: "/v1/ads/conversion-rules/{id}",
       summary: "Update an Ads conversion rule",
+      description:
+        "Changes an existing conversion rule's configuration. Call `ads.getRule` to inspect current values first.",
       tags: ["Ads"],
     })
     .input(adsConversionRuleIdParams.and(updateAdsConversionRulePublicRequest))
@@ -126,6 +134,8 @@ const adsConversionRulesPublicRouter = {
       method: "PATCH",
       path: "/v1/ads/conversion-rules/{id}/status",
       summary: "Enable or disable an Ads conversion rule",
+      description:
+        "Toggles whether a conversion rule is active without changing its other fields.",
       tags: ["Ads"],
     })
     .input(adsConversionRuleIdParams.and(toggleAdsConversionRulePublicRequest))
@@ -143,6 +153,8 @@ const adsConversionRulesPublicRouter = {
       method: "DELETE",
       path: "/v1/ads/conversion-rules/{id}",
       summary: "Delete an Ads conversion rule",
+      description:
+        "Permanently deletes a conversion rule. Use `ads.listRules` to find its id first.",
       successStatus: 204,
       tags: ["Ads"],
     })
@@ -162,6 +174,8 @@ const adsAnalyticsPublicRouter = {
       method: "GET",
       path: "/v1/ads/funnel",
       summary: "Get ad conversion funnel",
+      description:
+        "Returns aggregate CTWA/CTM/CTID conversion funnel counts (conversations, leads, purchases, revenue) for one ad. Use `ads.getFunnelTimeseries` for a daily breakdown instead.",
       tags: ["Ads"],
     })
     .input(getCtwaFunnelPublicRequest)
@@ -179,6 +193,8 @@ const adsAnalyticsPublicRouter = {
       method: "GET",
       path: "/v1/ads/funnel/timeseries",
       summary: "Get daily ad conversion funnel",
+      description:
+        "Returns the same conversion funnel as `ads.getFunnel`, bucketed per day for charting a trend.",
       tags: ["Ads"],
     })
     .input(getCtwaFunnelPublicRequest)
@@ -196,6 +212,8 @@ const adsAnalyticsPublicRouter = {
       method: "GET",
       path: "/v1/ads/capi-delivery",
       summary: "Get Conversions API delivery",
+      description:
+        "Returns the Conversions API delivery status breakdown (sent, pending, failed, skipped) for one ad's events.",
       tags: ["Ads"],
     })
     .input(getCtwaFunnelPublicRequest)
@@ -213,6 +231,8 @@ const adsAnalyticsPublicRouter = {
       method: "GET",
       path: "/v1/ads/conversions/export",
       summary: "Export conversion rows",
+      description:
+        "Returns cursor-paginated conversion/lead/purchase rows for export, contact-level. A workspace token sees unmasked contact data.",
       tags: ["Ads"],
     })
     .input(listAdsConversionExportRowsPublicRequest)
@@ -244,6 +264,8 @@ const adsAnalyticsPublicRouter = {
       method: "GET",
       path: "/v1/ads/{channel}/ad-accounts",
       summary: "List channel ad accounts",
+      description:
+        "Lists ad accounts connected for a channel — every connected integration's ads connection plus the workspace-wide fallback, deduped. Pass `integrationId` to scope to one integration's own connection.",
       tags: ["Ads"],
     })
     .input(
@@ -269,6 +291,8 @@ const adsAnalyticsPublicRouter = {
       method: "GET",
       path: "/v1/ads/analytics/overview",
       summary: "Get ad analytics overview",
+      description:
+        "Returns merged ads analytics (funnel plus channel spend/ROAS/CPM) for one ad, channel, account, and date range. Requires a connected ads account; use `ads.getFunnel` for a DB-only funnel without spend data.",
       tags: ["Ads"],
     })
     .input(adsAnalyticsPublicRequest)
@@ -286,6 +310,8 @@ const adsAnalyticsPublicRouter = {
       method: "GET",
       path: "/v1/ads/analytics/timeseries",
       summary: "Get daily ad analytics",
+      description:
+        "Returns the same merged ads analytics as `ads.getAnalyticsOverview`, bucketed per day for charting a trend.",
       tags: ["Ads"],
     })
     .input(adsAnalyticsPublicRequest)
@@ -303,6 +329,8 @@ const adsAnalyticsPublicRouter = {
       method: "GET",
       path: "/v1/ads/conversions/{id}",
       summary: "Get a single Ads conversion event",
+      description:
+        "Returns one conversion event's full detail. Use `ads.listConversionExportRows` to find its id first.",
       tags: ["Ads"],
     })
     .input(adsConversionEventIdParams)
@@ -320,6 +348,8 @@ const adsAnalyticsPublicRouter = {
       method: "GET",
       path: "/v1/ads/custom-audiences",
       summary: "List custom audiences",
+      description:
+        "Cached from the connected ad account for a fixed period. Use `ads.listChannelAdAccounts` to find `adAccountId` first.",
       tags: ["Ads"],
     })
     .input(listCustomAudiencesPublicRequest)
@@ -342,6 +372,8 @@ const adsAnalyticsPublicRouter = {
       method: "POST",
       path: "/v1/ads/retarget-audiences",
       summary: "Sync retarget audience",
+      description:
+        "Queues an async sync of a retargeting audience to the ad platform. Returns immediately; the sync runs in the background.",
       successStatus: 202,
       tags: ["Ads"],
     })

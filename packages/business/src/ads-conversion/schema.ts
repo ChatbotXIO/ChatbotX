@@ -13,19 +13,27 @@ const nonEmptyStringArray = z.array(z.string().trim().min(1)).min(1)
 export const adsConversionRuleTriggerSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("templateSent"),
-    templateIds: nonEmptyStringArray,
+    templateIds: nonEmptyStringArray.describe(
+      "Template ids that trigger this rule when sent.",
+    ),
   }),
   z.object({
     type: z.literal("tagApplied"),
-    tagIds: nonEmptyStringArray,
+    tagIds: nonEmptyStringArray.describe(
+      "Tag ids that trigger this rule when applied.",
+    ),
   }),
   z.object({
     type: z.literal("keywordMatched"),
-    automatedResponseIds: nonEmptyStringArray,
+    automatedResponseIds: nonEmptyStringArray.describe(
+      "Keyword automation ids that trigger this rule when matched.",
+    ),
   }),
   z.object({
     type: z.literal("contactReplied"),
-    firstReplyOnly: z.boolean(),
+    firstReplyOnly: z
+      .boolean()
+      .describe("Only trigger on the contact's first reply, not every reply."),
   }),
 ])
 export type AdsConversionRuleTrigger = z.infer<
@@ -51,7 +59,9 @@ export type AdsConversionRuleResource = z.infer<
 
 export const listAdsConversionRulesInput = z.object({
   workspaceId: zodBigintAsString(),
-  channel: adsConversionChannelSchema.optional(),
+  channel: adsConversionChannelSchema
+    .optional()
+    .describe("Restrict to rules on this channel."),
 })
 export type ListAdsConversionRulesInput = z.infer<
   typeof listAdsConversionRulesInput
@@ -59,18 +69,46 @@ export type ListAdsConversionRulesInput = z.infer<
 
 export const createAdsConversionRuleInput = z.object({
   workspaceId: zodBigintAsString(),
-  channel: adsConversionChannelSchema,
-  integrationWhatsappId: zodBigintAsString().nullable().optional(),
-  integrationFacebookAdsId: zodBigintAsString().nullable().optional(),
+  channel: adsConversionChannelSchema.describe("Channel this rule applies to."),
+  integrationWhatsappId: zodBigintAsString()
+    .nullable()
+    .optional()
+    .describe("Restrict to this WhatsApp integration."),
+  integrationFacebookAdsId: zodBigintAsString()
+    .nullable()
+    .optional()
+    .describe("Restrict to this Facebook Ads integration."),
   // Messenger/Instagram FKs (Phase 2 generalization) — mirrors
   // AdsConversionRule's per-channel FK columns (Phase 1 schema).
-  integrationMessengerId: zodBigintAsString().nullable().optional(),
-  integrationInstagramId: zodBigintAsString().nullable().optional(),
-  adAccountId: z.string().trim().min(1).nullable().optional(),
-  eventType: adsConversionEventTypeSchema,
-  trigger: adsConversionRuleTriggerSchema,
-  markAs: z.string().trim().min(1).nullable().optional(),
-  enabled: z.boolean().optional(),
+  integrationMessengerId: zodBigintAsString()
+    .nullable()
+    .optional()
+    .describe("Restrict to this Messenger integration."),
+  integrationInstagramId: zodBigintAsString()
+    .nullable()
+    .optional()
+    .describe("Restrict to this Instagram integration."),
+  adAccountId: z
+    .string()
+    .trim()
+    .min(1)
+    .nullable()
+    .optional()
+    .describe("Meta ad account id (act_<id>) to report conversions to."),
+  eventType: adsConversionEventTypeSchema.describe(
+    "Conversion event type this rule reports.",
+  ),
+  trigger: adsConversionRuleTriggerSchema.describe(
+    "Workspace event that fires this rule.",
+  ),
+  markAs: z
+    .string()
+    .trim()
+    .min(1)
+    .nullable()
+    .optional()
+    .describe("Label recorded on the conversion event for this rule."),
+  enabled: z.boolean().optional().describe("Whether the rule is active."),
 })
 export type CreateAdsConversionRuleInput = z.infer<
   typeof createAdsConversionRuleInput
@@ -79,7 +117,7 @@ export type CreateAdsConversionRuleInput = z.infer<
 export const updateAdsConversionRuleInput = createAdsConversionRuleInput
   .partial()
   .extend({
-    id: zodBigintAsString(),
+    id: zodBigintAsString().describe("Ads conversion rule id."),
     workspaceId: zodBigintAsString(),
   })
 export type UpdateAdsConversionRuleInput = z.infer<
@@ -89,7 +127,7 @@ export type UpdateAdsConversionRuleInput = z.infer<
 export const toggleAdsConversionRuleInput = z.object({
   id: zodBigintAsString(),
   workspaceId: zodBigintAsString(),
-  enabled: z.boolean(),
+  enabled: z.boolean().describe("Whether the rule should be active."),
 })
 export type ToggleAdsConversionRuleInput = z.infer<
   typeof toggleAdsConversionRuleInput

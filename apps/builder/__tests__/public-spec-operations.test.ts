@@ -57,7 +57,6 @@ const LEGACY_WORKSPACE_TOKEN_PATTERN = /workspace[_.]?token/i
 const LEGACY_API_SUFFIX_PATTERN = /[_.]api$/i
 
 const DESCRIPTION_BACKLOG = new Set<string>([
-  "ads.",
   "appointmentCalendars.",
   "appointmentExternalCalendars.",
   "appointmentReminders.",
