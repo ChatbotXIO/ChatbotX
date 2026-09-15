@@ -76,4 +76,46 @@ describe("CONNECTION_REGISTRY", () => {
       expect(Boolean(adapter.credentialType), channel).toBe(requiresCredential)
     }
   })
+
+  it("credential-strategy providers either implement fromCredentials or are pinned as a known live-connect gap (T4)", () => {
+    // `resolve-provider.ts#resolveUnavailableReason` reports these as
+    // `notImplemented` in `GET /v1/connection-providers` specifically
+    // because they have no `fromCredentials`. Two distinct reasons:
+    //   - `api`/`smtp`/`webchat`: self_serve with no external account to
+    //     validate AND no stable per-instance identity to derive
+    //     `Connection.sourceId` from before their satellite row exists (I1).
+    //   - `chatbotx`: the internal built-in channel is auto-provisioned per
+    //     workspace, never connected through a user-supplied credential.
+    // A new credential-strategy provider added here without `fromCredentials`
+    // silently becomes unreachable via `POST /v1/connections` — this pins
+    // the exception list so that is a conscious choice, not a silent gap.
+    const KNOWN_GAPS = new Set(["api", "chatbotx", "smtp", "webchat"])
+    const CREDENTIAL_STRATEGIES = new Set(["token", "api_key", "self_serve"])
+    const actualGaps: string[] = []
+    for (const [type, adapter] of Object.entries(CONNECTION_REGISTRY)) {
+      if (!(adapter && CREDENTIAL_STRATEGIES.has(adapter.provider.strategy))) {
+        continue
+      }
+      if (!adapter.provider.fromCredentials) {
+        actualGaps.push(type)
+      }
+    }
+    expect(actualGaps.sort()).toEqual([...KNOWN_GAPS].sort())
+  })
+
+  it("telegram (multiAccount + fromCredentials) derives sourceId from the bot token, never a constant (I1)", () => {
+    const adapter = CONNECTION_REGISTRY.telegram
+    expect(adapter?.provider.multiAccount).toBe(true)
+    expect(adapter?.provider.fromCredentials).toBeDefined()
+    const first = adapter?.provider.describe({
+      authType: "secretText",
+      secretText: "111111:secret-a",
+    } as never)
+    const second = adapter?.provider.describe({
+      authType: "secretText",
+      secretText: "222222:secret-b",
+    } as never)
+    expect(first?.sourceId).not.toBe("workspace")
+    expect(first?.sourceId).not.toBe(second?.sourceId)
+  })
 })

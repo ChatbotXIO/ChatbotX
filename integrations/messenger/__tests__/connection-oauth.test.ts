@@ -77,7 +77,7 @@ describe("Messenger connection.exchangeCode", () => {
       authType: "oauth2",
       clientId: "client-1",
       clientSecret: "secret-1",
-      redirectUrl: "",
+      redirectUrl: "https://app.example.test/callback",
       version: "v23.0",
       tokens: { accessToken: "long-lived-token" },
     })

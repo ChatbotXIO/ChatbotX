@@ -1,6 +1,7 @@
 import {
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { activeCampaignRequest } from "./client"
@@ -22,6 +23,7 @@ import {
   type ActiveCampaignAuthValue,
   type ActiveCampaignConfig,
   type ActiveCampaignContactAutomationPayload,
+  type ActiveCampaignCredentialValue,
   activeCampaignAccountsResponseSchema,
   activeCampaignAutomationsResponseSchema,
   activeCampaignContactAutomationPayloadSchema,
@@ -67,6 +69,19 @@ const contactAutomationExists = async (
   )
 }
 
+/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
+const buildActiveCampaignAuth = async (
+  config: ActiveCampaignCredentialValue,
+): Promise<ActiveCampaignAuthValue> => {
+  const credential = activeCampaignCredentialSchema.parse(config)
+  await activeCampaignRequest(
+    credential,
+    activeCampaignAccountsPath(),
+    activeCampaignAccountsResponseSchema,
+  )
+  return createActiveCampaignAuth(credential)
+}
+
 const config: IntegrationDefinition<
   ActiveCampaignConfig,
   ActiveCampaignAuthValue,
@@ -96,6 +111,7 @@ const config: IntegrationDefinition<
       sourceId: "workspace",
       displayName: "ActiveCampaign",
     }),
+    fromCredentials: buildActiveCampaignAuth,
     verify: async ({ auth }) => {
       try {
         await activeCampaignRequest(
@@ -107,7 +123,7 @@ const config: IntegrationDefinition<
       } catch (error) {
         return {
           ok: false,
-          revoked: false,
+          revoked: isUnauthorizedStatusError(error),
           error:
             error instanceof Error
               ? error.message
@@ -115,19 +131,10 @@ const config: IntegrationDefinition<
         }
       }
     },
-    // TODO(connection-phase2): refine once ActiveCampaign revoked-token error shape is confirmed.
-    isRevokedTokenError: () => false,
+    isRevokedTokenError: isUnauthorizedStatusError,
   },
   actions: {
-    validateCredentials: async ({ props }) => {
-      const credential = activeCampaignCredentialSchema.parse(props)
-      await activeCampaignRequest(
-        credential,
-        activeCampaignAccountsPath(),
-        activeCampaignAccountsResponseSchema,
-      )
-      return createActiveCampaignAuth(credential)
-    },
+    validateCredentials: async ({ props }) => buildActiveCampaignAuth(props),
     listLists: async ({ ctx }) => {
       const response = await activeCampaignRequest(
         ctx.auth,

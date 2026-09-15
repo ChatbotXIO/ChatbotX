@@ -1,6 +1,7 @@
 import {
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { z } from "zod"
@@ -34,6 +35,19 @@ const pageSearchParams = (props: { cursor?: string; size: number }) => {
 const extractNextCursor = (next: string | null | undefined) =>
   next ? new URL(next).searchParams.get("page[cursor]") : null
 
+/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
+const buildKlaviyoAuth = async (apiKey: string): Promise<KlaviyoAuthValue> => {
+  const auth = createKlaviyoAuth(apiKey)
+  await klaviyoRequest(
+    auth,
+    KLAVIYO_LISTS_PATH,
+    klaviyoListsResponseSchema,
+    { searchParams: pageSearchParams({ size: 1 }) },
+    [200],
+  )
+  return auth
+}
+
 const config: IntegrationDefinition<
   KlaviyoConfig,
   KlaviyoAuthValue,
@@ -57,6 +71,8 @@ const config: IntegrationDefinition<
       sourceId: "workspace",
       displayName: "Klaviyo",
     }),
+    fromCredentials: (config: { apiKey: string }) =>
+      buildKlaviyoAuth(config.apiKey),
     verify: async ({ auth }) => {
       try {
         await klaviyoRequest(
@@ -70,11 +86,7 @@ const config: IntegrationDefinition<
       } catch (error) {
         return {
           ok: false,
-          revoked:
-            typeof error === "object" &&
-            error !== null &&
-            "statusCode" in error &&
-            (error.statusCode === 401 || error.statusCode === 403),
+          revoked: isUnauthorizedStatusError(error),
           error:
             error instanceof Error
               ? error.message
@@ -82,24 +94,10 @@ const config: IntegrationDefinition<
         }
       }
     },
-    isRevokedTokenError: (error) =>
-      typeof error === "object" &&
-      error !== null &&
-      "statusCode" in error &&
-      (error.statusCode === 401 || error.statusCode === 403),
+    isRevokedTokenError: isUnauthorizedStatusError,
   },
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = createKlaviyoAuth(props.apiKey)
-      await klaviyoRequest(
-        auth,
-        KLAVIYO_LISTS_PATH,
-        klaviyoListsResponseSchema,
-        { searchParams: pageSearchParams({ size: 1 }) },
-        [200],
-      )
-      return auth
-    },
+    validateCredentials: async ({ props }) => buildKlaviyoAuth(props.apiKey),
     listLists: async ({ ctx, props }) => {
       const page = klaviyoListPageInputSchema.parse(props)
       const response = await klaviyoRequest(

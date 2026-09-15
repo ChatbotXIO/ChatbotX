@@ -117,10 +117,15 @@ export const openaiCompatibleConnectionProvider: ConnectionProvider<
     return secretTextAuth(apiKey)
   },
   verify: ({ auth }) => {
-    // `auth` alone has no `baseURL` (it lives on the DB row's own column, not
-    // the auth jsonb) — a real health check needs that row's `baseURL`
-    // alongside `auth.secretText`, wired in Phase 2 via `ConnectionService`.
-    // Until then, treat presence of a stored secret as sufficient.
+    // `auth` alone has no `baseURL` (it lives on the DB row's own column,
+    // not the auth jsonb) — a real health check needs that row's
+    // `baseURL` alongside `auth.secretText`. `ConnectionProvider.verify`'s
+    // signature (`Handler<{auth}, ConnectionHealth>`) has no room for it:
+    // `ConnectionService.verify`/`ConnectionService.refresh` only ever load
+    // and pass `auth`, never the satellite row's other columns, for any
+    // provider. Still unwired — treat presence of a stored secret as
+    // sufficient until either `baseURL` moves into `auth` itself or
+    // `verify`'s signature grows a second, store-row parameter.
     return Promise.resolve(
       auth.secretText
         ? { ok: true as const }

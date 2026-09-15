@@ -1,4 +1,5 @@
 import { channelLimitReachedException } from "@chatbotx.io/business/errors"
+import { AuthException } from "@chatbotx.io/sdk"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
@@ -373,11 +374,12 @@ describe("ConnectionService.disconnect", () => {
     expect(mocks.unsubscribe).toHaveBeenCalledWith({
       auth: { authType: "none" },
     })
-    expect(mocks.deleteRowByForeignKey).toHaveBeenCalledWith("inbox-1")
+    expect(mocks.deleteRowByForeignKey).toHaveBeenCalledWith("inbox-1", "tx")
     expect(mocks.transition).toHaveBeenCalledWith({
       connectionId: "conn-1",
       event: "user.disconnect",
       ownerId: "owner-1",
+      tx: "tx",
     })
     expect(result.status).toBe("disconnected")
   })
@@ -399,19 +401,24 @@ describe("ConnectionService.disconnect", () => {
       connectionId: "conn-1",
       event: "user.disconnect",
       ownerId: undefined,
+      tx: "tx",
     })
   })
 
-  it("proceeds to the state transition even when provider-side teardown throws", async () => {
+  it("proceeds to the state transition and records lastError even when provider-side teardown throws", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
     mocks.disconnect.mockRejectedValue(new Error("upstream 500"))
     await connectionService.disconnect({
       connectionId: "conn-1",
       workspaceId: "ws-1",
     })
-    expect(mocks.deleteRowByForeignKey).toHaveBeenCalledWith("inbox-1")
+    expect(mocks.deleteRowByForeignKey).toHaveBeenCalledWith("inbox-1", "tx")
+    expect(mocks.update).toHaveBeenCalledWith(
+      { id: "conn-1", values: { lastError: "upstream 500" } },
+      "tx",
+    )
     expect(mocks.transition).toHaveBeenCalledWith(
-      expect.objectContaining({ event: "user.disconnect" }),
+      expect.objectContaining({ event: "user.disconnect", tx: "tx" }),
     )
   })
 })
@@ -474,6 +481,44 @@ describe("ConnectionService.refresh", () => {
     expect(mocks.recordAuthSaved).toHaveBeenCalledWith({
       connectionId: "conn-1",
       authExpiresAt: new Date("2030-01-01T00:00:00.000Z"),
+    })
+  })
+
+  it("authStore.markOffline calls markUnhealthy for an AuthException", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
+    mocks.findById.mockResolvedValue(baseConnection())
+    mocks.ensureFreshAuth.mockImplementation(async (ctx) => {
+      await ctx.authStore.markOffline(new AuthException("revoked"))
+    })
+    await connectionService.refresh({
+      connectionId: "conn-1",
+      workspaceId: "ws-1",
+    })
+    expect(mocks.markUnhealthy).toHaveBeenCalledWith({
+      connectionId: "conn-1",
+      ownerId: "owner-1",
+    })
+    expect(mocks.transition).not.toHaveBeenCalledWith(
+      expect.objectContaining({ event: "refresh.transient_failure" }),
+    )
+  })
+
+  it("authStore.markOffline degrades via refresh.transient_failure for a non-auth error", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(baseConnection())
+    mocks.findById.mockResolvedValue(baseConnection())
+    mocks.ensureFreshAuth.mockImplementation(async (ctx) => {
+      await ctx.authStore.markOffline(new Error("ECONNRESET"))
+    })
+    await connectionService.refresh({
+      connectionId: "conn-1",
+      workspaceId: "ws-1",
+    })
+    expect(mocks.markUnhealthy).not.toHaveBeenCalled()
+    expect(mocks.transition).toHaveBeenCalledWith({
+      connectionId: "conn-1",
+      event: "refresh.transient_failure",
+      reason: "refresh_failed",
+      ownerId: "owner-1",
     })
   })
 })
@@ -887,7 +932,7 @@ describe("ConnectionService.completeAuthorization", () => {
     ).rejects.toMatchObject({ code: "connectSessionExpired" })
   })
 
-  it("fails the session with provider_denied when exchangeCode throws", async () => {
+  it("fails the session with exchange_failed when exchangeCode throws", async () => {
     mocks.exchangeCode.mockRejectedValue(new Error("bad code"))
     await expect(
       connectionService.completeAuthorization({
@@ -900,7 +945,7 @@ describe("ConnectionService.completeAuthorization", () => {
     ).rejects.toMatchObject({ code: "connectionCredentialsRejected" })
     expect(mocks.failSession).toHaveBeenCalledWith({
       id: "session-1",
-      errorCode: "provider_denied",
+      errorCode: "exchange_failed",
     })
   })
 
@@ -1413,5 +1458,23 @@ describe("ConnectionService.connectTargets", () => {
     ])
 
     mockAdapter.store.onDisconnect = "delete_row"
+  })
+
+  it("sets Connection.createdBy to null for a token-initiated connect (no actorUserId) (T7)", async () => {
+    await connectionService.connectTargets({
+      sessionId: "session-1",
+      workspaceId: "ws-1",
+      targetIds: ["page-1"],
+      // No `actorUserId` — the shape a public-API-token-authenticated
+      // `POST /v1/connect-sessions/{id}/targets` call always uses (the
+      // route never resolves/forwards one), matching `ConnectSession`'s
+      // own "token-actor session's Connection rows are created with
+      // createdBy = null" convention.
+    })
+
+    expect(mocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ createdBy: null }),
+      "tx",
+    )
   })
 })

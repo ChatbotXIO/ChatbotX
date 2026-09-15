@@ -1,6 +1,7 @@
 import {
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { getResponseRequest } from "./client"
@@ -40,6 +41,21 @@ const mapPageMeta = (props: {
   total: props.total,
 })
 
+/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
+const buildGetResponseAuth = async (
+  apiKey: string,
+): Promise<GetResponseAuthValue> => {
+  const auth = createGetResponseAuth(apiKey)
+  await getResponseRequest(
+    auth,
+    GET_RESPONSE_ACCOUNTS_PATH,
+    getResponseAccountsResponseSchema,
+    undefined,
+    [200],
+  )
+  return auth
+}
+
 const config: IntegrationDefinition<
   GetResponseConfig,
   GetResponseAuthValue,
@@ -63,6 +79,8 @@ const config: IntegrationDefinition<
       sourceId: "workspace",
       displayName: "GetResponse",
     }),
+    fromCredentials: (config: { apiKey: string }) =>
+      buildGetResponseAuth(config.apiKey),
     verify: async ({ auth }) => {
       try {
         await getResponseRequest(
@@ -76,7 +94,7 @@ const config: IntegrationDefinition<
       } catch (error) {
         return {
           ok: false,
-          revoked: false,
+          revoked: isUnauthorizedStatusError(error),
           error:
             error instanceof Error
               ? error.message
@@ -84,21 +102,11 @@ const config: IntegrationDefinition<
         }
       }
     },
-    // TODO(connection-phase2): refine once GetResponse revoked-token error shape is confirmed.
-    isRevokedTokenError: () => false,
+    isRevokedTokenError: isUnauthorizedStatusError,
   },
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = createGetResponseAuth(props.apiKey)
-      await getResponseRequest(
-        auth,
-        GET_RESPONSE_ACCOUNTS_PATH,
-        getResponseAccountsResponseSchema,
-        undefined,
-        [200],
-      )
-      return auth
-    },
+    validateCredentials: async ({ props }) =>
+      buildGetResponseAuth(props.apiKey),
     listCampaigns: async ({ ctx, props }) => {
       const response = await getResponseRequest(
         ctx.auth,

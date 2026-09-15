@@ -1,6 +1,7 @@
 import {
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { mailerLiteRequest } from "./client"
@@ -38,6 +39,21 @@ const pageSearchParams = (props: { page: number; limit: number }) =>
     limit: String(props.limit),
   })
 
+/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
+const buildMailerLiteAuth = async (
+  apiKey: string,
+): Promise<MailerLiteAuthValue> => {
+  const auth = createMailerLiteAuth(apiKey)
+  await mailerLiteRequest(
+    auth,
+    MAILER_LITE_GROUPS_PATH,
+    mailerLiteGroupsResponseSchema,
+    { searchParams: pageSearchParams({ page: 1, limit: 1 }) },
+    [200],
+  )
+  return auth
+}
+
 const config: IntegrationDefinition<
   MailerLiteConfig,
   MailerLiteAuthValue,
@@ -61,6 +77,8 @@ const config: IntegrationDefinition<
       sourceId: "workspace",
       displayName: "MailerLite",
     }),
+    fromCredentials: (config: { apiKey: string }) =>
+      buildMailerLiteAuth(config.apiKey),
     verify: async ({ auth }) => {
       try {
         await mailerLiteRequest(
@@ -74,11 +92,7 @@ const config: IntegrationDefinition<
       } catch (error) {
         return {
           ok: false,
-          revoked:
-            typeof error === "object" &&
-            error !== null &&
-            "statusCode" in error &&
-            (error.statusCode === 401 || error.statusCode === 403),
+          revoked: isUnauthorizedStatusError(error),
           error:
             error instanceof Error
               ? error.message
@@ -86,24 +100,10 @@ const config: IntegrationDefinition<
         }
       }
     },
-    isRevokedTokenError: (error) =>
-      typeof error === "object" &&
-      error !== null &&
-      "statusCode" in error &&
-      (error.statusCode === 401 || error.statusCode === 403),
+    isRevokedTokenError: isUnauthorizedStatusError,
   },
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = createMailerLiteAuth(props.apiKey)
-      await mailerLiteRequest(
-        auth,
-        MAILER_LITE_GROUPS_PATH,
-        mailerLiteGroupsResponseSchema,
-        { searchParams: pageSearchParams({ page: 1, limit: 1 }) },
-        [200],
-      )
-      return auth
-    },
+    validateCredentials: async ({ props }) => buildMailerLiteAuth(props.apiKey),
     listGroups: async ({ ctx, props }) => {
       const response = await mailerLiteRequest(
         ctx.auth,

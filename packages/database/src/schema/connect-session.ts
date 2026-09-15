@@ -36,7 +36,8 @@ import { workspaceApiTokenModel } from "./workspace-api-token"
  * device-code, OAuth1, or "enter verification PIN" strategy is a new
  * `nextAction.type`, not a new table. Generalises `WhatsappSignupSession`
  * (kept, wrapped — its id goes in `encryptedAuth`) and the three
- * `fb_*_pending_auth` cookies (`apps/builder/src/lib/facebook-pending-auth.ts`).
+ * `fb_*_pending_auth` cookies this PR deletes in favor of this table
+ * (formerly `apps/builder/src/lib/facebook-pending-auth.ts`).
  */
 export const connectSessionModel = pgTable(
   "ConnectSession",
