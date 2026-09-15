@@ -37,6 +37,8 @@ export const appointmentCalendarsPublicRouter = {
       method: "GET",
       path: "/v1/appointment-calendars",
       summary: "List appointment calendars",
+      description:
+        "Use this to find calendar ids before inspecting one with `appointmentCalendars.get` or checking slots with `appointmentCalendars.getAvailability`. Returns calendars in this workspace.",
       tags,
     })
     .input(listAppointmentCalendarsPublicRequest)
@@ -96,7 +98,10 @@ export const appointmentCalendarsPublicRouter = {
       method: "PUT",
       path: "/v1/appointment-calendars/{id}",
       summary: "Update an appointment calendar",
+      description:
+        "Replaces an existing calendar's full configuration (duration, availability, buffers, reminders). Call `appointmentCalendars.get` to inspect current values first.",
       tags,
+      successStatus: 204,
     })
     .input(
       updateAppointmentCalendarRequest.and(appointmentCalendarIdPublicRequest),
@@ -117,7 +122,10 @@ export const appointmentCalendarsPublicRouter = {
       method: "PATCH",
       path: "/v1/appointment-calendars/{id}/active",
       summary: "Activate or deactivate an appointment calendar",
+      description:
+        "Toggles whether a calendar accepts new bookings via `appointments.book`, without changing its configuration.",
       tags,
+      successStatus: 204,
     })
     .input(
       setAppointmentCalendarActivePublicRequest.and(
@@ -138,6 +146,8 @@ export const appointmentCalendarsPublicRouter = {
       method: "POST",
       path: "/v1/appointment-calendars/{id}/duplicate",
       summary: "Duplicate an appointment calendar",
+      description:
+        "Copies an existing calendar's configuration into a new calendar. Use `appointmentCalendars.update` afterward to adjust the copy.",
       successStatus: 201,
       tags,
     })
@@ -157,6 +167,8 @@ export const appointmentCalendarsPublicRouter = {
       method: "DELETE",
       path: "/v1/appointment-calendars/{id}",
       summary: "Delete an appointment calendar",
+      description:
+        "Permanently deletes a calendar. Use `appointmentCalendars.list` to find its id first.",
       successStatus: 204,
       tags,
     })

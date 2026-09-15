@@ -28,8 +28,16 @@ export const publicCouponTopicResource = couponTopicResource.pick({
 })
 
 export const listCouponTopicsPublicRequest = basePaginationRequest.extend({
-  archived: z.boolean().optional(),
-  search: z.string().optional(),
+  archived: z
+    .boolean()
+    .optional()
+    .describe(
+      "Restrict to archived topics when true, active topics when false.",
+    ),
+  search: z
+    .string()
+    .optional()
+    .describe("Case-insensitive substring match against the topic's name."),
 })
 
 // `list` is the only topic route that joins the coupon count; the six
@@ -42,21 +50,46 @@ export const listCouponTopicsPublicResponse = z.object({
 })
 
 export const createCouponTopicPublicRequest = z.object({
-  name: z.string().trim().min(1).max(255),
-  description: z.string().trim().max(1000).optional().nullable(),
-  expiresAt: z.coerce.date().optional().nullable(),
+  name: z.string().trim().min(1).max(255).describe("Coupon topic name."),
+  description: z
+    .string()
+    .trim()
+    .max(1000)
+    .optional()
+    .nullable()
+    .describe("Optional internal description of the topic."),
+  expiresAt: z.coerce
+    .date()
+    .optional()
+    .nullable()
+    .describe(
+      "When coupons from this topic stop being issueable/usable, or null for never.",
+    ),
 })
 
 export const updateCouponTopicPublicRequest =
   createCouponTopicPublicRequest.extend({
-    id: zodBigintAsString(),
+    id: zodBigintAsString().describe(
+      "Coupon topic id. Get it from `coupons.listTopics`.",
+    ),
   })
 
 export const listCouponsPublicRequest = basePaginationRequest.extend({
-  topicId: zodBigintAsString().optional(),
-  issueStatus: couponIssueStatuses.optional(),
-  usageStatus: couponUsageStatuses.optional(),
-  search: z.string().optional(),
+  topicId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Restrict to coupons from this topic. Get it from `coupons.listTopics`.",
+    ),
+  issueStatus: couponIssueStatuses
+    .optional()
+    .describe("Restrict to coupons with this issue status."),
+  usageStatus: couponUsageStatuses
+    .optional()
+    .describe("Restrict to coupons with this usage status."),
+  search: z
+    .string()
+    .optional()
+    .describe("Case-insensitive substring match against the coupon code."),
 })
 
 export const listCouponsPublicResponse = z.object({
@@ -65,13 +98,21 @@ export const listCouponsPublicResponse = z.object({
 })
 
 export const issueCouponPublicRequest = z.object({
-  id: zodBigintAsString(),
-  contactId: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Coupon topic id. Get it from `coupons.listTopics`.",
+  ),
+  contactId: zodBigintAsString().describe(
+    "Contact id. Get it from `contacts.list`.",
+  ),
 })
 
 export const markCouponUsedPublicRequest = z.object({
-  id: zodBigintAsString(),
-  contactId: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Coupon topic id. Get it from `coupons.listTopics`.",
+  ),
+  contactId: zodBigintAsString().describe(
+    "Contact id. Get it from `contacts.list`.",
+  ),
 })
 
 export const listContactCouponsPublicResponse = z.object({

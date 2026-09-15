@@ -12,9 +12,20 @@ export const contactsInboxesPublicRouter = {
       method: "GET",
       path: "/v1/contacts/{identifier}/inboxes",
       summary: "List the contact's channel identities (contact inboxes)",
+      description:
+        "Returns each channel-specific connection (contact inbox) this contact has, e.g. their WhatsApp phone number or Messenger PSID per inbox. Use `contacts.get` to resolve the contact first.",
       tags: ["Contacts"],
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .output(listContactInboxesPublicResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {

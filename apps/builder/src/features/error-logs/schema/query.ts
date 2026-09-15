@@ -21,7 +21,10 @@ export const listErrorLogsSearchParamsCache = createSearchParamsCache({
 })
 
 export const listErrorLogsRequest = basePaginationRequest.extend({
-  keyword: z.string().optional(),
+  keyword: z
+    .string()
+    .optional()
+    .describe("Case-insensitive substring match against the error message."),
   workspaceId: z.string(),
 })
 

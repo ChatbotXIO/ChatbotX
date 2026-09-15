@@ -6,6 +6,14 @@ import { runSseServer } from "./server/sse-server"
 import { runStdioServer } from "./server/stdio-server"
 
 async function main() {
+  // Manual verification only: this intentionally mutates Node's global TLS policy.
+  if (env.CHATBOTX_ALLOW_SELF_SIGNED_CERT === "true") {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+    console.error(
+      "CHATBOTX_ALLOW_SELF_SIGNED_CERT=true disables TLS certificate verification.",
+    )
+  }
+
   await loadOpenApiSpec()
 
   if (env.CHATBOTX_MCP_TRANSPORT === "both") {

@@ -588,6 +588,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/broadcasts/{id}/draft",
   },
   {
+    "method": "GET",
+    "operationId": "capabilities.get",
+    "path": "/v1/capabilities",
+  },
+  {
     "method": "POST",
     "operationId": "channels.deliveryStatus",
     "path": "/v1/channels/api/delivery-status",
@@ -1183,6 +1188,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/flows/{id}/draft",
   },
   {
+    "method": "POST",
+    "operationId": "flows.validate",
+    "path": "/v1/flows/validate",
+  },
+  {
     "method": "GET",
     "operationId": "flows.versions",
     "path": "/v1/flows/{id}/versions",
@@ -1698,6 +1708,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/saved-replies/{id}",
   },
   {
+    "method": "GET",
+    "operationId": "schemas.flowSpec",
+    "path": "/v1/schemas/flow-spec",
+  },
+  {
     "method": "POST",
     "operationId": "sequences.create",
     "path": "/v1/sequences",
@@ -1826,6 +1841,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "templateMessages.list",
     "path": "/v1/template-messages",
+  },
+  {
+    "method": "GET",
+    "operationId": "token.get",
+    "path": "/v1/token",
   },
   {
     "method": "POST",

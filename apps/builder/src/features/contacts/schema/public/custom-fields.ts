@@ -26,14 +26,30 @@ export const publicFieldOperationNameToCode: Record<
 }
 
 const contactCustomFieldOperationPublicRequest = z.object({
-  customFieldId: zodBigintAsString(),
-  operation: publicFieldOperationNames,
-  value: z.string().trim(),
+  customFieldId: zodBigintAsString().describe(
+    "Custom field id (numeric string). Get it from `customFields.list`.",
+  ),
+  operation: publicFieldOperationNames.describe(
+    "Operation to apply. `increase`/`decrease` treat the current value as a number and are a no-op if it isn't.",
+  ),
+  value: z
+    .string()
+    .trim()
+    .describe("Operand: the value to set, append, prepend, or add/subtract."),
 })
 
 export const addContactCustomFieldOperationsPublicRequest = z.object({
-  identifier: z.string().min(1),
-  operations: z.array(contactCustomFieldOperationPublicRequest).min(1).max(20),
+  identifier: z
+    .string()
+    .min(1)
+    .describe(
+      "Contact identifier: the numeric contact id, an email address, or a phone number.",
+    ),
+  operations: z
+    .array(contactCustomFieldOperationPublicRequest)
+    .min(1)
+    .max(20)
+    .describe("Operations to apply in order, up to 20 per request."),
 })
 export type AddContactCustomFieldOperationsPublicRequest = z.infer<
   typeof addContactCustomFieldOperationsPublicRequest

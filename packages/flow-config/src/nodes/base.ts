@@ -48,8 +48,10 @@ export type DefaultNodeProps = {
   detailProps?: Partial<{ beforeStep: any }>
 }
 
+export const DEFAULT_NODE_MEASURED = { width: 288, height: 100 } as const
+
 export const defaultNodeData = () => ({
   id: createId(),
   position: { x: 100, y: 300 },
-  measured: { width: 288, height: 100 },
+  measured: DEFAULT_NODE_MEASURED,
 })

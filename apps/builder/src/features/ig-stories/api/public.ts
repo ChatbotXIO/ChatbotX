@@ -31,6 +31,8 @@ export const igStoriesPublicRouter = {
       method: "GET",
       path: "/v1/ig-stories",
       summary: "List Instagram Story Automations",
+      description:
+        "Use this to find automation ids before inspecting one with `igStories.get` or changing one with `igStories.update`. Returns automations in this workspace.",
       tags: ["IG Stories"],
     })
     .input(listIgStoriesPublicRequest)
@@ -50,6 +52,8 @@ export const igStoriesPublicRouter = {
       method: "GET",
       path: "/v1/ig-stories/{id}",
       summary: "Get a specific Instagram Story Automation",
+      description:
+        "Returns one automation's trigger and reply settings. Use `igStories.list` to find its id first.",
       tags: ["IG Stories"],
     })
     .input(getIgStoryPublicRequest)
@@ -68,6 +72,8 @@ export const igStoriesPublicRouter = {
       method: "POST",
       path: "/v1/ig-stories",
       summary: "Create Instagram Story Automation",
+      description:
+        "Adds an automation that replies to story mentions/replies on Instagram. Use `igStories.listStories` to find eligible stories first.",
       successStatus: 201,
       tags: ["IG Stories"],
     })
@@ -88,6 +94,8 @@ export const igStoriesPublicRouter = {
       method: "PUT",
       path: "/v1/ig-stories/{id}",
       summary: "Update Instagram Story Automation",
+      description:
+        "Changes an existing automation's trigger or reply settings. Call `igStories.get` to inspect current values first.",
       tags: ["IG Stories"],
     })
     .input(updateIgStoryPublicRequest)
@@ -106,6 +114,8 @@ export const igStoriesPublicRouter = {
       method: "DELETE",
       path: "/v1/ig-stories/{id}",
       summary: "Delete Instagram Story Automation",
+      description:
+        "Permanently deletes an automation. Use `igStories.list` to find its id first.",
       successStatus: 204,
       tags: ["IG Stories"],
     })
@@ -123,6 +133,8 @@ export const igStoriesPublicRouter = {
       method: "GET",
       path: "/v1/ig-stories/instagram-stories",
       summary: "List Instagram stories eligible for IG story automation",
+      description:
+        "Returns Instagram stories from the workspace's connected accounts that `igStories.create` can target.",
       tags: ["IG Stories"],
     })
     .input(listInstagramStoriesPublicRequest)

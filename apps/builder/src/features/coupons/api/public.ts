@@ -37,6 +37,8 @@ export const couponsPublicRouter = {
       method: "GET",
       path: "/v1/coupon-topics",
       summary: "List coupon topics",
+      description:
+        "Use this to find coupon topic ids before inspecting one with `coupons.getTopic` or issuing from it with `coupons.issueCoupon`. Returns coupon topics in this workspace.",
       tags,
     })
     .input(withPublicPaging(listCouponTopicsPublicRequest.omit({ sort: true })))
@@ -55,9 +57,17 @@ export const couponsPublicRouter = {
       method: "GET",
       path: "/v1/coupon-topics/{id}",
       summary: "Get a coupon topic",
+      description:
+        "Returns one coupon topic's settings. Use `coupons.listTopics` to find its id first.",
       tags,
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Coupon topic id. Get it from `coupons.listTopics`.",
+        ),
+      }),
+    )
     .output(publicCouponTopicResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
@@ -74,7 +84,7 @@ export const couponsPublicRouter = {
       path: "/v1/coupon-topics",
       summary: "Create a coupon topic",
       description:
-        "Creates a coupon topic. The topic is created without a `createdById` — workspace API tokens have no associated user.",
+        "Adds a coupon topic without `createdById` because workspace API tokens have no user. Use `coupons.listTopics` to inspect existing topics before creating another.",
       tags,
     })
     .input(createCouponTopicPublicRequest)
@@ -94,6 +104,8 @@ export const couponsPublicRouter = {
       method: "PATCH",
       path: "/v1/coupon-topics/{id}",
       summary: "Update a coupon topic",
+      description:
+        "Changes an existing coupon topic's settings. Call `coupons.getTopic` to inspect current values first.",
       tags,
     })
     .input(updateCouponTopicPublicRequest)
@@ -113,9 +125,17 @@ export const couponsPublicRouter = {
       method: "POST",
       path: "/v1/coupon-topics/{id}/archive",
       summary: "Archive a coupon topic",
+      description:
+        "Stops a topic from being issueable via `coupons.issueCoupon` without deleting it. Use `coupons.unarchiveTopic` to reverse.",
       tags,
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Coupon topic id. Get it from `coupons.listTopics`.",
+        ),
+      }),
+    )
     .output(publicCouponTopicResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(
@@ -131,9 +151,17 @@ export const couponsPublicRouter = {
       method: "POST",
       path: "/v1/coupon-topics/{id}/unarchive",
       summary: "Unarchive a coupon topic",
+      description:
+        "Reactivates an archived coupon topic so it becomes issueable via `coupons.issueCoupon` again.",
       tags,
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Coupon topic id. Get it from `coupons.listTopics`.",
+        ),
+      }),
+    )
     .output(publicCouponTopicResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(
@@ -149,9 +177,17 @@ export const couponsPublicRouter = {
       method: "DELETE",
       path: "/v1/coupon-topics/{id}",
       summary: "Delete a coupon topic",
+      description:
+        "Permanently deletes a coupon topic. Use `coupons.listTopics` to find its id first.",
       tags,
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Coupon topic id. Get it from `coupons.listTopics`.",
+        ),
+      }),
+    )
     .output(publicCouponTopicResource)
     .errors(possibleErrorsOnDeletingResource)
     .handler(
@@ -167,6 +203,8 @@ export const couponsPublicRouter = {
       method: "GET",
       path: "/v1/coupons",
       summary: "List coupons",
+      description:
+        "Use this to find individual coupon codes across topics. Returns coupons in this workspace.",
       tags,
     })
     .input(withPublicPaging(listCouponsPublicRequest.omit({ sort: true })))
@@ -268,9 +306,17 @@ export const couponsPublicRouter = {
       method: "GET",
       path: "/v1/contacts/{contactId}/coupons",
       summary: "List coupons issued to a contact",
+      description:
+        "Returns every coupon issued to a specific contact, across all topics. Use `contacts.list` to find the contact id first.",
       tags,
     })
-    .input(z.object({ contactId: zodBigintAsString() }))
+    .input(
+      z.object({
+        contactId: zodBigintAsString().describe(
+          "Contact id. Get it from `contacts.list`.",
+        ),
+      }),
+    )
     .output(listContactCouponsPublicResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {

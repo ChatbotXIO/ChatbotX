@@ -24,6 +24,8 @@ export const integrationsCrudPublicRouter = {
       method: "GET",
       path: "/v1/integrations",
       summary: "List integrations",
+      description:
+        "Use this to find integration ids before inspecting one with `integrations.get`. Returns integrations in this workspace.",
       tags: ["Integrations"],
     })
     .input(publicListRequest)
@@ -41,6 +43,8 @@ export const integrationsCrudPublicRouter = {
       method: "GET",
       path: "/v1/integrations/{id}",
       summary: "Get an integration",
+      description:
+        "Returns one integration's connection status and settings. Use `integrations.list` to find its id first.",
       tags: ["Integrations"],
     })
     .input(getIntegrationRequest)

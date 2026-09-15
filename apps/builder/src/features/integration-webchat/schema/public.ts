@@ -23,7 +23,12 @@ export type WebchatPublicResource = z.infer<typeof webchatPublicResource>
 
 export const createWebchatPublicRequest = createWebchatRequest
   .omit({ workspaceId: true, authorizedDomains: true })
-  .extend({ authorizedDomains: z.array(z.hostname()).default([]) })
+  .extend({
+    authorizedDomains: z
+      .array(z.hostname())
+      .default([])
+      .describe("Domains allowed to embed this webchat widget."),
+  })
 export type CreateWebchatPublicRequest = z.infer<
   typeof createWebchatPublicRequest
 >
@@ -38,10 +43,22 @@ export type CreateWebchatPublicRequest = z.infer<
 export const updateWebchatPublicRequest = createWebchatPublicRequest
   .partial()
   .extend({
-    hideHeader: z.boolean().optional(),
-    showLogo: z.boolean().optional(),
-    hideMessageInput: z.boolean().optional(),
-    enable: z.boolean().optional(),
+    hideHeader: z
+      .boolean()
+      .optional()
+      .describe("Whether to hide the widget's header bar."),
+    showLogo: z
+      .boolean()
+      .optional()
+      .describe("Whether to show the brand logo in the widget."),
+    hideMessageInput: z
+      .boolean()
+      .optional()
+      .describe("Whether to hide the message input box."),
+    enable: z
+      .boolean()
+      .optional()
+      .describe("Whether the webchat widget is active."),
   })
 export type UpdateWebchatPublicRequest = z.infer<
   typeof updateWebchatPublicRequest

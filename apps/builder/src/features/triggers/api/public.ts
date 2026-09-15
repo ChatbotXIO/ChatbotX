@@ -39,7 +39,8 @@ export const triggersPublicRouter = {
       method: "GET",
       path: "/v1/triggers",
       summary: "List triggers",
-      description: "Lists triggers with their real conditions and actions.",
+      description:
+        "Use this to inspect triggers and their active conditions and actions before changing one with `triggers.update`. Returns the configured triggers in this workspace.",
       tags: ["Triggers"],
     })
     .input(publicListRequest)
@@ -62,7 +63,13 @@ export const triggersPublicRouter = {
       description: "Returns a trigger with its real conditions and actions.",
       tags: ["Triggers"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Trigger id. Get it from `triggers.list`.",
+        ),
+      }),
+    )
     .output(triggerResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -103,9 +110,19 @@ export const triggersPublicRouter = {
       method: "PUT",
       path: "/v1/triggers/{id}",
       summary: "Replace a trigger's conditions and actions",
+      description:
+        "Overwrites a trigger's full set of conditions and actions. Call `triggers.get` to inspect current values first.",
       tags: ["Triggers"],
     })
-    .input(updateTriggerSchema.and(z.object({ id: zodBigintAsString() })))
+    .input(
+      updateTriggerSchema.and(
+        z.object({
+          id: zodBigintAsString().describe(
+            "Trigger id. Get it from `triggers.list`.",
+          ),
+        }),
+      ),
+    )
     .output(triggerResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
@@ -130,13 +147,26 @@ export const triggersPublicRouter = {
       method: "PATCH",
       path: "/v1/triggers/{id}/settings",
       summary: "Update a trigger's name or active state",
+      description:
+        "Changes a trigger's name or active state without touching its conditions and actions.",
       tags: ["Triggers"],
     })
     .input(
       z.object({
-        id: zodBigintAsString(),
-        name: z.string().trim().min(1).max(255).optional(),
-        active: z.boolean().optional(),
+        id: zodBigintAsString().describe(
+          "Trigger id. Get it from `triggers.list`.",
+        ),
+        name: z
+          .string()
+          .trim()
+          .min(1)
+          .max(255)
+          .optional()
+          .describe("New trigger name."),
+        active: z
+          .boolean()
+          .optional()
+          .describe("Whether the trigger is active."),
       }),
     )
     .output(triggerResource)
@@ -156,10 +186,18 @@ export const triggersPublicRouter = {
       method: "DELETE",
       path: "/v1/triggers/{id}",
       summary: "Delete a trigger",
+      description:
+        "Permanently deletes a trigger. Use `triggers.list` to find its id first.",
       successStatus: 204,
       tags: ["Triggers"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Trigger id. Get it from `triggers.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await triggerService.deleteMany({

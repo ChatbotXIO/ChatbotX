@@ -16,32 +16,53 @@ import { z } from "zod"
  * builder's own request validation.
  */
 export const incomingApiMessageSchema = z.object({
-  contact: z.object({
-    sourceId: z.string().min(1),
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
-    email: z.email().optional(),
-    phoneNumber: z.string().optional(),
-    avatar: z.url().optional(),
-    locale: z.string().optional(),
-  }),
-  message: z.object({
-    sourceId: z.string().min(1),
-    text: z.string().nullish(),
-    attachments: z
-      .array(
-        z.object({
-          url: z.url(),
-          fileType: fileTypes,
-          mimeType: z.string(),
-          name: z.string().optional(),
-        }),
-      )
-      .optional(),
-    contentType: z.enum(["text", "location"]).default("text"),
-    contentAttributes: z.record(z.string(), z.unknown()).optional(),
-  }),
-  postbackPayload: z.string().nullish(),
+  contact: z
+    .object({
+      sourceId: z
+        .string()
+        .min(1)
+        .describe(
+          "Stable contact id in your system; used to find or create the contact.",
+        ),
+      firstName: z.string().optional(),
+      lastName: z.string().optional(),
+      email: z.email().optional(),
+      phoneNumber: z.string().optional(),
+      avatar: z.url().optional(),
+      locale: z.string().optional(),
+    })
+    .describe(
+      "Contact the message is from, identified by your system's own id.",
+    ),
+  message: z
+    .object({
+      sourceId: z
+        .string()
+        .min(1)
+        .describe(
+          "Idempotency key: resending the same value for the same contact does not duplicate the message.",
+        ),
+      text: z.string().nullish(),
+      attachments: z
+        .array(
+          z.object({
+            url: z.url(),
+            fileType: fileTypes,
+            mimeType: z.string(),
+            name: z.string().optional(),
+          }),
+        )
+        .optional(),
+      contentType: z.enum(["text", "location"]).default("text"),
+      contentAttributes: z.record(z.string(), z.unknown()).optional(),
+    })
+    .describe("Message body and any attachments."),
+  postbackPayload: z
+    .string()
+    .nullish()
+    .describe(
+      "Payload echoed back when the message is a reply to a button/postback.",
+    ),
 })
 export type IncomingApiMessage = z.infer<typeof incomingApiMessageSchema>
 

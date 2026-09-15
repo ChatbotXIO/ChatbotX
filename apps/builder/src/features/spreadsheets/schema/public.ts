@@ -18,29 +18,42 @@ export const listSpreadsheetsPublicResponse = publicListResponse(
 )
 
 export const getSpreadsheetPublicRequest = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Spreadsheet id. Get it from `spreadsheets.list`.",
+  ),
 })
 
 export const createSpreadsheetPublicRequest = createSpreadsheetRequest
 export const createSpreadsheetPublicResponse = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe("New spreadsheet id."),
 })
 
 export const updateSpreadsheetPublicRequest = createSpreadsheetRequest.extend({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Spreadsheet id. Get it from `spreadsheets.list`.",
+  ),
 })
 
 export const deleteSpreadsheetPublicRequest = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Spreadsheet id. Get it from `spreadsheets.list`.",
+  ),
 })
 
 export const listWorksheetsPublicRequest = z.object({
-  spreadsheetId: zodBigintAsString(),
+  spreadsheetId: zodBigintAsString().describe(
+    "Spreadsheet id. Get it from `spreadsheets.list`.",
+  ),
 })
 export { listWorksheetsResponse } from "./query"
 
 export const listWorksheetHeadersPublicRequest = z.object({
-  spreadsheetId: zodBigintAsString(),
-  worksheetName: z.string(),
+  spreadsheetId: zodBigintAsString().describe(
+    "Spreadsheet id. Get it from `spreadsheets.list`.",
+  ),
+  worksheetName: z
+    .string()
+    .describe("Worksheet name. Get it from `spreadsheets.listWorksheets`."),
 })
+
 export { listWorksheetHeadersResponse } from "./query"

@@ -23,7 +23,13 @@ export type GetWorkspaceMembersSchema = Awaited<
 
 export const listWorkspaceMembersRequest = basePaginationRequest.extend({
   workspaceId: zodBigintAsString(),
-  keyword: z.string().nullish().default(null),
+  keyword: z
+    .string()
+    .nullish()
+    .default(null)
+    .describe(
+      "Case-insensitive substring match against the member's name or email.",
+    ),
 })
 export type ListWorkspaceMembersRequest = z.infer<
   typeof listWorkspaceMembersRequest
@@ -42,7 +48,9 @@ export type ListWorkspaceMembersResponse = z.infer<
 >
 
 export const getWorkspaceMemberRequest = z.object({
-  memberId: zodBigintAsString(),
+  memberId: zodBigintAsString().describe(
+    "Workspace member id. Get it from `workspaceMembers.list`.",
+  ),
   workspaceId: zodBigintAsString(),
 })
 export type GetWorkspaceMemberRequest = z.infer<

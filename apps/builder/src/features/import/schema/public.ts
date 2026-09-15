@@ -26,8 +26,15 @@ export const contactImportPublicResource = z.object({
 })
 
 export const listContactImportsPublicRequest = publicListRequest.extend({
-  status: importStatuses.optional(),
-  keyword: z.string().nullish(),
+  status: importStatuses
+    .optional()
+    .describe("Filter to import jobs in this status."),
+  keyword: z
+    .string()
+    .nullish()
+    .describe(
+      "Case-insensitive substring match against the import's file name.",
+    ),
 })
 
 export const listContactImportsPublicResponse = publicListResponse(
@@ -35,5 +42,5 @@ export const listContactImportsPublicResponse = publicListResponse(
 )
 
 export const getContactImportPublicRequest = z.object({
-  id: z.string(),
+  id: z.string().describe("Import job id. Get it from `contacts.listImports`."),
 })

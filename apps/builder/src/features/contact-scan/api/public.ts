@@ -23,6 +23,8 @@ export const contactScanPublicRouter = {
       method: "GET",
       path: "/v1/contact-scans/status",
       summary: "Get the latest Automatic Customer Scan status for an inbox",
+      description:
+        "Returns the most recent scan's progress and result for an inbox. Use `contactScans.create` to start a new scan, or `contactScans.list` for the full history.",
       tags: ["Contacts"],
     })
     .input(getContactScanStatusPublicRequest)
@@ -41,6 +43,8 @@ export const contactScanPublicRouter = {
       method: "GET",
       path: "/v1/contact-scans",
       summary: "List Automatic Customer Scan runs for the workspace",
+      description:
+        "Returns scan history across every inbox in the workspace. Use `contactScans.getStatus` to check one inbox's latest run.",
       tags: ["Contacts"],
     })
     .input(listContactScansPublicRequest)

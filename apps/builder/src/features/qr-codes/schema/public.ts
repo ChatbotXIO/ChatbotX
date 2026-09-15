@@ -4,10 +4,15 @@ import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { createQrCodeRequest, updateQrCodeRequest } from "./action"
 import { qrCodeResource } from "./resource"
 
-const qrCodeId = zodBigintAsString()
+const qrCodeId = zodBigintAsString().describe(
+  "QR code id. Get it from `qrCodes.list`.",
+)
 
 export const publicListQrCodesRequest = publicListRequest.extend({
-  keyword: z.string().optional(),
+  keyword: z
+    .string()
+    .optional()
+    .describe("Case-insensitive substring match against the QR code's name."),
   sort: z
     .array(
       z.object({
@@ -15,7 +20,8 @@ export const publicListQrCodesRequest = publicListRequest.extend({
         desc: z.boolean(),
       }),
     )
-    .optional(),
+    .optional()
+    .describe("Sort order as [{ id, desc }] column/direction pairs."),
 })
 
 const qrCodePublicItem = qrCodeResource.omit({ workspaceId: true }).and(

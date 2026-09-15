@@ -1,6 +1,10 @@
 // @vitest-environment node
 
-import { OpenAPIGenerator } from "@orpc/openapi"
+import {
+  type JSONSchema,
+  OpenAPIGenerator,
+  simplifyComposedObjectJsonSchemasAndRefs,
+} from "@orpc/openapi"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { beforeAll, describe, expect, test, vi } from "vitest"
 
@@ -23,14 +27,30 @@ vi.mock("@chatbotx.io/database/client", () => {
   return { db: proxy }
 })
 
+type JsonSchema = {
+  allOf?: JsonSchema[]
+  anyOf?: JsonSchema[]
+  description?: string
+  oneOf?: JsonSchema[]
+  properties?: Record<string, JsonSchema>
+  type?: string
+}
+
 type SpecOperation = {
-  operationId: string
+  bodySchema?: JsonSchema
+  description?: string
   method: string
+  operationId: string
+  parameters: Array<{
+    description?: string
+    name: string
+    schema?: JsonSchema
+  }>
   path: string
-  tags: string[]
-  summary?: string
-  security?: Record<string, string[]>[]
   responseStatuses: string[]
+  security?: Record<string, string[]>[]
+  summary?: string
+  tags: string[]
 }
 
 const LEGACY_WORKSPACE_TOKEN_PATTERN = /workspace[_.]?token/i
@@ -117,11 +137,16 @@ beforeAll(async () => {
       methods as Record<string, unknown>,
     )) {
       const op = operation as {
+        description?: string
         operationId?: string
         summary?: string
         tags?: string[]
         security?: Record<string, string[]>[]
-        parameters?: { schema?: unknown }[]
+        parameters?: Array<{
+          description?: string
+          name: string
+          schema?: JsonSchema
+        }>
         requestBody?: {
           content?: Record<string, { schema?: unknown }>
         }
@@ -133,9 +158,18 @@ beforeAll(async () => {
       if (!op.operationId) {
         continue
       }
+      const bodySchema = op.requestBody?.content?.["application/json"]?.schema
       operations.push({
+        bodySchema: bodySchema
+          ? (simplifyComposedObjectJsonSchemasAndRefs(
+              bodySchema as JSONSchema,
+              spec,
+            ) as JsonSchema)
+          : undefined,
+        description: op.description,
         operationId: op.operationId,
         method: method.toUpperCase(),
+        parameters: op.parameters ?? [],
         path,
         tags: op.tags ?? [],
         summary: op.summary,
@@ -158,9 +192,10 @@ beforeAll(async () => {
           requestSchemas.push(param.schema)
         }
       }
-      const bodySchema = op.requestBody?.content?.["application/json"]?.schema
-      if (bodySchema) {
-        requestSchemas.push(bodySchema)
+      const requestBodySchema =
+        op.requestBody?.content?.["application/json"]?.schema
+      if (requestBodySchema) {
+        requestSchemas.push(requestBodySchema)
       }
       if (requestSchemas.length > 0) {
         requestSchemasByOperationId[op.operationId] = requestSchemas
@@ -170,6 +205,29 @@ beforeAll(async () => {
 
   operations.sort((a, b) => a.operationId.localeCompare(b.operationId))
 }, 120_000)
+
+const NON_ALPHANUMERIC_PATTERN = /[^a-z0-9]+/
+const SUMMARY_STARTS_UPPERCASE_PATTERN = /^[A-Z]/
+const normalizeDescriptionPhrase = (value: string): string => {
+  const [firstToken = "", ...remainingTokens] = value
+    .toLowerCase()
+    .split(NON_ALPHANUMERIC_PATTERN)
+    .filter(Boolean)
+  const normalizedFirstToken = firstToken.endsWith("s")
+    ? firstToken.slice(0, -1)
+    : firstToken
+  return [normalizedFirstToken, ...remainingTokens].join("")
+}
+
+const hasDescribedComposedBranches = (schema: JsonSchema): boolean =>
+  (["allOf", "anyOf", "oneOf"] as const).some((combinator) => {
+    const branches = schema[combinator]
+    return (
+      branches !== undefined &&
+      branches.length > 0 &&
+      branches.every((branch) => Boolean(branch.description))
+    )
+  })
 
 describe("public API spec — operation naming guard", () => {
   // Pins the MCP tool name / operationId surface. A diff here is a
@@ -198,6 +256,87 @@ describe("public API spec — operation naming guard", () => {
       .map((op) => op.operationId)
 
     expect(missingSummary).toEqual([])
+  })
+
+  test("every operation has a description", () => {
+    const missingDescriptions = operations
+      .filter((operation) => !operation.description)
+      .map((operation) => operation.operationId)
+
+    expect(missingDescriptions).toEqual([])
+  })
+
+  test("every operation has a tag", () => {
+    const missingTags = operations
+      .filter((operation) => operation.tags.length === 0)
+      .map((operation) => operation.operationId)
+
+    expect(missingTags).toEqual([])
+  })
+
+  test("every summary follows the public API house style", () => {
+    const invalidSummaries = operations.flatMap((operation) => {
+      const summary = operation.summary
+      if (!summary) {
+        return operation.operationId
+      }
+
+      const isInvalid =
+        summary.length > 60 ||
+        summary.endsWith(".") ||
+        summary.includes(" — ") ||
+        summary.includes(". ") ||
+        !SUMMARY_STARTS_UPPERCASE_PATTERN.test(summary)
+      return isInvalid ? operation.operationId : []
+    })
+
+    expect(invalidSummaries).toEqual([])
+  })
+
+  test("every present description is useful and non-redundant", () => {
+    const invalidDescriptions = operations.flatMap((operation) => {
+      const description = operation.description
+      if (!description) {
+        return []
+      }
+
+      const duplicatesSummary = normalizeDescriptionPhrase(
+        description,
+      ).startsWith(normalizeDescriptionPhrase(operation.summary ?? ""))
+      const isInvalid = description.length < 50 || duplicatesSummary
+      return isInvalid ? operation.operationId : []
+    })
+    expect(invalidDescriptions).toEqual([])
+  })
+
+  test("every top-level input field has a description", () => {
+    const missingInputDescriptions = operations.flatMap((operation) => {
+      const missingParameters = operation.parameters
+        .filter(
+          (parameter) =>
+            !(parameter.description || parameter.schema?.description),
+        )
+        .map((parameter) => `${operation.operationId}.${parameter.name}`)
+
+      const bodySchema = operation.bodySchema
+      if (!bodySchema) {
+        return missingParameters
+      }
+      if (bodySchema.type !== "object") {
+        return [...missingParameters, `${operation.operationId}.<body>`]
+      }
+
+      const missingBodyFields = Object.entries(bodySchema.properties ?? {})
+        .filter(
+          ([, property]) =>
+            !(property.description || hasDescribedComposedBranches(property)),
+        )
+        .map(([name]) => `${operation.operationId}.${name}`)
+
+      return [...missingParameters, ...missingBodyFields]
+    })
+
+    expect(missingInputDescriptions).toEqual([])
   })
 
   test("every /v1/channels/api/* operation requires only the channel token scheme", () => {
@@ -230,6 +369,10 @@ describe("public API spec — operation naming guard", () => {
       // `channels.me` legitimately echoes the authenticated token's own
       // workspace/inbox identity — that IS the endpoint's purpose.
       "channels.me",
+      // `token.get` legitimately echoes the calling token's own workspace
+      // id, permission, and scopes — that IS the endpoint's purpose (token
+      // introspection), same rationale as `channels.me`.
+      "token.get",
 
       // Pre-existing leaks, confirmed present on `main` before the analytics
       // router this test was strengthened for (verified via a clean
@@ -410,6 +553,65 @@ describe("public API spec — error response coverage", () => {
       .map((op) => op.operationId)
 
     expect(missing404).toEqual([])
+  })
+
+  // A route with no `.output(...)` schema serializes to this exact
+  // "unknown value" JSON Schema shape (oRPC/Zod's representation of `any`),
+  // distinct from every real response schema (which always declares a type
+  // or a real union of typed alternatives).
+  const isUndeclaredBodySchema = (schema: unknown): boolean =>
+    JSON.stringify(schema) === JSON.stringify({ anyOf: [{}, { not: {} }] })
+
+  test("every operation with no declared response body documents successStatus: 204", () => {
+    const bodyless = operations.filter((op) =>
+      isUndeclaredBodySchema(responseSchemasByOperationId[op.operationId]),
+    )
+
+    expect(bodyless.length).toBeGreaterThan(0)
+
+    const wrongStatus = bodyless
+      .filter((op) => {
+        const successStatuses = op.responseStatuses.filter((status) =>
+          status.startsWith("2"),
+        )
+        return !(successStatuses.length === 1 && successStatuses[0] === "204")
+      })
+      .map((op) => op.operationId)
+
+    expect(wrongStatus).toEqual([])
+  })
+
+  // Mirrors `toSnakeCase` in apps/mcp-server/src/openapi-loader.ts — kept in
+  // sync manually rather than imported, since apps/builder has no dependency
+  // on chatbotx-mcp-server. If that implementation changes, update this too.
+  const toSnakeCase = (str: string): string =>
+    str
+      .replace(/([A-Z]{2,})(?=[A-Z][a-z]|$)/g, "_$1")
+      .replace(/([a-z\d])([A-Z])/g, "$1_$2")
+      .toLowerCase()
+      .replace(/[.\-\s]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_|_$/g, "")
+
+  test("operationIds are injective after MCP's snake_case conversion — a collision leaves one tool permanently unreachable", () => {
+    const snakeCased = operations.map((op) => toSnakeCase(op.operationId))
+    const seen = new Map<string, string[]>()
+    for (const [index, name] of snakeCased.entries()) {
+      const operationId = operations[index]?.operationId ?? ""
+      const existing = seen.get(name)
+      if (existing) {
+        existing.push(operationId)
+      } else {
+        seen.set(name, [operationId])
+      }
+    }
+
+    const collisions = [...seen.entries()].filter(
+      ([, operationIds]) => operationIds.length > 1,
+    )
+
+    expect(collisions).toEqual([])
+    expect(new Set(snakeCased).size).toBe(operations.length)
   })
 
   test("every POST/PUT/PATCH operation documents 422", () => {

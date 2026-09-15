@@ -11,6 +11,7 @@ import { listMessages } from "@/features/messages/queries"
 import { createMessageRequest } from "@/features/messages/schema/mutation"
 import { listMessagesResponse } from "@/features/messages/schema/query"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
@@ -30,13 +31,21 @@ export const contactsMessagesPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/messages",
       summary: "Send message to contact",
+      description:
+        "Delivers a text or media message to a contact's conversation, creating one when needed. Use `contacts.get` to confirm the recipient first, and `contacts.listMessages` to inspect the conversation afterward.",
       successStatus: 204,
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       createMessageRequest.and(
         z.object({
-          identifier: z.string().min(1),
+          identifier: z
+            .string()
+            .min(1)
+            .describe(
+              "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            ),
         }),
       ),
     )
@@ -65,13 +74,30 @@ export const contactsMessagesPublicRouter = {
       method: "GET",
       path: "/v1/contacts/{identifier}/messages",
       summary: "List messages for contact",
+      description:
+        "Use this to inspect cursor-paginated messages from a contact's existing conversation. Call `contacts.get` to resolve the contact first, or use `contacts.sendMessage` to add an outbound message.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        perPage: z.coerce.number().optional().default(20),
-        cursor: z.string().optional(),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        perPage: z.coerce
+          .number()
+          .optional()
+          .default(20)
+          .describe("Number of messages per page."),
+        cursor: z
+          .string()
+          .optional()
+          .describe(
+            "Opaque pagination cursor from a previous response. Omit for the first page.",
+          ),
       }),
     )
     .output(listMessagesResponse)
@@ -101,12 +127,19 @@ export const contactsMessagesPublicRouter = {
       method: "GET",
       path: "/v1/contacts/{identifier}/messages/{messageId}",
       summary: "Get a message by ID for a contact",
+      description:
+        "Returns one message from a contact's conversation. Call `contacts.listMessages` to find its `messageId` first.",
       tags: ["Contacts"],
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        messageId: zodBigintAsString(),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        messageId: zodBigintAsString().describe("Message id (numeric string)."),
       }),
     )
     .output(messageResourceWithRelations)
@@ -135,14 +168,30 @@ export const contactsMessagesPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/auto-replies",
       summary: "Trigger auto reply for contact",
+      description:
+        "Simulates the contact sending `keyword` and delivers whichever automated response is configured to match it, as if it had arrived inbound. Use `contacts.sendMessage` to send arbitrary text instead.",
       successStatus: 204,
       tags: ["Contacts"],
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        keyword: z.string().min(1),
-        inboxId: zodBigintAsString().optional(),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        keyword: z
+          .string()
+          .min(1)
+          .describe(
+            "Inbound keyword to match against configured auto-replies.",
+          ),
+        inboxId: zodBigintAsString()
+          .optional()
+          .describe(
+            "Inbox id (numeric string) to send from. Get it from `inboxes.list`.",
+          ),
       }),
     )
     .errors(possibleErrorsOnMutatingResource)
@@ -182,14 +231,28 @@ export const contactsMessagesPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/flows",
       summary: "Send flow to contact",
+      description:
+        "Starts a flow for a resolved contact and delivers its first message on an existing or new conversation. Call `flows.list` to find the flow first, or use `contacts.sendMessage` for one message.",
       successStatus: 204,
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        flowId: zodBigintAsString(),
-        inboxId: zodBigintAsString().optional(),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        flowId: zodBigintAsString().describe(
+          "Flow id (numeric string). Get it from `flows.list`.",
+        ),
+        inboxId: zodBigintAsString()
+          .optional()
+          .describe(
+            "Inbox id (numeric string) to send from. Get it from `inboxes.list`.",
+          ),
       }),
     )
     .errors(possibleErrorsOnMutatingResource)

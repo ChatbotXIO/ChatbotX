@@ -13,9 +13,13 @@ import { publicListRequest } from "@/lib/public-api/list"
 // variants declared here instead of reusing those directly, mirroring
 // `broadcasts/schema/public.ts`.
 export const publicListSequenceStepContactsRequest = z.object({
-  id: zodBigintAsString(),
-  stepId: zodBigintAsString(),
-  eventType: sequenceStepEventTypes,
+  id: zodBigintAsString().describe(
+    "Sequence id. Get it from `sequences.list`.",
+  ),
+  stepId: zodBigintAsString().describe("Sequence step id."),
+  eventType: sequenceStepEventTypes.describe(
+    "Lifecycle event to filter recipients by (e.g. sent, opened).",
+  ),
   page: publicListRequest.shape.page,
   perPage: publicListRequest.shape.perPage,
 })

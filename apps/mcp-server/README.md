@@ -4,29 +4,67 @@
 
 ## How it works
 
-On startup the server fetches `{CHATBOTX_API_URL}/public-spec.json` and registers one MCP tool per API operation. `CHATBOTX_API_URL` is the origin **including** the `/api` path prefix (e.g. `https://app.chatbotx.io/api`). Adding a new API endpoint in ChatbotX automatically makes it available as a tool on the next server restart — no code changes required. Tool names are cached in-process for the server's lifetime, so a renamed operation requires a restart to pick up.
+On startup the server fetches `{CHATBOTX_API_URL}/public-spec.json` and registers one MCP tool per API operation the spec marks `x-mcp.visibility: "default"`. `CHATBOTX_API_URL` is the origin **including** the `/api` path prefix (e.g. `https://app.chatbotx.io/api`). Adding a new default-visible API endpoint in ChatbotX automatically makes it available as a tool — the spec is re-fetched in the background whenever it's older than `CHATBOTX_SPEC_TTL_MS` (default 5 minutes), so a new/changed operation shows up on the next `tools/list` call without a server restart.
+
+### Default tools vs. the full API
+
+ChatbotX's public API has ~350 operations. Listing all of them as MCP tools overwhelms an agent's context and its ability to pick the right one, so `tools/list` returns only a curated default set (see below) plus two meta-tools:
+
+| Tool | Description |
+|---|---|
+| `search_tools` | Search the full API for a tool not in the default set. Returns each match's name, description, and input schema. |
+| `call_tool` | Execute any tool by name, including ones `search_tools` found but `tools/list` doesn't show. |
+
+Use `search_tools` when the task needs something outside the default set (e.g. deleting a resource, managing AI agents, coupons, products) — then invoke it with `call_tool`.
+
+### Scope-based filtering
+
+`tools/list` is further narrowed to what the calling token can actually use, resolved once per token via `GET /v1/token` (`introspectToken`, cached per token value for `CHATBOTX_SPEC_TTL_MS`):
+
+- A token missing a scope never sees that scope's tools (they still exist for `search_tools`/`call_tool`, which always hit the real API and get a real 403 if unauthorized).
+- A `read_only` token only sees tools whose `readOnlyHint` annotation is true — every `GET` by default, plus any POST explicitly marked `x-mcp.readOnlyHint: true` for endpoints that are reads in disguise (currently `contacts_search`, a filter-body search).
+- `capabilities_get` and `token_get` are always visible regardless of scope — an agent needs them to discover what it *can* do and what its token allows before anything else works.
+- If token introspection itself fails (network blip, unreachable API), filtering fails open — `tools/list` falls back to the full default set. The actual API call still enforces the token's real permissions either way.
+
+### Discovery tools an agent should call first
+
+| Tool | Description |
+|---|---|
+| `capabilities_get` | Discover the workspace's inboxes, WhatsApp templates, custom/bot fields, tags, AI agents, sequences, and flows — the ids a flow spec or a message needs to reference. |
+| `token_get` | Get the calling token's workspace id, permission (`read_only`/`full`), and scopes — check before attempting a write. |
+| `schemas_flow_spec` | Get the JSON Schema for the `spec` object `flows_publish`/`flows_update_draft`/`flows_validate` accept — the authoritative reference for every flow step type. |
 
 ## Available tools
 
-Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). Operations under `/v1/channels/api/*` (channel-token-authed) and deprecated operations (e.g. `inboxes.listChannels`) are excluded — they require a different token type or are kept only for backward compatibility. The current set of 66 tools:
+Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 44 tools:
+
+### Capabilities
+
+| Tool | Description |
+|---|---|
+| `capabilities_get` | Discover the workspace's inboxes, templates, fields, tags, sequences, and flows |
+| `schemas_flow_spec` | Get the JSON Schema for the flow-spec DSL |
+| `token_get` | Get the calling token's workspace id, permission, and scopes |
 
 ### AI Agents
 
 | Tool | Description |
 |---|---|
 | `ai_agents_list` | List AI agents |
+| `ai_agents_create` | Create an AI agent |
+| `ai_agents_update` | Update an AI agent |
+| `ai_files_list` | List AI files |
+| `ai_functions_list` | List AI functions |
 
-### Bot Fields
+### Analytics
 
 | Tool | Description |
 |---|---|
-| `bot_fields_list` | Get all bot fields |
-| `bot_fields_create` | Create a new bot field |
-| `bot_fields_set_many` | Set multiple bot field values |
-| `bot_fields_bulk_update` | Bulk update bot field values by id or name |
-| `bot_fields_get` | Get bot field by id or name |
-| `bot_fields_set` | Set bot field value by id or name |
-| `bot_fields_delete` | Unset the value of the bot field by id or name |
+| `analytics_new_contact_counts_per_day` | Get new contact counts per day |
+| `analytics_blocked_contacts_per_day` | Get blocked contacts per day |
+| `analytics_flow_stats` | Get flow analytics |
+| `analytics_broadcast_stats` | Get broadcast stats |
+| `analytics_sequence_step_stats` | Get sequence step stats |
 
 ### Broadcasts
 
@@ -34,52 +72,33 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 |---|---|
 | `broadcasts_list` | Get all broadcasts |
 | `broadcasts_get` | Get broadcast by id or name |
-| `broadcasts_get_audience` | Get broadcast audience |
+| `broadcasts_stop` | Stop a broadcast that is currently sending |
 
 ### Contacts
 
 | Tool | Description |
 |---|---|
-| `contacts_list` | List contacts |
 | `contacts_create` | Create a contact |
 | `contacts_get` | Get contact by identifier (id:123, email:user@example.com, phone:+84...) |
-| `contacts_upsert` | Upsert a contact by identifier |
-| `contacts_update` | Update contact fields |
-| `contacts_delete` | Delete a contact |
-| `contacts_find_by_custom_field` | List contacts by custom field |
-| `contacts_import` | Import contacts from a file |
+| `contacts_list` | List contacts |
+| `contacts_search` | Search contacts with a filter body |
 | `contacts_list_tags` | Get all tags added to this contact |
-| `contacts_add_tags` | Add tags to the contact |
-| `contacts_remove_tags` | Remove tags from the contact |
+| `contacts_add_tags_by_name` | Add tags to the contact by name |
 | `contacts_list_custom_fields` | Get all custom fields from a contact |
-| `contacts_set_custom_fields` | Set multiple custom field values for a contact |
-| `contacts_clear_custom_fields` | Clear all custom fields from a contact |
-| `contacts_get_custom_field` | Get contact custom field value |
 | `contacts_set_custom_field` | Set contact custom field value |
-| `contacts_clear_custom_field` | Delete contact custom field by id or name |
-| `contacts_block` | Block a contact |
-| `contacts_unblock` | Unblock a contact |
 | `contacts_list_messages` | List messages for contact |
-| `contacts_get_message` | Get a message by ID for a contact |
 | `contacts_send_message` | Send message to contact |
 | `contacts_send_flow` | Send flow to contact |
-| `contacts_trigger_auto_reply` | Trigger auto reply for contact |
+| `contacts_list_sequences` | List sequences the contact is enrolled in |
+| `contacts_subscribe_sequences` | Enroll the contact in one or more sequences |
 
 ### Conversations
 
 | Tool | Description |
 |---|---|
 | `conversations_list` | List conversations |
-
-### Custom Fields
-
-| Tool | Description |
-|---|---|
-| `custom_fields_list` | Get all custom fields |
-| `custom_fields_create` | Create a custom field |
-| `custom_fields_get` | Get custom field by id or name |
-| `custom_fields_update` | Update custom field |
-| `custom_fields_delete` | Delete custom field |
+| `conversations_get` | Get a conversation by id |
+| `conversations_assign` | Assign or unassign a conversation to a user or inbox team |
 
 ### Error Logs
 
@@ -87,37 +106,16 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 |---|---|
 | `error_logs_list` | List error logs |
 
-### External Webhooks
-
-| Tool | Description |
-|---|---|
-| `external_webhooks_list` | List external webhooks |
-| `external_webhooks_create` | Register an external webhook |
-| `external_webhooks_delete` | Unregister an external webhook |
-
 ### Flows
 
 | Tool | Description |
 |---|---|
-| `flows_list` | Get all flows |
-
-### Inboxes
-
-| Tool | Description |
-|---|---|
-| `inboxes_list` | List inboxes |
-
-### Teams
-
-| Tool | Description |
-|---|---|
-| `inbox_teams_list` | List teams |
-
-### Integrations
-
-| Tool | Description |
-|---|---|
-| `integrations_list` | List integrations |
+| `flows_list` | List flows |
+| `flows_get` | Get a flow by id |
+| `flows_create` | Create a flow |
+| `flows_update_draft` | Update a flow's draft version |
+| `flows_publish` | Publish a flow |
+| `flows_validate` | Compile and validate a flow spec without publishing it |
 
 ### Keywords
 
@@ -125,17 +123,11 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 |---|---|
 | `keywords_list` | List keywords (automated responses) |
 
-### Ref Links
+### Messages
 
 | Tool | Description |
 |---|---|
-| `reflinks_get` | Get a specific ref link |
-
-### Saved Replies
-
-| Tool | Description |
-|---|---|
-| `saved_replies_list` | List saved replies |
+| `messages_list` | List messages on a conversation |
 
 ### Sequences
 
@@ -143,43 +135,9 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 |---|---|
 | `sequences_list` | List sequences |
 | `sequences_get` | Get sequence details |
+| `sequences_update` | Update a sequence's name or active state |
 
-### Tags
-
-| Tool | Description |
-|---|---|
-| `tags_list` | Get all tags |
-| `tags_create` | Create a new tag |
-| `tags_get` | Get tag by id or name |
-| `tags_update` | Update tag |
-| `tags_delete` | Delete tag |
-
-### Template Messages
-
-| Tool | Description |
-|---|---|
-| `template_messages_list` | List template messages |
-
-### Triggers
-
-| Tool | Description |
-|---|---|
-| `triggers_list` | List triggers |
-
-### Webhooks
-
-| Tool | Description |
-|---|---|
-| `webhooks_list` | List webhooks |
-| `webhooks_create` | Register a webhook |
-| `webhooks_delete` | Unregister a webhook |
-
-### Members
-
-| Tool | Description |
-|---|---|
-| `workspace_members_list` | List workspace members |
-| `workspace_members_get` | Get workspace member by id |
+Everything else — deletes, less-common resources (coupons, products, webhooks, saved replies, tags/triggers/inboxes/custom-fields management, integrations, workspace members, etc.), and channel-token-only or deprecated operations — is reachable via `search_tools` → `call_tool`, not `tools/list`.
 
 ## Prerequisites
 
@@ -285,11 +243,14 @@ cp .env.example .env
 | `CHATBOTX_API_KEY` | Workspace token (stdio) | — | Yes (stdio) |
 | `CHATBOTX_API_URL` | ChatbotX API origin, including `/api` (e.g. `https://app.chatbotx.io/api`) | `https://api.chatbotx.io` | Yes |
 | `CHATBOTX_ALLOW_SELF_SIGNED_CERT` | Disable TLS verification (`true`/`false`) | — | No |
+| `CHATBOTX_SPEC_TTL_MS` | How long the fetched OpenAPI spec/tool list and a token's introspected scopes are trusted before a background re-fetch | `300000` | No |
+| `CHATBOTX_HTTP_TIMEOUT_MS` | Maximum duration for each OpenAPI, token introspection, or tool-call HTTP request | `30000` | No |
 | `CHATBOTX_MCP_TRANSPORT` | `stdio` \| `sse` \| `both` | `both` | No |
 | `CHATBOTX_MCP_HOST` | SSE server host | `0.0.0.0` | No |
 | `CHATBOTX_MCP_PORT` | SSE server port | `3333` | No |
 | `CHATBOTX_MCP_SSE_PATH` | SSE endpoint path | `/sse` | No |
 | `CHATBOTX_MCP_MESSAGES_PATH` | JSON-RPC messages path | `/messages` | No |
+| `CHATBOTX_MCP_CORS_ORIGIN` | CORS origin allowed to call the SSE/HTTP endpoints | `*` | No |
 | `CHATBOTX_MCP_SERVER_NAME` | Display name sent to AI clients | package name | No |
 | `CHATBOTX_MCP_SERVER_INSTRUCTIONS` | Instructions sent to AI clients on connect (helps ChatGPT know when to call tools) | built-in default | No |
 
@@ -316,12 +277,17 @@ dotenv -e .env -- tsx src/test-tools.ts
 
 ```
 src/
-├── index.ts              # Entry point — loads spec, starts transport(s)
-├── env.ts                # Environment variable schema
-├── openapi-loader.ts     # Fetches OpenAPI spec → DynamicTool list
-├── test-tools.ts         # Dev utility — prints loaded tools
+├── index.ts                # Entry point — loads spec, starts transport(s)
+├── env.ts                  # Environment variable schema
+├── http.ts                 # Timed fetch helper for OpenAPI, token, and tool requests
+├── openapi-loader.ts       # Fetches OpenAPI spec → DynamicTool list, x-mcp
+│                           # visibility/scope parsing, scope-filtered getVisibleTools()
+├── token-introspection.ts  # GET /v1/token → cached {permission, scopes} per token
+├── test-tools.ts           # Dev utility — prints loaded tools
 └── server/
-    ├── create-mcp-server.ts   # MCP server factory
+    ├── create-mcp-server.ts   # MCP server factory, tools/list + tools/call handlers
+    ├── meta-tools.ts          # search_tools / call_tool definitions + ranking
+    ├── execute-tool.ts        # Shared HTTP dispatch for a DynamicTool call
     ├── sse-server.ts          # SSE / Streamable HTTP transport
     └── stdio-server.ts        # stdio transport
 ```
@@ -330,7 +296,9 @@ src/
 
 **Tools not showing up**
 - Check that `CHATBOTX_API_URL` is reachable and `{CHATBOTX_API_URL}/public-spec.json` returns a valid OpenAPI spec.
-- Tool names are cached in-process for the server's lifetime — restart the server after a tool rename or a public API change.
+- Only operations the spec marks `x-mcp.visibility: "default"` appear in `tools/list` — everything else is reachable via `search_tools`/`call_tool`. See "Default tools vs. the full API" above.
+- The spec/tool list refreshes automatically every `CHATBOTX_SPEC_TTL_MS` (default 5 minutes); a brand-new operation may take that long to appear without a restart.
+- A token missing a required scope, or a `read_only` token calling a write endpoint's tool, will not see that tool — see "Scope-based filtering" above.
 - Check stderr output on startup — the server logs `Loaded N tools from OpenAPI spec`.
 
 **Port already in use**

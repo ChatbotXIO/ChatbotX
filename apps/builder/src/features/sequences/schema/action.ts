@@ -48,15 +48,17 @@ export const listSequencesResponse = z.object({
 export type ListSequencesResponse = z.infer<typeof listSequencesResponse>
 
 export const createSequenceRequest = z.object({
-  name: z.string().trim().min(1).max(255),
-  folderId: zodBigintAsString().nullish(),
+  name: z.string().trim().min(1).max(255).describe("Sequence name."),
+  folderId: zodBigintAsString()
+    .nullish()
+    .describe("Folder id (numeric string) to create the sequence in."),
 })
 export type CreateSequenceRequest = z.infer<typeof createSequenceRequest>
 
 export const updateSequenceSchema = z
   .object({
-    name: z.string().trim().min(1).max(255),
-    active: z.boolean(),
+    name: z.string().trim().min(1).max(255).describe("New sequence name."),
+    active: z.boolean().describe("Whether the sequence is active."),
   })
   .partial()
 export type UpdateSequenceSchema = z.infer<typeof updateSequenceSchema>
@@ -66,19 +68,62 @@ export type UpdateSequenceSchema = z.infer<typeof updateSequenceSchema>
 // `sequenceId`-less variant below is built by omitting from this base
 // object first and re-applying `validateStepDelayConsistency` after.
 const upsertSequenceStepBaseShape = z.object({
-  stepId: zodBigintAsString().optional(),
-  sequenceId: zodBigintAsString(),
-  order: z.number().int().min(0),
-  delayDays: z.number().int().min(0).optional(),
-  delayMinutes: z.number().int().min(0).optional(),
-  delayUnit: z.enum(DELAY_UNITS).optional(),
-  specificDateTime: z.iso.datetime().nullable().optional(),
-  flowId: zodBigintAsString().optional(),
-  isActive: z.boolean().optional(),
-  anytime: z.boolean().optional(),
-  sendTimeStart: z.string().nullable().optional(),
-  sendTimeEnd: z.string().nullable().optional(),
-  sendDays: z.array(z.string()).optional(),
+  stepId: zodBigintAsString()
+    .optional()
+    .describe("Existing step id to update. Omit to create a new step."),
+  sequenceId: zodBigintAsString().describe("Sequence id this step belongs to."),
+  order: z
+    .number()
+    .int()
+    .min(0)
+    .describe("Zero-based position of this step within the sequence."),
+  delayDays: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe("Delay before this step, in days."),
+  delayMinutes: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe("Delay before this step, in minutes."),
+  delayUnit: z
+    .enum(DELAY_UNITS)
+    .optional()
+    .describe("Unit the delay is expressed in."),
+  specificDateTime: z.iso
+    .datetime()
+    .nullable()
+    .optional()
+    .describe(
+      "Send this step at a specific ISO 8601 date/time instead of a relative delay.",
+    ),
+  flowId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Flow id (numeric string) to run at this step. Get it from `flows.list`.",
+    ),
+  isActive: z.boolean().optional().describe("Whether this step is active."),
+  anytime: z
+    .boolean()
+    .optional()
+    .describe("Whether this step can send outside of send-time hours."),
+  sendTimeStart: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Earliest time of day (HH:mm) this step may send."),
+  sendTimeEnd: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Latest time of day (HH:mm) this step may send."),
+  sendDays: z
+    .array(z.string())
+    .optional()
+    .describe("Days of the week this step may send on."),
 })
 
 const validateStepDelayConsistency = (

@@ -11,6 +11,10 @@ import { appointmentsPublicRouter } from "@/features/appointments/api/public"
 import { keywordsPublicRouter } from "@/features/automated-response/api/public"
 import { botFieldsPublicRouter } from "@/features/bot-fields/api/public"
 import { broadcastsPublicRouter } from "@/features/broadcasts/api/public"
+import {
+  capabilitiesPublicRouter,
+  schemasPublicRouter,
+} from "@/features/capabilities/api/public"
 import { contactScanPublicRouter } from "@/features/contact-scan/api/public"
 import { contactsPublicRouter } from "@/features/contacts/api/public"
 import { conversationsPublicRouter } from "@/features/conversations/api/public"
@@ -48,6 +52,7 @@ import { savedRepliesPublicRouter } from "@/features/saved-replies/api/public"
 import { sequencesPublicRouter } from "@/features/sequences/api/public"
 import { spreadsheetsPublicRouter } from "@/features/spreadsheets/api/public"
 import { tagsPublicRouter } from "@/features/tags/api/public"
+import { tokenPublicRouter } from "@/features/token/api/public"
 import { triggersPublicRouter } from "@/features/triggers/api/public"
 import { userPersistentMenusPublicRouter } from "@/features/user-persistent-menus/api/public"
 import { webhooksPublicRouter } from "@/features/webhooks/api/public"
@@ -66,6 +71,7 @@ export const publicRouter = {
   appointments: appointmentsPublicRouter,
   botFields: botFieldsPublicRouter,
   broadcasts: broadcastsPublicRouter,
+  capabilities: capabilitiesPublicRouter,
   channels: channelsPublicRouter,
   contactScans: contactScanPublicRouter,
   contacts: contactsPublicRouter,
@@ -97,11 +103,13 @@ export const publicRouter = {
   questionnaires: questionnairesPublicRouter,
   reflinks: reflinksPublicRouter,
   savedReplies: savedRepliesPublicRouter,
+  schemas: schemasPublicRouter,
   sequences: sequencesPublicRouter,
   smtpIntegrations: smtpIntegrationsPublicRouter,
   spreadsheets: spreadsheetsPublicRouter,
   tags: tagsPublicRouter,
   templateMessages: templateMessagesPublicRouter,
+  token: tokenPublicRouter,
   triggers: triggersPublicRouter,
   userPersistentMenus: userPersistentMenusPublicRouter,
   webchats: webchatsPublicRouter,

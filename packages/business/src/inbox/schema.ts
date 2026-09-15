@@ -11,9 +11,24 @@ import { integrationZaloResource } from "../integration-zalo/schema"
 
 export const listInboxesRequest = z.object({
   workspaceId: zodBigintAsString(),
-  includes: z.array(z.literal("integration")).optional(),
-  page: z.coerce.number().int().min(1).optional(),
-  perPage: z.coerce.number().int().min(1).optional(),
+  includes: z
+    .array(z.literal("integration"))
+    .optional()
+    .describe(
+      'Relations to embed. Pass ["integration"] to include each inbox\'s channel integration.',
+    ),
+  page: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .describe("Page number, starting at 1."),
+  perPage: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .describe("Number of items per page."),
 })
 export type ListInboxesRequest = z.infer<typeof listInboxesRequest>
 

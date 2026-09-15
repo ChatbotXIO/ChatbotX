@@ -21,6 +21,8 @@ export const botFieldsPublicRouter = {
       method: "GET",
       path: "/v1/bot-fields",
       summary: "Get all bot fields",
+      description:
+        "Use this to find bot field names before reading one with `botFields.get` or setting a value with `botFields.set`. Returns bot fields in this workspace.",
       tags: ["Bot Fields"],
     })
     .input(publicListRequest)
@@ -42,6 +44,8 @@ export const botFieldsPublicRouter = {
       method: "POST",
       path: "/v1/bot-fields",
       summary: "Create a new bot field",
+      description:
+        "Adds a custom bot field definition (a global variable available to every flow). Use `botFields.list` first to avoid duplicating an existing name.",
       successStatus: 201,
       tags: ["Bot Fields"],
     })
@@ -61,9 +65,18 @@ export const botFieldsPublicRouter = {
       method: "GET",
       path: "/v1/bot-fields/{idOrName}",
       summary: "Get bot field by id or name",
+      description:
+        "Returns one bot field's current value. Use `botFields.list` to find its id or name first.",
       tags: ["Bot Fields"],
     })
-    .input(z.object({ idOrName: z.string().max(255) }))
+    .input(
+      z.object({
+        idOrName: z
+          .string()
+          .max(255)
+          .describe("Bot field id or name. Get it from `botFields.list`."),
+      }),
+    )
     .output(publicBotFieldResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
@@ -79,10 +92,18 @@ export const botFieldsPublicRouter = {
       method: "PUT",
       path: "/v1/bot-fields/{idOrName}",
       summary: "Set bot field value by id or name",
+      description:
+        "Changes an existing bot field's value. Call `botFields.get` to inspect the current value first.",
       tags: ["Bot Fields"],
     })
     .input(
-      z.object({ idOrName: z.string().max(255), value: z.string().max(255) }),
+      z.object({
+        idOrName: z
+          .string()
+          .max(255)
+          .describe("Bot field id or name. Get it from `botFields.list`."),
+        value: z.string().max(255).describe("New value for the bot field."),
+      }),
     )
     .output(publicBotFieldResource)
     .errors(possibleErrorsOnMutatingResource)
@@ -100,14 +121,24 @@ export const botFieldsPublicRouter = {
       method: "PUT",
       path: "/v1/bot-fields",
       summary: "Set multiple bot field values",
+      description:
+        "Changes several bot fields' values in one call, addressed by name. Use `botFields.list` to find valid field names first.",
       successStatus: 204,
       tags: ["Bot Fields"],
     })
     .input(
       z.object({
-        fields: z.array(
-          z.object({ key: z.string().max(255), value: z.string().max(255) }),
-        ),
+        fields: z
+          .array(
+            z.object({
+              key: z.string().max(255).describe("Bot field name."),
+              value: z
+                .string()
+                .max(255)
+                .describe("New value for the bot field."),
+            }),
+          )
+          .describe("Bot fields to update."),
       }),
     )
     .errors(possibleErrorsOnMutatingResource)
@@ -128,23 +159,37 @@ export const botFieldsPublicRouter = {
       method: "PUT",
       path: "/v1/bot-fields/bulk-update",
       summary: "Bulk update bot field values by id or name",
+      description:
+        "Changes several bot fields' values in one call, addressed by id or name. Unlike `botFields.setMany`, each entry may target either an id or a name.",
       successStatus: 204,
       tags: ["Bot Fields"],
     })
     .input(
       z.object({
-        fields: z.array(
-          z.union([
-            z.object({
-              id: z.coerce.number().int().positive(),
-              value: z.union([z.string(), z.number()]).transform(String),
-            }),
-            z.object({
-              name: z.string().max(255),
-              value: z.union([z.string(), z.number()]).transform(String),
-            }),
-          ]),
-        ),
+        fields: z
+          .array(
+            z.union([
+              z.object({
+                id: z.coerce
+                  .number()
+                  .int()
+                  .positive()
+                  .describe("Bot field id. Get it from `botFields.list`."),
+                value: z
+                  .union([z.string(), z.number()])
+                  .transform(String)
+                  .describe("New value for the bot field."),
+              }),
+              z.object({
+                name: z.string().max(255).describe("Bot field name."),
+                value: z
+                  .union([z.string(), z.number()])
+                  .transform(String)
+                  .describe("New value for the bot field."),
+              }),
+            ]),
+          )
+          .describe("Bot fields to update, each addressed by id or name."),
       }),
     )
     .errors(possibleErrorsOnMutatingResource)
@@ -163,10 +208,19 @@ export const botFieldsPublicRouter = {
       method: "DELETE",
       path: "/v1/bot-fields/{idOrName}",
       summary: "Unset the value of the bot field by id or name",
+      description:
+        "Clears an existing bot field's value back to empty. Use `botFields.list` to find its id or name first.",
       successStatus: 204,
       tags: ["Bot Fields"],
     })
-    .input(z.object({ idOrName: z.string().max(255) }))
+    .input(
+      z.object({
+        idOrName: z
+          .string()
+          .max(255)
+          .describe("Bot field id or name. Get it from `botFields.list`."),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(
       async ({ context, input }) =>

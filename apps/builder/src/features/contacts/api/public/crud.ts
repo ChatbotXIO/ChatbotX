@@ -1,6 +1,7 @@
 import { contactService, importService, UNSCOPED } from "@chatbotx.io/business"
 import { contactSources, genderTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnFindingResource,
@@ -38,8 +39,9 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts",
       summary: "List contacts",
       description:
-        "List contacts in the workspace, with optional keyword search and filter. Supports `include` to shrink the response (e.g. `include=tags`) and `withCount=false` to skip the total-count query when you only need the rows.",
+        "Use this to find contacts by keyword or filter before inspecting one with `contacts.get` or sending a message with `contacts.sendMessage`. Supports `include` and `withCount` to shape the response.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(listContactsPublicRequest)
     .output(listContactsResponse)
@@ -61,8 +63,13 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts/search",
       summary: "Search contacts with a filter body",
       description:
-        "Same as `GET /v1/contacts` but accepts the filter as a JSON request body instead of query parameters — use this when `contactFilter` is large or deeply nested. Supports the same `include`/`withCount` options.",
+        "Use this when a large or nested `contactFilter` cannot fit conveniently in query parameters. It returns the same contact data as `contacts.list`, including `include` and `withCount` options.",
       tags: ["Contacts"],
+      // A POST that reads, not writes — `readOnlyHint: true` keeps it
+      // visible to a `read_only` token (`isVisibleForScope` in
+      // `apps/mcp-server/src/openapi-loader.ts`), which would otherwise
+      // hide every non-GET tool.
+      spec: mcpSpec({ visibility: "default", readOnlyHint: true }),
     })
     .input(listContactsPublicRequest)
     .output(listContactsResponse)
@@ -83,6 +90,8 @@ export const contactsCrudPublicRouter = {
       method: "GET",
       path: "/v1/contacts/count",
       summary: "Count contacts matching a filter",
+      description:
+        "Counts contacts matching the same filter shape as `contacts.list`/`contacts.search`, without paginating the rows.",
       tags: ["Contacts"],
     })
     .input(countContactsPublicRequest)
@@ -101,11 +110,22 @@ export const contactsCrudPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/{identifier}",
-      summary:
-        "Get contact by identifier (id:123, email:user@example.com, phone:+84...)",
+      summary: "Get a contact by identifier",
+      description:
+        "Use this after locating a prefixed id, email, or phone identifier to inspect one contact. Call `contacts.list` to search first, or use `contacts.sendMessage` to contact the result.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .output(contactResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -124,7 +144,10 @@ export const contactsCrudPublicRouter = {
       method: "POST",
       path: "/v1/contacts",
       summary: "Create a contact",
+      description:
+        "Adds a workspace contact outside a channel conversation, with contact details for later messaging. Use `contacts.list` to check for an existing contact and `contacts.sendMessage` after creating one.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createContactRequest)
     .output(contactResponse)
@@ -165,6 +188,8 @@ export const contactsCrudPublicRouter = {
       method: "POST",
       path: "/v1/contacts/import",
       summary: "Import contacts from a file",
+      description:
+        "Starts an asynchronous bulk import of contacts from a previously uploaded file (`fileId`) into the given inbox. Returns an `importId` immediately; the import itself runs in the background, so newly imported contacts may not appear in `contacts.list` right away.",
       successStatus: 201,
       tags: ["Contacts"],
     })
@@ -187,12 +212,21 @@ export const contactsCrudPublicRouter = {
       method: "PUT",
       path: "/v1/contacts/{identifier}",
       summary: "Update contact fields",
+      description:
+        "Overwrites the given standard and/or custom fields on the contact identified by `identifier`; fields omitted from the body are left unchanged.",
       successStatus: 204,
       tags: ["Contacts"],
     })
     .input(
       z
-        .object({ identifier: z.string().min(1) })
+        .object({
+          identifier: z
+            .string()
+            .min(1)
+            .describe(
+              "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            ),
+        })
         .and(updateContactFieldRequest),
     )
     .errors(possibleErrorsOnMutatingResource)
@@ -213,10 +247,21 @@ export const contactsCrudPublicRouter = {
       method: "DELETE",
       path: "/v1/contacts/{identifier}",
       summary: "Delete a contact",
+      description:
+        "Permanently deletes the contact identified by `identifier`. Use `contacts.block` instead if you only need to stop the contact from messaging in.",
       successStatus: 204,
       tags: ["Contacts"],
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
@@ -235,10 +280,21 @@ export const contactsCrudPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/block",
       summary: "Block a contact",
+      description:
+        "Marks the contact identified by `identifier` as blocked, preventing further inbound messages from reaching the workspace. Use `contacts.unblock` to reverse this.",
       successStatus: 204,
       tags: ["Contacts"],
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
@@ -256,10 +312,21 @@ export const contactsCrudPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/unblock",
       summary: "Unblock a contact",
+      description:
+        "Reverses `contacts.block` for the contact identified by `identifier`, allowing inbound messages again.",
       successStatus: 204,
       tags: ["Contacts"],
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
@@ -277,22 +344,48 @@ export const contactsCrudPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/upsert",
       summary: "Upsert a contact by identifier",
+      description:
+        "Creates the contact identified by `identifier` if it doesn't exist yet, otherwise updates the given fields on the existing one.",
       tags: ["Contacts"],
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        firstName: z.string().trim().max(100).optional(),
-        lastName: z.string().trim().max(100).optional(),
-        email: z.union([z.literal(""), z.email().max(100)]).optional(),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        firstName: z
+          .string()
+          .trim()
+          .max(100)
+          .optional()
+          .describe("Contact's first name."),
+        lastName: z
+          .string()
+          .trim()
+          .max(100)
+          .optional()
+          .describe("Contact's last name."),
+        email: z
+          .union([z.literal(""), z.email().max(100)])
+          .optional()
+          .describe("Contact's email address, or an empty string to clear it."),
         phoneNumber: z
           .string()
           .min(10)
           .max(20)
           .regex(/\+?\d{10,20}/)
-          .optional(),
-        avatar: z.string().optional(),
-        gender: genderTypes.optional(),
+          .optional()
+          .describe(
+            "Contact's phone number in E.164-like digits (10-20 digits, optional leading +).",
+          ),
+        avatar: z
+          .string()
+          .optional()
+          .describe("URL of the contact's avatar image."),
+        gender: genderTypes.optional().describe("Contact's gender."),
       }),
     )
     .output(contactResponse)

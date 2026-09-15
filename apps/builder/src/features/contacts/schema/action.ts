@@ -19,14 +19,33 @@ export const createContactRequest = z
           .max(20)
           .regex(/\+?\d{10,20}/),
       ])
-      .optional(),
-    email: z.union([z.literal(""), z.email().max(100)]),
-    contactId: z.string().max(255).optional(),
-    firstName: z.optional(z.string().trim().max(100)),
-    lastName: z.optional(z.string().trim().max(100)),
-    gender: genderTypes,
-    channel: channelTypes,
-    inboxId: zodBigintAsString("Please select an inbox"),
+      .optional()
+      .describe(
+        "Contact's phone number. Required when `channel` is `whatsapp`.",
+      ),
+    email: z
+      .union([z.literal(""), z.email().max(100)])
+      .describe("Contact's email address. Required when `channel` is `smtp`."),
+    contactId: z
+      .string()
+      .max(255)
+      .optional()
+      .describe(
+        "Channel-specific user id (e.g. Messenger PSID). Required for channels other than webchat/omnichannel.",
+      ),
+    firstName: z
+      .optional(z.string().trim().max(100))
+      .describe("Contact's first name."),
+    lastName: z
+      .optional(z.string().trim().max(100))
+      .describe("Contact's last name."),
+    gender: genderTypes.describe("Contact's gender."),
+    channel: channelTypes.describe(
+      "Channel this contact is reachable on; determines which of phoneNumber/email/contactId is required.",
+    ),
+    inboxId: zodBigintAsString("Please select an inbox").describe(
+      "Inbox id (numeric string) to create the contact in. Get it from `inboxes.list`.",
+    ),
   })
   .superRefine((data, ctx) => {
     const ch = data.channel
@@ -71,17 +90,43 @@ export type UpdateContactFieldRequest = z.infer<
 >
 
 export const exportContactsFilter = z.object({
-  keyword: z.string().optional(),
-  contactFilter: contactFilterCriteriaSchema.optional(),
+  keyword: z
+    .string()
+    .optional()
+    .describe(
+      "Case-insensitive substring match against the contact's name, email, or phone.",
+    ),
+  contactFilter: contactFilterCriteriaSchema
+    .optional()
+    .describe(
+      "Structured filter for advanced matching beyond keyword. See `contacts.listFilterFields` for the field/operator reference.",
+    ),
 })
 export type ExportContactsFilter = z.infer<typeof exportContactsFilter>
 
 export const exportContactsRequest = z
   .object({
-    fields: z.array(z.string()).min(1),
-    contactIds: z.array(zodBigintAsString()).optional(),
-    exportAll: z.boolean().optional(),
-    filter: exportContactsFilter.optional(),
+    fields: z
+      .array(z.string())
+      .min(1)
+      .describe(
+        "Contact fields to include as CSV columns, e.g. `sys:firstName`, `sys:email`, or a custom field id.",
+      ),
+    contactIds: z
+      .array(zodBigintAsString())
+      .optional()
+      .describe(
+        "Specific contact ids to export. Required unless `exportAll` is true.",
+      ),
+    exportAll: z
+      .boolean()
+      .optional()
+      .describe(
+        "Export every contact matching `filter` (or the whole workspace if omitted).",
+      ),
+    filter: exportContactsFilter
+      .optional()
+      .describe("Narrows which contacts `exportAll` exports."),
   })
   .refine(
     (data) => (data.exportAll ? true : (data.contactIds?.length ?? 0) > 0),
@@ -93,7 +138,9 @@ export const exportContactsRequest = z
 export type ExportContactsRequest = z.infer<typeof exportContactsRequest>
 
 export const exportContactsResponse = z.object({
-  fileId: zodBigintAsString(),
+  fileId: zodBigintAsString().describe(
+    "Export file id (numeric string). Poll `contacts.getExportFile` with it.",
+  ),
 })
 export type ExportContactsResponse = z.infer<typeof exportContactsResponse>
 

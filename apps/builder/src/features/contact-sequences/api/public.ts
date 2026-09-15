@@ -6,6 +6,7 @@ import {
   listContactSequencesPublicResponse,
   setContactSequencesPublicRequest,
 } from "@/features/contact-sequences/schema/public"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
@@ -21,9 +22,21 @@ export const contactsSequencesPublicRouter = {
       method: "GET",
       path: "/v1/contacts/{identifier}/sequences",
       summary: "List sequences the contact is enrolled in",
+      description:
+        "Use this to inspect a contact's current sequence enrollments after resolving the contact with `contacts.get`. Call `contacts.subscribeSequences` to enroll it, or `sequences.get` to inspect a sequence.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .output(listContactSequencesPublicResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -44,12 +57,22 @@ export const contactsSequencesPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/sequences",
       summary: "Enroll the contact in one or more sequences",
+      description:
+        "Adds the contact identified by `identifier` to each given sequence; sequences the contact is already enrolled in are left as-is. Use `sequences.list`/`sequences.create` first to resolve names to ids.",
       successStatus: 204,
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       contactSequenceIdsPublicRequest.and(
-        z.object({ identifier: z.string().min(1) }),
+        z.object({
+          identifier: z
+            .string()
+            .min(1)
+            .describe(
+              "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            ),
+        }),
       ),
     )
     .errors(possibleErrorsOnMutatingResource)
@@ -71,12 +94,21 @@ export const contactsSequencesPublicRouter = {
       method: "DELETE",
       path: "/v1/contacts/{identifier}/sequences",
       summary: "Remove the contact from one or more sequences",
+      description:
+        "Removes the contact identified by `identifier` from each given sequence; sequences it isn't enrolled in are ignored. Use `contacts.listSequences` to see current enrollments first.",
       successStatus: 204,
       tags: ["Contacts"],
     })
     .input(
       contactSequenceIdsPublicRequest.and(
-        z.object({ identifier: z.string().min(1) }),
+        z.object({
+          identifier: z
+            .string()
+            .min(1)
+            .describe(
+              "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            ),
+        }),
       ),
     )
     .errors(possibleErrorsOnDeletingResource)
@@ -106,7 +138,14 @@ export const contactsSequencesPublicRouter = {
     })
     .input(
       setContactSequencesPublicRequest.and(
-        z.object({ identifier: z.string().min(1) }),
+        z.object({
+          identifier: z
+            .string()
+            .min(1)
+            .describe(
+              "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            ),
+        }),
       ),
     )
     .errors(possibleErrorsOnMutatingResource)

@@ -17,35 +17,46 @@ const mediaLibraryFileRequest = z.object({
 export const createMessageRequest = z
   .union([
     z.object({
-      text: z.string().trim().min(1).max(1000),
+      text: z.string().trim().min(1).max(1000).describe("Message text."),
       files: z
         .array(
           z.instanceof(File).refine((file) => file.size <= MAX_FILE_SIZE, {
             message: "Max image size is 5MB.",
           }),
         )
-        .min(1),
+        .min(1)
+        .describe("Media files to attach, up to 5MB each."),
     }),
     z.object({
-      text: z.string().trim().min(1).max(1000),
-      mediaFile: mediaLibraryFileRequest,
+      text: z.string().trim().min(1).max(1000).describe("Message text."),
+      mediaFile: mediaLibraryFileRequest.describe(
+        "Media library file reference to attach.",
+      ),
     }),
     // Media Library selection identified by DB id — must be listed before
     // the text-only branch below, since z.object() strips unknown keys: if
     // the text-only branch matched first, mediaFileId would be silently
     // dropped and the message would send as plain text.
     z.object({
-      text: z.string().trim().min(1).max(1000),
-      mediaFileId: zodBigintAsString(),
+      text: z.string().trim().min(1).max(1000).describe("Message text."),
+      mediaFileId: zodBigintAsString().describe(
+        "Media library file id (numeric string) to attach.",
+      ),
     }),
     // Multi-select Media Library variant — several images sent as one
     // message. Same union-ordering constraint as mediaFileId above.
     z.object({
-      text: z.string().trim().min(1).max(1000),
-      mediaFileIds: z.array(zodBigintAsString()).min(1).max(10),
+      text: z.string().trim().min(1).max(1000).describe("Message text."),
+      mediaFileIds: z
+        .array(zodBigintAsString())
+        .min(1)
+        .max(10)
+        .describe(
+          "Media library file ids (numeric strings) to attach, up to 10.",
+        ),
     }),
     z.object({
-      text: z.string().trim().min(1).max(1000),
+      text: z.string().trim().min(1).max(1000).describe("Message text."),
     }),
     z.object({
       files: z
@@ -54,34 +65,65 @@ export const createMessageRequest = z
             message: "Max image size is 5MB.",
           }),
         )
-        .min(1),
+        .min(1)
+        .describe("Media files to attach, up to 5MB each."),
     }),
     z.object({
-      mediaFile: mediaLibraryFileRequest,
+      mediaFile: mediaLibraryFileRequest.describe(
+        "Media library file reference to attach.",
+      ),
     }),
     z.object({
-      mediaFileId: zodBigintAsString(),
+      mediaFileId: zodBigintAsString().describe(
+        "Media library file id (numeric string) to attach.",
+      ),
     }),
     z.object({
-      mediaFileIds: z.array(zodBigintAsString()).min(1).max(10),
+      mediaFileIds: z
+        .array(zodBigintAsString())
+        .min(1)
+        .max(10)
+        .describe(
+          "Media library file ids (numeric strings) to attach, up to 10.",
+        ),
     }),
     z.object({
-      flowId: zodBigintAsString(),
-      nodeId: zodBigintAsString().optional(),
+      flowId: zodBigintAsString().describe(
+        "Flow id (numeric string) to send instead of a plain message. Get it from `flows.list`.",
+      ),
+      nodeId: zodBigintAsString()
+        .optional()
+        .describe(
+          "Node id within the flow to start from. Defaults to the flow's start node.",
+        ),
     }),
   ])
   .and(
     z.object({
-      inboxId: zodBigintAsString().optional().meta({
-        description:
+      inboxId: zodBigintAsString()
+        .optional()
+        .describe(
           "ID of the channel to send the message on. null to send message on the last interacted channel (if any).",
-      }),
-      clientId: zodBigintAsString().optional(),
-      replyToMessageId: z.string().optional(),
-      replyToMessageCreatedAt: z.coerce.date().optional(),
+        ),
+      clientId: zodBigintAsString()
+        .optional()
+        .describe("Client-generated id echoed back for de-duplication."),
+      replyToMessageId: z
+        .string()
+        .optional()
+        .describe("Id of the message this one replies to."),
+      replyToMessageCreatedAt: z.coerce
+        .date()
+        .optional()
+        .describe("Creation timestamp of the message this one replies to."),
       // When true, the outgoing comment is sent as a comment-anchored private
       // reply DM instead of a public comment reply.
-      isPrivateReply: z.boolean().optional(),
+      isPrivateReply: z
+        .boolean()
+        .optional()
+        .describe(
+          "When true, sends as a comment-anchored private reply DM instead of a public comment reply.",
+        ),
     }),
   )
 export type CreateMessageRequest = z.infer<typeof createMessageRequest>
@@ -136,15 +178,43 @@ export const deleteMessageRequest = z.object({
 export type DeleteMessageRequest = z.infer<typeof deleteMessageRequest>
 
 export const editMessageRequest = z.object({
-  messageId: zodBigintAsString(),
-  createdAt: z.coerce.date(),
-  newText: z.string().trim().min(1).max(2000),
-  newAttachmentPath: z.string().optional(),
-  newAttachmentPublicUrl: z.string().optional(),
-  newAttachmentMimeType: z.string().optional(),
-  newAttachmentName: z.string().optional(),
-  newAttachmentSize: z.number().int().optional(),
-  removeAttachment: z.boolean().optional(),
+  messageId: zodBigintAsString().describe("Message id."),
+  createdAt: z.coerce
+    .date()
+    .describe(
+      "The message's createdAt timestamp, exactly as returned by `messages.list`. Required to locate the message.",
+    ),
+  newText: z
+    .string()
+    .trim()
+    .min(1)
+    .max(2000)
+    .describe("Replacement message text."),
+  newAttachmentPath: z
+    .string()
+    .optional()
+    .describe("Path of a replacement attachment, if changing it."),
+  newAttachmentPublicUrl: z
+    .string()
+    .optional()
+    .describe("Public URL of the replacement attachment."),
+  newAttachmentMimeType: z
+    .string()
+    .optional()
+    .describe("MIME type of the replacement attachment."),
+  newAttachmentName: z
+    .string()
+    .optional()
+    .describe("Display name of the replacement attachment."),
+  newAttachmentSize: z
+    .number()
+    .int()
+    .optional()
+    .describe("Size in bytes of the replacement attachment."),
+  removeAttachment: z
+    .boolean()
+    .optional()
+    .describe("Whether to remove the message's existing attachment entirely."),
 })
 export type EditMessageRequest = z.infer<typeof editMessageRequest>
 
@@ -163,10 +233,20 @@ export const sendFlowMessageRequest = z.object({
 })
 
 export const changeMessageAttributesRequest = z.object({
-  messageId: zodBigintAsString(),
-  createdAt: z.coerce.date(),
-  liked: z.boolean().optional(),
-  hidden: z.boolean().optional(),
+  messageId: zodBigintAsString().describe("Message id."),
+  createdAt: z.coerce
+    .date()
+    .describe(
+      "The message's createdAt timestamp, exactly as returned by `messages.list`. Required to locate the message.",
+    ),
+  liked: z
+    .boolean()
+    .optional()
+    .describe("Whether the message should be marked liked."),
+  hidden: z
+    .boolean()
+    .optional()
+    .describe("Whether the message should be hidden."),
 })
 export type ChangeMessageAttributesRequest = z.infer<
   typeof changeMessageAttributesRequest

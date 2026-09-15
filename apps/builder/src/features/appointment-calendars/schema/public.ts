@@ -47,7 +47,10 @@ export type AppointmentCalendarPublicResource = z.infer<
 >
 
 export const listAppointmentCalendarsPublicRequest = publicListRequest.extend({
-  search: z.string().optional(),
+  search: z
+    .string()
+    .optional()
+    .describe("Case-insensitive substring match against the calendar's name."),
 })
 
 const appointmentCalendarAvailabilityPublicResource = createSelectSchema(
@@ -95,18 +98,32 @@ export const createAppointmentCalendarPublicResponse = z.object({
 })
 
 export const appointmentCalendarIdPublicRequest = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Appointment calendar id. Get it from `appointmentCalendars.list`.",
+  ),
 })
 
 export const setAppointmentCalendarActivePublicRequest = z.object({
-  active: z.boolean(),
+  active: z
+    .boolean()
+    .describe("Whether the calendar should accept new bookings."),
 })
 
 export const getAppointmentCalendarAvailabilityPublicRequest = z.object({
-  id: zodBigintAsString(),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
-  contactId: zodBigintAsString().optional(),
+  id: zodBigintAsString().describe(
+    "Appointment calendar id. Get it from `appointmentCalendars.list`.",
+  ),
+  startDate: z.coerce
+    .date()
+    .describe("Start of the range to check for available slots."),
+  endDate: z.coerce
+    .date()
+    .describe("End of the range to check for available slots."),
+  contactId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Contact id to exclude their own existing bookings from the daily/per-user limits.",
+    ),
 })
 
 export const appointmentCalendarAvailabilityPublicResponse = z.object({

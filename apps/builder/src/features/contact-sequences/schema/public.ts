@@ -14,14 +14,22 @@ export const contactSequenceIdsPublicRequest = z.object({
   sequenceIds: z
     .array(zodBigintAsString())
     .min(1, "At least one sequence id is required")
-    .max(100),
+    .max(100)
+    .describe(
+      "Sequence ids (numeric strings), up to 100. Get them from `sequences.list`.",
+    ),
 })
 export type ContactSequenceIdsPublicRequest = z.infer<
   typeof contactSequenceIdsPublicRequest
 >
 
 export const setContactSequencesPublicRequest = z.object({
-  sequenceIds: z.array(zodBigintAsString()).max(100),
+  sequenceIds: z
+    .array(zodBigintAsString())
+    .max(100)
+    .describe(
+      "Sequence ids (numeric strings) the contact should be enrolled in, up to 100. Get them from `sequences.list`.",
+    ),
 })
 export type SetContactSequencesPublicRequest = z.infer<
   typeof setContactSequencesPublicRequest

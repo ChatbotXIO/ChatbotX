@@ -11,13 +11,25 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const createMinigameRequest = z.object({
-  type: minigameTypes,
-  generalSettings: minigameGeneralSettingsSchema,
-  appearance: minigameAppearanceSchema,
-  playerSettings: minigamePlayerSettingsSchema,
-  prizeSettings: minigamePrizeSettingsSchema,
-  winningMessageSettings: minigameWinningMessageSettingsSchema,
-  nonWinningMessageSettings: minigameNonWinningMessageSettingsSchema,
+  type: minigameTypes.describe("Minigame type, e.g. `jackpot`."),
+  generalSettings: minigameGeneralSettingsSchema.describe(
+    "Name, status, and other top-level configuration.",
+  ),
+  appearance: minigameAppearanceSchema.describe(
+    "Visual theme and branding shown to players.",
+  ),
+  playerSettings: minigamePlayerSettingsSchema.describe(
+    "Rules for who can play and how often.",
+  ),
+  prizeSettings: minigamePrizeSettingsSchema.describe(
+    "Prizes and their odds/quantities.",
+  ),
+  winningMessageSettings: minigameWinningMessageSettingsSchema.describe(
+    "Message shown to a player who wins a prize.",
+  ),
+  nonWinningMessageSettings: minigameNonWinningMessageSettingsSchema.describe(
+    "Message shown to a player who does not win.",
+  ),
 })
 export type CreateMinigameRequest = z.infer<typeof createMinigameRequest>
 

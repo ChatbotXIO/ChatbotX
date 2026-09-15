@@ -19,58 +19,94 @@ const webSearchAuthorizedDomainsSchema = z
   .max(MAX_WEB_SEARCH_AUTHORIZED_DOMAINS)
 
 export const createAIAgentRequest = z.object({
-  name: z.string().trim().min(1).max(255),
-  prompt: z.string().trim().min(1).max(10_000),
-  messages: z.array(
-    z.object({
-      role: aiMessageRoles,
-      content: z.string().trim().min(1).max(255),
-    }),
-  ),
-  models: z.array(
-    z.union([
-      z.discriminatedUnion("provider", [
+  name: z.string().trim().min(1).max(255).describe("AI agent name."),
+  prompt: z
+    .string()
+    .trim()
+    .min(1)
+    .max(10_000)
+    .describe("System prompt that defines the agent's behavior."),
+  messages: z
+    .array(
+      z.object({
+        role: aiMessageRoles,
+        content: z.string().trim().min(1).max(255),
+      }),
+    )
+    .describe(
+      "Seed conversation history (role/content pairs) shown to the model before user input.",
+    ),
+  models: z
+    .array(
+      z.union([
+        z.discriminatedUnion("provider", [
+          z.object({
+            provider: z.literal(aiProviders.enum.gemini),
+            model: geminiModels,
+          }),
+          z.object({
+            provider: z.literal(aiProviders.enum.openai),
+            model: openaiModels,
+          }),
+          z.object({
+            provider: z.literal(aiProviders.enum.claude),
+            model: claudeModels,
+          }),
+          z.object({
+            provider: z.literal(aiProviders.enum.deepseek),
+            model: deepseekModels,
+          }),
+          z.object({
+            provider: z.literal(aiProviders.enum.openrouter),
+            model: openrouterModels,
+          }),
+        ]),
         z.object({
-          provider: z.literal(aiProviders.enum.gemini),
-          model: geminiModels,
-        }),
-        z.object({
-          provider: z.literal(aiProviders.enum.openai),
-          model: openaiModels,
-        }),
-        z.object({
-          provider: z.literal(aiProviders.enum.claude),
-          model: claudeModels,
-        }),
-        z.object({
-          provider: z.literal(aiProviders.enum.deepseek),
-          model: deepseekModels,
-        }),
-        z.object({
-          provider: z.literal(aiProviders.enum.openrouter),
-          model: openrouterModels,
+          kind: z.literal("openaiCompatible"),
+          integrationId: z.string().trim().min(1),
+          model: z.string().trim().min(1),
         }),
       ]),
-      z.object({
-        kind: z.literal("openaiCompatible"),
-        integrationId: z.string().trim().min(1),
-        model: z.string().trim().min(1),
-      }),
-    ]),
-  ),
-  temperature: z.number().min(0).max(2),
-  maxOutputTokens: z.number().min(1).max(32_768),
-  tools: z.array(z.string()),
-  webSearchAuthorizedDomains: webSearchAuthorizedDomainsSchema.default([]),
-  isDefault: z.boolean(),
-  isRichResponse: z.boolean().default(false),
+    )
+    .describe(
+      "Ordered fallback list of provider/model pairs to try. The first entry is preferred; later ones are used if it fails.",
+    ),
+  temperature: z.number().min(0).max(2).describe("Sampling temperature, 0-2."),
+  maxOutputTokens: z
+    .number()
+    .min(1)
+    .max(32_768)
+    .describe("Maximum tokens the model may generate in one reply."),
+  tools: z
+    .array(z.string())
+    .describe("Tool names this agent is allowed to call."),
+  webSearchAuthorizedDomains: webSearchAuthorizedDomainsSchema
+    .default([])
+    .describe(
+      `Domains the agent's web-search tool is restricted to, up to ${MAX_WEB_SEARCH_AUTHORIZED_DOMAINS}. Empty means unrestricted.`,
+    ),
+  isDefault: z
+    .boolean()
+    .describe("Whether this is the workspace's default AI agent."),
+  isRichResponse: z
+    .boolean()
+    .default(false)
+    .describe(
+      "Whether the agent may return rich (card/button) responses instead of plain text.",
+    ),
 })
 export type CreateAIAgentRequest = z.infer<typeof createAIAgentRequest>
 
 export const updateAIAgentRequest = createAIAgentRequest
   .extend({
-    webSearchAuthorizedDomains: webSearchAuthorizedDomainsSchema,
-    isRichResponse: z.boolean(),
+    webSearchAuthorizedDomains: webSearchAuthorizedDomainsSchema.describe(
+      `Domains the agent's web-search tool is restricted to, up to ${MAX_WEB_SEARCH_AUTHORIZED_DOMAINS}. Empty means unrestricted.`,
+    ),
+    isRichResponse: z
+      .boolean()
+      .describe(
+        "Whether the agent may return rich (card/button) responses instead of plain text.",
+      ),
   })
   .partial()
 export type UpdateAIAgentRequest = z.infer<typeof updateAIAgentRequest>

@@ -15,13 +15,14 @@ const isGoogleSpreadsheetUrl = (url: string): boolean => {
 }
 
 export const createSpreadsheetRequest = z.object({
-  name: z.string().min(1).max(255),
+  name: z.string().min(1).max(255).describe("Spreadsheet display name."),
   url: z
     .url()
     .refine(
       isGoogleSpreadsheetUrl,
       "URL must be a valid Google Spreadsheet link",
-    ),
+    )
+    .describe("Shareable Google Sheets URL."),
 })
 
 export type CreateSpreadsheetRequest = z.infer<typeof createSpreadsheetRequest>

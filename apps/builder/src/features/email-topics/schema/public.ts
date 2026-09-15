@@ -23,5 +23,7 @@ export const listEmailTopicsPublicResponse = publicListResponse(
 export const createEmailTopicPublicRequest = createEmailTopicRequest
 
 export const updateEmailTopicPublicRequest = updateEmailTopicRequest.extend({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Email topic id. Get it from `emailTopics.list`.",
+  ),
 })

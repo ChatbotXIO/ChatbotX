@@ -37,6 +37,8 @@ export const minigamesPublicRouter = {
       method: "GET",
       path: "/v1/minigames",
       summary: "List minigames",
+      description:
+        "Use this to find minigame ids before inspecting one with `minigames.get` or listing its plays with `minigames.listPlays`. Returns minigames in this workspace.",
       tags,
     })
     .input(listMinigamesPublicRequest)
@@ -56,9 +58,17 @@ export const minigamesPublicRouter = {
       method: "GET",
       path: "/v1/minigames/{id}",
       summary: "Get a minigame",
+      description:
+        "Returns one minigame's configuration and prizes. Use `minigames.list` to find its id first.",
       tags,
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Minigame id. Get it from `minigames.list`.",
+        ),
+      }),
+    )
     .output(minigamePublicResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
@@ -74,6 +84,8 @@ export const minigamesPublicRouter = {
       method: "POST",
       path: "/v1/minigames",
       summary: "Create a minigame",
+      description:
+        "Adds a minigame (e.g. jackpot) that contacts can play through a flow step or public link. Use `minigames.list` first to avoid duplicating an existing one.",
       successStatus: 201,
       tags,
     })
@@ -93,6 +105,8 @@ export const minigamesPublicRouter = {
       method: "PUT",
       path: "/v1/minigames/{id}",
       summary: "Update a minigame",
+      description:
+        "Replaces an existing minigame's full configuration. Call `minigames.get` to inspect current values first.",
       tags,
     })
     .input(updateMinigamePublicRequest)
@@ -113,6 +127,8 @@ export const minigamesPublicRouter = {
       method: "PATCH",
       path: "/v1/minigames/{id}",
       summary: "Partially update a minigame",
+      description:
+        "Changes only the given fields of an existing minigame, leaving the rest unchanged. Call `minigames.get` to inspect current values first.",
       tags,
     })
     .input(patchMinigamePublicRequest)
@@ -132,10 +148,18 @@ export const minigamesPublicRouter = {
       method: "DELETE",
       path: "/v1/minigames/{id}",
       summary: "Delete a minigame",
+      description:
+        "Permanently deletes a minigame and its configuration. Use `minigames.list` to find its id first.",
       successStatus: 204,
       tags,
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Minigame id. Get it from `minigames.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await minigameService.delete({
@@ -149,6 +173,8 @@ export const minigamesPublicRouter = {
       method: "POST",
       path: "/v1/minigames/bulk-delete",
       summary: "Delete multiple minigames",
+      description:
+        "Permanently deletes several minigames in one call. Use `minigames.list` to find their ids first.",
       successStatus: 204,
       tags,
     })
@@ -166,6 +192,8 @@ export const minigamesPublicRouter = {
       method: "PATCH",
       path: "/v1/minigames/{id}/enabled",
       summary: "Enable or disable a minigame",
+      description:
+        "Toggles whether a minigame is playable without changing its configuration.",
       tags,
     })
     .input(setMinigameEnabledPublicRequest)
@@ -184,6 +212,8 @@ export const minigamesPublicRouter = {
       method: "GET",
       path: "/v1/minigames/{id}/plays",
       summary: "List a contact's minigame play records",
+      description:
+        "Returns every play a specific contact made on a minigame, including prizes won. Use `minigames.list` to find the minigame id first.",
       tags,
     })
     .input(listMinigamePlaysPublicRequest)
@@ -203,6 +233,8 @@ export const minigamesPublicRouter = {
       method: "GET",
       path: "/v1/minigames/{id}/players",
       summary: "List a minigame's players",
+      description:
+        "Returns contacts who have played a minigame, with their play counts and prizes. Use `minigames.list` to find the minigame id first.",
       tags,
     })
     .input(listMinigamePlayersPublicRequest)

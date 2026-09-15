@@ -47,6 +47,8 @@ export const contactsExportPublicRouter = {
       method: "GET",
       path: "/v1/contacts/export-files/{fileId}",
       summary: "Get a contact export file's status and download URL",
+      description:
+        "Polls the status of an export started with `contacts.export`. Once `status` is complete, the response includes a download URL for the CSV file.",
       tags: ["Contacts"],
     })
     .input(getExportFilePublicRequest)

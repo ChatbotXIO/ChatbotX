@@ -6,6 +6,7 @@ import {
   listContactNotesPublicResponse,
   updateContactNotePublicRequest,
 } from "@/features/contact-notes/schema/public"
+import { contactNoteResource } from "@/features/contact-notes/schema/resource"
 import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
@@ -21,9 +22,20 @@ export const contactsNotesPublicRouter = {
       method: "GET",
       path: "/v1/contacts/{identifier}/notes",
       summary: "List notes on the contact",
+      description:
+        "Returns every internal note on the contact identified by `identifier`. Use `contacts.createNote` to add one.",
       tags: ["Contacts"],
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .output(listContactNotesPublicResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -44,13 +56,23 @@ export const contactsNotesPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/notes",
       summary: "Add a note to the contact",
+      description:
+        "Adds an internal note to the contact identified by `identifier`, visible only to workspace users. Use `contacts.listNotes` to see existing notes.",
       tags: ["Contacts"],
     })
     .input(
       addContactNotePublicRequest.and(
-        z.object({ identifier: z.string().min(1) }),
+        z.object({
+          identifier: z
+            .string()
+            .min(1)
+            .describe(
+              "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            ),
+        }),
       ),
     )
+    .output(contactNoteResource)
     // Mutating, not creating: the note is new, but `{identifier}` is resolved
     // via `contactService.resolveIdByIdentifier`, which throws a 404 when the
     // contact does not exist — so this route must declare `notFound` too.
@@ -74,16 +96,24 @@ export const contactsNotesPublicRouter = {
       method: "PUT",
       path: "/v1/contacts/{identifier}/notes/{noteId}",
       summary: "Update a note on the contact",
+      description:
+        "Overwrites the text of one note on the contact identified by `identifier`. Use `contacts.listNotes` to find its `noteId` first.",
       tags: ["Contacts"],
     })
     .input(
       updateContactNotePublicRequest.and(
         z.object({
-          identifier: z.string().min(1),
-          noteId: zodBigintAsString(),
+          identifier: z
+            .string()
+            .min(1)
+            .describe(
+              "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            ),
+          noteId: zodBigintAsString().describe("Note id (numeric string)."),
         }),
       ),
     )
+    .output(contactNoteResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
@@ -104,13 +134,20 @@ export const contactsNotesPublicRouter = {
       method: "DELETE",
       path: "/v1/contacts/{identifier}/notes/{noteId}",
       summary: "Delete a note from the contact",
+      description:
+        "Permanently removes one note from the contact identified by `identifier`.",
       successStatus: 204,
       tags: ["Contacts"],
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        noteId: zodBigintAsString(),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        noteId: zodBigintAsString().describe("Note id (numeric string)."),
       }),
     )
     .errors(possibleErrorsOnDeletingResource)

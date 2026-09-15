@@ -95,6 +95,40 @@ describe("loadOpenApiSpec", () => {
     expect(tools.map((tool) => tool.name)).toEqual(["tags_list"])
   })
 
+  test("a snake_case name collision keeps only the first operation in the returned list, getCachedTools, AND getToolByName — never advertising a tool tools/call can't reach", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/ai-mcp-servers": {
+            get: { operationId: "aiMCPServers.list", summary: "First" },
+          },
+          "/v1/ai-mcpservers": {
+            get: { operationId: "aiMcpservers.list", summary: "Second" },
+          },
+        },
+      }),
+    }) as unknown as typeof fetch
+
+    const { loadOpenApiSpec, getCachedTools, getToolByName } = await import(
+      "../src/openapi-loader"
+    )
+    const tools = await loadOpenApiSpec()
+
+    // Both operationIds snake_case to "ai_mcpservers_list" — only the first
+    // survives, and it must survive identically everywhere a caller can
+    // read the tool list from.
+    expect(
+      tools.filter((tool) => tool.name === "ai_mcpservers_list"),
+    ).toHaveLength(1)
+    expect(
+      getCachedTools().filter((tool) => tool.name === "ai_mcpservers_list"),
+    ).toHaveLength(1)
+    expect(getToolByName("ai_mcpservers_list")?.description).toBe("First")
+  })
+
   test("joins summary and description into one tool description", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -127,6 +161,178 @@ describe("loadOpenApiSpec", () => {
     expect(tools.find((tool) => tool.name === "tags_list")?.description).toBe(
       "List tags",
     )
+  })
+
+  test("adds a scope requirement to a GET tool description", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      headers: { get: () => null },
+      json: async () => ({
+        paths: {
+          "/v1/tags": {
+            get: {
+              operationId: "tags.list",
+              summary: "List tags",
+              "x-mcp": { scope: "contacts" },
+            },
+          },
+        },
+      }),
+      ok: true,
+    }) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+
+    expect(tool?.description).toBe(
+      "List tags\n\nRequires token scope: contacts.",
+    )
+  })
+
+  test("adds scope and full-token requirements to a POST tool description", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      headers: { get: () => null },
+      json: async () => ({
+        paths: {
+          "/v1/tags": {
+            post: {
+              operationId: "tags.create",
+              summary: "Create tag",
+              "x-mcp": { scope: "contacts" },
+            },
+          },
+        },
+      }),
+      ok: true,
+    }) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+
+    expect(tool?.description).toBe(
+      "Create tag\n\nRequires token scope: contacts.\nRequires a full (non read-only) token.",
+    )
+  })
+
+  test("adds the full-token requirement when readOnlyHint is explicitly false", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      headers: { get: () => null },
+      json: async () => ({
+        paths: {
+          "/v1/tags": {
+            post: {
+              operationId: "tags.create",
+              summary: "Create tag",
+              "x-mcp": { readOnlyHint: false, scope: "contacts" },
+            },
+          },
+        },
+      }),
+      ok: true,
+    }) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+
+    expect(tool?.description).toBe(
+      "Create tag\n\nRequires token scope: contacts.\nRequires a full (non read-only) token.",
+    )
+  })
+
+  test("merges allOf request body properties and requirements", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      headers: { get: () => null },
+      json: async () => ({
+        paths: {
+          "/v1/messages": {
+            post: {
+              operationId: "messages.create",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      allOf: [
+                        {
+                          properties: { content: { type: "string" } },
+                          required: ["content"],
+                          type: "object",
+                        },
+                        {
+                          properties: { contactId: { type: "string" } },
+                          required: ["contactId"],
+                          type: "object",
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+      ok: true,
+    }) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+
+    expect(tool?.bodyParamNames).toEqual(["content", "contactId"])
+    expect(tool?.inputSchema).toEqual({
+      properties: {
+        contactId: { type: "string" },
+        content: { type: "string" },
+      },
+      required: ["content", "contactId"],
+      type: "object",
+    })
+  })
+
+  test("merges oneOf request body properties without marking branch fields required", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      headers: { get: () => null },
+      json: async () => ({
+        paths: {
+          "/v1/messages": {
+            post: {
+              operationId: "messages.create",
+              requestBody: {
+                content: {
+                  "application/json": {
+                    schema: {
+                      oneOf: [
+                        {
+                          properties: { text: { type: "string" } },
+                          required: ["text"],
+                          type: "object",
+                        },
+                        {
+                          properties: { templateId: { type: "string" } },
+                          required: ["templateId"],
+                          type: "object",
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+      ok: true,
+    }) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+
+    expect(tool?.bodyParamNames).toEqual(["text", "templateId"])
+    expect(tool?.inputSchema).toEqual({
+      properties: {
+        templateId: { type: "string" },
+        text: { type: "string" },
+      },
+      type: "object",
+    })
   })
 })
 
@@ -270,5 +476,306 @@ describe("refreshOpenApiSpecIfStale", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(result1).toBe(result2)
+  })
+})
+
+describe("x-mcp visibility, scope, and annotations", () => {
+  const originalFetch = globalThis.fetch
+
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+  })
+
+  const specWithOperation = (operation: Record<string, unknown>) => ({
+    ok: true,
+    headers: { get: () => null },
+    json: async () => ({
+      servers: [{ url: "https://api.example.com" }],
+      paths: {
+        "/v1/tags": { get: { operationId: "tags.list", ...operation } },
+      },
+    }),
+  })
+
+  test("an operation with no x-mcp is hidden", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithOperation({})) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+    expect(tool?.visibility).toBe("hidden")
+  })
+
+  test("x-mcp.visibility: 'default' makes the tool visible; scope is carried through", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithOperation({
+        "x-mcp": { visibility: "default", scope: "contacts" },
+      }),
+    ) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+    expect(tool?.visibility).toBe("default")
+    expect(tool?.scope).toBe("contacts")
+  })
+
+  test("annotations default from the HTTP method when x-mcp doesn't override them", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithOperation({})) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+    expect(tool?.annotations).toEqual({
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    })
+  })
+
+  test("x-mcp annotation hints override the method-inferred defaults", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithOperation({
+        "x-mcp": { visibility: "default", destructiveHint: true },
+      }),
+    ) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+    expect(tool?.annotations.destructiveHint).toBe(true)
+    // readOnlyHint/idempotentHint still fall back to the GET-method default.
+    expect(tool?.annotations.readOnlyHint).toBe(true)
+  })
+
+  test("a DELETE operation defaults to destructive and idempotent, not read-only", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: { "/v1/tags/{id}": { delete: { operationId: "tags.delete" } } },
+      }),
+    }) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    const [tool] = await loadOpenApiSpec()
+    expect(tool?.annotations).toEqual({
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+    })
+  })
+})
+
+describe("getVisibleTools", () => {
+  const originalFetch = globalThis.fetch
+
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+  })
+
+  test("returns only visibility: 'default' tools, independent of getCachedTools", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/tags": {
+            get: {
+              operationId: "tags.list",
+              summary: "List tags",
+              "x-mcp": { visibility: "default" },
+            },
+          },
+          "/v1/minigames": {
+            get: { operationId: "minigames.list", summary: "List minigames" },
+          },
+        },
+      }),
+    }) as unknown as typeof fetch
+
+    const { loadOpenApiSpec, getCachedTools, getVisibleTools } = await import(
+      "../src/openapi-loader"
+    )
+    await loadOpenApiSpec()
+
+    expect(
+      getCachedTools()
+        .map((t) => t.name)
+        .sort(),
+    ).toEqual(["minigames_list", "tags_list"])
+    expect(getVisibleTools().map((t) => t.name)).toEqual(["tags_list"])
+  })
+
+  test("looks up hidden tools without exposing Object prototype properties", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/minigames": {
+            get: { operationId: "minigames.list", summary: "List minigames" },
+          },
+        },
+      }),
+    }) as unknown as typeof fetch
+
+    const { getToolByName, loadOpenApiSpec } = await import(
+      "../src/openapi-loader"
+    )
+    await loadOpenApiSpec()
+
+    expect(getToolByName("minigames_list")?.visibility).toBe("hidden")
+    expect(getToolByName("unknown_tool")).toBeUndefined()
+    expect(getToolByName("toString")).toBeUndefined()
+    expect(getToolByName("constructor")).toBeUndefined()
+  })
+
+  const specWithScopedTools = () => ({
+    ok: true,
+    headers: { get: () => null },
+    json: async () => ({
+      servers: [{ url: "https://api.example.com" }],
+      paths: {
+        "/v1/tags": {
+          get: {
+            operationId: "tags.list",
+            summary: "List tags",
+            "x-mcp": { visibility: "default", scope: "contacts" },
+          },
+        },
+        "/v1/flows": {
+          get: {
+            operationId: "flows.list",
+            summary: "List flows",
+            "x-mcp": { visibility: "default", scope: "automation" },
+          },
+        },
+        "/v1/contacts/search": {
+          post: {
+            operationId: "contacts.search",
+            summary: "Search contacts",
+            "x-mcp": {
+              visibility: "default",
+              scope: "contacts",
+              readOnlyHint: true,
+            },
+          },
+        },
+        "/v1/tags/{id}": {
+          delete: {
+            operationId: "tags.delete",
+            summary: "Delete a tag",
+            "x-mcp": { visibility: "default", scope: "contacts" },
+          },
+        },
+        "/v1/capabilities": {
+          get: {
+            operationId: "capabilities.get",
+            summary: "Discover capabilities",
+            "x-mcp": {
+              visibility: "default",
+              scope: "contacts",
+              alwaysVisible: true,
+            },
+          },
+        },
+      },
+    }),
+  })
+
+  test("introspection: null (fetch failed) fails open — no scope filtering", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithScopedTools()) as unknown as typeof fetch
+    const { loadOpenApiSpec, getVisibleTools } = await import(
+      "../src/openapi-loader"
+    )
+    await loadOpenApiSpec()
+
+    expect(
+      getVisibleTools(null)
+        .map((t) => t.name)
+        .sort(),
+    ).toEqual([
+      "capabilities_get",
+      "contacts_search",
+      "flows_list",
+      "tags_delete",
+      "tags_list",
+    ])
+  })
+
+  test("scopes: null means unrestricted — every default tool stays visible", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithScopedTools()) as unknown as typeof fetch
+    const { loadOpenApiSpec, getVisibleTools } = await import(
+      "../src/openapi-loader"
+    )
+    await loadOpenApiSpec()
+
+    expect(
+      getVisibleTools({ permission: "full", scopes: null, workspaceId: "ws-1" })
+        .map((t) => t.name)
+        .sort(),
+    ).toEqual([
+      "capabilities_get",
+      "contacts_search",
+      "flows_list",
+      "tags_delete",
+      "tags_list",
+    ])
+  })
+
+  test("a scoped token only sees tools whose scope it holds, plus alwaysVisible tools", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithScopedTools()) as unknown as typeof fetch
+    const { loadOpenApiSpec, getVisibleTools } = await import(
+      "../src/openapi-loader"
+    )
+    await loadOpenApiSpec()
+
+    expect(
+      getVisibleTools({
+        permission: "full",
+        scopes: ["automation"],
+        workspaceId: "ws-1",
+      })
+        .map((t) => t.name)
+        .sort(),
+    ).toEqual(["capabilities_get", "flows_list"])
+  })
+
+  test("a read_only token only sees GET tools plus readOnlyHint POST tools", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(specWithScopedTools()) as unknown as typeof fetch
+    const { loadOpenApiSpec, getVisibleTools } = await import(
+      "../src/openapi-loader"
+    )
+    await loadOpenApiSpec()
+
+    expect(
+      getVisibleTools({
+        permission: "read_only",
+        scopes: ["contacts", "automation"],
+        workspaceId: "ws-1",
+      })
+        .map((t) => t.name)
+        .sort(),
+    ).toEqual([
+      "capabilities_get",
+      "contacts_search",
+      "flows_list",
+      "tags_list",
+    ])
   })
 })

@@ -2,6 +2,7 @@ import { aiAgentService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -23,7 +24,10 @@ export const aiAgentsPublicRouter = {
       method: "GET",
       path: "/v1/ai-agents",
       summary: "List AI agents",
+      description:
+        "Use this to resolve an AI agent before referencing it in `flows.publish` or changing it with `aiAgents.update`. Returns the configured agents in the workspace.",
       tags: ["AI Agents"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(publicListRequest)
     .output(listAIAgentsResponse)
@@ -42,9 +46,17 @@ export const aiAgentsPublicRouter = {
       method: "GET",
       path: "/v1/ai-agents/{id}",
       summary: "Get an AI agent by id",
+      description:
+        "Returns one AI agent's configuration. Use `aiAgents.list` to find its id first.",
       tags: ["AI Agents"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "AI agent id. Get it from `aiAgents.list`.",
+        ),
+      }),
+    )
     .output(aiAgentResourceSchema)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -62,8 +74,11 @@ export const aiAgentsPublicRouter = {
       method: "POST",
       path: "/v1/ai-agents",
       summary: "Create an AI agent",
+      description:
+        "Adds a configured AI agent to the workspace. Use `aiAgents.list` first to avoid duplicating an existing agent, then use `aiAgents.update` to refine its settings.",
       successStatus: 201,
       tags: ["AI Agents"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createAIAgentRequest)
     .output(aiAgentResourceSchema)
@@ -78,9 +93,20 @@ export const aiAgentsPublicRouter = {
       method: "PUT",
       path: "/v1/ai-agents/{id}",
       summary: "Update an AI agent",
+      description:
+        "Changes settings on an existing AI agent without replacing unrelated fields. Call `aiAgents.list` to resolve its id, and use `aiAgents.get` to inspect the saved result.",
       tags: ["AI Agents"],
+      spec: mcpSpec({ visibility: "default" }),
     })
-    .input(updateAIAgentRequest.and(z.object({ id: zodBigintAsString() })))
+    .input(
+      updateAIAgentRequest.and(
+        z.object({
+          id: zodBigintAsString().describe(
+            "AI agent id. Get it from `aiAgents.list`.",
+          ),
+        }),
+      ),
+    )
     .output(aiAgentResourceSchema)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
@@ -96,10 +122,18 @@ export const aiAgentsPublicRouter = {
       method: "DELETE",
       path: "/v1/ai-agents/{id}",
       summary: "Delete an AI agent",
+      description:
+        "Permanently deletes an AI agent. Use `aiAgents.list` to find its id first.",
       successStatus: 204,
       tags: ["AI Agents"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "AI agent id. Get it from `aiAgents.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await aiAgentService.delete({

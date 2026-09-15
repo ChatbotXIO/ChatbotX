@@ -12,6 +12,7 @@ import {
 } from "@/features/messages/schema/mutation"
 import { listMessagesResponse } from "@/features/messages/schema/query"
 import { messageResourceWithRelations } from "@/features/messages/schema/resource"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -50,7 +51,10 @@ export const messagesPublicRouter = {
       method: "GET",
       path: "/v1/conversations/{conversationId}/messages",
       summary: "List messages on a conversation",
+      description:
+        "Lists messages on the given conversation, newest-related pagination via `cursor`. Use `conversations.get` first if you only have a contact identifier.",
       tags: ["Messages"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(listConversationMessagesPublicRequest)
     .output(listMessagesResponse)
@@ -77,6 +81,8 @@ export const messagesPublicRouter = {
       method: "GET",
       path: "/v1/conversations/{conversationId}/messages/{messageId}",
       summary: "Get a message by id on a conversation",
+      description:
+        "Returns one message. Use `messages.list` to find its `messageId`/`createdAt` first.",
       tags: ["Messages"],
     })
     .input(messageIdWithCreatedAtParam)
@@ -106,6 +112,8 @@ export const messagesPublicRouter = {
       method: "POST",
       path: "/v1/conversations/{conversationId}/messages",
       summary: "Send a message on a conversation",
+      description:
+        "Sends an outgoing text/media message on an existing conversation. To message a contact without first resolving their conversation id, use `contacts.sendMessage` instead.",
       successStatus: 201,
       tags: ["Messages"],
     })
@@ -140,6 +148,8 @@ export const messagesPublicRouter = {
       method: "PATCH",
       path: "/v1/conversations/{conversationId}/messages/{messageId}",
       summary: "Edit a comment message",
+      description:
+        "Edits the text of a comment-origin message (e.g. a Facebook/Instagram comment reply). Not usable for chat messages.",
       tags: ["Messages"],
     })
     .input(editMessageRequest.omit({ messageId: true }).and(messageIdPathParam))
@@ -158,6 +168,8 @@ export const messagesPublicRouter = {
       method: "DELETE",
       path: "/v1/conversations/{conversationId}/messages/{messageId}",
       summary: "Delete a comment message",
+      description:
+        "Permanently deletes a comment-origin message. Use `messages.list` to find its `messageId`/`createdAt` first.",
       successStatus: 204,
       tags: ["Messages"],
     })
@@ -176,6 +188,8 @@ export const messagesPublicRouter = {
       method: "POST",
       path: "/v1/conversations/{conversationId}/messages/{messageId}/attributes",
       summary: "Change a message's liked/hidden attributes",
+      description:
+        "Toggles whether a comment-origin message is liked and/or hidden. Use `messages.list` to find its `messageId` first.",
       tags: ["Messages"],
     })
     .input(

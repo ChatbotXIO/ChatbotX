@@ -54,6 +54,8 @@ export const foldersPublicRouter = {
       method: "POST",
       path: "/v1/folders",
       summary: "Create a folder",
+      description:
+        "Adds a folder used to organize tags or custom fields. Use `folders.list` first to avoid duplicating an existing one.",
       tags: ["Folders"],
     })
     .input(createFolderPublicRequest)
@@ -79,6 +81,8 @@ export const foldersPublicRouter = {
       method: "PUT",
       path: "/v1/folders/{id}",
       summary: "Rename a folder",
+      description:
+        "Changes a folder's display name without moving its contents. Use `folders.list` to find its id first.",
       tags: ["Folders"],
     })
     .input(updateFolderPublicRequest)
@@ -101,10 +105,18 @@ export const foldersPublicRouter = {
       method: "DELETE",
       path: "/v1/folders/{id}",
       summary: "Delete a folder",
+      description:
+        "Permanently deletes a folder. Its contents are not deleted, only unfiled. Use `folders.list` to find its id first.",
       successStatus: 204,
       tags: ["Folders"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Folder id. Get it from `folders.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const folder = await requireContactsFolder({

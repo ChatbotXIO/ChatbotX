@@ -375,10 +375,10 @@ export const applyRouteInNode = (
   return firstUpdate?.node ?? null
 }
 
-export const applyRouteUpdatesInNodes = (
-  nodes: FlowNode[],
+export const applyRouteUpdatesInNodes = <N extends FlowNode>(
+  nodes: readonly N[],
   updates: readonly FlowRouteUpdate[],
-): FlowNode[] => {
+): N[] => {
   const updatesBySourceNode = new Map<string, FlowRouteUpdate[]>()
   for (const update of updates) {
     const sourceUpdates = updatesBySourceNode.get(update.sourceNodeId)
@@ -390,13 +390,13 @@ export const applyRouteUpdatesInNodes = (
   }
 
   let hasChanges = false
-  const updatedNodes = nodes.map((node) => {
+  const updatedNodes = nodes.map((node): N => {
     const sourceUpdates = updatesBySourceNode.get(node.id)
     if (!sourceUpdates) {
       return node
     }
 
-    let updatedNode = node
+    let updatedNode: FlowNode = node
     for (const update of sourceUpdates) {
       const nextNode = applyRouteInNode(
         updatedNode,
@@ -409,8 +409,9 @@ export const applyRouteUpdatesInNodes = (
       }
     }
 
-    return updatedNode
+    // Route replacement changes only data nested in the same concrete node.
+    return updatedNode as N
   })
 
-  return hasChanges ? updatedNodes : nodes
+  return hasChanges ? updatedNodes : (nodes as N[])
 }

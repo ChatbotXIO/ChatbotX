@@ -71,6 +71,8 @@ export const integrationsAiPublicRouter = {
       method: "GET",
       path: "/v1/integrations/ai/{provider}",
       summary: "Get an AI provider integration",
+      description:
+        "Returns one AI provider's connected model and settings, without exposing the stored API key. Use `integrations.connectAiProvider` to configure it.",
       tags: ["Integrations"],
     })
     .input(getAiProviderRequest)
@@ -129,6 +131,8 @@ export const integrationsAiPublicRouter = {
       method: "DELETE",
       path: "/v1/integrations/ai/{provider}",
       summary: "Disconnect an AI provider integration",
+      description:
+        "Removes the stored API key and configuration for an AI provider integration.",
       tags: ["Integrations"],
       successStatus: 204,
     })

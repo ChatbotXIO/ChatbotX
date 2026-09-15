@@ -28,7 +28,7 @@ export const appointmentsPublicRouter = {
       path: "/v1/appointments",
       summary: "List appointments",
       description:
-        "Lists appointments in the workspace, optionally filtered by calendar and tab (next/past).",
+        "Use this to find appointments by calendar or next/past tab before opening one with `appointments.get`. Returns paginated workspace appointments for scheduling workflows.",
       tags,
     })
     .input(listAppointmentsPublicRequest)
@@ -55,6 +55,8 @@ export const appointmentsPublicRouter = {
       method: "GET",
       path: "/v1/appointments/{id}",
       summary: "Get an appointment by id",
+      description:
+        "Returns one appointment's booking details. Use `appointments.list` to find its id first.",
       tags,
     })
     .input(appointmentIdPublicRequest)
@@ -102,6 +104,8 @@ export const appointmentsPublicRouter = {
       method: "POST",
       path: "/v1/appointments/{id}/cancel",
       summary: "Cancel an appointment",
+      description:
+        "Cancels a booked appointment without deleting its record. Use `appointments.list` to find its id first.",
       tags,
     })
     .input(appointmentIdPublicRequest)

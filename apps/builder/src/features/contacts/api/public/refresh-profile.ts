@@ -20,8 +20,15 @@ export const contactsRefreshProfilePublicRouter = {
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        contactInboxId: zodBigintAsString(),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        contactInboxId: zodBigintAsString().describe(
+          "Id (numeric string) of the contact's channel inbox connection to refresh from.",
+        ),
       }),
     )
     .output(refreshContactProfilePublicResponse)

@@ -11,7 +11,7 @@ import { z } from "zod"
 export const appointmentCalendarNameSchema = z.string().trim().min(1).max(255)
 
 export const createAppointmentCalendarRequest = z.object({
-  name: appointmentCalendarNameSchema,
+  name: appointmentCalendarNameSchema.describe("Calendar name."),
 })
 export type CreateAppointmentCalendarRequest = z.infer<
   typeof createAppointmentCalendarRequest
@@ -47,8 +47,19 @@ const optionalExternalEventTemplate = (maxLength: number) =>
   )
 
 const appointmentAvailabilityIntervalRequest = z.object({
-  weekday: z.number().int().min(0).max(6),
-  startMinute: z.number().int().min(0).max(1425).multipleOf(15),
+  weekday: z
+    .number()
+    .int()
+    .min(0)
+    .max(6)
+    .describe("Day of week, 0 (Sunday) through 6 (Saturday)."),
+  startMinute: z
+    .number()
+    .int()
+    .min(0)
+    .max(1425)
+    .multipleOf(15)
+    .describe("Interval start, in minutes from midnight, on a 15-minute step."),
   endMinute: z
     .number()
     .int()
@@ -56,27 +67,51 @@ const appointmentAvailabilityIntervalRequest = z.object({
     .max(1439)
     .refine((value) => value === 1439 || value % 15 === 0, {
       message: "End time must be a 15-minute step or 23:59",
-    }),
+    })
+    .describe(
+      "Interval end, in minutes from midnight, on a 15-minute step (or 23:59).",
+    ),
 })
 
 export const appointmentReminderRequest = z.object({
-  flowId: zodBigintAsString(),
-  timingValue: z.coerce.number().int().min(1),
-  timingUnit: appointmentReminderTimingUnits,
+  flowId: zodBigintAsString().describe(
+    "Flow to trigger for this reminder. Get it from `flows.list`.",
+  ),
+  timingValue: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .describe(
+      "Number of timing units before the appointment to send the reminder.",
+    ),
+  timingUnit: appointmentReminderTimingUnits.describe(
+    "Unit for timingValue, e.g. minutes/hours/days.",
+  ),
 })
 
 export const updateAppointmentCalendarRequest = z
   .object({
-    name: appointmentCalendarNameSchema,
-    description: z.string().trim().max(2000).optional().nullable(),
-    active: z.boolean(),
-    timezone: z.string().trim().min(1),
+    name: appointmentCalendarNameSchema.describe("Calendar name."),
+    description: z
+      .string()
+      .trim()
+      .max(2000)
+      .optional()
+      .nullable()
+      .describe("Optional internal description of the calendar."),
+    active: z.boolean().describe("Whether the calendar accepts new bookings."),
+    timezone: z
+      .string()
+      .trim()
+      .min(1)
+      .describe("IANA timezone used to interpret availability and reminders."),
     durationMinutes: z.coerce
       .number()
       .int()
       .refine((value) => DURATION_MINUTE_VALUES.includes(value), {
         message: "Invalid duration",
-      }),
+      })
+      .describe("Length of each appointment slot, in minutes."),
     bufferAfterMinutes: z.preprocess(
       (value) =>
         value === noAppointmentCalendarSelectionValue || value === ""
@@ -88,34 +123,98 @@ export const updateAppointmentCalendarRequest = z
         .refine((value) => BUFFER_MINUTE_VALUES.includes(value), {
           message: "Invalid buffer",
         })
-        .nullable(),
+        .nullable()
+        .describe(
+          "Buffer time added after each appointment, in minutes, or null for none.",
+        ),
     ),
-    locationType: appointmentLocationTypes,
-    locationDetail: z.string().trim().max(500).optional().nullable(),
-    scheduleWindowConfig: appointmentScheduleWindowConfigSchema,
+    locationType: appointmentLocationTypes.describe(
+      "Where the appointment takes place, e.g. in-person or video call.",
+    ),
+    locationDetail: z
+      .string()
+      .trim()
+      .max(500)
+      .optional()
+      .nullable()
+      .describe("Address or link shown to the invitee for this location type."),
+    scheduleWindowConfig: appointmentScheduleWindowConfigSchema.describe(
+      "How far ahead bookings are allowed (e.g. a rolling window or fixed date range).",
+    ),
     maxAppointmentsPerUser: z.preprocess(
       (value) => (value === "" || value == null ? null : value),
-      z.coerce.number().int().min(1).nullable(),
+      z.coerce
+        .number()
+        .int()
+        .min(1)
+        .nullable()
+        .describe(
+          "Maximum number of active appointments a single contact may hold, or null for unlimited.",
+        ),
     ),
-    dailyLimitEnabled: z.boolean(),
+    dailyLimitEnabled: z.boolean().describe("Whether maxPerDay is enforced."),
     maxPerDay: z.preprocess(
       (value) => (value === "" || value == null ? null : value),
-      z.coerce.number().int().min(1).nullable(),
+      z.coerce
+        .number()
+        .int()
+        .min(1)
+        .nullable()
+        .describe(
+          "Maximum bookings per day when dailyLimitEnabled is true, or null when not set.",
+        ),
     ),
-    allowGroupMeeting: z.boolean(),
+    allowGroupMeeting: z
+      .boolean()
+      .describe("Whether multiple contacts can book the same slot."),
     maxPerSlot: z.preprocess(
       (value) => (value === "" || value == null ? null : value),
-      z.coerce.number().int().min(1).nullable(),
+      z.coerce
+        .number()
+        .int()
+        .min(1)
+        .nullable()
+        .describe(
+          "Maximum bookings per slot when allowGroupMeeting is true, or null for unlimited.",
+        ),
     ),
-    confirmationMessage: z.string().trim().max(2000).optional().nullable(),
-    confirmationFlowId: optionalFlowIdField,
-    cancellationFlowId: optionalFlowIdField,
-    externalConnectionId: optionalFlowIdField,
-    externalEventTitleTemplate: optionalExternalEventTemplate(1024),
-    externalEventDescriptionTemplate: optionalExternalEventTemplate(8192),
-    externalEventAttendeesTemplate: optionalExternalEventTemplate(8192),
-    availability: z.array(appointmentAvailabilityIntervalRequest).max(70),
-    reminders: z.array(appointmentReminderRequest).max(50),
+    confirmationMessage: z
+      .string()
+      .trim()
+      .max(2000)
+      .optional()
+      .nullable()
+      .describe("Message shown to the invitee after booking."),
+    confirmationFlowId: optionalFlowIdField.describe(
+      "Flow to trigger when an appointment is booked, or null for none.",
+    ),
+    cancellationFlowId: optionalFlowIdField.describe(
+      "Flow to trigger when an appointment is cancelled, or null for none.",
+    ),
+    externalConnectionId: optionalFlowIdField.describe(
+      "External calendar connection (from `appointmentExternalCalendars.list`) to sync bookings to, or null for none.",
+    ),
+    externalEventTitleTemplate: optionalExternalEventTemplate(1024).describe(
+      "Template for the external calendar event's title, or null to use the default.",
+    ),
+    externalEventDescriptionTemplate: optionalExternalEventTemplate(
+      8192,
+    ).describe(
+      "Template for the external calendar event's description, or null to use the default.",
+    ),
+    externalEventAttendeesTemplate: optionalExternalEventTemplate(
+      8192,
+    ).describe(
+      "Template for the external calendar event's attendee list, or null to use the default.",
+    ),
+    availability: z
+      .array(appointmentAvailabilityIntervalRequest)
+      .max(70)
+      .describe("Weekly recurring availability intervals."),
+    reminders: z
+      .array(appointmentReminderRequest)
+      .max(50)
+      .describe("Reminder flows to trigger before each appointment."),
   })
   .superRefine((data, ctx) => {
     if (data.dailyLimitEnabled && data.maxPerDay == null) {

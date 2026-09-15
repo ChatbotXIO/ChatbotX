@@ -14,6 +14,8 @@ export const templateMessagesPublicRouter = {
       method: "GET",
       path: "/v1/template-messages",
       summary: "List template messages",
+      description:
+        "Returns WhatsApp message templates approved for use in broadcasts, along with their approval status.",
       tags: ["Template Messages"],
     })
     .input(

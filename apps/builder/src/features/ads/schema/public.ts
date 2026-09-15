@@ -44,12 +44,16 @@ export const adsConversionRulePublicResource = adsConversionRuleResource.omit({
 })
 
 export const adsConversionRuleIdParams = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Ads conversion rule id. Get it from `ads.listRules`.",
+  ),
 })
 
 export const listAdsConversionRulesPublicRequest = withPublicPaging(
   z.object({
-    channel: adsConversionChannelSchema.optional(),
+    channel: adsConversionChannelSchema
+      .optional()
+      .describe("Restrict to rules on this channel."),
   }),
 )
 
@@ -69,8 +73,12 @@ export const MAX_ADS_PUBLIC_RANGE_DAYS = 366
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 const dateRangeShape = z.object({
-  since: z.coerce.date(),
-  until: z.coerce.date(),
+  since: z.coerce
+    .date()
+    .describe("ISO 8601 start of the date range (inclusive)."),
+  until: z.coerce
+    .date()
+    .describe("ISO 8601 end of the date range (inclusive)."),
 })
 
 // Mirrors `withOrderedDateRange` in
@@ -97,12 +105,28 @@ const withPublicDateRange = <Schema extends typeof dateRangeShape>(
     )
 
 const ctwaFunnelPublicShape = dateRangeShape.extend({
-  integrationWhatsappId: zodBigintAsString().optional(),
-  channel: adsConversionChannelSchema.optional(),
-  integrationMessengerId: zodBigintAsString().optional(),
-  integrationInstagramId: zodBigintAsString().optional(),
-  allChannels: z.boolean().optional(),
-  timezone: z.string().optional(),
+  integrationWhatsappId: zodBigintAsString()
+    .optional()
+    .describe("Restrict to this WhatsApp integration."),
+  channel: adsConversionChannelSchema
+    .optional()
+    .describe("Restrict to this channel."),
+  integrationMessengerId: zodBigintAsString()
+    .optional()
+    .describe("Restrict to this Messenger integration."),
+  integrationInstagramId: zodBigintAsString()
+    .optional()
+    .describe("Restrict to this Instagram integration."),
+  allChannels: z
+    .boolean()
+    .optional()
+    .describe(
+      "Aggregate across every channel instead of one. Mutually exclusive with channel/integration filters.",
+    ),
+  timezone: z
+    .string()
+    .optional()
+    .describe("IANA timezone used to bucket results."),
 })
 
 // Shared by the funnel and export public requests so the two endpoints
@@ -148,15 +172,46 @@ export const getCtwaFunnelPublicRequest = withPublicDateRange(
   })
 
 const adsConversionExportPublicShape = dateRangeShape.extend({
-  segment: adsConversionExportSegments,
-  adId: z.string().trim().min(1).nullable().optional(),
-  integrationWhatsappId: zodBigintAsString().optional(),
-  channel: adsConversionChannelSchema.optional(),
-  integrationMessengerId: zodBigintAsString().optional(),
-  integrationInstagramId: zodBigintAsString().optional(),
-  allChannels: z.boolean().optional(),
-  afterId: zodBigintAsString().optional(),
-  limit: z.number().int().positive().max(1000).default(500),
+  segment: adsConversionExportSegments.describe(
+    "Conversion funnel stage to export rows for.",
+  ),
+  adId: z
+    .string()
+    .trim()
+    .min(1)
+    .nullable()
+    .optional()
+    .describe("Restrict to this ad id."),
+  integrationWhatsappId: zodBigintAsString()
+    .optional()
+    .describe("Restrict to this WhatsApp integration."),
+  channel: adsConversionChannelSchema
+    .optional()
+    .describe("Restrict to this channel."),
+  integrationMessengerId: zodBigintAsString()
+    .optional()
+    .describe("Restrict to this Messenger integration."),
+  integrationInstagramId: zodBigintAsString()
+    .optional()
+    .describe("Restrict to this Instagram integration."),
+  allChannels: z
+    .boolean()
+    .optional()
+    .describe(
+      "Aggregate across every channel instead of one. Mutually exclusive with channel/integration filters.",
+    ),
+  afterId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Cursor: id of the last row from the previous page. Omit for the first page.",
+    ),
+  limit: z
+    .number()
+    .int()
+    .positive()
+    .max(1000)
+    .default(500)
+    .describe("Maximum rows to return, up to 1000."),
 })
 
 export const listAdsConversionExportRowsPublicRequest = withPublicDateRange(
@@ -204,11 +259,17 @@ export const listAdsConversionExportRowsPublicResponse = z.object({
 // ─────────────────────────────────────────────────────────────────────────
 
 export const listChannelAdAccountsPublicRequestParams = z.object({
-  channel: adsEligibleChannelTypes,
+  channel: adsEligibleChannelTypes.describe(
+    "Channel to list connected ad accounts for.",
+  ),
 })
 
 export const listChannelAdAccountsPublicRequest = z.object({
-  integrationId: zodBigintAsString().optional(),
+  integrationId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Restrict to this integration's own connection instead of the workspace-wide fallback.",
+    ),
 })
 
 export const listChannelAdAccountsPublicResponse = z.object({
@@ -269,21 +330,43 @@ export const capiDeliverySummaryPublicResponse = z.object({
 
 export const adsAnalyticsPublicRequest = z
   .object({
-    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    tz: z.string().optional(),
+    from: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .describe("Start date (YYYY-MM-DD, inclusive)."),
+    to: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .describe("End date (YYYY-MM-DD, inclusive)."),
+    tz: z.string().optional().describe("IANA timezone used to bucket results."),
     adAccountId: z
       .string()
       .regex(/^act_\d+$/)
-      .optional(),
+      .optional()
+      .describe(
+        "Restrict to this Meta ad account id (act_<id>). Get it from `ads.listChannelAdAccounts`.",
+      ),
     // `adsEligibleChannelTypes` here (not `adsConversionChannelSchema`): the
     // spend fan-out resolves messaging-ads connections, which `facebook` has
     // none of.
-    channel: adsEligibleChannelTypes.optional(),
-    integrationWhatsappId: zodBigintAsString().optional(),
-    integrationMessengerId: zodBigintAsString().optional(),
-    integrationInstagramId: zodBigintAsString().optional(),
-    allChannels: z.boolean().optional(),
+    channel: adsEligibleChannelTypes
+      .optional()
+      .describe("Restrict to this channel."),
+    integrationWhatsappId: zodBigintAsString()
+      .optional()
+      .describe("Restrict to this WhatsApp integration."),
+    integrationMessengerId: zodBigintAsString()
+      .optional()
+      .describe("Restrict to this Messenger integration."),
+    integrationInstagramId: zodBigintAsString()
+      .optional()
+      .describe("Restrict to this Instagram integration."),
+    allChannels: z
+      .boolean()
+      .optional()
+      .describe(
+        "Aggregate across every channel instead of one. Mutually exclusive with channel/integration filters.",
+      ),
   })
   .refine(
     (input) =>
@@ -364,7 +447,9 @@ export const adsAnalyticsTimeseriesPublicResponse = z.object({
 // ─────────────────────────────────────────────────────────────────────────
 
 export const adsConversionEventIdParams = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Ads conversion event id. Get it from `ads.listConversionExportRows`.",
+  ),
 })
 
 // `workspaceId` omitted — the leak sweep in public-spec-operations.test.ts
@@ -409,7 +494,13 @@ export const adsConversionEventPublicResource = z.object({
 // ─────────────────────────────────────────────────────────────────────────
 
 export const listCustomAudiencesPublicRequest = z.object({
-  adAccountId: z.string().trim().min(1),
+  adAccountId: z
+    .string()
+    .trim()
+    .min(1)
+    .describe(
+      "Meta ad account id (act_<id>). Get it from `ads.listChannelAdAccounts`.",
+    ),
 })
 
 export const listCustomAudiencesPublicResponse = z.object({

@@ -1,8 +1,19 @@
 import { env } from "./env"
+import { fetchWithTimeout } from "./http"
+import type { TokenIntrospection } from "./token-introspection"
 
 interface OpenAPISpec {
   paths?: Record<string, Record<string, OpenAPIOperation>>
   servers?: Array<{ url: string }>
+}
+
+interface McpOperationMeta {
+  alwaysVisible?: boolean
+  destructiveHint?: boolean
+  idempotentHint?: boolean
+  readOnlyHint?: boolean
+  scope?: string
+  visibility?: "default" | "hidden"
 }
 
 interface OpenAPIOperation {
@@ -11,7 +22,6 @@ interface OpenAPIOperation {
   operationId?: string
   parameters?: OpenAPIParameter[]
   requestBody?: {
-    required?: boolean
     content?: {
       "application/json"?: {
         schema?: OpenAPISchemaObject
@@ -20,6 +30,7 @@ interface OpenAPIOperation {
   }
   security?: Record<string, string[]>[]
   summary?: string
+  "x-mcp"?: McpOperationMeta
 }
 
 // Workspace-token security schemes only — a channel-token op (or any scheme
@@ -74,7 +85,15 @@ interface OpenAPISchemaObject {
   type?: string
 }
 
+interface DynamicToolAnnotations {
+  destructiveHint: boolean
+  idempotentHint: boolean
+  readOnlyHint: boolean
+}
+
 export interface DynamicTool {
+  alwaysVisible: boolean
+  annotations: DynamicToolAnnotations
   baseUrl: string
   bodyParamNames: string[]
   description: string
@@ -88,9 +107,13 @@ export interface DynamicTool {
   pathParamNames: string[]
   pathTemplate: string
   queryParamNames: string[]
+  scope?: string
+  visibility: "default" | "hidden"
 }
 
 let cachedTools: DynamicTool[] | null = null
+
+const toolsByName = new Map<string, DynamicTool>()
 let cachedEtag: string | null = null
 let fetchedAtMs = 0
 // Coalesces concurrent refresh attempts (e.g. several `tools/list` calls
@@ -116,17 +139,109 @@ function extractPathParamNames(pathTemplate: string): string[] {
 }
 
 /**
+ * `x-mcp` hints override; otherwise inferred from the HTTP method — a GET is
+ * read-only and idempotent by convention, a DELETE is destructive (and still
+ * idempotent: deleting twice is a no-op), everything else (POST/PUT/PATCH)
+ * defaults to none of the three.
+ */
+function buildAnnotations(
+  method: string,
+  meta: McpOperationMeta | undefined,
+): DynamicToolAnnotations {
+  const upperMethod = method.toUpperCase()
+  return {
+    readOnlyHint: meta?.readOnlyHint ?? upperMethod === "GET",
+    destructiveHint: meta?.destructiveHint ?? upperMethod === "DELETE",
+    idempotentHint:
+      meta?.idempotentHint ??
+      (upperMethod === "GET" ||
+        upperMethod === "PUT" ||
+        upperMethod === "DELETE"),
+  }
+}
+
+/**
  * `summary` is the short, always-present label; `description` (when a route
  * sets one) carries the long-form usage guidance an agent needs to pick the
  * right tool — example payloads, valid values, edge cases. Joining both
  * (instead of preferring one) means an endpoint author never has to choose
  * which one the MCP tool actually sees.
  */
-function buildToolDescription(operation: OpenAPIOperation): string {
+function buildToolDescription(
+  operation: OpenAPIOperation,
+  meta: McpOperationMeta | undefined,
+  annotations: DynamicToolAnnotations,
+): string {
   const parts = [operation.summary, operation.description].filter(
     (part): part is string => Boolean(part),
   )
+  const requirements: string[] = []
+  if (meta?.scope) {
+    requirements.push(`Requires token scope: ${meta.scope}.`)
+  }
+  if (!annotations.readOnlyHint) {
+    requirements.push("Requires a full (non read-only) token.")
+  }
+  if (requirements.length > 0) {
+    parts.push(requirements.join("\n"))
+  }
+
   return parts.length > 0 ? parts.join("\n\n") : (operation.operationId ?? "")
+}
+
+const resolveBodySchema = (
+  bodySchema: OpenAPISchemaObject | undefined,
+):
+  | {
+      properties: Record<string, OpenAPISchemaObject>
+      required: string[]
+    }
+  | undefined => {
+  if (!bodySchema) {
+    return
+  }
+
+  if (bodySchema.properties) {
+    return {
+      properties: bodySchema.properties,
+      required: bodySchema.required ?? [],
+    }
+  }
+
+  if (bodySchema.allOf) {
+    const properties: Record<string, OpenAPISchemaObject> = {}
+    const required: string[] = []
+    for (const branch of bodySchema.allOf) {
+      for (const [key, value] of Object.entries(branch.properties ?? {})) {
+        properties[key] = value
+      }
+      for (const key of branch.required ?? []) {
+        if (!required.includes(key)) {
+          required.push(key)
+        }
+      }
+    }
+    return Object.keys(properties).length > 0
+      ? { properties, required }
+      : undefined
+  }
+
+  const variants = [...(bodySchema.anyOf ?? []), ...(bodySchema.oneOf ?? [])]
+  if (variants.length === 0) {
+    return
+  }
+
+  const properties: Record<string, OpenAPISchemaObject> = {}
+  for (const branch of variants) {
+    for (const [key, value] of Object.entries(branch.properties ?? {})) {
+      properties[key] = value
+    }
+  }
+  // Branch requirements are intentionally omitted: per-property anyOf wrappers
+  // would be more precise, but are noisier for an LLM tool schema.
+  return Object.keys(properties).length > 0
+    ? { properties, required: [] }
+    : undefined
 }
 
 function buildInputSchema(operation: OpenAPIOperation): {
@@ -158,14 +273,15 @@ function buildInputSchema(operation: OpenAPIOperation): {
     }
   }
 
-  const bodySchema =
-    operation.requestBody?.content?.["application/json"]?.schema
-  if (bodySchema?.properties) {
+  const bodySchema = resolveBodySchema(
+    operation.requestBody?.content?.["application/json"]?.schema,
+  )
+  if (bodySchema) {
     for (const [key, value] of Object.entries(bodySchema.properties)) {
       properties[key] = value
       bodyParamNames.push(key)
     }
-    for (const key of bodySchema.required ?? []) {
+    for (const key of bodySchema.required) {
       if (!required.includes(key)) {
         required.push(key)
       }
@@ -183,40 +299,55 @@ function buildInputSchema(operation: OpenAPIOperation): {
   }
 }
 
+function parseOperation(
+  pathTemplate: string,
+  method: string,
+  operation: OpenAPIOperation,
+  baseUrl: string,
+): DynamicTool | null {
+  if (
+    !operation.operationId ||
+    operation.deprecated ||
+    !isWorkspaceTokenOperation(operation)
+  ) {
+    return null
+  }
+
+  const { schema, bodyParamNames, queryParamNames } =
+    buildInputSchema(operation)
+  const meta = operation["x-mcp"]
+  const annotations = buildAnnotations(method, meta)
+  return {
+    alwaysVisible: meta?.alwaysVisible === true,
+    annotations,
+    baseUrl,
+    bodyParamNames,
+    description: buildToolDescription(operation, meta, annotations),
+    inputSchema: schema,
+    method: method.toUpperCase(),
+    name: toSnakeCase(operation.operationId),
+    pathParamNames: extractPathParamNames(pathTemplate),
+    pathTemplate,
+    queryParamNames,
+    scope: meta?.scope,
+    visibility: meta?.visibility === "default" ? "default" : "hidden",
+  }
+}
+
 function parseToolsFromSpec(spec: OpenAPISpec): DynamicTool[] {
   const baseUrl = spec.servers?.[0]?.url ?? env.CHATBOTX_API_URL
   const tools: DynamicTool[] = []
 
   for (const [pathTemplate, pathItem] of Object.entries(spec.paths ?? {})) {
-    for (const [httpMethod, operation] of Object.entries(pathItem)) {
-      if (!HTTP_METHODS.has(httpMethod)) {
-        continue
-      }
-      if (!operation.operationId) {
-        continue
-      }
-      if (operation.deprecated) {
-        continue
-      }
-      if (!isWorkspaceTokenOperation(operation)) {
+    for (const [method, operation] of Object.entries(pathItem)) {
+      if (!HTTP_METHODS.has(method)) {
         continue
       }
 
-      const pathParamNames = extractPathParamNames(pathTemplate)
-      const { schema, bodyParamNames, queryParamNames } =
-        buildInputSchema(operation)
-
-      tools.push({
-        name: toSnakeCase(operation.operationId),
-        description: buildToolDescription(operation),
-        inputSchema: schema,
-        baseUrl,
-        pathTemplate,
-        method: httpMethod.toUpperCase(),
-        pathParamNames,
-        bodyParamNames,
-        queryParamNames,
-      })
+      const tool = parseOperation(pathTemplate, method, operation, baseUrl)
+      if (tool) {
+        tools.push(tool)
+      }
     }
   }
 
@@ -234,12 +365,16 @@ function parseToolsFromSpec(spec: OpenAPISpec): DynamicTool[] {
 async function fetchAndParseSpec(): Promise<DynamicTool[]> {
   const specUrl = `${env.CHATBOTX_API_URL}/public-spec.json`
 
-  const response = await fetch(specUrl, {
-    headers: {
-      Accept: "application/json",
-      ...(cachedEtag ? { "If-None-Match": cachedEtag } : {}),
+  const response = await fetchWithTimeout(
+    specUrl,
+    {
+      headers: {
+        Accept: "application/json",
+        ...(cachedEtag ? { "If-None-Match": cachedEtag } : {}),
+      },
     },
-  })
+    env.CHATBOTX_HTTP_TIMEOUT_MS,
+  )
 
   if (response.status === 304 && cachedTools !== null) {
     fetchedAtMs = Date.now()
@@ -255,12 +390,30 @@ async function fetchAndParseSpec(): Promise<DynamicTool[]> {
   const spec = (await response.json()) as OpenAPISpec
   const tools = parseToolsFromSpec(spec)
 
-  cachedTools = tools
+  toolsByName.clear()
+  const deduplicatedTools: DynamicTool[] = []
+  for (const tool of tools) {
+    if (toolsByName.has(tool.name)) {
+      console.error(
+        `Duplicate MCP tool name "${tool.name}" in OpenAPI spec; keeping the first operation.`,
+      )
+      continue
+    }
+    toolsByName.set(tool.name, tool)
+    deduplicatedTools.push(tool)
+  }
+
+  // `tools/list` serves `cachedTools` (see the return below and the 304
+  // fast-path above), so it must match `toolsByName` exactly — otherwise a
+  // duplicate name is advertised twice while `tools/call` can only ever
+  // dispatch to the first, permanently wasting a slot in the client's
+  // context window on an unreachable tool.
+  cachedTools = deduplicatedTools
   cachedEtag = response.headers.get("ETag")
   fetchedAtMs = Date.now()
   // stderr keeps this out of the stdio MCP transport stream
-  console.error(`Loaded ${tools.length} tools from OpenAPI spec`)
-  return tools
+  console.error(`Loaded ${deduplicatedTools.length} tools from OpenAPI spec`)
+  return deduplicatedTools
 }
 
 export async function loadOpenApiSpec(): Promise<DynamicTool[]> {
@@ -309,4 +462,55 @@ export async function refreshOpenApiSpecIfStale(): Promise<DynamicTool[]> {
 
 export function getCachedTools(): DynamicTool[] {
   return cachedTools ?? []
+}
+
+export const getToolByName = (name: string): DynamicTool | undefined =>
+  toolsByName.get(name)
+
+function isVisibleForScope(
+  tool: DynamicTool,
+  introspection: TokenIntrospection | null,
+): boolean {
+  // Fail OPEN: introspection unavailable (network blip, unexpected
+  // response) must not hide every tool — enforcement of scope/permission
+  // still happens server-side on the actual call; this is a `tools/list`
+  // display concern only.
+  if (introspection === null) {
+    return true
+  }
+
+  // `readOnlyHint` (method-inferred for GET, or explicit `x-mcp.readOnlyHint`
+  // for a POST that's a read in disguise, e.g. `contacts_search`) is the
+  // single source of truth here — no separate allowlist to keep in sync.
+  if (
+    introspection.permission === "read_only" &&
+    !tool.annotations.readOnlyHint
+  ) {
+    return false
+  }
+
+  // `alwaysVisible` (discovery endpoints like `capabilities.get`/`token.get`)
+  // and an unrestricted token (`scopes: null`) both skip the scope check.
+  if (tool.alwaysVisible || introspection.scopes === null) {
+    return true
+  }
+
+  return tool.scope !== undefined && introspection.scopes.includes(tool.scope)
+}
+
+/**
+ * The `tools/list` surface — `visibility: "default"` operations only,
+ * further narrowed to what `introspection` (the calling token's
+ * permission/scopes, from `GET /v1/token`) allows when provided. Everything
+ * excluded here is still reachable via `search_tools` / `call_tool` against
+ * `getCachedTools()`, which is never filtered.
+ */
+export function getVisibleTools(
+  introspection?: TokenIntrospection | null,
+): DynamicTool[] {
+  return getCachedTools().filter(
+    (tool) =>
+      tool.visibility === "default" &&
+      isVisibleForScope(tool, introspection ?? null),
+  )
 }
