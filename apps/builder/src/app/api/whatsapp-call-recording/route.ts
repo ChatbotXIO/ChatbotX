@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
     // ChatbotXException and mapped to a 4xx by `serverErrorHandler` below.
     await assertCurrentUserCanAccessChatbot(call.workspaceId)
 
-    // R24: apply the same owner-access gate `workspaceActionClient` uses
+    // Apply the same owner-access gate `workspaceActionClient` uses
     // (scheduled-deletion + blocked-owner/trial-expired), rather than the
     // `workspaceActionClientAllowExpired` variant that `get-call-recording-
     // url.action.ts` / `get-call-transcript.action.ts` use. Those actions

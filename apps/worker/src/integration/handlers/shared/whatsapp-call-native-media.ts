@@ -25,7 +25,7 @@ export class WhatsappCallMediaGoneError extends Error {
 }
 
 /**
- * Thrown by the native recording/transcript fetch handlers (R8) when the
+ * Thrown by the native recording/transcript fetch handlers when the
  * `WhatsappCall` row can't yet be resolved by `wacid` — the native-media
  * webhook can race the row-creating `calls` webhook/job on the same
  * delivery. Retryable: BullMQ's bounded backoff (see

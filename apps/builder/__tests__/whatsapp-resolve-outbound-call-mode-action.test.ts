@@ -292,7 +292,7 @@ describe("resolveOutboundCallModeAction", () => {
     })
   })
 
-  // R11 (fixed elsewhere): TR was removed from BLOCKED_OUTBOUND_COUNTRIES —
+  // TR was removed from BLOCKED_OUTBOUND_COUNTRIES —
   // it is not in Meta's documented business-initiated-calling block list.
   test("returns voip for a TR business number (not in the blocked-country list)", async () => {
     findByInboxIdForWorkspaceMock.mockResolvedValue({

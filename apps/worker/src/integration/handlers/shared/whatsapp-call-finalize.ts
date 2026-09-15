@@ -4,6 +4,7 @@ import {
   conversationService,
   sendToWorkspaceMember,
   whatsappVoipCallService,
+  whatsappVoipSignalingService,
 } from "@chatbotx.io/business"
 import {
   createMessageRepository,
@@ -159,7 +160,7 @@ const emitCallEndedToAgent = async (
   // This is terminal cleanup after the Graph call already ended the call, so
   // ending from `accepted` is expected here (`allowFromAccepted:true`).
   await whatsappVoipCallService.endCall({ wacid, allowFromAccepted: true })
-  await whatsappVoipCallService.deleteOffer(wacid)
+  await whatsappVoipSignalingService.deleteOffer(wacid)
 
   // No control record at all: nobody was ever rung, so there's nothing to
   // clear.

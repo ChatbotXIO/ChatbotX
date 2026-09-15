@@ -176,7 +176,7 @@ describe("isCallAnnouncementValidationError", () => {
 
   test.each([
     401, 403, 429,
-  ])("is false for a WhatsappException with httpStatusCode %s (auth/permission/rate-limit, never announcement-related) (B1)", async (httpStatusCode) => {
+  ])("is false for a WhatsappException with httpStatusCode %s (auth/permission/rate-limit, never announcement-related)", async (httpStatusCode) => {
     const { WhatsappException } = await import(
       "@chatbotx.io/integration-whatsapp/exception"
     )
@@ -184,7 +184,7 @@ describe("isCallAnnouncementValidationError", () => {
     expect(isCallAnnouncementValidationError(error)).toBe(false)
   })
 
-  test("is false for the local whatsappCallAnnouncementPurposeTooLong validation error (B1)", async () => {
+  test("is false for the local whatsappCallAnnouncementPurposeTooLong validation error", async () => {
     const { WhatsappException } = await import(
       "@chatbotx.io/integration-whatsapp/exception"
     )

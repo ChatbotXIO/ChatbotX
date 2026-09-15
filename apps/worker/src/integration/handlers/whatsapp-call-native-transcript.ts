@@ -116,7 +116,7 @@ const resolveFlatTranscript = (
  * (an explicit null-check, not a truthiness check — an already-persisted
  * `""` must still short-circuit) backed by `attachTranscript`'s own CAS.
  *
- * R8: the row may not exist yet at the first attempt (this job can race the
+ * The row may not exist yet at the first attempt (this job can race the
  * row-creating `calls` webhook/job) — `data.whatsappCallId` is only a
  * fast-path hint, so this always re-resolves by `data.wacid` and throws
  * {@link WhatsappCallRowNotReadyError} (retryable, bounded ~1h via

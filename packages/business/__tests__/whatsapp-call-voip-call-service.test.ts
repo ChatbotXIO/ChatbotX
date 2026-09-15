@@ -95,11 +95,15 @@ vi.stubGlobal("crypto", {
   randomUUID: mocks.randomUUID,
 })
 
-const {
-  ACTIVE_CALL_LIVENESS_STALE_MS,
-  isAnswerDeadlineExpired,
-  whatsappVoipCallService,
-} = await import("../src/whatsapp-call/voip-call-service")
+const { ACTIVE_CALL_LIVENESS_STALE_MS, isAnswerDeadlineExpired } = await import(
+  "../src/whatsapp-call/voip-call-control"
+)
+const { whatsappVoipCallService } = await import(
+  "../src/whatsapp-call/voip-call-service"
+)
+const { whatsappVoipSignalingService } = await import(
+  "../src/whatsapp-call/voip-signaling-service"
+)
 
 const NOW = 1_000_000
 const DEADLINE = NOW + 30_000
@@ -114,7 +118,7 @@ describe("whatsappVoipCallService.storeOffer", () => {
   test("writes the offer with SET NX PX=(deadlineAt-now)", async () => {
     mocks.setIfAbsent.mockResolvedValue(true)
 
-    const applied = await whatsappVoipCallService.storeOffer({
+    const applied = await whatsappVoipSignalingService.storeOffer({
       wacid: "wa1",
       sdp: "v=0...",
       deadlineAt: DEADLINE,
@@ -131,7 +135,7 @@ describe("whatsappVoipCallService.storeOffer", () => {
   test("floors the TTL so a near/past-deadline offer is not written with a non-positive TTL", async () => {
     mocks.setIfAbsent.mockResolvedValue(true)
 
-    await whatsappVoipCallService.storeOffer({
+    await whatsappVoipSignalingService.storeOffer({
       wacid: "wa1",
       sdp: "v=0...",
       deadlineAt: NOW - 1,
@@ -148,7 +152,7 @@ describe("whatsappVoipCallService.storeOffer", () => {
     mocks.setIfAbsent.mockResolvedValue(false)
 
     await expect(
-      whatsappVoipCallService.storeOffer({
+      whatsappVoipSignalingService.storeOffer({
         wacid: "wa1",
         sdp: "v=0...",
         deadlineAt: DEADLINE,
@@ -808,7 +812,7 @@ describe("whatsappVoipCallService.captureConnectOffer", () => {
   test("stores the offer and enqueues the connect + expiry jobs — the SDP never reaches a job payload", async () => {
     mocks.setIfAbsent.mockResolvedValue(true)
 
-    await whatsappVoipCallService.captureConnectOffer({
+    await whatsappVoipSignalingService.captureConnectOffer({
       wacid: "wa1",
       sdp: "v=0...",
       phoneNumberId: "phone-1",
@@ -856,7 +860,7 @@ describe("whatsappVoipCallService.captureConnectOffer", () => {
   test("a redelivered connect is a full no-op: no job is enqueued when storeOffer reports the offer already exists", async () => {
     mocks.setIfAbsent.mockResolvedValue(false)
 
-    await whatsappVoipCallService.captureConnectOffer({
+    await whatsappVoipSignalingService.captureConnectOffer({
       wacid: "wa1",
       sdp: "v=0...",
       phoneNumberId: "phone-1",
@@ -870,7 +874,7 @@ describe("whatsappVoipCallService.captureConnectOffer", () => {
     mocks.queueAdd.mockRejectedValueOnce(new Error("bullmq down"))
 
     await expect(
-      whatsappVoipCallService.captureConnectOffer({
+      whatsappVoipSignalingService.captureConnectOffer({
         wacid: "wa1",
         sdp: "v=0...",
         phoneNumberId: "phone-1",
@@ -885,7 +889,7 @@ describe("whatsappVoipCallService.captureConnectOffer", () => {
 
 describe("whatsappVoipCallService.rejectUnprocessableConnect", () => {
   test("enqueues ONLY the connect job (no offer stored, no expiry) so the consumer Meta-rejects", async () => {
-    await whatsappVoipCallService.rejectUnprocessableConnect({
+    await whatsappVoipSignalingService.rejectUnprocessableConnect({
       wacid: "wa1",
       phoneNumberId: "phone-1",
     })
@@ -904,10 +908,10 @@ describe("whatsappVoipCallService offer/control readers", () => {
   test("readOffer/deleteOffer/readControl delegate to the expected keys", async () => {
     mocks.getJson.mockResolvedValue(null)
 
-    await whatsappVoipCallService.readOffer("wa1")
+    await whatsappVoipSignalingService.readOffer("wa1")
     expect(mocks.getJson).toHaveBeenCalledWith("voip:offer:wa1")
 
-    await whatsappVoipCallService.deleteOffer("wa1")
+    await whatsappVoipSignalingService.deleteOffer("wa1")
     expect(mocks.del).toHaveBeenCalledWith("voip:offer:wa1")
 
     await whatsappVoipCallService.readControl("wa1")
@@ -1169,7 +1173,7 @@ describe("whatsappVoipCallService outbound answer store", () => {
   test("storeOutboundAnswer writes with SET NX PX keyed by attemptId, SDP-only payload", async () => {
     mocks.setIfAbsent.mockResolvedValue(true)
 
-    const created = await whatsappVoipCallService.storeOutboundAnswer({
+    const created = await whatsappVoipSignalingService.storeOutboundAnswer({
       attemptId: "att-1",
       sdp: "v=0...",
     })
@@ -1186,7 +1190,7 @@ describe("whatsappVoipCallService outbound answer store", () => {
     mocks.setIfAbsent.mockResolvedValue(false)
 
     await expect(
-      whatsappVoipCallService.storeOutboundAnswer({
+      whatsappVoipSignalingService.storeOutboundAnswer({
         attemptId: "att-1",
         sdp: "v=0...",
       }),
@@ -1196,11 +1200,12 @@ describe("whatsappVoipCallService outbound answer store", () => {
   test("readOutboundAnswer/deleteOutboundAnswer delegate to the attemptId-keyed key", async () => {
     mocks.getJson.mockResolvedValue({ sdp: "v=0..." })
 
-    const answer = await whatsappVoipCallService.readOutboundAnswer("att-1")
+    const answer =
+      await whatsappVoipSignalingService.readOutboundAnswer("att-1")
     expect(mocks.getJson).toHaveBeenCalledWith("voip:out:answer:att-1")
     expect(answer).toEqual({ sdp: "v=0..." })
 
-    await whatsappVoipCallService.deleteOutboundAnswer("att-1")
+    await whatsappVoipSignalingService.deleteOutboundAnswer("att-1")
     expect(mocks.del).toHaveBeenCalledWith("voip:out:answer:att-1")
   })
 })
@@ -1218,7 +1223,7 @@ describe("whatsappVoipCallService.captureOutboundAnswer", () => {
     mocks.findByAttemptId.mockResolvedValue(row())
     mocks.setIfAbsent.mockResolvedValue(true)
 
-    await whatsappVoipCallService.captureOutboundAnswer({
+    await whatsappVoipSignalingService.captureOutboundAnswer({
       attemptId: "att-1",
       wacid: "wa1",
       sdp: "v=0...",
@@ -1255,7 +1260,7 @@ describe("whatsappVoipCallService.captureOutboundAnswer", () => {
     mocks.findByWacid.mockResolvedValue(row())
     mocks.setIfAbsent.mockResolvedValue(true)
 
-    await whatsappVoipCallService.captureOutboundAnswer({
+    await whatsappVoipSignalingService.captureOutboundAnswer({
       attemptId: "",
       wacid: "wa1",
       sdp: "v=0...",
@@ -1282,7 +1287,7 @@ describe("whatsappVoipCallService.captureOutboundAnswer", () => {
     mocks.findByAttemptId.mockResolvedValue(undefined)
     mocks.findByWacid.mockResolvedValue(undefined)
 
-    await whatsappVoipCallService.captureOutboundAnswer({
+    await whatsappVoipSignalingService.captureOutboundAnswer({
       attemptId: "att-missing",
       wacid: "wa-missing",
       sdp: "v=0...",
@@ -1296,7 +1301,7 @@ describe("whatsappVoipCallService.captureOutboundAnswer", () => {
     mocks.findByAttemptId.mockResolvedValue(row())
     mocks.setIfAbsent.mockResolvedValue(false)
 
-    await whatsappVoipCallService.captureOutboundAnswer({
+    await whatsappVoipSignalingService.captureOutboundAnswer({
       attemptId: "att-1",
       wacid: "wa1",
       sdp: "v=0...",
@@ -1311,7 +1316,7 @@ describe("whatsappVoipCallService.captureOutboundAnswer", () => {
     mocks.queueAdd.mockRejectedValueOnce(new Error("bullmq down"))
 
     await expect(
-      whatsappVoipCallService.captureOutboundAnswer({
+      whatsappVoipSignalingService.captureOutboundAnswer({
         attemptId: "att-1",
         wacid: "wa1",
         sdp: "v=0...",
@@ -1330,7 +1335,7 @@ describe("whatsappVoipCallService.captureNativeRecordingAvailable", () => {
       workspaceId: "ws-1",
     })
 
-    await whatsappVoipCallService.captureNativeRecordingAvailable({
+    await whatsappVoipSignalingService.captureNativeRecordingAvailable({
       wacid: "wa1",
       audioMediaId: "media-1",
       audioUrl: "https://graph.example/media-1",
@@ -1357,7 +1362,7 @@ describe("whatsappVoipCallService.captureNativeRecordingAvailable", () => {
   test("R8: no matching row yet still enqueues, keyed by wacid, without whatsappCallId/workspaceId", async () => {
     mocks.findByWacid.mockResolvedValue(undefined)
 
-    await whatsappVoipCallService.captureNativeRecordingAvailable({
+    await whatsappVoipSignalingService.captureNativeRecordingAvailable({
       wacid: "wa-missing",
       audioMediaId: "media-1",
       audioUrl: "https://graph.example/media-1",
@@ -1387,7 +1392,7 @@ describe("whatsappVoipCallService.captureNativeTranscriptAvailable", () => {
       workspaceId: "ws-1",
     })
 
-    await whatsappVoipCallService.captureNativeTranscriptAvailable({
+    await whatsappVoipSignalingService.captureNativeTranscriptAvailable({
       wacid: "wa1",
       documentMediaId: "doc-1",
       documentUrl: "https://graph.example/doc-1",
@@ -1412,7 +1417,7 @@ describe("whatsappVoipCallService.captureNativeTranscriptAvailable", () => {
   test("R8: no matching row yet still enqueues, keyed by wacid, without whatsappCallId/workspaceId", async () => {
     mocks.findByWacid.mockResolvedValue(undefined)
 
-    await whatsappVoipCallService.captureNativeTranscriptAvailable({
+    await whatsappVoipSignalingService.captureNativeTranscriptAvailable({
       wacid: "wa-missing",
       documentMediaId: "doc-1",
       documentUrl: "https://graph.example/doc-1",
@@ -1434,7 +1439,7 @@ describe("whatsappVoipCallService.captureNativeTranscriptAvailable", () => {
 
 describe("whatsappVoipCallService.enqueueOutboundDialExpiry", () => {
   test("enqueues expireOutboundDial with a deadline-derived delay and deterministic jobId", async () => {
-    await whatsappVoipCallService.enqueueOutboundDialExpiry({
+    await whatsappVoipSignalingService.enqueueOutboundDialExpiry({
       attemptId: "att-1",
       whatsappCallId: "call-1",
       wacid: "wa1",
@@ -1463,7 +1468,7 @@ describe("whatsappVoipCallService.enqueueOutboundDialExpiry", () => {
   })
 
   test("floors the delay at 0 for a past deadline", async () => {
-    await whatsappVoipCallService.enqueueOutboundDialExpiry({
+    await whatsappVoipSignalingService.enqueueOutboundDialExpiry({
       attemptId: "att-1",
       whatsappCallId: "call-1",
       wacid: "wa1",

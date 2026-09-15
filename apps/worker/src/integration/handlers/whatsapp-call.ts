@@ -188,7 +188,7 @@ const handleOutboundInterimStatus = async (
 /**
  * A `call_created`/`terminate` webhook for a BUSINESS_INITIATED call must
  * never create a row: `initiateOutboundVoipCallAction` already inserted the pending
- * outbound row (`attemptId`, null `wacid`) before dialing. R23: correlation
+ * outbound row (`attemptId`, null `wacid`) before dialing. Correlation
  * back to that row is by exact `wacid`/`attemptId` only (see
  * {@link attachBusinessInitiatedToPendingOutbound}) — the previous
  * time-windowed `(inboxId, contactInboxId)` heuristic is removed.
@@ -204,7 +204,7 @@ const parseUnixSeconds = (value: string | undefined): Date | undefined => {
 }
 
 /**
- * R2: resolves the customer's identity for this call — a phone number
+ * Resolves the customer's identity for this call — a phone number
  * (`waId`) when one is exposed, and/or a Business-Scoped User ID (`userId`)
  * for a Username/BSUID-only caller with no phone number exposed. `contacts[]`
  * is preferred for both; the item-level `from`/`to`/`from_user_id`/
@@ -236,7 +236,7 @@ const resolveCallParticipants = async (
     )
 
   const { waId, userId } = resolveCallerIdentity(props.payload, event)
-  // R2: a Username/BSUID-only caller has no `waId` at all — fall back to the
+  // A Username/BSUID-only caller has no `waId` at all — fall back to the
   // BSUID as the primary `sourceId` (mirrors
   // `incomming-message.ts`'s `sourceId: asString(data.from) ?? sourceUserId ?? ""`),
   // which is what makes `isSourceUserIdKeyedIdentity`/
@@ -269,7 +269,7 @@ const resolveCallParticipants = async (
  * is the correct, safe outcome: a webhook this plan cannot confidently
  * attribute must not fabricate a call row.
  *
- * R23: correlation is EXACT ONLY — `wacid` or `attemptId`
+ * Correlation is EXACT ONLY — `wacid` or `attemptId`
  * (`biz_opaque_callback_data`), resolution order cheapest/most-exact first:
  * 1. `findByWacid`: the VoIP outbound action (`initiate-outbound-voip-call.action.ts`)
  *    already calls `attachWacid` synchronously right after `connectCall`

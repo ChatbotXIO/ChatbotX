@@ -118,7 +118,7 @@ export function WhatsappVoipCallButton({
   const [alertMessageKey, setAlertMessageKey] = useState<string | null>(null)
   const [alertCategory, setAlertCategory] =
     useState<CapabilityAlertCategory>("eligibility")
-  // R4 §6.4 + calls-subscription notice: for EVERY manually-connected
+  // + calls-subscription notice: for EVERY manually-connected
   // integration ChatbotX cannot confirm the customer's own Meta app is
   // subscribed to the `calls` webhook field (`manualCallsSubscriptionUnverified`),
   // and a manual integration with no Meta App Secret is additionally never

@@ -95,12 +95,14 @@ vi.mock("@chatbotx.io/business", () => ({
   whatsappVoipCallService: {
     assertNoActiveCallForContact: assertNoActiveCallForContactMock,
     startOutboundDial: startOutboundDialMock,
-    enqueueOutboundDialExpiry: enqueueOutboundDialExpiryMock,
     createOutboundAttempt: createOutboundAttemptMock,
     attachMetaCallId: attachMetaCallIdMock,
     finalizeEndedCall: finalizeEndedCallMock,
     endCall: endCallMock,
     isCallEnded: isCallEndedMock,
+  },
+  whatsappVoipSignalingService: {
+    enqueueOutboundDialExpiry: enqueueOutboundDialExpiryMock,
   },
   WhatsappCallInProgressError: InProgressError,
 }))
@@ -221,7 +223,7 @@ describe("initiateOutboundVoipCallAction", () => {
     expect(getCallPermissionsMock).not.toHaveBeenCalled()
   })
 
-  // R11: TR is not on Meta's blocked-business-country list (only VN, US, CA,
+  // TR is not on Meta's blocked-business-country list (only VN, US, CA,
   // EG, NG) — a TR business number must dial normally, not be blocked.
   test("does NOT block a TR business number (R11: TR removed from BLOCKED_OUTBOUND_COUNTRIES)", async () => {
     findByInboxIdForWorkspaceMock.mockResolvedValue({

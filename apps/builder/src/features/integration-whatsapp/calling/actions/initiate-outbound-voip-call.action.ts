@@ -1,11 +1,11 @@
 "use server"
 
 import {
-  contactInboxService,
   contactService,
   conversationService,
   WhatsappCallInProgressError,
   whatsappVoipCallService,
+  whatsappVoipSignalingService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { channelTypes } from "@chatbotx.io/database/partials"
@@ -22,9 +22,7 @@ import {
   type WhatsappConnectCallInput,
 } from "@chatbotx.io/integration-whatsapp/api/calling"
 import { WhatsappException } from "@chatbotx.io/integration-whatsapp/exception"
-import { shouldAddressBySourceUserId } from "@chatbotx.io/sdk"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { parsePhoneNumberFromString } from "libphonenumber-js"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { logger } from "@/lib/log"
@@ -35,6 +33,11 @@ import {
   hasCallAnnouncementOptions,
   isCallAnnouncementValidationError,
 } from "./call-announcement-options"
+import {
+  isBlockedBusinessCallingCountry,
+  resolveContactInbox,
+  resolveDialIdentity,
+} from "./outbound-dial-target"
 
 /** Same SDP size bound the inbound answer path applies (see `answer-voip-call.action.ts`). */
 const MAX_SDP_OFFER_CHARS = 100_000
@@ -103,8 +106,6 @@ export type InitiateOutboundVoipCallResult =
   | { outcome: "callingNotEnabled" }
   | { outcome: "callFailed" }
 
-const digitsOf = (phoneNumber: string): string => phoneNumber.replace(/\D/g, "")
-
 /**
  * Best-effort teardown of a leg Meta already connected but this dial will not
  * keep: ends the local call control (if it was created) and hangs up at Meta.
@@ -166,20 +167,10 @@ async function connectCallWithAnnouncementFallback(
 }
 
 /**
- * Resolves the business number's calling country via a real libphonenumber
- * region parse (not a `+1`/`+84` prefix heuristic, which would wrongly block
- * every NANP number for a `+1` check).`undefined`
- * when the number cannot be parsed, so the caller fails open on it.
- */
-const resolveBusinessCallingCountry = (
-  displayPhoneNumber: string,
-): string | undefined => parsePhoneNumberFromString(displayPhoneNumber)?.country
-
-/**
  * Maps a Meta calling error code (`WhatsappException.code`) to the typed
- * outcome the client renders."error taxonomy". Codes that
- * only make sense for OTHER call actions (e.g. 138007 connect timeout, or
- * media-drop codes) fall through to the generic `callFailed`.
+ * outcome the client renders. Codes that only make sense for OTHER call
+ * actions (e.g. 138007 connect timeout, or media-drop codes) fall through to
+ * the generic `callFailed`.
  */
 function mapMetaErrorCodeToOutcome(
   code: string | number,
@@ -206,57 +197,6 @@ function mapMetaErrorCodeToOutcome(
       return "paymentIssue"
     default:
       return "callFailed"
-  }
-}
-
-/**
- * Resolves the WhatsApp `ContactInbox` for this conversation's contact,
- * optionally pinned to a specific one via `contactInboxId` — mirrors
- * `resolveContactInbox` in `start-call.action.ts`.
- */
-async function resolveContactInbox(input: {
-  contactId: string
-  contactInboxId?: string
-}): Promise<{
-  id: string
-  inboxId: string
-  channel: string
-  sourceId: string
-  /**
-   * R2: the Business-Scoped User ID (BSUID) for a Username/BSUID-only
-   * contact — present alongside an empty `sourceId` when the contact's phone
-   * number was never exposed. Feeds `shouldAddressBySourceUserId` below to
-   * decide `to` vs `recipient` on the outbound `connect`.
-   */
-  sourceUserId: string | null
-  /** Per-channel language (the contact panel's "Language" field) — feeds the
-   * announcement-language resolution below. */
-  language: string | null
-} | null> {
-  const contactInbox = input.contactInboxId
-    ? await contactInboxService.findBy({
-        where: {
-          id: input.contactInboxId,
-          contactId: input.contactId,
-          channel: channelTypes.enum.whatsapp,
-        },
-      })
-    : await contactInboxService.findBy({
-        where: {
-          contactId: input.contactId,
-          channel: channelTypes.enum.whatsapp,
-        },
-      })
-  if (!contactInbox) {
-    return null
-  }
-  return {
-    id: contactInbox.id,
-    inboxId: contactInbox.inboxId,
-    channel: contactInbox.channel,
-    sourceId: contactInbox.sourceId,
-    sourceUserId: contactInbox.sourceUserId,
-    language: contactInbox.language,
   }
 }
 
@@ -326,33 +266,20 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
       // carry that data, so this gate intentionally does not fetch it here —
       // add the check if/when that data becomes available on the row rather
       // than inventing a new fetch.
-      const businessCountry = resolveBusinessCallingCountry(
-        integration.displayPhoneNumber,
-      )
-      if (businessCountry && BLOCKED_OUTBOUND_COUNTRIES.has(businessCountry)) {
+      if (
+        isBlockedBusinessCallingCountry(
+          integration.displayPhoneNumber,
+          BLOCKED_OUTBOUND_COUNTRIES,
+        )
+      ) {
         return { outcome: "ineligibleNumber" }
       }
 
-      // R2: a Username/BSUID-only contact has no phone number to dial —
-      // `shouldAddressBySourceUserId` is the same rule the outbound-message
-      // path uses (`lib/recipient.ts`) to decide `to` vs a BSUID `recipient`.
-      const useRecipient = shouldAddressBySourceUserId({
-        sourceId: resolvedContactInbox.sourceId,
-        sourceUserId: resolvedContactInbox.sourceUserId,
-      })
-      const to = useRecipient
-        ? undefined
-        : digitsOf(resolvedContactInbox.sourceId)
-      const recipient = useRecipient
-        ? (resolvedContactInbox.sourceUserId ?? undefined)
-        : undefined
-      // The call-permissions GET takes the SAME identity shape as the dial:
-      // `recipient=<BSUID>` for a Username/BSUID-only contact (never
-      // digit-stripped — that would corrupt a BSUID, which is not a phone
-      // number), `user_wa_id=<digits>` otherwise.
-      const permissionTarget = useRecipient
-        ? { recipient: resolvedContactInbox.sourceUserId ?? "" }
-        : { userWaId: to ?? "" }
+      // Addressing (phone number vs BSUID) is the same rule the outbound
+      // message path uses, and the permissions GET takes the same shape.
+      const { to, recipient, permissionTarget } =
+        resolveDialIdentity(resolvedContactInbox)
+      const useRecipient = recipient !== undefined
       const auth = integration.auth as WhatsappAuthValue
 
       // Best-effort: the contact's locale only feeds the announcement
@@ -436,7 +363,7 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
           sdpOffer,
           attemptId,
           ...announcementOptions,
-          // R2: exactly one of `to`/`recipient` per `WhatsappConnectCallInput`.
+          // Exactly one of `to`/`recipient` per `WhatsappConnectCallInput`.
           ...(useRecipient ? { recipient: recipient ?? "" } : { to: to ?? "" }),
         })
         wacid = connected.wacid
@@ -502,7 +429,7 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
           // any non-dialing outcome of a cancelled attempt to "cancelled".
           return { outcome: "callFailed" }
         }
-        await whatsappVoipCallService.enqueueOutboundDialExpiry({
+        await whatsappVoipSignalingService.enqueueOutboundDialExpiry({
           attemptId,
           whatsappCallId: pending.id,
           wacid,

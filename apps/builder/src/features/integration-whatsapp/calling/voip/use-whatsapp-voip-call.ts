@@ -19,6 +19,13 @@ import {
   WhatsappVoipCallDirection,
   WhatsappVoipCallPhase,
 } from "./voip-call-store"
+import {
+  captureMicrophoneStream,
+  createOutboundOffer,
+  registerConnectionHealthHandlers,
+  VOIP_AUDIO_CONSTRAINTS,
+  waitForIceGatheringComplete,
+} from "./voip-peer-connection"
 
 /**
  * Client-only cap on how long an outbound dial may sit in `preparing`
@@ -47,39 +54,13 @@ const ENDED_LINGER_MS = 2000
 const VOIP_CALL_HANGUP_BEACON_URL = "/api/whatsapp-voip-call-hangup"
 
 /**
- * Deadline for `RTCPeerConnection.iceGatheringState === "complete"` before
- * sending the answer SDP with whatever local candidates have gathered so
- * far — bounds how long a slow/blocked ICE gatherer can hold up answering
- * within Meta's 30-60s accept window (see `docs/whatsapp-calling-voip.md`).
- */
-const ICE_GATHERING_TIMEOUT_MS = 4000
-
-/**
- * R5: how long `pc.connectionState === "disconnected"` is tolerated before
- * treating the call as lost — long enough to absorb a brief network blip
- * (a Wi-Fi handoff, a momentary NAT rebind) without tearing down a call
- * that is about to recover, short enough that the agent is never left
- * staring at an "active" panel over genuine dead air for long.
- */
-const CONNECTION_DISCONNECTED_GRACE_MS = 8000
-
-/**
  * How often the browser pings the server while a call is `active` (accepted
  * and media flowing, wacid known) so a lost `terminate` webhook can still be
- * swept — see R6 in `docs/whatsapp-calling-gap-analysis-plan.md` and
+ * swept — see `docs/whatsapp-calling-gap-analysis-plan.md` and
  * `heartbeat-active-voip-call.action.ts`. Mirrors the presence heartbeat
  * cadence (`useWhatsappVoipPresence`'s `HEARTBEAT_INTERVAL_MS`).
  */
 const ACTIVE_CALL_HEARTBEAT_INTERVAL_MS = 20_000
-
-/**
- * Outbound counterpart to {@link ICE_GATHERING_TIMEOUT_MS} — longer because
- * the OFFER side has no incoming-call urgency pressure and Meta's `connect`
- * round-trip can tolerate a few extra seconds; still strictly under the
- * 60s user-accept deadline (`OUTBOUND_DIAL_DEADLINE_MS` in
- * `initiate-outbound-voip-call.action.ts`).
- */
-const OUTBOUND_ICE_GATHERING_TIMEOUT_MS = 9000
 
 /**
  * Mic constraints tuned to stop the classic WebRTC "howl" (the mic picking the
@@ -89,137 +70,6 @@ const OUTBOUND_ICE_GATHERING_TIMEOUT_MS = 9000
  * output. A bare `audio: true` usually turns these on, but requesting them
  * explicitly makes the behaviour deterministic across devices and browsers.
  */
-const VOIP_AUDIO_CONSTRAINTS: MediaStreamConstraints = {
-  audio: {
-    echoCancellation: true,
-    noiseSuppression: true,
-    autoGainControl: true,
-  },
-}
-
-/**
- * Resolves once `pc.iceGatheringState` reaches `"complete"` (all local ICE
- * candidates gathered, including the trickle-ICE end-of-candidates signal)
- * or the timeout elapses, whichever comes first. Never rejects — a partial
- * candidate set is still usable.
- */
-function waitForIceGatheringComplete(pc: RTCPeerConnection): Promise<void> {
-  if (pc.iceGatheringState === "complete") {
-    return Promise.resolve()
-  }
-  return new Promise<void>((resolve) => {
-    let settled = false
-    const finish = () => {
-      if (settled) {
-        return
-      }
-      settled = true
-      pc.removeEventListener("icegatheringstatechange", onStateChange)
-      clearTimeout(timeoutId)
-      resolve()
-    }
-    const onStateChange = () => {
-      if (pc.iceGatheringState === "complete") {
-        finish()
-      }
-    }
-    pc.addEventListener("icegatheringstatechange", onStateChange)
-    const timeoutId = setTimeout(finish, ICE_GATHERING_TIMEOUT_MS)
-  })
-}
-
-/**
- * Outbound counterpart to {@link waitForIceGatheringComplete}: resolves on
- * `"complete"`, on the timeout, OR — best-effort, when the caller asked for
- * it (a TURN server is actually configured) — as soon as at least one
- * `relay` candidate has been seen, so a dial is not held up the full cap
- * waiting for host/srflx candidates once a usable relay path already
- * exists. Falls back to the plain timeout when no relay candidate ever
- * shows up. Never rejects.
- */
-function waitForOutboundIceGatheringComplete(
-  pc: RTCPeerConnection,
-  options: { timeoutMs: number; preferRelay: boolean },
-): Promise<void> {
-  if (pc.iceGatheringState === "complete") {
-    return Promise.resolve()
-  }
-  return new Promise<void>((resolve) => {
-    let settled = false
-    const finish = () => {
-      if (settled) {
-        return
-      }
-      settled = true
-      pc.removeEventListener("icegatheringstatechange", onStateChange)
-      pc.removeEventListener("icecandidate", onIceCandidate)
-      clearTimeout(timeoutId)
-      resolve()
-    }
-    const onStateChange = () => {
-      if (pc.iceGatheringState === "complete") {
-        finish()
-      }
-    }
-    const onIceCandidate = (event: RTCPeerConnectionIceEvent) => {
-      if (
-        options.preferRelay &&
-        event.candidate?.candidate.includes("typ relay")
-      ) {
-        finish()
-      }
-    }
-    pc.addEventListener("icegatheringstatechange", onStateChange)
-    pc.addEventListener("icecandidate", onIceCandidate)
-    const timeoutId = setTimeout(finish, options.timeoutMs)
-  })
-}
-
-/**
- * R5: wires `pc.onconnectionstatechange` so a lost transport is never
- * silently left showing an "active" call with dead audio. `connectionState`
- * aggregates ICE + DTLS health, so it is a single reliable signal without
- * also needing `oniceconnectionstatechange`. `"failed"` is unrecoverable and
- * fires `onUnrecoverable` immediately; `"disconnected"` may self-heal (a
- * brief NAT rebind), so it only fires after
- * {@link CONNECTION_DISCONNECTED_GRACE_MS} of staying disconnected — any
- * other state observed in the meantime (notably back to `"connected"`)
- * cancels the pending grace timer.
- */
-function registerConnectionHealthHandlers(
-  pc: RTCPeerConnection,
-  onUnrecoverable: () => void,
-): void {
-  let disconnectedTimeoutId: ReturnType<typeof setTimeout> | null = null
-  const clearDisconnectedTimer = () => {
-    if (disconnectedTimeoutId !== null) {
-      clearTimeout(disconnectedTimeoutId)
-      disconnectedTimeoutId = null
-    }
-  }
-  pc.onconnectionstatechange = () => {
-    const state = pc.connectionState
-    if (state === "failed") {
-      clearDisconnectedTimer()
-      onUnrecoverable()
-      return
-    }
-    if (state === "disconnected") {
-      if (disconnectedTimeoutId === null) {
-        disconnectedTimeoutId = setTimeout(() => {
-          disconnectedTimeoutId = null
-          onUnrecoverable()
-        }, CONNECTION_DISCONNECTED_GRACE_MS)
-      }
-      return
-    }
-    // "connected" / "new" / "connecting" / "closed" — recovery (or an
-    // intentional close, which is a harmless no-op here) cancels any pending
-    // grace timer.
-    clearDisconnectedTimer()
-  }
-}
-
 /**
  * Outcome an outbound dial attempt resolves to — every
  * {@link InitiateOutboundVoipCallResult} outcome, plus `"occupied"` for the
@@ -316,7 +166,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   )
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
-  /** R7: the track-less `sendrecv` audio transceiver created up front on
+  /** The track-less `sendrecv` audio transceiver created up front on
    * every peer — the mic track is only ever attached to it via
    * `sender.replaceTrack` once the call is actually accepted (inbound: the
    * accept action resolves; outbound: the ACCEPTED status event), so no RTP
@@ -405,7 +255,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     }
   }, [setRecordingInStore])
 
-  /** R5: shared unrecoverable-connection handler wired onto every peer via
+  /** Shared unrecoverable-connection handler wired onto every peer via
    * {@link registerConnectionHealthHandlers} — never a bare local teardown:
    * an already-accepted call still needs a server-side `terminate` (compensating
    * hangup) so Meta's leg does not linger, while a call still `preparing`
@@ -588,7 +438,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   // called from `ontrack` below; whichever of the two resolves last actually
   // starts it, since both are idempotent no-ops once a recorder exists.
   //
-  // R7: this is also the outbound mic-attach point — Meta's ACCEPTED status
+  // This is also the outbound mic-attach point — Meta's ACCEPTED status
   // event drives `setOutboundStatus(..., "accepted")`, which is what moves
   // the store to `active` here. `replaceTrack` is a no-op renegotiation-free
   // call, safe to invoke again if this effect re-runs for the same call
@@ -670,7 +520,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         }
       }
 
-      // R7: a track-less `sendrecv` transceiver up front — the SDP still
+      // A track-less `sendrecv` transceiver up front — the SDP still
       // offers to send/receive audio (so Meta's callee never sees a
       // downgraded `recvonly` offer), but no RTP flows until the mic track
       // is attached via `replaceTrack` below, AFTER accept succeeds.
@@ -691,7 +541,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
       await pc.setLocalDescription(answerDescription)
       await waitForIceGatheringComplete(pc)
 
-      // R7: this exact string is the ONLY answer SDP ever generated for this
+      // This exact string is the ONLY answer SDP ever generated for this
       // call — `answerWhatsappVoipCallAction` submits it unmodified to both
       // Meta's `pre_accept` and `accept` (see `answer-voip-call.action.ts`),
       // so the two are byte-identical by construction (never regenerated).
@@ -729,7 +579,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         }
 
         markActive(whatsappCallId)
-        // R7: only NOW — accept has actually resolved — attach the mic
+        // Only NOW — accept has actually resolved — attach the mic
         // track, via `replaceTrack` (no renegotiation, no new SDP). Before
         // this point `transceiver.sender.track` is `null`, so no RTP is ever
         // sent while the call is still ringing/answering.
@@ -961,9 +811,24 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
       const clearCancelToken = () => {
         cancelledAttemptIdRef.current = null
       }
-      /** Releases the preparing slot only if it's still ours — a safe no-op
-       * once `upgradeToDialing`/`releasePreparing` (via `hangup`) already
-       * moved past it. */
+      /**
+       * Unwinds this attempt after the agent cancelled it: clears the cancel
+       * token and releases the preparing slot (a no-op once
+       * `upgradeToDialing` already moved past it), tearing the peer/mic down
+       * with it.
+       *
+       * `tearDownPeer: false` is required before this attempt has created a
+       * peer: the refs are shared across attempts, so a stale cancelled
+       * attempt must never close a newer attempt's peer/mic.
+       */
+      const finishCancelled = ({ tearDownPeer } = { tearDownPeer: true }) => {
+        if (tearDownPeer) {
+          teardown()
+        }
+        clearCancelToken()
+        releasePreparing(nonce)
+        return "cancelled" as const
+      }
       const releaseIfStillPreparing = () => {
         releasePreparing(nonce)
       }
@@ -985,9 +850,9 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         }
 
         if (isCancelled()) {
-          clearCancelToken()
-          releaseIfStillPreparing()
-          return "cancelled"
+          // No peer exists for this attempt yet — tearing down here would hit
+          // a newer attempt's peer/mic through the shared refs.
+          return finishCancelled({ tearDownPeer: false })
         }
 
         const pc = new RTCPeerConnection({ iceServers: credentials.iceServers })
@@ -1010,7 +875,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           }
         }
 
-        // R7: a track-less `sendrecv` transceiver, exactly like the inbound
+        // A track-less `sendrecv` transceiver, exactly like the inbound
         // `answer` flow — the OFFER already asks to send/receive audio, but
         // no RTP flows until the mic track is attached below, once the
         // outbound call's status reaches ACCEPTED (never here, while still
@@ -1021,62 +886,34 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         audioTransceiverRef.current = transceiver
 
         setPreparingStage(nonce, "mic")
-        let localStream: MediaStream
-        try {
-          localStream = await navigator.mediaDevices.getUserMedia(
-            VOIP_AUDIO_CONSTRAINTS,
-          )
-        } catch (mediaError) {
+        const microphone = await captureMicrophoneStream()
+        if ("failure" in microphone) {
           teardown()
           if (isCancelled()) {
             clearCancelToken()
             return "cancelled"
           }
           releaseIfStillPreparing()
-          if (
-            mediaError instanceof DOMException &&
-            mediaError.name === "NotAllowedError"
-          ) {
-            return "micPermissionDenied"
+          if (microphone.error !== undefined) {
+            logger.error(
+              { err: microphone.error },
+              "WhatsApp outbound VoIP getUserMedia failed",
+            )
           }
-          if (
-            mediaError instanceof DOMException &&
-            mediaError.name === "NotFoundError"
-          ) {
-            return "micNotFound"
-          }
-          logger.error(
-            { err: mediaError },
-            "WhatsApp outbound VoIP getUserMedia failed",
-          )
-          return "callFailed"
+          return microphone.failure
         }
-        // R7: mic acquired but NOT attached to the transceiver yet — see
+        // Mic acquired but NOT attached to the transceiver yet — see
         // the `replaceTrack` call once the outbound call reaches ACCEPTED.
-        localStreamRef.current = localStream
+        localStreamRef.current = microphone.stream
 
         if (isCancelled()) {
-          teardown()
-          clearCancelToken()
-          releaseIfStillPreparing()
-          return "cancelled"
+          return finishCancelled()
         }
 
         setPreparingStage(nonce, "offer")
-        // `offerToReceiveAudio`/`offerToReceiveVideo` are unnecessary now
-        // that the audio transceiver above already declares `sendrecv` — no
-        // video transceiver exists, so no video m-line is ever offered.
-        const offer = await pc.createOffer()
-        await pc.setLocalDescription(offer)
-        await waitForOutboundIceGatheringComplete(pc, {
-          timeoutMs: OUTBOUND_ICE_GATHERING_TIMEOUT_MS,
+        const sdpOffer = await createOutboundOffer(pc, {
           preferRelay: credentials.turnConfigured,
         })
-
-        const sdpOffer = pc.localDescription?.sdp
-        if (!sdpOffer) {
-          throw new Error("voip-outbound-local-description-missing")
-        }
 
         setPreparingStage(nonce, "initiate")
         const result = await initiateOutboundVoipCallAction(workspaceId, {
@@ -1114,9 +951,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         // ringing in the void, and tear down this attempt's now-orphaned
         // peer/mic.
         if (isCancelled()) {
-          clearCancelToken()
-          releaseIfStillPreparing()
-          teardown()
+          finishCancelled()
           hangupWhatsappVoipCallAction(workspaceId, {
             whatsappCallId: data.whatsappCallId,
           }).catch((error: unknown) => {
@@ -1241,7 +1076,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     return () => window.removeEventListener("pagehide", onPageHide)
   }, [call, workspaceId])
 
-  // R6: client-driven liveness — while a call is `active` (accepted,
+  // Client-driven liveness — while a call is `active` (accepted,
   // media flowing, wacid known — inbound or outbound), ping the server every
   // `ACTIVE_CALL_HEARTBEAT_INTERVAL_MS` so a lost `terminate` webhook can
   // still be swept server-side (see `heartbeat-active-voip-call.action.ts`).

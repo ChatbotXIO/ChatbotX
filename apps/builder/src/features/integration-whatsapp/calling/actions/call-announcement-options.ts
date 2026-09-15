@@ -85,7 +85,7 @@ export function hasCallAnnouncementOptions(
  * rate-limiting, none of which have anything to do with a bad
  * `purpose`/`announcement_language`. Stripping the announcement options and
  * retrying on one of these would silently disable recording/transcription
- * for a call that was never going to succeed anyway (B1).
+ * for a call that was never going to succeed anyway.
  */
 const NEVER_ANNOUNCEMENT_RELATED_HTTP_STATUSES = new Set([401, 403, 429])
 
@@ -106,12 +106,11 @@ const DOCUMENTED_CALLING_ERROR_CODES = new Set([
 
 /**
  * True for a Meta 4xx that can plausibly be the `recording`/`transcription`
- * opt-in objects being rejected (bad `purpose`/`announcement_language`) —
- *: "Bad purpose/announcement_language ⇒ Meta rejects the whole
- * connect/accept at request time". Meta does not return a dedicated error
- * code for this validation, so a 4xx is treated as retry-worthy ONLY when it
+ * opt-in objects being rejected: an invalid `purpose`/`announcement_language`
+ * makes Meta reject the whole connect/accept at request time. Meta returns no
+ * dedicated error code for that validation, so a 4xx is retry-worthy ONLY when it
  * is not one of the statuses above, and not the local
- * `whatsappCallAnnouncementPurposeTooLong` validation error (B1) — a bad SDP,
+ * `whatsappCallAnnouncementPurposeTooLong` validation error — a bad SDP,
  * an auth failure, or a rate limit must propagate untouched rather than
  * silently stripping recording/transcription and retrying. The caller only
  * invokes this check when announcement options were actually attached.

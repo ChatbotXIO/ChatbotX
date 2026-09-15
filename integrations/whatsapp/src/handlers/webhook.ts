@@ -1,4 +1,4 @@
-import { whatsappVoipCallService } from "@chatbotx.io/business"
+import { whatsappVoipSignalingService } from "@chatbotx.io/business"
 import {
   type HandleRequestProps,
   type ReceivedMessageProps,
@@ -175,7 +175,7 @@ const toBullMqSafeIdSegment = (value: string): string =>
   value.replace(/[^a-zA-Z0-9._-]/g, "_")
 
 /**
- * R4 (CRITICAL): reads the phone number id the CALLING route has pinned this
+ * Reads the phone number id the CALLING route has pinned this
  * request to, when one was pinned.
  *
  * Two routes call into this handler:
@@ -204,7 +204,7 @@ const resolvePinnedPhoneNumberId = (
 }
 
 /**
- * R4: drops every item whose `phoneNumberId` does not match the pinned one
+ * Drops every item whose `phoneNumberId` does not match the pinned one
  * (manual integration only — see {@link resolvePinnedPhoneNumberId}). A
  * dropped item is logged (`warn`, structured) so a forged/misrouted webhook
  * stays observable instead of silently vanishing. A no-op (returns `items`
@@ -288,7 +288,7 @@ const handleGetHandshake = async (
 }
 
 /**
- * R1: one `messages`-field change's `value`, narrowed just enough to split it
+ * One `messages`-field change's `value`, narrowed just enough to split it
  * into single-item sub-values. `whatsapp-api-js@6.2.1`'s `post()` only ever
  * reads `entry[0].changes[0].messages[0]` (confirmed against its source —
  * see `lib/raw-identity.ts`'s comment) — so a batched delivery carrying
@@ -389,9 +389,9 @@ const splitMessagesChangeValue = (
  * to the SDK middleware, once per item, instead of the whole batch once. A
  * `calls`-field change is never included here (handled entirely by
  * `extractCallEventPayloads` — see the comment on the `calls`-skip below).
- * R4: a change whose `metadata.phone_number_id` does not match a pinned
+ * A change whose `metadata.phone_number_id` does not match a pinned
  * integration (manual webhook route only) is dropped here, before the SDK
- * middleware — never reaches the SDK-derived `phoneID`, so the R4 gate on
+ * middleware — never reaches the SDK-derived `phoneID`, so the pinning gate on
  * the SDK message/status result is enforced at the source.
  */
 const buildMessagesChangeBuffers = (
@@ -624,7 +624,7 @@ const capturePostResult = async (input: {
 
 /**
  * Gives each coexist job a deterministic jobId so a whole-webhook redelivery
- * (R9 propagates enqueue failures as non-2xx, which makes Meta redeliver the
+ * (enqueue failures propagate as non-2xx, which makes Meta redeliver the
  * entire batch) is a no-op re-add instead of a duplicate
  * `coexistWhatsappBuffer` job. Hashed with Web Crypto (`sha256Hex`, itself
  * backed by `crypto.subtle`) rather than `node:crypto` so this module stays
@@ -745,7 +745,7 @@ const stripVoipSession = (
 }
 
 /**
- * R9: enqueue failures here are NO LONGER swallowed — they propagate so the
+ * Enqueue failures here are NO LONGER swallowed — they propagate so the
  * webhook handler throws and the route answers non-2xx, so Meta redelivers.
  * Deterministic jobIds (already in place below) make that redelivery
  * duplicate-safe: a job that already committed is a no-op re-add, and a job
@@ -800,7 +800,7 @@ const enqueueCallEventPayloads = async (
  * validated `session` (a bounded SDP offer parsed by
  * `extractCallEventPayloads`) triggers this branch; a business-initiated or
  * session-less connect (what Meta sends when a number is configured for
- * Meta's SIP signalling, which ChatbotX does not use) is a no-op here. R9: a
+ * Meta's SIP signalling, which ChatbotX does not use) is a no-op here. A
  * capture failure now PROPAGATES (no longer swallowed) so the
  * webhook handler throws and Meta redelivers — the underlying service calls
  * are idempotent (keyed by wacid/attemptId), so a redelivered capture is
@@ -827,7 +827,7 @@ const enqueueVoipConnectSignaling = async (
           )
         }
         try {
-          await whatsappVoipCallService.captureOutboundAnswer({
+          await whatsappVoipSignalingService.captureOutboundAnswer({
             attemptId: event.bizOpaqueCallbackData ?? "",
             wacid: event.wacid,
             sdp: event.session.sdp,
@@ -844,7 +844,7 @@ const enqueueVoipConnectSignaling = async (
     }
     try {
       if (event.session) {
-        await whatsappVoipCallService.captureConnectOffer({
+        await whatsappVoipSignalingService.captureConnectOffer({
           wacid: event.wacid,
           sdp: event.session.sdp,
           phoneNumberId: payload.phoneNumberId,
@@ -853,7 +853,7 @@ const enqueueVoipConnectSignaling = async (
         // A VoIP connect whose SDP we cannot honor — reject it on Meta rather
         // than leaving it to ring out on the session-less path (ChatbotX has
         // no leg for it).
-        await whatsappVoipCallService.rejectUnprocessableConnect({
+        await whatsappVoipSignalingService.rejectUnprocessableConnect({
           wacid: event.wacid,
           phoneNumberId: payload.phoneNumberId,
         })
@@ -870,11 +870,11 @@ const enqueueVoipConnectSignaling = async (
 
 /**
  * Meta-native call recording/transcript delivery (VoIP-only — see
- * : additive
- * alongside {@link enqueueCallEventPayloads}, never a replacement for it —
+ * `docs/whatsapp-calling-voip.md`): additive alongside
+ * {@link enqueueCallEventPayloads}, never a replacement for it —
  * the generic `whatsappCallEvent` job still fires for these two event kinds
  * (today it only skip-logs them; the worker-side handling of that lands in a
- * later wave). R9: a capture failure now PROPAGATES (no longer swallowed) so
+ * later wave). A capture failure PROPAGATES (never swallowed) so
  * the webhook handler throws and Meta redelivers, mirroring
  * {@link enqueueVoipConnectSignaling}.
  */
@@ -902,7 +902,7 @@ const enqueueNativeCallCapture = async (
         continue
       }
       try {
-        await whatsappVoipCallService.captureNativeRecordingAvailable({
+        await whatsappVoipSignalingService.captureNativeRecordingAvailable({
           wacid: event.wacid,
           audioMediaId: event.audio.mediaId,
           audioUrl: event.audio.url,
@@ -927,7 +927,7 @@ const enqueueNativeCallCapture = async (
         continue
       }
       try {
-        await whatsappVoipCallService.captureNativeTranscriptAvailable({
+        await whatsappVoipSignalingService.captureNativeTranscriptAvailable({
           wacid: event.wacid,
           documentMediaId: event.document.mediaId,
           documentUrl: event.document.url,
@@ -973,7 +973,7 @@ const dispatchWebhookResult = async (
         } as ReceivedMessageProps,
       },
       {
-        // R9: deterministic jobId so a Meta redelivery of the same message
+        // Deterministic jobId so a Meta redelivery of the same message
         // (now possible: enqueue failures upstream propagate to a non-2xx
         // instead of being swallowed) is a no-op re-add rather than a
         // duplicate job — the message row itself also dedupes by sourceId.
@@ -1012,7 +1012,7 @@ const dispatchWebhookResult = async (
           },
         },
         {
-          // R9: deterministic jobId — see the `incomingMessage` comment above.
+          // Deterministic jobId — see the `incomingMessage` comment above.
           jobId: `wa-status-${toBullMqSafeIdSegment(result.data.phoneID)}-${toBullMqSafeIdSegment(statusData.id)}-${toBullMqSafeIdSegment(statusData.status)}`,
           ...REDELIVERABLE_JOB_OPTIONS,
         },
@@ -1089,7 +1089,7 @@ export const webhookHandler = async (
         "callEvent",
       )
 
-      // R1: the SDK middleware (`handle_post`) exists only to extract
+      // The SDK middleware (`handle_post`) exists only to extract
       // message/status args for us. It is fed ONE reconstructed single-item
       // body per `messages`-field change item (see
       // `buildMessagesChangeBuffers`/`splitMessagesChangeValue`) instead of
@@ -1131,7 +1131,7 @@ export const webhookHandler = async (
         }
       }
 
-      // Order: the enqueues whose failure propagates (R9 — non-2xx so Meta
+      // Order: the enqueues whose failure propagates (non-2xx so Meta
       // redelivers; every one of them is keyed by a deterministic jobId, so
       // a redelivery is a no-op re-add) run first. Coexist and automatic
       // events log-and-skip per item, so they run last and can never block

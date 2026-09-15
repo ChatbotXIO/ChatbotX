@@ -1,4 +1,7 @@
-import { whatsappVoipCallService } from "@chatbotx.io/business"
+import {
+  whatsappVoipCallService,
+  whatsappVoipSignalingService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   integrationWhatsappRepository,
@@ -149,6 +152,6 @@ export async function endVoipCallAsAgent(
       ? { lastError: CALL_CANCELED_BY_BUSINESS_LAST_ERROR }
       : {}),
   })
-  await whatsappVoipCallService.deleteOffer(wacid)
+  await whatsappVoipSignalingService.deleteOffer(wacid)
   return true
 }

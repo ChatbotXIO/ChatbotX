@@ -133,7 +133,7 @@ class MockRTCPeerConnection {
   ontrack: ((event: unknown) => void) | null = null
   onconnectionstatechange: (() => void) | null = null
   addTrack = vi.fn()
-  /** R7: returns a fake `RTCRtpTransceiver` whose `sender.track` starts
+  /** Returns a fake `RTCRtpTransceiver` whose `sender.track` starts
    * `null` — tests assert it stays that way until `replaceTrack` is called
    * after accept. */
   addTransceiver = vi.fn(
@@ -974,7 +974,7 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     )
     expect(getUserMediaMock).toHaveBeenCalled()
     expect(createdPeerConnections).toHaveLength(1)
-    // R7: a track-less `sendrecv` audio transceiver is added up front, so
+    // A track-less `sendrecv` audio transceiver is added up front, so
     // `createOffer` no longer needs `offerToReceiveAudio`/`offerToReceiveVideo`
     // — the transceiver alone declares the m-line, and no video transceiver
     // exists, so no video m-line is ever offered.

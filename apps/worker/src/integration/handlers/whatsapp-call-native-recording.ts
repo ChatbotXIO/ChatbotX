@@ -52,7 +52,7 @@ const normalizeRecordingContentType = (mimeType: string) => {
  * Meta's 7-day retention window this throws so BullMQ retries; when the
  * media itself is gone, it logs and returns instead.
  *
- * R8: the row may not exist yet at the first attempt (this job can race the
+ * The row may not exist yet at the first attempt (this job can race the
  * row-creating `calls` webhook/job) — `data.whatsappCallId` is only a
  * fast-path hint, so this always re-resolves by `data.wacid` and throws
  * {@link WhatsappCallRowNotReadyError} (retryable, bounded ~1h via

@@ -36,7 +36,8 @@ vi.mock("../src/lib/logger", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  whatsappVoipCallService: {
+  whatsappVoipCallService: {},
+  whatsappVoipSignalingService: {
     captureConnectOffer: mockCaptureConnectOffer,
     rejectUnprocessableConnect: mockRejectUnprocessableConnect,
     captureOutboundAnswer: mockCaptureOutboundAnswer,
@@ -53,7 +54,7 @@ const { middlewareHandlePost } = vi.hoisted(() => ({
 }))
 
 // Mirrors just enough of whatsapp-api-js@6.2.1's real dispatch (reads
-// entry[0].changes[0].value.messages[0]/statuses[0]) so R9's deterministic
+// entry[0].changes[0].value.messages[0]/statuses[0]) so the deterministic
 // jobId test can assert against a real `on.message`/`on.status` dispatch
 // instead of the library's actual (untested-here) parsing.
 const extractMockDispatchArgs = async (

@@ -90,7 +90,7 @@ vi.mock("@chatbotx.io/business", () => ({
     markAcceptedByAgent: markAcceptedByAgentMock,
   },
   // Real implementation (not a stub) so the deadline tests exercise the
-  // actual R16 margin logic instead of a hard-coded true/false.
+  // actual deadline-margin logic instead of a hard-coded true/false.
   isAnswerDeadlineExpired: (deadlineAt: number) =>
     Date.now() + DEADLINE_SAFETY_MARGIN_MS >= deadlineAt,
   contactInboxService: { findBy: findContactInboxMock },

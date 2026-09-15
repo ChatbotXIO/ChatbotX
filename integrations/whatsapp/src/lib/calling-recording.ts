@@ -1,7 +1,6 @@
 /**
- * Meta-native call recording/transcription opt-in helpers (VoIP-only —
- * SIP-enabled numbers cannot use these; see
- *
+ * Meta-native call recording/transcription opt-in helpers. VoIP-only:
+ * SIP-enabled numbers cannot use these.
  *
  * Reference (verified 2026-09-14):
  * https://developers.facebook.com/documentation/business-messaging/whatsapp/calling/call-recording

@@ -61,7 +61,7 @@ class WhatsappCallTranscriptService {
     callId: string
     workspaceId: string
   }): Promise<WhatsappCallModel> {
-    // Workspace-scoped in the SQL WHERE clause (B7 defense-in-depth); the
+    // Workspace-scoped in the SQL WHERE clause (defense in depth); the
     // app-level check below is kept too (belt and suspenders) rather than
     // relied on as the only gate.
     const call = await whatsappCallRepository.findByIdForWorkspace(

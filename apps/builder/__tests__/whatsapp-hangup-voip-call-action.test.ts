@@ -44,8 +44,10 @@ vi.mock("@chatbotx.io/business", () => ({
   whatsappVoipCallService: {
     readControl: readControlMock,
     endCall: endCallMock,
-    deleteOffer: deleteOfferMock,
     finalizeEndedCall: finalizeEndedCallMock,
+  },
+  whatsappVoipSignalingService: {
+    deleteOffer: deleteOfferMock,
   },
 }))
 

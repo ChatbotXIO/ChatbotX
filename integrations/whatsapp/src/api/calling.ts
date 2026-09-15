@@ -287,7 +287,7 @@ type WhatsappCallExistingCallActionBody = {
  * `connect` places a NEW outbound call: no `call_id` yet (Meta assigns one
  * in the response), a recipient — `to` (bare digits, no leading `+`) for a
  * phone-number-keyed contact, or `recipient` (a BSUID) for a Username/BSUID-
- * only contact with no phone number exposed (R2) — the business's SDP OFFER,
+ * only contact with no phone number exposed — the business's SDP OFFER,
  * and `biz_opaque_callback_data` (the attempt id) so the async
  * answer/status/terminate webhooks can be correlated back to this attempt
  * before the call id is known. Exactly one of `to`/`recipient` is ever sent.
@@ -473,7 +473,7 @@ export const terminateCall = ({
   })
 
 /**
- * R2: a Username/BSUID-only contact (no phone number exposed) has no `to`
+ * A Username/BSUID-only contact (no phone number exposed) has no `to`
  * to dial — Meta's `connect` action accepts a BSUID via `recipient` instead
  * (per the Calling API's `connect` spec: "`to` | `recipient` BSUID"). Exactly
  * one of the two is ever sent.

@@ -43,7 +43,7 @@ export type WhatsappVoipCallDirection =
 
 /** Terminal outcome carried by the `whatsappCallTransportEnded` realtime
  * event — drives the ~2s "ended" linger message in the call panel.
- * `connectionLost` is client-only (R5): set when the local
+ * `connectionLost` is client-only: set when the local
  * `RTCPeerConnection` reports `failed`, or `disconnected` for longer than
  * the grace window, rather than by a server-sent transport-ended event. */
 export type WhatsappVoipEndedStatus =

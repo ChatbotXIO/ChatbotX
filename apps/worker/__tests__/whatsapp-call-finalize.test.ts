@@ -33,8 +33,10 @@ vi.mock("@chatbotx.io/business", () => ({
   whatsappVoipCallService: {
     readControl: mocks.voipReadControl,
     endCall: mocks.voipMarkTerminated,
-    deleteOffer: mocks.voipDeleteOffer,
     finalizeEndedCall: mocks.finalizeById,
+  },
+  whatsappVoipSignalingService: {
+    deleteOffer: mocks.voipDeleteOffer,
   },
 }))
 
@@ -749,7 +751,7 @@ describe("enrichCallActivityMessage", () => {
     })
   })
 
-  // B4: real timers — the bounded wait totals ~3.5s, which is cheap enough
+  // Real timers — the bounded wait totals ~3.5s, which is cheap enough
   // to run for real rather than fighting fake-timer/monotonic-clock
   // interactions elsewhere in this suite (see whatsapp-call-recording.test.ts).
   test("B4: throws WhatsappCallEnrichmentPendingError (instead of silently returning) when the finalize message never lands within the bounded wait", async () => {

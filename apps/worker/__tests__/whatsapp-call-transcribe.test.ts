@@ -236,7 +236,7 @@ describe("handleWhatsappCallTranscribe", () => {
       })
     })
 
-    // Behavior change (B4): the shared `enrichCallActivityMessage` used to
+    // Behavior change: the shared `enrichCallActivityMessage` used to
     // silently skip and let the job "succeed" when the finalize message
     // hadn't landed yet — losing the `hasTranscript` flag forever, since
     // this handler's own `call.transcript` CAS guard means a caller-level

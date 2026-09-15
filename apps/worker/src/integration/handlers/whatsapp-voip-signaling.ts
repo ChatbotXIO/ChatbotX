@@ -2,6 +2,7 @@ import {
   resolveWhatsappCallerName,
   sendToWorkspaceMember,
   whatsappVoipCallService,
+  whatsappVoipSignalingService,
 } from "@chatbotx.io/business"
 import {
   integrationLookupRepository,
@@ -277,7 +278,7 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
   // must be Meta-rejected, and doing it here means no agent is ever rung for a
   // doomed call. There is no control record yet, so `rejectUnreachableCall`
   // (Graph reject + finalize, no CAS) is the right primitive.
-  const offer = await whatsappVoipCallService.readOffer(wacid)
+  const offer = await whatsappVoipSignalingService.readOffer(wacid)
   if (!offer) {
     await rejectUnreachableCall({ wacid, auth })
     return
@@ -384,7 +385,8 @@ const handleOutboundAnswer = async (
   const { attemptId, wacid, workspaceId } = data
   const call = await getOutboundCallRowOrThrow({ attemptId, wacid })
 
-  const answer = await whatsappVoipCallService.readOutboundAnswer(attemptId)
+  const answer =
+    await whatsappVoipSignalingService.readOutboundAnswer(attemptId)
   if (!answer) {
     logger.warn(
       { attemptId, whatsappCallId: call.id },
@@ -423,7 +425,7 @@ const handleOutboundAnswer = async (
     )
   }
 
-  await whatsappVoipCallService.deleteOutboundAnswer(attemptId)
+  await whatsappVoipSignalingService.deleteOutboundAnswer(attemptId)
 }
 
 /**

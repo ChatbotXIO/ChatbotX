@@ -27,9 +27,11 @@ vi.mock("@chatbotx.io/business", () => ({
   resolveWhatsappCallerName: mocks.resolveWhatsappCallerName,
   whatsappVoipCallService: {
     resolveRingTargets: mocks.resolveRingTargets,
-    readOffer: mocks.readOffer,
     readControl: mocks.readControl,
     endCall: mocks.endCall,
+  },
+  whatsappVoipSignalingService: {
+    readOffer: mocks.readOffer,
     deleteOffer: mocks.deleteOffer,
     readOutboundAnswer: mocks.readOutboundAnswer,
     deleteOutboundAnswer: mocks.deleteOutboundAnswer,

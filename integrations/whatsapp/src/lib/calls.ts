@@ -52,7 +52,7 @@ const callTerminateErrorSchema = z.object({
   message: z.string().optional(),
 })
 
-// R2: `wa_id` is OPTIONAL — a Username/BSUID-only caller (no phone number
+// `wa_id` is OPTIONAL — a Username/BSUID-only caller (no phone number
 // exposed) still carries `user_id`/`parent_user_id`/`profile.username` but
 // never `wa_id`. Requiring `wa_id` here used to fail the WHOLE `calls` value
 // (`callsValueSchema.safeParse`) for such a contact, silently dropping every
@@ -100,7 +100,7 @@ const callEventItemSchema = z.object({
   event: z.string(),
   from: z.string().optional(),
   to: z.string().optional(),
-  // R2: item-level BSUID fields — present when either leg of the call is a
+  // Item-level BSUID fields — present when either leg of the call is a
   // Username/BSUID-only user (no phone number exposed on that leg).
   from_user_id: z.string().optional(),
   to_user_id: z.string().optional(),
@@ -140,7 +140,7 @@ const callStatusItemSchema = z.object({
   type: z.string().optional(),
   timestamp: z.union([z.string(), z.number()]).optional(),
   recipient_id: z.string().optional(),
-  // R2: the BSUID a status targets when the recipient has no phone number
+  // The BSUID a status targets when the recipient has no phone number
   // exposed (`recipient_id` is empty in that case) — mirrors
   // `statuses[].recipient_user_id` on the `messages` webhook (see
   // `lib/raw-identity.ts`).
@@ -178,7 +178,7 @@ export type WhatsappCallTerminateError = {
 }
 
 export type WhatsappCallContactPayload = {
-  /** R2: absent for a Username/BSUID-only caller (no phone number exposed). */
+  /** Absent for a Username/BSUID-only caller (no phone number exposed). */
   waId?: string
   userId?: string
   parentUserId?: string
@@ -213,7 +213,7 @@ export type WhatsappCallEventPayload = {
         direction: WhatsappCallDirectionPayload
         from?: string
         to?: string
-        /** R2: BSUID counterparts of `from`/`to` (Username/BSUID-only legs). */
+        /** BSUID counterparts of `from`/`to` (Username/BSUID-only legs). */
         fromUserId?: string
         toUserId?: string
         fromParentUserId?: string
@@ -242,7 +242,7 @@ export type WhatsappCallEventPayload = {
         status: "COMPLETED" | "FAILED"
         from?: string
         to?: string
-        /** R2: BSUID counterparts of `from`/`to` (Username/BSUID-only legs). */
+        /** BSUID counterparts of `from`/`to` (Username/BSUID-only legs). */
         fromUserId?: string
         toUserId?: string
         fromParentUserId?: string
@@ -259,7 +259,7 @@ export type WhatsappCallEventPayload = {
         wacid: string
         status: "RINGING" | "ACCEPTED" | "REJECTED"
         recipientId?: string
-        /** R2: BSUID counterpart of `recipientId` (Username/BSUID-only recipient). */
+        /** BSUID counterpart of `recipientId` (Username/BSUID-only recipient). */
         recipientUserId?: string
         timestamp?: string
         /** Meta's `biz_opaque_callback_data` echo (see the `connect` variant). */
@@ -395,7 +395,7 @@ const parseCallSession = (
 }
 
 /**
- * R12: normalizes a terminate item's `status` case-insensitively — Meta
+ * Normalizes a terminate item's `status` case-insensitively — Meta
  * documents `COMPLETED`/`FAILED` (uppercase), but nothing on the wire
  * guarantees a sender never varies casing. An unrecognized status (any
  * casing) is logged and defaults to `FAILED` rather than silently comparing

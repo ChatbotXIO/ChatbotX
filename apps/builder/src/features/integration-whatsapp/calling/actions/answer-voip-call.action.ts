@@ -214,7 +214,7 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
           workspaceId,
         })
 
-      // R16: the control's `deadlineAt` is the authoritative answer budget —
+      // The control's `deadlineAt` is the authoritative answer budget —
       // check it (with a safety margin) before claim/pre_accept/accept below
       // so an in-flight answer attempt never wins a race it has effectively
       // already lost to Meta's own timeout. `deadlineAt` is immutable across

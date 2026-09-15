@@ -10,7 +10,7 @@ const heartbeatActiveVoipCallSchema = z.object({
 })
 
 /**
- * R6 liveness: the browser tab holding an `accepted` VoIP call calls this on
+ * Liveness: the browser tab holding an `accepted` VoIP call calls this on
  * a short interval (mirroring the presence heartbeat cadence, see
  * `heartbeat-voip-presence.action.ts`) so a genuinely stranded call (the
  * terminate webhook was lost) can be told apart from one that is still live

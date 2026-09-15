@@ -154,7 +154,7 @@ export default function ConversationItem({
   // Narrowed to a boolean so every virtualized row does NOT re-render on
   // every VoIP call change (mute toggle, recording start, timer tick) —
   // only the one row whose conversation is actually ringing ever
-  // re-renders when the call object changes shape (M2).
+  // re-renders when the call object changes shape.
   const isRinging = useWhatsappVoipCallStore(
     (state) =>
       state.call?.phase === WhatsappVoipCallPhase.incomingRinging &&

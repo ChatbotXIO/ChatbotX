@@ -244,7 +244,7 @@ describe("handleWhatsappCallRecordingReady", () => {
     })
   })
 
-  describe("finalize-message race (B4): the recording webhook's job reaches attachRecordingAndNotify before finalizeCallSideEffects wrote the message", () => {
+  describe("finalize-message race: the recording webhook's job reaches attachRecordingAndNotify before finalizeCallSideEffects wrote the message", () => {
     afterEach(() => {
       vi.useRealTimers()
     })

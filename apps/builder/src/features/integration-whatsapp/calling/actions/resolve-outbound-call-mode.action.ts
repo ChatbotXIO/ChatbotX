@@ -83,7 +83,7 @@ export type ResolveOutboundCallModeResult =
       mode: "voip"
       permissionStatus: OutboundCallPermissionStatus | undefined
       /** True only for a manually-connected integration with no Meta App
-       * Secret configured (`auth.clientSecret` empty) — per R4 §6.4, manual
+       * Secret configured (`auth.clientSecret` empty) — manual
        * integrations without a secret stay unsigned/unverified rather than
        * being blocked from calling. The client shows a warning dialog before
        * dialing rather than gating the call outright. Never true for a
@@ -182,7 +182,7 @@ export const resolveOutboundCallModeAction = workspaceActionClient
       // than a second bespoke check.
       // A manual integration has no app credential to run the subscription
       // preflight against (`hasAppCredential` is always false for it) — per
-      // R4 §6.4 this no longer blocks calling outright; the client instead
+      // This no longer blocks calling outright; the client instead
       // shows a warning dialog (`unsignedWebhookWarning`) when the manual
       // integration also has no app secret configured. Only a
       // platform-credential integration with a confirmed missing webhook
