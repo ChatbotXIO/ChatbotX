@@ -64,7 +64,6 @@ const DESCRIPTION_BACKLOG = new Set<string>([
   "botFields.",
   "channels.",
   "contactScans.",
-  "coupons.",
   "customFields.",
   "emailTopics.",
   "fbComments.",
