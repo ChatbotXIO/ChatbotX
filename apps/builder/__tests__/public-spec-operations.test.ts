@@ -90,7 +90,6 @@ const DESCRIPTION_BACKLOG = new Set<string>([
   "qrCodes.",
   "questionnaires.",
   "reflinks.",
-  "savedReplies.",
   "schemas.",
   "smtpIntegrations.",
   "spreadsheets.",
