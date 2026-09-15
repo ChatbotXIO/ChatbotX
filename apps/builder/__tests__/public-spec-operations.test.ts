@@ -73,7 +73,6 @@ const DESCRIPTION_BACKLOG = new Set<string>([
   "igComments.",
   "igStories.",
   "integrations.",
-  "mediaLibrary.",
   "messengerChannels.",
   "messengerPersonas.",
   "minigames.",

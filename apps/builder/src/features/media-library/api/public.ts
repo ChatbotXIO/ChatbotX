@@ -41,6 +41,8 @@ export const mediaLibraryPublicRouter = {
       method: "GET",
       path: "/v1/media-library/folders",
       summary: "List media library folders",
+      description:
+        "Use this to find folder ids before listing its files with `mediaLibrary.listFiles` or moving files into it with `mediaLibrary.moveFiles`. Returns folders in this workspace.",
       tags,
     })
     .input(listMediaLibraryFoldersPublicRequest)
@@ -61,6 +63,8 @@ export const mediaLibraryPublicRouter = {
       method: "POST",
       path: "/v1/media-library/folders",
       summary: "Create a media library folder",
+      description:
+        "Adds a folder to organize media library files. Use `mediaLibrary.listFolders` first to avoid duplicating an existing folder.",
       successStatus: 201,
       tags,
     })
@@ -80,6 +84,8 @@ export const mediaLibraryPublicRouter = {
       method: "PATCH",
       path: "/v1/media-library/folders/{folderId}",
       summary: "Rename a media library folder",
+      description:
+        "Changes a folder's display name without moving its files. Use `mediaLibrary.listFolders` to find its id first.",
       successStatus: 204,
       tags,
     })
@@ -98,6 +104,8 @@ export const mediaLibraryPublicRouter = {
       method: "DELETE",
       path: "/v1/media-library/folders/{folderId}",
       summary: "Delete a media library folder and all its files",
+      description:
+        "Permanently deletes a folder and every file inside it, including their storage objects. Use `mediaLibrary.moveFiles` first to preserve files by moving them out.",
       successStatus: 204,
       tags,
     })
@@ -137,6 +145,8 @@ export const mediaLibraryPublicRouter = {
       method: "GET",
       path: "/v1/media-library/files",
       summary: "List media library files",
+      description:
+        "Use this to find file ids before inspecting one with `mediaLibrary.getFile` or attaching one to a message. Returns files in this workspace.",
       tags,
     })
     .input(listMediaLibraryFilesPublicRequest)
@@ -155,6 +165,8 @@ export const mediaLibraryPublicRouter = {
       method: "GET",
       path: "/v1/media-library/files/{fileId}",
       summary: "Get a media library file",
+      description:
+        "Returns one file's metadata (path, mime type, size). Use `mediaLibrary.listFiles` to find its id first.",
       tags,
     })
     .input(getMediaLibraryFilePublicRequest)
@@ -173,6 +185,8 @@ export const mediaLibraryPublicRouter = {
       method: "POST",
       path: "/v1/media-library/files",
       summary: "Register an uploaded file in the media library",
+      description:
+        "Registers a file already uploaded to the storage path from `mediaLibrary.createUploadUrl`, making it appear in `mediaLibrary.listFiles`.",
       successStatus: 201,
       tags,
     })
@@ -192,6 +206,8 @@ export const mediaLibraryPublicRouter = {
       method: "DELETE",
       path: "/v1/media-library/files/{fileId}",
       summary: "Delete a media library file and its storage object",
+      description:
+        "Permanently deletes a file's metadata and its underlying storage object. Use `mediaLibrary.listFiles` to find its id first.",
       successStatus: 204,
       tags,
     })
@@ -209,6 +225,8 @@ export const mediaLibraryPublicRouter = {
       method: "PUT",
       path: "/v1/media-library/files/{fileId}/favourite",
       summary: "Set a media library file's favourite status",
+      description:
+        "Marks a file as favourited or not, without changing its other metadata.",
       tags,
     })
     .input(setMediaLibraryFavouritePublicRequest)
@@ -228,6 +246,8 @@ export const mediaLibraryPublicRouter = {
       method: "POST",
       path: "/v1/media-library/files/{fileId}/access",
       summary: "Record media file access",
+      description:
+        "Records that a file was viewed or used, updating its last-accessed timestamp for sorting/cleanup purposes.",
       successStatus: 204,
       tags,
     })
@@ -245,6 +265,8 @@ export const mediaLibraryPublicRouter = {
       method: "PATCH",
       path: "/v1/media-library/files/move",
       summary: "Move media library files to another folder",
+      description:
+        "Moves the given files into a different folder, or to no folder if `folderId` is null.",
       successStatus: 204,
       tags,
     })
