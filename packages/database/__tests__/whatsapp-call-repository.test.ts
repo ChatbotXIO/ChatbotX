@@ -8,8 +8,6 @@ import { whatsappCallModel } from "../src/schema"
 
 const PENDING_OUTBOUND_EXISTS_RE = /pending-outbound-exists/
 
-const OUTBOUND_ATTEMPT_UNKNOWN_RE = /outbound-attempt-unknown/
-
 type Row = typeof whatsappCallModel.$inferSelect
 
 const baseRow = (overrides: Partial<Row> = {}): Row =>
@@ -23,14 +21,17 @@ const baseRow = (overrides: Partial<Row> = {}): Row =>
     endedAt: null,
     durationSeconds: null,
     messageId: null,
-    freeswitchUuid: null,
-    freeswitchBLegUuid: null,
     lastError: null,
     answeredByUserId: null,
+    initiatedByUserId: null,
     recordingPath: null,
     recordedAt: null,
     transcript: null,
     transcribedAt: null,
+    transcriptSegments: null,
+    aiSummary: null,
+    aiSummarizedAt: null,
+    aiSummaryProvider: null,
     workspaceId: "ws-1",
     inboxId: "inbox-1",
     contactInboxId: "ci-1",
@@ -51,24 +52,6 @@ function createUpdateChain(result: unknown[]) {
   chain.update.mockReturnValue(chain)
   chain.set.mockReturnValue(chain)
   chain.where.mockReturnValue(chain)
-  chain.returning.mockResolvedValue(result)
-  return chain
-}
-
-function createInsertChain(
-  onConflictMethod: "onConflictDoNothing" | "onConflictDoUpdate",
-  result: unknown[],
-) {
-  const chain: Record<string, ReturnType<typeof vi.fn>> = {
-    insert: vi.fn(),
-    values: vi.fn(),
-    onConflictDoNothing: vi.fn(),
-    onConflictDoUpdate: vi.fn(),
-    returning: vi.fn(),
-  }
-  chain.insert.mockReturnValue(chain)
-  chain.values.mockReturnValue(chain)
-  chain[onConflictMethod].mockReturnValue(chain)
   chain.returning.mockResolvedValue(result)
   return chain
 }
@@ -94,6 +77,38 @@ describe("canAdvanceStatus", () => {
   test("allows a strictly higher rank transition", () => {
     expect(canAdvanceStatus("ringing", "accepted")).toBe(true)
     expect(canAdvanceStatus("accepted", "completed")).toBe(true)
+  })
+})
+
+describe("whatsappCallRepository.findByIdForWorkspace", () => {
+  test("scopes the lookup by workspaceId in the WHERE clause (B7 defense-in-depth)", async () => {
+    const row = baseRow()
+    const findFirst = vi.fn().mockResolvedValue(row)
+    const tx = { query: { whatsappCallModel: { findFirst } } }
+
+    const result = await whatsappCallRepository.findByIdForWorkspace(
+      "call-1",
+      "ws-1",
+      tx as never,
+    )
+
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { id: "call-1", workspaceId: "ws-1" },
+    })
+    expect(result).toEqual(row)
+  })
+
+  test("returns undefined when no row matches (wrong workspace or missing id)", async () => {
+    const findFirst = vi.fn().mockResolvedValue(undefined)
+    const tx = { query: { whatsappCallModel: { findFirst } } }
+
+    const result = await whatsappCallRepository.findByIdForWorkspace(
+      "call-1",
+      "ws-other",
+      tx as never,
+    )
+
+    expect(result).toBeUndefined()
   })
 })
 
@@ -135,109 +150,190 @@ describe("whatsappCallRepository.finalizeById", () => {
   })
 })
 
-describe("whatsappCallRepository.createFromFreeswitch", () => {
-  test("conflicts on the partial freeswitchUuid index and COALESCEs wacid", async () => {
-    const row = baseRow({ freeswitchUuid: "fs-uuid-1" })
-    const tx = createInsertChain("onConflictDoUpdate", [row])
+describe("whatsappCallRepository.finalizeById idempotent endedAt fill", () => {
+  test("fills missing endedAt on a same-status terminate redelivery, status unchanged", async () => {
+    const current = baseRow({ status: "rejected", endedAt: null })
+    const filled = baseRow({
+      status: "rejected",
+      endedAt: new Date("2026-08-01T00:05:00.000Z"),
+    })
+    const tx = createUpdateChain([filled])
 
-    const result = await whatsappCallRepository.createFromFreeswitch(
+    const result = await whatsappCallRepository.finalizeById(
       {
-        freeswitchUuid: "fs-uuid-1",
-        wacid: null,
-        workspaceId: "ws-1",
-        inboxId: "inbox-1",
-        contactInboxId: "ci-1",
-        conversationId: "conv-1",
-        direction: "userInitiated",
-        status: "ringing",
+        id: current.id,
+        status: "rejected",
+        current,
+        endedAt: new Date("2026-08-01T00:05:00.000Z"),
       },
       tx as never,
     )
 
-    expect(tx.onConflictDoUpdate).toHaveBeenCalledTimes(1)
-    const call = tx.onConflictDoUpdate.mock.calls[0]?.[0] as {
-      target: unknown
-      where: { queryChunks?: unknown }
-      set: { wacid: { queryChunks?: unknown } }
-    }
-    expect(call.target).toBe(whatsappCallModel.freeswitchUuid)
-    // The predicate and the COALESCE both come through as `sql` fragments —
-    // asserting they are SQL objects (not plain strings) is what proves the
-    // partial-index WHERE clause was actually passed through, not dropped.
-    expect(call.where).toBeDefined()
-    expect(call.set.wacid).toBeDefined()
-    expect(result).toEqual(row)
+    expect(tx.update).toHaveBeenCalledWith(whatsappCallModel)
+    expect(tx.set).toHaveBeenCalledWith({
+      endedAt: new Date("2026-08-01T00:05:00.000Z"),
+    })
+    expect(result).toEqual(filled)
   })
-})
 
-describe("whatsappCallRepository.attachFreeswitchUuid", () => {
-  test("throws a typed error when no claimable outbound row exists", async () => {
+  test("does not overwrite an existing endedAt on a same-status terminate redelivery", async () => {
+    const authoritativeEndedAt = new Date("2026-08-01T00:01:00.000Z")
+    const current = baseRow({
+      status: "rejected",
+      endedAt: authoritativeEndedAt,
+    })
     const tx = createUpdateChain([])
 
-    await expect(
-      whatsappCallRepository.attachFreeswitchUuid(
-        { attemptId: "attempt-1", freeswitchUuid: "fs-1" },
-        tx as never,
-      ),
-    ).rejects.toThrow(OUTBOUND_ATTEMPT_UNKNOWN_RE)
-  })
-
-  test("binds the uuid onto the row created by the action", async () => {
-    const row = baseRow({ attemptId: "attempt-1", freeswitchUuid: "fs-1" })
-    const tx = createUpdateChain([row])
-
-    const result = await whatsappCallRepository.attachFreeswitchUuid(
-      { attemptId: "attempt-1", freeswitchUuid: "fs-1" },
+    const result = await whatsappCallRepository.finalizeById(
+      {
+        id: current.id,
+        status: "rejected",
+        current,
+        endedAt: new Date("2026-08-01T00:09:00.000Z"),
+      },
       tx as never,
     )
 
-    expect(result).toEqual(row)
+    // Nothing left to fill (endedAt already set) — no UPDATE issued at all.
+    expect(tx.update).not.toHaveBeenCalled()
+    expect(result).toEqual(current)
+  })
+
+  test("still blocks a genuine downgrade attempt (different, lower-rank status)", async () => {
+    const current = baseRow({ status: "completed", endedAt: null })
+    const tx = createUpdateChain([])
+
+    const result = await whatsappCallRepository.finalizeById(
+      { id: current.id, status: "failed", current },
+      tx as never,
+    )
+
+    expect(tx.update).not.toHaveBeenCalled()
+    expect(result).toBeUndefined()
+  })
+
+  test("fills every still-missing terminal field (not just endedAt) on a same-status redelivery", async () => {
+    const current = baseRow({
+      status: "rejected",
+      endedAt: null,
+      messageId: null,
+      lastError: null,
+    })
+    const filled = baseRow({
+      status: "rejected",
+      endedAt: new Date("2026-08-01T00:05:00.000Z"),
+      messageId: "msg-1",
+      lastError: "meta-timeout",
+    })
+    const tx = createUpdateChain([filled])
+
+    const result = await whatsappCallRepository.finalizeById(
+      {
+        id: current.id,
+        status: "rejected",
+        current,
+        endedAt: new Date("2026-08-01T00:05:00.000Z"),
+        messageId: "msg-1",
+        lastError: "meta-timeout",
+      },
+      tx as never,
+    )
+
+    expect(tx.set).toHaveBeenCalledWith({
+      endedAt: new Date("2026-08-01T00:05:00.000Z"),
+      messageId: "msg-1",
+      lastError: "meta-timeout",
+    })
+    expect(result).toEqual(filled)
+  })
+
+  test("does not clobber an already-set messageId on redelivery, even while filling the still-missing endedAt", async () => {
+    const current = baseRow({
+      status: "rejected",
+      endedAt: null,
+      messageId: "authoritative-msg",
+    })
+    const filled = baseRow({
+      status: "rejected",
+      endedAt: new Date("2026-08-01T00:05:00.000Z"),
+      messageId: "authoritative-msg",
+    })
+    const tx = createUpdateChain([filled])
+
+    const result = await whatsappCallRepository.finalizeById(
+      {
+        id: current.id,
+        status: "rejected",
+        current,
+        endedAt: new Date("2026-08-01T00:05:00.000Z"),
+        // A different/stale messageId from a redelivered payload — must
+        // never overwrite the row's already-set (authoritative) value.
+        messageId: "stale-redelivered-msg",
+      },
+      tx as never,
+    )
+
+    // Only endedAt is in the SET — messageId is guarded out entirely because
+    // current.messageId is already non-null, so a concurrent/earlier writer's
+    // value for that column is never clobbered by this redelivery.
+    expect(tx.set).toHaveBeenCalledWith({
+      endedAt: new Date("2026-08-01T00:05:00.000Z"),
+    })
+    expect(result).toEqual(filled)
   })
 })
 
-describe("whatsappCallRepository.upsertInbound", () => {
-  test("retries the wacid-row attach once after a 23505 on the wacid index", async () => {
-    const wacidRow = baseRow({ wacid: "wamid.1", freeswitchUuid: "fs-1" })
+describe("whatsappCallRepository.markAcceptedIfActive", () => {
+  test("applies from ringing", async () => {
+    const row = baseRow({ status: "accepted", answeredByUserId: "user-1" })
+    const tx = createUpdateChain([row])
 
-    // Step 1 (attach to the wacid row): first call finds nothing (no row yet),
-    // the retry after the 23505 finds the row the webhook inserted meanwhile.
-    const attachChain = createUpdateChain([])
-    attachChain.returning
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([wacidRow])
-
-    const conflictError = new DrizzleQueryError("insert", [], {
-      code: "23505",
-      constraint: "WhatsappCall_wacid_key",
-    })
-    const insertChain = createInsertChain("onConflictDoUpdate", [])
-    insertChain.returning.mockRejectedValueOnce(conflictError)
-
-    const trx = { ...attachChain, ...insertChain } as unknown as {
-      update: typeof attachChain.update
-      insert: typeof insertChain.insert
-    }
-
-    const result = await whatsappCallRepository.upsertInbound(
-      {
-        wacid: "wamid.1",
-        freeswitchUuid: "fs-1",
-        attemptId: "attempt-x",
-        workspaceId: "ws-1",
-        inboxId: "inbox-1",
-        contactInboxId: "ci-1",
-        conversationId: "conv-1",
-        direction: "userInitiated",
-        status: "ringing",
-      },
-      trx as never,
+    const result = await whatsappCallRepository.markAcceptedIfActive(
+      { id: row.id, answeredByUserId: "user-1" },
+      tx as never,
     )
 
-    expect(result).toEqual(wacidRow)
-    // attach attempted twice (initial miss, retry after the 23505)
-    expect(attachChain.returning).toHaveBeenCalledTimes(2)
-    // the insert path was attempted exactly once, and lost the race
-    expect(insertChain.returning).toHaveBeenCalledTimes(1)
+    expect(tx.set).toHaveBeenCalledWith({
+      status: "accepted",
+      answeredByUserId: "user-1",
+    })
+    expect(result).toEqual(row)
+  })
+
+  test.each([
+    "rejected",
+    "completed",
+    "failed",
+  ] as const)("no-ops from terminal status %s", async () => {
+    const tx = createUpdateChain([])
+
+    const result = await whatsappCallRepository.markAcceptedIfActive(
+      { id: "call-1", answeredByUserId: "user-1" },
+      tx as never,
+    )
+
+    expect(result).toBeUndefined()
+  })
+
+  test("sets answeredByUserId only on apply", async () => {
+    const tx = createUpdateChain([])
+
+    await whatsappCallRepository.markAcceptedIfActive(
+      { id: "call-1", answeredByUserId: "user-2" },
+      tx as never,
+    )
+
+    expect(tx.set).toHaveBeenCalledWith(
+      expect.objectContaining({ answeredByUserId: "user-2" }),
+    )
+    // The guarded WHERE is what actually prevents the write from applying
+    // against a terminal row in the real DB (this fake chain always
+    // resolves `.returning()` to the configured value); assert the WHERE
+    // is a real SQL predicate (not a plain truthy value) so the guard
+    // reaches Postgres rather than being decorative.
+    expect(tx.where).toHaveBeenCalledTimes(1)
+    const whereArg = tx.where.mock.calls[0]?.[0] as { queryChunks?: unknown }
+    expect(whereArg.queryChunks).toBeDefined()
   })
 })
 
@@ -265,7 +361,6 @@ describe("whatsappCallRepository.attachWacid", () => {
     const newer = baseRow({
       id: "call-newer",
       wacid: null,
-      freeswitchUuid: "fs-newer",
       createdAt: new Date("2026-08-01T00:05:00.000Z"),
     })
 
@@ -283,7 +378,7 @@ describe("whatsappCallRepository.attachWacid", () => {
 
     const updateChain = createUpdateChain([]) // the isNull(wacid) attempt loses
     const mergeChain = createUpdateChain([
-      { ...older, freeswitchUuid: "fs-newer" },
+      { ...older, attemptId: "attempt-newer" },
     ])
     const deleteChain = { delete: vi.fn(), where: vi.fn() }
     deleteChain.delete.mockReturnValue(deleteChain)
@@ -305,12 +400,12 @@ describe("whatsappCallRepository.attachWacid", () => {
     )
 
     expect(deleteChain.where).toHaveBeenCalledTimes(1)
-    expect(result).toMatchObject({ freeswitchUuid: "fs-newer" })
+    expect(result).toMatchObject({ attemptId: "attempt-newer" })
   })
 })
 
 describe("whatsappCallRepository.createPendingOutbound", () => {
-  test("inserts a null-wacid/null-freeswitchUuid businessInitiated ringing row", async () => {
+  test("inserts a null-wacid businessInitiated ringing row", async () => {
     const row = baseRow({ direction: "businessInitiated", attemptId: "att-1" })
     const tx = { insert: vi.fn(), values: vi.fn(), returning: vi.fn() }
     tx.insert.mockReturnValue(tx)
@@ -332,9 +427,41 @@ describe("whatsappCallRepository.createPendingOutbound", () => {
       expect.objectContaining({
         attemptId: "att-1",
         wacid: null,
-        freeswitchUuid: null,
         direction: "businessInitiated",
         status: "ringing",
+        answeredByUserId: null,
+      }),
+    )
+    expect(result).toEqual(row)
+  })
+
+  test("stamps answeredByUserId with the initiator when provided (VoIP outbound)", async () => {
+    const row = baseRow({
+      direction: "businessInitiated",
+      attemptId: "att-1",
+      answeredByUserId: "agent-1",
+    })
+    const tx = { insert: vi.fn(), values: vi.fn(), returning: vi.fn() }
+    tx.insert.mockReturnValue(tx)
+    tx.values.mockReturnValue(tx)
+    tx.returning.mockResolvedValue([row])
+
+    const result = await whatsappCallRepository.createPendingOutbound(
+      {
+        attemptId: "att-1",
+        workspaceId: "ws-1",
+        inboxId: "inbox-1",
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+        answeredByUserId: "agent-1",
+      },
+      tx as never,
+    )
+
+    expect(tx.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attemptId: "att-1",
+        answeredByUserId: "agent-1",
       }),
     )
     expect(result).toEqual(row)
@@ -425,11 +552,80 @@ describe("whatsappCallRepository.findPendingOutbound", () => {
   })
 })
 
-describe("whatsappCallRepository cursor pagination", () => {
-  test("listByWorkspaceCursor never calls offset", async () => {
-    const rows = [baseRow()]
-    // Deliberately omit an `offset` method: if the implementation ever
-    // called `.offset(...)`, this fake chain would throw immediately.
+describe("whatsappCallRepository.findActiveByContactInbox", () => {
+  test("returns a ringing/accepted row regardless of direction (glare guard)", async () => {
+    const row = baseRow({ direction: "userInitiated", status: "ringing" })
+    const chain = {
+      select: vi.fn(),
+      from: vi.fn(),
+      where: vi.fn(),
+      orderBy: vi.fn(),
+      limit: vi.fn(),
+    }
+    chain.select.mockReturnValue(chain)
+    chain.from.mockReturnValue(chain)
+    chain.where.mockReturnValue(chain)
+    chain.orderBy.mockReturnValue(chain)
+    chain.limit.mockResolvedValue([row])
+
+    const result = await whatsappCallRepository.findActiveByContactInbox(
+      { inboxId: "inbox-1", contactInboxId: "ci-1" },
+      chain as never,
+    )
+
+    expect(chain.limit).toHaveBeenCalledWith(1)
+    expect(result).toEqual(row)
+  })
+
+  test("also matches a businessInitiated active row", async () => {
+    const row = baseRow({ direction: "businessInitiated", status: "accepted" })
+    const chain = {
+      select: vi.fn(),
+      from: vi.fn(),
+      where: vi.fn(),
+      orderBy: vi.fn(),
+      limit: vi.fn(),
+    }
+    chain.select.mockReturnValue(chain)
+    chain.from.mockReturnValue(chain)
+    chain.where.mockReturnValue(chain)
+    chain.orderBy.mockReturnValue(chain)
+    chain.limit.mockResolvedValue([row])
+
+    const result = await whatsappCallRepository.findActiveByContactInbox(
+      { inboxId: "inbox-1", contactInboxId: "ci-1" },
+      chain as never,
+    )
+
+    expect(result).toEqual(row)
+  })
+
+  test("returns undefined when nothing is active", async () => {
+    const chain = {
+      select: vi.fn(),
+      from: vi.fn(),
+      where: vi.fn(),
+      orderBy: vi.fn(),
+      limit: vi.fn(),
+    }
+    chain.select.mockReturnValue(chain)
+    chain.from.mockReturnValue(chain)
+    chain.where.mockReturnValue(chain)
+    chain.orderBy.mockReturnValue(chain)
+    chain.limit.mockResolvedValue([])
+
+    const result = await whatsappCallRepository.findActiveByContactInbox(
+      { inboxId: "inbox-1", contactInboxId: "ci-1" },
+      chain as never,
+    )
+
+    expect(result).toBeUndefined()
+  })
+})
+
+describe("whatsappCallRepository.findRingingByWorkspace", () => {
+  test("scopes to workspace/ringing/wacid-present/unanswered rows, newest first, bounded by limit", async () => {
+    const rows = [baseRow({ wacid: "wacid.ABC" })]
     const chain = {
       select: vi.fn(),
       from: vi.fn(),
@@ -443,13 +639,35 @@ describe("whatsappCallRepository cursor pagination", () => {
     chain.orderBy.mockReturnValue(chain)
     chain.limit.mockResolvedValue(rows)
 
-    const result = await whatsappCallRepository.listByWorkspaceCursor(
-      { workspaceId: "ws-1", limit: 20 },
+    const result = await whatsappCallRepository.findRingingByWorkspace(
+      "ws-1",
       chain as never,
     )
 
     expect(chain.limit).toHaveBeenCalledWith(20)
     expect(result).toEqual(rows)
+  })
+
+  test("returns an empty array when nothing is ringing", async () => {
+    const chain = {
+      select: vi.fn(),
+      from: vi.fn(),
+      where: vi.fn(),
+      orderBy: vi.fn(),
+      limit: vi.fn(),
+    }
+    chain.select.mockReturnValue(chain)
+    chain.from.mockReturnValue(chain)
+    chain.where.mockReturnValue(chain)
+    chain.orderBy.mockReturnValue(chain)
+    chain.limit.mockResolvedValue([])
+
+    const result = await whatsappCallRepository.findRingingByWorkspace(
+      "ws-1",
+      chain as never,
+    )
+
+    expect(result).toEqual([])
   })
 })
 
@@ -499,5 +717,176 @@ describe("whatsappCallRepository.clearRecording", () => {
       recordingPath: null,
       recordedAt: null,
     })
+  })
+})
+
+describe("whatsappCallRepository.attachTranscript", () => {
+  test("stamps the flat transcript only when segments are omitted (SIP/Whisper)", async () => {
+    const row = baseRow({
+      transcript: "hello there",
+      transcribedAt: new Date(),
+    })
+    const chain = createUpdateChain([row])
+
+    const result = await whatsappCallRepository.attachTranscript(
+      {
+        id: "call-1",
+        transcript: "hello there",
+        transcribedAt: row.transcribedAt as Date,
+      },
+      chain as never,
+    )
+
+    expect(chain.set).toHaveBeenCalledWith({
+      transcript: "hello there",
+      transcribedAt: row.transcribedAt,
+    })
+    expect(result).toEqual(row)
+  })
+
+  test("also persists diarized transcriptSegments when provided (Meta-native VoIP)", async () => {
+    const segments = [
+      { speaker: "Business", channel: 0, start: 0, end: 1.2, text: "Hello" },
+      { speaker: "Customer", channel: 1, start: 1.5, end: 3, text: "Hi there" },
+    ]
+    const row = baseRow({
+      transcript: "Hello Hi there",
+      transcribedAt: new Date(),
+      transcriptSegments: segments,
+    })
+    const chain = createUpdateChain([row])
+
+    const result = await whatsappCallRepository.attachTranscript(
+      {
+        id: "call-1",
+        transcript: "Hello Hi there",
+        transcribedAt: row.transcribedAt as Date,
+        segments,
+      },
+      chain as never,
+    )
+
+    expect(chain.set).toHaveBeenCalledWith({
+      transcript: "Hello Hi there",
+      transcribedAt: row.transcribedAt,
+      transcriptSegments: segments,
+    })
+    expect(result).toEqual(row)
+  })
+
+  test("is a no-op (undefined) when the row already has a transcript", async () => {
+    const chain = createUpdateChain([])
+
+    const result = await whatsappCallRepository.attachTranscript(
+      { id: "call-1", transcript: "redelivered", transcribedAt: new Date() },
+      chain as never,
+    )
+
+    expect(result).toBeUndefined()
+  })
+})
+
+describe("whatsappCallRepository.attachAiSummary", () => {
+  test("persists the summary, provider, and aiSummarizedAt exactly once", async () => {
+    const aiSummarizedAt = new Date("2026-09-01T00:00:00.000Z")
+    const aiSummary = { summary: "Customer asked about pricing." }
+    const row = baseRow({
+      aiSummary,
+      aiSummaryProvider: "openai",
+      aiSummarizedAt,
+    })
+    const chain = createUpdateChain([row])
+
+    const result = await whatsappCallRepository.attachAiSummary(
+      {
+        id: "call-1",
+        aiSummary,
+        aiSummaryProvider: "openai",
+        aiSummarizedAt,
+      },
+      chain as never,
+    )
+
+    expect(chain.set).toHaveBeenCalledWith({
+      aiSummary,
+      aiSummaryProvider: "openai",
+      aiSummarizedAt,
+    })
+    expect(result).toEqual(row)
+  })
+
+  test("is a no-op (undefined) when the row already has aiSummarizedAt", async () => {
+    const chain = createUpdateChain([])
+
+    const result = await whatsappCallRepository.attachAiSummary(
+      {
+        id: "call-1",
+        aiSummary: { summary: "redelivered" },
+        aiSummaryProvider: "openai",
+        aiSummarizedAt: new Date(),
+      },
+      chain as never,
+    )
+
+    expect(result).toBeUndefined()
+  })
+})
+
+describe("whatsappCallRepository.createPendingOutbound initiatedByUserId", () => {
+  test("stamps initiatedByUserId independently of answeredByUserId", async () => {
+    const row = baseRow({
+      direction: "businessInitiated",
+      attemptId: "att-1",
+      answeredByUserId: "agent-1",
+      initiatedByUserId: "agent-1",
+    })
+    const tx = { insert: vi.fn(), values: vi.fn(), returning: vi.fn() }
+    tx.insert.mockReturnValue(tx)
+    tx.values.mockReturnValue(tx)
+    tx.returning.mockResolvedValue([row])
+
+    const result = await whatsappCallRepository.createPendingOutbound(
+      {
+        attemptId: "att-1",
+        workspaceId: "ws-1",
+        inboxId: "inbox-1",
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+        answeredByUserId: "agent-1",
+        initiatedByUserId: "agent-1",
+      },
+      tx as never,
+    )
+
+    expect(tx.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        answeredByUserId: "agent-1",
+        initiatedByUserId: "agent-1",
+      }),
+    )
+    expect(result).toEqual(row)
+  })
+
+  test("defaults initiatedByUserId to null when omitted", async () => {
+    const row = baseRow({ direction: "businessInitiated", attemptId: "att-1" })
+    const tx = { insert: vi.fn(), values: vi.fn(), returning: vi.fn() }
+    tx.insert.mockReturnValue(tx)
+    tx.values.mockReturnValue(tx)
+    tx.returning.mockResolvedValue([row])
+
+    await whatsappCallRepository.createPendingOutbound(
+      {
+        attemptId: "att-1",
+        workspaceId: "ws-1",
+        inboxId: "inbox-1",
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+      },
+      tx as never,
+    )
+
+    expect(tx.values).toHaveBeenCalledWith(
+      expect.objectContaining({ initiatedByUserId: null }),
+    )
   })
 })

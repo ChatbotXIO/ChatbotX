@@ -1,1 +1,0 @@
-ALTER TABLE "IntegrationWhatsapp" ADD COLUMN "callRecordingEnabled" boolean DEFAULT false NOT NULL;

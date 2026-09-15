@@ -183,6 +183,7 @@ export default function ConversationList({
               List: ConversationListList,
               Footer: ConversationListFooter,
             }}
+            computeItemKey={(_, item) => item.id}
             data={conversations}
             itemContent={(_, item) => (
               <ConversationItem

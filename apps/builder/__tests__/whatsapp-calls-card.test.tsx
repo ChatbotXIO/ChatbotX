@@ -37,14 +37,6 @@ vi.mock(
   }),
 )
 
-vi.mock(
-  "@/features/integration-whatsapp/calling/actions/whatsapp-sip-provisioning.action",
-  () => ({
-    provisionWhatsappSipAction: { bind: () => vi.fn() },
-    deprovisionWhatsappSipAction: { bind: () => vi.fn() },
-  }),
-)
-
 // jsdom ships no ResizeObserver, and Radix measures the switch thumb through it.
 Object.assign(globalThis, {
   ResizeObserver: class {
@@ -111,8 +103,8 @@ describe("WhatsappCallsCard", () => {
 
   test("keeps Meta's rejection visible in the card after the toast", async () => {
     await render()
-    // Index 0 is the settings-update action — the first `useAction` call in
-    // the component tree (`SipProvisioningControls`'s hooks run after it).
+    // Index 0 is the settings-update action — the only `useAction` call in
+    // the component tree.
     const settingsCallbacks = allCallbacks[0]
 
     act(() => {
@@ -139,58 +131,6 @@ describe("WhatsappCallsCard", () => {
     expect(container.querySelector('[role="alert"]')).toBeNull()
   })
 
-  test("shows the none provisioning status and a Provision button for super admins", async () => {
-    await render({ isSuperAdmin: true, sipProvisioningStatus: "none" })
-    expect(container.textContent).toContain("whatsapp.calls.sip.status.none")
-    expect(container.textContent).toContain(
-      "whatsapp.calls.sip.provisionButton",
-    )
-    expect(container.textContent).not.toContain(
-      "whatsapp.calls.sip.deprovisionButton",
-    )
-  })
-
-  test("shows a Deprovision button once provisioned, still super-admin only", async () => {
-    await render({ isSuperAdmin: true, sipProvisioningStatus: "provisioned" })
-    expect(container.textContent).toContain(
-      "whatsapp.calls.sip.deprovisionButton",
-    )
-    expect(container.textContent).not.toContain(
-      "whatsapp.calls.sip.provisionButton",
-    )
-  })
-
-  test("hides provisioning action buttons for non-super-admins", async () => {
-    await render({ isSuperAdmin: false, sipProvisioningStatus: "none" })
-    expect(container.textContent).not.toContain(
-      "whatsapp.calls.sip.provisionButton",
-    )
-  })
-
-  test("the in-app calling switch is disabled until sipProvisioningStatus is provisioned or enabled", async () => {
-    await render({
-      sipProvisioningStatus: "none",
-      settings: { status: "ENABLED" },
-    })
-    // Radix/Base UI's Switch renders `role="switch"` on a <span>, not a <button>.
-    const switches = container.querySelectorAll('[role="switch"]')
-    // enable, icon visibility, callback permission, in-app calling, recording, transcription
-    expect(switches.length).toBe(6)
-    const inAppCallingSwitch = switches[3]
-    expect(inAppCallingSwitch.getAttribute("data-disabled")).not.toBeNull()
-  })
-
-  test("the in-app calling switch is enabled once provisioned", async () => {
-    await render({
-      sipProvisioningStatus: "provisioned",
-      settings: { status: "ENABLED" },
-    })
-    const switches = container.querySelectorAll('[role="switch"]')
-    expect(switches.length).toBe(6)
-    const inAppCallingSwitch = switches[3]
-    expect(inAppCallingSwitch.getAttribute("data-disabled")).toBeNull()
-  })
-
   test("reverts the transcription switch when the save fails", async () => {
     await render({
       settings: { status: "ENABLED" },
@@ -198,8 +138,8 @@ describe("WhatsappCallsCard", () => {
     })
     const settingsCallbacks = allCallbacks[0]
     const switches = container.querySelectorAll('[role="switch"]')
-    // enable, icon visibility, callback permission, in-app calling, recording, transcription
-    const transcriptionSwitch = switches[5]
+    // enable, icon visibility, callback permission, recording, transcription
+    const transcriptionSwitch = switches[4]
     expect(transcriptionSwitch.getAttribute("aria-checked")).toBe("false")
 
     act(() => {

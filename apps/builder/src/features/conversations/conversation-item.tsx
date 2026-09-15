@@ -18,6 +18,8 @@ import { formatDistanceToNowStrict, isAfter } from "date-fns"
 import {
   MailIcon,
   MessageCircleMoreIcon,
+  PhoneIcon,
+  PhoneOffIcon,
   StarIcon,
   UsersRoundIcon,
 } from "lucide-react"
@@ -29,6 +31,11 @@ import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { useAvatarUrl } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
+import {
+  useWhatsappVoipCallStore,
+  WhatsappVoipCallPhase,
+} from "../integration-whatsapp/calling/voip/voip-call-store"
+import { useWhatsappVoipCallContext } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-context"
 import { readConversationAction } from "./actions/read-conversation.action"
 import { resolveLastMessagePreview } from "./queries/resolve-last-message-preview"
 import type { ListConversationItemResource } from "./schema/resource"
@@ -144,6 +151,16 @@ export default function ConversationItem({
     (state) => state,
   )
   const isActive = conversation.id === activeConversationId
+  // Narrowed to a boolean so every virtualized row does NOT re-render on
+  // every VoIP call change (mute toggle, recording start, timer tick) —
+  // only the one row whose conversation is actually ringing ever
+  // re-renders when the call object changes shape (M2).
+  const isRinging = useWhatsappVoipCallStore(
+    (state) =>
+      state.call?.phase === WhatsappVoipCallPhase.incomingRinging &&
+      state.call.conversationId === conversation.id,
+  )
+  const { answer, dismiss } = useWhatsappVoipCallContext()
   const isComment = conversation.messages?.[0]?.type === "comment"
   const avatarUrl = useAvatarUrl(conversation.contact)
   const assignedAvatarUrl = useUserAvatarUrl(conversation.assignedUser?.image)
@@ -204,7 +221,7 @@ export default function ConversationItem({
   }, [isActive])
 
   return (
-    <div className="w-full">
+    <div className="relative w-full">
       <Button
         className={cn(
           "h-auto w-full justify-center px-3 py-2 font-normal hover:bg-zinc-200 hover:text-foreground dark:hover:bg-muted",
@@ -295,6 +312,41 @@ export default function ConversationItem({
           </div>
         </div>
       </Button>
+      {isRinging && (
+        // Overlay SIBLING of the row `<Button>`, never a descendant — a
+        // `<button>` nested inside another `<button>` is invalid DOM and
+        // trips hydration. Mirrors the avatar's absolute overlay pattern
+        // above, anchored to the row's end edge instead.
+        <div className="absolute inset-y-0 end-3 z-10 flex items-center gap-1.5">
+          <Badge className="animate-pulse" variant="destructive">
+            {t("whatsapp.calls.ringingBadge")}
+          </Badge>
+          <Button
+            aria-label={t("whatsapp.calls.reject")}
+            className="size-7 rounded-full bg-red-600 text-white hover:bg-red-700"
+            onClick={(event) => {
+              event.stopPropagation()
+              dismiss()
+            }}
+            size="icon"
+            type="button"
+          >
+            <PhoneOffIcon className="size-3.5" />
+          </Button>
+          <Button
+            aria-label={t("whatsapp.calls.answer")}
+            className="size-7 rounded-full bg-green-600 text-white hover:bg-green-700"
+            onClick={(event) => {
+              event.stopPropagation()
+              answer()
+            }}
+            size="icon"
+            type="button"
+          >
+            <PhoneIcon className="size-3.5" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

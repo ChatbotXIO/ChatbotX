@@ -1,1 +1,0 @@
-CREATE INDEX "WhatsappCall_livekitRoomName_idx" ON "WhatsappCall" ("livekitRoomName") WHERE "livekitRoomName" IS NOT NULL;

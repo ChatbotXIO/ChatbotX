@@ -39,10 +39,9 @@ export const ScheduleJobData = {
   refreshChannelTokens: "refreshChannelTokens",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
-  // WhatsApp FreeSWITCH calling.
+  // WhatsApp calling.
   purgeExpiredCallRecordings: "purgeExpiredCallRecordings",
   sweepStaleWhatsappCalls: "sweepStaleWhatsappCalls",
-  expireAgentSipPresence: "expireAgentSipPresence",
 } as const
 
 /**
@@ -242,15 +241,9 @@ export type ScheduleJobPurgeExpiredCallRecordings = {
   data: Record<string, never>
 }
 
-/** Every 5 minutes: outbound `ringing` rows stuck without a `freeswitchUuid` older than 90s -> `failed`. */
+/** Every 5 minutes: `ringing` call rows older than 90s that were never finalized -> `failed`. */
 export type ScheduleJobSweepStaleWhatsappCalls = {
   type: typeof ScheduleJobData.sweepStaleWhatsappCalls
-  data: Record<string, never>
-}
-
-/** Daily sweeper: drops stale `AgentSipPresence` rows. */
-export type ScheduleJobExpireAgentSipPresence = {
-  type: typeof ScheduleJobData.expireAgentSipPresence
   data: Record<string, never>
 }
 
@@ -286,7 +279,6 @@ export type ScheduleJobData =
   | ScheduleJobTeardownExpiredTrial
   | ScheduleJobPurgeExpiredCallRecordings
   | ScheduleJobSweepStaleWhatsappCalls
-  | ScheduleJobExpireAgentSipPresence
 
 export const scheduleQueue = isNoRedisEnv()
   ? fakeQueue

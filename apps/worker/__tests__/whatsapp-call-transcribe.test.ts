@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const ENRICHMENT_PENDING_RE = /whatsapp-call-enrichment-pending/
+
 const mocks = vi.hoisted(() => ({
   findById: vi.fn(),
   attachTranscript: vi.fn(),
@@ -10,12 +12,17 @@ const mocks = vi.hoisted(() => ({
   aiFindBy: vi.fn(),
   transcribe: vi.fn(),
   kyGet: vi.fn(),
+  broadcastToWorkspaceParty: vi.fn(),
+  findBySourceId: vi.fn(),
+  updateContentBySourceId: vi.fn(),
+  mergeContentAttributesBySourceId: vi.fn(),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: { findBy: mocks.contactInboxFindBy },
   callRecordingService: { getRecordingSignedUrl: mocks.getRecordingSignedUrl },
+  broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -26,6 +33,11 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   integrationWhatsappRepository: {
     findByInboxIdForWorkspace: mocks.findByInboxIdForWorkspace,
   },
+  createMessageRepository: vi.fn(async () => ({
+    findBySourceId: mocks.findBySourceId,
+    updateContentBySourceId: mocks.updateContentBySourceId,
+    mergeContentAttributesBySourceId: mocks.mergeContentAttributesBySourceId,
+  })),
 }))
 
 vi.mock("@chatbotx.io/events", () => ({
@@ -67,9 +79,14 @@ const callRow = {
   workspaceId: "ws-1",
   inboxId: "inbox-1",
   contactInboxId: "ci-1",
+  conversationId: "conv-1",
+  direction: "userInitiated" as const,
   recordingPath: null as string | null,
   transcript: null as string | null,
   recordedAt: null as Date | null,
+  // `enrichCallActivityMessage` derives the sharded-message lookback window
+  // from `createdAt`, so the finalize row must carry it.
+  createdAt: new Date("2025-12-31T23:58:00.000Z"),
 }
 
 describe("handleWhatsappCallTranscribe", () => {
@@ -90,6 +107,35 @@ describe("handleWhatsappCallTranscribe", () => {
     })
     mocks.transcribe.mockResolvedValue({ text: "hello from the call" })
     mocks.attachTranscript.mockResolvedValue({ id: "call-1" })
+    mocks.findBySourceId.mockResolvedValue({
+      id: "message-1",
+      contentAttributes: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "completed",
+        callId: "call-1",
+        hasRecording: true,
+        transcriptionRequested: true,
+        hasTranscript: false,
+        hasSummary: false,
+        recordingExpired: false,
+      },
+    })
+    mocks.updateContentBySourceId.mockResolvedValue({ id: "message-1" })
+    mocks.mergeContentAttributesBySourceId.mockResolvedValue({
+      id: "message-1",
+      contentAttributes: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "completed",
+        callId: "call-1",
+        hasRecording: true,
+        transcriptionRequested: true,
+        hasTranscript: true,
+        hasSummary: false,
+        recordingExpired: false,
+      },
+    })
     mocks.getRecordingSignedUrl.mockResolvedValue(
       "https://signed.example.com/space/ws-1/calls/call-1.ogg?sig=abc",
     )
@@ -167,6 +213,59 @@ describe("handleWhatsappCallTranscribe", () => {
 
     expect(mocks.getRecordingSignedUrl).toHaveBeenCalledWith({
       recordingPath: "space/ws-1/calls/call-1.ogg",
+    })
+  })
+
+  describe("finalize activity message enrichment", () => {
+    test("enriches the finalize message in place (hasTranscript: true) by sourceId and broadcasts the update", async () => {
+      await call({ channel: "whatsapp", callId: "call-1", workspaceId: "ws-1" })
+
+      expect(mocks.mergeContentAttributesBySourceId).toHaveBeenCalledWith(
+        "wacall-call-1",
+        "ws-1",
+        { hasTranscript: true },
+      )
+      expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+        eventType: "messageContentUpdated",
+        data: {
+          messageId: "message-1",
+          contentAttributes: expect.objectContaining({
+            hasTranscript: true,
+          }),
+        },
+      })
+    })
+
+    // Behavior change (B4): the shared `enrichCallActivityMessage` used to
+    // silently skip and let the job "succeed" when the finalize message
+    // hadn't landed yet — losing the `hasTranscript` flag forever, since
+    // this handler's own `call.transcript` CAS guard means a caller-level
+    // BullMQ retry never re-reaches this code path. It now throws
+    // `WhatsappCallEnrichmentPendingError` after a bounded in-process wait
+    // so the failure is at least observable, propagating through this
+    // handler's own catch-and-rethrow — `callTranscribed` is never emitted
+    // on this path since enrichment runs before it.
+    test("throws (and never emits callTranscribed) when the finalize message never shows up after the bounded wait", async () => {
+      mocks.findBySourceId.mockResolvedValue(null)
+
+      await expect(
+        call({ channel: "whatsapp", callId: "call-1", workspaceId: "ws-1" }),
+      ).rejects.toThrow(ENRICHMENT_PENDING_RE)
+
+      expect(mocks.mergeContentAttributesBySourceId).not.toHaveBeenCalled()
+      expect(mocks.emitCallTranscribed).not.toHaveBeenCalled()
+    }, 10_000)
+
+    test("a broadcast failure is swallowed and does not fail the job or block callTranscribed", async () => {
+      mocks.broadcastToWorkspaceParty.mockRejectedValueOnce(
+        new Error("realtime down"),
+      )
+
+      await expect(
+        call({ channel: "whatsapp", callId: "call-1", workspaceId: "ws-1" }),
+      ).resolves.toBeUndefined()
+
+      expect(mocks.emitCallTranscribed).toHaveBeenCalled()
     })
   })
 })

@@ -253,8 +253,8 @@ describe("extractCoexistPayloads", () => {
 })
 
 // ---------------------------------------------------------------------------
-// H2 — setTimeout race: coexist payloads must be enqueued even when
-// handle_post resolves AFTER the 300 ms timeout window.
+// setTimeout race: coexist payloads must be enqueued even when handle_post
+// resolves AFTER the 300 ms timeout window.
 // ---------------------------------------------------------------------------
 
 const { handlePostMock } = vi.hoisted(() => ({
@@ -272,7 +272,7 @@ vi.mock("whatsapp-api-js/middleware/next", () => ({
   },
 }))
 
-// The H2 race tests below exercise the handle_post / 300 ms timeout race, not
+// The race tests below exercise the handle_post / 300 ms timeout race, not
 // signature verification (that is covered by webhook-hmac.test.ts). Stub the
 // verifier so it settles as a resolved microtask: the real Web Crypto
 // implementation resolves off the libuv threadpool, which
@@ -327,7 +327,7 @@ const baseConfig = {
   version: "v20.0",
 } as never
 
-describe("webhookHandler — H2 setTimeout race", () => {
+describe("webhookHandler — setTimeout race", () => {
   beforeEach(() => {
     // The WhatsAppAPI mock is a class (see vi.mock above), so it stays
     // constructable across tests; only the per-test handle_post stub needs

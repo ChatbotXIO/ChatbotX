@@ -45,13 +45,29 @@ export const requestCallPermissionAction = workspaceActionClient
         where: { id: conversationId, workspaceId },
       })
 
-      const contactInbox = await contactInboxService.findBy({
-        where: {
-          contactId: conversation.contactId,
-          channel: channelTypes.enum.whatsapp,
-          ...(parsedInput.inboxId ? { inboxId: parsedInput.inboxId } : {}),
-        },
-      })
+      // Prefer the caller's `inboxId` to pin the send to the number the agent
+      // is viewing (a contact can have WhatsApp ContactInbox rows on several
+      // connected numbers). But fall back to a contact + channel lookup when
+      // that pin finds nothing, so a stale/missing client `inboxId` can't
+      // dead-end an actual WhatsApp conversation with a false "not on
+      // WhatsApp" — the outbound call flow (`resolveOutboundCallModeAction`)
+      // resolves the same way.
+      const contactInbox =
+        (parsedInput.inboxId
+          ? await contactInboxService.findBy({
+              where: {
+                contactId: conversation.contactId,
+                channel: channelTypes.enum.whatsapp,
+                inboxId: parsedInput.inboxId,
+              },
+            })
+          : null) ??
+        (await contactInboxService.findBy({
+          where: {
+            contactId: conversation.contactId,
+            channel: channelTypes.enum.whatsapp,
+          },
+        }))
       if (!contactInbox) {
         throw new ChatbotXException(
           t("whatsapp.calls.errors.notWhatsappConversation"),
@@ -62,7 +78,12 @@ export const requestCallPermissionAction = workspaceActionClient
         type: "whatsapp_call_permission_request",
       }
 
-      return await messageService.createOutgoing({
+      // The channel send is enqueued, not awaited — Meta is contacted later in
+      // the chat worker. So a Meta 138017 ("permanent permission already
+      // exists") can never surface here; that case is reconciled in the worker
+      // (`recordCallPermissionAlreadyGranted`, see
+      // `apps/worker/src/chat/handlers/whatsapp-call-permission-grant.ts`).
+      await messageService.createOutgoing({
         conversation,
         contactInbox,
         input: { text: parsedInput.text, contentAttributes: entity },

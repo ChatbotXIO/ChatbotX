@@ -45,6 +45,7 @@ import {
   shouldSuppressRetryableChannelError,
   willSendRetry,
 } from "../utils/retry"
+import { recordCallPermissionAlreadyGranted } from "./whatsapp-call-permission-grant"
 
 function broadcastChatEvent(workspaceId: string, event: RealtimeEventData) {
   return chatQueue.add(ChatJobAction.broadcastEvent, {
@@ -252,6 +253,31 @@ export async function sendMessageToChannel(
 
     return { messageIds: result.messageIds }
   } catch (error) {
+    // Meta 138017 on a `call_permission_request` means the consumer already
+    // granted a permanent permission. Reconcile the local grant and nudge
+    // every open thread to refetch `useOutboundCallMode` so the header's call
+    // control flips from "request permission" to direct-dial live — there is
+    // no `call_permission_reply` message to hang that invalidation off of.
+    //
+    // The failure is NOT swallowed: the request message genuinely did not
+    // reach the consumer, so it still runs the normal `message:failed` /
+    // `recordMessageSendError` path below and shows the send-error icon (the
+    // 138017 text itself tells the agent the business can already call this
+    // consumer). It only avoids the terminal `throw` — see the guard at the
+    // end of this block — so BullMQ never re-POSTs the request to Meta.
+    const isReconciledPermissionGrant =
+      await recordCallPermissionAlreadyGranted({
+        error,
+        workspaceId: conversation.workspaceId,
+        contactInbox,
+        contentAttributes: message.contentAttributes,
+      })
+    if (isReconciledPermissionGrant) {
+      await broadcastChatEvent(conversation.workspaceId, {
+        eventType: RealtimeEventType.whatsappCallPermissionUpdated,
+        data: { conversationId: conversation.id },
+      })
+    }
     logger.error(error, "An error occurred while sending the message")
     const errorData = await parseSdkError(error)
     const willRetry = willSendRetry({
@@ -294,7 +320,13 @@ export async function sendMessageToChannel(
         errorDetail: errorData.message,
       })
     }
-    if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
+    // A reconciled 138017 is permanent (isRetryable:false) — the icon is now
+    // persisted above, so return rather than rethrow, or BullMQ would burn a
+    // retry re-POSTing the permission request to Meta (and risk 138009).
+    if (
+      isReconciledPermissionGrant ||
+      shouldSuppressRetryableChannelError(error, contactInbox.channel)
+    ) {
       return { messageIds: [] }
     }
     throw error

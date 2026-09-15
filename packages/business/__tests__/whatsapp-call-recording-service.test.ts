@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   deleteObject: vi.fn(),
   listRecordingsPastRetention: vi.fn(),
   clearRecording: vi.fn(),
+  findById: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/filesystem", () => ({
@@ -19,12 +20,16 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   whatsappCallRepository: {
     listRecordingsPastRetention: mocks.listRecordingsPastRetention,
     clearRecording: mocks.clearRecording,
+    findById: mocks.findById,
   },
 }))
 
-const { callRecordingService } = await import(
-  "../src/whatsapp-call/call-recording-service"
-)
+const {
+  callRecordingService,
+  isAllowedRecordingContentType,
+  resolveRecordingExtension,
+  UnsupportedRecordingContentTypeError,
+} = await import("../src/whatsapp-call/call-recording-service")
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -32,7 +37,7 @@ beforeEach(() => {
 })
 
 describe("callRecordingService.uploadRecording", () => {
-  test("uploads to the private space/<ws>/calls/<callId>.ogg key", async () => {
+  test("uploads to the private space/<ws>/calls/<callId>.ogg key by default (SIP path)", async () => {
     const result = await callRecordingService.uploadRecording({
       callId: "call-1",
       workspaceId: "ws-1",
@@ -43,6 +48,63 @@ describe("callRecordingService.uploadRecording", () => {
       "space/ws-1/calls/call-1.ogg",
       expect.anything(),
       expect.objectContaining({ ContentType: "audio/ogg" }),
+    )
+  })
+
+  test.each([
+    ["audio/ogg", "ogg"],
+    ["audio/webm", "webm"],
+    ["audio/mp4", "m4a"],
+    ["audio/mpeg", "mp3"],
+  ] as const)("derives the %s extension and passes it as ContentType", async (contentType, extension) => {
+    const result = await callRecordingService.uploadRecording({
+      callId: "call-1",
+      workspaceId: "ws-1",
+      body: new Uint8Array([1, 2, 3]),
+      contentType,
+    })
+    expect(result).toEqual({
+      recordingPath: `space/ws-1/calls/call-1.${extension}`,
+    })
+    expect(mocks.putObject).toHaveBeenCalledWith(
+      `space/ws-1/calls/call-1.${extension}`,
+      expect.anything(),
+      expect.objectContaining({ ContentType: contentType }),
+    )
+  })
+
+  test("throws UnsupportedRecordingContentTypeError for an unknown mime type", async () => {
+    await expect(
+      callRecordingService.uploadRecording({
+        callId: "call-1",
+        workspaceId: "ws-1",
+        body: new Uint8Array([1, 2, 3]),
+        contentType: "video/mp4" as unknown as Parameters<
+          typeof callRecordingService.uploadRecording
+        >[0]["contentType"],
+      }),
+    ).rejects.toThrow(UnsupportedRecordingContentTypeError)
+    expect(mocks.putObject).not.toHaveBeenCalled()
+  })
+})
+
+describe("isAllowedRecordingContentType / resolveRecordingExtension", () => {
+  test("accepts every allowed mime type", () => {
+    for (const [mime, extension] of [
+      ["audio/ogg", "ogg"],
+      ["audio/webm", "webm"],
+      ["audio/mp4", "m4a"],
+      ["audio/mpeg", "mp3"],
+    ] as const) {
+      expect(isAllowedRecordingContentType(mime)).toBe(true)
+      expect(resolveRecordingExtension(mime)).toBe(extension)
+    }
+  })
+
+  test("rejects an unknown mime type", () => {
+    expect(isAllowedRecordingContentType("video/mp4")).toBe(false)
+    expect(() => resolveRecordingExtension("video/mp4")).toThrow(
+      UnsupportedRecordingContentTypeError,
     )
   })
 })
@@ -58,6 +120,72 @@ describe("callRecordingService.getRecordingSignedUrl", () => {
       "space/ws-1/calls/call-1.ogg",
       15 * 60,
     )
+  })
+})
+
+describe("callRecordingService.getRecordingUrlForCall", () => {
+  test("returns a fresh signed URL for a call belonging to the caller's workspace", async () => {
+    mocks.findById.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "ws-1",
+      recordingPath: "space/ws-1/calls/call-1.ogg",
+    })
+    mocks.getPresignedDownload.mockResolvedValueOnce(
+      "https://signed.example/fresh",
+    )
+
+    const url = await callRecordingService.getRecordingUrlForCall({
+      callId: "call-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(url).toBe("https://signed.example/fresh")
+    expect(mocks.getPresignedDownload).toHaveBeenCalledWith(
+      "space/ws-1/calls/call-1.ogg",
+      15 * 60,
+    )
+  })
+
+  test("rejects a call that belongs to a different workspace", async () => {
+    mocks.findById.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "ws-other",
+      recordingPath: "space/ws-other/calls/call-1.ogg",
+    })
+
+    await expect(
+      callRecordingService.getRecordingUrlForCall({
+        callId: "call-1",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("Call recording not found")
+    expect(mocks.getPresignedDownload).not.toHaveBeenCalled()
+  })
+
+  test("rejects when the call has no recording yet", async () => {
+    mocks.findById.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "ws-1",
+      recordingPath: null,
+    })
+
+    await expect(
+      callRecordingService.getRecordingUrlForCall({
+        callId: "call-1",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("Call recording not found")
+  })
+
+  test("rejects when the call does not exist", async () => {
+    mocks.findById.mockResolvedValue(undefined)
+
+    await expect(
+      callRecordingService.getRecordingUrlForCall({
+        callId: "missing",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("Call recording not found")
   })
 })
 

@@ -22,6 +22,8 @@ import {
   type IntegrationJobData,
   integrationQueue,
   queueNames,
+  WhatsappVoipSignalingJobAction,
+  type WhatsappVoipSignalingJobData,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { env } from "../env"
@@ -30,6 +32,7 @@ import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { integrationService } from "../services/integrations"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
 import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
 import { runChallenge } from "./handlers/challenge"
@@ -66,9 +69,11 @@ import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
 import { runWaitResume } from "./handlers/wait-resume"
 import { handleWhatsappCallEvent } from "./handlers/whatsapp-call"
+import { handleWhatsappCallNativeRecordingFetch } from "./handlers/whatsapp-call-native-recording"
+import { handleWhatsappCallNativeTranscriptFetch } from "./handlers/whatsapp-call-native-transcript"
 import { handleWhatsappCallRecordingReady } from "./handlers/whatsapp-call-recording"
 import { handleWhatsappCallTranscribe } from "./handlers/whatsapp-call-transcribe"
-import { handleWhatsappFreeswitchEvent } from "./handlers/whatsapp-freeswitch"
+import { handleWhatsappVoipSignalingJob } from "./handlers/whatsapp-voip-signaling"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
 import { closeChatQueueEvents } from "./utils/message"
@@ -97,7 +102,7 @@ function getFlowExecutionKey(job: Job): string {
     return job.id
   }
 
-  const flowExecutionKey = `integration-job-${createId()}`
+  const flowExecutionKey = `integration-job-${createId}`
   logger.warn(
     { flowExecutionKey, jobName: job.name },
     "Integration job is missing id; generated flow execution key",
@@ -157,6 +162,16 @@ async function startIntegrationWorker() {
                   message.contentAttributes,
                 )
                 if (isFromContact && callPermissionReply) {
+                  logger.info(
+                    {
+                      contactInboxId: message.contactInboxId,
+                      response: callPermissionReply.response,
+                      isPermanent: callPermissionReply.isPermanent === true,
+                      expirationTimestamp:
+                        callPermissionReply.expirationTimestamp ?? null,
+                    },
+                    "[wa-call-permission] recording customer permission reply",
+                  )
                   await whatsappCallPermissionRepository.upsertForContactInbox({
                     workspaceId: conversation.workspaceId,
                     contactInboxId: message.contactInboxId,
@@ -379,12 +394,16 @@ async function startIntegrationWorker() {
                 await handleWhatsappCallEvent(job.data.data)
                 return
               }
-              case IntegrationJobAction.whatsappFreeswitchEvent: {
-                await handleWhatsappFreeswitchEvent(job.data.data)
-                return
-              }
               case IntegrationJobAction.whatsappCallRecordingReady: {
                 await handleWhatsappCallRecordingReady(job.data.data)
+                return
+              }
+              case IntegrationJobAction.whatsappCallNativeRecordingFetch: {
+                await handleWhatsappCallNativeRecordingFetch(job.data.data)
+                return
+              }
+              case IntegrationJobAction.whatsappCallNativeTranscriptFetch: {
+                await handleWhatsappCallNativeTranscriptFetch(job.data.data)
                 return
               }
               case IntegrationJobAction.evaluateTemplateSent:
@@ -529,6 +548,66 @@ async function startIntegrationWorker() {
     }
   })
 
+  // Dedicated consumer for WhatsApp Business Calling VoIP-mode signaling: a
+  // third `Worker` instance in this same process, on its own queue — the
+  // shared `integration` queue's traffic/concurrency must never starve the
+  // 30-60s Meta answer-deadline window (docs/whatsapp-calling-voip.md
+  // contract #3). `resolveWorkspaceId`'s generic resolvers don't know about
+  // `phoneNumberId`, so the workspace is resolved directly here for the
+  // frozen-workspace guard; the handler resolves the integration again for
+  // its own purposes (auth, inboxId) — same redundant-resolution shape as
+  // the main `worker` processor above and its handlers.
+  const whatsappVoipSignalingWorker = new Worker<WhatsappVoipSignalingJobData>(
+    queueNames.enum.whatsappVoipSignaling,
+    async (job: Job<WhatsappVoipSignalingJobData>) => {
+      // Outbound jobs (`handleOutboundAnswer`/`expireOutboundDial`) already
+      // carry `workspaceId` on their slim payload — no `phoneNumberId` to
+      // resolve it from. Inbound jobs (`handleConnect`/`expireIfUnanswered`) only
+      // carry `phoneNumberId`, so the workspace is resolved via the
+      // integration lookup, same as before.
+      let workspaceId: string | undefined
+      if (
+        job.data.type === WhatsappVoipSignalingJobAction.handleOutboundAnswer ||
+        job.data.type === WhatsappVoipSignalingJobAction.expireOutboundDial
+      ) {
+        workspaceId = job.data.data.workspaceId
+      } else {
+        try {
+          const { inbox } =
+            await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+              "whatsapp",
+              job.data.data.phoneNumberId,
+            )
+          workspaceId = inbox.workspaceId
+        } catch (err) {
+          logger.warn(
+            { err, phoneNumberId: job.data.data.phoneNumberId },
+            "Whatsapp VoIP signaling: unable to resolve workspace for the frozen-workspace guard",
+          )
+        }
+      }
+
+      await withBlockedOwnerGuard(workspaceId, async () => {
+        await runJobWithAuditContext(
+          { workspaceId, source: `integration:${job.data.type}` },
+          async () => {
+            await handleWhatsappVoipSignalingJob(job.data)
+          },
+        )
+      })
+    },
+    {
+      connection: getRedisConnection(),
+      concurrency: 10,
+    },
+  )
+
+  whatsappVoipSignalingWorker.on("failed", (job, err) => {
+    if (job) {
+      logger.error({ err }, `Whatsapp VoIP signaling job ${job.id} has failed`)
+    }
+  })
+
   let isShuttingDown = false
   async function shutdown() {
     if (isShuttingDown) {
@@ -539,6 +618,7 @@ async function startIntegrationWorker() {
       await worker.close()
       await Promise.all([
         callTranscriptionWorker.close(),
+        whatsappVoipSignalingWorker.close(),
         closeChatQueueEvents(),
         closeIntegrationQueueEvents(),
         closeHeavyQueueEvents(),

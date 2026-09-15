@@ -1,4 +1,3 @@
-import type { SipProvisioningStatus } from "@chatbotx.io/database/partials"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   getCallingSettings,
@@ -59,13 +58,6 @@ export default async function WhatsappCallsPage(props: {
       recordingEnabled={integrationWhatsapp.callRecordingEnabled}
       recordingRetentionDays={integrationWhatsapp.callRecordingRetentionDays}
       settings={settings}
-      // The `sipProvisioningStatus` pgEnum column erases to `string` at the
-      // Drizzle inference boundary (its zod enum isn't threaded through the
-      // `pgEnum(...)` call in `packages/database/src/schema/integration-whatsapp.ts`)
-      // — narrow it here rather than widen the prop type.
-      sipProvisioningStatus={
-        integrationWhatsapp.sipProvisioningStatus as SipProvisioningStatus
-      }
       transcriptionEnabled={integrationWhatsapp.callTranscriptionEnabled}
       workspaceId={data.workspaceId}
     />

@@ -8,13 +8,6 @@ export const updateWhatsappCallingSettingsSchema = z.object({
   status: z.enum(["ENABLED", "DISABLED"]).optional(),
   callIconVisibility: z.enum(["DEFAULT", "DISABLE_ALL"]).optional(),
   callbackPermissionStatus: z.enum(["ENABLED", "DISABLED"]).optional(),
-  /**
-   * Routes the number's calls through the FreeSWITCH SIP gateway (in-app
-   * calling). Only allowed once `sipProvisioningStatus === "provisioned"`
-   * — the SIP hostname/port/codecs come from server env and the
-   * integration's pinned node, never from client input.
-   */
-  sipEnabled: z.boolean().optional(),
   /** Local DB flag (no Meta call): auto-record in-app calls on this number. */
   recordingEnabled: z.boolean().optional(),
   /** Retention window for recordings, in days (default 90). */

@@ -1,3 +1,4 @@
+import { whatsappVoipCallService } from "@chatbotx.io/business"
 import {
   type HandleRequestProps,
   type ReceivedMessageProps,
@@ -461,6 +462,28 @@ const CALL_EVENT_JOB_RETRY_OPTIONS = {
   removeOnFail: { age: 6 * 60 * 60 },
 } as const
 
+/**
+ * The generic `whatsappCallEvent` job (consumed on the shared, unprioritized
+ * `integration` queue) must NEVER carry the SDP offer (see
+ * docs/whatsapp-calling-voip.md): a VoIP-mode connect's
+ * `session` is peeled off into short-TTL Redis + the dedicated
+ * `whatsappVoipSignaling` queue by {@link enqueueVoipConnectSignaling}
+ * instead. `IntegrationJobWhatsappCallEvent`'s connect variant has no
+ * `session` field, but `payload` here is a plain variable (not an object
+ * literal), so TypeScript's excess-property check does not strip it at
+ * compile time — this rebuilds the event explicitly so the field is
+ * actually absent from the serialized job at runtime.
+ */
+const stripVoipSession = (
+  event: WhatsappCallEventPayload["event"],
+): WhatsappCallEventPayload["event"] => {
+  if (event.kind !== "connect" || !event.session) {
+    return event
+  }
+  const { session: _session, ...rest } = event
+  return rest
+}
+
 const enqueueCallEventPayloads = async (
   queue: WebhookQueue,
   callEventPayloads: WhatsappCallEventPayload[],
@@ -476,7 +499,7 @@ const enqueueCallEventPayloads = async (
           data: {
             integrationType: "whatsapp",
             integrationIdentifier: payload.phoneNumberId,
-            payload,
+            payload: { ...payload, event: stripVoipSession(payload.event) },
           },
         },
         {
@@ -498,6 +521,148 @@ const enqueueCallEventPayloads = async (
         },
         "Whatsapp call event enqueue failed; webhook will still acknowledge",
       )
+    }
+  }
+}
+
+/**
+ * VoIP-mode connect branch (contracts #2/#3): additive alongside
+ * {@link enqueueCallEventPayloads} — never a replacement for it, so the
+ * ringing `WhatsappCall` row + incoming-call trigger the generic path
+ * creates keeps firing for every connect, SIP or VoIP. Only a validated
+ * `session` (a bounded SDP offer parsed by `extractCallEventPayloads`)
+ * triggers this branch; a business-initiated or SIP-mode connect is a no-op
+ * here. Per-event try/catch mirrors every other enqueue helper in this file
+ * — one failure never blocks the rest of the batch or the webhook ACK.
+ */
+const enqueueVoipConnectSignaling = async (
+  callEventPayloads: WhatsappCallEventPayload[],
+): Promise<void> => {
+  for (const payload of callEventPayloads) {
+    const { event } = payload
+    if (event.kind !== "connect") {
+      continue
+    }
+    if (event.direction === "businessInitiated") {
+      // A business-initiated connect carries the USER's answer to our own
+      // outbound offer — it must NEVER enter the inbound path below
+      // (captureConnectOffer / rejectUnprocessableConnect / ring-all), which
+      // has no leg for it and would otherwise Meta-reject our own dial.
+      if (event.session?.sdpType === "answer") {
+        if (!event.bizOpaqueCallbackData) {
+          logger.warn(
+            { phoneNumberId: payload.phoneNumberId, wacid: event.wacid },
+            "Whatsapp outbound answer: bizOpaqueCallbackData missing; falling back to wacid lookup",
+          )
+        }
+        try {
+          await whatsappVoipCallService.captureOutboundAnswer({
+            attemptId: event.bizOpaqueCallbackData ?? "",
+            wacid: event.wacid,
+            sdp: event.session.sdp,
+          })
+        } catch (err) {
+          logger.error(
+            { err, phoneNumberId: payload.phoneNumberId, wacid: event.wacid },
+            "Whatsapp outbound answer capture failed; webhook will still acknowledge",
+          )
+        }
+      }
+      continue
+    }
+    try {
+      if (event.session) {
+        await whatsappVoipCallService.captureConnectOffer({
+          wacid: event.wacid,
+          sdp: event.session.sdp,
+          phoneNumberId: payload.phoneNumberId,
+        })
+      } else if (event.sessionInvalid) {
+        // A VoIP connect whose SDP we cannot honor — reject it on Meta rather
+        // than leaving it to ring out in the SIP path (which has no leg here).
+        await whatsappVoipCallService.rejectUnprocessableConnect({
+          wacid: event.wacid,
+          phoneNumberId: payload.phoneNumberId,
+        })
+      }
+    } catch (err) {
+      logger.error(
+        { err, phoneNumberId: payload.phoneNumberId, wacid: event.wacid },
+        "Whatsapp VoIP connect signaling enqueue failed; webhook will still acknowledge",
+      )
+    }
+  }
+}
+
+/**
+ * Meta-native call recording/transcript delivery (VoIP-only — see
+ * : additive
+ * alongside {@link enqueueCallEventPayloads}, never a replacement for it —
+ * the generic `whatsappCallEvent` job still fires for these two event kinds
+ * (today it only skip-logs them; the worker-side handling of that lands in a
+ * later wave). Each event is captured in its own try/catch so one failure
+ * never blocks the other event or the rest of the webhook batch, mirroring
+ * {@link enqueueVoipConnectSignaling}.
+ */
+const enqueueNativeCallCapture = async (
+  callEventPayloads: WhatsappCallEventPayload[],
+): Promise<void> => {
+  for (const payload of callEventPayloads) {
+    const { event } = payload
+
+    if (event.kind === "recordingAvailable") {
+      logger.info(
+        {
+          phoneNumberId: payload.phoneNumberId,
+          wacid: event.wacid,
+          mimeType: event.audio.mimeType,
+          hasAudioUrl: Boolean(event.audio.url),
+        },
+        "[wa-call-recording] webhook call_recording_available received",
+      )
+      if (!(event.audio.url && event.audio.mimeType)) {
+        logger.warn(
+          { phoneNumberId: payload.phoneNumberId, wacid: event.wacid },
+          "Whatsapp native call recording skipped: missing audio url/mimeType",
+        )
+        continue
+      }
+      try {
+        await whatsappVoipCallService.captureNativeRecordingAvailable({
+          wacid: event.wacid,
+          audioMediaId: event.audio.mediaId,
+          audioUrl: event.audio.url,
+          mimeType: event.audio.mimeType,
+        })
+      } catch (err) {
+        logger.error(
+          { err, phoneNumberId: payload.phoneNumberId, wacid: event.wacid },
+          "Whatsapp native call recording capture failed; webhook will still acknowledge",
+        )
+      }
+      continue
+    }
+
+    if (event.kind === "transcriptionAvailable") {
+      if (!event.document.url) {
+        logger.warn(
+          { phoneNumberId: payload.phoneNumberId, wacid: event.wacid },
+          "Whatsapp native call transcript skipped: missing document url",
+        )
+        continue
+      }
+      try {
+        await whatsappVoipCallService.captureNativeTranscriptAvailable({
+          wacid: event.wacid,
+          documentMediaId: event.document.mediaId,
+          documentUrl: event.document.url,
+        })
+      } catch (err) {
+        logger.error(
+          { err, phoneNumberId: payload.phoneNumberId, wacid: event.wacid },
+          "Whatsapp native call transcript capture failed; webhook will still acknowledge",
+        )
+      }
     }
   }
 }
@@ -567,8 +732,8 @@ export const webhookHandler = async (
 
   if (props.req.method === "POST") {
     // Read the body once as raw bytes — HTTP body is a one-shot stream.
-    // Using arrayBuffer() preserves the exact bytes for HMAC verification;
-    // text() would silently re-encode, risking a signature mismatch on
+    // Using arrayBuffer preserves the exact bytes for HMAC verification;
+    // text would silently re-encode, risking a signature mismatch on
     // non-ASCII payloads. Verification happens BEFORE any parsing, logging,
     // or enqueueing so a forged request never reaches the queue.
     const signatureOutcome = await verifyPostSignature(props.req, props.config)
@@ -596,21 +761,41 @@ export const webhookHandler = async (
     try {
       const { coexistPayloads, automaticEventPayloads, callEventPayloads } =
         parsePostPayloads(signatureOutcome.rawBodyBuffer)
-      const result = await capturePostResult({
-        req: props.req,
-        rawBodyBuffer: signatureOutcome.rawBodyBuffer,
-        middleware,
-      })
+      // The SDK middleware (`handle_post`) exists only to extract message/status
+      // args for us; it does nothing for a `calls` webhook, which we parse and
+      // enqueue ourselves below. Worse, whatsapp-api-js@6.2.1's `post` throws
+      // on a `calls` payload whose contact has no `profile` — it reads
+      // `contact?.profile.name` (lib/index.js:551) with the optional chain on
+      // `contact` but NOT on `.profile`, and a calls contact is `{wa_id,
+      // user_id}` with no `profile`. That TypeError becomes a 500 from
+      // `handle_post`, which `capturePostResult` turns into a webhook-wide 400.
+      // So skip the middleware entirely for a calls webhook (both inbound and
+      // outbound), never feeding it the payload shape it crashes on.
+      const result =
+        callEventPayloads.length > 0
+          ? null
+          : await capturePostResult({
+              req: props.req,
+              rawBodyBuffer: signatureOutcome.rawBodyBuffer,
+              middleware,
+            })
       await enqueueCoexistPayloads(props.queue, coexistPayloads)
       await enqueueAutomaticEventPayloads(props.queue, automaticEventPayloads)
       await enqueueCallEventPayloads(props.queue, callEventPayloads)
+      await enqueueVoipConnectSignaling(callEventPayloads)
+      await enqueueNativeCallCapture(callEventPayloads)
       await dispatchWebhookResult(props.queue, result)
 
       return "ok"
-    } catch {
+    } catch (err) {
+      // Surface the underlying cause: a bare `catch {}` here previously
+      // discarded it, so a real failure (e.g. the SDK `handle_post`
+      // middleware throwing on an unexpected payload shape) reached the
+      // caller as an opaque "Failed to handle webhook" with no diagnosis.
+      logger.error({ err }, "Whatsapp webhook handler failed")
       throw new SdkException("Failed to handle webhook")
     }
   }
 
-  throw SdkException.methodNotImplemented()
+  throw SdkException.methodNotImplemented
 }

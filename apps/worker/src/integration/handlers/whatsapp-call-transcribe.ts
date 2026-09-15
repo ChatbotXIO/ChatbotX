@@ -18,6 +18,7 @@ import { experimental_transcribe as transcribe } from "ai"
 import ky from "ky"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
+import { enrichRecordingMessageWithTranscript } from "./shared/whatsapp-call-recording-enrichment"
 
 const TRANSCRIPTION_MODEL = "whisper-1"
 
@@ -27,6 +28,14 @@ const externalCorrelationId = (call: {
   attemptId: string | null
   id: string
 }): string => call.wacid ?? call.attemptId ?? call.id
+
+// `enrichRecordingMessageWithTranscript` moved to
+// `shared/whatsapp-call-recording-enrichment.ts` so both this SIP/Whisper
+// path and the Meta-native transcript fetch handler
+// (`handleWhatsappCallNativeTranscriptFetch`) reuse the exact same
+// message-enrichment + broadcast logic without either file pulling in the
+// other's unrelated dependencies (this file's `ai`/`ky`/AI-integration
+// imports are SIP-only).
 
 /**
  * Speech-to-text over a stored call recording. Opt-in per integration
@@ -128,6 +137,8 @@ export const handleWhatsappCallTranscribe = async (
     if (!stamped) {
       return
     }
+
+    await enrichRecordingMessageWithTranscript({ call })
 
     const contactInbox = await contactInboxService.findBy({
       where: { id: call.contactInboxId },

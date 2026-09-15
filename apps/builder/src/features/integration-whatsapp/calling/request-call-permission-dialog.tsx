@@ -53,8 +53,8 @@ export function RequestCallPermissionDialog({
     requestCallPermissionAction.bind(null, workspaceId, conversationId),
     {
       onSuccess: () => {
-        toast.success(t("whatsapp.calls.permissionRequestSent"))
         setOpen(false)
+        toast.success(t("whatsapp.calls.permissionRequestSent"))
       },
       onError: ({ error }) => {
         toast.error(error.serverError ?? t("messages.unknownError"))

@@ -1,0 +1,519 @@
+// @vitest-environment node
+
+import { beforeEach, describe, expect, test, vi } from "vitest"
+
+type ActionHandler = (args: {
+  bindArgsParsedInputs: readonly [string]
+  parsedInput: Record<string, unknown>
+  ctx: { user: { id: string } }
+}) => Promise<unknown>
+
+const {
+  findByIdMock,
+  findByInboxIdForWorkspaceMock,
+  findContactInboxMock,
+  findContactMock,
+  markAcceptedByAgentMock,
+  claimForAnswerMock,
+  commitAcceptedMock,
+  releaseClaimMock,
+  preAcceptCallMock,
+  acceptCallMock,
+  terminateCallMock,
+  broadcastToWorkspacePartyMock,
+} = vi.hoisted(() => ({
+  findByIdMock: vi.fn(),
+  findByInboxIdForWorkspaceMock: vi.fn(),
+  findContactInboxMock: vi.fn(),
+  findContactMock: vi.fn(),
+  markAcceptedByAgentMock: vi.fn(),
+  claimForAnswerMock: vi.fn(),
+  commitAcceptedMock: vi.fn(),
+  releaseClaimMock: vi.fn(),
+  preAcceptCallMock: vi.fn(),
+  acceptCallMock: vi.fn(),
+  terminateCallMock: vi.fn(),
+  broadcastToWorkspacePartyMock: vi.fn(),
+}))
+
+class FakeWhatsappException extends Error {
+  httpStatusCode: number
+  constructor(message: string, httpStatusCode = 400) {
+    super(message)
+    this.httpStatusCode = httpStatusCode
+  }
+}
+
+const SUPPORTED_ANNOUNCEMENT_LANGUAGES = new Set([
+  "en",
+  "en_US",
+  "en_AU",
+  "en_CA",
+  "en_GB",
+  "en_IN",
+  "en_NZ",
+  "nl",
+  "fr",
+  "de",
+  "hi",
+  "it",
+  "kn",
+  "pt",
+  "es",
+  "es_ES",
+  "te",
+  "vi",
+])
+
+vi.mock("@/lib/safe-action", () => {
+  const chain: Record<string, unknown> = {}
+  chain.bindArgsSchemas = () => chain
+  chain.inputSchema = () => chain
+  chain.action = (handler: unknown) => handler
+  return { workspaceActionClient: chain }
+})
+
+vi.mock("@/lib/log", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
+  whatsappVoipCallService: {
+    claimForAnswer: claimForAnswerMock,
+    commitAccepted: commitAcceptedMock,
+    releaseClaim: releaseClaimMock,
+    markAcceptedByAgent: markAcceptedByAgentMock,
+  },
+  contactInboxService: { findBy: findContactInboxMock },
+  contactService: { findBy: findContactMock },
+  broadcastToWorkspaceParty: broadcastToWorkspacePartyMock,
+}))
+
+vi.mock("@chatbotx.io/partysocket-config", () => ({
+  RealtimeEventType: {
+    whatsappCallClaimedElsewhere: "whatsappCallClaimedElsewhere",
+  },
+}))
+
+vi.mock("@chatbotx.io/business/errors", () => ({
+  ChatbotXException: class ChatbotXException extends Error {},
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  integrationWhatsappRepository: {
+    findByInboxIdForWorkspace: findByInboxIdForWorkspaceMock,
+  },
+  whatsappCallRepository: {
+    findById: findByIdMock,
+  },
+}))
+
+vi.mock("@chatbotx.io/integration-whatsapp/api/calling", () => ({
+  preAcceptCall: preAcceptCallMock,
+  acceptCall: acceptCallMock,
+  terminateCall: terminateCallMock,
+  resolveAnnouncementLanguage: (input: string | undefined) =>
+    input && SUPPORTED_ANNOUNCEMENT_LANGUAGES.has(input) ? input : "en_US",
+}))
+
+vi.mock("@chatbotx.io/integration-whatsapp/exception", () => ({
+  WhatsappException: FakeWhatsappException,
+}))
+
+vi.mock("next-intl/server", () => ({
+  getTranslations: async () => (key: string) => key,
+}))
+
+const { answerWhatsappVoipCallAction } = await import(
+  "../src/features/integration-whatsapp/calling/actions/answer-voip-call.action"
+)
+const action = answerWhatsappVoipCallAction as unknown as ActionHandler
+
+const ctx = { user: { id: "agent-1" } }
+
+const call = (whatsappCallId = "call-1", sdpAnswer = "v=0 answer") =>
+  action({
+    bindArgsParsedInputs: ["workspace-1"],
+    parsedInput: { whatsappCallId, sdpAnswer },
+    ctx,
+  })
+
+describe("answerWhatsappVoipCallAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    findByIdMock.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "workspace-1",
+      inboxId: "inbox-1",
+      contactInboxId: "contact-inbox-1",
+      wacid: "wacid-1",
+    })
+    findByInboxIdForWorkspaceMock.mockResolvedValue({
+      id: "integration-1",
+      auth: { tokens: { accessToken: "tok" } },
+      callRecordingEnabled: false,
+      callTranscriptionEnabled: false,
+      callRecordingMode: "browserWhisper",
+      callTranscriptionMode: "browserWhisper",
+      callAnnouncementLanguage: null,
+      callRecordingPurpose: null,
+    })
+    findContactInboxMock.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+    })
+    findContactMock.mockResolvedValue({ id: "contact-1", locale: null })
+    claimForAnswerMock.mockResolvedValue("fence-1")
+    preAcceptCallMock.mockResolvedValue(undefined)
+    acceptCallMock.mockResolvedValue(undefined)
+    commitAcceptedMock.mockResolvedValue(true)
+    markAcceptedByAgentMock.mockResolvedValue(true)
+    terminateCallMock.mockResolvedValue(undefined)
+    releaseClaimMock.mockResolvedValue(true)
+    broadcastToWorkspacePartyMock.mockResolvedValue(undefined)
+  })
+
+  test("denies a cross-workspace call id", async () => {
+    findByIdMock.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "workspace-2",
+      inboxId: "inbox-1",
+      wacid: "wacid-1",
+    })
+    await expect(call()).rejects.toThrow("whatsapp.calls.errors.callNotFound")
+    expect(claimForAnswerMock).not.toHaveBeenCalled()
+  })
+
+  test("answers successfully: pre_accept then accept then guarded persist", async () => {
+    findByIdMock.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "workspace-1",
+      inboxId: "inbox-1",
+      wacid: "wacid-1",
+    })
+
+    const result = await call()
+
+    expect(claimForAnswerMock).toHaveBeenCalledWith({
+      wacid: "wacid-1",
+      userId: "agent-1",
+    })
+    const preOrder = preAcceptCallMock.mock.invocationCallOrder[0]
+    const acceptOrder = acceptCallMock.mock.invocationCallOrder[0]
+    expect(preOrder).toBeLessThan(acceptOrder)
+    expect(preAcceptCallMock).toHaveBeenCalledWith(
+      expect.objectContaining({ callId: "wacid-1", sdpAnswer: "v=0 answer" }),
+    )
+    expect(commitAcceptedMock).toHaveBeenCalledWith({
+      wacid: "wacid-1",
+      fenceToken: "fence-1",
+    })
+    expect(markAcceptedByAgentMock).toHaveBeenCalledWith({
+      whatsappCallId: "call-1",
+      agentUserId: "agent-1",
+    })
+    expect(terminateCallMock).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      outcome: "accepted",
+      browserRecordingEnabled: false,
+      recordingRequested: false,
+    })
+    expect(broadcastToWorkspacePartyMock).toHaveBeenCalledWith("workspace-1", {
+      eventType: "whatsappCallClaimedElsewhere",
+      data: {
+        whatsappCallId: "call-1",
+        wacid: "wacid-1",
+        answeredByUserId: "agent-1",
+      },
+    })
+  })
+
+  test("releases the fenced claim (compensation) and does not swallow the accept error when Graph accept fails", async () => {
+    findByIdMock.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "workspace-1",
+      inboxId: "inbox-1",
+      wacid: "wacid-1",
+    })
+    acceptCallMock.mockRejectedValue(new Error("graph accept 500"))
+
+    await expect(call()).rejects.toThrow(
+      "whatsapp.calls.errors.voipAnswerFailed",
+    )
+
+    expect(releaseClaimMock).toHaveBeenCalledWith({
+      wacid: "wacid-1",
+      fenceToken: "fence-1",
+    })
+    expect(commitAcceptedMock).not.toHaveBeenCalled()
+    expect(broadcastToWorkspacePartyMock).not.toHaveBeenCalled()
+  })
+
+  test("a releaseClaim failure never masks the original accept error", async () => {
+    findByIdMock.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "workspace-1",
+      inboxId: "inbox-1",
+      wacid: "wacid-1",
+    })
+    acceptCallMock.mockRejectedValue(new Error("graph accept 500"))
+    releaseClaimMock.mockRejectedValue(new Error("redis down"))
+
+    await expect(call()).rejects.toThrow(
+      "whatsapp.calls.errors.voipAnswerFailed",
+    )
+
+    expect(releaseClaimMock).toHaveBeenCalledWith({
+      wacid: "wacid-1",
+      fenceToken: "fence-1",
+    })
+  })
+
+  test("returns browserRecordingEnabled+recordingRequested true when recording is on and mode is browserWhisper", async () => {
+    findByIdMock.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "workspace-1",
+      inboxId: "inbox-1",
+      wacid: "wacid-1",
+    })
+    findByInboxIdForWorkspaceMock.mockResolvedValue({
+      id: "integration-1",
+      auth: { tokens: { accessToken: "tok" } },
+      callRecordingEnabled: true,
+      callRecordingMode: "browserWhisper",
+    })
+
+    const result = await call()
+
+    expect(result).toEqual({
+      outcome: "accepted",
+      browserRecordingEnabled: true,
+      recordingRequested: true,
+    })
+  })
+
+  test("metaNative recording never enables the browser recorder, but still reports recordingRequested", async () => {
+    findByIdMock.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "workspace-1",
+      inboxId: "inbox-1",
+      wacid: "wacid-1",
+    })
+    findByInboxIdForWorkspaceMock.mockResolvedValue({
+      id: "integration-1",
+      auth: { tokens: { accessToken: "tok" } },
+      callRecordingEnabled: true,
+      callRecordingMode: "metaNative",
+      callAnnouncementLanguage: "en_US",
+      callRecordingPurpose: "QA",
+    })
+
+    const result = await call()
+
+    expect(result).toEqual({
+      outcome: "accepted",
+      browserRecordingEnabled: false,
+      recordingRequested: true,
+    })
+  })
+
+  test("returns cannotAnswer when the claim is lost, without touching Graph or the DB", async () => {
+    findByIdMock.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "workspace-1",
+      inboxId: "inbox-1",
+      wacid: "wacid-1",
+    })
+    claimForAnswerMock.mockResolvedValue(null)
+
+    const result = await call()
+
+    expect(result).toEqual({ outcome: "cannotAnswer" })
+    expect(preAcceptCallMock).not.toHaveBeenCalled()
+    expect(acceptCallMock).not.toHaveBeenCalled()
+    expect(markAcceptedByAgentMock).not.toHaveBeenCalled()
+  })
+
+  test("compensates with terminate and never persists accepted when the commit is lost", async () => {
+    findByIdMock.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "workspace-1",
+      inboxId: "inbox-1",
+      wacid: "wacid-1",
+    })
+    commitAcceptedMock.mockResolvedValue(false)
+
+    const result = await call()
+
+    expect(result).toEqual({ outcome: "callEnded" })
+    expect(terminateCallMock).toHaveBeenCalledWith(
+      expect.objectContaining({ callId: "wacid-1" }),
+    )
+    expect(markAcceptedByAgentMock).not.toHaveBeenCalled()
+  })
+
+  test("compensates with terminate when the guarded DB persist matches 0 rows (row already terminal)", async () => {
+    findByIdMock.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "workspace-1",
+      inboxId: "inbox-1",
+      wacid: "wacid-1",
+    })
+    // Redis commit won, but a concurrent hangup finalized the row first.
+    markAcceptedByAgentMock.mockResolvedValue(false)
+
+    const result = await call()
+
+    expect(result).toEqual({ outcome: "callEnded" })
+    expect(terminateCallMock).toHaveBeenCalledWith(
+      expect.objectContaining({ callId: "wacid-1" }),
+    )
+  })
+
+  test("never logs the SDP answer on a Graph failure", async () => {
+    findByIdMock.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "workspace-1",
+      inboxId: "inbox-1",
+      wacid: "wacid-1",
+    })
+    preAcceptCallMock.mockRejectedValue(new Error("graph failed"))
+    const { logger } = await import("@/lib/log")
+
+    await expect(call()).rejects.toThrow(
+      "whatsapp.calls.errors.voipAnswerFailed",
+    )
+
+    const loggedText = JSON.stringify(
+      (logger.error as ReturnType<typeof vi.fn>).mock.calls,
+    )
+    expect(loggedText).not.toContain("v=0 answer")
+    expect(commitAcceptedMock).not.toHaveBeenCalled()
+  })
+
+  describe("Meta-native recording/transcription announcement options", () => {
+    const metaNativeIntegration = {
+      id: "integration-1",
+      auth: { tokens: { accessToken: "tok" } },
+      callRecordingEnabled: true,
+      callTranscriptionEnabled: true,
+      callRecordingMode: "metaNative",
+      callTranscriptionMode: "metaNative",
+      callAnnouncementLanguage: "fr",
+      callRecordingPurpose: "Quality assurance",
+    }
+
+    test("passes recording/transcription options to acceptCall when both are metaNative", async () => {
+      findByInboxIdForWorkspaceMock.mockResolvedValue(metaNativeIntegration)
+
+      await call()
+
+      const expectedAnnouncement = {
+        status: "ENABLED",
+        purpose: "Quality assurance",
+        announcementLanguage: "fr",
+      }
+      expect(acceptCallMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recording: expectedAnnouncement,
+          transcription: expectedAnnouncement,
+        }),
+      )
+    })
+
+    test("omits both options in browserWhisper mode even when the toggles are on", async () => {
+      findByInboxIdForWorkspaceMock.mockResolvedValue({
+        ...metaNativeIntegration,
+        callRecordingMode: "browserWhisper",
+        callTranscriptionMode: "browserWhisper",
+      })
+
+      await call()
+
+      const acceptArgs = acceptCallMock.mock.calls[0]?.[0] as Record<
+        string,
+        unknown
+      >
+      expect(acceptArgs.recording).toBeUndefined()
+      expect(acceptArgs.transcription).toBeUndefined()
+    })
+
+    test("retries acceptCall once without announcement options after a Meta 4xx", async () => {
+      findByInboxIdForWorkspaceMock.mockResolvedValue(metaNativeIntegration)
+      acceptCallMock
+        .mockRejectedValueOnce(
+          new FakeWhatsappException("invalid purpose", 400),
+        )
+        .mockResolvedValueOnce(undefined)
+      const { logger } = await import("@/lib/log")
+
+      const result = await call()
+
+      expect(result).toEqual({
+        outcome: "accepted",
+        browserRecordingEnabled: false,
+        recordingRequested: true,
+      })
+      expect(acceptCallMock).toHaveBeenCalledTimes(2)
+      const secondCallArgs = acceptCallMock.mock.calls[1]?.[0] as Record<
+        string,
+        unknown
+      >
+      expect(secondCallArgs.recording).toBeUndefined()
+      expect(secondCallArgs.transcription).toBeUndefined()
+      expect(logger.warn).toHaveBeenCalled()
+      expect(commitAcceptedMock).toHaveBeenCalled()
+    })
+
+    test("does not retry, and surfaces the failure, when acceptCall fails with a non-4xx error", async () => {
+      findByInboxIdForWorkspaceMock.mockResolvedValue(metaNativeIntegration)
+      acceptCallMock.mockRejectedValue(
+        new FakeWhatsappException("Meta is down", 502),
+      )
+
+      await expect(call()).rejects.toThrow(
+        "whatsapp.calls.errors.voipAnswerFailed",
+      )
+      expect(acceptCallMock).toHaveBeenCalledTimes(1)
+    })
+
+    test("uses the contact's locale for the announcement language when the integration has none configured", async () => {
+      findByInboxIdForWorkspaceMock.mockResolvedValue({
+        ...metaNativeIntegration,
+        callAnnouncementLanguage: null,
+      })
+      findContactMock.mockResolvedValue({ id: "contact-1", locale: "es" })
+
+      await call()
+
+      expect(acceptCallMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recording: expect.objectContaining({ announcementLanguage: "es" }),
+        }),
+      )
+    })
+
+    test("prefers the per-channel ContactInbox.language (the contact panel's 'Language' field) over the derived Contact.locale", async () => {
+      findByInboxIdForWorkspaceMock.mockResolvedValue({
+        ...metaNativeIntegration,
+        callAnnouncementLanguage: null,
+      })
+      // Agent set the contact's Language to English; the auto-derived locale is
+      // still the WhatsApp profile's other language — English must win.
+      findContactInboxMock.mockResolvedValue({
+        id: "contact-inbox-1",
+        contactId: "contact-1",
+        language: "en",
+      })
+      findContactMock.mockResolvedValue({ id: "contact-1", locale: "fr" })
+
+      await call()
+
+      expect(acceptCallMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recording: expect.objectContaining({ announcementLanguage: "en" }),
+        }),
+      )
+    })
+  })
+})

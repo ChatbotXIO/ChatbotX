@@ -14,7 +14,10 @@ import {
 } from "drizzle-orm/pg-core"
 import type { z } from "zod"
 import {
-  sipProvisioningStatuses,
+  type WhatsappCallRecordingMode,
+  type WhatsappCallTranscriptionMode,
+  whatsappCallRecordingModes,
+  whatsappCallTranscriptionModes,
   type whatsappRegistrationErrorSchema,
   whatsappRegistrationStatuses,
 } from "../partials"
@@ -45,9 +48,14 @@ export const whatsappRegistrationStatus = pgEnum(
   whatsappRegistrationStatuses.options as [string, ...string[]],
 )
 
-export const sipProvisioningStatus = pgEnum(
-  "sipProvisioningStatus",
-  sipProvisioningStatuses.options as [string, ...string[]],
+export const whatsappCallRecordingMode = pgEnum(
+  "whatsappCallRecordingMode",
+  whatsappCallRecordingModes.options as [string, ...string[]],
+)
+
+export const whatsappCallTranscriptionMode = pgEnum(
+  "whatsappCallTranscriptionMode",
+  whatsappCallTranscriptionModes.options as [string, ...string[]],
 )
 
 export const integrationWhatsappModel = pgTable(
@@ -61,12 +69,37 @@ export const integrationWhatsappModel = pgTable(
     name: text().notNull(),
     displayPhoneNumber: text().notNull().default(""),
     coexistEnabled: boolean().notNull().default(false),
-    /** Auto-record WhatsApp calls (FreeSWITCH `record_session`) for this number. */
+    /** Auto-record WhatsApp calls for this number. */
     callRecordingEnabled: boolean().notNull().default(false),
     /** Days a call recording is kept before `purgeExpiredCallRecordings` deletes it. */
     callRecordingRetentionDays: integer().notNull().default(90),
     /** Opt-in: whether recordings for this number are transcribed. */
     callTranscriptionEnabled: boolean().notNull().default(false),
+    /** Recording pipeline mode for this number's VoIP calls. */
+    callRecordingMode: whatsappCallRecordingMode()
+      .$type<WhatsappCallRecordingMode>()
+      .notNull()
+      .default("metaNative"),
+    /** Transcription pipeline mode for this number's VoIP calls. */
+    callTranscriptionMode: whatsappCallTranscriptionMode()
+      .$type<WhatsappCallTranscriptionMode>()
+      .notNull()
+      .default("metaNative"),
+    /**
+     * Meta announcement language code (e.g. `en_US`) played to the customer
+     * when `metaNative` recording/transcription is enabled — a value from
+     * Meta's supported-announcement-languages table. Null until configured;
+     * the caller falls back to `en_US`.
+     */
+    callAnnouncementLanguage: text(),
+    /**
+     * The `purpose` string (≤250 chars) sent on Meta's per-call
+     * `recording`/`transcription` opt-in objects. A single shared value
+     * covers both — when both are enabled, Meta plays one combined
+     * announcement built from the `recording` object's `purpose`/
+     * `announcement_language`.
+     */
+    callRecordingPurpose: text(),
     coexistAiReadsSyncedHistory: boolean().notNull().default(false),
     isCoexist: boolean().notNull().default(false),
     platformType: text().notNull().default(""),
@@ -85,29 +118,6 @@ export const integrationWhatsappModel = pgTable(
     registrationError: jsonb().$type<IntegrationWhatsappRegistrationError>(),
     verificationCodeRequestedAt: timestamp(timestampConfig),
     tokenRefreshError: text(),
-    /**
-     * FreeSWITCH SIP provisioning state machine (WhatsApp calling).
-     * `none` until a provisioning attempt starts.
-     */
-    sipProvisioningStatus: sipProvisioningStatus().notNull().default("none"),
-    /** Opaque lease owner id; cleared once the claim is released. */
-    sipProvisioningClaim: text(),
-    /** Lease expiry for the current provisioning claim (5-min lease). */
-    sipProvisioningLeaseUntil: timestamp(timestampConfig),
-    /** When `sofia status gateway wa-<id>` first confirmed the gateway. */
-    sipProvisionedAt: timestamp(timestampConfig),
-    /** Last provisioning/deprovisioning error, surfaced on the Calls card. */
-    sipLastError: text(),
-    /**
-     * Meta SIP password for this business number, encrypted with
-     * `encryptUtils` (same as `capiAccessToken`). FreeSWITCH digest auth
-     * needs the clear-text password, so this is encrypted, not hashed.
-     */
-    sipPasswordEncrypted: jsonb().$type<EncryptedData>(),
-    /** FreeSWITCH gateway name (`wa-<integrationId>`), globally unique. */
-    sipGatewayName: text(),
-    /** FreeSWITCH node this number's gateway is provisioned on. */
-    sipNodeId: text(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {
@@ -138,12 +148,6 @@ export const integrationWhatsappModel = pgTable(
       "btree",
       table.phoneNumberId.asc().nullsLast(),
     ),
-    // Partial: only integrations that have actually been provisioned carry a
-    // gateway name, and the xml_curl responder looks gateways up by this
-    // name (`findByGatewayName`), so it must stay globally unique.
-    uniqueIndex("IntegrationWhatsapp_sipGatewayName_key")
-      .using("btree", table.sipGatewayName.asc().nullsLast())
-      .where(sql`"sipGatewayName" IS NOT NULL`),
     check(
       "IntegrationWhatsapp_registrationStatus_error_consistent",
       sql`("registrationStatus" <> 'failed' OR "registrationError" IS NOT NULL)

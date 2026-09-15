@@ -198,12 +198,6 @@ export type WhatsappCoexistStagingModel =
 export type CoexistSyncRunModel = typeof schema.coexistSyncRunModel.$inferSelect
 export type WhatsappSignupSessionModel =
   typeof schema.whatsappSignupSessionModel.$inferSelect
-export type UserSoftphoneCredentialModel =
-  typeof schema.userSoftphoneCredentialModel.$inferSelect
-export type AgentSipPresenceModel =
-  typeof schema.agentSipPresenceModel.$inferSelect
-export type WorkspaceSipNodeModel =
-  typeof schema.workspaceSipNodeModel.$inferSelect
 
 export type InboxWithIntegrations = InboxModel & {
   integrationApi?: IntegrationApiModel | null

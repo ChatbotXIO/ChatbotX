@@ -46,19 +46,25 @@ export type WhatsappRegistrationError = z.infer<
 >
 
 /**
- * Per-number FreeSWITCH SIP provisioning state machine (WhatsApp calling on
- * FreeSWITCH): `none` → `provisioning` (lease claimed) →
- * `provisioned` (Meta SIP credentials stored, gateway created) → `enabled`
- * (Meta `sip.status: ENABLED` written back) or `failed`. The allowed
- * transitions themselves (`SIP_PROVISIONING_TRANSITIONS`) live in
- * `packages/business` — this enum only fixes the value set the column can
- * hold.
+ * Recording/transcription pipeline mode for WhatsApp calls (VoIP only).
+ * `metaNative` (default): Meta's per-call `recording`/`transcription`
+ * opt-in objects — diarized transcript, new Meta billing.
+ * `browserWhisper`: the pre-existing browser MediaRecorder + OpenAI Whisper
+ * pipeline, kept as a selectable fallback (flat/timestamped, no speaker
+ * diarization, OpenAI cost).
  */
-export const sipProvisioningStatuses = z.enum([
-  "none",
-  "provisioning",
-  "provisioned",
-  "enabled",
-  "failed",
+export const whatsappCallRecordingModes = z.enum([
+  "metaNative",
+  "browserWhisper",
 ])
-export type SipProvisioningStatus = z.infer<typeof sipProvisioningStatuses>
+export type WhatsappCallRecordingMode = z.infer<
+  typeof whatsappCallRecordingModes
+>
+
+export const whatsappCallTranscriptionModes = z.enum([
+  "metaNative",
+  "browserWhisper",
+])
+export type WhatsappCallTranscriptionMode = z.infer<
+  typeof whatsappCallTranscriptionModes
+>

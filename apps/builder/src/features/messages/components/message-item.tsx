@@ -4,11 +4,11 @@ import type {
   MessageButtonTemplate,
   MessageStoryReplyEntity,
   MessageTemplateEntity,
-  MessageWhatsappCallEntity,
 } from "@chatbotx.io/sdk"
 import {
   getWhatsappCallEntity,
   getWhatsappCallPermissionReply,
+  getWhatsappCallRecordingEntity,
 } from "@chatbotx.io/sdk"
 import {
   Avatar,
@@ -39,7 +39,6 @@ import {
   LockIcon,
   PaperclipIcon,
   PhoneIcon,
-  PhoneMissedIcon,
   PhoneOffIcon,
   ReplyIcon,
   ThumbsUp,
@@ -51,8 +50,10 @@ import { useState } from "react"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentUrl } from "@/features/attachments/utils"
 import type { MessageResourceWithRelations } from "../schema/resource"
+import { CallRecordingActivity } from "./call-recording-activity"
 import { MessageActions, MessageActionsEditor } from "./message-actions"
 import { MessageBubble } from "./message-bubble"
+import { WhatsappCallCard } from "./whatsapp-call-card"
 
 type MessageItemProps = {
   message: MessageResourceWithRelations
@@ -134,7 +135,28 @@ export const MessageItem = (props: MessageItemProps) => {
   const callPermissionReply = getWhatsappCallPermissionReply(
     message.contentAttributes,
   )
+  // The recording's own audio attachment is rendered by CallRecordingActivity
+  // below (via RenderContentAttributes) instead of the generic
+  // RenderAttachments path, so it can refresh its own signed URL and show
+  // the transcript once available.
+  const whatsappCallRecording = getWhatsappCallRecordingEntity(
+    message.contentAttributes,
+  )
   const suppressRawText = Boolean(whatsappCall || callPermissionReply)
+
+  // A WhatsApp call card is a system `activity` message (so it defaults to the
+  // centered `full` variant), but a call has a direction: a customer-initiated
+  // call belongs on the incoming (left) side and a business-initiated call on
+  // the outgoing (right) side, mirroring how the two speakers' messages sit —
+  // `guestDisplay` flips both, exactly like `incoming`/`outgoing` above.
+  if (whatsappCall) {
+    const isBusinessInitiated = whatsappCall.direction === "businessInitiated"
+    if (isBusinessInitiated) {
+      variant = guestDisplay ? "left" : "right"
+    } else {
+      variant = guestDisplay ? "right" : "left"
+    }
+  }
 
   return (
     <MessageBubble
@@ -142,7 +164,7 @@ export const MessageItem = (props: MessageItemProps) => {
       title={format(new Date(message.createdAt), "yyyy/MM/dd HH:mm:ss")}
       variant={variant}
     >
-      {variant === "left" && avatarUrl && (
+      {variant === "left" && avatarUrl && !whatsappCall && (
         <Avatar className="mt-2 size-7 self-start">
           <AvatarImage alt="" src={avatarUrl} />
           <AvatarFallback>
@@ -219,9 +241,10 @@ export const MessageItem = (props: MessageItemProps) => {
                   </pre>
                 </div>
               )}
-            {!isDeleted && hasAttachments && (
-              <RenderAttachments message={message} />
-            )}
+            {!isDeleted &&
+              hasAttachments &&
+              !whatsappCallRecording &&
+              !whatsappCall && <RenderAttachments message={message} />}
           </>
         )}
         {RenderContentAttributes(props)}
@@ -469,7 +492,9 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
       )
     case "audio":
       return (
-        <audio controls preload="none">
+        // `preload="metadata"` (not "none") so the player shows the clip's
+        // total duration at rest instead of 0:00 / 0:00.
+        <audio controls preload="metadata">
           <track default kind="captions" />
           <source src={attachmentUrl} type={attachment.mimeType} />
         </audio>
@@ -526,44 +551,6 @@ const StoryReplyContext = (props: {
   )
 }
 
-const formatCallDuration = (durationSeconds: number): string => {
-  const minutes = Math.floor(durationSeconds / 60)
-  const seconds = durationSeconds % 60
-  return `${minutes}:${String(seconds).padStart(2, "0")}`
-}
-
-const WhatsappCallActivity = ({
-  call,
-}: {
-  call: MessageWhatsappCallEntity
-}) => {
-  const t = useTranslations("messages")
-
-  let icon = <PhoneIcon aria-hidden className="size-3.5" />
-  let label = t("voiceCall")
-  if (call.status === "completed") {
-    label =
-      call.durationSeconds === undefined
-        ? t("voiceCall")
-        : t("voiceCallDuration", {
-            duration: formatCallDuration(call.durationSeconds),
-          })
-  } else if (call.status === "rejected") {
-    icon = <PhoneOffIcon aria-hidden className="size-3.5" />
-    label = t("declinedVoiceCall")
-  } else {
-    icon = <PhoneMissedIcon aria-hidden className="size-3.5" />
-    label = t("missedVoiceCall")
-  }
-
-  return (
-    <div className="flex items-center justify-center gap-1.5 py-1 text-muted-foreground text-sm">
-      {icon}
-      <span>{label}</span>
-    </div>
-  )
-}
-
 const WhatsappCallPermissionReply = ({
   response,
 }: {
@@ -590,7 +577,26 @@ const RenderContentAttributes = (props: MessageItemProps) => {
   const { message, onPostback } = props
   const whatsappCall = getWhatsappCallEntity(message.contentAttributes)
   if (whatsappCall) {
-    return <WhatsappCallActivity call={whatsappCall} />
+    return (
+      <WhatsappCallCard
+        call={whatsappCall}
+        callEndedAt={message.createdAt}
+        contactName={message.contact?.fullName}
+        hasRecordingAttachment={Boolean(message.attachments?.length)}
+      />
+    )
+  }
+
+  const whatsappCallRecording = getWhatsappCallRecordingEntity(
+    message.contentAttributes,
+  )
+  if (whatsappCallRecording) {
+    return (
+      <CallRecordingActivity
+        attachment={message.attachments?.[0]}
+        recording={whatsappCallRecording}
+      />
+    )
   }
 
   const callPermissionReply = getWhatsappCallPermissionReply(

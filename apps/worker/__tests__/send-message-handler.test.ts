@@ -12,6 +12,7 @@ const {
   mockRecordOutboundMessageSent,
   mockRecordSendFailure,
   mockChatQueueAdd,
+  mockUpsertForContactInbox,
 } = vi.hoisted(() => {
   const updateChain = {
     set: vi.fn().mockReturnThis(),
@@ -37,6 +38,7 @@ const {
     mockRecordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
     mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
+    mockUpsertForContactInbox: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -72,6 +74,9 @@ vi.mock("@chatbotx.io/event-bus", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
+  whatsappCallPermissionRepository: {
+    upsertForContactInbox: mockUpsertForContactInbox,
+  },
 }))
 
 vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
@@ -637,6 +642,73 @@ describe("chat send-message handlers", () => {
         action: { messageId: "msg-1" },
         errorData: { message: "sdk error" },
       }),
+    )
+  })
+
+  test("reconciles Meta 138017 on a call_permission_request: records the grant, broadcasts the call-mode refresh, STILL shows the send-error icon, and never rethrows", async () => {
+    // 138017 = the consumer already granted a permanent permission. The worker
+    // records the local grant and nudges open threads to refetch
+    // `useOutboundCallMode` (button flips to direct-dial) — but the request
+    // message never reached the consumer, so the send-error icon must still
+    // show. It must NOT rethrow (permanent error → a BullMQ retry would just
+    // re-POST the request to Meta).
+    const createdAt = new Date("2026-09-15T06:11:52.105Z")
+    const error = new ChannelError(
+      "(#138017) already approved",
+      ChannelErrorCategory.AUTH_FAILED,
+      { code: 138_017 },
+    )
+    mockRunChannelHandler.mockRejectedValueOnce(error)
+
+    await expect(
+      sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: { ...contactInbox, channel: "whatsapp" } as never,
+        message: {
+          id: "msg-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "user",
+          text: "We would like to call you",
+          contentAttributes: { type: "whatsapp_call_permission_request" },
+          createdAt,
+        } as never,
+      }),
+    ).resolves.toEqual({ messageIds: [] })
+
+    // Grant reconciled + button flipped to direct-dial.
+    expect(mockUpsertForContactInbox).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactInboxId: "ci-1",
+        response: "accept",
+        isPermanent: true,
+      }),
+    )
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "broadcastEvent",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          workspaceId: "ws-1",
+          event: {
+            eventType: "whatsappCallPermissionUpdated",
+            data: { conversationId: "conv-1" },
+          },
+        }),
+      }),
+    )
+    // The send-error icon is still surfaced (this is the correction).
+    expect(mockEmit).toHaveBeenCalledWith(
+      "message:failed",
+      expect.objectContaining({ action: { messageId: "msg-1" } }),
+    )
+    expect(mockUpdateSendError).toHaveBeenCalledWith(
+      "msg-1",
+      "sdk error",
+      "ws-1",
+      createdAt,
     )
   })
 

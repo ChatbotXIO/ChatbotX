@@ -8,19 +8,12 @@ type UpdateCallingSettingsHandler = (args: {
   parsedInput: Record<string, unknown>
 }) => Promise<unknown>
 
-const {
-  findWorkspaceIntegrationMock,
-  runActionMock,
-  getCallingSettingsMock,
-  updateCallSettingsMock,
-  updateSipProvisioningMock,
-} = vi.hoisted(() => ({
-  findWorkspaceIntegrationMock: vi.fn(),
-  runActionMock: vi.fn(),
-  getCallingSettingsMock: vi.fn(),
-  updateCallSettingsMock: vi.fn(),
-  updateSipProvisioningMock: vi.fn(),
-}))
+const { findWorkspaceIntegrationMock, runActionMock, updateCallSettingsMock } =
+  vi.hoisted(() => ({
+    findWorkspaceIntegrationMock: vi.fn(),
+    runActionMock: vi.fn(),
+    updateCallSettingsMock: vi.fn(),
+  }))
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -34,50 +27,20 @@ vi.mock("@/lib/auth/assert-workspace-super-admin", () => ({
   assertWorkspaceSuperAdmin: vi.fn(async () => undefined),
 }))
 
-const FREESWITCH_NODES = {
-  "node-a": {
-    sipDomain: "sip.example.com",
-    wssUrl: "wss://sip.example.com:7443",
-    turnUrl: "turn:sip.example.com:3478",
-  },
-}
-
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: vi.fn(async () => ({})),
   integrationWhatsappService: {
     findWorkspaceIntegration: findWorkspaceIntegrationMock,
+    updateCallSettings: updateCallSettingsMock,
   },
-  assertSipProvisioningTransition: vi.fn(),
-  parseFreeswitchNodes: () => FREESWITCH_NODES,
-  resolveFreeswitchNode: (
-    nodes: Record<string, { sipDomain: string }>,
-    nodeId: string,
-  ) => {
-    const node = nodes[nodeId]
-    if (!node) {
-      throw new Error(`unknown-freeswitch-node: ${nodeId}`)
-    }
-    return node
-  },
-}))
-
-vi.mock("@/env", () => ({
-  env: { FS_NODES: undefined, FS_SIP_DOMAIN: "sip.example.com" },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: class ChatbotXException extends Error {},
 }))
 
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  integrationWhatsappRepository: {
-    updateCallSettings: updateCallSettingsMock,
-    updateSipProvisioning: updateSipProvisioningMock,
-  },
-}))
-
 vi.mock("@chatbotx.io/integration-whatsapp/api/calling", () => ({
-  getCallingSettings: getCallingSettingsMock,
+  getCallingSettings: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp", () => ({
@@ -122,20 +85,9 @@ describe("updateWhatsappCallingSettingsAction", () => {
     findWorkspaceIntegrationMock.mockResolvedValue({
       id: "integration-1",
       auth: {},
-      sipProvisioningStatus: "provisioned",
-      sipProvisioningClaim: "claim-1",
-      sipNodeId: "node-a",
     })
     updateCallSettingsMock.mockResolvedValue({})
-    updateSipProvisioningMock.mockResolvedValue({
-      id: "integration-1",
-      sipProvisioningStatus: "enabled",
-    })
     runActionMock.mockResolvedValue(undefined)
-    getCallingSettingsMock.mockResolvedValue({
-      status: "ENABLED",
-      sip: { status: "ENABLED" },
-    })
   })
 
   test("surfaces Meta's user-facing message when calling cannot be enabled", async () => {
@@ -178,106 +130,6 @@ describe("updateWhatsappCallingSettingsAction", () => {
 
     await expect(enableCalling()).rejects.toThrow(
       "whatsapp.calls.errors.updateFailed",
-    )
-  })
-
-  test("refuses to enable SIP calling unless provisioned", async () => {
-    findWorkspaceIntegrationMock.mockResolvedValue({
-      id: "integration-1",
-      auth: {},
-      sipProvisioningStatus: "none",
-      sipProvisioningClaim: null,
-      sipNodeId: null,
-    })
-
-    await expect(call({ sipEnabled: true })).rejects.toThrow(
-      "whatsapp.calls.sip.errors.notProvisioned",
-    )
-    expect(runActionMock).not.toHaveBeenCalled()
-  })
-
-  test("enabling SIP with an unknown node id fails before touching Meta", async () => {
-    findWorkspaceIntegrationMock.mockResolvedValue({
-      id: "integration-1",
-      auth: {},
-      sipProvisioningStatus: "provisioned",
-      sipProvisioningClaim: "claim-1",
-      sipNodeId: "node-that-does-not-exist",
-    })
-
-    await expect(call({ sipEnabled: true })).rejects.toThrow(
-      "unknown-freeswitch-node",
-    )
-    expect(runActionMock).not.toHaveBeenCalled()
-  })
-
-  test("enabling SIP sends SDES + codecs + the node's public SIP hostname (not the node id)", async () => {
-    await call({ sipEnabled: true })
-
-    expect(runActionMock).toHaveBeenCalledWith(
-      "updateCallingSettings",
-      expect.objectContaining({
-        data: expect.objectContaining({
-          sip: {
-            status: "ENABLED",
-            webhook_delivery: "ENABLED",
-            servers: [{ hostname: "sip.example.com", port: 5061 }],
-          },
-          srtp_key_exchange_protocol: "SDES",
-          audio: { additional_codecs: ["PCMA", "PCMU"] },
-        }),
-      }),
-    )
-  })
-
-  test("read-back mismatch after enabling surfaces an error and never advances the state machine", async () => {
-    getCallingSettingsMock.mockResolvedValue({
-      status: "ENABLED",
-      sip: { status: "DISABLED" },
-    })
-
-    await expect(call({ sipEnabled: true })).rejects.toThrow(
-      "whatsapp.calls.sip.errors.readBackMismatch",
-    )
-    expect(updateSipProvisioningMock).not.toHaveBeenCalled()
-  })
-
-  test("enabling SIP transitions provisioned -> enabled after a matching read-back", async () => {
-    await call({ sipEnabled: true })
-
-    expect(updateSipProvisioningMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: "integration-1",
-        workspaceId: "workspace-1",
-        claim: "claim-1",
-        values: { sipProvisioningStatus: "enabled" },
-      }),
-    )
-  })
-
-  test("disabling SIP sends sip.status DISABLED and transitions enabled -> provisioned", async () => {
-    findWorkspaceIntegrationMock.mockResolvedValue({
-      id: "integration-1",
-      auth: {},
-      sipProvisioningStatus: "enabled",
-      sipProvisioningClaim: "claim-1",
-      sipNodeId: "node-a",
-    })
-    getCallingSettingsMock.mockResolvedValue({
-      status: "ENABLED",
-      sip: { status: "DISABLED" },
-    })
-
-    await call({ sipEnabled: false })
-
-    expect(runActionMock).toHaveBeenCalledWith(
-      "updateCallingSettings",
-      expect.objectContaining({ data: { sip: { status: "DISABLED" } } }),
-    )
-    expect(updateSipProvisioningMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        values: { sipProvisioningStatus: "provisioned" },
-      }),
     )
   })
 

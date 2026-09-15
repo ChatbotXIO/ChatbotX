@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm"
 import {
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -14,8 +15,10 @@ import {
   timestampConfig,
 } from "../partials/shared"
 import {
+  type WhatsappCallAiSummary,
   type WhatsappCallDirection,
   type WhatsappCallStatus,
+  type WhatsappCallTranscriptSegments,
   whatsappCallDirections,
   whatsappCallStatuses,
 } from "../partials/whatsapp-call"
@@ -38,21 +41,17 @@ export const whatsappCallStatus = pgEnum(
 /**
  * One row per WhatsApp Business call.
  *
- * Two independent, decoupled identifiers can each name this row before the
- * other is known:
- * - `wacid` — Meta's call id, learned from an INVITE/BYE header or a
- *   `call_created`/`terminate` webhook. Nullable: an FreeSWITCH-created row
- *   may never see it (e.g. the webhook is delayed or lost).
- * - `freeswitchUuid` — the FreeSWITCH A-leg channel uuid (`Unique-ID`) that
- *   ran the dialplan and `record_session`. Nullable: an outbound row is
- *   inserted by the action before FreeSWITCH creates any channel.
- * `attemptId` is a locally-minted id (cuid) FreeSWITCH always carries via
- * the `X-CBX-Attempt` header / `cbx_attempt_id` channel var for outbound
- * calls; inbound rows mint one too so every FreeSWITCH-created row has one,
- * but pre-migration webhook-only rows never will — hence nullable.
- * `whatsappCallRepository.upsertInbound`/`createFromFreeswitch`/`attachWacid`
- * reconcile whichever identifier arrives first onto a single row (see
- * `packages/business/src/whatsapp-call/call-row-service.ts`).
+ * Two independent identifiers can each name this row before the other is
+ * known, so both are nullable:
+ * - `wacid` — Meta's call id, learned from a `connect`/`terminate` webhook.
+ *   An outbound row is inserted at dial time and only learns its wacid when
+ *   Meta answers or reports the call.
+ * - `attemptId` — a locally-minted id the outbound dial carries through
+ *   Meta's `biz_opaque_callback_data`, so an answer/terminate webhook can be
+ *   matched back to the attempt that placed the call before a wacid exists.
+ *
+ * `whatsappCallRepository.attachWacid` reconciles whichever identifier
+ * arrives first onto a single row.
  */
 export const whatsappCallModel = pgTable(
   "WhatsappCall",
@@ -60,7 +59,7 @@ export const whatsappCallModel = pgTable(
     ...sharedColumns,
     /** Meta call id ("wacid...."). Nullable — see file doc comment. */
     wacid: text(),
-    /** Locally-minted attempt id, set for every row FreeSWITCH creates. */
+    /** Locally-minted attempt id — see file doc comment. */
     attemptId: text(),
     direction: whatsappCallDirection().$type<WhatsappCallDirection>().notNull(),
     status: whatsappCallStatus()
@@ -76,18 +75,6 @@ export const whatsappCallModel = pgTable(
      * foreign keys by design.
      */
     messageId: bigintAsString(),
-    /**
-     * FreeSWITCH A-leg channel uuid (the root channel that ran the dialplan
-     * and `record_session`) carrying this call's audio. Unique when
-     * non-null.
-     */
-    freeswitchUuid: text(),
-    /**
-     * The bridged leg's uuid (Meta leg outbound / answering agent leg
-     * inbound) — used for `uuid_kill` and reading BYE headers. Not unique: a
-     * re-bridge (e.g. re-ringing a new agent) may replace it.
-     */
-    freeswitchBLegUuid: text(),
     /** Last error observed for this call (hangup cause detail, dial failure, reconciliation note). */
     lastError: text(),
     /** The agent user whose leg answered the call, if any. */
@@ -95,12 +82,40 @@ export const whatsappCallModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
+    /**
+     * The agent user who PLACED an outbound (`businessInitiated`) call —
+     * `answeredByUserId` only covers who answered an INBOUND call, so an
+     * outbound call needs its own column to label the "Business" speaker in
+     * the Call Information sheet. Nullable: absent for inbound calls and
+     * for outbound calls with no identifiable initiating agent (e.g. a
+     * legacy row predating this column).
+     */
+    initiatedByUserId: bigintAsString().references(() => userModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
     /** Object-storage path of the call recording. */
     recordingPath: text(),
     recordedAt: timestamp(timestampConfig),
-    /** Speech-to-text transcript of the recording. */
+    /**
+     * Speech-to-text transcript of the recording, flat (no speaker/timing
+     * breakdown) — backs `{{last_call_transcript}}` and text search.
+     */
     transcript: text(),
     transcribedAt: timestamp(timestampConfig),
+    /**
+     * Timestamped (and, for a Meta-native VoIP transcript, diarized)
+     * segments of {@link transcript} — see
+     * `WhatsappCallTranscriptSegment` (`partials/whatsapp-call.ts`) for the
+     * per-entry shape. Additive alongside the flat `transcript` column,
+     * never a replacement for it.
+     */
+    transcriptSegments: jsonb().$type<WhatsappCallTranscriptSegments>(),
+    /** On-demand AI-generated summary of the transcript — ours; Meta has no equivalent. */
+    aiSummary: jsonb().$type<WhatsappCallAiSummary>(),
+    aiSummarizedAt: timestamp(timestampConfig),
+    /** Which connected AI integration (OpenAI, Claude, Gemini, …) produced {@link aiSummary}. */
+    aiSummaryProvider: text(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {
@@ -133,19 +148,10 @@ export const whatsappCallModel = pgTable(
     uniqueIndex("WhatsappCall_wacid_key")
       .using("btree", table.wacid.asc().nullsLast())
       .where(sql`"wacid" IS NOT NULL`),
-    // Partial: only FreeSWITCH-created rows carry an attemptId.
+    // Partial: only outbound rows carry an attemptId.
     uniqueIndex("WhatsappCall_attemptId_key")
       .using("btree", table.attemptId.asc().nullsLast())
       .where(sql`"attemptId" IS NOT NULL`),
-    // Partial unique: the only column every FreeSWITCH-side job shares, and
-    // the canonical `ON CONFLICT` target for `createFromFreeswitch`.
-    uniqueIndex("WhatsappCall_freeswitchUuid_key")
-      .using("btree", table.freeswitchUuid.asc().nullsLast())
-      .where(sql`"freeswitchUuid" IS NOT NULL`),
-    // Non-unique: a re-bridge may point a second leg at the same call.
-    index("WhatsappCall_freeswitchBLegUuid_idx")
-      .using("btree", table.freeswitchBLegUuid.asc().nullsLast())
-      .where(sql`"freeswitchBLegUuid" IS NOT NULL`),
     index("WhatsappCall_workspaceId_idx").using(
       "btree",
       table.workspaceId.asc().nullsLast(),

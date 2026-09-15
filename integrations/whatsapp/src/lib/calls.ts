@@ -15,10 +15,76 @@ import { logger } from "./logger"
 
 const callDirectionSchema = z.enum(["USER_INITIATED", "BUSINESS_INITIATED"])
 
+// VoIP-mode connect events carry an SDP offer inline (see
+// docs/whatsapp-calling-voip.md, "Parser boundary"). The offer is bounded so
+// a pathological payload cannot blow up memory/logs before we even decide
+// whether to keep it. The parsed offer stays in memory only; it must never
+// reach logs (see `packages/logger/src/redact.ts`) or a persisted/queued
+// path.
+const MAX_SDP_OFFER_CHARS = 100_000
+
+// Outbound (business-initiated) calling inverts the inbound direction: the
+// business POSTs an `sdp_type:"offer"` to Meta's connect action and Meta
+// later echoes the user's `sdp_type:"answer"` on a `connect` webhook event
+// carrying `direction:"BUSINESS_INITIATED"`. Both shapes are structurally
+// identical ({ sdp_type, sdp }, SDP bounded by MAX_SDP_OFFER_CHARS) — which
+// literal is expected for a given event is a direction concern, enforced by
+// `parseCallSession`'s `expectedSdpType` param, not by this shape schema.
+const callSessionSchema = z.discriminatedUnion("sdp_type", [
+  z.object({
+    sdp_type: z.literal("offer"),
+    sdp: z.string().min(1).max(MAX_SDP_OFFER_CHARS),
+  }),
+  z.object({
+    sdp_type: z.literal("answer"),
+    sdp: z.string().min(1).max(MAX_SDP_OFFER_CHARS),
+  }),
+])
+
+// Bounded, minimal mirror of Meta's terminate-event error objects (dropped-
+// media codes 138021/138022/138023 land here) — enough for diagnosis without
+// letting an unbounded array blow up memory/logs on the hot webhook path.
+const MAX_TERMINATE_ERRORS = 20
+
+const callTerminateErrorSchema = z.object({
+  code: z.number().optional(),
+  title: z.string().optional(),
+  message: z.string().optional(),
+})
+
 const callContactSchema = z.object({
   wa_id: z.string(),
   user_id: z.string().optional(),
   profile: z.object({ name: z.string().optional() }).optional(),
+})
+
+// call_recording_available / call_transcription_available webhook nesting,
+// verified against developers.facebook.com/documentation/business-messaging/
+// whatsapp/calling/{call-recording,call-transcription} (2026-09-14): the
+// recording media sits under `call_recording.audio`, sibling to
+// `call_recording.type:"audio"`; the transcript document sits under
+// `call_transcript.document`. Both objects carry ids/urls only — never bytes.
+const callRecordingMediaSchema = z.object({
+  id: z.string(),
+  sha256: z.string().optional(),
+  mime_type: z.string().optional(),
+  url: z.string().optional(),
+})
+
+const callRecordingSchema = z.object({
+  type: z.string().optional(),
+  audio: callRecordingMediaSchema,
+})
+
+const callTranscriptDocumentSchema = z.object({
+  id: z.string(),
+  sha256: z.string().optional(),
+  mime_type: z.string().optional(),
+  url: z.string().optional(),
+})
+
+const callTranscriptSchema = z.object({
+  document: callTranscriptDocumentSchema,
 })
 
 const callEventItemSchema = z.object({
@@ -33,6 +99,23 @@ const callEventItemSchema = z.object({
   end_time: z.union([z.string(), z.number()]).optional(),
   duration: z.union([z.string(), z.number()]).optional(),
   biz_opaque_callback_data: z.string().optional(),
+  // Validated separately (see `parseCallSession`) so a malformed/oversized
+  // session never fails the whole item. A session that is ABSENT means a
+  // SIP-mode connect (falls through to the existing behavior); a session that
+  // is PRESENT but invalid means a VoIP connect we cannot honor — it is
+  // flagged (`sessionInvalid`) so the VoIP branch Meta-rejects it rather than
+  // dropping it into the SIP path, which has no leg for a VoIP call.
+  session: z.unknown().optional(),
+  // Present on `terminate` items when media dropped mid-call (e.g.
+  // 138021/138022/138023) — surfaced so the terminate handler can label the
+  // failure precisely instead of a bare FAILED status.
+  errors: z
+    .array(callTerminateErrorSchema)
+    .max(MAX_TERMINATE_ERRORS)
+    .optional(),
+  // Present only on `call_recording_available` / `call_transcription_available`.
+  call_recording: callRecordingSchema.optional(),
+  call_transcript: callTranscriptSchema.optional(),
 })
 
 const callStatusItemSchema = z.object({
@@ -56,10 +139,43 @@ const callsValueSchema = z.object({
 
 export type WhatsappCallDirectionPayload = "userInitiated" | "businessInitiated"
 
+/**
+ * A validated, bounded SDP session captured from a VoIP-mode connect event.
+ * `"offer"` on a USER_INITIATED connect (inbound); `"answer"` on a
+ * BUSINESS_INITIATED connect (outbound — the user's answer to our offer).
+ */
+export type WhatsappCallSessionPayload = {
+  sdpType: "offer" | "answer"
+  sdp: string
+}
+
+/** Minimal, bounded terminate-event error (media-drop diagnosis). */
+export type WhatsappCallTerminateError = {
+  code?: number
+  title?: string
+  message?: string
+}
+
 export type WhatsappCallContactPayload = {
   waId: string
   userId?: string
   name?: string
+}
+
+/** Normalized recording media reference (ids/urls only — never bytes). */
+export type WhatsappCallRecordingAudioPayload = {
+  mediaId: string
+  sha256?: string
+  mimeType?: string
+  url?: string
+}
+
+/** Normalized transcript document reference (ids/urls only — never bytes). */
+export type WhatsappCallTranscriptDocumentPayload = {
+  mediaId: string
+  sha256?: string
+  mimeType?: string
+  url?: string
 }
 
 /** Normalized single call event, ready to enqueue as one integration job. */
@@ -74,6 +190,20 @@ export type WhatsappCallEventPayload = {
         from?: string
         to?: string
         timestamp?: string
+        /** Present only for a validated VoIP-mode (SDP offer) connect. */
+        session?: WhatsappCallSessionPayload
+        /**
+         * A `session` was present but malformed/oversized: this is a VoIP
+         * connect the app cannot answer, and it must be Meta-rejected rather
+         * than dropped into the SIP path. Mutually exclusive with `session`.
+         */
+        sessionInvalid?: boolean
+        /**
+         * Meta echoes the outbound `connect` action's idempotency key
+         * (`attemptId`) on this field — the only correlation available
+         * before `wacid` is known. Absent on SIP-mode/legacy connects.
+         */
+        bizOpaqueCallbackData?: string
       }
     | {
         kind: "terminate"
@@ -86,6 +216,8 @@ export type WhatsappCallEventPayload = {
         startTime?: string
         endTime?: string
         durationSeconds?: number
+        /** Media-drop diagnosis (e.g. 138021/138022/138023). */
+        errors?: WhatsappCallTerminateError[]
       }
     | {
         kind: "status"
@@ -93,6 +225,21 @@ export type WhatsappCallEventPayload = {
         status: "RINGING" | "ACCEPTED" | "REJECTED"
         recipientId?: string
         timestamp?: string
+        /** Meta's `biz_opaque_callback_data` echo (see the `connect` variant). */
+        bizOpaqueCallbackData?: string
+      }
+    | {
+        kind: "recordingAvailable"
+        wacid: string
+        audio: WhatsappCallRecordingAudioPayload
+        direction?: WhatsappCallDirectionPayload
+        /** Meta's `biz_opaque_callback_data` echo, when present. */
+        bizOpaqueCallbackData?: string
+      }
+    | {
+        kind: "transcriptionAvailable"
+        wacid: string
+        document: WhatsappCallTranscriptDocumentPayload
       }
 }
 
@@ -134,6 +281,77 @@ const readWebhookEntries = (rawBody: unknown): unknown[] => {
   return Array.isArray(entries) ? entries : []
 }
 
+/**
+ * Result of validating a connect event's raw `session` field:
+ * - `undefined` — no session at all (a SIP-mode connect; falls through).
+ * - `"invalid"` — a session WAS present but malformed/oversized (a VoIP
+ *   connect that must be Meta-rejected, never dropped into the SIP path).
+ * - payload    — a validated, bounded SDP offer.
+ */
+type ParsedCallSession = WhatsappCallSessionPayload | "invalid" | undefined
+
+/**
+ * Which `sdp_type` a connect event's session must carry, by direction: a
+ * USER_INITIATED (inbound) connect carries the caller's OFFER; a
+ * BUSINESS_INITIATED (outbound) connect carries the user's ANSWER to our
+ * own offer. A session whose `sdp_type` doesn't match its direction is
+ * treated as invalid — this is what keeps the widened offer|answer schema
+ * from silently accepting a mislabeled session.
+ */
+const expectedSdpTypeForDirection = (
+  direction: WhatsappCallDirectionPayload,
+): "offer" | "answer" =>
+  direction === "businessInitiated" ? "answer" : "offer"
+
+/**
+ * Validates a connect event's raw `session` field (VoIP-mode SDP offer or
+ * answer, depending on `expectedSdpType`). Length is checked BEFORE the zod
+ * parse so an oversized string never pays for schema validation — this runs
+ * on the hot webhook path. A present but malformed/oversized/mismatched
+ * session returns `"invalid"` (never thrown) so the caller can Meta-reject
+ * it; an absent session returns `undefined`.
+ */
+const parseCallSession = (
+  wacid: string,
+  rawSession: unknown,
+  expectedSdpType: "offer" | "answer",
+): ParsedCallSession => {
+  if (rawSession === undefined) {
+    return
+  }
+  if (
+    typeof rawSession === "object" &&
+    rawSession !== null &&
+    typeof (rawSession as { sdp?: unknown }).sdp === "string" &&
+    (rawSession as { sdp: string }).sdp.length > MAX_SDP_OFFER_CHARS
+  ) {
+    logger.warn(
+      { wacid, sdpLength: (rawSession as { sdp: string }).sdp.length },
+      "Whatsapp call session invalid: SDP offer exceeds size limit",
+    )
+    return "invalid"
+  }
+
+  const parsed = callSessionSchema.safeParse(rawSession)
+  if (!parsed.success) {
+    logger.warn(
+      { wacid, issues: parsed.error.issues },
+      "Whatsapp call session invalid: malformed session",
+    )
+    return "invalid"
+  }
+
+  if (parsed.data.sdp_type !== expectedSdpType) {
+    logger.warn(
+      { wacid, sdpType: parsed.data.sdp_type, expectedSdpType },
+      "Whatsapp call session invalid: malformed session",
+    )
+    return "invalid"
+  }
+
+  return { sdpType: parsed.data.sdp_type, sdp: parsed.data.sdp }
+}
+
 const normalizeCallItem = (
   item: z.infer<typeof callEventItemSchema>,
 ): WhatsappCallEventPayload["event"] | undefined => {
@@ -146,6 +364,11 @@ const normalizeCallItem = (
       )
       return
     }
+    const session = parseCallSession(
+      item.id,
+      item.session,
+      expectedSdpTypeForDirection(direction),
+    )
     return {
       kind: "connect",
       wacid: item.id,
@@ -153,6 +376,9 @@ const normalizeCallItem = (
       from: item.from,
       to: item.to,
       timestamp: toOptionalString(item.timestamp),
+      session: session === "invalid" ? undefined : session,
+      sessionInvalid: session === "invalid",
+      bizOpaqueCallbackData: item.biz_opaque_callback_data,
     }
   }
 
@@ -170,6 +396,55 @@ const normalizeCallItem = (
       startTime: toOptionalString(item.start_time),
       endTime: toOptionalString(item.end_time),
       durationSeconds: Number.isFinite(duration) ? duration : undefined,
+      errors: item.errors,
+    }
+  }
+
+  if (item.event === "call_recording_available") {
+    if (!item.call_recording) {
+      logger.warn(
+        { wacid: item.id, event: item.event },
+        "Whatsapp call recording-available skipped: missing call_recording",
+      )
+      return
+    }
+    return {
+      kind: "recordingAvailable",
+      wacid: item.id,
+      audio: {
+        mediaId: item.call_recording.audio.id,
+        sha256: item.call_recording.audio.sha256,
+        mimeType: item.call_recording.audio.mime_type,
+        url: item.call_recording.audio.url,
+      },
+      direction: toDirection(item.direction),
+      bizOpaqueCallbackData: item.biz_opaque_callback_data,
+    }
+  }
+
+  // Meta's live webhook uses `call_transcript_available`; some docs/versions
+  // spell it `call_transcription_available`. Accept both so the transcript is
+  // never dropped as an "unknown event".
+  if (
+    item.event === "call_transcript_available" ||
+    item.event === "call_transcription_available"
+  ) {
+    if (!item.call_transcript) {
+      logger.warn(
+        { wacid: item.id, event: item.event },
+        "Whatsapp call transcription-available skipped: missing call_transcript",
+      )
+      return
+    }
+    return {
+      kind: "transcriptionAvailable",
+      wacid: item.id,
+      document: {
+        mediaId: item.call_transcript.document.id,
+        sha256: item.call_transcript.document.sha256,
+        mimeType: item.call_transcript.document.mime_type,
+        url: item.call_transcript.document.url,
+      },
     }
   }
 
@@ -200,6 +475,7 @@ const normalizeStatusItem = (
     status: item.status,
     recipientId: item.recipient_id,
     timestamp: toOptionalString(item.timestamp),
+    bizOpaqueCallbackData: item.biz_opaque_callback_data,
   }
 }
 

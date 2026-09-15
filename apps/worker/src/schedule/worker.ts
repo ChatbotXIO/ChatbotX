@@ -19,7 +19,6 @@ import {
 } from "../webhook/datetime-webhook-scanner"
 import { clearExpiredSupportAccess } from "./handlers/clear-expired-support-access"
 import { enqueueBroadcast } from "./handlers/enqueue-broadcast"
-import { expireAgentSipPresence } from "./handlers/expire-agent-sip-presence"
 import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
 import { prepareBroadcast } from "./handlers/prepare-broadcast"
@@ -180,10 +179,6 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.sweepStaleWhatsappCalls:
               await sweepStaleWhatsappCalls()
-              return
-
-            case ScheduleJobData.expireAgentSipPresence:
-              await expireAgentSipPresence()
               return
 
             case ScheduleJobData.refreshChannelTokens:

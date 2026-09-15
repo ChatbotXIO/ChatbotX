@@ -16,11 +16,8 @@ import { enableBotAction } from "../conversations/actions/enable-bot.action"
 import { UpdateConversationAssignee } from "../conversations/components/update-conversation-assignee"
 import { ConversationAction } from "../conversations/conversation-action"
 import { isConversationActive } from "../conversations/utils/bot-state"
-import {
-  isCallingAvailableForConversation,
-  useCallingEnabledInboxIds,
-} from "../integration-whatsapp/calling/softphone/calling-availability"
-import { StartCallButton } from "../integration-whatsapp/calling/softphone/start-call-button"
+import { useOutboundCallMode } from "../integration-whatsapp/calling/voip/use-outbound-call-mode"
+import { WhatsappVoipCallButton } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-button"
 
 /**
  * `onBack` and `onOpenContact` are supplied only by the mobile inbox layout,
@@ -36,7 +33,6 @@ export default function MessageHead({
 }) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
-  const callingEnabledInboxIds = useCallingEnabledInboxIds()
 
   const {
     conversations,
@@ -47,6 +43,22 @@ export default function MessageHead({
 
   const activeConversation = conversations.find(
     (c) => c.id === activeConversationId,
+  )
+
+  // Resolves in the background — never blocks this header's own render (the
+  // VoIP call button below renders synchronously from data already in
+  // scope). The query only decides what a CLICK on the VoIP button does — if
+  // it is still pending when clicked, the `preparing` phase absorbs the wait.
+  const outboundCallMode = useOutboundCallMode(
+    workspaceId,
+    activeConversation?.id,
+  )
+
+  // Whether this conversation has a WhatsApp contact inbox at all — the
+  // VoIP call button renders for every WhatsApp conversation regardless of
+  // whether `outboundCallMode` has resolved yet.
+  const whatsappContactInbox = activeConversation?.contactInboxes.find(
+    (contactInbox) => contactInbox.channel === "whatsapp",
   )
 
   const { execute: enableBot, isExecuting: isEnablingBot } = useAction(
@@ -91,14 +103,14 @@ export default function MessageHead({
             onChange={setAssignee}
           />
         </div>
-        <StartCallButton
-          contactName={activeConversation?.contact?.fullName}
-          conversationId={activeConversation.id}
-          sipCallingAvailable={isCallingAvailableForConversation(
-            activeConversation.contactInboxes,
-            callingEnabledInboxIds,
-          )}
-        />
+        {whatsappContactInbox && (
+          <WhatsappVoipCallButton
+            contactInboxId={whatsappContactInbox.id}
+            contactName={activeConversation?.contact?.fullName}
+            conversationId={activeConversation.id}
+            outboundCallMode={outboundCallMode.data}
+          />
+        )}
         {!isConversationActive(activeConversation) && (
           <Tooltip>
             <TooltipTrigger

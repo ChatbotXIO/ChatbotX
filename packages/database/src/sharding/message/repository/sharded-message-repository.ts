@@ -624,6 +624,59 @@ export class ShardedMessageRepository implements IMessageRepository {
     return null
   }
 
+  async mergeContentAttributesBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    overlay: Record<string, unknown>,
+  ): Promise<{
+    id: string
+    contentAttributes: Record<string, unknown> | null
+  } | null> {
+    // Same sourceId-based shard scan as `patchBySourceId` (90-day lookback
+    // plus the write shard). A single `jsonb ||` UPDATE — never a
+    // read-modify-write — so two independent writers racing on disjoint
+    // keys (e.g. `hasRecording` vs `hasTranscript`) can never clobber each
+    // other's flag.
+    const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+    const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
+    const timeShards = await this.getShardsForRange(since, new Date())
+    const shards = this.mergeWriteShard(timeShards, writeShard)
+
+    for (const shardInfo of shards) {
+      try {
+        const client = await this.shardManager.getShardClient(shardInfo.shard)
+        const [row] = await client
+          .update(messageModel)
+          .set({
+            contentAttributes: sql`COALESCE(${messageModel.contentAttributes}, '{}'::jsonb) || ${JSON.stringify(overlay)}::jsonb`,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(messageModel.sourceId, sourceId),
+              eq(messageModel.workspaceId, workspaceId),
+            ),
+          )
+          .returning({
+            id: messageModel.id,
+            contentAttributes: messageModel.contentAttributes,
+          })
+        if (row) {
+          return row as {
+            id: string
+            contentAttributes: Record<string, unknown> | null
+          }
+        }
+      } catch (error) {
+        logger.warn(
+          { err: error, shardId: shardInfo.shard.id },
+          "Shard update failed in mergeContentAttributesBySourceId",
+        )
+      }
+    }
+    return null
+  }
+
   // Targets the 1-2 shards covering the message's createdAt plus the write
   // shard (for back-dated imports). When createdAt is unknown it is resolved
   // first via a lightweight SELECT, avoiding a full shard scan.

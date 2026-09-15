@@ -11,16 +11,36 @@ vi.mock("@/features/chat/chat-realtime", () => ({
   ChatRealtime: () => <div data-testid="realtime" />,
 }))
 
-vi.mock("@/features/integration-whatsapp/calling/softphone/call-dock", () => ({
-  WhatsappCallDock: () => <div data-testid="call-dock" />,
-}))
-
 vi.mock(
-  "@/features/integration-whatsapp/calling/softphone/sip-user-provider",
+  "@/features/integration-whatsapp/calling/voip/whatsapp-call-panel",
   () => ({
-    SipUserProvider: ({ children }: { children: ReactNode }) => children,
+    WhatsappCallPanel: () => <div data-testid="voip-call-dock" />,
   }),
 )
+
+vi.mock(
+  "@/features/integration-whatsapp/calling/voip/whatsapp-voip-call-context",
+  () => ({
+    WhatsappVoipCallProvider: ({ children }: { children: ReactNode }) =>
+      children,
+    useWhatsappVoipCallContext: () => ({
+      answer: vi.fn(),
+      dismiss: vi.fn(),
+      hangup: vi.fn(),
+      toggleMute: vi.fn(),
+      dismissEnded: vi.fn(),
+    }),
+  }),
+)
+
+vi.mock(
+  "@/features/integration-whatsapp/calling/voip/use-whatsapp-voip-presence",
+  () => ({ useWhatsappVoipPresence: () => undefined }),
+)
+
+vi.mock("@/features/messages/components/whatsapp-call-info-sheet", () => ({
+  WhatsappCallInfoSheet: () => <div data-testid="call-info-sheet" />,
+}))
 
 const mockRouterReplace = vi.fn()
 

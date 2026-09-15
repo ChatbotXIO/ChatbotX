@@ -9,12 +9,14 @@ import {
   isNotNull,
   isNull,
   lt,
-  or,
+  notInArray,
   sql,
 } from "../../client"
 import type {
+  WhatsappCallAiSummary,
   WhatsappCallDirection,
   WhatsappCallStatus,
+  WhatsappCallTranscriptSegments,
 } from "../../partials/whatsapp-call"
 import {
   contactInboxModel,
@@ -23,6 +25,21 @@ import {
 } from "../../schema"
 
 type WhatsappCallRow = typeof whatsappCallModel.$inferSelect
+
+/**
+ * Every terminal-metadata column `fillMissingTerminalFields` is allowed to
+ * fill on a same-status redelivery. Iterated (rather than one copy-pasted
+ * `if` per column) so a new column is a one-line addition here, and so every
+ * filled column automatically gets its own `IS NULL` guard in the `WHERE`
+ * clause — see {@link WhatsappCallRepository.fillMissingTerminalFields}.
+ */
+const FILLABLE_TERMINAL_FIELDS = [
+  "endedAt",
+  "startedAt",
+  "durationSeconds",
+  "messageId",
+  "lastError",
+] as const satisfies readonly (keyof WhatsappCallRow)[]
 
 type WhatsappCallUpsertInput = {
   wacid: string
@@ -37,31 +54,13 @@ type WhatsappCallUpsertInput = {
   durationSeconds?: number | null
 }
 
-type CreateFromFreeswitchInput = {
-  freeswitchUuid: string
-  wacid?: string | null
-  attemptId?: string | null
-  workspaceId: string
-  inboxId: string
-  contactInboxId: string
-  conversationId: string
-  direction: WhatsappCallDirection
-  status: WhatsappCallStatus
-}
-
-type UpsertInboundInput = {
-  wacid: string | null
-  freeswitchUuid: string
-  attemptId: string
-  workspaceId: string
-  inboxId: string
-  contactInboxId: string
-  conversationId: string
-  direction: WhatsappCallDirection
-  status: WhatsappCallStatus
-}
-
-type CursorPage = { createdAt: Date; id: string }
+/**
+ * Small bound on `findRingingByWorkspace` — a resume-after-refresh lookup is
+ * expected to find at most a handful of concurrently ringing calls per
+ * workspace; this keeps the scan (and the caller's bounded Redis reads)
+ * cheap even under an anomalous backlog.
+ */
+const FIND_RINGING_BY_WORKSPACE_LIMIT = 20
 
 /**
  * The merge-collision-safe fields `attachWacid` moves onto the surviving
@@ -73,25 +72,23 @@ const mergeOntoOlderRow = (
   newer: WhatsappCallRow,
 ): Pick<
   WhatsappCallRow,
-  | "freeswitchUuid"
   | "attemptId"
-  | "freeswitchBLegUuid"
   | "recordingPath"
   | "recordedAt"
   | "transcript"
   | "transcribedAt"
+  | "transcriptSegments"
 > => ({
-  freeswitchUuid: older.freeswitchUuid ?? newer.freeswitchUuid,
   attemptId: older.attemptId ?? newer.attemptId,
-  freeswitchBLegUuid: older.freeswitchBLegUuid ?? newer.freeswitchBLegUuid,
   recordingPath: older.recordingPath ?? newer.recordingPath,
   recordedAt: older.recordedAt ?? newer.recordedAt,
   transcript: older.transcript ?? newer.transcript,
   transcribedAt: older.transcribedAt ?? newer.transcribedAt,
+  transcriptSegments: older.transcriptSegments ?? newer.transcriptSegments,
 })
 
 /**
- * Lifecycle ordering guard: webhook/FreeSWITCH jobs are processed
+ * Lifecycle ordering guard: webhook and signaling jobs are processed
  * concurrently, so a late RINGING/ACCEPTED can land after the terminate for
  * the same call. A status may only advance to a higher rank — with one
  * deliberate exception: `rejected` may overwrite `failed`, because a
@@ -107,6 +104,18 @@ const STATUS_RANK: Record<WhatsappCallStatus, number> = {
   completed: 4,
 }
 
+/**
+ * The persisted terminal statuses — a row in any of these can never be
+ * resurrected into `accepted`. `missed` is deliberately NOT here: it is
+ * UI-derived (a `failed` row that was never `accepted`), never a value
+ * written to the column. See {@link WhatsappCallRepository.markAcceptedIfActive}.
+ */
+export const WHATSAPP_CALL_TERMINAL_STATUSES: WhatsappCallStatus[] = [
+  "rejected",
+  "completed",
+  "failed",
+]
+
 export const canAdvanceStatus = (
   current: WhatsappCallStatus,
   next: WhatsappCallStatus,
@@ -117,21 +126,11 @@ export const canAdvanceStatus = (
   return STATUS_RANK[next] > STATUS_RANK[current]
 }
 
-/** Thrown by `attachFreeswitchUuid` when the outbound attempt row is gone or already bound elsewhere. */
-export class WhatsappCallOutboundAttemptUnknownError extends Error {
-  constructor(attemptId: string) {
-    super(
-      `outbound-attempt-unknown: no claimable row for attemptId ${attemptId}`,
-    )
-    this.name = "WhatsappCallOutboundAttemptUnknownError"
-  }
-}
-
-/** Thrown by `upsertInbound`/`attachWacid` when a row's uuid conflicts with an existing wacid binding. */
+/** Thrown by `attachWacid` when the row already carries a different wacid. */
 export class WhatsappCallUuidMismatchError extends Error {
   constructor(wacid: string) {
     super(
-      `call-uuid-mismatch: wacid ${wacid} already bound to a different freeswitchUuid`,
+      `call-uuid-mismatch: wacid ${wacid} is already bound to another call row`,
     )
     this.name = "WhatsappCallUuidMismatchError"
   }
@@ -162,16 +161,6 @@ const isUniqueViolation = (error: unknown, constraint: string): boolean => {
   return cause?.code === "23505" && cause?.constraint === constraint
 }
 
-/** Keyset predicate for `ORDER BY createdAt DESC, id DESC` pagination. */
-const beforeCursor = (cursor: CursorPage) =>
-  or(
-    lt(whatsappCallModel.createdAt, cursor.createdAt),
-    and(
-      eq(whatsappCallModel.createdAt, cursor.createdAt),
-      lt(whatsappCallModel.id, cursor.id),
-    ),
-  )
-
 class WhatsappCallRepository {
   async findById(
     id: string,
@@ -187,22 +176,28 @@ class WhatsappCallRepository {
     return await tx.query.whatsappCallModel.findFirst({ where: { wacid } })
   }
 
+  /**
+   * Defense-in-depth (belt and suspenders) on top of a caller's own
+   * app-level `workspaceId` check: scopes the lookup by `workspaceId`
+   * directly in the SQL `WHERE` clause, so a caller that ever forgets its
+   * own check can never read another workspace's call row.
+   */
+  async findByIdForWorkspace(
+    id: string,
+    workspaceId: string,
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await tx.query.whatsappCallModel.findFirst({
+      where: { id, workspaceId },
+    })
+  }
+
   async findByAttemptId(
     attemptId: string,
     tx: DatabaseClient = db,
   ): Promise<WhatsappCallRow | undefined> {
     return await tx.query.whatsappCallModel.findFirst({
       where: { attemptId },
-    })
-  }
-
-  async findByFreeswitchUuid(
-    freeswitchUuid: string,
-    tx: DatabaseClient = db,
-  ): Promise<WhatsappCallRow | undefined> {
-    return await tx.query.whatsappCallModel.findFirst({
-      where: { freeswitchUuid },
-      orderBy: { createdAt: "desc" },
     })
   }
 
@@ -213,8 +208,8 @@ class WhatsappCallRepository {
    * effects (trigger events, ringing broadcasts) fire exactly once.
    *
    * The conflict target is the PARTIAL unique index on `wacid` (nullable
-   * column), so this also tolerates a row FreeSWITCH already created for
-   * the same wacid via `createFromFreeswitch`/`upsertInbound`.
+   * column), so a concurrent insert for the same wacid is absorbed instead
+   * of creating a duplicate row.
    */
   async createIfAbsent(
     input: WhatsappCallUpsertInput,
@@ -243,9 +238,8 @@ class WhatsappCallRepository {
 
   /**
    * Inserts the row for a business-initiated attempt BEFORE dialing
-   * (outbound flow): `attemptId` minted by the caller, `wacid`/
-   * `freeswitchUuid` both null (attached later by `attachWacid`/
-   * `attachFreeswitchUuid` once FreeSWITCH and/or Meta report them). The
+   * (outbound flow): `attemptId` minted by the caller and `wacid` still
+   * null (attached by `attachWacid` once Meta reports the call id). The
    * partial unique index `WhatsappCall_pendingOutbound_key` allows only one
    * live (`ringing`/`accepted`) business-initiated row per
    * `(inboxId, contactInboxId)` — a concurrent second dial hits that
@@ -259,6 +253,23 @@ class WhatsappCallRepository {
       inboxId: string
       contactInboxId: string
       conversationId: string
+      /**
+       * The agent initiating a VoIP-mode outbound call — stamped onto the
+       * row at dial time (not just on accept, unlike the SIP flow's
+       * `markAcceptedIfActive`) so Meta's async answer webhook can be
+       * targeted at them and the recording upload route's
+       * `answeredByUserId === userId` auth gate passes. Absent for the SIP
+       * outbound flow, which leaves this null.
+       */
+      answeredByUserId?: string | null
+      /**
+       * The agent who PLACED this outbound call — distinct from
+       * `answeredByUserId` (who ANSWERS, only meaningful for inbound calls).
+       * Used to label the "Business" speaker in the Call Information sheet.
+       * Typically the same agent as `answeredByUserId` for a VoIP outbound
+       * call; left null for the SIP outbound flow like `answeredByUserId`.
+       */
+      initiatedByUserId?: string | null
     },
     tx: DatabaseClient = db,
   ): Promise<WhatsappCallRow> {
@@ -267,8 +278,9 @@ class WhatsappCallRepository {
         .insert(whatsappCallModel)
         .values({
           ...input,
+          answeredByUserId: input.answeredByUserId ?? null,
+          initiatedByUserId: input.initiatedByUserId ?? null,
           wacid: null,
-          freeswitchUuid: null,
           direction: "businessInitiated",
           status: "ringing",
         })
@@ -326,191 +338,41 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Idempotent row creation from the FreeSWITCH side (`ensureCallRow`'s
-   * inbound-without-webhook-yet path and the recording sweep). The conflict
-   * target is the partial unique index on `freeswitchUuid` — the only id
-   * every FreeSWITCH-side job for this call shares — so a redelivered
-   * `cbx::call`/`RECORD_STOP` for the same channel is a no-op merge rather
-   * than a duplicate row. `wacid` is only ever tightened (never cleared) by
-   * the COALESCE, so a webhook that lands first is never overwritten.
+   * The glare guard for VoIP-mode outbound dialing: any `ringing`/`accepted`
+   * row for this `(inboxId, contactInboxId)` pair, of EITHER direction — an
+   * inbound call currently ringing/live on this contact must block a new
+   * outbound dial exactly like an already-live outbound attempt does (Meta
+   * itself would reject the second leg with 138003). Ordered newest-first
+   * and bounded to one row; the caller only needs to know whether one
+   * exists, not enumerate them.
    */
-  async createFromFreeswitch(
-    input: CreateFromFreeswitchInput,
+  async findActiveByContactInbox(
+    input: { inboxId: string; contactInboxId: string },
     tx: DatabaseClient = db,
-  ): Promise<WhatsappCallRow> {
-    const [row] = await tx
-      .insert(whatsappCallModel)
-      .values(input)
-      .onConflictDoUpdate({
-        target: whatsappCallModel.freeswitchUuid,
-        where: sql`${whatsappCallModel.freeswitchUuid} IS NOT NULL`,
-        set: {
-          wacid: sql`COALESCE(excluded."wacid", "WhatsappCall"."wacid")`,
-        },
-      })
-      .returning()
-
-    if (!row) {
-      throw new Error(
-        `WhatsappCall createFromFreeswitch race lost for freeswitchUuid ${input.freeswitchUuid}`,
-      )
-    }
-    return row
-  }
-
-  /**
-   * Binds the FreeSWITCH A-leg uuid onto an outbound row the action created
-   * earlier (with a null uuid). The conditional UPDATE also tolerates a
-   * retry that already attached the same uuid (idempotent), but never lets
-   * a second, different uuid steal an already-bound row.
-   */
-  async attachFreeswitchUuid(
-    props: { attemptId: string; freeswitchUuid: string },
-    tx: DatabaseClient = db,
-  ): Promise<WhatsappCallRow> {
-    const [row] = await tx
-      .update(whatsappCallModel)
-      .set({ freeswitchUuid: props.freeswitchUuid })
-      .where(
-        and(
-          eq(whatsappCallModel.attemptId, props.attemptId),
-          or(
-            isNull(whatsappCallModel.freeswitchUuid),
-            eq(whatsappCallModel.freeswitchUuid, props.freeswitchUuid),
-          ),
-        ),
-      )
-      .returning()
-
-    if (!row) {
-      throw new WhatsappCallOutboundAttemptUnknownError(props.attemptId)
-    }
-    return row
-  }
-
-  /**
-   * Reconciles an inbound call row whichever side (Meta webhook vs.
-   * FreeSWITCH `cbx::call`) arrives first, per the persistence contract:
-   *
-   * 1. If `wacid` is known, try to attach the uuid to a row the webhook
-   *    already created (`UPDATE … WHERE wacid = $wacid AND workspaceId =
-   *    $ws`). A row with a DIFFERENT non-null uuid is a hard mismatch —
-   *    never overwritten.
-   * 2. Otherwise (or if (1) found no row), insert with `ON CONFLICT
-   *    (freeswitchUuid) … DO UPDATE` so a concurrent FreeSWITCH-side insert
-   *    for the same uuid is absorbed instead of erroring.
-   * 3. If (2) raises `23505` on the wacid partial unique index (the
-   *    webhook's row landed between steps 1 and 2), retry step 1 once, then
-   *    propagate the error.
-   *
-   * Both branches are idempotent under the integration worker's parallel
-   * concurrency, so any job order converges on exactly one row.
-   */
-  async upsertInbound(
-    input: UpsertInboundInput,
-    tx: DatabaseClient = db,
-  ): Promise<WhatsappCallRow> {
-    return await this.runInTransaction(tx, (trx) =>
-      this.upsertInboundStep(input, trx, false),
-    )
-  }
-
-  private async upsertInboundStep(
-    input: UpsertInboundInput,
-    trx: DatabaseClient,
-    isRetry: boolean,
-  ): Promise<WhatsappCallRow> {
-    if (input.wacid) {
-      const attached = await this.attachUuidToWacidRow(
-        {
-          wacid: input.wacid,
-          workspaceId: input.workspaceId,
-          freeswitchUuid: input.freeswitchUuid,
-        },
-        trx,
-      )
-      if (attached) {
-        return attached
-      }
-    }
-
-    try {
-      const [row] = await trx
-        .insert(whatsappCallModel)
-        .values({
-          wacid: input.wacid,
-          attemptId: input.attemptId,
-          freeswitchUuid: input.freeswitchUuid,
-          workspaceId: input.workspaceId,
-          inboxId: input.inboxId,
-          contactInboxId: input.contactInboxId,
-          conversationId: input.conversationId,
-          direction: input.direction,
-          status: input.status,
-        })
-        .onConflictDoUpdate({
-          target: whatsappCallModel.freeswitchUuid,
-          where: sql`${whatsappCallModel.freeswitchUuid} IS NOT NULL`,
-          set: {
-            wacid: sql`COALESCE(excluded."wacid", "WhatsappCall"."wacid")`,
-          },
-        })
-        .returning()
-
-      if (!row) {
-        throw new Error(
-          `WhatsappCall upsertInbound race lost for freeswitchUuid ${input.freeswitchUuid}`,
-        )
-      }
-      return row
-    } catch (error) {
-      if (
-        !isRetry &&
-        input.wacid &&
-        isUniqueViolation(error, "WhatsappCall_wacid_key")
-      ) {
-        return await this.upsertInboundStep(input, trx, true)
-      }
-      throw error
-    }
-  }
-
-  private async attachUuidToWacidRow(
-    props: { wacid: string; workspaceId: string; freeswitchUuid: string },
-    trx: DatabaseClient,
   ): Promise<WhatsappCallRow | undefined> {
-    const [row] = await trx
-      .update(whatsappCallModel)
-      .set({
-        freeswitchUuid: sql`COALESCE(${whatsappCallModel.freeswitchUuid}, ${props.freeswitchUuid})`,
-      })
+    const rows = await tx
+      .select()
+      .from(whatsappCallModel)
       .where(
         and(
-          eq(whatsappCallModel.wacid, props.wacid),
-          eq(whatsappCallModel.workspaceId, props.workspaceId),
+          eq(whatsappCallModel.inboxId, input.inboxId),
+          eq(whatsappCallModel.contactInboxId, input.contactInboxId),
+          inArray(whatsappCallModel.status, ["ringing", "accepted"]),
         ),
       )
-      .returning()
-
-    if (!row) {
-      return
-    }
-    if (row.freeswitchUuid && row.freeswitchUuid !== props.freeswitchUuid) {
-      throw new WhatsappCallUuidMismatchError(props.wacid)
-    }
-    return row
+      .orderBy(desc(whatsappCallModel.createdAt))
+      .limit(1)
+    return rows[0]
   }
 
   /**
    * Attaches a Meta-reported `wacid` to a row that was created without one
-   * (outbound rows before the webhook lands, or an inbound FreeSWITCH row
-   * ahead of `call_created`). No-op if the row already has this exact
-   * wacid. If another row already owns it (both sides created independent
-   * rows for the same call), the two are merged in one transaction: the
-   * OLDER row survives, the newer row's FreeSWITCH-side fields
-   * (`freeswitchUuid`/`attemptId`/`freeswitchBLegUuid`/recording*) are
-   * moved onto it where the survivor's own value is null, and the newer row
-   * is deleted.
+   * (an outbound row inserted at dial time, before Meta's webhook lands).
+   * No-op if the row already has this exact wacid. If another row already
+   * owns it (both the dial and the webhook created independent rows for the
+   * same call), the two are merged in one transaction: the OLDER row
+   * survives, the newer row's attempt/recording fields are moved onto it
+   * where the survivor's own value is null, and the newer row is deleted.
    */
   async attachWacid(
     props: { id: string; wacid: string },
@@ -626,9 +488,19 @@ class WhatsappCallRepository {
     return rows[0]?.call
   }
 
-  /** Call log page: cursor-paginated `(createdAt, id)` scan, newest first. */
-  async listByWorkspaceCursor(
-    input: { workspaceId: string; cursor?: CursorPage; limit: number },
+  /**
+   * Coarse DB-side prefilter for "still-ringing, unclaimed calls" in a
+   * workspace — backs the on-mount resume-after-refresh fetch
+   * (`whatsappVoipCallService.getResumableIncoming`). `wacid IS NOT NULL AND
+   * answeredByUserId IS NULL` only narrows to rows that LOOK resumable; the
+   * AUTHORITATIVE check is the Redis offer/control record the service layer
+   * reads for each candidate, since a row can still be `ringing` here after
+   * its offer has already expired. Ordered newest-first and bounded by
+   * {@link FIND_RINGING_BY_WORKSPACE_LIMIT} so a busy workspace never
+   * triggers an unbounded scan or an unbounded number of Redis reads.
+   */
+  async findRingingByWorkspace(
+    workspaceId: string,
     tx: DatabaseClient = db,
   ): Promise<WhatsappCallRow[]> {
     return await tx
@@ -636,21 +508,29 @@ class WhatsappCallRepository {
       .from(whatsappCallModel)
       .where(
         and(
-          eq(whatsappCallModel.workspaceId, input.workspaceId),
-          input.cursor ? beforeCursor(input.cursor) : undefined,
+          eq(whatsappCallModel.workspaceId, workspaceId),
+          eq(whatsappCallModel.status, "ringing"),
+          isNotNull(whatsappCallModel.wacid),
+          isNull(whatsappCallModel.answeredByUserId),
         ),
       )
-      .orderBy(desc(whatsappCallModel.createdAt), desc(whatsappCallModel.id))
-      .limit(input.limit)
+      .orderBy(desc(whatsappCallModel.createdAt))
+      .limit(FIND_RINGING_BY_WORKSPACE_LIMIT)
   }
 
   /**
-   * `ringing` rows stuck without ever getting a FreeSWITCH uuid (dial
-   * failed silently, or a lost `cbx::call`) older than `olderThan` — the
-   * outbound sweeper's source of stale attempts.
+   * `ringing` rows older than `olderThan` that no lifecycle event ever
+   * finalized — the stale-call sweeper's source of candidate rows.
+   *
+   * Bounded by `limit` (oldest first) because the sweeper does per-row work
+   * (a Redis control read, and possibly a Graph terminate) for every
+   * candidate: an unbounded result would turn one backlogged sweep into an
+   * unbounded read plus an unbounded burst of outbound calls. The sweeper
+   * runs on a fixed schedule, so a backlog larger than one page simply
+   * drains across the following runs.
    */
   async sweepStaleRinging(
-    input: { olderThan: Date },
+    input: { olderThan: Date; limit: number },
     tx: DatabaseClient = db,
   ): Promise<WhatsappCallRow[]> {
     return await tx
@@ -662,34 +542,8 @@ class WhatsappCallRepository {
           lt(whatsappCallModel.createdAt, input.olderThan),
         ),
       )
-  }
-
-  /**
-   * `ringing`/`accepted` rows for a set of integrations — the ESL-gap
-   * reconciliation loop's candidate set, joined through `inboxId` since
-   * `WhatsappCall` has no direct `integrationId` column.
-   */
-  async listActiveByIntegrationIds(
-    integrationIds: string[],
-    tx: DatabaseClient = db,
-  ): Promise<WhatsappCallRow[]> {
-    if (integrationIds.length === 0) {
-      return []
-    }
-    const rows = await tx
-      .select({ call: whatsappCallModel })
-      .from(whatsappCallModel)
-      .innerJoin(
-        integrationWhatsappModel,
-        eq(whatsappCallModel.inboxId, integrationWhatsappModel.inboxId),
-      )
-      .where(
-        and(
-          inArray(integrationWhatsappModel.id, integrationIds),
-          inArray(whatsappCallModel.status, ["ringing", "accepted"]),
-        ),
-      )
-    return rows.map((row) => row.call)
+      .orderBy(whatsappCallModel.createdAt)
+      .limit(input.limit)
   }
 
   /**
@@ -766,36 +620,19 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Records what a bridged B-leg reported when it hung up (the outbound Meta
-   * gateway leg's SIP final response, or which agent leg answered) WITHOUT
-   * touching the call's status: only the root A-leg terminates a call
-   * (leg correlation) — in an inbound parallel fork one agent
-   * declining must not end a call another agent can still answer.
+   * Stamps the transcript exactly once (same no-op-on-redelivery contract).
+   * `segments` is optional and additive alongside the flat `transcript`:
+   * a SIP/Whisper writer may pass only the flat text, while a Meta-native
+   * VoIP writer passes both (diarized `segments` + the flattened
+   * `transcript` for `{{last_call_transcript}}`/search).
    */
-  async recordBLegOutcome(
+  async attachTranscript(
     props: {
       id: string
-      freeswitchBLegUuid: string
-      lastError?: string | null
+      transcript: string
+      transcribedAt: Date
+      segments?: WhatsappCallTranscriptSegments | null
     },
-    tx: DatabaseClient = db,
-  ): Promise<WhatsappCallRow | undefined> {
-    return await tx
-      .update(whatsappCallModel)
-      .set({
-        freeswitchBLegUuid: props.freeswitchBLegUuid,
-        ...(props.lastError === undefined
-          ? {}
-          : { lastError: props.lastError }),
-      })
-      .where(eq(whatsappCallModel.id, props.id))
-      .returning()
-      .then((rows) => rows[0])
-  }
-
-  /** Stamps the transcript exactly once (same no-op-on-redelivery contract). */
-  async attachTranscript(
-    props: { id: string; transcript: string; transcribedAt: Date },
     tx: DatabaseClient = db,
   ): Promise<WhatsappCallRow | undefined> {
     return await tx
@@ -803,6 +640,9 @@ class WhatsappCallRepository {
       .set({
         transcript: props.transcript,
         transcribedAt: props.transcribedAt,
+        ...(props.segments === undefined
+          ? {}
+          : { transcriptSegments: props.segments }),
       })
       .where(
         and(
@@ -810,6 +650,72 @@ class WhatsappCallRepository {
           isNull(whatsappCallModel.transcript),
         ),
       )
+      .returning()
+      .then((rows) => rows[0])
+  }
+
+  /**
+   * Persists the on-demand AI summary exactly once, same no-op-on-
+   * redelivery contract as `attachTranscript`/`attachRecording` — a
+   * concurrent second "Generate summary" click for the same call is a
+   * no-op rather than clobbering the first result. A deliberate
+   * "Regenerate" (behind a confirm, per the plan) is a separate,
+   * unconditional write and does not use this method's CAS guard — it
+   * should update the row directly.
+   */
+  async attachAiSummary(
+    props: {
+      id: string
+      aiSummary: WhatsappCallAiSummary
+      aiSummaryProvider: string
+      /** Injectable for tests; defaults to `now`. */
+      aiSummarizedAt?: Date
+    },
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await tx
+      .update(whatsappCallModel)
+      .set({
+        aiSummary: props.aiSummary,
+        aiSummaryProvider: props.aiSummaryProvider,
+        aiSummarizedAt: props.aiSummarizedAt ?? new Date(),
+      })
+      .where(
+        and(
+          eq(whatsappCallModel.id, props.id),
+          isNull(whatsappCallModel.aiSummarizedAt),
+        ),
+      )
+      .returning()
+      .then((rows) => rows[0])
+  }
+
+  /**
+   * The "Regenerate" counterpart to {@link attachAiSummary} — an
+   * unconditional overwrite with no `isNull(aiSummarizedAt)` CAS guard, as
+   * called out in that method's docstring. Only reached from the
+   * user-confirmed "Regenerate" action, never from an
+   * automatic/redelivered path, so clobbering the previous summary is the
+   * intended behavior here.
+   */
+  async overwriteAiSummary(
+    props: {
+      id: string
+      aiSummary: WhatsappCallAiSummary
+      aiSummaryProvider: string
+      /** Injectable for tests; defaults to `now`. */
+      aiSummarizedAt?: Date
+    },
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await tx
+      .update(whatsappCallModel)
+      .set({
+        aiSummary: props.aiSummary,
+        aiSummaryProvider: props.aiSummaryProvider,
+        aiSummarizedAt: props.aiSummarizedAt ?? new Date(),
+      })
+      .where(eq(whatsappCallModel.id, props.id))
       .returning()
       .then((rows) => rows[0])
   }
@@ -867,10 +773,43 @@ class WhatsappCallRepository {
   }
 
   /**
+   * Guarded acceptance persistence — the ONLY writer of `accepted` +
+   * `answeredByUserId` for the VoIP flow. One conditional UPDATE (never a
+   * read-then-write) so PostgreSQL re-evaluates the terminal-status
+   * predicate under row lock: a terminal write (rejected/completed/failed)
+   * that landed first wins permanently and this call becomes a no-op,
+   * rather than resurrecting the row into `accepted`.
+   */
+  async markAcceptedIfActive(
+    props: { id: string; answeredByUserId: string },
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await tx
+      .update(whatsappCallModel)
+      .set({ status: "accepted", answeredByUserId: props.answeredByUserId })
+      .where(
+        and(
+          eq(whatsappCallModel.id, props.id),
+          notInArray(whatsappCallModel.status, WHATSAPP_CALL_TERMINAL_STATUSES),
+        ),
+      )
+      .returning()
+      .then((rows) => rows[0])
+  }
+
+  /**
    * Finalizes the call by id — guarded by {@link canAdvanceStatus} so a
    * `completed` row can never be downgraded (e.g. a delayed `failed` from a
    * stale hangup-cause map race). The WHERE re-checks the observed status,
    * same optimistic-lock discipline as `updateInterimStatus`.
+   *
+   * Idempotency gap closed: a terminate arriving after a locally-written
+   * terminal status (same `status`, e.g. two independent `rejected` writes)
+   * used to return early WITHOUT writing `endedAt`/terminal metadata. When
+   * the incoming status exactly matches the current terminal status, this
+   * now fills in ONLY the fields still missing (`endedAt` in particular) via
+   * a `WHERE … endedAt IS NULL`-guarded UPDATE — it never downgrades status
+   * and never overwrites an earlier authoritative `endedAt`.
    */
   async finalizeById(
     props: {
@@ -882,7 +821,6 @@ class WhatsappCallRepository {
       messageId?: string | null
       lastError?: string | null
       answeredByUserId?: string | null
-      freeswitchBLegUuid?: string | null
       current?: WhatsappCallRow
     },
     tx: DatabaseClient = db,
@@ -892,8 +830,18 @@ class WhatsappCallRepository {
     let existing = current
     for (let attempt = 0; attempt < 2; attempt++) {
       existing ??= await this.findById(id, tx)
-      if (!(existing && canAdvanceStatus(existing.status, status))) {
-        return existing?.status === status ? existing : undefined
+      if (!existing) {
+        return
+      }
+
+      if (!canAdvanceStatus(existing.status, status)) {
+        if (existing.status !== status) {
+          return
+        }
+        return await this.fillMissingTerminalFields(
+          { id, current: existing, data },
+          tx,
+        )
       }
 
       const updated = await tx
@@ -914,6 +862,68 @@ class WhatsappCallRepository {
       existing = undefined
     }
     return
+  }
+
+  /**
+   * Same-status terminate redelivery: `existing.status === status` already
+   * (so no rank change), but one or more terminal metadata fields may still
+   * be missing from an earlier write that only set `status` (e.g.
+   * `updateInterimStatus`'s `rejected`-only path). Fills every still-missing
+   * field in {@link FILLABLE_TERMINAL_FIELDS} exactly once.
+   *
+   * EVERY filled column gets its own `IS NULL` guard in the `WHERE` clause
+   * (not just `endedAt`), so a redelivery can only ever fill a column that is
+   * STILL null right now — a concurrent writer that already set, say,
+   * `messageId` or `lastError` between this method's read and its `UPDATE`
+   * is never clobbered by this redelivery's (possibly different/stale)
+   * value for that column.
+   */
+  private async fillMissingTerminalFields(
+    props: {
+      id: string
+      current: WhatsappCallRow
+      data: Omit<
+        Parameters<WhatsappCallRepository["finalizeById"]>[0],
+        "id" | "status" | "current"
+      >
+    },
+    tx: DatabaseClient,
+  ): Promise<WhatsappCallRow | undefined> {
+    const { current, data } = props
+
+    const fillEntries = FILLABLE_TERMINAL_FIELDS.flatMap((field) => {
+      const currentValue = current[field]
+      const nextValue = data[field]
+      return currentValue === null && nextValue != null
+        ? [{ field, value: nextValue }]
+        : []
+    })
+
+    if (fillEntries.length === 0) {
+      return current
+    }
+
+    const fillable = Object.fromEntries(
+      fillEntries.map(({ field, value }) => [field, value]),
+    ) as Partial<WhatsappCallRow>
+    const nullGuards = fillEntries.map(({ field }) =>
+      isNull(whatsappCallModel[field]),
+    )
+
+    const updated = await tx
+      .update(whatsappCallModel)
+      .set(fillable)
+      .where(
+        and(
+          eq(whatsappCallModel.id, props.id),
+          eq(whatsappCallModel.status, current.status),
+          ...nullGuards,
+        ),
+      )
+      .returning()
+      .then((rows) => rows[0])
+
+    return updated ?? current
   }
 
   /**

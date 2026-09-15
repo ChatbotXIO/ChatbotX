@@ -1,13 +1,11 @@
 "use client"
 
-import type { SipProvisioningStatus } from "@chatbotx.io/database/partials"
 import type { WhatsappCallingSettings } from "@chatbotx.io/integration-whatsapp/api/calling"
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@chatbotx.io/ui/components/ui/alert"
-import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
@@ -25,10 +23,6 @@ import { useRef, useState } from "react"
 import { toast } from "sonner"
 import { fixWhatsappCallsSubscriptionAction } from "./actions/fix-whatsapp-calls-subscription.action"
 import { updateWhatsappCallingSettingsAction } from "./actions/update-calling-settings.action"
-import {
-  deprovisionWhatsappSipAction,
-  provisionWhatsappSipAction,
-} from "./actions/whatsapp-sip-provisioning.action"
 import type { WhatsappCallingPreflight } from "./get-whatsapp-calling-preflight"
 import type { UpdateWhatsappCallingSettingsSchema } from "./schemas/update-calling-settings-schema"
 
@@ -37,7 +31,6 @@ type WhatsappCallsCardProps = {
   integrationWhatsappId: string
   settings: WhatsappCallingSettings | null
   loadError?: string
-  sipProvisioningStatus?: SipProvisioningStatus
   recordingEnabled?: boolean
   recordingRetentionDays?: number
   transcriptionEnabled?: boolean
@@ -74,92 +67,6 @@ const ToggleRow = ({
     />
   </div>
 )
-
-const PROVISIONING_BADGE_VARIANT: Record<
-  SipProvisioningStatus,
-  "outline" | "secondary" | "default" | "destructive"
-> = {
-  none: "outline",
-  provisioning: "secondary",
-  provisioned: "secondary",
-  enabled: "default",
-  failed: "destructive",
-}
-
-function SipProvisioningControls({
-  workspaceId,
-  integrationWhatsappId,
-  status,
-  isSuperAdmin,
-}: {
-  workspaceId: string
-  integrationWhatsappId: string
-  status: SipProvisioningStatus
-  isSuperAdmin: boolean
-}) {
-  const t = useTranslations()
-  const provision = useAction(
-    provisionWhatsappSipAction.bind(null, workspaceId, integrationWhatsappId),
-    {
-      onError: ({ error }) => {
-        toast.error(error.serverError ?? t("messages.unknownError"))
-      },
-    },
-  )
-  const deprovision = useAction(
-    deprovisionWhatsappSipAction.bind(null, workspaceId, integrationWhatsappId),
-    {
-      onError: ({ error }) => {
-        toast.error(error.serverError ?? t("messages.unknownError"))
-      },
-    },
-  )
-
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-2">
-        <span className="font-medium text-sm">
-          {t("whatsapp.calls.sip.provisioningLabel")}
-        </span>
-        <Badge variant={PROVISIONING_BADGE_VARIANT[status]}>
-          {t(`whatsapp.calls.sip.status.${status}`)}
-        </Badge>
-      </div>
-      {isSuperAdmin && (
-        <div className="flex gap-2">
-          {(status === "none" || status === "failed") && (
-            <Button
-              disabled={provision.isPending}
-              onClick={() => provision.execute()}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              {provision.isPending && (
-                <Loader2Icon className="size-4 animate-spin" />
-              )}
-              {t("whatsapp.calls.sip.provisionButton")}
-            </Button>
-          )}
-          {(status === "provisioned" || status === "enabled") && (
-            <Button
-              disabled={deprovision.isPending}
-              onClick={() => deprovision.execute()}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              {deprovision.isPending && (
-                <Loader2Icon className="size-4 animate-spin" />
-              )}
-              {t("whatsapp.calls.sip.deprovisionButton")}
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
 
 function WhatsappCallingPreflightNotices({
   preflight,
@@ -253,7 +160,6 @@ export function WhatsappCallsCard({
   integrationWhatsappId,
   settings,
   loadError,
-  sipProvisioningStatus = "none",
   recordingEnabled = false,
   recordingRetentionDays = 90,
   transcriptionEnabled = false,
@@ -310,9 +216,6 @@ export function WhatsappCallsCard({
   }
 
   const isCallingEnabled = current.status === "ENABLED"
-  const isSipProvisioned =
-    sipProvisioningStatus === "provisioned" ||
-    sipProvisioningStatus === "enabled"
 
   if (loadError) {
     return (
@@ -398,35 +301,6 @@ export function WhatsappCallsCard({
           }
         />
 
-        <SipProvisioningControls
-          integrationWhatsappId={integrationWhatsappId}
-          isSuperAdmin={isSuperAdmin}
-          status={sipProvisioningStatus}
-          workspaceId={workspaceId}
-        />
-
-        <ToggleRow
-          checked={current.sip?.status === "ENABLED"}
-          disabled={isPending || !isCallingEnabled || !isSipProvisioned}
-          helper={
-            isSipProvisioned
-              ? t("whatsapp.calls.inAppCallingHelper")
-              : t("whatsapp.calls.sip.errors.notProvisioned")
-          }
-          label={t("whatsapp.calls.inAppCallingLabel")}
-          onCheckedChange={(next) =>
-            apply(
-              { sipEnabled: next },
-              {
-                ...current,
-                sip: {
-                  ...current.sip,
-                  status: next ? "ENABLED" : "DISABLED",
-                },
-              },
-            )
-          }
-        />
         <ToggleRow
           checked={isRecordingEnabled}
           disabled={isPending || !isCallingEnabled}
