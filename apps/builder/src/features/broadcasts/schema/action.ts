@@ -66,18 +66,46 @@ export type BroadcastTargetRequest = z.infer<typeof broadcastTargetSchema>
 
 export const createBroadcastRequest = z
   .object({
-    channel: channelTypes,
-    flowId: zodBigintAsString().optional(),
-    templateId: zodBigintAsString().optional(),
-    integrationWhatsappId: zodBigintAsString().optional(),
-    integrationMessengerId: zodBigintAsString().optional(),
-    templateData: broadcastTemplateDataSchema.optional(),
-    buttons: broadcastTemplateButtonsSchema.optional(),
-    targets: z.array(broadcastTargetSchema).optional(),
+    channel: channelTypes.describe("Channel to send the broadcast over."),
+    flowId: zodBigintAsString()
+      .optional()
+      .describe(
+        "Flow id (numeric string) to send. Provide this or templateId, not both.",
+      ),
+    templateId: zodBigintAsString()
+      .optional()
+      .describe(
+        "WhatsApp template id (numeric string) to send. Provide this or flowId, not both.",
+      ),
+    integrationWhatsappId: zodBigintAsString()
+      .optional()
+      .describe("WhatsApp integration id (numeric string) to send from."),
+    integrationMessengerId: zodBigintAsString()
+      .optional()
+      .describe("Messenger integration id (numeric string) to send from."),
+    templateData: broadcastTemplateDataSchema
+      .optional()
+      .describe(
+        "Parameters for the WhatsApp template, when sending a single-page broadcast.",
+      ),
+    buttons: broadcastTemplateButtonsSchema
+      .optional()
+      .describe("Button overrides for the WhatsApp template."),
+    targets: z
+      .array(broadcastTargetSchema)
+      .optional()
+      .describe(
+        "Per-page targets for a multi-page broadcast, each with its own template/flow.",
+      ),
     /** The page multi-select's value; `targets` mirrors it and is what the server reads. */
-    inboxIds: z.array(zodBigintAsString()).optional(),
-    subaction: broadcastSubactions,
-    schedulesType: broadcastScheduleTypes,
+    inboxIds: z
+      .array(zodBigintAsString())
+      .optional()
+      .describe("Inbox ids (numeric strings) this broadcast sends from."),
+    subaction: broadcastSubactions.describe("Audience sub-action filter."),
+    schedulesType: broadcastScheduleTypes.describe(
+      "When to send: immediately (`now`) or at `schedulesAt` (`future`).",
+    ),
     // Future-ness is validated by the `superRefine` below, not here: that
     // check has the full object (`schedulesType`, `saveAsDraft`) and is the
     // only one that can tell a schedule actually being set (validate) from
@@ -85,9 +113,19 @@ export const createBroadcastRequest = z
     // field-level `.refine` here ran unconditionally on any non-null value,
     // so it blocked re-saving an untouched `future` draft once its
     // previously-chosen `schedulesAt` elapsed.
-    schedulesAt: z.string().nullable(),
-    contactFilter: contactFilterRequest.shape.contactFilter,
-    saveAsDraft: z.boolean().optional(),
+    schedulesAt: z
+      .string()
+      .nullable()
+      .describe(
+        "ISO 8601 send time, required when schedulesType is `future` and not a draft.",
+      ),
+    contactFilter: contactFilterRequest.shape.contactFilter.describe(
+      "Structured filter selecting the recipient audience. See `contacts.listFilterFields`.",
+    ),
+    saveAsDraft: z
+      .boolean()
+      .optional()
+      .describe("Save as a draft instead of scheduling/sending immediately."),
   })
   .refine(
     (data) => !!(broadcastSendsFlow(data) || broadcastSendsTemplate(data)),
@@ -170,14 +208,19 @@ export const createBroadcastRequest = z
 export type CreateBroadcastRequest = z.infer<typeof createBroadcastRequest>
 
 export const updateBroadcastSchema = z.object({
-  name: z.string().trim().min(1).max(255),
+  name: z.string().trim().min(1).max(255).describe("New broadcast name."),
 })
 export type UpdateBroadcastSchema = z.infer<typeof updateBroadcastSchema>
 
 export const scheduleBroadcastSchema = z
   .object({
-    schedulesType: broadcastScheduleTypes,
-    schedulesAt: z.string().nullable(),
+    schedulesType: broadcastScheduleTypes.describe(
+      "When to send: immediately (`now`) or at `schedulesAt` (`future`).",
+    ),
+    schedulesAt: z
+      .string()
+      .nullable()
+      .describe("ISO 8601 send time, required when schedulesType is `future`."),
   })
   .superRefine((data, ctx) => {
     if (
