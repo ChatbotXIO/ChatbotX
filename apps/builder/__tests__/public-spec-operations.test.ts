@@ -77,7 +77,6 @@ const DESCRIPTION_BACKLOG = new Set<string>([
   "minigames.",
   "productCategories.",
   "products.",
-  "qrCodes.",
   "questionnaires.",
   "reflinks.",
   "smtpIntegrations.",
