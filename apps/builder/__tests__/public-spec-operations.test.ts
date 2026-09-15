@@ -1,6 +1,10 @@
 // @vitest-environment node
 
-import { OpenAPIGenerator } from "@orpc/openapi"
+import {
+  type JSONSchema,
+  OpenAPIGenerator,
+  simplifyComposedObjectJsonSchemasAndRefs,
+} from "@orpc/openapi"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { beforeAll, describe, expect, test, vi } from "vitest"
 
@@ -23,18 +27,94 @@ vi.mock("@chatbotx.io/database/client", () => {
   return { db: proxy }
 })
 
+type JsonSchema = {
+  allOf?: JsonSchema[]
+  anyOf?: JsonSchema[]
+  description?: string
+  oneOf?: JsonSchema[]
+  properties?: Record<string, JsonSchema>
+  type?: string
+}
+
 type SpecOperation = {
-  operationId: string
+  bodySchema?: JsonSchema
+  description?: string
   method: string
+  operationId: string
+  parameters: Array<{
+    description?: string
+    name: string
+    schema?: JsonSchema
+  }>
   path: string
-  tags: string[]
-  summary?: string
-  security?: Record<string, string[]>[]
   responseStatuses: string[]
+  security?: Record<string, string[]>[]
+  summary?: string
+  tags: string[]
 }
 
 const LEGACY_WORKSPACE_TOKEN_PATTERN = /workspace[_.]?token/i
 const LEGACY_API_SUFFIX_PATTERN = /[_.]api$/i
+
+const DESCRIPTION_BACKLOG = new Set<string>([
+  "ads.",
+  "aiAgents.",
+  "aiFiles.",
+  "aiFunctions.",
+  "aiMcpServers.",
+  "analytics.",
+  "appointmentCalendars.",
+  "appointmentExternalCalendars.",
+  "appointmentReminders.",
+  "appointments.",
+  "botFields.",
+  "broadcasts.",
+  "capabilities.",
+  "channels.",
+  "contactScans.",
+  "contacts.",
+  "conversations.",
+  "coupons.",
+  "customFields.",
+  "dynamicImages.",
+  "emailTopics.",
+  "errorLogs.",
+  "externalWebhooks.",
+  "facebookLeadAds.",
+  "fbComments.",
+  "flows.",
+  "folders.",
+  "igComments.",
+  "igStories.",
+  "inboxTeams.",
+  "inboxes.",
+  "integrations.",
+  "keywords.",
+  "mediaLibrary.",
+  "messages.",
+  "messengerChannels.",
+  "messengerPersonas.",
+  "minigames.",
+  "productCategories.",
+  "products.",
+  "qrCodes.",
+  "questionnaires.",
+  "reflinks.",
+  "savedReplies.",
+  "schemas.",
+  "sequences.",
+  "smtpIntegrations.",
+  "spreadsheets.",
+  "tags.",
+  "templateMessages.",
+  "token.",
+  "triggers.",
+  "userPersistentMenus.",
+  "webchats.",
+  "webhooks.",
+  "workspaceMembers.",
+  "zaloChannels.",
+])
 
 let operations: SpecOperation[]
 let responseSchemasByOperationId: Record<string, unknown>
@@ -117,11 +197,16 @@ beforeAll(async () => {
       methods as Record<string, unknown>,
     )) {
       const op = operation as {
+        description?: string
         operationId?: string
         summary?: string
         tags?: string[]
         security?: Record<string, string[]>[]
-        parameters?: { schema?: unknown }[]
+        parameters?: Array<{
+          description?: string
+          name: string
+          schema?: JsonSchema
+        }>
         requestBody?: {
           content?: Record<string, { schema?: unknown }>
         }
@@ -133,9 +218,18 @@ beforeAll(async () => {
       if (!op.operationId) {
         continue
       }
+      const bodySchema = op.requestBody?.content?.["application/json"]?.schema
       operations.push({
+        bodySchema: bodySchema
+          ? (simplifyComposedObjectJsonSchemasAndRefs(
+              bodySchema as JSONSchema,
+              spec,
+            ) as JsonSchema)
+          : undefined,
+        description: op.description,
         operationId: op.operationId,
         method: method.toUpperCase(),
+        parameters: op.parameters ?? [],
         path,
         tags: op.tags ?? [],
         summary: op.summary,
@@ -158,9 +252,10 @@ beforeAll(async () => {
           requestSchemas.push(param.schema)
         }
       }
-      const bodySchema = op.requestBody?.content?.["application/json"]?.schema
-      if (bodySchema) {
-        requestSchemas.push(bodySchema)
+      const requestBodySchema =
+        op.requestBody?.content?.["application/json"]?.schema
+      if (requestBodySchema) {
+        requestSchemas.push(requestBodySchema)
       }
       if (requestSchemas.length > 0) {
         requestSchemasByOperationId[op.operationId] = requestSchemas
@@ -170,6 +265,32 @@ beforeAll(async () => {
 
   operations.sort((a, b) => a.operationId.localeCompare(b.operationId))
 }, 120_000)
+
+const isDescriptionBacklogged = (operationId: string): boolean =>
+  DESCRIPTION_BACKLOG.has(operationId.slice(0, operationId.indexOf(".") + 1))
+
+const NON_ALPHANUMERIC_PATTERN = /[^a-z0-9]+/
+const SUMMARY_STARTS_UPPERCASE_PATTERN = /^[A-Z]/
+const normalizeDescriptionPhrase = (value: string): string => {
+  const [firstToken = "", ...remainingTokens] = value
+    .toLowerCase()
+    .split(NON_ALPHANUMERIC_PATTERN)
+    .filter(Boolean)
+  const normalizedFirstToken = firstToken.endsWith("s")
+    ? firstToken.slice(0, -1)
+    : firstToken
+  return [normalizedFirstToken, ...remainingTokens].join("")
+}
+
+const hasDescribedComposedBranches = (schema: JsonSchema): boolean =>
+  (["allOf", "anyOf", "oneOf"] as const).some((combinator) => {
+    const branches = schema[combinator]
+    return (
+      branches !== undefined &&
+      branches.length > 0 &&
+      branches.every((branch) => Boolean(branch.description))
+    )
+  })
 
 describe("public API spec — operation naming guard", () => {
   // Pins the MCP tool name / operationId surface. A diff here is a
@@ -198,6 +319,93 @@ describe("public API spec — operation naming guard", () => {
       .map((op) => op.operationId)
 
     expect(missingSummary).toEqual([])
+  })
+
+  test("every non-backlogged operation has a description", () => {
+    const missingDescriptions = operations
+      .filter((operation) => !isDescriptionBacklogged(operation.operationId))
+      .filter((operation) => !operation.description)
+      .map((operation) => operation.operationId)
+
+    expect(missingDescriptions).toEqual([])
+  })
+
+  test("every non-backlogged operation has a tag", () => {
+    const missingTags = operations
+      .filter((operation) => !isDescriptionBacklogged(operation.operationId))
+      .filter((operation) => operation.tags.length === 0)
+      .map((operation) => operation.operationId)
+
+    expect(missingTags).toEqual([])
+  })
+
+  test("every summary follows the public API house style", () => {
+    const invalidSummaries = operations.flatMap((operation) => {
+      const summary = operation.summary
+      if (!summary) {
+        return operation.operationId
+      }
+
+      const isInvalid =
+        summary.length > 60 ||
+        summary.endsWith(".") ||
+        summary.includes(" — ") ||
+        summary.includes(". ") ||
+        !SUMMARY_STARTS_UPPERCASE_PATTERN.test(summary)
+      return isInvalid ? operation.operationId : []
+    })
+
+    expect(invalidSummaries).toEqual([])
+  })
+
+  test("every present description is useful and non-redundant", () => {
+    const invalidDescriptions = operations.flatMap((operation) => {
+      const description = operation.description
+      if (!description) {
+        return []
+      }
+
+      const duplicatesSummary = normalizeDescriptionPhrase(
+        description,
+      ).startsWith(normalizeDescriptionPhrase(operation.summary ?? ""))
+      const isInvalid = description.length < 50 || duplicatesSummary
+      return isInvalid ? operation.operationId : []
+    })
+    expect(invalidDescriptions).toEqual([])
+  })
+
+  test("every non-backlogged top-level input field has a description", () => {
+    const missingInputDescriptions = operations.flatMap((operation) => {
+      if (isDescriptionBacklogged(operation.operationId)) {
+        return []
+      }
+
+      const missingParameters = operation.parameters
+        .filter(
+          (parameter) =>
+            !(parameter.description || parameter.schema?.description),
+        )
+        .map((parameter) => `${operation.operationId}.${parameter.name}`)
+
+      const bodySchema = operation.bodySchema
+      if (!bodySchema) {
+        return missingParameters
+      }
+      if (bodySchema.type !== "object") {
+        return [...missingParameters, `${operation.operationId}.<body>`]
+      }
+
+      const missingBodyFields = Object.entries(bodySchema.properties ?? {})
+        .filter(
+          ([, property]) =>
+            !(property.description || hasDescribedComposedBranches(property)),
+        )
+        .map(([name]) => `${operation.operationId}.${name}`)
+
+      return [...missingParameters, ...missingBodyFields]
+    })
+
+    expect(missingInputDescriptions).toEqual([])
   })
 
   test("every /v1/channels/api/* operation requires only the channel token scheme", () => {

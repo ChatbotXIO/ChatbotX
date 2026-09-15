@@ -177,12 +177,24 @@ describe("default tool set", () => {
     expect(deleteDefaults).toEqual([])
   })
 
-  test("every default operation has a description, not just a summary", () => {
-    const missingDescription = defaultOperations()
-      .filter((op) => !op.description)
-      .map((op) => op.operationId)
+  test("every default operation has a useful MCP description", () => {
+    const invalidDescriptions = defaultOperations().flatMap((operation) => {
+      const description = operation.description
+      if (!description || description.length < 80) {
+        return operation.operationId
+      }
 
-    expect(missingDescription).toEqual([])
+      const referencedOperationIds = [
+        ...description.matchAll(/\b[a-z][A-Za-z]+\.[a-z][A-Za-z]+\b/g),
+      ].map(([operationId]) => operationId)
+      return referencedOperationIds.some(
+        (operationId) => operationId !== operation.operationId,
+      )
+        ? []
+        : operation.operationId
+    })
+
+    expect(invalidDescriptions).toEqual([])
   })
 
   test("README and SKILL list exactly the default MCP tools", () => {

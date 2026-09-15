@@ -23,7 +23,7 @@ export const contactsSequencesPublicRouter = {
       path: "/v1/contacts/{identifier}/sequences",
       summary: "List sequences the contact is enrolled in",
       description:
-        "Lists the sequences the contact identified by `identifier` is currently enrolled in.",
+        "Use this to inspect a contact's current sequence enrollments after resolving the contact with `contacts.get`. Call `contacts.subscribeSequences` to enroll it, or `sequences.get` to inspect a sequence.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })

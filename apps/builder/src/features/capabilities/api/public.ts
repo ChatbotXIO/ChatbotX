@@ -43,8 +43,7 @@ export const capabilitiesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/capabilities",
-      summary:
-        "Discover the workspace's inboxes, templates, fields, tags, sequences, and flows",
+      summary: "Discover workspace capabilities",
       description:
         "Returns compact (id + name, plus a couple of decisive fields) lists of the workspace entities an agent needs to reference by id — inboxes, WhatsApp templates, custom/bot fields, tags, AI agents, sequences, and flows — plus the flow-spec DSL's step types and valid wait units/channels. Bot fields are reference data only; they cannot be used as a branch condition's `field` (only custom fields and built-in contact fields can). Use `include` (comma-separated) to narrow the response; omit it for the default set an agent needs to build a flow. Call this before `flows.publish`/`flows.updateDraft`/`flows.validate` so names in a flow spec resolve to real ids instead of guesses.",
       tags: ["Capabilities"],

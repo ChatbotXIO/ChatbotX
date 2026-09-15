@@ -24,7 +24,7 @@ export const productCategoriesPublicRouter = {
       path: "/v1/product-categories",
       summary: "List product categories",
       description:
-        "Lists product categories as a flat two-level list. `parentId` is null for a top-level category, or the id of its top-level parent for a sub-category.",
+        "Use this to inspect the flat two-level category tree before creating one with `productCategories.create`. A null `parentId` identifies a top-level category.",
       tags: ["Product Categories"],
     })
     .output(listProductCategoriesPublicResponse)

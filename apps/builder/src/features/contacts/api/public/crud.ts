@@ -39,7 +39,7 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts",
       summary: "List contacts",
       description:
-        "List contacts in the workspace, with optional keyword search and filter. Supports `include` to shrink the response (e.g. `include=tags`) and `withCount=false` to skip the total-count query when you only need the rows.",
+        "Use this to find contacts by keyword or filter before inspecting one with `contacts.get` or sending a message with `contacts.sendMessage`. Supports `include` and `withCount` to shape the response.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -63,7 +63,7 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts/search",
       summary: "Search contacts with a filter body",
       description:
-        "Same as `GET /v1/contacts` but accepts the filter as a JSON request body instead of query parameters — use this when `contactFilter` is large or deeply nested. Supports the same `include`/`withCount` options.",
+        "Use this when a large or nested `contactFilter` cannot fit conveniently in query parameters. It returns the same contact data as `contacts.list`, including `include` and `withCount` options.",
       tags: ["Contacts"],
       // A POST that reads, not writes — `readOnlyHint: true` keeps it
       // visible to a `read_only` token (`isVisibleForScope` in
@@ -110,10 +110,9 @@ export const contactsCrudPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/{identifier}",
-      summary:
-        "Get contact by identifier (id:123, email:user@example.com, phone:+84...)",
+      summary: "Get a contact by identifier",
       description:
-        "Looks up a single contact by a prefixed identifier: `id:<contactId>`, `email:<address>`, or `phone:<e164Number>`.",
+        "Use this after locating a prefixed id, email, or phone identifier to inspect one contact. Call `contacts.list` to search first, or use `contacts.sendMessage` to contact the result.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -137,7 +136,7 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts",
       summary: "Create a contact",
       description:
-        "Creates a new contact directly in the workspace (not via a channel conversation). At least one of email or phoneNumber is typically required for later messaging.",
+        "Adds a workspace contact outside a channel conversation, with contact details for later messaging. Use `contacts.list` to check for an existing contact and `contacts.sendMessage` after creating one.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })

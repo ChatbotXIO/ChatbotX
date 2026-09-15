@@ -40,7 +40,8 @@ export const flowsPublicRouter = {
       method: "GET",
       path: "/v1/flows",
       summary: "List flows",
-      description: "Lists active flows in the workspace.",
+      description:
+        "Use this to find flow ids and names before fetching one with `flows.get` or publishing a draft with `flows.publish`. Returns active flows in the workspace.",
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -67,7 +68,8 @@ export const flowsPublicRouter = {
       method: "GET",
       path: "/v1/flows/{id}",
       summary: "Get a flow by id",
-      description: "Returns a flow with its list of versions.",
+      description:
+        "Use this to inspect one flow and its versions after finding its id with `flows.list`. Call `flows.updateDraft` to change the draft or `flows.publish` to create a version.",
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -88,7 +90,7 @@ export const flowsPublicRouter = {
       path: "/v1/flows",
       summary: "Create a flow",
       description:
-        "Creates a new draft flow seeded with a single default start node.",
+        "Starts a draft flow with its default start node. Use `flows.list` to inspect existing flows first, then call `flows.updateDraft` or `flows.publish` to complete it.",
       successStatus: 201,
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
@@ -142,7 +144,8 @@ export const flowsPublicRouter = {
       method: "POST",
       path: "/v1/flows/{id}/duplicate",
       summary: "Duplicate a flow",
-      description: "Duplicates a flow's draft version into a new flow.",
+      description:
+        "Copies a flow's draft into a new flow. Use `flows.get` to inspect the source first, then call `flows.updateDraft` or `flows.publish` on the returned flow.",
       successStatus: 201,
       tags: ["Flows"],
     })
@@ -163,7 +166,7 @@ export const flowsPublicRouter = {
       path: "/v1/flows/{id}/publish",
       summary: "Publish a flow",
       description:
-        "Publishes a new immutable version and syncs the draft to match. Accepts either the raw `{ nodes, edges }` graph the builder UI sends, or `{ spec }` — a flow-spec DSL object (see `GET /v1/schemas/flow-spec`) compiled server-side into that same graph before publishing.",
+        "Creates an immutable version from a draft and synchronizes the draft to match. Call `flows.validate` before this when supplying a spec, or use `flows.updateDraft` to save changes without publishing.",
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -192,6 +195,7 @@ export const flowsPublicRouter = {
       description:
         "Compiles a flow-spec DSL object (see `GET /v1/schemas/flow-spec`) and validates the result exactly like `flows.publish` would, without persisting anything. On success, returns the compiled node/edge graph. On failure, returns a 422 with structured errors (`path`/`code`/`message`/`hint`/`candidates`) — fix and retry before calling `flows.publish`.",
       tags: ["Flows"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(flowSpecRequest)
     .output(publishFlowSchema)

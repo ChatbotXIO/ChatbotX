@@ -24,7 +24,8 @@ export const aiFilesPublicRouter = {
       method: "GET",
       path: "/v1/ai-files",
       summary: "List AI files",
-      description: "Lists files uploaded to the workspace's AI knowledge base.",
+      description:
+        "Use this to find AI knowledge-base files before selecting one with `aiFiles.get` or creating another with `aiFiles.create`. Returns the uploaded files available in this workspace.",
       tags: ["AI Files"],
       spec: mcpSpec({ visibility: "default" }),
     })

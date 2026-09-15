@@ -227,8 +227,7 @@ export const mediaLibraryPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/media-library/files/{fileId}/access",
-      summary:
-        "Record that a media library file was used (feeds the recent filter)",
+      summary: "Record media file access",
       successStatus: 204,
       tags,
     })

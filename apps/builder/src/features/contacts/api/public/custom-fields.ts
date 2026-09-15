@@ -33,7 +33,7 @@ export const contactsCustomFieldsPublicRouter = {
       path: "/v1/contacts/{identifier}/custom-fields",
       summary: "Get all custom fields from a contact",
       description:
-        "Lists every custom field value set on the contact identified by `identifier`.",
+        "Use this to inspect every custom-field value for a contact after resolving its identifier with `contacts.get`. Call `contacts.setCustomField` to change one value or `contacts.setCustomFields` to change several.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -84,7 +84,7 @@ export const contactsCustomFieldsPublicRouter = {
       path: "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
       summary: "Set contact custom field value",
       description:
-        "Sets a single custom field's value on the contact identified by `identifier`. Use `contacts.setCustomFields` to set several at once.",
+        "Changes one custom-field value on a resolved contact without altering its other fields. Use `contacts.listCustomFields` to inspect current values, or `contacts.setCustomFields` for several changes.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })

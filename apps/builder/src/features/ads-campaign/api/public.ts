@@ -94,8 +94,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/campaigns",
-      summary:
-        "Create a messaging ad (campaign + ad set + creative + ad, all PAUSED). Created without a `createdBy` — workspace API tokens have no associated user.",
+      summary: "Create a messaging ad",
       successStatus: 201,
       tags: ["Ads"],
     })
@@ -131,8 +130,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/campaigns/{operationId}/retry",
-      summary:
-        "Resume a partially-created messaging ad using the same operationId",
+      summary: "Resume messaging ad creation",
       tags: ["Ads"],
     })
     .input(operationIdPublicParams)
@@ -150,8 +148,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/campaigns/{operationId}/publish",
-      summary:
-        "Publish a messaging ad — sets campaign/ad set/ad to ACTIVE on Meta. This spends real ad budget.",
+      summary: "Publish a messaging ad",
       tags: ["Ads"],
     })
     .input(operationIdPublicParams)
@@ -205,8 +202,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/campaigns",
-      summary:
-        "List messaging ads created from ChatbotX for one channel integration, with Meta's live effective_status",
+      summary: "List messaging ads",
       tags: ["Ads"],
     })
     .input(listMessagingAdsPublicRequest)
@@ -232,8 +228,7 @@ export const adsCampaignPublicRouter = {
       // the same constant (`../lib/api-paths`), so they cannot drift.
       method: "POST",
       path: ADS_CAMPAIGNS_INSIGHTS_PATH,
-      summary:
-        "Ads Insights for a set of messaging ads (impressions/reach/spend/clicks/messaging conversations started/cost-per-conversation)",
+      summary: "Get messaging ad insights",
       tags: ["Ads"],
     })
     .input(messagingAdsInsightsPublicRequest)
@@ -257,8 +252,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/campaigns/{channel}/{integrationId}/ad-accounts",
-      summary:
-        "List ad accounts reachable by one integration's messaging-ads connection (cached)",
+      summary: "List integration ad accounts",
       tags: ["Ads"],
     })
     .input(listAdAccountsPublicRequestParams.and(listAdAccountsPublicRequest))
@@ -276,8 +270,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/campaigns/ad-accounts/{adAccountId}",
-      summary:
-        "Get an ad account's currency/timezone/status/minimum budget (cached)",
+      summary: "Get ad account details",
       tags: ["Ads"],
     })
     .input(
@@ -297,8 +290,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/campaigns/upload-video",
-      summary:
-        "Upload a creative video to Meta — returns the video_id (processing is async, poll getCampaignVideoStatus)",
+      summary: "Upload campaign video",
       tags: ["Ads"],
     })
     .input(uploadAdVideoPublicRequest)
@@ -324,8 +316,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/campaigns/videos/{videoId}/status",
-      summary:
-        "Poll a video's processing status — a creative must not reference a not-yet-ready video",
+      summary: "Get campaign video status",
       tags: ["Ads"],
     })
     .input(videoStatusPublicRequestParams.and(videoStatusPublicRequest))
@@ -353,8 +344,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/campaigns/messenger-pages",
-      summary:
-        "List connected Messenger Pages (source of page_id for the WhatsApp ad-set step) — CTWA only",
+      summary: "List Messenger pages",
       tags: ["Ads"],
     })
     .input(listMessengerPagesPublicRequest)
@@ -385,8 +375,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/campaigns/prerequisites",
-      summary:
-        "Whether this channel integration's messaging-ads connection is ready",
+      summary: "Check messaging ads prerequisites",
       tags: ["Ads"],
     })
     .input(checkPrerequisitesPublicRequest)
@@ -436,8 +425,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/ads/connections/{channel}/{integrationId}",
-      summary:
-        "Disconnect a channel integration's messaging-ads connection — best-effort revokes the Graph token first",
+      summary: "Disconnect messaging ads connection",
       successStatus: 204,
       tags: ["Ads"],
     })

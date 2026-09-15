@@ -23,7 +23,7 @@ export const keywordsPublicRouter = {
       path: "/v1/keywords",
       summary: "List keywords (automated responses)",
       description:
-        "Lists keyword-triggered automated responses in the workspace, filterable by `type` (inbound/comment).",
+        "Use this to find keyword-triggered automations by type before inspecting one with `keywords.get` or adding one with `keywords.create`. Returns inbound or comment automations.",
       tags: ["Keywords"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -76,7 +76,7 @@ export const keywordsPublicRouter = {
       path: "/v1/keywords",
       summary: "Create a keyword automation",
       description:
-        "Creates a keyword automation that replies with text or starts a flow when any of `keywords` is matched in an inbound message or comment.",
+        "Adds a keyword automation that sends text or starts a flow for matching inbound messages or comments. Use `keywords.list` first to inspect existing rules and `flows.list` to resolve a flow.",
       successStatus: 201,
       tags: ["Keywords"],
     })

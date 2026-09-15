@@ -75,7 +75,7 @@ export const conversationsPublicRouter = {
       path: "/v1/conversations",
       summary: "List conversations",
       description:
-        "Lists conversations in the workspace with optional filters (status, channel, assignee, tags, contact filter). Use `conversations.get` for the full detail of one.",
+        "Use this to find conversations by status, channel, assignee, tags, or contact filter before inspecting one with `conversations.get`. Returns cursor-paginated workspace conversations.",
       tags: ["Conversations"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -101,7 +101,7 @@ export const conversationsPublicRouter = {
       path: "/v1/conversations/{id}",
       summary: "Get a conversation by id",
       description:
-        "Returns the full detail of a single conversation, including its contact, channel, assignee, and status.",
+        "Use this to inspect one conversation's contact, channel, assignee, and status after locating it with `conversations.list`. Call `conversations.assign` to change its assignee.",
       tags: ["Conversations"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -127,7 +127,7 @@ export const conversationsPublicRouter = {
       path: "/v1/conversations/{id}/assign",
       summary: "Assign or unassign a conversation to a user or inbox team",
       description:
-        "Sets the conversation's assignee. Pass a user id, an inbox team id, or `null`/omit `assignedId` to unassign.",
+        "Changes a conversation's user or inbox-team assignee, or clears it when `assignedId` is null. Call `conversations.get` first to inspect the current assignee and `conversations.list` to find the id.",
       tags: ["Conversations"],
       spec: mcpSpec({ visibility: "default" }),
     })

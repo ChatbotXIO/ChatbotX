@@ -17,7 +17,7 @@ export const errorLogsPublicRouter = {
       path: "/v1/error-logs",
       summary: "List error logs",
       description:
-        "Lists error logs recorded in the workspace, filterable by `keyword`, newest first.",
+        "Use this to inspect recent workspace failures by `keyword` before retrying the related action. Returns newest error logs first; use `token.get` to confirm the token can access diagnostics.",
       tags: ["Error Logs"],
       spec: mcpSpec({ visibility: "default" }),
     })

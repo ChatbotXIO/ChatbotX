@@ -51,10 +51,21 @@ export function withPublicPaging<Shape extends z.ZodRawShape>(
   >
 }
 
+export const PUBLIC_LIST_PAGING_NOTE =
+  "Returns `{ data, pageCount }`; page with `page`/`perPage`."
+
+export const withListPagingNote = (description: string): string =>
+  `${description} ${PUBLIC_LIST_PAGING_NOTE}`
+
 export function publicListResponse<T extends z.ZodTypeAny>(resource: T) {
   return z.object({
-    data: z.array(resource),
-    pageCount: z.number().int(),
+    data: z.array(resource).describe("Items on this page."),
+    pageCount: z
+      .number()
+      .int()
+      .describe(
+        "Total number of pages for the requested perPage; stop when page >= pageCount.",
+      ),
   })
 }
 

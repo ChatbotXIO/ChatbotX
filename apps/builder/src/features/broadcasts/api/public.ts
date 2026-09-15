@@ -57,7 +57,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts",
       summary: "Get all broadcasts",
       description:
-        "Lists broadcasts in the workspace across every status (draft, scheduled, sending, sent, cancelled), newest first.",
+        "Use this to find broadcasts by status before inspecting one with `broadcasts.get` or stopping one with `broadcasts.stop`. Returns newest broadcasts across every status.",
       tags: ["Broadcasts"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -79,7 +79,8 @@ export const broadcastsPublicRouter = {
       method: "GET",
       path: "/v1/broadcasts/{idOrName}",
       summary: "Get broadcast by id or name",
-      description: "Returns a single broadcast looked up by id or name.",
+      description:
+        "Use this to inspect a broadcast by id or name after finding it with `broadcasts.list`. Call `broadcasts.schedule` for a draft or `broadcasts.stop` for a sending broadcast.",
       tags: ["Broadcasts"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -155,7 +156,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts",
       summary: "Create a broadcast",
       description:
-        "Creates a broadcast as a draft (or immediately scheduled, depending on the payload) targeting the given audience filter.",
+        "Starts a broadcast as a draft or scheduled send for the supplied audience. Use `broadcasts.list` to avoid duplicates, then use `broadcasts.schedule` to control its send time.",
       successStatus: 201,
       tags: ["Broadcasts"],
     })
@@ -199,7 +200,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/draft",
       summary: "Replace a draft broadcast's full payload",
       description:
-        "Only matches a broadcast whose status is draft. Setting saveAsDraft to false schedules it.",
+        "Replaces a draft's complete payload and can schedule it when `saveAsDraft` is false. Call `broadcasts.get` to inspect the draft first, or use `broadcasts.schedule` to keep its payload.",
       tags: ["Broadcasts"],
     })
     .input(createBroadcastRequest.and(z.object({ id: zodBigintAsString() })))
@@ -224,7 +225,8 @@ export const broadcastsPublicRouter = {
       method: "POST",
       path: "/v1/broadcasts/{id}/schedule",
       summary: "Schedule a draft broadcast",
-      description: "Only matches a broadcast whose status is draft.",
+      description:
+        "Moves a draft broadcast to its scheduled state using the provided schedule. Call `broadcasts.get` to inspect it first, or use `broadcasts.updateDraft` to change its payload.",
       tags: ["Broadcasts"],
     })
     .input(scheduleBroadcastSchema.and(z.object({ id: zodBigintAsString() })))
@@ -264,7 +266,8 @@ export const broadcastsPublicRouter = {
       method: "POST",
       path: "/v1/broadcasts/{id}/stop",
       summary: "Stop a broadcast that is currently sending",
-      description: "Only matches a broadcast whose status is sending.",
+      description:
+        "Stops a broadcast only while it is sending and returns its id. Call `broadcasts.get` to confirm its state first, or use `broadcasts.moveToDraft` for scheduled broadcasts.",
       tags: ["Broadcasts"],
       spec: mcpSpec({ visibility: "default" }),
     })

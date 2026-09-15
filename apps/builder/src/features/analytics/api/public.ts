@@ -110,7 +110,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/new-contact-counts-per-day",
       summary: "Get new contact counts per day",
       description:
-        "Returns the count of contacts first created on each day within the given `from`/`to` time range.",
+        "Use this to chart newly created contacts over a requested time range. Compare it with `analytics.blockedContactsPerDay` to separate acquisition trends from blocked contacts.",
       tags: ["Analytics"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -131,7 +131,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/blocked-contacts-per-day",
       summary: "Get blocked contacts per day",
       description:
-        "Returns the count of contacts blocked on each day within the given `from`/`to` time range.",
+        "Use this to chart contacts blocked during a requested time range. Compare it with `analytics.newContactCountsPerDay` to distinguish blocking trends from new contacts.",
       tags: ["Analytics"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -547,7 +547,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/broadcasts/{broadcastId}/stats",
       summary: "Get broadcast stats",
       description:
-        "Returns delivery stats (sent/delivered/read/failed counts) for a single broadcast.",
+        "Use this after resolving a broadcast with `broadcasts.get` to inspect sent, delivered, read, and failed counts. Compare results with `analytics.flowStats` for automation performance.",
       tags: ["Analytics"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -572,7 +572,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/sequences/{sequenceId}/steps/{stepId}/stats",
       summary: "Get sequence step stats",
-      description: "Returns delivery stats for a single sequence step.",
+      description:
+        "Use this after resolving a sequence and step to inspect delivery counts for that step. Call `sequences.get` first for step ids, or use `analytics.broadcastStats` for broadcast delivery.",
       tags: ["Analytics"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -615,7 +616,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/flows/{flowId}",
       summary: "Get flow analytics",
-      description: "Returns session/completion stats for a single flow.",
+      description:
+        "Use this after resolving a flow with `flows.get` to inspect its session and completion counts. Call `analytics.newContactCountsPerDay` instead for workspace contact trends.",
       tags: ["Analytics"],
       spec: mcpSpec({ visibility: "default" }),
     })

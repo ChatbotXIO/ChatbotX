@@ -32,7 +32,7 @@ export const tokenPublicRouter = {
       path: "/v1/token",
       summary: "Get the calling token's workspace id, permission, and scopes",
       description:
-        "Returns the workspace id, permission (`read_only`/`full`), and scopes of the token making this request. `scopes: null` means unrestricted (every scope). Check this before attempting a write to see whether the token is allowed to make it.",
+        "Reports the calling token's workspace id, permission, and scopes, including whether `scopes: null` grants unrestricted access. Call `capabilities.get` to discover useful resources before using the token with another operation.",
       tags: ["Capabilities"],
       spec: mcpSpec({ visibility: "default", alwaysVisible: true }),
     })

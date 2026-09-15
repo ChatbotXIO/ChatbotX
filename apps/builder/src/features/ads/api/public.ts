@@ -161,8 +161,7 @@ const adsAnalyticsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/funnel",
-      summary:
-        "Get the CTWA/CTM/CTID conversion funnel (conversations/leads/purchases/revenue) per ad",
+      summary: "Get ad conversion funnel",
       tags: ["Ads"],
     })
     .input(getCtwaFunnelPublicRequest)
@@ -179,7 +178,7 @@ const adsAnalyticsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/funnel/timeseries",
-      summary: "Get the CTWA/CTM/CTID conversion funnel, bucketed per day",
+      summary: "Get daily ad conversion funnel",
       tags: ["Ads"],
     })
     .input(getCtwaFunnelPublicRequest)
@@ -196,8 +195,7 @@ const adsAnalyticsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/capi-delivery",
-      summary:
-        "Get the Conversions API delivery status breakdown (sent/pending/failed/skipped)",
+      summary: "Get Conversions API delivery",
       tags: ["Ads"],
     })
     .input(getCtwaFunnelPublicRequest)
@@ -214,8 +212,7 @@ const adsAnalyticsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/conversions/export",
-      summary:
-        "Cursor-paginated conversion/lead/purchase rows for export (contact-level — a workspace token sees unmasked contact data, see docs/developer/workspace-api-tokens.md)",
+      summary: "Export conversion rows",
       tags: ["Ads"],
     })
     .input(listAdsConversionExportRowsPublicRequest)
@@ -246,8 +243,7 @@ const adsAnalyticsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/{channel}/ad-accounts",
-      summary:
-        "List ad accounts for a channel — the union of every connected integration's messaging-ads connection plus the workspace-wide fallback (deduped), or one integration's own connection when integrationId is given",
+      summary: "List channel ad accounts",
       tags: ["Ads"],
     })
     .input(
@@ -272,8 +268,7 @@ const adsAnalyticsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/analytics/overview",
-      summary:
-        "Merged ads analytics (funnel + Meta spend/ROAS/CPM) per ad, for one channel/account/date range. Fans out to Meta Graph and requires a connected ads account — for a free, DB-only funnel, see GET /v1/ads/funnel.",
+      summary: "Get ad analytics overview",
       tags: ["Ads"],
     })
     .input(adsAnalyticsPublicRequest)
@@ -290,8 +285,7 @@ const adsAnalyticsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/analytics/timeseries",
-      summary:
-        "Merged ads analytics (funnel + Meta spend), bucketed per day. Fans out to Meta Graph and requires a connected ads account — for a free, DB-only funnel, see GET /v1/ads/funnel/timeseries.",
+      summary: "Get daily ad analytics",
       tags: ["Ads"],
     })
     .input(adsAnalyticsPublicRequest)
@@ -325,8 +319,7 @@ const adsAnalyticsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/custom-audiences",
-      summary:
-        "List Facebook custom audiences for an ad account — makes startRetargetAudienceSync's customAudienceId discoverable",
+      summary: "List custom audiences",
       tags: ["Ads"],
     })
     .input(listCustomAudiencesPublicRequest)
@@ -348,8 +341,7 @@ const adsAnalyticsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/retarget-audiences",
-      summary:
-        "Sync a Facebook custom audience with contacts matching a CTWA retarget segment — runs in the worker",
+      summary: "Sync retarget audience",
       successStatus: 202,
       tags: ["Ads"],
     })

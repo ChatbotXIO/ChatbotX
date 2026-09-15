@@ -24,7 +24,7 @@ export const contactsTagsPublicRouter = {
       path: "/v1/contacts/{identifier}/tags",
       summary: "Get all tags added to this contact",
       description:
-        "Lists every tag attached to the contact identified by `identifier`.",
+        "Use this to inspect tags attached to a contact after resolving its identifier with `contacts.get`. Call `contacts.addTags` to attach more tags or `tags.list` to discover available tags.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })

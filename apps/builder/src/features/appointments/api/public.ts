@@ -28,7 +28,7 @@ export const appointmentsPublicRouter = {
       path: "/v1/appointments",
       summary: "List appointments",
       description:
-        "Lists appointments in the workspace, optionally filtered by calendar and tab (next/past).",
+        "Use this to find appointments by calendar or next/past tab before opening one with `appointments.get`. Returns paginated workspace appointments for scheduling workflows.",
       tags,
     })
     .input(listAppointmentsPublicRequest)

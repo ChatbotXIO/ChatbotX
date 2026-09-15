@@ -26,7 +26,8 @@ export const aiFunctionsPublicRouter = {
       method: "GET",
       path: "/v1/ai-functions",
       summary: "List AI functions",
-      description: "Lists AI functions (tools) configured in the workspace.",
+      description:
+        "Use this to resolve configured AI functions before inspecting one with `aiFunctions.get` or adding one with `aiFunctions.create`. Returns the functions available in this workspace.",
       tags: ["AI Functions"],
       spec: mcpSpec({ visibility: "default" }),
     })

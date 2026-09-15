@@ -32,7 +32,7 @@ export const contactsMessagesPublicRouter = {
       path: "/v1/contacts/{identifier}/messages",
       summary: "Send message to contact",
       description:
-        "Sends a text/media message to the contact identified by `identifier` on their existing conversation, creating one if none exists yet. Requires the contact to have an inbox they can be reached on (see `inboxes.list`).",
+        "Delivers a text or media message to a contact's conversation, creating one when needed. Use `contacts.get` to confirm the recipient first, and `contacts.listMessages` to inspect the conversation afterward.",
       successStatus: 204,
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
@@ -70,7 +70,7 @@ export const contactsMessagesPublicRouter = {
       path: "/v1/contacts/{identifier}/messages",
       summary: "List messages for contact",
       description:
-        "Lists messages on the contact's existing conversation, newest-related pagination via `cursor`.",
+        "Use this to inspect cursor-paginated messages from a contact's existing conversation. Call `contacts.get` to resolve the contact first, or use `contacts.sendMessage` to add an outbound message.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -190,7 +190,7 @@ export const contactsMessagesPublicRouter = {
       path: "/v1/contacts/{identifier}/flows",
       summary: "Send flow to contact",
       description:
-        "Starts the given flow for the contact identified by `identifier`, delivering its first message on their existing (or newly created) conversation.",
+        "Starts a flow for a resolved contact and delivers its first message on an existing or new conversation. Call `flows.list` to find the flow first, or use `contacts.sendMessage` for one message.",
       successStatus: 204,
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),

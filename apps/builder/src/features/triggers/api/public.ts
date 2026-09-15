@@ -39,7 +39,8 @@ export const triggersPublicRouter = {
       method: "GET",
       path: "/v1/triggers",
       summary: "List triggers",
-      description: "Lists triggers with their real conditions and actions.",
+      description:
+        "Use this to inspect triggers and their active conditions and actions before changing one with `triggers.update`. Returns the configured triggers in this workspace.",
       tags: ["Triggers"],
     })
     .input(publicListRequest)

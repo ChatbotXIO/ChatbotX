@@ -74,7 +74,7 @@ export const couponsPublicRouter = {
       path: "/v1/coupon-topics",
       summary: "Create a coupon topic",
       description:
-        "Creates a coupon topic. The topic is created without a `createdById` — workspace API tokens have no associated user.",
+        "Adds a coupon topic without `createdById` because workspace API tokens have no user. Use `coupons.listTopics` to inspect existing topics before creating another.",
       tags,
     })
     .input(createCouponTopicPublicRequest)

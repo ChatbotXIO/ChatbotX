@@ -224,7 +224,7 @@ chatbotx error-logs list                             # [--page --perPage --sort 
 
 ## MCP Tools (for AI agents)
 
-Tool names are the OpenAPI `operationId` converted to `snake_case`. `tools/list` returns a curated **default set of 43 tools** — not the full ~350-operation API — plus two meta-tools that reach everything else:
+Tool names are the OpenAPI `operationId` converted to `snake_case`. `tools/list` returns a curated **default set of 44 tools** — not the full ~350-operation API — plus two meta-tools that reach everything else:
 
 | Tool | Description |
 |---|---|
@@ -248,7 +248,7 @@ Call `capabilities_get` and `token_get` first — both are always visible regard
 | Contacts | `contacts_create`, `contacts_get`, `contacts_list`, `contacts_search`, `contacts_list_tags`, `contacts_add_tags_by_name`, `contacts_list_custom_fields`, `contacts_set_custom_field`, `contacts_list_messages`, `contacts_send_message`, `contacts_send_flow`, `contacts_list_sequences`, `contacts_subscribe_sequences` |
 | Conversations | `conversations_list`, `conversations_get`, `conversations_assign` |
 | Error Logs | `error_logs_list` |
-| Flows | `flows_list`, `flows_get`, `flows_create`, `flows_update_draft`, `flows_publish` |
+| Flows | `flows_list`, `flows_get`, `flows_create`, `flows_update_draft`, `flows_publish`, `flows_validate` |
 | Keywords | `keywords_list` |
 | Messages | `messages_list` |
 | Sequences | `sequences_list`, `sequences_get`, `sequences_update` |

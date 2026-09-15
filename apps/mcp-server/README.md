@@ -36,7 +36,7 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 
 ## Available tools
 
-Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 43 tools:
+Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 44 tools:
 
 ### Capabilities
 
@@ -115,6 +115,7 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 | `flows_create` | Create a flow |
 | `flows_update_draft` | Update a flow's draft version |
 | `flows_publish` | Publish a flow |
+| `flows_validate` | Compile and validate a flow spec without publishing it |
 
 ### Keywords
 

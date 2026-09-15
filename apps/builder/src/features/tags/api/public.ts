@@ -43,7 +43,8 @@ export const tagsPublicRouter = {
       method: "POST",
       path: "/v1/tags",
       summary: "Create a new tag",
-      description: "Creates a new tag in the workspace, returned with its id.",
+      description:
+        "Adds a workspace tag and returns its id for later attachment to contacts. Use `tags.list` to check for an existing tag, or `contacts.addTags` to attach it.",
       successStatus: 201,
       tags: ["Tags"],
     })

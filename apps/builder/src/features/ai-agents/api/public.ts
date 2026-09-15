@@ -24,7 +24,8 @@ export const aiAgentsPublicRouter = {
       method: "GET",
       path: "/v1/ai-agents",
       summary: "List AI agents",
-      description: "Lists AI agents configured in the workspace.",
+      description:
+        "Use this to resolve an AI agent before referencing it in `flows.publish` or changing it with `aiAgents.update`. Returns the configured agents in the workspace.",
       tags: ["AI Agents"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -65,7 +66,8 @@ export const aiAgentsPublicRouter = {
       method: "POST",
       path: "/v1/ai-agents",
       summary: "Create an AI agent",
-      description: "Creates a new AI agent in the workspace.",
+      description:
+        "Adds a configured AI agent to the workspace. Use `aiAgents.list` first to avoid duplicating an existing agent, then use `aiAgents.update` to refine its settings.",
       successStatus: 201,
       tags: ["AI Agents"],
       spec: mcpSpec({ visibility: "default" }),
@@ -83,7 +85,8 @@ export const aiAgentsPublicRouter = {
       method: "PUT",
       path: "/v1/ai-agents/{id}",
       summary: "Update an AI agent",
-      description: "Partially updates an existing AI agent.",
+      description:
+        "Changes settings on an existing AI agent without replacing unrelated fields. Call `aiAgents.list` to resolve its id, and use `aiAgents.get` to inspect the saved result.",
       tags: ["AI Agents"],
       spec: mcpSpec({ visibility: "default" }),
     })

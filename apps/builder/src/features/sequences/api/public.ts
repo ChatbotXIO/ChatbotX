@@ -32,7 +32,7 @@ export const sequencesPublicRouter = {
       path: "/v1/sequences",
       summary: "List sequences",
       description:
-        "Lists sequences in the workspace. Use `sequences.get`/`contacts.subscribeSequences` next to inspect steps or enroll a contact.",
+        "Use this to find sequence ids before inspecting steps with `sequences.get` or enrolling contacts with `contacts.subscribeSequences`. Returns sequences available in the workspace.",
       tags: ["Sequences"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -52,7 +52,8 @@ export const sequencesPublicRouter = {
       method: "GET",
       path: "/v1/sequences/{id}",
       summary: "Get sequence details",
-      description: "Returns a sequence with its list of steps.",
+      description:
+        "Use this to inspect one sequence and its steps after finding its id with `sequences.list`. Call `sequences.update` to change its settings or `sequences.upsertStep` to edit steps.",
       tags: ["Sequences"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -93,7 +94,8 @@ export const sequencesPublicRouter = {
       method: "PATCH",
       path: "/v1/sequences/{id}",
       summary: "Update a sequence's name or active state",
-      description: "Partially updates a sequence's name or active flag.",
+      description:
+        "Changes a sequence name or active state without replacing its steps. Call `sequences.get` to inspect the current sequence, or use `sequences.list` to resolve its id.",
       tags: ["Sequences"],
       spec: mcpSpec({ visibility: "default" }),
     })
