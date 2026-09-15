@@ -37,6 +37,8 @@ export const spreadsheetsPublicRouter = {
       method: "GET",
       path: "/v1/spreadsheets",
       summary: "List spreadsheets",
+      description:
+        "Use this to find spreadsheet ids before inspecting one with `spreadsheets.get` or listing its worksheets with `spreadsheets.listWorksheets`. Returns spreadsheets in this workspace.",
       tags: ["Spreadsheets"],
     })
     .input(listSpreadsheetsPublicRequest)
@@ -55,6 +57,8 @@ export const spreadsheetsPublicRouter = {
       method: "GET",
       path: "/v1/spreadsheets/{id}",
       summary: "Get a spreadsheet",
+      description:
+        "Returns one connected spreadsheet's settings. Use `spreadsheets.list` to find its id first.",
       tags: ["Spreadsheets"],
     })
     .input(getSpreadsheetPublicRequest)
@@ -73,6 +77,8 @@ export const spreadsheetsPublicRouter = {
       method: "POST",
       path: "/v1/spreadsheets",
       summary: "Create a spreadsheet",
+      description:
+        "Connects a Google Sheets spreadsheet by its shareable URL. Requires the workspace's Google Sheets integration to be set up first.",
       successStatus: 201,
       tags: ["Spreadsheets"],
     })
@@ -93,6 +99,8 @@ export const spreadsheetsPublicRouter = {
       method: "PUT",
       path: "/v1/spreadsheets/{id}",
       summary: "Update a spreadsheet",
+      description:
+        "Changes an existing spreadsheet connection's settings. Call `spreadsheets.get` to inspect current values first.",
       tags: ["Spreadsheets"],
     })
     .input(updateSpreadsheetPublicRequest)
@@ -113,6 +121,8 @@ export const spreadsheetsPublicRouter = {
       method: "DELETE",
       path: "/v1/spreadsheets/{id}",
       summary: "Delete a spreadsheet",
+      description:
+        "Disconnects a spreadsheet. Use `spreadsheets.list` to find its id first.",
       successStatus: 204,
       tags: ["Spreadsheets"],
     })
@@ -130,6 +140,8 @@ export const spreadsheetsPublicRouter = {
       method: "GET",
       path: "/v1/spreadsheets/{spreadsheetId}/worksheets",
       summary: "List worksheets",
+      description:
+        "Returns the sheet tabs (worksheets) inside a connected spreadsheet. Use `spreadsheets.list` to find the spreadsheet id first.",
       tags: ["Spreadsheets"],
     })
     .input(listWorksheetsPublicRequest)
@@ -148,6 +160,8 @@ export const spreadsheetsPublicRouter = {
       method: "GET",
       path: "/v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetName}/headers",
       summary: "List worksheet headers",
+      description:
+        "Returns the column headers of a worksheet's first row. Use `spreadsheets.listWorksheets` to find the worksheet name first.",
       tags: ["Spreadsheets"],
     })
     .input(listWorksheetHeadersPublicRequest)

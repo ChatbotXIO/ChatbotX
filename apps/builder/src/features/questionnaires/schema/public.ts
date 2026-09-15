@@ -8,6 +8,7 @@ import { z } from "zod"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import {
   createQuestionnaireRequest,
+  questionnaireNameSchema,
   questionnaireOptionRequest,
   renameQuestionnaireRequest,
   updateQuestionnaireRequest,
@@ -42,7 +43,15 @@ const questionnaireListItemResource = z.object({
 })
 
 export const listQuestionnairesPublicRequest = publicListRequest.extend({
-  name: z.string().trim().min(1).max(255).optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(255)
+    .optional()
+    .describe(
+      "Case-insensitive substring match against the questionnaire's name.",
+    ),
   sort: z
     .array(
       z.object({
@@ -50,7 +59,8 @@ export const listQuestionnairesPublicRequest = publicListRequest.extend({
         desc: z.boolean(),
       }),
     )
-    .optional(),
+    .optional()
+    .describe('Sort order as [{ id: "name", desc }].'),
 })
 
 export const listQuestionnairesPublicResponse = publicListResponse(
@@ -58,7 +68,9 @@ export const listQuestionnairesPublicResponse = publicListResponse(
 )
 
 export const getQuestionnairePublicRequest = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Questionnaire id. Get it from `questionnaires.list`.",
+  ),
 })
 
 export const getQuestionnaireSubmissionStatsPublicResponse = z.object({
@@ -83,15 +95,24 @@ export const createQuestionnairePublicRequest = createQuestionnaireRequest
 
 export const updateQuestionnairePublicRequest =
   updateQuestionnaireRequest.extend({
-    id: zodBigintAsString(),
+    id: zodBigintAsString().describe(
+      "Questionnaire id. Get it from `questionnaires.list`.",
+    ),
   })
 
 export const duplicateQuestionnairePublicRequest = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Questionnaire id. Get it from `questionnaires.list`.",
+  ),
 })
 
 export const renameQuestionnairePublicRequest =
-  renameQuestionnaireRequest.extend({ id: zodBigintAsString() })
+  renameQuestionnaireRequest.extend({
+    id: zodBigintAsString().describe(
+      "Questionnaire id. Get it from `questionnaires.list`.",
+    ),
+    name: questionnaireNameSchema.describe("New questionnaire name."),
+  })
 
 const questionnaireSubmissionSort = z.object({
   id: z.enum(["name", "totalPoints", "status", "completedAt"]),
@@ -100,9 +121,22 @@ const questionnaireSubmissionSort = z.object({
 
 export const listQuestionnaireSubmissionsPublicRequest =
   publicListRequest.extend({
-    id: zodBigintAsString(),
-    name: z.string().trim().min(1).max(255).optional(),
-    sort: z.array(questionnaireSubmissionSort).optional(),
+    id: zodBigintAsString().describe(
+      "Questionnaire id. Get it from `questionnaires.list`.",
+    ),
+    name: z
+      .string()
+      .trim()
+      .min(1)
+      .max(255)
+      .optional()
+      .describe(
+        "Case-insensitive substring match against the respondent's name.",
+      ),
+    sort: z
+      .array(questionnaireSubmissionSort)
+      .optional()
+      .describe("Sort order."),
   })
 
 const questionnaireSubmissionContactResource = z.object({
@@ -130,8 +164,12 @@ export const listQuestionnaireSubmissionsPublicResponse = z.object({
 })
 
 export const getQuestionnaireSubmissionPublicRequest = z.object({
-  id: zodBigintAsString(),
-  submissionId: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Questionnaire id. Get it from `questionnaires.list`.",
+  ),
+  submissionId: zodBigintAsString().describe(
+    "Submission id. Get it from `questionnaires.listSubmissions`.",
+  ),
 })
 
 export const questionnaireSubmissionPublicResource = z.object({

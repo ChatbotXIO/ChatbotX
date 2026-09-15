@@ -55,6 +55,8 @@ export const appointmentsPublicRouter = {
       method: "GET",
       path: "/v1/appointments/{id}",
       summary: "Get an appointment by id",
+      description:
+        "Returns one appointment's booking details. Use `appointments.list` to find its id first.",
       tags,
     })
     .input(appointmentIdPublicRequest)
@@ -102,6 +104,8 @@ export const appointmentsPublicRouter = {
       method: "POST",
       path: "/v1/appointments/{id}/cancel",
       summary: "Cancel an appointment",
+      description:
+        "Cancels a booked appointment without deleting its record. Use `appointments.list` to find its id first.",
       tags,
     })
     .input(appointmentIdPublicRequest)

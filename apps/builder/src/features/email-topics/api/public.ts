@@ -27,6 +27,8 @@ export const emailTopicsPublicRouter = {
       method: "GET",
       path: "/v1/email-topics",
       summary: "List email topics",
+      description:
+        "Use this to find email topic ids before inspecting one with `emailTopics.get`. Returns email topics in this workspace.",
       tags: ["EmailTopics"],
     })
     .input(listEmailTopicsPublicRequest)
@@ -45,9 +47,17 @@ export const emailTopicsPublicRouter = {
       method: "GET",
       path: "/v1/email-topics/{id}",
       summary: "Get email topic",
+      description:
+        "Returns one email topic's settings. Use `emailTopics.list` to find its id first.",
       tags: ["EmailTopics"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Email topic id. Get it from `emailTopics.list`.",
+        ),
+      }),
+    )
     .output(emailTopicPublicResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
@@ -63,6 +73,8 @@ export const emailTopicsPublicRouter = {
       method: "POST",
       path: "/v1/email-topics",
       summary: "Create an email topic",
+      description:
+        "Adds an email topic used to group broadcast unsubscribe preferences. Use `emailTopics.list` first to avoid duplicating an existing one.",
       successStatus: 201,
       tags: ["EmailTopics"],
     })
@@ -86,6 +98,8 @@ export const emailTopicsPublicRouter = {
       method: "PUT",
       path: "/v1/email-topics/{id}",
       summary: "Update email topic",
+      description:
+        "Changes an existing email topic's settings. Call `emailTopics.get` to inspect current values first.",
       tags: ["EmailTopics"],
     })
     .input(updateEmailTopicPublicRequest)
@@ -105,10 +119,17 @@ export const emailTopicsPublicRouter = {
       method: "DELETE",
       path: "/v1/email-topics/{id}",
       summary: "Delete email topic",
-      successStatus: 204,
+      description:
+        "Permanently deletes an email topic. Use `emailTopics.list` to find its id first.",
       tags: ["EmailTopics"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Email topic id. Get it from `emailTopics.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       // `delete` is a bulk method for the UI's multi-select, which treats a

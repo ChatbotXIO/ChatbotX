@@ -57,15 +57,9 @@ const LEGACY_WORKSPACE_TOKEN_PATTERN = /workspace[_.]?token/i
 const LEGACY_API_SUFFIX_PATTERN = /[_.]api$/i
 
 const DESCRIPTION_BACKLOG = new Set<string>([
-  "appointmentCalendars.",
-  "appointmentExternalCalendars.",
-  "appointmentReminders.",
-  "appointments.",
-  "botFields.",
   "channels.",
   "contactScans.",
   "customFields.",
-  "emailTopics.",
   "fbComments.",
   "folders.",
   "igComments.",
@@ -75,10 +69,8 @@ const DESCRIPTION_BACKLOG = new Set<string>([
   "messengerPersonas.",
   "productCategories.",
   "products.",
-  "questionnaires.",
   "reflinks.",
   "smtpIntegrations.",
-  "spreadsheets.",
   "tags.",
   "templateMessages.",
   "userPersistentMenus.",

@@ -63,19 +63,41 @@ export type AppointmentListItemPublicResource = z.infer<
 export const appointmentListTabs = ["next", "past"] as const
 
 export const listAppointmentsPublicRequest = publicListRequest.extend({
-  calendarId: zodBigintAsString().optional(),
-  tab: z.enum(appointmentListTabs).optional(),
-  search: z.string().optional(),
+  calendarId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Restrict to appointments on this calendar. Get it from `appointmentCalendars.list`.",
+    ),
+  tab: z
+    .enum(appointmentListTabs)
+    .optional()
+    .describe("Restrict to upcoming (`next`) or past appointments."),
+  search: z
+    .string()
+    .optional()
+    .describe("Case-insensitive substring match against the contact's name."),
 })
 
 export const appointmentIdPublicRequest = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Appointment id. Get it from `appointments.list`.",
+  ),
 })
 
 export const bookAppointmentPublicRequest = z.object({
-  calendarId: zodBigintAsString(),
-  contactId: zodBigintAsString(),
-  conversationId: zodBigintAsString().optional().nullable(),
-  startAt: z.coerce.date(),
-  inviteeTimezone: z.string().optional(),
+  calendarId: zodBigintAsString().describe(
+    "Calendar to book on. Get it from `appointmentCalendars.list`.",
+  ),
+  contactId: zodBigintAsString().describe(
+    "Contact id. Get it from `contacts.list`.",
+  ),
+  conversationId: zodBigintAsString()
+    .optional()
+    .nullable()
+    .describe("Conversation to associate the booking with, if any."),
+  startAt: z.coerce.date().describe("Slot start time."),
+  inviteeTimezone: z
+    .string()
+    .optional()
+    .describe("IANA timezone of the invitee, for display purposes."),
 })
