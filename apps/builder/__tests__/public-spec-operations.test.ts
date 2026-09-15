@@ -555,6 +555,65 @@ describe("public API spec — error response coverage", () => {
     expect(missing404).toEqual([])
   })
 
+  // A route with no `.output(...)` schema serializes to this exact
+  // "unknown value" JSON Schema shape (oRPC/Zod's representation of `any`),
+  // distinct from every real response schema (which always declares a type
+  // or a real union of typed alternatives).
+  const isUndeclaredBodySchema = (schema: unknown): boolean =>
+    JSON.stringify(schema) === JSON.stringify({ anyOf: [{}, { not: {} }] })
+
+  test("every operation with no declared response body documents successStatus: 204", () => {
+    const bodyless = operations.filter((op) =>
+      isUndeclaredBodySchema(responseSchemasByOperationId[op.operationId]),
+    )
+
+    expect(bodyless.length).toBeGreaterThan(0)
+
+    const wrongStatus = bodyless
+      .filter((op) => {
+        const successStatuses = op.responseStatuses.filter((status) =>
+          status.startsWith("2"),
+        )
+        return !(successStatuses.length === 1 && successStatuses[0] === "204")
+      })
+      .map((op) => op.operationId)
+
+    expect(wrongStatus).toEqual([])
+  })
+
+  // Mirrors `toSnakeCase` in apps/mcp-server/src/openapi-loader.ts — kept in
+  // sync manually rather than imported, since apps/builder has no dependency
+  // on chatbotx-mcp-server. If that implementation changes, update this too.
+  const toSnakeCase = (str: string): string =>
+    str
+      .replace(/([A-Z]{2,})(?=[A-Z][a-z]|$)/g, "_$1")
+      .replace(/([a-z\d])([A-Z])/g, "$1_$2")
+      .toLowerCase()
+      .replace(/[.\-\s]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_|_$/g, "")
+
+  test("operationIds are injective after MCP's snake_case conversion — a collision leaves one tool permanently unreachable", () => {
+    const snakeCased = operations.map((op) => toSnakeCase(op.operationId))
+    const seen = new Map<string, string[]>()
+    for (const [index, name] of snakeCased.entries()) {
+      const operationId = operations[index]?.operationId ?? ""
+      const existing = seen.get(name)
+      if (existing) {
+        existing.push(operationId)
+      } else {
+        seen.set(name, [operationId])
+      }
+    }
+
+    const collisions = [...seen.entries()].filter(
+      ([, operationIds]) => operationIds.length > 1,
+    )
+
+    expect(collisions).toEqual([])
+    expect(new Set(snakeCased).size).toBe(operations.length)
+  })
+
   test("every POST/PUT/PATCH operation documents 422", () => {
     const bodyMethods = operations.filter(
       (op) =>

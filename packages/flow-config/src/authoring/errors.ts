@@ -17,6 +17,7 @@ export type FlowAuthoringErrorCode =
   | "unknownFlow"
   | "unknownCustomField"
   | "invalidGotoTarget"
+  | "selfLoopGoto"
   | "duplicateStepId"
   | "invalidStep"
   | "compileFailed"

@@ -574,6 +574,92 @@ describe("compileFlowSpec — goto", () => {
       expect(authoringError?.path).toBe("steps[1].targetId")
     }
   })
+
+  test("rejects a goto that targets the immediately preceding step (self-loop)", () => {
+    try {
+      compileFlowSpec(
+        spec([
+          { type: "addNote", id: "note", note: "hi" },
+          { type: "goto", targetId: "note" },
+        ]),
+        emptyCtx,
+      )
+      throw new Error("expected compileFlowSpec to throw")
+    } catch (error) {
+      expect(error).toBeInstanceOf(FlowAuthoringException)
+      const authoringError = (error as FlowAuthoringException).errors[0]
+      expect(authoringError?.code).toBe("selfLoopGoto")
+      expect(authoringError?.path).toBe("steps[1]")
+    }
+  })
+
+  test("a goto jumping back over an earlier step (not the immediately preceding one) still compiles", () => {
+    // Distinct from the self-loop case above: previousNodeId !== target here.
+    const compiled = compileFlowSpec(
+      spec([
+        { type: "addNote", id: "greet", note: "greeted" },
+        { type: "wait", duration: 1, unit: "days" },
+        { type: "goto", targetId: "greet" },
+      ]),
+      emptyCtx,
+    )
+    expect(compiled.nodes).toHaveLength(2)
+  })
+
+  test("a button's goto back to its own send step compiles (id registered before children)", () => {
+    const compiled = compileFlowSpec(
+      spec([
+        {
+          type: "send",
+          id: "menu",
+          text: "Pick an option",
+          buttons: [
+            {
+              text: "Back to menu",
+              // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+              then: [{ type: "goto", targetId: "menu" }],
+            },
+          ],
+        },
+      ]),
+      emptyCtx,
+    )
+
+    expect(compiled.nodes).toHaveLength(1)
+    const [menuNode] = compiled.nodes
+    const gotoEdge = compiled.edges.find(
+      (edge) => edge.target === menuNode?.id && edge.source === menuNode?.id,
+    )
+    expect(gotoEdge).toBeDefined()
+  })
+
+  test("a branch case's goto back to its own branch step compiles (id registered before children)", () => {
+    const compiled = compileFlowSpec(
+      spec([
+        {
+          type: "branch",
+          id: "router",
+          cases: [
+            {
+              when: [{ field: "email", operator: "isNotEmpty" }],
+              // biome-ignore lint/suspicious/noThenProperty: DSL fixture data
+              then: [{ type: "goto", targetId: "router" }],
+            },
+          ],
+        },
+      ]),
+      emptyCtx,
+    )
+
+    expect(compiled.nodes).toHaveLength(1)
+    const [branchNode] = compiled.nodes
+    if (branchNode?.type !== "condition") {
+      throw new Error("expected condition node")
+    }
+    const caseId = branchNode.data.details.steps[0]?.cases[0]?.id
+    const gotoEdge = compiled.edges.find((edge) => edge.sourceHandle === caseId)
+    expect(gotoEdge?.target).toBe(branchNode.id)
+  })
 })
 
 describe("compileFlowSpec — structural validation", () => {

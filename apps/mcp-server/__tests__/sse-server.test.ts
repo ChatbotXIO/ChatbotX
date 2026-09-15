@@ -248,6 +248,33 @@ describe("createRequestListener", () => {
     }
   })
 
+  // `isInitializeRequest` was switched from a local, lenient check (only
+  // `method === "initialize"`) to the SDK's version, which validates the
+  // full `InitializeRequestSchema` (jsonrpc version, id, protocolVersion,
+  // capabilities, clientInfo). A minimal body that the old check accepted
+  // must now be rejected — pinning this deliberately, since it's a
+  // breaking change for a lenient client.
+  test("rejects a minimal { method: 'initialize' } body missing jsonrpc/id/params as not a valid initialize request", async () => {
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const createMcpServer = vi.fn()
+    const requestServer = await startRequestServer(
+      createRequestListener(createMcpServer as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/messages`, {
+        body: JSON.stringify({ method: "initialize" }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      })
+
+      expect(response.status).toBe(400)
+      expect(createMcpServer).not.toHaveBeenCalled()
+    } finally {
+      await requestServer.close()
+    }
+  })
+
   test("logs and returns 500 when MCP server creation throws", async () => {
     const { createRequestListener } = await import("../src/server/sse-server")
     const createMcpServer = vi.fn(() => {

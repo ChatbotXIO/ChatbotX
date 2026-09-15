@@ -100,6 +100,7 @@ export const sequencesPublicRouter = {
       summary: "Update a sequence's name or active state",
       description:
         "Changes a sequence name or active state without replacing its steps. Call `sequences.get` to inspect the current sequence, or use `sequences.list` to resolve its id.",
+      successStatus: 204,
       tags: ["Sequences"],
       spec: mcpSpec({ visibility: "default" }),
     })

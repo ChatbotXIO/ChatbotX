@@ -95,6 +95,40 @@ describe("loadOpenApiSpec", () => {
     expect(tools.map((tool) => tool.name)).toEqual(["tags_list"])
   })
 
+  test("a snake_case name collision keeps only the first operation in the returned list, getCachedTools, AND getToolByName — never advertising a tool tools/call can't reach", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/ai-mcp-servers": {
+            get: { operationId: "aiMCPServers.list", summary: "First" },
+          },
+          "/v1/ai-mcpservers": {
+            get: { operationId: "aiMcpservers.list", summary: "Second" },
+          },
+        },
+      }),
+    }) as unknown as typeof fetch
+
+    const { loadOpenApiSpec, getCachedTools, getToolByName } = await import(
+      "../src/openapi-loader"
+    )
+    const tools = await loadOpenApiSpec()
+
+    // Both operationIds snake_case to "ai_mcpservers_list" — only the first
+    // survives, and it must survive identically everywhere a caller can
+    // read the tool list from.
+    expect(
+      tools.filter((tool) => tool.name === "ai_mcpservers_list"),
+    ).toHaveLength(1)
+    expect(
+      getCachedTools().filter((tool) => tool.name === "ai_mcpservers_list"),
+    ).toHaveLength(1)
+    expect(getToolByName("ai_mcpservers_list")?.description).toBe("First")
+  })
+
   test("joins summary and description into one tool description", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,

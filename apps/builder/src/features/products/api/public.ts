@@ -92,6 +92,7 @@ export const productsPublicRouter = {
       summary: "Replace a product",
       description:
         "Fully replaces the product, including its variant options, variants, and addons.",
+      successStatus: 204,
       tags: ["Products"],
     })
     .input(

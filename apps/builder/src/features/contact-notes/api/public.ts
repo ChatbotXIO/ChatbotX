@@ -6,6 +6,7 @@ import {
   listContactNotesPublicResponse,
   updateContactNotePublicRequest,
 } from "@/features/contact-notes/schema/public"
+import { contactNoteResource } from "@/features/contact-notes/schema/resource"
 import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
@@ -71,6 +72,7 @@ export const contactsNotesPublicRouter = {
         }),
       ),
     )
+    .output(contactNoteResource)
     // Mutating, not creating: the note is new, but `{identifier}` is resolved
     // via `contactService.resolveIdByIdentifier`, which throws a 404 when the
     // contact does not exist — so this route must declare `notFound` too.
@@ -111,6 +113,7 @@ export const contactsNotesPublicRouter = {
         }),
       ),
     )
+    .output(contactNoteResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id

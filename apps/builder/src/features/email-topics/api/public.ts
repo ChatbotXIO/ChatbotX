@@ -122,6 +122,7 @@ export const emailTopicsPublicRouter = {
       description:
         "Permanently deletes an email topic. Use `emailTopics.list` to find its id first.",
       tags: ["EmailTopics"],
+      successStatus: 204,
     })
     .input(
       z.object({

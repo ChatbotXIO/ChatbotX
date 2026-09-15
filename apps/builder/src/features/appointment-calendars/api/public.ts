@@ -101,6 +101,7 @@ export const appointmentCalendarsPublicRouter = {
       description:
         "Replaces an existing calendar's full configuration (duration, availability, buffers, reminders). Call `appointmentCalendars.get` to inspect current values first.",
       tags,
+      successStatus: 204,
     })
     .input(
       updateAppointmentCalendarRequest.and(appointmentCalendarIdPublicRequest),
@@ -124,6 +125,7 @@ export const appointmentCalendarsPublicRouter = {
       description:
         "Toggles whether a calendar accepts new bookings via `appointments.book`, without changing its configuration.",
       tags,
+      successStatus: 204,
     })
     .input(
       setAppointmentCalendarActivePublicRequest.and(

@@ -103,6 +103,7 @@ export const contactsCustomFieldsPublicRouter = {
       summary: "Set contact custom field value",
       description:
         "Changes one custom-field value on a resolved contact without altering its other fields. Use `contacts.listCustomFields` to inspect current values, or `contacts.setCustomFields` for several changes.",
+      successStatus: 204,
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })

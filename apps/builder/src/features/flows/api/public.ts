@@ -120,6 +120,7 @@ export const flowsPublicRouter = {
       summary: "Update flow settings",
       description:
         "Partially updates a flow's name, active, or enableInInbox flags.",
+      successStatus: 204,
       tags: ["Flows"],
     })
     .input(updateFlowSchema.and(publicIdParam("flow", "flows.list")))
@@ -176,6 +177,7 @@ export const flowsPublicRouter = {
       summary: "Publish a flow",
       description:
         "Creates an immutable version from a draft and synchronizes the draft to match. Call `flows.validate` before this when supplying a spec, or use `flows.updateDraft` to save changes without publishing.",
+      successStatus: 204,
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -220,6 +222,7 @@ export const flowsPublicRouter = {
       summary: "Update a flow's draft version",
       description:
         "Overwrites the draft version's nodes/edges in place, without publishing. Accepts either the raw `{ nodes, edges }` graph the builder UI sends, or `{ spec }` compiled server-side into that same graph — draft nodes are not otherwise validated (see `flows.validate` to check a spec before writing it).",
+      successStatus: 204,
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
     })

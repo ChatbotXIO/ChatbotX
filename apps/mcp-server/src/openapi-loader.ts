@@ -391,6 +391,7 @@ async function fetchAndParseSpec(): Promise<DynamicTool[]> {
   const tools = parseToolsFromSpec(spec)
 
   toolsByName.clear()
+  const deduplicatedTools: DynamicTool[] = []
   for (const tool of tools) {
     if (toolsByName.has(tool.name)) {
       console.error(
@@ -399,14 +400,20 @@ async function fetchAndParseSpec(): Promise<DynamicTool[]> {
       continue
     }
     toolsByName.set(tool.name, tool)
+    deduplicatedTools.push(tool)
   }
 
-  cachedTools = tools
+  // `tools/list` serves `cachedTools` (see the return below and the 304
+  // fast-path above), so it must match `toolsByName` exactly — otherwise a
+  // duplicate name is advertised twice while `tools/call` can only ever
+  // dispatch to the first, permanently wasting a slot in the client's
+  // context window on an unreachable tool.
+  cachedTools = deduplicatedTools
   cachedEtag = response.headers.get("ETag")
   fetchedAtMs = Date.now()
   // stderr keeps this out of the stdio MCP transport stream
-  console.error(`Loaded ${tools.length} tools from OpenAPI spec`)
-  return tools
+  console.error(`Loaded ${deduplicatedTools.length} tools from OpenAPI spec`)
+  return deduplicatedTools
 }
 
 export async function loadOpenApiSpec(): Promise<DynamicTool[]> {

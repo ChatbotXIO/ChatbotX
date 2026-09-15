@@ -225,6 +225,25 @@ function assertNoDuplicateStepIds(spec: FlowSpec, state: CompileState): void {
   }
 }
 
+/**
+ * Makes `specStepId` resolvable by `goto` before this step's own node exists
+ * in `state.nodes` — a step's children (a button's `then`, a branch case's
+ * `then`) compile before `registerNode` runs, so a `goto` back to the step
+ * that contains them (e.g. a "Back to menu" button on the same send step)
+ * would otherwise find nothing in `stepIdToNodeId` yet. Idempotent with
+ * `registerNode`'s own `stepIdToNodeId.set` below — both just point the id
+ * at the same, already-known `nodeId`.
+ */
+const preregisterStepId = (
+  state: CompileState,
+  specStepId: string | undefined,
+  nodeId: string,
+): void => {
+  if (specStepId) {
+    state.stepIdToNodeId.set(specStepId, nodeId)
+  }
+}
+
 const registerNode = (
   state: CompileState,
   specStepId: string | undefined,
@@ -238,9 +257,7 @@ const registerNode = (
     state.nodes.splice(options.insertAt, 0, node)
   }
   state.specPathByNodeId.set(node.id, stepPath)
-  if (specStepId) {
-    state.stepIdToNodeId.set(specStepId, node.id)
-  }
+  preregisterStepId(state, specStepId, node.id)
   return node.id
 }
 
@@ -314,6 +331,10 @@ function compileSendStep(
 ): string {
   const nodeId = createId()
   const insertAt = state.nodes.length
+  // Before compiling buttons: a button's `then` can `goto` back to this same
+  // send step (e.g. "Back to menu"), which only resolves if the id is
+  // already registered when that nested `compileChain` runs.
+  preregisterStepId(state, step.id, nodeId)
   const buttons = (step.buttons ?? []).map((buttonSpec, buttonIndex) =>
     compileSendButton(
       buttonSpec,
@@ -572,6 +593,10 @@ function compileBranchStep(
   const nodeId = createId()
   const insertAt = state.nodes.length
   const otherwiseId = createId()
+  // Before compiling cases/otherwise: a case's `then` can `goto` back to
+  // this same branch step, which only resolves if the id is already
+  // registered when that nested `compileChain` runs.
+  preregisterStepId(state, step.id, nodeId)
   const cases = step.cases.map((branchCase, caseIndex) => {
     const caseDefault = conditionCaseDefaultFn()
     const casePath = `${stepPath}.cases[${caseIndex}]`
@@ -703,7 +728,25 @@ function compileChain(
         entryNodeId = nodeId
       }
       if (previousNodeId && !previousStepWasTerminal) {
-        addContinueEdge(state, previousNodeId, nodeId)
+        // `compileGotoStep` creates no node of its own — it returns the
+        // existing target node's id. If that target is the step immediately
+        // before it, `nodeId === previousNodeId` and a continue edge would
+        // wire a node to itself (`source === target`), a degenerate
+        // self-loop `layoutNodes` can't position. Reject it as a compile
+        // error instead of silently emitting it.
+        if (nodeId === previousNodeId) {
+          addError(
+            state,
+            stepPath,
+            "selfLoopGoto",
+            '"goto" targets the immediately preceding step, which would create a self-loop edge.',
+            {
+              hint: 'Target an earlier step, or remove this "goto" — the flow already continues into the preceding step by default.',
+            },
+          )
+        } else {
+          addContinueEdge(state, previousNodeId, nodeId)
+        }
       }
       previousNodeId = nodeId
     }
@@ -778,11 +821,11 @@ const finalizeGraph = (
     state.edges,
     startNodeId,
   )
-  const nodes = routedNodes.map((node, index) =>
+  const nodes = routedNodes.map((node) =>
     withLayoutPosition(
       node,
       positions.get(node.id) ?? node.position,
-      index === 0 && node.id === startNodeId,
+      node.id === startNodeId,
     ),
   )
 

@@ -465,6 +465,109 @@ describe("GET /v1/flows/{id}/versions", () => {
   })
 })
 
+describe("publishFlowRequest / updateDraftFlowRequest — mixed body rejection", () => {
+  const validSpec = {
+    formatVersion: 1,
+    name: "Spec flow",
+    steps: [{ type: "send", text: "Hello!" }],
+  }
+
+  test("publishFlowRequest rejects a body carrying both nodes/edges and spec", async () => {
+    const { publishFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+
+    const result = publishFlowRequest.safeParse({
+      nodes: [],
+      edges: [],
+      spec: validSpec,
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  test("publishFlowRequest still accepts a spec-only body", async () => {
+    const { publishFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+
+    const result = publishFlowRequest.safeParse({ spec: validSpec })
+
+    expect(result.success).toBe(true)
+    expect(result.success && "spec" in result.data).toBe(true)
+  })
+
+  test("publishFlowRequest still accepts a graph-only body", async () => {
+    const { publishFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+
+    const result = publishFlowRequest.safeParse({ nodes: [], edges: [] })
+
+    expect(result.success).toBe(true)
+    expect(result.success && "spec" in result.data).toBe(false)
+  })
+
+  test("updateDraftFlowRequest rejects a body carrying both nodes/edges and spec", async () => {
+    const { updateDraftFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+
+    const result = updateDraftFlowRequest.safeParse({
+      nodes: [],
+      edges: [],
+      spec: validSpec,
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  test("updateDraftFlowRequest still accepts a spec-only body", async () => {
+    const { updateDraftFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+
+    const result = updateDraftFlowRequest.safeParse({ spec: validSpec })
+
+    expect(result.success).toBe(true)
+    expect(result.success && "spec" in result.data).toBe(true)
+  })
+
+  test("updateDraftFlowRequest still accepts a graph-only body", async () => {
+    const { updateDraftFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+
+    const result = updateDraftFlowRequest.safeParse({ nodes: [], edges: [] })
+
+    expect(result.success).toBe(true)
+    expect(result.success && "spec" in result.data).toBe(false)
+  })
+
+  // The actual route input is `publishFlowRequest.and(publicIdParam(...))` —
+  // a plain `.strict()` union member rejects the intersection's `id` key
+  // before the two schemas ever merge, which would break every real
+  // request. Pin the composed shape directly so a future refactor can't
+  // silently reintroduce that regression.
+  test("publishFlowRequest composed with the route's id param still accepts spec-only and graph-only bodies", async () => {
+    const { publishFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+    const { publicIdParam } = await import("@/lib/public-api/params")
+
+    const composed = publishFlowRequest.and(publicIdParam("flow", "flows.list"))
+
+    expect(composed.safeParse({ id: "1", spec: validSpec }).success).toBe(true)
+    expect(composed.safeParse({ id: "1", nodes: [], edges: [] }).success).toBe(
+      true,
+    )
+    expect(
+      composed.safeParse({ id: "1", nodes: [], edges: [], spec: validSpec })
+        .success,
+    ).toBe(false)
+  })
+})
+
 describe("POST /v1/flows/import", () => {
   const procedure = findProcedure("POST", "/v1/flows/import")
 

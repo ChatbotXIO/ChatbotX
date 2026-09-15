@@ -98,6 +98,7 @@ export const questionnairesPublicRouter = {
       summary: "Update a questionnaire",
       description:
         "Replaces an existing questionnaire's questions and settings. Call `questionnaires.get` to inspect current values first.",
+      successStatus: 204,
       tags: ["Questionnaires"],
     })
     .input(updateQuestionnairePublicRequest)
@@ -142,6 +143,7 @@ export const questionnairesPublicRouter = {
       summary: "Rename a questionnaire",
       description:
         "Changes a questionnaire's display name without touching its questions.",
+      successStatus: 204,
       tags: ["Questionnaires"],
     })
     .input(renameQuestionnairePublicRequest)
