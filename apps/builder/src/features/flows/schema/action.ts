@@ -8,21 +8,33 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const createFlowSchema = z.object({
-  folderId: zodBigintAsString().nullable(),
-  name: z.string().trim().min(1).max(255),
+  folderId: zodBigintAsString()
+    .nullable()
+    .describe(
+      "Folder id (numeric string) to create the flow in, or null for no folder.",
+    ),
+  name: z.string().trim().min(1).max(255).describe("Flow name."),
 })
 export type CreateFlowSchema = z.infer<typeof createFlowSchema>
 
 export const updateFlowSchema = z.object({
-  name: z.optional(z.string().trim().min(1).max(255)),
-  active: z.optional(z.boolean()),
-  enableInInbox: z.optional(z.boolean()),
+  name: z
+    .optional(z.string().trim().min(1).max(255))
+    .describe("New flow name."),
+  active: z.optional(z.boolean()).describe("Whether the flow is active."),
+  enableInInbox: z
+    .optional(z.boolean())
+    .describe("Whether agents can start this flow manually from the inbox."),
 })
 export type UpdateFlowSchema = z.infer<typeof updateFlowSchema>
 
 export const updateDraftFlowVersionSchema = z.object({
-  nodes: z.array(z.any()),
-  edges: z.array(edgeSchema),
+  nodes: z
+    .array(z.any())
+    .describe("Raw flow node graph, as sent by the builder UI."),
+  edges: z
+    .array(edgeSchema)
+    .describe("Raw flow edge graph, as sent by the builder UI."),
 })
 export type UpdateDraftFlowVersionSchema = z.infer<
   typeof updateDraftFlowVersionSchema
@@ -43,8 +55,13 @@ export const updateDraftFlowRequest = z.union([
 // `@chatbotx.io/flow-config/channel-rules`), so this stays one generic hook
 // instead of accumulating a refinement per channel/step pair.
 export const publishFlowSchema = z.object({
-  nodes: z.array(flowVersionSchema).superRefine(refineStepsByChannel),
-  edges: z.array(edgeSchema),
+  nodes: z
+    .array(flowVersionSchema)
+    .superRefine(refineStepsByChannel)
+    .describe("Raw flow node graph, as sent by the builder UI."),
+  edges: z
+    .array(edgeSchema)
+    .describe("Raw flow edge graph, as sent by the builder UI."),
 })
 export type PublishFlowSchema = z.infer<typeof publishFlowSchema>
 

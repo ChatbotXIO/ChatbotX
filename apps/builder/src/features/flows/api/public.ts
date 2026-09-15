@@ -17,6 +17,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
+import { publicIdParam } from "@/lib/public-api/params"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   compileAndValidateSpec,
@@ -47,7 +48,13 @@ export const flowsPublicRouter = {
     })
     .input(
       publicListRequest.extend({
-        active: z.boolean().optional().default(true),
+        active: z
+          .boolean()
+          .optional()
+          .default(true)
+          .describe(
+            "Restrict to active flows. Set to false to include inactive ones too.",
+          ),
       }),
     )
     .output(publicListResponse(flowResource.pick({ id: true, name: true })))
@@ -73,7 +80,7 @@ export const flowsPublicRouter = {
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(publicIdParam("flow", "flows.list"))
     .output(flowWithVersionsResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
@@ -115,7 +122,7 @@ export const flowsPublicRouter = {
         "Partially updates a flow's name, active, or enableInInbox flags.",
       tags: ["Flows"],
     })
-    .input(updateFlowSchema.and(z.object({ id: zodBigintAsString() })))
+    .input(updateFlowSchema.and(publicIdParam("flow", "flows.list")))
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
@@ -127,10 +134,12 @@ export const flowsPublicRouter = {
       method: "DELETE",
       path: "/v1/flows/{id}",
       summary: "Delete a flow",
+      description:
+        "Permanently deletes a flow and its draft/published versions. Use `flows.get` to confirm it first.",
       successStatus: 204,
       tags: ["Flows"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(publicIdParam("flow", "flows.list"))
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await flowService.deleteMany({
@@ -149,7 +158,7 @@ export const flowsPublicRouter = {
       successStatus: 201,
       tags: ["Flows"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(publicIdParam("flow", "flows.list"))
     .output(z.object({ id: z.string() }))
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
@@ -170,7 +179,7 @@ export const flowsPublicRouter = {
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
     })
-    .input(publishFlowRequest.and(z.object({ id: zodBigintAsString() })))
+    .input(publishFlowRequest.and(publicIdParam("flow", "flows.list")))
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id } = input
@@ -214,7 +223,7 @@ export const flowsPublicRouter = {
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
     })
-    .input(updateDraftFlowRequest.and(z.object({ id: zodBigintAsString() })))
+    .input(updateDraftFlowRequest.and(publicIdParam("flow", "flows.list")))
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id } = input
@@ -236,9 +245,11 @@ export const flowsPublicRouter = {
       method: "GET",
       path: "/v1/flows/{id}/versions",
       summary: "List a flow's published versions",
+      description:
+        "Returns every immutable version created by `flows.publish` for this flow, most recent first.",
       tags: ["Flows"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(publicIdParam("flow", "flows.list"))
     .output(z.object({ data: z.array(flowVersionResource) }))
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -261,8 +272,14 @@ export const flowsPublicRouter = {
     })
     .input(
       z.object({
-        fileId: zodBigintAsString(),
-        folderId: zodBigintAsString().nullable(),
+        fileId: zodBigintAsString().describe(
+          "Id (numeric string) of a previously uploaded flow-export file.",
+        ),
+        folderId: zodBigintAsString()
+          .nullable()
+          .describe(
+            "Folder id (numeric string) to import the flow into, or null for no folder.",
+          ),
       }),
     )
     .output(z.object({ importId: z.string() }))
