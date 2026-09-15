@@ -1,4 +1,9 @@
-import type { IncomingMessage } from "node:http"
+import {
+  createServer,
+  type IncomingMessage,
+  request,
+  type ServerResponse,
+} from "node:http"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 // Dynamic per-test `import()` (not a static top-level import) matches this
@@ -83,7 +88,7 @@ describe("makeApiKeyState / updateApiKeyStateFromRequest", () => {
 
   beforeEach(() => {
     vi.resetModules()
-    process.env.CHATBOTX_API_KEY = "env-default-token"
+    process.env.CHATBOTX_API_KEY = "  env-default-token  "
   })
 
   afterEach(() => {
@@ -130,5 +135,151 @@ describe("makeApiKeyState / updateApiKeyStateFromRequest", () => {
 
     updateApiKeyStateFromRequest(state, fakeRequest({}))
     expect(state.current).toBe("token-a")
+  })
+})
+
+type RequestListener = (
+  req: IncomingMessage,
+  res: ServerResponse,
+) => Promise<void>
+
+const startRequestServer = async (listener: RequestListener) => {
+  const server = createServer(listener)
+  const { promise: listening, resolve } = Promise.withResolvers<void>()
+  server.listen(0, "127.0.0.1", resolve)
+  await listening
+
+  const address = server.address()
+  if (!address || typeof address === "string") {
+    throw new Error("Expected a TCP listener address")
+  }
+
+  return {
+    close: async (): Promise<void> => {
+      const { promise, reject, resolve } = Promise.withResolvers<void>()
+      server.close((error) => (error ? reject(error) : resolve()))
+      await promise
+    },
+    url: `http://127.0.0.1:${address.port}`,
+  }
+}
+
+const sendChunkedRequest = async (
+  url: string,
+  chunks: Buffer[],
+): Promise<{ statusCode: number }> => {
+  const { promise, reject, resolve } = Promise.withResolvers<{
+    statusCode: number
+  }>()
+  const clientRequest = request(url, { method: "POST" }, (incomingResponse) => {
+    incomingResponse.resume()
+    incomingResponse.on("end", () => {
+      resolve({ statusCode: incomingResponse.statusCode ?? 0 })
+    })
+  })
+  clientRequest.on("error", reject)
+  for (const chunk of chunks) {
+    clientRequest.write(chunk)
+  }
+  clientRequest.end()
+  return await promise
+}
+
+describe("createRequestListener", () => {
+  test("rejects an oversized content-length before creating an MCP server", async () => {
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const createMcpServer = vi.fn()
+    const requestServer = await startRequestServer(
+      createRequestListener(createMcpServer as never),
+    )
+
+    try {
+      const oversizedBody = "x".repeat(1024 * 1024 + 1)
+      const response = await fetch(`${requestServer.url}/messages`, {
+        body: oversizedBody,
+        headers: { "content-length": String(Buffer.byteLength(oversizedBody)) },
+        method: "POST",
+      })
+
+      expect(response.status).toBe(413)
+      expect(createMcpServer).not.toHaveBeenCalled()
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("rejects a streamed body that grows past the size limit", async () => {
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const createMcpServer = vi.fn()
+    const requestServer = await startRequestServer(
+      createRequestListener(createMcpServer as never),
+    )
+
+    try {
+      const response = await sendChunkedRequest(
+        `${requestServer.url}/messages`,
+        [Buffer.alloc(1024 * 1024), Buffer.from("x")],
+      )
+
+      expect(response.statusCode).toBe(413)
+      expect(createMcpServer).not.toHaveBeenCalled()
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("returns 400 for malformed JSON", async () => {
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const createMcpServer = vi.fn()
+    const requestServer = await startRequestServer(
+      createRequestListener(createMcpServer as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/messages`, {
+        body: "{not json",
+        method: "POST",
+      })
+
+      expect(response.status).toBe(400)
+      expect(createMcpServer).not.toHaveBeenCalled()
+    } finally {
+      await requestServer.close()
+    }
+  })
+
+  test("logs and returns 500 when MCP server creation throws", async () => {
+    const { createRequestListener } = await import("../src/server/sse-server")
+    const createMcpServer = vi.fn(() => {
+      throw new Error("create failed")
+    })
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined)
+    const requestServer = await startRequestServer(
+      createRequestListener(createMcpServer as never),
+    )
+
+    try {
+      const response = await fetch(`${requestServer.url}/messages`, {
+        body: JSON.stringify({
+          id: 1,
+          jsonrpc: "2.0",
+          method: "initialize",
+          params: {
+            capabilities: {},
+            clientInfo: { name: "test", version: "1.0.0" },
+            protocolVersion: "2025-03-26",
+          },
+        }),
+        method: "POST",
+      })
+
+      expect(response.status).toBe(500)
+      expect(errorSpy).toHaveBeenCalledTimes(1)
+    } finally {
+      errorSpy.mockRestore()
+      await requestServer.close()
+    }
   })
 })

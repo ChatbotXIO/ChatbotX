@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { env } from "./env"
+import { fetchWithTimeout } from "./http"
 
 const tokenIntrospectionSchema = z.object({
   workspaceId: z.string(),
@@ -15,19 +16,34 @@ export type TokenIntrospection = z.infer<typeof tokenIntrospectionSchema>
  * caching by session id would serve a stale/wrong scope set after a token
  * swap. Module-level, same pattern as `openapi-loader.ts`'s tool cache.
  */
-const introspectionCache = new Map<
-  string,
-  { data: TokenIntrospection; fetchedAtMs: number }
->()
+const NEGATIVE_CACHE_TTL_MS = 30_000
+
+type IntrospectionCacheEntry = {
+  data: TokenIntrospection | null
+  fetchedAtMs: number
+  ttlMs: number
+}
+
+const introspectionCache = new Map<string, IntrospectionCacheEntry>()
 
 /** Sweeps entries whose TTL has already elapsed so the cache can't grow unbounded across distinct tokens. */
 function evictExpiredEntries(): void {
-  const cutoffMs = Date.now() - env.CHATBOTX_SPEC_TTL_MS
+  const nowMs = Date.now()
   for (const [apiKey, entry] of introspectionCache) {
-    if (entry.fetchedAtMs < cutoffMs) {
+    if (nowMs - entry.fetchedAtMs >= entry.ttlMs) {
       introspectionCache.delete(apiKey)
     }
   }
+}
+
+const cacheIntrospectionResult = (
+  apiKey: string,
+  data: TokenIntrospection | null,
+  ttlMs: number,
+): TokenIntrospection | null => {
+  evictExpiredEntries()
+  introspectionCache.set(apiKey, { data, fetchedAtMs: Date.now(), ttlMs })
+  return data
 }
 
 /**
@@ -42,39 +58,42 @@ export async function introspectToken(
   apiKey: string,
 ): Promise<TokenIntrospection | null> {
   const cached = introspectionCache.get(apiKey)
-  if (cached && Date.now() - cached.fetchedAtMs < env.CHATBOTX_SPEC_TTL_MS) {
+  if (cached && Date.now() - cached.fetchedAtMs < cached.ttlMs) {
     return cached.data
   }
 
   try {
-    const response = await fetch(`${env.CHATBOTX_API_URL}/v1/token`, {
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${apiKey}`,
+    const response = await fetchWithTimeout(
+      `${env.CHATBOTX_API_URL}/v1/token`,
+      {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
       },
-    })
+      env.CHATBOTX_HTTP_TIMEOUT_MS,
+    )
     if (!response.ok) {
-      return null
+      return cacheIntrospectionResult(apiKey, null, NEGATIVE_CACHE_TTL_MS)
     }
     const parsed = tokenIntrospectionSchema.safeParse(await response.json())
     if (!parsed.success) {
       console.error(
         `Token introspection returned a malformed body, tools/list will not be scope-filtered: ${parsed.error.message}`,
       )
-      return null
+      return cacheIntrospectionResult(apiKey, null, NEGATIVE_CACHE_TTL_MS)
     }
-    evictExpiredEntries()
-    introspectionCache.set(apiKey, {
-      data: parsed.data,
-      fetchedAtMs: Date.now(),
-    })
-    return parsed.data
+    return cacheIntrospectionResult(
+      apiKey,
+      parsed.data,
+      env.CHATBOTX_SPEC_TTL_MS,
+    )
   } catch (error) {
     console.error(
       `Token introspection failed, tools/list will not be scope-filtered: ${
         error instanceof Error ? error.message : String(error)
       }`,
     )
-    return null
+    return cacheIntrospectionResult(apiKey, null, NEGATIVE_CACHE_TTL_MS)
   }
 }

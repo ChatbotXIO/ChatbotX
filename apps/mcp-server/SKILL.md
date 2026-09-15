@@ -73,7 +73,7 @@ Find your workspace token at: **Settings → Developer → API Keys**
 ```bash
 claude mcp add chatbotx \
   -e CHATBOTX_API_KEY=<your-token> \
-  -e CHATBOTX_API_URL=https://your-instance.com \
+  -e CHATBOTX_API_URL=https://your-instance.com/api \
   -e CHATBOTX_MCP_TRANSPORT=stdio \
   -s user \
   -- node /path/to/dist/index.mjs
@@ -224,7 +224,7 @@ chatbotx error-logs list                             # [--page --perPage --sort 
 
 ## MCP Tools (for AI agents)
 
-Tool names are the OpenAPI `operationId` converted to `snake_case`. `tools/list` returns a curated **default set of 44 tools** — not the full ~350-operation API — plus two meta-tools that reach everything else:
+Tool names are the OpenAPI `operationId` converted to `snake_case`. `tools/list` returns a curated **default set of 43 tools** — not the full ~350-operation API — plus two meta-tools that reach everything else:
 
 | Tool | Description |
 |---|---|
@@ -237,22 +237,21 @@ Call `capabilities_get` and `token_get` first — both are always visible regard
 |---|---|
 | `capabilities_get` | Discover the workspace's inboxes, templates, fields, tags, sequences, and flows — the ids other tools need. |
 | `token_get` | Get the calling token's workspace id, permission (`read_only`/`full`), and scopes. |
-| `schemas_flow_spec` | JSON Schema for the flow-spec DSL `flows_create`/`flows_publish`/`flows_validate` accept. |
+| `schemas_flow_spec` | JSON Schema for the flow-spec DSL `flows_publish`/`flows_update_draft`/`flows_validate` accept. |
 
 | Category | Tool |
 |---|---|
-| Analytics | `analytics_contacts_count`, `analytics_new_contacts_count` |
-| Broadcasts | `broadcasts_create`, `broadcasts_list`, `broadcasts_schedule`, `broadcasts_stop` |
-| Contacts | `contacts_add_tags`, `contacts_count`, `contacts_create`, `contacts_get`, `contacts_list`, `contacts_list_filter_fields`, `contacts_search`, `contacts_send_flow`, `contacts_send_message`, `contacts_set_custom_fields`, `contacts_subscribe_sequences`, `contacts_update`, `contacts_upsert` |
-| Conversations | `conversations_archive`, `conversations_assign`, `conversations_get`, `conversations_list` |
-| Custom Fields | `custom_fields_create`, `custom_fields_list` |
-| Flows | `flows_create`, `flows_get`, `flows_list`, `flows_publish`, `flows_validate` |
-| Inboxes | `inboxes_list` |
-| Keywords | `keywords_create`, `keywords_list` |
-| Messages | `messages_create`, `messages_list` |
-| Sequences | `sequences_create`, `sequences_list` |
-| Tags | `tags_create`, `tags_list` |
-| Triggers | `triggers_create`, `triggers_list` |
+| Capabilities | `capabilities_get`, `schemas_flow_spec`, `token_get` |
+| AI Agents | `ai_agents_list`, `ai_agents_create`, `ai_agents_update`, `ai_files_list`, `ai_functions_list` |
+| Analytics | `analytics_new_contact_counts_per_day`, `analytics_blocked_contacts_per_day`, `analytics_flow_stats`, `analytics_broadcast_stats`, `analytics_sequence_step_stats` |
+| Broadcasts | `broadcasts_list`, `broadcasts_get`, `broadcasts_stop` |
+| Contacts | `contacts_create`, `contacts_get`, `contacts_list`, `contacts_search`, `contacts_list_tags`, `contacts_add_tags_by_name`, `contacts_list_custom_fields`, `contacts_set_custom_field`, `contacts_list_messages`, `contacts_send_message`, `contacts_send_flow`, `contacts_list_sequences`, `contacts_subscribe_sequences` |
+| Conversations | `conversations_list`, `conversations_get`, `conversations_assign` |
+| Error Logs | `error_logs_list` |
+| Flows | `flows_list`, `flows_get`, `flows_create`, `flows_update_draft`, `flows_publish` |
+| Keywords | `keywords_list` |
+| Messages | `messages_list` |
+| Sequences | `sequences_list`, `sequences_get`, `sequences_update` |
 
 A token missing a scope, or a `read_only` token calling a write tool, does not see that tool in `tools/list` (the underlying API call still 403s if forced via `call_tool`). Tools are auto-generated from the OpenAPI spec — new default-visible endpoints appear automatically once the spec's TTL (`CHATBOTX_SPEC_TTL_MS`, default 5 minutes) elapses, no restart required.
 

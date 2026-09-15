@@ -1,5 +1,6 @@
 import { getFlowAuthoringContext } from "@chatbotx.io/business/capabilities"
 import {
+  type CompiledFlow,
   compileFlowSpec,
   type EdgeSchema,
   FlowAuthoringException,
@@ -9,6 +10,13 @@ import {
   zodErrorToFlowAuthoringErrors,
 } from "@chatbotx.io/flow-config"
 import { publishFlowSchema } from "../schema/action"
+
+async function compileWithContext(
+  spec: FlowSpec,
+  workspaceId: string,
+): Promise<CompiledFlow> {
+  return compileFlowSpec(spec, await getFlowAuthoringContext(workspaceId))
+}
 
 /**
  * Resolves a `{ spec }` flow-authoring request into the raw `{ nodes, edges }`
@@ -20,8 +28,7 @@ export async function compileSpecToGraph(
   spec: FlowSpec,
   workspaceId: string,
 ): Promise<{ nodes: FlowVersionSchema[]; edges: EdgeSchema[] }> {
-  const ctx = await getFlowAuthoringContext(workspaceId)
-  const { nodes, edges } = compileFlowSpec(spec, ctx)
+  const { nodes, edges } = await compileWithContext(spec, workspaceId)
   return { nodes, edges }
 }
 
@@ -64,8 +71,10 @@ export async function compileAndValidateSpec(
   spec: FlowSpec,
   workspaceId: string,
 ): Promise<{ nodes: FlowVersionSchema[]; edges: EdgeSchema[] }> {
-  const ctx = await getFlowAuthoringContext(workspaceId)
-  const { nodes, edges, specPathByNodeId } = compileFlowSpec(spec, ctx)
+  const { nodes, edges, specPathByNodeId } = await compileWithContext(
+    spec,
+    workspaceId,
+  )
 
   const result = publishFlowSchema.safeParse({ nodes, edges })
   if (!result.success) {

@@ -1,16 +1,53 @@
+import { env } from "../env"
+import { fetchWithTimeout } from "../http"
 import type { DynamicTool } from "../openapi-loader"
 
 const NO_BODY_METHODS: ReadonlySet<string> = new Set(["GET", "HEAD", "DELETE"])
 
-function buildQueryString(params: Record<string, string>): string {
-  const qs = new URLSearchParams(params).toString()
-  return qs ? `?${qs}` : ""
+const appendQueryParam = (
+  params: URLSearchParams,
+  key: string,
+  value: unknown,
+): void => {
+  if (value === undefined || value === null) {
+    return
+  }
+
+  if (Array.isArray(value)) {
+    for (const [index, item] of value.entries()) {
+      appendQueryParam(params, `${key}[${index}]`, item)
+    }
+    return
+  }
+
+  if (typeof value === "object") {
+    for (const [childKey, childValue] of Object.entries(value)) {
+      appendQueryParam(params, `${key}[${childKey}]`, childValue)
+    }
+    return
+  }
+
+  params.append(key, String(value))
+}
+
+const buildQueryString = (params: URLSearchParams): string => {
+  const queryString = params.toString()
+  return queryString ? `?${queryString}` : ""
 }
 
 export type ToolCallResult = {
   content: Array<{ type: "text"; text: string }>
   isError?: boolean
 }
+
+export const errorResult = (text: string): ToolCallResult => ({
+  content: [{ text, type: "text" }],
+  isError: true,
+})
+
+export const jsonResult = (value: unknown): ToolCallResult => ({
+  content: [{ text: JSON.stringify(value, null, 2), type: "text" }],
+})
 
 /**
  * Fires the HTTP request a `DynamicTool` describes. Shared by the normal
@@ -28,25 +65,14 @@ export async function executeTool(
   for (const paramName of tool.pathParamNames) {
     const value = args[paramName]
     if (value === undefined || value === null) {
-      return {
-        isError: true,
-        content: [
-          {
-            type: "text",
-            text: `Missing required path parameter: ${paramName}`,
-          },
-        ],
-      }
+      return errorResult(`Missing required path parameter: ${paramName}`)
     }
     path = path.replace(`{${paramName}}`, encodeURIComponent(String(value)))
   }
 
-  const queryArgs: Record<string, string> = {}
+  const queryParams = new URLSearchParams()
   for (const key of tool.queryParamNames) {
-    const value = args[key]
-    if (value !== undefined && value !== null) {
-      queryArgs[key] = String(value)
-    }
+    appendQueryParam(queryParams, key, args[key])
   }
 
   const body: Record<string, unknown> = {}
@@ -56,19 +82,23 @@ export async function executeTool(
     }
   }
 
-  const url = `${tool.baseUrl}${path}${buildQueryString(queryArgs)}`
+  const url = `${tool.baseUrl}${path}${buildQueryString(queryParams)}`
   const sendBody =
     !NO_BODY_METHODS.has(tool.method) && tool.bodyParamNames.length > 0
 
   try {
-    const response = await fetch(url, {
-      method: tool.method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+    const response = await fetchWithTimeout(
+      url,
+      {
+        body: sendBody ? JSON.stringify(body) : undefined,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        method: tool.method,
       },
-      body: sendBody ? JSON.stringify(body) : undefined,
-    })
+      env.CHATBOTX_HTTP_TIMEOUT_MS,
+    )
 
     let result: unknown
     const contentType = response.headers.get("content-type") ?? ""
@@ -79,25 +109,17 @@ export async function executeTool(
     }
 
     if (!response.ok) {
-      return {
-        isError: true,
-        content: [
-          {
-            type: "text",
-            text: `Error ${response.status}:\n${JSON.stringify(result, null, 2)}`,
-          },
-        ],
-      }
+      return errorResult(
+        `Error ${response.status}:\n${JSON.stringify(result, null, 2)}`,
+      )
     }
 
-    return {
-      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-    }
+    return jsonResult(result)
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error"
-    return {
-      isError: true,
-      content: [{ type: "text", text: `Request failed: ${message}` }],
+    if (error instanceof Error && error.name === "TimeoutError") {
+      return errorResult(error.message)
     }
+    const message = error instanceof Error ? error.message : "Unknown error"
+    return errorResult(`Request failed: ${message}`)
   }
 }

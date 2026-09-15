@@ -7,6 +7,7 @@ import {
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js"
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js"
+import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js"
 import { env } from "../env"
 import type { CreateMcpServerOptions } from "./create-mcp-server"
 
@@ -33,8 +34,30 @@ type LegacySseSession = {
   transport: SSEServerTransport
 }
 
+type CreateMcpServerFn = (options?: CreateMcpServerOptions) => McpServer
+
+type ResolvedSession =
+  | { kind: "streamable"; session: SseSession }
+  | { kind: "legacy"; session: LegacySseSession }
+
 const sseSessions = new Map<string, SseSession>()
 const legacySseSessions = new Map<string, LegacySseSession>()
+
+const MAX_BODY_BYTES = 1024 * 1024
+
+class PayloadTooLargeError extends Error {}
+
+const resolveSession = (sessionId: string): ResolvedSession | undefined => {
+  const streamableSession = sseSessions.get(sessionId)
+  if (streamableSession) {
+    return { kind: "streamable", session: streamableSession }
+  }
+
+  const legacySession = legacySseSessions.get(sessionId)
+  if (legacySession) {
+    return { kind: "legacy", session: legacySession }
+  }
+}
 
 const apiTokenHeaderNames = ["x-workspace-token", "x-chatbo-token"] as const
 
@@ -108,10 +131,22 @@ const enableCors = (res: ServerResponse): void => {
 }
 
 const parseRequestBody = async (req: IncomingMessage): Promise<unknown> => {
-  const chunks: Buffer[] = []
+  const contentLength = Number(
+    resolveHeaderValue(req.headers["content-length"]),
+  )
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+    throw new PayloadTooLargeError()
+  }
 
+  const chunks: Buffer[] = []
+  let bodyBytes = 0
   for await (const chunk of req) {
-    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk)
+    const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk
+    bodyBytes += buffer.byteLength
+    if (bodyBytes > MAX_BODY_BYTES) {
+      throw new PayloadTooLargeError()
+    }
+    chunks.push(buffer)
   }
 
   if (chunks.length === 0) {
@@ -140,15 +175,6 @@ const setSessionIdHeader = (req: IncomingMessage, sessionId: string): void => {
   req.headers["mcp-session-id"] = sessionId
 }
 
-const isInitializeRequest = (value: unknown): boolean => {
-  if (!value || typeof value !== "object") {
-    return false
-  }
-
-  const candidate = value as { method?: unknown }
-  return candidate.method === "initialize"
-}
-
 const writePlainText = (
   res: ServerResponse,
   statusCode: number,
@@ -162,7 +188,7 @@ const writePlainText = (
 const handleSseRequest = async (
   req: IncomingMessage,
   res: ServerResponse,
-  createMcpServer: (options?: CreateMcpServerOptions) => McpServer,
+  createMcpServer: CreateMcpServerFn,
 ): Promise<void> => {
   if (req.method === "OPTIONS") {
     res.statusCode = 204
@@ -176,8 +202,6 @@ const handleSseRequest = async (
   }
 
   const sessionId = getSessionId(req)
-
-  // No session ID → old SSE protocol (Claude Desktop, Claude CLI -t sse)
   if (!sessionId) {
     const apiKeyState = makeApiKeyState(req)
     const server = createMcpServer({
@@ -192,27 +216,61 @@ const handleSseRequest = async (
       server,
       transport,
     })
-    res.on("close", () => legacySseSessions.delete(transport.sessionId))
+    transport.onclose = () => {
+      legacySseSessions.delete(transport.sessionId)
+    }
     await server.connect(transport)
     return
   }
 
-  // Has session ID → Streamable HTTP GET for server-initiated messages
-  const session = sseSessions.get(sessionId)
-  if (!session) {
+  const resolvedSession = resolveSession(sessionId)
+  if (resolvedSession?.kind !== "streamable") {
     writePlainText(res, 404, "Unknown sessionId")
     return
   }
 
+  const { session } = resolvedSession
   updateApiKeyStateFromRequest(session.apiKeyState, req)
   setSessionIdHeader(req, sessionId)
   await session.transport.handleRequest(req, res)
 }
 
+const startStreamableSession = async (
+  req: IncomingMessage,
+  res: ServerResponse,
+  parsedBody: unknown,
+  createMcpServer: CreateMcpServerFn,
+): Promise<void> => {
+  const apiKeyState = makeApiKeyState(req)
+  const server = createMcpServer({
+    getApiKey: getApiKeyFromState(apiKeyState),
+  })
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: () => randomUUID(),
+    onsessioninitialized: (initializedSessionId) => {
+      sseSessions.set(initializedSessionId, {
+        apiKeyState,
+        server,
+        transport,
+      })
+    },
+  })
+
+  transport.onclose = () => {
+    const activeSessionId = transport.sessionId
+    if (activeSessionId) {
+      sseSessions.delete(activeSessionId)
+    }
+  }
+
+  await server.connect(transport)
+  await transport.handleRequest(req, res, parsedBody)
+}
+
 const handleMessagesRequest = async (
   req: IncomingMessage,
   res: ServerResponse,
-  createMcpServer: (options?: CreateMcpServerOptions) => McpServer,
+  createMcpServer: CreateMcpServerFn,
 ): Promise<void> => {
   if (req.method === "OPTIONS") {
     res.statusCode = 204
@@ -231,22 +289,28 @@ const handleMessagesRequest = async (
     const parsedBody = await parseRequestBody(req)
 
     if (sessionId) {
-      const streamableSession = sseSessions.get(sessionId)
-      if (streamableSession) {
-        updateApiKeyStateFromRequest(streamableSession.apiKeyState, req)
+      const resolvedSession = resolveSession(sessionId)
+      if (!resolvedSession) {
+        writePlainText(res, 404, "Unknown sessionId")
+        return
+      }
+
+      updateApiKeyStateFromRequest(resolvedSession.session.apiKeyState, req)
+      if (resolvedSession.kind === "streamable") {
         setSessionIdHeader(req, sessionId)
-        await streamableSession.transport.handleRequest(req, res, parsedBody)
+        await resolvedSession.session.transport.handleRequest(
+          req,
+          res,
+          parsedBody,
+        )
         return
       }
 
-      const legacySession = legacySseSessions.get(sessionId)
-      if (legacySession) {
-        updateApiKeyStateFromRequest(legacySession.apiKeyState, req)
-        await legacySession.transport.handlePostMessage(req, res, parsedBody)
-        return
-      }
-
-      writePlainText(res, 404, "Unknown sessionId")
+      await resolvedSession.session.transport.handlePostMessage(
+        req,
+        res,
+        parsedBody,
+      )
       return
     }
 
@@ -259,30 +323,7 @@ const handleMessagesRequest = async (
       return
     }
 
-    const apiKeyState = makeApiKeyState(req)
-    const server = createMcpServer({
-      getApiKey: getApiKeyFromState(apiKeyState),
-    })
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
-      onsessioninitialized: (initializedSessionId) => {
-        sseSessions.set(initializedSessionId, {
-          apiKeyState,
-          server,
-          transport,
-        })
-      },
-    })
-
-    transport.onclose = () => {
-      const activeSessionId = transport.sessionId
-      if (activeSessionId) {
-        sseSessions.delete(activeSessionId)
-      }
-    }
-
-    await server.connect(transport)
-    await transport.handleRequest(req, res, parsedBody)
+    await startStreamableSession(req, res, parsedBody, createMcpServer)
   } catch (error) {
     if (error instanceof SyntaxError) {
       writePlainText(res, 400, "Invalid JSON body")
@@ -292,35 +333,51 @@ const handleMessagesRequest = async (
   }
 }
 
+export const createRequestListener =
+  (createMcpServer: CreateMcpServerFn) =>
+  async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+    try {
+      enableCors(res)
+
+      const url = new URL(req.url ?? "", "http://localhost")
+      if (url.pathname === env.CHATBOTX_MCP_SSE_PATH) {
+        await handleSseRequest(req, res, createMcpServer)
+        return
+      }
+
+      if (url.pathname === env.CHATBOTX_MCP_MESSAGES_PATH) {
+        await handleMessagesRequest(req, res, createMcpServer)
+        return
+      }
+
+      if (url.pathname === "/") {
+        writePlainText(res, 200, "MCP SSE server is running")
+        return
+      }
+
+      writePlainText(res, 404, "Not Found")
+    } catch (error) {
+      if (error instanceof PayloadTooLargeError) {
+        writePlainText(res, 413, "Payload Too Large")
+        return
+      }
+
+      console.error("MCP SSE request failed:", error)
+      if (res.headersSent) {
+        res.end()
+        return
+      }
+      writePlainText(res, 500, "Internal Server Error")
+    }
+  }
+
 export const runSseServer = async (
-  createMcpServer: (options?: CreateMcpServerOptions) => McpServer,
+  createMcpServer: CreateMcpServerFn,
 ): Promise<void> => {
-  const httpServer = createServer(async (req, res) => {
-    enableCors(res)
-
-    const url = new URL(req.url ?? "", "http://localhost")
-
-    if (url.pathname === env.CHATBOTX_MCP_SSE_PATH) {
-      await handleSseRequest(req, res, createMcpServer)
-      return
-    }
-
-    if (url.pathname === env.CHATBOTX_MCP_MESSAGES_PATH) {
-      await handleMessagesRequest(req, res, createMcpServer)
-      return
-    }
-
-    if (url.pathname === "/") {
-      writePlainText(res, 200, "MCP SSE server is running")
-      return
-    }
-
-    writePlainText(res, 404, "Not Found")
-  })
-
-  await new Promise<void>((resolve) => {
-    httpServer.listen(env.CHATBOTX_MCP_PORT, env.CHATBOTX_MCP_HOST, resolve)
-  })
+  const httpServer = createServer(createRequestListener(createMcpServer))
+  const { promise: listening, resolve } = Promise.withResolvers<void>()
+  httpServer.listen(env.CHATBOTX_MCP_PORT, env.CHATBOTX_MCP_HOST, resolve)
+  await listening
 
   console.error(
     `MCP Server running on http://${env.CHATBOTX_MCP_HOST}:${env.CHATBOTX_MCP_PORT}${env.CHATBOTX_MCP_SSE_PATH}`,

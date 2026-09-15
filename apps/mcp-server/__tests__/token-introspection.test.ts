@@ -123,6 +123,31 @@ describe("introspectToken", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
+  test("caches a failed introspection for 30 seconds", async () => {
+    vi.useFakeTimers()
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const { introspectToken } = await import("../src/token-introspection")
+    await introspectToken("token-negative-cache")
+    vi.advanceTimersByTime(29_999)
+    await introspectToken("token-negative-cache")
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  test("re-fetches a failed introspection after 30 seconds", async () => {
+    vi.useFakeTimers()
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const { introspectToken } = await import("../src/token-introspection")
+    await introspectToken("token-negative-cache-expiry")
+    vi.advanceTimersByTime(30_001)
+    await introspectToken("token-negative-cache-expiry")
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
   test("evicts expired cache entries once a subsequent lookup inserts a new one", async () => {
     vi.useFakeTimers()
     const fetchMock = vi.fn().mockResolvedValue({

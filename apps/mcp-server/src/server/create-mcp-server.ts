@@ -8,16 +8,14 @@ import {
   version as packageVersion,
 } from "../../package.json"
 import { env } from "../env"
-import { getVisibleTools, refreshOpenApiSpecIfStale } from "../openapi-loader"
-import { introspectToken } from "../token-introspection"
-import { executeTool } from "./execute-tool"
 import {
-  findToolByName,
-  handleCallTool,
-  handleSearchTools,
-  META_TOOL_NAMES,
-  META_TOOLS,
-} from "./meta-tools"
+  getToolByName,
+  getVisibleTools,
+  refreshOpenApiSpecIfStale,
+} from "../openapi-loader"
+import { introspectToken } from "../token-introspection"
+import { errorResult, executeTool } from "./execute-tool"
+import { handleCallTool, handleSearchTools, META_TOOLS } from "./meta-tools"
 
 export type CreateMcpServerOptions = {
   getApiKey?: () => string
@@ -44,8 +42,7 @@ export const createMcpServer = (
     { instructions: env.CHATBOTX_MCP_SERVER_INSTRUCTIONS },
   )
 
-  const getApiKey = (): string =>
-    options?.getApiKey?.().trim() || env.CHATBOTX_API_KEY
+  const getApiKey = (): string => options?.getApiKey?.() || env.CHATBOTX_API_KEY
 
   // Bypass McpServer's high-level tool API to support raw JSON Schema from
   // the OpenAPI spec. We register handlers on the underlying low-level server.
@@ -82,22 +79,16 @@ export const createMcpServer = (
 
     const apiKey = getApiKey()
     if (!apiKey) {
-      return {
-        isError: true,
-        content: [{ type: "text" as const, text: NO_API_KEY_MESSAGE }],
-      }
+      return errorResult(NO_API_KEY_MESSAGE)
     }
 
-    if (META_TOOL_NAMES.has(name)) {
+    if (name === "call_tool") {
       return await handleCallTool(toolArgs, apiKey)
     }
 
-    const tool = findToolByName(name)
+    const tool = getToolByName(name)
     if (!tool) {
-      return {
-        isError: true,
-        content: [{ type: "text" as const, text: `Unknown tool: ${name}` }],
-      }
+      return errorResult(`Unknown tool: ${name}`)
     }
 
     return await executeTool(tool, toolArgs, apiKey)

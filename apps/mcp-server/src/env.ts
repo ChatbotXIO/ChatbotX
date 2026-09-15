@@ -3,7 +3,7 @@ import { z } from "zod"
 
 export const env = createEnv({
   server: {
-    CHATBOTX_API_KEY: z.string().default(""),
+    CHATBOTX_API_KEY: z.string().trim().default(""),
     CHATBOTX_API_URL: z.url().default("https://api.chatbotx.io"),
     CHATBOTX_ALLOW_SELF_SIGNED_CERT: z.enum(["true", "false"]).optional(),
     CHATBOTX_MCP_TRANSPORT: z.enum(["stdio", "sse", "both"]).default("both"),
@@ -24,6 +24,11 @@ export const env = createEnv({
     // a new/changed public endpoint never appeared without restarting the
     // server.
     CHATBOTX_SPEC_TTL_MS: z.coerce.number().int().positive().default(300_000),
+    CHATBOTX_HTTP_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(30_000),
   },
   runtimeEnv: process.env,
 })

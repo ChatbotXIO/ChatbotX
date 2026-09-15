@@ -1,5 +1,14 @@
-import { type DynamicTool, getCachedTools } from "../openapi-loader"
-import { executeTool, type ToolCallResult } from "./execute-tool"
+import {
+  type DynamicTool,
+  getCachedTools,
+  getToolByName,
+} from "../openapi-loader"
+import {
+  errorResult,
+  executeTool,
+  jsonResult,
+  type ToolCallResult,
+} from "./execute-tool"
 
 /**
  * Static tool definitions for the two meta-tools that give an agent access
@@ -46,10 +55,6 @@ export const META_TOOLS = [
     },
   },
 ] as const
-
-export const META_TOOL_NAMES: ReadonlySet<string> = new Set(
-  META_TOOLS.map((tool) => tool.name),
-)
 
 const DEFAULT_SEARCH_LIMIT = 10
 const MAX_SEARCH_LIMIT = 25
@@ -125,7 +130,12 @@ export function searchTools(query: string, limit?: number): DynamicTool[] {
   const queryPhrase = query.trim().toLowerCase()
   const queryTokens = tokenize(query)
   const cappedLimit = Math.min(
-    Math.max(limit ?? DEFAULT_SEARCH_LIMIT, 1),
+    Math.max(
+      limit !== undefined && Number.isFinite(limit)
+        ? limit
+        : DEFAULT_SEARCH_LIMIT,
+      1,
+    ),
     MAX_SEARCH_LIMIT,
   )
 
@@ -150,10 +160,6 @@ export function searchTools(query: string, limit?: number): DynamicTool[] {
     .map(({ tool }) => tool)
 }
 
-export function findToolByName(name: string): DynamicTool | undefined {
-  return getCachedTools().find((tool) => tool.name === name)
-}
-
 /**
  * `search_tools` handler — validates the raw MCP `arguments` object and
  * returns each match's name/description/inputSchema as JSON text, the same
@@ -165,15 +171,7 @@ export function handleSearchTools(
 ): ToolCallResult {
   const query = args.query
   if (typeof query !== "string" || query.trim().length === 0) {
-    return {
-      isError: true,
-      content: [
-        {
-          type: "text",
-          text: "search_tools requires a non-empty 'query' string.",
-        },
-      ],
-    }
+    return errorResult("search_tools requires a non-empty 'query' string.")
   }
   const limit = typeof args.limit === "number" ? args.limit : undefined
 
@@ -183,9 +181,7 @@ export function handleSearchTools(
     inputSchema: tool.inputSchema,
   }))
 
-  return {
-    content: [{ type: "text", text: JSON.stringify(matches, null, 2) }],
-  }
+  return jsonResult(matches)
 }
 
 /**
@@ -199,26 +195,26 @@ export async function handleCallTool(
 ): Promise<ToolCallResult> {
   const name = args.name
   if (typeof name !== "string" || name.trim().length === 0) {
-    return {
-      isError: true,
-      content: [
-        { type: "text", text: "call_tool requires a non-empty 'name' string." },
-      ],
-    }
+    return errorResult("call_tool requires a non-empty 'name' string.")
   }
 
-  const tool = findToolByName(name)
+  const tool = getToolByName(name)
   if (!tool) {
-    return {
-      isError: true,
-      content: [{ type: "text", text: `Unknown tool: ${name}` }],
-    }
+    return errorResult(`Unknown tool: ${name}`)
   }
 
-  const toolArguments =
-    args.arguments && typeof args.arguments === "object"
-      ? (args.arguments as Record<string, unknown>)
-      : {}
+  const suppliedArguments = args.arguments
+  if (
+    suppliedArguments !== undefined &&
+    (typeof suppliedArguments !== "object" ||
+      suppliedArguments === null ||
+      Array.isArray(suppliedArguments) ||
+      Object.getPrototypeOf(suppliedArguments) !== Object.prototype)
+  ) {
+    return errorResult("call_tool 'arguments' must be a JSON object.")
+  }
+
+  const toolArguments = (suppliedArguments ?? {}) as Record<string, unknown>
 
   return await executeTool(tool, toolArguments, apiKey)
 }

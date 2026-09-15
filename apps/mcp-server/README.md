@@ -32,7 +32,7 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 |---|---|
 | `capabilities_get` | Discover the workspace's inboxes, WhatsApp templates, custom/bot fields, tags, AI agents, sequences, and flows — the ids a flow spec or a message needs to reference. |
 | `token_get` | Get the calling token's workspace id, permission (`read_only`/`full`), and scopes — check before attempting a write. |
-| `schemas_flow_spec` | Get the JSON Schema for the `spec` object `flows_create`/`flows_publish`/`flows_validate` accept — the authoritative reference for every flow step type. |
+| `schemas_flow_spec` | Get the JSON Schema for the `spec` object `flows_publish`/`flows_update_draft`/`flows_validate` accept — the authoritative reference for every flow step type. |
 
 ## Available tools
 
@@ -243,6 +243,7 @@ cp .env.example .env
 | `CHATBOTX_API_URL` | ChatbotX API origin, including `/api` (e.g. `https://app.chatbotx.io/api`) | `https://api.chatbotx.io` | Yes |
 | `CHATBOTX_ALLOW_SELF_SIGNED_CERT` | Disable TLS verification (`true`/`false`) | — | No |
 | `CHATBOTX_SPEC_TTL_MS` | How long the fetched OpenAPI spec/tool list and a token's introspected scopes are trusted before a background re-fetch | `300000` | No |
+| `CHATBOTX_HTTP_TIMEOUT_MS` | Maximum duration for each OpenAPI, token introspection, or tool-call HTTP request | `30000` | No |
 | `CHATBOTX_MCP_TRANSPORT` | `stdio` \| `sse` \| `both` | `both` | No |
 | `CHATBOTX_MCP_HOST` | SSE server host | `0.0.0.0` | No |
 | `CHATBOTX_MCP_PORT` | SSE server port | `3333` | No |
@@ -277,6 +278,7 @@ dotenv -e .env -- tsx src/test-tools.ts
 src/
 ├── index.ts                # Entry point — loads spec, starts transport(s)
 ├── env.ts                  # Environment variable schema
+├── http.ts                 # Timed fetch helper for OpenAPI, token, and tool requests
 ├── openapi-loader.ts       # Fetches OpenAPI spec → DynamicTool list, x-mcp
 │                           # visibility/scope parsing, scope-filtered getVisibleTools()
 ├── token-introspection.ts  # GET /v1/token → cached {permission, scopes} per token

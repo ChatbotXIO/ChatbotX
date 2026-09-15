@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { META_TOOLS } from "../src/server/meta-tools"
 
 // Same convention as openapi-loader.test.ts: `getCachedTools()` is
 // module-level state populated by `loadOpenApiSpec()`, so each test needs a
@@ -32,15 +33,11 @@ const specWithTools = (
 })
 
 describe("META_TOOLS", () => {
-  test("are exactly search_tools and call_tool", async () => {
-    const { META_TOOLS, META_TOOL_NAMES } = await import(
-      "../src/server/meta-tools"
-    )
+  test("are exactly search_tools and call_tool", () => {
     expect(META_TOOLS.map((tool) => tool.name)).toEqual([
       "search_tools",
       "call_tool",
     ])
-    expect([...META_TOOL_NAMES].sort()).toEqual(["call_tool", "search_tools"])
   })
 })
 
@@ -106,6 +103,22 @@ describe("searchTools", () => {
     const { searchTools } = await import("../src/server/meta-tools")
 
     expect(searchTools("keyword", 100)).toHaveLength(25)
+  })
+
+  test("uses the default limit when limit is NaN", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        specWithTools([{ name: "tags.list", summary: "Get all tags" }]),
+      ) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { searchTools } = await import("../src/server/meta-tools")
+
+    expect(searchTools("tags", Number.NaN).map((tool) => tool.name)).toEqual([
+      "tags_list",
+    ])
   })
 
   test("a GET tool ranks above a same-scoring non-GET tool", async () => {
@@ -224,5 +237,34 @@ describe("handleCallTool", () => {
       "api-key",
     )
     expect(result.isError).toBeUndefined()
+  })
+
+  test("rejects an arguments array without executing a fetch", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        specWithTools([{ name: "tags.list", summary: "Get all tags" }]),
+      ) as unknown as typeof fetch
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+
+    const executeFetch = vi.fn()
+    globalThis.fetch = executeFetch as unknown as typeof fetch
+    const { handleCallTool } = await import("../src/server/meta-tools")
+    const result = await handleCallTool(
+      { arguments: [], name: "tags_list" },
+      "api-key",
+    )
+
+    expect(result).toEqual({
+      content: [
+        {
+          text: "call_tool 'arguments' must be a JSON object.",
+          type: "text",
+        },
+      ],
+      isError: true,
+    })
+    expect(executeFetch).not.toHaveBeenCalled()
   })
 })

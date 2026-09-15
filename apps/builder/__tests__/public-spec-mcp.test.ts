@@ -1,8 +1,12 @@
 // @vitest-environment node
 
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
+
 import { OpenAPIGenerator } from "@orpc/openapi"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { beforeAll, describe, expect, test, vi } from "vitest"
+import { WORKSPACE_TOKEN_SECURITY_SCHEMES } from "@/lib/orpc/public-spec"
 
 // Same side-effect-free import stubs as public-spec-operations.test.ts —
 // `@/routers/public` transitively boots the real db client and better-auth
@@ -42,11 +46,9 @@ type McpSpecOperation = {
 // `oo.spec`-wrapping `requireTokenScope` in `apps/builder/src/orpc.ts`
 // actually ran. A channel-token-only or unauthenticated operation is exempt:
 // it never becomes an MCP tool, so it never needs a scope.
-const WORKSPACE_TOKEN_SECURITY_SCHEMES = new Set([
-  "bearerAuth",
-  "developerAccessToken",
-  "tokenInSearchParams",
-])
+const workspaceTokenSecuritySchemeNames = new Set(
+  Object.keys(WORKSPACE_TOKEN_SECURITY_SCHEMES),
+)
 
 function isWorkspaceTokenOperation(operation: McpSpecOperation): boolean {
   if (!operation.security) {
@@ -54,7 +56,7 @@ function isWorkspaceTokenOperation(operation: McpSpecOperation): boolean {
   }
   return operation.security.some((requirement) =>
     Object.keys(requirement).some((scheme) =>
-      WORKSPACE_TOKEN_SECURITY_SCHEMES.has(scheme),
+      workspaceTokenSecuritySchemeNames.has(scheme),
     ),
   )
 }
@@ -64,6 +66,53 @@ function isWorkspaceTokenOperation(operation: McpSpecOperation): boolean {
 // explicit decision to add a tool to the default set (see the plan's P0.2
 // table), never as a side effect of an unrelated change.
 const MAX_DEFAULT_VISIBLE_OPERATIONS = 45
+
+const MCP_SERVER_ROOT = join(import.meta.dirname, "..", "..", "mcp-server")
+const MCP_README_PATH = join(MCP_SERVER_ROOT, "README.md")
+const MCP_SKILL_PATH = join(MCP_SERVER_ROOT, "SKILL.md")
+const MCP_README_TOOLS_HEADING = "## Available tools"
+const MCP_README_PREREQUISITES_HEADING = "## Prerequisites"
+const MCP_SKILL_CATEGORY_TABLE_HEADING = "| Category | Tool |"
+
+function sectionBetween(
+  source: string,
+  startHeading: string,
+  endHeading: string,
+): string {
+  const start = source.indexOf(startHeading)
+  const end = source.indexOf(endHeading, start + startHeading.length)
+  if (start === -1 || end === -1) {
+    throw new Error(
+      `Could not find documentation section between "${startHeading}" and "${endHeading}".`,
+    )
+  }
+  return source.slice(start, end)
+}
+function mcpToolNamesFromMarkdownTable(
+  source: string,
+  toolColumnIndex: number,
+): Set<string> {
+  const toolNames = new Set<string>()
+  for (const row of source.split("\n")) {
+    const cell = row.split("|")[toolColumnIndex]
+    if (!cell) {
+      continue
+    }
+    for (const match of cell.matchAll(/`([^`]+)`/g)) {
+      toolNames.add(match[1].replace(/[._]/g, "").toLowerCase())
+    }
+  }
+  return toolNames
+}
+
+function mcpSkillCategoryTable(source: string): string {
+  const start = source.indexOf(MCP_SKILL_CATEGORY_TABLE_HEADING)
+  const end = source.indexOf("\n\n", start)
+  if (start === -1 || end === -1) {
+    throw new Error("Could not find the MCP SKILL.md category table.")
+  }
+  return source.slice(start, end)
+}
 
 let operations: McpSpecOperation[]
 
@@ -134,6 +183,53 @@ describe("default tool set", () => {
       .map((op) => op.operationId)
 
     expect(missingDescription).toEqual([])
+  })
+
+  test("README and SKILL list exactly the default MCP tools", () => {
+    const defaultToolNames = new Set(
+      defaultOperations().map((operation) =>
+        operation.operationId.replace(/[._]/g, "").toLowerCase(),
+      ),
+    )
+    const documentedToolNames = {
+      README: mcpToolNamesFromMarkdownTable(
+        sectionBetween(
+          readFileSync(MCP_README_PATH, "utf8"),
+          MCP_README_TOOLS_HEADING,
+          MCP_README_PREREQUISITES_HEADING,
+        ),
+        1,
+      ),
+      SKILL: mcpToolNamesFromMarkdownTable(
+        mcpSkillCategoryTable(readFileSync(MCP_SKILL_PATH, "utf8")),
+        2,
+      ),
+    }
+
+    const differences = Object.fromEntries(
+      Object.entries(documentedToolNames).map(([document, toolNames]) => [
+        document,
+        {
+          documentedButNotDefault: [...toolNames]
+            .filter((toolName) => !defaultToolNames.has(toolName))
+            .sort(),
+          defaultButNotDocumented: [...defaultToolNames]
+            .filter((toolName) => !toolNames.has(toolName))
+            .sort(),
+        },
+      ]),
+    )
+
+    expect(differences).toEqual({
+      README: {
+        documentedButNotDefault: [],
+        defaultButNotDocumented: [],
+      },
+      SKILL: {
+        documentedButNotDefault: [],
+        defaultButNotDocumented: [],
+      },
+    })
   })
 
   // A diff here means the default surface changed — intentional per P0.2's
