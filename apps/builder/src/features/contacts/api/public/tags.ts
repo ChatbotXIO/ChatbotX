@@ -23,7 +23,10 @@ export const contactsTagsPublicRouter = {
       method: "GET",
       path: "/v1/contacts/{identifier}/tags",
       summary: "Get all tags added to this contact",
+      description:
+        "Lists every tag attached to the contact identified by `identifier`.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(z.object({ identifier: z.string().min(1) }))
     .output(z.object({ data: z.array(publicTagResource) }))
@@ -48,7 +51,6 @@ export const contactsTagsPublicRouter = {
         "Attaches the given tag ids to the contact identified by `identifier`; tags already on the contact are left as-is. Use `tags.list`/`tags.create` first to resolve names to ids.",
       successStatus: 204,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({
@@ -105,6 +107,7 @@ export const contactsTagsPublicRouter = {
         'Same as `addTags` but takes tag names instead of ids — existing tags whose name matches are reused, unmatched names are created. Use this when you know the tag name but not its id (call `tags.list` first only if you need the id back). Example: `{"tags":["VIP"]}`.',
       successStatus: 204,
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(addTagsByNamePublicRequest)
     .errors(possibleErrorsOnMutatingResource)

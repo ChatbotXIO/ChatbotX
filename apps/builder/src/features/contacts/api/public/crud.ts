@@ -93,7 +93,6 @@ export const contactsCrudPublicRouter = {
       description:
         "Counts contacts matching the same filter shape as `contacts.list`/`contacts.search`, without paginating the rows.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(countContactsPublicRequest)
     .output(countContactsPublicResponse)
@@ -207,7 +206,6 @@ export const contactsCrudPublicRouter = {
         "Overwrites the given standard and/or custom fields on the contact identified by `identifier`; fields omitted from the body are left unchanged.",
       successStatus: 204,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z
@@ -299,7 +297,6 @@ export const contactsCrudPublicRouter = {
       description:
         "Creates the contact identified by `identifier` if it doesn't exist yet, otherwise updates the given fields on the existing one.",
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({

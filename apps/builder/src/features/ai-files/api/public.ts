@@ -2,6 +2,7 @@ import { aiFileService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -23,7 +24,9 @@ export const aiFilesPublicRouter = {
       method: "GET",
       path: "/v1/ai-files",
       summary: "List AI files",
+      description: "Lists files uploaded to the workspace's AI knowledge base.",
       tags: ["AI Files"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(publicListRequest)
     .output(publicListResponse(publicAIFileResource))

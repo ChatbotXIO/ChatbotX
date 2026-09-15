@@ -114,7 +114,6 @@ export const messagesPublicRouter = {
         "Sends an outgoing text/media message on an existing conversation. To message a contact without first resolving their conversation id, use `contacts.sendMessage` instead.",
       successStatus: 201,
       tags: ["Messages"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createMessageRequest.and(conversationIdPathParam))
     .output(messageResourceWithRelations.nullable())

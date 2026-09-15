@@ -79,7 +79,6 @@ export const keywordsPublicRouter = {
         "Creates a keyword automation that replies with text or starts a flow when any of `keywords` is matched in an inbound message or comment.",
       successStatus: 201,
       tags: ["Keywords"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({

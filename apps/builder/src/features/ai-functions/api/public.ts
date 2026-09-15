@@ -2,6 +2,7 @@ import { aiFunctionService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -25,7 +26,9 @@ export const aiFunctionsPublicRouter = {
       method: "GET",
       path: "/v1/ai-functions",
       summary: "List AI functions",
+      description: "Lists AI functions (tools) configured in the workspace.",
       tags: ["AI Functions"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(publicListRequest)
     .output(publicListResponse(aiFunctionResource))

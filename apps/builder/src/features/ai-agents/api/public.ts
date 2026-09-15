@@ -2,6 +2,7 @@ import { aiAgentService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -23,7 +24,9 @@ export const aiAgentsPublicRouter = {
       method: "GET",
       path: "/v1/ai-agents",
       summary: "List AI agents",
+      description: "Lists AI agents configured in the workspace.",
       tags: ["AI Agents"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(publicListRequest)
     .output(listAIAgentsResponse)
@@ -62,8 +65,10 @@ export const aiAgentsPublicRouter = {
       method: "POST",
       path: "/v1/ai-agents",
       summary: "Create an AI agent",
+      description: "Creates a new AI agent in the workspace.",
       successStatus: 201,
       tags: ["AI Agents"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createAIAgentRequest)
     .output(aiAgentResourceSchema)
@@ -78,7 +83,9 @@ export const aiAgentsPublicRouter = {
       method: "PUT",
       path: "/v1/ai-agents/{id}",
       summary: "Update an AI agent",
+      description: "Partially updates an existing AI agent.",
       tags: ["AI Agents"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(updateAIAgentRequest.and(z.object({ id: zodBigintAsString() })))
     .output(aiAgentResourceSchema)

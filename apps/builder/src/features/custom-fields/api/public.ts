@@ -1,7 +1,6 @@
 import { customFieldService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
-import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -29,7 +28,6 @@ export const customFieldsPublicRouter = {
       description:
         "Lists every custom field defined in the workspace, with its id and type. Use `contacts.setCustomFields` to set values on a contact.",
       tags: ["Custom Fields"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(publicListRequest)
     .output(listPublicCustomFieldsResponse)
@@ -51,7 +49,6 @@ export const customFieldsPublicRouter = {
         "Defines a new custom field on the workspace with the given name and value type.",
       successStatus: 201,
       tags: ["Custom Fields"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createCustomFieldRequest.pick({ name: true, type: true }))
     .output(publicCustomFieldResource)

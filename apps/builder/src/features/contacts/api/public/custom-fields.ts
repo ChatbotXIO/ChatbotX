@@ -32,7 +32,10 @@ export const contactsCustomFieldsPublicRouter = {
       method: "GET",
       path: "/v1/contacts/{identifier}/custom-fields",
       summary: "Get all custom fields from a contact",
+      description:
+        "Lists every custom field value set on the contact identified by `identifier`.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(z.object({ identifier: z.string().min(1) }))
     .output(listPublicContactCustomFieldsResponse)
@@ -80,7 +83,10 @@ export const contactsCustomFieldsPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
       summary: "Set contact custom field value",
+      description:
+        "Sets a single custom field's value on the contact identified by `identifier`. Use `contacts.setCustomFields` to set several at once.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({
@@ -112,7 +118,6 @@ export const contactsCustomFieldsPublicRouter = {
         "Sets each given custom field to its value on the contact identified by `identifier`; fields not listed are left unchanged. Use `customFields.list`/`customFields.create` first to resolve names to ids.",
       successStatus: 204,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({

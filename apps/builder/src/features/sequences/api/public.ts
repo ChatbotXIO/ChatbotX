@@ -52,7 +52,9 @@ export const sequencesPublicRouter = {
       method: "GET",
       path: "/v1/sequences/{id}",
       summary: "Get sequence details",
+      description: "Returns a sequence with its list of steps.",
       tags: ["Sequences"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(z.object({ id: z.string() }))
     .output(sequenceResource)
@@ -74,7 +76,6 @@ export const sequencesPublicRouter = {
         "Creates an empty sequence. Add steps afterward via the builder UI or `sequences.upsertStep`.",
       successStatus: 201,
       tags: ["Sequences"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createSequenceRequest)
     .output(z.object({ sequenceId: z.string() }))
@@ -92,7 +93,9 @@ export const sequencesPublicRouter = {
       method: "PATCH",
       path: "/v1/sequences/{id}",
       summary: "Update a sequence's name or active state",
+      description: "Partially updates a sequence's name or active flag.",
       tags: ["Sequences"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(updateSequenceSchema.and(z.object({ id: zodBigintAsString() })))
     .errors(possibleErrorsOnMutatingResource)

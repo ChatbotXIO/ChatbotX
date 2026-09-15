@@ -161,7 +161,6 @@ export const conversationsPublicRouter = {
       description:
         "Archives the conversation, removing it from the default inbox view. Use `conversations.list` with the appropriate filter to find archived conversations again.",
       tags: ["Conversations"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(conversationIdPathParam)
     .output(successResponse)

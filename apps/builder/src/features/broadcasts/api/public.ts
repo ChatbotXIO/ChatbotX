@@ -79,7 +79,9 @@ export const broadcastsPublicRouter = {
       method: "GET",
       path: "/v1/broadcasts/{idOrName}",
       summary: "Get broadcast by id or name",
+      description: "Returns a single broadcast looked up by id or name.",
       tags: ["Broadcasts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(z.object({ idOrName: z.string() }))
     .output(publicBroadcastResource)
@@ -156,7 +158,6 @@ export const broadcastsPublicRouter = {
         "Creates a broadcast as a draft (or immediately scheduled, depending on the payload) targeting the given audience filter.",
       successStatus: 201,
       tags: ["Broadcasts"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createBroadcastRequest)
     .output(publicBroadcastResource)
@@ -225,7 +226,6 @@ export const broadcastsPublicRouter = {
       summary: "Schedule a draft broadcast",
       description: "Only matches a broadcast whose status is draft.",
       tags: ["Broadcasts"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(scheduleBroadcastSchema.and(z.object({ id: zodBigintAsString() })))
     .output(z.object({ id: z.string() }))

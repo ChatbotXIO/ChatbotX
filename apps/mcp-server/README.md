@@ -36,7 +36,7 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 
 ## Available tools
 
-Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 44 tools:
+Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 43 tools:
 
 ### Capabilities
 
@@ -46,108 +46,97 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 | `schemas_flow_spec` | Get the JSON Schema for the flow-spec DSL |
 | `token_get` | Get the calling token's workspace id, permission, and scopes |
 
+### AI Agents
+
+| Tool | Description |
+|---|---|
+| `ai_agents_list` | List AI agents |
+| `ai_agents_create` | Create an AI agent |
+| `ai_agents_update` | Update an AI agent |
+| `ai_files_list` | List AI files |
+| `ai_functions_list` | List AI functions |
+
 ### Analytics
 
 | Tool | Description |
 |---|---|
-| `analytics_contacts_count` | Get contacts count |
-| `analytics_new_contacts_count` | Get new contacts count |
+| `analytics_new_contact_counts_per_day` | Get new contact counts per day |
+| `analytics_blocked_contacts_per_day` | Get blocked contacts per day |
+| `analytics_flow_stats` | Get flow analytics |
+| `analytics_broadcast_stats` | Get broadcast stats |
+| `analytics_sequence_step_stats` | Get sequence step stats |
 
 ### Broadcasts
 
 | Tool | Description |
 |---|---|
-| `broadcasts_create` | Create a broadcast |
 | `broadcasts_list` | Get all broadcasts |
-| `broadcasts_schedule` | Schedule a draft broadcast |
+| `broadcasts_get` | Get broadcast by id or name |
 | `broadcasts_stop` | Stop a broadcast that is currently sending |
 
 ### Contacts
 
 | Tool | Description |
 |---|---|
-| `contacts_add_tags` | Add tags to the contact |
-| `contacts_count` | Count contacts matching a filter |
 | `contacts_create` | Create a contact |
 | `contacts_get` | Get contact by identifier (id:123, email:user@example.com, phone:+84...) |
 | `contacts_list` | List contacts |
-| `contacts_list_filter_fields` | List every field usable in a contact filter |
 | `contacts_search` | Search contacts with a filter body |
-| `contacts_send_flow` | Send flow to contact |
+| `contacts_list_tags` | Get all tags added to this contact |
+| `contacts_add_tags_by_name` | Add tags to the contact by name |
+| `contacts_list_custom_fields` | Get all custom fields from a contact |
+| `contacts_set_custom_field` | Set contact custom field value |
+| `contacts_list_messages` | List messages for contact |
 | `contacts_send_message` | Send message to contact |
-| `contacts_set_custom_fields` | Set multiple custom field values for a contact |
+| `contacts_send_flow` | Send flow to contact |
+| `contacts_list_sequences` | List sequences the contact is enrolled in |
 | `contacts_subscribe_sequences` | Enroll the contact in one or more sequences |
-| `contacts_update` | Update contact fields |
-| `contacts_upsert` | Upsert a contact by identifier |
 
 ### Conversations
 
 | Tool | Description |
 |---|---|
-| `conversations_archive` | Archive a conversation |
-| `conversations_assign` | Assign or unassign a conversation to a user or inbox team |
-| `conversations_get` | Get a conversation by id |
 | `conversations_list` | List conversations |
+| `conversations_get` | Get a conversation by id |
+| `conversations_assign` | Assign or unassign a conversation to a user or inbox team |
 
-### Custom Fields
+### Error Logs
 
 | Tool | Description |
 |---|---|
-| `custom_fields_create` | Create a custom field |
-| `custom_fields_list` | Get all custom fields |
+| `error_logs_list` | List error logs |
 
 ### Flows
 
 | Tool | Description |
 |---|---|
-| `flows_create` | Create a flow |
-| `flows_get` | Get a flow by id |
 | `flows_list` | List flows |
+| `flows_get` | Get a flow by id |
+| `flows_create` | Create a flow |
+| `flows_update_draft` | Update a flow's draft version |
 | `flows_publish` | Publish a flow |
-| `flows_validate` | Compile and validate a flow spec without publishing it |
-
-### Inboxes
-
-| Tool | Description |
-|---|---|
-| `inboxes_list` | List inboxes |
 
 ### Keywords
 
 | Tool | Description |
 |---|---|
-| `keywords_create` | Create a keyword automation |
 | `keywords_list` | List keywords (automated responses) |
 
 ### Messages
 
 | Tool | Description |
 |---|---|
-| `messages_create` | Send a message on a conversation |
 | `messages_list` | List messages on a conversation |
 
 ### Sequences
 
 | Tool | Description |
 |---|---|
-| `sequences_create` | Create a sequence |
 | `sequences_list` | List sequences |
+| `sequences_get` | Get sequence details |
+| `sequences_update` | Update a sequence's name or active state |
 
-### Tags
-
-| Tool | Description |
-|---|---|
-| `tags_create` | Create a new tag |
-| `tags_list` | Get all tags |
-
-### Triggers
-
-| Tool | Description |
-|---|---|
-| `triggers_create` | Create a trigger |
-| `triggers_list` | List triggers |
-
-Everything else — deletes, less-common resources (AI agents, coupons, products, webhooks, saved replies, error logs, integrations, workspace members, etc.), and channel-token-only or deprecated operations — is reachable via `search_tools` → `call_tool`, not `tools/list`.
+Everything else — deletes, less-common resources (coupons, products, webhooks, saved replies, tags/triggers/inboxes/custom-fields management, integrations, workspace members, etc.), and channel-token-only or deprecated operations — is reachable via `search_tools` → `call_tool`, not `tools/list`.
 
 ## Prerequisites
 

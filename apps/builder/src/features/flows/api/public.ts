@@ -192,7 +192,6 @@ export const flowsPublicRouter = {
       description:
         "Compiles a flow-spec DSL object (see `GET /v1/schemas/flow-spec`) and validates the result exactly like `flows.publish` would, without persisting anything. On success, returns the compiled node/edge graph. On failure, returns a 422 with structured errors (`path`/`code`/`message`/`hint`/`candidates`) — fix and retry before calling `flows.publish`.",
       tags: ["Flows"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(flowSpecRequest)
     .output(publishFlowSchema)
@@ -209,6 +208,7 @@ export const flowsPublicRouter = {
       description:
         "Overwrites the draft version's nodes/edges in place, without publishing. Accepts either the raw `{ nodes, edges }` graph the builder UI sends, or `{ spec }` compiled server-side into that same graph — draft nodes are not otherwise validated (see `flows.validate` to check a spec before writing it).",
       tags: ["Flows"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(updateDraftFlowRequest.and(z.object({ id: zodBigintAsString() })))
     .errors(possibleErrorsOnMutatingResource)

@@ -69,7 +69,10 @@ export const contactsMessagesPublicRouter = {
       method: "GET",
       path: "/v1/contacts/{identifier}/messages",
       summary: "List messages for contact",
+      description:
+        "Lists messages on the contact's existing conversation, newest-related pagination via `cursor`.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({

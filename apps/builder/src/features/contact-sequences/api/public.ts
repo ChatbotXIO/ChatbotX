@@ -22,7 +22,10 @@ export const contactsSequencesPublicRouter = {
       method: "GET",
       path: "/v1/contacts/{identifier}/sequences",
       summary: "List sequences the contact is enrolled in",
+      description:
+        "Lists the sequences the contact identified by `identifier` is currently enrolled in.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(z.object({ identifier: z.string().min(1) }))
     .output(listContactSequencesPublicResponse)

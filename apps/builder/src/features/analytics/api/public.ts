@@ -109,7 +109,10 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/new-contact-counts-per-day",
       summary: "Get new contact counts per day",
+      description:
+        "Returns the count of contacts first created on each day within the given `from`/`to` time range.",
       tags: ["Analytics"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(timeRangePublicRequest)
     .output(contactCountsPublicResponse)
@@ -127,7 +130,10 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/blocked-contacts-per-day",
       summary: "Get blocked contacts per day",
+      description:
+        "Returns the count of contacts blocked on each day within the given `from`/`to` time range.",
       tags: ["Analytics"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(timeRangePublicRequest)
     .output(contactCountsPublicResponse)
@@ -179,7 +185,6 @@ export const analyticsPublicRouter = {
       description:
         "Counts contacts first created within the given `from`/`to` time range.",
       tags: ["Analytics"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(timeRangePublicRequest)
     .output(contactsCountPublicResponse)
@@ -213,7 +218,6 @@ export const analyticsPublicRouter = {
       description:
         "Counts all contacts that existed at any point within the given `from`/`to` time range.",
       tags: ["Analytics"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(timeRangePublicRequest)
     .output(contactsCountPublicResponse)
@@ -542,7 +546,10 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/broadcasts/{broadcastId}/stats",
       summary: "Get broadcast stats",
+      description:
+        "Returns delivery stats (sent/delivered/read/failed counts) for a single broadcast.",
       tags: ["Analytics"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(broadcastStatsPublicRequest)
     .output(broadcastStatsPublicResponse)
@@ -565,7 +572,9 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/sequences/{sequenceId}/steps/{stepId}/stats",
       summary: "Get sequence step stats",
+      description: "Returns delivery stats for a single sequence step.",
       tags: ["Analytics"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(sequenceStepStatsPublicRequest)
     .output(sequenceStepStatsPublicResponse)
@@ -606,7 +615,9 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/flows/{flowId}",
       summary: "Get flow analytics",
+      description: "Returns session/completion stats for a single flow.",
       tags: ["Analytics"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(flowStatsPublicRequest)
     .output(flowStatsPublicResponse)

@@ -1,4 +1,5 @@
 import { listErrorLogs } from "@chatbotx.io/business/error-log"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { withPublicPaging } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -15,7 +16,10 @@ export const errorLogsPublicRouter = {
       method: "GET",
       path: "/v1/error-logs",
       summary: "List error logs",
+      description:
+        "Lists error logs recorded in the workspace, filterable by `keyword`, newest first.",
       tags: ["Error Logs"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     // `sort` is dropped, unlike the private table, and the order is pinned in
     // the handler instead — the same way the tags/bot-fields/broadcasts public
