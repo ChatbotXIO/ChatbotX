@@ -13,7 +13,7 @@
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
-    "msw": "^2.7.3",
+    "msw": "^2.15.0",
     "typescript": "^5",
     "vitest": "^4.1.0"
   },
