@@ -27,7 +27,13 @@ export type BulkAddTagsPublicRequest = z.infer<typeof bulkAddTagsPublicRequest>
 
 export const bulkSubscribeSequencesPublicRequest =
   bulkContactIdsPublicRequest.extend({
-    sequenceIds: z.array(zodBigintAsString()).min(1).max(20),
+    sequenceIds: z
+      .array(zodBigintAsString())
+      .min(1)
+      .max(20)
+      .describe(
+        "Sequence ids (numeric strings) to enroll into. Get them from `sequences.list`.",
+      ),
   })
 export type BulkSubscribeSequencesPublicRequest = z.infer<
   typeof bulkSubscribeSequencesPublicRequest

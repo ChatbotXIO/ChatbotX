@@ -72,7 +72,6 @@ const DESCRIPTION_BACKLOG = new Set<string>([
   "capabilities.",
   "channels.",
   "contactScans.",
-  "contacts.",
   "conversations.",
   "coupons.",
   "customFields.",

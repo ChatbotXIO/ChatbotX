@@ -4,6 +4,7 @@ import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
 } from "@/lib/orpc/orpc-error-helper"
+import { withListPagingNote } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   contactImportPublicResource,
@@ -20,6 +21,9 @@ export const importPublicRouter = {
       method: "GET",
       path: "/v1/contacts/imports",
       summary: "List contact import jobs",
+      description: withListPagingNote(
+        "Returns background contact-import jobs started with `contacts.import`, most recent first. Use `contacts.getImport` for one job's full detail.",
+      ),
       tags: ["Contacts"],
     })
     .input(listContactImportsPublicRequest)
@@ -42,6 +46,8 @@ export const importPublicRouter = {
       method: "GET",
       path: "/v1/contacts/imports/{id}",
       summary: "Get a contact import job",
+      description:
+        "Returns one import job's progress and result counts. Call `contacts.listImports` to find its id first.",
       tags: ["Contacts"],
     })
     .input(getContactImportPublicRequest)
