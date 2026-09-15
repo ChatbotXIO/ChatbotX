@@ -28,7 +28,16 @@ export const contactsTagsPublicRouter = {
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .output(z.object({ data: z.array(publicTagResource) }))
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -54,8 +63,19 @@ export const contactsTagsPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        tagIds: z.array(zodBigintAsString()).min(1).max(100),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        tagIds: z
+          .array(zodBigintAsString())
+          .min(1)
+          .max(100)
+          .describe(
+            "Tag ids (numeric strings) to attach, up to 100. Get them from `tags.list`.",
+          ),
       }),
     )
     .errors(possibleErrorsOnMutatingResource)
@@ -76,13 +96,26 @@ export const contactsTagsPublicRouter = {
       method: "DELETE",
       path: "/v1/contacts/{identifier}/tags",
       summary: "Remove tags from the contact",
+      description:
+        "Detaches the given tag ids from the contact identified by `identifier`; tags not currently on the contact are ignored. Use `contacts.listTags` to see current tags first.",
       successStatus: 204,
       tags: ["Contacts"],
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        tagIds: z.array(zodBigintAsString()).min(1).max(100),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        tagIds: z
+          .array(zodBigintAsString())
+          .min(1)
+          .max(100)
+          .describe(
+            "Tag ids (numeric strings) to detach, up to 100. Get them from `tags.list`.",
+          ),
       }),
     )
     .errors(possibleErrorsOnDeletingResource)
