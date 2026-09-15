@@ -1,5 +1,6 @@
 import {
   sendToWorkspaceMember,
+  whatsappCallLifecycleService,
   whatsappVoipCallService,
 } from "@chatbotx.io/business"
 import { contactSources } from "@chatbotx.io/database/partials"
@@ -58,20 +59,9 @@ class WhatsappCallStatusRowNotReadyError extends Error {
   }
 }
 
-/**
- * Meta's status webhook items carry `biz_opaque_callback_data` (the
- * `attemptId`), but the shared `IntegrationJobWhatsappCallEvent` DTO in
- * `@chatbotx.io/worker-config` does not yet declare that field on the
- * `status` event shape. The integrations-side parser (`extractCallEventPayloads`)
- * already puts it on the object at runtime — this reads it back via a narrow,
- * type-safe accessor instead of widening the shared DTO, which is out of
- * this change's scope (apps/worker only).
- */
-const readBizOpaqueCallbackData = (event: object): string | undefined => {
-  const value = (event as { bizOpaqueCallbackData?: unknown })
-    .bizOpaqueCallbackData
-  return typeof value === "string" && value.length > 0 ? value : undefined
-}
+/** Meta's `biz_opaque_callback_data` echo (the outbound `attemptId`), when non-empty. */
+const readBizOpaqueCallbackData = (event: CallEvent): string | undefined =>
+  event.bizOpaqueCallbackData ? event.bizOpaqueCallbackData : undefined
 
 /**
  * Resolves the `WhatsappCall` row for a status webhook item: `wacid` first
@@ -159,7 +149,7 @@ const handleOutboundInterimStatus = async (
   event: Extract<CallEvent, { kind: "status" }>,
 ): Promise<void> => {
   if (event.status === "RINGING") {
-    await whatsappCallRepository.updateInterimStatus({
+    await whatsappCallLifecycleService.advanceInterimStatus({
       wacid: event.wacid,
       status: "ringing",
       current: call,
@@ -177,9 +167,9 @@ const handleOutboundInterimStatus = async (
       )
       return
     }
-    await whatsappCallRepository.markAcceptedIfActive({
-      id: call.id,
-      answeredByUserId: call.answeredByUserId,
+    await whatsappVoipCallService.markAcceptedByAgent({
+      whatsappCallId: call.id,
+      agentUserId: call.answeredByUserId,
     })
     await whatsappVoipCallService.markOutboundAccepted({ wacid: event.wacid })
     await notifyOutboundStatus(call, "accepted")
@@ -197,16 +187,12 @@ const handleOutboundInterimStatus = async (
 
 /**
  * A `call_created`/`terminate` webhook for a BUSINESS_INITIATED call must
- * never create a row: `startWhatsappCallAction` already
- * inserted the pending outbound row (`attemptId`, null `wacid`) before
- * dialing. Meta's own attempt-correlation is limited to
- * `(inboxId, contactInboxId)` — there is no attemptId on the wire — so a
- * webhook attaches to the pending row created within this window BEFORE the
- * event's own timestamp. Wide enough to survive normal webhook latency,
- * narrow enough that a call that's been ringing far longer than any real
- * attempt takes is treated as ambiguous rather than silently mis-attached.
+ * never create a row: `initiateOutboundVoipCallAction` already inserted the pending
+ * outbound row (`attemptId`, null `wacid`) before dialing. R23: correlation
+ * back to that row is by exact `wacid`/`attemptId` only (see
+ * {@link attachBusinessInitiatedToPendingOutbound}) — the previous
+ * time-windowed `(inboxId, contactInboxId)` heuristic is removed.
  */
-const OUTBOUND_CORRELATION_WINDOW_MS = 10 * 60 * 1000
 
 /** Meta call timestamps are unix seconds (as strings). */
 const parseUnixSeconds = (value: string | undefined): Date | undefined => {
@@ -218,18 +204,25 @@ const parseUnixSeconds = (value: string | undefined): Date | undefined => {
 }
 
 /**
- * Resolves the customer's WhatsApp number for this call. `contacts[]` is
- * preferred; `from`/`to` on the call item is the fallback, picked by the
- * call's direction.
+ * R2: resolves the customer's identity for this call — a phone number
+ * (`waId`) when one is exposed, and/or a Business-Scoped User ID (`userId`)
+ * for a Username/BSUID-only caller with no phone number exposed. `contacts[]`
+ * is preferred for both; the item-level `from`/`to`/`from_user_id`/
+ * `to_user_id` fields are the fallback, picked by the call's direction —
+ * mirroring the incoming-message resolution
+ * (`integrations/whatsapp/src/handlers/message/incomming-message.ts`).
  */
-const resolveCallerWaId = (
+const resolveCallerIdentity = (
   payload: CallPayload,
   event: Extract<CallEvent, { kind: "connect" | "terminate" }>,
-): string | undefined => {
-  if (payload.contact?.waId) {
-    return payload.contact.waId
-  }
-  return event.direction === "businessInitiated" ? event.to : event.from
+): { waId: string | undefined; userId: string | undefined } => {
+  const isBusinessInitiated = event.direction === "businessInitiated"
+  const waId =
+    payload.contact?.waId ?? (isBusinessInitiated ? event.to : event.from)
+  const userId =
+    payload.contact?.userId ??
+    (isBusinessInitiated ? event.toUserId : event.fromUserId)
+  return { waId, userId }
 }
 
 const resolveCallParticipants = async (
@@ -242,8 +235,14 @@ const resolveCallParticipants = async (
       props.integrationIdentifier,
     )
 
-  const waId = resolveCallerWaId(props.payload, event)
-  if (!waId) {
+  const { waId, userId } = resolveCallerIdentity(props.payload, event)
+  // R2: a Username/BSUID-only caller has no `waId` at all — fall back to the
+  // BSUID as the primary `sourceId` (mirrors
+  // `incomming-message.ts`'s `sourceId: asString(data.from) ?? sourceUserId ?? ""`),
+  // which is what makes `isSourceUserIdKeyedIdentity`/
+  // `shouldAddressBySourceUserId` treat the row as BSUID-keyed downstream.
+  const sourceId = waId ?? userId
+  if (!sourceId) {
     return { inbox, detected: null }
   }
 
@@ -251,8 +250,9 @@ const resolveCallParticipants = async (
     inbox,
     integrationRow,
     incomingContact: {
-      sourceId: waId,
-      sourceUserId: props.payload.contact?.userId,
+      sourceId,
+      sourceUserId: userId,
+      sourceUsername: props.payload.contact?.username,
       firstName: props.payload.contact?.name,
     },
     source: contactSources.enum.inboundMessage,
@@ -263,28 +263,29 @@ const resolveCallParticipants = async (
 
 /**
  * Attaches a BUSINESS_INITIATED `call_created`/`terminate` webhook's `wacid`
- * to the pending outbound row `startWhatsappCallAction` already created —
- * NEVER inserts a new row. Logs `outbound-correlation-ambiguous`
- * and does nothing (no row, no side effects) when no pending attempt
- * matches — that is the correct, safe outcome: a webhook this plan cannot
- * confidently attribute must not fabricate a call row.
+ * to the pending outbound row `initiateOutboundVoipCallAction` already created —
+ * NEVER inserts a new row. Logs `outbound-correlation-unmatched` and does
+ * nothing (no row, no side effects) when no pending attempt matches — that
+ * is the correct, safe outcome: a webhook this plan cannot confidently
+ * attribute must not fabricate a call row.
  *
- * L1 fix — resolution order, cheapest/most-exact first:
+ * R23: correlation is EXACT ONLY — `wacid` or `attemptId`
+ * (`biz_opaque_callback_data`), resolution order cheapest/most-exact first:
  * 1. `findByWacid`: the VoIP outbound action (`initiate-outbound-voip-call.action.ts`)
  *    already calls `attachWacid` synchronously right after `connectCall`
  *    returns, well before this webhook-driven event is processed — so for
  *    a VoIP outbound call the row almost always already carries this exact
- *    wacid by the time we get here. Without this check, every VoIP outbound
- *    connect fell through to the `wacid IS NULL` `findPendingOutbound`
- *    query below (which can never match a row that already has a wacid)
- *    and spuriously logged `outbound-correlation-ambiguous` on every call.
+ *    wacid by the time we get here.
  * 2. `findByAttemptId` via Meta's echoed `biz_opaque_callback_data`, when
- *    present: exact and race-free, so preferred over the time-window
- *    heuristic. Present on `connect` events (VoIP or SIP); absent on
- *    SIP-mode/legacy connects and on `terminate` events, so SIP correlation
- *    still falls through unchanged.
- * 3. The pre-existing `since`-windowed `findPendingOutbound` heuristic,
- *    unchanged, for everything the two lookups above miss.
+ *    present: exact and race-free. Present on `connect` events; absent on
+ *    `terminate` events.
+ *
+ * The previous third step — a `since`-windowed `findPendingOutbound` lookup
+ * by `(inboxId, contactInboxId)` — is REMOVED: it could attach a late
+ * webhook from a lost-response attempt to a newer attempt for the same
+ * contact, and no time window only lowers (never eliminates) that
+ * probability. Without an exact match the row is left to its own dial-expiry
+ * sweep rather than risk a wrong attach.
  */
 const attachBusinessInitiatedToPendingOutbound = async (
   props: CallEventData,
@@ -303,51 +304,23 @@ const attachBusinessInitiatedToPendingOutbound = async (
   if (attemptId) {
     const byAttempt = await whatsappCallRepository.findByAttemptId(attemptId)
     if (byAttempt) {
-      return await whatsappCallRepository.attachWacid({
-        id: byAttempt.id,
+      return await whatsappVoipCallService.attachMetaCallId({
+        whatsappCallId: byAttempt.id,
         wacid,
       })
     }
   }
 
-  const { inbox, detected } = await resolveCallParticipants(props, event)
-  if (!detected) {
-    logger.warn(
-      { wacid, phoneNumberId: props.payload.phoneNumberId },
-      "Whatsapp call (businessInitiated) skipped: unable to resolve caller",
-    )
-    return
-  }
-
-  const eventTimestamp =
-    parseUnixSeconds(
-      "timestamp" in event
-        ? (event.timestamp as string | undefined)
-        : undefined,
-    ) ?? new Date()
-  const since = new Date(
-    eventTimestamp.getTime() - OUTBOUND_CORRELATION_WINDOW_MS,
+  logger.warn(
+    {
+      wacid,
+      attemptId,
+      phoneNumberId: props.payload.phoneNumberId,
+      event: "outbound-correlation-unmatched",
+    },
+    "Whatsapp call (businessInitiated): no exact wacid/attemptId match to attach to",
   )
-
-  const pending = await whatsappCallRepository.findPendingOutbound({
-    inboxId: inbox.id,
-    contactInboxId: detected.contactInbox.id,
-    since,
-  })
-  if (!pending) {
-    logger.warn(
-      {
-        wacid,
-        inboxId: inbox.id,
-        contactInboxId: detected.contactInbox.id,
-        event: "outbound-correlation-ambiguous",
-      },
-      "Whatsapp call (businessInitiated): no pending outbound attempt to attach to",
-    )
-    return
-  }
-
-  return await whatsappCallRepository.attachWacid({ id: pending.id, wacid })
+  return
 }
 
 const handleConnect = async (
@@ -370,7 +343,7 @@ const handleConnect = async (
     return
   }
 
-  const { isNew } = await whatsappCallRepository.createIfAbsent({
+  const { isNew } = await whatsappCallLifecycleService.recordIncomingCall({
     wacid: event.wacid,
     direction: event.direction,
     status: "ringing",
@@ -422,7 +395,7 @@ const handleInterimStatus = async (
     return
   }
 
-  const transition = await whatsappCallRepository.updateInterimStatus({
+  const transition = await whatsappCallLifecycleService.advanceInterimStatus({
     wacid: event.wacid,
     status,
     current: existing,
@@ -448,29 +421,16 @@ const handleInterimStatus = async (
   }
 }
 
-/** Bounded, minimal mirror of the parser's terminate-error shape. */
-type WhatsappCallTerminateErrorLike = {
-  code?: number
-  title?: string
-  message?: string
-}
+type TerminateCallEvent = Extract<CallEvent, { kind: "terminate" }>
 
-/**
- * The shared `IntegrationJobWhatsappCallEvent` DTO in `@chatbotx.io/worker-config`
- * does not yet declare `errors[]` on the `terminate` event shape, but the
- * integrations-side parser (`extractCallEventPayloads`) already puts it on
- * the object at runtime (media-drop codes 138021/138022/138023, etc). Read
- * it back via a narrow, type-safe accessor instead of widening the shared
- * DTO, which is out of this change's scope (apps/worker only).
- */
+/** One of Meta's terminate `errors[]` items (media-drop codes 138021/138022/138023, etc). */
+type WhatsappCallTerminateErrorLike = NonNullable<
+  TerminateCallEvent["errors"]
+>[number]
+
 const readTerminateErrors = (
-  event: object,
-): WhatsappCallTerminateErrorLike[] | undefined => {
-  const value = (event as { errors?: unknown }).errors
-  return Array.isArray(value)
-    ? (value as WhatsappCallTerminateErrorLike[])
-    : undefined
-}
+  event: TerminateCallEvent,
+): WhatsappCallTerminateErrorLike[] | undefined => event.errors
 
 /** Joins Meta's terminate `errors[]` into a single diagnosis string for `lastError`. */
 const formatTerminateErrors = (
@@ -564,7 +524,7 @@ const handleTerminate = async (
         )
         return
       }
-      const upserted = await whatsappCallRepository.createIfAbsent({
+      const upserted = await whatsappCallLifecycleService.recordIncomingCall({
         wacid: event.wacid,
         direction: event.direction ?? "userInitiated",
         status: "ringing",

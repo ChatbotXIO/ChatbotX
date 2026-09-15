@@ -84,7 +84,7 @@ const handlePost = async (req: NextRequest, integrationId: string) => {
     return json({ message: "Integration not found" }, 404)
   }
 
-  const { auth } = result
+  const { row, auth } = result
 
   const verified =
     Boolean(auth.metadata?.webhookVerifiedAt) ||
@@ -112,6 +112,10 @@ const handlePost = async (req: NextRequest, integrationId: string) => {
         clientSecret: auth.clientSecret,
         manualIntegration: true,
         integrationId,
+        // Binds every parsed change to this integration's own number so an
+        // unsigned manual endpoint cannot inject events for another
+        // workspace's phone number (see `resolvePinnedPhoneNumberId`).
+        phoneNumberId: row.phoneNumberId,
         // biome-ignore lint/suspicious/noExplicitAny: pass-through config
       } as any,
       req,

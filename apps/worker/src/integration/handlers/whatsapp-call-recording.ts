@@ -1,6 +1,7 @@
 import {
   callRecordingService,
   contactInboxService,
+  whatsappCallLifecycleService,
 } from "@chatbotx.io/business"
 import {
   createMessageRepository,
@@ -44,16 +45,16 @@ export const externalCorrelationId = (call: {
  * as an `audio` attachment on the EXISTING finalize `whatsapp_call` message
  * (never a second message), then enriches that
  * message's flags (`hasRecording: true`) and fires `callRecorded` — the
- * exact pipeline both the SIP (`handleWhatsappCallRecordingReady`) and
- * Meta-native (`handleWhatsappCallNativeRecordingFetch`) paths converge on
- * once the recording bytes are safely in object storage, so neither keeps
+ * exact pipeline both the browserWhisper (`handleWhatsappCallRecordingReady`)
+ * and Meta-native (`handleWhatsappCallNativeRecordingFetch`) paths converge
+ * on once the recording bytes are safely in object storage, so neither keeps
  * its own copy of the attach/enrich/emit logic. The CAS on
  * `attachRecording` (`recordedAt IS NULL`) is what makes this idempotent —
  * a redelivery that loses the race returns `undefined` and this is a no-op,
  * since the winning call already did the enrichment/attachment/emit. Never
- * chains transcription — callers decide that themselves (SIP always chains
- * Whisper; Meta-native never does, since its transcript arrives via its own
- * independent webhook/job).
+ * chains transcription — callers decide that themselves (browserWhisper
+ * always chains Whisper; Meta-native never does, since its transcript
+ * arrives via its own independent webhook/job).
  *
  * `stamped.messageId`/`endedAt` (stamped by `finalizeCallSideEffects`) can
  * still be null right after the CAS wins if this recording webhook's
@@ -75,7 +76,7 @@ export const attachRecordingAndNotify = async (props: {
     return
   }
 
-  const stamped = await whatsappCallRepository.attachRecording({
+  const stamped = await whatsappCallLifecycleService.attachRecording({
     id: call.id,
     recordingPath,
     recordedAt: new Date(),

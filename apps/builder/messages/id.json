@@ -3982,7 +3982,6 @@
         "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
         "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
         "callFailed": "The call could not be placed. Please try again.",
-        "useSip": "This number uses in-app (SIP) calling. Use the call button for that instead.",
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Akses mikrofon ditolak. Izinkan akses mikrofon di pengaturan browser Anda dan coba lagi.",
@@ -4050,7 +4049,8 @@
         "expand": "Perluas",
         "dismiss": "Tutup",
         "statusNoAnswer": "Tidak ada jawaban",
-        "eyebrowCallEnded": "PANGGILAN BERAKHIR"
+        "eyebrowCallEnded": "PANGGILAN BERAKHIR",
+        "statusConnectionLost": "Koneksi terputus"
       },
       "capability": {
         "title": "Kelayakan panggilan",
@@ -4059,6 +4059,12 @@
         "ok": "OK",
         "micPermissionTitle": "Izin mikrofon",
         "dialFailureTitle": "Panggilan tidak dapat dilakukan"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Nomor yang terhubung secara manual",
+        "callsSubscription": "Nomor WhatsApp ini terhubung secara manual. Pastikan aplikasi Meta Anda berlangganan field webhook calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — jika tidak, panggilan keluar tidak akan tersambung dan panggilan masuk tidak akan berdering.",
+        "unsignedWebhook": "Nomor ini juga tidak memiliki Meta App Secret yang dikonfigurasi, sehingga webhook masuknya tidak diverifikasi tanda tangannya.",
+        "callAnyway": "Tetap panggil"
       }
     }
   },

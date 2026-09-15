@@ -5350,7 +5350,6 @@
         "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
         "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
         "callFailed": "The call could not be placed. Please try again.",
-        "useSip": "This number uses in-app (SIP) calling. Use the call button for that instead.",
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "麦克风访问被拒绝。请在浏览器设置中允许麦克风访问，然后重试。",
@@ -5418,7 +5417,8 @@
         "expand": "展开",
         "dismiss": "关闭",
         "statusNoAnswer": "无应答",
-        "eyebrowCallEnded": "通话已结束"
+        "eyebrowCallEnded": "通话已结束",
+        "statusConnectionLost": "连接已断开"
       },
       "capability": {
         "title": "通话资格",
@@ -5427,6 +5427,12 @@
         "ok": "确定",
         "micPermissionTitle": "麦克风权限",
         "dialFailureTitle": "无法拨打电话"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "手动连接的号码",
+        "callsSubscription": "此 WhatsApp 号码是手动连接的。请确保您的 Meta 应用已订阅 calls webhook 字段（Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls），否则外呼将无法接通，来电也不会振铃。",
+        "unsignedWebhook": "此号码也未配置 Meta App Secret，因此其传入的 webhook 未经过签名验证。",
+        "callAnyway": "仍然拨打"
       }
     }
   },

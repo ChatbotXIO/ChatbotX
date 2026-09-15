@@ -3,106 +3,123 @@ import { ChannelError, ChannelErrorCategory } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  upsertForContactInbox: vi.fn(),
+  recordPermanentGrant: vi.fn(),
+  broadcastChatEvent: vi.fn(),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  whatsappCallPermissionRepository: {
-    upsertForContactInbox: mocks.upsertForContactInbox,
+vi.mock("@chatbotx.io/business", () => ({
+  whatsappCallPermissionService: {
+    recordPermanentGrant: mocks.recordPermanentGrant,
   },
+}))
+
+vi.mock("../src/chat/utils/broadcast-chat-event", () => ({
+  broadcastChatEvent: mocks.broadcastChatEvent,
 }))
 
 vi.mock("../src/lib/logger", () => ({ logger: mocks.logger }))
 
-const { recordCallPermissionAlreadyGranted } = await import(
-  "../src/chat/handlers/whatsapp-call-permission-grant"
+const { reconcileChannelSendError } = await import(
+  "../src/chat/handlers/channel-send-error-reconcilers"
 )
 
+const conversation = { id: "conv-1", workspaceId: "ws-1" }
 const whatsappInbox = { id: "ci-1", channel: channelTypes.enum.whatsapp }
 const permissionRequestAttrs = { type: "whatsapp_call_permission_request" }
 
-const error138017 = () =>
-  new ChannelError("(#138017) already approved", ChannelErrorCategory.UNKNOWN, {
-    code: 138_017,
+const channelError = (code: number) =>
+  new ChannelError(`(#${code}) channel error`, ChannelErrorCategory.UNKNOWN, {
+    code,
   })
 
-describe("recordCallPermissionAlreadyGranted", () => {
+describe("reconcileChannelSendError", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.upsertForContactInbox.mockResolvedValue(undefined)
+    mocks.recordPermanentGrant.mockResolvedValue(undefined)
+    mocks.broadcastChatEvent.mockResolvedValue(undefined)
   })
 
-  test("records a permanent grant and reports handled for a whatsapp call_permission_request + 138017", async () => {
-    const handled = await recordCallPermissionAlreadyGranted({
-      error: error138017(),
-      workspaceId: "ws-1",
+  test("records a permanent grant, refreshes open threads and reports reconciled for a WhatsApp call_permission_request failing with 138017", async () => {
+    const isReconciled = await reconcileChannelSendError({
+      error: channelError(138_017),
+      conversation,
       contactInbox: whatsappInbox,
       contentAttributes: permissionRequestAttrs,
     })
 
-    expect(handled).toBe(true)
-    expect(mocks.upsertForContactInbox).toHaveBeenCalledWith({
+    expect(isReconciled).toBe(true)
+    expect(mocks.recordPermanentGrant).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactInboxId: "ci-1",
-      response: "accept",
-      isPermanent: true,
-      expiresAt: null,
-      respondedAt: expect.any(Date),
+      grantedAt: expect.any(Date),
+    })
+    expect(mocks.broadcastChatEvent).toHaveBeenCalledWith("ws-1", {
+      eventType: "whatsappCallPermissionUpdated",
+      data: { conversationId: "conv-1" },
     })
   })
 
-  test("ignores a non-whatsapp channel", async () => {
-    const handled = await recordCallPermissionAlreadyGranted({
-      error: error138017(),
-      workspaceId: "ws-1",
+  test("returns false for a channel with no registered reconciler", async () => {
+    const isReconciled = await reconcileChannelSendError({
+      error: channelError(138_017),
+      conversation,
       contactInbox: { id: "ci-1", channel: channelTypes.enum.messenger },
       contentAttributes: permissionRequestAttrs,
     })
 
-    expect(handled).toBe(false)
-    expect(mocks.upsertForContactInbox).not.toHaveBeenCalled()
+    expect(isReconciled).toBe(false)
+    expect(mocks.recordPermanentGrant).not.toHaveBeenCalled()
+    expect(mocks.broadcastChatEvent).not.toHaveBeenCalled()
   })
 
   test("ignores a message that is not a call_permission_request", async () => {
-    const handled = await recordCallPermissionAlreadyGranted({
-      error: error138017(),
-      workspaceId: "ws-1",
+    const isReconciled = await reconcileChannelSendError({
+      error: channelError(138_017),
+      conversation,
       contactInbox: whatsappInbox,
       contentAttributes: { type: "whatsapp_call" },
     })
 
-    expect(handled).toBe(false)
-    expect(mocks.upsertForContactInbox).not.toHaveBeenCalled()
+    expect(isReconciled).toBe(false)
+    expect(mocks.recordPermanentGrant).not.toHaveBeenCalled()
   })
 
   test("ignores a different Meta error code (still a real send failure)", async () => {
-    const handled = await recordCallPermissionAlreadyGranted({
-      error: new ChannelError(
-        "(#131026) undeliverable",
-        ChannelErrorCategory.UNKNOWN,
-        {
-          code: 131_026,
-        },
-      ),
-      workspaceId: "ws-1",
+    const isReconciled = await reconcileChannelSendError({
+      error: channelError(131_026),
+      conversation,
       contactInbox: whatsappInbox,
       contentAttributes: permissionRequestAttrs,
     })
 
-    expect(handled).toBe(false)
-    expect(mocks.upsertForContactInbox).not.toHaveBeenCalled()
+    expect(isReconciled).toBe(false)
+    expect(mocks.recordPermanentGrant).not.toHaveBeenCalled()
   })
 
   test("ignores a non-ChannelError throw", async () => {
-    const handled = await recordCallPermissionAlreadyGranted({
+    const isReconciled = await reconcileChannelSendError({
       error: new Error("boom"),
-      workspaceId: "ws-1",
+      conversation,
       contactInbox: whatsappInbox,
       contentAttributes: permissionRequestAttrs,
     })
 
-    expect(handled).toBe(false)
-    expect(mocks.upsertForContactInbox).not.toHaveBeenCalled()
+    expect(isReconciled).toBe(false)
+    expect(mocks.recordPermanentGrant).not.toHaveBeenCalled()
+  })
+
+  test("propagates a failure to store the grant so the send is retried rather than silently lost", async () => {
+    mocks.recordPermanentGrant.mockRejectedValue(new Error("db down"))
+
+    await expect(
+      reconcileChannelSendError({
+        error: channelError(138_017),
+        conversation,
+        contactInbox: whatsappInbox,
+        contentAttributes: permissionRequestAttrs,
+      }),
+    ).rejects.toThrow("db down")
+    expect(mocks.broadcastChatEvent).not.toHaveBeenCalled()
   })
 })

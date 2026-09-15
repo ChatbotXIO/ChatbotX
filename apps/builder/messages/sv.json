@@ -5350,7 +5350,6 @@
         "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
         "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
         "callFailed": "The call could not be placed. Please try again.",
-        "useSip": "This number uses in-app (SIP) calling. Use the call button for that instead.",
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Mikrofonåtkomst nekades. Tillåt mikrofonåtkomst i webbläsarens inställningar och försök igen.",
@@ -5418,7 +5417,8 @@
         "expand": "Expandera",
         "dismiss": "Stäng",
         "statusNoAnswer": "Inget svar",
-        "eyebrowCallEnded": "SAMTAL AVSLUTAT"
+        "eyebrowCallEnded": "SAMTAL AVSLUTAT",
+        "statusConnectionLost": "Anslutningen förlorades"
       },
       "capability": {
         "title": "Samtalsbehörighet",
@@ -5427,6 +5427,12 @@
         "ok": "OK",
         "micPermissionTitle": "Mikrofonbehörighet",
         "dialFailureTitle": "Samtalet kunde inte kopplas"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Manuellt anslutet nummer",
+        "callsSubscription": "Det här WhatsApp-numret anslöts manuellt. Se till att din Meta-app prenumererar på webhookfältet calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — annars går utgående samtal inte att koppla upp och inkommande samtal ringer inte.",
+        "unsignedWebhook": "Det här numret har inte heller någon Meta App Secret konfigurerad, så dess inkommande webhooks är inte signaturverifierade.",
+        "callAnyway": "Ring ändå"
       }
     }
   },

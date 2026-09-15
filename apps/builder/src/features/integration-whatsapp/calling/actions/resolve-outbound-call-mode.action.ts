@@ -1,16 +1,15 @@
 "use server"
 
 import {
+  type CallPermissionStatus,
   contactInboxService,
   conversationService,
+  whatsappCallPermissionService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { channelTypes } from "@chatbotx.io/database/partials"
-import {
-  integrationWhatsappRepository,
-  whatsappCallPermissionRepository,
-} from "@chatbotx.io/database/repositories"
+import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   getCallingSettings,
@@ -22,7 +21,6 @@ import { parsePhoneNumberFromString } from "libphonenumber-js"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { getWhatsappCallingPreflight } from "@/features/integration-whatsapp/calling/get-whatsapp-calling-preflight"
-import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { BLOCKED_OUTBOUND_COUNTRIES } from "./blocked-outbound-countries"
 
@@ -61,10 +59,7 @@ const resolveOutboundCallModeSchema = z.object({
   conversationId: zodBigintAsString(),
 })
 
-export type OutboundCallPermissionStatus =
-  | "no_permission"
-  | "temporary"
-  | "permanent"
+export type OutboundCallPermissionStatus = CallPermissionStatus
 
 /**
  * Which outbound call control the thread should render for this
@@ -79,9 +74,6 @@ export type NoneCallModeReason =
   /** The owning app is not subscribed to the `calls` webhook field, so call
    * events can never reach ChatbotX (Meta error 138018). */
   | "webhookNotSubscribed"
-  /** A manually-connected number has no app credential to run the
-   * subscription/eligibility preflight against. */
-  | "manualIntegrationNoCredentials"
   /** The stored token/credential was rejected by Meta when checking calling
    * eligibility (expired, revoked, or otherwise invalid). */
   | "tokenInvalid"
@@ -90,38 +82,33 @@ export type ResolveOutboundCallModeResult =
   | {
       mode: "voip"
       permissionStatus: OutboundCallPermissionStatus | undefined
+      /** True only for a manually-connected integration with no Meta App
+       * Secret configured (`auth.clientSecret` empty) — per R4 §6.4, manual
+       * integrations without a secret stay unsigned/unverified rather than
+       * being blocked from calling. The client shows a warning dialog before
+       * dialing rather than gating the call outright. Never true for a
+       * platform-credential integration (those always carry a secret). */
+      unsignedWebhookWarning: boolean
+      /** True for EVERY manually-connected integration (`auth.metadata.isManual`),
+       * regardless of whether an app secret is configured. Neither ChatbotX's
+       * platform app nor this action can confirm that the customer's own Meta
+       * app is subscribed to the `calls` webhook field for a manual
+       * integration (`hasAppCredential` is always false there, so the
+       * `webhookNotSubscribed` preflight gate never runs) — if it is not
+       * subscribed, outbound calls never receive Meta's SDP answer/status
+       * webhooks and inbound calls never ring. Always false for a
+       * platform-credential integration, where ChatbotX verifies/auto-
+       * subscribes the field. Never derived from or exposing a secret. */
+      manualCallsSubscriptionUnverified: boolean
+      /** The integration backing this conversation's WhatsApp number —
+       * scopes the client's manual-integration warning acknowledgement to
+       * this specific integration, so switching to a different WhatsApp
+       * number/conversation shows the warning again rather than silently
+       * reusing an acknowledgement from an unrelated integration. */
+      integrationId: string
     }
   | { mode: "none"; reason: NoneCallModeReason }
-
-/**
- * Derives the local permission display state from the `WhatsappCallPermission`
- * table (`response`/`isPermanent`/`expiresAt`) — NEVER Meta's `GET
- * call_permissions`, which is itself rate-limited. The live Meta GET only happens at dial time, inside
- * `initiateOutboundVoipCallAction`.
- */
-function derivePermissionStatus(
-  row:
-    | {
-        response: "accept" | "reject"
-        isPermanent: boolean
-        expiresAt: Date | null
-      }
-    | undefined,
-): OutboundCallPermissionStatus | undefined {
-  if (!row) {
-    return
-  }
-  if (row.response === "reject") {
-    return "no_permission"
-  }
-  if (row.isPermanent) {
-    return "permanent"
-  }
-  if (row.expiresAt && row.expiresAt.getTime() > Date.now()) {
-    return "temporary"
-  }
-  return "no_permission"
-}
+  | undefined
 
 /**
  * Resolves whether a conversation's WhatsApp number should render the VoIP
@@ -193,14 +180,18 @@ export const resolveOutboundCallModeAction = workspaceActionClient
       // human-readable reason up front, reusing the same read-only preflight
       // the Calls settings card runs (`getWhatsappCallingPreflight`) rather
       // than a second bespoke check.
+      // A manual integration has no app credential to run the subscription
+      // preflight against (`hasAppCredential` is always false for it) — per
+      // R4 §6.4 this no longer blocks calling outright; the client instead
+      // shows a warning dialog (`unsignedWebhookWarning`) when the manual
+      // integration also has no app secret configured. Only a
+      // platform-credential integration with a confirmed missing webhook
+      // subscription is blocked here.
       const workspace = await workspaceService.findById({ id: workspaceId })
       const preflight = await getWhatsappCallingPreflight({
         workspace,
         auth,
       }).catch(() => null)
-      if (preflight?.isManual) {
-        return { mode: "none", reason: "manualIntegrationNoCredentials" }
-      }
       if (preflight?.hasAppCredential && preflight.callsSubscribed === false) {
         return { mode: "none", reason: "webhookNotSubscribed" }
       }
@@ -212,27 +203,18 @@ export const resolveOutboundCallModeAction = workspaceActionClient
         return { mode: "none", reason: "ineligibleNumber" }
       }
 
-      const permissionRow =
-        await whatsappCallPermissionRepository.findByContactInboxId(
-          contactInbox.id,
-        )
+      const permissionStatus =
+        await whatsappCallPermissionService.resolveStatus(contactInbox.id)
 
-      const permissionStatus = derivePermissionStatus(permissionRow)
-      logger.info(
-        {
-          contactInboxId: contactInbox.id,
-          permissionStatus: permissionStatus ?? "none",
-          hasRow: permissionRow != null,
-          rowResponse: permissionRow?.response,
-          rowIsPermanent: permissionRow?.isPermanent,
-          rowExpiresAt: permissionRow?.expiresAt ?? null,
-        },
-        "[wa-call-permission] resolved outbound call mode",
-      )
+      const isManualIntegration = auth.metadata.isManual === true
+      const unsignedWebhookWarning = isManualIntegration && !auth.clientSecret
 
       return {
         mode: "voip",
         permissionStatus,
+        unsignedWebhookWarning,
+        manualCallsSubscriptionUnverified: isManualIntegration,
+        integrationId: integration.id,
       }
     },
   )

@@ -20,8 +20,8 @@ type CallRecordingActivityProps = {
 
 /**
  * Renders the audio player + (once available) transcript for a WhatsApp
- * call-recording activity message — benefits both SIP and VoIP calls, which
- * attach to the same `WhatsappCall` row/message shape. Replaces the generic
+ * call-recording activity message — browser-recorded and Meta-native
+ * recordings attach to the same `WhatsappCall` row/message shape. Replaces the generic
  * `RenderAttachments` audio rendering for this one content type (see
  * `message-item.tsx`) so the player can refresh its own signed URL instead
  * of trusting a URL that may already be past its 15-minute TTL.

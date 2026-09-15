@@ -3982,7 +3982,6 @@
         "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
         "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
         "callFailed": "The call could not be placed. Please try again.",
-        "useSip": "This number uses in-app (SIP) calling. Use the call button for that instead.",
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Mikrofon erişimi reddedildi. Tarayıcı ayarlarınızdan mikrofon erişimine izin verip yeniden deneyin.",
@@ -4050,7 +4049,8 @@
         "expand": "Genişlet",
         "dismiss": "Kapat",
         "statusNoAnswer": "Yanıt yok",
-        "eyebrowCallEnded": "ARAMA SONA ERDİ"
+        "eyebrowCallEnded": "ARAMA SONA ERDİ",
+        "statusConnectionLost": "Bağlantı kesildi"
       },
       "capability": {
         "title": "Arama uygunluğu",
@@ -4059,6 +4059,12 @@
         "ok": "Tamam",
         "micPermissionTitle": "Mikrofon izni",
         "dialFailureTitle": "Arama başlatılamadı"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Manuel bağlanmış numara",
+        "callsSubscription": "Bu WhatsApp numarası manuel olarak bağlandı. Meta uygulamanızın calls webhook alanına abone olduğundan emin olun (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — aksi takdirde giden aramalar bağlanmaz ve gelen aramalar çalmaz.",
+        "unsignedWebhook": "Bu numaranın ayrıca yapılandırılmış bir Meta App Secret'ı yok, bu nedenle gelen webhook'ları imza doğrulaması yapılmıyor.",
+        "callAnyway": "Yine de ara"
       }
     }
   },

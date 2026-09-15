@@ -52,10 +52,18 @@ const callTerminateErrorSchema = z.object({
   message: z.string().optional(),
 })
 
+// R2: `wa_id` is OPTIONAL — a Username/BSUID-only caller (no phone number
+// exposed) still carries `user_id`/`parent_user_id`/`profile.username` but
+// never `wa_id`. Requiring `wa_id` here used to fail the WHOLE `calls` value
+// (`callsValueSchema.safeParse`) for such a contact, silently dropping every
+// call/status item in the same webhook — never just the one item.
 const callContactSchema = z.object({
-  wa_id: z.string(),
+  wa_id: z.string().optional(),
   user_id: z.string().optional(),
-  profile: z.object({ name: z.string().optional() }).optional(),
+  parent_user_id: z.string().optional(),
+  profile: z
+    .object({ name: z.string().optional(), username: z.string().optional() })
+    .optional(),
 })
 
 // call_recording_available / call_transcription_available webhook nesting,
@@ -92,6 +100,12 @@ const callEventItemSchema = z.object({
   event: z.string(),
   from: z.string().optional(),
   to: z.string().optional(),
+  // R2: item-level BSUID fields — present when either leg of the call is a
+  // Username/BSUID-only user (no phone number exposed on that leg).
+  from_user_id: z.string().optional(),
+  to_user_id: z.string().optional(),
+  from_parent_user_id: z.string().optional(),
+  to_parent_user_id: z.string().optional(),
   timestamp: z.union([z.string(), z.number()]).optional(),
   direction: callDirectionSchema.optional(),
   status: z.string().optional(),
@@ -101,10 +115,12 @@ const callEventItemSchema = z.object({
   biz_opaque_callback_data: z.string().optional(),
   // Validated separately (see `parseCallSession`) so a malformed/oversized
   // session never fails the whole item. A session that is ABSENT means a
-  // SIP-mode connect (falls through to the existing behavior); a session that
-  // is PRESENT but invalid means a VoIP connect we cannot honor — it is
-  // flagged (`sessionInvalid`) so the VoIP branch Meta-rejects it rather than
-  // dropping it into the SIP path, which has no leg for a VoIP call.
+  // session-less connect (what Meta sends when a number is configured for
+  // Meta's SIP signalling, which ChatbotX does not use; falls through to the
+  // existing behavior); a session that is PRESENT but invalid means a VoIP
+  // connect we cannot honor — it is flagged (`sessionInvalid`) so the VoIP
+  // branch Meta-rejects it rather than dropping it into the session-less
+  // path, which has no leg for a VoIP call.
   session: z.unknown().optional(),
   // Present on `terminate` items when media dropped mid-call (e.g.
   // 138021/138022/138023) — surfaced so the terminate handler can label the
@@ -124,6 +140,11 @@ const callStatusItemSchema = z.object({
   type: z.string().optional(),
   timestamp: z.union([z.string(), z.number()]).optional(),
   recipient_id: z.string().optional(),
+  // R2: the BSUID a status targets when the recipient has no phone number
+  // exposed (`recipient_id` is empty in that case) — mirrors
+  // `statuses[].recipient_user_id` on the `messages` webhook (see
+  // `lib/raw-identity.ts`).
+  recipient_user_id: z.string().optional(),
   biz_opaque_callback_data: z.string().optional(),
 })
 
@@ -157,8 +178,11 @@ export type WhatsappCallTerminateError = {
 }
 
 export type WhatsappCallContactPayload = {
-  waId: string
+  /** R2: absent for a Username/BSUID-only caller (no phone number exposed). */
+  waId?: string
   userId?: string
+  parentUserId?: string
+  username?: string
   name?: string
 }
 
@@ -189,19 +213,25 @@ export type WhatsappCallEventPayload = {
         direction: WhatsappCallDirectionPayload
         from?: string
         to?: string
+        /** R2: BSUID counterparts of `from`/`to` (Username/BSUID-only legs). */
+        fromUserId?: string
+        toUserId?: string
+        fromParentUserId?: string
+        toParentUserId?: string
         timestamp?: string
         /** Present only for a validated VoIP-mode (SDP offer) connect. */
         session?: WhatsappCallSessionPayload
         /**
          * A `session` was present but malformed/oversized: this is a VoIP
          * connect the app cannot answer, and it must be Meta-rejected rather
-         * than dropped into the SIP path. Mutually exclusive with `session`.
+         * than dropped into the session-less path. Mutually exclusive with
+         * `session`.
          */
         sessionInvalid?: boolean
         /**
          * Meta echoes the outbound `connect` action's idempotency key
          * (`attemptId`) on this field — the only correlation available
-         * before `wacid` is known. Absent on SIP-mode/legacy connects.
+         * before `wacid` is known. Absent on session-less/legacy connects.
          */
         bizOpaqueCallbackData?: string
       }
@@ -212,6 +242,11 @@ export type WhatsappCallEventPayload = {
         status: "COMPLETED" | "FAILED"
         from?: string
         to?: string
+        /** R2: BSUID counterparts of `from`/`to` (Username/BSUID-only legs). */
+        fromUserId?: string
+        toUserId?: string
+        fromParentUserId?: string
+        toParentUserId?: string
         timestamp?: string
         startTime?: string
         endTime?: string
@@ -224,6 +259,8 @@ export type WhatsappCallEventPayload = {
         wacid: string
         status: "RINGING" | "ACCEPTED" | "REJECTED"
         recipientId?: string
+        /** R2: BSUID counterpart of `recipientId` (Username/BSUID-only recipient). */
+        recipientUserId?: string
         timestamp?: string
         /** Meta's `biz_opaque_callback_data` echo (see the `connect` variant). */
         bizOpaqueCallbackData?: string
@@ -269,6 +306,8 @@ const toContactPayload = (
   return {
     waId: contact.wa_id,
     userId: contact.user_id,
+    parentUserId: contact.parent_user_id,
+    username: contact.profile?.username,
     name: contact.profile?.name,
   }
 }
@@ -283,9 +322,12 @@ const readWebhookEntries = (rawBody: unknown): unknown[] => {
 
 /**
  * Result of validating a connect event's raw `session` field:
- * - `undefined` — no session at all (a SIP-mode connect; falls through).
+ * - `undefined` — no session at all (a session-less connect — what Meta
+ *   sends when a number is configured for Meta's SIP signalling, which
+ *   ChatbotX does not use; falls through).
  * - `"invalid"` — a session WAS present but malformed/oversized (a VoIP
- *   connect that must be Meta-rejected, never dropped into the SIP path).
+ *   connect that must be Meta-rejected, never dropped into the session-less
+ *   path).
  * - payload    — a validated, bounded SDP offer.
  */
 type ParsedCallSession = WhatsappCallSessionPayload | "invalid" | undefined
@@ -352,6 +394,30 @@ const parseCallSession = (
   return { sdpType: parsed.data.sdp_type, sdp: parsed.data.sdp }
 }
 
+/**
+ * R12: normalizes a terminate item's `status` case-insensitively — Meta
+ * documents `COMPLETED`/`FAILED` (uppercase), but nothing on the wire
+ * guarantees a sender never varies casing. An unrecognized status (any
+ * casing) is logged and defaults to `FAILED` rather than silently comparing
+ * unequal and always defaulting there.
+ */
+const normalizeTerminateStatus = (
+  wacid: string,
+  rawStatus: string | undefined,
+): "COMPLETED" | "FAILED" => {
+  const upper = (rawStatus ?? "").toUpperCase()
+  if (upper === "COMPLETED") {
+    return "COMPLETED"
+  }
+  if (upper !== "FAILED") {
+    logger.warn(
+      { wacid, status: rawStatus },
+      "Whatsapp call terminate status unknown; defaulting to FAILED",
+    )
+  }
+  return "FAILED"
+}
+
 const normalizeCallItem = (
   item: z.infer<typeof callEventItemSchema>,
 ): WhatsappCallEventPayload["event"] | undefined => {
@@ -375,6 +441,10 @@ const normalizeCallItem = (
       direction,
       from: item.from,
       to: item.to,
+      fromUserId: item.from_user_id,
+      toUserId: item.to_user_id,
+      fromParentUserId: item.from_parent_user_id,
+      toParentUserId: item.to_parent_user_id,
       timestamp: toOptionalString(item.timestamp),
       session: session === "invalid" ? undefined : session,
       sessionInvalid: session === "invalid",
@@ -383,7 +453,7 @@ const normalizeCallItem = (
   }
 
   if (item.event === "terminate") {
-    const status = item.status === "COMPLETED" ? "COMPLETED" : "FAILED"
+    const status = normalizeTerminateStatus(item.id, item.status)
     const duration = Number(item.duration)
     return {
       kind: "terminate",
@@ -392,6 +462,10 @@ const normalizeCallItem = (
       status,
       from: item.from,
       to: item.to,
+      fromUserId: item.from_user_id,
+      toUserId: item.to_user_id,
+      fromParentUserId: item.from_parent_user_id,
+      toParentUserId: item.to_parent_user_id,
       timestamp: toOptionalString(item.timestamp),
       startTime: toOptionalString(item.start_time),
       endTime: toOptionalString(item.end_time),
@@ -474,6 +548,7 @@ const normalizeStatusItem = (
     wacid: item.id,
     status: item.status,
     recipientId: item.recipient_id,
+    recipientUserId: item.recipient_user_id,
     timestamp: toOptionalString(item.timestamp),
     bizOpaqueCallbackData: item.biz_opaque_callback_data,
   }

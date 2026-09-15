@@ -8,6 +8,7 @@ import {
 import { PhoneOutgoingIcon, WorkflowIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
+import { findContactInboxByChannel } from "@/features/conversations/utils/contact-inbox"
 import { SelectFlowDialog } from "@/features/flows/components/select-flow-dialog"
 import { RequestCallPermissionDialog } from "@/features/integration-whatsapp/calling/request-call-permission-dialog"
 import SavedReplyManage from "@/features/saved-replies/saved-reply-manage"
@@ -29,8 +30,9 @@ export const InputMenu = ({ setContent }: InputMenuProps) => {
     () => conversations.find((c) => c.id === activeConversationId) ?? null,
     [conversations, activeConversationId],
   )
-  const whatsappContactInbox = conversation?.contactInboxes.find(
-    (inbox) => inbox.channel === channelTypes.enum.whatsapp,
+  const whatsappContactInbox = findContactInboxByChannel(
+    conversation,
+    channelTypes.enum.whatsapp,
   )
 
   return (

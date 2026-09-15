@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   setIfAbsent: vi.fn(),
+  set: vi.fn(),
   get: vi.fn(),
   del: vi.fn(),
   getJson: vi.fn(),
@@ -14,6 +15,11 @@ const mocks = vi.hoisted(() => ({
   findActiveByContactInbox: vi.fn(),
   findByAttemptId: vi.fn(),
   findByWacid: vi.fn(),
+  touchLivenessIfStale: vi.fn(),
+  recoverStrandedAccepted: vi.fn(),
+  finalizeById: vi.fn(),
+  attachWacid: vi.fn(),
+  findById: vi.fn(),
   contactInboxFindBy: vi.fn(),
   contactFindById: vi.fn(),
 }))
@@ -21,6 +27,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/redis", () => ({
   casStore: {
     setIfAbsent: mocks.setIfAbsent,
+    set: mocks.set,
     get: mocks.get,
     del: mocks.del,
     getJson: mocks.getJson,
@@ -33,11 +40,17 @@ vi.mock("../src/whatsapp-call/voip-presence-service", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  WHATSAPP_CALL_TERMINAL_STATUSES: ["rejected", "completed", "failed"],
   whatsappCallRepository: {
     findRingingByWorkspace: mocks.findRingingByWorkspace,
     findActiveByContactInbox: mocks.findActiveByContactInbox,
     findByAttemptId: mocks.findByAttemptId,
     findByWacid: mocks.findByWacid,
+    touchLivenessIfStale: mocks.touchLivenessIfStale,
+    recoverStrandedAccepted: mocks.recoverStrandedAccepted,
+    finalizeById: mocks.finalizeById,
+    attachWacid: mocks.attachWacid,
+    findById: mocks.findById,
   },
 }))
 
@@ -82,9 +95,11 @@ vi.stubGlobal("crypto", {
   randomUUID: mocks.randomUUID,
 })
 
-const { whatsappVoipCallService } = await import(
-  "../src/whatsapp-call/voip-call-service"
-)
+const {
+  ACTIVE_CALL_LIVENESS_STALE_MS,
+  isAnswerDeadlineExpired,
+  whatsappVoipCallService,
+} = await import("../src/whatsapp-call/voip-call-service")
 
 const NOW = 1_000_000
 const DEADLINE = NOW + 30_000
@@ -358,6 +373,221 @@ describe("whatsappVoipCallService.commitAccepted", () => {
 
     expect(won).toBe(false)
     expect(mocks.compareAndSwap).not.toHaveBeenCalled()
+  })
+})
+
+describe("whatsappVoipCallService.heartbeatActiveCall", () => {
+  const accepted = {
+    reservedUserId: "agent-1",
+    phase: "accepted" as const,
+    deadlineAt: DEADLINE,
+    fenceToken: "fence-1",
+  }
+
+  test("verified: renews the control TTL in one fenced CAS, preserving the fence and value", async () => {
+    mocks.findByWacid.mockResolvedValue({ id: "call-1", workspaceId: "ws-1" })
+    mocks.getJson.mockResolvedValue(accepted)
+    mocks.compareAndSwap.mockResolvedValue(true)
+    mocks.touchLivenessIfStale.mockResolvedValue(true)
+
+    const ok = await whatsappVoipCallService.heartbeatActiveCall({
+      wacid: "wa1",
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(ok).toBe(true)
+    expect(mocks.set).not.toHaveBeenCalled()
+    expect(mocks.compareAndSwap).toHaveBeenCalledWith(
+      "voip:ctrl:wa1",
+      { phase: "accepted", fenceToken: "fence-1" },
+      accepted,
+      4 * 60 * 60 * 1000,
+    )
+  })
+
+  test("the durable liveness touch is always attempted — the DB's own guard is the throttle", async () => {
+    mocks.findByWacid.mockResolvedValue({ id: "call-1", workspaceId: "ws-1" })
+    mocks.getJson.mockResolvedValue(accepted)
+    mocks.compareAndSwap.mockResolvedValue(true)
+    mocks.touchLivenessIfStale.mockResolvedValue(false)
+
+    await whatsappVoipCallService.heartbeatActiveCall({
+      wacid: "wa1",
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(mocks.touchLivenessIfStale).toHaveBeenCalledWith({
+      id: "call-1",
+      olderThan: expect.any(Date),
+    })
+  })
+
+  test("a failing liveness touch never fails the heartbeat itself", async () => {
+    mocks.findByWacid.mockResolvedValue({ id: "call-1", workspaceId: "ws-1" })
+    mocks.getJson.mockResolvedValue(accepted)
+    mocks.compareAndSwap.mockResolvedValue(true)
+    mocks.touchLivenessIfStale.mockRejectedValue(new Error("db down"))
+
+    await expect(
+      whatsappVoipCallService.heartbeatActiveCall({
+        wacid: "wa1",
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      }),
+    ).resolves.toBe(true)
+  })
+
+  test("Redis lost the control: an accepted row owned by this agent still counts as live — liveness touched, heartbeat keeps going", async () => {
+    mocks.findByWacid.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "ws-1",
+      status: "accepted",
+      answeredByUserId: "agent-1",
+      initiatedByUserId: null,
+      updatedAt: new Date(NOW - 5 * 60 * 1000),
+    })
+    mocks.getJson.mockResolvedValue(null)
+    mocks.touchLivenessIfStale.mockResolvedValue(undefined)
+
+    const ok = await whatsappVoipCallService.heartbeatActiveCall({
+      wacid: "wa1",
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(ok).toBe(true)
+    expect(mocks.touchLivenessIfStale).toHaveBeenCalledWith({
+      id: "call-1",
+      olderThan: expect.any(Date),
+    })
+    expect(mocks.compareAndSwap).not.toHaveBeenCalled()
+  })
+
+  test("Redis lost the control: a row this agent does not own is still a no-op", async () => {
+    mocks.findByWacid.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "ws-1",
+      status: "accepted",
+      answeredByUserId: "someone-else",
+      initiatedByUserId: null,
+      updatedAt: new Date(NOW - 5 * 60 * 1000),
+    })
+    mocks.getJson.mockResolvedValue(null)
+
+    await expect(
+      whatsappVoipCallService.heartbeatActiveCall({
+        wacid: "wa1",
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      }),
+    ).resolves.toBe(false)
+    expect(mocks.touchLivenessIfStale).not.toHaveBeenCalled()
+  })
+
+  test("Redis lost the control: a row that already ended is a no-op", async () => {
+    mocks.findByWacid.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "ws-1",
+      status: "completed",
+      answeredByUserId: "agent-1",
+      initiatedByUserId: null,
+      updatedAt: new Date(NOW - 5 * 60 * 1000),
+    })
+    mocks.getJson.mockResolvedValue(null)
+
+    await expect(
+      whatsappVoipCallService.heartbeatActiveCall({
+        wacid: "wa1",
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      }),
+    ).resolves.toBe(false)
+    expect(mocks.touchLivenessIfStale).not.toHaveBeenCalled()
+  })
+
+  test("false: the call does not belong to the given workspace", async () => {
+    mocks.findByWacid.mockResolvedValue({ id: "call-1", workspaceId: "ws-2" })
+
+    const ok = await whatsappVoipCallService.heartbeatActiveCall({
+      wacid: "wa1",
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(ok).toBe(false)
+    expect(mocks.set).not.toHaveBeenCalled()
+  })
+
+  test("false: no call row for the wacid", async () => {
+    mocks.findByWacid.mockResolvedValue(undefined)
+
+    const ok = await whatsappVoipCallService.heartbeatActiveCall({
+      wacid: "wa1",
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(ok).toBe(false)
+    expect(mocks.getJson).not.toHaveBeenCalled()
+  })
+
+  test("false: control is not phase:accepted", async () => {
+    mocks.findByWacid.mockResolvedValue({ id: "call-1", workspaceId: "ws-1" })
+    mocks.getJson.mockResolvedValue({ ...accepted, phase: "answering" })
+
+    const ok = await whatsappVoipCallService.heartbeatActiveCall({
+      wacid: "wa1",
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(ok).toBe(false)
+    expect(mocks.set).not.toHaveBeenCalled()
+  })
+
+  test("false: reservedUserId does not match the caller (wrong user)", async () => {
+    mocks.findByWacid.mockResolvedValue({ id: "call-1", workspaceId: "ws-1" })
+    mocks.getJson.mockResolvedValue(accepted)
+
+    const ok = await whatsappVoipCallService.heartbeatActiveCall({
+      wacid: "wa1",
+      workspaceId: "ws-1",
+      userId: "someone-else",
+    })
+
+    expect(ok).toBe(false)
+    expect(mocks.set).not.toHaveBeenCalled()
+  })
+
+  test("a lost renewal CAS (concurrent hangup) never fails the heartbeat itself", async () => {
+    mocks.findByWacid.mockResolvedValue({ id: "call-1", workspaceId: "ws-1" })
+    mocks.getJson.mockResolvedValue(accepted)
+    mocks.compareAndSwap.mockResolvedValue(false)
+
+    const ok = await whatsappVoipCallService.heartbeatActiveCall({
+      wacid: "wa1",
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(ok).toBe(true)
+    expect(mocks.compareAndSwap).toHaveBeenCalled()
+  })
+})
+
+describe("isAnswerDeadlineExpired", () => {
+  test("false when comfortably within the deadline", () => {
+    expect(isAnswerDeadlineExpired(NOW + 10_000)).toBe(false)
+  })
+
+  test("true within the 3s safety margin of the deadline", () => {
+    expect(isAnswerDeadlineExpired(NOW + 2000)).toBe(true)
+  })
+
+  test("true once the deadline has already passed", () => {
+    expect(isAnswerDeadlineExpired(NOW - 1)).toBe(true)
   })
 })
 
@@ -1124,7 +1354,7 @@ describe("whatsappVoipCallService.captureNativeRecordingAvailable", () => {
     )
   })
 
-  test("no matching row: logs and does not enqueue", async () => {
+  test("R8: no matching row yet still enqueues, keyed by wacid, without whatsappCallId/workspaceId", async () => {
     mocks.findByWacid.mockResolvedValue(undefined)
 
     await whatsappVoipCallService.captureNativeRecordingAvailable({
@@ -1134,7 +1364,18 @@ describe("whatsappVoipCallService.captureNativeRecordingAvailable", () => {
       mimeType: "audio/ogg; codecs=opus",
     })
 
-    expect(mocks.enqueueIntegrationJob).not.toHaveBeenCalled()
+    expect(mocks.enqueueIntegrationJob).toHaveBeenCalledWith(
+      {
+        type: "whatsappCallNativeRecordingFetch",
+        data: {
+          wacid: "wa-missing",
+          audioMediaId: "media-1",
+          audioUrl: "https://graph.example/media-1",
+          mimeType: "audio/ogg; codecs=opus",
+        },
+      },
+      { jobId: "native-rec-fetch-wa-missing" },
+    )
   })
 })
 
@@ -1168,7 +1409,7 @@ describe("whatsappVoipCallService.captureNativeTranscriptAvailable", () => {
     )
   })
 
-  test("no matching row: logs and does not enqueue", async () => {
+  test("R8: no matching row yet still enqueues, keyed by wacid, without whatsappCallId/workspaceId", async () => {
     mocks.findByWacid.mockResolvedValue(undefined)
 
     await whatsappVoipCallService.captureNativeTranscriptAvailable({
@@ -1177,7 +1418,17 @@ describe("whatsappVoipCallService.captureNativeTranscriptAvailable", () => {
       documentUrl: "https://graph.example/doc-1",
     })
 
-    expect(mocks.enqueueIntegrationJob).not.toHaveBeenCalled()
+    expect(mocks.enqueueIntegrationJob).toHaveBeenCalledWith(
+      {
+        type: "whatsappCallNativeTranscriptFetch",
+        data: {
+          wacid: "wa-missing",
+          documentMediaId: "doc-1",
+          documentUrl: "https://graph.example/doc-1",
+        },
+      },
+      { jobId: "native-transcript-fetch-wa-missing" },
+    )
   })
 })
 
@@ -1253,6 +1504,129 @@ describe("whatsappVoipCallService.assertNoActiveCallForContact", () => {
         contactInboxId: "ci-1",
       }),
     ).rejects.toThrow(CALL_IN_PROGRESS_RE)
+  })
+
+  describe("dial-time recovery of a stranded accepted call", () => {
+    const strandedRow = (overrides: Record<string, unknown> = {}) => ({
+      id: "call-1",
+      wacid: "wacid.ABC",
+      status: "accepted",
+      ...overrides,
+    })
+
+    const dial = () =>
+      whatsappVoipCallService.assertNoActiveCallForContact({
+        inboxId: "inbox-1",
+        contactInboxId: "ci-1",
+      })
+
+    test("closes the row and allows the dial when the control is gone and liveness is stale", async () => {
+      mocks.findActiveByContactInbox.mockResolvedValue(strandedRow())
+      mocks.getJson.mockResolvedValue(null)
+      mocks.recoverStrandedAccepted.mockResolvedValue({ id: "call-1" })
+
+      await expect(dial()).resolves.toBeUndefined()
+
+      // One guarded statement: the staleness cutoff and the terminal write
+      // travel together, so a heartbeat can never land in between.
+      expect(mocks.recoverStrandedAccepted).toHaveBeenCalledWith({
+        id: "call-1",
+        olderThan: new Date(NOW - ACTIVE_CALL_LIVENESS_STALE_MS),
+        lastError: "stranded-accepted-recovered-on-dial",
+      })
+      expect(mocks.findById).not.toHaveBeenCalled()
+    })
+
+    test("recovers a connected call as completed, never failed — reaching accepted means it connected", async () => {
+      mocks.findActiveByContactInbox.mockResolvedValue(strandedRow())
+      mocks.getJson.mockResolvedValue(null)
+      mocks.recoverStrandedAccepted.mockResolvedValue({ id: "call-1" })
+
+      await expect(dial()).resolves.toBeUndefined()
+      // Neither `status` nor `endedAt` is a parameter: the repository always
+      // writes `completed`, and the end time stays unknown rather than guessed.
+      expect(mocks.recoverStrandedAccepted).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          endedAt: expect.anything(),
+          status: expect.anything(),
+        }),
+      )
+    })
+
+    test("refuses the dial when a live control record still exists", async () => {
+      mocks.findActiveByContactInbox.mockResolvedValue(strandedRow())
+      mocks.getJson.mockResolvedValue({
+        reservedUserId: "user-1",
+        phase: "connected",
+        deadlineAt: DEADLINE,
+        fenceToken: "fence-1",
+      })
+
+      await expect(dial()).rejects.toThrow(CALL_IN_PROGRESS_RE)
+      expect(mocks.recoverStrandedAccepted).not.toHaveBeenCalled()
+    })
+
+    test("still recovers when the leftover control is already terminated", async () => {
+      mocks.findActiveByContactInbox.mockResolvedValue(strandedRow())
+      mocks.getJson.mockResolvedValue({
+        reservedUserId: "user-1",
+        phase: "terminated",
+        deadlineAt: DEADLINE,
+        fenceToken: "fence-1",
+      })
+      mocks.recoverStrandedAccepted.mockResolvedValue({ id: "call-1" })
+
+      await expect(dial()).resolves.toBeUndefined()
+      expect(mocks.recoverStrandedAccepted).toHaveBeenCalled()
+    })
+
+    test("refuses the dial when a concurrent heartbeat wins: the row is still accepted", async () => {
+      mocks.findActiveByContactInbox.mockResolvedValue(strandedRow())
+      mocks.getJson.mockResolvedValue(null)
+      mocks.recoverStrandedAccepted.mockResolvedValue(undefined)
+      mocks.findById.mockResolvedValue(strandedRow())
+
+      await expect(dial()).rejects.toThrow(CALL_IN_PROGRESS_RE)
+      expect(mocks.findById).toHaveBeenCalledWith("call-1")
+    })
+
+    test("allows the dial when a real terminate won the race and left the row terminal", async () => {
+      mocks.findActiveByContactInbox.mockResolvedValue(strandedRow())
+      mocks.getJson.mockResolvedValue(null)
+      mocks.recoverStrandedAccepted.mockResolvedValue(undefined)
+      mocks.findById.mockResolvedValue(strandedRow({ status: "completed" }))
+
+      await expect(dial()).resolves.toBeUndefined()
+    })
+
+    test("allows the dial when the row vanished entirely (retention purge)", async () => {
+      mocks.findActiveByContactInbox.mockResolvedValue(strandedRow())
+      mocks.getJson.mockResolvedValue(null)
+      mocks.recoverStrandedAccepted.mockResolvedValue(undefined)
+      mocks.findById.mockResolvedValue(undefined)
+
+      await expect(dial()).resolves.toBeUndefined()
+    })
+
+    test("never recovers a ringing call — only accepted rows can be stranded", async () => {
+      mocks.findActiveByContactInbox.mockResolvedValue(
+        strandedRow({ status: "ringing" }),
+      )
+
+      await expect(dial()).rejects.toThrow(CALL_IN_PROGRESS_RE)
+      expect(mocks.getJson).not.toHaveBeenCalled()
+      expect(mocks.recoverStrandedAccepted).not.toHaveBeenCalled()
+    })
+
+    test("skips the Redis read for a row that never got a wacid", async () => {
+      mocks.findActiveByContactInbox.mockResolvedValue(
+        strandedRow({ wacid: null }),
+      )
+      mocks.recoverStrandedAccepted.mockResolvedValue({ id: "call-1" })
+
+      await expect(dial()).resolves.toBeUndefined()
+      expect(mocks.getJson).not.toHaveBeenCalled()
+    })
   })
 })
 
@@ -1383,5 +1757,125 @@ describe("whatsappVoipCallService.getResumableIncoming", () => {
     })
 
     expect(result?.contactName).toBeNull()
+  })
+})
+
+describe("whatsappVoipCallService.finalizeEndedCall", () => {
+  test("maps the call id and forwards every provided outcome field", async () => {
+    const startedAt = new Date("2026-09-16T10:00:00.000Z")
+    const endedAt = new Date("2026-09-16T10:01:30.000Z")
+    mocks.finalizeById.mockResolvedValue({ id: "call-1", status: "completed" })
+
+    await expect(
+      whatsappVoipCallService.finalizeEndedCall({
+        whatsappCallId: "call-1",
+        status: "completed",
+        startedAt,
+        endedAt,
+        durationSeconds: 90,
+        messageId: "msg-1",
+      }),
+    ).resolves.toEqual({ id: "call-1", status: "completed" })
+    expect(mocks.finalizeById).toHaveBeenCalledWith({
+      id: "call-1",
+      status: "completed",
+      startedAt,
+      endedAt,
+      durationSeconds: 90,
+      messageId: "msg-1",
+    })
+  })
+
+  test("never adds an omitted field, so a set column is not cleared", async () => {
+    mocks.finalizeById.mockResolvedValue(undefined)
+
+    await expect(
+      whatsappVoipCallService.finalizeEndedCall({
+        whatsappCallId: "call-1",
+        status: "failed",
+        endedAt: new Date("2026-09-16T10:00:00.000Z"),
+      }),
+    ).resolves.toBeUndefined()
+    const [finalization] = mocks.finalizeById.mock.calls[0]
+    expect(finalization).not.toHaveProperty("lastError")
+    expect(finalization).not.toHaveProperty("startedAt")
+  })
+})
+
+describe("whatsappVoipCallService.attachMetaCallId", () => {
+  test("resolves to the bound row", async () => {
+    mocks.attachWacid.mockResolvedValue({ id: "call-1", wacid: "wacid.1" })
+
+    await expect(
+      whatsappVoipCallService.attachMetaCallId({
+        whatsappCallId: "call-1",
+        wacid: "wacid.1",
+      }),
+    ).resolves.toEqual({ id: "call-1", wacid: "wacid.1" })
+    expect(mocks.attachWacid).toHaveBeenCalledWith({
+      id: "call-1",
+      wacid: "wacid.1",
+    })
+  })
+})
+
+describe("whatsappVoipCallService.isCallEnded", () => {
+  test.each([
+    ["ringing", false],
+    ["accepted", false],
+    ["completed", true],
+    ["failed", true],
+    ["rejected", true],
+  ] as const)("%s -> %s", (status, expected) => {
+    expect(whatsappVoipCallService.isCallEnded({ status })).toBe(expected)
+  })
+})
+
+describe("whatsappVoipCallService.resolveEndOutcomeWithoutControl", () => {
+  test.each([
+    [
+      "an outbound call still ringing is terminated as failed",
+      { status: "ringing", direction: "businessInitiated" },
+      {
+        fromPhase: "dialing",
+        graphAction: "terminate",
+        terminalStatus: "failed",
+      },
+    ],
+    [
+      "an inbound call nobody answered is rejected",
+      { status: "ringing", direction: "userInitiated" },
+      {
+        fromPhase: "reserved",
+        graphAction: "reject",
+        terminalStatus: "rejected",
+      },
+    ],
+    [
+      "a live call is terminated as completed",
+      { status: "accepted", direction: "userInitiated" },
+      {
+        fromPhase: "accepted",
+        graphAction: "terminate",
+        terminalStatus: "completed",
+      },
+    ],
+  ] as const)("%s", (_, call, expected) => {
+    expect(
+      whatsappVoipCallService.resolveEndOutcomeWithoutControl(call),
+    ).toEqual(expected)
+  })
+
+  test.each([
+    "completed",
+    "failed",
+    "rejected",
+  ] as const)("is null for a %s row", (status) => {
+    expect(
+      whatsappVoipCallService.resolveEndOutcomeWithoutControl({
+        status,
+        direction: "businessInitiated",
+      }),
+    ).toBeNull()
   })
 })

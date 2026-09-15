@@ -1,4 +1,7 @@
-import { contactInboxService } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  whatsappCallLifecycleService,
+} from "@chatbotx.io/business"
 import type { WhatsappCallTranscriptSegments } from "@chatbotx.io/database/partials"
 import { whatsappCallRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -8,11 +11,13 @@ import {
 import type { IntegrationJobWhatsappCallNativeTranscriptFetch } from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
+import { isBlockedWorkspace } from "../../lib/is-blocked-workspace"
 import { logger } from "../../lib/logger"
 import {
   AttachmentTooLargeError,
   downloadCallMedia,
   WhatsappCallMediaGoneError,
+  WhatsappCallRowNotReadyError,
 } from "./shared/whatsapp-call-native-media"
 import { enrichRecordingMessageWithTranscript } from "./shared/whatsapp-call-recording-enrichment"
 import { externalCorrelationId } from "./whatsapp-call-recording"
@@ -97,8 +102,8 @@ const resolveFlatTranscript = (
  * the JSON document (preferring the media id, see `downloadCallMedia`),
  * parses + maps it to our diarized `segments` shape, stamps the
  * `WhatsappCall` row via `attachTranscript`, then reuses the exact
- * recording-message enrichment + `emitCallTranscribed` broadcast the SIP/
- * Whisper path uses so the realtime update-in-place logic isn't duplicated.
+ * recording-message enrichment + `emitCallTranscribed` broadcast the
+ * browserWhisper path uses so the realtime update-in-place logic isn't duplicated.
  *
  * Handles the empty-segments case (the spoken language wasn't supported for
  * transcription): still persists `segments: []` + a flat `""` transcript —
@@ -110,6 +115,13 @@ const resolveFlatTranscript = (
  * Idempotent on redelivery via the `call.transcript !== null` guard below
  * (an explicit null-check, not a truthiness check — an already-persisted
  * `""` must still short-circuit) backed by `attachTranscript`'s own CAS.
+ *
+ * R8: the row may not exist yet at the first attempt (this job can race the
+ * row-creating `calls` webhook/job) — `data.whatsappCallId` is only a
+ * fast-path hint, so this always re-resolves by `data.wacid` and throws
+ * {@link WhatsappCallRowNotReadyError} (retryable, bounded ~1h via
+ * `NATIVE_CALL_CAPTURE_RETRY_OPTIONS`) while still missing, instead of
+ * silently dropping the event.
  */
 export const handleWhatsappCallNativeTranscriptFetch = async (
   data: IntegrationJobWhatsappCallNativeTranscriptFetch["data"],
@@ -118,17 +130,29 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
   // override in whatsapp-call-transcribe.ts).
   setWebhookExecutionContext({ source: "webhook" })
 
-  const call = await whatsappCallRepository.findById(data.whatsappCallId)
+  const byId = data.whatsappCallId
+    ? await whatsappCallRepository.findById(data.whatsappCallId)
+    : undefined
+  const call = byId ?? (await whatsappCallRepository.findByWacid(data.wacid))
   if (!call) {
     logger.warn(
       { whatsappCallId: data.whatsappCallId, wacid: data.wacid },
-      "Whatsapp native call transcript skipped: call row not found",
+      "Whatsapp native call transcript: call row not found yet; retrying",
+    )
+    throw new WhatsappCallRowNotReadyError(data.wacid)
+  }
+  // See the matching guard in whatsapp-call-native-recording.ts: a job
+  // enqueued before its row existed bypassed the worker-level gate.
+  if (!data.workspaceId && (await isBlockedWorkspace(call.workspaceId))) {
+    logger.info(
+      { whatsappCallId: call.id, workspaceId: call.workspaceId },
+      "Whatsapp native call transcript skipped: blocked workspace",
     )
     return
   }
   if (call.transcript !== null) {
     logger.info(
-      { whatsappCallId: data.whatsappCallId },
+      { whatsappCallId: call.id },
       "Whatsapp native call transcript already processed; skipping",
     )
     return
@@ -147,20 +171,20 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
   } catch (err) {
     if (err instanceof WhatsappCallMediaGoneError) {
       logger.warn(
-        { err: normalizeError(err), whatsappCallId: data.whatsappCallId },
+        { err: normalizeError(err), whatsappCallId: call.id },
         "Whatsapp native call transcript: media no longer available; skipping",
       )
       return
     }
     if (err instanceof AttachmentTooLargeError) {
       logger.warn(
-        { err: normalizeError(err), whatsappCallId: data.whatsappCallId },
+        { err: normalizeError(err), whatsappCallId: call.id },
         "Whatsapp native call transcript: exceeds size cap; skipping (permanent)",
       )
       return
     }
     logger.error(
-      { err: normalizeError(err), whatsappCallId: data.whatsappCallId },
+      { err: normalizeError(err), whatsappCallId: call.id },
       "Whatsapp native call transcript download failed",
     )
     throw err
@@ -178,7 +202,7 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
       // logs the document body itself, only the validation issues).
       logger.error(
         {
-          whatsappCallId: data.whatsappCallId,
+          whatsappCallId: call.id,
           issues: parsed.error.issues,
         },
         "Whatsapp native call transcript: malformed document; skipping",
@@ -188,7 +212,7 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
     parsedTranscript = parsed.data.transcript
   } catch (err) {
     logger.error(
-      { err: normalizeError(err), whatsappCallId: data.whatsappCallId },
+      { err: normalizeError(err), whatsappCallId: call.id },
       "Whatsapp native call transcript: failed to parse document; skipping",
     )
     return
@@ -197,8 +221,8 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
   const segments = mapSegments(parsedTranscript.segments ?? [])
   const transcript = resolveFlatTranscript(parsedTranscript.text, segments)
 
-  const stamped = await whatsappCallRepository.attachTranscript({
-    id: data.whatsappCallId,
+  const stamped = await whatsappCallLifecycleService.attachTranscript({
+    id: call.id,
     transcript,
     transcribedAt: new Date(),
     segments,

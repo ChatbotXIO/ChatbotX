@@ -81,7 +81,7 @@ export const requestCallPermissionAction = workspaceActionClient
       // The channel send is enqueued, not awaited — Meta is contacted later in
       // the chat worker. So a Meta 138017 ("permanent permission already
       // exists") can never surface here; that case is reconciled in the worker
-      // (`recordCallPermissionAlreadyGranted`, see
+      // (`reconcileCallPermissionAlreadyGranted`, see
       // `apps/worker/src/chat/handlers/whatsapp-call-permission-grant.ts`).
       await messageService.createOutgoing({
         conversation,

@@ -2075,7 +2075,6 @@
         "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
         "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
         "callFailed": "The call could not be placed. Please try again.",
-        "useSip": "This number uses in-app (SIP) calling. Use the call button for that instead.",
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "הגישה למיקרופון נדחתה. אפשר גישה בהגדרות הדפדפן וניסה שוב.",
@@ -2143,7 +2142,8 @@
         "expand": "הרחב",
         "dismiss": "סגור",
         "statusNoAnswer": "אין מענה",
-        "eyebrowCallEnded": "השיחה הסתיימה"
+        "eyebrowCallEnded": "השיחה הסתיימה",
+        "statusConnectionLost": "החיבור אבד"
       },
       "capability": {
         "title": "זכאות לשיחות",
@@ -2152,6 +2152,12 @@
         "ok": "אישור",
         "micPermissionTitle": "הרשאת מיקרופון",
         "dialFailureTitle": "לא ניתן היה להתחיל את השיחה"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "מספר מחובר ידנית",
+        "callsSubscription": "מספר WhatsApp זה חובר באופן ידני. ודא שהאפליקציה שלך ב-Meta רשומה לשדה ה-webhook calls (לוח הבקרה של אפליקציות Meta ← WhatsApp ← Configuration ← Webhook fields ← calls) — אחרת שיחות יוצאות לא יתחברו ושיחות נכנסות לא יצלצלו.",
+        "unsignedWebhook": "למספר זה גם אין Meta App Secret מוגדר, ולכן ה-webhooks הנכנסים אליו אינם מאומתים בחתימה.",
+        "callAnyway": "התקשר בכל זאת"
       }
     }
   },

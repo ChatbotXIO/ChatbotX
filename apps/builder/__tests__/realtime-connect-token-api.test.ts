@@ -92,8 +92,26 @@ describe("mintWorkspaceConnectTokenAuthenticatedAPI", () => {
 
   test("route is registered under the expected workspace-scoped path", () => {
     expect(mocks.state.routeConfig).toMatchObject({
-      method: "POST",
+      method: "GET",
       path: "/workspaces/{workspaceId}/realtime/connect-token",
     })
+  })
+
+  test("stays a read method so a trial-expired or MAC-limited cloud workspace can still open its inbox socket", async () => {
+    // `workspaceAuthorizedMidddleware` refuses any method outside
+    // GET/HEAD/DELETE for a blocked owner (invariant #14). Every channel's
+    // realtime feed connects through this token, so a mutation method here
+    // would black out the live inbox — not just calling.
+    const { isWorkspaceMutationMethod } = await import(
+      "@/lib/workspace/authorize-workspace-access"
+    )
+
+    expect(
+      isWorkspaceMutationMethod(
+        mocks.state.routeConfig?.method as Parameters<
+          typeof isWorkspaceMutationMethod
+        >[0],
+      ),
+    ).toBe(false)
   })
 })

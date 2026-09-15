@@ -8,7 +8,6 @@ import {
 import {
   createMessageRepository,
   integrationWhatsappRepository,
-  whatsappCallRepository,
 } from "@chatbotx.io/database/repositories"
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
 import { emitCallEnded, emitMissedAudioCall } from "@chatbotx.io/events"
@@ -268,8 +267,8 @@ export const finalizeCallSideEffects = async (
     createdAt: endedAt,
   })
 
-  await whatsappCallRepository.finalizeById({
-    id: call.id,
+  await whatsappVoipCallService.finalizeEndedCall({
+    whatsappCallId: call.id,
     status: toPersistedCallStatus(entity.status),
     ...(input.startedAt === undefined ? {} : { startedAt: input.startedAt }),
     endedAt,

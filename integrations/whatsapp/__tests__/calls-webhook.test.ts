@@ -22,6 +22,9 @@ const {
   mockCaptureNativeTranscriptAvailable: vi.fn(),
 }))
 
+/** Just the contact fields whatsapp-api-js@6.2.1's `post()` reads. */
+type MockContact = { wa_id?: string; profile?: { name?: string } }
+
 type MiddlewareHandlers = {
   message?: (args: unknown) => void
   sent?: () => void
@@ -49,18 +52,98 @@ const { middlewareHandlePost } = vi.hoisted(() => ({
   middlewareHandlePost: vi.fn(),
 }))
 
+// Mirrors just enough of whatsapp-api-js@6.2.1's real dispatch (reads
+// entry[0].changes[0].value.messages[0]/statuses[0]) so R9's deterministic
+// jobId test can assert against a real `on.message`/`on.status` dispatch
+// instead of the library's actual (untested-here) parsing.
+const extractMockDispatchArgs = async (
+  req: Request,
+): Promise<
+  | {
+      kind: "message"
+      phoneID: string
+      from: string
+      message: unknown
+      contact?: MockContact
+    }
+  | { kind: "status"; phoneID: string; phone: string; statusItem: unknown }
+  | undefined
+> => {
+  try {
+    const body = JSON.parse(await req.text()) as {
+      entry?: Array<{ changes?: Array<{ value?: Record<string, unknown> }> }>
+    }
+    const value = body.entry?.[0]?.changes?.[0]?.value
+    const metadata = value?.metadata as { phone_number_id?: string }
+    const messages = value?.messages as Array<{ from: string }> | undefined
+    const statuses = value?.statuses as
+      | Array<{ recipient_id: string }>
+      | undefined
+    if (messages?.[0]) {
+      return {
+        kind: "message",
+        phoneID: metadata?.phone_number_id ?? "",
+        from: messages[0].from,
+        message: messages[0],
+        contact: (value?.contacts as MockContact[] | undefined)?.[0],
+      }
+    }
+    if (statuses?.[0]) {
+      return {
+        kind: "status",
+        phoneID: metadata?.phone_number_id ?? "",
+        phone: statuses[0].recipient_id,
+        statusItem: statuses[0],
+      }
+    }
+  } catch {
+    // fall through to `sent`
+  }
+  return
+}
+
 vi.mock("whatsapp-api-js/middleware/next", () => ({
   WhatsAppAPI: class {
     on: MiddlewareHandlers = {}
 
     get = vi.fn()
 
-    handle_post(...args: unknown[]): Promise<number> {
+    async handle_post(...args: unknown[]): Promise<number> {
       middlewareHandlePost(...args)
+      const dispatch = await extractMockDispatchArgs(args[0] as Request)
+      // Mirrors the library's own `contact?.profile.name` (optional-chained on
+      // `contact` but NOT on `.profile`): a contact carrying no `profile`
+      // throws here, exactly as it does inside the real `post()`.
+      const contactName =
+        dispatch?.kind === "message" && dispatch.contact
+          ? (dispatch.contact as { profile: { name?: string } }).profile.name
+          : undefined
       queueMicrotask(() => {
+        if (dispatch?.kind === "message") {
+          this.on.message?.({
+            phoneID: dispatch.phoneID,
+            from: dispatch.contact?.wa_id ?? dispatch.from,
+            name: contactName,
+            message: dispatch.message,
+            raw: {},
+          })
+          return
+        }
+        if (dispatch?.kind === "status") {
+          this.on.status?.({
+            phoneID: dispatch.phoneID,
+            phone: dispatch.phone,
+            status: (dispatch.statusItem as { status?: string }).status,
+            id: (dispatch.statusItem as { id?: string }).id,
+            timestamp: (dispatch.statusItem as { timestamp?: string })
+              .timestamp,
+            raw: {},
+          })
+          return
+        }
         this.on.sent?.()
       })
-      return Promise.resolve(200)
+      return 200
     }
   },
 }))
@@ -233,13 +316,13 @@ describe("extractCallEventPayloads", () => {
     )
   })
 
-  test("keeps a connect event with no session unchanged (existing SIP behavior)", () => {
+  test("keeps a connect event with no session unchanged (session-less behavior)", () => {
     const result = extractCallEventPayloads(
       wrapEntry(
         callsValue({
           calls: [
             {
-              id: "wacid.SIP-1",
+              id: "wacid.NOSESSION-1",
               from: "16315551234",
               to: "16505551111",
               event: "connect",
@@ -254,7 +337,7 @@ describe("extractCallEventPayloads", () => {
     expect(result).toHaveLength(1)
     expect(result[0].event).toEqual({
       kind: "connect",
-      wacid: "wacid.SIP-1",
+      wacid: "wacid.NOSESSION-1",
       direction: "userInitiated",
       from: "16315551234",
       to: "16505551111",
@@ -484,6 +567,127 @@ describe("extractCallEventPayloads", () => {
     )
   })
 
+  test("R2: normalizes a Username/BSUID-only connect (no wa_id) instead of dropping the whole calls value", () => {
+    const result = extractCallEventPayloads(
+      wrapEntry(
+        callsValue({
+          contacts: [
+            {
+              profile: { name: "Kerry Fisher", username: "kerryf" },
+              user_id: "bsuid-123",
+              parent_user_id: "parent-bsuid-123",
+            },
+          ],
+          calls: [
+            {
+              id: "wacid.BSUID-1",
+              event: "connect",
+              direction: "USER_INITIATED",
+              from_user_id: "bsuid-123",
+              to_user_id: "bsuid-biz-1",
+            },
+          ],
+        }),
+      ),
+    )
+
+    expect(result).toEqual([
+      {
+        phoneNumberId: "phone-1",
+        contact: {
+          waId: undefined,
+          userId: "bsuid-123",
+          parentUserId: "parent-bsuid-123",
+          username: "kerryf",
+          name: "Kerry Fisher",
+        },
+        event: {
+          kind: "connect",
+          wacid: "wacid.BSUID-1",
+          direction: "userInitiated",
+          fromUserId: "bsuid-123",
+          toUserId: "bsuid-biz-1",
+          sessionInvalid: false,
+        },
+      },
+    ])
+  })
+
+  test("R2: normalizes a status item's recipient_user_id (BSUID recipient)", () => {
+    const result = extractCallEventPayloads(
+      wrapEntry(
+        callsValue({
+          contacts: undefined,
+          statuses: [
+            {
+              id: "wacid.BSUID-2",
+              type: "call",
+              status: "RINGING",
+              recipient_user_id: "bsuid-456",
+            },
+          ],
+        }),
+      ),
+    )
+
+    expect(result).toEqual([
+      {
+        phoneNumberId: "phone-1",
+        contact: undefined,
+        event: {
+          kind: "status",
+          wacid: "wacid.BSUID-2",
+          status: "RINGING",
+          recipientUserId: "bsuid-456",
+        },
+      },
+    ])
+  })
+
+  test("R12: normalizes a terminate status case-insensitively", () => {
+    const result = extractCallEventPayloads(
+      wrapEntry(
+        callsValue({
+          calls: [
+            {
+              id: "wacid.CASE-1",
+              event: "terminate",
+              direction: "USER_INITIATED",
+              status: "completed",
+              start_time: "1755700010",
+              duration: 10,
+            },
+          ],
+        }),
+      ),
+    )
+
+    expect((result[0].event as { status?: string }).status).toBe("COMPLETED")
+  })
+
+  test("R12: an unrecognized terminate status logs a warning and defaults to FAILED", () => {
+    const result = extractCallEventPayloads(
+      wrapEntry(
+        callsValue({
+          calls: [
+            {
+              id: "wacid.UNKNOWN-STATUS",
+              event: "terminate",
+              direction: "USER_INITIATED",
+              status: "WEIRD_STATUS",
+            },
+          ],
+        }),
+      ),
+    )
+
+    expect((result[0].event as { status?: string }).status).toBe("FAILED")
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      { wacid: "wacid.UNKNOWN-STATUS", status: "WEIRD_STATUS" },
+      "Whatsapp call terminate status unknown; defaulting to FAILED",
+    )
+  })
+
   test("ignores non-calls fields and malformed values without throwing", () => {
     expect(
       extractCallEventPayloads({
@@ -503,6 +707,345 @@ describe("extractCallEventPayloads", () => {
         ],
       }),
     ).toEqual([])
+  })
+})
+
+const messagesValue = (overrides: Record<string, unknown> = {}) => ({
+  messaging_product: "whatsapp",
+  metadata: {
+    display_phone_number: "16505551111",
+    phone_number_id: "phone-1",
+  },
+  contacts: [{ profile: { name: "Kerry Fisher" }, wa_id: "16315551234" }],
+  messages: [
+    {
+      from: "16315551234",
+      id: "wamid.1",
+      timestamp: "1755700000",
+      type: "text",
+      text: { body: "hi" },
+    },
+  ],
+  ...overrides,
+})
+
+const wrapMessagesEntry = (value: unknown) => ({
+  object: "whatsapp_business_account",
+  entry: [{ id: "waba-1", changes: [{ field: "messages", value }] }],
+})
+
+describe("webhookHandler R1: per-change dispatch (mixed batches, multi-message)", () => {
+  test("a body with 2 messages in one change enqueues both as incomingMessage jobs", async () => {
+    const queueAdd = vi.fn()
+    const payload = wrapMessagesEntry(
+      messagesValue({
+        contacts: [
+          { profile: { name: "Kerry" }, wa_id: "16315551234" },
+          { profile: { name: "Alex" }, wa_id: "16315559999" },
+        ],
+        messages: [
+          {
+            from: "16315551234",
+            id: "wamid.1",
+            timestamp: "1755700000",
+            type: "text",
+            text: { body: "hi" },
+          },
+          {
+            from: "16315559999",
+            id: "wamid.2",
+            timestamp: "1755700001",
+            type: "text",
+            text: { body: "hello" },
+          },
+        ],
+      }),
+    )
+
+    await expect(
+      webhookHandler({
+        config: { verifyToken: "verify-token", clientSecret: CLIENT_SECRET },
+        req: makeSignedPostRequest(payload),
+        queue: { add: queueAdd },
+      } as unknown as Parameters<typeof webhookHandler>[0]),
+    ).resolves.toBe("ok")
+
+    const incomingMessageCalls = queueAdd.mock.calls.filter(
+      (call) => call[0] === "incomingMessage",
+    )
+    expect(incomingMessageCalls).toHaveLength(2)
+    expect(incomingMessageCalls[0][2]).toEqual({
+      jobId: "wa-msg-phone-1-wamid.1",
+      removeOnFail: true,
+    })
+    expect(incomingMessageCalls[1][2]).toEqual({
+      jobId: "wa-msg-phone-1-wamid.2",
+      removeOnFail: true,
+    })
+  })
+
+  test("a mixed calls+messages body enqueues both the call event AND the message", async () => {
+    const queueAdd = vi.fn()
+    const payload = {
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          id: "waba-1",
+          changes: [
+            { field: "calls", value: callsValue({ calls: undefined }) },
+            {
+              field: "calls",
+              value: callsValue({
+                calls: [
+                  {
+                    id: "wacid.MIXED-1",
+                    event: "connect",
+                    direction: "USER_INITIATED",
+                    from: "16315551234",
+                  },
+                ],
+              }),
+            },
+            { field: "messages", value: messagesValue() },
+          ],
+        },
+      ],
+    }
+
+    await expect(
+      webhookHandler({
+        config: { verifyToken: "verify-token", clientSecret: CLIENT_SECRET },
+        req: makeSignedPostRequest(payload),
+        queue: { add: queueAdd },
+      } as unknown as Parameters<typeof webhookHandler>[0]),
+    ).resolves.toBe("ok")
+
+    expect(queueAdd).toHaveBeenCalledWith(
+      "whatsappCallEvent",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          payload: expect.objectContaining({
+            event: expect.objectContaining({ wacid: "wacid.MIXED-1" }),
+          }),
+        }),
+      }),
+      expect.anything(),
+    )
+    expect(queueAdd).toHaveBeenCalledWith(
+      "incomingMessage",
+      expect.anything(),
+      { jobId: "wa-msg-phone-1-wamid.1", removeOnFail: true },
+    )
+  })
+
+  const enqueuedMessageNames = (queueAdd: ReturnType<typeof vi.fn>) =>
+    queueAdd.mock.calls
+      .filter((call) => call[0] === "incomingMessage")
+      .map((call) => call[1].data.payload.name)
+
+  const textMessage = (from: string, id: string) => ({
+    from,
+    id,
+    timestamp: "1755700000",
+    type: "text",
+    text: { body: "hi" },
+  })
+
+  const postMessages = async (
+    value: unknown,
+    queueAdd: ReturnType<typeof vi.fn>,
+  ) =>
+    await webhookHandler({
+      config: { verifyToken: "verify-token", clientSecret: CLIENT_SECRET },
+      req: makeSignedPostRequest(wrapMessagesEntry(value)),
+      queue: { add: queueAdd },
+    } as unknown as Parameters<typeof webhookHandler>[0])
+
+  test("each message keeps ITS OWN contact even when contacts[] is not index-aligned", async () => {
+    const queueAdd = vi.fn()
+    await postMessages(
+      messagesValue({
+        // Reversed vs `messages[]` — a positional pairing would attribute
+        // each message to the other customer.
+        contacts: [
+          { profile: { name: "Alex" }, wa_id: "16315559999" },
+          { profile: { name: "Kerry" }, wa_id: "16315551234" },
+        ],
+        messages: [
+          textMessage("16315551234", "wamid.1"),
+          textMessage("16315559999", "wamid.2"),
+        ],
+      }),
+      queueAdd,
+    )
+
+    expect(enqueuedMessageNames(queueAdd)).toEqual(["Kerry", "Alex"])
+  })
+
+  test("two messages from the same sender both keep the single contact", async () => {
+    const queueAdd = vi.fn()
+    await postMessages(
+      messagesValue({
+        contacts: [{ profile: { name: "Kerry" }, wa_id: "16315551234" }],
+        messages: [
+          textMessage("16315551234", "wamid.1"),
+          textMessage("16315551234", "wamid.2"),
+        ],
+      }),
+      queueAdd,
+    )
+
+    expect(enqueuedMessageNames(queueAdd)).toEqual(["Kerry", "Kerry"])
+  })
+
+  test("a message with no matching contact carries none, so its own `from` stays authoritative", async () => {
+    const queueAdd = vi.fn()
+    await postMessages(
+      messagesValue({
+        contacts: [{ profile: { name: "Kerry" }, wa_id: "16315551234" }],
+        messages: [
+          textMessage("16315551234", "wamid.1"),
+          textMessage("16315559999", "wamid.2"),
+        ],
+      }),
+      queueAdd,
+    )
+
+    expect(enqueuedMessageNames(queueAdd)).toEqual(["Kerry", undefined])
+    const second = queueAdd.mock.calls.filter(
+      (call) => call[0] === "incomingMessage",
+    )[1]
+    expect(second[1].data.payload.from).toBe("16315559999")
+  })
+
+  test("one unparsable item never blocks its healthy siblings (no endless Meta redelivery)", async () => {
+    const queueAdd = vi.fn()
+    await expect(
+      postMessages(
+        messagesValue({
+          contacts: [
+            { profile: { name: "Kerry" }, wa_id: "16315551234" },
+            // whatsapp-api-js@6.2.1 reads `contact?.profile.name` — a contact
+            // with no `profile` makes its item, and only its item, throw.
+            { wa_id: "16315559999" },
+            { profile: { name: "Sam" }, wa_id: "16315558888" },
+          ],
+          messages: [
+            textMessage("16315551234", "wamid.1"),
+            textMessage("16315559999", "wamid.2"),
+            textMessage("16315558888", "wamid.3"),
+          ],
+        }),
+        queueAdd,
+      ),
+    ).resolves.toBe("ok")
+
+    expect(enqueuedMessageNames(queueAdd)).toEqual(["Kerry", "Sam"])
+  })
+})
+
+describe("webhookHandler R4: manual-integration phone_number_id binding", () => {
+  test("a forged POST naming a phone_number_id that does not match the route-pinned integration enqueues nothing", async () => {
+    const queueAdd = vi.fn()
+    const payload = wrapMessagesEntry(messagesValue())
+
+    await expect(
+      webhookHandler({
+        config: {
+          verifyToken: "verify-token",
+          manualIntegration: true,
+          integrationId: "integration-A",
+          // Route-loaded phone number id for integration A — the payload
+          // above claims "phone-1", which must NOT match.
+          phoneNumberId: "phone-B-belongs-to-a-different-workspace",
+        },
+        req: makeSignedPostRequest(payload),
+        queue: { add: queueAdd },
+      } as unknown as Parameters<typeof webhookHandler>[0]),
+    ).resolves.toBe("ok")
+
+    expect(queueAdd).not.toHaveBeenCalled()
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pinnedPhoneNumberId: "phone-B-belongs-to-a-different-workspace",
+        receivedPhoneNumberId: "phone-1",
+      }),
+      "Whatsapp webhook change dropped: phone_number_id does not match the route-loaded integration",
+    )
+  })
+
+  test("a matching phone_number_id enqueues normally", async () => {
+    const queueAdd = vi.fn()
+    const payload = wrapMessagesEntry(messagesValue())
+
+    await expect(
+      webhookHandler({
+        config: {
+          verifyToken: "verify-token",
+          manualIntegration: true,
+          integrationId: "integration-A",
+          phoneNumberId: "phone-1",
+        },
+        req: makeSignedPostRequest(payload),
+        queue: { add: queueAdd },
+      } as unknown as Parameters<typeof webhookHandler>[0]),
+    ).resolves.toBe("ok")
+
+    expect(queueAdd).toHaveBeenCalledWith(
+      "incomingMessage",
+      expect.anything(),
+      { jobId: "wa-msg-phone-1-wamid.1", removeOnFail: true },
+    )
+  })
+
+  test("a forged call-event POST naming a mismatching phone_number_id enqueues no call job", async () => {
+    const queueAdd = vi.fn()
+    const payload = wrapEntry(
+      callsValue({
+        calls: [
+          {
+            id: "wacid.FORGED-1",
+            event: "connect",
+            direction: "USER_INITIATED",
+            from: "16315551234",
+          },
+        ],
+      }),
+    )
+
+    await expect(
+      webhookHandler({
+        config: {
+          verifyToken: "verify-token",
+          manualIntegration: true,
+          integrationId: "integration-A",
+          phoneNumberId: "phone-not-1",
+        },
+        req: makeSignedPostRequest(payload),
+        queue: { add: queueAdd },
+      } as unknown as Parameters<typeof webhookHandler>[0]),
+    ).resolves.toBe("ok")
+
+    expect(queueAdd).not.toHaveBeenCalled()
+  })
+
+  test("the shared platform-credential route (no phoneNumberId pinned) is unaffected — many numbers flow through normally", async () => {
+    const queueAdd = vi.fn()
+    const payload = wrapMessagesEntry(messagesValue())
+
+    await expect(
+      webhookHandler({
+        config: { verifyToken: "verify-token", clientSecret: CLIENT_SECRET },
+        req: makeSignedPostRequest(payload),
+        queue: { add: queueAdd },
+      } as unknown as Parameters<typeof webhookHandler>[0]),
+    ).resolves.toBe("ok")
+
+    expect(queueAdd).toHaveBeenCalledWith(
+      "incomingMessage",
+      expect.anything(),
+      { jobId: "wa-msg-phone-1-wamid.1", removeOnFail: true },
+    )
   })
 })
 
@@ -586,7 +1129,7 @@ describe("webhookHandler call events", () => {
     }
   })
 
-  test("keeps acknowledging when one enqueue fails", async () => {
+  test("R9: an enqueue failure now PROPAGATES — the handler rejects instead of swallowing it, so the route answers non-2xx and Meta redelivers", async () => {
     const queueAdd = vi
       .fn()
       .mockRejectedValueOnce(new Error("redis down"))
@@ -617,22 +1160,64 @@ describe("webhookHandler call events", () => {
         req: makeSignedPostRequest(payload),
         queue: { add: queueAdd },
       } as unknown as Parameters<typeof webhookHandler>[0]),
-    ).resolves.toBe("ok")
+    ).rejects.toThrow()
 
-    expect(queueAdd).toHaveBeenCalledTimes(2)
+    // The first call event's enqueue failed and propagated — the loop never
+    // reaches the second (wacid.B) event.
+    expect(queueAdd).toHaveBeenCalledTimes(1)
     expect(mockLogger.error).toHaveBeenCalledWith(
       expect.objectContaining({ wacid: "wacid.A" }),
-      "Whatsapp call event enqueue failed; webhook will still acknowledge",
+      "Whatsapp call event enqueue failed",
     )
-    // Terminate jobs are delayed so same-batch interim statuses commit first.
-    expect(queueAdd).toHaveBeenNthCalledWith(
-      2,
-      "whatsappCallEvent",
+  })
+
+  test("R9: deterministic jobIds are present on incomingMessage/messageStatus enqueues", async () => {
+    const queueAdd = vi.fn()
+    const messagePayload = {
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          id: "waba-1",
+          changes: [
+            {
+              field: "messages",
+              value: {
+                messaging_product: "whatsapp",
+                metadata: {
+                  display_phone_number: "16505551111",
+                  phone_number_id: "phone-1",
+                },
+                contacts: [
+                  { profile: { name: "Kerry" }, wa_id: "16315551234" },
+                ],
+                messages: [
+                  {
+                    from: "16315551234",
+                    id: "wamid.1",
+                    timestamp: "1755700000",
+                    type: "text",
+                    text: { body: "hi" },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    }
+
+    await expect(
+      webhookHandler({
+        config: { verifyToken: "verify-token", clientSecret: CLIENT_SECRET },
+        req: makeSignedPostRequest(messagePayload),
+        queue: { add: queueAdd },
+      } as unknown as Parameters<typeof webhookHandler>[0]),
+    ).resolves.toBe("ok")
+
+    expect(queueAdd).toHaveBeenCalledWith(
+      "incomingMessage",
       expect.anything(),
-      expect.objectContaining({
-        jobId: "wa-call-wacid.B-terminate",
-        delay: 2000,
-      }),
+      { jobId: "wa-msg-phone-1-wamid.1", removeOnFail: true },
     )
   })
 })
@@ -685,13 +1270,13 @@ describe("webhookHandler VoIP-mode connect signaling", () => {
     })
   })
 
-  test("a connect with no session never calls the VoIP signaling service (existing SIP behavior)", async () => {
+  test("a connect with no session never calls the VoIP signaling service (session-less behavior)", async () => {
     const queueAdd = vi.fn()
     const payload = wrapEntry(
       callsValue({
         calls: [
           {
-            id: "wacid.SIP-1",
+            id: "wacid.NOSESSION-1",
             from: "16315551234",
             event: "connect",
             direction: "USER_INITIATED",
@@ -711,7 +1296,7 @@ describe("webhookHandler VoIP-mode connect signaling", () => {
     expect(mockCaptureConnectOffer).not.toHaveBeenCalled()
   })
 
-  test("a VoIP signaling failure is logged and the webhook still acknowledges", async () => {
+  test("R9: a VoIP signaling failure is logged and PROPAGATES (no longer swallowed)", async () => {
     mockCaptureConnectOffer.mockRejectedValueOnce(new Error("redis down"))
     const queueAdd = vi.fn()
     const payload = wrapEntry(
@@ -734,11 +1319,11 @@ describe("webhookHandler VoIP-mode connect signaling", () => {
         req: makeSignedPostRequest(payload),
         queue: { add: queueAdd },
       } as unknown as Parameters<typeof webhookHandler>[0]),
-    ).resolves.toBe("ok")
+    ).rejects.toThrow()
 
     expect(mockLogger.error).toHaveBeenCalledWith(
       expect.objectContaining({ wacid: "wacid.VOIP-2" }),
-      "Whatsapp VoIP connect signaling enqueue failed; webhook will still acknowledge",
+      "Whatsapp VoIP connect signaling enqueue failed",
     )
   })
 
@@ -816,7 +1401,7 @@ describe("webhookHandler VoIP-mode connect signaling", () => {
     )
   })
 
-  test("a captureOutboundAnswer failure is logged and the webhook still acknowledges", async () => {
+  test("R9: a captureOutboundAnswer failure is logged and PROPAGATES (no longer swallowed)", async () => {
     mockCaptureOutboundAnswer.mockRejectedValueOnce(new Error("redis down"))
     const queueAdd = vi.fn()
     const payload = wrapEntry(
@@ -841,11 +1426,11 @@ describe("webhookHandler VoIP-mode connect signaling", () => {
         req: makeSignedPostRequest(payload),
         queue: { add: queueAdd },
       } as unknown as Parameters<typeof webhookHandler>[0]),
-    ).resolves.toBe("ok")
+    ).rejects.toThrow()
 
     expect(mockLogger.error).toHaveBeenCalledWith(
       expect.objectContaining({ wacid: "wacid.OUT-3" }),
-      "Whatsapp outbound answer capture failed; webhook will still acknowledge",
+      "Whatsapp outbound answer capture failed",
     )
   })
 
@@ -1021,7 +1606,7 @@ describe("webhookHandler Meta-native call recording/transcript capture", () => {
     expect(mockCaptureNativeRecordingAvailable).not.toHaveBeenCalled()
   })
 
-  test("a captureNativeRecordingAvailable failure is logged and the webhook still acknowledges", async () => {
+  test("R9: a captureNativeRecordingAvailable failure is logged and PROPAGATES (no longer swallowed)", async () => {
     mockCaptureNativeRecordingAvailable.mockRejectedValueOnce(
       new Error("db down"),
     )
@@ -1053,15 +1638,15 @@ describe("webhookHandler Meta-native call recording/transcript capture", () => {
         req: makeSignedPostRequest(payload),
         queue: { add: queueAdd },
       } as unknown as Parameters<typeof webhookHandler>[0]),
-    ).resolves.toBe("ok")
+    ).rejects.toThrow()
 
     expect(mockLogger.error).toHaveBeenCalledWith(
       expect.objectContaining({ wacid: "wacid.REC-2" }),
-      "Whatsapp native call recording capture failed; webhook will still acknowledge",
+      "Whatsapp native call recording capture failed",
     )
   })
 
-  test("a captureNativeTranscriptAvailable failure is logged and the webhook still acknowledges", async () => {
+  test("R9: a captureNativeTranscriptAvailable failure is logged and PROPAGATES (no longer swallowed)", async () => {
     mockCaptureNativeTranscriptAvailable.mockRejectedValueOnce(
       new Error("db down"),
     )
@@ -1091,11 +1676,11 @@ describe("webhookHandler Meta-native call recording/transcript capture", () => {
         req: makeSignedPostRequest(payload),
         queue: { add: queueAdd },
       } as unknown as Parameters<typeof webhookHandler>[0]),
-    ).resolves.toBe("ok")
+    ).rejects.toThrow()
 
     expect(mockLogger.error).toHaveBeenCalledWith(
       expect.objectContaining({ wacid: "wacid.TRX-2" }),
-      "Whatsapp native call transcript capture failed; webhook will still acknowledge",
+      "Whatsapp native call transcript capture failed",
     )
   })
 })

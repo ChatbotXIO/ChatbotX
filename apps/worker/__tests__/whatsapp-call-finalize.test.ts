@@ -34,11 +34,11 @@ vi.mock("@chatbotx.io/business", () => ({
     readControl: mocks.voipReadControl,
     endCall: mocks.voipMarkTerminated,
     deleteOffer: mocks.voipDeleteOffer,
+    finalizeEndedCall: mocks.finalizeById,
   },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
-  whatsappCallRepository: { finalizeById: mocks.finalizeById },
   integrationWhatsappRepository: {
     findByInboxIdForWorkspace: mocks.findByInboxIdForWorkspace,
   },
@@ -194,7 +194,7 @@ describe("finalizeCallSideEffects", () => {
     )
     expect(mocks.finalizeById).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: "call-1",
+        whatsappCallId: "call-1",
         status: "completed",
         startedAt: new Date("2026-08-21T09:58:30Z"),
         durationSeconds: 90,

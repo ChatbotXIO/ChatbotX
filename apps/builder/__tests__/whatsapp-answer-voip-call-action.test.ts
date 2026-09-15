@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 type ActionHandler = (args: {
   bindArgsParsedInputs: readonly [string]
@@ -14,6 +14,7 @@ const {
   findContactInboxMock,
   findContactMock,
   markAcceptedByAgentMock,
+  readControlMock,
   claimForAnswerMock,
   commitAcceptedMock,
   releaseClaimMock,
@@ -27,6 +28,7 @@ const {
   findContactInboxMock: vi.fn(),
   findContactMock: vi.fn(),
   markAcceptedByAgentMock: vi.fn(),
+  readControlMock: vi.fn(),
   claimForAnswerMock: vi.fn(),
   commitAcceptedMock: vi.fn(),
   releaseClaimMock: vi.fn(),
@@ -35,6 +37,8 @@ const {
   terminateCallMock: vi.fn(),
   broadcastToWorkspacePartyMock: vi.fn(),
 }))
+
+const DEADLINE_SAFETY_MARGIN_MS = 3000
 
 class FakeWhatsappException extends Error {
   httpStatusCode: number
@@ -79,11 +83,16 @@ vi.mock("@/lib/log", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   whatsappVoipCallService: {
+    readControl: readControlMock,
     claimForAnswer: claimForAnswerMock,
     commitAccepted: commitAcceptedMock,
     releaseClaim: releaseClaimMock,
     markAcceptedByAgent: markAcceptedByAgentMock,
   },
+  // Real implementation (not a stub) so the deadline tests exercise the
+  // actual R16 margin logic instead of a hard-coded true/false.
+  isAnswerDeadlineExpired: (deadlineAt: number) =>
+    Date.now() + DEADLINE_SAFETY_MARGIN_MS >= deadlineAt,
   contactInboxService: { findBy: findContactInboxMock },
   contactService: { findBy: findContactMock },
   broadcastToWorkspaceParty: broadcastToWorkspacePartyMock,
@@ -163,6 +172,12 @@ describe("answerWhatsappVoipCallAction", () => {
       contactId: "contact-1",
     })
     findContactMock.mockResolvedValue({ id: "contact-1", locale: null })
+    readControlMock.mockResolvedValue({
+      reservedUserId: "agent-1",
+      phase: "reserved",
+      deadlineAt: Date.now() + 60_000,
+      fenceToken: "fence-1",
+    })
     claimForAnswerMock.mockResolvedValue("fence-1")
     preAcceptCallMock.mockResolvedValue(undefined)
     acceptCallMock.mockResolvedValue(undefined)
@@ -389,6 +404,129 @@ describe("answerWhatsappVoipCallAction", () => {
     )
     expect(loggedText).not.toContain("v=0 answer")
     expect(commitAcceptedMock).not.toHaveBeenCalled()
+  })
+
+  describe("R16: server-side answer-deadline enforcement", () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    test("before claim: an already-expired deadline returns cannotAnswer without calling claimForAnswer or Graph", async () => {
+      readControlMock.mockResolvedValue({
+        reservedUserId: "",
+        phase: "reserved",
+        deadlineAt: Date.now() - 1,
+        fenceToken: "fence-1",
+      })
+
+      const result = await call()
+
+      expect(result).toEqual({ outcome: "cannotAnswer" })
+      expect(claimForAnswerMock).not.toHaveBeenCalled()
+      expect(preAcceptCallMock).not.toHaveBeenCalled()
+      expect(acceptCallMock).not.toHaveBeenCalled()
+    })
+
+    test("before claim: a deadline within the 3s safety margin returns cannotAnswer", async () => {
+      readControlMock.mockResolvedValue({
+        reservedUserId: "",
+        phase: "reserved",
+        deadlineAt: Date.now() + 2000,
+        fenceToken: "fence-1",
+      })
+
+      const result = await call()
+
+      expect(result).toEqual({ outcome: "cannotAnswer" })
+      expect(claimForAnswerMock).not.toHaveBeenCalled()
+    })
+
+    test("before pre_accept: the deadline expires between claim and pre_accept, releases the claim, never calls Graph", async () => {
+      const deadlineAt = Date.now() + 3500
+      readControlMock.mockResolvedValue({
+        reservedUserId: "",
+        phase: "reserved",
+        deadlineAt,
+        fenceToken: "fence-1",
+      })
+      claimForAnswerMock.mockImplementation(() => {
+        vi.advanceTimersByTime(1000)
+        return Promise.resolve("fence-1")
+      })
+
+      const result = await call()
+
+      expect(result).toEqual({ outcome: "cannotAnswer" })
+      expect(releaseClaimMock).toHaveBeenCalledWith({
+        wacid: "wacid-1",
+        fenceToken: "fence-1",
+      })
+      expect(preAcceptCallMock).not.toHaveBeenCalled()
+      expect(acceptCallMock).not.toHaveBeenCalled()
+    })
+
+    test("before accept: the deadline expires between pre_accept and accept, releases the claim, never calls accept", async () => {
+      const deadlineAt = Date.now() + 4000
+      readControlMock.mockResolvedValue({
+        reservedUserId: "",
+        phase: "reserved",
+        deadlineAt,
+        fenceToken: "fence-1",
+      })
+      preAcceptCallMock.mockImplementation(() => {
+        vi.advanceTimersByTime(1500)
+        return Promise.resolve()
+      })
+
+      const result = await call()
+
+      expect(result).toEqual({ outcome: "cannotAnswer" })
+      expect(preAcceptCallMock).toHaveBeenCalledTimes(1)
+      expect(acceptCallMock).not.toHaveBeenCalled()
+      expect(releaseClaimMock).toHaveBeenCalledWith({
+        wacid: "wacid-1",
+        fenceToken: "fence-1",
+      })
+    })
+
+    test("maps a Graph accept failure that races past the deadline to cannotAnswer instead of throwing", async () => {
+      const deadlineAt = Date.now() + 4000
+      readControlMock.mockResolvedValue({
+        reservedUserId: "",
+        phase: "reserved",
+        deadlineAt,
+        fenceToken: "fence-1",
+      })
+      acceptCallMock.mockImplementation(() => {
+        vi.advanceTimersByTime(1500)
+        return Promise.reject(new Error("graph accept timed out"))
+      })
+
+      const result = await call()
+
+      expect(result).toEqual({ outcome: "cannotAnswer" })
+      expect(releaseClaimMock).toHaveBeenCalledWith({
+        wacid: "wacid-1",
+        fenceToken: "fence-1",
+      })
+    })
+
+    test("well within the deadline: answers normally", async () => {
+      readControlMock.mockResolvedValue({
+        reservedUserId: "",
+        phase: "reserved",
+        deadlineAt: Date.now() + 55_000,
+        fenceToken: "fence-1",
+      })
+
+      const result = await call()
+
+      expect(result).toMatchObject({ outcome: "accepted" })
+    })
   })
 
   describe("Meta-native recording/transcription announcement options", () => {

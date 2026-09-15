@@ -22,6 +22,7 @@ import {
   type WhatsappConnectCallInput,
 } from "@chatbotx.io/integration-whatsapp/api/calling"
 import { WhatsappException } from "@chatbotx.io/integration-whatsapp/exception"
+import { shouldAddressBySourceUserId } from "@chatbotx.io/sdk"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { parsePhoneNumberFromString } from "libphonenumber-js"
 import { getTranslations } from "next-intl/server"
@@ -105,13 +106,41 @@ export type InitiateOutboundVoipCallResult =
 const digitsOf = (phoneNumber: string): string => phoneNumber.replace(/\D/g, "")
 
 /**
+ * Best-effort teardown of a leg Meta already connected but this dial will not
+ * keep: ends the local call control (if it was created) and hangs up at Meta.
+ * Never throws — each failure is logged, and Meta also drops an unanswered
+ * leg on its own timeout.
+ */
+async function abandonOutboundDial(input: {
+  auth: WhatsappAuthValue
+  wacid: string
+  attemptId: string
+}): Promise<void> {
+  const { auth, wacid, attemptId } = input
+  await whatsappVoipCallService
+    .endCall({ wacid, allowFromAccepted: true })
+    .catch((error: unknown) => {
+      logger.error(
+        { err: error, wacid, attemptId },
+        "WhatsApp outbound dial: failed to end the local call control",
+      )
+    })
+  await terminateCall({ auth, callId: wacid }).catch((error: unknown) => {
+    logger.error(
+      { err: error, wacid, attemptId },
+      "WhatsApp outbound dial: best-effort terminate at Meta failed",
+    )
+  })
+}
+
+/**
  * Wraps {@link connectCall} with the announcement-options safeguard: on a 4xx
  * specific to these fields, retry once with the object omitted rather than
- * failing the call. Meta returns no dedicated error code for a bad
- * `purpose`/`announcement_language`, so any 4xx is treated as retry-worthy —
- * but only when announcement options were actually attached, so a 4xx
- * caused by something else (bad SDP, etc.) still surfaces on the first
- * attempt without wasting a retry.
+ * failing the call. Meta documents no error code for a bad
+ * `purpose`/`announcement_language`, so a 4xx qualifies only when it is not
+ * one of Meta's documented calling errors (see
+ * `isCallAnnouncementValidationError`), and only when announcement options
+ * were actually attached.
  */
 async function connectCallWithAnnouncementFallback(
   input: WhatsappConnectCallInput,
@@ -193,6 +222,13 @@ async function resolveContactInbox(input: {
   inboxId: string
   channel: string
   sourceId: string
+  /**
+   * R2: the Business-Scoped User ID (BSUID) for a Username/BSUID-only
+   * contact — present alongside an empty `sourceId` when the contact's phone
+   * number was never exposed. Feeds `shouldAddressBySourceUserId` below to
+   * decide `to` vs `recipient` on the outbound `connect`.
+   */
+  sourceUserId: string | null
   /** Per-channel language (the contact panel's "Language" field) — feeds the
    * announcement-language resolution below. */
   language: string | null
@@ -219,6 +255,7 @@ async function resolveContactInbox(input: {
     inboxId: contactInbox.inboxId,
     channel: contactInbox.channel,
     sourceId: contactInbox.sourceId,
+    sourceUserId: contactInbox.sourceUserId,
     language: contactInbox.language,
   }
 }
@@ -296,7 +333,26 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
         return { outcome: "ineligibleNumber" }
       }
 
-      const to = digitsOf(resolvedContactInbox.sourceId)
+      // R2: a Username/BSUID-only contact has no phone number to dial —
+      // `shouldAddressBySourceUserId` is the same rule the outbound-message
+      // path uses (`lib/recipient.ts`) to decide `to` vs a BSUID `recipient`.
+      const useRecipient = shouldAddressBySourceUserId({
+        sourceId: resolvedContactInbox.sourceId,
+        sourceUserId: resolvedContactInbox.sourceUserId,
+      })
+      const to = useRecipient
+        ? undefined
+        : digitsOf(resolvedContactInbox.sourceId)
+      const recipient = useRecipient
+        ? (resolvedContactInbox.sourceUserId ?? undefined)
+        : undefined
+      // The call-permissions GET takes the SAME identity shape as the dial:
+      // `recipient=<BSUID>` for a Username/BSUID-only contact (never
+      // digit-stripped — that would corrupt a BSUID, which is not a phone
+      // number), `user_wa_id=<digits>` otherwise.
+      const permissionTarget = useRecipient
+        ? { recipient: resolvedContactInbox.sourceUserId ?? "" }
+        : { userWaId: to ?? "" }
       const auth = integration.auth as WhatsappAuthValue
 
       // Best-effort: the contact's locale only feeds the announcement
@@ -324,7 +380,7 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
       // that quota.
       let permissions: Awaited<ReturnType<typeof getCallPermissions>>
       try {
-        permissions = await getCallPermissions(auth, to)
+        permissions = await getCallPermissions(auth, permissionTarget)
       } catch (error) {
         logger.error(
           { err: error, integrationId: integration.id },
@@ -377,10 +433,11 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
       try {
         const connected = await connectCallWithAnnouncementFallback({
           auth,
-          to,
           sdpOffer,
           attemptId,
           ...announcementOptions,
+          // R2: exactly one of `to`/`recipient` per `WhatsappConnectCallInput`.
+          ...(useRecipient ? { recipient: recipient ?? "" } : { to: to ?? "" }),
         })
         wacid = connected.wacid
       } catch (error) {
@@ -418,17 +475,33 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
       // terminating the call at Meta and finalizing the DB row as failed,
       // then return a typed `callFailed` rather than letting the error
       // surface raw.
+      //
+      // Order matters for a hangup racing this dial. The call control is
+      // created BEFORE the row carries the wacid, so a hangup that can see
+      // the wacid always finds a control to end. A hangup that lands while
+      // the row still has no wacid closes the row instead — detected below
+      // from the bound row, and never dialed.
       const deadlineAt = Date.now() + OUTBOUND_DIAL_DEADLINE_MS
       try {
-        await whatsappVoipCallService.attachMetaCallId({
-          whatsappCallId: pending.id,
-          wacid,
-        })
         await whatsappVoipCallService.startOutboundDial({
           wacid,
           initiatorUserId: ctx.user.id,
           deadlineAt,
         })
+        const boundCall = await whatsappVoipCallService.attachMetaCallId({
+          whatsappCallId: pending.id,
+          wacid,
+        })
+        if (!boundCall || whatsappVoipCallService.isCallEnded(boundCall)) {
+          await abandonOutboundDial({ auth, wacid, attemptId })
+          logger.info(
+            { whatsappCallId: pending.id, wacid, attemptId },
+            "WhatsApp outbound dial: ended before Meta connected; hung up the connected leg",
+          )
+          // The canceller already reported the cancel; the initiating tab maps
+          // any non-dialing outcome of a cancelled attempt to "cancelled".
+          return { outcome: "callFailed" }
+        }
         await whatsappVoipCallService.enqueueOutboundDialExpiry({
           attemptId,
           whatsappCallId: pending.id,
@@ -441,19 +514,7 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
           { err: error, whatsappCallId: pending.id, wacid, attemptId },
           "WhatsApp outbound dial: post-connect setup failed after Meta connect succeeded; compensating",
         )
-        await terminateCall({ auth, callId: wacid }).catch(
-          (terminateError: unknown) => {
-            logger.error(
-              {
-                err: terminateError,
-                whatsappCallId: pending.id,
-                wacid,
-                attemptId,
-              },
-              "WhatsApp outbound dial: best-effort terminate after post-connect failure also failed",
-            )
-          },
-        )
+        await abandonOutboundDial({ auth, wacid, attemptId })
         await whatsappVoipCallService
           .finalizeEndedCall({
             whatsappCallId: pending.id,

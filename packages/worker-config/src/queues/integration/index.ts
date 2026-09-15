@@ -443,8 +443,12 @@ export type IntegrationJobWhatsappCallEvent = {
     payload: {
       phoneNumberId: string
       contact?: {
-        waId: string
+        /** Absent for a Username/BSUID-only caller (no phone number exposed). */
+        waId?: string
+        /** Business-scoped user id (BSUID). */
         userId?: string
+        parentUserId?: string
+        username?: string
         name?: string
       }
       event:
@@ -454,7 +458,14 @@ export type IntegrationJobWhatsappCallEvent = {
             direction: "userInitiated" | "businessInitiated"
             from?: string
             to?: string
+            /** BSUID counterparts of `from`/`to` (Username/BSUID-only legs). */
+            fromUserId?: string
+            toUserId?: string
+            fromParentUserId?: string
+            toParentUserId?: string
             timestamp?: string
+            /** Meta's `biz_opaque_callback_data` echo (the outbound `attemptId`). */
+            bizOpaqueCallbackData?: string
           }
         | {
             kind: "terminate"
@@ -463,17 +474,27 @@ export type IntegrationJobWhatsappCallEvent = {
             status: "COMPLETED" | "FAILED"
             from?: string
             to?: string
+            fromUserId?: string
+            toUserId?: string
+            fromParentUserId?: string
+            toParentUserId?: string
             timestamp?: string
             startTime?: string
             endTime?: string
             durationSeconds?: number
+            bizOpaqueCallbackData?: string
+            /** Media-drop diagnosis (e.g. 138021/138022/138023). */
+            errors?: { code?: number; title?: string; message?: string }[]
           }
         | {
             kind: "status"
             wacid: string
             status: "RINGING" | "ACCEPTED" | "REJECTED"
             recipientId?: string
+            /** BSUID counterpart of `recipientId`. */
+            recipientUserId?: string
             timestamp?: string
+            bizOpaqueCallbackData?: string
           }
     }
   }
@@ -529,12 +550,17 @@ export const whatsappCallRecordingReadyJobId = (callId: string): string =>
 export type IntegrationJobWhatsappCallNativeRecordingFetch = {
   type: typeof IntegrationJobAction.whatsappCallNativeRecordingFetch
   data: {
-    /** `WhatsappCall.id` (bigint string) — used to stamp the row. */
-    whatsappCallId: string
-    /** `calls[].id` from the webhook — used for idempotent job-id keying. */
+    /**
+     * `WhatsappCall.id` (bigint string) — absent when the webhook raced the
+     * row-creating job/webhook and the row didn't exist yet at enqueue time
+     * (R8). The handler always re-resolves the row by `wacid`, so this is
+     * only a fast-path hint, never load-bearing.
+     */
+    whatsappCallId?: string
+    /** `calls[].id` from the webhook — used for idempotent job-id keying AND to resolve the row when `whatsappCallId` is absent. */
     wacid: string
-    /** Enables the worker-level blocked-owner guard. */
-    workspaceId: string
+    /** Enables the worker-level blocked-owner guard; absent when the row (and thus its workspace) wasn't resolvable at enqueue time — the guard fails open for those attempts, matching `resolveWorkspaceId`'s documented "cannot attribute" behavior. */
+    workspaceId?: string
     /** Graph Media API id for the recording audio (`call_recording.audio.id`). */
     audioMediaId: string
     /** Meta's short-lived (~5-min) download URL (`call_recording.audio.url`). */
@@ -564,12 +590,17 @@ export const whatsappCallNativeRecordingFetchJobId = (wacid: string): string =>
 export type IntegrationJobWhatsappCallNativeTranscriptFetch = {
   type: typeof IntegrationJobAction.whatsappCallNativeTranscriptFetch
   data: {
-    /** `WhatsappCall.id` (bigint string) — used to stamp the row. */
-    whatsappCallId: string
-    /** `calls[].id` from the webhook — used for idempotent job-id keying. */
+    /**
+     * `WhatsappCall.id` (bigint string) — absent when the webhook raced the
+     * row-creating job/webhook and the row didn't exist yet at enqueue time
+     * (R8). The handler always re-resolves the row by `wacid`, so this is
+     * only a fast-path hint, never load-bearing.
+     */
+    whatsappCallId?: string
+    /** `calls[].id` from the webhook — used for idempotent job-id keying AND to resolve the row when `whatsappCallId` is absent. */
     wacid: string
-    /** Enables the worker-level blocked-owner guard. */
-    workspaceId: string
+    /** Enables the worker-level blocked-owner guard; absent when the row (and thus its workspace) wasn't resolvable at enqueue time — the guard fails open for those attempts, matching `resolveWorkspaceId`'s documented "cannot attribute" behavior. */
+    workspaceId?: string
     /** Graph Media API id for the transcript document (`call_transcript.document.id`). */
     documentMediaId: string
     /** Meta's short-lived download URL (`call_transcript.document.url`). */
@@ -881,6 +912,24 @@ const adsConversionRetryOptions: JobsOptions = {
   },
 }
 
+/**
+ * `whatsappCallNativeRecordingFetch`/`whatsappCallNativeTranscriptFetch` can
+ * be enqueued BEFORE the `WhatsappCall` row exists (the native-media webhook
+ * racing the row-creating `calls` webhook/job on the same delivery) — see
+ * R8. The handler resolves the row by `wacid` and throws a retryable error
+ * while it's still missing; this bounds those retries to roughly an hour (12
+ * intervals of 5 minutes) rather than the default short-lived retry policy,
+ * so a slow row insert still gets picked up without leaving the job retrying
+ * indefinitely.
+ */
+const NATIVE_CALL_CAPTURE_RETRY_OPTIONS: JobsOptions = {
+  attempts: 13,
+  backoff: {
+    type: "fixed",
+    delay: 300_000,
+  },
+}
+
 const jobOptionsByAction: Partial<
   Record<IntegrationJobActionValue, JobsOptions>
 > = {
@@ -892,6 +941,10 @@ const jobOptionsByAction: Partial<
   },
   [IntegrationJobAction.sendMetaCapiEvent]: adsConversionRetryOptions,
   [IntegrationJobAction.syncRetargetAudience]: adsConversionRetryOptions,
+  [IntegrationJobAction.whatsappCallNativeRecordingFetch]:
+    NATIVE_CALL_CAPTURE_RETRY_OPTIONS,
+  [IntegrationJobAction.whatsappCallNativeTranscriptFetch]:
+    NATIVE_CALL_CAPTURE_RETRY_OPTIONS,
 }
 
 /**

@@ -2,9 +2,10 @@ import { createHash } from "node:crypto"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   conversationService,
+  whatsappCallPermissionService,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
-import { whatsappCallPermissionRepository } from "@chatbotx.io/database/repositories"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
 import { getStoryReply, getWhatsappCallPermissionReply } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
@@ -22,7 +23,6 @@ import {
   type IntegrationJobData,
   integrationQueue,
   queueNames,
-  WhatsappVoipSignalingJobAction,
   type WhatsappVoipSignalingJobData,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
@@ -102,12 +102,41 @@ function getFlowExecutionKey(job: Job): string {
     return job.id
   }
 
-  const flowExecutionKey = `integration-job-${createId}`
+  const flowExecutionKey = `integration-job-${createId()}`
   logger.warn(
     { flowExecutionKey, jobName: job.name },
     "Integration job is missing id; generated flow execution key",
   )
   return flowExecutionKey
+}
+
+/**
+ * The workspace a VoIP signaling job belongs to, for the blocked-owner guard.
+ * Outbound jobs carry `workspaceId`; inbound jobs only carry the business
+ * `phoneNumberId`, resolved through its integration. `undefined` when that
+ * lookup fails — the guard then runs the job, and the handler reports the
+ * missing integration itself.
+ */
+async function resolveVoipSignalingWorkspaceId(
+  job: WhatsappVoipSignalingJobData,
+): Promise<string | undefined> {
+  if ("workspaceId" in job.data) {
+    return job.data.workspaceId
+  }
+  try {
+    const { inbox } =
+      await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+        channelTypes.enum.whatsapp,
+        job.data.phoneNumberId,
+      )
+    return inbox.workspaceId
+  } catch (err) {
+    logger.warn(
+      { err, phoneNumberId: job.data.phoneNumberId },
+      "WhatsApp VoIP signaling: unable to resolve workspace for the blocked-owner guard",
+    )
+    return
+  }
 }
 
 async function startIntegrationWorker() {
@@ -162,24 +191,13 @@ async function startIntegrationWorker() {
                   message.contentAttributes,
                 )
                 if (isFromContact && callPermissionReply) {
-                  logger.info(
-                    {
-                      contactInboxId: message.contactInboxId,
-                      response: callPermissionReply.response,
-                      isPermanent: callPermissionReply.isPermanent === true,
-                      expirationTimestamp:
-                        callPermissionReply.expirationTimestamp ?? null,
-                    },
-                    "[wa-call-permission] recording customer permission reply",
-                  )
-                  await whatsappCallPermissionRepository.upsertForContactInbox({
+                  await whatsappCallPermissionService.recordReply({
                     workspaceId: conversation.workspaceId,
                     contactInboxId: message.contactInboxId,
                     response: callPermissionReply.response,
                     isPermanent: callPermissionReply.isPermanent === true,
-                    expiresAt: callPermissionReply.expirationTimestamp
-                      ? new Date(callPermissionReply.expirationTimestamp * 1000)
-                      : null,
+                    expirationTimestamp:
+                      callPermissionReply.expirationTimestamp,
                     respondedAt: message.createdAt,
                   })
                   return
@@ -560,32 +578,7 @@ async function startIntegrationWorker() {
   const whatsappVoipSignalingWorker = new Worker<WhatsappVoipSignalingJobData>(
     queueNames.enum.whatsappVoipSignaling,
     async (job: Job<WhatsappVoipSignalingJobData>) => {
-      // Outbound jobs (`handleOutboundAnswer`/`expireOutboundDial`) already
-      // carry `workspaceId` on their slim payload — no `phoneNumberId` to
-      // resolve it from. Inbound jobs (`handleConnect`/`expireIfUnanswered`) only
-      // carry `phoneNumberId`, so the workspace is resolved via the
-      // integration lookup, same as before.
-      let workspaceId: string | undefined
-      if (
-        job.data.type === WhatsappVoipSignalingJobAction.handleOutboundAnswer ||
-        job.data.type === WhatsappVoipSignalingJobAction.expireOutboundDial
-      ) {
-        workspaceId = job.data.data.workspaceId
-      } else {
-        try {
-          const { inbox } =
-            await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
-              "whatsapp",
-              job.data.data.phoneNumberId,
-            )
-          workspaceId = inbox.workspaceId
-        } catch (err) {
-          logger.warn(
-            { err, phoneNumberId: job.data.data.phoneNumberId },
-            "Whatsapp VoIP signaling: unable to resolve workspace for the frozen-workspace guard",
-          )
-        }
-      }
+      const workspaceId = await resolveVoipSignalingWorkspaceId(job.data)
 
       await withBlockedOwnerGuard(workspaceId, async () => {
         await runJobWithAuditContext(

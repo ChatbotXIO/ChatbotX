@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { CALL_CANCELED_BY_BUSINESS_LAST_ERROR } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
@@ -11,6 +12,7 @@ const {
   deleteOfferMock,
   rejectCallMock,
   terminateCallMock,
+  resolveEndOutcomeWithoutControlMock,
 } = vi.hoisted(() => ({
   findByIdMock: vi.fn(),
   finalizeEndedCallMock: vi.fn(),
@@ -20,6 +22,7 @@ const {
   deleteOfferMock: vi.fn(),
   rejectCallMock: vi.fn(),
   terminateCallMock: vi.fn(),
+  resolveEndOutcomeWithoutControlMock: vi.fn(),
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -32,6 +35,7 @@ vi.mock("@chatbotx.io/business", () => ({
     endCall: endCallMock,
     deleteOffer: deleteOfferMock,
     finalizeEndedCall: finalizeEndedCallMock,
+    resolveEndOutcomeWithoutControl: resolveEndOutcomeWithoutControlMock,
   },
 }))
 
@@ -84,6 +88,7 @@ describe("endVoipCallAsAgent", () => {
     deleteOfferMock.mockResolvedValue(undefined)
     rejectCallMock.mockResolvedValue(undefined)
     terminateCallMock.mockResolvedValue(undefined)
+    resolveEndOutcomeWithoutControlMock.mockReturnValue(null)
   })
 
   test("throws callNotFound when the row does not exist", async () => {
@@ -105,12 +110,30 @@ describe("endVoipCallAsAgent", () => {
     )
   })
 
+  test("refuses to cancel another agent's undialed call, before any write", async () => {
+    findByIdMock.mockResolvedValue({
+      id: "call-1",
+      workspaceId: "workspace-1",
+      wacid: null,
+      inboxId: "inbox-1",
+      direction: "businessInitiated",
+      initiatedByUserId: "agent-2",
+      answeredByUserId: "agent-2",
+    })
+
+    await expect(endVoipCallAsAgent(baseInput)).rejects.toThrow(
+      "whatsapp.calls.errors.voipNotReservedAgent",
+    )
+    expect(finalizeEndedCallMock).not.toHaveBeenCalled()
+  })
+
   test("a row with wacid === null (not yet dialed) is finalized directly with no Graph call, no control read", async () => {
     findByIdMock.mockResolvedValue({
       id: "call-1",
       workspaceId: "workspace-1",
       wacid: null,
       inboxId: "inbox-1",
+      initiatedByUserId: "agent-1",
     })
 
     const result = await endVoipCallAsAgent(baseInput)
@@ -190,5 +213,72 @@ describe("endVoipCallAsAgent", () => {
 
     await expect(endVoipCallAsAgent(baseInput)).resolves.toBe(true)
     expect(finalizeEndedCallMock).toHaveBeenCalled()
+  })
+
+  describe("a row with a wacid but no call control", () => {
+    const boundOutboundRow = (overrides: Record<string, unknown> = {}) => ({
+      id: "call-1",
+      workspaceId: "workspace-1",
+      wacid: "wacid-1",
+      inboxId: "inbox-1",
+      direction: "businessInitiated",
+      status: "ringing",
+      initiatedByUserId: "agent-1",
+      answeredByUserId: "agent-1",
+      ...overrides,
+    })
+
+    beforeEach(() => {
+      readControlMock.mockResolvedValue(null)
+    })
+
+    test("the owner's hangup still ends the call at Meta and closes the row as cancelled", async () => {
+      const row = boundOutboundRow()
+      findByIdMock.mockResolvedValue(row)
+      resolveEndOutcomeWithoutControlMock.mockReturnValue({
+        fromPhase: "dialing",
+        graphAction: "terminate",
+        terminalStatus: "failed",
+      })
+
+      await expect(endVoipCallAsAgent(baseInput)).resolves.toBe(true)
+
+      expect(resolveEndOutcomeWithoutControlMock).toHaveBeenCalledWith(row)
+      expect(endCallMock).not.toHaveBeenCalled()
+      expect(terminateCallMock).toHaveBeenCalledWith(
+        expect.objectContaining({ callId: "wacid-1" }),
+      )
+      expect(finalizeEndedCallMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          whatsappCallId: "call-1",
+          status: "failed",
+          lastError: CALL_CANCELED_BY_BUSINESS_LAST_ERROR,
+        }),
+      )
+    })
+
+    test("rejects a hangup from someone who neither placed nor answered the call", async () => {
+      findByIdMock.mockResolvedValue(
+        boundOutboundRow({
+          initiatedByUserId: "agent-2",
+          answeredByUserId: "agent-2",
+        }),
+      )
+
+      await expect(endVoipCallAsAgent(baseInput)).rejects.toThrow(
+        "whatsapp.calls.errors.voipNotReservedAgent",
+      )
+      expect(terminateCallMock).not.toHaveBeenCalled()
+      expect(finalizeEndedCallMock).not.toHaveBeenCalled()
+    })
+
+    test("a row that is already terminal is a no-op success", async () => {
+      findByIdMock.mockResolvedValue(boundOutboundRow({ status: "failed" }))
+
+      await expect(endVoipCallAsAgent(baseInput)).resolves.toBe(false)
+      expect(terminateCallMock).not.toHaveBeenCalled()
+      expect(rejectCallMock).not.toHaveBeenCalled()
+      expect(finalizeEndedCallMock).not.toHaveBeenCalled()
+    })
   })
 })

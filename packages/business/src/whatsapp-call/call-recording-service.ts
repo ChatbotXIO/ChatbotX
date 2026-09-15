@@ -18,7 +18,7 @@ const PURGE_BATCH_SIZE_DEFAULT = 500
 export type { RecordingContentType } from "@chatbotx.io/sdk"
 export { ALLOWED_RECORDING_CONTENT_TYPES } from "@chatbotx.io/sdk"
 
-/** SIP recordings never pass a `contentType` explicitly — this keeps that path unchanged. */
+/** Meta-native recordings are Ogg/Opus; used whenever a caller does not name a type. */
 export const DEFAULT_RECORDING_CONTENT_TYPE: RecordingContentType = "audio/ogg"
 
 export const isAllowedRecordingContentType = (
@@ -66,9 +66,7 @@ class CallRecordingService {
    * this service only handles the transfer, never the DB write, so retries
    * stay idempotent at the repository's CAS layer.
    *
-   * `contentType` defaults to `audio/ogg` so the SIP recording-consumer
-   * (which never passes it) keeps writing the same `.ogg` key/content-type
-   * it always has.
+   * `contentType` defaults to {@link DEFAULT_RECORDING_CONTENT_TYPE}.
    */
   async uploadRecording(props: {
     callId: string

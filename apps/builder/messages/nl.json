@@ -3982,7 +3982,6 @@
         "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
         "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
         "callFailed": "The call could not be placed. Please try again.",
-        "useSip": "This number uses in-app (SIP) calling. Use the call button for that instead.",
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Microfoontoegang is geweigerd. Sta microfoontoegang toe in je browserinstellingen en probeer het opnieuw.",
@@ -4050,7 +4049,8 @@
         "expand": "Uitvouwen",
         "dismiss": "Sluiten",
         "statusNoAnswer": "Geen antwoord",
-        "eyebrowCallEnded": "OPROEP BEËINDIGD"
+        "eyebrowCallEnded": "OPROEP BEËINDIGD",
+        "statusConnectionLost": "Verbinding verbroken"
       },
       "capability": {
         "title": "Belgeschiktheid",
@@ -4059,6 +4059,12 @@
         "ok": "OK",
         "micPermissionTitle": "Microfoonmachtiging",
         "dialFailureTitle": "Oproep kon niet worden geplaatst"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Handmatig verbonden nummer",
+        "callsSubscription": "Dit WhatsApp-nummer is handmatig verbonden. Zorg dat je Meta-app is geabonneerd op het calls-webhookveld (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — anders komen uitgaande gesprekken niet tot stand en gaan inkomende gesprekken niet over.",
+        "unsignedWebhook": "Dit nummer heeft ook geen Meta App Secret geconfigureerd, waardoor de binnenkomende webhooks niet handtekening-geverifieerd zijn.",
+        "callAnyway": "Toch bellen"
       }
     }
   },

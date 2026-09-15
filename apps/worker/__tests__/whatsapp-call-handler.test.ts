@@ -11,7 +11,6 @@ const mocks = vi.hoisted(() => ({
   createIfAbsent: vi.fn(),
   updateInterimStatus: vi.fn(),
   markAcceptedIfActive: vi.fn(),
-  findPendingOutbound: vi.fn(),
   attachWacid: vi.fn(),
   updateContentBySourceId: vi.fn(),
   emitIncomingCall: vi.fn(),
@@ -23,9 +22,15 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  whatsappCallLifecycleService: {
+    recordIncomingCall: mocks.createIfAbsent,
+    advanceInterimStatus: mocks.updateInterimStatus,
+  },
   whatsappVoipCallService: {
     markOutboundRinging: mocks.markOutboundRinging,
     markOutboundAccepted: mocks.markOutboundAccepted,
+    markAcceptedByAgent: mocks.markAcceptedIfActive,
+    attachMetaCallId: mocks.attachWacid,
   },
   sendToWorkspaceMember: mocks.sendToWorkspaceMember,
 }))
@@ -34,11 +39,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   whatsappCallRepository: {
     findByWacid: mocks.findByWacid,
     findByAttemptId: mocks.findByAttemptId,
-    createIfAbsent: mocks.createIfAbsent,
-    updateInterimStatus: mocks.updateInterimStatus,
-    markAcceptedIfActive: mocks.markAcceptedIfActive,
-    findPendingOutbound: mocks.findPendingOutbound,
-    attachWacid: mocks.attachWacid,
   },
   createMessageRepository: vi.fn(async () => ({
     updateContentBySourceId: mocks.updateContentBySourceId,
@@ -139,7 +139,6 @@ describe("handleWhatsappCallEvent", () => {
     })
     mocks.createIfAbsent.mockResolvedValue({ call: callRow, isNew: true })
     mocks.findByWacid.mockResolvedValue(callRow)
-    mocks.findPendingOutbound.mockResolvedValue(pendingOutboundRow)
     mocks.attachWacid.mockResolvedValue({
       ...pendingOutboundRow,
       wacid: "wacid.OUT",
@@ -185,7 +184,36 @@ describe("handleWhatsappCallEvent", () => {
         callId: "wacid.ABC",
         conversationId: "conv-1",
       })
-      expect(mocks.findPendingOutbound).not.toHaveBeenCalled()
+    })
+
+    test("R2: a Username/BSUID-only caller (no wa_id, no from) resolves via the BSUID and still rings", async () => {
+      await handleWhatsappCallEvent({
+        ...baseData,
+        payload: {
+          phoneNumberId: "phone-1",
+          contact: { userId: "bsuid-123", username: "kerryf", name: "Kerry" },
+          event: {
+            kind: "connect",
+            wacid: "wacid.BSUID",
+            direction: "userInitiated",
+            fromUserId: "bsuid-123",
+          },
+        },
+      })
+
+      expect(mocks.detectContactAndConversation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          incomingContact: expect.objectContaining({
+            sourceId: "bsuid-123",
+            sourceUserId: "bsuid-123",
+            sourceUsername: "kerryf",
+          }),
+        }),
+      )
+      expect(mocks.createIfAbsent).toHaveBeenCalledWith(
+        expect.objectContaining({ wacid: "wacid.BSUID", status: "ringing" }),
+      )
+      expect(mocks.emitIncomingCall).toHaveBeenCalled()
     })
 
     test("redelivered connect does not re-fire the incomingCall event", async () => {
@@ -208,10 +236,7 @@ describe("handleWhatsappCallEvent", () => {
       expect(mocks.emitIncomingCall).not.toHaveBeenCalled()
     })
 
-    test("businessInitiated NEVER creates a row — attaches to the pending outbound attempt instead (no prior wacid, no attemptId echo)", async () => {
-      // No row already carries this wacid, and no biz_opaque_callback_data
-      // was echoed on this connect (SIP-mode/legacy shape) — falls through
-      // to the time-window heuristic, unchanged.
+    test("R23: businessInitiated NEVER creates a row — with no prior wacid and no attemptId echo (SIP-mode/legacy shape), correlation is unmatched and nothing is attached", async () => {
       mocks.findByWacid.mockResolvedValue(undefined)
 
       await handleWhatsappCallEvent({
@@ -230,19 +255,15 @@ describe("handleWhatsappCallEvent", () => {
       })
 
       expect(mocks.createIfAbsent).not.toHaveBeenCalled()
-      expect(mocks.findPendingOutbound).toHaveBeenCalledWith({
-        inboxId: "inbox-1",
-        contactInboxId: "ci-1",
-        since: expect.any(Date),
-      })
-      expect(mocks.attachWacid).toHaveBeenCalledWith({
-        id: "call-pending",
-        wacid: "wacid.OUT",
-      })
+      expect(mocks.attachWacid).not.toHaveBeenCalled()
       expect(mocks.emitIncomingCall).not.toHaveBeenCalled()
+      expect(mocks.logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ event: "outbound-correlation-unmatched" }),
+        expect.any(String),
+      )
     })
 
-    test("L1: VoIP outbound connect whose wacid is already attached (attachWacid ran synchronously in the initiate action) resolves directly — never logs outbound-correlation-ambiguous, never touches findPendingOutbound", async () => {
+    test("L1: VoIP outbound connect whose wacid is already attached (attachWacid ran synchronously in the initiate action) resolves directly — never logs outbound-correlation-ambiguous, never re-attaches", async () => {
       mocks.findByWacid.mockResolvedValue(outboundCallRow)
 
       await handleWhatsappCallEvent({
@@ -261,7 +282,6 @@ describe("handleWhatsappCallEvent", () => {
       })
 
       expect(mocks.findByWacid).toHaveBeenCalledWith("wacid.OUT")
-      expect(mocks.findPendingOutbound).not.toHaveBeenCalled()
       expect(mocks.attachWacid).not.toHaveBeenCalled()
       expect(mocks.createIfAbsent).not.toHaveBeenCalled()
       expect(mocks.logger.warn).not.toHaveBeenCalledWith(
@@ -291,9 +311,8 @@ describe("handleWhatsappCallEvent", () => {
       })
 
       expect(mocks.findByAttemptId).toHaveBeenCalledWith("att-1")
-      expect(mocks.findPendingOutbound).not.toHaveBeenCalled()
       expect(mocks.attachWacid).toHaveBeenCalledWith({
-        id: "call-pending",
+        whatsappCallId: "call-pending",
         wacid: "wacid.OUT",
       })
       expect(mocks.logger.warn).not.toHaveBeenCalledWith(
@@ -302,9 +321,9 @@ describe("handleWhatsappCallEvent", () => {
       )
     })
 
-    test("businessInitiated with no matching pending attempt logs ambiguous and creates nothing", async () => {
+    test("R23: businessInitiated with an attemptId echo that matches no pending attempt logs unmatched and creates/attaches nothing (no time-window fallback)", async () => {
       mocks.findByWacid.mockResolvedValue(undefined)
-      mocks.findPendingOutbound.mockResolvedValue(undefined)
+      mocks.findByAttemptId.mockResolvedValue(undefined)
 
       await handleWhatsappCallEvent({
         ...baseData,
@@ -316,6 +335,7 @@ describe("handleWhatsappCallEvent", () => {
             wacid: "wacid.OUT",
             direction: "businessInitiated",
             to: "84900000001",
+            bizOpaqueCallbackData: "att-unknown",
           },
         },
       })
@@ -323,7 +343,10 @@ describe("handleWhatsappCallEvent", () => {
       expect(mocks.createIfAbsent).not.toHaveBeenCalled()
       expect(mocks.attachWacid).not.toHaveBeenCalled()
       expect(mocks.logger.warn).toHaveBeenCalledWith(
-        expect.objectContaining({ event: "outbound-correlation-ambiguous" }),
+        expect.objectContaining({
+          event: "outbound-correlation-unmatched",
+          attemptId: "att-unknown",
+        }),
         expect.any(String),
       )
     })
@@ -481,8 +504,8 @@ describe("handleWhatsappCallEvent", () => {
       })
 
       expect(mocks.markAcceptedIfActive).toHaveBeenCalledWith({
-        id: "call-out-1",
-        answeredByUserId: "initiator-1",
+        whatsappCallId: "call-out-1",
+        agentUserId: "initiator-1",
       })
       expect(mocks.markOutboundAccepted).toHaveBeenCalledWith({
         wacid: "wacid.OUT",
@@ -691,8 +714,9 @@ describe("handleWhatsappCallEvent", () => {
       expect(mocks.finalizeCallSideEffects).toHaveBeenCalled()
     })
 
-    test("businessInitiated without a prior row NEVER creates one — attaches to the pending outbound row and finalizes it", async () => {
+    test("R23: businessInitiated without a prior row attaches via the exact attemptId match and finalizes it (no time-window fallback)", async () => {
       mocks.findByWacid.mockResolvedValue(undefined)
+      mocks.findByAttemptId.mockResolvedValue(pendingOutboundRow)
 
       await handleWhatsappCallEvent({
         ...baseData,
@@ -707,18 +731,15 @@ describe("handleWhatsappCallEvent", () => {
             to: "84900000001",
             timestamp: "1755700100",
             durationSeconds: 42,
+            bizOpaqueCallbackData: "att-1",
           },
         },
       })
 
       expect(mocks.createIfAbsent).not.toHaveBeenCalled()
-      expect(mocks.findPendingOutbound).toHaveBeenCalledWith({
-        inboxId: "inbox-1",
-        contactInboxId: "ci-1",
-        since: expect.any(Date),
-      })
+      expect(mocks.findByAttemptId).toHaveBeenCalledWith("att-1")
       expect(mocks.attachWacid).toHaveBeenCalledWith({
-        id: "call-pending",
+        whatsappCallId: "call-pending",
         wacid: "wacid.OUT",
       })
       expect(mocks.finalizeCallSideEffects).toHaveBeenCalledWith(
@@ -728,9 +749,8 @@ describe("handleWhatsappCallEvent", () => {
       )
     })
 
-    test("businessInitiated with no matching pending attempt: no row, no finalize, ambiguous logged", async () => {
+    test("R23: businessInitiated with no prior wacid and no attemptId match: no row, no finalize, unmatched logged (no time-window fallback)", async () => {
       mocks.findByWacid.mockResolvedValue(undefined)
-      mocks.findPendingOutbound.mockResolvedValue(undefined)
 
       await handleWhatsappCallEvent({
         ...baseData,
@@ -752,7 +772,7 @@ describe("handleWhatsappCallEvent", () => {
       expect(mocks.attachWacid).not.toHaveBeenCalled()
       expect(mocks.finalizeCallSideEffects).not.toHaveBeenCalled()
       expect(mocks.logger.warn).toHaveBeenCalledWith(
-        expect.objectContaining({ event: "outbound-correlation-ambiguous" }),
+        expect.objectContaining({ event: "outbound-correlation-unmatched" }),
         expect.any(String),
       )
     })

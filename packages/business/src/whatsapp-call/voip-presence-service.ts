@@ -10,9 +10,9 @@ import { presenceStore } from "@chatbotx.io/redis"
 export const VOIP_PRESENCE_TTL_MS = 45_000
 
 /**
- * Cap on how many agents a single inbound VoIP call fans out to — the same
- * "ring a bounded set" discipline the SIP path uses (`MAX_RING_TARGETS`), so a
- * huge workspace can't fork one call to hundreds of browsers.
+ * Cap on how many agents a single inbound VoIP call fans out to — a bounded
+ * "ring a bounded set" discipline so a huge workspace can't fork one call to
+ * hundreds of browsers.
  */
 export const MAX_VOIP_RING_TARGETS = 10
 
@@ -20,12 +20,11 @@ const presenceKey = (workspaceId: string): string =>
   `voip:presence:${workspaceId}`
 
 /**
- * VoIP-call agent presence — the routing source for browser-WebRTC calls,
- * deliberately INDEPENDENT of SIP `REGISTER` (`agentSipPresence`). A VoIP-only
- * number has no SIP registration, so reusing SIP presence would reject every
- * call; instead an agent is "present" for VoIP simply by having the inbox open
- * (the builder heartbeats while the call dock is mounted). Pure orchestration
- * over the generic `presenceStore` (Redis) — no `db`, no channel specifics.
+ * VoIP-call agent presence — the sole routing source for browser-WebRTC
+ * calls. An agent is "present" for VoIP simply by
+ * having the inbox open (the builder heartbeats while the call dock is
+ * mounted). Pure orchestration over the generic `presenceStore` (Redis) — no
+ * `db`, no channel specifics.
  */
 class WhatsappVoipPresenceService {
   /** Keeps the agent live for the next {@link VOIP_PRESENCE_TTL_MS}. */

@@ -3,6 +3,7 @@
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -12,8 +13,9 @@ import {
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { PhoneIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
+import { logger } from "@/lib/log"
 import type {
   NoneCallModeReason,
   ResolveOutboundCallModeResult,
@@ -63,7 +65,6 @@ const OUTCOME_MESSAGE_KEYS: Partial<Record<StartOutboundOutcome, string>> = {
 const NONE_REASON_MESSAGE_KEYS: Record<NoneCallModeReason, string> = {
   callingNotEnabled: "whatsapp.calls.capability.enableCalling",
   webhookNotSubscribed: "whatsapp.calls.capability.reconnectChannel",
-  manualIntegrationNoCredentials: "whatsapp.calls.capability.reconnectChannel",
   tokenInvalid: "whatsapp.calls.capability.reconnectChannel",
   ineligibleNumber: "whatsapp.calls.outbound.ineligibleNumber",
   notWhatsappConversation: "whatsapp.calls.errors.notWhatsappConversation",
@@ -107,9 +108,40 @@ export function WhatsappVoipCallButton({
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
   const [isDialing, setIsDialing] = useState(false)
+  // Synchronous mutex for `dial()`: `isDialing` (React state) only reflects
+  // reality after a re-render, so two activations dispatched in the same
+  // tick (e.g. two rapid clicks on "Call anyway", or a double-click on the
+  // direct-dial button) can both read `isDialing === false` and both call
+  // `startOutbound`. This ref is set synchronously, before the first
+  // `await`, so the second activation's `dial()` call is a guaranteed no-op.
+  const isDialingRef = useRef(false)
   const [alertMessageKey, setAlertMessageKey] = useState<string | null>(null)
   const [alertCategory, setAlertCategory] =
     useState<CapabilityAlertCategory>("eligibility")
+  // R4 §6.4 + calls-subscription notice: for EVERY manually-connected
+  // integration ChatbotX cannot confirm the customer's own Meta app is
+  // subscribed to the `calls` webhook field (`manualCallsSubscriptionUnverified`),
+  // and a manual integration with no Meta App Secret is additionally never
+  // signature-verified (`unsignedWebhookWarning`; see
+  // `resolve-outbound-call-mode.action.ts` and `signature-policy.ts`). The
+  // agent may still dial, but only after acknowledging the warning once —
+  // scoped to `integrationId` (not a bare boolean) so switching to a
+  // different WhatsApp number/conversation shows the warning again rather
+  // than silently reusing an acknowledgement from an unrelated integration.
+  //
+  // The dialog's open state is scoped to the integration AND conversation it
+  // was opened for (rather than a bare boolean) so that if either changes
+  // underneath it — navigating to another conversation (even on the same
+  // number), or the mode query refetching onto a different integration/mode —
+  // the dialog closes itself (and "Call anyway" becomes a no-op) instead of
+  // staying open and dialing whatever conversation is current at click time.
+  const [manualWarningTarget, setManualWarningTarget] = useState<{
+    integrationId: string
+    conversationId: string
+  } | null>(null)
+  const [acknowledgedIntegrationId, setAcknowledgedIntegrationId] = useState<
+    string | null
+  >(null)
   const { startOutbound } = useWhatsappVoipCallContext()
 
   // `undefined` = `resolveOutboundCallModeAction` still in flight. A click
@@ -124,16 +156,30 @@ export function WhatsappVoipCallButton({
     isVoipMode &&
     (outboundCallMode.permissionStatus === "temporary" ||
       outboundCallMode.permissionStatus === "permanent")
+  const manualWarningApplies =
+    isVoipMode &&
+    (outboundCallMode.unsignedWebhookWarning ||
+      outboundCallMode.manualCallsSubscriptionUnverified)
+  const manualWarningIsOpen =
+    manualWarningApplies &&
+    isVoipMode &&
+    manualWarningTarget?.integrationId === outboundCallMode.integrationId &&
+    manualWarningTarget.conversationId === conversationId
 
-  const handleClick = async () => {
-    if (isDialing) {
+  // A target that stopped matching (navigated away, or the mode refetched)
+  // is discarded, not just hidden — otherwise returning to the original
+  // conversation would re-open the old dialog without a new click.
+  useEffect(() => {
+    if (manualWarningTarget !== null && !manualWarningIsOpen) {
+      setManualWarningTarget(null)
+    }
+  }, [manualWarningTarget, manualWarningIsOpen])
+
+  const dial = async () => {
+    if (isDialingRef.current) {
       return
     }
-    if (outboundCallMode?.mode === "none") {
-      setAlertCategory("eligibility")
-      setAlertMessageKey(NONE_REASON_MESSAGE_KEYS[outboundCallMode.reason])
-      return
-    }
+    isDialingRef.current = true
     setIsDialing(true)
     try {
       const outcome = await startOutbound({
@@ -155,8 +201,49 @@ export function WhatsappVoipCallButton({
         OUTCOME_MESSAGE_KEYS[outcome] ?? "whatsapp.calls.outbound.callFailed",
       )
     } finally {
+      isDialingRef.current = false
       setIsDialing(false)
     }
+  }
+
+  const handleClick = async () => {
+    if (isDialing) {
+      return
+    }
+    if (outboundCallMode?.mode === "none") {
+      setAlertCategory("eligibility")
+      setAlertMessageKey(NONE_REASON_MESSAGE_KEYS[outboundCallMode.reason])
+      return
+    }
+    if (
+      outboundCallMode?.mode === "voip" &&
+      (outboundCallMode.unsignedWebhookWarning ||
+        outboundCallMode.manualCallsSubscriptionUnverified) &&
+      acknowledgedIntegrationId !== outboundCallMode.integrationId
+    ) {
+      setManualWarningTarget({
+        integrationId: outboundCallMode.integrationId,
+        conversationId,
+      })
+      return
+    }
+    await dial()
+  }
+
+  const handleCallAnyway = () => {
+    // The warning may no longer apply to the integration it was opened for
+    // (mode/integration changed underneath the open dialog) — no-op rather
+    // than dialing whatever conversation is now current.
+    if (!(manualWarningIsOpen && outboundCallMode?.mode === "voip")) {
+      return
+    }
+    setAcknowledgedIntegrationId(outboundCallMode.integrationId)
+    // Close first so the dialog never sits over the call panel while the dial
+    // is preparing; `dial()`'s ref lock makes a second activation a no-op.
+    setManualWarningTarget(null)
+    dial().catch((error: unknown) => {
+      logger.error({ err: error }, "WhatsApp VoIP call-anyway dial failed")
+    })
   }
 
   if (isResolvingMode) {
@@ -236,6 +323,49 @@ export function WhatsappVoipCallButton({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {isVoipMode && (
+        <AlertDialog
+          onOpenChange={(open) => {
+            if (!open) {
+              setManualWarningTarget(null)
+            }
+          }}
+          open={manualWarningIsOpen}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t("whatsapp.calls.manualIntegrationCallWarning.title")}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="flex flex-col gap-2">
+                {outboundCallMode.manualCallsSubscriptionUnverified && (
+                  <span>
+                    {t(
+                      "whatsapp.calls.manualIntegrationCallWarning.callsSubscription",
+                    )}
+                  </span>
+                )}
+                {outboundCallMode.unsignedWebhookWarning && (
+                  <span>
+                    {t(
+                      "whatsapp.calls.manualIntegrationCallWarning.unsignedWebhook",
+                    )}
+                  </span>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={isDialing}
+                onClick={handleCallAnyway}
+              >
+                {t("whatsapp.calls.manualIntegrationCallWarning.callAnyway")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   )
 }

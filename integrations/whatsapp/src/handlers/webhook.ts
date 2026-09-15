@@ -4,7 +4,7 @@ import {
   type ReceivedMessageProps,
   SdkException,
 } from "@chatbotx.io/sdk"
-import { verifyHmacSha256Signature } from "@chatbotx.io/utils/crypto"
+import { sha256Hex, verifyHmacSha256Signature } from "@chatbotx.io/utils/crypto"
 import type { OnMessageArgs, OnStatusArgs } from "whatsapp-api-js/emitters"
 import { WhatsAppAPI as Middleware } from "whatsapp-api-js/middleware/next"
 import type { GetParams } from "whatsapp-api-js/types"
@@ -174,6 +174,67 @@ const automaticEventFieldExtractors: Record<
 const toBullMqSafeIdSegment = (value: string): string =>
   value.replace(/[^a-zA-Z0-9._-]/g, "_")
 
+/**
+ * R4 (CRITICAL): reads the phone number id the CALLING route has pinned this
+ * request to, when one was pinned.
+ *
+ * Two routes call into this handler:
+ *  - The per-integration MANUAL webhook route
+ *    (`apps/builder/src/app/integrations/whatsapp/webhook/[integrationId]/route.ts`)
+ *    loads exactly one integration row by `integrationId` (the URL segment)
+ *    and is never signature-verified when that integration has no app secret
+ *    (`resolveSignaturePolicy` → `legacy-unverified`, see below) — any
+ *    workspace can create such an integration and POST a forged payload
+ *    naming another workspace's `phone_number_id`. That route must attach
+ *    the loaded integration's own phone number id here as
+ *    `config.phoneNumberId` (the `IntegrationWhatsapp.phoneNumberId` column)
+ *    so this module can bind every parsed change to it.
+ *  - The SHARED platform-credential route
+ *    (`apps/builder/src/app/integrations/[...integration]/webhook.ts`)
+ *    legitimately multiplexes every phone number registered under one
+ *    platform credential through a single endpoint, and IS always HMAC
+ *    verified. It never sets `config.phoneNumberId` — many numbers flowing
+ *    through is the correct, expected shape there, so binding is a no-op.
+ */
+const resolvePinnedPhoneNumberId = (
+  config: WhatsappConfig,
+): string | undefined => {
+  const pinned = config.phoneNumberId
+  return typeof pinned === "string" && pinned.length > 0 ? pinned : undefined
+}
+
+/**
+ * R4: drops every item whose `phoneNumberId` does not match the pinned one
+ * (manual integration only — see {@link resolvePinnedPhoneNumberId}). A
+ * dropped item is logged (`warn`, structured) so a forged/misrouted webhook
+ * stays observable instead of silently vanishing. A no-op (returns `items`
+ * unchanged) when nothing is pinned — the shared platform route's normal,
+ * multi-number traffic.
+ */
+const dropMismatchedPhoneNumberId = <T extends { phoneNumberId: string }>(
+  items: T[],
+  pinnedPhoneNumberId: string | undefined,
+  context: string,
+): T[] => {
+  if (!pinnedPhoneNumberId) {
+    return items
+  }
+  return items.filter((item) => {
+    if (item.phoneNumberId === pinnedPhoneNumberId) {
+      return true
+    }
+    logger.warn(
+      {
+        context,
+        pinnedPhoneNumberId,
+        receivedPhoneNumberId: item.phoneNumberId,
+      },
+      "Whatsapp webhook change dropped: phone_number_id does not match the route-loaded integration",
+    )
+    return false
+  })
+}
+
 export const extractAutomaticEventPayloads = (
   rawBody: unknown,
 ): AutomaticEventPayload[] => {
@@ -227,20 +288,195 @@ const handleGetHandshake = async (
 }
 
 /**
+ * R1: one `messages`-field change's `value`, narrowed just enough to split it
+ * into single-item sub-values. `whatsapp-api-js@6.2.1`'s `post()` only ever
+ * reads `entry[0].changes[0].messages[0]` (confirmed against its source —
+ * see `lib/raw-identity.ts`'s comment) — so a batched delivery carrying
+ * several `messages[]`/`statuses[]` items, or several `messages`-field
+ * changes, silently loses every item but the first unless each one is fed to
+ * the SDK middleware as its OWN single-item POST.
+ */
+type MessagesChangeValue = {
+  messages?: unknown[]
+  statuses?: unknown[]
+  contacts?: unknown[]
+  metadata?: { phone_number_id?: unknown }
+  [key: string]: unknown
+}
+
+/**
+ * Splits a `messages`-field change's value into one value per
+ * `messages[]`/`statuses[]` item, each carrying the index-aligned `contacts[]`
+ * entry when one exists (Meta index-aligns `contacts[]` with `messages[]`
+ * when a change legitimately batches several). A value with neither array
+ * (some other `messages`-field shape) is returned unchanged, exactly as
+ * before this split existed.
+ */
+const readStringField = (value: unknown, key: string): string | undefined => {
+  const field =
+    typeof value === "object" && value !== null
+      ? (value as Record<string, unknown>)[key]
+      : undefined
+  return typeof field === "string" && field.length > 0 ? field : undefined
+}
+
+/**
+ * The `contacts[]` entry belonging to ONE message of a batched `messages`
+ * change. Matched by identity (`wa_id` vs the message's `from`, `user_id` vs
+ * its `from_user_id`) rather than by position: Meta does not guarantee an
+ * index-aligned `contacts[]`, and the SDK prefers `contact.wa_id` over
+ * `message.from`, so a positional guess can attribute a message to the WRONG
+ * customer. When nothing matches, the contact is omitted (leaving
+ * `message.from` authoritative) — except for the ordinary single-contact
+ * change whose message carries no identity of its own, where that one contact
+ * IS the sender. Index is only a last-resort tiebreak for an equal-length
+ * batch of otherwise unidentifiable messages.
+ */
+const pickContactsForMessage = (
+  contacts: unknown[] | undefined,
+  message: unknown,
+  index: number,
+): unknown[] | undefined => {
+  if (!Array.isArray(contacts) || contacts.length === 0) {
+    return contacts
+  }
+  const from = readStringField(message, "from")
+  const fromUserId = readStringField(message, "from_user_id")
+  const matched = contacts.find(
+    (contact) =>
+      (from !== undefined && readStringField(contact, "wa_id") === from) ||
+      (fromUserId !== undefined &&
+        readStringField(contact, "user_id") === fromUserId),
+  )
+  if (matched !== undefined) {
+    return [matched]
+  }
+  if (from === undefined && fromUserId === undefined) {
+    return contacts.length === 1 ? contacts : contacts.slice(index, index + 1)
+  }
+  return
+}
+
+const splitMessagesChangeValue = (
+  value: MessagesChangeValue,
+): MessagesChangeValue[] => {
+  const results: MessagesChangeValue[] = []
+
+  if (Array.isArray(value.messages)) {
+    for (const [index, message] of value.messages.entries()) {
+      results.push({
+        ...value,
+        messages: [message],
+        statuses: undefined,
+        contacts: pickContactsForMessage(value.contacts, message, index),
+      })
+    }
+  }
+
+  if (Array.isArray(value.statuses)) {
+    for (const status of value.statuses) {
+      results.push({ ...value, statuses: [status], messages: undefined })
+    }
+  }
+
+  return results.length > 0 ? results : [value]
+}
+
+/**
+ * Reconstructs one full webhook JSON body per `messages`-field change item
+ * (see {@link splitMessagesChangeValue}), each shaped exactly like the
+ * original POST but carrying only that single item — this is what gets fed
+ * to the SDK middleware, once per item, instead of the whole batch once. A
+ * `calls`-field change is never included here (handled entirely by
+ * `extractCallEventPayloads` — see the comment on the `calls`-skip below).
+ * R4: a change whose `metadata.phone_number_id` does not match a pinned
+ * integration (manual webhook route only) is dropped here, before the SDK
+ * middleware — never reaches the SDK-derived `phoneID`, so the R4 gate on
+ * the SDK message/status result is enforced at the source.
+ */
+const buildMessagesChangeBuffers = (
+  rawBody: unknown,
+  pinnedPhoneNumberId: string | undefined,
+): ArrayBuffer[] => {
+  const object =
+    typeof rawBody === "object" && rawBody !== null
+      ? (rawBody as { object?: unknown }).object
+      : undefined
+  const encoder = new TextEncoder()
+  const buffers: ArrayBuffer[] = []
+
+  for (const entry of readWebhookEntries(rawBody)) {
+    const entryObj = entry as { id?: unknown; changes?: unknown }
+    const changes = entryObj.changes
+    if (!Array.isArray(changes)) {
+      continue
+    }
+    for (const change of changes) {
+      if (
+        typeof change !== "object" ||
+        change === null ||
+        (change as { field?: unknown }).field !== "messages"
+      ) {
+        continue
+      }
+      const value = (change as { value?: unknown }).value
+      if (typeof value !== "object" || value === null) {
+        continue
+      }
+      const typedValue = value as MessagesChangeValue
+      const phoneNumberId = typedValue.metadata?.phone_number_id
+      if (
+        pinnedPhoneNumberId &&
+        (typeof phoneNumberId !== "string" ||
+          phoneNumberId !== pinnedPhoneNumberId)
+      ) {
+        logger.warn(
+          {
+            context: "messages",
+            pinnedPhoneNumberId,
+            receivedPhoneNumberId: phoneNumberId,
+          },
+          "Whatsapp webhook change dropped: phone_number_id does not match the route-loaded integration",
+        )
+        continue
+      }
+
+      for (const singleValue of splitMessagesChangeValue(typedValue)) {
+        const body = {
+          object,
+          entry: [
+            {
+              id: entryObj.id,
+              changes: [{ field: "messages", value: singleValue }],
+            },
+          ],
+        }
+        buffers.push(encoder.encode(JSON.stringify(body)).buffer as ArrayBuffer)
+      }
+    }
+  }
+
+  return buffers
+}
+
+/**
  * Parses the already-signature-verified raw body into the payload shapes the
  * rest of the handler enqueues. Never throws — an unparseable body just
  * yields empty payload lists so the webhook can still ACK Meta.
  */
 const parsePostPayloads = (
   rawBodyBuffer: ArrayBuffer,
+  pinnedPhoneNumberId: string | undefined,
 ): {
   coexistPayloads: CoexistPayload[]
   automaticEventPayloads: AutomaticEventPayload[]
   callEventPayloads: WhatsappCallEventPayload[]
+  messagesChangeBuffers: ArrayBuffer[]
 } => {
   let coexistPayloads: CoexistPayload[] = []
   let automaticEventPayloads: AutomaticEventPayload[] = []
   let callEventPayloads: WhatsappCallEventPayload[] = []
+  let messagesChangeBuffers: ArrayBuffer[] = []
   try {
     const rawBodyText = new TextDecoder().decode(rawBodyBuffer)
     const rawBody = JSON.parse(rawBodyText) as unknown
@@ -261,11 +497,20 @@ const parsePostPayloads = (
         "Whatsapp call event extraction failed; webhook will still acknowledge",
       )
     }
+    messagesChangeBuffers = buildMessagesChangeBuffers(
+      rawBody,
+      pinnedPhoneNumberId,
+    )
   } catch {
     logger.debug("Whatsapp webhook raw body was not JSON; continuing")
   }
 
-  return { coexistPayloads, automaticEventPayloads, callEventPayloads }
+  return {
+    coexistPayloads,
+    automaticEventPayloads,
+    callEventPayloads,
+    messagesChangeBuffers,
+  }
 }
 
 const HUB_SIGNATURE_HEADER = "x-hub-signature-256"
@@ -327,6 +572,18 @@ const verifyPostSignature = async (
   return { verified: true, rawBodyBuffer }
 }
 
+/**
+ * Verified against `whatsapp-api-js@6.2.1`'s `post()` source
+ * (`node_modules/.pnpm/whatsapp-api-js@6.2.1/.../lib/index.js`): it invokes
+ * `this.on?.message?.call(null, args)` / `this.on?.status?.call(...)`
+ * synchronously inside `post()`, itself called from `handle_post()` before
+ * that method's own promise resolves — and only for
+ * `entry[0].changes[0]`'s `messages[0]`/`statuses[0]`. So installing the
+ * callbacks BEFORE calling `handle_post`, then awaiting `handle_post` to
+ * completion, guarantees any callback it is going to fire — however long
+ * that takes — has already run by the time `captured` is read below. No
+ * timer, no race, and nothing can be silently dropped.
+ */
 const capturePostResult = async (input: {
   req: Request
   rawBodyBuffer: ArrayBuffer
@@ -342,57 +599,60 @@ const capturePostResult = async (input: {
     body: input.rawBodyBuffer.byteLength > 0 ? input.rawBodyBuffer : undefined,
   })
 
-  // Start handle_post immediately; attach a no-op catch so any rejection
-  // that arrives after we've already resolved the race is silently absorbed
-  // (we re-check the outcome below via the full await).
-  const handlePostPromise = input.middleware.handle_post(reqWithBody)
-  handlePostPromise.catch(() => {
-    /* absorbed — re-checked below */
-  })
-
-  const result = await new Promise<
+  let captured:
     | { type: "message"; data: OnMessageArgs }
     | { type: "status"; data: OnStatusArgs }
-    | null
-  >((resolve) => {
-    input.middleware.on.message = (args: OnMessageArgs) => {
-      resolve({ type: "message", data: args })
-    }
-    input.middleware.on.sent = () => {
-      resolve(null)
-    }
-    input.middleware.on.status = (args: OnStatusArgs) => {
-      resolve({ type: "status", data: args })
-    }
+    | null = null
 
-    // 300 ms guard: resolve with null so callers aren't blocked forever.
-    setTimeout(() => {
-      resolve(null)
-    }, 300)
-  })
+  input.middleware.on.message = (args: OnMessageArgs) => {
+    captured = { type: "message", data: args }
+  }
+  input.middleware.on.sent = () => {
+    captured = null
+  }
+  input.middleware.on.status = (args: OnStatusArgs) => {
+    captured = { type: "status", data: args }
+  }
 
-  // Always await handle_post to completion so hmacVerified reflects the
-  // actual HMAC outcome — even if the middleware callbacks fired first or
-  // the 300 ms guard already resolved the inner promise above.
-  const handlePostStatus = await handlePostPromise
+  const handlePostStatus = await input.middleware.handle_post(reqWithBody)
   if (handlePostStatus !== 200) {
     throw new SdkException("Failed to handle webhook")
   }
 
-  return result
+  return captured
 }
 
+/**
+ * Gives each coexist job a deterministic jobId so a whole-webhook redelivery
+ * (R9 propagates enqueue failures as non-2xx, which makes Meta redeliver the
+ * entire batch) is a no-op re-add instead of a duplicate
+ * `coexistWhatsappBuffer` job. Hashed with Web Crypto (`sha256Hex`, itself
+ * backed by `crypto.subtle`) rather than `node:crypto` so this module stays
+ * edge-safe.
+ *
+ * A failure here PROPAGATES (as it did before the calling work): coexist
+ * carries history/echo/state-sync payloads that only ever arrive once, so
+ * swallowing a Redis outage would lose them permanently — Meta must be told
+ * to redeliver. This runs after the call/message enqueues, all of which are
+ * jobId-deduped, so a redelivery re-adds nothing that already landed.
+ */
 const enqueueCoexistPayloads = async (
   queue: WebhookQueue,
   coexistPayloads: CoexistPayload[],
 ): Promise<void> => {
-  if (coexistPayloads.length > 0) {
-    for (const { phoneNumberId, value } of coexistPayloads) {
-      await queue?.add("coexistWhatsappBuffer", {
+  for (const { phoneNumberId, value } of coexistPayloads) {
+    const payloadHash = await sha256Hex(JSON.stringify(value))
+    await queue?.add(
+      "coexistWhatsappBuffer",
+      {
         type: "coexistWhatsappBuffer",
         data: { phoneNumberId, payload: value },
-      })
-    }
+      },
+      {
+        jobId: `wa-coexist-${toBullMqSafeIdSegment(phoneNumberId)}-${payloadHash}`,
+        ...REDELIVERABLE_JOB_OPTIONS,
+      },
+    )
   }
 }
 
@@ -484,12 +744,18 @@ const stripVoipSession = (
   return rest
 }
 
+/**
+ * R9: enqueue failures here are NO LONGER swallowed — they propagate so the
+ * webhook handler throws and the route answers non-2xx, so Meta redelivers.
+ * Deterministic jobIds (already in place below) make that redelivery
+ * duplicate-safe: a job that already committed is a no-op re-add, and a job
+ * that never committed is retried for real instead of being silently lost on
+ * a Redis blip.
+ */
 const enqueueCallEventPayloads = async (
   queue: WebhookQueue,
   callEventPayloads: WhatsappCallEventPayload[],
 ): Promise<void> => {
-  // Per-event try/catch: one failed enqueue is logged and skipped without
-  // aborting the rest of the batch (same policy as automatic events).
   for (const payload of callEventPayloads) {
     try {
       await queue?.add(
@@ -519,8 +785,9 @@ const enqueueCallEventPayloads = async (
           phoneNumberId: payload.phoneNumberId,
           wacid: payload.event.wacid,
         },
-        "Whatsapp call event enqueue failed; webhook will still acknowledge",
+        "Whatsapp call event enqueue failed",
       )
+      throw err
     }
   }
 }
@@ -529,11 +796,15 @@ const enqueueCallEventPayloads = async (
  * VoIP-mode connect branch (contracts #2/#3): additive alongside
  * {@link enqueueCallEventPayloads} — never a replacement for it, so the
  * ringing `WhatsappCall` row + incoming-call trigger the generic path
- * creates keeps firing for every connect, SIP or VoIP. Only a validated
- * `session` (a bounded SDP offer parsed by `extractCallEventPayloads`)
- * triggers this branch; a business-initiated or SIP-mode connect is a no-op
- * here. Per-event try/catch mirrors every other enqueue helper in this file
- * — one failure never blocks the rest of the batch or the webhook ACK.
+ * creates keeps firing for every connect, session-less or VoIP. Only a
+ * validated `session` (a bounded SDP offer parsed by
+ * `extractCallEventPayloads`) triggers this branch; a business-initiated or
+ * session-less connect (what Meta sends when a number is configured for
+ * Meta's SIP signalling, which ChatbotX does not use) is a no-op here. R9: a
+ * capture failure now PROPAGATES (no longer swallowed) so the
+ * webhook handler throws and Meta redelivers — the underlying service calls
+ * are idempotent (keyed by wacid/attemptId), so a redelivered capture is
+ * safe to retry.
  */
 const enqueueVoipConnectSignaling = async (
   callEventPayloads: WhatsappCallEventPayload[],
@@ -564,8 +835,9 @@ const enqueueVoipConnectSignaling = async (
         } catch (err) {
           logger.error(
             { err, phoneNumberId: payload.phoneNumberId, wacid: event.wacid },
-            "Whatsapp outbound answer capture failed; webhook will still acknowledge",
+            "Whatsapp outbound answer capture failed",
           )
+          throw err
         }
       }
       continue
@@ -579,7 +851,8 @@ const enqueueVoipConnectSignaling = async (
         })
       } else if (event.sessionInvalid) {
         // A VoIP connect whose SDP we cannot honor — reject it on Meta rather
-        // than leaving it to ring out in the SIP path (which has no leg here).
+        // than leaving it to ring out on the session-less path (ChatbotX has
+        // no leg for it).
         await whatsappVoipCallService.rejectUnprocessableConnect({
           wacid: event.wacid,
           phoneNumberId: payload.phoneNumberId,
@@ -588,8 +861,9 @@ const enqueueVoipConnectSignaling = async (
     } catch (err) {
       logger.error(
         { err, phoneNumberId: payload.phoneNumberId, wacid: event.wacid },
-        "Whatsapp VoIP connect signaling enqueue failed; webhook will still acknowledge",
+        "Whatsapp VoIP connect signaling enqueue failed",
       )
+      throw err
     }
   }
 }
@@ -600,8 +874,8 @@ const enqueueVoipConnectSignaling = async (
  * alongside {@link enqueueCallEventPayloads}, never a replacement for it —
  * the generic `whatsappCallEvent` job still fires for these two event kinds
  * (today it only skip-logs them; the worker-side handling of that lands in a
- * later wave). Each event is captured in its own try/catch so one failure
- * never blocks the other event or the rest of the webhook batch, mirroring
+ * later wave). R9: a capture failure now PROPAGATES (no longer swallowed) so
+ * the webhook handler throws and Meta redelivers, mirroring
  * {@link enqueueVoipConnectSignaling}.
  */
 const enqueueNativeCallCapture = async (
@@ -637,8 +911,9 @@ const enqueueNativeCallCapture = async (
       } catch (err) {
         logger.error(
           { err, phoneNumberId: payload.phoneNumberId, wacid: event.wacid },
-          "Whatsapp native call recording capture failed; webhook will still acknowledge",
+          "Whatsapp native call recording capture failed",
         )
+        throw err
       }
       continue
     }
@@ -660,12 +935,24 @@ const enqueueNativeCallCapture = async (
       } catch (err) {
         logger.error(
           { err, phoneNumberId: payload.phoneNumberId, wacid: event.wacid },
-          "Whatsapp native call transcript capture failed; webhook will still acknowledge",
+          "Whatsapp native call transcript capture failed",
         )
+        throw err
       }
     }
   }
 }
+
+/**
+ * Every deterministic-jobId webhook job carries this: BullMQ keeps a FAILED
+ * job under its id (the worker default retains 5000), and a retained failed
+ * id silently swallows the very redelivery that is supposed to reprocess the
+ * event. Removing the job the moment it fails keeps the id free for Meta's
+ * next delivery, while COMPLETED jobs stay retained and keep deduping genuine
+ * duplicates. (The call-event jobs age theirs out instead — see
+ * `CALL_EVENT_JOB_RETRY_OPTIONS`.)
+ */
+const REDELIVERABLE_JOB_OPTIONS = { removeOnFail: true } as const
 
 const dispatchWebhookResult = async (
   queue: WebhookQueue,
@@ -675,14 +962,25 @@ const dispatchWebhookResult = async (
     | null,
 ): Promise<void> => {
   if (result?.type === "message" && result.data.message) {
-    await queue?.add("incomingMessage", {
-      type: "incomingMessage",
-      data: {
-        integrationType: "whatsapp",
-        integrationIdentifier: result.data.phoneID,
-        payload: result.data,
-      } as ReceivedMessageProps,
-    })
+    await queue?.add(
+      "incomingMessage",
+      {
+        type: "incomingMessage",
+        data: {
+          integrationType: "whatsapp",
+          integrationIdentifier: result.data.phoneID,
+          payload: result.data,
+        } as ReceivedMessageProps,
+      },
+      {
+        // R9: deterministic jobId so a Meta redelivery of the same message
+        // (now possible: enqueue failures upstream propagate to a non-2xx
+        // instead of being swallowed) is a no-op re-add rather than a
+        // duplicate job — the message row itself also dedupes by sourceId.
+        jobId: `wa-msg-${toBullMqSafeIdSegment(result.data.phoneID)}-${toBullMqSafeIdSegment(result.data.message.id)}`,
+        ...REDELIVERABLE_JOB_OPTIONS,
+      },
+    )
   }
 
   if (result?.type === "status") {
@@ -693,24 +991,32 @@ const dispatchWebhookResult = async (
       statusData.status === "failed" ||
       statusData.status === "read"
     ) {
-      await queue?.add("messageStatus", {
-        type: "messageStatus",
-        data: {
-          integrationIdentifier: result.data.phoneID,
-          integrationType: "whatsapp",
-          payload: {
-            phoneID: result.data.phoneID,
-            phone: result.data.phone,
-            recipientUserId: extractWhatsappStatusRecipientUserId(
-              result.data.raw,
-            ),
-            messageId: statusData.id,
-            status: statusData.status,
-            timestamp: statusData.timestamp,
-            error: result.data.error,
+      await queue?.add(
+        "messageStatus",
+        {
+          type: "messageStatus",
+          data: {
+            integrationIdentifier: result.data.phoneID,
+            integrationType: "whatsapp",
+            payload: {
+              phoneID: result.data.phoneID,
+              phone: result.data.phone,
+              recipientUserId: extractWhatsappStatusRecipientUserId(
+                result.data.raw,
+              ),
+              messageId: statusData.id,
+              status: statusData.status,
+              timestamp: statusData.timestamp,
+              error: result.data.error,
+            },
           },
         },
-      })
+        {
+          // R9: deterministic jobId — see the `incomingMessage` comment above.
+          jobId: `wa-status-${toBullMqSafeIdSegment(result.data.phoneID)}-${toBullMqSafeIdSegment(statusData.id)}-${toBullMqSafeIdSegment(statusData.status)}`,
+          ...REDELIVERABLE_JOB_OPTIONS,
+        },
+      )
     }
   }
 }
@@ -759,32 +1065,88 @@ export const webhookHandler = async (
     )
 
     try {
-      const { coexistPayloads, automaticEventPayloads, callEventPayloads } =
-        parsePostPayloads(signatureOutcome.rawBodyBuffer)
-      // The SDK middleware (`handle_post`) exists only to extract message/status
-      // args for us; it does nothing for a `calls` webhook, which we parse and
-      // enqueue ourselves below. Worse, whatsapp-api-js@6.2.1's `post` throws
-      // on a `calls` payload whose contact has no `profile` — it reads
-      // `contact?.profile.name` (lib/index.js:551) with the optional chain on
-      // `contact` but NOT on `.profile`, and a calls contact is `{wa_id,
-      // user_id}` with no `profile`. That TypeError becomes a 500 from
-      // `handle_post`, which `capturePostResult` turns into a webhook-wide 400.
-      // So skip the middleware entirely for a calls webhook (both inbound and
-      // outbound), never feeding it the payload shape it crashes on.
-      const result =
-        callEventPayloads.length > 0
-          ? null
-          : await capturePostResult({
+      const pinnedPhoneNumberId = resolvePinnedPhoneNumberId(props.config)
+      const {
+        coexistPayloads,
+        automaticEventPayloads,
+        callEventPayloads,
+        messagesChangeBuffers,
+      } = parsePostPayloads(signatureOutcome.rawBodyBuffer, pinnedPhoneNumberId)
+
+      const boundCoexistPayloads = dropMismatchedPhoneNumberId(
+        coexistPayloads,
+        pinnedPhoneNumberId,
+        "coexist",
+      )
+      const boundAutomaticEventPayloads = dropMismatchedPhoneNumberId(
+        automaticEventPayloads,
+        pinnedPhoneNumberId,
+        "automaticEvent",
+      )
+      const boundCallEventPayloads = dropMismatchedPhoneNumberId(
+        callEventPayloads,
+        pinnedPhoneNumberId,
+        "callEvent",
+      )
+
+      // R1: the SDK middleware (`handle_post`) exists only to extract
+      // message/status args for us. It is fed ONE reconstructed single-item
+      // body per `messages`-field change item (see
+      // `buildMessagesChangeBuffers`/`splitMessagesChangeValue`) instead of
+      // the whole POST once — whatsapp-api-js@6.2.1's `post()` only ever
+      // reads `entry[0].changes[0].messages[0]`, so a batched delivery (or a
+      // mixed `calls`+`messages` delivery) used to silently lose every
+      // message/status but the first. `messagesChangeBuffers` never contains
+      // a `calls`-field change (built only from `field === "messages"`), so
+      // this is also how a `calls` webhook (both inbound and outbound) never
+      // reaches the middleware — sidestepping whatsapp-api-js@6.2.1's crash
+      // on a `calls` contact with no `profile` (`contact?.profile.name`,
+      // optional-chained on `contact` but NOT on `.profile`).
+      const results: Array<
+        | { type: "message"; data: OnMessageArgs }
+        | { type: "status"; data: OnStatusArgs }
+        | null
+      > = []
+      // Per-item try/catch: `capturePostResult` only PARSES (it never
+      // enqueues), so a throw/non-200 here is deterministic for that one item
+      // — e.g. whatsapp-api-js@6.2.1 crashing on `contact?.profile.name` when
+      // a contact carries no `profile`. Letting it escape would fail the whole
+      // delivery, drop its healthy sibling items, and trap Meta in an endless
+      // redelivery of a body that can never succeed.
+      for (const [index, buffer] of messagesChangeBuffers.entries()) {
+        try {
+          results.push(
+            await capturePostResult({
               req: props.req,
-              rawBodyBuffer: signatureOutcome.rawBodyBuffer,
+              rawBodyBuffer: buffer,
               middleware,
-            })
-      await enqueueCoexistPayloads(props.queue, coexistPayloads)
-      await enqueueAutomaticEventPayloads(props.queue, automaticEventPayloads)
-      await enqueueCallEventPayloads(props.queue, callEventPayloads)
-      await enqueueVoipConnectSignaling(callEventPayloads)
-      await enqueueNativeCallCapture(callEventPayloads)
-      await dispatchWebhookResult(props.queue, result)
+            }),
+          )
+        } catch (err) {
+          logger.error(
+            { err, itemIndex: index, pinnedPhoneNumberId },
+            "Whatsapp webhook item skipped: the SDK middleware could not parse it",
+          )
+          results.push(null)
+        }
+      }
+
+      // Order: the enqueues whose failure propagates (R9 — non-2xx so Meta
+      // redelivers; every one of them is keyed by a deterministic jobId, so
+      // a redelivery is a no-op re-add) run first. Coexist and automatic
+      // events log-and-skip per item, so they run last and can never block
+      // call or message delivery.
+      await enqueueCallEventPayloads(props.queue, boundCallEventPayloads)
+      await enqueueVoipConnectSignaling(boundCallEventPayloads)
+      await enqueueNativeCallCapture(boundCallEventPayloads)
+      for (const result of results) {
+        await dispatchWebhookResult(props.queue, result)
+      }
+      await enqueueCoexistPayloads(props.queue, boundCoexistPayloads)
+      await enqueueAutomaticEventPayloads(
+        props.queue,
+        boundAutomaticEventPayloads,
+      )
 
       return "ok"
     } catch (err) {

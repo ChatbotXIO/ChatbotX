@@ -111,7 +111,7 @@ export default class WorkspaceParty implements Party.Server {
   }
 
   /**
-   * Verifies the one-time connect token Builder minted for this member
+   * Verifies the short-lived (60s) connect token Builder minted for this member
    * (`signMemberConnectToken`). `verifyMemberConnectToken` rejects — via the
    * JWT `aud` check — a token whose `workspaceId` claim does not match this
    * room (`lobby.id`), which is the cross-room replay a stolen/misrouted

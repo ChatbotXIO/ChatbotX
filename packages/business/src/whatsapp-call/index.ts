@@ -1,3 +1,5 @@
+export * from "./call-lifecycle-service"
+export * from "./call-permission-service"
 export * from "./call-recording-service"
 export * from "./call-summary-service"
 export * from "./turn-credential"

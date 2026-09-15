@@ -24,11 +24,15 @@ import {
   type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
-import type { AttachmentModel, MessageModel } from "@chatbotx.io/database/types"
+import type {
+  AttachmentModel,
+  ContactInboxModel,
+  MessageModel,
+} from "@chatbotx.io/database/types"
 import { signAppointmentWebviewToken } from "@chatbotx.io/encryption"
 import { emit } from "@chatbotx.io/event-bus"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
-import type { MetadataPayload } from "@chatbotx.io/flow-config"
+import type { MetadataPayload, StepType } from "@chatbotx.io/flow-config"
 import {
   appendCodeToMagicLink,
   type ButtonStepProps,
@@ -87,18 +91,27 @@ const CHANNEL_DELIVERABLE_STEP_TYPES = new Set<string>([
   stepTypes.enum.whatsappOptionList,
 ])
 
+/**
+ * Steps whose payload only exists on one channel. On any other channel they
+ * are skipped before a Message row is persisted, so an omnichannel flow never
+ * shows a phantom "sent" message the channel could not deliver.
+ */
+const CHANNEL_EXCLUSIVE_STEP_TYPES: Partial<
+  Record<StepType, ContactInboxModel["channel"]>
+> = {
+  [stepTypes.enum.whatsappCallButton]: channelTypes.enum.whatsapp,
+}
+
 const isBlankTextCarrierStep = (step: SendFlowStepData) => {
-  if (step.stepType === stepTypes.enum.sendText) {
+  if (
+    step.stepType === stepTypes.enum.sendText ||
+    step.stepType === stepTypes.enum.whatsappCallButton
+  ) {
     return !step.text.trim()
   }
 
   if (step.stepType === stepTypes.enum.sendQuickReply) {
     return !step.message.trim()
-  }
-
-  // Meta rejects a voice_call interactive without a body.
-  if (step.stepType === stepTypes.enum.whatsappCallButton) {
-    return !step.text.trim()
   }
 
   return false
@@ -413,17 +426,16 @@ export async function sendFlowStep({
     return
   }
 
-  // The voice_call interactive only exists on WhatsApp — bail before any
-  // Message row is persisted so an omnichannel flow reaching another channel
-  // never shows a fully-worded phantom "sent" message (mirrors the
-  // sendWaTemplateMessage channel guard above).
-  if (
-    step.stepType === stepTypes.enum.whatsappCallButton &&
-    targetContactInbox.channel !== channelTypes.enum.whatsapp
-  ) {
+  const exclusiveChannel = CHANNEL_EXCLUSIVE_STEP_TYPES[step.stepType]
+  if (exclusiveChannel && targetContactInbox.channel !== exclusiveChannel) {
     logger.debug(
-      { conversationId, stepId: step.id, channel: targetContactInbox.channel },
-      "Skipping whatsappCallButton step on non-whatsapp channel",
+      {
+        conversationId,
+        stepId: step.id,
+        stepType: step.stepType,
+        channel: targetContactInbox.channel,
+      },
+      "Skipping channel-exclusive flow step on another channel",
     )
     return
   }

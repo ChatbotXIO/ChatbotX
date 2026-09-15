@@ -1,6 +1,8 @@
 import {
   callRecordingService,
   isAllowedRecordingContentType,
+  isWorkspaceScheduledForDeletion,
+  workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
@@ -20,6 +22,10 @@ import {
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { isCrossSiteRequest } from "@/lib/http/same-site-request"
 import { logger } from "@/lib/log"
+import {
+  checkWorkspaceOwnerAccess,
+  workspaceAccessDenialException,
+} from "@/lib/workspace/authorize-workspace-access"
 
 /**
  * Upper bound on a browser-recorded VoIP call upload — generous enough for a
@@ -100,6 +106,34 @@ export async function POST(req: NextRequest) {
     // Membership check, mirroring `api/presigned-upload` — thrown as a
     // ChatbotXException and mapped to a 4xx by `serverErrorHandler` below.
     await assertCurrentUserCanAccessChatbot(call.workspaceId)
+
+    // R24: apply the same owner-access gate `workspaceActionClient` uses
+    // (scheduled-deletion + blocked-owner/trial-expired), rather than the
+    // `workspaceActionClientAllowExpired` variant that `get-call-recording-
+    // url.action.ts` / `get-call-transcript.action.ts` use. Those actions
+    // only read an already-existing recording/transcript, so they qualify
+    // as "finishing" an in-progress call under the allow-expired
+    // convention (AGENTS.md invariant #14). This route instead performs a
+    // NEW write (uploads the recording object) and enqueues the
+    // Meta-Whisper transcription job, which costs money — so a
+    // trial-expired or otherwise blocked owner must not be able to trigger
+    // it, same as any other paid mutation gated by `workspaceActionClient`.
+    const workspace = await workspaceService.findById({
+      id: call.workspaceId,
+    })
+    if (isWorkspaceScheduledForDeletion(workspace)) {
+      throw new ChatbotXException(
+        "Workspace deletion scheduled",
+        "workspaceScheduledDeletion",
+        403,
+      )
+    }
+    const ownerAccessDenialReason = await checkWorkspaceOwnerAccess({
+      ownerId: workspace.ownerId,
+    })
+    if (ownerAccessDenialReason) {
+      throw workspaceAccessDenialException(ownerAccessDenialReason)
+    }
 
     // Pure read with zero business logic — allowed to call the repository
     // directly from the app layer (AGENTS.md #9).

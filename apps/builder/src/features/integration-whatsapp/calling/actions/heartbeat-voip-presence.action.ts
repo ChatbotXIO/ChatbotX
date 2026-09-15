@@ -8,8 +8,8 @@ import { workspaceActionClient } from "@/lib/safe-action"
  * Marks the current agent "available for VoIP calls" for the next presence TTL
  * — the builder calls this on a short interval while the inbox call dock is
  * mounted (see `useWhatsappVoipPresence`). This is the ONLY routing source for
- * inbound browser-WebRTC calls, deliberately independent of SIP `REGISTER`, so
- * a VoIP-only number still rings live agents. No side effects beyond the
+ * inbound browser-WebRTC calls, so a number rings only agents with the inbox
+ * open. No side effects beyond the
  * short-TTL Redis presence write.
  *
  * No-input action (`bindArgsSchemas` only, per AGENTS.md invariant #6) — the

@@ -78,6 +78,12 @@ const endedCall = {
   endedStatus: "rejected" as const,
 }
 
+const connectionLostCall = {
+  ...activeCall,
+  phase: WhatsappVoipCallPhase.ended,
+  endedStatus: "connectionLost" as const,
+}
+
 const outboundNoAnswerCall = {
   transport: "voip" as const,
   whatsappCallId: "out-call-1",
@@ -233,6 +239,15 @@ describe("WhatsappCallPanel", () => {
     expect(
       document.querySelector(`[aria-label="whatsapp.calls.answer"]`),
     ).toBeNull()
+  })
+
+  test("R5: a connection-lost ended call shows the translated connection-lost notice", async () => {
+    useWhatsappVoipCallStore.setState({ call: connectionLostCall })
+    await render()
+
+    expect(document.body.textContent).toContain(
+      "whatsapp.calls.panel.statusConnectionLost",
+    )
   })
 
   test("clicking dismiss on the ended message calls dismissEnded()", async () => {

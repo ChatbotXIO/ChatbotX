@@ -1,0 +1,2 @@
+CREATE INDEX "WhatsappCall_resumableRinging_idx" ON "WhatsappCall" ("workspaceId","createdAt" DESC NULLS LAST) WHERE "status" = 'ringing' AND "wacid" IS NOT NULL AND "answeredByUserId" IS NULL;--> statement-breakpoint
+CREATE INDEX "WhatsappCall_recording_inboxId_recordedAt_idx" ON "WhatsappCall" ("inboxId","recordedAt") WHERE "recordingPath" IS NOT NULL;

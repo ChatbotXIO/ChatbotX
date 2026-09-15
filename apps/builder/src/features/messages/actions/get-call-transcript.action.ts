@@ -10,11 +10,11 @@ const getCallTranscriptSchema = z.object({
 })
 
 /**
- * Loads the diarized (VoIP/Meta-native) or flat, timestamped (SIP/Whisper)
+ * Loads the diarized (VoIP/Meta-native) or flat, timestamped (browserWhisper)
  * transcript for the Call Information sheet, mapping
  * speaker labels to display names: `"Business"` → the agent who placed
  * (outbound) or answered (inbound) the call, `"Customer"` → the contact.
- * `hasSpeakers=false` (no `speaker` field on any segment, i.e. SIP/Whisper)
+ * `hasSpeakers=false` (no `speaker` field on any segment, i.e. browserWhisper)
  * tells the sheet to omit the name column entirely. Empty `segments` is a
  * valid "unavailable" result, not an error. A read action — allowed even
  * for an expired/owner-blocked workspace (AGENTS.md invariant #14).

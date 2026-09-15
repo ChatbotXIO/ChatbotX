@@ -4,6 +4,7 @@ import {
   broadcastToWorkspaceParty,
   contactInboxService,
   contactService,
+  isAnswerDeadlineExpired,
   whatsappVoipCallService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -213,6 +214,17 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
           workspaceId,
         })
 
+      // R16: the control's `deadlineAt` is the authoritative answer budget —
+      // check it (with a safety margin) before claim/pre_accept/accept below
+      // so an in-flight answer attempt never wins a race it has effectively
+      // already lost to Meta's own timeout. `deadlineAt` is immutable across
+      // the whole state machine (preserved through every CAS), so one read
+      // here covers all three checkpoints.
+      const control = await whatsappVoipCallService.readControl(wacid)
+      if (!control || isAnswerDeadlineExpired(control.deadlineAt)) {
+        return { outcome: "cannotAnswer" }
+      }
+
       const fenceToken = await whatsappVoipCallService.claimForAnswer({
         wacid,
         userId: ctx.user.id,
@@ -221,8 +233,30 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
         return { outcome: "cannotAnswer" }
       }
 
+      const releaseExpiredClaim = (): Promise<void> =>
+        whatsappVoipCallService
+          .releaseClaim({ wacid, fenceToken })
+          .then(() => undefined)
+          .catch((releaseError: unknown) => {
+            logger.warn(
+              { err: releaseError, whatsappCallId, wacid },
+              "WhatsApp VoIP call: releaseClaim after deadline expiry failed",
+            )
+          })
+
+      if (isAnswerDeadlineExpired(control.deadlineAt)) {
+        await releaseExpiredClaim()
+        return { outcome: "cannotAnswer" }
+      }
+
       try {
         await preAcceptCall({ auth, callId: wacid, sdpAnswer })
+        if (isAnswerDeadlineExpired(control.deadlineAt)) {
+          // Never call `accept` past the deadline — Meta would reject it
+          // anyway, and the answer window has already closed.
+          await releaseExpiredClaim()
+          return { outcome: "cannotAnswer" }
+        }
         await acceptCallWithAnnouncementFallback({
           auth,
           callId: wacid,
@@ -230,6 +264,17 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
           ...announcementOptions,
         })
       } catch (error) {
+        if (isAnswerDeadlineExpired(control.deadlineAt)) {
+          // Map a Graph accept failure that raced past the deadline to the
+          // same "cannotAnswer" outcome the pre-checks return, rather than
+          // surfacing it as a generic accept failure.
+          logger.warn(
+            { err: error, whatsappCallId, wacid },
+            "WhatsApp VoIP call accept failed after the answer deadline",
+          )
+          await releaseExpiredClaim()
+          return { outcome: "cannotAnswer" }
+        }
         logger.error(
           { err: error, whatsappCallId, wacid },
           "WhatsApp VoIP call accept failed",

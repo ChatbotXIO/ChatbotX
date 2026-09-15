@@ -8,6 +8,42 @@ import { whatsappCallModel } from "../src/schema"
 
 const PENDING_OUTBOUND_EXISTS_RE = /pending-outbound-exists/
 
+/**
+ * Renders a drizzle WHERE clause back to readable SQL-ish text (columns,
+ * operators and bound values in order) so a test can assert the actual
+ * predicate that reaches Postgres, not merely that *some* clause was passed.
+ * The guards on the liveness/recovery updates are the concurrency control
+ * itself — asserting their shape is the only way to pin it without a database.
+ */
+const renderPredicate = (clause: unknown): string => {
+  const parts: string[] = []
+  const walk = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      for (const child of node) {
+        walk(child)
+      }
+      return
+    }
+    if (!node || typeof node !== "object") {
+      return
+    }
+    const entry = node as Record<string, unknown>
+    if (typeof entry.name === "string" && entry.table) {
+      parts.push(`"${entry.name}"`)
+      return
+    }
+    if (Array.isArray(entry.queryChunks)) {
+      walk(entry.queryChunks)
+      return
+    }
+    if ("value" in entry) {
+      parts.push(String(entry.value))
+    }
+  }
+  walk((clause as { queryChunks?: unknown }).queryChunks)
+  return parts.join("").replace(/\s+/g, " ").trim()
+}
+
 type Row = typeof whatsappCallModel.$inferSelect
 
 const baseRow = (overrides: Partial<Row> = {}): Row =>
@@ -337,6 +373,48 @@ describe("whatsappCallRepository.markAcceptedIfActive", () => {
   })
 })
 
+describe("whatsappCallRepository.touchLivenessIfStale", () => {
+  const chain = (rows: { id: string }[]) => {
+    const returning = vi.fn().mockResolvedValue(rows)
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    return { tx: { update: vi.fn(() => ({ set })) }, set, where }
+  }
+
+  const cutoff = new Date("2026-08-01T00:00:00.000Z")
+
+  test("wins the claim: bumps updatedAt behind a status + staleness guard", async () => {
+    const { tx, set, where } = chain([{ id: "call-1" }])
+
+    await expect(
+      whatsappCallRepository.touchLivenessIfStale(
+        { id: "call-1", olderThan: cutoff },
+        tx as never,
+      ),
+    ).resolves.toBe(true)
+
+    expect(set).toHaveBeenCalledWith({ updatedAt: expect.any(Date) })
+    // The guard must reach Postgres — it is what keeps concurrent beats from
+    // double-writing, and what makes a heartbeat lose to dial-time recovery
+    // (both statements lock the same row, so exactly one predicate can hold).
+    expect(where).toHaveBeenCalledTimes(1)
+    expect(renderPredicate(where.mock.calls[0]?.[0])).toBe(
+      `(("id" = call-1) and ("status" = accepted) and ("updatedAt" < ${cutoff}))`,
+    )
+  })
+
+  test("loses the claim when the row was updated since the cutoff", async () => {
+    const { tx } = chain([])
+
+    await expect(
+      whatsappCallRepository.touchLivenessIfStale(
+        { id: "call-1", olderThan: cutoff },
+        tx as never,
+      ),
+    ).resolves.toBe(false)
+  })
+})
+
 describe("whatsappCallRepository.attachWacid", () => {
   test("is a no-op when the row already carries this exact wacid", async () => {
     const current = baseRow({ wacid: "wamid.1" })
@@ -496,59 +574,48 @@ describe("whatsappCallRepository.createPendingOutbound", () => {
   })
 })
 
-describe("whatsappCallRepository.findPendingOutbound", () => {
-  test("scopes by inbox/contactInbox/businessInitiated/null-wacid/ringing-or-accepted/window, ordered newest first, limited to one", async () => {
-    const row = baseRow({ direction: "businessInitiated", wacid: null })
-    const chain = {
-      select: vi.fn(),
-      from: vi.fn(),
-      where: vi.fn(),
-      orderBy: vi.fn(),
-      limit: vi.fn(),
-    }
-    chain.select.mockReturnValue(chain)
-    chain.from.mockReturnValue(chain)
-    chain.where.mockReturnValue(chain)
-    chain.orderBy.mockReturnValue(chain)
-    chain.limit.mockResolvedValue([row])
+describe("whatsappCallRepository.recoverStrandedAccepted", () => {
+  const chain = (rows: unknown[]) => {
+    const returning = vi.fn().mockResolvedValue(rows)
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    return { tx: { update: vi.fn(() => ({ set })) }, set, where }
+  }
 
-    const result = await whatsappCallRepository.findPendingOutbound(
-      {
-        inboxId: "inbox-1",
-        contactInboxId: "ci-1",
-        since: new Date("2026-08-01T00:00:00.000Z"),
-      },
-      chain as never,
+  const props = {
+    id: "call-1",
+    olderThan: new Date("2026-08-01T00:10:00.000Z"),
+    lastError: "stranded-accepted-recovered-on-dial",
+  }
+
+  test("terminalizes the stale accepted row in one guarded statement", async () => {
+    const row = baseRow({ status: "completed" })
+    const { tx, set, where } = chain([row])
+
+    await expect(
+      whatsappCallRepository.recoverStrandedAccepted(props, tx as never),
+    ).resolves.toEqual(row)
+
+    // Status and staleness are guarded in the SAME update that writes the
+    // terminal status — no window in which a heartbeat could not intervene.
+    // No `endedAt`: we know the call is over, never when it ended, and
+    // leaving it null lets a delayed terminate still stamp the real value.
+    expect(set).toHaveBeenCalledWith({
+      status: "completed",
+      lastError: props.lastError,
+    })
+    expect(where).toHaveBeenCalledTimes(1)
+    expect(renderPredicate(where.mock.calls[0]?.[0])).toBe(
+      `(("id" = call-1) and ("status" = accepted) and ("updatedAt" < ${props.olderThan}))`,
     )
-
-    expect(chain.limit).toHaveBeenCalledWith(1)
-    expect(result).toEqual(row)
   })
 
-  test("returns undefined when nothing matches (ambiguous / no pending attempt)", async () => {
-    const chain = {
-      select: vi.fn(),
-      from: vi.fn(),
-      where: vi.fn(),
-      orderBy: vi.fn(),
-      limit: vi.fn(),
-    }
-    chain.select.mockReturnValue(chain)
-    chain.from.mockReturnValue(chain)
-    chain.where.mockReturnValue(chain)
-    chain.orderBy.mockReturnValue(chain)
-    chain.limit.mockResolvedValue([])
+  test("returns undefined when a heartbeat or a real terminate got there first", async () => {
+    const { tx } = chain([])
 
-    const result = await whatsappCallRepository.findPendingOutbound(
-      {
-        inboxId: "inbox-1",
-        contactInboxId: "ci-1",
-        since: new Date("2026-08-01T00:00:00.000Z"),
-      },
-      chain as never,
-    )
-
-    expect(result).toBeUndefined()
+    await expect(
+      whatsappCallRepository.recoverStrandedAccepted(props, tx as never),
+    ).resolves.toBeUndefined()
   })
 })
 

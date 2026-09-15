@@ -7,11 +7,13 @@ import { whatsappCallRepository } from "@chatbotx.io/database/repositories"
 import { setWebhookExecutionContext } from "@chatbotx.io/events"
 import type { IntegrationJobWhatsappCallNativeRecordingFetch } from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
+import { isBlockedWorkspace } from "../../lib/is-blocked-workspace"
 import { logger } from "../../lib/logger"
 import {
   AttachmentTooLargeError,
   downloadCallMedia,
   WhatsappCallMediaGoneError,
+  WhatsappCallRowNotReadyError,
 } from "./shared/whatsapp-call-native-media"
 import { attachRecordingAndNotify } from "./whatsapp-call-recording"
 import { resolveVoipAuthByInboxId } from "./whatsapp-voip-signaling"
@@ -20,7 +22,7 @@ import { resolveVoipAuthByInboxId } from "./whatsapp-voip-signaling"
  * `callRecordingService.uploadRecording`'s `contentType` must be one of
  * `ALLOWED_RECORDING_CONTENT_TYPES` — Meta's webhook mime type arrives as a
  * full media-type string (e.g. `audio/ogg; codecs=opus`), so this strips
- * any parameters and falls back to the SIP-path default when the base type
+ * any parameters and falls back to the browserWhisper-path default when the base type
  * isn't in the allow-list rather than throwing and losing an otherwise-good
  * recording.
  */
@@ -37,9 +39,10 @@ const normalizeRecordingContentType = (mimeType: string) => {
  * lookaside URL, never the audio bytes — this handler downloads them
  * (preferring the media id, see `downloadCallMedia`), uploads to our object
  * storage via `callRecordingService`, then converges on the exact
- * create-message/broadcast/`emitCallRecorded` pipeline the SIP path uses
- * (`attachRecordingAndNotify`) so the activity card/message logic is not
- * duplicated. Unlike the SIP path, it never chains transcription — the
+ * create-message/broadcast/`emitCallRecorded` pipeline the browserWhisper
+ * path uses (`attachRecordingAndNotify`) so the activity card/message logic
+ * is not duplicated. Unlike the browserWhisper path, it never chains
+ * transcription — the
  * Meta-native transcript arrives independently via its own
  * `call_transcription_available` webhook/job, racing on a disjoint column.
  *
@@ -47,7 +50,14 @@ const normalizeRecordingContentType = (mimeType: string) => {
  * webhook, or `attachRecording`'s CAS having already won a race) short-
  * circuits before any download. On a genuine download failure within
  * Meta's 7-day retention window this throws so BullMQ retries; when the
- * call row or the media itself is gone, it logs and returns instead.
+ * media itself is gone, it logs and returns instead.
+ *
+ * R8: the row may not exist yet at the first attempt (this job can race the
+ * row-creating `calls` webhook/job) — `data.whatsappCallId` is only a
+ * fast-path hint, so this always re-resolves by `data.wacid` and throws
+ * {@link WhatsappCallRowNotReadyError} (retryable, bounded ~1h via
+ * `NATIVE_CALL_CAPTURE_RETRY_OPTIONS`) while still missing, instead of
+ * silently dropping the event.
  */
 export const handleWhatsappCallNativeRecordingFetch = async (
   data: IntegrationJobWhatsappCallNativeRecordingFetch["data"],
@@ -57,17 +67,30 @@ export const handleWhatsappCallNativeRecordingFetch = async (
   // override in whatsapp-call.ts / whatsapp-call-recording.ts).
   setWebhookExecutionContext({ source: "webhook" })
 
-  const call = await whatsappCallRepository.findById(data.whatsappCallId)
+  const byId = data.whatsappCallId
+    ? await whatsappCallRepository.findById(data.whatsappCallId)
+    : undefined
+  const call = byId ?? (await whatsappCallRepository.findByWacid(data.wacid))
   if (!call) {
     logger.warn(
       { whatsappCallId: data.whatsappCallId, wacid: data.wacid },
-      "Whatsapp native call recording skipped: call row not found",
+      "Whatsapp native call recording: call row not found yet; retrying",
+    )
+    throw new WhatsappCallRowNotReadyError(data.wacid)
+  }
+  // A job enqueued before its row existed carries no `workspaceId`, so the
+  // worker-level blocked-owner gate could not resolve it — apply it here now
+  // that the row (and its workspace) is known.
+  if (!data.workspaceId && (await isBlockedWorkspace(call.workspaceId))) {
+    logger.info(
+      { whatsappCallId: call.id, workspaceId: call.workspaceId },
+      "Whatsapp native call recording skipped: blocked workspace",
     )
     return
   }
   if (call.recordedAt) {
     logger.info(
-      { whatsappCallId: data.whatsappCallId },
+      { whatsappCallId: call.id },
       "Whatsapp native call recording already processed; skipping",
     )
     return
@@ -75,7 +98,7 @@ export const handleWhatsappCallNativeRecordingFetch = async (
 
   logger.info(
     {
-      whatsappCallId: data.whatsappCallId,
+      whatsappCallId: call.id,
       wacid: data.wacid,
       audioMediaId: data.audioMediaId,
       hasAudioUrl: Boolean(data.audioUrl),
@@ -97,20 +120,20 @@ export const handleWhatsappCallNativeRecordingFetch = async (
   } catch (err) {
     if (err instanceof WhatsappCallMediaGoneError) {
       logger.warn(
-        { err: normalizeError(err), whatsappCallId: data.whatsappCallId },
+        { err: normalizeError(err), whatsappCallId: call.id },
         "Whatsapp native call recording: media no longer available; skipping",
       )
       return
     }
     if (err instanceof AttachmentTooLargeError) {
       logger.warn(
-        { err: normalizeError(err), whatsappCallId: data.whatsappCallId },
+        { err: normalizeError(err), whatsappCallId: call.id },
         "Whatsapp native call recording: exceeds size cap; skipping (permanent)",
       )
       return
     }
     logger.error(
-      { err: normalizeError(err), whatsappCallId: data.whatsappCallId },
+      { err: normalizeError(err), whatsappCallId: call.id },
       "Whatsapp native call recording download failed",
     )
     throw err
@@ -118,7 +141,7 @@ export const handleWhatsappCallNativeRecordingFetch = async (
 
   logger.info(
     {
-      whatsappCallId: data.whatsappCallId,
+      whatsappCallId: call.id,
       bytes: media.size,
       mimeType: media.mimeType,
     },
@@ -127,8 +150,8 @@ export const handleWhatsappCallNativeRecordingFetch = async (
 
   const resolvedMimeType = media.mimeType || data.mimeType
   const { recordingPath } = await callRecordingService.uploadRecording({
-    callId: data.whatsappCallId,
-    workspaceId: data.workspaceId,
+    callId: call.id,
+    workspaceId: call.workspaceId,
     body: new Uint8Array(media.bytes),
     contentType: normalizeRecordingContentType(resolvedMimeType),
   })
@@ -141,7 +164,7 @@ export const handleWhatsappCallNativeRecordingFetch = async (
   })
 
   logger.info(
-    { whatsappCallId: data.whatsappCallId, recordingPath },
+    { whatsappCallId: call.id, recordingPath },
     "[wa-call-recording] DONE (recording attached + message enriched)",
   )
 }

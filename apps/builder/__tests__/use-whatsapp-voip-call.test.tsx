@@ -33,6 +33,7 @@ const {
   startCallRecorderMock,
   initiateOutboundActionMock,
   outboundTurnCredentialsActionMock,
+  heartbeatActiveVoipCallActionMock,
 } = vi.hoisted(() => ({
   answerActionMock: vi.fn(),
   hangupActionMock: vi.fn().mockResolvedValue({ data: { hungUp: true } }),
@@ -51,6 +52,9 @@ const {
       turnConfigured: true,
     },
   }),
+  heartbeatActiveVoipCallActionMock: vi
+    .fn()
+    .mockResolvedValue({ data: { ok: true } }),
 }))
 
 vi.mock(
@@ -79,6 +83,12 @@ vi.mock(
     outboundVoipTurnCredentialsAction: outboundTurnCredentialsActionMock,
   }),
 )
+vi.mock(
+  "@/features/integration-whatsapp/calling/actions/heartbeat-active-voip-call.action",
+  () => ({
+    heartbeatActiveVoipCallAction: heartbeatActiveVoipCallActionMock,
+  }),
+)
 vi.mock("@/features/integration-whatsapp/calling/voip/call-recorder", () => ({
   startCallRecorder: startCallRecorderMock,
 }))
@@ -93,10 +103,18 @@ const makeMockStream = () => {
   } as unknown as MediaStream
 }
 
+type MockSender = {
+  track: MockTrack | null
+  replaceTrack: ReturnType<typeof vi.fn>
+}
+type MockTransceiver = { sender: MockSender }
+
 const createdPeerConnections: Array<{
   iceGatheringState: string
+  connectionState: string
   localDescription: RTCSessionDescriptionInit | null
   addTrack: ReturnType<typeof vi.fn>
+  addTransceiver: ReturnType<typeof vi.fn>
   setRemoteDescription: ReturnType<typeof vi.fn>
   createAnswer: ReturnType<typeof vi.fn>
   createOffer: ReturnType<typeof vi.fn>
@@ -105,13 +123,33 @@ const createdPeerConnections: Array<{
   addEventListener: ReturnType<typeof vi.fn>
   removeEventListener: ReturnType<typeof vi.fn>
   ontrack: ((event: unknown) => void) | null
+  onconnectionstatechange: (() => void) | null
 }> = []
 
 class MockRTCPeerConnection {
   iceGatheringState = "complete"
+  connectionState = "new"
   localDescription: RTCSessionDescriptionInit | null = null
   ontrack: ((event: unknown) => void) | null = null
+  onconnectionstatechange: (() => void) | null = null
   addTrack = vi.fn()
+  /** R7: returns a fake `RTCRtpTransceiver` whose `sender.track` starts
+   * `null` — tests assert it stays that way until `replaceTrack` is called
+   * after accept. */
+  addTransceiver = vi.fn(
+    (): MockTransceiver => ({
+      sender: {
+        track: null,
+        replaceTrack: vi.fn(function replaceTrack(
+          this: MockSender,
+          track: MockTrack | null,
+        ) {
+          this.track = track
+          return Promise.resolve()
+        }),
+      },
+    }),
+  )
   setRemoteDescription = vi.fn().mockResolvedValue(undefined)
   createAnswer = vi
     .fn()
@@ -590,6 +628,265 @@ describe("useWhatsappVoipCall", () => {
       expect.any(Blob),
     )
   })
+
+  test("R7: answer() adds a track-less sendrecv audio transceiver — sender.track stays null until accept resolves", async () => {
+    let resolveAnswer: ((value: unknown) => void) | undefined
+    answerActionMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveAnswer = resolve
+        }),
+    )
+    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    await render()
+
+    let answerPromise: Promise<void> | undefined
+    await act(async () => {
+      answerPromise = hookResult?.answer()
+      for (let i = 0; i < 20 && !resolveAnswer; i++) {
+        await Promise.resolve()
+      }
+    })
+
+    expect(createdPeerConnections[0]?.addTransceiver).toHaveBeenCalledWith(
+      "audio",
+      { direction: "sendrecv" },
+    )
+    const transceiver = createdPeerConnections[0]?.addTransceiver.mock
+      .results[0]?.value as MockTransceiver
+    expect(transceiver.sender.track).toBeNull()
+    // The single SDP answer string was already submitted to the action
+    // (Meta's `pre_accept`/`accept` both receive this exact string
+    // server-side — see `answer-voip-call.action.ts`) while the track is
+    // still unattached, proving no early media.
+    expect(answerActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "call-1",
+      sdpAnswer: "v=0 answer-sdp",
+    })
+
+    await act(async () => {
+      resolveAnswer?.({
+        data: {
+          outcome: "accepted",
+          browserRecordingEnabled: false,
+          recordingRequested: false,
+        },
+      })
+      await answerPromise
+    })
+
+    expect(transceiver.sender.replaceTrack).toHaveBeenCalled()
+    expect(transceiver.sender.track).not.toBeNull()
+  })
+
+  test("R5: pc.connectionState 'failed' tears down and fires a compensating hangup with a translated connection-lost notice", async () => {
+    answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    await render()
+    await act(async () => {
+      await hookResult?.answer()
+    })
+    const pc = createdPeerConnections[0]
+    expect(pc).toBeDefined()
+
+    if (pc) {
+      pc.connectionState = "failed"
+    }
+    act(() => {
+      pc?.onconnectionstatechange?.()
+    })
+
+    expect(pc?.close).toHaveBeenCalled()
+    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "call-1",
+    })
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.ended,
+    )
+    expect(useWhatsappVoipCallStore.getState().call?.endedStatus).toBe(
+      "connectionLost",
+    )
+  })
+
+  test("R5: a failed replaceTrack after inbound accept routes through handleConnectionLost — hangs up once, tears down, stops tracks", async () => {
+    const stream = makeMockStream()
+    getUserMediaMock.mockResolvedValue(stream)
+    const track = stream.getTracks()[0] as unknown as MockTrack
+
+    let resolveAnswer: ((value: unknown) => void) | undefined
+    answerActionMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveAnswer = resolve
+        }),
+    )
+    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    await render()
+
+    let answerPromise: Promise<void> | undefined
+    await act(async () => {
+      answerPromise = hookResult?.answer()
+      for (let i = 0; i < 20 && !resolveAnswer; i++) {
+        await Promise.resolve()
+      }
+    })
+
+    const transceiver = createdPeerConnections[0]?.addTransceiver.mock
+      .results[0]?.value as MockTransceiver
+    transceiver.sender.replaceTrack = vi
+      .fn()
+      .mockRejectedValue(new Error("replaceTrack failed"))
+
+    await act(async () => {
+      resolveAnswer?.({
+        data: {
+          outcome: "accepted",
+          browserRecordingEnabled: false,
+          recordingRequested: false,
+        },
+      })
+      await answerPromise
+      // Flush the rejected `replaceTrack().catch(...)` microtask and the
+      // subsequent `handleConnectionLost` -> `hangupWhatsappVoipCallAction`
+      // chain.
+      await Promise.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(hangupActionMock).toHaveBeenCalledTimes(1)
+    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "call-1",
+    })
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.ended,
+    )
+    expect(useWhatsappVoipCallStore.getState().call?.endedStatus).toBe(
+      "connectionLost",
+    )
+    expect(track.stop).toHaveBeenCalled()
+  })
+
+  test("R5: pc.connectionState 'disconnected' for more than the grace window tears down; recovery cancels the timer", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+      useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+      await render()
+      await act(async () => {
+        await hookResult?.answer()
+      })
+      const pc = createdPeerConnections[0]
+      if (!pc) {
+        throw new Error("expected a peer connection")
+      }
+
+      pc.connectionState = "disconnected"
+      act(() => pc.onconnectionstatechange?.())
+
+      // Recovers well before the 8s grace window elapses — must cancel the
+      // pending timer rather than tearing down later.
+      await act(async () => {
+        vi.advanceTimersByTime(4000)
+        await Promise.resolve()
+      })
+      pc.connectionState = "connected"
+      act(() => pc.onconnectionstatechange?.())
+      await act(async () => {
+        vi.advanceTimersByTime(10_000)
+        await Promise.resolve()
+      })
+      expect(pc.close).not.toHaveBeenCalled()
+      expect(hangupActionMock).not.toHaveBeenCalled()
+
+      // A second disconnect that is never recovered from DOES tear down
+      // once the grace window elapses.
+      pc.connectionState = "disconnected"
+      act(() => pc.onconnectionstatechange?.())
+      await act(async () => {
+        vi.advanceTimersByTime(8000)
+        await Promise.resolve()
+      })
+      expect(pc.close).toHaveBeenCalled()
+      expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+        whatsappCallId: "call-1",
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("R6: heartbeats every 20s while active, and a ok:false response stops the interval WITHOUT tearing the call down", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+      useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+      await render()
+      await act(async () => {
+        await hookResult?.answer()
+      })
+
+      expect(heartbeatActiveVoipCallActionMock).toHaveBeenCalledWith(
+        "workspace-1",
+        { wacid: "wacid-1" },
+      )
+      heartbeatActiveVoipCallActionMock.mockClear()
+
+      await act(async () => {
+        vi.advanceTimersByTime(20_000)
+        await Promise.resolve()
+      })
+      expect(heartbeatActiveVoipCallActionMock).toHaveBeenCalledTimes(1)
+
+      heartbeatActiveVoipCallActionMock.mockResolvedValueOnce({
+        data: { ok: false },
+      })
+      await act(async () => {
+        vi.advanceTimersByTime(20_000)
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+      heartbeatActiveVoipCallActionMock.mockClear()
+
+      await act(async () => {
+        vi.advanceTimersByTime(40_000)
+        await Promise.resolve()
+      })
+      expect(heartbeatActiveVoipCallActionMock).not.toHaveBeenCalled()
+      // ok:false only stops the ping — it must never tear the local call
+      // down (WebRTC media may still be flowing fine).
+      expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+        WhatsappVoipCallPhase.active,
+      )
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("R6: stops heartbeating once the call ends", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+      useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+      await render()
+      await act(async () => {
+        await hookResult?.answer()
+      })
+      heartbeatActiveVoipCallActionMock.mockClear()
+
+      await act(async () => {
+        await hookResult?.hangup()
+      })
+
+      await act(async () => {
+        vi.advanceTimersByTime(60_000)
+        await Promise.resolve()
+      })
+      expect(heartbeatActiveVoipCallActionMock).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
 
 const outboundDialingResult = {
@@ -677,10 +974,15 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     )
     expect(getUserMediaMock).toHaveBeenCalled()
     expect(createdPeerConnections).toHaveLength(1)
-    expect(createdPeerConnections[0]?.createOffer).toHaveBeenCalledWith({
-      offerToReceiveAudio: true,
-      offerToReceiveVideo: false,
-    })
+    // R7: a track-less `sendrecv` audio transceiver is added up front, so
+    // `createOffer` no longer needs `offerToReceiveAudio`/`offerToReceiveVideo`
+    // — the transceiver alone declares the m-line, and no video transceiver
+    // exists, so no video m-line is ever offered.
+    expect(createdPeerConnections[0]?.addTransceiver).toHaveBeenCalledWith(
+      "audio",
+      { direction: "sendrecv" },
+    )
+    expect(createdPeerConnections[0]?.createOffer).toHaveBeenCalledWith()
     expect(initiateOutboundActionMock).toHaveBeenCalledWith("workspace-1", {
       conversationId: "conversation-1",
       contactInboxId: undefined,
@@ -740,23 +1042,6 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     expect(outcome).toBe("needsPermission")
     expect(createdPeerConnections[0]?.close).toHaveBeenCalled()
     expect(useWhatsappVoipCallStore.getState().call).toBeNull()
-  })
-
-  test("useSip: tears down and returns the outcome (rare race)", async () => {
-    initiateOutboundActionMock.mockResolvedValue({
-      data: { outcome: "useSip" },
-    })
-    await render()
-
-    let outcome: string | undefined
-    await act(async () => {
-      outcome = await hookResult?.startOutbound({
-        conversationId: "conversation-1",
-      })
-    })
-
-    expect(outcome).toBe("useSip")
-    expect(createdPeerConnections[0]?.close).toHaveBeenCalled()
   })
 
   test("callFailed: a thrown error during setup tears down and resolves callFailed", async () => {
@@ -1264,6 +1549,235 @@ describe("useWhatsappVoipCall — startOutbound", () => {
         await Promise.resolve()
       })
       expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("R7: the outbound offer also uses a track-less sendrecv transceiver — mic attaches only once the status reaches ACCEPTED", async () => {
+    initiateOutboundActionMock.mockResolvedValue({
+      data: outboundDialingResult,
+    })
+    await render()
+    await act(async () => {
+      await hookResult?.startOutbound({ conversationId: "conversation-1" })
+    })
+
+    expect(createdPeerConnections[0]?.addTransceiver).toHaveBeenCalledWith(
+      "audio",
+      { direction: "sendrecv" },
+    )
+    const transceiver = createdPeerConnections[0]?.addTransceiver.mock
+      .results[0]?.value as MockTransceiver
+    expect(transceiver.sender.track).toBeNull()
+
+    act(() => {
+      useWhatsappVoipCallStore
+        .getState()
+        .setOutboundStatus("out-call-1", "ringing")
+    })
+    // Still ringing — no track attached yet.
+    expect(transceiver.sender.track).toBeNull()
+
+    act(() => {
+      useWhatsappVoipCallStore
+        .getState()
+        .setOutboundStatus("out-call-1", "accepted")
+    })
+
+    expect(transceiver.sender.replaceTrack).toHaveBeenCalled()
+    expect(transceiver.sender.track).not.toBeNull()
+  })
+
+  test("R5: an outbound call's pc.connectionState 'failed' tears down and fires a compensating hangup", async () => {
+    initiateOutboundActionMock.mockResolvedValue({
+      data: outboundDialingResult,
+    })
+    await render()
+    await act(async () => {
+      await hookResult?.startOutbound({ conversationId: "conversation-1" })
+    })
+    act(() => {
+      useWhatsappVoipCallStore
+        .getState()
+        .setOutboundStatus("out-call-1", "accepted")
+    })
+
+    const pc = createdPeerConnections[0]
+    if (!pc) {
+      throw new Error("expected a peer connection")
+    }
+    pc.connectionState = "failed"
+    act(() => pc.onconnectionstatechange?.())
+
+    expect(pc.close).toHaveBeenCalled()
+    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "out-call-1",
+    })
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.ended,
+    )
+    expect(useWhatsappVoipCallStore.getState().call?.endedStatus).toBe(
+      "connectionLost",
+    )
+  })
+
+  test("R5: a failed replaceTrack after outbound ACCEPTED routes through handleConnectionLost — hangs up once, tears down, stops tracks", async () => {
+    const stream = makeMockStream()
+    getUserMediaMock.mockResolvedValue(stream)
+    const track = stream.getTracks()[0] as unknown as MockTrack
+
+    initiateOutboundActionMock.mockResolvedValue({
+      data: outboundDialingResult,
+    })
+    await render()
+    await act(async () => {
+      await hookResult?.startOutbound({ conversationId: "conversation-1" })
+    })
+
+    const transceiver = createdPeerConnections[0]?.addTransceiver.mock
+      .results[0]?.value as MockTransceiver
+    transceiver.sender.replaceTrack = vi
+      .fn()
+      .mockRejectedValue(new Error("replaceTrack failed"))
+
+    await act(async () => {
+      useWhatsappVoipCallStore
+        .getState()
+        .setOutboundStatus("out-call-1", "accepted")
+      // Flush the rejected `replaceTrack().catch(...)` microtask and the
+      // subsequent `handleConnectionLost` -> `hangupWhatsappVoipCallAction`
+      // chain.
+      await Promise.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(hangupActionMock).toHaveBeenCalledTimes(1)
+    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "out-call-1",
+    })
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.ended,
+    )
+    expect(useWhatsappVoipCallStore.getState().call?.endedStatus).toBe(
+      "connectionLost",
+    )
+    expect(track.stop).toHaveBeenCalled()
+  })
+
+  test("R5: a replaceTrack failure followed by a connectionstatechange 'failed' still hangs up only once", async () => {
+    initiateOutboundActionMock.mockResolvedValue({
+      data: outboundDialingResult,
+    })
+    await render()
+    await act(async () => {
+      await hookResult?.startOutbound({ conversationId: "conversation-1" })
+    })
+
+    const transceiver = createdPeerConnections[0]?.addTransceiver.mock
+      .results[0]?.value as MockTransceiver
+    transceiver.sender.replaceTrack = vi
+      .fn()
+      .mockRejectedValue(new Error("replaceTrack failed"))
+
+    await act(async () => {
+      useWhatsappVoipCallStore
+        .getState()
+        .setOutboundStatus("out-call-1", "accepted")
+      await Promise.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(hangupActionMock).toHaveBeenCalledTimes(1)
+
+    const pc = createdPeerConnections[0]
+    if (!pc) {
+      throw new Error("expected a peer connection")
+    }
+    pc.connectionState = "failed"
+    await act(async () => {
+      pc.onconnectionstatechange?.()
+      await Promise.resolve()
+    })
+
+    // Still only once — `handleConnectionLost` must be idempotent once the
+    // store already shows the call `ended`.
+    expect(hangupActionMock).toHaveBeenCalledTimes(1)
+  })
+
+  test("R5: a connection failure while still preparing releases the local slot immediately (before any server call exists)", async () => {
+    let resolveInitiate: ((value: unknown) => void) | undefined
+    initiateOutboundActionMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveInitiate = resolve
+        }),
+    )
+    await render()
+
+    await act(async () => {
+      const startPromise = hookResult?.startOutbound({
+        conversationId: "conversation-1",
+      })
+      for (let i = 0; i < 20 && !resolveInitiate; i++) {
+        await Promise.resolve()
+      }
+
+      // The connection fails while no server call exists yet (still
+      // `preparing`) — releases the slot right away, with no server call to
+      // hang up against at this point.
+      const pc = createdPeerConnections[0]
+      if (pc) {
+        pc.connectionState = "failed"
+        pc.onconnectionstatechange?.()
+      }
+      expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+      expect(hangupActionMock).not.toHaveBeenCalled()
+
+      // Meta ends up dialing anyway (a late resolution) — same defense-in-depth
+      // compensating hangup as an agent-initiated cancel racing a late
+      // "dialing" outcome (see the `hangup()`-during-`preparing` test above):
+      // the slot is already gone, so the dial's own post-upgrade check fires
+      // the compensating hangup itself.
+      resolveInitiate?.({ data: outboundDialingResult })
+      await startPromise
+    })
+
+    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "out-call-1",
+    })
+    expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+  })
+
+  test("R6: heartbeats an outbound call every 20s once active, keyed by wacid", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      initiateOutboundActionMock.mockResolvedValue({
+        data: outboundDialingResult,
+      })
+      await render()
+      await act(async () => {
+        await hookResult?.startOutbound({ conversationId: "conversation-1" })
+      })
+      act(() => {
+        useWhatsappVoipCallStore
+          .getState()
+          .setOutboundStatus("out-call-1", "accepted")
+      })
+
+      expect(heartbeatActiveVoipCallActionMock).toHaveBeenCalledWith(
+        "workspace-1",
+        { wacid: "out-wacid-1" },
+      )
+      heartbeatActiveVoipCallActionMock.mockClear()
+
+      await act(async () => {
+        vi.advanceTimersByTime(20_000)
+        await Promise.resolve()
+      })
+      expect(heartbeatActiveVoipCallActionMock).toHaveBeenCalledTimes(1)
     } finally {
       vi.useRealTimers()
     }

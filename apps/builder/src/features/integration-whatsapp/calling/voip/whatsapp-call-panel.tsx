@@ -113,6 +113,8 @@ function getStatusKey(call: WhatsappVoipCall): string {
           return "whatsapp.calls.panel.statusDeclined"
         case "failed":
           return "whatsapp.calls.panel.statusCallFailed"
+        case "connectionLost":
+          return "whatsapp.calls.panel.statusConnectionLost"
         default:
           // "completed" (or a status-less handleEnded call): an outbound
           // dial that never connected is "No answer"; anything else (an

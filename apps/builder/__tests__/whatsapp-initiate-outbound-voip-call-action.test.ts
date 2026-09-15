@@ -22,6 +22,8 @@ const {
   assertNoActiveCallForContactMock,
   startOutboundDialMock,
   enqueueOutboundDialExpiryMock,
+  endCallMock,
+  isCallEndedMock,
 } = vi.hoisted(() => ({
   findByMock: vi.fn(),
   findInboxMock: vi.fn(),
@@ -36,6 +38,8 @@ const {
   assertNoActiveCallForContactMock: vi.fn(),
   startOutboundDialMock: vi.fn(),
   enqueueOutboundDialExpiryMock: vi.fn(),
+  endCallMock: vi.fn(),
+  isCallEndedMock: vi.fn(),
 }))
 
 class InProgressError extends Error {}
@@ -95,6 +99,8 @@ vi.mock("@chatbotx.io/business", () => ({
     createOutboundAttempt: createOutboundAttemptMock,
     attachMetaCallId: attachMetaCallIdMock,
     finalizeEndedCall: finalizeEndedCallMock,
+    endCall: endCallMock,
+    isCallEnded: isCallEndedMock,
   },
   WhatsappCallInProgressError: InProgressError,
 }))
@@ -173,7 +179,6 @@ describe("initiateOutboundVoipCallAction", () => {
     findByInboxIdForWorkspaceMock.mockResolvedValue({
       id: "integration-1",
       auth: {},
-      sipProvisioningStatus: "provisioned",
       displayPhoneNumber: "+44 20 7946 0958",
       callRecordingEnabled: true,
       callTranscriptionEnabled: false,
@@ -199,13 +204,16 @@ describe("initiateOutboundVoipCallAction", () => {
       phase: "dialing",
     })
     enqueueOutboundDialExpiryMock.mockResolvedValue(undefined)
+    endCallMock.mockResolvedValue({ graphAction: "terminate" })
+    isCallEndedMock.mockImplementation(({ status }: { status?: string }) =>
+      ["completed", "failed", "rejected"].includes(status ?? ""),
+    )
   })
 
   test("returns ineligibleNumber when the business number's country is blocked (VN)", async () => {
     findByInboxIdForWorkspaceMock.mockResolvedValue({
       id: "integration-1",
       auth: {},
-      sipProvisioningStatus: "provisioned",
       displayPhoneNumber: "+84 912 345 678",
       callRecordingEnabled: false,
     })
@@ -213,16 +221,19 @@ describe("initiateOutboundVoipCallAction", () => {
     expect(getCallPermissionsMock).not.toHaveBeenCalled()
   })
 
-  test("returns ineligibleNumber when the business number's country is blocked (TR)", async () => {
+  // R11: TR is not on Meta's blocked-business-country list (only VN, US, CA,
+  // EG, NG) — a TR business number must dial normally, not be blocked.
+  test("does NOT block a TR business number (R11: TR removed from BLOCKED_OUTBOUND_COUNTRIES)", async () => {
     findByInboxIdForWorkspaceMock.mockResolvedValue({
       id: "integration-1",
       auth: {},
-      sipProvisioningStatus: "provisioned",
       displayPhoneNumber: "+90 532 123 4567",
-      callRecordingEnabled: false,
+      callRecordingEnabled: true,
+      callRecordingMode: "browserWhisper",
     })
-    await expect(call()).resolves.toEqual({ outcome: "ineligibleNumber" })
-    expect(getCallPermissionsMock).not.toHaveBeenCalled()
+    const result = await call()
+    expect(result).not.toEqual({ outcome: "ineligibleNumber" })
+    expect(getCallPermissionsMock).toHaveBeenCalled()
   })
 
   test("returns needsPermission when Meta reports no start_call permission", async () => {
@@ -290,6 +301,76 @@ describe("initiateOutboundVoipCallAction", () => {
     )
   })
 
+  test("creates the call control before the row exposes the wacid, so a racing hangup always finds one", async () => {
+    await call()
+
+    expect(startOutboundDialMock.mock.invocationCallOrder[0]).toBeLessThan(
+      attachMetaCallIdMock.mock.invocationCallOrder[0],
+    )
+  })
+
+  test("a hangup that closed the row while Meta was connecting wins: the leg is hung up and never dialed", async () => {
+    attachMetaCallIdMock.mockResolvedValue({
+      id: "call-1",
+      wacid: "wacid-1",
+      status: "failed",
+    })
+
+    await expect(call()).resolves.toEqual({ outcome: "callFailed" })
+
+    expect(endCallMock).toHaveBeenCalledWith({
+      wacid: "wacid-1",
+      allowFromAccepted: true,
+    })
+    expect(terminateCallMock).toHaveBeenCalledWith(
+      expect.objectContaining({ callId: "wacid-1" }),
+    )
+    expect(enqueueOutboundDialExpiryMock).not.toHaveBeenCalled()
+    // The row is already closed by the hangup — never overwritten here.
+    expect(finalizeEndedCallMock).not.toHaveBeenCalled()
+  })
+
+  test("treats a vanished attempt row the same as a cancelled one", async () => {
+    attachMetaCallIdMock.mockResolvedValue(undefined)
+
+    await expect(call()).resolves.toEqual({ outcome: "callFailed" })
+    expect(terminateCallMock).toHaveBeenCalledWith(
+      expect.objectContaining({ callId: "wacid-1" }),
+    )
+    expect(enqueueOutboundDialExpiryMock).not.toHaveBeenCalled()
+  })
+
+  test("C1: a failing attach after the control exists ends the control, hangs up and finalizes", async () => {
+    attachMetaCallIdMock.mockRejectedValue(new Error("db down"))
+
+    await expect(call()).resolves.toEqual({ outcome: "callFailed" })
+    expect(endCallMock).toHaveBeenCalledWith({
+      wacid: "wacid-1",
+      allowFromAccepted: true,
+    })
+    expect(terminateCallMock).toHaveBeenCalledWith(
+      expect.objectContaining({ callId: "wacid-1" }),
+    )
+    expect(finalizeEndedCallMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        whatsappCallId: "call-1",
+        status: "failed",
+        lastError: "outbound-setup-failed",
+      }),
+    )
+  })
+
+  test("C1: teardown failures never surface — still finalizes and returns callFailed", async () => {
+    startOutboundDialMock.mockRejectedValue(new Error("redis down"))
+    endCallMock.mockRejectedValue(new Error("redis still down"))
+    terminateCallMock.mockRejectedValue(new Error("meta down"))
+
+    await expect(call()).resolves.toEqual({ outcome: "callFailed" })
+    expect(finalizeEndedCallMock).toHaveBeenCalledWith(
+      expect.objectContaining({ whatsappCallId: "call-1", status: "failed" }),
+    )
+  })
+
   test("on success: creates the pending row, connects, attaches wacid, starts the dial, and returns dialing", async () => {
     const result = await call()
 
@@ -333,11 +414,45 @@ describe("initiateOutboundVoipCallAction", () => {
     )
   })
 
+  test("R2: a Username/BSUID-only contact (empty sourceId, known sourceUserId) dials via `recipient`, never `to`", async () => {
+    findInboxMock.mockResolvedValue({
+      id: "contact-inbox-1",
+      inboxId: "inbox-1",
+      channel: "whatsapp",
+      sourceId: "",
+      sourceUserId: "bsuid-123",
+    })
+
+    const result = await call()
+
+    expect(connectCallMock).toHaveBeenCalledWith(
+      expect.objectContaining({ recipient: "bsuid-123", sdpOffer: "v=0..." }),
+    )
+    const connectArgs = connectCallMock.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >
+    expect(connectArgs.to).toBeUndefined()
+    // The permissions GET must use the SAME identity shape as the dial —
+    // Meta's `recipient=<BSUID>`, never a BSUID stuffed into `user_wa_id`.
+    expect(getCallPermissionsMock).toHaveBeenCalledWith(expect.anything(), {
+      recipient: "bsuid-123",
+    })
+    expect(result).toEqual(expect.objectContaining({ outcome: "dialing" }))
+  })
+
+  test("a phone-number contact looks its permissions up by user_wa_id", async () => {
+    await call()
+
+    expect(getCallPermissionsMock).toHaveBeenCalledWith(expect.anything(), {
+      userWaId: "15551234567",
+    })
+  })
+
   test("metaNative recording never enables the browser recorder, but still reports recordingRequested", async () => {
     findByInboxIdForWorkspaceMock.mockResolvedValue({
       id: "integration-1",
       auth: {},
-      sipProvisioningStatus: "provisioned",
       displayPhoneNumber: "+44 20 7946 0958",
       callRecordingEnabled: true,
       callTranscriptionEnabled: false,
@@ -362,7 +477,6 @@ describe("initiateOutboundVoipCallAction", () => {
     findByInboxIdForWorkspaceMock.mockResolvedValue({
       id: "integration-1",
       auth: {},
-      sipProvisioningStatus: "provisioned",
       displayPhoneNumber: "+44 20 7946 0958",
       callRecordingEnabled: false,
       callTranscriptionEnabled: false,
@@ -435,7 +549,6 @@ describe("initiateOutboundVoipCallAction", () => {
     const metaNativeIntegration = {
       id: "integration-1",
       auth: {},
-      sipProvisioningStatus: "provisioned",
       displayPhoneNumber: "+44 20 7946 0958",
       callRecordingEnabled: true,
       callTranscriptionEnabled: true,

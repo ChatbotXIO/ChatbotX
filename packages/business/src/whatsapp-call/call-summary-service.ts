@@ -75,7 +75,7 @@ class WhatsappCallTranscriptService {
   }
 
   /**
-   * Diarized (VoIP/Meta-native) or flat, timestamped (SIP/Whisper) segments,
+   * Diarized (Meta-native) or flat, timestamped (browser recording) segments,
    * mapped to the agent/contact display names. Empty
    * `segments` is a valid "unavailable" result — never thrown as an error.
    */

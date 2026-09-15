@@ -1,5 +1,8 @@
 import type { WhatsappCallStatus } from "@chatbotx.io/database/partials"
-import { whatsappCallRepository } from "@chatbotx.io/database/repositories"
+import {
+  WHATSAPP_CALL_TERMINAL_STATUSES,
+  whatsappCallRepository,
+} from "@chatbotx.io/database/repositories"
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
 import { casStore } from "@chatbotx.io/redis"
 import {
@@ -47,7 +50,7 @@ export type VoipCallDirection = "userInitiated" | "businessInitiated"
 export type VoipCallControl = {
   /**
    * The agent bound to the call. Empty string (`""`) while the call is still
-   * ringing every eligible agent (ring-all, mirroring the SIP fork-dial); set
+   * ringing every eligible agent (ring-all); set
    * to the winner's id the moment one of them claims it (`claimForAnswer`).
    * For an outbound call this is the initiating agent from the moment the
    * control is created (`startOutboundDial`) — there is no "unclaimed" state.
@@ -107,11 +110,49 @@ export const VOIP_ANSWER_DEADLINE_MS = 55_000
  * The answer-deadline TTL no longer applies once a call is live; the real
  * end-of-call cleanup is a later phase (worker-driven), this only bounds
  * how long an abandoned key can linger in Redis.
+ *
+ * A live call's heartbeat (`heartbeatActiveCall`) renews the control on this
+ * same TTL, so a control that vanished early was lost by Redis rather than
+ * expired — which is why a missing control is only ever "unknown", never
+ * "the call ended", and why the durable DB liveness exists alongside it.
  */
-const ACTIVE_CALL_CONTROL_TTL_MS = 4 * 60 * 60 * 1000
+export const ACTIVE_CALL_CONTROL_TTL_MS = 4 * 60 * 60 * 1000
 
 /** Short retention after termination — long enough for a redelivered webhook to observe it, then let it expire. */
 const TERMINATED_CONTROL_TTL_MS = 60_000
+
+/**
+ * How long an `accepted` row must have gone without a liveness heartbeat
+ * before a NEW dial to the same contact may treat it as stranded — see
+ * {@link WhatsappVoipCallService.recoverStrandedAcceptedCall}. The browser
+ * refreshes the row every couple of minutes
+ * ({@link ACTIVE_CALL_ROW_TOUCH_INTERVAL_MS}), so this is many missed beats,
+ * not a tight race.
+ */
+export const ACTIVE_CALL_LIVENESS_STALE_MS = 30 * 60 * 1000
+
+/** `lastError` for a call closed by {@link WhatsappVoipCallService.recoverStrandedAcceptedCall}. */
+const STRANDED_CALL_RECOVERED_LAST_ERROR = "stranded-accepted-recovered-on-dial"
+
+/**
+ * How often an active-call heartbeat ALSO bumps the DB row's `updatedAt`
+ * (`whatsappCallRepository.touchLivenessIfStale`). The control record alone is
+ * not enough: Redis losing it (flush/eviction/restart) must never look like
+ * "the call ended", so recovery needs a durable liveness signal it can trust.
+ * Throttled well under {@link ACTIVE_CALL_LIVENESS_STALE_MS} so a live call's
+ * row is always fresher than the staleness threshold by a wide margin, while a
+ * 20-second heartbeat still costs at most one tiny write every two minutes.
+ */
+const ACTIVE_CALL_ROW_TOUCH_INTERVAL_MS = 2 * 60 * 1000
+
+/**
+ * Safety margin (R16) under Meta's answer deadline for every server-side
+ * check before a claim/`pre_accept`/`accept` Graph call: a call within this
+ * many ms of `deadlineAt` is treated as already expired, so a race between
+ * "we still have budget" and Meta's own timeout always resolves in favor of
+ * NOT calling Graph.
+ */
+export const VOIP_ANSWER_DEADLINE_SAFETY_MARGIN_MS = 3000
 
 /**
  * Margin that makes `startOutboundDial`'s control key outlive its own expiry
@@ -148,6 +189,16 @@ const ALLOWED_TRANSITIONS: Record<VoipCallPhase, readonly VoipCallPhase[]> = {
 const isTransitionAllowed = (from: VoipCallPhase, to: VoipCallPhase): boolean =>
   ALLOWED_TRANSITIONS[from].includes(to)
 
+/**
+ * R16 server-side deadline enforcement: `true` once `deadlineAt` is within
+ * {@link VOIP_ANSWER_DEADLINE_SAFETY_MARGIN_MS} of now (or already past),
+ * checked before every claim/`pre_accept`/`accept` Graph call in
+ * `answerWhatsappVoipCallAction` so an in-flight answer attempt never wins a
+ * race it has effectively already lost to Meta's own timeout.
+ */
+export const isAnswerDeadlineExpired = (deadlineAt: number): boolean =>
+  Date.now() + VOIP_ANSWER_DEADLINE_SAFETY_MARGIN_MS >= deadlineAt
+
 const remainingTtlMs = (deadlineAt: number): number =>
   Math.max(deadlineAt - Date.now(), MIN_RESERVATION_TTL_MS)
 
@@ -173,8 +224,8 @@ export type ResolveRingTargetsInput = {
 /**
  * Discriminated so the signaling consumer can tell the three outcomes apart
  * and react correctly (see `docs/whatsapp-calling-voip.md`):
- * - `ring` — deliver the offer to EVERY listed agent (ring-all, like the SIP
- *   fork-dial); the fenced CAS in `claimForAnswer` lets only the first to
+ * - `ring` — deliver the offer to EVERY listed agent (ring-all); the fenced
+ *   CAS in `claimForAnswer` lets only the first to
  *   answer win.
  * - `noEligibleAgent` — nobody has the inbox open; the call must be Meta-`reject`ed.
  * - `alreadyProgressed` — a control record exists past `reserved` (a
@@ -246,6 +297,18 @@ const VOIP_END_OUTCOME_BY_PHASE = {
 >
 
 type TerminableVoipCallPhase = keyof typeof VOIP_END_OUTCOME_BY_PHASE
+
+/**
+ * The control phase a still-live call row stands for, used to end a call whose
+ * control record does not exist (Meta's webhook bound the call id before the
+ * dial created one, or Redis lost it). Terminal statuses have no entry.
+ */
+const LIVE_CALL_PHASE_BY_STATUS: Partial<
+  Record<WhatsappCallStatus, Record<VoipCallDirection, TerminableVoipCallPhase>>
+> = {
+  ringing: { businessInitiated: "dialing", userInitiated: "reserved" },
+  accepted: { businessInitiated: "accepted", userInitiated: "accepted" },
+}
 
 const isTerminableVoipCallPhase = (
   phase: VoipCallPhase,
@@ -706,6 +769,101 @@ class WhatsappVoipCallService {
   }
 
   /**
+   * R6 liveness: the browser tab holding an `accepted` call calls this on a
+   * short interval (mirroring the presence heartbeat cadence) so a genuinely
+   * stranded call (terminate webhook lost) can later be told apart from one
+   * that is still live but has run longer than
+   * {@link ACTIVE_CALL_CONTROL_TTL_MS}. Verifies the call belongs to
+   * `input.workspaceId` and that the live control is still `phase:"accepted"`
+   * with `reservedUserId` matching `input.userId` (the agent who won
+   * `claimForAnswer`/holds `startOutboundDial`'s initiator slot) before doing
+   * anything — a heartbeat for a call this agent doesn't own, or that already
+   * ended, is a no-op (`false`).
+   *
+   * On success it renews the control's TTL with a fenced CAS
+   * (`phase:"accepted"` + the exact `fenceToken`), so a call kept alive past
+   * {@link ACTIVE_CALL_CONTROL_TTL_MS} keeps an authenticated hangup path. The
+   * CAS losing (a concurrent hangup/terminate) never turns this into a
+   * failure. It ALSO refreshes the DB row's durable liveness — the only signal
+   * {@link WhatsappVoipCallService.recoverStrandedAcceptedCall} trusts.
+   */
+  async heartbeatActiveCall(input: {
+    wacid: string
+    workspaceId: string
+    userId: string
+  }): Promise<boolean> {
+    const call = await whatsappCallRepository.findByWacid(input.wacid)
+    if (!call || call.workspaceId !== input.workspaceId) {
+      return false
+    }
+
+    const control = await this.readControl(input.wacid)
+    if (!control) {
+      // Redis lost the control (flush/eviction/restart) while the call is
+      // still up. The DB row is the durable authority here: an `accepted`
+      // row owned by this agent means the call IS live, so keep refreshing
+      // its liveness (and keep the client heartbeating) rather than letting a
+      // later dial treat it as stranded. There is no control to renew.
+      const ownsLiveCall =
+        call.status === "accepted" &&
+        (call.answeredByUserId === input.userId ||
+          call.initiatedByUserId === input.userId)
+      if (!ownsLiveCall) {
+        return false
+      }
+      await this.touchCallLiveness(call.id)
+      return true
+    }
+    if (
+      control.phase !== "accepted" ||
+      control.reservedUserId !== input.userId
+    ) {
+      return false
+    }
+
+    await casStore
+      .compareAndSwap<VoipCallControl>(
+        controlKey(input.wacid),
+        { phase: "accepted", fenceToken: control.fenceToken },
+        control,
+        ACTIVE_CALL_CONTROL_TTL_MS,
+      )
+      .catch((error: unknown) => {
+        logger.warn(
+          { err: error, wacid: input.wacid },
+          "WhatsApp VoIP active-call heartbeat: control renewal failed",
+        )
+      })
+
+    await this.touchCallLiveness(call.id)
+
+    return true
+  }
+
+  /**
+   * Durable liveness: recovery reads the row's `updatedAt`, which no Redis
+   * outage can erase. The throttle is the DB's own WHERE clause (a write only
+   * lands when the row is older than the interval), so it cannot be defeated
+   * by a Redis value that refreshes on every beat. Never throws — a failed
+   * touch only risks the row looking older than it is, and it takes
+   * {@link ACTIVE_CALL_LIVENESS_STALE_MS} of consecutive failures plus a
+   * deliberate re-dial before that matters.
+   */
+  private async touchCallLiveness(whatsappCallId: string): Promise<void> {
+    await whatsappCallRepository
+      .touchLivenessIfStale({
+        id: whatsappCallId,
+        olderThan: new Date(Date.now() - ACTIVE_CALL_ROW_TOUCH_INTERVAL_MS),
+      })
+      .catch((error: unknown) => {
+        logger.warn(
+          { err: error, whatsappCallId },
+          "WhatsApp VoIP active-call heartbeat: durable liveness touch failed",
+        )
+      })
+  }
+
+  /**
    * The single termination primitive — every end-of-call path (reject,
    * hangup, expiry cleanup, finalize) routes through it, so the phase → Graph
    * action mapping lives in exactly one place. Advances to `terminated` from
@@ -1038,30 +1196,34 @@ class WhatsappVoipCallService {
     input: CaptureNativeRecordingAvailableInput,
   ): Promise<void> {
     const row = await whatsappCallRepository.findByWacid(input.wacid)
-    if (!row) {
+    if (row) {
+      logger.info(
+        {
+          wacid: input.wacid,
+          whatsappCallId: row.id,
+          workspaceId: row.workspaceId,
+        },
+        "[wa-call-recording] matched call row → enqueuing native fetch job",
+      )
+    } else {
+      // R8: never drop the event because the row hasn't been created yet —
+      // the recording webhook can race the row-creating `calls`
+      // webhook/job. Enqueue anyway; the fetch job resolves the row by
+      // `wacid` with bounded retry/backoff instead.
       logger.warn(
         { wacid: input.wacid },
-        "[wa-call-recording] no matching call row for wacid; dropping",
+        "[wa-call-recording] no matching call row for wacid yet; enqueuing native fetch job to retry by wacid",
       )
-      return
     }
-
-    logger.info(
-      {
-        wacid: input.wacid,
-        whatsappCallId: row.id,
-        workspaceId: row.workspaceId,
-      },
-      "[wa-call-recording] matched call row → enqueuing native fetch job",
-    )
 
     await enqueueIntegrationJob(
       {
         type: IntegrationJobAction.whatsappCallNativeRecordingFetch,
         data: {
-          whatsappCallId: row.id,
+          ...(row === undefined
+            ? {}
+            : { whatsappCallId: row.id, workspaceId: row.workspaceId }),
           wacid: input.wacid,
-          workspaceId: row.workspaceId,
           audioMediaId: input.audioMediaId,
           audioUrl: input.audioUrl,
           mimeType: input.mimeType,
@@ -1087,20 +1249,23 @@ class WhatsappVoipCallService {
   ): Promise<void> {
     const row = await whatsappCallRepository.findByWacid(input.wacid)
     if (!row) {
+      // R8: never drop the event because the row hasn't been created yet —
+      // enqueue anyway; the fetch job resolves the row by `wacid` with
+      // bounded retry/backoff instead.
       logger.warn(
         { wacid: input.wacid },
-        "Whatsapp native call transcript: no matching call row found; dropping",
+        "Whatsapp native call transcript: no matching call row found yet; enqueuing native fetch job to retry by wacid",
       )
-      return
     }
 
     await enqueueIntegrationJob(
       {
         type: IntegrationJobAction.whatsappCallNativeTranscriptFetch,
         data: {
-          whatsappCallId: row.id,
+          ...(row === undefined
+            ? {}
+            : { whatsappCallId: row.id, workspaceId: row.workspaceId }),
           wacid: input.wacid,
-          workspaceId: row.workspaceId,
           documentMediaId: input.documentMediaId,
           documentUrl: input.documentUrl,
         },
@@ -1155,9 +1320,86 @@ class WhatsappVoipCallService {
       inboxId: input.inboxId,
       contactInboxId: input.contactInboxId,
     })
-    if (active) {
-      throw new WhatsappCallInProgressError(input.contactInboxId)
+    if (!active) {
+      return
     }
+    if (await this.recoverStrandedAcceptedCall(active)) {
+      return
+    }
+    throw new WhatsappCallInProgressError(input.contactInboxId)
+  }
+
+  /**
+   * Dial-time recovery for a call left `accepted` forever because its
+   * `terminate` webhook never arrived: that row holds the
+   * one-live-call-per-contact guard (and the partial unique index behind it),
+   * so without this the contact could never be called again.
+   *
+   * Deliberately NOT a background sweep. "No heartbeat" is evidence, never
+   * proof, that a call ended — a suspended tab or a browser that can still
+   * reach Meta's relay but not ChatbotX looks identical — so nothing closes a
+   * call on a timer. This runs only when an agent explicitly dials the same
+   * contact again, which is itself the human confirmation that the old call is
+   * over, and it never touches Meta (a call whose media really stopped is
+   * dropped by Meta itself, errors 138021/138022).
+   *
+   * Three guards, all of which must agree: the row is `accepted`, its Redis
+   * control is gone or already terminated, and it has had no liveness
+   * heartbeat for {@link ACTIVE_CALL_LIVENESS_STALE_MS}. The last two of those
+   * happen as ONE conditional UPDATE
+   * ({@link WhatsappCallRepository.recoverStrandedAccepted}) rather than a
+   * claim followed by a finalize: a claim would bump `updatedAt` itself, so in
+   * the gap before the finalize a heartbeat could no longer prove the call is
+   * live and a live call could be closed. Written as one statement there is no
+   * gap, and a concurrent heartbeat simply makes the UPDATE match nothing.
+   *
+   * Returns true only when this call personally made the transition, or when a
+   * re-read shows the row reached a terminal status by itself while we were
+   * looking (a real `terminate` landing in the same instant) — which equally
+   * means the contact is free. Anything else refuses the dial.
+   *
+   * The recovered row is `completed`, not `failed`: reaching `accepted` means
+   * the call did connect. `durationSeconds` and `endedAt` stay null rather
+   * than guessed — we know the call is over, never when it ended, and a
+   * delayed terminate can still fill them in. No activity card, realtime event
+   * or workflow trigger is emitted — those belong to an authoritative terminate, and
+   * inventing them here is exactly the false-terminal-effect problem that
+   * removed the background sweep.
+   */
+  private async recoverStrandedAcceptedCall(
+    call: WhatsappCallModel,
+  ): Promise<boolean> {
+    if (call.status !== "accepted") {
+      return false
+    }
+    if (call.wacid) {
+      const control = await this.readControl(call.wacid)
+      if (control && control.phase !== "terminated") {
+        return false
+      }
+    }
+
+    const recovered = await whatsappCallRepository.recoverStrandedAccepted({
+      id: call.id,
+      olderThan: new Date(Date.now() - ACTIVE_CALL_LIVENESS_STALE_MS),
+      lastError: STRANDED_CALL_RECOVERED_LAST_ERROR,
+    })
+    if (recovered) {
+      logger.info(
+        { whatsappCallId: call.id, wacid: call.wacid },
+        "WhatsApp call: closed a stranded accepted call so this contact can be dialed again",
+      )
+      return true
+    }
+
+    // Lost the conditional update. Either a heartbeat proved the call live
+    // (row still `accepted`, refuse) or a real terminate beat us to it (row
+    // already terminal, so the contact is free after all).
+    const latest = await whatsappCallRepository.findById(call.id)
+    return !(
+      latest &&
+      (latest.status === "accepted" || latest.status === "ringing")
+    )
   }
 
   /**
@@ -1190,15 +1432,35 @@ class WhatsappVoipCallService {
   }
 
   /**
+   * How to end a live call that has no control record, derived from its row
+   * exactly as {@link WhatsappVoipCallService.endCall} derives it from the
+   * control phase. `null` when the row is already terminal.
+   */
+  resolveEndOutcomeWithoutControl(
+    call: Pick<WhatsappCallModel, "status" | "direction">,
+  ): EndVoipCallResult | null {
+    const phase = LIVE_CALL_PHASE_BY_STATUS[call.status]?.[call.direction]
+    return phase
+      ? { fromPhase: phase, ...VOIP_END_OUTCOME_BY_PHASE[phase] }
+      : null
+  }
+
+  /** True once the call row has reached a status nothing can move it out of. */
+  isCallEnded(call: Pick<WhatsappCallModel, "status">): boolean {
+    return WHATSAPP_CALL_TERMINAL_STATUSES.includes(call.status)
+  }
+
+  /**
    * Binds Meta's call id to the row an outbound attempt created, once the
    * dial returns one. Idempotent, and it reconciles the attempt row with a
    * row a webhook may have created for the same call in the meantime.
+   * Resolves to the bound row, or `undefined` when the attempt row is gone.
    */
   async attachMetaCallId(input: {
     whatsappCallId: string
     wacid: string
-  }): Promise<void> {
-    await whatsappCallRepository.attachWacid({
+  }): Promise<WhatsappCallModel | undefined> {
+    return await whatsappCallRepository.attachWacid({
       id: input.whatsappCallId,
       wacid: input.wacid,
     })
@@ -1223,24 +1485,27 @@ class WhatsappVoipCallService {
   }
 
   /**
-   * Writes a terminal status for a call the agent ended locally. The
-   * repository's status-rank guard makes this a no-op when a lifecycle
-   * event already finalized the row, so it is safe to call from both the
-   * hangup action and the tab-close beacon for the same call.
+   * Writes a call's terminal status and outcome — from an agent hangup, a
+   * Meta terminate webhook, or the stale-ringing sweep. The repository's
+   * status-rank guard never downgrades a terminal row and only fills fields
+   * still missing on a same-status redelivery, so every caller is idempotent.
+   * Omitted (`undefined`) fields are left untouched. Resolves to the written
+   * row, or `undefined` when nothing changed.
    */
   async finalizeEndedCall(input: {
     whatsappCallId: string
     status: WhatsappCallStatus
     endedAt: Date
+    startedAt?: Date | null
+    durationSeconds?: number | null
+    messageId?: string | null
     lastError?: string | null
     current?: WhatsappCallModel
-  }): Promise<void> {
-    await whatsappCallRepository.finalizeById({
-      id: input.whatsappCallId,
-      status: input.status,
-      endedAt: input.endedAt,
-      ...(input.lastError === undefined ? {} : { lastError: input.lastError }),
-      ...(input.current === undefined ? {} : { current: input.current }),
+  }): Promise<WhatsappCallModel | undefined> {
+    const { whatsappCallId, ...finalization } = input
+    return await whatsappCallRepository.finalizeById({
+      id: whatsappCallId,
+      ...finalization,
     })
   }
 }

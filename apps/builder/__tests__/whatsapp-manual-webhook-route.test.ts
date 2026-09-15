@@ -40,6 +40,7 @@ const manualRow = (
     subscribeOverrideOk: boolean
   }> = {},
 ) => ({
+  phoneNumberId: "phone-number-1",
   auth: {
     verifyToken: "verify-token",
     clientSecret: "",
@@ -136,6 +137,8 @@ describe("whatsapp manual webhook route — POST", () => {
           clientSecret: "",
           manualIntegration: true,
           integrationId: INTEGRATION_ID,
+          // R4: pins every parsed change to this integration's own number.
+          phoneNumberId: "phone-number-1",
         }),
       }),
     )

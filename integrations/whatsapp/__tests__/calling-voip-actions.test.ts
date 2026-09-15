@@ -328,6 +328,33 @@ describe("connectCall", () => {
     ).rejects.toBeInstanceOf(WhatsappException)
   })
 
+  it("R2: posts action:connect with `recipient` (BSUID) instead of `to` for a Username/BSUID-only contact", async () => {
+    postMock.mockReturnValueOnce(
+      okResponse({
+        messaging_product: "whatsapp",
+        calls: [{ id: "wacid.BSUID-1" }],
+      }),
+    )
+
+    const result = await connectCall({
+      auth: buildAuth(),
+      recipient: "bsuid-123",
+      sdpOffer: "v=0 offer-sdp",
+      attemptId: "attempt-bsuid-1",
+    })
+
+    expect(result).toEqual({ wacid: "wacid.BSUID-1" })
+    const [, options] = postMock.mock.calls[0]
+    expect(options.json).toEqual({
+      messaging_product: "whatsapp",
+      recipient: "bsuid-123",
+      action: WhatsappCallGraphAction.connect,
+      biz_opaque_callback_data: "attempt-bsuid-1",
+      session: { sdp_type: "offer", sdp: "v=0 offer-sdp" },
+    })
+    expect(options.json.to).toBeUndefined()
+  })
+
   it("never logs or throws the SDP when connectCall fails", async () => {
     const httpError = makeHttpError(400, {
       error: {

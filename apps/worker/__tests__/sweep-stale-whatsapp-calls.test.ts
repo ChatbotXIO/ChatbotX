@@ -12,8 +12,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   whatsappCallRepository: {
     sweepStaleRinging: mocks.sweepStaleRinging,
-    finalizeById: mocks.finalizeById,
   },
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
+  whatsappVoipCallService: { finalizeEndedCall: mocks.finalizeById },
 }))
 
 vi.mock("@chatbotx.io/logger", () => ({
@@ -58,7 +61,7 @@ describe("sweepStaleWhatsappCalls", () => {
     expect(mocks.resolveVoipAuthByInboxId).not.toHaveBeenCalled()
     expect(mocks.finalizeById).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: "call-1",
+        whatsappCallId: "call-1",
         status: "failed",
         lastError: "stale-ringing-never-finalized",
       }),
@@ -77,7 +80,7 @@ describe("sweepStaleWhatsappCalls", () => {
       auth: { fake: "auth" },
     })
     expect(mocks.finalizeById).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "call-1", status: "failed" }),
+      expect.objectContaining({ whatsappCallId: "call-1", status: "failed" }),
     )
   })
 
@@ -112,7 +115,7 @@ describe("sweepStaleWhatsappCalls", () => {
       expect.stringContaining("falling back to a direct finalize"),
     )
     expect(mocks.finalizeById).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "call-1", status: "failed" }),
+      expect.objectContaining({ whatsappCallId: "call-1", status: "failed" }),
     )
   })
 
@@ -127,7 +130,7 @@ describe("sweepStaleWhatsappCalls", () => {
 
     expect(mocks.finalizeById).toHaveBeenCalledTimes(1)
     expect(mocks.finalizeById).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "call-no-wacid" }),
+      expect.objectContaining({ whatsappCallId: "call-no-wacid" }),
     )
     expect(mocks.endReservedCall).toHaveBeenCalledWith({
       wacid: "wacid.VOIP",

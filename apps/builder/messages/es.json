@@ -3982,7 +3982,6 @@
         "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
         "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
         "callFailed": "The call could not be placed. Please try again.",
-        "useSip": "This number uses in-app (SIP) calling. Use the call button for that instead.",
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Se denegó el acceso al micrófono. Permite el acceso en la configuración de tu navegador e inténtalo de nuevo.",
@@ -4050,7 +4049,8 @@
         "expand": "Expandir",
         "dismiss": "Cerrar",
         "statusNoAnswer": "Sin respuesta",
-        "eyebrowCallEnded": "LLAMADA FINALIZADA"
+        "eyebrowCallEnded": "LLAMADA FINALIZADA",
+        "statusConnectionLost": "Conexión perdida"
       },
       "capability": {
         "title": "Elegibilidad de llamadas",
@@ -4059,6 +4059,12 @@
         "ok": "Aceptar",
         "micPermissionTitle": "Permiso de micrófono",
         "dialFailureTitle": "No se pudo realizar la llamada"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Número conectado manualmente",
+        "callsSubscription": "Este número de WhatsApp se conectó manualmente. Asegúrate de que tu aplicación de Meta esté suscrita al campo de webhook calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls); de lo contrario, las llamadas salientes no podrán conectarse y las entrantes no sonarán.",
+        "unsignedWebhook": "Este número tampoco tiene configurado un Meta App Secret, por lo que sus webhooks entrantes no se verifican mediante firma.",
+        "callAnyway": "Llamar de todos modos"
       }
     }
   },

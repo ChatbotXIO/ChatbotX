@@ -4,17 +4,20 @@
 > overview lives in [`whatsapp-calling.md`](./whatsapp-calling.md).
 
 ## Why browser WebRTC
-Meta WhatsApp Business Calling offers two transports for a user-initiated call: a
-SIP interconnect to a self-hosted media server, and VoIP mode, where the `calls`
-connect webhook carries an SDP **offer** (`session.sdp_type:"offer"` — WebRTC:
-ICE, DTLS-SRTP, OPUS) and the business answers with an SDP **answer** through the
-Graph API (`pre_accept` then `accept`). Media then flows over WebRTC directly
-between the answering peer and Meta.
+Meta WhatsApp Business Calling's VoIP mode is where the `calls` connect webhook
+carries an SDP **offer** (`session.sdp_type:"offer"` — WebRTC: ICE, DTLS-SRTP,
+OPUS) and the business answers with an SDP **answer** through the Graph API
+(`pre_accept` then `accept`). Media then flows over WebRTC directly between the
+answering peer and Meta.
 
 ChatbotX uses VoIP mode exclusively, with the **agent's browser** as the WebRTC
 peer, so there is no media server to operate (Meta docs:
 `.../whatsapp/calling/user-initiated-calls`). A connect webhook is routed to the
 calling path only when it carries a **validated** `session.sdp_type:"offer"`.
+There is no SIP transport or self-hosted media server (FreeSWITCH) in this
+codebase — an earlier iteration used one, but it was fully removed in favor of
+this browser-WebRTC path; `transport` in the realtime payload contract is a
+`z.literal("voip")`, not a union.
 
 ## Meta Graph API (verified against Meta docs)
 `POST /{phone_number_id}/calls` with `{ messaging_product:"whatsapp", call_id, action, session? }`:
@@ -75,8 +78,8 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
 5. **Ring-all + fenced claim/accept.** Shipped as RING-ALL, not single-agent
    reservation: `whatsappVoipCallService.resolveRingTargets` resolves every agent with
    the inbox open (`whatsappVoipPresenceService`, capped at `MAX_VOIP_RING_TARGETS`)
-   and creates ONE control record with `reservedUserId: ""` (unclaimed — mirrors the
-   SIP fork-dial). The worker's `handleConnect` delivers the SDP offer to every one of
+   and creates ONE control record with `reservedUserId: ""` (unclaimed — the classic
+   telephony fork-dial pattern). The worker's `handleConnect` delivers the SDP offer to every one of
    those agents via `sendToWorkspaceMember` (never a broadcast). Call control lives in
    Redis `voip:ctrl:<wacid>` = `{ reservedUserId, phase, deadlineAt, fenceToken }`,
    `phase: "reserved" | "answering" | "accepted" | "terminated"`. Transitions are
@@ -142,25 +145,75 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
   claim it as long as the control is still `phase:"reserved"`/`reservedUserId:""` and
   the offer TTL hasn't lapsed. This is an accepted design decision, not a gap: any
   member of the workspace is trusted to pick up a ringing call for that workspace —
-  the same trust boundary the SIP fork-dial and the inbox itself already extend to
-  every member. Documenting it here makes it explicit rather than an implicit
-  assumption future readers might mistake for a bug.
+  the same trust boundary the inbox itself already extends to every member.
+  Documenting it here makes it explicit rather than an implicit assumption
+  future readers might mistake for a bug.
 
 ## Browser WebRTC (standard, no SDP munging)
 `use-whatsapp-voip-call` (native `RTCPeerConnection`, NOT sip.js):
-`setRemoteDescription(offer)` → `addTrack(getUserMedia audio)` → `createAnswer()` →
+`setRemoteDescription(offer)` → `addTransceiver("audio", { direction: "sendrecv" })`
+with **no track** (mic acquired but not attached) → `createAnswer()` →
 `setLocalDescription()` → **wait `iceGatheringState==="complete"`** (deadline-capped) →
 send the full answer SDP to the answer action. The browser generates DTLS `a=setup`,
 ICE role, codecs, candidates — never hand-edit SDP. ICE servers = STUN + short-lived
 coturn TURN from `getVoipTurnCredentials(whatsappCallId)` (scoped to the reserved caller
-and that call; NOT the SIP `softphone-credentials.action`). Media flows only after
-`accept` 200. Close the peer on the transport-tagged `ended` realtime event.
+and that call). Transport-tagged `ended` realtime event closes the peer.
+
+- **No early media.** The same cached answer SDP string is sent to `pre_accept` and
+  `accept` (Meta requires them identical). The mic is attached with
+  `sender.replaceTrack(micTrack)` only after `accept` returns 200 (inbound) or the
+  outbound `ACCEPTED` status arrives — no renegotiation, no RTP before accept.
+- **Server-side answer deadline.** `answerVoipCallAction` re-checks the control
+  `deadlineAt` (3 s margin) before claim, before `pre_accept` and before `accept`;
+  an expired call makes no Graph call and returns `cannotAnswer`.
+- **Connection health.** `connectionstatechange` → `failed` ends the call
+  immediately; `disconnected` longer than 8 s ends it (recovery cancels the timer).
+  The panel shows `connectionLost`.
+- **Active-call liveness.** While a call is active the tab calls
+  `heartbeatActiveVoipCallAction` every 20 s; it renews the 4 h accepted control via
+  fenced CAS and, at most once every 2 min, refreshes the row's `updatedAt` through
+  `whatsappCallRepository.touchLivenessIfStale`. Nothing closes an `accepted` call on
+  a timer: "no heartbeat" is evidence, never proof, that a call ended (a suspended
+  tab, or a browser that still reaches Meta's relay but not ChatbotX, looks
+  identical), and `sweepStaleWhatsappCalls` only ages out `ringing` rows.
+- **Dial-time recovery of a stranded call.** A call left `accepted` forever because
+  its `terminate` webhook never arrived holds the one-live-call-per-contact guard.
+  `whatsappVoipCallService.assertNoActiveCallForContact` releases it — but only when
+  an agent explicitly dials that same contact again, which is itself the human
+  confirmation that the old call is over — and only when three guards agree: the row
+  is `accepted`, its Redis control is gone or already `terminated`, and it has had no
+  liveness touch for 30 min. The last two are ONE conditional statement
+  (`whatsappCallRepository.recoverStrandedAccepted`: `UPDATE … SET status='completed'
+  WHERE id = ? AND status = 'accepted' AND updatedAt < cutoff RETURNING`) — claiming
+  the row and then terminalizing it would leave a gap in which a heartbeat could no
+  longer prove the call live. Losing that update means either a heartbeat won (row
+  still `accepted` → dial refused) or a real terminate won (row already terminal →
+  dial allowed); the code re-reads to tell them apart. The recovery is local
+  (`lastError: "stranded-accepted-recovered-on-dial"`) and never calls Meta — a call
+  whose media really stopped is dropped by Meta itself (138021/138022). The row is
+  recorded `completed` (reaching `accepted` means it connected); `endedAt` and
+  `durationSeconds` stay null rather than guessed, which also leaves a delayed
+  terminate free to stamp the real values. It deliberately emits **no** activity card,
+  realtime event or workflow trigger: those belong to an authoritative terminate.
+- **Manual integrations** can place calls, but ChatbotX can never confirm that the
+  customer's own Meta app is subscribed to the `calls` webhook field (unlike a
+  platform-credential integration, which ChatbotX verifies/auto-subscribes) — if it
+  is not, outbound calls never receive Meta's SDP answer/status webhooks and inbound
+  calls never ring. `resolveOutboundCallModeAction` reports this as
+  `manualCallsSubscriptionUnverified: true` for every manual integration, and the
+  call button shows a pre-dial warning dialog reminding the user to check their Meta
+  App Dashboard subscription before proceeding. A manual integration with no App
+  Secret additionally carries `unsignedWebhookWarning: true` (its incoming webhooks
+  are not signature-verified), shown as a second paragraph in the same dialog.
+  Webhooks on the manual route are bound to the integration's own `phoneNumberId` —
+  changes for any other number are dropped before enqueue.
 
 ## Realtime event contract
-Add a discriminated SIP/VoIP payload in `packages/partysocket-config/src/schemas.ts`
-(`transport: "sip" | "voip"`, variants incoming/ended). VoIP variants carry
-`whatsappCallId`/`wacid` and **no `rootUuid`**. `ChatRealtime` and the shared finalizer
-emit the transport-tagged ended event for both transports.
+The transport-tagged payload lives in `packages/partysocket-config/src/schemas.ts`
+(`transport: z.literal("voip")` — kept as a literal, not stripped, so existing
+clients keep parsing the payload unchanged; browser WebRTC is the only transport).
+Variants carry `whatsappCallId`/`wacid` and **no `rootUuid`**. `ChatRealtime` and
+the shared finalizer emit the transport-tagged ended event.
 
 ## Multi-agent behaviour
 
@@ -173,22 +226,33 @@ emit the transport-tagged ended event for both transports.
   render it the same way. `get-pending-incoming-voip-call.action.ts` calls this on
   dock mount. See M6 above for who is allowed to call it.
 - **Presence heartbeat.** `whatsappVoipPresenceService` (Redis `presenceStore`,
-  `voip:presence:<workspaceId>`) is the VoIP ring-set source, deliberately independent
-  of SIP `REGISTER` presence — an agent counts as "available" simply by having the
-  inbox open, heartbeating every well inside `VOIP_PRESENCE_TTL_MS` (45 s) via a
-  builder hook while the call dock is mounted. No explicit sign-off is required: a
-  closed tab drops out within one TTL.
-- **Recording upload (browser-side, not media-path).** The answering agent's browser
-  captures the call locally via `MediaRecorder` (`voip/call-recorder.ts`) and uploads
-  the result through `apps/builder/src/app/api/whatsapp-call-recording/route.ts` once
-  the call ends. This is explicitly NOT server-side/media-path recording — Meta's
-  WebRTC media never transits a server we control, so there is no media-path tap to
-  record from; the recording is only as complete as what the answering agent's own
-  browser captured.
-- **Transcript enrichment.** `apps/worker/src/integration/handlers/whatsapp-call-transcribe.ts`
-  transcribes the uploaded recording and enriches the call's activity message,
-  emitting a realtime `messageContentUpdated` event so the inbox updates the call row
-  in place once a transcript becomes available, without a full message re-fetch.
+  `voip:presence:<workspaceId>`) is the VoIP ring-set source — an agent counts as
+  "available" simply by having the inbox open, heartbeating every well inside
+  `VOIP_PRESENCE_TTL_MS` (45 s) via a builder hook while the call dock is mounted. No
+  explicit sign-off is required: a closed tab drops out within one TTL.
+- **Recording mode.** Each `WhatsappIntegration` row has a `callRecordingMode`
+  column: `"metaNative"` (default) or `"browserWhisper"` (opt-in, requires
+  `callRecordingEnabled`).
+  - `metaNative`: Meta records the call server-side and delivers the recording and,
+    separately, the transcript via their own native recording/transcription webhooks
+    (`handleWhatsappCallNativeRecordingFetch`,
+    `handleWhatsappCallNativeTranscriptFetch`) — there is no browser upload and no
+    OpenAI Whisper call for this mode.
+  - `browserWhisper`: the answering agent's browser captures the call locally via
+    `MediaRecorder` (`voip/call-recorder.ts`) and uploads the result through
+    `apps/builder/src/app/api/whatsapp-call-recording/route.ts` once the call ends —
+    this is browser-side, NOT server-side/media-path recording, since Meta's WebRTC
+    media never transits a server we control, so the recording is only as complete as
+    what the answering agent's own browser captured. If `callTranscriptionEnabled` is
+    also set, `apps/worker/src/integration/handlers/whatsapp-call-transcribe.ts`
+    transcribes the uploaded recording with OpenAI Whisper (a paid call) and enriches
+    the call's activity message, emitting a realtime `messageContentUpdated` event so
+    the inbox updates the call row in place once a transcript becomes available,
+    without a full message re-fetch. The upload route independently gates on the
+    caller being the answering agent, `callRecordingEnabled`, `callRecordingMode ===
+    "browserWhisper"`, and the workspace owner's access state (a trial-expired or
+    otherwise blocked owner is rejected the same way `workspaceActionClient` rejects
+    a paid mutation) before it ever queues that paid transcription job.
 - **Hangup beacon on tab close.** `apps/builder/src/app/api/whatsapp-voip-call-hangup/route.ts`
   is a dedicated route hit via the `pagehide` event (`use-whatsapp-voip-call.ts`) so a
   closed tab / navigated-away agent still triggers a hangup server-side instead of
@@ -200,16 +264,38 @@ emit the transport-tagged ended event for both transports.
 ## Parser boundary
 `integrations/whatsapp/src/lib/calls.ts`: the user-initiated connect gains a bounded
 discriminated `session: { sdp_type:"offer"; sdp: string /* ≤ ~100 KB */ }`; a
-malformed/oversized supplied session is **rejected** (warn), never silently treated as
-SIP. Mirror the bounded field in the worker-config queue payload
+malformed/oversized supplied session is **rejected** (warn), never silently accepted.
+Mirror the bounded field in the worker-config queue payload
 (`packages/worker-config/src/queues/integration/index.ts`) if it flows through there;
 otherwise the slim VoIP job type carries only `{ wacid, deadlineAt }`.
+
+## Webhook/flow-trigger payloads (`callRecorded` / `callTranscribed`)
+Both call events are dispatched to workspace webhooks and flow triggers with their
+call metadata passed straight through (`apps/worker/src/webhook/services/webhook-payload.builder.ts`):
+
+- **`callRecorded`** carries `recordingUrl` — a **presigned, time-limited URL**
+  (`callRecordingService.getRecordingSignedUrl`,
+  `RECORDING_SIGNED_URL_TTL_SECONDS` = **15 minutes**), never a public storage URL.
+  A consumer (webhook receiver, flow step) that stores this URL for later use, or
+  delays processing past the 15-minute window, must re-fetch a fresh one via
+  `getCallRecordingUrlAction` / `callRecordingService.getRecordingUrlForCall`
+  rather than reuse the expired link. The same TTL backs the
+  `{{last_call_recording}}` flow variable
+  (`packages/variables/src/helpers/last-call.ts`).
+- **`callTranscribed`** carries the **full transcript text** of the call. This is
+  potentially sensitive/PII content (whatever the caller and agent said) —
+  workspace admins wiring this into a webhook or a flow step are responsible for
+  handling it accordingly (e.g. not logging it verbatim, respecting data-retention
+  policy). See `docs/whatsapp-calling-gap-analysis-plan.md` (R26) for the decision
+  record: presigned URL + full transcript were kept as-is, short TTL and PII
+  handling are documented rather than replaced with an opaque-id + authenticated
+  fetch pattern.
 
 ## Test matrix
 parser valid/malformed/oversized · Graph payload shapes + SDP-absent-from-logs (both
 webhook routes, sub-64 KB sentinel) · two-answerer race (one wins) · cross-room token
 replay rejected · redelivery does not extend TTL · deadline expiry cleanup path ·
-accepted persisted before the 90 s stale sweep · ICE-gathering-complete gating · fence
+accepted persisted before the 90 s stale-*ringing* sweep · ICE-gathering-complete gating · fence
 inverse race (accept CAS wins, terminate advances before DB write → guarded UPDATE
 no-ops + Graph terminate compensation) · forward race (accept persists, later terminate
 fills `endedAt`, no downgrade) · `finalizeEndedCall` terminal idempotency ·

@@ -66,7 +66,7 @@ const memberClaimsSchema = z.object({
 export type RealtimeMemberClaims = z.infer<typeof memberClaimsSchema>
 
 /**
- * Mints a one-time connect token bound to a member of a workspace room:
+ * Mints a short-lived connect token bound to a member of a workspace room:
  * `aud` carries the workspace room id (verified against `room.id` on
  * connect — see `verifyMemberConnectToken`) and the payload carries the
  * verified `userId`. Only the issuer (Builder, after checking workspace

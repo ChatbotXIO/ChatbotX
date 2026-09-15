@@ -12,7 +12,7 @@ const {
   mockRecordOutboundMessageSent,
   mockRecordSendFailure,
   mockChatQueueAdd,
-  mockUpsertForContactInbox,
+  mockRecordPermanentGrant,
 } = vi.hoisted(() => {
   const updateChain = {
     set: vi.fn().mockReturnThis(),
@@ -38,7 +38,7 @@ const {
     mockRecordOutboundMessageSent: vi.fn().mockResolvedValue(undefined),
     mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
-    mockUpsertForContactInbox: vi.fn().mockResolvedValue(undefined),
+    mockRecordPermanentGrant: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -54,6 +54,9 @@ vi.mock("@chatbotx.io/business", () => ({
     recordSendFailure: mockRecordSendFailure,
   },
   contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
+  whatsappCallPermissionService: {
+    recordPermanentGrant: mockRecordPermanentGrant,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -74,9 +77,6 @@ vi.mock("@chatbotx.io/event-bus", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
-  whatsappCallPermissionRepository: {
-    upsertForContactInbox: mockUpsertForContactInbox,
-  },
 }))
 
 vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
@@ -680,13 +680,11 @@ describe("chat send-message handlers", () => {
     ).resolves.toEqual({ messageIds: [] })
 
     // Grant reconciled + button flipped to direct-dial.
-    expect(mockUpsertForContactInbox).toHaveBeenCalledWith(
-      expect.objectContaining({
-        contactInboxId: "ci-1",
-        response: "accept",
-        isPermanent: true,
-      }),
-    )
+    expect(mockRecordPermanentGrant).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactInboxId: "ci-1",
+      grantedAt: expect.any(Date),
+    })
     expect(mockChatQueueAdd).toHaveBeenCalledWith(
       "broadcastEvent",
       expect.objectContaining({

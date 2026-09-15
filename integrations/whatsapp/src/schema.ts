@@ -27,6 +27,13 @@ export type WhatsappConfig = BaseConfig & {
   manualIntegration?: boolean
   /** Set by the manual-integration webhook route, for log correlation only. */
   integrationId?: string
+  /**
+   * Set by the manual-integration webhook route to the loaded integration's
+   * own phone number id. When present, every parsed change whose
+   * `metadata.phone_number_id` differs is dropped before enqueue, so a
+   * manual endpoint can only ever deliver events for its own number.
+   */
+  phoneNumberId?: string
 }
 
 export type WhatsappAuthValue = Oauth2AuthValue & {

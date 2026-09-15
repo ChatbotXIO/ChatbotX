@@ -3961,7 +3961,6 @@
         "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
         "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
         "callFailed": "The call could not be placed. Please try again.",
-        "useSip": "This number uses in-app (SIP) calling. Use the call button for that instead.",
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "マイクへのアクセスが拒否されました。ブラウザの設定でマイクへのアクセスを許可してから再試行してください。",
@@ -4029,7 +4028,8 @@
         "expand": "展開",
         "dismiss": "閉じる",
         "statusNoAnswer": "応答なし",
-        "eyebrowCallEnded": "通話終了"
+        "eyebrowCallEnded": "通話終了",
+        "statusConnectionLost": "接続が失われました"
       },
       "capability": {
         "title": "通話の利用条件",
@@ -4038,6 +4038,12 @@
         "ok": "OK",
         "micPermissionTitle": "マイクの許可",
         "dialFailureTitle": "発信できませんでした"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "手動で接続された番号",
+        "callsSubscription": "このWhatsApp番号は手動で接続されています。Metaアプリがcalls Webhookフィールドをサブスクライブしていることを確認してください（Metaアプリダッシュボード → WhatsApp → Configuration → Webhook fields → calls）。そうしないと、発信通話は接続されず、着信通話も鳴りません。",
+        "unsignedWebhook": "この番号にはMeta App Secretも設定されていないため、受信Webhookは署名検証されていません。",
+        "callAnyway": "このまま発信する"
       }
     }
   },

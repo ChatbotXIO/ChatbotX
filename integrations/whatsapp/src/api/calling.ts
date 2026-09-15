@@ -155,13 +155,26 @@ export type WhatsappCallPermissionsResponse = {
 }
 
 /**
- * `GET /{pnid}/call_permissions?user_wa_id=<E164 digits>` — whether this
- * business number may start a call (or must request permission first) with
- * the given WhatsApp user, per Meta's calling-permissions reference.
+ * Who the permission lookup is about — Meta's `call_permissions` GET takes
+ * EITHER the phone number (`user_wa_id`) OR, for a Username/BSUID-only user
+ * with no phone number exposed, the business-scoped id (`recipient`):
+ * "The business-scoped user ID (BSUID) or parent BSUID of the WhatsApp user.
+ * Use this instead of `user_wa_id`." Passing a BSUID as `user_wa_id` is NOT
+ * the documented shape, so the two are modelled as an exclusive union here.
+ */
+export type WhatsappCallPermissionsTarget =
+  | { userWaId: string }
+  | { recipient: string }
+
+/**
+ * `GET /{pnid}/call_permissions?user_wa_id=<E164 digits>` (or `?recipient=
+ * <BSUID>`) — whether this business number may start a call (or must request
+ * permission first) with the given WhatsApp user, per Meta's
+ * calling-permissions reference.
  */
 export const getCallPermissions = (
   auth: WhatsappAuthValue,
-  userWaId: string,
+  target: WhatsappCallPermissionsTarget,
 ): Promise<WhatsappCallPermissionsResponse> => {
   const { version = DEFAULT_API_VERSION } = auth
 
@@ -174,7 +187,10 @@ export const getCallPermissions = (
             headers: {
               Authorization: `Bearer ${auth.tokens.accessToken}`,
             },
-            searchParams: { user_wa_id: userWaId },
+            searchParams:
+              "recipient" in target
+                ? { recipient: target.recipient }
+                : { user_wa_id: target.userWaId },
           },
         )
         .json(),
@@ -269,20 +285,21 @@ type WhatsappCallExistingCallActionBody = {
 
 /**
  * `connect` places a NEW outbound call: no `call_id` yet (Meta assigns one
- * in the response), a recipient `to` (bare digits, no leading `+`), the
- * business's SDP OFFER, and `biz_opaque_callback_data` (the attempt id) so
- * the async answer/status/terminate webhooks can be correlated back to this
- * attempt before the call id is known.
+ * in the response), a recipient — `to` (bare digits, no leading `+`) for a
+ * phone-number-keyed contact, or `recipient` (a BSUID) for a Username/BSUID-
+ * only contact with no phone number exposed (R2) — the business's SDP OFFER,
+ * and `biz_opaque_callback_data` (the attempt id) so the async
+ * answer/status/terminate webhooks can be correlated back to this attempt
+ * before the call id is known. Exactly one of `to`/`recipient` is ever sent.
  */
 type WhatsappCallConnectActionBody = {
   messaging_product: "whatsapp"
-  to: string
   action: "connect"
   biz_opaque_callback_data: string
   session: WhatsappCallOfferSession
   recording?: WhatsappCallAnnouncementBody
   transcription?: WhatsappCallAnnouncementBody
-}
+} & ({ to: string } | { recipient: string })
 
 type WhatsappCallActionRequestBody =
   | WhatsappCallExistingCallActionBody
@@ -294,14 +311,15 @@ export type WhatsappCallActionResponse = {
 }
 
 /**
- * `connect` has no `call_id` (only `to`, until Meta's response assigns one)
- * — the error context surfaces whichever identifier the failed action's
- * body actually carried, never both.
+ * `connect` has no `call_id` (only `to`/`recipient`, until Meta's response
+ * assigns one) — the error context surfaces whichever identifier the failed
+ * action's body actually carried, never more than one.
  */
 type CallActionErrorContext = {
   action: WhatsappCallGraphAction
   callId?: string
   to?: string
+  recipient?: string
 }
 
 /**
@@ -322,6 +340,7 @@ const buildCallActionError = (
     {
       callId: context.callId,
       to: context.to,
+      recipient: context.recipient,
       action: context.action,
       httpStatus: parsed.httpStatusCode,
     },
@@ -361,6 +380,7 @@ const postCallAction = async (
       action: body.action,
       callId: "call_id" in body ? body.call_id : undefined,
       to: "to" in body ? body.to : undefined,
+      recipient: "recipient" in body ? body.recipient : undefined,
     })
   }
 }
@@ -452,10 +472,14 @@ export const terminateCall = ({
     action: WhatsappCallGraphAction.terminate,
   })
 
+/**
+ * R2: a Username/BSUID-only contact (no phone number exposed) has no `to`
+ * to dial — Meta's `connect` action accepts a BSUID via `recipient` instead
+ * (per the Calling API's `connect` spec: "`to` | `recipient` BSUID"). Exactly
+ * one of the two is ever sent.
+ */
 export type WhatsappConnectCallInput = {
   auth: WhatsappAuthValue
-  /** Recipient WhatsApp id, bare digits — no leading `+` (Meta rejects one). */
-  to: string
   sdpOffer: string
   /**
    * Round-trips as `biz_opaque_callback_data` so the async answer, status,
@@ -464,7 +488,11 @@ export type WhatsappConnectCallInput = {
    * `bizOpaqueCallbackData`).
    */
   attemptId: string
-} & WhatsappCallAnnouncementOptions
+} & WhatsappCallAnnouncementOptions &
+  (
+    | { to: string; recipient?: undefined }
+    | { recipient: string; to?: undefined }
+  )
 
 /**
  * `action:"connect"` — places a NEW outbound (business-initiated) call.
@@ -475,15 +503,17 @@ export type WhatsappConnectCallInput = {
  */
 export const connectCall = async ({
   auth,
-  to,
   sdpOffer,
   attemptId,
   recording,
   transcription,
+  ...identity
 }: WhatsappConnectCallInput): Promise<{ wacid: string }> => {
   const response = await postCallAction(auth, {
     messaging_product: "whatsapp",
-    to,
+    ...(identity.recipient === undefined
+      ? { to: identity.to }
+      : { recipient: identity.recipient }),
     action: WhatsappCallGraphAction.connect,
     biz_opaque_callback_data: attemptId,
     session: { sdp_type: "offer", sdp: sdpOffer },

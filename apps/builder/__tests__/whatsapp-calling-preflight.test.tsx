@@ -39,14 +39,6 @@ vi.mock(
   }),
 )
 
-vi.mock(
-  "@/features/integration-whatsapp/calling/actions/whatsapp-sip-provisioning.action",
-  () => ({
-    provisionWhatsappSipAction: { bind: () => vi.fn() },
-    deprovisionWhatsappSipAction: { bind: () => vi.fn() },
-  }),
-)
-
 // jsdom ships no ResizeObserver, and Radix measures the switch thumb through it.
 Object.assign(globalThis, {
   ResizeObserver: class {

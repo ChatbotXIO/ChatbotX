@@ -8,12 +8,12 @@ import { enrichCallActivityMessage } from "./whatsapp-call-finalize"
  * themselves never go on the message — only the flag —
  * they are fetched separately on Call Information sheet open.
  *
- * Shared by both the SIP/Whisper (`handleWhatsappCallTranscribe`) and
+ * Shared by both the browserWhisper (`handleWhatsappCallTranscribe`) and
  * Meta-native (`handleWhatsappCallNativeTranscriptFetch`) transcription
  * paths so neither keeps its own copy of the enrichment call. Kept in its
  * own module (rather than inline in `whatsapp-call-transcribe.ts`) so
- * importing it does not pull in that file's SIP-only AI-transcription
- * dependencies (`ai`, `ky`, `@chatbotx.io/ai`).
+ * importing it does not pull in that file's browserWhisper-only
+ * AI-transcription dependencies (`ai`, `ky`, `@chatbotx.io/ai`).
  */
 export const enrichRecordingMessageWithTranscript = async (props: {
   call: Pick<

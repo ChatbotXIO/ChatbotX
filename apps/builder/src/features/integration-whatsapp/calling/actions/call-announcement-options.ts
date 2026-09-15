@@ -90,6 +90,21 @@ export function hasCallAnnouncementOptions(
 const NEVER_ANNOUNCEMENT_RELATED_HTTP_STATUSES = new Set([401, 403, 429])
 
 /**
+ * Meta's documented calling error codes. Each names a concrete cause that is
+ * not a bad announcement (duplicate call, limits, permissions, payment,
+ * media failures), so retrying without the announcement would only repeat a
+ * request Meta already refused for another reason. Meta documents no code of
+ * its own for an invalid `purpose`/`announcement_language`.
+ *
+ * developers.facebook.com/documentation/business-messaging/whatsapp/calling/troubleshooting
+ */
+const DOCUMENTED_CALLING_ERROR_CODES = new Set([
+  613, 131_009, 131_030, 131_044, 131_055, 138_000, 138_001, 138_002, 138_003,
+  138_004, 138_005, 138_006, 138_007, 138_009, 138_012, 138_013, 138_014,
+  138_015, 138_017, 138_018, 138_019, 138_020, 138_021, 138_022, 138_023,
+])
+
+/**
  * True for a Meta 4xx that can plausibly be the `recording`/`transcription`
  * opt-in objects being rejected (bad `purpose`/`announcement_language`) —
  *: "Bad purpose/announcement_language ⇒ Meta rejects the whole
@@ -108,7 +123,10 @@ export function isCallAnnouncementValidationError(error: unknown): boolean {
   if (error.code === "whatsappCallAnnouncementPurposeTooLong") {
     return false
   }
-  if (NEVER_ANNOUNCEMENT_RELATED_HTTP_STATUSES.has(error.httpStatusCode)) {
+  if (
+    NEVER_ANNOUNCEMENT_RELATED_HTTP_STATUSES.has(error.httpStatusCode) ||
+    DOCUMENTED_CALLING_ERROR_CODES.has(Number(error.code))
+  ) {
     return false
   }
   return error.httpStatusCode >= 400 && error.httpStatusCode < 500

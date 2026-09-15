@@ -260,11 +260,12 @@ export const endReservedCall = async (input: {
 }
 
 /**
- * `handleConnect` — rings EVERY eligible agent (ring-all, like the SIP
- * fork-dial): resolves the live ring set, then delivers the SDP offer to each
- * one's realtime connections. The fenced CAS in `claimForAnswer` lets only the
- * first to answer win. Rejects when nobody has the inbox open. The durable
- * expiry job is scheduled at the webhook boundary.
+ * `handleConnect` — rings EVERY eligible agent (ring-all, the classic
+ * telephony fork-dial pattern): resolves the live ring set, then delivers
+ * the SDP offer to each one's realtime connections. The fenced CAS in
+ * `claimForAnswer` lets only the first to answer win. Rejects when nobody
+ * has the inbox open. The durable expiry job is scheduled at the webhook
+ * boundary.
  */
 const handleConnect = async (data: HandleConnectData): Promise<void> => {
   const { wacid, deadlineAt, phoneNumberId } = data

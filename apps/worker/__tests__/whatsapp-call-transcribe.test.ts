@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  whatsappCallLifecycleService: { attachTranscript: mocks.attachTranscript },
   contactInboxService: { findBy: mocks.contactInboxFindBy },
   callRecordingService: { getRecordingSignedUrl: mocks.getRecordingSignedUrl },
   broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
@@ -28,7 +29,6 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   whatsappCallRepository: {
     findById: mocks.findById,
-    attachTranscript: mocks.attachTranscript,
   },
   integrationWhatsappRepository: {
     findByInboxIdForWorkspace: mocks.findByInboxIdForWorkspace,

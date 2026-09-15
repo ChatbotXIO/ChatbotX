@@ -1,5 +1,6 @@
 "use client"
 
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Tooltip,
@@ -16,6 +17,7 @@ import { enableBotAction } from "../conversations/actions/enable-bot.action"
 import { UpdateConversationAssignee } from "../conversations/components/update-conversation-assignee"
 import { ConversationAction } from "../conversations/conversation-action"
 import { isConversationActive } from "../conversations/utils/bot-state"
+import { findContactInboxByChannel } from "../conversations/utils/contact-inbox"
 import { useOutboundCallMode } from "../integration-whatsapp/calling/voip/use-outbound-call-mode"
 import { WhatsappVoipCallButton } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-button"
 
@@ -57,8 +59,9 @@ export default function MessageHead({
   // Whether this conversation has a WhatsApp contact inbox at all — the
   // VoIP call button renders for every WhatsApp conversation regardless of
   // whether `outboundCallMode` has resolved yet.
-  const whatsappContactInbox = activeConversation?.contactInboxes.find(
-    (contactInbox) => contactInbox.channel === "whatsapp",
+  const whatsappContactInbox = findContactInboxByChannel(
+    activeConversation,
+    channelTypes.enum.whatsapp,
   )
 
   const { execute: enableBot, isExecuting: isEnablingBot } = useAction(

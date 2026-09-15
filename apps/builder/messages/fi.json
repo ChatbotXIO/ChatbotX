@@ -3982,7 +3982,6 @@
         "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
         "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
         "callFailed": "The call could not be placed. Please try again.",
-        "useSip": "This number uses in-app (SIP) calling. Use the call button for that instead.",
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Mikrofonin käyttöoikeus evättiin. Salli käyttöoikeus selaimen asetuksista ja yritä uudelleen.",
@@ -4050,7 +4049,8 @@
         "expand": "Laajenna",
         "dismiss": "Sulje",
         "statusNoAnswer": "Ei vastausta",
-        "eyebrowCallEnded": "PUHELU PÄÄTTYI"
+        "eyebrowCallEnded": "PUHELU PÄÄTTYI",
+        "statusConnectionLost": "Yhteys katkesi"
       },
       "capability": {
         "title": "Puhelukelpoisuus",
@@ -4059,6 +4059,12 @@
         "ok": "OK",
         "micPermissionTitle": "Mikrofonin käyttöoikeus",
         "dialFailureTitle": "Puhelua ei voitu soittaa"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Manuaalisesti yhdistetty numero",
+        "callsSubscription": "Tämä WhatsApp-numero yhdistettiin manuaalisesti. Varmista, että Meta-sovelluksesi on tilannut calls-webhook-kentän (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — muuten lähtevät puhelut eivät muodosta yhteyttä eivätkä saapuvat puhelut soi.",
+        "unsignedWebhook": "Tälle numerolle ei myöskään ole määritetty Meta App Secret -avainta, joten sen saapuvia webhookeja ei allekirjoitusvarmenneta.",
+        "callAnyway": "Soita silti"
       }
     }
   },

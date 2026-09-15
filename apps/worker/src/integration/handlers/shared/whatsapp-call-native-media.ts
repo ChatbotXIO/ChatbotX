@@ -24,6 +24,21 @@ export class WhatsappCallMediaGoneError extends Error {
   }
 }
 
+/**
+ * Thrown by the native recording/transcript fetch handlers (R8) when the
+ * `WhatsappCall` row can't yet be resolved by `wacid` — the native-media
+ * webhook can race the row-creating `calls` webhook/job on the same
+ * delivery. Retryable: BullMQ's bounded backoff (see
+ * `NATIVE_CALL_CAPTURE_RETRY_OPTIONS` in `@chatbotx.io/worker-config`,
+ * ~1h total) gives the row time to land before giving up.
+ */
+export class WhatsappCallRowNotReadyError extends Error {
+  constructor(wacid: string) {
+    super(`whatsapp-call-row-not-ready: ${wacid}`)
+    this.name = "WhatsappCallRowNotReadyError"
+  }
+}
+
 const LOOKASIDE_FETCH_TIMEOUT_MS = 30_000
 
 /**

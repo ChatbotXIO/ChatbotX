@@ -62,5 +62,5 @@ CLAUDE.md
 .pnpm-store/
 .plans/
 
-# Local FreeSWITCH recordings bind mount (docker-compose.yml)
+# Local runtime data bind mounts, e.g. TURN certificates (docker-compose.yml)
 .data/

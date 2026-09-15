@@ -4015,7 +4015,6 @@
         "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
         "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
         "callFailed": "The call could not be placed. Please try again.",
-        "useSip": "This number uses in-app (SIP) calling. Use the call button for that instead.",
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "麥克風存取被拒絕。請在瀏覽器設定中允許麥克風存取，然後重試。",
@@ -4083,7 +4082,8 @@
         "expand": "展開",
         "dismiss": "關閉",
         "statusNoAnswer": "無應答",
-        "eyebrowCallEnded": "通話已結束"
+        "eyebrowCallEnded": "通話已結束",
+        "statusConnectionLost": "連線中斷"
       },
       "capability": {
         "title": "通話資格",
@@ -4092,6 +4092,12 @@
         "ok": "確定",
         "micPermissionTitle": "麥克風權限",
         "dialFailureTitle": "無法撥打電話"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "手動連接的號碼",
+        "callsSubscription": "此 WhatsApp 號碼是手動連接的。請確保您的 Meta 應用程式已訂閱 calls webhook 欄位（Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls），否則撥出電話將無法接通，來電也不會響鈴。",
+        "unsignedWebhook": "此號碼也未設定 Meta App Secret，因此其傳入的 webhook 未經過簽署驗證。",
+        "callAnyway": "仍然撥打"
       }
     }
   },

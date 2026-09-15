@@ -36,7 +36,7 @@ export type WhatsappCallPermissionResponse = z.infer<
  *
  * `speaker`/`channel` are present ONLY for a VoIP call transcribed via
  * Meta-native transcription (`"Business"` / `"Customer"`, `channel` 0/1 per
- * Meta's `call_transcript` document) — a SIP/Whisper transcript has no
+ * Meta's `call_transcript` document) — a browserWhisper transcript has no
  * diarization, so those segments omit both fields entirely (never `null`,
  * to keep the shape a plain optional-property union rather than a
  * nullable one). `start`/`end` are seconds, matching Meta's

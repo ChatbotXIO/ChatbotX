@@ -6,17 +6,21 @@ const {
   assertCurrentUserCanAccessChatbot,
   findById,
   findByInboxIdForWorkspace,
+  findWorkspaceById,
   uploadRecording,
   integrationQueueAdd,
   loggerError,
+  checkWorkspaceOwnerAccess,
 } = vi.hoisted(() => ({
   getCurrentUserId: vi.fn(),
   assertCurrentUserCanAccessChatbot: vi.fn(),
   findById: vi.fn(),
   findByInboxIdForWorkspace: vi.fn(),
+  findWorkspaceById: vi.fn(),
   uploadRecording: vi.fn(),
   integrationQueueAdd: vi.fn(),
   loggerError: vi.fn(),
+  checkWorkspaceOwnerAccess: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", async (importOriginal) => {
@@ -25,6 +29,7 @@ vi.mock("@chatbotx.io/business", async (importOriginal) => {
   return {
     ...original,
     callRecordingService: { uploadRecording },
+    workspaceService: { findById: findWorkspaceById },
   }
 })
 
@@ -33,6 +38,20 @@ vi.mock("@chatbotx.io/business/errors", () => ({
     httpStatusCode = 403
   },
 }))
+
+vi.mock(
+  "@/lib/workspace/authorize-workspace-access",
+  async (importOriginal) => {
+    const original =
+      await importOriginal<
+        typeof import("@/lib/workspace/authorize-workspace-access")
+      >()
+    return {
+      ...original,
+      checkWorkspaceOwnerAccess,
+    }
+  },
+)
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   whatsappCallRepository: { findById },
@@ -92,6 +111,12 @@ describe("POST /api/whatsapp-call-recording", () => {
     getCurrentUserId.mockResolvedValue("user-1")
     assertCurrentUserCanAccessChatbot.mockResolvedValue(undefined)
     findById.mockResolvedValue(callRow)
+    findWorkspaceById.mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+      scheduledDeletionAt: null,
+    })
+    checkWorkspaceOwnerAccess.mockResolvedValue(null)
     findByInboxIdForWorkspace.mockResolvedValue({
       id: "integration-1",
       callRecordingEnabled: true,
@@ -253,6 +278,45 @@ describe("POST /api/whatsapp-call-recording", () => {
 
     expect(response.status).toBe(403)
     expect(uploadRecording).not.toHaveBeenCalled()
+  })
+
+  test("rejects a blocked owner (trial-expired) workspace and never enqueues the job", async () => {
+    checkWorkspaceOwnerAccess.mockResolvedValue("trialExpired")
+
+    const response = await POST(
+      buildRequest({
+        whatsappCallId: "call-1",
+        contentType: "audio/webm",
+        audio: audioBlob(),
+      }),
+    )
+
+    expect(response.status).toBe(403)
+    expect(checkWorkspaceOwnerAccess).toHaveBeenCalledWith({
+      ownerId: "owner-1",
+    })
+    expect(uploadRecording).not.toHaveBeenCalled()
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("rejects a workspace scheduled for deletion and never enqueues the job", async () => {
+    findWorkspaceById.mockResolvedValue({
+      id: "ws-1",
+      ownerId: "owner-1",
+      scheduledDeletionAt: new Date().toISOString(),
+    })
+
+    const response = await POST(
+      buildRequest({
+        whatsappCallId: "call-1",
+        contentType: "audio/webm",
+        audio: audioBlob(),
+      }),
+    )
+
+    expect(response.status).toBe(403)
+    expect(uploadRecording).not.toHaveBeenCalled()
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
   })
 
   test("rejects a disallowed mime type", async () => {

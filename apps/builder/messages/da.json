@@ -3982,7 +3982,6 @@
         "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
         "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
         "callFailed": "The call could not be placed. Please try again.",
-        "useSip": "This number uses in-app (SIP) calling. Use the call button for that instead.",
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Mikrofonadgang blev nægtet. Tillad mikrofonadgang i browserindstillingerne, og forsøg igen.",
@@ -4050,7 +4049,8 @@
         "expand": "Udvid",
         "dismiss": "Afvis",
         "statusNoAnswer": "Intet svar",
-        "eyebrowCallEnded": "OPKALD AFSLUTTET"
+        "eyebrowCallEnded": "OPKALD AFSLUTTET",
+        "statusConnectionLost": "Forbindelsen blev afbrudt"
       },
       "capability": {
         "title": "Opkaldsberettigelse",
@@ -4059,6 +4059,12 @@
         "ok": "OK",
         "micPermissionTitle": "Mikrofontilladelse",
         "dialFailureTitle": "Opkaldet kunne ikke oprettes"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Manuelt tilsluttet nummer",
+        "callsSubscription": "Dette WhatsApp-nummer blev tilsluttet manuelt. Sørg for, at din Meta-app abonnerer på calls-webhookfeltet (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — ellers kan udgående opkald ikke oprette forbindelse, og indgående opkald ringer ikke.",
+        "unsignedWebhook": "Dette nummer har heller ikke en Meta App Secret konfigureret, så dets indgående webhooks er ikke signaturverificeret.",
+        "callAnyway": "Ring alligevel"
       }
     }
   },

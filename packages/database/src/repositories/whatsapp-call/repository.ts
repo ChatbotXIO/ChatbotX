@@ -139,7 +139,7 @@ export class WhatsappCallUuidMismatchError extends Error {
 /**
  * Thrown by `createPendingOutbound` when `WhatsappCall_pendingOutbound_key`
  * (one live business-initiated attempt per contact-inbox) is already held —
- * `startWhatsappCallAction` surfaces this as a localized "call already in
+ * `initiateOutboundVoipCallAction` surfaces this as a localized "call already in
  * progress" error instead of dialing a second leg.
  */
 export class WhatsappCallPendingOutboundExistsError extends Error {
@@ -298,43 +298,6 @@ class WhatsappCallRepository {
       }
       throw error
     }
-  }
-
-  /**
-   * The single pending (`wacid IS NULL`, `ringing`/`accepted`) outbound row
-   * for a `(inboxId, contactInboxId)` pair, created within `since`:
-   * Meta's `call_created`/`terminate` webhooks for a
-   * BUSINESS_INITIATED call never create a row (a second row would violate
-   * the one-call-per-(inbox, contactInbox) invariant a
-   * `startWhatsappCallAction` attempt already established via
-   * `createPendingOutbound`) — they resolve the row to attach to through
-   * this lookup instead. Ordered newest-first so a caller ends up on the
-   * most recent attempt if, for some reason, more than one qualifies (the
-   * `WhatsappCall_pendingOutbound_key` partial unique index should already
-   * prevent that for `ringing`/`accepted` rows, but the window bound here is
-   * an explicit second safety net against attaching a webhook to a
-   * stale/abandoned attempt).
-   */
-  async findPendingOutbound(
-    input: { inboxId: string; contactInboxId: string; since: Date },
-    tx: DatabaseClient = db,
-  ): Promise<WhatsappCallRow | undefined> {
-    const rows = await tx
-      .select()
-      .from(whatsappCallModel)
-      .where(
-        and(
-          eq(whatsappCallModel.inboxId, input.inboxId),
-          eq(whatsappCallModel.contactInboxId, input.contactInboxId),
-          eq(whatsappCallModel.direction, "businessInitiated"),
-          isNull(whatsappCallModel.wacid),
-          inArray(whatsappCallModel.status, ["ringing", "accepted"]),
-          sql`${whatsappCallModel.createdAt} >= ${input.since}`,
-        ),
-      )
-      .orderBy(desc(whatsappCallModel.createdAt))
-      .limit(1)
-    return rows[0]
   }
 
   /**
@@ -791,6 +754,81 @@ class WhatsappCallRepository {
         and(
           eq(whatsappCallModel.id, props.id),
           notInArray(whatsappCallModel.status, WHATSAPP_CALL_TERMINAL_STATUSES),
+        ),
+      )
+      .returning()
+      .then((rows) => rows[0])
+  }
+
+  /**
+   * Durable liveness for an `accepted` call: `UPDATE … SET updatedAt = now()
+   * WHERE id = ? AND status = 'accepted' AND updatedAt < olderThan`. The
+   * browser heartbeat calls it with a short `olderThan`, so the throttle is
+   * the DB's own WHERE clause — no caller has to remember when it last wrote,
+   * and concurrent beats cannot double-write.
+   *
+   * Status-guarded, so an already-terminal row is never resurrected — which
+   * is also what makes it race-free against
+   * {@link WhatsappCallRepository.recoverStrandedAccepted}: exactly one of the
+   * two can win, and a heartbeat losing means the row is already terminal.
+   */
+  async touchLivenessIfStale(
+    props: { id: string; olderThan: Date },
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const rows = await tx
+      .update(whatsappCallModel)
+      .set({ updatedAt: new Date() })
+      .where(
+        and(
+          eq(whatsappCallModel.id, props.id),
+          eq(whatsappCallModel.status, "accepted"),
+          lt(whatsappCallModel.updatedAt, props.olderThan),
+        ),
+      )
+      .returning({ id: whatsappCallModel.id })
+    return rows.length > 0
+  }
+
+  /**
+   * Dial-time recovery of a call stuck `accepted` because its `terminate`
+   * webhook was lost, as ONE conditional statement:
+   * `UPDATE … SET status = 'completed', endedAt, lastError
+   *  WHERE id = ? AND status = 'accepted' AND updatedAt < olderThan
+   *  RETURNING *`.
+   *
+   * Claiming the stale row and terminalizing it cannot be two statements: in
+   * the gap between them a heartbeat would be unable to signal liveness (its
+   * own throttle predicate would already be satisfied by the claim's write),
+   * so a live call could be closed. Here there is no gap — a heartbeat either
+   * lands first, bumping `updatedAt` so this UPDATE matches nothing, or lands
+   * after, finding a row that is no longer `accepted`.
+   *
+   * Returns the row only when THIS caller performed the transition. An empty
+   * result is never "already done": a real terminate that got there first
+   * also matches nothing, and the caller must re-read rather than assume it
+   * recovered anything.
+   *
+   * `endedAt` is deliberately left NULL. We know the call is over, never when
+   * it ended — "now" would record the moment somebody happened to redial,
+   * often long after the fact. Leaving it null also keeps a delayed terminate
+   * authoritative: {@link WhatsappCallRepository.finalizeById}'s same-status
+   * path fills only fields that are still missing, so a redelivered webhook
+   * can still stamp the real `endedAt` afterwards, but could never correct a
+   * value we had invented.
+   */
+  async recoverStrandedAccepted(
+    props: { id: string; olderThan: Date; lastError: string },
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await tx
+      .update(whatsappCallModel)
+      .set({ status: "completed", lastError: props.lastError })
+      .where(
+        and(
+          eq(whatsappCallModel.id, props.id),
+          eq(whatsappCallModel.status, "accepted"),
+          lt(whatsappCallModel.updatedAt, props.olderThan),
         ),
       )
       .returning()

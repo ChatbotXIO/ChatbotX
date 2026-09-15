@@ -9,10 +9,15 @@ export interface BroadcastTarget {
 }
 
 /**
- * Extracts ONLY safe scalar fields from a broadcast failure for logging. A
- * raw `ky` `HTTPError` retains `options.json` (the request body — which for a
- * VoIP offer/answer holds the SDP) and `options.headers` (the bearer token),
- * so handing it straight to the logger would leak both. Never returns the request/response bodies.
+ * Extracts ONLY safe fields from a broadcast failure for logging. A raw `ky`
+ * `HTTPError` retains `options.json` (the request body — which for a VoIP
+ * offer/answer holds the SDP) and `options.headers` (the bearer token), so
+ * handing it straight to the logger would leak both. Never returns the
+ * request/response bodies.
+ *
+ * The `stack` IS kept: every channel's realtime broadcast fails through here,
+ * and stripping it would cost on-call the one field that says which call site
+ * failed. It is the attached request/response that leaks, never the trace.
  */
 const describeBroadcastError = (error: unknown): Record<string, unknown> => {
   if (error instanceof HTTPError) {
@@ -20,10 +25,11 @@ const describeBroadcastError = (error: unknown): Record<string, unknown> => {
       name: error.name,
       status: error.response.status,
       message: error.message,
+      stack: error.stack,
     }
   }
   if (error instanceof Error) {
-    return { name: error.name, message: error.message }
+    return { name: error.name, message: error.message, stack: error.stack }
   }
   return { message: "unknown broadcast error" }
 }

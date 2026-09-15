@@ -3,6 +3,7 @@ import { aiIntegrationService, getAIModel } from "@chatbotx.io/ai/server"
 import {
   callRecordingService,
   contactInboxService,
+  whatsappCallLifecycleService,
 } from "@chatbotx.io/business"
 import {
   integrationWhatsappRepository,
@@ -30,12 +31,13 @@ const externalCorrelationId = (call: {
 }): string => call.wacid ?? call.attemptId ?? call.id
 
 // `enrichRecordingMessageWithTranscript` moved to
-// `shared/whatsapp-call-recording-enrichment.ts` so both this SIP/Whisper
-// path and the Meta-native transcript fetch handler
+// `shared/whatsapp-call-recording-enrichment.ts` so both this
+// browserWhisper (browser-recorded audio + Whisper) path and the
+// Meta-native transcript fetch handler
 // (`handleWhatsappCallNativeTranscriptFetch`) reuse the exact same
 // message-enrichment + broadcast logic without either file pulling in the
 // other's unrelated dependencies (this file's `ai`/`ky`/AI-integration
-// imports are SIP-only).
+// imports are browserWhisper-only).
 
 /**
  * Speech-to-text over a stored call recording. Opt-in per integration
@@ -129,7 +131,7 @@ export const handleWhatsappCallTranscribe = async (
       return
     }
 
-    const stamped = await whatsappCallRepository.attachTranscript({
+    const stamped = await whatsappCallLifecycleService.attachTranscript({
       id: data.callId,
       transcript: transcript.text,
       transcribedAt: new Date(),

@@ -12,8 +12,8 @@ const HEARTBEAT_INTERVAL_MS = 20_000
 
 /**
  * Keeps the current agent listed as "available for VoIP calls" while the inbox
- * is open — the routing source inbound browser-WebRTC calls ring, independent
- * of SIP `REGISTER`. Pings immediately on mount, then every
+ * is open — the routing source inbound browser-WebRTC calls ring. Pings
+ * immediately on mount, then every
  * {@link HEARTBEAT_INTERVAL_MS}; presence lapses on its own (TTL) once the tab
  * closes or navigates away, so no explicit sign-off is required. Best-effort: a
  * failed ping is swallowed — the next tick recovers, and a missed call is not a

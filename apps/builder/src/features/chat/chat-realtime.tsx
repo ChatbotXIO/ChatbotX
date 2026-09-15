@@ -10,6 +10,7 @@ import usePartySocket from "partysocket/react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { authClient } from "@/lib/auth/auth-client"
 import { client } from "@/lib/orpc/orpc"
+import { outboundCallModeQueryKey } from "../integration-whatsapp/calling/voip/outbound-call-mode-query-key"
 import {
   useWhatsappVoipCallStore,
   WhatsappVoipCallPhase,
@@ -24,6 +25,10 @@ export function ChatRealtime() {
   const { data: session } = authClient.useSession()
   const currentUserId = session?.user.id
   const queryClient = useQueryClient()
+  const invalidateOutboundCallMode = (conversationId: string) =>
+    queryClient.invalidateQueries({
+      queryKey: outboundCallModeQueryKey(workspaceId, conversationId),
+    })
 
   const {
     handleNewMessage,
@@ -55,10 +60,8 @@ export function ChatRealtime() {
     // protocol: "ws",
 
     query: async () => {
-      // Member-bound, workspace-room-bound one-time token (see
-      // docs/whatsapp-calling-voip.md) — the `workspaces` party
-      // rejects the upgrade unless this token's `workspaceId` claim matches
-      // the room being connected to.
+      // Short-lived token bound to this member and workspace room — the
+      // `workspaces` party rejects the upgrade for any other room.
       const { token } =
         await client.realtimeAPI.mintWorkspaceConnectTokenAuthenticatedAPI({
           workspaceId,
@@ -67,7 +70,7 @@ export function ChatRealtime() {
       return { token }
     },
 
-    // onOpen {},
+    // onOpen() {},
     onMessage(e) {
       try {
         const { eventType, data } = JSON.parse(e.data) as RealtimeEventData
@@ -82,13 +85,7 @@ export function ChatRealtime() {
             // a remount. Invalidate that query so the button reflects the new
             // grant on the next render, live.
             if (getWhatsappCallPermissionReply(message.contentAttributes)) {
-              queryClient.invalidateQueries({
-                queryKey: [
-                  "whatsapp-outbound-call-mode",
-                  workspaceId,
-                  message.conversationId,
-                ],
-              })
+              invalidateOutboundCallMode(message.conversationId)
             }
             break
           }
@@ -170,13 +167,7 @@ export function ChatRealtime() {
             // message to piggyback on) — refetch the same query the reply
             // path invalidates so the header's call control flips to
             // direct-dial live.
-            queryClient.invalidateQueries({
-              queryKey: [
-                "whatsapp-outbound-call-mode",
-                workspaceId,
-                data.conversationId,
-              ],
-            })
+            invalidateOutboundCallMode(data.conversationId)
             break
           case RealtimeEventType.whatsappCallClaimedElsewhere: {
             // Ring-all: broadcast to the whole workspace after another rung

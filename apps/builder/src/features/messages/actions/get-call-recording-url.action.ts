@@ -11,7 +11,8 @@ const getCallRecordingUrlSchema = z.object({
 
 /**
  * Mints a fresh 15-minute signed playback URL for a WhatsApp call recording
- * (SIP or VoIP — both attach to the same `WhatsappCall` row). The URL
+ * (browserWhisper or Meta-native VoIP — both attach to the same
+ * `WhatsappCall` row). The URL
  * embedded in the recording's realtime `messageCreated`/an earlier page load
  * expires after `RECORDING_SIGNED_URL_TTL_SECONDS`; the inbox audio player
  * calls this on-demand (on play, or after a playback error) to avoid a 403

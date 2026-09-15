@@ -11,7 +11,7 @@ const {
   findByMock,
   findInboxMock,
   findByInboxIdForWorkspaceMock,
-  findByContactInboxIdMock,
+  resolveStatusMock,
   findWorkspaceByIdMock,
   getCallingSettingsMock,
   getWhatsappCallingPreflightMock,
@@ -20,7 +20,7 @@ const {
   findByMock: vi.fn(),
   findInboxMock: vi.fn(),
   findByInboxIdForWorkspaceMock: vi.fn(),
-  findByContactInboxIdMock: vi.fn(),
+  resolveStatusMock: vi.fn(),
   findWorkspaceByIdMock: vi.fn(),
   getCallingSettingsMock: vi.fn(),
   getWhatsappCallingPreflightMock: vi.fn(),
@@ -57,6 +57,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: { findBy: findByMock },
   contactInboxService: { findBy: findInboxMock },
+  whatsappCallPermissionService: { resolveStatus: resolveStatusMock },
   workspaceService: { findById: findWorkspaceByIdMock },
 }))
 
@@ -71,9 +72,6 @@ vi.mock("@chatbotx.io/database/partials", () => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   integrationWhatsappRepository: {
     findByInboxIdForWorkspace: findByInboxIdForWorkspaceMock,
-  },
-  whatsappCallPermissionRepository: {
-    findByContactInboxId: findByContactInboxIdMock,
   },
 }))
 
@@ -111,10 +109,13 @@ describe("resolveOutboundCallModeAction", () => {
     })
     findByInboxIdForWorkspaceMock.mockResolvedValue({
       id: "integration-1",
-      sipProvisioningStatus: "provisioned",
       displayPhoneNumber: "+44 20 7946 0958",
+      auth: {
+        clientSecret: "app-secret",
+        metadata: { isManual: false },
+      },
     })
-    findByContactInboxIdMock.mockResolvedValue(undefined)
+    resolveStatusMock.mockResolvedValue(undefined)
     findWorkspaceByIdMock.mockResolvedValue({ id: "workspace-1" })
     getCallingSettingsMock.mockResolvedValue({ status: "ENABLED" })
     getWhatsappCallingPreflightMock.mockResolvedValue({
@@ -125,6 +126,64 @@ describe("resolveOutboundCallModeAction", () => {
       isCloudApiPlatform: true,
       messagingLimitTier: "TIER_10K",
       messagingLimitSufficient: true,
+    })
+  })
+
+  test("returns manualCallsSubscriptionUnverified:false for a platform-credential integration", async () => {
+    await expect(call()).resolves.toEqual({
+      mode: "voip",
+      permissionStatus: undefined,
+      unsignedWebhookWarning: false,
+      manualCallsSubscriptionUnverified: false,
+      integrationId: "integration-1",
+    })
+  })
+
+  test("returns manualCallsSubscriptionUnverified:true for a manual integration WITH an app secret", async () => {
+    getWhatsappCallingPreflightMock.mockResolvedValue({
+      isManual: true,
+      hasAppCredential: false,
+      callsSubscribed: null,
+      platformType: null,
+      isCloudApiPlatform: null,
+      messagingLimitTier: null,
+      messagingLimitSufficient: true,
+    })
+    findByInboxIdForWorkspaceMock.mockResolvedValue({
+      id: "integration-1",
+      displayPhoneNumber: "+44 20 7946 0958",
+      auth: { clientSecret: "an-app-secret", metadata: { isManual: true } },
+    })
+    await expect(call()).resolves.toEqual({
+      mode: "voip",
+      permissionStatus: undefined,
+      unsignedWebhookWarning: false,
+      manualCallsSubscriptionUnverified: true,
+      integrationId: "integration-1",
+    })
+  })
+
+  test("returns manualCallsSubscriptionUnverified:true for a manual integration WITHOUT an app secret", async () => {
+    getWhatsappCallingPreflightMock.mockResolvedValue({
+      isManual: true,
+      hasAppCredential: false,
+      callsSubscribed: null,
+      platformType: null,
+      isCloudApiPlatform: null,
+      messagingLimitTier: null,
+      messagingLimitSufficient: true,
+    })
+    findByInboxIdForWorkspaceMock.mockResolvedValue({
+      id: "integration-1",
+      displayPhoneNumber: "+44 20 7946 0958",
+      auth: { clientSecret: "", metadata: { isManual: true } },
+    })
+    await expect(call()).resolves.toEqual({
+      mode: "voip",
+      permissionStatus: undefined,
+      unsignedWebhookWarning: true,
+      manualCallsSubscriptionUnverified: true,
+      integrationId: "integration-1",
     })
   })
 
@@ -157,7 +216,7 @@ describe("resolveOutboundCallModeAction", () => {
     })
   })
 
-  test("returns none/manualIntegrationNoCredentials for a manually-connected number", async () => {
+  test("returns voip + unsignedWebhookWarning for a manually-connected number with no app secret (R4 §6.4)", async () => {
     getWhatsappCallingPreflightMock.mockResolvedValue({
       isManual: true,
       hasAppCredential: false,
@@ -167,9 +226,41 @@ describe("resolveOutboundCallModeAction", () => {
       messagingLimitTier: null,
       messagingLimitSufficient: true,
     })
+    findByInboxIdForWorkspaceMock.mockResolvedValue({
+      id: "integration-1",
+      displayPhoneNumber: "+44 20 7946 0958",
+      auth: { clientSecret: "", metadata: { isManual: true } },
+    })
     await expect(call()).resolves.toEqual({
-      mode: "none",
-      reason: "manualIntegrationNoCredentials",
+      mode: "voip",
+      permissionStatus: undefined,
+      unsignedWebhookWarning: true,
+      manualCallsSubscriptionUnverified: true,
+      integrationId: "integration-1",
+    })
+  })
+
+  test("does not warn for a manually-connected number that has an app secret configured", async () => {
+    getWhatsappCallingPreflightMock.mockResolvedValue({
+      isManual: true,
+      hasAppCredential: false,
+      callsSubscribed: null,
+      platformType: null,
+      isCloudApiPlatform: null,
+      messagingLimitTier: null,
+      messagingLimitSufficient: true,
+    })
+    findByInboxIdForWorkspaceMock.mockResolvedValue({
+      id: "integration-1",
+      displayPhoneNumber: "+44 20 7946 0958",
+      auth: { clientSecret: "an-app-secret", metadata: { isManual: true } },
+    })
+    await expect(call()).resolves.toEqual({
+      mode: "voip",
+      permissionStatus: undefined,
+      unsignedWebhookWarning: false,
+      manualCallsSubscriptionUnverified: true,
+      integrationId: "integration-1",
     })
   })
 
@@ -192,8 +283,8 @@ describe("resolveOutboundCallModeAction", () => {
   test("returns none/ineligibleNumber for a blocked business country (NG)", async () => {
     findByInboxIdForWorkspaceMock.mockResolvedValue({
       id: "integration-1",
-      sipProvisioningStatus: "provisioned",
       displayPhoneNumber: "+234 810 123 4567",
+      auth: { clientSecret: "app-secret", metadata: { isManual: false } },
     })
     await expect(call()).resolves.toEqual({
       mode: "none",
@@ -201,15 +292,20 @@ describe("resolveOutboundCallModeAction", () => {
     })
   })
 
-  test("returns none/ineligibleNumber for a blocked business country (TR)", async () => {
+  // R11 (fixed elsewhere): TR was removed from BLOCKED_OUTBOUND_COUNTRIES —
+  // it is not in Meta's documented business-initiated-calling block list.
+  test("returns voip for a TR business number (not in the blocked-country list)", async () => {
     findByInboxIdForWorkspaceMock.mockResolvedValue({
       id: "integration-1",
-      sipProvisioningStatus: "provisioned",
       displayPhoneNumber: "+90 532 123 4567",
+      auth: { clientSecret: "app-secret", metadata: { isManual: false } },
     })
     await expect(call()).resolves.toEqual({
-      mode: "none",
-      reason: "ineligibleNumber",
+      mode: "voip",
+      permissionStatus: undefined,
+      unsignedWebhookWarning: false,
+      manualCallsSubscriptionUnverified: false,
+      integrationId: "integration-1",
     })
   })
 
@@ -217,64 +313,31 @@ describe("resolveOutboundCallModeAction", () => {
     await expect(call()).resolves.toEqual({
       mode: "voip",
       permissionStatus: undefined,
+      unsignedWebhookWarning: false,
+      manualCallsSubscriptionUnverified: false,
+      integrationId: "integration-1",
     })
   })
 
-  test("returns voip/no_permission when the contact rejected the request", async () => {
-    findByContactInboxIdMock.mockResolvedValue({
-      response: "reject",
-      isPermanent: false,
-      expiresAt: null,
-    })
+  test.each([
+    "no_permission",
+    "temporary",
+    "permanent",
+  ] as const)("returns voip with the %s permission status the service resolves", async (permissionStatus) => {
+    resolveStatusMock.mockResolvedValue(permissionStatus)
     await expect(call()).resolves.toEqual({
       mode: "voip",
-      permissionStatus: "no_permission",
-    })
-  })
-
-  test("returns voip/permanent when the contact accepted permanently", async () => {
-    findByContactInboxIdMock.mockResolvedValue({
-      response: "accept",
-      isPermanent: true,
-      expiresAt: null,
-    })
-    await expect(call()).resolves.toEqual({
-      mode: "voip",
-      permissionStatus: "permanent",
-    })
-  })
-
-  test("returns voip/temporary when the contact accepted and the temporary grant has not expired", async () => {
-    findByContactInboxIdMock.mockResolvedValue({
-      response: "accept",
-      isPermanent: false,
-      expiresAt: new Date(Date.now() + 60_000),
-    })
-    await expect(call()).resolves.toEqual({
-      mode: "voip",
-      permissionStatus: "temporary",
-    })
-  })
-
-  test("returns voip/no_permission when the temporary grant has expired", async () => {
-    findByContactInboxIdMock.mockResolvedValue({
-      response: "accept",
-      isPermanent: false,
-      expiresAt: new Date(Date.now() - 60_000),
-    })
-    await expect(call()).resolves.toEqual({
-      mode: "voip",
-      permissionStatus: "no_permission",
+      permissionStatus,
+      unsignedWebhookWarning: false,
+      manualCallsSubscriptionUnverified: false,
+      integrationId: "integration-1",
     })
   })
 
   test("never calls Meta's rate-limited call_permissions GET", async () => {
     await call()
-    // No fetch/ky mock is wired for the Graph client in this test at all —
-    // if the resolver ever called it, the module import would need
-    // `@chatbotx.io/integration-whatsapp/api/calling` mocked here and it
-    // deliberately is not.
-    expect(findByContactInboxIdMock).toHaveBeenCalledWith("contact-inbox-1")
+    // Permission comes from the local record only.
+    expect(resolveStatusMock).toHaveBeenCalledWith("contact-inbox-1")
   })
 
   test("caches the calling-settings GET per integration with a TTL", async () => {
@@ -294,6 +357,9 @@ describe("resolveOutboundCallModeAction", () => {
     await expect(call()).resolves.toEqual({
       mode: "voip",
       permissionStatus: undefined,
+      unsignedWebhookWarning: false,
+      manualCallsSubscriptionUnverified: false,
+      integrationId: "integration-1",
     })
     expect(getCallingSettingsMock).not.toHaveBeenCalled()
   })

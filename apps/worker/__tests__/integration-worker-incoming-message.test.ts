@@ -43,6 +43,8 @@ const {
   mockResolveIncomingTextRouting,
   mockAutomatedResponseEnqueue,
   mockConversationFindOrCreate,
+  mockGetWhatsappCallPermissionReply,
+  mockRecordCallPermissionReply,
   workerState,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
@@ -93,6 +95,8 @@ const {
     mockResolveIncomingTextRouting: vi.fn(),
     mockAutomatedResponseEnqueue: vi.fn().mockResolvedValue(undefined),
     mockConversationFindOrCreate: vi.fn(),
+    mockGetWhatsappCallPermissionReply: vi.fn(),
+    mockRecordCallPermissionReply: vi.fn().mockResolvedValue(undefined),
     workerState: { capturedWorkers: [] as CapturedWorker[] },
   }
 })
@@ -311,6 +315,7 @@ vi.mock("@chatbotx.io/business", () => ({
     lastName?: string | null
   }) => !(contact.firstName?.trim() || contact.lastName?.trim()),
   contactProfileRefreshService: { refresh: mockContactProfileRefresh },
+  whatsappCallPermissionService: { recordReply: mockRecordCallPermissionReply },
   recordProfileRefreshFailure: vi.fn().mockResolvedValue(undefined),
   contactInboxService: {
     updateTracking: vi
@@ -389,7 +394,7 @@ vi.mock("@chatbotx.io/sdk", () => ({
     Boolean(identity.sourceUserId) &&
     identity.sourceId === identity.sourceUserId,
   getStoryReply: () => undefined,
-  getWhatsappCallPermissionReply: () => undefined,
+  getWhatsappCallPermissionReply: mockGetWhatsappCallPermissionReply,
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
@@ -544,6 +549,8 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     mockDbTransaction.mockClear()
     mockContactUpdate.mockClear()
     mockConversationFindOrCreate.mockReset()
+    mockGetWhatsappCallPermissionReply.mockReset()
+    mockRecordCallPermissionReply.mockClear()
 
     vi.mocked(
       integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
@@ -661,5 +668,61 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
 
     expect(mockContactProfileRefresh).not.toHaveBeenCalled()
     expect(mockAutomatedResponseEnqueue).toHaveBeenCalled()
+    expect(mockRecordCallPermissionReply).not.toHaveBeenCalled()
+  })
+
+  test("a contact's call permission reply is recorded and never dispatched to automations", async () => {
+    // Keyed on the message content, not the channel — the harness channel is fine.
+    mockGetWhatsappCallPermissionReply.mockReturnValue({
+      type: "whatsapp_call_permission_reply",
+      response: "accept",
+      isPermanent: false,
+      expirationTimestamp: 1_789_000_000,
+    })
+    const integrationWorker = findIntegrationWorker()
+
+    await integrationWorker?.processor({
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "inbox-1",
+          payload: {},
+        },
+      },
+    })
+
+    expect(mockRecordCallPermissionReply).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactInboxId: "ci-1",
+      response: "accept",
+      isPermanent: false,
+      expirationTimestamp: 1_789_000_000,
+      respondedAt: fakeCreatedMessage.createdAt,
+    })
+    expect(mockAutomatedResponseEnqueue).not.toHaveBeenCalled()
+  })
+
+  test("a permission reply without an isPermanent flag is stored as temporary", async () => {
+    mockGetWhatsappCallPermissionReply.mockReturnValue({
+      type: "whatsapp_call_permission_reply",
+      response: "reject",
+    })
+    const integrationWorker = findIntegrationWorker()
+
+    await integrationWorker?.processor({
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "inbox-1",
+          payload: {},
+        },
+      },
+    })
+
+    expect(mockRecordCallPermissionReply).toHaveBeenCalledWith(
+      expect.objectContaining({ response: "reject", isPermanent: false }),
+    )
   })
 })

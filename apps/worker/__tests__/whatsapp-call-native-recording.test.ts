@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   findById: vi.fn(),
+  findByWacid: vi.fn(),
   attachRecording: vi.fn(),
   bulkCreateAttachments: vi.fn(),
   findBySourceId: vi.fn(),
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  whatsappCallLifecycleService: { attachRecording: mocks.attachRecording },
   broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
   contactInboxService: { findBy: mocks.contactInboxFindBy },
   callRecordingService: {
@@ -32,7 +34,7 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   whatsappCallRepository: {
     findById: mocks.findById,
-    attachRecording: mocks.attachRecording,
+    findByWacid: mocks.findByWacid,
   },
   integrationWhatsappRepository: {
     findByInboxIdForWorkspace: vi.fn(async () => ({
@@ -71,11 +73,22 @@ vi.mock(
     downloadCallMedia: mocks.downloadCallMedia,
     WhatsappCallMediaGoneError: class WhatsappCallMediaGoneError extends Error {},
     AttachmentTooLargeError: class AttachmentTooLargeError extends Error {},
+    WhatsappCallRowNotReadyError: class WhatsappCallRowNotReadyError extends Error {
+      constructor(wacid: string) {
+        super(`whatsapp-call-row-not-ready: ${wacid}`)
+        this.name = "WhatsappCallRowNotReadyError"
+      }
+    },
   }),
 )
 
 vi.mock("../src/lib/logger", () => ({
   logger: mocks.logger,
+}))
+
+const isBlockedWorkspaceMock = vi.hoisted(() => vi.fn())
+vi.mock("../src/lib/is-blocked-workspace", () => ({
+  isBlockedWorkspace: isBlockedWorkspaceMock,
 }))
 
 const { handleWhatsappCallNativeRecordingFetch } = await import(
@@ -119,6 +132,7 @@ const jobData = {
 describe("handleWhatsappCallNativeRecordingFetch", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    isBlockedWorkspaceMock.mockResolvedValue(false)
     mocks.findById.mockResolvedValue(callRow)
     mocks.resolveVoipAuthByInboxId.mockResolvedValue({
       tokens: { accessToken: "token-1" },
@@ -262,15 +276,51 @@ describe("handleWhatsappCallNativeRecordingFetch", () => {
     expect(mocks.emitCallRecorded).not.toHaveBeenCalled()
   })
 
-  test("call row not found: logs and returns without throwing", async () => {
+  test("R8: call row not found yet (neither by id nor by wacid) throws a retryable error instead of dropping the event", async () => {
     mocks.findById.mockResolvedValue(undefined)
+    mocks.findByWacid.mockResolvedValue(undefined)
 
     await expect(
       handleWhatsappCallNativeRecordingFetch(jobData),
-    ).resolves.toBeUndefined()
+    ).rejects.toThrow("whatsapp-call-row-not-ready")
 
     expect(mocks.downloadCallMedia).not.toHaveBeenCalled()
     expect(mocks.logger.warn).toHaveBeenCalled()
+  })
+
+  test("a job without workspaceId (enqueued before the row existed) skips a blocked workspace once the row resolves", async () => {
+    mocks.findByWacid.mockResolvedValue(callRow)
+    isBlockedWorkspaceMock.mockResolvedValue(true)
+
+    await handleWhatsappCallNativeRecordingFetch({
+      ...jobData,
+      whatsappCallId: undefined,
+      workspaceId: undefined,
+    })
+
+    expect(isBlockedWorkspaceMock).toHaveBeenCalledWith("ws-1")
+    expect(mocks.downloadCallMedia).not.toHaveBeenCalled()
+  })
+
+  test("a job that already carries workspaceId was gated by the worker and is not re-checked", async () => {
+    await handleWhatsappCallNativeRecordingFetch(jobData)
+
+    expect(isBlockedWorkspaceMock).not.toHaveBeenCalled()
+  })
+
+  test("R8: no whatsappCallId in the job data resolves the row by wacid instead", async () => {
+    mocks.findByWacid.mockResolvedValue(callRow)
+
+    await handleWhatsappCallNativeRecordingFetch({
+      ...jobData,
+      whatsappCallId: undefined,
+    })
+
+    // The row is resolved by wacid, never by the (absent) whatsappCallId —
+    // `attachRecordingAndNotify` legitimately re-reads by id afterward, so
+    // this only asserts the RESOLUTION path, not every findById call.
+    expect(mocks.findByWacid).toHaveBeenCalledWith("wacid.ABC")
+    expect(mocks.downloadCallMedia).toHaveBeenCalled()
   })
 
   test("media gone (past Meta's 7-day retention): logs and returns without throwing or retrying", async () => {

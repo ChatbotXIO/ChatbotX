@@ -42,8 +42,15 @@ export type WhatsappVoipCallDirection =
   (typeof WhatsappVoipCallDirection)[keyof typeof WhatsappVoipCallDirection]
 
 /** Terminal outcome carried by the `whatsappCallTransportEnded` realtime
- * event — drives the ~2s "ended" linger message in the call panel. */
-export type WhatsappVoipEndedStatus = "completed" | "rejected" | "failed"
+ * event — drives the ~2s "ended" linger message in the call panel.
+ * `connectionLost` is client-only (R5): set when the local
+ * `RTCPeerConnection` reports `failed`, or `disconnected` for longer than
+ * the grace window, rather than by a server-sent transport-ended event. */
+export type WhatsappVoipEndedStatus =
+  | "completed"
+  | "rejected"
+  | "failed"
+  | "connectionLost"
 
 /** Which async step of `startOutbound` is currently in flight — drives the
  * "Preparing…" / "Waiting for microphone access…" status line while

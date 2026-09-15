@@ -3982,7 +3982,6 @@
         "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
         "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
         "callFailed": "The call could not be placed. Please try again.",
-        "useSip": "This number uses in-app (SIP) calling. Use the call button for that instead.",
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Accesul la microfon a fost refuzat. Permite accesul din setările browserului și încearcă din nou.",
@@ -4050,7 +4049,8 @@
         "expand": "Expandează",
         "dismiss": "Închide",
         "statusNoAnswer": "Fără răspuns",
-        "eyebrowCallEnded": "APEL ÎNCHEIAT"
+        "eyebrowCallEnded": "APEL ÎNCHEIAT",
+        "statusConnectionLost": "Conexiune pierdută"
       },
       "capability": {
         "title": "Eligibilitate pentru apeluri",
@@ -4059,6 +4059,12 @@
         "ok": "OK",
         "micPermissionTitle": "Permisiune microfon",
         "dialFailureTitle": "Apelul nu a putut fi efectuat"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Număr conectat manual",
+        "callsSubscription": "Acest număr WhatsApp a fost conectat manual. Asigură-te că aplicația ta Meta este abonată la câmpul webhook calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — altfel apelurile efectuate nu se vor conecta, iar apelurile primite nu vor suna.",
+        "unsignedWebhook": "Acest număr nu are niciun Meta App Secret configurat, astfel încât webhook-urile primite nu sunt verificate prin semnătură.",
+        "callAnyway": "Apelează oricum"
       }
     }
   },

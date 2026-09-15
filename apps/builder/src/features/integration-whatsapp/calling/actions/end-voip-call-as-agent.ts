@@ -49,6 +49,11 @@ type EndVoipCallAsAgentInput = {
  * or a Graph action on), so this finalizes the DB row directly and returns
  * `true` rather than throwing `callNotFound` — the row not having a `wacid`
  * yet is not the same as the row not existing.
+ *
+ * A row WITH a `wacid` but no control record (Meta's webhook bound the id
+ * before the dial created the control, or Redis lost it) is still ended: the
+ * row names the owner and decides the Graph action and terminal status, so an
+ * explicit hangup never leaves the customer's phone ringing.
  */
 export async function endVoipCallAsAgent(
   input: EndVoipCallAsAgentInput,
@@ -66,7 +71,18 @@ export async function endVoipCallAsAgent(
   // agent ending an unanswered INBOUND call is a different outcome.
   const isBusinessCancelBeforeAnswer = call.direction === "businessInitiated"
 
+  // Without a control record naming the reserved agent, the row's own
+  // initiator/answerer is the ownership check.
+  const isCallOwner =
+    call.initiatedByUserId === input.userId ||
+    call.answeredByUserId === input.userId
+
   if (!call.wacid) {
+    if (!isCallOwner) {
+      throw new ChatbotXException(
+        t("whatsapp.calls.errors.voipNotReservedAgent"),
+      )
+    }
     await whatsappVoipCallService.finalizeEndedCall({
       whatsappCallId: input.whatsappCallId,
       status: "failed",
@@ -80,14 +96,16 @@ export async function endVoipCallAsAgent(
   const { wacid } = call
 
   const control = await whatsappVoipCallService.readControl(wacid)
-  if (control && control.reservedUserId !== input.userId) {
+  const isReservedAgent = control
+    ? control.reservedUserId === input.userId
+    : isCallOwner
+  if (!isReservedAgent) {
     throw new ChatbotXException(t("whatsapp.calls.errors.voipNotReservedAgent"))
   }
 
-  const ended = await whatsappVoipCallService.endCall({
-    wacid,
-    allowFromAccepted: true,
-  })
+  const ended = control
+    ? await whatsappVoipCallService.endCall({ wacid, allowFromAccepted: true })
+    : whatsappVoipCallService.resolveEndOutcomeWithoutControl(call)
   if (!ended) {
     return false
   }

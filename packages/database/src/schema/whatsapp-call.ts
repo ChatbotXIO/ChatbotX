@@ -181,8 +181,28 @@ export const whatsappCallModel = pgTable(
     index("WhatsappCall_ringing_createdAt_idx")
       .using("btree", table.createdAt.asc().nullsLast())
       .where(sql`"status" = 'ringing'`),
+    // Inbox resume-after-refresh (`findRingingByWorkspace`): runs on every
+    // inbox open, so it reads only the newest resumable ringing rows.
+    index("WhatsappCall_resumableRinging_idx")
+      .using(
+        "btree",
+        table.workspaceId.asc().nullsLast(),
+        table.createdAt.desc(),
+      )
+      .where(
+        sql`"status" = 'ringing' AND "wacid" IS NOT NULL AND "answeredByUserId" IS NULL`,
+      ),
+    // Recording retention sweep (`listRecordingsPastRetention`): recorded rows
+    // per inbox by age, so each integration's cutoff is an index range scan.
+    index("WhatsappCall_recording_inboxId_recordedAt_idx")
+      .using(
+        "btree",
+        table.inboxId.asc().nullsLast(),
+        table.recordedAt.asc().nullsLast(),
+      )
+      .where(sql`"recordingPath" IS NOT NULL`),
     // One live outbound attempt per (inbox, contact) at a time — the guard
-    // `startWhatsappCallAction` relies on to refuse a second concurrent dial.
+    // `initiateOutboundVoipCallAction` relies on to refuse a second concurrent dial.
     uniqueIndex("WhatsappCall_pendingOutbound_key")
       .using(
         "btree",

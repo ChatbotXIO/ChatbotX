@@ -1,3 +1,4 @@
+import { whatsappVoipCallService } from "@chatbotx.io/business"
 import { whatsappCallRepository } from "@chatbotx.io/database/repositories"
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
 import { getChildLogger } from "@chatbotx.io/logger"
@@ -59,6 +60,11 @@ const endViaCallControlIfLive = async (
  * {@link endViaCallControlIfLive}; anything else is written straight to
  * `failed`, where `finalizeById`'s status-rank guard makes the write a no-op
  * for a row that has meanwhile progressed on its own.
+ *
+ * A call left `accepted` (its terminate webhook lost) is deliberately NOT
+ * swept: "no heartbeat" is never proof a call ended, so nothing closes one on
+ * a timer. Such a row is recovered the next time an agent dials that contact —
+ * see `whatsappVoipCallService.assertNoActiveCallForContact`.
  */
 export async function sweepStaleWhatsappCalls(): Promise<void> {
   const stale = await whatsappCallRepository.sweepStaleRinging({
@@ -73,8 +79,8 @@ export async function sweepStaleWhatsappCalls(): Promise<void> {
       continue
     }
 
-    const updated = await whatsappCallRepository.finalizeById({
-      id: call.id,
+    const updated = await whatsappVoipCallService.finalizeEndedCall({
+      whatsappCallId: call.id,
       status: "failed",
       endedAt: new Date(),
       lastError: "stale-ringing-never-finalized",
