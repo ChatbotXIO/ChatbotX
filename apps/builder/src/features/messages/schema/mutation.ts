@@ -178,15 +178,43 @@ export const deleteMessageRequest = z.object({
 export type DeleteMessageRequest = z.infer<typeof deleteMessageRequest>
 
 export const editMessageRequest = z.object({
-  messageId: zodBigintAsString(),
-  createdAt: z.coerce.date(),
-  newText: z.string().trim().min(1).max(2000),
-  newAttachmentPath: z.string().optional(),
-  newAttachmentPublicUrl: z.string().optional(),
-  newAttachmentMimeType: z.string().optional(),
-  newAttachmentName: z.string().optional(),
-  newAttachmentSize: z.number().int().optional(),
-  removeAttachment: z.boolean().optional(),
+  messageId: zodBigintAsString().describe("Message id."),
+  createdAt: z.coerce
+    .date()
+    .describe(
+      "The message's createdAt timestamp, exactly as returned by `messages.list`. Required to locate the message.",
+    ),
+  newText: z
+    .string()
+    .trim()
+    .min(1)
+    .max(2000)
+    .describe("Replacement message text."),
+  newAttachmentPath: z
+    .string()
+    .optional()
+    .describe("Path of a replacement attachment, if changing it."),
+  newAttachmentPublicUrl: z
+    .string()
+    .optional()
+    .describe("Public URL of the replacement attachment."),
+  newAttachmentMimeType: z
+    .string()
+    .optional()
+    .describe("MIME type of the replacement attachment."),
+  newAttachmentName: z
+    .string()
+    .optional()
+    .describe("Display name of the replacement attachment."),
+  newAttachmentSize: z
+    .number()
+    .int()
+    .optional()
+    .describe("Size in bytes of the replacement attachment."),
+  removeAttachment: z
+    .boolean()
+    .optional()
+    .describe("Whether to remove the message's existing attachment entirely."),
 })
 export type EditMessageRequest = z.infer<typeof editMessageRequest>
 
@@ -205,10 +233,20 @@ export const sendFlowMessageRequest = z.object({
 })
 
 export const changeMessageAttributesRequest = z.object({
-  messageId: zodBigintAsString(),
-  createdAt: z.coerce.date(),
-  liked: z.boolean().optional(),
-  hidden: z.boolean().optional(),
+  messageId: zodBigintAsString().describe("Message id."),
+  createdAt: z.coerce
+    .date()
+    .describe(
+      "The message's createdAt timestamp, exactly as returned by `messages.list`. Required to locate the message.",
+    ),
+  liked: z
+    .boolean()
+    .optional()
+    .describe("Whether the message should be marked liked."),
+  hidden: z
+    .boolean()
+    .optional()
+    .describe("Whether the message should be hidden."),
 })
 export type ChangeMessageAttributesRequest = z.infer<
   typeof changeMessageAttributesRequest
