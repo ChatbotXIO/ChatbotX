@@ -188,7 +188,8 @@ export const sequencesPublicRouter = {
       method: "DELETE",
       path: "/v1/sequences/{id}/steps/{stepId}",
       summary: "Delete a sequence step",
-      description: "Permanently removes one step from a sequence.",
+      description:
+        "Permanently removes one step from a sequence, identified by its `stepId`. Use `sequences.get` to see current steps first.",
       successStatus: 204,
       tags: ["Sequences"],
     })
