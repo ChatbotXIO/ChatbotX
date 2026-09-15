@@ -99,7 +99,7 @@ export const exportContactsFilter = z.object({
   contactFilter: contactFilterCriteriaSchema
     .optional()
     .describe(
-      "Structured filter for advanced matching beyond keyword. See `contactFilter.get`.",
+      "Structured filter for advanced matching beyond keyword. See `contacts.listFilterFields` for the field/operator reference.",
     ),
 })
 export type ExportContactsFilter = z.infer<typeof exportContactsFilter>

@@ -59,7 +59,7 @@ export const listContactsRequest = basePaginationRequest.extend({
     contactFilterCriteriaSchema
       .optional()
       .describe(
-        "Structured filter (same shape as `contacts.filterFields`) for advanced matching beyond `keyword`. See `contactFilter.get` for the field/operator reference.",
+        "Structured filter for advanced matching beyond `keyword`. See `contacts.listFilterFields` for the field/operator reference.",
       ),
   ),
   channels: z
