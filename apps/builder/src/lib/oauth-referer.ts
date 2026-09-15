@@ -38,6 +38,29 @@ export async function sanitizeReferer(referer: string): Promise<string> {
 }
 
 /**
+ * Validates an optional client-supplied `redirectUrl` (e.g. `POST
+ * /v1/connections {redirectUrl}`) against the same allow-list as
+ * `sanitizeReferer`, but returns `undefined` instead of falling back to the
+ * builder-internal `/manage` path — an unattended API/MCP caller has no
+ * builder browser session for that fallback to mean anything. A missing or
+ * disallowed value leaves `ConnectSession.returnUrl` unset, so the
+ * completion page shows its own neutral "you may close this window" default.
+ */
+export async function sanitizeOptionalReturnUrl(
+  redirectUrl: string | undefined,
+): Promise<string | undefined> {
+  if (!redirectUrl) {
+    return
+  }
+  try {
+    const url = new URL(redirectUrl)
+    return (await isAllowedOrigin(url)) ? redirectUrl : undefined
+  } catch {
+    return
+  }
+}
+
+/**
  * OAuth redirect_uris are pinned per-credential: the broker host for
  * inherited/platform credentials, or the reseller's own custom domain for a
  * tenant-owned credential (see `lib/provider-origin.ts`). Either way, the

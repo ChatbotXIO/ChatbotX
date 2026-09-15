@@ -89,6 +89,9 @@ importers:
       '@chatbotx.io/business':
         specifier: workspace:*
         version: link:../../packages/business
+      '@chatbotx.io/connections':
+        specifier: workspace:*
+        version: link:../../packages/connections
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -682,6 +685,9 @@ importers:
       '@chatbotx.io/business':
         specifier: workspace:*
         version: link:../../packages/business
+      '@chatbotx.io/connections':
+        specifier: workspace:*
+        version: link:../../packages/connections
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -2231,6 +2237,9 @@ importers:
       jose:
         specifier: ^6.2.3
         version: 6.2.3
+      ky:
+        specifier: ^2.0.2
+        version: 2.0.2
       libphonenumber-js:
         specifier: ^1.12.42
         version: 1.13.6
@@ -2259,6 +2268,109 @@ importers:
       '@types/qrcode':
         specifier: ^1.5.6
         version: 1.5.6
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.0
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@4.1.8)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
+
+  packages/connections:
+    dependencies:
+      '@chatbotx.io/business':
+        specifier: workspace:*
+        version: link:../business
+      '@chatbotx.io/database':
+        specifier: workspace:*
+        version: link:../database
+      '@chatbotx.io/encryption':
+        specifier: workspace:*
+        version: link:../encryption
+      '@chatbotx.io/integration-active-campaign':
+        specifier: workspace:*
+        version: link:../../integrations/active-campaign
+      '@chatbotx.io/integration-api':
+        specifier: workspace:*
+        version: link:../../integrations/api
+      '@chatbotx.io/integration-chatbotx':
+        specifier: workspace:*
+        version: link:../../integrations/chatbotx
+      '@chatbotx.io/integration-drip':
+        specifier: workspace:*
+        version: link:../../integrations/drip
+      '@chatbotx.io/integration-facebook-ads':
+        specifier: workspace:*
+        version: link:../../integrations/facebook-ads
+      '@chatbotx.io/integration-get-response':
+        specifier: workspace:*
+        version: link:../../integrations/get-response
+      '@chatbotx.io/integration-google-calendar':
+        specifier: workspace:*
+        version: link:../../integrations/google-calendar
+      '@chatbotx.io/integration-google-sheets':
+        specifier: workspace:*
+        version: link:../../integrations/google-sheets
+      '@chatbotx.io/integration-instagram':
+        specifier: workspace:*
+        version: link:../../integrations/instagram
+      '@chatbotx.io/integration-instagram-facebook':
+        specifier: workspace:*
+        version: link:../../integrations/instagram-facebook
+      '@chatbotx.io/integration-klaviyo':
+        specifier: workspace:*
+        version: link:../../integrations/klaviyo
+      '@chatbotx.io/integration-mailchimp':
+        specifier: workspace:*
+        version: link:../../integrations/mailchimp
+      '@chatbotx.io/integration-mailer-lite':
+        specifier: workspace:*
+        version: link:../../integrations/mailer-lite
+      '@chatbotx.io/integration-messenger':
+        specifier: workspace:*
+        version: link:../../integrations/messenger
+      '@chatbotx.io/integration-moosend':
+        specifier: workspace:*
+        version: link:../../integrations/moosend
+      '@chatbotx.io/integration-sendgrid':
+        specifier: workspace:*
+        version: link:../../integrations/sendgrid
+      '@chatbotx.io/integration-smtp':
+        specifier: workspace:*
+        version: link:../../integrations/smtp
+      '@chatbotx.io/integration-telegram':
+        specifier: workspace:*
+        version: link:../../integrations/telegram
+      '@chatbotx.io/integration-tiktok':
+        specifier: workspace:*
+        version: link:../../integrations/tiktok
+      '@chatbotx.io/integration-webchat':
+        specifier: workspace:*
+        version: link:../../integrations/webchat
+      '@chatbotx.io/integration-whatsapp':
+        specifier: workspace:*
+        version: link:../../integrations/whatsapp
+      '@chatbotx.io/integration-zalo':
+        specifier: workspace:*
+        version: link:../../integrations/zalo
+      '@chatbotx.io/logger':
+        specifier: workspace:*
+        version: link:../logger
+      '@chatbotx.io/sdk':
+        specifier: workspace:*
+        version: link:../sdk
+      '@chatbotx.io/utils':
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      '@chatbotx.io/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@chatbotx.io/vitest-config':
+        specifier: workspace:*
+        version: link:../vitest-config
+      '@types/node':
+        specifier: 24.x
+        version: 24.13.1
       typescript:
         specifier: ^5
         version: 5.9.3

@@ -34,6 +34,7 @@ export const integrationInstagramConnectAPIs = {
       ({ input, context }): Promise<ConnectActionResultWire> =>
         connectInstagramAccountViaFacebook({
           userId: context.user.id,
+          sessionId: input.sessionId,
           igId: input.igId,
         }),
     ),
@@ -53,6 +54,7 @@ export const integrationInstagramConnectAPIs = {
       ({ input, context }): Promise<ConnectActionResultWire> =>
         connectInstagramAccount({
           userId: context.user.id,
+          sessionId: input.sessionId,
           igId: input.igId,
         }),
     ),

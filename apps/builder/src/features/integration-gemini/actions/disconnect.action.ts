@@ -9,6 +9,7 @@ export const disconnectGeminiAction = createDisconnectAction(
   integrationGeminiService,
   {
     name: "Gemini",
+    provider: "gemini",
     log: false,
     afterDisconnect: async (workspaceId) => {
       await aiIntegrationService.invalidateCache(

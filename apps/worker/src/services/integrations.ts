@@ -3,6 +3,7 @@ import {
   type IntegrationContext,
   workspaceService,
 } from "@chatbotx.io/business"
+import { CONNECTION_REGISTRY } from "@chatbotx.io/connections"
 import { findOrFail } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { integrationLookupRepository } from "@chatbotx.io/database/repositories"
@@ -12,19 +13,6 @@ import type {
   InboxModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
-import { integration as integrationApi } from "@chatbotx.io/integration-api"
-import { integration as integrationChatbotx } from "@chatbotx.io/integration-chatbotx"
-import { integration as integrationGoogleCalendar } from "@chatbotx.io/integration-google-calendar"
-import { integration as integrationGoogleSheets } from "@chatbotx.io/integration-google-sheets"
-import { integration as integrationInstagram } from "@chatbotx.io/integration-instagram"
-import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
-import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
-import { integration as integrationSmtp } from "@chatbotx.io/integration-smtp"
-import { integration as integrationTelegram } from "@chatbotx.io/integration-telegram"
-import { integration as integrationTiktok } from "@chatbotx.io/integration-tiktok"
-import { integration as integrationWebchat } from "@chatbotx.io/integration-webchat"
-import { integration as integrationWhatsapp } from "@chatbotx.io/integration-whatsapp"
-import { integration as integrationZalo } from "@chatbotx.io/integration-zalo"
 import {
   type AuthValue,
   ChannelError,
@@ -35,26 +23,34 @@ import {
 } from "@chatbotx.io/sdk"
 import { IntegrationNotFoundError } from "./orphaned-integration-cleanup"
 
+/**
+ * Sourced from `CONNECTION_REGISTRY` (the single exhaustive provider
+ * registry `@chatbotx.io/connections` builds) instead of importing each
+ * `integrations/<name>` package directly. `gemini`/`openai` stay `undefined`
+ * — same as before this derivation — because those two `IntegrationType`s
+ * have no `integrations/` SDK package (`CONNECTION_REGISTRY.gemini`/`.openai`
+ * are credential-only adapters with no `.integration` field to read).
+ */
 export const allIntegrations: Record<
   string,
   // biome-ignore lint/suspicious/noExplicitAny: safe pass value
   Integration<IntegrationDefinition<any, any, any>> | undefined
 > = {
-  api: integrationApi,
-  gemini: undefined,
-  googleCalendar: integrationGoogleCalendar,
-  googleSheets: integrationGoogleSheets,
-  messenger: integrationMessenger,
-  openai: undefined,
-  webchat: integrationWebchat,
-  whatsapp: integrationWhatsapp,
-  telegram: integrationTelegram,
-  tiktok: integrationTiktok,
-  zalo: integrationZalo,
-  chatbotx: integrationChatbotx,
-  smtp: integrationSmtp,
-  instagram: integrationInstagram,
-  instagramFacebook: integrationInstagramFacebook,
+  api: CONNECTION_REGISTRY.api?.integration,
+  gemini: CONNECTION_REGISTRY.gemini?.integration,
+  googleCalendar: CONNECTION_REGISTRY.googleCalendar?.integration,
+  googleSheets: CONNECTION_REGISTRY.googleSheets?.integration,
+  messenger: CONNECTION_REGISTRY.messenger?.integration,
+  openai: CONNECTION_REGISTRY.openai?.integration,
+  webchat: CONNECTION_REGISTRY.webchat?.integration,
+  whatsapp: CONNECTION_REGISTRY.whatsapp?.integration,
+  telegram: CONNECTION_REGISTRY.telegram?.integration,
+  tiktok: CONNECTION_REGISTRY.tiktok?.integration,
+  zalo: CONNECTION_REGISTRY.zalo?.integration,
+  chatbotx: CONNECTION_REGISTRY.chatbotx?.integration,
+  smtp: CONNECTION_REGISTRY.smtp?.integration,
+  instagram: CONNECTION_REGISTRY.instagram?.integration,
+  instagramFacebook: CONNECTION_REGISTRY.instagramFacebook?.integration,
 }
 
 export type IntegrationRow = {

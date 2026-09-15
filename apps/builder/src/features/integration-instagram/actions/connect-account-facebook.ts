@@ -4,181 +4,140 @@ import {
   buildContext,
   instagramIntegrationService,
 } from "@chatbotx.io/business"
+import { connectionService } from "@chatbotx.io/connections"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram-facebook"
+import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
 import {
-  getUserInstagramAccounts,
-  integration as integrationInstagramFacebook,
-  subscribePageToInstagramWebhook,
-} from "@chatbotx.io/integration-instagram-facebook"
-import { AuthType } from "@chatbotx.io/sdk"
+  connectedOutcome,
+  duplicatedOutcome,
+  notSelectableOutcome,
+  runConnectFollowUps,
+  toConnectActionFailure,
+} from "@/features/channel-connect/lib/connect-action-outcomes"
 import type { ResolvedConnectSession } from "@/features/channel-connect/lib/resolve-connect-session"
-import {
-  type ConnectCandidateLookup,
-  runConnectSequence,
-  selectableCandidate,
-  unselectableCandidate,
-} from "@/features/channel-connect/lib/run-connect-sequence"
+import { resolveConnectSession } from "@/features/channel-connect/lib/resolve-connect-session"
 import type { ConnectActionResultWire } from "@/features/channel-connect/schema"
 import { BRANDING_TITLE } from "@/features/integration-webchat/lib"
 import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
-import { FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE } from "@/lib/facebook-pending-auth"
-import { persistIntegrationUserInfo } from "@/lib/integration-user-info"
-import { isInstagramAccountConnected } from "./connect-account-shared"
 
 type InstagramFacebookSession = ResolvedConnectSession<"instagramFacebook">
 
-type LinkedInstagramAccount = {
-  id: string
-  name: string
-  username: string
-  pageId: string
-  pageAccessToken: string
-}
-
 /**
- * One Graph call per request, no cache — provider lists carry page access
- * tokens (plan §4.9).
+ * Connects one Instagram account (via its linked Facebook Page) from a
+ * `ConnectSession`, as a plain server function so both transports can call
+ * it: the oRPC route the picker posts to in parallel (`api/connect.ts`) and
+ * the server action kept for any non-picker caller. Same skeleton and the
+ * same two accepted scope reductions as `connectMessengerPage`.
  */
-async function findLinkedAccount({
-  session,
-  sourceId,
-}: {
-  session: InstagramFacebookSession
-  sourceId: string
-}): Promise<ConnectCandidateLookup<LinkedInstagramAccount>> {
-  const accounts = await getUserInstagramAccounts(
-    session.pendingAuth.userToken,
-    session.pendingAuth.version,
-  )
-  const account = accounts.find((candidate) => candidate.id === sourceId)
-
-  return account ? selectableCandidate(account) : unselectableCandidate()
-}
-
-async function subscribeAndPersistAccount({
-  session,
-  candidate: account,
-  actorUserId,
-}: {
-  session: InstagramFacebookSession
-  candidate: LinkedInstagramAccount
-  actorUserId: string
-}) {
-  const { pendingAuth, workspace, platformOwnerId, brandingMenuEntry } = session
-  const instagramSettings = session.credential.config
-
-  await subscribePageToInstagramWebhook({
-    pageId: account.pageId,
-    accessToken: account.pageAccessToken,
-    version: pendingAuth.version,
-  })
-
-  const auth: InstagramAuthValue = {
-    authType: AuthType.oauth2,
-    clientId: instagramSettings.clientId,
-    clientSecret: instagramSettings.clientSecret,
-    redirectUrl: "",
-    tokens: {
-      accessToken: account.pageAccessToken,
-    },
-    metadata: {
-      igId: account.id,
-      igName: account.name,
-      pageId: account.pageId,
-      version: pendingAuth.version,
-    },
-  }
-
-  const { integrationId, integration } =
-    await instagramIntegrationService.connectAccount({
-      actorUserId,
-      ownerId: platformOwnerId,
-      workspaceId: workspace.id,
-      type: "facebook",
-      account: {
-        igId: account.id,
-        igName: account.name,
-        igUsername: account.username,
-        pageId: account.pageId,
-      },
-      auth,
-      persistentMenus: [brandingMenuEntry],
-    })
-
-  return {
-    integrationId,
-    runFollowUps: async () => {
-      const brandingCtx = await buildContext({
-        workspaceId: workspace.id,
-        integrationType: "instagramFacebook",
-        integration: { ...integration, auth },
-      })
-
-      await integrationInstagramFacebook.runChannelHandler(
-        "bot",
-        "addBranding",
-        {
-          ctx: brandingCtx,
-          title: BRANDING_TITLE,
-          url: brandingMenuEntry.url,
-        },
-      )
-
-      await updateWorkspaceLogo({
-        id: workspace.id,
-        integration: integrationInstagramFacebook,
-        ctx: brandingCtx,
-      })
-
-      await persistIntegrationUserInfo({
-        workspaceId: workspace.id,
-        userId: pendingAuth.userId,
-        userName: pendingAuth.userName,
-        userAccessToken: pendingAuth.userToken,
-        avatarUrl: pendingAuth.userAvatarUrl,
-        persist: (userInfo) =>
-          instagramIntegrationService.updateUserInfo({
-            id: integrationId,
-            workspaceId: workspace.id,
-            userInfo,
-          }),
-      })
-    },
-  }
-}
-
-/**
- * Connects a single Instagram account via its linked Facebook Page, as a
- * plain server function so both transports can call it: the oRPC route the
- * picker posts to in parallel (`api/connect.ts`) and the server action kept
- * for any non-picker caller. Same skeleton as Messenger's
- * `connectMessengerPage`: the pending-auth cookie is the only source of the
- * user token / workspace, the id arrives on the wire alone, and every failure
- * comes back as a typed `ConnectActionResult` instead of a thrown exception.
- */
-export function connectInstagramAccountViaFacebook({
+export async function connectInstagramAccountViaFacebook({
   userId,
+  sessionId,
   igId,
 }: {
   userId: string
+  sessionId: string
   igId: string
 }): Promise<ConnectActionResultWire> {
-  return runConnectSequence({
-    sourceId: igId,
-    session: {
+  let name = igId
+
+  try {
+    const session = await resolveConnectSession({
       userId,
-      cookieName: FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE,
+      sessionId,
       credentialType: "instagramFacebook",
       brandingChannel: "instagram",
-    },
-    lookUpCandidate: findLinkedAccount,
-    isAlreadyConnected: isInstagramAccountConnected,
-    connect: ({ session, candidate }) =>
-      subscribeAndPersistAccount({ session, candidate, actorUserId: userId }),
-    logMessages: {
-      followUpFailed:
-        "Instagram (via Facebook) connect follow-up failed after the account was connected",
-      failed: "Failed to connect an Instagram account via Facebook",
-    },
+    })
+
+    const target = session.session.targets.find((t) => t.id === igId)
+    if (!target) {
+      return notSelectableOutcome({ sourceId: igId, name })
+    }
+    name = target.name
+
+    if (!target.selectable) {
+      return target.alreadyConnected
+        ? duplicatedOutcome({ sourceId: igId, name })
+        : notSelectableOutcome({ sourceId: igId, name })
+    }
+
+    const result = await connectionService.connectTargets({
+      sessionId,
+      workspaceId: session.workspace.id,
+      targetIds: [igId],
+      actorUserId: userId,
+    })
+    const outcome = result.outcomes[0]
+    const connection = result.connections[0]
+
+    if (!(outcome && outcome.status === "connected" && connection)) {
+      return {
+        kind: "outcome",
+        outcome: {
+          sourceId: igId,
+          name,
+          status: outcome?.status ?? "failed",
+          reason: outcome?.reason ?? "unknown",
+          detail: outcome?.detail,
+          coexistEligible: false,
+        },
+      }
+    }
+
+    const instagramRow = await instagramIntegrationService.findByInboxId(
+      connection.inboxId as string,
+    )
+
+    const warning = await runConnectFollowUps(
+      () => runInstagramFacebookFollowUps({ session, instagramRow }),
+      {
+        message:
+          "Instagram (via Facebook) connect follow-up failed after the account was connected",
+      },
+    )
+
+    return connectedOutcome({
+      sourceId: igId,
+      name,
+      warning,
+      integrationId: instagramRow.id,
+      coexistEligible: true,
+    })
+  } catch (error) {
+    return toConnectActionFailure(error, {
+      sourceId: igId,
+      name,
+      log: "Failed to connect an Instagram account via Facebook",
+    })
+  }
+}
+
+async function runInstagramFacebookFollowUps({
+  session,
+  instagramRow,
+}: {
+  session: InstagramFacebookSession
+  instagramRow: Awaited<
+    ReturnType<typeof instagramIntegrationService.findByInboxId>
+  >
+}): Promise<void> {
+  const { workspace, brandingMenuEntry } = session
+  const auth = instagramRow.auth as InstagramAuthValue
+
+  const brandingCtx = await buildContext({
+    workspaceId: workspace.id,
+    integrationType: "instagramFacebook",
+    integration: { ...instagramRow, auth },
+  })
+
+  await integrationInstagramFacebook.runChannelHandler("bot", "addBranding", {
+    ctx: brandingCtx,
+    title: BRANDING_TITLE,
+    url: brandingMenuEntry.url,
+  })
+
+  await updateWorkspaceLogo({
+    id: workspace.id,
+    integration: integrationInstagramFacebook,
+    ctx: brandingCtx,
   })
 }

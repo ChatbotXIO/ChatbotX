@@ -256,3 +256,90 @@ export const workspaceLimitReachedException = () =>
     "Workspace limit reached for this plan",
     "workspaceLimitReached",
   )
+
+/**
+ * `refresh`/`verify` fired against a `Connection` whose status is not one of
+ * `ACTIVE_CONNECTION_STATUSES` (`connected`/`degraded`) — matches the FSM's
+ * own precondition in `transitionConnection` (`state.ts`).
+ */
+export const connectionInactiveException = () =>
+  new ChatbotXException(
+    "This connection is not active.",
+    "connectionInactive",
+    409,
+  )
+
+/** No `ConnectionAdapter` (or no store binding on it) is registered for this provider — a registry/data integrity gap, not a user error. */
+export const connectionNotConfiguredException = (provider: string) =>
+  new ChatbotXException(
+    `Connection provider "${provider}" is not configured.`,
+    "connectionNotConfigured",
+    500,
+  )
+
+export const connectionNotRefreshableException = (provider: string) =>
+  new ChatbotXException(
+    `Connection provider "${provider}" does not support refresh.`,
+    "connectionNotRefreshable",
+    400,
+  )
+
+/** This provider is already connected in this workspace — a fresh `connectFromCredentials`/OAuth-connect call would collide with the unique `(workspaceId, provider, sourceId)` key. */
+export const connectionAlreadyConnectedException = () =>
+  new ChatbotXException(
+    "This provider is already connected in this workspace.",
+    "connectionAlreadyConnected",
+    409,
+  )
+
+/** `connectFromCredentials` called against a provider whose `strategy` isn't `token`/`api_key`/`self_serve` (or one that never declared `fromCredentials`). */
+export const connectionWrongStrategyException = (provider: string) =>
+  new ChatbotXException(
+    `Connection provider "${provider}" does not accept direct credentials.`,
+    "connectionWrongStrategy",
+    400,
+  )
+
+/** `provider.fromCredentials` rejected the supplied config with a live validation call (e.g. an invalid API key). */
+export const connectionCredentialsRejectedException = (message: string) =>
+  new ChatbotXException(message, "connectionCredentialsRejected", 400)
+
+/** `startSession`/`completeAuthorization` called against a provider with no `authorizeUrl`/`exchangeCode` handler — not an OAuth-strategy provider. */
+export const connectionNotOAuthException = (provider: string) =>
+  new ChatbotXException(
+    `Connection provider "${provider}" does not support an OAuth connect flow.`,
+    "connectionNotOAuth",
+    400,
+  )
+
+/** The OAuth callback's `sessionId`/nonce did not resolve to a matching `ConnectSession` — a forged, stale, or already-consumed `state` parameter. */
+export const connectionStateMismatchException = () =>
+  new ChatbotXException(
+    "This connect session could not be verified. Please start the connection again.",
+    "connectionStateMismatch",
+    400,
+  )
+
+/** `listCandidates`/`describe` returned nothing selectable after a successful code exchange. */
+export const connectionNoCandidatesException = () =>
+  new ChatbotXException(
+    "No connectable accounts were found for this authorization.",
+    "connectionNoCandidates",
+    400,
+  )
+
+/** `reconnect`'s completion: the re-authorized account does not match the `Connection` being reconnected (user picked/granted the wrong account). */
+export const connectionIdentityMismatchException = () =>
+  new ChatbotXException(
+    "The reauthorized account does not match the connection being reconnected.",
+    "connectionIdentityMismatch",
+    400,
+  )
+
+/** API-driven `POST /v1/connections` for a channel provider hidden by the tenant's channel-visibility policy (not already connected in this workspace) — a deliberate tightening for an unattended caller; the interactive builder UI grandfathers an already-connected channel instead of hiding it. */
+export const channelHiddenException = (channel: string) =>
+  new ChatbotXException(
+    `The "${channel}" channel is not available for this workspace.`,
+    "channelHidden",
+    403,
+  )

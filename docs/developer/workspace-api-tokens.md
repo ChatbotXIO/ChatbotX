@@ -134,7 +134,7 @@ the authoritative, current list, and
 each feature's scope assignment at compile/test time (e.g.
 `contacts-public-scope.test.ts`, `broadcasts-public-scope.test.ts`,
 `appointments-public-scope.test.ts`, `sequences-public-scope.test.ts`,
-`integrations-public-scope.test.ts`, `analytics-public-scope.test.ts`,
+`connections-public-scope.test.ts`, `analytics-public-scope.test.ts`,
 `conversations-public-scope.test.ts`, `products-public-scope.test.ts`,
 `product-categories-public-scope.test.ts`, `coupons-public-scope.test.ts`).
 
@@ -327,18 +327,21 @@ an endpoint's scope.
     — the same template the builder's edit page shows the user. Never
     publish the bare `backgroundUrl` column value.
 
-- **Channels** — see the dedicated table below.
+- **Connections** — see the dedicated table below.
 
-### Channels scope — endpoint-to-scope table
+### Connections scope — endpoint-to-scope table
 
-`channels` shipped in the enum/registry/i18n alongside `ads` but, like `ads`,
-carried no endpoints for a while. It now covers user persistent menus
-(Messenger bot menu) CRUD, webchat CRUD, SMTP integration CRUD,
-Messenger/Zalo tag-sync toggling, and a read-only list of Messenger personas
-across the workspace's connected Pages. As with every other scope, each
-public handler calls the same `packages/business` service method the
-private/action code calls — no business logic was duplicated to publish
-these.
+`connections` replaces the former `channels` and `integrations` scopes
+(merged 2026-09-14; a data migration rewrites already-issued tokens'
+`scopes` arrays from either old value to `connections`). It covers user
+persistent menus (Messenger bot menu) CRUD, webchat CRUD, SMTP integration
+CRUD, Messenger/Zalo tag-sync toggling, a read-only list of Messenger
+personas across the workspace's connected Pages, generic integration
+list/get (including the token-refresh-error signal), AI-provider-key
+connect/disconnect, and webhook/external-webhook CRUD. As with every other
+scope, each public handler calls the same `packages/business` service
+method the private/action code calls — no business logic was duplicated to
+publish these.
 
 | Endpoint | Notes |
 |---|---|
@@ -348,10 +351,17 @@ these.
 | `PATCH /v1/messenger-channels/{id}/tag-sync` | Toggles `syncTagEnabledAt` via `messengerIntegrationService.updateTagSync`. |
 | `PATCH /v1/zalo-channels/{id}/tag-sync` | Toggles `syncTagEnabledAt` via `zaloIntegrationService.updateTagSync`. |
 | `GET /v1/messenger-personas` | Read-only; lists Messenger personas across every Page connected to the workspace, with page access tokens projected away. |
+| `GET /v1/integrations`, `GET /v1/integrations/{id}` | Read-only list/get via `integrationService`. |
+| `GET /v1/integrations/status/token-errors` | Channel integrations whose daily automatic token-refresh last failed. Superseded by the Connection domain's `needs_reauth`/`degraded` status (not yet public in this branch) — will be marked `deprecated: true` once its `/v1/connections` equivalent ships. |
+| `GET/PUT/DELETE /v1/integrations/ai/{provider}` | Get/upsert/disconnect an AI-provider API key (`claude`, `deepseek`, `gemini`, `openai`) via `integration<Provider>Service`. `PUT` live-validates the key with `verifyAiProviderApiKey` before persisting. |
+| `GET/POST /v1/webhooks`, `DELETE /v1/webhooks/{id}` | Full CRUD via `webhookService`. |
+| `GET/POST /v1/external-webhooks`, `DELETE /v1/external-webhooks/{id}` | Full CRUD via `externalWebhookService`, scoped to platforms like Make; `POST` is idempotent on `(event, url)`. |
+| `GET /v1/connections`, `GET /v1/connections/{id}` | Read-only, `ORDER BY kind, provider, displayName, id`, via `connectionStateService`. The unified successor to the four rows above and `GET /v1/integrations` — not a replacement yet (nothing is marked `deprecated: true` until its Phase 2/3 write-path equivalent ships), but the shared read path both the public and private (`GET /workspaces/{workspaceId}/connections`) routes call. `capabilities` (`refreshable`/`verifiable`/`multiAccount`) is joined from `CONNECTION_REGISTRY` at response time — never stored on the row. `auth` is never returned. |
+| `GET /v1/connection-providers` | Read-only connect catalog — every `IntegrationType`'s `strategy`, `configFields` (labels resolved from the request locale, falling back to the raw field name for a key with no translation yet), and `available`/`unavailableReason` (`notImplemented` \| `hiddenForTenant` \| `alreadyConnected` \| `credentialMissing`) resolved against this workspace via `resolveChannelPolicy` + `platformCredentialService.resolveForOwner`. No `POST /v1/connections` yet — Phase 3. |
 
 Two invariants specific to this scope:
 
-- **`customCss` is writable by a `channels`-scoped token with no extra
+- **`customCss` is writable by a `connections`-scoped token with no extra
   permission check.** The private `updateWebchatAction` gates `customCss`
   behind `hasWorkspacePermission(..., "superAdmin")` because it renders via
   `dangerouslySetInnerHTML` in `lib/widget-css.tsx`. The public webchat
@@ -403,7 +413,7 @@ Two invariants specific to this scope:
 
 ### Ads scope — endpoint-to-scope table
 
-`ads` shipped in the enum/registry/i18n from day one (alongside `channels`,
+`ads` shipped in the enum/registry/i18n from day one (alongside `connections`,
 `minigames`, `appointments`, `media`) but carried no endpoints until this
 table's routes were added — a token scoped to `["ads"]` reached nothing
 before. It now covers Ads conversion-rule CRUD, the CTWA/CTM/CTID funnel and
@@ -500,6 +510,10 @@ these helpers — import from the business package directly.
   asserts a campaign mutation succeeds with no session user in context (the
   `assertWorkspaceSuperAdmin` regression guard) and that `createdBy` is never
   set from one
+- `apps/builder/__tests__/connections-public-scope.test.ts` — real-router scope wiring for the merged `connections` scope (10 submodules)
+- `apps/builder/__tests__/connections-public-api.test.ts` — handler-behavior tests for `GET /v1/connections`, `GET /v1/connections/{id}`, `GET /v1/connection-providers`
+- `packages/business/src/connection/__tests__/state-service.test.ts` — quota-edge-exactly-once and Inbox-mirror assertions for `ConnectionStateService.transition`/`markUnhealthy`
+- `packages/connections/__tests__/registry.test.ts` — `CONNECTION_REGISTRY` exhaustiveness and channel/credential invariants
 - `apps/builder/__tests__/create-workspace-token-action.test.ts`
 - `apps/builder/__tests__/delete-workspace-token-action.test.ts`
 - `apps/builder/__tests__/integration-api-token-hash.test.ts`

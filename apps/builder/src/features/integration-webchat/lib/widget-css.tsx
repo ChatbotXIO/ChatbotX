@@ -22,7 +22,7 @@ export const sanitizeWidgetCss = (css: string): string =>
  *
  * Security: `customCss` is gated by `requireWorkspacePermission(workspaceId,
  * "superAdmin")` on the edit page and by the matching check inside
- * `updateWebchatAction`. The `channels`-scoped public API
+ * `updateWebchatAction`. The `connections`-scoped public API
  * (`integration-webchat/api/public.ts`) accepts `customCss` too, with no
  * equivalent in-handler permission check — that is intentional, not a gap:
  * minting any workspace token already requires the caller to be a workspace

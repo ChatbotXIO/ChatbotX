@@ -73,6 +73,51 @@ const config: IntegrationDefinition<
   ActiveCampaignActions
 > = {
   name: "activeCampaign",
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiUrl",
+        type: "url",
+        required: true,
+        labelKey: "integrations.activeCampaign.fields.apiUrl",
+      },
+      {
+        name: "apiKey",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.activeCampaign.fields.apiKey",
+      },
+    ],
+    describe: () => ({
+      // ActiveCampaign auth has no stable account id; this is workspace-singleton.
+      sourceId: "workspace",
+      displayName: "ActiveCampaign",
+    }),
+    verify: async ({ auth }) => {
+      try {
+        await activeCampaignRequest(
+          auth,
+          activeCampaignAccountsPath(),
+          activeCampaignAccountsResponseSchema,
+        )
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to verify ActiveCampaign credentials",
+        }
+      }
+    },
+    // TODO(connection-phase2): refine once ActiveCampaign revoked-token error shape is confirmed.
+    isRevokedTokenError: () => false,
+  },
   actions: {
     validateCredentials: async ({ props }) => {
       const credential = activeCampaignCredentialSchema.parse(props)

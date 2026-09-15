@@ -29,9 +29,11 @@ export type MessengerPickerItem = ConnectPickerItem & {
 }
 
 export function MessengerPages({
+  sessionId,
   workspaceId,
   items,
 }: {
+  sessionId: string
   workspaceId: string
   items: MessengerPickerItem[]
 }) {
@@ -43,7 +45,7 @@ export function MessengerPages({
   const connectOne = (item: MessengerPickerItem) =>
     connectViaApi({
       route: CONNECT_CHANNEL_REGISTRY.messenger.connectRoute,
-      body: { pageId: item.id },
+      body: { sessionId, pageId: item.id },
       parse: (data) => connectActionResultSchemaDefault.parse(data),
       item,
     })

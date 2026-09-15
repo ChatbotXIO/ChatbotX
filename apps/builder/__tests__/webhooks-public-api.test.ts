@@ -79,7 +79,7 @@ const findProcedure = (method: string, path: string) => {
 
 // Captured before the first beforeEach's clearAllMocks() erases the
 // import-time call record — the router calls
-// workspaceTokenAuthAPIForScope("integrations") exactly once, at module load
+// workspaceTokenAuthAPIForScope("connections") exactly once, at module load
 // (line 59 above), never again during the test run.
 const scopeArgAtImport = workspaceTokenAuthAPIForScope.mock.calls[0]?.[0]
 
@@ -87,8 +87,8 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-test("registers the webhooks public router under the integrations scope", () => {
-  expect(scopeArgAtImport).toBe("integrations")
+test("registers the webhooks public router under the connections scope", () => {
+  expect(scopeArgAtImport).toBe("connections")
 })
 
 describe("GET /v1/webhooks", () => {

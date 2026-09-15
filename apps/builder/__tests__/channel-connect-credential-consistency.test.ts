@@ -3,62 +3,32 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
-// The OAuth completion legs (the three "select" actions plus the messenger
-// reuse-check route) must resolve the platform credential owner from the
-// SAME workspaceId the start leg (`/channels/create`) used — never from the
-// request host. Those legs run post-relay on the broker or branded host
-// interchangeably, so a host-derived completion leg could silently pick a
-// different OAuth app than the one the start leg authorized against,
-// breaking the token exchange.
-//
-// Messenger's `connectMessengerPage` (plan §2.4/§4.7) gets its `workspaceId`
-// from the encrypted, httpOnly pending-auth cookie — never client input —
-// so this test pins that it forwards the COOKIE's workspaceId into
-// `resolvePlatformOwnerId`, and that a schema-invalid/missing cookie is
-// rejected with a `sessionError` before the resolver is ever called.
-// Instagram's two legs (phase 4) now go through the same
-// `resolveConnectSession` helper, so they get the identical treatment: the
-// wire payload carries only `igId`, never `workspaceId`.
+// The OAuth completion legs (the three "select" actions) must resolve the
+// platform credential from the SAME owner the start leg (`/channels/create`
+// or `channels/create/messenger/route.ts`) resolved — never re-derive it
+// from the request host. Under the unified `ConnectSession` model this is a
+// structural invariant rather than a call-site convention: the session row
+// stores `platformOwnerId` once, at creation time, and every completion leg
+// (`resolveConnectSession`) reads it straight off that row — there is no
+// `resolvePlatformOwnerId`/host-derived re-resolution step in the
+// completion leg to drift. This test pins that `platformCredentialService
+// .resolveForOwner` is called with the SESSION's stored owner, and that a
+// missing/expired session short-circuits before any credential lookup.
 // ---------------------------------------------------------------------------
 
-const {
-  mockResolvePlatformOwnerId,
-  mockResolveForOwner,
-  mockReadPendingAuth,
-  mockWorkspaceFind,
-  mockIsMember,
-} = vi.hoisted(() => ({
-  mockResolvePlatformOwnerId: vi.fn(async () => "resolved-owner-1"),
-  mockResolveForOwner: vi.fn(async () => undefined),
-  mockReadPendingAuth: vi.fn(
-    async (): Promise<{
-      userToken: string
-      workspaceId: string
-      referer: string
-      version: string
-      expiresAt: number
-    } | null> => ({
-      userToken: "user-token-1",
-      workspaceId: "ws-1",
-      referer: "/channels/create",
-      version: "v23.0",
-      expiresAt: Date.now() + 600_000,
-    }),
-  ),
-  mockWorkspaceFind: vi.fn(async () => ({
-    id: "ws-1",
-    ownerId: "owner-1",
-  })),
-  mockIsMember: vi.fn(async () => true),
-}))
+const { mockFindById, mockResolveForOwner, mockWorkspaceFind, mockIsMember } =
+  vi.hoisted(() => ({
+    mockFindById: vi.fn(),
+    mockResolveForOwner: vi.fn(async () => undefined),
+    mockWorkspaceFind: vi.fn(async () => ({
+      id: "ws-1",
+      ownerId: "owner-1",
+    })),
+    mockIsMember: vi.fn(async () => true),
+  }))
 
-// A passthrough action-client chain: `.inputSchema()`/`.action()` just
-// return their handler so the test can call it directly with a hand-built
-// `{ ctx, parsedInput }`, without instantiating the real safe-action /
-// next-safe-action machinery. Mirrors the pattern in
-// `instagram-facebook-settings-actions.test.ts`.
-vi.mock("@/lib/platform-credential-owner", () => ({
-  resolvePlatformOwnerId: mockResolvePlatformOwnerId,
+vi.mock("@chatbotx.io/business/connect-session", () => ({
+  connectSessionService: { findById: mockFindById },
 }))
 
 // Bypassed entirely — this test is about credential-owner resolution, not
@@ -84,16 +54,26 @@ vi.mock("@chatbotx.io/business", () => ({
     findConnectedPageIds: vi.fn(async () => new Set<string>()),
     connectPage: vi.fn(),
     updateUserInfo: vi.fn(),
+    findByInboxId: vi.fn(),
   },
   instagramIntegrationService: {
     findConnectedIgIds: vi.fn(async () => new Set<string>()),
     connectAccount: vi.fn(),
     updateUserInfo: vi.fn(),
+    findByInboxId: vi.fn(),
   },
   tagSyncService: { enqueueChannelScan: vi.fn() },
   userQuotaService: { getAccessState: vi.fn(async () => ({ blocked: false })) },
   connectChannelIntegration: vi.fn(),
   buildContext: vi.fn(async () => ({})),
+}))
+
+// The real connect actions never reach `connectionService.connectTargets` in
+// this test — `mockResolveForOwner` defaults to `undefined`, so
+// `resolveConnectSession` throws `credentialMissingException` first — this
+// stub only satisfies the module import.
+vi.mock("@chatbotx.io/connections", () => ({
+  connectionService: { connectTargets: vi.fn() },
 }))
 
 // The REAL session/item-outcome mapping table — `resolveConnectSession`
@@ -129,45 +109,14 @@ vi.mock("@chatbotx.io/database/client", () => ({
   isDatabaseError: vi.fn(() => false),
 }))
 
-vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@chatbotx.io/database/schema")>()
-  return {
-    ...actual,
-    integrationInstagramModel: {},
-    integrationMessengerModel: {},
-  }
-})
-
 vi.mock("@chatbotx.io/integration-messenger", () => ({
   integration: { runChannelHandler: vi.fn() },
-  getUserPages: vi.fn(async () => ({
-    pages: [
-      {
-        id: "p1",
-        name: "Page",
-        access_token: "page-token",
-        isConnectable: true,
-      },
-    ],
-    bmLookupFailed: false,
-  })),
-}))
-vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
-  exchangeLongLivedToken: vi.fn(),
-  subscribePageToAppWebhook: vi.fn(),
 }))
 vi.mock("@chatbotx.io/integration-instagram", () => ({
   integration: { runChannelHandler: vi.fn() },
-  subscribePageToInstagramWebhook: vi.fn(),
 }))
 vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
   integration: { runChannelHandler: vi.fn() },
-  subscribePageToInstagramWebhook: vi.fn(),
-}))
-vi.mock("@chatbotx.io/sdk", () => ({
-  AuthType: { oauth2: "oauth2" },
-  SdkException: class SdkException extends Error {},
 }))
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
@@ -188,13 +137,6 @@ vi.mock("@/features/integration-webchat/lib", () => ({
 vi.mock("@/features/workspaces/actions/upload-logo", () => ({
   updateWorkspaceLogo: vi.fn(),
 }))
-vi.mock("@/lib/facebook-pending-auth", () => ({
-  FB_MESSENGER_PENDING_AUTH_COOKIE: "fb_messenger_pending_auth",
-  FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE:
-    "fb_instagram_facebook_pending_auth",
-  FB_INSTAGRAM_PENDING_AUTH_COOKIE: "fb_instagram_pending_auth",
-  readPendingAuth: mockReadPendingAuth,
-}))
 vi.mock("@/lib/integration-user-info", () => ({
   persistIntegrationUserInfo: vi.fn(),
 }))
@@ -212,69 +154,77 @@ const { connectInstagramAccountViaFacebook } = await import(
   "../src/features/integration-instagram/actions/connect-account-facebook"
 )
 
+const session = {
+  id: "session-1",
+  workspaceId: "ws-1",
+  platformOwnerId: "owner-1",
+  provider: "messenger",
+  status: "awaiting_selection",
+  targets: [{ id: "p1", name: "Page", selectable: true }],
+}
+
 describe("channel connect completion legs never re-derive the credential owner from the host", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockResolvePlatformOwnerId.mockResolvedValue("resolved-owner-1")
     // Credential missing short-circuits each action right after the
     // resolver call — exactly the point this test needs to observe, without
     // running the rest of the (heavily mocked) connect transaction.
     mockResolveForOwner.mockResolvedValue(undefined)
-    mockReadPendingAuth.mockResolvedValue({
-      userToken: "user-token-1",
-      workspaceId: "ws-1",
-      referer: "/channels/create",
-      version: "v23.0",
-      expiresAt: Date.now() + 600_000,
-    })
+    mockFindById.mockResolvedValue(session)
     mockWorkspaceFind.mockResolvedValue({ id: "ws-1", ownerId: "owner-1" })
     mockIsMember.mockResolvedValue(true)
   })
 
-  test("connectMessengerPage resolves the credential owner from the pending-auth cookie's workspaceId", async () => {
-    await connectMessengerPage({ userId: "user-1", pageId: "p1" }).catch(
-      () => undefined,
-    )
-
-    expect(mockResolvePlatformOwnerId).toHaveBeenCalledWith({
+  test("connectMessengerPage resolves the credential from the session's stored platformOwnerId", async () => {
+    await connectMessengerPage({
       userId: "user-1",
-      workspaceId: "ws-1",
+      sessionId: "session-1",
+      pageId: "p1",
+    }).catch(() => undefined)
+
+    expect(mockResolveForOwner).toHaveBeenCalledWith({
+      ownerId: "owner-1",
+      type: "messenger",
     })
   })
 
-  test("connectInstagramAccount resolves the credential owner from the pending-auth cookie's workspaceId", async () => {
-    await connectInstagramAccount({ userId: "user-1", igId: "ig1" }).catch(
-      () => undefined,
-    )
-
-    expect(mockResolvePlatformOwnerId).toHaveBeenCalledWith({
+  test("connectInstagramAccount resolves the credential from the session's stored platformOwnerId", async () => {
+    await connectInstagramAccount({
       userId: "user-1",
-      workspaceId: "ws-1",
-    })
-  })
-
-  test("connectInstagramAccountViaFacebook resolves the credential owner from the pending-auth cookie's workspaceId", async () => {
-    await connectInstagramAccountViaFacebook({
-      userId: "user-1",
+      sessionId: "session-1",
       igId: "ig1",
     }).catch(() => undefined)
 
-    expect(mockResolvePlatformOwnerId).toHaveBeenCalledWith({
-      userId: "user-1",
-      workspaceId: "ws-1",
+    expect(mockResolveForOwner).toHaveBeenCalledWith({
+      ownerId: "owner-1",
+      type: "instagram",
     })
   })
 
-  test("connectMessengerPage never calls the resolver when the pending-auth cookie is missing/schema-invalid", async () => {
-    mockReadPendingAuth.mockResolvedValue(null)
+  test("connectInstagramAccountViaFacebook resolves the credential from the session's stored platformOwnerId", async () => {
+    await connectInstagramAccountViaFacebook({
+      userId: "user-1",
+      sessionId: "session-1",
+      igId: "ig1",
+    }).catch(() => undefined)
+
+    expect(mockResolveForOwner).toHaveBeenCalledWith({
+      ownerId: "owner-1",
+      type: "instagramFacebook",
+    })
+  })
+
+  test("connectMessengerPage never calls the credential resolver when the session is missing/expired", async () => {
+    mockFindById.mockResolvedValue(null)
 
     const result = await connectMessengerPage({
       userId: "user-1",
+      sessionId: "session-1",
       pageId: "p1",
     })
 
     expect(result).toEqual({ kind: "sessionError", code: "sessionExpired" })
-    expect(mockResolvePlatformOwnerId).not.toHaveBeenCalled()
+    expect(mockResolveForOwner).not.toHaveBeenCalled()
     expect(mockWorkspaceFind).not.toHaveBeenCalled()
   })
 })

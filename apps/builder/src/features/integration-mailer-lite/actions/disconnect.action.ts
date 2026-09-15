@@ -5,5 +5,5 @@ import { createDisconnectAction } from "@/lib/integration-actions"
 
 export const disconnectMailerLiteAction = createDisconnectAction(
   integrationMailerLiteService,
-  { name: "MailerLite" },
+  { name: "MailerLite", provider: "mailerLite" },
 )

@@ -127,7 +127,13 @@ describe("MessengerPages", () => {
 
   function renderPages(items: MessengerPickerItem[]) {
     act(() => {
-      root.render(<MessengerPages items={items} workspaceId="ws-1" />)
+      root.render(
+        <MessengerPages
+          items={items}
+          sessionId="session-1"
+          workspaceId="ws-1"
+        />,
+      )
     })
   }
 
@@ -186,7 +192,7 @@ describe("MessengerPages", () => {
     expect(checkboxes()).toHaveLength(0)
   })
 
-  test("submitting a single selected item posts only { pageId } to the messenger connect route — no token, no workspaceId", async () => {
+  test("submitting a single selected item posts only { sessionId, pageId } to the messenger connect route — no token, no workspaceId", async () => {
     mockConnectViaApi.mockResolvedValue({
       kind: "outcome",
       outcome: {
@@ -212,16 +218,16 @@ describe("MessengerPages", () => {
     })
 
     expect(mockConnectViaApi).toHaveBeenCalledTimes(1)
-    // Ids only, and the channel's own route — no token, no workspaceId.
+    // Session and page IDs only, and the channel's own route — no token or workspaceId.
     expect(mockConnectViaApi.mock.calls[0]?.[0]).toMatchObject({
       // The registry entry itself — it now carries the typed oRPC procedure,
       // so identity is what pins the channel, not a URL string.
       route: CONNECT_CHANNEL_REGISTRY.messenger.connectRoute,
-      body: { pageId: "page-selectable" },
+      body: { sessionId: "session-1", pageId: "page-selectable" },
     })
     expect(
       Object.keys(mockConnectViaApi.mock.calls[0]?.[0]?.body ?? {}),
-    ).toEqual(["pageId"])
+    ).toEqual(["sessionId", "pageId"])
 
     await act(async () => {
       await Promise.resolve()

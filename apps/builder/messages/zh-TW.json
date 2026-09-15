@@ -1440,8 +1440,7 @@
       "broadcasts": "群發",
       "analytics": "分析",
       "ecommerce": "電子商務",
-      "integrations": "整合",
-      "channels": "頻道",
+      "connections": "連線",
       "minigames": "小遊戲",
       "appointments": "預約",
       "media": "媒體",
@@ -6089,5 +6088,19 @@
   },
   "accountFields": {
     "title": "機器人欄位"
+  },
+  "connectSessionPage": {
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   }
 }

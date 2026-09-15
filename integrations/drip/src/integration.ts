@@ -25,6 +25,48 @@ import {
 
 const config: IntegrationDefinition<DripConfig, DripAuthValue, DripActions> = {
   name: "drip",
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiToken",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.drip.fields.apiToken",
+      },
+    ],
+    describe: () => ({
+      // Drip auth has no stable account id; this is workspace-singleton.
+      sourceId: "workspace",
+      displayName: "Drip",
+    }),
+    verify: async ({ auth }) => {
+      try {
+        const response = await dripRequest(
+          auth,
+          DRIP_ACCOUNTS_PATH,
+          dripAccountsResponseSchema,
+        )
+        if (response.accounts.length === 0) {
+          throw new DripNoAccountError()
+        }
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to verify Drip credentials",
+        }
+      }
+    },
+    // TODO(connection-phase2): refine once Drip revoked-token error shape is confirmed.
+    isRevokedTokenError: () => false,
+  },
   actions: {
     validateCredentials: async ({ props }) => {
       const response = await dripRequest(

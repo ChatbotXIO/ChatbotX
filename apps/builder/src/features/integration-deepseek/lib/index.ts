@@ -1,5 +1,4 @@
-import { aiProviders } from "@chatbotx.io/ai"
-import { verifyAiProviderApiKey } from "@/features/integration-ai/lib/verify-api-key"
+import { verifyAiProviderApiKey } from "@chatbotx.io/business/integration-ai-provider/verify"
 
 export const verifyDeepSeekApiKey = (apiKey: string) =>
-  verifyAiProviderApiKey(aiProviders.enum.deepseek, apiKey)
+  verifyAiProviderApiKey("deepseek", apiKey)

@@ -40,6 +40,17 @@ export const appointmentExternalCalendarsPublicRouter = {
       return paginateInMemory(items, input)
     }),
 
+  /**
+   * NOT aliased to `connectionService.disconnect` (unlike the AI-provider
+   * DELETE route) — `getDisconnectableGoogleConnection`'s `connectionInUse`
+   * 409 guard (any appointment calendar still referencing this connection)
+   * is a business rule the registry-only `ConnectionService` has no way to
+   * know about, and this endpoint is Google-only in practice
+   * (`outlookCalendar` has no `ConnectionAdapter` yet) — see
+   * `out/plan/…-integration-nested-ember.md`'s non-goals: "Meta CAPI
+   * sub-connections and MessagingAdsConnection … keep their routes"
+   * applies by the same reasoning to this provider-specific guard.
+   */
   disconnect: workspaceTokenAuthAPI
     .route({
       method: "DELETE",

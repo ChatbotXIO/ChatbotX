@@ -6,11 +6,9 @@ import {
   integrationGeminiService,
   integrationOpenAIService,
 } from "@chatbotx.io/business"
-import {
-  notFoundException,
-  validationException,
-} from "@chatbotx.io/business/errors"
-import { verifyAiProviderApiKey } from "@/features/integration-ai/lib/verify-api-key"
+import { notFoundException } from "@chatbotx.io/business/errors"
+import { connectionService } from "@chatbotx.io/connections"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
@@ -23,7 +21,7 @@ import {
   publicAiProviderResource,
 } from "../../schema/ai-provider"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("connections")
 
 type AiProviderRow = {
   id: string
@@ -54,14 +52,6 @@ const aiProviderServices = {
     findByWorkspaceId: (
       workspaceId: string,
     ) => Promise<AiProviderRow | undefined>
-    connect: (input: {
-      workspaceId: string
-      apiKey: string
-      model: string
-      temperature: number
-      maxOutputTokens: number
-    }) => Promise<unknown>
-    disconnect: (workspaceId: string) => Promise<void>
   }
 >
 
@@ -91,7 +81,8 @@ export const integrationsAiPublicRouter = {
       path: "/v1/integrations/ai/{provider}",
       summary: "Connect or update an AI provider integration",
       description:
-        "Upserts the AI provider integration for the workspace — connects it if not already configured, otherwise replaces the stored configuration (including the API key).",
+        "Deprecated — use `POST /v1/connections` instead. Upserts the AI provider integration for the workspace — connects it if not already configured, otherwise replaces the stored configuration (including the API key).",
+      deprecated: true,
       tags: ["Integrations"],
     })
     .input(getAiProviderRequest.extend(connectAiProviderRequest.shape))
@@ -100,16 +91,20 @@ export const integrationsAiPublicRouter = {
     .handler(async ({ context, input }) => {
       const service = aiProviderServices[input.provider]
 
-      if (!(await verifyAiProviderApiKey(input.provider, input.apiKey))) {
-        throw validationException("apiKey", "Invalid API key")
-      }
-
-      await service.connect({
+      // `allowUpdate: true` — this route has always upserted (replacing an
+      // already-connected provider's stored API key/config on repeat
+      // calls), unlike the strict "reject if already connected" semantics
+      // `connectFromCredentials` otherwise enforces for a fresh connect.
+      await connectionService.connectFromCredentials({
         workspaceId: context.workspace.id,
-        apiKey: input.apiKey,
-        model: input.model,
-        temperature: input.temperature,
-        maxOutputTokens: input.maxOutputTokens,
+        provider: input.provider,
+        config: {
+          apiKey: input.apiKey,
+          model: input.model,
+          temperature: input.temperature,
+          maxOutputTokens: input.maxOutputTokens,
+        },
+        allowUpdate: true,
       })
 
       await aiIntegrationService.invalidateCache(
@@ -129,14 +124,29 @@ export const integrationsAiPublicRouter = {
       method: "DELETE",
       path: "/v1/integrations/ai/{provider}",
       summary: "Disconnect an AI provider integration",
+      description:
+        "Deprecated — use `DELETE /v1/connections/{id}` instead. Kept for backward compatibility.",
+      deprecated: true,
       tags: ["Integrations"],
       successStatus: 204,
     })
     .input(getAiProviderRequest)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const service = aiProviderServices[input.provider]
-      await service.disconnect(context.workspace.id)
+      const connection = await connectionRepository.findByProviderSourceId({
+        workspaceId: context.workspace.id,
+        provider: input.provider,
+        sourceId: "workspace",
+      })
+      // Idempotent, same as the pre-Connection-domain per-provider
+      // `disconnect(workspaceId)` this aliases: a no-op when already
+      // disconnected, not a 404.
+      if (connection) {
+        await connectionService.disconnect({
+          connectionId: connection.id,
+          workspaceId: context.workspace.id,
+        })
+      }
 
       await aiIntegrationService.invalidateCache(
         context.workspace.id,

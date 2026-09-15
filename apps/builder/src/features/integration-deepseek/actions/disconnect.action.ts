@@ -9,6 +9,7 @@ export const disconnectDeepSeekAction = createDisconnectAction(
   integrationDeepSeekService,
   {
     name: "DeepSeek",
+    provider: "deepseek",
     log: false,
     afterDisconnect: async (workspaceId) => {
       await aiIntegrationService.invalidateCache(

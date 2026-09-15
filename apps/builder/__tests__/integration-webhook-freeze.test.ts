@@ -8,12 +8,14 @@ const findIntegrationTiktokByOpenId = vi.fn()
 const telegramHandleRequest = vi.fn()
 const tiktokHandleRequest = vi.fn()
 const loggerInfo = vi.fn()
+const markUnhealthyByIdentifier = vi.fn()
 
 vi.mock("@chatbotx.io/business", async () => {
   const { resolveWorkspaceFreezeReason } = await import(
     "@chatbotx.io/business/workspace-lifecycle/predicates"
   )
   return {
+    connectionStateService: { markUnhealthyByIdentifier },
     customDomainService: { findActiveByDomain: vi.fn() },
     platformCredentialService: {
       findDecryptedPlatform: vi.fn(),
@@ -193,6 +195,27 @@ describe("tiktok webhook freeze", () => {
     const response = await handleWebhook("tiktok", request())
 
     expect(await response.text()).toBe("ok")
+    expect(tiktokHandleRequest).not.toHaveBeenCalled()
+  })
+
+  test("routes authorization.removed to connectionStateService.markUnhealthyByIdentifier instead of the integration handler", async () => {
+    const response = await handleWebhook(
+      "tiktok",
+      asNextRequest(
+        "http://localhost/integrations/tiktok",
+        JSON.stringify({
+          user_openid: "open-1",
+          event: "authorization.removed",
+        }),
+      ),
+    )
+
+    expect(await response.text()).toBe("ok")
+    expect(markUnhealthyByIdentifier).toHaveBeenCalledWith({
+      provider: "tiktok",
+      identifier: "open-1",
+      reason: "token_revoked",
+    })
     expect(tiktokHandleRequest).not.toHaveBeenCalled()
   })
 })

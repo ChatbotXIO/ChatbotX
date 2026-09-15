@@ -30,6 +30,52 @@ const config: IntegrationDefinition<
   MailchimpActions
 > = {
   name: "mailchimp",
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiKey",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.mailchimp.fields.apiKey",
+      },
+    ],
+    describe: () => ({
+      // Mailchimp auth contains no stable account identifier; this is workspace-scoped.
+      sourceId: "workspace",
+      displayName: "Mailchimp",
+    }),
+    verify: async ({ auth }) => {
+      try {
+        await mailchimpRequest(
+          auth,
+          MAILCHIMP_PING_ENDPOINT,
+          mailchimpPingResponseSchema,
+        )
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked:
+            typeof error === "object" &&
+            error !== null &&
+            "statusCode" in error &&
+            (error.statusCode === 401 || error.statusCode === 403),
+          error:
+            error instanceof Error
+              ? error.message
+              : "Mailchimp credential verification failed",
+        }
+      }
+    },
+    isRevokedTokenError: (error) =>
+      typeof error === "object" &&
+      error !== null &&
+      "statusCode" in error &&
+      (error.statusCode === 401 || error.statusCode === 403),
+  },
   actions: {
     validateApiKey: async ({ props }) => {
       const auth = createMailchimpAuth(props.apiKey)

@@ -5,9 +5,9 @@ import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schema"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
-export const deleteWebchatAction = workspaceActionClient
+export const deleteWebchatAction = workspaceActionClientAllowExpired
   .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .action(
     async ({

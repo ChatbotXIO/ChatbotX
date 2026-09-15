@@ -43,6 +43,52 @@ const config: IntegrationDefinition<
   SendGridActions
 > = {
   name: "sendGrid",
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiKey",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.sendGrid.fields.apiKey",
+      },
+    ],
+    describe: () => ({
+      // SendGrid auth contains no stable account identifier; this is workspace-scoped.
+      sourceId: "workspace",
+      displayName: "SendGrid",
+    }),
+    verify: async ({ auth }) => {
+      try {
+        await sendGridRequest(
+          auth,
+          SENDGRID_SCOPES_PATH,
+          sendGridScopesResponseSchema,
+        )
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked:
+            typeof error === "object" &&
+            error !== null &&
+            "statusCode" in error &&
+            (error.statusCode === 401 || error.statusCode === 403),
+          error:
+            error instanceof Error
+              ? error.message
+              : "SendGrid credential verification failed",
+        }
+      }
+    },
+    isRevokedTokenError: (error) =>
+      typeof error === "object" &&
+      error !== null &&
+      "statusCode" in error &&
+      (error.statusCode === 401 || error.statusCode === 403),
+  },
   actions: {
     validateCredentials: async ({ props }) => {
       const auth = createSendGridAuth(props.apiKey)

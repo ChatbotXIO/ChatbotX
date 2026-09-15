@@ -37,8 +37,6 @@ const {
   mockCreateGoogleFromOAuthCallback,
   mockResolveOwnerForWorkspace,
   mockGetCurrentUser,
-  mockEncryptAuth,
-  mockCookieSet,
   mockNotFound,
   mockRedirect,
   mockAuditRecord,
@@ -78,8 +76,6 @@ const {
   mockCreateGoogleFromOAuthCallback: vi.fn(),
   mockResolveOwnerForWorkspace: vi.fn(async () => "platform-owner-1"),
   mockGetCurrentUser: vi.fn(),
-  mockEncryptAuth: vi.fn(async () => "encrypted-token"),
-  mockCookieSet: vi.fn(),
   mockNotFound: vi.fn(() => {
     throw new Error("not found")
   }),
@@ -131,6 +127,21 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: { transaction: vi.fn() },
 }))
 
+vi.mock("@chatbotx.io/business/connect-session", () => ({
+  connectSessionService: {
+    findByNonce: vi.fn(),
+    fail: vi.fn(),
+  },
+}))
+
+vi.mock("@chatbotx.io/connections", () => ({
+  connectionService: {
+    completeAuthorization: vi.fn(),
+    connectTargets: vi.fn(),
+  },
+  CONNECTION_REGISTRY: {},
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   integrationGoogleSheetsModel: {},
   integrationModel: {},
@@ -178,10 +189,6 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
     getPublicUrlFromRequest: (request: { url: string }) => request.url,
   }
 })
-
-vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ set: mockCookieSet })),
-}))
 
 vi.mock("next/navigation", () => ({
   notFound: mockNotFound,
@@ -238,24 +245,6 @@ vi.mock("@/lib/log", () => ({
   logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
-vi.mock("@/lib/facebook-pending-auth", async (importOriginal) => {
-  // The real `pendingAuthCookieOptions` — these tests assert the set site
-  // passes the helper's own value through, not a copy that could drift from
-  // it (the cookie's `path` is what makes the connect routes reachable).
-  const actual =
-    await importOriginal<typeof import("@/lib/facebook-pending-auth")>()
-
-  return {
-    encryptAuth: mockEncryptAuth,
-    FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE: "igfb-pending-auth",
-    FB_INSTAGRAM_PENDING_AUTH_COOKIE: "ig-pending-auth",
-    FB_MESSENGER_PENDING_AUTH_COOKIE: "messenger-pending-auth",
-    FB_PENDING_AUTH_MAX_AGE: 600,
-    // The real writer: these tests assert what actually reaches the cookie
-    // store, including the expiry of the picker-scoped predecessor.
-    writePendingAuth: actual.writePendingAuth,
-  }
-})
 vi.mock("@/lib/oauth-broker", () => ({
   buildBrokerCallbackUrl: (path: string) => `https://broker.example.com${path}`,
   getBrokerOrigin: () => "https://broker.example.com",
@@ -339,41 +328,13 @@ describe("handleCallback OAuth reconnect", () => {
       callbackUrl: "https://broker.example.com/integrations/messenger/callback",
     })
     expect(mockExchangeMessengerCode).not.toHaveBeenCalled()
-    expect(mockCookieSet).not.toHaveBeenCalled()
 
     const redirectTarget = new URL(mockRedirect.mock.calls[0][0])
     expect(redirectTarget.searchParams.get("reconnect")).toBe("success")
     expect(redirectTarget.searchParams.get("channel")).toBe("messenger")
   })
 
-  test("first-channel workspace creation hitting the plan limit redirects to /channels/create?error=… instead of throwing", async () => {
-    const { workspaceLimitReachedException } = await import(
-      "@chatbotx.io/business/errors"
-    )
-    const { workspaceService } = await import("@chatbotx.io/business")
-    vi.mocked(workspaceService.create).mockRejectedValueOnce(
-      workspaceLimitReachedException(),
-    )
-    // Next's real `redirect` throws; mirror that here so the handler stops
-    // where production would, then restore the shared no-op for later tests.
-    mockRedirect.mockImplementation((path: string) => {
-      throw new Error(`redirect:${path}`)
-    })
-    try {
-      await expect(
-        handleCallback(
-          "messenger",
-          buildCallbackRequest("messenger", { referer: REFERER }),
-        ),
-      ).rejects.toThrow("redirect:/channels/create?error=workspaceLimitReached")
-    } finally {
-      mockRedirect.mockImplementation(() => undefined)
-    }
-
-    expect(mockExchangeMessengerCode).not.toHaveBeenCalled()
-    expect(mockCookieSet).not.toHaveBeenCalled()
-  })
-
+  // Plain legacy connect callbacks are superseded by the ConnectSession flow.
   test("messenger reconnect failure redirects with the error reason", async () => {
     mockReconnectMessengerHandler.mockResolvedValue({
       status: "error",
@@ -459,39 +420,6 @@ describe("handleCallback OAuth reconnect", () => {
 
     expect(mockReconnectMessengerHandler).not.toHaveBeenCalled()
     expect(mockRedirect).not.toHaveBeenCalled()
-  })
-
-  test("connect flow without reconnect state still runs the page-select flow", async () => {
-    mockExchangeMessengerCode.mockResolvedValue("short-token")
-    mockExchangeMessengerLongLivedToken.mockResolvedValue("long-token")
-
-    await handleCallback(
-      "messenger",
-      buildCallbackRequest("messenger", {
-        workspaceId: "1",
-        referer: REFERER,
-      }),
-    )
-
-    expect(mockReconnectMessengerHandler).not.toHaveBeenCalled()
-    expect(mockEncryptAuth).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userToken: "long-token",
-        userId: "fb-user-1",
-        userName: "FB User",
-        userAvatarUrl: "https://fb.example/avatar.jpg",
-      }),
-    )
-    expect(mockCookieSet).toHaveBeenCalledWith(
-      "messenger-pending-auth",
-      "encrypted-token",
-      // Scoped for the connect route, not the picker page — see
-      // `pendingAuthCookieOptions`.
-      expect.objectContaining({ path: "/", httpOnly: true, sameSite: "lax" }),
-    )
-    expect(mockRedirect).toHaveBeenCalledWith(
-      new URL("/channels/messenger/select", REFERER).toString(),
-    )
   })
 
   test("google calendar callback resolves credentials with the tenant-aware owner", async () => {
@@ -806,7 +734,6 @@ describe("handleCallback OAuth reconnect", () => {
       integrationId: "7",
       userToken: "ig-user-token",
     })
-    expect(mockCookieSet).not.toHaveBeenCalled()
 
     const redirectTarget = new URL(mockRedirect.mock.calls[0][0])
     expect(redirectTarget.searchParams.get("reconnect")).toBe("success")

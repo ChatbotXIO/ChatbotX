@@ -6,6 +6,7 @@ import {
   workspaceMemberService,
   workspaceService,
 } from "@chatbotx.io/business"
+import { connectSessionService } from "@chatbotx.io/business/connect-session"
 import {
   connectSessionExpiredException,
   credentialMissingException,
@@ -15,16 +16,14 @@ import type {
   ChannelType,
   CredentialType,
 } from "@chatbotx.io/database/partials"
-import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import type {
+  ConnectSessionModel,
+  WorkspaceModel,
+} from "@chatbotx.io/database/types"
 import {
   BRANDING_TITLE,
   getBrandingUrl,
 } from "@/features/integration-webchat/lib"
-import {
-  type FacebookAuthCallback,
-  readPendingAuth,
-} from "@/lib/facebook-pending-auth"
-import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
 import {
   checkWorkspaceOwnerAccess,
   workspaceAccessDenialException,
@@ -35,7 +34,7 @@ import {
  * by `packages/business` — derived here instead of widening every caller to
  * `unknown`. `NonNullable` drops the `undefined` branch: this module always
  * turns a missing credential into `credentialMissingException()` before
- * returning, so callers never see it.
+ * returning.
  */
 type ConnectCredential<T extends CredentialType> = NonNullable<
   Awaited<ReturnType<typeof platformCredentialService.resolveForOwner<T>>>
@@ -50,13 +49,13 @@ type ConnectBrandingMenuEntry = {
 
 export type ConnectSessionRequest<T extends CredentialType> = {
   userId: string
-  cookieName: string
+  sessionId: string
   credentialType: T
   brandingChannel: ChannelType
 }
 
 export type ResolvedConnectSession<T extends CredentialType> = {
-  pendingAuth: FacebookAuthCallback
+  session: ConnectSessionModel
   workspace: WorkspaceModel
   platformOwnerId: string
   credential: ConnectCredential<T>
@@ -65,10 +64,18 @@ export type ResolvedConnectSession<T extends CredentialType> = {
 }
 
 /**
- * Shared plan §2.4 steps 1–4: pending-auth cookie → workspace + membership →
- * owner quota/trial gate → platform credential + branding menu entry. Every
- * per-account connect action (Messenger today; Instagram's two actions in a
- * later phase) starts here instead of re-implementing the same five checks.
+ * Shared per-account connect steps: `ConnectSession` row (workspace-unscoped
+ * lookup — the id is itself the capability token, same trust boundary as the
+ * `/connect/{id}` completion page) → workspace + membership → owner
+ * quota/trial gate → platform credential + branding menu entry. Every
+ * per-account connect action (Messenger, Instagram direct, Instagram-via-
+ * Facebook) starts here instead of re-implementing the same checks.
+ *
+ * Superseded the pending-auth-cookie version of this module: the session row
+ * already carries `workspaceId`/`provider`/`targets` (computed once by
+ * `ConnectionService.completeAuthorization`/`listAndAttachCandidates`), so
+ * there is no cookie to read and no live re-fetch of the provider's
+ * page/account list — `session.targets` is that list.
  *
  * Every failure throws one of the session-level exceptions
  * (`connectSessionExpiredException`, `notWorkspaceMemberException`,
@@ -84,8 +91,8 @@ export type ResolvedConnectSession<T extends CredentialType> = {
 export async function resolveConnectSession<T extends CredentialType>(
   props: ConnectSessionRequest<T>,
 ): Promise<ResolvedConnectSession<T>> {
-  const pendingAuth = await readPendingAuth(props.cookieName)
-  if (!pendingAuth) {
+  const session = await connectSessionService.findById(props.sessionId)
+  if (!session) {
     throw connectSessionExpiredException(
       "Your connect session expired. Please start again.",
     )
@@ -95,7 +102,7 @@ export async function resolveConnectSession<T extends CredentialType>(
   // "not a member of it" (a session error), not fall through to a generic
   // item-level `failed/unknown` outcome from an uncaught `notFoundException`.
   const workspace = await workspaceService.find({
-    where: { id: pendingAuth.workspaceId },
+    where: { id: session.workspaceId },
   })
   if (!workspace) {
     throw notWorkspaceMemberException()
@@ -116,10 +123,12 @@ export async function resolveConnectSession<T extends CredentialType>(
     throw workspaceAccessDenialException(denialReason)
   }
 
-  const platformOwnerId = await resolvePlatformOwnerId({
-    userId: props.userId,
-    workspaceId: workspace.id,
-  })
+  const platformOwnerId = session.platformOwnerId
+  if (!platformOwnerId) {
+    throw credentialMissingException(
+      "App credentials are not configured for this workspace.",
+    )
+  }
 
   const credential = await platformCredentialService.resolveForOwner({
     ownerId: platformOwnerId,
@@ -141,7 +150,7 @@ export async function resolveConnectSession<T extends CredentialType>(
   }
 
   return {
-    pendingAuth,
+    session,
     workspace,
     platformOwnerId,
     credential,

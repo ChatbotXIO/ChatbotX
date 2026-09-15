@@ -11,6 +11,11 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService, withAuditContext } from "@chatbotx.io/business/audit"
+import { connectSessionService } from "@chatbotx.io/business/connect-session"
+import {
+  CONNECTION_REGISTRY,
+  connectionService,
+} from "@chatbotx.io/connections"
 import { db } from "@chatbotx.io/database/client"
 import {
   type IntegrationType,
@@ -27,16 +32,7 @@ import {
   type FacebookAdsAuthValue,
 } from "@chatbotx.io/integration-facebook-ads"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
-import {
-  exchangeCodeForToken as exchangeInstagramFacebookCode,
-  getFacebookUser as getInstagramFacebookUser,
-} from "@chatbotx.io/integration-instagram-facebook"
-import {
-  exchangeCodeForToken as exchangeMessengerCode,
-  type FacebookUser,
-  getFacebookUser as getMessengerFacebookUser,
-} from "@chatbotx.io/integration-messenger"
-import { exchangeLongLivedToken as exchangeMessengerLongLivedToken } from "@chatbotx.io/integration-messenger/apis/page"
+import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
 import type { MetaCatalogAuthValue } from "@chatbotx.io/integration-meta-catalog/schemas"
 import {
   AuthType,
@@ -48,7 +44,6 @@ import {
   getPublicUrlFromRequest,
   zodBigintAsString,
 } from "@chatbotx.io/utils"
-import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { normalizeError } from "universal-error-normalizer"
@@ -67,14 +62,6 @@ import { integrations } from "@/integration"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { getCurrentUser } from "@/lib/auth/utils"
 import { buildReconnectRedirectUrl } from "@/lib/channel-reconnect"
-import {
-  encryptAuth,
-  FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE,
-  FB_INSTAGRAM_PENDING_AUTH_COOKIE,
-  FB_MESSENGER_PENDING_AUTH_COOKIE,
-  FB_PENDING_AUTH_MAX_AGE,
-  writePendingAuth,
-} from "@/lib/facebook-pending-auth"
 import { logger } from "@/lib/log"
 import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
@@ -233,17 +220,117 @@ const storeMetaCatalogConnection = async (args: {
   })
 }
 
-// Best-effort: the connect flow works without the user identity, so a failed
-// lookup only leaves `userInfo` unset on the integration row.
-const lookupFacebookUser = async (
-  fetchUser: () => Promise<FacebookUser>,
-): Promise<FacebookUser | undefined> => {
-  try {
-    return await fetchUser()
-  } catch (error) {
-    logger.info({ err: error }, "Failed to fetch Facebook user profile")
-    return
+const CONNECT_SESSION_STATE_PATTERN = /^\d+\.[A-Za-z0-9_-]+$/
+
+/**
+ * Dispatches an OAuth callback whose `state` is a raw `"{sessionId}.{nonce}"`
+ * string — the Connection-domain `ConnectSession` flow (`POST
+ * /v1/connections`, `POST /v1/connections/{id}/reconnect`, and the builder
+ * pickers once converted). Unlike the legacy JSON-state flow below, this
+ * path needs no builder session cookie and no host-relay hop: every fact it
+ * needs (`workspaceId`, `provider`, `platformOwnerId`, `returnUrl`) lives on
+ * the `ConnectSession` row itself — resolved once at `startSession` time —
+ * not derived from the request's host or an authenticated user, so a
+ * completion landing on the broker or a reseller's custom domain both
+ * resolve identically with no relay needed. The completion page
+ * (`/connect/{id}`) does not require a signed-in builder session either.
+ */
+const handleConnectSessionCallback = async (url: URL, rawState: string) => {
+  const [sessionId, nonce] = rawState.split(".")
+  if (!(sessionId && nonce)) {
+    return notFound()
   }
+
+  const session = await connectSessionService.findByNonce(nonce)
+  if (!session || session.id !== sessionId) {
+    logger.debug({ sessionId }, "connect session state could not be verified")
+    return notFound()
+  }
+
+  const fallbackReturnUrl = `/connect/${session.id}`
+  const returnUrl = session.returnUrl
+    ? await sanitizeReferer(session.returnUrl)
+    : fallbackReturnUrl
+
+  // Facebook/Google/Zalo/TikTok all return ?error=... when the user cancels
+  // the OAuth dialog — no code exchange to attempt.
+  if (url.searchParams.get("error")) {
+    await connectSessionService.fail({
+      id: session.id,
+      errorCode: "provider_denied",
+    })
+    return redirect(returnUrl)
+  }
+
+  const adapter = CONNECTION_REGISTRY[session.provider]
+  if (!(adapter?.credentialType && session.platformOwnerId)) {
+    logger.warn(
+      { sessionId: session.id, provider: session.provider },
+      "connect session provider is not OAuth-configured",
+    )
+    return notFound()
+  }
+
+  const credential = await platformCredentialService.resolveForOwner({
+    ownerId: session.platformOwnerId,
+    type: adapter.credentialType,
+  })
+  if (!credential) {
+    return notFound()
+  }
+
+  const code = url.searchParams.get("code") ?? ""
+  // Reconstructs the exact redirect_uri the provider was given at
+  // `authorizeUrl` time — `buildProviderCallbackUrl` resolved it once
+  // against this same credential, and the callback always lands on that
+  // registered host/path (no relay hop for this flow, see above).
+  const callbackUrl = `${url.origin}${url.pathname}`
+
+  try {
+    const completed = await connectionService.completeAuthorization({
+      sessionId: session.id,
+      nonce,
+      code,
+      callbackUrl,
+      credential: credential.config,
+    })
+
+    // A non-multi-account provider's grant always resolves to exactly one
+    // selectable target — finish the connect immediately so an API/MCP
+    // caller (one with no builder session, `actorTokenId` set) never has to
+    // make a second `targets` call for it. A builder-initiated session
+    // (`actorUserId` set) skips this: its picker page — Instagram's direct
+    // login is non-multi-account too, but still shows a confirm screen with
+    // per-row coexist/sync-history opt-ins the person must set before the
+    // connect actually runs — owns finishing the connect itself via its own
+    // `connectTargets` call from the "Continue" button.
+    if (
+      completed.status === "awaiting_selection" &&
+      !adapter.provider.multiAccount &&
+      !completed.actorUserId
+    ) {
+      const onlyTarget = completed.targets[0]
+      if (onlyTarget?.selectable) {
+        await connectionService.connectTargets({
+          sessionId: completed.id,
+          workspaceId: completed.workspaceId,
+          targetIds: [onlyTarget.id],
+        })
+      }
+    }
+  } catch (err) {
+    // `completeAuthorization` already marks the session `failed` for its own
+    // known error paths (exchange rejected, no candidates, state mismatch);
+    // this catch is only a safety net so an unexpected error still redirects
+    // the browser instead of rendering a 500 — the completion page shows
+    // whatever status the session actually ended up in.
+    logger.warn(
+      { err, sessionId: session.id, provider: session.provider },
+      "connect session completeAuthorization failed",
+    )
+  }
+
+  return redirect(returnUrl)
 }
 
 export const handleCallback = async (
@@ -256,11 +343,22 @@ export const handleCallback = async (
 
   // Parse state params to get workspace info
   const url = new URL(getPublicUrlFromRequest(req))
+  const rawStateParam = url.searchParams.get("state") ?? ""
+
+  // New Connection-domain sessions (`POST /v1/connections`, `POST
+  // /v1/connections/{id}/reconnect`) carry a raw "{sessionId}.{nonce}"
+  // state — never JSON/base64-encoded — dispatched here before the legacy
+  // parse below, which would otherwise throw trying to atob/JSON.parse it.
+  // TODO(Phase 5): once every legacy JSON-state caller (builder pickers,
+  // ads/lead-ads/meta-catalog connect flows) moves onto sessions, this
+  // early branch becomes the only path and the switch below is deleted.
+  if (CONNECT_SESSION_STATE_PATTERN.test(rawStateParam)) {
+    return await handleConnectSessionCallback(url, rawStateParam)
+  }
+
   let rawState: unknown
   try {
-    rawState = JSON.parse(
-      atob(decodeURIComponent(url.searchParams.get("state") || "")),
-    )
+    rawState = JSON.parse(atob(decodeURIComponent(rawStateParam)))
   } catch {
     logger.debug(
       { url: url.toString() },
@@ -494,44 +592,14 @@ export const handleCallback = async (
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
-      const shortLivedToken = await exchangeMessengerCode(
-        messengerCredential.config,
-        code,
-        callbackUrl,
-      )
-      // Exchange for a long-lived user token before the page-select step so
-      // the pending-auth cookie stays usable even when the user leaves the
-      // picker open for a long time. Best-effort: the short-lived token still
-      // covers the normal flow if the exchange fails.
-      const userToken = await exchangeMessengerLongLivedToken(
-        messengerCredential.config,
-        shortLivedToken,
-      ).catch((error) => {
-        logger.info(
-          { err: error },
-          "Messenger long-lived token exchange failed, using short-lived token",
-        )
-        return shortLivedToken
-      })
-      const fbUser = await lookupFacebookUser(() =>
-        getMessengerFacebookUser(userToken, messengerCredential.config.version),
-      )
-      const token = await encryptAuth({
-        userToken,
-        userId: fbUser?.id,
-        userName: fbUser?.name,
-        userAvatarUrl: fbUser?.avatarUrl,
-        workspaceId: workspace.id,
-        referer: safeReferer,
-        version: messengerCredential.config.version,
-        expiresAt: Date.now() + FB_PENDING_AUTH_MAX_AGE * 1000,
-      })
-
-      const cookieStore = await cookies()
-      writePendingAuth(cookieStore, FB_MESSENGER_PENDING_AUTH_COOKIE, token)
-      return redirect(
-        new URL("/channels/messenger/select", safeReferer).toString(),
-      )
+      // A plain connect (no `flow`, no `reconnectIntegrationId`) never
+      // reaches here anymore: `channels/create/messenger/route.ts` mints a
+      // `ConnectSession` and its raw `"{sessionId}.{nonce}"` state is
+      // dispatched by `handleConnectSessionCallback` before this legacy
+      // switch ever runs. Every remaining caller of this callback sets one
+      // of `stateParams.flow` or `reconnectIntegrationId`, both handled
+      // above.
+      return notFound()
     }
 
     case "instagram": {
@@ -577,18 +645,9 @@ export const handleCallback = async (
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
-      const token = await encryptAuth({
-        userToken,
-        workspaceId: workspace.id,
-        referer: safeReferer,
-        version: instagramCredential.config.version,
-        expiresAt: Date.now() + FB_PENDING_AUTH_MAX_AGE * 1000,
-      })
-      const cookieStore = await cookies()
-      writePendingAuth(cookieStore, FB_INSTAGRAM_PENDING_AUTH_COOKIE, token)
-      return redirect(
-        new URL("/channels/instagram/select", safeReferer).toString(),
-      )
+      // A plain connect never reaches here anymore — see the comment at
+      // the end of `case "messenger"`.
+      return notFound()
     }
 
     case "instagramFacebook": {
@@ -633,32 +692,9 @@ export const handleCallback = async (
         return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
 
-      const fbUser = await lookupFacebookUser(() =>
-        getInstagramFacebookUser(
-          userToken,
-          instagramFacebookCredential.config.version,
-        ),
-      )
-
-      const token = await encryptAuth({
-        userToken,
-        userId: fbUser?.id,
-        userName: fbUser?.name,
-        userAvatarUrl: fbUser?.avatarUrl,
-        workspaceId: workspace.id,
-        referer: safeReferer,
-        version: instagramFacebookCredential.config.version,
-        expiresAt: Date.now() + FB_PENDING_AUTH_MAX_AGE * 1000,
-      })
-      const cookieStore = await cookies()
-      writePendingAuth(
-        cookieStore,
-        FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE,
-        token,
-      )
-      return redirect(
-        new URL("/channels/instagram-facebook/select", safeReferer).toString(),
-      )
+      // A plain connect never reaches here anymore — see the comment at
+      // the end of `case "messenger"`.
+      return notFound()
     }
 
     case "tiktok": {

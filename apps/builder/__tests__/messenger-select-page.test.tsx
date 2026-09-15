@@ -1,22 +1,19 @@
 // @vitest-environment node
 
-import type { ConnectableFacebookPage } from "@chatbotx.io/integration-messenger/schema"
 import { isValidElement } from "react"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  mockFindConnectedMessengerPageIds,
-  mockGetUserPages,
-  mockReadPendingAuth,
+  mockGetCurrentUserId,
   mockRedirect,
+  mockResolveConnectSession,
   mockSelectPage,
 } = vi.hoisted(() => ({
-  mockFindConnectedMessengerPageIds: vi.fn(),
-  mockGetUserPages: vi.fn(),
-  mockReadPendingAuth: vi.fn(),
+  mockGetCurrentUserId: vi.fn(),
   mockRedirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`)
   }),
+  mockResolveConnectSession: vi.fn(),
   mockSelectPage: vi.fn(() => null),
 }))
 
@@ -29,19 +26,12 @@ vi.mock("next-intl/server", () => ({
   getTranslations: async () => (key: string) => key,
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
-  messengerIntegrationService: {
-    findConnectedPageIds: mockFindConnectedMessengerPageIds,
-  },
+vi.mock("@/lib/auth/utils", () => ({
+  getCurrentUserId: mockGetCurrentUserId,
 }))
 
-vi.mock("@chatbotx.io/integration-messenger", () => ({
-  getUserPages: mockGetUserPages,
-}))
-
-vi.mock("@/lib/facebook-pending-auth", () => ({
-  readPendingAuth: mockReadPendingAuth,
-  FB_MESSENGER_PENDING_AUTH_COOKIE: "fb_messenger_pending_auth",
+vi.mock("@/features/channel-connect/lib/resolve-connect-session", () => ({
+  resolveConnectSession: mockResolveConnectSession,
 }))
 
 vi.mock("@/features/inboxes/components/inbox-icon", () => ({
@@ -57,6 +47,7 @@ const { default: MessengerSelectPage } = await import(
 )
 
 type SelectPageElementProps = {
+  bmLookupFailed: boolean
   items: Array<{
     id: string
     isAlreadyConnected: boolean
@@ -65,71 +56,55 @@ type SelectPageElementProps = {
     disabledReason?: string
     secondary?: string
   }>
+  sessionId: string
+  workspaceId: string
 }
 
-const connectablePage: ConnectableFacebookPage = {
+const pageArgs = {
+  searchParams: Promise.resolve({ session: "session-1" }),
+}
+
+const connectableTarget = {
   id: "page-connectable",
   name: "Connectable Page",
-  access_token: "connectable-token",
-  isConnectable: true,
+  selectable: true,
 }
 
-const notAdminPage: ConnectableFacebookPage = {
-  id: "page-not-admin",
-  name: "Not Admin Page",
-  access_token: "not-admin-token",
-  isConnectable: false,
-}
-
-const alreadyConnectedPage: ConnectableFacebookPage = {
+const alreadyConnectedTarget = {
   id: "page-connected",
   name: "Connected Page",
-  access_token: "connected-token",
-  isConnectable: false,
-}
-
-// Meta can report a page as both connect-eligible and already connected
-// elsewhere (e.g. reconnected under a different workspace) — this must still
-// rank last and be treated as disabled, exactly like any other
-// already-connected page.
-const connectableAndConnectedPage: ConnectableFacebookPage = {
-  id: "page-connectable-and-connected",
-  name: "Connectable But Connected Page",
-  access_token: "connectable-and-connected-token",
-  isConnectable: true,
+  selectable: false,
+  alreadyConnected: "other_workspace" as const,
 }
 
 describe("MessengerSelectPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockReadPendingAuth.mockResolvedValue({
-      userToken: "user-token",
-      version: "v23.0",
-      referer: "/channels/create",
-      workspaceId: "ws-1",
+    mockGetCurrentUserId.mockResolvedValue("user-1")
+    mockResolveConnectSession.mockResolvedValue({
+      session: {
+        targets: [alreadyConnectedTarget, connectableTarget],
+      },
+      workspace: { id: "ws-1" },
     })
-    mockGetUserPages.mockResolvedValue({
-      pages: [
-        notAdminPage,
-        alreadyConnectedPage,
-        connectablePage,
-        connectableAndConnectedPage,
-      ],
-      bmLookupFailed: false,
-    })
-    mockFindConnectedMessengerPageIds.mockResolvedValue(
-      new Set(["page-connected", "page-connectable-and-connected"]),
-    )
   })
 
-  test("passes every page through as a picker item, ranked connectable first, then non-admin, then already-connected", async () => {
-    const element = await MessengerSelectPage()
+  test("passes session targets through as picker items, ranked selectable first then already-connected", async () => {
+    const element = await MessengerSelectPage(pageArgs)
 
     expect(isValidElement<SelectPageElementProps>(element)).toBe(true)
     if (!isValidElement<SelectPageElementProps>(element)) {
       throw new Error("MessengerSelectPage did not return a valid element")
     }
 
+    expect(mockResolveConnectSession).toHaveBeenCalledWith({
+      userId: "user-1",
+      sessionId: "session-1",
+      credentialType: "messenger",
+      brandingChannel: "messenger",
+    })
+    expect(element.props.sessionId).toBe("session-1")
+    expect(element.props.workspaceId).toBe("ws-1")
     expect(element.props.items).toEqual([
       expect.objectContaining({
         id: "page-connectable",
@@ -138,21 +113,7 @@ describe("MessengerSelectPage", () => {
         disabled: false,
       }),
       expect.objectContaining({
-        id: "page-not-admin",
-        isConnectable: false,
-        isAlreadyConnected: false,
-        disabled: true,
-        disabledReason: "messenger.selectPage.notAdminNote",
-      }),
-      expect.objectContaining({
         id: "page-connected",
-        isConnectable: false,
-        isAlreadyConnected: true,
-        disabled: true,
-        disabledReason: "messenger.selectPage.alreadyConnectedNote",
-      }),
-      expect.objectContaining({
-        id: "page-connectable-and-connected",
         isConnectable: true,
         isAlreadyConnected: true,
         disabled: true,
@@ -161,20 +122,24 @@ describe("MessengerSelectPage", () => {
     ])
   })
 
-  test("never sends access_token to the client for any page", async () => {
-    const element = await MessengerSelectPage()
+  test("renders an empty picker when the session has no targets", async () => {
+    mockResolveConnectSession.mockResolvedValue({
+      session: { targets: [] },
+      workspace: { id: "ws-1" },
+    })
+
+    const element = await MessengerSelectPage(pageArgs)
 
     if (!isValidElement<SelectPageElementProps>(element)) {
       throw new Error("MessengerSelectPage did not return a valid element")
     }
 
-    for (const item of element.props.items) {
-      expect(item).not.toHaveProperty("access_token")
-    }
+    expect(mockRedirect).not.toHaveBeenCalled()
+    expect(element.props.items).toEqual([])
   })
 
   test("uses the page id as the secondary line", async () => {
-    const element = await MessengerSelectPage()
+    const element = await MessengerSelectPage(pageArgs)
 
     if (!isValidElement<SelectPageElementProps>(element)) {
       throw new Error("MessengerSelectPage did not return a valid element")
@@ -186,12 +151,34 @@ describe("MessengerSelectPage", () => {
     expect(connectable?.secondary).toBe("page-connectable")
   })
 
-  test("redirects to channel creation when the pending-auth cookie is missing or invalid", async () => {
-    mockReadPendingAuth.mockResolvedValue(null)
+  // Non-admin pages are filtered before session targets are created, so the
+  // old not-admin warning cannot structurally render in this picker anymore.
+  test("does not set the legacy Business Manager lookup warning", async () => {
+    const element = await MessengerSelectPage(pageArgs)
 
-    await expect(MessengerSelectPage()).rejects.toThrow(
+    if (!isValidElement<SelectPageElementProps>(element)) {
+      throw new Error("MessengerSelectPage did not return a valid element")
+    }
+
+    expect(element.props.bmLookupFailed).toBe(false)
+  })
+
+  test("redirects to channel creation when the session id is missing", async () => {
+    await expect(
+      MessengerSelectPage({ searchParams: Promise.resolve({}) }),
+    ).rejects.toThrow("redirect:/channels/create")
+
+    expect(mockGetCurrentUserId).not.toHaveBeenCalled()
+    expect(mockResolveConnectSession).not.toHaveBeenCalled()
+  })
+
+  test("redirects to channel creation when the user is not authenticated", async () => {
+    mockGetCurrentUserId.mockResolvedValue(null)
+
+    await expect(MessengerSelectPage(pageArgs)).rejects.toThrow(
       "redirect:/channels/create",
     )
-    expect(mockGetUserPages).not.toHaveBeenCalled()
+
+    expect(mockResolveConnectSession).not.toHaveBeenCalled()
   })
 })

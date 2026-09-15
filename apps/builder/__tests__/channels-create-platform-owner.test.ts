@@ -59,12 +59,6 @@ vi.mock(
   "@/features/integration-instagram/components/instagram-login-select",
   () => ({ InstagramLoginSelect: () => null }),
 )
-vi.mock("@/features/integration-instagram/libs/oauth", () => ({
-  generateInstagramRedirectUri: vi.fn(async () => ""),
-}))
-vi.mock("@/features/integration-instagram/libs/oauth-facebook", () => ({
-  generateInstagramFacebookRedirectUri: vi.fn(async () => ""),
-}))
 vi.mock("@/features/integration-telegram/components/telegram-connect", () => ({
   TelegramConnect: () => null,
 }))
