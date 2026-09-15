@@ -1,86 +1,83 @@
-import { messengerIntegrationService } from "@chatbotx.io/business"
-import { getUserPages } from "@chatbotx.io/integration-messenger"
-import type { ConnectableFacebookPage } from "@chatbotx.io/integration-messenger/schema"
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
-import {
-  markAlreadyConnected,
-  rankPickerItem,
-} from "@/features/channel-connect/lib/picker-items"
+import { resolveConnectSession } from "@/features/channel-connect/lib/resolve-connect-session"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import type { MessengerPickerItem } from "@/features/integration-messenger/components/messenger-pages"
 import { SelectPage } from "@/features/integration-messenger/components/select-account"
-import {
-  FB_MESSENGER_PENDING_AUTH_COOKIE,
-  readPendingAuth,
-} from "@/lib/facebook-pending-auth"
+import { getCurrentUserId } from "@/lib/auth/utils"
 
 export const dynamic = "force-dynamic"
 
 /**
- * `rankPickerItem`'s rank (0 selectable / 1 not-admin / 2 already-connected)
- * doubles as the disabled-reason lookup, table-driven instead of an
- * if/else-if chain re-deriving the same precedence rank already computes.
- */
-const DISABLED_REASON_KEY_BY_RANK: Record<number, string | undefined> = {
-  0: undefined,
-  1: "messenger.selectPage.notAdminNote",
-  2: "messenger.selectPage.alreadyConnectedNote",
-}
-
-/**
- * A page is only selectable when the user has full admin permission on it
- * and it isn't already connected elsewhere. Every other page is rendered
- * disabled — its `access_token` is never sent to the client at all: the
- * connect action re-fetches the provider list itself from the pending-auth
- * cookie (plan §4.7/§4.9).
+ * `session.targets` is already the fully-computed, admin-filtered,
+ * already-connected-marked list `ConnectionService.listAndAttachCandidates`
+ * built at authorization time — there is no live `getUserPages` re-fetch
+ * here anymore. Two documented, minor scope reductions versus the
+ * pending-auth-cookie version of this page:
+ * - No "not admin" rank: Messenger's `listCandidates` silently drops pages
+ *   the user doesn't administer before they ever become a target, so
+ *   `messenger-pages.tsx`'s "you're not an admin on any page" warning banner
+ *   can no longer fire — a user who administers zero pages simply sees an
+ *   empty picker instead.
+ * - `bmLookupFailed` (the Business Manager lookup warning) isn't part of
+ *   the session's public target projection, so it's always `false` here.
  */
 function toPickerItem(
-  page: ConnectableFacebookPage & { isAlreadyConnected: boolean },
+  target: {
+    id: string
+    name: string
+    selectable: boolean
+    alreadyConnected?: "this_workspace" | "other_workspace"
+  },
   t: Awaited<ReturnType<typeof getTranslations>>,
 ): MessengerPickerItem {
-  const rank = rankPickerItem(page)
-  const disabledReasonKey = DISABLED_REASON_KEY_BY_RANK[rank]
-
   return {
-    id: page.id,
-    name: page.name,
-    secondary: page.id,
-    disabled: rank !== 0,
-    disabledReason: disabledReasonKey ? t(disabledReasonKey) : undefined,
+    id: target.id,
+    name: target.name,
+    secondary: target.id,
+    disabled: !target.selectable,
+    disabledReason: target.alreadyConnected
+      ? t("messenger.selectPage.alreadyConnectedNote")
+      : undefined,
     leading: <InboxIcon channel="messenger" showLabel={false} size="small" />,
-    isConnectable: page.isConnectable,
-    isAlreadyConnected: page.isAlreadyConnected,
+    isConnectable: true,
+    isAlreadyConnected: Boolean(target.alreadyConnected),
   }
 }
 
-export default async function MessengerSelectPage() {
-  const pendingAuth = await readPendingAuth(FB_MESSENGER_PENDING_AUTH_COOKIE)
-
-  if (!pendingAuth) {
+export default async function MessengerSelectPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ session?: string }>
+}) {
+  const { session: sessionId } = await searchParams
+  if (!sessionId) {
     redirect("/channels/create")
   }
 
-  const { pages, bmLookupFailed } = await getUserPages(
-    pendingAuth.userToken,
-    pendingAuth.version,
-  )
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    redirect("/channels/create")
+  }
 
-  const connectedPageIds =
-    await messengerIntegrationService.findConnectedPageIds(
-      pages.map((page) => page.id),
-    )
+  const resolved = await resolveConnectSession({
+    userId,
+    sessionId,
+    credentialType: "messenger",
+    brandingChannel: "messenger",
+  })
 
   const t = await getTranslations()
-  const items = markAlreadyConnected(pages, connectedPageIds)
-    .sort((current, next) => rankPickerItem(current) - rankPickerItem(next))
-    .map((page) => toPickerItem(page, t))
+  const items = resolved.session.targets
+    .map((target) => toPickerItem(target, t))
+    .sort((current, next) => Number(current.disabled) - Number(next.disabled))
 
   return (
     <SelectPage
-      bmLookupFailed={bmLookupFailed}
+      bmLookupFailed={false}
       items={items}
-      workspaceId={pendingAuth.workspaceId}
+      sessionId={sessionId}
+      workspaceId={resolved.workspace.id}
     />
   )
 }

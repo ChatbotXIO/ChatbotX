@@ -15,6 +15,8 @@ export * from "./bot-field"
 export * from "./broadcast"
 export * from "./coexist"
 export * from "./coexist-import"
+export * from "./connect-session"
+export * from "./connection"
 export * from "./contact"
 // Exported here, NOT from ./contact/index.ts, on purpose: it drags in
 // coexist-import + workspace-usage (→ analytics/mac-tracking → redis bloomFilter),

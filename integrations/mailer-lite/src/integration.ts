@@ -1,6 +1,7 @@
 import {
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { mailerLiteRequest } from "./client"
@@ -38,24 +39,71 @@ const pageSearchParams = (props: { page: number; limit: number }) =>
     limit: String(props.limit),
   })
 
+/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
+const buildMailerLiteAuth = async (
+  apiKey: string,
+): Promise<MailerLiteAuthValue> => {
+  const auth = createMailerLiteAuth(apiKey)
+  await mailerLiteRequest(
+    auth,
+    MAILER_LITE_GROUPS_PATH,
+    mailerLiteGroupsResponseSchema,
+    { searchParams: pageSearchParams({ page: 1, limit: 1 }) },
+    [200],
+  )
+  return auth
+}
+
 const config: IntegrationDefinition<
   MailerLiteConfig,
   MailerLiteAuthValue,
   MailerLiteActions
 > = {
   name: "mailerLite",
-  actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = createMailerLiteAuth(props.apiKey)
-      await mailerLiteRequest(
-        auth,
-        MAILER_LITE_GROUPS_PATH,
-        mailerLiteGroupsResponseSchema,
-        { searchParams: pageSearchParams({ page: 1, limit: 1 }) },
-        [200],
-      )
-      return auth
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiKey",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.mailerLite.fields.apiKey",
+      },
+    ],
+    describe: () => ({
+      // MailerLite auth contains no stable account identifier; this is workspace-scoped.
+      sourceId: "workspace",
+      displayName: "MailerLite",
+    }),
+    fromCredentials: (config: { apiKey: string }) =>
+      buildMailerLiteAuth(config.apiKey),
+    verify: async ({ auth }) => {
+      try {
+        await mailerLiteRequest(
+          auth,
+          MAILER_LITE_GROUPS_PATH,
+          mailerLiteGroupsResponseSchema,
+          { searchParams: pageSearchParams({ page: 1, limit: 1 }) },
+          [200],
+        )
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked: isUnauthorizedStatusError(error),
+          error:
+            error instanceof Error
+              ? error.message
+              : "MailerLite credential verification failed",
+        }
+      }
     },
+    isRevokedTokenError: isUnauthorizedStatusError,
+  },
+  actions: {
+    validateCredentials: async ({ props }) => buildMailerLiteAuth(props.apiKey),
     listGroups: async ({ ctx, props }) => {
       const response = await mailerLiteRequest(
         ctx.auth,

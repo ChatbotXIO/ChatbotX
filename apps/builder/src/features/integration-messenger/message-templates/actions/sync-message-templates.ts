@@ -6,6 +6,7 @@ import {
   messengerMessageTemplateService,
 } from "@chatbotx.io/business"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
+import type { MessengerMessageTemplateEntity } from "@chatbotx.io/integration-messenger/apis/message-templates"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { SdkException } from "@chatbotx.io/sdk"
@@ -49,21 +50,23 @@ export async function syncMessengerMessageTemplatesForIntegration({
     )
   }
 
-  const templates = res.data.filter((template) => {
-    if (templateId && template.id !== templateId) {
-      return false
-    }
+  const templates = res.data.filter(
+    (template: MessengerMessageTemplateEntity) => {
+      if (templateId && template.id !== templateId) {
+        return false
+      }
 
-    if (templateName && template.name !== templateName) {
-      return false
-    }
+      if (templateName && template.name !== templateName) {
+        return false
+      }
 
-    if (templateLanguage && template.language !== templateLanguage) {
-      return false
-    }
+      if (templateLanguage && template.language !== templateLanguage) {
+        return false
+      }
 
-    return true
-  })
+      return true
+    },
+  )
 
   await messengerMessageTemplateService.syncFromMeta({
     integrationMessengerId: integrationMessenger.id,

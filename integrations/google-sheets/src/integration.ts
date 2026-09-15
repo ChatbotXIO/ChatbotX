@@ -1,4 +1,5 @@
 import {
+  AuthType,
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
@@ -18,6 +19,61 @@ const config: IntegrationDefinition<
   GoogleSheetsActions
 > = {
   name: "googleSheets",
+  connection: {
+    kind: "integration",
+    strategy: "oauth_redirect",
+    multiAccount: true,
+    configFields: [],
+    // Bypasses `generateAuthUrl`: that helper base64-JSON-encodes
+    // `stateParams` for the legacy cookie flow, while the Connection OAuth
+    // callback hub matches the raw `"{sessionId}.{nonce}"` state value.
+    authorizeUrl: ({ credential, callbackUrl, state }) => {
+      const config = credential as GoogleSheetsConfig
+      return getClient({
+        ...config,
+        redirectUrl: callbackUrl,
+      }).generateAuthUrl({
+        access_type: "offline",
+        prompt: "consent",
+        scope: ["https://www.googleapis.com/auth/spreadsheets"],
+        state,
+      })
+    },
+    exchangeCode: async ({ code, callbackUrl, credential }) => {
+      const config = credential as GoogleSheetsConfig
+      const tokens = await getClient({
+        ...config,
+        redirectUrl: callbackUrl,
+      }).getToken(code)
+
+      return {
+        authType: AuthType.oauth2,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        redirectUrl: "",
+        tokens: {
+          accessToken: tokens.tokens.access_token || "",
+          expiresAt: new Date(tokens.tokens.expiry_date ?? "").toISOString(),
+          refreshToken: tokens.tokens.refresh_token ?? null,
+        },
+        metadata: {
+          scope: tokens.tokens.scope,
+        },
+      } satisfies GoogleSheetsAuthValue
+    },
+    describe: (auth) => ({
+      // Google Sheets auth does not retain a spreadsheet identifier.
+      sourceId: "workspace",
+      displayName: "Google Sheets",
+      authExpiresAt: auth.tokens.expiresAt,
+    }),
+    verify: async ({ auth }) => {
+      await getClient(auth).getTokenInfo(auth.tokens.accessToken)
+      return { ok: true, authExpiresAt: auth.tokens.expiresAt }
+    },
+    // TODO(connection-phase2): refine once Google Sheets revoked-token error shape is confirmed.
+    isRevokedTokenError: () => false,
+  },
   actions: {
     listSheetNames: async ({ ctx, props }): Promise<string[]> => {
       const sheetsClient = getSheetsClient(ctx.auth)

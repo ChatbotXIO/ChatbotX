@@ -16,7 +16,7 @@ import {
 } from "../../schema/public"
 import { publicIntegrationResource } from "../../schema/resource"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("integrations")
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("connections")
 
 export const integrationsCrudPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -63,7 +63,8 @@ export const integrationsCrudPublicRouter = {
       path: "/v1/integrations/status/token-errors",
       summary: "List channel integrations with a failed token refresh",
       description:
-        "Channel integrations whose daily automatic token-refresh last failed — a signal the channel needs a manual reconnect before it silently stops sending or receiving messages.",
+        "Deprecated — use `GET /v1/connections?status=needs_reauth` (and `status=degraded`) instead. Channel integrations whose daily automatic token-refresh last failed — a signal the channel needs a manual reconnect before it silently stops sending or receiving messages.",
+      deprecated: true,
       tags: ["Integrations"],
     })
     .output(listTokenRefreshErrorsResponse)

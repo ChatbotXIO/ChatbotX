@@ -3044,8 +3044,7 @@
       "broadcasts": "群发",
       "analytics": "分析",
       "ecommerce": "电子商务",
-      "integrations": "集成",
-      "channels": "渠道",
+      "connections": "连接",
       "minigames": "小游戏",
       "appointments": "预约",
       "media": "媒体",
@@ -6128,5 +6127,19 @@
   },
   "accountFields": {
     "title": "机器人字段"
+  },
+  "connectSessionPage": {
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   }
 }

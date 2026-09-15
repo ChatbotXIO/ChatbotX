@@ -432,6 +432,14 @@ export const adsCampaignPublicRouter = {
       }
     }),
 
+  /**
+   * NOT aliased to `connectionService.disconnect` — `MessagingAdsConnection`
+   * is a `sub_connection` (an attribute of a channel connection, keyed by
+   * `parentConnectionId`, not its own registry adapter). The plan's
+   * non-goals section reserves `sub_connection` as an enum value only for
+   * this rollout and explicitly keeps "Meta CAPI sub-connections and
+   * MessagingAdsConnection … their routes" out of scope.
+   */
   disconnectConnection: workspaceTokenAuthAPI
     .route({
       method: "DELETE",

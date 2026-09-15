@@ -291,12 +291,22 @@ class InboxService extends BaseService {
     return inboxes.map((inbox) => inbox.id)
   }
 
+  /**
+   * `skipQuota` bypasses this method's own `tryConsume`/`increment` for a
+   * brand-new inbox — used only by `ConnectionService.connectTargets`
+   * (`@chatbotx.io/connections`), which activates the Connection through
+   * `connectionStateService.transition` right after this call: `transition`
+   * owns the quota edge for that path, so consuming here too would charge
+   * the workspace twice for one new channel. Every other caller leaves it
+   * `false` (default) and keeps today's behaviour unchanged.
+   */
   async create(props: {
     data: Omit<typeof inboxModel.$inferInsert, "id"> & { id?: string }
     ownerId: string
     tx?: DatabaseClient
+    skipQuota?: boolean
   }): Promise<{ inbox: InboxModel; wasCreated: boolean }> {
-    const { data, ownerId, tx = db } = props
+    const { data, ownerId, tx = db, skipQuota = false } = props
 
     const existing = await tx.query.inboxModel.findFirst({
       where: {
@@ -323,12 +333,14 @@ class InboxService extends BaseService {
       return { inbox: existing, wasCreated: false }
     }
 
-    const consumed = await quotaEnforcementService.tryConsume({
-      userId: ownerId,
-      metric: "channels",
-    })
-    if (!consumed.ok) {
-      throw channelLimitReachedException()
+    if (!skipQuota) {
+      const consumed = await quotaEnforcementService.tryConsume({
+        userId: ownerId,
+        metric: "channels",
+      })
+      if (!consumed.ok) {
+        throw channelLimitReachedException()
+      }
     }
 
     const [inbox] = await tx
@@ -336,14 +348,16 @@ class InboxService extends BaseService {
       .values({ id: data.id ?? createId(), ...data })
       .returning()
 
-    await workspaceUsageService
-      .increment(data.workspaceId, "channels")
-      .catch((err) => {
-        logger.warn(
-          { err, workspaceId: data.workspaceId },
-          "workspace usage channel increment failed",
-        )
-      })
+    if (!skipQuota) {
+      await workspaceUsageService
+        .increment(data.workspaceId, "channels")
+        .catch((err) => {
+          logger.warn(
+            { err, workspaceId: data.workspaceId },
+            "workspace usage channel increment failed",
+          )
+        })
+    }
 
     return { inbox, wasCreated: true }
   }

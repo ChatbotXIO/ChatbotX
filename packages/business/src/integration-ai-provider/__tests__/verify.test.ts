@@ -23,10 +23,7 @@ vi.mock("ky", () => ({
   HTTPError: MockHTTPError,
 }))
 
-const { aiProviders } = await import("@chatbotx.io/ai")
-const { verifyAiProviderApiKey } = await import(
-  "@/features/integration-ai/lib/verify-api-key"
-)
+const { verifyAiProviderApiKey } = await import("../verify")
 
 describe("verifyAiProviderApiKey", () => {
   beforeEach(() => {
@@ -36,9 +33,9 @@ describe("verifyAiProviderApiKey", () => {
   test("checks OpenRouter credentials against the authenticated key endpoint", async () => {
     mockKyGet.mockResolvedValueOnce({})
 
-    await expect(
-      verifyAiProviderApiKey(aiProviders.enum.openrouter, "or-key"),
-    ).resolves.toBe(true)
+    await expect(verifyAiProviderApiKey("openrouter", "or-key")).resolves.toBe(
+      true,
+    )
 
     expect(mockKyGet).toHaveBeenCalledWith(
       "https://openrouter.ai/api/v1/key",
@@ -51,16 +48,16 @@ describe("verifyAiProviderApiKey", () => {
   test("rejects explicitly unauthorized provider responses", async () => {
     mockKyGet.mockRejectedValueOnce(new MockHTTPError(401))
 
-    await expect(
-      verifyAiProviderApiKey(aiProviders.enum.openrouter, "bad-key"),
-    ).resolves.toBe(false)
+    await expect(verifyAiProviderApiKey("openrouter", "bad-key")).resolves.toBe(
+      false,
+    )
   })
 
   test("does not block users on transient provider failures", async () => {
     mockKyGet.mockRejectedValueOnce(new Error("network unavailable"))
 
     await expect(
-      verifyAiProviderApiKey(aiProviders.enum.openrouter, "possibly-valid-key"),
+      verifyAiProviderApiKey("openrouter", "possibly-valid-key"),
     ).resolves.toBe(true)
   })
 })

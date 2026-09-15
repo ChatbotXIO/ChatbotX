@@ -1,6 +1,7 @@
 import {
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { activeCampaignRequest } from "./client"
@@ -22,6 +23,7 @@ import {
   type ActiveCampaignAuthValue,
   type ActiveCampaignConfig,
   type ActiveCampaignContactAutomationPayload,
+  type ActiveCampaignCredentialValue,
   activeCampaignAccountsResponseSchema,
   activeCampaignAutomationsResponseSchema,
   activeCampaignContactAutomationPayloadSchema,
@@ -67,22 +69,72 @@ const contactAutomationExists = async (
   )
 }
 
+/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
+const buildActiveCampaignAuth = async (
+  config: ActiveCampaignCredentialValue,
+): Promise<ActiveCampaignAuthValue> => {
+  const credential = activeCampaignCredentialSchema.parse(config)
+  await activeCampaignRequest(
+    credential,
+    activeCampaignAccountsPath(),
+    activeCampaignAccountsResponseSchema,
+  )
+  return createActiveCampaignAuth(credential)
+}
+
 const config: IntegrationDefinition<
   ActiveCampaignConfig,
   ActiveCampaignAuthValue,
   ActiveCampaignActions
 > = {
   name: "activeCampaign",
-  actions: {
-    validateCredentials: async ({ props }) => {
-      const credential = activeCampaignCredentialSchema.parse(props)
-      await activeCampaignRequest(
-        credential,
-        activeCampaignAccountsPath(),
-        activeCampaignAccountsResponseSchema,
-      )
-      return createActiveCampaignAuth(credential)
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiUrl",
+        type: "url",
+        required: true,
+        labelKey: "integrations.activeCampaign.fields.apiUrl",
+      },
+      {
+        name: "apiKey",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.activeCampaign.fields.apiKey",
+      },
+    ],
+    describe: () => ({
+      // ActiveCampaign auth has no stable account id; this is workspace-singleton.
+      sourceId: "workspace",
+      displayName: "ActiveCampaign",
+    }),
+    fromCredentials: buildActiveCampaignAuth,
+    verify: async ({ auth }) => {
+      try {
+        await activeCampaignRequest(
+          auth,
+          activeCampaignAccountsPath(),
+          activeCampaignAccountsResponseSchema,
+        )
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked: isUnauthorizedStatusError(error),
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to verify ActiveCampaign credentials",
+        }
+      }
     },
+    isRevokedTokenError: isUnauthorizedStatusError,
+  },
+  actions: {
+    validateCredentials: async ({ props }) => buildActiveCampaignAuth(props),
     listLists: async ({ ctx }) => {
       const response = await activeCampaignRequest(
         ctx.auth,

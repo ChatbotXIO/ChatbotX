@@ -6,8 +6,12 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
+import { connectionStateService } from "@chatbotx.io/business/connection"
 import { db } from "@chatbotx.io/database/client"
-import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
+import {
+  connectionRepository,
+  metaCapiEventRepository,
+} from "@chatbotx.io/database/repositories"
 import {
   isDisconnectSafeError,
   type MessengerAuthValue,
@@ -102,13 +106,34 @@ export const disconnectMessenger = async (ctx: {
       tx,
     })
 
-    await inboxService.disconnect({
-      inboxId: integrationMessenger.inboxId,
-      ownerId: workspace.ownerId,
-      workspaceId: ctx.workspaceId,
-      reason: "manual",
+    // Writing through `connectionStateService` (not `inboxService.disconnect`)
+    // keeps the `Connection` row and `Inbox.status` in lockstep — Messenger/
+    // Instagram/InstagramFacebook connect already write `Connection` via
+    // `ConnectionService.connectTargets`, so leaving this on the legacy
+    // direct write would silently drift the two tables and let a
+    // reconnect skip quota consumption (`connect.completed` from an already-
+    // `connected` row is a same-state no-op). Falls back to the legacy path
+    // only for a pre-backfill row with no `Connection` counterpart yet.
+    const connection = await connectionRepository.findByInboxId(
+      { inboxId: integrationMessenger.inboxId },
       tx,
-    })
+    )
+    if (connection) {
+      await connectionStateService.transition({
+        connectionId: connection.id,
+        event: "user.disconnect",
+        ownerId: workspace.ownerId,
+        tx,
+      })
+    } else {
+      await inboxService.disconnect({
+        inboxId: integrationMessenger.inboxId,
+        ownerId: workspace.ownerId,
+        workspaceId: ctx.workspaceId,
+        reason: "manual",
+        tx,
+      })
+    }
   })
 
   await auditService.record({

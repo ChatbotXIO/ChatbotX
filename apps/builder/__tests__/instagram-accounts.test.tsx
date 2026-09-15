@@ -1,8 +1,8 @@
-import type { InstagramAccount } from "@chatbotx.io/integration-instagram"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { INSTAGRAM_DIRECT_CONNECT_ROUTE } from "@/features/channel-connect/lib/registry"
+import type { InstagramDirectAccount } from "@/features/integration-instagram/components/instagram-accounts"
 
 /** Echoes the key back so assertions never depend on the English copy. */
 vi.mock("next-intl", () => ({
@@ -67,13 +67,10 @@ const { InstagramAccounts } = await import(
   "@/features/integration-instagram/components/instagram-accounts"
 )
 
-const account: InstagramAccount = {
-  id: "page-scoped-1",
+const account: InstagramDirectAccount = {
+  id: "ig-1",
   name: "IG Direct Account",
-  username: "ig_direct",
-  userId: "ig-1",
-  profile_picture_url: "https://example.com/avatar.jpg",
-  accessToken: "account-token-1",
+  avatarUrl: "https://example.com/avatar.jpg",
 }
 
 describe("InstagramAccounts", () => {
@@ -97,7 +94,13 @@ describe("InstagramAccounts", () => {
 
   function renderAccount() {
     act(() => {
-      root.render(<InstagramAccounts account={account} workspaceId="ws-1" />)
+      root.render(
+        <InstagramAccounts
+          account={account}
+          sessionId="session-1"
+          workspaceId="ws-1"
+        />,
+      )
     })
   }
 
@@ -106,15 +109,14 @@ describe("InstagramAccounts", () => {
       button.textContent?.includes("actions.continue"),
     )
 
-  test("renders the account card with name and @username, no batch dialog ever appears", () => {
+  test("renders the account card with its name and no batch dialog", () => {
     renderAccount()
 
     expect(container.textContent).toContain("IG Direct Account")
-    expect(container.textContent).toContain("@ig_direct")
     expect(mockConnectManyDialog).not.toHaveBeenCalled()
   })
 
-  test("clicking continue posts only { igId } to the instagram connect route — no token, no workspaceId, and never opens the batch dialog", async () => {
+  test("clicking continue posts only { sessionId, igId } to the instagram connect route — no token, no workspaceId, and never opens the batch dialog", async () => {
     mockConnectViaApi.mockResolvedValue({
       kind: "outcome",
       outcome: {
@@ -135,16 +137,16 @@ describe("InstagramAccounts", () => {
     })
 
     expect(mockConnectViaApi).toHaveBeenCalledTimes(1)
-    // Ids only, and this login's own route — no token, no workspaceId.
+    // Session and account IDs only, and this login's own route — no token or workspaceId.
     expect(mockConnectViaApi.mock.calls[0]?.[0]).toMatchObject({
       // The direct-login route itself — it now carries the typed oRPC
       // procedure, so identity is what pins this login, not a URL string.
       route: INSTAGRAM_DIRECT_CONNECT_ROUTE,
-      body: { igId: "ig-1" },
+      body: { sessionId: "session-1", igId: "ig-1" },
     })
     expect(
       Object.keys(mockConnectViaApi.mock.calls[0]?.[0]?.body ?? {}),
-    ).toEqual(["igId"])
+    ).toEqual(["sessionId", "igId"])
     expect(mockConnectManyDialog).not.toHaveBeenCalled()
 
     await act(async () => {

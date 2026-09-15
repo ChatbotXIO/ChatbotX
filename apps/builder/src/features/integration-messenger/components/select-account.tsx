@@ -17,12 +17,14 @@ import type { MessengerPickerItem } from "@/features/integration-messenger/compo
 import { MessengerPages } from "@/features/integration-messenger/components/messenger-pages"
 
 type SelectPageProps = {
+  sessionId: string
   items: MessengerPickerItem[]
   bmLookupFailed: boolean
   workspaceId: string
 }
 
 export function SelectPage({
+  sessionId,
   items,
   bmLookupFailed,
   workspaceId,
@@ -47,7 +49,11 @@ export function SelectPage({
             </AlertDescription>
           </Alert>
         )}
-        <MessengerPages items={items} workspaceId={workspaceId} />
+        <MessengerPages
+          items={items}
+          sessionId={sessionId}
+          workspaceId={workspaceId}
+        />
       </CardContent>
     </Card>
   )

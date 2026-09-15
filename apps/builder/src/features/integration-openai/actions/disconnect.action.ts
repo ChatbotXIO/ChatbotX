@@ -9,6 +9,7 @@ export const disconnectOpenAIAction = createDisconnectAction(
   integrationOpenAIService,
   {
     name: "OpenAI",
+    provider: "openai",
     log: false,
     afterDisconnect: async (workspaceId) => {
       await aiIntegrationService.invalidateCache(

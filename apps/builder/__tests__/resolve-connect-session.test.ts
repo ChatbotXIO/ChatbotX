@@ -4,39 +4,33 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
-// `resolveConnectSession` is the shared plan §2.4 steps 1-4 helper every
-// per-account connect action (Messenger today; Instagram's two actions in a
-// later phase) delegates to instead of re-implementing the same five checks:
-// pending-auth cookie -> workspace + membership -> owner quota/trial gate ->
-// platform credential + branding menu entry. Every failure throws one of the
-// session-level exceptions; this file pins each branch plus the happy path's
-// full return shape.
+// `resolveConnectSession` is the shared per-account connect helper every
+// picker action (Messenger, Instagram direct, Instagram-via-Facebook)
+// delegates to instead of re-implementing the same checks: `ConnectSession`
+// row lookup -> workspace + membership -> owner quota/trial gate ->
+// platform credential + branding menu entry. Every failure throws one of
+// the session-level exceptions; this file pins each branch plus the happy
+// path's full return shape.
 // ---------------------------------------------------------------------------
 
 const {
   checkWorkspaceOwnerAccessMock,
+  findByIdMock,
   findWorkspaceMock,
   isMemberMock,
   platformCredentialResolveMock,
-  readPendingAuthMock,
-  resolvePlatformOwnerIdMock,
   resolveTenantSettingsMock,
 } = vi.hoisted(() => ({
   checkWorkspaceOwnerAccessMock: vi.fn(),
+  findByIdMock: vi.fn(),
   findWorkspaceMock: vi.fn(),
   isMemberMock: vi.fn(),
   platformCredentialResolveMock: vi.fn(),
-  readPendingAuthMock: vi.fn(),
-  resolvePlatformOwnerIdMock: vi.fn(),
   resolveTenantSettingsMock: vi.fn(),
 }))
 
-vi.mock("@/lib/facebook-pending-auth", () => ({
-  readPendingAuth: readPendingAuthMock,
-}))
-
-vi.mock("@/lib/platform-credential-owner", () => ({
-  resolvePlatformOwnerId: resolvePlatformOwnerIdMock,
+vi.mock("@chatbotx.io/business/connect-session", () => ({
+  connectSessionService: { findById: findByIdMock },
 }))
 
 // Fully replaced (not `importOriginal`) — the real module's
@@ -75,36 +69,36 @@ const { resolveConnectSession } = await import(
   "@/features/channel-connect/lib/resolve-connect-session"
 )
 
-const pendingAuth = {
-  userToken: "user-token-1",
+const session = {
+  id: "session-1",
   workspaceId: "ws-1",
-  referer: "/channels/create",
-  version: "v23.0",
-  expiresAt: Date.now() + 600_000,
+  platformOwnerId: "owner-1",
+  provider: "messenger",
+  status: "awaiting_selection",
+  targets: [],
 }
 
 describe("resolveConnectSession", () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    readPendingAuthMock.mockResolvedValue(pendingAuth)
+    findByIdMock.mockResolvedValue(session)
     findWorkspaceMock.mockResolvedValue({ id: "ws-1", ownerId: "owner-1" })
     isMemberMock.mockResolvedValue(true)
     checkWorkspaceOwnerAccessMock.mockResolvedValue(null)
-    resolvePlatformOwnerIdMock.mockResolvedValue("owner-1")
     platformCredentialResolveMock.mockResolvedValue({
       config: { clientId: "client-1", clientSecret: "secret-1" },
     })
     resolveTenantSettingsMock.mockResolvedValue({ appUrl: "https://app.test" })
   })
 
-  test("throws connectSessionExpired when the pending-auth cookie is missing/invalid", async () => {
-    readPendingAuthMock.mockResolvedValue(null)
+  test("throws connectSessionExpired when the session is missing/expired", async () => {
+    findByIdMock.mockResolvedValue(null)
 
     await expect(
       resolveConnectSession({
         userId: "user-1",
-        cookieName: "fb_messenger_pending_auth",
+        sessionId: "session-1",
         credentialType: "messenger",
         brandingChannel: "messenger",
       }),
@@ -118,7 +112,7 @@ describe("resolveConnectSession", () => {
     await expect(
       resolveConnectSession({
         userId: "user-1",
-        cookieName: "fb_messenger_pending_auth",
+        sessionId: "session-1",
         credentialType: "messenger",
         brandingChannel: "messenger",
       }),
@@ -131,9 +125,6 @@ describe("resolveConnectSession", () => {
     checkWorkspaceOwnerAccessMock.mockRejectedValue(
       new Error("must not be called"),
     )
-    resolvePlatformOwnerIdMock.mockRejectedValue(
-      new Error("must not be called"),
-    )
     platformCredentialResolveMock.mockRejectedValue(
       new Error("must not be called"),
     )
@@ -141,13 +132,12 @@ describe("resolveConnectSession", () => {
     await expect(
       resolveConnectSession({
         userId: "user-1",
-        cookieName: "fb_messenger_pending_auth",
+        sessionId: "session-1",
         credentialType: "messenger",
         brandingChannel: "messenger",
       }),
     ).rejects.toMatchObject({ code: "notWorkspaceMember" })
     expect(checkWorkspaceOwnerAccessMock).not.toHaveBeenCalled()
-    expect(resolvePlatformOwnerIdMock).not.toHaveBeenCalled()
     expect(platformCredentialResolveMock).not.toHaveBeenCalled()
   })
 
@@ -157,12 +147,12 @@ describe("resolveConnectSession", () => {
     await expect(
       resolveConnectSession({
         userId: "user-1",
-        cookieName: "fb_messenger_pending_auth",
+        sessionId: "session-1",
         credentialType: "messenger",
         brandingChannel: "messenger",
       }),
     ).rejects.toMatchObject({ code: "trialExpired" })
-    expect(resolvePlatformOwnerIdMock).not.toHaveBeenCalled()
+    expect(platformCredentialResolveMock).not.toHaveBeenCalled()
   })
 
   test("throws macLimitReached when the workspace owner is blocked on MAC", async () => {
@@ -171,11 +161,25 @@ describe("resolveConnectSession", () => {
     await expect(
       resolveConnectSession({
         userId: "user-1",
-        cookieName: "fb_messenger_pending_auth",
+        sessionId: "session-1",
         credentialType: "messenger",
         brandingChannel: "messenger",
       }),
     ).rejects.toMatchObject({ code: "macLimitReached" })
+  })
+
+  test("throws credentialMissing when the session has no platform owner", async () => {
+    findByIdMock.mockResolvedValue({ ...session, platformOwnerId: null })
+
+    await expect(
+      resolveConnectSession({
+        userId: "user-1",
+        sessionId: "session-1",
+        credentialType: "messenger",
+        brandingChannel: "messenger",
+      }),
+    ).rejects.toMatchObject({ code: "credentialMissing" })
+    expect(platformCredentialResolveMock).not.toHaveBeenCalled()
   })
 
   test("throws credentialMissing when the owner has no configured credential", async () => {
@@ -184,7 +188,7 @@ describe("resolveConnectSession", () => {
     await expect(
       resolveConnectSession({
         userId: "user-1",
-        cookieName: "fb_messenger_pending_auth",
+        sessionId: "session-1",
         credentialType: "messenger",
         brandingChannel: "messenger",
       }),
@@ -195,13 +199,13 @@ describe("resolveConnectSession", () => {
   test("happy path resolves every field, sourcing the branding channel from the caller (not a hard-coded literal)", async () => {
     const result = await resolveConnectSession({
       userId: "user-1",
-      cookieName: "fb_messenger_pending_auth",
+      sessionId: "session-1",
       credentialType: "messenger",
       brandingChannel: "instagram",
     })
 
     expect(result).toEqual({
-      pendingAuth,
+      session,
       workspace: { id: "ws-1", ownerId: "owner-1" },
       platformOwnerId: "owner-1",
       credential: {
@@ -218,9 +222,8 @@ describe("resolveConnectSession", () => {
       ownerId: "owner-1",
       type: "messenger",
     })
-    expect(resolvePlatformOwnerIdMock).toHaveBeenCalledWith({
-      userId: "user-1",
-      workspaceId: "ws-1",
+    expect(findWorkspaceMock).toHaveBeenCalledWith({
+      where: { id: "ws-1" },
     })
   })
 })

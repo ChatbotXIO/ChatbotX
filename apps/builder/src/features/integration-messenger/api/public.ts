@@ -4,7 +4,7 @@ import { z } from "zod"
 import { possibleErrorsOnMutatingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
-const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("channels")
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("connections")
 
 export const messengerChannelsPublicRouter = {
   updateTagSync: workspaceTokenAuthAPI

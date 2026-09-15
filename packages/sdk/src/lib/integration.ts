@@ -1,5 +1,6 @@
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import type { AuthValue, Oauth2AuthValue } from "./auth"
+import type { ConnectionProvider } from "./connection"
 import {
   AuthException,
   AuthRefreshException,
@@ -388,6 +389,14 @@ export type IntegrationDefinition<
   >
   disconnect: Handler<IAuth, void>
   refreshAuth?: Handler<{ auth: IAuth }, IAuth>
+  /**
+   * Connection-domain adapter (connect/verify/webhook/describe) driving the
+   * unified `Connection` lifecycle. Optional during the Phase 0-3 rollout —
+   * a provider with no `connection` block simply has no `CONNECTION_REGISTRY`
+   * entry yet (`@chatbotx.io/connections` maps it to `null`).
+   */
+  // biome-ignore lint/suspicious/noExplicitAny: credential shape varies per provider
+  connection?: ConnectionProvider<IAuth, any>
 }
 
 // ---------------------------------------------------------------------------
@@ -467,6 +476,10 @@ export class Integration<
 
   get disconnect(): T["disconnect"] {
     return this.props.disconnect
+  }
+
+  get connection(): T["connection"] {
+    return this.props.connection
   }
 
   get handleRequest(): T["handleRequest"] {
@@ -567,7 +580,10 @@ export class Integration<
     }
   }
 
-  private shouldProactivelyRefresh(auth: AuthValue): boolean {
+  private shouldProactivelyRefresh(
+    auth: AuthValue,
+    withinMs: number = AUTH_REFRESH_BUFFER_MS,
+  ): boolean {
     if (!this.props.refreshAuth || auth.authType !== "oauth2") {
       return false
     }
@@ -579,11 +595,12 @@ export class Integration<
     if (Number.isNaN(expiresAtMs)) {
       return false
     }
-    return expiresAtMs - Date.now() < AUTH_REFRESH_BUFFER_MS
+    return expiresAtMs - Date.now() < withinMs
   }
 
   private async refreshAndPersist(
     ctx: Context<AuthValue>,
+    opts?: { withinMs?: number; force?: boolean },
   ): Promise<Context<AuthValue>> {
     const refreshAuth = this.props.refreshAuth
     if (!refreshAuth) {
@@ -604,7 +621,11 @@ export class Integration<
         }
       }
 
-      if (!this.shouldProactivelyRefresh(baseAuth)) {
+      if (
+        !(
+          opts?.force || this.shouldProactivelyRefresh(baseAuth, opts?.withinMs)
+        )
+      ) {
         return { ...ctx, auth: baseAuth }
       }
 
@@ -616,6 +637,25 @@ export class Integration<
     }
 
     return ctx.authStore?.withLock ? await ctx.authStore.withLock(run) : run()
+  }
+
+  /**
+   * Public entry point for the Connection domain to force or proactively
+   * refresh auth outside the request-triggered `invokeWithRefresh` flow —
+   * today called only from `POST /v1/connections/{id}/refresh`
+   * (`ConnectionService.refresh`). `ConnectionStateService.listDueForRefresh`
+   * exists but has no scheduled caller yet; a `refresh-connections` cron
+   * that proactively calls this method for rows it returns is still
+   * unbuilt (Phase 4). With no `opts`, behaves like the proactive check
+   * used before every handler call (refresh only when within
+   * {@link AUTH_REFRESH_BUFFER_MS} of expiry). `force: true` always calls
+   * `refreshAuth` regardless of expiry.
+   */
+  async ensureFreshAuth(
+    ctx: Context<AuthValue>,
+    opts?: { withinMs?: number; force?: boolean },
+  ): Promise<Context<AuthValue>> {
+    return await this.refreshAndPersist(ctx, opts)
   }
 
   /**

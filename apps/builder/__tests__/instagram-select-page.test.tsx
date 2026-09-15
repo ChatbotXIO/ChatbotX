@@ -4,16 +4,16 @@ import { isValidElement } from "react"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  mockGetInstagramAccount,
-  mockReadPendingAuth,
+  mockGetCurrentUserId,
   mockRedirect,
+  mockResolveConnectSession,
   mockSelectAccount,
 } = vi.hoisted(() => ({
-  mockGetInstagramAccount: vi.fn(),
-  mockReadPendingAuth: vi.fn(),
+  mockGetCurrentUserId: vi.fn(),
   mockRedirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`)
   }),
+  mockResolveConnectSession: vi.fn(),
   mockSelectAccount: vi.fn(() => null),
 }))
 
@@ -21,13 +21,12 @@ vi.mock("next/navigation", () => ({
   redirect: mockRedirect,
 }))
 
-vi.mock("@chatbotx.io/integration-instagram", () => ({
-  getInstagramAccount: mockGetInstagramAccount,
+vi.mock("@/lib/auth/utils", () => ({
+  getCurrentUserId: mockGetCurrentUserId,
 }))
 
-vi.mock("@/lib/facebook-pending-auth", () => ({
-  readPendingAuth: mockReadPendingAuth,
-  FB_INSTAGRAM_PENDING_AUTH_COOKIE: "fb_instagram_pending_auth",
+vi.mock("@/features/channel-connect/lib/resolve-connect-session", () => ({
+  resolveConnectSession: mockResolveConnectSession,
 }))
 
 vi.mock("@/features/integration-instagram/components/select-accounts", () => ({
@@ -39,50 +38,81 @@ const { default: InstagramSelectPage } = await import(
 )
 
 type SelectAccountElementProps = {
-  account: { id: string; username: string }
+  account: { avatarUrl?: string; id: string; name: string }
+  sessionId: string
   workspaceId: string
 }
 
-const account = { id: "ig-1", username: "handle" }
+const pageArgs = {
+  searchParams: Promise.resolve({ session: "session-1" }),
+}
+
+const account = {
+  avatarUrl: "https://example.com/account.jpg",
+  id: "ig-1",
+  name: "Instagram account",
+  selectable: true,
+}
 
 describe("InstagramSelectPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockReadPendingAuth.mockResolvedValue({
-      userToken: "user-token",
-      version: "v23.0",
-      referer: "/channels/create",
-      workspaceId: "ws-1",
-      expiresAt: Date.now() + 600_000,
+    mockGetCurrentUserId.mockResolvedValue("user-1")
+    mockResolveConnectSession.mockResolvedValue({
+      session: { targets: [account] },
+      workspace: { id: "ws-1" },
     })
-    mockGetInstagramAccount.mockResolvedValue(account)
   })
 
-  test("renders SelectAccount with the resolved account and workspace id", async () => {
-    const element = await InstagramSelectPage()
+  test("renders SelectAccount with the resolved account, session id, and workspace id", async () => {
+    const element = await InstagramSelectPage(pageArgs)
 
     expect(isValidElement<SelectAccountElementProps>(element)).toBe(true)
     if (!isValidElement<SelectAccountElementProps>(element)) {
       throw new Error("InstagramSelectPage did not return a valid element")
     }
-    expect(element.props.account).toEqual(account)
+
+    expect(mockResolveConnectSession).toHaveBeenCalledWith({
+      userId: "user-1",
+      sessionId: "session-1",
+      credentialType: "instagram",
+      brandingChannel: "instagram",
+    })
+    expect(element.props.account).toEqual({
+      avatarUrl: "https://example.com/account.jpg",
+      id: "ig-1",
+      name: "Instagram account",
+    })
+    expect(element.props.sessionId).toBe("session-1")
     expect(element.props.workspaceId).toBe("ws-1")
-    expect(mockGetInstagramAccount).toHaveBeenCalledWith("user-token")
   })
 
-  test("redirects to channel creation when the pending-auth cookie is missing or invalid", async () => {
-    mockReadPendingAuth.mockResolvedValue(null)
+  test("redirects to channel creation when the session id is missing", async () => {
+    await expect(
+      InstagramSelectPage({ searchParams: Promise.resolve({}) }),
+    ).rejects.toThrow("redirect:/channels/create")
 
-    await expect(InstagramSelectPage()).rejects.toThrow(
+    expect(mockGetCurrentUserId).not.toHaveBeenCalled()
+    expect(mockResolveConnectSession).not.toHaveBeenCalled()
+  })
+
+  test("redirects to channel creation when the user is not authenticated", async () => {
+    mockGetCurrentUserId.mockResolvedValue(null)
+
+    await expect(InstagramSelectPage(pageArgs)).rejects.toThrow(
       "redirect:/channels/create",
     )
-    expect(mockGetInstagramAccount).not.toHaveBeenCalled()
+
+    expect(mockResolveConnectSession).not.toHaveBeenCalled()
   })
 
-  test("redirects to channel creation when no Instagram account is found", async () => {
-    mockGetInstagramAccount.mockResolvedValue(null)
+  test("redirects to channel creation when the session has no Instagram account", async () => {
+    mockResolveConnectSession.mockResolvedValue({
+      session: { targets: [] },
+      workspace: { id: "ws-1" },
+    })
 
-    await expect(InstagramSelectPage()).rejects.toThrow(
+    await expect(InstagramSelectPage(pageArgs)).rejects.toThrow(
       "redirect:/channels/create",
     )
   })

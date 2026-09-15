@@ -613,6 +613,71 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/channels/api/typing",
   },
   {
+    "method": "GET",
+    "operationId": "connectionProviders.list",
+    "path": "/v1/connection-providers",
+  },
+  {
+    "method": "POST",
+    "operationId": "connections.create",
+    "path": "/v1/connections",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "connections.disconnect",
+    "path": "/v1/connections/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "connections.get",
+    "path": "/v1/connections/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "connections.list",
+    "path": "/v1/connections",
+  },
+  {
+    "method": "POST",
+    "operationId": "connections.reconnect",
+    "path": "/v1/connections/{id}/reconnect",
+  },
+  {
+    "method": "POST",
+    "operationId": "connections.refresh",
+    "path": "/v1/connections/{id}/refresh",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "connections.update",
+    "path": "/v1/connections/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "connections.verify",
+    "path": "/v1/connections/{id}/verify",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "connectSessions.cancel",
+    "path": "/v1/connect-sessions/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "connectSessions.connectTargets",
+    "path": "/v1/connect-sessions/{id}/targets",
+  },
+  {
+    "method": "GET",
+    "operationId": "connectSessions.get",
+    "path": "/v1/connect-sessions/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "connectSessions.submitInput",
+    "path": "/v1/connect-sessions/{id}/input",
+  },
+  {
     "method": "POST",
     "operationId": "contacts.addTags",
     "path": "/v1/contacts/{identifier}/tags",

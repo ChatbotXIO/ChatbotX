@@ -27,6 +27,11 @@ export const PUBLIC_ROUTES = [
   "/portal/redeem",
   "/webchat",
   "/t/",
+  // The neutral `ConnectSession` completion page — the person finishing an
+  // API/MCP-started OAuth connect is never necessarily a builder user or a
+  // member of the workspace that started it. `sessionId` itself is the
+  // capability token (see `app/connect/[sessionId]/page.tsx`'s doc comment).
+  "/connect",
 ]
 
 /**

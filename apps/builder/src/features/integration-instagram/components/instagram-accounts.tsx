@@ -1,6 +1,5 @@
 "use client"
 
-import type { InstagramAccount } from "@chatbotx.io/integration-instagram"
 import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { Loader2Icon } from "lucide-react"
 import Image from "next/image"
@@ -23,18 +22,32 @@ import {
 } from "@/features/channel-connect/lib/registry"
 import { connectActionResultSchemaDefault } from "@/features/channel-connect/schema"
 
+/** The one account a direct-login `ConnectSession` offers — `session.targets[0]`, the public projection (no username/access token). */
+export type InstagramDirectAccount = {
+  id: string
+  name: string
+  avatarUrl?: string
+}
+
 /**
- * Instagram direct-login connect (plan §3.3): a single account, so it always
- * goes through `useConnectFlow`'s single-item path (inline spinner, then the
+ * Instagram direct-login connect: a single account, so it always goes
+ * through `useConnectFlow`'s single-item path (inline spinner, then the
  * coexist call when the account's own switch asked for one) — never the
  * multi-select batch dialog.
+ *
+ * Scope note: the account's `username` is no longer displayed — it lived
+ * only in the pending-auth cookie's live re-fetch, and the unified session
+ * model's public `session.targets` projection doesn't carry it (by design,
+ * the same projection every picker shares). A cosmetic-only regression.
  */
 export function InstagramAccounts({
+  sessionId,
   workspaceId,
   account,
 }: {
+  sessionId: string
   workspaceId: string
-  account: InstagramAccount
+  account: InstagramDirectAccount
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -51,7 +64,7 @@ export function InstagramAccounts({
   const connectOne = (item: ConnectTarget) =>
     connectViaApi({
       route: INSTAGRAM_DIRECT_CONNECT_ROUTE,
-      body: { igId: item.id },
+      body: { sessionId, igId: item.id },
       parse: (data) => connectActionResultSchemaDefault.parse(data),
       item,
     })
@@ -82,18 +95,17 @@ export function InstagramAccounts({
       )}
 
       <div className="flex items-center gap-3 rounded-lg border p-4">
-        {account.profile_picture_url && (
+        {account.avatarUrl && (
           <Image
             alt={account.name}
             className="size-12 rounded-full object-cover"
             height={48}
-            src={account.profile_picture_url}
+            src={account.avatarUrl}
             width={48}
           />
         )}
         <div className="min-w-0 flex-1">
           <p className="font-medium">{account.name}</p>
-          <p className="text-muted-foreground text-sm">@{account.username}</p>
         </div>
         {/* The same trailing column (and the same reveal rule) the
             multi-select pickers render, for the one account this screen
@@ -127,7 +139,7 @@ export function InstagramAccounts({
           onClick={() =>
             flow.start([
               {
-                id: account.userId,
+                id: account.id,
                 name: account.name,
                 aiReadsSyncedHistory,
                 coexist: syncHistory,

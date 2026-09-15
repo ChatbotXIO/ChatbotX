@@ -1,6 +1,7 @@
 import {
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { sendGridRequest } from "./client"
@@ -37,33 +38,78 @@ const getNextPageToken = (next?: string) => {
   return url.searchParams.get("page_token")?.trim() || undefined
 }
 
+/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
+const buildSendGridAuth = async (
+  apiKey: string,
+): Promise<SendGridAuthValue> => {
+  const auth = createSendGridAuth(apiKey)
+  const { scopes } = await sendGridRequest(
+    auth,
+    SENDGRID_SCOPES_PATH,
+    sendGridScopesResponseSchema,
+  )
+  // SendGrid API keys can report Marketing permissions under either the
+  // modern "marketing.*" scope names or the legacy "marketing_campaigns.*"
+  // names depending on key type. Full Access keys have implicit write
+  // access but do NOT enumerate "marketing.write" in the scopes endpoint
+  // even though write calls succeed (HTTP 202). Checking read is enough.
+  const hasRead =
+    scopes.includes("marketing.read") ||
+    scopes.includes("marketing_campaigns.read")
+  if (!hasRead) {
+    throw new SendGridMissingScopesError(["marketing.read"])
+  }
+  return auth
+}
+
 const config: IntegrationDefinition<
   SendGridConfig,
   SendGridAuthValue,
   SendGridActions
 > = {
   name: "sendGrid",
-  actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = createSendGridAuth(props.apiKey)
-      const { scopes } = await sendGridRequest(
-        auth,
-        SENDGRID_SCOPES_PATH,
-        sendGridScopesResponseSchema,
-      )
-      // SendGrid API keys can report Marketing permissions under either the
-      // modern "marketing.*" scope names or the legacy "marketing_campaigns.*"
-      // names depending on key type. Full Access keys have implicit write
-      // access but do NOT enumerate "marketing.write" in the scopes endpoint
-      // even though write calls succeed (HTTP 202). Checking read is enough.
-      const hasRead =
-        scopes.includes("marketing.read") ||
-        scopes.includes("marketing_campaigns.read")
-      if (!hasRead) {
-        throw new SendGridMissingScopesError(["marketing.read"])
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiKey",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.sendGrid.fields.apiKey",
+      },
+    ],
+    describe: () => ({
+      // SendGrid auth contains no stable account identifier; this is workspace-scoped.
+      sourceId: "workspace",
+      displayName: "SendGrid",
+    }),
+    fromCredentials: (config: { apiKey: string }) =>
+      buildSendGridAuth(config.apiKey),
+    verify: async ({ auth }) => {
+      try {
+        await sendGridRequest(
+          auth,
+          SENDGRID_SCOPES_PATH,
+          sendGridScopesResponseSchema,
+        )
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked: isUnauthorizedStatusError(error),
+          error:
+            error instanceof Error
+              ? error.message
+              : "SendGrid credential verification failed",
+        }
       }
-      return auth
     },
+    isRevokedTokenError: isUnauthorizedStatusError,
+  },
+  actions: {
+    validateCredentials: async ({ props }) => buildSendGridAuth(props.apiKey),
     listLists: async ({ ctx, props }) => {
       const searchParams = new URLSearchParams({
         page_size: String(props.pageSize),

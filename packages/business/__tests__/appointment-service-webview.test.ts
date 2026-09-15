@@ -66,7 +66,8 @@ vi.mock("@chatbotx.io/encryption", () => ({
   signAppointmentScheduleToken: vi.fn(async () => "schedule-token"),
 }))
 
-vi.mock("@chatbotx.io/redis", () => ({
+vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   invalidateCacheByTags: vi.fn(),
 }))
 

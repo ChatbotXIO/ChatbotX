@@ -28,6 +28,8 @@ import { botFieldRelations } from "./bot-field"
 import { broadcastRelations } from "./broadcast"
 import { broadcastTargetRelations } from "./broadcast-target"
 import { coexistSyncRunRelations } from "./coexist-sync-run"
+import { connectSessionRelations } from "./connect-session"
+import { connectionRelations } from "./connection"
 import { contactRelations } from "./contact"
 import { contactCustomFieldRelations } from "./contact-custom-field"
 import { contactInboxRelations } from "./contact-inbox"
@@ -147,6 +149,8 @@ import { workspaceMemberRelations } from "./workspace-member"
 
 export const relations = {
   ...integrationApiRelations,
+  ...connectionRelations,
+  ...connectSessionRelations,
   ...adsConversionEventRelations,
   ...metaCapiEventRelations,
   ...messagingAdOperationRelations,

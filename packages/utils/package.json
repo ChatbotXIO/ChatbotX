@@ -20,6 +20,7 @@
     ".": "./src/index.ts",
     "./broadcast": "./src/broadcast.ts",
     "./channel": "./src/channel.ts",
+    "./connection": "./src/connection.ts",
     "./contact-filter-value-format": "./src/contact-filter-value-format.ts",
     "./conversation": "./src/conversation.ts",
     "./crypto": "./src/crypto.ts",

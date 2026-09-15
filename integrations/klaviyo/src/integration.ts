@@ -1,6 +1,7 @@
 import {
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { z } from "zod"
@@ -34,24 +35,69 @@ const pageSearchParams = (props: { cursor?: string; size: number }) => {
 const extractNextCursor = (next: string | null | undefined) =>
   next ? new URL(next).searchParams.get("page[cursor]") : null
 
+/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
+const buildKlaviyoAuth = async (apiKey: string): Promise<KlaviyoAuthValue> => {
+  const auth = createKlaviyoAuth(apiKey)
+  await klaviyoRequest(
+    auth,
+    KLAVIYO_LISTS_PATH,
+    klaviyoListsResponseSchema,
+    { searchParams: pageSearchParams({ size: 1 }) },
+    [200],
+  )
+  return auth
+}
+
 const config: IntegrationDefinition<
   KlaviyoConfig,
   KlaviyoAuthValue,
   KlaviyoActions
 > = {
   name: "klaviyo",
-  actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = createKlaviyoAuth(props.apiKey)
-      await klaviyoRequest(
-        auth,
-        KLAVIYO_LISTS_PATH,
-        klaviyoListsResponseSchema,
-        { searchParams: pageSearchParams({ size: 1 }) },
-        [200],
-      )
-      return auth
+  connection: {
+    kind: "integration",
+    strategy: "api_key",
+    multiAccount: false,
+    configFields: [
+      {
+        name: "apiKey",
+        type: "secret",
+        required: true,
+        labelKey: "integrations.klaviyo.fields.apiKey",
+      },
+    ],
+    describe: () => ({
+      // Klaviyo auth contains no stable account identifier; this is workspace-scoped.
+      sourceId: "workspace",
+      displayName: "Klaviyo",
+    }),
+    fromCredentials: (config: { apiKey: string }) =>
+      buildKlaviyoAuth(config.apiKey),
+    verify: async ({ auth }) => {
+      try {
+        await klaviyoRequest(
+          auth,
+          KLAVIYO_LISTS_PATH,
+          klaviyoListsResponseSchema,
+          { searchParams: pageSearchParams({ size: 1 }) },
+          [200],
+        )
+        return { ok: true }
+      } catch (error) {
+        return {
+          ok: false,
+          revoked: isUnauthorizedStatusError(error),
+          error:
+            error instanceof Error
+              ? error.message
+              : "Klaviyo credential verification failed",
+        }
+      }
     },
+    isRevokedTokenError: isUnauthorizedStatusError,
+  },
+  actions: {
+    validateCredentials: async ({ props }) => buildKlaviyoAuth(props.apiKey),
     listLists: async ({ ctx, props }) => {
       const page = klaviyoListPageInputSchema.parse(props)
       const response = await klaviyoRequest(

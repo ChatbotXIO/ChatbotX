@@ -284,3 +284,118 @@ export const possibleErrorsOnMutatingEmailTopic = {
   businessError,
   nameTaken,
 } satisfies ErrorMap
+
+/**
+ * `refresh`/`verify` on a `Connection` whose status is not `connected`/
+ * `degraded` throws `connectionInactive` (409) — see `ConnectionService` in
+ * `@chatbotx.io/connections`.
+ */
+const connectionInactive = {
+  message: "This connection is not active",
+  status: 409,
+}
+
+/** No `ConnectionAdapter`/store binding registered for the provider — a data-integrity gap, not a user error. */
+const connectionNotConfigured = {
+  message: "This connection provider is not configured",
+  status: 500,
+}
+
+/** The provider has no `refreshAuth` handler (e.g. a static API-key credential). */
+const connectionNotRefreshable = {
+  message: "This connection provider does not support refresh",
+  status: 400,
+}
+
+export const possibleErrorsOnDisconnectingConnection = {
+  notFound,
+  businessError,
+} satisfies ErrorMap
+
+export const possibleErrorsOnRefreshingConnection = {
+  notFound,
+  connectionInactive,
+  connectionNotConfigured,
+  connectionNotRefreshable,
+} satisfies ErrorMap
+
+export const possibleErrorsOnVerifyingConnection = {
+  notFound,
+  businessError,
+  connectionInactive,
+  connectionNotConfigured,
+} satisfies ErrorMap
+
+/** `connectFromCredentials`'s config-validation/live-check failures — see `ConnectionService` in `@chatbotx.io/connections`. */
+const connectionWrongStrategy = {
+  message: "This connection provider does not accept direct credentials",
+  status: 400,
+}
+
+const connectionCredentialsRejected = {
+  message: "The provided credentials were rejected",
+  status: 400,
+}
+
+const connectionNotOAuth = {
+  message: "This connection provider does not support an OAuth connect flow",
+  status: 400,
+}
+
+/** The tenant's channel-visibility policy hides this channel from an unattended API caller — see `channelHiddenException`. */
+const channelHidden = {
+  message: "This channel is not available for this workspace",
+  status: 403,
+}
+
+export const possibleErrorsOnCreatingConnection = {
+  businessError,
+  connectionAlreadyConnected: {
+    message: "This provider is already connected in this workspace",
+    status: 409,
+  },
+  connectionWrongStrategy,
+  connectionCredentialsRejected,
+  connectionNotOAuth,
+  connectionNotConfigured,
+  channelHidden,
+} satisfies ErrorMap
+
+export const possibleErrorsOnReconnectingConnection = {
+  notFound,
+  businessError,
+  connectionNotOAuth,
+  connectionNotConfigured,
+} satisfies ErrorMap
+
+export const possibleErrorsOnUpdatingConnection = {
+  notFound,
+  businessError,
+} satisfies ErrorMap
+
+/** The `state` nonce did not resolve to a matching session, or the session is expired/consumed — see `ConnectSessionService`. */
+const connectSessionExpired = {
+  message: "This connect session is no longer active",
+  status: 400,
+}
+
+export const possibleErrorsOnFindingConnectSession = {
+  notFound,
+  businessError,
+} satisfies ErrorMap
+
+export const possibleErrorsOnConnectingSessionTargets = {
+  notFound,
+  businessError,
+  connectSessionExpired,
+} satisfies ErrorMap
+
+export const possibleErrorsOnSubmittingConnectSessionInput = {
+  notFound,
+  connectSessionExpired,
+} satisfies ErrorMap
+
+export const possibleErrorsOnCancelingConnectSession = {
+  notFound,
+  businessError,
+} satisfies ErrorMap

@@ -64,10 +64,16 @@ export type ConnectRoute<TBody> = {
 // Arrow wrappers, never a bare `client.x.y` method reference: the oRPC
 // procedure client relies on its receiver, and a detached reference loses it
 // (AGENTS.md invariant 13).
-const MESSENGER_CONNECT_ROUTE: ConnectRoute<{ pageId: string }> = {
+const MESSENGER_CONNECT_ROUTE: ConnectRoute<{
+  sessionId: string
+  pageId: string
+}> = {
   call: (body) => client.integrationMessengerAPIs.connectMessengerPageAPI(body),
 }
-const INSTAGRAM_FACEBOOK_CONNECT_ROUTE: ConnectRoute<{ igId: string }> = {
+const INSTAGRAM_FACEBOOK_CONNECT_ROUTE: ConnectRoute<{
+  sessionId: string
+  igId: string
+}> = {
   call: (body) =>
     client.integrationInstagramAPIs.connectInstagramFacebookAccountAPI(body),
 }
@@ -81,7 +87,10 @@ const WHATSAPP_CONNECT_ROUTE: ConnectRoute<ConnectWhatsappViaSessionBody> = {
  * entry of its own — but its route belongs in this file with every other
  * channel literal.
  */
-export const INSTAGRAM_DIRECT_CONNECT_ROUTE: ConnectRoute<{ igId: string }> = {
+export const INSTAGRAM_DIRECT_CONNECT_ROUTE: ConnectRoute<{
+  sessionId: string
+  igId: string
+}> = {
   call: (body) =>
     client.integrationInstagramAPIs.connectInstagramAccountAPI(body),
 }

@@ -35,11 +35,13 @@ import { getTableColumns, getTableName } from "drizzle-orm"
 import type { PgTable } from "drizzle-orm/pg-core"
 import { Client } from "pg"
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
+import { connectSessionRepository } from "../../src/repositories/connect-session/repository"
 import { integrationInstagramRepository } from "../../src/repositories/integration-instagram/repository"
 import { integrationMessengerRepository } from "../../src/repositories/integration-messenger/repository"
 import { integrationWhatsappRepository } from "../../src/repositories/integration-whatsapp/repository"
 import { whatsappSignupSessionRepository } from "../../src/repositories/integration-whatsapp/signup-session"
 import {
+  connectSessionModel,
   inboxModel,
   integrationInstagramModel,
   integrationMessengerModel,
@@ -72,6 +74,7 @@ type ColumnFact = {
 type TableFacts = Map<string, ColumnFact>
 
 const AUDITED_TABLES = [
+  connectSessionModel,
   inboxModel,
   integrationInstagramModel,
   integrationMessengerModel,
@@ -249,6 +252,25 @@ describe.skipIf(!databaseUrl)(
               } as never,
               apiVersion: "v23.0",
               candidatePhoneNumberIds: ["phone-1"],
+            },
+            tx,
+          ),
+      },
+      {
+        name: "connectSessionRepository.insert",
+        table: connectSessionModel as unknown as PgTable,
+        run: (tx) =>
+          connectSessionRepository.insert(
+            {
+              workspaceId: "workspace-1",
+              provider: "telegram",
+              purpose: "connect",
+              stateNonceHash: "nonce-hash",
+              targets: [],
+              claimedTargetIds: [],
+              resultConnectionIds: [],
+              results: [],
+              expiresAt: new Date(),
             },
             tx,
           ),

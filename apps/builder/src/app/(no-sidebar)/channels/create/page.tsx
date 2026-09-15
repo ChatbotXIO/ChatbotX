@@ -5,8 +5,6 @@ import { notFound, redirect } from "next/navigation"
 import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
 import { CreateApiForm } from "@/features/integration-api/components/create-api-form"
 import { InstagramLoginSelect } from "@/features/integration-instagram/components/instagram-login-select"
-import { generateInstagramRedirectUri } from "@/features/integration-instagram/libs/oauth"
-import { generateInstagramFacebookRedirectUri } from "@/features/integration-instagram/libs/oauth-facebook"
 import { TelegramConnect } from "@/features/integration-telegram/components/telegram-connect"
 import { generateTiktokRedirectUri } from "@/features/integration-tiktok/libs/tiktok"
 import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-create-webchat"
@@ -137,11 +135,9 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
     instagram &&
     isVisible("instagram")
   ) {
-    const redirectUri = await generateInstagramRedirectUri(
-      instagram,
-      workspaceId,
+    redirect(
+      `/channels/instagram${workspaceId ? `?workspaceId=${workspaceId}` : ""}`,
     )
-    redirect(redirectUri)
   }
 
   // `instagram-facebook` is a login-flavor route discriminator, not its own
@@ -152,11 +148,9 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
     instagramFacebook &&
     isVisible("instagram")
   ) {
-    const redirectUri = await generateInstagramFacebookRedirectUri(
-      instagramFacebook,
-      workspaceId,
+    redirect(
+      `/channels/instagram-facebook${workspaceId ? `?workspaceId=${workspaceId}` : ""}`,
     )
-    redirect(redirectUri)
   }
 
   if (selectedChannel === "zalo" && zalo && isVisible("zalo")) {
