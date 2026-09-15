@@ -52,4 +52,72 @@ describe("isRetryable", () => {
       expect(isRetryable("nope")).toBe(false)
     })
   })
+
+  describe("statusless transport failures (timeout / dropped socket)", () => {
+    // Spelled out here on purpose instead of importing the implementation's
+    // sets: a fixture derived from the same constant can never catch a typo in
+    // it. A mis-keyed entry (`EAI_FAIL` for `EAI_AGAIN`) stops matching these
+    // literals and fails the suite, instead of silently never retrying that
+    // failure mode in production.
+    const TIMEOUT_ERROR_NAMES = ["TimeoutError", "AbortError"]
+    const TRANSIENT_NETWORK_CODES = [
+      "ECONNRESET",
+      "ECONNREFUSED",
+      "ETIMEDOUT",
+      "EPIPE",
+      "EAI_AGAIN",
+      "UND_ERR_CONNECT_TIMEOUT",
+      "UND_ERR_SOCKET",
+      "UND_ERR_HEADERS_TIMEOUT",
+      "UND_ERR_BODY_TIMEOUT",
+    ]
+
+    const named = (name: string): Error =>
+      Object.assign(
+        new Error("Request timed out: GET /v25.0/1/conversations"),
+        { name },
+      )
+
+    const coded = (code: string): Error =>
+      Object.assign(new Error(`socket failure: ${code}`), { code })
+
+    it.each(TIMEOUT_ERROR_NAMES)("retries a bare %s", (name) => {
+      expect(isRetryable(named(name))).toBe(true)
+    })
+
+    it.each(
+      TIMEOUT_ERROR_NAMES,
+    )("retries a wrapped SdkException whose origin error is a %s", (name) => {
+      // The real shape: `rescue()` cannot map a timeout to a status, so it
+      // stamps the permanent-looking FALLBACK_HTTP_STATUS (400) and keeps
+      // the timeout only as `getOriginError()`.
+      const wrapped = new SdkException("Request timed out: GET …", 100, 400)
+      wrapped.setOriginError(named(name))
+      expect(isRetryable(wrapped)).toBe(true)
+    })
+
+    it.each(TRANSIENT_NETWORK_CODES)("retries a bare %s", (code) => {
+      expect(isRetryable(coded(code))).toBe(true)
+    })
+
+    it.each(
+      TRANSIENT_NETWORK_CODES,
+    )("retries a %s carried as the cause of a fetch TypeError", (code) => {
+      expect(
+        isRetryable(
+          Object.assign(new TypeError("fetch failed"), { cause: coded(code) }),
+        ),
+      ).toBe(true)
+    })
+
+    it("still does not retry a wrapped 400 whose origin error is permanent", () => {
+      const wrapped = new SdkException("bad request", 100, 400)
+      wrapped.setOriginError(new Error("boom"))
+      expect(isRetryable(wrapped)).toBe(false)
+    })
+
+    it("does not retry an unrelated socket-looking code", () => {
+      expect(isRetryable(coded("ENOTFOUND"))).toBe(false)
+    })
+  })
 })

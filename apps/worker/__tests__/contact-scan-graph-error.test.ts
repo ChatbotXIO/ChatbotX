@@ -106,4 +106,32 @@ describe("classifyGraphSdkError", () => {
       expect(classifyGraphSdkError(undefined)).toBe("unknown")
     })
   })
+
+  describe("request timeouts (the shape that used to fail a whole scan run)", () => {
+    const timeoutError = (): Error =>
+      Object.assign(
+        new Error(
+          "Request timed out: GET https://graph.facebook.com/v25.0/1/conversations",
+        ),
+        { name: "TimeoutError" },
+      )
+
+    it("classifies a wrapped Graph timeout as retryable, not unknown", () => {
+      // `rescue()` stamps FALLBACK_HTTP_STATUS (400) + the default
+      // "messengerError" code on a timeout, which is indistinguishable from a
+      // permanent failure by status alone — the run was terminalized as
+      // `failed` on the first slow `/conversations` page.
+      const wrapped = new SdkException(
+        "Request timed out: GET https://graph.facebook.com/v25.0/1/conversations",
+        "messengerError",
+        400,
+      )
+      wrapped.setOriginError(timeoutError())
+      expect(classifyGraphSdkError(wrapped)).toBe("retryable")
+    })
+
+    it("classifies a bare, never-wrapped timeout as retryable", () => {
+      expect(classifyGraphSdkError(timeoutError())).toBe("retryable")
+    })
+  })
 })

@@ -22,6 +22,7 @@ import { useEffect, useMemo } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { scheduleBroadcastAction } from "../actions/schedule-broadcast.action"
+import { buildBroadcastScheduleTypeOptions } from "../lib/schedule-type-options"
 import {
   type ScheduleBroadcastSchema,
   scheduleBroadcastSchema,
@@ -101,13 +102,7 @@ export function ScheduleBroadcastDialog({
     control: form.control,
     name: "schedulesType",
   })
-  const options = useMemo(
-    () => [
-      { value: "now", label: t("fields.schedule.now") },
-      { value: "future", label: t("fields.schedule.scheduled") },
-    ],
-    [t],
-  )
+  const options = useMemo(() => buildBroadcastScheduleTypeOptions(t), [t])
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -139,6 +134,10 @@ export function ScheduleBroadcastDialog({
                 label={t("fields.chooseTime.label")}
                 name="schedulesAt"
                 required
+                // See `create-broadcast-form.tsx`: the persisted value must be
+                // an ISO instant so the operator's wall-clock choice keeps its
+                // offset across the wire.
+                saveFormat="iso"
               />
             )}
             <DialogFooter>
