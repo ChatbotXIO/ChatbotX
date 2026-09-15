@@ -58,7 +58,6 @@ const LEGACY_API_SUFFIX_PATTERN = /[_.]api$/i
 
 const DESCRIPTION_BACKLOG = new Set<string>([
   "ads.",
-  "aiMcpServers.",
   "analytics.",
   "appointmentCalendars.",
   "appointmentExternalCalendars.",
@@ -101,7 +100,6 @@ const DESCRIPTION_BACKLOG = new Set<string>([
   "tags.",
   "templateMessages.",
   "token.",
-  "triggers.",
   "userPersistentMenus.",
   "webchats.",
   "webhooks.",
