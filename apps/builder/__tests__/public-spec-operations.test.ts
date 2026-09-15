@@ -87,7 +87,6 @@ const DESCRIPTION_BACKLOG = new Set<string>([
   "inboxTeams.",
   "inboxes.",
   "integrations.",
-  "keywords.",
   "mediaLibrary.",
   "messages.",
   "messengerChannels.",

@@ -29,7 +29,9 @@ export const keywordsPublicRouter = {
     })
     .input(
       publicListRequest.extend({
-        type: automatedResponseTypes.default("inbound"),
+        type: automatedResponseTypes
+          .default("inbound")
+          .describe("Automation type: inbound message or comment reply."),
       }),
     )
     .output(publicListResponse(publicKeywordResource))
@@ -51,12 +53,18 @@ export const keywordsPublicRouter = {
       method: "GET",
       path: "/v1/keywords/{id}",
       summary: "Get a keyword automation by id",
+      description:
+        "Returns one keyword automation. Use `keywords.list` to find its id first.",
       tags: ["Keywords"],
     })
     .input(
       z.object({
-        id: zodBigintAsString(),
-        type: automatedResponseTypes.default("inbound"),
+        id: zodBigintAsString().describe(
+          "Keyword automation id. Get it from `keywords.list`.",
+        ),
+        type: automatedResponseTypes
+          .default("inbound")
+          .describe("Automation type: inbound message or comment reply."),
       }),
     )
     .output(publicKeywordResource)
@@ -82,11 +90,30 @@ export const keywordsPublicRouter = {
     })
     .input(
       z.object({
-        type: automatedResponseTypes.default("inbound"),
-        keywords: z.array(z.string().min(1).max(255)).min(1),
-        text: z.string().min(1).nullish(),
-        flowId: zodBigintAsString().nullish(),
-        folderId: zodBigintAsString().nullish(),
+        type: automatedResponseTypes
+          .default("inbound")
+          .describe("Automation type: inbound message or comment reply."),
+        keywords: z
+          .array(z.string().min(1).max(255))
+          .min(1)
+          .describe("Keyword phrases that trigger this automation."),
+        text: z
+          .string()
+          .min(1)
+          .nullish()
+          .describe(
+            "Reply text to send when matched. Mutually exclusive with flowId in practice.",
+          ),
+        flowId: zodBigintAsString()
+          .nullish()
+          .describe(
+            "Flow id (numeric string) to start when matched instead of sending text.",
+          ),
+        folderId: zodBigintAsString()
+          .nullish()
+          .describe(
+            "Folder id (numeric string) to organize this automation under.",
+          ),
       }),
     )
     .output(publicKeywordResource)
@@ -101,16 +128,38 @@ export const keywordsPublicRouter = {
       method: "PUT",
       path: "/v1/keywords/{id}",
       summary: "Update a keyword automation",
+      description:
+        "Overwrites the given fields on an existing keyword automation. Use `keywords.get` to inspect current values first.",
       tags: ["Keywords"],
     })
     .input(
       z.object({
-        id: zodBigintAsString(),
-        type: automatedResponseTypes.default("inbound"),
-        keywords: z.array(z.string().min(1).max(255)).min(1).optional(),
-        text: z.string().min(1).nullish(),
-        flowId: zodBigintAsString().nullish(),
-        folderId: zodBigintAsString().nullish(),
+        id: zodBigintAsString().describe(
+          "Keyword automation id. Get it from `keywords.list`.",
+        ),
+        type: automatedResponseTypes
+          .default("inbound")
+          .describe("Automation type: inbound message or comment reply."),
+        keywords: z
+          .array(z.string().min(1).max(255))
+          .min(1)
+          .optional()
+          .describe("Keyword phrases that trigger this automation."),
+        text: z
+          .string()
+          .min(1)
+          .nullish()
+          .describe("Reply text to send when matched."),
+        flowId: zodBigintAsString()
+          .nullish()
+          .describe(
+            "Flow id (numeric string) to start when matched instead of sending text.",
+          ),
+        folderId: zodBigintAsString()
+          .nullish()
+          .describe(
+            "Folder id (numeric string) to organize this automation under.",
+          ),
       }),
     )
     .output(publicKeywordResource)
@@ -131,13 +180,21 @@ export const keywordsPublicRouter = {
       method: "PATCH",
       path: "/v1/keywords/{id}/status",
       summary: "Enable or disable a keyword automation",
+      description:
+        "Toggles whether a keyword automation is active without changing its other fields.",
       tags: ["Keywords"],
     })
     .input(
       z.object({
-        id: zodBigintAsString(),
-        status: z.boolean(),
-        type: automatedResponseTypes.default("inbound"),
+        id: zodBigintAsString().describe(
+          "Keyword automation id. Get it from `keywords.list`.",
+        ),
+        status: z
+          .boolean()
+          .describe("Whether the automation should be active."),
+        type: automatedResponseTypes
+          .default("inbound")
+          .describe("Automation type: inbound message or comment reply."),
       }),
     )
     .output(publicKeywordResource)
@@ -159,13 +216,19 @@ export const keywordsPublicRouter = {
       method: "DELETE",
       path: "/v1/keywords/{id}",
       summary: "Delete a keyword automation",
+      description:
+        "Permanently deletes one keyword automation. Use `keywords.list` to find its id first.",
       successStatus: 204,
       tags: ["Keywords"],
     })
     .input(
       z.object({
-        id: zodBigintAsString(),
-        type: automatedResponseTypes.default("inbound"),
+        id: zodBigintAsString().describe(
+          "Keyword automation id. Get it from `keywords.list`.",
+        ),
+        type: automatedResponseTypes
+          .default("inbound")
+          .describe("Automation type: inbound message or comment reply."),
       }),
     )
     .errors(possibleErrorsOnDeletingResource)
