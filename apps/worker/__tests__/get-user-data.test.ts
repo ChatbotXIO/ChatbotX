@@ -290,6 +290,40 @@ describe("getUserData — validation logic", () => {
     lastMessage.current = null
   })
 
+  test.each([
+    ["unspent", { commentId: "comment-1", replyChannel: "private" as const }],
+    [
+      "spent",
+      { commentId: "comment-1", replyChannel: "private" as const, spent: true },
+    ],
+  ])("forwards %s comment anchor through flow message queue", async (_label, commentAnchor) => {
+    const props = {
+      ...makeProps(ReplyFormat.email, {}, 0),
+      ctx: undefined,
+      commentAnchor,
+    }
+
+    await getUserData(props)
+
+    expect(chatQueueAdd).toHaveBeenCalledWith("sendFlowMessage", {
+      type: "sendFlowMessage",
+      data: expect.objectContaining({ commentAnchor }),
+    })
+  })
+
+  test("does not include comment anchor for normal flow prompt", async () => {
+    await getUserData({
+      ...makeProps(ReplyFormat.email, {}, 0),
+      ctx: undefined,
+    })
+
+    const [, job] = chatQueueAdd.mock.calls[0] as [
+      string,
+      { data: Record<string, unknown> },
+    ]
+    expect(job.data).not.toHaveProperty("commentAnchor")
+  })
+
   test("anchors the message lookup on conversation.lastActivityAt, not contactInbox", async () => {
     lastMessage.current = makeIncomingMessage({ text: "user@example.com" })
     const props = makeProps(ReplyFormat.email)
