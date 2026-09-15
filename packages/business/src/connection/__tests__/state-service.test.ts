@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const NO_OWNER_ID_MESSAGE = /no ownerId/
+
 const mocks = vi.hoisted(() => ({
   findById: vi.fn(),
   findByProviderAndSourceIdAnyWorkspace: vi.fn(),
@@ -28,6 +30,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     update: mocks.inboxUpdate,
+    transaction: vi.fn(async (fn: (tx: unknown) => unknown) =>
+      fn({ update: mocks.inboxUpdate }),
+    ),
   },
   eq: vi.fn((column, value) => ({ column, value })),
 }))
@@ -152,6 +157,36 @@ describe("ConnectionStateService.transition", () => {
     expect(result.status).toBe("connected")
     expect(mocks.tryConsume).not.toHaveBeenCalled()
     expect(mocks.release).not.toHaveBeenCalled()
+  })
+
+  test("throws channelLimitReached and never writes status when quota consume fails (I5)", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.tryConsume.mockResolvedValueOnce({ ok: false })
+
+    await expect(
+      connectionStateService.transition({
+        connectionId: "conn-1",
+        event: "connect.completed",
+        ownerId: "owner-1",
+      }),
+    ).rejects.toMatchObject({ code: "channelLimitReached" })
+
+    expect(mocks.update).not.toHaveBeenCalled()
+    expect(mocks.inboxUpdateSet).not.toHaveBeenCalled()
+  })
+
+  test("throws when a channel quotaEdge is required but no ownerId is supplied (I8)", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+
+    await expect(
+      connectionStateService.transition({
+        connectionId: "conn-1",
+        event: "connect.completed",
+      }),
+    ).rejects.toThrow(NO_OWNER_ID_MESSAGE)
+
+    expect(mocks.update).not.toHaveBeenCalled()
+    expect(mocks.tryConsume).not.toHaveBeenCalled()
   })
 })
 

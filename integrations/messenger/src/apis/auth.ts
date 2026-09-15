@@ -324,6 +324,41 @@ export function debugToken({
   })
 }
 
+/**
+ * Shared `ConnectionProvider.verify` body for a Meta-graph token: inspects
+ * it via `debugToken` and maps the result to a `ConnectionHealth`. `label`
+ * only varies the error string (`"${label} access token is invalid"`) —
+ * Messenger and Instagram-via-Facebook run byte-identical logic otherwise.
+ */
+export const verifyMetaToken =
+  (label: string) =>
+  async ({
+    auth,
+  }: {
+    auth: {
+      clientId: string
+      clientSecret: string
+      tokens: { accessToken: string; expiresAt?: string }
+      metadata: { version: string }
+    }
+  }) => {
+    const token = await debugToken({
+      inputToken: auth.tokens.accessToken,
+      appAccessToken: toAppAccessToken(auth),
+      version: auth.metadata.version,
+    })
+
+    if (token.is_valid !== true) {
+      return {
+        ok: false as const,
+        revoked: true,
+        error: `${label} access token is invalid`,
+      }
+    }
+
+    return { ok: true as const, authExpiresAt: auth.tokens.expiresAt }
+  }
+
 export function hasLeadsRetrieval(scopes: string[] | undefined): boolean {
   return Boolean(scopes?.includes(LEADS_RETRIEVAL_SCOPE))
 }

@@ -31,4 +31,9 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/apikeys")).toBe(false)
     expect(isPublicRoute("/authorized-apps")).toBe(false)
   })
+
+  test("/connect is public so an unauthenticated ConnectSession completion works (T8)", () => {
+    expect(isPublicRoute("/connect")).toBe(true)
+    expect(isPublicRoute("/connect/sess-abc123")).toBe(true)
+  })
 })

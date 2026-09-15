@@ -5,10 +5,10 @@ import {
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
 import {
-  debugToken,
   exchangeCodeForToken,
   getUserInstagramAccounts,
   toAppAccessToken,
+  verifyMetaToken,
 } from "./apis/auth"
 import {
   exchangeLongLivedToken,
@@ -116,23 +116,7 @@ const config: IntegrationDefinition<
       sourceId: auth.metadata.igId,
       displayName: auth.metadata.igName,
     }),
-    verify: async ({ auth }) => {
-      const token = await debugToken({
-        inputToken: auth.tokens.accessToken,
-        appAccessToken: toAppAccessToken(auth),
-        version: auth.metadata.version,
-      })
-
-      if (token.is_valid !== true) {
-        return {
-          ok: false,
-          revoked: true,
-          error: "Instagram access token is invalid",
-        }
-      }
-
-      return { ok: true, authExpiresAt: auth.tokens.expiresAt }
-    },
+    verify: verifyMetaToken("Instagram"),
     isRevokedTokenError,
     webhook: {
       subscribe: ({ auth }) =>

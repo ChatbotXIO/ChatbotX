@@ -16,6 +16,17 @@ import {
   moosendSubscriberResponseSchema,
 } from "./schemas"
 
+/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
+const buildMoosendAuth = async (apiKey: string): Promise<MoosendAuthValue> => {
+  const auth = createMoosendAuth(apiKey)
+  await moosendRequest(
+    auth,
+    moosendListsPagePath(1, 1),
+    moosendMailingListsResponseSchema,
+  )
+  return auth
+}
+
 const config: IntegrationDefinition<
   MoosendConfig,
   MoosendAuthValue,
@@ -39,6 +50,8 @@ const config: IntegrationDefinition<
       sourceId: "workspace",
       displayName: "Moosend",
     }),
+    fromCredentials: (config: { apiKey: string }) =>
+      buildMoosendAuth(config.apiKey),
     verify: async ({ auth }) => {
       try {
         await moosendRequest(
@@ -69,15 +82,7 @@ const config: IntegrationDefinition<
       error.kind === "invalid_credentials",
   },
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = createMoosendAuth(props.apiKey)
-      await moosendRequest(
-        auth,
-        moosendListsPagePath(1, 1),
-        moosendMailingListsResponseSchema,
-      )
-      return auth
-    },
+    validateCredentials: async ({ props }) => buildMoosendAuth(props.apiKey),
     listMailingLists: async ({ ctx, props }) => {
       const page = moosendListPageRequestSchema.parse(props)
       const response = await moosendRequest(

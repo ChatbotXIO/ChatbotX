@@ -3,6 +3,7 @@ import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { inboxModel } from "@chatbotx.io/database/schema"
 import { distributedLock } from "@chatbotx.io/redis"
 import {
+  AuthException,
   type AuthStore,
   type AuthValue,
   type ConnectionHealth,
@@ -109,23 +110,43 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
         timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
         fn,
       }),
-    markOffline: async () => {
+    markOffline: async (reason?: unknown) => {
       const connection = await resolveConnection()
+      const isRevoked = reason instanceof AuthException
       if (connection) {
         const ownerId =
           await workspaceMemberService.findOwnerUserIdByWorkspaceId({
             workspaceId: connection.workspaceId,
           })
-        await connectionStateService.markUnhealthy({
-          connectionId: connection.id,
-          ownerId,
-        })
+        if (isRevoked) {
+          await connectionStateService.markUnhealthy({
+            connectionId: connection.id,
+            ownerId,
+          })
+          return
+        }
+        // Transient failure (network/5xx, retries exhausted) — degrade
+        // instead of revoking: the channel keeps sending and its quota slot
+        // stays held, matching a live provider outage rather than a real
+        // reauth requirement. Invalid from a terminal status (e.g. already
+        // `needs_reauth`) is a legitimate no-op, not an error.
+        try {
+          await connectionStateService.transition({
+            connectionId: connection.id,
+            event: "refresh.transient_failure",
+            reason: "refresh_failed",
+            ownerId,
+          })
+        } catch {
+          // Not currently active — nothing to degrade.
+        }
         return
       }
       // Pre-backfill fallback: no `Connection` row exists yet for this
-      // integration — fall back to the legacy direct `Inbox` write.
-      if (!integration.inboxId) {
-        // Workspace-level integration (no inbox) — nothing to disconnect.
+      // integration — fall back to the legacy direct `Inbox` write. Only for
+      // a genuine revocation; a transient failure with no `Connection` row
+      // to degrade must not disconnect the channel outright.
+      if (!(isRevoked && integration.inboxId)) {
         return
       }
       await db

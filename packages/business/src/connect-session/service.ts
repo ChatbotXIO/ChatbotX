@@ -121,6 +121,16 @@ class ConnectSessionService extends BaseService {
       stateNonceHash,
       status: "pending",
       step: "authorize",
+      // The schema declares `.default(sql\`[]\`)` for these four columns, but
+      // drizzle-kit never inlines a `sql` default into the generated
+      // migration (see `schema-default-parity.test.ts`) — the physical
+      // columns have NO database default, so omitting any of these turns
+      // into a bare `DEFAULT` keyword and a NOT NULL violation. Every insert
+      // must write them explicitly.
+      targets: [],
+      claimedTargetIds: [],
+      resultConnectionIds: [],
+      results: [],
       expiresAt: new Date(Date.now() + PENDING_TTL_MS),
     })
 

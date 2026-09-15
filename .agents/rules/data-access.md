@@ -3,14 +3,15 @@ name: data-access
 description: >-
   Enforces the action/API handler → service → repository → DB chain in
   ChatbotX. Read before adding or reviewing code in apps/builder,
-  apps/worker, integrations/*, packages/business, or packages/database that
-  reads or writes data.
+  apps/worker, integrations/*, packages/business, packages/connections, or
+  packages/database that reads or writes data.
 globs:
   - apps/builder/**
   - apps/worker/**
   - apps/mcp-server/**
   - integrations/**
   - packages/business/**
+  - packages/connections/**
   - packages/database/**
 ---
 
@@ -34,6 +35,7 @@ The chain is: **action / API handler → service (`packages/business/`) → repo
 |-------|---|------|
 | `packages/database/src/repositories/*` | Yes | Raw where-builders, joins, pagination, shard routing. **Never** cache invalidation, event emission, or validation. |
 | `packages/business/src/*` | Yes | Validation, orchestration across repositories, cache invalidation, events, audit, quota checks, optional `tx?: DatabaseClient` passthrough. **Never** imports from `apps/` or `integrations/`. |
+| `packages/connections/src/*` | Yes | The **registry-aware** orchestration tier for the `Connection` domain, one level above `packages/business` — it composes `CONNECTION_REGISTRY` (each `integrations/<provider>`'s SDK adapter) with `packages/business`'s registry-free `connectionStateService`/`connectSessionService`, and owns the transactions that touch both a satellite table row and the `Connection` row in one commit (`upsertConnectionRow`, `disconnect`, `completeReconnect`). It exists as its own tier — not folded into `packages/business` — specifically because `packages/business` must stay registry-free (importable from `markOffline` hooks and webhook handlers without pulling in every provider's module graph); `packages/connections` is the one place allowed to depend on both. Only `connectionService` (from `@chatbotx.io/connections`) is the public surface app/worker code calls — never import `packages/connections/src/internal.ts`'s helpers directly. |
 | `apps/builder/src/features/*/actions/` | **No** | Parse input → call a service method → map the result/error for the client. |
 | `apps/builder/src/features/*/queries/` | **No** | See the `.query.ts` contract below. |
 | `apps/builder/src/features/*/api/` | **No** | Resolve session context into plain params, call the same service method the private path uses. |

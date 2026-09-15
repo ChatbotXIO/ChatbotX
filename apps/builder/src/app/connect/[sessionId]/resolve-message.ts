@@ -3,12 +3,16 @@ import type { ConnectSessionStatus } from "@chatbotx.io/database/partials"
 /**
  * Which message block `/connect/{sessionId}` shows for a given
  * `ConnectSession.status` (or `null` when the session id resolved to
- * nothing at all). `"pending"`/`"authorized"`/`"awaiting_selection"` are
- * ALL still-in-flight states — including `"authorized"`, the brief window
- * between a successful OAuth exchange and candidate listing — so they all
- * map to `"processing"` (auto-refreshing), never `"failed"`. Every other
- * value (including a genuinely unknown future status) falls back to
- * `"failed"` rather than silently misreporting progress as success.
+ * nothing at all). `"pending"`/`"awaiting_selection"` are still-in-flight
+ * states, mapped to `"processing"` (auto-refreshing), never `"failed"`.
+ * `"authorized"` is a declared `ConnectSessionStatus` value with no writer
+ * today — `attachAuthorization` (`packages/business/src/connect-session/service.ts`)
+ * goes straight from `pending` to `awaiting_selection`, skipping it — kept
+ * here (mapped the same as the other in-flight states) only so a future
+ * intermediate step that DOES write it doesn't silently fall through to
+ * `"failed"`. Every other value (including a genuinely unknown future
+ * status) falls back to `"failed"` rather than silently misreporting
+ * progress as success.
  *
  * Extracted as a pure function so this mapping — the one behavior in this
  * page with real branching to get wrong — is unit-testable without

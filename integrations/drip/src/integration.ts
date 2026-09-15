@@ -1,6 +1,7 @@
 import {
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { dripRequest } from "./client"
@@ -23,6 +24,20 @@ import {
   dripTagsResponseSchema,
 } from "./schemas"
 
+/** Shared by `connection.fromCredentials` (live-validate + return `AuthValue`) and the legacy `validateCredentials` action. */
+const buildDripAuth = async (apiToken: string): Promise<DripAuthValue> => {
+  const auth = createDripAuth(apiToken)
+  const response = await dripRequest(
+    auth,
+    DRIP_ACCOUNTS_PATH,
+    dripAccountsResponseSchema,
+  )
+  if (response.accounts.length === 0) {
+    throw new DripNoAccountError()
+  }
+  return auth
+}
+
 const config: IntegrationDefinition<DripConfig, DripAuthValue, DripActions> = {
   name: "drip",
   connection: {
@@ -42,6 +57,8 @@ const config: IntegrationDefinition<DripConfig, DripAuthValue, DripActions> = {
       sourceId: "workspace",
       displayName: "Drip",
     }),
+    fromCredentials: (config: { apiToken: string }) =>
+      buildDripAuth(config.apiToken),
     verify: async ({ auth }) => {
       try {
         const response = await dripRequest(
@@ -56,7 +73,7 @@ const config: IntegrationDefinition<DripConfig, DripAuthValue, DripActions> = {
       } catch (error) {
         return {
           ok: false,
-          revoked: false,
+          revoked: isUnauthorizedStatusError(error),
           error:
             error instanceof Error
               ? error.message
@@ -64,21 +81,10 @@ const config: IntegrationDefinition<DripConfig, DripAuthValue, DripActions> = {
         }
       }
     },
-    // TODO(connection-phase2): refine once Drip revoked-token error shape is confirmed.
-    isRevokedTokenError: () => false,
+    isRevokedTokenError: isUnauthorizedStatusError,
   },
   actions: {
-    validateCredentials: async ({ props }) => {
-      const response = await dripRequest(
-        props,
-        DRIP_ACCOUNTS_PATH,
-        dripAccountsResponseSchema,
-      )
-      if (response.accounts.length === 0) {
-        throw new DripNoAccountError()
-      }
-      return createDripAuth(props.apiToken)
-    },
+    validateCredentials: async ({ props }) => buildDripAuth(props.apiToken),
     listAccounts: async ({ ctx }) => {
       const response = await dripRequest(
         ctx.auth,

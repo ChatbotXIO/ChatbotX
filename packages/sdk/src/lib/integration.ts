@@ -641,11 +641,15 @@ export class Integration<
 
   /**
    * Public entry point for the Connection domain to force or proactively
-   * refresh auth outside the request-triggered `invokeWithRefresh` flow
-   * (the `refresh-connections` cron, `POST /v1/connections/{id}/refresh`).
-   * With no `opts`, behaves like the proactive check used before every
-   * handler call (refresh only when within {@link AUTH_REFRESH_BUFFER_MS} of
-   * expiry). `force: true` always calls `refreshAuth` regardless of expiry.
+   * refresh auth outside the request-triggered `invokeWithRefresh` flow —
+   * today called only from `POST /v1/connections/{id}/refresh`
+   * (`ConnectionService.refresh`). `ConnectionStateService.listDueForRefresh`
+   * exists but has no scheduled caller yet; a `refresh-connections` cron
+   * that proactively calls this method for rows it returns is still
+   * unbuilt (Phase 4). With no `opts`, behaves like the proactive check
+   * used before every handler call (refresh only when within
+   * {@link AUTH_REFRESH_BUFFER_MS} of expiry). `force: true` always calls
+   * `refreshAuth` regardless of expiry.
    */
   async ensureFreshAuth(
     ctx: Context<AuthValue>,

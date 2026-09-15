@@ -5,11 +5,11 @@ import {
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
 import {
-  debugToken,
   exchangeCodeForToken,
   getUserPages,
   MESSENGER_SCOPES,
   toAppAccessToken,
+  verifyMetaToken,
 } from "./apis/auth"
 import {
   getCommentAttachment,
@@ -102,7 +102,11 @@ const config: IntegrationDefinition<
         authType: AuthType.oauth2,
         clientId: config.clientId,
         clientSecret: config.clientSecret,
-        redirectUrl: "",
+        // The real callback URL `authorizeUrl` sent as `redirect_uri` —
+        // `oauth2AuthSchema.redirectUrl` is `min(1)`; a hardcoded `""` here
+        // fails the first generic validator that parses this value (Google
+        // Calendar's `.extend()` pattern already does).
+        redirectUrl: callbackUrl,
         version: config.version,
         tokens: { accessToken: longLivedToken },
       }
@@ -125,7 +129,7 @@ const config: IntegrationDefinition<
             authType: AuthType.oauth2,
             clientId: auth.clientId,
             clientSecret: auth.clientSecret,
-            redirectUrl: "",
+            redirectUrl: auth.redirectUrl,
             version,
             tokens: { accessToken: page.access_token as string },
             metadata: { pageId: page.id, pageName: page.name, version },
@@ -136,23 +140,7 @@ const config: IntegrationDefinition<
       sourceId: auth.metadata.pageId,
       displayName: auth.metadata.pageName,
     }),
-    verify: async ({ auth }) => {
-      const token = await debugToken({
-        inputToken: auth.tokens.accessToken,
-        appAccessToken: toAppAccessToken(auth),
-        version: auth.metadata.version,
-      })
-
-      if (token.is_valid !== true) {
-        return {
-          ok: false,
-          revoked: true,
-          error: "Messenger access token is invalid",
-        }
-      }
-
-      return { ok: true, authExpiresAt: auth.tokens.expiresAt }
-    },
+    verify: verifyMetaToken("Messenger"),
     isRevokedTokenError,
     webhook: {
       subscribe: ({ auth }) =>

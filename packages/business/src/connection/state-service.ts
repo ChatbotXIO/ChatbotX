@@ -12,6 +12,7 @@ import {
 import { inboxModel } from "@chatbotx.io/database/schema"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
+import { channelLimitReachedException } from "../errors"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceUsageService } from "../workspace-usage/service"
@@ -101,65 +102,121 @@ class ConnectionStateService extends BaseService {
     ownerId?: string
     tx?: DatabaseClient
   }): Promise<ConnectionModel> {
-    const client = input.tx ?? db
-    const existing = await connectionRepository.findById(
-      { id: input.connectionId },
-      client,
-    )
-    if (!existing) {
-      throw new ConnectionNotFoundException(input.connectionId)
-    }
-
-    const result = transitionConnection({
-      from: existing.status,
-      event: input.event,
-      reason: input.reason,
-    })
-
-    const updated = await connectionRepository.update(
-      {
-        id: existing.id,
-        values: {
-          status: result.to,
-          statusReason: result.reason,
-          connectedAt:
-            result.quotaEdge === "consume" ? new Date() : existing.connectedAt,
-          disconnectedAt:
-            result.quotaEdge === "release"
-              ? new Date()
-              : existing.disconnectedAt,
-        },
-      },
-      client,
-    )
-    if (!updated) {
-      throw new ConnectionNotFoundException(input.connectionId)
-    }
-
-    if (existing.inboxId) {
-      await this.mirrorInboxStatus({
-        inboxId: existing.inboxId,
-        to: result.to,
-        reason: result.reason,
-        tx: client,
-      })
-    }
-
-    // Gated on `kind === "channel"` here (not just `input.ownerId` being
-    // set) as defense-in-depth: the "channels" quota metric only applies to
-    // channel connections, so a caller that mistakenly resolves and passes
-    // an `ownerId` for a workspace-integration/sub-connection row (AI
-    // providers, marketing tools) still cannot mis-consume/release a
-    // channel-quota slot.
-    if (result.quotaEdge && input.ownerId && existing.kind === "channel") {
-      await this.applyQuotaEdge(
-        result.quotaEdge,
-        input.ownerId,
-        existing.workspaceId,
+    const run = async (client: DatabaseClient): Promise<ConnectionModel> => {
+      const existing = await connectionRepository.findById(
+        { id: input.connectionId },
+        client,
       )
+      if (!existing) {
+        throw new ConnectionNotFoundException(input.connectionId)
+      }
+
+      const result = transitionConnection({
+        from: existing.status,
+        event: input.event,
+        reason: input.reason,
+      })
+
+      // Gated on `kind === "channel"` here (not just `input.ownerId` being
+      // set) as defense-in-depth: the "channels" quota metric only applies
+      // to channel connections, so a caller that mistakenly resolves and
+      // passes an `ownerId` for a workspace-integration/sub-connection row
+      // (AI providers, marketing tools) still cannot mis-consume/release a
+      // channel-quota slot.
+      if (result.quotaEdge && existing.kind === "channel" && !input.ownerId) {
+        // A channel-kind connection crossing the active/inactive boundary
+        // with no resolvable owner is a caller bug, not a legitimate no-op
+        // — `inboxService.create` throws in the same situation. Silently
+        // skipping here would let a channel go `connected` (or a disconnect
+        // go through) with no quota consumed/released at all.
+        throw new Error(
+          `connection ${existing.id} transition "${input.event}" would ${result.quotaEdge} channel quota but no ownerId was supplied`,
+        )
+      }
+
+      // Consume BEFORE the status write: a failed consume must never
+      // require rolling back an already-committed transition — nothing has
+      // been written yet at this point.
+      if (
+        result.quotaEdge === "consume" &&
+        input.ownerId &&
+        existing.kind === "channel"
+      ) {
+        const consumed = await quotaEnforcementService.tryConsume({
+          userId: input.ownerId,
+          metric: "channels",
+        })
+        if (!consumed.ok) {
+          throw channelLimitReachedException()
+        }
+      }
+
+      const updated = await connectionRepository.update(
+        {
+          id: existing.id,
+          values: {
+            status: result.to,
+            statusReason: result.reason,
+            connectedAt:
+              result.quotaEdge === "consume"
+                ? new Date()
+                : existing.connectedAt,
+            disconnectedAt:
+              result.quotaEdge === "release"
+                ? new Date()
+                : existing.disconnectedAt,
+          },
+        },
+        client,
+      )
+      if (!updated) {
+        throw new ConnectionNotFoundException(input.connectionId)
+      }
+
+      if (existing.inboxId) {
+        await this.mirrorInboxStatus({
+          inboxId: existing.inboxId,
+          to: result.to,
+          reason: result.reason,
+          tx: client,
+        })
+      }
+
+      if (
+        result.quotaEdge === "consume" &&
+        input.ownerId &&
+        existing.kind === "channel"
+      ) {
+        // The authoritative counter already moved above; this is the
+        // display-only mirror, best-effort like every other usage-counter
+        // write in this class.
+        await workspaceUsageService
+          .increment(existing.workspaceId, "channels")
+          .catch((err) => {
+            logger.warn(
+              {
+                err,
+                workspaceId: existing.workspaceId,
+                ownerId: input.ownerId,
+              },
+              "connection connect: workspace usage channel increment failed",
+            )
+          })
+      } else if (
+        result.quotaEdge === "release" &&
+        input.ownerId &&
+        existing.kind === "channel"
+      ) {
+        await this.releaseQuotaEdge(input.ownerId, existing.workspaceId)
+      }
+
+      return updated
     }
 
-    return updated
+    if (input.tx) {
+      return await run(input.tx)
+    }
+    return await db.transaction(run)
   }
 
   /**
@@ -259,45 +316,18 @@ class ConnectionStateService extends BaseService {
   }
 
   /**
-   * Consumes/releases exactly one unit of the owner's `channels` enforcement
-   * quota, then best-effort mirrors the SAME edge onto the workspace's
-   * display-only `channels` usage counter — the counterpart to
-   * `inboxService.create`'s `!skipQuota` branch and `inboxService
-   * .disconnect`'s unconditional decrement, both of which this method's
-   * callers (`connectCandidate`/`connectFromCredentials`'s revive path via
-   * `skipQuota: true`, and disconnect via `mirrorInboxStatus` instead of
-   * `inboxService.disconnect`) deliberately bypass so this is the only
-   * place either counter moves for a Connection-domain channel.
+   * Best-effort release of one unit of the owner's `channels` enforcement
+   * quota, then a best-effort mirror onto the workspace's display-only
+   * `channels` usage counter. Consume is handled inline in `transition`
+   * (it must run BEFORE the status write and throw on failure, unlike
+   * release, which never blocks/rolls back an already-inactive connection)
+   * — this is the release-only counterpart, the same "only place either
+   * counter moves for a Connection-domain channel" as before.
    */
-  private async applyQuotaEdge(
-    edge: "consume" | "release",
+  private async releaseQuotaEdge(
     ownerId: string,
     workspaceId: string,
   ): Promise<void> {
-    if (edge === "consume") {
-      const consumed = await quotaEnforcementService.tryConsume({
-        userId: ownerId,
-        metric: "channels",
-      })
-      if (!consumed.ok) {
-        // The caller already committed the status write; a failed consume
-        // here means the FSM and the quota ledger disagree. Surface it
-        // rather than silently under-counting — the nightly reconcile
-        // (Phase 4) is the long-term fix for this race.
-        throw new Error(
-          `connection quota consume failed for owner ${ownerId} after status transition committed`,
-        )
-      }
-      await workspaceUsageService
-        .increment(workspaceId, "channels")
-        .catch((err) => {
-          logger.warn(
-            { err, workspaceId, ownerId },
-            "connection connect: workspace usage channel increment failed",
-          )
-        })
-      return
-    }
     await quotaEnforcementService.release({
       userId: ownerId,
       metric: "channels",

@@ -107,6 +107,7 @@ export const connectSessionErrorCodes = z.enum([
   "state_mismatch",
   "expired",
   "provider_denied",
+  "exchange_failed",
   "provider_error",
   "no_candidates",
   "already_connected",

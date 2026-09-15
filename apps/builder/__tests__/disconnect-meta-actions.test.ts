@@ -21,6 +21,8 @@ const mocks = vi.hoisted(() => {
       callback(tx),
     ),
     coexistTearDownForIntegration: vi.fn().mockResolvedValue(undefined),
+    connectionFindByInboxId: vi.fn().mockResolvedValue(undefined),
+    connectionTransition: vi.fn().mockResolvedValue(undefined),
     findOrFail: vi.fn(),
     inboxDisconnect: vi.fn().mockResolvedValue(undefined),
     instagramExists: vi.fn().mockResolvedValue(false),
@@ -49,6 +51,10 @@ const mocks = vi.hoisted(() => {
     workspaceFindById: vi.fn(),
   }
 })
+
+vi.mock("@chatbotx.io/business/connection", () => ({
+  connectionStateService: { transition: mocks.connectionTransition },
+}))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
   auditService: { record: mocks.auditRecord },
@@ -81,6 +87,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  connectionRepository: { findByInboxId: mocks.connectionFindByInboxId },
   metaCapiEventRepository: {
     deleteByIntegration: mocks.metaCapiDeleteByIntegration,
   },
@@ -189,6 +196,7 @@ describe("Meta disconnect actions", () => {
     mocks.instagramDisconnect.mockResolvedValue(undefined)
     mocks.instagramFacebookDisconnect.mockResolvedValue(undefined)
     mocks.subscribePageToAppWebhook.mockResolvedValue(undefined)
+    mocks.connectionFindByInboxId.mockResolvedValue(undefined)
     mocks.workspaceFindById.mockResolvedValue({
       id: "workspace-1",
       ownerId: "owner-1",
@@ -328,5 +336,44 @@ describe("Meta disconnect actions", () => {
       action: "disconnect",
       detail: "disconnected the Messenger channel (#messenger-1)",
     })
+  })
+
+  test("messenger disconnect transitions the Connection row instead of writing Inbox directly when one exists", async () => {
+    mocks.findOrFail.mockResolvedValueOnce(messengerRow)
+    mocks.connectionFindByInboxId.mockResolvedValueOnce({
+      id: "conn-1",
+      workspaceId: "workspace-1",
+    })
+
+    await disconnectMessenger({ workspaceId: "workspace-1", id: "messenger-1" })
+
+    expect(mocks.connectionTransition).toHaveBeenCalledWith({
+      connectionId: "conn-1",
+      event: "user.disconnect",
+      ownerId: "owner-1",
+      tx: mocks.tx,
+    })
+    expect(mocks.inboxDisconnect).not.toHaveBeenCalled()
+  })
+
+  test("instagram disconnect transitions the Connection row instead of writing Inbox directly when one exists", async () => {
+    mocks.findOrFail.mockResolvedValueOnce(instagramFacebookRow)
+    mocks.connectionFindByInboxId.mockResolvedValueOnce({
+      id: "conn-2",
+      workspaceId: "workspace-1",
+    })
+
+    await disconnectInstagram({
+      workspaceId: "workspace-1",
+      integrationInstagramId: "instagram-1",
+    })
+
+    expect(mocks.connectionTransition).toHaveBeenCalledWith({
+      connectionId: "conn-2",
+      event: "user.disconnect",
+      ownerId: "owner-1",
+      tx: mocks.tx,
+    })
+    expect(mocks.inboxDisconnect).not.toHaveBeenCalled()
   })
 })

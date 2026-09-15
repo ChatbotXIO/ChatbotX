@@ -153,6 +153,8 @@ export const channelForProvider = (
     : (provider as ChannelType)
 }
 
+const CREDENTIAL_STRATEGIES = new Set(["token", "api_key", "self_serve"])
+
 const resolveUnavailableReason = async (input: {
   provider: IntegrationType
   policy: Awaited<ReturnType<typeof resolveChannelPolicy>>
@@ -161,6 +163,22 @@ const resolveUnavailableReason = async (input: {
 }): Promise<ConnectionProviderResource["unavailableReason"]> => {
   const adapter = CONNECTION_REGISTRY[input.provider]
   if (!adapter) {
+    return "notImplemented"
+  }
+
+  // A credential-strategy provider with no live `fromCredentials` validator
+  // cannot complete `POST /v1/connections` — advertising it as `available`
+  // would 500 on `connectionWrongStrategyException`. Webchat/SMTP/the API
+  // channel are `self_serve` with no external account to validate against
+  // AND no stable per-instance identity to derive `Connection.sourceId`
+  // from (`describe()` only receives `auth`, which for these providers is
+  // minted before any satellite row exists) — deferred to a follow-up that
+  // resolves that identity gap rather than shipping a second "workspace"-
+  // literal `sourceId` collision class.
+  if (
+    CREDENTIAL_STRATEGIES.has(adapter.provider.strategy) &&
+    !adapter.provider.fromCredentials
+  ) {
     return "notImplemented"
   }
 
