@@ -57,7 +57,11 @@ export const sequencesPublicRouter = {
       tags: ["Sequences"],
       spec: mcpSpec({ visibility: "default" }),
     })
-    .input(z.object({ id: z.string() }))
+    .input(
+      z.object({
+        id: z.string().describe("Sequence id. Get it from `sequences.list`."),
+      }),
+    )
     .output(sequenceResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
@@ -99,7 +103,15 @@ export const sequencesPublicRouter = {
       tags: ["Sequences"],
       spec: mcpSpec({ visibility: "default" }),
     })
-    .input(updateSequenceSchema.and(z.object({ id: zodBigintAsString() })))
+    .input(
+      updateSequenceSchema.and(
+        z.object({
+          id: zodBigintAsString().describe(
+            "Sequence id. Get it from `sequences.list`.",
+          ),
+        }),
+      ),
+    )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
@@ -114,10 +126,17 @@ export const sequencesPublicRouter = {
       method: "DELETE",
       path: "/v1/sequences/{id}",
       summary: "Delete a sequence",
+      description: "Permanently deletes a sequence and all of its steps.",
       successStatus: 204,
       tags: ["Sequences"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Sequence id. Get it from `sequences.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(
       async ({ context, input }) =>
@@ -138,7 +157,11 @@ export const sequencesPublicRouter = {
     })
     .input(
       publicUpsertSequenceStepRequest.and(
-        z.object({ id: zodBigintAsString() }),
+        z.object({
+          id: zodBigintAsString().describe(
+            "Sequence id. Get it from `sequences.list`.",
+          ),
+        }),
       ),
     )
     .output(z.object({ stepId: z.string() }))
@@ -165,10 +188,18 @@ export const sequencesPublicRouter = {
       method: "DELETE",
       path: "/v1/sequences/{id}/steps/{stepId}",
       summary: "Delete a sequence step",
+      description: "Permanently removes one step from a sequence.",
       successStatus: 204,
       tags: ["Sequences"],
     })
-    .input(z.object({ id: zodBigintAsString(), stepId: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Sequence id. Get it from `sequences.list`.",
+        ),
+        stepId: zodBigintAsString().describe("Sequence step id."),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await sequenceService.assertOwned({
@@ -190,6 +221,8 @@ export const sequencesPublicRouter = {
       method: "GET",
       path: "/v1/sequences/{id}/steps/{stepId}/contacts",
       summary: "List sequence step recipients by event type",
+      description:
+        "Returns contacts that reached one lifecycle event (e.g. sent, opened) at one step of a sequence.",
       tags: ["Sequences"],
     })
     .input(publicListSequenceStepContactsRequest)
