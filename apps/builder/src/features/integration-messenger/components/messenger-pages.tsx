@@ -13,7 +13,7 @@ import { connectViaApi } from "@/features/channel-connect/lib/connect-client"
 import type { ConnectPickerItem } from "@/features/channel-connect/lib/picker-items"
 import {
   CONNECT_CHANNEL_REGISTRY,
-  CONNECT_RETRY_HREF,
+  getConnectRetryHref,
 } from "@/features/channel-connect/lib/registry"
 import { connectActionResultSchemaDefault } from "@/features/channel-connect/schema"
 
@@ -73,7 +73,7 @@ export function MessengerPages({
               <p>{t("messenger.selectPage.noConnectablePagesDescription")}</p>
               <Link
                 className={buttonVariants({ size: "sm" })}
-                href={CONNECT_RETRY_HREF}
+                href={getConnectRetryHref(workspaceId)}
               >
                 {t("messenger.selectPage.tryAgain")}
               </Link>

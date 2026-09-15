@@ -251,6 +251,9 @@ describe("InstagramAccounts", () => {
       (link) => link.textContent === "instagram.selectPage.tryAgain",
     )
     expect(tryAgainLink).not.toBeUndefined()
+    expect(tryAgainLink?.getAttribute("href")).toBe(
+      "/channels/create?workspaceId=ws-1",
+    )
     expect(container.textContent).toContain("IG Direct Account")
     expect(mockPush).not.toHaveBeenCalled()
   })
