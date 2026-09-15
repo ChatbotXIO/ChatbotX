@@ -19,16 +19,24 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 // disappearing without a trace.
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
-const includeQueryParam = z.preprocess((value) => {
-  if (typeof value !== "string") {
-    return value
-  }
-  const parts = value
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean)
-  return parts.length > 0 ? parts : undefined
-}, z.array(z.enum(CAPABILITIES_INCLUDES)).optional())
+const includeQueryParam = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") {
+      return value
+    }
+    const parts = value
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean)
+    return parts.length > 0 ? parts : undefined
+  },
+  z
+    .array(z.enum(CAPABILITIES_INCLUDES))
+    .optional()
+    .describe(
+      "Comma-separated list of capability categories to include. Omit to get the default set.",
+    ),
+)
 
 const flowSpecJsonSchemaConverter = new ZodToJsonSchemaConverter()
 // `flowSpecSchema` is static — converted once at module load rather than on
