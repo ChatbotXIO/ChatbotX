@@ -15,7 +15,9 @@ export type BroadcastEventType = MessageEventType | FlowEventType
 
 export const getBroadcastStatsRequest = z.object({
   workspaceId: z.string(),
-  broadcastId: z.string(),
+  broadcastId: z
+    .string()
+    .describe("Broadcast id. Get it from `broadcasts.list`."),
 })
 
 export type GetBroadcastStatsRequest = z.infer<typeof getBroadcastStatsRequest>

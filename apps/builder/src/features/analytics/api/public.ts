@@ -91,6 +91,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/contact-counts-per-day",
       summary: "Get contact counts per day",
+      description:
+        "Use this to chart total contacts over a requested time range. Compare it with `analytics.newContactCountsPerDay` to isolate acquisition from the running total.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -151,6 +153,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/blocked-contacts-count",
       summary: "Get blocked contacts count",
+      description:
+        "Counts contacts blocked within the given `from`/`to` time range. Use `analytics.blockedContactsPerDay` for a daily breakdown instead of a single total.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -248,6 +252,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/active-contacts-count",
       summary: "Get active contacts count",
+      description:
+        "Counts contacts with at least one channel interaction within the given `from`/`to` time range (monthly active contacts).",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -280,6 +286,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/contacts-by-dimension",
       summary: "Get contacts by dimension",
+      description:
+        "Groups contact counts by country, channel, or source over a time range. Set `dimension` to choose the grouping.",
       tags: ["Analytics"],
     })
     .input(contactsByDimensionPublicRequest)
@@ -311,6 +319,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/messages-by-admin",
       summary: "Get messages sent by admin",
+      description:
+        "Counts outgoing messages sent by human agents over a requested time range. Compare with `analytics.messagesBySender` for a per-sender breakdown.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -329,6 +339,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/human-agent-stats",
       summary: "Get human agent statistics",
+      description:
+        "Returns response-time and volume statistics for human agents over a requested time range.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -347,6 +359,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/conversation-handoffs",
       summary: "Get conversation handoffs",
+      description:
+        "Counts conversations handed off from the bot to a human agent, by day, over a requested time range.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -365,6 +379,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/conversation-followups",
       summary: "Get conversation follow-ups",
+      description:
+        "Counts conversations flagged for follow-up, by day, over a requested time range.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -383,6 +399,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/conversation-archived",
       summary: "Get archived conversations",
+      description:
+        "Counts conversations archived, by day, over a requested time range. Use `analytics.conversationAssigned` for assignment trends instead.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -401,6 +419,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/conversation-assigned",
       summary: "Get assigned conversations",
+      description:
+        "Counts conversations assigned to an agent, by day, over a requested time range. Use `analytics.conversationAssignedByAdmin` for a per-admin breakdown.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -419,6 +439,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/conversation-assigned-by-admin",
       summary: "Get assigned conversations by admin",
+      description:
+        "Counts conversations assigned, broken down by the admin who assigned them, over a requested time range.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -437,6 +459,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/unique-conversations-by-admin",
       summary: "Get unique conversations by admin",
+      description:
+        "Counts distinct conversations each admin handled, over a requested time range. Use `analytics.conversationAssignedByAdmin` for assignment counts instead.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -456,6 +480,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/bot-messages-by-result",
       summary: "Get bot messages by result",
+      description:
+        "Counts bot messages grouped by their outcome (e.g. answered, fallback), over a requested time range with `granularity` bucketing.",
       tags: ["Analytics"],
     })
     .input(timeRangeWithGranularityMHDPublicRequest)
@@ -474,6 +500,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/bot-messages-with-response",
       summary: "Get bot messages with response",
+      description:
+        "Counts bot messages that received a follow-up reply, over a requested time range with `granularity` bucketing.",
       tags: ["Analytics"],
     })
     .input(timeRangeWithGranularityMHDPublicRequest)
@@ -492,6 +520,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/bot-messages-no-response",
       summary: "Get bot messages with no response",
+      description:
+        "Counts bot messages that did not receive a follow-up reply, over a requested time range with `granularity` bucketing.",
       tags: ["Analytics"],
     })
     .input(timeRangeWithGranularityMHDPublicRequest)
@@ -510,6 +540,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/bot-messages-ai-providers",
       summary: "Get bot messages AI providers",
+      description:
+        "Counts bot messages grouped by the AI provider that generated them, over a requested time range.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -528,6 +560,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/messages-by-sender",
       summary: "Get messages by sender",
+      description:
+        "Counts messages grouped by sender (bot vs human agent), over a requested time range with `granularity` bucketing.",
       tags: ["Analytics"],
     })
     .input(timeRangeWithGranularityDMPublicRequest)
@@ -599,6 +633,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/mac/active-count",
       summary: "Get current period MAC count for the workspace",
+      description:
+        "Returns the workspace's monthly active contact count for the current billing period. Use `analytics.activeContactsCount` for an arbitrary date range instead.",
       tags: ["Analytics"],
     })
     .output(macActiveContactCountPublicResponse)
@@ -642,6 +678,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/magic-links/stats",
       summary: "Get magic link stats",
+      description:
+        "Returns click/conversion counts for one magic link over a time range. Use `analytics.magicLinkContacts` to list the contacts behind those counts.",
       tags: ["Analytics"],
     })
     .input(linkStatsPublicRequest)
@@ -659,6 +697,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/magic-links/contacts",
       summary: "Get magic link contacts",
+      description:
+        "Lists the contacts who clicked one magic link over a time range. Use `analytics.magicLinkStats` for aggregate counts instead.",
       tags: ["Analytics"],
     })
     .input(linkContactsPublicRequest)
@@ -677,6 +717,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/ref-links/stats",
       summary: "Get ref link stats",
+      description:
+        "Returns click/conversion counts for one ref link over a time range. Use `analytics.refLinkContacts` to list the contacts behind those counts.",
       tags: ["Analytics"],
     })
     .input(linkStatsPublicRequest)
@@ -695,6 +737,8 @@ export const analyticsPublicRouter = {
       method: "GET",
       path: "/v1/analytics/ref-links/contacts",
       summary: "Get ref link contacts",
+      description:
+        "Lists the contacts who clicked one ref link over a time range. Use `analytics.refLinkStats` for aggregate counts instead.",
       tags: ["Analytics"],
     })
     .input(linkContactsPublicRequest)

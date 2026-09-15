@@ -6,7 +6,7 @@ import { z } from "zod"
 
 export const flowStatsRequest = z.object({
   workspaceId: z.string(),
-  flowId: z.string(),
+  flowId: z.string().describe("Flow id. Get it from `flows.list`."),
 })
 export type FlowStatsRequest = z.infer<typeof flowStatsRequest>
 
