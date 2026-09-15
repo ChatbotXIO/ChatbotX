@@ -10,6 +10,7 @@
     "./audit": "./src/audit/index.ts",
     "./branding": "./src/platform/branding.ts",
     "./capabilities": "./src/capabilities/index.ts",
+    "./capabilities/schema": "./src/capabilities/schema.ts",
     "./contact-custom-field": "./src/contact-custom-field/index.ts",
     "./contact-custom-field-value": "./src/contact-custom-field/value-service.ts",
     "./contact-inbox": "./src/contact-inbox/index.ts",

@@ -1,7 +1,7 @@
 import type {
   FlowAuthoringContext,
+  FlowSpecStepType,
   TemplateComponent,
-  WaTemplateParams,
 } from "@chatbotx.io/flow-config"
 import {
   extractTemplateParams,
@@ -17,6 +17,24 @@ import { inboxService } from "../inbox/service"
 import { sequenceService } from "../sequence/service"
 import { tagService } from "../tag/service"
 import { whatsappMessageTemplateService } from "../whatsapp-message-template/service"
+import type {
+  CapabilitiesField,
+  CapabilitiesFlowSpec,
+  CapabilitiesInbox,
+  CapabilitiesNamedEntity,
+  CapabilitiesResponse,
+  CapabilitiesTemplate,
+} from "./schema"
+
+export type {
+  CapabilitiesField,
+  CapabilitiesFlowSpec,
+  CapabilitiesFlowSpecStepType,
+  CapabilitiesInbox,
+  CapabilitiesNamedEntity,
+  CapabilitiesResponse,
+  CapabilitiesTemplate,
+} from "./schema"
 
 /**
  * Caps every list this service gathers. This output is fed straight into an
@@ -47,45 +65,10 @@ export type CapabilitiesInclude = (typeof CAPABILITIES_INCLUDES)[number]
 // needs alongside them. `aiAgents` is left out of the default: it's rarely
 // needed to build a flow and the same information is one `ai_agents_list`
 // call away.
-const DEFAULT_INCLUDES: readonly CapabilitiesInclude[] = [
-  "inboxes",
-  "templates",
-  "customFields",
-  "botFields",
-  "tags",
-  "sequences",
-  "flows",
-  "flowSpec",
-]
-
-export type CapabilitiesInbox = { id: string; name: string; channel: string }
-export type CapabilitiesTemplate = {
-  id: string
-  name: string
-  language: string
-  status: string
-  params: WaTemplateParams
-}
-export type CapabilitiesField = { id: string; name: string; type: string }
-export type CapabilitiesNamedEntity = { id: string; name: string }
-export type CapabilitiesFlowSpecStepType = { type: string; description: string }
-export type CapabilitiesFlowSpec = {
-  stepTypes: CapabilitiesFlowSpecStepType[]
-  waitUnits: string[]
-  channels: string[]
-}
-
-export type CapabilitiesResponse = {
-  inboxes?: CapabilitiesInbox[]
-  templates?: CapabilitiesTemplate[]
-  customFields?: CapabilitiesField[]
-  botFields?: CapabilitiesField[]
-  tags?: CapabilitiesNamedEntity[]
-  aiAgents?: CapabilitiesNamedEntity[]
-  sequences?: CapabilitiesNamedEntity[]
-  flows?: CapabilitiesNamedEntity[]
-  flowSpec?: CapabilitiesFlowSpec
-}
+export const OPT_IN_INCLUDES: readonly CapabilitiesInclude[] = ["aiAgents"]
+export const DEFAULT_INCLUDES = CAPABILITIES_INCLUDES.filter(
+  (include) => !OPT_IN_INCLUDES.includes(include),
+)
 
 function toCapabilitiesField(field: {
   id: string
@@ -113,6 +96,7 @@ async function listTemplates(
   const templates = await whatsappMessageTemplateService.list({
     where: { workspaceId },
   })
+  // follow-up: tagService.listActive / whatsappMessageTemplateService.list have no limit param; capabilities slices in memory.
   return templates.slice(0, CAPABILITIES_LIST_LIMIT).map((template) => ({
     id: template.id,
     name: template.name,
@@ -146,6 +130,7 @@ async function listTags(
   workspaceId: string,
 ): Promise<CapabilitiesNamedEntity[]> {
   const tags = await tagService.listActive({ workspaceId })
+  // follow-up: tagService.listActive / whatsappMessageTemplateService.list have no limit param; capabilities slices in memory.
   return tags.slice(0, CAPABILITIES_LIST_LIMIT)
 }
 
@@ -182,8 +167,10 @@ async function listFlows(
 }
 
 function getFlowSpecCapabilities(): CapabilitiesFlowSpec {
+  const stepTypes: FlowSpecStepType[] = flowSpecStepTypes
+
   return {
-    stepTypes: flowSpecStepTypes,
+    stepTypes,
     waitUnits: [...waitStepDelayUnits.options],
     channels: [...channelTypes.options],
   }
@@ -241,6 +228,9 @@ export async function getCapabilities(props: {
 export async function getFlowAuthoringContext(
   workspaceId: string,
 ): Promise<FlowAuthoringContext> {
+  // Deliberately uncached: an agent can create a template then immediately
+  // reference it in the same session, and a cache TTL would cause false
+  // `unknownTemplate` errors.
   const [templates, customFields, flows] = await Promise.all([
     listTemplates(workspaceId),
     listCustomFields(workspaceId),

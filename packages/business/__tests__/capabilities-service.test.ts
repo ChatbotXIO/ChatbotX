@@ -11,8 +11,15 @@ const { tagService } = await import("../src/tag/service")
 const { whatsappMessageTemplateService } = await import(
   "../src/whatsapp-message-template/service"
 )
-const { getCapabilities, getFlowAuthoringContext } = await import(
-  "../src/capabilities/service"
+const {
+  getCapabilities,
+  getFlowAuthoringContext,
+  CAPABILITIES_INCLUDES,
+  DEFAULT_INCLUDES,
+  OPT_IN_INCLUDES,
+} = await import("../src/capabilities/service")
+const { capabilitiesResponseSchema } = await import(
+  "../src/capabilities/schema"
 )
 
 const emptyListResult = { data: [], pageCount: 0 }
@@ -78,7 +85,7 @@ describe("getCapabilities", () => {
       id: `tpl-${i}`,
       name: `Template ${i}`,
       language: "en",
-      status: "approved",
+      status: "APPROVED",
       components: [],
     }))
     vi.spyOn(tagService, "listActive").mockResolvedValue(manyTags as never)
@@ -94,6 +101,44 @@ describe("getCapabilities", () => {
     expect(result.tags).toHaveLength(200)
     expect(result.templates).toHaveLength(200)
   })
+
+  test("DEFAULT_INCLUDES is every CAPABILITIES_INCLUDES entry except the opt-in ones (aiAgents)", () => {
+    expect(OPT_IN_INCLUDES).toEqual(["aiAgents"])
+    expect(DEFAULT_INCLUDES).toEqual(
+      CAPABILITIES_INCLUDES.filter((include) => include !== "aiAgents"),
+    )
+    expect(DEFAULT_INCLUDES).not.toContain("aiAgents")
+  })
+
+  test("response satisfies the shared capabilitiesResponseSchema", async () => {
+    vi.spyOn(inboxService, "list").mockResolvedValue({
+      data: [{ id: "1", name: "Support", channel: "messenger" }],
+      pageCount: 1,
+    } as never)
+    vi.spyOn(whatsappMessageTemplateService, "list").mockResolvedValue([
+      {
+        id: "2",
+        name: "welcome_promo",
+        language: "en",
+        status: "APPROVED",
+        components: [],
+      },
+    ] as never)
+    vi.spyOn(tagService, "listActive").mockResolvedValue([
+      { id: "3", name: "vip" },
+    ] as never)
+    vi.spyOn(aiAgentService, "listAIAgents").mockResolvedValue({
+      data: [{ id: "4", name: "Support agent" }],
+      pageCount: 1,
+    } as never)
+
+    const result = await getCapabilities({
+      workspaceId: "ws-1",
+      include: CAPABILITIES_INCLUDES,
+    })
+
+    expect(capabilitiesResponseSchema.safeParse(result).success).toBe(true)
+  })
 })
 
 describe("getFlowAuthoringContext", () => {
@@ -103,7 +148,7 @@ describe("getFlowAuthoringContext", () => {
         id: "1001",
         name: "welcome_promo",
         language: "en",
-        status: "approved",
+        status: "APPROVED",
         components: [],
       },
     ] as never)
@@ -124,7 +169,7 @@ describe("getFlowAuthoringContext", () => {
     expect(ctx.templatesByName.get("welcome_promo")).toEqual({
       id: "1001",
       language: "en",
-      status: "approved",
+      status: "APPROVED",
     })
     expect(ctx.customFieldsByName.get("Plan")).toEqual({
       id: "1002",
