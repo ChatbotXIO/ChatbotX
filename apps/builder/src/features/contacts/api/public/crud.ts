@@ -116,7 +116,16 @@ export const contactsCrudPublicRouter = {
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .output(contactResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -179,6 +188,8 @@ export const contactsCrudPublicRouter = {
       method: "POST",
       path: "/v1/contacts/import",
       summary: "Import contacts from a file",
+      description:
+        "Starts an asynchronous bulk import of contacts from a previously uploaded file (`fileId`) into the given inbox. Returns an `importId` immediately; the import itself runs in the background, so newly imported contacts may not appear in `contacts.list` right away.",
       successStatus: 201,
       tags: ["Contacts"],
     })
@@ -208,7 +219,14 @@ export const contactsCrudPublicRouter = {
     })
     .input(
       z
-        .object({ identifier: z.string().min(1) })
+        .object({
+          identifier: z
+            .string()
+            .min(1)
+            .describe(
+              "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            ),
+        })
         .and(updateContactFieldRequest),
     )
     .errors(possibleErrorsOnMutatingResource)
@@ -229,10 +247,21 @@ export const contactsCrudPublicRouter = {
       method: "DELETE",
       path: "/v1/contacts/{identifier}",
       summary: "Delete a contact",
+      description:
+        "Permanently deletes the contact identified by `identifier`. Use `contacts.block` instead if you only need to stop the contact from messaging in.",
       successStatus: 204,
       tags: ["Contacts"],
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
@@ -251,10 +280,21 @@ export const contactsCrudPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/block",
       summary: "Block a contact",
+      description:
+        "Marks the contact identified by `identifier` as blocked, preventing further inbound messages from reaching the workspace. Use `contacts.unblock` to reverse this.",
       successStatus: 204,
       tags: ["Contacts"],
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
@@ -272,10 +312,21 @@ export const contactsCrudPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/unblock",
       summary: "Unblock a contact",
+      description:
+        "Reverses `contacts.block` for the contact identified by `identifier`, allowing inbound messages again.",
       successStatus: 204,
       tags: ["Contacts"],
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
@@ -299,18 +350,42 @@ export const contactsCrudPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        firstName: z.string().trim().max(100).optional(),
-        lastName: z.string().trim().max(100).optional(),
-        email: z.union([z.literal(""), z.email().max(100)]).optional(),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        firstName: z
+          .string()
+          .trim()
+          .max(100)
+          .optional()
+          .describe("Contact's first name."),
+        lastName: z
+          .string()
+          .trim()
+          .max(100)
+          .optional()
+          .describe("Contact's last name."),
+        email: z
+          .union([z.literal(""), z.email().max(100)])
+          .optional()
+          .describe("Contact's email address, or an empty string to clear it."),
         phoneNumber: z
           .string()
           .min(10)
           .max(20)
           .regex(/\+?\d{10,20}/)
-          .optional(),
-        avatar: z.string().optional(),
-        gender: genderTypes.optional(),
+          .optional()
+          .describe(
+            "Contact's phone number in E.164-like digits (10-20 digits, optional leading +).",
+          ),
+        avatar: z
+          .string()
+          .optional()
+          .describe("URL of the contact's avatar image."),
+        gender: genderTypes.optional().describe("Contact's gender."),
       }),
     )
     .output(contactResponse)

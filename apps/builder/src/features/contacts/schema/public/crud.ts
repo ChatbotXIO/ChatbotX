@@ -37,10 +37,16 @@ export type CountContactsPublicRequest = z.infer<
   typeof countContactsPublicRequest
 >
 
-export const countContactsPublicResponse = z.object({ total: z.number() })
+export const countContactsPublicResponse = z.object({
+  total: z.number().describe("Number of contacts matching the filter."),
+})
 
 export const importContactsPublicResponse = z.object({
-  importId: z.string(),
+  importId: z
+    .string()
+    .describe(
+      "Id of the background import job. The import runs asynchronously; imported contacts appear in `contacts.list` once it finishes.",
+    ),
 })
 export type ImportContactsPublicResponse = z.infer<
   typeof importContactsPublicResponse

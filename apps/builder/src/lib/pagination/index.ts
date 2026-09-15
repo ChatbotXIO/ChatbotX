@@ -3,8 +3,18 @@ import z from "zod"
 const sortSchema = z.array(z.object({ id: z.string(), desc: z.boolean() }))
 
 export const basePaginationRequest = z.object({
-  page: z.coerce.number().int().min(1).nullish(),
-  perPage: z.coerce.number().int().min(1).nullish(),
+  page: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .nullish()
+    .describe("Page number, starting at 1."),
+  perPage: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .nullish()
+    .describe("Number of items per page."),
   sort: z.preprocess((val) => {
     if (val === undefined) {
       return
@@ -25,12 +35,24 @@ export const basePaginationRequest = z.object({
     } catch {
       return
     }
-  }, sortSchema.nullish()),
+  }, sortSchema
+    .nullish()
+    .describe("Sort order as `[{ id, desc }]` column/direction pairs.")),
 })
 
 export const cursorPaginationRequest = z.object({
-  cursor: z.string().optional(),
-  perPage: z.coerce.number().int().min(1).nullish(),
+  cursor: z
+    .string()
+    .optional()
+    .describe(
+      "Opaque pagination cursor from a previous response's `nextCursor`. Omit to start from the first page.",
+    ),
+  perPage: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .nullish()
+    .describe("Number of items per page."),
   sort: z.preprocess((val) => {
     if (val === undefined) {
       return
@@ -51,7 +73,9 @@ export const cursorPaginationRequest = z.object({
     } catch {
       return
     }
-  }, sortSchema.nullish()),
+  }, sortSchema
+    .nullish()
+    .describe("Sort order as `[{ id, desc }]` column/direction pairs.")),
 })
 
 export const decodeCursor = <T>(

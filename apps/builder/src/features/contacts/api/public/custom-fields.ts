@@ -37,7 +37,16 @@ export const contactsCustomFieldsPublicRouter = {
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .output(listPublicContactCustomFieldsResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -56,12 +65,21 @@ export const contactsCustomFieldsPublicRouter = {
       method: "GET",
       path: "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
       summary: "Get contact custom field value",
+      description:
+        "Returns one custom field's current value for the contact identified by `identifier`. Use `contacts.listCustomFields` to see every field at once.",
       tags: ["Contacts"],
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        customFieldId: zodBigintAsString(),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        customFieldId: zodBigintAsString().describe(
+          "Custom field id (numeric string). Get it from `customFields.list`.",
+        ),
       }),
     )
     .output(publicContactCustomFieldResource)
@@ -90,9 +108,16 @@ export const contactsCustomFieldsPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        customFieldId: zodBigintAsString(),
-        value: z.string().trim(),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        customFieldId: zodBigintAsString().describe(
+          "Custom field id (numeric string). Get it from `customFields.list`.",
+        ),
+        value: z.string().trim().describe("New value for the custom field."),
       }),
     )
     .errors(possibleErrorsOnMutatingResource)
@@ -121,16 +146,27 @@ export const contactsCustomFieldsPublicRouter = {
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
         fields: z
           .array(
             z.object({
-              customFieldId: zodBigintAsString(),
-              value: z.string().trim(),
+              customFieldId: zodBigintAsString().describe(
+                "Custom field id (numeric string). Get it from `customFields.list`.",
+              ),
+              value: z
+                .string()
+                .trim()
+                .describe("New value for this custom field."),
             }),
           )
           .min(1)
-          .max(20),
+          .max(20)
+          .describe("Custom field values to set, up to 20 per request."),
       }),
     )
     .errors(possibleErrorsOnMutatingResource)
@@ -181,13 +217,23 @@ export const contactsCustomFieldsPublicRouter = {
       method: "DELETE",
       path: "/v1/contacts/{identifier}/custom-fields/{idOrName}",
       summary: "Delete contact custom field by id or name",
+      description:
+        "Removes one custom-field value from the contact identified by `identifier`, matched by id or field name. Use `contacts.clearCustomFields` to clear every field at once.",
       successStatus: 204,
       tags: ["Contacts"],
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        idOrName: z.string().min(1),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        idOrName: z
+          .string()
+          .min(1)
+          .describe("Custom field id (numeric string) or exact field name."),
       }),
     )
     .errors(possibleErrorsOnDeletingResource)
@@ -208,10 +254,21 @@ export const contactsCustomFieldsPublicRouter = {
       method: "DELETE",
       path: "/v1/contacts/{identifier}/custom-fields",
       summary: "Clear all custom fields from a contact",
+      description:
+        "Removes every custom-field value from the contact identified by `identifier`. Use `contacts.clearCustomField` to remove just one.",
       successStatus: 204,
       tags: ["Contacts"],
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
