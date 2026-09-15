@@ -9,7 +9,7 @@ export const aiProviderPathParam = z.enum([
 export type AiProviderPathParam = z.infer<typeof aiProviderPathParam>
 
 export const getAiProviderRequest = z.object({
-  provider: aiProviderPathParam,
+  provider: aiProviderPathParam.describe("AI provider identifier."),
 })
 
 // Never includes `auth` — the encrypted/secret credential. Only `hasApiKey`
@@ -25,8 +25,20 @@ export const publicAiProviderResource = z.object({
 })
 
 export const connectAiProviderRequest = z.object({
-  apiKey: z.string().min(1),
-  model: z.string().min(1),
-  temperature: z.coerce.number().min(0).max(2),
-  maxOutputTokens: z.coerce.number().int().min(1).max(8192),
+  apiKey: z.string().min(1).describe("Provider API key."),
+  model: z
+    .string()
+    .min(1)
+    .describe("Model identifier to use for this provider."),
+  temperature: z.coerce
+    .number()
+    .min(0)
+    .max(2)
+    .describe("Sampling temperature."),
+  maxOutputTokens: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(8192)
+    .describe("Maximum tokens generated per response."),
 })

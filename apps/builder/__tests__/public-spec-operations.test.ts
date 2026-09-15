@@ -56,20 +56,6 @@ type SpecOperation = {
 const LEGACY_WORKSPACE_TOKEN_PATTERN = /workspace[_.]?token/i
 const LEGACY_API_SUFFIX_PATTERN = /[_.]api$/i
 
-const DESCRIPTION_BACKLOG = new Set<string>([
-  "channels.",
-  "fbComments.",
-  "igComments.",
-  "igStories.",
-  "integrations.",
-  "messengerChannels.",
-  "messengerPersonas.",
-  "smtpIntegrations.",
-  "templateMessages.",
-  "webchats.",
-  "zaloChannels.",
-])
-
 let operations: SpecOperation[]
 let responseSchemasByOperationId: Record<string, unknown>
 let requestSchemasByOperationId: Record<string, unknown[]>
@@ -220,9 +206,6 @@ beforeAll(async () => {
   operations.sort((a, b) => a.operationId.localeCompare(b.operationId))
 }, 120_000)
 
-const isDescriptionBacklogged = (operationId: string): boolean =>
-  DESCRIPTION_BACKLOG.has(operationId.slice(0, operationId.indexOf(".") + 1))
-
 const NON_ALPHANUMERIC_PATTERN = /[^a-z0-9]+/
 const SUMMARY_STARTS_UPPERCASE_PATTERN = /^[A-Z]/
 const normalizeDescriptionPhrase = (value: string): string => {
@@ -275,18 +258,16 @@ describe("public API spec — operation naming guard", () => {
     expect(missingSummary).toEqual([])
   })
 
-  test("every non-backlogged operation has a description", () => {
+  test("every operation has a description", () => {
     const missingDescriptions = operations
-      .filter((operation) => !isDescriptionBacklogged(operation.operationId))
       .filter((operation) => !operation.description)
       .map((operation) => operation.operationId)
 
     expect(missingDescriptions).toEqual([])
   })
 
-  test("every non-backlogged operation has a tag", () => {
+  test("every operation has a tag", () => {
     const missingTags = operations
-      .filter((operation) => !isDescriptionBacklogged(operation.operationId))
       .filter((operation) => operation.tags.length === 0)
       .map((operation) => operation.operationId)
 
@@ -328,12 +309,8 @@ describe("public API spec — operation naming guard", () => {
     expect(invalidDescriptions).toEqual([])
   })
 
-  test("every non-backlogged top-level input field has a description", () => {
+  test("every top-level input field has a description", () => {
     const missingInputDescriptions = operations.flatMap((operation) => {
-      if (isDescriptionBacklogged(operation.operationId)) {
-        return []
-      }
-
       const missingParameters = operation.parameters
         .filter(
           (parameter) =>

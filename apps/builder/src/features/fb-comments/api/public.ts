@@ -27,6 +27,8 @@ export const fbCommentsPublicRouter = {
       method: "GET",
       path: "/v1/fb-comments",
       summary: "List FB comment automations",
+      description:
+        "Use this to find automation ids before inspecting one with `fbComments.get` or changing one with `fbComments.update`. Returns automations in this workspace.",
       tags: ["FB Comments"],
     })
     .input(listFbCommentsPublicRequest)
@@ -46,6 +48,8 @@ export const fbCommentsPublicRouter = {
       method: "GET",
       path: "/v1/fb-comments/{id}",
       summary: "Get a specific FB comment automation",
+      description:
+        "Returns one automation's trigger and reply settings. Use `fbComments.list` to find its id first.",
       tags: ["FB Comments"],
     })
     .input(getFbCommentPublicRequest)
@@ -64,6 +68,8 @@ export const fbCommentsPublicRouter = {
       method: "POST",
       path: "/v1/fb-comments",
       summary: "Create an FB comment automation",
+      description:
+        "Adds an automation that replies to or hides comments on a Facebook post. Use `fbComments.listPosts` to find an eligible post first.",
       successStatus: 201,
       tags: ["FB Comments"],
     })
@@ -83,6 +89,8 @@ export const fbCommentsPublicRouter = {
       method: "PUT",
       path: "/v1/fb-comments/{id}",
       summary: "Update an FB comment automation",
+      description:
+        "Changes an existing automation's trigger or reply settings. Call `fbComments.get` to inspect current values first.",
       tags: ["FB Comments"],
     })
     .input(updateFbCommentPublicRequest)
@@ -101,6 +109,8 @@ export const fbCommentsPublicRouter = {
       method: "DELETE",
       path: "/v1/fb-comments/{id}",
       summary: "Delete an FB comment automation",
+      description:
+        "Permanently deletes an automation. Use `fbComments.list` to find its id first.",
       successStatus: 204,
       tags: ["FB Comments"],
     })
@@ -118,6 +128,8 @@ export const fbCommentsPublicRouter = {
       method: "GET",
       path: "/v1/fb-comments/facebook-posts",
       summary: "List Facebook posts eligible for FB comment automation",
+      description:
+        "Returns posts from the workspace's connected Facebook pages that `fbComments.create` can target.",
       tags: ["FB Comments"],
     })
     .output(listFacebookPostsPublicResponse)

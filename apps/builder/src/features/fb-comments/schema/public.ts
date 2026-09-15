@@ -7,10 +7,18 @@ import { facebookPostSchema, fbCommentResource } from "./resource"
 const sortSchema = z.array(z.object({ id: z.string(), desc: z.boolean() }))
 
 export const listFbCommentsPublicRequest = publicListRequest.extend({
-  sort: sortSchema.optional(),
-  name: z.string().nullish(),
-  folderId: zodBigintAsString().nullish(),
-  isActive: z.boolean().nullish(),
+  sort: sortSchema.optional().describe("Sort order."),
+  name: z
+    .string()
+    .nullish()
+    .describe(
+      "Case-insensitive substring match against the automation's name.",
+    ),
+  folderId: zodBigintAsString().nullish().describe("Restrict to this folder."),
+  isActive: z
+    .boolean()
+    .nullish()
+    .describe("Restrict to enabled or disabled automations."),
 })
 
 export const fbCommentPublicResource = fbCommentResource.omit({
@@ -24,15 +32,23 @@ export const listFbCommentsPublicResponse = publicListResponse(
 export const createFbCommentPublicRequest = createFbCommentRequest
 
 export const updateFbCommentPublicRequest = updateFbCommentRequest.and(
-  z.object({ id: zodBigintAsString() }),
+  z.object({
+    id: zodBigintAsString().describe(
+      "FB comment automation id. Get it from `fbComments.list`.",
+    ),
+  }),
 )
 
 export const getFbCommentPublicRequest = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "FB comment automation id. Get it from `fbComments.list`.",
+  ),
 })
 
 export const deleteFbCommentPublicRequest = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "FB comment automation id. Get it from `fbComments.list`.",
+  ),
 })
 
 export const listFacebookPostsPublicResponse = z.object({

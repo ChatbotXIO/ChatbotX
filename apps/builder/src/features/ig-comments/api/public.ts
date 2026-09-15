@@ -31,6 +31,8 @@ export const igCommentsPublicRouter = {
       method: "GET",
       path: "/v1/ig-comments",
       summary: "List Instagram comment automations",
+      description:
+        "Use this to find automation ids before inspecting one with `igComments.get` or changing one with `igComments.update`. Returns automations in this workspace.",
       tags: ["IG Comments"],
     })
     .input(listIgCommentsPublicRequest)
@@ -50,6 +52,8 @@ export const igCommentsPublicRouter = {
       method: "GET",
       path: "/v1/ig-comments/{id}",
       summary: "Get a specific Instagram comment automation",
+      description:
+        "Returns one automation's trigger and reply settings. Use `igComments.list` to find its id first.",
       tags: ["IG Comments"],
     })
     .input(getIgCommentPublicRequest)
@@ -68,6 +72,8 @@ export const igCommentsPublicRouter = {
       method: "POST",
       path: "/v1/ig-comments",
       summary: "Create an Instagram comment automation",
+      description:
+        "Adds an automation that replies to or hides comments on Instagram media. Use `igComments.listMedia` to find eligible media first.",
       successStatus: 201,
       tags: ["IG Comments"],
     })
@@ -88,6 +94,8 @@ export const igCommentsPublicRouter = {
       method: "PUT",
       path: "/v1/ig-comments/{id}",
       summary: "Update an Instagram comment automation",
+      description:
+        "Changes an existing automation's trigger or reply settings. Call `igComments.get` to inspect current values first.",
       tags: ["IG Comments"],
     })
     .input(updateIgCommentPublicRequest)
@@ -106,6 +114,8 @@ export const igCommentsPublicRouter = {
       method: "DELETE",
       path: "/v1/ig-comments/{id}",
       summary: "Delete an Instagram comment automation",
+      description:
+        "Permanently deletes an automation. Use `igComments.list` to find its id first.",
       successStatus: 204,
       tags: ["IG Comments"],
     })
@@ -123,6 +133,8 @@ export const igCommentsPublicRouter = {
       method: "GET",
       path: "/v1/ig-comments/instagram-media",
       summary: "List Instagram media eligible for IG comment automation",
+      description:
+        "Returns Instagram posts/reels from the workspace's connected accounts that `igComments.create` can target.",
       tags: ["IG Comments"],
     })
     .input(listInstagramMediaPublicRequest)

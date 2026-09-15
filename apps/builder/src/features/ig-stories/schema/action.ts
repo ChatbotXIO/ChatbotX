@@ -49,20 +49,43 @@ export const igStoryVariants = igStoryAutomationTypes
 export type IgStoryVariant = z.infer<typeof igStoryVariants>
 
 export const createIgStoryRequest = z.object({
-  name: z.string().trim().min(1).max(255),
-  type: igStoryVariants,
-  folderId: zodBigintAsString().nullish(),
-  story: igStoryTargetSchema,
-  reply: fbCommentReplySchema,
-  includeKeywords: fbCommentIncludeKeywordsSchema,
+  name: z.string().trim().min(1).max(255).describe("Automation name."),
+  type: igStoryVariants.describe(
+    "Instagram connection type, `instagram` (native login) or `instagramFacebook` (linked via a Facebook page).",
+  ),
+  folderId: zodBigintAsString()
+    .nullish()
+    .describe("Folder to place the automation in, or null for root-level."),
+  story: igStoryTargetSchema.describe(
+    "Instagram story to watch for replies/mentions. Get it from `igStories.listStories`.",
+  ),
+  reply: fbCommentReplySchema.describe(
+    "Private message reply sent to the contact.",
+  ),
+  includeKeywords: fbCommentIncludeKeywordsSchema.describe(
+    "Only trigger when the reply matches these keywords.",
+  ),
 })
 export type CreateIgStoryRequest = z.infer<typeof createIgStoryRequest>
 
 export const updateIgStoryRequest = createIgStoryRequest.partial().and(
   z.object({
-    isActive: z.boolean().optional(),
-    startTime: z.string().nullable().optional(),
-    endTime: z.string().nullable().optional(),
+    isActive: z
+      .boolean()
+      .optional()
+      .describe("Whether the automation is enabled."),
+    startTime: z
+      .string()
+      .nullable()
+      .optional()
+      .describe(
+        "When the automation starts being active, or null for immediately.",
+      ),
+    endTime: z
+      .string()
+      .nullable()
+      .optional()
+      .describe("When the automation stops being active, or null for never."),
   }),
 )
 export type UpdateIgStoryRequest = z.infer<typeof updateIgStoryRequest>
