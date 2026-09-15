@@ -46,9 +46,17 @@ export const aiAgentsPublicRouter = {
       method: "GET",
       path: "/v1/ai-agents/{id}",
       summary: "Get an AI agent by id",
+      description:
+        "Returns one AI agent's configuration. Use `aiAgents.list` to find its id first.",
       tags: ["AI Agents"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "AI agent id. Get it from `aiAgents.list`.",
+        ),
+      }),
+    )
     .output(aiAgentResourceSchema)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -90,7 +98,15 @@ export const aiAgentsPublicRouter = {
       tags: ["AI Agents"],
       spec: mcpSpec({ visibility: "default" }),
     })
-    .input(updateAIAgentRequest.and(z.object({ id: zodBigintAsString() })))
+    .input(
+      updateAIAgentRequest.and(
+        z.object({
+          id: zodBigintAsString().describe(
+            "AI agent id. Get it from `aiAgents.list`.",
+          ),
+        }),
+      ),
+    )
     .output(aiAgentResourceSchema)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
@@ -106,10 +122,18 @@ export const aiAgentsPublicRouter = {
       method: "DELETE",
       path: "/v1/ai-agents/{id}",
       summary: "Delete an AI agent",
+      description:
+        "Permanently deletes an AI agent. Use `aiAgents.list` to find its id first.",
       successStatus: 204,
       tags: ["AI Agents"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "AI agent id. Get it from `aiAgents.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await aiAgentService.delete({
