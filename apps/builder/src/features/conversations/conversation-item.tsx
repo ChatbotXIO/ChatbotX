@@ -31,10 +31,7 @@ import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { useAvatarUrl } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
-import {
-  useWhatsappVoipCallStore,
-  WhatsappVoipCallPhase,
-} from "../integration-whatsapp/calling/voip/voip-call-store"
+import { useWhatsappVoipCallStore } from "../integration-whatsapp/calling/voip/voip-call-store"
 import { useWhatsappVoipCallContext } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-context"
 import { readConversationAction } from "./actions/read-conversation.action"
 import { resolveLastMessagePreview } from "./queries/resolve-last-message-preview"
@@ -151,15 +148,24 @@ export default function ConversationItem({
     (state) => state,
   )
   const isActive = conversation.id === activeConversationId
-  // Narrowed to a boolean so every virtualized row does NOT re-render on
-  // every VoIP call change (mute toggle, recording start, timer tick) —
-  // only the one row whose conversation is actually ringing ever
-  // re-renders when the call object changes shape.
-  const isRinging = useWhatsappVoipCallStore(
+  // Ring-all: several inbox rows can be ringing at once (one basket entry
+  // per offered call), so this reads the BASKET, not the single `call`
+  // slot. Narrowed to the matching entry's id (or `undefined`) — not a bare
+  // boolean — because the Answer/Reject buttons below need that id to
+  // target the right offer. This still preserves the "no re-render on
+  // every VoIP change" property the original boolean selector had: zustand
+  // compares the selector's RETURNED VALUE (a primitive id or undefined),
+  // not the whole `ringingCalls` array, so a row only re-renders when ITS
+  // OWN match appears or disappears — an unrelated basket mutation (another
+  // conversation's ring arriving/expiring, a mute toggle on the slot's
+  // call, a countdown tick) never touches this row.
+  const ringingCallId = useWhatsappVoipCallStore(
     (state) =>
-      state.call?.phase === WhatsappVoipCallPhase.incomingRinging &&
-      state.call.conversationId === conversation.id,
+      state.ringingCalls.find(
+        (ringing) => ringing.conversationId === conversation.id,
+      )?.whatsappCallId,
   )
+  const isRinging = ringingCallId !== undefined
   const { answer, dismiss } = useWhatsappVoipCallContext()
   const isComment = conversation.messages?.[0]?.type === "comment"
   const avatarUrl = useAvatarUrl(conversation.contact)
@@ -326,7 +332,9 @@ export default function ConversationItem({
             className="size-7 rounded-full bg-red-600 text-white hover:bg-red-700"
             onClick={(event) => {
               event.stopPropagation()
-              dismiss()
+              if (ringingCallId) {
+                dismiss(ringingCallId)
+              }
             }}
             size="icon"
             type="button"
@@ -338,7 +346,9 @@ export default function ConversationItem({
             className="size-7 rounded-full bg-green-600 text-white hover:bg-green-700"
             onClick={(event) => {
               event.stopPropagation()
-              answer()
+              if (ringingCallId) {
+                answer(ringingCallId)
+              }
             }}
             size="icon"
             type="button"

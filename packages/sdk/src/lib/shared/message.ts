@@ -217,6 +217,23 @@ export type MessageWhatsappCallEntity = {
    * aged out) and from the still-processing state.
    */
   recordingUnavailable?: boolean
+  /**
+   * The DB `WhatsappCall.answeredByUserId`, snapshotted at finalize time —
+   * never re-resolved on read, so a later rename or account deletion cannot
+   * rewrite this card's history. Named for the agent ON the call, not for
+   * "who answered": that column is ALSO populated for a business-initiated
+   * VoIP call with the INITIATING agent (see `createPendingOutbound`'s field
+   * docs), so an "answered by" label would be wrong for an outbound call.
+   * The card picks its copy from {@link direction} instead of this id.
+   */
+  agentUserId?: string
+  /**
+   * Display-name snapshot paired with {@link agentUserId}, resolved once at
+   * finalize via the business layer. Absent when the id could not be
+   * resolved to a still-existing user (or when there was no id to resolve) —
+   * the card renders no agent line rather than an empty label in that case.
+   */
+  agentName?: string
 }
 
 /**

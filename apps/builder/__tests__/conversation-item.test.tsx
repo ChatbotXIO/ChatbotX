@@ -79,18 +79,20 @@ const makeConversation = (
   }) as unknown as ListConversationItemResource
 
 const ringingCall = {
-  transport: "voip" as const,
   whatsappCallId: "call-1",
   wacid: "wacid-1",
-  direction: "inbound" as const,
-  phase: "incomingRinging" as const,
   conversationId: "conversation-1",
   contactInboxId: "contact-inbox-1",
   contactName: "Ada Lovelace",
   offer: { sdpType: "offer" as const, sdp: "v=0 offer" },
   deadlineAt: "2026-01-01T00:00:00.000Z",
-  isMuted: false,
-  isRecording: false,
+}
+
+const ringingCall2 = {
+  ...ringingCall,
+  whatsappCallId: "call-2",
+  conversationId: "conversation-2",
+  contactName: "Grace Hopper",
 }
 
 describe("ConversationItem", () => {
@@ -101,7 +103,7 @@ describe("ConversationItem", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
-    useWhatsappVoipCallStore.setState({ call: null })
+    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
     storeState.activeConversationId = null
     container = document.createElement("div")
     document.body.appendChild(container)
@@ -133,7 +135,7 @@ describe("ConversationItem", () => {
   })
 
   test("shows the ringing badge and Answer/Reject only for the matching ringing conversation", async () => {
-    useWhatsappVoipCallStore.setState({ call: ringingCall })
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringingCall] })
     await render(makeConversation({ id: "conversation-1" }))
 
     expect(container.textContent).toContain("whatsapp.calls.ringingBadge")
@@ -146,7 +148,7 @@ describe("ConversationItem", () => {
   })
 
   test("a different (non-matching) conversation row stays unchanged while another is ringing", async () => {
-    useWhatsappVoipCallStore.setState({ call: ringingCall })
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringingCall] })
     await render(makeConversation({ id: "conversation-2" }))
 
     expect(container.textContent).not.toContain("whatsapp.calls.ringingBadge")
@@ -155,8 +157,29 @@ describe("ConversationItem", () => {
     ).toBeNull()
   })
 
-  test("Answer/Reject stopPropagation so the row is not selected, and call the shared context", async () => {
-    useWhatsappVoipCallStore.setState({ call: ringingCall })
+  test("several rows ring simultaneously — each shows its own badge and buttons", async () => {
+    useWhatsappVoipCallStore.setState({
+      ringingCalls: [ringingCall, ringingCall2],
+    })
+    await render(makeConversation({ id: "conversation-1" }))
+    expect(
+      container.querySelector(`[aria-label="whatsapp.calls.answer"]`),
+    ).not.toBeNull()
+    act(() => root.unmount())
+    container.remove()
+    container = document.createElement("div")
+    document.body.appendChild(container)
+    root = createRoot(container)
+    await render(makeConversation({ id: "conversation-2" }))
+    expect(
+      container.querySelector(`[aria-label="whatsapp.calls.answer"]`),
+    ).not.toBeNull()
+  })
+
+  test("Answer/Reject stopPropagation so the row is not selected, and pass the row's own call id to the shared context", async () => {
+    useWhatsappVoipCallStore.setState({
+      ringingCalls: [ringingCall, ringingCall2],
+    })
     await render(makeConversation({ id: "conversation-1" }))
 
     const answerButton = container.querySelector<HTMLButtonElement>(
@@ -165,7 +188,7 @@ describe("ConversationItem", () => {
     act(() => {
       answerButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
     })
-    expect(contextMock.answer).toHaveBeenCalledTimes(1)
+    expect(contextMock.answer).toHaveBeenCalledWith("call-1")
     expect(onSelect).not.toHaveBeenCalled()
 
     const rejectButton = container.querySelector<HTMLButtonElement>(
@@ -174,8 +197,23 @@ describe("ConversationItem", () => {
     act(() => {
       rejectButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
     })
-    expect(contextMock.dismiss).toHaveBeenCalledTimes(1)
+    expect(contextMock.dismiss).toHaveBeenCalledWith("call-1")
     expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  test("a different row's Answer button passes ITS OWN id, not another ringing row's", async () => {
+    useWhatsappVoipCallStore.setState({
+      ringingCalls: [ringingCall, ringingCall2],
+    })
+    await render(makeConversation({ id: "conversation-2" }))
+
+    const answerButton = container.querySelector<HTMLButtonElement>(
+      `[aria-label="whatsapp.calls.answer"]`,
+    )
+    act(() => {
+      answerButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+    expect(contextMock.answer).toHaveBeenCalledWith("call-2")
   })
 
   test("clicking the row still selects the conversation as before", async () => {

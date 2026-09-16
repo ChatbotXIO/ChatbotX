@@ -5448,7 +5448,9 @@
         "seek": "Sök",
         "mute": "Ljud av",
         "unmute": "Ljud på",
-        "playbackFailed": "Uppspelning misslyckades"
+        "playbackFailed": "Uppspelning misslyckades",
+        "answeredBy": "Besvarat av {name}",
+        "calledBy": "Uppringt av {name}"
       },
       "sheet": {
         "title": "Samtalsinformation",
@@ -5495,7 +5497,8 @@
         "dismiss": "Stäng",
         "statusNoAnswer": "Inget svar",
         "eyebrowCallEnded": "SAMTAL AVSLUTAT",
-        "statusConnectionLost": "Anslutningen förlorades"
+        "statusConnectionLost": "Anslutningen förlorades",
+        "ringingListTitle": "{count} inkommande samtal"
       },
       "capability": {
         "title": "Samtalsbehörighet",
@@ -5510,6 +5513,12 @@
         "callsSubscription": "Det här WhatsApp-numret anslöts manuellt. Se till att din Meta-app prenumererar på webhookfältet calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — annars går utgående samtal inte att koppla upp och inkommande samtal ringer inte.",
         "unsignedWebhook": "Det här numret har inte heller någon Meta App Secret konfigurerad, så dess inkommande webhooks är inte signaturverifierade.",
         "callAnyway": "Ring ändå"
+      },
+      "replaceConfirm": {
+        "title": "Svara på nytt samtal?",
+        "description": "Avsluta samtalet med {current} för att svara {incoming}?",
+        "confirm": "Avsluta och svara",
+        "cancel": "Avbryt"
       }
     }
   },

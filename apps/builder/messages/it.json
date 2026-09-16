@@ -4011,7 +4011,9 @@
         "seek": "Cerca",
         "mute": "Muto",
         "unmute": "Attiva audio",
-        "playbackFailed": "Riproduzione non riuscita"
+        "playbackFailed": "Riproduzione non riuscita",
+        "answeredBy": "Risposta da {name}",
+        "calledBy": "Chiamata da {name}"
       },
       "sheet": {
         "title": "Informazioni sulla chiamata",
@@ -4058,7 +4060,8 @@
         "dismiss": "Chiudi",
         "statusNoAnswer": "Nessuna risposta",
         "eyebrowCallEnded": "CHIAMATA TERMINATA",
-        "statusConnectionLost": "Connessione persa"
+        "statusConnectionLost": "Connessione persa",
+        "ringingListTitle": "{count} chiamate in arrivo"
       },
       "capability": {
         "title": "Idoneità alle chiamate",
@@ -4073,6 +4076,12 @@
         "callsSubscription": "Questo numero WhatsApp è stato connesso manualmente. Assicurati che la tua app Meta sia iscritta al campo webhook calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls), altrimenti le chiamate in uscita non si connetteranno e quelle in entrata non squilleranno.",
         "unsignedWebhook": "Questo numero non ha nemmeno un Meta App Secret configurato, quindi i suoi webhook in entrata non sono verificati tramite firma.",
         "callAnyway": "Chiama comunque"
+      },
+      "replaceConfirm": {
+        "title": "Rispondere alla nuova chiamata?",
+        "description": "Terminare la chiamata con {current} per rispondere a {incoming}?",
+        "confirm": "Termina e rispondi",
+        "cancel": "Annulla"
       }
     }
   },

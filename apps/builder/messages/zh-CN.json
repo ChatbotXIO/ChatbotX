@@ -5448,7 +5448,9 @@
         "seek": "跳转",
         "mute": "静音",
         "unmute": "取消静音",
-        "playbackFailed": "播放失败"
+        "playbackFailed": "播放失败",
+        "answeredBy": "由 {name} 接听",
+        "calledBy": "由 {name} 拨打"
       },
       "sheet": {
         "title": "通话信息",
@@ -5495,7 +5497,8 @@
         "dismiss": "关闭",
         "statusNoAnswer": "无应答",
         "eyebrowCallEnded": "通话已结束",
-        "statusConnectionLost": "连接已断开"
+        "statusConnectionLost": "连接已断开",
+        "ringingListTitle": "{count} 个来电"
       },
       "capability": {
         "title": "通话资格",
@@ -5510,6 +5513,12 @@
         "callsSubscription": "此 WhatsApp 号码是手动连接的。请确保您的 Meta 应用已订阅 calls webhook 字段（Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls），否则外呼将无法接通，来电也不会振铃。",
         "unsignedWebhook": "此号码也未配置 Meta App Secret，因此其传入的 webhook 未经过签名验证。",
         "callAnyway": "仍然拨打"
+      },
+      "replaceConfirm": {
+        "title": "接听新来电？",
+        "description": "结束与 {current} 的通话以接听 {incoming} 吗？",
+        "confirm": "结束并接听",
+        "cancel": "取消"
       }
     }
   },

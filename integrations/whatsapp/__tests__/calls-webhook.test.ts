@@ -689,6 +689,143 @@ describe("extractCallEventPayloads", () => {
     )
   })
 
+  test("D2: two connect items from different users each keep THEIR OWN contact even with a reversed contacts[] and no `from`/only `from_user_id`", () => {
+    const result = extractCallEventPayloads(
+      wrapEntry(
+        callsValue({
+          // Reversed vs the calls[] below — a positional pairing would
+          // attribute each call to the other customer.
+          contacts: [
+            {
+              profile: { name: "Alex" },
+              user_id: "bsuid-alex",
+            },
+            {
+              profile: { name: "Kerry Fisher" },
+              user_id: "bsuid-kerry",
+            },
+          ],
+          calls: [
+            {
+              id: "wacid.MULTI-1",
+              event: "connect",
+              direction: "USER_INITIATED",
+              from_user_id: "bsuid-kerry",
+              to_user_id: "bsuid-biz-1",
+            },
+            {
+              id: "wacid.MULTI-2",
+              event: "connect",
+              direction: "USER_INITIATED",
+              from_user_id: "bsuid-alex",
+              to_user_id: "bsuid-biz-1",
+            },
+          ],
+        }),
+      ),
+    )
+
+    expect(result).toHaveLength(2)
+    expect(result[0].contact).toEqual({
+      waId: undefined,
+      userId: "bsuid-kerry",
+      parentUserId: undefined,
+      username: undefined,
+      name: "Kerry Fisher",
+    })
+    expect(result[1].contact).toEqual({
+      waId: undefined,
+      userId: "bsuid-alex",
+      parentUserId: undefined,
+      username: undefined,
+      name: "Alex",
+    })
+  })
+
+  test("D2: a call item whose from_user_id matches no contact carries none when contacts.length > 1", () => {
+    const result = extractCallEventPayloads(
+      wrapEntry(
+        callsValue({
+          contacts: [
+            { profile: { name: "Alex" }, user_id: "bsuid-alex" },
+            { profile: { name: "Kerry Fisher" }, user_id: "bsuid-kerry" },
+          ],
+          calls: [
+            {
+              id: "wacid.NOMATCH-1",
+              event: "connect",
+              direction: "USER_INITIATED",
+              from_user_id: "bsuid-unknown",
+            },
+          ],
+        }),
+      ),
+    )
+
+    expect(result).toHaveLength(1)
+    expect(result[0].contact).toBeUndefined()
+  })
+
+  test("D2: the existing single-contact convenience still resolves when the item carries no identity", () => {
+    const result = extractCallEventPayloads(
+      wrapEntry(
+        callsValue({
+          calls: [
+            {
+              id: "wacid.SINGLE-1",
+              event: "call_recording_available",
+              direction: "USER_INITIATED",
+              call_recording: {
+                type: "audio",
+                audio: { id: "media-1" },
+              },
+            },
+          ],
+        }),
+      ),
+    )
+
+    expect(result).toHaveLength(1)
+    expect(result[0].contact).toEqual({
+      waId: "16315551234",
+      userId: undefined,
+      parentUserId: undefined,
+      username: undefined,
+      name: "Kerry Fisher",
+    })
+  })
+
+  test("D2: a business-initiated item selects its contact by to/to_user_id, not from/from_user_id", () => {
+    const result = extractCallEventPayloads(
+      wrapEntry(
+        callsValue({
+          contacts: [
+            { profile: { name: "Wrong Party" }, wa_id: "16505551111" },
+            { profile: { name: "Kerry Fisher" }, wa_id: "16315551234" },
+          ],
+          calls: [
+            {
+              id: "wacid.BIZ-1",
+              event: "connect",
+              direction: "BUSINESS_INITIATED",
+              from: "16505551111",
+              to: "16315551234",
+            },
+          ],
+        }),
+      ),
+    )
+
+    expect(result).toHaveLength(1)
+    expect(result[0].contact).toEqual({
+      waId: "16315551234",
+      userId: undefined,
+      parentUserId: undefined,
+      username: undefined,
+      name: "Kerry Fisher",
+    })
+  })
+
   test("ignores non-calls fields and malformed values without throwing", () => {
     expect(
       extractCallEventPayloads({

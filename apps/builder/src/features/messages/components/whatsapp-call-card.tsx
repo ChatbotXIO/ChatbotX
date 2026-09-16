@@ -70,6 +70,42 @@ const formatAnswerWait = (locale: string, totalSeconds: number): string => {
  */
 const RECORDING_PROCESSING_GRACE_MS = 10 * 60 * 1000
 
+/**
+ * The agent-audit copy is direction-aware because `agentUserId` is NOT
+ * "who answered" — `WhatsappCall.answeredByUserId` is also populated for a
+ * business-initiated VoIP call with the INITIATING agent (see the field
+ * docs on `createPendingOutbound`). A lookup object (not an inline
+ * ternary/if-chain) keeps every direction's copy key auditable and makes
+ * TypeScript flag a missing entry if `direction` ever grows a member.
+ */
+const AGENT_LABEL_KEY_BY_DIRECTION = {
+  userInitiated: "answeredBy",
+  businessInitiated: "calledBy",
+} as const satisfies Record<MessageWhatsappCallEntity["direction"], string>
+
+/**
+ * The agent-audit line shared by both the compact (non-completed) outcome
+ * row and the full completed-call card — a call an agent actually answered
+ * that then failed/dropped/was terminated must show the SAME audit record a
+ * completed call shows, or the audit trail silently disappears for exactly
+ * the calls most worth reviewing. Rendered only when `agentName` is
+ * present — a call that was never answered (missed/no-answer/rejected) has
+ * no `agentName` at all and correctly renders nothing here.
+ */
+const CallAgentLine = ({
+  agentName,
+  direction,
+  t,
+}: {
+  agentName: string
+  direction: MessageWhatsappCallEntity["direction"]
+  t: ReturnType<typeof useTranslations>
+}) => (
+  <span className="truncate text-muted-foreground text-xs">
+    {t(AGENT_LABEL_KEY_BY_DIRECTION[direction], { name: agentName })}
+  </span>
+)
+
 type WhatsappCallCardProps = {
   call: MessageWhatsappCallEntity
   contactName?: string | null
@@ -207,13 +243,22 @@ export const WhatsappCallCard = ({
     )
     const isMissedInbound = labelKey === "missedVoiceCall"
     return (
-      <div className="flex items-center justify-center gap-1.5 py-1 text-muted-foreground text-sm">
-        {isMissedInbound ? (
-          <PhoneMissedIcon aria-hidden className="size-3.5" />
-        ) : (
-          <PhoneOffIcon aria-hidden className="size-3.5" />
+      <div className="flex flex-col items-center gap-1 py-1 text-muted-foreground text-sm">
+        <div className="flex items-center justify-center gap-1.5">
+          {isMissedInbound ? (
+            <PhoneMissedIcon aria-hidden className="size-3.5" />
+          ) : (
+            <PhoneOffIcon aria-hidden className="size-3.5" />
+          )}
+          <span>{tMessages(labelKey)}</span>
+        </div>
+        {call.agentName && (
+          <CallAgentLine
+            agentName={call.agentName}
+            direction={call.direction}
+            t={t}
+          />
         )}
-        <span>{tMessages(labelKey)}</span>
       </div>
     )
   }
@@ -247,6 +292,14 @@ export const WhatsappCallCard = ({
           </span>
         )}
       </div>
+
+      {call.agentName && (
+        <CallAgentLine
+          agentName={call.agentName}
+          direction={call.direction}
+          t={t}
+        />
+      )}
 
       {call.callId &&
         (() => {

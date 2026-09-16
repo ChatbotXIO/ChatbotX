@@ -25,6 +25,15 @@ vi.mock("@/lib/log", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }))
 
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => key,
+}))
+
+const { toastErrorMock } = vi.hoisted(() => ({ toastErrorMock: vi.fn() }))
+vi.mock("sonner", () => ({
+  toast: { error: toastErrorMock, success: vi.fn() },
+}))
+
 const {
   answerActionMock,
   hangupActionMock,
@@ -221,6 +230,7 @@ describe("useWhatsappVoipCall", () => {
 
     useWhatsappVoipCallStore.setState({
       call: null,
+      ringingCalls: [],
       pendingOutboundAnswer: null,
     })
     hookResult = null
@@ -383,8 +393,49 @@ describe("useWhatsappVoipCall", () => {
     expect(useWhatsappVoipCallStore.getState().call?.isMuted).toBe(true)
   })
 
-  test("resumes a still-ringing call fetched on mount when the store slot is empty", async () => {
-    pendingIncomingActionMock.mockResolvedValue({ data: incomingData })
+  test("resumes a still-ringing call fetched on mount into the basket, not the slot", async () => {
+    pendingIncomingActionMock.mockResolvedValue({ data: [incomingData] })
+
+    await render()
+    await act(async () => {
+      await pendingIncomingActionMock.mock.results.at(-1)?.value
+    })
+
+    expect(pendingIncomingActionMock).toHaveBeenCalledWith("workspace-1")
+    expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-1"])
+  })
+
+  test("resumes EVERY still-ringing call, reversed into oldest-first basket order", async () => {
+    // The service returns newest-created-first (`desc(createdAt)`), while a
+    // live realtime ring always appends oldest-first — reversing here keeps
+    // both paths producing the same basket order.
+    const callA = { ...incomingData, whatsappCallId: "call-a" }
+    const callB = { ...incomingData, whatsappCallId: "call-b" }
+    pendingIncomingActionMock.mockResolvedValue({ data: [callB, callA] })
+
+    await render()
+    await act(async () => {
+      await pendingIncomingActionMock.mock.results.at(-1)?.value
+    })
+
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-a", "call-b"])
+  })
+
+  test("resumes into the basket even while the slot already holds a different call — ring-all means both stay live", async () => {
+    pendingIncomingActionMock.mockResolvedValue({ data: [incomingData] })
+    useWhatsappVoipCallStore.getState().addIncoming({
+      ...incomingData,
+      whatsappCallId: "already-engaged",
+    })
 
     await render()
     await act(async () => {
@@ -393,15 +444,17 @@ describe("useWhatsappVoipCall", () => {
 
     expect(pendingIncomingActionMock).toHaveBeenCalledWith("workspace-1")
     expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
-      "call-1",
+      "already-engaged",
     )
-    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
-      WhatsappVoipCallPhase.incomingRinging,
-    )
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-1"])
   })
 
   test("the resume-after-reload path also bubbles the conversation to the top of the inbox list", async () => {
-    pendingIncomingActionMock.mockResolvedValue({ data: incomingData })
+    pendingIncomingActionMock.mockResolvedValue({ data: [incomingData] })
 
     await render()
     await act(async () => {
@@ -415,7 +468,7 @@ describe("useWhatsappVoipCall", () => {
   })
 
   test("does not bubble when there is nothing to resume", async () => {
-    pendingIncomingActionMock.mockResolvedValue({ data: null })
+    pendingIncomingActionMock.mockResolvedValue({ data: [] })
 
     await render()
     await act(async () => {
@@ -446,8 +499,166 @@ describe("useWhatsappVoipCall", () => {
     expect(useWhatsappVoipCallStore.getState().call).toBeNull()
   })
 
+  test("FIX 1: a late 'accepted' outcome must not resurrect a call Meta already ended mid-flight (same id, terminal ended phase)", async () => {
+    let resolveAnswer: ((value: unknown) => void) | undefined
+    answerActionMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveAnswer = resolve
+        }),
+    )
+    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    await render()
+
+    let answerPromise: Promise<void> | undefined
+    await act(async () => {
+      answerPromise = hookResult?.answer()
+      for (let i = 0; i < 20 && !resolveAnswer; i++) {
+        await Promise.resolve()
+      }
+    })
+
+    // The realtime `whatsappCallTransportEnded` handler runs while the
+    // accept round-trip is still in flight — same `whatsappCallId`, moved to
+    // the terminal `ended` phase.
+    act(() => {
+      useWhatsappVoipCallStore.getState().handleEnded("call-1", "rejected")
+    })
+
+    await act(async () => {
+      resolveAnswer?.({ data: { outcome: "accepted" } })
+      await answerPromise
+    })
+
+    // Never resurrected: still `ended`, never bounced to `active`.
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.ended,
+    )
+    expect(useWhatsappVoipCallStore.getState().call?.endedStatus).toBe(
+      "rejected",
+    )
+    // Teardown ran and a compensating hangup was sent for the accept Meta
+    // just confirmed.
+    expect(createdPeerConnections[0]?.close).toHaveBeenCalled()
+    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "call-1",
+    })
+  })
+
+  test("FIX 2: the provider unmounting while getUserMedia is pending tears down the peer and stops the mic — no compensating hangup since nothing was accepted yet", async () => {
+    let resolveMic: ((value: MediaStream) => void) | undefined
+    getUserMediaMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveMic = resolve
+        }),
+    )
+    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    await render()
+
+    let answerPromise: Promise<void> | undefined
+    await act(async () => {
+      answerPromise = hookResult?.answer()
+      for (let i = 0; i < 20 && !resolveMic; i++) {
+        await Promise.resolve()
+      }
+    })
+
+    act(() => {
+      root.unmount()
+    })
+
+    const stream = makeMockStream()
+    await act(async () => {
+      resolveMic?.(stream)
+      await answerPromise
+    })
+
+    const track = stream.getTracks()[0] as unknown as MockTrack
+    expect(createdPeerConnections[0]?.close).toHaveBeenCalled()
+    expect(track.stop).toHaveBeenCalled()
+    expect(answerActionMock).not.toHaveBeenCalled()
+    expect(hangupActionMock).not.toHaveBeenCalled()
+  })
+
+  test("FIX 2: the provider unmounting after the accept already resolved sends a compensating hangup and tears down", async () => {
+    let resolveAnswer: ((value: unknown) => void) | undefined
+    answerActionMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveAnswer = resolve
+        }),
+    )
+    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    await render()
+
+    let answerPromise: Promise<void> | undefined
+    await act(async () => {
+      answerPromise = hookResult?.answer()
+      for (let i = 0; i < 20 && !resolveAnswer; i++) {
+        await Promise.resolve()
+      }
+    })
+
+    act(() => {
+      root.unmount()
+    })
+
+    await act(async () => {
+      resolveAnswer?.({ data: { outcome: "accepted" } })
+      await answerPromise
+    })
+
+    expect(createdPeerConnections[0]?.close).toHaveBeenCalled()
+    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "call-1",
+    })
+  })
+
+  test("FIX 2 control: a slow-but-still-mounted answer (TURN + mic) still succeeds", async () => {
+    let resolveTurn:
+      | ((value: {
+          data: { iceServers: RTCIceServer[]; turnConfigured: boolean }
+        }) => void)
+      | undefined
+    turnCredentialsActionMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveTurn = resolve
+        }),
+    )
+    answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    await render()
+
+    let answerPromise: Promise<void> | undefined
+    await act(async () => {
+      answerPromise = hookResult?.answer()
+      for (let i = 0; i < 20 && !resolveTurn; i++) {
+        await Promise.resolve()
+      }
+    })
+
+    // Still mounted the whole time — the slow TURN round-trip must not be
+    // mistaken for an abandoned attempt.
+    await act(async () => {
+      resolveTurn?.({
+        data: {
+          iceServers: [{ urls: "stun:stun.example.com" }],
+          turnConfigured: true,
+        },
+      })
+      await answerPromise
+    })
+
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.active,
+    )
+    expect(hangupActionMock).not.toHaveBeenCalled()
+  })
+
   test("does not fetch the resume lookup again on a re-render (mount-only)", async () => {
-    pendingIncomingActionMock.mockResolvedValue({ data: null })
+    pendingIncomingActionMock.mockResolvedValue({ data: [] })
 
     await render()
     await act(async () => {
@@ -458,14 +669,6 @@ describe("useWhatsappVoipCall", () => {
     await render()
 
     expect(pendingIncomingActionMock).toHaveBeenCalledTimes(1)
-  })
-
-  test("skips the resume fetch entirely when a call is already in the store on mount", async () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
-
-    await render()
-
-    expect(pendingIncomingActionMock).not.toHaveBeenCalled()
   })
 
   test("starts the recorder with the local+remote streams once accepted with browserRecordingEnabled", async () => {
@@ -889,6 +1092,490 @@ describe("useWhatsappVoipCall", () => {
   })
 })
 
+const incomingData2 = {
+  ...incomingData,
+  whatsappCallId: "call-2",
+  contactName: "Grace Hopper",
+}
+
+describe("useWhatsappVoipCall — basket / multi-ring", () => {
+  let container: HTMLDivElement
+  let root: Root
+
+  beforeEach(() => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    createdPeerConnections.length = 0
+    vi.clearAllMocks()
+    bubbleConversationToTopMock.mockResolvedValue(undefined)
+    getUserMediaMock.mockResolvedValue(makeMockStream())
+    turnCredentialsActionMock.mockResolvedValue({
+      data: {
+        iceServers: [{ urls: "stun:stun.example.com" }],
+        turnConfigured: true,
+      },
+    })
+    pendingIncomingActionMock.mockResolvedValue({ data: [] })
+    startCallRecorderMock.mockReturnValue({ stop: vi.fn() })
+    hangupActionMock.mockResolvedValue({ data: { hungUp: true } })
+    vi.stubGlobal("RTCPeerConnection", MockRTCPeerConnection)
+    vi.stubGlobal("navigator", {
+      ...globalThis.navigator,
+      mediaDevices: { getUserMedia: getUserMediaMock },
+      sendBeacon: vi.fn(),
+    })
+
+    useWhatsappVoipCallStore.setState({
+      call: null,
+      ringingCalls: [],
+      pendingOutboundAnswer: null,
+    })
+    hookResult = null
+
+    container = document.createElement("div")
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+    vi.unstubAllGlobals()
+  })
+
+  function TestHarness() {
+    hookResult = useWhatsappVoipCall()
+    return null
+  }
+
+  const render = () =>
+    act(() => {
+      root.render(<TestHarness />)
+    })
+
+  test("answer(id) reaches the answer action for a basket entry — fails against a naive implementation reusing the stale call closure", async () => {
+    answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+    await render()
+    // The hook's `call` selector closure was `null` at the time this render
+    // committed — populate the basket via a DIRECT store mutation (not a
+    // re-render channel this component has necessarily observed yet) so a
+    // stale-closure implementation of `answer` would see `call === null`
+    // and no-op instead of resolving the target from `getState()`.
+    act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData)
+    })
+
+    await act(async () => {
+      await hookResult?.answer("call-1")
+    })
+
+    expect(turnCredentialsActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "call-1",
+    })
+    expect(answerActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "call-1",
+      sdpAnswer: "v=0 answer-sdp",
+    })
+    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
+      "call-1",
+    )
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.active,
+    )
+    expect(useWhatsappVoipCallStore.getState().ringingCalls).toHaveLength(0)
+  })
+
+  test("answer(id) promotes and answers exactly the targeted basket entry among several", async () => {
+    answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+    await render()
+    act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData)
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData2)
+    })
+
+    await act(async () => {
+      await hookResult?.answer("call-2")
+    })
+
+    expect(turnCredentialsActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "call-2",
+    })
+    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
+      "call-2",
+    )
+    // The untouched offer stays in the basket, unaffected.
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-1"])
+  })
+
+  test("the replacement path awaits a confirmed hangup before promoting the basket entry", async () => {
+    answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+    let resolveHangup: ((value: unknown) => void) | undefined
+    hangupActionMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveHangup = resolve
+        }),
+    )
+    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    await render()
+    // Get the first call to `active` so the slot is genuinely ENGAGED.
+    await act(async () => {
+      await hookResult?.answer()
+    })
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.active,
+    )
+    act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData2)
+    })
+
+    let answerPromise: Promise<void> | undefined
+    await act(async () => {
+      answerPromise = hookResult?.answer("call-2")
+      // Flush microtasks so the replacement hangup call is issued before we
+      // assert on it, without resolving it yet.
+      for (let i = 0; i < 10 && !resolveHangup; i++) {
+        await Promise.resolve()
+      }
+    })
+
+    // Still the FIRST call — nothing was promoted while the hangup is
+    // pending, so the first customer is never dropped mid-await.
+    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "call-1",
+    })
+    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
+      "call-1",
+    )
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-2"])
+
+    await act(async () => {
+      resolveHangup?.({ data: { hungUp: true } })
+      await answerPromise
+    })
+
+    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
+      "call-2",
+    )
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.active,
+    )
+    expect(useWhatsappVoipCallStore.getState().ringingCalls).toHaveLength(0)
+  })
+
+  test("the replacement path aborts without promoting when the hangup fails, and surfaces an error", async () => {
+    hangupActionMock.mockResolvedValue({ data: { hungUp: false } })
+    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    await render()
+    await act(async () => {
+      await hookResult?.answer()
+    })
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.active,
+    )
+    act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData2)
+    })
+    // Only care about calls made from the replacement attempt below.
+    answerActionMock.mockClear()
+
+    await act(async () => {
+      await hookResult?.answer("call-2")
+    })
+
+    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "call-1",
+    })
+    // Never promoted: the slot still holds the ORIGINAL call, and the
+    // offer stays fully intact in the basket.
+    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
+      "call-1",
+    )
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-2"])
+    // Never even reached the answer flow — the replacement was aborted
+    // before `promoteRinging` was ever called.
+    expect(answerActionMock).not.toHaveBeenCalled()
+    expect(toastErrorMock).toHaveBeenCalled()
+  })
+
+  test("FIX 5: replacing a call still `preparing` never calls the hangup action with the client nonce — cancels locally and promotes the ring", async () => {
+    await render()
+    let resolveInitiate: ((value: unknown) => void) | undefined
+    initiateOutboundActionMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveInitiate = resolve
+        }),
+    )
+
+    let startOutboundPromise: Promise<unknown> | undefined
+    await act(async () => {
+      startOutboundPromise = hookResult?.startOutbound({
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+      })
+      for (let i = 0; i < 20 && !resolveInitiate; i++) {
+        await Promise.resolve()
+      }
+    })
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.preparing,
+    )
+
+    act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData)
+    })
+    answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+
+    await act(async () => {
+      await hookResult?.answer("call-1")
+    })
+
+    // The client nonce is a UUID, not the `/^\d+$/` shape the hangup
+    // action's schema demands — sending it would fail validation and
+    // surface a false "hangup failed" toast (FIX 5). It must never be sent.
+    expect(hangupActionMock).not.toHaveBeenCalled()
+    expect(toastErrorMock).not.toHaveBeenCalled()
+    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
+      "call-1",
+    )
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.active,
+    )
+
+    // The cancel token set by the shared `cancelPreparingAttempt` helper
+    // still does its job: once the abandoned dial resolves to a real server
+    // call anyway, `startOutbound` fires its OWN compensating hangup with
+    // the real server id — never the malformed nonce-based one this fix
+    // removes.
+    await act(async () => {
+      resolveInitiate?.({
+        data: {
+          outcome: "dialing",
+          whatsappCallId: "999",
+          wacid: "wacid-999",
+          attemptId: "attempt-1",
+          deadlineAt: new Date(Date.now() + 30_000).toISOString(),
+          browserRecordingEnabled: false,
+          recordingRequested: false,
+        },
+      })
+      await startOutboundPromise
+    })
+    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "999",
+    })
+  })
+
+  test("FIX 5: replacing a call still `outboundDialing` sends the real server id to the hangup action", async () => {
+    initiateOutboundActionMock.mockResolvedValue({
+      data: {
+        outcome: "dialing",
+        whatsappCallId: "out-call-1",
+        wacid: "out-wacid-1",
+        attemptId: "attempt-1",
+        deadlineAt: new Date(Date.now() + 30_000).toISOString(),
+        browserRecordingEnabled: false,
+        recordingRequested: false,
+      },
+    })
+    await render()
+    await act(async () => {
+      await hookResult?.startOutbound({
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+      })
+    })
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.outboundDialing,
+    )
+
+    act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData)
+    })
+    answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+
+    await act(async () => {
+      await hookResult?.answer("call-1")
+    })
+
+    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "out-call-1",
+    })
+    expect(toastErrorMock).not.toHaveBeenCalled()
+    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
+      "call-1",
+    )
+  })
+
+  test("FIX 5: replacing a call still `outboundRinging` sends the real server id to the hangup action", async () => {
+    initiateOutboundActionMock.mockResolvedValue({
+      data: {
+        outcome: "dialing",
+        whatsappCallId: "out-call-1",
+        wacid: "out-wacid-1",
+        attemptId: "attempt-1",
+        deadlineAt: new Date(Date.now() + 30_000).toISOString(),
+        browserRecordingEnabled: false,
+        recordingRequested: false,
+      },
+    })
+    await render()
+    await act(async () => {
+      await hookResult?.startOutbound({
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+      })
+    })
+    act(() => {
+      useWhatsappVoipCallStore
+        .getState()
+        .setOutboundStatus("out-call-1", "ringing")
+    })
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.outboundRinging,
+    )
+
+    act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData)
+    })
+    answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+
+    await act(async () => {
+      await hookResult?.answer("call-1")
+    })
+
+    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "out-call-1",
+    })
+    expect(toastErrorMock).not.toHaveBeenCalled()
+  })
+
+  test("a double-click cannot end the call being answered — the second answer() call for a different id is rejected while the first is in flight", async () => {
+    answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+    let resolveHangup: ((value: unknown) => void) | undefined
+    hangupActionMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveHangup = resolve
+        }),
+    )
+    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    await render()
+    await act(async () => {
+      await hookResult?.answer()
+    })
+    act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData2)
+    })
+
+    let firstAnswer: Promise<void> | undefined
+    let secondAnswer: Promise<void> | undefined
+    await act(async () => {
+      // Two rapid clicks on the SAME offer while the first replacement is
+      // still awaiting the server's confirmed hangup.
+      firstAnswer = hookResult?.answer("call-2")
+      secondAnswer = hookResult?.answer("call-2")
+      for (let i = 0; i < 10 && !resolveHangup; i++) {
+        await Promise.resolve()
+      }
+    })
+
+    // Only ONE hangup was ever issued for the call being replaced — a
+    // second attempt reaching this point would either hang it up again or
+    // race the first attempt's own freshly-promoted slot.
+    expect(hangupActionMock).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      resolveHangup?.({ data: { hungUp: true } })
+      await Promise.all([firstAnswer, secondAnswer])
+    })
+
+    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
+      "call-2",
+    )
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.active,
+    )
+  })
+
+  test("one basket entry's expiry removes only its own id, leaving other offers untouched", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      const soon = {
+        ...incomingData,
+        deadlineAt: new Date(Date.now() + 5000).toISOString(),
+      }
+      const later = {
+        ...incomingData2,
+        deadlineAt: new Date(Date.now() + 60_000).toISOString(),
+      }
+      await render()
+      act(() => {
+        useWhatsappVoipCallStore.getState().enqueueRinging(soon)
+        useWhatsappVoipCallStore.getState().enqueueRinging(later)
+      })
+
+      await act(async () => {
+        vi.advanceTimersByTime(5000)
+        await Promise.resolve()
+      })
+
+      expect(
+        useWhatsappVoipCallStore
+          .getState()
+          .ringingCalls.map((entry) => entry.whatsappCallId),
+      ).toEqual(["call-2"])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("clears the whole basket on unmount", async () => {
+    await render()
+    act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData)
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData2)
+    })
+    expect(useWhatsappVoipCallStore.getState().ringingCalls).toHaveLength(2)
+
+    act(() => root.unmount())
+
+    expect(useWhatsappVoipCallStore.getState().ringingCalls).toHaveLength(0)
+  })
+
+  test("dismiss(id) drops only that basket entry and never touches teardown/hangup", async () => {
+    await render()
+    act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData)
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData2)
+    })
+
+    act(() => {
+      hookResult?.dismiss("call-1")
+    })
+
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-2"])
+    expect(hangupActionMock).not.toHaveBeenCalled()
+    expect(answerActionMock).not.toHaveBeenCalled()
+  })
+})
+
 const outboundDialingResult = {
   outcome: "dialing" as const,
   whatsappCallId: "out-call-1",
@@ -929,6 +1616,7 @@ describe("useWhatsappVoipCall — startOutbound", () => {
 
     useWhatsappVoipCallStore.setState({
       call: null,
+      ringingCalls: [],
       pendingOutboundAnswer: null,
     })
     hookResult = null

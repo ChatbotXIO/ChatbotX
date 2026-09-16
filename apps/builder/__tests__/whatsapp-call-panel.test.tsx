@@ -27,6 +27,22 @@ vi.mock(
   }),
 )
 
+const voipRingtoneMock = vi.fn()
+vi.mock(
+  "@/features/integration-whatsapp/calling/voip/use-voip-ringtone",
+  () => ({
+    useVoipRingtone: (active: boolean) => voipRingtoneMock(active),
+  }),
+)
+
+const voipRingbackMock = vi.fn()
+vi.mock(
+  "@/features/integration-whatsapp/calling/voip/use-voip-ringback",
+  () => ({
+    useVoipRingback: (active: boolean) => voipRingbackMock(active),
+  }),
+)
+
 const preparingCall = {
   transport: "voip" as const,
   whatsappCallId: "nonce-1",
@@ -113,7 +129,7 @@ describe("WhatsappCallPanel", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
-    useWhatsappVoipCallStore.setState({ call: null })
+    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
     container = document.createElement("div")
     document.body.appendChild(container)
     root = createRoot(container)
@@ -377,5 +393,221 @@ describe("WhatsappCallPanel", () => {
     expect(document.body.textContent).not.toContain(
       "whatsapp.calls.panel.eyebrowOnCall",
     )
+  })
+})
+
+const ringA = {
+  whatsappCallId: "ring-a",
+  wacid: "wacid-a",
+  conversationId: "conversation-a",
+  contactInboxId: "contact-inbox-a",
+  contactName: "Ada Lovelace",
+  offer: { sdpType: "offer" as const, sdp: "v=0" },
+  deadlineAt: new Date(Date.now() + 30_000).toISOString(),
+}
+const ringB = {
+  ...ringA,
+  whatsappCallId: "ring-b",
+  conversationId: "conversation-b",
+  contactName: "Grace Hopper",
+}
+
+describe("WhatsappCallPanel — basket / multi-ring", () => {
+  let container: HTMLDivElement
+  let root: Root
+
+  beforeEach(() => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    vi.clearAllMocks()
+    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
+    container = document.createElement("div")
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+  })
+
+  const render = () =>
+    act(() => {
+      root.render(<WhatsappCallPanel />)
+    })
+
+  test("free slot + exactly one basket entry: the big card fed from the basket entry, with a backdrop", async () => {
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringA] })
+    await render()
+
+    expect(document.body.textContent).toContain("Ada Lovelace")
+    expect(
+      document.querySelector(`[aria-label="whatsapp.calls.answer"]`),
+    ).not.toBeNull()
+    expect(
+      document.querySelector('[aria-hidden="true"].fixed.inset-0'),
+    ).not.toBeNull()
+  })
+
+  test("clicking Answer/Reject on the single basket card targets that entry's id", async () => {
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringA] })
+    await render()
+
+    act(() => {
+      document
+        .querySelector(`[aria-label="whatsapp.calls.answer"]`)
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+    expect(contextMock.answer).toHaveBeenCalledWith("ring-a")
+
+    act(() => {
+      document
+        .querySelector(`[aria-label="whatsapp.calls.reject"]`)
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+    expect(contextMock.dismiss).toHaveBeenCalledWith("ring-a")
+  })
+
+  test("free slot + 2 basket entries: the compact list, one row per caller, with a backdrop", async () => {
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringA, ringB] })
+    await render()
+
+    expect(document.body.textContent).toContain("Ada Lovelace")
+    expect(document.body.textContent).toContain("Grace Hopper")
+    expect(document.body.textContent).toContain("ringingListTitle")
+    expect(
+      document.querySelectorAll(`[aria-label="whatsapp.calls.answer"]`),
+    ).toHaveLength(2)
+    expect(
+      document.querySelector('[aria-hidden="true"].fixed.inset-0'),
+    ).not.toBeNull()
+  })
+
+  test("the list's Answer/Reject buttons target their own row's id", async () => {
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringA, ringB] })
+    await render()
+
+    const answerButtons = Array.from(
+      document.querySelectorAll(`[aria-label="whatsapp.calls.answer"]`),
+    )
+    act(() => {
+      answerButtons[1]?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      )
+    })
+    expect(contextMock.answer).toHaveBeenCalledWith("ring-b")
+  })
+
+  test("engaged slot + ringing basket: the slot's panel keeps its position with NO backdrop, and the ring list stacks above it", async () => {
+    useWhatsappVoipCallStore.setState({
+      call: activeCall,
+      ringingCalls: [ringA],
+    })
+    await render()
+
+    // The active call panel itself still renders (mute/end controls).
+    expect(
+      document.querySelector(`[aria-label="whatsapp.calls.card.mute"]`),
+    ).not.toBeNull()
+    // The ring list is present too...
+    expect(document.body.textContent).toContain("Ada Lovelace")
+    // ...but no backdrop while the agent is engaged in a call.
+    expect(
+      document.querySelector('[aria-hidden="true"].fixed.inset-0'),
+    ).toBeNull()
+  })
+
+  test("engaged slot + ringing basket: the ring row's Answer button routes through context.answer with its own id", async () => {
+    useWhatsappVoipCallStore.setState({
+      call: activeCall,
+      ringingCalls: [ringA],
+    })
+    await render()
+
+    const answerButton = document.querySelector(
+      `[data-testid="whatsapp-ringing-calls-list"] [aria-label="whatsapp.calls.answer"]`,
+    )
+    act(() => {
+      answerButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+    expect(contextMock.answer).toHaveBeenCalledWith("ring-a")
+  })
+
+  test("today's unchanged behavior when the basket is empty: no call renders nothing, a single call renders the normal panel", async () => {
+    await render()
+    expect(document.body.textContent).toBe("")
+
+    act(() => {
+      useWhatsappVoipCallStore.setState({ call: incomingCall })
+    })
+    await render()
+    expect(
+      document.querySelector(`[aria-label="whatsapp.calls.answer"]`),
+    ).not.toBeNull()
+  })
+
+  test("ringtone gating: rings while ANY basket entry is ringing, even with the slot free and no call object", async () => {
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringA] })
+    await render()
+
+    expect(voipRingtoneMock).toHaveBeenLastCalledWith(true)
+  })
+
+  test("ringtone gating: rings for exactly one tone with 2+ basket entries too (never doubled per entry)", async () => {
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringA, ringB] })
+    await render()
+
+    expect(voipRingtoneMock).toHaveBeenLastCalledWith(true)
+  })
+
+  test("ringtone gating: stays silent when the basket is empty and nothing is incomingRinging", async () => {
+    useWhatsappVoipCallStore.setState({ call: activeCall, ringingCalls: [] })
+    await render()
+
+    expect(voipRingtoneMock).toHaveBeenLastCalledWith(false)
+  })
+
+  // An outbound dial no longer refuses to start while an offer sits in the
+  // basket, so both tone conditions can now be true at the same moment. Each
+  // hook opens its own AudioContext at the same 440/480 Hz pair, so running
+  // both would play audibly doubled tones — the dial the agent just clicked
+  // deliberately wins over an unanswered offer.
+  test("tone gating: an outbound dial silences the incoming ringtone rather than layering both tones", async () => {
+    useWhatsappVoipCallStore.setState({
+      call: {
+        ...preparingCall,
+        whatsappCallId: "out-dial-1",
+        phase: WhatsappVoipCallPhase.outboundDialing,
+      },
+      ringingCalls: [ringA],
+    })
+    await render()
+
+    expect(voipRingbackMock).toHaveBeenLastCalledWith(true)
+    expect(voipRingtoneMock).toHaveBeenLastCalledWith(false)
+  })
+
+  // Minimizing is a display preference for the call the agent is ON; it must
+  // never hide an offer. The ringtone keeps playing while minimized, so
+  // dropping the list here would leave an audible ring with nowhere on screen
+  // to answer it.
+  test("a MINIMIZED engaged call still shows the ring list, so an audible ring is never unanswerable", async () => {
+    useWhatsappVoipCallStore.setState({
+      call: activeCall,
+      ringingCalls: [ringA],
+    })
+    await render()
+
+    act(() => {
+      document
+        .querySelector(`[aria-label="whatsapp.calls.panel.minimize"]`)
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(
+      document.querySelector(`[aria-label="whatsapp.calls.panel.expand"]`),
+    ).not.toBeNull()
+    expect(
+      document.querySelector('[data-testid="whatsapp-ringing-calls-list"]'),
+    ).not.toBeNull()
   })
 })

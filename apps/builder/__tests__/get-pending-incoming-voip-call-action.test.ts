@@ -7,8 +7,8 @@ type ActionHandler = (args: {
   parsedInput: Record<string, unknown>
 }) => Promise<unknown>
 
-const { getResumableIncomingMock } = vi.hoisted(() => ({
-  getResumableIncomingMock: vi.fn(),
+const { listResumableIncomingMock } = vi.hoisted(() => ({
+  listResumableIncomingMock: vi.fn(),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -20,7 +20,7 @@ vi.mock("@/lib/safe-action", () => {
 })
 
 vi.mock("@chatbotx.io/business", () => ({
-  whatsappVoipCallService: { getResumableIncoming: getResumableIncomingMock },
+  whatsappVoipCallService: { listResumableIncoming: listResumableIncomingMock },
 }))
 
 const { getPendingIncomingVoipCallAction } = await import(
@@ -33,37 +33,49 @@ describe("getPendingIncomingVoipCallAction", () => {
     vi.clearAllMocks()
   })
 
-  test("returns the resumable incoming call for the workspace", async () => {
-    const pending = {
-      whatsappCallId: "call-1",
-      wacid: "wacid.ABC",
-      conversationId: "conv-1",
-      contactInboxId: "ci-1",
-      contactName: "Hung Phan",
-      offer: { sdpType: "offer" as const, sdp: "v=0..." },
-      deadlineAt: "2026-09-14T00:00:00.000Z",
-    }
-    getResumableIncomingMock.mockResolvedValue(pending)
+  test("returns every resumable incoming call for the workspace", async () => {
+    const pending = [
+      {
+        whatsappCallId: "call-1",
+        wacid: "wacid.ABC",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contactName: "Hung Phan",
+        offer: { sdpType: "offer" as const, sdp: "v=0..." },
+        deadlineAt: "2026-09-14T00:00:00.000Z",
+      },
+      {
+        whatsappCallId: "call-2",
+        wacid: "wacid.DEF",
+        conversationId: "conv-2",
+        contactInboxId: "ci-2",
+        contactName: null,
+        offer: { sdpType: "offer" as const, sdp: "v=0..." },
+        deadlineAt: "2026-09-14T00:00:05.000Z",
+      },
+    ]
+    listResumableIncomingMock.mockResolvedValue(pending)
 
     const result = await action({
       bindArgsParsedInputs: ["workspace-1"],
       parsedInput: {},
     })
 
-    expect(getResumableIncomingMock).toHaveBeenCalledWith({
+    expect(listResumableIncomingMock).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
     })
     expect(result).toEqual(pending)
+    expect(Array.isArray(result)).toBe(true)
   })
 
-  test("returns null when there is nothing to resume", async () => {
-    getResumableIncomingMock.mockResolvedValue(null)
+  test("returns an empty array when there is nothing to resume", async () => {
+    listResumableIncomingMock.mockResolvedValue([])
 
     const result = await action({
       bindArgsParsedInputs: ["workspace-1"],
       parsedInput: {},
     })
 
-    expect(result).toBeNull()
+    expect(result).toEqual([])
   })
 })

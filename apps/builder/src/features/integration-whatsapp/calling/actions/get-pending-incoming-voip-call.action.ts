@@ -5,13 +5,15 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 /**
- * Resume-after-refresh lookup for VoIP calls: an inbound ring is delivered
- * once over realtime (fire-and-forget to open sockets), so an agent who hits
- * F5 while a call is still ringing loses the incoming-call UI even though the
- * Redis offer/control TTL (~55s) means it may still be answerable. The
- * builder calls this once on mount (see `useWhatsappVoipCall`) to
- * re-discover a still-ringing, still-unclaimed VoIP call for the workspace
- * and re-show it. Returns `null` when there is nothing to resume.
+ * Resume-after-refresh lookup for VoIP calls: ring-all means more than one
+ * caller can be ringing this workspace at once, and each inbound ring is
+ * delivered once over realtime (fire-and-forget to open sockets), so an
+ * agent who hits F5 while calls are still ringing loses the incoming-call UI
+ * for all of them even though the Redis offer/control TTL (~55s) means they
+ * may still be answerable. The builder calls this once on mount (see
+ * `useWhatsappVoipCall`) to re-discover every still-ringing, still-unclaimed
+ * VoIP call for the workspace and re-show them. Returns `[]`, never `null`,
+ * when there is nothing to resume.
  *
  * No-input action (`bindArgsSchemas` only, per AGENTS.md invariant #6) — the
  * client must call `execute` with no arguments, not `execute({})`.
@@ -19,5 +21,5 @@ import { workspaceActionClient } from "@/lib/safe-action"
 export const getPendingIncomingVoipCallAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString()])
   .action(async ({ bindArgsParsedInputs: [workspaceId] }) =>
-    whatsappVoipCallService.getResumableIncoming({ workspaceId }),
+    whatsappVoipCallService.listResumableIncoming({ workspaceId }),
   )

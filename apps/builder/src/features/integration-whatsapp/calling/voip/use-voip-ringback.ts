@@ -26,8 +26,14 @@ type WebkitWindow = Window & {
  * is true, stopping and releasing the audio context when it turns false or
  * the component unmounts. This is the outbound counterpart to
  * `useVoipRingtone` — mount it only where the outbound dialing/ringing UI
- * lives, driven by the store's `outboundDialing`/`outboundRinging` phases,
- * so it never doubles up with the incoming ringtone. Same autoplay/teardown
+ * lives, driven by the store's `outboundDialing`/`outboundRinging` phases.
+ * `startOutbound` no longer refuses to dial while an offer sits in the
+ * ringing basket, so both this hook's `active` and `useVoipRingtone`'s could
+ * be true at once; `WhatsappCallPanel` is the one place both are mounted,
+ * and it deliberately silences `useVoipRingtone` while THIS is active (see
+ * its mutual-exclusion comment there) — the agent's own deliberate outbound
+ * dial wins over a simultaneous incoming ring, so the two can never sound at
+ * once. Same autoplay/teardown
  * discipline as `useVoipRingtone`: the agent is already interacting with the
  * inbox (they just clicked Call), so the audio context resumes without a
  * fresh gesture, and a browser that still blocks it silently skips the tone

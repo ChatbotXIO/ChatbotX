@@ -4044,7 +4044,9 @@
         "seek": "跳轉",
         "mute": "靜音",
         "unmute": "取消靜音",
-        "playbackFailed": "播放失敗"
+        "playbackFailed": "播放失敗",
+        "answeredBy": "由 {name} 接聽",
+        "calledBy": "由 {name} 撥打"
       },
       "sheet": {
         "title": "通話資訊",
@@ -4091,7 +4093,8 @@
         "dismiss": "關閉",
         "statusNoAnswer": "無應答",
         "eyebrowCallEnded": "通話已結束",
-        "statusConnectionLost": "連線中斷"
+        "statusConnectionLost": "連線中斷",
+        "ringingListTitle": "{count} 通來電"
       },
       "capability": {
         "title": "通話資格",
@@ -4106,6 +4109,12 @@
         "callsSubscription": "此 WhatsApp 號碼是手動連接的。請確保您的 Meta 應用程式已訂閱 calls webhook 欄位（Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls），否則撥出電話將無法接通，來電也不會響鈴。",
         "unsignedWebhook": "此號碼也未設定 Meta App Secret，因此其傳入的 webhook 未經過簽署驗證。",
         "callAnyway": "仍然撥打"
+      },
+      "replaceConfirm": {
+        "title": "接聽新來電？",
+        "description": "結束與 {current} 的通話以接聽 {incoming} 嗎？",
+        "confirm": "結束並接聽",
+        "cancel": "取消"
       }
     }
   },

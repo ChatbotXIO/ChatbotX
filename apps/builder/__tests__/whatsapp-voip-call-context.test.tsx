@@ -1,10 +1,20 @@
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { useWhatsappVoipCallStore } from "@/features/integration-whatsapp/calling/voip/voip-call-store"
 import {
   useWhatsappVoipCallContext,
   WhatsappVoipCallProvider,
 } from "@/features/integration-whatsapp/calling/voip/whatsapp-voip-call-context"
+
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string, values?: Record<string, unknown>) =>
+    values ? `${key}:${JSON.stringify(values)}` : key,
+}))
+
+vi.mock("@/lib/log", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}))
 
 const voipCallMock = {
   remoteAudioRef: { current: null },
@@ -12,6 +22,7 @@ const voipCallMock = {
   dismiss: vi.fn(),
   hangup: vi.fn().mockResolvedValue(undefined),
   toggleMute: vi.fn(),
+  dismissEnded: vi.fn(),
   startOutbound: vi.fn().mockResolvedValue("dialing"),
 }
 const useWhatsappVoipCallSpy = vi.fn(() => voipCallMock)
@@ -27,6 +38,9 @@ function ContextConsumer() {
       <button onClick={() => answer()} type="button">
         answer
       </button>
+      <button onClick={() => answer("ring-2")} type="button">
+        answer-ring-2
+      </button>
       <button onClick={() => dismiss()} type="button">
         dismiss
       </button>
@@ -40,6 +54,30 @@ function ContextConsumer() {
   )
 }
 
+const engagedCall = {
+  transport: "voip" as const,
+  whatsappCallId: "call-1",
+  wacid: "wacid-1",
+  direction: "inbound" as const,
+  phase: "active" as const,
+  conversationId: "conversation-1",
+  contactInboxId: "contact-inbox-1",
+  contactName: "Ada Lovelace",
+  deadlineAt: new Date().toISOString(),
+  isMuted: false,
+  isRecording: false,
+}
+
+const ringingEntry = {
+  whatsappCallId: "ring-2",
+  wacid: "wacid-2",
+  conversationId: "conversation-2",
+  contactInboxId: "contact-inbox-2",
+  contactName: "Grace Hopper",
+  offer: { sdpType: "offer" as const, sdp: "v=0" },
+  deadlineAt: new Date(Date.now() + 30_000).toISOString(),
+}
+
 describe("WhatsappVoipCallProvider", () => {
   let container: HTMLDivElement
   let root: Root
@@ -47,6 +85,8 @@ describe("WhatsappVoipCallProvider", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
+    voipCallMock.answer.mockResolvedValue(undefined)
+    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
     container = document.createElement("div")
     document.body.appendChild(container)
     root = createRoot(container)
@@ -73,7 +113,10 @@ describe("WhatsappVoipCallProvider", () => {
     expect(container.querySelectorAll("audio")).toHaveLength(1)
   })
 
-  test("exposes the single hook instance's callbacks to consumers", () => {
+  test("answer() with no replacement needed (slot's own call) goes straight to the underlying hook", () => {
+    useWhatsappVoipCallStore.setState({
+      call: { ...engagedCall, phase: "incomingRinging" },
+    })
     act(() => {
       root.render(
         <WhatsappVoipCallProvider>
@@ -92,7 +135,168 @@ describe("WhatsappVoipCallProvider", () => {
     }
 
     click("answer")
-    expect(voipCallMock.answer).toHaveBeenCalledTimes(1)
+    expect(voipCallMock.answer).toHaveBeenCalledWith("call-1")
+    // No confirmation dialog — nothing to replace.
+    expect(container.textContent).not.toContain(
+      "whatsapp.calls.replaceConfirm.title",
+    )
+  })
+
+  test("answer(id) while the slot is free goes straight through with no confirmation", () => {
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringingEntry] })
+    act(() => {
+      root.render(
+        <WhatsappVoipCallProvider>
+          <ContextConsumer />
+        </WhatsappVoipCallProvider>,
+      )
+    })
+
+    const button = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent === "answer-ring-2",
+    )
+    act(() => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(voipCallMock.answer).toHaveBeenCalledWith("ring-2")
+  })
+
+  test("answer(id) for a DIFFERENT call while the slot is engaged opens the replacement confirmation instead of answering immediately", () => {
+    useWhatsappVoipCallStore.setState({
+      call: engagedCall,
+      ringingCalls: [ringingEntry],
+    })
+    act(() => {
+      root.render(
+        <WhatsappVoipCallProvider>
+          <ContextConsumer />
+        </WhatsappVoipCallProvider>,
+      )
+    })
+
+    const button = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent === "answer-ring-2",
+    )
+    act(() => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    // Not answered yet — waiting on confirmation. The dialog portals
+    // outside `container`, so assert against the document body.
+    expect(voipCallMock.answer).not.toHaveBeenCalled()
+    expect(document.body.textContent).toContain(
+      "whatsapp.calls.replaceConfirm.title",
+    )
+    expect(document.body.textContent).toContain(
+      JSON.stringify({ current: "Ada Lovelace", incoming: "Grace Hopper" }),
+    )
+  })
+
+  // A confirmation that can only confirm into a no-op is worse than none:
+  // the hook's `answeringIdRef` mutex is already held for the slot's own
+  // in-flight answer, so a confirmed replacement would be silently rejected
+  // and the dialog would close with no feedback at all.
+  test("answer(id) offers NO replacement dialog while the slot's own call is still answering", () => {
+    useWhatsappVoipCallStore.setState({
+      call: { ...engagedCall, phase: "answering" as const },
+      ringingCalls: [ringingEntry],
+    })
+    act(() => {
+      root.render(
+        <WhatsappVoipCallProvider>
+          <ContextConsumer />
+        </WhatsappVoipCallProvider>,
+      )
+    })
+
+    const button = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent === "answer-ring-2",
+    )
+    act(() => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(voipCallMock.answer).not.toHaveBeenCalled()
+    expect(document.body.textContent).not.toContain(
+      "whatsapp.calls.replaceConfirm.title",
+    )
+  })
+
+  test("confirming the replacement dialog answers the incoming call", () => {
+    useWhatsappVoipCallStore.setState({
+      call: engagedCall,
+      ringingCalls: [ringingEntry],
+    })
+    act(() => {
+      root.render(
+        <WhatsappVoipCallProvider>
+          <ContextConsumer />
+        </WhatsappVoipCallProvider>,
+      )
+    })
+    act(() => {
+      Array.from(container.querySelectorAll("button"))
+        .find((b) => b.textContent === "answer-ring-2")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    const confirmButton = Array.from(document.querySelectorAll("button")).find(
+      (b) => b.textContent === "whatsapp.calls.replaceConfirm.confirm",
+    )
+    act(() => {
+      confirmButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(voipCallMock.answer).toHaveBeenCalledWith("ring-2")
+  })
+
+  test("cancelling the replacement dialog never answers anything", () => {
+    useWhatsappVoipCallStore.setState({
+      call: engagedCall,
+      ringingCalls: [ringingEntry],
+    })
+    act(() => {
+      root.render(
+        <WhatsappVoipCallProvider>
+          <ContextConsumer />
+        </WhatsappVoipCallProvider>,
+      )
+    })
+    act(() => {
+      Array.from(container.querySelectorAll("button"))
+        .find((b) => b.textContent === "answer-ring-2")
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    const cancelButton = Array.from(document.querySelectorAll("button")).find(
+      (b) => b.textContent === "whatsapp.calls.replaceConfirm.cancel",
+    )
+    act(() => {
+      cancelButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(voipCallMock.answer).not.toHaveBeenCalled()
+  })
+
+  test("exposes the single hook instance's dismiss/hangup/toggleMute callbacks to consumers", () => {
+    act(() => {
+      root.render(
+        <WhatsappVoipCallProvider>
+          <ContextConsumer />
+        </WhatsappVoipCallProvider>,
+      )
+    })
+
+    const click = (label: string) => {
+      const button = Array.from(container.querySelectorAll("button")).find(
+        (b) => b.textContent === label,
+      )
+      act(() => {
+        button?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      })
+    }
+
     click("dismiss")
     expect(voipCallMock.dismiss).toHaveBeenCalledTimes(1)
     click("hangup")

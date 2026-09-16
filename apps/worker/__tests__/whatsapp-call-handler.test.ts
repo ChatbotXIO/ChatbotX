@@ -216,6 +216,120 @@ describe("handleWhatsappCallEvent", () => {
       expect(mocks.emitIncomingCall).toHaveBeenCalled()
     })
 
+    test("D2: a payload contact that disagrees with the item's from_user_id lets the item's identity decide sourceId", async () => {
+      await handleWhatsappCallEvent({
+        ...baseData,
+        payload: {
+          phoneNumberId: "phone-1",
+          // Belongs to a DIFFERENT batched item — must never win over the
+          // item's own from_user_id.
+          contact: { userId: "bsuid-other", name: "Wrong Name" },
+          event: {
+            kind: "connect",
+            wacid: "wacid.MISMATCH",
+            direction: "userInitiated",
+            fromUserId: "bsuid-correct",
+          },
+        },
+      })
+
+      expect(mocks.detectContactAndConversation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          incomingContact: expect.objectContaining({
+            sourceId: "bsuid-correct",
+            sourceUserId: "bsuid-correct",
+          }),
+        }),
+      )
+    })
+
+    test("D2: a mismatched payload contact's username/name never reach detectContactAndConversation", async () => {
+      await handleWhatsappCallEvent({
+        ...baseData,
+        payload: {
+          phoneNumberId: "phone-1",
+          contact: {
+            userId: "bsuid-other",
+            username: "wrong-username",
+            name: "Wrong Name",
+          },
+          event: {
+            kind: "connect",
+            wacid: "wacid.MISMATCH-2",
+            direction: "userInitiated",
+            fromUserId: "bsuid-correct",
+          },
+        },
+      })
+
+      expect(mocks.detectContactAndConversation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          incomingContact: expect.objectContaining({
+            sourceUsername: undefined,
+            firstName: undefined,
+          }),
+        }),
+      )
+    })
+
+    test("D2 regression: a real Meta call item (from_user_id only, no `from`) with a MATCHING contacts[] entry keys by the phone number, not the BSUID", async () => {
+      // The exact production shape: `calls.ts`'s `pickContactForCallItem`
+      // already resolved this contact for this item upstream, so it is safe
+      // to enrich the identity the item itself omitted.
+      await handleWhatsappCallEvent({
+        ...baseData,
+        payload: {
+          phoneNumberId: "phone-1",
+          contact: {
+            waId: "84349566550",
+            userId: "VN.1506778474525162",
+            name: "Hung Phan",
+          },
+          event: {
+            kind: "connect",
+            wacid: "wacid.PROD-1",
+            direction: "userInitiated",
+            fromUserId: "VN.1506778474525162",
+            to: "6287744910069",
+          },
+        },
+      })
+
+      expect(mocks.detectContactAndConversation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          incomingContact: expect.objectContaining({
+            sourceId: "84349566550",
+            sourceUserId: "VN.1506778474525162",
+          }),
+        }),
+      )
+    })
+
+    test("D2 regression: a genuinely BSUID-only caller (contact has no wa_id) still keys by the BSUID", async () => {
+      await handleWhatsappCallEvent({
+        ...baseData,
+        payload: {
+          phoneNumberId: "phone-1",
+          contact: { userId: "bsuid-only-1", name: "No Phone Exposed" },
+          event: {
+            kind: "connect",
+            wacid: "wacid.PROD-2",
+            direction: "userInitiated",
+            fromUserId: "bsuid-only-1",
+          },
+        },
+      })
+
+      expect(mocks.detectContactAndConversation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          incomingContact: expect.objectContaining({
+            sourceId: "bsuid-only-1",
+            sourceUserId: "bsuid-only-1",
+          }),
+        }),
+      )
+    })
+
     test("redelivered connect does not re-fire the incomingCall event", async () => {
       mocks.createIfAbsent.mockResolvedValue({ call: callRow, isNew: false })
 

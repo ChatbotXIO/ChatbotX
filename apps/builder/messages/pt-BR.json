@@ -3990,7 +3990,9 @@
         "seek": "Buscar",
         "mute": "Mudo",
         "unmute": "Ativar som",
-        "playbackFailed": "Falha na reprodução"
+        "playbackFailed": "Falha na reprodução",
+        "answeredBy": "Atendida por {name}",
+        "calledBy": "Chamada por {name}"
       },
       "sheet": {
         "title": "Informações da chamada",
@@ -4037,7 +4039,8 @@
         "dismiss": "Fechar",
         "statusNoAnswer": "Sem resposta",
         "eyebrowCallEnded": "CHAMADA ENCERRADA",
-        "statusConnectionLost": "Conexão perdida"
+        "statusConnectionLost": "Conexão perdida",
+        "ringingListTitle": "{count} chamadas recebidas"
       },
       "capability": {
         "title": "Elegibilidade de chamadas",
@@ -4052,6 +4055,12 @@
         "callsSubscription": "Este número do WhatsApp foi conectado manualmente. Verifique se o seu aplicativo Meta está inscrito no campo de webhook calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — caso contrário, as chamadas de saída não se conectarão e as chamadas recebidas não tocarão.",
         "unsignedWebhook": "Este número também não tem um Meta App Secret configurado, portanto seus webhooks de entrada não têm a assinatura verificada.",
         "callAnyway": "Ligar mesmo assim"
+      },
+      "replaceConfirm": {
+        "title": "Atender nova chamada?",
+        "description": "Encerrar a chamada com {current} para atender {incoming}?",
+        "confirm": "Encerrar e atender",
+        "cancel": "Cancelar"
       }
     }
   },

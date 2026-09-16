@@ -4011,7 +4011,9 @@
         "seek": "Cari posisi",
         "mute": "Bisukan",
         "unmute": "Bunyikan",
-        "playbackFailed": "Pemutaran gagal"
+        "playbackFailed": "Pemutaran gagal",
+        "answeredBy": "Dijawab oleh {name}",
+        "calledBy": "Ditelepon oleh {name}"
       },
       "sheet": {
         "title": "Informasi Panggilan",
@@ -4058,7 +4060,8 @@
         "dismiss": "Tutup",
         "statusNoAnswer": "Tidak ada jawaban",
         "eyebrowCallEnded": "PANGGILAN BERAKHIR",
-        "statusConnectionLost": "Koneksi terputus"
+        "statusConnectionLost": "Koneksi terputus",
+        "ringingListTitle": "{count} panggilan masuk"
       },
       "capability": {
         "title": "Kelayakan panggilan",
@@ -4073,6 +4076,12 @@
         "callsSubscription": "Nomor WhatsApp ini terhubung secara manual. Pastikan aplikasi Meta Anda berlangganan field webhook calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — jika tidak, panggilan keluar tidak akan tersambung dan panggilan masuk tidak akan berdering.",
         "unsignedWebhook": "Nomor ini juga tidak memiliki Meta App Secret yang dikonfigurasi, sehingga webhook masuknya tidak diverifikasi tanda tangannya.",
         "callAnyway": "Tetap panggil"
+      },
+      "replaceConfirm": {
+        "title": "Jawab panggilan baru?",
+        "description": "Akhiri panggilan dengan {current} untuk menjawab {incoming}?",
+        "confirm": "Akhiri & Jawab",
+        "cancel": "Batal"
       }
     }
   },

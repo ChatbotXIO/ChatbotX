@@ -4011,7 +4011,9 @@
         "seek": "Siirry kohtaan",
         "mute": "Mykistä",
         "unmute": "Poista mykistys",
-        "playbackFailed": "Toisto epäonnistui"
+        "playbackFailed": "Toisto epäonnistui",
+        "answeredBy": "Vastaaja: {name}",
+        "calledBy": "Soittaja: {name}"
       },
       "sheet": {
         "title": "Puhelun tiedot",
@@ -4058,7 +4060,8 @@
         "dismiss": "Sulje",
         "statusNoAnswer": "Ei vastausta",
         "eyebrowCallEnded": "PUHELU PÄÄTTYI",
-        "statusConnectionLost": "Yhteys katkesi"
+        "statusConnectionLost": "Yhteys katkesi",
+        "ringingListTitle": "{count} saapuvaa puhelua"
       },
       "capability": {
         "title": "Puhelukelpoisuus",
@@ -4073,6 +4076,12 @@
         "callsSubscription": "Tämä WhatsApp-numero yhdistettiin manuaalisesti. Varmista, että Meta-sovelluksesi on tilannut calls-webhook-kentän (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — muuten lähtevät puhelut eivät muodosta yhteyttä eivätkä saapuvat puhelut soi.",
         "unsignedWebhook": "Tälle numerolle ei myöskään ole määritetty Meta App Secret -avainta, joten sen saapuvia webhookeja ei allekirjoitusvarmenneta.",
         "callAnyway": "Soita silti"
+      },
+      "replaceConfirm": {
+        "title": "Vastaa uuteen puheluun?",
+        "description": "Lopeta puhelu henkilön {current} kanssa vastataksesi henkilölle {incoming}?",
+        "confirm": "Lopeta ja vastaa",
+        "cancel": "Peruuta"
       }
     }
   },

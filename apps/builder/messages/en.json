@@ -4199,7 +4199,9 @@
         "seek": "Seek",
         "mute": "Mute",
         "unmute": "Unmute",
-        "playbackFailed": "Playback failed"
+        "playbackFailed": "Playback failed",
+        "answeredBy": "Answered by {name}",
+        "calledBy": "Called by {name}"
       },
       "sheet": {
         "title": "Call Information",
@@ -4246,7 +4248,8 @@
         "dismiss": "Dismiss",
         "statusNoAnswer": "No answer",
         "eyebrowCallEnded": "CALL ENDED",
-        "statusConnectionLost": "Connection lost"
+        "statusConnectionLost": "Connection lost",
+        "ringingListTitle": "{count} incoming calls"
       },
       "capability": {
         "title": "Calling eligibility",
@@ -4261,6 +4264,12 @@
         "callsSubscription": "This WhatsApp number was connected manually. Make sure your Meta app is subscribed to the calls webhook field (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — otherwise outbound calls will not connect and incoming calls will not ring.",
         "unsignedWebhook": "This number also has no Meta App Secret configured, so its incoming webhooks are not signature-verified.",
         "callAnyway": "Call anyway"
+      },
+      "replaceConfirm": {
+        "title": "Answer new call?",
+        "description": "End the call with {current} to answer {incoming}?",
+        "confirm": "End & Answer",
+        "cancel": "Cancel"
       }
     }
   },

@@ -204,25 +204,97 @@ const parseUnixSeconds = (value: string | undefined): Date | undefined => {
 }
 
 /**
+ * The item's OWN identity fields for this call, picked by direction — the
+ * counterparty for a USER_INITIATED item is `from`/`from_user_id`; for a
+ * BUSINESS_INITIATED item it is `to`/`to_user_id`. `undefined`/`undefined`
+ * means the item carries no identity of its own (a session-less/legacy
+ * connect), the only case where a fallback to `payload.contact` is safe.
+ */
+const readItemIdentity = (
+  event: Extract<CallEvent, { kind: "connect" | "terminate" }>,
+): { waId: string | undefined; userId: string | undefined } => {
+  const isBusinessInitiated = event.direction === "businessInitiated"
+  return {
+    waId: isBusinessInitiated ? event.to : event.from,
+    userId: isBusinessInitiated ? event.toUserId : event.fromUserId,
+  }
+}
+
+/**
+ * Whether `contact` is the SAME party the item itself identifies as —
+ * `contacts[]` is index-aligned by Meta only for a single-contact batch, so
+ * a `payload.contact` that came from a different item in the same batch
+ * (D2 — see `calls.ts`'s `pickContactForCallItem`) must never be trusted
+ * just because it is present.
+ */
+const contactMatchesIdentity = (
+  contact: CallPayload["contact"],
+  itemWaId: string | undefined,
+  itemUserId: string | undefined,
+): boolean =>
+  contact !== undefined &&
+  ((itemWaId !== undefined && contact.waId === itemWaId) ||
+    (itemUserId !== undefined && contact.userId === itemUserId))
+
+/**
  * Resolves the customer's identity for this call — a phone number
  * (`waId`) when one is exposed, and/or a Business-Scoped User ID (`userId`)
- * for a Username/BSUID-only caller with no phone number exposed. `contacts[]`
- * is preferred for both; the item-level `from`/`to`/`from_user_id`/
- * `to_user_id` fields are the fallback, picked by the call's direction —
- * mirroring the incoming-message resolution
- * (`integrations/whatsapp/src/handlers/message/incomming-message.ts`).
+ * for a Username/BSUID-only caller with no phone number exposed — together
+ * with the ONE `payload.contact` (if any) that is actually THIS party,
+ * never a different batched item's contact bleeding in (D2).
+ *
+ * The item's OWN `from`/`to`/`from_user_id`/`to_user_id` is authoritative —
+ * mirroring the incoming-message resolution (`integrations/whatsapp/src/
+ * handlers/message/incomming-message.ts`). `payload.contact` only overrides
+ * it when the item carries no identity of its own (a session-less/legacy
+ * connect) — the one case where `payload.contact` IS that same fallback
+ * identity, so it doubles as the profile source too.
+ *
+ * Otherwise `payload.contact` is consulted ONLY when it matches the item's
+ * identity on at least one field (`contactMatchesIdentity`) — a mismatched
+ * contact belongs to a different batched item (D2) and must never leak in.
+ * BUT a real Meta payload for a user-initiated call routinely omits `from`
+ * on the item and carries ONLY `from_user_id` — the phone number lives
+ * solely in `contacts[]` (see `pickContactForCallItem` in `calls.ts`, which
+ * already resolved this exact contact for this exact item upstream). A
+ * MATCHED contact is therefore not just a profile source: it is safe — and
+ * necessary — to let it fill in whichever identity field the item itself
+ * omitted (`itemWaId ?? matchedContact.waId`). This is NOT the same as the
+ * unmatched-contact case above: enrichment only ever reads from a contact
+ * that already proved itself the same party via the OTHER field, so it
+ * cannot reintroduce a wrong `sourceId` — losing this fallback would key
+ * every user-initiated call's `ContactInbox` lookup by BSUID instead of the
+ * phone number, splitting call history off the existing (message-keyed)
+ * contact row.
  */
 const resolveCallerIdentity = (
   payload: CallPayload,
   event: Extract<CallEvent, { kind: "connect" | "terminate" }>,
-): { waId: string | undefined; userId: string | undefined } => {
-  const isBusinessInitiated = event.direction === "businessInitiated"
-  const waId =
-    payload.contact?.waId ?? (isBusinessInitiated ? event.to : event.from)
-  const userId =
-    payload.contact?.userId ??
-    (isBusinessInitiated ? event.toUserId : event.fromUserId)
-  return { waId, userId }
+): {
+  waId: string | undefined
+  userId: string | undefined
+  matchedContact: CallPayload["contact"]
+} => {
+  const { waId: itemWaId, userId: itemUserId } = readItemIdentity(event)
+  if (itemWaId === undefined && itemUserId === undefined) {
+    return {
+      waId: payload.contact?.waId,
+      userId: payload.contact?.userId,
+      matchedContact: payload.contact,
+    }
+  }
+  const matchedContact = contactMatchesIdentity(
+    payload.contact,
+    itemWaId,
+    itemUserId,
+  )
+    ? payload.contact
+    : undefined
+  return {
+    waId: itemWaId ?? matchedContact?.waId,
+    userId: itemUserId ?? matchedContact?.userId,
+    matchedContact,
+  }
 }
 
 const resolveCallParticipants = async (
@@ -235,7 +307,10 @@ const resolveCallParticipants = async (
       props.integrationIdentifier,
     )
 
-  const { waId, userId } = resolveCallerIdentity(props.payload, event)
+  const { waId, userId, matchedContact } = resolveCallerIdentity(
+    props.payload,
+    event,
+  )
   // A Username/BSUID-only caller has no `waId` at all — fall back to the
   // BSUID as the primary `sourceId` (mirrors
   // `incomming-message.ts`'s `sourceId: asString(data.from) ?? sourceUserId ?? ""`),
@@ -252,8 +327,8 @@ const resolveCallParticipants = async (
     incomingContact: {
       sourceId,
       sourceUserId: userId,
-      sourceUsername: props.payload.contact?.username,
-      firstName: props.payload.contact?.name,
+      sourceUsername: matchedContact?.username,
+      firstName: matchedContact?.name,
     },
     source: contactSources.enum.inboundMessage,
   })

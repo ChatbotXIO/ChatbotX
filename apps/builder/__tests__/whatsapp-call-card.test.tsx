@@ -103,6 +103,37 @@ describe("WhatsappCallCard", () => {
     expect(el.querySelector("button")).toBeNull()
   })
 
+  test("a failed inbound call WITH an agentName still renders the answeredBy audit line alongside the outcome row", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{
+          ...baseCall,
+          status: "failed",
+          direction: "userInitiated",
+          agentUserId: "user-1",
+          agentName: "Agent Smith",
+        }}
+      />,
+    )
+    expect(el.textContent).toContain("missedVoiceCall")
+    expect(el.textContent).toContain("answeredBy")
+  })
+
+  test("a failed call with NO agentName renders no agent line (never answered)", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{
+          ...baseCall,
+          status: "failed",
+          direction: "userInitiated",
+        }}
+      />,
+    )
+    expect(el.textContent).toContain("missedVoiceCall")
+    expect(el.textContent).not.toContain("answeredBy")
+    expect(el.textContent).not.toContain("calledBy")
+  })
+
   test("a failed outbound call renders as 'no answer', never 'missed'", () => {
     const el = renderComponent(
       <WhatsappCallCard
@@ -339,6 +370,50 @@ describe("WhatsappCallCard", () => {
       <WhatsappCallCard call={baseCall} contactName="Jane Doe" />,
     )
     expect(el.textContent).toContain("Jane Doe")
+  })
+
+  test("userInitiated + agentName renders the answeredBy copy (an inbound call is genuinely answered)", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{
+          ...baseCall,
+          direction: "userInitiated",
+          agentUserId: "user-1",
+          agentName: "Agent Smith",
+        }}
+      />,
+    )
+    expect(el.textContent).toContain("answeredBy")
+    expect(el.textContent).not.toContain("calledBy")
+  })
+
+  test("businessInitiated + agentName renders the calledBy copy — answeredByUserId is the INITIATOR there, not an answerer", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{
+          ...baseCall,
+          direction: "businessInitiated",
+          agentUserId: "user-2",
+          agentName: "Agent Outbound",
+        }}
+      />,
+    )
+    expect(el.textContent).toContain("calledBy")
+    expect(el.textContent).not.toContain("answeredBy")
+  })
+
+  test("no agentName renders no agent line at all", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{
+          ...baseCall,
+          direction: "userInitiated",
+          agentUserId: "user-1",
+        }}
+      />,
+    )
+    expect(el.textContent).not.toContain("answeredBy")
+    expect(el.textContent).not.toContain("calledBy")
   })
 
   test("clicking play lazily requests a signed URL via getCallRecordingUrlAction", async () => {

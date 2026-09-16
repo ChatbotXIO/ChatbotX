@@ -91,7 +91,7 @@ describe("ChatRealtime — whatsappCallClaimedElsewhere", () => {
     vi.clearAllMocks()
     bubbleConversationToTopMock.mockResolvedValue(undefined)
     authSessionMock.mockReturnValue({ data: { user: { id: "user-winner" } } })
-    useWhatsappVoipCallStore.setState({ call: null })
+    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
     container = document.createElement("div")
     document.body.appendChild(container)
     root = createRoot(container)
@@ -177,6 +177,173 @@ describe("ChatRealtime — whatsappCallClaimedElsewhere", () => {
   })
 })
 
+describe("ChatRealtime — ring-all basket (multi-ring)", () => {
+  let container: HTMLDivElement
+  let root: Root
+
+  beforeEach(() => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    vi.clearAllMocks()
+    bubbleConversationToTopMock.mockResolvedValue(undefined)
+    authSessionMock.mockReturnValue({ data: { user: { id: "user-winner" } } })
+    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
+    container = document.createElement("div")
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+    capturedOnMessage = null
+  })
+
+  const render = () =>
+    act(() => {
+      root.render(<ChatRealtime />)
+    })
+
+  test("two incoming events both land in the basket, not the single call slot", async () => {
+    await render()
+
+    act(() => {
+      emit("whatsappCallTransportIncoming", {
+        whatsappCallId: "call-1",
+        wacid: "wacid-1",
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+        contactName: "Ada Lovelace",
+        offer: { sdpType: "offer", sdp: "v=0 offer" },
+        deadlineAt: new Date(Date.now() + 20_000).toISOString(),
+      })
+    })
+    act(() => {
+      emit("whatsappCallTransportIncoming", {
+        whatsappCallId: "call-2",
+        wacid: "wacid-2",
+        conversationId: "conversation-2",
+        contactInboxId: "contact-inbox-2",
+        contactName: "Grace Hopper",
+        offer: { sdpType: "offer", sdp: "v=0 offer" },
+        deadlineAt: new Date(Date.now() + 20_000).toISOString(),
+      })
+    })
+
+    expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-1", "call-2"])
+    expect(bubbleConversationToTopMock).toHaveBeenCalledWith(
+      "workspace-1",
+      "conversation-1",
+    )
+    expect(bubbleConversationToTopMock).toHaveBeenCalledWith(
+      "workspace-1",
+      "conversation-2",
+    )
+  })
+
+  test("whatsappCallClaimedElsewhere removes only the matching basket entry", async () => {
+    useWhatsappVoipCallStore.setState({
+      ringingCalls: [
+        { ...baseVoipCall, whatsappCallId: "call-1" },
+        { ...baseVoipCall, whatsappCallId: "call-2" },
+      ],
+    })
+    await render()
+
+    act(() => {
+      emit("whatsappCallClaimedElsewhere", {
+        whatsappCallId: "call-1",
+        wacid: "wacid-1",
+        answeredByUserId: "user-someone-else",
+      })
+    })
+
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-2"])
+  })
+
+  test("whatsappCallTransportEnded removes only the matching basket entry", async () => {
+    useWhatsappVoipCallStore.setState({
+      ringingCalls: [
+        { ...baseVoipCall, whatsappCallId: "call-1" },
+        { ...baseVoipCall, whatsappCallId: "call-2" },
+      ],
+    })
+    await render()
+
+    act(() => {
+      emit("whatsappCallTransportEnded", {
+        whatsappCallId: "call-1",
+        wacid: "wacid-1",
+        status: "completed",
+      })
+    })
+
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-2"])
+  })
+
+  test("whatsappCallTransportEnded for the engaged slot's own call still lingers as ended (handleEnded), independent of the basket", async () => {
+    useWhatsappVoipCallStore.setState({
+      call: { ...baseVoipCall, phase: "active" },
+      ringingCalls: [{ ...baseVoipCall, whatsappCallId: "call-2" }],
+    })
+    await render()
+
+    act(() => {
+      emit("whatsappCallTransportEnded", {
+        whatsappCallId: "call-1",
+        wacid: "wacid-1",
+        status: "completed",
+      })
+    })
+
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe("ended")
+    // The basket is untouched — call-1 was never in it.
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-2"])
+  })
+
+  test("claimed-by-self (the winning agent) preserves the promoted slot and does not touch the basket", async () => {
+    useWhatsappVoipCallStore.setState({
+      call: { ...baseVoipCall, phase: "answering" },
+      ringingCalls: [{ ...baseVoipCall, whatsappCallId: "call-2" }],
+    })
+    await render()
+
+    act(() => {
+      emit("whatsappCallClaimedElsewhere", {
+        whatsappCallId: "call-1",
+        wacid: "wacid-1",
+        answeredByUserId: "user-winner",
+      })
+    })
+
+    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
+      "call-1",
+    )
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe("answering")
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-2"])
+  })
+})
+
 const baseOutboundCall = {
   transport: "voip" as const,
   whatsappCallId: "out-call-1",
@@ -203,6 +370,7 @@ describe("ChatRealtime — outbound VoIP events", () => {
     authSessionMock.mockReturnValue({ data: { user: { id: "user-winner" } } })
     useWhatsappVoipCallStore.setState({
       call: null,
+      ringingCalls: [],
       pendingOutboundAnswer: null,
     })
     container = document.createElement("div")

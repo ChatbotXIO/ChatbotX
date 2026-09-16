@@ -55,7 +55,7 @@ export type ResolveRingTargetsResult =
  * Best-effort caller display name for the ring UI: `contactInbox -> contact
  * -> fullName`. Shared between the worker's realtime ring delivery
  * (`handleConnect`) and the builder's resume-after-refresh lookup
- * (`getResumableIncoming`), so both surfaces resolve a caller's name the
+ * (`listResumableIncoming`), so both surfaces resolve a caller's name the
  * same way. Resolved server-side (not on the client) so the dock shows the
  * name even when the agent doesn't have that conversation loaded. A miss
  * just falls back to the dock's "unknown caller" label — never blocks the
@@ -86,9 +86,9 @@ export const resolveWhatsappCallerName = async (
 }
 /**
  * Shaped to match the client `useWhatsappVoipCallStore.addIncoming` payload
- * (`WhatsappVoipIncomingData`) exactly, so `getResumableIncoming`'s result can
- * be handed straight to it after an on-mount resume fetch (F5 during a still-
- * ringing call).
+ * (`WhatsappVoipIncomingData`) exactly, so each entry of
+ * `listResumableIncoming`'s result array can be handed straight to it after
+ * an on-mount resume fetch (F5 during still-ringing calls).
  */
 export type StartOutboundDialInput = {
   wacid: string
@@ -134,11 +134,12 @@ class WhatsappVoipCallService {
   }
 
   /**
-   * Re-discovers a still-ringing, still-unclaimed VoIP call for `workspaceId`
-   * so an agent who refreshed their browser (F5) mid-ring can re-show the
-   * incoming-call UI — the one-shot realtime ring event is otherwise gone
-   * once the socket reconnects, even though the Redis offer/control TTL
-   * (~55s) means the call may still be answerable.
+   * Re-discovers every still-ringing, still-unclaimed VoIP call for
+   * `workspaceId` so an agent who refreshed their browser (F5) mid-ring can
+   * re-show ALL of them — ring-all means more than one caller can be ringing
+   * this workspace at once, and the one-shot realtime ring event for each is
+   * otherwise gone once the socket reconnects, even though the Redis
+   * offer/control TTL (~55s) means those calls may still be answerable.
    *
    * The DB query (`findRingingByWorkspace`) is only a coarse prefilter;
    * membership in the ring-all/unclaimed state is decided here, against
@@ -146,47 +147,93 @@ class WhatsappVoipCallService {
    * its control record exists, is still `phase: "reserved"` with
    * `reservedUserId: ""` (nobody has claimed it — a claimed call is being
    * answered by someone else and must not be re-shown), AND its offer is
-   * still present. Returns the FIRST such row (bounded by the repository's
-   * small `limit`, so this does at most that many Redis reads), or `null`
-   * when none qualify.
+   * still present. Every qualifying row is returned (bounded by the
+   * repository's small `limit`, so this does at most that many Redis reads
+   * — see {@link resolveResumableCandidate}), never just the first, so a
+   * caller who refreshes mid-ring sees every call still worth answering.
+   *
+   * Candidates are resolved CONCURRENTLY via one `Promise.all` over every
+   * candidate, never awaited one at a time — but this is NOT the same Redis
+   * cost as before this became plural: the old singular method returned at
+   * the FIRST qualifying candidate, while this resolves EVERY candidate
+   * unconditionally. At the repository's `FIND_RINGING_BY_WORKSPACE_LIMIT`
+   * of 20 that is up to 40 Redis reads (`readControl` + `readOffer` per
+   * candidate) plus up to 20 contact-inbox and 20 contact DB reads (via
+   * `resolveWhatsappCallerName`), all fired concurrently, per agent resume
+   * fetch. This only fires when calls are actually ringing (the DB
+   * prefilter), and the bound stays fixed at the repository's small limit
+   * regardless of how ringing-heavy the workspace gets, which is why the
+   * fan-out is the accepted design rather than a regression to fix. Still,
+   * `Promise.all` over the candidate list resolves in the ORIGINAL array
+   * order regardless of which Redis read finishes first,
+   * so the result stays exactly the order `findRingingByWorkspace` returned
+   * — newest-created-first (its `orderBy(desc(createdAt))`), with
+   * unqualified candidates simply absent rather than reordering the rest.
+   * The caller (the resume action, then the ring basket) can rely on that
+   * order for rendering. Returns `[]`, never `null`, when nothing qualifies.
    */
-  async getResumableIncoming(input: {
+  async listResumableIncoming(input: {
     workspaceId: string
-  }): Promise<ResumableIncomingVoipCall | null> {
+  }): Promise<ResumableIncomingVoipCall[]> {
     const candidates = await whatsappCallRepository.findRingingByWorkspace(
       input.workspaceId,
     )
 
-    for (const call of candidates) {
-      if (!call.wacid) {
-        continue
-      }
-      const [control, offer] = await Promise.all([
-        this.readControl(call.wacid),
-        whatsappVoipSignalingService.readOffer(call.wacid),
-      ])
-      if (!control) {
-        continue
-      }
-      if (control.phase !== "reserved" || control.reservedUserId !== "") {
-        continue
-      }
-      if (!offer) {
-        continue
-      }
+    const resolved = await Promise.all(
+      candidates.map((call) => this.resolveResumableCandidate(call)),
+    )
 
-      return {
-        whatsappCallId: call.id,
-        wacid: call.wacid,
-        conversationId: call.conversationId,
-        contactInboxId: call.contactInboxId,
-        contactName: await resolveWhatsappCallerName(call),
-        offer: { sdpType: "offer", sdp: offer.sdp },
-        deadlineAt: new Date(control.deadlineAt).toISOString(),
-      }
+    return resolved.filter(
+      (entry): entry is ResumableIncomingVoipCall => entry !== null,
+    )
+  }
+
+  /**
+   * Per-candidate liveness check backing {@link listResumableIncoming} — kept
+   * as the single place the three Redis liveness rules (control exists,
+   * `phase: "reserved"` + unclaimed, offer present) are evaluated, so they
+   * are never duplicated. Two Redis reads per candidate (`readControl` +
+   * `readOffer`), plus one `resolveWhatsappCallerName` (contactInbox ->
+   * contact) for a candidate that qualifies. Note this is strictly MORE work
+   * than the singular predecessor, which returned at the first qualifying
+   * row: the plural contract has to inspect every candidate, so a worst case
+   * is `FIND_RINGING_BY_WORKSPACE_LIMIT` (20) x (2 Redis + 1 name lookup),
+   * issued concurrently. Accepted because it is hard-bounded by that limit,
+   * runs only on an agent's inbox mount, and does nothing at all unless calls
+   * are actually ringing right then.
+   * Returns `null` for a disqualified candidate rather than throwing, so
+   * {@link listResumableIncoming} can run every candidate through
+   * `Promise.all` and simply filter the misses.
+   */
+  private async resolveResumableCandidate(
+    call: WhatsappCallModel,
+  ): Promise<ResumableIncomingVoipCall | null> {
+    if (!call.wacid) {
+      return null
+    }
+    const [control, offer] = await Promise.all([
+      this.readControl(call.wacid),
+      whatsappVoipSignalingService.readOffer(call.wacid),
+    ])
+    if (!control) {
+      return null
+    }
+    if (control.phase !== "reserved" || control.reservedUserId !== "") {
+      return null
+    }
+    if (!offer) {
+      return null
     }
 
-    return null
+    return {
+      whatsappCallId: call.id,
+      wacid: call.wacid,
+      conversationId: call.conversationId,
+      contactInboxId: call.contactInboxId,
+      contactName: await resolveWhatsappCallerName(call),
+      offer: { sdpType: "offer", sdp: offer.sdp },
+      deadlineAt: new Date(control.deadlineAt).toISOString(),
+    }
   }
 
   /**
@@ -475,7 +522,7 @@ class WhatsappVoipCallService {
    * - Other rung agents can `claimForAnswer` again once the control is back
    *   to `reserved`/`reservedUserId:""`.
    * - An agent who refreshed their browser mid-attempt is picked back up by
-   *   {@link WhatsappVoipCallService.getResumableIncoming}, which requires
+   *   {@link WhatsappVoipCallService.listResumableIncoming}, which requires
    *   exactly `phase:"reserved"` + `reservedUserId:""`.
    *
    * This does NOT loosen {@link ALLOWED_TRANSITIONS}/{@link

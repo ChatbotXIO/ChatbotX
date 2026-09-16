@@ -4011,7 +4011,9 @@
         "seek": "Tìm vị trí",
         "mute": "Tắt tiếng",
         "unmute": "Bật tiếng",
-        "playbackFailed": "Phát lại không thành công"
+        "playbackFailed": "Phát lại không thành công",
+        "answeredBy": "Nghe bởi {name}",
+        "calledBy": "Gọi bởi {name}"
       },
       "sheet": {
         "title": "Thông tin cuộc gọi",
@@ -4058,7 +4060,8 @@
         "dismiss": "Đóng",
         "statusNoAnswer": "Không có phản hồi",
         "eyebrowCallEnded": "CUỘC GỌI ĐÃ KẾT THÚC",
-        "statusConnectionLost": "Mất kết nối"
+        "statusConnectionLost": "Mất kết nối",
+        "ringingListTitle": "{count} cuộc gọi đến"
       },
       "capability": {
         "title": "Điều kiện gọi điện",
@@ -4073,6 +4076,12 @@
         "callsSubscription": "Số WhatsApp này được kết nối thủ công. Hãy đảm bảo app Meta của bạn đã đăng ký trường webhook calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — nếu không, cuộc gọi đi sẽ không kết nối được và cuộc gọi đến sẽ không đổ chuông.",
         "unsignedWebhook": "Số này cũng chưa cấu hình Meta App Secret, do đó các webhook đến không được xác minh chữ ký.",
         "callAnyway": "Vẫn gọi"
+      },
+      "replaceConfirm": {
+        "title": "Trả lời cuộc gọi mới?",
+        "description": "Kết thúc cuộc gọi với {current} để trả lời {incoming}?",
+        "confirm": "Kết thúc & Trả lời",
+        "cancel": "Hủy"
       }
     }
   },

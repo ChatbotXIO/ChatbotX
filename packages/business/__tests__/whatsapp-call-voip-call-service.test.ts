@@ -1635,7 +1635,7 @@ describe("whatsappVoipCallService.assertNoActiveCallForContact", () => {
   })
 })
 
-describe("whatsappVoipCallService.getResumableIncoming", () => {
+describe("whatsappVoipCallService.listResumableIncoming", () => {
   const callRow = (overrides: Record<string, unknown> = {}) => ({
     id: "call-1",
     wacid: "wacid.ABC",
@@ -1645,19 +1645,27 @@ describe("whatsappVoipCallService.getResumableIncoming", () => {
     ...overrides,
   })
 
-  const unclaimedControl = {
+  const unclaimedControl = (
+    overrides: Record<string, unknown> = {},
+  ): {
+    reservedUserId: string
+    phase: "reserved"
+    deadlineAt: number
+    fenceToken: string
+  } => ({
     reservedUserId: "",
     phase: "reserved" as const,
     deadlineAt: DEADLINE,
     fenceToken: "fence-1",
-  }
+    ...overrides,
+  })
   const offer = { sdp: "v=0...", deadlineAt: DEADLINE }
 
-  test("returns the first unclaimed+offer-present ringing call, shaped for addIncoming, with the contact name resolved", async () => {
+  test("returns the single unclaimed+offer-present ringing call, shaped for addIncoming, with the contact name resolved", async () => {
     mocks.findRingingByWorkspace.mockResolvedValue([callRow()])
     mocks.getJson.mockImplementation((key: string) =>
       key.startsWith("voip:ctrl:")
-        ? Promise.resolve(unclaimedControl)
+        ? Promise.resolve(unclaimedControl())
         : Promise.resolve(offer),
     )
     mocks.contactInboxFindBy.mockResolvedValue({
@@ -1666,102 +1674,198 @@ describe("whatsappVoipCallService.getResumableIncoming", () => {
     })
     mocks.contactFindById.mockResolvedValue({ fullName: "Hung Phan" })
 
-    const result = await whatsappVoipCallService.getResumableIncoming({
+    const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
     })
 
     expect(mocks.findRingingByWorkspace).toHaveBeenCalledWith("ws-1")
-    expect(result).toEqual({
-      whatsappCallId: "call-1",
-      wacid: "wacid.ABC",
-      conversationId: "conv-1",
-      contactInboxId: "ci-1",
-      contactName: "Hung Phan",
-      offer: { sdpType: "offer", sdp: "v=0..." },
-      deadlineAt: new Date(DEADLINE).toISOString(),
-    })
+    expect(result).toEqual([
+      {
+        whatsappCallId: "call-1",
+        wacid: "wacid.ABC",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contactName: "Hung Phan",
+        offer: { sdpType: "offer", sdp: "v=0..." },
+        deadlineAt: new Date(DEADLINE).toISOString(),
+      },
+    ])
   })
 
-  test('skips a row whose control is already claimed (reservedUserId !== "")', async () => {
-    mocks.findRingingByWorkspace.mockResolvedValue([callRow()])
-    mocks.getJson.mockImplementation((key: string) =>
-      key.startsWith("voip:ctrl:")
-        ? Promise.resolve({ ...unclaimedControl, reservedUserId: "agent-1" })
-        : Promise.resolve(offer),
-    )
+  test("returns every qualifying candidate, in the same order findRingingByWorkspace returned them", async () => {
+    const rows = [
+      callRow({ id: "call-1", wacid: "wacid.ONE" }),
+      callRow({ id: "call-2", wacid: "wacid.TWO", contactInboxId: "ci-2" }),
+      callRow({ id: "call-3", wacid: "wacid.THREE", contactInboxId: "ci-3" }),
+    ]
+    mocks.findRingingByWorkspace.mockResolvedValue(rows)
+    mocks.getJson.mockImplementation((key: string) => {
+      if (key.startsWith("voip:ctrl:")) {
+        return Promise.resolve(unclaimedControl())
+      }
+      return Promise.resolve(offer)
+    })
+    mocks.contactInboxFindBy.mockResolvedValue(null)
 
-    const result = await whatsappVoipCallService.getResumableIncoming({
+    const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
     })
 
-    expect(result).toBeNull()
+    expect(result.map((entry) => entry.whatsappCallId)).toEqual([
+      "call-1",
+      "call-2",
+      "call-3",
+    ])
+    expect(result.map((entry) => entry.wacid)).toEqual([
+      "wacid.ONE",
+      "wacid.TWO",
+      "wacid.THREE",
+    ])
   })
 
-  test("skips a row whose control is past the reserved phase", async () => {
-    mocks.findRingingByWorkspace.mockResolvedValue([callRow()])
-    mocks.getJson.mockImplementation((key: string) =>
-      key.startsWith("voip:ctrl:")
-        ? Promise.resolve({ ...unclaimedControl, phase: "answering" })
-        : Promise.resolve(offer),
-    )
+  test("excludes only the row missing a control record; its siblings still qualify", async () => {
+    const rows = [
+      callRow({ id: "call-1", wacid: "wacid.ONE" }),
+      callRow({ id: "call-2", wacid: "wacid.TWO" }),
+      callRow({ id: "call-3", wacid: "wacid.THREE" }),
+    ]
+    mocks.findRingingByWorkspace.mockResolvedValue(rows)
+    mocks.getJson.mockImplementation((key: string) => {
+      if (key === "voip:ctrl:wacid.TWO") {
+        return Promise.resolve(null)
+      }
+      if (key.startsWith("voip:ctrl:")) {
+        return Promise.resolve(unclaimedControl())
+      }
+      return Promise.resolve(offer)
+    })
 
-    const result = await whatsappVoipCallService.getResumableIncoming({
+    const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
     })
 
-    expect(result).toBeNull()
+    expect(result.map((entry) => entry.whatsappCallId)).toEqual([
+      "call-1",
+      "call-3",
+    ])
   })
 
-  test("skips a row with no offer", async () => {
-    mocks.findRingingByWorkspace.mockResolvedValue([callRow()])
-    mocks.getJson.mockImplementation((key: string) =>
-      key.startsWith("voip:ctrl:")
-        ? Promise.resolve(unclaimedControl)
-        : Promise.resolve(null),
-    )
+  test('excludes only the row whose control has phase !== "reserved"; its siblings still qualify', async () => {
+    const rows = [
+      callRow({ id: "call-1", wacid: "wacid.ONE" }),
+      callRow({ id: "call-2", wacid: "wacid.TWO" }),
+      callRow({ id: "call-3", wacid: "wacid.THREE" }),
+    ]
+    mocks.findRingingByWorkspace.mockResolvedValue(rows)
+    mocks.getJson.mockImplementation((key: string) => {
+      if (key === "voip:ctrl:wacid.TWO") {
+        return Promise.resolve(unclaimedControl({ phase: "answering" }))
+      }
+      if (key.startsWith("voip:ctrl:")) {
+        return Promise.resolve(unclaimedControl())
+      }
+      return Promise.resolve(offer)
+    })
 
-    const result = await whatsappVoipCallService.getResumableIncoming({
+    const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
     })
 
-    expect(result).toBeNull()
+    expect(result.map((entry) => entry.whatsappCallId)).toEqual([
+      "call-1",
+      "call-3",
+    ])
   })
 
-  test("skips a row with no control record", async () => {
+  test('excludes only the row whose control is already claimed (reservedUserId !== ""); its siblings still qualify', async () => {
+    const rows = [
+      callRow({ id: "call-1", wacid: "wacid.ONE" }),
+      callRow({ id: "call-2", wacid: "wacid.TWO" }),
+      callRow({ id: "call-3", wacid: "wacid.THREE" }),
+    ]
+    mocks.findRingingByWorkspace.mockResolvedValue(rows)
+    mocks.getJson.mockImplementation((key: string) => {
+      if (key === "voip:ctrl:wacid.TWO") {
+        return Promise.resolve(unclaimedControl({ reservedUserId: "agent-1" }))
+      }
+      if (key.startsWith("voip:ctrl:")) {
+        return Promise.resolve(unclaimedControl())
+      }
+      return Promise.resolve(offer)
+    })
+
+    const result = await whatsappVoipCallService.listResumableIncoming({
+      workspaceId: "ws-1",
+    })
+
+    expect(result.map((entry) => entry.whatsappCallId)).toEqual([
+      "call-1",
+      "call-3",
+    ])
+  })
+
+  test("excludes only the row missing an offer; its siblings still qualify", async () => {
+    const rows = [
+      callRow({ id: "call-1", wacid: "wacid.ONE" }),
+      callRow({ id: "call-2", wacid: "wacid.TWO" }),
+      callRow({ id: "call-3", wacid: "wacid.THREE" }),
+    ]
+    mocks.findRingingByWorkspace.mockResolvedValue(rows)
+    mocks.getJson.mockImplementation((key: string) => {
+      if (key === "voip:offer:wacid.TWO") {
+        return Promise.resolve(null)
+      }
+      if (key.startsWith("voip:ctrl:")) {
+        return Promise.resolve(unclaimedControl())
+      }
+      return Promise.resolve(offer)
+    })
+
+    const result = await whatsappVoipCallService.listResumableIncoming({
+      workspaceId: "ws-1",
+    })
+
+    expect(result.map((entry) => entry.whatsappCallId)).toEqual([
+      "call-1",
+      "call-3",
+    ])
+  })
+
+  test("returns an empty array, not null, when no candidate qualifies", async () => {
     mocks.findRingingByWorkspace.mockResolvedValue([callRow()])
     mocks.getJson.mockResolvedValue(null)
 
-    const result = await whatsappVoipCallService.getResumableIncoming({
+    const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
     })
 
-    expect(result).toBeNull()
+    expect(result).toEqual([])
   })
 
-  test("returns null when the workspace has no ringing calls", async () => {
+  test("returns an empty array, not null, when the workspace has no ringing calls", async () => {
     mocks.findRingingByWorkspace.mockResolvedValue([])
 
-    const result = await whatsappVoipCallService.getResumableIncoming({
+    const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
     })
 
-    expect(result).toBeNull()
+    expect(result).toEqual([])
   })
 
   test("falls back to a null contact name when contact lookup fails", async () => {
     mocks.findRingingByWorkspace.mockResolvedValue([callRow()])
     mocks.getJson.mockImplementation((key: string) =>
       key.startsWith("voip:ctrl:")
-        ? Promise.resolve(unclaimedControl)
+        ? Promise.resolve(unclaimedControl())
         : Promise.resolve(offer),
     )
     mocks.contactInboxFindBy.mockRejectedValue(new Error("db unreachable"))
 
-    const result = await whatsappVoipCallService.getResumableIncoming({
+    const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
     })
 
-    expect(result?.contactName).toBeNull()
+    expect(result[0]?.contactName).toBeNull()
   })
 })
 

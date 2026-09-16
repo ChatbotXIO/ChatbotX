@@ -41,7 +41,12 @@ export function ChatRealtime() {
     updateConversations,
     bubbleConversationToTop,
   } = useChatStore((state) => state)
-  const addVoipIncoming = useWhatsappVoipCallStore((state) => state.addIncoming)
+  const enqueueVoipRinging = useWhatsappVoipCallStore(
+    (state) => state.enqueueRinging,
+  )
+  const removeVoipRinging = useWhatsappVoipCallStore(
+    (state) => state.removeRinging,
+  )
   const handleVoipCallEnded = useWhatsappVoipCallStore(
     (state) => state.handleEnded,
   )
@@ -131,7 +136,12 @@ export function ChatRealtime() {
             })
             break
           case RealtimeEventType.whatsappCallTransportIncoming:
-            addVoipIncoming({
+            // Ring-all: several offers can be outstanding for this agent at
+            // once, so every incoming offer lands in the basket
+            // (`ringingCalls`) rather than the single `call` slot directly —
+            // `enqueueRinging` itself no-ops for an id already in the
+            // basket or occupying the slot (a redelivered offer).
+            enqueueVoipRinging({
               whatsappCallId: data.whatsappCallId,
               wacid: data.wacid,
               conversationId: data.conversationId,
@@ -147,6 +157,12 @@ export function ChatRealtime() {
             )
             break
           case RealtimeEventType.whatsappCallTransportEnded:
+            // Drop the basket entry (a no-op if this call was never in the
+            // basket — e.g. it was already promoted into the slot) AND
+            // still run the existing slot-side handler, which lingers an
+            // `ended` message for THIS agent if it was the one engaged with
+            // the call.
+            removeVoipRinging(data.whatsappCallId)
             handleVoipCallEnded(data.whatsappCallId, data.status)
             break
           case RealtimeEventType.whatsappCallOutboundAnswer:
@@ -171,11 +187,18 @@ export function ChatRealtime() {
             break
           case RealtimeEventType.whatsappCallClaimedElsewhere: {
             // Ring-all: broadcast to the whole workspace after another rung
-            // agent's accept succeeds. The winning agent already knows it
-            // won (it's mid-`answer`) and must ignore its own event, or
-            // this would clear the dialog out from under its own in-flight
-            // accept — only a losing agent still
-            // `incomingRinging` for this exact call clears its dialog.
+            // agent's accept succeeds. Drop the basket entry unconditionally
+            // — it is no longer offered to anyone (a no-op if it was never
+            // in this agent's basket, e.g. it had already been promoted).
+            removeVoipRinging(data.whatsappCallId)
+            // The winning agent already knows it won (it's mid-`answer`)
+            // and must ignore its own event for the SLOT, or this would
+            // clear the dialog out from under its own in-flight accept —
+            // only a losing agent still `incomingRinging` for this exact
+            // call in the slot clears its dialog. Kept as a safety net
+            // alongside the basket removal above (the slot and basket are
+            // disjoint, but a call could in principle still be sitting in
+            // the slot here via an older/redelivered event ordering).
             // Silent local dismiss, like `dismiss` — losing a ring-all
             // race is not a terminal call event FROM THIS AGENT's point of
             // view (the call is still very much alive, just answered by a

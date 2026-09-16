@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   voipReadControl: vi.fn(),
   voipMarkTerminated: vi.fn(),
   voipDeleteOffer: vi.fn(),
+  findNameAndEmail: vi.fn(),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
@@ -30,6 +31,9 @@ vi.mock("@chatbotx.io/business", () => ({
     invalidateTracking: mocks.invalidateTracking,
   },
   conversationService: { updateFlowStepState: mocks.updateFlowStepState },
+  userService: {
+    findNameAndEmail: mocks.findNameAndEmail,
+  },
   whatsappVoipCallService: {
     readControl: mocks.voipReadControl,
     endCall: mocks.voipMarkTerminated,
@@ -170,6 +174,104 @@ describe("finalizeCallSideEffects", () => {
     mocks.findByInboxIdForWorkspace.mockResolvedValue({
       callTranscriptionEnabled: false,
     })
+    mocks.findNameAndEmail.mockResolvedValue(undefined)
+  })
+
+  test("stamps an agent id+name snapshot for an inbound answered call", async () => {
+    mocks.findNameAndEmail.mockResolvedValue({
+      name: "Agent Smith",
+      email: "agent@example.com",
+    })
+
+    await finalizeCallSideEffects({
+      call: { ...call, answeredByUserId: "user-1" },
+      entity: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "completed",
+      },
+    })
+
+    expect(mocks.findNameAndEmail).toHaveBeenCalledWith("user-1")
+    expect(mocks.createOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          agentUserId: "user-1",
+          agentName: "Agent Smith",
+        }),
+      }),
+    )
+  })
+
+  test("stamps an agent id+name snapshot for an outbound (business-initiated) call — answeredByUserId is the INITIATOR there", async () => {
+    mocks.findNameAndEmail.mockResolvedValue({
+      name: "Agent Outbound",
+      email: "outbound@example.com",
+    })
+
+    await finalizeCallSideEffects({
+      call: {
+        ...call,
+        direction: "businessInitiated",
+        answeredByUserId: "user-2",
+      },
+      entity: {
+        type: "whatsapp_call",
+        direction: "businessInitiated",
+        status: "completed",
+      },
+    })
+
+    expect(mocks.findNameAndEmail).toHaveBeenCalledWith("user-2")
+    expect(mocks.createOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          agentUserId: "user-2",
+          agentName: "Agent Outbound",
+        }),
+      }),
+    )
+  })
+
+  test("skips the agent lookup entirely and stamps no agent fields when answeredByUserId is null", async () => {
+    await finalizeCallSideEffects({
+      call: { ...call, answeredByUserId: null },
+      entity: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "completed",
+      },
+    })
+
+    expect(mocks.findNameAndEmail).not.toHaveBeenCalled()
+    const attrs = mocks.createOrUpdate.mock.calls[0]?.[0]?.contentAttributes
+    expect(attrs).not.toHaveProperty("agentUserId")
+    expect(attrs).not.toHaveProperty("agentName")
+  })
+
+  test("a user id that no longer resolves to a user: id stamped, name absent, never throws", async () => {
+    mocks.findNameAndEmail.mockResolvedValue(undefined)
+
+    await expect(
+      finalizeCallSideEffects({
+        call: { ...call, answeredByUserId: "deleted-user" },
+        entity: {
+          type: "whatsapp_call",
+          direction: "userInitiated",
+          status: "completed",
+        },
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.createOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          agentUserId: "deleted-user",
+        }),
+      }),
+    )
+    const attrs = mocks.createOrUpdate.mock.calls[0]?.[0]?.contentAttributes
+    expect(attrs).not.toHaveProperty("agentName")
   })
 
   test("reports a call the number records but Meta refused to record as unavailable, not pending", async () => {

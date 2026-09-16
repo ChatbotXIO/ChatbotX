@@ -4011,7 +4011,9 @@
         "seek": "Derulează",
         "mute": "Fără sunet",
         "unmute": "Activează sunetul",
-        "playbackFailed": "Redare nereușită"
+        "playbackFailed": "Redare nereușită",
+        "answeredBy": "Preluat de {name}",
+        "calledBy": "Apelat de {name}"
       },
       "sheet": {
         "title": "Informații despre apel",
@@ -4058,7 +4060,8 @@
         "dismiss": "Închide",
         "statusNoAnswer": "Fără răspuns",
         "eyebrowCallEnded": "APEL ÎNCHEIAT",
-        "statusConnectionLost": "Conexiune pierdută"
+        "statusConnectionLost": "Conexiune pierdută",
+        "ringingListTitle": "{count} apeluri primite"
       },
       "capability": {
         "title": "Eligibilitate pentru apeluri",
@@ -4073,6 +4076,12 @@
         "callsSubscription": "Acest număr WhatsApp a fost conectat manual. Asigură-te că aplicația ta Meta este abonată la câmpul webhook calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — altfel apelurile efectuate nu se vor conecta, iar apelurile primite nu vor suna.",
         "unsignedWebhook": "Acest număr nu are niciun Meta App Secret configurat, astfel încât webhook-urile primite nu sunt verificate prin semnătură.",
         "callAnyway": "Apelează oricum"
+      },
+      "replaceConfirm": {
+        "title": "Răspunzi la apelul nou?",
+        "description": "Închei apelul cu {current} pentru a răspunde la {incoming}?",
+        "confirm": "Închide și răspunde",
+        "cancel": "Anulează"
       }
     }
   },

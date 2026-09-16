@@ -4011,7 +4011,9 @@
         "seek": "الانتقال",
         "mute": "كتم الصوت",
         "unmute": "إلغاء كتم الصوت",
-        "playbackFailed": "فشل التشغيل"
+        "playbackFailed": "فشل التشغيل",
+        "answeredBy": "تم الرد بواسطة {name}",
+        "calledBy": "تم الاتصال بواسطة {name}"
       },
       "sheet": {
         "title": "معلومات المكالمة",
@@ -4058,7 +4060,8 @@
         "dismiss": "إغلاق",
         "statusNoAnswer": "لا يوجد رد",
         "eyebrowCallEnded": "انتهت المكالمة",
-        "statusConnectionLost": "انقطع الاتصال"
+        "statusConnectionLost": "انقطع الاتصال",
+        "ringingListTitle": "{count} مكالمات واردة"
       },
       "capability": {
         "title": "أهلية الاتصال",
@@ -4073,6 +4076,12 @@
         "callsSubscription": "تم توصيل رقم واتساب هذا يدويًا. تأكد من أن تطبيق Meta الخاص بك مشترك في حقل webhook الخاص بـ calls (لوحة تحكم تطبيق Meta ← WhatsApp ← Configuration ← Webhook fields ← calls) — وإلا فلن تتصل المكالمات الصادرة ولن ترن المكالمات الواردة.",
         "unsignedWebhook": "هذا الرقم أيضًا لا يحتوي على مفتاح Meta App Secret مُهيأ، لذا لا يتم التحقق من توقيع الـ webhooks الواردة إليه.",
         "callAnyway": "الاتصال على أي حال"
+      },
+      "replaceConfirm": {
+        "title": "الرد على مكالمة جديدة؟",
+        "description": "إنهاء المكالمة مع {current} للرد على {incoming}؟",
+        "confirm": "إنهاء والرد",
+        "cancel": "إلغاء"
       }
     }
   },

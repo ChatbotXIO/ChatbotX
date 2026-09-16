@@ -4011,7 +4011,9 @@
         "seek": "Konum ara",
         "mute": "Sessize al",
         "unmute": "Sesi aç",
-        "playbackFailed": "Oynatma başarısız oldu"
+        "playbackFailed": "Oynatma başarısız oldu",
+        "answeredBy": "Yanıtlayan: {name}",
+        "calledBy": "Arayan: {name}"
       },
       "sheet": {
         "title": "Arama Bilgileri",
@@ -4058,7 +4060,8 @@
         "dismiss": "Kapat",
         "statusNoAnswer": "Yanıt yok",
         "eyebrowCallEnded": "ARAMA SONA ERDİ",
-        "statusConnectionLost": "Bağlantı kesildi"
+        "statusConnectionLost": "Bağlantı kesildi",
+        "ringingListTitle": "{count} gelen arama"
       },
       "capability": {
         "title": "Arama uygunluğu",
@@ -4073,6 +4076,12 @@
         "callsSubscription": "Bu WhatsApp numarası manuel olarak bağlandı. Meta uygulamanızın calls webhook alanına abone olduğundan emin olun (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — aksi takdirde giden aramalar bağlanmaz ve gelen aramalar çalmaz.",
         "unsignedWebhook": "Bu numaranın ayrıca yapılandırılmış bir Meta App Secret'ı yok, bu nedenle gelen webhook'ları imza doğrulaması yapılmıyor.",
         "callAnyway": "Yine de ara"
+      },
+      "replaceConfirm": {
+        "title": "Yeni arama yanıtlansın mı?",
+        "description": "{incoming} aramasını yanıtlamak için {current} ile olan aramayı sonlandırmak istiyor musunuz?",
+        "confirm": "Sonlandır ve Yanıtla",
+        "cancel": "İptal"
       }
     }
   },

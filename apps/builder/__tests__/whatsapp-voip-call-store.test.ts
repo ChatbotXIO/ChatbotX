@@ -123,12 +123,31 @@ describe("useWhatsappVoipCallStore", () => {
     expect(typeof call?.startedAt).toBe("number")
   })
 
-  test("markActive ignores a mismatched id", () => {
+  test("markActive ignores a mismatched id and reports false", () => {
     useWhatsappVoipCallStore.getState().addIncoming(incomingData)
-    useWhatsappVoipCallStore.getState().markActive("call-other")
+    const result = useWhatsappVoipCallStore.getState().markActive("call-other")
+    expect(result).toBe(false)
     expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
       WhatsappVoipCallPhase.incomingRinging,
     )
+  })
+
+  test("markActive reports true on success", () => {
+    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    const result = useWhatsappVoipCallStore.getState().markActive("call-1")
+    expect(result).toBe(true)
+  })
+
+  test("markActive is a no-op (and reports false) against a call already in the terminal ended phase", () => {
+    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    useWhatsappVoipCallStore.getState().handleEnded("call-1")
+
+    const result = useWhatsappVoipCallStore.getState().markActive("call-1")
+
+    expect(result).toBe(false)
+    const { call } = useWhatsappVoipCallStore.getState()
+    expect(call?.phase).toBe(WhatsappVoipCallPhase.ended)
+    expect(call?.startedAt).toBeUndefined()
   })
 
   test("setMuted toggles isMuted on the current call", () => {
@@ -486,5 +505,138 @@ describe("useWhatsappVoipCallStore — outbound", () => {
     useWhatsappVoipCallStore.getState().clearPendingOutboundAnswer()
 
     expect(useWhatsappVoipCallStore.getState().pendingOutboundAnswer).toBeNull()
+  })
+})
+
+describe("useWhatsappVoipCallStore — ringing basket", () => {
+  beforeEach(() => {
+    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
+  })
+
+  const ringA = incomingData
+  const ringB = {
+    ...incomingData,
+    whatsappCallId: "call-2",
+    wacid: "wacid-2",
+    contactName: "Grace Hopper",
+  }
+
+  test("enqueueRinging appends distinct rings in arrival order", () => {
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringB)
+
+    const { ringingCalls } = useWhatsappVoipCallStore.getState()
+    expect(ringingCalls.map((ringing) => ringing.whatsappCallId)).toEqual([
+      "call-1",
+      "call-2",
+    ])
+    expect(ringingCalls[0]).toMatchObject(ringA)
+  })
+
+  test("enqueueRinging is idempotent against a redelivered offer for an id already in the basket", () => {
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
+
+    expect(useWhatsappVoipCallStore.getState().ringingCalls).toHaveLength(1)
+  })
+
+  test("enqueueRinging is a no-op for an id already occupying the call slot", () => {
+    useWhatsappVoipCallStore.getState().addIncoming(ringA)
+
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
+
+    expect(useWhatsappVoipCallStore.getState().ringingCalls).toHaveLength(0)
+  })
+
+  test("removeRinging drops only the matching entry", () => {
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringB)
+
+    useWhatsappVoipCallStore.getState().removeRinging("call-1")
+
+    const { ringingCalls } = useWhatsappVoipCallStore.getState()
+    expect(ringingCalls.map((ringing) => ringing.whatsappCallId)).toEqual([
+      "call-2",
+    ])
+  })
+
+  test("removeRinging is a no-op when the id is absent", () => {
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
+
+    useWhatsappVoipCallStore.getState().removeRinging("call-missing")
+
+    expect(useWhatsappVoipCallStore.getState().ringingCalls).toHaveLength(1)
+  })
+
+  test("promoteRinging on a free slot moves the entry into the call slot at incomingRinging and drops it from the basket", () => {
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
+
+    const result = useWhatsappVoipCallStore.getState().promoteRinging("call-1")
+
+    expect(result).toBe(true)
+    const { call, ringingCalls } = useWhatsappVoipCallStore.getState()
+    expect(call).toMatchObject({
+      ...ringA,
+      transport: "voip",
+      direction: "inbound",
+      phase: WhatsappVoipCallPhase.incomingRinging,
+      isMuted: false,
+      isRecording: false,
+    })
+    expect(ringingCalls).toHaveLength(0)
+  })
+
+  test("promoteRinging is rejected while the slot holds an active call, leaving the slot and basket untouched", () => {
+    useWhatsappVoipCallStore.getState().addIncoming(ringB)
+    useWhatsappVoipCallStore
+      .getState()
+      .setPhase("call-2", WhatsappVoipCallPhase.active)
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
+
+    const result = useWhatsappVoipCallStore.getState().promoteRinging("call-1")
+
+    expect(result).toBe(false)
+    const { call, ringingCalls } = useWhatsappVoipCallStore.getState()
+    expect(call?.whatsappCallId).toBe("call-2")
+    expect(call?.phase).toBe(WhatsappVoipCallPhase.active)
+    expect(ringingCalls.map((ringing) => ringing.whatsappCallId)).toEqual([
+      "call-1",
+    ])
+  })
+
+  test("promoteRinging succeeds over a lingering ended call (a free slot)", () => {
+    useWhatsappVoipCallStore.getState().addIncoming(ringB)
+    useWhatsappVoipCallStore.getState().handleEnded("call-2")
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
+
+    const result = useWhatsappVoipCallStore.getState().promoteRinging("call-1")
+
+    expect(result).toBe(true)
+    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
+      "call-1",
+    )
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.incomingRinging,
+    )
+  })
+
+  test("promoteRinging returns false for an id that is not in the basket", () => {
+    const result = useWhatsappVoipCallStore
+      .getState()
+      .promoteRinging("call-missing")
+
+    expect(result).toBe(false)
+    expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+  })
+
+  test("clearRinging empties the basket and leaves the call slot alone", () => {
+    useWhatsappVoipCallStore.getState().addIncoming(ringB)
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
+
+    useWhatsappVoipCallStore.getState().clearRinging()
+
+    const { call, ringingCalls } = useWhatsappVoipCallStore.getState()
+    expect(ringingCalls).toHaveLength(0)
+    expect(call?.whatsappCallId).toBe("call-2")
   })
 })

@@ -312,6 +312,52 @@ const toContactPayload = (
   }
 }
 
+/**
+ * The identity to match a `contacts[]` entry against for ONE `calls[]`/
+ * `statuses[]` item. Named after `pickContactsForMessage`'s own `from`/
+ * `fromUserId` params (`handlers/webhook.ts`) even though the field it is
+ * matched against on the item varies by shape: `statuses[]` supplies
+ * `recipient_id`/`recipient_user_id` (no `from`, no direction), and
+ * `calls[]` supplies `from`/`from_user_id` for a USER_INITIATED item or
+ * `to`/`to_user_id` for a BUSINESS_INITIATED one — the caller picks which
+ * pair to pass in.
+ */
+type CallItemIdentity = { from?: string; fromUserId?: string }
+
+/**
+ * The `contacts[]` entry belonging to ONE `calls[]`/`statuses[]` item.
+ * Matched by identity (`wa_id`/`user_id` vs the item's own fields) rather
+ * than by position — mirrors `pickContactsForMessage` (`handlers/
+ * webhook.ts`) for the sibling `messages` webhook, which the calling API
+ * batches identically (an index-aligned `contacts[]` is not guaranteed).
+ * When nothing matches, the contact is omitted (leaving the item's own
+ * `from`/`from_user_id`/`to`/`to_user_id` authoritative) — except for the
+ * ordinary single-contact change whose item carries no identity of its own
+ * (e.g. a `call_recording_available`/`call_transcription_available` item,
+ * which never carries `from`/`to`), where that one contact IS the party.
+ */
+const pickContactForCallItem = (
+  contacts: z.infer<typeof callContactSchema>[] | undefined,
+  identity: CallItemIdentity,
+): WhatsappCallContactPayload | undefined => {
+  if (!Array.isArray(contacts) || contacts.length === 0) {
+    return
+  }
+  const { from, fromUserId } = identity
+  const matched = contacts.find(
+    (contact) =>
+      (from !== undefined && contact.wa_id === from) ||
+      (fromUserId !== undefined && contact.user_id === fromUserId),
+  )
+  if (matched) {
+    return toContactPayload([matched])
+  }
+  if (from === undefined && fromUserId === undefined) {
+    return contacts.length === 1 ? toContactPayload(contacts) : undefined
+  }
+  return
+}
+
 const readWebhookEntries = (rawBody: unknown): unknown[] => {
   if (typeof rawBody !== "object" || rawBody === null) {
     return []
@@ -594,7 +640,6 @@ export const extractCallEventPayloads = (
       }
 
       const { metadata, contacts, calls, statuses } = parsed.data
-      const contact = toContactPayload(contacts)
 
       // Interim statuses are pushed (and therefore enqueued) BEFORE call
       // events: when a batch carries both a REJECTED status and its
@@ -605,7 +650,10 @@ export const extractCallEventPayloads = (
         if (event) {
           payloads.push({
             phoneNumberId: metadata.phone_number_id,
-            contact,
+            contact: pickContactForCallItem(contacts, {
+              from: item.recipient_id,
+              fromUserId: item.recipient_user_id,
+            }),
             event,
           })
         }
@@ -614,9 +662,17 @@ export const extractCallEventPayloads = (
       for (const item of calls ?? []) {
         const event = normalizeCallItem(item)
         if (event) {
+          // BUSINESS_INITIATED matches the callee (`to`/`to_user_id`); every
+          // other item (USER_INITIATED, or an event with no direction, e.g.
+          // a recording/transcript-available item) matches the caller
+          // (`from`/`from_user_id`).
+          const identity: CallItemIdentity =
+            item.direction === "BUSINESS_INITIATED"
+              ? { from: item.to, fromUserId: item.to_user_id }
+              : { from: item.from, fromUserId: item.from_user_id }
           payloads.push({
             phoneNumberId: metadata.phone_number_id,
-            contact,
+            contact: pickContactForCallItem(contacts, identity),
             event,
           })
         }

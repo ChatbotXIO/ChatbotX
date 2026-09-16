@@ -2098,7 +2098,9 @@
         "seek": "דילוג למיקום",
         "mute": "השתקה",
         "unmute": "ביטול השתקה",
-        "playbackFailed": "ההפעלה נכשלה"
+        "playbackFailed": "ההפעלה נכשלה",
+        "answeredBy": "נענה על ידי {name}",
+        "calledBy": "התקשרות מאת {name}"
       },
       "sheet": {
         "title": "פרטי השיחה",
@@ -2145,7 +2147,8 @@
         "dismiss": "סגור",
         "statusNoAnswer": "אין מענה",
         "eyebrowCallEnded": "השיחה הסתיימה",
-        "statusConnectionLost": "החיבור אבד"
+        "statusConnectionLost": "החיבור אבד",
+        "ringingListTitle": "{count} שיחות נכנסות"
       },
       "capability": {
         "title": "זכאות לשיחות",
@@ -2160,6 +2163,12 @@
         "callsSubscription": "מספר WhatsApp זה חובר באופן ידני. ודא שהאפליקציה שלך ב-Meta רשומה לשדה ה-webhook calls (לוח הבקרה של אפליקציות Meta ← WhatsApp ← Configuration ← Webhook fields ← calls) — אחרת שיחות יוצאות לא יתחברו ושיחות נכנסות לא יצלצלו.",
         "unsignedWebhook": "למספר זה גם אין Meta App Secret מוגדר, ולכן ה-webhooks הנכנסים אליו אינם מאומתים בחתימה.",
         "callAnyway": "התקשר בכל זאת"
+      },
+      "replaceConfirm": {
+        "title": "לענות לשיחה חדשה?",
+        "description": "לסיים את השיחה עם {current} כדי לענות ל-{incoming}?",
+        "confirm": "סיים וענה",
+        "cancel": "ביטול"
       }
     }
   },

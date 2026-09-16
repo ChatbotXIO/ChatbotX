@@ -4011,7 +4011,9 @@
         "seek": "Søg",
         "mute": "Lydløs",
         "unmute": "Fjern lydløs",
-        "playbackFailed": "Afspilning mislykkedes"
+        "playbackFailed": "Afspilning mislykkedes",
+        "answeredBy": "Besvaret af {name}",
+        "calledBy": "Ringet op af {name}"
       },
       "sheet": {
         "title": "Opkaldsoplysninger",
@@ -4058,7 +4060,8 @@
         "dismiss": "Afvis",
         "statusNoAnswer": "Intet svar",
         "eyebrowCallEnded": "OPKALD AFSLUTTET",
-        "statusConnectionLost": "Forbindelsen blev afbrudt"
+        "statusConnectionLost": "Forbindelsen blev afbrudt",
+        "ringingListTitle": "{count} indgående opkald"
       },
       "capability": {
         "title": "Opkaldsberettigelse",
@@ -4073,6 +4076,12 @@
         "callsSubscription": "Dette WhatsApp-nummer blev tilsluttet manuelt. Sørg for, at din Meta-app abonnerer på calls-webhookfeltet (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — ellers kan udgående opkald ikke oprette forbindelse, og indgående opkald ringer ikke.",
         "unsignedWebhook": "Dette nummer har heller ikke en Meta App Secret konfigureret, så dets indgående webhooks er ikke signaturverificeret.",
         "callAnyway": "Ring alligevel"
+      },
+      "replaceConfirm": {
+        "title": "Besvare nyt opkald?",
+        "description": "Afslut opkaldet med {current} for at besvare {incoming}?",
+        "confirm": "Afslut og besvar",
+        "cancel": "Annuller"
       }
     }
   },

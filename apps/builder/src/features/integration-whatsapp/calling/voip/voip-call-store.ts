@@ -109,6 +109,20 @@ export type WhatsappVoipIncomingData = {
   deadlineAt: string
 }
 
+/**
+ * A call OFFERED to this agent but not yet answered — lives in the
+ * `ringingCalls` basket below. A basket entry owns no `RTCPeerConnection`,
+ * no microphone track and no timer, so the basket is pure data; it only
+ * becomes "the call this agent is engaged with" (the `call` slot) once
+ * `promoteRinging` moves it there.
+ *
+ * INVARIANT: a `whatsappCallId` is never simultaneously in `ringingCalls`
+ * and in `call` — `enqueueRinging` skips an id already occupying the slot,
+ * and `promoteRinging` removes the basket entry and writes the slot in the
+ * same `set()`, so there is no state in which both are true.
+ */
+export type WhatsappVoipRingingCall = WhatsappVoipIncomingData
+
 export type WhatsappVoipOutboundData = {
   whatsappCallId: string
   wacid: string
@@ -142,11 +156,48 @@ export type WhatsappVoipPendingOutboundAnswer = {
   sdp: string
 }
 
+/** True when the single `call` slot is unoccupied and can accept a new
+ * call — a lingering `ended` call is FREE, not occupied, since it is only
+ * still in the slot so the panel can show its terminal message for ~2s (see
+ * the identical rule inlined in `addIncoming` below). Factored out as a
+ * standalone helper — and exported — so every consumer of this rule
+ * (`promoteRinging` here, plus `WhatsappCallPanel`'s `isSlotFree` and the
+ * `slotIsEngaged` checks in `useWhatsappVoipCall`'s `answer()` and
+ * `WhatsappVoipCallProvider`) shares the ONE definition instead of
+ * re-deriving it inline in four places that would silently drift the moment
+ * a new terminal phase is added. `addIncoming`/`addOutbound`/`startPreparing`
+ * keep their own inline checks as-is, since this slice only ADDS to the
+ * store and does not touch the 14 existing mutations. */
+export function isCallSlotFree(call: WhatsappVoipCall | null): boolean {
+  return !call || call.phase === WhatsappVoipCallPhase.ended
+}
+
 type WhatsappVoipCallState = {
   /** At most one VoIP call at a time — offers are targeted to one reserved
    * agent, and inbound/outbound stay mutually exclusive in this one slot. */
   call: WhatsappVoipCall | null
+  /** Calls OFFERED to this agent but not yet answered — see
+   * `WhatsappVoipRingingCall`. Ordered by arrival (append-only, dropped by
+   * id). Disjoint from `call` at all times — see the invariant documented
+   * on `WhatsappVoipRingingCall`. */
+  ringingCalls: WhatsappVoipRingingCall[]
   pendingOutboundAnswer: WhatsappVoipPendingOutboundAnswer | null
+  /** Appends a new ring to the basket. A no-op when redelivered: either the
+   * id is already sitting in the basket, or it is the id currently occupying
+   * the `call` slot (already promoted, so no longer merely "offered") —
+   * either way a duplicate row must never appear. */
+  enqueueRinging: (data: WhatsappVoipIncomingData) => void
+  /** Drops a basket entry by id. A no-op when the id is not present. */
+  removeRinging: (whatsappCallId: string) => void
+  /** Atomically moves one basket entry into the single `call` slot, shaped
+   * exactly like `addIncoming`'s result (phase `incomingRinging`,
+   * `isMuted`/`isRecording` false). Returns `true` on success; `false` when
+   * the id is not in the basket, or the slot is occupied by a call that is
+   * not free (see `isCallSlotFree` — a lingering `ended` call IS free). On
+   * `false` the basket and slot are both left untouched. */
+  promoteRinging: (whatsappCallId: string) => boolean
+  /** Empties the basket. Does not touch the `call` slot. */
+  clearRinging: () => void
   addIncoming: (data: WhatsappVoipIncomingData) => void
   addOutbound: (data: WhatsappVoipOutboundData) => void
   /** Claims the single call slot INSTANTLY, keyed by the client `attemptId`
@@ -174,7 +225,20 @@ type WhatsappVoipCallState = {
     whatsappCallId: string,
     status: "ringing" | "accepted",
   ) => void
-  markActive: (whatsappCallId: string) => void
+  /** Transitions the matching call to `active` and stamps `startedAt`.
+   * Refuses (and reports `false`) when the id doesn't match the current
+   * slot, OR when the slot's call has already reached the terminal `ended`
+   * phase — e.g. the realtime `whatsappCallTransportEnded` handler already
+   * ran `handleEnded` for this exact id while an in-flight accept round-trip
+   * was still resolving. `ended` is terminal; no caller ever legitimately
+   * resurrects it out of it, so refusing here at the store level protects
+   * every present and future caller rather than requiring each call site to
+   * re-check the phase itself. Returns `true` only when the transition
+   * actually applied — mirroring `promoteRinging` — so a caller (see
+   * `useWhatsappVoipCall`'s answer flow) can tell a refusal apart from
+   * success and tear down / send a compensating hangup instead of silently
+   * treating a refused activation as a success. */
+  markActive: (whatsappCallId: string) => boolean
   setMuted: (muted: boolean) => void
   setRecording: (recording: boolean) => void
   setPendingOutboundAnswer: (data: WhatsappVoipPendingOutboundAnswer) => void
@@ -193,7 +257,79 @@ type WhatsappVoipCallState = {
 export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
   (set) => ({
     call: null,
+    ringingCalls: [],
     pendingOutboundAnswer: null,
+
+    enqueueRinging: (data) =>
+      set((state) => {
+        const alreadyInBasket = state.ringingCalls.some(
+          (ringing) => ringing.whatsappCallId === data.whatsappCallId,
+        )
+        // An id already occupying the slot has been promoted — it is being
+        // handled, not merely offered, so a redelivered offer for it must
+        // not re-appear in the basket (that would violate the
+        // basket/slot-disjoint invariant the moment it is later promoted
+        // again).
+        const alreadyInSlot = state.call?.whatsappCallId === data.whatsappCallId
+        if (alreadyInBasket || alreadyInSlot) {
+          return state
+        }
+        return {
+          ringingCalls: [...state.ringingCalls, data],
+        }
+      }),
+
+    removeRinging: (whatsappCallId) =>
+      set((state) => {
+        const nextRingingCalls = state.ringingCalls.filter(
+          (ringing) => ringing.whatsappCallId !== whatsappCallId,
+        )
+        if (nextRingingCalls.length === state.ringingCalls.length) {
+          return state
+        }
+        return { ringingCalls: nextRingingCalls }
+      }),
+
+    // ATOMICITY: zustand's `set` updater receives the current state and
+    // returns the next partial state, but has no channel back to the
+    // caller — while `get()` gives a channel back but, called separately
+    // from `set()`, would open a window between "decide" and "write" where
+    // the decision could go stale before the write lands. Both the decision
+    // (is the id in the basket? is the slot free?) and the write (remove
+    // from the basket, occupy the slot) therefore happen inside ONE
+    // synchronous `set` callback below; a closed-over `promoted` variable
+    // smuggles the boolean result back out. `set` invokes its updater
+    // synchronously (zustand has no async/batched update path), so
+    // `promoted` is guaranteed to be assigned before this function returns —
+    // there is no window in which another caller could observe or mutate
+    // state between the check and the write.
+    promoteRinging: (whatsappCallId) => {
+      let promoted = false
+      set((state) => {
+        const index = state.ringingCalls.findIndex(
+          (ringing) => ringing.whatsappCallId === whatsappCallId,
+        )
+        if (index === -1 || !isCallSlotFree(state.call)) {
+          return state
+        }
+        const incoming = state.ringingCalls[index]
+        promoted = true
+        return {
+          ringingCalls: state.ringingCalls.filter((_, i) => i !== index),
+          call: {
+            ...incoming,
+            transport: "voip",
+            direction: WhatsappVoipCallDirection.inbound,
+            phase: WhatsappVoipCallPhase.incomingRinging,
+            isMuted: false,
+            isRecording: false,
+          },
+        }
+      })
+      return promoted
+    },
+
+    clearRinging: () => set({ ringingCalls: [] }),
 
     addIncoming: (data) =>
       set((state) => {
@@ -356,18 +492,26 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
         }
       }),
 
-    markActive: (whatsappCallId) =>
-      set((state) =>
-        state.call?.whatsappCallId === whatsappCallId
-          ? {
-              call: {
-                ...state.call,
-                phase: WhatsappVoipCallPhase.active,
-                startedAt: Date.now(),
-              },
-            }
-          : state,
-      ),
+    markActive: (whatsappCallId) => {
+      let activated = false
+      set((state) => {
+        if (
+          state.call?.whatsappCallId !== whatsappCallId ||
+          state.call.phase === WhatsappVoipCallPhase.ended
+        ) {
+          return state
+        }
+        activated = true
+        return {
+          call: {
+            ...state.call,
+            phase: WhatsappVoipCallPhase.active,
+            startedAt: Date.now(),
+          },
+        }
+      })
+      return activated
+    },
 
     setMuted: (muted) =>
       set((state) =>

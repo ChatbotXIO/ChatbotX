@@ -454,7 +454,7 @@ class WhatsappCallRepository {
   /**
    * Coarse DB-side prefilter for "still-ringing, unclaimed calls" in a
    * workspace — backs the on-mount resume-after-refresh fetch
-   * (`whatsappVoipCallService.getResumableIncoming`). `wacid IS NOT NULL AND
+   * (`whatsappVoipCallService.listResumableIncoming`). `wacid IS NOT NULL AND
    * answeredByUserId IS NULL` only narrows to rows that LOOK resumable; the
    * AUTHORITATIVE check is the Redis offer/control record the service layer
    * reads for each candidate, since a row can still be `ringing` here after

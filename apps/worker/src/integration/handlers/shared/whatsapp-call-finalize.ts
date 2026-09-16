@@ -3,6 +3,7 @@ import {
   contactInboxService,
   conversationService,
   sendToWorkspaceMember,
+  userService,
   whatsappVoipCallService,
   whatsappVoipSignalingService,
 } from "@chatbotx.io/business"
@@ -211,6 +212,39 @@ const emitCallEndedToAgent = async (
   }
 }
 
+/**
+ * Display-name snapshot for the agent on the call (`WhatsappCall.answeredByUserId`),
+ * resolved through the business layer exactly once at finalize time — never
+ * re-resolved on read, so a later rename or account deletion cannot rewrite
+ * this card's history. Skips the lookup entirely when there is no id: this
+ * runs on every call finalize in a high-volume chatbot, and most calls (any
+ * legacy row, or an inbound call nobody answered) have none.
+ *
+ * Never throws: this is bookkeeping on an already-completed call, so a
+ * lookup failure or a since-deleted user id just means the id is stamped
+ * with no name — the card renders no agent line rather than an empty label.
+ */
+const resolveCallAgentSnapshot = async (
+  answeredByUserId: string | null | undefined,
+): Promise<Pick<MessageWhatsappCallEntity, "agentUserId" | "agentName">> => {
+  if (!answeredByUserId) {
+    return {}
+  }
+  try {
+    const user = await userService.findNameAndEmail(answeredByUserId)
+    return {
+      agentUserId: answeredByUserId,
+      ...(user?.name ? { agentName: user.name } : {}),
+    }
+  } catch (error) {
+    logger.warn(
+      { err: error, userId: answeredByUserId },
+      "Whatsapp call: unable to resolve agent name for call activity card",
+    )
+    return { agentUserId: answeredByUserId }
+  }
+}
+
 export type FinalizeCallSideEffectsInput = {
   call: WhatsappCallModel
   entity: MessageWhatsappCallEntity
@@ -247,6 +281,7 @@ export const finalizeCallSideEffects = async (
   const answerSeconds = resolveAnswerSeconds(input.startedAt, call.createdAt)
   const { recordingRequested, transcriptionRequested, recordingUnavailable } =
     await resolveCallActivityRequestFlags(call)
+  const agentSnapshot = await resolveCallAgentSnapshot(call.answeredByUserId)
 
   // The finalize message IS the single progressive activity card — it carries
   // the full flag set from the start (all false/unknown until the
@@ -263,6 +298,7 @@ export const finalizeCallSideEffects = async (
     hasSummary: false,
     recordingExpired: false,
     recordingUnavailable,
+    ...agentSnapshot,
   }
 
   // The card's promise to the agent, in one greppable line: whether a
