@@ -46,7 +46,7 @@ export const userPersistentMenusPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/user-persistent-menus/{id}",
-      summary: "Get a user persistent menu by id",
+      summary: "Get user persistent menu",
       description:
         "Returns one persistent menu's items. Use `userPersistentMenus.list` to find its id first.",
       tags: ["User Persistent Menus"],
@@ -72,7 +72,7 @@ export const userPersistentMenusPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/user-persistent-menus",
-      summary: "Create a user persistent menu",
+      summary: "Create user persistent menu",
       description:
         "Adds a persistent menu of quick-reply buttons shown to channel users. Use `userPersistentMenus.list` first to avoid duplicating an existing one.",
       successStatus: 201,
@@ -94,7 +94,7 @@ export const userPersistentMenusPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/user-persistent-menus/{id}",
-      summary: "Update a user persistent menu",
+      summary: "Update user persistent menu",
       description:
         "Replaces an existing persistent menu's items. Call `userPersistentMenus.get` to inspect current values first.",
       tags: ["User Persistent Menus"],
@@ -116,7 +116,7 @@ export const userPersistentMenusPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/user-persistent-menus/{id}",
-      summary: "Delete a user persistent menu",
+      summary: "Delete user persistent menu",
       description:
         "Permanently deletes a persistent menu. Use `userPersistentMenus.list` to find its id first.",
       successStatus: 204,

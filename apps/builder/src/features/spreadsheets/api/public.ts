@@ -56,7 +56,7 @@ export const spreadsheetsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/spreadsheets/{id}",
-      summary: "Get a spreadsheet",
+      summary: "Get spreadsheet",
       description:
         "Returns one connected spreadsheet's settings. Use `spreadsheets.list` to find its id first.",
       tags: ["Spreadsheets"],
@@ -76,7 +76,7 @@ export const spreadsheetsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/spreadsheets",
-      summary: "Create a spreadsheet",
+      summary: "Create spreadsheet",
       description:
         "Connects a Google Sheets spreadsheet by its shareable URL. Requires the workspace's Google Sheets integration to be set up first.",
       successStatus: 201,
@@ -98,7 +98,7 @@ export const spreadsheetsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/spreadsheets/{id}",
-      summary: "Update a spreadsheet",
+      summary: "Update spreadsheet",
       description:
         "Changes an existing spreadsheet connection's settings. Call `spreadsheets.get` to inspect current values first.",
       tags: ["Spreadsheets"],
@@ -120,7 +120,7 @@ export const spreadsheetsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/spreadsheets/{id}",
-      summary: "Delete a spreadsheet",
+      summary: "Delete spreadsheet",
       description:
         "Disconnects a spreadsheet. Use `spreadsheets.list` to find its id first.",
       successStatus: 204,

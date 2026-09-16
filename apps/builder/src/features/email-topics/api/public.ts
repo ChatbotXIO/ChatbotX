@@ -72,7 +72,7 @@ export const emailTopicsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/email-topics",
-      summary: "Create an email topic",
+      summary: "Create email topic",
       description:
         "Adds an email topic used to group broadcast unsubscribe preferences. Use `emailTopics.list` first to avoid duplicating an existing one.",
       successStatus: 201,

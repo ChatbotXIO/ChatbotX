@@ -46,7 +46,7 @@ export const productsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/products/{id}",
-      summary: "Get a product",
+      summary: "Get product",
       description:
         "Returns full product detail, including variant options, variants, and addons.",
       tags: ["Products"],
@@ -69,7 +69,7 @@ export const productsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/products",
-      summary: "Create a product",
+      summary: "Create product",
       description:
         "Adds a product, including its variant options, variants, and addons, in one call.",
       tags: ["Products"],
@@ -89,7 +89,7 @@ export const productsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/products/{id}",
-      summary: "Replace a product",
+      summary: "Replace product",
       description:
         "Fully replaces the product, including its variant options, variants, and addons.",
       successStatus: 204,
@@ -118,7 +118,7 @@ export const productsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/products/{id}",
-      summary: "Delete a product",
+      summary: "Delete product",
       description:
         "Permanently deletes a product and its variants/addons. Use `products.list` to find its id first.",
       successStatus: 204,

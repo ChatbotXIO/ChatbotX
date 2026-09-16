@@ -94,7 +94,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/campaigns",
-      summary: "Create a messaging ad",
+      summary: "Create messaging ad",
       description:
         "Starts a draft click-to-message ad campaign (campaign/ad set/ad) for the given audience and creative. Use `ads.publishCampaign` to publish it once ready.",
       successStatus: 201,
@@ -152,7 +152,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/campaigns/{operationId}/publish",
-      summary: "Publish a messaging ad",
+      summary: "Publish messaging ad",
       description:
         "Publishes a draft messaging ad's campaign/ad set/ad to Meta so it starts delivering. Use `ads.pauseCampaign` to pause it afterward.",
       tags: ["Ads"],
@@ -172,7 +172,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/campaigns/{operationId}/pause",
-      summary: "Pause a published messaging ad on Meta",
+      summary: "Pause published messaging ad on Meta",
       description:
         "Pauses delivery of a published messaging ad without deleting it. There is no dedicated resume operation — publish again or edit via Meta directly.",
       tags: ["Ads"],
@@ -192,7 +192,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/ads/campaigns/{operationId}",
-      summary: "Delete a messaging ad's campaign/ad set/ad on Meta",
+      summary: "Delete messaging ad campaign/ad set/ad on Meta",
       description:
         "Permanently removes a messaging ad's campaign/ad set/ad from Meta. Use `ads.listCampaigns` to find its `operationId` first.",
       tags: ["Ads"],
@@ -420,7 +420,7 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/connections",
-      summary: "List messaging-ads connections for a channel",
+      summary: "List messaging-ads connections for channel",
       description:
         "Returns messaging-ads connections for one channel, including their status. Use `ads.disconnectConnection` to remove one.",
       tags: ["Ads"],

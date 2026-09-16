@@ -30,7 +30,7 @@ export const tokenPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/token",
-      summary: "Get the calling token's workspace id, permission, and scopes",
+      summary: "Get calling token workspace id, permission, and scopes",
       description:
         "Reports the calling token's workspace id, permission, and scopes, including whether `scopes: null` grants unrestricted access. Call `capabilities.get` to discover useful resources before using the token with another operation.",
       tags: ["Capabilities"],

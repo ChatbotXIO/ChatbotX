@@ -28,7 +28,7 @@ export const setContactSequencesPublicRequest = z.object({
     .array(zodBigintAsString())
     .max(100)
     .describe(
-      "Sequence ids (numeric strings) the contact should be enrolled in, up to 100. Get them from `sequences.list`.",
+      "Sequence ids (numeric strings) the contact should be subscribed to, up to 100. Get them from `sequences.list`.",
     ),
 })
 export type SetContactSequencesPublicRequest = z.infer<

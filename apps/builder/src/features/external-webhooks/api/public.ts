@@ -46,7 +46,7 @@ export const externalWebhooksPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/external-webhooks",
-      summary: "Register an external webhook",
+      summary: "Register external webhook",
       description:
         "Registers a URL to receive events for a given event name. Idempotent — registering the same (event, url) again returns the existing registration.",
       successStatus: 201,
@@ -87,7 +87,7 @@ export const externalWebhooksPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/external-webhooks/{id}",
-      summary: "Unregister an external webhook",
+      summary: "Unregister external webhook",
       description:
         "Permanently deletes a registered external webhook. Use `externalWebhooks.list` to find its id first.",
       successStatus: 204,

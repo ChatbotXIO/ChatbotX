@@ -126,7 +126,7 @@ export const contactsMessagesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/{identifier}/messages/{messageId}",
-      summary: "Get a message by ID for a contact",
+      summary: "Get message for contact",
       description:
         "Returns one message from a contact's conversation. Call `contacts.listMessages` to find its `messageId` first.",
       tags: ["Contacts"],

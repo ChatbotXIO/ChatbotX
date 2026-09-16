@@ -61,7 +61,7 @@ export const contactsCrudPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contacts/search",
-      summary: "Search contacts with a filter body",
+      summary: "Search contacts with filter body",
       description:
         "Use this when a large or nested `contactFilter` cannot fit conveniently in query parameters. It returns the same contact data as `contacts.list`, including `include` and `withCount` options.",
       tags: ["Contacts"],
@@ -89,7 +89,7 @@ export const contactsCrudPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/count",
-      summary: "Count contacts matching a filter",
+      summary: "Count contacts matching filter",
       description:
         "Counts contacts matching the same filter shape as `contacts.list`/`contacts.search`, without paginating the rows.",
       tags: ["Contacts"],
@@ -110,7 +110,7 @@ export const contactsCrudPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/{identifier}",
-      summary: "Get a contact by identifier",
+      summary: "Get contact",
       description:
         "Use this after locating a prefixed id, email, or phone identifier to inspect one contact. Call `contacts.list` to search first, or use `contacts.sendMessage` to contact the result.",
       tags: ["Contacts"],
@@ -143,7 +143,7 @@ export const contactsCrudPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contacts",
-      summary: "Create a contact",
+      summary: "Create contact",
       description:
         "Adds a workspace contact outside a channel conversation, with contact details for later messaging. Use `contacts.list` to check for an existing contact and `contacts.sendMessage` after creating one.",
       tags: ["Contacts"],
@@ -187,7 +187,7 @@ export const contactsCrudPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contacts/import",
-      summary: "Import contacts from a file",
+      summary: "Import contacts from file",
       description:
         "Starts an asynchronous bulk import of contacts from a previously uploaded file (`fileId`) into the given inbox. Returns an `importId` immediately; the import itself runs in the background, so newly imported contacts may not appear in `contacts.list` right away.",
       successStatus: 201,
@@ -246,7 +246,7 @@ export const contactsCrudPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/contacts/{identifier}",
-      summary: "Delete a contact",
+      summary: "Delete contact",
       description:
         "Permanently deletes the contact identified by `identifier`. Use `contacts.block` instead if you only need to stop the contact from messaging in.",
       successStatus: 204,
@@ -279,7 +279,7 @@ export const contactsCrudPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contacts/{identifier}/block",
-      summary: "Block a contact",
+      summary: "Block contact",
       description:
         "Marks the contact identified by `identifier` as blocked, preventing further inbound messages from reaching the workspace. Use `contacts.unblock` to reverse this.",
       successStatus: 204,
@@ -311,7 +311,7 @@ export const contactsCrudPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contacts/{identifier}/unblock",
-      summary: "Unblock a contact",
+      summary: "Unblock contact",
       description:
         "Reverses `contacts.block` for the contact identified by `identifier`, allowing inbound messages again.",
       successStatus: 204,
@@ -343,7 +343,7 @@ export const contactsCrudPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contacts/{identifier}/upsert",
-      summary: "Upsert a contact by identifier",
+      summary: "Upsert contact",
       description:
         "Creates the contact identified by `identifier` if it doesn't exist yet, otherwise updates the given fields on the existing one.",
       tags: ["Contacts"],

@@ -22,7 +22,7 @@ export const contactsTagsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/{identifier}/tags",
-      summary: "Get all tags added to this contact",
+      summary: "Get all tags added to contact",
       description:
         "Use this to inspect tags attached to a contact after resolving its identifier with `contacts.get`. Call `contacts.addTags` to attach more tags or `tags.list` to discover available tags.",
       tags: ["Contacts"],
@@ -55,7 +55,7 @@ export const contactsTagsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contacts/{identifier}/tags",
-      summary: "Add tags to the contact",
+      summary: "Add tags to contact",
       description:
         "Attaches the given tag ids to the contact identified by `identifier`; tags already on the contact are left as-is. Use `tags.list`/`tags.create` first to resolve names to ids.",
       successStatus: 204,
@@ -95,7 +95,7 @@ export const contactsTagsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/contacts/{identifier}/tags",
-      summary: "Remove tags from the contact",
+      summary: "Remove tags from contact",
       description:
         "Detaches the given tag ids from the contact identified by `identifier`; tags not currently on the contact are ignored. Use `contacts.listTags` to see current tags first.",
       successStatus: 204,
@@ -135,7 +135,7 @@ export const contactsTagsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contacts/{identifier}/tags/by-name",
-      summary: "Add tags to the contact by name",
+      summary: "Add tags to contact by name",
       description:
         'Same as `addTags` but takes tag names instead of ids — existing tags whose name matches are reused, unmatched names are created. Use this when you know the tag name but not its id (call `tags.list` first only if you need the id back). Example: `{"tags":["VIP"]}`.',
       successStatus: 204,
@@ -161,7 +161,7 @@ export const contactsTagsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/contacts/{identifier}/tags",
-      summary: "Replace all tags on the contact",
+      summary: "Replace all tags on contact",
       description:
         'Sets the contact\'s tags to exactly this list, by tag name — tags not in `tags` are removed, new names are created as tags if they don\'t already exist. Pass an empty array to clear all tags. Example: `{"tags":["VIP","Newsletter"]}`.',
       successStatus: 204,

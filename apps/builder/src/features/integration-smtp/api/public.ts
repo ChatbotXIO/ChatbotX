@@ -63,7 +63,7 @@ export const smtpIntegrationsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/smtp-integrations/{id}",
-      summary: "Get an SMTP integration by id",
+      summary: "Get SMTP integration",
       description:
         "Returns one SMTP integration's settings, excluding the stored password. Use `smtpIntegrations.list` to find its id first.",
       tags,
@@ -90,7 +90,7 @@ export const smtpIntegrationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/smtp-integrations",
-      summary: "Create an SMTP integration",
+      summary: "Create SMTP integration",
       description:
         "Connects an SMTP server for outbound email broadcasts. Use `smtpIntegrations.list` first to avoid duplicating an existing one.",
       successStatus: 201,
@@ -129,7 +129,7 @@ export const smtpIntegrationsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/smtp-integrations/{id}",
-      summary: "Update an SMTP integration",
+      summary: "Update SMTP integration",
       description:
         "Changes an existing SMTP integration's settings, including its credentials. Call `smtpIntegrations.get` to inspect current values first.",
       tags,
@@ -162,7 +162,7 @@ export const smtpIntegrationsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/smtp-integrations/{id}",
-      summary: "Delete an SMTP integration",
+      summary: "Delete SMTP integration",
       description:
         "Disconnects an SMTP integration. Use `smtpIntegrations.list` to find its id first.",
       successStatus: 204,
