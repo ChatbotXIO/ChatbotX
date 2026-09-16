@@ -26,3 +26,28 @@ export function envInt(
 
   return value
 }
+
+/**
+ * Read a boolean from process.env with a safe fallback. Accepts true/false
+ * and 1/0; any other value logs a warning and returns the fallback.
+ */
+export function envBool(name: string, fallback: boolean): boolean {
+  const raw = process.env[name]
+  if (raw === undefined || raw === "") {
+    return fallback
+  }
+
+  const value = raw.trim().toLowerCase()
+  if (value === "true" || value === "1") {
+    return true
+  }
+  if (value === "false" || value === "0") {
+    return false
+  }
+
+  logger.warn(
+    { name, value: raw, fallback },
+    "Invalid boolean environment value, using fallback",
+  )
+  return fallback
+}
