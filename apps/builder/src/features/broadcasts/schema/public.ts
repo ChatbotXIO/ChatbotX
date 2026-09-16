@@ -10,8 +10,12 @@ import { publicListRequest } from "@/lib/public-api/list"
 // navigation detail, not a public API concern) — narrow variants declared
 // here instead of reusing those directly, mirroring `analytics/schema/public.ts`.
 export const publicListBroadcastContactsRequest = z.object({
-  id: zodBigintAsString(),
-  eventType: broadcastEventType,
+  id: zodBigintAsString().describe(
+    "Broadcast id. Get it from `broadcasts.list`.",
+  ),
+  eventType: broadcastEventType.describe(
+    "Delivery event to filter recipients by (e.g. sent, delivered, read, failed).",
+  ),
   page: publicListRequest.shape.page,
   perPage: publicListRequest.shape.perPage,
 })

@@ -46,7 +46,9 @@ export const timeRangeWithGranularityDMPublicRequest =
   timeRangeQueryWithGranularityDMSchema.omit({ workspaceId: true })
 
 export const contactsByDimensionPublicRequest = timeRangePublicRequest.extend({
-  dimension: z.enum(["country", "channel", "source"]),
+  dimension: z
+    .enum(["country", "channel", "source"])
+    .describe("How to group contact counts."),
 })
 
 // ─────────────────────────────────────────────────────────────────────────

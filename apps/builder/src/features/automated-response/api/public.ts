@@ -2,6 +2,7 @@ import { automatedResponseService } from "@chatbotx.io/business"
 import { automatedResponseTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -21,11 +22,16 @@ export const keywordsPublicRouter = {
       method: "GET",
       path: "/v1/keywords",
       summary: "List keywords (automated responses)",
+      description:
+        "Use this to find keyword-triggered automations by type before inspecting one with `keywords.get` or adding one with `keywords.create`. Returns inbound or comment automations.",
       tags: ["Keywords"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       publicListRequest.extend({
-        type: automatedResponseTypes.default("inbound"),
+        type: automatedResponseTypes
+          .default("inbound")
+          .describe("Automation type: inbound message or comment reply."),
       }),
     )
     .output(publicListResponse(publicKeywordResource))
@@ -46,13 +52,19 @@ export const keywordsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/keywords/{id}",
-      summary: "Get a keyword automation by id",
+      summary: "Get keyword automation",
+      description:
+        "Returns one keyword automation. Use `keywords.list` to find its id first.",
       tags: ["Keywords"],
     })
     .input(
       z.object({
-        id: zodBigintAsString(),
-        type: automatedResponseTypes.default("inbound"),
+        id: zodBigintAsString().describe(
+          "Keyword automation id. Get it from `keywords.list`.",
+        ),
+        type: automatedResponseTypes
+          .default("inbound")
+          .describe("Automation type: inbound message or comment reply."),
       }),
     )
     .output(publicKeywordResource)
@@ -70,17 +82,38 @@ export const keywordsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/keywords",
-      summary: "Create a keyword automation",
+      summary: "Create keyword automation",
+      description:
+        "Adds a keyword automation that sends text or starts a flow for matching inbound messages or comments. Use `keywords.list` first to inspect existing rules and `flows.list` to resolve a flow.",
       successStatus: 201,
       tags: ["Keywords"],
     })
     .input(
       z.object({
-        type: automatedResponseTypes.default("inbound"),
-        keywords: z.array(z.string().min(1).max(255)).min(1),
-        text: z.string().min(1).nullish(),
-        flowId: zodBigintAsString().nullish(),
-        folderId: zodBigintAsString().nullish(),
+        type: automatedResponseTypes
+          .default("inbound")
+          .describe("Automation type: inbound message or comment reply."),
+        keywords: z
+          .array(z.string().min(1).max(255))
+          .min(1)
+          .describe("Keyword phrases that trigger this automation."),
+        text: z
+          .string()
+          .min(1)
+          .nullish()
+          .describe(
+            "Reply text to send when matched. Mutually exclusive with flowId in practice.",
+          ),
+        flowId: zodBigintAsString()
+          .nullish()
+          .describe(
+            "Flow id (numeric string) to start when matched instead of sending text.",
+          ),
+        folderId: zodBigintAsString()
+          .nullish()
+          .describe(
+            "Folder id (numeric string) to organize this automation under.",
+          ),
       }),
     )
     .output(publicKeywordResource)
@@ -94,17 +127,39 @@ export const keywordsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/keywords/{id}",
-      summary: "Update a keyword automation",
+      summary: "Update keyword automation",
+      description:
+        "Overwrites the given fields on an existing keyword automation. Use `keywords.get` to inspect current values first.",
       tags: ["Keywords"],
     })
     .input(
       z.object({
-        id: zodBigintAsString(),
-        type: automatedResponseTypes.default("inbound"),
-        keywords: z.array(z.string().min(1).max(255)).min(1).optional(),
-        text: z.string().min(1).nullish(),
-        flowId: zodBigintAsString().nullish(),
-        folderId: zodBigintAsString().nullish(),
+        id: zodBigintAsString().describe(
+          "Keyword automation id. Get it from `keywords.list`.",
+        ),
+        type: automatedResponseTypes
+          .default("inbound")
+          .describe("Automation type: inbound message or comment reply."),
+        keywords: z
+          .array(z.string().min(1).max(255))
+          .min(1)
+          .optional()
+          .describe("Keyword phrases that trigger this automation."),
+        text: z
+          .string()
+          .min(1)
+          .nullish()
+          .describe("Reply text to send when matched."),
+        flowId: zodBigintAsString()
+          .nullish()
+          .describe(
+            "Flow id (numeric string) to start when matched instead of sending text.",
+          ),
+        folderId: zodBigintAsString()
+          .nullish()
+          .describe(
+            "Folder id (numeric string) to organize this automation under.",
+          ),
       }),
     )
     .output(publicKeywordResource)
@@ -124,14 +179,22 @@ export const keywordsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/keywords/{id}/status",
-      summary: "Enable or disable a keyword automation",
+      summary: "Enable or disable keyword automation",
+      description:
+        "Toggles whether a keyword automation is active without changing its other fields.",
       tags: ["Keywords"],
     })
     .input(
       z.object({
-        id: zodBigintAsString(),
-        status: z.boolean(),
-        type: automatedResponseTypes.default("inbound"),
+        id: zodBigintAsString().describe(
+          "Keyword automation id. Get it from `keywords.list`.",
+        ),
+        status: z
+          .boolean()
+          .describe("Whether the automation should be active."),
+        type: automatedResponseTypes
+          .default("inbound")
+          .describe("Automation type: inbound message or comment reply."),
       }),
     )
     .output(publicKeywordResource)
@@ -152,14 +215,20 @@ export const keywordsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/keywords/{id}",
-      summary: "Delete a keyword automation",
+      summary: "Delete keyword automation",
+      description:
+        "Permanently deletes one keyword automation. Use `keywords.list` to find its id first.",
       successStatus: 204,
       tags: ["Keywords"],
     })
     .input(
       z.object({
-        id: zodBigintAsString(),
-        type: automatedResponseTypes.default("inbound"),
+        id: zodBigintAsString().describe(
+          "Keyword automation id. Get it from `keywords.list`.",
+        ),
+        type: automatedResponseTypes
+          .default("inbound")
+          .describe("Automation type: inbound message or comment reply."),
       }),
     )
     .errors(possibleErrorsOnDeletingResource)

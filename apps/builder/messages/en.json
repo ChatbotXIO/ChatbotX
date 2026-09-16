@@ -865,6 +865,10 @@
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers."
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "Marketing Messages Config ID",
+      "description": "Facebook Login for Business configuration ID used to request the marketing_messages_messenger permission."
+    },
     "omnichannel": {
       "label": "Omnichannel"
     },
@@ -2789,6 +2793,41 @@
   },
   "general": {
     "title": "General"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "This removes the campaign from ChatbotX only. The Meta message campaign keeps running — pause or delete it in Ads Manager.",
+    "title": "Facebook Marketing Messages",
+    "description": "Drive engagement and sales with personalized promotional messages on Messenger.",
+    "create": "Create New",
+    "grantTitle": "Grant Facebook access",
+    "grantDescription": "Please grant access to use the Marketing Messages feature",
+    "grantAction": "Grant access",
+    "reconnect": "Reconnect",
+    "expiredWarning": "Your Facebook access has expired or was revoked. Reconnect to create or edit campaigns. Existing campaigns are shown below and are read-only until you reconnect.",
+    "fields": {
+      "image": "Image",
+      "video": "Video",
+      "page": "Facebook Page",
+      "adAccount": "Ad account",
+      "budgetType": "Budget type",
+      "budget": "Budget",
+      "daily": "Daily budget",
+      "lifetime": "Lifetime budget",
+      "templateType": "Message type",
+      "text": "Text",
+      "button": "Button",
+      "media": "Media",
+      "generic": "Generic",
+      "greeting": "Greeting",
+      "quickReplies": "Quick replies",
+      "elements": "Cards"
+    },
+    "errors": {
+      "notConfigured": "Facebook Marketing Messages is not configured. Ask your administrator to set the Marketing Messages Config ID.",
+      "notGranted": "Please grant access to use the Marketing Messages feature.",
+      "tosNotAccepted": "To use this feature, please accept the custom object terms at {url}",
+      "notFound": "Marketing message not found."
+    }
   },
   "facebookAds": {
     "title": "Facebook Ads",

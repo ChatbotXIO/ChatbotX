@@ -13,4 +13,10 @@ export const createUserPersistentMenuPublicRequest =
   createUserPersistentMenuRequest
 
 export const updateUserPersistentMenuPublicRequest =
-  updateUserPersistentMenuRequest.and(z.object({ id: zodBigintAsString() }))
+  updateUserPersistentMenuRequest.and(
+    z.object({
+      id: zodBigintAsString().describe(
+        "User persistent menu id. Get it from `userPersistentMenus.list`.",
+      ),
+    }),
+  )

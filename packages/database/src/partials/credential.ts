@@ -52,6 +52,9 @@ export const messengerCredentialSchema = z.object({
   version: z.string(),
   verifyToken: z.string(),
   clientSecret: z.string(),
+  // Optional: the credential `value` is stored encrypted as one object, so a
+  // required field would fail to parse every row written before this shipped.
+  marketingMessagesConfigId: z.string().optional(),
 })
 export type MessengerCredential = z.infer<typeof messengerCredentialSchema>
 
@@ -59,6 +62,7 @@ export const messengerCredentialPublicSchema = messengerCredentialSchema.pick({
   clientId: true,
   version: true,
   verifyToken: true,
+  marketingMessagesConfigId: true,
 })
 export type MessengerCredentialPublic = z.infer<
   typeof messengerCredentialPublicSchema
@@ -298,6 +302,9 @@ export const messengerCredentialUpdateSchema = z.object({
   version: z.string().trim().min(1),
   verifyToken: z.string().trim().min(1),
   clientSecret: z.string().trim().min(1),
+  // Optional so existing admins can keep saving without configuring
+  // Marketing Messages.
+  marketingMessagesConfigId: z.string().trim().optional(),
 })
 export type MessengerCredentialUpdate = z.infer<
   typeof messengerCredentialUpdateSchema

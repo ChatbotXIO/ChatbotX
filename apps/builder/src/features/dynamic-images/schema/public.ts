@@ -19,7 +19,12 @@ export const publicDynamicImageResource = dynamicImageResource
   })
 
 export const listDynamicImagesPublicRequest = publicListRequest.extend({
-  name: z.string().optional(),
+  name: z
+    .string()
+    .optional()
+    .describe(
+      "Case-insensitive substring match against the dynamic image's name.",
+    ),
 })
 
 export const listDynamicImagesPublicResponse = publicListResponse(
@@ -30,11 +35,15 @@ export const createDynamicImagePublicRequest = createDynamicImageRequest
 
 export const updateDynamicImagePublicRequest = updateDynamicImageRequest.extend(
   {
-    id: zodBigintAsString(),
+    id: zodBigintAsString().describe(
+      "Dynamic image id. Get it from `dynamicImages.list`.",
+    ),
   },
 )
 
 export const setDynamicImageEnabledPublicRequest = z.object({
-  id: zodBigintAsString(),
-  enabled: z.boolean(),
+  id: zodBigintAsString().describe(
+    "Dynamic image id. Get it from `dynamicImages.list`.",
+  ),
+  enabled: z.boolean().describe("Whether the dynamic image should be enabled."),
 })

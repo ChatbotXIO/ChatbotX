@@ -5,7 +5,12 @@ import { createMinigameRequest, updateMinigameRequest } from "./action"
 import { minigameResource } from "./resource"
 
 export const listMinigamesPublicRequest = publicListRequest.extend({
-  name: z.string().trim().min(1).optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe("Case-insensitive substring match against the minigame's name."),
 })
 
 export const minigamePublicResource = minigameResource.omit({
@@ -19,12 +24,18 @@ export const listMinigamesPublicResponse = publicListResponse(
 export const createMinigamePublicRequest = createMinigameRequest
 
 export const updateMinigamePublicRequest = updateMinigameRequest.extend({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Minigame id. Get it from `minigames.list`.",
+  ),
 })
 
 export const patchMinigamePublicRequest = createMinigameRequest
   .partial()
-  .extend({ id: zodBigintAsString() })
+  .extend({
+    id: zodBigintAsString().describe(
+      "Minigame id. Get it from `minigames.list`.",
+    ),
+  })
   .refine(
     (data) =>
       Object.entries(data).some(
@@ -34,18 +45,33 @@ export const patchMinigamePublicRequest = createMinigameRequest
   )
 
 export const setMinigameEnabledPublicRequest = z.object({
-  id: zodBigintAsString(),
-  enabled: z.boolean(),
+  id: zodBigintAsString().describe(
+    "Minigame id. Get it from `minigames.list`.",
+  ),
+  enabled: z.boolean().describe("Whether the minigame should be playable."),
 })
 
 export const listMinigamePlaysPublicRequest = z.object({
-  id: zodBigintAsString(),
-  contactId: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Minigame id. Get it from `minigames.list`.",
+  ),
+  contactId: zodBigintAsString().describe(
+    "Contact id. Get it from `contacts.list`.",
+  ),
 })
 
 export const listMinigamePlayersPublicRequest = publicListRequest.extend({
-  id: zodBigintAsString(),
-  name: z.string().trim().min(1).optional(),
+  id: zodBigintAsString().describe(
+    "Minigame id. Get it from `minigames.list`.",
+  ),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe(
+      "Case-insensitive substring match against the player's contact name.",
+    ),
 })
 
 export const minigamePlayerResource = z.object({

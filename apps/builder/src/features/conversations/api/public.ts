@@ -7,6 +7,7 @@ import {
 import z from "zod"
 import { successResponse } from "@/features/common/schema"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
@@ -42,28 +43,61 @@ function jsonQueryParam<T>(schema: z.ZodType<T>) {
 }
 
 const listConversationsQueryRequest = z.object({
-  botCategory: conversationBotCategories.optional(),
-  assignedId: z.string().nullable().optional(),
-  channel: channelTypes.optional(),
-  status: jsonQueryParam(z.array(conversationStatuses).optional()),
-  keyword: z.string().optional(),
-  botEnabled: z.preprocess((val) => {
-    if (val === "true") {
-      return true
-    }
-    if (val === "false") {
-      return false
-    }
-    return val
-  }, z.boolean().nullish()),
+  botCategory: conversationBotCategories
+    .optional()
+    .describe("Restrict to conversations in this bot lifecycle category."),
+  assignedId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "Restrict to conversations assigned to this user/inbox-team id (`u_<id>`/`t_<id>`), or null for unassigned.",
+    ),
+  channel: channelTypes
+    .optional()
+    .describe("Restrict to conversations on this channel."),
+  status: jsonQueryParam(
+    z
+      .array(conversationStatuses)
+      .optional()
+      .describe(
+        "Restrict to conversations in one of these statuses. Sent as a JSON-encoded array.",
+      ),
+  ),
+  keyword: z
+    .string()
+    .optional()
+    .describe(
+      "Case-insensitive substring match against the conversation's contact.",
+    ),
+  botEnabled: z
+    .preprocess((val) => {
+      if (val === "true") {
+        return true
+      }
+      if (val === "false") {
+        return false
+      }
+      return val
+    }, z.boolean().nullish())
+    .describe("Restrict to conversations with the bot enabled or disabled."),
   tags: jsonQueryParam(
     z
       .array(
         z.enum(["noAdminReply", "unread", "followUp", "archived", "blocked"]),
       )
-      .optional(),
+      .optional()
+      .describe(
+        "Restrict to conversations matching one of these system tags. Sent as a JSON-encoded array.",
+      ),
   ),
-  contactFilter: jsonQueryParam(contactFilterCriteriaSchema.optional()),
+  contactFilter: jsonQueryParam(
+    contactFilterCriteriaSchema
+      .optional()
+      .describe(
+        "Structured filter for advanced matching on the conversation's contact. Sent as a JSON-encoded object. See `contacts.listFilterFields` for the field/operator reference.",
+      ),
+  ),
   ...cursorPaginationRequest.shape,
 })
 
@@ -73,7 +107,10 @@ export const conversationsPublicRouter = {
       method: "GET",
       path: "/v1/conversations",
       summary: "List conversations",
+      description:
+        "Use this to find conversations by status, channel, assignee, tags, or contact filter before inspecting one with `conversations.get`. Returns cursor-paginated workspace conversations.",
       tags: ["Conversations"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(listConversationsQueryRequest)
     .output(listConversationsResponse)
@@ -95,8 +132,11 @@ export const conversationsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/conversations/{id}",
-      summary: "Get a conversation by id",
+      summary: "Get conversation",
+      description:
+        "Use this to inspect one conversation's contact, channel, assignee, and status after locating it with `conversations.list`. Call `conversations.assign` to change its assignee.",
       tags: ["Conversations"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(conversationIdPathParam)
     .output(getConversationPublicResponse)
@@ -118,8 +158,11 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/assign",
-      summary: "Assign or unassign a conversation to a user or inbox team",
+      summary: "Assign or unassign conversation to user or inbox team",
+      description:
+        "Changes a conversation's user or inbox-team assignee, or clears it when `assignedId` is null. Call `conversations.get` first to inspect the current assignee and `conversations.list` to find the id.",
       tags: ["Conversations"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(assignConversationPublicRequest.and(conversationIdPathParam))
     .output(successResponse)
@@ -147,7 +190,9 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/archive",
-      summary: "Archive a conversation",
+      summary: "Archive conversation",
+      description:
+        "Archives the conversation, removing it from the default inbox view. Use `conversations.list` with the appropriate filter to find archived conversations again.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -174,7 +219,9 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/unarchive",
-      summary: "Unarchive a conversation",
+      summary: "Unarchive conversation",
+      description:
+        "Reverses `conversations.archive`, restoring the conversation to the default inbox view.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -201,7 +248,9 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/read",
-      summary: "Mark a conversation as read",
+      summary: "Mark conversation as read",
+      description:
+        "Clears the unread indicator on a conversation for the workspace.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -229,7 +278,9 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/unread",
-      summary: "Mark a conversation as unread",
+      summary: "Mark conversation as unread",
+      description:
+        "Reverses `conversations.read`, flagging the conversation as unread again.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -247,7 +298,9 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/follow",
-      summary: "Follow a conversation",
+      summary: "Follow conversation",
+      description:
+        "Subscribes the calling actor to updates on a conversation. Use `conversations.unfollow` to reverse.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -271,7 +324,9 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/unfollow",
-      summary: "Unfollow a conversation",
+      summary: "Unfollow conversation",
+      description:
+        "Reverses `conversations.follow`, unsubscribing from conversation updates.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -295,7 +350,9 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/enable-bot",
-      summary: "Re-enable the bot for a conversation",
+      summary: "Re-enable bot for conversation",
+      description:
+        "Turns the bot back on for a conversation after it was handed off to a human with `conversations.disableBot`.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)
@@ -323,7 +380,9 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/disable-bot",
-      summary: "Disable the bot for a conversation (hand off to a human)",
+      summary: "Disable bot for conversation (hand off to human)",
+      description:
+        "Turns the bot off for a conversation so a human agent takes over. Use `conversations.enableBot` to reverse.",
       tags: ["Conversations"],
     })
     .input(conversationIdPathParam)

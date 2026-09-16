@@ -18,6 +18,7 @@ export const updateMessengerSettingAction = authActionClient
       version: parsedInput.version,
       verifyToken: parsedInput.verifyToken,
       clientSecret: parsedInput.clientSecret,
+      marketingMessagesConfigId: parsedInput.marketingMessagesConfigId,
     }
 
     await platformCredentialService.upsert({

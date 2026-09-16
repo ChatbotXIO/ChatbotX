@@ -37,6 +37,8 @@ export const webchatsPublicRouter = {
       method: "GET",
       path: "/v1/webchats",
       summary: "List webchats",
+      description:
+        "Use this to find webchat ids before inspecting one with `webchats.get` or changing one with `webchats.update`. Returns webchats in this workspace.",
       tags,
     })
     .input(publicListRequest)
@@ -55,10 +57,18 @@ export const webchatsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/webchats/{id}",
-      summary: "Get a webchat by id",
+      summary: "Get webchat",
+      description:
+        "Returns one webchat's branding and behavior settings. Use `webchats.list` to find its id first.",
       tags,
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Webchat id. Get it from `webchats.list`.",
+        ),
+      }),
+    )
     .output(webchatPublicResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
@@ -73,7 +83,9 @@ export const webchatsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/webchats",
-      summary: "Create a webchat",
+      summary: "Create webchat",
+      description:
+        "Adds a webchat widget for the workspace's website. Use `webchats.list` first to avoid duplicating an existing one.",
       successStatus: 201,
       tags,
     })
@@ -111,11 +123,19 @@ export const webchatsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/webchats/{id}",
-      summary: "Update a webchat",
+      summary: "Update webchat",
+      description:
+        "Changes an existing webchat's branding or behavior settings. Call `webchats.get` to inspect current values first.",
       tags,
     })
     .input(
-      updateWebchatPublicRequest.and(z.object({ id: zodBigintAsString() })),
+      updateWebchatPublicRequest.and(
+        z.object({
+          id: zodBigintAsString().describe(
+            "Webchat id. Get it from `webchats.list`.",
+          ),
+        }),
+      ),
     )
     .output(webchatPublicResource)
     .errors(possibleErrorsOnMutatingResource)
@@ -150,11 +170,19 @@ export const webchatsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/webchats/{id}",
-      summary: "Delete a webchat",
+      summary: "Delete webchat",
+      description:
+        "Permanently deletes a webchat widget. Use `webchats.list` to find its id first.",
       successStatus: 204,
       tags,
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Webchat id. Get it from `webchats.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await integrationWebchatService.delete({

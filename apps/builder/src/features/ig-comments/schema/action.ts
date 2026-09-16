@@ -52,25 +52,58 @@ export const igCommentVariants = igCommentAutomationTypes
 export type IgCommentVariant = z.infer<typeof igCommentVariants>
 
 export const createIgCommentRequest = z.object({
-  name: z.string().trim().min(1).max(255),
-  type: igCommentVariants,
-  folderId: zodBigintAsString().nullish(),
-  post: fbCommentPostSchema,
-  privateReply: fbCommentReplySchema,
-  publicReply: fbCommentReplySchema,
-  includeKeywords: fbCommentIncludeKeywordsSchema,
-  excludeKeywords: z.array(z.string()),
-  options: fbCommentOptionsSchema,
-  hideComments: fbCommentHideCommentsSchema,
-  replyAfter: fbCommentReplyAfterSchema,
+  name: z.string().trim().min(1).max(255).describe("Automation name."),
+  type: igCommentVariants.describe(
+    "Instagram connection type, `instagram` (native login) or `instagramFacebook` (linked via a Facebook page).",
+  ),
+  folderId: zodBigintAsString()
+    .nullish()
+    .describe("Folder to place the automation in, or null for root-level."),
+  post: fbCommentPostSchema.describe(
+    "Instagram media to watch for comments. Get it from `igComments.listMedia`.",
+  ),
+  privateReply: fbCommentReplySchema.describe(
+    "Private message reply sent to the commenter, if any.",
+  ),
+  publicReply: fbCommentReplySchema.describe(
+    "Public comment reply posted under the comment, if any.",
+  ),
+  includeKeywords: fbCommentIncludeKeywordsSchema.describe(
+    "Only trigger when the comment matches these keywords.",
+  ),
+  excludeKeywords: z
+    .array(z.string())
+    .describe("Never trigger when the comment matches these keywords."),
+  options: fbCommentOptionsSchema.describe(
+    "Matching and trigger behavior options.",
+  ),
+  hideComments: fbCommentHideCommentsSchema.describe(
+    "Whether to hide matching comments after replying.",
+  ),
+  replyAfter: fbCommentReplyAfterSchema.describe(
+    "Delay before sending the reply.",
+  ),
 })
 export type CreateIgCommentRequest = z.infer<typeof createIgCommentRequest>
 
 export const updateIgCommentRequest = createIgCommentRequest.partial().and(
   z.object({
-    isActive: z.boolean().optional(),
-    startTime: z.string().nullable().optional(),
-    endTime: z.string().nullable().optional(),
+    isActive: z
+      .boolean()
+      .optional()
+      .describe("Whether the automation is enabled."),
+    startTime: z
+      .string()
+      .nullable()
+      .optional()
+      .describe(
+        "When the automation starts being active, or null for immediately.",
+      ),
+    endTime: z
+      .string()
+      .nullable()
+      .optional()
+      .describe("When the automation stops being active, or null for never."),
   }),
 )
 export type UpdateIgCommentRequest = z.infer<typeof updateIgCommentRequest>

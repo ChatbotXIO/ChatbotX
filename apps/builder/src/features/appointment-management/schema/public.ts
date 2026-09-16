@@ -41,5 +41,7 @@ export type AppointmentReminderDispatchPublicResource = z.infer<
 >
 
 export const listAppointmentRemindersPublicRequest = publicListRequest.extend({
-  status: appointmentReminderDispatchStatuses.optional(),
+  status: appointmentReminderDispatchStatuses
+    .optional()
+    .describe("Restrict to reminders with this dispatch status."),
 })

@@ -727,6 +727,10 @@
     }
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "ID de configuração das Mensagens de marketing",
+      "description": "ID de configuração do Facebook Login for Business usado para solicitar a permissão marketing_messages_messenger."
+    },
     "omnichannel": {
       "label": "Omnichannel"
     },
@@ -2464,6 +2468,41 @@
   },
   "general": {
     "title": "Geral"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Isso remove a campanha apenas do ChatbotX. A campanha de mensagens da Meta continua ativa — pause ou exclua no Gerenciador de Anúncios.",
+    "title": "Facebook Marketing Messages",
+    "description": "Aumente o engajamento e as vendas com mensagens promocionais personalizadas no Messenger.",
+    "create": "Criar novo",
+    "grantTitle": "Conceder acesso ao Facebook",
+    "grantDescription": "Conceda acesso para usar o recurso Mensagens de marketing",
+    "grantAction": "Conceder acesso",
+    "reconnect": "Reconectar",
+    "expiredWarning": "Seu acesso ao Facebook expirou ou foi revogado. Reconecte para criar ou editar campanhas. As campanhas existentes são exibidas abaixo e ficam somente leitura até você reconectar.",
+    "fields": {
+      "image": "Imagem",
+      "video": "Vídeo",
+      "page": "Página do Facebook",
+      "adAccount": "Conta de anúncios",
+      "budgetType": "Tipo de orçamento",
+      "budget": "Orçamento",
+      "daily": "Orçamento diário",
+      "lifetime": "Orçamento total",
+      "templateType": "Tipo de mensagem",
+      "text": "Texto",
+      "button": "Botão",
+      "media": "Mídia",
+      "generic": "Genérico",
+      "greeting": "Saudação",
+      "quickReplies": "Respostas rápidas",
+      "elements": "Cartões"
+    },
+    "errors": {
+      "notConfigured": "O Facebook Marketing Messages não está configurado. Peça ao seu administrador para definir o ID de configuração das Mensagens de marketing.",
+      "notGranted": "Conceda acesso para usar o recurso Mensagens de marketing.",
+      "tosNotAccepted": "Para usar este recurso, aceite os termos de objeto personalizado em {url}",
+      "notFound": "Mensagem de marketing não encontrada."
+    }
   },
   "facebookAds": {
     "title": "Anúncios do Facebook",

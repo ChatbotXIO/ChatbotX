@@ -25,6 +25,8 @@ export const customFieldsPublicRouter = {
       method: "GET",
       path: "/v1/custom-fields",
       summary: "Get all custom fields",
+      description:
+        "Lists every custom field defined in the workspace, with its id and type. Use `contacts.setCustomFields` to set values on a contact.",
       tags: ["Custom Fields"],
     })
     .input(publicListRequest)
@@ -42,7 +44,9 @@ export const customFieldsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/custom-fields",
-      summary: "Create a custom field",
+      summary: "Create custom field",
+      description:
+        "Defines a new custom field on the workspace with the given name and value type.",
       successStatus: 201,
       tags: ["Custom Fields"],
     })
@@ -61,10 +65,20 @@ export const customFieldsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/custom-fields/{idOrName}",
-      summary: "Get custom field by id or name",
+      summary: "Get custom field",
+      description:
+        "Returns one custom field's type and settings. Use `customFields.list` to find its id or name first.",
       tags: ["Custom Fields"],
     })
-    .input(z.object({ idOrName: z.string() }))
+    .input(
+      z.object({
+        idOrName: z
+          .string()
+          .describe(
+            "Custom field id or name. Get it from `customFields.list`.",
+          ),
+      }),
+    )
     .output(publicCustomFieldResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -83,9 +97,19 @@ export const customFieldsPublicRouter = {
       method: "PUT",
       path: "/v1/custom-fields/{id}",
       summary: "Update custom field",
+      description:
+        "Changes an existing custom field's settings. Use `customFields.list` to find its id first.",
       tags: ["Custom Fields"],
     })
-    .input(updateCustomFieldRequest.and(z.object({ id: zodBigintAsString() })))
+    .input(
+      updateCustomFieldRequest.and(
+        z.object({
+          id: zodBigintAsString().describe(
+            "Custom field id. Get it from `customFields.list`.",
+          ),
+        }),
+      ),
+    )
     .output(publicCustomFieldResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
@@ -101,10 +125,18 @@ export const customFieldsPublicRouter = {
       method: "DELETE",
       path: "/v1/custom-fields/{id}",
       summary: "Delete custom field",
+      description:
+        "Permanently deletes a custom field definition. Use `customFields.list` to find its id first.",
       successStatus: 204,
       tags: ["Custom Fields"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Custom field id. Get it from `customFields.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(
       async ({ context, input }) =>

@@ -1409,6 +1409,41 @@
     },
     "unknown": "未知"
   },
+  "facebookMarketingMessages": {
+    "deleteWarning": "这只会从 ChatbotX 中移除该广告系列。Meta 消息广告系列仍在投放——请在广告管理工具中暂停或删除。",
+    "title": "Facebook 营销消息",
+    "description": "通过 Messenger 上的个性化推广消息提升互动与销售。",
+    "create": "新建",
+    "grantTitle": "授予 Facebook 访问权限",
+    "grantDescription": "请授予访问权限以使用营销消息功能",
+    "grantAction": "授予访问权限",
+    "reconnect": "重新连接",
+    "expiredWarning": "您的 Facebook 访问权限已过期或被撤销。请重新连接以创建或编辑广告系列。现有广告系列显示在下方，在重新连接前为只读状态。",
+    "fields": {
+      "image": "图片",
+      "video": "视频",
+      "page": "Facebook 主页",
+      "adAccount": "广告账户",
+      "budgetType": "预算类型",
+      "budget": "预算",
+      "daily": "每日预算",
+      "lifetime": "总预算",
+      "templateType": "消息类型",
+      "text": "文本",
+      "button": "按钮",
+      "media": "媒体",
+      "generic": "通用",
+      "greeting": "问候语",
+      "quickReplies": "快速回复",
+      "elements": "卡片"
+    },
+    "errors": {
+      "notConfigured": "尚未配置 Facebook 营销消息。请让管理员设置营销消息配置 ID。",
+      "notGranted": "请授予访问权限以使用营销消息功能。",
+      "tosNotAccepted": "要使用此功能，请在 {url} 接受自定义对象条款",
+      "notFound": "未找到营销消息。"
+    }
+  },
   "facebookAds": {
     "adAccounts": {
       "error": "加载广告帐号失败。请检查您的Facebook广告链接。",
@@ -1566,6 +1601,10 @@
     "dashboardCta": "在广告仪表盘中查看"
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "营销消息配置 ID",
+      "description": "用于请求 marketing_messages_messenger 权限的“Facebook 商务登录”配置 ID。"
+    },
     "accessToken": {
       "label": "访问权杖"
     },

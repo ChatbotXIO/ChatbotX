@@ -24,6 +24,8 @@ export const integrationsCrudPublicRouter = {
       method: "GET",
       path: "/v1/integrations",
       summary: "List integrations",
+      description:
+        "Use this to find integration ids before inspecting one with `integrations.get`. Returns integrations in this workspace.",
       tags: ["Integrations"],
     })
     .input(publicListRequest)
@@ -40,7 +42,9 @@ export const integrationsCrudPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/integrations/{id}",
-      summary: "Get an integration",
+      summary: "Get integration",
+      description:
+        "Returns one integration's connection status and settings. Use `integrations.list` to find its id first.",
       tags: ["Integrations"],
     })
     .input(getIntegrationRequest)
@@ -61,7 +65,7 @@ export const integrationsCrudPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/integrations/status/token-errors",
-      summary: "List channel integrations with a failed token refresh",
+      summary: "List channel integrations with failed token refresh",
       description:
         "Channel integrations whose daily automatic token-refresh last failed — a signal the channel needs a manual reconnect before it silently stops sending or receiving messages.",
       tags: ["Integrations"],

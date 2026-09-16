@@ -47,17 +47,46 @@ export {
 } from "@/features/contact-filter/schema"
 
 export const listContactsRequest = basePaginationRequest.extend({
-  keyword: z.string().optional(),
+  keyword: z
+    .string()
+    .optional()
+    .describe(
+      "Case-insensitive substring match against the contact's name, email, or phone.",
+    ),
   workspaceId: zodBigintAsString(),
   contactFilter: z.preprocess(
     parseContactFilterSearchParam,
-    contactFilterCriteriaSchema.optional(),
+    contactFilterCriteriaSchema
+      .optional()
+      .describe(
+        "Structured filter for advanced matching beyond `keyword`. See `contacts.listFilterFields` for the field/operator reference.",
+      ),
   ),
-  channels: z.array(channelTypes).optional(),
-  integrationWhatsappId: zodBigintAsString().optional(),
-  integrationMessengerId: zodBigintAsString().optional(),
-  inboxIds: z.array(zodBigintAsString()).optional(),
-  subaction: broadcastSubactions.optional(),
+  channels: z
+    .array(channelTypes)
+    .optional()
+    .describe(
+      "Restrict to contacts with at least one inbox on one of these channels.",
+    ),
+  integrationWhatsappId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Restrict to contacts reachable via this WhatsApp integration id.",
+    ),
+  integrationMessengerId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Restrict to contacts reachable via this Messenger integration id.",
+    ),
+  inboxIds: z
+    .array(zodBigintAsString())
+    .optional()
+    .describe(
+      "Restrict to contacts with at least one conversation in one of these inbox ids.",
+    ),
+  subaction: broadcastSubactions
+    .optional()
+    .describe("Broadcast recipient sub-action filter."),
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 
@@ -125,8 +154,14 @@ export const findContactRequest = contactResource
 export type FindContactRequest = z.infer<typeof findContactRequest>
 
 export const publicListContactsByCustomFieldRequest = z.object({
-  customFieldId: z.string(),
-  value: z.string(),
+  customFieldId: z
+    .string()
+    .describe(
+      "Custom field id (numeric string). Get it from `customFields.list`.",
+    ),
+  value: z
+    .string()
+    .describe("Custom field value to match, exact string comparison."),
 })
 
 export type PublicListContactsByCustomFieldRequest = z.infer<

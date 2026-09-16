@@ -54,6 +54,8 @@ import { errorLogRelations } from "./error-log"
 import { externalWebhookRelations } from "./external-webhook"
 import { facebookLeadAdsAutomationRelations } from "./facebook-lead-ads-automation"
 import { facebookLeadAdsLeadRelations } from "./facebook-lead-ads-lead"
+import { facebookMarketingMessageRelations } from "./facebook-marketing-message"
+import { facebookMarketingMessagesAuthRelations } from "./facebook-marketing-messages-auth"
 import { fbCommentAutomationRelations } from "./fb-comment-automation"
 import { fbCommentAutomationEventRelations } from "./fb-comment-automation-event"
 import { fbCommentAutomationMissRelations } from "./fb-comment-automation-miss"
@@ -206,6 +208,8 @@ export const relations = {
   ...errorLogRelations,
   ...facebookLeadAdsAutomationRelations,
   ...facebookLeadAdsLeadRelations,
+  ...facebookMarketingMessageRelations,
+  ...facebookMarketingMessagesAuthRelations,
   ...fbCommentAutomationRelations,
   ...fbCommentAutomationEventRelations,
   ...fbCommentAutomationMissRelations,

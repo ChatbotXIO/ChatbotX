@@ -19,12 +19,27 @@ export const fromAddressSchema = z
 
 export const createSmtpRequest = z
   .object({
-    provider: smtpProviders,
-    host: z.string(),
-    port: z.coerce.number().int().positive().max(65_535),
-    username: z.string().min(1).max(255),
-    password: z.string().min(1).max(255),
-    fromAddress: fromAddressSchema,
+    provider: smtpProviders.describe(
+      "SMTP provider preset, or `other` for a custom server.",
+    ),
+    host: z
+      .string()
+      .describe("SMTP server host. Required when provider is `other`."),
+    port: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(65_535)
+      .describe("SMTP server port. Required when provider is `other`."),
+    username: z
+      .string()
+      .min(1)
+      .max(255)
+      .describe("SMTP username, and the display name for outgoing broadcasts."),
+    password: z.string().min(1).max(255).describe("SMTP password."),
+    fromAddress: fromAddressSchema.describe(
+      "Sender email address, plain or 'Name <email>' format.",
+    ),
   })
   .superRefine((data, ctx) => {
     if (data.provider === "other") {
@@ -50,12 +65,25 @@ export type CreateSmtpRequest = z.infer<typeof createSmtpRequest>
 
 export const updateSmtpRequest = z
   .object({
-    provider: smtpProviders,
-    host: z.string(),
-    port: z.coerce.number().int().positive(),
-    username: z.string().min(1),
-    password: z.string().min(1),
-    fromAddress: fromAddressSchema,
+    provider: smtpProviders.describe(
+      "SMTP provider preset, or `other` for a custom server.",
+    ),
+    host: z
+      .string()
+      .describe("SMTP server host. Required when provider is `other`."),
+    port: z.coerce
+      .number()
+      .int()
+      .positive()
+      .describe("SMTP server port. Required when provider is `other`."),
+    username: z
+      .string()
+      .min(1)
+      .describe("SMTP username, and the display name for outgoing broadcasts."),
+    password: z.string().min(1).describe("SMTP password."),
+    fromAddress: fromAddressSchema.describe(
+      "Sender email address, plain or 'Name <email>' format.",
+    ),
   })
   .superRefine((data, ctx) => {
     if (data.provider === "other") {

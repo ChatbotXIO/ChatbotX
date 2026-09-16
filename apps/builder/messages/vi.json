@@ -865,6 +865,10 @@
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi."
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "ID cấu hình Marketing Messages",
+      "description": "ID cấu hình Facebook Login for Business dùng để yêu cầu quyền marketing_messages_messenger."
+    },
     "omnichannel": {
       "label": "Đa kênh"
     },
@@ -2602,6 +2606,41 @@
   },
   "general": {
     "title": "Chung"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Thao tác này chỉ xóa chiến dịch khỏi ChatbotX. Chiến dịch tin nhắn Meta vẫn chạy — hãy tạm dừng hoặc xóa trong Trình quản lý quảng cáo.",
+    "title": "Facebook Marketing Messages",
+    "description": "Tăng tương tác và doanh số bằng tin nhắn quảng cáo được cá nhân hóa trên Messenger.",
+    "create": "Tạo mới",
+    "grantTitle": "Cấp quyền truy cập Facebook",
+    "grantDescription": "Vui lòng cấp quyền truy cập để sử dụng tính năng Marketing Messages",
+    "grantAction": "Cấp quyền truy cập",
+    "reconnect": "Kết nối lại",
+    "expiredWarning": "Quyền truy cập Facebook của bạn đã hết hạn hoặc bị thu hồi. Hãy kết nối lại để tạo hoặc chỉnh sửa chiến dịch. Các chiến dịch hiện có được hiển thị bên dưới và ở chế độ chỉ đọc cho đến khi bạn kết nối lại.",
+    "fields": {
+      "image": "Hình ảnh",
+      "video": "Video",
+      "page": "Trang Facebook",
+      "adAccount": "Tài khoản quảng cáo",
+      "budgetType": "Loại ngân sách",
+      "budget": "Ngân sách",
+      "daily": "Ngân sách hằng ngày",
+      "lifetime": "Ngân sách trọn đời",
+      "templateType": "Loại tin nhắn",
+      "text": "Văn bản",
+      "button": "Nút",
+      "media": "Đa phương tiện",
+      "generic": "Chung",
+      "greeting": "Lời chào",
+      "quickReplies": "Trả lời nhanh",
+      "elements": "Thẻ"
+    },
+    "errors": {
+      "notConfigured": "Facebook Marketing Messages chưa được cấu hình. Hãy yêu cầu quản trị viên thiết lập ID cấu hình Marketing Messages.",
+      "notGranted": "Vui lòng cấp quyền truy cập để sử dụng tính năng Marketing Messages.",
+      "tosNotAccepted": "Để sử dụng tính năng này, vui lòng chấp nhận điều khoản đối tượng tùy chỉnh tại {url}",
+      "notFound": "Không tìm thấy tin nhắn marketing."
+    }
   },
   "facebookAds": {
     "title": "Facebook Ads",

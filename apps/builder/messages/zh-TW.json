@@ -1,5 +1,9 @@
 {
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "行銷訊息設定 ID",
+      "description": "用於請求 marketing_messages_messenger 權限的「Facebook 商務登入」設定 ID。"
+    },
     "authorizedDomain": {
       "label": "已授權網域 {plural, select, 1 {} other {}}",
       "description": "有權存取您的網路聊天的網域或子網域。"
@@ -2764,6 +2768,41 @@
   },
   "general": {
     "title": "常規"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "這只會從 ChatbotX 移除該廣告活動。Meta 訊息廣告活動仍在投放——請於廣告管理員中暫停或刪除。",
+    "title": "Facebook 行銷訊息",
+    "description": "透過 Messenger 上的個人化推廣訊息提升互動與銷售。",
+    "create": "新增",
+    "grantTitle": "授予 Facebook 存取權限",
+    "grantDescription": "請授予存取權限以使用行銷訊息功能",
+    "grantAction": "授予存取權限",
+    "reconnect": "重新連線",
+    "expiredWarning": "您的 Facebook 存取權限已過期或被撤銷。請重新連線以建立或編輯廣告活動。現有廣告活動顯示於下方，在重新連線前為唯讀狀態。",
+    "fields": {
+      "image": "圖片",
+      "video": "影片",
+      "page": "Facebook 粉絲頁",
+      "adAccount": "廣告帳戶",
+      "budgetType": "預算類型",
+      "budget": "預算",
+      "daily": "每日預算",
+      "lifetime": "總預算",
+      "templateType": "訊息類型",
+      "text": "文字",
+      "button": "按鈕",
+      "media": "媒體",
+      "generic": "通用",
+      "greeting": "問候語",
+      "quickReplies": "快速回覆",
+      "elements": "卡片"
+    },
+    "errors": {
+      "notConfigured": "尚未設定 Facebook 行銷訊息。請請管理員設定行銷訊息設定 ID。",
+      "notGranted": "請授予存取權限以使用行銷訊息功能。",
+      "tosNotAccepted": "若要使用此功能，請於 {url} 接受自訂物件條款",
+      "notFound": "找不到行銷訊息。"
+    }
   },
   "facebookAds": {
     "title": "Facebook 廣告",

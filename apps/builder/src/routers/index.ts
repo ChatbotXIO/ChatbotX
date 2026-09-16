@@ -196,6 +196,11 @@ export const router = {
       default: m.facebookLeadAdsAPI,
     })),
   ),
+  facebookMarketingMessagesAPI: lazy(() =>
+    import("@/features/facebook-marketing-messages/api").then((m) => ({
+      default: m.facebookMarketingMessagesAPI,
+    })),
+  ),
   sequencesAPI: lazy(() =>
     import("@/features/sequences/api").then((m) => ({
       default: m.sequencesAPI,

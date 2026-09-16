@@ -25,6 +25,8 @@ export const aiMcpServersPublicRouter = {
       method: "GET",
       path: "/v1/ai-mcp-servers",
       summary: "List AI MCP servers",
+      description:
+        "Use this to resolve configured AI MCP servers before inspecting one with `aiMcpServers.get` or adding one with `aiMcpServers.create`. Returns the servers configured in this workspace.",
       tags: ["AI MCP Servers"],
     })
     .input(publicListRequest)
@@ -42,10 +44,18 @@ export const aiMcpServersPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ai-mcp-servers/{id}",
-      summary: "Get an AI MCP server by id",
+      summary: "Get AI MCP server",
+      description:
+        "Returns one AI MCP server's configuration. Use `aiMcpServers.list` to find its id first.",
       tags: ["AI MCP Servers"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "AI MCP server id. Get it from `aiMcpServers.list`.",
+        ),
+      }),
+    )
     .output(publicAIMcpServerResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -62,7 +72,9 @@ export const aiMcpServersPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ai-mcp-servers",
-      summary: "Create an AI MCP server",
+      summary: "Create AI MCP server",
+      description:
+        "Registers a remote MCP server the AI agent can call as a tool. Use `aiMcpServers.list` first to avoid duplicating an existing one.",
       successStatus: 201,
       tags: ["AI MCP Servers"],
     })
@@ -81,10 +93,20 @@ export const aiMcpServersPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/ai-mcp-servers/{id}",
-      summary: "Update an AI MCP server",
+      summary: "Update AI MCP server",
+      description:
+        "Changes settings on an existing AI MCP server. Call `aiMcpServers.list` to resolve its id first.",
       tags: ["AI MCP Servers"],
     })
-    .input(updateAIMcpServerRequest.and(z.object({ id: zodBigintAsString() })))
+    .input(
+      updateAIMcpServerRequest.and(
+        z.object({
+          id: zodBigintAsString().describe(
+            "AI MCP server id. Get it from `aiMcpServers.list`.",
+          ),
+        }),
+      ),
+    )
     .output(publicAIMcpServerResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
@@ -103,11 +125,19 @@ export const aiMcpServersPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/ai-mcp-servers/{id}",
-      summary: "Delete an AI MCP server",
+      summary: "Delete AI MCP server",
+      description:
+        "Permanently deletes an AI MCP server. Use `aiMcpServers.list` to find its id first.",
       successStatus: 204,
       tags: ["AI MCP Servers"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "AI MCP server id. Get it from `aiMcpServers.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const deleted = await aiMcpServerService.delete({

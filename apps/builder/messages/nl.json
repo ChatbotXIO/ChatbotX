@@ -540,6 +540,10 @@
     }
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "Configuratie-ID voor marketingberichten",
+      "description": "Configuratie-ID van Facebook Login for Business die wordt gebruikt om de marketing_messages_messenger-machtiging aan te vragen."
+    },
     "omnichannel": {
       "label": "Omnichannel"
     },
@@ -2464,6 +2468,41 @@
   },
   "general": {
     "title": "Algemeen"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Hiermee verwijder je de campagne alleen uit ChatbotX. De Meta-berichtcampagne blijft lopen — pauzeer of verwijder deze in Advertentiebeheer.",
+    "title": "Facebook Marketing Messages",
+    "description": "Verhoog betrokkenheid en verkoop met gepersonaliseerde promotieberichten op Messenger.",
+    "create": "Nieuw maken",
+    "grantTitle": "Facebook-toegang verlenen",
+    "grantDescription": "Geef toegang om de functie Marketingberichten te gebruiken",
+    "grantAction": "Toegang verlenen",
+    "reconnect": "Opnieuw verbinden",
+    "expiredWarning": "Je Facebook-toegang is verlopen of ingetrokken. Verbind opnieuw om campagnes te maken of te bewerken. Bestaande campagnes worden hieronder weergegeven en zijn alleen-lezen tot je opnieuw verbindt.",
+    "fields": {
+      "image": "Afbeelding",
+      "video": "Video",
+      "page": "Facebook-pagina",
+      "adAccount": "Advertentieaccount",
+      "budgetType": "Budgettype",
+      "budget": "Budget",
+      "daily": "Dagbudget",
+      "lifetime": "Totaalbudget",
+      "templateType": "Berichttype",
+      "text": "Tekst",
+      "button": "Knop",
+      "media": "Media",
+      "generic": "Generiek",
+      "greeting": "Begroeting",
+      "quickReplies": "Snelle antwoorden",
+      "elements": "Kaarten"
+    },
+    "errors": {
+      "notConfigured": "Facebook Marketing Messages is niet geconfigureerd. Vraag je beheerder om de configuratie-ID voor marketingberichten in te stellen.",
+      "notGranted": "Geef toegang om de functie Marketingberichten te gebruiken.",
+      "tosNotAccepted": "Accepteer de voorwaarden voor aangepaste objecten op {url} om deze functie te gebruiken",
+      "notFound": "Marketingbericht niet gevonden."
+    }
   },
   "facebookAds": {
     "title": "Facebook-advertenties",

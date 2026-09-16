@@ -6,24 +6,36 @@ import { PUBLIC_LIST_MAX_PER_PAGE } from "@/lib/public-api/list"
 // never accepted in the body, per `public-spec-operations.test.ts`'s
 // zero-exception request-schema sweep. `conversationId` is a path param.
 export const conversationIdPathParam = z.object({
-  conversationId: zodBigintAsString(),
+  conversationId: zodBigintAsString().describe(
+    "Conversation id (numeric string). Get it from `conversations.list`.",
+  ),
 })
 
 export const listConversationMessagesPublicRequest = z.object({
-  conversationId: zodBigintAsString(),
+  conversationId: zodBigintAsString().describe(
+    "Conversation id (numeric string). Get it from `conversations.list`.",
+  ),
   perPage: z.coerce
     .number()
     .int()
     .min(1)
     .max(PUBLIC_LIST_MAX_PER_PAGE)
     .optional()
-    .default(20),
-  cursor: z.string().optional(),
+    .default(20)
+    .describe("Number of messages per page."),
+  cursor: z
+    .string()
+    .optional()
+    .describe(
+      "Opaque pagination cursor from a previous response. Omit for the first page.",
+    ),
 })
 
 export const messageIdPathParam = z.object({
-  conversationId: zodBigintAsString(),
-  messageId: zodBigintAsString(),
+  conversationId: zodBigintAsString().describe(
+    "Conversation id (numeric string). Get it from `conversations.list`.",
+  ),
+  messageId: zodBigintAsString().describe("Message id (numeric string)."),
 })
 
 // The sharded message store needs `createdAt` to locate a message's shard —
@@ -32,10 +44,11 @@ export const messageIdPathParam = z.object({
 // parameter (e.g. `?createdAt=...`), not a request body.
 export const messageIdWithCreatedAtParam = messageIdPathParam.and(
   z.object({
-    createdAt: z.coerce.date().meta({
-      description:
+    createdAt: z.coerce
+      .date()
+      .describe(
         "The message's createdAt timestamp, exactly as returned by GET /v1/conversations/{conversationId}/messages. Required to locate the message in sharded storage. Sent as a query parameter.",
-    }),
+      ),
   }),
 )
 

@@ -727,6 +727,10 @@
     }
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "Markkinointiviestien määritystunnus",
+      "description": "Facebook Login for Business -määritystunnus, jolla pyydetään marketing_messages_messenger-lupaa."
+    },
     "omnichannel": {
       "label": "Monikanavainen"
     },
@@ -2464,6 +2468,41 @@
   },
   "general": {
     "title": "Yleiset"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Tämä poistaa kampanjan vain ChatbotX:stä. Metan viestikampanja jatkuu — keskeytä tai poista se Ads Managerissa.",
+    "title": "Facebook Marketing Messages",
+    "description": "Kasvata sitoutumista ja myyntiä personoiduilla mainosviesteillä Messengerissä.",
+    "create": "Luo uusi",
+    "grantTitle": "Myönnä Facebook-käyttöoikeus",
+    "grantDescription": "Myönnä käyttöoikeus, jotta voit käyttää markkinointiviestitoimintoa",
+    "grantAction": "Myönnä käyttöoikeus",
+    "reconnect": "Yhdistä uudelleen",
+    "expiredWarning": "Facebook-käyttöoikeutesi on vanhentunut tai peruutettu. Yhdistä uudelleen luodaksesi tai muokataksesi kampanjoita. Nykyiset kampanjat näkyvät alla ja ovat vain luku -tilassa, kunnes yhdistät uudelleen.",
+    "fields": {
+      "image": "Kuva",
+      "video": "Video",
+      "page": "Facebook-sivu",
+      "adAccount": "Mainostili",
+      "budgetType": "Budjetin tyyppi",
+      "budget": "Budjetti",
+      "daily": "Päiväbudjetti",
+      "lifetime": "Kokonaisbudjetti",
+      "templateType": "Viestin tyyppi",
+      "text": "Teksti",
+      "button": "Painike",
+      "media": "Media",
+      "generic": "Yleinen",
+      "greeting": "Tervehdys",
+      "quickReplies": "Pikavastaukset",
+      "elements": "Kortit"
+    },
+    "errors": {
+      "notConfigured": "Facebook Marketing Messages -toimintoa ei ole määritetty. Pyydä järjestelmänvalvojaa asettamaan markkinointiviestien määritystunnus.",
+      "notGranted": "Myönnä käyttöoikeus, jotta voit käyttää markkinointiviestitoimintoa.",
+      "tosNotAccepted": "Jos haluat käyttää tätä toimintoa, hyväksy mukautettujen objektien ehdot osoitteessa {url}",
+      "notFound": "Markkinointiviestiä ei löytynyt."
+    }
   },
   "facebookAds": {
     "title": "Facebook-mainokset",

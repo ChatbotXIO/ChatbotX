@@ -24,21 +24,32 @@ export const mediaLibraryFileListItemPublicResource =
   mediaLibraryFilePublicResource.extend({ url: z.string() })
 
 export const createMediaLibraryFolderPublicRequest = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1).describe("Folder name."),
 })
 
 export const renameMediaLibraryFolderPublicRequest = z.object({
-  folderId: zodBigintAsString(),
-  name: z.string().min(1),
+  folderId: zodBigintAsString().describe(
+    "Folder id. Get it from `mediaLibrary.listFolders`.",
+  ),
+  name: z.string().min(1).describe("New folder name."),
 })
 
 export const deleteMediaLibraryFolderPublicRequest = z.object({
-  folderId: zodBigintAsString(),
+  folderId: zodBigintAsString().describe(
+    "Folder id. Get it from `mediaLibrary.listFolders`.",
+  ),
 })
 
 export const listMediaLibraryFilesPublicRequest = publicListRequest.extend({
-  folderId: zodBigintAsString().nullish(),
-  search: z.string().optional(),
+  folderId: zodBigintAsString()
+    .nullish()
+    .describe(
+      "Restrict to files in this folder. Omit for root-level files only.",
+    ),
+  search: z
+    .string()
+    .optional()
+    .describe("Case-insensitive substring match against the file name."),
   filter: z
     .enum(["all", "recent", "favourite"])
     .optional()
@@ -52,8 +63,8 @@ export const listMediaLibraryFilesPublicResponse = publicListResponse(
 )
 
 export const createMediaLibraryUploadUrlPublicRequest = z.object({
-  fileName: z.string().min(1),
-  mimeType: z.string().min(1),
+  fileName: z.string().min(1).describe("File name for the upload."),
+  mimeType: z.string().min(1).describe("File MIME type."),
 })
 
 export const createMediaLibraryUploadUrlPublicResponse = z.object({
@@ -63,31 +74,50 @@ export const createMediaLibraryUploadUrlPublicResponse = z.object({
 })
 
 export const getMediaLibraryFilePublicRequest = z.object({
-  fileId: zodBigintAsString(),
+  fileId: zodBigintAsString().describe(
+    "File id. Get it from `mediaLibrary.listFiles`.",
+  ),
 })
 
 export const createMediaLibraryFilePublicRequest = z.object({
-  folderId: zodBigintAsString().nullish(),
-  name: z.string(),
-  path: z.string(),
-  mimeType: z.string(),
-  size: z.number(),
+  folderId: zodBigintAsString()
+    .nullish()
+    .describe("Folder to register the file in, or null for root-level."),
+  name: z.string().describe("File name."),
+  path: z
+    .string()
+    .describe("Storage path from `mediaLibrary.createUploadUrl`."),
+  mimeType: z.string().describe("File MIME type."),
+  size: z.number().describe("File size in bytes."),
 })
 
 export const deleteMediaLibraryFilePublicRequest = z.object({
-  fileId: zodBigintAsString(),
+  fileId: zodBigintAsString().describe(
+    "File id. Get it from `mediaLibrary.listFiles`.",
+  ),
 })
 
 export const setMediaLibraryFavouritePublicRequest = z.object({
-  fileId: zodBigintAsString(),
-  isFavourite: z.boolean(),
+  fileId: zodBigintAsString().describe(
+    "File id. Get it from `mediaLibrary.listFiles`.",
+  ),
+  isFavourite: z
+    .boolean()
+    .describe("Whether the file should be marked favourited."),
 })
 
 export const recordMediaLibraryFileAccessPublicRequest = z.object({
-  fileId: zodBigintAsString(),
+  fileId: zodBigintAsString().describe(
+    "File id. Get it from `mediaLibrary.listFiles`.",
+  ),
 })
 
 export const moveMediaLibraryFilesPublicRequest = z.object({
-  fileIds: z.array(zodBigintAsString()).min(1),
-  folderId: zodBigintAsString().nullish(),
+  fileIds: z
+    .array(zodBigintAsString())
+    .min(1)
+    .describe("File ids to move. Get them from `mediaLibrary.listFiles`."),
+  folderId: zodBigintAsString()
+    .nullish()
+    .describe("Destination folder id, or null to move to root-level."),
 })

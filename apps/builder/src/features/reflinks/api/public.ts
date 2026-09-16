@@ -21,6 +21,8 @@ export const reflinksPublicRouter = {
       method: "GET",
       path: "/v1/ref-links",
       summary: "List ref links",
+      description:
+        "Use this to find ref link ids before inspecting one with `reflinks.get` or changing one with `reflinks.update`. Returns ref links in this workspace.",
       tags: ["Ref Links"],
     })
     .input(publicListRequest)
@@ -38,10 +40,18 @@ export const reflinksPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ref-links/{id}",
-      summary: "Get a specific ref link",
+      summary: "Get ref link",
+      description:
+        "Returns one ref link's target and settings. Use `reflinks.list` to find its id first.",
       tags: ["Ref Links"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Ref link id. Get it from `reflinks.list`.",
+        ),
+      }),
+    )
     .output(reflinkResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
@@ -56,7 +66,9 @@ export const reflinksPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ref-links",
-      summary: "Create a ref link",
+      summary: "Create ref link",
+      description:
+        "Adds a shareable link that redirects to a flow or destination. Use `reflinks.list` first to avoid duplicating an existing one.",
       successStatus: 201,
       tags: ["Ref Links"],
     })
@@ -75,10 +87,20 @@ export const reflinksPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/ref-links/{id}",
-      summary: "Update a ref link",
+      summary: "Update ref link",
+      description:
+        "Changes an existing ref link's target or settings. Call `reflinks.get` to inspect current values first.",
       tags: ["Ref Links"],
     })
-    .input(updateReflinkRequest.and(z.object({ id: zodBigintAsString() })))
+    .input(
+      updateReflinkRequest.and(
+        z.object({
+          id: zodBigintAsString().describe(
+            "Ref link id. Get it from `reflinks.list`.",
+          ),
+        }),
+      ),
+    )
     .output(reflinkResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
@@ -93,11 +115,19 @@ export const reflinksPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/ref-links/{id}",
-      summary: "Delete a ref link",
+      summary: "Delete ref link",
+      description:
+        "Permanently deletes a ref link. Use `reflinks.list` to find its id first.",
       successStatus: 204,
       tags: ["Ref Links"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Ref link id. Get it from `reflinks.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await reflinkService.deleteMany({

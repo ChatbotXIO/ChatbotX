@@ -94,8 +94,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/campaigns",
-      summary:
-        "Create a messaging ad (campaign + ad set + creative + ad, all PAUSED). Created without a `createdBy` — workspace API tokens have no associated user.",
+      summary: "Create messaging ad",
+      description:
+        "Starts a draft click-to-message ad campaign (campaign/ad set/ad) for the given audience and creative. Use `ads.publishCampaign` to publish it once ready.",
       successStatus: 201,
       tags: ["Ads"],
     })
@@ -131,8 +132,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/campaigns/{operationId}/retry",
-      summary:
-        "Resume a partially-created messaging ad using the same operationId",
+      summary: "Resume messaging ad creation",
+      description:
+        "Retries a draft messaging ad's creation after a previous attempt failed partway through. Use `ads.listCampaigns` to find its `operationId` first.",
       tags: ["Ads"],
     })
     .input(operationIdPublicParams)
@@ -150,8 +152,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/campaigns/{operationId}/publish",
-      summary:
-        "Publish a messaging ad — sets campaign/ad set/ad to ACTIVE on Meta. This spends real ad budget.",
+      summary: "Publish messaging ad",
+      description:
+        "Publishes a draft messaging ad's campaign/ad set/ad to Meta so it starts delivering. Use `ads.pauseCampaign` to pause it afterward.",
       tags: ["Ads"],
     })
     .input(operationIdPublicParams)
@@ -169,7 +172,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/campaigns/{operationId}/pause",
-      summary: "Pause a published messaging ad on Meta",
+      summary: "Pause published messaging ad on Meta",
+      description:
+        "Pauses delivery of a published messaging ad without deleting it. There is no dedicated resume operation — publish again or edit via Meta directly.",
       tags: ["Ads"],
     })
     .input(operationIdPublicParams)
@@ -187,7 +192,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/ads/campaigns/{operationId}",
-      summary: "Delete a messaging ad's campaign/ad set/ad on Meta",
+      summary: "Delete messaging ad campaign/ad set/ad on Meta",
+      description:
+        "Permanently removes a messaging ad's campaign/ad set/ad from Meta. Use `ads.listCampaigns` to find its `operationId` first.",
       tags: ["Ads"],
     })
     .input(operationIdPublicParams)
@@ -205,8 +212,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/campaigns",
-      summary:
-        "List messaging ads created from ChatbotX for one channel integration, with Meta's live effective_status",
+      summary: "List messaging ads",
+      description:
+        "Use this to find messaging-ad `operationId`s before publishing, pausing, or deleting one. Returns messaging ads created in this workspace.",
       tags: ["Ads"],
     })
     .input(listMessagingAdsPublicRequest)
@@ -232,8 +240,9 @@ export const adsCampaignPublicRouter = {
       // the same constant (`../lib/api-paths`), so they cannot drift.
       method: "POST",
       path: ADS_CAMPAIGNS_INSIGHTS_PATH,
-      summary:
-        "Ads Insights for a set of messaging ads (impressions/reach/spend/clicks/messaging conversations started/cost-per-conversation)",
+      summary: "Get messaging ad insights",
+      description:
+        "Returns delivery/spend insights for the given ad ids. POST (not GET) since `adIds` can be up to 500 entries, too large for a query string.",
       tags: ["Ads"],
     })
     .input(messagingAdsInsightsPublicRequest)
@@ -257,8 +266,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/campaigns/{channel}/{integrationId}/ad-accounts",
-      summary:
-        "List ad accounts reachable by one integration's messaging-ads connection (cached)",
+      summary: "List integration ad accounts",
+      description:
+        "Lists ad accounts available for a channel integration's messaging-ads connection. Use `ads.checkCampaignPrerequisites` first to confirm a connection exists.",
       tags: ["Ads"],
     })
     .input(listAdAccountsPublicRequestParams.and(listAdAccountsPublicRequest))
@@ -276,8 +286,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/campaigns/ad-accounts/{adAccountId}",
-      summary:
-        "Get an ad account's currency/timezone/status/minimum budget (cached)",
+      summary: "Get ad account details",
+      description:
+        "Returns one ad account's details (name, currency, status). Use `ads.listCampaignAdAccounts` to find its id first.",
       tags: ["Ads"],
     })
     .input(
@@ -297,8 +308,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/campaigns/upload-video",
-      summary:
-        "Upload a creative video to Meta — returns the video_id (processing is async, poll getCampaignVideoStatus)",
+      summary: "Upload campaign video",
+      description:
+        "Uploads a video for use as ad creative. Returns a `videoId`; poll `ads.getCampaignVideoStatus` until it's ready before referencing it in `ads.createCampaign`.",
       tags: ["Ads"],
     })
     .input(uploadAdVideoPublicRequest)
@@ -324,8 +336,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/campaigns/videos/{videoId}/status",
-      summary:
-        "Poll a video's processing status — a creative must not reference a not-yet-ready video",
+      summary: "Get campaign video status",
+      description:
+        "Returns processing status for a video uploaded with `ads.uploadCampaignVideo`. Poll until `isReady` is true or `isError` is true.",
       tags: ["Ads"],
     })
     .input(videoStatusPublicRequestParams.and(videoStatusPublicRequest))
@@ -353,8 +366,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/campaigns/messenger-pages",
-      summary:
-        "List connected Messenger Pages (source of page_id for the WhatsApp ad-set step) — CTWA only",
+      summary: "List Messenger pages",
+      description:
+        "Only supported for the whatsapp channel — returns pages available for click-to-WhatsApp ad creative.",
       tags: ["Ads"],
     })
     .input(listMessengerPagesPublicRequest)
@@ -385,8 +399,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/campaigns/prerequisites",
-      summary:
-        "Whether this channel integration's messaging-ads connection is ready",
+      summary: "Check messaging ads prerequisites",
+      description:
+        "Reports whether an active messaging-ads connection exists for the given channel integration. Use `ads.listConnections` to inspect connections directly.",
       tags: ["Ads"],
     })
     .input(checkPrerequisitesPublicRequest)
@@ -405,7 +420,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/connections",
-      summary: "List messaging-ads connections for a channel",
+      summary: "List messaging-ads connections for channel",
+      description:
+        "Returns messaging-ads connections for one channel, including their status. Use `ads.disconnectConnection` to remove one.",
       tags: ["Ads"],
     })
     .input(listConnectionsPublicRequestParams)
@@ -436,8 +453,9 @@ export const adsCampaignPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/ads/connections/{channel}/{integrationId}",
-      summary:
-        "Disconnect a channel integration's messaging-ads connection — best-effort revokes the Graph token first",
+      summary: "Disconnect messaging ads connection",
+      description:
+        "Permanently disconnects a messaging-ads connection for a channel integration. Use `ads.listConnections` to find it first.",
       successStatus: 204,
       tags: ["Ads"],
     })

@@ -865,6 +865,10 @@
     "deleteConfirmation": "¿Estás completamente seguro?\nEsta acción no se puede deshacer.\nSe eliminará permanentemente tu {feature} de nuestros servidores."
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "ID de configuración de Mensajes de marketing",
+      "description": "ID de configuración de Facebook Login for Business que se usa para solicitar el permiso marketing_messages_messenger."
+    },
     "omnichannel": {
       "label": "Omnicanal"
     },
@@ -2602,6 +2606,41 @@
   },
   "general": {
     "title": "General"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Esto elimina la campaña solo de ChatbotX. La campaña de mensajes de Meta sigue activa: pausala o elimínala en el Administrador de anuncios.",
+    "title": "Facebook Marketing Messages",
+    "description": "Impulsa la interacción y las ventas con mensajes promocionales personalizados en Messenger.",
+    "create": "Crear nuevo",
+    "grantTitle": "Conceder acceso a Facebook",
+    "grantDescription": "Concede acceso para usar la función Mensajes de marketing",
+    "grantAction": "Conceder acceso",
+    "reconnect": "Volver a conectar",
+    "expiredWarning": "Tu acceso a Facebook caducó o fue revocado. Vuelve a conectar para crear o editar campañas. Las campañas existentes se muestran abajo y son de solo lectura hasta que vuelvas a conectar.",
+    "fields": {
+      "image": "Imagen",
+      "video": "Vídeo",
+      "page": "Página de Facebook",
+      "adAccount": "Cuenta publicitaria",
+      "budgetType": "Tipo de presupuesto",
+      "budget": "Presupuesto",
+      "daily": "Presupuesto diario",
+      "lifetime": "Presupuesto total",
+      "templateType": "Tipo de mensaje",
+      "text": "Texto",
+      "button": "Botón",
+      "media": "Multimedia",
+      "generic": "Genérico",
+      "greeting": "Saludo",
+      "quickReplies": "Respuestas rápidas",
+      "elements": "Tarjetas"
+    },
+    "errors": {
+      "notConfigured": "Facebook Marketing Messages no está configurado. Pide a tu administrador que establezca el ID de configuración de Mensajes de marketing.",
+      "notGranted": "Concede acceso para usar la función Mensajes de marketing.",
+      "tosNotAccepted": "Para usar esta función, acepta los términos de objetos personalizados en {url}",
+      "notFound": "No se encontró el mensaje de marketing."
+    }
   },
   "facebookAds": {
     "title": "Anuncios de Facebook",

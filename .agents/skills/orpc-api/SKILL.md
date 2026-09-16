@@ -217,6 +217,74 @@ guidance (valid values, example payloads, edge cases) an LLM needs to pick
 the right tool and fill it in correctly. A `findByCustomField`-style
 endpoint with ambiguous input shape should always set `description`.
 
+**Every DELETE (and any other body-less mutation) declares `successStatus:
+204`** — a handler with no `.output(...)` returns `undefined`, and without
+an explicit `successStatus` oRPC defaults to `200` with an empty body, which
+misrepresents the response. `apps/builder/__tests__/public-spec-operations.test.ts`
+enforces this across the whole public spec: every operation whose generated
+response has no declared body schema must document `successStatus: 204`
+(and nothing else in the 2xx range). If a mutation's handler actually
+`return`s data, add `.output(...)` instead of `successStatus: 204` — don't
+declare a body-less success status on a route that has a body.
+
+```typescript
+  delete: workspaceTokenAuthAPI
+    .route({
+      method: "DELETE",
+      path: "/v1/my-feature/{id}",
+      summary: "Delete item",
+      tags: ["MyFeature"],
+      successStatus: 204,
+    })
+    .input(z.object({ id: zodBigintAsString() }))
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      await myFeatureService.delete({ id: input.id, workspaceId: context.workspace.id })
+    }),
+```
+
+**`mcpSpec`/`x-mcp` controls MCP-specific tool metadata** beyond what
+`summary`/`description`/`tags` cover — visibility in `tools/list`, whether a
+token-scope check can be bypassed so the tool is discoverable even when the
+caller lacks its scope, and the MCP read-only/destructive/idempotent hints.
+Import `mcpSpec` from `@/lib/orpc/mcp-annotations` and pass it as the
+function form of `.route({ spec: ... })` — **never a plain object**, which
+the OpenAPI generator treats as a full replacement of the generated
+operation (dropping `parameters`/`requestBody`/`responses`) rather than a
+merge:
+
+```typescript
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
+
+  list: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/my-feature",
+      summary: "List items",
+      tags: ["MyFeature"],
+      spec: mcpSpec({ visibility: "default" }),
+    })
+    // ...
+```
+
+- `visibility: "default"`** ships the tool in `tools/list` on every MCP
+  connection. The polarity is inverted from what you'd expect: **omitting
+  `spec` entirely (or `visibility` absent from it) means `"hidden"`** —
+  reachable only through the `search_tools`/`call_tool` meta-tools, not the
+  default connection payload. We cannot ask every one of the ~350 public
+  operations to opt out individually, so only the ~40 operations an agent
+  needs on every connection (list/get the most common resources, publish a
+  flow, etc.) opt IN.
+- `alwaysVisible: true` exempts an operation from scope-based `tools/list`
+  filtering — reserved for the small set of discovery endpoints
+  (`capabilities.get`, `token.get`) a token must be able to *see* even when
+  it lacks the scope those endpoints themselves require, so the caller gets
+  a 403 body instead of the tool silently disappearing.
+- `readOnlyHint`/`destructiveHint`/`idempotentHint` override the mcp-server
+  loader's HTTP-method-based inference (GET ⇒ read-only/idempotent, DELETE ⇒
+  destructive/idempotent, everything else ⇒ none) when an operation doesn't
+  fit that default.
+
 **`include`/`withCount` convention for list endpoints**: a public list
 endpoint whose row shape has optional relations or an expensive count query
 should accept `include?: string[]` (narrows the response payload — see

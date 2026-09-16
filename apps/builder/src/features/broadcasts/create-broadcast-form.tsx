@@ -61,6 +61,7 @@ import {
   buildCreateBroadcastDefaultValues,
   type EditBroadcastDraft,
 } from "./lib/create-broadcast-defaults"
+import { buildBroadcastScheduleTypeOptions } from "./lib/schedule-type-options"
 
 type BroadcastConfig = {
   value: ChannelType
@@ -426,16 +427,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const workspaceId = useWorkspaceId()
 
   const schedulesOptions = useMemo(
-    () => [
-      {
-        value: "now",
-        label: t("fields.schedule.now"),
-      },
-      {
-        value: "future",
-        label: t("fields.schedule.scheduled"),
-      },
-    ],
+    () => buildBroadcastScheduleTypeOptions(t),
     [t],
   )
 
@@ -685,6 +677,12 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
               label={t("fields.chooseTime.label")}
               name="schedulesAt"
               required
+              // ISO, never a bare "yyyy-MM-dd HH:mm:ss" wall-clock string: the
+              // picked time is a wall-clock time in the OPERATOR's zone, and
+              // only an ISO instant carries that offset to the server. A bare
+              // string is re-read with `new Date(...)` in the server's own zone
+              // (UTC in production), which silently shifts the send time.
+              saveFormat="iso"
               value={defaultDateTime}
             />
           )}

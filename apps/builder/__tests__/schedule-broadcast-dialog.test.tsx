@@ -67,8 +67,16 @@ vi.mock("@chatbotx.io/ui/components/form/select-field", () => ({
   },
 }))
 
+// Records the props the dialog hands the picker so the `saveFormat` contract
+// below can be asserted without driving the real calendar widget.
+const pickerProps = vi.hoisted(() => ({
+  current: null as Record<string, unknown> | null,
+}))
+
 vi.mock("@chatbotx.io/ui/components/form/date-picker-field", () => ({
-  DateTimePickerField: ({ name }: { name: string }) => {
+  DateTimePickerField: (props: { name: string }) => {
+    pickerProps.current = props
+    const { name } = props
     const { setValue, watch } = useFormContext()
     const value = watch(name)
     return (
@@ -158,6 +166,7 @@ afterEach(() => {
   container?.remove()
   container = null
   root = null
+  pickerProps.current = null
 })
 
 describe("ScheduleBroadcastDialog reopen reset", () => {
@@ -200,5 +209,25 @@ describe("ScheduleBroadcastDialog reopen reset", () => {
     // The stale "future" + date selection must not leak into broadcast B's dialog.
     expect(reopenedScheduleTypeField()?.dataset.value).toBe("now")
     expect(reopenedDateField()).toBeNull()
+  })
+})
+
+describe("ScheduleBroadcastDialog send time", () => {
+  test("persists the picked time as an ISO instant, not a zoneless wall-clock string", () => {
+    // Regression: the picker defaults to `saveFormat="formatted"`, which saves
+    // "yyyy-MM-dd HH:mm:ss" with no offset. The server then re-reads it with
+    // `new Date(...)` in ITS zone (UTC in production), so a broadcast scheduled
+    // at 08:00 by a UTC+7 operator was stored — and sent — at 15:00 their time.
+    const el = renderDialog({ broadcast: BROADCAST_A, open: true })
+
+    act(() => {
+      el.querySelector<HTMLButtonElement>(
+        '[data-testid="field-schedulesType"]',
+      )?.click()
+    })
+
+    // `afterEach` clears the recorder, so a `null` here means the picker never
+    // mounted — which fails this assertion just as loudly as a wrong format.
+    expect(pickerProps.current?.saveFormat).toBe("iso")
   })
 })

@@ -39,7 +39,7 @@ type RemoveEnrollmentsResult = {
   dispatchesToRemove: DispatchToRemove[]
   removedEnrollments: RemovedEnrollment[]
 }
-type RemoveReason = "enrollment_removed" | "unsubscribed_via_flow"
+type RemoveReason = "subscription_removed" | "unsubscribed_via_flow"
 
 type RemoveContactSequencesForContactsParams = {
   client?: DrizzleClient
@@ -155,7 +155,7 @@ class ContactSequenceService extends BaseService {
     }
   }
 
-  async enrollContacts(props: {
+  async subscribeContacts(props: {
     workspaceId: string
     contactIds: string[]
     sequenceIds: string[]
@@ -226,7 +226,7 @@ class ContactSequenceService extends BaseService {
   }
   /**
    * The flow-step `addContactTag`/`addContactSequence`-equivalent single-
-   * contact enrollment: unlike `enrollContacts` (bulk, no per-enrollment
+   * contact subscription: unlike `subscribeContacts` (bulk, no per-enrollment
    * event), this emits `sequenceSubscribed` for the flow-step UI to react to,
    * matching the worker's original hand-rolled `nextRunAt` calculation
    * (`delayDays`/`delayMinutes` only — `delayUnit`/`specificDateTime` are
@@ -234,7 +234,7 @@ class ContactSequenceService extends BaseService {
    * logic; unifying with `calculateNextRunAtFromStep`, which does honor
    * them, is a separate follow-up).
    */
-  async enrollFromFlow(props: {
+  async subscribeFromFlow(props: {
     workspaceId: string
     contactId: string
     sequenceId: string
@@ -428,7 +428,7 @@ class ContactSequenceService extends BaseService {
         workspaceId,
         contactId,
         sequenceIds: toRemove,
-        reason: "enrollment_removed",
+        reason: "subscription_removed",
         client: tx,
         removeFromSchedule: false,
       })
@@ -674,21 +674,6 @@ class ContactSequenceService extends BaseService {
     callback: (tx: Transaction) => Promise<T>,
   ): Promise<T> {
     return await db.transaction(callback)
-  }
-
-  /** Already-enrolled guard for the "Subscribe to Sequence" flow step. */
-  async isEnrolled(props: {
-    workspaceId: string
-    contactId: string
-    sequenceId: string
-    tx?: DrizzleClient
-  }): Promise<boolean> {
-    const { workspaceId, contactId, sequenceId, tx = db } = props
-    const existing = await tx.query.contactsOnSequenceModel.findFirst({
-      where: { contactId, sequenceId, workspaceId },
-      columns: { id: true },
-    })
-    return Boolean(existing)
   }
 
   /** First active step (order 0) — used to compute `nextRunAt` on enroll. */

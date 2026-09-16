@@ -1217,6 +1217,41 @@
     },
     "unknown": "Okänt"
   },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Detta tar bara bort kampanjen från ChatbotX. Meta-meddelandekampanjen fortsätter — pausa eller ta bort den i Annonshanteraren.",
+    "title": "Facebook Marketing Messages",
+    "description": "Öka engagemang och försäljning med personliga kampanjmeddelanden på Messenger.",
+    "create": "Skapa ny",
+    "grantTitle": "Ge Facebook-åtkomst",
+    "grantDescription": "Ge åtkomst för att använda funktionen Marknadsföringsmeddelanden",
+    "grantAction": "Ge åtkomst",
+    "reconnect": "Anslut igen",
+    "expiredWarning": "Din Facebook-åtkomst har upphört eller återkallats. Anslut igen för att skapa eller redigera kampanjer. Befintliga kampanjer visas nedan och är skrivskyddade tills du ansluter igen.",
+    "fields": {
+      "image": "Bild",
+      "video": "Video",
+      "page": "Facebook-sida",
+      "adAccount": "Annonskonto",
+      "budgetType": "Budgettyp",
+      "budget": "Budget",
+      "daily": "Dagsbudget",
+      "lifetime": "Total budget",
+      "templateType": "Meddelandetyp",
+      "text": "Text",
+      "button": "Knapp",
+      "media": "Media",
+      "generic": "Generisk",
+      "greeting": "Hälsning",
+      "quickReplies": "Snabbsvar",
+      "elements": "Kort"
+    },
+    "errors": {
+      "notConfigured": "Facebook Marketing Messages är inte konfigurerat. Be din administratör att ange konfigurations-ID:t för marknadsföringsmeddelanden.",
+      "notGranted": "Ge åtkomst för att använda funktionen Marknadsföringsmeddelanden.",
+      "tosNotAccepted": "För att använda den här funktionen behöver du godkänna villkoren för anpassade objekt på {url}",
+      "notFound": "Marknadsföringsmeddelandet hittades inte."
+    }
+  },
   "facebookAds": {
     "adAccounts": {
       "error": "Det gick inte att läsa in annonskonton. Kontrollera din anslutning till Facebook Ads.",
@@ -1563,6 +1598,10 @@
     "dashboardCta": "Visa i annonspanelen"
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "Konfigurations-ID för marknadsföringsmeddelanden",
+      "description": "Konfigurations-ID för Facebook Login for Business som används för att begära behörigheten marketing_messages_messenger."
+    },
     "accessToken": {
       "label": "Åtkomsttoken"
     },

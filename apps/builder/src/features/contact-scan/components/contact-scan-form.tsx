@@ -8,7 +8,6 @@ import { CONTACT_SCAN_CHANNELS } from "@chatbotx.io/utils/channel"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { parse } from "date-fns"
 import { HistoryIcon, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useFormatter, useTranslations } from "next-intl"
@@ -31,28 +30,20 @@ const SETTLED_STATUSES: GetContactScanStatusResponse["status"][] = [
 ]
 
 /**
- * Matches `DateTimePickerField`'s default `dateTimeFormat` — the "scan
- * from" field below doesn't override it, so this is the exact string shape
- * `field.onChange` saves into `scanFromAt`'s form value.
- */
-const SCAN_FROM_SAVE_FORMAT = "yyyy-MM-dd HH:mm:ss"
-
-/**
- * `scanFromAt`'s form value is saved as a formatted string (see
- * `SCAN_FROM_SAVE_FORMAT`) even though the schema's inferred type says
- * `Date` (`z.coerce.date()`'s output type) — parse defensively so the
- * dynamic description below reads correctly regardless of which shape is
- * actually in the form store.
+ * `scanFromAt`'s form value is the ISO instant the picker saves
+ * (`saveFormat="iso"`), even though the schema's inferred type says `Date`
+ * (`z.coerce.date()`'s output type) — read it defensively so the dynamic
+ * description below works with either shape.
  */
 function parseScanFromAt(value: unknown): Date | null {
   if (value instanceof Date) {
     return Number.isNaN(value.getTime()) ? null : value
   }
-  if (typeof value === "string" && value.length > 0) {
-    const parsed = parse(value, SCAN_FROM_SAVE_FORMAT, new Date())
-    return Number.isNaN(parsed.getTime()) ? null : parsed
+  if (typeof value !== "string" || value.length === 0) {
+    return null
   }
-  return null
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
 /**
@@ -148,6 +139,11 @@ export function ContactScanForm({ workspaceId }: { workspaceId: string }) {
             label={t("contactScan.fields.scanFrom")}
             name="scanFromAt"
             required
+            // ISO instant, not a bare wall-clock string: `scanFromAt` is the
+            // walk ceiling compared against Graph's `updated_time`, so a value
+            // re-read in the server's zone would move the scan window by the
+            // operator's UTC offset.
+            saveFormat="iso"
           />
 
           <p className="text-muted-foreground text-xs">

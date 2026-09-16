@@ -9,15 +9,19 @@ import { MAX_CUSTOM_RANGE_DAYS } from "@/features/broadcasts/lib/calendar-grid"
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: Record<string, unknown>) =>
     values ? `${key}:${JSON.stringify(values)}` : key,
+  // Formats in LOCAL time, like the real `useFormatter` and like the component
+  // under test (`dayKey` is `format(date, "yyyy-MM-dd")`). Using `toISOString()`
+  // here would project every fixture onto UTC and make the expectations depend
+  // on the runner's offset.
   useFormatter: () => ({
     dateTime: (date: Date, options?: Record<string, unknown>) => {
       if (options?.hour) {
-        return date.toISOString().slice(11, 16)
+        return format(date, "HH:mm")
       }
-      return date.toISOString().slice(0, 10)
+      return format(date, "yyyy-MM-dd")
     },
     dateTimeRange: (from: Date, to: Date) =>
-      `${from.toISOString().slice(0, 10)}..${to.toISOString().slice(0, 10)}`,
+      `${format(from, "yyyy-MM-dd")}..${format(to, "yyyy-MM-dd")}`,
   }),
 }))
 
@@ -316,8 +320,8 @@ const makeRow = (
 // August 31, 2026 is a Monday, which starts a new calendar week under the
 // grid's Monday-start convention — so it renders in its own (current-month)
 // cell, distinct from the leading July 31 cell that also reads "31".
-const AUG_31 = new Date("2026-08-31T00:00:00Z")
-const SEP_2 = new Date("2026-09-02T00:00:00Z")
+const AUG_31 = new Date(2026, 7, 31)
+const SEP_2 = new Date(2026, 8, 2)
 
 const fourRowsOnAug31 = [
   makeRow("b-scheduled", "scheduled", AUG_31),
@@ -429,7 +433,7 @@ describe("BroadcastsCalendar month view", () => {
     const unknownStatusRow = makeRow(
       "b-unknown",
       "some-unrecognized-status",
-      new Date("2026-08-05T00:00:00Z"),
+      new Date(2026, 7, 5),
     )
     const el = renderCalendar(
       <BroadcastsCalendar
@@ -758,8 +762,8 @@ describe("BroadcastsCalendar custom range", () => {
 
   test("lists day sections sorted, skipping days without rows", () => {
     const rows = [
-      makeRow("c-2", "scheduled", new Date("2026-09-06T14:00:00Z"), "Later"),
-      makeRow("c-1", "scheduled", new Date("2026-08-31T09:00:00Z"), "Earlier"),
+      makeRow("c-2", "scheduled", new Date(2026, 8, 6, 14, 0), "Later"),
+      makeRow("c-1", "scheduled", new Date(2026, 7, 31, 9, 0), "Earlier"),
     ]
     const el = renderCalendar(
       <BroadcastsCalendar
@@ -1011,10 +1015,10 @@ describe("BroadcastsCalendar custom range", () => {
 describe("BroadcastsCalendar week view", () => {
   test("shows a chip's HH:mm before the name and does not cap chips per day", () => {
     const rowsOnAug31 = [
-      makeRow("w-1", "scheduled", new Date("2026-08-31T09:15:00Z"), "First"),
-      makeRow("w-2", "scheduled", new Date("2026-08-31T14:00:00Z"), "Second"),
-      makeRow("w-3", "scheduled", new Date("2026-08-31T18:30:00Z"), "Third"),
-      makeRow("w-4", "scheduled", new Date("2026-08-31T20:00:00Z"), "Fourth"),
+      makeRow("w-1", "scheduled", new Date(2026, 7, 31, 9, 15), "First"),
+      makeRow("w-2", "scheduled", new Date(2026, 7, 31, 14, 0), "Second"),
+      makeRow("w-3", "scheduled", new Date(2026, 7, 31, 18, 30), "Third"),
+      makeRow("w-4", "scheduled", new Date(2026, 7, 31, 20, 0), "Fourth"),
     ]
     const el = renderCalendar(
       <BroadcastsCalendar
@@ -1081,8 +1085,8 @@ describe("BroadcastsCalendar week view", () => {
 describe("BroadcastsCalendar day view", () => {
   test("lists rows sorted by time and opens the dialog on click", () => {
     const rows = [
-      makeRow("d-2", "scheduled", new Date("2026-09-02T14:00:00Z"), "Later"),
-      makeRow("d-1", "scheduled", new Date("2026-09-02T09:00:00Z"), "Earlier"),
+      makeRow("d-2", "scheduled", new Date(2026, 8, 2, 14, 0), "Later"),
+      makeRow("d-1", "scheduled", new Date(2026, 8, 2, 9, 0), "Earlier"),
     ]
     const el = renderCalendar(
       <BroadcastsCalendar

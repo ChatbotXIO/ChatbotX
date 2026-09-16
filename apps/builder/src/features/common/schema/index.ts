@@ -13,7 +13,7 @@ export const workspaceIdAndIdRequestParams: [z.ZodString, z.ZodString] = [
 export type WorkspaceIdAndIdRequestParams = [string, string]
 
 export const bulkUpdateIdsRequest = z.object({
-  ids: z.array(zodBigintAsString()),
+  ids: z.array(zodBigintAsString()).describe("Ids of the records to act on."),
 })
 export type BulkUpdateIdsRequest = z.infer<typeof bulkUpdateIdsRequest>
 

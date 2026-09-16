@@ -172,7 +172,7 @@ describe("contactSequenceService", () => {
       workspaceId: "ws-1",
       contactIds: ["contact-1"],
       sequenceIds: ["sequence-1"],
-      reason: "enrollment_removed",
+      reason: "subscription_removed",
     })
 
     expect(findManySpy).toHaveBeenCalledOnce()
@@ -180,7 +180,7 @@ describe("contactSequenceService", () => {
       client: txClient,
       enrollmentId: "enrollment-1",
       workspaceId: "ws-1",
-      reason: "enrollment_removed",
+      reason: "subscription_removed",
       removeFromSchedule: false,
     })
     expect(deleteWhereSpy).toHaveBeenCalledOnce()
@@ -199,7 +199,7 @@ describe("contactSequenceService", () => {
         workspaceId: "ws-1",
         contactIds: ["contact-1"],
         sequenceIds: ["sequence-1"],
-        reason: "enrollment_removed",
+        reason: "subscription_removed",
       })
 
     expect(result).toEqual([{ id: "dispatch-enrollment-1", bucket: 1 }])
@@ -217,7 +217,7 @@ describe("contactSequenceService", () => {
         workspaceId: "ws-1",
         contactIds: ["contact-1"],
         sequenceIds: ["sequence-1"],
-        reason: "enrollment_removed",
+        reason: "subscription_removed",
       }),
     ).rejects.toThrow("delete failed")
 
@@ -327,7 +327,7 @@ describe("contactSequenceService", () => {
         workspaceId: "ws-1",
         contactIds: ["contact-1"],
         sequenceIds: ["sequence-1"],
-        reason: "enrollment_removed",
+        reason: "subscription_removed",
         client: txClient,
         removeFromSchedule: false,
       })
@@ -343,7 +343,7 @@ describe("contactSequenceService", () => {
         workspaceId: "ws-1",
         contactIds: ["contact-1"],
         sequenceIds: ["sequence-1"],
-        reason: "enrollment_removed",
+        reason: "subscription_removed",
         client: txClient,
         useTransaction: true,
       }),
@@ -400,7 +400,7 @@ describe("contactSequenceService", () => {
       workspaceId: "ws-1",
       contactIds: ["contact-1", "contact-2"],
       sequenceIds: ["sequence-1"],
-      reason: "enrollment_removed",
+      reason: "subscription_removed",
       contactInboxId: "ci-1",
     })
 
@@ -447,7 +447,7 @@ describe("contactSequenceService", () => {
       workspaceId: "ws-1",
       contactIds: ["contact-1", "contact-2"],
       sequenceIds: ["sequence-1"],
-      reason: "enrollment_removed",
+      reason: "subscription_removed",
     })
 
     expect(loggerWarnSpy).not.toHaveBeenCalled()

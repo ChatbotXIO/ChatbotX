@@ -25,8 +25,17 @@ export type ListProductsSearchParams = Awaited<
 }
 
 export const listProductsRequest = basePaginationRequest.extend({
-  name: z.string().nullish(),
-  categoryId: z.string().regex(/^\d+$/).nullish(),
+  name: z
+    .string()
+    .nullish()
+    .describe("Case-insensitive substring match against the product's name."),
+  categoryId: z
+    .string()
+    .regex(/^\d+$/)
+    .nullish()
+    .describe(
+      "Restrict to products in this category. Get it from `productCategories.list`.",
+    ),
 })
 export type ListProductsRequest = z.infer<typeof listProductsRequest>
 

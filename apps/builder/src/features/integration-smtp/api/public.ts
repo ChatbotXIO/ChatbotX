@@ -45,6 +45,8 @@ export const smtpIntegrationsPublicRouter = {
       method: "GET",
       path: "/v1/smtp-integrations",
       summary: "List SMTP integrations",
+      description:
+        "Use this to find SMTP integration ids before inspecting one with `smtpIntegrations.get` or changing one with `smtpIntegrations.update`. Returns SMTP integrations in this workspace.",
       tags,
     })
     .input(publicListRequest)
@@ -61,10 +63,18 @@ export const smtpIntegrationsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/smtp-integrations/{id}",
-      summary: "Get an SMTP integration by id",
+      summary: "Get SMTP integration",
+      description:
+        "Returns one SMTP integration's settings, excluding the stored password. Use `smtpIntegrations.list` to find its id first.",
       tags,
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "SMTP integration id. Get it from `smtpIntegrations.list`.",
+        ),
+      }),
+    )
     .output(integrationSmtpResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) =>
@@ -80,7 +90,9 @@ export const smtpIntegrationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/smtp-integrations",
-      summary: "Create an SMTP integration",
+      summary: "Create SMTP integration",
+      description:
+        "Connects an SMTP server for outbound email broadcasts. Use `smtpIntegrations.list` first to avoid duplicating an existing one.",
       successStatus: 201,
       tags,
     })
@@ -117,10 +129,20 @@ export const smtpIntegrationsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/smtp-integrations/{id}",
-      summary: "Update an SMTP integration",
+      summary: "Update SMTP integration",
+      description:
+        "Changes an existing SMTP integration's settings, including its credentials. Call `smtpIntegrations.get` to inspect current values first.",
       tags,
     })
-    .input(updateSmtpRequest.and(z.object({ id: zodBigintAsString() })))
+    .input(
+      updateSmtpRequest.and(
+        z.object({
+          id: zodBigintAsString().describe(
+            "SMTP integration id. Get it from `smtpIntegrations.list`.",
+          ),
+        }),
+      ),
+    )
     .output(integrationSmtpResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
@@ -140,11 +162,19 @@ export const smtpIntegrationsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/smtp-integrations/{id}",
-      summary: "Delete an SMTP integration",
+      summary: "Delete SMTP integration",
+      description:
+        "Disconnects an SMTP integration. Use `smtpIntegrations.list` to find its id first.",
       successStatus: 204,
       tags,
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "SMTP integration id. Get it from `smtpIntegrations.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const integration = await integrationSmtpService.findByIdForWorkspace({

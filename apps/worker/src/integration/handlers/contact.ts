@@ -220,7 +220,7 @@ export async function addContactSequence({
     return
   }
 
-  await contactSequenceService.enrollFromFlow({
+  await contactSequenceService.subscribeFromFlow({
     workspaceId: conversation.workspaceId,
     contactId: conversation.contactId,
     sequenceId: step.sequenceId,

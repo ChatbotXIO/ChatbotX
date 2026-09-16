@@ -13,7 +13,7 @@ import { splitTrafficNodeSchema } from "./split-traffic"
 import { startFlowNodeSchema } from "./start-flow"
 import { waitNodeSchema } from "./wait"
 
-export const flowVersionSchema = z.union([
+export const flowVersionSchema = z.discriminatedUnion("type", [
   sendMessageNodeSchema,
   startFlowNodeSchema,
   performActionNodeSchema,

@@ -11,10 +11,19 @@ export const messengerChannelsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/messenger-channels/{id}/tag-sync",
-      summary: "Enable or disable tag sync for a Messenger channel",
+      summary: "Enable or disable tag sync for Messenger channel",
+      description:
+        "Toggles whether this Messenger channel's page tags sync into the workspace as contact tags.",
       tags: ["Channels"],
     })
-    .input(z.object({ id: zodBigintAsString(), enabled: z.boolean() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Messenger channel (integration) id. Get it from `integrations.list`.",
+        ),
+        enabled: z.boolean().describe("Whether tag sync should be enabled."),
+      }),
+    )
     .output(z.object({ syncTagEnabledAt: z.date().nullable() }))
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {

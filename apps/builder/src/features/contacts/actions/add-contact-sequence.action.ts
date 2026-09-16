@@ -25,7 +25,7 @@ export const addContactSequenceAction = workspaceActionClient
     }) => {
       const accessScope = await requireContactPermissionScope(workspaceId)
 
-      await contactSequenceService.enrollContacts({
+      await contactSequenceService.subscribeContacts({
         workspaceId,
         contactIds: parsedInput.ids,
         sequenceIds: parsedInput.sequences,

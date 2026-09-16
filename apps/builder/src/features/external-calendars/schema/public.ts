@@ -28,5 +28,7 @@ export const listAppointmentExternalCalendarsPublicResponse =
   publicListResponse(appointmentExternalCalendarPublicResource)
 
 export const appointmentExternalCalendarIdPublicRequest = z.object({
-  integrationId: zodBigintAsString(),
+  integrationId: zodBigintAsString().describe(
+    "External calendar connection id. Get it from `appointmentExternalCalendars.list`.",
+  ),
 })

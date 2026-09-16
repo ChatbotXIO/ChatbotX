@@ -2,7 +2,9 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const getExportFilePublicRequest = z.object({
-  fileId: zodBigintAsString(),
+  fileId: zodBigintAsString().describe(
+    "Export file id (numeric string) returned by `contacts.export`.",
+  ),
 })
 
 export const getExportFilePublicResponse = z.object({

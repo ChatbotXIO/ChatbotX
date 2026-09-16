@@ -14,7 +14,9 @@ import { findConversationResponse } from "./resource"
 export const getConversationPublicResponse = findConversationResponse
 
 export const conversationIdPathParam = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Conversation id. Get it from `conversations.list`.",
+  ),
 })
 
 export const assignConversationPublicRequest = z.object({
@@ -25,5 +27,8 @@ export const assignConversationPublicRequest = z.object({
     .string()
     .trim()
     .regex(/^[ut]_\S+$/, "assignedId must start with 'u_' or 't_'")
-    .nullable(),
+    .nullable()
+    .describe(
+      "New assignee: `u_<userId>` for a user or `t_<inboxTeamId>` for an inbox team, or null to unassign.",
+    ),
 })

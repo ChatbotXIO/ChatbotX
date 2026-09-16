@@ -27,6 +27,8 @@ export const productsPublicRouter = {
       method: "GET",
       path: "/v1/products",
       summary: "List products",
+      description:
+        "Use this to find product ids before inspecting one with `products.get` or changing one with `products.update`. Returns products in this workspace.",
       tags: ["Products"],
     })
     .input(withPublicPaging(listProductsRequest.omit({ sort: true })))
@@ -44,12 +46,18 @@ export const productsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/products/{id}",
-      summary: "Get a product",
+      summary: "Get product",
       description:
         "Returns full product detail, including variant options, variants, and addons.",
       tags: ["Products"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Product id. Get it from `products.list`.",
+        ),
+      }),
+    )
     .output(publicProductDetailResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
@@ -61,7 +69,9 @@ export const productsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/products",
-      summary: "Create a product",
+      summary: "Create product",
+      description:
+        "Adds a product, including its variant options, variants, and addons, in one call.",
       tags: ["Products"],
     })
     .input(createProductPublicRequest)
@@ -79,13 +89,20 @@ export const productsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/products/{id}",
-      summary: "Replace a product",
+      summary: "Replace product",
       description:
         "Fully replaces the product, including its variant options, variants, and addons.",
+      successStatus: 204,
       tags: ["Products"],
     })
     .input(
-      updateProductPublicRequest.and(z.object({ id: zodBigintAsString() })),
+      updateProductPublicRequest.and(
+        z.object({
+          id: zodBigintAsString().describe(
+            "Product id. Get it from `products.list`.",
+          ),
+        }),
+      ),
     )
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
@@ -101,11 +118,19 @@ export const productsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/products/{id}",
-      summary: "Delete a product",
+      summary: "Delete product",
+      description:
+        "Permanently deletes a product and its variants/addons. Use `products.list` to find its id first.",
       successStatus: 204,
       tags: ["Products"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Product id. Get it from `products.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       // findById throws notFoundException (-> 404) for a missing id, so the

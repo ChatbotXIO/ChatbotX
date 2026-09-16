@@ -10,7 +10,12 @@ export const listSpreadsheetsRequest = z.object({
   workspaceId: zodBigintAsString(),
   page: z.number().optional(),
   perPage: z.number().optional(),
-  name: z.string().optional(),
+  name: z
+    .string()
+    .optional()
+    .describe(
+      "Case-insensitive substring match against the spreadsheet's name.",
+    ),
 })
 export type ListSpreadsheetsRequest = z.infer<typeof listSpreadsheetsRequest>
 

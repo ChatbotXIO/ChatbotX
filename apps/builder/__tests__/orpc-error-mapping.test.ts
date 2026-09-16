@@ -63,9 +63,11 @@ vi.mock("@/lib/workspace/authorize-workspace-access", () => ({
 
 const { ChatbotXException } = await import("@chatbotx.io/business/errors")
 const { ModelNotfoundException } = await import("@chatbotx.io/database/errors")
+const { FlowAuthoringException } = await import("@chatbotx.io/flow-config")
 const { SdkException } = await import("@chatbotx.io/sdk")
 const { ActionValidationError } = await import("next-safe-action")
 const { ORPCError } = await import("@orpc/server")
+const { z } = await import("zod")
 
 const { mapKnownOrpcErrors } = await import("@/orpc")
 
@@ -164,5 +166,38 @@ describe("mapKnownOrpcErrors", () => {
     expect(() => mapKnownOrpcErrors(error)).not.toThrow()
     expect(mockLoggerError).not.toHaveBeenCalled()
     expect(mockLoggerWarn).not.toHaveBeenCalled()
+  })
+
+  test("maps FlowAuthoringException to a 422 invalidRequestData with its structured errors", () => {
+    const error = new FlowAuthoringException([
+      {
+        path: "steps[0].templateName",
+        code: "unknownTemplate",
+        message: 'No WhatsApp template named "welcom_promo" in this workspace.',
+      },
+    ])
+
+    expect(() => mapKnownOrpcErrors(error)).toThrow(
+      expect.objectContaining({
+        code: "invalidRequestData",
+        status: 422,
+        data: error.errors,
+      }),
+    )
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
+  })
+
+  test("maps a raw ZodError to a 422 invalidRequestData as a safety net", () => {
+    const result = z.object({ name: z.string() }).safeParse({})
+    const error = result.error as InstanceType<typeof z.ZodError>
+
+    expect(() => mapKnownOrpcErrors(error)).toThrow(
+      expect.objectContaining({
+        code: "invalidRequestData",
+        status: 422,
+        data: error.issues,
+      }),
+    )
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(1)
   })
 })

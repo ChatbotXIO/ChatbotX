@@ -60,9 +60,9 @@ export const contactsBulkPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contacts/bulk/sequences",
-      summary: "Enroll multiple contacts in one or more sequences",
+      summary: "Subscribe multiple contacts to one or more sequences",
       description:
-        "Enrolls every contact in `contactIds` that resolves in this workspace into every sequence in `sequenceIds`. Contact ids that don't resolve are skipped and reported back in `skippedContactIds` rather than failing the whole request.",
+        "Subscribes every contact in `contactIds` that resolves in this workspace to every sequence in `sequenceIds`. Contact ids that don't resolve are skipped and reported back in `skippedContactIds` rather than failing the whole request.",
       tags: ["Contacts"],
     })
     .input(bulkSubscribeSequencesPublicRequest)
@@ -70,7 +70,7 @@ export const contactsBulkPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const { processedContactIds, skippedContactIds } =
-        await contactSequenceService.enrollContacts({
+        await contactSequenceService.subscribeContacts({
           workspaceId: context.workspace.id,
           contactIds: input.contactIds,
           sequenceIds: input.sequenceIds,

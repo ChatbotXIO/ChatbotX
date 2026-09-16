@@ -110,3 +110,56 @@ export function getCustomAudiences(
     }),
   )
 }
+
+/**
+ * Ad accounts for the Marketing Messages create form. Separate from
+ * `getAdAccounts` on purpose: that function's `FacebookAdAccount` shape is
+ * consumed by the CTM wizard and must not grow fields.
+ *
+ * `tosAccepted` is returned as Graph's raw map. Deciding whether the
+ * custom-audience terms are accepted is the caller's job
+ * (`isCustomAudienceTosAccepted`), which keeps the key-name uncertainty in one
+ * place instead of spread across the integration layer.
+ */
+export type MarketingMessagesAdAccount = {
+  /** `act_<id>` — the value Graph endpoints take. */
+  id: string
+  /** Bare id — the value the ToS remediation link takes. */
+  accountId: string
+  name?: string
+  currency: string
+  tosAccepted: Record<string, number>
+}
+
+type MarketingMessagesAdAccountResponse = {
+  id: string
+  account_id: string
+  name?: string
+  currency: string
+  tos_accepted?: Record<string, number>
+}
+
+export function getMarketingMessagesAdAccounts(
+  accessToken: string,
+  version: string = DEFAULT_API_VERSION,
+): Promise<MarketingMessagesAdAccount[]> {
+  const endpoint = `${version}/me/adaccounts`
+
+  return rescue(endpoint, async () => {
+    const rows = await fetchAllPages<MarketingMessagesAdAccountResponse>(
+      endpoint,
+      {
+        fields: "name,account_id,currency,tos_accepted",
+        limit: String(ADS_PAGE_LIMIT),
+        access_token: accessToken,
+      },
+    )
+    return rows.map((row) => ({
+      id: row.id,
+      accountId: row.account_id,
+      name: row.name,
+      currency: row.currency,
+      tosAccepted: row.tos_accepted ?? {},
+    }))
+  })
+}

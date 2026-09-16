@@ -727,6 +727,10 @@
     }
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "ID Konfigurasi Marketing Messages",
+      "description": "ID konfigurasi Facebook Login for Business yang digunakan untuk meminta izin marketing_messages_messenger."
+    },
     "omnichannel": {
       "label": "Omnikanal"
     },
@@ -2464,6 +2468,41 @@
   },
   "general": {
     "title": "Umum"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Ini hanya menghapus kampanye dari ChatbotX. Kampanye pesan Meta tetap berjalan — jeda atau hapus di Ads Manager.",
+    "title": "Facebook Marketing Messages",
+    "description": "Tingkatkan interaksi dan penjualan dengan pesan promosi yang dipersonalisasi di Messenger.",
+    "create": "Buat Baru",
+    "grantTitle": "Berikan akses Facebook",
+    "grantDescription": "Berikan akses untuk menggunakan fitur Marketing Messages",
+    "grantAction": "Berikan akses",
+    "reconnect": "Hubungkan ulang",
+    "expiredWarning": "Akses Facebook Anda telah kedaluwarsa atau dicabut. Hubungkan ulang untuk membuat atau mengedit kampanye. Kampanye yang ada ditampilkan di bawah dan hanya dapat dibaca sampai Anda menghubungkan ulang.",
+    "fields": {
+      "image": "Gambar",
+      "video": "Video",
+      "page": "Halaman Facebook",
+      "adAccount": "Akun iklan",
+      "budgetType": "Jenis anggaran",
+      "budget": "Anggaran",
+      "daily": "Anggaran harian",
+      "lifetime": "Anggaran total",
+      "templateType": "Jenis pesan",
+      "text": "Teks",
+      "button": "Tombol",
+      "media": "Media",
+      "generic": "Generik",
+      "greeting": "Sapaan",
+      "quickReplies": "Balasan cepat",
+      "elements": "Kartu"
+    },
+    "errors": {
+      "notConfigured": "Facebook Marketing Messages belum dikonfigurasi. Minta administrator Anda untuk menyetel ID Konfigurasi Marketing Messages.",
+      "notGranted": "Berikan akses untuk menggunakan fitur Marketing Messages.",
+      "tosNotAccepted": "Untuk menggunakan fitur ini, setujui ketentuan objek khusus di {url}",
+      "notFound": "Pesan marketing tidak ditemukan."
+    }
   },
   "facebookAds": {
     "title": "Iklan Facebook",

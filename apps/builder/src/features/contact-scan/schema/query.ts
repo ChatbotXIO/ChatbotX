@@ -11,7 +11,9 @@ import { basePaginationRequest } from "@/lib/pagination"
 
 export const getContactScanStatusRequest = z.object({
   workspaceId: zodBigintAsString(),
-  inboxId: zodBigintAsString(),
+  inboxId: zodBigintAsString().describe(
+    "Inbox id. Get it from `inboxes.list`.",
+  ),
 })
 export type GetContactScanStatusRequest = z.infer<
   typeof getContactScanStatusRequest

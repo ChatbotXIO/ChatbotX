@@ -8,7 +8,12 @@ import {
 import { facebookLeadAdsAutomationResource } from "./resource"
 
 export const listFacebookLeadAdsPublicRequest = publicListRequest.extend({
-  keyword: z.string().optional(),
+  keyword: z
+    .string()
+    .optional()
+    .describe(
+      "Case-insensitive substring match against the automation's page/form name.",
+    ),
   sort: z
     .array(
       z.object({
@@ -16,7 +21,8 @@ export const listFacebookLeadAdsPublicRequest = publicListRequest.extend({
         desc: z.boolean(),
       }),
     )
-    .optional(),
+    .optional()
+    .describe("Sort order as [{ id, desc }] column/direction pairs."),
 })
 
 const facebookLeadAdPublicItem = facebookLeadAdsAutomationResource
@@ -32,7 +38,9 @@ export const listFacebookLeadAdsPublicResponse = publicListResponse(
 )
 
 export const getFacebookLeadAdPublicRequest = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Facebook Lead Ads automation id. Get it from `facebookLeadAds.list`.",
+  ),
 })
 
 export const createFacebookLeadAdPublicRequest =
@@ -40,11 +48,15 @@ export const createFacebookLeadAdPublicRequest =
 
 export const updateFacebookLeadAdPublicRequest =
   updateFacebookLeadAdAutomationRequest.extend({
-    id: zodBigintAsString(),
+    id: zodBigintAsString().describe(
+      "Facebook Lead Ads automation id. Get it from `facebookLeadAds.list`.",
+    ),
   })
 
 export const deleteFacebookLeadAdPublicRequest = z.object({
-  id: zodBigintAsString(),
+  id: zodBigintAsString().describe(
+    "Facebook Lead Ads automation id. Get it from `facebookLeadAds.list`.",
+  ),
 })
 export const facebookLeadAdPublicDetailResource = facebookLeadAdPublicItem
 
@@ -59,7 +71,9 @@ export const listFacebookLeadAdsPagesPublicResponse = z.object({
 })
 
 export const listFacebookLeadAdsFormsPublicRequest = z.object({
-  pageId: z.string(),
+  pageId: z
+    .string()
+    .describe("Facebook page id. Get it from `facebookLeadAds.listPages`."),
 })
 
 const facebookLeadAdFormQuestion = z.object({

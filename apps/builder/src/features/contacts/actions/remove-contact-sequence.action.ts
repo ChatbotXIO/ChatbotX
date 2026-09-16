@@ -43,7 +43,7 @@ export const removeContactSequenceAction = workspaceActionClient
           workspaceId,
           contactIds: contacts.map((contact) => contact.id),
           sequenceIds: parsedInput.sequences,
-          reason: "enrollment_removed",
+          reason: "subscription_removed",
         })
       }
     },

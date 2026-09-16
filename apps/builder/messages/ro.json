@@ -274,6 +274,41 @@
   "general": {
     "title": "General"
   },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Aceasta elimină campania doar din ChatbotX. Campania de mesaje Meta continuă — pune-o pe pauză sau șterge-o în Ads Manager.",
+    "title": "Facebook Marketing Messages",
+    "description": "Crește implicarea și vânzările cu mesaje promoționale personalizate pe Messenger.",
+    "create": "Creează",
+    "grantTitle": "Acordă acces Facebook",
+    "grantDescription": "Acordă accesul pentru a folosi funcția Mesaje de marketing",
+    "grantAction": "Acordă acces",
+    "reconnect": "Reconectează",
+    "expiredWarning": "Accesul tău la Facebook a expirat sau a fost revocat. Reconectează-te pentru a crea sau edita campanii. Campaniile existente sunt afișate mai jos și sunt doar pentru citire până te reconectezi.",
+    "fields": {
+      "image": "Imagine",
+      "video": "Videoclip",
+      "page": "Pagină Facebook",
+      "adAccount": "Cont publicitar",
+      "budgetType": "Tip de buget",
+      "budget": "Buget",
+      "daily": "Buget zilnic",
+      "lifetime": "Buget total",
+      "templateType": "Tip de mesaj",
+      "text": "Text",
+      "button": "Buton",
+      "media": "Media",
+      "generic": "Generic",
+      "greeting": "Salut",
+      "quickReplies": "Răspunsuri rapide",
+      "elements": "Carduri"
+    },
+    "errors": {
+      "notConfigured": "Facebook Marketing Messages nu este configurat. Cere administratorului să seteze ID-ul de configurare pentru Mesaje de marketing.",
+      "notGranted": "Acordă accesul pentru a folosi funcția Mesaje de marketing.",
+      "tosNotAccepted": "Pentru a folosi această funcție, acceptă termenii pentru obiecte personalizate la {url}",
+      "notFound": "Mesajul de marketing nu a fost găsit."
+    }
+  },
   "facebookAds": {
     "title": "Reclame Facebook",
     "setting": {
@@ -1511,6 +1546,10 @@
     }
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "ID de configurare pentru Mesaje de marketing",
+      "description": "ID-ul de configurare Facebook Login for Business folosit pentru a solicita permisiunea marketing_messages_messenger."
+    },
     "omnichannel": {
       "label": "Omnicanal"
     },

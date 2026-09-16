@@ -49,6 +49,8 @@ export const dynamicImagesPublicRouter = {
       method: "GET",
       path: "/v1/dynamic-images",
       summary: "List dynamic images",
+      description:
+        "Use this to find dynamic image ids before inspecting one with `dynamicImages.get` or changing one with `dynamicImages.update`. Returns dynamic images in this workspace.",
       tags,
     })
     .input(listDynamicImagesPublicRequest)
@@ -71,10 +73,18 @@ export const dynamicImagesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/dynamic-images/{id}",
-      summary: "Get a dynamic image",
+      summary: "Get dynamic image",
+      description:
+        "Returns one dynamic image's template and settings. Use `dynamicImages.list` to find its id first.",
       tags,
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Dynamic image id. Get it from `dynamicImages.list`.",
+        ),
+      }),
+    )
     .output(publicDynamicImageResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -89,7 +99,9 @@ export const dynamicImagesPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/dynamic-images",
-      summary: "Create a dynamic image",
+      summary: "Create dynamic image",
+      description:
+        "Adds a dynamically-rendered image template that fills in per-contact data via a `{{user_id}}` URL. Use `dynamicImages.list` first to avoid duplicating an existing one.",
       successStatus: 201,
       tags,
     })
@@ -108,7 +120,9 @@ export const dynamicImagesPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/dynamic-images/{id}",
-      summary: "Update a dynamic image",
+      summary: "Update dynamic image",
+      description:
+        "Changes an existing dynamic image's template or settings. Call `dynamicImages.get` to inspect current values first.",
       tags,
     })
     .input(updateDynamicImagePublicRequest)
@@ -128,11 +142,19 @@ export const dynamicImagesPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/dynamic-images/{id}",
-      summary: "Delete a dynamic image",
+      summary: "Delete dynamic image",
+      description:
+        "Permanently deletes a dynamic image template. Use `dynamicImages.list` to find its id first.",
       successStatus: 204,
       tags,
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Dynamic image id. Get it from `dynamicImages.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await dynamicImageService.delete({
@@ -145,7 +167,9 @@ export const dynamicImagesPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/dynamic-images/{id}/enabled",
-      summary: "Set whether a dynamic image is enabled",
+      summary: "Enable or disable dynamic image",
+      description:
+        "Toggles whether a dynamic image is enabled without changing its template or settings.",
       tags,
     })
     .input(setDynamicImageEnabledPublicRequest)

@@ -11,10 +11,19 @@ export const zaloChannelsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/zalo-channels/{id}/tag-sync",
-      summary: "Enable or disable tag sync for a Zalo channel",
+      summary: "Enable or disable tag sync for Zalo channel",
+      description:
+        "Toggles whether this Zalo channel's tags sync into the workspace as contact tags.",
       tags: ["Channels"],
     })
-    .input(z.object({ id: zodBigintAsString(), enabled: z.boolean() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Zalo channel (integration) id. Get it from `integrations.list`.",
+        ),
+        enabled: z.boolean().describe("Whether tag sync should be enabled."),
+      }),
+    )
     .output(z.object({ syncTagEnabledAt: z.date().nullable() }))
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {

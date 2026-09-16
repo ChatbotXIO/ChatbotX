@@ -22,17 +22,58 @@ function sanitizeJobIdPart(value: string): string {
  */
 export const startRetargetAudienceSyncShape = z.object({
   workspaceId: z.string(),
-  segment: adsConversionExportSegments,
-  adId: z.string().trim().min(1).nullable().optional(),
-  channel: adsConversionChannelSchema.optional(),
-  integrationWhatsappId: z.string().optional(),
-  integrationMessengerId: z.string().optional(),
-  integrationInstagramId: z.string().optional(),
-  since: z.coerce.date(),
-  until: z.coerce.date(),
-  adAccountId: z.string().trim().min(1),
-  audienceName: z.string().trim().min(1).optional(),
-  customAudienceId: z.string().trim().min(1).optional(),
+  segment: adsConversionExportSegments.describe(
+    "Conversion funnel stage to build the audience from.",
+  ),
+  adId: z
+    .string()
+    .trim()
+    .min(1)
+    .nullable()
+    .optional()
+    .describe("Restrict to this ad id."),
+  channel: adsConversionChannelSchema
+    .optional()
+    .describe("Restrict to this channel."),
+  integrationWhatsappId: z
+    .string()
+    .optional()
+    .describe("Restrict to this WhatsApp integration."),
+  integrationMessengerId: z
+    .string()
+    .optional()
+    .describe("Restrict to this Messenger integration."),
+  integrationInstagramId: z
+    .string()
+    .optional()
+    .describe("Restrict to this Instagram integration."),
+  since: z.coerce
+    .date()
+    .describe("ISO 8601 start of the date range (inclusive)."),
+  until: z.coerce
+    .date()
+    .describe("ISO 8601 end of the date range (inclusive)."),
+  adAccountId: z
+    .string()
+    .trim()
+    .min(1)
+    .describe("Meta ad account id (act_<id>) to sync the audience to."),
+  audienceName: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe(
+      "Name for a new custom audience. Provide this or customAudienceId, not both.",
+    ),
+  customAudienceId: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe(
+      "Existing custom audience id to sync into. Provide this or audienceName, not both.",
+    ),
 })
 
 export const startRetargetAudienceSyncInput =

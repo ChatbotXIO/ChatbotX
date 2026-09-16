@@ -21,46 +21,108 @@ import {
  * special-ad-category country, adSet time ordering).
  */
 export const createMessagingAdPublicRequest = z.object({
-  channel: messagingAdChannelSchema,
-  integrationId: zodBigintAsString(),
-  whatsappPageIntegrationId: zodBigintAsString().optional(),
+  channel: messagingAdChannelSchema.describe(
+    "Channel to run the messaging ad on.",
+  ),
+  integrationId: zodBigintAsString().describe(
+    "Channel integration id (numeric string).",
+  ),
+  whatsappPageIntegrationId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Messenger page integration id, required when channel is whatsapp.",
+    ),
   adAccountId: z
     .string()
     .trim()
-    .regex(/^act_\d+$/),
-  name: z.string().trim().min(1).max(120),
-  campaign: z.object({
-    specialAdCategories: z.array(specialAdCategorySchema).min(1),
-    specialAdCategoryCountry: z.array(z.string().trim().length(2)).optional(),
-  }),
-  adSet: z.object({
-    dailyBudgetMinorUnits: z.coerce.number().int().positive(),
-    targeting: messagingAdTargetingSchema,
-    startTime: z.string().trim().optional(),
-    endTime: z.string().trim().optional(),
-  }),
-  creative: z.object({
-    media: creativeMediaSchema,
-    welcomeMessage: welcomeMessageSchema,
-  }),
+    .regex(/^act_\d+$/)
+    .describe(
+      "Meta ad account id (act_<id>). Get it from `ads.listCampaignAdAccounts`.",
+    ),
+  name: z.string().trim().min(1).max(120).describe("Campaign name."),
+  campaign: z
+    .object({
+      specialAdCategories: z
+        .array(specialAdCategorySchema)
+        .min(1)
+        .describe(
+          "Meta special ad category classifications this campaign falls under.",
+        ),
+      specialAdCategoryCountry: z
+        .array(z.string().trim().length(2))
+        .optional()
+        .describe(
+          "ISO 3166-1 alpha-2 country codes required for some special ad categories.",
+        ),
+    })
+    .describe("Campaign-level settings."),
+  adSet: z
+    .object({
+      dailyBudgetMinorUnits: z.coerce
+        .number()
+        .int()
+        .positive()
+        .describe(
+          "Daily budget in the ad account's currency minor units (e.g. cents).",
+        ),
+      targeting: messagingAdTargetingSchema.describe(
+        "Audience targeting for the ad set.",
+      ),
+      startTime: z
+        .string()
+        .trim()
+        .optional()
+        .describe("ISO 8601 ad set start time."),
+      endTime: z
+        .string()
+        .trim()
+        .optional()
+        .describe("ISO 8601 ad set end time."),
+    })
+    .describe("Ad set-level settings."),
+  creative: z
+    .object({
+      media: creativeMediaSchema.describe(
+        "Ad creative media (image or video).",
+      ),
+      welcomeMessage: welcomeMessageSchema.describe(
+        "Click-to-message welcome message shown to the contact.",
+      ),
+    })
+    .describe("Ad creative settings."),
 })
 export type CreateMessagingAdPublicRequest = z.infer<
   typeof createMessagingAdPublicRequest
 >
 
 export const operationIdPublicParams = z.object({
-  operationId: zodBigintAsString(),
+  operationId: zodBigintAsString().describe(
+    "Messaging ad operation id. Get it from `ads.listCampaigns`.",
+  ),
 })
 
 const messagingAdsIntegrationIdentityPublicShape = {
-  channel: messagingAdChannelSchema,
-  integrationId: zodBigintAsString(),
+  channel: messagingAdChannelSchema.describe(
+    "Channel the integration belongs to.",
+  ),
+  integrationId: zodBigintAsString().describe(
+    "Channel integration id (numeric string).",
+  ),
 }
 
 export const listMessagingAdsPublicRequest = z.object({
-  channel: messagingAdChannelSchema,
-  integrationId: zodBigintAsString(),
-  refresh: z.boolean().optional(),
+  channel: messagingAdChannelSchema.describe(
+    "Channel the integration belongs to.",
+  ),
+  integrationId: zodBigintAsString().describe(
+    "Channel integration id (numeric string).",
+  ),
+  refresh: z
+    .boolean()
+    .optional()
+    .describe(
+      "Force an uncached refresh from Meta instead of serving cached data.",
+    ),
 })
 
 const MAX_INSIGHTS_AD_IDS = 500
@@ -70,10 +132,22 @@ export const messagingAdsInsightsPublicRequest = z.object({
   adAccountId: z
     .string()
     .trim()
-    .regex(/^act_\d+$/),
-  adIds: z.array(z.string().trim().min(1)).min(1).max(MAX_INSIGHTS_AD_IDS),
-  datePreset: messagingAdsInsightsDatePresetSchema.optional(),
-  refresh: z.boolean().optional(),
+    .regex(/^act_\d+$/)
+    .describe("Meta ad account id (act_<id>)."),
+  adIds: z
+    .array(z.string().trim().min(1))
+    .min(1)
+    .max(MAX_INSIGHTS_AD_IDS)
+    .describe(`Ad ids to fetch insights for, up to ${MAX_INSIGHTS_AD_IDS}.`),
+  datePreset: messagingAdsInsightsDatePresetSchema
+    .optional()
+    .describe("Meta date preset for the insights window."),
+  refresh: z
+    .boolean()
+    .optional()
+    .describe(
+      "Force an uncached refresh from Meta instead of serving cached data.",
+    ),
 })
 
 export const listAdAccountsPublicRequestParams = z.object({
@@ -81,19 +155,32 @@ export const listAdAccountsPublicRequestParams = z.object({
 })
 
 export const listAdAccountsPublicRequest = z.object({
-  refresh: z.boolean().optional(),
+  refresh: z
+    .boolean()
+    .optional()
+    .describe(
+      "Force an uncached refresh from Meta instead of serving cached data.",
+    ),
 })
 
 export const adAccountDetailsPublicRequestParams = z.object({
   adAccountId: z
     .string()
     .trim()
-    .regex(/^act_\d+$/),
+    .regex(/^act_\d+$/)
+    .describe(
+      "Meta ad account id (act_<id>). Get it from `ads.listCampaignAdAccounts`.",
+    ),
 })
 
 export const adAccountDetailsPublicRequest = z.object({
   ...messagingAdsIntegrationIdentityPublicShape,
-  refresh: z.boolean().optional(),
+  refresh: z
+    .boolean()
+    .optional()
+    .describe(
+      "Force an uncached refresh from Meta instead of serving cached data.",
+    ),
 })
 
 // Deliberately LOWER than the private route's 140MB cap
@@ -117,14 +204,33 @@ export const uploadAdVideoPublicRequest = z.object({
   adAccountId: z
     .string()
     .trim()
-    .regex(/^act_\d+$/),
-  fileName: z.string().trim().min(1).max(255),
-  mimeType: z.string().trim().regex(VIDEO_MIME_RE),
-  base64: z.string().trim().min(1).max(MAX_VIDEO_BASE64_LENGTH),
+    .regex(/^act_\d+$/)
+    .describe("Meta ad account id (act_<id>)."),
+  fileName: z
+    .string()
+    .trim()
+    .min(1)
+    .max(255)
+    .describe("File name for the uploaded video."),
+  mimeType: z
+    .string()
+    .trim()
+    .regex(VIDEO_MIME_RE)
+    .describe("Video MIME type: video/mp4 or video/quicktime."),
+  base64: z
+    .string()
+    .trim()
+    .min(1)
+    .max(MAX_VIDEO_BASE64_LENGTH)
+    .describe("Base64-encoded video file contents, up to 25MB."),
 })
 
 export const videoStatusPublicRequestParams = z.object({
-  videoId: z.string().trim().min(1),
+  videoId: z
+    .string()
+    .trim()
+    .min(1)
+    .describe("Video id returned by `ads.uploadCampaignVideo`."),
 })
 
 export const videoStatusPublicRequest = z.object({
@@ -132,13 +238,21 @@ export const videoStatusPublicRequest = z.object({
 })
 
 export const listMessengerPagesPublicRequest = z.object({
-  channel: messagingAdChannelSchema,
-  integrationId: zodBigintAsString(),
+  channel: messagingAdChannelSchema.describe(
+    "Channel the integration belongs to.",
+  ),
+  integrationId: zodBigintAsString().describe(
+    "Channel integration id (numeric string).",
+  ),
 })
 
 export const checkPrerequisitesPublicRequest = z.object({
-  channel: messagingAdChannelSchema,
-  integrationId: zodBigintAsString(),
+  channel: messagingAdChannelSchema.describe(
+    "Channel the integration belongs to.",
+  ),
+  integrationId: zodBigintAsString().describe(
+    "Channel integration id (numeric string).",
+  ),
 })
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -146,7 +260,9 @@ export const checkPrerequisitesPublicRequest = z.object({
 // ─────────────────────────────────────────────────────────────────────────
 
 export const listConnectionsPublicRequestParams = z.object({
-  channel: messagingAdChannelSchema,
+  channel: messagingAdChannelSchema.describe(
+    "Channel to list messaging-ads connections for.",
+  ),
 })
 
 // Never `auth` (an encrypted credential blob) or `workspaceId`.
@@ -169,6 +285,10 @@ export const listConnectionsPublicResponse = z.object({
 })
 
 export const disconnectConnectionPublicRequestParams = z.object({
-  channel: messagingAdChannelSchema,
-  integrationId: zodBigintAsString(),
+  channel: messagingAdChannelSchema.describe(
+    "Channel the integration belongs to.",
+  ),
+  integrationId: zodBigintAsString().describe(
+    "Channel integration id (numeric string).",
+  ),
 })

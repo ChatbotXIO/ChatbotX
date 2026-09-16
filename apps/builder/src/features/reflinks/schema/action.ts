@@ -8,11 +8,17 @@ export const createReflinkRequest = z.object({
     .string()
     .min(1)
     .max(50)
-    .refine((value) => REF_LINK_NAME_REGEX.test(value)),
-  flowId: zodBigintAsString(),
+    .refine((value) => REF_LINK_NAME_REGEX.test(value))
+    .describe("Ref link name, alphanumeric only."),
+  flowId: zodBigintAsString().describe(
+    "Flow to trigger when the ref link is opened. Get it from `flows.list`.",
+  ),
   customFieldId: z
     .union([z.literal("").transform(() => null), zodBigintAsString()])
-    .nullable(),
+    .nullable()
+    .describe(
+      "Custom field to stamp a click identifier into, or null for none.",
+    ),
 })
 export type CreateReflinkRequest = z.infer<typeof createReflinkRequest>
 

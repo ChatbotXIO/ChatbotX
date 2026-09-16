@@ -1,7 +1,7 @@
 ---
 name: chatbotx
 description: ChatbotX is an open-source chat marketing platform for managing contacts, conversations, flows, broadcasts, and sequences across WhatsApp, Messenger, Instagram, TikTok, Telegram, Zalo OA, Email, and Webchat. An alternative to ManyChat, Chatfuel, Wati, Respond, etc...
-version: 0.1.6
+version: 0.2.0
 emoji: 🤖
 homepage: https://github.com/ChatbotXIO/ChatbotX
 metadata:
@@ -73,7 +73,7 @@ Find your workspace token at: **Settings → Developer → API Keys**
 ```bash
 claude mcp add chatbotx \
   -e CHATBOTX_API_KEY=<your-token> \
-  -e CHATBOTX_API_URL=https://your-instance.com \
+  -e CHATBOTX_API_URL=https://your-instance.com/api \
   -e CHATBOTX_MCP_TRANSPORT=stdio \
   -s user \
   -- node /path/to/dist/index.mjs
@@ -224,36 +224,36 @@ chatbotx error-logs list                             # [--page --perPage --sort 
 
 ## MCP Tools (for AI agents)
 
-Tool names are the OpenAPI `operationId` converted to `snake_case` (66 tools total). Channel-token operations (`/v1/channels/api/*`) and deprecated operations (e.g. `inboxes.listChannels`) are excluded from this surface.
+Tool names are the OpenAPI `operationId` converted to `snake_case`. `tools/list` returns a curated **default set of 44 tools** — not the full ~350-operation API — plus two meta-tools that reach everything else:
+
+| Tool | Description |
+|---|---|
+| `search_tools` | Search the full API for a tool outside the default set (e.g. delete operations, AI agents, coupons, products, webhooks). Returns name/description/inputSchema. |
+| `call_tool` | Execute any tool by name, including ones only `search_tools` found. |
+
+Call `capabilities_get` and `token_get` first — both are always visible regardless of the calling token's scopes:
+
+| Tool | Description |
+|---|---|
+| `capabilities_get` | Discover the workspace's inboxes, templates, fields, tags, sequences, and flows — the ids other tools need. |
+| `token_get` | Get the calling token's workspace id, permission (`read_only`/`full`), and scopes. |
+| `schemas_flow_spec` | JSON Schema for the flow-spec DSL `flows_publish`/`flows_update_draft`/`flows_validate` accept. |
 
 | Category | Tool |
 |---|---|
-| AI Agents | `ai_agents_list` |
-| Bot Fields | `bot_fields_list`, `bot_fields_create`, `bot_fields_set_many`, `bot_fields_bulk_update`, `bot_fields_get`, `bot_fields_set`, `bot_fields_delete` |
-| Broadcasts | `broadcasts_list`, `broadcasts_get`, `broadcasts_get_audience` |
-| Contacts | `contacts_list`, `contacts_create`, `contacts_get`, `contacts_upsert`, `contacts_update`, `contacts_delete`, `contacts_find_by_custom_field`, `contacts_import` |
-| Contact Tags | `contacts_list_tags`, `contacts_add_tags`, `contacts_remove_tags` |
-| Contact Custom Fields | `contacts_list_custom_fields`, `contacts_set_custom_fields`, `contacts_clear_custom_fields`, `contacts_get_custom_field`, `contacts_set_custom_field`, `contacts_clear_custom_field` |
-| Contact Actions | `contacts_block`, `contacts_unblock`, `contacts_list_messages`, `contacts_get_message`, `contacts_send_message`, `contacts_send_flow`, `contacts_trigger_auto_reply` |
-| Conversations | `conversations_list` |
-| Custom Fields | `custom_fields_list`, `custom_fields_create`, `custom_fields_get`, `custom_fields_update`, `custom_fields_delete` |
+| Capabilities | `capabilities_get`, `schemas_flow_spec`, `token_get` |
+| AI Agents | `ai_agents_list`, `ai_agents_create`, `ai_agents_update`, `ai_files_list`, `ai_functions_list` |
+| Analytics | `analytics_new_contact_counts_per_day`, `analytics_blocked_contacts_per_day`, `analytics_flow_stats`, `analytics_broadcast_stats`, `analytics_sequence_step_stats` |
+| Broadcasts | `broadcasts_list`, `broadcasts_get`, `broadcasts_stop` |
+| Contacts | `contacts_create`, `contacts_get`, `contacts_list`, `contacts_search`, `contacts_list_tags`, `contacts_add_tags_by_name`, `contacts_list_custom_fields`, `contacts_set_custom_field`, `contacts_list_messages`, `contacts_send_message`, `contacts_send_flow`, `contacts_list_sequences`, `contacts_subscribe_sequences` |
+| Conversations | `conversations_list`, `conversations_get`, `conversations_assign` |
 | Error Logs | `error_logs_list` |
-| External Webhooks | `external_webhooks_list`, `external_webhooks_create`, `external_webhooks_delete` |
-| Flows | `flows_list` |
-| Inboxes | `inboxes_list` |
-| Teams | `inbox_teams_list` |
-| Integrations | `integrations_list` |
+| Flows | `flows_list`, `flows_get`, `flows_create`, `flows_update_draft`, `flows_publish`, `flows_validate` |
 | Keywords | `keywords_list` |
-| Ref Links | `reflinks_get` |
-| Saved Replies | `saved_replies_list` |
-| Sequences | `sequences_list`, `sequences_get` |
-| Tags | `tags_list`, `tags_create`, `tags_get`, `tags_update`, `tags_delete` |
-| Template Messages | `template_messages_list` |
-| Triggers | `triggers_list` |
-| Webhooks | `webhooks_list`, `webhooks_create`, `webhooks_delete` |
-| Members | `workspace_members_list`, `workspace_members_get` |
+| Messages | `messages_list` |
+| Sequences | `sequences_list`, `sequences_get`, `sequences_update` |
 
-Tools are auto-generated from the OpenAPI spec — new API endpoints appear automatically on server restart. Tool names are cached in-process for the server's lifetime, so a rename requires a restart.
+A token missing a scope, or a `read_only` token calling a write tool, does not see that tool in `tools/list` (the underlying API call still 403s if forced via `call_tool`). Tools are auto-generated from the OpenAPI spec — new default-visible endpoints appear automatically once the spec's TTL (`CHATBOTX_SPEC_TTL_MS`, default 5 minutes) elapses, no restart required.
 
 ---
 

@@ -4,6 +4,7 @@ import {
 } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
@@ -30,10 +31,22 @@ export const contactsCustomFieldsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/{identifier}/custom-fields",
-      summary: "Get all custom fields from a contact",
+      summary: "Get all custom fields from contact",
+      description:
+        "Use this to inspect every custom-field value for a contact after resolving its identifier with `contacts.get`. Call `contacts.setCustomField` to change one value or `contacts.setCustomFields` to change several.",
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .output(listPublicContactCustomFieldsResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
@@ -52,12 +65,21 @@ export const contactsCustomFieldsPublicRouter = {
       method: "GET",
       path: "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
       summary: "Get contact custom field value",
+      description:
+        "Returns one custom field's current value for the contact identified by `identifier`. Use `contacts.listCustomFields` to see every field at once.",
       tags: ["Contacts"],
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        customFieldId: zodBigintAsString(),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        customFieldId: zodBigintAsString().describe(
+          "Custom field id (numeric string). Get it from `customFields.list`.",
+        ),
       }),
     )
     .output(publicContactCustomFieldResource)
@@ -79,13 +101,24 @@ export const contactsCustomFieldsPublicRouter = {
       method: "POST",
       path: "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
       summary: "Set contact custom field value",
+      description:
+        "Changes one custom-field value on a resolved contact without altering its other fields. Use `contacts.listCustomFields` to inspect current values, or `contacts.setCustomFields` for several changes.",
+      successStatus: 204,
       tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        customFieldId: zodBigintAsString(),
-        value: z.string().trim(),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        customFieldId: zodBigintAsString().describe(
+          "Custom field id (numeric string). Get it from `customFields.list`.",
+        ),
+        value: z.string().trim().describe("New value for the custom field."),
       }),
     )
     .errors(possibleErrorsOnMutatingResource)
@@ -106,22 +139,35 @@ export const contactsCustomFieldsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/contacts/{identifier}/custom-fields",
-      summary: "Set multiple custom field values for a contact",
+      summary: "Set multiple custom field values for contact",
+      description:
+        "Sets each given custom field to its value on the contact identified by `identifier`; fields not listed are left unchanged. Use `customFields.list`/`customFields.create` first to resolve names to ids.",
       successStatus: 204,
       tags: ["Contacts"],
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
         fields: z
           .array(
             z.object({
-              customFieldId: zodBigintAsString(),
-              value: z.string().trim(),
+              customFieldId: zodBigintAsString().describe(
+                "Custom field id (numeric string). Get it from `customFields.list`.",
+              ),
+              value: z
+                .string()
+                .trim()
+                .describe("New value for this custom field."),
             }),
           )
           .min(1)
-          .max(20),
+          .max(20)
+          .describe("Custom field values to set, up to 20 per request."),
       }),
     )
     .errors(possibleErrorsOnMutatingResource)
@@ -141,7 +187,7 @@ export const contactsCustomFieldsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/contacts/{identifier}/custom-fields",
-      summary: "Apply arithmetic/append operations to a custom field",
+      summary: "Apply arithmetic/append operations to custom field",
       description:
         'Applies a set of operations to one custom field on the contact, in order. Each operation is one of `set`, `append`, `prepend`, `increase`, `decrease` — `increase`/`decrease` treat the current value as a number (no-op if it is not numeric). Example: `{"operations":[{"customFieldId":"123","operation":"increase","value":"1"}]}` to increment a numeric field.',
       successStatus: 204,
@@ -171,14 +217,24 @@ export const contactsCustomFieldsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/contacts/{identifier}/custom-fields/{idOrName}",
-      summary: "Delete contact custom field by id or name",
+      summary: "Delete contact custom field",
+      description:
+        "Removes one custom-field value from the contact identified by `identifier`, matched by id or field name. Use `contacts.clearCustomFields` to clear every field at once.",
       successStatus: 204,
       tags: ["Contacts"],
     })
     .input(
       z.object({
-        identifier: z.string().min(1),
-        idOrName: z.string().min(1),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        idOrName: z
+          .string()
+          .min(1)
+          .describe("Custom field id (numeric string) or exact field name."),
       }),
     )
     .errors(possibleErrorsOnDeletingResource)
@@ -198,11 +254,22 @@ export const contactsCustomFieldsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/contacts/{identifier}/custom-fields",
-      summary: "Clear all custom fields from a contact",
+      summary: "Clear all custom fields from contact",
+      description:
+        "Removes every custom-field value from the contact identified by `identifier`. Use `contacts.clearCustomField` to remove just one.",
       successStatus: 204,
       tags: ["Contacts"],
     })
-    .input(z.object({ identifier: z.string().min(1) }))
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({

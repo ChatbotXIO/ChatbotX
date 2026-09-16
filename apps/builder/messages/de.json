@@ -727,6 +727,10 @@
     }
   },
   "fields": {
+    "marketingMessagesConfigId": {
+      "label": "Marketing-Messages-Konfigurations-ID",
+      "description": "Konfigurations-ID von Facebook Login for Business, die zum Anfordern der Berechtigung marketing_messages_messenger verwendet wird."
+    },
     "omnichannel": {
       "label": "Omnichannel"
     },
@@ -2464,6 +2468,41 @@
   },
   "general": {
     "title": "Allgemein"
+  },
+  "facebookMarketingMessages": {
+    "deleteWarning": "Dies entfernt die Kampagne nur aus ChatbotX. Die Meta-Nachrichtenkampagne läuft weiter — pausieren oder löschen Sie sie im Werbeanzeigenmanager.",
+    "title": "Facebook Marketing Messages",
+    "description": "Steigern Sie Engagement und Umsatz mit personalisierten Werbenachrichten auf Messenger.",
+    "create": "Neu erstellen",
+    "grantTitle": "Facebook-Zugriff gewähren",
+    "grantDescription": "Bitte gewähren Sie Zugriff, um die Marketing-Messages-Funktion zu nutzen",
+    "grantAction": "Zugriff gewähren",
+    "reconnect": "Neu verbinden",
+    "expiredWarning": "Ihr Facebook-Zugriff ist abgelaufen oder wurde widerrufen. Verbinden Sie sich neu, um Kampagnen zu erstellen oder zu bearbeiten. Bestehende Kampagnen werden unten angezeigt und sind bis zur Neuverbindung schreibgeschützt.",
+    "fields": {
+      "image": "Bild",
+      "video": "Video",
+      "page": "Facebook-Seite",
+      "adAccount": "Werbekonto",
+      "budgetType": "Budgettyp",
+      "budget": "Budget",
+      "daily": "Tagesbudget",
+      "lifetime": "Laufzeitbudget",
+      "templateType": "Nachrichtentyp",
+      "text": "Text",
+      "button": "Schaltfläche",
+      "media": "Medien",
+      "generic": "Generisch",
+      "greeting": "Begrüßung",
+      "quickReplies": "Schnellantworten",
+      "elements": "Karten"
+    },
+    "errors": {
+      "notConfigured": "Facebook Marketing Messages ist nicht konfiguriert. Bitten Sie Ihren Administrator, die Marketing-Messages-Konfigurations-ID festzulegen.",
+      "notGranted": "Bitte gewähren Sie Zugriff, um die Marketing-Messages-Funktion zu nutzen.",
+      "tosNotAccepted": "Um diese Funktion zu nutzen, akzeptieren Sie bitte die Bedingungen für benutzerdefinierte Objekte unter {url}",
+      "notFound": "Marketing-Nachricht nicht gefunden."
+    }
   },
   "facebookAds": {
     "title": "Facebook Ads",

@@ -24,7 +24,7 @@ export const productCategoriesPublicRouter = {
       path: "/v1/product-categories",
       summary: "List product categories",
       description:
-        "Lists product categories as a flat two-level list. `parentId` is null for a top-level category, or the id of its top-level parent for a sub-category.",
+        "Use this to inspect the flat two-level category tree before creating one with `productCategories.create`. A null `parentId` identifies a top-level category.",
       tags: ["Product Categories"],
     })
     .output(listProductCategoriesPublicResponse)
@@ -38,7 +38,7 @@ export const productCategoriesPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/product-categories",
-      summary: "Create a product category",
+      summary: "Create product category",
       description:
         "Omit `parentId` to create a top-level category, or pass an existing top-level category's id to create a sub-category.",
       tags: ["Product Categories"],
@@ -60,7 +60,9 @@ export const productCategoriesPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/product-categories/{id}",
-      summary: "Update a product category",
+      summary: "Update product category",
+      description:
+        "Changes an existing category's name or reparents it. Use `productCategories.list` to find its id first.",
       tags: ["Product Categories"],
     })
     .input(updateProductCategoryPublicRequest)
@@ -86,11 +88,19 @@ export const productCategoriesPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/product-categories/{id}",
-      summary: "Delete a product category",
+      summary: "Delete product category",
+      description:
+        "Permanently deletes a product category. Use `productCategories.list` to find its id first.",
       successStatus: 204,
       tags: ["Product Categories"],
     })
-    .input(z.object({ id: zodBigintAsString() }))
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Product category id. Get it from `productCategories.list`.",
+        ),
+      }),
+    )
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await productCategoryService.delete({

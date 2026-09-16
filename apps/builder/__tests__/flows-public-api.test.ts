@@ -1,4 +1,7 @@
+import { FlowAuthoringException } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+
+const SPEC_STEP_PATH_PATTERN = /^steps\[/
 
 type RouteConfig = {
   method: string
@@ -71,6 +74,15 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/business/errors", () => ({
   validationException: (field: string, message: string) =>
     new Error(`${field}: ${message}`),
+}))
+
+const getFlowAuthoringContext = vi.fn(async () => ({
+  templatesByName: new Map(),
+  customFieldsByName: new Map(),
+  flowsByName: new Map(),
+}))
+vi.mock("@chatbotx.io/business/capabilities", () => ({
+  getFlowAuthoringContext,
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -280,6 +292,112 @@ describe("POST /v1/flows/{id}/publish", () => {
       edges: [],
     })
   })
+
+  test("compiles a { spec } input into nodes/edges before publishing", async () => {
+    flowVersionService.publish.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        id: "flow-1",
+        spec: {
+          formatVersion: 1,
+          name: "Spec flow",
+          steps: [{ type: "send", text: "Hello!" }],
+        },
+      },
+    })
+
+    expect(getFlowAuthoringContext).toHaveBeenCalledWith("workspace-1")
+    expect(flowVersionService.publish).toHaveBeenCalledTimes(1)
+    const call = flowVersionService.publish.mock.calls[0][0]
+    expect(call.workspaceId).toBe("workspace-1")
+    expect(call.flowId).toBe("flow-1")
+    expect(call.nodes).toHaveLength(1)
+    expect(call.nodes[0].type).toBe("sendMessage")
+    expect(call.edges).toEqual([])
+  })
+
+  test("throws FlowAuthoringException (not a raw 500) when the compiled spec fails channel refinement", async () => {
+    const input = {
+      id: "flow-1",
+      spec: {
+        formatVersion: 1,
+        name: "Spec flow",
+        channel: "instagram",
+        steps: [
+          {
+            type: "send",
+            imageUrl: "https://example.com/a.png",
+            buttons: [{ text: "Yes" }],
+          },
+        ],
+      },
+    }
+
+    let caught: unknown
+    try {
+      await procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input,
+      })
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toBeInstanceOf(FlowAuthoringException)
+    expect((caught as FlowAuthoringException).errors[0]?.path).toMatch(
+      SPEC_STEP_PATH_PATTERN,
+    )
+    expect(flowVersionService.publish).not.toHaveBeenCalled()
+  })
+})
+
+describe("POST /v1/flows/validate", () => {
+  const procedure = findProcedure("POST", "/v1/flows/validate")
+
+  test("compiles a spec and returns the graph without persisting anything", async () => {
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        spec: {
+          formatVersion: 1,
+          name: "Spec flow",
+          steps: [{ type: "send", text: "Hello!" }],
+        },
+      },
+    })
+
+    expect(getFlowAuthoringContext).toHaveBeenCalledWith("workspace-1")
+    expect(result.nodes).toHaveLength(1)
+    expect(result.nodes[0].type).toBe("sendMessage")
+    expect(result.edges).toEqual([])
+    expect(flowVersionService.publish).not.toHaveBeenCalled()
+    expect(flowVersionService.updateDraftByFlowId).not.toHaveBeenCalled()
+  })
+
+  test("throws FlowAuthoringException for an unknown template name", async () => {
+    let caught: unknown
+    try {
+      await procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: {
+          spec: {
+            formatVersion: 1,
+            name: "Spec flow",
+            steps: [{ type: "sendTemplate", templateName: "does_not_exist" }],
+          },
+        },
+      })
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toBeInstanceOf(FlowAuthoringException)
+    expect((caught as FlowAuthoringException).errors[0]?.code).toBe(
+      "unknownTemplate",
+    )
+  })
 })
 
 describe("PUT /v1/flows/{id}/draft", () => {
@@ -300,6 +418,31 @@ describe("PUT /v1/flows/{id}/draft", () => {
       edges: [],
     })
   })
+
+  test("compiles a { spec } input into nodes/edges before updating the draft", async () => {
+    flowVersionService.updateDraftByFlowId.mockResolvedValueOnce(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        id: "flow-1",
+        spec: {
+          formatVersion: 1,
+          name: "Spec flow",
+          steps: [{ type: "send", text: "Hello!" }],
+        },
+      },
+    })
+
+    expect(getFlowAuthoringContext).toHaveBeenCalledWith("workspace-1")
+    expect(flowVersionService.updateDraftByFlowId).toHaveBeenCalledTimes(1)
+    const call = flowVersionService.updateDraftByFlowId.mock.calls[0][0]
+    expect(call.workspaceId).toBe("workspace-1")
+    expect(call.flowId).toBe("flow-1")
+    expect(call.nodes).toHaveLength(1)
+    expect(call.nodes[0].type).toBe("sendMessage")
+    expect(call.edges).toEqual([])
+  })
 })
 
 describe("GET /v1/flows/{id}/versions", () => {
@@ -319,6 +462,109 @@ describe("GET /v1/flows/{id}/versions", () => {
       flowId: "flow-1",
       workspaceId: "workspace-1",
     })
+  })
+})
+
+describe("publishFlowRequest / updateDraftFlowRequest — mixed body rejection", () => {
+  const validSpec = {
+    formatVersion: 1,
+    name: "Spec flow",
+    steps: [{ type: "send", text: "Hello!" }],
+  }
+
+  test("publishFlowRequest rejects a body carrying both nodes/edges and spec", async () => {
+    const { publishFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+
+    const result = publishFlowRequest.safeParse({
+      nodes: [],
+      edges: [],
+      spec: validSpec,
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  test("publishFlowRequest still accepts a spec-only body", async () => {
+    const { publishFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+
+    const result = publishFlowRequest.safeParse({ spec: validSpec })
+
+    expect(result.success).toBe(true)
+    expect(result.success && "spec" in result.data).toBe(true)
+  })
+
+  test("publishFlowRequest still accepts a graph-only body", async () => {
+    const { publishFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+
+    const result = publishFlowRequest.safeParse({ nodes: [], edges: [] })
+
+    expect(result.success).toBe(true)
+    expect(result.success && "spec" in result.data).toBe(false)
+  })
+
+  test("updateDraftFlowRequest rejects a body carrying both nodes/edges and spec", async () => {
+    const { updateDraftFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+
+    const result = updateDraftFlowRequest.safeParse({
+      nodes: [],
+      edges: [],
+      spec: validSpec,
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  test("updateDraftFlowRequest still accepts a spec-only body", async () => {
+    const { updateDraftFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+
+    const result = updateDraftFlowRequest.safeParse({ spec: validSpec })
+
+    expect(result.success).toBe(true)
+    expect(result.success && "spec" in result.data).toBe(true)
+  })
+
+  test("updateDraftFlowRequest still accepts a graph-only body", async () => {
+    const { updateDraftFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+
+    const result = updateDraftFlowRequest.safeParse({ nodes: [], edges: [] })
+
+    expect(result.success).toBe(true)
+    expect(result.success && "spec" in result.data).toBe(false)
+  })
+
+  // The actual route input is `publishFlowRequest.and(publicIdParam(...))` —
+  // a plain `.strict()` union member rejects the intersection's `id` key
+  // before the two schemas ever merge, which would break every real
+  // request. Pin the composed shape directly so a future refactor can't
+  // silently reintroduce that regression.
+  test("publishFlowRequest composed with the route's id param still accepts spec-only and graph-only bodies", async () => {
+    const { publishFlowRequest } = await import(
+      "@/features/flows/schema/action"
+    )
+    const { publicIdParam } = await import("@/lib/public-api/params")
+
+    const composed = publishFlowRequest.and(publicIdParam("flow", "flows.list"))
+
+    expect(composed.safeParse({ id: "1", spec: validSpec }).success).toBe(true)
+    expect(composed.safeParse({ id: "1", nodes: [], edges: [] }).success).toBe(
+      true,
+    )
+    expect(
+      composed.safeParse({ id: "1", nodes: [], edges: [], spec: validSpec })
+        .success,
+    ).toBe(false)
   })
 })
 

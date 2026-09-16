@@ -37,6 +37,8 @@ export const facebookLeadAdsPublicRouter = {
       method: "GET",
       path: "/v1/facebook-lead-ads",
       summary: "List Facebook Lead Ads automations",
+      description:
+        "Use this to find automation ids before inspecting one with `facebookLeadAds.get` or changing one with `facebookLeadAds.update`. Returns automations configured in this workspace.",
       tags: ["Facebook Lead Ads"],
     })
     .input(listFacebookLeadAdsPublicRequest)
@@ -54,7 +56,9 @@ export const facebookLeadAdsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/facebook-lead-ads/{id}",
-      summary: "Get a Facebook Lead Ads automation",
+      summary: "Get Facebook Lead Ads automation",
+      description:
+        "Returns one automation's page, form, and reply configuration. Use `facebookLeadAds.list` to find its id first.",
       tags: ["Facebook Lead Ads"],
     })
     .input(getFacebookLeadAdPublicRequest)
@@ -75,7 +79,9 @@ export const facebookLeadAdsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/facebook-lead-ads",
-      summary: "Create a Facebook Lead Ads automation",
+      summary: "Create Facebook Lead Ads automation",
+      description:
+        "Subscribes a page to lead-form webhooks and configures the reply sent to new leads. Use `facebookLeadAds.listPages`/`facebookLeadAds.listForms` first to resolve valid page/form ids.",
       successStatus: 201,
       tags: ["Facebook Lead Ads"],
     })
@@ -95,7 +101,9 @@ export const facebookLeadAdsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/facebook-lead-ads/{id}",
-      summary: "Update a Facebook Lead Ads automation",
+      summary: "Update Facebook Lead Ads automation",
+      description:
+        "Changes an existing automation's configuration. Call `facebookLeadAds.get` to inspect current values first.",
       tags: ["Facebook Lead Ads"],
     })
     .input(updateFacebookLeadAdPublicRequest)
@@ -117,7 +125,9 @@ export const facebookLeadAdsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/facebook-lead-ads/{id}",
-      summary: "Delete a Facebook Lead Ads automation",
+      summary: "Delete Facebook Lead Ads automation",
+      description:
+        "Permanently deletes an automation and stops replying to new leads for it. Use `facebookLeadAds.list` to find its id first.",
       successStatus: 204,
       tags: ["Facebook Lead Ads"],
     })
@@ -135,6 +145,8 @@ export const facebookLeadAdsPublicRouter = {
       method: "GET",
       path: "/v1/facebook-lead-ads/pages",
       summary: "List Messenger pages eligible for Lead Ads",
+      description:
+        "Returns pages connected to this workspace that can be automated. Use `facebookLeadAds.listForms` to see a page's lead forms next.",
       tags: ["Facebook Lead Ads"],
     })
     .output(listFacebookLeadAdsPagesPublicResponse)
@@ -147,7 +159,9 @@ export const facebookLeadAdsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/facebook-lead-ads/forms",
-      summary: "List a page's lead forms",
+      summary: "List page lead forms",
+      description:
+        "Returns lead-generation forms configured on a Facebook page. Use `facebookLeadAds.listPages` to find `pageId` first.",
       tags: ["Facebook Lead Ads"],
     })
     .input(listFacebookLeadAdsFormsPublicRequest)
