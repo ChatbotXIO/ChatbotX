@@ -4047,7 +4047,8 @@
         "unmute": "取消靜音",
         "playbackFailed": "播放失敗",
         "answeredBy": "由 {name} 接聽",
-        "calledBy": "由 {name} 撥打"
+        "calledBy": "由 {name} 撥打",
+        "callFailed": "通話問題"
       },
       "sheet": {
         "title": "通話資訊",

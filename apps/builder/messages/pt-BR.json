@@ -3993,7 +3993,8 @@
         "unmute": "Ativar som",
         "playbackFailed": "Falha na reprodução",
         "answeredBy": "Atendida por {name}",
-        "calledBy": "Chamada por {name}"
+        "calledBy": "Chamada por {name}",
+        "callFailed": "Problema na chamada"
       },
       "sheet": {
         "title": "Informações da chamada",

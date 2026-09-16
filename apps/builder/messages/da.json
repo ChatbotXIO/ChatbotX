@@ -4014,7 +4014,8 @@
         "unmute": "Fjern lydløs",
         "playbackFailed": "Afspilning mislykkedes",
         "answeredBy": "Besvaret af {name}",
-        "calledBy": "Ringet op af {name}"
+        "calledBy": "Ringet op af {name}",
+        "callFailed": "Opkaldsproblem"
       },
       "sheet": {
         "title": "Opkaldsoplysninger",

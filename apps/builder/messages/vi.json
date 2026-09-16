@@ -4014,7 +4014,8 @@
         "unmute": "Bật tiếng",
         "playbackFailed": "Phát lại không thành công",
         "answeredBy": "Nghe bởi {name}",
-        "calledBy": "Gọi bởi {name}"
+        "calledBy": "Gọi bởi {name}",
+        "callFailed": "Sự cố cuộc gọi"
       },
       "sheet": {
         "title": "Thông tin cuộc gọi",

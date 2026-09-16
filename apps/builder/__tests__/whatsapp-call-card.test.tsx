@@ -416,6 +416,42 @@ describe("WhatsappCallCard", () => {
     expect(el.textContent).not.toContain("calledBy")
   })
 
+  test("a completed call with failureReason renders the error affordance alongside the audio-call layout", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{
+          ...baseCall,
+          failureReason:
+            "138021:WhatsApp client terminated the call due to not receiving any media for a long time.",
+        }}
+      />,
+    )
+    // Still the normal completed "Audio call" layout — the failure is an
+    // addition on top, not a replacement for it.
+    expect(el.textContent).toContain("audioCall")
+    expect(el.querySelector(".text-destructive")).not.toBeNull()
+  })
+
+  test("a non-completed call with failureReason also renders the error affordance (never buried)", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{
+          ...baseCall,
+          status: "failed",
+          direction: "userInitiated",
+          failureReason: "138021:Media connection dropped",
+        }}
+      />,
+    )
+    expect(el.textContent).toContain("missedVoiceCall")
+    expect(el.querySelector(".text-destructive")).not.toBeNull()
+  })
+
+  test("no failureReason renders no error affordance", () => {
+    const el = renderComponent(<WhatsappCallCard call={baseCall} />)
+    expect(el.querySelector(".text-destructive")).toBeNull()
+  })
+
   test("clicking play lazily requests a signed URL via getCallRecordingUrlAction", async () => {
     const el = renderComponent(<WhatsappCallCard call={baseCall} />)
     const playButton = el.querySelector('button[aria-label="play"]')

@@ -33,6 +33,7 @@ import { useChatStore } from "@/features/chat/store/chat-store-provider"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useCallInfoSheetStore } from "../store/call-info-sheet-store"
 import { CallAudioPlayer } from "./call-audio-player"
+import { MessageErrorBadge } from "./message-error-badge"
 
 /**
  * Human, locale-aware "time to answer" — e.g. `9s`, `1m 30s`, `2m` in English;
@@ -105,6 +106,25 @@ const CallAgentLine = ({
     {t(AGENT_LABEL_KEY_BY_DIRECTION[direction], { name: agentName })}
   </span>
 )
+
+/**
+ * The call-failure affordance shared by both the compact (non-completed)
+ * outcome row and the full completed-call card — Meta can terminate a call
+ * that was ANSWERED but carried no audio with `status: completed` and an
+ * `errors[]` diagnosis (e.g. code 138021), so the affordance must not be
+ * gated on `status !== "completed"`: a failure with no visible reason on an
+ * apparently-fine "Audio call" card is exactly the case that costs an agent
+ * a debugging session. Wraps the same {@link MessageErrorBadge} an outgoing
+ * message's `sendError` uses, with call-specific copy ("Call problem"
+ * rather than "Failed to send").
+ */
+const CallFailureBadge = ({
+  failureReason,
+  t,
+}: {
+  failureReason: string
+  t: ReturnType<typeof useTranslations>
+}) => <MessageErrorBadge detail={failureReason} label={t("callFailed")} />
 
 type WhatsappCallCardProps = {
   call: MessageWhatsappCallEntity
@@ -251,6 +271,9 @@ export const WhatsappCallCard = ({
             <PhoneOffIcon aria-hidden className="size-3.5" />
           )}
           <span>{tMessages(labelKey)}</span>
+          {call.failureReason && (
+            <CallFailureBadge failureReason={call.failureReason} t={t} />
+          )}
         </div>
         {call.agentName && (
           <CallAgentLine
@@ -286,6 +309,9 @@ export const WhatsappCallCard = ({
             </span>
           )}
         </div>
+        {call.failureReason && (
+          <CallFailureBadge failureReason={call.failureReason} t={t} />
+        )}
         {displayName && (
           <span className="ml-auto truncate text-muted-foreground text-xs">
             {displayName}

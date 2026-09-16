@@ -234,6 +234,18 @@ export type MessageWhatsappCallEntity = {
    * the card renders no agent line rather than an empty label in that case.
    */
   agentName?: string
+  /**
+   * Meta's own diagnosis for why the call ended badly — carried verbatim
+   * from the terminate webhook's `errors[]` (e.g. a media-drop code like
+   * `138021` when the call was answered but no audio was ever received).
+   * This is Meta's raw text and may simply name an error code with no
+   * further explanation; it is stamped as-is (see
+   * `finalizeCallSideEffects`'s `lastError` formatting) so the card can show
+   * an agent WHY a call that looks answered actually failed, instead of
+   * leaving them to guess. Absent for a call that ended without a
+   * terminate-reported error.
+   */
+  failureReason?: string
 }
 
 /**

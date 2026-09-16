@@ -299,6 +299,11 @@ export const finalizeCallSideEffects = async (
     recordingExpired: false,
     recordingUnavailable,
     ...agentSnapshot,
+    // Surfaces Meta's own terminate diagnosis (e.g. a media-drop code) on
+    // the card itself — without this an agent sees an "Audio call" with no
+    // audio and no explanation. Only stamped when Meta actually reported one;
+    // never overwritten with an empty value.
+    ...(input.lastError ? { failureReason: input.lastError } : {}),
   }
 
   // The card's promise to the agent, in one greppable line: whether a

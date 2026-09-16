@@ -4014,7 +4014,8 @@
         "unmute": "إلغاء كتم الصوت",
         "playbackFailed": "فشل التشغيل",
         "answeredBy": "تم الرد بواسطة {name}",
-        "calledBy": "تم الاتصال بواسطة {name}"
+        "calledBy": "تم الاتصال بواسطة {name}",
+        "callFailed": "مشكلة في المكالمة"
       },
       "sheet": {
         "title": "معلومات المكالمة",

@@ -459,6 +459,42 @@ describe("finalizeCallSideEffects", () => {
     )
   })
 
+  test("stamps lastError onto the activity entity as failureReason, so the card can show WHY the call failed", async () => {
+    await finalizeCallSideEffects({
+      call,
+      entity: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "completed",
+      },
+      lastError:
+        "138021:WhatsApp client terminated the call due to not receiving any media for a long time.",
+    })
+
+    expect(mocks.createOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          failureReason:
+            "138021:WhatsApp client terminated the call due to not receiving any media for a long time.",
+        }),
+      }),
+    )
+  })
+
+  test("leaves failureReason unset on the activity entity when lastError is absent", async () => {
+    await finalizeCallSideEffects({
+      call,
+      entity: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "completed",
+      },
+    })
+
+    const attrs = mocks.createOrUpdate.mock.calls[0]?.[0]?.contentAttributes
+    expect(attrs).not.toHaveProperty("failureReason")
+  })
+
   test("uses attemptId as the external correlation id when wacid is null (outbound before Meta assigns one)", async () => {
     await finalizeCallSideEffects({
       call: { ...call, wacid: null, attemptId: "att-1" },

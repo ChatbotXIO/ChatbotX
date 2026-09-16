@@ -4014,7 +4014,8 @@
         "unmute": "Bunyikan",
         "playbackFailed": "Pemutaran gagal",
         "answeredBy": "Dijawab oleh {name}",
-        "calledBy": "Ditelepon oleh {name}"
+        "calledBy": "Ditelepon oleh {name}",
+        "callFailed": "Masalah panggilan"
       },
       "sheet": {
         "title": "Informasi Panggilan",

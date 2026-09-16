@@ -2101,7 +2101,8 @@
         "unmute": "ביטול השתקה",
         "playbackFailed": "ההפעלה נכשלה",
         "answeredBy": "נענה על ידי {name}",
-        "calledBy": "התקשרות מאת {name}"
+        "calledBy": "התקשרות מאת {name}",
+        "callFailed": "בעיה בשיחה"
       },
       "sheet": {
         "title": "פרטי השיחה",

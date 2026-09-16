@@ -3993,7 +3993,8 @@
         "unmute": "ミュート解除",
         "playbackFailed": "再生に失敗しました",
         "answeredBy": "応答者: {name}",
-        "calledBy": "発信者: {name}"
+        "calledBy": "発信者: {name}",
+        "callFailed": "通話の問題"
       },
       "sheet": {
         "title": "通話情報",

@@ -32,7 +32,6 @@ import {
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { format } from "date-fns"
 import {
-  AlertCircleIcon,
   BotIcon,
   ExternalLinkIcon,
   ImageIcon,
@@ -53,6 +52,7 @@ import type { MessageResourceWithRelations } from "../schema/resource"
 import { CallRecordingActivity } from "./call-recording-activity"
 import { MessageActions, MessageActionsEditor } from "./message-actions"
 import { MessageBubble } from "./message-bubble"
+import { MessageErrorBadge } from "./message-error-badge"
 import { WhatsappCallCard } from "./whatsapp-call-card"
 
 type MessageItemProps = {
@@ -252,20 +252,10 @@ export const MessageItem = (props: MessageItemProps) => {
 
       <div className="flex">
         {message.messageType === "outgoing" && message.sendError && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <span className="flex items-center self-center px-1 text-destructive">
-                  <AlertCircleIcon aria-hidden className="size-4" />
-                </span>
-              }
-            />
-            <TooltipContent>
-              <p>
-                {t("sendFailed")}: {message.sendError}
-              </p>
-            </TooltipContent>
-          </Tooltip>
+          <MessageErrorBadge
+            detail={message.sendError}
+            label={t("sendFailed")}
+          />
         )}
         {isComment && !isEditing && message.messageType === "incoming" && (
           <Button

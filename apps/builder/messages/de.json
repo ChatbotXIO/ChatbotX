@@ -4014,7 +4014,8 @@
         "unmute": "Ton ein",
         "playbackFailed": "Wiedergabe fehlgeschlagen",
         "answeredBy": "Angenommen von {name}",
-        "calledBy": "Angerufen von {name}"
+        "calledBy": "Angerufen von {name}",
+        "callFailed": "Anrufproblem"
       },
       "sheet": {
         "title": "Anrufinformationen",

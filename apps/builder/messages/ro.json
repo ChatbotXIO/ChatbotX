@@ -4014,7 +4014,8 @@
         "unmute": "Activează sunetul",
         "playbackFailed": "Redare nereușită",
         "answeredBy": "Preluat de {name}",
-        "calledBy": "Apelat de {name}"
+        "calledBy": "Apelat de {name}",
+        "callFailed": "Problemă la apel"
       },
       "sheet": {
         "title": "Informații despre apel",

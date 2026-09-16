@@ -4014,7 +4014,8 @@
         "unmute": "Dempen opheffen",
         "playbackFailed": "Afspelen mislukt",
         "answeredBy": "Beantwoord door {name}",
-        "calledBy": "Gebeld door {name}"
+        "calledBy": "Gebeld door {name}",
+        "callFailed": "Gespreksprobleem"
       },
       "sheet": {
         "title": "Gesprekinformatie",

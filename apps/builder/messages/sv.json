@@ -5451,7 +5451,8 @@
         "unmute": "Ljud på",
         "playbackFailed": "Uppspelning misslyckades",
         "answeredBy": "Besvarat av {name}",
-        "calledBy": "Uppringt av {name}"
+        "calledBy": "Uppringt av {name}",
+        "callFailed": "Samtalsproblem"
       },
       "sheet": {
         "title": "Samtalsinformation",

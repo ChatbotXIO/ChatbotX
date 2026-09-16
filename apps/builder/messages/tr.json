@@ -4014,7 +4014,8 @@
         "unmute": "Sesi aç",
         "playbackFailed": "Oynatma başarısız oldu",
         "answeredBy": "Yanıtlayan: {name}",
-        "calledBy": "Arayan: {name}"
+        "calledBy": "Arayan: {name}",
+        "callFailed": "Arama sorunu"
       },
       "sheet": {
         "title": "Arama Bilgileri",

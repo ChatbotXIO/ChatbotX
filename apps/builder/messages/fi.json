@@ -4014,7 +4014,8 @@
         "unmute": "Poista mykistys",
         "playbackFailed": "Toisto epäonnistui",
         "answeredBy": "Vastaaja: {name}",
-        "calledBy": "Soittaja: {name}"
+        "calledBy": "Soittaja: {name}",
+        "callFailed": "Puheluongelma"
       },
       "sheet": {
         "title": "Puhelun tiedot",
