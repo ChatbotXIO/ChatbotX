@@ -241,7 +241,7 @@ cp .env.example .env
 | Variable | Description | Default | Required |
 |---|---|---|---|
 | `CHATBOTX_API_KEY` | Workspace token (stdio) | — | Yes (stdio) |
-| `CHATBOTX_API_URL` | ChatbotX API origin, including `/api` (e.g. `https://app.chatbotx.io/api`) | `https://api.chatbotx.io` | Yes |
+| `CHATBOTX_API_URL` | ChatbotX API origin, including `/api` (e.g. `https://app.chatbotx.io/api`) | `https://app.chatbotx.io` | Yes |
 | `CHATBOTX_ALLOW_SELF_SIGNED_CERT` | Disable TLS verification (`true`/`false`) | — | No |
 | `CHATBOTX_SPEC_TTL_MS` | How long the fetched OpenAPI spec/tool list and a token's introspected scopes are trusted before a background re-fetch | `300000` | No |
 | `CHATBOTX_HTTP_TIMEOUT_MS` | Maximum duration for each OpenAPI, token introspection, or tool-call HTTP request | `30000` | No |
