@@ -549,7 +549,13 @@ describe("processCommentAutomation threads support", () => {
       expect.objectContaining({
         type: "comment",
         text: "Hi Threads",
-        contentAttributes: { replyToCommentId: COMMENT_ID },
+        contentAttributes: {
+          replyToCommentId: COMMENT_ID,
+          commentAutomation: {
+            automationId: "automation-1",
+            replyChannel: "public",
+          },
+        },
       }),
     )
     expect(mockChatQueueAdd).toHaveBeenCalledWith(
@@ -557,7 +563,9 @@ describe("processCommentAutomation threads support", () => {
       expect.objectContaining({ type: "sendChannelMessage" }),
       { delay: 0, attempts: 1 },
     )
-    expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
+    // Replies counts DMs, not comment replies (see index.ts) — a public-only
+    // dispatch must not bump it.
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
   })
 
   test("public flow reply still enqueues sendFlow with a public comment anchor", async () => {
@@ -579,12 +587,18 @@ describe("processCommentAutomation threads support", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           flowId: "flow-1",
-          commentAnchor: { commentId: COMMENT_ID, replyChannel: "public" },
+          commentAnchor: {
+            automationId: "automation-1",
+            commentId: COMMENT_ID,
+            replyChannel: "public",
+          },
         }),
       }),
       { delay: 0, attempts: 1 },
     )
-    expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
+    // Replies counts DMs, not comment replies (see index.ts) — a public-only
+    // dispatch must not bump it.
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
   })
 
   test("public AI reply still enqueues commentAIReply on the threads channel", async () => {
@@ -616,7 +630,9 @@ describe("processCommentAutomation threads support", () => {
         jobId: `comment-ai-reply-automation-1-${COMMENT_ID}-public`,
       }),
     )
-    expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
+    // Replies counts DMs, not comment replies (see index.ts) — a public-only
+    // dispatch must not bump it.
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
   })
 
   test("unsupported private reply is skipped on threads but public success still dedups", async () => {

@@ -110,6 +110,55 @@ describe("threads comment api", () => {
     ).rejects.toThrow("Reply creation expired")
   })
 
+  test("treats PUBLISHED as ready instead of an unsupported status", async () => {
+    server.use(
+      http.post(
+        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
+        () => HttpResponse.json({ id: "creation-published" }),
+      ),
+      http.get(`${THREADS_GRAPH_API_URL}/v1.0/creation-published`, () =>
+        HttpResponse.json({ status: "PUBLISHED" }),
+      ),
+      http.post(
+        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads_publish`,
+        () => HttpResponse.json({ id: "reply-published" }),
+      ),
+    )
+
+    await expect(
+      sendCommentReply(auth, "comment-123", "hello world"),
+    ).resolves.toEqual({ id: "reply-published" })
+  })
+
+  // A container that has not reported a status yet is not a failure. Aborting
+  // on the first poll dropped the reply outright, since Threads enqueues these
+  // jobs with `attempts: 1`.
+  test("keeps polling when the first status response carries no status field", async () => {
+    let poll = 0
+    server.use(
+      http.post(
+        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads`,
+        () => HttpResponse.json({ id: "creation-late" }),
+      ),
+      http.get(`${THREADS_GRAPH_API_URL}/v1.0/creation-late`, () => {
+        poll += 1
+        return HttpResponse.json(poll === 1 ? {} : { status: "FINISHED" })
+      }),
+      http.post(
+        `${THREADS_GRAPH_API_URL}/v1.0/${auth.metadata.threadsUserId}/threads_publish`,
+        () => HttpResponse.json({ id: "reply-late" }),
+      ),
+    )
+
+    await expect(
+      sendCommentReply(auth, "comment-123", "hello world", {
+        pollIntervalMs: 0,
+        sleep: () => Promise.resolve(),
+      }),
+    ).resolves.toEqual({ id: "reply-late" })
+    expect(poll).toBe(2)
+  })
+
   test("times out with fake timers when reply creation never becomes ready", async () => {
     vi.useFakeTimers()
 

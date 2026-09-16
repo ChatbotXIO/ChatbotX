@@ -102,6 +102,14 @@ export type IntegrationJobReceiveComment = {
       fromId: string
       fromName?: string
       fromUsername?: string
+      /**
+       * Commenter's profile picture, when the channel's webhook pushes it
+       * directly on the reply payload (Threads) rather than requiring a
+       * separate on-demand profile lookup (Messenger/Instagram). A public
+       * URL — `receiveComment` downloads and re-uploads it to the tenant's
+       * own storage before it ever reaches `Contact.avatar`.
+       */
+      fromAvatarUrl?: string
       message?: string
       tags?: CommentTag[]
       createdTime: number

@@ -13,8 +13,12 @@ vi.mock("@/features/flows/provider/flow-hook", () => ({
   useFlowSelectOptions: () => [],
 }))
 
-vi.mock("@/features/ai-agents/provider/ai-agent-store-context", () => ({
-  useAIAgentStore: () => [],
+vi.mock("@/features/ai-agents/hooks/use-ai-agents", () => ({
+  useAIAgentSelectOptions: () => ({ options: [], isError: false }),
+}))
+
+vi.mock("@/hooks/routing", () => ({
+  useWorkspaceId: () => "workspace-1",
 }))
 
 Object.assign(globalThis, {

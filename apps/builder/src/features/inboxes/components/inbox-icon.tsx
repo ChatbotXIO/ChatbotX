@@ -69,6 +69,9 @@ export const INBOX_ICON_CONFIG: Record<ChannelType, InboxIconConfig> = {
   threads: {
     Icon: SiThreads,
     fill: SiThreadsHex,
+    // The brand hex is pure black, which disappears on the dark background —
+    // the class wins over the `fill` attribute, so dark mode renders it light.
+    iconClassName: "dark:fill-zinc-100",
     defaultLabelKey: "fields.threads.label",
   },
   whatsapp: {

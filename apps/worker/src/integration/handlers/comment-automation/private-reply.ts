@@ -214,7 +214,7 @@ export async function executePrivateReply(
     // Channel has no private-reply API (Threads). Callers log the skip with
     // the automation id; this guard keeps flow/AIAgent dispatch from enqueuing
     // a job whose reply could never be delivered.
-    return
+    return null
   }
 
   if (privateReply.type === "text" && privateReply.value) {

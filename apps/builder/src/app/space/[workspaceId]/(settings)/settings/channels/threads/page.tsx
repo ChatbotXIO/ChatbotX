@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import { listIntegrationThreads } from "@/features/integration-threads/queries"
 import { ThreadsManage } from "@/features/integration-threads/threads-manage"
 import { requireVisibleChannel } from "@/lib/workspace/require-visible-channel"
+import { resolveChannelCreatable } from "@/lib/workspace/resolve-channel-creatable"
 
 export default async function SettingChannelThreadsPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -24,9 +25,11 @@ export default async function SettingChannelThreadsPage(props: {
       workspaceId,
     }),
   ])
+  const canCreate = await resolveChannelCreatable(workspaceId, "threads")
 
   return (
     <ThreadsManage
+      canCreate={canCreate}
       promises={promises}
       publicConfig={credential?.publicConfig ?? null}
       workspaceId={workspaceId}

@@ -13,6 +13,7 @@ import {
   integrationMessengerModel,
   integrationMetaCatalogModel,
   integrationModel,
+  integrationThreadsModel,
   integrationTiktokModel,
   integrationWhatsappModel,
   integrationZaloModel,
@@ -27,6 +28,7 @@ export type TokenRefreshErrorChannel =
   | "instagramFacebook"
   | "messenger"
   | "whatsapp"
+  | "threads"
 
 export type TokenRefreshErrorIntegration = {
   id: string
@@ -82,7 +84,7 @@ class IntegrationService extends BaseService {
   async findTokenRefreshErrorsByWorkspaceId(
     workspaceId: string,
   ): Promise<TokenRefreshErrorIntegration[]> {
-    const [zalos, tiktoks, instagrams, messengers, whatsapps] =
+    const [zalos, tiktoks, instagrams, messengers, whatsapps, threads] =
       await Promise.all([
         db
           .select({
@@ -150,6 +152,19 @@ class IntegrationService extends BaseService {
               isNotNull(integrationWhatsappModel.tokenRefreshError),
             ),
           ),
+        db
+          .select({
+            id: integrationThreadsModel.id,
+            name: integrationThreadsModel.name,
+            error: integrationThreadsModel.tokenRefreshError,
+          })
+          .from(integrationThreadsModel)
+          .where(
+            and(
+              eq(integrationThreadsModel.workspaceId, workspaceId),
+              isNotNull(integrationThreadsModel.tokenRefreshError),
+            ),
+          ),
       ])
 
     return [
@@ -183,6 +198,12 @@ class IntegrationService extends BaseService {
       ...whatsapps.map((row) => ({
         id: row.id,
         channel: "whatsapp" as const,
+        name: row.name,
+        error: row.error as string,
+      })),
+      ...threads.map((row) => ({
+        id: row.id,
+        channel: "threads" as const,
         name: row.name,
         error: row.error as string,
       })),

@@ -38,3 +38,20 @@ export function buildReconnectRedirectUrl(
   }
   return isAbsolute ? url.toString() : `${url.pathname}${url.search}`
 }
+
+/**
+ * The connect-flow counterpart of `buildReconnectRedirectUrl`: relays back to
+ * the originating (possibly branded) referer with the `?error=` param that
+ * `useChannelDuplicatedError` reads. Channels whose connect runs in a server
+ * action redirect to a fixed settings path instead; an OAuth callback cannot,
+ * because the branded origin only survives in the referer.
+ */
+export function buildChannelErrorRedirectUrl(
+  safeReferer: string,
+  error: "duplicated",
+): string {
+  const isAbsolute = ABSOLUTE_URL_PATTERN.test(safeReferer)
+  const url = new URL(safeReferer, getBrokerOrigin())
+  url.searchParams.set("error", error)
+  return isAbsolute ? url.toString() : `${url.pathname}${url.search}`
+}

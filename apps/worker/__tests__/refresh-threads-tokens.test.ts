@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const listDueForTokenRefresh = vi.fn()
 const updateAuthIfAccessTokenMatches = vi.fn()
+const markTokenRefreshError = vi.fn()
 const refreshAccessToken = vi.fn()
 const runExclusive = vi.fn(async ({ fn }: { fn: () => Promise<unknown> }) =>
   fn(),
@@ -14,6 +15,7 @@ vi.mock("@chatbotx.io/business", () => ({
   integrationThreadsService: {
     listDueForTokenRefresh,
     updateAuthIfAccessTokenMatches,
+    markTokenRefreshError,
   },
 }))
 vi.mock("@chatbotx.io/integration-threads", () => ({
@@ -145,6 +147,7 @@ describe("refreshThreadsTokens", () => {
     )
     expect(JSON.stringify(error.mock.calls[0]?.[0])).not.toContain("token-1")
     expect(error.mock.calls[0]?.[0]).not.toHaveProperty("err")
+    expect(markTokenRefreshError).toHaveBeenCalledWith("threads-1", "revoked")
     expect(updateAuthIfAccessTokenMatches).toHaveBeenCalledTimes(1)
     expect(updateAuthIfAccessTokenMatches).toHaveBeenCalledWith(
       expect.objectContaining({

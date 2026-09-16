@@ -31,7 +31,6 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
 import { DeleteCredentialDialog } from "../delete-credential-dialog"
 import { useCredentialScope } from "../provider/credential-scope-context"
@@ -42,22 +41,26 @@ import { buildThreadsWebhookUrl } from "./webhook-url"
 export function ThreadsSettings({
   publicConfig,
   isInherited = false,
+  callbackOrigin,
 }: {
   publicConfig: ThreadsCredentialPublic | null
   isInherited?: boolean
+  /** Origin to register with Meta. See `ZaloSettings`' equivalent prop. */
+  callbackOrigin: string
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
   const webhookUrl = buildThreadsWebhookUrl(publicConfig?.clientId)
-  const authCallbackUrl = buildBrokerCallbackUrl(
-    "/integrations/threads/callback",
-  )
+  const authCallbackUrl = `${callbackOrigin}/integrations/threads/callback`
 
   return (
     <Card>
       <CardHeader className="items-center justify-center">
         <CardTitle className="flex items-center gap-2">
-          <SiThreads className="size-6" fill={SiThreadsHex} />
+          <SiThreads
+            className="size-6 dark:fill-zinc-100"
+            fill={SiThreadsHex}
+          />
           <span>{t("fields.threads.label")}</span>
         </CardTitle>
         <CardAction>

@@ -10,6 +10,7 @@ import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
@@ -25,8 +26,10 @@ import { useTranslations } from "next-intl"
 import { useEffect, useRef } from "react"
 import type { UseFormReturn } from "react-hook-form"
 import { useWatch } from "react-hook-form"
-import { useAIAgentStore } from "@/features/ai-agents/provider/ai-agent-store-context"
+import { toast } from "sonner"
+import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useWorkspaceId } from "@/hooks/routing"
 import type { CreateThreadsCommentRequest } from "../schema/action"
 
 type Props = {
@@ -46,7 +49,8 @@ export function ThreadsCommentForm({
 }: Props) {
   const t = useTranslations()
   const flowOptions = useFlowSelectOptions()
-  const aiAgents = useAIAgentStore((state) => state.aiAgents)
+  const { options: aiAgentOptions, isError: isAIAgentsError } =
+    useAIAgentSelectOptions(useWorkspaceId())
   const replyType = useWatch({
     control: form.control,
     name: "publicReply.type",
@@ -60,15 +64,17 @@ export function ThreadsCommentForm({
     control: form.control,
     name: "replyAfter.type",
   })
-  const aiAgentOptions = aiAgents.map((agent) => ({
-    label: agent.name,
-    value: String(agent.id),
-  }))
   const previousReplyType = useRef(replyType)
 
   const requiresDelayValue = ["seconds", "minutes", "hours"].includes(
     replyAfterType,
   )
+
+  useEffect(() => {
+    if (isAIAgentsError) {
+      toast.error(t("fields.aiAgent.loadError"))
+    }
+  }, [isAIAgentsError, t])
 
   useEffect(() => {
     if (postType === "all") {
@@ -118,15 +124,15 @@ export function ThreadsCommentForm({
       <Card>
         <CardContent className="space-y-4 pt-6">
           <InputField label={t("fields.name.label")} name="name" required />
-          <p className="text-muted-foreground text-sm">
-            {t("threadsCommentAutomation.publicOnlyNote")}
-          </p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>{t("threadsCommentAutomation.card.targeting")}</CardTitle>
+          <CardDescription>
+            {t("threadsCommentAutomation.publicOnlyNote")}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <RadioGroupField

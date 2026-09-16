@@ -154,6 +154,7 @@ export async function ManagePlatformCredentials({
           publicConfig={instagramFacebook.publicConfig}
         />
         <ThreadsSettings
+          callbackOrigin={callbackOriginFor(threads.isInherited)}
           isInherited={threads.isInherited}
           publicConfig={threads.publicConfig}
         />

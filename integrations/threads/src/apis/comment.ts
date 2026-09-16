@@ -116,19 +116,21 @@ export async function waitForReplyContainerReady(
     const statusResponse = await getReplyCreationStatus(auth, containerId)
     const normalizedStatus = normalizeReplyStatus(statusResponse.status)
 
-    if (normalizedStatus === "FINISHED") {
+    // `PUBLISHED` means the container is already live — just as ready as
+    // `FINISHED` for our purposes.
+    if (normalizedStatus === "FINISHED" || normalizedStatus === "PUBLISHED") {
       return
     }
 
+    // Only Meta's two documented terminal failures abort. Anything else —
+    // `IN_PROGRESS`, a missing `status` field, or a value Meta adds later —
+    // keeps polling until `deadline`, which is the single stop condition.
+    // Treating an unrecognised status as fatal dropped the reply on the very
+    // first poll, and Threads sends these jobs with `attempts: 1`, so there
+    // was no retry behind it.
     if (normalizedStatus === "ERROR" || normalizedStatus === "EXPIRED") {
       throw new ThreadsException(
         `Threads reply creation ${normalizedStatus.toLowerCase()}: ${statusResponse.error_message ?? "Unknown error"}`,
-      )
-    }
-
-    if (normalizedStatus !== "IN_PROGRESS") {
-      throw new ThreadsException(
-        `Threads reply creation returned unsupported status: ${statusResponse.status ?? "unknown"}`,
       )
     }
 

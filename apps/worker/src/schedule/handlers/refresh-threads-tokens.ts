@@ -51,6 +51,7 @@ export async function refreshThreadsTokens(): Promise<void> {
       const refreshBefore = new Date(
         Date.now() + THREADS_TOKEN_REFRESH_THRESHOLD_DAYS * DAY_IN_MS,
       )
+
       const integrations =
         await integrationThreadsService.listDueForTokenRefresh({
           refreshBefore,
@@ -108,6 +109,10 @@ export async function refreshThreadsTokens(): Promise<void> {
               workspaceId: integration.workspaceId,
             },
             "refreshThreadsTokens: integration refresh failed",
+          )
+          await integrationThreadsService.markTokenRefreshError(
+            integration.id,
+            error instanceof Error ? error.message : String(error),
           )
         }
       }

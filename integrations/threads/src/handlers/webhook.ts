@@ -16,6 +16,10 @@ const threadsReplyValueSchema = z.object({
     username: z.string().min(1),
   }),
   timestamp: z.string().optional(),
+  // Only present "when available" per Meta's docs — a private commenter's
+  // account, for instance, omits it. Not part of the documented sample
+  // payload, but a real, additional field Meta sends on reply webhooks.
+  profile_picture_url: z.string().optional(),
 })
 
 const threadsWebhookEntrySchema = z.object({
@@ -198,6 +202,7 @@ const handleWebhookEvent = async (
             parentId: value.replied_to?.id,
             fromId: value.username.toLowerCase(),
             fromName: value.username,
+            fromAvatarUrl: value.profile_picture_url,
             message: value.text,
             createdTime: toEpochSeconds(value.timestamp, payload.time),
           },

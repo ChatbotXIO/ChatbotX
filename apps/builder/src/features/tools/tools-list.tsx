@@ -44,6 +44,21 @@ export const TOOLS_CONFIG = [
     getLink: (id: string) => `/space/${id}/fb-comments`,
   },
   {
+    id: "facebook-lead-ads",
+    labelKey: "facebookLeadAdsAutomation.title",
+    descriptionKey: "facebookLeadAdsAutomation.description",
+    icon: SiFacebook,
+    getLink: (id: string) => `/space/${id}/fb-lead-ads`,
+  },
+  {
+    id: "click-to-message-ads",
+    labelKey: "clickToMessageAds.title",
+    descriptionKey: "clickToMessageAds.description",
+    icon: MegaphoneIcon,
+    permission: "superAdmin",
+    getLink: (id: string) => buildMessagingAdsToolPath({ workspaceId: id }),
+  },
+  {
     id: "instagram-comment",
     labelKey: "instagramCommentAutomation.title",
     descriptionKey: "instagramCommentAutomation.description",
@@ -63,21 +78,6 @@ export const TOOLS_CONFIG = [
     descriptionKey: "threadsCommentAutomation.description",
     icon: SiThreads,
     getLink: (id: string) => `/space/${id}/threads-comments`,
-  },
-  {
-    id: "facebook-lead-ads",
-    labelKey: "facebookLeadAdsAutomation.title",
-    descriptionKey: "facebookLeadAdsAutomation.description",
-    icon: SiFacebook,
-    getLink: (id: string) => `/space/${id}/fb-lead-ads`,
-  },
-  {
-    id: "click-to-message-ads",
-    labelKey: "clickToMessageAds.title",
-    descriptionKey: "clickToMessageAds.description",
-    icon: MegaphoneIcon,
-    permission: "superAdmin",
-    getLink: (id: string) => buildMessagingAdsToolPath({ workspaceId: id }),
   },
   {
     id: "reflinks",
@@ -136,24 +136,6 @@ export const TOOLS_CONFIG = [
     getLink: (id: string) => `/space/${id}/products`,
   },
   {
-    id: "places-near-me",
-    labelKey: "placesNearMe.title",
-    descriptionKey: "placesNearMe.description",
-    icon: MapIcon,
-  },
-  {
-    id: "poll-manager",
-    labelKey: "pollManager.title",
-    descriptionKey: "pollManager.description",
-    icon: UserCheck2Icon,
-  },
-  {
-    id: "bot-simulator",
-    labelKey: "botSimulator.title",
-    descriptionKey: "botSimulator.description",
-    icon: BotIcon,
-  },
-  {
     id: "coupons",
     labelKey: "coupons.title",
     descriptionKey: "coupons.description",
@@ -174,6 +156,24 @@ export const TOOLS_CONFIG = [
   //   icon: UsersIcon,
   //   getLink: (id: string) => `/space/${id}/webhooks`,
   // },
+  {
+    id: "places-near-me",
+    labelKey: "placesNearMe.title",
+    descriptionKey: "placesNearMe.description",
+    icon: MapIcon,
+  },
+  {
+    id: "poll-manager",
+    labelKey: "pollManager.title",
+    descriptionKey: "pollManager.description",
+    icon: UserCheck2Icon,
+  },
+  {
+    id: "bot-simulator",
+    labelKey: "botSimulator.title",
+    descriptionKey: "botSimulator.description",
+    icon: BotIcon,
+  },
 ] as const
 
 type ToolsListProps = {

@@ -39,11 +39,7 @@ const NAMESPACE_PROPERTY = /namespace:\s*(["'])((?:\\.|(?!\1).)*)\1/
  * the excuse the moment the key is added, so this cannot rot into a permanent
  * mute.
  */
-const KNOWN_MISSING_KEYS = new Set([
-  // apps/builder/src/features/ads-campaign/components/messaging-ads-box.tsx —
-  // spinner aria-label; `messages` exists in en.json but has no `loading` leaf.
-  "messages.loading",
-])
+const KNOWN_MISSING_KEYS = new Set<string>([])
 
 const flattenKeys = (
   value: unknown,

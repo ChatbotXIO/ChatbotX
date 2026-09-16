@@ -1,7 +1,6 @@
 "use client"
 
 import type { ThreadsCredentialPublic } from "@chatbotx.io/database/partials"
-import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
   Table,
   TableBody,
@@ -10,20 +9,23 @@ import {
   TableHeader,
   TableRow,
 } from "@chatbotx.io/ui/components/ui/table"
-import { PlusCircleIcon } from "lucide-react"
-import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
+import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
+import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
 import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
+import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import { ThreadsDisconnect } from "./components/threads-disconnect"
 import { ThreadsReconnect } from "./components/threads-reconnect"
 import type { listIntegrationThreads } from "./queries"
 
 export function ThreadsManage({
+  canCreate = true,
   publicConfig,
   workspaceId,
   promises,
 }: {
+  canCreate?: boolean
   publicConfig: ThreadsCredentialPublic | null
   workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listIntegrationThreads>>]>
@@ -32,6 +34,7 @@ export function ThreadsManage({
   const t = useTranslations()
 
   useChannelDuplicatedError("threads")
+  useChannelReconnectResult()
 
   if (!publicConfig?.clientId) {
     return (
@@ -46,17 +49,11 @@ export function ThreadsManage({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-end gap-2">
-        <Link
-          className={buttonVariants({
-            size: "sm",
-            variant: "secondary",
-            className: "flex items-center gap-2",
-          })}
+        <AddChannelButton
+          canCreate={canCreate}
           href={`/channels/create?channel=threads&workspaceId=${workspaceId}`}
-        >
-          <PlusCircleIcon className="h-4 w-4" />
-          {t("actions.addFeature", { feature: t("fields.threads.label") })}
-        </Link>
+          label={t("fields.threads.label")}
+        />
       </div>
 
       <div className="overflow-hidden rounded-md border">
@@ -70,7 +67,16 @@ export function ThreadsManage({
           <TableBody>
             {integrations.map((integration) => (
               <TableRow key={integration.id}>
-                <TableCell>{integration.name}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {integration.tokenRefreshError && (
+                      <TokenRefreshErrorIcon
+                        message={integration.tokenRefreshError}
+                      />
+                    )}
+                    {integration.name}
+                  </div>
+                </TableCell>
                 <TableCell className="flex w-50 justify-end gap-2">
                   <ThreadsReconnect integrationThreads={integration} />
                   <ThreadsDisconnect integrationThreads={integration} />

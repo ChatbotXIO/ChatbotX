@@ -172,10 +172,7 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
   }
 
   if (selectedChannel === "threads" && threads && isVisible("threads")) {
-    const redirectUri = await generateThreadsRedirectUri(
-      threads.publicConfig,
-      workspaceId,
-    )
+    const redirectUri = await generateThreadsRedirectUri(threads, workspaceId)
     redirect(redirectUri)
   }
 

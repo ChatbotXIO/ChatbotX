@@ -37,8 +37,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   ),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/database/schema")>()),
   inboxModel: {},
+  contactInboxModel: {},
 }))
 
 vi.mock("@chatbotx.io/sdk", async (importOriginal) => {

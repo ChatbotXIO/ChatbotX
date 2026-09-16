@@ -563,8 +563,9 @@ describe("threads webhook handler", () => {
   // What it pins that no hand-written fixture does:
   //   1. `values` arrives as an ARRAY, not the single object the docs describe.
   //   2. Undeclared extra fields (`has_uid_field`, `media_type`, `permalink`,
-  //      `shortcode`, `is_verified`, `profile_picture_url`) are stripped by the
-  //      zod schema instead of failing the parse.
+  //      `shortcode`, `is_verified`) are stripped by the zod schema instead of
+  //      failing the parse; `profile_picture_url` is declared and carried
+  //      through as `fromAvatarUrl`.
   //   3. `createdTime` comes from the comment's own `timestamp`, not from the
   //      envelope's `time` — the two differ by 7 seconds here on purpose.
   test("parses the anonymized structure of a live Meta delivery captured on 2026-09-01", async () => {
@@ -596,6 +597,8 @@ describe("threads webhook handler", () => {
           parentId: "17841400000000001",
           fromId: "test_commenter",
           fromName: "test_commenter",
+          fromAvatarUrl:
+            "https://scontent.cdninstagram.com/v/t51.0-0/000000000_0000000000000000_0000000000000000000_n.jpg",
           message: "Great post!",
           // 2026-09-01T08:06:09+0000, NOT the envelope's `time` (1788249976).
           createdTime: 1_788_249_969,

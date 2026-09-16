@@ -733,6 +733,7 @@
       "instagram": "This Instagram account is already connected to another workspace.",
       "messenger": "This Facebook Page is already connected to another workspace.",
       "telegram": "This Telegram bot is already connected to another workspace.",
+      "threads": "This Threads account is already connected to another workspace.",
       "tiktok": "This TikTok account is already connected to another workspace.",
       "whatsapp": "This WhatsApp number is already connected to another workspace.",
       "zalo": "This Zalo OA is already connected to another workspace."

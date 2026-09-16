@@ -10,7 +10,10 @@ import type { IntegrationThreadsModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { BaseService } from "../base.service"
-import { connectChannelIntegration } from "../inbox/connect-channel"
+import {
+  connectChannelIntegration,
+  runConnectTransaction,
+} from "../inbox/connect-channel"
 import { inboxService } from "../inbox/service"
 import { workspaceService } from "../workspace"
 
@@ -70,6 +73,21 @@ class IntegrationThreadsService extends BaseService {
     return { data }
   }
 
+  async markTokenRefreshError(id: string, error: string): Promise<void> {
+    await db
+      .update(integrationThreadsModel)
+      .set({ tokenRefreshError: error })
+      .where(eq(integrationThreadsModel.id, id))
+  }
+
+  /**
+   * Persists a Threads connect atomically. `IntegrationThreads.threadsUserId`
+   * is unique *globally* while `connectChannelIntegration`'s duplicate check is
+   * workspace-scoped, so a second workspace connecting the same account only
+   * collides on the insert — without one transaction around both writes the
+   * `Inbox` row would already be committed and left orphaned. Passing `tx`
+   * joins a caller's transaction instead, which then owns the error mapping.
+   */
   async connect(props: {
     workspaceId: string
     ownerId: string
@@ -79,50 +97,64 @@ class IntegrationThreadsService extends BaseService {
     name: string
     tx?: DatabaseClient
   }): Promise<IntegrationThreadsModel> {
-    const { tx = db } = props
+    const insert = async (tx: DatabaseClient) => {
+      const { integration } = await connectChannelIntegration({
+        tx,
+        ownerId: props.ownerId,
+        inboxData: {
+          id: createId(),
+          workspaceId: props.workspaceId,
+          name: props.name,
+          channel: "threads",
+          sourceId: props.threadsUserId,
+        },
+        insertIntegration: async (inboxId) =>
+          tx
+            .insert(integrationThreadsModel)
+            .values({
+              id: createId(),
+              inboxId,
+              workspaceId: props.workspaceId,
+              auth: props.auth,
+              threadsUserId: props.threadsUserId,
+              username: props.username,
+              name: props.name,
+            })
+            .returning()
+            .then((rows) => rows[0]),
+      })
 
-    const { integration } = await connectChannelIntegration({
-      tx,
-      ownerId: props.ownerId,
-      inboxData: {
-        id: createId(),
-        workspaceId: props.workspaceId,
-        name: props.name,
-        channel: "threads",
-        sourceId: props.threadsUserId,
-      },
-      insertIntegration: async (inboxId) =>
-        tx
-          .insert(integrationThreadsModel)
-          .values({
-            id: createId(),
-            inboxId,
-            workspaceId: props.workspaceId,
-            auth: props.auth,
-            threadsUserId: props.threadsUserId,
-            username: props.username,
-            name: props.name,
-          })
-          .returning()
-          .then((rows) => rows[0]),
-    })
+      return integration
+    }
 
-    return integration
+    if (props.tx) {
+      return await insert(props.tx)
+    }
+
+    return await runConnectTransaction("threads", insert)
   }
 
+  /**
+   * Returns whether a row actually matched, so the caller can tell a real
+   * reconnect from an UPDATE that hit nothing (wrong id, wrong workspace, row
+   * already disconnected) instead of reporting success either way.
+   */
   async reconnect(props: {
     workspaceId: string
     id: string
     auth: Record<string, unknown>
     username: string
     name: string
-  }): Promise<void> {
-    await db
+  }): Promise<boolean> {
+    const rows = await db
       .update(integrationThreadsModel)
       .set({
         auth: props.auth,
         username: props.username,
         name: props.name,
+        // A fresh token clears whatever the refresh cron last recorded —
+        // otherwise the error icon and workspace banner stick forever.
+        tokenRefreshError: null,
       })
       .where(
         and(
@@ -130,6 +162,9 @@ class IntegrationThreadsService extends BaseService {
           eq(integrationThreadsModel.workspaceId, props.workspaceId),
         ),
       )
+      .returning({ id: integrationThreadsModel.id })
+
+    return rows.length > 0
   }
 
   async listDueForTokenRefresh(props?: {
@@ -143,6 +178,27 @@ class IntegrationThreadsService extends BaseService {
       )
     const includeMissingExpiresAt = props?.includeMissingExpiresAt ?? true
 
+    // Parenthesised at the source: `::` binds tighter than `->>`, so an
+    // unwrapped fragment would make `<frag>::timestamptz` parse as
+    // `auth -> 'tokens' ->> ('expiresAt'::timestamptz)` and fail at runtime
+    // with "invalid input syntax for type timestamp with time zone".
+    const expiresAtText = sql`(${integrationThreadsModel.auth} -> 'tokens' ->> 'expiresAt')`
+    // A row with no `expiresAt` is opted in or out wholesale; one with a value
+    // is due only once it falls inside the refresh window. Postgres does the
+    // filtering so the cron loads the rows it will actually refresh, not every
+    // Threads `auth` blob in the table.
+    //
+    // CASE, not `AND`, because only CASE guarantees left-to-right evaluation:
+    // an unparseable `expiresAt` must be skipped the way the old JS
+    // `Number.isNaN` check skipped it, never abort the whole query with a cast
+    // error and take the entire refresh run down with it.
+    const dueForRefresh = sql`(CASE
+      WHEN ${expiresAtText} IS NULL THEN ${includeMissingExpiresAt}
+      WHEN ${expiresAtText} ~ '^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}'
+        THEN ${expiresAtText}::timestamptz <= ${refreshBefore.toISOString()}::timestamptz
+      ELSE false
+    END)`
+
     const rows = (await db
       .select({
         id: integrationThreadsModel.id,
@@ -151,37 +207,18 @@ class IntegrationThreadsService extends BaseService {
       })
       .from(integrationThreadsModel)
       .where(
-        sql`${integrationThreadsModel.auth} -> 'tokens' ->> 'accessToken' IS NOT NULL`,
+        and(
+          sql`${integrationThreadsModel.auth} -> 'tokens' ->> 'accessToken' IS NOT NULL`,
+          dueForRefresh,
+        ),
       )) as ThreadsRefreshRow[]
 
+    // Kept as a safety net for rows whose `auth` shape the SQL above cannot
+    // vouch for (a malformed blob, a non-string token).
     return rows.flatMap((row) => {
       const parsedAuth = threadsRefreshAuthSchema.safeParse(row.auth)
 
       if (!parsedAuth.success) {
-        return []
-      }
-
-      const { accessToken, expiresAt } = parsedAuth.data.tokens
-
-      if (!expiresAt) {
-        return includeMissingExpiresAt
-          ? [
-              {
-                id: row.id,
-                workspaceId: row.workspaceId,
-                auth: row.auth,
-                currentAccessToken: accessToken,
-              },
-            ]
-          : []
-      }
-
-      const expiresAtDate = new Date(expiresAt)
-
-      if (
-        Number.isNaN(expiresAtDate.getTime()) ||
-        expiresAtDate > refreshBefore
-      ) {
         return []
       }
 
@@ -190,7 +227,7 @@ class IntegrationThreadsService extends BaseService {
           id: row.id,
           workspaceId: row.workspaceId,
           auth: row.auth,
-          currentAccessToken: accessToken,
+          currentAccessToken: parsedAuth.data.tokens.accessToken,
         },
       ]
     })
@@ -206,6 +243,9 @@ class IntegrationThreadsService extends BaseService {
       .update(integrationThreadsModel)
       .set({
         auth: props.auth,
+        // A successful refresh clears the previous failure, matching
+        // `tiktokIntegrationService` / `zaloIntegrationService`.
+        tokenRefreshError: null,
       })
       .where(
         and(
@@ -254,6 +294,7 @@ class IntegrationThreadsService extends BaseService {
       inboxId: integration.inboxId,
       ownerId: workspace.ownerId,
       workspaceId: props.workspaceId,
+      reason: "manual",
       tx: client,
     })
   }

@@ -10,7 +10,8 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { getOriginUrlFromHeader } from "@/lib/domain"
-import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
+import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const reconnectThreadsAction = workspaceActionClient
@@ -28,7 +29,7 @@ export const reconnectThreadsAction = workspaceActionClient
       }
 
       const credential = await platformCredentialService.resolveForOwner({
-        ownerId: ctx.workspace.ownerId,
+        ownerId: await resolveOwnerForWorkspace(ctx.workspace),
         type: "threads",
       })
       if (!credential) {
@@ -40,10 +41,17 @@ export const reconnectThreadsAction = workspaceActionClient
         await getOriginUrlFromHeader(),
       ).toString()
 
+      // Must match the redirect_uri used at authorize time — the tenant's
+      // custom domain for a tenant-owned credential, else the broker.
+      const redirectUrl = await buildProviderCallbackUrl(
+        credential,
+        "/integrations/threads/callback",
+      )
+
       return redirect(
         generateAuthUrl({
           clientId: credential.config.clientId,
-          redirectUrl: buildBrokerCallbackUrl("/integrations/threads/callback"),
+          redirectUrl,
           stateParams: {
             workspaceId,
             referer,

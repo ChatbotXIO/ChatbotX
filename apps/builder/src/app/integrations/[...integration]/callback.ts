@@ -12,6 +12,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService, withAuditContext } from "@chatbotx.io/business/audit"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import {
   type IntegrationType,
@@ -66,13 +67,17 @@ import {
   reconnectInstagramHandler,
 } from "@/features/integration-instagram/actions/reconnect-callback"
 import { reconnectMessengerHandler } from "@/features/integration-messenger/actions/reconnect-callback"
+import { reconnectThreadsHandler } from "@/features/integration-threads/actions/reconnect-callback"
 import { connectTiktokHandler } from "@/features/integration-tiktok/actions/connect.action"
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
 import { reconnectZaloHandler } from "@/features/integration-zalo/actions/reconnect-callback"
 import { integrations } from "@/integration"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { getCurrentUser } from "@/lib/auth/utils"
-import { buildReconnectRedirectUrl } from "@/lib/channel-reconnect"
+import {
+  buildChannelErrorRedirectUrl,
+  buildReconnectRedirectUrl,
+} from "@/lib/channel-reconnect"
 import {
   encryptAuth,
   FB_INSTAGRAM_FACEBOOK_PENDING_AUTH_COOKIE,
@@ -689,6 +694,29 @@ export const handleCallback = async (
         code,
         callbackUrl,
       )
+
+      if (stateParams.reconnectIntegrationId) {
+        const result = await reconnectThreadsHandler({
+          credentialConfig: threadsCredential.config,
+          callbackUrl,
+          workspaceId: workspace.id,
+          integrationId: stateParams.reconnectIntegrationId,
+          accessToken: token.accessToken,
+          expiresAt: token.expiresAt,
+        })
+        if (result.status === "success") {
+          await auditService.record({
+            userId,
+            workspaceId: workspace.id,
+            action: "update",
+            detail: "reconnected the Threads channel",
+            ipAddress: getGuestClientIp(req.headers),
+            userAgent: req.headers.get("user-agent") ?? undefined,
+          })
+        }
+        return redirect(buildReconnectRedirectUrl(safeReferer, result))
+      }
+
       const profile = await getThreadsProfile(
         token.accessToken,
         threadsCredential.config.version,
@@ -704,26 +732,40 @@ export const handleCallback = async (
         username: profile.username,
       })
 
-      if (stateParams.reconnectIntegrationId) {
-        await integrationThreadsService.reconnect({
+      let threadsIntegrationId: string
+      try {
+        const integration = await integrationThreadsService.connect({
           workspaceId: workspace.id,
-          id: stateParams.reconnectIntegrationId,
+          ownerId: workspace.ownerId,
           auth,
+          threadsUserId: profile.id,
           username: profile.username,
           name: profile.username,
         })
-        return redirect(
-          buildReconnectRedirectUrl(safeReferer, { status: "success" }),
-        )
+        threadsIntegrationId = integration.id
+      } catch (error) {
+        // The account is already connected — here or in another workspace
+        // (`threadsUserId` is globally unique). Surface it as the standard
+        // duplicated-channel toast instead of a 500 page. `redirect()` throws
+        // NEXT_REDIRECT, so it must stay out of the `try` above.
+        if (
+          error instanceof ChatbotXException &&
+          error.code === "channelDuplicated"
+        ) {
+          return redirect(
+            buildChannelErrorRedirectUrl(safeReferer, "duplicated"),
+          )
+        }
+        throw error
       }
 
-      await integrationThreadsService.connect({
+      await auditService.record({
+        userId,
         workspaceId: workspace.id,
-        ownerId: workspace.ownerId,
-        auth,
-        threadsUserId: profile.id,
-        username: profile.username,
-        name: profile.username,
+        action: "connect",
+        detail: `connected a new Threads channel (#${threadsIntegrationId})`,
+        ipAddress: getGuestClientIp(req.headers),
+        userAgent: req.headers.get("user-agent") ?? undefined,
       })
 
       return redirect(safeReferer)

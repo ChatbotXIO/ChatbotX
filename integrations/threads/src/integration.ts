@@ -9,6 +9,7 @@ import {
   refreshAccessToken,
   type ThreadsOAuthProfile,
 } from "./apis/auth"
+import { getPostDetails } from "./apis/post"
 import { ThreadsException } from "./exception"
 import { commentHandlers } from "./handlers/comment"
 import { webhookHandler } from "./handlers/webhook"
@@ -31,6 +32,8 @@ const config: IntegrationDefinition<
         ctx.auth.tokens.accessToken,
         ctx.auth.metadata.version,
       )) as ThreadsOAuthProfile,
+    getPostDetails: async ({ ctx, input }) =>
+      await getPostDetails(ctx.auth, input.postId),
   },
   refreshAuth: async ({ auth }) => {
     if (!auth.tokens.accessToken) {

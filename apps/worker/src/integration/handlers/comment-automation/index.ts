@@ -408,33 +408,6 @@ export async function processCommentAutomation(
                 "Failed to apply hide comments",
               ),
             )
-
-            // Awaited, unlike the like/hide fire-and-forget above: the reply below
-            // renders `{{total_tagged}}`/`{{total_new_tagged}}` by reading these
-            // back off this very row, so racing the send would render an empty
-            // value on the first comment and the right one only on a retry.
-            if (automation.options.trackUserTags) {
-              try {
-                const { totalTagged, totalNewTagged } = await resolveTagInfo()
-                await messageRepo.updateContentAttributes(
-                  dbMessage.id,
-                  workspaceId,
-                  {
-                    ...dbMessage.contentAttributes,
-                    totalTagged,
-                    totalNewTagged,
-                  },
-                  dbMessage.createdAt,
-                )
-              } catch (err) {
-                // Not a skip — the reply still goes out, just with the two tag
-                // variables unresolved. Logged because nothing else would show it.
-                logger.error(
-                  { err, automationId: automation.id, commentId, postId },
-                  "Failed to resolve user tags for comment",
-                )
-              }
-            }
           } else {
             if (needsAttachmentInfo(automation.hideComments)) {
               logUnsupportedCapability({
@@ -448,6 +421,35 @@ export async function processCommentAutomation(
               commentId,
               capability: "hide or unhide comment unsupported",
             })
+          }
+        }
+
+        // Independent of hide-comment support/configuration above — tag
+        // tracking is its own capability. Awaited, unlike the like/hide
+        // fire-and-forget above: the reply below renders
+        // `{{total_tagged}}`/`{{total_new_tagged}}` by reading these back off
+        // this very row, so racing the send would render an empty value on
+        // the first comment and the right one only on a retry.
+        if (automation.options.trackUserTags) {
+          try {
+            const { totalTagged, totalNewTagged } = await resolveTagInfo()
+            await messageRepo.updateContentAttributes(
+              dbMessage.id,
+              workspaceId,
+              {
+                ...dbMessage.contentAttributes,
+                totalTagged,
+                totalNewTagged,
+              },
+              dbMessage.createdAt,
+            )
+          } catch (err) {
+            // Not a skip — the reply still goes out, just with the two tag
+            // variables unresolved. Logged because nothing else would show it.
+            logger.error(
+              { err, automationId: automation.id, commentId, postId },
+              "Failed to resolve user tags for comment",
+            )
           }
         }
       } else {
@@ -582,22 +584,25 @@ export async function processCommentAutomation(
           })
         } else {
           try {
-            privateOutcome = await executePrivateReply(automation.privateReply, {
-              auth,
-              automationId: automation.id,
-              integrationType,
-              integrationIdentifier,
-              commentId,
-              channelType,
-              conversationId,
-              contactInboxId,
-              contactInbox,
-              workspaceId,
-              delay,
-              message,
-              createdTime,
-              dedup,
-            })
+            privateOutcome = await executePrivateReply(
+              automation.privateReply,
+              {
+                auth,
+                automationId: automation.id,
+                integrationType,
+                integrationIdentifier,
+                commentId,
+                channelType,
+                conversationId,
+                contactInboxId,
+                contactInbox,
+                workspaceId,
+                delay,
+                message,
+                createdTime,
+                dedup,
+              },
+            )
             privateReplyClaimed ||= privateOutcome !== null
           } catch (err) {
             logger.error(

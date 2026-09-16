@@ -10,10 +10,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
+import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -130,33 +137,44 @@ export function ThreadsCommentsTable({
           <div className="w-full text-center">{t("actions.actions")}</div>
         ),
         cell: ({ row }) => (
-          <div className="flex justify-center gap-2">
-            <Button
-              render={
-                <Link
-                  href={`/space/${workspaceId}/threads-comments/${row.original.id}`}
+          <div className="flex justify-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button size="icon" variant="ghost">
+                    <MoreHorizontalIcon className="h-4 w-4" />
+                    <span className="sr-only">{t("actions.actions")}</span>
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-auto">
+                <DropdownMenuItem
+                  onClick={() =>
+                    router.push(
+                      `/space/${workspaceId}/threads-comments/${row.original.id}`,
+                    )
+                  }
                 >
+                  <PencilIcon className="me-2" />
                   {t("actions.edit")}
-                </Link>
-              }
-              size="sm"
-              variant="outline"
-            />
-            <Button
-              onClick={() => setRowAction({ row, variant: "delete" })}
-              size="sm"
-              variant="destructive"
-            >
-              {t("actions.delete")}
-            </Button>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="hover:bg-muted hover:text-destructive"
+                  onClick={() => setRowAction({ row, variant: "delete" })}
+                >
+                  <Trash2Icon className="me-2" />
+                  {t("actions.delete")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         ),
-        size: 180,
+        size: 50,
         enableSorting: false,
         enableHiding: false,
       },
     ],
-    [handleToggleStatus, t, workspaceId],
+    [handleToggleStatus, router, t, workspaceId],
   )
 
   const { table } = useDataTable({

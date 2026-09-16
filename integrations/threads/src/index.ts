@@ -1,5 +1,6 @@
 export * from "./apis/auth"
 export * from "./apis/comment"
+export * from "./apis/post"
 export * from "./integration"
 export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"
 export {

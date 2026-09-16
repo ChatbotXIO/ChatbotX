@@ -4,6 +4,7 @@ import type {
   Oauth2AuthValue,
   Oauth2Config,
 } from "@chatbotx.io/sdk"
+import type { ThreadsPostDetails } from "./apis/post"
 
 export type ThreadsConfig = Oauth2Config & {
   version: string
@@ -32,4 +33,8 @@ export type ThreadsProfile = {
 export type ThreadsActions<IAuth extends ThreadsAuthValue = ThreadsAuthValue> =
   {
     getProfile: Handler<{ ctx: Context<IAuth> }, ThreadsProfile>
+    getPostDetails: Handler<
+      { ctx: Context<IAuth>; input: { postId: string } },
+      ThreadsPostDetails
+    >
   }
