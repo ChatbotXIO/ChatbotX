@@ -56,11 +56,12 @@ import {
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
-import type { IncomingAttachment } from "@chatbotx.io/sdk"
+import { distributedLock } from "@chatbotx.io/redis"
 import {
   type AuthValue,
   contentTypes,
   getStoryReply,
+  type IncomingAttachment,
   type IncomingContact,
   type IncomingMessage,
   isSourceUserIdKeyedIdentity,
@@ -180,6 +181,18 @@ export const metaReferralToContactSource = (
       return
   }
 }
+
+const CONVERSATION_INGEST_LOCK_TIMEOUT_SECONDS = 60
+
+const withConversationIngestLock = async <T>(
+  conversationId: string,
+  fn: () => Promise<T>,
+): Promise<T> =>
+  await distributedLock.runExclusive({
+    key: `conversation-ingest:${conversationId}`,
+    timeoutInSeconds: CONVERSATION_INGEST_LOCK_TIMEOUT_SECONDS,
+    fn,
+  })
 
 export const receiveMessage = async (
   props: IntegrationJobReceiveMessage["data"],
@@ -710,7 +723,7 @@ const isEchoOfOwnSend = async (props: {
 // updates contactInbox/conversation activity timestamps for new rows,
 // broadcasts the realtime event to the UI, and emits `message:received` to trigger flows.
 // Shared by `receiveMessage` and `receiveComment`.
-const saveAndBroadcastMessage = async (props: {
+type SaveAndBroadcastMessageProps = {
   inbox: InboxModel
   contactInbox: ContactInboxModel
   conversation: ConversationModel
@@ -719,7 +732,22 @@ const saveAndBroadcastMessage = async (props: {
   contactLocation?: ContactLocation | null
   createdAt?: Date
   storageUrl: string
-}): Promise<{
+}
+
+const saveAndBroadcastMessage = async (
+  props: SaveAndBroadcastMessageProps,
+): Promise<{
+  message: MessageModel & { attachments: unknown[] }
+  isNew: boolean
+}> =>
+  await withConversationIngestLock(
+    props.conversation.id,
+    async () => await saveAndBroadcastMessageForConversation(props),
+  )
+
+const saveAndBroadcastMessageForConversation = async (
+  props: SaveAndBroadcastMessageProps,
+): Promise<{
   message: MessageModel & { attachments: unknown[] }
   isNew: boolean
 }> => {
@@ -1254,7 +1282,6 @@ export const processMessageReaction = async (
   // and ads-conversion listeners consume with no way to exclude an activity
   // row. A reaction only ever inserts/updates one lightweight activity
   // message — persist + broadcast, nothing else.
-  const repository = await createMessageRepository()
   // Stable (no wall-clock component) so a BullMQ retry of this same job
   // upserts the same activity row instead of creating a duplicate. Must not
   // reuse the reacted-to message's mid: that would collide with
@@ -1264,20 +1291,27 @@ export const processMessageReaction = async (
     action === "react"
       ? `Reacted${emoji ? ` ${emoji}` : ""}`
       : "Removed a reaction"
+  const { repository, reactionRow, isNew } = await withConversationIngestLock(
+    conversation.id,
+    async () => {
+      const repository = await createMessageRepository()
+      const { message: reactionRow, isNew } = await repository.createOrUpdate({
+        id: createId(),
+        conversationId: conversation.id,
+        contactInboxId: existingContactInbox.id,
+        workspaceId: inbox.workspaceId,
+        senderType: "contact",
+        senderId: existingContactInbox.contactId,
+        sourceId: reactionSourceId,
+        messageType: messageTypes.enum.activity,
+        contentType: contentTypes.enum.text,
+        text: reactionText,
+        createdAt: new Date(),
+      })
 
-  const { message: reactionRow, isNew } = await repository.createOrUpdate({
-    id: createId(),
-    conversationId: conversation.id,
-    contactInboxId: existingContactInbox.id,
-    workspaceId: inbox.workspaceId,
-    senderType: "contact",
-    senderId: existingContactInbox.contactId,
-    sourceId: reactionSourceId,
-    messageType: messageTypes.enum.activity,
-    contentType: contentTypes.enum.text,
-    text: reactionText,
-    createdAt: new Date(),
-  })
+      return { repository, reactionRow, isNew }
+    },
+  )
 
   if (isNew) {
     try {
@@ -1294,11 +1328,15 @@ export const processMessageReaction = async (
   // Same action reused within createOrUpdate's dedup window (e.g. a changed
   // emoji) — update the existing row instead of silently ignoring it.
   if (reactionRow.text !== reactionText) {
-    const updated = await repository.updateMessageText(
-      reactionRow.id,
-      inbox.workspaceId,
-      reactionText,
-      reactionRow.createdAt,
+    const updated = await withConversationIngestLock(
+      conversation.id,
+      async () =>
+        await repository.updateMessageText(
+          reactionRow.id,
+          inbox.workspaceId,
+          reactionText,
+          reactionRow.createdAt,
+        ),
     )
     if (updated) {
       try {

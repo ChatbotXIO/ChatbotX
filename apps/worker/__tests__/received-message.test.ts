@@ -39,6 +39,7 @@ const {
   mockContactProfileRefresh,
   mockRecordProfileRefreshFailure,
   mockResolveIntegrationContextFromContactInbox,
+  mockRunExclusive,
 } = vi.hoisted(() => {
   const mockFindContactInbox = vi.fn()
 
@@ -117,6 +118,9 @@ const {
       .fn()
       .mockResolvedValue({ status: "skipped", reason: "profileComplete" }),
     mockRecordProfileRefreshFailure: vi.fn().mockResolvedValue(undefined),
+    mockRunExclusive: vi.fn(
+      async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
+    ),
     mockResolveIntegrationContextFromContactInbox: vi.fn().mockResolvedValue({
       integration: { runChannelHandler: mockRunChannelHandler },
       ctx: { workspaceId: "ws-1" },
@@ -254,6 +258,10 @@ vi.mock("@chatbotx.io/event-bus", () => ({
 vi.mock("@chatbotx.io/events", () => ({
   emitContactCreated: vi.fn().mockResolvedValue(undefined),
   setWebhookExecutionContext: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: { runExclusive: mockRunExclusive },
 }))
 
 vi.mock("@chatbotx.io/partysocket-config", () => ({
@@ -575,6 +583,69 @@ describe("receiveMessage — message repository branch", () => {
 
     expect(mockCreateOrUpdate).toHaveBeenCalledTimes(1)
     expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
+  })
+
+  test("serializes concurrent persistence for messages in the same conversation", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    let previous = Promise.resolve()
+    let lockAttempts = 0
+    const firstPersistStarted = Promise.withResolvers<void>()
+    const allowFirstPersist = Promise.withResolvers<void>()
+    const secondLockAttempted = Promise.withResolvers<void>()
+    const runSequentially = async ({ fn }: { fn: () => Promise<unknown> }) => {
+      const waitingFor = previous
+      const currentLock = Promise.withResolvers<void>()
+      previous = currentLock.promise
+      lockAttempts += 1
+      if (lockAttempts === 2) {
+        secondLockAttempted.resolve()
+      }
+      await waitingFor
+      try {
+        return await fn()
+      } finally {
+        currentLock.resolve()
+      }
+    }
+    mockRunExclusive
+      .mockImplementationOnce(runSequentially)
+      .mockImplementationOnce(runSequentially)
+
+    mockCreateOrUpdate
+      .mockImplementationOnce(async () => {
+        firstPersistStarted.resolve()
+        await allowFirstPersist.promise
+        return { message: fakeCreatedMessage, isNew: true }
+      })
+      .mockImplementationOnce(async () => ({
+        message: fakeCreatedMessage,
+        isNew: true,
+      }))
+
+    const first = receiveMessage(baseProps)
+    await firstPersistStarted.promise
+
+    const second = receiveMessage(baseProps)
+    await secondLockAttempted.promise
+    expect(mockCreateOrUpdate).toHaveBeenCalledTimes(1)
+
+    allowFirstPersist.resolve()
+    await Promise.all([first, second])
+
+    expect(mockCreateOrUpdate).toHaveBeenCalledTimes(2)
+    expect(mockRunExclusive).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: "conversation-ingest:conv-1",
+        timeoutInSeconds: 60,
+      }),
+    )
   })
 
   test("auto-unblocks on inbound messages using the loaded contact", async () => {
