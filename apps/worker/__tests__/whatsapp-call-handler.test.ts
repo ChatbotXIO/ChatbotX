@@ -782,6 +782,89 @@ describe("handleWhatsappCallEvent", () => {
       })
     })
 
+    // Meta omits `start_time`/`duration` on a call it terminated without media
+    // ever flowing, even when an agent really did answer it. Our own row knows
+    // better: it only reaches `accepted` after Meta accepted the call.
+    test("an ACCEPTED row terminated with no start_time or duration is still a completed call, never missed", async () => {
+      mocks.findByWacid.mockResolvedValue({ ...callRow, status: "accepted" })
+
+      await handleWhatsappCallEvent({
+        ...baseData,
+        payload: {
+          phoneNumberId: "phone-1",
+          event: {
+            kind: "terminate",
+            wacid: "wacid.ABC",
+            direction: "userInitiated",
+            status: "COMPLETED",
+            timestamp: "1755700100",
+          },
+        },
+      })
+
+      expect(mocks.finalizeCallSideEffects).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entity: expect.objectContaining({
+            status: "completed",
+            // No duration to report — better than claiming a 0-second call.
+            durationSeconds: undefined,
+          }),
+        }),
+      )
+    })
+
+    // The agent's own hangup finalizes the row `completed` before Meta's
+    // terminate arrives; that trailing webhook must not downgrade it.
+    test("a late terminate never downgrades a row an agent already completed", async () => {
+      mocks.findByWacid.mockResolvedValue({ ...callRow, status: "completed" })
+
+      await handleWhatsappCallEvent({
+        ...baseData,
+        payload: {
+          phoneNumberId: "phone-1",
+          event: {
+            kind: "terminate",
+            wacid: "wacid.ABC",
+            direction: "userInitiated",
+            status: "FAILED",
+            timestamp: "1755700100",
+          },
+        },
+      })
+
+      expect(mocks.finalizeCallSideEffects).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entity: expect.objectContaining({ status: "completed" }),
+        }),
+      )
+    })
+
+    // The original guard must survive: a call NOBODY answered still renders as
+    // missed, so its card never waits on a recording that cannot exist.
+    test("a never-answered row terminated as COMPLETED with no timestamps is still failed", async () => {
+      mocks.findByWacid.mockResolvedValue({ ...callRow, status: "ringing" })
+
+      await handleWhatsappCallEvent({
+        ...baseData,
+        payload: {
+          phoneNumberId: "phone-1",
+          event: {
+            kind: "terminate",
+            wacid: "wacid.ABC",
+            direction: "userInitiated",
+            status: "COMPLETED",
+            timestamp: "1755700100",
+          },
+        },
+      })
+
+      expect(mocks.finalizeCallSideEffects).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entity: expect.objectContaining({ status: "failed" }),
+        }),
+      )
+    })
+
     test("failed terminate after a rejected status renders the entity as rejected", async () => {
       mocks.findByWacid.mockResolvedValue({ ...callRow, status: "rejected" })
 

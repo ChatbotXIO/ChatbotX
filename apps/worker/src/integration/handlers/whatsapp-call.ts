@@ -534,10 +534,23 @@ const resolveTerminalEntity = (
   // call that never connected (rang out / declined), which must render as a
   // missed/failed call, never as an "Audio call" stuck on "recording
   // processing…" waiting for a recording that can never exist.
-  const wasAnswered =
+  const metaReportsAnswered =
     event.status === "COMPLETED" &&
     (event.startTime !== undefined ||
       (event.durationSeconds !== undefined && event.durationSeconds > 0))
+
+  // Our own row outranks the webhook on whether the call ever connected.
+  // `accepted` is written only after Meta accepted it (`markAcceptedByAgent`
+  // for an inbound answer, the ACCEPTED status for an outbound dial), and
+  // `completed` only by an agent hanging a live call up. Meta, meanwhile,
+  // terminates a genuinely answered call with neither `start_time` nor
+  // `duration` when media never flowed — so trusting the webhook alone
+  // rendered a call the agent really did answer as "Missed voice call",
+  // directly contradicting the answerer named on the very same card, and let
+  // a late terminate downgrade a row the hangup had already finalized.
+  const rowReportsAnswered =
+    priorStatus === "accepted" || priorStatus === "completed"
+  const wasAnswered = metaReportsAnswered || rowReportsAnswered
 
   let status: MessageWhatsappCallEntity["status"]
   if (priorStatus === "rejected") {
@@ -564,7 +577,12 @@ const resolveTerminalEntity = (
     type: "whatsapp_call",
     direction,
     status,
-    durationSeconds: wasAnswered ? (event.durationSeconds ?? 0) : undefined,
+    // Meta's own duration when it gave one. For a call only OUR row knows was
+    // answered there is no duration to report, and claiming `0` would read as
+    // a zero-second call — `undefined` renders a plain "Voice call" instead.
+    durationSeconds: metaReportsAnswered
+      ? (event.durationSeconds ?? 0)
+      : event.durationSeconds,
   }
 }
 
