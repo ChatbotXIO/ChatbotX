@@ -1,10 +1,7 @@
 import {
   customDomainService,
   platformCredentialService,
-  resolveWorkspaceFreezeReason,
   tenantService,
-  userQuotaService,
-  workspaceService,
 } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { inboxStatuses } from "@chatbotx.io/database/partials"
@@ -67,32 +64,6 @@ const createThreadsErrorResponse = (error: unknown) => {
     safeError,
     status,
   }
-}
-
-/**
- * Per-bot/per-account channels (telegram, tiktok) reach their integration
- * handler before any queue consumer runs, so they need the freeze verdict
- * in-request. Delegating to the shared resolver keeps them aligned with the
- * worker-side guard instead of re-implementing a weaker owner-only check.
- */
-const resolveWebhookFreezeReason = async (
-  workspaceId: string,
-): Promise<ReturnType<typeof resolveWorkspaceFreezeReason>> => {
-  const workspace = await workspaceService.find({ where: { id: workspaceId } })
-
-  // Two passes, mirroring withBlockedOwnerGuard: the Workspace row alone
-  // decides `missingWorkspace`/`scheduledForDeletion`; only `ownerBlocked`
-  // needs entitlements, and only the cloud edition can produce it, so
-  // self-hosted installs skip the quota lookup entirely.
-  const rowReason = resolveWorkspaceFreezeReason({ workspace })
-  if (rowReason || !isCloud() || !workspace) {
-    return rowReason
-  }
-
-  return resolveWorkspaceFreezeReason({
-    accessState: await userQuotaService.getAccessState(workspace.ownerId),
-    workspace,
-  })
 }
 
 export const handleWebhook = async (
@@ -326,22 +297,6 @@ const handleTelegramWebhook = async (req: NextRequest) => {
     })
   }
 
-  const telegramFreezeReason = await resolveWebhookFreezeReason(
-    integrationTelegram.workspaceId,
-  )
-  if (telegramFreezeReason) {
-    logger.info(
-      {
-        freezeReason: telegramFreezeReason,
-        integrationType: "telegram",
-        workspaceId: integrationTelegram.workspaceId,
-      },
-      "webhook skipped: frozen workspace",
-    )
-    // 200 so Telegram does not retry or disable the webhook while frozen.
-    return new Response("ok")
-  }
-
   const auth = integrationTelegram.auth as {
     secretText: string
     metadata?: { botId?: string; webhookSecretToken?: string }
@@ -415,22 +370,6 @@ const handleTiktokWebhook = async (req: NextRequest) => {
       JSON.stringify({ message: "TikTok account not found" }),
       { status: 404, headers: { "Content-Type": "application/json" } },
     )
-  }
-
-  const tiktokFreezeReason = await resolveWebhookFreezeReason(
-    integrationTiktok.workspaceId,
-  )
-  if (tiktokFreezeReason) {
-    logger.info(
-      {
-        freezeReason: tiktokFreezeReason,
-        integrationType: "tiktok",
-        workspaceId: integrationTiktok.workspaceId,
-      },
-      "webhook skipped: frozen workspace",
-    )
-    // 200 so TikTok does not retry or revoke the subscription while frozen.
-    return new Response("ok")
   }
 
   if (eventType === "authorization.removed") {
