@@ -93,6 +93,15 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Check circular dependencies
+        run: pnpm check:circular
+
+      - name: Check unused exports
+        run: pnpm check:unused
+
+      - name: Check dependency boundaries
+        run: pnpm exec depcruise --config .dependency-cruiser.js --output-type err --focus '^packages/database/src/client[.]ts$' --focus-depth 1 apps packages integrations
+
   test:
     name: Tests
     runs-on: ubuntu-latest
