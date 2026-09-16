@@ -14,6 +14,11 @@ import { distributedStore } from "."
 // they never see an envelope they cannot decode.
 const CACHE_KEY_PREFIX = "sj:"
 
+// De-duplicates cache misses within this process. Cross-process coordination
+// remains intentionally out of scope: the Redis cache is still the shared
+// layer, while a distributed miss lock would need its own failure semantics.
+const inFlightCacheMisses = new Map<string, Promise<unknown>>()
+
 const isSuperJsonEnvelope = (value: unknown): value is SuperJSONResult =>
   typeof value === "object" && value !== null && "json" in value
 
@@ -50,42 +55,58 @@ export const withCache = async <T>(
     logger.debug({ err, key }, "Cache read failed, falling back to source")
   }
 
-  const result = await fn()
-  // Skip cache write if result is null or undefined
-  if (result === null || result === undefined) {
-    return result
+  const inFlight = inFlightCacheMisses.get(cacheKey)
+  if (inFlight) {
+    return await (inFlight as Promise<T>)
   }
 
-  // Cache writes are best-effort: a failure here must not break the caller,
-  // which already has a valid result from the source function.
-  try {
-    const resolvedTtl = ttlFor?.(result) ?? ttl
-    await distributedStore.put(
-      cacheKey,
-      superjson.serialize(result),
-      resolvedTtl,
-    )
-
-    // Add tags to the cache
-    const dynamicTagsResult = dynamicTags?.(result)
-    const allTags = [...tags, ...(dynamicTagsResult || [])]
-    if (allTags.length > 0) {
-      // The tag set is shared by every key under the tag — its expiry must
-      // never be truncated by one short-lived (e.g. negative-result) entry,
-      // or longer-lived siblings would drop out of tag invalidation early.
-      const tagTtl = Math.max(resolvedTtl, ttl)
-      await Promise.all(
-        allTags.map(async (tag) => {
-          await distributedStore.sadd(`tags:${tag}`, cacheKey)
-          await distributedStore.expire(`tags:${tag}`, tagTtl)
-        }),
-      )
+  const sourcePromise = (async () => {
+    const result = await fn()
+    // Skip cache write if result is null or undefined
+    if (result === null || result === undefined) {
+      return result
     }
-  } catch (err) {
-    logger.debug({ err, key }, "Cache write failed, returning source result")
-  }
 
-  return result
+    // Cache writes are best-effort: a failure here must not break the caller,
+    // which already has a valid result from the source function.
+    try {
+      const resolvedTtl = ttlFor?.(result) ?? ttl
+      await distributedStore.put(
+        cacheKey,
+        superjson.serialize(result),
+        resolvedTtl,
+      )
+
+      // Add tags to the cache
+      const dynamicTagsResult = dynamicTags?.(result)
+      const allTags = [...tags, ...(dynamicTagsResult || [])]
+      if (allTags.length > 0) {
+        // The tag set is shared by every key under the tag — its expiry must
+        // never be truncated by one short-lived (e.g. negative-result) entry,
+        // or longer-lived siblings would drop out of tag invalidation early.
+        const tagTtl = Math.max(resolvedTtl, ttl)
+        await Promise.all(
+          allTags.map(async (tag) => {
+            await distributedStore.sadd(`tags:${tag}`, cacheKey)
+            await distributedStore.expire(`tags:${tag}`, tagTtl)
+          }),
+        )
+      }
+    } catch (err) {
+      logger.debug({ err, key }, "Cache write failed, returning source result")
+    }
+
+    return result
+  })()
+  inFlightCacheMisses.set(cacheKey, sourcePromise)
+
+  try {
+    return await sourcePromise
+  } finally {
+    if (inFlightCacheMisses.get(cacheKey) === sourcePromise) {
+      inFlightCacheMisses.delete(cacheKey)
+    }
+  }
 }
 
 /**
