@@ -32,7 +32,7 @@ export const foldersPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/folders",
-      summary: "List folders of a given type",
+      summary: "List folders by type",
       description:
         'Lists folders for one `folderType` (e.g. `"tag"`, `"customField"`, `"flow"`). Omit `parentId` for top-level folders.',
       tags: ["Folders"],
@@ -53,7 +53,7 @@ export const foldersPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/folders",
-      summary: "Create a folder",
+      summary: "Create folder",
       description:
         "Adds a folder used to organize tags or custom fields. Use `folders.list` first to avoid duplicating an existing one.",
       tags: ["Folders"],
@@ -80,7 +80,7 @@ export const foldersPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/folders/{id}",
-      summary: "Rename a folder",
+      summary: "Rename folder",
       description:
         "Changes a folder's display name without moving its contents. Use `folders.list` to find its id first.",
       tags: ["Folders"],
@@ -104,7 +104,7 @@ export const foldersPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/folders/{id}",
-      summary: "Delete a folder",
+      summary: "Delete folder",
       description:
         "Permanently deletes a folder. Its contents are not deleted, only unfiled. Use `folders.list` to find its id first.",
       successStatus: 204,

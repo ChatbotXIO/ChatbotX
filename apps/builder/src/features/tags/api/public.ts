@@ -42,7 +42,7 @@ export const tagsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/tags",
-      summary: "Create a new tag",
+      summary: "Create tag",
       description:
         "Adds a workspace tag and returns its id for later attachment to contacts. Use `tags.list` to check for an existing tag, or `contacts.addTags` to attach it.",
       successStatus: 201,
@@ -64,7 +64,7 @@ export const tagsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/tags/{idOrName}",
-      summary: "Get tag by id or name",
+      summary: "Get tag",
       description:
         "Returns one tag's id and name. Use `tags.list` to find its id or name first.",
       tags: ["Tags"],

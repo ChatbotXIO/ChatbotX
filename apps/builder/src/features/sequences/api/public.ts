@@ -32,7 +32,7 @@ export const sequencesPublicRouter = {
       path: "/v1/sequences",
       summary: "List sequences",
       description:
-        "Use this to find sequence ids before inspecting steps with `sequences.get` or enrolling contacts with `contacts.subscribeSequences`. Returns sequences available in the workspace.",
+        "Use this to find sequence ids before inspecting steps with `sequences.get` or subscribing contacts with `contacts.subscribeSequences`. Returns sequences available in the workspace.",
       tags: ["Sequences"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -51,7 +51,7 @@ export const sequencesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/sequences/{id}",
-      summary: "Get sequence details",
+      summary: "Get sequence",
       description:
         "Use this to inspect one sequence and its steps after finding its id with `sequences.list`. Call `sequences.update` to change its settings or `sequences.upsertStep` to edit steps.",
       tags: ["Sequences"],
@@ -76,7 +76,7 @@ export const sequencesPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/sequences",
-      summary: "Create a sequence",
+      summary: "Create sequence",
       description:
         "Creates an empty sequence. Add steps afterward via the builder UI or `sequences.upsertStep`.",
       successStatus: 201,
@@ -97,7 +97,7 @@ export const sequencesPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/sequences/{id}",
-      summary: "Update a sequence's name or active state",
+      summary: "Update sequence name or active state",
       description:
         "Changes a sequence name or active state without replacing its steps. Call `sequences.get` to inspect the current sequence, or use `sequences.list` to resolve its id.",
       successStatus: 204,
@@ -126,7 +126,7 @@ export const sequencesPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/sequences/{id}",
-      summary: "Delete a sequence",
+      summary: "Delete sequence",
       description: "Permanently deletes a sequence and all of its steps.",
       successStatus: 204,
       tags: ["Sequences"],
@@ -151,7 +151,7 @@ export const sequencesPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/sequences/{id}/steps",
-      summary: "Create or update a sequence step",
+      summary: "Create or update sequence step",
       description:
         "Pass stepId to update an existing step; omit it to create a new one.",
       tags: ["Sequences"],
@@ -188,7 +188,7 @@ export const sequencesPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/sequences/{id}/steps/{stepId}",
-      summary: "Delete a sequence step",
+      summary: "Delete sequence step",
       description:
         "Permanently removes one step from a sequence, identified by its `stepId`. Use `sequences.get` to see current steps first.",
       successStatus: 204,

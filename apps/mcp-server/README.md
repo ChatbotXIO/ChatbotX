@@ -43,16 +43,16 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 | Tool | Description |
 |---|---|
 | `capabilities_get` | Discover the workspace's inboxes, templates, fields, tags, sequences, and flows |
-| `schemas_flow_spec` | Get the JSON Schema for the flow-spec DSL |
-| `token_get` | Get the calling token's workspace id, permission, and scopes |
+| `schemas_flow_spec` | Get JSON Schema for flow-spec DSL |
+| `token_get` | Get calling token workspace id, permission, and scopes |
 
 ### AI Agents
 
 | Tool | Description |
 |---|---|
 | `ai_agents_list` | List AI agents |
-| `ai_agents_create` | Create an AI agent |
-| `ai_agents_update` | Update an AI agent |
+| `ai_agents_create` | Create AI agent |
+| `ai_agents_update` | Update AI agent |
 | `ai_files_list` | List AI files |
 | `ai_functions_list` | List AI functions |
 
@@ -70,21 +70,21 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 
 | Tool | Description |
 |---|---|
-| `broadcasts_list` | Get all broadcasts |
-| `broadcasts_get` | Get broadcast by id or name |
-| `broadcasts_stop` | Stop a broadcast that is currently sending |
+| `broadcasts_list` | List broadcasts |
+| `broadcasts_get` | Get broadcast |
+| `broadcasts_stop` | Stop broadcast |
 
 ### Contacts
 
 | Tool | Description |
 |---|---|
-| `contacts_create` | Create a contact |
+| `contacts_create` | Create contact |
 | `contacts_get` | Get contact by identifier (id:123, email:user@example.com, phone:+84...) |
 | `contacts_list` | List contacts |
-| `contacts_search` | Search contacts with a filter body |
-| `contacts_list_tags` | Get all tags added to this contact |
-| `contacts_add_tags_by_name` | Add tags to the contact by name |
-| `contacts_list_custom_fields` | Get all custom fields from a contact |
+| `contacts_search` | Search contacts with filter body |
+| `contacts_list_tags` | Get all tags added to contact |
+| `contacts_add_tags_by_name` | Add tags to contact by name |
+| `contacts_list_custom_fields` | Get all custom fields from contact |
 | `contacts_set_custom_field` | Set contact custom field value |
 | `contacts_list_messages` | List messages for contact |
 | `contacts_send_message` | Send message to contact |
@@ -97,8 +97,8 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 | Tool | Description |
 |---|---|
 | `conversations_list` | List conversations |
-| `conversations_get` | Get a conversation by id |
-| `conversations_assign` | Assign or unassign a conversation to a user or inbox team |
+| `conversations_get` | Get conversation |
+| `conversations_assign` | Assign or unassign conversation to user or inbox team |
 
 ### Error Logs
 
@@ -111,11 +111,11 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 | Tool | Description |
 |---|---|
 | `flows_list` | List flows |
-| `flows_get` | Get a flow by id |
-| `flows_create` | Create a flow |
-| `flows_update_draft` | Update a flow's draft version |
-| `flows_publish` | Publish a flow |
-| `flows_validate` | Compile and validate a flow spec without publishing it |
+| `flows_get` | Get flow |
+| `flows_create` | Create flow |
+| `flows_update_draft` | Update flow draft |
+| `flows_publish` | Publish flow |
+| `flows_validate` | Compile and validate flow spec without publishing |
 
 ### Keywords
 
@@ -127,15 +127,15 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 
 | Tool | Description |
 |---|---|
-| `messages_list` | List messages on a conversation |
+| `messages_list` | List messages on conversation |
 
 ### Sequences
 
 | Tool | Description |
 |---|---|
 | `sequences_list` | List sequences |
-| `sequences_get` | Get sequence details |
-| `sequences_update` | Update a sequence's name or active state |
+| `sequences_get` | Get sequence |
+| `sequences_update` | Update sequence name or active state |
 
 Everything else — deletes, less-common resources (coupons, products, webhooks, saved replies, tags/triggers/inboxes/custom-fields management, integrations, workspace members, etc.), and channel-token-only or deprecated operations — is reachable via `search_tools` → `call_tool`, not `tools/list`.
 

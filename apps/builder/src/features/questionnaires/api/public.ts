@@ -55,7 +55,7 @@ export const questionnairesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/questionnaires/{id}",
-      summary: "Get a questionnaire",
+      summary: "Get questionnaire",
       description:
         "Returns one questionnaire's questions and settings. Use `questionnaires.list` to find its id first.",
       tags: ["Questionnaires"],
@@ -75,7 +75,7 @@ export const questionnairesPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/questionnaires",
-      summary: "Create a questionnaire",
+      summary: "Create questionnaire",
       description:
         "Adds an empty questionnaire with the given name. Use `questionnaires.update` afterward to add questions.",
       successStatus: 201,
@@ -95,7 +95,7 @@ export const questionnairesPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/questionnaires/{id}",
-      summary: "Update a questionnaire",
+      summary: "Update questionnaire",
       description:
         "Replaces an existing questionnaire's questions and settings. Call `questionnaires.get` to inspect current values first.",
       successStatus: 204,
@@ -116,7 +116,7 @@ export const questionnairesPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/questionnaires/{id}",
-      summary: "Delete a questionnaire",
+      summary: "Delete questionnaire",
       description:
         "Permanently deletes a questionnaire and its submissions. Use `questionnaires.list` to find its id first.",
       successStatus: 204,
@@ -140,7 +140,7 @@ export const questionnairesPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/questionnaires/{id}/rename",
-      summary: "Rename a questionnaire",
+      summary: "Rename questionnaire",
       description:
         "Changes a questionnaire's display name without touching its questions.",
       successStatus: 204,
@@ -160,7 +160,7 @@ export const questionnairesPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/questionnaires/{id}/duplicate",
-      summary: "Duplicate a questionnaire",
+      summary: "Duplicate questionnaire",
       description:
         "Copies an existing questionnaire's questions and settings into a new questionnaire.",
       successStatus: 201,
@@ -201,7 +201,7 @@ export const questionnairesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/questionnaires/{id}/submissions/{submissionId}",
-      summary: "Get a questionnaire submission",
+      summary: "Get questionnaire submission",
       description:
         "Returns one submission's full answers. Use `questionnaires.listSubmissions` to find its id first.",
       tags: ["Questionnaire submissions"],
@@ -222,7 +222,7 @@ export const questionnairesPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/questionnaires/{id}/submissions/{submissionId}",
-      summary: "Delete a questionnaire submission",
+      summary: "Delete questionnaire submission",
       description:
         "Permanently deletes a single submission's answers. Use `questionnaires.listSubmissions` to find its id first.",
       successStatus: 204,

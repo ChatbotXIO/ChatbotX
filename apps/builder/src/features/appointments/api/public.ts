@@ -54,7 +54,7 @@ export const appointmentsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/appointments/{id}",
-      summary: "Get an appointment by id",
+      summary: "Get appointment",
       description:
         "Returns one appointment's booking details. Use `appointments.list` to find its id first.",
       tags,
@@ -74,7 +74,7 @@ export const appointmentsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/appointments",
-      summary: "Book an appointment",
+      summary: "Book appointment",
       description:
         "Books a slot on a calendar for a contact. Runs the same availability, capacity, and daily-limit checks as the booking webview, and schedules reminders/confirmation flow if configured on the calendar.",
       successStatus: 201,
@@ -103,7 +103,7 @@ export const appointmentsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/appointments/{id}/cancel",
-      summary: "Cancel an appointment",
+      summary: "Cancel appointment",
       description:
         "Cancels a booked appointment without deleting its record. Use `appointments.list` to find its id first.",
       tags,
@@ -123,7 +123,7 @@ export const appointmentsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/appointments/{id}",
-      summary: "Delete an appointment",
+      summary: "Delete appointment",
       description:
         "Soft-deletes an appointment. Upcoming scheduled appointments must be cancelled first.",
       successStatus: 204,

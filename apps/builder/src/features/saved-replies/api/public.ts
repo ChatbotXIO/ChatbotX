@@ -49,7 +49,7 @@ export const savedRepliesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/saved-replies/{id}",
-      summary: "Get a saved reply by id",
+      summary: "Get saved reply",
       description:
         "Returns one saved reply. Use `savedReplies.list` to find its id first.",
       tags: ["Saved Replies"],
@@ -75,7 +75,7 @@ export const savedRepliesPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/saved-replies",
-      summary: "Create a saved reply",
+      summary: "Create saved reply",
       description:
         "Adds a shortcut-triggered text snippet agents can insert into a reply. Use `savedReplies.list` first to avoid duplicating a shortcut.",
       successStatus: 201,
@@ -97,7 +97,7 @@ export const savedRepliesPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/saved-replies/{id}",
-      summary: "Update a saved reply",
+      summary: "Update saved reply",
       description:
         "Changes a saved reply's shortcut and/or text. Call `savedReplies.get` to inspect current values first.",
       tags: ["Saved Replies"],
@@ -126,7 +126,7 @@ export const savedRepliesPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/saved-replies/{id}",
-      summary: "Delete a saved reply",
+      summary: "Delete saved reply",
       description:
         "Permanently deletes a saved reply. Use `savedReplies.list` to find its id first.",
       successStatus: 204,

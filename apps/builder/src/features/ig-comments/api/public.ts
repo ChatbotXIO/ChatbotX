@@ -51,7 +51,7 @@ export const igCommentsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ig-comments/{id}",
-      summary: "Get a specific Instagram comment automation",
+      summary: "Get Instagram comment automation",
       description:
         "Returns one automation's trigger and reply settings. Use `igComments.list` to find its id first.",
       tags: ["IG Comments"],
@@ -71,7 +71,7 @@ export const igCommentsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ig-comments",
-      summary: "Create an Instagram comment automation",
+      summary: "Create Instagram comment automation",
       description:
         "Adds an automation that replies to or hides comments on Instagram media. Use `igComments.listMedia` to find eligible media first.",
       successStatus: 201,
@@ -93,7 +93,7 @@ export const igCommentsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/ig-comments/{id}",
-      summary: "Update an Instagram comment automation",
+      summary: "Update Instagram comment automation",
       description:
         "Changes an existing automation's trigger or reply settings. Call `igComments.get` to inspect current values first.",
       tags: ["IG Comments"],
@@ -113,7 +113,7 @@ export const igCommentsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/ig-comments/{id}",
-      summary: "Delete an Instagram comment automation",
+      summary: "Delete Instagram comment automation",
       description:
         "Permanently deletes an automation. Use `igComments.list` to find its id first.",
       successStatus: 204,

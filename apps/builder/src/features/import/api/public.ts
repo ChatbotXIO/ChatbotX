@@ -45,7 +45,7 @@ export const importPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/imports/{id}",
-      summary: "Get a contact import job",
+      summary: "Get contact import job",
       description:
         "Returns one import job's progress and result counts. Call `contacts.listImports` to find its id first.",
       tags: ["Contacts"],

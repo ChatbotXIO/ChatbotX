@@ -22,7 +22,7 @@ export const contactScanPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contact-scans/status",
-      summary: "Get the latest Automatic Customer Scan status for an inbox",
+      summary: "Get latest Automatic Customer Scan status for inbox",
       description:
         "Returns the most recent scan's progress and result for an inbox. Use `contactScans.create` to start a new scan, or `contactScans.list` for the full history.",
       tags: ["Contacts"],
@@ -42,7 +42,7 @@ export const contactScanPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contact-scans",
-      summary: "List Automatic Customer Scan runs for the workspace",
+      summary: "List Automatic Customer Scan runs",
       description:
         "Returns scan history across every inbox in the workspace. Use `contactScans.getStatus` to check one inbox's latest run.",
       tags: ["Contacts"],
@@ -63,7 +63,7 @@ export const contactScanPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contact-scans",
-      summary: "Schedule an Automatic Customer Scan for an inbox",
+      summary: "Schedule Automatic Customer Scan for inbox",
       description:
         "Starts a scan that walks the inbox's existing conversations and imports contacts that never messaged first. `scanFromAt` must be in the past. Only one scan may run per inbox, with a cooldown between runs — both are rejected with 409.",
       successStatus: 202,

@@ -87,7 +87,7 @@ chatbotx workspaces get                              # Get workspace info
 ```bash
 chatbotx members list                                # List workspace members
                                                      # [--page --perPage --sort --keyword]
-chatbotx members get <memberId>                      # Get workspace member by id
+chatbotx members get <memberId>                      # Get workspace member
 ```
 
 ---
@@ -113,8 +113,8 @@ chatbotx teams list                                  # List teams
 
 ```bash
 chatbotx tags list                                   # Get all tags
-chatbotx tags create --name <name>                   # Create a new tag
-chatbotx tags get <idOrName>                         # Get tag by id or name
+chatbotx tags create --name <name>                   # Create tag
+chatbotx tags get <idOrName>                         # Get tag
 chatbotx tags update <id> --name <name>              # Update tag
 chatbotx tags delete <id>                            # Delete tag
 ```
@@ -126,7 +126,7 @@ chatbotx tags delete <id>                            # Delete tag
 ```bash
 chatbotx custom-fields list                          # Get all custom fields
 chatbotx custom-fields create --name <name> --type <type>
-chatbotx custom-fields get <idOrName>                # Get custom field by id or name
+chatbotx custom-fields get <idOrName>                # Get custom field
 chatbotx custom-fields update <id> --name <name>     # [--description --folderId]
 chatbotx custom-fields delete <id>
 ```
@@ -142,8 +142,8 @@ chatbotx bot-fields create --name <name> --type <type> --value <value> --descrip
 chatbotx bot-fields update --fields <fields>         # Set multiple bot field values
 chatbotx bot-fields bulk-update --fields <fields>    # Bulk update values by id or name
                                                      # fields: JSON array of {id,value} or {name,value}
-chatbotx bot-fields get <idOrName>                   # Get bot field by id or name
-chatbotx bot-fields update <idOrName> --value <value> # Set bot field value by id or name
+chatbotx bot-fields get <idOrName>                   # Get bot field
+chatbotx bot-fields update <idOrName> --value <value> # Set bot field value
 chatbotx bot-fields delete <idOrName>                # Unset bot field value
 ```
 
@@ -179,7 +179,7 @@ chatbotx contacts tag add <identifier> --tagIds <tagIds>
 chatbotx contacts tag delete <identifier> --tagIds <tagIds>
 
 # Custom fields
-chatbotx contacts custom-fields list <identifier>    # Get all custom fields from a contact
+chatbotx contacts custom-fields list <identifier>    # Get all custom fields from contact
 chatbotx contacts custom-fields update <identifier> --fields <fields>  # Set multiple values
 chatbotx contacts custom-field get <identifier> <customFieldId>
 chatbotx contacts custom-field add <identifier> <customFieldId> --value <value>
@@ -191,7 +191,7 @@ chatbotx contacts unblock <identifier>
 
 # Messaging & Automation
 chatbotx contacts messages list <identifier>         # [--perPage --cursor]
-chatbotx contacts message get <identifier> <messageId>  # Get a message by ID for a contact
+chatbotx contacts message get <identifier> <messageId>  # Get message for contact
 chatbotx contacts message send <identifier>          # [--text --files --flowId --nodeId --inboxId]
 chatbotx contacts flow add <identifier> --flowId <flowId>  # [--inboxId]
 chatbotx contacts auto-replies add <identifier> --keyword <keyword>  # [--inboxId]
@@ -212,7 +212,7 @@ chatbotx conversations list                          # [--botCategory --assigned
 
 ```bash
 chatbotx broadcasts list
-chatbotx broadcasts get <idOrName>                   # Get broadcast by id or name
+chatbotx broadcasts get <idOrName>                   # Get broadcast
 chatbotx broadcasts audience get <idOrName>          # Get broadcast audience (contacts)
                                                      # [--page --perPage]
 ```

@@ -9,7 +9,7 @@ import "@/polyfill"
 // procedure absent from publicRouter now 404s here instead of silently
 // answering to a session cookie. See __tests__/public-router-boundary.test.ts.
 const openAPIHandler = createOpenAPIHandler(publicRouter, {
-  title: "ChatbotX",
+  title: "Public API",
   logLabel: "OpenAPI handler",
 })
 

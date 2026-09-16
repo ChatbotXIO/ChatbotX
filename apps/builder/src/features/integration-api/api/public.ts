@@ -14,7 +14,7 @@ export const channelsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/channels/api/messages",
-      summary: "Send an inbound message from your application to ChatbotX",
+      summary: "Send inbound message from your application",
       description:
         "`message.sourceId` is the idempotency key — sending the same value twice for the same contact does not create a duplicate message. Always send a stable id, never a random one per retry.",
       tags: ["API Channel"],
@@ -47,7 +47,7 @@ export const channelsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/channels/api/typing",
-      summary: "Notify ChatbotX that the contact is typing",
+      summary: "Report contact typing",
       description:
         "Records a typing indicator for the contact. Currently accepted and logged only; no downstream effect yet.",
       tags: ["API Channel"],
@@ -83,7 +83,7 @@ export const channelsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/channels/api/read",
-      summary: "Notify ChatbotX that the contact read our messages",
+      summary: "Report contact read outbound messages",
       description:
         "Marks the conversation as read up to this contact, mirroring a read receipt from the channel.",
       tags: ["API Channel"],
@@ -117,9 +117,9 @@ export const channelsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/channels/api/delivery-status",
-      summary: "Report delivery status for an outbound message",
+      summary: "Report delivery status for outbound message",
       description:
-        "`messageId` correlates to the id ChatbotX received back in the outbound callback response, if one was supplied.",
+        "`messageId` correlates to the id returned in the outbound callback response, if one was supplied.",
       tags: ["API Channel"],
       successStatus: 204,
     })
@@ -159,7 +159,7 @@ export const channelsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/channels/api/me",
-      summary: "Verify your token and echo the connected inbox identity",
+      summary: "Verify token and echo connected inbox identity",
       description:
         "Use this to confirm a token is valid and discover which inbox and workspace it is scoped to.",
       tags: ["API Channel"],

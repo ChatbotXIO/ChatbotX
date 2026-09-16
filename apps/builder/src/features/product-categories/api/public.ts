@@ -38,7 +38,7 @@ export const productCategoriesPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/product-categories",
-      summary: "Create a product category",
+      summary: "Create product category",
       description:
         "Omit `parentId` to create a top-level category, or pass an existing top-level category's id to create a sub-category.",
       tags: ["Product Categories"],
@@ -60,7 +60,7 @@ export const productCategoriesPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/product-categories/{id}",
-      summary: "Update a product category",
+      summary: "Update product category",
       description:
         "Changes an existing category's name or reparents it. Use `productCategories.list` to find its id first.",
       tags: ["Product Categories"],
@@ -88,7 +88,7 @@ export const productCategoriesPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/product-categories/{id}",
-      summary: "Delete a product category",
+      summary: "Delete product category",
       description:
         "Permanently deletes a product category. Use `productCategories.list` to find its id first.",
       successStatus: 204,

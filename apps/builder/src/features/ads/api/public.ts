@@ -75,7 +75,7 @@ const adsConversionRulesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/conversion-rules/{id}",
-      summary: "Get an Ads conversion rule",
+      summary: "Get Ads conversion rule",
       description:
         "Returns one conversion rule's configuration. Use `ads.listRules` to find its id first.",
       tags: ["Ads"],
@@ -94,7 +94,7 @@ const adsConversionRulesPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ads/conversion-rules",
-      summary: "Create an Ads conversion rule",
+      summary: "Create Ads conversion rule",
       description:
         "Adds a rule mapping a channel event to a conversion. Use `ads.listRules` first to avoid duplicating an existing rule.",
       successStatus: 201,
@@ -114,7 +114,7 @@ const adsConversionRulesPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/ads/conversion-rules/{id}",
-      summary: "Update an Ads conversion rule",
+      summary: "Update Ads conversion rule",
       description:
         "Changes an existing conversion rule's configuration. Call `ads.getRule` to inspect current values first.",
       tags: ["Ads"],
@@ -133,7 +133,7 @@ const adsConversionRulesPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/ads/conversion-rules/{id}/status",
-      summary: "Enable or disable an Ads conversion rule",
+      summary: "Enable or disable Ads conversion rule",
       description:
         "Toggles whether a conversion rule is active without changing its other fields.",
       tags: ["Ads"],
@@ -152,7 +152,7 @@ const adsConversionRulesPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/ads/conversion-rules/{id}",
-      summary: "Delete an Ads conversion rule",
+      summary: "Delete Ads conversion rule",
       description:
         "Permanently deletes a conversion rule. Use `ads.listRules` to find its id first.",
       successStatus: 204,
@@ -328,7 +328,7 @@ const adsAnalyticsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ads/conversions/{id}",
-      summary: "Get a single Ads conversion event",
+      summary: "Get Ads conversion event",
       description:
         "Returns one conversion event's full detail. Use `ads.listConversionExportRows` to find its id first.",
       tags: ["Ads"],

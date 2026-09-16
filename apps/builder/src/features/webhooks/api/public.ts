@@ -47,7 +47,7 @@ export const webhooksPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/webhooks",
-      summary: "Register a webhook",
+      summary: "Register webhook",
       description:
         "Registers a URL to receive system events (e.g. new contact, tag applied). Automation platforms (e.g. n8n) can call this to auto-attach a webhook when a workflow is activated.",
       successStatus: 201,
@@ -87,7 +87,7 @@ export const webhooksPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/webhooks/{id}",
-      summary: "Unregister a webhook",
+      summary: "Unregister webhook",
       description:
         "Permanently deletes a registered webhook. Use `webhooks.list` to find its id first.",
       successStatus: 204,

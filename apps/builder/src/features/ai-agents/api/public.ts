@@ -45,7 +45,7 @@ export const aiAgentsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ai-agents/{id}",
-      summary: "Get an AI agent by id",
+      summary: "Get AI agent",
       description:
         "Returns one AI agent's configuration. Use `aiAgents.list` to find its id first.",
       tags: ["AI Agents"],
@@ -73,7 +73,7 @@ export const aiAgentsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ai-agents",
-      summary: "Create an AI agent",
+      summary: "Create AI agent",
       description:
         "Adds a configured AI agent to the workspace. Use `aiAgents.list` first to avoid duplicating an existing agent, then use `aiAgents.update` to refine its settings.",
       successStatus: 201,
@@ -92,7 +92,7 @@ export const aiAgentsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/ai-agents/{id}",
-      summary: "Update an AI agent",
+      summary: "Update AI agent",
       description:
         "Changes settings on an existing AI agent without replacing unrelated fields. Call `aiAgents.list` to resolve its id, and use `aiAgents.get` to inspect the saved result.",
       tags: ["AI Agents"],
@@ -121,7 +121,7 @@ export const aiAgentsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/ai-agents/{id}",
-      summary: "Delete an AI agent",
+      summary: "Delete AI agent",
       description:
         "Permanently deletes an AI agent. Use `aiAgents.list` to find its id first.",
       successStatus: 204,

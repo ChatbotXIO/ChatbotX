@@ -132,7 +132,7 @@ export const conversationsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/conversations/{id}",
-      summary: "Get a conversation by id",
+      summary: "Get conversation",
       description:
         "Use this to inspect one conversation's contact, channel, assignee, and status after locating it with `conversations.list`. Call `conversations.assign` to change its assignee.",
       tags: ["Conversations"],
@@ -158,7 +158,7 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/assign",
-      summary: "Assign or unassign a conversation to a user or inbox team",
+      summary: "Assign or unassign conversation to user or inbox team",
       description:
         "Changes a conversation's user or inbox-team assignee, or clears it when `assignedId` is null. Call `conversations.get` first to inspect the current assignee and `conversations.list` to find the id.",
       tags: ["Conversations"],
@@ -190,7 +190,7 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/archive",
-      summary: "Archive a conversation",
+      summary: "Archive conversation",
       description:
         "Archives the conversation, removing it from the default inbox view. Use `conversations.list` with the appropriate filter to find archived conversations again.",
       tags: ["Conversations"],
@@ -219,7 +219,7 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/unarchive",
-      summary: "Unarchive a conversation",
+      summary: "Unarchive conversation",
       description:
         "Reverses `conversations.archive`, restoring the conversation to the default inbox view.",
       tags: ["Conversations"],
@@ -248,7 +248,7 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/read",
-      summary: "Mark a conversation as read",
+      summary: "Mark conversation as read",
       description:
         "Clears the unread indicator on a conversation for the workspace.",
       tags: ["Conversations"],
@@ -278,7 +278,7 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/unread",
-      summary: "Mark a conversation as unread",
+      summary: "Mark conversation as unread",
       description:
         "Reverses `conversations.read`, flagging the conversation as unread again.",
       tags: ["Conversations"],
@@ -298,7 +298,7 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/follow",
-      summary: "Follow a conversation",
+      summary: "Follow conversation",
       description:
         "Subscribes the calling actor to updates on a conversation. Use `conversations.unfollow` to reverse.",
       tags: ["Conversations"],
@@ -324,7 +324,7 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/unfollow",
-      summary: "Unfollow a conversation",
+      summary: "Unfollow conversation",
       description:
         "Reverses `conversations.follow`, unsubscribing from conversation updates.",
       tags: ["Conversations"],
@@ -350,7 +350,7 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/enable-bot",
-      summary: "Re-enable the bot for a conversation",
+      summary: "Re-enable bot for conversation",
       description:
         "Turns the bot back on for a conversation after it was handed off to a human with `conversations.disableBot`.",
       tags: ["Conversations"],
@@ -380,7 +380,7 @@ export const conversationsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/conversations/{id}/disable-bot",
-      summary: "Disable the bot for a conversation (hand off to a human)",
+      summary: "Disable bot for conversation (hand off to human)",
       description:
         "Turns the bot off for a conversation so a human agent takes over. Use `conversations.enableBot` to reverse.",
       tags: ["Conversations"],

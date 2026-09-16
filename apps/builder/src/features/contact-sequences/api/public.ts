@@ -21,9 +21,9 @@ export const contactsSequencesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/{identifier}/sequences",
-      summary: "List sequences the contact is enrolled in",
+      summary: "List contact sequence subscriptions",
       description:
-        "Use this to inspect a contact's current sequence enrollments after resolving the contact with `contacts.get`. Call `contacts.subscribeSequences` to enroll it, or `sequences.get` to inspect a sequence.",
+        "Use this to inspect a contact's current sequence subscriptions after resolving the contact with `contacts.get`. Call `contacts.subscribeSequences` to subscribe it, or `sequences.get` to inspect a sequence.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -56,9 +56,9 @@ export const contactsSequencesPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contacts/{identifier}/sequences",
-      summary: "Enroll the contact in one or more sequences",
+      summary: "Subscribe contact to sequences",
       description:
-        "Adds the contact identified by `identifier` to each given sequence; sequences the contact is already enrolled in are left as-is. Use `sequences.list`/`sequences.create` first to resolve names to ids.",
+        "Adds the contact identified by `identifier` to each given sequence; sequences the contact is already subscribed to are left as-is. Use `sequences.list`/`sequences.create` first to resolve names to ids.",
       successStatus: 204,
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
@@ -82,7 +82,7 @@ export const contactsSequencesPublicRouter = {
         identifier: input.identifier,
         workspaceId,
       })
-      await contactSequenceService.enrollContacts({
+      await contactSequenceService.subscribeContacts({
         workspaceId,
         contactIds: [contactId],
         sequenceIds: input.sequenceIds,
@@ -93,9 +93,9 @@ export const contactsSequencesPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/contacts/{identifier}/sequences",
-      summary: "Remove the contact from one or more sequences",
+      summary: "Unsubscribe contact from sequences",
       description:
-        "Removes the contact identified by `identifier` from each given sequence; sequences it isn't enrolled in are ignored. Use `contacts.listSequences` to see current enrollments first.",
+        "Removes the contact identified by `identifier` from each given sequence; sequences it isn't subscribed to are ignored. Use `contacts.listSequences` to see current subscriptions first.",
       successStatus: 204,
       tags: ["Contacts"],
     })
@@ -122,7 +122,7 @@ export const contactsSequencesPublicRouter = {
         workspaceId,
         contactIds: [contactId],
         sequenceIds: input.sequenceIds,
-        reason: "enrollment_removed",
+        reason: "subscription_removed",
       })
     }),
 
@@ -130,9 +130,9 @@ export const contactsSequencesPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/contacts/{identifier}/sequences",
-      summary: "Replace all sequence enrollments for the contact",
+      summary: "Replace contact sequence subscriptions",
       description:
-        "Sets the contact's active sequence enrollments to exactly this list — sequences not in `sequenceIds` are unenrolled, missing ones are enrolled. Pass an empty array to unenroll from everything.",
+        "Sets the contact's active sequence subscriptions to exactly this list — sequences not in `sequenceIds` are unsubscribed, missing ones are subscribed. Pass an empty array to unsubscribe from everything.",
       successStatus: 204,
       tags: ["Contacts"],
     })

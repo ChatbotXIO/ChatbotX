@@ -11,9 +11,9 @@ export const messengerChannelsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/messenger-channels/{id}/tag-sync",
-      summary: "Enable or disable tag sync for a Messenger channel",
+      summary: "Enable or disable tag sync for Messenger channel",
       description:
-        "Toggles whether this Messenger channel's page tags sync into ChatbotX as contact tags.",
+        "Toggles whether this Messenger channel's page tags sync into the workspace as contact tags.",
       tags: ["Channels"],
     })
     .input(

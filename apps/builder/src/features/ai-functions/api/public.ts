@@ -46,7 +46,7 @@ export const aiFunctionsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ai-functions/{id}",
-      summary: "Get an AI function by id",
+      summary: "Get AI function",
       description:
         "Returns one AI function's configuration. Use `aiFunctions.list` to find its id first.",
       tags: ["AI Functions"],
@@ -74,7 +74,7 @@ export const aiFunctionsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ai-functions",
-      summary: "Create an AI function",
+      summary: "Create AI function",
       description:
         "Adds a callable AI function definition to the workspace. Use `aiFunctions.list` first to avoid duplicating an existing one.",
       successStatus: 201,
@@ -95,7 +95,7 @@ export const aiFunctionsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/ai-functions/{id}",
-      summary: "Update an AI function",
+      summary: "Update AI function",
       description:
         "Changes settings on an existing AI function. Call `aiFunctions.list` to resolve its id first.",
       tags: ["AI Functions"],
@@ -123,7 +123,7 @@ export const aiFunctionsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/ai-functions/{id}",
-      summary: "Delete an AI function",
+      summary: "Delete AI function",
       description:
         "Permanently deletes an AI function. Use `aiFunctions.list` to find its id first.",
       successStatus: 204,
