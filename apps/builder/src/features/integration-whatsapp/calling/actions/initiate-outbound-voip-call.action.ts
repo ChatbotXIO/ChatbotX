@@ -491,6 +491,12 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
         workspaceId,
         recordingRequested,
         recordingWasRequested: announcementOptions.recording !== undefined,
+        transcriptionWasRequested:
+          announcementOptions.transcription !== undefined,
+        announcementLanguage:
+          announcementOptions.recording?.announcementLanguage,
+        purposeChars: announcementOptions.recording?.purpose.length,
+        browserRecordingEnabled,
         announcementError,
       })
 

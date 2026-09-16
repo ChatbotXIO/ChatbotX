@@ -56,6 +56,10 @@ export const handleWhatsappCallTranscribe = async (
 ): Promise<void> => {
   // See handleWhatsappCallRecordingReady — required for emitCallTranscribed.
   setWebhookExecutionContext({ source: "webhook" })
+  logger.info(
+    { callId: data.callId },
+    "[wa-call-transcript] transcribe job START (browser recording)",
+  )
   const call: WhatsappCallModel | undefined =
     await whatsappCallRepository.findById(data.callId)
   // This job is only enqueued after the recording finished uploading, so a
@@ -65,7 +69,7 @@ export const handleWhatsappCallTranscribe = async (
   if (!call?.recordingPath) {
     logger.warn(
       { callId: data.callId },
-      "Whatsapp call transcription skipped: no recording",
+      "[wa-call-transcript]  skipped: no recording",
     )
     return
   }
@@ -81,7 +85,7 @@ export const handleWhatsappCallTranscribe = async (
   if (!integration?.callTranscriptionEnabled) {
     logger.info(
       { callId: data.callId },
-      "Whatsapp call transcription skipped: not enabled for this number",
+      "[wa-call-transcript]  skipped: not enabled for this number",
     )
     return
   }
@@ -93,7 +97,7 @@ export const handleWhatsappCallTranscribe = async (
   if (!aiConfig) {
     logger.info(
       { callId: data.callId, workspaceId: call.workspaceId },
-      "Whatsapp call transcription skipped: no OpenAI integration",
+      "[wa-call-transcript]  skipped: no OpenAI integration",
     )
     return
   }
@@ -102,7 +106,7 @@ export const handleWhatsappCallTranscribe = async (
   if (!("transcription" in openaiProvider)) {
     logger.warn(
       { callId: data.callId },
-      "Whatsapp call transcription skipped: provider lacks transcription",
+      "[wa-call-transcript]  skipped: provider lacks transcription",
     )
     return
   }
@@ -126,7 +130,7 @@ export const handleWhatsappCallTranscribe = async (
     if (!transcript.text.trim()) {
       logger.info(
         { callId: data.callId },
-        "Whatsapp call transcription produced empty text; not stamping",
+        "[wa-call-transcript]  produced empty text; not stamping",
       )
       return
     }
@@ -141,6 +145,10 @@ export const handleWhatsappCallTranscribe = async (
     }
 
     await enrichRecordingMessageWithTranscript({ call })
+    logger.info(
+      { callId: data.callId, transcriptChars: transcript.text.length },
+      "[wa-call-transcript] DONE (transcript attached + card enriched)",
+    )
 
     const contactInbox = await contactInboxService.findBy({
       where: { id: call.contactInboxId },
@@ -155,7 +163,7 @@ export const handleWhatsappCallTranscribe = async (
     const error = normalizeError(err)
     logger.error(
       { err: error, callId: data.callId },
-      "Whatsapp call transcription failed",
+      "[wa-call-transcript]  failed",
     )
     throw error
   } finally {

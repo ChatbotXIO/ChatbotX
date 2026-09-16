@@ -74,7 +74,7 @@ export const handleWhatsappCallNativeRecordingFetch = async (
   if (!call) {
     logger.warn(
       { whatsappCallId: data.whatsappCallId, wacid: data.wacid },
-      "Whatsapp native call recording: call row not found yet; retrying",
+      "[wa-call-recording] call row not found yet; retrying",
     )
     throw new WhatsappCallRowNotReadyError(data.wacid)
   }
@@ -84,14 +84,14 @@ export const handleWhatsappCallNativeRecordingFetch = async (
   if (!data.workspaceId && (await isBlockedWorkspace(call.workspaceId))) {
     logger.info(
       { whatsappCallId: call.id, workspaceId: call.workspaceId },
-      "Whatsapp native call recording skipped: blocked workspace",
+      "[wa-call-recording] skipped: blocked workspace",
     )
     return
   }
   if (call.recordedAt) {
     logger.info(
       { whatsappCallId: call.id },
-      "Whatsapp native call recording already processed; skipping",
+      "[wa-call-recording] already processed; skipping",
     )
     return
   }
@@ -121,20 +121,20 @@ export const handleWhatsappCallNativeRecordingFetch = async (
     if (err instanceof WhatsappCallMediaGoneError) {
       logger.warn(
         { err: normalizeError(err), whatsappCallId: call.id },
-        "Whatsapp native call recording: media no longer available; skipping",
+        "[wa-call-recording] media no longer available; skipping",
       )
       return
     }
     if (err instanceof AttachmentTooLargeError) {
       logger.warn(
         { err: normalizeError(err), whatsappCallId: call.id },
-        "Whatsapp native call recording: exceeds size cap; skipping (permanent)",
+        "[wa-call-recording] exceeds size cap; skipping (permanent)",
       )
       return
     }
     logger.error(
       { err: normalizeError(err), whatsappCallId: call.id },
-      "Whatsapp native call recording download failed",
+      "[wa-call-recording] download failed",
     )
     throw err
   }

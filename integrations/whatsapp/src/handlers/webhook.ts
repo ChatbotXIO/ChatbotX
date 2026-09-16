@@ -919,6 +919,14 @@ const enqueueNativeCallCapture = async (
     }
 
     if (event.kind === "transcriptionAvailable") {
+      logger.info(
+        {
+          phoneNumberId: payload.phoneNumberId,
+          wacid: event.wacid,
+          hasDocumentUrl: Boolean(event.document.url),
+        },
+        "[wa-call-transcript] webhook call_transcription_available received",
+      )
       if (!event.document.url) {
         logger.warn(
           { phoneNumberId: payload.phoneNumberId, wacid: event.wacid },

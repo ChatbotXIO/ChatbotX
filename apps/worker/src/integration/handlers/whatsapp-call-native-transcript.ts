@@ -130,6 +130,11 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
   // override in whatsapp-call-transcribe.ts).
   setWebhookExecutionContext({ source: "webhook" })
 
+  logger.info(
+    { whatsappCallId: data.whatsappCallId, wacid: data.wacid },
+    "[wa-call-transcript] fetch job START (Meta-native)",
+  )
+
   const byId = data.whatsappCallId
     ? await whatsappCallRepository.findById(data.whatsappCallId)
     : undefined
@@ -137,7 +142,7 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
   if (!call) {
     logger.warn(
       { whatsappCallId: data.whatsappCallId, wacid: data.wacid },
-      "Whatsapp native call transcript: call row not found yet; retrying",
+      "[wa-call-transcript] : call row not found yet; retrying",
     )
     throw new WhatsappCallRowNotReadyError(data.wacid)
   }
@@ -146,14 +151,14 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
   if (!data.workspaceId && (await isBlockedWorkspace(call.workspaceId))) {
     logger.info(
       { whatsappCallId: call.id, workspaceId: call.workspaceId },
-      "Whatsapp native call transcript skipped: blocked workspace",
+      "[wa-call-transcript]  skipped: blocked workspace",
     )
     return
   }
   if (call.transcript !== null) {
     logger.info(
       { whatsappCallId: call.id },
-      "Whatsapp native call transcript already processed; skipping",
+      "[wa-call-transcript]  already processed; skipping",
     )
     return
   }
@@ -172,20 +177,20 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
     if (err instanceof WhatsappCallMediaGoneError) {
       logger.warn(
         { err: normalizeError(err), whatsappCallId: call.id },
-        "Whatsapp native call transcript: media no longer available; skipping",
+        "[wa-call-transcript] : media no longer available; skipping",
       )
       return
     }
     if (err instanceof AttachmentTooLargeError) {
       logger.warn(
         { err: normalizeError(err), whatsappCallId: call.id },
-        "Whatsapp native call transcript: exceeds size cap; skipping (permanent)",
+        "[wa-call-transcript] : exceeds size cap; skipping (permanent)",
       )
       return
     }
     logger.error(
       { err: normalizeError(err), whatsappCallId: call.id },
-      "Whatsapp native call transcript download failed",
+      "[wa-call-transcript]  download failed",
     )
     throw err
   }
@@ -205,7 +210,7 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
           whatsappCallId: call.id,
           issues: parsed.error.issues,
         },
-        "Whatsapp native call transcript: malformed document; skipping",
+        "[wa-call-transcript] : malformed document; skipping",
       )
       return
     }
@@ -213,7 +218,7 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
   } catch (err) {
     logger.error(
       { err: normalizeError(err), whatsappCallId: call.id },
-      "Whatsapp native call transcript: failed to parse document; skipping",
+      "[wa-call-transcript] : failed to parse document; skipping",
     )
     return
   }
@@ -234,6 +239,15 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
   }
 
   await enrichRecordingMessageWithTranscript({ call })
+  logger.info(
+    {
+      whatsappCallId: call.id,
+      wacid: call.wacid,
+      transcriptChars: transcript.length,
+      segments: segments.length,
+    },
+    "[wa-call-transcript] DONE (transcript attached + card enriched)",
+  )
 
   const contactInbox = await contactInboxService.findBy({
     where: { id: call.contactInboxId },

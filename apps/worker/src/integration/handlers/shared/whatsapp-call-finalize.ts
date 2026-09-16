@@ -265,6 +265,21 @@ export const finalizeCallSideEffects = async (
     recordingUnavailable,
   }
 
+  // The card's promise to the agent, in one greppable line: whether a
+  // recording/transcript is expected for this call at all, and whether we
+  // already know none is coming.
+  logger.info(
+    {
+      callId: call.id,
+      wacid: call.wacid,
+      status: entity.status,
+      recordingRequested,
+      transcriptionRequested,
+      recordingUnavailable,
+    },
+    "[wa-call-media] call card flags stamped",
+  )
+
   const repository = await createMessageRepository()
   const { message, isNew } = await repository.createOrUpdate({
     id: createId(),
@@ -504,6 +519,11 @@ export const enrichCallActivityMessage = async (props: {
     )
     return
   }
+
+  logger.info(
+    { callId: call.id, overrides },
+    "[wa-call-media] call card enriched",
+  )
 
   const entity =
     getWhatsappCallEntity(merged.contentAttributes) ??

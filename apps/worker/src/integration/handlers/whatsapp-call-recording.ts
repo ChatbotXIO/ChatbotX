@@ -110,7 +110,7 @@ export const attachRecordingAndNotify = async (props: {
   } else {
     logger.warn(
       { callId: call.id },
-      "Whatsapp call recording: finalize message still not found after bounded wait; attachment not attached",
+      "[wa-call-recording] finalize message still not found after bounded wait; attachment not attached",
     )
   }
 
@@ -152,7 +152,7 @@ export const handleWhatsappCallRecordingReady = async (
   if (!call) {
     logger.warn(
       { callId: data.callId },
-      "Whatsapp call recording skipped: call row not found",
+      "[wa-call-recording] skipped: call row not found",
     )
     return
   }
@@ -164,7 +164,7 @@ export const handleWhatsappCallRecordingReady = async (
   if (call.recordedAt) {
     logger.info(
       { callId: data.callId },
-      "Whatsapp call recording already processed; re-chaining transcription only",
+      "[wa-call-recording] already processed; re-chaining transcription only",
     )
   } else {
     await attachRecordingAndNotify({

@@ -28,11 +28,37 @@ export async function recordCallRecordingArrangement(input: {
   recordingRequested: boolean
   /** Whether this call asked Meta to record in the first place. */
   recordingWasRequested: boolean
+  /** Whether this call asked Meta to transcribe it. */
+  transcriptionWasRequested: boolean
+  /** The announcement language actually sent, for diagnosing a refusal. */
+  announcementLanguage?: string
+  /** Length of the announcement purpose — never the text itself. */
+  purposeChars?: number
+  /** Whether the browser recorder is capturing this call instead. */
+  browserRecordingEnabled: boolean
   /** Meta's refusal, when the announcement was dropped to save the call. */
   announcementError?: unknown
 }): Promise<void> {
   const rejectedByMeta =
     input.recordingWasRequested && !input.recordingRequested
+
+  // One line per call carrying every input the recording/transcription
+  // pipelines depend on: when an agent reports "no recording", this says
+  // whether Meta was ever asked, with what, and whether it accepted.
+  logger.info(
+    {
+      whatsappCallId: input.whatsappCallId,
+      workspaceId: input.workspaceId,
+      recordingWasRequested: input.recordingWasRequested,
+      transcriptionWasRequested: input.transcriptionWasRequested,
+      announcementLanguage: input.announcementLanguage ?? null,
+      purposeChars: input.purposeChars ?? null,
+      browserRecordingEnabled: input.browserRecordingEnabled,
+      acceptedByMeta: !rejectedByMeta,
+      recordingRequested: input.recordingRequested,
+    },
+    "[wa-call-media] call media arrangement",
+  )
 
   try {
     await whatsappCallLifecycleService.markRecordingArrangement({
