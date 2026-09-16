@@ -6,10 +6,10 @@
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
-    "@noble/hashes": "^2.2.0",
-    "ky": "^2.0.2",
+    "@noble/hashes": "^2.4.0",
+    "ky": "^2.1.0",
     "universal-error-normalizer": "^1.0.0",
-    "zod": "^4.3.6"
+    "zod": "^4.6.4"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",

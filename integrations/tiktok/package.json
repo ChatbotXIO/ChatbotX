@@ -9,14 +9,14 @@
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@types/node": "^24.10.4",
-    "ky": "^2.0.2",
-    "remeda": "^2.34.0",
-    "zod": "^4.3.6"
+    "ky": "^2.1.0",
+    "remeda": "^2.48.0",
+    "zod": "^4.6.4"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "msw": "^2.7.3",
+    "msw": "^2.15.0",
     "typescript": "^5",
     "vitest": "^3.2.4"
   },

@@ -18,7 +18,7 @@
     "@chatbotx.io/business": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "date-fns-tz": "^3.2.0",
-    "zod": "^4.3.6"
+    "zod": "^4.6.4"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
