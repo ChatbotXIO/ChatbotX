@@ -23,10 +23,33 @@ describe("WhatsApp webhook incomingMessage job IDs", () => {
 
     await expect(
       webhookHandler({
-        config: { verifyToken: "verify-token" },
+        config: { verifyToken: "verify-token", manualIntegration: true },
         req: new Request("https://example.test/webhook", {
           method: "POST",
-          body: JSON.stringify({ entry: [] }),
+          body: JSON.stringify({
+            entry: [
+              {
+                id: "waba-1",
+                changes: [
+                  {
+                    field: "messages",
+                    value: {
+                      metadata: { phone_number_id: "phone-1" },
+                      messages: [
+                        {
+                          from: "user-1",
+                          id: "wamid:1/2",
+                          timestamp: "1",
+                          type: "text",
+                          text: { body: "hi" },
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            ],
+          }),
         }),
         queue: { add },
       } as never),
@@ -35,7 +58,7 @@ describe("WhatsApp webhook incomingMessage job IDs", () => {
     expect(add).toHaveBeenCalledWith(
       "incomingMessage",
       expect.objectContaining({ type: "incomingMessage" }),
-      { jobId: "incoming-whatsapp-wamid_1_2" },
+      expect.objectContaining({ jobId: "wa-msg-phone-1-wamid_1_2" }),
     )
   })
 })

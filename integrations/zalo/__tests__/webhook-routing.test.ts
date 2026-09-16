@@ -58,16 +58,14 @@ describe("zalo webhookHandler event routing", () => {
       ),
     )
 
-    expect(queueAdd).toHaveBeenCalledWith(
-      "incomingMessage",
-      expect.objectContaining({
-        type: "incomingMessage",
-        data: expect.objectContaining({
-          integrationType: "zalo",
-          integrationIdentifier: "oa-1",
-        }),
+    expect(queueAdd.mock.calls[0]?.[0]).toBe("incomingMessage")
+    expect(queueAdd.mock.calls[0]?.[1]).toMatchObject({
+      type: "incomingMessage",
+      data: expect.objectContaining({
+        integrationType: "zalo",
+        integrationIdentifier: "oa-1",
       }),
-    )
+    })
   })
 
   test("routes oa_send_text echoes to the incomingMessage queue", async () => {
@@ -86,15 +84,13 @@ describe("zalo webhookHandler event routing", () => {
       ),
     )
 
-    expect(queueAdd).toHaveBeenCalledWith(
-      "incomingMessage",
-      expect.objectContaining({
-        type: "incomingMessage",
-        data: expect.objectContaining({
-          integrationIdentifier: "oa-1",
-        }),
+    expect(queueAdd.mock.calls[0]?.[0]).toBe("incomingMessage")
+    expect(queueAdd.mock.calls[0]?.[1]).toMatchObject({
+      type: "incomingMessage",
+      data: expect.objectContaining({
+        integrationIdentifier: "oa-1",
       }),
-    )
+    })
   })
 
   test("routes user_seen_message to the contactMarkAsRead queue", async () => {

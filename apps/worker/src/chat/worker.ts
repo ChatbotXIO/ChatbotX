@@ -152,7 +152,7 @@ function startChatWorker() {
         max: env.CHAT_WORKER_RATE_LIMIT_MAX,
         duration: env.CHAT_WORKER_RATE_LIMIT_DURATION_MS,
       },
-    }
+    },
   )
 }
 

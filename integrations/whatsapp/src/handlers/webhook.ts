@@ -180,7 +180,6 @@ const automaticEventFieldExtractors: Record<
   },
 }
 
-
 /**
  * The phone number id the calling route pinned, if any. The per-integration
  * manual route pins its own number because it may be unsigned — otherwise a

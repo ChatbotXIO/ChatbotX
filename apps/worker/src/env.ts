@@ -32,21 +32,21 @@ export const env = createEnv({
       .default(10),
     // Every outbound send (comment replies, flow steps, broadcasts, inbox
     // messages) shares the `chat` queue, so its parallelism caps how fast any
-    // of them leave. Defaults to the shared worker default.
-    CHAT_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(200).default(5),
-    // Caps outbound sends globally per worker to protect channel APIs from
-    // burst traffic while retaining the queue's configurable concurrency.
-    CHAT_WORKER_RATE_LIMIT_MAX: z.coerce
+    // of them leave.
+    CHAT_WORKER_CONCURRENCY: z.coerce
       .number()
       .int()
       .min(1)
-      .max(10_000)
-      .default(80),
+      .max(200)
+      .default(20),
+    // BullMQ's own rate limiter is queue-wide, not per-channel/page — a
+    // coarse throughput cap on the whole chat queue, not a substitute for a
+    // per-inbox token bucket in front of each provider API call.
+    CHAT_WORKER_RATE_LIMIT_MAX: z.coerce.number().int().min(1).default(80),
     CHAT_WORKER_RATE_LIMIT_DURATION_MS: z.coerce
       .number()
       .int()
       .min(1)
-      .max(60_000)
       .default(1000),
     // Light-but-bulky, low-priority jobs (Coexist/Customer-Scan media backfill)
     // run on their own `low` queue/worker so a historical-import burst never

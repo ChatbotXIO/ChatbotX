@@ -55,7 +55,6 @@ const marketingMessageItemField = (item: unknown): string | null => {
     : null
 }
 
-
 /**
  * Standby items that are worth a job: a message or a postback. Reads and
  * deliveries on standby are receipts for another app's traffic.
