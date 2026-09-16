@@ -6,11 +6,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // The handler no longer touches `db.*` directly — it calls
 // `contactInboxRepository.listByInboxPage`, `integrationMessengerRepository
 // .findById`, `zaloIntegrationService.findByIdUnscoped`, and
-// `tagChannelRepository.upsertLabelMapping`. The SQL-shape assertions for
-// `upsertLabelMapping` itself (insert order, onConflict targets, early
-// returns) already live in
+// `tagSyncService.upsertLabelMapping` (a tx-accepting pass-through to
+// `tagChannelRepository.upsertLabelMapping`, required because this is a
+// DB-mutating call). The SQL-shape assertions for `upsertLabelMapping`
+// itself (insert order, onConflict targets, early returns) already live in
 // `packages/database/__tests__/tag-channel-repository.test.ts` — this file
-// only asserts the handler calls that repository method with the right
+// only asserts the handler calls that service method with the right
 // arguments, and preserves every handler-level behavior (routing, scan
 // pagination, per-user error isolation, error-log collapsing).
 //
@@ -47,9 +48,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   integrationMessengerRepository: {
     findById: (...args: unknown[]) => findMessengerByIdSpy(...args),
   },
-  tagChannelRepository: {
-    upsertLabelMapping: (...args: unknown[]) => upsertLabelMappingSpy(...args),
-  },
 }))
 
 // ---------------------------------------------------------------------------
@@ -58,6 +56,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 const findZaloUnscopedSpy = vi.fn(async () => state.zaloIntegration)
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: vi.fn(async () => ({ ctx: "mocked-context" })),
+  tagSyncService: {
+    upsertLabelMapping: (...args: unknown[]) => upsertLabelMappingSpy(...args),
+  },
   zaloIntegrationService: {
     findByIdUnscoped: (...args: unknown[]) => findZaloUnscopedSpy(...args),
   },

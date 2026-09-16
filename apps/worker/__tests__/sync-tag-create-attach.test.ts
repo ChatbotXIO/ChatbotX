@@ -27,6 +27,18 @@ vi.mock("@chatbotx.io/business", () => ({
   tagService: {
     findById: (...args: unknown[]) => findTag(...args),
   },
+  tagSyncService: {
+    insertTagChannelIfAbsent: (...args: unknown[]) =>
+      tagChannelInsertIfAbsent(...args),
+    updateTagChannelExternalLabelId: (...args: unknown[]) =>
+      tagChannelUpdateExternalLabelId(...args),
+    insertOrFetchTagChannel: (...args: unknown[]) =>
+      tagChannelInsertOrFetch(...args),
+    upsertTagChannel: (...args: unknown[]) =>
+      tagChannelUpsertByTagAndIntegration(...args),
+    linkContactInbox: (...args: unknown[]) =>
+      tagChannelLinkContactInbox(...args),
+  },
   zaloIntegrationService: {
     listByWorkspace: (...args: unknown[]) => findManyZaloIntegrations(...args),
     findByInboxId: (...args: unknown[]) =>
@@ -36,16 +48,8 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   tagChannelRepository: {
-    insertIfAbsent: (...args: unknown[]) => tagChannelInsertIfAbsent(...args),
     findByTagAndIntegration: (...args: unknown[]) =>
       findTagChannelByTagAndIntegration(...args),
-    updateExternalLabelId: (...args: unknown[]) =>
-      tagChannelUpdateExternalLabelId(...args),
-    insertOrFetch: (...args: unknown[]) => tagChannelInsertOrFetch(...args),
-    upsertByTagAndIntegration: (...args: unknown[]) =>
-      tagChannelUpsertByTagAndIntegration(...args),
-    linkContactInbox: (...args: unknown[]) =>
-      tagChannelLinkContactInbox(...args),
   },
   contactInboxRepository: {
     listByContactId: (...args: unknown[]) => findManyContactInboxes(...args),

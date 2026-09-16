@@ -2,7 +2,7 @@ import type { SequenceStepWithFlow } from "@chatbotx.io/database/repositories"
 import { sequenceDispatchRepository } from "@chatbotx.io/database/repositories"
 
 export type StepWithFlow = SequenceStepWithFlow
-export type StepWithConfiguredFlow = StepWithFlow & {
+type StepWithConfiguredFlow = StepWithFlow & {
   flow: NonNullable<StepWithFlow["flow"]>
 }
 

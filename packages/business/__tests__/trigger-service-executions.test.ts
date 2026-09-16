@@ -137,14 +137,21 @@ describe("listExecutedPairs", () => {
 })
 
 describe("recordExecution", () => {
-  test("onConflictDoNothing-inserts the execution row", async () => {
+  test("onConflictDoNothing-inserts the execution row with triggerId/contactId/workspaceId", async () => {
     await triggerService.recordExecution({
       triggerId: "tr-1",
       contactId: "c-1",
       workspaceId: "ws-1",
     })
 
-    expect(insertOnConflictDoNothing).toHaveBeenCalled()
+    expect(insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        triggerId: "tr-1",
+        contactId: "c-1",
+        workspaceId: "ws-1",
+      }),
+    )
+    expect(insertOnConflictDoNothing).toHaveBeenCalledTimes(1)
   })
 })
 

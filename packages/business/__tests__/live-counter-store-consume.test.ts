@@ -187,8 +187,11 @@ describe("userQuotaService write-through", () => {
 describe("userQuotaService.reconcileOwnerPoolUsage", () => {
   test("counts a human shared across tenant workspaces once", async () => {
     // Two workspaces with an owner and one shared teammate have four member
-    // rows, but only two distinct humans in the owner pool.
-    reconcileCounts.push(0, 2, 2, 0, 0)
+    // rows, but only two distinct humans in the owner pool. Queue order
+    // mirrors the DB calls' construction order: contacts, workspaces,
+    // channels (all three from `countWorkspaceScopedUsage`), then
+    // teamMembers (`countDistinctTeamMembers`), then mac.
+    reconcileCounts.push(0, 2, 0, 2, 0)
 
     await userQuotaService.reconcileOwnerPoolUsage("owner-1", "tenant-1")
 

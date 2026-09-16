@@ -2339,7 +2339,7 @@ class BroadcastService extends BaseService {
     const rows = await db
       .update(broadcastModel)
       .set({
-        status: broadcastStatuses.enum[input.status],
+        status: input.status,
         contactCount: input.contactCount,
       })
       .where(

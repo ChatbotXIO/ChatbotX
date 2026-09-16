@@ -1,10 +1,13 @@
-import { buildContext, zaloIntegrationService } from "@chatbotx.io/business"
+import {
+  buildContext,
+  tagSyncService,
+  zaloIntegrationService,
+} from "@chatbotx.io/business"
 import { logProviderError } from "@chatbotx.io/business/error-log"
 import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
 import {
   contactInboxRepository,
   integrationMessengerRepository,
-  tagChannelRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
   ContactInboxModel,
@@ -218,7 +221,7 @@ async function upsertLabelMapping(props: {
   label: NormalizedLabel
   contactInbox: ContactInboxModel
 }): Promise<void> {
-  await tagChannelRepository.upsertLabelMapping({
+  await tagSyncService.upsertLabelMapping({
     workspaceId: props.workspaceId,
     channelType: props.channelType,
     integrationId: props.integrationId,

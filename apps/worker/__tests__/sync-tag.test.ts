@@ -32,6 +32,25 @@ vi.mock("@chatbotx.io/business", () => ({
     hardDeleteSoftDeleted: (...args: unknown[]) =>
       tagServiceHardDeleteSoftDeleted(...args),
   },
+  tagSyncService: {
+    insertTagChannelIfAbsent: (...args: unknown[]) =>
+      tagChannelInsertIfAbsent(...args),
+    updateTagChannelExternalLabelId: (...args: unknown[]) =>
+      tagChannelUpdateExternalLabelId(...args),
+    insertOrFetchTagChannel: (...args: unknown[]) =>
+      tagChannelInsertOrFetch(...args),
+    upsertTagChannel: (...args: unknown[]) =>
+      tagChannelUpsertByTagAndIntegration(...args),
+    linkContactInbox: (...args: unknown[]) =>
+      tagChannelLinkContactInbox(...args),
+    unlinkContactInbox: (...args: unknown[]) =>
+      tagChannelUnlinkContactInbox(...args),
+    deleteLinksForChannel: (...args: unknown[]) =>
+      tagChannelDeleteLinksForChannel(...args),
+    deleteContactTagsForContacts: (...args: unknown[]) =>
+      tagChannelDeleteContactTagsForContacts(...args),
+    deleteTagChannel: (...args: unknown[]) => tagChannelDeleteById(...args),
+  },
   zaloIntegrationService: {
     listByWorkspace: (...args: unknown[]) => zaloListByWorkspace(...args),
     findByInboxId: (...args: unknown[]) => zaloFindByInboxId(...args),
@@ -87,28 +106,13 @@ const integrationMessengerFindById = vi.fn(
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   tagChannelRepository: {
-    insertIfAbsent: (...args: unknown[]) => tagChannelInsertIfAbsent(...args),
     findByTagAndIntegration: (...args: unknown[]) =>
       tagChannelFindByTagAndIntegration(...args),
-    updateExternalLabelId: (...args: unknown[]) =>
-      tagChannelUpdateExternalLabelId(...args),
-    insertOrFetch: (...args: unknown[]) => tagChannelInsertOrFetch(...args),
-    upsertByTagAndIntegration: (...args: unknown[]) =>
-      tagChannelUpsertByTagAndIntegration(...args),
-    linkContactInbox: (...args: unknown[]) =>
-      tagChannelLinkContactInbox(...args),
-    unlinkContactInbox: (...args: unknown[]) =>
-      tagChannelUnlinkContactInbox(...args),
     listContactTagChannelRows: (...args: unknown[]) =>
       tagChannelListContactTagChannelRows(...args),
     listByTag: (...args: unknown[]) => tagChannelListByTag(...args),
-    deleteById: (...args: unknown[]) => tagChannelDeleteById(...args),
     listContactInboxIdsForChannelPage: (...args: unknown[]) =>
       tagChannelListContactInboxIdsForChannelPage(...args),
-    deleteLinksForChannel: (...args: unknown[]) =>
-      tagChannelDeleteLinksForChannel(...args),
-    deleteContactTagsForContacts: (...args: unknown[]) =>
-      tagChannelDeleteContactTagsForContacts(...args),
     listTaggedContactIdsPage: (...args: unknown[]) =>
       tagChannelListTaggedContactIdsPage(...args),
   },

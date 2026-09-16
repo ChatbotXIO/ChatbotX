@@ -9,7 +9,8 @@ import {
 import { createId } from "@chatbotx.io/utils"
 // contact-custom-field/service.ts imports contactService back from
 // ../contact/service, a pre-existing cycle on main; this import re-enters it
-// via this module. Known and accepted — see PR #1101 review, I3.
+// via this module. TypeScript/bundler tolerate the cycle since neither side
+// reads the other's exports at module-init time — known and accepted.
 import { contactCustomFieldService } from "../contact-custom-field/service"
 import { messageCleanupService } from "../message-cleanup/service"
 

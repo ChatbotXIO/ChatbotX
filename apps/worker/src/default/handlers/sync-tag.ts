@@ -1,6 +1,7 @@
 import {
   buildContext,
   tagService,
+  tagSyncService,
   zaloIntegrationService,
 } from "@chatbotx.io/business"
 import {
@@ -30,14 +31,6 @@ import { logger } from "../../lib/logger"
 const DELETE_CHUNK_SIZE = 500
 
 type TagWithName = { id: string; name: string; workspaceId: string }
-
-// This handler calls tagChannelRepository / contactInboxRepository /
-// integrationMessengerRepository methods directly rather than through a
-// service. These are named, documented, tx-accepting repository methods with
-// no cache/event/validation logic of their own (moved verbatim off inline
-// db.* calls) — matching the existing main pattern in export-coupons.ts and
-// send-messenger-template.ts. Deliberate choice, not an oversight; see PR
-// #1101 review, A6.
 
 /**
  * Single entry point for every tag-sync job. The `action` discriminator selects
@@ -114,7 +107,7 @@ async function syncTagCreate(props: {
     if (!integration.syncTagEnabledAt) {
       continue
     }
-    await tagChannelRepository.insertIfAbsent({
+    await tagSyncService.insertTagChannelIfAbsent({
       workspaceId,
       tagId: tag.id,
       channelType: channelTypes.enum.zalo,
@@ -153,14 +146,14 @@ async function createMessengerLabel(props: {
         })
 
       if (existing) {
-        await tagChannelRepository.updateExternalLabelId({
+        await tagSyncService.updateTagChannelExternalLabelId({
           id: existing.id,
           externalLabelId,
         })
         return
       }
 
-      await tagChannelRepository.insertIfAbsent({
+      await tagSyncService.insertTagChannelIfAbsent({
         workspaceId,
         tagId: tag.id,
         channelType: channelTypes.enum.messenger,
@@ -237,7 +230,7 @@ async function attachOnMessenger(props: {
           data: { pageId: integration.pageId, name: tag.name },
         })
 
-      return await tagChannelRepository.insertOrFetch({
+      return await tagSyncService.insertOrFetchTagChannel({
         workspaceId,
         tagId: tag.id,
         channelType: channelTypes.enum.messenger,
@@ -263,7 +256,7 @@ async function attachOnMessenger(props: {
     },
   })
 
-  await tagChannelRepository.linkContactInbox({
+  await tagSyncService.linkContactInbox({
     tagId: tag.id,
     tagChannelId: tagChannel.id,
     contactInboxId: contactInbox.id,
@@ -291,7 +284,7 @@ async function attachOnZalo(props: {
     tagName: tag.name,
   })
 
-  const tagChannel = await tagChannelRepository.upsertByTagAndIntegration({
+  const tagChannel = await tagSyncService.upsertTagChannel({
     workspaceId,
     tagId: tag.id,
     channelType: channelTypes.enum.zalo,
@@ -303,7 +296,7 @@ async function attachOnZalo(props: {
     return
   }
 
-  await tagChannelRepository.linkContactInbox({
+  await tagSyncService.linkContactInbox({
     tagId: tag.id,
     tagChannelId: tagChannel.id,
     contactInboxId: contactInbox.id,
@@ -343,7 +336,7 @@ async function syncTagDetach(props: {
       })
     }
     // Delete the local mapping regardless of sync state / API outcome.
-    await tagChannelRepository.unlinkContactInbox({
+    await tagSyncService.unlinkContactInbox({
       tagChannelId: row.tagChannelId,
       contactInboxId: row.contactInboxId,
     })
@@ -480,13 +473,13 @@ async function deleteTagOnChannel(props: {
         })
         const contactIds = [...new Set(inboxes.map((inbox) => inbox.contactId))]
 
-        await tagChannelRepository.deleteLinksForChannel({
+        await tagSyncService.deleteLinksForChannel({
           tagChannelId: channel.id,
           contactInboxIds,
         })
 
         if (contactIds.length > 0) {
-          await tagChannelRepository.deleteContactTagsForContacts({
+          await tagSyncService.deleteContactTagsForContacts({
             tagId,
             contactIds,
           })
@@ -496,7 +489,7 @@ async function deleteTagOnChannel(props: {
     },
   )
 
-  await tagChannelRepository.deleteById({ id: channel.id })
+  await tagSyncService.deleteTagChannel({ id: channel.id })
 }
 
 /**
@@ -541,7 +534,7 @@ async function deleteTagOnChannels(props: {
       chunkSize: DELETE_CHUNK_SIZE,
       callback: async (batch) => {
         const contactIds = batch.map((row) => row.id)
-        await tagChannelRepository.deleteContactTagsForContacts({
+        await tagSyncService.deleteContactTagsForContacts({
           tagId,
           contactIds,
         })

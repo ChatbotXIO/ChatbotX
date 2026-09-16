@@ -10,11 +10,12 @@ const mocks = vi.hoisted(() => ({
   and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),
   eq: vi.fn((column: unknown, value: unknown) => ({ eq: [column, value] })),
   select: vi.fn(),
+  update: vi.fn(),
 }))
 
 vi.mock("../src/client", () => ({
   and: mocks.and,
-  db: { select: mocks.select },
+  db: { select: mocks.select, update: mocks.update },
   eq: mocks.eq,
 }))
 
@@ -60,5 +61,28 @@ describe("fileRepository.findByIdForWorkspace", () => {
     })
 
     expect(result).toBeNull()
+  })
+})
+
+describe("fileRepository.updateForWorkspace", () => {
+  test("scopes the update to BOTH id and workspaceId", async () => {
+    const where = vi.fn(() => Promise.resolve(undefined))
+    const set = vi.fn(() => ({ where }))
+    mocks.update.mockReturnValue({ set })
+
+    await fileRepository.updateForWorkspace({
+      id: "file_1",
+      workspaceId: "ws_1",
+      values: { status: "completed" },
+    })
+
+    expect(mocks.update).toHaveBeenCalled()
+    expect(set).toHaveBeenCalledWith({ status: "completed" })
+    expect(mocks.eq).toHaveBeenCalledWith("id", "file_1")
+    expect(mocks.eq).toHaveBeenCalledWith("workspaceId", "ws_1")
+    expect(mocks.and).toHaveBeenCalledWith(
+      { eq: ["id", "file_1"] },
+      { eq: ["workspaceId", "ws_1"] },
+    )
   })
 })

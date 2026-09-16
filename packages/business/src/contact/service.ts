@@ -120,7 +120,7 @@ export type ContactAccessScope = {
 
 export type ContactListScope = ContactListScopeType
 
-export class ContactService extends BaseService {
+class ContactService extends BaseService {
   createWithInbox = createContactWithInbox
   updateFieldsAndCustomFields = updateFieldsAndCustomFields
   list = listContacts

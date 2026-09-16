@@ -215,7 +215,3 @@ export const contactRepository = {
     })
   },
 }
-
-export type ContactExportPageRow = Awaited<
-  ReturnType<typeof contactRepository.listForExportPage>
->[number]

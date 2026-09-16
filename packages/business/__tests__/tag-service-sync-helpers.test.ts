@@ -246,9 +246,16 @@ describe("detachFromContactForTrigger", () => {
     await tagService.detachFromContactForTrigger({
       workspaceId: "ws-1",
       contactId: "c-1",
-      tagIds: ["t-1"],
+      tagIds: ["t-1", "t-2"],
     })
 
     expect(deleteWhere).toHaveBeenCalledTimes(1)
+    const whereArg = deleteWhere.mock.calls[0]?.[0]
+    const flat = JSON.stringify(whereArg)
+    expect(flat).toContain("ContactToTag.contactId")
+    expect(flat).toContain('"c-1"')
+    expect(flat).toContain("ContactToTag.tagId")
+    expect(flat).toContain('"t-1"')
+    expect(flat).toContain('"t-2"')
   })
 })

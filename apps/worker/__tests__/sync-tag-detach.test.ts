@@ -17,7 +17,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   tagChannelRepository: {
     listContactTagChannelRows: (...args: unknown[]) =>
       listContactTagChannelRows(...args),
-    unlinkContactInbox: (...args: unknown[]) => unlinkContactInbox(...args),
   },
   integrationMessengerRepository: {
     findById: (...args: unknown[]) => findMessengerIntegrationById(...args),
@@ -26,6 +25,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   buildContext: vi.fn().mockResolvedValue({ auth: {}, workspaceId: "ws-1" }),
+  tagSyncService: {
+    unlinkContactInbox: (...args: unknown[]) => unlinkContactInbox(...args),
+  },
   zaloIntegrationService: {
     findByIdUnscoped: (...args: unknown[]) =>
       findZaloIntegrationUnscoped(...args),

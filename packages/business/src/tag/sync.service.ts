@@ -1,4 +1,7 @@
+import type { DatabaseClient } from "@chatbotx.io/database/client"
 import type { ChannelType } from "@chatbotx.io/database/partials"
+import { tagChannelRepository } from "@chatbotx.io/database/repositories"
+import type { TagChannelModel } from "@chatbotx.io/database/types"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { BaseService } from "../base.service"
 
@@ -134,6 +137,86 @@ class TagSyncService extends BaseService {
       type: DefaultJobAction.syncChannelLabels,
       data: { workspaceId, channelType, integrationId },
     })
+  }
+
+  // -------------------------------------------------------------------------
+  // TagChannel / ContactToTagChannel write pass-throughs. `sync-tag.ts` and
+  // `sync-channel-labels.ts` mutate these tables and must not call the
+  // DB-mutating repository directly (data-access.md only exempts pure
+  // reads); each method below is a one-line, tx-accepting delegate to the
+  // matching `tagChannelRepository` method.
+  // -------------------------------------------------------------------------
+
+  async upsertLabelMapping(
+    input: Parameters<typeof tagChannelRepository.upsertLabelMapping>[0],
+    tx?: DatabaseClient,
+  ): Promise<void> {
+    await tagChannelRepository.upsertLabelMapping(input, tx)
+  }
+
+  async insertTagChannelIfAbsent(
+    input: Parameters<typeof tagChannelRepository.insertIfAbsent>[0],
+    tx?: DatabaseClient,
+  ): Promise<void> {
+    await tagChannelRepository.insertIfAbsent(input, tx)
+  }
+
+  async updateTagChannelExternalLabelId(
+    input: Parameters<typeof tagChannelRepository.updateExternalLabelId>[0],
+    tx?: DatabaseClient,
+  ): Promise<void> {
+    await tagChannelRepository.updateExternalLabelId(input, tx)
+  }
+
+  async insertOrFetchTagChannel(
+    input: Parameters<typeof tagChannelRepository.insertOrFetch>[0],
+    tx?: DatabaseClient,
+  ): Promise<TagChannelModel | undefined> {
+    return await tagChannelRepository.insertOrFetch(input, tx)
+  }
+
+  async upsertTagChannel(
+    input: Parameters<typeof tagChannelRepository.upsertByTagAndIntegration>[0],
+    tx?: DatabaseClient,
+  ): Promise<TagChannelModel | undefined> {
+    return await tagChannelRepository.upsertByTagAndIntegration(input, tx)
+  }
+
+  async linkContactInbox(
+    input: Parameters<typeof tagChannelRepository.linkContactInbox>[0],
+    tx?: DatabaseClient,
+  ): Promise<void> {
+    await tagChannelRepository.linkContactInbox(input, tx)
+  }
+
+  async unlinkContactInbox(
+    input: Parameters<typeof tagChannelRepository.unlinkContactInbox>[0],
+    tx?: DatabaseClient,
+  ): Promise<void> {
+    await tagChannelRepository.unlinkContactInbox(input, tx)
+  }
+
+  async deleteLinksForChannel(
+    input: Parameters<typeof tagChannelRepository.deleteLinksForChannel>[0],
+    tx?: DatabaseClient,
+  ): Promise<void> {
+    await tagChannelRepository.deleteLinksForChannel(input, tx)
+  }
+
+  async deleteContactTagsForContacts(
+    input: Parameters<
+      typeof tagChannelRepository.deleteContactTagsForContacts
+    >[0],
+    tx?: DatabaseClient,
+  ): Promise<void> {
+    await tagChannelRepository.deleteContactTagsForContacts(input, tx)
+  }
+
+  async deleteTagChannel(
+    input: Parameters<typeof tagChannelRepository.deleteById>[0],
+    tx?: DatabaseClient,
+  ): Promise<void> {
+    await tagChannelRepository.deleteById(input, tx)
   }
 }
 

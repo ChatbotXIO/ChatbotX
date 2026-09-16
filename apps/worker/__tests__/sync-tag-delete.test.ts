@@ -26,18 +26,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     listByTag: (...args: unknown[]) => findManyTagChannel(...args),
     listContactInboxIdsForChannelPage: (...args: unknown[]) =>
       tagChannelListContactInboxIdsForChannelPage(...args),
-    deleteLinksForChannel: (...args: unknown[]) => {
-      callLog.push("deleteLinksForChannel")
-      return tagChannelDeleteLinksForChannel(...args)
-    },
-    deleteContactTagsForContacts: (...args: unknown[]) => {
-      callLog.push("deleteContactTagsForContacts")
-      return tagChannelDeleteContactTagsForContacts(...args)
-    },
-    deleteById: (...args: unknown[]) => {
-      callLog.push("deleteById")
-      return tagChannelDeleteById(...args)
-    },
     listTaggedContactIdsPage: (...args: unknown[]) =>
       tagChannelListTaggedContactIdsPage(...args),
   },
@@ -56,6 +44,20 @@ vi.mock("@chatbotx.io/business", () => ({
     hardDeleteSoftDeleted: (...args: unknown[]) => {
       callLog.push("hardDeleteSoftDeleted")
       return tagServiceHardDeleteSoftDeleted(...args)
+    },
+  },
+  tagSyncService: {
+    deleteLinksForChannel: (...args: unknown[]) => {
+      callLog.push("deleteLinksForChannel")
+      return tagChannelDeleteLinksForChannel(...args)
+    },
+    deleteContactTagsForContacts: (...args: unknown[]) => {
+      callLog.push("deleteContactTagsForContacts")
+      return tagChannelDeleteContactTagsForContacts(...args)
+    },
+    deleteTagChannel: (...args: unknown[]) => {
+      callLog.push("deleteById")
+      return tagChannelDeleteById(...args)
     },
   },
   zaloIntegrationService: {

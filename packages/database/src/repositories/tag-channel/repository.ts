@@ -20,7 +20,7 @@ const tagChannelConflictTarget = () => [
   tagChannelModel.integrationId,
 ]
 
-export type ContactTagChannelRow = {
+type ContactTagChannelRow = {
   tagChannelId: string
   contactInboxId: string
   channelType: string

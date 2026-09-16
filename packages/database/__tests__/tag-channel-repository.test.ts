@@ -448,3 +448,115 @@ describe("listByTag", () => {
     })
   })
 })
+
+describe("linkContactInbox", () => {
+  test("inserts the ContactToTagChannel row with onConflictDoNothing", async () => {
+    const onConflictDoNothing = vi.fn(() => Promise.resolve(undefined))
+    const values = vi.fn(() => ({ onConflictDoNothing }))
+    mocks.insert.mockReturnValue({ values })
+
+    await tagChannelRepository.linkContactInbox({
+      tagId: "tag-1",
+      tagChannelId: "tc-1",
+      contactInboxId: "ci-1",
+    })
+
+    expect(values).toHaveBeenCalledWith({
+      tagId: "tag-1",
+      tagChannelId: "tc-1",
+      contactInboxId: "ci-1",
+    })
+    expect(onConflictDoNothing).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("unlinkContactInbox", () => {
+  test("deletes scoped by tagChannelId AND contactInboxId", async () => {
+    const chain = { where: vi.fn(() => Promise.resolve(undefined)) }
+    mocks.deleteFn.mockReturnValue(chain)
+
+    await tagChannelRepository.unlinkContactInbox({
+      tagChannelId: "tc-1",
+      contactInboxId: "ci-1",
+    })
+
+    expect(mocks.deleteFn).toHaveBeenCalled()
+    expect(mocks.eq).toHaveBeenCalledWith("tagChannelId", "tc-1")
+    expect(mocks.eq).toHaveBeenCalledWith("contactInboxId", "ci-1")
+    expect(mocks.and).toHaveBeenCalledWith(
+      { eq: ["tagChannelId", "tc-1"] },
+      { eq: ["contactInboxId", "ci-1"] },
+    )
+  })
+})
+
+describe("listContactTagChannelRows", () => {
+  test("inner-joins TagChannel + ContactInbox, scoped by tagId and contactId", async () => {
+    const rows = [
+      {
+        tagChannelId: "tc-1",
+        contactInboxId: "ci-1",
+        channelType: "messenger",
+        integrationId: "int-1",
+        externalLabelId: "ext-1",
+        sourceId: "src-1",
+      },
+    ]
+    const chain = {
+      from: vi.fn(() => chain),
+      innerJoin: vi.fn(() => chain),
+      where: vi.fn(() => Promise.resolve(rows)),
+    }
+    mocks.select.mockReturnValue(chain)
+
+    const result = await tagChannelRepository.listContactTagChannelRows({
+      tagId: "tag-1",
+      contactId: "contact-1",
+    })
+
+    expect(result).toEqual(rows)
+    expect(chain.innerJoin).toHaveBeenCalledTimes(2)
+    expect(mocks.eq).toHaveBeenCalledWith("tagId", "tag-1")
+    expect(mocks.eq).toHaveBeenCalledWith("contactId", "contact-1")
+    expect(mocks.and).toHaveBeenCalledWith(
+      { eq: ["tagId", "tag-1"] },
+      { eq: ["contactId", "contact-1"] },
+    )
+  })
+})
+
+describe("listTaggedContactIdsPage", () => {
+  test("pages by contactId ascending, keyed off tagId", async () => {
+    mocks.findMany.mockResolvedValue([{ contactId: "contact-1" }])
+
+    const result = await tagChannelRepository.listTaggedContactIdsPage({
+      tagId: "tag-1",
+      limit: 500,
+    })
+
+    expect(result).toEqual([{ contactId: "contact-1" }])
+    expect(mocks.findMany).toHaveBeenCalledWith({
+      where: { tagId: "tag-1" },
+      orderBy: { contactId: "asc" },
+      limit: 500,
+      columns: { contactId: true },
+    })
+  })
+
+  test("adds the afterContactId gt-filter when a cursor is passed", async () => {
+    mocks.findMany.mockResolvedValue([])
+
+    await tagChannelRepository.listTaggedContactIdsPage({
+      tagId: "tag-1",
+      afterContactId: "contact-5",
+      limit: 500,
+    })
+
+    expect(mocks.findMany).toHaveBeenCalledWith({
+      where: { tagId: "tag-1", contactId: { gt: "contact-5" } },
+      orderBy: { contactId: "asc" },
+      limit: 500,
+      columns: { contactId: true },
+    })
+  })
+})

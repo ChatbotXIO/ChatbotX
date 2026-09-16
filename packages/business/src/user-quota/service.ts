@@ -6,6 +6,7 @@ import {
   eq,
   gt,
   lte,
+  type SQL,
   sql,
   sum,
 } from "@chatbotx.io/database/client"
@@ -721,6 +722,47 @@ class UserQuotaService extends BaseService {
   }
 
   /**
+   * Shared `contacts ⋈ workspace` / `workspaces` / `inboxes ⋈ workspace`
+   * count block behind both `reconcileOwnerPoolUsage` (tenant-scoped `where`)
+   * and `reconcileUserSelfUsage` (owner-scoped `where`) — same three queries,
+   * differing only in which workspace predicate is applied.
+   */
+  private async countWorkspaceScopedUsage(where: SQL): Promise<{
+    contactsUsed: number
+    workspacesUsed: number
+    channelsUsed: number
+  }> {
+    const [[contactsResult], [workspacesResult], [channelsResult]] =
+      await Promise.all([
+        db
+          .select({ count: count() })
+          .from(contactModel)
+          .innerJoin(
+            workspaceModel,
+            eq(contactModel.workspaceId, workspaceModel.id),
+          )
+          .where(where),
+
+        db.select({ count: count() }).from(workspaceModel).where(where),
+
+        db
+          .select({ count: count() })
+          .from(inboxModel)
+          .innerJoin(
+            workspaceModel,
+            eq(inboxModel.workspaceId, workspaceModel.id),
+          )
+          .where(where),
+      ])
+
+    return {
+      contactsUsed: contactsResult?.count ?? 0,
+      workspacesUsed: workspacesResult?.count ?? 0,
+      channelsUsed: channelsResult?.count ?? 0,
+    }
+  }
+
+  /**
    * Reconcile a reseller owner's `UserQuota.*Used` from the source-of-truth DB
    * counts aggregated across EVERY workspace under their tenant — the owner's row
    * is the pool (owner's own resources carry the reseller tenantId too, so the
@@ -741,36 +783,13 @@ class UserQuotaService extends BaseService {
     const client = await cacheConnections.useExisting()
 
     const [
-      [contactsResult],
+      { contactsUsed, workspacesUsed, channelsUsed },
       teamMembersUsed,
-      [workspacesResult],
-      [channelsResult],
       [macResult],
     ] = await Promise.all([
-      db
-        .select({ count: count() })
-        .from(contactModel)
-        .innerJoin(
-          workspaceModel,
-          eq(contactModel.workspaceId, workspaceModel.id),
-        )
-        .where(eq(workspaceModel.tenantId, tenantId)),
+      this.countWorkspaceScopedUsage(eq(workspaceModel.tenantId, tenantId)),
 
       this.countDistinctTeamMembers({ tenantId }),
-
-      db
-        .select({ count: count() })
-        .from(workspaceModel)
-        .where(eq(workspaceModel.tenantId, tenantId)),
-
-      db
-        .select({ count: count() })
-        .from(inboxModel)
-        .innerJoin(
-          workspaceModel,
-          eq(inboxModel.workspaceId, workspaceModel.id),
-        )
-        .where(eq(workspaceModel.tenantId, tenantId)),
 
       db
         .select({ total: sum(workspaceMacModel.macCount) })
@@ -788,9 +807,6 @@ class UserQuotaService extends BaseService {
         ),
     ])
 
-    const contactsUsed = contactsResult?.count ?? 0
-    const workspacesUsed = workspacesResult?.count ?? 0
-    const channelsUsed = channelsResult?.count ?? 0
     // `sum()` returns a numeric string (or null when no rows match).
     const macUsed = Number(macResult?.total ?? 0)
 
@@ -908,41 +924,11 @@ class UserQuotaService extends BaseService {
   }> {
     const client = await cacheConnections.useExisting()
 
-    const [
-      [contactsResult],
-      teamMembersUsed,
-      [workspacesResult],
-      [channelsResult],
-    ] = await Promise.all([
-      db
-        .select({ count: count() })
-        .from(contactModel)
-        .innerJoin(
-          workspaceModel,
-          eq(contactModel.workspaceId, workspaceModel.id),
-        )
-        .where(eq(workspaceModel.ownerId, userId)),
-
-      this.countDistinctTeamMembersForOwner(userId),
-
-      db
-        .select({ count: count() })
-        .from(workspaceModel)
-        .where(eq(workspaceModel.ownerId, userId)),
-
-      db
-        .select({ count: count() })
-        .from(inboxModel)
-        .innerJoin(
-          workspaceModel,
-          eq(inboxModel.workspaceId, workspaceModel.id),
-        )
-        .where(eq(workspaceModel.ownerId, userId)),
-    ])
-
-    const contactsUsed = contactsResult?.count ?? 0
-    const workspacesUsed = workspacesResult?.count ?? 0
-    const channelsUsed = channelsResult?.count ?? 0
+    const [{ contactsUsed, workspacesUsed, channelsUsed }, teamMembersUsed] =
+      await Promise.all([
+        this.countWorkspaceScopedUsage(eq(workspaceModel.ownerId, userId)),
+        this.countDistinctTeamMembersForOwner(userId),
+      ])
 
     await db
       .insert(userQuotaModel)
