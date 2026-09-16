@@ -40,6 +40,7 @@ const byInboxSourceKey = (
 
 const PROCESS_DEFAULT_LIMIT = 100
 const CONVERSATION_DELETE_BATCH_SIZE = 100
+const ORPHANED_ATTACHMENT_BATCH_SIZE = 1000
 
 /**
  * Tracks Message/Attachment rows orphaned by contact deletes.
@@ -204,6 +205,61 @@ class MessageCleanupService extends BaseService {
     }
 
     return { processed, failed }
+  }
+
+  /**
+   * Deletes one bounded batch of attachments whose parent Message no longer
+   * exists. Attachment cannot have an FK to the Message hypertable, so this
+   * reconciles rows left behind by deletes outside the contact tombstone flow.
+   */
+  async purgeOrphanedAttachments(props?: { limit?: number }): Promise<number> {
+    const limit = props?.limit ?? ORPHANED_ATTACHMENT_BATCH_SIZE
+    const result = await db.transaction(async (tx) => {
+      await liftDecompressionLimit(tx)
+
+      return tx.execute<{
+        originPath: string
+        thumbnailPath: string | null
+      }>(sql`
+        WITH orphaned AS (
+          SELECT attachment."id", attachment."createdAt"
+          FROM "Attachment" AS attachment
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM "Message" AS message
+            WHERE message."id" = attachment."messageId"
+              AND message."createdAt" = attachment."messageCreatedAt"
+          )
+          ORDER BY attachment."createdAt" ASC
+          LIMIT ${limit}
+        )
+        DELETE FROM "Attachment" AS attachment
+        USING orphaned
+        WHERE attachment."id" = orphaned."id"
+          AND attachment."createdAt" = orphaned."createdAt"
+        RETURNING attachment."originPath", attachment."thumbnailPath"
+      `)
+    })
+
+    const deleteResults = await Promise.allSettled(
+      result.rows
+        .flatMap((attachment) =>
+          attachment.thumbnailPath
+            ? [attachment.originPath, attachment.thumbnailPath]
+            : [attachment.originPath],
+        )
+        .map((path) => uploader.deleteObject(path)),
+    )
+    for (const deleteResult of deleteResults) {
+      if (deleteResult.status === "rejected") {
+        logger.warn(
+          { err: deleteResult.reason },
+          "Orphaned attachment file deletion failed",
+        )
+      }
+    }
+
+    return result.rows.length
   }
 
   private async purgeRow(row: MessageCleanupModel): Promise<void> {
