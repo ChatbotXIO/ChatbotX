@@ -137,10 +137,15 @@ non-terminal step continues into the node-level "Continue" edge by default.
    `edges` — it is never the persisted id, since persisted node ids are numeric
    snowflakes and a caller id like `"n1"` would otherwise fail `publishFlowSchema`),
    and defaults edge handles to the node-id convention `addHandleEdge` produces
-   against the remapped ids. Add `publish: true` to validate the resulting graph
-   exactly like `flows.publish` and create the flow's first version in the same
-   call; omitting content or `publish` keeps today's default-start-node draft
-   behavior.
+   against the remapped ids. The response's `nodeIds` maps each authored id to
+   its persisted id (present only for the raw-graph shape; omitted for `{
+   spec }` input, which has no authored ids). Add `publish: true` to validate
+   the resulting graph exactly like `flows.publish` and create the flow's
+   first version in the same call — the flow, its draft version, and its
+   published version are inserted in one transaction
+   (`FlowService.createPublished`/`createPublishedDefault`), so a downstream
+   failure never leaves an orphaned, unpublished flow behind. Omitting
+   content or `publish` keeps today's default-start-node draft behavior.
 2. **`flows.validate`** — compiles a `{ spec }` and validates the result exactly like
    `flows.publish` would, without persisting anything. On success it returns the
    compiled `{ nodes, edges }` graph; on failure a 422 with structured errors
@@ -153,7 +158,10 @@ non-terminal step continues into the node-level "Continue" edge by default.
    them. Creates an immutable version from the draft and syncs the draft to match.
 4. **`flows.updateDraft`** — same either/or `{ nodes, edges }` vs `{ spec }`
    acceptance as `flows.publish`, but overwrites the draft in place without
-   publishing; draft nodes are not otherwise validated.
+   publishing; draft nodes are not otherwise validated. Unlike `flows.create`,
+   a raw node's `id` is persisted **verbatim, not remapped** — it must already
+   be a numeric string (`zodBigintAsString`), e.g. one returned by
+   `flows.create`'s `nodeIds` response or a `flows.get` call.
 
 The DSL compiler resolves `templateName`/`customFieldName`/`flowName` against the
 **entire workspace**, not a possibly-truncated capabilities page — see

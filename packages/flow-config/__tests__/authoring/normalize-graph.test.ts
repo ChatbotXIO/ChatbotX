@@ -48,6 +48,14 @@ describe("normalizeAuthoredGraph", () => {
     }
   })
 
+  test("returns the authored id -> persisted id map for every node", () => {
+    const result = normalizeAuthoredGraph([{ id: "a" }, { id: "b" }], [])
+
+    expect(Object.keys(result.nodeIds).sort()).toEqual(["a", "b"])
+    expect(result.nodeIds.a).toBe(result.nodes[0].id)
+    expect(result.nodeIds.b).toBe(result.nodes[1].id)
+  })
+
   test("generates edge ids and node-id handles, rewriting them to the remapped node ids", () => {
     const result = normalizeAuthoredGraph(
       [{ id: "a" }, { id: "b" }, { id: "c" }],

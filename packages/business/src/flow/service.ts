@@ -372,6 +372,52 @@ class FlowService extends BaseService {
   }
 
   /**
+   * The public `flows.create` API's `publish: true` path: inserts the flow,
+   * its analytics session, a draft version, and a published version — all in
+   * one transaction via `createPublishedDefault` — so a downstream failure
+   * (a DB error, a constraint, the cache invalidation) never leaves behind
+   * an orphaned, invisible, unpublished flow the caller was never told the
+   * id of. Runs the same folder guard `createDraft` runs before opening the
+   * transaction, and invalidates/audits after it commits, matching
+   * `createPublishedDefault`'s doc-comment contract.
+   */
+  async createPublished(input: {
+    workspaceId: string
+    data: { name: string; folderId?: string | null }
+    graph: {
+      nodes: FlowVersionModel["nodes"]
+      edges: FlowVersionModel["edges"]
+      startNodeId: string
+    }
+  }): Promise<{ id: string }> {
+    const { workspaceId, data, graph } = input
+
+    if (data.folderId) {
+      await folderService.ensureExists({
+        id: data.folderId,
+        workspaceId,
+        folderType: "flow",
+      })
+    }
+
+    const { flowId } = await db.transaction((tx) =>
+      this.createPublishedDefault(tx, {
+        workspaceId,
+        name: data.name,
+        folderId: data.folderId,
+        startNodeId: graph.startNodeId,
+        nodes: graph.nodes,
+        edges: graph.edges,
+      }),
+    )
+
+    await flowVersionService.invalidateList(flowId)
+    await this.audit("create", `created a new flow (#${flowId})`)
+
+    return { id: flowId }
+  }
+
+  /**
    * Partial update of a flow's name/active/enableInInbox. No-ops (and skips
    * the audit record) when every field matches the current row, mirroring
    * the guard the old `update-flow-action.ts` implementation had.

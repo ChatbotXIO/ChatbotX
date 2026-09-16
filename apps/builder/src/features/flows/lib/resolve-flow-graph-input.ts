@@ -21,9 +21,16 @@ export type FlowGraphInput = {
 }
 
 export type ResolvedFlowGraph = {
-  nodes: FlowVersionSchema[]
+  // Validated (`options.validate: true`) graphs are `FlowVersionSchema`-shaped;
+  // an unvalidated raw `{ nodes, edges }` draft graph stays `AuthoredNodeInput`-shaped
+  // (`authorableNodeSchema` only requires an `id`) until publish time. `flowService.createDraft`/
+  // `createPublished` only need the loose `FlowVersionModel["nodes"]` shape (`{ id: string, ... }`),
+  // which both branches satisfy, so no cast is needed to hand either one off.
+  nodes: FlowVersionSchema[] | AuthoredNodeInput[]
   edges: EdgeSchema[]
   startNodeId: string
+  /** Authored id → persisted id, populated only for the raw `{ nodes, edges }` path (`normalizeAuthoredGraph`'s remap map). `undefined` for `{ spec }` input, which has no authored node ids. */
+  nodeIds?: Record<string, string>
 }
 
 /**
@@ -58,7 +65,7 @@ export function resolveFlowGraphInput(
     // Draft nodes are unvalidated by design, same as `flows.updateDraft`'s
     // raw `{ nodes, edges }` path — `authorableNodeSchema` only requires an
     // `id`, so the graph is not `FlowVersionSchema`-shaped until publish time.
-    return Promise.resolve(graph as unknown as ResolvedFlowGraph)
+    return Promise.resolve(graph)
   }
 
   const result = publishFlowSchema.safeParse({
@@ -74,5 +81,9 @@ export function resolveFlowGraphInput(
     )
   }
 
-  return Promise.resolve({ ...result.data, startNodeId: graph.startNodeId })
+  return Promise.resolve({
+    ...result.data,
+    startNodeId: graph.startNodeId,
+    nodeIds: graph.nodeIds,
+  })
 }

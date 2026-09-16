@@ -56,6 +56,7 @@ const flowService = {
   list: vi.fn(),
   findById: vi.fn(),
   createDraft: vi.fn(),
+  createPublished: vi.fn(),
   update: vi.fn(),
   deleteMany: vi.fn(),
   duplicate: vi.fn(),
@@ -223,7 +224,7 @@ describe("POST /v1/flows", () => {
   test("spec content: createDraft receives a positioned graph and startNodeId; publish is not called", async () => {
     flowService.createDraft.mockResolvedValueOnce({ id: "flow-1" })
 
-    await procedure.handler?.({
+    const response = await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: {
         name: "New flow",
@@ -243,12 +244,15 @@ describe("POST /v1/flows", () => {
     expect(call.graph.nodes[0].position).toEqual({ x: 100, y: 100 })
     expect(call.graph.startNodeId).toBe(call.graph.nodes[0].id)
     expect(flowVersionService.publish).not.toHaveBeenCalled()
+    expect(flowService.createPublished).not.toHaveBeenCalled()
+    // A `{ spec }` graph has no authored node ids to report.
+    expect(response.nodeIds).toBeUndefined()
   })
 
   test("raw graph content: createDraft receives normalized positions/edges and startNodeId", async () => {
     flowService.createDraft.mockResolvedValueOnce({ id: "flow-1" })
 
-    await procedure.handler?.({
+    const response = await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: {
         name: "New flow",
@@ -279,10 +283,14 @@ describe("POST /v1/flows", () => {
     )
     expect(call.graph.startNodeId).toBe(nodeN1.id)
     expect(flowVersionService.publish).not.toHaveBeenCalled()
+    expect(flowService.createPublished).not.toHaveBeenCalled()
+    // The response reports the authored → persisted id mapping so the
+    // caller can edit the graph it just created without a `flows.get`.
+    expect(response.nodeIds).toEqual({ n1: nodeN1.id, n2: nodeN2.id })
   })
 
-  test("publish: true validates and publishes the graph createDraft returned an id for", async () => {
-    flowService.createDraft.mockResolvedValueOnce({ id: "flow-9" })
+  test("publish: true validates the graph and creates it atomically via flowService.createPublished, not createDraft + publish", async () => {
+    flowService.createPublished.mockResolvedValueOnce({ id: "flow-9" })
     // Authored id is deliberately non-numeric ("n1") — normalizeAuthoredGraph
     // must remap it to an internal createId() id before publishFlowSchema
     // validates it, since baseNodeSchema.id requires digits only.
@@ -292,7 +300,7 @@ describe("POST /v1/flows", () => {
       detailProps: {},
     })
 
-    await procedure.handler?.({
+    const response = await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: {
         name: "New flow",
@@ -303,14 +311,19 @@ describe("POST /v1/flows", () => {
       },
     })
 
-    const createDraftCall = flowService.createDraft.mock.calls[0][0]
-    expect(createDraftCall.graph.nodes[0].id).not.toBe("n1")
-    expect(flowVersionService.publish).toHaveBeenCalledTimes(1)
-    expect(flowVersionService.publish).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
-      flowId: "flow-9",
-      nodes: createDraftCall.graph.nodes,
-      edges: createDraftCall.graph.edges,
+    expect(flowService.createDraft).not.toHaveBeenCalled()
+    expect(flowVersionService.publish).not.toHaveBeenCalled()
+    expect(flowService.createPublished).toHaveBeenCalledTimes(1)
+    const createPublishedCall = flowService.createPublished.mock.calls[0][0]
+    expect(createPublishedCall.workspaceId).toBe("workspace-1")
+    expect(createPublishedCall.data).toEqual({
+      name: "New flow",
+      folderId: null,
+    })
+    expect(createPublishedCall.graph.nodes[0].id).not.toBe("n1")
+    expect(response).toEqual({
+      id: "flow-9",
+      nodeIds: { n1: createPublishedCall.graph.nodes[0].id },
     })
   })
 

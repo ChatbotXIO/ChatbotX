@@ -98,13 +98,22 @@ export const flowsPublicRouter = {
       path: "/v1/flows",
       summary: "Create flow",
       description:
-        "Creates a flow. With no `spec`/`nodes` it starts a draft with one default start node. Supply `spec` (flow-spec DSL, see `GET /v1/schemas/flow-spec`) or a raw `nodes`/`edges` graph to seed the draft in the same call — node `position`/`measured`, node ids, and edge ids/handles are all generated server-side (a raw node's `id` is only a request-scoped token for wiring `edges`), so only the flow's content needs sending. Add `publish: true` to validate the graph exactly like `flows.publish` and create the flow's first version immediately. Use `flows.list` to inspect existing flows first.",
+        "Creates a flow. With no `spec`/`nodes` it starts a draft with one default start node. Supply `spec` (flow-spec DSL, see `GET /v1/schemas/flow-spec`) or a raw `nodes`/`edges` graph to seed the draft in the same call — node `position`/`measured`, node ids, and edge ids/handles are all generated server-side (a raw node's `id` is only a request-scoped token for wiring `edges`; the response's `nodeIds` maps each authored id to its persisted id). Add `publish: true` to validate the graph exactly like `flows.publish` and create the flow's first version immediately. Use `flows.list` to inspect existing flows first.",
       successStatus: 201,
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
     })
     .input(createFlowRequest)
-    .output(z.object({ id: z.string() }))
+    .output(
+      z.object({
+        id: z.string(),
+        nodeIds: z
+          .optional(z.record(z.string(), z.string()))
+          .describe(
+            "Authored node id → persisted node id, present only when the request sent raw `nodes` (omitted for `spec` input, which has no authored ids).",
+          ),
+      }),
+    )
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
@@ -115,20 +124,19 @@ export const flowsPublicRouter = {
         workspaceId,
         { validate: publish === true },
       )
-      const flow = await flowService.createDraft({
-        workspaceId,
-        data: { name, folderId },
-        graph,
-      })
-      if (publish && graph) {
-        await flowVersionService.publish({
-          workspaceId,
-          flowId: flow.id,
-          nodes: graph.nodes,
-          edges: graph.edges,
-        })
-      }
-      return flow
+      const flow =
+        publish && graph
+          ? await flowService.createPublished({
+              workspaceId,
+              data: { name, folderId },
+              graph,
+            })
+          : await flowService.createDraft({
+              workspaceId,
+              data: { name, folderId },
+              graph,
+            })
+      return { id: flow.id, nodeIds: graph?.nodeIds }
     }),
 
   update: workspaceTokenAuthAPI
@@ -243,7 +251,7 @@ export const flowsPublicRouter = {
       path: "/v1/flows/{id}/draft",
       summary: "Update flow draft",
       description:
-        "Overwrites the draft version's nodes/edges in place, without publishing. Accepts either the raw `{ nodes, edges }` graph the builder UI sends, or `{ spec }` compiled server-side into that same graph — draft nodes are not otherwise validated (see `flows.validate` to check a spec before writing it).",
+        "Overwrites the draft version's nodes/edges in place, without publishing. Accepts either the raw `{ nodes, edges }` graph the builder UI sends, or `{ spec }` compiled server-side into that same graph — draft nodes are not otherwise validated (see `flows.validate` to check a spec before writing it). Unlike `flows.create`, a raw node's `id` is persisted verbatim, not remapped, so it must already be a numeric string (the same format `flows.create`'s `nodeIds` response and `flows.get` return).",
       successStatus: 204,
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),

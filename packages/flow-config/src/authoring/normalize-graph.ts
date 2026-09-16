@@ -23,6 +23,8 @@ export type NormalizedAuthoredGraph<T> = {
   nodes: T[]
   edges: EdgeSchema[]
   startNodeId: string
+  /** Authored id (e.g. `"n1"`) → persisted internal id, for callers that need to reference the nodes they just authored without a round-trip fetch. */
+  nodeIds: Record<string, string>
 }
 
 /**
@@ -51,6 +53,10 @@ export function normalizeAuthoredGraph<T extends AuthoredNodeInput>(
     message: string
   }[] = []
 
+  // The public `flows.create` API pre-enforces `.min(1)` on `nodes`
+  // (`createFlowRequest`, `apps/builder/src/features/flows/schema/action.ts`),
+  // so this guard is unreachable from there; it exists for other package
+  // callers, and `nodes[0].id` below still depends on non-emptiness.
   if (nodes.length === 0) {
     errors.push({
       path: "nodes",
@@ -59,9 +65,9 @@ export function normalizeAuthoredGraph<T extends AuthoredNodeInput>(
     })
   }
 
-  const nodeIds = new Set<string>()
+  const seenNodeIds = new Set<string>()
   for (const [index, node] of nodes.entries()) {
-    if (nodeIds.has(node.id)) {
+    if (seenNodeIds.has(node.id)) {
       errors.push({
         path: `nodes[${index}].id`,
         code: "invalidGraph",
@@ -69,18 +75,18 @@ export function normalizeAuthoredGraph<T extends AuthoredNodeInput>(
       })
       continue
     }
-    nodeIds.add(node.id)
+    seenNodeIds.add(node.id)
   }
 
   for (const [index, edge] of edges.entries()) {
-    if (!nodeIds.has(edge.source)) {
+    if (!seenNodeIds.has(edge.source)) {
       errors.push({
         path: `edges[${index}].source`,
         code: "invalidGraph",
         message: `Edge source "${edge.source}" does not match any node id.`,
       })
     }
-    if (!nodeIds.has(edge.target)) {
+    if (!seenNodeIds.has(edge.target)) {
       errors.push({
         path: `edges[${index}].target`,
         code: "invalidGraph",
@@ -149,5 +155,10 @@ export function normalizeAuthoredGraph<T extends AuthoredNodeInput>(
     }
   })
 
-  return { nodes: resolvedNodes, edges: resolvedEdges, startNodeId }
+  return {
+    nodes: resolvedNodes,
+    edges: resolvedEdges,
+    startNodeId,
+    nodeIds: Object.fromEntries(idByAuthoredId),
+  }
 }
