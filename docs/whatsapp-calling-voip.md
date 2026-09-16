@@ -331,4 +331,27 @@ persisting an `accepted` row the call has already moved past).
 
 ## Required infrastructure (operator)
 A **publicly reachable coturn (TURN)** server for browser↔Meta media on hostile NATs.
-Without it, media will not connect in production even though signaling succeeds.
+TURN is a media relay: the agent's browser AND Meta's media servers both send RTP to
+it, so it has to be reachable from the public internet. A coturn on localhost, or on a
+machine behind a home router, advertises a relay address Meta can never reach — and an
+HTTP tunnel does not help, since TURN needs UDP.
+
+**How it fails when missing.** Signalling still succeeds, so the call connects and the
+agent sees a live call. Meta then receives no media and terminates it with
+`status: FAILED` plus error `138021`/`138022`/`138023` (media receive timeout, transmit
+timeout, or accepted-with-no-media). The row is finalized `failed`, so the conversation
+renders the compact "Missed voice call" row rather than the audio card — even though an
+agent did answer. `voipTurnCredentialService` logs a warning on every call placed
+without TURN, and those Meta error codes now reach the call row, so both ends of the
+symptom are greppable.
+
+Without TURN the app falls back to public STUN, which does connect media on
+NAT-friendly networks (same LAN, permissive router). That is fine for working on the
+calling UI and misleading for anything else.
+
+Setup lives in `docker/coturn/turnserver.conf` (set `external-ip` to the host's public
+IP) and the `coturn` service in `docker-compose.yml`, behind the `production` compose
+profile so local dev never starts it by accident. `.env.example` carries the
+copy-pasteable env block. Only coturn's REST/HMAC scheme (`use-auth-secret`) is
+supported: credentials are minted per call and scoped to `<userId>:<wacid>`, so a
+leaked one cannot be replayed for another call or agent.
