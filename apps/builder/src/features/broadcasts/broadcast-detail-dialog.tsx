@@ -31,6 +31,7 @@ import { TemplatePreview } from "@/features/integration-whatsapp/message-templat
 import { useWorkspaceId } from "@/hooks/routing"
 import { client } from "@/lib/orpc/orpc"
 import { BroadcastStatusBadge } from "./components/broadcast-status-badge"
+import { resolveBroadcastScheduleTypeMessageKey } from "./lib/schedule-type-options"
 import type { BroadcastResourceWithRelations } from "./schema/resource"
 
 type BroadcastDetailDialogProps = {
@@ -158,7 +159,9 @@ export function BroadcastDetailDialog({
             />
             <DetailField
               label={t("fields.schedule.label")}
-              value={t(`fields.schedule.${broadcast.schedulesType}`)}
+              value={t(
+                resolveBroadcastScheduleTypeMessageKey(broadcast.schedulesType),
+              )}
             />
             <DetailField
               label={t("fields.scheduledAt.label")}

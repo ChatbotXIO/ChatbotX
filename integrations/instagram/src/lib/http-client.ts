@@ -175,6 +175,10 @@ export const instagramOAuthClient = new InstagramHttpClient({
 
 export const instagramCoexistGraphClient = new InstagramHttpClient({
   baseUrl: INSTAGRAM_API_URL,
-  timeout: 30_000,
+  // 60s, matching `facebookCoexistGraphClient`: the coexist/contact-scan walk
+  // pulls conversation pages at Graph's page-size ceiling, which routinely
+  // takes longer than the 30s default on a large account. Retry stays with the
+  // handler (`withInlineRetry` + bounded scheduler attempts).
+  timeout: 60_000,
   retries: 0,
 })

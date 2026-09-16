@@ -182,6 +182,14 @@ export const facebookAttachmentClient = new MessengerHttpClient({
  */
 export const facebookCoexistGraphClient = new MessengerHttpClient({
   baseUrl: "https://graph.facebook.com",
-  timeout: 30_000,
+  // 60s, not the 30s default: a `/conversations` page is requested at Graph's
+  // ~499-per-page ceiling with `participants` expanded (v1 used the same page
+  // size against a client with no short timeout), and Graph regularly needs
+  // longer than 30s to answer one for a large Page. A genuine hang is bounded
+  // per request by this timeout and per run by the handler's own
+  // `withInlineRetry` plus the run's capped scheduler attempts; the walk as a
+  // whole stays inside its job lock through the handler's chunk budget and
+  // BullMQ's lock renewal, not through this value.
+  timeout: 60_000,
   retries: 0,
 })

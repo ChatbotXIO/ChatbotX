@@ -1,5 +1,5 @@
 import { SdkException } from "@chatbotx.io/sdk"
-import { isRetryable } from "../shared/http-retry"
+import { isRetryable, readOriginError } from "../shared/http-retry"
 import type { ContactScanErrorClassification } from "./adapter"
 
 /**
@@ -23,8 +23,6 @@ type GraphSdkErrorFields = {
   code?: number | string
   type?: string
 }
-
-type ErrorWithOriginError = { getOriginError?: () => unknown }
 
 /**
  * Reads the flat fields off a thrown Graph SDK error. Prefers
@@ -144,7 +142,7 @@ export const classifyGraphSdkError = (
 ): ContactScanErrorClassification => {
   const fields = readGraphSdkErrorFields(error)
   const code = toNumericCode(fields.code)
-  const originError = (error as ErrorWithOriginError | null)?.getOriginError?.()
+  const originError = readOriginError(error)
 
   if (
     isRetryableHttpStatus(fields.httpStatusCode) ||
