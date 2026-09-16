@@ -8,8 +8,10 @@ import {
 import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { startHealthServer } from "../lib/health-server"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { WebhookMatcherService } from "./services/webhook-matcher.service"
 
@@ -53,10 +55,18 @@ async function startWebhookWorker() {
     },
   )
 
+  startHealthServer({ port: env.WEBHOOK_WORKER_HEALTH_PORT, worker })
+
   worker.on("failed", (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.webhook })
     if (job) {
-      logger.error(err, `Webhook job ${job.id} has failed`)
+      logger.error({ err, jobId: job.id }, "Webhook job has failed")
     }
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.webhook, job)
+    logger.info({ jobId: job.id }, "Webhook job completed")
   })
 
   let isShuttingDown = false

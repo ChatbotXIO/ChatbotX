@@ -44,6 +44,7 @@ const {
   mockAutomatedResponseEnqueue,
   mockConversationFindOrCreate,
   workerState,
+  mockRunExclusive,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -93,6 +94,9 @@ const {
     mockResolveIncomingTextRouting: vi.fn(),
     mockAutomatedResponseEnqueue: vi.fn().mockResolvedValue(undefined),
     mockConversationFindOrCreate: vi.fn(),
+    mockRunExclusive: vi.fn(
+      async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
+    ),
     workerState: { capturedWorkers: [] as CapturedWorker[] },
   }
 })
@@ -360,6 +364,10 @@ vi.mock("@chatbotx.io/event-bus", () => ({
 vi.mock("@chatbotx.io/events", () => ({
   emitContactCreated: vi.fn().mockResolvedValue(undefined),
   setWebhookExecutionContext: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: { runExclusive: mockRunExclusive },
 }))
 
 vi.mock("@chatbotx.io/partysocket-config", () => ({

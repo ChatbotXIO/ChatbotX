@@ -8,7 +8,9 @@ import {
 import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { startHealthServer } from "../lib/health-server"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { sendPushForNotificationJob } from "./handlers/send-push"
 
 async function startNotificationWorker() {
@@ -34,10 +36,18 @@ async function startNotificationWorker() {
     },
   )
 
+  startHealthServer({ port: env.NOTIFICATION_WORKER_HEALTH_PORT, worker })
+
   worker.on("failed", (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.notification })
     if (job) {
-      logger.error(err, `Notification job ${job.id} has failed`)
+      logger.error({ err, jobId: job.id }, "Notification job has failed")
     }
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.notification, job)
+    logger.info({ jobId: job.id }, "Notification job completed")
   })
 
   let isShuttingDown = false

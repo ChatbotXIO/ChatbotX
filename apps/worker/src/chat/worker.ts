@@ -9,11 +9,14 @@ import {
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
+import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { startHealthServer } from "../lib/health-server"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isBotMessageQuotaReached } from "../lib/is-bot-message-quota-reached"
 import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { checkOutboundAutomatedResponse } from "./handlers/outbound-automated-response"
@@ -142,10 +145,18 @@ async function startChatWorker() {
     },
   )
 
+  startHealthServer({ port: env.CHAT_WORKER_HEALTH_PORT, worker })
+
   worker.on("failed", (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.chat })
     if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
+      logger.error({ err, jobId: job.id }, "Job has failed")
     }
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.chat, job)
+    logger.info({ jobId: job.id }, "Job completed")
   })
 
   let isShuttingDown = false

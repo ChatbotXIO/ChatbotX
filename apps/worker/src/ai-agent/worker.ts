@@ -22,9 +22,11 @@ import { processStoryReplyAutomation } from "../integration/handlers/story-reply
 import { runWithOrphanedIntegrationCleanup } from "../integration/job-context"
 import { closeChatQueueEvents } from "../integration/utils/message"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { startHealthServer } from "../lib/health-server"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { processConversationSource } from "./handlers/process-conversation-source"
@@ -128,7 +130,10 @@ async function startAIAgentWorker() {
     },
   )
 
+  startHealthServer({ port: env.AI_AGENT_WORKER_HEALTH_PORT, worker })
+
   worker.on("failed", async (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.aiAgent })
     if (!job) {
       logger.error(
         { err: normalizeError(err) },
@@ -176,6 +181,11 @@ async function startAIAgentWorker() {
       },
       "AI Agent job failed",
     )
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.aiAgent, job)
+    logger.info({ jobId: job.id }, "AI Agent job completed")
   })
 
   let isShuttingDown = false

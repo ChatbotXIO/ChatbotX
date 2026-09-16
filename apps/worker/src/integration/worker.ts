@@ -21,8 +21,10 @@ import {
 import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { startHealthServer } from "../lib/health-server"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
@@ -455,10 +457,18 @@ async function startIntegrationWorker() {
     },
   )
 
+  startHealthServer({ port: env.INTEGRATION_WORKER_HEALTH_PORT, worker })
+
   worker.on("failed", (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.integration })
     if (job) {
-      logger.error({ err }, `Job ${job.id} has failed`)
+      logger.error({ err, jobId: job.id }, "Job has failed")
     }
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.integration, job)
+    logger.info({ jobId: job.id }, "Job completed")
   })
 
   let isShuttingDown = false

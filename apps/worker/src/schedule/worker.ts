@@ -6,8 +6,11 @@ import {
   scheduleQueue,
 } from "@chatbotx.io/worker-config"
 import { type Job, Queue, Worker } from "bullmq"
+import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { startHealthServer } from "../lib/health-server"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import {
   cleanupTriggerExecutions,
@@ -194,10 +197,18 @@ async function startScheduleWorker() {
     },
   )
 
+  startHealthServer({ port: env.SCHEDULE_WORKER_HEALTH_PORT, worker })
+
   worker.on("failed", (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.schedule })
     if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
+      logger.error({ err, jobId: job.id }, "Job has failed")
     }
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.schedule, job)
+    logger.info({ jobId: job.id }, "Job completed")
   })
 
   let isShuttingDown = false

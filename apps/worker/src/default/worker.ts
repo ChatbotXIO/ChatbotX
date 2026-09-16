@@ -6,9 +6,12 @@ import {
   queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
+import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { startHealthServer } from "../lib/health-server"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
@@ -167,7 +170,10 @@ async function startDefaultWorker() {
     },
   )
 
+  startHealthServer({ port: env.DEFAULT_WORKER_HEALTH_PORT, worker })
+
   worker.on("failed", (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.default })
     if (!job) {
       return
     }
@@ -177,7 +183,12 @@ async function startDefaultWorker() {
     // six jobs that do call a third party log explicitly in their own handlers,
     // where the provider is actually knowable — `syncTag` alone hits both
     // Messenger and Zalo, which no single catch-all label could attribute.
-    logger.error(err, `Job ${job.id} has failed`)
+    logger.error({ err, jobId: job.id }, "Job has failed")
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.default, job)
+    logger.info({ jobId: job.id }, "Job completed")
   })
 
   let isShuttingDown = false

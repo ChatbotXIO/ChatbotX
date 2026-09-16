@@ -9,9 +9,12 @@ import {
   type TriggerJobData,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
+import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { startHealthServer } from "../lib/health-server"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { TriggerExecutorService } from "./services/trigger-executor.service"
@@ -92,14 +95,18 @@ async function startTriggerWorker() {
     },
   )
 
+  startHealthServer({ port: env.TRIGGER_WORKER_HEALTH_PORT, worker })
+
   worker.on("failed", (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.trigger })
     if (job) {
-      logger.error(err, `Trigger job ${job.id} has failed`)
+      logger.error({ err, jobId: job.id }, "Trigger job has failed")
     }
   })
 
   worker.on("completed", (job) => {
-    logger.info(`Trigger job ${job.id} completed successfully`)
+    observeJobDuration(queueNames.enum.trigger, job)
+    logger.info({ jobId: job.id }, "Trigger job completed")
   })
 
   logger.info("Trigger worker started")
