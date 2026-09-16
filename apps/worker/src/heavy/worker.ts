@@ -20,6 +20,7 @@ import {
 } from "../integration/handlers/heavy-step-runner"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { detectConversationAndContactInbox } from "../lib/db"
+import { startHealthServer } from "../lib/health-server"
 import { recordHeavyMetric } from "../lib/heavy-metrics"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
@@ -337,6 +338,8 @@ async function startHeavyWorker() {
       maxStalledCount: 1,
     },
   )
+
+  startHealthServer({ port: env.HEAVY_WORKER_HEALTH_PORT, worker })
 
   worker.on("failed", async (job, err) => {
     failedJobsTotal.inc({ queue: queueNames.enum.heavy })

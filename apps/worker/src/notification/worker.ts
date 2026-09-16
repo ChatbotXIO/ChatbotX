@@ -8,6 +8,7 @@ import {
 import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { startHealthServer } from "../lib/health-server"
 import { logger } from "../lib/logger"
 import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { sendPushForNotificationJob } from "./handlers/send-push"
@@ -34,6 +35,8 @@ async function startNotificationWorker() {
       concurrency: env.NOTIFICATION_WORKER_CONCURRENCY,
     },
   )
+
+  startHealthServer({ port: env.NOTIFICATION_WORKER_HEALTH_PORT, worker })
 
   worker.on("failed", (job, err) => {
     failedJobsTotal.inc({ queue: queueNames.enum.notification })

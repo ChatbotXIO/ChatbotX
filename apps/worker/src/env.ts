@@ -86,6 +86,29 @@ export const env = createEnv({
       .min(1)
       .max(200)
       .default(10),
+    // One /health + /metrics HTTP server per worker process (see
+    // lib/health-server.ts) — `worker all` runs every queue's worker as its
+    // own OS process in one container, so each needs a distinct default
+    // port to avoid an EADDRINUSE collision. `worker <name>` deployments
+    // (the recommended production split, see apps/worker/README.md) only
+    // ever bind their own one port and can leave every other default alone.
+    CHAT_WORKER_HEALTH_PORT: z.coerce.number().int().min(1).default(3301),
+    INTEGRATION_WORKER_HEALTH_PORT: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .default(3302),
+    AI_AGENT_WORKER_HEALTH_PORT: z.coerce.number().int().min(1).default(3303),
+    HEAVY_WORKER_HEALTH_PORT: z.coerce.number().int().min(1).default(3304),
+    NOTIFICATION_WORKER_HEALTH_PORT: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .default(3305),
+    SCHEDULE_WORKER_HEALTH_PORT: z.coerce.number().int().min(1).default(3306),
+    TRIGGER_WORKER_HEALTH_PORT: z.coerce.number().int().min(1).default(3307),
+    WEBHOOK_WORKER_HEALTH_PORT: z.coerce.number().int().min(1).default(3308),
+    DEFAULT_WORKER_HEALTH_PORT: z.coerce.number().int().min(1).default(3309),
     // Expo push access token. Only needed if Expo's "enhanced push security"
     // is enabled on the project; unauthenticated requests work otherwise.
     EXPO_ACCESS_TOKEN: z.string().optional(),

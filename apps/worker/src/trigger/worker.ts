@@ -9,7 +9,9 @@ import {
   type TriggerJobData,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
+import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { startHealthServer } from "../lib/health-server"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
@@ -92,6 +94,8 @@ async function startTriggerWorker() {
       concurrency: 100,
     },
   )
+
+  startHealthServer({ port: env.TRIGGER_WORKER_HEALTH_PORT, worker })
 
   worker.on("failed", (job, err) => {
     failedJobsTotal.inc({ queue: queueNames.enum.trigger })

@@ -21,6 +21,7 @@ import {
 import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { startHealthServer } from "../lib/health-server"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
 import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
@@ -455,6 +456,8 @@ async function startIntegrationWorker() {
       maxStalledCount: 1,
     },
   )
+
+  startHealthServer({ port: env.INTEGRATION_WORKER_HEALTH_PORT, worker })
 
   worker.on("failed", (job, err) => {
     failedJobsTotal.inc({ queue: queueNames.enum.integration })

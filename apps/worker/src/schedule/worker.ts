@@ -6,7 +6,9 @@ import {
   scheduleQueue,
 } from "@chatbotx.io/worker-config"
 import { type Job, Queue, Worker } from "bullmq"
+import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
+import { startHealthServer } from "../lib/health-server"
 import { logger } from "../lib/logger"
 import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
@@ -194,6 +196,8 @@ async function startScheduleWorker() {
       ...defaultWorkerOptions,
     },
   )
+
+  startHealthServer({ port: env.SCHEDULE_WORKER_HEALTH_PORT, worker })
 
   worker.on("failed", (job, err) => {
     failedJobsTotal.inc({ queue: queueNames.enum.schedule })
