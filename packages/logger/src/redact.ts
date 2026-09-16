@@ -29,6 +29,7 @@ const SENSITIVE_KEYS: ReadonlySet<string> = new Set([
   "api_key",
   "apikey",
   "authorization",
+  "sdp",
 ])
 
 // Primitives never recurse, so the depth guard applies only to arrays/objects.

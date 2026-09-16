@@ -2192,6 +2192,16 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta アプリシークレット（省略可）",
+      "description": "この手動接続のWebhook署名検証を有効にします。Metaアプリのダッシュボードの「設定 > 基本」で確認できます。"
+    },
+    "lastCallRecorded": {
+      "label": "最後の通話録音"
+    },
+    "lastCallTranscript": {
+      "label": "最後の通話文字起こし"
     }
   },
   "flows": {
@@ -2332,7 +2342,9 @@
       "import": "フローをインポート",
       "export": "エクスポート",
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
-      "importJsonOnly": "JSONファイルのみ"
+      "importJsonOnly": "JSONファイルのみ",
+      "whatsappCallButton": "WhatsAppで通話",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2448,6 +2460,10 @@
     "media": {
       "stepUnsupportedOnChannel": "このチャネルではこの種類のメディアを送信できず、ステップはスキップされます。ステップを削除するか、対応しているチャネルにノードを切り替えてください。",
       "buttonsSkippedOnChannel": "このチャネルではメディアメッセージと一緒にボタンを送信できず、ボタンはスキップされます。代わりに次のテキストステップに配置してください。"
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "ボタンを編集",
+      "buttonLabel": "ボタンラベル"
     }
   },
   "folders": {
@@ -2669,7 +2685,8 @@
       "adAccountFilter": {
         "all": "すべての広告アカウント",
         "label": "広告アカウント",
-        "unavailable": "広告アカウントを読み込めませんでした。この連携のAds接続、またはワークスペースのFacebook Ads接続を設定で確認してください。"
+        "unavailable": "広告アカウントを読み込めませんでした。この連携のAds接続、またはワークスペースのFacebook Ads接続を設定で確認してください。",
+        "note": "広告アカウントで絞り込む場合、選択した期間内でコンバージョンはあるが広告費または配信が0の広告は非表示になります。"
       },
       "channelFilter": {
         "label": "チャネル",
@@ -3257,7 +3274,19 @@
     "waTemplateLtoExpirationRequired": "送信する前に期間限定オファーの有効期限を選択してください。",
     "waTemplateMpmIncompleteProducts": "各セクションには選択済みの商品が少なくとも1つ必要です。空の行を削除するか、商品を選択してください。",
     "mediaStepUnsupported": "このチャネルではこの種類のメディアを送信できません。ステップを削除するか、対応しているチャネルにこのノードを向けてください。",
-    "mediaButtonsUnsupported": "このチャネルではメディアメッセージと一緒にボタンを送信できません。ボタンを削除するか、この後のテキストステップに移動してください。"
+    "mediaButtonsUnsupported": "このチャネルではメディアメッセージと一緒にボタンを送信できません。ボタンを削除するか、この後のテキストステップに移動してください。",
+    "voiceCall": "音声通話",
+    "voiceCallDuration": "音声通話 · {duration}",
+    "missedVoiceCall": "不在着信",
+    "declinedVoiceCall": "拒否された音声通話",
+    "voiceCallFailed": "失敗した音声通話",
+    "unansweredVoiceCall": "応答なし",
+    "canceledVoiceCall": "キャンセルされた通話",
+    "acceptedCallPermission": "通話許可リクエストを承認しました",
+    "declinedCallPermission": "通話許可リクエストを拒否しました",
+    "sendHumanAgentTag": "HUMAN_AGENTタグを付けてメッセージを1件送信",
+    "warning": "警告！",
+    "humanAgentWarningDescription": "問題を24時間以内に解決することが合理的に困難な場合に限り、ユーザーのメッセージに7日以内で返信できます。たとえば、週末、祝日、または完了までに1日以上かかるケースです。それ以外の理由でこのオプションを使用すると、FacebookページまたはInstagramアカウントが危険にさらされる可能性があります。確信がない場合は続行しないでください。"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",
@@ -3720,7 +3749,8 @@
       "profile": "プロフィール",
       "usefulLinks": "便利なリンク",
       "conversionsApi": "広告最適化",
-      "settings": "設定"
+      "settings": "設定",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "WhatsAppアカウントを管理",
@@ -3852,6 +3882,176 @@
     "transferPhoneNumber": "別のWhatsAppプロバイダーから電話番号を移行",
     "selectPage": {
       "tryAgain": "再接続を試す"
+    },
+    "manualAppSecretMissingNotice": "Meta アプリシークレットを追加するまで、Webhookの署名は検証されません。",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Metaが通話設定の変更を拒否しました",
+        "bicUnavailable": "この国では、企業が発信する通話は利用できません",
+        "callAlreadyInProgress": "この連絡先への通話は既に進行中です",
+        "hangupFailed": "通話を終了できませんでした",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "Could not decline the WhatsApp call",
+        "voipHangupFailed": "Could not end the WhatsApp call",
+        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again."
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingInProgress": "録音をリクエストしました",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Metaが変更を拒否しました",
+      "callContact": "WhatsAppで発信",
+      "dialing": "発信中…",
+      "startCall": "WhatsApp通話を開始",
+      "retentionLabel": "録音の保存期間（日数）",
+      "retentionHelper": "通話の録音が完全に削除されるまでの保存期間。",
+      "transcriptionLabel": "通話を文字起こし",
+      "transcriptionHelper": "接続済みのAIプロバイダーを使用して、録音された通話を自動的に文字起こしします。",
+      "preflight": {
+        "title": "通話の利用資格",
+        "appSubscriptionMissing": "まずMetaアプリダッシュボードでこのアプリのWhatsApp Webhookを設定してから、再度お試しください。",
+        "appSubscriptionFailed": "アプリの「calls」Webhookのサブスクリプションを確認できませんでした。しばらくしてから再度お試しください。",
+        "callsNotSubscribed": "このアプリは「calls」Webhookフィールドをサブスクライブしていないため、通話イベントがChatbotXに届きません（Metaエラー138018：技術的な前提条件が満たされていません。WABAにサブスクライブしているアプリのうち、少なくとも1つが通話Webhookフィールドを持つようにしてください）。",
+        "fixButton": "修正",
+        "fixSuccess": "アプリはWhatsApp通話Webhookに正常にサブスクライブされました。",
+        "manualIntegrationNotice": "この番号は手動で接続されており、ここにはアプリの認証情報がありません。Metaアプリダッシュボードでアプリの「calls」Webhookフィールドをサブスクライブしてください。",
+        "coexistenceWarning": "この番号はWhatsApp Businessアプリの併用（コイグジスタンス）を使用していますが、Metaは通話でこれをサポートしていません。Cloud APIのみに移行してください。",
+        "messagingLimitTooLow": "この番号のメッセージ送信上限レベルは、Metaが通話に必要とする最低限を下回っています。"
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "文字起こしを表示",
+        "hideTranscript": "文字起こしを隠す"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "マイクへのアクセスが拒否されました。ブラウザの設定でマイクへのアクセスを許可してから再試行してください。",
+        "micNotFound": "マイクが見つかりません。マイクを接続してから再試行してください。"
+      },
+      "card": {
+        "audioCall": "音声通話",
+        "recordingUnavailable": "録音はもう利用できません",
+        "recordingProcessing": "録音を処理中…",
+        "moreOptions": "その他のオプション",
+        "download": "ダウンロード",
+        "openCallInformation": "通話情報を開く",
+        "transcript": "文字起こし",
+        "aiSummary": "AI要約",
+        "transcriptUnavailable": "文字起こしはまだ利用できません",
+        "summaryUnavailable": "AI要約はまだ利用できません",
+        "play": "再生",
+        "pause": "一時停止",
+        "seek": "シーク",
+        "mute": "ミュート",
+        "unmute": "ミュート解除",
+        "playbackFailed": "再生に失敗しました"
+      },
+      "sheet": {
+        "title": "通話情報",
+        "summaryTab": "AI要約",
+        "transcriptTab": "文字起こし",
+        "searchLabel": "文字起こしを検索",
+        "searchPlaceholder": "文字起こしを検索…",
+        "transcriptUnavailable": "この通話の言語では文字起こしを利用できません",
+        "transcriptError": "文字起こしを読み込めませんでした。接続を確認して再試行してください。",
+        "noSearchResults": "一致するセグマコヘなし",
+        "playSegment": "ここから再生",
+        "summaryKeyPoints": "主なポイント",
+        "summaryActionItems": "アドテァテタデタリト",
+        "regenerate": "再生成",
+        "regenerateConfirmTitle": "AI要約を再生成しますか？",
+        "regenerateConfirmDescription": "現在の要約は新しく生成された要約に置き換えられます。",
+        "summaryEmpty": "この通話のAI要約はまだありません。",
+        "generateSummary": "要約を生成"
+      },
+      "summaryDialog": {
+        "title": "AI要約を生成",
+        "description": "この通話を要約するために接続済みのAIプロバイダーを選択してください。",
+        "noProviderTitle": "接続されているAIプロバイダーがありません",
+        "noProviderDescription": "通話要約を生成するにはAI連携を接続してください。",
+        "connectLink": "AI設定に移動",
+        "generate": "生成",
+        "generating": "生成中…",
+        "generateFailed": "要約を生成できませんでした。もう一度お試しください。",
+        "retry": "再試行",
+        "emptyTranscriptTooltip": "この通話にはまだ要約できる文字起こしがありません"
+      },
+      "panel": {
+        "eyebrowCalling": "発信中…",
+        "eyebrowIncoming": "着信中",
+        "eyebrowOnCall": "通話中",
+        "statusPreparing": "準備中…",
+        "statusWaitingForMic": "マイクへのアクセスを待っています…",
+        "statusDeclined": "拒否されました",
+        "statusCallFailed": "通話に失敗しました",
+        "statusCallEnded": "通話が終了しました",
+        "end": "終了",
+        "minimize": "最小化",
+        "expand": "展開",
+        "dismiss": "閉じる",
+        "statusNoAnswer": "応答なし",
+        "eyebrowCallEnded": "通話終了",
+        "statusConnectionLost": "接続が失われました"
+      },
+      "capability": {
+        "title": "通話の利用条件",
+        "enableCalling": "設定 > チャネル > WhatsApp > 通話 で通話を有効にしてください。",
+        "reconnectChannel": "設定 > チャネル に移動し、WhatsAppチャネルを再接続してください。",
+        "ok": "OK",
+        "micPermissionTitle": "マイクの許可",
+        "dialFailureTitle": "発信できませんでした"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "手動で接続された番号",
+        "callsSubscription": "このWhatsApp番号は手動で接続されています。Metaアプリがcalls Webhookフィールドをサブスクライブしていることを確認してください（Metaアプリダッシュボード → WhatsApp → Configuration → Webhook fields → calls）。そうしないと、発信通話は接続されず、着信通話も鳴りません。",
+        "unsignedWebhook": "この番号にはMeta App Secretも設定されていないため、受信Webhookは署名検証されていません。",
+        "callAnyway": "このまま発信する"
+      }
     }
   },
   "zalo": {
@@ -3864,7 +4064,8 @@
       "toggleSuccess": "タグ同期の設定を更新しました。",
       "enabledSince": "{date}から有効",
       "disabled": "無効"
-    }
+    },
+    "refreshPermissions": "権限を更新"
   },
   "telegram": {
     "description": "この連携を使用すると、Telegramボットを作成できます。",
@@ -4001,7 +4202,9 @@
       "productRemovedFromCart": "商品がカートから削除された",
       "productOrdered": "商品が注文された",
       "contactReferredANewContact": "連絡先が新しい連絡先を紹介した",
-      "contactReferredExistingContact": "連絡先が既存の連絡先を紹介した"
+      "contactReferredExistingContact": "連絡先が既存の連絡先を紹介した",
+      "callRecorded": "通話が録音されました",
+      "callTranscribed": "通話が文字起こしされました"
     },
     "actions": {
       "addTag": "タグを追加",
@@ -5667,7 +5870,8 @@
     "connectViaFacebook": "Facebook 経由で連携",
     "unsupportedExplanation": "この Instagram アカウントは Instagram ビジネスログインで連携されています。Meta Conversions API を利用するには、Facebook 経由でアカウントを連携してください。",
     "flowStep": {
-      "whatsappNote": "WhatsApp のイベントは、Click-to-WhatsApp 広告から開始した会話でのみ送信されます。"
+      "whatsappNote": "WhatsApp のイベントは、Click-to-WhatsApp 広告から開始した会話でのみ送信されます。",
+      "description": "Messenger、Instagram、WhatsApp 向けに LeadSubmitted イベントをキューに追加します。"
     },
     "status": {
       "title": "Meta Conversions API",

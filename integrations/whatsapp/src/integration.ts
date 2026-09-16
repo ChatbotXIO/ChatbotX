@@ -5,6 +5,7 @@ import {
   SdkException,
 } from "@chatbotx.io/sdk"
 import { exchangeLongLivedToken } from "./api/auth"
+import { getCallingSettings, updateCallingSettings } from "./api/calling"
 import { getFlowAssets } from "./api/flow"
 import {
   findConversationalAutomation,
@@ -51,6 +52,9 @@ const config: IntegrationDefinition<
       await findConversationalAutomation(ctx.auth),
     updateConversationalAutomation: async ({ ctx, data }) =>
       await updateConversationalAutomation(ctx.auth, data),
+    getCallingSettings: async ({ ctx }) => await getCallingSettings(ctx.auth),
+    updateCallingSettings: async ({ ctx, data }) =>
+      await updateCallingSettings(ctx.auth, data),
   },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")

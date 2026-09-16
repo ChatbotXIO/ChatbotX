@@ -39,6 +39,9 @@ export const ScheduleJobData = {
   refreshChannelTokens: "refreshChannelTokens",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
+  // WhatsApp calling.
+  purgeExpiredCallRecordings: "purgeExpiredCallRecordings",
+  sweepStaleWhatsappCalls: "sweepStaleWhatsappCalls",
 } as const
 
 /**
@@ -232,6 +235,18 @@ export type ScheduleJobTeardownExpiredTrial = {
   data: { userId: string }
 }
 
+/** Daily retention sweep: deletes expired call recordings' S3 objects and clears the columns. */
+export type ScheduleJobPurgeExpiredCallRecordings = {
+  type: typeof ScheduleJobData.purgeExpiredCallRecordings
+  data: Record<string, never>
+}
+
+/** Every 5 minutes: `ringing` call rows older than 90s that were never finalized -> `failed`. */
+export type ScheduleJobSweepStaleWhatsappCalls = {
+  type: typeof ScheduleJobData.sweepStaleWhatsappCalls
+  data: Record<string, never>
+}
+
 export type ScheduleJobData =
   | ScheduleJobBroadcast
   | ScheduleJobEnqueueBroadcast
@@ -262,6 +277,8 @@ export type ScheduleJobData =
   | ScheduleJobRefreshChannelTokens
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial
+  | ScheduleJobPurgeExpiredCallRecordings
+  | ScheduleJobSweepStaleWhatsappCalls
 
 export const scheduleQueue = isNoRedisEnv()
   ? fakeQueue

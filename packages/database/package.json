@@ -32,6 +32,7 @@
     "db:check-drift": "node ./scripts/check-schema-drift.mjs",
     "db:fix-chain": "node ./scripts/fix-migration-chain.mjs",
     "db:migrate": "dotenv -e ../../.env -- node ./scripts/run-migrations.mjs",
+    "db:reconcile": "dotenv -e ../../.env -- node ./scripts/reconcile-ledger.mjs",
     "db:bootstrap-message-shard": "dotenv -e ../../.env -- tsx scripts/bootstrap-message-shard.ts",
     "db:seed": "dotenv -e ../../.env -- tsx src/seed/index.ts",
     "db:setup": "pnpm db:migrate && pnpm db:seed",

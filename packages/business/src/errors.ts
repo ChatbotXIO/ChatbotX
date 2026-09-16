@@ -251,6 +251,20 @@ export const channelLimitReachedException = () =>
     "channelLimitReached",
   )
 
+/**
+ * A second "Generate/Regenerate summary" request arrived while another one
+ * for the SAME call is still in flight (the in-flight lock in
+ * `whatsappCallSummaryService.attachSummary` failed to acquire). 409 rather
+ * than a generic error so a caller can show "already generating" instead of
+ * a hard failure.
+ */
+export const summaryAlreadyGeneratingException = () =>
+  new ChatbotXException(
+    "A summary is already being generated for this call.",
+    "summaryAlreadyGenerating",
+    409,
+  )
+
 export const workspaceLimitReachedException = () =>
   new ChatbotXException(
     "Workspace limit reached for this plan",

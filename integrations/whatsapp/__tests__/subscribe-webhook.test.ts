@@ -60,6 +60,30 @@ describe("subscribeWebhook", () => {
     expect(options.headers.Authorization).toBe("Bearer tok-abc")
   })
 
+  // The WABA `subscribed_apps` payload is documented as
+  // taking only `override_callback_uri`/`verify_token` (+ our long-standing
+  // `subscribed_fields`) — `calls` field subscription is app-level
+  // (`/{app-id}/subscriptions`, see `app-subscriptions.ts`) and must never be
+  // folded into this body.
+  it("never sends a 'calls' field or app-subscription params on the WABA payload", async () => {
+    postMock.mockReturnValueOnce(okResponse())
+
+    await subscribeWebhook({
+      auth: buildAuth(),
+      includeAutomaticEvents: true,
+      overrideCallbackUrl: true,
+    })
+
+    const [, options] = postMock.mock.calls[0]
+    expect(options.json.subscribed_fields).not.toContain("calls")
+    expect(options.json.subscribed_fields).not.toContain(
+      "account_settings_update",
+    )
+    expect(Object.keys(options.json).sort()).toEqual(
+      ["override_callback_uri", "subscribed_fields", "verify_token"].sort(),
+    )
+  })
+
   it("posts automatic_events when includeAutomaticEvents=true", async () => {
     postMock.mockReturnValueOnce(okResponse())
 

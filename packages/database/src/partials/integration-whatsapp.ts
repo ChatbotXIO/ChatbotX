@@ -44,3 +44,27 @@ export const whatsappRegistrationErrorSchema = z.object({
 export type WhatsappRegistrationError = z.infer<
   typeof whatsappRegistrationErrorSchema
 >
+
+/**
+ * Recording/transcription pipeline mode for WhatsApp calls (VoIP only).
+ * `metaNative` (default): Meta's per-call `recording`/`transcription`
+ * opt-in objects — diarized transcript, new Meta billing.
+ * `browserWhisper`: the pre-existing browser MediaRecorder + OpenAI Whisper
+ * pipeline, kept as a selectable fallback (flat/timestamped, no speaker
+ * diarization, OpenAI cost).
+ */
+export const whatsappCallRecordingModes = z.enum([
+  "metaNative",
+  "browserWhisper",
+])
+export type WhatsappCallRecordingMode = z.infer<
+  typeof whatsappCallRecordingModes
+>
+
+export const whatsappCallTranscriptionModes = z.enum([
+  "metaNative",
+  "browserWhisper",
+])
+export type WhatsappCallTranscriptionMode = z.infer<
+  typeof whatsappCallTranscriptionModes
+>

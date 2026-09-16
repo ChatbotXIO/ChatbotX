@@ -127,32 +127,36 @@ export function AddCondition({
         ],
       },
 
-      // {
-      //   label: t("fields.whatsapp.label"),
-      //   children: [
-      //     {
-      //       label: t("trigger.conditions.incomingCall"),
-      //       value: triggerEventTypes.enum.incomingCall,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.incomingCall,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.missedAudioCall"),
-      //       value: triggerEventTypes.enum.missedAudioCall,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.missedAudioCall,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.callEnded"),
-      //       value: triggerEventTypes.enum.callEnded,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.callEnded,
-      //       }),
-      //     },
-      //   ],
-      // },
+      {
+        label: t("fields.whatsapp.label"),
+        children: [
+          {
+            label: t("trigger.conditions.incomingCall"),
+            value: triggerEventTypes.enum.incomingCall,
+            defaultFn: createDefaultFn(triggerEventTypes.enum.incomingCall),
+          },
+          {
+            label: t("trigger.conditions.missedAudioCall"),
+            value: triggerEventTypes.enum.missedAudioCall,
+            defaultFn: createDefaultFn(triggerEventTypes.enum.missedAudioCall),
+          },
+          {
+            label: t("trigger.conditions.callEnded"),
+            value: triggerEventTypes.enum.callEnded,
+            defaultFn: createDefaultFn(triggerEventTypes.enum.callEnded),
+          },
+          {
+            label: t("trigger.conditions.callRecorded"),
+            value: triggerEventTypes.enum.callRecorded,
+            defaultFn: createDefaultFn(triggerEventTypes.enum.callRecorded),
+          },
+          {
+            label: t("trigger.conditions.callTranscribed"),
+            value: triggerEventTypes.enum.callTranscribed,
+            defaultFn: createDefaultFn(triggerEventTypes.enum.callTranscribed),
+          },
+        ],
+      },
 
       // {
       //   label: t("fields.pipelines.label"),
