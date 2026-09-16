@@ -52,24 +52,25 @@ const BaseInboxCard = memo(function BaseInboxCard({
 }) {
   const t = useTranslations()
   const { appUrl } = useTenantSettings()
+  // Channels with no public chat link (threads, api) still get a card — only
+  // the QR/test action needs a link, so hiding the whole card dropped a
+  // connected inbox from the dashboard entirely.
   const link = buildInboxLink(appUrl, inbox as InboxWithIntegrations)
-
-  if (!link) {
-    return
-  }
 
   return (
     <Card className="py-3">
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
         <InboxIcon channel={inbox.channel as ChannelType} label={inbox.name} />
 
-        <ScanQRCodeDialog
-          link={link}
-          title={t("actions.connectFeature", {
-            feature: inbox.name,
-          })}
-          triggerName={t("actions.testNow")}
-        />
+        {link ? (
+          <ScanQRCodeDialog
+            link={link}
+            title={t("actions.connectFeature", {
+              feature: inbox.name,
+            })}
+            triggerName={t("actions.testNow")}
+          />
+        ) : null}
       </CardContent>
     </Card>
   )
