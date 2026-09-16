@@ -269,6 +269,11 @@ export const router = {
   refLinksAPI: lazy(() =>
     import("@/features/reflinks/api").then((m) => ({ default: m.refLinksAPI })),
   ),
+  realtimeAPI: lazy(() =>
+    import("@/features/realtime/api").then((m) => ({
+      default: m.realtimeAPI,
+    })),
+  ),
   userPersistentMenusAPI: lazy(() =>
     import("@/features/user-persistent-menus/api").then((m) => ({
       default: m.userPersistentMenusAPI,

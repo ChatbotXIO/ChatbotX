@@ -111,6 +111,14 @@ type UpdateCapiAccessTokenInput = WorkspaceIntegrationRef & {
   capiAccessToken: EncryptedData
 }
 
+type UpdateCallSettingsInput = WorkspaceIntegrationRef & {
+  values: Partial<{
+    callRecordingEnabled: boolean
+    callRecordingRetentionDays: number
+    callTranscriptionEnabled: boolean
+  }>
+}
+
 const workspaceIntegrationFilter = (input: WorkspaceIntegrationRef) =>
   and(
     eq(integrationWhatsappModel.id, input.id),
@@ -660,6 +668,48 @@ class IntegrationWhatsappRepository {
       .returning()
 
     return row
+  }
+  /** Whether the number backing this inbox auto-records in-app calls. */
+  async isCallRecordingEnabledForInbox(
+    input: { workspaceId: string; inboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const [row] = await tx
+      .select({ enabled: integrationWhatsappModel.callRecordingEnabled })
+      .from(integrationWhatsappModel)
+      .where(
+        and(
+          eq(integrationWhatsappModel.inboxId, input.inboxId),
+          eq(integrationWhatsappModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .limit(1)
+    return row?.enabled === true
+  }
+
+  /** Toggle auto-recording of in-app calls for this number. */
+  async updateCallRecordingEnabled(
+    input: WorkspaceIntegrationRef & { enabled: boolean },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    await tx
+      .update(integrationWhatsappModel)
+      .set({ callRecordingEnabled: input.enabled })
+      .where(workspaceIntegrationFilter(input))
+  }
+
+  /** Updates recording/retention/transcription settings for a number (Calls card). */
+  async updateCallSettings(
+    input: UpdateCallSettingsInput,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .update(integrationWhatsappModel)
+      .set(input.values)
+      .where(workspaceIntegrationFilter(input))
+      .returning()
+
+    return row ?? null
   }
 }
 

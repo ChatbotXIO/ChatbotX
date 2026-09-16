@@ -2186,6 +2186,16 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Rahasia Aplikasi Meta (opsional)",
+      "description": "Mengaktifkan verifikasi tanda tangan webhook untuk koneksi manual ini. Temukan di dashboard Aplikasi Meta Anda di bagian Settings > Basic."
+    },
+    "lastCallRecorded": {
+      "label": "Rekaman panggilan terakhir"
+    },
+    "lastCallTranscript": {
+      "label": "Transkrip panggilan terakhir"
     }
   },
   "flows": {
@@ -2326,7 +2336,9 @@
       "import": "Impor Alur",
       "export": "Ekspor",
       "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
-      "importJsonOnly": "Hanya file JSON"
+      "importJsonOnly": "Hanya file JSON",
+      "whatsappCallButton": "Telepon di WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -2442,6 +2454,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Saluran ini tidak dapat mengirim jenis media ini — langkahnya dilewati di sana. Hapus langkah ini, atau ubah node ke saluran yang mendukungnya.",
       "buttonsSkippedOnChannel": "Saluran ini tidak dapat mengirim tombol bersama pesan media — tombol dilewati di sana. Letakkan pada langkah teks berikutnya saja."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Edit Tombol",
+      "buttonLabel": "Label Tombol"
     }
   },
   "folders": {
@@ -2663,7 +2679,8 @@
       "adAccountFilter": {
         "all": "Semua akun iklan",
         "label": "Akun iklan",
-        "unavailable": "Tidak dapat memuat akun iklan — periksa koneksi Ads integrasi ini, atau koneksi Facebook Ads workspace, di pengaturan."
+        "unavailable": "Tidak dapat memuat akun iklan — periksa koneksi Ads integrasi ini, atau koneksi Facebook Ads workspace, di pengaturan.",
+        "note": "Iklan dengan konversi tetapi nol pengeluaran atau nol pengiriman dalam rentang tanggal yang dipilih akan disembunyikan saat memfilter berdasarkan akun iklan."
       },
       "channelFilter": {
         "label": "Saluran",
@@ -3271,7 +3288,19 @@
     "waTemplateLtoExpirationRequired": "Pilih tanggal berakhir untuk penawaran waktu terbatas sebelum mengirim.",
     "waTemplateMpmIncompleteProducts": "Setiap bagian membutuhkan minimal satu produk terpilih — hapus baris kosong atau pilih produknya.",
     "mediaStepUnsupported": "Saluran ini tidak dapat mengirim jenis media ini. Hapus langkahnya, atau arahkan node ini ke saluran yang mendukungnya.",
-    "mediaButtonsUnsupported": "Saluran ini tidak dapat mengirim tombol bersama pesan media. Hapus tombolnya, atau pindahkan ke langkah teks setelah langkah ini."
+    "mediaButtonsUnsupported": "Saluran ini tidak dapat mengirim tombol bersama pesan media. Hapus tombolnya, atau pindahkan ke langkah teks setelah langkah ini.",
+    "voiceCall": "Panggilan suara",
+    "voiceCallDuration": "Panggilan suara · {duration}",
+    "missedVoiceCall": "Panggilan suara tak terjawab",
+    "declinedVoiceCall": "Panggilan suara ditolak",
+    "voiceCallFailed": "Panggilan suara gagal",
+    "unansweredVoiceCall": "Tidak dijawab",
+    "canceledVoiceCall": "Panggilan dibatalkan",
+    "acceptedCallPermission": "Menerima permintaan izin panggilan",
+    "declinedCallPermission": "Menolak permintaan izin panggilan",
+    "sendHumanAgentTag": "Kirim satu pesan dengan tag HUMAN_AGENT",
+    "warning": "Peringatan!",
+    "humanAgentWarningDescription": "Anda hanya boleh menanggapi pesan pengguna dalam waktu 7 hari jika masalahnya tidak dapat diselesaikan secara wajar dalam 24 jam. Contohnya termasuk akhir pekan, hari libur, atau kasus yang memerlukan lebih dari satu hari untuk diselesaikan. Jangan gunakan opsi ini untuk alasan lain karena dapat membahayakan Halaman Facebook atau akun Instagram Anda. Jika tidak yakin, jangan lanjutkan."
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",
@@ -3734,7 +3763,8 @@
       "profile": "Profil",
       "usefulLinks": "Tautan Berguna",
       "conversionsApi": "Optimasi Iklan",
-      "settings": "Pengaturan"
+      "settings": "Pengaturan",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Kelola akun WhatsApp Anda",
@@ -3866,6 +3896,176 @@
     "transferPhoneNumber": "Transfer telepon dari penyedia WhatsApp lain",
     "selectPage": {
       "tryAgain": "Coba hubungkan kembali"
+    },
+    "manualAppSecretMissingNotice": "Tanda tangan webhook tidak diverifikasi hingga Anda menambahkan Rahasia Aplikasi Meta Anda.",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta menolak perubahan pengaturan panggilan",
+        "bicUnavailable": "Panggilan yang dimulai bisnis tidak tersedia untuk negara ini",
+        "callAlreadyInProgress": "Panggilan dengan kontak ini sudah sedang berlangsung",
+        "hangupFailed": "Tidak dapat mengakhiri panggilan",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "Could not decline the WhatsApp call",
+        "voipHangupFailed": "Could not end the WhatsApp call",
+        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again."
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingInProgress": "Perekaman diminta",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Meta menolak perubahan",
+      "callContact": "Telepon di WhatsApp",
+      "dialing": "Menelepon…",
+      "startCall": "Mulai panggilan WhatsApp",
+      "retentionLabel": "Retensi rekaman (hari)",
+      "retentionHelper": "Berapa lama rekaman panggilan disimpan sebelum dihapus secara permanen.",
+      "transcriptionLabel": "Transkripsikan panggilan",
+      "transcriptionHelper": "Secara otomatis mentranskripsikan panggilan yang direkam menggunakan penyedia AI Anda yang terhubung.",
+      "preflight": {
+        "title": "Kelayakan panggilan",
+        "appSubscriptionMissing": "Konfigurasikan dahulu webhook WhatsApp untuk aplikasi ini di Meta App Dashboard, lalu coba lagi.",
+        "appSubscriptionFailed": "Tidak dapat memverifikasi langganan webhook 'calls' aplikasi. Coba lagi sebentar.",
+        "callsNotSubscribed": "Aplikasi ini tidak berlangganan field webhook 'calls', sehingga peristiwa panggilan tidak dapat mencapai ChatbotX (error Meta 138018: prasyarat teknis belum terpenuhi — pastikan setidaknya satu aplikasi yang berlangganan WABA juga memiliki field webhook panggilan).",
+        "fixButton": "Perbaiki",
+        "fixSuccess": "Aplikasi sekarang berlangganan webhook panggilan WhatsApp.",
+        "manualIntegrationNotice": "Nomor ini terhubung secara manual dan tidak memiliki kredensial aplikasi di sini. Berlangganan field webhook 'calls' untuk aplikasi Anda di Meta App Dashboard.",
+        "coexistenceWarning": "Nomor ini menggunakan koeksistensi aplikasi WhatsApp Business, yang tidak didukung Meta untuk panggilan. Pindahkan ke Cloud API saja.",
+        "messagingLimitTooLow": "Tingkat batas pesan nomor ini di bawah minimum yang diwajibkan Meta untuk panggilan."
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "Tampilkan transkrip",
+        "hideTranscript": "Sembunyikan transkrip"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "Akses mikrofon ditolak. Izinkan akses mikrofon di pengaturan browser Anda dan coba lagi.",
+        "micNotFound": "Mikrofon tidak ditemukan. Sambungkan mikrofon dan coba lagi."
+      },
+      "card": {
+        "audioCall": "Panggilan suara",
+        "recordingUnavailable": "Rekaman tidak lagi tersedia",
+        "recordingProcessing": "Rekaman sedang diproses…",
+        "moreOptions": "Opsi lainnya",
+        "download": "Unduh",
+        "openCallInformation": "Buka informasi panggilan",
+        "transcript": "Transkrip",
+        "aiSummary": "Ringkasan AI",
+        "transcriptUnavailable": "Transkrip belum tersedia",
+        "summaryUnavailable": "Ringkasan AI belum tersedia",
+        "play": "Putar",
+        "pause": "Jeda",
+        "seek": "Cari posisi",
+        "mute": "Bisukan",
+        "unmute": "Bunyikan",
+        "playbackFailed": "Pemutaran gagal"
+      },
+      "sheet": {
+        "title": "Informasi Panggilan",
+        "summaryTab": "Ringkasan AI",
+        "transcriptTab": "Transkrip",
+        "searchLabel": "Cari dalam transkrip",
+        "searchPlaceholder": "Cari dalam transkrip…",
+        "transcriptUnavailable": "Transkrip tidak tersedia untuk bahasa panggilan ini",
+        "transcriptError": "Tidak dapat memuat transkrip. Periksa koneksi Anda dan coba lagi.",
+        "noSearchResults": "Tidak ada segmen yang cocok",
+        "playSegment": "Putar dari sini",
+        "summaryKeyPoints": "Poin utama",
+        "summaryActionItems": "Item tindakan",
+        "regenerate": "Buat ulang",
+        "regenerateConfirmTitle": "Buat ulang ringkasan AI?",
+        "regenerateConfirmDescription": "Ini akan mengganti ringkasan saat ini dengan ringkasan yang baru dibuat.",
+        "summaryEmpty": "Belum ada ringkasan AI untuk panggilan ini.",
+        "generateSummary": "Buat ringkasan"
+      },
+      "summaryDialog": {
+        "title": "Buat ringkasan AI",
+        "description": "Pilih penyedia AI yang terhubung untuk meringkas panggilan ini.",
+        "noProviderTitle": "Tidak ada penyedia AI yang terhubung",
+        "noProviderDescription": "Hubungkan integrasi AI untuk membuat ringkasan panggilan.",
+        "connectLink": "Buka pengaturan AI",
+        "generate": "Buat",
+        "generating": "Membuat…",
+        "generateFailed": "Gagal membuat ringkasan. Silakan coba lagi.",
+        "retry": "Coba lagi",
+        "emptyTranscriptTooltip": "Panggilan ini belum memiliki transkrip untuk diringkas"
+      },
+      "panel": {
+        "eyebrowCalling": "MEMANGGIL…",
+        "eyebrowIncoming": "PANGGILAN MASUK",
+        "eyebrowOnCall": "SEDANG PANGGILAN",
+        "statusPreparing": "Menyiapkan…",
+        "statusWaitingForMic": "Menunggu akses mikrofon…",
+        "statusDeclined": "Ditolak",
+        "statusCallFailed": "Panggilan gagal",
+        "statusCallEnded": "Panggilan berakhir",
+        "end": "Akhiri",
+        "minimize": "Perkecil",
+        "expand": "Perluas",
+        "dismiss": "Tutup",
+        "statusNoAnswer": "Tidak ada jawaban",
+        "eyebrowCallEnded": "PANGGILAN BERAKHIR",
+        "statusConnectionLost": "Koneksi terputus"
+      },
+      "capability": {
+        "title": "Kelayakan panggilan",
+        "enableCalling": "Aktifkan panggilan di Pengaturan > Saluran > WhatsApp > Panggilan.",
+        "reconnectChannel": "Buka Pengaturan > Saluran dan sambungkan ulang saluran WhatsApp.",
+        "ok": "OK",
+        "micPermissionTitle": "Izin mikrofon",
+        "dialFailureTitle": "Panggilan tidak dapat dilakukan"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Nomor yang terhubung secara manual",
+        "callsSubscription": "Nomor WhatsApp ini terhubung secara manual. Pastikan aplikasi Meta Anda berlangganan field webhook calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — jika tidak, panggilan keluar tidak akan tersambung dan panggilan masuk tidak akan berdering.",
+        "unsignedWebhook": "Nomor ini juga tidak memiliki Meta App Secret yang dikonfigurasi, sehingga webhook masuknya tidak diverifikasi tanda tangannya.",
+        "callAnyway": "Tetap panggil"
+      }
     }
   },
   "zalo": {
@@ -3878,7 +4078,8 @@
       "toggleSuccess": "Pengaturan sinkronisasi tag diperbarui.",
       "enabledSince": "Diaktifkan sejak {date}",
       "disabled": "Dinonaktifkan"
-    }
+    },
+    "refreshPermissions": "Perbarui izin"
   },
   "telegram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Telegram.",
@@ -4015,7 +4216,9 @@
       "productRemovedFromCart": "Produk Dihapus dari Keranjang",
       "productOrdered": "Produk Dipesan",
       "contactReferredANewContact": "Kontak Mereferensikan Kontak Baru",
-      "contactReferredExistingContact": "Kontak Mereferensikan Kontak yang Sudah Ada"
+      "contactReferredExistingContact": "Kontak Mereferensikan Kontak yang Sudah Ada",
+      "callRecorded": "Panggilan direkam",
+      "callTranscribed": "Panggilan ditranskripsi"
     },
     "actions": {
       "addTag": "Tambahkan Tag",
@@ -5591,7 +5794,8 @@
     "connectViaFacebook": "Hubungkan via Facebook",
     "unsupportedExplanation": "Akun Instagram ini terhubung menggunakan Instagram Business Login. Hubungkan akun melalui Facebook untuk menggunakan Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "Peristiwa WhatsApp hanya dikirim untuk percakapan yang dimulai dari iklan click-to-WhatsApp."
+      "whatsappNote": "Peristiwa WhatsApp hanya dikirim untuk percakapan yang dimulai dari iklan click-to-WhatsApp.",
+      "description": "Antrekan peristiwa LeadSubmitted untuk Messenger, Instagram, atau WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",

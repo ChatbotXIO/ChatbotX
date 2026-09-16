@@ -43,3 +43,62 @@ export function timingSafeStringEqual(a: string, b: string): boolean {
   }
   return different === 0
 }
+
+const DEFAULT_HMAC_SIGNATURE_PREFIX = "sha256="
+
+export type VerifyHmacSha256SignatureInput = {
+  rawBody: Uint8Array
+  secret: string
+  signatureHeader: string | null | undefined
+  /** Defaults to `"sha256="`, matching `X-Hub-Signature-256`. */
+  prefix?: string
+}
+
+/**
+ * Edge-safe (Web Crypto) verification of a Meta-style `sha256=<hex>` webhook
+ * signature header (commonly `X-Hub-Signature-256`). Channel-agnostic — any
+ * inbound webhook signed the same way (WhatsApp, Messenger, Instagram, …) can
+ * share this. The HMAC is computed over the exact request bytes (`rawBody`),
+ * never a re-encoded string, so the digest matches Meta's. Rejects (returns
+ * `false`) on a missing header, wrong prefix, or a value/length mismatch —
+ * never throws.
+ *
+ * Uses Web Crypto (`crypto.subtle`) rather than `node:crypto` so it stays
+ * importable from edge-bundled subpaths (e.g. the Next.js edge runtime pulls
+ * the oRPC router graph in through instrumentation).
+ */
+export async function verifyHmacSha256Signature(
+  input: VerifyHmacSha256SignatureInput,
+): Promise<boolean> {
+  const prefix = input.prefix ?? DEFAULT_HMAC_SIGNATURE_PREFIX
+  if (!input.signatureHeader?.startsWith(prefix)) {
+    return false
+  }
+
+  const provided = input.signatureHeader.slice(prefix.length).toLowerCase()
+
+  const enc = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(input.secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  )
+  // Copy into a fresh ArrayBuffer-backed view: a bare `Uint8Array` widens to
+  // `Uint8Array<ArrayBufferLike>` (possibly SharedArrayBuffer), which
+  // `crypto.subtle.sign`'s `BufferSource` param rejects.
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new Uint8Array(input.rawBody),
+  )
+  const expected = Array.from(new Uint8Array(signature))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+
+  return (
+    provided.length === expected.length &&
+    timingSafeStringEqual(provided, expected)
+  )
+}

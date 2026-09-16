@@ -692,6 +692,31 @@ class IntegrationWhatsappService extends BaseService {
       tx,
     })
   }
+
+  /**
+   * Persists the calling toggles that are stored locally rather than on
+   * Meta (call recording, its retention window, and transcription). Scoped
+   * by workspace in the UPDATE itself, so a settings write can never reach
+   * another workspace's number.
+   */
+  async updateCallSettings(input: {
+    id: string
+    workspaceId: string
+    values: Partial<{
+      callRecordingEnabled: boolean
+      callRecordingRetentionDays: number
+      callTranscriptionEnabled: boolean
+    }>
+  }): Promise<void> {
+    if (Object.keys(input.values).length === 0) {
+      return
+    }
+    await integrationWhatsappRepository.updateCallSettings({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      values: input.values,
+    })
+  }
 }
 
 export const integrationWhatsappService = new IntegrationWhatsappService()

@@ -307,6 +307,26 @@ export interface IMessageRepository {
     params: ListIncomingTextsByContactInboxParams,
   ): Promise<string[]>
 
+  /**
+   * Atomically merges `overlay` into the message's CURRENT
+   * `contentAttributes` via a single DB-side `jsonb ||` UPDATE — never a
+   * read-modify-write. Two independent writers racing on disjoint keys
+   * (e.g. a `call_recording_available` webhook setting `hasRecording` and a
+   * `call_transcription_available` webhook setting `hasTranscript`
+   * concurrently) can each merge their own key without clobbering the
+   * other's already-applied flag. Returns the resulting merged
+   * `contentAttributes` (so the caller can broadcast the authoritative
+   * current state) or `null` when no row matched `sourceId`/`workspaceId`.
+   */
+  mergeContentAttributesBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    overlay: Record<string, unknown>,
+  ): Promise<{
+    id: string
+    contentAttributes: Record<string, unknown> | null
+  } | null>
+
   updateAttachment(params: UpdateAttachmentParams): Promise<void>
 
   /**
@@ -319,6 +339,15 @@ export interface IMessageRepository {
     workspaceId: string,
     contentAttributes: Record<string, unknown>,
     createdAt: Date,
+  ): Promise<{ id: string } | null>
+
+  updateContentBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    patch: {
+      text?: string | null
+      contentAttributes?: Record<string, unknown> | null
+    },
   ): Promise<{ id: string } | null>
 
   updateMessageAttributes(

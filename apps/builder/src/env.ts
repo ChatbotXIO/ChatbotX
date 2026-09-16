@@ -19,6 +19,9 @@ export const env = createEnv({
     BETTER_AUTH_URL: z.url(),
     LICENSE_KEY: z.string().optional(),
     WHATSAPP_OVERRIDE_CALLBACK_URI: z.url().optional(),
+    // WhatsApp VoIP calling (docs/whatsapp-calling.md) ICE/TURN relay.
+    TURN_URL: z.string().optional(),
+    TURN_STATIC_SECRET: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_BUILDER_URL: z.url(),

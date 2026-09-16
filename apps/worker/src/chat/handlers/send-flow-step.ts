@@ -24,11 +24,15 @@ import {
   type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
-import type { AttachmentModel, MessageModel } from "@chatbotx.io/database/types"
+import type {
+  AttachmentModel,
+  ContactInboxModel,
+  MessageModel,
+} from "@chatbotx.io/database/types"
 import { signAppointmentWebviewToken } from "@chatbotx.io/encryption"
 import { emit } from "@chatbotx.io/event-bus"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
-import type { MetadataPayload } from "@chatbotx.io/flow-config"
+import type { MetadataPayload, StepType } from "@chatbotx.io/flow-config"
 import {
   appendCodeToMagicLink,
   type ButtonStepProps,
@@ -82,12 +86,27 @@ const CHANNEL_DELIVERABLE_STEP_TYPES = new Set<string>([
   stepTypes.enum.sendText,
   stepTypes.enum.sendVideo,
   stepTypes.enum.sendWaTemplateMessage,
+  stepTypes.enum.whatsappCallButton,
   stepTypes.enum.whatsappFlow,
   stepTypes.enum.whatsappOptionList,
 ])
 
+/**
+ * Steps whose payload only exists on one channel. On any other channel they
+ * are skipped before a Message row is persisted, so an omnichannel flow never
+ * shows a phantom "sent" message the channel could not deliver.
+ */
+const CHANNEL_EXCLUSIVE_STEP_TYPES: Partial<
+  Record<StepType, ContactInboxModel["channel"]>
+> = {
+  [stepTypes.enum.whatsappCallButton]: channelTypes.enum.whatsapp,
+}
+
 const isBlankTextCarrierStep = (step: SendFlowStepData) => {
-  if (step.stepType === stepTypes.enum.sendText) {
+  if (
+    step.stepType === stepTypes.enum.sendText ||
+    step.stepType === stepTypes.enum.whatsappCallButton
+  ) {
     return !step.text.trim()
   }
 
@@ -407,6 +426,20 @@ export async function sendFlowStep({
     return
   }
 
+  const exclusiveChannel = CHANNEL_EXCLUSIVE_STEP_TYPES[step.stepType]
+  if (exclusiveChannel && targetContactInbox.channel !== exclusiveChannel) {
+    logger.debug(
+      {
+        conversationId,
+        stepId: step.id,
+        stepType: step.stepType,
+        channel: targetContactInbox.channel,
+      },
+      "Skipping channel-exclusive flow step on another channel",
+    )
+    return
+  }
+
   if (step.stepType === stepTypes.enum.sendMessengerTemplateMessage) {
     if (targetContactInbox.channel !== channelTypes.enum.messenger) {
       return
@@ -499,7 +532,10 @@ export async function sendFlowStep({
   }
 
   const messageText =
-    resolvedStep.stepType === stepTypes.enum.sendText ? resolvedStep.text : null
+    resolvedStep.stepType === stepTypes.enum.sendText ||
+    resolvedStep.stepType === stepTypes.enum.whatsappCallButton
+      ? resolvedStep.text
+      : null
 
   let message: MessageModel | MessageWithAttachments | undefined
 

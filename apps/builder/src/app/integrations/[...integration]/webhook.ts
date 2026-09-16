@@ -13,6 +13,7 @@ import type {
   TiktokAuthValue,
   TiktokConfig,
 } from "@chatbotx.io/integration-tiktok"
+import { SdkException } from "@chatbotx.io/sdk"
 import { integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
 import { isCloud } from "@/env"
@@ -176,8 +177,13 @@ export const handleWebhook = async (
       { err: e, integrationType },
       "Integration handleRequest failed",
     )
+    // Respect the exception's own status (e.g. 401 from a failed inbound
+    // webhook signature check) instead of always answering 400 — every
+    // SdkException still defaults its httpStatusCode to 400, so this is a
+    // no-op for exceptions that never set one.
+    const status = e instanceof SdkException ? e.httpStatusCode : 400
     return new Response(JSON.stringify({ message }), {
-      status: 400,
+      status,
       headers: { "Content-Type": "application/json" },
     })
   }
