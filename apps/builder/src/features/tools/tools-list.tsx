@@ -3,11 +3,7 @@
 import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import {
-  SiFacebook,
-  SiInstagram,
-  SiThreads,
-} from "@icons-pack/react-simple-icons"
+import { SiFacebook, SiInstagram } from "@icons-pack/react-simple-icons"
 import {
   BotIcon,
   CalendarIcon,
@@ -79,13 +75,18 @@ export const TOOLS_CONFIG = [
     icon: SiInstagram,
     getLink: (id: string) => `/space/${id}/ig-stories`,
   },
-  {
-    id: "threads-comment",
-    labelKey: "threadsCommentAutomation.title",
-    descriptionKey: "threadsCommentAutomation.description",
-    icon: SiThreads,
-    getLink: (id: string) => `/space/${id}/threads-comments`,
-  },
+  // Hidden until Meta approves the Threads API permissions for the platform
+  // app — same reason the `threads` channel is `creatable: false, manageable:
+  // false` in `CHANNEL_CAPABILITIES` (`packages/utils/src/channel.ts`). The
+  // `/space/<id>/threads-comments` routes stay reachable by direct URL;
+  // restore this entry (and the `SiThreads` import) once approved.
+  // {
+  //   id: "threads-comment",
+  //   labelKey: "threadsCommentAutomation.title",
+  //   descriptionKey: "threadsCommentAutomation.description",
+  //   icon: SiThreads,
+  //   getLink: (id: string) => `/space/${id}/threads-comments`,
+  // },
   {
     id: "reflinks",
     labelKey: "reflinks.title",
