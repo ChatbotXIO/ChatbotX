@@ -137,7 +137,9 @@
       "import": "Importă fluxul",
       "export": "Exportă",
       "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
-      "importJsonOnly": "Doar fișiere JSON"
+      "importJsonOnly": "Doar fișiere JSON",
+      "markAsRead": "Marchează ca citit",
+      "reaction": "Reacționează"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -201,7 +203,12 @@
       "typingSecondsLabel": "Scriere timp de (secunde)",
       "lookupColumnsLabel": "Coloane de căutare:",
       "filterModeAnd": "ȘI",
-      "filterModeOr": "SAU"
+      "filterModeOr": "SAU",
+      "markAsReadDescription": "Marchează mesajul WhatsApp primit ca citit (bife albastre).",
+      "reactionEmojiLabel": "Alege un emoji:",
+      "reactionEmojiCustomLabel": "Emoji personalizat",
+      "reactionEmojiCustomDescription": "Alege un emoji rapid mai sus sau introdu orice emoji valid aici.",
+      "reactionPreviewText": "Reacționează cu {emoji}"
     },
     "operators": {
       "append": "Adaugă la sfârșit",

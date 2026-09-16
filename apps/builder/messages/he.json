@@ -429,7 +429,9 @@
       "import": "ייבוא זרימה",
       "export": "ייצוא",
       "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
-      "importJsonOnly": "קבצי JSON בלבד"
+      "importJsonOnly": "קבצי JSON בלבד",
+      "markAsRead": "סמן כנקרא",
+      "reaction": "הגב באימוג׳י"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -493,7 +495,12 @@
       "typingSecondsLabel": "הקלדה למשך (שניות)",
       "lookupColumnsLabel": "עמודות חיפוש:",
       "filterModeAnd": "וגם",
-      "filterModeOr": "או"
+      "filterModeOr": "או",
+      "markAsReadDescription": "מסמן את הודעת ה-WhatsApp שהתקבלה כנקראה (וי כחול).",
+      "reactionEmojiLabel": "בחר אימוג׳י:",
+      "reactionEmojiCustomLabel": "אימוג׳י מותאם אישית",
+      "reactionEmojiCustomDescription": "בחר אימוג׳י מהיר למעלה או הזן אימוג׳י חוקי כאן.",
+      "reactionPreviewText": "הגב עם {emoji}"
     },
     "operators": {
       "append": "הוספה לסוף",

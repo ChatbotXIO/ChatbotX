@@ -2332,7 +2332,9 @@
       "import": "Importa flusso",
       "export": "Esporta",
       "importStarted": "Il flusso è in fase di importazione. Controlla la cronologia delle importazioni per i risultati.",
-      "importJsonOnly": "Solo file JSON"
+      "importJsonOnly": "Solo file JSON",
+      "markAsRead": "Segna come letto",
+      "reaction": "Reagisci"
     },
     "splitTraffic": {
       "balanceHint": "La somma totale deve essere pari al 100%.",
@@ -2396,7 +2398,12 @@
       "typingSecondsLabel": "Digitazione per (secondi)",
       "lookupColumnsLabel": "Colonne di ricerca:",
       "filterModeAnd": "E",
-      "filterModeOr": "O"
+      "filterModeOr": "O",
+      "markAsReadDescription": "Contrassegna il messaggio WhatsApp ricevuto come letto (spunte blu).",
+      "reactionEmojiLabel": "Scegli un'emoji:",
+      "reactionEmojiCustomLabel": "Emoji personalizzata",
+      "reactionEmojiCustomDescription": "Scegli un'emoji rapida sopra o inserisci qualsiasi emoji valida qui.",
+      "reactionPreviewText": "Reagisci con {emoji}"
     },
     "operators": {
       "append": "Aggiungi alla fine",

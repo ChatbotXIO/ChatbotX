@@ -2657,7 +2657,9 @@
       "import": "Import Flow",
       "export": "Export",
       "importStarted": "Flow is importing. Check the import history for results.",
-      "importJsonOnly": "JSON files only"
+      "importJsonOnly": "JSON files only",
+      "markAsRead": "Mark as read",
+      "reaction": "Reaction"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
@@ -2721,7 +2723,12 @@
       "typingSecondsLabel": "Typing for (seconds)",
       "lookupColumnsLabel": "Lookup Columns:",
       "filterModeAnd": "AND",
-      "filterModeOr": "OR"
+      "filterModeOr": "OR",
+      "markAsReadDescription": "Marks the incoming WhatsApp message as read (blue checkmarks).",
+      "reactionEmojiLabel": "Choose an emoji:",
+      "reactionEmojiCustomLabel": "Custom emoji",
+      "reactionEmojiCustomDescription": "Pick a quick emoji above or enter any valid emoji here.",
+      "reactionPreviewText": "React with {emoji}"
     },
     "operators": {
       "append": "Append to the end",

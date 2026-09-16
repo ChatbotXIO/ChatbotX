@@ -2332,7 +2332,9 @@
       "import": "Tuo vuo",
       "export": "Vie",
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
-      "importJsonOnly": "Vain JSON-tiedostot"
+      "importJsonOnly": "Vain JSON-tiedostot",
+      "markAsRead": "Merkitse luetuksi",
+      "reaction": "Reagoi"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2396,7 +2398,12 @@
       "typingSecondsLabel": "Kirjoittaa (sekuntia)",
       "lookupColumnsLabel": "Hakusarakkeet:",
       "filterModeAnd": "JA",
-      "filterModeOr": "TAI"
+      "filterModeOr": "TAI",
+      "markAsReadDescription": "Merkitsee saapuvan WhatsApp-viestin luetuksi (siniset väkäset).",
+      "reactionEmojiLabel": "Valitse emoji:",
+      "reactionEmojiCustomLabel": "Mukautettu emoji",
+      "reactionEmojiCustomDescription": "Valitse pikaemoji ylhäältä tai kirjoita kelvollinen emoji tähän.",
+      "reactionPreviewText": "Reagoi: {emoji}"
     },
     "operators": {
       "append": "Lisää loppuun",

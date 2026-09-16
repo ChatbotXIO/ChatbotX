@@ -3190,7 +3190,9 @@
       "import": "Importera flöde",
       "export": "Exportera",
       "importStarted": "Flödet importeras. Kontrollera importhistoriken för resultat.",
-      "importJsonOnly": "Endast JSON-filer"
+      "importJsonOnly": "Endast JSON-filer",
+      "markAsRead": "Markera som läst",
+      "reaction": "Reagera"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -3242,7 +3244,12 @@
       "preview": "Förhandsgranska",
       "selectMessengerTemplatePlaceholder": "Välj en Messenger-mall",
       "selectTemplatePlaceholder": "Välj en WhatsApp-mall",
-      "typingSecondsLabel": "Skriver i (sekunder)"
+      "typingSecondsLabel": "Skriver i (sekunder)",
+      "markAsReadDescription": "Markerar det inkommande WhatsApp-meddelandet som läst (blå bockar).",
+      "reactionEmojiLabel": "Välj en emoji:",
+      "reactionEmojiCustomLabel": "Anpassad emoji",
+      "reactionEmojiCustomDescription": "Välj en snabb emoji ovan eller ange valfri giltig emoji här.",
+      "reactionPreviewText": "Reagera med {emoji}"
     },
     "followUp": {
       "cancelOnReplyHint": "Uppföljningen skickas inte om kontakten svarar innan tiden löper ut.",

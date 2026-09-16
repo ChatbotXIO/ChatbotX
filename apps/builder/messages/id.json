@@ -2332,7 +2332,9 @@
       "import": "Impor Alur",
       "export": "Ekspor",
       "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
-      "importJsonOnly": "Hanya file JSON"
+      "importJsonOnly": "Hanya file JSON",
+      "markAsRead": "Tandai sudah dibaca",
+      "reaction": "Reaksi"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -2396,7 +2398,12 @@
       "typingSecondsLabel": "Mengetik selama (detik)",
       "lookupColumnsLabel": "Kolom Pencarian:",
       "filterModeAnd": "DAN",
-      "filterModeOr": "ATAU"
+      "filterModeOr": "ATAU",
+      "markAsReadDescription": "Menandai pesan WhatsApp masuk sebagai sudah dibaca (centang biru).",
+      "reactionEmojiLabel": "Pilih emoji:",
+      "reactionEmojiCustomLabel": "Emoji kustom",
+      "reactionEmojiCustomDescription": "Pilih emoji cepat di atas atau masukkan emoji yang valid di sini.",
+      "reactionPreviewText": "Bereaksi dengan {emoji}"
     },
     "operators": {
       "append": "Tambahkan ke akhir",
