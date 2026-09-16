@@ -9,6 +9,7 @@ import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
@@ -168,6 +169,7 @@ async function startDefaultWorker() {
   )
 
   worker.on("failed", (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.default })
     if (!job) {
       return
     }
@@ -178,6 +180,10 @@ async function startDefaultWorker() {
     // where the provider is actually knowable — `syncTag` alone hits both
     // Messenger and Zalo, which no single catch-all label could attribute.
     logger.error(err, `Job ${job.id} has failed`)
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.default, job)
   })
 
   let isShuttingDown = false

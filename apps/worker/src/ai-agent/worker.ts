@@ -25,6 +25,7 @@ import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { processConversationSource } from "./handlers/process-conversation-source"
@@ -129,6 +130,7 @@ async function startAIAgentWorker() {
   )
 
   worker.on("failed", async (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.aiAgent })
     if (!job) {
       logger.error(
         { err: normalizeError(err) },
@@ -176,6 +178,10 @@ async function startAIAgentWorker() {
       },
       "AI Agent job failed",
     )
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.aiAgent, job)
   })
 
   let isShuttingDown = false

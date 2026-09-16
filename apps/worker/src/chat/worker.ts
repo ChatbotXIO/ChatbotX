@@ -14,6 +14,7 @@ import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isBotMessageQuotaReached } from "../lib/is-bot-message-quota-reached"
 import { isFinalAttempt } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { checkOutboundAutomatedResponse } from "./handlers/outbound-automated-response"
@@ -143,9 +144,14 @@ async function startChatWorker() {
   )
 
   worker.on("failed", (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.chat })
     if (job) {
       logger.error(err, `Job ${job.id} has failed`)
     }
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.chat, job)
   })
 
   let isShuttingDown = false

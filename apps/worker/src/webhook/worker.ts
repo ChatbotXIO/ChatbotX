@@ -10,6 +10,7 @@ import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { WebhookMatcherService } from "./services/webhook-matcher.service"
 
@@ -54,9 +55,14 @@ async function startWebhookWorker() {
   )
 
   worker.on("failed", (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.webhook })
     if (job) {
       logger.error(err, `Webhook job ${job.id} has failed`)
     }
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.webhook, job)
   })
 
   let isShuttingDown = false

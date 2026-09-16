@@ -8,6 +8,7 @@ import {
 import { type Job, Queue, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import {
   cleanupTriggerExecutions,
@@ -195,9 +196,14 @@ async function startScheduleWorker() {
   )
 
   worker.on("failed", (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.schedule })
     if (job) {
       logger.error(err, `Job ${job.id} has failed`)
     }
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.schedule, job)
   })
 
   let isShuttingDown = false

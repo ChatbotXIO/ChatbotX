@@ -23,6 +23,7 @@ import { detectConversationAndContactInbox } from "../lib/db"
 import { recordHeavyMetric } from "../lib/heavy-metrics"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { analyzeImage } from "./handlers/analyze-image"
@@ -338,6 +339,7 @@ async function startHeavyWorker() {
   )
 
   worker.on("failed", async (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.heavy })
     if (!job) {
       logger.error(
         { err: normalizeError(err) },
@@ -391,6 +393,10 @@ async function startHeavyWorker() {
       event: "failed",
       outcome: isRetryableHeavyError(err) ? "retryable_failed" : "failed",
     })
+  })
+
+  worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.heavy, job)
   })
 
   worker.on("stalled", (jobId) => {

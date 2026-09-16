@@ -100,6 +100,7 @@
     "mime-types": "^3.0.2",
     "p-limit": "^7.3.0",
     "pdf-parse-new": "2.0.0",
+    "prom-client": "^15.1.3",
     "remeda": "^2.34.0",
     "remove-markdown": "^0.6.3",
     "universal-error-normalizer": "^1.0.0",

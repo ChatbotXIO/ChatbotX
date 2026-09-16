@@ -12,6 +12,7 @@ import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { failedJobsTotal, observeJobDuration } from "../lib/metrics"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { TriggerExecutorService } from "./services/trigger-executor.service"
@@ -93,12 +94,14 @@ async function startTriggerWorker() {
   )
 
   worker.on("failed", (job, err) => {
+    failedJobsTotal.inc({ queue: queueNames.enum.trigger })
     if (job) {
       logger.error(err, `Trigger job ${job.id} has failed`)
     }
   })
 
   worker.on("completed", (job) => {
+    observeJobDuration(queueNames.enum.trigger, job)
     logger.info(`Trigger job ${job.id} completed successfully`)
   })
 
