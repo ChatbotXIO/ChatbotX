@@ -459,12 +459,13 @@ async function startIntegrationWorker() {
   worker.on("failed", (job, err) => {
     failedJobsTotal.inc({ queue: queueNames.enum.integration })
     if (job) {
-      logger.error({ err }, `Job ${job.id} has failed`)
+      logger.error({ err, jobId: job.id }, "Job has failed")
     }
   })
 
   worker.on("completed", (job) => {
     observeJobDuration(queueNames.enum.integration, job)
+    logger.info({ jobId: job.id }, "Job completed")
   })
 
   let isShuttingDown = false

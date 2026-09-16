@@ -182,6 +182,7 @@ async function startAIAgentWorker() {
 
   worker.on("completed", (job) => {
     observeJobDuration(queueNames.enum.aiAgent, job)
+    logger.info({ jobId: job.id }, "AI Agent job completed")
   })
 
   let isShuttingDown = false

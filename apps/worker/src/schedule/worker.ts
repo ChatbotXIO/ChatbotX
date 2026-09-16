@@ -198,12 +198,13 @@ async function startScheduleWorker() {
   worker.on("failed", (job, err) => {
     failedJobsTotal.inc({ queue: queueNames.enum.schedule })
     if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
+      logger.error({ err, jobId: job.id }, "Job has failed")
     }
   })
 
   worker.on("completed", (job) => {
     observeJobDuration(queueNames.enum.schedule, job)
+    logger.info({ jobId: job.id }, "Job completed")
   })
 
   let isShuttingDown = false

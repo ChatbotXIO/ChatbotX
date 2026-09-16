@@ -96,13 +96,13 @@ async function startTriggerWorker() {
   worker.on("failed", (job, err) => {
     failedJobsTotal.inc({ queue: queueNames.enum.trigger })
     if (job) {
-      logger.error(err, `Trigger job ${job.id} has failed`)
+      logger.error({ err, jobId: job.id }, "Trigger job has failed")
     }
   })
 
   worker.on("completed", (job) => {
     observeJobDuration(queueNames.enum.trigger, job)
-    logger.info(`Trigger job ${job.id} completed successfully`)
+    logger.info({ jobId: job.id }, "Trigger job completed")
   })
 
   logger.info("Trigger worker started")

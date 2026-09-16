@@ -57,12 +57,13 @@ async function startWebhookWorker() {
   worker.on("failed", (job, err) => {
     failedJobsTotal.inc({ queue: queueNames.enum.webhook })
     if (job) {
-      logger.error(err, `Webhook job ${job.id} has failed`)
+      logger.error({ err, jobId: job.id }, "Webhook job has failed")
     }
   })
 
   worker.on("completed", (job) => {
     observeJobDuration(queueNames.enum.webhook, job)
+    logger.info({ jobId: job.id }, "Webhook job completed")
   })
 
   let isShuttingDown = false

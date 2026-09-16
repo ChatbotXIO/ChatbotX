@@ -38,12 +38,13 @@ async function startNotificationWorker() {
   worker.on("failed", (job, err) => {
     failedJobsTotal.inc({ queue: queueNames.enum.notification })
     if (job) {
-      logger.error(err, `Notification job ${job.id} has failed`)
+      logger.error({ err, jobId: job.id }, "Notification job has failed")
     }
   })
 
   worker.on("completed", (job) => {
     observeJobDuration(queueNames.enum.notification, job)
+    logger.info({ jobId: job.id }, "Notification job completed")
   })
 
   let isShuttingDown = false

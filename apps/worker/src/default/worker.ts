@@ -179,11 +179,12 @@ async function startDefaultWorker() {
     // six jobs that do call a third party log explicitly in their own handlers,
     // where the provider is actually knowable — `syncTag` alone hits both
     // Messenger and Zalo, which no single catch-all label could attribute.
-    logger.error(err, `Job ${job.id} has failed`)
+    logger.error({ err, jobId: job.id }, "Job has failed")
   })
 
   worker.on("completed", (job) => {
     observeJobDuration(queueNames.enum.default, job)
+    logger.info({ jobId: job.id }, "Job completed")
   })
 
   let isShuttingDown = false

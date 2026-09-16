@@ -397,6 +397,7 @@ async function startHeavyWorker() {
 
   worker.on("completed", (job) => {
     observeJobDuration(queueNames.enum.heavy, job)
+    logger.info({ jobId: job.id }, "Heavy job completed")
   })
 
   worker.on("stalled", (jobId) => {
