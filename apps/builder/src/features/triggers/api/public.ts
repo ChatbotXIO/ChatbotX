@@ -59,7 +59,7 @@ export const triggersPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/triggers/{id}",
-      summary: "Get a trigger by id",
+      summary: "Get trigger",
       description: "Returns a trigger with its real conditions and actions.",
       tags: ["Triggers"],
     })
@@ -87,7 +87,7 @@ export const triggersPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/triggers",
-      summary: "Create a trigger",
+      summary: "Create trigger",
       description:
         "Creates an empty trigger. Use PUT /v1/triggers/{id} to attach conditions and actions.",
       successStatus: 201,
@@ -109,7 +109,7 @@ export const triggersPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/triggers/{id}",
-      summary: "Replace a trigger's conditions and actions",
+      summary: "Replace trigger conditions and actions",
       description:
         "Overwrites a trigger's full set of conditions and actions. Call `triggers.get` to inspect current values first.",
       tags: ["Triggers"],
@@ -146,7 +146,7 @@ export const triggersPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/triggers/{id}/settings",
-      summary: "Update a trigger's name or active state",
+      summary: "Update trigger name or active state",
       description:
         "Changes a trigger's name or active state without touching its conditions and actions.",
       tags: ["Triggers"],
@@ -185,7 +185,7 @@ export const triggersPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/triggers/{id}",
-      summary: "Delete a trigger",
+      summary: "Delete trigger",
       description:
         "Permanently deletes a trigger. Use `triggers.list` to find its id first.",
       successStatus: 204,

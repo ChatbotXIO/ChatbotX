@@ -44,7 +44,7 @@ export const aiFilesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ai-files/{id}",
-      summary: "Get an AI file by id",
+      summary: "Get AI file",
       description:
         "Returns one AI knowledge-base file's metadata and processing status. Use `aiFiles.list` to find its id first.",
       tags: ["AI Files"],
@@ -72,7 +72,7 @@ export const aiFilesPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/ai-files",
-      summary: "Create an AI file",
+      summary: "Create AI file",
       description:
         "Provide either 'file' (multipart upload, up to 100MB) or 'url' (the server downloads and stores it, up to 100MB). Requires an OpenAI or Gemini integration configured for embeddings.",
       successStatus: 201,
@@ -94,7 +94,7 @@ export const aiFilesPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/ai-files/{id}",
-      summary: "Delete an AI file",
+      summary: "Delete AI file",
       description:
         "Permanently deletes an AI file. Use `aiFiles.list` to find its id first.",
       successStatus: 204,

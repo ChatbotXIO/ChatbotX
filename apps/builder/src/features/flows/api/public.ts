@@ -74,7 +74,7 @@ export const flowsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/flows/{id}",
-      summary: "Get a flow by id",
+      summary: "Get flow",
       description:
         "Use this to inspect one flow and its versions after finding its id with `flows.list`. Call `flows.updateDraft` to change the draft or `flows.publish` to create a version.",
       tags: ["Flows"],
@@ -95,7 +95,7 @@ export const flowsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/flows",
-      summary: "Create a flow",
+      summary: "Create flow",
       description:
         "Starts a draft flow with its default start node. Use `flows.list` to inspect existing flows first, then call `flows.updateDraft` or `flows.publish` to complete it.",
       successStatus: 201,
@@ -134,7 +134,7 @@ export const flowsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/flows/{id}",
-      summary: "Delete a flow",
+      summary: "Delete flow",
       description:
         "Permanently deletes a flow and its draft/published versions. Use `flows.get` to confirm it first.",
       successStatus: 204,
@@ -153,7 +153,7 @@ export const flowsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/flows/{id}/duplicate",
-      summary: "Duplicate a flow",
+      summary: "Duplicate flow",
       description:
         "Copies a flow's draft into a new flow. Use `flows.get` to inspect the source first, then call `flows.updateDraft` or `flows.publish` on the returned flow.",
       successStatus: 201,
@@ -174,7 +174,7 @@ export const flowsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/flows/{id}/publish",
-      summary: "Publish a flow",
+      summary: "Publish flow",
       description:
         "Creates an immutable version from a draft and synchronizes the draft to match. Call `flows.validate` before this when supplying a spec, or use `flows.updateDraft` to save changes without publishing.",
       successStatus: 204,
@@ -202,7 +202,7 @@ export const flowsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/flows/validate",
-      summary: "Compile and validate a flow spec without publishing it",
+      summary: "Compile and validate flow spec without publishing",
       description:
         "Compiles a flow-spec DSL object (see `GET /v1/schemas/flow-spec`) and validates the result exactly like `flows.publish` would, without persisting anything. On success, returns the compiled node/edge graph. On failure, returns a 422 with structured errors (`path`/`code`/`message`/`hint`/`candidates`) — fix and retry before calling `flows.publish`.",
       tags: ["Flows"],
@@ -219,7 +219,7 @@ export const flowsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/flows/{id}/draft",
-      summary: "Update a flow's draft version",
+      summary: "Update flow draft",
       description:
         "Overwrites the draft version's nodes/edges in place, without publishing. Accepts either the raw `{ nodes, edges }` graph the builder UI sends, or `{ spec }` compiled server-side into that same graph — draft nodes are not otherwise validated (see `flows.validate` to check a spec before writing it).",
       successStatus: 204,
@@ -247,7 +247,7 @@ export const flowsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/flows/{id}/versions",
-      summary: "List a flow's published versions",
+      summary: "List flow versions",
       description:
         "Returns every immutable version created by `flows.publish` for this flow, most recent first.",
       tags: ["Flows"],
@@ -267,7 +267,7 @@ export const flowsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/flows/import",
-      summary: "Import a flow from a previously uploaded file",
+      summary: "Import flow from uploaded file",
       description:
         "Queues an async import job for a flow export file uploaded via the Files API. Returns the import id; poll or watch for completion out of band.",
       successStatus: 202,

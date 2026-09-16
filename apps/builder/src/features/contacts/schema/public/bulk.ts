@@ -32,7 +32,7 @@ export const bulkSubscribeSequencesPublicRequest =
       .min(1)
       .max(20)
       .describe(
-        "Sequence ids (numeric strings) to enroll into. Get them from `sequences.list`.",
+        "Sequence ids (numeric strings) to subscribe the contacts to. Get them from `sequences.list`.",
       ),
   })
 export type BulkSubscribeSequencesPublicRequest = z.infer<

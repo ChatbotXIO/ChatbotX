@@ -60,6 +60,7 @@ let operations: SpecOperation[]
 let responseSchemasByOperationId: Record<string, unknown>
 let requestSchemasByOperationId: Record<string, unknown[]>
 let componentSchemas: Record<string, unknown>
+let specDocument: unknown
 
 // Recursively collects every property key across a JSON schema, including
 // through $ref (resolved against `components.schemas`), allOf/oneOf/anyOf,
@@ -111,6 +112,39 @@ function collectSchemaPropertyKeys(
   }
 }
 
+const PRODUCT_NAME_PATTERN = /chatbotx/i
+
+// Collects every human-readable copy string (`summary`/`description`) in the
+// generated document, including schema field descriptions from zod
+// `.describe()`. Deliberately key-scoped: `chatbotx` is a legitimate
+// ChannelType enum member (packages/database/src/partials/integration.ts), so
+// a document-wide string match would be a false positive.
+function collectCopyStrings(
+  node: unknown,
+  path: string,
+  found: Array<{ path: string; text: string }>,
+): void {
+  if (Array.isArray(node)) {
+    node.forEach((item, index) => {
+      collectCopyStrings(item, `${path}[${index}]`, found)
+    })
+    return
+  }
+  if (!node || typeof node !== "object") {
+    return
+  }
+  for (const [key, value] of Object.entries(node)) {
+    if (
+      (key === "summary" || key === "description") &&
+      typeof value === "string"
+    ) {
+      found.push({ path: `${path}.${key}`, text: value })
+      continue
+    }
+    collectCopyStrings(value, `${path}.${key}`, found)
+  }
+}
+
 beforeAll(async () => {
   const { publicRouter } = await import("@/routers/public")
   const { publicSpecGenerateOptions, withChannelApiTokenSecurity } =
@@ -128,6 +162,7 @@ beforeAll(async () => {
   )
 
   componentSchemas = (spec.components?.schemas ?? {}) as Record<string, unknown>
+  specDocument = spec
 
   operations = []
   responseSchemasByOperationId = {}
@@ -208,6 +243,14 @@ beforeAll(async () => {
 
 const NON_ALPHANUMERIC_PATTERN = /[^a-z0-9]+/
 const SUMMARY_STARTS_UPPERCASE_PATTERN = /^[A-Z]/
+
+// Public API summaries are article-free imperative phrases: no `a`/`an`/`the`,
+// no possessive `'s`, and no `by id`/`by identifier` suffix (the path already
+// says how the resource is addressed). `by name` stays legal — it is what
+// distinguishes `contacts.addTagsByName` from `contacts.addTags`.
+const SUMMARY_ARTICLE_PATTERN = /\b(?:an?|the)\b/i
+const SUMMARY_POSSESSIVE_PATTERN = /'s\b/
+const SUMMARY_BY_ID_PATTERN = /\bby (?:id|identifier)\b/i
 const normalizeDescriptionPhrase = (value: string): string => {
   const [firstToken = "", ...remainingTokens] = value
     .toLowerCase()
@@ -286,7 +329,10 @@ describe("public API spec — operation naming guard", () => {
         summary.endsWith(".") ||
         summary.includes(" — ") ||
         summary.includes(". ") ||
-        !SUMMARY_STARTS_UPPERCASE_PATTERN.test(summary)
+        !SUMMARY_STARTS_UPPERCASE_PATTERN.test(summary) ||
+        SUMMARY_ARTICLE_PATTERN.test(summary) ||
+        SUMMARY_POSSESSIVE_PATTERN.test(summary) ||
+        SUMMARY_BY_ID_PATTERN.test(summary)
       return isInvalid ? operation.operationId : []
     })
 
@@ -511,6 +557,22 @@ describe("public API spec — operation naming guard", () => {
       .map(([operationId]) => operationId)
 
     expect(leaking).toEqual([])
+  })
+})
+
+describe("public API spec — white-label safety", () => {
+  // White-label deployments serve this document to their own customers under
+  // their own brand (the tenant name supplies `info.title` in
+  // apps/builder/src/app/api/public-spec.json/route.ts). Copy that hardcodes
+  // the product name cannot be rebranded and leaks through the Scalar docs,
+  // the CLI, and every generated MCP tool description.
+  test("no summary or description hardcodes the product name", () => {
+    const found: Array<{ path: string; text: string }> = []
+    collectCopyStrings(specDocument, "$", found)
+
+    expect(found.filter(({ text }) => PRODUCT_NAME_PATTERN.test(text))).toEqual(
+      [],
+    )
   })
 })
 

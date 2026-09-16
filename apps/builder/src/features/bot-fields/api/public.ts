@@ -43,7 +43,7 @@ export const botFieldsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/bot-fields",
-      summary: "Create a new bot field",
+      summary: "Create bot field",
       description:
         "Adds a custom bot field definition (a global variable available to every flow). Use `botFields.list` first to avoid duplicating an existing name.",
       successStatus: 201,
@@ -64,7 +64,7 @@ export const botFieldsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/bot-fields/{idOrName}",
-      summary: "Get bot field by id or name",
+      summary: "Get bot field",
       description:
         "Returns one bot field's current value. Use `botFields.list` to find its id or name first.",
       tags: ["Bot Fields"],
@@ -91,7 +91,7 @@ export const botFieldsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/bot-fields/{idOrName}",
-      summary: "Set bot field value by id or name",
+      summary: "Set bot field value",
       description:
         "Changes an existing bot field's value. Call `botFields.get` to inspect the current value first.",
       tags: ["Bot Fields"],
@@ -158,7 +158,7 @@ export const botFieldsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/bot-fields/bulk-update",
-      summary: "Bulk update bot field values by id or name",
+      summary: "Bulk update bot field values",
       description:
         "Changes several bot fields' values in one call, addressed by id or name. Unlike `botFields.setMany`, each entry may target either an id or a name.",
       successStatus: 204,
@@ -207,7 +207,7 @@ export const botFieldsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/bot-fields/{idOrName}",
-      summary: "Unset the value of the bot field by id or name",
+      summary: "Unset bot field value",
       description:
         "Clears an existing bot field's value back to empty. Use `botFields.list` to find its id or name first.",
       successStatus: 204,

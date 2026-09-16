@@ -50,14 +50,14 @@ const addContactTags = vi.fn()
 
 const deleteContact = vi.fn()
 
-const enrollContactsInSequences = vi.fn()
+const subscribeContactsToSequences = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   contactService: { deleteAndRecord: deleteContact },
   tagService: { attachByNamesToContacts: addContactTags },
 }))
 vi.mock("@chatbotx.io/business/contact-sequence", () => ({
-  contactSequenceService: { enrollContacts: enrollContactsInSequences },
+  contactSequenceService: { subscribeContacts: subscribeContactsToSequences },
 }))
 
 await import("@/features/contacts/api/public/bulk")
@@ -125,8 +125,8 @@ describe("POST /v1/contacts/bulk/delete", () => {
 describe("POST /v1/contacts/bulk/sequences", () => {
   const procedure = findProcedure("POST", "/v1/contacts/bulk/sequences")
 
-  test("delegates to enrollContactsInSequences with all given contact ids", async () => {
-    enrollContactsInSequences.mockResolvedValueOnce({
+  test("delegates to subscribeContactsToSequences with all given contact ids", async () => {
+    subscribeContactsToSequences.mockResolvedValueOnce({
       processedContactIds: ["1", "2"],
       skippedContactIds: [],
     })
@@ -136,7 +136,7 @@ describe("POST /v1/contacts/bulk/sequences", () => {
       input: { contactIds: ["1", "2"], sequenceIds: ["seq-1"] },
     })
 
-    expect(enrollContactsInSequences).toHaveBeenCalledWith({
+    expect(subscribeContactsToSequences).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       contactIds: ["1", "2"],
       sequenceIds: ["seq-1"],

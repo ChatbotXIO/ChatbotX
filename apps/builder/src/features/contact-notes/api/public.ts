@@ -21,7 +21,7 @@ export const contactsNotesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/{identifier}/notes",
-      summary: "List notes on the contact",
+      summary: "List notes on contact",
       description:
         "Returns every internal note on the contact identified by `identifier`. Use `contacts.createNote` to add one.",
       tags: ["Contacts"],
@@ -55,7 +55,7 @@ export const contactsNotesPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contacts/{identifier}/notes",
-      summary: "Add a note to the contact",
+      summary: "Add note to contact",
       description:
         "Adds an internal note to the contact identified by `identifier`, visible only to workspace users. Use `contacts.listNotes` to see existing notes.",
       tags: ["Contacts"],
@@ -95,7 +95,7 @@ export const contactsNotesPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/contacts/{identifier}/notes/{noteId}",
-      summary: "Update a note on the contact",
+      summary: "Update note on contact",
       description:
         "Overwrites the text of one note on the contact identified by `identifier`. Use `contacts.listNotes` to find its `noteId` first.",
       tags: ["Contacts"],
@@ -133,7 +133,7 @@ export const contactsNotesPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/contacts/{identifier}/notes/{noteId}",
-      summary: "Delete a note from the contact",
+      summary: "Delete note from contact",
       description:
         "Permanently removes one note from the contact identified by `identifier`.",
       successStatus: 204,

@@ -56,7 +56,7 @@ export const couponsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/coupon-topics/{id}",
-      summary: "Get a coupon topic",
+      summary: "Get coupon topic",
       description:
         "Returns one coupon topic's settings. Use `coupons.listTopics` to find its id first.",
       tags,
@@ -82,7 +82,7 @@ export const couponsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/coupon-topics",
-      summary: "Create a coupon topic",
+      summary: "Create coupon topic",
       description:
         "Adds a coupon topic without `createdById` because workspace API tokens have no user. Use `coupons.listTopics` to inspect existing topics before creating another.",
       tags,
@@ -103,7 +103,7 @@ export const couponsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/coupon-topics/{id}",
-      summary: "Update a coupon topic",
+      summary: "Update coupon topic",
       description:
         "Changes an existing coupon topic's settings. Call `coupons.getTopic` to inspect current values first.",
       tags,
@@ -124,7 +124,7 @@ export const couponsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/coupon-topics/{id}/archive",
-      summary: "Archive a coupon topic",
+      summary: "Archive coupon topic",
       description:
         "Stops a topic from being issueable via `coupons.issueCoupon` without deleting it. Use `coupons.unarchiveTopic` to reverse.",
       tags,
@@ -150,7 +150,7 @@ export const couponsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/coupon-topics/{id}/unarchive",
-      summary: "Unarchive a coupon topic",
+      summary: "Unarchive coupon topic",
       description:
         "Reactivates an archived coupon topic so it becomes issueable via `coupons.issueCoupon` again.",
       tags,
@@ -176,7 +176,7 @@ export const couponsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/coupon-topics/{id}",
-      summary: "Delete a coupon topic",
+      summary: "Delete coupon topic",
       description:
         "Permanently deletes a coupon topic. Use `coupons.listTopics` to find its id first.",
       tags,
@@ -222,7 +222,7 @@ export const couponsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/coupon-topics/{id}/issue",
-      summary: "Issue a coupon to a contact",
+      summary: "Issue coupon to contact",
       description:
         "Issues a coupon from the topic to the contact. Idempotent: reissuing to the same contact returns the coupon already issued to them (`existing`) rather than a duplicate. Fails with `couponIssueUnavailable` when the topic is not issueable (`topicUnavailable`) or has no available coupon left (`noAvailableCoupon`).",
       tags,
@@ -265,7 +265,7 @@ export const couponsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/coupon-topics/{id}/mark-used",
-      summary: "Mark an issued coupon as used",
+      summary: "Mark issued coupon as used",
       description:
         "Marks the coupon issued to the contact as used. Fails with `couponNotIssued` (`noIssuedCoupon`) when the contact has no coupon issued from this topic.",
       tags,
@@ -305,7 +305,7 @@ export const couponsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/{contactId}/coupons",
-      summary: "List coupons issued to a contact",
+      summary: "List coupons issued to contact",
       description:
         "Returns every coupon issued to a specific contact, across all topics. Use `contacts.list` to find the contact id first.",
       tags,

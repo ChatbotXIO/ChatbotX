@@ -632,7 +632,7 @@ export const analyticsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/analytics/mac/active-count",
-      summary: "Get current period MAC count for the workspace",
+      summary: "Get current period MAC count",
       description:
         "Returns the workspace's monthly active contact count for the current billing period. Use `analytics.activeContactsCount` for an arbitrary date range instead.",
       tags: ["Analytics"],

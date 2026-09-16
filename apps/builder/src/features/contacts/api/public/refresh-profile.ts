@@ -13,7 +13,7 @@ export const contactsRefreshProfilePublicRouter = {
     .route({
       method: "POST",
       path: "/v1/contacts/{identifier}/refresh-profile",
-      summary: "Refresh a contact's profile from the channel",
+      summary: "Refresh contact profile from channel",
       description:
         'Re-fetches the contact\'s profile (name, avatar, ...) from the channel API for the given contact inbox, when the channel supports on-demand profile lookup. Returns `{status:"skipped",reason:...}` rather than an error when nothing needed refreshing.',
       tags: ["Contacts"],

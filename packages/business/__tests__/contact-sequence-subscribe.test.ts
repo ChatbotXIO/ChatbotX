@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// contactSequenceService.enrollContacts: sequenceIds are validated against
+// contactSequenceService.subscribeContacts: sequenceIds are validated against
 // the caller's workspace BEFORE anything is inserted (HIGH-1 fix — a
-// workspace-A token must not enroll contacts into a workspace-B sequence);
-// contactIds are chunked at 1000; and an already-enrolled contact/sequence
+// workspace-A token must not subscribe contacts into a workspace-B sequence);
+// contactIds are chunked at 1000; and an already-subscribed contact/sequence
 // pair is skipped rather than duplicated.
 
 const mocks = vi.hoisted(() => ({
@@ -91,12 +91,12 @@ beforeEach(() => {
   mocks.enrollContactInSequence.mockResolvedValue(undefined)
 })
 
-describe("contactSequenceService.enrollContacts", () => {
+describe("contactSequenceService.subscribeContacts", () => {
   test("throws and inserts nothing when a sequenceId belongs to another workspace", async () => {
     mocks.sequenceFindMany.mockResolvedValueOnce([{ id: "seq-owned" }])
 
     await expect(
-      contactSequenceService.enrollContacts({
+      contactSequenceService.subscribeContacts({
         workspaceId: WORKSPACE_ID,
         contactIds: ["contact-1"],
         sequenceIds: ["seq-owned", "seq-other-workspace"],
@@ -115,7 +115,7 @@ describe("contactSequenceService.enrollContacts", () => {
 
     const contactIds = Array.from({ length: 1001 }, (_, i) => `contact-${i}`)
 
-    const result = await contactSequenceService.enrollContacts({
+    const result = await contactSequenceService.subscribeContacts({
       workspaceId: WORKSPACE_ID,
       contactIds,
       sequenceIds: ["seq-1"],
@@ -146,7 +146,7 @@ describe("contactSequenceService.enrollContacts", () => {
       { contactId: "contact-1", sequenceId: "seq-1" },
     ])
 
-    await contactSequenceService.enrollContacts({
+    await contactSequenceService.subscribeContacts({
       workspaceId: WORKSPACE_ID,
       contactIds: ["contact-1", "contact-2"],
       sequenceIds: ["seq-1"],
@@ -163,7 +163,7 @@ describe("contactSequenceService.enrollContacts", () => {
     mocks.sequenceFindMany.mockResolvedValueOnce([{ id: "seq-1" }])
     mocks.findManyByIds.mockResolvedValueOnce([{ id: "contact-1" }])
 
-    const result = await contactSequenceService.enrollContacts({
+    const result = await contactSequenceService.subscribeContacts({
       workspaceId: WORKSPACE_ID,
       contactIds: ["contact-1", "deleted-contact"],
       sequenceIds: ["seq-1"],
@@ -176,11 +176,11 @@ describe("contactSequenceService.enrollContacts", () => {
   })
 })
 
-describe("contactSequenceService.enrollFromFlow", () => {
+describe("contactSequenceService.subscribeFromFlow", () => {
   test("does nothing when the contact is already enrolled", async () => {
     mocks.contactsOnSequenceFindFirst.mockResolvedValueOnce({ id: "enr-1" })
 
-    await contactSequenceService.enrollFromFlow({
+    await contactSequenceService.subscribeFromFlow({
       workspaceId: WORKSPACE_ID,
       contactId: "contact-1",
       sequenceId: "seq-1",
@@ -199,7 +199,7 @@ describe("contactSequenceService.enrollFromFlow", () => {
     })
     mocks.sequenceFindFirst.mockResolvedValueOnce({ name: "Welcome" })
 
-    await contactSequenceService.enrollFromFlow({
+    await contactSequenceService.subscribeFromFlow({
       workspaceId: WORKSPACE_ID,
       contactId: "contact-1",
       sequenceId: "seq-1",
@@ -227,7 +227,7 @@ describe("contactSequenceService.enrollFromFlow", () => {
     mocks.sequenceStepFindFirst.mockResolvedValueOnce(null)
     mocks.sequenceFindFirst.mockResolvedValueOnce({ name: "Welcome" })
 
-    await contactSequenceService.enrollFromFlow({
+    await contactSequenceService.subscribeFromFlow({
       workspaceId: WORKSPACE_ID,
       contactId: "contact-1",
       sequenceId: "seq-1",
@@ -242,7 +242,7 @@ describe("contactSequenceService.enrollFromFlow", () => {
   test("emits sequenceSubscribed with an empty name when the sequence lookup misses", async () => {
     mocks.sequenceFindFirst.mockResolvedValueOnce(null)
 
-    await contactSequenceService.enrollFromFlow({
+    await contactSequenceService.subscribeFromFlow({
       workspaceId: WORKSPACE_ID,
       contactId: "contact-1",
       sequenceId: "seq-1",

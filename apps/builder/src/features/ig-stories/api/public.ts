@@ -51,7 +51,7 @@ export const igStoriesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/ig-stories/{id}",
-      summary: "Get a specific Instagram Story Automation",
+      summary: "Get Instagram Story Automation",
       description:
         "Returns one automation's trigger and reply settings. Use `igStories.list` to find its id first.",
       tags: ["IG Stories"],

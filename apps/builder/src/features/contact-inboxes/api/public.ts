@@ -11,7 +11,7 @@ export const contactsInboxesPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/{identifier}/inboxes",
-      summary: "List the contact's channel identities (contact inboxes)",
+      summary: "List contact channel identities",
       description:
         "Returns each channel-specific connection (contact inbox) this contact has, e.g. their WhatsApp phone number or Messenger PSID per inbox. Use `contacts.get` to resolve the contact first.",
       tags: ["Contacts"],

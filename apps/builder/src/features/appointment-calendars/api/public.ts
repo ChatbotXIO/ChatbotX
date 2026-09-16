@@ -56,7 +56,7 @@ export const appointmentCalendarsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/appointment-calendars/{id}",
-      summary: "Get an appointment calendar",
+      summary: "Get appointment calendar",
       description:
         "Returns the calendar's full configuration including its availability intervals and reminders.",
       tags,
@@ -76,7 +76,7 @@ export const appointmentCalendarsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/appointment-calendars",
-      summary: "Create an appointment calendar",
+      summary: "Create appointment calendar",
       description:
         "Creates a new calendar with default settings. Use the update endpoint to configure duration, availability, and reminders.",
       successStatus: 201,
@@ -97,7 +97,7 @@ export const appointmentCalendarsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/appointment-calendars/{id}",
-      summary: "Update an appointment calendar",
+      summary: "Update appointment calendar",
       description:
         "Replaces an existing calendar's full configuration (duration, availability, buffers, reminders). Call `appointmentCalendars.get` to inspect current values first.",
       tags,
@@ -121,7 +121,7 @@ export const appointmentCalendarsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/appointment-calendars/{id}/active",
-      summary: "Activate or deactivate an appointment calendar",
+      summary: "Activate or deactivate appointment calendar",
       description:
         "Toggles whether a calendar accepts new bookings via `appointments.book`, without changing its configuration.",
       tags,
@@ -145,7 +145,7 @@ export const appointmentCalendarsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/appointment-calendars/{id}/duplicate",
-      summary: "Duplicate an appointment calendar",
+      summary: "Duplicate appointment calendar",
       description:
         "Copies an existing calendar's configuration into a new calendar. Use `appointmentCalendars.update` afterward to adjust the copy.",
       successStatus: 201,
@@ -166,7 +166,7 @@ export const appointmentCalendarsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/appointment-calendars/{id}",
-      summary: "Delete an appointment calendar",
+      summary: "Delete appointment calendar",
       description:
         "Permanently deletes a calendar. Use `appointmentCalendars.list` to find its id first.",
       successStatus: 204,
@@ -185,7 +185,7 @@ export const appointmentCalendarsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/appointment-calendars/{id}/availability",
-      summary: "Check appointment availability for a calendar",
+      summary: "Check appointment availability for calendar",
       description:
         "Returns bookable slots between startDate and endDate, accounting for existing appointments, buffers, and connected external calendars.",
       tags,

@@ -42,7 +42,7 @@ export const workspaceMembersPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/members/{memberId}",
-      summary: "Get workspace member by id",
+      summary: "Get workspace member",
       description:
         "Returns one workspace member. Use `workspaceMembers.list` to find its id first.",
       tags: ["Members"],

@@ -31,7 +31,7 @@ export const contactsCustomFieldsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/contacts/{identifier}/custom-fields",
-      summary: "Get all custom fields from a contact",
+      summary: "Get all custom fields from contact",
       description:
         "Use this to inspect every custom-field value for a contact after resolving its identifier with `contacts.get`. Call `contacts.setCustomField` to change one value or `contacts.setCustomFields` to change several.",
       tags: ["Contacts"],
@@ -139,7 +139,7 @@ export const contactsCustomFieldsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/contacts/{identifier}/custom-fields",
-      summary: "Set multiple custom field values for a contact",
+      summary: "Set multiple custom field values for contact",
       description:
         "Sets each given custom field to its value on the contact identified by `identifier`; fields not listed are left unchanged. Use `customFields.list`/`customFields.create` first to resolve names to ids.",
       successStatus: 204,
@@ -187,7 +187,7 @@ export const contactsCustomFieldsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/contacts/{identifier}/custom-fields",
-      summary: "Apply arithmetic/append operations to a custom field",
+      summary: "Apply arithmetic/append operations to custom field",
       description:
         'Applies a set of operations to one custom field on the contact, in order. Each operation is one of `set`, `append`, `prepend`, `increase`, `decrease` — `increase`/`decrease` treat the current value as a number (no-op if it is not numeric). Example: `{"operations":[{"customFieldId":"123","operation":"increase","value":"1"}]}` to increment a numeric field.',
       successStatus: 204,
@@ -217,7 +217,7 @@ export const contactsCustomFieldsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/contacts/{identifier}/custom-fields/{idOrName}",
-      summary: "Delete contact custom field by id or name",
+      summary: "Delete contact custom field",
       description:
         "Removes one custom-field value from the contact identified by `identifier`, matched by id or field name. Use `contacts.clearCustomFields` to clear every field at once.",
       successStatus: 204,
@@ -254,7 +254,7 @@ export const contactsCustomFieldsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/contacts/{identifier}/custom-fields",
-      summary: "Clear all custom fields from a contact",
+      summary: "Clear all custom fields from contact",
       description:
         "Removes every custom-field value from the contact identified by `identifier`. Use `contacts.clearCustomField` to remove just one.",
       successStatus: 204,

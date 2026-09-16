@@ -74,7 +74,7 @@ export const schemasPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/schemas/flow-spec",
-      summary: "Get the JSON Schema for the flow-spec DSL",
+      summary: "Get JSON Schema for flow-spec DSL",
       description:
         "Returns the JSON Schema for the `spec` object accepted by `flows.publish`'s, `flows.updateDraft`'s, and `flows.validate`'s `{ spec }` input — the authoritative reference for every step type's fields. Use `capabilities.get` first to resolve the names (templates, flows, tags, custom fields) a spec references into real ids.",
       tags: ["Capabilities"],

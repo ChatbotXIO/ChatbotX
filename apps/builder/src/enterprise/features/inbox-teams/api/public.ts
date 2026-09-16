@@ -50,7 +50,7 @@ export const inboxTeamsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/teams/{id}",
-      summary: "Get a team by id",
+      summary: "Get team",
       description:
         "Returns one inbox team and its members. Use `inboxTeams.list` to find its id first.",
       tags: ["Teams"],
@@ -70,7 +70,7 @@ export const inboxTeamsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/teams",
-      summary: "Create a team",
+      summary: "Create team",
       description:
         "Adds an inbox team that a conversation can be assigned to. Use `inboxTeams.list` first to avoid duplicating an existing team.",
       successStatus: 201,
@@ -91,7 +91,7 @@ export const inboxTeamsPublicRouter = {
     .route({
       method: "PUT",
       path: "/v1/teams/{id}",
-      summary: "Update a team",
+      summary: "Update team",
       description:
         "Changes an inbox team's settings. Call `inboxTeams.get` to inspect current values first.",
       tags: ["Teams"],
@@ -112,7 +112,7 @@ export const inboxTeamsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/teams/{id}",
-      summary: "Delete a team",
+      summary: "Delete team",
       description:
         "Permanently deletes an inbox team. Use `inboxTeams.list` to find its id first.",
       successStatus: 204,
@@ -131,7 +131,7 @@ export const inboxTeamsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/teams/{id}/members",
-      summary: "Add members to a team",
+      summary: "Add members to team",
       description:
         "Adds the given user ids to an inbox team's membership. Use `inboxTeams.removeMembers` to remove them.",
       tags: ["Teams"],
@@ -151,7 +151,7 @@ export const inboxTeamsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/teams/{id}/members",
-      summary: "Remove members from a team",
+      summary: "Remove members from team",
       description:
         "Removes the given user ids from an inbox team's membership. Use `inboxTeams.addMembers` to add them.",
       tags: ["Teams"],

@@ -73,7 +73,7 @@ describe("removeContactSequenceAction", () => {
       workspaceId: WORKSPACE_ID,
       contactIds: ["contact-1"],
       sequenceIds: ["sequence-1"],
-      reason: "enrollment_removed",
+      reason: "subscription_removed",
     })
   })
 
@@ -94,17 +94,17 @@ describe("removeContactSequenceAction", () => {
       workspaceId: WORKSPACE_ID,
       contactIds: ids.slice(0, 1000),
       sequenceIds: ["sequence-1"],
-      reason: "enrollment_removed",
+      reason: "subscription_removed",
     })
     expect(removeContactSequencesForContactsSpy).toHaveBeenNthCalledWith(2, {
       workspaceId: WORKSPACE_ID,
       contactIds: ids.slice(1000),
       sequenceIds: ["sequence-1"],
-      reason: "enrollment_removed",
+      reason: "subscription_removed",
     })
   })
 
-  test("does not remove enrollments when scoped lookup returns no contacts", async () => {
+  test("does not remove subscriptions when scoped lookup returns no contacts", async () => {
     findManyByIdsSpy.mockResolvedValue([])
 
     await callAction({

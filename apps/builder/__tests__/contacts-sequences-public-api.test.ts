@@ -54,7 +54,7 @@ const contactSequenceService = {
 
 const resolveContactId = vi.fn()
 
-const enrollContactsInSequences = vi.fn()
+const subscribeContactsToSequences = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   contactService: { resolveIdByIdentifier: resolveContactId },
@@ -62,7 +62,7 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/business/contact-sequence", () => ({
   contactSequenceService: {
     ...contactSequenceService,
-    enrollContacts: enrollContactsInSequences,
+    subscribeContacts: subscribeContactsToSequences,
   },
 }))
 
@@ -86,7 +86,7 @@ beforeEach(() => {
 describe("GET /v1/contacts/{identifier}/sequences", () => {
   const procedure = findProcedure("GET", "/v1/contacts/{identifier}/sequences")
 
-  test("lists sequence enrollments for the resolved contact", async () => {
+  test("lists sequence subscriptions for the resolved contact", async () => {
     contactSequenceService.listByContactId.mockResolvedValueOnce([
       { sequenceId: "seq-1", sequenceName: "Welcome" },
     ])
@@ -110,15 +110,15 @@ describe("GET /v1/contacts/{identifier}/sequences", () => {
 describe("POST /v1/contacts/{identifier}/sequences", () => {
   const procedure = findProcedure("POST", "/v1/contacts/{identifier}/sequences")
 
-  test("enrolls the single resolved contact into the given sequences", async () => {
-    enrollContactsInSequences.mockResolvedValueOnce(undefined)
+  test("subscribes the single resolved contact to the given sequences", async () => {
+    subscribeContactsToSequences.mockResolvedValueOnce(undefined)
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: { identifier: "id:123", sequenceIds: ["seq-1", "seq-2"] },
     })
 
-    expect(enrollContactsInSequences).toHaveBeenCalledWith({
+    expect(subscribeContactsToSequences).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       contactIds: ["contact-1"],
       sequenceIds: ["seq-1", "seq-2"],
@@ -132,7 +132,7 @@ describe("DELETE /v1/contacts/{identifier}/sequences", () => {
     "/v1/contacts/{identifier}/sequences",
   )
 
-  test("removes the enrollment with reason enrollment_removed", async () => {
+  test("removes the subscription with reason subscription_removed", async () => {
     contactSequenceService.removeContactSequencesForContacts.mockResolvedValueOnce(
       [],
     )
@@ -148,7 +148,7 @@ describe("DELETE /v1/contacts/{identifier}/sequences", () => {
       workspaceId: "workspace-1",
       contactIds: ["contact-1"],
       sequenceIds: ["seq-1"],
-      reason: "enrollment_removed",
+      reason: "subscription_removed",
     })
   })
 })
@@ -156,7 +156,7 @@ describe("DELETE /v1/contacts/{identifier}/sequences", () => {
 describe("PUT /v1/contacts/{identifier}/sequences", () => {
   const procedure = findProcedure("PUT", "/v1/contacts/{identifier}/sequences")
 
-  test("replaces enrollments via updateContactSequences", async () => {
+  test("replaces subscriptions via updateContactSequences", async () => {
     contactSequenceService.updateContactSequences.mockResolvedValueOnce({})
 
     await procedure.handler?.({

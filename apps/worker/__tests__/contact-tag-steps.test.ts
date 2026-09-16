@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // src/integration/handlers/contact.ts): they now delegate the actual
 // tag-attach/detach and sequence-enrollment work to the business services
 // (`tagService.attachByNamesToContacts` / `detachByNamesFromContacts`,
-// `contactSequenceService.enrollFromFlow`), so these tests verify the
+// `contactSequenceService.subscribeFromFlow`), so these tests verify the
 // handlers pass the right arguments through — not the underlying DB/enqueue
 // mechanics, which are covered by the business package's own tests.
 // ---------------------------------------------------------------------------
@@ -17,7 +17,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const removeContactSequencesForContact = vi.fn(() => {
   order.push("remove-sequence")
 })
-const enrollFromFlow = vi.fn(async () => undefined)
+const subscribeFromFlow = vi.fn(async () => undefined)
 const attachByNamesToContacts = vi.fn(async () => ({
   processedContactIds: [],
   skippedContactIds: [],
@@ -35,7 +35,7 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/business/contact-sequence", () => ({
   contactSequenceService: {
     removeContactSequencesForContact,
-    enrollFromFlow,
+    subscribeFromFlow,
   },
 }))
 
@@ -171,10 +171,10 @@ describe("removeContactSequence", () => {
 describe("addContactSequence", () => {
   beforeEach(reset)
 
-  test("delegates enrollment to contactSequenceService.enrollFromFlow", async () => {
+  test("delegates subscription to contactSequenceService.subscribeFromFlow", async () => {
     await addContactSequence(addSequenceProps())
 
-    expect(enrollFromFlow).toHaveBeenCalledWith({
+    expect(subscribeFromFlow).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactId: "c-1",
       sequenceId: "seq-1",
@@ -185,7 +185,7 @@ describe("addContactSequence", () => {
   test("returns early when sequenceId is missing, without calling the service", async () => {
     await addContactSequence(addSequenceProps(null))
 
-    expect(enrollFromFlow).not.toHaveBeenCalled()
+    expect(subscribeFromFlow).not.toHaveBeenCalled()
   })
 })
 

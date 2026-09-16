@@ -44,7 +44,7 @@ export const appointmentExternalCalendarsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/appointment-external-calendars/{integrationId}",
-      summary: "Disconnect an external calendar",
+      summary: "Disconnect external calendar",
       description:
         "Disconnects a Google/Outlook calendar connection. Fails if any appointment calendar is still using it.",
       successStatus: 204,

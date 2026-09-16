@@ -44,7 +44,7 @@ export const customFieldsPublicRouter = {
     .route({
       method: "POST",
       path: "/v1/custom-fields",
-      summary: "Create a custom field",
+      summary: "Create custom field",
       description:
         "Defines a new custom field on the workspace with the given name and value type.",
       successStatus: 201,
@@ -65,7 +65,7 @@ export const customFieldsPublicRouter = {
     .route({
       method: "GET",
       path: "/v1/custom-fields/{idOrName}",
-      summary: "Get custom field by id or name",
+      summary: "Get custom field",
       description:
         "Returns one custom field's type and settings. Use `customFields.list` to find its id or name first.",
       tags: ["Custom Fields"],

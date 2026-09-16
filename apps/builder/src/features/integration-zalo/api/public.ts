@@ -11,9 +11,9 @@ export const zaloChannelsPublicRouter = {
     .route({
       method: "PATCH",
       path: "/v1/zalo-channels/{id}/tag-sync",
-      summary: "Enable or disable tag sync for a Zalo channel",
+      summary: "Enable or disable tag sync for Zalo channel",
       description:
-        "Toggles whether this Zalo channel's tags sync into ChatbotX as contact tags.",
+        "Toggles whether this Zalo channel's tags sync into the workspace as contact tags.",
       tags: ["Channels"],
     })
     .input(
