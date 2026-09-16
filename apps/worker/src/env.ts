@@ -34,6 +34,20 @@ export const env = createEnv({
     // messages) shares the `chat` queue, so its parallelism caps how fast any
     // of them leave. Defaults to the shared worker default.
     CHAT_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(200).default(5),
+    // Caps outbound sends globally per worker to protect channel APIs from
+    // burst traffic while retaining the queue's configurable concurrency.
+    CHAT_WORKER_RATE_LIMIT_MAX: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(10_000)
+      .default(80),
+    CHAT_WORKER_RATE_LIMIT_DURATION_MS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(60_000)
+      .default(1000),
     // Light-but-bulky, low-priority jobs (Coexist/Customer-Scan media backfill)
     // run on their own `low` queue/worker so a historical-import burst never
     // starves the latency-sensitive integration queue. I/O-bound → higher
