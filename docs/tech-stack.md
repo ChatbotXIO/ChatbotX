@@ -39,7 +39,7 @@ Key components of the project's tech stack.
 ### Background Jobs & Queues
 
 - [BullMQ](https://bullmq.io/) backed by **Redis / Dragonfly**
-- **Kafka** for high-throughput sequence dispatch
+- Sequence scheduling uses BullMQ over Redis across 256 hash buckets with Redlock coordination
 - Push notifications via the **Expo Push Service** (`notification` queue/worker)
 - Package: `packages/worker-config` (`@chatbotx.io/worker-config`)
 
