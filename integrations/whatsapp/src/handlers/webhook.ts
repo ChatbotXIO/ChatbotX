@@ -3,6 +3,7 @@ import {
   type ReceivedMessageProps,
   SdkException,
 } from "@chatbotx.io/sdk"
+import { toBullMqSafeIdSegment } from "@chatbotx.io/utils"
 import type { OnMessageArgs, OnStatusArgs } from "whatsapp-api-js/emitters"
 import { WhatsAppAPI as Middleware } from "whatsapp-api-js/middleware/next"
 import type { GetParams } from "whatsapp-api-js/types"
@@ -163,9 +164,6 @@ const automaticEventFieldExtractors: Record<
     return payloads
   },
 }
-
-const toBullMqSafeIdSegment = (value: string): string =>
-  value.replace(/[^a-zA-Z0-9._-]/g, "_")
 
 export const extractAutomaticEventPayloads = (
   rawBody: unknown,
@@ -362,14 +360,22 @@ const dispatchWebhookResult = async (
     | null,
 ): Promise<void> => {
   if (result?.type === "message" && result.data.message) {
-    await queue?.add("incomingMessage", {
-      type: "incomingMessage",
-      data: {
-        integrationType: "whatsapp",
-        integrationIdentifier: result.data.phoneID,
-        payload: result.data,
-      } as ReceivedMessageProps,
-    })
+    await queue?.add(
+      "incomingMessage",
+      {
+        type: "incomingMessage",
+        data: {
+          integrationType: "whatsapp",
+          integrationIdentifier: result.data.phoneID,
+          payload: result.data,
+        } as ReceivedMessageProps,
+      },
+      result.data.message.id === undefined
+        ? undefined
+        : {
+            jobId: `incoming-whatsapp-${toBullMqSafeIdSegment(result.data.message.id)}`,
+          },
+    )
   }
 
   if (result?.type === "status") {

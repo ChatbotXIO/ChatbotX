@@ -1,4 +1,5 @@
 import type { HandleRequestProps } from "@chatbotx.io/sdk"
+import { toBullMqSafeIdSegment } from "@chatbotx.io/utils"
 import { TelegramWebhookException } from "../exception"
 import type { TelegramConfig } from "../schema"
 import { telegramUpdateSchema } from "../schema"
@@ -23,14 +24,20 @@ export const webhookHandler = async (
       return "ok"
     }
 
-    await queue?.add("incomingMessage", {
-      type: "incomingMessage",
-      data: {
-        integrationType: "telegram",
-        integrationIdentifier,
-        payload: update,
+    await queue?.add(
+      "incomingMessage",
+      {
+        type: "incomingMessage",
+        data: {
+          integrationType: "telegram",
+          integrationIdentifier,
+          payload: update,
+        },
       },
-    })
+      {
+        jobId: `incoming-telegram-${toBullMqSafeIdSegment(integrationIdentifier)}-${update.update_id}`,
+      },
+    )
     return "ok"
   }
 
@@ -38,14 +45,20 @@ export const webhookHandler = async (
     return "ok"
   }
 
-  await queue?.add("incomingMessage", {
-    type: "incomingMessage",
-    data: {
-      integrationType: "telegram",
-      integrationIdentifier,
-      payload: update,
+  await queue?.add(
+    "incomingMessage",
+    {
+      type: "incomingMessage",
+      data: {
+        integrationType: "telegram",
+        integrationIdentifier,
+        payload: update,
+      },
     },
-  })
+    {
+      jobId: `incoming-telegram-${toBullMqSafeIdSegment(integrationIdentifier)}-${update.update_id}`,
+    },
+  )
 
   return "ok"
 }

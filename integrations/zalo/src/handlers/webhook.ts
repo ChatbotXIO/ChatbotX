@@ -3,6 +3,7 @@ import {
   type HandleRequestProps,
   SdkException,
 } from "@chatbotx.io/sdk"
+import { toBullMqSafeIdSegment } from "@chatbotx.io/utils"
 import { sha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import type { ZaloConfig } from "../schema/definition"
 import {
@@ -110,14 +111,22 @@ const handleWebhookEvent = async (
         ? webhookData.recipient.id
         : webhookData.sender.id
 
-      await queue.add("incomingMessage", {
-        type: "incomingMessage",
-        data: {
-          integrationType: "zalo",
-          integrationIdentifier,
-          payload: webhookData,
+      await queue.add(
+        "incomingMessage",
+        {
+          type: "incomingMessage",
+          data: {
+            integrationType: "zalo",
+            integrationIdentifier,
+            payload: webhookData,
+          },
         },
-      })
+        webhookData.message?.msg_id === undefined
+          ? undefined
+          : {
+              jobId: `incoming-zalo-${toBullMqSafeIdSegment(webhookData.message.msg_id)}`,
+            },
+      )
     }
   } catch (error) {
     const errorMessage =
