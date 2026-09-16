@@ -1,4 +1,7 @@
-import { FlowAuthoringException } from "@chatbotx.io/flow-config"
+import {
+  FlowAuthoringException,
+  sendMessageNodeDefaultFn,
+} from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const SPEC_STEP_PATH_PATTERN = /^steps\[/
@@ -215,6 +218,117 @@ describe("POST /v1/flows", () => {
       workspaceId: "workspace-1",
       data: { name: "New flow" },
     })
+  })
+
+  test("spec content: createDraft receives a positioned graph and startNodeId; publish is not called", async () => {
+    flowService.createDraft.mockResolvedValueOnce({ id: "flow-1" })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        name: "New flow",
+        folderId: null,
+        spec: {
+          formatVersion: 1,
+          name: "Spec flow",
+          steps: [{ type: "send", text: "Hi" }],
+        },
+      },
+    })
+
+    expect(flowService.createDraft).toHaveBeenCalledTimes(1)
+    const call = flowService.createDraft.mock.calls[0][0]
+    expect(call.data).toEqual({ name: "New flow", folderId: null })
+    expect(call.graph.nodes).toHaveLength(1)
+    expect(call.graph.nodes[0].position).toEqual({ x: 100, y: 100 })
+    expect(call.graph.startNodeId).toBe(call.graph.nodes[0].id)
+    expect(flowVersionService.publish).not.toHaveBeenCalled()
+  })
+
+  test("raw graph content: createDraft receives normalized positions/edges and startNodeId", async () => {
+    flowService.createDraft.mockResolvedValueOnce({ id: "flow-1" })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        name: "New flow",
+        folderId: null,
+        nodes: [
+          { id: "n1", type: "sendMessage", data: {} },
+          { id: "n2", type: "sendMessage", data: {} },
+        ],
+        edges: [{ source: "n1", target: "n2" }],
+      },
+    })
+
+    const call = flowService.createDraft.mock.calls[0][0]
+    const [nodeN1, nodeN2] = call.graph.nodes
+    // Authored ids ("n1"/"n2") are request-scoped wiring tokens, remapped to
+    // fresh internal ids server-side — assert the relationship, not the
+    // literal authored string.
+    expect(nodeN1.id).not.toBe("n1")
+    expect(nodeN2.id).not.toBe("n2")
+    expect(nodeN1.position).toEqual({ x: 100, y: 100 })
+    expect(call.graph.edges[0]).toEqual(
+      expect.objectContaining({
+        source: nodeN1.id,
+        target: nodeN2.id,
+        sourceHandle: nodeN1.id,
+        targetHandle: nodeN2.id,
+      }),
+    )
+    expect(call.graph.startNodeId).toBe(nodeN1.id)
+    expect(flowVersionService.publish).not.toHaveBeenCalled()
+  })
+
+  test("publish: true validates and publishes the graph createDraft returned an id for", async () => {
+    flowService.createDraft.mockResolvedValueOnce({ id: "flow-9" })
+    // Authored id is deliberately non-numeric ("n1") — normalizeAuthoredGraph
+    // must remap it to an internal createId() id before publishFlowSchema
+    // validates it, since baseNodeSchema.id requires digits only.
+    const node = sendMessageNodeDefaultFn({
+      nodeProps: { id: "n1" },
+      dataProps: {},
+      detailProps: {},
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        name: "New flow",
+        folderId: null,
+        nodes: [node],
+        edges: [],
+        publish: true,
+      },
+    })
+
+    const createDraftCall = flowService.createDraft.mock.calls[0][0]
+    expect(createDraftCall.graph.nodes[0].id).not.toBe("n1")
+    expect(flowVersionService.publish).toHaveBeenCalledTimes(1)
+    expect(flowVersionService.publish).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      flowId: "flow-9",
+      nodes: createDraftCall.graph.nodes,
+      edges: createDraftCall.graph.edges,
+    })
+  })
+
+  test("publish: true rejects an invalid node before createDraft is called", async () => {
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: {
+          name: "New flow",
+          folderId: null,
+          nodes: [{ id: "n1", type: "sendMessage", data: {} }],
+          edges: [],
+          publish: true,
+        },
+      }),
+    ).rejects.toBeInstanceOf(FlowAuthoringException)
+
+    expect(flowService.createDraft).not.toHaveBeenCalled()
   })
 })
 

@@ -23,8 +23,9 @@ import {
   compileAndValidateSpec,
   compileSpecToGraph,
 } from "../lib/compile-spec-to-graph"
+import { resolveFlowGraphInput } from "../lib/resolve-flow-graph-input"
 import {
-  createFlowSchema,
+  createFlowRequest,
   flowSpecRequest,
   publishFlowRequest,
   publishFlowSchema,
@@ -97,21 +98,38 @@ export const flowsPublicRouter = {
       path: "/v1/flows",
       summary: "Create flow",
       description:
-        "Starts a draft flow with its default start node. Use `flows.list` to inspect existing flows first, then call `flows.updateDraft` or `flows.publish` to complete it.",
+        "Creates a flow. With no `spec`/`nodes` it starts a draft with one default start node. Supply `spec` (flow-spec DSL, see `GET /v1/schemas/flow-spec`) or a raw `nodes`/`edges` graph to seed the draft in the same call — node `position`/`measured`, node ids, and edge ids/handles are all generated server-side (a raw node's `id` is only a request-scoped token for wiring `edges`), so only the flow's content needs sending. Add `publish: true` to validate the graph exactly like `flows.publish` and create the flow's first version immediately. Use `flows.list` to inspect existing flows first.",
       successStatus: 201,
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
     })
-    .input(createFlowSchema)
+    .input(createFlowRequest)
     .output(z.object({ id: z.string() }))
     .errors(possibleErrorsOnCreatingResource)
-    .handler(
-      async ({ context, input }) =>
-        await flowService.createDraft({
-          workspaceId: context.workspace.id,
-          data: input,
-        }),
-    ),
+    .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
+      const { name, folderId, spec, nodes, edges, publish } = input
+      // Compile/validate before any write, so a rejected graph creates no flow row.
+      const graph = await resolveFlowGraphInput(
+        { spec, nodes, edges },
+        workspaceId,
+        { validate: publish === true },
+      )
+      const flow = await flowService.createDraft({
+        workspaceId,
+        data: { name, folderId },
+        graph,
+      })
+      if (publish && graph) {
+        await flowVersionService.publish({
+          workspaceId,
+          flowId: flow.id,
+          nodes: graph.nodes,
+          edges: graph.edges,
+        })
+      }
+      return flow
+    }),
 
   update: workspaceTokenAuthAPI
     .route({
@@ -211,9 +229,13 @@ export const flowsPublicRouter = {
     .input(flowSpecRequest)
     .output(publishFlowSchema)
     .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) =>
-      compileAndValidateSpec(input.spec, context.workspace.id),
-    ),
+    .handler(async ({ context, input }) => {
+      const { nodes, edges } = await compileAndValidateSpec(
+        input.spec,
+        context.workspace.id,
+      )
+      return { nodes, edges }
+    }),
 
   updateDraft: workspaceTokenAuthAPI
     .route({

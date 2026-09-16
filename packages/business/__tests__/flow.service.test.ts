@@ -495,4 +495,45 @@ describe("flowService.createDraft", () => {
     )
     expect(result).toEqual({ id: "flow-1" })
   })
+
+  test("uses a pre-resolved graph instead of the default start node when one is supplied", async () => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockInsertValues.mockImplementation(() =>
+      Object.assign(Promise.resolve(undefined), {
+        returning: mockInsertReturning,
+      }),
+    )
+    mockCreateId
+      .mockReturnValueOnce("flow-2")
+      .mockReturnValueOnce("analytics-2")
+      .mockReturnValueOnce("version-2")
+    mockInsertReturning.mockResolvedValue([{ id: "flow-2" }])
+
+    const result = await flowService.createDraft({
+      workspaceId: "ws-1",
+      data: { name: "New flow" },
+      graph: {
+        nodes: [{ id: "node-1" }],
+        edges: [{ id: "e1", source: "node-1", target: "node-1" }],
+        startNodeId: "node-1",
+      },
+    })
+
+    expect(mockInsert).toHaveBeenNthCalledWith(3, flowVersionModel)
+    expect(mockInsertValues).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        id: "version-2",
+        workspaceId: "ws-1",
+        flowId: "flow-2",
+        nodes: [{ id: "node-1" }],
+        edges: [{ id: "e1", source: "node-1", target: "node-1" }],
+        isDraft: true,
+        startNodeId: "node-1",
+      }),
+    )
+    expect(result).toEqual({ id: "flow-2" })
+  })
 })

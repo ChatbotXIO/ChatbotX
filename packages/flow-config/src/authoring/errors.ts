@@ -20,6 +20,7 @@ export type FlowAuthoringErrorCode =
   | "selfLoopGoto"
   | "duplicateStepId"
   | "invalidStep"
+  | "invalidGraph"
   | "compileFailed"
   | "templateNotApproved"
 

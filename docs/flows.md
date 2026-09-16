@@ -23,7 +23,7 @@ versions, and reverting a draft back to the current published content.
 
 | Operation | Code path | Behavior |
 |---|---|---|
-| Create | `createFlowAction` | Inserts the flow and a single draft version with a default start node. No published version exists yet. |
+| Create | `createFlowAction` / public `flows.create` | Inserts the flow and a single draft version. The builder form and a bare API call seed it with a default start node; the public API can instead seed the draft with `{ spec }` or a raw `{ nodes, edges }` graph in the same call (see [Publish / validate workflow](#publish--validate-workflow)). No published version exists yet unless `publish: true` was sent. |
 | Edit / autosave | `updateDraftFlowVersionAction` | Overwrites the draft row's `nodes` and `edges` from the canvas. |
 | Publish | `publishFlowAction` | Copies the current draft content into a new published snapshot, marks it `isLatest`, and updates `currentVersionId`. |
 | Restore older version | `flowVersionService.restore()` | Marks the chosen version as current published, updates `currentVersionId`, and copies that version's content into the draft row. |
@@ -124,17 +124,34 @@ non-terminal step continues into the node-level "Continue" edge by default.
 
 ### Publish / validate workflow
 
-1. **`flows.validate`** — compiles a `{ spec }` and validates the result exactly like
+1. **`flows.create`** — accepts `name`/`folderId` plus, optionally, exactly one of
+   `{ spec }` or a raw `{ nodes, edges }` graph to seed the draft in the same call
+   (a body carrying both, or `edges` without `nodes`, is rejected with a 422 naming
+   the offending key). For the raw graph shape, node `position`/`measured`, node
+   ids, and edge `id`/handles are all optional or caller-arbitrary — filled in or
+   remapped server-side by
+   [`normalizeAuthoredGraph`](../packages/flow-config/src/authoring/normalize-graph.ts),
+   which lays out positionless nodes with the same BFS `layoutNodes` the spec
+   compiler uses, remaps every node's caller-supplied `id` to a fresh internal
+   `createId()` id (a raw node's `id` is only a request-scoped token for wiring
+   `edges` — it is never the persisted id, since persisted node ids are numeric
+   snowflakes and a caller id like `"n1"` would otherwise fail `publishFlowSchema`),
+   and defaults edge handles to the node-id convention `addHandleEdge` produces
+   against the remapped ids. Add `publish: true` to validate the resulting graph
+   exactly like `flows.publish` and create the flow's first version in the same
+   call; omitting content or `publish` keeps today's default-start-node draft
+   behavior.
+2. **`flows.validate`** — compiles a `{ spec }` and validates the result exactly like
    `flows.publish` would, without persisting anything. On success it returns the
    compiled `{ nodes, edges }` graph; on failure a 422 with structured errors
    (`path`/`code`/`message`/`hint`/`candidates`), each `path` remapped back onto the
    *spec-relative* location (e.g. `steps[2].buttons[0].then[0]`) rather than a
    compiled-node path. Fix and retry before publishing.
-2. **`flows.publish`** — accepts either the raw `{ nodes, edges }` graph the builder
+3. **`flows.publish`** — accepts either the raw `{ nodes, edges }` graph the builder
    UI sends, or `{ spec }`; a request must send exactly one of the two shapes — a
    body carrying both is rejected with a 422 rather than silently discarding one of
    them. Creates an immutable version from the draft and syncs the draft to match.
-3. **`flows.updateDraft`** — same either/or `{ nodes, edges }` vs `{ spec }`
+4. **`flows.updateDraft`** — same either/or `{ nodes, edges }` vs `{ spec }`
    acceptance as `flows.publish`, but overwrites the draft in place without
    publishing; draft nodes are not otherwise validated.
 
