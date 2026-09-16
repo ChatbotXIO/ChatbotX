@@ -67,6 +67,15 @@ const VOIP_CALL_HANGUP_BEACON_URL = "/api/whatsapp-voip-call-hangup"
 const ACTIVE_CALL_HEARTBEAT_INTERVAL_MS = 20_000
 
 /**
+ * Local expiry for a ringing offer whose `deadlineAt` cannot be parsed.
+ * Comfortably past Meta's own offer/control TTL (~55s), so it never cuts a
+ * still-answerable offer short, while making sure a malformed deadline can
+ * never strand a dead ring in the basket forever if the transport-ended
+ * event is also lost — the exact case this local backstop exists for.
+ */
+const RING_FALLBACK_EXPIRY_MS = 90_000
+
+/**
  * Mic constraints tuned to stop the classic WebRTC "howl" (the mic picking the
  * remote party's voice back up off the speakers and feeding it into a loop):
  * the browser's echo canceller subtracts the played-back audio from the mic
@@ -317,21 +326,23 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     const timeoutIds = ringingCalls.flatMap((entry) => {
       const deadlineMs = new Date(entry.deadlineAt).getTime()
       // An unparseable deadline would make `Math.max(NaN, 0)` NaN, which
-      // `setTimeout` coerces to 0 — the ring would vanish from the basket the
-      // instant it arrived, before the agent could ever see it. Arming no
-      // timer at all is strictly better: the offer stays answerable and the
-      // server's own expiry (which is authoritative anyway) still ends it.
-      if (!Number.isFinite(deadlineMs)) {
+      // `setTimeout` coerces to 0 — the ring would vanish the instant it
+      // arrived, before the agent could ever see it. Arming NO timer is not
+      // the answer either: this backstop exists precisely for a lost
+      // transport-ended event, so skipping it can strand a dead ring in the
+      // basket until the agent reloads. Fall back to a bounded delay past
+      // Meta's own TTL instead, which is wrong in neither direction.
+      const isDeadlineUsable = Number.isFinite(deadlineMs)
+      if (!isDeadlineUsable) {
         logger.warn(
           { whatsappCallId: entry.whatsappCallId },
-          "WhatsApp VoIP ring has an unparseable deadline; skipping its local expiry timer",
+          "WhatsApp VoIP ring has an unparseable deadline; falling back to a bounded local expiry",
         )
-        return []
       }
-      return setTimeout(
-        () => removeRinging(entry.whatsappCallId),
-        Math.max(deadlineMs - Date.now(), 0),
-      )
+      const delayMs = isDeadlineUsable
+        ? Math.max(deadlineMs - Date.now(), 0)
+        : RING_FALLBACK_EXPIRY_MS
+      return setTimeout(() => removeRinging(entry.whatsappCallId), delayMs)
     })
     return () => {
       for (const timeoutId of timeoutIds) {
@@ -621,8 +632,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
       if (
         !workspaceId ||
         incomingCall.phase !== WhatsappVoipCallPhase.incomingRinging ||
-        // Every inbound call carries an offer (`addIncoming`/`promoteRinging`
-        // require one) — `offer` is only optional on the shared
+        // Every inbound call carries an offer (`promoteRinging` moves one
+        // in) — `offer` is only optional on the shared
         // `WhatsappVoipCall` type because an outbound call never has one.
         // This can never actually be reached for a call still in
         // `incomingRinging`.
@@ -972,11 +983,13 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
 
         const current = latest.call
         const slotIsEngaged = !isCallSlotFree(current)
+        let endedACallToGetHere = false
         if (slotIsEngaged && current) {
           const ended = await endForReplacement(current)
           if (!ended) {
             return
           }
+          endedACallToGetHere = true
         }
 
         const promoted = useWhatsappVoipCallStore
@@ -984,8 +997,19 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           .promoteRinging(targetId)
         if (!promoted) {
           // Another agent won the race, or the slot filled again in the
-          // window above — abort cleanly. A basket entry owns no
-          // peer/mic, so there is nothing to tear down.
+          // window above — abort cleanly. A basket entry owns no peer/mic,
+          // so there is nothing to tear down.
+          //
+          // But if we ENDED a live call to get here, the agent just lost a
+          // real conversation for nothing. Failing silently would leave them
+          // staring at an empty panel with no idea why, so say it plainly.
+          if (endedACallToGetHere) {
+            logger.warn(
+              { whatsappCallId: targetId },
+              "WhatsApp VoIP replacement: the incoming call was gone after the current one was ended",
+            )
+            toast.error(t("whatsapp.calls.errors.callNoLongerRinging"))
+          }
           return
         }
         const promotedCall = useWhatsappVoipCallStore.getState().call
@@ -996,7 +1020,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         answeringIdRef.current = null
       }
     },
-    [answerIncoming, endForReplacement],
+    [answerIncoming, endForReplacement, t],
   )
 
   // Ring-all: dismissing an incoming call is LOCAL only — the same offer is
@@ -1280,7 +1304,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         setPreparingStage(nonce, "mic")
         const microphone = await captureMicrophoneStream()
         if ("failure" in microphone) {
-          teardown()
+          teardownIfStillOurs()
           if (isCancelled()) {
             clearCancelToken()
             return "cancelled"
@@ -1390,7 +1414,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
               "WhatsApp outbound VoIP compensating hangup failed after the store's call slot was taken mid-dial",
             )
           })
-          teardown()
+          teardownIfStillOurs()
           return "occupied"
         }
 
@@ -1411,7 +1435,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           },
           "WhatsApp outbound VoIP dial failed",
         )
-        teardown()
+        teardownIfStillOurs()
         if (isCancelled()) {
           clearCancelToken()
           return "cancelled"

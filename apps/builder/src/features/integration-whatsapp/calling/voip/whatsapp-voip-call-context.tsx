@@ -17,6 +17,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react"
 import { toast } from "sonner"
@@ -205,17 +206,26 @@ export function WhatsappVoipCallProvider({
     }
   }, [ringingCalls, replacementTarget])
 
+  // Memoized because this provider re-renders on every store change it
+  // subscribes to (the call slot AND the ringing basket). A fresh object each
+  // time would re-render every consumer — including every virtualized
+  // `ConversationItem` in the inbox — on a mute toggle or a countdown tick,
+  // exactly what that row's own selector is written to avoid. The callbacks
+  // below are already stable.
+  const contextValue = useMemo(
+    () => ({
+      answer,
+      dismiss,
+      hangup,
+      toggleMute,
+      dismissEnded,
+      startOutbound,
+    }),
+    [answer, dismiss, hangup, toggleMute, dismissEnded, startOutbound],
+  )
+
   return (
-    <WhatsappVoipCallContext.Provider
-      value={{
-        answer,
-        dismiss,
-        hangup,
-        toggleMute,
-        dismissEnded,
-        startOutbound,
-      }}
-    >
+    <WhatsappVoipCallContext.Provider value={contextValue}>
       {/** biome-ignore lint/a11y/useMediaCaption: remote call audio has no captions to attach */}
       <audio autoPlay ref={remoteAudioRef} />
       <AlertDialog

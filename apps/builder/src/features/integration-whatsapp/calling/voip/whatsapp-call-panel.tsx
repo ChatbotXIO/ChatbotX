@@ -169,9 +169,12 @@ export function WhatsappCallPanel() {
       (ringingCalls.length > 0 ||
         call?.phase === WhatsappVoipCallPhase.incomingRinging),
     isMidConversation ? voipRingtoneModes.callWaiting : voipRingtoneModes.ring,
-    // Re-arms the finite call-waiting beep for each NEW offer; without it a
-    // second arrival would be silent, since `active` never changed.
-    ringingCalls.length,
+    // Re-arms the FINITE call-waiting beep for each new offer; without it a
+    // second arrival would be silent, since `active` never changed. Held
+    // constant for the full ring, which already repeats on its own: letting
+    // it vary there would tear down and rebuild the `AudioContext` on every
+    // arrival, audibly restarting a ring that used to play through.
+    isMidConversation ? ringingCalls.length : 0,
   )
   useVoipRingback(isOutboundDialPhase)
 

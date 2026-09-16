@@ -94,7 +94,7 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
    - `releaseClaim` — fenced rollback `answering → reserved (reservedUserId:"")`, used
      when the winning agent's own Graph `accept` attempt fails. This re-opens the call
      to every other rung agent (and to the same agent after a refresh, via
-     `getResumableIncoming`) within the original deadline, instead of stranding the
+     `listResumableIncoming`) within the original deadline, instead of stranding the
      call `answering` until expiry. It intentionally does NOT loosen the general
      `ALLOWED_TRANSITIONS` table — this is a narrowly fenced, one-off exception.
    - `commitAccepted` — `answering + matching fenceToken → accepted`, after Graph
@@ -138,7 +138,7 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
 ## Threat model notes (M-series)
 
 - **M6 — pickup is workspace-wide, wider than the live rung set (accepted design).**
-  `getResumableIncoming`/`claimForAnswer` are reachable by ANY current workspace
+  `listResumableIncoming`/`claimForAnswer` are reachable by ANY current workspace
   member who mounts the inbox — not only the ≤`MAX_VOIP_RING_TARGETS` agents who were
   actually live (and therefore rung) at connect time. An agent who opens the inbox
   seconds after a call started, and was never sent the offer, can still resume and
@@ -217,14 +217,30 @@ the shared finalizer emit the transport-tagged ended event.
 
 ## Multi-agent behaviour
 
-- **Resume after refresh.** `getResumableIncoming({ workspaceId })` lets an agent who
-  reloads mid-ring (or opens the inbox after the call started) pick the call back up:
+- **Concurrent offers (the ringing basket).** Ring-all means several customers can be
+  ringing one workspace — and one agent — at the same moment. The browser store keeps
+  two distinct things: `ringingCalls`, the basket of offers made TO this agent, and the
+  single `call` slot, the one call they are ENGAGED with. A basket entry is pure data:
+  no `RTCPeerConnection`, no microphone, no timer of its own. `enqueueRinging` adds one,
+  `promoteRinging` moves one into the slot atomically (returning `false` if the slot is
+  taken), and only then is a peer built. An id is never in both at once. The panel
+  renders one big card for a single offer, a compact list for several, and stacks that
+  list above the call in progress when the agent is already busy — see
+  `docs/superpowers/specs/2026-09-16-whatsapp-multi-ring-design.md` for the full table.
+- **Answering while already on a call.** There is no hold. Answering a second offer
+  ends the current call first, behind a confirmation dialog that names both parties,
+  and only promotes the new offer once the server CONFIRMS the hangup — never on the
+  best-effort local `hangup()`. An agent who is mid-conversation hears a short
+  call-waiting beep rather than the full ringtone.
+- **Resume after refresh.** `listResumableIncoming({ workspaceId })` lets an agent who
+  reloads mid-ring (or opens the inbox after the call started) pick the calls back up:
   it scans candidate rows via `whatsappCallRepository.findRingingByWorkspace`, and for
   each checks the live control is exactly `phase:"reserved"` + `reservedUserId:""`
-  (still unclaimed) with an offer still in Redis, returning the first match shaped
-  identically to the realtime `whatsappCallTransportIncoming` payload so the dock can
-  render it the same way. `get-pending-incoming-voip-call.action.ts` calls this on
-  dock mount. See M6 above for who is allowed to call it.
+  (still unclaimed) with an offer still in Redis, returning EVERY match (bounded by the
+  repository's limit) shaped identically to the realtime
+  `whatsappCallTransportIncoming` payload so the dock can render them the same way.
+  `get-pending-incoming-voip-call.action.ts` calls this on dock mount and enqueues each
+  entry into the basket. See M6 above for who is allowed to call it.
 - **Presence heartbeat.** `whatsappVoipPresenceService` (Redis `presenceStore`,
   `voip:presence:<workspaceId>`) is the VoIP ring-set source — an agent counts as
   "available" simply by having the inbox open, heartbeating every well inside

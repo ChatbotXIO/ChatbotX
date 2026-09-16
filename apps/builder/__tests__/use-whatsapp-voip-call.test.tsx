@@ -6,6 +6,7 @@ import { useWhatsappVoipCall } from "@/features/integration-whatsapp/calling/voi
 import {
   useWhatsappVoipCallStore,
   WhatsappVoipCallPhase,
+  type WhatsappVoipIncomingData,
 } from "@/features/integration-whatsapp/calling/voip/voip-call-store"
 
 vi.mock("@/hooks/routing", () => ({
@@ -194,6 +195,24 @@ const incomingData = {
   deadlineAt: new Date(Date.now() + 60_000).toISOString(),
 }
 
+/**
+ * Seeds the slot with a ringing inbound call, the way production does it:
+ * into the basket first, then promoted — replaces the deleted `addIncoming`.
+ * Throws if promotion did not actually happen, so a mis-migrated test — one
+ * that seeds against an already-occupied slot — fails loudly instead of
+ * silently asserting against an empty/unchanged slot.
+ */
+const seedRingingSlot = (data: WhatsappVoipIncomingData) => {
+  const store = useWhatsappVoipCallStore.getState()
+  store.enqueueRinging(data)
+  const promoted = store.promoteRinging(data.whatsappCallId)
+  if (!promoted) {
+    throw new Error(
+      `seedRingingSlot: promoteRinging failed for "${data.whatsappCallId}" — the slot was already occupied`,
+    )
+  }
+}
+
 let hookResult: UseWhatsappVoipCallResult | null = null
 
 describe("useWhatsappVoipCall", () => {
@@ -258,7 +277,7 @@ describe("useWhatsappVoipCall", () => {
 
   test("answer() gathers a peer connection, answers, and marks the call active on accepted", async () => {
     answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
 
     await act(async () => {
@@ -290,7 +309,7 @@ describe("useWhatsappVoipCall", () => {
 
   test("answer() tears down and resets on a cannotAnswer outcome", async () => {
     answerActionMock.mockResolvedValue({ data: { outcome: "cannotAnswer" } })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
 
     await act(async () => {
@@ -303,7 +322,7 @@ describe("useWhatsappVoipCall", () => {
 
   test("answer() tears down and resets on a callEnded outcome", async () => {
     answerActionMock.mockResolvedValue({ data: { outcome: "callEnded" } })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
 
     await act(async () => {
@@ -315,7 +334,7 @@ describe("useWhatsappVoipCall", () => {
   })
 
   test("dismiss() silences the ring locally: resets the store, no peer, no server action", async () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
 
     act(() => {
@@ -331,7 +350,7 @@ describe("useWhatsappVoipCall", () => {
   })
 
   test("L-ts1: hangup() is a no-op while the call is still incomingRinging (never fires against an unanswered call)", async () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
 
     await act(async () => {
@@ -345,7 +364,7 @@ describe("useWhatsappVoipCall", () => {
 
   test("hangup() closes the peer and calls the hangup action", async () => {
     answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     await act(async () => {
       await hookResult?.answer()
@@ -364,7 +383,7 @@ describe("useWhatsappVoipCall", () => {
 
   test("the transport-ended realtime event (handleEnded) closes an active peer", async () => {
     answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     await act(async () => {
       await hookResult?.answer()
@@ -380,7 +399,7 @@ describe("useWhatsappVoipCall", () => {
 
   test("toggleMute disables the local audio track and flips store state", async () => {
     answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     await act(async () => {
       await hookResult?.answer()
@@ -432,7 +451,7 @@ describe("useWhatsappVoipCall", () => {
 
   test("resumes into the basket even while the slot already holds a different call — ring-all means both stay live", async () => {
     pendingIncomingActionMock.mockResolvedValue({ data: [incomingData] })
-    useWhatsappVoipCallStore.getState().addIncoming({
+    seedRingingSlot({
       ...incomingData,
       whatsappCallId: "already-engaged",
     })
@@ -485,7 +504,7 @@ describe("useWhatsappVoipCall", () => {
       useWhatsappVoipCallStore.setState({ call: null })
       return Promise.resolve({ data: { outcome: "accepted" } })
     })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
 
     await act(async () => {
@@ -507,7 +526,7 @@ describe("useWhatsappVoipCall", () => {
           resolveAnswer = resolve
         }),
     )
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
 
     let answerPromise: Promise<void> | undefined
@@ -553,7 +572,7 @@ describe("useWhatsappVoipCall", () => {
           resolveMic = resolve
         }),
     )
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
 
     let answerPromise: Promise<void> | undefined
@@ -589,7 +608,7 @@ describe("useWhatsappVoipCall", () => {
           resolveAnswer = resolve
         }),
     )
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
 
     let answerPromise: Promise<void> | undefined
@@ -628,7 +647,7 @@ describe("useWhatsappVoipCall", () => {
         }),
     )
     answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
 
     let answerPromise: Promise<void> | undefined
@@ -679,7 +698,7 @@ describe("useWhatsappVoipCall", () => {
         recordingRequested: true,
       },
     })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     await act(async () => {
       await hookResult?.answer()
@@ -706,7 +725,7 @@ describe("useWhatsappVoipCall", () => {
         recordingRequested: false,
       },
     })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     await act(async () => {
       await hookResult?.answer()
@@ -728,7 +747,7 @@ describe("useWhatsappVoipCall", () => {
         recordingRequested: true,
       },
     })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     await act(async () => {
       await hookResult?.answer()
@@ -764,7 +783,7 @@ describe("useWhatsappVoipCall", () => {
         recordingRequested: true,
       },
     })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     await act(async () => {
       await hookResult?.answer()
@@ -791,7 +810,7 @@ describe("useWhatsappVoipCall", () => {
         recordingRequested: true,
       },
     })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     await act(async () => {
       await hookResult?.answer()
@@ -816,7 +835,7 @@ describe("useWhatsappVoipCall", () => {
         recordingRequested: false,
       },
     })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     await act(async () => {
       await hookResult?.answer()
@@ -840,7 +859,7 @@ describe("useWhatsappVoipCall", () => {
           resolveAnswer = resolve
         }),
     )
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
 
     let answerPromise: Promise<void> | undefined
@@ -884,7 +903,7 @@ describe("useWhatsappVoipCall", () => {
 
   test("R5: pc.connectionState 'failed' tears down and fires a compensating hangup with a translated connection-lost notice", async () => {
     answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     await act(async () => {
       await hookResult?.answer()
@@ -923,7 +942,7 @@ describe("useWhatsappVoipCall", () => {
           resolveAnswer = resolve
         }),
     )
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
 
     let answerPromise: Promise<void> | undefined
@@ -974,7 +993,7 @@ describe("useWhatsappVoipCall", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     try {
       answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
-      useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+      seedRingingSlot(incomingData)
       await render()
       await act(async () => {
         await hookResult?.answer()
@@ -1023,7 +1042,7 @@ describe("useWhatsappVoipCall", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     try {
       answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
-      useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+      seedRingingSlot(incomingData)
       await render()
       await act(async () => {
         await hookResult?.answer()
@@ -1070,7 +1089,7 @@ describe("useWhatsappVoipCall", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     try {
       answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
-      useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+      seedRingingSlot(incomingData)
       await render()
       await act(async () => {
         await hookResult?.answer()
@@ -1219,7 +1238,7 @@ describe("useWhatsappVoipCall — basket / multi-ring", () => {
           resolveHangup = resolve
         }),
     )
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     // Get the first call to `active` so the slot is genuinely ENGAGED.
     await act(async () => {
@@ -1272,7 +1291,7 @@ describe("useWhatsappVoipCall — basket / multi-ring", () => {
 
   test("the replacement path aborts without promoting when the hangup fails, and surfaces an error", async () => {
     hangupActionMock.mockResolvedValue({ data: { hungUp: false } })
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     await act(async () => {
       await hookResult?.answer()
@@ -1471,7 +1490,7 @@ describe("useWhatsappVoipCall — basket / multi-ring", () => {
           resolveHangup = resolve
         }),
     )
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     await render()
     await act(async () => {
       await hookResult?.answer()
@@ -1994,7 +2013,7 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     }
   })
 
-  test("an inbound ring during preparing is DROPPED — the slot is already ours from click", async () => {
+  test("an inbound ring during preparing lands in the BASKET — the slot stays ours, the ring stays answerable", async () => {
     let resolveInitiate: ((value: unknown) => void) | undefined
     initiateOutboundActionMock.mockImplementation(
       () =>
@@ -2019,9 +2038,12 @@ describe("useWhatsappVoipCall — startOutbound", () => {
 
       // An inbound ring arrives while this dial is still `preparing` — the
       // slot is already ours (claimed instantly on click, before the
-      // initiate round-trip even started), so `addIncoming` drops it rather
-      // than claiming the slot (accepted trade-off).
-      useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+      // initiate round-trip even started), so `chat-realtime.tsx` calling
+      // `enqueueRinging` for it lands the offer in the basket rather than
+      // the slot. It stays fully answerable there — `startOutbound` never
+      // blocks on the basket (see the deliberate comment on that check in
+      // `use-whatsapp-voip-call.ts`).
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData)
 
       resolveInitiate?.({ data: outboundDialingResult })
       outcome = await startPromise
@@ -2035,6 +2057,12 @@ describe("useWhatsappVoipCall — startOutbound", () => {
       "out-call-1",
     )
     expect(useWhatsappVoipCallStore.getState().call?.direction).toBe("outbound")
+    // The ring survived in the basket rather than being dropped.
+    expect(
+      useWhatsappVoipCallStore
+        .getState()
+        .ringingCalls.map((entry) => entry.whatsappCallId),
+    ).toEqual(["call-1"])
   })
 
   test("preparing -> cancel -> a late 'dialing' outcome fires a compensating hangup", async () => {

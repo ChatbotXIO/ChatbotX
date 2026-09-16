@@ -159,22 +159,37 @@ export type WhatsappVoipPendingOutboundAnswer = {
 /** True when the single `call` slot is unoccupied and can accept a new
  * call — a lingering `ended` call is FREE, not occupied, since it is only
  * still in the slot so the panel can show its terminal message for ~2s (see
- * the identical rule inlined in `addIncoming` below). Factored out as a
- * standalone helper — and exported — so every consumer of this rule
- * (`promoteRinging` here, plus `WhatsappCallPanel`'s `isSlotFree` and the
- * `slotIsEngaged` checks in `useWhatsappVoipCall`'s `answer()` and
+ * the identical rule inlined in `addOutbound`/`startPreparing` below).
+ * Factored out as a standalone helper — and exported — so every consumer of
+ * this rule (`promoteRinging` here, plus `WhatsappCallPanel`'s `slotFree`
+ * and the `slotIsEngaged` checks in `useWhatsappVoipCall`'s `answer()` and
  * `WhatsappVoipCallProvider`) shares the ONE definition instead of
  * re-deriving it inline in four places that would silently drift the moment
- * a new terminal phase is added. `addIncoming`/`addOutbound`/`startPreparing`
- * keep their own inline checks as-is, since this slice only ADDS to the
- * store and does not touch the 14 existing mutations. */
+ * a new terminal phase is added. `addOutbound`/`startPreparing` keep their
+ * own inline checks as-is, since this slice only ADDS to the store and does
+ * not touch the existing mutations. */
 export function isCallSlotFree(call: WhatsappVoipCall | null): boolean {
   return !call || call.phase === WhatsappVoipCallPhase.ended
 }
 
+/**
+ * The phase an outbound call lands in when Meta's status for it arrived
+ * BEFORE its real id reached the slot — see `pendingOutboundStatus`.
+ */
+const OUTBOUND_PHASE_BY_BUFFERED_STATUS: Record<
+  "ringing" | "accepted",
+  WhatsappVoipCallPhase
+> = {
+  ringing: WhatsappVoipCallPhase.outboundRinging,
+  accepted: WhatsappVoipCallPhase.active,
+}
+
 type WhatsappVoipCallState = {
-  /** At most one VoIP call at a time — offers are targeted to one reserved
-   * agent, and inbound/outbound stay mutually exclusive in this one slot. */
+  /** The call this agent is ENGAGED with — at most one at a time, and
+   * inbound/outbound stay mutually exclusive in this one slot. Several
+   * offers can be pending at once under ring-all (see `ringingCalls`
+   * below); this slot only ever holds the one the agent answered or is
+   * dialing. */
   call: WhatsappVoipCall | null
   /** Calls OFFERED to this agent but not yet answered — see
    * `WhatsappVoipRingingCall`. Ordered by arrival (append-only, dropped by
@@ -189,16 +204,15 @@ type WhatsappVoipCallState = {
   enqueueRinging: (data: WhatsappVoipIncomingData) => void
   /** Drops a basket entry by id. A no-op when the id is not present. */
   removeRinging: (whatsappCallId: string) => void
-  /** Atomically moves one basket entry into the single `call` slot, shaped
-   * exactly like `addIncoming`'s result (phase `incomingRinging`,
-   * `isMuted`/`isRecording` false). Returns `true` on success; `false` when
+  /** Atomically moves one basket entry into the single `call` slot (phase
+   * `incomingRinging`, `isMuted`/`isRecording` false). Returns `true` on
+   * success; `false` when
    * the id is not in the basket, or the slot is occupied by a call that is
    * not free (see `isCallSlotFree` — a lingering `ended` call IS free). On
    * `false` the basket and slot are both left untouched. */
   promoteRinging: (whatsappCallId: string) => boolean
   /** Empties the basket. Does not touch the `call` slot. */
   clearRinging: () => void
-  addIncoming: (data: WhatsappVoipIncomingData) => void
   addOutbound: (data: WhatsappVoipOutboundData) => void
   /** Claims the single call slot INSTANTLY, keyed by the client `attemptId`
    * nonce — before any TURN/getUserMedia/offer/ICE/initiate work starts, so
@@ -221,6 +235,20 @@ type WhatsappVoipCallState = {
    * a non-`"dialing"` outcome (needs permission, ineligible, failed, …). */
   releasePreparing: (attemptId: string) => void
   setPhase: (whatsappCallId: string, phase: WhatsappVoipCallPhase) => void
+  /**
+   * Meta's outbound status for a call whose id the slot does not hold YET.
+   * The slot carries a client nonce until `initiateOutboundVoipCallAction`
+   * returns, but Meta can emit ACCEPTED as soon as it binds the wacid —
+   * before that return. Dropping it there would leave a connected customer
+   * talking to an agent whose microphone is never attached, until the
+   * deadline backstop hangs the call up. Buffered here and applied by
+   * `upgradeToDialing`, mirroring how `pendingOutboundAnswer` already
+   * buffers the SDP answer for exactly the same race.
+   */
+  pendingOutboundStatus: {
+    whatsappCallId: string
+    status: "ringing" | "accepted"
+  } | null
   setOutboundStatus: (
     whatsappCallId: string,
     status: "ringing" | "accepted",
@@ -259,6 +287,7 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
     call: null,
     ringingCalls: [],
     pendingOutboundAnswer: null,
+    pendingOutboundStatus: null,
 
     enqueueRinging: (data) =>
       set((state) => {
@@ -331,57 +360,15 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
 
     clearRinging: () => set({ ringingCalls: [] }),
 
-    addIncoming: (data) =>
-      set((state) => {
-        // Accept a new incoming offer ONLY when the slot is free, or when it is
-        // a redelivery of the SAME call that is still merely ringing (a
-        // harmless idempotent refresh). Any call already past `incomingRinging`
-        // — including the same call now `answering`/`active` — is left
-        // untouched: overwriting it would reset the phase and orphan the live
-        // `RTCPeerConnection` the hook holds (a leaked peer + mic). A second,
-        // different offer that lands while one is in progress is dropped on
-        // this agent and Meta-rejected server-side when it expires.
-        //
-        // While an outbound dial is `preparing`, the slot is ALREADY ours
-        // (claimed instantly on click, before any server call exists) — an
-        // inbound ring landing in that window is dropped here too, exactly
-        // like it would be against any other in-progress call. Accepted
-        // trade-off.
-        const existing = state.call
-        const isSameRinging =
-          existing?.whatsappCallId === data.whatsappCallId &&
-          existing?.phase === WhatsappVoipCallPhase.incomingRinging
-        // A lingering `ended` call is FREE, not occupied — it is only
-        // still in the slot so the panel can show its terminal message for
-        // ~2s; a new inbound ring must be able to claim the slot immediately
-        // rather than being dropped for up to 2s after the previous call
-        // ended.
-        const isFree =
-          !existing || existing.phase === WhatsappVoipCallPhase.ended
-        if (!(isFree || isSameRinging)) {
-          return state
-        }
-        return {
-          call: {
-            ...data,
-            transport: "voip",
-            direction: WhatsappVoipCallDirection.inbound,
-            phase: WhatsappVoipCallPhase.incomingRinging,
-            isMuted: false,
-            isRecording: false,
-          },
-        }
-      }),
-
-    // Mirrors `addIncoming`'s single-slot guard so inbound and outbound stay
-    // mutually exclusive: a no-op while the slot is occupied by any other
-    // in-progress call (the hook's `startOutbound` also short-circuits
-    // before this is ever reached, but the guard here keeps the store itself
-    // safe against any other caller).
+    // A no-op while the slot is occupied by any other in-progress call (the
+    // hook's `startOutbound` also short-circuits before this is ever
+    // reached, but the guard here keeps the store itself safe against any
+    // other caller) — keeps inbound and outbound mutually exclusive in the
+    // one slot.
     addOutbound: (data) =>
       set((state) => {
         // A lingering `ended` call is FREE, not occupied — see
-        // `addIncoming`.
+        // `isCallSlotFree`.
         if (state.call && state.call.phase !== WhatsappVoipCallPhase.ended) {
           return state
         }
@@ -400,7 +387,7 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
     startPreparing: (attemptId, data) =>
       set((state) => {
         // A lingering `ended` call is FREE, not occupied — see
-        // `addIncoming`.
+        // `isCallSlotFree`.
         if (state.call && state.call.phase !== WhatsappVoipCallPhase.ended) {
           return state
         }
@@ -440,14 +427,28 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
         ) {
           return state
         }
+        // A status Meta sent before this id reached the slot (see
+        // `pendingOutboundStatus`) must take effect now, or an already-
+        // answered call would sit in `outboundDialing` with no microphone.
+        const buffered =
+          state.pendingOutboundStatus?.whatsappCallId === data.whatsappCallId
+            ? state.pendingOutboundStatus
+            : undefined
+        const phase = buffered
+          ? OUTBOUND_PHASE_BY_BUFFERED_STATUS[buffered.status]
+          : WhatsappVoipCallPhase.outboundDialing
         return {
+          pendingOutboundStatus: buffered ? null : state.pendingOutboundStatus,
           call: {
             ...data,
             transport: "voip",
             direction: WhatsappVoipCallDirection.outbound,
-            phase: WhatsappVoipCallPhase.outboundDialing,
+            phase,
             isMuted: false,
             isRecording: data.recordingRequested,
+            ...(buffered?.status === "accepted"
+              ? { startedAt: Date.now() }
+              : {}),
           },
         }
       }),
@@ -469,10 +470,20 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
 
     setOutboundStatus: (whatsappCallId, status) =>
       set((state) => {
-        if (
-          state.call?.whatsappCallId !== whatsappCallId ||
-          state.call.direction !== WhatsappVoipCallDirection.outbound
-        ) {
+        if (state.call?.whatsappCallId !== whatsappCallId) {
+          // Not (yet) the slot's call. While an outbound dial is still
+          // `preparing` the slot holds a client nonce, so this is how a real
+          // ACCEPTED arrives before the initiate action returns — buffer it
+          // for `upgradeToDialing` rather than losing it. `accepted` is never
+          // downgraded by a later `ringing`: Meta does not order these.
+          if (state.pendingOutboundStatus?.status === "accepted") {
+            return state
+          }
+          return {
+            pendingOutboundStatus: { whatsappCallId, status },
+          }
+        }
+        if (state.call.direction !== WhatsappVoipCallDirection.outbound) {
           return state
         }
         // Meta's outbound status events are NOT ordered — the worker says so

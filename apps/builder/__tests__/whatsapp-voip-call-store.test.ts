@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest"
 import {
   useWhatsappVoipCallStore,
   WhatsappVoipCallPhase,
+  type WhatsappVoipIncomingData,
 } from "@/features/integration-whatsapp/calling/voip/voip-call-store"
 
 const incomingData = {
@@ -14,86 +15,47 @@ const incomingData = {
   deadlineAt: "2026-01-01T00:00:00.000Z",
 }
 
+/**
+ * Seeds the slot with a ringing inbound call, the way production does it:
+ * into the basket first, then promoted (`enqueueRinging` + `promoteRinging`)
+ * — replaces the deleted `addIncoming`, which used to write the slot
+ * directly and had its own (now-removed) single-slot guard. Throws if
+ * promotion did not actually happen, so a mis-migrated test — one that seeds
+ * against an already-occupied slot — fails loudly instead of silently
+ * asserting against an empty/unchanged slot.
+ */
+const seedRingingSlot = (data: WhatsappVoipIncomingData) => {
+  const store = useWhatsappVoipCallStore.getState()
+  store.enqueueRinging(data)
+  const promoted = store.promoteRinging(data.whatsappCallId)
+  if (!promoted) {
+    throw new Error(
+      `seedRingingSlot: promoteRinging failed for "${data.whatsappCallId}" — the slot was already occupied`,
+    )
+  }
+}
+
 describe("useWhatsappVoipCallStore", () => {
   beforeEach(() => {
-    useWhatsappVoipCallStore.setState({ call: null })
+    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
   })
 
-  test("addIncoming starts the call in incomingRinging with isMuted false", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
-
-    const { call } = useWhatsappVoipCallStore.getState()
-    expect(call).toMatchObject({
-      ...incomingData,
-      transport: "voip",
-      phase: WhatsappVoipCallPhase.incomingRinging,
-      isMuted: false,
-      isRecording: false,
-    })
-  })
-
-  test("addIncoming does NOT replace a different in-progress call (would orphan its peer)", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
-    useWhatsappVoipCallStore
-      .getState()
-      .setPhase("call-1", WhatsappVoipCallPhase.active)
-
-    useWhatsappVoipCallStore.getState().addIncoming({
-      ...incomingData,
-      whatsappCallId: "call-2",
-      wacid: "wacid-2",
-    })
-
-    // The active call is preserved; the second offer is dropped on this agent.
-    const { call } = useWhatsappVoipCallStore.getState()
-    expect(call?.whatsappCallId).toBe("call-1")
-    expect(call?.phase).toBe(WhatsappVoipCallPhase.active)
-  })
-
-  test("addIncoming for the SAME call id while still ringing is an idempotent refresh", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
-
-    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
-      "call-1",
-    )
-    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
-      WhatsappVoipCallPhase.incomingRinging,
-    )
-  })
-
-  test("addIncoming for the SAME call id does NOT reset the phase once it is in progress", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
-    useWhatsappVoipCallStore
-      .getState()
-      .setPhase("call-1", WhatsappVoipCallPhase.active)
-
-    // A late redelivery of the same call must not knock an active call back to
-    // ringing (which would orphan its peer).
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
-
-    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
-      WhatsappVoipCallPhase.active,
-    )
-  })
-
-  test("addIncoming accepts a new call once the previous slot is cleared", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
-    useWhatsappVoipCallStore.getState().reset()
-
-    useWhatsappVoipCallStore.getState().addIncoming({
-      ...incomingData,
-      whatsappCallId: "call-2",
-      wacid: "wacid-2",
-    })
-
-    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
-      "call-2",
-    )
-  })
+  // NOTE: the tests that used to live here for `addIncoming`'s own
+  // single-slot guard — "does NOT replace a different in-progress call",
+  // "for the SAME call id while still ringing is an idempotent refresh",
+  // "does NOT reset the phase once it is in progress", "accepts a new call
+  // once the previous slot is cleared", and "treats a lingering ended call
+  // as FREE and overwrites it" — were deleted along with `addIncoming`
+  // itself. That guard doesn't exist anymore: an inbound offer now always
+  // lands in the `ringingCalls` basket first (see `enqueueRinging`'s own
+  // dedupe/no-op-against-the-slot tests below) and only reaches the slot
+  // through `promoteRinging`, whose free-slot/rejection/ended-is-free
+  // behavior is already fully covered by the "ringing basket" describe
+  // block below. Porting those tests forward would just re-test
+  // `promoteRinging` a second time under an assumed name.
 
   test("setPhase transitions the matching call and ignores a mismatched id", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
 
     useWhatsappVoipCallStore
       .getState()
@@ -111,7 +73,7 @@ describe("useWhatsappVoipCallStore", () => {
   })
 
   test("markActive sets phase active and stamps startedAt", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     useWhatsappVoipCallStore
       .getState()
       .setPhase("call-1", WhatsappVoipCallPhase.answering)
@@ -124,7 +86,7 @@ describe("useWhatsappVoipCallStore", () => {
   })
 
   test("markActive ignores a mismatched id and reports false", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     const result = useWhatsappVoipCallStore.getState().markActive("call-other")
     expect(result).toBe(false)
     expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
@@ -133,13 +95,13 @@ describe("useWhatsappVoipCallStore", () => {
   })
 
   test("markActive reports true on success", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     const result = useWhatsappVoipCallStore.getState().markActive("call-1")
     expect(result).toBe(true)
   })
 
   test("markActive is a no-op (and reports false) against a call already in the terminal ended phase", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     useWhatsappVoipCallStore.getState().handleEnded("call-1")
 
     const result = useWhatsappVoipCallStore.getState().markActive("call-1")
@@ -151,13 +113,13 @@ describe("useWhatsappVoipCallStore", () => {
   })
 
   test("setMuted toggles isMuted on the current call", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     useWhatsappVoipCallStore.getState().setMuted(true)
     expect(useWhatsappVoipCallStore.getState().call?.isMuted).toBe(true)
   })
 
   test("setRecording toggles isRecording on the current call", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     useWhatsappVoipCallStore.getState().setRecording(true)
     expect(useWhatsappVoipCallStore.getState().call?.isRecording).toBe(true)
 
@@ -166,13 +128,13 @@ describe("useWhatsappVoipCallStore", () => {
   })
 
   test("reset clears the call unconditionally", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     useWhatsappVoipCallStore.getState().reset()
     expect(useWhatsappVoipCallStore.getState().call).toBeNull()
   })
 
   test("handleEnded ignores a mismatched id", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
 
     useWhatsappVoipCallStore.getState().handleEnded("call-other")
 
@@ -182,7 +144,7 @@ describe("useWhatsappVoipCallStore", () => {
   })
 
   test("handleEnded moves the matching call to the LINGERING ended phase (never a bare null)", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
 
     useWhatsappVoipCallStore.getState().handleEnded("call-1", "rejected")
 
@@ -193,7 +155,7 @@ describe("useWhatsappVoipCallStore", () => {
   })
 
   test("handleEnded defaults endedStatus to 'completed' when omitted", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
 
     useWhatsappVoipCallStore.getState().handleEnded("call-1")
 
@@ -201,26 +163,11 @@ describe("useWhatsappVoipCallStore", () => {
       "completed",
     )
   })
-
-  test("addIncoming treats a lingering ended call as FREE and overwrites it with a new ring", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
-    useWhatsappVoipCallStore.getState().handleEnded("call-1")
-
-    useWhatsappVoipCallStore.getState().addIncoming({
-      ...incomingData,
-      whatsappCallId: "call-2",
-      wacid: "wacid-2",
-    })
-
-    const { call } = useWhatsappVoipCallStore.getState()
-    expect(call?.whatsappCallId).toBe("call-2")
-    expect(call?.phase).toBe(WhatsappVoipCallPhase.incomingRinging)
-  })
 })
 
 describe("useWhatsappVoipCallStore — preparing", () => {
   beforeEach(() => {
-    useWhatsappVoipCallStore.setState({ call: null })
+    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
   })
 
   const preparingData = {
@@ -245,7 +192,7 @@ describe("useWhatsappVoipCallStore — preparing", () => {
   })
 
   test("startPreparing is a no-op while the slot is already occupied", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
 
     useWhatsappVoipCallStore.getState().startPreparing("nonce-1", preparingData)
 
@@ -255,7 +202,7 @@ describe("useWhatsappVoipCallStore — preparing", () => {
   })
 
   test("startPreparing treats a lingering ended call as FREE and claims the slot", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
     useWhatsappVoipCallStore.getState().handleEnded("call-1")
 
     useWhatsappVoipCallStore.getState().startPreparing("nonce-1", preparingData)
@@ -380,7 +327,9 @@ describe("useWhatsappVoipCallStore — outbound", () => {
   beforeEach(() => {
     useWhatsappVoipCallStore.setState({
       call: null,
+      ringingCalls: [],
       pendingOutboundAnswer: null,
+      pendingOutboundStatus: null,
     })
   })
 
@@ -399,7 +348,7 @@ describe("useWhatsappVoipCallStore — outbound", () => {
   })
 
   test("addOutbound is a no-op when the slot is already occupied (mutual exclusion with inbound)", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
 
     useWhatsappVoipCallStore.getState().addOutbound(outboundData)
 
@@ -482,13 +431,211 @@ describe("useWhatsappVoipCallStore — outbound", () => {
   })
 
   test("setOutboundStatus ignores an inbound call in the slot (direction guard)", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(incomingData)
+    seedRingingSlot(incomingData)
 
     useWhatsappVoipCallStore.getState().setOutboundStatus("call-1", "ringing")
 
     expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
       WhatsappVoipCallPhase.incomingRinging,
     )
+  })
+
+  // 2a — ordering guards on setOutboundStatus: Meta does not order these
+  // events, so a delayed status must never regress an already-active call
+  // nor resurrect one that has already ended. Each test below would FAIL
+  // against a version of `setOutboundStatus` that applies the status
+  // unconditionally (i.e. before the `phase === active`/`phase === ended`
+  // guards existed) — the assertions pin the phase/startedAt that an
+  // unconditional apply would overwrite.
+
+  test("a normal outboundDialing -> outboundRinging -> active progression still works", () => {
+    useWhatsappVoipCallStore.getState().addOutbound(outboundData)
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.outboundDialing,
+    )
+
+    useWhatsappVoipCallStore
+      .getState()
+      .setOutboundStatus("out-call-1", "ringing")
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.outboundRinging,
+    )
+
+    useWhatsappVoipCallStore
+      .getState()
+      .setOutboundStatus("out-call-1", "accepted")
+    const { call } = useWhatsappVoipCallStore.getState()
+    expect(call?.phase).toBe(WhatsappVoipCallPhase.active)
+    expect(typeof call?.startedAt).toBe("number")
+  })
+
+  test("a 'ringing' status arriving AFTER the call is already active does not regress it to outboundRinging", () => {
+    useWhatsappVoipCallStore.getState().addOutbound(outboundData)
+    useWhatsappVoipCallStore
+      .getState()
+      .setOutboundStatus("out-call-1", "accepted")
+    const activeStartedAt = useWhatsappVoipCallStore.getState().call?.startedAt
+
+    // A late RINGING for the same call, arriving after ACCEPTED already
+    // landed — must be ignored, or the deadline backstop could hang up a
+    // live, mid-conversation call.
+    useWhatsappVoipCallStore
+      .getState()
+      .setOutboundStatus("out-call-1", "ringing")
+
+    const { call } = useWhatsappVoipCallStore.getState()
+    expect(call?.phase).toBe(WhatsappVoipCallPhase.active)
+    expect(call?.startedAt).toBe(activeStartedAt)
+  })
+
+  test("any status arriving after the call reached ended is ignored (no phantom resurrection)", () => {
+    useWhatsappVoipCallStore.getState().addOutbound(outboundData)
+    useWhatsappVoipCallStore.getState().handleEnded("out-call-1", "completed")
+
+    useWhatsappVoipCallStore
+      .getState()
+      .setOutboundStatus("out-call-1", "accepted")
+
+    const { call } = useWhatsappVoipCallStore.getState()
+    expect(call?.phase).toBe(WhatsappVoipCallPhase.ended)
+    expect(call?.startedAt).toBeUndefined()
+  })
+
+  // 2b — the buffered early ACCEPTED/RINGING: while an outbound dial is
+  // `preparing`, the slot holds the client nonce rather than the real
+  // server id, so a status Meta emits before `initiateOutboundVoipCallAction`
+  // returns has nowhere to land — `setOutboundStatus` buffers it into
+  // `pendingOutboundStatus`, and `upgradeToDialing` applies it. Each test
+  // would FAIL against a version that drops an unmatched status instead of
+  // buffering it (the call would land in `outboundDialing` with
+  // `startedAt` unset instead of `active`/`outboundRinging`).
+
+  test("a buffered ACCEPTED for an id the slot does not hold yet lands the call directly in active once upgradeToDialing runs", () => {
+    useWhatsappVoipCallStore.getState().startPreparing("nonce-1", {
+      conversationId: outboundData.conversationId,
+      contactInboxId: outboundData.contactInboxId,
+      contactName: outboundData.contactName,
+    })
+
+    // Meta's ACCEPTED arrives before the initiate action resolves — the slot
+    // still holds the nonce, not "out-call-1".
+    useWhatsappVoipCallStore
+      .getState()
+      .setOutboundStatus("out-call-1", "accepted")
+    expect(useWhatsappVoipCallStore.getState().pendingOutboundStatus).toEqual({
+      whatsappCallId: "out-call-1",
+      status: "accepted",
+    })
+    // The still-preparing slot itself must be untouched.
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.preparing,
+    )
+
+    useWhatsappVoipCallStore
+      .getState()
+      .upgradeToDialing("nonce-1", outboundData)
+
+    const { call, pendingOutboundStatus } = useWhatsappVoipCallStore.getState()
+    expect(call?.whatsappCallId).toBe("out-call-1")
+    expect(call?.phase).toBe(WhatsappVoipCallPhase.active)
+    expect(typeof call?.startedAt).toBe("number")
+    expect(pendingOutboundStatus).toBeNull()
+  })
+
+  test("a buffered RINGING for an id the slot does not hold yet lands the call in outboundRinging once upgradeToDialing runs", () => {
+    useWhatsappVoipCallStore.getState().startPreparing("nonce-1", {
+      conversationId: outboundData.conversationId,
+      contactInboxId: outboundData.contactInboxId,
+      contactName: outboundData.contactName,
+    })
+
+    useWhatsappVoipCallStore
+      .getState()
+      .setOutboundStatus("out-call-1", "ringing")
+
+    useWhatsappVoipCallStore
+      .getState()
+      .upgradeToDialing("nonce-1", outboundData)
+
+    const { call, pendingOutboundStatus } = useWhatsappVoipCallStore.getState()
+    expect(call?.whatsappCallId).toBe("out-call-1")
+    expect(call?.phase).toBe(WhatsappVoipCallPhase.outboundRinging)
+    expect(call?.startedAt).toBeUndefined()
+    expect(pendingOutboundStatus).toBeNull()
+  })
+
+  test("a buffered accepted is NOT downgraded by a later ringing for the same not-yet-slotted id", () => {
+    useWhatsappVoipCallStore.getState().startPreparing("nonce-1", {
+      conversationId: outboundData.conversationId,
+      contactInboxId: outboundData.contactInboxId,
+      contactName: outboundData.contactName,
+    })
+
+    useWhatsappVoipCallStore
+      .getState()
+      .setOutboundStatus("out-call-1", "accepted")
+    // Meta does not order these — a later RINGING for the same id must not
+    // overwrite the buffered ACCEPTED.
+    useWhatsappVoipCallStore
+      .getState()
+      .setOutboundStatus("out-call-1", "ringing")
+
+    expect(useWhatsappVoipCallStore.getState().pendingOutboundStatus).toEqual({
+      whatsappCallId: "out-call-1",
+      status: "accepted",
+    })
+
+    useWhatsappVoipCallStore
+      .getState()
+      .upgradeToDialing("nonce-1", outboundData)
+
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.active,
+    )
+  })
+
+  test("with no buffered status, upgradeToDialing still lands in outboundDialing exactly as before", () => {
+    useWhatsappVoipCallStore.getState().startPreparing("nonce-1", {
+      conversationId: outboundData.conversationId,
+      contactInboxId: outboundData.contactInboxId,
+      contactName: outboundData.contactName,
+    })
+
+    useWhatsappVoipCallStore
+      .getState()
+      .upgradeToDialing("nonce-1", outboundData)
+
+    const { call } = useWhatsappVoipCallStore.getState()
+    expect(call?.phase).toBe(WhatsappVoipCallPhase.outboundDialing)
+    expect(call?.startedAt).toBeUndefined()
+  })
+
+  test("a buffered status for a DIFFERENT id does not leak into this call", () => {
+    useWhatsappVoipCallStore.getState().startPreparing("nonce-1", {
+      conversationId: outboundData.conversationId,
+      contactInboxId: outboundData.contactInboxId,
+      contactName: outboundData.contactName,
+    })
+
+    // Buffered for a call that will never be this attempt's real id.
+    useWhatsappVoipCallStore
+      .getState()
+      .setOutboundStatus("out-call-other", "accepted")
+
+    useWhatsappVoipCallStore
+      .getState()
+      .upgradeToDialing("nonce-1", outboundData)
+
+    const { call, pendingOutboundStatus } = useWhatsappVoipCallStore.getState()
+    // Unrelated buffered status must not apply to this call, and must
+    // survive untouched for whichever call it actually belongs to.
+    expect(call?.whatsappCallId).toBe("out-call-1")
+    expect(call?.phase).toBe(WhatsappVoipCallPhase.outboundDialing)
+    expect(call?.startedAt).toBeUndefined()
+    expect(pendingOutboundStatus).toEqual({
+      whatsappCallId: "out-call-other",
+      status: "accepted",
+    })
   })
 
   test("setPendingOutboundAnswer / clearPendingOutboundAnswer are immutable and independent of call", () => {
@@ -541,7 +688,7 @@ describe("useWhatsappVoipCallStore — ringing basket", () => {
   })
 
   test("enqueueRinging is a no-op for an id already occupying the call slot", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(ringA)
+    seedRingingSlot(ringA)
 
     useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
 
@@ -587,7 +734,7 @@ describe("useWhatsappVoipCallStore — ringing basket", () => {
   })
 
   test("promoteRinging is rejected while the slot holds an active call, leaving the slot and basket untouched", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(ringB)
+    seedRingingSlot(ringB)
     useWhatsappVoipCallStore
       .getState()
       .setPhase("call-2", WhatsappVoipCallPhase.active)
@@ -605,7 +752,7 @@ describe("useWhatsappVoipCallStore — ringing basket", () => {
   })
 
   test("promoteRinging succeeds over a lingering ended call (a free slot)", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(ringB)
+    seedRingingSlot(ringB)
     useWhatsappVoipCallStore.getState().handleEnded("call-2")
     useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
 
@@ -630,7 +777,7 @@ describe("useWhatsappVoipCallStore — ringing basket", () => {
   })
 
   test("clearRinging empties the basket and leaves the call slot alone", () => {
-    useWhatsappVoipCallStore.getState().addIncoming(ringB)
+    seedRingingSlot(ringB)
     useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
 
     useWhatsappVoipCallStore.getState().clearRinging()
