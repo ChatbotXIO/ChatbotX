@@ -8,8 +8,8 @@ import {
   getRedisConnection,
   queueNames,
 } from "@chatbotx.io/worker-config"
-import { keys } from "@chatbotx.io/worker-config/keys"
 import { type Job, Worker } from "bullmq"
+import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { isBotMessageQuotaReached } from "../lib/is-bot-message-quota-reached"
@@ -140,10 +140,10 @@ async function startChatWorker() {
     {
       connection: getRedisConnection(),
       ...defaultWorkerOptions,
-      concurrency: keys().CHAT_WORKER_CONCURRENCY,
+      concurrency: env.CHAT_WORKER_CONCURRENCY,
       limiter: {
-        max: keys().CHAT_WORKER_RATE_LIMIT_MAX,
-        duration: keys().CHAT_WORKER_RATE_LIMIT_DURATION_MS,
+        max: env.CHAT_WORKER_RATE_LIMIT_MAX,
+        duration: env.CHAT_WORKER_RATE_LIMIT_DURATION_MS,
       },
     },
   )
