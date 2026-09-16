@@ -102,6 +102,9 @@ jobs:
       - name: Check dependency boundaries
         run: pnpm exec depcruise --config .dependency-cruiser.js --output-type err --focus '^packages/database/src/client[.]ts$' --focus-depth 1 apps packages integrations
 
+      - name: Check dependency deduplication
+        run: pnpm dedupe --check
+
   test:
     name: Tests
     runs-on: ubuntu-latest
