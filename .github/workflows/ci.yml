@@ -160,3 +160,54 @@ jobs:
       # deliberately does not set VITEST_SKIP_COVERAGE_THRESHOLDS.
       - name: Verify coverage thresholds
         run: pnpm --filter @chatbotx.io/business --filter worker test -- --coverage
+
+  database-integration:
+    name: Database integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://chatbotx:secretkey@localhost:5432/chatbotx?schema=public
+      REDIS_URL: redis://localhost:6379
+    services:
+      postgres:
+        image: timescale/timescaledb-ha:pg18-all
+        env:
+          POSTGRES_DB: chatbotx
+          POSTGRES_USER: chatbotx
+          POSTGRES_PASSWORD: secretkey
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -d chatbotx -U chatbotx"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --health-start-period 20s
+      redis:
+        image: redis:8-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6.1.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Migrate database from zero
+        run: pnpm --filter @chatbotx.io/database db:migrate
+
+      - name: Run database integration tests
+        run: pnpm --filter @chatbotx.io/database test:db
