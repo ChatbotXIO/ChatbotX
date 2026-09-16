@@ -30,8 +30,6 @@ type TenantBrandingData = {
   theme?: string | null
 }
 
-/** Tag shared by `findByOwner`'s cache entry and every write that must bust it. */
-const ownerCacheTag = (ownerId: string) => `tenant:owner:${ownerId}`
 const tenantCacheTag = (tenantId: string) => `tenants:${tenantId}`
 
 /**
@@ -85,14 +83,9 @@ export const tenantService = {
   },
 
   findByOwner(ownerId: string) {
-    return withCache(
-      ownerCacheTag(ownerId),
-      () =>
-        db.query.tenantModel.findFirst({
-          where: { ownerId },
-        }),
-      { tags: [ownerCacheTag(ownerId)] },
-    )
+    return db.query.tenantModel.findFirst({
+      where: { ownerId },
+    })
   },
 
   /**
@@ -118,7 +111,6 @@ export const tenantService = {
       .values({ ownerId })
       .onConflictDoNothing({ target: tenantModel.ownerId })
       .returning({ id: tenantModel.id })
-    await invalidateCacheByTags([ownerCacheTag(ownerId)])
     if (created) {
       return created.id
     }
@@ -188,10 +180,7 @@ export const tenantService = {
       .where(eq(tenantModel.ownerId, ownerId))
       .returning({ id: tenantModel.id })
     if (updated) {
-      await invalidateCacheByTags([
-        tenantCacheTag(updated.id),
-        ownerCacheTag(ownerId),
-      ])
+      await invalidateCacheByTags([tenantCacheTag(updated.id)])
     }
   },
 
@@ -215,10 +204,7 @@ export const tenantService = {
       .where(eq(tenantModel.ownerId, ownerId))
       .returning({ id: tenantModel.id })
     if (updated) {
-      await invalidateCacheByTags([
-        tenantCacheTag(updated.id),
-        ownerCacheTag(ownerId),
-      ])
+      await invalidateCacheByTags([tenantCacheTag(updated.id)])
     }
   },
 
