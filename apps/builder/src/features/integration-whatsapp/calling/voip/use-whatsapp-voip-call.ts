@@ -314,11 +314,23 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   // trigger — see the comment above.
   // biome-ignore lint/correctness/useExhaustiveDependencies: ringingFingerprint substitutes for ringingCalls on purpose
   useEffect(() => {
-    const timeoutIds = ringingCalls.map((entry) => {
-      const msUntilDeadline = new Date(entry.deadlineAt).getTime() - Date.now()
+    const timeoutIds = ringingCalls.flatMap((entry) => {
+      const deadlineMs = new Date(entry.deadlineAt).getTime()
+      // An unparseable deadline would make `Math.max(NaN, 0)` NaN, which
+      // `setTimeout` coerces to 0 — the ring would vanish from the basket the
+      // instant it arrived, before the agent could ever see it. Arming no
+      // timer at all is strictly better: the offer stays answerable and the
+      // server's own expiry (which is authoritative anyway) still ends it.
+      if (!Number.isFinite(deadlineMs)) {
+        logger.warn(
+          { whatsappCallId: entry.whatsappCallId },
+          "WhatsApp VoIP ring has an unparseable deadline; skipping its local expiry timer",
+        )
+        return []
+      }
       return setTimeout(
         () => removeRinging(entry.whatsappCallId),
-        Math.max(msUntilDeadline, 0),
+        Math.max(deadlineMs - Date.now(), 0),
       )
     })
     return () => {
@@ -1181,9 +1193,29 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
        * peer: the refs are shared across attempts, so a stale cancelled
        * attempt must never close a newer attempt's peer/mic.
        */
+      // `teardown()` closes the SHARED peer/mic refs, which a DIFFERENT call
+      // may already own by the time a cancelled attempt's async work finally
+      // resolves. An agent can now replace a still-`preparing` dial by
+      // answering an inbound ring (`endForReplacement`): that cancels this
+      // attempt, closes ITS peer right then, and hands the slot to the ring,
+      // which builds its own peer and microphone. A late `finishCancelled`
+      // here would close that replacement's peer and stop its microphone,
+      // leaving the agent connected to Meta with dead media. So tear down
+      // only while this attempt still owns the slot — or while the slot is
+      // empty, where there is nothing of anyone else's to break.
+      const stillOwnsSharedMedia = () => {
+        const slotCallId =
+          useWhatsappVoipCallStore.getState().call?.whatsappCallId
+        return slotCallId === undefined || slotCallId === nonce
+      }
+      const teardownIfStillOurs = () => {
+        if (stillOwnsSharedMedia()) {
+          teardown()
+        }
+      }
       const finishCancelled = ({ tearDownPeer } = { tearDownPeer: true }) => {
         if (tearDownPeer) {
-          teardown()
+          teardownIfStillOurs()
         }
         clearCancelToken()
         releasePreparing(nonce)
@@ -1283,7 +1315,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         })
         const data = result?.data
         if (!data) {
-          teardown()
+          teardownIfStillOurs()
           if (isCancelled()) {
             clearCancelToken()
             return "cancelled"
@@ -1296,7 +1328,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           // No live call was created on any of these branches (needs
           // permission, glare, ineligible, rate-limited, etc.) — the peer
           // built above is now unused.
-          teardown()
+          teardownIfStillOurs()
           if (isCancelled()) {
             clearCancelToken()
             return "cancelled"

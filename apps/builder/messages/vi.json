@@ -3934,7 +3934,8 @@
         "voipRejectFailed": "Could not decline the WhatsApp call",
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
-        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again."
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Cuộc gọi đó không còn đổ chuông nữa"
       },
       "permissionRequestTitle": "Xin quyền gọi điện",
       "permissionRequestDescription": "Hỏi khách hàng này cho phép doanh nghiệp gọi qua WhatsApp. Meta giới hạn 1 yêu cầu mỗi 24 giờ và 2 yêu cầu mỗi 7 ngày cho mỗi khách hàng.",
@@ -4061,7 +4062,7 @@
         "statusNoAnswer": "Không có phản hồi",
         "eyebrowCallEnded": "CUỘC GỌI ĐÃ KẾT THÚC",
         "statusConnectionLost": "Mất kết nối",
-        "ringingListTitle": "{count} cuộc gọi đến"
+        "ringingListTitle": "{count, plural, one {# cuộc gọi đến} other {# cuộc gọi đến}}"
       },
       "capability": {
         "title": "Điều kiện gọi điện",
@@ -4082,7 +4083,9 @@
         "description": "Kết thúc cuộc gọi với {current} để trả lời {incoming}?",
         "confirm": "Kết thúc & Trả lời",
         "cancel": "Hủy"
-      }
+      },
+      "answerCaller": "Nghe cuộc gọi từ {name}",
+      "rejectCaller": "Từ chối cuộc gọi từ {name}"
     }
   },
   "zalo": {

@@ -475,7 +475,24 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
         ) {
           return state
         }
+        // Meta's outbound status events are NOT ordered — the worker says so
+        // explicitly where it forwards them — so this must never move a call
+        // BACKWARDS or revive a finished one. Two concrete failures without
+        // these guards: a delayed RINGING landing after ACCEPTED regresses a
+        // live call to `outboundRinging`, where the hook's deadline backstop
+        // is armed again and can hang up a call that is mid-conversation; and
+        // a delayed ACCEPTED landing after the agent cancelled turns the
+        // lingering `ended` message into a phantom `active` call whose peer
+        // and microphone were already torn down. `ended` is terminal (the
+        // same rule `markActive` enforces), and `active` never goes back to
+        // ringing.
+        if (state.call.phase === WhatsappVoipCallPhase.ended) {
+          return state
+        }
         if (status === "ringing") {
+          if (state.call.phase === WhatsappVoipCallPhase.active) {
+            return state
+          }
           return {
             call: {
               ...state.call,

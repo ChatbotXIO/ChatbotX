@@ -3934,7 +3934,8 @@
         "voipRejectFailed": "Could not decline the WhatsApp call",
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
-        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again."
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Tuo puhelu ei enää soi"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -4061,7 +4062,7 @@
         "statusNoAnswer": "Ei vastausta",
         "eyebrowCallEnded": "PUHELU PÄÄTTYI",
         "statusConnectionLost": "Yhteys katkesi",
-        "ringingListTitle": "{count} saapuvaa puhelua"
+        "ringingListTitle": "{count, plural, one {# saapuva puhelu} other {# saapuvaa puhelua}}"
       },
       "capability": {
         "title": "Puhelukelpoisuus",
@@ -4082,7 +4083,9 @@
         "description": "Lopeta puhelu henkilön {current} kanssa vastataksesi henkilölle {incoming}?",
         "confirm": "Lopeta ja vastaa",
         "cancel": "Peruuta"
-      }
+      },
+      "answerCaller": "Vastaa puheluun henkilöltä {name}",
+      "rejectCaller": "Hylkää puhelu henkilöltä {name}"
     }
   },
   "zalo": {

@@ -3934,7 +3934,8 @@
         "voipRejectFailed": "Could not decline the WhatsApp call",
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
-        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again."
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Panggilan itu tidak lagi berdering"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -4061,7 +4062,7 @@
         "statusNoAnswer": "Tidak ada jawaban",
         "eyebrowCallEnded": "PANGGILAN BERAKHIR",
         "statusConnectionLost": "Koneksi terputus",
-        "ringingListTitle": "{count} panggilan masuk"
+        "ringingListTitle": "{count, plural, one {# panggilan masuk} other {# panggilan masuk}}"
       },
       "capability": {
         "title": "Kelayakan panggilan",
@@ -4082,7 +4083,9 @@
         "description": "Akhiri panggilan dengan {current} untuk menjawab {incoming}?",
         "confirm": "Akhiri & Jawab",
         "cancel": "Batal"
-      }
+      },
+      "answerCaller": "Jawab panggilan dari {name}",
+      "rejectCaller": "Tolak panggilan dari {name}"
     }
   },
   "zalo": {

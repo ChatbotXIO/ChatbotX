@@ -3934,7 +3934,8 @@
         "voipRejectFailed": "Could not decline the WhatsApp call",
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
-        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again."
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "لم تعد تلك المكالمة ترن"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -4061,7 +4062,7 @@
         "statusNoAnswer": "لا يوجد رد",
         "eyebrowCallEnded": "انتهت المكالمة",
         "statusConnectionLost": "انقطع الاتصال",
-        "ringingListTitle": "{count} مكالمات واردة"
+        "ringingListTitle": "{count, plural, one {# مكالمة واردة} other {# مكالمات واردة}}"
       },
       "capability": {
         "title": "أهلية الاتصال",
@@ -4082,7 +4083,9 @@
         "description": "إنهاء المكالمة مع {current} للرد على {incoming}؟",
         "confirm": "إنهاء والرد",
         "cancel": "إلغاء"
-      }
+      },
+      "answerCaller": "الرد على مكالمة من {name}",
+      "rejectCaller": "رفض مكالمة من {name}"
     }
   },
   "zalo": {

@@ -26,5 +26,13 @@ export function useCountdownSeconds(deadlineAt: string | undefined): number {
   if (!deadlineAt) {
     return 0
   }
-  return Math.max(0, Math.ceil((new Date(deadlineAt).getTime() - now) / 1000))
+  const deadlineMs = new Date(deadlineAt).getTime()
+  // `deadlineAt` arrives from a realtime event payload and a server action, so
+  // an unparseable value is possible; `NaN` would otherwise render literally
+  // as "NaNs" in the countdown. Zero reads as "expiring now", which is the
+  // honest thing to show when the deadline is unknown.
+  if (!Number.isFinite(deadlineMs)) {
+    return 0
+  }
+  return Math.max(0, Math.ceil((deadlineMs - now) / 1000))
 }

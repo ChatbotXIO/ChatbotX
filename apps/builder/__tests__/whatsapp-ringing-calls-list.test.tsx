@@ -44,7 +44,6 @@ describe("WhatsappRingingCallsList", () => {
 
   const render = (props: {
     calls: WhatsappVoipRingingCall[]
-    engaged: boolean
     onAnswer: (id: string) => void
     onReject: (id: string) => void
   }) =>
@@ -53,7 +52,7 @@ describe("WhatsappRingingCallsList", () => {
     })
 
   test("renders nothing when the basket is empty", () => {
-    render({ calls: [], engaged: false, onAnswer: vi.fn(), onReject: vi.fn() })
+    render({ calls: [], onAnswer: vi.fn(), onReject: vi.fn() })
 
     expect(container.textContent).toBe("")
   })
@@ -61,7 +60,6 @@ describe("WhatsappRingingCallsList", () => {
   test("renders one row per caller with the title showing the count", () => {
     render({
       calls: [ringA, ringB],
-      engaged: false,
       onAnswer: vi.fn(),
       onReject: vi.fn(),
     })
@@ -72,46 +70,43 @@ describe("WhatsappRingingCallsList", () => {
       `whatsapp.calls.panel.ringingListTitle:${JSON.stringify({ count: 2 })}`,
     )
     expect(
-      container.querySelectorAll(`[aria-label="whatsapp.calls.answer"]`),
+      container.querySelectorAll('[aria-label^="whatsapp.calls.answerCaller"]'),
     ).toHaveLength(2)
     expect(
-      container.querySelectorAll(`[aria-label="whatsapp.calls.reject"]`),
+      container.querySelectorAll('[aria-label^="whatsapp.calls.rejectCaller"]'),
     ).toHaveLength(2)
   })
 
-  test("shows a backdrop when NOT engaged (free-slot 2+ rings case)", () => {
-    render({
-      calls: [ringA, ringB],
-      engaged: false,
-      onAnswer: vi.fn(),
-      onReject: vi.fn(),
-    })
-
-    expect(
-      container.querySelector('[aria-hidden="true"].fixed.inset-0'),
-    ).not.toBeNull()
-  })
-
-  test("shows NO backdrop when engaged (compact strip above the busy call panel)", () => {
-    render({
-      calls: [ringA, ringB],
-      engaged: true,
-      onAnswer: vi.fn(),
-      onReject: vi.fn(),
-    })
+  // This component used to render its own backdrop. Nested inside the
+  // caller's positioned `z-50` wrapper, that viewport-wide `fixed z-40`
+  // overlay painted OVER this un-positioned card and, having no
+  // `pointer-events-none`, swallowed every Answer/Reject click in exactly the
+  // two-simultaneous-rings scenario the component exists for. The backdrop is
+  // the caller's sibling now; owning one here again would bring the bug back.
+  test("renders NO backdrop of its own — the caller owns that, as its sibling", () => {
+    render({ calls: [ringA, ringB], onAnswer: vi.fn(), onReject: vi.fn() })
 
     expect(
       container.querySelector('[aria-hidden="true"].fixed.inset-0'),
     ).toBeNull()
   })
 
+  test("renders no fixed positioning of its own, so it cannot create a stacking context for a caller's overlay", () => {
+    render({ calls: [ringA, ringB], onAnswer: vi.fn(), onReject: vi.fn() })
+
+    const card = container.querySelector(
+      '[data-testid="whatsapp-ringing-calls-list"]',
+    )
+    expect(card?.className).not.toContain("fixed")
+  })
+
   test("each row's Answer/Reject buttons target that row's own id", () => {
     const onAnswer = vi.fn()
     const onReject = vi.fn()
-    render({ calls: [ringA, ringB], engaged: false, onAnswer, onReject })
+    render({ calls: [ringA, ringB], onAnswer, onReject })
 
     const answerButtons = container.querySelectorAll(
-      `[aria-label="whatsapp.calls.answer"]`,
+      '[aria-label^="whatsapp.calls.answerCaller"]',
     )
     act(() => {
       answerButtons[1]?.dispatchEvent(
@@ -121,7 +116,7 @@ describe("WhatsappRingingCallsList", () => {
     expect(onAnswer).toHaveBeenCalledWith("ring-b")
 
     const rejectButtons = container.querySelectorAll(
-      `[aria-label="whatsapp.calls.reject"]`,
+      '[aria-label^="whatsapp.calls.rejectCaller"]',
     )
     act(() => {
       rejectButtons[0]?.dispatchEvent(
@@ -134,7 +129,6 @@ describe("WhatsappRingingCallsList", () => {
   test("falls back to the unknown-caller label when contactName is missing", () => {
     render({
       calls: [{ ...ringA, contactName: null }],
-      engaged: false,
       onAnswer: vi.fn(),
       onReject: vi.fn(),
     })

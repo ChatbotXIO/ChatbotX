@@ -3934,7 +3934,8 @@
         "voipRejectFailed": "Could not decline the WhatsApp call",
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
-        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again."
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Essa chamada já não está a tocar"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -4061,7 +4062,7 @@
         "statusNoAnswer": "Sem resposta",
         "eyebrowCallEnded": "CHAMADA TERMINADA",
         "statusConnectionLost": "Ligação perdida",
-        "ringingListTitle": "{count} chamadas a receber"
+        "ringingListTitle": "{count, plural, one {# chamada a receber} other {# chamadas a receber}}"
       },
       "capability": {
         "title": "Elegibilidade de chamadas",
@@ -4082,7 +4083,9 @@
         "description": "Terminar a chamada com {current} para atender {incoming}?",
         "confirm": "Terminar e atender",
         "cancel": "Cancelar"
-      }
+      },
+      "answerCaller": "Atender a chamada de {name}",
+      "rejectCaller": "Rejeitar a chamada de {name}"
     }
   },
   "zalo": {

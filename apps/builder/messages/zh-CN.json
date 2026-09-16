@@ -5371,7 +5371,8 @@
         "voipRejectFailed": "Could not decline the WhatsApp call",
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
-        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again."
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "该来电已不再响铃"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -5498,7 +5499,7 @@
         "statusNoAnswer": "无应答",
         "eyebrowCallEnded": "通话已结束",
         "statusConnectionLost": "连接已断开",
-        "ringingListTitle": "{count} 个来电"
+        "ringingListTitle": "{count, plural, one {# 个来电} other {# 个来电}}"
       },
       "capability": {
         "title": "通话资格",
@@ -5519,7 +5520,9 @@
         "description": "结束与 {current} 的通话以接听 {incoming} 吗？",
         "confirm": "结束并接听",
         "cancel": "取消"
-      }
+      },
+      "answerCaller": "接听来自 {name} 的来电",
+      "rejectCaller": "拒接来自 {name} 的来电"
     }
   },
   "workspace": {

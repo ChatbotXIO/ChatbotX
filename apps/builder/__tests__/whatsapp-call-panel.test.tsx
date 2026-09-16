@@ -475,7 +475,7 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
     expect(document.body.textContent).toContain("Grace Hopper")
     expect(document.body.textContent).toContain("ringingListTitle")
     expect(
-      document.querySelectorAll(`[aria-label="whatsapp.calls.answer"]`),
+      document.querySelectorAll('[aria-label^="whatsapp.calls.answerCaller"]'),
     ).toHaveLength(2)
     expect(
       document.querySelector('[aria-hidden="true"].fixed.inset-0'),
@@ -487,7 +487,7 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
     await render()
 
     const answerButtons = Array.from(
-      document.querySelectorAll(`[aria-label="whatsapp.calls.answer"]`),
+      document.querySelectorAll('[aria-label^="whatsapp.calls.answerCaller"]'),
     )
     act(() => {
       answerButtons[1]?.dispatchEvent(
@@ -524,7 +524,7 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
     await render()
 
     const answerButton = document.querySelector(
-      `[data-testid="whatsapp-ringing-calls-list"] [aria-label="whatsapp.calls.answer"]`,
+      `[data-testid="whatsapp-ringing-calls-list"] [aria-label^="whatsapp.calls.answerCaller"]`,
     )
     act(() => {
       answerButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))

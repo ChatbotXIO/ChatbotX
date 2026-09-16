@@ -228,6 +228,100 @@ describe("extractCallEventPayloads", () => {
     ])
   })
 
+  // Meta documents the terminate `errors[]` at the VALUE level, beside
+  // `calls` — not inside the call item. Missing it meant a media-drop
+  // failure (138021/138022/138023) reached the terminate handler with no
+  // error at all, so the call was stored as a bare FAILED with no diagnosis.
+  test("a value-level errors[] is attributed to a lone terminate item", () => {
+    const [payload] = extractCallEventPayloads(
+      wrapEntry(
+        callsValue({
+          calls: [
+            {
+              id: "wacid.ERR-1",
+              from: "16315551234",
+              to: "16505551111",
+              event: "terminate",
+              direction: "USER_INITIATED",
+              timestamp: "1755700100",
+              status: "FAILED",
+            },
+          ],
+          errors: [{ code: 138_021, message: "Media receive timeout" }],
+        }),
+      ),
+    )
+
+    expect(payload?.event).toMatchObject({
+      kind: "terminate",
+      wacid: "wacid.ERR-1",
+      errors: [{ code: 138_021, message: "Media receive timeout" }],
+    })
+  })
+
+  test("an item's own errors[] wins over the value-level one", () => {
+    const [payload] = extractCallEventPayloads(
+      wrapEntry(
+        callsValue({
+          calls: [
+            {
+              id: "wacid.ERR-2",
+              from: "16315551234",
+              to: "16505551111",
+              event: "terminate",
+              direction: "USER_INITIATED",
+              timestamp: "1755700100",
+              status: "FAILED",
+              errors: [{ code: 138_023, message: "No media signals" }],
+            },
+          ],
+          errors: [{ code: 138_021, message: "Media receive timeout" }],
+        }),
+      ),
+    )
+
+    expect(payload?.event).toMatchObject({
+      errors: [{ code: 138_023, message: "No media signals" }],
+    })
+  })
+
+  // Two terminates and one value-level array: there is no way to tell whose
+  // failure it describes, and guessing by position is the same defect as the
+  // blind `contacts[0]` attribution this file already guards against.
+  test("a value-level errors[] is dropped, never guessed, when the batch holds two terminates", () => {
+    const payloads = extractCallEventPayloads(
+      wrapEntry(
+        callsValue({
+          calls: [
+            {
+              id: "wacid.ERR-3",
+              from: "16315551234",
+              to: "16505551111",
+              event: "terminate",
+              direction: "USER_INITIATED",
+              timestamp: "1755700100",
+              status: "FAILED",
+            },
+            {
+              id: "wacid.ERR-4",
+              from: "16315559999",
+              to: "16505551111",
+              event: "terminate",
+              direction: "USER_INITIATED",
+              timestamp: "1755700101",
+              status: "COMPLETED",
+            },
+          ],
+          errors: [{ code: 138_021, message: "Media receive timeout" }],
+        }),
+      ),
+    )
+
+    for (const payload of payloads) {
+      expect(payload.event).toMatchObject({ errors: undefined })
+    }
+  })
+
   test("normalizes a completed terminate event with duration", () => {
     const result = extractCallEventPayloads(
       wrapEntry(

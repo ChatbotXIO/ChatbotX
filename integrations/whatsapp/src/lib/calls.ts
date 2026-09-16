@@ -156,6 +156,20 @@ const callsValueSchema = z.object({
   contacts: z.array(callContactSchema).optional(),
   calls: z.array(callEventItemSchema).optional(),
   statuses: z.array(callStatusItemSchema).optional(),
+  // Meta DOCUMENTS the terminate `errors[]` here, at the value level, as a
+  // sibling of `calls` rather than inside the call item — see the "Call
+  // Terminate webhook" payload in developers.facebook.com/documentation/
+  // business-messaging/whatsapp/calling/{user-initiated,business-initiated}-calls
+  // (checked 2026-09-16). The item-level `errors` on `callEventItemSchema`
+  // is kept as well, because live payloads have carried it there too and the
+  // two shapes cost nothing to accept side by side. Missing this meant a
+  // media-drop failure (138021/138022/138023) reached the terminate handler
+  // with no error at all, so the call was recorded as a bare FAILED with no
+  // diagnosis.
+  errors: z
+    .array(callTerminateErrorSchema)
+    .max(MAX_TERMINATE_ERRORS)
+    .optional(),
 })
 
 export type WhatsappCallDirectionPayload = "userInitiated" | "businessInitiated"
@@ -639,7 +653,21 @@ export const extractCallEventPayloads = (
         continue
       }
 
-      const { metadata, contacts, calls, statuses } = parsed.data
+      const { metadata, contacts, calls, statuses, errors } = parsed.data
+
+      // The value-level `errors[]` (Meta's documented placement — see
+      // `callsValueSchema`) describes ONE call's failure, but sits outside
+      // the `calls` array, so it can only be attributed when the batch holds
+      // a single terminate. With two, there is no way to tell whose failure
+      // it is, and guessing by position would repeat exactly the
+      // `contacts[0]` mistake `pickContactForCallItem` exists to prevent —
+      // so it is dropped rather than misattributed. An item that carries its
+      // own `errors` always wins over this fallback.
+      const terminateItemCount = (calls ?? []).filter(
+        (item) => item.event === "terminate",
+      ).length
+      const sharedTerminateErrors =
+        terminateItemCount === 1 ? errors : undefined
 
       // Interim statuses are pushed (and therefore enqueued) BEFORE call
       // events: when a batch carries both a REJECTED status and its
@@ -673,7 +701,10 @@ export const extractCallEventPayloads = (
           payloads.push({
             phoneNumberId: metadata.phone_number_id,
             contact: pickContactForCallItem(contacts, identity),
-            event,
+            event:
+              event.kind === "terminate" && !event.errors
+                ? { ...event, errors: sharedTerminateErrors }
+                : event,
           })
         }
       }

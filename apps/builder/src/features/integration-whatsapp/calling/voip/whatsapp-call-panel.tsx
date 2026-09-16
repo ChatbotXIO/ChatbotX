@@ -169,7 +169,9 @@ export function WhatsappCallPanel() {
   // ring" case below. Called unconditionally (Rules of Hooks) even when
   // that case is not the one being rendered.
   const singleRingingSecondsRemaining = useCountdownSeconds(
-    ringingCalls.length === 1 ? ringingCalls[0]?.deadlineAt : undefined,
+    slotFree && ringingCalls.length === 1
+      ? ringingCalls[0]?.deadlineAt
+      : undefined,
   )
 
   // A fresh call always starts expanded — the agent should see what just
@@ -209,16 +211,22 @@ export function WhatsappCallPanel() {
       )
     }
     return (
-      <div className="fixed right-6 bottom-6 z-50">
-        <WhatsappRingingCallsList
-          calls={ringingCalls}
-          engaged={false}
-          onAnswer={(whatsappCallId) => {
-            answer(whatsappCallId)
-          }}
-          onReject={(whatsappCallId) => dismiss(whatsappCallId)}
-        />
-      </div>
+      <>
+        {/* Sibling of the positioned wrapper, never a child of it: nested
+         * inside, this `fixed z-40` overlay would paint OVER the z-50 list
+         * (z-index applies only to positioned elements, and the list card is
+         * not positioned) and swallow every Answer/Reject click. */}
+        <VoipBackdrop />
+        <div className="fixed right-6 bottom-6 z-50">
+          <WhatsappRingingCallsList
+            calls={ringingCalls}
+            onAnswer={(whatsappCallId) => {
+              answer(whatsappCallId)
+            }}
+            onReject={(whatsappCallId) => dismiss(whatsappCallId)}
+          />
+        </div>
+      </>
     )
   }
 
@@ -245,7 +253,7 @@ export function WhatsappCallPanel() {
   // with nowhere on screen to answer it.
   if (isMinimized && !isIncoming) {
     return (
-      <div className="fixed right-6 bottom-6 z-50 flex flex-col-reverse items-end gap-3">
+      <div className="fixed right-6 bottom-6 z-50 flex max-h-[calc(100vh-3rem)] flex-col-reverse items-end gap-3">
         <button
           aria-label={t("whatsapp.calls.panel.expand")}
           className="motion-safe:zoom-in-95 flex items-center gap-2 rounded-full bg-gradient-to-b from-emerald-600 to-emerald-800 px-4 py-2 text-white shadow-lg motion-safe:animate-in"
@@ -265,7 +273,6 @@ export function WhatsappCallPanel() {
         {!slotFree && ringingCalls.length > 0 && (
           <WhatsappRingingCallsList
             calls={ringingCalls}
-            engaged
             onAnswer={(whatsappCallId) => {
               answer(whatsappCallId)
             }}
@@ -279,7 +286,7 @@ export function WhatsappCallPanel() {
   return (
     <>
       {isIncoming && <VoipBackdrop />}
-      <div className="fixed right-6 bottom-6 z-50 flex flex-col-reverse items-end gap-3">
+      <div className="fixed right-6 bottom-6 z-50 flex max-h-[calc(100vh-3rem)] flex-col-reverse items-end gap-3">
         <div
           className={cn(
             "motion-safe:zoom-in-95 w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border-none bg-gradient-to-b from-emerald-600 to-emerald-900 text-white shadow-2xl motion-safe:animate-in dark:from-emerald-700 dark:to-emerald-950",
@@ -433,7 +440,6 @@ export function WhatsappCallPanel() {
         {!slotFree && ringingCalls.length > 0 && (
           <WhatsappRingingCallsList
             calls={ringingCalls}
-            engaged
             onAnswer={(whatsappCallId) => {
               answer(whatsappCallId)
             }}

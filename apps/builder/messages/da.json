@@ -3934,7 +3934,8 @@
         "voipRejectFailed": "Could not decline the WhatsApp call",
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
-        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again."
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Det opkald ringer ikke længere"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -4061,7 +4062,7 @@
         "statusNoAnswer": "Intet svar",
         "eyebrowCallEnded": "OPKALD AFSLUTTET",
         "statusConnectionLost": "Forbindelsen blev afbrudt",
-        "ringingListTitle": "{count} indgående opkald"
+        "ringingListTitle": "{count, plural, one {# indgående opkald} other {# indgående opkald}}"
       },
       "capability": {
         "title": "Opkaldsberettigelse",
@@ -4082,7 +4083,9 @@
         "description": "Afslut opkaldet med {current} for at besvare {incoming}?",
         "confirm": "Afslut og besvar",
         "cancel": "Annuller"
-      }
+      },
+      "answerCaller": "Besvar opkald fra {name}",
+      "rejectCaller": "Afvis opkald fra {name}"
     }
   },
   "zalo": {

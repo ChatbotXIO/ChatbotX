@@ -16,8 +16,10 @@ import {
   type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useState,
 } from "react"
+import { toast } from "sonner"
 import { logger } from "@/lib/log"
 import type {
   StartOutboundOutcome,
@@ -159,10 +161,24 @@ export function WhatsappVoipCallProvider({
     [answerCall, t],
   )
 
+  // The offer can lapse on Meta's deadline, or be answered by a colleague,
+  // while the agent is still reading this dialog. Closing it the moment that
+  // happens is the real fix; this second check covers the last few
+  // milliseconds, because without it `answer` returns silently and the agent
+  // is left believing they just took the call.
   const confirmReplacement = useCallback(() => {
     const target = replacementTarget
     setReplacementTarget(null)
     if (!target) {
+      return
+    }
+    const stillRinging = useWhatsappVoipCallStore
+      .getState()
+      .ringingCalls.some(
+        (entry) => entry.whatsappCallId === target.incomingCallId,
+      )
+    if (!stillRinging) {
+      toast.error(t("whatsapp.calls.errors.callNoLongerRinging"))
       return
     }
     answerCall(target.incomingCallId).catch((error: unknown) => {
@@ -171,7 +187,23 @@ export function WhatsappVoipCallProvider({
         "WhatsApp VoIP replacement answer failed",
       )
     })
-  }, [answerCall, replacementTarget])
+  }, [answerCall, replacementTarget, t])
+
+  // Auto-close the confirmation when the offer it names stops ringing —
+  // expired on its own deadline, dismissed, or won by another agent. A stale
+  // confirmation on screen can only ever confirm into a no-op.
+  const ringingCalls = useWhatsappVoipCallStore((state) => state.ringingCalls)
+  useEffect(() => {
+    if (!replacementTarget) {
+      return
+    }
+    const stillRinging = ringingCalls.some(
+      (entry) => entry.whatsappCallId === replacementTarget.incomingCallId,
+    )
+    if (!stillRinging) {
+      setReplacementTarget(null)
+    }
+  }, [ringingCalls, replacementTarget])
 
   return (
     <WhatsappVoipCallContext.Provider

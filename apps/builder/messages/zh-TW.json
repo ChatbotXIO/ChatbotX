@@ -3967,7 +3967,8 @@
         "voipRejectFailed": "Could not decline the WhatsApp call",
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
-        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again."
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "該來電已不再響鈴"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -4094,7 +4095,7 @@
         "statusNoAnswer": "無應答",
         "eyebrowCallEnded": "通話已結束",
         "statusConnectionLost": "連線中斷",
-        "ringingListTitle": "{count} 通來電"
+        "ringingListTitle": "{count, plural, one {# 通來電} other {# 通來電}}"
       },
       "capability": {
         "title": "通話資格",
@@ -4115,7 +4116,9 @@
         "description": "結束與 {current} 的通話以接聽 {incoming} 嗎？",
         "confirm": "結束並接聽",
         "cancel": "取消"
-      }
+      },
+      "answerCaller": "接聽來自 {name} 的來電",
+      "rejectCaller": "拒接來自 {name} 的來電"
     }
   },
   "zalo": {
