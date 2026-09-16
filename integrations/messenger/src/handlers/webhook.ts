@@ -1,4 +1,5 @@
 import type { ContextQueue, HandleRequestProps } from "@chatbotx.io/sdk"
+import { toBullMqSafeIdSegment } from "@chatbotx.io/utils"
 import { sha256Hex } from "@chatbotx.io/utils/crypto"
 import z from "zod"
 import { MessengerWebhookException } from "../exception"
@@ -54,8 +55,6 @@ const marketingMessageItemField = (item: unknown): string | null => {
     : null
 }
 
-const toBullMqSafeIdSegment = (value: string): string =>
-  value.replace(/[^a-zA-Z0-9._-]/g, "_")
 
 /**
  * Standby items that are worth a job: a message or a postback. Reads and
@@ -479,16 +478,27 @@ const handleWebhookEvent = async (
           ? messagingEvent.sender.id
           : messagingEvent.recipient.id
 
+        const sourceMessageId =
+          messagingEvent.postback?.mid ?? messagingEvent.message?.mid
+
         if (messagingEvent.postback) {
-          await queue?.add("incomingMessage", {
-            type: "incomingMessage",
-            data: {
-              integrationType: "messenger",
-              integrationIdentifier,
-              payload: singleEventPayload,
-              action: messagingEvent.postback.payload,
+          await queue?.add(
+            "incomingMessage",
+            {
+              type: "incomingMessage",
+              data: {
+                integrationType: "messenger",
+                integrationIdentifier,
+                payload: singleEventPayload,
+                action: messagingEvent.postback.payload,
+              },
             },
-          })
+            sourceMessageId === undefined
+              ? undefined
+              : {
+                  jobId: `incoming-messenger-${toBullMqSafeIdSegment(sourceMessageId)}`,
+                },
+          )
           continue
         }
 
@@ -500,14 +510,22 @@ const handleWebhookEvent = async (
           continue
         }
 
-        await queue?.add("incomingMessage", {
-          type: "incomingMessage",
-          data: {
-            integrationType: "messenger",
-            integrationIdentifier,
-            payload: singleEventPayload,
+        await queue?.add(
+          "incomingMessage",
+          {
+            type: "incomingMessage",
+            data: {
+              integrationType: "messenger",
+              integrationIdentifier,
+              payload: singleEventPayload,
+            },
           },
-        })
+          sourceMessageId === undefined
+            ? undefined
+            : {
+                jobId: `incoming-messenger-${toBullMqSafeIdSegment(sourceMessageId)}`,
+              },
+        )
       }
     }
   } catch (error) {
