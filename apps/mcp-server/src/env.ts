@@ -4,7 +4,7 @@ import { z } from "zod"
 export const env = createEnv({
   server: {
     CHATBOTX_API_KEY: z.string().trim().default(""),
-    CHATBOTX_API_URL: z.url().default("https://api.chatbotx.io"),
+    CHATBOTX_API_URL: z.url().default("https://app.chatbotx.io/api"),
     CHATBOTX_ALLOW_SELF_SIGNED_CERT: z.enum(["true", "false"]).optional(),
     CHATBOTX_MCP_TRANSPORT: z.enum(["stdio", "sse", "both"]).default("both"),
     CHATBOTX_MCP_HOST: z.string().default("0.0.0.0"),

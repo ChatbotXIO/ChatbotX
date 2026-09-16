@@ -34,7 +34,7 @@
   "scripts": {
     "build": "tsdown",
     "check-types": "tsc --noEmit",
-    "dev:mcp": "dotenv -e .env -- tsx --watch src/index.ts",
+    "dev:mcp": "dotenv -e ../../.env -e .env -- tsx --watch src/index.ts",
     "prepublishOnly": "pnpm build",
     "start": "node dist/index.mjs",
     "test": "vitest run --passWithNoTests",
