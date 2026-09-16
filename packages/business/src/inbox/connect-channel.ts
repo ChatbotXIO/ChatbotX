@@ -8,6 +8,7 @@ import {
   INSTAGRAM_IG_ID_UNIQUE_CONSTRAINT,
   type inboxModel,
   MESSENGER_PAGE_ID_UNIQUE_CONSTRAINT,
+  THREADS_USER_ID_UNIQUE_CONSTRAINT,
   WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT,
 } from "@chatbotx.io/database/schema"
 import type { InboxModel } from "@chatbotx.io/database/types"
@@ -59,6 +60,10 @@ export const CHANNEL_CONNECT_DESCRIPTORS = {
   whatsapp: {
     duplicateConstraint: WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT,
     auditNoun: "WhatsApp",
+  },
+  threads: {
+    duplicateConstraint: THREADS_USER_ID_UNIQUE_CONSTRAINT,
+    auditNoun: "Threads",
   },
 } as const satisfies Partial<
   Record<ChannelType, { duplicateConstraint: string; auditNoun: string }>

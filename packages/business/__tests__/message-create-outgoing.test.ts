@@ -134,4 +134,52 @@ describe("messageService.createOutgoing", () => {
       },
     })
   })
+
+  test("uses attempts=1 for manual Threads comment replies", async () => {
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: { ...contactInbox, channel: "threads" } as never,
+      input: {
+        text: "hello",
+        replyToMessageId: "parent-1",
+        replyToMessageCreatedAt: new Date("2026-08-12T00:00:00Z"),
+      },
+      user: { id: "user-1" } as never,
+    })
+
+    expect(mockChatQueueAdd).toHaveBeenNthCalledWith(
+      2,
+      "sendChannelMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          message: expect.objectContaining({ type: "comment" }),
+        }),
+      }),
+      { attempts: 1 },
+    )
+  })
+
+  test("keeps default queue options for non-Threads manual comment replies", async () => {
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: { ...contactInbox, channel: "messenger" } as never,
+      input: {
+        text: "hello",
+        replyToMessageId: "parent-1",
+        replyToMessageCreatedAt: new Date("2026-08-12T00:00:00Z"),
+      },
+      user: { id: "user-1" } as never,
+    })
+
+    expect(mockChatQueueAdd).toHaveBeenNthCalledWith(
+      2,
+      "sendChannelMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          message: expect.objectContaining({ type: "comment" }),
+        }),
+      }),
+    )
+    expect(mockChatQueueAdd.mock.calls[1]).toHaveLength(2)
+  })
 })

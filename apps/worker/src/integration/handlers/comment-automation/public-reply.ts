@@ -34,6 +34,20 @@ import { type CommentReplyOutcome, describeFlowReply } from "./reply-outcome"
 const PUBLIC_REPLY_SPACING_MS = 3000
 
 /**
+ * Extra BullMQ options for a comment reply dispatched on this contact's
+ * channel. Threads' reply endpoint takes no idempotency key and rate-limits
+ * aggressively, so a BullMQ retry would double-post the same public reply —
+ * Threads jobs therefore run with a single attempt. Every other channel keeps
+ * the queue's default retry policy (returns `undefined`, spreading to
+ * nothing).
+ */
+function commentReplyRetryPolicy(
+  contactInbox: ContactInboxModel,
+): { attempts: number } | undefined {
+  return contactInbox.channel === "threads" ? { attempts: 1 } : undefined
+}
+
+/**
  * Post a public Facebook comment reply: creates the outgoing DB message,
  * broadcasts it over realtime, and enqueues the actual send. Shared by the
  * `text` reply type (dispatched immediately, sends after `delay`) and
@@ -88,6 +102,11 @@ export async function postPublicCommentReply(props: {
       "Unable to emit realtime message",
     ),
   )
+  const retryPolicy = commentReplyRetryPolicy(props.contactInbox)
+  const queueOptions =
+    props.delay === undefined
+      ? retryPolicy
+      : { delay: props.delay, ...retryPolicy }
   await chatQueue.add(
     ChatJobAction.sendChannelMessage,
     {
@@ -104,7 +123,7 @@ export async function postPublicCommentReply(props: {
         },
       },
     },
-    ...(props.delay === undefined ? [] : [{ delay: props.delay }]),
+    ...(queueOptions ? [queueOptions] : []),
   )
 }
 
@@ -251,7 +270,7 @@ export async function executePublicReply(
               },
             },
           },
-          { delay: ctx.delay },
+          { delay: ctx.delay, ...commentReplyRetryPolicy(ctx.contactInbox) },
         )
       },
     }
@@ -291,6 +310,7 @@ export async function executePublicReply(
           {
             delay: ctx.delay,
             jobId: `comment-ai-reply-${ctx.automationId}-${ctx.commentId}-public`,
+            ...commentReplyRetryPolicy(ctx.contactInbox),
           },
         )
       },

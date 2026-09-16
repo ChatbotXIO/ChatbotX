@@ -60,6 +60,8 @@ const { full, noButtons, unsupported } = mediaStepSupport
  * - **telegram** — every media step carries the buttons as an inline keyboard.
  * - **tiktok** — only images can be sent at all, and the IMAGE payload has no
  *   button field.
+ * - **threads** — comment-automation only; no `sendFlowStep` branch exists for
+ *   it yet, so every media step hits `default: break`.
  * - **api** — every media step maps to bare attachments in the envelope; only a
  *   carousel's cards carry buttons.
  * - **webchat** — its `sendFlowStep` is a no-op by design: the worker
@@ -127,6 +129,13 @@ const MEDIA_STEP_SUPPORT: Record<
   },
   [channelTypes.enum.tiktok]: {
     sendImage: noButtons,
+    sendVideo: unsupported,
+    sendAudio: unsupported,
+    sendFile: unsupported,
+    sendGif: unsupported,
+  },
+  [channelTypes.enum.threads]: {
+    sendImage: unsupported,
     sendVideo: unsupported,
     sendAudio: unsupported,
     sendFile: unsupported,

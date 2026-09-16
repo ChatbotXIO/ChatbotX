@@ -10,7 +10,10 @@ import type { AIJobCommentAIReply } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import { integrationService } from "../../../services/integrations"
 import { IntegrationNotFoundError } from "../../../services/orphaned-integration-cleanup"
-import { generateAIReplyText } from "../automated-response/replies"
+import {
+  createGuardedCommentInputMessage,
+  generateAIReplyText,
+} from "../automated-response/replies"
 import { rollbackCommentDedup } from "./dedup"
 import {
   PRIVATE_REPLY_TEXT_SENDERS,
@@ -140,6 +143,17 @@ async function generateAndDeliverAIReply(
     return
   }
 
+  // Resolved before generation so an undeliverable private reply (Threads has
+  // no private-reply API) skips without burning an AI call.
+  const sendPrivateReplyText = PRIVATE_REPLY_TEXT_SENDERS[data.channelType]
+  if (data.replyChannel === "private" && !sendPrivateReplyText) {
+    logger.info(
+      { commentId: data.commentId, capability: "private reply unsupported" },
+      "comment AI reply skipped: unsupported capability",
+    )
+    return
+  }
+
   const [workspace, agent, contactInbox, conversation] = await Promise.all([
     workspaceService.findById({ id: data.workspaceId }),
     aiAgentService.findBy({
@@ -209,7 +223,17 @@ async function generateAndDeliverAIReply(
   const generated = await generateAIReplyText({
     conversation,
     contactInbox,
-    messages: [{ role: "user", content: message }],
+    messages: [
+      // Threads comments are wrapped in an explicit untrusted-data envelope
+      // before reaching the agent. Meta-channel comments keep the raw shape
+      // they have always been sent with.
+      data.channelType === "threads"
+        ? createGuardedCommentInputMessage({
+            channel: data.channelType,
+            comment: message,
+          })
+        : { role: "user", content: message },
+    ],
     aiAgent: agent,
   })
   if (!generated?.text) {
@@ -250,13 +274,21 @@ async function generateAndDeliverAIReply(
     })
   } else {
     // Private DM: sent inline, so a throw here IS the delivery failure.
+    // Unreachable without a sender in practice — the early guard above
+    // already skips before generation — but re-checked here in case a future
+    // call site skips that gate, the same defence-in-depth `executePrivateReply`
+    // applies to its own checks.
+    if (!sendPrivateReplyText) {
+      return
+    }
+
     const { integrationRow } =
       await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
         data.integrationType as IntegrationType,
         data.integrationIdentifier,
       )
 
-    await PRIVATE_REPLY_TEXT_SENDERS[data.channelType](
+    await sendPrivateReplyText(
       integrationRow.auth as PrivateReplyAuth,
       data.commentId,
       generated.text,

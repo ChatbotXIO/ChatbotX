@@ -1,0 +1,1 @@
+ALTER TABLE "IntegrationThreads" ADD COLUMN "tokenRefreshError" text;

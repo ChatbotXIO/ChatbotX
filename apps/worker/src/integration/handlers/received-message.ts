@@ -53,8 +53,10 @@ import {
   emitContactCreated,
   setWebhookExecutionContext,
 } from "@chatbotx.io/events"
+import { uploader } from "@chatbotx.io/filesystem"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
+import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
@@ -928,6 +930,41 @@ const getMessageActivityTracking = (props: {
   return tracking
 }
 
+/**
+ * Threads pushes the commenter's profile picture directly on the reply
+ * webhook payload (`fromAvatarUrl`) rather than exposing an on-demand
+ * profile-lookup API the way Messenger/Instagram do (see
+ * `hasOnDemandProfileApi`) — Threads has no endpoint to look up an arbitrary
+ * user's profile by id. The URL is re-hosted on the tenant's own storage,
+ * matching every other channel's contact avatar (never linked to hotlink
+ * Meta's CDN directly, which can expire or rate-limit).
+ */
+async function downloadCommenterAvatar(props: {
+  url: string
+  workspaceId: string
+  accessToken?: string
+}): Promise<string | undefined> {
+  const response = await fetch(props.url, {
+    headers: props.accessToken
+      ? { Authorization: `Bearer ${props.accessToken}` }
+      : undefined,
+  })
+  if (!(response.ok && response.body)) {
+    return
+  }
+
+  const originPath = `public/space/${props.workspaceId}/avatars/${createId()}`
+  const bytes = await response.arrayBuffer()
+  const mimeType = response.headers.get("content-type") ?? "image/jpeg"
+
+  await uploader.putObject(originPath, Buffer.from(bytes), {
+    ACL: "public-read",
+    ContentType: mimeType,
+  })
+
+  return originPath
+}
+
 // Handles a Facebook fanpage comment (enqueued as `incomingComment` by the
 // messenger webhook). Each post maps to one conversation keyed by
 // `Conversation.sourceId = postId`; the comment author's PSID identifies the
@@ -975,7 +1012,36 @@ export const receiveComment = async (
   if (!detected) {
     throw new SdkException("Unable to resolve contact and conversation")
   }
-  const { contactInbox, conversation } = detected
+  const { contactInbox, contact, conversation } = detected
+
+  // Resolved AFTER the contact, and only when it has no avatar yet: a
+  // returning commenter takes the `buildExistingContactMatch` path, which
+  // ignores `incomingContact.avatar` entirely — re-hosting on every comment
+  // would leave one orphaned public object per comment with nothing pointing
+  // at it.
+  if (commentData.fromAvatarUrl && !contact.avatar) {
+    try {
+      const avatar = await downloadCommenterAvatar({
+        url: commentData.fromAvatarUrl,
+        workspaceId: inbox.workspaceId,
+        accessToken:
+          integrationType === "threads"
+            ? (integrationRow.auth as ThreadsAuthValue).tokens.accessToken
+            : undefined,
+      })
+      if (avatar) {
+        await contactService.update(
+          { workspaceId: inbox.workspaceId, id: contact.id },
+          { avatar },
+        )
+      }
+    } catch (err) {
+      logger.warn(
+        { err, commentId: commentData.commentId },
+        "receiveComment: failed to download commenter avatar",
+      )
+    }
+  }
 
   const repository = await createMessageRepository()
   let parentId: string | null = null
@@ -1028,13 +1094,26 @@ export const receiveComment = async (
     workspaceId: inbox.workspaceId,
   })
 
-  await saveAndBroadcastMessage({
+  const { isNew: isNewComment } = await saveAndBroadcastMessage({
     inbox,
     contactInbox,
     conversation,
     incomingMessage,
     storageUrl,
   })
+
+  // Deliberately NOT an early return: this job can be retried after the save
+  // already committed (a failure in anything below), and a retry always sees
+  // `isNew: false`. Returning here would silently drop the auto-reply. The
+  // enqueue below is idempotent on its own — `jobId` rejects a duplicate, and
+  // completed jobs are retained (`removeOnComplete: { count: 1000 }`), so a
+  // genuine webhook redelivery is a no-op rather than a second reply.
+  if (!isNewComment) {
+    logger.info(
+      { commentId: commentData.commentId, integrationType },
+      "receiveComment: comment already stored, re-checking automation enqueue",
+    )
+  }
 
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })
   if (!workspaceService.isActiveNow(workspace)) {
@@ -1068,7 +1147,14 @@ export const receiveComment = async (
         createdTime: commentData.createdTime,
       },
     },
-    { jobId: processCommentAutomationJobId },
+    // Threads gets a single attempt on purpose: `sendCommentReply` creates a
+    // fresh media container per call, so a retry after a partial failure posts
+    // a SECOND visible reply — there is no container id to resume from. That
+    // is also why `waitForReplyContainerReady` must not treat an unrecognised
+    // container status as fatal: nothing retries behind it.
+    integrationType === "threads"
+      ? { jobId: processCommentAutomationJobId, attempts: 1 }
+      : { jobId: processCommentAutomationJobId },
   )
 }
 

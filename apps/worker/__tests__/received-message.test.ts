@@ -1,5 +1,7 @@
 import { UnrecoverableError } from "bullmq"
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+
+const AVATAR_STORAGE_PATH_PATTERN = /^public\/space\/ws-1\/avatars\//
 
 // ---------------------------------------------------------------------------
 // Hoist mock references
@@ -39,6 +41,7 @@ const {
   mockContactProfileRefresh,
   mockRecordProfileRefreshFailure,
   mockResolveIntegrationContextFromContactInbox,
+  mockUploaderPutObject,
 } = vi.hoisted(() => {
   const mockFindContactInbox = vi.fn()
 
@@ -121,6 +124,7 @@ const {
       integration: { runChannelHandler: mockRunChannelHandler },
       ctx: { workspaceId: "ws-1" },
     }),
+    mockUploaderPutObject: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -139,6 +143,10 @@ vi.mock("@chatbotx.io/automated-response", () => ({
   automatedResponseService: {
     enqueueFlowAction: mockAutomatedResponseEnqueueFlowAction,
   },
+}))
+
+vi.mock("@chatbotx.io/filesystem", () => ({
+  uploader: { putObject: mockUploaderPutObject },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -328,6 +336,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     runFlowPostback: "runFlowPostback",
     runFlowQuickReply: "runFlowQuickReply",
     runRef: "runRef",
+    processCommentAutomation: "processCommentAutomation",
   },
   integrationQueue: {
     add: mockIntegrationQueueAdd,
@@ -2754,6 +2763,10 @@ describe("contact source taxonomy", () => {
     })
   })
 
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   test("maps Meta referral source buckets", () => {
     expect(metaReferralToContactSource("ADS")).toBe("ads")
     expect(metaReferralToContactSource("SHORTLINK")).toBe("botLink")
@@ -2798,6 +2811,202 @@ describe("contact source taxonomy", () => {
         .mocked(allIntegrations.messenger?.runAction)
         .mock.calls.some(([action]) => action === "getPostDetails"),
     ).toBe(false)
+  })
+
+  // A retry of this job after the message save already committed always sees
+  // `isNew: false`; skipping the enqueue there would silently drop the
+  // auto-reply. De-duplication is the queue's job (`jobId` + retained
+  // completed jobs), not this handler's.
+  test("still enqueues comment automation when the save result is isNew=false (job retry)", async () => {
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: false,
+    })
+
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-dup-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello again",
+        postId: "post-1",
+      },
+    })
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "processCommentAutomation",
+      expect.objectContaining({ type: "processCommentAutomation" }),
+      { jobId: "comment-auto-comment-dup-1" },
+    )
+  })
+
+  test("enqueues comment automation for new comments when save result isNew=true", async () => {
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-new-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello",
+        postId: "post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "processCommentAutomation",
+      {
+        type: "processCommentAutomation",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "inbox-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-new",
+          commentId: "comment-new-1",
+          postId: "post-1",
+          parentId: undefined,
+          fromId: "commenter-1",
+          message: "hello",
+          createdTime: 1_783_674_105,
+        },
+      },
+      { jobId: "comment-auto-comment-new-1" },
+    )
+  })
+
+  test("uses attempts=1 when enqueueing Threads comment automation", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "threads" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+
+    await receiveComment({
+      integrationType: "threads",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-threads-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello from threads",
+        postId: "post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "processCommentAutomation",
+      {
+        type: "processCommentAutomation",
+        data: {
+          integrationType: "threads",
+          integrationIdentifier: "inbox-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-new",
+          commentId: "comment-threads-1",
+          postId: "post-1",
+          parentId: undefined,
+          fromId: "commenter-1",
+          message: "hello from threads",
+          createdTime: 1_783_674_105,
+        },
+      },
+      { jobId: "comment-auto-comment-threads-1", attempts: 1 },
+    )
+  })
+
+  test("downloads and re-hosts a Threads commenter's avatar from the webhook payload", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "threads" },
+      integrationRow: {
+        ...fakeIntegrationRow,
+        auth: { tokens: { accessToken: "threads-token" } },
+      },
+    } as never)
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(new Uint8Array([1, 2, 3]), {
+          status: 200,
+          headers: { "content-type": "image/jpeg" },
+        }),
+      ),
+    )
+
+    await receiveComment({
+      integrationType: "threads",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-threads-avatar-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        fromAvatarUrl: "https://scontent.cdninstagram.com/avatar.jpg",
+        message: "hello from threads",
+        postId: "post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(fetch).toHaveBeenCalledWith(
+      "https://scontent.cdninstagram.com/avatar.jpg",
+      { headers: { Authorization: "Bearer threads-token" } },
+    )
+    expect(mockUploaderPutObject).toHaveBeenCalledWith(
+      expect.stringMatching(AVATAR_STORAGE_PATH_PATTERN),
+      expect.anything(),
+      { ACL: "public-read", ContentType: "image/jpeg" },
+    )
+    expect(mockContactUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws-1" }),
+      expect.objectContaining({
+        avatar: expect.stringMatching(AVATAR_STORAGE_PATH_PATTERN),
+      }),
+    )
+  })
+
+  // The re-host is pure waste for a returning commenter:
+  // `buildExistingContactMatch` never reads `incomingContact.avatar`, so every
+  // repeat comment would leave one orphaned public object behind.
+  test("does not re-host the avatar when the contact already has one", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "threads" },
+      integrationRow: {
+        ...fakeIntegrationRow,
+        auth: { tokens: { accessToken: "threads-token" } },
+      },
+    } as never)
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      contact: { ...fakeContact, avatar: "public/space/ws-1/avatars/existing" },
+    })
+    vi.stubGlobal("fetch", vi.fn())
+
+    await receiveComment({
+      integrationType: "threads",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-threads-avatar-2",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        fromAvatarUrl: "https://scontent.cdninstagram.com/avatar.jpg",
+        message: "hello again",
+        postId: "post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(fetch).not.toHaveBeenCalled()
+    expect(mockUploaderPutObject).not.toHaveBeenCalled()
   })
 })
 

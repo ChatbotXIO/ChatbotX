@@ -4,18 +4,33 @@ const tenantService = { findByOwner: vi.fn() }
 vi.mock("../src/enterprise/tenant/service", () => ({ tenantService }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  asc: vi.fn((value) => value),
   db: {},
   and: vi.fn(),
   eq: vi.fn(),
   isNull: vi.fn(),
+  sql: vi.fn((_strings: TemplateStringsArray, ...values: unknown[]) => values),
 }))
 vi.mock("@chatbotx.io/database/partials", () => ({
-  credentialEncryptedSchema: {},
+  credentialEncryptedSchema: { parse: vi.fn((value) => value) },
   credentialPublicSchemas: {},
-  credentialSchemas: {},
+  credentialSchemas: {
+    threads: {},
+  },
 }))
-vi.mock("@chatbotx.io/database/schema", () => ({ platformCredentialModel: {} }))
-vi.mock("@chatbotx.io/encryption", () => ({ encryptUtils: {} }))
+vi.mock("@chatbotx.io/database/schema", () => ({
+  platformCredentialModel: {
+    id: "id",
+    livemode: "livemode",
+    publicConfig: "publicConfig",
+    type: "type",
+    usePlatformCredential: "usePlatformCredential",
+    userId: "userId",
+  },
+}))
+vi.mock("@chatbotx.io/encryption", () => ({
+  encryptUtils: { decryptObject: vi.fn(), encryptObject: vi.fn() },
+}))
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: vi.fn(async () => undefined),
   withCache: vi.fn(async (_key: string, fn: () => unknown) => fn()),
@@ -25,6 +40,7 @@ vi.mock("../src/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }))
 const { platformCredentialService } = await import(
   "../src/platform-credential/service"
 )
+const { encryptUtils } = await import("@chatbotx.io/encryption")
 
 const OWN = { id: "own", type: "messenger", publicConfig: { clientId: "own" } }
 const PLATFORM = {
@@ -226,6 +242,73 @@ describe("resolvePlatformAppAccessToken", () => {
 
     await expect(
       platformCredentialService.resolvePlatformAppAccessToken("instagram"),
+    ).resolves.toBeUndefined()
+  })
+})
+
+describe("findDecryptedThreadsByClientId", () => {
+  test("queries non-delegated threads credentials and decrypts the first deterministic match", async () => {
+    vi.mocked(encryptUtils.decryptObject).mockResolvedValue({
+      clientId: "thread-app",
+      clientSecret: "secret-1",
+      verifyToken: "verify-1",
+      version: "v1.0",
+    })
+
+    const row = {
+      createdAt: new Date("2026-08-12T00:00:00Z"),
+      id: "platform-row",
+      livemode: false,
+      publicConfig: { clientId: "thread-app" },
+      type: "threads",
+      updatedAt: new Date("2026-08-12T00:00:00Z"),
+      userId: null,
+      value: { encrypted: true },
+    }
+
+    const limit = vi.fn().mockResolvedValue([row])
+    const orderBy = vi.fn(() => ({ limit }))
+    const where = vi.fn(() => ({ orderBy }))
+    const from = vi.fn(() => ({ where }))
+    const tx = { select: vi.fn(() => ({ from })) } as never
+
+    const result =
+      await platformCredentialService.findDecryptedThreadsByClientId({
+        clientId: "thread-app",
+        tx,
+      })
+
+    expect(result).toEqual({
+      config: {
+        clientId: "thread-app",
+        clientSecret: "secret-1",
+        verifyToken: "verify-1",
+        version: "v1.0",
+      },
+      createdAt: row.createdAt,
+      id: "platform-row",
+      publicConfig: { clientId: "thread-app" },
+      type: "threads",
+      updatedAt: row.updatedAt,
+      userId: null,
+    })
+    expect(orderBy).toHaveBeenCalledOnce()
+    expect(limit).toHaveBeenCalledWith(1)
+    expect(encryptUtils.decryptObject).toHaveBeenCalledOnce()
+  })
+
+  test("returns undefined when no threads credential matches the clientId", async () => {
+    const limit = vi.fn().mockResolvedValue([])
+    const orderBy = vi.fn(() => ({ limit }))
+    const where = vi.fn(() => ({ orderBy }))
+    const from = vi.fn(() => ({ where }))
+    const tx = { select: vi.fn(() => ({ from })) } as never
+
+    await expect(
+      platformCredentialService.findDecryptedThreadsByClientId({
+        clientId: "missing-app",
+        tx,
+      }),
     ).resolves.toBeUndefined()
   })
 })

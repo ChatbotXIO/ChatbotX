@@ -274,19 +274,25 @@ export const createOutgoing = async (props: {
     },
     {
       jobType: ChatJobAction.sendChannelMessage,
-      promise: chatQueue.add(ChatJobAction.sendChannelMessage, {
-        type: ChatJobAction.sendChannelMessage,
-        data: {
-          conversation: targetConversation,
-          contactInbox,
-          message: {
-            ...messageWithAttachments,
-            clientId: parsedInput.clientId,
-            parentCreatedAt: parsedInput.replyToMessageCreatedAt ?? null,
+      promise: chatQueue.add(
+        ChatJobAction.sendChannelMessage,
+        {
+          type: ChatJobAction.sendChannelMessage,
+          data: {
+            conversation: targetConversation,
+            contactInbox,
+            message: {
+              ...messageWithAttachments,
+              clientId: parsedInput.clientId,
+              parentCreatedAt: parsedInput.replyToMessageCreatedAt ?? null,
+            },
+            sendFrom: "inbox",
           },
-          sendFrom: "inbox",
         },
-      }),
+        ...(contactInbox.channel === "threads" && message.type === "comment"
+          ? [{ attempts: 1 }]
+          : []),
+      ),
     },
     ...(user && messageInput.text
       ? [

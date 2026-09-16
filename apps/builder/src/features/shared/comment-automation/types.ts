@@ -13,4 +13,5 @@ export type CommentAutomationRow = {
 export type CommentAutomationTranslationNamespace =
   | "facebookCommentAutomation"
   | "instagramCommentAutomation"
+  | "threadsCommentAutomation"
   | "instagramStoryAutomation"

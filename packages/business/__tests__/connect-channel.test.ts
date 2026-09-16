@@ -14,6 +14,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 vi.mock("@chatbotx.io/database/schema", () => ({
   INSTAGRAM_IG_ID_UNIQUE_CONSTRAINT: "IntegrationInstagram_igId_key",
   MESSENGER_PAGE_ID_UNIQUE_CONSTRAINT: "IntegrationMessenger_pageId_key",
+  THREADS_USER_ID_UNIQUE_CONSTRAINT: "IntegrationThreads_threadsUserId_key",
   WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT:
     "IntegrationWhatsapp_phoneNumberId_key",
   inboxModel: {},

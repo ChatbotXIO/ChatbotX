@@ -165,7 +165,8 @@ vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
   subscribePageToAppWebhook: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/sdk", () => ({
+vi.mock("@chatbotx.io/sdk", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/sdk")>()),
   AuthType: { oauth2: "oauth2", custom: "custom" },
   SdkException: class SdkException extends Error {},
 }))

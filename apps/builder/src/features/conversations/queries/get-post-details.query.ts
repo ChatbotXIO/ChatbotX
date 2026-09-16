@@ -1,11 +1,14 @@
 import {
   buildContext,
   instagramIntegrationService,
+  integrationThreadsService,
   messengerIntegrationService,
 } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
+import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import { withCache } from "@chatbotx.io/redis"
 import { integrations } from "@/integration"
 import type { PostDetails } from "../schema/query"
@@ -50,6 +53,35 @@ export function getPostDetailsQuery(
           picture: raw.thumbnail_url ?? raw.media_url,
           from: { id: integration.igId, name: integration.name },
           createdAt: raw.timestamp,
+          link: raw.permalink,
+        }
+      }
+
+      if (channel === "threads") {
+        const integration =
+          await integrationThreadsService.findByInboxId(inboxId)
+        if (!integration) {
+          throw new ChatbotXException("Threads integration not found")
+        }
+        const ctx = await buildContext({
+          workspaceId: integration.workspaceId,
+          integrationType: "threads",
+          integration: {
+            ...integration,
+            auth: integration.auth as ThreadsAuthValue,
+          },
+        })
+        const raw = await integrations.threads.runAction("getPostDetails", {
+          ctx,
+          input: { postId },
+        })
+        return {
+          text: raw.text,
+          picture: raw.media_url ?? raw.thumbnail_url,
+          from: raw.username
+            ? { id: raw.owner?.id ?? raw.username, name: raw.username }
+            : undefined,
+          createdAt: raw.timestamp ?? new Date().toISOString(),
           link: raw.permalink,
         }
       }

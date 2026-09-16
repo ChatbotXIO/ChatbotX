@@ -1,0 +1,1 @@
+ALTER TYPE "fbCommentAutomationType" ADD VALUE 'threads';

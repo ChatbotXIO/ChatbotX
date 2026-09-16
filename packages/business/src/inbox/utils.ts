@@ -74,6 +74,7 @@ export function buildInboxLink(
       refKey: "ref",
       refValue,
     },
+    threads: undefined,
     whatsapp: {
       url: `https://wa.me/${inbox.integrationWhatsapp?.displayPhoneNumber ?? ""}`,
       refKey: "text",
@@ -139,6 +140,7 @@ export function buildPostLink(channel: ChannelType, postId: string): string {
   const allLinkConfigs: Record<ChannelType, string> = {
     messenger: `https://fb.com/${postId}`,
     instagram: "",
+    threads: "",
     whatsapp: "",
     telegram: "",
     zalo: "",
@@ -159,6 +161,7 @@ export function buildMessageLink(
   const allLinkConfigs: Record<ChannelType, string> = {
     messenger: `https://fb.com/${messageId}`,
     instagram: `https://instagram.com/p/${messageId}`,
+    threads: "",
     whatsapp: "",
     telegram: "",
     zalo: "",
