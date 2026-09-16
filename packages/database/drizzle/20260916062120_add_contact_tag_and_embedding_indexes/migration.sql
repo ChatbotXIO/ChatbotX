@@ -1,0 +1,2 @@
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "AIEmbedding_embedding_idx" ON "AIEmbedding" USING hnsw ("embedding" vector_cosine_ops);--> statement-breakpoint
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "ContactToTag_tagId_contactId_idx" ON "ContactToTag" ("tagId","contactId");

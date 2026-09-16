@@ -34,5 +34,9 @@ export const aiEmbeddingModel = pgTable(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
+    index("AIEmbedding_embedding_idx").using(
+      "hnsw",
+      table.embedding.op("vector_cosine_ops"),
+    ),
   ],
 )

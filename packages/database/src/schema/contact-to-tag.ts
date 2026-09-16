@@ -1,4 +1,4 @@
-import { pgTable, primaryKey } from "drizzle-orm/pg-core"
+import { index, pgTable, primaryKey } from "drizzle-orm/pg-core"
 import { bigintAsString } from "../partials/shared"
 import { contactModel } from "./contact"
 import { tagModel } from "./tag"
@@ -23,5 +23,10 @@ export const contactsToTagsModel = pgTable(
     primaryKey({
       columns: [table.contactId, table.tagId],
     }),
+    index("ContactToTag_tagId_contactId_idx").using(
+      "btree",
+      table.tagId.asc().nullsLast(),
+      table.contactId.asc().nullsLast(),
+    ),
   ],
 )
