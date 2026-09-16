@@ -10,10 +10,10 @@ import type {
 import type { CommentAnchor, OutgoingMessage } from "@chatbotx.io/sdk"
 import { type JobsOptions, Queue } from "bullmq"
 import {
-  defaultJobOptions,
   fakeQueue,
   getRedisConnection,
   isNoRedisEnv,
+  resilientJobOptions,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
@@ -689,7 +689,7 @@ export const integrationQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<IntegrationJobData>(queueNames.enum.integration, {
       connection: getRedisConnection(),
-      defaultJobOptions,
+      defaultJobOptions: resilientJobOptions,
     })
 
 // Ads-conversion jobs need a stronger retry policy than the integration

@@ -56,6 +56,14 @@ export const defaultJobOptions = {
   },
 }
 
+export const resilientJobOptions = {
+  attempts: 5,
+  backoff: {
+    type: "exponential",
+    delay: 10_000,
+  },
+}
+
 export const defaultWorkerOptions = {
   concurrency: 5,
   removeOnComplete: { count: 1000 },

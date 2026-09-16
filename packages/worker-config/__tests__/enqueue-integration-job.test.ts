@@ -20,6 +20,10 @@ vi.mock("../src/lib/connection", () => ({
     attempts: 2,
     backoff: { type: "exponential", delay: 5000 },
   },
+  resilientJobOptions: {
+    attempts: 5,
+    backoff: { type: "exponential", delay: 10_000 },
+  },
   fakeQueue: { add: vi.fn() },
   getRedisConnection: () => ({}),
   isNoRedisEnv: () => false,
