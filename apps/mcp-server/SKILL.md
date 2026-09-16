@@ -237,7 +237,7 @@ Call `capabilities_get` and `token_get` first — both are always visible regard
 |---|---|
 | `capabilities_get` | Discover the workspace's inboxes, templates, fields, tags, sequences, and flows — the ids other tools need. |
 | `token_get` | Get the calling token's workspace id, permission (`read_only`/`full`), and scopes. |
-| `schemas_flow_spec` | JSON Schema for the flow-spec DSL `flows_publish`/`flows_update_draft`/`flows_validate` accept. |
+| `schemas_flow_spec` | JSON Schema for the flow-spec DSL `flows_create`/`flows_publish`/`flows_update_draft`/`flows_validate` accept. |
 
 | Category | Tool |
 |---|---|

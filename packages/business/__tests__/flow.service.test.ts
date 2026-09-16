@@ -12,6 +12,7 @@ const {
   mockInsert,
   mockInsertReturning,
   mockInsertValues,
+  mockInvalidateList,
   mockTopLevelFlowFindFirst,
   mockUpdate,
   mockUpdateSet,
@@ -40,6 +41,7 @@ const {
     mockInsert,
     mockInsertReturning,
     mockInsertValues,
+    mockInvalidateList: vi.fn(),
     mockTopLevelFlowFindFirst: vi.fn(),
     mockUpdate,
     mockUpdateSet,
@@ -126,6 +128,7 @@ vi.mock("../src/errors", () => ({
 vi.mock("../src/flow-version", () => ({
   flowVersionService: {
     findDraft: mockFindDraft,
+    invalidateList: mockInvalidateList,
   },
 }))
 
@@ -494,5 +497,123 @@ describe("flowService.createDraft", () => {
       "created a new flow (#flow-1)",
     )
     expect(result).toEqual({ id: "flow-1" })
+  })
+
+  test("uses a pre-resolved graph instead of the default start node when one is supplied", async () => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockInsertValues.mockImplementation(() =>
+      Object.assign(Promise.resolve(undefined), {
+        returning: mockInsertReturning,
+      }),
+    )
+    mockCreateId
+      .mockReturnValueOnce("flow-2")
+      .mockReturnValueOnce("analytics-2")
+      .mockReturnValueOnce("version-2")
+    mockInsertReturning.mockResolvedValue([{ id: "flow-2" }])
+
+    const result = await flowService.createDraft({
+      workspaceId: "ws-1",
+      data: { name: "New flow" },
+      graph: {
+        nodes: [{ id: "node-1" }],
+        edges: [{ id: "e1", source: "node-1", target: "node-1" }],
+        startNodeId: "node-1",
+      },
+    })
+
+    expect(mockInsert).toHaveBeenNthCalledWith(3, flowVersionModel)
+    expect(mockInsertValues).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        id: "version-2",
+        workspaceId: "ws-1",
+        flowId: "flow-2",
+        nodes: [{ id: "node-1" }],
+        edges: [{ id: "e1", source: "node-1", target: "node-1" }],
+        isDraft: true,
+        startNodeId: "node-1",
+      }),
+    )
+    expect(result).toEqual({ id: "flow-2" })
+  })
+})
+
+describe("flowService.createPublished", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("checks the folder exists before opening the transaction", async () => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockInsertValues.mockResolvedValue(undefined)
+    mockCreateId
+      .mockReturnValueOnce("flow-1")
+      .mockReturnValueOnce("draft-1")
+      .mockReturnValueOnce("published-1")
+      .mockReturnValueOnce("analytics-1")
+
+    await flowService.createPublished({
+      workspaceId: "ws-1",
+      data: { name: "New flow", folderId: "folder-1" },
+      graph: {
+        nodes: [{ id: "node-1" }] as never,
+        edges: [] as never,
+        startNodeId: "node-1",
+      },
+    })
+
+    expect(mockEnsureExists).toHaveBeenCalledWith({
+      id: "folder-1",
+      workspaceId: "ws-1",
+      folderType: "flow",
+    })
+  })
+
+  test("inserts flow + draft + published version in one transaction, invalidates the versions cache, and audits", async () => {
+    mockDbTransaction.mockImplementation(async (callback) =>
+      callback(transaction),
+    )
+    mockInsertValues.mockResolvedValue(undefined)
+    mockCreateId
+      .mockReturnValueOnce("flow-1")
+      .mockReturnValueOnce("draft-1")
+      .mockReturnValueOnce("published-1")
+      .mockReturnValueOnce("analytics-1")
+
+    const result = await flowService.createPublished({
+      workspaceId: "ws-1",
+      data: { name: "New flow" },
+      graph: {
+        nodes: [{ id: "node-1" }] as never,
+        edges: [] as never,
+        startNodeId: "node-1",
+      },
+    })
+
+    expect(result).toEqual({ id: "flow-1" })
+    expect(mockDbTransaction).toHaveBeenCalledTimes(1)
+    expect(mockInsert).toHaveBeenNthCalledWith(3, flowVersionModel)
+    expect(mockInsertValues).toHaveBeenNthCalledWith(3, [
+      expect.objectContaining({
+        id: "draft-1",
+        isDraft: true,
+        isLatest: false,
+      }),
+      expect.objectContaining({
+        id: "published-1",
+        isDraft: false,
+        isLatest: true,
+      }),
+    ])
+    expect(mockInvalidateList).toHaveBeenCalledWith("flow-1")
+    expect(mockAudit).toHaveBeenCalledWith(
+      "create",
+      "created a new flow (#flow-1)",
+    )
   })
 })

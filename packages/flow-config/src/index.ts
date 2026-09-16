@@ -12,6 +12,12 @@ export {
   zodErrorToFlowAuthoringErrors,
 } from "./authoring/errors"
 export {
+  type AuthoredEdgeInput,
+  type AuthoredNodeInput,
+  type NormalizedAuthoredGraph,
+  normalizeAuthoredGraph,
+} from "./authoring/normalize-graph"
+export {
   type FlowSpec,
   type FlowSpecStepType,
   type FlowStepSpec,

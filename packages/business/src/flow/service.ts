@@ -79,6 +79,26 @@ const resolveManifestIdMap = async (
   return { idMap, createdIds }
 }
 
+/** `flows.create`'s default content when no `spec`/`nodes` is supplied: today's single "Send Message" start node. */
+const defaultDraftGraph = (): {
+  nodes: FlowVersionModel["nodes"]
+  edges: FlowVersionModel["edges"]
+  startNodeId: string
+} => {
+  const defaultNode = sendMessageNodeDefaultFn({
+    dataProps: {
+      name: "Send Message #1",
+      isStartNode: true,
+    },
+  })
+  return {
+    // biome-ignore lint/suspicious/noExplicitAny: temporary any to bypass circular dependency between flow and flow version
+    nodes: [defaultNode as any],
+    edges: [],
+    startNodeId: defaultNode.id,
+  }
+}
+
 class FlowService extends BaseService {
   async findBy(
     input: { workspaceId: string; id: string },
@@ -285,8 +305,12 @@ class FlowService extends BaseService {
   }
 
   /**
-   * The builder create-flow form's flow: a single new (unpublished) draft
-   * version seeded with one default "Send Message" start node — unlike
+   * The builder create-flow form's flow, and the public `flows.create`
+   * API's default: a single new (unpublished) draft version. With no
+   * `graph`, it's seeded with one default "Send Message" start node
+   * (`defaultDraftGraph`); the public API passes a pre-resolved `graph`
+   * (compiled from `spec`, or normalized from a raw `nodes`/`edges` body)
+   * to seed the draft with caller-supplied content instead. Unlike
    * `createPublishedDefault` (template install: draft + published version
    * pair, external `tx`), this owns its own transaction and audits the
    * result.
@@ -294,6 +318,11 @@ class FlowService extends BaseService {
   async createDraft(input: {
     workspaceId: string
     data: { name: string; folderId?: string | null }
+    graph?: {
+      nodes: FlowVersionModel["nodes"]
+      edges: FlowVersionModel["edges"]
+      startNodeId: string
+    }
   }): Promise<{ id: string }> {
     const { workspaceId, data } = input
 
@@ -305,12 +334,7 @@ class FlowService extends BaseService {
       })
     }
 
-    const defaultNode = sendMessageNodeDefaultFn({
-      dataProps: {
-        name: "Send Message #1",
-        isStartNode: true,
-      },
-    })
+    const graph = input.graph ?? defaultDraftGraph()
 
     const flow = await db.transaction(async (tx) => {
       const flowId = createId()
@@ -333,11 +357,10 @@ class FlowService extends BaseService {
         id: createId(),
         workspaceId,
         flowId,
-        // biome-ignore lint/suspicious/noExplicitAny: temporary any to bypass circular dependency between flow and flow version
-        nodes: [defaultNode as any],
-        edges: [],
+        nodes: graph.nodes,
+        edges: graph.edges,
         isDraft: true,
-        startNodeId: defaultNode.id,
+        startNodeId: graph.startNodeId,
       })
 
       return created
@@ -346,6 +369,52 @@ class FlowService extends BaseService {
     await this.audit("create", `created a new flow (#${flow.id})`)
 
     return { id: flow.id }
+  }
+
+  /**
+   * The public `flows.create` API's `publish: true` path: inserts the flow,
+   * its analytics session, a draft version, and a published version — all in
+   * one transaction via `createPublishedDefault` — so a downstream failure
+   * (a DB error, a constraint, the cache invalidation) never leaves behind
+   * an orphaned, invisible, unpublished flow the caller was never told the
+   * id of. Runs the same folder guard `createDraft` runs before opening the
+   * transaction, and invalidates/audits after it commits, matching
+   * `createPublishedDefault`'s doc-comment contract.
+   */
+  async createPublished(input: {
+    workspaceId: string
+    data: { name: string; folderId?: string | null }
+    graph: {
+      nodes: FlowVersionModel["nodes"]
+      edges: FlowVersionModel["edges"]
+      startNodeId: string
+    }
+  }): Promise<{ id: string }> {
+    const { workspaceId, data, graph } = input
+
+    if (data.folderId) {
+      await folderService.ensureExists({
+        id: data.folderId,
+        workspaceId,
+        folderType: "flow",
+      })
+    }
+
+    const { flowId } = await db.transaction((tx) =>
+      this.createPublishedDefault(tx, {
+        workspaceId,
+        name: data.name,
+        folderId: data.folderId,
+        startNodeId: graph.startNodeId,
+        nodes: graph.nodes,
+        edges: graph.edges,
+      }),
+    )
+
+    await flowVersionService.invalidateList(flowId)
+    await this.audit("create", `created a new flow (#${flowId})`)
+
+    return { id: flowId }
   }
 
   /**

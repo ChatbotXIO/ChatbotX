@@ -27,9 +27,16 @@ async function compileWithContext(
 export async function compileSpecToGraph(
   spec: FlowSpec,
   workspaceId: string,
-): Promise<{ nodes: FlowVersionSchema[]; edges: EdgeSchema[] }> {
-  const { nodes, edges } = await compileWithContext(spec, workspaceId)
-  return { nodes, edges }
+): Promise<{
+  nodes: FlowVersionSchema[]
+  edges: EdgeSchema[]
+  startNodeId: string
+}> {
+  const { nodes, edges, startNodeId } = await compileWithContext(
+    spec,
+    workspaceId,
+  )
+  return { nodes, edges, startNodeId }
 }
 
 /**
@@ -70,11 +77,13 @@ function mapPublishIssuePath(
 export async function compileAndValidateSpec(
   spec: FlowSpec,
   workspaceId: string,
-): Promise<{ nodes: FlowVersionSchema[]; edges: EdgeSchema[] }> {
-  const { nodes, edges, specPathByNodeId } = await compileWithContext(
-    spec,
-    workspaceId,
-  )
+): Promise<{
+  nodes: FlowVersionSchema[]
+  edges: EdgeSchema[]
+  startNodeId: string
+}> {
+  const { nodes, edges, specPathByNodeId, startNodeId } =
+    await compileWithContext(spec, workspaceId)
 
   const result = publishFlowSchema.safeParse({ nodes, edges })
   if (!result.success) {
@@ -85,5 +94,5 @@ export async function compileAndValidateSpec(
     )
   }
 
-  return result.data
+  return { ...result.data, startNodeId }
 }

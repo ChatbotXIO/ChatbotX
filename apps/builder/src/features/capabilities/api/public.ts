@@ -53,7 +53,7 @@ export const capabilitiesPublicRouter = {
       path: "/v1/capabilities",
       summary: "Discover workspace capabilities",
       description:
-        "Returns compact (id + name, plus a couple of decisive fields) lists of the workspace entities an agent needs to reference by id — inboxes, WhatsApp templates, custom/bot fields, tags, AI agents, sequences, and flows — plus the flow-spec DSL's step types and valid wait units/channels. Bot fields are reference data only; they cannot be used as a branch condition's `field` (only custom fields and built-in contact fields can). Use `include` (comma-separated) to narrow the response; omit it for the default set an agent needs to build a flow. Call this before `flows.publish`/`flows.updateDraft`/`flows.validate` so names in a flow spec resolve to real ids instead of guesses.",
+        "Returns compact (id + name, plus a couple of decisive fields) lists of the workspace entities an agent needs to reference by id — inboxes, WhatsApp templates, custom/bot fields, tags, AI agents, sequences, and flows — plus the flow-spec DSL's step types and valid wait units/channels. Bot fields are reference data only; they cannot be used as a branch condition's `field` (only custom fields and built-in contact fields can). Use `include` (comma-separated) to narrow the response; omit it for the default set an agent needs to build a flow. Call this before `flows.create`/`flows.publish`/`flows.updateDraft`/`flows.validate` so names in a flow spec resolve to real ids instead of guesses.",
       tags: ["Capabilities"],
       spec: mcpSpec({ visibility: "default", alwaysVisible: true }),
     })
@@ -76,7 +76,7 @@ export const schemasPublicRouter = {
       path: "/v1/schemas/flow-spec",
       summary: "Get JSON Schema for flow-spec DSL",
       description:
-        "Returns the JSON Schema for the `spec` object accepted by `flows.publish`'s, `flows.updateDraft`'s, and `flows.validate`'s `{ spec }` input — the authoritative reference for every step type's fields. Use `capabilities.get` first to resolve the names (templates, flows, tags, custom fields) a spec references into real ids.",
+        "Returns the JSON Schema for the `spec` object accepted by `flows.create`'s, `flows.publish`'s, `flows.updateDraft`'s, and `flows.validate`'s `{ spec }` input — the authoritative reference for every step type's fields. Use `capabilities.get` first to resolve the names (templates, flows, tags, custom fields) a spec references into real ids.",
       tags: ["Capabilities"],
       spec: mcpSpec({ visibility: "default" }),
     })
