@@ -3997,6 +3997,7 @@
       "card": {
         "audioCall": "مكالمة صوتية",
         "recordingUnavailable": "التسجيل غير متوفر بعد الآن",
+        "recordingNotCaptured": "التسجيل غير متاح لهذه المكالمة",
         "recordingProcessing": "المكالمة قيد المعالجة…",
         "moreOptions": "خيارات أخرى",
         "download": "تنزيل",

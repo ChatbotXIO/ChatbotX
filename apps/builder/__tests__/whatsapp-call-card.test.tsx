@@ -173,6 +173,19 @@ describe("WhatsappCallCard", () => {
     expect(el.textContent).toContain("recordingUnavailable")
   })
 
+  test("says the recording is unavailable when none is coming, without waiting out the grace window", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{ ...baseCall, hasRecording: false, recordingUnavailable: true }}
+        callEndedAt={new Date()}
+      />,
+    )
+
+    expect(el.textContent).toContain("recordingNotCaptured")
+    expect(el.textContent).not.toContain("recordingProcessing")
+    expect(el.querySelector('button[aria-label="play"]')).toBeNull()
+  })
+
   test("shows a processing placeholder instead of the player before hasRecording is true", () => {
     const el = renderComponent(
       <WhatsappCallCard

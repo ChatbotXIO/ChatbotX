@@ -35,19 +35,31 @@ import { logger } from "../../../lib/logger"
  * recording off shows no player row instead of one that never resolves.
  */
 export const resolveCallActivityRequestFlags = async (
-  call: Pick<WhatsappCallModel, "inboxId" | "workspaceId">,
+  call: Pick<
+    WhatsappCallModel,
+    "inboxId" | "workspaceId" | "recordingRequested"
+  >,
 ): Promise<{
   recordingRequested: boolean
   transcriptionRequested: boolean
+  recordingUnavailable: boolean
 }> => {
   const integration =
     await integrationWhatsappRepository.findByInboxIdForWorkspace({
       inboxId: call.inboxId,
       workspaceId: call.workspaceId,
     })
+  const recordsCalls = Boolean(integration?.callRecordingEnabled)
+  // The row records what THIS call actually arranged (Meta only records after
+  // its consent announcement, and refuses an invalid one); the toggle only
+  // says what the number does in general, so it is the fallback for rows
+  // written before that column existed.
   return {
-    recordingRequested: Boolean(integration?.callRecordingEnabled),
+    recordingRequested: call.recordingRequested ?? recordsCalls,
     transcriptionRequested: Boolean(integration?.callTranscriptionEnabled),
+    // Only a number that records calls can have a MISSING recording worth
+    // reporting; with the toggle off there was never one to expect.
+    recordingUnavailable: call.recordingRequested === false && recordsCalls,
   }
 }
 
@@ -233,7 +245,7 @@ export const finalizeCallSideEffects = async (
   // on the `connect` webhook / outbound dial). Shown under the "Audio call"
   // header — distinct from the talk-time `durationSeconds` in the player.
   const answerSeconds = resolveAnswerSeconds(input.startedAt, call.createdAt)
-  const { recordingRequested, transcriptionRequested } =
+  const { recordingRequested, transcriptionRequested, recordingUnavailable } =
     await resolveCallActivityRequestFlags(call)
 
   // The finalize message IS the single progressive activity card — it carries
@@ -250,6 +262,7 @@ export const finalizeCallSideEffects = async (
     hasTranscript: false,
     hasSummary: false,
     recordingExpired: false,
+    recordingUnavailable,
   }
 
   const repository = await createMessageRepository()

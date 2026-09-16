@@ -38,6 +38,7 @@ import {
   resolveContactInbox,
   resolveDialIdentity,
 } from "./outbound-dial-target"
+import { recordCallRecordingArrangement } from "./record-call-recording-arrangement"
 
 /** Same SDP size bound the inbound answer path applies (see `answer-voip-call.action.ts`). */
 const MAX_SDP_OFFER_CHARS = 100_000
@@ -145,9 +146,18 @@ async function abandonOutboundDial(input: {
  */
 async function connectCallWithAnnouncementFallback(
   input: WhatsappConnectCallInput,
-): Promise<{ wacid: string }> {
+): Promise<{
+  wacid: string
+  announcementApplied: boolean
+  announcementError?: unknown
+}> {
+  const announcementAttached = hasCallAnnouncementOptions({
+    recording: input.recording,
+    transcription: input.transcription,
+  })
   try {
-    return await connectCall(input)
+    const connected = await connectCall(input)
+    return { ...connected, announcementApplied: announcementAttached }
   } catch (error) {
     const { recording, transcription, ...withoutAnnouncementOptions } = input
     if (
@@ -162,7 +172,15 @@ async function connectCallWithAnnouncementFallback(
       { err: error, attemptId: input.attemptId },
       "WhatsApp outbound connect: retrying without recording/transcription announcement options after a Meta 4xx",
     )
-    return await connectCall(withoutAnnouncementOptions)
+    const connected = await connectCall(withoutAnnouncementOptions)
+    // Meta placed the call WITHOUT recording/transcription: nothing will ever
+    // be recorded for it, so the caller must not advertise one.
+    // Surfaced by the caller: the call is placed but NOT being recorded.
+    return {
+      ...connected,
+      announcementApplied: false,
+      announcementError: error,
+    }
   }
 }
 
@@ -357,6 +375,8 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
       }
 
       let wacid: string
+      let announcementApplied = false
+      let announcementError: unknown
       try {
         const connected = await connectCallWithAnnouncementFallback({
           auth,
@@ -367,6 +387,8 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
           ...(useRecipient ? { recipient: recipient ?? "" } : { to: to ?? "" }),
         })
         wacid = connected.wacid
+        announcementApplied = connected.announcementApplied
+        announcementError = connected.announcementError
       } catch (error) {
         const code =
           error instanceof WhatsappException ? error.code : "callFailed"
@@ -461,6 +483,17 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
       const browserRecordingEnabled =
         integration.callRecordingEnabled &&
         integration.callRecordingMode === "browserWhisper"
+      const recordingRequested =
+        (announcementApplied && announcementOptions.recording !== undefined) ||
+        browserRecordingEnabled
+      await recordCallRecordingArrangement({
+        whatsappCallId: pending.id,
+        workspaceId,
+        recordingRequested,
+        recordingWasRequested: announcementOptions.recording !== undefined,
+        announcementError,
+      })
+
       return {
         outcome: "dialing",
         whatsappCallId: pending.id,
@@ -468,9 +501,7 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
         attemptId,
         deadlineAt: new Date(deadlineAt).toISOString(),
         browserRecordingEnabled,
-        recordingRequested:
-          announcementOptions.recording !== undefined ||
-          browserRecordingEnabled,
+        recordingRequested,
       }
     },
   )

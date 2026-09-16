@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm"
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -94,6 +95,21 @@ export const whatsappCallModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
+    /**
+     * Whether THIS call actually arranged a recording, as opposed to the
+     * number's "Record calls" toggle. Meta only records after it plays its
+     * consent announcement, and it rejects the announcement outright when the
+     * `purpose`/`announcement_language` are invalid — so the toggle alone can
+     * never tell the agent whether audio is coming. `null` on rows written
+     * before this column existed; the card then falls back to the toggle.
+     */
+    recordingRequested: boolean(),
+    /**
+     * Why no recording was arranged, when {@link recordingRequested} is
+     * false — surfaced on the call card and recorded in the workspace's
+     * error log, so aconfiguration mistake is never silently swallowed.
+     */
+    recordingFailureReason: text(),
     /** Object-storage path of the call recording. */
     recordingPath: text(),
     recordedAt: timestamp(timestampConfig),

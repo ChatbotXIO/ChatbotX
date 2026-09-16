@@ -9,6 +9,8 @@ type ActionHandler = (args: {
 }) => Promise<unknown>
 
 const {
+  markRecordingArrangementMock,
+  logProviderErrorMock,
   findByMock,
   findInboxMock,
   findContactMock,
@@ -25,6 +27,8 @@ const {
   endCallMock,
   isCallEndedMock,
 } = vi.hoisted(() => ({
+  markRecordingArrangementMock: vi.fn(),
+  logProviderErrorMock: vi.fn(),
   findByMock: vi.fn(),
   findInboxMock: vi.fn(),
   findContactMock: vi.fn(),
@@ -89,6 +93,10 @@ vi.mock("@/lib/log", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  whatsappCallLifecycleService: {
+    markRecordingArrangement: markRecordingArrangementMock,
+  },
+  logProviderErrorForChannel: logProviderErrorMock,
   conversationService: { findBy: findByMock },
   contactInboxService: { findBy: findInboxMock },
   contactService: { findBy: findContactMock },
@@ -451,6 +459,30 @@ describe("initiateOutboundVoipCallAction", () => {
     })
   })
 
+  test("records that a recording IS coming when Meta accepted the announcement", async () => {
+    findByInboxIdForWorkspaceMock.mockResolvedValue({
+      id: "integration-1",
+      auth: {},
+      displayPhoneNumber: "+44 20 7946 0958",
+      callRecordingEnabled: true,
+      callTranscriptionEnabled: false,
+      callRecordingMode: "metaNative",
+      callTranscriptionMode: "metaNative",
+      callAnnouncementLanguage: null,
+      callRecordingPurpose: null,
+    })
+
+    await call()
+
+    expect(markRecordingArrangementMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recordingRequested: true,
+        recordingFailureReason: null,
+      }),
+    )
+    expect(logProviderErrorMock).not.toHaveBeenCalled()
+  })
+
   test("metaNative recording never enables the browser recorder, but still reports recordingRequested", async () => {
     findByInboxIdForWorkspaceMock.mockResolvedValue({
       id: "integration-1",
@@ -606,8 +638,27 @@ describe("initiateOutboundVoipCallAction", () => {
 
       const result = await call()
 
-      expect(result).toEqual(expect.objectContaining({ outcome: "dialing" }))
+      // Meta dialed without the announcement, so no recording is coming —
+      // the card must not promise one.
+      expect(result).toEqual(
+        expect.objectContaining({
+          outcome: "dialing",
+          recordingRequested: false,
+        }),
+      )
       expect(connectCallMock).toHaveBeenCalledTimes(2)
+      // The call is connected but Meta is NOT recording it: the row must say
+      // so, and the workspace must see the failure in its error log.
+      expect(markRecordingArrangementMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recordingRequested: false,
+          recordingFailureReason: "meta-rejected-recording-announcement",
+        }),
+      )
+      expect(logProviderErrorMock).toHaveBeenCalledWith(
+        "whatsapp",
+        expect.objectContaining({ workspaceId: "workspace-1" }),
+      )
       const secondCallArgs = connectCallMock.mock.calls[1]?.[0] as Record<
         string,
         unknown

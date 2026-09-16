@@ -3997,6 +3997,7 @@
       "card": {
         "audioCall": "Sesli arama",
         "recordingUnavailable": "Kayıt artık kullanılamıyor",
+        "recordingNotCaptured": "Bu arama için kayıt kullanılamıyor",
         "recordingProcessing": "Kayıt işleniyor…",
         "moreOptions": "Diğer seçenekler",
         "download": "İndir",

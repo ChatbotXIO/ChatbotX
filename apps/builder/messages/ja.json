@@ -3976,6 +3976,7 @@
       "card": {
         "audioCall": "音声通話",
         "recordingUnavailable": "録音はもう利用できません",
+        "recordingNotCaptured": "この通話の録音は利用できません",
         "recordingProcessing": "録音を処理中…",
         "moreOptions": "その他のオプション",
         "download": "ダウンロード",

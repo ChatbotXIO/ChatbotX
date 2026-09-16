@@ -3997,6 +3997,7 @@
       "card": {
         "audioCall": "Gọi thoại",
         "recordingUnavailable": "Bản ghi âm không còn khả dụng",
+        "recordingNotCaptured": "Cuộc gọi này không có bản ghi âm",
         "recordingProcessing": "Đang xử lý bản ghi âm…",
         "moreOptions": "Tùy chọn khác",
         "download": "Tải xuống",

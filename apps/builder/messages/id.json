@@ -3997,6 +3997,7 @@
       "card": {
         "audioCall": "Panggilan suara",
         "recordingUnavailable": "Rekaman tidak lagi tersedia",
+        "recordingNotCaptured": "Rekaman tidak tersedia untuk panggilan ini",
         "recordingProcessing": "Rekaman sedang diproses…",
         "moreOptions": "Opsi lainnya",
         "download": "Unduh",

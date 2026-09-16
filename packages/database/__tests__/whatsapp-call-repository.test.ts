@@ -574,6 +574,49 @@ describe("whatsappCallRepository.createPendingOutbound", () => {
   })
 })
 
+describe("whatsappCallRepository.markRecordingArrangement", () => {
+  const chain = (rows: unknown[]) => {
+    const returning = vi.fn().mockResolvedValue(rows)
+    const where = vi.fn(() => ({ returning }))
+    const set = vi.fn(() => ({ where }))
+    return { tx: { update: vi.fn(() => ({ set })) }, set }
+  }
+
+  test("stores that a recording is coming, clearing any failure reason", async () => {
+    const row = baseRow()
+    const { tx, set } = chain([row])
+
+    await expect(
+      whatsappCallRepository.markRecordingArrangement(
+        { id: "call-1", recordingRequested: true },
+        tx as never,
+      ),
+    ).resolves.toEqual(row)
+    expect(set).toHaveBeenCalledWith({
+      recordingRequested: true,
+      recordingFailureReason: null,
+    })
+  })
+
+  test("stores why no recording is coming", async () => {
+    const { tx, set } = chain([baseRow()])
+
+    await whatsappCallRepository.markRecordingArrangement(
+      {
+        id: "call-1",
+        recordingRequested: false,
+        recordingFailureReason: "meta-rejected-recording-announcement",
+      },
+      tx as never,
+    )
+
+    expect(set).toHaveBeenCalledWith({
+      recordingRequested: false,
+      recordingFailureReason: "meta-rejected-recording-announcement",
+    })
+  })
+})
+
 describe("whatsappCallRepository.recoverStrandedAccepted", () => {
   const chain = (rows: unknown[]) => {
     const returning = vi.fn().mockResolvedValue(rows)

@@ -17,7 +17,6 @@ import {
   acceptCall,
   preAcceptCall,
   terminateCall,
-  type WhatsappCallActionResponse,
   type WhatsappCallAnnouncementOptions,
   type WhatsappCallSdpAnswerInput,
 } from "@chatbotx.io/integration-whatsapp/api/calling"
@@ -32,6 +31,7 @@ import {
   hasCallAnnouncementOptions,
   isCallAnnouncementValidationError,
 } from "./call-announcement-options"
+import { recordCallRecordingArrangement } from "./record-call-recording-arrangement"
 
 /** Mirrors `MAX_SDP_OFFER_CHARS` in `integrations/whatsapp/src/lib/calls.ts` — bounds the answer SDP the browser posts back. */
 const MAX_SDP_ANSWER_CHARS = 100_000
@@ -163,9 +163,14 @@ async function resolveCallAndAuth(input: {
  */
 async function acceptCallWithAnnouncementFallback(
   input: WhatsappCallSdpAnswerInput & WhatsappCallAnnouncementOptions,
-): Promise<WhatsappCallActionResponse> {
+): Promise<{ announcementApplied: boolean; announcementError?: unknown }> {
+  const announcementAttached = hasCallAnnouncementOptions({
+    recording: input.recording,
+    transcription: input.transcription,
+  })
   try {
-    return await acceptCall(input)
+    await acceptCall(input)
+    return { announcementApplied: announcementAttached }
   } catch (error) {
     const { recording, transcription, ...withoutAnnouncementOptions } = input
     if (
@@ -180,7 +185,11 @@ async function acceptCallWithAnnouncementFallback(
       { err: error, whatsappCallId: input.callId },
       "WhatsApp VoIP accept: retrying without recording/transcription announcement options after a Meta 4xx",
     )
-    return await acceptCall(withoutAnnouncementOptions)
+    await acceptCall(withoutAnnouncementOptions)
+    // Surfaced by the caller: the call is connected but NOT being recorded.
+    // Meta accepted the call WITHOUT recording/transcription: nothing will
+    // ever be recorded for it, so the caller must not advertise one.
+    return { announcementApplied: false, announcementError: error }
   }
 }
 
@@ -249,6 +258,8 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
         return { outcome: "cannotAnswer" }
       }
 
+      let announcementApplied = false
+      let announcementError: unknown
       try {
         await preAcceptCall({ auth, callId: wacid, sdpAnswer })
         if (isAnswerDeadlineExpired(control.deadlineAt)) {
@@ -257,12 +268,13 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
           await releaseExpiredClaim()
           return { outcome: "cannotAnswer" }
         }
-        await acceptCallWithAnnouncementFallback({
-          auth,
-          callId: wacid,
-          sdpAnswer,
-          ...announcementOptions,
-        })
+        ;({ announcementApplied, announcementError } =
+          await acceptCallWithAnnouncementFallback({
+            auth,
+            callId: wacid,
+            sdpAnswer,
+            ...announcementOptions,
+          }))
       } catch (error) {
         if (isAnswerDeadlineExpired(control.deadlineAt)) {
           // Map a Graph accept failure that raced past the deadline to the
@@ -351,12 +363,21 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
         )
       })
 
+      const recordingRequested =
+        (announcementApplied && announcementOptions.recording !== undefined) ||
+        browserRecordingEnabled
+      await recordCallRecordingArrangement({
+        whatsappCallId,
+        workspaceId,
+        recordingRequested,
+        recordingWasRequested: announcementOptions.recording !== undefined,
+        announcementError,
+      })
+
       return {
         outcome: "accepted",
         browserRecordingEnabled,
-        recordingRequested:
-          announcementOptions.recording !== undefined ||
-          browserRecordingEnabled,
+        recordingRequested,
       }
     },
   )

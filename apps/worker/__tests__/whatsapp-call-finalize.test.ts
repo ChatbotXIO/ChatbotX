@@ -172,6 +172,56 @@ describe("finalizeCallSideEffects", () => {
     })
   })
 
+  test("reports a call the number records but Meta refused to record as unavailable, not pending", async () => {
+    mocks.findByInboxIdForWorkspace.mockResolvedValue({
+      callRecordingEnabled: true,
+      callTranscriptionEnabled: false,
+    })
+
+    await finalizeCallSideEffects({
+      call: { ...call, recordingRequested: false },
+      entity: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "completed",
+      },
+    })
+
+    expect(mocks.createOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          recordingRequested: false,
+          recordingUnavailable: true,
+        }),
+      }),
+    )
+  })
+
+  test("falls back to the number's setting for a call row written before the column existed", async () => {
+    mocks.findByInboxIdForWorkspace.mockResolvedValue({
+      callRecordingEnabled: true,
+      callTranscriptionEnabled: false,
+    })
+
+    await finalizeCallSideEffects({
+      call: { ...call, recordingRequested: null },
+      entity: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "completed",
+      },
+    })
+
+    expect(mocks.createOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          recordingRequested: true,
+          recordingUnavailable: false,
+        }),
+      }),
+    )
+  })
+
   test("writes the activity message keyed on wacall-<id>, finalizes by id, and fires the full side-effect chain on a fresh insert", async () => {
     await finalizeCallSideEffects({
       call,

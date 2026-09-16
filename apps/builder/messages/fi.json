@@ -3997,6 +3997,7 @@
       "card": {
         "audioCall": "Äänipuhelu",
         "recordingUnavailable": "Tallenne ei ole enää käytettävissä",
+        "recordingNotCaptured": "Tallennetta ei ole saatavilla tälle puhelulle",
         "recordingProcessing": "Käsitellään tallennetta…",
         "moreOptions": "Lisää vaihtoehtoja",
         "download": "Lataa",

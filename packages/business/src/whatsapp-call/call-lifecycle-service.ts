@@ -5,6 +5,7 @@ type RepositoryInput<
     | "attachRecording"
     | "attachTranscript"
     | "createIfAbsent"
+    | "markRecordingArrangement"
     | "updateInterimStatus",
 > = Parameters<(typeof whatsappCallRepository)[TMethod]>[0]
 
@@ -30,6 +31,15 @@ class WhatsappCallLifecycleService {
    */
   advanceInterimStatus(input: RepositoryInput<"updateInterimStatus">) {
     return whatsappCallRepository.updateInterimStatus(input)
+  }
+
+  /**
+   * Records whether this call actually arranged a recording, and why not when
+   * it did not. Written once by the accept/connect path, read by the finalize
+   * that builds the call card.
+   */
+  markRecordingArrangement(input: RepositoryInput<"markRecordingArrangement">) {
+    return whatsappCallRepository.markRecordingArrangement(input)
   }
 
   /** Stamps the stored recording once; `undefined` means another delivery already did. */

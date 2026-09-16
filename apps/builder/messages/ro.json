@@ -3997,6 +3997,7 @@
       "card": {
         "audioCall": "Apel audio",
         "recordingUnavailable": "Înregistrarea nu mai este disponibilă",
+        "recordingNotCaptured": "Înregistrarea nu este disponibilă pentru acest apel",
         "recordingProcessing": "Se procesează înregistrarea…",
         "moreOptions": "Mai multe opțiuni",
         "download": "Descarcă",

@@ -3997,6 +3997,7 @@
       "card": {
         "audioCall": "Chamada de voz",
         "recordingUnavailable": "Gravação já não está disponível",
+        "recordingNotCaptured": "Gravação indisponível para esta chamada",
         "recordingProcessing": "A processar a gravação…",
         "moreOptions": "Mais opções",
         "download": "Transferir",

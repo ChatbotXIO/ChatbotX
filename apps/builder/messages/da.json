@@ -3997,6 +3997,7 @@
       "card": {
         "audioCall": "Lydopkald",
         "recordingUnavailable": "Optagelsen er ikke længere tilgængelig",
+        "recordingNotCaptured": "Optagelse ikke tilgængelig for dette opkald",
         "recordingProcessing": "Optagelse behandles…",
         "moreOptions": "Flere valgmuligheder",
         "download": "Download",

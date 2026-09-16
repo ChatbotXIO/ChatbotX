@@ -2084,6 +2084,7 @@
       "card": {
         "audioCall": "שיחה קולית",
         "recordingUnavailable": "ההקלטה אינה זמינה יותר",
+        "recordingNotCaptured": "ההקלטה אינה זמינה לשיחה זו",
         "recordingProcessing": "ההקלטה בעיבוד…",
         "moreOptions": "אפשרויות נוספות",
         "download": "הורדה",

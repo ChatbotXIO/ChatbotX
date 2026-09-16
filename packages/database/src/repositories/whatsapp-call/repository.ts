@@ -557,6 +557,32 @@ class WhatsappCallRepository {
   }
 
   /**
+   * Records what this call actually arranged for recording, decided at
+   * accept/connect time: `recordingRequested` false with a
+   * `recordingFailureReason` means no audio is coming, so the card can say so
+   * instead of waiting out a "processing…" window. Last writer wins — the
+   * accept/connect path is the only writer, and it writes once per call.
+   */
+  async markRecordingArrangement(
+    props: {
+      id: string
+      recordingRequested: boolean
+      recordingFailureReason?: string | null
+    },
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallRow | undefined> {
+    return await tx
+      .update(whatsappCallModel)
+      .set({
+        recordingRequested: props.recordingRequested,
+        recordingFailureReason: props.recordingFailureReason ?? null,
+      })
+      .where(eq(whatsappCallModel.id, props.id))
+      .returning()
+      .then((rows) => rows[0])
+  }
+
+  /**
    * Finalizes the recording exactly once when the upload lands — the CAS on
    * `recordedAt IS NULL` makes a redelivered upload a no-op (`undefined`
    * return). `recordingPath` is overwritten with the actual S3 key, which

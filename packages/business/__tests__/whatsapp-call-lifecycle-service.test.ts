@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   createIfAbsent: vi.fn(),
   updateInterimStatus: vi.fn(),
   attachRecording: vi.fn(),
+  markRecordingArrangement: vi.fn(),
   attachTranscript: vi.fn(),
 }))
 
@@ -84,5 +85,19 @@ describe("whatsappCallLifecycleService", () => {
       whatsappCallLifecycleService.attachTranscript(input),
     ).resolves.toEqual({ id: "call-1" })
     expect(mocks.attachTranscript).toHaveBeenCalledWith(input)
+  })
+
+  test("markRecordingArrangement forwards the call's recording outcome", async () => {
+    mocks.markRecordingArrangement.mockResolvedValue({ id: "call-1" })
+    const input = {
+      id: "call-1",
+      recordingRequested: false,
+      recordingFailureReason: "meta-rejected-recording-announcement",
+    }
+
+    await expect(
+      whatsappCallLifecycleService.markRecordingArrangement(input),
+    ).resolves.toEqual({ id: "call-1" })
+    expect(mocks.markRecordingArrangement).toHaveBeenCalledWith(input)
   })
 })

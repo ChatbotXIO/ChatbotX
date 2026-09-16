@@ -261,6 +261,15 @@ export const WhatsappCallCard = ({
               </p>
             )
           }
+          if (!hasRecording && call.recordingUnavailable) {
+            // Nothing is coming for this call — say so immediately rather
+            // than showing "processing…" until the grace window lapses.
+            return (
+              <p className="text-muted-foreground text-xs">
+                {t("recordingNotCaptured")}
+              </p>
+            )
+          }
           if (!hasRecording) {
             // Only a call that actually requested a recording will ever get
             // one. When recording was off for this call there is nothing to

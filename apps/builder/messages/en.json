@@ -4185,6 +4185,7 @@
       "card": {
         "audioCall": "Audio call",
         "recordingUnavailable": "Recording no longer available",
+        "recordingNotCaptured": "Recording unavailable for this call",
         "recordingProcessing": "Recording processing…",
         "moreOptions": "More options",
         "download": "Download",

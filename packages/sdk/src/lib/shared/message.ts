@@ -210,6 +210,13 @@ export type MessageWhatsappCallEntity = {
   hasSummary?: boolean
   /** `true` once the recording has been purged past its retention window. */
   recordingExpired?: boolean
+  /**
+   * `true` when this call will never have a recording even though the number
+   * records calls — Meta refused the recording announcement, or the capture
+   * never started. Distinct from `recordingExpired` (a recording existed and
+   * aged out) and from the still-processing state.
+   */
+  recordingUnavailable?: boolean
 }
 
 /**

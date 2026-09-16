@@ -5434,6 +5434,7 @@
       "card": {
         "audioCall": "语音通话",
         "recordingUnavailable": "录音已不可用",
+        "recordingNotCaptured": "此通话没有可用的录音",
         "recordingProcessing": "正在处理录音…",
         "moreOptions": "更多选项",
         "download": "下载",

@@ -4030,6 +4030,7 @@
       "card": {
         "audioCall": "語音通話",
         "recordingUnavailable": "錄音已不再可用",
+        "recordingNotCaptured": "此通話沒有可用的錄音",
         "recordingProcessing": "正在處理錄音…",
         "moreOptions": "更多選項",
         "download": "下載",
