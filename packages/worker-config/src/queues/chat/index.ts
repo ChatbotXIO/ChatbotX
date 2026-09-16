@@ -30,10 +30,10 @@ import type {
 import type { CommentAnchor, MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
 import {
-  defaultJobOptions,
   fakeQueue,
   getQueueConnection,
   isNoRedisEnv,
+  resilientJobOptions,
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
@@ -274,5 +274,5 @@ export const chatQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<ChatJobData>(queueNames.enum.chat, {
       connection: getQueueConnection(queueNames.enum.chat),
-      defaultJobOptions,
+      defaultJobOptions: resilientJobOptions,
     })
