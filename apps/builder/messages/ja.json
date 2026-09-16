@@ -4058,10 +4058,10 @@
         "callAnyway": "このまま発信する"
       },
       "replaceConfirm": {
-        "title": "新しい着信に応答しますか？",
-        "description": "{current}との通話を終了して{incoming}に応答しますか？",
+        "title": "{current} との通話を終了しますか?",
+        "description": "現在 {current} と通話中です。{incoming} に応答すると、この通話はすぐに終了します。",
         "confirm": "終了して応答",
-        "cancel": "キャンセル"
+        "cancel": "通話を続ける"
       },
       "answerCaller": "{name} からの着信に応答",
       "rejectCaller": "{name} からの着信を拒否"

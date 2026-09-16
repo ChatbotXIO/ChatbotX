@@ -4112,10 +4112,10 @@
         "callAnyway": "仍然撥打"
       },
       "replaceConfirm": {
-        "title": "接聽新來電？",
-        "description": "結束與 {current} 的通話以接聽 {incoming} 嗎？",
+        "title": "結束與 {current} 的通話？",
+        "description": "您正在與 {current} 通話。接聽 {incoming} 會立即結束目前的通話。",
         "confirm": "結束並接聽",
-        "cancel": "取消"
+        "cancel": "繼續通話"
       },
       "answerCaller": "接聽來自 {name} 的來電",
       "rejectCaller": "拒接來自 {name} 的來電"

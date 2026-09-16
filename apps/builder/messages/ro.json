@@ -4079,10 +4079,10 @@
         "callAnyway": "Apelează oricum"
       },
       "replaceConfirm": {
-        "title": "Răspunzi la apelul nou?",
-        "description": "Închei apelul cu {current} pentru a răspunde la {incoming}?",
+        "title": "Închizi apelul cu {current}?",
+        "description": "Ești într-un apel cu {current}. Dacă răspunzi la {incoming}, acel apel se va încheia imediat.",
         "confirm": "Închide și răspunde",
-        "cancel": "Anulează"
+        "cancel": "Rămâi în apel"
       },
       "answerCaller": "Răspunde la apelul de la {name}",
       "rejectCaller": "Respinge apelul de la {name}"

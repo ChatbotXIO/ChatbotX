@@ -4079,10 +4079,10 @@
         "callAnyway": "Tetap panggil"
       },
       "replaceConfirm": {
-        "title": "Jawab panggilan baru?",
-        "description": "Akhiri panggilan dengan {current} untuk menjawab {incoming}?",
-        "confirm": "Akhiri & Jawab",
-        "cancel": "Batal"
+        "title": "Akhiri panggilan dengan {current}?",
+        "description": "Anda sedang menelepon {current}. Menjawab {incoming} akan langsung mengakhiri panggilan itu.",
+        "confirm": "Akhiri & jawab",
+        "cancel": "Tetap di panggilan"
       },
       "answerCaller": "Jawab panggilan dari {name}",
       "rejectCaller": "Tolak panggilan dari {name}"

@@ -4079,10 +4079,10 @@
         "callAnyway": "Yine de ara"
       },
       "replaceConfirm": {
-        "title": "Yeni arama yanıtlansın mı?",
-        "description": "{incoming} aramasını yanıtlamak için {current} ile olan aramayı sonlandırmak istiyor musunuz?",
-        "confirm": "Sonlandır ve Yanıtla",
-        "cancel": "İptal"
+        "title": "{current} ile görüşme sonlandırılsın mı?",
+        "description": "Şu anda {current} ile görüşüyorsunuz. {incoming} aramasını yanıtlarsanız bu görüşme hemen sona erer.",
+        "confirm": "Sonlandır ve yanıtla",
+        "cancel": "Görüşmede kal"
       },
       "answerCaller": "{name} kişisinden gelen aramayı yanıtla",
       "rejectCaller": "{name} kişisinden gelen aramayı reddet"

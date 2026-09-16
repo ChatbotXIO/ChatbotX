@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useCountdownSeconds } from "./use-countdown-seconds"
 import { useVoipRingback } from "./use-voip-ringback"
-import { useVoipRingtone } from "./use-voip-ringtone"
+import { useVoipRingtone, voipRingtoneModes } from "./use-voip-ringtone"
 import { VoipBackdrop } from "./voip-backdrop"
 import {
   isCallSlotFree,
@@ -155,10 +155,23 @@ export function WhatsappCallPanel() {
   // its ringback wins over any simultaneous incoming ring, rather than
   // playing two overlapping 440/480Hz tones through two separate
   // `AudioContext`s. See `use-voip-ringback.ts`'s doc comment.
+  //
+  // The agent who is already mid-conversation gets a short call-waiting beep
+  // instead of the full ring: ring-all rings them too, and a repeating phone
+  // ring in their ear for the offer's whole ~30-55s deadline would make the
+  // call they are ON impossible to hold. An agent whose slot is free — or
+  // who is looking at their own incoming card — still gets the full ring.
+  const isMidConversation = !(
+    slotFree || call?.phase === WhatsappVoipCallPhase.incomingRinging
+  )
   useVoipRingtone(
     !isOutboundDialPhase &&
       (ringingCalls.length > 0 ||
         call?.phase === WhatsappVoipCallPhase.incomingRinging),
+    isMidConversation ? voipRingtoneModes.callWaiting : voipRingtoneModes.ring,
+    // Re-arms the finite call-waiting beep for each NEW offer; without it a
+    // second arrival would be silent, since `active` never changed.
+    ringingCalls.length,
   )
   useVoipRingback(isOutboundDialPhase)
 

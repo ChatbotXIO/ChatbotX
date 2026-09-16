@@ -4079,10 +4079,10 @@
         "callAnyway": "Appeler quand même"
       },
       "replaceConfirm": {
-        "title": "Répondre au nouvel appel ?",
-        "description": "Terminer l'appel avec {current} pour répondre à {incoming} ?",
+        "title": "Mettre fin à l'appel avec {current} ?",
+        "description": "Vous êtes en communication avec {current}. Répondre à {incoming} mettra immédiatement fin à cet appel.",
         "confirm": "Terminer et répondre",
-        "cancel": "Annuler"
+        "cancel": "Rester en ligne"
       },
       "answerCaller": "Répondre à l'appel de {name}",
       "rejectCaller": "Refuser l'appel de {name}"

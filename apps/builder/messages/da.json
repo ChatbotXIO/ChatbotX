@@ -4079,10 +4079,10 @@
         "callAnyway": "Ring alligevel"
       },
       "replaceConfirm": {
-        "title": "Besvare nyt opkald?",
-        "description": "Afslut opkaldet med {current} for at besvare {incoming}?",
+        "title": "Afslut opkaldet med {current}?",
+        "description": "Du er i et opkald med {current}. Hvis du besvarer {incoming}, afsluttes det opkald med det samme.",
         "confirm": "Afslut og besvar",
-        "cancel": "Annuller"
+        "cancel": "Bliv i opkaldet"
       },
       "answerCaller": "Besvar opkald fra {name}",
       "rejectCaller": "Afvis opkald fra {name}"

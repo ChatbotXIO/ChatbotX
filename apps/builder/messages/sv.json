@@ -5516,10 +5516,10 @@
         "callAnyway": "Ring ändå"
       },
       "replaceConfirm": {
-        "title": "Svara på nytt samtal?",
-        "description": "Avsluta samtalet med {current} för att svara {incoming}?",
+        "title": "Avsluta samtalet med {current}?",
+        "description": "Du är i ett samtal med {current}. Om du svarar {incoming} avslutas det samtalet direkt.",
         "confirm": "Avsluta och svara",
-        "cancel": "Avbryt"
+        "cancel": "Stanna kvar i samtalet"
       },
       "answerCaller": "Svara på samtal från {name}",
       "rejectCaller": "Avvisa samtal från {name}"

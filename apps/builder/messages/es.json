@@ -4079,10 +4079,10 @@
         "callAnyway": "Llamar de todos modos"
       },
       "replaceConfirm": {
-        "title": "¿Responder nueva llamada?",
-        "description": "¿Finalizar la llamada con {current} para responder a {incoming}?",
+        "title": "¿Finalizar la llamada con {current}?",
+        "description": "Estás en una llamada con {current}. Si respondes a {incoming}, esa llamada finalizará de inmediato.",
         "confirm": "Finalizar y responder",
-        "cancel": "Cancelar"
+        "cancel": "Seguir en la llamada"
       },
       "answerCaller": "Responder la llamada de {name}",
       "rejectCaller": "Rechazar la llamada de {name}"

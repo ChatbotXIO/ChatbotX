@@ -4079,10 +4079,10 @@
         "callAnyway": "Soita silti"
       },
       "replaceConfirm": {
-        "title": "Vastaa uuteen puheluun?",
-        "description": "Lopeta puhelu henkilön {current} kanssa vastataksesi henkilölle {incoming}?",
+        "title": "Lopetetaanko puhelu henkilön {current} kanssa?",
+        "description": "Olet puhelussa henkilön {current} kanssa. Jos vastaat henkilölle {incoming}, tämä puhelu päättyy heti.",
         "confirm": "Lopeta ja vastaa",
-        "cancel": "Peruuta"
+        "cancel": "Jatka puhelua"
       },
       "answerCaller": "Vastaa puheluun henkilöltä {name}",
       "rejectCaller": "Hylkää puhelu henkilöltä {name}"

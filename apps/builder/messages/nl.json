@@ -4079,10 +4079,10 @@
         "callAnyway": "Toch bellen"
       },
       "replaceConfirm": {
-        "title": "Nieuwe oproep beantwoorden?",
-        "description": "Gesprek met {current} beëindigen om {incoming} te beantwoorden?",
-        "confirm": "Beëindigen en beantwoorden",
-        "cancel": "Annuleren"
+        "title": "Gesprek met {current} beëindigen?",
+        "description": "Je bent in gesprek met {current}. Als je {incoming} beantwoordt, wordt dat gesprek direct beëindigd.",
+        "confirm": "Beëindigen en opnemen",
+        "cancel": "In gesprek blijven"
       },
       "answerCaller": "Oproep van {name} beantwoorden",
       "rejectCaller": "Oproep van {name} weigeren"

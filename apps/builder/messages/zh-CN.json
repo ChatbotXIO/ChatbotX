@@ -5516,10 +5516,10 @@
         "callAnyway": "仍然拨打"
       },
       "replaceConfirm": {
-        "title": "接听新来电？",
-        "description": "结束与 {current} 的通话以接听 {incoming} 吗？",
+        "title": "结束与 {current} 的通话？",
+        "description": "您正在与 {current} 通话。接听 {incoming} 会立即结束当前通话。",
         "confirm": "结束并接听",
-        "cancel": "取消"
+        "cancel": "继续通话"
       },
       "answerCaller": "接听来自 {name} 的来电",
       "rejectCaller": "拒接来自 {name} 的来电"

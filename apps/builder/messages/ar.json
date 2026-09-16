@@ -4079,10 +4079,10 @@
         "callAnyway": "الاتصال على أي حال"
       },
       "replaceConfirm": {
-        "title": "الرد على مكالمة جديدة؟",
-        "description": "إنهاء المكالمة مع {current} للرد على {incoming}؟",
+        "title": "إنهاء المكالمة مع {current}؟",
+        "description": "أنت في مكالمة مع {current}. الرد على {incoming} سينهي تلك المكالمة فورًا.",
         "confirm": "إنهاء والرد",
-        "cancel": "إلغاء"
+        "cancel": "متابعة المكالمة"
       },
       "answerCaller": "الرد على مكالمة من {name}",
       "rejectCaller": "رفض مكالمة من {name}"

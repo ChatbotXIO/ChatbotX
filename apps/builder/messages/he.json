@@ -2166,10 +2166,10 @@
         "callAnyway": "התקשר בכל זאת"
       },
       "replaceConfirm": {
-        "title": "לענות לשיחה חדשה?",
-        "description": "לסיים את השיחה עם {current} כדי לענות ל-{incoming}?",
+        "title": "לסיים את השיחה עם {current}?",
+        "description": "אתה בשיחה עם {current}. מענה ל{incoming} יסיים את השיחה הזו מיד.",
         "confirm": "סיים וענה",
-        "cancel": "ביטול"
+        "cancel": "להישאר בשיחה"
       },
       "answerCaller": "ענה לשיחה מ{name}",
       "rejectCaller": "דחה שיחה מ{name}"

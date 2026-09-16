@@ -4079,10 +4079,10 @@
         "callAnyway": "Trotzdem anrufen"
       },
       "replaceConfirm": {
-        "title": "Neuen Anruf annehmen?",
-        "description": "Anruf mit {current} beenden, um {incoming} anzunehmen?",
-        "confirm": "Beenden & Annehmen",
-        "cancel": "Abbrechen"
+        "title": "Anruf mit {current} beenden?",
+        "description": "Sie telefonieren gerade mit {current}. Wenn Sie {incoming} annehmen, wird dieser Anruf sofort beendet.",
+        "confirm": "Beenden und annehmen",
+        "cancel": "Im Gespräch bleiben"
       },
       "answerCaller": "Anruf von {name} annehmen",
       "rejectCaller": "Anruf von {name} ablehnen"

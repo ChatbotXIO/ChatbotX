@@ -229,7 +229,10 @@ export function WhatsappVoipCallProvider({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t("whatsapp.calls.replaceConfirm.title")}
+              {replacementTarget &&
+                t("whatsapp.calls.replaceConfirm.title", {
+                  current: replacementTarget.currentContactName,
+                })}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {replacementTarget &&
@@ -243,7 +246,10 @@ export function WhatsappVoipCallProvider({
             <AlertDialogCancel>
               {t("whatsapp.calls.replaceConfirm.cancel")}
             </AlertDialogCancel>
-            <AlertDialogAction onClick={confirmReplacement}>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={confirmReplacement}
+            >
               {t("whatsapp.calls.replaceConfirm.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>

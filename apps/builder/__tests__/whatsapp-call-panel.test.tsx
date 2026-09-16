@@ -31,7 +31,9 @@ const voipRingtoneMock = vi.fn()
 vi.mock(
   "@/features/integration-whatsapp/calling/voip/use-voip-ringtone",
   () => ({
-    useVoipRingtone: (active: boolean) => voipRingtoneMock(active),
+    useVoipRingtone: (active: boolean, mode?: string) =>
+      voipRingtoneMock(active, mode),
+    voipRingtoneModes: { ring: "ring", callWaiting: "callWaiting" },
   }),
 )
 
@@ -549,21 +551,21 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
     useWhatsappVoipCallStore.setState({ ringingCalls: [ringA] })
     await render()
 
-    expect(voipRingtoneMock).toHaveBeenLastCalledWith(true)
+    expect(voipRingtoneMock).toHaveBeenLastCalledWith(true, expect.anything())
   })
 
   test("ringtone gating: rings for exactly one tone with 2+ basket entries too (never doubled per entry)", async () => {
     useWhatsappVoipCallStore.setState({ ringingCalls: [ringA, ringB] })
     await render()
 
-    expect(voipRingtoneMock).toHaveBeenLastCalledWith(true)
+    expect(voipRingtoneMock).toHaveBeenLastCalledWith(true, expect.anything())
   })
 
   test("ringtone gating: stays silent when the basket is empty and nothing is incomingRinging", async () => {
     useWhatsappVoipCallStore.setState({ call: activeCall, ringingCalls: [] })
     await render()
 
-    expect(voipRingtoneMock).toHaveBeenLastCalledWith(false)
+    expect(voipRingtoneMock).toHaveBeenLastCalledWith(false, expect.anything())
   })
 
   // An outbound dial no longer refuses to start while an offer sits in the
@@ -583,7 +585,28 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
     await render()
 
     expect(voipRingbackMock).toHaveBeenLastCalledWith(true)
-    expect(voipRingtoneMock).toHaveBeenLastCalledWith(false)
+    expect(voipRingtoneMock).toHaveBeenLastCalledWith(false, expect.anything())
+  })
+
+  // Ring-all rings the agent who is already mid-conversation too. A full
+  // repeating phone ring in their ear for the offer's whole deadline would
+  // make the call they are ON impossible to hold, so they get the short
+  // call-waiting beep instead — what every real phone system does.
+  test("an agent mid-conversation hears the call-waiting beep, not the full ring", async () => {
+    useWhatsappVoipCallStore.setState({
+      call: activeCall,
+      ringingCalls: [ringA],
+    })
+    await render()
+
+    expect(voipRingtoneMock).toHaveBeenLastCalledWith(true, "callWaiting")
+  })
+
+  test("an agent with a free slot still hears the full ring", async () => {
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringA] })
+    await render()
+
+    expect(voipRingtoneMock).toHaveBeenLastCalledWith(true, "ring")
   })
 
   // Minimizing is a display preference for the call the agent is ON; it must

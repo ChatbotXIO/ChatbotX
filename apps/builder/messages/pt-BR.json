@@ -4058,10 +4058,10 @@
         "callAnyway": "Ligar mesmo assim"
       },
       "replaceConfirm": {
-        "title": "Atender nova chamada?",
-        "description": "Encerrar a chamada com {current} para atender {incoming}?",
+        "title": "Encerrar a chamada com {current}?",
+        "description": "Você está em uma chamada com {current}. Atender {incoming} encerrará essa chamada imediatamente.",
         "confirm": "Encerrar e atender",
-        "cancel": "Cancelar"
+        "cancel": "Continuar na chamada"
       },
       "answerCaller": "Atender a chamada de {name}",
       "rejectCaller": "Recusar a chamada de {name}"

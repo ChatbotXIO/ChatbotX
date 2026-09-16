@@ -4267,10 +4267,10 @@
         "callAnyway": "Call anyway"
       },
       "replaceConfirm": {
-        "title": "Answer new call?",
-        "description": "End the call with {current} to answer {incoming}?",
-        "confirm": "End & Answer",
-        "cancel": "Cancel"
+        "title": "End the call with {current}?",
+        "description": "You are on a call with {current}. Answering {incoming} will end that call immediately.",
+        "confirm": "End & answer",
+        "cancel": "Stay on the call"
       },
       "answerCaller": "Answer call from {name}",
       "rejectCaller": "Reject call from {name}"

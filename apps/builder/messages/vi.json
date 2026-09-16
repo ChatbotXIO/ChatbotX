@@ -4079,10 +4079,10 @@
         "callAnyway": "Vẫn gọi"
       },
       "replaceConfirm": {
-        "title": "Trả lời cuộc gọi mới?",
-        "description": "Kết thúc cuộc gọi với {current} để trả lời {incoming}?",
-        "confirm": "Kết thúc & Trả lời",
-        "cancel": "Hủy"
+        "title": "Kết thúc cuộc gọi với {current}?",
+        "description": "Bạn đang nói chuyện với {current}. Nghe máy {incoming} sẽ kết thúc cuộc gọi này ngay lập tức.",
+        "confirm": "Kết thúc & nghe máy",
+        "cancel": "Tiếp tục cuộc gọi"
       },
       "answerCaller": "Nghe cuộc gọi từ {name}",
       "rejectCaller": "Từ chối cuộc gọi từ {name}"
