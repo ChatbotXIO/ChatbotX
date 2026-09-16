@@ -21,6 +21,11 @@ export type AdsConversionRuleUpdateValues = Partial<
   Omit<typeof adsConversionRuleModel.$inferInsert, "id" | "workspaceId">
 >
 
+// `update`/`delete` below build their `where` through this helper rather
+// than an inline `eq(...)`, so `scripts/check-workspace-scoping.mjs`'s
+// textual scan can't see the `workspaceId` filter and flags them —
+// allowlisted in check-workspace-scoping.allowlist.json as verified false
+// positives. Both methods DO filter by workspaceId, here.
 const workspaceRuleFilter = (input: { id: string; workspaceId: string }) =>
   and(
     eq(adsConversionRuleModel.id, input.id),

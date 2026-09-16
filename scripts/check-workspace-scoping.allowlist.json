@@ -1,0 +1,4 @@
+[
+  "packages/database/src/repositories/ads-conversion-rule/repository.ts delete",
+  "packages/database/src/repositories/ads-conversion-rule/repository.ts update"
+]
