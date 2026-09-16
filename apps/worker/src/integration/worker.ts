@@ -29,6 +29,7 @@ import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
+import { hasExhaustedAttempts } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
@@ -596,9 +597,27 @@ async function startIntegrationWorker() {
   )
 
   whatsappVoipSignalingWorker.on("failed", (job, err) => {
-    if (job) {
-      logger.error({ err }, `Whatsapp VoIP signaling job ${job.id} has failed`)
+    if (!job) {
+      return
     }
+    // Retries here are routine, not incidents: `handleConnect` throws
+    // `VoipCallRowNotReadyError` until the SEPARATE `whatsappCallEvent` job
+    // creates the call row, and this queue's retry window
+    // (`WHATSAPP_VOIP_SIGNAL_RETRY_OPTIONS`) exists precisely to outlast that
+    // lag. Logging every attempt at ERROR made a perfectly healthy race read
+    // as a dropped call. Only an exhausted job actually lost the offer.
+    const attempts = job.opts.attempts ?? 1
+    if (!hasExhaustedAttempts(job)) {
+      logger.warn(
+        { err, attempt: job.attemptsMade, attempts },
+        `Whatsapp VoIP signaling job ${job.id} attempt failed; retrying`,
+      )
+      return
+    }
+    logger.error(
+      { err, attempts },
+      `Whatsapp VoIP signaling job ${job.id} has failed`,
+    )
   })
 
   let isShuttingDown = false
