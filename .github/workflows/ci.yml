@@ -131,3 +131,32 @@ jobs:
       # contend with builder's own workers on a 4-vCPU runner.
       - name: Test
         run: pnpm turbo run test --concurrency=2
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6.1.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Turbo cache
+        uses: rharkor/caching-for-turbo@v2.5.1
+
+      # Keep this starter scope narrow enough for predictable CI wall time.
+      # The shared Vitest preset enforces its 80% thresholds because this job
+      # deliberately does not set VITEST_SKIP_COVERAGE_THRESHOLDS.
+      - name: Verify coverage thresholds
+        run: pnpm --filter @chatbotx.io/business --filter worker test -- --coverage
