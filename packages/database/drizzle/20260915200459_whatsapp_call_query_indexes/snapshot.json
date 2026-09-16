@@ -1301,6 +1301,18 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "FacebookMarketingMessage",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "FacebookMarketingMessagesAuth",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "FBCommentAutomation",
       "entityType": "tables",
       "schema": "public"
@@ -11990,6 +12002,292 @@
       "entityType": "columns",
       "schema": "public",
       "table": "FacebookLeadAdsLead"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "adAccountId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "currency",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "currencyOffset",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "budgetType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "budgetMinorUnits",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "content",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "campaignId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "facebookUserId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessagesAuth"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessagesAuth"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessagesAuth"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessagesAuth"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "auth",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessagesAuth"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tokenExpiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessagesAuth"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'active'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessagesAuth"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "facebookUserId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FacebookMarketingMessagesAuth"
     },
     {
       "type": "bigint",
@@ -31635,6 +31933,69 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
+      "name": "FacebookMarketingMessage_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "campaignId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FacebookMarketingMessage_campaignId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FacebookMarketingMessagesAuth_workspaceId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FacebookMarketingMessagesAuth"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
       "name": "FBCommentAutomation_workspaceId_idx",
       "entityType": "indexes",
       "schema": "public",
@@ -39723,6 +40084,40 @@
       ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "FacebookMarketingMessage_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "FacebookMarketingMessage"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "FacebookMarketingMessagesAuth_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "FacebookMarketingMessagesAuth"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "FBCommentAutomation_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -44131,6 +44526,26 @@
       "name": "FacebookLeadAdsLead_pkey",
       "schema": "public",
       "table": "FacebookLeadAdsLead",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "FacebookMarketingMessage_pkey",
+      "schema": "public",
+      "table": "FacebookMarketingMessage",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "FacebookMarketingMessagesAuth_pkey",
+      "schema": "public",
+      "table": "FacebookMarketingMessagesAuth",
       "entityType": "pks"
     },
     {
