@@ -32,6 +32,7 @@ type TenantBrandingData = {
 
 /** Tag shared by `findByOwner`'s cache entry and every write that must bust it. */
 const ownerCacheTag = (ownerId: string) => `tenant:owner:${ownerId}`
+const tenantCacheTag = (tenantId: string) => `tenants:${tenantId}`
 
 /**
  * Read/write access to the `Tenant` row (identity + lifecycle + branding). A
@@ -42,12 +43,12 @@ const ownerCacheTag = (ownerId: string) => `tenant:owner:${ownerId}`
 export const tenantService = {
   findById(tenantId: string) {
     return withCache(
-      `tenant:${tenantId}`,
+      tenantCacheTag(tenantId),
       () =>
         db.query.tenantModel.findFirst({
           where: { id: tenantId },
         }),
-      { tags: [`tenant:${tenantId}`] },
+      { tags: [tenantCacheTag(tenantId)], ttl: 30 },
     )
   },
 
@@ -188,7 +189,7 @@ export const tenantService = {
       .returning({ id: tenantModel.id })
     if (updated) {
       await invalidateCacheByTags([
-        `tenant:${updated.id}`,
+        tenantCacheTag(updated.id),
         ownerCacheTag(ownerId),
       ])
     }
@@ -202,7 +203,7 @@ export const tenantService = {
       .where(eq(tenantModel.id, tenantId))
       .returning({ id: tenantModel.id })
     if (updated) {
-      await invalidateCacheByTags([`tenant:${updated.id}`])
+      await invalidateCacheByTags([tenantCacheTag(updated.id)])
     }
   },
 
@@ -215,7 +216,7 @@ export const tenantService = {
       .returning({ id: tenantModel.id })
     if (updated) {
       await invalidateCacheByTags([
-        `tenant:${updated.id}`,
+        tenantCacheTag(updated.id),
         ownerCacheTag(ownerId),
       ])
     }
