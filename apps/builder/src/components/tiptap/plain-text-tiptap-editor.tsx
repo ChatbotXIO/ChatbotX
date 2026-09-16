@@ -30,6 +30,7 @@ import { htmlToPlainTextWithBlocks } from "./html-to-plain-text"
 import { usePromptVariableOptions } from "./use-prompt-variable-options"
 
 type PlainTextTiptapEditorProps = {
+  botFieldsOnly?: boolean
   initValue?: string
   placeholder?: string
   showEmojiPicker?: boolean
@@ -44,6 +45,7 @@ type PlainTextTiptapEditorProps = {
 }
 
 export const PlainTextTiptapEditor = ({
+  botFieldsOnly = false,
   initValue,
   onChange,
   className,
@@ -59,6 +61,7 @@ export const PlainTextTiptapEditor = ({
   const [isEditorFocused, setIsEditorFocused] = useState(false)
   const [isOpenCustomField, setIsOpenCustomField] = useState(false)
   const promptVariableOptions = usePromptVariableOptions({
+    botFieldsOnly,
     channels,
     includeCouponVariables,
     includeRawCustomFieldVariables,

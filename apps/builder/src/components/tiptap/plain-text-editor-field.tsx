@@ -15,6 +15,7 @@ import { useFormContext } from "react-hook-form"
 import { PlainTextTiptapEditor } from "./plain-text-tiptap-editor"
 
 export type PlainTextEditorFieldProps = {
+  botFieldsOnly?: boolean
   label?: string
   name: string
   required?: boolean
@@ -32,6 +33,7 @@ export type PlainTextEditorFieldProps = {
 }
 
 export const PlainTextEditorField = ({
+  botFieldsOnly = false,
   name,
   description,
   label,
@@ -73,6 +75,7 @@ export const PlainTextEditorField = ({
           ) : null}
           <FormControl>
             <PlainTextTiptapEditor
+              botFieldsOnly={botFieldsOnly}
               channels={channels}
               className={editorClassName}
               includeBotFieldVariables={includeBotFieldVariables}

@@ -4,17 +4,30 @@ import {
   experimental_createMCPClient,
   type experimental_MCPClient,
 } from "@ai-sdk/mcp"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { aiMcpServerAuthTypes } from "@chatbotx.io/database/partials"
-import type { ValidateAIMcpServerRequest } from "../schema/action"
+import { resolveBotFieldVariableText } from "@chatbotx.io/variables"
+import type { ValidatePrivateAIMcpServerRequest } from "../schema/action"
 
 export const validateAIMcpServer = async ({
   parsedInput,
 }: {
-  parsedInput: ValidateAIMcpServerRequest
+  parsedInput: ValidatePrivateAIMcpServerRequest & { workspaceId: string }
 }) => {
   const headers: Record<string, string> = {}
   if (parsedInput.auth.type === aiMcpServerAuthTypes.enum.token) {
-    headers.Authorization = `Bearer ${parsedInput.auth.token}`
+    const resolution = await resolveBotFieldVariableText({
+      text: parsedInput.auth.token,
+      workspaceId: parsedInput.workspaceId,
+    })
+    if (resolution.status !== "resolved") {
+      throw new ChatbotXException(
+        "Unable to validate MCP server.",
+        "invalidMcpTokenTemplate",
+        400,
+      )
+    }
+    headers.Authorization = `Bearer ${resolution.value}`
   } else if (parsedInput.auth.type === aiMcpServerAuthTypes.enum.header) {
     for (const header of parsedInput.auth.headers) {
       headers[header.header] = header.value
