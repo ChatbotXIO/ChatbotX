@@ -217,7 +217,7 @@ const NodeEditorMenu = memo(
     return (
       <>
         {inboxesError && hasInboxDependentMenus && (
-          <ErrorAlert message={inboxesError} />
+          <ErrorAlert message={`${t("states.error")}: ${inboxesError}`} />
         )}
         {nodeMenus.length > 0 && (
           <DropdownMenu>
