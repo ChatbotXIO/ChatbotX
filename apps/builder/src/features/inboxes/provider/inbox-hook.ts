@@ -3,6 +3,13 @@ import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { useEffect, useMemo, useState } from "react"
 import { useInboxStore } from "./inbox-store-context"
 
+export const useInboxesState = () => ({
+  inboxes: useInboxStore((state) => state.inboxes),
+  error: useInboxStore((state) => state.error),
+  loading: useInboxStore((state) => state.loadingInboxes),
+  initialized: useInboxStore((state) => state.initialized),
+})
+
 export const allInboxConfigs = {
   omnichannel: {
     label: "Omnichannel",

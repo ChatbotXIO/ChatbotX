@@ -20,6 +20,21 @@ beforeEach(() => {
 })
 
 describe("getAllInboxes", () => {
+  test("keeps successful empty fetch distinct from a failed fetch", async () => {
+    mocks.listInboxesAuthenticatedAPI.mockResolvedValueOnce({ data: [] })
+
+    const store = createInboxStore({ workspaceId: "workspace-1" })
+
+    await store.getState().initialize()
+
+    expect(store.getState()).toMatchObject({
+      inboxes: [],
+      error: null,
+      loadingInboxes: false,
+      initialized: true,
+    })
+  })
+
   test("fetches inboxes for the workspace with includes and maxPerPage", async () => {
     mocks.listInboxesAuthenticatedAPI.mockResolvedValueOnce({
       data: [{ id: "inbox-1", name: "Support" }],
