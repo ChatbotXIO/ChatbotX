@@ -36,6 +36,9 @@ DROP TABLE IF EXISTS "WorkspaceSipNode" CASCADE;--> statement-breakpoint
 -- NOT drop) — drop the current + any legacy calling columns, re-added below.
 -- The `sip*` columns are dropped and NOT re-added (SIP transport removed).
 ALTER TABLE "IntegrationWhatsapp"
+  DROP COLUMN IF EXISTS "callingEnabled",
+  DROP COLUMN IF EXISTS "inboundCallsEnabled",
+  DROP COLUMN IF EXISTS "callHours",
   DROP COLUMN IF EXISTS "callRecordingEnabled",
   DROP COLUMN IF EXISTS "callRecordingRetentionDays",
   DROP COLUMN IF EXISTS "callTranscriptionEnabled",
@@ -109,6 +112,9 @@ CREATE TABLE "WhatsappCallPermission" (
 	"contactInboxId" bigint NOT NULL
 );
 --> statement-breakpoint
+ALTER TABLE "IntegrationWhatsapp" ADD COLUMN "callingEnabled" boolean;--> statement-breakpoint
+ALTER TABLE "IntegrationWhatsapp" ADD COLUMN "inboundCallsEnabled" boolean DEFAULT true NOT NULL;--> statement-breakpoint
+ALTER TABLE "IntegrationWhatsapp" ADD COLUMN "callHours" jsonb;--> statement-breakpoint
 ALTER TABLE "IntegrationWhatsapp" ADD COLUMN "callRecordingEnabled" boolean DEFAULT false NOT NULL;--> statement-breakpoint
 ALTER TABLE "IntegrationWhatsapp" ADD COLUMN "callRecordingRetentionDays" integer DEFAULT 90 NOT NULL;--> statement-breakpoint
 ALTER TABLE "IntegrationWhatsapp" ADD COLUMN "callTranscriptionEnabled" boolean DEFAULT false NOT NULL;--> statement-breakpoint

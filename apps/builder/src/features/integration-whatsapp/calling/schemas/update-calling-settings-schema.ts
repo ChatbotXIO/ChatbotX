@@ -14,6 +14,11 @@ export const updateWhatsappCallingSettingsSchema = z.object({
   callRecordingRetentionDays: z.number().int().min(1).max(3650).optional(),
   /** Local DB flag (no Meta call): opt-in per-integration transcription (default false). */
   callTranscriptionEnabled: z.boolean().optional(),
+  /**
+   * Local DB flag (no Meta call): mutes only the INBOUND side. Calls still dial
+   * out from the inbox; an incoming `connect` is rejected instead of ringing.
+   */
+  inboundCallsEnabled: z.boolean().optional(),
 })
 
 export type UpdateWhatsappCallingSettingsSchema = z.infer<

@@ -68,3 +68,28 @@ export const whatsappCallTranscriptionModes = z.enum([
 export type WhatsappCallTranscriptionMode = z.infer<
   typeof whatsappCallTranscriptionModes
 >
+
+/**
+ * The subset of Meta's `calling.call_hours` the runtime needs to decide whether
+ * a call arriving now is inside the configured schedule. Declared here rather
+ * than imported from the WhatsApp integration so the database layer keeps no
+ * dependency on a channel package.
+ *
+ * Times are minutes since midnight in `timezoneId`, matching Meta's own
+ * `open_time`/`close_time` encoding. `null` on the column means no schedule at
+ * all, which is not the same as a schedule that is currently closed.
+ */
+export type WhatsappCallHoursSnapshot = {
+  status: "ENABLED" | "DISABLED"
+  timezoneId: string
+  weeklyOperatingHours: {
+    dayOfWeek: string
+    openTime: string
+    closeTime: string
+  }[]
+  holidaySchedule?: {
+    date: string
+    startTime: string
+    endTime: string
+  }[]
+}

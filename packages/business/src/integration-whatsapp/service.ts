@@ -4,7 +4,10 @@ import {
   eq,
   inArray,
 } from "@chatbotx.io/database/client"
-import type { WhatsappRegistrationStatus } from "@chatbotx.io/database/partials"
+import type {
+  WhatsappCallHoursSnapshot,
+  WhatsappRegistrationStatus,
+} from "@chatbotx.io/database/partials"
 import {
   integrationWhatsappRepository,
   LIVE_RUN_STATUSES,
@@ -82,6 +85,14 @@ type CallSettingsValues = Partial<{
   callRecordingEnabled: boolean
   callRecordingRetentionDays: number
   callTranscriptionEnabled: boolean
+  /**
+   * Local mirrors of Meta's calling settings. Callers must write these only
+   * after Meta has accepted the same change, so a number can never report
+   * calling as on while Meta still has it off.
+   */
+  callingEnabled: boolean
+  inboundCallsEnabled: boolean
+  callHours: WhatsappCallHoursSnapshot | null
 }>
 
 type FindWorkspaceIntegrationInput = {

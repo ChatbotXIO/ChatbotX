@@ -3926,6 +3926,7 @@
         "noCallPermission": "The contact has not granted call permission",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta, arama ayarları değişikliğini reddetti",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
         "bicUnavailable": "İşletme tarafından başlatılan aramalar bu ülke için kullanılamıyor",
         "callAlreadyInProgress": "Bu kişiyle zaten devam eden bir arama var",
         "hangupFailed": "Arama sonlandırılamadı",
@@ -4114,7 +4115,9 @@
           "rangeOverlap": "Bu gündeki saatler çakışıyor.",
           "noOpenHours": "En az bir güne saat ekleyin."
         }
-      }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
     }
   },
   "zalo": {

@@ -3926,6 +3926,7 @@
         "noCallPermission": "The contact has not granted call permission",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta hylkäsi puheluasetusten muutoksen",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
         "bicUnavailable": "Yrityksen aloittamat puhelut eivät ole käytettävissä tässä maassa",
         "callAlreadyInProgress": "Puhelu tähän yhteystietoon on jo käynnissä",
         "hangupFailed": "Puhelua ei voitu lopettaa",
@@ -4114,7 +4115,9 @@
           "rangeOverlap": "Tämän päivän ajat menevät päällekkäin.",
           "noOpenHours": "Lisää aikoja vähintään yhdelle päivälle."
         }
-      }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
     }
   },
   "zalo": {

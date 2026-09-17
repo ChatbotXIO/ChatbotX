@@ -107,6 +107,21 @@ describe("WhatsappCallsCard", () => {
       )
     })
 
+  /** Switches are addressed by name — their DOM order is not the contract. */
+  const settingSwitch = (setting: string) =>
+    container.querySelector(`[role="switch"][data-setting="${setting}"]`)
+
+  const checkedState = (setting: string) =>
+    settingSwitch(setting)?.getAttribute("aria-checked")
+
+  const toggle = (setting: string) => {
+    const element = settingSwitch(setting)
+    if (!element) {
+      throw new Error(`No "${setting}" switch is rendered`)
+    }
+    ;(element as HTMLButtonElement).click()
+  }
+
   test("keeps Meta's rejection visible in the card after the toast", async () => {
     await render()
     // Index 0 is the settings-update action — the only `useAction` call in
@@ -144,20 +159,17 @@ describe("WhatsappCallsCard", () => {
       transcriptionEnabled: false,
     })
     const settingsCallbacks = allCallbacks[0]
-    const switches = container.querySelectorAll('[role="switch"]')
-    // enable, icon visibility, callback permission, recording, transcription
-    const transcriptionSwitch = switches[4]
-    expect(transcriptionSwitch.getAttribute("aria-checked")).toBe("false")
+    expect(checkedState("transcription")).toBe("false")
 
     act(() => {
-      ;(transcriptionSwitch as HTMLButtonElement).click()
+      toggle("transcription")
     })
-    expect(transcriptionSwitch.getAttribute("aria-checked")).toBe("true")
+    expect(checkedState("transcription")).toBe("true")
 
     act(() => {
       settingsCallbacks.onError({ error: { serverError: META_ERROR } })
     })
-    expect(transcriptionSwitch.getAttribute("aria-checked")).toBe("false")
+    expect(checkedState("transcription")).toBe("false")
   })
 
   test("hides the transcription switch while the number does not record calls", async () => {
@@ -167,8 +179,8 @@ describe("WhatsappCallsCard", () => {
       transcriptionEnabled: true,
     })
 
-    // enable, icon visibility, callback permission, recording
-    expect(container.querySelectorAll('[role="switch"]')).toHaveLength(4)
+    expect(settingSwitch("transcription")).toBeNull()
+    expect(settingSwitch("recording")).not.toBeNull()
   })
 
   test("turning recording off also turns transcription off, and a failed save restores both", async () => {
@@ -178,20 +190,17 @@ describe("WhatsappCallsCard", () => {
       transcriptionEnabled: true,
     })
     const settingsCallbacks = allCallbacks[0]
-    const recordingSwitch = container.querySelectorAll('[role="switch"]')[3]
 
     act(() => {
-      ;(recordingSwitch as HTMLButtonElement).click()
+      toggle("recording")
     })
-    expect(container.querySelectorAll('[role="switch"]')).toHaveLength(4)
+    expect(settingSwitch("transcription")).toBeNull()
 
     act(() => {
       settingsCallbacks.onError({ error: { serverError: META_ERROR } })
     })
-    const switches = container.querySelectorAll('[role="switch"]')
-    expect(switches).toHaveLength(5)
-    expect(switches[3].getAttribute("aria-checked")).toBe("true")
-    expect(switches[4].getAttribute("aria-checked")).toBe("true")
+    expect(checkedState("recording")).toBe("true")
+    expect(checkedState("transcription")).toBe("true")
   })
 
   test("a failed save never rolls back a switch an earlier save already changed", async () => {
@@ -202,24 +211,47 @@ describe("WhatsappCallsCard", () => {
     const settingsCallbacks = allCallbacks[0]
 
     act(() => {
-      ;(
-        container.querySelectorAll('[role="switch"]')[3] as HTMLButtonElement
-      ).click()
+      toggle("recording")
     })
     act(() => {
       settingsCallbacks.onSuccess()
     })
     act(() => {
-      ;(
-        container.querySelectorAll('[role="switch"]')[1] as HTMLButtonElement
-      ).click()
+      toggle("iconVisibility")
     })
     act(() => {
       settingsCallbacks.onError({ error: { serverError: META_ERROR } })
     })
 
-    const switches = container.querySelectorAll('[role="switch"]')
-    expect(switches[1].getAttribute("aria-checked")).toBe("true")
-    expect(switches[3].getAttribute("aria-checked")).toBe("true")
+    expect(checkedState("iconVisibility")).toBe("true")
+    expect(checkedState("recording")).toBe("true")
+  })
+
+  // The inbound toggle saves through the same action as the rest, so a refusal
+  // must put it back too — otherwise the card claims calls are muted while the
+  // gate still rings agents.
+  test("reverts the inbound switch when the save fails", async () => {
+    await render({
+      settings: { status: "ENABLED" },
+      inboundCallsEnabled: true,
+    })
+    const settingsCallbacks = allCallbacks[0]
+
+    act(() => {
+      toggle("inbound")
+    })
+    expect(checkedState("inbound")).toBe("false")
+
+    act(() => {
+      settingsCallbacks.onError({ error: { serverError: META_ERROR } })
+    })
+    expect(checkedState("inbound")).toBe("true")
+  })
+
+  test("the inbound switch cannot be touched while calling itself is off", async () => {
+    await render({ settings: { status: "DISABLED" } })
+
+    expect(settingSwitch("inbound")?.hasAttribute("data-disabled")).toBe(true)
+    expect(settingSwitch("recording")?.hasAttribute("data-disabled")).toBe(true)
   })
 })

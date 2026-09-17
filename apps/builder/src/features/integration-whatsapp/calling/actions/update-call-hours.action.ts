@@ -11,9 +11,15 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { integrations } from "@/integration"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { throwWhatsappApiActionError } from "../../libs/whatsapp-api-action-error"
-import { toMetaCallHours, upcomingHolidays } from "../lib/call-hours"
+import {
+  toCallHoursSnapshot,
+  toMetaCallHours,
+  upcomingHolidays,
+} from "../lib/call-hours"
+import { invalidateCallingSettingsCache } from "../lib/calling-settings-cache"
 import {
   type CallHoursFormValues,
   callHoursFormSchema,
@@ -82,5 +88,27 @@ export const updateWhatsappCallHoursAction = workspaceActionClient
           t("whatsapp.calls.errors.updateFailed"),
         )
       }
+
+      // Mirrored ONLY after Meta accepted the schedule, so the inbound gate can
+      // never refuse a call on hours Meta never stored. If this write fails the
+      // two sides disagree — Meta enforces the new schedule while the gate
+      // still enforces the old one — so the operator is told to save again
+      // rather than shown a generic failure.
+      try {
+        await integrationWhatsappService.updateCallSettings({
+          id: integrationWhatsappId,
+          workspaceId,
+          values: { callHours: toCallHoursSnapshot(callHours) },
+        })
+      } catch (error) {
+        logger.error(
+          { err: error, workspaceId, integrationWhatsappId },
+          "Whatsapp calling: Meta accepted the call hours but the local mirror write failed",
+        )
+        throw new ChatbotXException(t("whatsapp.calls.errors.savedOnMetaOnly"))
+      }
+
+      // Same cache as the calling toggles — see `invalidateCallingSettingsCache`.
+      await invalidateCallingSettingsCache(integrationWhatsappId)
     },
   )

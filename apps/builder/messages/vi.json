@@ -3910,12 +3910,12 @@
       "title": "Cuộc gọi WhatsApp",
       "description": "Cho phép khách hàng gọi cho doanh nghiệp qua WhatsApp và điều khiển cách hoạt động của tính năng gọi cho số này.",
       "enableLabel": "Bật tính năng gọi",
-      "enableHelper": "Cho phép các cuộc gọi WhatsApp đến và đi từ số doanh nghiệp này.",
-      "iconVisibilityLabel": "Hiện nút gọi",
-      "iconVisibilityHelper": "Hiển thị nút gọi trong cuộc trò chuyện và trên hồ sơ doanh nghiệp.",
-      "callbackPermissionLabel": "Yêu cầu quyền gọi lại",
-      "callbackPermissionHelper": "Tự động xin phép khách hàng để gọi lại sau cuộc gọi nhỡ hoặc đã hoàn thành.",
-      "propagationNote": "Thay đổi được Meta áp dụng ngay, nhưng ứng dụng WhatsApp của khách hàng có thể mất tới 7 ngày để cập nhật.",
+      "enableHelper": "Bật tính năng gọi WhatsApp cho số này.",
+      "iconVisibilityLabel": "Hiện nút gọi cho khách",
+      "iconVisibilityHelper": "Hiện nút gọi trong ứng dụng WhatsApp của khách. Không ảnh hưởng tới inbox.",
+      "callbackPermissionLabel": "Xin phép gọi lại",
+      "callbackPermissionHelper": "Sau cuộc gọi nhỡ hoặc đã kết thúc, xin phép khách để gọi lại.",
+      "propagationNote": "Meta áp dụng thay đổi ngay, nhưng ứng dụng WhatsApp của khách có thể mất tới 7 ngày mới cập nhật.",
       "loadFailed": "Không tải được cài đặt cuộc gọi từ Meta. Kiểm tra kết nối của số này và thử lại.",
       "errors": {
         "notFound": "Không tìm thấy tích hợp WhatsApp",
@@ -3926,6 +3926,7 @@
         "noCallPermission": "Khách hàng chưa cấp quyền gọi",
         "audioConnectFailed": "Không kết nối được âm thanh cuộc gọi",
         "updateFailed": "Meta đã từ chối thay đổi cài đặt cuộc gọi",
+        "savedOnMetaOnly": "Meta đã lưu thay đổi nhưng workspace này thì chưa. Hãy lưu lại để hoàn tất.",
         "bicUnavailable": "Tính năng gọi từ doanh nghiệp chưa hỗ trợ cho quốc gia này",
         "callAlreadyInProgress": "Đã có một cuộc gọi đến khách hàng này đang diễn ra",
         "hangupFailed": "Không thể kết thúc cuộc gọi",
@@ -3947,7 +3948,7 @@
       "inAppCallingLabel": "Gọi trong ứng dụng (beta)",
       "inAppCallingHelper": "Định tuyến cuộc gọi WhatsApp của số này vào inbox để agent nghe máy ngay trên trình duyệt.",
       "recordingLabel": "Ghi âm cuộc gọi",
-      "recordingHelper": "Ghi âm các cuộc gọi được nghe hoặc gọi đi từ inbox và thêm bản ghi vào hội thoại.",
+      "recordingHelper": "Lưu âm thanh của cuộc gọi nghe hoặc gọi từ inbox vào hội thoại.",
       "recordingInProgress": "Đã yêu cầu ghi âm",
       "incomingCall": "Cuộc gọi WhatsApp đến…",
       "unknownCaller": "Người gọi không xác định",
@@ -3963,7 +3964,7 @@
       "retentionLabel": "Thời gian lưu ghi âm (ngày)",
       "retentionHelper": "Ghi âm cuộc gọi được lưu trong bao lâu trước khi bị xóa vĩnh viễn.",
       "transcriptionLabel": "Chuyển văn bản cuộc gọi",
-      "transcriptionHelper": "Thêm bản chép lời của mỗi cuộc gọi đã ghi âm vào hội thoại.",
+      "transcriptionHelper": "Thêm bản ghi chữ cho mỗi cuộc gọi đã ghi âm. Cần bật ghi âm.",
       "preflight": {
         "title": "Điều kiện gọi điện",
         "appSubscriptionMissing": "Hãy cấu hình webhook WhatsApp cho app này trong App Dashboard của Meta trước, sau đó thử lại.",
@@ -4114,7 +4115,9 @@
           "rangeOverlap": "Các khung giờ trong ngày này bị chồng lên nhau.",
           "noOpenHours": "Hãy thêm khung giờ cho ít nhất một ngày."
         }
-      }
+      },
+      "inboundLabel": "Nhận cuộc gọi đến",
+      "inboundHelper": "Cho khách gọi vào. Tắt thì vẫn gọi ra được nhưng inbox không đổ chuông."
     }
   },
   "zalo": {

@@ -12,11 +12,13 @@ const {
   findWorkspaceIntegrationMock,
   runActionMock,
   updateCallSettingsMock,
+  invalidateCacheKeysMock,
   TranscriptionRequiresRecordingError,
 } = vi.hoisted(() => ({
   findWorkspaceIntegrationMock: vi.fn(),
   runActionMock: vi.fn(),
   updateCallSettingsMock: vi.fn(),
+  invalidateCacheKeysMock: vi.fn(),
   TranscriptionRequiresRecordingError: class extends Error {},
 }))
 
@@ -40,6 +42,10 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   WhatsappCallTranscriptionRequiresRecordingError:
     TranscriptionRequiresRecordingError,
+}))
+
+vi.mock("@chatbotx.io/redis", () => ({
+  invalidateCacheKeys: invalidateCacheKeysMock,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -94,6 +100,7 @@ describe("updateWhatsappCallingSettingsAction", () => {
       auth: {},
     })
     updateCallSettingsMock.mockResolvedValue({})
+    invalidateCacheKeysMock.mockResolvedValue(undefined)
     runActionMock.mockResolvedValue(undefined)
   })
 
@@ -167,5 +174,53 @@ describe("updateWhatsappCallingSettingsAction", () => {
     await expect(call({ callTranscriptionEnabled: true })).rejects.toThrow(
       "whatsapp.calls.errors.transcriptionRequiresRecording",
     )
+  })
+
+  // A save that reached Meta and was refused must leave the database exactly
+  // as it was. Writing the local half first would leave the mirror, Meta and
+  // the rolled-back card all disagreeing about the same number.
+  test("writes nothing locally when Meta refuses the save", async () => {
+    runActionMock.mockRejectedValueOnce(
+      new ChannelError("nope", ChannelErrorCategory.PAYLOAD_INVALID),
+    )
+
+    await expect(
+      call({ status: "ENABLED", inboundCallsEnabled: false }),
+    ).rejects.toThrow("nope")
+    expect(updateCallSettingsMock).not.toHaveBeenCalled()
+    expect(invalidateCacheKeysMock).not.toHaveBeenCalled()
+  })
+
+  test("persists the local and Meta halves together once Meta accepts", async () => {
+    await call({ status: "ENABLED", inboundCallsEnabled: false })
+
+    expect(updateCallSettingsMock).toHaveBeenCalledTimes(1)
+    expect(updateCallSettingsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: { inboundCallsEnabled: false, callingEnabled: true },
+      }),
+    )
+    expect(invalidateCacheKeysMock).toHaveBeenCalledWith(
+      "whatsapp-outbound-call-mode:calling-settings:integration-1",
+    )
+  })
+
+  // The worst divergence: Meta has the number ENABLED while the mirror still
+  // says disabled, so the worker refuses every inbound call. The operator must
+  // be told to save again rather than shown a generic failure.
+  test("says the change reached Meta when only the local write failed", async () => {
+    updateCallSettingsMock.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(call({ status: "ENABLED" })).rejects.toThrow(
+      "whatsapp.calls.errors.savedOnMetaOnly",
+    )
+  })
+
+  // Everything is already committed by then; failing the save would roll the
+  // card back to values that are live on both Meta and the database.
+  test("a cache invalidation failure does not fail a save that already committed", async () => {
+    invalidateCacheKeysMock.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(call({ status: "ENABLED" })).resolves.toBeUndefined()
   })
 })

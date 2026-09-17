@@ -5363,6 +5363,7 @@
         "noCallPermission": "The contact has not granted call permission",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta rejected the calling settings change",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
         "bicUnavailable": "Business-initiated calling is not available for this country",
         "callAlreadyInProgress": "A call to this contact is already in progress",
         "hangupFailed": "Could not end the call",
@@ -5551,7 +5552,9 @@
           "rangeOverlap": "这一天的时间段有重叠。",
           "noOpenHours": "请至少为一天添加时间段。"
         }
-      }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
     }
   },
   "workspace": {

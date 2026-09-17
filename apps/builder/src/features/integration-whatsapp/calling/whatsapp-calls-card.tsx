@@ -35,6 +35,8 @@ type WhatsappCallsCardProps = {
   recordingEnabled?: boolean
   recordingRetentionDays?: number
   transcriptionEnabled?: boolean
+  /** Local flag: whether an incoming call may ring agents at all. */
+  inboundCallsEnabled?: boolean
   /** Eligibility preflight. `null` when the current user
    * could not be resolved against the workspace. */
   preflight?: WhatsappCallingPreflight | null
@@ -43,7 +45,17 @@ type WhatsappCallsCardProps = {
   workspaceTimezone?: string
 }
 
+/** Every toggle in the card, named so tests never index by DOM order. */
+type CallSettingName =
+  | "calling"
+  | "inbound"
+  | "iconVisibility"
+  | "callbackPermission"
+  | "recording"
+  | "transcription"
+
 type ToggleRowProps = {
+  setting: CallSettingName
   label: string
   helper: string
   checked: boolean
@@ -52,6 +64,7 @@ type ToggleRowProps = {
 }
 
 const ToggleRow = ({
+  setting,
   label,
   helper,
   checked,
@@ -65,6 +78,7 @@ const ToggleRow = ({
     </div>
     <Switch
       checked={checked}
+      data-setting={setting}
       disabled={disabled}
       onCheckedChange={onCheckedChange}
     />
@@ -163,6 +177,7 @@ export function WhatsappCallsCard({
   integrationWhatsappId,
   settings,
   loadError,
+  inboundCallsEnabled = true,
   recordingEnabled = false,
   recordingRetentionDays = 90,
   transcriptionEnabled = false,
@@ -174,6 +189,7 @@ export function WhatsappCallsCard({
   const [current, setCurrent] = useState<WhatsappCallingSettings>(
     settings ?? { status: "DISABLED" },
   )
+  const [isInboundEnabled, setIsInboundEnabled] = useState(inboundCallsEnabled)
   const [isRecordingEnabled, setIsRecordingEnabled] = useState(recordingEnabled)
   const [retentionDays, setRetentionDays] = useState(recordingRetentionDays)
   const [isTranscriptionEnabled, setIsTranscriptionEnabled] =
@@ -185,6 +201,7 @@ export function WhatsappCallsCard({
   // change — without it the switches would keep showing a state that was
   // never applied remotely.
   const previousRef = useRef(current)
+  const previousInboundRef = useRef(inboundCallsEnabled)
   const previousRecordingRef = useRef(recordingEnabled)
   const previousTranscriptionRef = useRef(transcriptionEnabled)
 
@@ -201,6 +218,7 @@ export function WhatsappCallsCard({
       },
       onError: ({ error }) => {
         setCurrent(previousRef.current)
+        setIsInboundEnabled(previousInboundRef.current)
         setIsRecordingEnabled(previousRecordingRef.current)
         setIsTranscriptionEnabled(previousTranscriptionRef.current)
         const message = error.serverError ?? t("messages.unknownError")
@@ -215,6 +233,7 @@ export function WhatsappCallsCard({
   // successful save would roll an unrelated switch back to a stale value.
   const snapshot = () => {
     previousRef.current = current
+    previousInboundRef.current = isInboundEnabled
     previousRecordingRef.current = isRecordingEnabled
     previousTranscriptionRef.current = isTranscriptionEnabled
   }
@@ -282,6 +301,19 @@ export function WhatsappCallsCard({
               { ...current, status: next ? "ENABLED" : "DISABLED" },
             )
           }
+          setting="calling"
+        />
+        <ToggleRow
+          checked={isInboundEnabled}
+          disabled={isPending || !isCallingEnabled}
+          helper={t("whatsapp.calls.inboundHelper")}
+          label={t("whatsapp.calls.inboundLabel")}
+          onCheckedChange={(next) => {
+            snapshot()
+            setIsInboundEnabled(next)
+            execute({ inboundCallsEnabled: next })
+          }}
+          setting="inbound"
         />
         <ToggleRow
           checked={current.call_icon_visibility !== "DISABLE_ALL"}
@@ -297,6 +329,7 @@ export function WhatsappCallsCard({
               },
             )
           }
+          setting="iconVisibility"
         />
         <ToggleRow
           checked={current.callback_permission_status === "ENABLED"}
@@ -312,6 +345,7 @@ export function WhatsappCallsCard({
               },
             )
           }
+          setting="callbackPermission"
         />
 
         <ToggleRow
@@ -329,6 +363,7 @@ export function WhatsappCallsCard({
             }
             execute({ recordingEnabled: next })
           }}
+          setting="recording"
         />
         {isRecordingEnabled && (
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -371,6 +406,7 @@ export function WhatsappCallsCard({
               setIsTranscriptionEnabled(next)
               execute({ callTranscriptionEnabled: next })
             }}
+            setting="transcription"
           />
         )}
         <WhatsappCallHoursSection

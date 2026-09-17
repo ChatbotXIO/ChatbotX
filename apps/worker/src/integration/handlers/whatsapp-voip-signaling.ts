@@ -4,6 +4,7 @@ import {
   whatsappVoipCallService,
   whatsappVoipSignalingService,
 } from "@chatbotx.io/business"
+import type { WhatsappCallHoursSnapshot } from "@chatbotx.io/database/partials"
 import {
   integrationLookupRepository,
   whatsappCallRepository,
@@ -20,6 +21,7 @@ import {
   type RealtimeEventWhatsappCallTransportEnded,
   type RealtimeEventWhatsappCallTransportIncoming,
 } from "@chatbotx.io/partysocket-config"
+import { isWithinCallHours } from "@chatbotx.io/utils/whatsapp-call-hours"
 import {
   WhatsappVoipSignalingJobAction,
   type WhatsappVoipSignalingJobData,
@@ -116,6 +118,11 @@ const isReservedCallEndStatus = (
 type ResolvedVoipIntegration = {
   workspaceId: string
   auth: WhatsappAuthValue
+  /** Local mirrors of Meta's calling settings — see `refuseInboundCall`. */
+  /** `false` only when explicitly turned off — see `readFlag`. */
+  callingEnabled: boolean
+  inboundCallsEnabled: boolean
+  callHours: WhatsappCallHoursSnapshot | null
 }
 
 const resolveVoipIntegration = async (
@@ -129,7 +136,52 @@ const resolveVoipIntegration = async (
   return {
     workspaceId: inbox.workspaceId,
     auth: integrationRow.auth as WhatsappAuthValue,
+    // `integrationRow` is the channel-agnostic shape, so these WhatsApp-only
+    // columns arrive untyped — read them defensively rather than casting. Each
+    // falls back to the permissive value: a row we cannot read must never be
+    // the reason a customer cannot get through.
+    callingEnabled: readFlag(integrationRow.callingEnabled),
+    inboundCallsEnabled: readFlag(integrationRow.inboundCallsEnabled),
+    callHours: readCallHours(integrationRow.callHours),
   }
+}
+
+/**
+ * `false` only when the column really says so. A missing or unreadable value
+ * means "never mirrored" and defers to Meta, so a number that had calling
+ * working before this column existed keeps working.
+ */
+const readFlag = (value: unknown): boolean => value !== false
+
+const readCallHours = (value: unknown): WhatsappCallHoursSnapshot | null =>
+  value && typeof value === "object"
+    ? (value as WhatsappCallHoursSnapshot)
+    : null
+
+/**
+ * Why an inbound call must not ring, or `null` when it may.
+ *
+ * Meta is supposed to stop these at the source, but its own docs say a
+ * customer's app can take up to 7 days to pick up a settings change, and a
+ * stale client can still place the call. Without this the business has no way
+ * to enforce its own setting: every `connect` Meta delivers rings every agent.
+ *
+ * Open by default at each step — only an explicit opt-out or a well-formed
+ * schedule refuses a call, so a half-configured number never goes silent.
+ */
+export const inboundCallRefusal = (
+  integration: ResolvedVoipIntegration,
+  at: Date = new Date(),
+): "callingDisabled" | "inboundMuted" | "outsideCallHours" | null => {
+  if (!integration.callingEnabled) {
+    return "callingDisabled"
+  }
+  if (!integration.inboundCallsEnabled) {
+    return "inboundMuted"
+  }
+  return isWithinCallHours(integration.callHours, at)
+    ? null
+    : "outsideCallHours"
 }
 
 /**
@@ -349,7 +401,7 @@ const notifyRungAgentsIfEnded = async (input: {
  * never rung and never Meta-rejected — it is over on Meta's side too.
  */
 const handleConnect = async (data: HandleConnectData): Promise<void> => {
-  const { wacid, deadlineAt, phoneNumberId } = data
+  const { wacid, deadlineAt, phoneNumberId, receivedAt } = data
 
   // Checked before anything else: the terminate that ended this call found
   // no offer and no control to clean up, so nothing else would stop a ring.
@@ -363,7 +415,50 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
     return
   }
 
-  const { workspaceId, auth } = await resolveVoipIntegration(phoneNumberId)
+  // A redelivered connect for a call that has already been claimed or answered
+  // must do NOTHING: every remaining branch below can reject the call at Meta,
+  // and rejecting a live call would drop an agent mid-conversation. The
+  // `alreadyProgressed` branch further down says the same thing, but it only
+  // runs after those reject paths, and `resolveRingTargets` creates a control
+  // record on the way — so the check is made here, read-only, first.
+  const control = await whatsappVoipCallService.readControl(wacid)
+  if (control && control.phase !== "reserved") {
+    logger.info(
+      { wacid, phase: control.phase },
+      "Whatsapp VoIP: connect for a call that is no longer ringing; ignoring",
+    )
+    return
+  }
+
+  const integration = await resolveVoipIntegration(phoneNumberId)
+  const { workspaceId, auth } = integration
+
+  // Before the offer is even read, and long before any agent is rung: the
+  // business has turned calling off, muted the inbound side, or the call
+  // arrived outside its own call hours. Rejected rather than dropped so Meta
+  // ends the call and the customer stops hearing ringing. Evaluated against
+  // the moment the webhook arrived, not the moment this job ran, so a queue
+  // backlog can never push a call that arrived in hours out of them.
+  const refusal = inboundCallRefusal(integration, new Date(receivedAt))
+  if (refusal) {
+    logger.info(
+      { wacid, workspaceId, refusal },
+      "Whatsapp VoIP: inbound call refused by this number's calling settings",
+    )
+    // Which primitive ends the call depends on whether a control record
+    // exists. `control` was read before the integration lookup, so an agent
+    // could have claimed the call in between: for a redelivery that already
+    // had one, `endReservedCall` CASes out of `reserved` and no-ops if that
+    // claim won, leaving the live call alone. A first delivery has no control
+    // yet, and `rejectUnreachableCall` (Graph reject + finalize, no CAS) is
+    // the only thing that can end it.
+    if (control) {
+      await endReservedCall({ wacid, auth })
+    } else {
+      await rejectUnreachableCall({ wacid, auth })
+    }
+    return
+  }
 
   // Offer FIRST, before ringing anyone: a connect with no stored offer is
   // either an unprocessable-SDP connect (deliberately never stored — see

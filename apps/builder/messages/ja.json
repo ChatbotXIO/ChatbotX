@@ -3905,6 +3905,7 @@
         "noCallPermission": "The contact has not granted call permission",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Metaが通話設定の変更を拒否しました",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
         "bicUnavailable": "この国では、企業が発信する通話は利用できません",
         "callAlreadyInProgress": "この連絡先への通話は既に進行中です",
         "hangupFailed": "通話を終了できませんでした",
@@ -4093,7 +4094,9 @@
           "rangeOverlap": "この日の時間帯が重なっています。",
           "noOpenHours": "少なくとも1日に時間帯を追加してください。"
         }
-      }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
     }
   },
   "zalo": {

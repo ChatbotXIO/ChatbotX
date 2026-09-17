@@ -5363,6 +5363,7 @@
         "noCallPermission": "The contact has not granted call permission",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta avvisade ändringen av samtalsinställningarna",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
         "bicUnavailable": "Företagsinitierade samtal är inte tillgängliga för detta land",
         "callAlreadyInProgress": "Ett samtal med denna kontakt pågår redan",
         "hangupFailed": "Kunde inte avsluta samtalet",
@@ -5551,7 +5552,9 @@
           "rangeOverlap": "Tiderna den här dagen överlappar.",
           "noOpenHours": "Lägg till tider för minst en dag."
         }
-      }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
     }
   },
   "workspace": {

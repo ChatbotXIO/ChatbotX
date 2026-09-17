@@ -1499,7 +1499,75 @@ describe("webhookHandler VoIP-mode connect signaling", () => {
       wacid: "wacid.VOIP-1",
       sdp: "v=0...SENSITIVE_SDP...",
       phoneNumberId: "phone-1",
+      // Meta's own timestamp (seconds) as epoch ms — the consumer reads the
+      // number's call hours against when the customer rang.
+      receivedAt: 1_755_700_000_000,
     })
+  })
+
+  // A redelivery repeats Meta's timestamp, so the same call is always judged
+  // against the same instant even if the first enqueue failed and released
+  // the offer claim.
+  test("the arrival time comes from Meta, not the clock, so a redelivery judges the same instant", async () => {
+    const send = () =>
+      webhookHandler({
+        config: { verifyToken: "verify-token", clientSecret: CLIENT_SECRET },
+        req: makeSignedPostRequest(
+          wrapEntry(
+            callsValue({
+              calls: [
+                {
+                  id: "wacid.VOIP-RETRY",
+                  from: "16315551234",
+                  to: "16505551111",
+                  event: "connect",
+                  timestamp: "1755700000",
+                  direction: "USER_INITIATED",
+                  session: { sdp_type: "offer", sdp: "v=0..." },
+                },
+              ],
+            }),
+          ),
+        ),
+        queue: { add: vi.fn() },
+      } as unknown as Parameters<typeof webhookHandler>[0])
+
+    await expect(send()).resolves.toBe("ok")
+    await expect(send()).resolves.toBe("ok")
+
+    const times = mockCaptureConnectOffer.mock.calls.map(
+      ([arg]: [{ receivedAt?: number }]) => arg.receivedAt,
+    )
+    expect(times).toEqual([1_755_700_000_000, 1_755_700_000_000])
+  })
+
+  test("a connect with no usable timestamp falls back to the clock rather than 1970", async () => {
+    await expect(
+      webhookHandler({
+        config: { verifyToken: "verify-token", clientSecret: CLIENT_SECRET },
+        req: makeSignedPostRequest(
+          wrapEntry(
+            callsValue({
+              calls: [
+                {
+                  id: "wacid.VOIP-NOTS",
+                  from: "16315551234",
+                  to: "16505551111",
+                  event: "connect",
+                  direction: "USER_INITIATED",
+                  session: { sdp_type: "offer", sdp: "v=0..." },
+                },
+              ],
+            }),
+          ),
+        ),
+        queue: { add: vi.fn() },
+      } as unknown as Parameters<typeof webhookHandler>[0]),
+    ).resolves.toBe("ok")
+
+    expect(mockCaptureConnectOffer).toHaveBeenCalledWith(
+      expect.objectContaining({ receivedAt: undefined }),
+    )
   })
 
   test("a connect with no session never calls the VoIP signaling service (session-less behavior)", async () => {

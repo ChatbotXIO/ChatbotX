@@ -3959,6 +3959,7 @@
         "noCallPermission": "The contact has not granted call permission",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta 拒絕了通話設定的變更",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
         "bicUnavailable": "此國家不支援商家主動發起的通話",
         "callAlreadyInProgress": "與此聯絡人的通話已在進行中",
         "hangupFailed": "無法結束通話",
@@ -4147,7 +4148,9 @@
           "rangeOverlap": "這一天的時段有重疊。",
           "noOpenHours": "請至少為一天新增時段。"
         }
-      }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
     }
   },
   "zalo": {

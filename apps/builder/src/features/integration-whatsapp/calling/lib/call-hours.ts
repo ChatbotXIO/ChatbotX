@@ -1,3 +1,4 @@
+import type { WhatsappCallHoursSnapshot } from "@chatbotx.io/database/partials"
 import type {
   WhatsappCallHours,
   WhatsappCallingHolidaySchedule,
@@ -142,3 +143,27 @@ export const upcomingHolidays = (
 const knownTimezone = (...candidates: string[]): string =>
   candidates.find((timezone) => timezoneCodeSet.has(timezone)) ??
   FALLBACK_TIMEZONE
+
+/**
+ * Meta's snake_case `call_hours` in the shape the runtime stores and reads.
+ *
+ * The timezone carried here is the one chosen in the CALL settings, never the
+ * workspace's — a number serving another market keeps its own hours even when
+ * the workspace timezone changes for reporting.
+ */
+export const toCallHoursSnapshot = (
+  callHours: WhatsappCallHours,
+): WhatsappCallHoursSnapshot => ({
+  status: callHours.status,
+  timezoneId: callHours.timezone_id,
+  weeklyOperatingHours: callHours.weekly_operating_hours.map((window) => ({
+    dayOfWeek: window.day_of_week,
+    openTime: window.open_time,
+    closeTime: window.close_time,
+  })),
+  holidaySchedule: callHours.holiday_schedule?.map((holiday) => ({
+    date: holiday.date,
+    startTime: holiday.start_time,
+    endTime: holiday.end_time,
+  })),
+})

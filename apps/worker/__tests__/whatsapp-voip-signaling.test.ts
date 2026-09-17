@@ -87,7 +87,7 @@ vi.mock("../src/lib/logger", () => ({
   logger: mocks.logger,
 }))
 
-const { handleWhatsappVoipSignalingJob } = await import(
+const { handleWhatsappVoipSignalingJob, inboundCallRefusal } = await import(
   "../src/integration/handlers/whatsapp-voip-signaling"
 )
 
@@ -122,12 +122,17 @@ const outboundCallRow = {
   answeredByUserId: "initiator-1" as string | null,
 }
 
+/** A fixed connect-webhook arrival time; the handler reads hours against it. */
+const RECEIVED_AT = Date.UTC(2026, 8, 14, 3)
+
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
     inbox,
     integrationRow,
   })
+  // A fresh connect has no control record yet; the tests that need one say so.
+  mocks.readControl.mockResolvedValue(null)
   mocks.findByWacid.mockResolvedValue(callRow)
   mocks.findByAttemptId.mockResolvedValue(undefined)
   mocks.findAuthByInboxId.mockResolvedValue({ auth: integrationRow.auth })
@@ -147,7 +152,12 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
-      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
     })
 
     expect(mocks.resolveRingTargets).toHaveBeenCalledWith({
@@ -190,7 +200,12 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
-      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
     })
 
     expect(mocks.sendToWorkspaceMember).toHaveBeenCalledTimes(2)
@@ -208,7 +223,12 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
-      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
     })
 
     // There is no control record for an unreachable call, so no CAS transition.
@@ -236,7 +256,12 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
-      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
     })
 
     expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
@@ -254,6 +279,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       handleWhatsappVoipSignalingJob({
         type: "handleConnect",
         data: {
+          receivedAt: RECEIVED_AT,
           wacid: "wacid.ABC",
           deadlineAt: 2000,
           phoneNumberId: "phone-1",
@@ -270,7 +296,12 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
-      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
     })
 
     expect(mocks.resolveRingTargets).not.toHaveBeenCalled()
@@ -287,7 +318,12 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
-      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
     })
 
     expect(mocks.rejectCall).not.toHaveBeenCalled()
@@ -304,7 +340,12 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
-      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
     })
 
     expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
@@ -327,7 +368,12 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
-      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
     })
 
     const endedEvent = {
@@ -358,7 +404,12 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
-      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
     })
 
     expect(mocks.sendToWorkspaceMember).toHaveBeenCalledTimes(2)
@@ -373,7 +424,12 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
-      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
     })
 
     expect(mocks.resolveRingTargets).not.toHaveBeenCalled()
@@ -849,5 +905,272 @@ describe("handleWhatsappVoipSignalingJob: expireOutboundDial", () => {
 
     expect(mocks.terminateCall).not.toHaveBeenCalled()
     expect(mocks.finalizeCallSideEffects).not.toHaveBeenCalled()
+  })
+})
+
+describe("inboundCallRefusal", () => {
+  const integration = (
+    over: Partial<Parameters<typeof inboundCallRefusal>[0]> = {},
+  ) =>
+    ({
+      workspaceId: "ws-1",
+      auth: {} as never,
+      callingEnabled: true,
+      inboundCallsEnabled: true,
+      callHours: null,
+      ...over,
+    }) as Parameters<typeof inboundCallRefusal>[0]
+
+  test("a fully enabled number with no schedule accepts calls", () => {
+    expect(inboundCallRefusal(integration())).toBeNull()
+  })
+
+  test("calling turned off refuses", () => {
+    expect(inboundCallRefusal(integration({ callingEnabled: false }))).toBe(
+      "callingDisabled",
+    )
+  })
+
+  test("the inbound mute refuses while leaving outbound alone", () => {
+    expect(
+      inboundCallRefusal(integration({ inboundCallsEnabled: false })),
+    ).toBe("inboundMuted")
+  })
+
+  test("calling off outranks the inbound mute — the more decisive reason wins", () => {
+    expect(
+      inboundCallRefusal(
+        integration({ callingEnabled: false, inboundCallsEnabled: false }),
+      ),
+    ).toBe("callingDisabled")
+  })
+
+  test("a call outside the configured hours refuses", () => {
+    const refusal = inboundCallRefusal(
+      integration({
+        callHours: {
+          status: "ENABLED",
+          timezoneId: "Etc/UTC",
+          weeklyOperatingHours: [
+            { dayOfWeek: "MONDAY", openTime: "0900", closeTime: "1700" },
+          ],
+        },
+      }),
+      new Date(Date.UTC(2026, 8, 14, 20)),
+    )
+
+    expect(refusal).toBe("outsideCallHours")
+  })
+
+  test("a call inside the configured hours is accepted", () => {
+    const refusal = inboundCallRefusal(
+      integration({
+        callHours: {
+          status: "ENABLED",
+          timezoneId: "Etc/UTC",
+          weeklyOperatingHours: [
+            { dayOfWeek: "MONDAY", openTime: "0900", closeTime: "1700" },
+          ],
+        },
+      }),
+      new Date(Date.UTC(2026, 8, 14, 10)),
+    )
+
+    expect(refusal).toBeNull()
+  })
+})
+
+describe("handleConnect — the number's own calling settings", () => {
+  // Meta is supposed to stop these at the source, but a customer's app can lag
+  // a settings change by up to 7 days, so a stale client still reaches us.
+  test("rejects the call and rings nobody when calling is turned off", async () => {
+    mocks.identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
+      inbox,
+      integrationRow: { ...integrationRow, callingEnabled: false },
+    })
+    mocks.findByWacid.mockResolvedValue(undefined)
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.IN",
+        phoneNumberId: "pn-1",
+        deadlineAt: Date.now() + 30_000,
+      },
+    })
+
+    expect(mocks.rejectCall).toHaveBeenCalled()
+    expect(mocks.resolveRingTargets).not.toHaveBeenCalled()
+    // Refused before the offer is even read — no work done for a doomed call.
+    expect(mocks.readOffer).not.toHaveBeenCalled()
+  })
+
+  test("rings normally when the settings allow the call", async () => {
+    mocks.findByWacid.mockResolvedValue(undefined)
+    mocks.readOffer.mockResolvedValue({ sdp: "v=0" })
+    // Stops the handler right after the gate — this test is about reaching
+    // ring resolution, not about the ring flow itself.
+    mocks.resolveRingTargets.mockResolvedValue({ status: "alreadyProgressed" })
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.IN",
+        phoneNumberId: "pn-1",
+        deadlineAt: Date.now() + 30_000,
+      },
+    })
+
+    expect(mocks.readOffer).toHaveBeenCalled()
+    expect(mocks.resolveRingTargets).toHaveBeenCalled()
+  })
+
+  // The regression: Meta redelivers `connect` for a call an agent is already
+  // on. Every branch below the gate can reject the call at Meta, so a redelivery
+  // that lands outside call hours (or after calling was switched off) would cut
+  // a live conversation. Nothing may happen for a call past `reserved`.
+  test.each([
+    "answering",
+    "accepted",
+  ])("a redelivered connect for a %s call rejects nothing and rings nobody", async (phase) => {
+    mocks.readControl.mockResolvedValue({ phase, reservedUserId: "user-1" })
+    mocks.identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
+      inbox,
+      integrationRow: { ...integrationRow, callingEnabled: false },
+    })
+    mocks.findByWacid.mockResolvedValue(undefined)
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.IN",
+        phoneNumberId: "pn-1",
+        deadlineAt: Date.now() + 30_000,
+      },
+    })
+
+    expect(mocks.rejectCall).not.toHaveBeenCalled()
+    expect(mocks.terminateCall).not.toHaveBeenCalled()
+    expect(mocks.resolveRingTargets).not.toHaveBeenCalled()
+    expect(mocks.readOffer).not.toHaveBeenCalled()
+  })
+
+  // The narrow race the phase snapshot cannot close: the control still read
+  // `reserved`, but an agent claims the call while the integration is being
+  // loaded. `endCall` is the CAS that arbitrates it, so a refusal must go
+  // through `endCall` rather than rejecting at Meta outright.
+  test("a refusal on a redelivery ends the call through the CAS, not a bare reject", async () => {
+    mocks.readControl.mockResolvedValue({
+      phase: "reserved",
+      reservedUserId: "",
+    })
+    // The CAS loses: someone claimed the call after the phase was read.
+    mocks.endCall.mockResolvedValue(null)
+    mocks.identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
+      inbox,
+      integrationRow: { ...integrationRow, callingEnabled: false },
+    })
+    mocks.findByWacid.mockResolvedValue(undefined)
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.IN",
+        phoneNumberId: "pn-1",
+        deadlineAt: Date.now() + 30_000,
+      },
+    })
+
+    expect(mocks.endCall).toHaveBeenCalledWith(
+      expect.objectContaining({ allowFromAccepted: false }),
+    )
+    // The claim won, so nothing may reach Meta.
+    expect(mocks.rejectCall).not.toHaveBeenCalled()
+  })
+
+  test("a refusal on a FIRST delivery rejects at Meta — there is no control to CAS", async () => {
+    mocks.readControl.mockResolvedValue(null)
+    mocks.identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
+      inbox,
+      integrationRow: { ...integrationRow, callingEnabled: false },
+    })
+    mocks.findByWacid.mockResolvedValue(undefined)
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.IN",
+        phoneNumberId: "pn-1",
+        deadlineAt: Date.now() + 30_000,
+      },
+    })
+
+    expect(mocks.rejectCall).toHaveBeenCalled()
+  })
+
+  test("a still-reserved call is not treated as progressed", async () => {
+    mocks.readControl.mockResolvedValue({
+      phase: "reserved",
+      reservedUserId: "",
+    })
+    mocks.findByWacid.mockResolvedValue(undefined)
+    mocks.readOffer.mockResolvedValue({ sdp: "v=0" })
+    mocks.resolveRingTargets.mockResolvedValue({ status: "alreadyProgressed" })
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.IN",
+        phoneNumberId: "pn-1",
+        deadlineAt: Date.now() + 30_000,
+      },
+    })
+
+    expect(mocks.resolveRingTargets).toHaveBeenCalled()
+  })
+
+  // Call hours are read against the webhook's arrival time, not the worker's
+  // clock: a backlog must never push a call that arrived in hours out of them.
+  test("a backlogged job still uses the hours that applied when the call arrived", async () => {
+    // RECEIVED_AT is Monday 10:00 in Asia/Ho_Chi_Minh — inside the window.
+    // The job itself runs hours later, well outside it.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2026, 8, 14, 20)))
+    mocks.identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
+      inbox,
+      integrationRow: {
+        ...integrationRow,
+        callHours: {
+          status: "ENABLED",
+          timezoneId: "Asia/Ho_Chi_Minh",
+          weeklyOperatingHours: [
+            { dayOfWeek: "MONDAY", openTime: "0900", closeTime: "1700" },
+          ],
+        },
+      },
+    })
+    mocks.findByWacid.mockResolvedValue(undefined)
+    mocks.readOffer.mockResolvedValue({ sdp: "v=0" })
+    mocks.resolveRingTargets.mockResolvedValue({ status: "alreadyProgressed" })
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.IN",
+        phoneNumberId: "pn-1",
+        deadlineAt: Date.now() + 30_000,
+      },
+    })
+    vi.useRealTimers()
+
+    expect(mocks.rejectCall).not.toHaveBeenCalled()
+    expect(mocks.resolveRingTargets).toHaveBeenCalled()
   })
 })

@@ -10,6 +10,7 @@ import {
   or,
   sql,
 } from "../../client"
+import type { WhatsappCallHoursSnapshot } from "../../partials"
 import {
   type IntegrationWhatsappRegistrationError,
   integrationWhatsappModel,
@@ -116,6 +117,10 @@ type UpdateCallSettingsInput = WorkspaceIntegrationRef & {
     callRecordingEnabled: boolean
     callRecordingRetentionDays: number
     callTranscriptionEnabled: boolean
+    /** Mirrors of Meta's calling settings — written only once Meta accepts. */
+    callingEnabled: boolean
+    inboundCallsEnabled: boolean
+    callHours: WhatsappCallHoursSnapshot | null
   }>
   /**
    * Match the number only while it records calls. The recording check and

@@ -51,6 +51,7 @@ export default async function WhatsappCallsPage(props: {
 
   return (
     <WhatsappCallsCard
+      inboundCallsEnabled={integrationWhatsapp.inboundCallsEnabled}
       integrationWhatsappId={data.id}
       isSuperAdmin={isSuperAdmin}
       loadError={loadError}

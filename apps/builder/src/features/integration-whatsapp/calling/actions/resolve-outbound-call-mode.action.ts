@@ -22,6 +22,7 @@ import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { getWhatsappCallingPreflight } from "@/features/integration-whatsapp/calling/get-whatsapp-calling-preflight"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { callingSettingsCacheKey } from "../lib/calling-settings-cache"
 import { BLOCKED_OUTBOUND_COUNTRIES } from "./blocked-outbound-countries"
 
 /**
@@ -33,9 +34,6 @@ import { BLOCKED_OUTBOUND_COUNTRIES } from "./blocked-outbound-countries"
  * long, while still cutting the vast majority of redundant per-open GETs.
  */
 const CALLING_SETTINGS_CACHE_TTL_SECONDS = 5 * 60
-
-const callingSettingsCacheKey = (integrationId: string): string =>
-  `whatsapp-outbound-call-mode:calling-settings:${integrationId}`
 
 /**
  * Cached wrapper around {@link getCallingSettings} — see

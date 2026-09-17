@@ -3926,6 +3926,7 @@
         "noCallPermission": "The contact has not granted call permission",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta rechazó el cambio de la configuración de llamadas",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
         "bicUnavailable": "Las llamadas iniciadas por la empresa no están disponibles para este país",
         "callAlreadyInProgress": "Ya hay una llamada en curso con este contacto",
         "hangupFailed": "No se pudo finalizar la llamada",
@@ -4114,7 +4115,9 @@
           "rangeOverlap": "Los horarios de este día se solapan.",
           "noOpenHours": "Añade un horario al menos a un día."
         }
-      }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
     }
   },
   "zalo": {

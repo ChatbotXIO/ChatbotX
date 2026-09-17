@@ -831,6 +831,9 @@ describe("whatsappVoipCallService.captureConnectOffer", () => {
           wacid: "wa1",
           deadlineAt: NOW + 55_000,
           phoneNumberId: "phone-1",
+          // Stamped here, at the webhook boundary — the consumer reads the
+          // number's call hours against this, not its own clock.
+          receivedAt: NOW,
         },
       },
       expect.objectContaining({

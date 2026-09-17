@@ -2013,6 +2013,7 @@
         "noCallPermission": "The contact has not granted call permission",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta דחתה את השינוי בהגדרות השיחות",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
         "bicUnavailable": "שיחות ביוזמת העסק אינן זמינות במדינה זו",
         "callAlreadyInProgress": "שיחה עם איש קשר זה כבר מתבצעת",
         "hangupFailed": "לא ניתן היה לסיים את השיחה",
@@ -2201,7 +2202,9 @@
           "rangeOverlap": "השעות ביום הזה חופפות.",
           "noOpenHours": "הוסף שעות ליום אחד לפחות."
         }
-      }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
     }
   },
   "zalo": {

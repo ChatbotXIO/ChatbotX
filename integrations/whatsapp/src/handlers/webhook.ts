@@ -806,6 +806,19 @@ const enqueueCallEventPayloads = async (
  * are idempotent (keyed by wacid/attemptId), so a redelivered capture is
  * safe to retry.
  */
+/**
+ * Meta sends the webhook timestamp as Unix SECONDS in a string. Anything else
+ * (absent, non-numeric, or implausible) yields `undefined` so the caller falls
+ * back to the clock rather than evaluating a schedule against 1970.
+ */
+const metaTimestampToEpochMs = (timestamp?: string): number | undefined => {
+  const seconds = Number(timestamp)
+  if (!(timestamp && Number.isFinite(seconds)) || seconds <= 0) {
+    return
+  }
+  return seconds * 1000
+}
+
 const enqueueVoipConnectSignaling = async (
   callEventPayloads: WhatsappCallEventPayload[],
 ): Promise<void> => {
@@ -842,12 +855,17 @@ const enqueueVoipConnectSignaling = async (
       }
       continue
     }
+    // Meta's own timestamp for the connect, so the call-hours check in the
+    // consumer measures when the customer rang rather than when the job ran —
+    // and keeps measuring the same instant if Meta redelivers the webhook.
+    const receivedAt = metaTimestampToEpochMs(event.timestamp)
     try {
       if (event.session) {
         await whatsappVoipSignalingService.captureConnectOffer({
           wacid: event.wacid,
           sdp: event.session.sdp,
           phoneNumberId: payload.phoneNumberId,
+          receivedAt,
         })
       } else if (event.sessionInvalid) {
         // A VoIP connect whose SDP we cannot honor — reject it on Meta rather
@@ -856,6 +874,7 @@ const enqueueVoipConnectSignaling = async (
         await whatsappVoipSignalingService.rejectUnprocessableConnect({
           wacid: event.wacid,
           phoneNumberId: payload.phoneNumberId,
+          receivedAt,
         })
       }
     } catch (err) {

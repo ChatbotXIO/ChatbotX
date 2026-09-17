@@ -3926,6 +3926,7 @@
         "noCallPermission": "The contact has not granted call permission",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta menolak perubahan pengaturan panggilan",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
         "bicUnavailable": "Panggilan yang dimulai bisnis tidak tersedia untuk negara ini",
         "callAlreadyInProgress": "Panggilan dengan kontak ini sudah sedang berlangsung",
         "hangupFailed": "Tidak dapat mengakhiri panggilan",
@@ -4114,7 +4115,9 @@
           "rangeOverlap": "Jam pada hari ini saling tumpang tindih.",
           "noOpenHours": "Tambahkan jam untuk setidaknya satu hari."
         }
-      }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
     }
   },
   "zalo": {

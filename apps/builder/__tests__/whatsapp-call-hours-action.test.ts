@@ -12,12 +12,16 @@ const {
   assertSuperAdminMock,
   findWorkspaceIntegrationMock,
   getCallingSettingsMock,
+  invalidateCacheKeysMock,
   runActionMock,
+  updateCallSettingsMock,
 } = vi.hoisted(() => ({
   assertSuperAdminMock: vi.fn(),
   findWorkspaceIntegrationMock: vi.fn(),
   getCallingSettingsMock: vi.fn(),
+  invalidateCacheKeysMock: vi.fn(),
   runActionMock: vi.fn(),
+  updateCallSettingsMock: vi.fn(),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -36,7 +40,12 @@ vi.mock("@chatbotx.io/business", () => ({
   buildContext: vi.fn(async () => ({})),
   integrationWhatsappService: {
     findWorkspaceIntegration: findWorkspaceIntegrationMock,
+    updateCallSettings: updateCallSettingsMock,
   },
+}))
+
+vi.mock("@chatbotx.io/redis", () => ({
+  invalidateCacheKeys: invalidateCacheKeysMock,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -109,6 +118,8 @@ describe("updateWhatsappCallHoursAction", () => {
     })
     getCallingSettingsMock.mockResolvedValue({ status: "ENABLED" })
     runActionMock.mockResolvedValue(undefined)
+    updateCallSettingsMock.mockResolvedValue(undefined)
+    invalidateCacheKeysMock.mockResolvedValue(undefined)
   })
 
   test("only a workspace super admin can change call hours", async () => {
@@ -194,5 +205,64 @@ describe("updateWhatsappCallHoursAction", () => {
     )
 
     await expect(save(input)).rejects.toThrow("Invalid schedule for call_hours")
+  })
+
+  test("mirrors the accepted schedule locally so the inbound gate can read it", async () => {
+    await save(input)
+
+    expect(updateCallSettingsMock).toHaveBeenCalledWith({
+      id: "integration-1",
+      workspaceId: "workspace-1",
+      values: {
+        callHours: {
+          status: "ENABLED",
+          timezoneId: "Asia/Ho_Chi_Minh",
+          weeklyOperatingHours: [
+            { dayOfWeek: "MONDAY", openTime: "0900", closeTime: "1700" },
+          ],
+          holidaySchedule: undefined,
+        },
+      },
+    })
+  })
+
+  test("drops the cached settings so the inbox stops serving the old schedule", async () => {
+    await save(input)
+
+    expect(invalidateCacheKeysMock).toHaveBeenCalledWith(
+      "whatsapp-outbound-call-mode:calling-settings:integration-1",
+    )
+  })
+
+  // The mirror is what refuses inbound calls, so it must never run ahead of
+  // Meta — otherwise a rejected save would start blocking calls Meta still takes.
+  test("does not mirror or invalidate when Meta refuses the schedule", async () => {
+    runActionMock.mockRejectedValueOnce(
+      new ChannelError(
+        "Invalid schedule for call_hours",
+        ChannelErrorCategory.PAYLOAD_INVALID,
+      ),
+    )
+
+    await expect(save(input)).rejects.toThrow("Invalid schedule for call_hours")
+    expect(updateCallSettingsMock).not.toHaveBeenCalled()
+    expect(invalidateCacheKeysMock).not.toHaveBeenCalled()
+  })
+
+  // Meta is already enforcing the new schedule; the gate is still enforcing
+  // the old one. Saying "Meta rejected it" would be a lie and would stop the
+  // operator retrying, which is exactly what heals it.
+  test("says the schedule reached Meta when only the local write failed", async () => {
+    updateCallSettingsMock.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(save(input)).rejects.toThrow(
+      "whatsapp.calls.errors.savedOnMetaOnly",
+    )
+  })
+
+  test("a cache invalidation failure does not fail a save that already committed", async () => {
+    invalidateCacheKeysMock.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(save(input)).resolves.toBeUndefined()
   })
 })

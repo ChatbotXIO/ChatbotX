@@ -14,6 +14,7 @@ import {
 } from "drizzle-orm/pg-core"
 import type { z } from "zod"
 import {
+  type WhatsappCallHoursSnapshot,
   type WhatsappCallRecordingMode,
   type WhatsappCallTranscriptionMode,
   whatsappCallRecordingModes,
@@ -69,6 +70,31 @@ export const integrationWhatsappModel = pgTable(
     name: text().notNull(),
     displayPhoneNumber: text().notNull().default(""),
     coexistEnabled: boolean().notNull().default(false),
+    /**
+     * Local mirror of Meta's `calling.status`, written only after Meta accepts
+     * the change. Meta is still the authority for the customer-facing side, but
+     * the webhook path cannot afford a Graph round-trip per `connect`, and Meta
+     * can deliver a call from a client whose cached UI has not caught up yet —
+     * so inbound ringing is gated on this instead.
+     *
+     * NULLABLE on purpose: `null` means "never mirrored yet" and defers to
+     * Meta, so numbers that already had calling working keep working after this
+     * column ships. Only an explicit `false` refuses a call.
+     */
+    callingEnabled: boolean(),
+    /**
+     * Mutes only the INBOUND side: calls still ring out from the inbox, but a
+     * `connect` webhook is rejected instead of ringing agents. Defaults to on,
+     * so only an explicit opt-out disables it.
+     */
+    inboundCallsEnabled: boolean().notNull().default(true),
+    /**
+     * Local mirror of Meta's `calling.call_hours`, written only after Meta
+     * accepts the change. `null` means no schedule — calls are accepted at any
+     * time. Mirrored for the same reason as `callingEnabled`: the webhook path
+     * has to decide without a Graph round-trip.
+     */
+    callHours: jsonb().$type<WhatsappCallHoursSnapshot>(),
     /** Auto-record WhatsApp calls for this number. */
     callRecordingEnabled: boolean().notNull().default(false),
     /** Days a call recording is kept before `purgeExpiredCallRecordings` deletes it. */

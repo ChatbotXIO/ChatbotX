@@ -35,6 +35,14 @@ export type CaptureConnectOfferInput = {
   sdp: string
   /** Resolves the integration (workspace/inbox/Graph auth) in the signaling consumer. */
   phoneNumberId: string
+  /**
+   * Epoch ms the call arrived, from Meta's own webhook timestamp. Passing it
+   * rather than reading the clock here keeps the value STABLE across a
+   * redelivery: an enqueue that fails releases the offer claim, and the
+   * redelivery that follows must evaluate call hours against when the customer
+   * actually rang, not when the retry happened.
+   */
+  receivedAt?: number
 }
 
 export type StoreOutboundAnswerInput = {
@@ -157,6 +165,7 @@ class WhatsappVoipSignalingService {
         input.wacid,
         deadlineAt,
         input.phoneNumberId,
+        input.receivedAt,
       )
       await whatsappVoipSignalingQueue.add(
         WhatsappVoipSignalingJobAction.expireIfUnanswered,
@@ -190,11 +199,13 @@ class WhatsappVoipSignalingService {
   async rejectUnprocessableConnect(input: {
     wacid: string
     phoneNumberId: string
+    receivedAt?: number
   }): Promise<void> {
     await this.enqueueHandleConnect(
       input.wacid,
       Date.now() + VOIP_ANSWER_DEADLINE_MS,
       input.phoneNumberId,
+      input.receivedAt,
     )
   }
 
@@ -203,12 +214,22 @@ class WhatsappVoipSignalingService {
     wacid: string,
     deadlineAt: number,
     phoneNumberId: string,
+    receivedAt?: number,
   ): Promise<void> {
     await whatsappVoipSignalingQueue.add(
       WhatsappVoipSignalingJobAction.handleConnect,
       {
         type: WhatsappVoipSignalingJobAction.handleConnect,
-        data: { wacid, deadlineAt, phoneNumberId },
+        // The moment the call arrived, not the moment the consumer runs — it
+        // is what the consumer evaluates the number's call hours against.
+        // Meta's webhook timestamp when we have it (stable across
+        // redeliveries), the clock only as a fallback.
+        data: {
+          wacid,
+          deadlineAt,
+          phoneNumberId,
+          receivedAt: receivedAt ?? Date.now(),
+        },
       },
       {
         jobId: whatsappVoipSignalingJobId(wacid),

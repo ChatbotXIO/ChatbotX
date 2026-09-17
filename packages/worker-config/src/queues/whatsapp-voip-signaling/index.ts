@@ -36,6 +36,12 @@ export type WhatsappVoipSignalingJobHandleConnect = {
     deadlineAt: number
     /** Resolves the integration (workspace/inbox/Graph auth) in the consumer. Not sensitive. */
     phoneNumberId: string
+    /**
+     * Epoch ms the connect webhook arrived. The consumer evaluates the
+     * number's call hours against THIS, not its own clock: a queue backlog
+     * or a retry must never push a call that arrived in hours out of them.
+     */
+    receivedAt: number
   }
 }
 
