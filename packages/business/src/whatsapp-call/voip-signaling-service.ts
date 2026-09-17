@@ -22,6 +22,7 @@ import {
   type VoipOfferRecord,
   type VoipOutboundAnswerRecord,
 } from "./voip-call-control"
+import { pinAnswerDtlsSetup } from "./voip-sdp"
 
 export type StoreOfferInput = {
   wacid: string
@@ -289,9 +290,11 @@ class WhatsappVoipSignalingService {
       return
     }
 
+    // Normalized once here, at the only place an outbound answer enters the
+    // system, so every tab that applies it gets a DTLS role it can accept.
     const created = await this.storeOutboundAnswer({
       attemptId,
-      sdp: input.sdp,
+      sdp: pinAnswerDtlsSetup(input.sdp),
     })
     if (!created) {
       // Redelivered answer webhook for the same attemptId: the first answer

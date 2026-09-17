@@ -1310,6 +1310,23 @@ describe("whatsappVoipCallService.captureOutboundAnswer", () => {
     expect(mocks.queueAdd).not.toHaveBeenCalled()
   })
 
+  test("stores Meta's answer with an actpass DTLS role pinned to active, so the browser can apply it", async () => {
+    mocks.findByAttemptId.mockResolvedValue(row())
+    mocks.setIfAbsent.mockResolvedValue(true)
+
+    await whatsappVoipSignalingService.captureOutboundAnswer({
+      attemptId: "att-1",
+      wacid: "wa1",
+      sdp: "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=setup:actpass\r\n",
+    })
+
+    expect(mocks.setIfAbsent).toHaveBeenCalledWith(
+      "voip:out:answer:att-1",
+      { sdp: "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=setup:active\r\n" },
+      55_000,
+    )
+  })
+
   test("releases the stored answer if the job enqueue throws, so a redelivery can retry", async () => {
     mocks.findByAttemptId.mockResolvedValue(row())
     mocks.setIfAbsent.mockResolvedValue(true)
