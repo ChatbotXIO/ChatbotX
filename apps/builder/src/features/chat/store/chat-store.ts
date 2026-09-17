@@ -16,6 +16,7 @@ import type {
   MessageResource,
   MessageResourceWithRelations,
 } from "@/features/messages/schema/resource"
+import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
 
 export type ConversationFilters = {
@@ -86,6 +87,20 @@ export type ChatActions = {
     data: Partial<ConversationResource>,
   ) => void
   updateConversationViaMessage: (message: MessageResource) => void
+  /**
+   * Moves a conversation to the top of the (already loaded) in-memory list —
+   * a purely visual reorder used to surface a ringing VoIP call. Never
+   * touches `lastActivityAt` or `nextCursorConversation`: it must not corrupt
+   * the server's keyset pagination cursor, and it does not persist across
+   * `loadMore`/`resetState`/a filter change. Fetches and prepends the
+   * conversation when it isn't loaded client-side yet (mirrors
+   * `updateConversationViaMessage`'s not-found branch); a lookup failure
+   * (e.g. filtered out for this agent) is a silent no-op.
+   */
+  bubbleConversationToTop: (
+    workspaceId: string,
+    conversationId: string,
+  ) => Promise<void>
 
   deleteConversation: (conversationId: string) => void
   readConversation: (conversationId: string) => void
@@ -105,6 +120,10 @@ export type ChatActions = {
     error: string | null,
   ) => void
   assignMessageCommentId: (messageId: string, commentId: string) => void
+  updateMessageContentAttributes: (
+    messageId: string,
+    contentAttributes: Record<string, unknown>,
+  ) => void
   updateMessageAttributes: (
     messageId: string,
     attributes: { liked: boolean; hidden: boolean },
@@ -455,6 +474,20 @@ export const createChatStore = () => {
       }))
     },
 
+    // Merges a `contentAttributes` patch pushed via `messageContentUpdated`
+    // (e.g. a call transcript arriving after the recording message itself)
+    // — a full replace, not a deep merge, matching how the worker always
+    // sends the entity's complete shape rather than a partial diff.
+    updateMessageContentAttributes: (messageId, contentAttributes) => {
+      set((state) => ({
+        messages: state.messages.map((message): typeof message =>
+          message.id === messageId
+            ? { ...message, contentAttributes }
+            : message,
+        ),
+      }))
+    },
+
     markMessagesDeleted: (messageIds: string[]) => {
       const idSet = new Set(messageIds)
       const now = new Date()
@@ -621,6 +654,54 @@ export const createChatStore = () => {
           })
         newConversation.data.messages = [message]
         prependConversation(newConversation.data)
+      }
+    },
+
+    bubbleConversationToTop: async (
+      workspaceId: string,
+      conversationId: string,
+    ) => {
+      const { conversations, prependConversation } = get()
+      const conversationIndex = conversations.findIndex(
+        (c) => c.id === conversationId,
+      )
+
+      if (conversationIndex > -1) {
+        // Already loaded — splice it out and re-insert at the front, exactly
+        // like `updateConversationViaMessage`, but WITHOUT touching
+        // `lastActivityAt` or `messages`: this is a visual-only reorder, not
+        // a new-message event.
+        const updatedConversations = [...conversations]
+        const [conversation] = updatedConversations.splice(conversationIndex, 1)
+        if (conversation) {
+          set({ conversations: [conversation, ...updatedConversations] })
+        }
+        return
+      }
+
+      // Not loaded client-side (e.g. it was outside the current page or
+      // filter) — fetch and prepend it, mirroring
+      // `updateConversationViaMessage`'s not-found branch. A lookup failure
+      // (not visible to this agent under the active filters) is a no-op:
+      // the ringing state still lives in the VoIP call store, so the dock
+      // and dialog keep working even if the list can't show the row.
+      try {
+        const response =
+          await client.conversationsAPI.findConversationAuthenticatedAPI({
+            workspaceId,
+            id: conversationId,
+          })
+        prependConversation(response.data)
+      } catch (error) {
+        // Not surfaced as a toast — the ringing state still lives in the
+        // VoIP call store, so the dock/dialog keep working even if the list
+        // can't show the row. But a real network/auth/5xx failure must not
+        // be indistinguishable from the documented "filtered out for this
+        // agent" case, so log it (M-ts2 / L4).
+        logger.warn(
+          { err: error, conversationId },
+          "bubbleConversationToTop: failed to fetch conversation to prepend",
+        )
       }
     },
 

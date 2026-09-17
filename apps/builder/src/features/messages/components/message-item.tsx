@@ -6,6 +6,11 @@ import type {
   MessageTemplateEntity,
 } from "@chatbotx.io/sdk"
 import {
+  getWhatsappCallEntity,
+  getWhatsappCallPermissionReply,
+  getWhatsappCallRecordingEntity,
+} from "@chatbotx.io/sdk"
+import {
   Avatar,
   AvatarFallback,
   AvatarImage,
@@ -27,12 +32,13 @@ import {
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { format } from "date-fns"
 import {
-  AlertCircleIcon,
   BotIcon,
   ExternalLinkIcon,
   ImageIcon,
   LockIcon,
   PaperclipIcon,
+  PhoneIcon,
+  PhoneOffIcon,
   ReplyIcon,
   ThumbsUp,
 } from "lucide-react"
@@ -43,8 +49,11 @@ import { useState } from "react"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentUrl } from "@/features/attachments/utils"
 import type { MessageResourceWithRelations } from "../schema/resource"
+import { CallRecordingActivity } from "./call-recording-activity"
 import { MessageActions, MessageActionsEditor } from "./message-actions"
 import { MessageBubble } from "./message-bubble"
+import { MessageErrorBadge } from "./message-error-badge"
+import { WhatsappCallCard } from "./whatsapp-call-card"
 
 type MessageItemProps = {
   message: MessageResourceWithRelations
@@ -119,6 +128,35 @@ export const MessageItem = (props: MessageItemProps) => {
   const isHidden = attributes?.hidden === true
   const hasAttachments = !!message.attachments?.length
   const storyReply = getStoryReplyEntity(message.contentAttributes)
+  // Call-related rows render localized labels from contentAttributes (see
+  // WhatsappCallActivity / WhatsappCallPermissionReply); the stored text is
+  // only an English fallback for previews and must not double-render here.
+  const whatsappCall = getWhatsappCallEntity(message.contentAttributes)
+  const callPermissionReply = getWhatsappCallPermissionReply(
+    message.contentAttributes,
+  )
+  // The recording's own audio attachment is rendered by CallRecordingActivity
+  // below (via RenderContentAttributes) instead of the generic
+  // RenderAttachments path, so it can refresh its own signed URL and show
+  // the transcript once available.
+  const whatsappCallRecording = getWhatsappCallRecordingEntity(
+    message.contentAttributes,
+  )
+  const suppressRawText = Boolean(whatsappCall || callPermissionReply)
+
+  // A WhatsApp call card is a system `activity` message (so it defaults to the
+  // centered `full` variant), but a call has a direction: a customer-initiated
+  // call belongs on the incoming (left) side and a business-initiated call on
+  // the outgoing (right) side, mirroring how the two speakers' messages sit —
+  // `guestDisplay` flips both, exactly like `incoming`/`outgoing` above.
+  if (whatsappCall) {
+    const isBusinessInitiated = whatsappCall.direction === "businessInitiated"
+    if (isBusinessInitiated) {
+      variant = guestDisplay ? "left" : "right"
+    } else {
+      variant = guestDisplay ? "right" : "left"
+    }
+  }
 
   return (
     <MessageBubble
@@ -126,7 +164,7 @@ export const MessageItem = (props: MessageItemProps) => {
       title={format(new Date(message.createdAt), "yyyy/MM/dd HH:mm:ss")}
       variant={variant}
     >
-      {variant === "left" && avatarUrl && (
+      {variant === "left" && avatarUrl && !whatsappCall && (
         <Avatar className="mt-2 size-7 self-start">
           <AvatarImage alt="" src={avatarUrl} />
           <AvatarFallback>
@@ -134,7 +172,12 @@ export const MessageItem = (props: MessageItemProps) => {
           </AvatarFallback>
         </Avatar>
       )}
-      <div className="flex min-h-11 max-w-[70%] flex-col gap-1">
+      <div
+        className={cn(
+          "flex min-h-11 max-w-[70%] flex-col gap-1",
+          variant === "full" && "mx-auto",
+        )}
+      >
         {storyReply && <StoryReplyContext story={storyReply.story} />}
         {isComment ? (
           (message.text ||
@@ -178,28 +221,30 @@ export const MessageItem = (props: MessageItemProps) => {
           )
         ) : (
           <>
-            {(isDeleted || (message.text && message.text.length > 0)) && (
-              <div
-                className={cn(
-                  "text-sm",
-                  variants[variant],
-                  isDeleted && "opacity-50",
-                )}
-              >
-                <pre className="wrap-break-word whitespace-pre-line font-sans">
-                  {isDeleted ? (
-                    <span className="text-xs italic">
-                      {t("messageDeleted")}
-                    </span>
-                  ) : (
-                    message.text
+            {(isDeleted || (message.text && message.text.length > 0)) &&
+              !suppressRawText && (
+                <div
+                  className={cn(
+                    "text-sm",
+                    variants[variant],
+                    isDeleted && "opacity-50",
                   )}
-                </pre>
-              </div>
-            )}
-            {!isDeleted && hasAttachments && (
-              <RenderAttachments message={message} />
-            )}
+                >
+                  <pre className="wrap-break-word whitespace-pre-line font-sans">
+                    {isDeleted ? (
+                      <span className="text-xs italic">
+                        {t("messageDeleted")}
+                      </span>
+                    ) : (
+                      message.text
+                    )}
+                  </pre>
+                </div>
+              )}
+            {!isDeleted &&
+              hasAttachments &&
+              !whatsappCallRecording &&
+              !whatsappCall && <RenderAttachments message={message} />}
           </>
         )}
         {RenderContentAttributes(props)}
@@ -207,20 +252,22 @@ export const MessageItem = (props: MessageItemProps) => {
 
       <div className="flex">
         {message.messageType === "outgoing" && message.sendError && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <span className="flex items-center self-center px-1 text-destructive">
-                  <AlertCircleIcon aria-hidden className="size-4" />
-                </span>
-              }
-            />
-            <TooltipContent>
-              <p>
-                {t("sendFailed")}: {message.sendError}
-              </p>
-            </TooltipContent>
-          </Tooltip>
+          <MessageErrorBadge
+            detail={message.sendError}
+            label={t("sendFailed")}
+          />
+        )}
+        {/* A call failure sits beside the card, not inside it — the same slot
+            an outgoing message's sendError uses, so every failed item in the
+            thread carries its icon in the same place. Meta can terminate an
+            ANSWERED call with no audio (e.g. 138021), so this is not gated on
+            the call having been missed: an "Audio call" card with a silent
+            failure is exactly the case worth surfacing. */}
+        {whatsappCall?.failureReason && (
+          <MessageErrorBadge
+            detail={whatsappCall.failureReason}
+            label={t("callFailed")}
+          />
         )}
         {isComment && !isEditing && message.messageType === "incoming" && (
           <Button
@@ -447,7 +494,9 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
       )
     case "audio":
       return (
-        <audio controls preload="none">
+        // `preload="metadata"` (not "none") so the player shows the clip's
+        // total duration at rest instead of 0:00 / 0:00.
+        <audio controls preload="metadata">
           <track default kind="captions" />
           <source src={attachmentUrl} type={attachment.mimeType} />
         </audio>
@@ -504,8 +553,63 @@ const StoryReplyContext = (props: {
   )
 }
 
+const WhatsappCallPermissionReply = ({
+  response,
+}: {
+  response: "accept" | "reject"
+}) => {
+  const t = useTranslations("messages")
+  const isAccepted = response === "accept"
+
+  return (
+    <div className="flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-3 text-sm">
+      {isAccepted ? (
+        <PhoneIcon aria-hidden className="size-3.5" />
+      ) : (
+        <PhoneOffIcon aria-hidden className="size-3.5" />
+      )}
+      <span>
+        {isAccepted ? t("acceptedCallPermission") : t("declinedCallPermission")}
+      </span>
+    </div>
+  )
+}
+
 const RenderContentAttributes = (props: MessageItemProps) => {
   const { message, onPostback } = props
+  const whatsappCall = getWhatsappCallEntity(message.contentAttributes)
+  if (whatsappCall) {
+    return (
+      <WhatsappCallCard
+        call={whatsappCall}
+        callEndedAt={message.createdAt}
+        contactName={message.contact?.fullName}
+        hasRecordingAttachment={Boolean(message.attachments?.length)}
+      />
+    )
+  }
+
+  const whatsappCallRecording = getWhatsappCallRecordingEntity(
+    message.contentAttributes,
+  )
+  if (whatsappCallRecording) {
+    return (
+      <CallRecordingActivity
+        attachment={message.attachments?.[0]}
+        recording={whatsappCallRecording}
+      />
+    )
+  }
+
+  const callPermissionReply = getWhatsappCallPermissionReply(
+    message.contentAttributes,
+  )
+  if (callPermissionReply) {
+    return (
+      <WhatsappCallPermissionReply response={callPermissionReply.response} />
+    )
+  }
+
   const contentAttributes = message.contentAttributes as
     | MessageTemplateEntity
     | undefined

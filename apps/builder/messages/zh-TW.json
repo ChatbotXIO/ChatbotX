@@ -1465,6 +1465,16 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta 應用程式密鑰（選填）",
+      "description": "為此手動連接啟用 webhook 簽章驗證。您可以在 Meta 應用程式的儀表板中的「設定 > 基本」找到它。"
+    },
+    "lastCallRecorded": {
+      "label": "最近通話錄音"
+    },
+    "lastCallTranscript": {
+      "label": "最近通話轉寫"
     }
   },
   "messages": {
@@ -1594,7 +1604,20 @@
     "waTemplateLtoExpirationRequired": "傳送前請為限時優惠選擇到期時間。",
     "waTemplateMpmIncompleteProducts": "每個分組至少需要一個已選擇的商品——請刪除空白列或為其選擇商品。",
     "mediaStepUnsupported": "此管道無法傳送該類型的媒體。請刪除該步驟，或將此節點指向支援的管道。",
-    "mediaButtonsUnsupported": "此管道無法隨媒體訊息傳送按鈕。請刪除按鈕，或移到此步驟之後的文字步驟中。"
+    "mediaButtonsUnsupported": "此管道無法隨媒體訊息傳送按鈕。請刪除按鈕，或移到此步驟之後的文字步驟中。",
+    "voiceCall": "語音通話",
+    "voiceCallDuration": "語音通話 · {duration}",
+    "missedVoiceCall": "未接語音通話",
+    "declinedVoiceCall": "已拒絕的語音通話",
+    "voiceCallFailed": "失敗的語音通話",
+    "unansweredVoiceCall": "無人接聽",
+    "canceledVoiceCall": "已取消的通話",
+    "acceptedCallPermission": "已接受通話權限請求",
+    "declinedCallPermission": "已拒絕通話權限請求",
+    "sendHumanAgentTag": "傳送一封帶有 HUMAN_AGENT 標籤的訊息",
+    "warning": "警告！",
+    "humanAgentWarningDescription": "只有在問題無法於 24 小時內合理解決時，您才可以在 7 天內回覆使用者的訊息。例如週末、假日，或需要超過一天才能完成的案例。請勿因其他原因使用此選項，否則可能讓您的 Facebook 粉專或 Instagram 帳號面臨風險。如果您不確定，請不要繼續。",
+    "callFailed": "通話問題"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
@@ -2632,7 +2655,9 @@
       "import": "匯入流程",
       "export": "匯出",
       "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
-      "importJsonOnly": "僅限 JSON 檔案"
+      "importJsonOnly": "僅限 JSON 檔案",
+      "whatsappCallButton": "透過 WhatsApp 通話",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -2748,6 +2773,10 @@
     "media": {
       "stepUnsupportedOnChannel": "此管道無法傳送該類型的媒體，此步驟會被略過。請刪除該步驟，或將節點切換到支援的管道。",
       "buttonsSkippedOnChannel": "此管道無法隨媒體訊息傳送按鈕，按鈕會被略過。請改放在後面的文字步驟中。"
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "編輯按鈕",
+      "buttonLabel": "按鈕標籤"
     }
   },
   "folders": {
@@ -2969,7 +2998,8 @@
       "adAccountFilter": {
         "all": "所有廣告帳戶",
         "label": "廣告帳戶",
-        "unavailable": "無法載入廣告帳號——請在設定中檢查此整合的 Ads 連線，或工作區的 Facebook Ads 連線。"
+        "unavailable": "無法載入廣告帳號——請在設定中檢查此整合的 Ads 連線，或工作區的 Facebook Ads 連線。",
+        "note": "以廣告帳戶篩選時，在所選日期範圍內有轉換但花費或曝光為零的廣告將被隱藏。"
       },
       "channelFilter": {
         "label": "頻道",
@@ -3774,7 +3804,8 @@
       "profile": "簡介",
       "usefulLinks": "有用連結",
       "conversionsApi": "廣告優化",
-      "settings": "設定"
+      "settings": "設定",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "管理您的WhatsApp帳戶",
@@ -3906,6 +3937,217 @@
     "transferPhoneNumber": "從其他 Whatsapp 供應商轉接電話",
     "selectPage": {
       "tryAgain": "嘗試重新連接"
+    },
+    "manualAppSecretMissingNotice": "在您新增 Meta 應用程式密鑰之前，webhook 簽章將不會被驗證。",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta 拒絕了通話設定的變更",
+        "bicUnavailable": "此國家不支援商家主動發起的通話",
+        "callAlreadyInProgress": "與此聯絡人的通話已在進行中",
+        "hangupFailed": "無法結束通話",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "Could not decline the WhatsApp call",
+        "voipHangupFailed": "Could not end the WhatsApp call",
+        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "該來電已不再響鈴",
+        "transcriptionRequiresRecording": "請先開啟通話錄音，再開啟轉錄。"
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "錄製在收件匣中接聽或撥出的通話，並將錄音加入對話中。",
+      "recordingInProgress": "已請求錄音",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Meta 拒絕了此變更",
+      "callContact": "在 WhatsApp 上通話",
+      "dialing": "通話中…",
+      "startCall": "開始 WhatsApp 通話",
+      "retentionLabel": "錄音保留期限（天）",
+      "retentionHelper": "通話錄音在永久刪除前的保留時長。",
+      "transcriptionLabel": "轉錄通話",
+      "transcriptionHelper": "將每通已錄製通話的逐字稿加入對話中。",
+      "preflight": {
+        "title": "通話資格",
+        "appSubscriptionMissing": "請先在 Meta 應用程式儀表板中為此應用程式設定 WhatsApp webhook，然後再試一次。",
+        "appSubscriptionFailed": "無法驗證應用程式的「calls」webhook 訂閱狀態，請稍後再試。",
+        "callsNotSubscribed": "此應用程式未訂閱「calls」webhook 欄位，因此通話事件無法傳送至 ChatbotX（Meta 錯誤 138018：未滿足技術先決條件 — 請確保訂閱 WABA 的至少一個應用程式也具有通話 webhook 欄位）。",
+        "fixButton": "修復",
+        "fixSuccess": "此應用程式現已訂閱 WhatsApp 通話 webhook。",
+        "manualIntegrationNotice": "此號碼是手動連接的，此處沒有應用程式憑證。請在 Meta 應用程式儀表板中為您的應用程式訂閱「calls」webhook 欄位。",
+        "coexistenceWarning": "此號碼使用與 WhatsApp Business 應用程式的共存模式，而 Meta 不支援此模式進行通話。請將其僅移至 Cloud API。",
+        "messagingLimitTooLow": "此號碼的訊息限制等級低於 Meta 進行通話所要求的最低標準。"
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "顯示逐字稿",
+        "hideTranscript": "隱藏逐字稿"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "麥克風存取被拒絕。請在瀏覽器設定中允許麥克風存取，然後重試。",
+        "micNotFound": "找不到麥克風。請連接麥克風後重試。"
+      },
+      "card": {
+        "audioCall": "語音通話",
+        "recordingUnavailable": "錄音已不再可用",
+        "recordingNotCaptured": "此通話沒有可用的錄音",
+        "recordingProcessing": "正在處理錄音…",
+        "moreOptions": "更多選項",
+        "download": "下載",
+        "openCallInformation": "開啟通話資訊",
+        "transcript": "轉錄文字",
+        "aiSummary": "AI 摘要",
+        "transcriptUnavailable": "轉錄文字尚未可用",
+        "summaryUnavailable": "AI 摘要尚未可用",
+        "play": "播放",
+        "pause": "暫停",
+        "seek": "跳轉",
+        "mute": "靜音",
+        "unmute": "取消靜音",
+        "playbackFailed": "播放失敗",
+        "answeredBy": "由 {name} 接聽",
+        "calledBy": "由 {name} 撥打",
+        "callFailed": "通話問題"
+      },
+      "sheet": {
+        "title": "通話資訊",
+        "summaryTab": "AI 摘要",
+        "transcriptTab": "逐字稿",
+        "searchLabel": "搜尋逐字稿",
+        "searchPlaceholder": "搜尋逐字稿…",
+        "transcriptUnavailable": "此通話的語言暫不支援逐字稿",
+        "transcriptError": "無法載入逐字稿。請檢查您的連線後再試一次。",
+        "noSearchResults": "沒有符合的片段",
+        "playSegment": "從此處播放",
+        "summaryKeyPoints": "要點",
+        "summaryActionItems": "待辦事項",
+        "regenerate": "重新生成",
+        "regenerateConfirmTitle": "要重新生成 AI 摘要嗎？",
+        "regenerateConfirmDescription": "這將以新生成的摘要取代目前的摘要。",
+        "summaryEmpty": "此通話尚無 AI 摘要。",
+        "generateSummary": "生成摘要"
+      },
+      "summaryDialog": {
+        "title": "生成 AI 摘要",
+        "description": "選擇一個已連接的 AI 提供者來總結此通話。",
+        "noProviderTitle": "未連接任何 AI 提供者",
+        "noProviderDescription": "連接一個 AI 整合以生成通話摘要。",
+        "connectLink": "前往 AI 設定",
+        "generate": "生成",
+        "generating": "正在生成…",
+        "generateFailed": "无法生成摘要，請再試一次。",
+        "retry": "重試",
+        "emptyTranscriptTooltip": "此通話尚無可供摘要的逐字稿"
+      },
+      "panel": {
+        "eyebrowCalling": "正在通話中…",
+        "eyebrowIncoming": "來電",
+        "eyebrowOnCall": "通話中",
+        "statusPreparing": "正在準備…",
+        "statusWaitingForMic": "正在等待麥克風權限…",
+        "statusDeclined": "已拒絕",
+        "statusCallFailed": "通話失敗",
+        "statusCallEnded": "通話已結束",
+        "end": "結束",
+        "minimize": "最小化",
+        "expand": "展開",
+        "dismiss": "關閉",
+        "statusNoAnswer": "無應答",
+        "eyebrowCallEnded": "通話已結束",
+        "statusConnectionLost": "連線中斷",
+        "ringingListTitle": "{count, plural, one {# 通來電} other {# 通來電}}"
+      },
+      "capability": {
+        "title": "通話資格",
+        "enableCalling": "請在設定 > 頻道 > WhatsApp > 通話中啟用通話功能。",
+        "reconnectChannel": "請前往設定 > 頻道，重新連接 WhatsApp 頻道。",
+        "ok": "確定",
+        "micPermissionTitle": "麥克風權限",
+        "dialFailureTitle": "無法撥打電話"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "手動連接的號碼",
+        "callsSubscription": "此 WhatsApp 號碼是手動連接的。請確保您的 Meta 應用程式已訂閱 calls webhook 欄位（Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls），否則撥出電話將無法接通，來電也不會響鈴。",
+        "unsignedWebhook": "此號碼也未設定 Meta App Secret，因此其傳入的 webhook 未經過簽署驗證。",
+        "callAnyway": "仍然撥打"
+      },
+      "replaceConfirm": {
+        "title": "結束與 {current} 的通話？",
+        "description": "您正在與 {current} 通話。接聽 {incoming} 會立即結束目前的通話。",
+        "confirm": "結束並接聽",
+        "cancel": "繼續通話"
+      },
+      "answerCaller": "接聽來自 {name} 的來電",
+      "rejectCaller": "拒接來自 {name} 的來電",
+      "hours": {
+        "title": "通話時間",
+        "description": "客戶只能在這些時間內撥打此號碼。在此時間之外，WhatsApp 會建議改為聊天，或在開啟回撥要求時要求回撥，並顯示下次可撥打的時間。",
+        "enabledLabel": "僅在通話時間內接聽來電",
+        "timezoneLabel": "時區",
+        "closed": "休息",
+        "openTimeLabel": "{day}：開始時間",
+        "closeTimeLabel": "{day}：結束時間",
+        "addRangeLabel": "為{day}新增時段",
+        "removeRangeLabel": "刪除{day}的時段",
+        "overnightHint": "每天於 23:59 結束。如需在午夜之後繼續營業，請將剩餘時間加到隔天。",
+        "days": {
+          "monday": "星期一",
+          "tuesday": "星期二",
+          "wednesday": "星期三",
+          "thursday": "星期四",
+          "friday": "星期五",
+          "saturday": "星期六",
+          "sunday": "星期日"
+        },
+        "errors": {
+          "rangeOrder": "結束時間必須晚於開始時間。",
+          "rangeOverlap": "這一天的時段有重疊。",
+          "noOpenHours": "請至少為一天新增時段。"
+        }
+      }
     }
   },
   "zalo": {
@@ -3918,7 +4160,8 @@
       "toggleSuccess": "標籤同步設定已更新。",
       "enabledSince": "自 {date} 啟用",
       "disabled": "已停用"
-    }
+    },
+    "refreshPermissions": "刷新權限"
   },
   "telegram": {
     "description": "此整合可讓您建立Telegram 機器人。",
@@ -4055,7 +4298,9 @@
       "productRemovedFromCart": "產品已從購物車中刪除",
       "productOrdered": "已訂購產品",
       "contactReferredANewContact": "聯絡人推薦了新聯絡人",
-      "contactReferredExistingContact": "聯絡人引用現有聯絡人"
+      "contactReferredExistingContact": "聯絡人引用現有聯絡人",
+      "callRecorded": "通話已錄音",
+      "callTranscribed": "通話已轉寫"
     },
     "actions": {
       "addTag": "新增標籤",
@@ -5667,7 +5912,8 @@
     "connectViaFacebook": "透過 Facebook 連接",
     "unsupportedExplanation": "此 Instagram 帳戶是透過 Instagram Business Login 連接的。請透過 Facebook 連接該帳戶，以使用 Meta Conversions API。",
     "flowStep": {
-      "whatsappNote": "WhatsApp 事件僅會針對由點擊式 WhatsApp 廣告發起的對話傳送。"
+      "whatsappNote": "WhatsApp 事件僅會針對由點擊式 WhatsApp 廣告發起的對話傳送。",
+      "description": "為 Messenger、Instagram 或 WhatsApp 排入一筆 LeadSubmitted 事件。"
     },
     "status": {
       "title": "Meta Conversions API",

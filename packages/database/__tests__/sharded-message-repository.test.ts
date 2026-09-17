@@ -726,6 +726,68 @@ describe("ShardedMessageRepository.updateSourceId", () => {
   })
 })
 
+describe("ShardedMessageRepository.mergeContentAttributesBySourceId", () => {
+  const rangeShard = makeShardInfo("tr:range", "range")
+  const writeShard = makeShardInfo("tr:write", "write")
+
+  function makeUpdateClient(rows: unknown[]) {
+    const chain = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockResolvedValue(rows),
+    }
+    return { update: vi.fn().mockReturnValue(chain), chain }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("merges the overlay via a single jsonb UPDATE — never overwrites the whole column", async () => {
+    const mergedRow = {
+      id: "msg-1",
+      contentAttributes: { hasRecording: true, hasTranscript: true },
+    }
+    const client = makeUpdateClient([mergedRow])
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      getShardClient: vi.fn().mockResolvedValue(client),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.mergeContentAttributesBySourceId(
+      "wacall-call-1",
+      "ws-1",
+      { hasRecording: true },
+    )
+
+    expect(client.update).toHaveBeenCalledWith(messageModel)
+    // `set` is called with the sql merge expression, never a plain object
+    // literal for `contentAttributes` — this is what makes concurrent
+    // writers of disjoint keys (hasRecording vs hasTranscript) safe.
+    expect(client.chain.set).toHaveBeenCalledWith(
+      expect.objectContaining({ contentAttributes: expect.anything() }),
+    )
+    expect(result).toEqual(mergedRow)
+  })
+
+  test("swallows a shard-level failure and returns null when no shard has the row", async () => {
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      getShardClient: vi.fn().mockRejectedValue(new Error("down")),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await expect(
+      repo.mergeContentAttributesBySourceId("wacall-call-1", "ws-1", {
+        hasRecording: true,
+      }),
+    ).resolves.toBeNull()
+  })
+})
+
 describe("ShardedMessageRepository.listByConversation — write-shard union", () => {
   beforeEach(() => {
     vi.clearAllMocks()

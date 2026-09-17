@@ -2192,6 +2192,16 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta App Secret (valgfrit)",
+      "description": "Aktiverer webhook-signaturverificering for denne manuelle forbindelse. Find den i din Meta-apps dashboard under Indstillinger > Grundlæggende."
+    },
+    "lastCallRecorded": {
+      "label": "Seneste opkaldsoptagelse"
+    },
+    "lastCallTranscript": {
+      "label": "Seneste opkaldstransskription"
     }
   },
   "flows": {
@@ -2332,7 +2342,9 @@
       "import": "Importer flow",
       "export": "Eksporter",
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
-      "importJsonOnly": "Kun JSON-filer"
+      "importJsonOnly": "Kun JSON-filer",
+      "whatsappCallButton": "Ring på WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2448,6 +2460,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Denne kanal kan ikke sende denne medietype – trinnet springes over der. Fjern det, eller skift noden til en kanal der understøtter det.",
       "buttonsSkippedOnChannel": "Denne kanal kan ikke sende knapper sammen med en mediebesked – de springes over der. Læg dem i stedet på et efterfølgende teksttrin."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Rediger Knap",
+      "buttonLabel": "Knap Etiket"
     }
   },
   "folders": {
@@ -2669,7 +2685,8 @@
       "adAccountFilter": {
         "all": "Alle annoncekonti",
         "label": "Annoncekonto",
-        "unavailable": "Kunne ikke indlæse annoncekonti — tjek denne integrations Ads-forbindelse, eller workspacets Facebook Ads-forbindelse, i indstillingerne."
+        "unavailable": "Kunne ikke indlæse annoncekonti — tjek denne integrations Ads-forbindelse, eller workspacets Facebook Ads-forbindelse, i indstillingerne.",
+        "note": "Annoncer med konverteringer, men uden forbrug eller levering i den valgte periode, skjules ved filtrering efter annoncekonto."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -3278,7 +3295,20 @@
     "waTemplateLtoExpirationRequired": "Vælg en udløbsdato for tilbuddet, før du sender.",
     "waTemplateMpmIncompleteProducts": "Hver sektion skal have mindst ét valgt produkt — fjern tomme rækker, eller vælg et produkt til dem.",
     "mediaStepUnsupported": "Denne kanal kan ikke sende denne medietype. Fjern trinnet, eller peg noden mod en kanal der understøtter det.",
-    "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette."
+    "mediaButtonsUnsupported": "Denne kanal kan ikke sende knapper sammen med en mediebesked. Fjern knapperne, eller flyt dem til et teksttrin efter dette.",
+    "voiceCall": "Taleopkald",
+    "voiceCallDuration": "Taleopkald · {duration}",
+    "missedVoiceCall": "Ubesvaret taleopkald",
+    "declinedVoiceCall": "Afvist taleopkald",
+    "voiceCallFailed": "Mislykket taleopkald",
+    "unansweredVoiceCall": "Intet svar",
+    "canceledVoiceCall": "Annulleret opkald",
+    "acceptedCallPermission": "Accepterede anmodning om opkaldstilladelse",
+    "declinedCallPermission": "Afviste anmodning om opkaldstilladelse",
+    "sendHumanAgentTag": "Send one besked med HUMAN_AGENT tag",
+    "warning": "Warning!",
+    "humanAgentWarningDescription": "Du may respond til a user's besked within 7 dage kun når den issue kan ikke reasonably være resolved within 24 timer. Examples include weekends, holidays, eller cases at require mere than one day til complete. Do ikke use denne option for vilkårlig anden reason, as it could put din Facebook Page eller Instagram konto på risk. Hvis you're ikke sure, do ikke fortsæt.",
+    "callFailed": "Opkaldsproblem"
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",
@@ -3741,7 +3771,8 @@
       "profile": "Profil",
       "usefulLinks": "Useful Links",
       "conversionsApi": "Ads Optimization",
-      "settings": "Indstillinger"
+      "settings": "Indstillinger",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Administrer din WhatsApp konto",
@@ -3873,6 +3904,217 @@
     "transferPhoneNumber": "Overfør telefon fra another Whatsapp udbyder",
     "selectPage": {
       "tryAgain": "Try reconnecting"
+    },
+    "manualAppSecretMissingNotice": "Webhook-signaturer bliver ikke verificeret, før du tilføjer din Meta App Secret.",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta afviste ændringen af opkaldsindstillingerne",
+        "bicUnavailable": "Virksomhedsinitieret opkald er ikke tilgængeligt for dette land",
+        "callAlreadyInProgress": "Der er allerede et opkald i gang til denne kontakt",
+        "hangupFailed": "Kunne ikke afslutte opkaldet",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "Could not decline the WhatsApp call",
+        "voipHangupFailed": "Could not end the WhatsApp call",
+        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Det opkald ringer ikke længere",
+        "transcriptionRequiresRecording": "Slå optagelse af opkald til, før du slår transskription til."
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Optag opkald, der besvares eller foretages i indbakken, og føj optagelsen til samtalen.",
+      "recordingInProgress": "Optagelse anmodet",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Meta afviste ændringen",
+      "callContact": "Ring via WhatsApp",
+      "dialing": "Ringer op…",
+      "startCall": "Start WhatsApp-opkald",
+      "retentionLabel": "Opbevaring af optagelser (dage)",
+      "retentionHelper": "Hvor længe optagelser af opkald opbevares, før de slettes permanent.",
+      "transcriptionLabel": "Transskriber opkald",
+      "transcriptionHelper": "Føj en transskription af hvert optaget opkald til samtalen.",
+      "preflight": {
+        "title": "Opkaldsberettigelse",
+        "appSubscriptionMissing": "Konfigurer først WhatsApp-webhooken for denne app i Meta App Dashboard, og forsøg derefter igen.",
+        "appSubscriptionFailed": "Kunne ikke bekræfte appens 'calls'-webhook-abonnement. Forsøg igen om lidt.",
+        "callsNotSubscribed": "Denne app abonnerer ikke på 'calls'-webhookfeltet, så opkaldshændelser kan ikke nå ChatbotX (Meta-fejl 138018: tekniske forudsætninger er ikke opfyldt — sørg for, at mindst én app, der abonnerer på WABA'en, også har opkalds-webhookfeltet).",
+        "fixButton": "Ret",
+        "fixSuccess": "Appen abonnerer nu på WhatsApp-opkalds-webhooks.",
+        "manualIntegrationNotice": "Dette nummer blev forbundet manuelt og har ingen app-legitimationsoplysninger her. Abonnér på 'calls'-webhookfeltet for din app i Meta App Dashboard.",
+        "coexistenceWarning": "Dette nummer bruger coexistence med WhatsApp Business-appen, hvilket Meta ikke understøtter til opkald. Flyt det til kun Cloud API.",
+        "messagingLimitTooLow": "Dette nummers meddelelsesgrænse-niveau er under den minimumsgrænse, Meta kræver for opkald."
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "Vis transskription",
+        "hideTranscript": "Skjul transskription"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "Mikrofonadgang blev nægtet. Tillad mikrofonadgang i browserindstillingerne, og forsøg igen.",
+        "micNotFound": "Ingen mikrofon blev fundet. Tilslut en mikrofon, og forsøg igen."
+      },
+      "card": {
+        "audioCall": "Lydopkald",
+        "recordingUnavailable": "Optagelsen er ikke længere tilgængelig",
+        "recordingNotCaptured": "Optagelse ikke tilgængelig for dette opkald",
+        "recordingProcessing": "Optagelse behandles…",
+        "moreOptions": "Flere valgmuligheder",
+        "download": "Download",
+        "openCallInformation": "Åbn opkaldsoplysninger",
+        "transcript": "Udskrift",
+        "aiSummary": "AI-resumé",
+        "transcriptUnavailable": "Udskrift ikke tilgængelig endnu",
+        "summaryUnavailable": "AI-resumé ikke tilgængeligt endnu",
+        "play": "Afspil",
+        "pause": "Pause",
+        "seek": "Søg",
+        "mute": "Lydløs",
+        "unmute": "Fjern lydløs",
+        "playbackFailed": "Afspilning mislykkedes",
+        "answeredBy": "Besvaret af {name}",
+        "calledBy": "Ringet op af {name}",
+        "callFailed": "Opkaldsproblem"
+      },
+      "sheet": {
+        "title": "Opkaldsoplysninger",
+        "summaryTab": "AI-resúmé",
+        "transcriptTab": "Transskription",
+        "searchLabel": "Søg i transskription",
+        "searchPlaceholder": "Søg i transskription…",
+        "transcriptUnavailable": "Transskription ikke tilgængelig for dette opkalds sprog",
+        "transcriptError": "Kunne ikke indlæse udskriften. Kontroller din forbindelse, og prøv igen.",
+        "noSearchResults": "Ingen matchende afsnit",
+        "playSegment": "Afspil herfra",
+        "summaryKeyPoints": "Vigtige punkter",
+        "summaryActionItems": "Handlingspunkter",
+        "regenerate": "Regenerér",
+        "regenerateConfirmTitle": "Regenerér AI-resúmé?",
+        "regenerateConfirmDescription": "Dette udskifter det nuværende resúmé med et nyt genereret resúmé.",
+        "summaryEmpty": "Der er endnu ikke noget AI-resúmé for dette opkald.",
+        "generateSummary": "Generér resúmé"
+      },
+      "summaryDialog": {
+        "title": "Generér AI-resúmé",
+        "description": "Vælg en tilsluttet AI-udbyder til at opsummere dette opkald.",
+        "noProviderTitle": "Ingen AI-udbyder tilsluttet",
+        "noProviderDescription": "Tilslut en AI-integration for at generere opkaldsresúméer.",
+        "connectLink": "Gå til AI-indstillinger",
+        "generate": "Generér",
+        "generating": "Genererer…",
+        "generateFailed": "Kunne ikke generere resúméet. Prøv igen.",
+        "retry": "Prøv igen",
+        "emptyTranscriptTooltip": "Dette opkald har endnu ingen transskription at opsummere"
+      },
+      "panel": {
+        "eyebrowCalling": "RINGER OP…",
+        "eyebrowIncoming": "INDGÅENDE OPKALD",
+        "eyebrowOnCall": "I OPKALD",
+        "statusPreparing": "Forbereder…",
+        "statusWaitingForMic": "Venter på mikrofonadgang…",
+        "statusDeclined": "Afvist",
+        "statusCallFailed": "Opkald mislykkedes",
+        "statusCallEnded": "Opkald afsluttet",
+        "end": "Afslut",
+        "minimize": "Minimer",
+        "expand": "Udvid",
+        "dismiss": "Afvis",
+        "statusNoAnswer": "Intet svar",
+        "eyebrowCallEnded": "OPKALD AFSLUTTET",
+        "statusConnectionLost": "Forbindelsen blev afbrudt",
+        "ringingListTitle": "{count, plural, one {# indgående opkald} other {# indgående opkald}}"
+      },
+      "capability": {
+        "title": "Opkaldsberettigelse",
+        "enableCalling": "Aktivér opkald under Indstillinger > Kanaler > WhatsApp > Opkald.",
+        "reconnectChannel": "Gå til Indstillinger > Kanaler og genopret forbindelsen til WhatsApp-kanalen.",
+        "ok": "OK",
+        "micPermissionTitle": "Mikrofontilladelse",
+        "dialFailureTitle": "Opkaldet kunne ikke oprettes"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Manuelt tilsluttet nummer",
+        "callsSubscription": "Dette WhatsApp-nummer blev tilsluttet manuelt. Sørg for, at din Meta-app abonnerer på calls-webhookfeltet (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — ellers kan udgående opkald ikke oprette forbindelse, og indgående opkald ringer ikke.",
+        "unsignedWebhook": "Dette nummer har heller ikke en Meta App Secret konfigureret, så dets indgående webhooks er ikke signaturverificeret.",
+        "callAnyway": "Ring alligevel"
+      },
+      "replaceConfirm": {
+        "title": "Afslut opkaldet med {current}?",
+        "description": "Du er i et opkald med {current}. Hvis du besvarer {incoming}, afsluttes det opkald med det samme.",
+        "confirm": "Afslut og besvar",
+        "cancel": "Bliv i opkaldet"
+      },
+      "answerCaller": "Besvar opkald fra {name}",
+      "rejectCaller": "Afvis opkald fra {name}",
+      "hours": {
+        "title": "Opkaldstider",
+        "description": "Kunder kan kun ringe til dette nummer inden for disse tider. Uden for dem tilbyder WhatsApp i stedet at chatte eller, hvis anmodninger om at blive ringet op er slået til, at bede om at blive ringet op, og viser, hvornår de kan ringe næste gang.",
+        "enabledLabel": "Tag kun imod opkald inden for opkaldstiderne",
+        "timezoneLabel": "Tidszone",
+        "closed": "Lukket",
+        "openTimeLabel": "{day}: åbner kl.",
+        "closeTimeLabel": "{day}: lukker kl.",
+        "addRangeLabel": "Tilføj tider for {day}",
+        "removeRangeLabel": "Fjern tider for {day}",
+        "overnightHint": "Hver dag slutter kl. 23:59. For at holde åbent efter midnat skal du føje de resterende timer til næste dag.",
+        "days": {
+          "monday": "Mandag",
+          "tuesday": "Tirsdag",
+          "wednesday": "Onsdag",
+          "thursday": "Torsdag",
+          "friday": "Fredag",
+          "saturday": "Lørdag",
+          "sunday": "Søndag"
+        },
+        "errors": {
+          "rangeOrder": "Lukketiden skal ligge efter åbningstiden.",
+          "rangeOverlap": "Tiderne på denne dag overlapper.",
+          "noOpenHours": "Tilføj tider til mindst én dag."
+        }
+      }
     }
   },
   "zalo": {
@@ -3885,7 +4127,8 @@
       "toggleSuccess": "Tag synkroniser setting updated.",
       "enabledSince": "Aktiveret since {date}",
       "disabled": "Deaktiveret"
-    }
+    },
+    "refreshPermissions": "Refresh tilladelser"
   },
   "telegram": {
     "description": "Denne integration lets du opret Telegram bots.",
@@ -4022,7 +4265,9 @@
       "productRemovedFromCart": "Product Removed Fra Cart",
       "productOrdered": "Product Ordered",
       "contactReferredANewContact": "Kontakt Referred A Ny Kontakt",
-      "contactReferredExistingContact": "Kontakt Referred Existing Kontakt"
+      "contactReferredExistingContact": "Kontakt Referred Existing Kontakt",
+      "callRecorded": "Opkald optaget",
+      "callTranscribed": "Opkald transskriberet"
     },
     "actions": {
       "addTag": "Tilføj tag",
@@ -5667,7 +5912,8 @@
     "connectViaFacebook": "Forbind via Facebook",
     "unsupportedExplanation": "Denne Instagram-konto blev forbundet med Instagram Business Login. Forbind kontoen via Facebook for at bruge Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "WhatsApp-hændelser sendes kun for samtaler, der er startet fra en click-to-WhatsApp-annonce."
+      "whatsappNote": "WhatsApp-hændelser sendes kun for samtaler, der er startet fra en click-to-WhatsApp-annonce.",
+      "description": "Sæt en LeadSubmitted-hændelse i kø til Messenger, Instagram eller WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",

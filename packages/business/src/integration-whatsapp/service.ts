@@ -77,6 +77,13 @@ type RecordRegistrationOutcomeInput = {
   outcome: RegistrationOutcome
 }
 
+/** The calling toggles stored on the number itself rather than on Meta. */
+type CallSettingsValues = Partial<{
+  callRecordingEnabled: boolean
+  callRecordingRetentionDays: number
+  callTranscriptionEnabled: boolean
+}>
+
 type FindWorkspaceIntegrationInput = {
   id: string
   workspaceId: string
@@ -691,6 +698,52 @@ class IntegrationWhatsappService extends BaseService {
       reason: "manual",
       tx,
     })
+  }
+
+  /**
+   * Persists the calling toggles that are stored locally rather than on
+   * Meta (call recording, its retention window, and transcription). Scoped
+   * by workspace in the UPDATE itself, so a settings write can never reach
+   * another workspace's number.
+   *
+   * Transcription requires recording, enforced in the write itself so two
+   * admins toggling at once cannot store transcription on with recording
+   * off: turning recording off turns transcription off in the same UPDATE,
+   * and turning transcription on alone only matches a number that records
+   * calls — a miss means it does not, and is refused.
+   */
+  async updateCallSettings(input: {
+    id: string
+    workspaceId: string
+    values: CallSettingsValues
+  }): Promise<void> {
+    const { values } = input
+    if (Object.keys(values).length === 0) {
+      return
+    }
+    const enablesTranscriptionAlone =
+      values.callTranscriptionEnabled === true &&
+      values.callRecordingEnabled !== true
+    const row = await integrationWhatsappRepository.updateCallSettings({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      values:
+        values.callRecordingEnabled === false
+          ? { ...values, callTranscriptionEnabled: false }
+          : values,
+      onlyWhileRecording: enablesTranscriptionAlone,
+    })
+    if (enablesTranscriptionAlone && !row) {
+      throw new WhatsappCallTranscriptionRequiresRecordingError()
+    }
+  }
+}
+
+/** Thrown when transcription is turned on for a number that does not record calls. */
+export class WhatsappCallTranscriptionRequiresRecordingError extends Error {
+  constructor() {
+    super("whatsapp-call-transcription-requires-recording")
+    this.name = "WhatsappCallTranscriptionRequiresRecordingError"
   }
 }
 

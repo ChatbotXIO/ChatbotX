@@ -117,6 +117,13 @@ vi.mock("../src/helpers/storage-url", () => ({
   toPublicStorageUrl: vi.fn().mockResolvedValue("https://cdn.example/a.png"),
 }))
 
+vi.mock("../src/helpers/last-call", () => ({
+  getContactLastCallRecording: vi
+    .fn()
+    .mockResolvedValue("https://cdn.example/recording.ogg"),
+  getContactLastCallTranscript: vi.fn().mockResolvedValue("call transcript"),
+}))
+
 const { getSystemFieldValue } = await import("../src/utils")
 
 const contact = {

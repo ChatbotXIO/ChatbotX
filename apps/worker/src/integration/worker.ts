@@ -1,12 +1,18 @@
 import { createHash } from "node:crypto"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
-import { conversationService } from "@chatbotx.io/business"
+import {
+  conversationService,
+  whatsappCallPermissionService,
+  withBlockedOwnerGuard,
+} from "@chatbotx.io/business"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
-import { getStoryReply } from "@chatbotx.io/sdk"
+import { getStoryReply, getWhatsappCallPermissionReply } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
   AIJobAction,
   aiAgentQueue,
+  type CallTranscriptionJobData,
   closeHeavyQueueEvents,
   closeIntegrationQueueEvents,
   defaultWorkerOptions,
@@ -17,14 +23,17 @@ import {
   type IntegrationJobData,
   integrationQueue,
   queueNames,
+  type WhatsappVoipSignalingJobData,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
+import { hasExhaustedAttempts } from "../lib/job-attempts"
 import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { integrationService } from "../services/integrations"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
 import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
 import { runChallenge } from "./handlers/challenge"
@@ -60,6 +69,12 @@ import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
 import { runWaitResume } from "./handlers/wait-resume"
+import { handleWhatsappCallEvent } from "./handlers/whatsapp-call"
+import { handleWhatsappCallNativeRecordingFetch } from "./handlers/whatsapp-call-native-recording"
+import { handleWhatsappCallNativeTranscriptFetch } from "./handlers/whatsapp-call-native-transcript"
+import { handleWhatsappCallRecordingReady } from "./handlers/whatsapp-call-recording"
+import { handleWhatsappCallTranscribe } from "./handlers/whatsapp-call-transcribe"
+import { handleWhatsappVoipSignalingJob } from "./handlers/whatsapp-voip-signaling"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
 import { closeChatQueueEvents } from "./utils/message"
@@ -94,6 +109,35 @@ function getFlowExecutionKey(job: Job): string {
     "Integration job is missing id; generated flow execution key",
   )
   return flowExecutionKey
+}
+
+/**
+ * The workspace a VoIP signaling job belongs to, for the blocked-owner guard.
+ * Outbound jobs carry `workspaceId`; inbound jobs only carry the business
+ * `phoneNumberId`, resolved through its integration. `undefined` when that
+ * lookup fails — the guard then runs the job, and the handler reports the
+ * missing integration itself.
+ */
+async function resolveVoipSignalingWorkspaceId(
+  job: WhatsappVoipSignalingJobData,
+): Promise<string | undefined> {
+  if ("workspaceId" in job.data) {
+    return job.data.workspaceId
+  }
+  try {
+    const { inbox } =
+      await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+        channelTypes.enum.whatsapp,
+        job.data.phoneNumberId,
+      )
+    return inbox.workspaceId
+  } catch (err) {
+    logger.warn(
+      { err, phoneNumberId: job.data.phoneNumberId },
+      "WhatsApp VoIP signaling: unable to resolve workspace for the blocked-owner guard",
+    )
+    return
+  }
 }
 
 async function startIntegrationWorker() {
@@ -143,6 +187,22 @@ async function startIntegrationWorker() {
                 const isLocation = message.contentType === "location"
 
                 const storyReply = getStoryReply(message.contentAttributes)
+
+                const callPermissionReply = getWhatsappCallPermissionReply(
+                  message.contentAttributes,
+                )
+                if (isFromContact && callPermissionReply) {
+                  await whatsappCallPermissionService.recordReply({
+                    workspaceId: conversation.workspaceId,
+                    contactInboxId: message.contactInboxId,
+                    response: callPermissionReply.response,
+                    isPermanent: callPermissionReply.isPermanent === true,
+                    expirationTimestamp:
+                      callPermissionReply.expirationTimestamp,
+                    respondedAt: message.createdAt,
+                  })
+                  return
+                }
 
                 if (isFromContact && storyReply) {
                   await aiAgentQueue.add(
@@ -349,6 +409,22 @@ async function startIntegrationWorker() {
                 await handleAdsAutomaticEvent(job.data.data)
                 return
               }
+              case IntegrationJobAction.whatsappCallEvent: {
+                await handleWhatsappCallEvent(job.data.data)
+                return
+              }
+              case IntegrationJobAction.whatsappCallRecordingReady: {
+                await handleWhatsappCallRecordingReady(job.data.data)
+                return
+              }
+              case IntegrationJobAction.whatsappCallNativeRecordingFetch: {
+                await handleWhatsappCallNativeRecordingFetch(job.data.data)
+                return
+              }
+              case IntegrationJobAction.whatsappCallNativeTranscriptFetch: {
+                await handleWhatsappCallNativeTranscriptFetch(job.data.data)
+                return
+              }
               case IntegrationJobAction.evaluateTemplateSent:
               case IntegrationJobAction.evaluateConversionTrigger:
               case IntegrationJobAction.sendConversionEvent:
@@ -461,6 +537,89 @@ async function startIntegrationWorker() {
     }
   })
 
+  // Dedicated, rate-limited consumer for call transcription:
+  // a second `Worker` instance in this same process, on its own queue, so
+  // its `limiter` bounds transcription throughput independent of the
+  // shared `integration` queue's traffic/concurrency.
+  const callTranscriptionWorker = new Worker(
+    queueNames.enum.callTranscription,
+    async (job: Job<CallTranscriptionJobData>) => {
+      const workspaceId = job.data.data.workspaceId
+      await withBlockedOwnerGuard(workspaceId, async () => {
+        await runJobWithAuditContext(
+          { workspaceId, source: `integration:${job.data.type}` },
+          async () => {
+            await handleWhatsappCallTranscribe(job.data.data)
+          },
+        )
+      })
+    },
+    {
+      connection: getRedisConnection(),
+      concurrency: 1,
+      limiter: { max: env.CALL_TRANSCRIBE_PER_MIN, duration: 60_000 },
+    },
+  )
+
+  callTranscriptionWorker.on("failed", (job, err) => {
+    if (job) {
+      logger.error({ err }, `Call transcription job ${job.id} has failed`)
+    }
+  })
+
+  // Dedicated consumer for WhatsApp Business Calling VoIP-mode signaling: a
+  // third `Worker` instance in this same process, on its own queue — the
+  // shared `integration` queue's traffic/concurrency must never starve the
+  // 30-60s Meta answer-deadline window (docs/whatsapp-calling-voip.md
+  // contract #3). `resolveWorkspaceId`'s generic resolvers don't know about
+  // `phoneNumberId`, so the workspace is resolved directly here for the
+  // frozen-workspace guard; the handler resolves the integration again for
+  // its own purposes (auth, inboxId) — same redundant-resolution shape as
+  // the main `worker` processor above and its handlers.
+  const whatsappVoipSignalingWorker = new Worker<WhatsappVoipSignalingJobData>(
+    queueNames.enum.whatsappVoipSignaling,
+    async (job: Job<WhatsappVoipSignalingJobData>) => {
+      const workspaceId = await resolveVoipSignalingWorkspaceId(job.data)
+
+      await withBlockedOwnerGuard(workspaceId, async () => {
+        await runJobWithAuditContext(
+          { workspaceId, source: `integration:${job.data.type}` },
+          async () => {
+            await handleWhatsappVoipSignalingJob(job.data)
+          },
+        )
+      })
+    },
+    {
+      connection: getRedisConnection(),
+      concurrency: 10,
+    },
+  )
+
+  whatsappVoipSignalingWorker.on("failed", (job, err) => {
+    if (!job) {
+      return
+    }
+    // Retries here are routine, not incidents: `handleConnect` throws
+    // `VoipCallRowNotReadyError` until the SEPARATE `whatsappCallEvent` job
+    // creates the call row, and this queue's retry window
+    // (`WHATSAPP_VOIP_SIGNAL_RETRY_OPTIONS`) exists precisely to outlast that
+    // lag. Logging every attempt at ERROR made a perfectly healthy race read
+    // as a dropped call. Only an exhausted job actually lost the offer.
+    const attempts = job.opts.attempts ?? 1
+    if (!hasExhaustedAttempts(job)) {
+      logger.warn(
+        { err, attempt: job.attemptsMade, attempts },
+        `Whatsapp VoIP signaling job ${job.id} attempt failed; retrying`,
+      )
+      return
+    }
+    logger.error(
+      { err, attempts },
+      `Whatsapp VoIP signaling job ${job.id} has failed`,
+    )
+  })
+
   let isShuttingDown = false
   async function shutdown() {
     if (isShuttingDown) {
@@ -470,6 +629,8 @@ async function startIntegrationWorker() {
     try {
       await worker.close()
       await Promise.all([
+        callTranscriptionWorker.close(),
+        whatsappVoipSignalingWorker.close(),
         closeChatQueueEvents(),
         closeIntegrationQueueEvents(),
         closeHeavyQueueEvents(),

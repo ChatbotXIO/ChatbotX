@@ -23,6 +23,11 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
+const { loggerWarnMock } = vi.hoisted(() => ({ loggerWarnMock: vi.fn() }))
+vi.mock("@/lib/log", () => ({
+  logger: { warn: loggerWarnMock, error: vi.fn(), info: vi.fn() },
+}))
+
 const { createChatStore } = await import(
   "../src/features/chat/store/chat-store"
 )
@@ -407,6 +412,76 @@ describe("chat store conversation updates", () => {
       ...second,
       agentLastReadAt: new Date("2026-01-02T00:00:00Z"),
     })
+  })
+
+  test("bubbleConversationToTop moves an already-loaded conversation to the front without touching lastActivityAt or the cursor", async () => {
+    const store = createChatStore()
+    const oldFirst = makeConversation(
+      "conv-1",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const target = makeConversation("conv-2", new Date("2026-01-01T01:00:00Z"))
+    store.setState({
+      conversations: [oldFirst, target] as never,
+      nextCursorConversation: "cursor-abc",
+    })
+
+    await store.getState().bubbleConversationToTop("ws-1", "conv-2")
+
+    const state = store.getState()
+    expect(state.conversations.map((c) => c.id)).toEqual(["conv-2", "conv-1"])
+    // Unlike `updateConversationViaMessage`, this is a purely visual reorder:
+    // no fabricated `lastActivityAt` and no message payload attached.
+    expect(state.conversations[0].lastActivityAt).toEqual(target.lastActivityAt)
+    expect(state.conversations[0].messages).toEqual(target.messages)
+    // The server keyset cursor must never be touched by an in-memory reorder.
+    expect(state.nextCursorConversation).toBe("cursor-abc")
+    expect(mockFindConversationAuthenticatedAPI).not.toHaveBeenCalled()
+  })
+
+  test("bubbleConversationToTop fetches and prepends a conversation that isn't loaded client-side", async () => {
+    const store = createChatStore()
+    const existing = makeConversation(
+      "conv-1",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const fetched = makeConversation(
+      "conv-new",
+      new Date("2026-01-01T02:00:00Z"),
+    )
+    store.setState({ conversations: [existing] as never })
+    mockFindConversationAuthenticatedAPI.mockResolvedValue({ data: fetched })
+
+    await store.getState().bubbleConversationToTop("ws-1", "conv-new")
+
+    expect(mockFindConversationAuthenticatedAPI).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "conv-new",
+    })
+    expect(store.getState().conversations).toEqual([fetched, existing])
+  })
+
+  test("bubbleConversationToTop is a silent no-op when the conversation cannot be fetched (e.g. filtered out)", async () => {
+    const store = createChatStore()
+    const existing = makeConversation(
+      "conv-1",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    store.setState({ conversations: [existing] as never })
+    mockFindConversationAuthenticatedAPI.mockRejectedValue(
+      new Error("not found"),
+    )
+
+    await expect(
+      store.getState().bubbleConversationToTop("ws-1", "conv-missing"),
+    ).resolves.toBeUndefined()
+    expect(store.getState().conversations).toEqual([existing])
+    // M-ts2 / L4: the failure is logged (not silently swallowed), even
+    // though it never surfaces as a toast.
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      expect.objectContaining({ conversationId: "conv-missing" }),
+      expect.any(String),
+    )
   })
 })
 

@@ -1465,6 +1465,16 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Segreto app Meta (opzionale)",
+      "description": "Attiva la verifica della firma del webhook per questa connessione manuale. Puoi trovarlo nella dashboard della tua app Meta, in Impostazioni > Generali."
+    },
+    "lastCallRecorded": {
+      "label": "Ultima registrazione chiamata"
+    },
+    "lastCallTranscript": {
+      "label": "Ultima trascrizione chiamata"
     }
   },
   "actions": {
@@ -2332,7 +2342,9 @@
       "import": "Importa flusso",
       "export": "Esporta",
       "importStarted": "Il flusso è in fase di importazione. Controlla la cronologia delle importazioni per i risultati.",
-      "importJsonOnly": "Solo file JSON"
+      "importJsonOnly": "Solo file JSON",
+      "whatsappCallButton": "Chiama su WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "La somma totale deve essere pari al 100%.",
@@ -2448,6 +2460,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Questo canale non può inviare questo tipo di contenuto: il passaggio viene ignorato. Rimuovilo o imposta il nodo su un canale che lo supporta.",
       "buttonsSkippedOnChannel": "Questo canale non può inviare pulsanti con un messaggio multimediale: lì vengono ignorati. Inseriscili invece in un passaggio di testo successivo."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Modifica pulsante",
+      "buttonLabel": "Etichetta del pulsante"
     }
   },
   "folders": {
@@ -2669,7 +2685,8 @@
       "adAccountFilter": {
         "all": "Tutti gli account pubblicitari",
         "label": "Account pubblicitario",
-        "unavailable": "Impossibile caricare gli account pubblicitari: controlla la connessione Ads di questa integrazione, oppure la connessione Facebook Ads del workspace, nelle impostazioni."
+        "unavailable": "Impossibile caricare gli account pubblicitari: controlla la connessione Ads di questa integrazione, oppure la connessione Facebook Ads del workspace, nelle impostazioni.",
+        "note": "Le inserzioni con conversioni ma senza spesa o senza distribuzione nell'intervallo di date selezionato vengono nascoste durante il filtro per account pubblicitario."
       },
       "channelFilter": {
         "label": "Canale",
@@ -3278,7 +3295,20 @@
     "waTemplateLtoExpirationRequired": "Scegli una data di scadenza per l'offerta a tempo limitato prima di inviare.",
     "waTemplateMpmIncompleteProducts": "Ogni sezione richiede almeno un prodotto selezionato: rimuovi le righe vuote o scegli un prodotto.",
     "mediaStepUnsupported": "Questo canale non può inviare questo tipo di contenuto. Rimuovi il passaggio o imposta questo nodo su un canale che lo supporta.",
-    "mediaButtonsUnsupported": "Questo canale non può inviare pulsanti con un messaggio multimediale. Rimuovi i pulsanti o spostali in un passaggio di testo successivo."
+    "mediaButtonsUnsupported": "Questo canale non può inviare pulsanti con un messaggio multimediale. Rimuovi i pulsanti o spostali in un passaggio di testo successivo.",
+    "voiceCall": "Chiamata vocale",
+    "voiceCallDuration": "Chiamata vocale · {duration}",
+    "missedVoiceCall": "Chiamata vocale persa",
+    "declinedVoiceCall": "Chiamata vocale rifiutata",
+    "voiceCallFailed": "Chiamata vocale non riuscita",
+    "unansweredVoiceCall": "Nessuna risposta",
+    "canceledVoiceCall": "Chiamata annullata",
+    "acceptedCallPermission": "Ha accettato la richiesta di autorizzazione alla chiamata",
+    "declinedCallPermission": "Ha rifiutato la richiesta di autorizzazione alla chiamata",
+    "sendHumanAgentTag": "Invia un messaggio con il tag HUMAN_AGENT",
+    "warning": "Attenzione!",
+    "humanAgentWarningDescription": "Puoi rispondere al messaggio di un utente entro 7 giorni solo quando non è ragionevolmente possibile risolvere il problema entro 24 ore. Ad esempio durante fine settimana e festività o nei casi che richiedono più di un giorno. Non usare questa opzione per altri motivi, poiché potresti mettere a rischio la tua Pagina Facebook o il tuo account Instagram. Se hai dubbi, non continuare.",
+    "callFailed": "Problema di chiamata"
   },
   "instagram": {
     "description": "Questa integrazione ti consente di creare bot Instagram.",
@@ -3741,7 +3771,8 @@
       "profile": "Profilo",
       "usefulLinks": "Link utili",
       "conversionsApi": "Ottimizzazione annunci",
-      "settings": "Impostazioni"
+      "settings": "Impostazioni",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Gestisci il tuo account WhatsApp",
@@ -3873,6 +3904,217 @@
     "transferPhoneNumber": "Trasferisci il numero di telefono da un altro provider WhatsApp",
     "selectPage": {
       "tryAgain": "Prova a ricollegarti"
+    },
+    "manualAppSecretMissingNotice": "Le firme dei webhook non vengono verificate finché non aggiungi il tuo segreto app Meta.",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta ha rifiutato la modifica delle impostazioni di chiamata",
+        "bicUnavailable": "Le chiamate avviate dall'azienda non sono disponibili per questo paese",
+        "callAlreadyInProgress": "È già in corso una chiamata con questo contatto",
+        "hangupFailed": "Impossibile terminare la chiamata",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "Could not decline the WhatsApp call",
+        "voipHangupFailed": "Could not end the WhatsApp call",
+        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Quella chiamata non sta più squillando",
+        "transcriptionRequiresRecording": "Attiva la registrazione delle chiamate prima di attivare la trascrizione."
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Registra le chiamate ricevute o effettuate dalla inbox e aggiunge la registrazione alla conversazione.",
+      "recordingInProgress": "Registrazione richiesta",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Meta ha rifiutato la modifica",
+      "callContact": "Chiama su WhatsApp",
+      "dialing": "Chiamata in corso…",
+      "startCall": "Avvia chiamata WhatsApp",
+      "retentionLabel": "Conservazione delle registrazioni (giorni)",
+      "retentionHelper": "Per quanto tempo vengono conservate le registrazioni delle chiamate prima di essere eliminate definitivamente.",
+      "transcriptionLabel": "Trascrivi chiamate",
+      "transcriptionHelper": "Aggiunge alla conversazione la trascrizione di ogni chiamata registrata.",
+      "preflight": {
+        "title": "Idoneità alle chiamate",
+        "appSubscriptionMissing": "Configura prima il webhook di WhatsApp per questa app nella dashboard delle app Meta, quindi riprova.",
+        "appSubscriptionFailed": "Impossibile verificare l'iscrizione al webhook 'calls' dell'app. Riprova a breve.",
+        "callsNotSubscribed": "Questa app non è iscritta al campo webhook 'calls', quindi gli eventi di chiamata non possono raggiungere ChatbotX (errore Meta 138018: i prerequisiti tecnici non sono soddisfatti — assicurati che almeno un'app iscritta al WABA disponga anche del campo webhook delle chiamate).",
+        "fixButton": "Correggi",
+        "fixSuccess": "L'app è ora iscritta ai webhook delle chiamate WhatsApp.",
+        "manualIntegrationNotice": "Questo numero è stato connesso manualmente e non dispone di credenziali app qui. Iscrivi il campo webhook 'calls' della tua app nella dashboard delle app Meta.",
+        "coexistenceWarning": "Questo numero utilizza la coesistenza con l'app WhatsApp Business, non supportata da Meta per le chiamate. Spostalo su Cloud API soltanto.",
+        "messagingLimitTooLow": "Il livello del limite di messaggistica di questo numero è inferiore al minimo richiesto da Meta per le chiamate."
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "Mostra trascrizione",
+        "hideTranscript": "Nascondi trascrizione"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "Accesso al microfono negato. Consenti l'accesso nelle impostazioni del browser e riprova.",
+        "micNotFound": "Nessun microfono trovato. Collega un microfono e riprova."
+      },
+      "card": {
+        "audioCall": "Chiamata audio",
+        "recordingUnavailable": "Registrazione non più disponibile",
+        "recordingNotCaptured": "Registrazione non disponibile per questa chiamata",
+        "recordingProcessing": "Elaborazione della registrazione…",
+        "moreOptions": "Altre opzioni",
+        "download": "Scarica",
+        "openCallInformation": "Apri informazioni chiamata",
+        "transcript": "Trascrizione",
+        "aiSummary": "Riepilogo IA",
+        "transcriptUnavailable": "Trascrizione non ancora disponibile",
+        "summaryUnavailable": "Riepilogo IA non ancora disponibile",
+        "play": "Riproduci",
+        "pause": "Pausa",
+        "seek": "Cerca",
+        "mute": "Muto",
+        "unmute": "Attiva audio",
+        "playbackFailed": "Riproduzione non riuscita",
+        "answeredBy": "Risposta da {name}",
+        "calledBy": "Chiamata da {name}",
+        "callFailed": "Problema di chiamata"
+      },
+      "sheet": {
+        "title": "Informazioni sulla chiamata",
+        "summaryTab": "Riepilogo IA",
+        "transcriptTab": "Trascrizione",
+        "searchLabel": "Cerca nella trascrizione",
+        "searchPlaceholder": "Cerca nella trascrizione…",
+        "transcriptUnavailable": "Trascrizione non disponibile per la lingua di questa chiamata",
+        "transcriptError": "Impossibile caricare la trascrizione. Controlla la connessione e riprova.",
+        "noSearchResults": "Nessun segmento corrispondente",
+        "playSegment": "Riproduci da qui",
+        "summaryKeyPoints": "Punti chiave",
+        "summaryActionItems": "Azioni da svolgere",
+        "regenerate": "Rigenera",
+        "regenerateConfirmTitle": "Rigenerare il riepilogo IA?",
+        "regenerateConfirmDescription": "Questo sostituirà il riepilogo attuale con uno nuovo generato.",
+        "summaryEmpty": "Non è ancora disponibile un riepilogo IA per questa chiamata.",
+        "generateSummary": "Genera riepilogo"
+      },
+      "summaryDialog": {
+        "title": "Genera riepilogo IA",
+        "description": "Scegli un provider IA connesso per riassumere questa chiamata.",
+        "noProviderTitle": "Nessun provider IA connesso",
+        "noProviderDescription": "Collega un'integrazione IA per generare i riepiloghi delle chiamate.",
+        "connectLink": "Vai alle impostazioni IA",
+        "generate": "Genera",
+        "generating": "Generazione in corso…",
+        "generateFailed": "Impossibile generare il riepilogo. Riprova.",
+        "retry": "Riprova",
+        "emptyTranscriptTooltip": "Questa chiamata non ha ancora una trascrizione da riassumere"
+      },
+      "panel": {
+        "eyebrowCalling": "CHIAMATA IN CORSO…",
+        "eyebrowIncoming": "CHIAMATA IN ARRIVO",
+        "eyebrowOnCall": "IN CHIAMATA",
+        "statusPreparing": "Preparazione…",
+        "statusWaitingForMic": "In attesa dell'accesso al microfono…",
+        "statusDeclined": "Rifiutata",
+        "statusCallFailed": "Chiamata non riuscita",
+        "statusCallEnded": "Chiamata terminata",
+        "end": "Termina",
+        "minimize": "Riduci",
+        "expand": "Espandi",
+        "dismiss": "Chiudi",
+        "statusNoAnswer": "Nessuna risposta",
+        "eyebrowCallEnded": "CHIAMATA TERMINATA",
+        "statusConnectionLost": "Connessione persa",
+        "ringingListTitle": "{count, plural, one {# chiamata in arrivo} other {# chiamate in arrivo}}"
+      },
+      "capability": {
+        "title": "Idoneità alle chiamate",
+        "enableCalling": "Attiva le chiamate in Impostazioni > Canali > WhatsApp > Chiamate.",
+        "reconnectChannel": "Vai su Impostazioni > Canali e riconnetti il canale WhatsApp.",
+        "ok": "OK",
+        "micPermissionTitle": "Autorizzazione microfono",
+        "dialFailureTitle": "Impossibile effettuare la chiamata"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Numero connesso manualmente",
+        "callsSubscription": "Questo numero WhatsApp è stato connesso manualmente. Assicurati che la tua app Meta sia iscritta al campo webhook calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls), altrimenti le chiamate in uscita non si connetteranno e quelle in entrata non squilleranno.",
+        "unsignedWebhook": "Questo numero non ha nemmeno un Meta App Secret configurato, quindi i suoi webhook in entrata non sono verificati tramite firma.",
+        "callAnyway": "Chiama comunque"
+      },
+      "replaceConfirm": {
+        "title": "Terminare la chiamata con {current}?",
+        "description": "Sei in chiamata con {current}. Rispondere a {incoming} terminerà subito quella chiamata.",
+        "confirm": "Termina e rispondi",
+        "cancel": "Resta in chiamata"
+      },
+      "answerCaller": "Rispondi alla chiamata di {name}",
+      "rejectCaller": "Rifiuta la chiamata di {name}",
+      "hours": {
+        "title": "Orari delle chiamate",
+        "description": "I clienti possono chiamare questo numero solo in questi orari. Al di fuori, WhatsApp propone di chattare o, se le richieste di richiamata sono attive, di chiedere una richiamata, e mostra quando potranno chiamare di nuovo.",
+        "enabledLabel": "Accetta chiamate solo negli orari delle chiamate",
+        "timezoneLabel": "Fuso orario",
+        "closed": "Chiuso",
+        "openTimeLabel": "{day}: apre alle",
+        "closeTimeLabel": "{day}: chiude alle",
+        "addRangeLabel": "Aggiungi orari per {day}",
+        "removeRangeLabel": "Rimuovi orari di {day}",
+        "overnightHint": "Ogni giorno termina alle 23:59. Per restare aperti dopo mezzanotte, aggiungi le ore restanti al giorno successivo.",
+        "days": {
+          "monday": "Lunedì",
+          "tuesday": "Martedì",
+          "wednesday": "Mercoledì",
+          "thursday": "Giovedì",
+          "friday": "Venerdì",
+          "saturday": "Sabato",
+          "sunday": "Domenica"
+        },
+        "errors": {
+          "rangeOrder": "L'orario di chiusura deve essere successivo a quello di apertura.",
+          "rangeOverlap": "Gli orari di questo giorno si sovrappongono.",
+          "noOpenHours": "Aggiungi degli orari ad almeno un giorno."
+        }
+      }
     }
   },
   "zalo": {
@@ -3885,7 +4127,8 @@
       "toggleSuccess": "Impostazione di sincronizzazione dei tag aggiornata.",
       "enabledSince": "Attiva dal {date}",
       "disabled": "Disattivata"
-    }
+    },
+    "refreshPermissions": "Aggiorna autorizzazioni"
   },
   "telegram": {
     "description": "Questa integrazione ti consente di creare bot Telegram.",
@@ -4022,7 +4265,9 @@
       "productRemovedFromCart": "Prodotto rimosso dal carrello",
       "productOrdered": "Prodotto ordinato",
       "contactReferredANewContact": "Il contatto ha segnalato un nuovo contatto",
-      "contactReferredExistingContact": "Il contatto ha segnalato un contatto esistente"
+      "contactReferredExistingContact": "Il contatto ha segnalato un contatto esistente",
+      "callRecorded": "Chiamata registrata",
+      "callTranscribed": "Chiamata trascritta"
     },
     "actions": {
       "addTag": "Aggiungi tag",
@@ -5667,7 +5912,8 @@
     "connectViaFacebook": "Connetti tramite Facebook",
     "unsupportedExplanation": "Questo account Instagram è stato connesso con Instagram Business Login. Connetti l'account tramite Facebook per usare Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "Gli eventi WhatsApp vengono inviati solo per le conversazioni avviate da un annuncio click-to-WhatsApp."
+      "whatsappNote": "Gli eventi WhatsApp vengono inviati solo per le conversazioni avviate da un annuncio click-to-WhatsApp.",
+      "description": "Accoda un evento LeadSubmitted per Messenger, Instagram o WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",

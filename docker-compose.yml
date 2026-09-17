@@ -107,6 +107,7 @@ services:
     volumes:
       - redis-ui-data:/data
 
+  # TURN relay for in-app WhatsApp VoIP calling (browser WebRTC ICE).
 networks:
   chatbotx-network:
     driver: bridge

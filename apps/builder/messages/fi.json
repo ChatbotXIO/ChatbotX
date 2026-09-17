@@ -2192,6 +2192,16 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta-sovelluksen salaisuus (valinnainen)",
+      "description": "Ottaa käyttöön webhook-allekirjoituksen varmistuksen tälle manuaaliselle yhteydelle. Löydät sen Meta-sovelluksesi hallintapaneelista kohdasta Asetukset > Perustiedot."
+    },
+    "lastCallRecorded": {
+      "label": "Viimeisin puhelutallenne"
+    },
+    "lastCallTranscript": {
+      "label": "Viimeisin puhelulitterointi"
     }
   },
   "flows": {
@@ -2332,7 +2342,9 @@
       "import": "Tuo vuo",
       "export": "Vie",
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
-      "importJsonOnly": "Vain JSON-tiedostot"
+      "importJsonOnly": "Vain JSON-tiedostot",
+      "whatsappCallButton": "Soita WhatsAppissa",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2448,6 +2460,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Tämä kanava ei voi lähettää tätä mediatyyppiä – vaihe ohitetaan siellä. Poista se tai vaihda solmun kanava sellaiseen, joka tukee sitä.",
       "buttonsSkippedOnChannel": "Tämä kanava ei voi lähettää painikkeita mediaviestin mukana – ne ohitetaan siellä. Sijoita ne sen sijaan seuraavaan tekstivaiheeseen."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Muokkaa painiketta",
+      "buttonLabel": "Painikkeen teksti"
     }
   },
   "folders": {
@@ -2669,7 +2685,8 @@
       "adAccountFilter": {
         "all": "Kaikki mainostilit",
         "label": "Mainostili",
-        "unavailable": "Mainostilien lataus epäonnistui — tarkista tämän integraation Ads-yhteys tai työtilan Facebook Ads -yhteys asetuksista."
+        "unavailable": "Mainostilien lataus epäonnistui — tarkista tämän integraation Ads-yhteys tai työtilan Facebook Ads -yhteys asetuksista.",
+        "note": "Mainokset, joissa on konversioita mutta ei kulutusta tai toimituksia valitulla aikavälillä, piilotetaan suodatettaessa mainostilin mukaan."
       },
       "channelFilter": {
         "label": "Kanava",
@@ -3278,7 +3295,20 @@
     "waTemplateLtoExpirationRequired": "Valitse määräaikaisen tarjouksen päättymisaika ennen lähettämistä.",
     "waTemplateMpmIncompleteProducts": "Jokaisessa osiossa on oltava vähintään yksi valittu tuote — poista tyhjät rivit tai valitse niille tuote.",
     "mediaStepUnsupported": "Tämä kanava ei voi lähettää tätä mediatyyppiä. Poista vaihe tai osoita tämä solmu kanavalle, joka tukee sitä.",
-    "mediaButtonsUnsupported": "Tämä kanava ei voi lähettää painikkeita mediaviestin mukana. Poista painikkeet tai siirrä ne tämän jälkeiseen tekstivaiheeseen."
+    "mediaButtonsUnsupported": "Tämä kanava ei voi lähettää painikkeita mediaviestin mukana. Poista painikkeet tai siirrä ne tämän jälkeiseen tekstivaiheeseen.",
+    "voiceCall": "Äänipuhelu",
+    "voiceCallDuration": "Äänipuhelu · {duration}",
+    "missedVoiceCall": "Vastaamaton äänipuhelu",
+    "declinedVoiceCall": "Hylätty äänipuhelu",
+    "voiceCallFailed": "Epäonnistunut äänipuhelu",
+    "unansweredVoiceCall": "Ei vastausta",
+    "canceledVoiceCall": "Peruutettu puhelu",
+    "acceptedCallPermission": "Hyväksyi soittolupapyynnön",
+    "declinedCallPermission": "Hylkäsi soittolupapyynnön",
+    "sendHumanAgentTag": "Lähetä yksi viesti HUMAN_AGENT-tunnisteella",
+    "warning": "Varoitus!",
+    "humanAgentWarningDescription": "Voit vastata käyttäjän viestiin 7 päivän kuluessa vain, jos ongelmaa ei kohtuudella voi ratkaista 24 tunnissa. Esimerkkejä ovat viikonloput, pyhäpäivät tai tapaukset, joiden ratkaiseminen kestää yli päivän. Älä käytä tätä vaihtoehtoa muusta syystä, sillä se voi vaarantaa Facebook-sivusi tai Instagram-tilisi. Jos olet epävarma, älä jatka.",
+    "callFailed": "Puheluongelma"
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",
@@ -3741,7 +3771,8 @@
       "profile": "Profiili",
       "usefulLinks": "Hyödylliset linkit",
       "conversionsApi": "Mainosten optimointi",
-      "settings": "Asetukset"
+      "settings": "Asetukset",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "Hallitse WhatsApp-tiliäsi",
@@ -3873,6 +3904,217 @@
     "transferPhoneNumber": "Siirrä puhelin toiselta WhatsApp-palveluntarjoajalta",
     "selectPage": {
       "tryAgain": "Yritä yhdistää uudelleen"
+    },
+    "manualAppSecretMissingNotice": "Webhook-allekirjoituksia ei vahvisteta, ennen kuin lisäät Meta-sovelluksen salaisuuden.",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta hylkäsi puheluasetusten muutoksen",
+        "bicUnavailable": "Yrityksen aloittamat puhelut eivät ole käytettävissä tässä maassa",
+        "callAlreadyInProgress": "Puhelu tähän yhteystietoon on jo käynnissä",
+        "hangupFailed": "Puhelua ei voitu lopettaa",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "Could not decline the WhatsApp call",
+        "voipHangupFailed": "Could not end the WhatsApp call",
+        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Tuo puhelu ei enää soi",
+        "transcriptionRequiresRecording": "Ota puheluiden tallennus käyttöön ennen litteroinnin käyttöönottoa."
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Tallenna saapuneessa postissa vastatut tai soitetut puhelut ja lisää tallenne keskusteluun.",
+      "recordingInProgress": "Nauhoitus pyydetty",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Meta hylkäsi muutoksen",
+      "callContact": "Soita WhatsAppissa",
+      "dialing": "Soitetaan…",
+      "startCall": "Aloita WhatsApp-puhelu",
+      "retentionLabel": "Tallenteiden säilytysaika (päivää)",
+      "retentionHelper": "Kuinka pitkään puhelutallenteita säilytetään, ennen kuin ne poistetaan pysyvästi.",
+      "transcriptionLabel": "Tekstitä puhelut",
+      "transcriptionHelper": "Lisää keskusteluun litterointi jokaisesta tallennetusta puhelusta.",
+      "preflight": {
+        "title": "Puheluoikeus",
+        "appSubscriptionMissing": "Määritä ensin WhatsApp-webhook tälle sovellukselle Meta-sovelluspaneelissa ja yritä sitten uudelleen.",
+        "appSubscriptionFailed": "Sovelluksen 'calls'-webhook-tilausta ei voitu vahvistaa. Yritä pian uudelleen.",
+        "callsNotSubscribed": "Tämä sovellus ei ole tilannut 'calls'-webhook-kenttää, joten puhelutapahtumat eivät voi tavoittaa ChatbotX:ää (Meta-virhe 138018: tekniset edellytykset eivät täyty — varmista, että ainakin yhdellä WABA:an tilatulla sovelluksella on myös puhelujen webhook-kenttä).",
+        "fixButton": "Korjaa",
+        "fixSuccess": "Sovellus on nyt tilannut WhatsApp-puheluwebhookit.",
+        "manualIntegrationNotice": "Tämä numero yhdistettiin manuaalisesti, ja sillä ei ole sovellustunnuksia tässä. Tilaa 'calls'-webhook-kenttä sovellukselle Meta-sovelluspaneelissa.",
+        "coexistenceWarning": "Tämä numero käyttää rinnakkaiseloa WhatsApp Business -sovelluksen kanssa, jota Meta ei tue puheluissa. Siirrä se käyttämään vain Cloud APIa.",
+        "messagingLimitTooLow": "Tämän numeron viestirajataso on alle Metan puheluille vaatiman vähimmäistason."
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "Näytä litteroitu teksti",
+        "hideTranscript": "Piilota litteroitu teksti"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "Mikrofonin käyttöoikeus evättiin. Salli käyttöoikeus selaimen asetuksista ja yritä uudelleen.",
+        "micNotFound": "Mikrofonia ei löytynyt. Liitä mikrofoni ja yritä uudelleen."
+      },
+      "card": {
+        "audioCall": "Äänipuhelu",
+        "recordingUnavailable": "Tallenne ei ole enää käytettävissä",
+        "recordingNotCaptured": "Tallennetta ei ole saatavilla tälle puhelulle",
+        "recordingProcessing": "Käsitellään tallennetta…",
+        "moreOptions": "Lisää vaihtoehtoja",
+        "download": "Lataa",
+        "openCallInformation": "Avaa puhelun tiedot",
+        "transcript": "Litteraatio",
+        "aiSummary": "AI-yhteenveto",
+        "transcriptUnavailable": "Litteraatio ei ole vielä valmis",
+        "summaryUnavailable": "AI-yhteenveto ei ole vielä valmis",
+        "play": "Toista",
+        "pause": "Tauko",
+        "seek": "Siirry kohtaan",
+        "mute": "Mykistä",
+        "unmute": "Poista mykistys",
+        "playbackFailed": "Toisto epäonnistui",
+        "answeredBy": "Vastaaja: {name}",
+        "calledBy": "Soittaja: {name}",
+        "callFailed": "Puheluongelma"
+      },
+      "sheet": {
+        "title": "Puhelun tiedot",
+        "summaryTab": "Tekoälyn yhteenveto",
+        "transcriptTab": "Litterointi",
+        "searchLabel": "Hae litteroinnista",
+        "searchPlaceholder": "Hae litteroinnista…",
+        "transcriptUnavailable": "Litterointi ei ole käytettävissä tämän puhelun kielelle",
+        "transcriptError": "Litteraatiota ei voitu latata. Tarkista yhteytesi ja yritä uudelleen.",
+        "noSearchResults": "Ei täsmääviä osioita",
+        "playSegment": "Toista tästä kohdasta",
+        "summaryKeyPoints": "Keskeiset kohdat",
+        "summaryActionItems": "Toimenpiteet",
+        "regenerate": "Luo uudelleen",
+        "regenerateConfirmTitle": "Luodaanko tekoälyn yhteenveto uudelleen?",
+        "regenerateConfirmDescription": "Tämä korvaa nykyisen yhteenvedon uudella luodulla yhteenvedolla.",
+        "summaryEmpty": "Tälle puhelulle ei ole vieldä tekoälyn yhteenvetoa.",
+        "generateSummary": "Luo yhteenveto"
+      },
+      "summaryDialog": {
+        "title": "Luo tekoälyn yhteenveto",
+        "description": "Valitse yhdistetty tekoälypalveluntarjoaja tämän puhelun yhteenvetoa varten.",
+        "noProviderTitle": "Tekoälypalveluntarjoajaa ei ole yhdistetty",
+        "noProviderDescription": "Yhdistä tekoälyintegraatio puheluyhteenvetojen luomiseksi.",
+        "connectLink": "Siirry tekoälyasetuksiin",
+        "generate": "Luo",
+        "generating": "Luodaan…",
+        "generateFailed": "Yhteenvedon luominen epäonnistui. Yritä uudelleen.",
+        "retry": "Yritä uudelleen",
+        "emptyTranscriptTooltip": "Tällä puhelulla ei ole vieldä litterointia yhteenvetoa varten"
+      },
+      "panel": {
+        "eyebrowCalling": "SOITETAAN…",
+        "eyebrowIncoming": "SAAPUVA PUHELU",
+        "eyebrowOnCall": "PUHELUSSA",
+        "statusPreparing": "Valmistellaan…",
+        "statusWaitingForMic": "Odotetaan mikrofonin käyttöoikeutta…",
+        "statusDeclined": "Hylätty",
+        "statusCallFailed": "Puhelu epäonnistui",
+        "statusCallEnded": "Puhelu päättyi",
+        "end": "Lopeta",
+        "minimize": "Pienennä",
+        "expand": "Laajenna",
+        "dismiss": "Sulje",
+        "statusNoAnswer": "Ei vastausta",
+        "eyebrowCallEnded": "PUHELU PÄÄTTYI",
+        "statusConnectionLost": "Yhteys katkesi",
+        "ringingListTitle": "{count, plural, one {# saapuva puhelu} other {# saapuvaa puhelua}}"
+      },
+      "capability": {
+        "title": "Puhelukelpoisuus",
+        "enableCalling": "Ota puhelut käyttöön kohdassa Asetukset > Kanavat > WhatsApp > Puhelut.",
+        "reconnectChannel": "Siirry kohtaan Asetukset > Kanavat ja yhdistä WhatsApp-kanava uudelleen.",
+        "ok": "OK",
+        "micPermissionTitle": "Mikrofonin käyttöoikeus",
+        "dialFailureTitle": "Puhelua ei voitu soittaa"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Manuaalisesti yhdistetty numero",
+        "callsSubscription": "Tämä WhatsApp-numero yhdistettiin manuaalisesti. Varmista, että Meta-sovelluksesi on tilannut calls-webhook-kentän (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — muuten lähtevät puhelut eivät muodosta yhteyttä eivätkä saapuvat puhelut soi.",
+        "unsignedWebhook": "Tälle numerolle ei myöskään ole määritetty Meta App Secret -avainta, joten sen saapuvia webhookeja ei allekirjoitusvarmenneta.",
+        "callAnyway": "Soita silti"
+      },
+      "replaceConfirm": {
+        "title": "Lopetetaanko puhelu henkilön {current} kanssa?",
+        "description": "Olet puhelussa henkilön {current} kanssa. Jos vastaat henkilölle {incoming}, tämä puhelu päättyy heti.",
+        "confirm": "Lopeta ja vastaa",
+        "cancel": "Jatka puhelua"
+      },
+      "answerCaller": "Vastaa puheluun henkilöltä {name}",
+      "rejectCaller": "Hylkää puhelu henkilöltä {name}",
+      "hours": {
+        "title": "Puheluajat",
+        "description": "Asiakkaat voivat soittaa tähän numeroon vain näinä aikoina. Niiden ulkopuolella WhatsApp tarjoaa sen sijaan chattia tai, jos takaisinsoittopyynnöt ovat käytössä, takaisinsoiton pyytämistä ja näyttää, milloin seuraavan kerran voi soittaa.",
+        "enabledLabel": "Ota puheluita vastaan vain puheluaikoina",
+        "timezoneLabel": "Aikavyöhyke",
+        "closed": "Suljettu",
+        "openTimeLabel": "{day}: aukeaa klo",
+        "closeTimeLabel": "{day}: sulkeutuu klo",
+        "addRangeLabel": "Lisää aikoja päivälle {day}",
+        "removeRangeLabel": "Poista aikoja päivältä {day}",
+        "overnightHint": "Jokainen päivä päättyy klo 23:59. Jos haluat pysyä auki keskiyön jälkeen, lisää loput tunnit seuraavalle päivälle.",
+        "days": {
+          "monday": "Maanantai",
+          "tuesday": "Tiistai",
+          "wednesday": "Keskiviikko",
+          "thursday": "Torstai",
+          "friday": "Perjantai",
+          "saturday": "Lauantai",
+          "sunday": "Sunnuntai"
+        },
+        "errors": {
+          "rangeOrder": "Sulkemisajan on oltava avaamisajan jälkeen.",
+          "rangeOverlap": "Tämän päivän ajat menevät päällekkäin.",
+          "noOpenHours": "Lisää aikoja vähintään yhdelle päivälle."
+        }
+      }
     }
   },
   "zalo": {
@@ -3885,7 +4127,8 @@
       "toggleSuccess": "Tunnisteiden synkronointiasetus päivitettiin.",
       "enabledSince": "Käytössä alkaen {date}",
       "disabled": "Ei käytössä"
-    }
+    },
+    "refreshPermissions": "Päivitä käyttöoikeudet"
   },
   "telegram": {
     "description": "Tämän integraation avulla voit luoda Telegram-botteja.",
@@ -4022,7 +4265,9 @@
       "productRemovedFromCart": "Tuote poistettu ostoskorista",
       "productOrdered": "Tuote tilattu",
       "contactReferredANewContact": "Yhteystieto suositteli uutta yhteystietoa",
-      "contactReferredExistingContact": "Yhteystieto suositteli olemassa olevaa yhteystietoa"
+      "contactReferredExistingContact": "Yhteystieto suositteli olemassa olevaa yhteystietoa",
+      "callRecorded": "Puhelu tallennettu",
+      "callTranscribed": "Puhelu litteroitu"
     },
     "actions": {
       "addTag": "Lisää tunniste",
@@ -5667,7 +5912,8 @@
     "connectViaFacebook": "Yhdistä Facebookin kautta",
     "unsupportedExplanation": "Tämä Instagram-tili yhdistettiin Instagram Business -kirjautumisella. Yhdistä tili Facebookin kautta käyttääksesi Meta Conversions API:a.",
     "flowStep": {
-      "whatsappNote": "WhatsApp-tapahtumat lähetetään vain keskusteluista, jotka alkoivat click-to-WhatsApp-mainoksesta."
+      "whatsappNote": "WhatsApp-tapahtumat lähetetään vain keskusteluista, jotka alkoivat click-to-WhatsApp-mainoksesta.",
+      "description": "Jonota LeadSubmitted-tapahtuma Messengerille, Instagramille tai WhatsAppille."
     },
     "status": {
       "title": "Meta Conversions API",

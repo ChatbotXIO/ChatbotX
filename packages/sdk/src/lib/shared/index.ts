@@ -6,6 +6,7 @@ export * from "./message"
 export * from "./meta-messaging"
 export * from "./mime-types"
 export * from "./profile-fields"
+export * from "./recording-content-type"
 
 export type Handler<I, O> = (props: I) => Promise<O>
 
