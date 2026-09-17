@@ -120,7 +120,7 @@ chatbotx config set --apiKey <key> --apiUrl <url>
 chatbotx workspaces get
 chatbotx members list                                # [--page --perPage --sort --keyword]
 chatbotx members get <memberId>
-chatbotx channels list                               # [--includes --page --perPage]
+chatbotx inboxes list                                 # [--page --perPage]
 chatbotx teams list
 ```
 
@@ -165,7 +165,6 @@ chatbotx contacts get <identifier>
 chatbotx contacts upsert <identifier>                    # insert or update; [--firstName --lastName --email --phoneNumber --avatar --gender]
 chatbotx contacts update <identifier>
 chatbotx contacts delete <identifier>
-chatbotx contacts find-by-custom-field               # [--customFieldId --value]
 chatbotx contacts import --fileId <id> --channel <ch> --inboxId <id>
 
 # Tags on a contact

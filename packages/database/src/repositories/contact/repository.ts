@@ -51,23 +51,6 @@ export const contactRepository = {
       with: PUBLIC_CONTACT_RELATIONS,
     })
   },
-  async listPublicByCustomField(
-    input: {
-      where: Record<string, unknown>
-      limit: number
-      orderBy: Record<string, unknown>
-    },
-    tx: DatabaseClient = db,
-  ) {
-    const { where, limit, orderBy } = input
-    const data = await tx.query.contactModel.findMany({
-      where,
-      limit,
-      orderBy,
-      with: PUBLIC_CONTACT_RELATIONS,
-    })
-    return { data }
-  },
   listWithRelations(input: ContactListInput, tx: DatabaseClient = db) {
     return tx.query.contactModel.findMany({
       ...input,

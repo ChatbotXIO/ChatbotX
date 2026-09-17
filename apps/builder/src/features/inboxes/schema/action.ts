@@ -18,6 +18,7 @@ export const publicInboxResource = inboxResource.pick({
   name: true,
   channel: true,
   status: true,
+  sourceId: true,
 })
 
 export const publicListInboxResponse = z.object({
@@ -25,23 +26,3 @@ export const publicListInboxResponse = z.object({
   pageCount: z.number(),
 })
 export type PublicListInboxResponse = z.infer<typeof publicListInboxResponse>
-
-export const publicListInboxesResponse = z.object({
-  data: z.array(
-    inboxResource
-      .pick({
-        name: true,
-        channel: true,
-        status: true,
-      })
-      .extend({
-        // The public API exposes sourceId as id, which is not always numeric
-        // (e.g. TikTok uses the account username)
-        id: z.string(),
-      }),
-  ),
-  pageCount: z.number(),
-})
-export type PublicListInboxesResponse = z.infer<
-  typeof publicListInboxesResponse
->

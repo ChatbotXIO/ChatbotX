@@ -694,11 +694,6 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
-    "operationId": "contacts.findByCustomField",
-    "path": "/v1/contacts/find-by-custom-field",
-  },
-  {
-    "method": "GET",
     "operationId": "contacts.get",
     "path": "/v1/contacts/{identifier}",
   },
@@ -781,11 +776,6 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "DELETE",
     "operationId": "contacts.removeTags",
     "path": "/v1/contacts/{identifier}/tags",
-  },
-  {
-    "method": "POST",
-    "operationId": "contacts.search",
-    "path": "/v1/contacts/search",
   },
   {
     "method": "POST",
@@ -1281,11 +1271,6 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "inboxes.list",
     "path": "/v1/inboxes",
-  },
-  {
-    "method": "GET",
-    "operationId": "inboxes.listChannels",
-    "path": "/v1/channels",
   },
   {
     "method": "POST",

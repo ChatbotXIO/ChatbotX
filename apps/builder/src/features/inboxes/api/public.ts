@@ -2,7 +2,6 @@ import { possibleErrorsOnListingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { listInboxes } from "../queries"
 import {
-  publicListInboxesResponse,
   publicListInboxResponse,
   publishInboxesRequest,
 } from "../schema/action"
@@ -29,31 +28,4 @@ export const inboxesPublicRouter = {
           workspaceId: context.workspace.id,
         }),
     ),
-
-  listChannels: workspaceTokenAuthAPI
-    .route({
-      method: "GET",
-      path: "/v1/channels",
-      summary: "List channels",
-      description:
-        "Deprecated — use `inboxes.list` instead. Kept for backward compatibility; hidden from MCP/CLI tool listings.",
-      deprecated: true,
-      tags: ["Channels"],
-    })
-    .input(publishInboxesRequest)
-    .output(publicListInboxesResponse)
-    .errors(possibleErrorsOnListingResource)
-    .handler(async ({ context, input }) => {
-      const result = await listInboxes({
-        ...input,
-        workspaceId: context.workspace.id,
-      })
-      return {
-        ...result,
-        data: result.data.map(({ sourceId, ...inbox }) => ({
-          ...inbox,
-          id: sourceId,
-        })),
-      }
-    }),
 }

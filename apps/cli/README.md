@@ -171,13 +171,11 @@ The `<identifier>` parameter (`packages/business/src/contact/utils.ts` `parseCon
 # Basic CRUD
 chatbotx contacts list                               # [--page --perPage --sort --keyword --contactFilter]
 chatbotx contacts create --email <email>             # [--phoneNumber --contactId --firstName --lastName]
-chatbotx contacts search                             # Search with filter body [--page --perPage --sort --keyword --contactFilter]
 chatbotx contacts count                              # Count matching filter [--page --perPage --sort --keyword --contactFilter]
 chatbotx contacts get <identifier>
 chatbotx contacts update <identifier>
 chatbotx contacts delete <identifier>
 chatbotx contacts upsert add <identifier>            # Insert or update by identifier
-chatbotx contacts find-by-custom-field --customFieldId <customFieldId> --value <value>
 chatbotx contacts import --fileId <fileId> --channel <channel> --inboxId <inboxId>
                                                      # [--timezone --countryCode]
 chatbotx contacts block <identifier>

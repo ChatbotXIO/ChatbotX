@@ -144,29 +144,10 @@ export const listContactsResponse = z.object({
 })
 export type ListContactsResponse = z.infer<typeof listContactsResponse>
 
-export const publicListContactsResponse = z.object({
-  data: z.array(contactResponse),
-})
-
 export const findContactRequest = contactResource
   .pick({ id: true, workspaceId: true })
   .partial()
 export type FindContactRequest = z.infer<typeof findContactRequest>
-
-export const publicListContactsByCustomFieldRequest = z.object({
-  customFieldId: z
-    .string()
-    .describe(
-      "Custom field id (numeric string). Get it from `customFields.list`.",
-    ),
-  value: z
-    .string()
-    .describe("Custom field value to match, exact string comparison."),
-})
-
-export type PublicListContactsByCustomFieldRequest = z.infer<
-  typeof publicListContactsByCustomFieldRequest
->
 
 export const getContactRequest = z.object({
   workspaceId: zodBigintAsString(),

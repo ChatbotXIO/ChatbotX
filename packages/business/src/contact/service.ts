@@ -49,7 +49,6 @@ import { createContactWithInbox } from "./create-with-inbox"
 import {
   type ContactListScope as ContactListScopeType,
   count as countContacts,
-  listByCustomFieldValue,
   list as listContacts,
 } from "./list"
 
@@ -120,7 +119,6 @@ class ContactService extends BaseService {
   updateFieldsAndCustomFields = updateFieldsAndCustomFields
   list = listContacts
   count = countContacts
-  listByCustomFieldValue = listByCustomFieldValue
   /**
    * Runs on every contact-addressed public request. Safe to cache: every
    * contact write path (update, delete, custom-field writes, tag writes)
