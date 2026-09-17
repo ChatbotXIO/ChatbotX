@@ -38,7 +38,7 @@ import {
   useWatch,
 } from "react-hook-form"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
-import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
+import { useInboxesState } from "@/features/inboxes/provider/inbox-hook"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ButtonStepEditor } from "../steps/button/editor"
@@ -162,7 +162,11 @@ const NodeEditorMenu = memo(
     onClick: (menuItem: MenuItem) => void
   }) => {
     const t = useTranslations()
-    const inboxes = useInboxStore((s) => s.inboxes)
+    const {
+      inboxes,
+      error: inboxesError,
+      loading: loadingInboxes,
+    } = useInboxesState()
     const whatsappTemplates = useFlowTemplate((s) => s.whatsappTemplates)
     const whatsappFlows = useWhatsappFlow((s) => s.whatsappFlows)
     const messengerTemplates = useFlowTemplate((s) => s.messengerTemplates)
@@ -174,12 +178,17 @@ const NodeEditorMenu = memo(
       const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
       if (nodeConfig) {
         setNodeMenus(
-          nodeConfig.menus(t, {
-            inboxes,
-            templates: { waTemplates: whatsappTemplates, messengerTemplates },
-            flows: { waFlows: whatsappFlows },
-            beforeStep,
-          }),
+          loadingInboxes || inboxesError
+            ? []
+            : nodeConfig.menus(t, {
+                inboxes,
+                templates: {
+                  waTemplates: whatsappTemplates,
+                  messengerTemplates,
+                },
+                flows: { waFlows: whatsappFlows },
+                beforeStep,
+              }),
         )
       } else {
         setNodeMenus([])
@@ -192,25 +201,30 @@ const NodeEditorMenu = memo(
       whatsappFlows,
       messengerTemplates,
       beforeStep,
+      inboxesError,
+      loadingInboxes,
     ])
 
     return (
-      nodeMenus.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button variant="outline">
-                <PlusIcon />
-                {t("actions.create")}
-              </Button>
-            }
-          />
+      <>
+        {inboxesError && <ErrorAlert message={inboxesError} />}
+        {nodeMenus.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="outline">
+                  <PlusIcon />
+                  {t("actions.create")}
+                </Button>
+              }
+            />
 
-          <DropdownMenuContent className="w-full">
-            <RecursiveDropdownMenu data={nodeMenus} onClick={onClick} />
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
+            <DropdownMenuContent className="w-full">
+              <RecursiveDropdownMenu data={nodeMenus} onClick={onClick} />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </>
     )
   },
 )
