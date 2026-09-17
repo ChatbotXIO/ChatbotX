@@ -86,7 +86,7 @@
     "@orpc/client": "^1.14.0",
     "@orpc/json-schema": "^1.14.0",
     "@orpc/openapi": "^1.14.0",
-    "@orpc/server": "^1.14.0",
+    "@orpc/server": "^1.14.8",
     "@orpc/tanstack-query": "1.14.5",
     "@orpc/zod": "^1.14.0",
     "@t3-oss/env-nextjs": "^0.13.11",

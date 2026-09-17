@@ -19,7 +19,7 @@
     "@chatbotx.io/ui": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
     "@orpc/client": "^1.14.0",
-    "@orpc/server": "^1.14.0",
+    "@orpc/server": "^1.14.8",
     "@t3-oss/env-nextjs": "^0.13.11",
     "date-fns": "^4.1.0",
     "lucide-react": "^1.14.0",
