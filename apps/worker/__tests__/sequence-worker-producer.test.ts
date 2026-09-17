@@ -10,6 +10,8 @@ const {
   removeFromRetrySpy,
   getScheduleCountSpy,
   getRetryCountSpy,
+  batchAddToScheduleSpy,
+  addToRetrySpy,
   producerSendSpy,
   producerCloseSpy,
   createProducerSpy,
@@ -33,6 +35,8 @@ const {
     removeFromRetrySpy: vi.fn(),
     getScheduleCountSpy: vi.fn(),
     getRetryCountSpy: vi.fn(),
+    batchAddToScheduleSpy: vi.fn(),
+    addToRetrySpy: vi.fn(),
     producerSendSpy,
     producerCloseSpy,
     createProducerSpy,
@@ -65,6 +69,8 @@ vi.mock("@chatbotx.io/scheduler", () => ({
     removeFromRetry = removeFromRetrySpy
     getScheduleCount = getScheduleCountSpy
     getRetryCount = getRetryCountSpy
+    batchAddToSchedule = batchAddToScheduleSpy
+    addToRetry = addToRetrySpy
   },
 }))
 
@@ -119,6 +125,8 @@ function makeReadyWorker(
     removeFromRetry: removeFromRetrySpy,
     getScheduleCount: getScheduleCountSpy,
     getRetryCount: getRetryCountSpy,
+    batchAddToSchedule: batchAddToScheduleSpy,
+    addToRetry: addToRetrySpy,
   }
   internal._producer = { send: producerSendSpy, close: producerCloseSpy }
   return w
@@ -152,6 +160,8 @@ beforeEach(() => {
   producerCloseSpy.mockResolvedValue(undefined)
   getScheduleCountSpy.mockResolvedValue(0)
   getRetryCountSpy.mockResolvedValue(0)
+  batchAddToScheduleSpy.mockResolvedValue(undefined)
+  addToRetrySpy.mockResolvedValue(undefined)
 })
 
 // =============================================================================
@@ -435,6 +445,34 @@ describe("processBucket()", () => {
     // The error is propagated — tick() is what catches and logs
     // Here we verify processBucket surfaces the error
     expect(loggerErrorSpy).not.toHaveBeenCalled() // processBucket itself doesn't log
+  })
+
+  test("re-inserts claimed dispatches into their zsets when publishDispatches fails", async () => {
+    getDueSpy
+      .mockResolvedValueOnce(["sched-1"]) // schedule
+      .mockResolvedValueOnce(["retry-1"]) // retry
+
+    mockLockAcquired()
+    findManySpy.mockResolvedValue([
+      { id: "sched-1", workspaceId: "ws-1" },
+      { id: "retry-1", workspaceId: "ws-1" },
+    ])
+    producerSendSpy.mockRejectedValueOnce(new Error("broker unreachable"))
+
+    const w = makeReadyWorker()
+
+    // processBucket must not throw even though publishDispatches rejects —
+    // the re-insertion recovers the claimed entries for the next tick.
+    await expect(w.processBucket(0)).resolves.toBeUndefined()
+
+    expect(batchAddToScheduleSpy).toHaveBeenCalledWith([
+      expect.objectContaining({ bucket: 0, dispatchId: "sched-1" }),
+    ])
+    expect(addToRetrySpy).toHaveBeenCalledWith(0, "retry-1", expect.any(Number))
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ bucket: 0, count: 2 }),
+      expect.any(String),
+    )
   })
 })
 

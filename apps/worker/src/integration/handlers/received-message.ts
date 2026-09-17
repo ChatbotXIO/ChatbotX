@@ -56,6 +56,7 @@ import {
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { distributedLock } from "@chatbotx.io/redis"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
   type AuthValue,
@@ -733,128 +734,158 @@ const saveAndBroadcastMessage = async (props: {
     createdAt,
     storageUrl,
   } = props
-  const repository = await createMessageRepository()
+  const persist = async (): Promise<{
+    message: MessageModel & { attachments: unknown[] }
+    isNew: boolean
+  }> => {
+    const repository = await createMessageRepository()
 
-  // Computed from the pre-update `contactInbox` snapshot this function was
-  // called with — before persistNewMessageSideEffects' updateTracking runs —
-  // because ContactInbox.lastIncomingMessageAt/firstInteractionAt get set by
-  // outbound sends too (see contact-inbox/service.ts) and can't be used to
-  // infer "first inbound message" after the tracking update has landed.
-  const isInboundMessage = incomingMessage.messageType !== "outgoing"
-  const isFirstIncomingMessage =
-    isInboundMessage && contactInbox.lastIncomingMessageAt === null
+    // Computed from the pre-update `contactInbox` snapshot this function was
+    // called with — before persistNewMessageSideEffects' updateTracking runs —
+    // because ContactInbox.lastIncomingMessageAt/firstInteractionAt get set by
+    // outbound sends too (see contact-inbox/service.ts) and can't be used to
+    // infer "first inbound message" after the tracking update has landed.
+    const isInboundMessage = incomingMessage.messageType !== "outgoing"
+    const isFirstIncomingMessage =
+      isInboundMessage && contactInbox.lastIncomingMessageAt === null
 
-  const messageInput = {
-    id: createId(),
-    conversationId: conversation.id,
-    contactInboxId: contactInbox.id,
-    senderType:
-      incomingMessage.messageType === "outgoing"
-        ? ("user" as const)
-        : ("contact" as const),
-    workspaceId: inbox.workspaceId,
-    sourceId: incomingMessage.sourceId,
-    senderId:
-      incomingMessage.messageType === "outgoing"
-        ? null
-        : contactInbox.contactId,
-    messageType: incomingMessage.messageType,
-    text: incomingMessage.text,
-    contentType: incomingMessage.contentType,
-    contentAttributes: incomingMessage.contentAttributes,
-    type: incomingMessage.type ?? "message",
-    parentId: incomingMessage.parentId ?? null,
-    createdAt: createdAt ?? new Date(),
-  }
-
-  const attachmentInputs =
-    incomingMessage.attachments?.map((attachment: IncomingAttachment) => ({
-      ...attachment,
-      workspaceId: inbox.workspaceId,
+    const messageInput = {
+      id: createId(),
       conversationId: conversation.id,
-    })) ?? []
+      contactInboxId: contactInbox.id,
+      senderType:
+        incomingMessage.messageType === "outgoing"
+          ? ("user" as const)
+          : ("contact" as const),
+      workspaceId: inbox.workspaceId,
+      sourceId: incomingMessage.sourceId,
+      senderId:
+        incomingMessage.messageType === "outgoing"
+          ? null
+          : contactInbox.contactId,
+      messageType: incomingMessage.messageType,
+      text: incomingMessage.text,
+      contentType: incomingMessage.contentType,
+      contentAttributes: incomingMessage.contentAttributes,
+      type: incomingMessage.type ?? "message",
+      parentId: incomingMessage.parentId ?? null,
+      createdAt: createdAt ?? new Date(),
+    }
 
-  let messageWithAttachments: MessageModel & { attachments: unknown[] }
-  let isNew: boolean
+    const attachmentInputs =
+      incomingMessage.attachments?.map((attachment: IncomingAttachment) => ({
+        ...attachment,
+        workspaceId: inbox.workspaceId,
+        conversationId: conversation.id,
+      })) ?? []
 
-  if (attachmentInputs.length > 0) {
-    const result = await repository.createOrUpdateWithAttachments(
-      messageInput,
-      attachmentInputs,
-    )
-    messageWithAttachments = result.result
-    isNew = result.isNew
-  } else {
-    const result = await repository.createOrUpdate(messageInput)
-    messageWithAttachments = { ...result.message, attachments: [] }
-    isNew = result.isNew
+    let messageWithAttachments: MessageModel & { attachments: unknown[] }
+    let isNew: boolean
+
+    if (attachmentInputs.length > 0) {
+      const result = await repository.createOrUpdateWithAttachments(
+        messageInput,
+        attachmentInputs,
+      )
+      messageWithAttachments = result.result
+      isNew = result.isNew
+    } else {
+      const result = await repository.createOrUpdate(messageInput)
+      messageWithAttachments = { ...result.message, attachments: [] }
+      isNew = result.isNew
+    }
+
+    const newMessage = messageWithAttachments
+
+    if (isNew) {
+      await persistNewMessageSideEffects({
+        inbox,
+        contactInbox,
+        conversation,
+        incomingMessage,
+        message: newMessage,
+        storageUrl,
+        contactInboxTracking,
+        contactLocation,
+      })
+    }
+
+    try {
+      broadcastToWorkspaceParty(inbox.workspaceId, {
+        eventType: RealtimeEventType.messageCreated,
+        data: newMessage,
+      })
+    } catch (error) {
+      logger.warn(error, "Unable to emit realtime message")
+    }
+
+    // Push notification for a genuinely new inbound message only — this
+    // broadcast above is unconditional, so the guard here is built explicitly
+    // rather than copied from it.
+    if (isNew && isInboundMessage) {
+      try {
+        await notificationQueue.add(
+          NotificationJobAction.notifyIncomingMessage,
+          {
+            type: NotificationJobAction.notifyIncomingMessage,
+            data: {
+              workspaceId: inbox.workspaceId,
+              conversationId: conversation.id,
+              messageId: newMessage.id,
+              messageText: newMessage.text?.slice(0, 140),
+              contentType: newMessage.contentType,
+              attachmentCount: newMessage.attachments.length,
+            },
+          },
+          { jobId: `notify-incoming-${newMessage.id}` },
+        )
+      } catch (error) {
+        logger.warn(error, "Unable to enqueue incoming message notification")
+      }
+    }
+
+    if (isNew) {
+      emit(messageEventTypeSchema.enum["message:received"], {
+        workspaceId: inbox.workspaceId,
+        contactId: contactInbox.contactId,
+        contactInboxId: contactInbox.id,
+        channel: inbox.channel,
+        inboxId: inbox.id,
+        occurredAt: newMessage.createdAt,
+        sourceId: newMessage.sourceId ?? undefined,
+        origin: isInboundMessage ? "inbound" : undefined,
+        messageId: newMessage.id,
+        isFirstIncomingMessage,
+      })
+    }
+
+    return { message: newMessage, isNew }
   }
 
-  const newMessage = messageWithAttachments
-
-  if (isNew) {
-    await persistNewMessageSideEffects({
-      inbox,
-      contactInbox,
-      conversation,
-      incomingMessage,
-      message: newMessage,
-      storageUrl,
-      contactInboxTracking,
-      contactLocation,
-    })
-  }
-
+  // Serializes the whole insert → tracking → realtime → notification →
+  // event-bus critical section per conversation, so concurrent inbound
+  // webhook deliveries for the same conversation cannot reorder realtime
+  // events or interleave tracking updates. Distinct from the repository's
+  // `msg:upsert:${conversationId}:${sourceId}` dedup lock (keyed by sourceId,
+  // not conversation) so this cannot deadlock against it.
   try {
-    broadcastToWorkspaceParty(inbox.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: newMessage,
+    return await distributedLock.runExclusive({
+      key: `ingress:conv:${conversation.id}`,
+      timeoutInSeconds: 30,
+      retryTimeoutInSeconds: 30,
+      fn: persist,
     })
   } catch (error) {
-    logger.warn(error, "Unable to emit realtime message")
+    // Ordering is best-effort at tier-1: a lock acquisition failure must
+    // degrade to unlocked processing rather than fail the job, because
+    // `integration` jobs only have 2 attempts and a thrown error here could
+    // drop an inbound message permanently.
+    logger.warn(
+      { err: error, conversationId: conversation.id },
+      "Unable to acquire ingress lock for conversation; processing unlocked",
+    )
+    return await persist()
   }
-
-  // Push notification for a genuinely new inbound message only — this
-  // broadcast above is unconditional, so the guard here is built explicitly
-  // rather than copied from it.
-  if (isNew && isInboundMessage) {
-    try {
-      await notificationQueue.add(
-        NotificationJobAction.notifyIncomingMessage,
-        {
-          type: NotificationJobAction.notifyIncomingMessage,
-          data: {
-            workspaceId: inbox.workspaceId,
-            conversationId: conversation.id,
-            messageId: newMessage.id,
-            messageText: newMessage.text?.slice(0, 140),
-            contentType: newMessage.contentType,
-            attachmentCount: newMessage.attachments.length,
-          },
-        },
-        { jobId: `notify-incoming-${newMessage.id}` },
-      )
-    } catch (error) {
-      logger.warn(error, "Unable to enqueue incoming message notification")
-    }
-  }
-
-  if (isNew) {
-    emit(messageEventTypeSchema.enum["message:received"], {
-      workspaceId: inbox.workspaceId,
-      contactId: contactInbox.contactId,
-      contactInboxId: contactInbox.id,
-      channel: inbox.channel,
-      inboxId: inbox.id,
-      occurredAt: newMessage.createdAt,
-      sourceId: newMessage.sourceId ?? undefined,
-      origin: isInboundMessage ? "inbound" : undefined,
-      messageId: newMessage.id,
-      isFirstIncomingMessage,
-    })
-  }
-
-  return { message: newMessage, isNew }
 }
 
 const persistNewMessageSideEffects = async (props: {

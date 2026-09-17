@@ -266,6 +266,6 @@ export type ScheduleJobData =
 export const scheduleQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
-      connection: getRedisConnection(),
+      connection: getRedisConnection("bulk"),
       defaultJobOptions,
     })

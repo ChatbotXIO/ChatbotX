@@ -28,6 +28,6 @@ export type WebhookJobData = WebhookJobEvaluate
 export const webhookQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<WebhookJobData>(queueNames.enum.webhook, {
-      connection: getRedisConnection(),
+      connection: getRedisConnection("bulk"),
       defaultJobOptions,
     })

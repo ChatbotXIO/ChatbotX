@@ -1272,8 +1272,10 @@ class ConversationService extends BaseService {
     if ("currentStep" in props) {
       data.currentStep = props.currentStep
     }
-    if ("lastActivityAt" in props) {
-      data.lastActivityAt = props.lastActivityAt
+    if ("lastActivityAt" in props && props.lastActivityAt) {
+      Object.assign(data, {
+        lastActivityAt: sql`GREATEST(${conversationModel.lastActivityAt}, ${props.lastActivityAt})`,
+      })
     }
     if ("lastStep" in props) {
       data.lastStep = props.lastStep

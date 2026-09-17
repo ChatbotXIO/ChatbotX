@@ -78,22 +78,28 @@ class DispatchConsumer {
         return
       }
 
+      let payload: Partial<DispatchMessage>
       try {
-        const payload = JSON.parse(value || "{}") as Partial<DispatchMessage>
-        if (!payload.workspaceId) {
-          logger.warn(
-            { payload },
-            "Skipping sequence dispatch message without workspaceId",
-          )
-          return
-        }
-        await this.limitProcess(() =>
-          this.processDispatch(payload as DispatchMessage),
-        )
+        payload = JSON.parse(value || "{}") as Partial<DispatchMessage>
       } catch (error) {
-        logger.error(error, "Error processing dispatch message")
-        logger.error({ value }, "Error processing dispatch message value")
+        logger.error(
+          { err: error, value },
+          "Failed to parse sequence dispatch message; discarding",
+        )
+        return
       }
+
+      if (!payload.workspaceId) {
+        logger.warn(
+          { payload },
+          "Skipping sequence dispatch message without workspaceId",
+        )
+        return
+      }
+
+      await this.limitProcess(() =>
+        this.processDispatch(payload as DispatchMessage),
+      )
     })
   }
 
@@ -150,8 +156,11 @@ class DispatchConsumer {
         },
       )
     } catch (error) {
-      logger.error(error, "Error processing dispatch")
-      logger.error({ payload }, "Error processing dispatch payload")
+      logger.error(
+        { err: error, payload },
+        "Error processing dispatch; propagating for BullMQ retry",
+      )
+      throw error
     }
   }
 
@@ -221,7 +230,7 @@ class DispatchConsumer {
       })
     } catch (error) {
       logger.error(
-        { error, dispatchId: dispatch.id },
+        { err: error, dispatchId: dispatch.id },
         "Failed to enqueue sendSequenceFlow; reverting dispatch",
       )
 

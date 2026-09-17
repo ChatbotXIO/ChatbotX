@@ -43,6 +43,8 @@ const {
   mockResolveIncomingTextRouting,
   mockAutomatedResponseEnqueue,
   mockConversationFindOrCreate,
+  mockDistributedLockRunExclusive,
+  mockBroadcastToWorkspaceParty,
   workerState,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
@@ -93,6 +95,12 @@ const {
     mockResolveIncomingTextRouting: vi.fn(),
     mockAutomatedResponseEnqueue: vi.fn().mockResolvedValue(undefined),
     mockConversationFindOrCreate: vi.fn(),
+    // Pass-through by default: matches every other test file's
+    // `distributedLock` convention (see e.g. `drip-handler.test.ts`).
+    mockDistributedLockRunExclusive: vi.fn(
+      async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
+    ),
+    mockBroadcastToWorkspaceParty: vi.fn(),
     workerState: { capturedWorkers: [] as CapturedWorker[] },
   }
 })
@@ -298,7 +306,7 @@ const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
 
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: { cancelAppointmentByToken: vi.fn() },
-  broadcastToWorkspaceParty: vi.fn(),
+  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
   updateContactFromMessage: mockUpdateContactFromMessage,
@@ -351,6 +359,10 @@ vi.mock("@chatbotx.io/business", () => ({
   messageCleanupService: {
     cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
   },
+}))
+
+vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: { runExclusive: mockDistributedLockRunExclusive },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({
@@ -531,6 +543,11 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
     mockDbTransaction.mockClear()
     mockContactUpdate.mockClear()
     mockConversationFindOrCreate.mockReset()
+    mockDistributedLockRunExclusive.mockReset()
+    mockDistributedLockRunExclusive.mockImplementation(
+      async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
+    )
+    mockBroadcastToWorkspaceParty.mockClear()
 
     vi.mocked(
       integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
@@ -648,5 +665,67 @@ describe("integration worker — incomingMessage case: profile refresh vs. autom
 
     expect(mockContactProfileRefresh).not.toHaveBeenCalled()
     expect(mockAutomatedResponseEnqueue).toHaveBeenCalled()
+  })
+
+  // ---------------------------------------------------------------------
+  // Step 3a regression: `saveAndBroadcastMessage` serializes its insert →
+  // broadcast critical section per conversation via `distributedLock`, and
+  // degrades to unlocked processing (never drops the message) when the
+  // lock cannot be acquired.
+  // ---------------------------------------------------------------------
+
+  test("wraps message persistence in the per-conversation ingress lock", async () => {
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "inbox-1",
+          payload: {},
+        },
+      },
+    })
+
+    expect(mockDistributedLockRunExclusive).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: "ingress:conv:conv-1",
+        timeoutInSeconds: 30,
+        retryTimeoutInSeconds: 30,
+        fn: expect.any(Function),
+      }),
+    )
+    // The insert and the realtime broadcast both happen inside the locked
+    // section: the default pass-through mock only calls `mockCreateOrUpdate`
+    // and `mockBroadcastToWorkspaceParty` via its `fn`, so their having run
+    // at all proves they executed inside `runExclusive`, not around it.
+    expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
+    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledOnce()
+    expect(
+      mockDistributedLockRunExclusive.mock.invocationCallOrder[0],
+    ).toBeLessThan(mockCreateOrUpdate.mock.invocationCallOrder[0])
+  })
+
+  test("degrades to unlocked processing and still persists + broadcasts exactly once when the lock cannot be acquired", async () => {
+    mockDistributedLockRunExclusive.mockRejectedValueOnce(
+      new Error("lock acquisition timed out"),
+    )
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: "inbox-1",
+          payload: {},
+        },
+      },
+    })
+
+    expect(mockDistributedLockRunExclusive).toHaveBeenCalledOnce()
+    expect(mockCreateOrUpdate).toHaveBeenCalledOnce()
+    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledOnce()
   })
 })
