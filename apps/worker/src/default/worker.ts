@@ -162,7 +162,7 @@ async function startDefaultWorker() {
       }
     },
     {
-      connection: getRedisConnection(),
+      connection: getRedisConnection("bulk"),
       ...defaultWorkerOptions,
     },
   )

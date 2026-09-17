@@ -135,7 +135,7 @@ async function startAIAgentWorker() {
       )
     },
     {
-      connection: getRedisConnection(),
+      connection: getRedisConnection("bulk"),
       ...defaultWorkerOptions,
       concurrency: env.AI_AGENT_WORKER_CONCURRENCY,
     },

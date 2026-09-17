@@ -2,7 +2,10 @@ import { createRedisConnection } from "@chatbotx.io/redis"
 import type { default as IORedis, RedisOptions } from "ioredis"
 import { keys } from "../keys"
 
-let permanentRedis: IORedis | null = null
+const connectionsByGroup: Record<QueueGroup, IORedis | null> = {
+  hot: null,
+  bulk: null,
+}
 const env = keys()
 
 /**
@@ -17,9 +20,20 @@ export function isNoRedisEnv(): boolean {
   )
 }
 
-export function getRedisConnection() {
-  if (permanentRedis) {
-    return permanentRedis
+export type QueueGroup = "hot" | "bulk"
+
+function resolveGroupUrl(group: QueueGroup): string {
+  const queueUrl = env.REDIS_QUEUE_URL ?? env.REDIS_URL
+  if (group === "bulk") {
+    return env.REDIS_QUEUE_BULK_URL ?? queueUrl
+  }
+  return queueUrl
+}
+
+export function getRedisConnection(group: QueueGroup = "hot") {
+  const existing = connectionsByGroup[group]
+  if (existing) {
+    return existing
   }
 
   const options: RedisOptions = {
@@ -43,9 +57,10 @@ export function getRedisConnection() {
     },
   }
 
-  permanentRedis = createRedisConnection(env.REDIS_URL, options)
+  const connection = createRedisConnection(resolveGroupUrl(group), options)
+  connectionsByGroup[group] = connection
 
-  return permanentRedis
+  return connection
 }
 
 export const defaultJobOptions = {

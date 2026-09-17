@@ -43,6 +43,6 @@ export type TriggerJobData = TriggerJobExecute | TriggerJobEvaluate
 export const triggerQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<TriggerJobData>(queueNames.enum.trigger, {
-      connection: getRedisConnection(),
+      connection: getRedisConnection("bulk"),
       defaultJobOptions,
     })

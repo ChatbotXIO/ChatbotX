@@ -87,7 +87,7 @@ async function startTriggerWorker() {
       )
     },
     {
-      connection: getRedisConnection(),
+      connection: getRedisConnection("bulk"),
       ...defaultWorkerOptions,
       concurrency: 100,
     },

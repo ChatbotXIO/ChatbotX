@@ -1,3 +1,4 @@
+import { getChildLogger } from "@chatbotx.io/logger"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { Queue, Worker } from "bullmq"
 import { defaultJobOptions } from "../lib/connection"
@@ -9,6 +10,8 @@ import {
   type MessagingProducer,
   type ProducerConfig,
 } from "./types"
+
+const logger = getChildLogger("worker-config:bullmq-provider")
 
 export class BullMQProducer implements MessagingProducer {
   private queue: Queue | null = null
@@ -86,7 +89,7 @@ export class BullMQConsumer implements MessagingConsumer {
     )
 
     this.worker.on("failed", (job, err) => {
-      console.error(`[BullMQ] Job ${job?.id} failed:`, err)
+      logger.error({ err, jobId: job?.id }, "BullMQ job failed")
     })
 
     await this.worker.waitUntilReady()

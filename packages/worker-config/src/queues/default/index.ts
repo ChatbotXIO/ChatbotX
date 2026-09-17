@@ -23,7 +23,7 @@ import { queueNames } from "../../lib/types"
 export const defaultQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<DefaultJobData>(queueNames.enum.default, {
-      connection: getRedisConnection(),
+      connection: getRedisConnection("bulk"),
       defaultJobOptions,
     })
 

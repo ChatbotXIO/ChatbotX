@@ -25,12 +25,14 @@ const {
   integrationQueueAddSpy,
   loggerInfoSpy,
   loggerWarnSpy,
+  loggerErrorSpy,
 } = vi.hoisted(() => ({
   consumeSpy: vi.fn(),
   fetchDispatchSpy: vi.fn(),
   integrationQueueAddSpy: vi.fn(),
   loggerInfoSpy: vi.fn(),
   loggerWarnSpy: vi.fn(),
+  loggerErrorSpy: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/flow-config", () => ({
@@ -82,7 +84,7 @@ vi.mock("@chatbotx.io/worker-config/message-queue/factory", () => ({
 
 vi.mock("../src/lib/logger", () => ({
   logger: {
-    error: vi.fn(),
+    error: loggerErrorSpy,
     info: loggerInfoSpy,
     warn: loggerWarnSpy,
   },
@@ -184,5 +186,83 @@ describe("sequence worker consumer", () => {
         source: "sequence-scheduler:executeStep",
       }),
     )
+  })
+
+  // -------------------------------------------------------------------
+  // Step 4b regression: a genuine processing failure must propagate so
+  // BullMQ retries the job; malformed input must NOT retry (it will never
+  // parse), and must resolve rather than throw.
+  // -------------------------------------------------------------------
+
+  test("propagates a processing failure so the BullMQ job retries", async () => {
+    let capturedHandler: ((value: string) => Promise<void>) | undefined
+    consumeSpy.mockImplementation((handler) => {
+      capturedHandler = handler
+      return Promise.resolve()
+    })
+    fetchDispatchSpy.mockRejectedValue(new Error("db exploded"))
+
+    await import("../src/sequence-scheduler/worker-consumer")
+
+    await vi.waitFor(() => {
+      expect(consumeSpy).toHaveBeenCalledOnce()
+    })
+
+    await expect(
+      capturedHandler?.(
+        JSON.stringify({
+          dispatchId: "dispatch-1",
+          bucket: 1,
+          workspaceId: "workspace-1",
+        }),
+      ),
+    ).rejects.toThrow("db exploded")
+
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      expect.any(String),
+    )
+  })
+
+  test("resolves without throwing for unparseable JSON, and never calls fetchDispatch", async () => {
+    let capturedHandler: ((value: string) => Promise<void>) | undefined
+    consumeSpy.mockImplementation((handler) => {
+      capturedHandler = handler
+      return Promise.resolve()
+    })
+
+    await import("../src/sequence-scheduler/worker-consumer")
+
+    await vi.waitFor(() => {
+      expect(consumeSpy).toHaveBeenCalledOnce()
+    })
+
+    await expect(capturedHandler?.("{not valid json")).resolves.toBeUndefined()
+    expect(fetchDispatchSpy).not.toHaveBeenCalled()
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(SyntaxError) }),
+      expect.any(String),
+    )
+  })
+
+  test("resolves without throwing for a payload missing workspaceId", async () => {
+    let capturedHandler: ((value: string) => Promise<void>) | undefined
+    consumeSpy.mockImplementation((handler) => {
+      capturedHandler = handler
+      return Promise.resolve()
+    })
+
+    await import("../src/sequence-scheduler/worker-consumer")
+
+    await vi.waitFor(() => {
+      expect(consumeSpy).toHaveBeenCalledOnce()
+    })
+
+    await expect(
+      capturedHandler?.(
+        JSON.stringify({ dispatchId: "dispatch-1", bucket: 1 }),
+      ),
+    ).resolves.toBeUndefined()
+    expect(fetchDispatchSpy).not.toHaveBeenCalled()
   })
 })

@@ -47,7 +47,7 @@ async function startWebhookWorker() {
       )
     },
     {
-      connection: getRedisConnection(),
+      connection: getRedisConnection("bulk"),
       ...defaultWorkerOptions,
       concurrency: env.WEBHOOK_WORKER_CONCURRENCY,
     },

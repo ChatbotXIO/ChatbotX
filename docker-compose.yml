@@ -88,6 +88,12 @@ services:
     image: redis:8-alpine
     ports:
       - "6379:6379"
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
     volumes:
       - cache-data:/data
     healthcheck:

@@ -51,6 +51,6 @@ export type QuotaJobData =
 export const quotaQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<QuotaJobData>(queueNames.enum.quota, {
-      connection: getRedisConnection(),
+      connection: getRedisConnection("bulk"),
       defaultJobOptions,
     })

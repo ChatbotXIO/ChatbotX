@@ -131,7 +131,11 @@ export class SchedulerWorker {
       return
     }
 
-    const claimed: { dispatchId: string; bucket: number }[] = []
+    const claimed: {
+      dispatchId: string
+      bucket: number
+      source: "schedule" | "retry"
+    }[] = []
 
     await Promise.all([
       ...scheduleCandidates.map(async (dispatchId) => {
@@ -145,6 +149,7 @@ export class SchedulerWorker {
               claimed.push({
                 dispatchId,
                 bucket,
+                source: "schedule",
               })
             },
           )
@@ -163,6 +168,7 @@ export class SchedulerWorker {
               claimed.push({
                 dispatchId,
                 bucket,
+                source: "retry",
               })
             },
           )
@@ -173,7 +179,36 @@ export class SchedulerWorker {
     ])
 
     if (claimed.length > 0) {
-      await this.publishDispatches(claimed)
+      try {
+        await this.publishDispatches(claimed)
+      } catch (err) {
+        logger.error(
+          { err, bucket, count: claimed.length },
+          "Failed to publish claimed dispatches; re-inserting for retry on next tick",
+        )
+        const nowRetryMs = Date.now()
+        const scheduleEntries = claimed
+          .filter((entry) => entry.source === "schedule")
+          .map((entry) => ({
+            bucket: entry.bucket,
+            dispatchId: entry.dispatchId,
+            runAtMs: nowRetryMs,
+          }))
+        if (scheduleEntries.length > 0) {
+          await this.scheduler.batchAddToSchedule(scheduleEntries)
+        }
+        await Promise.all(
+          claimed
+            .filter((entry) => entry.source === "retry")
+            .map((entry) =>
+              this.scheduler.addToRetry(
+                entry.bucket,
+                entry.dispatchId,
+                nowRetryMs,
+              ),
+            ),
+        )
+      }
     }
   }
 

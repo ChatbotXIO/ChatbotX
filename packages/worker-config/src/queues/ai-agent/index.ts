@@ -161,6 +161,6 @@ export type AIJobProcessStoryReplyAutomation = z.infer<
 export const aiAgentQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<AIJobData>(queueNames.enum.aiAgent, {
-      connection: getRedisConnection(),
+      connection: getRedisConnection("bulk"),
       defaultJobOptions,
     })
