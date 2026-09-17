@@ -88,15 +88,25 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
    `(automationId, contactId)` + `postId != ?` queries — no new index needed; use a
    `LIMIT 1` existence check, not `$count`.
 
-6. **Three channels, one loop.** `type` is `messenger` | `instagram` (Instagram Login) |
-   `instagramFacebook` (Instagram via Facebook Login) — see
+6. **Five channels, one loop.** `type` is `messenger` | `instagram` (Instagram Login) |
+   `instagramFacebook` (Instagram via Facebook Login) | `threads` | `tiktok` — see
    `CommentAutomationChannelType` — and `findActiveAutomations` filters on it, so every
-   capability must be routed per channel. Private DM text works on all three via
-   `PRIVATE_REPLY_TEXT_SENDERS` (comment_id-anchored Send API); comment liking exists
-   only on `messenger` + `instagramFacebook` (Instagram Login's `likeComment` is a logged
-   no-op); the attachment lookup behind `hideComments.hasImage`/`hasVideo` is
-   messenger-only. Hide an unsupported toggle in the builder form instead of shipping a
-   dead switch.
+   capability must be routed per channel. No capability is universal any more, so read
+   the gate rather than assuming:
+
+   | | messenger | instagram | instagramFacebook | threads | tiktok |
+   |---|---|---|---|---|---|
+   | public reply | ✅ | ✅ | ✅ | ✅ | ✅ |
+   | private DM reply (`PRIVATE_REPLY_TEXT_SENDERS`) | ✅ | ✅ | ✅ | ❌ | ❌ |
+   | like (`supportsCommentLike`) | ✅ | ✅ | ✅ | ❌ | ✅ |
+   | hide (`supportsHideComments`) | ✅ | ✅ | ✅ | ❌ | ✅ |
+   | attachment lookup (`hasImage`/`hasVideo`) | ✅ | ❌ | ❌ | ❌ | ❌ |
+   | tag tracking (`trackUserTags`) | ✅ | ✅ | ✅ | ❌ | ❌ |
+
+   Threads and TikTok lack a private DM for different reasons: Threads has no DM API at
+   all, while TikTok's Send API addresses an existing `conversation_id` that only the
+   contact can open. Hide an unsupported toggle in the builder form instead of shipping
+   a dead switch.
 
 7. **A `private` flow reply runs on the DM conversation; a `public` one does not.** The
    comment conversation is anchored to the post (`sourceId = postId`), but DM replies land
@@ -283,8 +293,8 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 2. Handle it in BOTH `executePublicReply` (`public-reply.ts`) and `executePrivateReply`
    (`private-reply.ts`). Public = message `type:"comment"` + `replyToCommentId` via
    `sendChannelMessage`; private = the channel's entry in `PRIVATE_REPLY_TEXT_SENDERS`, so
-   a new type has to work for all three channels (messenger, instagram,
-   instagramFacebook).
+   a new type has to work for every channel whose entry in that map is non-null
+   (messenger, instagram, instagramFacebook).
 3. Update `willSendReply` so dedup/`repliesCount` only count when a reply is actually
    dispatchable (e.g. require `value`).
 4. Return a `CommentReplyOutcome` (`reply-outcome.ts`) with the text the customer will

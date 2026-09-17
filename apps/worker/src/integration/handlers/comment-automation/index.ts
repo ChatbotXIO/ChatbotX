@@ -713,6 +713,7 @@ const ERROR_LOG_PROVIDER_BY_CHANNEL: Record<
   instagram: "instagram",
   instagramFacebook: "instagram",
   threads: "threads",
+  tiktok: "tiktok",
 }
 
 type ReplyEventContext = {

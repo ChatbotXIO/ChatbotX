@@ -35,16 +35,23 @@ const PUBLIC_REPLY_SPACING_MS = 3000
 
 /**
  * Extra BullMQ options for a comment reply dispatched on this contact's
- * channel. Threads' reply endpoint takes no idempotency key and rate-limits
- * aggressively, so a BullMQ retry would double-post the same public reply —
- * Threads jobs therefore run with a single attempt. Every other channel keeps
- * the queue's default retry policy (returns `undefined`, spreading to
- * nothing).
+ * channel.
+ *
+ * Threads' reply endpoint takes no idempotency key and rate-limits
+ * aggressively; TikTok's `business/comment/reply/create/` likewise creates a
+ * fresh reply on every call. On either, a BullMQ retry would double-post the
+ * same public reply under the comment, so those jobs run with a single attempt.
+ * Every other channel keeps the queue's default retry policy (returns
+ * `undefined`, spreading to nothing).
  */
+const SINGLE_ATTEMPT_REPLY_CHANNELS = new Set(["threads", "tiktok"])
+
 function commentReplyRetryPolicy(
   contactInbox: ContactInboxModel,
 ): { attempts: number } | undefined {
-  return contactInbox.channel === "threads" ? { attempts: 1 } : undefined
+  return SINGLE_ATTEMPT_REPLY_CHANNELS.has(contactInbox.channel)
+    ? { attempts: 1 }
+    : undefined
 }
 
 /**

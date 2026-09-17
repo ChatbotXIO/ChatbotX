@@ -57,6 +57,7 @@ import { uploader } from "@chatbotx.io/filesystem"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
+import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
@@ -102,6 +103,7 @@ import {
   refreshExistingContactProfile,
 } from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
+import { resolveTiktokCommenterIdentity } from "./tiktok-comment-identity"
 
 type ContactInboxTracking = ContactInboxTrackingData
 
@@ -991,17 +993,42 @@ export const receiveComment = async (
       integrationIdentifier,
     )
 
+  // TikTok's webhook carries no commenter identity at all, so it is fetched
+  // before the contact is built. This also settles whether the business wrote
+  // the comment: the `fromId === integrationIdentifier` check above cannot,
+  // because TikTok reports the commenter as a `unique_identifier` while the
+  // integration is keyed by `open_id`.
+  const tiktokIdentity =
+    integrationType === "tiktok"
+      ? await resolveTiktokCommenterIdentity({
+          auth: integrationRow.auth as TiktokAuthValue,
+          commentId: commentData.commentId,
+          videoId: commentData.postId,
+        })
+      : undefined
+
+  if (tiktokIdentity?.isOwner) {
+    logger.info(
+      { commentId: commentData.commentId, integrationIdentifier },
+      "receiveComment: skipping self-authored comment",
+    )
+    return
+  }
+
   // `from.id` is the commenter's ID (PSID for Messenger, Instagram User ID for Instagram);
   // `fromName` is the fallback firstName.
   const incomingContact: IncomingContact = {
     sourceId: commentData.fromId,
     sourceConversationId: commentData.postId,
-    firstName: commentData.fromName,
+    firstName: tiktokIdentity?.displayName ?? commentData.fromName,
     // Instagram only: the handle is the sole way to match an `@mention` in a
     // comment back to a known contact, since its webhook carries no tagged-user
     // ids. Facebook sends no username here and matches on `sourceId` instead.
-    sourceUsername: commentData.fromUsername,
+    sourceUsername: tiktokIdentity?.username ?? commentData.fromUsername,
   }
+
+  const commenterAvatarUrl =
+    tiktokIdentity?.avatarUrl ?? commentData.fromAvatarUrl
 
   const detected = await detectContactAndConversation({
     incomingContact,
@@ -1019,10 +1046,10 @@ export const receiveComment = async (
   // ignores `incomingContact.avatar` entirely — re-hosting on every comment
   // would leave one orphaned public object per comment with nothing pointing
   // at it.
-  if (commentData.fromAvatarUrl && !contact.avatar) {
+  if (commenterAvatarUrl && !contact.avatar) {
     try {
       const avatar = await downloadCommenterAvatar({
-        url: commentData.fromAvatarUrl,
+        url: commenterAvatarUrl,
         workspaceId: inbox.workspaceId,
         accessToken:
           integrationType === "threads"
@@ -1453,6 +1480,7 @@ const buildExistingContactMatch = async (props: {
     workspaceId: inbox.workspaceId,
     contactId: syncedContactInbox.contactId,
     sourceId: conversationSourceId,
+    channelConversationId: incomingContact.channelConversationId,
   })
 
   return {
@@ -1720,6 +1748,7 @@ const createNewContactAndContactInbox = async (props: {
         workspaceId: inbox.workspaceId,
         contactId: newContact.id,
         sourceId: conversationSourceId,
+        channelConversationId: incomingContact.channelConversationId,
         tx,
       })
 

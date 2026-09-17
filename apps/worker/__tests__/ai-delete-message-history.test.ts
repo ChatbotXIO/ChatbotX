@@ -157,7 +157,6 @@ describe("handleAIDeleteMessageHistory", () => {
     expect(mocks.findDMByContact).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactId: "contact-1",
-      channel: "instagram",
     })
     expect(mocks.runExclusive).toHaveBeenNthCalledWith(
       1,

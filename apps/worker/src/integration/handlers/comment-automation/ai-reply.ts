@@ -14,12 +14,24 @@ import {
   createGuardedCommentInputMessage,
   generateAIReplyText,
 } from "../automated-response/replies"
+import type { CommentAutomationChannelType } from "./channel-type"
 import { rollbackCommentDedup } from "./dedup"
 import {
   PRIVATE_REPLY_TEXT_SENDERS,
   type PrivateReplyAuth,
 } from "./private-reply"
 import { postPublicCommentReply } from "./public-reply"
+
+/**
+ * Channels whose comments reach the agent inside an explicit untrusted-data
+ * envelope. Meta-channel comments keep the raw shape they have always been sent
+ * with, so this stays an allowlist rather than a negated check — a new channel
+ * defaults to the guarded path only once someone decides it should.
+ */
+const GUARDED_COMMENT_CHANNELS = new Set<CommentAutomationChannelType>([
+  "threads",
+  "tiktok",
+])
 
 /**
  * Generate an AI agent reply for a Facebook comment and deliver it on the
@@ -224,10 +236,10 @@ async function generateAndDeliverAIReply(
     conversation,
     contactInbox,
     messages: [
-      // Threads comments are wrapped in an explicit untrusted-data envelope
-      // before reaching the agent. Meta-channel comments keep the raw shape
-      // they have always been sent with.
-      data.channelType === "threads"
+      // Threads and TikTok comments are wrapped in an explicit untrusted-data
+      // envelope before reaching the agent. Meta-channel comments keep the raw
+      // shape they have always been sent with.
+      GUARDED_COMMENT_CHANNELS.has(data.channelType)
         ? createGuardedCommentInputMessage({
             channel: data.channelType,
             comment: message,

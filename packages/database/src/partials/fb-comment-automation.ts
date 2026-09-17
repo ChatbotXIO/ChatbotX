@@ -5,6 +5,7 @@ export const fbCommentAutomationTypes = z.enum([
   "instagram",
   "instagramFacebook",
   "threads",
+  "tiktok",
 ])
 export type FBCommentAutomationType = z.infer<typeof fbCommentAutomationTypes>
 

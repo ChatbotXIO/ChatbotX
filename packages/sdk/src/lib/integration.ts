@@ -209,6 +209,13 @@ export type CommentHandlers<IAuth extends AuthValue> = {
       data: {
         commentId: string
         hidden: boolean
+        /**
+         * The post the comment sits under, for channels whose hide endpoint
+         * needs it alongside the comment id (TikTok). Meta's does not, so this
+         * is optional and ignored there. Sourced from the comment message's
+         * `contentAttributes.postId`.
+         */
+        postId?: string
       }
     },
     void

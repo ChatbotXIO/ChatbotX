@@ -5,11 +5,11 @@ Page post or an Instagram post flows from the webhook to an automated reply, how
 config option is matched and enforced, and the non-obvious pitfalls that have caused
 silent failures. It is the reference for anyone touching the comment-automation code.
 
-> Scope: the three `CommentAutomationChannelType` values (`channel-type.ts`) —
-> `messenger` (Facebook Pages), `instagram` (Instagram Login) and `instagramFacebook`
-> (Instagram via Facebook Login). All three share one table, one worker loop and one set
-> of filters; the per-channel capability differences are listed under
-> [Known gaps](#known-gaps--pitfalls).
+> Scope: the five `CommentAutomationChannelType` values (`channel-type.ts`) —
+> `messenger` (Facebook Pages), `instagram` (Instagram Login), `instagramFacebook`
+> (Instagram via Facebook Login), `threads` and `tiktok`. All five share one table, one
+> worker loop and one set of filters; the per-channel capability differences are listed
+> under [Known gaps](#known-gaps--pitfalls).
 
 ## Tables
 
@@ -100,7 +100,7 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | Option / field | Meaning | Enforcement |
 |---|---|---|
 | `isActive` | Automation on/off | `findActiveAutomations` filters `isActive: true`. |
-| `type` | `messenger` \| `instagram` \| `instagramFacebook` | `findActiveAutomations` filters `type === channelType`, which is the incoming `integrationType`. The builder writes it: `fb-comments` → `messenger`, `ig-comments` → the selected Instagram variant. |
+| `type` | `messenger` \| `instagram` \| `instagramFacebook` \| `threads` \| `tiktok` | `findActiveAutomations` filters `type === channelType`, which is the incoming `integrationType`. The builder writes it: `fb-comments` → `messenger`, `ig-comments` → the selected Instagram variant. |
 | `startTime`/`endTime` | Daily active window (workspace tz) | `isWithinSchedule` — lexicographic `"HH:mm"` compare, handles overnight windows; null → always within. |
 | `post` (`all` / `postIds`) | Which posts | `matchPost` — `all` always true; `postIds` matches via normalized trailing id. |
 | `options.ignoreCommentReplies` (default **true**) | Skip replies-to-comments | Skips only when `isCommentReply(parentId, postId, commentId)` is true. |
@@ -398,8 +398,11 @@ Two Instagram-only caveats follow from that, and both are expected behaviour:
   comment when `ignoreCommentReplies` is on.)
 - **Post-id formats differ by picker tab.** Always compare via `normalizePostId`. Reels
   may still need verification that the stored `video_id` equals the webhook `story_id`.
-- **Capabilities differ per channel.** Private DM replies work on all three channels
-  (`PRIVATE_REPLY_TEXT_SENDERS`), but comment liking exists only on `messenger` and
+- **Capabilities differ per channel.** Private DM replies work on the three Meta
+  channels only (`PRIVATE_REPLY_TEXT_SENDERS`): Threads has no DM API, and TikTok's Send
+  API addresses an existing `conversation_id` the business cannot open. Comment liking
+  and hiding exist on the Meta channels and TikTok but not Threads. Among the Meta
+  channels liking exists only on `messenger` and
   `instagramFacebook` — Instagram Login has no like API, so its `likeComment` handler
   is a logged no-op — and the attachment lookup behind `hideComments.hasImage` /
   `hasVideo` is implemented only for `messenger` (`comment-attachment.ts`

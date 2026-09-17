@@ -1,8 +1,5 @@
 import { conversationService } from "@chatbotx.io/business"
-import type {
-  ChannelType,
-  FBCommentReply,
-} from "@chatbotx.io/database/partials"
+import type { FBCommentReply } from "@chatbotx.io/database/partials"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import { COMMENT_AUTOMATION_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
@@ -99,6 +96,12 @@ export const PRIVATE_REPLY_TEXT_SENDERS: Record<
   // comment can only be answered publicly. Every private-reply path — text,
   // flow and AIAgent alike — therefore skips on Threads.
   threads: null,
+  // TikTok has no comment-anchored DM either, and the gap is wider than an
+  // endpoint: its Send API addresses an existing `conversation_id`
+  // (`recipient_type: "CONVERSATION"`), and a business cannot open one. So
+  // there is nothing to address a DM to until the contact messages first, and
+  // never anything tying that DM back to the comment.
+  tiktok: null,
 }
 
 /** Whether the channel can answer a comment with a private DM. */
@@ -119,10 +122,10 @@ export function supportsPrivateReply(
  * comment_id-anchored Send API.
  *
  * The `sourceId: null` fallback covers a contact whose first ever interaction
- * is this comment. It holds because every comment-automation channel
- * (messenger, instagram, instagramFacebook) keys its DM conversation with a
- * null sourceId — revisit it if a channel like TikTok, whose DM lives on a
- * non-null sourceId, ever grows comment automation.
+ * is this comment. It holds on every channel: the DM conversation is keyed by a
+ * null sourceId everywhere, and a channel that needs its own conversation id to
+ * address the DM (TikTok) carries it on
+ * `additionalAttributes.channelConversationId` instead of in `sourceId`.
  */
 async function resolveDirectMessageConversationId(ctx: {
   commentId: string
@@ -134,7 +137,6 @@ async function resolveDirectMessageConversationId(ctx: {
     const existing = await conversationService.findDMByContact({
       workspaceId: ctx.workspaceId,
       contactId: ctx.contactInbox.contactId,
-      channel: ctx.contactInbox.channel as ChannelType,
     })
     if (existing) {
       return existing.id

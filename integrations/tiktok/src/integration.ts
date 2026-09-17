@@ -7,6 +7,7 @@ import {
 import { refreshAccessToken } from "./apis/auth"
 import { TiktokAPIException } from "./exception"
 import { callbackHandler } from "./handlers/callback"
+import { commentHandlers } from "./handlers/comment"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
@@ -25,6 +26,7 @@ const config: IntegrationDefinition<
       message: messageHandlers,
       conversation: conversationHandlers,
       contact: contactHandlers,
+      comment: commentHandlers,
     },
   },
   actions: {},

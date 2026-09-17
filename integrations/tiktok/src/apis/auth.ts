@@ -9,6 +9,19 @@ const TIKTOK_AUTH_BASE_URL = "https://www.tiktok.com/v2/auth/authorize/"
 const TIKTOK_TOKEN_URL = `${BUSINESS_API_BASE_URL}tt_user/oauth2/token/`
 const TIKTOK_REFRESH_URL = `${BUSINESS_API_BASE_URL}tt_user/oauth2/refresh_token/`
 
+// `comment.list` is what makes TikTok deliver `comment.update` webhooks at all
+// (documented as a prerequisite on the comment-update event page); `video.list`
+// backs the post picker.
+//
+// Adding a scope does not upgrade an existing connection: every
+// already-connected account has to re-authorize before comment automation can
+// run for it.
+//
+// TODO(tiktok-comments): the write actions — reply, like, hide, delete — need
+// their own scope, whose exact identifier is not in the public docs. Read it off
+// the app's Permissions page in the TikTok developer portal and add it here.
+// Deliberately not guessed: TikTok rejects the whole authorize request on an
+// unknown scope string, which would break connecting the channel at all.
 const TIKTOK_SCOPES = [
   "user.info.basic",
   "user.info.username",
@@ -18,6 +31,8 @@ const TIKTOK_SCOPES = [
   "message.list.read",
   "message.list.send",
   "message.list.manage",
+  "video.list",
+  "comment.list",
 ].join(",")
 
 export function generateAuthUrl({

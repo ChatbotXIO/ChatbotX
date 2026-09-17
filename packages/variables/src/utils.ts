@@ -14,7 +14,6 @@ import {
 import { resolveGenderLabel } from "@chatbotx.io/business/system-field"
 import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
 import {
-  type ChannelType,
   type ContactSource,
   contactSources,
   type SystemFieldType,
@@ -236,7 +235,6 @@ const getFlowStepValue = async (
   const conversation = await conversationService.findDMByContact({
     workspaceId: context.contact.workspaceId,
     contactId: context.contact.id,
-    channel: context.contactInbox?.channel as ChannelType | undefined,
   })
   return conversation?.[key] ?? null
 }

@@ -742,6 +742,152 @@ describe("processCommentAutomation threads support", () => {
   })
 })
 
+describe("processCommentAutomation tiktok support", () => {
+  test("queries active automations with channelType tiktok", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "text", value: "hi" } }),
+    ])
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok", parentId: POST_ID }) as any,
+    )
+
+    expect(mockFindActiveAutomations).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      channelType: "tiktok",
+    })
+  })
+
+  test("public text reply posts a public comment reply", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "text", value: "Hi TikTok" } }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "comment",
+        text: "Hi TikTok",
+        contentAttributes: {
+          replyToCommentId: COMMENT_ID,
+          commentAutomation: {
+            automationId: "automation-1",
+            replyChannel: "public",
+          },
+        },
+      }),
+    )
+  })
+
+  // TikTok's reply endpoint creates a fresh reply on every call, so a BullMQ
+  // retry would double-post under the same comment.
+  test("dispatches the public reply with a single attempt", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "text", value: "Hi TikTok" } }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "sendChannelMessage",
+      expect.anything(),
+      expect.objectContaining({ attempts: 1 }),
+    )
+  })
+
+  // Unlike Threads, TikTok HAS both endpoints — the capability-unsupported
+  // branches must not fire.
+  test("likes and hides run instead of logging unsupported", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        options: { likeUserComment: true },
+        hideComments: {
+          hasKeywords: true,
+          keywords: ["spam"],
+          showCommentsAfter: "1d",
+        },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+      }),
+      create: mockMessageCreate,
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok", message: "spam" }) as any,
+    )
+
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "changeChannelMessageState",
+      expect.anything(),
+      expect.anything(),
+    )
+    expect(mockLoggerInfo).not.toHaveBeenCalledWith(
+      expect.objectContaining({ capability: "like comment unsupported" }),
+      "Comment automation capability unsupported",
+    )
+    expect(mockLoggerInfo).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        capability: "hide or unhide comment unsupported",
+      }),
+      "Comment automation capability unsupported",
+    )
+  })
+
+  // TikTok's Send API addresses an existing conversation_id and a business
+  // cannot open one, so there is nothing to anchor a comment DM to.
+  test("private reply is skipped as an unsupported capability", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "text", value: "psst" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockLoggerInfo).toHaveBeenCalledWith(
+      {
+        automationId: "automation-1",
+        commentId: COMMENT_ID,
+        capability: "private reply unsupported",
+      },
+      "Comment automation capability unsupported",
+    )
+  })
+})
+
 describe("processCommentAutomation matchPost normalization", () => {
   test("matches a reel stored as a bare id against the composite webhook post_id", async () => {
     mockFindActiveAutomations.mockResolvedValue([
@@ -1165,7 +1311,6 @@ describe("processCommentAutomation flow private reply DM conversation", () => {
     expect(mockConversationFindDMByContact).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       contactId: "contact-1",
-      channel: "messenger",
     })
     expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
       "sendFlow",

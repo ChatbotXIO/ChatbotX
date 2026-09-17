@@ -4,6 +4,13 @@ export * from "./integration"
 export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"
 export type {
   TiktokAuthValue,
+  TiktokComment,
+  TiktokCommentHideAction,
+  TiktokCommentLikeAction,
+  TiktokCommentListResult,
+  TiktokCommentStatus,
   TiktokConfig,
+  TiktokVideo,
+  TiktokVideoListResult,
   TiktokWebhookEvent,
 } from "./schema"

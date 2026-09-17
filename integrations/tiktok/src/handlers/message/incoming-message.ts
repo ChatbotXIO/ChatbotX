@@ -87,7 +87,10 @@ export const receiveMessage = async ({
 
   const contact: IncomingContact = {
     sourceId: customerOpenId,
-    sourceConversationId: content.conversation_id,
+    // TikTok's conversation_id addresses the DM at send time, but it must not
+    // key the conversation row: `Conversation.sourceId` is reserved for comment
+    // threads (the video id), and a contact can have both.
+    channelConversationId: content.conversation_id,
     firstName: isEcho
       ? (content.to ?? content.to_user?.id ?? content.from_user.id)
       : (content.from ?? content.from_user.id),

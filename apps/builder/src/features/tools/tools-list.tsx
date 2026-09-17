@@ -7,6 +7,7 @@ import {
   SiFacebook,
   SiInstagram,
   SiThreads,
+  SiTiktok,
 } from "@icons-pack/react-simple-icons"
 import {
   BotIcon,
@@ -89,6 +90,13 @@ export const TOOLS_CONFIG = [
     // same gate that hides the channel itself. Drop the flag once approved.
     previewOnly: true,
     getLink: (id: string) => `/space/${id}/threads-comments`,
+  },
+  {
+    id: "tiktok-comment",
+    labelKey: "tiktokCommentAutomation.title",
+    descriptionKey: "tiktokCommentAutomation.description",
+    icon: SiTiktok,
+    getLink: (id: string) => `/space/${id}/tiktok-comments`,
   },
   {
     id: "reflinks",

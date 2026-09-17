@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/database/client"
 import {
   type FBCommentAutomationType,
+  type FBCommentHideComments,
   fbCommentAutomationTypes,
   type IgCommentAutomationType,
   igCommentAutomationTypes,
@@ -114,6 +115,53 @@ type UpdateThreadsCommentAutomationInput = Partial<
   isActive?: boolean
 }
 
+/**
+ * TikTok sits between Threads and the Meta channels: it CAN like and hide a
+ * comment (`business/comment/like/`, `business/comment/hide/`), but it has no
+ * comment-anchored DM, so `privateReply` is pinned off the way Threads pins it.
+ * `trackUserTags` is off too — TikTok's comment payload carries no tagged users
+ * in any form, structured or in the text.
+ */
+type TiktokCommentAutomationOptions = {
+  replyToNewContactsOnly: boolean
+  replyOncePerUserPerPost: boolean
+  likeUserComment: boolean
+  replyToUsersWhoCommentedOnOtherPosts: boolean
+  ignoreCommentReplies: boolean
+  trackUserTags?: false
+}
+
+type TiktokCommentAutomationHideComments = {
+  all: boolean
+  hasPhoneNumber: boolean
+  /** Always false: the attachment lookup behind these two is messenger-only. */
+  hasImage?: false
+  hasVideo?: false
+  hasLink: boolean
+  hasKeywords: boolean
+  keywords: string[]
+  showCommentsAfter: FBCommentHideComments["showCommentsAfter"]
+}
+
+type CreateTiktokCommentAutomationInput = {
+  name: string
+  post: ThreadsCommentAutomationPost
+  publicReply: ThreadsCommentAutomationReply
+  includeKeywords: ThreadsCommentAutomationIncludeKeywords
+  excludeKeywords: string[]
+  options: TiktokCommentAutomationOptions
+  hideComments?: TiktokCommentAutomationHideComments
+  replyAfter: ThreadsCommentAutomationReplyAfter
+  isActive?: boolean
+}
+
+type UpdateTiktokCommentAutomationInput = Partial<
+  Omit<CreateTiktokCommentAutomationInput, "isActive">
+> & {
+  options?: TiktokCommentAutomationOptions
+  isActive?: boolean
+}
+
 class FbCommentAutomationService extends BaseService {
   private readonly threadsType = fbCommentAutomationTypes.enum.threads
 
@@ -173,9 +221,72 @@ class FbCommentAutomationService extends BaseService {
     }
   }
 
+  private readonly tiktokType = fbCommentAutomationTypes.enum.tiktok
+
+  private readonly tiktokDefaults = {
+    privateReply: { type: "none", value: null } as {
+      type: "none"
+      value: null
+    },
+    hideComments: {
+      all: false,
+      hasPhoneNumber: false,
+      hasImage: false,
+      hasVideo: false,
+      hasLink: false,
+      hasKeywords: false,
+      keywords: [] as string[],
+      showCommentsAfter: "none",
+    } as FBCommentHideComments,
+    replyAfter: { type: "immediately", value: 0 } as {
+      type: "immediately"
+      value: number
+    },
+  }
+
+  /**
+   * Forces the unsupported flags off on every write, so a request that sets
+   * them — by hand, or from a form that drifted — cannot enable a capability
+   * TikTok does not have. `likeUserComment` is NOT forced: TikTok supports it.
+   */
+  private buildTiktokOptions(input?: TiktokCommentAutomationOptions) {
+    return {
+      replyToNewContactsOnly: input?.replyToNewContactsOnly ?? false,
+      replyOncePerUserPerPost: input?.replyOncePerUserPerPost ?? false,
+      likeUserComment: input?.likeUserComment ?? false,
+      replyToUsersWhoCommentedOnOtherPosts:
+        input?.replyToUsersWhoCommentedOnOtherPosts ?? true,
+      ignoreCommentReplies: input?.ignoreCommentReplies ?? true,
+      trackUserTags: false as const,
+    }
+  }
+
+  /**
+   * `hasImage`/`hasVideo` are pinned off: they are answered by
+   * `comment-attachment.ts`, which only knows how to ask Messenger. Leaving
+   * them settable would render a switch that silently never matches.
+   */
+  private buildTiktokHideComments(
+    input?: TiktokCommentAutomationHideComments,
+  ): FBCommentHideComments {
+    if (!input) {
+      return this.tiktokDefaults.hideComments
+    }
+    return {
+      all: input.all ?? false,
+      hasPhoneNumber: input.hasPhoneNumber ?? false,
+      hasImage: false,
+      hasVideo: false,
+      hasLink: input.hasLink ?? false,
+      hasKeywords: input.hasKeywords ?? false,
+      keywords: input.keywords ?? [],
+      showCommentsAfter: input.showCommentsAfter ?? "none",
+    }
+  }
+
   findActiveAutomations(props: {
     workspaceId: string
-    channelType: "messenger" | "instagram" | "instagramFacebook" | "threads"
+    channelType: FBCommentAutomationType
   }) {
     return db.query.fbCommentAutomationModel.findMany({
       where: {
@@ -691,6 +802,169 @@ class FbCommentAutomationService extends BaseService {
           eq(fbCommentAutomationModel.id, id),
           eq(fbCommentAutomationModel.workspaceId, workspaceId),
           eq(fbCommentAutomationModel.type, this.threadsType),
+        ),
+      )
+      .returning({ id: fbCommentAutomationModel.id })
+
+    return record ?? null
+  }
+
+  async listTiktokAutomations(props: {
+    workspaceId: string
+    name?: string
+    isActive?: boolean
+    limit: number
+    offset: number
+    orderBy?: Record<string, unknown>
+    tx?: DatabaseClient
+  }) {
+    const {
+      workspaceId,
+      name,
+      isActive,
+      limit,
+      offset,
+      orderBy = { createdAt: "desc" },
+      tx = db,
+    } = props
+    const where = {
+      workspaceId,
+      type: this.tiktokType,
+      isActive,
+      name: name
+        ? {
+            ilike: `%${name}%`,
+          }
+        : undefined,
+    }
+
+    const [data, total] = await Promise.all([
+      tx.query.fbCommentAutomationModel.findMany({
+        where,
+        orderBy,
+        limit,
+        offset,
+      }),
+      tx.$count(
+        fbCommentAutomationModel,
+        relationsFilterToSQL(fbCommentAutomationModel, where),
+      ),
+    ])
+
+    return {
+      data,
+      total,
+    }
+  }
+
+  getTiktokAutomation(props: {
+    workspaceId: string
+    id: string
+    tx?: DatabaseClient
+  }) {
+    const { workspaceId, id, tx = db } = props
+    return tx.query.fbCommentAutomationModel.findFirst({
+      where: {
+        workspaceId,
+        type: this.tiktokType,
+        id,
+      },
+    })
+  }
+
+  async createTiktokAutomation(props: {
+    workspaceId: string
+    data: CreateTiktokCommentAutomationInput
+    tx?: DatabaseClient
+  }) {
+    const { workspaceId, data, tx = db } = props
+    const [record] = await tx
+      .insert(fbCommentAutomationModel)
+      .values({
+        id: createId(),
+        workspaceId,
+        type: this.tiktokType,
+        isActive: data.isActive ?? true,
+        name: data.name,
+        post: data.post,
+        privateReply: this.tiktokDefaults.privateReply,
+        publicReply: data.publicReply,
+        includeKeywords: data.includeKeywords,
+        excludeKeywords: data.excludeKeywords,
+        options: this.buildTiktokOptions(data.options),
+        hideComments: this.buildTiktokHideComments(data.hideComments),
+        replyAfter: data.replyAfter ?? this.tiktokDefaults.replyAfter,
+      })
+      .returning()
+
+    return record
+  }
+
+  async updateTiktokAutomation(props: {
+    workspaceId: string
+    id: string
+    data: UpdateTiktokCommentAutomationInput
+    tx?: DatabaseClient
+  }) {
+    const { workspaceId, id, data, tx = db } = props
+    const values: Record<string, unknown> = {}
+
+    if (data.name !== undefined) {
+      values.name = data.name
+    }
+    if (data.isActive !== undefined) {
+      values.isActive = data.isActive
+    }
+    if (data.post !== undefined) {
+      values.post = data.post
+    }
+    if (data.publicReply !== undefined) {
+      values.publicReply = data.publicReply
+    }
+    if (data.includeKeywords !== undefined) {
+      values.includeKeywords = data.includeKeywords
+    }
+    if (data.excludeKeywords !== undefined) {
+      values.excludeKeywords = data.excludeKeywords
+    }
+    if (data.options !== undefined) {
+      values.options = this.buildTiktokOptions(data.options)
+    }
+    if (data.hideComments !== undefined) {
+      values.hideComments = this.buildTiktokHideComments(data.hideComments)
+    }
+    if (data.replyAfter !== undefined) {
+      values.replyAfter = data.replyAfter
+    }
+
+    const [record] = await tx
+      .update(fbCommentAutomationModel)
+      .set(values)
+      .where(
+        and(
+          eq(fbCommentAutomationModel.id, id),
+          eq(fbCommentAutomationModel.workspaceId, workspaceId),
+          eq(fbCommentAutomationModel.type, this.tiktokType),
+        ),
+      )
+      .returning()
+
+    return record
+  }
+
+  async deleteTiktokAutomation(props: {
+    workspaceId: string
+    id: string
+    tx?: DatabaseClient
+  }) {
+    const { workspaceId, id, tx = db } = props
+    const [record] = await tx
+      .delete(fbCommentAutomationModel)
+      .where(
+        and(
+          eq(fbCommentAutomationModel.id, id),
+          eq(fbCommentAutomationModel.workspaceId, workspaceId),
+          eq(fbCommentAutomationModel.type, this.tiktokType),
         ),
       )
       .returning({ id: fbCommentAutomationModel.id })

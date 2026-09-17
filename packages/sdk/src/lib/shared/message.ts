@@ -25,6 +25,16 @@ export type IncomingContact = {
    * Display-only, never used as a matching key.
    */
   sourceUsername?: string
+  /**
+   * The channel's own conversation identifier, for channels that require one to
+   * address an outbound DM (TikTok's `conversation_id`). Stored on
+   * `Conversation.additionalAttributes.channelConversationId` — deliberately NOT
+   * `sourceConversationId`, which keys the conversation row and is reserved for
+   * comment threads (the post id). Keeping the two apart is what lets a channel
+   * have both a DM and comment threads for the same contact; see
+   * `packages/database/src/partials/channel.ts`.
+   */
+  channelConversationId?: string
 }
 
 /** The `{ sourceId, sourceUserId }` slice shared by contact-inbox rows and SDK contacts. */

@@ -28,7 +28,6 @@ import {
   broadcastStatuses,
   type ChannelType,
   contactFilterFields,
-  dmConversationUsesSourceId,
   findBroadcastChannelCapability,
   hasDuplicateBroadcastTarget,
   hasFlowAndTemplate,
@@ -1806,27 +1805,14 @@ class BroadcastService extends BaseService {
     })
   }
 
-  // A broadcast's audience is scoped to a single channel. TikTok stores its DM
-  // conversation with a non-null `sourceId` (the channel `conversation_id`);
-  // every other channel keeps the `sourceId IS NULL` DM convention. Keeping this
-  // decision in one predicate mirrors `findDMByContactIds` on the delivery side,
-  // so the count/preview and the actual send agree on which conversation is the DM.
-  private audienceUsesSourceIdDmConversation(
-    input: BroadcastAudienceInput,
-  ): boolean {
-    return (input.channels ?? []).some((channel) =>
-      dmConversationUsesSourceId(channel),
-    )
-  }
-
-  private buildDmConversationJoin(
-    input: BroadcastAudienceInput,
-  ): SQL | undefined {
+  // The DM conversation is `sourceId IS NULL` on every channel — a non-null
+  // sourceId is a comment thread, keyed by the post id. Mirrors
+  // `findDMByContactIds` on the delivery side, so the count/preview and the
+  // actual send agree on which conversation is the DM.
+  private buildDmConversationJoin(): SQL | undefined {
     return and(
       eq(conversationModel.contactId, contactInboxModel.contactId),
-      this.audienceUsesSourceIdDmConversation(input)
-        ? isNotNull(conversationModel.sourceId)
-        : isNull(conversationModel.sourceId),
+      isNull(conversationModel.sourceId),
     )
   }
 
@@ -1851,7 +1837,7 @@ class BroadcastService extends BaseService {
       const [result] = await db
         .select({ count: count() })
         .from(contactInboxModel)
-        .innerJoin(conversationModel, this.buildDmConversationJoin(input))
+        .innerJoin(conversationModel, this.buildDmConversationJoin())
         .where(
           and(
             this.buildAudienceWhere(inboxIds, input),
@@ -1899,7 +1885,7 @@ class BroadcastService extends BaseService {
       })
       .from(contactInboxModel)
       .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
-      .leftJoin(conversationModel, this.buildDmConversationJoin(input))
+      .leftJoin(conversationModel, this.buildDmConversationJoin())
       .where(
         and(
           this.buildAudienceWhere(inboxIds, input),
