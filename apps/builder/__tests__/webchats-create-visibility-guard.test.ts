@@ -38,6 +38,15 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
+// The pending-approval channel allowlist (Threads) reads the session. These
+// suites cover tenant channel policy, not that gate, so it is stubbed as
+// "previewer" and passes every channel through untouched.
+vi.mock("@/lib/workspace/preview-channels", () => ({
+  PREVIEW_CHANNELS: ["threads"],
+  canSeePreviewChannels: vi.fn(async () => true),
+  filterPreviewChannels: vi.fn(async (channels: string[]) => [...channels]),
+}))
+
 vi.mock("@/lib/platform-credential-owner", () => ({
   resolveOwnerForWorkspace: vi.fn(async () => "owner-1"),
 }))

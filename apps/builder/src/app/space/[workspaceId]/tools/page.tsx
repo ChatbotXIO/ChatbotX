@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { ToolsList } from "@/features/tools/tools-list"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import { canSeePreviewChannels } from "@/lib/workspace/preview-channels"
 
 export default async function ToolsPage({
   params,
@@ -23,6 +24,7 @@ export default async function ToolsPage({
 
   return (
     <ToolsList
+      canSeePreviewTools={await canSeePreviewChannels()}
       permissions={userAndWorkspace.targetWorkspaceMember.permissions}
     />
   )

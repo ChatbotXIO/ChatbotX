@@ -130,18 +130,14 @@ export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
     requiresCredential: true,
     order: 3,
   },
-  // Threads is fully implemented but hidden from the product UI until Meta
-  // approves the Threads API permissions for the platform app. `creatable:
-  // false` drops it from the create picker and the platform/reseller
-  // hidden-channels admin list; `manageable: false` drops its settings
-  // accordion row and makes `settings/channels/threads` 404 through
-  // `requireVisibleChannel`. This is a UI gate only (AGENTS.md invariant 18):
-  // webhooks, outbound send and any already-connected Threads inbox keep
-  // working. Flip both back to `true` once App Review is approved (and
-  // restore the `threads-comment` card in `features/tools/tools-list.tsx`).
+  // Threads is fully implemented but still waiting on Meta's Threads API
+  // approval, so the product UI hides it from everyone outside a preview
+  // allowlist. That gate depends on the signed-in user, so it cannot live in
+  // this static registry — see
+  // `apps/builder/src/lib/workspace/preview-channels.ts`.
   threads: {
-    creatable: false,
-    manageable: false,
+    creatable: true,
+    manageable: true,
     requiresCredential: true,
     order: 4,
   },

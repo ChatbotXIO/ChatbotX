@@ -3,7 +3,11 @@
 import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { SiFacebook, SiInstagram } from "@icons-pack/react-simple-icons"
+import {
+  SiFacebook,
+  SiInstagram,
+  SiThreads,
+} from "@icons-pack/react-simple-icons"
 import {
   BotIcon,
   CalendarIcon,
@@ -75,18 +79,17 @@ export const TOOLS_CONFIG = [
     icon: SiInstagram,
     getLink: (id: string) => `/space/${id}/ig-stories`,
   },
-  // Hidden until Meta approves the Threads API permissions for the platform
-  // app — same reason the `threads` channel is `creatable: false, manageable:
-  // false` in `CHANNEL_CAPABILITIES` (`packages/utils/src/channel.ts`). The
-  // `/space/<id>/threads-comments` routes stay reachable by direct URL;
-  // restore this entry (and the `SiThreads` import) once approved.
-  // {
-  //   id: "threads-comment",
-  //   labelKey: "threadsCommentAutomation.title",
-  //   descriptionKey: "threadsCommentAutomation.description",
-  //   icon: SiThreads,
-  //   getLink: (id: string) => `/space/${id}/threads-comments`,
-  // },
+  {
+    id: "threads-comment",
+    labelKey: "threadsCommentAutomation.title",
+    descriptionKey: "threadsCommentAutomation.description",
+    icon: SiThreads,
+    // Threads is still awaiting Meta's API approval, so this card only shows
+    // for the preview allowlist (`lib/workspace/preview-channels.ts`), the
+    // same gate that hides the channel itself. Drop the flag once approved.
+    previewOnly: true,
+    getLink: (id: string) => `/space/${id}/threads-comments`,
+  },
   {
     id: "reflinks",
     labelKey: "reflinks.title",
@@ -191,6 +194,13 @@ type ToolsListProps = {
    * fail-closed, exactly like the sidebar's nav filtering (`app-sidebar.tsx`).
    */
   permissions: WorkspaceMemberPermissions
+  /**
+   * Whether the signed-in user is on the preview allowlist
+   * (`lib/workspace/preview-channels.ts`) and may see cards for channels still
+   * awaiting provider approval. Defaults to `false` so a call site that
+   * forgets to resolve it hides those cards rather than leaking them.
+   */
+  canSeePreviewTools?: boolean
 }
 
 /**
@@ -208,7 +218,22 @@ export function canShowTool(
   return !permission || hasWorkspacePermission(permissions, permission)
 }
 
-export const ToolsList = ({ permissions }: ToolsListProps) => {
+/**
+ * A card flagged `previewOnly` belongs to a channel whose provider approval is
+ * still pending (today: Threads) — it stays hidden until the signed-in user is
+ * on the preview allowlist, independently of workspace permissions.
+ */
+export function canShowPreviewTool(
+  previewOnly: boolean,
+  canSeePreviewTools: boolean,
+): boolean {
+  return !previewOnly || canSeePreviewTools
+}
+
+export const ToolsList = ({
+  permissions,
+  canSeePreviewTools = false,
+}: ToolsListProps) => {
   const workspaceId = useWorkspaceId()
   const t = useTranslations()
   const router = useRouter()
@@ -218,7 +243,12 @@ export const ToolsList = ({ permissions }: ToolsListProps) => {
       TOOLS_CONFIG.filter((config) => {
         const permission =
           "permission" in config ? config.permission : undefined
-        return canShowTool(permission, permissions)
+        const previewOnly =
+          "previewOnly" in config ? Boolean(config.previewOnly) : false
+        return (
+          canShowTool(permission, permissions) &&
+          canShowPreviewTool(previewOnly, canSeePreviewTools)
+        )
       }).map((config) => ({
         id: config.id,
         label: t(config.labelKey),
@@ -229,7 +259,7 @@ export const ToolsList = ({ permissions }: ToolsListProps) => {
             ? config.getLink(workspaceId.toString())
             : undefined,
       })),
-    [t, workspaceId, permissions],
+    [t, workspaceId, permissions, canSeePreviewTools],
   )
 
   const handleCardClick = useCallback(

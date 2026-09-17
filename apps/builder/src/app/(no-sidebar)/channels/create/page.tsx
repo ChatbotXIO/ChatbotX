@@ -22,6 +22,7 @@ import {
   CREATE_CHANNEL_ERROR_MESSAGE_KEYS,
   isCreateChannelErrorCode,
 } from "@/lib/workspace/create-first-workspace"
+import { filterPreviewChannels } from "@/lib/workspace/preview-channels"
 
 export const dynamic = "force-dynamic"
 
@@ -61,8 +62,11 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
   // hiding is a hint, never an access control. Never consulted by
   // webhooks/outbound send/`Inbox` itself, so an already-connected inbox of a
   // hidden channel keeps working unaffected.
-  const visibleChannels =
-    await tenantService.resolveVisibleChannels(platformOwnerId)
+  // `filterPreviewChannels` layers the pending-provider-approval allowlist
+  // (Threads) on top of that policy — same UI-only semantics.
+  const visibleChannels = await filterPreviewChannels(
+    await tenantService.resolveVisibleChannels(platformOwnerId),
+  )
   const isVisible = (channel: ChannelType) => visibleChannels.includes(channel)
 
   if (selectedChannel === "telegram" && isVisible("telegram")) {

@@ -10,6 +10,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { cache } from "react"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
+import { filterPreviewChannels } from "@/lib/workspace/preview-channels"
 
 export type ChannelPolicy = {
   /** Tenant-aware owner (`resolveOwnerForWorkspace`) — the credential/policy key. */
@@ -49,8 +50,15 @@ export const resolveChannelPolicy = cache(
       resolveOwnerForWorkspace(workspace),
       inboxService.distinctConnectedChannels(workspaceId),
     ])
-    const creatable = await tenantService.resolveVisibleChannels(ownerId)
+    const creatable = await filterPreviewChannels(
+      await tenantService.resolveVisibleChannels(ownerId),
+    )
 
+    // `filterPreviewChannels` is applied to `creatable` only, never to this
+    // union: a channel awaiting provider approval must not be *offered*, but a
+    // workspace that already connected one during the preview keeps its
+    // settings row — and therefore its disconnect path — exactly like any
+    // other grandfathered channel (AGENTS.md invariant 18c).
     const visibleChannels = MANAGEABLE_CHANNELS.filter(
       (channel) =>
         !CREATABLE_CHANNELS.includes(channel) ||
