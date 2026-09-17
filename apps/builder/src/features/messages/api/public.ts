@@ -145,7 +145,7 @@ export const messagesPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PATCH",
+      method: "PUT",
       path: "/v1/conversations/{conversationId}/messages/{messageId}",
       summary: "Edit comment message",
       description:

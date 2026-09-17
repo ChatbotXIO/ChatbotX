@@ -19,7 +19,6 @@ import { z } from "zod"
 import { withPublicPaging } from "@/lib/public-api/list"
 import {
   createAdsConversionRuleRequest,
-  toggleAdsConversionRuleRequest,
   updateAdsConversionRuleRequest,
 } from "./conversion-rule"
 
@@ -33,8 +32,6 @@ export const createAdsConversionRulePublicRequest =
   createAdsConversionRuleRequest
 export const updateAdsConversionRulePublicRequest =
   updateAdsConversionRuleRequest.omit({ id: true })
-export const toggleAdsConversionRulePublicRequest =
-  toggleAdsConversionRuleRequest.omit({ id: true })
 
 // `adsConversionRuleResource` includes `workspaceId` (it's a straight
 // `createSelectSchema` off the table) — stripped here so no public response

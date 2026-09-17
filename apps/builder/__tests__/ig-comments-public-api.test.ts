@@ -91,7 +91,7 @@ test("registers the IG comments public router under the automation scope", () =>
   expect(findProcedure("GET", "/v1/ig-comments")).toBeDefined()
   expect(findProcedure("GET", "/v1/ig-comments/{id}")).toBeDefined()
   expect(findProcedure("POST", "/v1/ig-comments")).toBeDefined()
-  expect(findProcedure("PUT", "/v1/ig-comments/{id}")).toBeDefined()
+  expect(findProcedure("PATCH", "/v1/ig-comments/{id}")).toBeDefined()
   expect(findProcedure("DELETE", "/v1/ig-comments/{id}")).toBeDefined()
   expect(findProcedure("GET", "/v1/ig-comments/instagram-media")).toBeDefined()
 })
@@ -170,8 +170,8 @@ describe("POST /v1/ig-comments", () => {
   })
 })
 
-describe("PUT /v1/ig-comments/{id}", () => {
-  const procedure = findProcedure("PUT", "/v1/ig-comments/{id}")
+describe("PATCH /v1/ig-comments/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/ig-comments/{id}")
 
   test("updates an IG comment automation in the token workspace", async () => {
     const input = { id: "ig-comment-1", name: "Updated welcome" }

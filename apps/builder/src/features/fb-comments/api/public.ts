@@ -86,7 +86,7 @@ export const fbCommentsPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/fb-comments/{id}",
       summary: "Update FB comment automation",
       description:

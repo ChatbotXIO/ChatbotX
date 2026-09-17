@@ -200,7 +200,7 @@ export const broadcastsPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PATCH",
+      method: "PUT",
       path: "/v1/broadcasts/{id}",
       summary: "Rename broadcast",
       description:
@@ -401,11 +401,11 @@ export const broadcastsPublicRouter = {
         }),
     ),
 
-  clone: workspaceTokenAuthAPI
+  duplicate: workspaceTokenAuthAPI
     .route({
       method: "POST",
-      path: "/v1/broadcasts/{id}/clone",
-      summary: "Clone broadcast",
+      path: "/v1/broadcasts/{id}/duplicate",
+      summary: "Duplicate broadcast",
       description:
         "Copies the broadcast into a new draft with a deduplicated name, including its targets and audience filter.",
       successStatus: 201,

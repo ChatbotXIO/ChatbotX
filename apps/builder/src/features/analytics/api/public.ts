@@ -650,7 +650,7 @@ export const analyticsPublicRouter = {
   flowStats: workspaceTokenAuthAPI
     .route({
       method: "GET",
-      path: "/v1/analytics/flows/{flowId}",
+      path: "/v1/analytics/flows/{flowId}/stats",
       summary: "Get flow analytics",
       description:
         "Use this after resolving a flow with `flows.get` to inspect its session and completion counts. Call `analytics.newContactCountsPerDay` instead for workspace contact trends.",
@@ -686,8 +686,14 @@ export const analyticsPublicRouter = {
     .output(linkStatsPublicResponse)
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
+      const { from, to, ...rest } = input
       const data = await magicLinkAnalyticsService.getMagicLinkStatsByDateRange(
-        { ...input, workspaceId: context.workspace.id },
+        {
+          ...rest,
+          startDate: from,
+          endDate: to,
+          workspaceId: context.workspace.id,
+        },
       )
       return { data }
     }),
@@ -705,8 +711,11 @@ export const analyticsPublicRouter = {
     .output(linkContactsPublicResponse)
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
+      const { from, to, ...rest } = input
       const result = await magicLinkAnalyticsService.getMagicLinkContactStats({
-        ...input,
+        ...rest,
+        startDate: from,
+        endDate: to,
         workspaceId: context.workspace.id,
       })
       return { ...result, data: result.data.map(toLinkContact) }
@@ -725,8 +734,11 @@ export const analyticsPublicRouter = {
     .output(linkStatsPublicResponse)
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
+      const { from, to, ...rest } = input
       const data = await refLinkAnalyticsService.getRefLinkStatsByDateRange({
-        ...input,
+        ...rest,
+        startDate: from,
+        endDate: to,
         workspaceId: context.workspace.id,
       })
       return { data }
@@ -745,8 +757,11 @@ export const analyticsPublicRouter = {
     .output(linkContactsPublicResponse)
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
+      const { from, to, ...rest } = input
       const result = await refLinkAnalyticsService.getRefLinkContactStats({
-        ...input,
+        ...rest,
+        startDate: from,
+        endDate: to,
         workspaceId: context.workspace.id,
       })
       return { ...result, data: result.data.map(toLinkContact) }
@@ -755,10 +770,10 @@ export const analyticsPublicRouter = {
   resetFlowStats: workspaceTokenAuthAPI
     .route({
       method: "DELETE",
-      path: "/v1/analytics/flows/{flowId}",
+      path: "/v1/analytics/flows/{flowId}/stats",
       summary: "Reset flow analytics",
       description:
-        "Permanently clears the flow's analytics sessions. This cannot be undone. Unavailable to read_only tokens (DELETE is blocked for read_only permission).",
+        "Clears the flow's recorded analytics sessions and counters and opens a new session; it does not delete or otherwise touch the flow itself. This cannot be undone. Unavailable to read_only tokens (DELETE is blocked for read_only permission).",
       successStatus: 204,
       tags: ["Analytics"],
     })

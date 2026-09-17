@@ -8,15 +8,15 @@ import {
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 
-export const templateMessagesPublicRouter = {
+export const whatsappTemplatesPublicRouter = {
   list: workspaceTokenAuthAPI
     .route({
       method: "GET",
-      path: "/v1/template-messages",
-      summary: "List template messages",
+      path: "/v1/whatsapp/templates",
+      summary: "List WhatsApp templates",
       description:
         "Returns WhatsApp message templates approved for use in broadcasts, along with their approval status.",
-      tags: ["Template Messages"],
+      tags: ["WhatsApp Templates"],
     })
     .input(
       listWhatsappMessageTemplatesRequest.omit({

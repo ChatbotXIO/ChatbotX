@@ -122,8 +122,8 @@ describe("POST /v1/broadcasts", () => {
   })
 })
 
-describe("PATCH /v1/broadcasts/{id}", () => {
-  const procedure = findProcedure("PATCH", "/v1/broadcasts/{id}")
+describe("PUT /v1/broadcasts/{id}", () => {
+  const procedure = findProcedure("PUT", "/v1/broadcasts/{id}")
 
   test("renames the broadcast then re-fetches it from context's workspace", async () => {
     broadcastService.update.mockResolvedValueOnce(undefined)

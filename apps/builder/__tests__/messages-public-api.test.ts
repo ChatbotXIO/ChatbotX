@@ -234,9 +234,9 @@ describe("POST /v1/conversations/{conversationId}/messages", () => {
   })
 })
 
-describe("PATCH /v1/conversations/{conversationId}/messages/{messageId}", () => {
+describe("PUT /v1/conversations/{conversationId}/messages/{messageId}", () => {
   const procedure = findProcedure(
-    "PATCH",
+    "PUT",
     "/v1/conversations/{conversationId}/messages/{messageId}",
   )
 

@@ -87,7 +87,7 @@ export const productsPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PATCH",
+      method: "PUT",
       path: "/v1/products/{id}",
       summary: "Replace product",
       description:

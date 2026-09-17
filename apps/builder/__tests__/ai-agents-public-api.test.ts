@@ -180,8 +180,8 @@ describe("POST /v1/ai-agents", () => {
   })
 })
 
-describe("PUT /v1/ai-agents/{id}", () => {
-  const procedure = findProcedure("PUT", "/v1/ai-agents/{id}")
+describe("PATCH /v1/ai-agents/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/ai-agents/{id}")
 
   test("delegates to aiAgentService.updateAIAgent and returns its result", async () => {
     aiAgentService.updateAIAgent.mockResolvedValueOnce({ id: "agent-1" })

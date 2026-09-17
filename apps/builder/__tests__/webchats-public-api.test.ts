@@ -217,8 +217,8 @@ describe("POST /v1/webchats", () => {
   })
 })
 
-describe("PUT /v1/webchats/{id}", () => {
-  const procedure = findProcedure("PUT", "/v1/webchats/{id}")
+describe("PATCH /v1/webchats/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/webchats/{id}")
 
   test("re-applies branding when persistentMenus is supplied", async () => {
     isCommunity.mockReturnValue(true)

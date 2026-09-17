@@ -156,7 +156,7 @@ export const contactsCrudPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/contacts/{identifier}",
       summary: "Update contact fields",
       description:

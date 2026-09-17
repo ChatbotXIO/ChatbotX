@@ -20,7 +20,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
   {
     "method": "DELETE",
     "operationId": "ads.deleteCampaign",
-    "path": "/v1/ads/campaigns/{operationId}",
+    "path": "/v1/ads/campaigns/{id}",
   },
   {
     "method": "DELETE",
@@ -125,17 +125,17 @@ exports[`public API spec — operation naming guard > operation list (operationI
   {
     "method": "POST",
     "operationId": "ads.pauseCampaign",
-    "path": "/v1/ads/campaigns/{operationId}/pause",
+    "path": "/v1/ads/campaigns/{id}/pause",
   },
   {
     "method": "POST",
     "operationId": "ads.publishCampaign",
-    "path": "/v1/ads/campaigns/{operationId}/publish",
+    "path": "/v1/ads/campaigns/{id}/publish",
   },
   {
     "method": "POST",
     "operationId": "ads.retryCampaign",
-    "path": "/v1/ads/campaigns/{operationId}/retry",
+    "path": "/v1/ads/campaigns/{id}/retry",
   },
   {
     "method": "POST",
@@ -144,11 +144,6 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "PATCH",
-    "operationId": "ads.toggleRuleStatus",
-    "path": "/v1/ads/conversion-rules/{id}/status",
-  },
-  {
-    "method": "PUT",
     "operationId": "ads.updateRule",
     "path": "/v1/ads/conversion-rules/{id}",
   },
@@ -178,7 +173,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/ai-agents",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "aiAgents.update",
     "path": "/v1/ai-agents/{id}",
   },
@@ -335,7 +330,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
   {
     "method": "GET",
     "operationId": "analytics.flowStats",
-    "path": "/v1/analytics/flows/{flowId}",
+    "path": "/v1/analytics/flows/{flowId}/stats",
   },
   {
     "method": "GET",
@@ -390,7 +385,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
   {
     "method": "DELETE",
     "operationId": "analytics.resetFlowStats",
-    "path": "/v1/analytics/flows/{flowId}",
+    "path": "/v1/analytics/flows/{flowId}/stats",
   },
   {
     "method": "GET",
@@ -483,11 +478,6 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/appointments",
   },
   {
-    "method": "PUT",
-    "operationId": "botFields.bulkUpdate",
-    "path": "/v1/bot-fields/bulk-update",
-  },
-  {
     "method": "POST",
     "operationId": "botFields.create",
     "path": "/v1/bot-fields",
@@ -519,11 +509,6 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
-    "operationId": "broadcasts.clone",
-    "path": "/v1/broadcasts/{id}/clone",
-  },
-  {
-    "method": "POST",
     "operationId": "broadcasts.create",
     "path": "/v1/broadcasts",
   },
@@ -531,6 +516,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "DELETE",
     "operationId": "broadcasts.delete",
     "path": "/v1/broadcasts/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.duplicate",
+    "path": "/v1/broadcasts/{id}/duplicate",
   },
   {
     "method": "GET",
@@ -578,7 +568,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/broadcasts/{id}/stop",
   },
   {
-    "method": "PATCH",
+    "method": "PUT",
     "operationId": "broadcasts.update",
     "path": "/v1/broadcasts/{id}",
   },
@@ -700,7 +690,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
   {
     "method": "GET",
     "operationId": "contacts.getCustomField",
-    "path": "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
+    "path": "/v1/contacts/{identifier}/custom-fields/{idOrName}",
   },
   {
     "method": "GET",
@@ -788,14 +778,9 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/contacts/{identifier}/messages",
   },
   {
-    "method": "POST",
-    "operationId": "contacts.setCustomField",
-    "path": "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
-  },
-  {
     "method": "PUT",
-    "operationId": "contacts.setCustomFields",
-    "path": "/v1/contacts/{identifier}/custom-fields",
+    "operationId": "contacts.setCustomField",
+    "path": "/v1/contacts/{identifier}/custom-fields/{idOrName}",
   },
   {
     "method": "PUT",
@@ -828,7 +813,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/contacts/{identifier}/sequences",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "contacts.update",
     "path": "/v1/contacts/{identifier}",
   },
@@ -940,7 +925,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
   {
     "method": "GET",
     "operationId": "coupons.listContactCoupons",
-    "path": "/v1/contacts/{contactId}/coupons",
+    "path": "/v1/contacts/{identifier}/coupons",
   },
   {
     "method": "GET",
@@ -963,7 +948,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/coupon-topics/{id}/unarchive",
   },
   {
-    "method": "PATCH",
+    "method": "PUT",
     "operationId": "coupons.updateTopic",
     "path": "/v1/coupon-topics/{id}",
   },
@@ -1098,7 +1083,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/facebook-lead-ads/pages",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "facebookLeadAds.update",
     "path": "/v1/facebook-lead-ads/{id}",
   },
@@ -1128,7 +1113,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/fb-comments/facebook-posts",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "fbComments.update",
     "path": "/v1/fb-comments/{id}",
   },
@@ -1233,7 +1218,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/ig-comments/instagram-media",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "igComments.update",
     "path": "/v1/ig-comments/{id}",
   },
@@ -1263,7 +1248,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/ig-stories/instagram-stories",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "igStories.update",
     "path": "/v1/ig-stories/{id}",
   },
@@ -1303,7 +1288,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/teams/{id}/members",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "inboxTeams.update",
     "path": "/v1/teams/{id}",
   },
@@ -1358,7 +1343,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/keywords",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "keywords.update",
     "path": "/v1/keywords/{id}",
   },
@@ -1418,7 +1403,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/media-library/files/{fileId}/access",
   },
   {
-    "method": "PATCH",
+    "method": "PUT",
     "operationId": "mediaLibrary.renameFolder",
     "path": "/v1/media-library/folders/{folderId}",
   },
@@ -1453,7 +1438,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/conversations/{conversationId}/messages",
   },
   {
-    "method": "PATCH",
+    "method": "PUT",
     "operationId": "messages.update",
     "path": "/v1/conversations/{conversationId}/messages/{messageId}",
   },
@@ -1504,17 +1489,17 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "PATCH",
-    "operationId": "minigames.patch",
-    "path": "/v1/minigames/{id}",
-  },
-  {
-    "method": "PATCH",
     "operationId": "minigames.setEnabled",
     "path": "/v1/minigames/{id}/enabled",
   },
   {
     "method": "PUT",
     "operationId": "minigames.update",
+    "path": "/v1/minigames/{id}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "minigames.updatePartial",
     "path": "/v1/minigames/{id}",
   },
   {
@@ -1533,7 +1518,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/product-categories",
   },
   {
-    "method": "PATCH",
+    "method": "PUT",
     "operationId": "productCategories.update",
     "path": "/v1/product-categories/{id}",
   },
@@ -1558,7 +1543,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/products",
   },
   {
-    "method": "PATCH",
+    "method": "PUT",
     "operationId": "products.update",
     "path": "/v1/products/{id}",
   },
@@ -1583,7 +1568,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/qr-codes",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "qrCodes.update",
     "path": "/v1/qr-codes/{id}",
   },
@@ -1663,7 +1648,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/ref-links",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "reflinks.update",
     "path": "/v1/ref-links/{id}",
   },
@@ -1785,12 +1770,12 @@ exports[`public API spec — operation naming guard > operation list (operationI
   {
     "method": "GET",
     "operationId": "spreadsheets.listWorksheetHeaders",
-    "path": "/v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetName}/headers",
+    "path": "/v1/spreadsheets/{id}/worksheets/{worksheetName}/headers",
   },
   {
     "method": "GET",
     "operationId": "spreadsheets.listWorksheets",
-    "path": "/v1/spreadsheets/{spreadsheetId}/worksheets",
+    "path": "/v1/spreadsheets/{id}/worksheets",
   },
   {
     "method": "PUT",
@@ -1821,11 +1806,6 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "tags.update",
     "path": "/v1/tags/{id}",
-  },
-  {
-    "method": "GET",
-    "operationId": "templateMessages.list",
-    "path": "/v1/template-messages",
   },
   {
     "method": "GET",
@@ -1908,7 +1888,7 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/webchats",
   },
   {
-    "method": "PUT",
+    "method": "PATCH",
     "operationId": "webchats.update",
     "path": "/v1/webchats/{id}",
   },
@@ -1926,6 +1906,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "webhooks.list",
     "path": "/v1/webhooks",
+  },
+  {
+    "method": "GET",
+    "operationId": "whatsappTemplates.list",
+    "path": "/v1/whatsapp/templates",
   },
   {
     "method": "GET",

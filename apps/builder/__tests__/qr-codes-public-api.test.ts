@@ -170,8 +170,8 @@ describe("POST /v1/qr-codes", () => {
   })
 })
 
-describe("PUT /v1/qr-codes/{id}", () => {
-  const procedure = findProcedure("PUT", "/v1/qr-codes/{id}")
+describe("PATCH /v1/qr-codes/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/qr-codes/{id}")
 
   test("updates a QR code in the token workspace", async () => {
     const updated = { id: "qr-1", name: "welcome", size: 400 }

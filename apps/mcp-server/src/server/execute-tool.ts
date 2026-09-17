@@ -2,7 +2,7 @@ import { env } from "../env"
 import { fetchWithTimeout } from "../http"
 import type { DynamicTool } from "../openapi-loader"
 
-const NO_BODY_METHODS: ReadonlySet<string> = new Set(["GET", "HEAD", "DELETE"])
+const NO_BODY_METHODS: Record<string, true> = { GET: true, HEAD: true }
 
 const appendQueryParam = (
   params: URLSearchParams,
@@ -84,7 +84,7 @@ export async function executeTool(
 
   const url = `${tool.baseUrl}${path}${buildQueryString(queryParams)}`
   const sendBody =
-    !NO_BODY_METHODS.has(tool.method) && tool.bodyParamNames.length > 0
+    !NO_BODY_METHODS[tool.method] && tool.bodyParamNames.length > 0
 
   try {
     const response = await fetchWithTimeout(

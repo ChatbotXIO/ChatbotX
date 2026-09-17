@@ -101,7 +101,7 @@ export const couponsPublicRouter = {
 
   updateTopic: workspaceTokenAuthAPI
     .route({
-      method: "PATCH",
+      method: "PUT",
       path: "/v1/coupon-topics/{id}",
       summary: "Update coupon topic",
       description:
@@ -304,29 +304,32 @@ export const couponsPublicRouter = {
   listContactCoupons: workspaceTokenAuthAPI
     .route({
       method: "GET",
-      path: "/v1/contacts/{contactId}/coupons",
+      path: "/v1/contacts/{identifier}/coupons",
       summary: "List coupons issued to contact",
       description:
-        "Returns every coupon issued to a specific contact, across all topics. Use `contacts.list` to find the contact id first.",
+        "Returns every coupon issued to a specific contact, across all topics. Use `contacts.list` to find the contact first.",
       tags,
     })
     .input(
       z.object({
-        contactId: zodBigintAsString().describe(
-          "Contact id. Get it from `contacts.list`.",
-        ),
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
       }),
     )
     .output(listContactCouponsPublicResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      await contactService.findByIdOrFail({
+      const contactId = await contactService.resolveIdByIdentifier({
+        identifier: input.identifier,
         workspaceId: context.workspace.id,
-        id: input.contactId,
       })
       const data = await couponService.listIssuedCouponsForContact({
         workspaceId: context.workspace.id,
-        contactId: input.contactId,
+        contactId,
       })
       return { data }
     }),

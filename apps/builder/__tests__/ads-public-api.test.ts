@@ -62,7 +62,6 @@ const adsConversionService = {
   findOrFail: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
-  toggleEnabled: vi.fn(),
   remove: vi.fn(),
   getCtwaFunnel: vi.fn(),
   getCtwaFunnelTimeseries: vi.fn(),

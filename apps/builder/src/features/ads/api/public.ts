@@ -39,7 +39,6 @@ import {
   listCustomAudiencesPublicResponse,
   startRetargetAudienceSyncPublicRequest,
   startRetargetAudienceSyncPublicResponse,
-  toggleAdsConversionRulePublicRequest,
   updateAdsConversionRulePublicRequest,
 } from "../schema/public"
 
@@ -112,11 +111,11 @@ const adsConversionRulesPublicRouter = {
 
   updateRule: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/ads/conversion-rules/{id}",
       summary: "Update Ads conversion rule",
       description:
-        "Changes an existing conversion rule's configuration. Call `ads.getRule` to inspect current values first.",
+        "Changes an existing conversion rule's configuration. Fields omitted from the body are left unchanged. This is also how a rule is enabled or disabled: pass `enabled` on its own to toggle status without touching other fields. Call `ads.getRule` to inspect current values first.",
       tags: ["Ads"],
     })
     .input(adsConversionRuleIdParams.and(updateAdsConversionRulePublicRequest))
@@ -124,25 +123,6 @@ const adsConversionRulesPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) =>
       adsConversionService.update({
-        ...input,
-        workspaceId: context.workspace.id,
-      }),
-    ),
-
-  toggleRuleStatus: workspaceTokenAuthAPI
-    .route({
-      method: "PATCH",
-      path: "/v1/ads/conversion-rules/{id}/status",
-      summary: "Enable or disable Ads conversion rule",
-      description:
-        "Toggles whether a conversion rule is active without changing its other fields.",
-      tags: ["Ads"],
-    })
-    .input(adsConversionRuleIdParams.and(toggleAdsConversionRulePublicRequest))
-    .output(adsConversionRulePublicResource)
-    .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) =>
-      adsConversionService.toggleEnabled({
         ...input,
         workspaceId: context.workspace.id,
       }),

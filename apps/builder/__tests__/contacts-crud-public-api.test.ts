@@ -239,8 +239,8 @@ describe("POST /v1/contacts", () => {
   })
 })
 
-describe("PUT /v1/contacts/{identifier}", () => {
-  const procedure = findProcedure("PUT", "/v1/contacts/{identifier}")
+describe("PATCH /v1/contacts/{identifier}", () => {
+  const procedure = findProcedure("PATCH", "/v1/contacts/{identifier}")
 
   test("resolves the contact id via resolveIdByIdentifier before updating fields", async () => {
     resolveContactId.mockResolvedValueOnce("contact-1")

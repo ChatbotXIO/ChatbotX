@@ -122,45 +122,7 @@ export const botFieldsPublicRouter = {
       path: "/v1/bot-fields",
       summary: "Set multiple bot field values",
       description:
-        "Changes several bot fields' values in one call, addressed by name. Use `botFields.list` to find valid field names first.",
-      successStatus: 204,
-      tags: ["Bot Fields"],
-    })
-    .input(
-      z.object({
-        fields: z
-          .array(
-            z.object({
-              key: z.string().max(255).describe("Bot field name."),
-              value: z
-                .string()
-                .max(255)
-                .describe("New value for the bot field."),
-            }),
-          )
-          .describe("Bot fields to update."),
-      }),
-    )
-    .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) => {
-      await Promise.all(
-        input.fields.map(({ key, value }) =>
-          botFieldService.updateByKey({
-            workspaceId: context.workspace.id,
-            key,
-            data: { value },
-          }),
-        ),
-      )
-    }),
-
-  bulkUpdate: workspaceTokenAuthAPI
-    .route({
-      method: "PUT",
-      path: "/v1/bot-fields/bulk-update",
-      summary: "Bulk update bot field values",
-      description:
-        "Changes several bot fields' values in one call, addressed by id or name. Unlike `botFields.setMany`, each entry may target either an id or a name.",
+        "Changes several bot field values in one call, each entry addressed by id or name. Use `botFields.list` to find valid ids or names first.",
       successStatus: 204,
       tags: ["Bot Fields"],
     })
