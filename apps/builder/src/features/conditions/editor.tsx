@@ -2,6 +2,7 @@ import {
   type TriggerEventType,
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
@@ -41,7 +42,13 @@ export const ConditionEditor = ({
     case triggerEventTypes.enum.tagApplied:
     case triggerEventTypes.enum.tagRemoved: {
       return (
-        <SelectField name={`${parentName}.sourceId`} options={tagOptions} />
+        <ComboboxField
+          emptyText={t("actions.noRecordFound")}
+          name={`${parentName}.sourceId`}
+          options={tagOptions}
+          placeholder={t("actions.pleaseSelect")}
+          popoverClassName="w-[var(--anchor-width)]"
+        />
       )
     }
     case triggerEventTypes.enum.contactInfoUpdated:
@@ -54,9 +61,12 @@ export const ConditionEditor = ({
     case triggerEventTypes.enum.subscribedToSequence:
     case triggerEventTypes.enum.unsubscribedFromSequence:
       return (
-        <SelectField
+        <ComboboxField
+          emptyText={t("actions.noRecordFound")}
           name={`${parentName}.sourceId`}
           options={sequenceOptions}
+          placeholder={t("actions.pleaseSelect")}
+          popoverClassName="w-[var(--anchor-width)]"
         />
       )
     case triggerEventTypes.enum.dateTimeBasedTrigger:

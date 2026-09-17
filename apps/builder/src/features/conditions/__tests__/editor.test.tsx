@@ -15,11 +15,13 @@ vi.mock("@chatbotx.io/ui/components/form/input-field", () => ({
   ),
 }))
 
-vi.mock("@chatbotx.io/ui/components/form/select-field", async () => {
-  const { useFormContext } = await import("react-hook-form")
+// Both field mocks render a native <select> tagged with the component name so
+// tests can assert which field a condition type uses.
+const { createFieldMock } = vi.hoisted(() => ({
+  createFieldMock: async (component: "select" | "combobox") => {
+    const { useFormContext } = await import("react-hook-form")
 
-  return {
-    SelectField: ({
+    return ({
       name,
       options,
     }: {
@@ -29,11 +31,7 @@ vi.mock("@chatbotx.io/ui/components/form/select-field", async () => {
       const form = useFormContext()
 
       return (
-        <select
-          data-testid="condition-source"
-          {...form.register(name)}
-          name={name}
-        >
+        <select data-component={component} {...form.register(name)} name={name}>
           {options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -41,9 +39,17 @@ vi.mock("@chatbotx.io/ui/components/form/select-field", async () => {
           ))}
         </select>
       )
-    },
-  }
-})
+    }
+  },
+}))
+
+vi.mock("@chatbotx.io/ui/components/form/select-field", async () => ({
+  SelectField: await createFieldMock("select"),
+}))
+
+vi.mock("@chatbotx.io/ui/components/form/combobox-field", async () => ({
+  ComboboxField: await createFieldMock("combobox"),
+}))
 
 vi.mock("@/features/sequences/provider/sequence-hook", () => ({
   useSequenceOptions: () => [
@@ -53,7 +59,10 @@ vi.mock("@/features/sequences/provider/sequence-hook", () => ({
 }))
 
 vi.mock("@/features/tags/provider/tag-hook", () => ({
-  useTagSelectOptions: () => [],
+  useTagSelectOptions: () => [
+    { label: "VIP", value: "tag-1" },
+    { label: "Lead", value: "tag-2" },
+  ],
 }))
 
 vi.mock("next-intl", () => ({
@@ -127,6 +136,7 @@ describe("ConditionEditor", () => {
       'select[name="conditions.0.sourceId"]',
     )
     expect(select).toBeInstanceOf(HTMLSelectElement)
+    expect(select?.getAttribute("data-component")).toBe("combobox")
     expect(
       Array.from(select?.querySelectorAll("option") ?? []).map((option) => ({
         label: option.textContent,
@@ -166,6 +176,53 @@ describe("ConditionEditor", () => {
     ).toBe("sequence-1")
   })
 
+  test.each([
+    triggerEventTypes.enum.tagApplied,
+    triggerEventTypes.enum.tagRemoved,
+  ])("uses a searchable combobox for %s tag conditions and saves the tag id", async (type) => {
+    const onSubmit = vi.fn()
+    render(
+      <TestConditionEditor
+        defaultSourceId="tag-2"
+        onSubmit={onSubmit}
+        type={type}
+      />,
+    )
+
+    const select = container.querySelector(
+      'select[name="conditions.0.sourceId"]',
+    ) as HTMLSelectElement
+    expect(select.getAttribute("data-component")).toBe("combobox")
+    expect(
+      Array.from(select.querySelectorAll("option")).map((option) => ({
+        label: option.textContent,
+        value: option.getAttribute("value"),
+      })),
+    ).toEqual([
+      { label: "VIP", value: "tag-1" },
+      { label: "Lead", value: "tag-2" },
+    ])
+    expect(select.value).toBe("tag-2")
+
+    act(() => {
+      select.value = "tag-1"
+      select.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+    act(() => {
+      container
+        .querySelector("form")
+        ?.dispatchEvent(
+          new SubmitEvent("submit", { bubbles: true, cancelable: true }),
+        )
+    })
+
+    await vi.waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({
+        conditions: [{ sourceId: "tag-1" }],
+      })
+    })
+  })
+
   test("offers phone and email source options for contact info updated conditions", () => {
     render(
       <TestConditionEditor
@@ -178,6 +235,7 @@ describe("ConditionEditor", () => {
       'select[name="conditions.0.sourceId"]',
     )
     expect(select).toBeInstanceOf(HTMLSelectElement)
+    expect(select?.getAttribute("data-component")).toBe("select")
     expect(
       Array.from(select?.querySelectorAll("option") ?? []).map((option) => ({
         label: option.textContent,
