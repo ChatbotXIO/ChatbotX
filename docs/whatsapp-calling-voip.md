@@ -135,6 +135,20 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
    terminal status still fills missing `endedAt`/terminal metadata idempotently, without
    downgrading status or overwriting an earlier authoritative end time.
 
+8. **A call that already ended is never rung.** Meta does not order a call's webhooks, so
+   the caller's `terminate` can be processed before the VoIP `connect`. That terminate
+   finds no offer and no control to clean up, so `handleConnect` checks the row itself,
+   at three points: before anything else (terminal → drop the offer, no Graph reject of a
+   dead call), after `resolveRingTargets` (terminal → end the control it just created,
+   still without Graph), and after delivering the offer (terminal → re-send
+   `whatsappCallTransportEnded` to the agents it rang, because the finalize's own ended
+   event may have reached them before the offer did). The finalize writes the terminal
+   row before it emits, which is what makes the last re-read sufficient. Its transport
+   cleanup (end the control, drop the offer, emit ended) runs on every delivery, not only
+   the one that inserted the call card: a finalize that died after the insert is retried
+   as `isNew: false`, and gating the cleanup on `isNew` would leave agents ringing a call
+   that is already over.
+
 ## Threat model notes (M-series)
 
 - **M6 — pickup is workspace-wide, wider than the live rung set (accepted design).**
@@ -149,7 +163,7 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
   Documenting it here makes it explicit rather than an implicit assumption
   future readers might mistake for a bug.
 
-## Browser WebRTC (standard, no SDP munging)
+## Browser WebRTC (standard; one SDP normalization)
 `use-whatsapp-voip-call` (native `RTCPeerConnection`, NOT sip.js):
 `setRemoteDescription(offer)` → `addTransceiver("audio", { direction: "sendrecv" })`
 with **no track** (mic acquired but not attached) → `createAnswer()` →
@@ -158,6 +172,17 @@ send the full answer SDP to the answer action. The browser generates DTLS `a=set
 ICE role, codecs, candidates — never hand-edit SDP. ICE servers = STUN + short-lived
 coturn TURN from `getVoipTurnCredentials(whatsappCallId)` (scoped to the reserved caller
 and that call). Transport-tagged `ended` realtime event closes the peer.
+
+- **The one SDP rewrite: an outbound answer's DTLS role.** For a business-initiated call
+  the browser's offer carries `a=setup:actpass`, and Meta echoes `actpass` back in its
+  answer. RFC 5763 requires an answerer to choose `active` or `passive`, and browsers
+  refuse the answer otherwise (libwebrtc: "Answerer must use either active or passive
+  value for setup attribute") — signalling succeeds but `setRemoteDescription` fails and
+  no media flows. `captureOutboundAnswer` rewrites each whole `a=setup:actpass` line to
+  `a=setup:active` (`voip-sdp.ts`, `pinAnswerDtlsSetup`) before the answer is stored, so
+  every tab applies an answer it can accept. `active` is what an answer with no setup
+  attribute means (RFC 4145). Nothing else in any SDP is edited, and inbound calls are
+  untouched: there the browser writes the answer itself.
 
 - **No early media.** The same cached answer SDP string is sent to `pre_accept` and
   `accept` (Meta requires them identical). The mic is attached with
@@ -349,9 +374,15 @@ Without TURN the app falls back to public STUN, which does connect media on
 NAT-friendly networks (same LAN, permissive router). That is fine for working on the
 calling UI and misleading for anything else.
 
-Setup lives in `docker/coturn/turnserver.conf` (set `external-ip` to the host's public
-IP) and the `coturn` service in `docker-compose.yml`, behind the `production` compose
-profile so local dev never starts it by accident. `.env.example` carries the
-copy-pasteable env block. Only coturn's REST/HMAC scheme (`use-auth-secret`) is
-supported: credentials are minted per call and scoped to `<userId>:<wacid>`, so a
-leaked one cannot be replayed for another call or agent.
+The relay is deployed from the deployment repo, which owns its config, its firewall
+rules and a Deploy TURN button; it is deliberately not in this repo's compose file,
+because a relay on a laptop cannot work. `.env.example` carries the copy-pasteable env
+block for pointing local dev at an existing relay.
+
+Only coturn's REST/HMAC scheme (`use-auth-secret`) is supported: per call the app mints
+username `<unix-expiry>:<userId>:<wacid>` and password
+`base64(HMAC-SHA1(TURN_STATIC_SECRET, username))`. coturn verifies the HMAC and that the
+expiry is still in the future — nothing else. The `<userId>:<wacid>` suffix is therefore
+log attribution, **not** replay protection: a leaked credential is usable by anyone until
+it expires, and cannot be revoked early. What bounds the damage is the short TTL plus the
+relay's own `denied-peer-ip` and quota settings.
