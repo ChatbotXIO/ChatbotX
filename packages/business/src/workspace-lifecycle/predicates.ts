@@ -18,11 +18,10 @@ export const isWorkspaceScheduledForDeletion = (
 /**
  * Single source of truth for "must this workspace's work be frozen right now".
  *
- * Every freeze layer (worker consumers, in-request webhook receivers, public
- * routes) resolves the reason here so the concept cannot drift into three
- * subtly different checks. Ordered most-terminal first: a purged row and a
- * pending deletion both outrank an entitlement block, because they are not
- * recoverable by paying.
+ * Every freeze layer (worker consumers, public routes) resolves the reason
+ * here so the concept cannot drift into subtly different checks. Ordered
+ * most-terminal first: a purged row and a pending deletion both outrank an
+ * entitlement block, because they are not recoverable by paying.
  *
  * A missing workspace is FROZEN, not allowed: the row is only absent after the
  * purge cron hard-deleted it, so any work still referencing it belongs to a
