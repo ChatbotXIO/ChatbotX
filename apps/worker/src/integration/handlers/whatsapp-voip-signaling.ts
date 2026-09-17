@@ -400,6 +400,41 @@ const notifyRungAgentsIfEnded = async (input: {
  * processed before this job runs. A call whose row is already terminal is
  * never rung and never Meta-rejected — it is over on Meta's side too.
  */
+/**
+ * Ends an inbound connect this worker has decided NOT to ring, whatever state
+ * the call is in. Every refusal in `handleConnect` goes through here.
+ *
+ * A plain Graph reject is only safe while no agent owns the call, and reading
+ * the control first cannot establish that: an agent can claim it in the gap
+ * before the reject lands, and the reject would drop a live conversation. So
+ * the refusal CLAIMS the call first ({@link
+ * whatsappVoipCallService.claimUnreachable}, `SET NX` on the same key
+ * `resolveRingTargets` creates), which leaves exactly two outcomes and no gap
+ * between them:
+ *
+ * - Claim won: nothing owned the call and nothing can start owning it now, so
+ *   the Graph reject is safe.
+ * - Claim lost: a control already exists, so the fenced CAS in
+ *   {@link endReservedCall} arbitrates — it ends a still-`reserved` call with
+ *   the same reject+`rejected` outcome, and no-ops on one an agent has
+ *   claimed or answered.
+ */
+const refuseIncomingCall = async (input: {
+  wacid: string
+  auth: WhatsappAuthValue
+  deadlineAt: number
+}): Promise<void> => {
+  const claimed = await whatsappVoipCallService.claimUnreachable({
+    wacid: input.wacid,
+    deadlineAt: input.deadlineAt,
+  })
+  if (claimed) {
+    await rejectUnreachableCall({ wacid: input.wacid, auth: input.auth })
+    return
+  }
+  await endReservedCall({ wacid: input.wacid, auth: input.auth })
+}
+
 const handleConnect = async (data: HandleConnectData): Promise<void> => {
   const { wacid, deadlineAt, phoneNumberId, receivedAt } = data
 
@@ -417,10 +452,11 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
 
   // A redelivered connect for a call that has already been claimed or answered
   // must do NOTHING: every remaining branch below can reject the call at Meta,
-  // and rejecting a live call would drop an agent mid-conversation. The
-  // `alreadyProgressed` branch further down says the same thing, but it only
-  // runs after those reject paths, and `resolveRingTargets` creates a control
-  // record on the way — so the check is made here, read-only, first.
+  // and even though each of them now claims the call before rejecting, doing
+  // that work for a call nobody can answer any more is pure waste — and the
+  // log line below is what explains a redelivery in production. The
+  // `alreadyProgressed` branch further down says the same thing, but only
+  // after the integration lookup and the offer read.
   const control = await whatsappVoipCallService.readControl(wacid)
   if (control && control.phase !== "reserved") {
     logger.info(
@@ -445,18 +481,7 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
       { wacid, workspaceId, refusal },
       "Whatsapp VoIP: inbound call refused by this number's calling settings",
     )
-    // Which primitive ends the call depends on whether a control record
-    // exists. `control` was read before the integration lookup, so an agent
-    // could have claimed the call in between: for a redelivery that already
-    // had one, `endReservedCall` CASes out of `reserved` and no-ops if that
-    // claim won, leaving the live call alone. A first delivery has no control
-    // yet, and `rejectUnreachableCall` (Graph reject + finalize, no CAS) is
-    // the only thing that can end it.
-    if (control) {
-      await endReservedCall({ wacid, auth })
-    } else {
-      await rejectUnreachableCall({ wacid, auth })
-    }
+    await refuseIncomingCall({ wacid, auth, deadlineAt })
     return
   }
 
@@ -464,11 +489,10 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
   // either an unprocessable-SDP connect (deliberately never stored — see
   // `rejectUnprocessableConnect`) or one whose offer TTL lapsed. Either way it
   // must be Meta-rejected, and doing it here means no agent is ever rung for a
-  // doomed call. There is no control record yet, so `rejectUnreachableCall`
-  // (Graph reject + finalize, no CAS) is the right primitive.
+  // doomed call.
   const offer = await whatsappVoipSignalingService.readOffer(wacid)
   if (!offer) {
-    await rejectUnreachableCall({ wacid, auth })
+    await refuseIncomingCall({ wacid, auth, deadlineAt })
     return
   }
 
@@ -485,7 +509,7 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
     return
   }
   if (ring.status === "noEligibleAgent") {
-    await rejectUnreachableCall({ wacid, auth })
+    await refuseIncomingCall({ wacid, auth, deadlineAt })
     return
   }
 

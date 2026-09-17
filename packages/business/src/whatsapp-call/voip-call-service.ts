@@ -237,6 +237,45 @@ class WhatsappVoipCallService {
   }
 
   /**
+   * Claims an inbound call as `terminated` before this worker refuses it —
+   * `SET NX`, the SAME primitive {@link
+   * WhatsappVoipCallService.resolveRingTargets} uses to create the ringing
+   * control, so exactly one of the two can win the key.
+   *
+   * Reading the control and then rejecting at Meta is not enough on its own:
+   * an agent can claim the call in the gap between the read and the Graph
+   * call, and the reject would then drop a live conversation. Claiming first
+   * removes the gap in both directions:
+   *
+   * - We win, so no control existed and none can appear behind us —
+   *   `resolveRingTargets` now reads `terminated`, reports
+   *   `alreadyProgressed`, and rings nobody. The Graph reject is safe.
+   * - We lose, so a control already exists and the caller must defer to the
+   *   fenced CAS in `endCall` instead, which ends a still-`reserved` call and
+   *   no-ops on one that has been claimed or answered.
+   *
+   * The phase written is terminal, so the leftover key is inert: `handleExpire`
+   * and a redelivered `connect` both read it and return early, and
+   * `listResumableIncoming`/`claimForAnswer` only ever act on `reserved`.
+   */
+  async claimUnreachable(input: {
+    wacid: string
+    deadlineAt: number
+  }): Promise<boolean> {
+    const control: VoipCallControl = {
+      reservedUserId: "",
+      phase: "terminated",
+      deadlineAt: input.deadlineAt,
+      fenceToken: crypto.randomUUID(),
+    }
+    return await casStore.setIfAbsent(
+      controlKey(input.wacid),
+      control,
+      TERMINATED_CONTROL_TTL_MS,
+    )
+  }
+
+  /**
    * Resolves the agents to RING for an inbound VoIP call and creates the
    * single (unclaimed) control record — the ring-all analogue of the SIP
    * fork-dial. Ring targets come from {@link whatsappVoipPresenceService}

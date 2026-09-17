@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto"
-import { describe, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockLogger,
@@ -1455,6 +1455,18 @@ describe("webhookHandler call events", () => {
 })
 
 describe("webhookHandler VoIP-mode connect signaling", () => {
+  // Meta's connect timestamp is only believed when it sits near this server's
+  // clock, so the clock is pinned beside the fixture timestamp rather than
+  // left to drift past the tolerance as the calendar moves.
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(1_755_700_000_000))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   test("a validated SDP offer both enqueues the generic (session-stripped) job AND captures the offer via the VoIP signaling service — the SDP never reaches the generic job", async () => {
     const queueAdd = vi.fn()
     const payload = wrapEntry(
@@ -1539,6 +1551,44 @@ describe("webhookHandler VoIP-mode connect signaling", () => {
       ([arg]: [{ receivedAt?: number }]) => arg.receivedAt,
     )
     expect(times).toEqual([1_755_700_000_000, 1_755_700_000_000])
+  })
+
+  // Meta only ever sends seconds; a value in another unit or a placeholder is
+  // a corrupt payload, and believing it would read the number's call hours
+  // against 1970 or the year 56000 and refuse a call that should have rung.
+  test.each([
+    ["a placeholder", "1"],
+    ["a millisecond value", "1755700000000"],
+    ["a non-numeric value", "not-a-time"],
+    ["a negative value", "-1755700000"],
+  ])("%s is not believed", async (_label, timestamp) => {
+    await expect(
+      webhookHandler({
+        config: { verifyToken: "verify-token", clientSecret: CLIENT_SECRET },
+        req: makeSignedPostRequest(
+          wrapEntry(
+            callsValue({
+              calls: [
+                {
+                  id: "wacid.VOIP-BADTS",
+                  from: "16315551234",
+                  to: "16505551111",
+                  event: "connect",
+                  timestamp,
+                  direction: "USER_INITIATED",
+                  session: { sdp_type: "offer", sdp: "v=0..." },
+                },
+              ],
+            }),
+          ),
+        ),
+        queue: { add: vi.fn() },
+      } as unknown as Parameters<typeof webhookHandler>[0]),
+    ).resolves.toBe("ok")
+
+    expect(mockCaptureConnectOffer).toHaveBeenCalledWith(
+      expect.objectContaining({ receivedAt: undefined }),
+    )
   })
 
   test("a connect with no usable timestamp falls back to the clock rather than 1970", async () => {

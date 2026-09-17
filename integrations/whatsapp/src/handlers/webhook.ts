@@ -793,6 +793,33 @@ const enqueueCallEventPayloads = async (
 }
 
 /**
+ * The widest a connect webhook's timestamp may sit from this server's clock and
+ * still be believed: a day either way absorbs clock skew and a long Meta
+ * redelivery backlog, while still rejecting a value in the wrong unit
+ * (milliseconds lands ~50 000 years out) or a placeholder like `"1"`.
+ */
+const CONNECT_TIMESTAMP_TOLERANCE_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Meta sends the webhook timestamp as Unix SECONDS in a string. Anything else —
+ * absent, non-numeric, or too far from now to be this call — yields `undefined`
+ * so the caller falls back to the clock. Without the range check a `"1"` would
+ * have the consumer read the number's call hours against 1970, and a
+ * millisecond-valued field against the year 56000; either silently refuses a
+ * call that should have rung.
+ */
+const metaTimestampToEpochMs = (timestamp?: string): number | undefined => {
+  const seconds = Number(timestamp)
+  if (!(timestamp && Number.isFinite(seconds)) || seconds <= 0) {
+    return
+  }
+  const epochMs = seconds * 1000
+  return Math.abs(epochMs - Date.now()) > CONNECT_TIMESTAMP_TOLERANCE_MS
+    ? undefined
+    : epochMs
+}
+
+/**
  * VoIP-mode connect branch (contracts #2/#3): additive alongside
  * {@link enqueueCallEventPayloads} — never a replacement for it, so the
  * ringing `WhatsappCall` row + incoming-call trigger the generic path
@@ -806,19 +833,6 @@ const enqueueCallEventPayloads = async (
  * are idempotent (keyed by wacid/attemptId), so a redelivered capture is
  * safe to retry.
  */
-/**
- * Meta sends the webhook timestamp as Unix SECONDS in a string. Anything else
- * (absent, non-numeric, or implausible) yields `undefined` so the caller falls
- * back to the clock rather than evaluating a schedule against 1970.
- */
-const metaTimestampToEpochMs = (timestamp?: string): number | undefined => {
-  const seconds = Number(timestamp)
-  if (!(timestamp && Number.isFinite(seconds)) || seconds <= 0) {
-    return
-  }
-  return seconds * 1000
-}
-
 const enqueueVoipConnectSignaling = async (
   callEventPayloads: WhatsappCallEventPayload[],
 ): Promise<void> => {

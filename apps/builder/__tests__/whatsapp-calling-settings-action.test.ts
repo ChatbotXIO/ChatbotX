@@ -216,6 +216,19 @@ describe("updateWhatsappCallingSettingsAction", () => {
     )
   })
 
+  // The divergence message must not swallow a real validation failure: this
+  // save reaches Meta first, so the transcription check runs on the far side
+  // of it and still has to reach the operator in its own words.
+  test("a validation failure after Meta keeps its own message", async () => {
+    updateCallSettingsMock.mockRejectedValueOnce(
+      new TranscriptionRequiresRecordingError("requires recording"),
+    )
+
+    await expect(
+      call({ status: "ENABLED", callTranscriptionEnabled: true }),
+    ).rejects.toThrow("whatsapp.calls.errors.transcriptionRequiresRecording")
+  })
+
   // Everything is already committed by then; failing the save would roll the
   // card back to values that are live on both Meta and the database.
   test("a cache invalidation failure does not fail a save that already committed", async () => {

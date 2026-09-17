@@ -161,6 +161,64 @@ describe("whatsappVoipCallService.storeOffer", () => {
   })
 })
 
+describe("whatsappVoipCallService.claimUnreachable", () => {
+  // It must write on the SAME key `resolveRingTargets` uses, with `SET NX`, so
+  // the two cannot both succeed: whichever lands first decides whether the
+  // call rings or is refused.
+  test("claims the ring control key as terminated, SET NX", async () => {
+    mocks.randomUUID.mockReturnValue("fence-x")
+    mocks.setIfAbsent.mockResolvedValue(true)
+
+    const claimed = await whatsappVoipCallService.claimUnreachable({
+      wacid: "wa1",
+      deadlineAt: DEADLINE,
+    })
+
+    expect(claimed).toBe(true)
+    expect(mocks.setIfAbsent).toHaveBeenCalledWith(
+      "voip:ctrl:wa1",
+      {
+        reservedUserId: "",
+        phase: "terminated",
+        deadlineAt: DEADLINE,
+        fenceToken: "fence-x",
+      },
+      60_000,
+    )
+  })
+
+  test("reports the loss when a control already exists", async () => {
+    mocks.setIfAbsent.mockResolvedValue(false)
+
+    await expect(
+      whatsappVoipCallService.claimUnreachable({
+        wacid: "wa1",
+        deadlineAt: DEADLINE,
+      }),
+    ).resolves.toBe(false)
+  })
+
+  // The point of writing a TERMINAL phase: a ring resolution that arrives
+  // afterwards must see the call as done rather than create a second control.
+  test("a ring resolution that follows the claim reports alreadyProgressed", async () => {
+    mocks.getJson.mockResolvedValueOnce({
+      reservedUserId: "",
+      phase: "terminated",
+      deadlineAt: DEADLINE,
+      fenceToken: "fence-x",
+    })
+
+    await expect(
+      whatsappVoipCallService.resolveRingTargets({
+        wacid: "wa1",
+        workspaceId: "ws1",
+        deadlineAt: DEADLINE,
+      }),
+    ).resolves.toEqual({ status: "alreadyProgressed" })
+    expect(mocks.liveAgents).not.toHaveBeenCalled()
+  })
+})
+
 describe("whatsappVoipCallService.resolveRingTargets", () => {
   test("returns the live ring set and creates ONE unclaimed control (reservedUserId empty)", async () => {
     mocks.getJson.mockResolvedValueOnce(null) // no existing control
@@ -831,8 +889,8 @@ describe("whatsappVoipCallService.captureConnectOffer", () => {
           wacid: "wa1",
           deadlineAt: NOW + 55_000,
           phoneNumberId: "phone-1",
-          // Stamped here, at the webhook boundary — the consumer reads the
-          // number's call hours against this, not its own clock.
+          // No `receivedAt` was passed, so the clock stands in for the
+          // webhook's own timestamp.
           receivedAt: NOW,
         },
       },
@@ -858,6 +916,26 @@ describe("whatsappVoipCallService.captureConnectOffer", () => {
     )
     const jobPayload = mocks.queueAdd.mock.calls[0][1]
     expect(JSON.stringify(jobPayload)).not.toContain("v=0")
+  })
+
+  // The webhook passes Meta's own timestamp; it must reach the job payload
+  // untouched, or a redelivery would be judged against a fresh clock and could
+  // fall on the other side of a call-hours boundary.
+  test("a supplied arrival time reaches the job instead of the clock", async () => {
+    const metaArrival = NOW - 90_000
+    mocks.setIfAbsent.mockResolvedValue(true)
+
+    await whatsappVoipSignalingService.captureConnectOffer({
+      wacid: "wa-ts",
+      sdp: "v=0...",
+      phoneNumberId: "phone-1",
+      receivedAt: metaArrival,
+    })
+
+    const connectJob = mocks.queueAdd.mock.calls.find(
+      ([name]: [string]) => name === "handleConnect",
+    )
+    expect(connectJob?.[1].data.receivedAt).toBe(metaArrival)
   })
 
   test("a redelivered connect is a full no-op: no job is enqueued when storeOffer reports the offer already exists", async () => {

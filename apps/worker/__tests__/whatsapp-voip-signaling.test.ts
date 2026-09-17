@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   resolveRingTargets: vi.fn(),
   readOffer: vi.fn(),
   readControl: vi.fn(),
+  claimUnreachable: vi.fn(),
   endCall: vi.fn(),
   isCallEnded: vi.fn(),
   deleteOffer: vi.fn(),
@@ -29,6 +30,7 @@ vi.mock("@chatbotx.io/business", () => ({
   whatsappVoipCallService: {
     resolveRingTargets: mocks.resolveRingTargets,
     readControl: mocks.readControl,
+    claimUnreachable: mocks.claimUnreachable,
     endCall: mocks.endCall,
     isCallEnded: mocks.isCallEnded,
   },
@@ -133,6 +135,8 @@ beforeEach(() => {
   })
   // A fresh connect has no control record yet; the tests that need one say so.
   mocks.readControl.mockResolvedValue(null)
+  // The refusal claim wins by default — nothing else owns the call.
+  mocks.claimUnreachable.mockResolvedValue(true)
   mocks.findByWacid.mockResolvedValue(callRow)
   mocks.findByAttemptId.mockResolvedValue(undefined)
   mocks.findAuthByInboxId.mockResolvedValue({ auth: integrationRow.auth })
@@ -1058,24 +1062,8 @@ describe("handleConnect — the number's own calling settings", () => {
     expect(mocks.readOffer).not.toHaveBeenCalled()
   })
 
-  // The narrow race the phase snapshot cannot close: the control still read
-  // `reserved`, but an agent claims the call while the integration is being
-  // loaded. `endCall` is the CAS that arbitrates it, so a refusal must go
-  // through `endCall` rather than rejecting at Meta outright.
-  test("a refusal on a redelivery ends the call through the CAS, not a bare reject", async () => {
-    mocks.readControl.mockResolvedValue({
-      phase: "reserved",
-      reservedUserId: "",
-    })
-    // The CAS loses: someone claimed the call after the phase was read.
-    mocks.endCall.mockResolvedValue(null)
-    mocks.identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
-      inbox,
-      integrationRow: { ...integrationRow, callingEnabled: false },
-    })
-    mocks.findByWacid.mockResolvedValue(undefined)
-
-    await handleWhatsappVoipSignalingJob({
+  const connectJob = () =>
+    handleWhatsappVoipSignalingJob({
       type: "handleConnect",
       data: {
         receivedAt: RECEIVED_AT,
@@ -1084,33 +1072,73 @@ describe("handleConnect — the number's own calling settings", () => {
         deadlineAt: Date.now() + 30_000,
       },
     })
+
+  /** Drives `handleConnect` to each of its three refusal branches in turn. */
+  const arrangeRefusal = (branch: "settings" | "noOffer" | "noAgent") => {
+    mocks.findByWacid.mockResolvedValue(undefined)
+    if (branch === "settings") {
+      mocks.identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
+        inbox,
+        integrationRow: { ...integrationRow, callingEnabled: false },
+      })
+      return
+    }
+    mocks.readOffer.mockResolvedValue(
+      branch === "noOffer" ? null : { sdp: "v=0" },
+    )
+    if (branch === "noAgent") {
+      mocks.resolveRingTargets.mockResolvedValue({ status: "noEligibleAgent" })
+    }
+  }
+
+  const REFUSAL_BRANCHES = ["settings", "noOffer", "noAgent"] as const
+
+  // The race a phase snapshot cannot close: whatever the handler read earlier,
+  // an agent can claim the call before the Graph reject lands. Every refusal
+  // branch therefore claims the call first (SET NX) and only rejects outright
+  // when that claim WINS — otherwise the fenced CAS in `endCall` arbitrates.
+  test.each(
+    REFUSAL_BRANCHES,
+  )("the %s refusal rejects at Meta only when it wins the claim", async (branch) => {
+    arrangeRefusal(branch)
+    mocks.claimUnreachable.mockResolvedValue(true)
+
+    await connectJob()
+
+    expect(mocks.rejectCall).toHaveBeenCalled()
+  })
+
+  test.each(
+    REFUSAL_BRANCHES,
+  )("the %s refusal defers to the CAS when something else already owns the call", async (branch) => {
+    arrangeRefusal(branch)
+    // Lost the claim: a control exists, so this refusal must not touch Meta
+    // on its own authority.
+    mocks.claimUnreachable.mockResolvedValue(false)
+    // ...and the CAS loses too — an agent claimed the call.
+    mocks.endCall.mockResolvedValue(null)
+
+    await connectJob()
 
     expect(mocks.endCall).toHaveBeenCalledWith(
       expect.objectContaining({ allowFromAccepted: false }),
     )
-    // The claim won, so nothing may reach Meta.
     expect(mocks.rejectCall).not.toHaveBeenCalled()
+    expect(mocks.terminateCall).not.toHaveBeenCalled()
   })
 
-  test("a refusal on a FIRST delivery rejects at Meta — there is no control to CAS", async () => {
+  // The interleaving that motivated the claim: the snapshot said "no control",
+  // so the old code rejected outright — but a concurrent delivery had created
+  // one and an agent had answered by the time the reject would have landed.
+  test("a control created AFTER the snapshot still stops a bare reject", async () => {
     mocks.readControl.mockResolvedValue(null)
-    mocks.identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
-      inbox,
-      integrationRow: { ...integrationRow, callingEnabled: false },
-    })
-    mocks.findByWacid.mockResolvedValue(undefined)
+    mocks.claimUnreachable.mockResolvedValue(false)
+    mocks.endCall.mockResolvedValue(null)
+    arrangeRefusal("settings")
 
-    await handleWhatsappVoipSignalingJob({
-      type: "handleConnect",
-      data: {
-        receivedAt: RECEIVED_AT,
-        wacid: "wacid.IN",
-        phoneNumberId: "pn-1",
-        deadlineAt: Date.now() + 30_000,
-      },
-    })
+    await connectJob()
 
-    expect(mocks.rejectCall).toHaveBeenCalled()
+    expect(mocks.rejectCall).not.toHaveBeenCalled()
   })
 
   test("a still-reserved call is not treated as progressed", async () => {
