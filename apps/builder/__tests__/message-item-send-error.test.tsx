@@ -9,6 +9,7 @@ import { TenantProvider } from "@/features/tenant/tenant-settings-provider"
 /** Echoes the key back so assertions never depend on the English copy. */
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => "en",
 }))
 
 // Same rationale as message-item-avatar.test.tsx: MediaLibraryTrigger imports
@@ -16,6 +17,14 @@ vi.mock("next-intl", () => ({
 // under vitest. Stubbing it keeps this test about the send-error affordance.
 vi.mock("@/features/media-library/components/media-library-trigger", () => ({
   MediaLibraryTrigger: () => null,
+}))
+
+// Same rationale: the real card pulls in the playback store and workspace
+// context. This test is about WHERE the failure badge renders relative to the
+// card, so a marker stub is enough — the card's own contents are covered by
+// whatsapp-call-card.test.tsx.
+vi.mock("@/features/messages/components/whatsapp-call-card", () => ({
+  WhatsappCallCard: () => <div data-slot="whatsapp-call-card">audioCall</div>,
 }))
 
 let container: HTMLDivElement | null = null
@@ -91,6 +100,50 @@ describe("MessageItem outgoing send-error affordance", () => {
         })}
       />,
     )
+
+    expect(el.querySelector(".text-destructive")).toBeNull()
+  })
+})
+
+describe("MessageItem call-failure affordance", () => {
+  // The failure icon for a call must render in the SAME slot as an outgoing
+  // message's send error — beside the message, not inside the call card — so
+  // every failed item in the thread carries its icon in one place. The card
+  // itself asserts the complement (whatsapp-call-card.test.tsx).
+  const callMessage = (failureReason?: string) =>
+    makeMessage({
+      messageType: "incoming",
+      // A call row is an activity message; `makeMessage` already casts through
+      // `unknown`, so the narrower literal types on the real resource do not
+      // apply to this fixture.
+      type: "activity",
+      contentAttributes: {
+        type: "whatsapp_call",
+        status: "completed",
+        direction: "userInitiated",
+        durationSeconds: 15,
+        ...(failureReason ? { failureReason } : {}),
+      },
+    } as unknown as Partial<MessageResourceWithRelations>)
+
+  test("a call with a failureReason renders the destructive error icon outside the card", () => {
+    const el = renderComponent(
+      <MessageItem
+        message={callMessage(
+          "138021:WhatsApp client terminated the call due to not receiving any media",
+        )}
+      />,
+    )
+
+    const badge = el.querySelector(".text-destructive")
+    expect(badge).not.toBeNull()
+    // Outside the card: the badge must not sit inside the call card's own
+    // bordered container.
+    expect(badge?.closest("[data-slot='whatsapp-call-card']")).toBeNull()
+  })
+
+  test("a call with no failureReason renders no error icon", () => {
+    const el = renderComponent(<MessageItem message={callMessage()} />)
 
     expect(el.querySelector(".text-destructive")).toBeNull()
   })

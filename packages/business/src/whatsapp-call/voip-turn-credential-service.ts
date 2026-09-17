@@ -44,10 +44,11 @@ export type IssueVoipTurnCredentialsInput = {
 
 class VoipTurnCredentialService {
   /**
-   * Short-lived coturn REST credentials (reuses
-   * `mintTurnCredential`'s HMAC scheme) scoped to `<userId>:<wacid>` so a
-   * leaked credential cannot be replayed for a different call or by a
-   * different agent. STUN is always included; TURN is added only when the
+   * Short-lived coturn REST credentials (reuses `mintTurnCredential`'s HMAC
+   * scheme), labelled `<userId>:<wacid>`. The label is for log attribution
+   * only — coturn verifies the HMAC and the expiry and nothing else, so a
+   * leaked credential works for any call, from anywhere, until it expires.
+   * The TTL is what bounds it. STUN is always included; TURN is added only when the
    * deployment has a TURN URL + static secret configured — otherwise
    * `turnConfigured:false` tells the caller to fall back to STUN-only.
    */

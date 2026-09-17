@@ -2,9 +2,12 @@
 
 import {
   broadcastToWorkspaceParty,
+  canSendAudio,
   contactInboxService,
   contactService,
+  diagnoseAnswerShape,
   isAnswerDeadlineExpired,
+  summarizeIceCandidates,
   whatsappVoipCallService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -260,6 +263,30 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
 
       let announcementApplied = false
       let announcementError: unknown
+      // Whether the browser actually obtained a TURN relay address is the
+      // single most useful fact when a call connects and stays silent, and it
+      // is knowable only from the answer SDP. Counts only — no SDP content.
+      // Two independent causes of a silent call, both invisible without this.
+      // One constant message with the diagnosis as a field, so the log backend
+      // can group and alert on it; the unhealthy cases are warnings.
+      const answerShape = summarizeIceCandidates(sdpAnswer)
+      const diagnosis = diagnoseAnswerShape(answerShape)
+      const logCallMedia =
+        diagnosis === "healthy"
+          ? logger.info.bind(logger)
+          : logger.warn.bind(logger)
+      logCallMedia(
+        {
+          whatsappCallId,
+          workspaceId,
+          ...answerShape,
+          diagnosis,
+          turnRelayUsed: answerShape.relay > 0,
+          canSendAudio: canSendAudio(answerShape),
+        },
+        "[wa-call-media] answer media path",
+      )
+
       try {
         await preAcceptCall({ auth, callId: wacid, sdpAnswer })
         if (isAnswerDeadlineExpired(control.deadlineAt)) {

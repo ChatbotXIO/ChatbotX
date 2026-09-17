@@ -108,35 +108,6 @@ services:
       - redis-ui-data:/data
 
   # TURN relay for in-app WhatsApp VoIP calling (browser WebRTC ICE).
-  # Production-only: not started by default in local compose (local dev uses
-  # host/STUN candidates) — enable with `--profile production`. The real
-  # production stack (Docker Swarm, host networking, wide RTP range) lives in
-  # the deployment repo, not here.
-  coturn:
-    profiles: ["production"]
-    image: coturn/coturn:4.18.0-alpine
-    # turnserver.conf does not expand ${} itself; the secret and realm are
-    # passed as CLI flags, which override the file's placeholder lines.
-    # TURN_STATIC_SECRET/TURN_REALM must be real values before this profile is
-    # actually started in production — `:-CHANGE_ME` here only keeps
-    # `docker compose config` usable without failing interpolation for a
-    # service local dev never starts.
-    #
-    # Host networking is required: the TURN relay range (49152-65535/udp)
-    # is thousands of ports and cannot be sensibly published through
-    # Docker's bridge network. The host firewall must open 3478/udp+tcp,
-    # 5349/udp+tcp, and 49152-65535/udp.
-    network_mode: host
-    command:
-      - "-c"
-      - "/etc/coturn/turnserver.conf"
-      - "--static-auth-secret=${TURN_STATIC_SECRET:-CHANGE_ME_TURN_STATIC_SECRET}"
-      - "--realm=${TURN_REALM:-chatbotx.local}"
-    volumes:
-      - ./docker/coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
-      # Holds wss.pem/wss.key for TURN-over-TLS (5349).
-      - ${TURN_CERTS_DIR:-./.data/certs}:/etc/coturn/certs:ro
-
 networks:
   chatbotx-network:
     driver: bridge

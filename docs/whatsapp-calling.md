@@ -37,7 +37,8 @@ arrive (surfaced as the `webhookNotSubscribed` outbound-call reason).
 Browser WebRTC uses STUN plus, in production, a **coturn** TURN relay
 (`TURN_URL` / `TURN_STATIC_SECRET`), minted into short-lived per-call
 credentials by `voipTurnCredentialService`. Local dev falls back to host/STUN
-candidates. See `docker-compose.yml` (`coturn` service, `--profile production`).
+candidates. The relay itself is deployed from the deployment repo, not from this
+repo's compose file.
 
 ## Settings
 

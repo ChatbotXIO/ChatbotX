@@ -187,6 +187,44 @@ export async function captureMicrophoneStream(): Promise<
 }
 
 /**
+ * Attaches the agent's microphone to a peer connection, and is the ONLY
+ * supported way to do it on either side of a call.
+ *
+ * It must run before the SDP for that side is created — `createAnswer` on the
+ * inbound path, `createOffer` on the outbound one. Two independent failures
+ * come from getting this wrong, both of which end an established call with
+ * Meta's error 138021, "no media was received from the business":
+ *
+ *   - ANSWERING with `addTransceiver("audio", { direction: "sendrecv" })` and
+ *     no track produces an `a=recvonly` answer. The spec only lets a remote
+ *     offer's m-line reuse a transceiver whose internal [[AddTrackMagic]] slot
+ *     is set, and only `addTrack` sets it — so Chrome builds a second,
+ *     `recvonly` transceiver for that m-line and leaves the hand-made one
+ *     unassociated. A later `replaceTrack` then attaches the microphone to a
+ *     transceiver that is not in the session at all.
+ *   - OFFERING with a track-less transceiver does negotiate `sendrecv`, but
+ *     deferring the attach to a later signal makes the audio depend on that
+ *     signal arriving. Meta documents its ACCEPTED status event as
+ *     best-effort, so a lost one left the sender track-less on a live call.
+ *
+ * Attaching a real track up front removes both. Exactly ONE track is attached:
+ * a second would add a second audio m-line, which Meta rejects. Returns false
+ * when the stream carries no audio track, so callers can refuse to negotiate a
+ * call that could only ever be silent.
+ */
+export function attachMicrophone(
+  peerConnection: RTCPeerConnection,
+  microphone: MediaStream,
+): boolean {
+  const [audioTrack] = microphone.getAudioTracks()
+  if (!audioTrack) {
+    return false
+  }
+  peerConnection.addTrack(audioTrack, microphone)
+  return true
+}
+
+/**
  * Builds the outbound SDP offer and waits for ICE gathering (preferring a
  * relay candidate when TURN is configured) before reading the local
  * description back.

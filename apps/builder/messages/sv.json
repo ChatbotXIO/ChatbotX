@@ -3965,7 +3965,8 @@
     "declinedCallPermission": "Avvisade begäran om samtalstillstånd",
     "humanAgentWarningDescription": "Du får endast svara på en användares meddelande inom 7 dagar när problemet rimligen inte kan lösas inom 24 timmar. Exempel är helger, högtider eller ärenden som kräver mer än en dag. Använd inte detta alternativ av någon annan anledning, eftersom det kan utsätta din Facebook-sida eller ditt Instagram-konto för risk. Fortsätt inte om du är osäker.",
     "sendHumanAgentTag": "Skicka ett meddelande med taggen HUMAN_AGENT",
-    "warning": "Varning!"
+    "warning": "Varning!",
+    "callFailed": "Samtalsproblem"
   },
   "messenger": {
     "botProfile": "Botprofil",

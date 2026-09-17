@@ -85,6 +85,14 @@ vi.mock("@/lib/log", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }))
 
+const {
+  canSendAudio: actualCanSendAudio,
+  diagnoseAnswerShape: actualDiagnoseAnswerShape,
+  summarizeIceCandidates: actualSummarizeIceCandidates,
+} = await vi.importActual<typeof import("@chatbotx.io/business")>(
+  "@chatbotx.io/business",
+)
+
 vi.mock("@chatbotx.io/business", () => ({
   whatsappCallLifecycleService: {
     markRecordingArrangement: markRecordingArrangementMock,
@@ -101,6 +109,11 @@ vi.mock("@chatbotx.io/business", () => ({
   // actual deadline-margin logic instead of a hard-coded true/false.
   isAnswerDeadlineExpired: (deadlineAt: number) =>
     Date.now() + DEADLINE_SAFETY_MARGIN_MS >= deadlineAt,
+  // Real implementations too — they only read the SDP string the test passes
+  // in, and stubbing them would hide a wrong diagnosis in the answer log.
+  summarizeIceCandidates: actualSummarizeIceCandidates,
+  canSendAudio: actualCanSendAudio,
+  diagnoseAnswerShape: actualDiagnoseAnswerShape,
   contactInboxService: { findBy: findContactInboxMock },
   contactService: { findBy: findContactMock },
   broadcastToWorkspaceParty: broadcastToWorkspacePartyMock,

@@ -257,6 +257,18 @@ export const MessageItem = (props: MessageItemProps) => {
             label={t("sendFailed")}
           />
         )}
+        {/* A call failure sits beside the card, not inside it — the same slot
+            an outgoing message's sendError uses, so every failed item in the
+            thread carries its icon in the same place. Meta can terminate an
+            ANSWERED call with no audio (e.g. 138021), so this is not gated on
+            the call having been missed: an "Audio call" card with a silent
+            failure is exactly the case worth surfacing. */}
+        {whatsappCall?.failureReason && (
+          <MessageErrorBadge
+            detail={whatsappCall.failureReason}
+            label={t("callFailed")}
+          />
+        )}
         {isComment && !isEditing && message.messageType === "incoming" && (
           <Button
             className="self-center opacity-0 transition-opacity group-hover:opacity-100"

@@ -79,7 +79,7 @@ const outboundVoipTurnCredentialsSchema = z.object({
    * server-generated `attemptId`/`wacid`, because this action runs BEFORE
    * that call row exists (the browser must `createOffer`/gather ICE before
    * dialing). Only used to scope the minted TURN credential's username so a
-   * leaked one cannot be replayed for a different prepared call.
+   * leaked one is usable until it expires — the label only aids log tracing.
    */
   attemptId: z.string().min(1).max(MAX_ATTEMPT_ID_CHARS),
 })
@@ -92,7 +92,7 @@ const outboundVoipTurnCredentialsSchema = z.object({
  * Unlike `getWhatsappVoipTurnCredentialsAction` (inbound), this is gated
  * only on workspace membership — there is no call row or reservation to
  * check yet, so no `wacid`/`reservedUserId` gate applies. Scoped to
- * `<userId>:<attemptId>` so a leaked credential cannot be replayed for a
+ * `<userId>:<attemptId>` to aid log tracing; a leaked credential still works for a
  * different agent or a different prepared call. Falls back to STUN-only
  * when no TURN secret is configured (see `voip-turn-credentials.action.ts`).
  */

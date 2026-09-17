@@ -3495,7 +3495,8 @@
     "declinedCallPermission": "Declined call permission request",
     "sendHumanAgentTag": "Send one message with HUMAN_AGENT tag",
     "warning": "Warning!",
-    "humanAgentWarningDescription": "You may respond to a user's message within 7 days only when the issue cannot reasonably be resolved within 24 hours. Examples include weekends, holidays, or cases that require more than one day to complete. Do not use this option for any other reason, as it could put your Facebook Page or Instagram account at risk. If you're not sure, do not continue."
+    "humanAgentWarningDescription": "You may respond to a user's message within 7 days only when the issue cannot reasonably be resolved within 24 hours. Examples include weekends, holidays, or cases that require more than one day to complete. Do not use this option for any other reason, as it could put your Facebook Page or Instagram account at risk. If you're not sure, do not continue.",
+    "callFailed": "Call problem"
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

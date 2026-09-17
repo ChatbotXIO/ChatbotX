@@ -22,7 +22,8 @@ const voipTurnCredentialsSchema = z.object({
  * still UNCLAIMED any rung agent may mint ICE to prepare their answer (the
  * winner is decided later by `claimForAnswer`); once someone has claimed it,
  * only that agent may — a lost racer is refused. The coturn username embeds
- * both ids so a leaked credential cannot be replayed elsewhere. Falls back to
+ * both ids for log attribution — coturn checks only the HMAC and the expiry,
+ * so a leaked credential is usable until it expires. Falls back to
  * STUN-only when no TURN secret is configured (local dev) — good enough on
  * NAT-friendly networks, never sufficient in production (see
  * `docs/whatsapp-calling-voip.md` "Required infrastructure").

@@ -119,12 +119,20 @@ type MockSender = {
 }
 type MockTransceiver = { sender: MockSender }
 
+/** What the mock peer connection emits, mirroring real Chrome's direction rule. */
+const mockSdp = (_kind: "answer" | "offer", canSendAudio: boolean) =>
+  `v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=${canSendAudio ? "sendrecv" : "recvonly"}\r\n`
+
+const ANSWER_SDP = mockSdp("answer", true)
+const OFFER_SDP = mockSdp("offer", true)
+
 const createdPeerConnections: Array<{
   iceGatheringState: string
   connectionState: string
   localDescription: RTCSessionDescriptionInit | null
   addTrack: ReturnType<typeof vi.fn>
   addTransceiver: ReturnType<typeof vi.fn>
+  addTrackSenders: MockSender[]
   setRemoteDescription: ReturnType<typeof vi.fn>
   createAnswer: ReturnType<typeof vi.fn>
   createOffer: ReturnType<typeof vi.fn>
@@ -142,31 +150,76 @@ class MockRTCPeerConnection {
   localDescription: RTCSessionDescriptionInit | null = null
   ontrack: ((event: unknown) => void) | null = null
   onconnectionstatechange: (() => void) | null = null
-  addTrack = vi.fn()
-  /** Returns a fake `RTCRtpTransceiver` whose `sender.track` starts
-   * `null` — tests assert it stays that way until `replaceTrack` is called
-   * after accept. */
-  addTransceiver = vi.fn(
-    (): MockTransceiver => ({
-      sender: {
-        track: null,
-        replaceTrack: vi.fn(function replaceTrack(
-          this: MockSender,
-          track: MockTrack | null,
-        ) {
-          this.track = track
-          return Promise.resolve()
-        }),
-      },
-    }),
-  )
+  /**
+   * Senders created by `addTrack`. Kept apart from the ones `addTransceiver`
+   * makes, because on the ANSWERING side only these decide the negotiated
+   * direction — see `createAnswer` below.
+   */
+  addTrackSenders: MockSender[] = []
+
+  addTrack = vi.fn((track: MockTrack | null): MockSender => {
+    const sender: MockSender = {
+      track,
+      replaceTrack: vi.fn(function replaceTrack(
+        this: MockSender,
+        next: MockTrack | null,
+      ) {
+        this.track = next
+        return Promise.resolve()
+      }),
+    }
+    this.addTrackSenders.push(sender)
+    return sender
+  })
+
+  /** Returns a fake `RTCRtpTransceiver` whose `sender.track` starts `null`. */
+  addTransceiver = vi.fn((): MockTransceiver => {
+    const sender: MockSender = {
+      track: null,
+      replaceTrack: vi.fn(function replaceTrack(
+        this: MockSender,
+        track: MockTrack | null,
+      ) {
+        this.track = track
+        return Promise.resolve()
+      }),
+    }
+    return { sender }
+  })
+
   setRemoteDescription = vi.fn().mockResolvedValue(undefined)
-  createAnswer = vi
-    .fn()
-    .mockResolvedValue({ type: "answer", sdp: "v=0 answer-sdp" })
-  createOffer = vi
-    .fn()
-    .mockResolvedValue({ type: "offer", sdp: "v=0 offer-sdp" })
+
+  /**
+   * Models the real Chrome behaviour this codebase was bitten by, verified
+   * against Chrome directly: when ANSWERING, a `sendrecv` transceiver created
+   * with `addTransceiver` is NOT reused for the remote offer's m-line — Chrome
+   * makes a second, `recvonly` one and leaves ours unassociated. So the answer
+   * can only promise to send audio when a track was attached with `addTrack`
+   * BEFORE `createAnswer`. A mock that always returned a fixed SDP is why the
+   * `recvonly` regression reached production with the suite green.
+   */
+  createAnswer = vi.fn(() => {
+    const canSend = this.addTrackSenders.some((sender) => sender.track !== null)
+    return Promise.resolve({
+      type: "answer",
+      sdp: mockSdp("answer", canSend),
+    })
+  })
+
+  /**
+   * Offering is laxer in real Chrome — a track-less `addTransceiver` still
+   * yields `sendrecv` there — but the app deliberately no longer relies on
+   * that. It attaches the mic with `addTrack` before building the offer, so a
+   * lost ACCEPTED event can never leave the sender track-less on a live call.
+   * The mock holds the app to that stricter rule.
+   */
+  createOffer = vi.fn(() => {
+    const canSend = this.addTrackSenders.some((sender) => sender.track !== null)
+    return Promise.resolve({
+      type: "offer",
+      sdp: mockSdp("offer", canSend),
+    })
+  })
   setLocalDescription = vi.fn().mockImplementation((desc) => {
     this.localDescription = desc
     return Promise.resolve()
@@ -300,7 +353,7 @@ describe("useWhatsappVoipCall", () => {
     ).toHaveBeenCalledWith({ type: "offer", sdp: "v=0 offer" })
     expect(answerActionMock).toHaveBeenCalledWith("workspace-1", {
       whatsappCallId: "call-1",
-      sdpAnswer: "v=0 answer-sdp",
+      sdpAnswer: ANSWER_SDP,
     })
     expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
       WhatsappVoipCallPhase.active,
@@ -851,7 +904,11 @@ describe("useWhatsappVoipCall", () => {
     )
   })
 
-  test("R7: answer() adds a track-less sendrecv audio transceiver — sender.track stays null until accept resolves", async () => {
+  test("R7: answer() attaches the mic with addTrack BEFORE the answer, so the SDP is sendrecv", async () => {
+    // The regression this pins: a `sendrecv` transceiver with no track makes
+    // Chrome answer `recvonly`, no RTP ever leaves the browser, and Meta ends
+    // the answered call with 138021. Asserting the SDP — not that
+    // `addTransceiver` was called — is what makes this test able to fail.
     let resolveAnswer: ((value: unknown) => void) | undefined
     answerActionMock.mockImplementation(
       () =>
@@ -870,21 +927,19 @@ describe("useWhatsappVoipCall", () => {
       }
     })
 
-    expect(createdPeerConnections[0]?.addTransceiver).toHaveBeenCalledWith(
-      "audio",
-      { direction: "sendrecv" },
-    )
-    const transceiver = createdPeerConnections[0]?.addTransceiver.mock
-      .results[0]?.value as MockTransceiver
-    expect(transceiver.sender.track).toBeNull()
-    // The single SDP answer string was already submitted to the action
-    // (Meta's `pre_accept`/`accept` both receive this exact string
-    // server-side — see `answer-voip-call.action.ts`) while the track is
-    // still unattached, proving no early media.
-    expect(answerActionMock).toHaveBeenCalledWith("workspace-1", {
-      whatsappCallId: "call-1",
-      sdpAnswer: "v=0 answer-sdp",
-    })
+    const pc = createdPeerConnections[0]
+    expect(pc?.addTrack).toHaveBeenCalled()
+    // Answering must NOT use addTransceiver: Chrome does not reuse it for the
+    // remote offer's m-line, so the mic would attach to a transceiver that is
+    // not in the session at all.
+    expect(pc?.addTransceiver).not.toHaveBeenCalled()
+    expect(pc?.addTrackSenders[0]?.track).not.toBeNull()
+
+    const submitted = answerActionMock.mock.calls[0]?.[1] as {
+      sdpAnswer: string
+    }
+    expect(submitted.sdpAnswer).toContain("a=sendrecv")
+    expect(submitted.sdpAnswer).not.toContain("a=recvonly")
 
     await act(async () => {
       resolveAnswer?.({
@@ -897,8 +952,37 @@ describe("useWhatsappVoipCall", () => {
       await answerPromise
     })
 
-    expect(transceiver.sender.replaceTrack).toHaveBeenCalled()
-    expect(transceiver.sender.track).not.toBeNull()
+    // Accept resolving changes nothing about the media path — it was already
+    // negotiated, and the sender still holds the same track.
+    expect(pc?.addTrackSenders).toHaveLength(1)
+    expect(pc?.addTrackSenders[0]?.track).not.toBeNull()
+  })
+
+  test("R7: the mic track is attached before the remote offer is applied", async () => {
+    // Order matters, not just presence: addTrack after setRemoteDescription
+    // still answers recvonly.
+    answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+    seedRingingSlot(incomingData)
+    await render()
+    await act(async () => {
+      await hookResult?.answer()
+    })
+
+    const pc = createdPeerConnections[0]
+    // Read without a `?? 0` fallback: defaulting a never-invoked spy to 0 would
+    // make "addTrack was never called" pass this ordering assertion.
+    expect(pc?.addTrack).toHaveBeenCalled()
+    expect(pc?.setRemoteDescription).toHaveBeenCalled()
+    expect(pc?.createAnswer).toHaveBeenCalled()
+
+    const [addTrackOrder] = pc?.addTrack.mock.invocationCallOrder ?? []
+    const [setRemoteOrder] =
+      pc?.setRemoteDescription.mock.invocationCallOrder ?? []
+    const [createAnswerOrder] = pc?.createAnswer.mock.invocationCallOrder ?? []
+
+    expect(addTrackOrder).toBeDefined()
+    expect(addTrackOrder).toBeLessThan(setRemoteOrder as number)
+    expect(setRemoteOrder).toBeLessThan(createAnswerOrder as number)
   })
 
   test("R5: pc.connectionState 'failed' tears down and fires a compensating hangup with a translated connection-lost notice", async () => {
@@ -930,63 +1014,23 @@ describe("useWhatsappVoipCall", () => {
     )
   })
 
-  test("R5: a failed replaceTrack after inbound accept routes through handleConnectionLost — hangs up once, tears down, stops tracks", async () => {
-    const stream = makeMockStream()
-    getUserMediaMock.mockResolvedValue(stream)
-    const track = stream.getTracks()[0] as unknown as MockTrack
-
-    let resolveAnswer: ((value: unknown) => void) | undefined
-    answerActionMock.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveAnswer = resolve
-        }),
-    )
+  test("R5: answering with a microphone that yields no audio track fails loudly instead of answering silently", async () => {
+    // The inbound equivalent of the old failed-replaceTrack path: if nothing
+    // can be attached before the answer is created, the SDP would commit to
+    // `recvonly` and the call would connect and stay silent. Refuse instead.
+    getUserMediaMock.mockResolvedValue({
+      getTracks: () => [],
+      getAudioTracks: () => [],
+    })
     seedRingingSlot(incomingData)
     await render()
 
-    let answerPromise: Promise<void> | undefined
     await act(async () => {
-      answerPromise = hookResult?.answer()
-      for (let i = 0; i < 20 && !resolveAnswer; i++) {
-        await Promise.resolve()
-      }
+      await hookResult?.answer()
     })
 
-    const transceiver = createdPeerConnections[0]?.addTransceiver.mock
-      .results[0]?.value as MockTransceiver
-    transceiver.sender.replaceTrack = vi
-      .fn()
-      .mockRejectedValue(new Error("replaceTrack failed"))
-
-    await act(async () => {
-      resolveAnswer?.({
-        data: {
-          outcome: "accepted",
-          browserRecordingEnabled: false,
-          recordingRequested: false,
-        },
-      })
-      await answerPromise
-      // Flush the rejected `replaceTrack().catch(...)` microtask and the
-      // subsequent `handleConnectionLost` -> `hangupWhatsappVoipCallAction`
-      // chain.
-      await Promise.resolve()
-      await Promise.resolve()
-      await Promise.resolve()
-    })
-
-    expect(hangupActionMock).toHaveBeenCalledTimes(1)
-    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
-      whatsappCallId: "call-1",
-    })
-    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
-      WhatsappVoipCallPhase.ended,
-    )
-    expect(useWhatsappVoipCallStore.getState().call?.endedStatus).toBe(
-      "connectionLost",
-    )
-    expect(track.stop).toHaveBeenCalled()
+    expect(answerActionMock).not.toHaveBeenCalled()
+    expect(createdPeerConnections[0]?.close).toHaveBeenCalled()
   })
 
   test("R5: pc.connectionState 'disconnected' for more than the grace window tears down; recovery cancels the timer", async () => {
@@ -1192,7 +1236,7 @@ describe("useWhatsappVoipCall — basket / multi-ring", () => {
     })
     expect(answerActionMock).toHaveBeenCalledWith("workspace-1", {
       whatsappCallId: "call-1",
-      sdpAnswer: "v=0 answer-sdp",
+      sdpAnswer: ANSWER_SDP,
     })
     expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
       "call-1",
@@ -1681,19 +1725,17 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     )
     expect(getUserMediaMock).toHaveBeenCalled()
     expect(createdPeerConnections).toHaveLength(1)
-    // A track-less `sendrecv` audio transceiver is added up front, so
-    // `createOffer` no longer needs `offerToReceiveAudio`/`offerToReceiveVideo`
-    // — the transceiver alone declares the m-line, and no video transceiver
-    // exists, so no video m-line is ever offered.
-    expect(createdPeerConnections[0]?.addTransceiver).toHaveBeenCalledWith(
-      "audio",
-      { direction: "sendrecv" },
-    )
+    // The mic track is added up front, so `createOffer` needs no
+    // `offerToReceiveAudio`/`offerToReceiveVideo` — the audio track alone
+    // declares the m-line, and no video track exists, so no video m-line is
+    // ever offered.
+    expect(createdPeerConnections[0]?.addTrack).toHaveBeenCalled()
+    expect(createdPeerConnections[0]?.addTransceiver).not.toHaveBeenCalled()
     expect(createdPeerConnections[0]?.createOffer).toHaveBeenCalledWith()
     expect(initiateOutboundActionMock).toHaveBeenCalledWith("workspace-1", {
       conversationId: "conversation-1",
       contactInboxId: undefined,
-      sdpOffer: "v=0 offer-sdp",
+      sdpOffer: OFFER_SDP,
     })
     expect(outcome).toBe("dialing")
     expect(useWhatsappVoipCallStore.getState().call).toMatchObject({
@@ -2270,7 +2312,32 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     }
   })
 
-  test("R7: the outbound offer also uses a track-less sendrecv transceiver — mic attaches only once the status reaches ACCEPTED", async () => {
+  test("R7: the outbound offer attaches the mic before createOffer, so the SDP is sendrecv", async () => {
+    initiateOutboundActionMock.mockResolvedValue({
+      data: outboundDialingResult,
+    })
+    // Regression guard for the outbound half of the 138021 bug. The mic used
+    // to be held back and attached via `replaceTrack` on Meta's ACCEPTED
+    // event, which Meta documents as best-effort — a lost event left the
+    // sender track-less on a live call and Chrome sent zero RTP.
+    await render()
+    await act(async () => {
+      await hookResult?.startOutbound({ conversationId: "conversation-1" })
+    })
+
+    const pc = createdPeerConnections[0]
+    expect(pc?.addTrack).toHaveBeenCalled()
+    expect(pc?.addTransceiver).not.toHaveBeenCalled()
+    expect(pc?.addTrackSenders[0]?.track).not.toBeNull()
+
+    const submitted = initiateOutboundActionMock.mock.calls[0]?.[1] as {
+      sdpOffer: string
+    }
+    expect(submitted.sdpOffer).toContain("a=sendrecv")
+    expect(submitted.sdpOffer).not.toContain("a=recvonly")
+  })
+
+  test("R7: the outbound mic is attached before the offer is built, not after", async () => {
     initiateOutboundActionMock.mockResolvedValue({
       data: outboundDialingResult,
     })
@@ -2279,30 +2346,46 @@ describe("useWhatsappVoipCall — startOutbound", () => {
       await hookResult?.startOutbound({ conversationId: "conversation-1" })
     })
 
-    expect(createdPeerConnections[0]?.addTransceiver).toHaveBeenCalledWith(
-      "audio",
-      { direction: "sendrecv" },
-    )
-    const transceiver = createdPeerConnections[0]?.addTransceiver.mock
-      .results[0]?.value as MockTransceiver
-    expect(transceiver.sender.track).toBeNull()
+    const pc = createdPeerConnections[0]
+    expect(pc?.addTrack).toHaveBeenCalled()
+    expect(pc?.createOffer).toHaveBeenCalled()
 
-    act(() => {
-      useWhatsappVoipCallStore
-        .getState()
-        .setOutboundStatus("out-call-1", "ringing")
+    const [addTrackOrder] = pc?.addTrack.mock.invocationCallOrder ?? []
+    const [createOfferOrder] = pc?.createOffer.mock.invocationCallOrder ?? []
+
+    expect(addTrackOrder).toBeDefined()
+    expect(addTrackOrder).toBeLessThan(createOfferOrder as number)
+  })
+
+  test("R7: reaching ACCEPTED does not re-touch the media path — it was negotiated at offer time", async () => {
+    // The ACCEPTED effect must only start the recorder. If it ever attaches
+    // media again, the call's audio depends on that best-effort event once
+    // more — the outbound half of the 138021 bug.
+    initiateOutboundActionMock.mockResolvedValue({
+      data: outboundDialingResult,
     })
-    // Still ringing — no track attached yet.
-    expect(transceiver.sender.track).toBeNull()
+    await render()
+    await act(async () => {
+      await hookResult?.startOutbound({ conversationId: "conversation-1" })
+    })
+    const pc = createdPeerConnections[0]
+    const attachCalls = pc?.addTrack.mock.calls.length ?? 0
 
-    act(() => {
+    await act(async () => {
+      // The id the slot actually holds — a mismatched one is merely buffered
+      // by `setOutboundStatus`, so the effect under test would never run and
+      // both assertions below would pass for the wrong reason.
       useWhatsappVoipCallStore
         .getState()
         .setOutboundStatus("out-call-1", "accepted")
+      await Promise.resolve()
     })
 
-    expect(transceiver.sender.replaceTrack).toHaveBeenCalled()
-    expect(transceiver.sender.track).not.toBeNull()
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.active,
+    )
+    expect(pc?.addTrack.mock.calls.length).toBe(attachCalls)
+    expect(pc?.addTrackSenders[0]?.replaceTrack).not.toHaveBeenCalled()
   })
 
   test("R5: an outbound call's pc.connectionState 'failed' tears down and fires a compensating hangup", async () => {
@@ -2338,11 +2421,10 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     )
   })
 
-  test("R5: a failed replaceTrack after outbound ACCEPTED routes through handleConnectionLost — hangs up once, tears down, stops tracks", async () => {
-    const stream = makeMockStream()
-    getUserMediaMock.mockResolvedValue(stream)
-    const track = stream.getTracks()[0] as unknown as MockTrack
-
+  test("R5: handleConnectionLost is idempotent — two connection failures hang up only once", async () => {
+    // The mic-attach failure that used to race `connectionstatechange` here is
+    // gone (media is negotiated at offer time), but the idempotency it exercised
+    // is still load-bearing: `connectionState` can reach `failed` more than once.
     initiateOutboundActionMock.mockResolvedValue({
       data: outboundDialingResult,
     })
@@ -2350,77 +2432,32 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     await act(async () => {
       await hookResult?.startOutbound({ conversationId: "conversation-1" })
     })
-
-    const transceiver = createdPeerConnections[0]?.addTransceiver.mock
-      .results[0]?.value as MockTransceiver
-    transceiver.sender.replaceTrack = vi
-      .fn()
-      .mockRejectedValue(new Error("replaceTrack failed"))
-
-    await act(async () => {
-      useWhatsappVoipCallStore
-        .getState()
-        .setOutboundStatus("out-call-1", "accepted")
-      // Flush the rejected `replaceTrack().catch(...)` microtask and the
-      // subsequent `handleConnectionLost` -> `hangupWhatsappVoipCallAction`
-      // chain.
-      await Promise.resolve()
-      await Promise.resolve()
-      await Promise.resolve()
-    })
-
-    expect(hangupActionMock).toHaveBeenCalledTimes(1)
-    expect(hangupActionMock).toHaveBeenCalledWith("workspace-1", {
-      whatsappCallId: "out-call-1",
-    })
-    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
-      WhatsappVoipCallPhase.ended,
-    )
-    expect(useWhatsappVoipCallStore.getState().call?.endedStatus).toBe(
-      "connectionLost",
-    )
-    expect(track.stop).toHaveBeenCalled()
-  })
-
-  test("R5: a replaceTrack failure followed by a connectionstatechange 'failed' still hangs up only once", async () => {
-    initiateOutboundActionMock.mockResolvedValue({
-      data: outboundDialingResult,
-    })
-    await render()
-    await act(async () => {
-      await hookResult?.startOutbound({ conversationId: "conversation-1" })
-    })
-
-    const transceiver = createdPeerConnections[0]?.addTransceiver.mock
-      .results[0]?.value as MockTransceiver
-    transceiver.sender.replaceTrack = vi
-      .fn()
-      .mockRejectedValue(new Error("replaceTrack failed"))
-
     await act(async () => {
       useWhatsappVoipCallStore
         .getState()
         .setOutboundStatus("out-call-1", "accepted")
       await Promise.resolve()
-      await Promise.resolve()
-      await Promise.resolve()
     })
-
-    expect(hangupActionMock).toHaveBeenCalledTimes(1)
 
     const pc = createdPeerConnections[0]
     if (!pc) {
       throw new Error("expected a peer connection")
     }
+
     pc.connectionState = "failed"
     await act(async () => {
       pc.onconnectionstatechange?.()
       await Promise.resolve()
     })
+    await act(async () => {
+      pc.onconnectionstatechange?.()
+      await Promise.resolve()
+    })
 
-    // Still only once — `handleConnectionLost` must be idempotent once the
-    // store already shows the call `ended`.
     expect(hangupActionMock).toHaveBeenCalledTimes(1)
+    expect(useWhatsappVoipCallStore.getState().call?.endedStatus).toBe(
+      "connectionLost",
+    )
   })
 
   test("R5: a connection failure while still preparing releases the local slot immediately (before any server call exists)", async () => {

@@ -3965,7 +3965,8 @@
     "declinedCallPermission": "已拒绝通话权限请求",
     "humanAgentWarningDescription": "只有在问题无法于 24 小时内合理解决时，您才可以在 7 天内回复用户的消息。例如周末、假日，或需要超过一天才能完成的案例。请勿因其他原因使用此选项，否则可能让您的 Facebook 粉专或 Instagram 帐号面临风险。如果您不确定，请不要继续。",
     "sendHumanAgentTag": "发送一封带有 HUMAN_AGENT 标签的消息",
-    "warning": "警告！"
+    "warning": "警告！",
+    "callFailed": "通话问题"
   },
   "messenger": {
     "botProfile": "机器人个人数据",

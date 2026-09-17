@@ -3307,7 +3307,8 @@
     "declinedCallPermission": "Rechazó la solicitud de permiso de llamada",
     "sendHumanAgentTag": "Enviar one mensaje con HUMAN_AGENT tag",
     "warning": "¡Advertencia!",
-    "humanAgentWarningDescription": "You may respond un a usuario's mensaje within 7 días only cuando el issue cannot reasonably be resolved within 24 horas. Examples include weekends, holidías, o cases that require más than one día un complete. hacer not use este option para cualquier other reason, as it podría put tu Facebook Página o Instagram cuenta at risk. si you're not sure, hacer not continue."
+    "humanAgentWarningDescription": "You may respond un a usuario's mensaje within 7 días only cuando el issue cannot reasonably be resolved within 24 horas. Examples include weekends, holidías, o cases that require más than one día un complete. hacer not use este option para cualquier other reason, as it podría put tu Facebook Página o Instagram cuenta at risk. si you're not sure, hacer not continue.",
+    "callFailed": "Problema de llamada"
   },
   "instagram": {
     "description": "This integración lets tú Crear Instagram bots.",

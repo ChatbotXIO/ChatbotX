@@ -24,6 +24,7 @@ import {
   WhatsappVoipCallPhase,
 } from "./voip-call-store"
 import {
+  attachMicrophone,
   captureMicrophoneStream,
   createOutboundOffer,
   registerConnectionHealthHandlers,
@@ -207,12 +208,6 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   )
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
-  /** The track-less `sendrecv` audio transceiver created up front on
-   * every peer — the mic track is only ever attached to it via
-   * `sender.replaceTrack` once the call is actually accepted (inbound: the
-   * accept action resolves; outbound: the ACCEPTED status event), so no RTP
-   * ever flows before that point. */
-  const audioTransceiverRef = useRef<RTCRtpTransceiver | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const remoteStreamRef = useRef<MediaStream | null>(null)
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
@@ -375,7 +370,6 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
 
     peerConnectionRef.current?.close()
     peerConnectionRef.current = null
-    audioTransceiverRef.current = null
     for (const track of localStreamRef.current?.getTracks() ?? []) {
       track.stop()
     }
@@ -392,16 +386,10 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
    * (no server call exists yet) just releases the local slot. Shows the
    * translated "connection lost" notice via the lingering `ended` phase.
    *
-   * Also the shared failure path for a post-accept `replaceTrack` rejection
-   * or a missing mic track (see the inbound-accept and outbound-ACCEPTED
-   * mic-attach sites) — either one is treated exactly like an ICE/connection
-   * failure so the UI and compensating hangup behave identically.
-   *
-   * Idempotent: an ICE failure and a `replaceTrack` failure can both fire
-   * for the same call (e.g. connectionstatechange races the mic-attach
-   * failure), so once the call is already `ended` this is a no-op beyond
-   * the always-safe `teardown()` — it must never call `handleEnded`/hangup
-   * twice for the same call. */
+   * Idempotent: `connectionState` can reach `failed` more than once for the
+   * same call, so once it is already `ended` this is a no-op beyond the
+   * always-safe `teardown()` — it must never call `handleEnded`/hangup twice
+   * for the same call. */
   const handleConnectionLost = useCallback(() => {
     const current = useWhatsappVoipCallStore.getState().call
     teardown()
@@ -579,42 +567,17 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   // called from `ontrack` below; whichever of the two resolves last actually
   // starts it, since both are idempotent no-ops once a recorder exists.
   //
-  // This is also the outbound mic-attach point — Meta's ACCEPTED status
-  // event drives `setOutboundStatus(..., "accepted")`, which is what moves
-  // the store to `active` here. `replaceTrack` is a no-op renegotiation-free
-  // call, safe to invoke again if this effect re-runs for the same call
-  // (e.g. a mute toggle) — guarded on the sender not already holding the
-  // track.
+  // Recorder only — this must never touch the media path. The mic is attached
+  // when the offer is built (see `attachMicrophone`), precisely so audio does
+  // not depend on Meta's best-effort ACCEPTED event arriving.
   useEffect(() => {
     if (
       call?.direction === WhatsappVoipCallDirection.outbound &&
       call.phase === WhatsappVoipCallPhase.active
     ) {
-      const transceiver = audioTransceiverRef.current
-      const micTrack = localStreamRef.current?.getAudioTracks()[0]
-      if (transceiver && transceiver.sender.track !== micTrack) {
-        if (micTrack) {
-          transceiver.sender.replaceTrack(micTrack).catch((error: unknown) => {
-            logger.error(
-              { err: error, whatsappCallId: call.whatsappCallId },
-              "WhatsApp outbound VoIP replaceTrack after ACCEPTED failed",
-            )
-            // No outbound audio can ever flow without this track — treat it
-            // exactly like an unrecoverable connection failure rather than
-            // leaving the UI/heartbeat running silently.
-            handleConnectionLost()
-          })
-        } else {
-          logger.error(
-            { whatsappCallId: call.whatsappCallId },
-            "WhatsApp outbound VoIP replaceTrack after ACCEPTED skipped — no local mic track",
-          )
-          handleConnectionLost()
-        }
-      }
       maybeStartRecorder(call.whatsappCallId)
     }
-  }, [call, maybeStartRecorder, handleConnectionLost])
+  }, [call, maybeStartRecorder])
 
   /**
    * The actual "gather a TURN/STUN answer, then call the answer action"
@@ -674,20 +637,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           }
         }
 
-        // A track-less `sendrecv` transceiver up front — the SDP still
-        // offers to send/receive audio (so Meta's callee never sees a
-        // downgraded `recvonly` offer), but no RTP flows until the mic track
-        // is attached via `replaceTrack` below, AFTER accept succeeds.
-        const transceiver = pc.addTransceiver("audio", {
-          direction: "sendrecv",
-        })
-        audioTransceiverRef.current = transceiver
-
-        await pc.setRemoteDescription({ type: "offer", sdp: offer.sdp })
-
-        // Acquire the mic now (so a denial/missing-device surfaces before the
-        // agent waits out the whole accept round-trip) but do NOT attach it to
-        // the transceiver yet — see the `replaceTrack` call below.
+        // Acquire the mic first, so a denial or missing device surfaces before
+        // the agent waits out the whole accept round-trip.
         const localStream = await navigator.mediaDevices.getUserMedia(
           VOIP_AUDIO_CONSTRAINTS,
         )
@@ -710,6 +661,21 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           teardown()
           return
         }
+
+        // Before the answer is built — see `attachMicrophone`. Nothing has been
+        // accepted server-side yet, so this aborts the answer rather than
+        // hanging up, but it must still tell the agent why the ring vanished.
+        if (!attachMicrophone(pc, localStream)) {
+          logger.error(
+            { whatsappCallId },
+            "WhatsApp VoIP answer aborted — the microphone yielded no audio track",
+          )
+          teardown()
+          handleEnded(whatsappCallId, "connectionLost")
+          return
+        }
+
+        await pc.setRemoteDescription({ type: "offer", sdp: offer.sdp })
 
         const answerDescription = await pc.createAnswer()
         await pc.setLocalDescription(answerDescription)
@@ -766,31 +732,9 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
             return
           }
 
-          // Only NOW — accept has actually resolved — attach the mic
-          // track, via `replaceTrack` (no renegotiation, no new SDP). Before
-          // this point `transceiver.sender.track` is `null`, so no RTP is ever
-          // sent while the call is still ringing/answering.
-          const micTrack = localStream.getAudioTracks()[0]
-          if (micTrack) {
-            transceiver.sender
-              .replaceTrack(micTrack)
-              .catch((error: unknown) => {
-                logger.error(
-                  { err: error, whatsappCallId },
-                  "WhatsApp VoIP replaceTrack after accept failed",
-                )
-                // No outbound audio can ever flow without this track — treat it
-                // exactly like an unrecoverable connection failure rather than
-                // leaving the UI/heartbeat running silently.
-                handleConnectionLost()
-              })
-          } else {
-            logger.error(
-              { whatsappCallId },
-              "WhatsApp VoIP replaceTrack after accept skipped — no local mic track",
-            )
-            handleConnectionLost()
-          }
+          // The mic is already attached and negotiated as `sendrecv` (see the
+          // `addTrack` above), so there is nothing to wire up here — accept
+          // simply opens the path Meta will send and receive audio on.
           // Only the answering agent ever reaches this branch, so a losing
           // ring-all agent never starts a recorder — no extra gating needed.
           // `browserRecordingEnabled` gates the BROWSER MediaRecorder only —
@@ -826,6 +770,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
       maybeStartRecorder,
       setRecordingInStore,
       handleConnectionLost,
+      handleEnded,
     ],
   )
 
@@ -1291,16 +1236,6 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           }
         }
 
-        // A track-less `sendrecv` transceiver, exactly like the inbound
-        // `answer` flow — the OFFER already asks to send/receive audio, but
-        // no RTP flows until the mic track is attached below, once the
-        // outbound call's status reaches ACCEPTED (never here, while still
-        // ringing).
-        const transceiver = pc.addTransceiver("audio", {
-          direction: "sendrecv",
-        })
-        audioTransceiverRef.current = transceiver
-
         setPreparingStage(nonce, "mic")
         const microphone = await captureMicrophoneStream()
         if ("failure" in microphone) {
@@ -1318,9 +1253,21 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           }
           return microphone.failure
         }
-        // Mic acquired but NOT attached to the transceiver yet — see
-        // the `replaceTrack` call once the outbound call reaches ACCEPTED.
         localStreamRef.current = microphone.stream
+
+        // Before the offer is built — see `attachMicrophone`.
+        if (!attachMicrophone(pc, microphone.stream)) {
+          teardownIfStillOurs()
+          if (isCancelled()) {
+            clearCancelToken()
+            return "cancelled"
+          }
+          releaseIfStillPreparing()
+          logger.error(
+            "WhatsApp outbound VoIP dial aborted — the microphone yielded no audio track",
+          )
+          return "callFailed"
+        }
 
         if (isCancelled()) {
           return finishCancelled()

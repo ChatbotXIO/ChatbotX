@@ -3307,7 +3307,8 @@
     "declinedCallPermission": "Verzoek om beltoestemming geweigerd",
     "sendHumanAgentTag": "Eén bericht verzenden met de tag HUMAN_AGENT",
     "warning": "Waarschuwing!",
-    "humanAgentWarningDescription": "Je mag alleen binnen 7 dagen op het bericht van een gebruiker reageren wanneer het probleem redelijkerwijs niet binnen 24 uur kan worden opgelost. Voorbeelden zijn weekenden, feestdagen of gevallen die meer dan één dag vereisen. Gebruik deze optie om geen enkele andere reden, omdat dit je Facebook-pagina of Instagram-account in gevaar kan brengen. Ga niet verder als je twijfelt."
+    "humanAgentWarningDescription": "Je mag alleen binnen 7 dagen op het bericht van een gebruiker reageren wanneer het probleem redelijkerwijs niet binnen 24 uur kan worden opgelost. Voorbeelden zijn weekenden, feestdagen of gevallen die meer dan één dag vereisen. Gebruik deze optie om geen enkele andere reden, omdat dit je Facebook-pagina of Instagram-account in gevaar kan brengen. Ga niet verder als je twijfelt.",
+    "callFailed": "Gespreksprobleem"
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",

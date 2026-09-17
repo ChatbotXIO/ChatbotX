@@ -416,7 +416,7 @@ describe("WhatsappCallCard", () => {
     expect(el.textContent).not.toContain("calledBy")
   })
 
-  test("a completed call with failureReason renders the error affordance alongside the audio-call layout", () => {
+  test("a completed call with failureReason keeps the audio-call layout and renders no badge — it lives beside the message", () => {
     const el = renderComponent(
       <WhatsappCallCard
         call={{
@@ -426,13 +426,15 @@ describe("WhatsappCallCard", () => {
         }}
       />,
     )
-    // Still the normal completed "Audio call" layout — the failure is an
-    // addition on top, not a replacement for it.
+    // Still the normal completed "Audio call" layout. The failure badge is
+    // deliberately NOT here: it renders beside the message, in the same slot an
+    // outgoing message's sendError badge uses, so every failed item in the
+    // thread carries its icon in the same place (see message-item.tsx).
     expect(el.textContent).toContain("audioCall")
-    expect(el.querySelector(".text-destructive")).not.toBeNull()
+    expect(el.querySelector(".text-destructive")).toBeNull()
   })
 
-  test("a non-completed call with failureReason also renders the error affordance (never buried)", () => {
+  test("a non-completed call with failureReason renders no badge either — same reason", () => {
     const el = renderComponent(
       <WhatsappCallCard
         call={{
@@ -444,7 +446,8 @@ describe("WhatsappCallCard", () => {
       />,
     )
     expect(el.textContent).toContain("missedVoiceCall")
-    expect(el.querySelector(".text-destructive")).not.toBeNull()
+    // Same as above — the badge lives outside the card.
+    expect(el.querySelector(".text-destructive")).toBeNull()
   })
 
   test("no failureReason renders no error affordance", () => {
