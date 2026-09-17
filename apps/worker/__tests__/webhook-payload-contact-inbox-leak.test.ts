@@ -26,21 +26,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   contactFindById: vi.fn(),
   listWithDefinitions: vi.fn(),
-  tagFindFirst: vi.fn(),
+  findNameByIdForWorkspace: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   contactCustomFieldService: { listWithDefinitions: mocks.listWithDefinitions },
   contactService: { findById: mocks.contactFindById },
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      tagModel: {
-        findFirst: (...args: unknown[]) => mocks.tagFindFirst(...args),
-      },
-    },
+  tagService: {
+    findNameByIdForWorkspace: (...args: unknown[]) =>
+      mocks.findNameByIdForWorkspace(...args),
   },
 }))
 
@@ -123,7 +117,7 @@ const SELECTIVELY_PROJECTED_EVENT_TYPES = Object.keys(EVENT_DATA_BY_TYPE)
 describe("buildWebhookPayload — contactInboxId never leaks (selectively-projecting builders)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.tagFindFirst.mockResolvedValue({ name: "VIP" })
+    mocks.findNameByIdForWorkspace.mockResolvedValue("VIP")
     mocks.contactFindById.mockResolvedValue({
       id: "contact-1",
       fullName: "Ada Lovelace",

@@ -47,6 +47,11 @@ import { workspaceUsageService } from "../workspace-usage/service"
 import { emitContactInfoChangeEvents } from "./contact-info-changes"
 import { createContactWithInbox } from "./create-with-inbox"
 import {
+  type InsertImportedContactBatchInput,
+  type InsertImportedContactBatchResult,
+  insertImportedContactBatch,
+} from "./insert-imported-batch"
+import {
   type ContactListScope as ContactListScopeType,
   count as countContacts,
   listByCustomFieldValue,
@@ -230,6 +235,7 @@ class ContactService extends BaseService {
   }) {
     await contactService.unblock(ctx)
   }
+
   // ─── Legacy generic find (preserved for backward compat) ────────────────
   async findBy(props: {
     tx?: DatabaseClient
@@ -976,6 +982,16 @@ class ContactService extends BaseService {
           isNull(contactModel.avatar),
         ),
       )
+  }
+
+  /**
+   * Bulk-insert a validated batch of imported contacts. Body lives in
+   * `./insert-imported-batch` to keep this file's merge surface small.
+   */
+  insertImportedContactBatch(
+    input: InsertImportedContactBatchInput,
+  ): Promise<InsertImportedContactBatchResult> {
+    return insertImportedContactBatch(input)
   }
 }
 

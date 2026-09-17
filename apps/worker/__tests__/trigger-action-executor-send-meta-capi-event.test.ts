@@ -27,7 +27,7 @@ import { z } from "zod"
 const plainNumberPattern = /^\d+(\.\d+)?$/
 
 const mocks = vi.hoisted(() => ({
-  conversationFindFirst: vi.fn(),
+  findLatestCreatedByContact: vi.fn(),
   findByIdForContact: vi.fn(),
   findMostRecentByContact: vi.fn(),
   enqueueEvent: vi.fn(),
@@ -38,30 +38,7 @@ const mocks = vi.hoisted(() => ({
   ),
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      conversationModel: {
-        findFirst: (...args: unknown[]) => mocks.conversationFindFirst(...args),
-      },
-    },
-    insert: () => ({
-      values: () => ({
-        onConflictDoNothing: () => ({ returning: vi.fn() }),
-      }),
-    }),
-    delete: () => ({ where: vi.fn() }),
-  },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (col: unknown, val: unknown) => ({ eq: [col, val] }),
-  inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
-}))
-
 vi.mock("@chatbotx.io/database/schema", () => ({
-  contactsToTagsModel: {
-    contactId: "contactsToTagsModel.contactId",
-    tagId: "contactsToTagsModel.tagId",
-  },
   metaCapiEventChannelSchema: {
     safeParse: (value: unknown) =>
       value === "messenger" || value === "instagram" || value === "whatsapp"
@@ -81,9 +58,16 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   contactCustomFieldService: {},
-  conversationService: {},
+  conversationService: {
+    findLatestCreatedByContact: (...args: unknown[]) =>
+      mocks.findLatestCreatedByContact(...args),
+  },
+  tagService: {},
   tagSyncService: {},
   adsConversionService: {},
+  flowService: {},
+  workspaceMemberService: {},
+  inboxService: {},
   metaConversionsService: {
     enqueueEvent: (...args: unknown[]) => mocks.enqueueEvent(...args),
     buildSourceKey: (...args: unknown[]) => mocks.buildSourceKey(...args),
@@ -137,7 +121,7 @@ describe("ActionExecutor sendMetaCapiEvent", () => {
     mocks.resolveContactVariablesDeep.mockImplementation(
       async (_contactId: string, value: unknown) => value,
     )
-    mocks.conversationFindFirst.mockResolvedValue({
+    mocks.findLatestCreatedByContact.mockResolvedValue({
       id: "conv-1",
       contactId: "contact-1",
       workspaceId: "ws-1",

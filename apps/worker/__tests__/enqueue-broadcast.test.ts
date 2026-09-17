@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ── fixed "now" so startOfMinute is deterministic ─────────────────────────────
 const FIXED_START = new Date("2026-01-01T10:00:00.000Z")
 
-// ── db spy ────────────────────────────────────────────────────────────────────
-const findManyBroadcast = vi.fn()
+// ── service spy ───────────────────────────────────────────────────────────────
+const listDueScheduled = vi.fn()
 
 // ── queue spy ─────────────────────────────────────────────────────────────────
 const addBulkSpy = vi.fn()
@@ -14,13 +14,9 @@ vi.mock("date-fns", () => ({
   startOfMinute: (_input: unknown) => FIXED_START,
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      broadcastModel: {
-        findMany: (...args: unknown[]) => findManyBroadcast(...args),
-      },
-    },
+vi.mock("@chatbotx.io/business", () => ({
+  broadcastService: {
+    listDueScheduled: (...args: unknown[]) => listDueScheduled(...args),
   },
 }))
 
@@ -50,7 +46,7 @@ const makeBroadcasts = (count: number) =>
 
 // ── setup ─────────────────────────────────────────────────────────────────────
 beforeEach(() => {
-  findManyBroadcast.mockResolvedValue([])
+  listDueScheduled.mockResolvedValue([])
   addBulkSpy.mockResolvedValue(undefined)
 })
 
@@ -58,7 +54,7 @@ beforeEach(() => {
 describe("enqueueBroadcast", () => {
   describe("no scheduled broadcasts found", () => {
     test("returns { scanned: 0, enqueued: 0 } without calling addBulk", async () => {
-      findManyBroadcast.mockResolvedValue([])
+      listDueScheduled.mockResolvedValue([])
 
       const result = await enqueueBroadcast()
 
@@ -70,7 +66,7 @@ describe("enqueueBroadcast", () => {
   describe("broadcasts found within one bulk chunk (<= 500)", () => {
     test("calls addBulk once with prepareBroadcast jobs for each broadcast", async () => {
       const broadcasts = makeBroadcasts(3)
-      findManyBroadcast.mockResolvedValue(broadcasts)
+      listDueScheduled.mockResolvedValue(broadcasts)
 
       const result = await enqueueBroadcast()
 
@@ -88,7 +84,7 @@ describe("enqueueBroadcast", () => {
     })
 
     test("each job has name prepareBroadcast with correct broadcastId and dedup jobId", async () => {
-      findManyBroadcast.mockResolvedValue(makeBroadcasts(1))
+      listDueScheduled.mockResolvedValue(makeBroadcasts(1))
 
       await enqueueBroadcast()
 
@@ -107,7 +103,7 @@ describe("enqueueBroadcast", () => {
     })
 
     test("clears the dedup jobId on completion and on failure so a terminal job cannot wedge the broadcast forever", async () => {
-      findManyBroadcast.mockResolvedValue(makeBroadcasts(1))
+      listDueScheduled.mockResolvedValue(makeBroadcasts(1))
 
       await enqueueBroadcast()
 
@@ -127,24 +123,20 @@ describe("enqueueBroadcast", () => {
       expect(jobs[0].opts.removeOnFail).toBe(true)
     })
 
-    test("queries broadcastModel with status 'scheduled' and schedulesAt lte startTime", async () => {
-      findManyBroadcast.mockResolvedValue(makeBroadcasts(1))
+    test("passes the current startOfMinute as dueAt", async () => {
+      listDueScheduled.mockResolvedValue(makeBroadcasts(1))
 
       await enqueueBroadcast()
 
-      expect(findManyBroadcast).toHaveBeenCalledTimes(1)
-      const [queryArg] = findManyBroadcast.mock.calls[0] as [
-        { where: { status: string; schedulesAt: { lte: Date } } },
-      ]
-      expect(queryArg.where.status).toBe("scheduled")
-      expect(queryArg.where.schedulesAt.lte).toEqual(FIXED_START)
+      expect(listDueScheduled).toHaveBeenCalledTimes(1)
+      expect(listDueScheduled).toHaveBeenCalledWith({ dueAt: FIXED_START })
     })
   })
 
   describe("more than 500 broadcasts (multi-chunk batching)", () => {
     test("splits into chunks of 500 and calls addBulk once per chunk", async () => {
       const broadcasts = makeBroadcasts(501)
-      findManyBroadcast.mockResolvedValue(broadcasts)
+      listDueScheduled.mockResolvedValue(broadcasts)
 
       const result = await enqueueBroadcast()
 
@@ -158,7 +150,7 @@ describe("enqueueBroadcast", () => {
     })
 
     test("exactly 1000 broadcasts → two equal batches of 500", async () => {
-      findManyBroadcast.mockResolvedValue(makeBroadcasts(1000))
+      listDueScheduled.mockResolvedValue(makeBroadcasts(1000))
 
       const result = await enqueueBroadcast()
 

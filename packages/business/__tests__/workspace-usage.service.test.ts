@@ -131,3 +131,34 @@ describe("workspaceUsageService.getUsage", () => {
     expect(usage.macUsed).toBe(50)
   })
 })
+
+describe("workspaceUsageService.upsertReconciled", () => {
+  test("upserts onConflictDoUpdate target workspaceId with direct-assign set and CURRENT_TIMESTAMP", async () => {
+    await workspaceUsageService.upsertReconciled({
+      workspaceId: WORKSPACE,
+      contactsUsed: 10,
+      channelsUsed: 2,
+      teamMembersUsed: 3,
+      macUsed: 40,
+    })
+
+    expect(insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WORKSPACE,
+        contactsUsed: 10,
+        channelsUsed: 2,
+        teamMembersUsed: 3,
+        macUsed: 40,
+      }),
+    )
+    const [{ target, set }] = insertBuilder.onConflictDoUpdate.mock.calls[0]
+    expect(target).toBe("workspaceId-column")
+    expect(set).toMatchObject({
+      contactsUsed: 10,
+      channelsUsed: 2,
+      teamMembersUsed: 3,
+      macUsed: 40,
+    })
+    expect(set).toHaveProperty("updatedAt")
+  })
+})

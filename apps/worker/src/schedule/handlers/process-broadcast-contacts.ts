@@ -1,16 +1,17 @@
-import { broadcastService } from "@chatbotx.io/business"
-import { and, db, eq, sql } from "@chatbotx.io/database/client"
+import {
+  type BroadcastForSend,
+  type BroadcastRecipientForSend,
+  broadcastService,
+} from "@chatbotx.io/business"
 import {
   broadcastSendsFlow,
   broadcastSendsTemplate,
-  broadcastStatuses,
   channelTypes,
   hasBroadcastSendForInbox,
   resolveBroadcastFlowSend,
   resolveBroadcastTemplateSend,
   usesBroadcastTargets,
 } from "@chatbotx.io/database/partials"
-import { contactsOnBroadcastsModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -32,17 +33,6 @@ import { logger } from "../../lib/logger"
 const DEFAULT_BROADCAST_RATE_LIMIT = 500
 const BROADCAST_SEND_JOB_RETENTION_SECONDS = 3600
 
-type BroadcastForSend = Awaited<
-  ReturnType<(typeof db.query.broadcastModel)["findMany"]>
->[number] & {
-  targets: {
-    inboxId: string
-    flowId: string | null
-    templateId: string | null
-    templateData: unknown
-  }[]
-}
-
 /** The reasons a recipient cannot be enqueued; stored as the row's `errorContent`. */
 const NO_TEMPLATE_FOR_PAGE_REASON =
   "no template selected for the contact's page"
@@ -50,12 +40,7 @@ const NO_FLOW_FOR_PAGE_REASON = "no flow selected for the contact's page"
 const NO_SEND_FOR_PAGE_REASON =
   "no flow or template selected for the contact's page"
 
-type ContactOnBroadcastForSend = Awaited<
-  ReturnType<(typeof db.query.contactsOnBroadcastsModel)["findMany"]>
->[number] & {
-  conversation?: ConversationModel | null
-  contactInbox?: ContactInboxModel | null
-}
+type ContactOnBroadcastForSend = BroadcastRecipientForSend
 
 const downstreamJobOptions = (jobId: string) => ({
   jobId,
@@ -149,21 +134,11 @@ const markContactFailed = async (
   contactOnBroadcast: ContactOnBroadcastForSend,
   reason: string,
 ) => {
-  await db
-    .update(contactsOnBroadcastsModel)
-    .set({
-      failedAt: sql`CURRENT_TIMESTAMP`,
-      errorContent: reason,
-    })
-    .where(
-      and(
-        eq(
-          contactsOnBroadcastsModel.broadcastId,
-          contactOnBroadcast.broadcastId,
-        ),
-        eq(contactsOnBroadcastsModel.contactId, contactOnBroadcast.contactId),
-      ),
-    )
+  await broadcastService.markContactFailed({
+    broadcastId: contactOnBroadcast.broadcastId,
+    contactId: contactOnBroadcast.contactId,
+    reason,
+  })
 }
 
 const enqueueBroadcastContact = async (
@@ -287,23 +262,7 @@ const enqueueBroadcastContact = async (
 }
 
 export const processBroadcastContacts = async (broadcastId: string) => {
-  const broadcasts = await db.query.broadcastModel.findMany({
-    where: {
-      id: broadcastId,
-      status: broadcastStatuses.enum.sending,
-      deletedAt: { isNull: true },
-    },
-    with: {
-      targets: {
-        columns: {
-          inboxId: true,
-          flowId: true,
-          templateId: true,
-          templateData: true,
-        },
-      },
-    },
-  })
+  const broadcasts = await broadcastService.listSendableById({ broadcastId })
 
   if (broadcasts.length === 0) {
     return { processed: 0 }
@@ -316,19 +275,10 @@ export const processBroadcastContacts = async (broadcastId: string) => {
   let totalProcessed = 0
 
   for (const broadcast of broadcasts) {
-    const contactsOnBroadcasts =
-      await db.query.contactsOnBroadcastsModel.findMany({
-        where: {
-          broadcastId: broadcast.id,
-          sent: false,
-          failedAt: { isNull: true },
-        },
-        with: {
-          conversation: true,
-          contactInbox: true,
-        },
-        limit: DEFAULT_BROADCAST_RATE_LIMIT,
-      })
+    const contactsOnBroadcasts = await broadcastService.listPendingRecipients({
+      broadcastId: broadcast.id,
+      limit: DEFAULT_BROADCAST_RATE_LIMIT,
+    })
 
     if (contactsOnBroadcasts.length === 0) {
       // Everything has been handed to the channel; finalizeBroadcasts resolves sent|failed.
