@@ -62,6 +62,7 @@ import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { distributedLock } from "@chatbotx.io/redis"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
   type AuthValue,
@@ -832,103 +833,107 @@ const saveAndBroadcastMessage = async (props: {
     createdAt,
     storageUrl,
   } = props
-  const repository = await createMessageRepository()
+  const persist = async (): Promise<{
+    message: MessageModel & { attachments: unknown[] }
+    isNew: boolean
+  }> => {
+    const repository = await createMessageRepository()
 
-  // Computed from the pre-update `contactInbox` snapshot this function was
-  // called with — before persistNewMessageSideEffects' updateTracking runs —
-  // because ContactInbox.lastIncomingMessageAt/firstInteractionAt get set by
-  // outbound sends too (see contact-inbox/service.ts) and can't be used to
-  // infer "first inbound message" after the tracking update has landed.
-  const isInboundMessage = incomingMessage.messageType !== "outgoing"
-  const isFirstIncomingMessage =
-    isInboundMessage && contactInbox.lastIncomingMessageAt === null
+    // Computed from the pre-update `contactInbox` snapshot this function was
+    // called with — before persistNewMessageSideEffects' updateTracking runs —
+    // because ContactInbox.lastIncomingMessageAt/firstInteractionAt get set by
+    // outbound sends too (see contact-inbox/service.ts) and can't be used to
+    // infer "first inbound message" after the tracking update has landed.
+    const isInboundMessage = incomingMessage.messageType !== "outgoing"
+    const isFirstIncomingMessage =
+      isInboundMessage && contactInbox.lastIncomingMessageAt === null
 
-  const messageInput = {
-    id: createId(),
-    conversationId: conversation.id,
-    contactInboxId: contactInbox.id,
-    senderType:
-      incomingMessage.messageType === "outgoing"
-        ? ("user" as const)
-        : ("contact" as const),
-    workspaceId: inbox.workspaceId,
-    sourceId: incomingMessage.sourceId,
-    senderId:
-      incomingMessage.messageType === "outgoing"
-        ? null
-        : contactInbox.contactId,
-    messageType: incomingMessage.messageType,
-    text: incomingMessage.text,
-    contentType: incomingMessage.contentType,
-    contentAttributes: incomingMessage.contentAttributes,
-    type: incomingMessage.type ?? "message",
-    parentId: incomingMessage.parentId ?? null,
-    createdAt: createdAt ?? new Date(),
-  }
-
-  const attachmentInputs =
-    incomingMessage.attachments?.map((attachment: IncomingAttachment) => ({
-      ...attachment,
-      workspaceId: inbox.workspaceId,
+    const messageInput = {
+      id: createId(),
       conversationId: conversation.id,
-    })) ?? []
-
-  let messageWithAttachments: MessageWithAttachments
-  let isNew: boolean
-
-  if (attachmentInputs.length > 0) {
-    const result = await repository.createOrUpdateWithAttachments(
-      messageInput,
-      attachmentInputs,
-    )
-    messageWithAttachments = result.result
-    isNew = result.isNew
-  } else {
-    const result = await repository.createOrUpdate(messageInput)
-    messageWithAttachments = { ...result.message, attachments: [] }
-    isNew = result.isNew
-  }
-
-  const newMessage = messageWithAttachments
-  let isOwnSendEcho = false
-  // Fail closed on read state: when the echo cannot be classified, activity
-  // is still recorded (pre-feature behaviour) but the conversation is not
-  // marked read. An own send already decided its read state on the send path,
-  // so only an echo positively identified as a native-tool send may read here.
-  let canMarkReadByEcho = true
-
-  if (isNew) {
-    const isOutgoingDirectMessageEcho =
-      !isInboundMessage && (incomingMessage.type ?? "message") === "message"
-
-    if (isOutgoingDirectMessageEcho) {
-      try {
-        isOwnSendEcho = await isEchoOfOwnSend(
-          {
-            conversation,
-            message: newMessage,
-          },
-          { pendingOnly: true },
-        )
-      } catch (err) {
-        canMarkReadByEcho = false
-        logger.warn(
-          {
-            err,
-            workspaceId: inbox.workspaceId,
-            conversationId: conversation.id,
-            messageId: newMessage.id,
-          },
-          "Unable to match outgoing echo to an own send",
-        )
-      }
+      contactInboxId: contactInbox.id,
+      senderType:
+        incomingMessage.messageType === "outgoing"
+          ? ("user" as const)
+          : ("contact" as const),
+      workspaceId: inbox.workspaceId,
+      sourceId: incomingMessage.sourceId,
+      senderId:
+        incomingMessage.messageType === "outgoing"
+          ? null
+          : contactInbox.contactId,
+      messageType: incomingMessage.messageType,
+      text: incomingMessage.text,
+      contentType: incomingMessage.contentType,
+      contentAttributes: incomingMessage.contentAttributes,
+      type: incomingMessage.type ?? "message",
+      parentId: incomingMessage.parentId ?? null,
+      createdAt: createdAt ?? new Date(),
     }
 
-    // Duplicate rows of our own sends skip these effects and the realtime
-    // messageCreated broadcast because the send path already recorded activity
-    // and read state with its gating; replaying either would leave the live
-    // client newer and unread while the server conversation remains read.
-    if (!isOwnSendEcho) {
+    const attachmentInputs =
+      incomingMessage.attachments?.map((attachment: IncomingAttachment) => ({
+        ...attachment,
+        workspaceId: inbox.workspaceId,
+        conversationId: conversation.id,
+      })) ?? []
+
+    let messageWithAttachments: MessageWithAttachments
+    let isNew: boolean
+
+    if (attachmentInputs.length > 0) {
+      const result = await repository.createOrUpdateWithAttachments(
+        messageInput,
+        attachmentInputs,
+      )
+      messageWithAttachments = result.result
+      isNew = result.isNew
+    } else {
+      const result = await repository.createOrUpdate(messageInput)
+      messageWithAttachments = { ...result.message, attachments: [] }
+      isNew = result.isNew
+    }
+
+    const newMessage = messageWithAttachments
+    let isOwnSendEcho = false
+    // Fail closed on read state: when the echo cannot be classified, activity
+    // is still recorded (pre-feature behaviour) but the conversation is not
+    // marked read. An own send already decided its read state on the send path,
+    // so only an echo positively identified as a native-tool send may read here.
+    let canMarkReadByEcho = true
+
+    if (isNew) {
+      const isOutgoingDirectMessageEcho =
+        !isInboundMessage && (incomingMessage.type ?? "message") === "message"
+
+      if (isOutgoingDirectMessageEcho) {
+        try {
+          isOwnSendEcho = await isEchoOfOwnSend(
+            {
+              conversation,
+              message: newMessage,
+            },
+            { pendingOnly: true },
+          )
+        } catch (err) {
+          canMarkReadByEcho = false
+          logger.warn(
+            {
+              err,
+              workspaceId: inbox.workspaceId,
+              conversationId: conversation.id,
+              messageId: newMessage.id,
+            },
+            "Unable to match outgoing echo to an own send",
+          )
+        }
+      }
+
+      // Duplicate rows of our own sends skip these effects and the realtime
+      // messageCreated broadcast because the send path already recorded activity
+      // and read state with its gating; replaying either would leave the live
+      // client newer and unread while the server conversation remains read.
+      if (!isOwnSendEcho) {
       await persistNewMessageSideEffects({
         inbox,
         contactInbox,
@@ -1010,6 +1015,32 @@ const saveAndBroadcastMessage = async (props: {
   }
 
   return { message: newMessage, isNew }
+  }
+
+  // Serializes the whole insert → tracking → realtime → notification →
+  // event-bus critical section per conversation, so concurrent inbound
+  // webhook deliveries for the same conversation cannot reorder realtime
+  // events or interleave tracking updates. Distinct from the repository's
+  // `msg:upsert:${conversationId}:${sourceId}` dedup lock (keyed by sourceId,
+  // not conversation) so this cannot deadlock against it.
+  try {
+    return await distributedLock.runExclusive({
+      key: `ingress:conv:${conversation.id}`,
+      timeoutInSeconds: 30,
+      retryTimeoutInSeconds: 30,
+      fn: persist,
+    })
+  } catch (error) {
+    // Ordering is best-effort at tier-1: a lock acquisition failure must
+    // degrade to unlocked processing rather than fail the job, because
+    // `integration` jobs only have 2 attempts and a thrown error here could
+    // drop an inbound message permanently.
+    logger.warn(
+      { err: error, conversationId: conversation.id },
+      "Unable to acquire ingress lock for conversation; processing unlocked",
+    )
+    return await persist()
+  }
 }
 
 const persistNewMessageSideEffects = async (props: {

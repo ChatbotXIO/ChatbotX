@@ -199,7 +199,7 @@ async function startScheduleWorker() {
         },
       ),
     {
-      connection: getRedisConnection(),
+      connection: getRedisConnection("bulk"),
       ...defaultWorkerOptions,
     },
   )

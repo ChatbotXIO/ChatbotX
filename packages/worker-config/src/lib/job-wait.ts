@@ -69,7 +69,7 @@ export function getHeavyQueueEvents(): QueueEvents {
   }
 
   heavyQueueEvents = new QueueEvents(queueNames.enum.heavy, {
-    connection: getRedisConnection().duplicate(),
+    connection: getRedisConnection("bulk").duplicate(),
   })
   return heavyQueueEvents
 }

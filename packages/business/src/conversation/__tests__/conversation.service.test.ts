@@ -16,6 +16,13 @@ const mocks = vi.hoisted(() => ({
   inboxTeamExists: vi.fn(),
   assignUserIfUnassigned: vi.fn(),
   broadcastToWorkspaceParty: vi.fn(),
+  // Captures tagged-template calls (`sql\`GREATEST(${a}, ${b})\``) as a plain
+  // `{ strings, values }` fragment so tests can assert both the emitted SQL
+  // shape and the interpolated values without a real Postgres connection.
+  sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
+    strings: Array.from(strings),
+    values,
+  })),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -49,7 +56,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   and: (...args: unknown[]) => ({ and: args }),
   eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
   inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
-  sql: vi.fn(),
+  sql: mocks.sql,
 }))
 
 // Plain object stubs only — importing the real schema opens a database
@@ -175,6 +182,61 @@ beforeEach(() => {
   vi.mocked(notificationQueue.addBulk).mockReset()
   vi.mocked(emitConversationAssigned).mockReset()
   vi.mocked(emit).mockReset()
+  mocks.sql.mockClear()
+})
+
+describe("ConversationService.updateFlowStepState lastActivityAt monotonicity", () => {
+  test("advancing lastActivityAt emits a GREATEST guard instead of overwriting the column", async () => {
+    const at = new Date("2024-01-02T00:00:00Z")
+
+    await conversationService.updateFlowStepState({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      lastActivityAt: at,
+    })
+
+    expect(mocks.updateSet).toHaveBeenCalledOnce()
+    const [data] = mocks.updateSet.mock.calls.at(-1) as [
+      { lastActivityAt: { strings: string[]; values: unknown[] } },
+    ]
+    expect(data.lastActivityAt.strings.join("")).toContain("GREATEST")
+    expect(data.lastActivityAt.values.at(-1)).toBe(at)
+  })
+
+  test("an older lastActivityAt still goes through the GREATEST guard, never a bare overwrite", async () => {
+    // Regression: pre-fix, `data.lastActivityAt = props.lastActivityAt` wrote
+    // this value unconditionally, letting a late-processed older message move
+    // `lastActivityAt` backwards. The fix always routes through GREATEST, so
+    // Postgres — not caller ordering — decides which timestamp wins.
+    const earlierAt = new Date("2024-01-01T00:00:00Z")
+
+    await conversationService.updateFlowStepState({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      lastActivityAt: earlierAt,
+    })
+
+    const [data] = mocks.updateSet.mock.calls.at(-1) as [
+      { lastActivityAt: { strings: string[]; values: unknown[] } },
+    ]
+    expect(data.lastActivityAt.strings.join("")).toContain("GREATEST")
+    expect(data.lastActivityAt.values.at(-1)).toBe(earlierAt)
+  })
+
+  test("omits lastActivityAt entirely when not provided, leaving currentStep/lastStep unconditional", async () => {
+    await conversationService.updateFlowStepState({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      currentStep: "step-2",
+      lastStep: "step-1",
+    })
+
+    expect(mocks.updateSet).toHaveBeenCalledWith({
+      currentStep: "step-2",
+      lastStep: "step-1",
+    })
+    expect(mocks.sql).not.toHaveBeenCalled()
+  })
 })
 
 describe("ConversationService.findDMByContactIds", () => {

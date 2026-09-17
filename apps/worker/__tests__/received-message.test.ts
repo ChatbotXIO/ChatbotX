@@ -44,6 +44,7 @@ const {
   mockResolveIntegrationContextFromContactInbox,
   mockUploaderPutObject,
   mockMarkReadByOutbound,
+  mockDistributedLockRunExclusive,
 } = vi.hoisted(() => {
   const mockFindContactInbox = vi.fn()
 
@@ -129,6 +130,12 @@ const {
     }),
     mockUploaderPutObject: vi.fn().mockResolvedValue(undefined),
     mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
+    // Pass-through by default: `saveAndBroadcastMessage` wraps its critical
+    // section in this lock; tests exercise persistence behavior, not lock
+    // contention, unless they explicitly override this mock.
+    mockDistributedLockRunExclusive: vi.fn(
+      async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
+    ),
   }
 })
 
@@ -261,6 +268,10 @@ vi.mock("@chatbotx.io/business", () => ({
   messageCleanupService: {
     cancelByInboxSource: vi.fn().mockResolvedValue(undefined),
   },
+}))
+
+vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: { runExclusive: mockDistributedLockRunExclusive },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({

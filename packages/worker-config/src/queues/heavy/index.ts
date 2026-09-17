@@ -309,6 +309,6 @@ export type HeavyAnalyzeImageResultData = z.infer<
 export const heavyQueue = isNoRedisEnv()
   ? fakeQueue
   : new Queue<HeavyJobData>(queueNames.enum.heavy, {
-      connection: getRedisConnection(),
+      connection: getRedisConnection("bulk"),
       defaultJobOptions,
     })
