@@ -6,7 +6,9 @@ import {
   MAX_QUICK_REPLIES,
   stepTypes,
   upgradeNodeSteps,
+  nodeTypeSchema
 } from "@chatbotx.io/flow-config"
+import { channelTypes } from "@chatbotx.io/utils/channel"
 import { TriggerFormInitially } from "@chatbotx.io/ui/components/form/form-trigger-initially"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -166,30 +168,38 @@ const NodeEditorMenu = memo(
       inboxes,
       error: inboxesError,
       loading: loadingInboxes,
+      initialized: inboxesInitialized,
     } = useInboxesState()
     const whatsappTemplates = useFlowTemplate((s) => s.whatsappTemplates)
     const whatsappFlows = useWhatsappFlow((s) => s.whatsappFlows)
     const messengerTemplates = useFlowTemplate((s) => s.messengerTemplates)
     const beforeStep = useWatch({ name: "beforeStep" })
+    const channel = beforeStep?.channel
+    const hasInboxDependentMenus =
+      nodeType === nodeTypeSchema.enum.sendMessage &&
+      (channel === channelTypes.enum.whatsapp ||
+        channel === channelTypes.enum.messenger ||
+        channel === channelTypes.enum.omnichannel)
 
     const [nodeMenus, setNodeMenus] = useState<MenuItem[]>([])
+    const inboxesUnavailable =
+      !inboxesInitialized || loadingInboxes || Boolean(inboxesError)
 
     useEffect(() => {
       const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
       if (nodeConfig) {
         setNodeMenus(
-          loadingInboxes || inboxesError
-            ? []
-            : nodeConfig.menus(t, {
-                inboxes,
-                templates: {
-                  waTemplates: whatsappTemplates,
-                  messengerTemplates,
-                },
-                flows: { waFlows: whatsappFlows },
-                beforeStep,
-              }),
-        )
+          nodeConfig.menus(t, {
+            inboxes,
+            templates: {
+              waTemplates: whatsappTemplates,
+              messengerTemplates,
+            },
+            flows: { waFlows: whatsappFlows },
+            beforeStep,
+            inboxesUnavailable,
+          }),
+          )
       } else {
         setNodeMenus([])
       }
@@ -201,13 +211,14 @@ const NodeEditorMenu = memo(
       whatsappFlows,
       messengerTemplates,
       beforeStep,
-      inboxesError,
-      loadingInboxes,
+      inboxesUnavailable,
     ])
 
     return (
       <>
-        {inboxesError && <ErrorAlert message={inboxesError} />}
+        {inboxesError && hasInboxDependentMenus && (
+          <ErrorAlert message={inboxesError} />
+        )}
         {nodeMenus.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger

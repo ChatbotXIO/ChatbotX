@@ -180,6 +180,9 @@ const MENU_ORDER_BY_CHANNEL: Record<string, readonly string[]> = {
   [channelTypes.enum.tiktok]: TIKTOK_MENU_ORDER,
 }
 
+const isInboxDependentMenuKey = (key: string) =>
+  key === "sendTemplateMessage" || key === "whatsappFlow"
+
 export const sendMessageEditorMenus = (
   t: TranslationFn,
   menuData?: MenuData,
@@ -188,7 +191,12 @@ export const sendMessageEditorMenus = (
   const allMenuItems = ALL_MENU_ITEMS(t, menuData)
 
   if (channel === channelTypes.enum.omnichannel) {
-    return Object.values(allMenuItems)
+    return Object.entries(allMenuItems)
+      .filter(
+        ([key]) =>
+          !(menuData?.inboxesUnavailable && isInboxDependentMenuKey(key)),
+      )
+      .map(([, item]) => item)
   }
 
   const menuOrder =
@@ -196,7 +204,12 @@ export const sendMessageEditorMenus = (
       ? MENU_ORDER_BY_CHANNEL[channel]
       : BASE_MENU_ORDER
 
-  return menuOrder.map((key) => allMenuItems[key])
+  return menuOrder
+    .filter(
+      (key) =>
+        !(menuData?.inboxesUnavailable && isInboxDependentMenuKey(key)),
+    )
+    .map((key) => allMenuItems[key])
 }
 
 export const sendMessageEditorMenusWithButton = (
