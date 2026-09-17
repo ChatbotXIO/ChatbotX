@@ -17,6 +17,7 @@ import {
 import {
   RealtimeEventType,
   type RealtimeEventWhatsappCallOutboundAnswer,
+  type RealtimeEventWhatsappCallTransportEnded,
   type RealtimeEventWhatsappCallTransportIncoming,
 } from "@chatbotx.io/partysocket-config"
 import {
@@ -261,15 +262,107 @@ export const endReservedCall = async (input: {
 }
 
 /**
+ * The terminal status of a call row, shaped as the realtime ended event
+ * carries it, or `null` while the call is still live.
+ */
+const endedStatusOf = (
+  call: WhatsappCallModel,
+): RealtimeEventWhatsappCallTransportEnded["data"]["status"] | null =>
+  whatsappVoipCallService.isCallEnded(call)
+    ? // `isCallEnded` holds exactly for the statuses this event carries.
+      (call.status as RealtimeEventWhatsappCallTransportEnded["data"]["status"])
+    : null
+
+/**
+ * Delivers the SDP offer to every rung agent. A per-recipient failure never
+ * blocks the rest: `sendToWorkspaceMember` never throws (it catches
+ * internally and returns `null` on failure), so a falsy result — not a
+ * try/catch — is what surfaces a delivery failure here.
+ */
+const ringAgents = async (input: {
+  workspaceId: string
+  targets: string[]
+  event: RealtimeEventWhatsappCallTransportIncoming
+}): Promise<void> => {
+  await Promise.all(
+    input.targets.map(async (userId) => {
+      const result = await sendToWorkspaceMember(
+        { workspaceId: input.workspaceId, userId },
+        input.event,
+      )
+      if (!result) {
+        logger.warn(
+          { wacid: input.event.data.wacid, userId },
+          "Whatsapp VoIP: unable to deliver the offer realtime event",
+        )
+      }
+    }),
+  )
+}
+
+/**
+ * Closes the last race of a caller hanging up while the offer is on its way:
+ * a terminate finalized after `handleConnect` checked the row can emit its
+ * ended event BEFORE this job's offer reaches the agents, leaving every
+ * dialog ringing a dead call until its own deadline. Re-reading the row
+ * after delivery catches it — the finalize writes the terminal status before
+ * it emits — and the same ended event is re-sent to the agents this job
+ * rang. A duplicate ended event is harmless: the client drops a call it no
+ * longer holds.
+ */
+const notifyRungAgentsIfEnded = async (input: {
+  wacid: string
+  workspaceId: string
+  targets: string[]
+}): Promise<void> => {
+  const latest = await whatsappCallRepository.findByWacid(input.wacid)
+  const status = latest ? endedStatusOf(latest) : null
+  if (!(latest && status)) {
+    return
+  }
+  const event: RealtimeEventWhatsappCallTransportEnded = {
+    eventType: RealtimeEventType.whatsappCallTransportEnded,
+    data: {
+      transport: "voip",
+      whatsappCallId: latest.id,
+      wacid: input.wacid,
+      status,
+    },
+  }
+  await Promise.all(
+    input.targets.map((userId) =>
+      sendToWorkspaceMember({ workspaceId: input.workspaceId, userId }, event),
+    ),
+  )
+}
+
+/**
  * `handleConnect` — rings EVERY eligible agent (ring-all, the classic
  * telephony fork-dial pattern): resolves the live ring set, then delivers
  * the SDP offer to each one's realtime connections. The fenced CAS in
  * `claimForAnswer` lets only the first to answer win. Rejects when nobody
  * has the inbox open. The durable expiry job is scheduled at the webhook
  * boundary.
+ *
+ * Meta does not order a call's webhooks, so the caller's `terminate` can be
+ * processed before this job runs. A call whose row is already terminal is
+ * never rung and never Meta-rejected — it is over on Meta's side too.
  */
 const handleConnect = async (data: HandleConnectData): Promise<void> => {
   const { wacid, deadlineAt, phoneNumberId } = data
+
+  // Checked before anything else: the terminate that ended this call found
+  // no offer and no control to clean up, so nothing else would stop a ring.
+  const existing = await whatsappCallRepository.findByWacid(wacid)
+  if (existing && whatsappVoipCallService.isCallEnded(existing)) {
+    await whatsappVoipSignalingService.deleteOffer(wacid)
+    logger.info(
+      { wacid, status: existing.status },
+      "Whatsapp VoIP: connect for a call that already ended; not ringing",
+    )
+    return
+  }
+
   const { workspaceId, auth } = await resolveVoipIntegration(phoneNumberId)
 
   // Offer FIRST, before ringing anyone: a connect with no stored offer is
@@ -306,39 +399,36 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
   // idempotent (SET NX-backed), so retrying the whole job on a race is safe.
   const call = await getCallRowOrThrow(wacid)
 
-  const eventData: RealtimeEventWhatsappCallTransportIncoming["data"] = {
-    transport: "voip",
-    whatsappCallId: call.id,
-    wacid,
-    direction: call.direction,
-    conversationId: call.conversationId,
-    contactInboxId: call.contactInboxId,
-    contactName: await resolveWhatsappCallerName(call),
-    offer: { sdpType: "offer", sdp: offer.sdp },
-    deadlineAt: new Date(deadlineAt).toISOString(),
+  if (whatsappVoipCallService.isCallEnded(call)) {
+    // The terminate finalized while the ring set was being reserved. If its
+    // finalize ran before `resolveRingTargets`, it saw no control and left
+    // the one just created `reserved`, so end it here — without Meta, and
+    // without re-finalizing. Both calls are no-ops when the finalize already
+    // did the same.
+    await whatsappVoipCallService.endCall({ wacid, allowFromAccepted: false })
+    await whatsappVoipSignalingService.deleteOffer(wacid)
+    return
   }
 
-  // Fan out to every live agent; a per-recipient failure never blocks the
-  // rest. `sendToWorkspaceMember` never throws (it catches internally and
-  // returns `null` on failure), so a falsy result — not a try/catch — is
-  // what surfaces a delivery failure here.
-  await Promise.all(
-    ring.targets.map(async (userId) => {
-      const result = await sendToWorkspaceMember(
-        { workspaceId, userId },
-        {
-          eventType: RealtimeEventType.whatsappCallTransportIncoming,
-          data: eventData,
-        },
-      )
-      if (!result) {
-        logger.warn(
-          { wacid, userId },
-          "Whatsapp VoIP: unable to deliver the offer realtime event",
-        )
-      }
-    }),
-  )
+  await ringAgents({
+    workspaceId,
+    targets: ring.targets,
+    event: {
+      eventType: RealtimeEventType.whatsappCallTransportIncoming,
+      data: {
+        transport: "voip",
+        whatsappCallId: call.id,
+        wacid,
+        direction: call.direction,
+        conversationId: call.conversationId,
+        contactInboxId: call.contactInboxId,
+        contactName: await resolveWhatsappCallerName(call),
+        offer: { sdpType: "offer", sdp: offer.sdp },
+        deadlineAt: new Date(deadlineAt).toISOString(),
+      },
+    },
+  })
+  await notifyRungAgentsIfEnded({ wacid, workspaceId, targets: ring.targets })
   // The durable `expireIfUnanswered` job is scheduled at the webhook boundary
   // (in `captureConnectOffer`), not here — so deadline enforcement never
   // depends on this consumer running to completion.

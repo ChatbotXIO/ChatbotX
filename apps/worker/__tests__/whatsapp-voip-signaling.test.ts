@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   readOffer: vi.fn(),
   readControl: vi.fn(),
   endCall: vi.fn(),
+  isCallEnded: vi.fn(),
   deleteOffer: vi.fn(),
   readOutboundAnswer: vi.fn(),
   deleteOutboundAnswer: vi.fn(),
@@ -29,6 +30,7 @@ vi.mock("@chatbotx.io/business", () => ({
     resolveRingTargets: mocks.resolveRingTargets,
     readControl: mocks.readControl,
     endCall: mocks.endCall,
+    isCallEnded: mocks.isCallEnded,
   },
   whatsappVoipSignalingService: {
     readOffer: mocks.readOffer,
@@ -56,6 +58,7 @@ vi.mock("@chatbotx.io/integration-whatsapp/api/calling", () => ({
 vi.mock("@chatbotx.io/partysocket-config", () => ({
   RealtimeEventType: {
     whatsappCallTransportIncoming: "whatsappCallTransportIncoming",
+    whatsappCallTransportEnded: "whatsappCallTransportEnded",
     whatsappCallOutboundAnswer: "whatsappCallOutboundAnswer",
   },
 }))
@@ -132,6 +135,9 @@ beforeEach(() => {
   mocks.rejectCall.mockResolvedValue(undefined)
   mocks.terminateCall.mockResolvedValue(undefined)
   mocks.deleteOutboundAnswer.mockResolvedValue(undefined)
+  mocks.isCallEnded.mockImplementation(({ status }: { status?: string }) =>
+    ["rejected", "completed", "failed"].includes(status ?? ""),
+  )
 })
 
 describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
@@ -256,6 +262,110 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
     ).rejects.toThrow(CALL_ROW_NOT_READY_PATTERN)
 
     expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+  })
+
+  test("the caller already hung up (terminate processed before connect): never rings, never calls Meta, drops the offer", async () => {
+    mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
+    mocks.findByWacid.mockResolvedValue({ ...callRow, status: "rejected" })
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+    })
+
+    expect(mocks.resolveRingTargets).not.toHaveBeenCalled()
+    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.rejectCall).not.toHaveBeenCalled()
+    expect(mocks.terminateCall).not.toHaveBeenCalled()
+    expect(mocks.finalizeCallSideEffects).not.toHaveBeenCalled()
+    expect(mocks.deleteOffer).toHaveBeenCalledWith("wacid.ABC")
+  })
+
+  test("the caller already hung up and no offer is stored: no Graph reject of the dead call", async () => {
+    mocks.readOffer.mockResolvedValue(null)
+    mocks.findByWacid.mockResolvedValue({ ...callRow, status: "completed" })
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+    })
+
+    expect(mocks.rejectCall).not.toHaveBeenCalled()
+    expect(mocks.finalizeCallSideEffects).not.toHaveBeenCalled()
+    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+  })
+
+  test("the call ended while the ring set was being reserved: ends the fresh control without Meta, never rings", async () => {
+    mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
+    mocks.resolveRingTargets.mockResolvedValue(ring)
+    mocks.findByWacid
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ ...callRow, status: "rejected" })
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+    })
+
+    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.endCall).toHaveBeenCalledWith({
+      wacid: "wacid.ABC",
+      allowFromAccepted: false,
+    })
+    expect(mocks.deleteOffer).toHaveBeenCalledWith("wacid.ABC")
+    expect(mocks.rejectCall).not.toHaveBeenCalled()
+    expect(mocks.terminateCall).not.toHaveBeenCalled()
+  })
+
+  test("the call ended while the offer was being delivered: tells every rung agent it ended, so no dialog rings a dead call", async () => {
+    mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
+    mocks.resolveRingTargets.mockResolvedValue(ring)
+    mocks.findByWacid
+      .mockResolvedValueOnce({ ...callRow, status: "ringing" })
+      .mockResolvedValueOnce({ ...callRow, status: "ringing" })
+      .mockResolvedValueOnce({ ...callRow, status: "completed" })
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+    })
+
+    const endedEvent = {
+      eventType: "whatsappCallTransportEnded",
+      data: {
+        transport: "voip",
+        whatsappCallId: "call-1",
+        wacid: "wacid.ABC",
+        status: "completed",
+      },
+    }
+    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledTimes(4)
+    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", userId: "agent-1" },
+      endedEvent,
+    )
+    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", userId: "agent-2" },
+      endedEvent,
+    )
+    expect(mocks.rejectCall).not.toHaveBeenCalled()
+  })
+
+  test("a call still ringing after delivery sends no ended event", async () => {
+    mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
+    mocks.resolveRingTargets.mockResolvedValue(ring)
+    mocks.findByWacid.mockResolvedValue({ ...callRow, status: "ringing" })
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: { wacid: "wacid.ABC", deadlineAt: 2000, phoneNumberId: "phone-1" },
+    })
+
+    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledTimes(2)
+    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ eventType: "whatsappCallTransportEnded" }),
+    )
   })
 
   test("no stored offer (unprocessable SDP, or offer expired): Meta-rejects before reserving any agent", async () => {

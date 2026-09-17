@@ -795,10 +795,16 @@ describe("finalizeCallSideEffects ended emit", () => {
     )
   })
 
-  test("a redelivery (isNew: false) never re-runs the cleanup/emit", async () => {
+  test("a redelivery (isNew: false) still re-runs the transport cleanup/emit, so a finalize that died after inserting the card never leaves agents ringing", async () => {
     mocks.createOrUpdate.mockResolvedValue({
       isNew: false,
       message: { id: "msg-1", createdAt: new Date() },
+    })
+    mocks.voipReadControl.mockResolvedValue({
+      reservedUserId: "",
+      phase: "reserved",
+      deadlineAt: 123,
+      fenceToken: "fence-1",
     })
 
     await finalizeCallSideEffects({
@@ -806,14 +812,19 @@ describe("finalizeCallSideEffects ended emit", () => {
       entity: {
         type: "whatsapp_call",
         direction: "userInitiated",
-        status: "completed",
+        status: "rejected",
       },
     })
 
-    expect(mocks.voipReadControl).not.toHaveBeenCalled()
-    expect(mocks.voipMarkTerminated).not.toHaveBeenCalled()
-    expect(mocks.voipDeleteOffer).not.toHaveBeenCalled()
-    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.voipMarkTerminated).toHaveBeenCalled()
+    expect(mocks.voipDeleteOffer).toHaveBeenCalled()
+    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({ eventType: "whatsappCallTransportEnded" }),
+    )
+    // Everything that is not transport cleanup stays first-delivery only.
+    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledTimes(1)
+    expect(mocks.updateFlowStepState).not.toHaveBeenCalled()
   })
 })
 

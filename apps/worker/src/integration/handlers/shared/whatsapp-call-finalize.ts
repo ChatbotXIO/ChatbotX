@@ -348,11 +348,17 @@ export const finalizeCallSideEffects = async (
     current: call,
   })
 
+  // Transport cleanup runs on EVERY delivery, not just the first: the card is
+  // inserted before this point, so a run that died after the insert comes
+  // back as `isNew: false`. Gating this on `isNew` would leave the control
+  // claimable, the offer stored and every rung agent ringing a dead call.
+  // Each step is idempotent, and the client drops an ended event for a call
+  // it no longer holds.
+  await emitCallEndedToAgent(call, toPersistedCallStatus(entity.status))
+
   if (!isNew) {
     return
   }
-
-  await emitCallEndedToAgent(call, toPersistedCallStatus(entity.status))
 
   await conversationService.updateFlowStepState({
     workspaceId: call.workspaceId,
