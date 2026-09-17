@@ -5,10 +5,9 @@ import { hmacSha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import type { TiktokConfig } from "../schema"
 import { tiktokWebhookEventSchema } from "../schema"
 
-// TikTok recommends rejecting events older than 5 seconds, but our webhook
-// route does several DB round-trips (integration lookup, freeze check) before
-// this check runs, so a tight window drops legitimate live deliveries. 300s
-// still blocks replay while giving that request path room to breathe.
+// TikTok recommends rejecting events older than 5 seconds, but per-account
+// webhook configuration must be loaded before signature verification. 300s
+// still blocks replay while allowing that lookup headroom during live delivery.
 const WEBHOOK_TIMESTAMP_WINDOW_SECONDS = 300
 // Allow 2s of clock skew between TikTok servers and ours
 const WEBHOOK_CLOCK_SKEW_SECONDS = 2
