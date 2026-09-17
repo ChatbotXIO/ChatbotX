@@ -25,6 +25,7 @@ import { fixWhatsappCallsSubscriptionAction } from "./actions/fix-whatsapp-calls
 import { updateWhatsappCallingSettingsAction } from "./actions/update-calling-settings.action"
 import type { WhatsappCallingPreflight } from "./get-whatsapp-calling-preflight"
 import type { UpdateWhatsappCallingSettingsSchema } from "./schemas/update-calling-settings-schema"
+import { WhatsappCallHoursSection } from "./whatsapp-call-hours-section"
 
 type WhatsappCallsCardProps = {
   workspaceId: string
@@ -38,6 +39,8 @@ type WhatsappCallsCardProps = {
    * could not be resolved against the workspace. */
   preflight?: WhatsappCallingPreflight | null
   isSuperAdmin?: boolean
+  /** Seeds the call hours timezone for a number that has none on Meta yet. */
+  workspaceTimezone?: string
 }
 
 type ToggleRowProps = {
@@ -165,6 +168,7 @@ export function WhatsappCallsCard({
   transcriptionEnabled = false,
   preflight,
   isSuperAdmin = false,
+  workspaceTimezone = "Etc/UTC",
 }: WhatsappCallsCardProps) {
   const t = useTranslations()
   const [current, setCurrent] = useState<WhatsappCallingSettings>(
@@ -206,11 +210,20 @@ export function WhatsappCallsCard({
     },
   )
 
+  // Every save snapshots ALL switches, not just the one it changes: a failed
+  // save restores from these refs, and a ref left over from an earlier,
+  // successful save would roll an unrelated switch back to a stale value.
+  const snapshot = () => {
+    previousRef.current = current
+    previousRecordingRef.current = isRecordingEnabled
+    previousTranscriptionRef.current = isTranscriptionEnabled
+  }
+
   const apply = (
     input: UpdateWhatsappCallingSettingsSchema,
     next: WhatsappCallingSettings,
   ) => {
-    previousRef.current = current
+    snapshot()
     setCurrent(next)
     execute(input)
   }
@@ -307,9 +320,13 @@ export function WhatsappCallsCard({
           helper={t("whatsapp.calls.recordingHelper")}
           label={t("whatsapp.calls.recordingLabel")}
           onCheckedChange={(next) => {
-            previousRef.current = current
-            previousRecordingRef.current = isRecordingEnabled
+            snapshot()
             setIsRecordingEnabled(next)
+            // Transcription only runs on a number that records calls; the
+            // server turns it off in the same write.
+            if (!next) {
+              setIsTranscriptionEnabled(false)
+            }
             execute({ recordingEnabled: next })
           }}
         />
@@ -328,9 +345,10 @@ export function WhatsappCallsCard({
               disabled={isPending}
               max={3650}
               min={1}
-              onBlur={() =>
+              onBlur={() => {
+                snapshot()
                 execute({ callRecordingRetentionDays: retentionDays })
-              }
+              }}
               onChange={(event) => {
                 const next = Number(event.target.value)
                 if (Number.isInteger(next) && next >= 1 && next <= 3650) {
@@ -342,16 +360,25 @@ export function WhatsappCallsCard({
             />
           </div>
         )}
-        <ToggleRow
-          checked={isTranscriptionEnabled}
-          disabled={isPending || !isCallingEnabled}
-          helper={t("whatsapp.calls.transcriptionHelper")}
-          label={t("whatsapp.calls.transcriptionLabel")}
-          onCheckedChange={(next) => {
-            previousTranscriptionRef.current = isTranscriptionEnabled
-            setIsTranscriptionEnabled(next)
-            execute({ callTranscriptionEnabled: next })
-          }}
+        {isRecordingEnabled && (
+          <ToggleRow
+            checked={isTranscriptionEnabled}
+            disabled={isPending || !isCallingEnabled}
+            helper={t("whatsapp.calls.transcriptionHelper")}
+            label={t("whatsapp.calls.transcriptionLabel")}
+            onCheckedChange={(next) => {
+              snapshot()
+              setIsTranscriptionEnabled(next)
+              execute({ callTranscriptionEnabled: next })
+            }}
+          />
+        )}
+        <WhatsappCallHoursSection
+          callHours={settings?.call_hours}
+          disabled={!isCallingEnabled}
+          integrationWhatsappId={integrationWhatsappId}
+          workspaceId={workspaceId}
+          workspaceTimezone={workspaceTimezone}
         />
         <p className="text-muted-foreground text-xs">
           {t("whatsapp.calls.propagationNote")}

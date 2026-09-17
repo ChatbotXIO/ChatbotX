@@ -3915,7 +3915,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "その着信はすでに終了しています"
+        "callNoLongerRinging": "その着信はすでに終了しています",
+        "transcriptionRequiresRecording": "文字起こしをオンにする前に、通話の録音をオンにしてください。"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3925,7 +3926,7 @@
       "inAppCallingLabel": "In-app calling (beta)",
       "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
       "recordingLabel": "Record calls",
-      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingHelper": "受信トレイで応答または発信した通話を録音し、録音を会話に追加します。",
       "recordingInProgress": "録音をリクエストしました",
       "incomingCall": "Incoming WhatsApp call…",
       "unknownCaller": "Unknown caller",
@@ -3941,7 +3942,7 @@
       "retentionLabel": "録音の保存期間（日数）",
       "retentionHelper": "通話の録音が完全に削除されるまでの保存期間。",
       "transcriptionLabel": "通話を文字起こし",
-      "transcriptionHelper": "接続済みのAIプロバイダーを使用して、録音された通話を自動的に文字起こしします。",
+      "transcriptionHelper": "録音した各通話の文字起こしを会話に追加します。",
       "preflight": {
         "title": "通話の利用資格",
         "appSubscriptionMissing": "まずMetaアプリダッシュボードでこのアプリのWhatsApp Webhookを設定してから、再度お試しください。",
@@ -4066,7 +4067,33 @@
         "cancel": "通話を続ける"
       },
       "answerCaller": "{name} からの着信に応答",
-      "rejectCaller": "{name} からの着信を拒否"
+      "rejectCaller": "{name} からの着信を拒否",
+      "hours": {
+        "title": "通話受付時間",
+        "description": "お客様はこの時間内にのみこの番号に電話をかけられます。時間外は、WhatsAppがチャット、またはコールバックリクエストがオンの場合はコールバックの依頼を提案し、次に通話できる時間を表示します。",
+        "enabledLabel": "通話受付時間内のみ通話を受け付ける",
+        "timezoneLabel": "タイムゾーン",
+        "closed": "休業",
+        "openTimeLabel": "{day}：開始時刻",
+        "closeTimeLabel": "{day}：終了時刻",
+        "addRangeLabel": "{day}に時間帯を追加",
+        "removeRangeLabel": "{day}の時間帯を削除",
+        "overnightHint": "各日は23:59で終わります。深夜0時以降も受け付ける場合は、残りの時間を翌日に追加してください。",
+        "days": {
+          "monday": "月曜日",
+          "tuesday": "火曜日",
+          "wednesday": "水曜日",
+          "thursday": "木曜日",
+          "friday": "金曜日",
+          "saturday": "土曜日",
+          "sunday": "日曜日"
+        },
+        "errors": {
+          "rangeOrder": "終了時刻は開始時刻より後にしてください。",
+          "rangeOverlap": "この日の時間帯が重なっています。",
+          "noOpenHours": "少なくとも1日に時間帯を追加してください。"
+        }
+      }
     }
   },
   "zalo": {

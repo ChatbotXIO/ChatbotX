@@ -99,6 +99,7 @@ describe("handleWhatsappCallTranscribe", () => {
     })
     mocks.findByInboxIdForWorkspace.mockResolvedValue({
       id: "iw-1",
+      callRecordingEnabled: true,
       callTranscriptionEnabled: true,
     })
     mocks.aiFindBy.mockResolvedValue({ id: "ai-1" })
@@ -172,6 +173,18 @@ describe("handleWhatsappCallTranscribe", () => {
     mocks.findByInboxIdForWorkspace.mockResolvedValue({
       id: "iw-1",
       callTranscriptionEnabled: false,
+    })
+
+    await call({ channel: "whatsapp", callId: "call-1", workspaceId: "ws-1" })
+
+    expect(mocks.transcribe).not.toHaveBeenCalled()
+  })
+
+  test("skipped when the number has since stopped recording calls, even with transcription still on", async () => {
+    mocks.findByInboxIdForWorkspace.mockResolvedValue({
+      id: "iw-1",
+      callRecordingEnabled: false,
+      callTranscriptionEnabled: true,
     })
 
     await call({ channel: "whatsapp", callId: "call-1", workspaceId: "ws-1" })

@@ -3936,7 +3936,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "Acel apel nu mai sună"
+        "callNoLongerRinging": "Acel apel nu mai sună",
+        "transcriptionRequiresRecording": "Activează înregistrarea apelurilor înainte de a activa transcrierea."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3946,7 +3947,7 @@
       "inAppCallingLabel": "In-app calling (beta)",
       "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
       "recordingLabel": "Record calls",
-      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingHelper": "Înregistrează apelurile preluate sau inițiate din inbox și adaugă înregistrarea în conversație.",
       "recordingInProgress": "Înregistrare solicitată",
       "incomingCall": "Incoming WhatsApp call…",
       "unknownCaller": "Unknown caller",
@@ -3962,7 +3963,7 @@
       "retentionLabel": "Retenția înregistrărilor (zile)",
       "retentionHelper": "Cât timp sunt păstrate înregistrările apelurilor înainte de a fi șterse definitiv.",
       "transcriptionLabel": "Transcrie apelurile",
-      "transcriptionHelper": "Transcrie automat apelurile înregistrate folosind furnizorul tău de AI conectat.",
+      "transcriptionHelper": "Adaugă în conversație o transcriere a fiecărui apel înregistrat.",
       "preflight": {
         "title": "Eligibilitate pentru apeluri",
         "appSubscriptionMissing": "Configurează mai întâi webhook-ul WhatsApp pentru această aplicație în Meta App Dashboard, apoi încearcă din nou.",
@@ -4087,7 +4088,33 @@
         "cancel": "Rămâi în apel"
       },
       "answerCaller": "Răspunde la apelul de la {name}",
-      "rejectCaller": "Respinge apelul de la {name}"
+      "rejectCaller": "Respinge apelul de la {name}",
+      "hours": {
+        "title": "Program pentru apeluri",
+        "description": "Clienții pot suna la acest număr doar în acest program. În afara lui, WhatsApp le oferă să scrie în chat sau, dacă solicitările de apel înapoi sunt activate, să ceară să fie sunați, și le arată când pot suna din nou.",
+        "enabledLabel": "Acceptă apeluri doar în programul pentru apeluri",
+        "timezoneLabel": "Fus orar",
+        "closed": "Închis",
+        "openTimeLabel": "{day}: se deschide la",
+        "closeTimeLabel": "{day}: se închide la",
+        "addRangeLabel": "Adaugă interval pentru {day}",
+        "removeRangeLabel": "Elimină intervalul pentru {day}",
+        "overnightHint": "Fiecare zi se încheie la 23:59. Pentru a rămâne deschis după miezul nopții, adaugă orele rămase în ziua următoare.",
+        "days": {
+          "monday": "Luni",
+          "tuesday": "Marți",
+          "wednesday": "Miercuri",
+          "thursday": "Joi",
+          "friday": "Vineri",
+          "saturday": "Sâmbătă",
+          "sunday": "Duminică"
+        },
+        "errors": {
+          "rangeOrder": "Ora de închidere trebuie să fie după ora de deschidere.",
+          "rangeOverlap": "Intervalele din această zi se suprapun.",
+          "noOpenHours": "Adaugă un interval pentru cel puțin o zi."
+        }
+      }
     }
   },
   "zalo": {

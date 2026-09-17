@@ -54,9 +54,19 @@ describe("buildCallAnnouncementOptions", () => {
     expect(result.transcription).toBeUndefined()
   })
 
-  test("attaches only transcription when enabled+metaNative and recording is off", () => {
+  test("omits transcription when recording is off: a number transcribes only the calls it records", () => {
     const result = buildCallAnnouncementOptions({
       ...baseIntegration,
+      callTranscriptionEnabled: true,
+    })
+    expect(result).toEqual({})
+  })
+
+  test("attaches only transcription when recording is on in browserWhisper mode and transcription is metaNative", () => {
+    const result = buildCallAnnouncementOptions({
+      ...baseIntegration,
+      callRecordingEnabled: true,
+      callRecordingMode: "browserWhisper",
       callTranscriptionEnabled: true,
     })
     expect(result.transcription).toEqual({

@@ -117,6 +117,12 @@ type UpdateCallSettingsInput = WorkspaceIntegrationRef & {
     callRecordingRetentionDays: number
     callTranscriptionEnabled: boolean
   }>
+  /**
+   * Match the number only while it records calls. The recording check and
+   * the write are then one statement, so a concurrent "recording off" can
+   * never be overtaken by a "transcription on" that read the old value.
+   */
+  onlyWhileRecording?: boolean
 }
 
 const workspaceIntegrationFilter = (input: WorkspaceIntegrationRef) =>
@@ -706,7 +712,14 @@ class IntegrationWhatsappRepository {
     const [row] = await tx
       .update(integrationWhatsappModel)
       .set(input.values)
-      .where(workspaceIntegrationFilter(input))
+      .where(
+        input.onlyWhileRecording
+          ? and(
+              workspaceIntegrationFilter(input),
+              eq(integrationWhatsappModel.callRecordingEnabled, true),
+            )
+          : workspaceIntegrationFilter(input),
+      )
       .returning()
 
     return row ?? null

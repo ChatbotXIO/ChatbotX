@@ -39,6 +39,15 @@ vi.mock(
   }),
 )
 
+// The call-hours section is rendered by WhatsappCallsCard and imports its own
+// server action at module scope, which drags a live pg Pool into this suite.
+vi.mock(
+  "@/features/integration-whatsapp/calling/actions/update-call-hours.action",
+  () => ({
+    updateWhatsappCallHoursAction: { bind: () => vi.fn() },
+  }),
+)
+
 // jsdom ships no ResizeObserver, and Radix measures the switch thumb through it.
 Object.assign(globalThis, {
   ResizeObserver: class {

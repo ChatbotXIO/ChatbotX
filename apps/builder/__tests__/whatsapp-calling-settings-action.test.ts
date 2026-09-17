@@ -8,12 +8,17 @@ type UpdateCallingSettingsHandler = (args: {
   parsedInput: Record<string, unknown>
 }) => Promise<unknown>
 
-const { findWorkspaceIntegrationMock, runActionMock, updateCallSettingsMock } =
-  vi.hoisted(() => ({
-    findWorkspaceIntegrationMock: vi.fn(),
-    runActionMock: vi.fn(),
-    updateCallSettingsMock: vi.fn(),
-  }))
+const {
+  findWorkspaceIntegrationMock,
+  runActionMock,
+  updateCallSettingsMock,
+  TranscriptionRequiresRecordingError,
+} = vi.hoisted(() => ({
+  findWorkspaceIntegrationMock: vi.fn(),
+  runActionMock: vi.fn(),
+  updateCallSettingsMock: vi.fn(),
+  TranscriptionRequiresRecordingError: class extends Error {},
+}))
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -33,6 +38,8 @@ vi.mock("@chatbotx.io/business", () => ({
     findWorkspaceIntegration: findWorkspaceIntegrationMock,
     updateCallSettings: updateCallSettingsMock,
   },
+  WhatsappCallTranscriptionRequiresRecordingError:
+    TranscriptionRequiresRecordingError,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -150,5 +157,15 @@ describe("updateWhatsappCallingSettingsAction", () => {
       }),
     )
     expect(runActionMock).not.toHaveBeenCalled()
+  })
+
+  test("explains, in the operator's language, that transcription needs recording", async () => {
+    updateCallSettingsMock.mockRejectedValueOnce(
+      new TranscriptionRequiresRecordingError("requires recording"),
+    )
+
+    await expect(call({ callTranscriptionEnabled: true })).rejects.toThrow(
+      "whatsapp.calls.errors.transcriptionRequiresRecording",
+    )
   })
 })

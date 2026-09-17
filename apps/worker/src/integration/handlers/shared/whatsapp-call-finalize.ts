@@ -24,6 +24,7 @@ import {
   type WhatsappCallActivityLabelKey,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { transcribesCalls } from "@chatbotx.io/utils/whatsapp-call"
 import { logger } from "../../../lib/logger"
 
 /**
@@ -57,7 +58,7 @@ export const resolveCallActivityRequestFlags = async (
   // written before that column existed.
   return {
     recordingRequested: call.recordingRequested ?? recordsCalls,
-    transcriptionRequested: Boolean(integration?.callTranscriptionEnabled),
+    transcriptionRequested: integration ? transcribesCalls(integration) : false,
     // Only a number that records calls can have a MISSING recording worth
     // reporting; with the toggle off there was never one to expect.
     recordingUnavailable: call.recordingRequested === false && recordsCalls,

@@ -5373,7 +5373,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "该来电已不再响铃"
+        "callNoLongerRinging": "该来电已不再响铃",
+        "transcriptionRequiresRecording": "请先开启通话录音，再开启转写。"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -5383,7 +5384,7 @@
       "inAppCallingLabel": "In-app calling (beta)",
       "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
       "recordingLabel": "Record calls",
-      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingHelper": "录制在收件箱中接听或拨出的通话，并将录音添加到会话中。",
       "recordingInProgress": "已请求录音",
       "incomingCall": "Incoming WhatsApp call…",
       "unknownCaller": "Unknown caller",
@@ -5399,7 +5400,7 @@
       "retentionLabel": "Recording retention (days)",
       "retentionHelper": "How long call recordings are kept before they are permanently deleted.",
       "transcriptionLabel": "Transcribe calls",
-      "transcriptionHelper": "Automatically transcribe recorded calls using your connected AI provider.",
+      "transcriptionHelper": "将每通已录制通话的文字记录添加到会话中。",
       "preflight": {
         "title": "Calling eligibility",
         "appSubscriptionMissing": "Configure the WhatsApp webhook for this app in the Meta App Dashboard first, then try again.",
@@ -5524,7 +5525,33 @@
         "cancel": "继续通话"
       },
       "answerCaller": "接听来自 {name} 的来电",
-      "rejectCaller": "拒接来自 {name} 的来电"
+      "rejectCaller": "拒接来自 {name} 的来电",
+      "hours": {
+        "title": "通话时间",
+        "description": "客户只能在这些时间内拨打此号码。在此时间之外，WhatsApp 会建议改为聊天，或在开启回拨请求时请求回拨，并显示下次可拨打的时间。",
+        "enabledLabel": "仅在通话时间内接听来电",
+        "timezoneLabel": "时区",
+        "closed": "休息",
+        "openTimeLabel": "{day}：开始时间",
+        "closeTimeLabel": "{day}：结束时间",
+        "addRangeLabel": "为{day}添加时间段",
+        "removeRangeLabel": "删除{day}的时间段",
+        "overnightHint": "每天在 23:59 结束。如需在午夜之后继续营业，请将剩余时间添加到第二天。",
+        "days": {
+          "monday": "星期一",
+          "tuesday": "星期二",
+          "wednesday": "星期三",
+          "thursday": "星期四",
+          "friday": "星期五",
+          "saturday": "星期六",
+          "sunday": "星期日"
+        },
+        "errors": {
+          "rangeOrder": "结束时间必须晚于开始时间。",
+          "rangeOverlap": "这一天的时间段有重叠。",
+          "noOpenHours": "请至少为一天添加时间段。"
+        }
+      }
     }
   },
   "workspace": {

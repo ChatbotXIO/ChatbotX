@@ -3936,7 +3936,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "Dieser Anruf klingelt nicht mehr"
+        "callNoLongerRinging": "Dieser Anruf klingelt nicht mehr",
+        "transcriptionRequiresRecording": "Aktiviere zuerst die Anrufaufzeichnung, bevor du die Transkription aktivierst."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3946,7 +3947,7 @@
       "inAppCallingLabel": "In-app calling (beta)",
       "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
       "recordingLabel": "Record calls",
-      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingHelper": "Im Posteingang angenommene oder getätigte Anrufe aufzeichnen und die Aufnahme zur Unterhaltung hinzufügen.",
       "recordingInProgress": "Aufnahme angefordert",
       "incomingCall": "Incoming WhatsApp call…",
       "unknownCaller": "Unknown caller",
@@ -3962,7 +3963,7 @@
       "retentionLabel": "Aufbewahrung von Aufzeichnungen (Tage)",
       "retentionHelper": "Wie lange Anrufaufzeichnungen aufbewahrt werden, bevor sie endgültig gelöscht werden.",
       "transcriptionLabel": "Anrufe transkribieren",
-      "transcriptionHelper": "Transkribiert aufgezeichnete Anrufe automatisch mit dem verbundenen KI-Anbieter.",
+      "transcriptionHelper": "Jeder aufgezeichneten Unterhaltung ein Transkript des Anrufs hinzufügen.",
       "preflight": {
         "title": "Anrufberechtigung",
         "appSubscriptionMissing": "Zuerst den WhatsApp-Webhook für diese App im Meta App Dashboard konfigurieren und es dann erneut versuchen.",
@@ -4087,7 +4088,33 @@
         "cancel": "Im Gespräch bleiben"
       },
       "answerCaller": "Anruf von {name} annehmen",
-      "rejectCaller": "Anruf von {name} ablehnen"
+      "rejectCaller": "Anruf von {name} ablehnen",
+      "hours": {
+        "title": "Anrufzeiten",
+        "description": "Kunden können diese Nummer nur zu diesen Zeiten anrufen. Außerhalb davon bietet WhatsApp stattdessen einen Chat oder, falls Rückrufanfragen aktiviert sind, eine Rückrufanfrage an und zeigt, wann der nächste Anruf möglich ist.",
+        "enabledLabel": "Anrufe nur während der Anrufzeiten annehmen",
+        "timezoneLabel": "Zeitzone",
+        "closed": "Geschlossen",
+        "openTimeLabel": "{day}: öffnet um",
+        "closeTimeLabel": "{day}: schließt um",
+        "addRangeLabel": "Zeiten für {day} hinzufügen",
+        "removeRangeLabel": "Zeiten für {day} entfernen",
+        "overnightHint": "Jeder Tag endet um 23:59. Um über Mitternacht hinaus geöffnet zu bleiben, füge die restlichen Stunden am nächsten Tag hinzu.",
+        "days": {
+          "monday": "Montag",
+          "tuesday": "Dienstag",
+          "wednesday": "Mittwoch",
+          "thursday": "Donnerstag",
+          "friday": "Freitag",
+          "saturday": "Samstag",
+          "sunday": "Sonntag"
+        },
+        "errors": {
+          "rangeOrder": "Die Schließzeit muss nach der Öffnungszeit liegen.",
+          "rangeOverlap": "Die Zeiten an diesem Tag überschneiden sich.",
+          "noOpenHours": "Füge für mindestens einen Tag Zeiten hinzu."
+        }
+      }
     }
   },
   "zalo": {

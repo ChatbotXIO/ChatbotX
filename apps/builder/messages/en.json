@@ -4124,7 +4124,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "That call is no longer ringing"
+        "callNoLongerRinging": "That call is no longer ringing",
+        "transcriptionRequiresRecording": "Turn on call recording before turning on transcription."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -4134,7 +4135,7 @@
       "inAppCallingLabel": "In-app calling (beta)",
       "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
       "recordingLabel": "Record calls",
-      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingHelper": "Record calls answered or placed in the inbox and add the recording to the conversation.",
       "recordingInProgress": "Recording requested",
       "incomingCall": "Incoming WhatsApp call…",
       "voipConnecting": "Connecting…",
@@ -4151,7 +4152,7 @@
       "retentionLabel": "Recording retention (days)",
       "retentionHelper": "How long call recordings are kept before they are permanently deleted.",
       "transcriptionLabel": "Transcribe calls",
-      "transcriptionHelper": "Automatically transcribe recorded calls using your connected AI provider.",
+      "transcriptionHelper": "Add a transcript of each recorded call to the conversation.",
       "preflight": {
         "title": "Calling eligibility",
         "appSubscriptionMissing": "Configure the WhatsApp webhook for this app in the Meta App Dashboard first, then try again.",
@@ -4275,7 +4276,33 @@
         "cancel": "Stay on the call"
       },
       "answerCaller": "Answer call from {name}",
-      "rejectCaller": "Reject call from {name}"
+      "rejectCaller": "Reject call from {name}",
+      "hours": {
+        "title": "Call hours",
+        "description": "Customers can call this number only during these hours. Outside them, WhatsApp offers to chat instead, or to request a callback if callback requests are on, and shows when they can call next.",
+        "enabledLabel": "Only accept calls during call hours",
+        "timezoneLabel": "Timezone",
+        "closed": "Closed",
+        "openTimeLabel": "{day}: opens at",
+        "closeTimeLabel": "{day}: closes at",
+        "addRangeLabel": "Add hours on {day}",
+        "removeRangeLabel": "Remove hours on {day}",
+        "overnightHint": "Each day ends at 23:59. To stay open past midnight, add the remaining hours to the next day.",
+        "days": {
+          "monday": "Monday",
+          "tuesday": "Tuesday",
+          "wednesday": "Wednesday",
+          "thursday": "Thursday",
+          "friday": "Friday",
+          "saturday": "Saturday",
+          "sunday": "Sunday"
+        },
+        "errors": {
+          "rangeOrder": "Closing time must be after opening time.",
+          "rangeOverlap": "The hours on this day overlap.",
+          "noOpenHours": "Add hours to at least one day."
+        }
+      }
     }
   },
   "zalo": {

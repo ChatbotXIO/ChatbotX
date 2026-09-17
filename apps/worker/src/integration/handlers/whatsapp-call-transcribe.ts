@@ -14,6 +14,7 @@ import {
   emitCallTranscribed,
   setWebhookExecutionContext,
 } from "@chatbotx.io/events"
+import { transcribesCalls } from "@chatbotx.io/utils/whatsapp-call"
 import type { CallTranscriptionJobTranscribeCall } from "@chatbotx.io/worker-config"
 import { experimental_transcribe as transcribe } from "ai"
 import ky from "ky"
@@ -41,7 +42,8 @@ const externalCorrelationId = (call: {
 
 /**
  * Speech-to-text over a stored call recording. Opt-in per integration
- * (`callTranscriptionEnabled`, default false) and requires the
+ * (`transcribesCalls`: transcription on, which also needs recording on) and
+ * requires the
  * workspace's OpenAI integration; silently skips (no retry) when either is
  * absent — the recording itself is already saved and usable.
  *
@@ -82,7 +84,7 @@ export const handleWhatsappCallTranscribe = async (
       inboxId: call.inboxId,
       workspaceId: call.workspaceId,
     })
-  if (!integration?.callTranscriptionEnabled) {
+  if (!(integration && transcribesCalls(integration))) {
     logger.info(
       { callId: data.callId },
       "[wa-call-transcript]  skipped: not enabled for this number",

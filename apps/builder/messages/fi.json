@@ -3936,7 +3936,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "Tuo puhelu ei enää soi"
+        "callNoLongerRinging": "Tuo puhelu ei enää soi",
+        "transcriptionRequiresRecording": "Ota puheluiden tallennus käyttöön ennen litteroinnin käyttöönottoa."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3946,7 +3947,7 @@
       "inAppCallingLabel": "In-app calling (beta)",
       "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
       "recordingLabel": "Record calls",
-      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingHelper": "Tallenna saapuneessa postissa vastatut tai soitetut puhelut ja lisää tallenne keskusteluun.",
       "recordingInProgress": "Nauhoitus pyydetty",
       "incomingCall": "Incoming WhatsApp call…",
       "unknownCaller": "Unknown caller",
@@ -3962,7 +3963,7 @@
       "retentionLabel": "Tallenteiden säilytysaika (päivää)",
       "retentionHelper": "Kuinka pitkään puhelutallenteita säilytetään, ennen kuin ne poistetaan pysyvästi.",
       "transcriptionLabel": "Tekstitä puhelut",
-      "transcriptionHelper": "Tekstittää automaattisesti tallennetut puhelut käyttäen yhdistettyä tekoälypalveluntarjoajaa.",
+      "transcriptionHelper": "Lisää keskusteluun litterointi jokaisesta tallennetusta puhelusta.",
       "preflight": {
         "title": "Puheluoikeus",
         "appSubscriptionMissing": "Määritä ensin WhatsApp-webhook tälle sovellukselle Meta-sovelluspaneelissa ja yritä sitten uudelleen.",
@@ -4087,7 +4088,33 @@
         "cancel": "Jatka puhelua"
       },
       "answerCaller": "Vastaa puheluun henkilöltä {name}",
-      "rejectCaller": "Hylkää puhelu henkilöltä {name}"
+      "rejectCaller": "Hylkää puhelu henkilöltä {name}",
+      "hours": {
+        "title": "Puheluajat",
+        "description": "Asiakkaat voivat soittaa tähän numeroon vain näinä aikoina. Niiden ulkopuolella WhatsApp tarjoaa sen sijaan chattia tai, jos takaisinsoittopyynnöt ovat käytössä, takaisinsoiton pyytämistä ja näyttää, milloin seuraavan kerran voi soittaa.",
+        "enabledLabel": "Ota puheluita vastaan vain puheluaikoina",
+        "timezoneLabel": "Aikavyöhyke",
+        "closed": "Suljettu",
+        "openTimeLabel": "{day}: aukeaa klo",
+        "closeTimeLabel": "{day}: sulkeutuu klo",
+        "addRangeLabel": "Lisää aikoja päivälle {day}",
+        "removeRangeLabel": "Poista aikoja päivältä {day}",
+        "overnightHint": "Jokainen päivä päättyy klo 23:59. Jos haluat pysyä auki keskiyön jälkeen, lisää loput tunnit seuraavalle päivälle.",
+        "days": {
+          "monday": "Maanantai",
+          "tuesday": "Tiistai",
+          "wednesday": "Keskiviikko",
+          "thursday": "Torstai",
+          "friday": "Perjantai",
+          "saturday": "Lauantai",
+          "sunday": "Sunnuntai"
+        },
+        "errors": {
+          "rangeOrder": "Sulkemisajan on oltava avaamisajan jälkeen.",
+          "rangeOverlap": "Tämän päivän ajat menevät päällekkäin.",
+          "noOpenHours": "Lisää aikoja vähintään yhdelle päivälle."
+        }
+      }
     }
   },
   "zalo": {

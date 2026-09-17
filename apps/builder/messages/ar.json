@@ -3936,7 +3936,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "لم تعد تلك المكالمة ترن"
+        "callNoLongerRinging": "لم تعد تلك المكالمة ترن",
+        "transcriptionRequiresRecording": "فعّل تسجيل المكالمات قبل تفعيل النسخ النصي."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3946,7 +3947,7 @@
       "inAppCallingLabel": "In-app calling (beta)",
       "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
       "recordingLabel": "Record calls",
-      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingHelper": "سجّل المكالمات التي يُرد عليها أو تُجرى من صندوق الوارد وأضف التسجيل إلى المحادثة.",
       "recordingInProgress": "طُلب التسجيل",
       "incomingCall": "Incoming WhatsApp call…",
       "unknownCaller": "Unknown caller",
@@ -3962,7 +3963,7 @@
       "retentionLabel": "مدة الاحتفاظ بالتسجيلات (أيام)",
       "retentionHelper": "المدة التي يتم الاحتفاظ فيها بتسجيلات المكالمات قبل حذفها نهائيًا.",
       "transcriptionLabel": "تحويل المكالمات إلى نص",
-      "transcriptionHelper": "يقوم تلقائيًا بتحويل المكالمات المسجّلة إلى نص باستخدام مزوّد الذكاء الاصطناعي المتصل.",
+      "transcriptionHelper": "أضف نصًا مكتوبًا لكل مكالمة مسجّلة إلى المحادثة.",
       "preflight": {
         "title": "أهلية المكالمات",
         "appSubscriptionMissing": "قم بتكوين webhook الخاص بـ WhatsApp لهذا التطبيق في لوحة تحكم تطبيق Meta أولاً، ثم حاول مرة أخرى.",
@@ -4087,7 +4088,33 @@
         "cancel": "متابعة المكالمة"
       },
       "answerCaller": "الرد على مكالمة من {name}",
-      "rejectCaller": "رفض مكالمة من {name}"
+      "rejectCaller": "رفض مكالمة من {name}",
+      "hours": {
+        "title": "ساعات المكالمات",
+        "description": "لا يمكن للعملاء الاتصال بهذا الرقم إلا خلال هذه الساعات. خارجها، يعرض WhatsApp عليهم الدردشة بدلًا من ذلك، أو طلب معاودة الاتصال إذا كانت طلبات معاودة الاتصال مفعّلة، ويُظهر لهم موعد الاتصال التالي المتاح.",
+        "enabledLabel": "قبول المكالمات خلال ساعات المكالمات فقط",
+        "timezoneLabel": "المنطقة الزمنية",
+        "closed": "مغلق",
+        "openTimeLabel": "{day}: يفتح الساعة",
+        "closeTimeLabel": "{day}: يغلق الساعة",
+        "addRangeLabel": "إضافة ساعات يوم {day}",
+        "removeRangeLabel": "إزالة ساعات يوم {day}",
+        "overnightHint": "ينتهي كل يوم الساعة 23:59. للبقاء متاحًا بعد منتصف الليل، أضف الساعات المتبقية إلى اليوم التالي.",
+        "days": {
+          "monday": "الاثنين",
+          "tuesday": "الثلاثاء",
+          "wednesday": "الأربعاء",
+          "thursday": "الخميس",
+          "friday": "الجمعة",
+          "saturday": "السبت",
+          "sunday": "الأحد"
+        },
+        "errors": {
+          "rangeOrder": "يجب أن يكون وقت الإغلاق بعد وقت الفتح.",
+          "rangeOverlap": "الساعات في هذا اليوم متداخلة.",
+          "noOpenHours": "أضف ساعات ليوم واحد على الأقل."
+        }
+      }
     }
   },
   "zalo": {

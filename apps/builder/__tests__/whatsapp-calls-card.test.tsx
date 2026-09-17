@@ -37,6 +37,12 @@ vi.mock(
   }),
 )
 
+// The call hours form has its own tests; the card only places it.
+vi.mock(
+  "@/features/integration-whatsapp/calling/whatsapp-call-hours-section",
+  () => ({ WhatsappCallHoursSection: () => null }),
+)
+
 // jsdom ships no ResizeObserver, and Radix measures the switch thumb through it.
 Object.assign(globalThis, {
   ResizeObserver: class {
@@ -134,6 +140,7 @@ describe("WhatsappCallsCard", () => {
   test("reverts the transcription switch when the save fails", async () => {
     await render({
       settings: { status: "ENABLED" },
+      recordingEnabled: true,
       transcriptionEnabled: false,
     })
     const settingsCallbacks = allCallbacks[0]
@@ -151,5 +158,68 @@ describe("WhatsappCallsCard", () => {
       settingsCallbacks.onError({ error: { serverError: META_ERROR } })
     })
     expect(transcriptionSwitch.getAttribute("aria-checked")).toBe("false")
+  })
+
+  test("hides the transcription switch while the number does not record calls", async () => {
+    await render({
+      settings: { status: "ENABLED" },
+      recordingEnabled: false,
+      transcriptionEnabled: true,
+    })
+
+    // enable, icon visibility, callback permission, recording
+    expect(container.querySelectorAll('[role="switch"]')).toHaveLength(4)
+  })
+
+  test("turning recording off also turns transcription off, and a failed save restores both", async () => {
+    await render({
+      settings: { status: "ENABLED" },
+      recordingEnabled: true,
+      transcriptionEnabled: true,
+    })
+    const settingsCallbacks = allCallbacks[0]
+    const recordingSwitch = container.querySelectorAll('[role="switch"]')[3]
+
+    act(() => {
+      ;(recordingSwitch as HTMLButtonElement).click()
+    })
+    expect(container.querySelectorAll('[role="switch"]')).toHaveLength(4)
+
+    act(() => {
+      settingsCallbacks.onError({ error: { serverError: META_ERROR } })
+    })
+    const switches = container.querySelectorAll('[role="switch"]')
+    expect(switches).toHaveLength(5)
+    expect(switches[3].getAttribute("aria-checked")).toBe("true")
+    expect(switches[4].getAttribute("aria-checked")).toBe("true")
+  })
+
+  test("a failed save never rolls back a switch an earlier save already changed", async () => {
+    await render({
+      settings: { status: "ENABLED" },
+      recordingEnabled: false,
+    })
+    const settingsCallbacks = allCallbacks[0]
+
+    act(() => {
+      ;(
+        container.querySelectorAll('[role="switch"]')[3] as HTMLButtonElement
+      ).click()
+    })
+    act(() => {
+      settingsCallbacks.onSuccess()
+    })
+    act(() => {
+      ;(
+        container.querySelectorAll('[role="switch"]')[1] as HTMLButtonElement
+      ).click()
+    })
+    act(() => {
+      settingsCallbacks.onError({ error: { serverError: META_ERROR } })
+    })
+
+    const switches = container.querySelectorAll('[role="switch"]')
+    expect(switches[1].getAttribute("aria-checked")).toBe("true")
+    expect(switches[3].getAttribute("aria-checked")).toBe("true")
   })
 })

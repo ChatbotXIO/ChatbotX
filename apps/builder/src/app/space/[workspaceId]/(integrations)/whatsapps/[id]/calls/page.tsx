@@ -60,6 +60,7 @@ export default async function WhatsappCallsPage(props: {
       settings={settings}
       transcriptionEnabled={integrationWhatsapp.callTranscriptionEnabled}
       workspaceId={data.workspaceId}
+      workspaceTimezone={currentUserAndWorkspace?.targetWorkspace.timezone}
     />
   )
 }

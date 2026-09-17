@@ -3936,7 +3936,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "Essa chamada já não está a tocar"
+        "callNoLongerRinging": "Essa chamada já não está a tocar",
+        "transcriptionRequiresRecording": "Ative a gravação de chamadas antes de ativar a transcrição."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3946,7 +3947,7 @@
       "inAppCallingLabel": "In-app calling (beta)",
       "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
       "recordingLabel": "Record calls",
-      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingHelper": "Grave as chamadas atendidas ou efetuadas a partir da caixa de entrada e adicione a gravação à conversa.",
       "recordingInProgress": "Gravação solicitada",
       "incomingCall": "Incoming WhatsApp call…",
       "unknownCaller": "Unknown caller",
@@ -3962,7 +3963,7 @@
       "retentionLabel": "Retenção de gravações (dias)",
       "retentionHelper": "Durante quanto tempo as gravações de chamadas são guardadas antes de serem eliminadas permanentemente.",
       "transcriptionLabel": "Transcrever chamadas",
-      "transcriptionHelper": "Transcreve automaticamente as chamadas gravadas através do teu fornecedor de IA associado.",
+      "transcriptionHelper": "Adicione à conversa uma transcrição de cada chamada gravada.",
       "preflight": {
         "title": "Elegibilidade para chamadas",
         "appSubscriptionMissing": "Configura primeiro o webhook do WhatsApp para esta aplicação no Meta App Dashboard e tenta novamente.",
@@ -4087,7 +4088,33 @@
         "cancel": "Continuar na chamada"
       },
       "answerCaller": "Atender a chamada de {name}",
-      "rejectCaller": "Rejeitar a chamada de {name}"
+      "rejectCaller": "Rejeitar a chamada de {name}",
+      "hours": {
+        "title": "Horário de chamadas",
+        "description": "Os clientes só podem ligar para este número nestes horários. Fora deles, o WhatsApp propõe conversar por chat ou, se os pedidos de chamada de retorno estiverem ativos, pedir uma chamada de retorno, e mostra quando podem voltar a ligar.",
+        "enabledLabel": "Aceitar chamadas apenas no horário de chamadas",
+        "timezoneLabel": "Fuso horário",
+        "closed": "Fechado",
+        "openTimeLabel": "{day}: abre às",
+        "closeTimeLabel": "{day}: fecha às",
+        "addRangeLabel": "Adicionar horário em {day}",
+        "removeRangeLabel": "Remover horário de {day}",
+        "overnightHint": "Cada dia termina às 23:59. Para ficar aberto depois da meia-noite, adicione as horas restantes ao dia seguinte.",
+        "days": {
+          "monday": "Segunda-feira",
+          "tuesday": "Terça-feira",
+          "wednesday": "Quarta-feira",
+          "thursday": "Quinta-feira",
+          "friday": "Sexta-feira",
+          "saturday": "Sábado",
+          "sunday": "Domingo"
+        },
+        "errors": {
+          "rangeOrder": "A hora de fecho tem de ser posterior à hora de abertura.",
+          "rangeOverlap": "Os horários deste dia sobrepõem-se.",
+          "noOpenHours": "Adicione horários a pelo menos um dia."
+        }
+      }
     }
   },
   "zalo": {

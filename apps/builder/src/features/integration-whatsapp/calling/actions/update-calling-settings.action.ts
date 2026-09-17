@@ -1,6 +1,10 @@
 "use server"
 
-import { buildContext, integrationWhatsappService } from "@chatbotx.io/business"
+import {
+  buildContext,
+  integrationWhatsappService,
+  WhatsappCallTranscriptionRequiresRecordingError,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import type { WhatsappCallingSettings } from "@chatbotx.io/integration-whatsapp/api/calling"
@@ -67,11 +71,20 @@ export const updateWhatsappCallingSettingsAction = workspaceActionClient
         localValues.callTranscriptionEnabled =
           parsedInput.callTranscriptionEnabled
       }
-      await integrationWhatsappService.updateCallSettings({
-        id: integrationWhatsappId,
-        workspaceId,
-        values: localValues,
-      })
+      try {
+        await integrationWhatsappService.updateCallSettings({
+          id: integrationWhatsappId,
+          workspaceId,
+          values: localValues,
+        })
+      } catch (error) {
+        if (error instanceof WhatsappCallTranscriptionRequiresRecordingError) {
+          throw new ChatbotXException(
+            t("whatsapp.calls.errors.transcriptionRequiresRecording"),
+          )
+        }
+        throw error
+      }
 
       // A pure local toggle needs no Meta round-trip.
       if (Object.keys(data).length === 0) {

@@ -299,6 +299,30 @@ describe("finalizeCallSideEffects", () => {
     )
   })
 
+  test("never promises a transcript on a number that does not record calls", async () => {
+    mocks.findByInboxIdForWorkspace.mockResolvedValue({
+      callRecordingEnabled: false,
+      callTranscriptionEnabled: true,
+    })
+
+    await finalizeCallSideEffects({
+      call: { ...call, recordingRequested: null },
+      entity: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "completed",
+      },
+    })
+
+    expect(mocks.createOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          transcriptionRequested: false,
+        }),
+      }),
+    )
+  })
+
   test("falls back to the number's setting for a call row written before the column existed", async () => {
     mocks.findByInboxIdForWorkspace.mockResolvedValue({
       callRecordingEnabled: true,

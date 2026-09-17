@@ -3,6 +3,7 @@ import {
   type WhatsappCallAnnouncementOptions,
 } from "@chatbotx.io/integration-whatsapp/api/calling"
 import { WhatsappException } from "@chatbotx.io/integration-whatsapp/exception"
+import { transcribesCalls } from "@chatbotx.io/utils/whatsapp-call"
 
 /**
  * Fallback `purpose` (Meta requires this when `status:"ENABLED"`, capped at
@@ -31,7 +32,8 @@ export type CallAnnouncementIntegration = {
  *
  * - `recording` is present only when `callRecordingEnabled` AND
  *   `callRecordingMode === "metaNative"`.
- * - `transcription` is present only when `callTranscriptionEnabled` AND
+ * - `transcription` is present only when the number transcribes calls
+ *   (`transcribesCalls`: transcription on AND recording on) AND
  *   `callTranscriptionMode === "metaNative"`.
  * - Both objects share ONE `purpose`/`announcementLanguage` pair — when both
  *   are enabled, Meta plays a single combined announcement built from the
@@ -48,7 +50,7 @@ export function buildCallAnnouncementOptions(
     integration.callRecordingEnabled &&
     integration.callRecordingMode === "metaNative"
   const transcriptionNative =
-    integration.callTranscriptionEnabled &&
+    transcribesCalls(integration) &&
     integration.callTranscriptionMode === "metaNative"
 
   if (!(recordingNative || transcriptionNative)) {

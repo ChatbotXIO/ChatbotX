@@ -3936,7 +3936,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "Det opkald ringer ikke længere"
+        "callNoLongerRinging": "Det opkald ringer ikke længere",
+        "transcriptionRequiresRecording": "Slå optagelse af opkald til, før du slår transskription til."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3946,7 +3947,7 @@
       "inAppCallingLabel": "In-app calling (beta)",
       "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
       "recordingLabel": "Record calls",
-      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingHelper": "Optag opkald, der besvares eller foretages i indbakken, og føj optagelsen til samtalen.",
       "recordingInProgress": "Optagelse anmodet",
       "incomingCall": "Incoming WhatsApp call…",
       "unknownCaller": "Unknown caller",
@@ -3962,7 +3963,7 @@
       "retentionLabel": "Opbevaring af optagelser (dage)",
       "retentionHelper": "Hvor længe optagelser af opkald opbevares, før de slettes permanent.",
       "transcriptionLabel": "Transskriber opkald",
-      "transcriptionHelper": "Transskriberer automatisk optagede opkald med din tilsluttede AI-udbyder.",
+      "transcriptionHelper": "Føj en transskription af hvert optaget opkald til samtalen.",
       "preflight": {
         "title": "Opkaldsberettigelse",
         "appSubscriptionMissing": "Konfigurer først WhatsApp-webhooken for denne app i Meta App Dashboard, og forsøg derefter igen.",
@@ -4087,7 +4088,33 @@
         "cancel": "Bliv i opkaldet"
       },
       "answerCaller": "Besvar opkald fra {name}",
-      "rejectCaller": "Afvis opkald fra {name}"
+      "rejectCaller": "Afvis opkald fra {name}",
+      "hours": {
+        "title": "Opkaldstider",
+        "description": "Kunder kan kun ringe til dette nummer inden for disse tider. Uden for dem tilbyder WhatsApp i stedet at chatte eller, hvis anmodninger om at blive ringet op er slået til, at bede om at blive ringet op, og viser, hvornår de kan ringe næste gang.",
+        "enabledLabel": "Tag kun imod opkald inden for opkaldstiderne",
+        "timezoneLabel": "Tidszone",
+        "closed": "Lukket",
+        "openTimeLabel": "{day}: åbner kl.",
+        "closeTimeLabel": "{day}: lukker kl.",
+        "addRangeLabel": "Tilføj tider for {day}",
+        "removeRangeLabel": "Fjern tider for {day}",
+        "overnightHint": "Hver dag slutter kl. 23:59. For at holde åbent efter midnat skal du føje de resterende timer til næste dag.",
+        "days": {
+          "monday": "Mandag",
+          "tuesday": "Tirsdag",
+          "wednesday": "Onsdag",
+          "thursday": "Torsdag",
+          "friday": "Fredag",
+          "saturday": "Lørdag",
+          "sunday": "Søndag"
+        },
+        "errors": {
+          "rangeOrder": "Lukketiden skal ligge efter åbningstiden.",
+          "rangeOverlap": "Tiderne på denne dag overlapper.",
+          "noOpenHours": "Tilføj tider til mindst én dag."
+        }
+      }
     }
   },
   "zalo": {

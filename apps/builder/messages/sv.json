@@ -5373,7 +5373,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "Det samtalet ringer inte längre"
+        "callNoLongerRinging": "Det samtalet ringer inte längre",
+        "transcriptionRequiresRecording": "Aktivera samtalsinspelning innan du aktiverar transkribering."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -5383,7 +5384,7 @@
       "inAppCallingLabel": "In-app calling (beta)",
       "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
       "recordingLabel": "Record calls",
-      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingHelper": "Spela in samtal som besvaras eller rings från inkorgen och lägg till inspelningen i konversationen.",
       "recordingInProgress": "Inspelning begärd",
       "incomingCall": "Incoming WhatsApp call…",
       "unknownCaller": "Unknown caller",
@@ -5399,7 +5400,7 @@
       "retentionLabel": "Lagring av inspelningar (dagar)",
       "retentionHelper": "Hur länge samtalsinspelningar sparas innan de raderas permanent.",
       "transcriptionLabel": "Transkribera samtal",
-      "transcriptionHelper": "Transkriberar automatiskt inspelade samtal med hjälp av din anslutna AI-leverantör.",
+      "transcriptionHelper": "Lägg till en transkription av varje inspelat samtal i konversationen.",
       "preflight": {
         "title": "Samtalsbehörighet",
         "appSubscriptionMissing": "Konfigurera först WhatsApp-webhooken för denna app i Meta App Dashboard och försök sedan igen.",
@@ -5524,7 +5525,33 @@
         "cancel": "Stanna kvar i samtalet"
       },
       "answerCaller": "Svara på samtal från {name}",
-      "rejectCaller": "Avvisa samtal från {name}"
+      "rejectCaller": "Avvisa samtal från {name}",
+      "hours": {
+        "title": "Samtalstider",
+        "description": "Kunder kan bara ringa det här numret under dessa tider. Utanför dem erbjuder WhatsApp att chatta i stället eller, om återuppringningsförfrågningar är aktiverade, att be om att bli uppringd, och visar när de kan ringa nästa gång.",
+        "enabledLabel": "Ta endast emot samtal under samtalstiderna",
+        "timezoneLabel": "Tidszon",
+        "closed": "Stängt",
+        "openTimeLabel": "{day}: öppnar kl.",
+        "closeTimeLabel": "{day}: stänger kl.",
+        "addRangeLabel": "Lägg till tider för {day}",
+        "removeRangeLabel": "Ta bort tider för {day}",
+        "overnightHint": "Varje dag slutar kl. 23:59. För att ha öppet efter midnatt lägger du till de återstående timmarna på nästa dag.",
+        "days": {
+          "monday": "Måndag",
+          "tuesday": "Tisdag",
+          "wednesday": "Onsdag",
+          "thursday": "Torsdag",
+          "friday": "Fredag",
+          "saturday": "Lördag",
+          "sunday": "Söndag"
+        },
+        "errors": {
+          "rangeOrder": "Stängningstiden måste vara efter öppningstiden.",
+          "rangeOverlap": "Tiderna den här dagen överlappar.",
+          "noOpenHours": "Lägg till tider för minst en dag."
+        }
+      }
     }
   },
   "workspace": {

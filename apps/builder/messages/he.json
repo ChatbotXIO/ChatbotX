@@ -2023,7 +2023,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "השיחה הזו כבר לא מצלצלת"
+        "callNoLongerRinging": "השיחה הזו כבר לא מצלצלת",
+        "transcriptionRequiresRecording": "הפעל הקלטת שיחות לפני הפעלת התמלול."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -2033,7 +2034,7 @@
       "inAppCallingLabel": "In-app calling (beta)",
       "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
       "recordingLabel": "Record calls",
-      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingHelper": "הקלט שיחות שנענו או בוצעו מתיבת הדואר הנכנס והוסף את ההקלטה לשיחה.",
       "recordingInProgress": "התבקש תיעוד",
       "incomingCall": "Incoming WhatsApp call…",
       "unknownCaller": "Unknown caller",
@@ -2049,7 +2050,7 @@
       "retentionLabel": "שמירת הקלטות (ימים)",
       "retentionHelper": "משך הזמן שבו הקלטות שיחה נשמרות לפני שהן נמחקות לצמיתות.",
       "transcriptionLabel": "תמלול שיחות",
-      "transcriptionHelper": "מתמלל באופן אוטומטי שיחות מוקלטות באמצעות ספק ה-AI המחובר שלך.",
+      "transcriptionHelper": "הוסף לשיחה תמלול של כל שיחה מוקלטת.",
       "preflight": {
         "title": "זכאות לשיחות",
         "appSubscriptionMissing": "הגדר תחילה את ה-webhook של WhatsApp לאפליקציה זו בלוח הבקרה של אפליקציות Meta, ולאחר מכן נסה שוב.",
@@ -2174,7 +2175,33 @@
         "cancel": "להישאר בשיחה"
       },
       "answerCaller": "ענה לשיחה מ{name}",
-      "rejectCaller": "דחה שיחה מ{name}"
+      "rejectCaller": "דחה שיחה מ{name}",
+      "hours": {
+        "title": "שעות שיחות",
+        "description": "לקוחות יכולים להתקשר למספר הזה רק בשעות האלה. מחוץ להן, WhatsApp מציע להם לשוחח בצ'אט, או לבקש שיחה חוזרת אם בקשות שיחה חוזרת מופעלות, ומציג מתי אפשר להתקשר בפעם הבאה.",
+        "enabledLabel": "קבל שיחות רק בשעות השיחות",
+        "timezoneLabel": "אזור זמן",
+        "closed": "סגור",
+        "openTimeLabel": "{day}: נפתח ב-",
+        "closeTimeLabel": "{day}: נסגר ב-",
+        "addRangeLabel": "הוסף שעות ביום {day}",
+        "removeRangeLabel": "הסר שעות ביום {day}",
+        "overnightHint": "כל יום מסתיים ב-23:59. כדי להישאר פתוח אחרי חצות, הוסף את השעות הנותרות ליום הבא.",
+        "days": {
+          "monday": "שני",
+          "tuesday": "שלישי",
+          "wednesday": "רביעי",
+          "thursday": "חמישי",
+          "friday": "שישי",
+          "saturday": "שבת",
+          "sunday": "ראשון"
+        },
+        "errors": {
+          "rangeOrder": "שעת הסגירה חייבת להיות אחרי שעת הפתיחה.",
+          "rangeOverlap": "השעות ביום הזה חופפות.",
+          "noOpenHours": "הוסף שעות ליום אחד לפחות."
+        }
+      }
     }
   },
   "zalo": {

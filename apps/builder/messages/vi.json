@@ -3936,7 +3936,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "Cuộc gọi đó không còn đổ chuông nữa"
+        "callNoLongerRinging": "Cuộc gọi đó không còn đổ chuông nữa",
+        "transcriptionRequiresRecording": "Hãy bật ghi âm cuộc gọi trước khi bật chép lời."
       },
       "permissionRequestTitle": "Xin quyền gọi điện",
       "permissionRequestDescription": "Hỏi khách hàng này cho phép doanh nghiệp gọi qua WhatsApp. Meta giới hạn 1 yêu cầu mỗi 24 giờ và 2 yêu cầu mỗi 7 ngày cho mỗi khách hàng.",
@@ -3946,7 +3947,7 @@
       "inAppCallingLabel": "Gọi trong ứng dụng (beta)",
       "inAppCallingHelper": "Định tuyến cuộc gọi WhatsApp của số này vào inbox để agent nghe máy ngay trên trình duyệt.",
       "recordingLabel": "Ghi âm cuộc gọi",
-      "recordingHelper": "Tự động ghi âm cuộc gọi trong ứng dụng và đính kèm audio vào hội thoại. Chuyển văn bản chạy khi đã kết nối tích hợp OpenAI.",
+      "recordingHelper": "Ghi âm các cuộc gọi được nghe hoặc gọi đi từ inbox và thêm bản ghi vào hội thoại.",
       "recordingInProgress": "Đã yêu cầu ghi âm",
       "incomingCall": "Cuộc gọi WhatsApp đến…",
       "unknownCaller": "Người gọi không xác định",
@@ -3962,7 +3963,7 @@
       "retentionLabel": "Thời gian lưu ghi âm (ngày)",
       "retentionHelper": "Ghi âm cuộc gọi được lưu trong bao lâu trước khi bị xóa vĩnh viễn.",
       "transcriptionLabel": "Chuyển văn bản cuộc gọi",
-      "transcriptionHelper": "Tự động chuyển ghi âm cuộc gọi thành văn bản bằng nhà cung cấp AI đã kết nối.",
+      "transcriptionHelper": "Thêm bản chép lời của mỗi cuộc gọi đã ghi âm vào hội thoại.",
       "preflight": {
         "title": "Điều kiện gọi điện",
         "appSubscriptionMissing": "Hãy cấu hình webhook WhatsApp cho app này trong App Dashboard của Meta trước, sau đó thử lại.",
@@ -4087,7 +4088,33 @@
         "cancel": "Tiếp tục cuộc gọi"
       },
       "answerCaller": "Nghe cuộc gọi từ {name}",
-      "rejectCaller": "Từ chối cuộc gọi từ {name}"
+      "rejectCaller": "Từ chối cuộc gọi từ {name}",
+      "hours": {
+        "title": "Giờ nhận cuộc gọi",
+        "description": "Khách chỉ gọi được cho số này trong các khung giờ bên dưới. Ngoài giờ, WhatsApp sẽ gợi ý khách nhắn tin, hoặc yêu cầu gọi lại nếu đã bật xin quyền gọi lại, và cho biết thời gian có thể gọi tiếp theo.",
+        "enabledLabel": "Chỉ nhận cuộc gọi trong giờ làm việc",
+        "timezoneLabel": "Múi giờ",
+        "closed": "Nghỉ",
+        "openTimeLabel": "{day}: giờ bắt đầu",
+        "closeTimeLabel": "{day}: giờ kết thúc",
+        "addRangeLabel": "Thêm khung giờ cho {day}",
+        "removeRangeLabel": "Xóa khung giờ của {day}",
+        "overnightHint": "Mỗi ngày kết thúc lúc 23:59. Nếu làm việc qua nửa đêm, hãy thêm phần giờ còn lại vào ngày hôm sau.",
+        "days": {
+          "monday": "Thứ Hai",
+          "tuesday": "Thứ Ba",
+          "wednesday": "Thứ Tư",
+          "thursday": "Thứ Năm",
+          "friday": "Thứ Sáu",
+          "saturday": "Thứ Bảy",
+          "sunday": "Chủ Nhật"
+        },
+        "errors": {
+          "rangeOrder": "Giờ kết thúc phải sau giờ bắt đầu.",
+          "rangeOverlap": "Các khung giờ trong ngày này bị chồng lên nhau.",
+          "noOpenHours": "Hãy thêm khung giờ cho ít nhất một ngày."
+        }
+      }
     }
   },
   "zalo": {

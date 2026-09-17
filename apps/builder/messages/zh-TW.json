@@ -3969,7 +3969,8 @@
         "voipHangupFailed": "Could not end the WhatsApp call",
         "voipNotReservedAgent": "You are not the agent assigned to this call",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
-        "callNoLongerRinging": "該來電已不再響鈴"
+        "callNoLongerRinging": "該來電已不再響鈴",
+        "transcriptionRequiresRecording": "請先開啟通話錄音，再開啟轉錄。"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3979,7 +3980,7 @@
       "inAppCallingLabel": "In-app calling (beta)",
       "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
       "recordingLabel": "Record calls",
-      "recordingHelper": "Automatically record in-app calls and attach the audio to the conversation. Transcription runs when an OpenAI integration is connected.",
+      "recordingHelper": "錄製在收件匣中接聽或撥出的通話，並將錄音加入對話中。",
       "recordingInProgress": "已請求錄音",
       "incomingCall": "Incoming WhatsApp call…",
       "unknownCaller": "Unknown caller",
@@ -3995,7 +3996,7 @@
       "retentionLabel": "錄音保留期限（天）",
       "retentionHelper": "通話錄音在永久刪除前的保留時長。",
       "transcriptionLabel": "轉錄通話",
-      "transcriptionHelper": "使用您已連接的 AI 提供者自動轉錄已錄製的通話。",
+      "transcriptionHelper": "將每通已錄製通話的逐字稿加入對話中。",
       "preflight": {
         "title": "通話資格",
         "appSubscriptionMissing": "請先在 Meta 應用程式儀表板中為此應用程式設定 WhatsApp webhook，然後再試一次。",
@@ -4120,7 +4121,33 @@
         "cancel": "繼續通話"
       },
       "answerCaller": "接聽來自 {name} 的來電",
-      "rejectCaller": "拒接來自 {name} 的來電"
+      "rejectCaller": "拒接來自 {name} 的來電",
+      "hours": {
+        "title": "通話時間",
+        "description": "客戶只能在這些時間內撥打此號碼。在此時間之外，WhatsApp 會建議改為聊天，或在開啟回撥要求時要求回撥，並顯示下次可撥打的時間。",
+        "enabledLabel": "僅在通話時間內接聽來電",
+        "timezoneLabel": "時區",
+        "closed": "休息",
+        "openTimeLabel": "{day}：開始時間",
+        "closeTimeLabel": "{day}：結束時間",
+        "addRangeLabel": "為{day}新增時段",
+        "removeRangeLabel": "刪除{day}的時段",
+        "overnightHint": "每天於 23:59 結束。如需在午夜之後繼續營業，請將剩餘時間加到隔天。",
+        "days": {
+          "monday": "星期一",
+          "tuesday": "星期二",
+          "wednesday": "星期三",
+          "thursday": "星期四",
+          "friday": "星期五",
+          "saturday": "星期六",
+          "sunday": "星期日"
+        },
+        "errors": {
+          "rangeOrder": "結束時間必須晚於開始時間。",
+          "rangeOverlap": "這一天的時段有重疊。",
+          "noOpenHours": "請至少為一天新增時段。"
+        }
+      }
     }
   },
   "zalo": {
