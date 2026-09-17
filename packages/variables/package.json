@@ -5,7 +5,9 @@
   "type": "module",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./bot-field-variable": "./src/bot-field-variable.ts",
+    "./bot-field-variable-resolver": "./src/bot-field-variable-resolver.ts"
   },
   "dependencies": {
     "@chatbotx.io/encryption": "workspace:*",

@@ -8,6 +8,8 @@ import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-fi
 import type { PromptVariableOption } from "./extensions/variable-injection/definition"
 
 type UsePromptVariableOptionsProps = {
+  /** Restricts a credential field to workspace Account Fields only. */
+  botFieldsOnly?: boolean
   channels?: ChannelType[]
   includeCouponVariables?: boolean
   includeRawCustomFieldVariables?: boolean
@@ -37,6 +39,7 @@ export const buildBotFieldPromptVariableOptions = (
   }))
 
 export function usePromptVariableOptions({
+  botFieldsOnly = false,
   channels,
   includeCouponVariables = false,
   includeRawCustomFieldVariables = false,
@@ -55,13 +58,18 @@ export function usePromptVariableOptions({
   })
   const rawCustomFieldOptions = useMemo(
     () =>
-      includeRawCustomFieldVariables
+      includeRawCustomFieldVariables && !botFieldsOnly
         ? rawCustomFieldSelectOptions.map((option) => ({
             ...option,
             group: t("customFields.variables.rawGroup"),
           }))
         : [],
-    [includeRawCustomFieldVariables, rawCustomFieldSelectOptions, t],
+    [
+      botFieldsOnly,
+      includeRawCustomFieldVariables,
+      rawCustomFieldSelectOptions,
+      t,
+    ],
   )
   const { botFields, ensureBotFieldsLoaded } = useCustomFieldStore(
     (state) => state,
@@ -82,7 +90,7 @@ export function usePromptVariableOptions({
     [includeBotFieldVariables, botFields, t],
   )
   const { topics } = useCouponTopicOptions({
-    enabled: includeCouponVariables,
+    enabled: includeCouponVariables && !botFieldsOnly,
   })
   const couponOptions = useMemo(
     () =>
@@ -95,13 +103,17 @@ export function usePromptVariableOptions({
   )
 
   return useMemo(
-    () => [
-      ...customFieldSelectOptions,
-      ...rawCustomFieldOptions,
-      ...botFieldOptions,
-      ...couponOptions,
-    ],
+    () =>
+      botFieldsOnly
+        ? botFieldOptions
+        : [
+            ...customFieldSelectOptions,
+            ...rawCustomFieldOptions,
+            ...botFieldOptions,
+            ...couponOptions,
+          ],
     [
+      botFieldsOnly,
       couponOptions,
       customFieldSelectOptions,
       rawCustomFieldOptions,

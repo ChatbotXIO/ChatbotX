@@ -22,10 +22,11 @@ import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { useFieldArray, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-field"
 import { client } from "@/lib/orpc/orpc"
 import { createAIMcpServerAction } from "./actions/create-ai-mcp-server.action"
 import { updateAIMcpServerAction } from "./actions/update-ai-mcp-server.action"
-import { createAIMcpServerRequest } from "./schema/action"
+import { createPrivateAIMcpServerRequest } from "./schema/action"
 import type { AIMcpServerResource } from "./schema/resource"
 
 type ToolInfo = { name: string; description?: string }
@@ -82,7 +83,7 @@ export function AIMcpServersCreate({
       : createAIMcpServerAction.bind(null, workspaceId)
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(action, zodResolver(createAIMcpServerRequest), {
+    useHookFormAction(action, zodResolver(createPrivateAIMcpServerRequest), {
       formProps: {
         mode: "onChange",
         defaultValues: {
@@ -224,7 +225,6 @@ export function AIMcpServersCreate({
     name: "auth.type",
     control: form.control,
   })
-
   return (
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
       {trigger}
@@ -247,10 +247,15 @@ export function AIMcpServersCreate({
               required
             />
             {watchAuthType === aiMcpServerAuthTypes.enum.token && (
-              <InputField
+              <PlainTextEditorField
+                botFieldsOnly
+                editorClassName="tiptap-plain-text-inline"
+                includeBotFieldVariables
+                inline
                 label={t("fields.authToken.label")}
                 name="auth.token"
                 required
+                showEmojiPicker={false}
               />
             )}
             {watchAuthType === aiMcpServerAuthTypes.enum.header && fields && (

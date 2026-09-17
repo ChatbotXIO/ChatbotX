@@ -34,6 +34,7 @@ import { type ModelMessage, stepCountIs, streamText, type ToolSet } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { logProviderAttempt } from "./provider-attempt-logger"
+import { createMcpTokenResolver } from "./resolve-mcp-token"
 
 export type ReplyByAIProps = {
   conversation: ConversationModel
@@ -100,6 +101,7 @@ export async function runAIAgentRunner(
     mcp: {
       McpClient,
       normalizeMcpContent,
+      resolveToken: createMcpTokenResolver(props.conversation.workspaceId),
     },
   })
 
