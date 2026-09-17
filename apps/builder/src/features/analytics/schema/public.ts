@@ -165,40 +165,76 @@ export const flowStatsPublicResponse = flowNodeStatsResponse
 // use. Handlers map `{ from, to }` -> `{ startDate, endDate }` before
 // calling the service; `packages/analytics` and its dashboard callers are
 // untouched.
+//
+// Back-compat: these 4 operations shipped with `startDate`/`endDate` before
+// being renamed to `from`/`to` for consistency. `withLegacyDateRangeAliases`
+// accepts either spelling so an existing caller's request keeps working —
+// `from`/`to` win if a caller (confusingly) sends both.
 // ─────────────────────────────────────────────────────────────────────────
 
-export const linkStatsPublicRequest = z.object({
-  from: z.string().describe("ISO 8601 start of the time range (inclusive)."),
-  to: z.string().describe("ISO 8601 end of the time range (exclusive)."),
-  linkId: z.string().describe("Magic link or ref link id."),
-  timezone: z
-    .string()
-    .describe("IANA timezone used to bucket results, e.g. `America/New_York`."),
-})
+const withLegacyDateRangeAliases = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((value) => {
+    if (typeof value !== "object" || value === null) {
+      return value
+    }
+    const { startDate, endDate, ...rest } = value as Record<string, unknown>
+    return {
+      ...rest,
+      from: (value as Record<string, unknown>).from ?? startDate,
+      to: (value as Record<string, unknown>).to ?? endDate,
+    }
+  }, schema)
+
+export const linkStatsPublicRequest = withLegacyDateRangeAliases(
+  z.object({
+    from: z
+      .string()
+      .describe(
+        "ISO 8601 start of the time range (inclusive). Accepts the deprecated `startDate` name too.",
+      ),
+    to: z
+      .string()
+      .describe(
+        "ISO 8601 end of the time range (exclusive). Accepts the deprecated `endDate` name too.",
+      ),
+    linkId: z.string().describe("Magic link or ref link id."),
+    timezone: z
+      .string()
+      .describe(
+        "IANA timezone used to bucket results, e.g. `America/New_York`.",
+      ),
+  }),
+)
 // `refLinkTimeseriesRow` (`{ dateReport, count }`) has no workspaceId —
 // reused directly.
 export const linkStatsPublicResponse = z.object({
   data: z.array(refLinkTimeseriesRow),
 })
 
-export const linkContactsPublicRequest = withPublicPaging(
-  z.object({
-    linkId: z.string().describe("Magic link or ref link id."),
-    from: z
-      .string()
-      .optional()
-      .describe("ISO 8601 start of the time range (inclusive)."),
-    to: z
-      .string()
-      .optional()
-      .describe("ISO 8601 end of the time range (exclusive)."),
-    timezone: z
-      .string()
-      .optional()
-      .describe(
-        "IANA timezone used to bucket results, e.g. `America/New_York`.",
-      ),
-  }),
+export const linkContactsPublicRequest = withLegacyDateRangeAliases(
+  withPublicPaging(
+    z.object({
+      linkId: z.string().describe("Magic link or ref link id."),
+      from: z
+        .string()
+        .optional()
+        .describe(
+          "ISO 8601 start of the time range (inclusive). Accepts the deprecated `startDate` name too.",
+        ),
+      to: z
+        .string()
+        .optional()
+        .describe(
+          "ISO 8601 end of the time range (exclusive). Accepts the deprecated `endDate` name too.",
+        ),
+      timezone: z
+        .string()
+        .optional()
+        .describe(
+          "IANA timezone used to bucket results, e.g. `America/New_York`.",
+        ),
+    }),
+  ),
 )
 
 /**

@@ -6,7 +6,7 @@ function buildQueryString(params: Record<string, string>): string {
   return qs ? `?${qs}` : ""
 }
 
-const NO_BODY_METHODS: Record<string, true> = { GET: true, HEAD: true }
+const NO_BODY_METHODS = new Set(["GET", "HEAD"])
 
 export async function executeDynamicCommand(
   tool: DynamicTool,
@@ -55,7 +55,7 @@ export async function executeDynamicCommand(
     : `${config.apiUrl}${tool.baseUrl}`
   const url = `${baseUrl}${path}${buildQueryString(queryArgs)}`
   const sendBody =
-    !NO_BODY_METHODS[tool.method] && tool.bodyParamNames.length > 0
+    !NO_BODY_METHODS.has(tool.method) && tool.bodyParamNames.length > 0
 
   const response = await fetch(url, {
     method: tool.method,

@@ -603,14 +603,21 @@ describe("public API spec — operation naming guard", () => {
     expect(invalidPathParams).toEqual([])
   })
 
-  // House rule (docs/developer/workspace-api-tokens.md): PUT replaces a
-  // resource wholesale (body has required fields — omitting one would leave
-  // the resource in an undefined state), PATCH merges a partial change
-  // (every body field optional). Scoped to routes whose last path segment
-  // is the resource's own id/name placeholder — a sub-resource setter like
-  // `/{id}/enabled` or a collection route like `/v1/bot-fields` doesn't
-  // address "the whole resource" the same way, so the rule doesn't apply
-  // there; both are already excluded by the trailing-path-param check.
+  // House rule (docs/developer/workspace-api-tokens.md, "PUT vs. PATCH on a
+  // resource's own id"): PUT replaces a resource wholesale (body has
+  // required fields — omitting one would leave the resource in an undefined
+  // state), PATCH merges a partial change (every body field optional).
+  // Scoped to routes whose last path segment is the resource's own id/name
+  // placeholder — a sub-resource setter like `/{id}/enabled` or a
+  // collection route like `/v1/bot-fields` doesn't address "the whole
+  // resource" the same way, so the rule doesn't apply there; both are
+  // already excluded by the trailing-path-param check.
+  //
+  // Blind spot this mechanical check cannot see (see the doc section above
+  // for the full explanation): a zod `.default(...)` field drops out of
+  // `required` exactly like a genuinely optional one, so a PUT can pass this
+  // guard while still silently wiping every defaulted field a caller omits.
+  // Checking that requires reading the handler, not the generated schema.
 
   test("every PUT/PATCH addressing a resource by its trailing path id matches its body's required-ness", () => {
     const resourceAddressedMutations = operations.filter(

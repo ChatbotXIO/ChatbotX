@@ -125,6 +125,39 @@ permissions and calls the same `contactService.list` method — see
 contacts or contact-derived data, make the intended scope explicit in the
 API contract and tests.
 
+### PUT vs. PATCH on a resource's own id
+
+House rule, enforced by
+`apps/builder/__tests__/public-spec-operations.test.ts` ("every PUT/PATCH
+addressing a resource by its trailing path id matches its body's
+required-ness"): **PUT replaces a resource wholesale** — every body field is
+required, because omitting one would leave the resource in an undefined
+state — **PATCH merges a partial change** — every body field is optional,
+and an omitted field is left untouched. This only applies to a route whose
+last path segment is the resource's own id/name placeholder
+(`/v1/products/{id}`); a sub-resource setter (`/{id}/enabled`) or a
+collection route (`/v1/bot-fields`) doesn't address "the whole resource" the
+same way, and the guard skips both.
+
+Two things the guard's `required.length` check cannot see, so a reviewer has
+to check them by hand:
+
+- **A zod `.default(...)` field is indistinguishable from a genuinely
+  optional one** in the generated JSON Schema — both drop out of `required`.
+  A PUT whose schema has one truly-required field and twenty defaulted ones
+  passes the guard, but if the handler does a full-column overwrite (as
+  opposed to only touching the fields present in the parsed body), every
+  defaulted field the caller omits silently resets to its default. Before
+  adding a `.default()` to a field on a PUT body, confirm the handler
+  actually treats an omitted field as "leave it in its current value," not
+  "have zod fill this in and treat it as an explicit write."
+- **A body having a required field doesn't mean the body represents the
+  whole resource.** A narrow, single-purpose mutation (e.g. a rename
+  endpoint whose body is just `{name}`) can legitimately sit at the
+  resource's own path and pass the guard while still not being a true
+  "replace everything" PUT. That's a naming/semantics call for the route's
+  author, not something the guard enforces.
+
 ## Scope notes
 
 The full endpoint-to-scope mapping is generated, not hand-maintained here —
