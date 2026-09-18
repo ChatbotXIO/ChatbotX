@@ -163,10 +163,18 @@ function CallRow({
     context: "Whatsapp calls table",
   })
 
+  // One href for both ways into the call's conversation: the contact cell
+  // (what a reader reaches for first) and the explicit open-conversation
+  // button at the end of the row.
+  const conversationHref = `/space/${workspaceId}/inbox?conversationId=${row.conversationId}`
+
   return (
     <TableRow>
       <TableCell>
-        <div className="flex items-center gap-2">
+        <Link
+          className="flex items-center gap-2 hover:underline"
+          href={conversationHref}
+        >
           <Avatar className="size-7">
             <AvatarImage src={row.contact.avatar ?? undefined} />
             <AvatarFallback>
@@ -176,7 +184,7 @@ function CallRow({
           <span className="truncate">
             {row.contact.fullName ?? t("unknownContact")}
           </span>
-        </div>
+        </Link>
       </TableCell>
       <TableCell className="text-muted-foreground">{row.inbox.name}</TableCell>
       <TableCell>
@@ -217,7 +225,7 @@ function CallRow({
           <Link
             aria-label={t("openConversation")}
             className={cn(buttonVariants({ size: "icon", variant: "ghost" }))}
-            href={`/space/${workspaceId}/inbox?conversationId=${row.conversationId}`}
+            href={conversationHref}
           >
             <ExternalLinkIcon aria-hidden className="size-4" />
           </Link>

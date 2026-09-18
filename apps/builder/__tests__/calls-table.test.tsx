@@ -147,4 +147,38 @@ describe("CallsTable", () => {
       ),
     ).toBe(false)
   })
+
+  test("the contact name links to that call's conversation in the inbox", () => {
+    render([baseRow({ conversationId: "conversation-9" })])
+    const contactLink = Array.from(container.querySelectorAll("a")).find(
+      (anchor) => anchor.textContent?.includes("Jane"),
+    )
+    expect(contactLink?.getAttribute("href")).toBe(
+      "/space/ws-1/inbox?conversationId=conversation-9",
+    )
+  })
+
+  test("the contact link and the open-conversation button point at the same conversation", () => {
+    render([baseRow({ conversationId: "conversation-9" })])
+    const hrefs = Array.from(container.querySelectorAll("a")).map((anchor) =>
+      anchor.getAttribute("href"),
+    )
+    expect(hrefs).toHaveLength(2)
+    expect(new Set(hrefs).size).toBe(1)
+  })
+
+  test("falls back to the unknown-contact label and still links to the conversation", () => {
+    render([
+      baseRow({
+        contact: { id: "contact-1", fullName: null, avatar: null },
+        conversationId: "conversation-9",
+      }),
+    ])
+    const contactLink = Array.from(container.querySelectorAll("a")).find(
+      (anchor) => anchor.textContent?.includes("unknownContact"),
+    )
+    expect(contactLink?.getAttribute("href")).toBe(
+      "/space/ws-1/inbox?conversationId=conversation-9",
+    )
+  })
 })

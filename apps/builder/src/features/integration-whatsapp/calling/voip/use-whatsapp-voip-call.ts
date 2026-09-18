@@ -960,8 +960,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   )
 
   // Ring-all: dismissing an incoming call is LOCAL only — the same offer is
-  // rung to every available agent (ring-all), so declining just silences it
-  // call for the others still ringing. The call ends for everyone only when
+  // rung to every available agent, so declining just silences it here and
+  // leaves it ringing for the others. The call ends for everyone only when
   // someone answers, the caller hangs up, or the deadline lapses (the worker
   // then Meta-rejects it as missed). No server action here.
   const dismiss = useCallback(
