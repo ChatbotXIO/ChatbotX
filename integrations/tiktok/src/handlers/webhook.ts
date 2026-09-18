@@ -103,6 +103,20 @@ async function handleCommentEvent(props: {
     return
   }
 
+  // `unique_identifier` is the only thing in the payload that identifies the
+  // commenter, and it is what keys their Contact. Falling back to
+  // `comment_id` would key the contact by the comment itself, so the same
+  // person would become a brand-new Contact on every comment they write —
+  // inflating MAC quota and making `replyToNewContactsOnly` fire every time.
+  // A comment nobody can be attributed to is dropped instead.
+  if (!content.unique_identifier) {
+    logger.warn(
+      { integrationIdentifier, commentId: content.comment_id },
+      "TikTok comment has no unique_identifier; cannot identify commenter",
+    )
+    return
+  }
+
   await queue?.add("incomingComment", {
     type: "incomingComment",
     data: {
@@ -114,7 +128,7 @@ async function handleCommentEvent(props: {
         // The webhook carries no open id, name or avatar — only this stable
         // per-commenter identifier. `receiveComment` enriches it from
         // `business/comment/list/` before a contact is created.
-        fromId: content.unique_identifier ?? content.comment_id,
+        fromId: content.unique_identifier,
         message: content.text,
         // `timestamp` is milliseconds; the envelope's `create_time` is already
         // seconds. Prefer the comment's own time so a webhook delayed by

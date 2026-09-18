@@ -205,6 +205,29 @@ describe("webhookHandler comment routing", () => {
     expect(queueAdd).not.toHaveBeenCalled()
   })
 
+  // `unique_identifier` keys the commenter's Contact. Falling back to
+  // `comment_id` would key it by the comment, so one person would become a new
+  // Contact on every comment — inflating MAC quota and firing
+  // `replyToNewContactsOnly` every time. Dropping the event is the lesser harm.
+  test("drops a comment that carries no unique_identifier", async () => {
+    await expect(
+      run(buildContent({ unique_identifier: undefined })),
+    ).resolves.toBe("ok")
+
+    expect(queueAdd).not.toHaveBeenCalled()
+  })
+
+  test("a deletion still routes without a unique_identifier", async () => {
+    await run(
+      buildContent({ comment_action: "delete", unique_identifier: undefined }),
+    )
+
+    expect(queueAdd).toHaveBeenCalledWith(
+      "deleteIncomingComment",
+      expect.anything(),
+    )
+  })
+
   test("still routes direct messages, untouched by the comment branch", async () => {
     await run(
       JSON.stringify({
