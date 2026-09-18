@@ -429,6 +429,38 @@ export const broadcastsPublicRouter = {
         }),
     ),
 
+  // Deprecated — use `broadcasts.duplicate` instead. Kept for backward
+  // compatibility with the pre-consolidation `/clone` path; hidden from
+  // MCP/CLI tool listings.
+  clone: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/broadcasts/{id}/clone",
+      summary: "Clone broadcast",
+      description:
+        "Deprecated — renamed to `broadcasts.duplicate` at `/duplicate`; this route does the same copy, kept only for callers still on the old path.",
+      successStatus: 201,
+      deprecated: true,
+      tags: ["Broadcasts"],
+    })
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Broadcast id. Get it from `broadcasts.list`.",
+        ),
+      }),
+    )
+    .output(publicBroadcastResource)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(
+      async ({ context, input }) =>
+        await broadcastService.cloneBroadcast({
+          workspaceId: context.workspace.id,
+          broadcastId: input.id,
+          canViewEmailAndPhone: TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE,
+        }),
+    ),
+
   delete: workspaceTokenAuthAPI
     .route({
       method: "DELETE",

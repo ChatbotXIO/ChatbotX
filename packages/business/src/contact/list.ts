@@ -210,3 +210,30 @@ export async function count(input: CountInput): Promise<{ total: number }> {
   const total = await contactRepository.count({ where })
   return { total }
 }
+
+// Back-compat for the deprecated `contacts.findByCustomField` alias — use
+// `contacts.list` with a `contactFilter` instead. `email`/`phone` are the
+// two magic `customFieldId` values the pre-consolidation endpoint accepted,
+// mapped onto their native columns; anything else addresses a real custom
+// field row.
+export async function listByCustomFieldValue(input: {
+  workspaceId: string
+  customFieldId: string
+  value: string
+}) {
+  const { workspaceId, customFieldId, value } = input
+  const where: Record<string, unknown> = { workspaceId }
+  if (customFieldId === "email") {
+    where.email = value
+  } else if (customFieldId === "phone") {
+    where.phoneNumber = value
+  } else {
+    where.contactCustomFields = { customFieldId, value }
+  }
+
+  return await contactRepository.listPublicByCustomField({
+    where,
+    limit: 100,
+    orderBy: { updatedAt: "desc" },
+  })
+}

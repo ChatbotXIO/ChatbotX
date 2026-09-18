@@ -158,6 +158,38 @@ to check them by hand:
   "replace everything" PUT. That's a naming/semantics call for the route's
   author, not something the guard enforces.
 
+### Deprecated back-compat aliases
+
+Removing or renaming a released endpoint (path, method, or operation name)
+is a breaking change for any existing API-token caller — the public surface
+is under a compatibility guarantee. Instead of deleting the old route
+outright, add it back as a `deprecated: true` alias that delegates to the
+same handler/service call as its canonical sibling (no duplicated business
+logic): see `inboxes.listChannels`, `contacts.search`,
+`contacts.findByCustomField`, `contacts.setCustomFieldLegacy`,
+`contacts.updateLegacy`, `ads.toggleRuleStatus`, `ads.updateRuleLegacy`,
+`botFields.bulkUpdate`, `templateMessages.list`, and `broadcasts.clone` for
+the pattern.
+
+`apps/mcp-server/src/openapi-loader.ts` skips any operation with
+`deprecated: true` when building MCP tools, so an alias stays callable over
+REST for existing integrations while staying hidden from MCP/CLI tool
+listings — new agent-facing surface stays on the canonical name only.
+
+A method-flip alias (the old route reused the same path with a different
+HTTP method, e.g. `PUT` where the canonical route is now `PATCH`) needs its
+own operationId — `operationId` derives from the router key, and two
+operations can't share a path+method pair under the same key. The
+`<name>Legacy` suffix is the convention (`contacts.updateLegacy`,
+`ads.updateRuleLegacy`).
+
+One specific case worth calling out: `inboxes.listChannels` (`GET
+/v1/channels`) returned the external/platform-side id (e.g. a TikTok
+username) *as* `id`. The canonical `inboxes.list` returns the internal
+inbox id as `id` and exposes that external id as `sourceId` instead — a
+caller migrating off the deprecated route needs to read a different field,
+not just change the URL.
+
 ## Scope notes
 
 The full endpoint-to-scope mapping is generated, not hand-maintained here —

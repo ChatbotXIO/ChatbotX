@@ -1,5 +1,4 @@
 import { FieldOperationType } from "@chatbotx.io/flow-config"
-import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 // The public API speaks friendly operation names (`increase`, not the
@@ -26,9 +25,12 @@ export const publicFieldOperationNameToCode: Record<
 }
 
 const contactCustomFieldOperationPublicRequest = z.object({
-  customFieldId: zodBigintAsString().describe(
-    "Custom field id (numeric string). Get it from `customFields.list`.",
-  ),
+  customFieldId: z
+    .string()
+    .min(1)
+    .describe(
+      "Custom field id (numeric string) or field name. Get either from `customFields.list`.",
+    ),
   operation: publicFieldOperationNames.describe(
     "Operation to apply. `increase`/`decrease` treat the current value as a number and are a no-op if it isn't.",
   ),

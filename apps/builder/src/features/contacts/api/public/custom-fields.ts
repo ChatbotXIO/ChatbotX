@@ -3,6 +3,7 @@ import {
   contactService,
   customFieldService,
 } from "@chatbotx.io/business"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
@@ -151,13 +152,55 @@ export const contactsCustomFieldsPublicRouter = {
       })
     }),
 
+  // Deprecated — use `contacts.setCustomField` instead. Kept for backward
+  // compatibility with the pre-consolidation `POST .../{customFieldId}`
+  // path and method; hidden from MCP/CLI tool listings.
+  setCustomFieldLegacy: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
+      summary: "Set contact custom field value",
+      description:
+        "Deprecated — `contacts.setCustomField` now covers this at `PUT .../custom-fields/{idOrName}`, addressed by id or name; this POST route only ever accepted a numeric id.",
+      successStatus: 204,
+      deprecated: true,
+      tags: ["Contacts"],
+    })
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        customFieldId: zodBigintAsString().describe(
+          "Custom field id (numeric string). Get it from `customFields.list`.",
+        ),
+        value: z.string().trim().describe("New value for the custom field."),
+      }),
+    )
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const contactId = await contactService.resolveIdByIdentifier({
+        identifier: input.identifier,
+        workspaceId: context.workspace.id,
+      })
+      await contactCustomFieldService.setValueForContact({
+        workspaceId: context.workspace.id,
+        contactId,
+        customFieldId: input.customFieldId,
+        value: input.value,
+      })
+    }),
+
   applyCustomFieldOperations: workspaceTokenAuthAPI
     .route({
       method: "PATCH",
       path: "/v1/contacts/{identifier}/custom-fields",
       summary: "Apply arithmetic/append operations to custom field",
       description:
-        'Applies a batch of operations to one or more custom fields on the contact, in the given order. Each operation is one of `set`, `append`, `prepend`, `increase`, `decrease`: `set` overwrites the current value, `append`/`prepend` concatenate onto it, and `increase`/`decrease` treat the current value as a number (no-op if it is not numeric). This is the batch equivalent of `contacts.setCustomField` for changing several fields in one call. Example: `{"operations":[{"customFieldId":"123","operation":"increase","value":"1"}]}` to increment a numeric field.',
+        'Applies a batch of operations to one or more custom fields on the contact, in the given order, each addressed by id or name. Each operation is one of `set`, `append`, `prepend`, `increase`, `decrease`: `set` overwrites the current value, `append`/`prepend` concatenate onto it, and `increase`/`decrease` treat the current value as a number (no-op if it is not numeric). This is the batch equivalent of `contacts.setCustomField` for changing several fields in one call. Example: `{"operations":[{"customFieldId":"123","operation":"increase","value":"1"}]}` to increment a numeric field.',
       successStatus: 204,
       tags: ["Contacts"],
     })
@@ -170,14 +213,28 @@ export const contactsCustomFieldsPublicRouter = {
         workspaceId,
       })
 
+      // Resolved outside `applyOperations`' own transaction — a field
+      // deleted between this lookup and the write already throws
+      // `notFoundException` inside that transaction and rolls back, so a
+      // `tx`-aware lookup here would buy nothing.
+      const operations = await Promise.all(
+        input.operations.map(async (op) => {
+          const field = await customFieldService.findByKeyOrFail({
+            workspaceId,
+            key: op.customFieldId,
+          })
+          return {
+            customFieldId: field.id,
+            operation: publicFieldOperationNameToCode[op.operation],
+            value: op.value,
+          }
+        }),
+      )
+
       await contactCustomFieldService.applyOperations({
         workspaceId,
         contactId,
-        operations: input.operations.map((op) => ({
-          customFieldId: op.customFieldId,
-          operation: publicFieldOperationNameToCode[op.operation],
-          value: op.value,
-        })),
+        operations,
       })
     }),
 

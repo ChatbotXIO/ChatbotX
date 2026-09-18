@@ -144,7 +144,17 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "PATCH",
+    "operationId": "ads.toggleRuleStatus",
+    "path": "/v1/ads/conversion-rules/{id}/status",
+  },
+  {
+    "method": "PATCH",
     "operationId": "ads.updateRule",
+    "path": "/v1/ads/conversion-rules/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "ads.updateRuleLegacy",
     "path": "/v1/ads/conversion-rules/{id}",
   },
   {
@@ -478,6 +488,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/appointments",
   },
   {
+    "method": "PUT",
+    "operationId": "botFields.bulkUpdate",
+    "path": "/v1/bot-fields/bulk-update",
+  },
+  {
     "method": "POST",
     "operationId": "botFields.create",
     "path": "/v1/bot-fields",
@@ -506,6 +521,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "botFields.setMany",
     "path": "/v1/bot-fields",
+  },
+  {
+    "method": "POST",
+    "operationId": "broadcasts.clone",
+    "path": "/v1/broadcasts/{id}/clone",
   },
   {
     "method": "POST",
@@ -684,6 +704,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "contacts.findByCustomField",
+    "path": "/v1/contacts/find-by-custom-field",
+  },
+  {
+    "method": "GET",
     "operationId": "contacts.get",
     "path": "/v1/contacts/{identifier}",
   },
@@ -769,6 +794,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "contacts.search",
+    "path": "/v1/contacts/search",
+  },
+  {
+    "method": "POST",
     "operationId": "contacts.sendFlow",
     "path": "/v1/contacts/{identifier}/flows",
   },
@@ -781,6 +811,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "contacts.setCustomField",
     "path": "/v1/contacts/{identifier}/custom-fields/{idOrName}",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.setCustomFieldLegacy",
+    "path": "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
   },
   {
     "method": "PUT",
@@ -815,6 +850,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   {
     "method": "PATCH",
     "operationId": "contacts.update",
+    "path": "/v1/contacts/{identifier}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "contacts.updateLegacy",
     "path": "/v1/contacts/{identifier}",
   },
   {
@@ -1256,6 +1296,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "inboxes.list",
     "path": "/v1/inboxes",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboxes.listChannels",
+    "path": "/v1/channels",
   },
   {
     "method": "POST",
@@ -1806,6 +1851,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PUT",
     "operationId": "tags.update",
     "path": "/v1/tags/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "templateMessages.list",
+    "path": "/v1/template-messages",
   },
   {
     "method": "GET",

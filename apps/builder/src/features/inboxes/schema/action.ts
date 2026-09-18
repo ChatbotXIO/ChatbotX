@@ -26,3 +26,25 @@ export const publicListInboxResponse = z.object({
   pageCount: z.number(),
 })
 export type PublicListInboxResponse = z.infer<typeof publicListInboxResponse>
+
+// Back-compat for the deprecated `GET /v1/channels` alias (see
+// `inboxesPublicRouter.listChannels`): the pre-consolidation response
+// exposed `sourceId` as `id`, which is not always numeric (e.g. TikTok uses
+// the account username).
+export const publicListInboxesResponse = z.object({
+  data: z.array(
+    inboxResource
+      .pick({
+        name: true,
+        channel: true,
+        status: true,
+      })
+      .extend({
+        id: z.string(),
+      }),
+  ),
+  pageCount: z.number(),
+})
+export type PublicListInboxesResponse = z.infer<
+  typeof publicListInboxesResponse
+>

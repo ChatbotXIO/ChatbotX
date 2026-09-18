@@ -413,6 +413,7 @@ describe("PATCH /v1/contacts/{identifier}/custom-fields", () => {
   )
 
   test("maps friendly operation names to internal FieldOperationType codes", async () => {
+    findCustomFieldByKeyOrFail.mockResolvedValueOnce({ id: "cf-1" })
     applyCustomFieldOperations.mockResolvedValue(undefined)
 
     await procedure.handler?.({
@@ -425,6 +426,10 @@ describe("PATCH /v1/contacts/{identifier}/custom-fields", () => {
       },
     })
 
+    expect(findCustomFieldByKeyOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      key: "cf-1",
+    })
     expect(applyCustomFieldOperations).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       contactId: "contact-1",
@@ -432,7 +437,47 @@ describe("PATCH /v1/contacts/{identifier}/custom-fields", () => {
     })
   })
 
+  test("resolves each operation's field by id or name before applying", async () => {
+    findCustomFieldByKeyOrFail
+      .mockResolvedValueOnce({ id: "cf-1" })
+      .mockResolvedValueOnce({ id: "cf-2" })
+    applyCustomFieldOperations.mockResolvedValue(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        identifier: "id:123",
+        operations: [
+          {
+            customFieldId: "Loyalty Points",
+            operation: "increase",
+            value: "1",
+          },
+          { customFieldId: "cf-2", operation: "set", value: "x" },
+        ],
+      },
+    })
+
+    expect(findCustomFieldByKeyOrFail).toHaveBeenNthCalledWith(1, {
+      workspaceId: "workspace-1",
+      key: "Loyalty Points",
+    })
+    expect(findCustomFieldByKeyOrFail).toHaveBeenNthCalledWith(2, {
+      workspaceId: "workspace-1",
+      key: "cf-2",
+    })
+    expect(applyCustomFieldOperations).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      operations: [
+        { customFieldId: "cf-1", operation: "O04", value: "1" },
+        { customFieldId: "cf-2", operation: "O01", value: "x" },
+      ],
+    })
+  })
+
   test("makes a single applyOperations call carrying every operation in order", async () => {
+    findCustomFieldByKeyOrFail.mockResolvedValue({ id: "cf-1" })
     applyCustomFieldOperations.mockResolvedValue(undefined)
 
     await procedure.handler?.({

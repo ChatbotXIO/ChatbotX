@@ -182,6 +182,73 @@ export const botFieldsPublicRouter = {
       })
     }),
 
+  // Deprecated — use `botFields.setMany` instead. Kept for backward
+  // compatibility with the pre-consolidation `/bulk-update` path; hidden
+  // from MCP/CLI tool listings. Body shape mirrors `setMany`'s legacy `key`
+  // branch.
+  bulkUpdate: workspaceTokenAuthAPI
+    .route({
+      method: "PUT",
+      path: "/v1/bot-fields/bulk-update",
+      summary: "Bulk update bot field values",
+      description:
+        "Deprecated — `botFields.setMany` now accepts the same entries (by id or name) at `PUT /v1/bot-fields`; this dedicated `/bulk-update` path is kept only for callers that have not migrated.",
+      successStatus: 204,
+      deprecated: true,
+      tags: ["Bot Fields"],
+    })
+    .input(
+      z.object({
+        fields: z
+          .array(
+            z.union([
+              z.object({
+                id: z.coerce
+                  .number()
+                  .int()
+                  .positive()
+                  .describe("Bot field id. Get it from `botFields.list`."),
+                value: z
+                  .union([z.string(), z.number()])
+                  .transform(String)
+                  .describe("New value for the bot field."),
+              }),
+              z.object({
+                name: z.string().max(255).describe("Bot field name."),
+                value: z
+                  .union([z.string(), z.number()])
+                  .transform(String)
+                  .describe("New value for the bot field."),
+              }),
+              z.object({
+                key: z.string().max(255).describe("Bot field name."),
+                value: z
+                  .union([z.string(), z.number()])
+                  .transform(String)
+                  .describe("New value for the bot field."),
+              }),
+            ]),
+          )
+          .describe("Bot fields to update, each addressed by id or name."),
+      }),
+    )
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const resolveKey = (field: (typeof input.fields)[number]): string => {
+        if ("id" in field) {
+          return String(field.id)
+        }
+        return "name" in field ? field.name : field.key
+      }
+      await botFieldService.bulkUpdateByKeys({
+        workspaceId: context.workspace.id,
+        updates: input.fields.map((field) => ({
+          key: resolveKey(field),
+          value: field.value,
+        })),
+      })
+    }),
+
   delete: workspaceTokenAuthAPI
     .route({
       method: "DELETE",

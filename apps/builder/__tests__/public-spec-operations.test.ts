@@ -446,6 +446,11 @@ describe("public API spec — operation naming guard", () => {
       "contacts.listMessages",
       "contacts.getMessage",
       "contacts.refreshProfile",
+      // Deprecated aliases sharing `contacts.list`'s response schema
+      // (`contactResponse`/`listContactsResponse`/`publicListContactsResponse`)
+      // — same pre-existing leak, not new.
+      "contacts.search",
+      "contacts.findByCustomField",
       "conversations.list",
       "coupons.listTopics",
       "coupons.createTopic",
@@ -619,11 +624,22 @@ describe("public API spec — operation naming guard", () => {
   // guard while still silently wiping every defaulted field a caller omits.
   // Checking that requires reading the handler, not the generated schema.
 
+  // Deprecated back-compat aliases for a route that flipped PUT→PATCH
+  // during the public-API consolidation: the alias keeps the OLD method
+  // (PUT) on the SAME merge-style handler as its PATCH canonical sibling —
+  // it never had "replace everything" semantics even when it was the only
+  // spelling, so it fails this house rule by construction, not by mistake.
+  const DEPRECATED_METHOD_FLIP_ALIASES = new Set<string>([
+    "ads.updateRuleLegacy",
+    "contacts.updateLegacy",
+  ])
+
   test("every PUT/PATCH addressing a resource by its trailing path id matches its body's required-ness", () => {
     const resourceAddressedMutations = operations.filter(
       (op) =>
         (op.method === "PUT" || op.method === "PATCH") &&
-        TRAILING_PATH_PARAM_PATTERN.test(op.path),
+        TRAILING_PATH_PARAM_PATTERN.test(op.path) &&
+        !DEPRECATED_METHOD_FLIP_ALIASES.has(op.operationId),
     )
 
     expect(resourceAddressedMutations.length).toBeGreaterThan(0)

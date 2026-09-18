@@ -62,6 +62,7 @@ const adsConversionService = {
   findOrFail: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
+  toggleEnabled: vi.fn(),
   remove: vi.fn(),
   getCtwaFunnel: vi.fn(),
   getCtwaFunnelTimeseries: vi.fn(),
@@ -207,6 +208,59 @@ describe("GET /v1/ads/conversion-rules/{id}", () => {
       id: "r1",
       workspaceId: "workspace-1",
     })
+  })
+})
+
+describe("PATCH /v1/ads/conversion-rules/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/ads/conversion-rules/{id}")
+
+  test("a lone `enabled` field toggles status without touching other fields", async () => {
+    adsConversionService.update.mockResolvedValueOnce({
+      id: "r1",
+      enabled: false,
+    })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "r1", enabled: false },
+    })
+
+    expect(adsConversionService.update).toHaveBeenCalledWith({
+      id: "r1",
+      enabled: false,
+      workspaceId: "workspace-1",
+    })
+    expect(result).toEqual({ id: "r1", enabled: false })
+  })
+})
+
+// Deprecated back-compat alias for the pre-consolidation `/status` path —
+// calls the same `toggleEnabled` service method the old dedicated route
+// did, kept distinct from `update` above (folding a toggle into `update`'s
+// merge semantics is the canonical route's job, not this alias's).
+describe("PATCH /v1/ads/conversion-rules/{id}/status (deprecated alias)", () => {
+  const procedure = findProcedure(
+    "PATCH",
+    "/v1/ads/conversion-rules/{id}/status",
+  )
+
+  test("delegates to toggleEnabled, scoped to context's workspace", async () => {
+    adsConversionService.toggleEnabled.mockResolvedValueOnce({
+      id: "r1",
+      enabled: true,
+    })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "r1", enabled: true },
+    })
+
+    expect(adsConversionService.toggleEnabled).toHaveBeenCalledWith({
+      id: "r1",
+      enabled: true,
+      workspaceId: "workspace-1",
+    })
+    expect(result).toEqual({ id: "r1", enabled: true })
   })
 })
 

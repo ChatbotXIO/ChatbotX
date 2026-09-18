@@ -23,7 +23,12 @@ import {
   importContactsPublicResponse,
   listContactsPublicRequest,
 } from "../../schema/public/crud"
-import { contactResponse, listContactsResponse } from "../../schema/query"
+import {
+  contactResponse,
+  listContactsResponse,
+  publicListContactsByCustomFieldRequest,
+  publicListContactsResponse,
+} from "../../schema/query"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
@@ -41,6 +46,33 @@ export const contactsCrudPublicRouter = {
     .input(listContactsPublicRequest)
     .output(listContactsResponse)
     .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) => {
+      const { include, withCount, ...rest } = input
+      return await contactService.list({
+        ...rest,
+        workspaceId: context.workspace.id,
+        scope: UNSCOPED,
+        include,
+        withCount,
+      })
+    }),
+
+  // Deprecated — use `contacts.list` instead (same filter shape, as a
+  // query-string request). Kept for backward compatibility with the
+  // pre-consolidation `/search` path; hidden from MCP/CLI tool listings.
+  search: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/contacts/search",
+      summary: "Search contacts with filter body",
+      description:
+        "Deprecated — `contacts.list` accepts the identical `contactFilter` shape as a query-string request; this POST-with-body variant is kept only for callers that have not migrated.",
+      tags: ["Contacts"],
+      deprecated: true,
+    })
+    .input(listContactsPublicRequest)
+    .output(listContactsResponse)
+    .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const { include, withCount, ...rest } = input
       return await contactService.list({
@@ -130,6 +162,30 @@ export const contactsCrudPublicRouter = {
       })
     }),
 
+  // Deprecated — use `contacts.list` with a `contactFilter` instead. Kept
+  // for backward compatibility with the pre-consolidation
+  // `/find-by-custom-field` path; hidden from MCP/CLI tool listings.
+  findByCustomField: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/contacts/find-by-custom-field",
+      summary: "List contacts by custom field",
+      description:
+        "Deprecated — `contacts.list` with a `contactFilter` covers every case this route did, including the `email`/`phone` custom-field values; this dedicated route is kept only for callers that have not migrated.",
+      deprecated: true,
+      tags: ["Contacts"],
+    })
+    .input(publicListContactsByCustomFieldRequest)
+    .output(publicListContactsResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(
+      async ({ context, input }) =>
+        await contactService.listByCustomFieldValue({
+          ...input,
+          workspaceId: context.workspace.id,
+        }),
+    ),
+
   import: workspaceTokenAuthAPI
     .route({
       method: "POST",
@@ -162,6 +218,45 @@ export const contactsCrudPublicRouter = {
       description:
         "Overwrites the given standard and/or custom fields on the contact identified by `identifier`; fields omitted from the body are left unchanged.",
       successStatus: 204,
+      tags: ["Contacts"],
+    })
+    .input(
+      z
+        .object({
+          identifier: z
+            .string()
+            .min(1)
+            .describe(
+              "Contact identifier: the numeric contact id, an email address, or a phone number.",
+            ),
+        })
+        .and(updateContactFieldRequest),
+    )
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const { identifier, ...fields } = input
+      const contactId = await contactService.resolveIdByIdentifier({
+        identifier,
+        workspaceId: context.workspace.id,
+      })
+      await contactService.updateFieldsAndCustomFields(
+        { workspaceId: context.workspace.id, id: contactId },
+        fields,
+      )
+    }),
+
+  // Deprecated — use `contacts.update` instead. Kept for backward
+  // compatibility with the pre-consolidation `PUT` method on this path;
+  // hidden from MCP/CLI tool listings.
+  updateLegacy: workspaceTokenAuthAPI
+    .route({
+      method: "PUT",
+      path: "/v1/contacts/{identifier}",
+      summary: "Update contact fields",
+      description:
+        "Deprecated — this route used PUT for the same merge-style update `contacts.update` (PATCH) performs today; omitted fields were always left unchanged on both.",
+      successStatus: 204,
+      deprecated: true,
       tags: ["Contacts"],
     })
     .input(

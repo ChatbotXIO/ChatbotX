@@ -222,6 +222,35 @@ describe("contactCustomFieldService.applyOperationToContacts — event ordering"
     expect(mocks.updateSet).not.toHaveBeenCalled()
     expect(mocks.emitCustomFieldChanged).not.toHaveBeenCalled()
   })
+
+  // `contacts.setCustomFields` (deleted by the public-API consolidation;
+  // `contacts.applyCustomFieldOperations` is the surviving batch route)
+  // called `setValues`, whose `writeValues` step runs every value through
+  // `normalizeCustomFieldValueForStorage` (type coercion, temporal
+  // parsing/timezone resolution) before persisting.
+  // `applyOperationToContacts`/`applyOperations` predate this PR and never
+  // called that normalizer — they persist `computeUpdatedFieldValue`'s raw
+  // string as-is. This is not a regression introduced by the consolidation
+  // (the gap pre-existed on `main`), but it is a real behavioral difference
+  // between the two batch-write paths worth pinning: a caller migrating
+  // from `setCustomFields` to `applyCustomFieldOperations` for a
+  // date/datetime-typed field loses `setValues`'s temporal normalization.
+  test("persists the raw computed value without type/temporal normalization", async () => {
+    txHandle.query.contactCustomFieldModel.findMany = vi.fn(async () => [])
+
+    await contactCustomFieldService.applyOperationToContacts({
+      workspaceId: "ws-1",
+      contactIds: ["contact-1"],
+      customFieldId: "cf-1",
+      operation: "set" as never,
+      value: "not-a-normalized-date",
+      sourceTimezone: "Asia/Ho_Chi_Minh",
+    })
+
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ value: "not-a-normalized-date" }),
+    )
+  })
 })
 
 describe("contactCustomFieldService.applyOperations — batch atomicity", () => {
