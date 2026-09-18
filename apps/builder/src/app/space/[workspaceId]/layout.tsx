@@ -1,4 +1,5 @@
 import {
+  inboxService,
   integrationService,
   isPlatformAdmin,
   isSuperAdmin,
@@ -14,6 +15,7 @@ import {
   SidebarTrigger,
 } from "@chatbotx.io/ui/components/ui/sidebar"
 import { getIdFromParams } from "@chatbotx.io/utils"
+import { CALL_CAPABLE_CHANNELS } from "@chatbotx.io/utils/channel"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
@@ -84,6 +86,7 @@ export default async function WorkspaceLayout({
     { blocked, blockReason, quota, trialEndsAt },
     usage,
     tokenRefreshErrors,
+    hasCallCapableChannel,
   ] = await Promise.all([
     resolveWorkspaceBlockState(targetWorkspace.ownerId),
     cloud
@@ -93,6 +96,13 @@ export default async function WorkspaceLayout({
         })
       : null,
     integrationService.findTokenRefreshErrorsByWorkspaceId(workspaceId),
+    // Gates the sidebar's Calls entry only (see `callHistoryNavVisible`):
+    // a workspace that has never connected a call-capable channel can never
+    // have call rows, so the entry would lead to a permanently empty page.
+    inboxService.hasAnyChannel({
+      workspaceId,
+      channels: CALL_CAPABLE_CHANNELS,
+    }),
   ])
 
   await enforceWorkspaceNotScheduledForDeletionFromRequest(
@@ -135,6 +145,7 @@ export default async function WorkspaceLayout({
     scheduledForDeletion,
     cloud,
     blocked,
+    hasCallCapableChannel,
   })
 
   return (
@@ -151,7 +162,7 @@ export default async function WorkspaceLayout({
     >
       <AppSidebar
         allWorkspaces={allWorkspaces}
-        callHistoryEnabled={realtimeGates.callHistoryEnabled}
+        callHistoryNavVisible={realtimeGates.callHistoryNavVisible}
         isPlatformAdmin={platformAdmin}
         isSuperAdmin={isSuperAdmin(user)}
         permissions={targetWorkspaceMember.permissions}

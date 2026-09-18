@@ -16,6 +16,16 @@ export type WorkspaceRealtimeGates = {
   callingEnabled: boolean
   /** The Calls page / call history and artifacts (D4). */
   callHistoryEnabled: boolean
+  /**
+   * Whether the sidebar offers the Calls page at all. Narrower than
+   * {@link callHistoryEnabled} by design: that flag also mounts
+   * `WhatsappCallInfoSheet`, which any call card's Transcript / AI Summary
+   * button opens — gating the sheet on the workspace's channels would leave
+   * those buttons inert for anyone who reached `/calls` by URL. So the
+   * channel check narrows the NAV ENTRY only; the page itself stays
+   * reachable and renders its empty state.
+   */
+  callHistoryNavVisible: boolean
 }
 
 export type ResolveWorkspaceRealtimeGatesInput = {
@@ -24,6 +34,13 @@ export type ResolveWorkspaceRealtimeGatesInput = {
   scheduledForDeletion: boolean
   cloud: boolean
   blocked: boolean
+  /**
+   * Whether the workspace has ever connected a channel that can produce
+   * calls (`CALL_CAPABLE_CHANNELS`, resolved by the caller via
+   * `inboxService.hasAnyChannel`). Passed in as plain data to keep this
+   * function pure and channel-agnostic.
+   */
+  hasCallCapableChannel: boolean
 }
 
 /**
@@ -38,7 +55,12 @@ export function resolveWorkspaceRealtimeGates({
   scheduledForDeletion,
   cloud,
   blocked,
+  hasCallCapableChannel,
 }: ResolveWorkspaceRealtimeGatesInput): WorkspaceRealtimeGates {
+  const callHistoryEnabled =
+    hasContactsAccess(permissions) ||
+    hasWorkspacePermission(permissions, "analytics")
+
   return {
     realtimeEnabled: true,
     callingEnabled:
@@ -46,8 +68,7 @@ export function resolveWorkspaceRealtimeGates({
       !isSupportSession &&
       !scheduledForDeletion &&
       !(cloud && blocked),
-    callHistoryEnabled:
-      hasContactsAccess(permissions) ||
-      hasWorkspacePermission(permissions, "analytics"),
+    callHistoryEnabled,
+    callHistoryNavVisible: callHistoryEnabled && hasCallCapableChannel,
   }
 }

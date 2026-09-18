@@ -6,6 +6,7 @@ const baseInput = {
   scheduledForDeletion: false,
   cloud: false,
   blocked: false,
+  hasCallCapableChannel: true,
 }
 
 describe("resolveWorkspaceRealtimeGates", () => {
@@ -110,5 +111,46 @@ describe("resolveWorkspaceRealtimeGates", () => {
       blocked: true,
     })
     expect(gates.callingEnabled).toBe(true)
+  })
+})
+
+describe("callHistoryNavVisible", () => {
+  test("is hidden when the workspace has no call-capable channel, even with full access", () => {
+    const gates = resolveWorkspaceRealtimeGates({
+      ...baseInput,
+      permissions: { superAdmin: true },
+      hasCallCapableChannel: false,
+    })
+    expect(gates.callHistoryNavVisible).toBe(false)
+    // The page and the call-artifact sheet stay reachable — only the nav
+    // entry is narrowed.
+    expect(gates.callHistoryEnabled).toBe(true)
+  })
+
+  test("is hidden when the member lacks call-history access, even with a call-capable channel", () => {
+    const gates = resolveWorkspaceRealtimeGates({
+      ...baseInput,
+      permissions: {},
+      hasCallCapableChannel: true,
+    })
+    expect(gates.callHistoryNavVisible).toBe(false)
+  })
+
+  test("is visible only when both access and a call-capable channel are present", () => {
+    const gates = resolveWorkspaceRealtimeGates({
+      ...baseInput,
+      permissions: { contacts: true },
+      hasCallCapableChannel: true,
+    })
+    expect(gates.callHistoryNavVisible).toBe(true)
+  })
+
+  test("stays visible for an analytics-only member of a call-capable workspace", () => {
+    const gates = resolveWorkspaceRealtimeGates({
+      ...baseInput,
+      permissions: { analytics: true },
+      hasCallCapableChannel: true,
+    })
+    expect(gates.callHistoryNavVisible).toBe(true)
   })
 })

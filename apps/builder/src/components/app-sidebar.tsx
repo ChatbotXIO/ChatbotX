@@ -47,10 +47,9 @@ type SidebarNavItem = {
   url: string
   icon: LucideIcon
   permission: WorkspacePermissionKey
-  /** Only present for items whose visibility rule isn't the default
-   * single-permission check below — e.g. Calls, gated on plan D4's
-   * `hasContactsAccess || analytics` (`callHistoryEnabled`), computed once
-   * in the workspace layout via `resolveWorkspaceRealtimeGates`. */
+  /** Only present for items with an extra visibility rule beyond the
+   * permission check below — computed once in the workspace layout via
+   * `resolveWorkspaceRealtimeGates`. */
   visible?: boolean
 }
 
@@ -59,7 +58,7 @@ const SETTINGS_GENERAL_URL_SEGMENT = "/settings/general"
 export function AppSidebar({
   workspaceId,
   allWorkspaces,
-  callHistoryEnabled,
+  callHistoryNavVisible,
   isSuperAdmin,
   isPlatformAdmin,
   permissions,
@@ -69,8 +68,9 @@ export function AppSidebar({
 }: ComponentProps<typeof Sidebar> & {
   workspaceId: string
   allWorkspaces: WorkspaceResource[]
-  /** P5 item 6 (plan D4) — gates the Calls nav item. */
-  callHistoryEnabled: boolean
+  /** Gates the Calls nav item: call-history permission AND a connected
+   * call-capable channel. */
+  callHistoryNavVisible: boolean
   isSuperAdmin?: boolean
   isPlatformAdmin?: boolean
   // Runtime may be a partial object (the jsonb column defaults to `{}`);
@@ -124,7 +124,7 @@ export function AppSidebar({
         url: `/space/${workspaceId}/calls`,
         icon: PhoneCallIcon,
         permission: PERMISSION_NAV.contacts,
-        visible: callHistoryEnabled,
+        visible: callHistoryNavVisible,
       },
       {
         title: t("keywords.title"),
@@ -173,9 +173,8 @@ export function AppSidebar({
 
   const isNavItemVisible = (item: SidebarNavItem): boolean => {
     // `visible` overrides the default single-permission gate below for an
-    // item whose visibility rule isn't a plain permission flag (Calls: plan
-    // D4's `hasContactsAccess || analytics`, computed by the layout as
-    // `callHistoryEnabled`).
+    // item whose rule isn't a plain permission flag (Calls, see
+    // `callHistoryNavVisible`).
     if (item.visible !== undefined) {
       return item.visible
     }

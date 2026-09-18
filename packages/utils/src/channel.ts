@@ -109,6 +109,16 @@ export type ChannelCapability = {
   requiresCredential: boolean
   /** Relative display order in the picker and the settings accordion. */
   order: number
+  /**
+   * Whether the channel carries voice calls, i.e. whether connecting it can
+   * ever produce call history. Gates call-only navigation (the Calls page
+   * entry) so a workspace that only runs, say, Telegram is not offered a
+   * page that can never have rows. Only WhatsApp has a calling API today;
+   * being part of this exhaustive record means a future calling channel
+   * fails to compile until it declares its answer here, rather than
+   * silently inheriting `false`.
+   */
+  callable: boolean
 }
 
 export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
@@ -117,60 +127,70 @@ export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
     manageable: true,
     requiresCredential: true,
     order: 1,
+    callable: true,
   },
   messenger: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
     order: 2,
+    callable: false,
   },
   instagram: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
     order: 3,
+    callable: false,
   },
   threads: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
     order: 4,
+    callable: false,
   },
   tiktok: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
     order: 5,
+    callable: false,
   },
   telegram: {
     creatable: true,
     manageable: true,
     requiresCredential: false,
     order: 6,
+    callable: false,
   },
   zalo: {
     creatable: true,
     manageable: true,
     requiresCredential: true,
     order: 7,
+    callable: false,
   },
   webchat: {
     creatable: true,
     manageable: true,
     requiresCredential: false,
     order: 8,
+    callable: false,
   },
   smtp: {
     creatable: false,
     manageable: true,
     requiresCredential: false,
     order: 9,
+    callable: false,
   },
   api: {
     creatable: true,
     manageable: true,
     requiresCredential: false,
     order: 10,
+    callable: false,
   },
   // Not a real connectable channel — the fallback icon/label for unknown
   // channel strings (see `InboxIcon`'s `isChannelType` guard). Never offered
@@ -180,6 +200,7 @@ export const CHANNEL_CAPABILITIES: Record<ChannelType, ChannelCapability> = {
     manageable: false,
     requiresCredential: false,
     order: 11,
+    callable: false,
   },
 }
 
@@ -201,6 +222,16 @@ export const CREATABLE_CHANNELS: ChannelType[] = channelTypes.options
  */
 export const MANAGEABLE_CHANNELS: ChannelType[] = channelTypes.options
   .filter((channel) => CHANNEL_CAPABILITIES[channel].manageable)
+  .sort((a, b) => CHANNEL_CAPABILITIES[a].order - CHANNEL_CAPABILITIES[b].order)
+
+/**
+ * Channels that can produce call history, in display order. Derived from
+ * `CHANNEL_CAPABILITIES.callable` rather than hardcoded so nothing outside
+ * that registry has to name a specific channel to answer "can this
+ * workspace ever have calls?".
+ */
+export const CALL_CAPABLE_CHANNELS: ChannelType[] = channelTypes.options
+  .filter((channel) => CHANNEL_CAPABILITIES[channel].callable)
   .sort((a, b) => CHANNEL_CAPABILITIES[a].order - CHANNEL_CAPABILITIES[b].order)
 
 /**
