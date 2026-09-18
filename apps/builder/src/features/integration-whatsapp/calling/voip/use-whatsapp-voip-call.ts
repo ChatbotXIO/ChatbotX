@@ -1431,17 +1431,19 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   }, [call, workspaceId])
 
   // D7 — warn before a navigation/reload/close would silently drop a call
-  // the agent is actively engaged with: answering an offer, dialing out
-  // (ringing or already connecting), or already on an active call — or
-  // would drop one or more still-unanswered rings sitting in the basket.
-  // Deliberately does NOT cover `incomingRinging`/`preparing`/`ended`: those
-  // are momentary or already over, and a bare unanswered offer is always
-  // represented by a non-empty basket entry (see `promoteRinging`), never by
-  // the slot alone.
+  // the agent is actively ENGAGED with: answering an offer, dialing out
+  // (ringing or already connecting), or already on an active call.
+  //
+  // Deliberately does NOT cover a merely-ringing basket. Under ring-all an
+  // offer reaches every online agent, so counting the basket made ANY
+  // inbound call block navigation, reload and tab-close for every agent in
+  // the workspace — including the ones with no intention of answering. And
+  // it guarded nothing: the resume-after-refresh fetch above re-discovers
+  // every still-unanswered offer on the next mount, so a reload mid-ring
+  // loses nothing to warn about.
   useEffect(() => {
     const shouldConfirmLeave =
-      (call !== null && LEAVE_CONFIRMATION_PHASES.has(call.phase)) ||
-      ringingCalls.length > 0
+      call !== null && LEAVE_CONFIRMATION_PHASES.has(call.phase)
     if (!shouldConfirmLeave) {
       return
     }
@@ -1451,7 +1453,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     }
     window.addEventListener("beforeunload", onBeforeUnload)
     return () => window.removeEventListener("beforeunload", onBeforeUnload)
-  }, [call, ringingCalls])
+  }, [call])
 
   // Client-driven liveness — while a call is `active` (accepted,
   // media flowing, wacid known — inbound or outbound), ping the server every

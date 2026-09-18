@@ -937,7 +937,7 @@ describe("useWhatsappVoipCall", () => {
   test.each([
     WhatsappVoipCallPhase.incomingRinging,
     WhatsappVoipCallPhase.ended,
-  ])("D7: beforeunload is NOT cancelled while the call phase is %s and the basket is empty", async (phase) => {
+  ])("D7: beforeunload is NOT cancelled while the call phase is %s", async (phase) => {
     await render()
     act(() => {
       useWhatsappVoipCallStore.setState({ call: makeCall(phase) })
@@ -946,15 +946,31 @@ describe("useWhatsappVoipCall", () => {
     expect(dispatchBeforeUnload()).toBe(true)
   })
 
-  test("D7: beforeunload is NOT cancelled with no call and an empty basket", async () => {
+  test("D7: beforeunload is NOT cancelled with no call in the slot", async () => {
     await render()
 
     expect(dispatchBeforeUnload()).toBe(true)
   })
 
-  test("D7: beforeunload is cancelled while the ringing basket is non-empty, even with no call in the slot", async () => {
+  // Under ring-all an offer reaches every online agent, so warning on a
+  // merely-ringing basket blocked navigation for agents who never intended to
+  // answer — and guarded nothing, since the resume fetch re-discovers every
+  // unanswered offer on the next mount.
+  test("D7: beforeunload is NOT cancelled by a ringing basket alone", async () => {
     await render()
     act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData)
+    })
+
+    expect(dispatchBeforeUnload()).toBe(true)
+  })
+
+  test("D7: an engaged call still warns even while the basket is also ringing", async () => {
+    await render()
+    act(() => {
+      useWhatsappVoipCallStore.setState({
+        call: makeCall(WhatsappVoipCallPhase.active),
+      })
       useWhatsappVoipCallStore.getState().enqueueRinging(incomingData)
     })
 

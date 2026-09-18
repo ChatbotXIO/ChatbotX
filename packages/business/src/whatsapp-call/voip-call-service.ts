@@ -736,6 +736,13 @@ class WhatsappVoipCallService {
    * `dialing` (already advanced, already terminated, or missing) — the
    * caller treats this purely as an observability/UI advance, never a
    * blocking precondition.
+   *
+   * Renews on `deadlineAt + VOIP_CONTROL_EXPIRY_MARGIN_MS`, like every other
+   * CAS that renews a still-unanswered control: the call stays unanswered
+   * through this transition, so without the margin this write would SHORTEN
+   * the TTL `startOutboundDial` set and let the key expire just before
+   * `expireOutboundDial` runs — the same race that left inbound calls stuck
+   * at `ringing`.
    */
   async markOutboundRinging(input: { wacid: string }): Promise<boolean> {
     const key = controlKey(input.wacid)
@@ -749,7 +756,7 @@ class WhatsappVoipCallService {
       key,
       current,
       next,
-      remainingTtlMs(current.deadlineAt),
+      remainingTtlMs(current.deadlineAt) + VOIP_CONTROL_EXPIRY_MARGIN_MS,
     )
   }
 

@@ -1618,8 +1618,21 @@ describe("whatsappVoipCallService.markOutboundRinging", () => {
       "voip:ctrl:wa1",
       dialing,
       { ...dialing, phase: "ringing" },
-      30_000,
+      30_000 + VOIP_CONTROL_EXPIRY_MARGIN_MS,
     )
+  })
+
+  // Bug 1, outbound variant: the call is still unanswered here, so renewing
+  // on the bare remaining TTL would SHORTEN what `startOutboundDial` set and
+  // let the key expire just before `expireOutboundDial` is promoted.
+  test("keeps the control alive past its own expiry job — never shortens the TTL to the bare deadline", async () => {
+    mocks.getJson.mockResolvedValue(dialing)
+    mocks.compareAndSwap.mockResolvedValue(true)
+
+    await whatsappVoipCallService.markOutboundRinging({ wacid: "wa1" })
+
+    const ttl = mocks.compareAndSwap.mock.calls.at(-1)?.[3] as number
+    expect(ttl).toBeGreaterThan(DEADLINE - NOW)
   })
 
   test("rejects when the control is not in dialing (e.g. already accepted)", async () => {
