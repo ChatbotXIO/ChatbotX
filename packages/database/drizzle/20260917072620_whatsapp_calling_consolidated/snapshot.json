@@ -858,6 +858,17 @@
     },
     {
       "values": [
+        "completed",
+        "failed",
+        "rejected",
+        "canceled"
+      ],
+      "name": "whatsappCallOutcome",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
         "ringing",
         "accepted",
         "rejected",
@@ -26250,6 +26261,19 @@
       "table": "WhatsappCall"
     },
     {
+      "type": "whatsappCallOutcome",
+      "typeSchema": "public",
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "outcome",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
       "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
@@ -27831,6 +27855,19 @@
       "generated": null,
       "identity": null,
       "name": "permissions",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceMember"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "onlineSince",
       "entityType": "columns",
       "schema": "public",
       "table": "WorkspaceMember"
@@ -37715,6 +37752,13 @@
           "asc": false,
           "nullsFirst": false,
           "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
         }
       ],
       "isUnique": false,
@@ -37722,7 +37766,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "WhatsappCall_workspaceId_createdAt_idx",
+      "name": "WhatsappCall_workspaceId_createdAt_id_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "WhatsappCall"

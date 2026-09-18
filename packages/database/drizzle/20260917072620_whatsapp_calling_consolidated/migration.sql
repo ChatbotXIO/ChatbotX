@@ -59,6 +59,7 @@ DROP TYPE IF EXISTS "whatsappCallRecordingMode";--> statement-breakpoint
 DROP TYPE IF EXISTS "whatsappCallTranscriptionMode";--> statement-breakpoint
 DROP TYPE IF EXISTS "whatsappCallDirection";--> statement-breakpoint
 DROP TYPE IF EXISTS "whatsappCallStatus";--> statement-breakpoint
+DROP TYPE IF EXISTS "whatsappCallOutcome";--> statement-breakpoint
 DROP TYPE IF EXISTS "whatsappCallPermissionResponse";--> statement-breakpoint
 DROP TYPE IF EXISTS "sipProvisioningStatus";--> statement-breakpoint
 --> statement-breakpoint
@@ -68,6 +69,7 @@ CREATE TYPE "whatsappCallRecordingMode" AS ENUM('metaNative', 'browserWhisper');
 CREATE TYPE "whatsappCallTranscriptionMode" AS ENUM('metaNative', 'browserWhisper');--> statement-breakpoint
 CREATE TYPE "whatsappCallDirection" AS ENUM('userInitiated', 'businessInitiated');--> statement-breakpoint
 CREATE TYPE "whatsappCallStatus" AS ENUM('ringing', 'accepted', 'rejected', 'completed', 'failed');--> statement-breakpoint
+CREATE TYPE "whatsappCallOutcome" AS ENUM('completed', 'failed', 'rejected', 'canceled');--> statement-breakpoint
 CREATE TYPE "whatsappCallPermissionResponse" AS ENUM('accept', 'reject');--> statement-breakpoint
 CREATE TABLE "WhatsappCall" (
 	"id" bigint PRIMARY KEY,
@@ -77,6 +79,7 @@ CREATE TABLE "WhatsappCall" (
 	"attemptId" text,
 	"direction" "whatsappCallDirection" NOT NULL,
 	"status" "whatsappCallStatus" DEFAULT 'ringing'::"whatsappCallStatus" NOT NULL,
+	"outcome" "whatsappCallOutcome",
 	"startedAt" timestamp(6) with time zone,
 	"endedAt" timestamp(6) with time zone,
 	"durationSeconds" integer,
@@ -127,7 +130,7 @@ CREATE UNIQUE INDEX "WhatsappCall_attemptId_key" ON "WhatsappCall" ("attemptId")
 CREATE INDEX "WhatsappCall_workspaceId_idx" ON "WhatsappCall" ("workspaceId");--> statement-breakpoint
 CREATE INDEX "WhatsappCall_conversationId_idx" ON "WhatsappCall" ("conversationId");--> statement-breakpoint
 CREATE INDEX "WhatsappCall_contactInboxId_idx" ON "WhatsappCall" ("contactInboxId");--> statement-breakpoint
-CREATE INDEX "WhatsappCall_workspaceId_createdAt_idx" ON "WhatsappCall" ("workspaceId","createdAt" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "WhatsappCall_workspaceId_createdAt_id_idx" ON "WhatsappCall" ("workspaceId","createdAt" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "WhatsappCall_contactInboxId_createdAt_idx" ON "WhatsappCall" ("contactInboxId","createdAt" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "WhatsappCall_ringing_createdAt_idx" ON "WhatsappCall" ("createdAt") WHERE "status" = 'ringing';--> statement-breakpoint
 CREATE INDEX "WhatsappCall_resumableRinging_idx" ON "WhatsappCall" ("workspaceId","createdAt" DESC NULLS LAST) WHERE "status" = 'ringing' AND "wacid" IS NOT NULL AND "answeredByUserId" IS NULL;--> statement-breakpoint
@@ -143,3 +146,10 @@ ALTER TABLE "WhatsappCall" ADD CONSTRAINT "WhatsappCall_contactInboxId_ContactIn
 ALTER TABLE "WhatsappCall" ADD CONSTRAINT "WhatsappCall_conversationId_Conversation_id_fkey" FOREIGN KEY ("conversationId") REFERENCES "Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "WhatsappCallPermission" ADD CONSTRAINT "WhatsappCallPermission_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "WhatsappCallPermission" ADD CONSTRAINT "WhatsappCallPermission_contactInboxId_ContactInbox_id_fkey" FOREIGN KEY ("contactInboxId") REFERENCES "ContactInbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- ── workspace presence ────────────────────────────────────────────────
+-- `WorkspaceMember` predates this branch and holds real rows, so this is a
+-- plain nullable ADD COLUMN (metadata-only, no table rewrite). Ships here
+-- rather than in its own migration because presence is part of the same
+-- calling feature.
+ALTER TABLE "WorkspaceMember" ADD COLUMN "onlineSince" timestamp(6) with time zone;
