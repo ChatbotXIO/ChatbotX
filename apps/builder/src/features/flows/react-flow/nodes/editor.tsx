@@ -6,7 +6,9 @@ import {
   MAX_QUICK_REPLIES,
   stepTypes,
   upgradeNodeSteps,
+  nodeTypeSchema
 } from "@chatbotx.io/flow-config"
+import { channelTypes } from "@chatbotx.io/utils/channel"
 import { TriggerFormInitially } from "@chatbotx.io/ui/components/form/form-trigger-initially"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -38,7 +40,7 @@ import {
   useWatch,
 } from "react-hook-form"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
-import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
+import { useInboxesState } from "@/features/inboxes/provider/inbox-hook"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ButtonStepEditor } from "../steps/button/editor"
@@ -162,13 +164,26 @@ const NodeEditorMenu = memo(
     onClick: (menuItem: MenuItem) => void
   }) => {
     const t = useTranslations()
-    const inboxes = useInboxStore((s) => s.inboxes)
+    const {
+      inboxes,
+      error: inboxesError,
+      loading: loadingInboxes,
+      initialized: inboxesInitialized,
+    } = useInboxesState()
     const whatsappTemplates = useFlowTemplate((s) => s.whatsappTemplates)
     const whatsappFlows = useWhatsappFlow((s) => s.whatsappFlows)
     const messengerTemplates = useFlowTemplate((s) => s.messengerTemplates)
     const beforeStep = useWatch({ name: "beforeStep" })
+    const channel = beforeStep?.channel
+    const hasInboxDependentMenus =
+      nodeType === nodeTypeSchema.enum.sendMessage &&
+      (channel === channelTypes.enum.whatsapp ||
+        channel === channelTypes.enum.messenger ||
+        channel === channelTypes.enum.omnichannel)
 
     const [nodeMenus, setNodeMenus] = useState<MenuItem[]>([])
+    const inboxesUnavailable =
+      !inboxesInitialized || loadingInboxes || Boolean(inboxesError)
 
     useEffect(() => {
       const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
@@ -176,11 +191,15 @@ const NodeEditorMenu = memo(
         setNodeMenus(
           nodeConfig.menus(t, {
             inboxes,
-            templates: { waTemplates: whatsappTemplates, messengerTemplates },
+            templates: {
+              waTemplates: whatsappTemplates,
+              messengerTemplates,
+            },
             flows: { waFlows: whatsappFlows },
             beforeStep,
+            inboxesUnavailable,
           }),
-        )
+          )
       } else {
         setNodeMenus([])
       }
@@ -192,25 +211,31 @@ const NodeEditorMenu = memo(
       whatsappFlows,
       messengerTemplates,
       beforeStep,
+      inboxesUnavailable,
     ])
 
     return (
-      nodeMenus.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button variant="outline">
-                <PlusIcon />
-                {t("actions.create")}
-              </Button>
-            }
-          />
+      <>
+        {inboxesError && hasInboxDependentMenus && (
+          <ErrorAlert message={`${t("states.error")}: ${inboxesError}`} />
+        )}
+        {nodeMenus.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="outline">
+                  <PlusIcon />
+                  {t("actions.create")}
+                </Button>
+              }
+            />
 
-          <DropdownMenuContent className="w-full">
-            <RecursiveDropdownMenu data={nodeMenus} onClick={onClick} />
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
+            <DropdownMenuContent className="w-full">
+              <RecursiveDropdownMenu data={nodeMenus} onClick={onClick} />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </>
     )
   },
 )

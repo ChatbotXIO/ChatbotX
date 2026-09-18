@@ -31,6 +31,7 @@ export type FlowMenuData = {
 
 export type MenuData = {
   inboxes: ListInboxesResponse["data"]
+  inboxesUnavailable?: boolean
   templates: FlowTemplateMenuData
   flows: FlowMenuData
   beforeStep: ChooseChannelStepSchema
