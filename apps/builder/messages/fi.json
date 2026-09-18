@@ -3924,6 +3924,7 @@
         "callNotReady": "The call is not ready to answer yet — try again",
         "inAppCallingUnavailable": "In-app calling is not configured on this server",
         "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp sallii vain 2 soittolupapyyntöä yhteystietoa kohden 7 päivän aikana. Tämä yhteystieto on saavuttanut rajan — yritä myöhemmin uudelleen.",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta hylkäsi puheluasetusten muutoksen",
         "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",

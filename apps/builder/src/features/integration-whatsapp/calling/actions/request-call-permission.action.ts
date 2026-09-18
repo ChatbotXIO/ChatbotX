@@ -7,12 +7,19 @@ import {
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { channelTypes } from "@chatbotx.io/database/partials"
+import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
+import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import type { MessageWhatsappCallPermissionRequestEntity } from "@chatbotx.io/sdk"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { callingActionClient } from "@/lib/safe-action"
+import {
+  canSendCallPermissionRequest,
+  readMetaCallPermissions,
+} from "../lib/meta-call-permission"
 import { assertCallAccessOrThrow } from "./assert-call-access"
+import { resolveDialIdentity } from "./outbound-dial-target"
 
 const requestCallPermissionSchema = z.object({
   text: z.string().trim().min(1).max(1024),
@@ -81,6 +88,45 @@ export const requestCallPermissionAction = callingActionClient
       if (!contactInbox) {
         throw new ChatbotXException(
           t("whatsapp.calls.errors.notWhatsappConversation"),
+        )
+      }
+
+      // Meta caps these at 1 per 24 hours and 2 per 7 days per consumer and
+      // reports the remaining budget on the action itself, so the check is
+      // against Meta's own counter rather than a second one of ours that
+      // could drift from it. It has to happen HERE: the send below is
+      // enqueued, so Meta's rejection surfaces in the worker as a failed
+      // message the agent is never shown a reason for — and two agents on
+      // the same thread would otherwise each spend one of the two.
+      const integration =
+        await integrationWhatsappRepository.findByInboxIdForWorkspace({
+          workspaceId,
+          inboxId: contactInbox.inboxId,
+        })
+      if (!integration) {
+        throw new ChatbotXException(t("whatsapp.calls.errors.notFound"))
+      }
+
+      const { permissionTarget } = resolveDialIdentity(contactInbox)
+      const permissions = await readMetaCallPermissions({
+        auth: integration.auth as WhatsappAuthValue,
+        integrationId: integration.id,
+        contactInboxId: contactInbox.id,
+        target: permissionTarget,
+      })
+      // Fail closed on an unreadable lookup, mirroring the dial gate in
+      // `initiate-outbound-voip-call.action.ts`: a GET that never ran is not
+      // evidence of remaining budget, and the budget it would spend is two
+      // requests per WEEK with no way to get them back. Only successes are
+      // cached, so retrying a minute later re-reads Meta.
+      if (!permissions) {
+        throw new ChatbotXException(
+          t("whatsapp.calls.outbound.permissionCheckFailed"),
+        )
+      }
+      if (!canSendCallPermissionRequest(permissions)) {
+        throw new ChatbotXException(
+          t("whatsapp.calls.errors.permissionRequestLimitReached"),
         )
       }
 

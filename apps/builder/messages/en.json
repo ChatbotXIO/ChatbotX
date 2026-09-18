@@ -4112,6 +4112,7 @@
         "callNotReady": "The call is not ready to answer yet — try again",
         "inAppCallingUnavailable": "In-app calling is not configured on this server",
         "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp allows only 2 call permission requests per contact every 7 days. This contact has reached that limit — try again later.",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta rejected the calling settings change",
         "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",

@@ -5361,6 +5361,7 @@
         "callNotReady": "The call is not ready to answer yet — try again",
         "inAppCallingUnavailable": "In-app calling is not configured on this server",
         "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp tillåter endast 2 förfrågningar om samtalstillstånd per kontakt var sjunde dag. Den här kontakten har nått gränsen – försök igen senare.",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta avvisade ändringen av samtalsinställningarna",
         "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",

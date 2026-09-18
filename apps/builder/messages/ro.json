@@ -3924,6 +3924,7 @@
         "callNotReady": "The call is not ready to answer yet — try again",
         "inAppCallingUnavailable": "In-app calling is not configured on this server",
         "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp permite doar 2 solicitări de permisiune pentru apel per contact la fiecare 7 zile. Acest contact a atins limita — încearcă din nou mai târziu.",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta a respins modificarea setărilor de apelare",
         "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",

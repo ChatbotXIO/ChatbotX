@@ -3924,6 +3924,7 @@
         "callNotReady": "The call is not ready to answer yet — try again",
         "inAppCallingUnavailable": "In-app calling is not configured on this server",
         "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp n'autorise que 2 demandes d'autorisation d'appel par contact tous les 7 jours. Ce contact a atteint cette limite — réessayez plus tard.",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta a refusé la modification des paramètres d'appel",
         "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",

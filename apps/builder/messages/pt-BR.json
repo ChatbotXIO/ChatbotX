@@ -3903,6 +3903,7 @@
         "callNotReady": "The call is not ready to answer yet — try again",
         "inAppCallingUnavailable": "In-app calling is not configured on this server",
         "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "O WhatsApp permite apenas 2 solicitações de permissão de chamada por contato a cada 7 dias. Este contato atingiu o limite — tente novamente mais tarde.",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "A Meta rejeitou a alteração das configurações de chamada",
         "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",

@@ -13,11 +13,17 @@ const {
   findInboxMock,
   createOutgoingMock,
   canCallConversationMock,
+  findIntegrationMock,
+  readMetaCallPermissionsMock,
+  canSendCallPermissionRequestMock,
 } = vi.hoisted(() => ({
   findByOrFailMock: vi.fn(),
   findInboxMock: vi.fn(),
   createOutgoingMock: vi.fn(),
   canCallConversationMock: vi.fn(),
+  findIntegrationMock: vi.fn(),
+  readMetaCallPermissionsMock: vi.fn(),
+  canSendCallPermissionRequestMock: vi.fn(),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -51,6 +57,20 @@ vi.mock("@chatbotx.io/database/partials", () => ({
   channelTypes: { enum: { whatsapp: "whatsapp" } },
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  integrationWhatsappRepository: {
+    findByInboxIdForWorkspace: findIntegrationMock,
+  },
+}))
+
+vi.mock(
+  "../src/features/integration-whatsapp/calling/lib/meta-call-permission",
+  () => ({
+    readMetaCallPermissions: readMetaCallPermissionsMock,
+    canSendCallPermissionRequest: canSendCallPermissionRequestMock,
+  }),
+)
+
 vi.mock("next-intl/server", () => ({
   getTranslations: async () => (key: string) => key,
 }))
@@ -81,8 +101,19 @@ describe("requestCallPermissionAction — P2 item 5 (D3) / M1 / M4", () => {
       id: "contact-inbox-1",
       inboxId: "inbox-1",
       channel: "whatsapp",
+      sourceId: "84349566550",
+      sourceUserId: null,
     })
     createOutgoingMock.mockResolvedValue(undefined)
+    findIntegrationMock.mockResolvedValue({
+      id: "integration-1",
+      auth: { metadata: { phoneNumber: { id: "pnid-1" } } },
+    })
+    readMetaCallPermissionsMock.mockResolvedValue({
+      permission: { status: "no_permission" },
+      actions: [],
+    })
+    canSendCallPermissionRequestMock.mockReturnValue(true)
   })
 
   test("allowed on the caller's own conversation: sends the permission request", async () => {
@@ -109,6 +140,48 @@ describe("requestCallPermissionAction — P2 item 5 (D3) / M1 / M4", () => {
     })
 
     expect(findInboxMock).not.toHaveBeenCalled()
+    expect(createOutgoingMock).not.toHaveBeenCalled()
+  })
+
+  test("Meta still has request budget: sends, and asks about this contact's identity", async () => {
+    findInboxMock.mockResolvedValue({
+      id: "contact-inbox-1",
+      inboxId: "inbox-1",
+      channel: "whatsapp",
+      sourceId: "84349566550",
+      sourceUserId: null,
+    })
+
+    await expect(call()).resolves.toBeUndefined()
+
+    expect(readMetaCallPermissionsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: "integration-1",
+        contactInboxId: "contact-inbox-1",
+        target: { userWaId: "84349566550" },
+      }),
+    )
+    expect(createOutgoingMock).toHaveBeenCalled()
+  })
+
+  test("Meta reports the request budget is spent: refuses instead of burning a message", async () => {
+    canSendCallPermissionRequestMock.mockReturnValue(false)
+
+    await expect(call()).rejects.toMatchObject({
+      message: "whatsapp.calls.errors.permissionRequestLimitReached",
+    })
+
+    expect(createOutgoingMock).not.toHaveBeenCalled()
+  })
+
+  test("permission lookup unavailable: fails closed rather than spending 1 of 2 weekly requests", async () => {
+    readMetaCallPermissionsMock.mockResolvedValue(undefined)
+
+    await expect(call()).rejects.toMatchObject({
+      message: "whatsapp.calls.outbound.permissionCheckFailed",
+    })
+
+    expect(canSendCallPermissionRequestMock).not.toHaveBeenCalled()
     expect(createOutgoingMock).not.toHaveBeenCalled()
   })
 })

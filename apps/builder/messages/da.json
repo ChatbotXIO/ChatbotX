@@ -3924,6 +3924,7 @@
         "callNotReady": "The call is not ready to answer yet — try again",
         "inAppCallingUnavailable": "In-app calling is not configured on this server",
         "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp tillader kun 2 anmodninger om opkaldstilladelse pr. kontakt hver 7. dag. Denne kontakt har nået grænsen — prøv igen senere.",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta afviste ændringen af opkaldsindstillingerne",
         "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",

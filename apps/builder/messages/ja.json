@@ -3903,6 +3903,7 @@
         "callNotReady": "The call is not ready to answer yet — try again",
         "inAppCallingUnavailable": "In-app calling is not configured on this server",
         "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp では、1 件の連絡先につき 7 日間に 2 回までしか通話許可をリクエストできません。この連絡先は上限に達しています。しばらくしてから再度お試しください。",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Metaが通話設定の変更を拒否しました",
         "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",

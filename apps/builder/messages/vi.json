@@ -3924,6 +3924,7 @@
         "callNotReady": "Cuộc gọi chưa sẵn sàng để nghe — thử lại",
         "inAppCallingUnavailable": "Máy chủ này chưa cấu hình gọi trong ứng dụng",
         "noCallPermission": "Khách hàng chưa cấp quyền gọi",
+        "permissionRequestLimitReached": "WhatsApp chỉ cho phép gửi 2 yêu cầu xin phép gọi cho mỗi liên hệ trong 7 ngày. Liên hệ này đã đạt giới hạn — vui lòng thử lại sau.",
         "audioConnectFailed": "Không kết nối được âm thanh cuộc gọi",
         "updateFailed": "Meta đã từ chối thay đổi cài đặt cuộc gọi",
         "savedOnMetaOnly": "Meta đã lưu thay đổi nhưng workspace này thì chưa. Hãy lưu lại để hoàn tất.",

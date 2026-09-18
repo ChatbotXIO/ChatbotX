@@ -3924,6 +3924,7 @@
         "callNotReady": "The call is not ready to answer yet — try again",
         "inAppCallingUnavailable": "In-app calling is not configured on this server",
         "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "يسمح واتساب بإرسال طلبين فقط لإذن الاتصال لكل جهة اتصال خلال 7 أيام. وصلت جهة الاتصال هذه إلى الحد الأقصى — حاول مرة أخرى لاحقًا.",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "رفضت Meta تغيير إعدادات المكالمات",
         "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",

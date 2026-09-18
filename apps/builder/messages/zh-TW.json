@@ -3957,6 +3957,7 @@
         "callNotReady": "The call is not ready to answer yet — try again",
         "inAppCallingUnavailable": "In-app calling is not configured on this server",
         "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp 每 7 天對每位聯絡人最多只允許傳送 2 次通話權限請求。該聯絡人已達上限，請稍後再試。",
         "audioConnectFailed": "Could not connect call audio",
         "updateFailed": "Meta 拒絕了通話設定的變更",
         "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
