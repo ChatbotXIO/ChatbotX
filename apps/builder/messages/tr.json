@@ -449,7 +449,6 @@
       "audienceFilter": "Hedef kitle filtresi",
       "noAudienceFilter": "Hedef kitle filtresi yok",
       "template": "Şablon",
-      "noTemplate": "Şablon yok",
       "integration": "Entegrasyon"
     },
     "filters": {

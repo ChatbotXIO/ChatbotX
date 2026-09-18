@@ -685,7 +685,6 @@
       "audienceFilter": "受众过滤器",
       "integration": "集成",
       "noAudienceFilter": "无受众过滤器",
-      "noTemplate": "无范本",
       "subaction": "子操作",
       "template": "范本",
       "title": "广播详细信息"

@@ -449,7 +449,6 @@
       "audienceFilter": "Zielgruppenfilter",
       "noAudienceFilter": "Kein Zielgruppenfilter",
       "template": "Vorlage",
-      "noTemplate": "Keine Vorlage",
       "integration": "Integration"
     },
     "filters": {

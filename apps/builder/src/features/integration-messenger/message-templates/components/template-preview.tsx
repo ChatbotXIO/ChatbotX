@@ -20,6 +20,9 @@ type MessengerTemplatePreviewProps = {
 }
 
 const NAMED_PARAMETER_PATTERN = /\{\{[a-zA-Z_]+\}\}/
+// A URL button's suffix placeholder: positional ({{1}}) or, in NAMED
+// templates, named ({{url_suffix}}).
+const URL_SUFFIX_PATTERN = /\{\{(\d+|[a-zA-Z_]+)\}\}/
 
 function renderTemplateText(
   templateText: string,
@@ -41,6 +44,39 @@ function renderTemplateText(
   }
 
   return text
+}
+
+const HTTP_URL_PATTERN = /^https?:\/\//i
+
+/**
+ * A Messenger IMAGE header's picture is fixed at template creation, so it is
+ * never a send-time param: the stored template keeps Meta's listed image URL
+ * in `example.header_handle[0]` (a raw upload handle is not a URL and is
+ * skipped).
+ */
+function readTemplateHeaderImageUrl(example: unknown): string | undefined {
+  if (!(example && typeof example === "object" && "header_handle" in example)) {
+    return
+  }
+  const [firstHandle] = Array.isArray(example.header_handle)
+    ? example.header_handle
+    : []
+  return typeof firstHandle === "string" && HTTP_URL_PATTERN.test(firstHandle)
+    ? firstHandle
+    : undefined
+}
+
+// An explicit image param (the template management view passes one) wins;
+// broadcast and flow editors pass send-time params only, so fall back to the
+// template's own image.
+function resolveHeaderImageLink(
+  component: MessengerTemplateComponent,
+  headerParams: MessengerTemplatePreviewProps["headerParams"],
+): string | undefined {
+  return (
+    headerParams.find((param) => param.image?.link)?.image?.link ??
+    readTemplateHeaderImageUrl(component.example)
+  )
 }
 
 function getButtonParam(
@@ -79,10 +115,15 @@ export function MessengerTemplatePreview({
             ? renderTemplateText(component.text, headerParams)
             : null
 
-          if (componentFormat === "IMAGE" && headerParams?.[0]?.image?.link) {
+          const headerImageLink =
+            componentFormat === "IMAGE"
+              ? resolveHeaderImageLink(component, headerParams)
+              : undefined
+
+          if (headerImageLink) {
             let imageUrl: URL | null = null
             try {
-              imageUrl = new URL(headerParams[0].image.link)
+              imageUrl = new URL(headerImageLink)
             } catch {
               imageUrl = null
             }
@@ -100,7 +141,7 @@ export function MessengerTemplatePreview({
                   </div>
                 ) : (
                   <div className="rounded border bg-muted px-2 py-1 text-muted-foreground text-xs">
-                    {headerParams[0].image.link}
+                    {headerImageLink}
                   </div>
                 )}
                 {headerText && (
@@ -157,8 +198,8 @@ export function MessengerTemplatePreview({
                 if (buttonType === "URL") {
                   detail = button.url ?? ""
                   const value = buttonParam?.text
-                  if (detail.includes("{{1}}") && value) {
-                    detail = detail.replace("{{1}}", value)
+                  if (value && URL_SUFFIX_PATTERN.test(detail)) {
+                    detail = detail.replace(URL_SUFFIX_PATTERN, value)
                   } else if (!detail && value) {
                     detail = value
                   }

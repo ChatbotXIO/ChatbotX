@@ -120,6 +120,10 @@ function extractPlaceholderNames(text: string | undefined): string[] {
   )
 }
 
+function hasPlaceholder(text: string | undefined): boolean {
+  return extractPlaceholderNames(text).length > 0
+}
+
 // NAMED templates echo each placeholder back as `parameter_name`; POSITIONAL
 // ones must omit the key entirely.
 function toParameterName(
@@ -169,10 +173,13 @@ export function extractMessengerTemplateParams(
         const buttonType = button.type.toUpperCase()
 
         if (buttonType === "URL" && button.url) {
+          // A dynamic URL ends in one suffix placeholder — {{1}}, or a named
+          // one like {{url_suffix}} in NAMED templates — whose value the user
+          // fills in; a static URL is sent as is.
           buttonParams.push({
             sub_type: "url",
             index: idx,
-            text: button.url.includes("{{1}}") ? "" : button.url,
+            text: hasPlaceholder(button.url) ? "" : button.url,
           })
         }
         if (buttonType === "PHONE_NUMBER") {
@@ -235,11 +242,12 @@ export function extractMessengerParameterInfos(
       for (const [buttonIdx, button] of component.buttons.entries()) {
         const buttonType = button.type.toUpperCase()
 
-        if (buttonType === "URL" && button.url?.includes("{{1}}")) {
+        const [urlSuffixName] = extractPlaceholderNames(button.url)
+        if (buttonType === "URL" && urlSuffixName) {
           params.push({
             type: "button",
             index: 0,
-            paramName: "1",
+            paramName: toDisplayName(urlSuffixName, 0),
             buttonIndex: buttonIdx,
             buttonSubType: "url",
           })

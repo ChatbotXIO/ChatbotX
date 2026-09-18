@@ -449,7 +449,6 @@
       "audienceFilter": "Yleisösuodatin",
       "noAudienceFilter": "Ei yleisösuodatinta",
       "template": "Malli",
-      "noTemplate": "Ei mallia",
       "integration": "Integraatio"
     },
     "filters": {

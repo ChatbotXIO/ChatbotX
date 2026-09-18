@@ -449,7 +449,6 @@
       "audienceFilter": "Målgruppefilter",
       "noAudienceFilter": "Intet målgruppefilter",
       "template": "Skabelon",
-      "noTemplate": "Ingen skabelon",
       "integration": "Integration"
     },
     "filters": {

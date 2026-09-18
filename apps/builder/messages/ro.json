@@ -1268,7 +1268,6 @@
       "audienceFilter": "Filtru de public",
       "noAudienceFilter": "Niciun filtru de public",
       "template": "Șablon",
-      "noTemplate": "Niciun șablon",
       "integration": "Integrare"
     },
     "filters": {

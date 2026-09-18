@@ -6,15 +6,7 @@ import { inboxStatuses } from "@chatbotx.io/utils/conversation"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
-
-// Per-channel wording for the page picker; a channel without an entry falls
-// back to the generic inbox label.
-const inboxFieldLabelKeys = {
-  whatsapp: "fields.whatsappChannels.label",
-  messenger: "fields.messengerChannels.label",
-} as const satisfies Partial<Record<ChannelType, string>>
-
-const FALLBACK_LABEL_KEY = "fields.inbox.label"
+import { resolveBroadcastInboxLabelKey } from "../lib/broadcast-inbox-label"
 
 type BroadcastInboxMultiSelectProps = {
   channel: ChannelType
@@ -42,14 +34,9 @@ export function BroadcastInboxMultiSelect({
     [inboxes, channel],
   )
 
-  const labelKey =
-    channel in inboxFieldLabelKeys
-      ? inboxFieldLabelKeys[channel as keyof typeof inboxFieldLabelKeys]
-      : FALLBACK_LABEL_KEY
-
   return (
     <MultiSelectField
-      label={t(labelKey)}
+      label={t(resolveBroadcastInboxLabelKey(channel))}
       name={name}
       options={options}
       placeholder={t("actions.pleaseSelect")}

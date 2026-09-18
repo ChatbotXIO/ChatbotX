@@ -187,6 +187,47 @@ describe("buildMessengerTemplateComponents", () => {
     })
   })
 
+  // Mirrors Meta's documented NAMED template: the URL button keeps a named
+  // suffix placeholder, and the send-time parameter is only the suffix value.
+  test("NAMED template URL button {{url_suffix}} — sends only the suffix value", () => {
+    const templateComponents: MessengerTemplateComponent[] = [
+      {
+        type: "BODY",
+        text: "Good news! Your order #{{order_id}} is on its way.",
+      },
+      {
+        type: "BUTTONS",
+        buttons: [
+          {
+            type: "URL",
+            text: "Track Order",
+            url: "http://www.example.com/orders/{{url_suffix}}",
+          },
+        ],
+      },
+    ]
+    const extracted = extractMessengerTemplateParams(
+      templateComponents,
+      "NAMED",
+    )
+    const params = {
+      body: extracted.body?.map((param) => ({ ...param, text: "566701" })),
+      button: extracted.button?.map((param) => ({ ...param, text: "1234" })),
+    }
+
+    const components = buildMessengerTemplateComponents(params, "NAMED")
+
+    expect(components).toEqual([
+      {
+        type: "body",
+        parameters: [
+          { type: "text", text: "566701", parameter_name: "order_id" },
+        ],
+      },
+      { type: "buttons", parameters: [{ type: "URL", url: "1234" }] },
+    ])
+  })
+
   describe("body", () => {
     test("POSITIONAL — no parameter_name", () => {
       const components = buildMessengerTemplateComponents(

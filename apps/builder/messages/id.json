@@ -449,7 +449,6 @@
       "audienceFilter": "Filter audiens",
       "noAudienceFilter": "Tanpa filter audiens",
       "template": "Template",
-      "noTemplate": "Tanpa template",
       "integration": "Integrasi"
     },
     "filters": {
