@@ -22,6 +22,12 @@ const mocks = vi.hoisted(() => ({
   findById: vi.fn(),
   contactInboxFindBy: vi.fn(),
   contactFindById: vi.fn(),
+  listPermissionsByUserIds: vi.fn(),
+  listUserIdsByTeamId: vi.fn(),
+  conversationFindBy: vi.fn(),
+  canCallConversation: vi.fn(),
+  canCallConversationForMember: vi.fn(),
+  loadCallEligibilityMember: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
@@ -35,8 +41,8 @@ vi.mock("@chatbotx.io/redis", () => ({
   },
 }))
 
-vi.mock("../src/whatsapp-call/voip-presence-service", () => ({
-  whatsappVoipPresenceService: { liveAgents: mocks.liveAgents },
+vi.mock("../src/workspace-presence/service", () => ({
+  workspacePresenceService: { listOnlineMembers: mocks.liveAgents },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -60,6 +66,38 @@ vi.mock("../src/contact-inbox/service", () => ({
 
 vi.mock("../src/contact/service", () => ({
   contactService: { findById: mocks.contactFindById },
+}))
+
+vi.mock("../src/workspace-member/service", () => ({
+  workspaceMemberService: {
+    listPermissionsByUserIds: mocks.listPermissionsByUserIds,
+  },
+}))
+
+vi.mock("../src/enterprise/inbox-team/service", () => ({
+  inboxTeamService: { listUserIdsByTeamId: mocks.listUserIdsByTeamId },
+}))
+
+vi.mock("../src/conversation/service", () => ({
+  conversationService: { findBy: mocks.conversationFindBy },
+}))
+
+vi.mock("../src/whatsapp-call/call-access-service", () => ({
+  canCallConversation: mocks.canCallConversation,
+  canCallConversationForMember: mocks.canCallConversationForMember,
+  loadCallEligibilityMember: mocks.loadCallEligibilityMember,
+}))
+
+/**
+ * Every online-member id used across this file's ring-target tests, made
+ * eligible by default (`contacts: true`) — the `eligibleOnline` tier
+ * predicate (see `ring-targets.ts`) would otherwise ring nobody in every
+ * test that doesn't care about eligibility itself. Dedicated tests below
+ * override this mock to exercise ineligible members explicitly.
+ */
+const DEFAULT_ELIGIBLE_MEMBERS = Array.from({ length: 20 }, (_, i) => ({
+  userId: `agent-${i}`,
+  permissions: { contacts: true },
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -98,7 +136,7 @@ vi.stubGlobal("crypto", {
 const { ACTIVE_CALL_LIVENESS_STALE_MS, isAnswerDeadlineExpired } = await import(
   "../src/whatsapp-call/voip-call-control"
 )
-const { whatsappVoipCallService } = await import(
+const { whatsappVoipCallService, MAX_VOIP_RING_TARGETS } = await import(
   "../src/whatsapp-call/voip-call-service"
 )
 const { whatsappVoipSignalingService } = await import(
@@ -112,6 +150,15 @@ const CALL_IN_PROGRESS_RE = /call-in-progress/
 beforeEach(() => {
   vi.clearAllMocks()
   vi.spyOn(Date, "now").mockReturnValue(NOW)
+  mocks.listPermissionsByUserIds.mockResolvedValue(DEFAULT_ELIGIBLE_MEMBERS)
+  mocks.listUserIdsByTeamId.mockResolvedValue([])
+  mocks.conversationFindBy.mockResolvedValue(undefined)
+  mocks.canCallConversation.mockResolvedValue(true)
+  mocks.canCallConversationForMember.mockResolvedValue(true)
+  mocks.loadCallEligibilityMember.mockResolvedValue({
+    userId: "agent-1",
+    permissions: { contacts: true },
+  })
 })
 
 describe("whatsappVoipCallService.storeOffer", () => {
@@ -162,7 +209,7 @@ describe("whatsappVoipCallService.storeOffer", () => {
 })
 
 describe("whatsappVoipCallService.claimUnreachable", () => {
-  // It must write on the SAME key `resolveRingTargets` uses, with `SET NX`, so
+  // It must write on the SAME key `reserveIncomingCall` uses, with `SET NX`, so
   // the two cannot both succeed: whichever lands first decides whether the
   // call rings or is refused.
   test("claims the ring control key as terminated, SET NX", async () => {
@@ -198,9 +245,10 @@ describe("whatsappVoipCallService.claimUnreachable", () => {
     ).resolves.toBe(false)
   })
 
-  // The point of writing a TERMINAL phase: a ring resolution that arrives
-  // afterwards must see the call as done rather than create a second control.
-  test("a ring resolution that follows the claim reports alreadyProgressed", async () => {
+  // The point of writing a TERMINAL phase: a reservation attempt that
+  // arrives afterwards must see the call as done rather than create a
+  // second control.
+  test("a reservation attempt that follows the claim reports alreadyProgressed", async () => {
     mocks.getJson.mockResolvedValueOnce({
       reservedUserId: "",
       phase: "terminated",
@@ -209,31 +257,26 @@ describe("whatsappVoipCallService.claimUnreachable", () => {
     })
 
     await expect(
-      whatsappVoipCallService.resolveRingTargets({
+      whatsappVoipCallService.reserveIncomingCall({
         wacid: "wa1",
-        workspaceId: "ws1",
         deadlineAt: DEADLINE,
       }),
     ).resolves.toEqual({ status: "alreadyProgressed" })
-    expect(mocks.liveAgents).not.toHaveBeenCalled()
   })
 })
 
-describe("whatsappVoipCallService.resolveRingTargets", () => {
-  test("returns the live ring set and creates ONE unclaimed control (reservedUserId empty)", async () => {
-    mocks.getJson.mockResolvedValueOnce(null) // no existing control
-    mocks.liveAgents.mockResolvedValue(["agent-1", "agent-2"])
+describe("whatsappVoipCallService.reserveIncomingCall", () => {
+  test("creates ONE unclaimed control (reservedUserId empty) when none exists", async () => {
+    mocks.getJson.mockResolvedValueOnce(null)
     mocks.randomUUID.mockReturnValue("fence-1")
     mocks.setIfAbsent.mockResolvedValue(true)
 
-    const result = await whatsappVoipCallService.resolveRingTargets({
+    const result = await whatsappVoipCallService.reserveIncomingCall({
       wacid: "wa1",
-      workspaceId: "ws1",
       deadlineAt: DEADLINE,
     })
 
-    expect(result).toEqual({ status: "ring", targets: ["agent-1", "agent-2"] })
-    expect(mocks.liveAgents).toHaveBeenCalledWith({ workspaceId: "ws1" })
+    expect(result).toEqual({ status: "reserved" })
     expect(mocks.setIfAbsent).toHaveBeenCalledWith(
       "voip:ctrl:wa1",
       {
@@ -246,55 +289,21 @@ describe("whatsappVoipCallService.resolveRingTargets", () => {
     )
   })
 
-  test("returns noEligibleAgent when nobody has the inbox open", async () => {
-    mocks.getJson.mockResolvedValueOnce(null)
-    mocks.liveAgents.mockResolvedValue([])
-
-    const result = await whatsappVoipCallService.resolveRingTargets({
-      wacid: "wa1",
-      workspaceId: "ws1",
-      deadlineAt: DEADLINE,
-    })
-
-    expect(result).toEqual({ status: "noEligibleAgent" })
-    expect(mocks.setIfAbsent).not.toHaveBeenCalled()
-  })
-
-  test("a redelivered connect for a still-ringing call re-rings the current live set", async () => {
+  test("redelivery: an existing reserved control is observed, not recreated", async () => {
     mocks.getJson.mockResolvedValueOnce({
       reservedUserId: "",
       phase: "reserved",
       deadlineAt: DEADLINE,
       fenceToken: "fence-1",
     })
-    mocks.liveAgents.mockResolvedValue(["agent-3"])
 
-    const result = await whatsappVoipCallService.resolveRingTargets({
+    const result = await whatsappVoipCallService.reserveIncomingCall({
       wacid: "wa1",
-      workspaceId: "ws1",
       deadlineAt: DEADLINE,
     })
 
-    expect(result).toEqual({ status: "ring", targets: ["agent-3"] })
+    expect(result).toEqual({ status: "reserved" })
     expect(mocks.setIfAbsent).not.toHaveBeenCalled()
-  })
-
-  test("a redelivered connect whose agents have all left rejects (no ringing an empty set)", async () => {
-    mocks.getJson.mockResolvedValueOnce({
-      reservedUserId: "",
-      phase: "reserved",
-      deadlineAt: DEADLINE,
-      fenceToken: "fence-1",
-    })
-    mocks.liveAgents.mockResolvedValue([])
-
-    const result = await whatsappVoipCallService.resolveRingTargets({
-      wacid: "wa1",
-      workspaceId: "ws1",
-      deadlineAt: DEADLINE,
-    })
-
-    expect(result).toEqual({ status: "noEligibleAgent" })
   })
 
   test("returns alreadyProgressed when the call has moved past 'reserved'", async () => {
@@ -305,14 +314,430 @@ describe("whatsappVoipCallService.resolveRingTargets", () => {
       fenceToken: "fence-1",
     })
 
-    const result = await whatsappVoipCallService.resolveRingTargets({
+    const result = await whatsappVoipCallService.reserveIncomingCall({
       wacid: "wa1",
-      workspaceId: "ws1",
       deadlineAt: DEADLINE,
     })
 
     expect(result).toEqual({ status: "alreadyProgressed" })
-    expect(mocks.liveAgents).not.toHaveBeenCalled()
+  })
+
+  test("losing a concurrent create race defers to a reserved winner", async () => {
+    mocks.getJson
+      .mockResolvedValueOnce(null) // no existing control on first read
+      .mockResolvedValueOnce({
+        reservedUserId: "",
+        phase: "reserved",
+        deadlineAt: DEADLINE,
+        fenceToken: "fence-winner",
+      })
+    mocks.randomUUID.mockReturnValue("fence-loser")
+    mocks.setIfAbsent.mockResolvedValue(false)
+
+    const result = await whatsappVoipCallService.reserveIncomingCall({
+      wacid: "wa1",
+      deadlineAt: DEADLINE,
+    })
+
+    expect(result).toEqual({ status: "reserved" })
+  })
+
+  test("losing a concurrent create race to a winner that already progressed reports alreadyProgressed", async () => {
+    mocks.getJson.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      reservedUserId: "agent-1",
+      phase: "answering",
+      deadlineAt: DEADLINE,
+      fenceToken: "fence-winner",
+    })
+    mocks.randomUUID.mockReturnValue("fence-loser")
+    mocks.setIfAbsent.mockResolvedValue(false)
+
+    const result = await whatsappVoipCallService.reserveIncomingCall({
+      wacid: "wa1",
+      deadlineAt: DEADLINE,
+    })
+
+    expect(result).toEqual({ status: "alreadyProgressed" })
+  })
+})
+
+describe("whatsappVoipCallService.selectRingTargetsForCall", () => {
+  test("returns the live, eligible online set (eligibleOnline tier)", async () => {
+    mocks.liveAgents.mockResolvedValue(["agent-1", "agent-2"])
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({
+      tier: "eligibleOnline",
+      userIds: ["agent-1", "agent-2"],
+    })
+    expect(mocks.liveAgents).toHaveBeenCalledWith("ws1")
+  })
+
+  test("caps the ring set at MAX_VOIP_RING_TARGETS even though presence itself is uncapped", async () => {
+    const onlineUserIds = Array.from(
+      { length: MAX_VOIP_RING_TARGETS + 5 },
+      (_, i) => `agent-${i}`,
+    )
+    mocks.liveAgents.mockResolvedValue(onlineUserIds)
+    mocks.listPermissionsByUserIds.mockResolvedValue(
+      onlineUserIds.map((userId) => ({
+        userId,
+        permissions: { contacts: true },
+      })),
+    )
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({
+      tier: "eligibleOnline",
+      userIds: onlineUserIds.slice(0, MAX_VOIP_RING_TARGETS),
+    })
+  })
+
+  test("skips online members with no calling-eligible permission (analytics-only) and an onlyAssignedContacts member when the conversation lookup itself returns nothing (D3)", async () => {
+    mocks.liveAgents.mockResolvedValue(["agent-1", "agent-2", "agent-3"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "agent-1", permissions: { contacts: true } },
+      { userId: "agent-2", permissions: { analytics: true } }, // ineligible
+      { userId: "agent-3", permissions: { onlyAssignedContacts: true } }, // D3: conversationFindBy resolves nothing (default mock) -> assignment unknown -> excluded
+    ])
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: "eligibleOnline", userIds: ["agent-1"] })
+  })
+
+  test("a superAdmin online member is always eligible regardless of other flags", async () => {
+    mocks.liveAgents.mockResolvedValue(["agent-1"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "agent-1", permissions: { superAdmin: true } },
+    ])
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: "eligibleOnline", userIds: ["agent-1"] })
+  })
+
+  test("an online id with no member row at all (e.g. a synthetic support session) is excluded", async () => {
+    mocks.liveAgents.mockResolvedValue(["agent-1", "support-session-user"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "agent-1", permissions: { contacts: true } },
+      // "support-session-user" deliberately absent — no WorkspaceMember row.
+    ])
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: "eligibleOnline", userIds: ["agent-1"] })
+    // Bounded projection: only the ONLINE ids are requested, never the
+    // whole roster.
+    expect(mocks.listPermissionsByUserIds).toHaveBeenCalledWith({
+      workspaceId: "ws1",
+      userIds: ["agent-1", "support-session-user"],
+    })
+  })
+
+  // D1: the assignee tier wins when the assignee is online and eligible.
+  test("D1/tier1: assignee online and eligible rings only the assignee", async () => {
+    mocks.liveAgents.mockResolvedValue(["agent-1", "agent-2"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "agent-1", permissions: { contacts: true } },
+      { userId: "agent-2", permissions: { contacts: true } },
+    ])
+    mocks.conversationFindBy.mockResolvedValue({
+      id: "conv-1",
+      assignedUserId: "agent-1",
+      assignedInboxTeamId: null,
+    })
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: "assignee", userIds: ["agent-1"] })
+    expect(mocks.conversationFindBy).toHaveBeenCalledWith({
+      where: { id: "conv-1", workspaceId: "ws1" },
+    })
+  })
+
+  // D1: assignee offline falls through — never included just because
+  // they're assigned.
+  test("D1: assignee offline falls through to the next tier", async () => {
+    mocks.liveAgents.mockResolvedValue(["agent-2"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "agent-2", permissions: { contacts: true } },
+    ])
+    mocks.conversationFindBy.mockResolvedValue({
+      id: "conv-1",
+      assignedUserId: "agent-1", // not in onlineUserIds
+      assignedInboxTeamId: null,
+    })
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: "eligibleOnline", userIds: ["agent-2"] })
+  })
+
+  // D2: team tier only loaded when assignedInboxTeamId is set.
+  test("D2: team-assigned conversation rings online, eligible team members (tier 2)", async () => {
+    mocks.liveAgents.mockResolvedValue(["team-member-1", "non-team-1"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "team-member-1", permissions: { contacts: true } },
+      { userId: "non-team-1", permissions: { contacts: true } },
+    ])
+    mocks.conversationFindBy.mockResolvedValue({
+      id: "conv-1",
+      assignedUserId: null,
+      assignedInboxTeamId: "team-1",
+    })
+    mocks.listUserIdsByTeamId.mockResolvedValue(["team-member-1"])
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({
+      tier: "assignedTeam",
+      userIds: ["team-member-1"],
+    })
+    expect(mocks.listUserIdsByTeamId).toHaveBeenCalledWith({
+      workspaceId: "ws1",
+      inboxTeamId: "team-1",
+    })
+  })
+
+  test("team projection is NOT loaded when the conversation has no assigned team", async () => {
+    mocks.liveAgents.mockResolvedValue(["agent-1"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "agent-1", permissions: { contacts: true } },
+    ])
+    mocks.conversationFindBy.mockResolvedValue({
+      id: "conv-1",
+      assignedUserId: null,
+      assignedInboxTeamId: null,
+    })
+
+    await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(mocks.listUserIdsByTeamId).not.toHaveBeenCalled()
+  })
+
+  // D2/D3 interaction: a team member whose ONLY qualifying permission is
+  // onlyAssignedContacts is never eligible in tier 2 — they aren't
+  // individually assigned.
+  test("team member with only onlyAssignedContacts is skipped in tier 2, falls through to tier 3", async () => {
+    mocks.liveAgents.mockResolvedValue(["team-member-1", "other-1"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "team-member-1", permissions: { onlyAssignedContacts: true } },
+      { userId: "other-1", permissions: { contacts: true } },
+    ])
+    mocks.conversationFindBy.mockResolvedValue({
+      id: "conv-1",
+      assignedUserId: null,
+      assignedInboxTeamId: "team-1",
+    })
+    mocks.listUserIdsByTeamId.mockResolvedValue(["team-member-1"])
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: "eligibleOnline", userIds: ["other-1"] })
+  })
+
+  test("team empty (no eligible team member online) falls through to eligible online tier", async () => {
+    mocks.liveAgents.mockResolvedValue(["other-1"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "other-1", permissions: { contacts: true } },
+    ])
+    mocks.conversationFindBy.mockResolvedValue({
+      id: "conv-1",
+      assignedUserId: null,
+      assignedInboxTeamId: "team-1",
+    })
+    mocks.listUserIdsByTeamId.mockResolvedValue([])
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: "eligibleOnline", userIds: ["other-1"] })
+  })
+
+  // D3: an onlyAssignedContacts-only member is eligible ONLY when they are
+  // individually assigned to the conversation this call belongs to — never
+  // just because they have the inbox open.
+  test("D3: onlyAssignedContacts member IS rung when individually assigned to the conversation", async () => {
+    mocks.liveAgents.mockResolvedValue(["agent-1"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "agent-1", permissions: { onlyAssignedContacts: true } },
+    ])
+    mocks.conversationFindBy.mockResolvedValue({
+      id: "conv-1",
+      assignedUserId: "agent-1",
+      assignedInboxTeamId: null,
+    })
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: "assignee", userIds: ["agent-1"] })
+  })
+
+  test("D3: onlyAssignedContacts member is SKIPPED when assigned to someone else", async () => {
+    mocks.liveAgents.mockResolvedValue(["agent-1"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "agent-1", permissions: { onlyAssignedContacts: true } },
+    ])
+    mocks.conversationFindBy.mockResolvedValue({
+      id: "conv-1",
+      assignedUserId: "agent-2",
+      assignedInboxTeamId: null,
+    })
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: null, userIds: [] })
+  })
+
+  test("D3: onlyAssignedContacts member is SKIPPED for an unassigned conversation (no auto-claim)", async () => {
+    mocks.liveAgents.mockResolvedValue(["agent-1"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "agent-1", permissions: { onlyAssignedContacts: true } },
+    ])
+    mocks.conversationFindBy.mockResolvedValue({
+      id: "conv-1",
+      assignedUserId: null,
+      assignedInboxTeamId: null,
+    })
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: null, userIds: [] })
+  })
+
+  test("returns nobody when every online member is ineligible", async () => {
+    mocks.liveAgents.mockResolvedValue(["agent-1", "agent-2"])
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      { userId: "agent-1", permissions: { analytics: true } },
+      { userId: "agent-2", permissions: {} },
+    ])
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: null, userIds: [] })
+  })
+
+  test("cap is applied AFTER eligibility filtering, not before", async () => {
+    // 3 eligible + several ineligible interleaved BEFORE them in presence
+    // order — if the cap were applied first (on raw online ids), it could
+    // truncate away the eligible ones entirely.
+    const onlineUserIds = [
+      "ineligible-0",
+      "ineligible-1",
+      "ineligible-2",
+      "ineligible-3",
+      "ineligible-4",
+      "ineligible-5",
+      "ineligible-6",
+      "ineligible-7",
+      "ineligible-8",
+      "ineligible-9",
+      "ineligible-10",
+      "agent-1",
+      "agent-2",
+      "agent-3",
+    ]
+    mocks.liveAgents.mockResolvedValue(onlineUserIds)
+    mocks.listPermissionsByUserIds.mockResolvedValue([
+      ...Array.from({ length: 11 }, (_, i) => ({
+        userId: `ineligible-${i}`,
+        permissions: {},
+      })),
+      { userId: "agent-1", permissions: { contacts: true } },
+      { userId: "agent-2", permissions: { contacts: true } },
+      { userId: "agent-3", permissions: { contacts: true } },
+    ])
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({
+      tier: "eligibleOnline",
+      userIds: ["agent-1", "agent-2", "agent-3"],
+    })
+  })
+
+  test("returns nobody when no one has the inbox open, without loading permissions or the conversation", async () => {
+    mocks.liveAgents.mockResolvedValue([])
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: null, userIds: [] })
+    expect(mocks.listPermissionsByUserIds).not.toHaveBeenCalled()
+    expect(mocks.conversationFindBy).not.toHaveBeenCalled()
+  })
+
+  // `workspacePresenceService.listOnlineMembers` degrades to `[]` on a Redis
+  // failure — it never throws (see `workspace-presence-service.test.ts`).
+  // That degraded `[]` is indistinguishable from "nobody online" from here,
+  // so a Redis outage during ring-target resolution behaves EXACTLY like
+  // this "nobody online" case: `handleConnect` takes its existing, already
+  // fenced-CAS-safe `endReservedCall` rejection path immediately, rather
+  // than throwing and relying on BullMQ retries / the durable
+  // `expireIfUnanswered` job to eventually reject the call.
+  test("a degraded (Redis-outage) presence read is treated exactly like nobody online — no throw, clean immediate reject path", async () => {
+    mocks.liveAgents.mockResolvedValue([])
+
+    const result = await whatsappVoipCallService.selectRingTargetsForCall({
+      workspaceId: "ws1",
+      conversationId: "conv-1",
+    })
+
+    expect(result).toEqual({ tier: null, userIds: [] })
+    expect(mocks.listPermissionsByUserIds).not.toHaveBeenCalled()
+    expect(mocks.conversationFindBy).not.toHaveBeenCalled()
   })
 })
 
@@ -1774,6 +2199,7 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
 
     const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
+      userId: "agent-1",
     })
 
     expect(mocks.findRingingByWorkspace).toHaveBeenCalledWith("ws-1")
@@ -1807,6 +2233,7 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
 
     const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
+      userId: "agent-1",
     })
 
     expect(result.map((entry) => entry.whatsappCallId)).toEqual([
@@ -1840,6 +2267,7 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
 
     const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
+      userId: "agent-1",
     })
 
     expect(result.map((entry) => entry.whatsappCallId)).toEqual([
@@ -1867,6 +2295,7 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
 
     const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
+      userId: "agent-1",
     })
 
     expect(result.map((entry) => entry.whatsappCallId)).toEqual([
@@ -1894,6 +2323,7 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
 
     const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
+      userId: "agent-1",
     })
 
     expect(result.map((entry) => entry.whatsappCallId)).toEqual([
@@ -1921,6 +2351,7 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
 
     const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
+      userId: "agent-1",
     })
 
     expect(result.map((entry) => entry.whatsappCallId)).toEqual([
@@ -1935,6 +2366,7 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
 
     const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
+      userId: "agent-1",
     })
 
     expect(result).toEqual([])
@@ -1945,9 +2377,136 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
 
     const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
+      userId: "agent-1",
     })
 
     expect(result).toEqual([])
+  })
+
+  test("M3: loads the caller's eligibility member ONCE per request, not once per candidate", async () => {
+    const rows = [
+      callRow({ id: "call-1", wacid: "wacid.ONE", conversationId: "conv-1" }),
+      callRow({ id: "call-2", wacid: "wacid.TWO", conversationId: "conv-2" }),
+      callRow({
+        id: "call-3",
+        wacid: "wacid.THREE",
+        conversationId: "conv-3",
+      }),
+    ]
+    mocks.findRingingByWorkspace.mockResolvedValue(rows)
+    mocks.getJson.mockImplementation((key: string) =>
+      key.startsWith("voip:ctrl:")
+        ? Promise.resolve(unclaimedControl())
+        : Promise.resolve(offer),
+    )
+
+    await whatsappVoipCallService.listResumableIncoming({
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(mocks.loadCallEligibilityMember).toHaveBeenCalledTimes(1)
+    expect(mocks.loadCallEligibilityMember).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+  })
+
+  test("calls canCallConversationForMember with the preloaded member and the candidate's workspace/conversation", async () => {
+    mocks.findRingingByWorkspace.mockResolvedValue([callRow()])
+    mocks.getJson.mockImplementation((key: string) =>
+      key.startsWith("voip:ctrl:")
+        ? Promise.resolve(unclaimedControl())
+        : Promise.resolve(offer),
+    )
+    const preloadedMember = {
+      userId: "agent-1",
+      permissions: { contacts: true },
+    }
+    mocks.loadCallEligibilityMember.mockResolvedValue(preloadedMember)
+
+    await whatsappVoipCallService.listResumableIncoming({
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(mocks.canCallConversationForMember).toHaveBeenCalledWith({
+      member: preloadedMember,
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+    })
+  })
+
+  test("excludes only the row the requester is ineligible for (D3); its siblings still qualify", async () => {
+    const rows = [
+      callRow({ id: "call-1", wacid: "wacid.ONE", conversationId: "conv-1" }),
+      callRow({ id: "call-2", wacid: "wacid.TWO", conversationId: "conv-2" }),
+      callRow({
+        id: "call-3",
+        wacid: "wacid.THREE",
+        conversationId: "conv-3",
+      }),
+    ]
+    mocks.findRingingByWorkspace.mockResolvedValue(rows)
+    mocks.getJson.mockImplementation((key: string) =>
+      key.startsWith("voip:ctrl:")
+        ? Promise.resolve(unclaimedControl())
+        : Promise.resolve(offer),
+    )
+    mocks.canCallConversationForMember.mockImplementation(
+      async (input: { conversationId: string }) =>
+        input.conversationId !== "conv-2",
+    )
+
+    const result = await whatsappVoipCallService.listResumableIncoming({
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(result.map((entry) => entry.whatsappCallId)).toEqual([
+      "call-1",
+      "call-3",
+    ])
+  })
+
+  test("never leaks the offer SDP for a candidate the requester is ineligible for, and never even reads it (M3)", async () => {
+    mocks.findRingingByWorkspace.mockResolvedValue([callRow()])
+    mocks.getJson.mockImplementation((key: string) =>
+      key.startsWith("voip:ctrl:")
+        ? Promise.resolve(unclaimedControl())
+        : Promise.resolve(offer),
+    )
+    mocks.canCallConversationForMember.mockResolvedValue(false)
+
+    const result = await whatsappVoipCallService.listResumableIncoming({
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(result).toEqual([])
+    expect(mocks.getJson).not.toHaveBeenCalledWith(
+      expect.stringContaining("voip:offer:"),
+    )
+  })
+
+  test("M3: never checks eligibility (canCallConversationForMember) or reads the offer for a non-reserved/claimed candidate", async () => {
+    mocks.findRingingByWorkspace.mockResolvedValue([callRow()])
+    mocks.getJson.mockImplementation((key: string) =>
+      key.startsWith("voip:ctrl:")
+        ? Promise.resolve(unclaimedControl({ reservedUserId: "someone-else" }))
+        : Promise.resolve(offer),
+    )
+
+    const result = await whatsappVoipCallService.listResumableIncoming({
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(result).toEqual([])
+    expect(mocks.canCallConversationForMember).not.toHaveBeenCalled()
+    expect(mocks.getJson).not.toHaveBeenCalledWith(
+      expect.stringContaining("voip:offer:"),
+    )
   })
 
   test("falls back to a null contact name when contact lookup fails", async () => {
@@ -1961,6 +2520,7 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
 
     const result = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
+      userId: "agent-1",
     })
 
     expect(result[0]?.contactName).toBeNull()
@@ -1968,7 +2528,7 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
 })
 
 describe("whatsappVoipCallService.finalizeEndedCall", () => {
-  test("maps the call id and forwards every provided outcome field", async () => {
+  test("maps the call id and forwards every provided outcome field, including outcome", async () => {
     const startedAt = new Date("2026-09-16T10:00:00.000Z")
     const endedAt = new Date("2026-09-16T10:01:30.000Z")
     mocks.finalizeById.mockResolvedValue({ id: "call-1", status: "completed" })
@@ -1977,6 +2537,7 @@ describe("whatsappVoipCallService.finalizeEndedCall", () => {
       whatsappVoipCallService.finalizeEndedCall({
         whatsappCallId: "call-1",
         status: "completed",
+        outcome: "completed",
         startedAt,
         endedAt,
         durationSeconds: 90,
@@ -1986,11 +2547,31 @@ describe("whatsappVoipCallService.finalizeEndedCall", () => {
     expect(mocks.finalizeById).toHaveBeenCalledWith({
       id: "call-1",
       status: "completed",
+      outcome: "completed",
       startedAt,
       endedAt,
       durationSeconds: 90,
       messageId: "msg-1",
     })
+  })
+
+  test("forwards a failed status paired with a canceled outcome unchanged", async () => {
+    mocks.finalizeById.mockResolvedValue({
+      id: "call-1",
+      status: "failed",
+      outcome: "canceled",
+    })
+
+    await whatsappVoipCallService.finalizeEndedCall({
+      whatsappCallId: "call-1",
+      status: "failed",
+      outcome: "canceled",
+      endedAt: new Date("2026-09-16T10:00:00.000Z"),
+    })
+
+    expect(mocks.finalizeById).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failed", outcome: "canceled" }),
+    )
   })
 
   test("never adds an omitted field, so a set column is not cleared", async () => {
@@ -2000,6 +2581,7 @@ describe("whatsappVoipCallService.finalizeEndedCall", () => {
       whatsappVoipCallService.finalizeEndedCall({
         whatsappCallId: "call-1",
         status: "failed",
+        outcome: "failed",
         endedAt: new Date("2026-09-16T10:00:00.000Z"),
       }),
     ).resolves.toBeUndefined()

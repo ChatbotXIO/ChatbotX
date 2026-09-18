@@ -9,6 +9,7 @@ import {
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { assertCanReadCallArtifactOrThrow } from "@/features/integration-whatsapp/calling/actions/assert-call-access"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 const generateCallAiSummarySchema = z.object({
@@ -29,8 +30,17 @@ const generateCallAiSummarySchema = z.object({
 export const generateCallAiSummaryAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString()])
   .inputSchema(generateCallAiSummarySchema)
-  .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
+  .action(async ({ bindArgsParsedInputs: [workspaceId], ctx, parsedInput }) => {
     const { whatsappCallId, provider } = parsedInput
+
+    await assertCanReadCallArtifactOrThrow({
+      workspaceId,
+      whatsappCallId,
+      member: {
+        userId: ctx.user.id,
+        permissions: ctx.workspaceMemberPermissions,
+      },
+    })
 
     const transcriptText =
       await whatsappCallTranscriptService.getTranscriptTextForCall({

@@ -12,6 +12,17 @@ vi.mock("next-intl", () => ({
     values ? `${key}:${JSON.stringify(values)}` : key,
 }))
 
+vi.mock("@/hooks/routing", () => ({
+  useWorkspaceId: () => "workspace-1",
+}))
+
+const routerPushMock = vi.fn()
+let mockPathname = "/space/workspace-1/inbox"
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: routerPushMock }),
+  usePathname: () => mockPathname,
+}))
+
 const contextMock = {
   answer: vi.fn(),
   dismiss: vi.fn(),
@@ -131,7 +142,13 @@ describe("WhatsappCallPanel", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
-    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
+    contextMock.answer.mockReset()
+    mockPathname = "/space/workspace-1/inbox"
+    useWhatsappVoipCallStore.setState({
+      call: null,
+      ringingCalls: [],
+      pendingConversationOpen: null,
+    })
     container = document.createElement("div")
     document.body.appendChild(container)
     root = createRoot(container)
@@ -210,6 +227,88 @@ describe("WhatsappCallPanel", () => {
     expect(contextMock.dismiss).toHaveBeenCalledTimes(1)
   })
 
+  test("D6: a SUCCESSFUL answer while already on the inbox sets the pending-open bridge instead of navigating", async () => {
+    mockPathname = "/space/workspace-1/inbox"
+    useWhatsappVoipCallStore.setState({ call: incomingCall })
+    contextMock.answer.mockImplementation((_id, onAnswered) => {
+      onAnswered?.("conversation-1")
+      return Promise.resolve("answered")
+    })
+    await render()
+
+    await act(async () => {
+      document
+        .querySelector(`[aria-label="whatsapp.calls.answer"]`)
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(
+      useWhatsappVoipCallStore.getState().pendingConversationOpen
+        ?.conversationId,
+    ).toBe("conversation-1")
+    expect(routerPushMock).not.toHaveBeenCalled()
+  })
+
+  test("D6: a SUCCESSFUL answer while off the inbox pushes the inbox route with the conversationId", async () => {
+    mockPathname = "/space/workspace-1/settings"
+    useWhatsappVoipCallStore.setState({ call: incomingCall })
+    contextMock.answer.mockImplementation((_id, onAnswered) => {
+      onAnswered?.("conversation-1")
+      return Promise.resolve("answered")
+    })
+    await render()
+
+    await act(async () => {
+      document
+        .querySelector(`[aria-label="whatsapp.calls.answer"]`)
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      "/space/workspace-1/inbox?conversationId=conversation-1",
+    )
+    expect(
+      useWhatsappVoipCallStore.getState().pendingConversationOpen,
+    ).toBeNull()
+  })
+
+  test("D6: a FAILED answer (call never becomes active) does not navigate — on the inbox", async () => {
+    mockPathname = "/space/workspace-1/inbox"
+    useWhatsappVoipCallStore.setState({ call: incomingCall })
+    contextMock.answer.mockImplementation(() => Promise.resolve("declined"))
+    await render()
+
+    await act(async () => {
+      document
+        .querySelector(`[aria-label="whatsapp.calls.answer"]`)
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(
+      useWhatsappVoipCallStore.getState().pendingConversationOpen,
+    ).toBeNull()
+    expect(routerPushMock).not.toHaveBeenCalled()
+  })
+
+  test("D6: a FAILED answer (call never becomes active) does not navigate — off the inbox", async () => {
+    mockPathname = "/space/workspace-1/settings"
+    useWhatsappVoipCallStore.setState({ call: incomingCall })
+    contextMock.answer.mockImplementation(() => Promise.resolve("declined"))
+    await render()
+
+    await act(async () => {
+      document
+        .querySelector(`[aria-label="whatsapp.calls.answer"]`)
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(routerPushMock).not.toHaveBeenCalled()
+  })
+
   test("active phase renders a live timer, mute, end, and the recording indicator", async () => {
     useWhatsappVoipCallStore.setState({ call: activeCall })
     await render()
@@ -242,6 +341,40 @@ describe("WhatsappCallPanel", () => {
         ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
     })
     expect(contextMock.hangup).toHaveBeenCalledTimes(1)
+  })
+
+  test("Go to conversation: sets the pending-open bridge while already on the inbox", async () => {
+    mockPathname = "/space/workspace-1/inbox"
+    useWhatsappVoipCallStore.setState({ call: activeCall })
+    await render()
+
+    act(() => {
+      document
+        .querySelector(`[aria-label="whatsapp.calls.panel.goToConversation"]`)
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(
+      useWhatsappVoipCallStore.getState().pendingConversationOpen
+        ?.conversationId,
+    ).toBe("conversation-1")
+    expect(routerPushMock).not.toHaveBeenCalled()
+  })
+
+  test("Go to conversation: pushes the inbox route with the conversationId while off the inbox", async () => {
+    mockPathname = "/space/workspace-1/settings"
+    useWhatsappVoipCallStore.setState({ call: activeCall })
+    await render()
+
+    act(() => {
+      document
+        .querySelector(`[aria-label="whatsapp.calls.panel.goToConversation"]`)
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      "/space/workspace-1/inbox?conversationId=conversation-1",
+    )
   })
 
   test("ended phase shows the mapped message and a dismiss control, no Answer/End", async () => {
@@ -421,7 +554,13 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
-    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
+    contextMock.answer.mockReset()
+    mockPathname = "/space/workspace-1/inbox"
+    useWhatsappVoipCallStore.setState({
+      call: null,
+      ringingCalls: [],
+      pendingConversationOpen: null,
+    })
     container = document.createElement("div")
     document.body.appendChild(container)
     root = createRoot(container)
@@ -459,7 +598,10 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
         .querySelector(`[aria-label="whatsapp.calls.answer"]`)
         ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
     })
-    expect(contextMock.answer).toHaveBeenCalledWith("ring-a")
+    expect(contextMock.answer).toHaveBeenCalledWith(
+      "ring-a",
+      expect.any(Function),
+    )
 
     act(() => {
       document
@@ -467,6 +609,44 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
         ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
     })
     expect(contextMock.dismiss).toHaveBeenCalledWith("ring-a")
+  })
+
+  test("D6: answering the single basket card navigates to its own conversation, off the inbox, only on success", async () => {
+    mockPathname = "/space/workspace-1/settings"
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringA] })
+    contextMock.answer.mockImplementation((_id, onAnswered) => {
+      onAnswered?.("conversation-a")
+      return Promise.resolve("answered")
+    })
+    await render()
+
+    await act(async () => {
+      document
+        .querySelector(`[aria-label="whatsapp.calls.answer"]`)
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      "/space/workspace-1/inbox?conversationId=conversation-a",
+    )
+  })
+
+  test("D6: does not navigate when answering the single basket card fails", async () => {
+    mockPathname = "/space/workspace-1/settings"
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringA] })
+    // Left ringing (or dismissed) — never promoted to an active call.
+    contextMock.answer.mockResolvedValue("declined")
+    await render()
+
+    await act(async () => {
+      document
+        .querySelector(`[aria-label="whatsapp.calls.answer"]`)
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(routerPushMock).not.toHaveBeenCalled()
   })
 
   test("free slot + 2 basket entries: the compact list, one row per caller, with a backdrop", async () => {
@@ -496,7 +676,34 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
         new MouseEvent("click", { bubbles: true }),
       )
     })
-    expect(contextMock.answer).toHaveBeenCalledWith("ring-b")
+    expect(contextMock.answer).toHaveBeenCalledWith(
+      "ring-b",
+      expect.any(Function),
+    )
+  })
+
+  test("D6: answering a ring-list row navigates to that row's own conversation, off the inbox, only on success", async () => {
+    mockPathname = "/space/workspace-1/settings"
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringA, ringB] })
+    contextMock.answer.mockImplementation((_id, onAnswered) => {
+      onAnswered?.("conversation-b")
+      return Promise.resolve("answered")
+    })
+    await render()
+
+    const answerButtons = Array.from(
+      document.querySelectorAll('[aria-label^="whatsapp.calls.answerCaller"]'),
+    )
+    await act(async () => {
+      answerButtons[1]?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      )
+      await Promise.resolve()
+    })
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      "/space/workspace-1/inbox?conversationId=conversation-b",
+    )
   })
 
   test("engaged slot + ringing basket: the slot's panel keeps its position with NO backdrop, and the ring list stacks above it", async () => {
@@ -531,7 +738,10 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
     act(() => {
       answerButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
     })
-    expect(contextMock.answer).toHaveBeenCalledWith("ring-a")
+    expect(contextMock.answer).toHaveBeenCalledWith(
+      "ring-a",
+      expect.any(Function),
+    )
   })
 
   test("today's unchanged behavior when the basket is empty: no call renders nothing, a single call renders the normal panel", async () => {

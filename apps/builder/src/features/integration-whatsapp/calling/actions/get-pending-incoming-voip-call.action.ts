@@ -2,7 +2,7 @@
 
 import { whatsappVoipCallService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { callingActionClient } from "@/lib/safe-action"
 
 /**
  * Resume-after-refresh lookup for VoIP calls: ring-all means more than one
@@ -18,8 +18,11 @@ import { workspaceActionClient } from "@/lib/safe-action"
  * No-input action (`bindArgsSchemas` only, per AGENTS.md invariant #6) — the
  * client must call `execute` with no arguments, not `execute({})`.
  */
-export const getPendingIncomingVoipCallAction = workspaceActionClient
+export const getPendingIncomingVoipCallAction = callingActionClient
   .bindArgsSchemas([zodBigintAsString()])
-  .action(async ({ bindArgsParsedInputs: [workspaceId] }) =>
-    whatsappVoipCallService.listResumableIncoming({ workspaceId }),
+  .action(async ({ bindArgsParsedInputs: [workspaceId], ctx }) =>
+    whatsappVoipCallService.listResumableIncoming({
+      workspaceId,
+      userId: ctx.user.id,
+    }),
   )

@@ -14,6 +14,7 @@ import {
   dmConversationUsesSourceId,
 } from "@chatbotx.io/database/partials"
 import {
+  assignUserIfUnassigned,
   createMessageRepository,
   getSafeSinceTime,
 } from "@chatbotx.io/database/repositories"
@@ -889,6 +890,7 @@ class ConversationService extends BaseService {
       conversations,
       assignedUserId,
       assignedInboxTeamId,
+      assignedBy,
       triggerContext,
       tx = db,
     } = props
@@ -903,6 +905,56 @@ class ConversationService extends BaseService {
         ),
       )
       .returning()
+
+    await this.publishAssignmentChanges({
+      workspaceId,
+      conversations: updated,
+      assignedUserId,
+      assignedInboxTeamId,
+      assignedBy,
+      triggerContext,
+    })
+
+    return updated
+  }
+
+  /**
+   * Every side effect of an assignment write — cache invalidation, realtime
+   * broadcast, agent notification, the domain event and the analytics event
+   * — extracted from `updateAssignment` (P3) so `claimForCallAgent` can
+   * trigger the exact same publish from an UPDATE it ran itself. Always
+   * built from the rows the caller's UPDATE actually returned, never from
+   * input the caller merely intended to update. `conversations` empty (no
+   * rows returned, e.g. a losing `assignUserIfUnassigned` claim, or a
+   * `updateAssignment` call whose ids matched nothing) is a no-op: no
+   * invalidation, no broadcast, no notification, no domain/analytics event
+   * — this is the single guard both callers rely on, so neither call site
+   * duplicates it.
+   * Order: invalidate -> conversationUpdated -> conversationAssigned ->
+   * notification (unless self-assigned) -> emitConversationAssigned/
+   * emitConversationUnassigned -> analytics.
+   */
+  private async publishAssignmentChanges(props: {
+    workspaceId: string
+    conversations: { id: string; contactId: string }[]
+    assignedUserId: string | null
+    assignedInboxTeamId: string | null
+    assignedBy?: string
+    triggerContext: TriggerContext
+  }): Promise<void> {
+    const {
+      workspaceId,
+      conversations,
+      assignedUserId,
+      assignedInboxTeamId,
+      assignedBy,
+      triggerContext,
+    } = props
+    if (conversations.length === 0) {
+      return
+    }
+    const ids = conversations.map((c) => c.id)
+
     await this.invalidate({ workspaceId, ids })
 
     await this.broadcastConversationEvent(workspaceId, {
@@ -917,7 +969,7 @@ class ConversationService extends BaseService {
       data: { conversationIds: ids, assignedUserId, assignedInboxTeamId },
     })
 
-    if (assignedUserId && assignedUserId !== props.assignedBy) {
+    if (assignedUserId && assignedUserId !== assignedBy) {
       try {
         await notificationQueue.addBulk(
           conversations.map((conv) => ({
@@ -945,7 +997,7 @@ class ConversationService extends BaseService {
           conv.contactId,
           conv.id,
           assignedTo,
-          props.assignedBy,
+          assignedBy,
         )
         emit("analytics:dashboard", {
           eventType: "conversation:assigned",
@@ -960,7 +1012,7 @@ class ConversationService extends BaseService {
           workspaceId,
           conv.contactId,
           conv.id,
-          props.assignedBy,
+          assignedBy,
         )
         emit("analytics:dashboard", {
           eventType: "conversation:unassigned",
@@ -971,8 +1023,46 @@ class ConversationService extends BaseService {
         })
       }
     }
+  }
 
-    return updated
+  /**
+   * Auto-assign on call answer / outbound dial (P3, plan D2). Claims the
+   * conversation for the agent ONLY when it is currently unassigned to both
+   * a user and a team — `assignUserIfUnassigned`'s guarded UPDATE is the
+   * single source of truth for that, so a team-assigned conversation is
+   * never auto-claimed and a concurrent manual assignment always wins.
+   * `publishAssignmentChanges` itself no-ops on an empty `claimed` (no rows
+   * returned means no publish, full stop) — that guard lives there once,
+   * not duplicated here. Never throws for a losing claim; the call itself
+   * must never fail because of this.
+   */
+  async claimForCallAgent(props: {
+    workspaceId: string
+    conversationId: string
+    userId: string
+    triggerHandler: string
+    tx?: DatabaseClient
+  }): Promise<ConversationModel[]> {
+    const { workspaceId, conversationId, userId, triggerHandler, tx } = props
+    const claimed = await assignUserIfUnassigned(
+      { workspaceId, conversationId, userId },
+      tx,
+    )
+
+    await this.publishAssignmentChanges({
+      workspaceId,
+      conversations: claimed,
+      assignedUserId: userId,
+      assignedInboxTeamId: null,
+      assignedBy: userId,
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler,
+        triggerType: "conversation_assigned",
+      },
+    })
+
+    return claimed
   }
 
   async updateBotEnabled(props: {

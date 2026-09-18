@@ -2020,12 +2020,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "לא ניתן היה לדחות את שיחת הוואטסאפ",
+        "voipHangupFailed": "לא ניתן היה לסיים את שיחת הוואטסאפ",
+        "voipNotReservedAgent": "אינך הסוכן המשויך לשיחה זו",
+        "voipCallAccessDenied": "אין לך הרשאה לטפל בשיחה זו",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "השיחה הזו כבר לא מצלצלת",
-        "transcriptionRequiresRecording": "הפעל הקלטת שיחות לפני הפעלת התמלול."
+        "transcriptionRequiresRecording": "הפעל הקלטת שיחות לפני הפעלת התמלול.",
+        "supportSessionCallingBlocked": "שיחות אינן זמינות במהלך הפעלת תמיכה של הפלטפורמה.",
+        "callingAccessDenied": "אין לך גישה לשיחות בסביבת עבודה זו.",
+        "callArtifactAccessDenied": "אין לך הרשאה לצפות בשיחה זו.",
+        "callHistoryAccessDenied": "אין לך גישה להיסטוריית השיחות בסביבת עבודה זו."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -2083,7 +2088,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "הגישה למיקרופון נדחתה. אפשר גישה בהגדרות הדפדפן וניסה שוב.",
-        "micNotFound": "לא נמצא מיקרופון. חבר מיקרופון וניסה שוב."
+        "micNotFound": "לא נמצא מיקרופון. חבר מיקרופון וניסה שוב.",
+        "callAccessDenied": "אין לך הרשאה להתקשר לאיש קשר זה."
       },
       "card": {
         "audioCall": "שיחה קולית",
@@ -2105,7 +2111,8 @@
         "playbackFailed": "ההפעלה נכשלה",
         "answeredBy": "נענה על ידי {name}",
         "calledBy": "התקשרות מאת {name}",
-        "callFailed": "בעיה בשיחה"
+        "callFailed": "בעיה בשיחה",
+        "callBack": "התקשר בחזרה"
       },
       "sheet": {
         "title": "פרטי השיחה",
@@ -2148,6 +2155,7 @@
         "statusCallEnded": "השיחה הסתיימה",
         "end": "סיום",
         "minimize": "מזער",
+        "goToConversation": "עבור לשיחה",
         "expand": "הרחב",
         "dismiss": "סגור",
         "statusNoAnswer": "אין מענה",
@@ -2204,7 +2212,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "שיחות",
+        "subtitle": "היסטוריית שיחות עבור סביבת עבודה זו",
+        "emptyTitle": "אין עדיין שיחות",
+        "emptyDescription": "שיחות יופיעו כאן ברגע שהצוות שלך יתחיל לבצע או לקבל שיחות וואטסאפ.",
+        "loadMore": "טען עוד",
+        "allActivity": "כל השיחות",
+        "filterMissed": "שיחות שלא נענו",
+        "filterNoReply": "ללא מענה",
+        "allInboxes": "כל תיבות הדואר הנכנס",
+        "allAgents": "כל הנציגים",
+        "columnContact": "איש קשר",
+        "columnInbox": "תיבת דואר נכנס",
+        "columnDirection": "כיוון",
+        "columnAgent": "נציג",
+        "columnDuration": "משך",
+        "columnDate": "תאריך",
+        "directionInbound": "נכנסת",
+        "directionOutbound": "יוצאת",
+        "kindOngoing": "מתבצעת",
+        "kindAnsweredInbound": "נענתה",
+        "kindAnsweredOutbound": "נענתה",
+        "openConversation": "פתח שיחה",
+        "unknownContact": "איש קשר לא ידוע",
+        "emptyFilteredTitle": "אין שיחות התואמות למסנן זה",
+        "emptyFilteredDescription": "נסו מסנן אחר או נקו אותו כדי לראות את כל השיחות.",
+        "loadMoreError": "טעינת שיחות נוספות נכשלה. נסו שוב.",
+        "callInformation": "פרטי השיחה"
+      }
     }
   },
   "zalo": {

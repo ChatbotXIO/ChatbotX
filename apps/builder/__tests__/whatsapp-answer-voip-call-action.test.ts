@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 type ActionHandler = (args: {
   bindArgsParsedInputs: readonly [string]
   parsedInput: Record<string, unknown>
-  ctx: { user: { id: string } }
+  ctx: { user: { id: string }; isSupportSession: boolean }
 }) => Promise<unknown>
 
 const {
@@ -24,6 +24,8 @@ const {
   acceptCallMock,
   terminateCallMock,
   broadcastToWorkspacePartyMock,
+  claimForCallAgentMock,
+  canCallConversationMock,
 } = vi.hoisted(() => ({
   markRecordingArrangementMock: vi.fn(),
   logProviderErrorMock: vi.fn(),
@@ -40,6 +42,8 @@ const {
   acceptCallMock: vi.fn(),
   terminateCallMock: vi.fn(),
   broadcastToWorkspacePartyMock: vi.fn(),
+  claimForCallAgentMock: vi.fn(),
+  canCallConversationMock: vi.fn(),
 }))
 
 const DEADLINE_SAFETY_MARGIN_MS = 3000
@@ -78,7 +82,7 @@ vi.mock("@/lib/safe-action", () => {
   chain.bindArgsSchemas = () => chain
   chain.inputSchema = () => chain
   chain.action = (handler: unknown) => handler
-  return { workspaceActionClient: chain }
+  return { callingActionClient: chain }
 })
 
 vi.mock("@/lib/log", () => ({
@@ -94,6 +98,7 @@ const {
 )
 
 vi.mock("@chatbotx.io/business", () => ({
+  canCallConversation: canCallConversationMock,
   whatsappCallLifecycleService: {
     markRecordingArrangement: markRecordingArrangementMock,
   },
@@ -117,6 +122,11 @@ vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: { findBy: findContactInboxMock },
   contactService: { findBy: findContactMock },
   broadcastToWorkspaceParty: broadcastToWorkspacePartyMock,
+  conversationService: { claimForCallAgent: claimForCallAgentMock },
+  CALL_ASSIGNMENT_TRIGGER_HANDLERS: {
+    answered: "whatsappCallAnswered",
+    dialed: "whatsappCallDialed",
+  },
 }))
 
 vi.mock("@chatbotx.io/partysocket-config", () => ({
@@ -157,9 +167,10 @@ vi.mock("next-intl/server", () => ({
 const { answerWhatsappVoipCallAction } = await import(
   "../src/features/integration-whatsapp/calling/actions/answer-voip-call.action"
 )
+const { logger } = await import("@/lib/log")
 const action = answerWhatsappVoipCallAction as unknown as ActionHandler
 
-const ctx = { user: { id: "agent-1" } }
+const ctx = { user: { id: "agent-1" }, isSupportSession: false }
 
 const call = (whatsappCallId = "call-1", sdpAnswer = "v=0 answer") =>
   action({
@@ -171,11 +182,13 @@ const call = (whatsappCallId = "call-1", sdpAnswer = "v=0 answer") =>
 describe("answerWhatsappVoipCallAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    canCallConversationMock.mockResolvedValue(true)
     findByIdMock.mockResolvedValue({
       id: "call-1",
       workspaceId: "workspace-1",
       inboxId: "inbox-1",
       contactInboxId: "contact-inbox-1",
+      conversationId: "conversation-1",
       wacid: "wacid-1",
     })
     findByInboxIdForWorkspaceMock.mockResolvedValue({
@@ -207,6 +220,7 @@ describe("answerWhatsappVoipCallAction", () => {
     terminateCallMock.mockResolvedValue(undefined)
     releaseClaimMock.mockResolvedValue(true)
     broadcastToWorkspacePartyMock.mockResolvedValue(undefined)
+    claimForCallAgentMock.mockResolvedValue([])
   })
 
   test("denies a cross-workspace call id", async () => {
@@ -218,6 +232,39 @@ describe("answerWhatsappVoipCallAction", () => {
     })
     await expect(call()).rejects.toThrow("whatsapp.calls.errors.callNotFound")
     expect(claimForAnswerMock).not.toHaveBeenCalled()
+  })
+
+  test("P2 item 5 / M2 (D3): answer refused BEFORE claim when the agent is ineligible — canCallConversation checked directly, no throw/catch dance", async () => {
+    canCallConversationMock.mockResolvedValueOnce(false)
+
+    await expect(call()).resolves.toEqual({ outcome: "cannotAnswer" })
+
+    expect(canCallConversationMock).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      conversationId: "conversation-1",
+      userId: "agent-1",
+    })
+    expect(claimForAnswerMock).not.toHaveBeenCalled()
+  })
+
+  test("P2 item 5 / M2 (D3): answer refused AFTER a successful claim (reassignment/removal), releases the claim", async () => {
+    // First check (before claim) passes; the second (after claim, before
+    // pre_accept) catches a reassignment that happened in between.
+    canCallConversationMock
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false)
+
+    await expect(call()).resolves.toEqual({ outcome: "cannotAnswer" })
+
+    expect(claimForAnswerMock).toHaveBeenCalledWith({
+      wacid: "wacid-1",
+      userId: "agent-1",
+    })
+    expect(releaseClaimMock).toHaveBeenCalledWith({
+      wacid: "wacid-1",
+      fenceToken: "fence-1",
+    })
+    expect(preAcceptCallMock).not.toHaveBeenCalled()
   })
 
   test("answers successfully: pre_accept then accept then guarded persist", async () => {
@@ -262,6 +309,67 @@ describe("answerWhatsappVoipCallAction", () => {
         answeredByUserId: "agent-1",
       },
     })
+  })
+
+  test("auto-assigns the conversation to the answering agent only after markAcceptedByAgent succeeds", async () => {
+    await call()
+
+    expect(claimForCallAgentMock).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      conversationId: "conversation-1",
+      userId: "agent-1",
+      triggerHandler: "whatsappCallAnswered",
+    })
+  })
+
+  test("a claimForCallAgent failure is logged with `err` and does not change the accepted outcome", async () => {
+    const claimError = new Error("claim failed")
+    claimForCallAgentMock.mockRejectedValue(claimError)
+
+    const result = await call()
+
+    expect(result).toEqual({
+      outcome: "accepted",
+      browserRecordingEnabled: false,
+      recordingRequested: false,
+    })
+    expect(logger.warn).toHaveBeenCalledWith(
+      { err: claimError, whatsappCallId: "call-1" },
+      "WhatsApp VoIP call: auto-assign on answer failed",
+    )
+  })
+
+  test("does not auto-assign when the call ends before markAcceptedByAgent succeeds", async () => {
+    markAcceptedByAgentMock.mockResolvedValue(false)
+
+    await call()
+
+    expect(claimForCallAgentMock).not.toHaveBeenCalled()
+  })
+
+  // M2: the auto-assign claim must never delay the "claimed elsewhere"
+  // broadcast that tells every other rung agent to stop ringing — it runs
+  // strictly after both markAcceptedByAgent and that broadcast, as the last
+  // best-effort step before the action returns.
+  test("claims the conversation after markAcceptedByAgent AND after the claimed-elsewhere broadcast", async () => {
+    await call()
+
+    const markOrder = markAcceptedByAgentMock.mock.invocationCallOrder[0]
+    const broadcastOrder =
+      broadcastToWorkspacePartyMock.mock.invocationCallOrder[0]
+    const claimOrder = claimForCallAgentMock.mock.invocationCallOrder[0]
+    expect(markOrder).toBeLessThan(claimOrder)
+    expect(broadcastOrder).toBeLessThan(claimOrder)
+  })
+
+  test("skips auto-assign entirely for a support session", async () => {
+    await action({
+      bindArgsParsedInputs: ["workspace-1"],
+      parsedInput: { whatsappCallId: "call-1", sdpAnswer: "v=0 answer" },
+      ctx: { user: { id: "agent-1" }, isSupportSession: true },
+    })
+
+    expect(claimForCallAgentMock).not.toHaveBeenCalled()
   })
 
   test("releases the fenced claim (compensation) and does not swallow the accept error when Graph accept fails", async () => {
@@ -413,6 +521,9 @@ describe("answerWhatsappVoipCallAction", () => {
       expect.objectContaining({ callId: "wacid-1" }),
     )
     expect(markAcceptedByAgentMock).not.toHaveBeenCalled()
+    // L4: a lost commit never reaches the claim at all (not just that
+    // markAcceptedByAgent was skipped).
+    expect(claimForCallAgentMock).not.toHaveBeenCalled()
   })
 
   test("compensates with terminate when the guarded DB persist matches 0 rows (row already terminal)", async () => {

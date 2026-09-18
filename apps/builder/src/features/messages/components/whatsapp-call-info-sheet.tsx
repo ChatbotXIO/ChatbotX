@@ -46,6 +46,7 @@ import {
 import { useWorkspaceId } from "@/hooks/routing"
 import { getCallSummaryAction } from "../actions/get-call-summary.action"
 import { getCallTranscriptAction } from "../actions/get-call-transcript.action"
+import { createResolveCallRecordingUrl } from "../lib/resolve-call-recording-url"
 import {
   type CallInfoSheetTab,
   useCallInfoSheetStore,
@@ -63,21 +64,12 @@ const formatTimestamp = (seconds: number): string => {
   return `${minutes}:${String(remainder).padStart(2, "0")}`
 }
 
-const resolveRecordingUrl =
-  (whatsappCallId: string, workspaceId: string) =>
-  async (): Promise<string> => {
-    const { getCallRecordingUrlAction } = await import(
-      "../actions/get-call-recording-url.action"
-    )
-    const result = await getCallRecordingUrlAction(workspaceId, {
-      whatsappCallId,
-    })
-    const url = result?.data?.url
-    if (!url) {
-      throw new Error("Whatsapp call info sheet: no recording URL returned")
-    }
-    return url
-  }
+const resolveRecordingUrl = (whatsappCallId: string, workspaceId: string) =>
+  createResolveCallRecordingUrl({
+    workspaceId,
+    whatsappCallId,
+    context: "Whatsapp call info sheet",
+  })
 
 /** Matches a transcript segment against the search query, on speaker name or text. */
 const matchesSearch = (

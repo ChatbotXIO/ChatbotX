@@ -32,6 +32,14 @@ type RequestCallPermissionDialogProps = {
   /** Inbox backing the displayed conversation — pins the sending number. */
   inboxId?: string
   children: ReactNode
+  /**
+   * Opens the dialog immediately on mount instead of waiting for a click on
+   * `children` — used by a caller that commits to "request permission for
+   * THIS number" the moment it decides to render this dialog (e.g. the
+   * contact panel's number picker, which has no separate visible trigger
+   * once a row is chosen) rather than requiring a second click.
+   */
+  defaultOpen?: boolean
 }
 
 export function RequestCallPermissionDialog({
@@ -39,9 +47,10 @@ export function RequestCallPermissionDialog({
   conversationId,
   inboxId,
   children,
+  defaultOpen,
 }: RequestCallPermissionDialogProps) {
   const t = useTranslations()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen ?? false)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

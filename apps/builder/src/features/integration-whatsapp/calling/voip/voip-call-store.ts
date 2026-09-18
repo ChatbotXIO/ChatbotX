@@ -176,6 +176,11 @@ export function isCallSlotFree(call: WhatsappVoipCall | null): boolean {
  * The phase an outbound call lands in when Meta's status for it arrived
  * BEFORE its real id reached the slot — see `pendingOutboundStatus`.
  */
+/** How long a `pendingConversationOpen` request stays honorable — see its
+ * doc comment. Generous enough for a normal route transition to land, small
+ * enough that "much later" can never reopen a stale request. */
+export const PENDING_CONVERSATION_OPEN_MAX_AGE_MS = 15_000
+
 const OUTBOUND_PHASE_BY_BUFFERED_STATUS: Record<
   "ringing" | "accepted",
   WhatsappVoipCallPhase
@@ -196,6 +201,33 @@ type WhatsappVoipCallState = {
    * id). Disjoint from `call` at all times — see the invariant documented
    * on `WhatsappVoipRingingCall`. */
   ringingCalls: WhatsappVoipRingingCall[]
+  /**
+   * The conversation id the agent asked to view — set by
+   * `WhatsappCallPanel`'s "Go to conversation" control, and by the D6
+   * navigate-on-answer flow — while ALREADY on the inbox route. A plain
+   * `router.push` there would only change the `conversationId` query param
+   * without re-running `ConversationList`'s one-shot bootstrap effect, so it
+   * would never actually select the conversation. This module-level store
+   * is reachable from both the calling layer (`whatsapp-call-panel.tsx`,
+   * outside `ChatStoreProvider` — see `workspace-realtime-shell.tsx`) and
+   * the chat feature (`chat-realtime.tsx`, inside it) without either
+   * needing to cross that boundary via React context — the same pattern
+   * `ringingCalls` already uses for bubble-to-top, just in the opposite
+   * direction. `null` when nothing is pending.
+   *
+   * Stamped with `requestedAt` because `isOnInbox` (the panel's own gate for
+   * writing this) is a bare pathname string check, not proof that a
+   * `ChatRealtime` subscriber is actually mounted to consume it — a
+   * transient routing mismatch (mid-navigation, a Suspense boundary) could
+   * in principle leave this set with nothing listening. Without an age
+   * check, a LATER, unrelated mount of the inbox (e.g. the agent leaves and
+   * comes back much later) would silently reopen a stale request. See
+   * `consumePendingConversationOpen`.
+   */
+  pendingConversationOpen: {
+    conversationId: string
+    requestedAt: number
+  } | null
   pendingOutboundAnswer: WhatsappVoipPendingOutboundAnswer | null
   /** Appends a new ring to the basket. A no-op when redelivered: either the
    * id is already sitting in the basket, or it is the id currently occupying
@@ -204,6 +236,24 @@ type WhatsappVoipCallState = {
   enqueueRinging: (data: WhatsappVoipIncomingData) => void
   /** Drops a basket entry by id. A no-op when the id is not present. */
   removeRinging: (whatsappCallId: string) => void
+  /** Drops every basket entry whose `conversationId` is in the given list,
+   * in one store update — used by the `conversationAssigned` realtime
+   * handler when a conversation is reassigned to someone else while still
+   * ringing this agent, instead of looping `removeRinging` per entry. A
+   * no-op when no entry matches. */
+  removeRingingByConversationIds: (conversationIds: readonly string[]) => void
+  /** Records the conversation the agent wants to view while already on the
+   * inbox — see `pendingConversationOpen`. Stamps `requestedAt: Date.now()`. */
+  setPendingConversationOpen: (conversationId: string) => void
+  /**
+   * Atomically reads and clears the pending-open request (so a caller
+   * mounting more than once, or a duplicate notification, can never consume
+   * it twice), returning the conversation id ONLY when it is still fresh
+   * (within `PENDING_CONVERSATION_OPEN_MAX_AGE_MS` of `requestedAt`) —
+   * `null` otherwise, including when nothing was pending at all. `now`
+   * defaults to `Date.now()`, overridable for tests.
+   */
+  consumePendingConversationOpen: (now?: number) => string | null
   /** Atomically moves one basket entry into the single `call` slot (phase
    * `incomingRinging`, `isMuted`/`isRecording` false). Returns `true` on
    * success; `false` when
@@ -283,9 +333,10 @@ type WhatsappVoipCallState = {
 }
 
 export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
-  (set) => ({
+  (set, get) => ({
     call: null,
     ringingCalls: [],
+    pendingConversationOpen: null,
     pendingOutboundAnswer: null,
     pendingOutboundStatus: null,
 
@@ -318,6 +369,34 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
         }
         return { ringingCalls: nextRingingCalls }
       }),
+
+    removeRingingByConversationIds: (conversationIds) =>
+      set((state) => {
+        const dropIds = new Set(conversationIds)
+        const nextRingingCalls = state.ringingCalls.filter(
+          (ringing) => !dropIds.has(ringing.conversationId),
+        )
+        if (nextRingingCalls.length === state.ringingCalls.length) {
+          return state
+        }
+        return { ringingCalls: nextRingingCalls }
+      }),
+
+    setPendingConversationOpen: (conversationId) =>
+      set({
+        pendingConversationOpen: { conversationId, requestedAt: Date.now() },
+      }),
+
+    consumePendingConversationOpen: (now = Date.now()) => {
+      const pending = get().pendingConversationOpen
+      if (!pending) {
+        return null
+      }
+      set({ pendingConversationOpen: null })
+      const isFresh =
+        now - pending.requestedAt <= PENDING_CONVERSATION_OPEN_MAX_AGE_MS
+      return isFresh ? pending.conversationId : null
+    },
 
     // ATOMICITY: zustand's `set` updater receives the current state and
     // returns the next partial state, but has no channel back to the

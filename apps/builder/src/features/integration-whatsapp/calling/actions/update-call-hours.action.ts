@@ -12,7 +12,7 @@ import { getTranslations } from "next-intl/server"
 import { integrations } from "@/integration"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { logger } from "@/lib/log"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { callingAdminActionClient } from "@/lib/safe-action"
 import { throwWhatsappApiActionError } from "../../libs/whatsapp-api-action-error"
 import {
   toCallHoursSnapshot,
@@ -32,7 +32,7 @@ import {
  * save time and sent back, minus the ones already past (Meta rejects those).
  * If they cannot be read, nothing is written.
  */
-export const updateWhatsappCallHoursAction = workspaceActionClient
+export const updateWhatsappCallHoursAction = callingAdminActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(callHoursFormSchema)
   .action(

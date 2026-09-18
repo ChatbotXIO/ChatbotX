@@ -89,7 +89,11 @@ const buildRequest = (
   const request = new Request("http://localhost/api/whatsapp-call-recording", {
     method: "POST",
     body: formData,
-    headers,
+    // Default headers describe a legitimate same-origin request (real
+    // browser traffic always carries Host, and `Origin` on a POST) so
+    // tests that don't care about the same-site check aren't accidentally
+    // exercising its "nothing verifiable" fail-closed branch.
+    headers: { host: "localhost", origin: "http://localhost", ...headers },
   })
   return request as never
 }

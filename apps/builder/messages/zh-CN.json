@@ -5370,12 +5370,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "无法拒绝此 WhatsApp 通话",
+        "voipHangupFailed": "无法结束此 WhatsApp 通话",
+        "voipNotReservedAgent": "您不是分配给此通话的坐席",
+        "voipCallAccessDenied": "您无权处理此通话",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "该来电已不再响铃",
-        "transcriptionRequiresRecording": "请先开启通话录音，再开启转写。"
+        "transcriptionRequiresRecording": "请先开启通话录音，再开启转写。",
+        "supportSessionCallingBlocked": "平台支持会话期间无法使用通话功能。",
+        "callingAccessDenied": "您在此工作区中无权使用通话功能。",
+        "callArtifactAccessDenied": "您无权查看此通话。",
+        "callHistoryAccessDenied": "您无权访问此工作区的通话记录。"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -5433,7 +5438,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "麦克风访问被拒绝。请在浏览器设置中允许麦克风访问，然后重试。",
-        "micNotFound": "未找到麦克风。请连接麦克风后重试。"
+        "micNotFound": "未找到麦克风。请连接麦克风后重试。",
+        "callAccessDenied": "您无权拨打此联系人。"
       },
       "card": {
         "audioCall": "语音通话",
@@ -5455,7 +5461,8 @@
         "playbackFailed": "播放失败",
         "answeredBy": "由 {name} 接听",
         "calledBy": "由 {name} 拨打",
-        "callFailed": "通话问题"
+        "callFailed": "通话问题",
+        "callBack": "回拨"
       },
       "sheet": {
         "title": "通话信息",
@@ -5498,6 +5505,7 @@
         "statusCallEnded": "通话已结束",
         "end": "结束",
         "minimize": "最小化",
+        "goToConversation": "前往对话",
         "expand": "展开",
         "dismiss": "关闭",
         "statusNoAnswer": "无应答",
@@ -5554,7 +5562,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "通话",
+        "subtitle": "此工作区的通话记录",
+        "emptyTitle": "暂无通话",
+        "emptyDescription": "当您的团队开始拨打或接听 WhatsApp 通话后，通话记录将显示在这里。",
+        "loadMore": "加载更多",
+        "allActivity": "所有通话",
+        "filterMissed": "未接",
+        "filterNoReply": "无应答",
+        "allInboxes": "所有收件箱",
+        "allAgents": "所有客服",
+        "columnContact": "联系人",
+        "columnInbox": "收件箱",
+        "columnDirection": "方向",
+        "columnAgent": "客服",
+        "columnDuration": "时长",
+        "columnDate": "日期",
+        "directionInbound": "呼入",
+        "directionOutbound": "呼出",
+        "kindOngoing": "进行中",
+        "kindAnsweredInbound": "已接听",
+        "kindAnsweredOutbound": "已接听",
+        "openConversation": "打开会话",
+        "unknownContact": "未知联系人",
+        "emptyFilteredTitle": "没有符合此筛选条件的通话",
+        "emptyFilteredDescription": "请尝试其他筛选条件，或清除筛选以查看所有通话。",
+        "loadMoreError": "无法加载更多通话，请重试。",
+        "callInformation": "通话信息"
+      }
     }
   },
   "workspace": {

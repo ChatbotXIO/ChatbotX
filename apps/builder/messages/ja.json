@@ -3912,12 +3912,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "WhatsAppの通話を拒否できませんでした",
+        "voipHangupFailed": "WhatsAppの通話を終了できませんでした",
+        "voipNotReservedAgent": "あなたはこの通話に割り当てられたエージェントではありません",
+        "voipCallAccessDenied": "この通話を処理する権限がありません",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "その着信はすでに終了しています",
-        "transcriptionRequiresRecording": "文字起こしをオンにする前に、通話の録音をオンにしてください。"
+        "transcriptionRequiresRecording": "文字起こしをオンにする前に、通話の録音をオンにしてください。",
+        "supportSessionCallingBlocked": "プラットフォームのサポートセッション中は通話をご利用いただけません。",
+        "callingAccessDenied": "このワークスペースでは通話へのアクセス権がありません。",
+        "callArtifactAccessDenied": "この通話を表示する権限がありません。",
+        "callHistoryAccessDenied": "このワークスペースの通話履歴にアクセスする権限がありません。"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3975,7 +3980,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "マイクへのアクセスが拒否されました。ブラウザの設定でマイクへのアクセスを許可してから再試行してください。",
-        "micNotFound": "マイクが見つかりません。マイクを接続してから再試行してください。"
+        "micNotFound": "マイクが見つかりません。マイクを接続してから再試行してください。",
+        "callAccessDenied": "この連絡先に発信する権限がありません。"
       },
       "card": {
         "audioCall": "音声通話",
@@ -3997,7 +4003,8 @@
         "playbackFailed": "再生に失敗しました",
         "answeredBy": "応答者: {name}",
         "calledBy": "発信者: {name}",
-        "callFailed": "通話の問題"
+        "callFailed": "通話の問題",
+        "callBack": "折り返し発信"
       },
       "sheet": {
         "title": "通話情報",
@@ -4040,6 +4047,7 @@
         "statusCallEnded": "通話が終了しました",
         "end": "終了",
         "minimize": "最小化",
+        "goToConversation": "会話に移動",
         "expand": "展開",
         "dismiss": "閉じる",
         "statusNoAnswer": "応答なし",
@@ -4096,7 +4104,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "通話",
+        "subtitle": "このワークスペースの通話履歴",
+        "emptyTitle": "通話はまだありません",
+        "emptyDescription": "チームがWhatsApp通話を発信または受信すると、ここに表示されます。",
+        "loadMore": "もっと読み込む",
+        "allActivity": "すべての通話",
+        "filterMissed": "不在着信",
+        "filterNoReply": "応答なし",
+        "allInboxes": "すべての受信箱",
+        "allAgents": "すべての担当者",
+        "columnContact": "連絡先",
+        "columnInbox": "受信箱",
+        "columnDirection": "方向",
+        "columnAgent": "担当者",
+        "columnDuration": "通話時間",
+        "columnDate": "日付",
+        "directionInbound": "着信",
+        "directionOutbound": "発信",
+        "kindOngoing": "進行中",
+        "kindAnsweredInbound": "応答済み",
+        "kindAnsweredOutbound": "応答済み",
+        "openConversation": "会話を開く",
+        "unknownContact": "不明な連絡先",
+        "emptyFilteredTitle": "このフィルターに一致する通話はありません",
+        "emptyFilteredDescription": "別のフィルターを試すか、フィルターを解除してすべての通話を表示してください。",
+        "loadMoreError": "通話をさらに読み込めませんでした。もう一度お試しください。",
+        "callInformation": "通話情報"
+      }
     }
   },
   "zalo": {

@@ -11,8 +11,7 @@ const heartbeatActiveVoipCallSchema = z.object({
 
 /**
  * Liveness: the browser tab holding an `accepted` VoIP call calls this on
- * a short interval (mirroring the presence heartbeat cadence, see
- * `heartbeat-voip-presence.action.ts`) so a genuinely stranded call (the
+ * a short interval so a genuinely stranded call (the
  * terminate webhook was lost) can be told apart from one that is still live
  * but has run longer than the control's safety-net TTL — the distinction
  * `whatsappVoipCallService.assertNoActiveCallForContact` makes the next time

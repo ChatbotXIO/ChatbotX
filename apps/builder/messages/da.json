@@ -3933,12 +3933,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "Kunne ikke afvise WhatsApp-opkaldet",
+        "voipHangupFailed": "Kunne ikke afslutte WhatsApp-opkaldet",
+        "voipNotReservedAgent": "Du er ikke den agent, der er tildelt dette opkald",
+        "voipCallAccessDenied": "Du har ikke tilladelse til at håndtere dette opkald",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "Det opkald ringer ikke længere",
-        "transcriptionRequiresRecording": "Slå optagelse af opkald til, før du slår transskription til."
+        "transcriptionRequiresRecording": "Slå optagelse af opkald til, før du slår transskription til.",
+        "supportSessionCallingBlocked": "Opkald er ikke tilgængeligt under en supportsession for platformen.",
+        "callingAccessDenied": "Du har ikke adgang til opkald i dette arbejdsområde.",
+        "callArtifactAccessDenied": "Du har ikke tilladelse til at se dette opkald.",
+        "callHistoryAccessDenied": "Du har ikke adgang til opkaldshistorik i denne arbejdsplads."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3996,7 +4001,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Mikrofonadgang blev nægtet. Tillad mikrofonadgang i browserindstillingerne, og forsøg igen.",
-        "micNotFound": "Ingen mikrofon blev fundet. Tilslut en mikrofon, og forsøg igen."
+        "micNotFound": "Ingen mikrofon blev fundet. Tilslut en mikrofon, og forsøg igen.",
+        "callAccessDenied": "Du har ikke tilladelse til at ringe til denne kontakt."
       },
       "card": {
         "audioCall": "Lydopkald",
@@ -4018,7 +4024,8 @@
         "playbackFailed": "Afspilning mislykkedes",
         "answeredBy": "Besvaret af {name}",
         "calledBy": "Ringet op af {name}",
-        "callFailed": "Opkaldsproblem"
+        "callFailed": "Opkaldsproblem",
+        "callBack": "Ring tilbage"
       },
       "sheet": {
         "title": "Opkaldsoplysninger",
@@ -4061,6 +4068,7 @@
         "statusCallEnded": "Opkald afsluttet",
         "end": "Afslut",
         "minimize": "Minimer",
+        "goToConversation": "Gå til samtalen",
         "expand": "Udvid",
         "dismiss": "Afvis",
         "statusNoAnswer": "Intet svar",
@@ -4117,7 +4125,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Opkald",
+        "subtitle": "Opkaldshistorik for denne arbejdsplads",
+        "emptyTitle": "Ingen opkald endnu",
+        "emptyDescription": "Opkald vises her, når dit team begynder at foretage eller modtage WhatsApp-opkald.",
+        "loadMore": "Indlæs flere",
+        "allActivity": "Alle opkald",
+        "filterMissed": "Mistet",
+        "filterNoReply": "Intet svar",
+        "allInboxes": "Alle indbakker",
+        "allAgents": "Alle agenter",
+        "columnContact": "Kontakt",
+        "columnInbox": "Indbakke",
+        "columnDirection": "Retning",
+        "columnAgent": "Agent",
+        "columnDuration": "Varighed",
+        "columnDate": "Dato",
+        "directionInbound": "Indgående",
+        "directionOutbound": "Udgående",
+        "kindOngoing": "I gang",
+        "kindAnsweredInbound": "Besvaret",
+        "kindAnsweredOutbound": "Besvaret",
+        "openConversation": "Åbn samtale",
+        "unknownContact": "Ukendt kontakt",
+        "emptyFilteredTitle": "Ingen opkald matcher dette filter",
+        "emptyFilteredDescription": "Prøv et andet filter, eller ryd det for at se alle opkald.",
+        "loadMoreError": "Kunne ikke indlæse flere opkald. Prøv igen.",
+        "callInformation": "Opkaldsoplysninger"
+      }
     }
   },
   "zalo": {

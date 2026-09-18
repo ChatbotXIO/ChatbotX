@@ -3,6 +3,7 @@
 import { callRecordingService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { assertCanReadCallArtifactOrThrow } from "@/features/integration-whatsapp/calling/actions/assert-call-access"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
 const getCallRecordingUrlSchema = z.object({
@@ -28,7 +29,15 @@ const getCallRecordingUrlSchema = z.object({
 export const getCallRecordingUrlAction = workspaceActionClientAllowExpired
   .bindArgsSchemas([zodBigintAsString()])
   .inputSchema(getCallRecordingUrlSchema)
-  .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => {
+  .action(async ({ bindArgsParsedInputs: [workspaceId], ctx, parsedInput }) => {
+    await assertCanReadCallArtifactOrThrow({
+      workspaceId,
+      whatsappCallId: parsedInput.whatsappCallId,
+      member: {
+        userId: ctx.user.id,
+        permissions: ctx.workspaceMemberPermissions,
+      },
+    })
     const url = await callRecordingService.getRecordingUrlForCall({
       callId: parsedInput.whatsappCallId,
       workspaceId,

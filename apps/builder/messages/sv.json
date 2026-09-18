@@ -5370,12 +5370,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "Det gick inte att avvisa WhatsApp-samtalet",
+        "voipHangupFailed": "Det gick inte att avsluta WhatsApp-samtalet",
+        "voipNotReservedAgent": "Du är inte agenten som tilldelats detta samtal",
+        "voipCallAccessDenied": "Du har inte behörighet att hantera detta samtal",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "Det samtalet ringer inte längre",
-        "transcriptionRequiresRecording": "Aktivera samtalsinspelning innan du aktiverar transkribering."
+        "transcriptionRequiresRecording": "Aktivera samtalsinspelning innan du aktiverar transkribering.",
+        "supportSessionCallingBlocked": "Samtal är inte tillgängliga under en supportsession för plattformen.",
+        "callingAccessDenied": "Du har inte åtkomst till samtal i detta arbetsområde.",
+        "callArtifactAccessDenied": "Du har inte behörighet att visa det här samtalet.",
+        "callHistoryAccessDenied": "Du har inte åtkomst till samtalshistoriken i det här arbetsområdet."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -5433,7 +5438,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Mikrofonåtkomst nekades. Tillåt mikrofonåtkomst i webbläsarens inställningar och försök igen.",
-        "micNotFound": "Ingen mikrofon hittades. Anslut en mikrofon och försök igen."
+        "micNotFound": "Ingen mikrofon hittades. Anslut en mikrofon och försök igen.",
+        "callAccessDenied": "Du har inte behörighet att ringa denna kontakt."
       },
       "card": {
         "audioCall": "Röstsamtal",
@@ -5455,7 +5461,8 @@
         "playbackFailed": "Uppspelning misslyckades",
         "answeredBy": "Besvarat av {name}",
         "calledBy": "Uppringt av {name}",
-        "callFailed": "Samtalsproblem"
+        "callFailed": "Samtalsproblem",
+        "callBack": "Ring tillbaka"
       },
       "sheet": {
         "title": "Samtalsinformation",
@@ -5498,6 +5505,7 @@
         "statusCallEnded": "Samtal avslutat",
         "end": "Avsluta",
         "minimize": "Minimera",
+        "goToConversation": "Gå till konversationen",
         "expand": "Expandera",
         "dismiss": "Stäng",
         "statusNoAnswer": "Inget svar",
@@ -5554,7 +5562,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Samtal",
+        "subtitle": "Samtalshistorik för detta arbetsområde",
+        "emptyTitle": "Inga samtal ännu",
+        "emptyDescription": "Samtal visas här när ditt team börjar ringa eller ta emot WhatsApp-samtal.",
+        "loadMore": "Ladda fler",
+        "allActivity": "Alla samtal",
+        "filterMissed": "Missade",
+        "filterNoReply": "Inget svar",
+        "allInboxes": "Alla inkorgar",
+        "allAgents": "Alla agenter",
+        "columnContact": "Kontakt",
+        "columnInbox": "Inkorg",
+        "columnDirection": "Riktning",
+        "columnAgent": "Agent",
+        "columnDuration": "Varaktighet",
+        "columnDate": "Datum",
+        "directionInbound": "Inkommande",
+        "directionOutbound": "Utgående",
+        "kindOngoing": "Pågående",
+        "kindAnsweredInbound": "Besvarat",
+        "kindAnsweredOutbound": "Besvarat",
+        "openConversation": "Öppna konversation",
+        "unknownContact": "Okänd kontakt",
+        "emptyFilteredTitle": "Inga samtal matchar detta filter",
+        "emptyFilteredDescription": "Prova ett annat filter eller rensa det för att se alla samtal.",
+        "loadMoreError": "Det gick inte att läsa in fler samtal. Försök igen.",
+        "callInformation": "Samtalsinformation"
+      }
     }
   },
   "workspace": {

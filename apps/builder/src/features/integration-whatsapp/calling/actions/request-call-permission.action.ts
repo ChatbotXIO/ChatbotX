@@ -11,7 +11,8 @@ import type { MessageWhatsappCallPermissionRequestEntity } from "@chatbotx.io/sd
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { callingActionClient } from "@/lib/safe-action"
+import { assertCallAccessOrThrow } from "./assert-call-access"
 
 const requestCallPermissionSchema = z.object({
   text: z.string().trim().min(1).max(1024),
@@ -31,7 +32,7 @@ const requestCallPermissionSchema = z.object({
  * (WhatsappCallPermission) — the state future business-initiated calls gate
  * on. Subject to Meta's per-customer request limits (1/24h, 2/7 days).
  */
-export const requestCallPermissionAction = workspaceActionClient
+export const requestCallPermissionAction = callingActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(requestCallPermissionSchema)
   .action(
@@ -43,6 +44,15 @@ export const requestCallPermissionAction = workspaceActionClient
       const t = await getTranslations()
       const conversation = await conversationService.findByOrFail({
         where: { id: conversationId, workspaceId },
+      })
+
+      // P2 item 5 (plan D3): mirrors the outbound-dial gate — an
+      // assigned-only agent must not send a permission request on another
+      // agent's conversation.
+      await assertCallAccessOrThrow({
+        workspaceId,
+        conversationId,
+        userId: ctx.user.id,
       })
 
       // Prefer the caller's `inboxId` to pin the send to the number the agent

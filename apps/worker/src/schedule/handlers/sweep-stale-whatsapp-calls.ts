@@ -1,4 +1,5 @@
 import { whatsappVoipCallService } from "@chatbotx.io/business"
+import { resolveWhatsappCallOutcome } from "@chatbotx.io/database/partials"
 import { whatsappCallRepository } from "@chatbotx.io/database/repositories"
 import type { WhatsappCallModel } from "@chatbotx.io/database/types"
 import { getChildLogger } from "@chatbotx.io/logger"
@@ -82,6 +83,7 @@ export async function sweepStaleWhatsappCalls(): Promise<void> {
     const updated = await whatsappVoipCallService.finalizeEndedCall({
       whatsappCallId: call.id,
       status: "failed",
+      outcome: resolveWhatsappCallOutcome({ status: "failed" }),
       endedAt: new Date(),
       lastError: "stale-ringing-never-finalized",
       current: call,

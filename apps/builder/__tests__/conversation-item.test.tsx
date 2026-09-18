@@ -20,10 +20,14 @@ vi.mock("@/lib/auth/avatar", () => ({
   useUserAvatarUrl: () => undefined,
 }))
 
+const resolveCallPreviewKindMock = vi.fn<() => string | undefined>(
+  () => undefined,
+)
 vi.mock(
   "@/features/conversations/queries/resolve-last-message-preview",
   () => ({
     resolveLastMessagePreview: () => "hello there",
+    resolveCallPreviewKind: () => resolveCallPreviewKindMock(),
   }),
 )
 
@@ -51,9 +55,14 @@ const contextMock = {
   hangup: vi.fn().mockResolvedValue(undefined),
   toggleMute: vi.fn(),
 }
+const optionalCallContextMock = vi.fn<() => typeof contextMock | null>(
+  () => contextMock,
+)
 vi.mock(
   "@/features/integration-whatsapp/calling/voip/whatsapp-voip-call-context",
-  () => ({ useWhatsappVoipCallContext: () => contextMock }),
+  () => ({
+    useOptionalWhatsappVoipCallContext: () => optionalCallContextMock(),
+  }),
 )
 
 const { default: ConversationItem } = await import(
@@ -103,6 +112,7 @@ describe("ConversationItem", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
+    resolveCallPreviewKindMock.mockReturnValue(undefined)
     useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
     storeState.activeConversationId = null
     container = document.createElement("div")
@@ -131,6 +141,17 @@ describe("ConversationItem", () => {
     ).toBeNull()
     expect(
       container.querySelector(`[aria-label="whatsapp.calls.reject"]`),
+    ).toBeNull()
+  })
+
+  test("renders no ringing overlay when calling is disabled for this workspace (optional context is null)", async () => {
+    optionalCallContextMock.mockReturnValueOnce(null)
+    useWhatsappVoipCallStore.setState({ ringingCalls: [ringingCall] })
+    await render(makeConversation({ id: "conversation-1" }))
+
+    expect(container.textContent).not.toContain("whatsapp.calls.ringingBadge")
+    expect(
+      container.querySelector(`[aria-label="whatsapp.calls.answer"]`),
     ).toBeNull()
   })
 
@@ -224,5 +245,32 @@ describe("ConversationItem", () => {
       rowButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
     })
     expect(onSelect).toHaveBeenCalledTimes(1)
+  })
+
+  test("no call preview icon renders for a non-call message", async () => {
+    resolveCallPreviewKindMock.mockReturnValue(undefined)
+    await render(makeConversation())
+
+    expect(container.querySelector("svg.lucide-phone-incoming")).toBeNull()
+    expect(container.querySelector("svg.lucide-phone-outgoing")).toBeNull()
+    expect(container.querySelector("svg.lucide-phone-missed")).toBeNull()
+    expect(container.querySelector("svg.lucide-phone-off")).toBeNull()
+  })
+
+  test.each([
+    ["completedInbound", "svg.lucide-phone-incoming"],
+    ["completedOutbound", "svg.lucide-phone-outgoing"],
+    ["missedVoiceCall", "svg.lucide-phone-missed"],
+    // A-L1 (Fable review): aligned with `whatsapp-call-card.tsx`'s
+    // in-conversation card, which uses `PhoneOffIcon` for `unansweredVoiceCall`
+    // (only `missedVoiceCall` gets `PhoneMissedIcon` there).
+    ["unansweredVoiceCall", "svg.lucide-phone-off"],
+    ["declinedVoiceCall", "svg.lucide-phone-off"],
+    ["canceledVoiceCall", "svg.lucide-phone-off"],
+  ] as const)("renders the %s call preview icon (%s)", async (kind, selector) => {
+    resolveCallPreviewKindMock.mockReturnValue(kind)
+    await render(makeConversation())
+
+    expect(container.querySelector(selector)).not.toBeNull()
   })
 })

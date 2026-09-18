@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest"
 import {
+  PENDING_CONVERSATION_OPEN_MAX_AGE_MS,
   useWhatsappVoipCallStore,
   WhatsappVoipCallPhase,
   type WhatsappVoipIncomingData,
@@ -37,7 +38,11 @@ const seedRingingSlot = (data: WhatsappVoipIncomingData) => {
 
 describe("useWhatsappVoipCallStore", () => {
   beforeEach(() => {
-    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
+    useWhatsappVoipCallStore.setState({
+      call: null,
+      ringingCalls: [],
+      pendingConversationOpen: null,
+    })
   })
 
   // NOTE: the tests that used to live here for `addIncoming`'s own
@@ -657,7 +662,11 @@ describe("useWhatsappVoipCallStore — outbound", () => {
 
 describe("useWhatsappVoipCallStore — ringing basket", () => {
   beforeEach(() => {
-    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
+    useWhatsappVoipCallStore.setState({
+      call: null,
+      ringingCalls: [],
+      pendingConversationOpen: null,
+    })
   })
 
   const ringA = incomingData
@@ -713,6 +722,41 @@ describe("useWhatsappVoipCallStore — ringing basket", () => {
     useWhatsappVoipCallStore.getState().removeRinging("call-missing")
 
     expect(useWhatsappVoipCallStore.getState().ringingCalls).toHaveLength(1)
+  })
+
+  // L5: `conversationAssigned` reassignment drops every basket entry for a
+  // now-reassigned conversation in one store update, rather than looping
+  // `removeRinging` per entry from the realtime handler.
+  test("removeRingingByConversationIds drops every entry for the given conversation ids in one update", () => {
+    const ringC = {
+      ...incomingData,
+      whatsappCallId: "call-3",
+      wacid: "wacid-3",
+      conversationId: "conversation-2",
+    }
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringA) // conversation-1
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringB) // conversation-1
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringC) // conversation-2
+
+    useWhatsappVoipCallStore
+      .getState()
+      .removeRingingByConversationIds(["conversation-1"])
+
+    const { ringingCalls } = useWhatsappVoipCallStore.getState()
+    expect(ringingCalls.map((ringing) => ringing.whatsappCallId)).toEqual([
+      "call-3",
+    ])
+  })
+
+  test("removeRingingByConversationIds is a no-op when none of the ids match", () => {
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringA)
+    useWhatsappVoipCallStore.getState().enqueueRinging(ringB)
+
+    useWhatsappVoipCallStore
+      .getState()
+      .removeRingingByConversationIds(["conversation-missing"])
+
+    expect(useWhatsappVoipCallStore.getState().ringingCalls).toHaveLength(2)
   })
 
   test("promoteRinging on a free slot moves the entry into the call slot at incomingRinging and drops it from the basket", () => {
@@ -785,5 +829,92 @@ describe("useWhatsappVoipCallStore — ringing basket", () => {
     const { call, ringingCalls } = useWhatsappVoipCallStore.getState()
     expect(ringingCalls).toHaveLength(0)
     expect(call?.whatsappCallId).toBe("call-2")
+  })
+
+  describe("pendingConversationOpen — cross-boundary bridge to the chat store", () => {
+    test("starts null", () => {
+      expect(
+        useWhatsappVoipCallStore.getState().pendingConversationOpen,
+      ).toBeNull()
+    })
+
+    test("setPendingConversationOpen stores the requested conversation id, stamped with requestedAt", () => {
+      const before = Date.now()
+      useWhatsappVoipCallStore
+        .getState()
+        .setPendingConversationOpen("conversation-9")
+      const after = Date.now()
+
+      const pending =
+        useWhatsappVoipCallStore.getState().pendingConversationOpen
+      expect(pending?.conversationId).toBe("conversation-9")
+      expect(pending?.requestedAt).toBeGreaterThanOrEqual(before)
+      expect(pending?.requestedAt).toBeLessThanOrEqual(after)
+    })
+
+    test("consumePendingConversationOpen returns null and clears when nothing is pending", () => {
+      const result = useWhatsappVoipCallStore
+        .getState()
+        .consumePendingConversationOpen()
+
+      expect(result).toBeNull()
+      expect(
+        useWhatsappVoipCallStore.getState().pendingConversationOpen,
+      ).toBeNull()
+    })
+
+    test("consumePendingConversationOpen returns the id and clears it when fresh", () => {
+      useWhatsappVoipCallStore
+        .getState()
+        .setPendingConversationOpen("conversation-9")
+
+      const result = useWhatsappVoipCallStore
+        .getState()
+        .consumePendingConversationOpen()
+
+      expect(result).toBe("conversation-9")
+      expect(
+        useWhatsappVoipCallStore.getState().pendingConversationOpen,
+      ).toBeNull()
+    })
+
+    test("consumePendingConversationOpen drops (returns null for) a stale request — never reopens much later", () => {
+      const requestedAt = 1_000_000
+      useWhatsappVoipCallStore.setState({
+        pendingConversationOpen: {
+          conversationId: "conversation-stale",
+          requestedAt,
+        },
+      })
+
+      const result = useWhatsappVoipCallStore
+        .getState()
+        .consumePendingConversationOpen(
+          requestedAt + PENDING_CONVERSATION_OPEN_MAX_AGE_MS + 1,
+        )
+
+      expect(result).toBeNull()
+      expect(
+        useWhatsappVoipCallStore.getState().pendingConversationOpen,
+      ).toBeNull()
+    })
+
+    test("consumePendingConversationOpen keeps a request exactly at the age boundary", () => {
+      const requestedAt = 1_000_000
+      useWhatsappVoipCallStore.setState({
+        pendingConversationOpen: {
+          conversationId: "conversation-boundary",
+          requestedAt,
+        },
+      })
+
+      const result = useWhatsappVoipCallStore
+        .getState()
+        .consumePendingConversationOpen(
+          requestedAt + PENDING_CONVERSATION_OPEN_MAX_AGE_MS,
+        )
+
+      expect(result).toBe("conversation-boundary")
+    })
   })
 })

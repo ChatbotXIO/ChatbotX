@@ -2,6 +2,7 @@
 
 import {
   broadcastToWorkspaceParty,
+  canCallConversation,
   canSendAudio,
   contactInboxService,
   contactService,
@@ -28,12 +29,13 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { logger } from "@/lib/log"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { callingActionClient } from "@/lib/safe-action"
 import {
   buildCallAnnouncementOptions,
   hasCallAnnouncementOptions,
   isCallAnnouncementValidationError,
 } from "./call-announcement-options"
+import { claimConversationForCallAgent } from "./claim-conversation-for-call-agent"
 import { recordCallRecordingArrangement } from "./record-call-recording-arrangement"
 
 /** Mirrors `MAX_SDP_OFFER_CHARS` in `integrations/whatsapp/src/lib/calls.ts` — bounds the answer SDP the browser posts back. */
@@ -123,6 +125,7 @@ async function resolveCallAndAuth(input: {
   workspaceId: string
 }): Promise<{
   wacid: string
+  conversationId: string
   auth: WhatsappAuthValue
   browserRecordingEnabled: boolean
   announcementOptions: WhatsappCallAnnouncementOptions
@@ -150,6 +153,7 @@ async function resolveCallAndAuth(input: {
 
   return {
     wacid: call.wacid,
+    conversationId: call.conversationId,
     auth: integration.auth as WhatsappAuthValue,
     browserRecordingEnabled:
       integration.callRecordingEnabled &&
@@ -209,7 +213,7 @@ async function acceptCallWithAnnouncementFallback(
  * best-effort broadcasts `whatsappCallClaimedElsewhere` so every other rung
  * agent's ringing dialog clears immediately. The SDP answer is never logged.
  */
-export const answerWhatsappVoipCallAction = workspaceActionClient
+export const answerWhatsappVoipCallAction = callingActionClient
   .bindArgsSchemas([zodBigintAsString()])
   .inputSchema(answerVoipCallSchema)
   .action(
@@ -220,11 +224,31 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
     }): Promise<AnswerWhatsappVoipCallResult> => {
       const t = await getTranslations()
       const { whatsappCallId, sdpAnswer } = parsedInput
-      const { wacid, auth, browserRecordingEnabled, announcementOptions } =
-        await resolveCallAndAuth({
-          whatsappCallId,
+      const {
+        wacid,
+        conversationId,
+        auth,
+        browserRecordingEnabled,
+        announcementOptions,
+      } = await resolveCallAndAuth({
+        whatsappCallId,
+        workspaceId,
+      })
+
+      // P2 item 5 (plan D3): the same eligibility check that gates every
+      // other call action — checked BEFORE the claim below so an
+      // ineligible agent never occupies the claim slot for the whole rung
+      // team until expiry. Reuses the `conversationId` already resolved by
+      // `resolveCallAndAuth` fresh above, never a cached read.
+      if (
+        !(await canCallConversation({
           workspaceId,
-        })
+          conversationId,
+          userId: ctx.user.id,
+        }))
+      ) {
+        return { outcome: "cannotAnswer" }
+      }
 
       // The control's `deadlineAt` is the authoritative answer budget —
       // check it (with a safety margin) before claim/pre_accept/accept below
@@ -245,19 +269,38 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
         return { outcome: "cannotAnswer" }
       }
 
-      const releaseExpiredClaim = (): Promise<void> =>
+      // L1: neutral name/message — this releases the claim for several
+      // reasons (deadline expiry, a losing D3 eligibility re-check,
+      // pre_accept racing the deadline), not only expiry.
+      const releaseClaimBestEffort = (): Promise<void> =>
         whatsappVoipCallService
           .releaseClaim({ wacid, fenceToken })
           .then(() => undefined)
           .catch((releaseError: unknown) => {
             logger.warn(
               { err: releaseError, whatsappCallId, wacid },
-              "WhatsApp VoIP call: releaseClaim after deadline expiry failed",
+              "WhatsApp VoIP call: best-effort releaseClaim failed",
             )
           })
 
       if (isAnswerDeadlineExpired(control.deadlineAt)) {
-        await releaseExpiredClaim()
+        await releaseClaimBestEffort()
+        return { outcome: "cannotAnswer" }
+      }
+
+      // P2 item 5 (plan D3): re-checked AFTER the claim succeeded, before
+      // `pre_accept` — a fresh reload catches a reassignment or a removal
+      // that happened in the window between the first check above and this
+      // agent winning the claim. Releases the claim on failure so a losing
+      // eligibility race never strands the call for the whole rung team.
+      if (
+        !(await canCallConversation({
+          workspaceId,
+          conversationId,
+          userId: ctx.user.id,
+        }))
+      ) {
+        await releaseClaimBestEffort()
         return { outcome: "cannotAnswer" }
       }
 
@@ -292,7 +335,7 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
         if (isAnswerDeadlineExpired(control.deadlineAt)) {
           // Never call `accept` past the deadline — Meta would reject it
           // anyway, and the answer window has already closed.
-          await releaseExpiredClaim()
+          await releaseClaimBestEffort()
           return { outcome: "cannotAnswer" }
         }
         ;({ announcementApplied, announcementError } =
@@ -311,7 +354,7 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
             { err: error, whatsappCallId, wacid },
             "WhatsApp VoIP call accept failed after the answer deadline",
           )
-          await releaseExpiredClaim()
+          await releaseClaimBestEffort()
           return { outcome: "cannotAnswer" }
         }
         logger.error(
@@ -405,6 +448,23 @@ export const answerWhatsappVoipCallAction = workspaceActionClient
         purposeChars: announcementOptions.recording?.purpose.length,
         browserRecordingEnabled,
         announcementError,
+      })
+
+      // Best-effort auto-assign (P3): last step, after every other
+      // best-effort side effect (the claimed-elsewhere broadcast and the
+      // recording bookkeeping above) so it never delays the P1
+      // `whatsappCallClaimedElsewhere` broadcast that tells other rung
+      // agents to stop ringing. Awaited so it completes before the action
+      // returns, but errors are caught and logged inside
+      // `claimConversationForCallAgent` — never allowed to change the
+      // outcome. Skipped for a support session (D8, plan §5 P3).
+      await claimConversationForCallAgent({
+        workspaceId,
+        conversationId,
+        agentUserId: ctx.user.id,
+        whatsappCallId,
+        trigger: "answered",
+        isSupportSession: ctx.isSupportSession,
       })
 
       return {

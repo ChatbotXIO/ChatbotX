@@ -63,6 +63,7 @@ describe("sweepStaleWhatsappCalls", () => {
       expect.objectContaining({
         whatsappCallId: "call-1",
         status: "failed",
+        outcome: "failed",
         lastError: "stale-ringing-never-finalized",
       }),
     )

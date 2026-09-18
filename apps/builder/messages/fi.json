@@ -3933,12 +3933,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "WhatsApp-puhelua ei voitu hylätä",
+        "voipHangupFailed": "WhatsApp-puhelua ei voitu lopettaa",
+        "voipNotReservedAgent": "Et ole tähän puheluun määritetty agentti",
+        "voipCallAccessDenied": "Sinulla ei ole oikeutta käsitellä tätä puhelua",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "Tuo puhelu ei enää soi",
-        "transcriptionRequiresRecording": "Ota puheluiden tallennus käyttöön ennen litteroinnin käyttöönottoa."
+        "transcriptionRequiresRecording": "Ota puheluiden tallennus käyttöön ennen litteroinnin käyttöönottoa.",
+        "supportSessionCallingBlocked": "Soittaminen ei ole käytettävissä alustan tukiistunnon aikana.",
+        "callingAccessDenied": "Sinulla ei ole pääsyä puheluihin tässä työtilassa.",
+        "callArtifactAccessDenied": "Sinulla ei ole oikeutta tarkastella tätä puhelua.",
+        "callHistoryAccessDenied": "Sinulla ei ole pääsyä tämän työtilan puheluhistoriaan."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3996,7 +4001,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Mikrofonin käyttöoikeus evättiin. Salli käyttöoikeus selaimen asetuksista ja yritä uudelleen.",
-        "micNotFound": "Mikrofonia ei löytynyt. Liitä mikrofoni ja yritä uudelleen."
+        "micNotFound": "Mikrofonia ei löytynyt. Liitä mikrofoni ja yritä uudelleen.",
+        "callAccessDenied": "Sinulla ei ole oikeutta soittaa tälle yhteystiedolle."
       },
       "card": {
         "audioCall": "Äänipuhelu",
@@ -4018,7 +4024,8 @@
         "playbackFailed": "Toisto epäonnistui",
         "answeredBy": "Vastaaja: {name}",
         "calledBy": "Soittaja: {name}",
-        "callFailed": "Puheluongelma"
+        "callFailed": "Puheluongelma",
+        "callBack": "Soita takaisin"
       },
       "sheet": {
         "title": "Puhelun tiedot",
@@ -4061,6 +4068,7 @@
         "statusCallEnded": "Puhelu päättyi",
         "end": "Lopeta",
         "minimize": "Pienennä",
+        "goToConversation": "Siirry keskusteluun",
         "expand": "Laajenna",
         "dismiss": "Sulje",
         "statusNoAnswer": "Ei vastausta",
@@ -4117,7 +4125,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Puhelut",
+        "subtitle": "Tämän työtilan puheluhistoria",
+        "emptyTitle": "Ei vielä puheluita",
+        "emptyDescription": "Puhelut näkyvät täällä, kun tiimisi alkaa soittaa tai vastaanottaa WhatsApp-puheluita.",
+        "loadMore": "Lataa lisää",
+        "allActivity": "Kaikki puhelut",
+        "filterMissed": "Vastaamattomat",
+        "filterNoReply": "Ei vastausta",
+        "allInboxes": "Kaikki saapuneet",
+        "allAgents": "Kaikki agentit",
+        "columnContact": "Yhteystieto",
+        "columnInbox": "Saapuneet",
+        "columnDirection": "Suunta",
+        "columnAgent": "Agentti",
+        "columnDuration": "Kesto",
+        "columnDate": "Päivämäärä",
+        "directionInbound": "Saapuva",
+        "directionOutbound": "Lähtevä",
+        "kindOngoing": "Käynnissä",
+        "kindAnsweredInbound": "Vastattu",
+        "kindAnsweredOutbound": "Vastattu",
+        "openConversation": "Avaa keskustelu",
+        "unknownContact": "Tuntematon yhteystieto",
+        "emptyFilteredTitle": "Yksikään puhelu ei vastaa tätä suodatinta",
+        "emptyFilteredDescription": "Kokeile toista suodatinta tai poista se nähdäksesi kaikki puhelut.",
+        "loadMoreError": "Lisäpuheluiden lataaminen epäonnistui. Yritä uudelleen.",
+        "callInformation": "Puhelun tiedot"
+      }
     }
   },
   "zalo": {

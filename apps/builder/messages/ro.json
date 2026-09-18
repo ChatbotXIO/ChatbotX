@@ -3933,12 +3933,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "Apelul WhatsApp nu a putut fi refuzat",
+        "voipHangupFailed": "Apelul WhatsApp nu a putut fi încheiat",
+        "voipNotReservedAgent": "Nu sunteți agentul alocat acestui apel",
+        "voipCallAccessDenied": "Nu aveți permisiunea de a gestiona acest apel",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "Acel apel nu mai sună",
-        "transcriptionRequiresRecording": "Activează înregistrarea apelurilor înainte de a activa transcrierea."
+        "transcriptionRequiresRecording": "Activează înregistrarea apelurilor înainte de a activa transcrierea.",
+        "supportSessionCallingBlocked": "Apelurile nu sunt disponibile în timpul unei sesiuni de asistență a platformei.",
+        "callingAccessDenied": "Nu aveți acces la apeluri în acest spațiu de lucru.",
+        "callArtifactAccessDenied": "Nu ai permisiunea de a vedea acest apel.",
+        "callHistoryAccessDenied": "Nu ai acces la istoricul apelurilor din acest spațiu de lucru."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3996,7 +4001,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Accesul la microfon a fost refuzat. Permite accesul din setările browserului și încearcă din nou.",
-        "micNotFound": "Nu a fost găsit niciun microfon. Conectează un microfon și încearcă din nou."
+        "micNotFound": "Nu a fost găsit niciun microfon. Conectează un microfon și încearcă din nou.",
+        "callAccessDenied": "Nu aveți permisiunea de a suna acest contact."
       },
       "card": {
         "audioCall": "Apel audio",
@@ -4018,7 +4024,8 @@
         "playbackFailed": "Redare nereușită",
         "answeredBy": "Preluat de {name}",
         "calledBy": "Apelat de {name}",
-        "callFailed": "Problemă la apel"
+        "callFailed": "Problemă la apel",
+        "callBack": "Sună înapoi"
       },
       "sheet": {
         "title": "Informații despre apel",
@@ -4061,6 +4068,7 @@
         "statusCallEnded": "Apel încheiat",
         "end": "Închide",
         "minimize": "Minimizează",
+        "goToConversation": "Mergi la conversație",
         "expand": "Expandează",
         "dismiss": "Închide",
         "statusNoAnswer": "Fără răspuns",
@@ -4117,7 +4125,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Apeluri",
+        "subtitle": "Istoricul apelurilor pentru acest spațiu de lucru",
+        "emptyTitle": "Niciun apel încă",
+        "emptyDescription": "Apelurile vor apărea aici de îndată ce echipa ta începe să efectueze sau să primească apeluri WhatsApp.",
+        "loadMore": "Încarcă mai multe",
+        "allActivity": "Toate apelurile",
+        "filterMissed": "Pierdute",
+        "filterNoReply": "Fără răspuns",
+        "allInboxes": "Toate Inbox-urile",
+        "allAgents": "Toți agenții",
+        "columnContact": "Contact",
+        "columnInbox": "Inbox",
+        "columnDirection": "Direcție",
+        "columnAgent": "Agent",
+        "columnDuration": "Durată",
+        "columnDate": "Dată",
+        "directionInbound": "Primit",
+        "directionOutbound": "Efectuat",
+        "kindOngoing": "În desfășurare",
+        "kindAnsweredInbound": "Preluat",
+        "kindAnsweredOutbound": "Preluat",
+        "openConversation": "Deschide conversația",
+        "unknownContact": "Contact necunoscut",
+        "emptyFilteredTitle": "Niciun apel nu se potrivește cu acest filtru",
+        "emptyFilteredDescription": "Încercați un alt filtru sau ștergeți-l pentru a vedea toate apelurile.",
+        "loadMoreError": "Nu s-au putut încărca mai multe apeluri. Încercați din nou.",
+        "callInformation": "Informații despre apel"
+      }
     }
   },
   "zalo": {

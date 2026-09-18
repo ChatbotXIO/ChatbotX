@@ -4,6 +4,10 @@ import {
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
+  resolveWhatsappCallOutcome,
+  resolveWhatsappCallTerminalOutcomePair,
+} from "@chatbotx.io/database/partials"
+import {
   integrationWhatsappRepository,
   whatsappCallRepository,
 } from "@chatbotx.io/database/repositories"
@@ -89,6 +93,10 @@ export async function endVoipCallAsAgent(
     await whatsappVoipCallService.finalizeEndedCall({
       whatsappCallId: input.whatsappCallId,
       status: "failed",
+      outcome: resolveWhatsappCallOutcome({
+        status: "failed",
+        canceledByBusiness: isBusinessCancelBeforeAnswer,
+      }),
       endedAt: new Date(),
       ...(isBusinessCancelBeforeAnswer
         ? { lastError: CALL_CANCELED_BY_BUSINESS_LAST_ERROR }
@@ -140,15 +148,20 @@ export async function endVoipCallAsAgent(
     )
   }
 
+  const isFailedBusinessCancel =
+    isBusinessCancelBeforeAnswer && ended.terminalStatus === "failed"
   await whatsappVoipCallService.finalizeEndedCall({
     whatsappCallId: input.whatsappCallId,
-    status: ended.terminalStatus,
+    ...resolveWhatsappCallTerminalOutcomePair({
+      status: ended.terminalStatus,
+      canceledByBusiness: isFailedBusinessCancel,
+    }),
     endedAt: new Date(),
     // `terminalStatus === "failed"` here means the call never reached
     // `accepted` — the agent hung up while it was still ringing. For an
     // answered call `terminalStatus` is `completed`, so this never mislabels a
     // real conversation the agent simply ended.
-    ...(isBusinessCancelBeforeAnswer && ended.terminalStatus === "failed"
+    ...(isFailedBusinessCancel
       ? { lastError: CALL_CANCELED_BY_BUSINESS_LAST_ERROR }
       : {}),
   })

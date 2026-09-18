@@ -4,12 +4,18 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 type ActionHandler = (args: {
   bindArgsParsedInputs: readonly [string]
+  ctx: {
+    user: { id: string }
+    workspaceMemberPermissions: Record<string, boolean>
+  }
   parsedInput: { whatsappCallId: string }
 }) => Promise<unknown>
 
-const { getTranscriptForCallMock } = vi.hoisted(() => ({
-  getTranscriptForCallMock: vi.fn(),
-}))
+const { getTranscriptForCallMock, assertCanReadCallArtifactOrThrowMock } =
+  vi.hoisted(() => ({
+    getTranscriptForCallMock: vi.fn(),
+    assertCanReadCallArtifactOrThrowMock: vi.fn(),
+  }))
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -24,6 +30,13 @@ vi.mock("@chatbotx.io/business", () => ({
     getTranscriptForCall: getTranscriptForCallMock,
   },
 }))
+
+vi.mock(
+  "@/features/integration-whatsapp/calling/actions/assert-call-access",
+  () => ({
+    assertCanReadCallArtifactOrThrow: assertCanReadCallArtifactOrThrowMock,
+  }),
+)
 
 const { getCallTranscriptAction } = await import(
   "../src/features/messages/actions/get-call-transcript.action"
@@ -45,14 +58,42 @@ describe("getCallTranscriptAction", () => {
 
     const result = await getAction({
       bindArgsParsedInputs: ["ws-1"],
+      ctx: {
+        user: { id: "user-1" },
+        workspaceMemberPermissions: { contacts: true },
+      },
       parsedInput: { whatsappCallId: "call-1" },
     })
 
+    expect(assertCanReadCallArtifactOrThrowMock).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      whatsappCallId: "call-1",
+      member: { userId: "user-1", permissions: { contacts: true } },
+    })
     expect(getTranscriptForCallMock).toHaveBeenCalledWith({
       callId: "call-1",
       workspaceId: "ws-1",
     })
     expect(result).toEqual(transcript)
+  })
+
+  test("propagates a denial from the D4 artifact-scope check without calling the service", async () => {
+    assertCanReadCallArtifactOrThrowMock.mockRejectedValueOnce(
+      new Error("callArtifactAccessDenied"),
+    )
+
+    await expect(
+      getAction({
+        bindArgsParsedInputs: ["ws-1"],
+        ctx: {
+          user: { id: "user-1" },
+          workspaceMemberPermissions: { contacts: true },
+        },
+        parsedInput: { whatsappCallId: "call-1" },
+      }),
+    ).rejects.toThrow("callArtifactAccessDenied")
+
+    expect(getTranscriptForCallMock).not.toHaveBeenCalled()
   })
 
   test("propagates a cross-workspace rejection instead of masking it", async () => {
@@ -61,6 +102,10 @@ describe("getCallTranscriptAction", () => {
     await expect(
       getAction({
         bindArgsParsedInputs: ["ws-2"],
+        ctx: {
+          user: { id: "user-1" },
+          workspaceMemberPermissions: { contacts: true },
+        },
         parsedInput: { whatsappCallId: "call-1" },
       }),
     ).rejects.toThrow("Call not found")

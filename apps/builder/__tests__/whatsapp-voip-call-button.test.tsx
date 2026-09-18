@@ -16,10 +16,15 @@ const { startOutboundMock } = vi.hoisted(() => ({
   startOutboundMock: vi.fn(),
 }))
 
+const optionalCallContextMock = vi.fn<
+  () => { startOutbound: typeof startOutboundMock } | null
+>(() => ({
+  startOutbound: startOutboundMock,
+}))
 vi.mock(
   "@/features/integration-whatsapp/calling/voip/whatsapp-voip-call-context",
   () => ({
-    useWhatsappVoipCallContext: () => ({ startOutbound: startOutboundMock }),
+    useOptionalWhatsappVoipCallContext: () => optionalCallContextMock(),
   }),
 )
 
@@ -88,6 +93,12 @@ describe("WhatsappVoipCallButton", () => {
       integrationId: "integration-1",
       ...overrides,
     }) satisfies Mode
+
+  test("renders nothing when calling is disabled for this workspace (optional context is null)", async () => {
+    optionalCallContextMock.mockReturnValueOnce(null)
+    await render(voipMode({ permissionStatus: "permanent" }))
+    expect(container.querySelector("button")).toBeNull()
+  })
 
   test("renders the request-permission affordance for voip + no_permission", async () => {
     await render(voipMode({ permissionStatus: "no_permission" }))
@@ -193,6 +204,16 @@ describe("WhatsappVoipCallButton", () => {
 
     expect(document.body.textContent).toContain(
       "whatsapp.calls.outbound.callAlreadyInProgress",
+    )
+  })
+
+  test("P2 review leftover (a): 'callAccessDenied' maps to whatsapp.calls.outbound.callAccessDenied", async () => {
+    startOutboundMock.mockResolvedValue("callAccessDenied")
+    await render(voipMode({ permissionStatus: "permanent" }))
+    await click()
+
+    expect(document.body.textContent).toContain(
+      "whatsapp.calls.outbound.callAccessDenied",
     )
   })
 

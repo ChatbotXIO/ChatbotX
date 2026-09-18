@@ -1,4 +1,4 @@
-import type { WhatsappCallStatus } from "@chatbotx.io/database/partials"
+import type { WhatsappCallTerminalStatusOutcomePair } from "@chatbotx.io/database/partials"
 import {
   WHATSAPP_CALL_TERMINAL_STATUSES,
   whatsappCallRepository,
@@ -7,7 +7,21 @@ import type { WhatsappCallModel } from "@chatbotx.io/database/types"
 import { casStore } from "@chatbotx.io/redis"
 import { contactService } from "../contact/service"
 import { contactInboxService } from "../contact-inbox/service"
+import { conversationService } from "../conversation/service"
+import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { logger } from "../logger"
+import { workspaceMemberService } from "../workspace-member/service"
+import { workspacePresenceService } from "../workspace-presence/service"
+import {
+  canCallConversationForMember,
+  loadCallEligibilityMember,
+} from "./call-access-service"
+import {
+  type RingContext,
+  type RingMember,
+  type RingTargetsSelection,
+  selectRingTargets,
+} from "./ring-targets"
 import {
   ACTIVE_CALL_CONTROL_TTL_MS,
   ACTIVE_CALL_LIVENESS_STALE_MS,
@@ -27,29 +41,27 @@ import {
   type VoipCallControl,
   type VoipCallPhase,
 } from "./voip-call-control"
-import { whatsappVoipPresenceService } from "./voip-presence-service"
 import { whatsappVoipSignalingService } from "./voip-signaling-service"
 
-export type ResolveRingTargetsInput = {
+export { MAX_VOIP_RING_TARGETS } from "./ring-targets"
+
+export type ReserveIncomingCallInput = {
   wacid: string
-  workspaceId: string
   deadlineAt: number
 }
 /**
- * Discriminated so the signaling consumer can tell the three outcomes apart
- * and react correctly (see `docs/whatsapp-calling-voip.md`):
- * - `ring` — deliver the offer to EVERY listed agent (ring-all); the fenced
- *   CAS in `claimForAnswer` lets only the first to
- *   answer win.
- * - `noEligibleAgent` — nobody has the inbox open; the call must be Meta-`reject`ed.
- * - `alreadyProgressed` — a control record exists past `reserved` (a
- *   redelivered/retried connect landing after the call already advanced);
- *   the connect handler must NO-OP, never re-ring and never terminate, so it
- *   can't downgrade a live/accepted call.
+ * Discriminated so `handleConnect` can tell the two outcomes apart:
+ * - `reserved` — a `phase:"reserved"` control record exists for this
+ *   `wacid` (freshly created by THIS call, OR already there from an
+ *   earlier reservation — e.g. a redelivered/retried connect for a call
+ *   still ringing). Either way the caller must now resolve and ring the
+ *   live target set.
+ * - `alreadyProgressed` — a control record exists PAST `reserved` (claimed,
+ *   answered, or terminated); the connect handler must NO-OP, never re-ring
+ *   and never terminate, so it can't downgrade a live/accepted call.
  */
-export type ResolveRingTargetsResult =
-  | { status: "ring"; targets: string[] }
-  | { status: "noEligibleAgent" }
+export type ReserveIncomingCallResult =
+  | { status: "reserved" }
   | { status: "alreadyProgressed" }
 /**
  * Best-effort caller display name for the ring UI: `contactInbox -> contact
@@ -174,13 +186,23 @@ class WhatsappVoipCallService {
    */
   async listResumableIncoming(input: {
     workspaceId: string
+    userId: string
   }): Promise<ResumableIncomingVoipCall[]> {
-    const candidates = await whatsappCallRepository.findRingingByWorkspace(
-      input.workspaceId,
-    )
+    // M3 (scale): the caller's ring-eligibility permissions are the SAME
+    // for every candidate in this request (one `workspaceId`/`userId`) —
+    // load them ONCE here rather than once per candidate inside
+    // `resolveResumableCandidate`, so a workspace with N ringing calls
+    // fires one permissions read, not N.
+    const [candidates, member] = await Promise.all([
+      whatsappCallRepository.findRingingByWorkspace(input.workspaceId),
+      loadCallEligibilityMember({
+        workspaceId: input.workspaceId,
+        userId: input.userId,
+      }),
+    ])
 
     const resolved = await Promise.all(
-      candidates.map((call) => this.resolveResumableCandidate(call)),
+      candidates.map((call) => this.resolveResumableCandidate(call, member)),
     )
 
     return resolved.filter(
@@ -204,23 +226,43 @@ class WhatsappVoipCallService {
    * Returns `null` for a disqualified candidate rather than throwing, so
    * {@link listResumableIncoming} can run every candidate through
    * `Promise.all` and simply filter the misses.
+   *
+   * P2 item 5 / M3 (scale): the D3 eligibility check
+   * (`canCallConversationForMember`, the same core rule
+   * `call-access-service.ts` applies everywhere else, against a member
+   * loaded ONCE by the caller — never re-fetched per candidate) runs BEFORE
+   * `readOffer`, and only AFTER the cheap control check (control exists,
+   * `phase: "reserved"`, unclaimed) — so the offer SDP is read from Redis
+   * only for a candidate that is reserved, unclaimed, AND eligible. Neither
+   * an ineligible candidate nor a non-reserved/claimed one ever costs an
+   * offer read, and a resume request from a member who could not pick up
+   * this call never leaks its SDP.
    */
   private async resolveResumableCandidate(
     call: WhatsappCallModel,
+    member: RingMember | null,
   ): Promise<ResumableIncomingVoipCall | null> {
     if (!call.wacid) {
       return null
     }
-    const [control, offer] = await Promise.all([
-      this.readControl(call.wacid),
-      whatsappVoipSignalingService.readOffer(call.wacid),
-    ])
+    const control = await this.readControl(call.wacid)
     if (!control) {
       return null
     }
     if (control.phase !== "reserved" || control.reservedUserId !== "") {
       return null
     }
+
+    const allowed = await canCallConversationForMember({
+      member,
+      workspaceId: call.workspaceId,
+      conversationId: call.conversationId,
+    })
+    if (!allowed) {
+      return null
+    }
+
+    const offer = await whatsappVoipSignalingService.readOffer(call.wacid)
     if (!offer) {
       return null
     }
@@ -239,7 +281,7 @@ class WhatsappVoipCallService {
   /**
    * Claims an inbound call as `terminated` before this worker refuses it —
    * `SET NX`, the SAME primitive {@link
-   * WhatsappVoipCallService.resolveRingTargets} uses to create the ringing
+   * WhatsappVoipCallService.reserveIncomingCall} uses to create the ringing
    * control, so exactly one of the two can win the key.
    *
    * Reading the control and then rejecting at Meta is not enough on its own:
@@ -248,7 +290,7 @@ class WhatsappVoipCallService {
    * removes the gap in both directions:
    *
    * - We win, so no control existed and none can appear behind us —
-   *   `resolveRingTargets` now reads `terminated`, reports
+   *   `reserveIncomingCall` now reads `terminated`, reports
    *   `alreadyProgressed`, and rings nobody. The Graph reject is safe.
    * - We lose, so a control already exists and the caller must defer to the
    *   fenced CAS in `endCall` instead, which ends a still-`reserved` call and
@@ -276,42 +318,29 @@ class WhatsappVoipCallService {
   }
 
   /**
-   * Resolves the agents to RING for an inbound VoIP call and creates the
-   * single (unclaimed) control record — the ring-all analogue of the SIP
-   * fork-dial. Ring targets come from {@link whatsappVoipPresenceService}
-   * (agents with the inbox open), deliberately NOT SIP `REGISTER` presence, so
-   * a VoIP-only number still routes. The control is created once via `SET NX`
-   * with `reservedUserId: ""` (nobody has claimed it yet); the first agent to
-   * `claimForAnswer` stamps themselves as the winner. A redelivered/retried
-   * connect for a still-ringing call re-delivers to the current live set (the
-   * browser store is idempotent per wacid); one that already advanced past
-   * `reserved` is `alreadyProgressed`.
+   * Reserves the single (unclaimed) control record for an inbound VoIP call
+   * BEFORE any target selection runs (P2 §4: "reserve-first") — the
+   * deadline-owning control exists before any retryable read
+   * (`getCallRowOrThrow`'s conversation lookup), so a row-not-ready retry
+   * can never leave a call with no control and no deadline enforcement
+   * (the P1 stopgap's residual "row never appears -> no control -> nobody
+   * rejects" gap). `SET NX` on the control key: the first reservation for
+   * a `wacid` creates it with `reservedUserId: ""` (nobody has claimed it
+   * yet); every later call — including a redelivered/retried connect for a
+   * call still ringing — simply observes the same `reserved` control, and
+   * the worker re-runs selection against the CURRENT live set
+   * (`selectRingTargetsForCall`). One that already advanced past
+   * `reserved` (claimed, answered, terminated) is `alreadyProgressed`.
    */
-  async resolveRingTargets(
-    input: ResolveRingTargetsInput,
-  ): Promise<ResolveRingTargetsResult> {
+  async reserveIncomingCall(
+    input: ReserveIncomingCallInput,
+  ): Promise<ReserveIncomingCallResult> {
     const key = controlKey(input.wacid)
     const existing = await casStore.getJson<VoipCallControl>(key)
     if (existing) {
-      if (existing.phase !== "reserved") {
-        return { status: "alreadyProgressed" }
-      }
-      // Still ringing (redelivered/retried connect): re-deliver to whoever is
-      // live NOW. If everyone has since left, reject — same as the fresh-call
-      // branch below, never leave it ringing an empty set.
-      const liveTargets = await whatsappVoipPresenceService.liveAgents({
-        workspaceId: input.workspaceId,
-      })
-      return liveTargets.length === 0
-        ? { status: "noEligibleAgent" }
-        : { status: "ring", targets: liveTargets }
-    }
-
-    const targets = await whatsappVoipPresenceService.liveAgents({
-      workspaceId: input.workspaceId,
-    })
-    if (targets.length === 0) {
-      return { status: "noEligibleAgent" }
+      return existing.phase === "reserved"
+        ? { status: "reserved" }
+        : { status: "alreadyProgressed" }
     }
 
     const control: VoipCallControl = {
@@ -326,14 +355,73 @@ class WhatsappVoipCallService {
       remainingTtlMs(input.deadlineAt),
     )
     if (created) {
-      return { status: "ring", targets }
+      return { status: "reserved" }
     }
 
     // Lost a concurrent race to create the control — defer to whoever won.
     const winner = await casStore.getJson<VoipCallControl>(key)
     return winner && winner.phase === "reserved"
-      ? { status: "ring", targets }
+      ? { status: "reserved" }
       : { status: "alreadyProgressed" }
+  }
+
+  /**
+   * Business-layer orchestration for the P2 ring-tier snapshot: reads
+   * presence, then the bounded permissions/team projections, and runs the
+   * pure `selectRingTargets` (`ring-targets.ts`) over them. Keeps
+   * `handleConnect` thin — the worker only calls this and
+   * `reserveIncomingCall`, never assembles the snapshot itself.
+   *
+   * Load per call: one presence read, one permissions read bounded by
+   * online ids, 0/1 team read by id (only when the conversation has an
+   * assigned team), one conversation read — all issued concurrently where
+   * independent.
+   */
+  async selectRingTargetsForCall(input: {
+    workspaceId: string
+    conversationId: string
+  }): Promise<RingTargetsSelection> {
+    // Nobody online: skip the conversation/permission reads entirely — no
+    // tier can resolve any candidates regardless of assignment.
+    const onlineUserIds = await workspacePresenceService.listOnlineMembers(
+      input.workspaceId,
+    )
+    if (onlineUserIds.length === 0) {
+      return { tier: null, userIds: [] }
+    }
+
+    const conversation = await conversationService.findBy({
+      where: { id: input.conversationId, workspaceId: input.workspaceId },
+    })
+
+    const conversationSnapshot: RingContext["conversation"] = conversation
+      ? {
+          assignedUserId: conversation.assignedUserId,
+          assignedInboxTeamId: conversation.assignedInboxTeamId,
+        }
+      : null
+
+    const [permissionRows, teamMemberUserIds] = await Promise.all([
+      workspaceMemberService.listPermissionsByUserIds({
+        workspaceId: input.workspaceId,
+        userIds: [...onlineUserIds],
+      }),
+      conversationSnapshot?.assignedInboxTeamId
+        ? inboxTeamService.listUserIdsByTeamId({
+            workspaceId: input.workspaceId,
+            inboxTeamId: conversationSnapshot.assignedInboxTeamId,
+          })
+        : Promise.resolve<string[]>([]),
+    ])
+
+    return selectRingTargets({
+      conversation: conversationSnapshot,
+      onlineUserIds,
+      permissionsByUserId: new Map(
+        permissionRows.map((row) => [row.userId, row.permissions]),
+      ),
+      teamMemberUserIds,
+    })
   }
 
   /**
@@ -613,7 +701,7 @@ class WhatsappVoipCallService {
    * Creates the outbound (business-initiated) call control, keyed by
    * `wacid` in the SAME `voip:ctrl:<wacid>` namespace inbound calls use —
    * called by the app layer AFTER `connectCall` returns Meta's `wacid`, so
-   * (unlike the inbound `resolveRingTargets` control, which exists before
+   * (unlike the inbound `reserveIncomingCall` control, which exists before
    * the caller is known) there is exactly one agent from the start:
    * `reservedUserId` is the initiator, never `""`. `SET NX` makes this
    * create-only — a retry of the same dial (same wacid) is a no-op that
@@ -895,16 +983,17 @@ class WhatsappVoipCallService {
    * Omitted (`undefined`) fields are left untouched. Resolves to the written
    * row, or `undefined` when nothing changed.
    */
-  async finalizeEndedCall(input: {
-    whatsappCallId: string
-    status: WhatsappCallStatus
-    endedAt: Date
-    startedAt?: Date | null
-    durationSeconds?: number | null
-    messageId?: string | null
-    lastError?: string | null
-    current?: WhatsappCallModel
-  }): Promise<WhatsappCallModel | undefined> {
+  async finalizeEndedCall(
+    input: {
+      whatsappCallId: string
+      endedAt: Date
+      startedAt?: Date | null
+      durationSeconds?: number | null
+      messageId?: string | null
+      lastError?: string | null
+      current?: WhatsappCallModel
+    } & WhatsappCallTerminalStatusOutcomePair,
+  ): Promise<WhatsappCallModel | undefined> {
     const { whatsappCallId, ...finalization } = input
     return await whatsappCallRepository.finalizeById({
       id: whatsappCallId,

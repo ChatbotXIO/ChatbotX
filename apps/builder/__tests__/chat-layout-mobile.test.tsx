@@ -1,5 +1,5 @@
 import { setViewportWidth } from "@chatbotx.io/vitest-config/setup-dom"
-import { act, type ReactNode } from "react"
+import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -9,37 +9,6 @@ vi.mock("next-intl", () => ({
 
 vi.mock("@/features/chat/chat-realtime", () => ({
   ChatRealtime: () => <div data-testid="realtime" />,
-}))
-
-vi.mock(
-  "@/features/integration-whatsapp/calling/voip/whatsapp-call-panel",
-  () => ({
-    WhatsappCallPanel: () => <div data-testid="voip-call-dock" />,
-  }),
-)
-
-vi.mock(
-  "@/features/integration-whatsapp/calling/voip/whatsapp-voip-call-context",
-  () => ({
-    WhatsappVoipCallProvider: ({ children }: { children: ReactNode }) =>
-      children,
-    useWhatsappVoipCallContext: () => ({
-      answer: vi.fn(),
-      dismiss: vi.fn(),
-      hangup: vi.fn(),
-      toggleMute: vi.fn(),
-      dismissEnded: vi.fn(),
-    }),
-  }),
-)
-
-vi.mock(
-  "@/features/integration-whatsapp/calling/voip/use-whatsapp-voip-presence",
-  () => ({ useWhatsappVoipPresence: () => undefined }),
-)
-
-vi.mock("@/features/messages/components/whatsapp-call-info-sheet", () => ({
-  WhatsappCallInfoSheet: () => <div data-testid="call-info-sheet" />,
 }))
 
 const mockRouterReplace = vi.fn()

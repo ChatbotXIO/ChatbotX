@@ -3933,12 +3933,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "تعذر رفض مكالمة واتساب",
+        "voipHangupFailed": "تعذر إنهاء مكالمة واتساب",
+        "voipNotReservedAgent": "أنت لست الوكيل المخصص لهذه المكالمة",
+        "voipCallAccessDenied": "ليس لديك إذن للتعامل مع هذه المكالمة",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "لم تعد تلك المكالمة ترن",
-        "transcriptionRequiresRecording": "فعّل تسجيل المكالمات قبل تفعيل النسخ النصي."
+        "transcriptionRequiresRecording": "فعّل تسجيل المكالمات قبل تفعيل النسخ النصي.",
+        "supportSessionCallingBlocked": "الاتصال غير متاح أثناء جلسة دعم المنصة.",
+        "callingAccessDenied": "ليس لديك إمكانية الوصول إلى الاتصال في مساحة العمل هذه.",
+        "callArtifactAccessDenied": "ليس لديك إذن لعرض هذه المكالمة.",
+        "callHistoryAccessDenied": "ليس لديك إمكانية الوصول إلى سجل المكالمات في مساحة العمل هذه."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3996,7 +4001,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "تم رفض الوصول إلى الميكروفون. فعّل الوصول من إعدادات المتصفح وحاول مرة أخرى.",
-        "micNotFound": "لم يتم العثور على ميكروفون. قم بتوصيل ميكروفون وحاول مرة أخرى."
+        "micNotFound": "لم يتم العثور على ميكروفون. قم بتوصيل ميكروفون وحاول مرة أخرى.",
+        "callAccessDenied": "ليس لديك إذن للاتصال بجهة الاتصال هذه."
       },
       "card": {
         "audioCall": "مكالمة صوتية",
@@ -4018,7 +4024,8 @@
         "playbackFailed": "فشل التشغيل",
         "answeredBy": "تم الرد بواسطة {name}",
         "calledBy": "تم الاتصال بواسطة {name}",
-        "callFailed": "مشكلة في المكالمة"
+        "callFailed": "مشكلة في المكالمة",
+        "callBack": "معاودة الاتصال"
       },
       "sheet": {
         "title": "معلومات المكالمة",
@@ -4061,6 +4068,7 @@
         "statusCallEnded": "انتهت المكالمة",
         "end": "إنهاء",
         "minimize": "تصغير",
+        "goToConversation": "الانتقال إلى المحادثة",
         "expand": "توسيع",
         "dismiss": "إغلاق",
         "statusNoAnswer": "لا يوجد رد",
@@ -4117,7 +4125,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "المكالمات",
+        "subtitle": "سجل المكالمات لمساحة العمل هذه",
+        "emptyTitle": "لا توجد مكالمات بعد",
+        "emptyDescription": "ستظهر المكالمات هنا بمجرد أن يبدأ فريقك بإجراء أو استقبال مكالمات واتساب.",
+        "loadMore": "تحميل المزيد",
+        "allActivity": "جميع المكالمات",
+        "filterMissed": "فائتة",
+        "filterNoReply": "بدون رد",
+        "allInboxes": "جميع صناديق الوارد",
+        "allAgents": "جميع الوكلاء",
+        "columnContact": "جهة الاتصال",
+        "columnInbox": "صندوق الوارد",
+        "columnDirection": "الاتجاه",
+        "columnAgent": "الوكيل",
+        "columnDuration": "المدة",
+        "columnDate": "التاريخ",
+        "directionInbound": "واردة",
+        "directionOutbound": "صادرة",
+        "kindOngoing": "جارية",
+        "kindAnsweredInbound": "تم الرد",
+        "kindAnsweredOutbound": "تم الرد",
+        "openConversation": "فتح المحادثة",
+        "unknownContact": "جهة اتصال غير معروفة",
+        "emptyFilteredTitle": "لا توجد مكالمات مطابقة لهذا الفلتر",
+        "emptyFilteredDescription": "جرّب فلترًا آخر، أو امسح الفلتر لعرض جميع المكالمات.",
+        "loadMoreError": "تعذر تحميل مزيد من المكالمات. يرجى المحاولة مرة أخرى.",
+        "callInformation": "معلومات المكالمة"
+      }
     }
   },
   "zalo": {

@@ -29,5 +29,10 @@ export const whatsappCallRelations = defineRelationsPart(schema, (r) => ({
       to: r.userModel.id,
       optional: true,
     }),
+    initiatedByUser: r.one.userModel({
+      from: r.whatsappCallModel.initiatedByUserId,
+      to: r.userModel.id,
+      optional: true,
+    }),
   },
 }))

@@ -3933,12 +3933,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "WhatsApp araması reddedilemedi",
+        "voipHangupFailed": "WhatsApp araması sonlandırılamadı",
+        "voipNotReservedAgent": "Bu arama için atanan temsilci siz değilsiniz",
+        "voipCallAccessDenied": "Bu aramayı yönetme izniniz yok",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "O arama artık çalmıyor",
-        "transcriptionRequiresRecording": "Döküm özelliğini açmadan önce arama kaydını açın."
+        "transcriptionRequiresRecording": "Döküm özelliğini açmadan önce arama kaydını açın.",
+        "supportSessionCallingBlocked": "Platform destek oturumu sırasında arama kullanılamaz.",
+        "callingAccessDenied": "Bu çalışma alanında arama erişiminiz yok.",
+        "callArtifactAccessDenied": "Bu aramayı görüntüleme izniniz yok.",
+        "callHistoryAccessDenied": "Bu çalışma alanındaki arama geçmişine erişiminiz yok."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3996,7 +4001,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Mikrofon erişimi reddedildi. Tarayıcı ayarlarınızdan mikrofon erişimine izin verip yeniden deneyin.",
-        "micNotFound": "Mikrofon bulunamadı. Bir mikrofon bağlayıp yeniden deneyin."
+        "micNotFound": "Mikrofon bulunamadı. Bir mikrofon bağlayıp yeniden deneyin.",
+        "callAccessDenied": "Bu kişiyi arama izniniz yok."
       },
       "card": {
         "audioCall": "Sesli arama",
@@ -4018,7 +4024,8 @@
         "playbackFailed": "Oynatma başarısız oldu",
         "answeredBy": "Yanıtlayan: {name}",
         "calledBy": "Arayan: {name}",
-        "callFailed": "Arama sorunu"
+        "callFailed": "Arama sorunu",
+        "callBack": "Geri ara"
       },
       "sheet": {
         "title": "Arama Bilgileri",
@@ -4061,6 +4068,7 @@
         "statusCallEnded": "Arama sona erdi",
         "end": "Sonlandır",
         "minimize": "Küçült",
+        "goToConversation": "Konuşmaya git",
         "expand": "Genişlet",
         "dismiss": "Kapat",
         "statusNoAnswer": "Yanıt yok",
@@ -4117,7 +4125,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Aramalar",
+        "subtitle": "Bu çalışma alanının arama geçmişi",
+        "emptyTitle": "Henüz arama yok",
+        "emptyDescription": "Ekibiniz WhatsApp araması yapmaya veya almaya başladığında aramalar burada görünecek.",
+        "loadMore": "Daha fazla yükle",
+        "allActivity": "Tüm aramalar",
+        "filterMissed": "Cevapsız",
+        "filterNoReply": "Yanıt yok",
+        "allInboxes": "Tüm gelen kutuları",
+        "allAgents": "Tüm temsilciler",
+        "columnContact": "Kişi",
+        "columnInbox": "Gelen kutusu",
+        "columnDirection": "Yön",
+        "columnAgent": "Temsilci",
+        "columnDuration": "Süre",
+        "columnDate": "Tarih",
+        "directionInbound": "Gelen",
+        "directionOutbound": "Giden",
+        "kindOngoing": "Devam ediyor",
+        "kindAnsweredInbound": "Yanıtlandı",
+        "kindAnsweredOutbound": "Yanıtlandı",
+        "openConversation": "Konuşmayı aç",
+        "unknownContact": "Bilinmeyen kişi",
+        "emptyFilteredTitle": "Bu filtreyle eşleşen çağrı yok",
+        "emptyFilteredDescription": "Başka bir filtre deneyin veya tüm çağrıları görmek için filtreyi temizleyin.",
+        "loadMoreError": "Daha fazla çağrı yüklenemedi. Lütfen tekrar deneyin.",
+        "callInformation": "Çağrı bilgisi"
+      }
     }
   },
   "zalo": {

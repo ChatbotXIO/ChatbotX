@@ -2,13 +2,12 @@
 
 import {
   type CallPermissionStatus,
-  contactInboxService,
+  canCallConversation,
   conversationService,
   whatsappCallPermissionService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { channelTypes } from "@chatbotx.io/database/partials"
 import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
@@ -21,9 +20,10 @@ import { parsePhoneNumberFromString } from "libphonenumber-js"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { getWhatsappCallingPreflight } from "@/features/integration-whatsapp/calling/get-whatsapp-calling-preflight"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { callingActionClient } from "@/lib/safe-action"
 import { callingSettingsCacheKey } from "../lib/calling-settings-cache"
 import { BLOCKED_OUTBOUND_COUNTRIES } from "./blocked-outbound-countries"
+import { resolveContactInbox } from "./outbound-dial-target"
 
 /**
  * `getCallingSettings` is a live Meta GET — without a cache it would fire
@@ -55,6 +55,17 @@ async function getCachedCallingSettings(
 
 const resolveOutboundCallModeSchema = z.object({
   conversationId: zodBigintAsString(),
+  /**
+   * Pins resolution to a SPECIFIC WhatsApp `ContactInbox` of this
+   * conversation's contact (e.g. the contact panel dialing one of several
+   * numbers) rather than "whichever WhatsApp inbox this contact has" —
+   * ownership-checked the same way `resolveContactInbox` checks it for an
+   * actual outbound dial (`outbound-dial-target.ts`), so a foreign id (one
+   * that does not belong to this conversation's contact) resolves to
+   * nothing, never leaking another contact's number. Omitted, mode is
+   * identical to before this parameter existed.
+   */
+  contactInboxId: zodBigintAsString().optional(),
 })
 
 export type OutboundCallPermissionStatus = CallPermissionStatus
@@ -75,6 +86,15 @@ export type NoneCallModeReason =
   /** The stored token/credential was rejected by Meta when checking calling
    * eligibility (expired, revoked, or otherwise invalid). */
   | "tokenInvalid"
+  /** D3 access denial: `canCallConversation` returned false (an
+   * assigned-only agent resolving a conversation assigned to someone else).
+   * Never distinguishable from "no such call/conversation" by a caller
+   * probing this reason — same non-disclosure guarantee
+   * `assertCallAccessOrThrow`'s thrown `CALL_ACCESS_DENIED_CODE` gives the
+   * other calling actions, just returned as data instead of thrown so a
+   * failed mode resolution does not leave the starter's `isResolvingMode`
+   * stuck forever. */
+  | "callAccessDenied"
 
 export type ResolveOutboundCallModeResult =
   | {
@@ -117,13 +137,14 @@ export type ResolveOutboundCallModeResult =
  * when no reply has ever been recorded for this contact (the client renders
  * a neutral "request permission" affordance).
  */
-export const resolveOutboundCallModeAction = workspaceActionClient
+export const resolveOutboundCallModeAction = callingActionClient
   .bindArgsSchemas([zodBigintAsString()])
   .inputSchema(resolveOutboundCallModeSchema)
   .action(
     async ({
       parsedInput,
       bindArgsParsedInputs: [workspaceId],
+      ctx,
     }): Promise<ResolveOutboundCallModeResult> => {
       const t = await getTranslations()
 
@@ -134,16 +155,38 @@ export const resolveOutboundCallModeAction = workspaceActionClient
         throw new ChatbotXException(t("whatsapp.calls.errors.callNotFound"))
       }
 
-      const contactInbox = await contactInboxService.findBy({
-        where: {
-          contactId: conversation.contactId,
-          channel: channelTypes.enum.whatsapp,
-        },
+      // P2 item 5 (plan D3): mirrors the outbound-dial gate — an
+      // assigned-only agent must not even be told which call mode another
+      // agent's conversation would use. Uses the non-throwing
+      // `canCallConversation` (rather than `assertCallAccessOrThrow`) and
+      // returns `{ mode: "none", reason: "callAccessDenied" }` instead of
+      // throwing (review B1): a thrown error here left the client's
+      // `isResolvingMode` stuck `true` forever (a permanently disabled call
+      // button with no feedback), since `outboundCallMode` never resolves to
+      // a value on a query error. Returning data instead lets the shared
+      // starter's `mode: "none"` alert path handle it uniformly with every
+      // other denial reason.
+      const hasCallAccess = await canCallConversation({
+        workspaceId,
+        conversationId: conversation.id,
+        userId: ctx.user.id,
       })
-      if (
-        !contactInbox ||
-        contactInbox.channel !== channelTypes.enum.whatsapp
-      ) {
+      if (!hasCallAccess) {
+        return { mode: "none", reason: "callAccessDenied" }
+      }
+
+      // Reuses the exact same ownership-scoped lookup an actual outbound
+      // dial uses (`resolveContactInbox`, `outbound-dial-target.ts`) rather
+      // than duplicating the "does this contactInboxId belong to this
+      // conversation's contact" check — a foreign id simply resolves to
+      // `null` here too, the channel filter is baked into the query, and
+      // omitting `contactInboxId` falls through to "whichever WhatsApp
+      // inbox this contact has", identical to before this parameter existed.
+      const contactInbox = await resolveContactInbox({
+        contactId: conversation.contactId,
+        contactInboxId: parsedInput.contactInboxId,
+      })
+      if (!contactInbox) {
         return { mode: "none", reason: "notWhatsappConversation" }
       }
 

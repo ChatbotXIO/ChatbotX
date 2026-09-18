@@ -1,5 +1,6 @@
 "use client"
 
+import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   type MessageWhatsappCallEntity,
   resolveWhatsappCallActivityLabelKey,
@@ -21,6 +22,7 @@ import {
   FileTextIcon,
   InfoIcon,
   MoreVerticalIcon,
+  PhoneIcon,
   PhoneIncomingIcon,
   PhoneMissedIcon,
   PhoneOffIcon,
@@ -30,7 +32,16 @@ import {
 import { useLocale, useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 import { useChatStore } from "@/features/chat/store/chat-store-provider"
+import { findContactInboxByChannel } from "@/features/conversations/utils/contact-inbox"
+import { useOutboundCallMode } from "@/features/integration-whatsapp/calling/voip/use-outbound-call-mode"
+import { useWhatsappCallStarter } from "@/features/integration-whatsapp/calling/voip/use-whatsapp-call-starter"
+import {
+  isCallSlotFree,
+  useWhatsappVoipCallStore,
+} from "@/features/integration-whatsapp/calling/voip/voip-call-store"
+import { useOptionalWhatsappVoipCallContext } from "@/features/integration-whatsapp/calling/voip/whatsapp-voip-call-context"
 import { useWorkspaceId } from "@/hooks/routing"
+import { createResolveCallRecordingUrl } from "../lib/resolve-call-recording-url"
 import { useCallInfoSheetStore } from "../store/call-info-sheet-store"
 import { CallAudioPlayer } from "./call-audio-player"
 
@@ -121,6 +132,104 @@ type WhatsappCallCardProps = {
    * recording that never arrives can't leave the card stuck on "processing".
    */
   callEndedAt?: string | number | Date | null
+  /**
+   * The conversation this activity message belongs to (`message.conversationId`,
+   * passed by `message-item.tsx`) — feeds the "Call back" control (P4 item
+   * 3) below. Falls back to the chat store's `activeConversationId` when
+   * omitted, matching every other caller.
+   */
+  conversationId?: string
+}
+
+/**
+ * Which non-completed call outcomes offer a "Call back" control, keyed by
+ * DIRECTION rather than by label name — expressed on the underlying
+ * status/direction so it can never silently drift from
+ * `resolveWhatsappCallActivityLabelKey`'s own labeling. Matches the
+ * reference behaviour: every non-completed INBOUND call (the business
+ * missed/declined a customer's call) offers to call back; an outbound call
+ * the business itself placed and that failed/was cancelled never does
+ * (that case is deliberately not offered a call-back)
+ * — `canceled` is display-only anyway (see
+ * `MessageWhatsappCallEntity.status`'s doc comment) and is never call-back
+ * eligible on either direction.
+ */
+export const CALL_BACK_STATUSES_BY_DIRECTION: Record<
+  MessageWhatsappCallEntity["direction"],
+  ReadonlySet<MessageWhatsappCallEntity["status"]>
+> = {
+  userInitiated: new Set(["failed", "rejected"]),
+  businessInitiated: new Set(),
+}
+
+/**
+ * Standalone so its own hooks (`useOutboundCallMode`, `useWhatsappCallStarter`)
+ * only run while a call-back is actually offered — `WhatsappCallCard` itself
+ * renders unconditionally for every message, most of which are not a missed
+ * call. Disabled while the agent's single call slot or ring-all basket is
+ * non-empty (dialing out while already engaged/ringing would either be
+ * rejected by `startOutbound`'s own occupied check or confusingly queue
+ * behind an active ring), and while calling is disabled for this workspace/
+ * member (`voipCallContext` is `null`) it renders nothing at all — mirrors
+ * `WhatsappVoipCallButton`.
+ */
+function WhatsappCallBackButton({
+  conversationId,
+  contactInboxId,
+  contactName,
+}: {
+  conversationId: string
+  contactInboxId: string
+  contactName?: string | null
+}) {
+  const t = useTranslations("whatsapp.calls.card")
+  const workspaceId = useWorkspaceId()
+  // Read directly (not via `useWhatsappCallStarter`, which itself needs
+  // `outboundCallMode`) so the mode query can be gated on it: with calling
+  // disabled for this workspace/member the provider isn't mounted, this
+  // card renders nothing (see the `voipCallContext` check below), and the
+  // query firing anyway would just churn a deterministic 403 on remount.
+  const voipCallContext = useOptionalWhatsappVoipCallContext()
+  const outboundCallModeQuery = useOutboundCallMode(
+    workspaceId,
+    conversationId,
+    contactInboxId,
+    { enabled: Boolean(voipCallContext) },
+  )
+  const starter = useWhatsappCallStarter({
+    conversationId,
+    contactInboxId,
+    contactName,
+    outboundCallMode: outboundCallModeQuery.data,
+  })
+  // A single selector returning the derived boolean PRIMITIVE — not the
+  // whole `call` object or `ringingCalls` array — so this button only
+  // re-renders when busy-ness actually flips, not on every unrelated
+  // field change inside an active call (e.g. the countdown ticking).
+  const isBusy = useWhatsappVoipCallStore(
+    (state) => !isCallSlotFree(state.call) || state.ringingCalls.length > 0,
+  )
+
+  if (!starter.voipCallContext) {
+    return null
+  }
+
+  return (
+    <>
+      <Button
+        className="h-7 gap-1.5 px-2 text-xs"
+        disabled={isBusy || starter.isDialing || starter.isResolvingMode}
+        onClick={starter.handleClick}
+        size="sm"
+        type="button"
+        variant="ghost"
+      >
+        <PhoneIcon aria-hidden className="size-3.5" />
+        {t("callBack")}
+      </Button>
+      {starter.dialogs}
+    </>
+  )
 }
 
 const CallActionButton = ({
@@ -184,6 +293,7 @@ export const WhatsappCallCard = ({
   contactName,
   hasRecordingAttachment,
   callEndedAt,
+  conversationId,
 }: WhatsappCallCardProps) => {
   const t = useTranslations("whatsapp.calls.card")
   const locale = useLocale()
@@ -193,33 +303,41 @@ export const WhatsappCallCard = ({
   const tMessages = useTranslations("messages")
   const workspaceId = useWorkspaceId()
   const openCallInfoSheet = useCallInfoSheetStore((state) => state.open)
-  // The call is always with the active conversation's contact, so fall back to
-  // that name when the message row itself has no contact relation — this is
-  // the "caller info" the reference UI shows in the box.
-  const activeConversationContactName = useChatStore((state) => {
-    const active = state.conversations.find(
-      (conversation) => conversation.id === state.activeConversationId,
-    )
-    return active?.contact?.fullName ?? null
-  })
+  // The call is always with this message's own conversation (falls back to
+  // whatever is currently active for callers that don't pass one — every
+  // caller today does), so its contact and WhatsApp contact-inbox both come
+  // from the same lookup — feeds both the "caller info" name shown in the
+  // box AND the "Call back" control's dial target (P4 item 3).
+  // Selects only STABLE references (the `conversations` array reference and
+  // the `activeConversationId` primitive) — never an inline object/array
+  // literal. A zustand v5 selector that returns a fresh literal on every
+  // call fails `useSyncExternalStore`'s identity check on every store
+  // notification, which re-triggers the selector, which returns ANOTHER
+  // fresh literal — an infinite "Maximum update depth exceeded" loop for
+  // every `whatsapp_call` message rendered. Everything derived from
+  // `active` below is computed in the component body instead, matching the
+  // established pattern in `message-head.tsx`/`contact-detail.tsx`.
+  const conversations = useChatStore((state) => state.conversations)
+  const activeConversationId = useChatStore(
+    (state) => state.activeConversationId,
+  )
+  const active = conversations.find(
+    (conversation) =>
+      conversation.id === (conversationId ?? activeConversationId),
+  )
+  const activeConversationContactName = active?.contact?.fullName ?? null
+  const whatsappContactInboxId = findContactInboxByChannel(
+    active,
+    channelTypes.enum.whatsapp,
+  )?.id
+  const resolvedConversationId = conversationId ?? active?.id ?? null
   const displayName = contactName ?? activeConversationContactName
 
-  const resolveRecordingUrl = async (): Promise<string> => {
-    if (!call.callId) {
-      throw new Error("Whatsapp call card: missing callId")
-    }
-    const { getCallRecordingUrlAction } = await import(
-      "../actions/get-call-recording-url.action"
-    )
-    const result = await getCallRecordingUrlAction(workspaceId, {
-      whatsappCallId: call.callId,
-    })
-    const url = result?.data?.url
-    if (!url) {
-      throw new Error("Whatsapp call card: no recording URL returned")
-    }
-    return url
-  }
+  const resolveRecordingUrl = createResolveCallRecordingUrl({
+    workspaceId,
+    whatsappCallId: call.callId,
+    context: "Whatsapp call card",
+  })
 
   const openSheet = (tab: "transcript" | "summary") => {
     if (call.callId) {
@@ -242,6 +360,9 @@ export const WhatsappCallCard = ({
       call.direction,
     )
     const isMissedInbound = labelKey === "missedVoiceCall"
+    const canCallBack = CALL_BACK_STATUSES_BY_DIRECTION[call.direction].has(
+      call.status,
+    )
     return (
       <div className="flex flex-col items-center gap-1 py-1 text-muted-foreground text-sm">
         <div className="flex items-center justify-center gap-1.5">
@@ -257,6 +378,13 @@ export const WhatsappCallCard = ({
             agentName={call.agentName}
             direction={call.direction}
             t={t}
+          />
+        )}
+        {canCallBack && resolvedConversationId && whatsappContactInboxId && (
+          <WhatsappCallBackButton
+            contactInboxId={whatsappContactInboxId}
+            contactName={displayName}
+            conversationId={resolvedConversationId}
           />
         )}
       </div>

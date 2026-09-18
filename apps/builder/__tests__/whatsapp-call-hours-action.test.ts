@@ -29,7 +29,7 @@ vi.mock("@/lib/safe-action", () => {
   chain.bindArgsSchemas = () => chain
   chain.inputSchema = () => chain
   chain.action = (handler: unknown) => handler
-  return { workspaceActionClient: chain }
+  return { callingAdminActionClient: chain }
 })
 
 vi.mock("@/lib/auth/assert-workspace-super-admin", () => ({

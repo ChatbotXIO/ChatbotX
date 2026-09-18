@@ -1,4 +1,7 @@
-import type { WhatsappCallStatus } from "@chatbotx.io/database/partials"
+import type {
+  WhatsappCallStatus,
+  WhatsappCallTerminalStatus,
+} from "@chatbotx.io/database/partials"
 
 /**
  * VoIP-mode (browser WebRTC) call-control phases. Persisted at
@@ -142,7 +145,7 @@ export const VOIP_ANSWER_DEADLINE_SAFETY_MARGIN_MS = 3000
  * leaving the real Meta leg ringing and the DB row stuck `ringing` forever.
  * With the margin, `endCall` can still observe (and terminate) the control
  * when the job runs right at the deadline. Deliberately NOT
- * applied to any INBOUND control TTL (`resolveRingTargets`) — those are
+ * applied to any INBOUND control TTL (`reserveIncomingCall`) — those are
  * unaffected by this bug and out of scope here.
  */
 export const OUTBOUND_CONTROL_TTL_MARGIN_MS = 20_000
@@ -215,7 +218,7 @@ export type EndVoipCallResult = {
    * `graphAction` with their own if-chain (that pattern was previously
    * duplicated across callers as a `hangupTerminalStatus` computation).
    */
-  terminalStatus: WhatsappCallStatus
+  terminalStatus: WhatsappCallTerminalStatus
 }
 
 /**
@@ -240,7 +243,10 @@ export const VOIP_END_OUTCOME_BY_PHASE = {
   ringing: { graphAction: "terminate", terminalStatus: "failed" },
 } as const satisfies Record<
   "reserved" | "answering" | "accepted" | "dialing" | "ringing",
-  { graphAction: VoipGraphEndAction; terminalStatus: WhatsappCallStatus }
+  {
+    graphAction: VoipGraphEndAction
+    terminalStatus: WhatsappCallTerminalStatus
+  }
 >
 
 export type TerminableVoipCallPhase = keyof typeof VOIP_END_OUTCOME_BY_PHASE

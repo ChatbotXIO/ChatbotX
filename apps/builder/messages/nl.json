@@ -3933,12 +3933,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "Kan het WhatsApp-gesprek niet weigeren",
+        "voipHangupFailed": "Kan het WhatsApp-gesprek niet beëindigen",
+        "voipNotReservedAgent": "U bent niet de aan dit gesprek toegewezen agent",
+        "voipCallAccessDenied": "U heeft geen toestemming om dit gesprek te behandelen",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "Die oproep gaat niet meer over",
-        "transcriptionRequiresRecording": "Schakel het opnemen van gesprekken in voordat je transcriptie inschakelt."
+        "transcriptionRequiresRecording": "Schakel het opnemen van gesprekken in voordat je transcriptie inschakelt.",
+        "supportSessionCallingBlocked": "Bellen is niet beschikbaar tijdens een platformondersteuningssessie.",
+        "callingAccessDenied": "U heeft geen toegang tot bellen in deze werkruimte.",
+        "callArtifactAccessDenied": "Je hebt geen toestemming om deze oproep te bekijken.",
+        "callHistoryAccessDenied": "Je hebt geen toegang tot de oproepgeschiedenis in deze werkruimte."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3996,7 +4001,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Microfoontoegang is geweigerd. Sta microfoontoegang toe in je browserinstellingen en probeer het opnieuw.",
-        "micNotFound": "Geen microfoon gevonden. Sluit een microfoon aan en probeer het opnieuw."
+        "micNotFound": "Geen microfoon gevonden. Sluit een microfoon aan en probeer het opnieuw.",
+        "callAccessDenied": "U heeft geen toestemming om dit contact te bellen."
       },
       "card": {
         "audioCall": "Audiogesprek",
@@ -4018,7 +4024,8 @@
         "playbackFailed": "Afspelen mislukt",
         "answeredBy": "Beantwoord door {name}",
         "calledBy": "Gebeld door {name}",
-        "callFailed": "Gespreksprobleem"
+        "callFailed": "Gespreksprobleem",
+        "callBack": "Terugbellen"
       },
       "sheet": {
         "title": "Gesprekinformatie",
@@ -4061,6 +4068,7 @@
         "statusCallEnded": "Oproep beëindigd",
         "end": "Beëindigen",
         "minimize": "Minimaliseren",
+        "goToConversation": "Ga naar het gesprek",
         "expand": "Uitvouwen",
         "dismiss": "Sluiten",
         "statusNoAnswer": "Geen antwoord",
@@ -4117,7 +4125,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Oproepen",
+        "subtitle": "Oproepgeschiedenis voor deze werkruimte",
+        "emptyTitle": "Nog geen oproepen",
+        "emptyDescription": "Oproepen verschijnen hier zodra je team WhatsApp-oproepen begint te plaatsen of te ontvangen.",
+        "loadMore": "Meer laden",
+        "allActivity": "Alle oproepen",
+        "filterMissed": "Gemist",
+        "filterNoReply": "Geen antwoord",
+        "allInboxes": "Alle postvakken IN",
+        "allAgents": "Alle medewerkers",
+        "columnContact": "Contact",
+        "columnInbox": "Postvak IN",
+        "columnDirection": "Richting",
+        "columnAgent": "Medewerker",
+        "columnDuration": "Duur",
+        "columnDate": "Datum",
+        "directionInbound": "Inkomend",
+        "directionOutbound": "Uitgaand",
+        "kindOngoing": "Actief",
+        "kindAnsweredInbound": "Beantwoord",
+        "kindAnsweredOutbound": "Beantwoord",
+        "openConversation": "Gesprek openen",
+        "unknownContact": "Onbekend contact",
+        "emptyFilteredTitle": "Geen oproepen komen overeen met dit filter",
+        "emptyFilteredDescription": "Probeer een ander filter of wis het om alle oproepen te zien.",
+        "loadMoreError": "Meer oproepen konden niet worden geladen. Probeer het opnieuw.",
+        "callInformation": "Oproepinformatie"
+      }
     }
   },
   "zalo": {

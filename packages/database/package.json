@@ -17,6 +17,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
     "@types/pg": "^8.20.0",

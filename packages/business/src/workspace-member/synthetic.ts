@@ -46,6 +46,13 @@ export function buildSupportMembership(props: {
       newOrder: false,
     },
     permissions: FULL_WORKSPACE_MEMBER_PERMISSIONS,
+    // `onlineSince` is a durable "last came online" stamp with no real row
+    // for a presence report's `markOnlineBulk` to ever update (AGENTS.md
+    // invariant #19). Whether this user reads as online RIGHT NOW is answered
+    // entirely by Redis (`workspacePresenceService.listOnlineMembers`),
+    // keyed by their real session `userId` regardless of membership type —
+    // this field never gates that.
+    onlineSince: null,
   }
 }
 

@@ -37,7 +37,7 @@ type CallEvent = CallPayload["event"]
 
 const INTERIM_STATUS_MAP: Record<
   string,
-  WhatsappCallModel["status"] | undefined
+  "ringing" | "accepted" | "rejected" | undefined
 > = {
   RINGING: "ringing",
   ACCEPTED: "accepted",

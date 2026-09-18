@@ -12,7 +12,7 @@ import { getTranslations } from "next-intl/server"
 import { ensureWhatsappCallsWebhookSubscribed } from "@/features/integration-whatsapp/libs/ensure-calls-webhook-subscribed"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { callingAdminActionClient } from "@/lib/safe-action"
 
 /**
  * Runs the same app-level `calls` webhook subscription used after
@@ -21,7 +21,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
  * gated client-side, but the action re-asserts so it is never exploitable
  * by calling it directly.
  */
-export const fixWhatsappCallsSubscriptionAction = workspaceActionClient
+export const fixWhatsappCallsSubscriptionAction = callingAdminActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .action(
     async ({

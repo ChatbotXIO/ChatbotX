@@ -3933,12 +3933,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "Tidak dapat menolak panggilan WhatsApp",
+        "voipHangupFailed": "Tidak dapat mengakhiri panggilan WhatsApp",
+        "voipNotReservedAgent": "Anda bukan agen yang ditugaskan untuk panggilan ini",
+        "voipCallAccessDenied": "Anda tidak memiliki izin untuk menangani panggilan ini",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "Panggilan itu tidak lagi berdering",
-        "transcriptionRequiresRecording": "Aktifkan perekaman panggilan sebelum mengaktifkan transkripsi."
+        "transcriptionRequiresRecording": "Aktifkan perekaman panggilan sebelum mengaktifkan transkripsi.",
+        "supportSessionCallingBlocked": "Panggilan tidak tersedia selama sesi dukungan platform.",
+        "callingAccessDenied": "Anda tidak memiliki akses ke panggilan di workspace ini.",
+        "callArtifactAccessDenied": "Anda tidak memiliki izin untuk melihat panggilan ini.",
+        "callHistoryAccessDenied": "Anda tidak memiliki akses ke riwayat panggilan di ruang kerja ini."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3996,7 +4001,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Akses mikrofon ditolak. Izinkan akses mikrofon di pengaturan browser Anda dan coba lagi.",
-        "micNotFound": "Mikrofon tidak ditemukan. Sambungkan mikrofon dan coba lagi."
+        "micNotFound": "Mikrofon tidak ditemukan. Sambungkan mikrofon dan coba lagi.",
+        "callAccessDenied": "Anda tidak memiliki izin untuk menelepon kontak ini."
       },
       "card": {
         "audioCall": "Panggilan suara",
@@ -4018,7 +4024,8 @@
         "playbackFailed": "Pemutaran gagal",
         "answeredBy": "Dijawab oleh {name}",
         "calledBy": "Ditelepon oleh {name}",
-        "callFailed": "Masalah panggilan"
+        "callFailed": "Masalah panggilan",
+        "callBack": "Telepon balik"
       },
       "sheet": {
         "title": "Informasi Panggilan",
@@ -4061,6 +4068,7 @@
         "statusCallEnded": "Panggilan berakhir",
         "end": "Akhiri",
         "minimize": "Perkecil",
+        "goToConversation": "Buka percakapan",
         "expand": "Perluas",
         "dismiss": "Tutup",
         "statusNoAnswer": "Tidak ada jawaban",
@@ -4117,7 +4125,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Panggilan",
+        "subtitle": "Riwayat panggilan untuk ruang kerja ini",
+        "emptyTitle": "Belum ada panggilan",
+        "emptyDescription": "Panggilan akan muncul di sini setelah tim Anda mulai melakukan atau menerima panggilan WhatsApp.",
+        "loadMore": "Muat lebih banyak",
+        "allActivity": "Semua panggilan",
+        "filterMissed": "Tidak terjawab",
+        "filterNoReply": "Tanpa balasan",
+        "allInboxes": "Semua kotak masuk",
+        "allAgents": "Semua agen",
+        "columnContact": "Kontak",
+        "columnInbox": "Kotak masuk",
+        "columnDirection": "Arah",
+        "columnAgent": "Agen",
+        "columnDuration": "Durasi",
+        "columnDate": "Tanggal",
+        "directionInbound": "Masuk",
+        "directionOutbound": "Keluar",
+        "kindOngoing": "Berlangsung",
+        "kindAnsweredInbound": "Dijawab",
+        "kindAnsweredOutbound": "Dijawab",
+        "openConversation": "Buka percakapan",
+        "unknownContact": "Kontak tidak dikenal",
+        "emptyFilteredTitle": "Tidak ada panggilan yang cocok dengan filter ini",
+        "emptyFilteredDescription": "Coba filter lain, atau hapus filter untuk melihat semua panggilan.",
+        "loadMoreError": "Gagal memuat panggilan lainnya. Silakan coba lagi.",
+        "callInformation": "Informasi panggilan"
+      }
     }
   },
   "zalo": {

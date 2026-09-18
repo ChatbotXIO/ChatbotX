@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 type ActionHandler = (args: {
   bindArgsParsedInputs: readonly [string]
   parsedInput: Record<string, unknown>
+  ctx: { user: { id: string } }
 }) => Promise<unknown>
 
 const {
@@ -16,6 +17,7 @@ const {
   getCallingSettingsMock,
   getWhatsappCallingPreflightMock,
   withCacheMock,
+  canCallConversationMock,
 } = vi.hoisted(() => ({
   findByMock: vi.fn(),
   findInboxMock: vi.fn(),
@@ -29,6 +31,7 @@ const {
   withCacheMock: vi.fn(
     async (_key: string, fn: () => Promise<unknown>) => await fn(),
   ),
+  canCallConversationMock: vi.fn(),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -36,7 +39,7 @@ vi.mock("@/lib/safe-action", () => {
   chain.bindArgsSchemas = () => chain
   chain.inputSchema = () => chain
   chain.action = (handler: unknown) => handler
-  return { workspaceActionClient: chain }
+  return { callingActionClient: chain }
 })
 
 vi.mock(
@@ -55,6 +58,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  canCallConversation: canCallConversationMock,
   conversationService: { findBy: findByMock },
   contactInboxService: { findBy: findInboxMock },
   whatsappCallPermissionService: { resolveStatus: resolveStatusMock },
@@ -62,7 +66,15 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
-  ChatbotXException: class ChatbotXException extends Error {},
+  ChatbotXException: class ChatbotXException extends Error {
+    code: string
+    httpStatusCode: number
+    constructor(message: string, code = "systemError", httpStatusCode = 400) {
+      super(message)
+      this.code = code
+      this.httpStatusCode = httpStatusCode
+    }
+  },
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
@@ -84,10 +96,15 @@ const { resolveOutboundCallModeAction } = await import(
 )
 const action = resolveOutboundCallModeAction as unknown as ActionHandler
 
-const call = (conversationId = "conversation-1") =>
+const ctx = { user: { id: "agent-1" } }
+
+const call = (conversationId = "conversation-1", contactInboxId?: string) =>
   action({
     bindArgsParsedInputs: ["workspace-1"],
-    parsedInput: { conversationId },
+    parsedInput: contactInboxId
+      ? { conversationId, contactInboxId }
+      : { conversationId },
+    ctx,
   })
 
 describe("resolveOutboundCallModeAction", () => {
@@ -96,6 +113,7 @@ describe("resolveOutboundCallModeAction", () => {
     withCacheMock.mockImplementation(
       async (_key: string, fn: () => Promise<unknown>) => await fn(),
     )
+    canCallConversationMock.mockResolvedValue(true)
     findByMock.mockResolvedValue({
       id: "conversation-1",
       contactId: "contact-1",
@@ -190,6 +208,28 @@ describe("resolveOutboundCallModeAction", () => {
   test("throws when the conversation cannot be found", async () => {
     findByMock.mockResolvedValue(undefined)
     await expect(call()).rejects.toThrow("whatsapp.calls.errors.callNotFound")
+  })
+
+  // Review B1: this used to THROW (via `assertCallAccessOrThrow`), which left
+  // the client's `isResolvingMode` stuck `true` forever (`outboundCallMode`
+  // never resolves to a value on a query error) — a permanently disabled
+  // call button with no feedback. Returning `{ mode: "none", reason:
+  // "callAccessDenied" }` instead lets the shared starter's `mode: "none"`
+  // alert path handle it the same as every other denial reason.
+  test("P2 item 5 (D3) / M1: resolves mode:none/callAccessDenied for an assigned-only agent for a conversation assigned to someone else", async () => {
+    canCallConversationMock.mockResolvedValue(false)
+
+    await expect(call()).resolves.toEqual({
+      mode: "none",
+      reason: "callAccessDenied",
+    })
+
+    expect(canCallConversationMock).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      conversationId: "conversation-1",
+      userId: "agent-1",
+    })
+    expect(findInboxMock).not.toHaveBeenCalled()
   })
 
   test("returns none/notWhatsappConversation when there is no WhatsApp contact inbox", async () => {
@@ -349,6 +389,34 @@ describe("resolveOutboundCallModeAction", () => {
       expect.objectContaining({ ttl: 5 * 60 }),
     )
     expect(getCallingSettingsMock).toHaveBeenCalledTimes(1)
+  })
+
+  test("P4 item 2: contactInboxId is looked up scoped to the conversation's own contact (ownership reused from resolveContactInbox)", async () => {
+    await call("conversation-1", "contact-inbox-2")
+
+    expect(findInboxMock).toHaveBeenCalledWith({
+      where: {
+        id: "contact-inbox-2",
+        contactId: "contact-1",
+        channel: "whatsapp",
+      },
+    })
+  })
+
+  test("P4 item 2: rejects (mode:none) a contactInboxId that does not belong to this conversation's contact", async () => {
+    // The ownership-scoped where-clause simply finds nothing for a foreign id.
+    findInboxMock.mockResolvedValue(undefined)
+
+    await expect(
+      call("conversation-1", "someone-elses-contact-inbox"),
+    ).resolves.toEqual({ mode: "none", reason: "notWhatsappConversation" })
+  })
+
+  test("P4 item 2: mode is identical whether or not contactInboxId is supplied, when it does resolve", async () => {
+    const withoutId = await call("conversation-1")
+    const withId = await call("conversation-1", "contact-inbox-1")
+
+    expect(withId).toEqual(withoutId)
   })
 
   test("a cache hit skips the live Meta GET entirely", async () => {

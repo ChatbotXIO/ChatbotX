@@ -19,10 +19,6 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useConversationIdParam } from "../conversations/hooks/use-conversation-id-param"
 import type { ConversationResource } from "../conversations/schema/resource"
-import { useWhatsappVoipPresence } from "../integration-whatsapp/calling/voip/use-whatsapp-voip-presence"
-import { WhatsappCallPanel } from "../integration-whatsapp/calling/voip/whatsapp-call-panel"
-import { WhatsappVoipCallProvider } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-context"
-import { WhatsappCallInfoSheet } from "../messages/components/whatsapp-call-info-sheet"
 import { useCallPlaybackStore } from "../messages/store/call-playback-store"
 import {
   ContactDetailPane,
@@ -60,10 +56,6 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     useState<ConversationResource | null>(null)
   const [isContactSheetOpen, setIsContactSheetOpen] = useState(false)
   const conversationIdParam = useConversationIdParam()
-
-  // Marks this agent available for inbound calls while the inbox is open —
-  // the ring-all routing source.
-  useWhatsappVoipPresence(workspaceId)
 
   // The shared call-recording `<audio>` element (`callPlaybackStore`) is a
   // module singleton with no lifecycle of its own — nothing else stops it
@@ -124,112 +116,100 @@ export const ChatLayout = (props: ChatLayoutProps) => {
       */}
       <ChatRealtime />
       {/*
-        Single mount for the whole inbox — driven by
-        `callInfoSheetStore`, opened from the progressive call card's
-        Transcript/AI Summary buttons regardless of which pane/conversation
-        rendered that card.
+        The VoIP provider (single `useWhatsappVoipCall` peer/hook instance),
+        the call panel and `WhatsappCallInfoSheet` now
+        mount once at the workspace layout level, gated by
+        `callingEnabled`/`callHistoryEnabled` — see
+        `components/workspace-realtime-shell.tsx`. Every consumer here
+        (`ConversationListPane`'s rows render their own Answer/Reject
+        buttons) still reaches the same context because this pane tree is
+        rendered inside that shell's `{children}`.
       */}
-      <WhatsappCallInfoSheet />
-      {/*
-        The VoIP provider mounts the single `useWhatsappVoipCall` peer/hook
-        instance and must wrap every consumer: `WhatsappCallPanel` below AND
-        every `ConversationListPane` (mobile and desktop), whose conversation
-        rows render their own Answer/Reject buttons against the same call.
-      */}
-      <WhatsappVoipCallProvider>
-        <WhatsappCallPanel />
-        {isMobile === undefined && (
-          <div className="flex min-h-0 flex-1 items-center justify-center">
-            <Loader2Icon className="animate-spin" />
-          </div>
-        )}
-        {isMobile === true && (
-          // Fills the height `FullBleed` derives from the shell rather than
-          // naming a viewport unit of its own — see the desktop group below.
-          <div className="flex min-h-0 flex-1 flex-col">
-            {activeConversationId ? (
-              <MessageThreadPane
-                {...paneState}
-                onBack={() => {
-                  conversationIdParam.clear()
-                  setActiveConversationId(null)
-                }}
-                onOpenContact={() => setIsContactSheetOpen(true)}
-                workspaceId={workspaceId}
-              />
-            ) : (
-              <div className="min-h-0 flex-1 overflow-y-auto p-3">
-                <ConversationListPane
-                  autoSelectFirstConversation={false}
-                  canViewEmailAndPhone={canViewEmailAndPhone}
-                  workspaceId={workspaceId}
-                />
-              </div>
-            )}
-
-            <Sheet
-              onOpenChange={setIsContactSheetOpen}
-              open={isContactSheetOpen}
-            >
-              <SheetContent
-                className="w-[85vw] overflow-y-auto px-4 py-3 sm:max-w-sm"
-                side="right"
-              >
-                <SheetHeader className="sr-only">
-                  <SheetTitle>{t("fields.contact.label")}</SheetTitle>
-                  <SheetDescription>
-                    {t("messages.selectConversationContactDescription")}
-                  </SheetDescription>
-                </SheetHeader>
-                <ContactDetailPane {...paneState} workspaceId={workspaceId} />
-              </SheetContent>
-            </Sheet>
-          </div>
-        )}
-        {isMobile === false && (
-          // Height comes from `flex-1`, never a `height` class: `PanelGroup`
-          // hard-codes an inline `height: 100%`, which beats any stylesheet rule,
-          // so `h-[100dvh]`/`h-full` here are silently dead and the group
-          // collapses to its panes' content height — a short inbox with dead
-          // space under it on a tall viewport.
-          <ResizablePanelGroup className="min-h-0 flex-1 items-stretch">
-            {/* CONVERSATION LIST */}
-            <ResizablePanel
-              className="p-3"
-              defaultSize={`${layout[0] ?? 25}%`}
-              maxSize={"30%"}
-              minSize={"20%"}
-            >
+      {isMobile === undefined && (
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <Loader2Icon className="animate-spin" />
+        </div>
+      )}
+      {isMobile === true && (
+        // Fills the height `FullBleed` derives from the shell rather than
+        // naming a viewport unit of its own — see the desktop group below.
+        <div className="flex min-h-0 flex-1 flex-col">
+          {activeConversationId ? (
+            <MessageThreadPane
+              {...paneState}
+              onBack={() => {
+                conversationIdParam.clear()
+                setActiveConversationId(null)
+              }}
+              onOpenContact={() => setIsContactSheetOpen(true)}
+              workspaceId={workspaceId}
+            />
+          ) : (
+            <div className="min-h-0 flex-1 overflow-y-auto p-3">
               <ConversationListPane
+                autoSelectFirstConversation={false}
                 canViewEmailAndPhone={canViewEmailAndPhone}
                 workspaceId={workspaceId}
               />
-            </ResizablePanel>
+            </div>
+          )}
 
-            <ResizableHandle withHandle />
-
-            {/* MESSAGE LIST */}
-            <ResizablePanel
-              className="pt-3"
-              defaultSize={`${layout[1] ?? 50}%`}
+          <Sheet onOpenChange={setIsContactSheetOpen} open={isContactSheetOpen}>
+            <SheetContent
+              className="w-[85vw] overflow-y-auto px-4 py-3 sm:max-w-sm"
+              side="right"
             >
-              <MessageThreadPane {...paneState} workspaceId={workspaceId} />
-            </ResizablePanel>
-
-            <ResizableHandle withHandle />
-
-            {/* CONTACT DETAIL */}
-            <ResizablePanel
-              className="overflow-y-auto! h-full min-h-0 px-4 py-3"
-              defaultSize={`${layout[2] ?? 25}%`}
-              maxSize={"30%"}
-              minSize={"20%"}
-            >
+              <SheetHeader className="sr-only">
+                <SheetTitle>{t("fields.contact.label")}</SheetTitle>
+                <SheetDescription>
+                  {t("messages.selectConversationContactDescription")}
+                </SheetDescription>
+              </SheetHeader>
               <ContactDetailPane {...paneState} workspaceId={workspaceId} />
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        )}
-      </WhatsappVoipCallProvider>
+            </SheetContent>
+          </Sheet>
+        </div>
+      )}
+      {isMobile === false && (
+        // Height comes from `flex-1`, never a `height` class: `PanelGroup`
+        // hard-codes an inline `height: 100%`, which beats any stylesheet rule,
+        // so `h-[100dvh]`/`h-full` here are silently dead and the group
+        // collapses to its panes' content height — a short inbox with dead
+        // space under it on a tall viewport.
+        <ResizablePanelGroup className="min-h-0 flex-1 items-stretch">
+          {/* CONVERSATION LIST */}
+          <ResizablePanel
+            className="p-3"
+            defaultSize={`${layout[0] ?? 25}%`}
+            maxSize={"30%"}
+            minSize={"20%"}
+          >
+            <ConversationListPane
+              canViewEmailAndPhone={canViewEmailAndPhone}
+              workspaceId={workspaceId}
+            />
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* MESSAGE LIST */}
+          <ResizablePanel className="pt-3" defaultSize={`${layout[1] ?? 50}%`}>
+            <MessageThreadPane {...paneState} workspaceId={workspaceId} />
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* CONTACT DETAIL */}
+          <ResizablePanel
+            className="overflow-y-auto! h-full min-h-0 px-4 py-3"
+            defaultSize={`${layout[2] ?? 25}%`}
+            maxSize={"30%"}
+            minSize={"20%"}
+          >
+            <ContactDetailPane {...paneState} workspaceId={workspaceId} />
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      )}
     </>
   )
 }

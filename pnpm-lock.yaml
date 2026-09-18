@@ -483,6 +483,9 @@ importers:
       dotenv-cli:
         specifier: ^11.0.0
         version: 11.0.0
+      jose:
+        specifier: ^6.2.8
+        version: 6.2.8
       pg:
         specifier: ^8.20.0
         version: 8.21.0
@@ -2342,6 +2345,9 @@ importers:
         specifier: ^4.3.6
         version: 4.4.3
     devDependencies:
+      '@chatbotx.io/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@chatbotx.io/vitest-config':
         specifier: workspace:*
         version: link:../vitest-config
@@ -13215,7 +13221,7 @@ snapshots:
       express: 5.2.1
       express-rate-limit: 8.5.2(express@5.2.1)
       hono: 4.13.5
-      jose: 6.2.3
+      jose: 6.2.8
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2

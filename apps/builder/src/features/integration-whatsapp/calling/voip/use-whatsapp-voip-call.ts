@@ -4,7 +4,6 @@ import { useTranslations } from "next-intl"
 import type { RefObject } from "react"
 import { useCallback, useEffect, useMemo, useRef } from "react"
 import { toast } from "sonner"
-import { useChatStore } from "@/features/chat/store/chat-store-provider"
 import { useWorkspaceId } from "@/hooks/routing"
 import { logger } from "@/lib/log"
 import { answerWhatsappVoipCallAction } from "../actions/answer-voip-call.action"
@@ -62,8 +61,9 @@ const VOIP_CALL_HANGUP_BEACON_URL = "/api/whatsapp-voip-call-hangup"
  * How often the browser pings the server while a call is `active` (accepted
  * and media flowing, wacid known) so a lost `terminate` webhook can still be
  * swept — see `docs/whatsapp-calling-gap-analysis-plan.md` and
- * `heartbeat-active-voip-call.action.ts`. Mirrors the presence heartbeat
- * cadence (`useWhatsappVoipPresence`'s `HEARTBEAT_INTERVAL_MS`).
+ * `heartbeat-active-voip-call.action.ts`. Mirrors the workspace presence
+ * report cadence (`PRESENCE_REPORT_INTERVAL_MS`,
+ * `apps/realtime/src/parties/workspaces.ts`).
  */
 const ACTIVE_CALL_HEARTBEAT_INTERVAL_MS = 20_000
 
@@ -75,6 +75,22 @@ const ACTIVE_CALL_HEARTBEAT_INTERVAL_MS = 20_000
  * event is also lost — the exact case this local backstop exists for.
  */
 const RING_FALLBACK_EXPIRY_MS = 90_000
+
+/**
+ * Phases in which leaving the tab would drop a call the agent is actively
+ * engaged with (answering an offer, dialing out, or already on the call) —
+ * D7 in `docs/whatsapp-calling-parity-plan.md`. `incomingRinging`
+ * is deliberately excluded: an unanswered offer still lives in the
+ * `ringingCalls` basket (or, once promoted, is checked separately below),
+ * so the ringing-basket check covers it without double-counting the
+ * promoted slot's own `incomingRinging` phase.
+ */
+const LEAVE_CONFIRMATION_PHASES = new Set<WhatsappVoipCallPhase>([
+  WhatsappVoipCallPhase.answering,
+  WhatsappVoipCallPhase.outboundDialing,
+  WhatsappVoipCallPhase.outboundRinging,
+  WhatsappVoipCallPhase.active,
+])
 
 /**
  * Mic constraints tuned to stop the classic WebRTC "howl" (the mic picking the
@@ -203,10 +219,6 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   const clearPendingOutboundAnswer = useWhatsappVoipCallStore(
     (state) => state.clearPendingOutboundAnswer,
   )
-  const bubbleConversationToTop = useChatStore(
-    (state) => state.bubbleConversationToTop,
-  )
-
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const remoteStreamRef = useRef<MediaStream | null>(null)
@@ -272,15 +284,14 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         // basket's arrival order consistent between the two paths instead
         // of depending on which one populated it first.
         for (const pendingCall of [...pending].reverse()) {
+          // Bubbling the ringing conversation to the top of the inbox list
+          // is now `ChatRealtime`'s job: it subscribes directly to this
+          // store's `ringingCalls` basket (see `chat-realtime.tsx`), which
+          // covers both a live realtime ring AND an entry enqueued here on
+          // resume-after-refresh — this hook no longer needs `ChatStore` at
+          // all (and stays mountable without a `ChatStoreProvider`, e.g. at
+          // the workspace layout level).
           enqueueRinging(pendingCall)
-          // Mirror the realtime incoming handler (`ChatRealtime`): surface
-          // the ringing conversation at the top of the inbox list here too,
-          // or a ring resumed after a reload never bubbles. Errors are
-          // already logged inside `bubbleConversationToTop` itself.
-          bubbleConversationToTop(
-            workspaceId,
-            pendingCall.conversationId,
-          ).catch(() => undefined)
         }
       })
       .catch((error: unknown) => {
@@ -289,7 +300,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           "WhatsApp VoIP resume-after-refresh lookup failed",
         )
       })
-  }, [workspaceId, enqueueRinging, bubbleConversationToTop])
+  }, [workspaceId, enqueueRinging])
 
   // Basket expiry: a `ringingCalls` entry owns no timer of its own (it is
   // pure data — see `WhatsappVoipRingingCall`), so this hook is the single
@@ -1438,6 +1449,29 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     window.addEventListener("pagehide", onPageHide)
     return () => window.removeEventListener("pagehide", onPageHide)
   }, [call, workspaceId])
+
+  // D7 — warn before a navigation/reload/close would silently drop a call
+  // the agent is actively engaged with: answering an offer, dialing out
+  // (ringing or already connecting), or already on an active call — or
+  // would drop one or more still-unanswered rings sitting in the basket.
+  // Deliberately does NOT cover `incomingRinging`/`preparing`/`ended`: those
+  // are momentary or already over, and a bare unanswered offer is always
+  // represented by a non-empty basket entry (see `promoteRinging`), never by
+  // the slot alone.
+  useEffect(() => {
+    const shouldConfirmLeave =
+      (call !== null && LEAVE_CONFIRMATION_PHASES.has(call.phase)) ||
+      ringingCalls.length > 0
+    if (!shouldConfirmLeave) {
+      return
+    }
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ""
+    }
+    window.addEventListener("beforeunload", onBeforeUnload)
+    return () => window.removeEventListener("beforeunload", onBeforeUnload)
+  }, [call, ringingCalls])
 
   // Client-driven liveness — while a call is `active` (accepted,
   // media flowing, wacid known — inbound or outbound), ping the server every

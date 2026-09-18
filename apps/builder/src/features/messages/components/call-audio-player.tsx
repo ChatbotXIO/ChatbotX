@@ -4,6 +4,7 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Slider } from "@chatbotx.io/ui/components/ui/slider"
 import { PauseIcon, PlayIcon, Volume2Icon, VolumeXIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { formatCallDurationSeconds } from "../lib/format-call-duration"
 import { useCallPlaybackStore } from "../store/call-playback-store"
 
 type CallAudioPlayerProps = {
@@ -18,15 +19,6 @@ type CallAudioPlayerProps = {
    * its metadata.
    */
   totalDurationSeconds?: number
-}
-
-const formatSeconds = (seconds: number): string => {
-  if (!Number.isFinite(seconds) || seconds < 0) {
-    return "0:00"
-  }
-  const minutes = Math.floor(seconds / 60)
-  const remainder = Math.floor(seconds % 60)
-  return `${minutes}:${String(remainder).padStart(2, "0")}`
 }
 
 /**
@@ -88,7 +80,8 @@ export const CallAudioPlayer = ({
         )}
       </Button>
       <span className="w-20 shrink-0 text-muted-foreground text-xs tabular-nums">
-        {formatSeconds(displayCurrentTime)} / {formatSeconds(displayDuration)}
+        {formatCallDurationSeconds(displayCurrentTime)} /{" "}
+        {formatCallDurationSeconds(displayDuration)}
       </span>
       <Slider
         aria-label={t("seek")}

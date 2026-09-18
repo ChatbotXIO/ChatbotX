@@ -8,40 +8,133 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe("presenceStoreFactory.heartbeat", () => {
-  test("pipelines ZADD (scored by expiry) + PEXPIRE so the member add and key TTL land together", async () => {
+/**
+ * `defineCommand` registers a Lua script and ioredis exposes it as a
+ * method on the client — vitest can't run real Lua, so this fake
+ * reproduces `PRESENCE_HEARTBEAT_MANY_LUA`'s exact semantics in JS against
+ * an in-memory map, to verify the store wires the Lua call's arguments and
+ * branching correctly (mirrors `cas-store.test.ts`'s
+ * `makeFakeRedisWithLuaCas`).
+ */
+function makeFakeRedisWithPresenceLua() {
+  const scores = new Map<string, Map<string, number>>()
+
+  const zsetFor = (key: string) => {
+    let zset = scores.get(key)
+    if (!zset) {
+      zset = new Map()
+      scores.set(key, zset)
+    }
+    return zset
+  }
+
+  const client = {
+    defineCommand: vi.fn(),
+    presenceHeartbeatMany: vi.fn(
+      (
+        presenceKey: string,
+        ttlMs: string,
+        now: string,
+        ...members: string[]
+      ) => {
+        const zset = zsetFor(presenceKey)
+        const expiresAt = Number(now) + Number(ttlMs)
+
+        for (const [m, score] of zset) {
+          if (score <= Number(now)) {
+            zset.delete(m)
+          }
+        }
+
+        const newlyLive: string[] = []
+        for (const member of members) {
+          if (!zset.has(member)) {
+            newlyLive.push(member)
+          }
+          zset.set(member, expiresAt)
+        }
+
+        return Promise.resolve(newlyLive)
+      },
+    ),
+  } as unknown as Redis
+
+  return { client, scores }
+}
+
+describe("presenceStoreFactory.heartbeatMany", () => {
+  test("marks every member live via ONE presenceHeartbeatMany Lua call", async () => {
     vi.spyOn(Date, "now").mockReturnValue(NOW)
-    const zadd = vi.fn(() => pipeline)
-    const pexpire = vi.fn(() => pipeline)
-    const exec = vi.fn(async () => [])
-    const pipeline = { zadd, pexpire, exec }
-    const multi = vi.fn(() => pipeline)
-    const store = presenceStoreFactory(
-      async () => ({ multi }) as unknown as Redis,
+    const { client, scores } = makeFakeRedisWithPresenceLua()
+    const store = presenceStoreFactory(async () => client)
+
+    const result = await store.heartbeatMany(
+      "workspace:presence:w1",
+      ["user-1", "user-2"],
+      20_000,
     )
 
-    await store.heartbeat("voip:presence:w1", "agent-1", 45_000)
-
-    expect(zadd).toHaveBeenCalledWith(
-      "voip:presence:w1",
-      NOW + 45_000,
-      "agent-1",
+    expect(client.presenceHeartbeatMany).toHaveBeenCalledTimes(1)
+    expect(client.presenceHeartbeatMany).toHaveBeenCalledWith(
+      "workspace:presence:w1",
+      "20000",
+      String(NOW),
+      "user-1",
+      "user-2",
     )
-    expect(pexpire).toHaveBeenCalledWith("voip:presence:w1", 45_000)
-    expect(exec).toHaveBeenCalled()
+    expect(scores.get("workspace:presence:w1")?.get("user-1")).toBe(
+      NOW + 20_000,
+    )
+    expect(scores.get("workspace:presence:w1")?.get("user-2")).toBe(
+      NOW + 20_000,
+    )
+    expect(result).toEqual({ newlyLiveMembers: ["user-1", "user-2"] })
   })
-})
 
-describe("presenceStoreFactory.drop", () => {
-  test("ZREMs the member", async () => {
-    const zrem = vi.fn(async () => 1)
-    const store = presenceStoreFactory(
-      async () => ({ zrem }) as unknown as Redis,
+  test("returns only the members that were NOT already live (renewals excluded)", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(NOW)
+    const { client } = makeFakeRedisWithPresenceLua()
+    const store = presenceStoreFactory(async () => client)
+
+    await store.heartbeatMany("workspace:presence:w1", ["user-1"], 20_000)
+    const result = await store.heartbeatMany(
+      "workspace:presence:w1",
+      ["user-1", "user-2"],
+      20_000,
     )
 
-    await store.drop("voip:presence:w1", "agent-1")
+    expect(result).toEqual({ newlyLiveMembers: ["user-2"] })
+  })
 
-    expect(zrem).toHaveBeenCalledWith("voip:presence:w1", "agent-1")
+  test("a member whose previous lease expired counts as newly live again", async () => {
+    const { client } = makeFakeRedisWithPresenceLua()
+    const store = presenceStoreFactory(async () => client)
+
+    vi.spyOn(Date, "now").mockReturnValue(NOW)
+    await store.heartbeatMany("workspace:presence:w1", ["user-1"], 20_000)
+
+    vi.spyOn(Date, "now").mockReturnValue(NOW + 20_001)
+    const result = await store.heartbeatMany(
+      "workspace:presence:w1",
+      ["user-1"],
+      20_000,
+    )
+
+    expect(result).toEqual({ newlyLiveMembers: ["user-1"] })
+  })
+
+  test("is a no-op (no Redis call) for an empty member list", async () => {
+    const { client } = makeFakeRedisWithPresenceLua()
+    const store = presenceStoreFactory(async () => client)
+
+    const result = await store.heartbeatMany(
+      "workspace:presence:w1",
+      [],
+      20_000,
+    )
+
+    expect(client.presenceHeartbeatMany).not.toHaveBeenCalled()
+    expect(result).toEqual({ newlyLiveMembers: [] })
   })
 })
 
@@ -54,14 +147,17 @@ describe("presenceStoreFactory.liveMembers", () => {
       async () => ({ zremrangebyscore, zrevrangebyscore }) as unknown as Redis,
     )
 
-    await expect(store.liveMembers("voip:presence:w1", 10)).resolves.toEqual([
-      "agent-2",
-      "agent-1",
-    ])
+    await expect(
+      store.liveMembers("workspace:presence:w1", 10),
+    ).resolves.toEqual(["agent-2", "agent-1"])
 
-    expect(zremrangebyscore).toHaveBeenCalledWith("voip:presence:w1", 0, NOW)
+    expect(zremrangebyscore).toHaveBeenCalledWith(
+      "workspace:presence:w1",
+      0,
+      NOW,
+    )
     expect(zrevrangebyscore).toHaveBeenCalledWith(
-      "voip:presence:w1",
+      "workspace:presence:w1",
       "+inf",
       NOW,
       "LIMIT",

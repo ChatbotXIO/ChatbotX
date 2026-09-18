@@ -3933,12 +3933,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "Impossible de refuser l'appel WhatsApp",
+        "voipHangupFailed": "Impossible de mettre fin à l'appel WhatsApp",
+        "voipNotReservedAgent": "Vous n'êtes pas l'agent assigné à cet appel",
+        "voipCallAccessDenied": "Vous n'êtes pas autorisé à gérer cet appel",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "Cet appel ne sonne plus",
-        "transcriptionRequiresRecording": "Activez l'enregistrement des appels avant d'activer la transcription."
+        "transcriptionRequiresRecording": "Activez l'enregistrement des appels avant d'activer la transcription.",
+        "supportSessionCallingBlocked": "Les appels ne sont pas disponibles pendant une session d'assistance de la plateforme.",
+        "callingAccessDenied": "Vous n'avez pas accès aux appels dans cet espace de travail.",
+        "callArtifactAccessDenied": "Vous n'avez pas la permission de voir cet appel.",
+        "callHistoryAccessDenied": "Vous n'avez pas accès à l'historique des appels de cet espace de travail."
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -3996,7 +4001,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "L'accès au micro a été refusé. Autorisez-le dans les paramètres de votre navigateur puis réessayez.",
-        "micNotFound": "Aucun micro détecté. Connectez un micro puis réessayez."
+        "micNotFound": "Aucun micro détecté. Connectez un micro puis réessayez.",
+        "callAccessDenied": "Vous n'êtes pas autorisé à appeler ce contact."
       },
       "card": {
         "audioCall": "Appel audio",
@@ -4018,7 +4024,8 @@
         "playbackFailed": "Lecture échouée",
         "answeredBy": "Répondu par {name}",
         "calledBy": "Appelé par {name}",
-        "callFailed": "Problème d'appel"
+        "callFailed": "Problème d'appel",
+        "callBack": "Rappeler"
       },
       "sheet": {
         "title": "Informations sur l'appel",
@@ -4061,6 +4068,7 @@
         "statusCallEnded": "Appel terminé",
         "end": "Terminer",
         "minimize": "Réduire",
+        "goToConversation": "Aller à la conversation",
         "expand": "Agrandir",
         "dismiss": "Fermer",
         "statusNoAnswer": "Pas de réponse",
@@ -4117,7 +4125,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Appels",
+        "subtitle": "Historique des appels de cet espace de travail",
+        "emptyTitle": "Aucun appel pour le moment",
+        "emptyDescription": "Les appels apparaîtront ici dès que votre équipe commencera à passer ou recevoir des appels WhatsApp.",
+        "loadMore": "Charger plus",
+        "allActivity": "Tous les appels",
+        "filterMissed": "Manqués",
+        "filterNoReply": "Sans réponse",
+        "allInboxes": "Toutes les boîtes de réception",
+        "allAgents": "Tous les agents",
+        "columnContact": "Contact",
+        "columnInbox": "Boîte de réception",
+        "columnDirection": "Direction",
+        "columnAgent": "Agent",
+        "columnDuration": "Durée",
+        "columnDate": "Date",
+        "directionInbound": "Entrant",
+        "directionOutbound": "Sortant",
+        "kindOngoing": "En cours",
+        "kindAnsweredInbound": "Répondu",
+        "kindAnsweredOutbound": "Répondu",
+        "openConversation": "Ouvrir la conversation",
+        "unknownContact": "Contact inconnu",
+        "emptyFilteredTitle": "Aucun appel ne correspond à ce filtre",
+        "emptyFilteredDescription": "Essayez un autre filtre ou effacez-le pour voir tous les appels.",
+        "loadMoreError": "Impossible de charger plus d'appels. Veuillez réessayer.",
+        "callInformation": "Informations sur l'appel"
+      }
     }
   },
   "zalo": {

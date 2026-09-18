@@ -3933,12 +3933,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "Không thể từ chối cuộc gọi WhatsApp",
+        "voipHangupFailed": "Không thể kết thúc cuộc gọi WhatsApp",
+        "voipNotReservedAgent": "Bạn không phải là nhân viên được phân công cho cuộc gọi này",
+        "voipCallAccessDenied": "Bạn không có quyền xử lý cuộc gọi này",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "Cuộc gọi đó không còn đổ chuông nữa",
-        "transcriptionRequiresRecording": "Hãy bật ghi âm cuộc gọi trước khi bật chép lời."
+        "transcriptionRequiresRecording": "Hãy bật ghi âm cuộc gọi trước khi bật chép lời.",
+        "supportSessionCallingBlocked": "Không thể gọi điện trong phiên hỗ trợ nền tảng.",
+        "callingAccessDenied": "Bạn không có quyền truy cập tính năng gọi điện trong không gian làm việc này.",
+        "callArtifactAccessDenied": "Bạn không có quyền xem cuộc gọi này.",
+        "callHistoryAccessDenied": "Bạn không có quyền truy cập lịch sử cuộc gọi trong không gian làm việc này."
       },
       "permissionRequestTitle": "Xin quyền gọi điện",
       "permissionRequestDescription": "Hỏi khách hàng này cho phép doanh nghiệp gọi qua WhatsApp. Meta giới hạn 1 yêu cầu mỗi 24 giờ và 2 yêu cầu mỗi 7 ngày cho mỗi khách hàng.",
@@ -3996,7 +4001,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "Quyền truy cập micrô đã bị từ chối. Hãy cho phép truy cập micrô trong cài đặt trình duyệt và thử lại.",
-        "micNotFound": "Không tìm thấy micrô. Hãy kết nối micrô và thử lại."
+        "micNotFound": "Không tìm thấy micrô. Hãy kết nối micrô và thử lại.",
+        "callAccessDenied": "Bạn không có quyền gọi cho liên hệ này."
       },
       "card": {
         "audioCall": "Gọi thoại",
@@ -4018,7 +4024,8 @@
         "playbackFailed": "Phát lại không thành công",
         "answeredBy": "Nghe bởi {name}",
         "calledBy": "Gọi bởi {name}",
-        "callFailed": "Sự cố cuộc gọi"
+        "callFailed": "Sự cố cuộc gọi",
+        "callBack": "Gọi lại"
       },
       "sheet": {
         "title": "Thông tin cuộc gọi",
@@ -4061,6 +4068,7 @@
         "statusCallEnded": "Cuộc gọi đã kết thúc",
         "end": "Kết thúc",
         "minimize": "Thu nhỏ",
+        "goToConversation": "Đi tới cuộc trò chuyện",
         "expand": "Mở rộng",
         "dismiss": "Đóng",
         "statusNoAnswer": "Không có phản hồi",
@@ -4117,7 +4125,36 @@
         }
       },
       "inboundLabel": "Nhận cuộc gọi đến",
-      "inboundHelper": "Cho khách gọi vào. Tắt thì vẫn gọi ra được nhưng inbox không đổ chuông."
+      "inboundHelper": "Cho khách gọi vào. Tắt thì vẫn gọi ra được nhưng inbox không đổ chuông.",
+      "page": {
+        "title": "Cuộc gọi",
+        "subtitle": "Lịch sử cuộc gọi của không gian làm việc này",
+        "emptyTitle": "Chưa có cuộc gọi nào",
+        "emptyDescription": "Cuộc gọi sẽ xuất hiện ở đây khi nhóm của bạn bắt đầu gọi hoặc nhận cuộc gọi WhatsApp.",
+        "loadMore": "Tải thêm",
+        "allActivity": "Tất cả cuộc gọi",
+        "filterMissed": "Nhỡ",
+        "filterNoReply": "Không trả lời",
+        "allInboxes": "Tất cả hộp thư đến",
+        "allAgents": "Tất cả nhân viên",
+        "columnContact": "Liên hệ",
+        "columnInbox": "Hộp thư đến",
+        "columnDirection": "Chiều",
+        "columnAgent": "Nhân viên",
+        "columnDuration": "Thời lượng",
+        "columnDate": "Ngày",
+        "directionInbound": "Gọi đến",
+        "directionOutbound": "Gọi đi",
+        "kindOngoing": "Đang diễn ra",
+        "kindAnsweredInbound": "Đã trả lời",
+        "kindAnsweredOutbound": "Đã trả lời",
+        "openConversation": "Mở cuộc trò chuyện",
+        "unknownContact": "Liên hệ không xác định",
+        "emptyFilteredTitle": "Không có cuộc gọi nào khớp với bộ lọc này",
+        "emptyFilteredDescription": "Hãy thử một bộ lọc khác hoặc xóa bộ lọc để xem tất cả cuộc gọi.",
+        "loadMoreError": "Không thể tải thêm cuộc gọi. Vui lòng thử lại.",
+        "callInformation": "Thông tin cuộc gọi"
+      }
     }
   },
   "zalo": {

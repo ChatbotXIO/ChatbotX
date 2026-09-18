@@ -24,6 +24,7 @@ import { ScheduledDeletionBanner } from "@/components/scheduled-deletion-banner"
 import { SupportAccessBanner } from "@/components/support-access-banner"
 import { TokenRefreshErrorDialog } from "@/components/token-refresh-error-dialog"
 import { WorkspaceDeletionTabSync } from "@/components/workspace-deletion-tab-sync"
+import { WorkspaceRealtimeShell } from "@/components/workspace-realtime-shell"
 import { isCloud } from "@/env"
 import { AnalyticsApiProvider } from "@/features/analytics/components/analytics-api-provider"
 import { CouponTopicStoreProvider } from "@/features/coupons/provider/coupon-topic-store-context"
@@ -33,6 +34,7 @@ import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
 import { buildWorkspaceQuotaMetrics } from "@/lib/quota-metrics"
 import { enforceWorkspaceNotScheduledForDeletionFromRequest } from "@/lib/workspace/require-not-scheduled-for-deletion"
+import { resolveWorkspaceRealtimeGates } from "@/lib/workspace/resolve-workspace-realtime-gates"
 import { resolveWorkspaceBlockState } from "@/lib/workspace-quota"
 
 export default async function WorkspaceLayout({
@@ -127,6 +129,14 @@ export default async function WorkspaceLayout({
 
   const scheduledForDeletion = isWorkspaceScheduledForDeletion(targetWorkspace)
 
+  const realtimeGates = resolveWorkspaceRealtimeGates({
+    permissions: targetWorkspaceMember.permissions,
+    isSupportSession,
+    scheduledForDeletion,
+    cloud,
+    blocked,
+  })
+
   return (
     // `has-data-full-bleed:h-svh` caps the shell at the viewport for pages
     // that own the whole screen (the inbox — see `components/full-bleed.tsx`).
@@ -141,6 +151,7 @@ export default async function WorkspaceLayout({
     >
       <AppSidebar
         allWorkspaces={allWorkspaces}
+        callHistoryEnabled={realtimeGates.callHistoryEnabled}
         isPlatformAdmin={platformAdmin}
         isSuperAdmin={isSuperAdmin(user)}
         permissions={targetWorkspaceMember.permissions}
@@ -178,7 +189,13 @@ export default async function WorkspaceLayout({
               autoInitialize={false}
               workspaceId={workspaceId}
             >
-              {children}
+              <WorkspaceRealtimeShell
+                callHistoryEnabled={realtimeGates.callHistoryEnabled}
+                callingEnabled={realtimeGates.callingEnabled}
+                realtimeEnabled={realtimeGates.realtimeEnabled}
+              >
+                {children}
+              </WorkspaceRealtimeShell>
             </CouponTopicStoreProvider>
           </AnalyticsApiProvider>
         </main>

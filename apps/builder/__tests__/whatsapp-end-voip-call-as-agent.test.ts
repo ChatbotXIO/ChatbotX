@@ -142,7 +142,11 @@ describe("endVoipCallAsAgent", () => {
 
     expect(result).toBe(true)
     expect(finalizeEndedCallMock).toHaveBeenCalledWith(
-      expect.objectContaining({ whatsappCallId: "call-1", status: "failed" }),
+      expect.objectContaining({
+        whatsappCallId: "call-1",
+        status: "failed",
+        outcome: "failed",
+      }),
     )
     expect(readControlMock).not.toHaveBeenCalled()
     expect(endCallMock).not.toHaveBeenCalled()
@@ -172,7 +176,11 @@ describe("endVoipCallAsAgent", () => {
       expect.objectContaining({ callId: "wacid-1" }),
     )
     expect(finalizeEndedCallMock).toHaveBeenCalledWith(
-      expect.objectContaining({ whatsappCallId: "call-1", status: "failed" }),
+      expect.objectContaining({
+        whatsappCallId: "call-1",
+        status: "failed",
+        outcome: "failed",
+      }),
     )
     expect(deleteOfferMock).toHaveBeenCalledWith("wacid-1")
   })
@@ -254,9 +262,32 @@ describe("endVoipCallAsAgent", () => {
         expect.objectContaining({
           whatsappCallId: "call-1",
           status: "failed",
+          outcome: "canceled",
           lastError: CALL_CANCELED_BY_BUSINESS_LAST_ERROR,
         }),
       )
+    })
+
+    test("an owner's hangup of a call that had already connected persists completed, never canceled", async () => {
+      const row = boundOutboundRow()
+      findByIdMock.mockResolvedValue(row)
+      resolveEndOutcomeWithoutControlMock.mockReturnValue({
+        fromPhase: "accepted",
+        graphAction: "terminate",
+        terminalStatus: "completed",
+      })
+
+      await expect(endVoipCallAsAgent(baseInput)).resolves.toBe(true)
+
+      expect(finalizeEndedCallMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          whatsappCallId: "call-1",
+          status: "completed",
+          outcome: "completed",
+        }),
+      )
+      const [finalization] = finalizeEndedCallMock.mock.calls.at(-1) ?? []
+      expect(finalization).not.toHaveProperty("lastError")
     })
 
     test("rejects a hangup from someone who neither placed nor answered the call", async () => {

@@ -3,12 +3,9 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { endVoipCallAsAgent } from "@/features/integration-whatsapp/calling/actions/end-voip-call-as-agent"
-import {
-  assertCurrentUserCanAccessChatbot,
-  getCurrentUserId,
-} from "@/lib/auth/utils"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
-import { isCrossSiteRequest } from "@/lib/http/same-site-request"
+import { authorizeWorkspaceBeaconSession } from "@/lib/http/authorize-workspace-beacon-request"
 import { logger } from "@/lib/log"
 
 const hangupBeaconSchema = z.object({
@@ -26,20 +23,23 @@ const hangupBeaconSchema = z.object({
  * carries the session cookie, so auth works exactly like every other
  * authenticated route here.
  *
+ * Check order matters: same-site + session (`authorizeWorkspaceBeaconSession`)
+ * run BEFORE the body is even parsed, so a cross-site or unauthenticated
+ * caller always gets 403/401 regardless of body shape — never a 400 that
+ * would imply the request was otherwise on track. Membership is checked
+ * last, once `workspaceId` is known.
+ *
  * Always best-effort: the browser never reads a beacon's response, unload
  * beacons are inherently unreliable, and Meta's own accept/expiry deadline
  * remains the authoritative backstop for a call this never reaches.
  */
 export async function POST(req: NextRequest) {
   try {
-    if (isCrossSiteRequest(req)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    const authorized = await authorizeWorkspaceBeaconSession(req)
+    if (authorized instanceof NextResponse) {
+      return authorized
     }
-
-    const userId = await getCurrentUserId()
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { userId } = authorized
 
     const body = await req.json().catch(() => null)
     const parsed = hangupBeaconSchema.safeParse(body)

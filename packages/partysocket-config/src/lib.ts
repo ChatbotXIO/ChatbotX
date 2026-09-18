@@ -1,5 +1,9 @@
 import ky, { HTTPError } from "ky"
-import { type RealtimeAudience, signRealtimeToken } from "./auth"
+import {
+  REALTIME_TOKEN_PURPOSE,
+  type RealtimeAudience,
+  signRealtimeToken,
+} from "./auth"
 import { logger } from "./logger"
 import type { RealtimeEventData } from "./schemas"
 
@@ -38,7 +42,11 @@ const buildAuthHeader = async (
   audience: RealtimeAudience,
   secret: string,
 ): Promise<string> => {
-  const token = await signRealtimeToken(audience, secret)
+  const token = await signRealtimeToken(
+    audience,
+    REALTIME_TOKEN_PURPOSE.broadcast,
+    secret,
+  )
   return `Bearer ${token}`
 }
 

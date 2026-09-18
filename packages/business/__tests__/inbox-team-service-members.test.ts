@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   teamFindFirst: vi.fn(),
   teamMemberFindMany: vi.fn(),
   userFindMany: vi.fn(),
+  listUserIdsByTeamId: vi.fn(),
 }))
 
 const WORKSPACE_ID = "ws-1"
@@ -56,6 +57,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn(),
   invalidateCacheByTags: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  inboxTeamMemberRepository: {
+    listUserIdsByTeamId: mocks.listUserIdsByTeamId,
+  },
 }))
 
 vi.mock("../src/workspace-member/service", () => ({
@@ -187,5 +194,26 @@ describe("InboxTeamService membership inserts", () => {
       "inboxTeamId",
       "userId",
     ])
+  })
+})
+
+// L6: pins the P2 ring-target team-member read as a pure delegation to the
+// repository — no caching, no transformation.
+describe("InboxTeamService.listUserIdsByTeamId", () => {
+  test("delegates straight to inboxTeamMemberRepository.listUserIdsByTeamId with the same props and returns its result unchanged", async () => {
+    const userIds = ["u1", "u2"]
+    mocks.listUserIdsByTeamId.mockResolvedValue(userIds)
+
+    const result = await inboxTeamService.listUserIdsByTeamId({
+      workspaceId: WORKSPACE_ID,
+      inboxTeamId: TEAM_ID,
+    })
+
+    expect(mocks.listUserIdsByTeamId).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      inboxTeamId: TEAM_ID,
+    })
+    expect(mocks.listUserIdsByTeamId).toHaveBeenCalledTimes(1)
+    expect(result).toBe(userIds)
   })
 })

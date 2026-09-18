@@ -584,6 +584,7 @@ const RenderContentAttributes = (props: MessageItemProps) => {
         call={whatsappCall}
         callEndedAt={message.createdAt}
         contactName={message.contact?.fullName}
+        conversationId={message.conversationId}
         hasRecordingAttachment={Boolean(message.attachments?.length)}
       />
     )

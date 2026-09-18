@@ -3966,12 +3966,17 @@
         "voipCannotAnswer": "This call is no longer available to answer",
         "voipCallEnded": "The call ended before it could be answered",
         "voipAnswerFailed": "Could not answer the WhatsApp call",
-        "voipRejectFailed": "Could not decline the WhatsApp call",
-        "voipHangupFailed": "Could not end the WhatsApp call",
-        "voipNotReservedAgent": "You are not the agent assigned to this call",
+        "voipRejectFailed": "無法拒接此 WhatsApp 通話",
+        "voipHangupFailed": "無法結束此 WhatsApp 通話",
+        "voipNotReservedAgent": "您不是指派給此通話的客服人員",
+        "voipCallAccessDenied": "您無權處理此通話",
         "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
         "callNoLongerRinging": "該來電已不再響鈴",
-        "transcriptionRequiresRecording": "請先開啟通話錄音，再開啟轉錄。"
+        "transcriptionRequiresRecording": "請先開啟通話錄音，再開啟轉錄。",
+        "supportSessionCallingBlocked": "平台支援工作階段期間無法使用通話功能。",
+        "callingAccessDenied": "您在此工作區中無權使用通話功能。",
+        "callArtifactAccessDenied": "您無權檢視此通話。",
+        "callHistoryAccessDenied": "您無權存取此工作區的通話記錄。"
       },
       "permissionRequestTitle": "Request call permission",
       "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
@@ -4029,7 +4034,8 @@
         "calling": "Calling…",
         "ringback": "Ringing…",
         "micPermissionDenied": "麥克風存取被拒絕。請在瀏覽器設定中允許麥克風存取，然後重試。",
-        "micNotFound": "找不到麥克風。請連接麥克風後重試。"
+        "micNotFound": "找不到麥克風。請連接麥克風後重試。",
+        "callAccessDenied": "您無權撥打此聯絡人。"
       },
       "card": {
         "audioCall": "語音通話",
@@ -4051,7 +4057,8 @@
         "playbackFailed": "播放失敗",
         "answeredBy": "由 {name} 接聽",
         "calledBy": "由 {name} 撥打",
-        "callFailed": "通話問題"
+        "callFailed": "通話問題",
+        "callBack": "回撥"
       },
       "sheet": {
         "title": "通話資訊",
@@ -4094,6 +4101,7 @@
         "statusCallEnded": "通話已結束",
         "end": "結束",
         "minimize": "最小化",
+        "goToConversation": "前往對話",
         "expand": "展開",
         "dismiss": "關閉",
         "statusNoAnswer": "無應答",
@@ -4150,7 +4158,36 @@
         }
       },
       "inboundLabel": "Accept incoming calls",
-      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "通話",
+        "subtitle": "此工作區的通話記錄",
+        "emptyTitle": "尚無通話",
+        "emptyDescription": "當您的團隊開始撥打或接聽 WhatsApp 通話後，通話記錄將顯示於此。",
+        "loadMore": "載入更多",
+        "allActivity": "所有通話",
+        "filterMissed": "未接",
+        "filterNoReply": "無回應",
+        "allInboxes": "所有收件匣",
+        "allAgents": "所有客服人員",
+        "columnContact": "聯絡人",
+        "columnInbox": "收件匣",
+        "columnDirection": "方向",
+        "columnAgent": "客服人員",
+        "columnDuration": "時長",
+        "columnDate": "日期",
+        "directionInbound": "撥入",
+        "directionOutbound": "撥出",
+        "kindOngoing": "進行中",
+        "kindAnsweredInbound": "已接聽",
+        "kindAnsweredOutbound": "已接聽",
+        "openConversation": "開啟對話",
+        "unknownContact": "未知聯絡人",
+        "emptyFilteredTitle": "沒有符合此篩選條件的通話",
+        "emptyFilteredDescription": "請嘗試其他篩選條件，或清除篩選以檢視所有通話。",
+        "loadMoreError": "無法載入更多通話，請重試。",
+        "callInformation": "通話資訊"
+      }
     }
   },
   "zalo": {

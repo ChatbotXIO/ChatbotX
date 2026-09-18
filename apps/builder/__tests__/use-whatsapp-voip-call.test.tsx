@@ -13,15 +13,6 @@ vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-1",
 }))
 
-const bubbleConversationToTopMock = vi.fn().mockResolvedValue(undefined)
-vi.mock("@/features/chat/store/chat-store-provider", () => ({
-  useChatStore: (
-    selector: (state: {
-      bubbleConversationToTop: typeof bubbleConversationToTopMock
-    }) => unknown,
-  ) => selector({ bubbleConversationToTop: bubbleConversationToTopMock }),
-}))
-
 vi.mock("@/lib/log", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }))
@@ -276,7 +267,6 @@ describe("useWhatsappVoipCall", () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     createdPeerConnections.length = 0
     vi.clearAllMocks()
-    bubbleConversationToTopMock.mockResolvedValue(undefined)
     getUserMediaMock.mockResolvedValue(makeMockStream())
     turnCredentialsActionMock.mockResolvedValue({
       data: {
@@ -358,6 +348,32 @@ describe("useWhatsappVoipCall", () => {
     expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
       WhatsappVoipCallPhase.active,
     )
+  })
+
+  test("M4: unmounting the provider while a call is ACCEPTED/active tears down the peer connection and stops the mic tracks", async () => {
+    const stream = makeMockStream()
+    getUserMediaMock.mockResolvedValue(stream)
+    answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
+    seedRingingSlot(incomingData)
+    await render()
+
+    await act(async () => {
+      await hookResult?.answer()
+    })
+
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.active,
+    )
+    expect(createdPeerConnections[0]?.close).not.toHaveBeenCalled()
+    const track = stream.getTracks()[0] as unknown as MockTrack
+    expect(track.stop).not.toHaveBeenCalled()
+
+    act(() => {
+      root.unmount()
+    })
+
+    expect(createdPeerConnections[0]?.close).toHaveBeenCalled()
+    expect(track.stop).toHaveBeenCalled()
   })
 
   test("answer() tears down and resets on a cannotAnswer outcome", async () => {
@@ -523,31 +539,6 @@ describe("useWhatsappVoipCall", () => {
         .getState()
         .ringingCalls.map((entry) => entry.whatsappCallId),
     ).toEqual(["call-1"])
-  })
-
-  test("the resume-after-reload path also bubbles the conversation to the top of the inbox list", async () => {
-    pendingIncomingActionMock.mockResolvedValue({ data: [incomingData] })
-
-    await render()
-    await act(async () => {
-      await pendingIncomingActionMock.mock.results.at(-1)?.value
-    })
-
-    expect(bubbleConversationToTopMock).toHaveBeenCalledWith(
-      "workspace-1",
-      "conversation-1",
-    )
-  })
-
-  test("does not bubble when there is nothing to resume", async () => {
-    pendingIncomingActionMock.mockResolvedValue({ data: [] })
-
-    await render()
-    await act(async () => {
-      await pendingIncomingActionMock.mock.results.at(-1)?.value
-    })
-
-    expect(bubbleConversationToTopMock).not.toHaveBeenCalled()
   })
 
   test("sends a compensating hangup and does not markActive when the store's call was cleared while answer() was in flight", async () => {
@@ -904,6 +895,72 @@ describe("useWhatsappVoipCall", () => {
     )
   })
 
+  const makeCall = (
+    phase: WhatsappVoipCallPhase,
+  ): ReturnType<typeof useWhatsappVoipCallStore.getState>["call"] => ({
+    transport: "voip",
+    whatsappCallId: "call-1",
+    wacid: "wacid-1",
+    phase,
+    direction: "inbound",
+    conversationId: "conversation-1",
+    contactInboxId: "contact-inbox-1",
+    contactName: "Ada Lovelace",
+    deadlineAt: new Date(Date.now() + 60_000).toISOString(),
+    isMuted: false,
+    isRecording: false,
+  })
+
+  const dispatchBeforeUnload = () => {
+    const event = new Event("beforeunload", { cancelable: true })
+    let notCancelled = true
+    act(() => {
+      notCancelled = window.dispatchEvent(event)
+    })
+    return notCancelled
+  }
+
+  test.each([
+    WhatsappVoipCallPhase.answering,
+    WhatsappVoipCallPhase.outboundDialing,
+    WhatsappVoipCallPhase.outboundRinging,
+    WhatsappVoipCallPhase.active,
+  ])("D7: beforeunload is cancelled while the call phase is %s", async (phase) => {
+    await render()
+    act(() => {
+      useWhatsappVoipCallStore.setState({ call: makeCall(phase) })
+    })
+
+    expect(dispatchBeforeUnload()).toBe(false)
+  })
+
+  test.each([
+    WhatsappVoipCallPhase.incomingRinging,
+    WhatsappVoipCallPhase.ended,
+  ])("D7: beforeunload is NOT cancelled while the call phase is %s and the basket is empty", async (phase) => {
+    await render()
+    act(() => {
+      useWhatsappVoipCallStore.setState({ call: makeCall(phase) })
+    })
+
+    expect(dispatchBeforeUnload()).toBe(true)
+  })
+
+  test("D7: beforeunload is NOT cancelled with no call and an empty basket", async () => {
+    await render()
+
+    expect(dispatchBeforeUnload()).toBe(true)
+  })
+
+  test("D7: beforeunload is cancelled while the ringing basket is non-empty, even with no call in the slot", async () => {
+    await render()
+    act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging(incomingData)
+    })
+
+    expect(dispatchBeforeUnload()).toBe(false)
+  })
+
   test("R7: answer() attaches the mic with addTrack BEFORE the answer, so the SDP is sendrecv", async () => {
     // The regression this pins: a `sendrecv` transceiver with no track makes
     // Chrome answer `recvonly`, no RTP ever leaves the browser, and Meta ends
@@ -1169,7 +1226,6 @@ describe("useWhatsappVoipCall — basket / multi-ring", () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     createdPeerConnections.length = 0
     vi.clearAllMocks()
-    bubbleConversationToTopMock.mockResolvedValue(undefined)
     getUserMediaMock.mockResolvedValue(makeMockStream())
     turnCredentialsActionMock.mockResolvedValue({
       data: {

@@ -8,6 +8,10 @@ import {
   whatsappVoipSignalingService,
 } from "@chatbotx.io/business"
 import {
+  resolveWhatsappCallTerminalOutcomePair,
+  type WhatsappCallTerminalStatusOutcomePair,
+} from "@chatbotx.io/database/partials"
+import {
   createMessageRepository,
   integrationWhatsappRepository,
 } from "@chatbotx.io/database/repositories"
@@ -127,6 +131,24 @@ const toPersistedCallStatus = (
   status: MessageWhatsappCallEntity["status"],
 ): "completed" | "failed" | "rejected" =>
   status === "canceled" ? "failed" : status
+
+/**
+ * Pairs the display-only entity status with its persisted `{ status,
+ * outcome }` write — `entity.status` is read BEFORE
+ * {@link toPersistedCallStatus} collapses `canceled` into `failed`, so a
+ * `canceled` entity persists `outcome: "canceled"` alongside the DB's
+ * `status: "failed"`. Delegates to
+ * {@link resolveWhatsappCallTerminalOutcomePair} (the single place the
+ * status/outcome pairing switch lives) instead of re-deriving the same
+ * `completed`/`rejected`/`failed`/`canceled` branches here.
+ */
+const toFinalizeStatusOutcome = (
+  status: MessageWhatsappCallEntity["status"],
+): WhatsappCallTerminalStatusOutcomePair =>
+  resolveWhatsappCallTerminalOutcomePair({
+    status: toPersistedCallStatus(status),
+    canceledByBusiness: status === "canceled",
+  })
 
 export const buildCallActivityText = (
   entity: MessageWhatsappCallEntity,
@@ -340,7 +362,7 @@ export const finalizeCallSideEffects = async (
 
   await whatsappVoipCallService.finalizeEndedCall({
     whatsappCallId: call.id,
-    status: toPersistedCallStatus(entity.status),
+    ...toFinalizeStatusOutcome(entity.status),
     ...(input.startedAt === undefined ? {} : { startedAt: input.startedAt }),
     endedAt,
     durationSeconds: entity.durationSeconds ?? null,

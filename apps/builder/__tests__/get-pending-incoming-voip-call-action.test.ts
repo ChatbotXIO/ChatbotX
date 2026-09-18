@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 type ActionHandler = (args: {
   bindArgsParsedInputs: readonly [string]
   parsedInput: Record<string, unknown>
+  ctx: { user: { id: string } }
 }) => Promise<unknown>
 
 const { listResumableIncomingMock } = vi.hoisted(() => ({
@@ -16,7 +17,7 @@ vi.mock("@/lib/safe-action", () => {
   chain.bindArgsSchemas = () => chain
   chain.inputSchema = () => chain
   chain.action = (handler: unknown) => handler
-  return { workspaceActionClient: chain }
+  return { callingActionClient: chain }
 })
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -28,12 +29,14 @@ const { getPendingIncomingVoipCallAction } = await import(
 )
 const action = getPendingIncomingVoipCallAction as unknown as ActionHandler
 
+const ctx = { user: { id: "agent-1" } }
+
 describe("getPendingIncomingVoipCallAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  test("returns every resumable incoming call for the workspace", async () => {
+  test("returns every resumable incoming call for the workspace, scoped to the requesting agent", async () => {
     const pending = [
       {
         whatsappCallId: "call-1",
@@ -59,10 +62,12 @@ describe("getPendingIncomingVoipCallAction", () => {
     const result = await action({
       bindArgsParsedInputs: ["workspace-1"],
       parsedInput: {},
+      ctx,
     })
 
     expect(listResumableIncomingMock).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
+      userId: "agent-1",
     })
     expect(result).toEqual(pending)
     expect(Array.isArray(result)).toBe(true)
@@ -74,6 +79,7 @@ describe("getPendingIncomingVoipCallAction", () => {
     const result = await action({
       bindArgsParsedInputs: ["workspace-1"],
       parsedInput: {},
+      ctx,
     })
 
     expect(result).toEqual([])

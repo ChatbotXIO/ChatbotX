@@ -1,6 +1,7 @@
 "use server"
 
 import {
+  canCallConversation,
   contactService,
   conversationService,
   WhatsappCallInProgressError,
@@ -8,7 +9,10 @@ import {
   whatsappVoipSignalingService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { channelTypes } from "@chatbotx.io/database/partials"
+import {
+  channelTypes,
+  resolveWhatsappCallOutcome,
+} from "@chatbotx.io/database/partials"
 import {
   integrationWhatsappRepository,
   WhatsappCallPendingOutboundExistsError,
@@ -26,13 +30,14 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { logger } from "@/lib/log"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { callingActionClient } from "@/lib/safe-action"
 import { BLOCKED_OUTBOUND_COUNTRIES } from "./blocked-outbound-countries"
 import {
   buildCallAnnouncementOptions,
   hasCallAnnouncementOptions,
   isCallAnnouncementValidationError,
 } from "./call-announcement-options"
+import { claimConversationForCallAgent } from "./claim-conversation-for-call-agent"
 import {
   isBlockedBusinessCallingCountry,
   resolveContactInbox,
@@ -106,6 +111,14 @@ export type InitiateOutboundVoipCallResult =
   | { outcome: "paymentIssue" }
   | { outcome: "callingNotEnabled" }
   | { outcome: "callFailed" }
+  /** P2 item 5 (plan D3): the caller failed the same call-access-conversation
+   * eligibility check every other calling action gates on (see
+   * `packages/business/src/whatsapp-call/call-access-service.ts`) — an
+   * assigned-only agent dialing a conversation assigned to someone else. A
+   * typed outcome rather than a thrown exception so the client can surface
+   * the actual translated reason (`whatsapp.calls.outbound.
+   * callAccessDenied`) instead of the generic `callFailed` toast. */
+  | { outcome: "callAccessDenied" }
 
 /**
  * Best-effort teardown of a leg Meta already connected but this dial will not
@@ -233,7 +246,7 @@ function mapMetaErrorCodeToOutcome(
  * branch the client UI renders directly (request-permission dialog, "already
  * in progress" toast, etc.), not an application error.
  */
-export const initiateOutboundVoipCallAction = workspaceActionClient
+export const initiateOutboundVoipCallAction = callingActionClient
   .bindArgsSchemas([zodBigintAsString()])
   .inputSchema(initiateOutboundVoipCallSchema)
   .action(
@@ -250,6 +263,22 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
       })
       if (!conversation) {
         throw new ChatbotXException(t("whatsapp.calls.errors.callNotFound"))
+      }
+
+      // P2 item 5 (plan D3): dialing is gated exactly like picking up an
+      // inbound call — an assigned-only agent must not dial another agent's
+      // conversation. Checked before any Meta call or `createOutboundAttempt`
+      // below. Non-throwing (`canCallConversation`) so a denial is a typed
+      // outcome the client can translate, rather than a generic serverError
+      // toast (`whatsapp.calls.outbound.callAccessDenied`).
+      if (
+        !(await canCallConversation({
+          workspaceId,
+          conversationId,
+          userId: ctx.user.id,
+        }))
+      ) {
+        return { outcome: "callAccessDenied" }
       }
 
       const resolvedContactInbox = await resolveContactInbox({
@@ -396,6 +425,7 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
           .finalizeEndedCall({
             whatsappCallId: pending.id,
             status: "failed",
+            outcome: resolveWhatsappCallOutcome({ status: "failed" }),
             endedAt: new Date(),
             lastError: String(code),
           })
@@ -468,6 +498,7 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
           .finalizeEndedCall({
             whatsappCallId: pending.id,
             status: "failed",
+            outcome: resolveWhatsappCallOutcome({ status: "failed" }),
             endedAt: new Date(),
             lastError: "outbound-setup-failed",
           })
@@ -498,6 +529,21 @@ export const initiateOutboundVoipCallAction = workspaceActionClient
         purposeChars: announcementOptions.recording?.purpose.length,
         browserRecordingEnabled,
         announcementError,
+      })
+
+      // Best-effort auto-assign (P3): last step, after every other
+      // best-effort side effect above, so it never delays anything the
+      // customer-facing dial depends on. Awaited so it completes before the
+      // action returns, but errors are caught and logged inside
+      // `claimConversationForCallAgent` — never allowed to change the dial's
+      // outcome. Skipped for a support session (D8, plan §5 P3).
+      await claimConversationForCallAgent({
+        workspaceId,
+        conversationId: conversation.id,
+        agentUserId: ctx.user.id,
+        whatsappCallId: pending.id,
+        trigger: "dialed",
+        isSupportSession: ctx.isSupportSession,
       })
 
       return {

@@ -3,9 +3,17 @@
 import { Avatar, AvatarFallback } from "@chatbotx.io/ui/components/ui/avatar"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { MicIcon, MicOffIcon, Minimize2Icon, PhoneOffIcon } from "lucide-react"
+import {
+  MessageSquareTextIcon,
+  MicIcon,
+  MicOffIcon,
+  Minimize2Icon,
+  PhoneOffIcon,
+} from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { useWorkspaceId } from "@/hooks/routing"
 import { useCountdownSeconds } from "./use-countdown-seconds"
 import { useVoipRingback } from "./use-voip-ringback"
 import { useVoipRingtone, voipRingtoneModes } from "./use-voip-ringtone"
@@ -131,9 +139,61 @@ export function WhatsappCallPanel() {
   const t = useTranslations()
   const call = useWhatsappVoipCallStore((state) => state.call)
   const ringingCalls = useWhatsappVoipCallStore((state) => state.ringingCalls)
+  const setPendingConversationOpen = useWhatsappVoipCallStore(
+    (state) => state.setPendingConversationOpen,
+  )
   const { answer, dismiss, hangup, toggleMute, dismissEnded } =
     useWhatsappVoipCallContext()
   const [isMinimized, setIsMinimized] = useState(false)
+
+  const workspaceId = useWorkspaceId()
+  const router = useRouter()
+  const pathname = usePathname()
+  const inboxPath = `/space/${workspaceId}/inbox`
+  const isOnInbox =
+    pathname === inboxPath || pathname.startsWith(`${inboxPath}/`)
+
+  /**
+   * "Go to conversation" (the panel's own control) and D6 (navigate the
+   * moment the agent answers) share this: off the inbox, a real route
+   * change is needed — the inbox page's own mount effect
+   * (`ConversationList`'s `initActiveConversationFromUrl`) then picks the
+   * `conversationId` query param up itself. Already on the inbox, a route
+   * change would only rewrite that query param without re-running that
+   * one-shot effect, so the conversation is opened directly instead — via
+   * `pendingConversationOpen`, a module-level bridge `ChatRealtime`
+   * consumes from inside `ChatStoreProvider` (this panel is mounted
+   * OUTSIDE it — see `workspace-realtime-shell.tsx` — so it cannot call
+   * `chatStore.openConversation` itself).
+   */
+  const goToConversation = useCallback(
+    (conversationId: string) => {
+      if (isOnInbox) {
+        setPendingConversationOpen(conversationId)
+        return
+      }
+      router.push(`${inboxPath}?conversationId=${conversationId}`)
+    },
+    [isOnInbox, router, inboxPath, setPendingConversationOpen],
+  )
+
+  /**
+   * D6: navigates to the conversation ONLY after the answer actually
+   * succeeds — shared by every Answer control below (the slot's own
+   * incoming card, and every basket entry, minimized or not — one helper,
+   * no per-caller if-else on where the offer's `conversationId` comes
+   * from). `answer()` itself now OWNS the "did this succeed" check (see
+   * `AnswerOutcome` / `resolveAnswered` in `whatsapp-voip-call-context.tsx`)
+   * — including the replacement-confirm path, where `goToConversation`
+   * fires later from `confirmReplacement` instead of from here. This panel
+   * no longer reads `voip-call-store` itself to decide.
+   */
+  const handleAnswer = useCallback(
+    (whatsappCallId?: string) => {
+      answer(whatsappCallId, goToConversation)
+    },
+    [goToConversation, answer],
+  )
 
   const isOutboundDialPhase =
     call?.phase === WhatsappVoipCallPhase.outboundDialing ||
@@ -215,9 +275,7 @@ export function WhatsappCallPanel() {
           <div className="motion-safe:zoom-in-95 fixed right-6 bottom-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border-none bg-gradient-to-b from-emerald-600 to-emerald-900 text-white shadow-2xl motion-safe:animate-in dark:from-emerald-700 dark:to-emerald-950">
             <WhatsappIncomingCallCard
               contactName={contactName}
-              onAnswer={() => {
-                answer(entry.whatsappCallId)
-              }}
+              onAnswer={() => handleAnswer(entry.whatsappCallId)}
               onReject={() => dismiss(entry.whatsappCallId)}
               secondsRemaining={singleRingingSecondsRemaining}
               statusKey="whatsapp.calls.incomingCall"
@@ -236,9 +294,7 @@ export function WhatsappCallPanel() {
         <div className="fixed right-6 bottom-6 z-50">
           <WhatsappRingingCallsList
             calls={ringingCalls}
-            onAnswer={(whatsappCallId) => {
-              answer(whatsappCallId)
-            }}
+            onAnswer={handleAnswer}
             onReject={(whatsappCallId) => dismiss(whatsappCallId)}
           />
         </div>
@@ -289,9 +345,7 @@ export function WhatsappCallPanel() {
         {!slotFree && ringingCalls.length > 0 && (
           <WhatsappRingingCallsList
             calls={ringingCalls}
-            onAnswer={(whatsappCallId) => {
-              answer(whatsappCallId)
-            }}
+            onAnswer={handleAnswer}
             onReject={(whatsappCallId) => dismiss(whatsappCallId)}
           />
         )}
@@ -310,6 +364,16 @@ export function WhatsappCallPanel() {
         >
           <div className="flex items-center justify-end gap-1 px-2 pt-2">
             <Button
+              aria-label={t("whatsapp.calls.panel.goToConversation")}
+              className="size-7 text-white hover:bg-white/10 hover:text-white"
+              onClick={() => goToConversation(call.conversationId)}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <MessageSquareTextIcon className="size-4" />
+            </Button>
+            <Button
               aria-label={t("whatsapp.calls.panel.minimize")}
               className="size-7 text-white hover:bg-white/10 hover:text-white"
               onClick={() => setIsMinimized(true)}
@@ -325,9 +389,7 @@ export function WhatsappCallPanel() {
             <WhatsappIncomingCallCard
               contactName={contactName}
               disabled={isAnswering}
-              onAnswer={() => {
-                answer()
-              }}
+              onAnswer={() => handleAnswer()}
               onReject={() => dismiss()}
               secondsRemaining={secondsRemaining}
               statusKey={statusKey}
@@ -456,9 +518,7 @@ export function WhatsappCallPanel() {
         {!slotFree && ringingCalls.length > 0 && (
           <WhatsappRingingCallsList
             calls={ringingCalls}
-            onAnswer={(whatsappCallId) => {
-              answer(whatsappCallId)
-            }}
+            onAnswer={handleAnswer}
             onReject={(whatsappCallId) => dismiss(whatsappCallId)}
           />
         )}

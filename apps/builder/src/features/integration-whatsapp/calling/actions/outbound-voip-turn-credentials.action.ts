@@ -8,7 +8,7 @@ import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { env } from "@/env"
 import { logger } from "@/lib/log"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { callingActionClient } from "@/lib/safe-action"
 
 /**
  * Bounds the client-minted pre-dial attempt identifier — never trusted
@@ -96,7 +96,7 @@ const outboundVoipTurnCredentialsSchema = z.object({
  * different agent or a different prepared call. Falls back to STUN-only
  * when no TURN secret is configured (see `voip-turn-credentials.action.ts`).
  */
-export const outboundVoipTurnCredentialsAction = workspaceActionClient
+export const outboundVoipTurnCredentialsAction = callingActionClient
   .bindArgsSchemas([zodBigintAsString()])
   .inputSchema(outboundVoipTurnCredentialsSchema)
   // The bound workspaceId is used only for the authorization gate on this

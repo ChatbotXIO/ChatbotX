@@ -4,6 +4,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 type ActionHandler = (args: {
   bindArgsParsedInputs: readonly [string]
+  ctx: {
+    user: { id: string }
+    workspaceMemberPermissions: Record<string, boolean>
+  }
   parsedInput: { whatsappCallId: string; provider: string }
 }) => Promise<unknown>
 
@@ -11,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   getTranscriptTextForCall: vi.fn(),
   attachSummary: vi.fn(),
   generateCallSummary: vi.fn(),
+  assertCanReadCallArtifactOrThrow: vi.fn(),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -49,6 +54,13 @@ vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: class ChatbotXException extends Error {},
 }))
 
+vi.mock(
+  "@/features/integration-whatsapp/calling/actions/assert-call-access",
+  () => ({
+    assertCanReadCallArtifactOrThrow: mocks.assertCanReadCallArtifactOrThrow,
+  }),
+)
+
 const { generateCallAiSummaryAction } = await import(
   "../src/features/messages/actions/generate-call-ai-summary.action"
 )
@@ -69,9 +81,18 @@ describe("generateCallAiSummaryAction", () => {
 
     const result = await getAction({
       bindArgsParsedInputs: ["ws-1"],
+      ctx: {
+        user: { id: "user-1" },
+        workspaceMemberPermissions: { contacts: true },
+      },
       parsedInput: { whatsappCallId: "call-1", provider: "openai" },
     })
 
+    expect(mocks.assertCanReadCallArtifactOrThrow).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      whatsappCallId: "call-1",
+      member: { userId: "user-1", permissions: { contacts: true } },
+    })
     expect(mocks.generateCallSummary).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       provider: "openai",
@@ -92,12 +113,35 @@ describe("generateCallAiSummaryAction", () => {
     await expect(
       getAction({
         bindArgsParsedInputs: ["ws-1"],
+        ctx: {
+          user: { id: "user-1" },
+          workspaceMemberPermissions: { contacts: true },
+        },
         parsedInput: { whatsappCallId: "call-1", provider: "openai" },
       }),
     ).rejects.toThrow("This call has no transcript to summarize")
 
     expect(mocks.generateCallSummary).not.toHaveBeenCalled()
     expect(mocks.attachSummary).not.toHaveBeenCalled()
+  })
+
+  test("propagates a denial from the D4 artifact-scope check before reading the transcript", async () => {
+    mocks.assertCanReadCallArtifactOrThrow.mockRejectedValueOnce(
+      new Error("callArtifactAccessDenied"),
+    )
+
+    await expect(
+      getAction({
+        bindArgsParsedInputs: ["ws-1"],
+        ctx: {
+          user: { id: "user-1" },
+          workspaceMemberPermissions: { contacts: true },
+        },
+        parsedInput: { whatsappCallId: "call-1", provider: "openai" },
+      }),
+    ).rejects.toThrow("callArtifactAccessDenied")
+
+    expect(mocks.getTranscriptTextForCall).not.toHaveBeenCalled()
   })
 
   test("propagates a provider failure without persisting anything", async () => {
@@ -107,6 +151,10 @@ describe("generateCallAiSummaryAction", () => {
     await expect(
       getAction({
         bindArgsParsedInputs: ["ws-1"],
+        ctx: {
+          user: { id: "user-1" },
+          workspaceMemberPermissions: { contacts: true },
+        },
         parsedInput: { whatsappCallId: "call-1", provider: "claude" },
       }),
     ).rejects.toThrow("provider down")

@@ -1,3 +1,4 @@
+import { alias } from "drizzle-orm/pg-core"
 import {
   and,
   type DatabaseClient,
@@ -10,17 +11,26 @@ import {
   isNull,
   lt,
   notInArray,
+  or,
   sql,
 } from "../../client"
-import type {
-  WhatsappCallAiSummary,
-  WhatsappCallDirection,
-  WhatsappCallStatus,
-  WhatsappCallTranscriptSegments,
+import {
+  resolveWhatsappCallOutcome,
+  type WhatsappCallAiSummary,
+  type WhatsappCallDirection,
+  type WhatsappCallOutcome,
+  type WhatsappCallStatus,
+  type WhatsappCallTerminalStatus,
+  type WhatsappCallTerminalStatusOutcomePair,
+  type WhatsappCallTranscriptSegments,
 } from "../../partials/whatsapp-call"
 import {
   contactInboxModel,
+  contactModel,
+  conversationModel,
+  inboxModel,
   integrationWhatsappModel,
+  userModel,
   whatsappCallModel,
 } from "../../schema"
 
@@ -39,12 +49,20 @@ const FILLABLE_TERMINAL_FIELDS = [
   "durationSeconds",
   "messageId",
   "lastError",
+  "outcome",
 ] as const satisfies readonly (keyof WhatsappCallRow)[]
 
 type WhatsappCallUpsertInput = {
   wacid: string
   direction: WhatsappCallDirection
-  status: WhatsappCallStatus
+  /**
+   * `createIfAbsent` only ever inserts a freshly-announced call — its two
+   * (webhook) callers both pass `"ringing"` — so this is narrowed to exclude
+   * every terminal status rather than accepting the full
+   * {@link WhatsappCallStatus} union (review A6): a terminal insert here
+   * would bypass every terminal writer's `outcome`-pairing contract.
+   */
+  status: Exclude<WhatsappCallStatus, WhatsappCallTerminalStatus>
   workspaceId: string
   inboxId: string
   contactInboxId: string
@@ -159,6 +177,79 @@ const isUniqueViolation = (error: unknown, constraint: string): boolean => {
     | { code?: string; constraint?: string }
     | undefined
   return cause?.code === "23505" && cause?.constraint === constraint
+}
+
+/**
+ * P5 item 4 — who a `listForWorkspace` caller may see, computed by the
+ * business layer (`whatsappCallHistoryService.list`, which alone knows the
+ * D3/D4 eligibility rules — `packages/database` never imports
+ * `packages/business`) and passed down as plain data. `allCalls: true` is
+ * `CALL_READ_SCOPES.history.allCalls` (superAdmin/analytics) — no further
+ * restriction, and `filters.agentUserId` is honoured. `allCalls: false` is
+ * every other viewer: restricted to calls they answered or placed
+ * (`isOwnCall`), and — only for an `onlyAssignedContacts`-only member
+ * (`assignedOnly: true`) — further restricted to conversations
+ * individually assigned to them (D3), mirroring
+ * `isEligibleForConversationCall` translated to SQL.
+ */
+export type WhatsappCallHistoryScope =
+  | { allCalls: true }
+  | { allCalls: false; userId: string; assignedOnly: boolean }
+
+/**
+ * Low-level filters the Calls page where-builder understands. `outcome`
+ * matches the DISPLAY outcome (`coalesce(outcome, status)`, see
+ * `resolveDisplayCallOutcome`), not the raw column — a chip like "missed"
+ * must still match a legacy terminal row with `outcome IS NULL`.
+ * `agentUserId` is only honoured when {@link WhatsappCallHistoryScope}
+ * `allCalls` is true (D4: "Agent filter only for superAdmin/analytics").
+ */
+export type WhatsappCallListFilters = {
+  direction?: WhatsappCallDirection
+  inboxId?: string
+  agentUserId?: string
+  outcome?: WhatsappCallOutcome
+  /** Non-terminal rows only ("ongoing" kind) — mutually exclusive with `outcome` in practice, never combined by the service. */
+  ongoing?: boolean
+}
+
+/**
+ * H1 fix: `createdAt` is carried as the DB's own TEXT rendering of the
+ * `timestamptz(6)` value (microsecond precision), never a JS `Date` — a
+ * `Date` only holds millisecond precision, so a cursor built from one and
+ * then bound back into `lt(...)`/`eq(...)` on the next page silently
+ * truncates the sub-millisecond digits. Two rows created within the same
+ * millisecond (a real possibility: `now()` is constant for every statement
+ * in one transaction) would then compare equal on the truncated bound and
+ * the `id`-tiebreak branch would never fire for the one that actually
+ * differs only below a millisecond, skipping it. The text form round-trips
+ * losslessly: read back with `::text` in `listForWorkspace`'s SELECT,
+ * bound back with an explicit `::timestamptz` cast in the WHERE.
+ */
+export type WhatsappCallListCursor = { createdAt: string; id: string }
+
+export type WhatsappCallListRow = WhatsappCallRow & {
+  /** Full-precision text form of `createdAt` for the NEXT page's cursor — see {@link WhatsappCallListCursor}. `createdAt` itself (inherited from `WhatsappCallRow`) stays a `Date` for display. */
+  createdAtCursor: string
+  contact: { id: string; fullName: string | null; avatar: string | null }
+  inbox: { id: string; name: string }
+  answeredByUser: { id: string; name: string | null; email: string } | null
+  initiatedByUser: { id: string; name: string | null; email: string } | null
+}
+
+/**
+ * Terminal status values that are ALSO valid {@link WhatsappCallOutcome}
+ * literals — the SQL-side half of `coalesce(outcome, status)` (see
+ * `resolveDisplayCallOutcome`, the in-memory half). `canceled` has no
+ * entry: a legacy `failed` row with no `outcome` can never resolve to
+ * `canceled` from `status` alone.
+ */
+const LEGACY_STATUS_FALLBACK_BY_OUTCOME: Partial<
+  Record<WhatsappCallOutcome, WhatsappCallStatus>
+> = {
+  completed: "completed",
+  rejected: "rejected",
+  failed: "failed",
 }
 
 class WhatsappCallRepository {
@@ -710,10 +801,15 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Advances the call to an interim status (ringing/accepted/rejected),
+   * Advances the call to an interim status (`ringing`/`accepted`/`rejected`),
    * respecting {@link canAdvanceStatus} — a stale or out-of-order status is
    * a no-op. The WHERE re-checks the observed status so a concurrent writer
    * cannot be overwritten with stale data.
+   *
+   * Only the terminal branch (`rejected`) writes `outcome` — derived from the
+   * status alone via `resolveWhatsappCallOutcome` (no caller fabricates one
+   * for a non-terminal transition), which is what makes a `failed → rejected`
+   * repair (permitted by `canAdvanceStatus`) rewrite both columns together.
    *
    * Returns the status the row transitioned FROM when an update was applied
    * (`undefined` otherwise), so callers can react to the actual DB
@@ -723,12 +819,20 @@ class WhatsappCallRepository {
   async updateInterimStatus(
     props: {
       wacid: string
-      status: WhatsappCallStatus
+      status: "ringing" | "accepted" | "rejected"
       /** Pre-fetched row to avoid a redundant read on the common path. */
       current?: WhatsappCallRow
     },
     tx: DatabaseClient = db,
   ): Promise<{ previousStatus: WhatsappCallStatus } | undefined> {
+    const set =
+      props.status === "rejected"
+        ? {
+            status: props.status,
+            outcome: resolveWhatsappCallOutcome({ status: props.status }),
+          }
+        : { status: props.status }
+
     // Retried once: a concurrent writer can invalidate the optimistic WHERE
     // between the read and the update (e.g. terminate finalizing to `failed`
     // right before a REJECTED lands). The caller-supplied `current` seeds the
@@ -742,7 +846,7 @@ class WhatsappCallRepository {
 
       const updated = await tx
         .update(whatsappCallModel)
-        .set({ status: props.status })
+        .set(set)
         .where(
           and(
             eq(whatsappCallModel.wacid, props.wacid),
@@ -849,7 +953,11 @@ class WhatsappCallRepository {
   ): Promise<WhatsappCallRow | undefined> {
     return await tx
       .update(whatsappCallModel)
-      .set({ status: "completed", lastError: props.lastError })
+      .set({
+        status: "completed",
+        outcome: resolveWhatsappCallOutcome({ status: "completed" }),
+        lastError: props.lastError,
+      })
       .where(
         and(
           eq(whatsappCallModel.id, props.id),
@@ -874,11 +982,18 @@ class WhatsappCallRepository {
    * now fills in ONLY the fields still missing (`endedAt` in particular) via
    * a `WHERE … endedAt IS NULL`-guarded UPDATE — it never downgrades status
    * and never overwrites an earlier authoritative `endedAt`.
+   *
+   * `outcome` rides along with every status write: on an advance it is set
+   * from the caller's input (required — `status`/`outcome` are a matched
+   * pair via {@link WhatsappCallTerminalStatusOutcomePair}, so a mismatch is
+   * a compile error, never a runtime bug); on a same-status redelivery it is
+   * only filled when still null ({@link FILLABLE_TERMINAL_FIELDS}), so a
+   * later `failed` webhook can never turn an already-persisted `canceled`
+   * back into `failed`.
    */
   async finalizeById(
     props: {
       id: string
-      status: WhatsappCallStatus
       startedAt?: Date | null
       endedAt?: Date | null
       durationSeconds?: number | null
@@ -886,7 +1001,7 @@ class WhatsappCallRepository {
       lastError?: string | null
       answeredByUserId?: string | null
       current?: WhatsappCallRow
-    },
+    } & WhatsappCallTerminalStatusOutcomePair,
     tx: DatabaseClient = db,
   ): Promise<WhatsappCallRow | undefined> {
     const { id, status, current, ...data } = props
@@ -988,6 +1103,160 @@ class WhatsappCallRepository {
       .then((rows) => rows[0])
 
     return updated ?? current
+  }
+
+  /**
+   * P5 item 4 — the Calls page list query. Joins `whatsappCall` →
+   * `contactInbox` → `contact`, `inbox`, `conversation` (for the D3
+   * `assignedOnly` scope condition), and `answeredByUser`/`initiatedByUser`
+   * (aliased `userModel`) — NEVER the sharded `Message` hypertable
+   * (`WhatsappCall.messageId` has no FK by design).
+   *
+   * Cursor pagination is keyset `(createdAt desc, id desc)`, matching the
+   * `WhatsappCall_workspaceId_createdAt_id_idx` composite index — the
+   * caller (`whatsappCallHistoryService.list`) requests `limit + 1` and
+   * trims the extra row itself to detect "more pages" without a `COUNT(*)`.
+   */
+  async listForWorkspace(
+    input: {
+      workspaceId: string
+      scope: WhatsappCallHistoryScope
+      filters?: WhatsappCallListFilters
+      cursor?: WhatsappCallListCursor
+      limit: number
+    },
+    tx: DatabaseClient = db,
+  ): Promise<WhatsappCallListRow[]> {
+    const { filters = {} } = input
+
+    // Aliased TWICE from the same `userModel` (answered-by / initiated-by —
+    // a plain join can only bind a table once per query). Created here,
+    // not at module scope, so a caller that only mocks part of
+    // `@chatbotx.io/database/schema` (no `userModel`) and never calls this
+    // method never pays for it at import time.
+    const answeredByUserAlias = alias(userModel, "answeredByUser")
+    const initiatedByUserAlias = alias(userModel, "initiatedByUser")
+
+    const legacyStatusFallback = filters.outcome
+      ? LEGACY_STATUS_FALLBACK_BY_OUTCOME[filters.outcome]
+      : undefined
+
+    const outcomeCondition = filters.outcome
+      ? or(
+          eq(whatsappCallModel.outcome, filters.outcome),
+          legacyStatusFallback
+            ? and(
+                isNull(whatsappCallModel.outcome),
+                eq(whatsappCallModel.status, legacyStatusFallback),
+              )
+            : undefined,
+        )
+      : undefined
+
+    const scopeCondition = input.scope.allCalls
+      ? undefined
+      : and(
+          or(
+            eq(whatsappCallModel.answeredByUserId, input.scope.userId),
+            eq(whatsappCallModel.initiatedByUserId, input.scope.userId),
+          ),
+          input.scope.assignedOnly
+            ? eq(conversationModel.assignedUserId, input.scope.userId)
+            : undefined,
+        )
+
+    // H1 fix: bound as the cursor's own TEXT value, cast to `timestamptz` in
+    // SQL — never `lt(column, jsDate)`, which would serialize through the
+    // driver's millisecond-precision `Date` binding and silently drop the
+    // `timestamptz(6)` column's sub-millisecond digits. Still a fully
+    // parameterised bound value (drizzle's `sql` tag), never string
+    // interpolation.
+    const cursorCondition = input.cursor
+      ? or(
+          sql`${whatsappCallModel.createdAt} < ${input.cursor.createdAt}::timestamptz`,
+          and(
+            sql`${whatsappCallModel.createdAt} = ${input.cursor.createdAt}::timestamptz`,
+            lt(whatsappCallModel.id, input.cursor.id),
+          ),
+        )
+      : undefined
+
+    const where = and(
+      eq(whatsappCallModel.workspaceId, input.workspaceId),
+      scopeCondition,
+      filters.ongoing
+        ? inArray(whatsappCallModel.status, ["ringing", "accepted"])
+        : undefined,
+      filters.direction
+        ? eq(whatsappCallModel.direction, filters.direction)
+        : undefined,
+      filters.inboxId
+        ? eq(whatsappCallModel.inboxId, filters.inboxId)
+        : undefined,
+      input.scope.allCalls && filters.agentUserId
+        ? or(
+            eq(whatsappCallModel.answeredByUserId, filters.agentUserId),
+            eq(whatsappCallModel.initiatedByUserId, filters.agentUserId),
+          )
+        : undefined,
+      outcomeCondition,
+      cursorCondition,
+    )
+
+    const rows = await tx
+      .select({
+        call: whatsappCallModel,
+        // H1: the raw, full-precision text rendering of `createdAt` — see
+        // {@link WhatsappCallListCursor}'s doc comment.
+        createdAtCursor: sql<string>`${whatsappCallModel.createdAt}::text`,
+        contact: {
+          id: contactModel.id,
+          fullName: contactModel.fullName,
+          avatar: contactModel.avatar,
+        },
+        inbox: { id: inboxModel.id, name: inboxModel.name },
+        answeredByUser: {
+          id: answeredByUserAlias.id,
+          name: answeredByUserAlias.name,
+          email: answeredByUserAlias.email,
+        },
+        initiatedByUser: {
+          id: initiatedByUserAlias.id,
+          name: initiatedByUserAlias.name,
+          email: initiatedByUserAlias.email,
+        },
+      })
+      .from(whatsappCallModel)
+      .innerJoin(
+        contactInboxModel,
+        eq(contactInboxModel.id, whatsappCallModel.contactInboxId),
+      )
+      .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
+      .innerJoin(inboxModel, eq(inboxModel.id, whatsappCallModel.inboxId))
+      .innerJoin(
+        conversationModel,
+        eq(conversationModel.id, whatsappCallModel.conversationId),
+      )
+      .leftJoin(
+        answeredByUserAlias,
+        eq(answeredByUserAlias.id, whatsappCallModel.answeredByUserId),
+      )
+      .leftJoin(
+        initiatedByUserAlias,
+        eq(initiatedByUserAlias.id, whatsappCallModel.initiatedByUserId),
+      )
+      .where(where)
+      .orderBy(desc(whatsappCallModel.createdAt), desc(whatsappCallModel.id))
+      .limit(input.limit)
+
+    return rows.map((row) => ({
+      ...row.call,
+      createdAtCursor: row.createdAtCursor,
+      contact: row.contact,
+      inbox: row.inbox,
+      answeredByUser: row.answeredByUser?.id ? row.answeredByUser : null,
+      initiatedByUser: row.initiatedByUser?.id ? row.initiatedByUser : null,
+    }))
   }
 
   /**

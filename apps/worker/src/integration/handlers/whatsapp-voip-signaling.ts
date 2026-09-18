@@ -409,7 +409,7 @@ const notifyRungAgentsIfEnded = async (input: {
  * before the reject lands, and the reject would drop a live conversation. So
  * the refusal CLAIMS the call first ({@link
  * whatsappVoipCallService.claimUnreachable}, `SET NX` on the same key
- * `resolveRingTargets` creates), which leaves exactly two outcomes and no gap
+ * `reserveIncomingCall` creates), which leaves exactly two outcomes and no gap
  * between them:
  *
  * - Claim won: nothing owned the call and nothing can start owning it now, so
@@ -496,31 +496,68 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
     return
   }
 
-  const ring = await whatsappVoipCallService.resolveRingTargets({
+  // P2 §4 "reserve-first": the control record is created (or observed, for
+  // a redelivered/retried connect still ringing) BEFORE any further
+  // retryable read — closing the P1 stopgap's residual gap where a row
+  // that never became ready left no control and nothing to reject. `SET
+  // NX`-backed, so retrying the whole job on a race is safe.
+  const reservation = await whatsappVoipCallService.reserveIncomingCall({
     wacid,
-    workspaceId,
     deadlineAt,
   })
-
-  if (ring.status === "alreadyProgressed") {
+  if (reservation.status === "alreadyProgressed") {
     // A redelivered/retried connect that landed after the call already
     // advanced past `reserved` — never re-ring, and never terminate (that
     // would downgrade a live/accepted call).
     return
   }
-  if (ring.status === "noEligibleAgent") {
-    await refuseIncomingCall({ wacid, auth, deadlineAt })
-    return
-  }
 
   // The generic `whatsappCallEvent` connect job (same webhook batch, the
-  // shared `integration` queue) creates this row — resolveRingTargets above is
-  // idempotent (SET NX-backed), so retrying the whole job on a race is safe.
+  // shared `integration` queue) creates this row. Resolved HERE — reusing
+  // `existing` when the early check above already found it, otherwise
+  // fetching it now — and BEFORE `selectRingTargetsForCall`: D3's
+  // eligibility filter needs a real `conversationId` to check
+  // `onlyAssignedContacts` assignment, and on a brand-new inbound call the
+  // row frequently does NOT exist yet at this point (the other job racing
+  // on the shared queue). `getCallRowOrThrow` throws
+  // `VoipCallRowNotReadyError` in that case, and BullMQ retries the WHOLE
+  // job (`WHATSAPP_VOIP_SIGNAL_RETRY_OPTIONS`) — the reservation above
+  // already exists (idempotent SET NX), so the retry keeps the same
+  // control and simply re-resolves the conversation. If the row never
+  // becomes ready at all (retries exhaust), the durable
+  // `expireIfUnanswered` job (scheduled independently at the webhook
+  // boundary) still finds the reserved control and Meta-rejects it — no
+  // call is ever left ringing with no control and no deadline enforcement.
+  const conversationId =
+    existing?.conversationId ?? (await getCallRowOrThrow(wacid)).conversationId
+
+  const selection = await whatsappVoipCallService.selectRingTargetsForCall({
+    workspaceId,
+    conversationId,
+  })
+
+  if (selection.userIds.length === 0) {
+    // Same observable result as the P1 stopgap's `noEligibleAgent`: nobody
+    // online (or eligible) to ring — end the just-reserved (or
+    // already-reserved, on redelivery) control and Meta-reject. The
+    // reservation above already holds the control record, so
+    // `refuseIncomingCall`'s `claimUnreachable` SET NX would always lose;
+    // go straight to `endReservedCall`, which the fenced CAS makes safe
+    // even against a concurrent claim/answer.
+    await endReservedCall({ wacid, auth })
+    return
+  }
+  const targets = [...selection.userIds]
+
+  // Fetched fresh (not reusing the row above) — this is the SEPARATE race
+  // this call is guarding against: a terminate that finalized while the
+  // ring set was being selected (just above), which the row read above
+  // (taken BEFORE that selection ran) cannot reflect.
   const call = await getCallRowOrThrow(wacid)
 
   if (whatsappVoipCallService.isCallEnded(call)) {
-    // The terminate finalized while the ring set was being reserved. If its
-    // finalize ran before `resolveRingTargets`, it saw no control and left
+    // The terminate finalized while the ring set was being selected. If its
+    // finalize ran before `reserveIncomingCall`, it saw no control and left
     // the one just created `reserved`, so end it here — without Meta, and
     // without re-finalizing. Both calls are no-ops when the finalize already
     // did the same.
@@ -531,7 +568,7 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
 
   await ringAgents({
     workspaceId,
-    targets: ring.targets,
+    targets,
     event: {
       eventType: RealtimeEventType.whatsappCallTransportIncoming,
       data: {
@@ -547,7 +584,7 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
       },
     },
   })
-  await notifyRungAgentsIfEnded({ wacid, workspaceId, targets: ring.targets })
+  await notifyRungAgentsIfEnded({ wacid, workspaceId, targets })
   // The durable `expireIfUnanswered` job is scheduled at the webhook boundary
   // (in `captureConnectOffer`), not here — so deadline enforcement never
   // depends on this consumer running to completion.

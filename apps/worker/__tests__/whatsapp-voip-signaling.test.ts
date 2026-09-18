@@ -4,7 +4,8 @@ const CALL_ROW_NOT_READY_PATTERN = /whatsapp-voip-call-row-not-ready/
 
 const mocks = vi.hoisted(() => ({
   identifyInboxAndIntegrationAuthFromIdentifier: vi.fn(),
-  resolveRingTargets: vi.fn(),
+  reserveIncomingCall: vi.fn(),
+  selectRingTargetsForCall: vi.fn(),
   readOffer: vi.fn(),
   readControl: vi.fn(),
   claimUnreachable: vi.fn(),
@@ -28,7 +29,8 @@ vi.mock("@chatbotx.io/business", () => ({
   sendToWorkspaceMember: mocks.sendToWorkspaceMember,
   resolveWhatsappCallerName: mocks.resolveWhatsappCallerName,
   whatsappVoipCallService: {
-    resolveRingTargets: mocks.resolveRingTargets,
+    reserveIncomingCall: mocks.reserveIncomingCall,
+    selectRingTargetsForCall: mocks.selectRingTargetsForCall,
     readControl: mocks.readControl,
     claimUnreachable: mocks.claimUnreachable,
     endCall: mocks.endCall,
@@ -108,9 +110,9 @@ const callRow = {
   contactInboxId: "ci-1",
 }
 
-const ring = {
-  status: "ring" as const,
-  targets: ["agent-1", "agent-2"],
+const ringSelection = {
+  tier: "eligibleOnline" as const,
+  userIds: ["agent-1", "agent-2"],
 }
 
 const outboundCallRow = {
@@ -135,6 +137,8 @@ beforeEach(() => {
   })
   // A fresh connect has no control record yet; the tests that need one say so.
   mocks.readControl.mockResolvedValue(null)
+  // Reservation succeeds by default; tests that need alreadyProgressed say so.
+  mocks.reserveIncomingCall.mockResolvedValue({ status: "reserved" })
   // The refusal claim wins by default — nothing else owns the call.
   mocks.claimUnreachable.mockResolvedValue(true)
   mocks.findByWacid.mockResolvedValue(callRow)
@@ -152,7 +156,7 @@ beforeEach(() => {
 describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
   test("rings ALL live agents (ring-all): delivers the offer to every target, expiry scheduled at the boundary", async () => {
     mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
-    mocks.resolveRingTargets.mockResolvedValue(ring)
+    mocks.selectRingTargetsForCall.mockResolvedValue(ringSelection)
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
@@ -164,10 +168,13 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       },
     })
 
-    expect(mocks.resolveRingTargets).toHaveBeenCalledWith({
+    expect(mocks.reserveIncomingCall).toHaveBeenCalledWith({
       wacid: "wacid.ABC",
-      workspaceId: "ws-1",
       deadlineAt: 2000,
+    })
+    expect(mocks.selectRingTargetsForCall).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
     })
     const expectedEvent = {
       eventType: "whatsappCallTransportIncoming",
@@ -197,7 +204,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
   test("a per-recipient delivery failure (sendToWorkspaceMember returns null) is logged, other recipients still delivered", async () => {
     mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
-    mocks.resolveRingTargets.mockResolvedValue(ring)
+    mocks.selectRingTargetsForCall.mockResolvedValue(ringSelection)
     mocks.sendToWorkspaceMember
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ ok: true })
@@ -219,10 +226,19 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
     )
   })
 
-  test("no eligible agent: Meta-rejects and finalizes as rejected without touching the control state", async () => {
+  test("no eligible agent (empty selection): Meta-rejects and finalizes as rejected, ending the already-reserved control", async () => {
     mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
-    mocks.resolveRingTargets.mockResolvedValue({
-      status: "noEligibleAgent",
+    mocks.selectRingTargetsForCall.mockResolvedValue({
+      tier: null,
+      userIds: [],
+    })
+    // The reservation already created the control (reserve-first): the
+    // refusal claim (SET NX) loses to it, and the fenced CAS in
+    // `endReservedCall` ends the still-reserved call instead.
+    mocks.claimUnreachable.mockResolvedValue(false)
+    mocks.endCall.mockResolvedValue({
+      terminalStatus: "rejected",
+      graphAction: "reject",
     })
 
     await handleWhatsappVoipSignalingJob({
@@ -235,8 +251,10 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       },
     })
 
-    // There is no control record for an unreachable call, so no CAS transition.
-    expect(mocks.endCall).not.toHaveBeenCalled()
+    expect(mocks.endCall).toHaveBeenCalledWith({
+      wacid: "wacid.ABC",
+      allowFromAccepted: false,
+    })
     expect(mocks.rejectCall).toHaveBeenCalledWith({
       auth: integrationRow.auth,
       callId: "wacid.ABC",
@@ -250,11 +268,16 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       },
     })
     expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    // L2: the reservation already exists at this point (reserve-first), so
+    // this branch must end it directly via `endReservedCall` rather than
+    // going through `refuseIncomingCall`'s `claimUnreachable` SET NX, which
+    // can never win here.
+    expect(mocks.claimUnreachable).not.toHaveBeenCalled()
   })
 
-  test("already progressed (redelivered/retried after the call advanced): no-op, never re-rings or terminates", async () => {
+  test("already progressed (redelivered/retried after the call advanced): no-op, never re-rings or terminates, never selects targets", async () => {
     mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
-    mocks.resolveRingTargets.mockResolvedValue({
+    mocks.reserveIncomingCall.mockResolvedValue({
       status: "alreadyProgressed",
     })
 
@@ -268,15 +291,100 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       },
     })
 
+    expect(mocks.selectRingTargetsForCall).not.toHaveBeenCalled()
     expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
     expect(mocks.rejectCall).not.toHaveBeenCalled()
     expect(mocks.terminateCall).not.toHaveBeenCalled()
     expect(mocks.endCall).not.toHaveBeenCalled()
   })
 
-  test("reserved but the WhatsappCall row is not ready yet: throws so BullMQ retries", async () => {
+  test("redelivery while still reserved: the reservation is observed (not recreated) and selection re-runs against the current live set", async () => {
     mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
-    mocks.resolveRingTargets.mockResolvedValue(ring)
+    // Distinguishes this from a fresh connect (`readControl` -> null): a
+    // redelivered/retried connect for a call still in `reserved` phase must
+    // observe the existing control (never recreate it) and re-run
+    // selection/delivery against it.
+    mocks.readControl.mockResolvedValue({
+      phase: "reserved",
+      reservedUserId: "",
+    })
+    mocks.reserveIncomingCall.mockResolvedValue({ status: "reserved" })
+    mocks.selectRingTargetsForCall.mockResolvedValue({
+      tier: "eligibleOnline",
+      userIds: ["agent-3"],
+    })
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
+    })
+
+    expect(mocks.selectRingTargetsForCall).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+    })
+    expect(mocks.sendToWorkspaceMember).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", userId: "agent-3" },
+      expect.anything(),
+    )
+    expect(mocks.rejectCall).not.toHaveBeenCalled()
+  })
+
+  test("redelivery while still reserved, but the live set is now empty: the still-reserved call is ended with exactly one Graph reject", async () => {
+    mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
+    mocks.readControl.mockResolvedValue({
+      phase: "reserved",
+      reservedUserId: "",
+    })
+    mocks.reserveIncomingCall.mockResolvedValue({ status: "reserved" })
+    mocks.selectRingTargetsForCall.mockResolvedValue({
+      tier: null,
+      userIds: [],
+    })
+    mocks.endCall.mockResolvedValue({
+      terminalStatus: "rejected",
+      graphAction: "reject",
+    })
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
+    })
+
+    expect(mocks.selectRingTargetsForCall).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+    })
+    expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.endCall).toHaveBeenCalledWith({
+      wacid: "wacid.ABC",
+      allowFromAccepted: false,
+    })
+    expect(mocks.rejectCall).toHaveBeenCalledTimes(1)
+    expect(mocks.rejectCall).toHaveBeenCalledWith({
+      auth: integrationRow.auth,
+      callId: "wacid.ABC",
+    })
+    expect(mocks.terminateCall).not.toHaveBeenCalled()
+    // Reserve-first: the control already exists, so this must go straight
+    // to `endReservedCall`, never through `refuseIncomingCall`'s
+    // `claimUnreachable` (which would always lose here).
+    expect(mocks.claimUnreachable).not.toHaveBeenCalled()
+  })
+
+  test("the WhatsappCall row is not ready yet: throws so BullMQ retries, selectRingTargetsForCall is NEVER called, the reservation is left in place, and nobody is refused/rung with an unknown conversation", async () => {
+    mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
+    mocks.selectRingTargetsForCall.mockResolvedValue(ringSelection)
     mocks.findByWacid.mockResolvedValue(null)
 
     await expect(
@@ -291,7 +399,46 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       }),
     ).rejects.toThrow(CALL_ROW_NOT_READY_PATTERN)
 
+    // The row genuinely isn't ready — the conversation (needed for D3's
+    // onlyAssignedContacts check) can't be resolved, so this must retry
+    // AFTER the reservation (already made, and idempotent on retry) but
+    // BEFORE any target is selected, refusal issued, or agent rung.
+    expect(mocks.reserveIncomingCall).toHaveBeenCalled()
+    expect(mocks.selectRingTargetsForCall).not.toHaveBeenCalled()
     expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+    expect(mocks.rejectCall).not.toHaveBeenCalled()
+    expect(mocks.terminateCall).not.toHaveBeenCalled()
+  })
+
+  test("row already found by the early `existing` read: selectRingTargetsForCall is called with its conversationId, without a second lookup", async () => {
+    mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
+    mocks.selectRingTargetsForCall.mockResolvedValue(ringSelection)
+    // Default beforeEach already sets `mocks.findByWacid` to resolve
+    // `callRow` (conversationId "conv-1") — asserting call COUNT here
+    // proves the early `existing` read is reused, not fetched again.
+    mocks.findByWacid.mockClear()
+    mocks.findByWacid.mockResolvedValue(callRow)
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
+    })
+
+    expect(mocks.selectRingTargetsForCall).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+    })
+    // Once for the early `existing` check, once more (fresh, by design —
+    // see the post-selection comment in `whatsapp-voip-signaling.ts`) for
+    // the terminate-during-selection race check, and once inside
+    // `notifyRungAgentsIfEnded` (unrelated to this fix) — never an EXTRA
+    // call just to resolve `conversationId`, since `existing` was reused.
+    expect(mocks.findByWacid).toHaveBeenCalledTimes(3)
   })
 
   test("the caller already hung up (terminate processed before connect): never rings, never calls Meta, drops the offer", async () => {
@@ -308,7 +455,8 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       },
     })
 
-    expect(mocks.resolveRingTargets).not.toHaveBeenCalled()
+    expect(mocks.reserveIncomingCall).not.toHaveBeenCalled()
+    expect(mocks.selectRingTargetsForCall).not.toHaveBeenCalled()
     expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
     expect(mocks.rejectCall).not.toHaveBeenCalled()
     expect(mocks.terminateCall).not.toHaveBeenCalled()
@@ -335,11 +483,16 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
     expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
   })
 
-  test("the call ended while the ring set was being reserved: ends the fresh control without Meta, never rings", async () => {
+  test("the call ended while the ring set was being selected: ends the reserved control without Meta, never rings", async () => {
     mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
-    mocks.resolveRingTargets.mockResolvedValue(ring)
+    mocks.selectRingTargetsForCall.mockResolvedValue(ringSelection)
+    // 1) the early `existing` check (not ready yet); 2) the pre-selection
+    // conversationId resolution's `getCallRowOrThrow` (row now exists,
+    // still live); 3) the POST-selection fresh fetch — this is where the
+    // termination-during-selection race is simulated.
     mocks.findByWacid
       .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(callRow)
       .mockResolvedValueOnce({ ...callRow, status: "rejected" })
 
     await handleWhatsappVoipSignalingJob({
@@ -364,7 +517,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
   test("the call ended while the offer was being delivered: tells every rung agent it ended, so no dialog rings a dead call", async () => {
     mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
-    mocks.resolveRingTargets.mockResolvedValue(ring)
+    mocks.selectRingTargetsForCall.mockResolvedValue(ringSelection)
     mocks.findByWacid
       .mockResolvedValueOnce({ ...callRow, status: "ringing" })
       .mockResolvedValueOnce({ ...callRow, status: "ringing" })
@@ -403,7 +556,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
 
   test("a call still ringing after delivery sends no ended event", async () => {
     mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
-    mocks.resolveRingTargets.mockResolvedValue(ring)
+    mocks.selectRingTargetsForCall.mockResolvedValue(ringSelection)
     mocks.findByWacid.mockResolvedValue({ ...callRow, status: "ringing" })
 
     await handleWhatsappVoipSignalingJob({
@@ -436,7 +589,8 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       },
     })
 
-    expect(mocks.resolveRingTargets).not.toHaveBeenCalled()
+    expect(mocks.reserveIncomingCall).not.toHaveBeenCalled()
+    expect(mocks.selectRingTargetsForCall).not.toHaveBeenCalled()
     expect(mocks.rejectCall).toHaveBeenCalledWith({
       auth: integrationRow.auth,
       callId: "wacid.ABC",
@@ -1005,17 +1159,19 @@ describe("handleConnect — the number's own calling settings", () => {
     })
 
     expect(mocks.rejectCall).toHaveBeenCalled()
-    expect(mocks.resolveRingTargets).not.toHaveBeenCalled()
+    expect(mocks.reserveIncomingCall).not.toHaveBeenCalled()
     // Refused before the offer is even read — no work done for a doomed call.
     expect(mocks.readOffer).not.toHaveBeenCalled()
   })
 
   test("rings normally when the settings allow the call", async () => {
-    mocks.findByWacid.mockResolvedValue(undefined)
+    mocks.findByWacid.mockResolvedValue({ ...callRow, wacid: "wacid.IN" })
     mocks.readOffer.mockResolvedValue({ sdp: "v=0" })
     // Stops the handler right after the gate — this test is about reaching
-    // ring resolution, not about the ring flow itself.
-    mocks.resolveRingTargets.mockResolvedValue({ status: "alreadyProgressed" })
+    // target selection, not about the ring flow itself.
+    mocks.reserveIncomingCall.mockResolvedValue({
+      status: "alreadyProgressed",
+    })
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
@@ -1028,7 +1184,7 @@ describe("handleConnect — the number's own calling settings", () => {
     })
 
     expect(mocks.readOffer).toHaveBeenCalled()
-    expect(mocks.resolveRingTargets).toHaveBeenCalled()
+    expect(mocks.reserveIncomingCall).toHaveBeenCalled()
   })
 
   // The regression: Meta redelivers `connect` for a call an agent is already
@@ -1058,7 +1214,7 @@ describe("handleConnect — the number's own calling settings", () => {
 
     expect(mocks.rejectCall).not.toHaveBeenCalled()
     expect(mocks.terminateCall).not.toHaveBeenCalled()
-    expect(mocks.resolveRingTargets).not.toHaveBeenCalled()
+    expect(mocks.reserveIncomingCall).not.toHaveBeenCalled()
     expect(mocks.readOffer).not.toHaveBeenCalled()
   })
 
@@ -1073,9 +1229,13 @@ describe("handleConnect — the number's own calling settings", () => {
       },
     })
 
-  /** Drives `handleConnect` to each of its three refusal branches in turn. */
+  /** Drives `handleConnect` to each of its three refusal branches in turn.
+   * The "noAgent" branch reaches the point where `conversationId` must be
+   * resolved (before `selectRingTargetsForCall`), so this must resolve a real
+   * row — "settings"/"noOffer" never get that far, so this is harmless
+   * for them too. */
   const arrangeRefusal = (branch: "settings" | "noOffer" | "noAgent") => {
-    mocks.findByWacid.mockResolvedValue(undefined)
+    mocks.findByWacid.mockResolvedValue({ ...callRow, wacid: "wacid.IN" })
     if (branch === "settings") {
       mocks.identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
         inbox,
@@ -1087,18 +1247,23 @@ describe("handleConnect — the number's own calling settings", () => {
       branch === "noOffer" ? null : { sdp: "v=0" },
     )
     if (branch === "noAgent") {
-      mocks.resolveRingTargets.mockResolvedValue({ status: "noEligibleAgent" })
+      mocks.selectRingTargetsForCall.mockResolvedValue({
+        tier: null,
+        userIds: [],
+      })
     }
   }
 
-  const REFUSAL_BRANCHES = ["settings", "noOffer", "noAgent"] as const
+  // The two refusals that run BEFORE `reserveIncomingCall` (settings/no
+  // offer) go through `refuseIncomingCall`: the race a phase snapshot
+  // cannot close means whatever the handler read earlier, an agent can
+  // claim the call before the Graph reject lands, so they claim first (SET
+  // NX) and only reject outright when that claim WINS — otherwise the
+  // fenced CAS in `endCall` arbitrates.
+  const PRE_RESERVATION_REFUSAL_BRANCHES = ["settings", "noOffer"] as const
 
-  // The race a phase snapshot cannot close: whatever the handler read earlier,
-  // an agent can claim the call before the Graph reject lands. Every refusal
-  // branch therefore claims the call first (SET NX) and only rejects outright
-  // when that claim WINS — otherwise the fenced CAS in `endCall` arbitrates.
   test.each(
-    REFUSAL_BRANCHES,
+    PRE_RESERVATION_REFUSAL_BRANCHES,
   )("the %s refusal rejects at Meta only when it wins the claim", async (branch) => {
     arrangeRefusal(branch)
     mocks.claimUnreachable.mockResolvedValue(true)
@@ -1109,7 +1274,7 @@ describe("handleConnect — the number's own calling settings", () => {
   })
 
   test.each(
-    REFUSAL_BRANCHES,
+    PRE_RESERVATION_REFUSAL_BRANCHES,
   )("the %s refusal defers to the CAS when something else already owns the call", async (branch) => {
     arrangeRefusal(branch)
     // Lost the claim: a control exists, so this refusal must not touch Meta
@@ -1123,6 +1288,37 @@ describe("handleConnect — the number's own calling settings", () => {
     expect(mocks.endCall).toHaveBeenCalledWith(
       expect.objectContaining({ allowFromAccepted: false }),
     )
+    expect(mocks.rejectCall).not.toHaveBeenCalled()
+    expect(mocks.terminateCall).not.toHaveBeenCalled()
+  })
+
+  // L2: the "noAgent" refusal runs AFTER `reserveIncomingCall`, so the
+  // control record already exists — it must go straight to
+  // `endReservedCall` (the fenced CAS), never through
+  // `refuseIncomingCall`'s `claimUnreachable`, which would always lose.
+  test("the noAgent refusal ends the already-reserved call via the fenced CAS, never the claim", async () => {
+    arrangeRefusal("noAgent")
+    mocks.endCall.mockResolvedValue({
+      terminalStatus: "rejected",
+      graphAction: "reject",
+    })
+
+    await connectJob()
+
+    expect(mocks.claimUnreachable).not.toHaveBeenCalled()
+    expect(mocks.endCall).toHaveBeenCalledWith(
+      expect.objectContaining({ allowFromAccepted: false }),
+    )
+    expect(mocks.rejectCall).toHaveBeenCalled()
+  })
+
+  test("the noAgent refusal no-ops when the CAS loses (an agent claimed/answered concurrently)", async () => {
+    arrangeRefusal("noAgent")
+    mocks.endCall.mockResolvedValue(null)
+
+    await connectJob()
+
+    expect(mocks.claimUnreachable).not.toHaveBeenCalled()
     expect(mocks.rejectCall).not.toHaveBeenCalled()
     expect(mocks.terminateCall).not.toHaveBeenCalled()
   })
@@ -1146,9 +1342,9 @@ describe("handleConnect — the number's own calling settings", () => {
       phase: "reserved",
       reservedUserId: "",
     })
-    mocks.findByWacid.mockResolvedValue(undefined)
+    mocks.findByWacid.mockResolvedValue({ ...callRow, wacid: "wacid.IN" })
     mocks.readOffer.mockResolvedValue({ sdp: "v=0" })
-    mocks.resolveRingTargets.mockResolvedValue({ status: "alreadyProgressed" })
+    mocks.reserveIncomingCall.mockResolvedValue({ status: "alreadyProgressed" })
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
@@ -1160,7 +1356,7 @@ describe("handleConnect — the number's own calling settings", () => {
       },
     })
 
-    expect(mocks.resolveRingTargets).toHaveBeenCalled()
+    expect(mocks.reserveIncomingCall).toHaveBeenCalled()
   })
 
   // Call hours are read against the webhook's arrival time, not the worker's
@@ -1183,9 +1379,9 @@ describe("handleConnect — the number's own calling settings", () => {
         },
       },
     })
-    mocks.findByWacid.mockResolvedValue(undefined)
+    mocks.findByWacid.mockResolvedValue({ ...callRow, wacid: "wacid.IN" })
     mocks.readOffer.mockResolvedValue({ sdp: "v=0" })
-    mocks.resolveRingTargets.mockResolvedValue({ status: "alreadyProgressed" })
+    mocks.reserveIncomingCall.mockResolvedValue({ status: "alreadyProgressed" })
 
     await handleWhatsappVoipSignalingJob({
       type: "handleConnect",
@@ -1199,6 +1395,6 @@ describe("handleConnect — the number's own calling settings", () => {
     vi.useRealTimers()
 
     expect(mocks.rejectCall).not.toHaveBeenCalled()
-    expect(mocks.resolveRingTargets).toHaveBeenCalled()
+    expect(mocks.reserveIncomingCall).toHaveBeenCalled()
   })
 })

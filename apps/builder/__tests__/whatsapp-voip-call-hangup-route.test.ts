@@ -39,7 +39,16 @@ const buildRequest = (body: unknown, headers?: Record<string, string>) =>
   new Request("http://localhost/api/whatsapp-voip-call-hangup", {
     method: "POST",
     body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json", ...headers },
+    // Default headers describe a legitimate same-origin request (real
+    // browser traffic always carries Host, and `Origin` on a POST) so
+    // tests that don't care about the same-site check aren't accidentally
+    // exercising its "nothing verifiable" fail-closed branch.
+    headers: {
+      "Content-Type": "application/json",
+      host: "localhost",
+      origin: "http://localhost",
+      ...headers,
+    },
   }) as never
 
 describe("POST /api/whatsapp-voip-call-hangup", () => {
@@ -131,5 +140,39 @@ describe("POST /api/whatsapp-voip-call-hangup", () => {
     )
 
     expect(response.status).toBe(200)
+  })
+
+  test("cross-site + malformed body: rejected as cross-site (403), never reaches body parsing", async () => {
+    const response = await POST(
+      buildRequest({ workspaceId: "1" }, { "sec-fetch-site": "cross-site" }),
+    )
+
+    expect(response.status).toBe(403)
+    expect(endVoipCallAsAgent).not.toHaveBeenCalled()
+  })
+
+  test("no session + malformed body: rejected as unauthenticated (401), never reaches body parsing", async () => {
+    getCurrentUserId.mockResolvedValue(null)
+
+    const response = await POST(buildRequest({ workspaceId: "1" }))
+
+    expect(response.status).toBe(401)
+    expect(endVoipCallAsAgent).not.toHaveBeenCalled()
+  })
+
+  test("only a Host header, no Sec-Fetch-Site/Origin/Referer at all: rejected as cross-site (fails closed)", async () => {
+    const request = new Request(
+      "http://localhost/api/whatsapp-voip-call-hangup",
+      {
+        method: "POST",
+        body: JSON.stringify({ workspaceId: "1", whatsappCallId: "1" }),
+        headers: { "Content-Type": "application/json", host: "localhost" },
+      },
+    ) as never
+
+    const response = await POST(request)
+
+    expect(response.status).toBe(403)
+    expect(endVoipCallAsAgent).not.toHaveBeenCalled()
   })
 })

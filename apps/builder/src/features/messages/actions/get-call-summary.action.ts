@@ -3,6 +3,7 @@
 import { whatsappCallSummaryService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { assertCanReadCallArtifactOrThrow } from "@/features/integration-whatsapp/calling/actions/assert-call-access"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
 
 const getCallSummarySchema = z.object({
@@ -21,9 +22,19 @@ const getCallSummarySchema = z.object({
 export const getCallSummaryAction = workspaceActionClientAllowExpired
   .bindArgsSchemas([zodBigintAsString()])
   .inputSchema(getCallSummarySchema)
-  .action(async ({ bindArgsParsedInputs: [workspaceId], parsedInput }) => ({
-    result: await whatsappCallSummaryService.getSummaryForCall({
-      callId: parsedInput.whatsappCallId,
+  .action(async ({ bindArgsParsedInputs: [workspaceId], ctx, parsedInput }) => {
+    await assertCanReadCallArtifactOrThrow({
       workspaceId,
-    }),
-  }))
+      whatsappCallId: parsedInput.whatsappCallId,
+      member: {
+        userId: ctx.user.id,
+        permissions: ctx.workspaceMemberPermissions,
+      },
+    })
+    return {
+      result: await whatsappCallSummaryService.getSummaryForCall({
+        callId: parsedInput.whatsappCallId,
+        workspaceId,
+      }),
+    }
+  })

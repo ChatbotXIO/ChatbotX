@@ -13,13 +13,23 @@ vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "ws-1",
 }))
 
+type MockConversation = {
+  id: string
+  contact: { fullName: string } | null
+  contactInboxes: { id: string; channel: string }[]
+}
+
+/** Mutable so call-back tests can seed a conversation with a WhatsApp
+ * `contactInboxes` entry — every other (pre-existing) test leaves this at
+ * its default empty state. */
+const chatStoreState: {
+  conversations: MockConversation[]
+  activeConversationId: string | null
+} = { conversations: [], activeConversationId: null }
+
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
-  useChatStore: (
-    selector: (state: {
-      conversations: unknown[]
-      activeConversationId: string | null
-    }) => unknown,
-  ) => selector({ conversations: [], activeConversationId: null }),
+  useChatStore: (selector: (state: typeof chatStoreState) => unknown) =>
+    selector(chatStoreState),
 }))
 
 const { getCallRecordingUrlActionMock } = vi.hoisted(() => ({
@@ -30,8 +40,53 @@ vi.mock("@/features/messages/actions/get-call-recording-url.action", () => ({
   getCallRecordingUrlAction: getCallRecordingUrlActionMock,
 }))
 
-const { WhatsappCallCard } = await import(
+// P4 item 3 — the call-back control's own hooks are exercised by
+// `use-whatsapp-call-starter.test.ts` and `whatsapp-voip-call-button.test.tsx`;
+// here they are mocked so `WhatsappCallCard` tests stay focused on
+// VISIBILITY/DISABLED logic, not the dial flow itself.
+const outboundCallModeMock = { data: undefined as unknown }
+vi.mock(
+  "@/features/integration-whatsapp/calling/voip/use-outbound-call-mode",
+  () => ({
+    useOutboundCallMode: () => outboundCallModeMock,
+  }),
+)
+
+const callStarterMock = {
+  voipCallContext: {} as unknown,
+  isResolvingMode: false,
+  isVoipMode: true,
+  canDialDirectly: true,
+  isDialing: false,
+  handleClick: vi.fn(),
+  dialogs: null,
+}
+const useWhatsappCallStarterMock = vi.fn((_params: unknown) => callStarterMock)
+vi.mock(
+  "@/features/integration-whatsapp/calling/voip/use-whatsapp-call-starter",
+  () => ({
+    useWhatsappCallStarter: (params: unknown) =>
+      useWhatsappCallStarterMock(params),
+  }),
+)
+
+// `WhatsappCallBackButton` reads this directly (to gate the mode query, and
+// to decide whether it renders at all) — mocked in sync with
+// `callStarterMock.voipCallContext` so these VISIBILITY/DISABLED-focused
+// tests don't have to pull in the real `use-whatsapp-voip-call.ts` (which
+// transitively touches server-only env vars).
+vi.mock(
+  "@/features/integration-whatsapp/calling/voip/whatsapp-voip-call-context",
+  () => ({
+    useOptionalWhatsappVoipCallContext: () => callStarterMock.voipCallContext,
+  }),
+)
+
+const { WhatsappCallCard, CALL_BACK_STATUSES_BY_DIRECTION } = await import(
   "@/features/messages/components/whatsapp-call-card"
+)
+const { useWhatsappVoipCallStore } = await import(
+  "@/features/integration-whatsapp/calling/voip/voip-call-store"
 )
 const { useCallInfoSheetStore } = await import(
   "@/features/messages/store/call-info-sheet-store"
@@ -87,6 +142,14 @@ describe("WhatsappCallCard", () => {
       whatsappCallId: null,
       tab: "transcript",
     })
+    chatStoreState.conversations = []
+    chatStoreState.activeConversationId = null
+    outboundCallModeMock.data = undefined
+    callStarterMock.voipCallContext = {}
+    callStarterMock.isResolvingMode = false
+    callStarterMock.isDialing = false
+    callStarterMock.handleClick = vi.fn()
+    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
   })
 
   test("a failed inbound call renders as missed", () => {
@@ -510,5 +573,201 @@ describe("WhatsappCallCard", () => {
     expect(createdLink.getAttribute("download")).toBe("")
 
     clickSpy.mockRestore()
+  })
+})
+
+describe("WhatsappCallCard — Call back (P4 item 3)", () => {
+  const conversationWithWhatsapp = (id: string): MockConversation => ({
+    id,
+    contact: { fullName: "Ada Lovelace" },
+    contactInboxes: [{ id: `contact-inbox-${id}`, channel: "whatsapp" }],
+  })
+
+  const findCallBackButton = (root: HTMLElement) =>
+    Array.from(root.querySelectorAll("button")).find((button) =>
+      button.textContent?.includes("callBack"),
+    )
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    chatStoreState.conversations = [conversationWithWhatsapp("conv-1")]
+    chatStoreState.activeConversationId = null
+    outboundCallModeMock.data = undefined
+    callStarterMock.voipCallContext = {}
+    callStarterMock.isResolvingMode = false
+    callStarterMock.isDialing = false
+    callStarterMock.handleClick = vi.fn()
+    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
+  })
+
+  test("CALL_BACK_STATUSES_BY_DIRECTION matches the plan exactly", () => {
+    expect([...CALL_BACK_STATUSES_BY_DIRECTION.userInitiated].sort()).toEqual(
+      ["failed", "rejected"].sort(),
+    )
+    expect([...CALL_BACK_STATUSES_BY_DIRECTION.businessInitiated]).toEqual([])
+  })
+
+  test("visible for a userInitiated failed call", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{ ...baseCall, status: "failed", direction: "userInitiated" }}
+        conversationId="conv-1"
+      />,
+    )
+    expect(findCallBackButton(el)).toBeDefined()
+  })
+
+  test("visible for a userInitiated rejected call", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{ ...baseCall, status: "rejected", direction: "userInitiated" }}
+        conversationId="conv-1"
+      />,
+    )
+    expect(findCallBackButton(el)).toBeDefined()
+  })
+
+  test("hidden for a userInitiated canceled call (not a call-back-eligible status)", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{ ...baseCall, status: "canceled", direction: "userInitiated" }}
+        conversationId="conv-1"
+      />,
+    )
+    expect(findCallBackButton(el)).toBeUndefined()
+  })
+
+  test("hidden for a businessInitiated failed call (outbound never offers call-back)", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{
+          ...baseCall,
+          status: "failed",
+          direction: "businessInitiated",
+        }}
+        conversationId="conv-1"
+      />,
+    )
+    expect(findCallBackButton(el)).toBeUndefined()
+  })
+
+  test("hidden for a businessInitiated canceled call", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{
+          ...baseCall,
+          status: "canceled",
+          direction: "businessInitiated",
+        }}
+        conversationId="conv-1"
+      />,
+    )
+    expect(findCallBackButton(el)).toBeUndefined()
+  })
+
+  test("hidden when calling is disabled for this workspace/member (no voip context)", () => {
+    callStarterMock.voipCallContext = null
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{ ...baseCall, status: "failed", direction: "userInitiated" }}
+        conversationId="conv-1"
+      />,
+    )
+    expect(findCallBackButton(el)).toBeUndefined()
+  })
+
+  test("hidden when the conversation has no WhatsApp contactInbox to dial", () => {
+    chatStoreState.conversations = [
+      { id: "conv-1", contact: null, contactInboxes: [] },
+    ]
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{ ...baseCall, status: "failed", direction: "userInitiated" }}
+        conversationId="conv-1"
+      />,
+    )
+    expect(findCallBackButton(el)).toBeUndefined()
+  })
+
+  test("disabled while the agent's call slot is occupied", () => {
+    useWhatsappVoipCallStore.setState({ call: { phase: "active" } as never })
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{ ...baseCall, status: "failed", direction: "userInitiated" }}
+        conversationId="conv-1"
+      />,
+    )
+    expect(findCallBackButton(el)?.disabled).toBe(true)
+  })
+
+  test("disabled while the ringing basket is non-empty", () => {
+    useWhatsappVoipCallStore.setState({
+      call: null,
+      ringingCalls: [{ whatsappCallId: "ring-1" } as never],
+    })
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{ ...baseCall, status: "failed", direction: "userInitiated" }}
+        conversationId="conv-1"
+      />,
+    )
+    expect(findCallBackButton(el)?.disabled).toBe(true)
+  })
+
+  test("enabled when the call slot AND the ringing basket are both empty", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{ ...baseCall, status: "failed", direction: "userInitiated" }}
+        conversationId="conv-1"
+      />,
+    )
+    expect(findCallBackButton(el)?.disabled).toBe(false)
+  })
+
+  test("clicking Call back routes through the shared starter's handleClick", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{ ...baseCall, status: "failed", direction: "userInitiated" }}
+        conversationId="conv-1"
+      />,
+    )
+    act(() => {
+      findCallBackButton(el)?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      )
+    })
+    expect(callStarterMock.handleClick).toHaveBeenCalledTimes(1)
+  })
+
+  // LOW 11: a completed call never offers a call-back — `WhatsappCallCard`
+  // only reaches the non-completed branch (where `WhatsappCallBackButton`
+  // lives) when `call.status !== "completed"`; a completed call renders the
+  // full player card instead, with no call-back control at all.
+  test("completed calls never render a call-back control, regardless of direction", () => {
+    const el = renderComponent(
+      <WhatsappCallCard
+        call={{ ...baseCall, status: "completed", direction: "userInitiated" }}
+        conversationId="conv-1"
+      />,
+    )
+    expect(findCallBackButton(el)).toBeUndefined()
+  })
+
+  // LOW 11: the call-back control's dial target must be the SPECIFIC
+  // WhatsApp `contactInboxId` resolved from this message's own conversation
+  // (see the P4 review log's deviation note), not left undefined/omitted.
+  test("forwards the resolved WhatsApp contactInboxId to the shared starter (and on to startOutbound)", () => {
+    renderComponent(
+      <WhatsappCallCard
+        call={{ ...baseCall, status: "failed", direction: "userInitiated" }}
+        conversationId="conv-1"
+      />,
+    )
+    expect(useWhatsappCallStarterMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: "conv-1",
+        contactInboxId: "contact-inbox-conv-1",
+      }),
+    )
   })
 })

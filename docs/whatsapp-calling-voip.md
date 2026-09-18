@@ -76,10 +76,13 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
    exposure. Remove the two realtime token log leaks (`apps/realtime/src/lib/auth.ts`).
 
 5. **Ring-all + fenced claim/accept.** Shipped as RING-ALL, not single-agent
-   reservation: `whatsappVoipCallService.resolveRingTargets` resolves every agent with
-   the inbox open (`whatsappVoipPresenceService`, capped at `MAX_VOIP_RING_TARGETS`)
-   and creates ONE control record with `reservedUserId: ""` (unclaimed — the classic
-   telephony fork-dial pattern). The worker's `handleConnect` delivers the SDP offer to every one of
+   reservation: `whatsappVoipCallService.reserveIncomingCall` creates (or observes, on
+   redelivery) ONE control record with `reservedUserId: ""` (unclaimed — the classic
+   telephony fork-dial pattern) BEFORE any target is resolved (P2 "reserve-first"), and
+   `selectRingTargetsForCall` then resolves the ring tier (assignee → assigned team →
+   every eligible agent with an online workspace tab —
+   `workspacePresenceService.listOnlineMembers`) capped at `MAX_VOIP_RING_TARGETS`. The
+   worker's `handleConnect` delivers the SDP offer to every one of
    those agents via `sendToWorkspaceMember` (never a broadcast). Call control lives in
    Redis `voip:ctrl:<wacid>` = `{ reservedUserId, phase, deadlineAt, fenceToken }`,
    `phase: "reserved" | "answering" | "accepted" | "terminated"`. Transitions are
@@ -139,7 +142,7 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
    the caller's `terminate` can be processed before the VoIP `connect`. That terminate
    finds no offer and no control to clean up, so `handleConnect` checks the row itself,
    at three points: before anything else (terminal → drop the offer, no Graph reject of a
-   dead call), after `resolveRingTargets` (terminal → end the control it just created,
+   dead call), after `selectRingTargetsForCall` (terminal → end the control already reserved,
    still without Graph), and after delivering the offer (terminal → re-send
    `whatsappCallTransportEnded` to the agents it rang, because the finalize's own ended
    event may have reached them before the offer did). The finalize writes the terminal
@@ -151,17 +154,34 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
 
 ## Threat model notes (M-series)
 
-- **M6 — pickup is workspace-wide, wider than the live rung set (accepted design).**
-  `listResumableIncoming`/`claimForAnswer` are reachable by ANY current workspace
-  member who mounts the inbox — not only the ≤`MAX_VOIP_RING_TARGETS` agents who were
-  actually live (and therefore rung) at connect time. An agent who opens the inbox
-  seconds after a call started, and was never sent the offer, can still resume and
-  claim it as long as the control is still `phase:"reserved"`/`reservedUserId:""` and
-  the offer TTL hasn't lapsed. This is an accepted design decision, not a gap: any
-  member of the workspace is trusted to pick up a ringing call for that workspace —
-  the same trust boundary the inbox itself already extends to every member.
-  Documenting it here makes it explicit rather than an implicit assumption
-  future readers might mistake for a bug.
+- **M6 — pickup is D3-eligible-wide, wider than the live rung set, narrower than the
+  whole workspace (revised by P2 item 5).** `listResumableIncoming`/`claimForAnswer`/
+  the TURN mint for an unclaimed call are reachable by any CURRENTLY D3-ELIGIBLE
+  workspace member — `isEligibleForConversationCall` (`ring-targets.ts`), the exact
+  predicate ring selection applies — not only the ≤`MAX_VOIP_RING_TARGETS` agents who
+  were actually live (and therefore rung) at connect time. An agent who opens the
+  inbox seconds after a call started, and was never sent the offer, can still resume
+  and claim it as long as they are D3-eligible for the call's conversation, the
+  control is still `phase:"reserved"`/`reservedUserId:""`, and the offer TTL hasn't
+  lapsed. `whatsappVoipCallService.listResumableIncoming` runs the check (via
+  `canCallConversationForMember`, `whatsapp-call/call-access-service.ts`, against a
+  member permissions row loaded ONCE per request rather than once per candidate —
+  M3) BEFORE attaching the offer SDP to a candidate, so an ineligible member's resume
+  fetch never even sees it. `getWhatsappVoipTurnCredentialsAction` runs the same
+  check (`canCallConversation`) for a still-unclaimed call. This narrows the previous
+  "any workspace member may pick up any ringing call" trust boundary to the same D3
+  boundary every other call action already enforces (`whatsapp-call/
+  call-access-service.ts`: `canCallConversation`, checked non-throwing at the action
+  boundary) — a member without `contacts`, and without `onlyAssignedContacts` on the
+  individually-assigned conversation, can no longer resume or claim a call for it,
+  even while it is genuinely still ringing.
+  A ring and a resume/answer can therefore disagree: the realtime ring delivered at
+  connect time reflects membership/assignment AT THAT MOMENT, while every resume and
+  `answerWhatsappVoipCallAction` re-reads FRESH, uncached state. An agent who was
+  the assigned agent (and so was rung) but is reassigned away before they answer
+  still sees the call ring on their client, but the D3 check inside
+  `answerWhatsappVoipCallAction` reads the conversation fresh and refuses the
+  answer — an ex-assignee can ring but is refused at answer, never accepts it.
 
 ## Browser WebRTC (standard; one SDP normalization)
 `use-whatsapp-voip-call` (native `RTCPeerConnection`, NOT sip.js):
@@ -266,11 +286,100 @@ the shared finalizer emit the transport-tagged ended event.
   `whatsappCallTransportIncoming` payload so the dock can render them the same way.
   `get-pending-incoming-voip-call.action.ts` calls this on dock mount and enqueues each
   entry into the basket. See M6 above for who is allowed to call it.
-- **Presence heartbeat.** `whatsappVoipPresenceService` (Redis `presenceStore`,
-  `voip:presence:<workspaceId>`) is the VoIP ring-set source — an agent counts as
-  "available" simply by having the inbox open, heartbeating every well inside
-  `VOIP_PRESENCE_TTL_MS` (45 s) via a builder hook while the call dock is mounted. No
-  explicit sign-off is required: a closed tab drops out within one TTL.
+- **Presence report.** Presence moved from a WhatsApp-only, inbox-only heartbeat to
+  the workspace-wide presence described in `docs/realtime.md` and §3.2/§9 of
+  `docs/whatsapp-calling-parity-plan.md`: `workspacePresenceService` (Redis
+  `presenceStore`, `workspace:presence:<workspaceId>`, member id = the bare `userId`,
+  ONE member per user — not per browser tab) is the VoIP ring-set source
+  (`workspacePresenceService.listOnlineMembers`) — a user counts as "online" while
+  their entry is renewed within `PRESENCE_TTL_MS` (20 s). Renewal is no longer a
+  per-browser-tab client heartbeat: each `apps/realtime` `workspaces` room reports its
+  distinct connected user ids to the builder every 20 s (`WorkspaceParty`'s alarm loop
+  → `POST /api/workspace-presence/report` → `workspacePresenceService.heartbeatMany`,
+  one Redis round-trip for the whole batch), so request volume scales with active
+  workspaces, not agent count. Matches a widely used online-status-tracker model: there is
+  deliberately no explicit sign-off — a crashed/closed/backgrounded tab simply stops
+  being reported and drops out once the TTL lapses (see §9 of the parity plan for the
+  record of both owner-directed simplifications), and `presenceStore.heartbeatMany`
+  also prunes every already-expired member on each write (not only on a
+  `listOnlineMembers` read), so a key kept alive by one live user can't accumulate
+  long-departed members indefinitely. For one release, `listOnlineMembers` also merges
+  in the legacy `voip:presence:<workspaceId>` key (bare user ids — the same shape as
+  the current key now) so a rolling deploy's old pods don't look offline to new ones —
+  tracked follow-up removes that read. A Redis outage degrades `listOnlineMembers` to
+  `[]` rather than throwing (`withRedisFallback`), which `selectRingTargetsForCall`
+  already treats identically to "nobody online" — see `docs/realtime.md`'s
+  "Redis-outage resilience" note for the full `handleConnect` trace.
+- **Ring-target tiers + eligibility (P2, `packages/business/src/whatsapp-call/ring-targets.ts`).**
+  `selectRingTargets` (pure, no I/O) tries `RING_TIERS` in order — `assignee` →
+  `assignedTeam` → `eligibleOnline` — and returns the first non-empty tier's user ids
+  (presence order preserved), capped at `MAX_VOIP_RING_TARGETS` LAST. Every tier
+  filters through the SAME predicate, `isEligibleForConversationCall`
+  (`CALL_ELIGIBILITY_RULES`, an ordered rule array): `superAdmin`, OR `contacts`, OR
+  (`onlyAssignedContacts` AND individually `assignedUserId` on this call's
+  conversation). `onlyAssignedContacts` alone is never enough — a member with only
+  that flag is eligible only when the conversation's `assignedUserId` is literally
+  their own id; an unassigned conversation, or one assigned to a TEAM but not to them
+  individually (D2 — no auto-claim by ringing, and not eligible in the `assignedTeam`
+  tier either), does not count. D1: an offline or ineligible assignee falls through to
+  the next tier rather than ringing nobody. The permission half of the rule reuses
+  `hasWorkspacePermission`, from `packages/business/src/workspace-member/permissions.ts`
+  (re-exported unchanged from `apps/builder/src/lib/auth/permission-routes.ts` for
+  existing callers). An online member with no eligible permission at all
+  (analytics-only, or a synthetic support session with no `WorkspaceMember` row) is
+  excluded and never counts against the ring cap either.
+
+  The business-layer orchestration, `whatsappVoipCallService.selectRingTargetsForCall`,
+  builds the `RingContext` the pure selector needs: presence
+  (`workspacePresenceService.listOnlineMembers`), a bounded permissions projection for
+  exactly those online ids (`workspaceMemberRepository.listPermissionsByUserIds`, via
+  `workspaceMemberService`), the conversation snapshot
+  (`conversationService.findBy`), and — only when the conversation has an
+  `assignedInboxTeamId` — a bounded team-member projection
+  (`inboxTeamMemberRepository.listUserIdsByTeamId`, via `inboxTeamService`). When the
+  `Conversation` row itself cannot be resolved (`conversationService.findBy` finds
+  nothing), the conversation is passed through as `null` and an
+  `onlyAssignedContacts`-only member is excluded rather than guessed into eligibility
+  (fail closed). This is distinct from the `WhatsappCall` row not being ready yet — see
+  "Empty-selection timing" below: a missing `WhatsappCall` row throws
+  `VoipCallRowNotReadyError` and retries the whole job instead, so `conversationId` is
+  never resolved against a null/missing call row.
+  - **Empty-selection timing (P2, reserve-first — supersedes the P1 note
+    above).** `whatsappVoipCallService.reserveIncomingCall` now creates (or
+    observes, on redelivery) the `phase:"reserved"` control record BEFORE the
+    conversation is even resolved — closing the P1 stopgap's residual gap
+    where a `WhatsappCall` row that never became ready left no control and
+    nothing to reject. D3's eligibility check still needs a real
+    `conversationId`, which comes from the `WhatsappCall` row the SEPARATE,
+    concurrent `whatsappCallEvent` connect job creates on the shared
+    `integration` queue: `handleConnect`
+    (`apps/worker/src/integration/handlers/whatsapp-voip-signaling.ts`)
+    resolves that row AFTER `reserveIncomingCall` but BEFORE calling
+    `selectRingTargetsForCall`, retrying the whole job
+    (`WHATSAPP_VOIP_SIGNAL_RETRY_OPTIONS`: 10 attempts × 2s fixed backoff ≈
+    20s) if the row lags — the reservation already made is idempotent
+    (`SET NX`-backed), so a retry keeps the same control rather than losing
+    it. An empty selection (nobody online/eligible) then ends the
+    already-reserved control and Meta-rejects directly via `endReservedCall`
+    (never `refuseIncomingCall`'s `claimUnreachable` SET NX, which would
+    always lose against the reservation already held) — the same observable
+    outcome as the P1 stopgap's `noEligibleAgent`. If the `WhatsappCall` row never
+    appears within the retry budget, the reservation ALREADY exists, so the
+    durable `expireIfUnanswered` job (scheduled independently at the webhook
+    boundary) still finds it and Meta-rejects on its own deadline — no call
+    is ever left ringing with a reservation but no way to end it. The
+    periodic stale-call sweep reconciles the row afterward either way.
+- **D8 for the ring path (verified, not re-implemented).** A scheduled-deletion or
+  blocked-owner workspace never reaches `selectRingTargetsForCall`/`handleConnect`
+  at all: `apps/worker/src/integration/worker.ts`'s `whatsappVoipSignalingWorker`
+  wraps EVERY job on the `whatsappVoipSignaling` queue (including `handleConnect`) in
+  `withBlockedOwnerGuard`, uniformly regardless of `job.data.type` — see invariant
+  #15. A characterization test
+  (`apps/worker/__tests__/integration-worker-boot.test.ts`, "D8: withBlockedOwnerGuard
+  deciding a workspace is frozen…") pins this: forcing the guard's frozen-workspace
+  no-op proves `handleWhatsappVoipSignalingJob` (and therefore any ring) never runs.
+  No duplicate check was added inside the pure business-layer eligibility filter —
+  it would require a second workspace-row query the guard has already paid for.
 - **Recording mode.** Each `WhatsappIntegration` row has a `callRecordingMode`
   column: `"metaNative"` (default) or `"browserWhisper"` (opt-in, requires
   `callRecordingEnabled`).
@@ -302,6 +411,71 @@ the shared finalizer emit the transport-tagged ended event.
   of the conversation list (`chat-store.ts`, `conversation-list.tsx`) so an incoming
   call is never buried under unrelated activity.
 
+## Auto-assign on answer / outbound dial (P3)
+
+- **What claims.** `conversationService.claimForCallAgent({ workspaceId,
+  conversationId, userId, triggerHandler })`
+  (`packages/business/src/conversation/service.ts`) calls the repository-level guarded
+  UPDATE, `assignUserIfUnassigned`
+  (`packages/database/src/repositories/conversation/repository.ts`):
+  `UPDATE Conversation SET assignedUserId = :userId WHERE workspaceId = :workspaceId
+  AND id = :conversationId AND assignedUserId IS NULL AND assignedInboxTeamId IS
+  NULL RETURNING *`. Both `IS NULL` guards are the entire correctness guarantee — a
+  conversation already assigned to a user OR a team is left untouched, so (a) a
+  concurrent manual assignment landing first always wins the race (the guard simply
+  matches zero rows), and (b) a team-assigned conversation is **never** auto-claimed
+  for an individual agent (plan D2). Zero rows returned is a normal outcome, not an
+  error: `claimForCallAgent`'s caller gets an empty array back and nothing is
+  published.
+- **Publishing is derived from what the UPDATE returned, not from caller input.**
+  `publishAssignmentChanges` (private, extracted from the pre-existing
+  `updateAssignment`) is the single place that turns a set of assigned/updated
+  conversation rows into cache invalidation, the `conversationUpdated` /
+  `conversationAssigned` realtime broadcasts, the assignment notification job, and the
+  `conversation:assigned`/`conversation:unassigned` analytics event — in that fixed
+  order. Both `updateAssignment` and `claimForCallAgent` call it with the rows their
+  own UPDATE actually returned; when that set is empty (the claim lost the race, or
+  `updateAssignment`'s ids matched nothing) `publishAssignmentChanges` returns
+  immediately — no invalidation, no broadcast with an empty `conversationIds: []`, no
+  notification, no event. This is a deliberate behavior change from the pre-P3
+  `updateAssignment`, which published unconditionally from its caller's input list
+  even when the UPDATE matched zero rows; the new contract is the one
+  `claimForCallAgent` requires (a losing claim must never look like a successful one)
+  and `updateAssignment` now shares it.
+- **Trigger handlers.** `CALL_ASSIGNMENT_TRIGGER_HANDLERS`
+  (`packages/business/src/whatsapp-call/call-assignment-triggers.ts`) is `{ answered:
+  "whatsappCallAnswered", dialed: "whatsappCallDialed" }` — kept with the WhatsApp
+  calling code (not in the channel-agnostic conversation service) because
+  `triggerHandler` is a free-form string across the codebase with no shared enum to
+  extend; the map exists so the two call sites don't hand-type the string. Both values
+  produce `triggerType: "conversation_assigned"` (the same taxonomy `assignOne` uses
+  for the public API), `triggerSource: "api"`.
+- **Call sites and ordering.** A single shared helper,
+  `apps/builder/src/features/integration-whatsapp/calling/actions/
+  claim-conversation-for-call-agent.ts` (a plain module, not `"use server"` — it is
+  never invoked directly from a client, only from the two action files below), is
+  called from:
+  - `answer-voip-call.action.ts`, as the LAST step before the action returns — after
+    `markAcceptedByAgent` succeeds, after the best-effort
+    `whatsappCallClaimedElsewhere` broadcast that tells every other rung agent to stop
+    ringing, and after the recording-arrangement bookkeeping. Ordering it last means a
+    slow or failing claim can never delay that broadcast.
+  - `initiate-outbound-voip-call.action.ts`, also as the last step, after the
+    recording-arrangement bookkeeping.
+
+  Both calls are `await`ed (so the claim completes before the action returns to the
+  client) but the helper itself never throws: it wraps
+  `conversationService.claimForCallAgent` in a `.catch()` that logs
+  `logger.warn({ err, whatsappCallId }, ...)` and swallows the error — a claim failure
+  must never fail or change the outcome of the call itself.
+- **Support sessions are skipped entirely (D8).** `claimConversationForCallAgent`
+  takes an `isSupportSession` flag (from `ctx.isSupportSession`, already resolved by
+  `workspaceActionClient`) and returns immediately when it is true, before calling the
+  service at all. A support session's synthetic workspace membership
+  (`docs/support-access.md`) has no real `WorkspaceMember` row, so assigning a
+  conversation to that user id would write an assignee nothing else (the members list,
+  notifications, permission checks) can resolve.
+
 ## Parser boundary
 `integrations/whatsapp/src/lib/calls.ts`: the user-initiated connect gains a bounded
 discriminated `session: { sdp_type:"offer"; sdp: string /* ≤ ~100 KB */ }`; a
@@ -331,6 +505,30 @@ call metadata passed straight through (`apps/worker/src/webhook/services/webhook
   record: presigned URL + full transcript were kept as-is, short TTL and PII
   handling are documented rather than replaced with an opaque-id + authenticated
   fetch pattern.
+
+## Call outcome column (display, P5)
+
+`WhatsappCall.outcome` (`completed|failed|rejected|canceled`, nullable) is a
+DISPLAY-only refinement of the persisted `status` column, written together
+with every terminal `status` write from the `20260917173244_whatsapp_call_outcome_type_column`
+/ `20260917173245_whatsapp_call_outcome_backfill_index` migration pair
+onward (`resolveWhatsappCallOutcome`, `packages/database/src/partials/whatsapp-call.ts`).
+The pair is split in two for lock safety: migration 1 is the fast
+transactional `CREATE TYPE` + nullable `ADD COLUMN`; migration 2 runs
+unwrapped (`CONCURRENTLY`) to backfill every already-terminal row and swap
+the call-log index without taking an ACCESS EXCLUSIVE lock on a table a live
+call is actively reading/writing.
+
+**Deploy-order contract:** the migration must land before the new
+outcome-writing pods roll out, but during the rolling deploy window old pods
+still write terminal rows (sweep, no-wacid cancel, outbound connect/setup
+failures) with `outcome` left `NULL` — those rows never get a redelivery
+that would heal them via `fillMissingTerminalFields`. **Every reader of
+`outcome` MUST treat `NULL` as "use `status` instead"** —
+`coalesce(outcome, status)` semantics, not a plain `outcome` read. This
+applies to P5b's `CALL_KIND_RULES` / `whatsappCallHistoryService.list`
+filters (not yet built) and any other future reader; it is the reason
+`resolveWhatsappCallOutcome`'s doc comment restates it.
 
 ## Test matrix
 parser valid/malformed/oversized · Graph payload shapes + SDP-absent-from-logs (both

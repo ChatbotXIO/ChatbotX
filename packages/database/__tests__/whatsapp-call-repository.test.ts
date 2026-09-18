@@ -53,6 +53,7 @@ const baseRow = (overrides: Partial<Row> = {}): Row =>
     attemptId: null,
     direction: "userInitiated",
     status: "ringing",
+    outcome: null,
     startedAt: null,
     endedAt: null,
     durationSeconds: null,
@@ -154,7 +155,7 @@ describe("whatsappCallRepository.finalizeById", () => {
     const tx = createUpdateChain([])
 
     const result = await whatsappCallRepository.finalizeById(
-      { id: current.id, status: "failed", current },
+      { id: current.id, status: "failed", outcome: "failed", current },
       tx as never,
     )
 
@@ -162,15 +163,16 @@ describe("whatsappCallRepository.finalizeById", () => {
     expect(result).toBeUndefined()
   })
 
-  test("advances ringing to completed and writes the terminal fields", async () => {
+  test("advances ringing to completed and writes the terminal fields plus outcome", async () => {
     const current = baseRow({ status: "accepted" })
-    const updated = baseRow({ status: "completed" })
+    const updated = baseRow({ status: "completed", outcome: "completed" })
     const tx = createUpdateChain([updated])
 
     const result = await whatsappCallRepository.finalizeById(
       {
         id: current.id,
         status: "completed",
+        outcome: "completed",
         current,
         endedAt: new Date("2026-08-01T00:05:00.000Z"),
         durationSeconds: 300,
@@ -180,17 +182,83 @@ describe("whatsappCallRepository.finalizeById", () => {
 
     expect(tx.update).toHaveBeenCalledWith(whatsappCallModel)
     expect(tx.set).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "completed", durationSeconds: 300 }),
+      expect.objectContaining({
+        status: "completed",
+        outcome: "completed",
+        durationSeconds: 300,
+      }),
     )
     expect(result).toEqual(updated)
+  })
+
+  test("a permitted rejected → failed advance rewrites outcome from failed's input", async () => {
+    const current = baseRow({ status: "rejected", outcome: "rejected" })
+    const updated = baseRow({ status: "failed", outcome: "failed" })
+    const tx = createUpdateChain([updated])
+
+    const result = await whatsappCallRepository.finalizeById(
+      {
+        id: current.id,
+        status: "failed",
+        outcome: "failed",
+        current,
+        endedAt: new Date("2026-08-01T00:05:00.000Z"),
+      },
+      tx as never,
+    )
+
+    expect(tx.set).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failed", outcome: "failed" }),
+    )
+    expect(result).toEqual(updated)
+  })
+
+  test("a permitted rejected → completed advance rewrites outcome from completed's input", async () => {
+    const current = baseRow({ status: "rejected", outcome: "rejected" })
+    const updated = baseRow({ status: "completed", outcome: "completed" })
+    const tx = createUpdateChain([updated])
+
+    const result = await whatsappCallRepository.finalizeById(
+      {
+        id: current.id,
+        status: "completed",
+        outcome: "completed",
+        current,
+        endedAt: new Date("2026-08-01T00:05:00.000Z"),
+      },
+      tx as never,
+    )
+
+    expect(tx.set).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "completed", outcome: "completed" }),
+    )
+    expect(result).toEqual(updated)
+  })
+
+  test("a disallowed downgrade (completed → failed) leaves outcome untouched", async () => {
+    const current = baseRow({ status: "completed", outcome: "completed" })
+    const tx = createUpdateChain([])
+
+    const result = await whatsappCallRepository.finalizeById(
+      { id: current.id, status: "failed", outcome: "failed", current },
+      tx as never,
+    )
+
+    expect(tx.update).not.toHaveBeenCalled()
+    expect(result).toBeUndefined()
   })
 })
 
 describe("whatsappCallRepository.finalizeById idempotent endedAt fill", () => {
   test("fills missing endedAt on a same-status terminate redelivery, status unchanged", async () => {
-    const current = baseRow({ status: "rejected", endedAt: null })
+    const current = baseRow({
+      status: "rejected",
+      outcome: "rejected",
+      endedAt: null,
+    })
     const filled = baseRow({
       status: "rejected",
+      outcome: "rejected",
       endedAt: new Date("2026-08-01T00:05:00.000Z"),
     })
     const tx = createUpdateChain([filled])
@@ -199,6 +267,7 @@ describe("whatsappCallRepository.finalizeById idempotent endedAt fill", () => {
       {
         id: current.id,
         status: "rejected",
+        outcome: "rejected",
         current,
         endedAt: new Date("2026-08-01T00:05:00.000Z"),
       },
@@ -216,6 +285,7 @@ describe("whatsappCallRepository.finalizeById idempotent endedAt fill", () => {
     const authoritativeEndedAt = new Date("2026-08-01T00:01:00.000Z")
     const current = baseRow({
       status: "rejected",
+      outcome: "rejected",
       endedAt: authoritativeEndedAt,
     })
     const tx = createUpdateChain([])
@@ -224,6 +294,7 @@ describe("whatsappCallRepository.finalizeById idempotent endedAt fill", () => {
       {
         id: current.id,
         status: "rejected",
+        outcome: "rejected",
         current,
         endedAt: new Date("2026-08-01T00:09:00.000Z"),
       },
@@ -236,11 +307,15 @@ describe("whatsappCallRepository.finalizeById idempotent endedAt fill", () => {
   })
 
   test("still blocks a genuine downgrade attempt (different, lower-rank status)", async () => {
-    const current = baseRow({ status: "completed", endedAt: null })
+    const current = baseRow({
+      status: "completed",
+      outcome: "completed",
+      endedAt: null,
+    })
     const tx = createUpdateChain([])
 
     const result = await whatsappCallRepository.finalizeById(
-      { id: current.id, status: "failed", current },
+      { id: current.id, status: "failed", outcome: "failed", current },
       tx as never,
     )
 
@@ -251,12 +326,14 @@ describe("whatsappCallRepository.finalizeById idempotent endedAt fill", () => {
   test("fills every still-missing terminal field (not just endedAt) on a same-status redelivery", async () => {
     const current = baseRow({
       status: "rejected",
+      outcome: "rejected",
       endedAt: null,
       messageId: null,
       lastError: null,
     })
     const filled = baseRow({
       status: "rejected",
+      outcome: "rejected",
       endedAt: new Date("2026-08-01T00:05:00.000Z"),
       messageId: "msg-1",
       lastError: "meta-timeout",
@@ -267,6 +344,7 @@ describe("whatsappCallRepository.finalizeById idempotent endedAt fill", () => {
       {
         id: current.id,
         status: "rejected",
+        outcome: "rejected",
         current,
         endedAt: new Date("2026-08-01T00:05:00.000Z"),
         messageId: "msg-1",
@@ -286,11 +364,13 @@ describe("whatsappCallRepository.finalizeById idempotent endedAt fill", () => {
   test("does not clobber an already-set messageId on redelivery, even while filling the still-missing endedAt", async () => {
     const current = baseRow({
       status: "rejected",
+      outcome: "rejected",
       endedAt: null,
       messageId: "authoritative-msg",
     })
     const filled = baseRow({
       status: "rejected",
+      outcome: "rejected",
       endedAt: new Date("2026-08-01T00:05:00.000Z"),
       messageId: "authoritative-msg",
     })
@@ -300,6 +380,7 @@ describe("whatsappCallRepository.finalizeById idempotent endedAt fill", () => {
       {
         id: current.id,
         status: "rejected",
+        outcome: "rejected",
         current,
         endedAt: new Date("2026-08-01T00:05:00.000Z"),
         // A different/stale messageId from a redelivered payload — must
@@ -316,6 +397,133 @@ describe("whatsappCallRepository.finalizeById idempotent endedAt fill", () => {
       endedAt: new Date("2026-08-01T00:05:00.000Z"),
     })
     expect(result).toEqual(filled)
+  })
+})
+
+describe("whatsappCallRepository.finalizeById outcome fill-when-null", () => {
+  test("fills outcome on a same-status redelivery when the current row has none yet (legacy row)", async () => {
+    const current = baseRow({
+      status: "failed",
+      outcome: null,
+      endedAt: new Date("2026-08-01T00:05:00.000Z"),
+    })
+    const filled = baseRow({
+      status: "failed",
+      outcome: "failed",
+      endedAt: new Date("2026-08-01T00:05:00.000Z"),
+    })
+    const tx = createUpdateChain([filled])
+
+    const result = await whatsappCallRepository.finalizeById(
+      {
+        id: current.id,
+        status: "failed",
+        outcome: "failed",
+        current,
+        endedAt: new Date("2026-08-01T00:05:00.000Z"),
+      },
+      tx as never,
+    )
+
+    expect(tx.set).toHaveBeenCalledWith({ outcome: "failed" })
+    expect(result).toEqual(filled)
+  })
+
+  test("a canceled outcome survives a same-status failed redelivery (never clobbered back to failed)", async () => {
+    const current = baseRow({
+      status: "failed",
+      outcome: "canceled",
+      endedAt: new Date("2026-08-01T00:05:00.000Z"),
+      lastError: "canceled_by_business",
+    })
+    const tx = createUpdateChain([])
+
+    const result = await whatsappCallRepository.finalizeById(
+      {
+        id: current.id,
+        status: "failed",
+        outcome: "failed",
+        current,
+        endedAt: new Date("2026-08-01T00:05:00.000Z"),
+        lastError: "canceled_by_business",
+      },
+      tx as never,
+    )
+
+    // Nothing left to fill — outcome, endedAt and lastError are all already
+    // set on the current row, so no UPDATE is issued and the row is returned
+    // unchanged, still `canceled`.
+    expect(tx.update).not.toHaveBeenCalled()
+    expect(result).toEqual(current)
+    expect(result?.outcome).toBe("canceled")
+  })
+})
+
+describe("whatsappCallRepository.updateInterimStatus outcome", () => {
+  // `ringing` is rank 0 — the lowest — so `canAdvanceStatus` never permits a
+  // transition INTO it from a pre-existing row (both the inbound `connect`
+  // and the outbound `createPendingOutbound` insert a row already at
+  // `ringing`, so a RINGING interim webhook against an existing row is
+  // always a same-rank no-op; see `canAdvanceStatus`).
+  test("a RINGING interim event against an already-ringing row is a same-rank no-op (never sets outcome)", async () => {
+    const current = baseRow({ status: "ringing", wacid: "wacid.1" })
+    const tx = createUpdateChain([])
+
+    const result = await whatsappCallRepository.updateInterimStatus(
+      { wacid: "wacid.1", status: "ringing", current },
+      tx as never,
+    )
+
+    expect(tx.update).not.toHaveBeenCalled()
+    expect(result).toBeUndefined()
+  })
+
+  test("accepted leaves outcome untouched (no outcome key in the SET)", async () => {
+    const current = baseRow({ status: "ringing", wacid: "wacid.1" })
+    const tx = createUpdateChain([{ id: current.id }])
+
+    await whatsappCallRepository.updateInterimStatus(
+      { wacid: "wacid.1", status: "accepted", current },
+      tx as never,
+    )
+
+    expect(tx.set).toHaveBeenCalledWith({ status: "accepted" })
+  })
+
+  test("rejected (terminal) sets outcome alongside status", async () => {
+    const current = baseRow({ status: "ringing", wacid: "wacid.1" })
+    const tx = createUpdateChain([{ id: current.id }])
+
+    const result = await whatsappCallRepository.updateInterimStatus(
+      { wacid: "wacid.1", status: "rejected", current },
+      tx as never,
+    )
+
+    expect(tx.set).toHaveBeenCalledWith({
+      status: "rejected",
+      outcome: "rejected",
+    })
+    expect(result).toEqual({ previousStatus: "ringing" })
+  })
+
+  test("the failed → rejected repair (permitted by canAdvanceStatus) rewrites both columns", async () => {
+    const current = baseRow({
+      status: "failed",
+      outcome: "failed",
+      wacid: "wacid.1",
+    })
+    const tx = createUpdateChain([{ id: current.id }])
+
+    const result = await whatsappCallRepository.updateInterimStatus(
+      { wacid: "wacid.1", status: "rejected", current },
+      tx as never,
+    )
+
+    expect(tx.set).toHaveBeenCalledWith({
+      status: "rejected",
+      outcome: "rejected",
+    })
+    expect(result).toEqual({ previousStatus: "failed" })
   })
 })
 
@@ -645,6 +853,7 @@ describe("whatsappCallRepository.recoverStrandedAccepted", () => {
     // leaving it null lets a delayed terminate still stamp the real value.
     expect(set).toHaveBeenCalledWith({
       status: "completed",
+      outcome: "completed",
       lastError: props.lastError,
     })
     expect(where).toHaveBeenCalledTimes(1)

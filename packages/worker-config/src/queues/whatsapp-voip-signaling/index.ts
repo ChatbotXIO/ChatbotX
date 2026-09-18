@@ -146,7 +146,7 @@ const whatsappVoipSignalingJobOptions = {
  * queue — `handleConnect` throws `VoipCallRowNotReadyError` until that row
  * exists, and a too-short window (the old 4 × 750ms ≈ 2.25s) loses the race
  * under any worker load and drops the call. Retrying the whole job is safe:
- * `resolveRingTargets` is SET-NX idempotent and re-delivering the offer to an
+ * `reserveIncomingCall` is SET-NX idempotent and re-delivering the offer to an
  * already-ringing agent is a no-op in the browser store.
  */
 export const WHATSAPP_VOIP_SIGNAL_RETRY_OPTIONS = {

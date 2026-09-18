@@ -18,9 +18,11 @@ import {
 import {
   type WhatsappCallAiSummary,
   type WhatsappCallDirection,
+  type WhatsappCallOutcome,
   type WhatsappCallStatus,
   type WhatsappCallTranscriptSegments,
   whatsappCallDirections,
+  whatsappCallOutcomes,
   whatsappCallStatuses,
 } from "../partials/whatsapp-call"
 import { userModel } from "./auth-user"
@@ -37,6 +39,11 @@ export const whatsappCallDirection = pgEnum(
 export const whatsappCallStatus = pgEnum(
   "whatsappCallStatus",
   whatsappCallStatuses.options as [string, ...string[]],
+)
+
+export const whatsappCallOutcome = pgEnum(
+  "whatsappCallOutcome",
+  whatsappCallOutcomes.options as [string, ...string[]],
 )
 
 /**
@@ -67,6 +74,14 @@ export const whatsappCallModel = pgTable(
       .$type<WhatsappCallStatus>()
       .notNull()
       .default("ringing"),
+    /**
+     * Display outcome for a terminal {@link status}, written together with
+     * every terminal status write (`resolveWhatsappCallOutcome`,
+     * `partials/whatsapp-call.ts`). `null` for a non-terminal row
+     * (ringing/accepted) and for a legacy terminal row until the backfill
+     * migration fills it.
+     */
+    outcome: whatsappCallOutcome().$type<WhatsappCallOutcome>(),
     startedAt: timestamp(timestampConfig),
     endedAt: timestamp(timestampConfig),
     durationSeconds: integer(),
@@ -181,10 +196,13 @@ export const whatsappCallModel = pgTable(
       table.contactInboxId.asc().nullsLast(),
     ),
     // Call log page: cursor-paginated `(createdAt, id)` scan per workspace.
-    index("WhatsappCall_workspaceId_createdAt_idx").using(
+    // `id desc` is the tie-breaker for rows sharing the same `createdAt`
+    // (bulk backfills, high-volume workspaces), so the cursor is stable.
+    index("WhatsappCall_workspaceId_createdAt_id_idx").using(
       "btree",
       table.workspaceId.asc().nullsLast(),
       table.createdAt.desc(),
+      table.id.desc(),
     ),
     // Contact panel: cursor-paginated `(createdAt, id)` scan per contact.
     index("WhatsappCall_contactInboxId_createdAt_idx").using(

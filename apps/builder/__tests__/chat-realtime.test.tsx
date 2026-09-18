@@ -1,4 +1,4 @@
-import { act } from "react"
+import { act, StrictMode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { useWhatsappVoipCallStore } from "@/features/integration-whatsapp/calling/voip/voip-call-store"
@@ -15,28 +15,8 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
   useQueryClient: () => ({ invalidateQueries: invalidateQueriesMock }),
 }))
 
-vi.mock("@/features/tenant", () => ({
-  useTenantSettings: () => ({ wsUrl: "ws://localhost:1999" }),
-}))
-
-const { authSessionMock } = vi.hoisted(() => ({
-  authSessionMock: vi.fn(() => ({ data: { user: { id: "user-winner" } } })),
-}))
-vi.mock("@/lib/auth/auth-client", () => ({
-  authClient: { useSession: authSessionMock },
-}))
-
-vi.mock("@/lib/orpc/orpc", () => ({
-  client: {
-    realtimeAPI: {
-      mintWorkspaceConnectTokenAuthenticatedAPI: vi
-        .fn()
-        .mockResolvedValue({ token: "token-1" }),
-    },
-  },
-}))
-
 const bubbleConversationToTopMock = vi.fn().mockResolvedValue(undefined)
+const openConversationMock = vi.fn().mockResolvedValue(true)
 const chatStoreState = {
   handleNewMessage: vi.fn(),
   markMessagesDeleted: vi.fn(),
@@ -47,21 +27,37 @@ const chatStoreState = {
   updateContact: vi.fn(),
   updateConversations: vi.fn(),
   bubbleConversationToTop: bubbleConversationToTopMock,
+  openConversation: openConversationMock,
 }
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
   useChatStore: (selector: (state: typeof chatStoreState) => unknown) =>
     selector(chatStoreState),
 }))
 
-let capturedOnMessage: ((event: { data: string }) => void) | null = null
-vi.mock("partysocket/react", () => ({
-  default: (options: { onMessage: (event: { data: string }) => void }) => {
-    capturedOnMessage = options.onMessage
-    return {}
+const conversationIdParamMock = { set: vi.fn(), clear: vi.fn() }
+vi.mock("@/features/conversations/hooks/use-conversation-id-param", () => ({
+  useConversationIdParam: () => conversationIdParamMock,
+}))
+
+// `ChatRealtime` is a pure subscriber now — it registers handlers against
+// the shared `WorkspaceRealtimeProvider` instead of owning a socket. This
+// mock captures the last handler map passed to
+// `useWorkspaceRealtimeEvents` so `emit` can invoke it directly, exactly
+// mirroring what the real provider would dispatch.
+let capturedHandlers: Record<string, (event: unknown) => void> | null = null
+vi.mock("@/features/realtime/use-workspace-realtime-events", () => ({
+  useWorkspaceRealtimeEvents: (
+    handlers: Record<string, (event: unknown) => void>,
+  ) => {
+    capturedHandlers = handlers
   },
 }))
 
 const { ChatRealtime } = await import("@/features/chat/chat-realtime")
+
+function emit(eventType: string, data: unknown) {
+  capturedHandlers?.[eventType]?.({ eventType, data })
+}
 
 const baseVoipCall = {
   transport: "voip" as const,
@@ -78,11 +74,7 @@ const baseVoipCall = {
   isRecording: false,
 }
 
-function emit(eventType: string, data: unknown) {
-  capturedOnMessage?.({ data: JSON.stringify({ eventType, data }) })
-}
-
-describe("ChatRealtime — whatsappCallClaimedElsewhere", () => {
+describe("ChatRealtime — chat event parity", () => {
   let container: HTMLDivElement
   let root: Root
 
@@ -90,7 +82,6 @@ describe("ChatRealtime — whatsappCallClaimedElsewhere", () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
     bubbleConversationToTopMock.mockResolvedValue(undefined)
-    authSessionMock.mockReturnValue({ data: { user: { id: "user-winner" } } })
     useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
     container = document.createElement("div")
     document.body.appendChild(container)
@@ -100,7 +91,7 @@ describe("ChatRealtime — whatsappCallClaimedElsewhere", () => {
   afterEach(() => {
     act(() => root.unmount())
     container.remove()
-    capturedOnMessage = null
+    capturedHandlers = null
   })
 
   const render = () =>
@@ -108,339 +99,121 @@ describe("ChatRealtime — whatsappCallClaimedElsewhere", () => {
       root.render(<ChatRealtime />)
     })
 
-  test("clears the losing agent's ringing dialog when someone else answers", async () => {
-    authSessionMock.mockReturnValue({ data: { user: { id: "user-loser" } } })
-    useWhatsappVoipCallStore.setState({ call: baseVoipCall })
+  test("registers exactly the nine chat events, no more, no fewer", async () => {
     await render()
-
-    act(() => {
-      emit("whatsappCallClaimedElsewhere", {
-        whatsappCallId: "call-1",
-        wacid: "wacid-1",
-        answeredByUserId: "user-winner",
-      })
-    })
-
-    expect(useWhatsappVoipCallStore.getState().call).toBeNull()
-  })
-
-  test("the winning agent (answeredByUserId matches) ignores its own broadcast", async () => {
-    authSessionMock.mockReturnValue({ data: { user: { id: "user-winner" } } })
-    useWhatsappVoipCallStore.setState({
-      call: { ...baseVoipCall, phase: "answering" },
-    })
-    await render()
-
-    act(() => {
-      emit("whatsappCallClaimedElsewhere", {
-        whatsappCallId: "call-1",
-        wacid: "wacid-1",
-        answeredByUserId: "user-winner",
-      })
-    })
-
-    expect(useWhatsappVoipCallStore.getState().call).not.toBeNull()
-  })
-
-  test("ignores the event for a different call", async () => {
-    authSessionMock.mockReturnValue({ data: { user: { id: "user-loser" } } })
-    useWhatsappVoipCallStore.setState({ call: baseVoipCall })
-    await render()
-
-    act(() => {
-      emit("whatsappCallClaimedElsewhere", {
-        whatsappCallId: "call-other",
-        wacid: "wacid-other",
-        answeredByUserId: "user-winner",
-      })
-    })
-
-    expect(useWhatsappVoipCallStore.getState().call).not.toBeNull()
-  })
-
-  test("ignores the event once the local call has moved past incomingRinging (e.g. this agent is itself answering)", async () => {
-    authSessionMock.mockReturnValue({ data: { user: { id: "user-loser" } } })
-    useWhatsappVoipCallStore.setState({
-      call: { ...baseVoipCall, phase: "answering" },
-    })
-    await render()
-
-    act(() => {
-      emit("whatsappCallClaimedElsewhere", {
-        whatsappCallId: "call-1",
-        wacid: "wacid-1",
-        answeredByUserId: "user-winner",
-      })
-    })
-
-    expect(useWhatsappVoipCallStore.getState().call).not.toBeNull()
-  })
-})
-
-describe("ChatRealtime — ring-all basket (multi-ring)", () => {
-  let container: HTMLDivElement
-  let root: Root
-
-  beforeEach(() => {
-    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-    vi.clearAllMocks()
-    bubbleConversationToTopMock.mockResolvedValue(undefined)
-    authSessionMock.mockReturnValue({ data: { user: { id: "user-winner" } } })
-    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
-    container = document.createElement("div")
-    document.body.appendChild(container)
-    root = createRoot(container)
-  })
-
-  afterEach(() => {
-    act(() => root.unmount())
-    container.remove()
-    capturedOnMessage = null
-  })
-
-  const render = () =>
-    act(() => {
-      root.render(<ChatRealtime />)
-    })
-
-  test("two incoming events both land in the basket, not the single call slot", async () => {
-    await render()
-
-    act(() => {
-      emit("whatsappCallTransportIncoming", {
-        whatsappCallId: "call-1",
-        wacid: "wacid-1",
-        conversationId: "conversation-1",
-        contactInboxId: "contact-inbox-1",
-        contactName: "Ada Lovelace",
-        offer: { sdpType: "offer", sdp: "v=0 offer" },
-        deadlineAt: new Date(Date.now() + 20_000).toISOString(),
-      })
-    })
-    act(() => {
-      emit("whatsappCallTransportIncoming", {
-        whatsappCallId: "call-2",
-        wacid: "wacid-2",
-        conversationId: "conversation-2",
-        contactInboxId: "contact-inbox-2",
-        contactName: "Grace Hopper",
-        offer: { sdpType: "offer", sdp: "v=0 offer" },
-        deadlineAt: new Date(Date.now() + 20_000).toISOString(),
-      })
-    })
-
-    expect(useWhatsappVoipCallStore.getState().call).toBeNull()
-    expect(
-      useWhatsappVoipCallStore
-        .getState()
-        .ringingCalls.map((entry) => entry.whatsappCallId),
-    ).toEqual(["call-1", "call-2"])
-    expect(bubbleConversationToTopMock).toHaveBeenCalledWith(
-      "workspace-1",
-      "conversation-1",
-    )
-    expect(bubbleConversationToTopMock).toHaveBeenCalledWith(
-      "workspace-1",
-      "conversation-2",
+    expect(Object.keys(capturedHandlers ?? {}).sort()).toEqual(
+      [
+        "contactBlocked",
+        "contactUnblocked",
+        "conversationAssigned",
+        "messageContentUpdated",
+        "messageCreated",
+        "messageDeleted",
+        "messageFailed",
+        "messageIdAssigned",
+        "messageUpdated",
+      ].sort(),
     )
   })
 
-  test("whatsappCallClaimedElsewhere removes only the matching basket entry", async () => {
-    useWhatsappVoipCallStore.setState({
-      ringingCalls: [
-        { ...baseVoipCall, whatsappCallId: "call-1" },
-        { ...baseVoipCall, whatsappCallId: "call-2" },
-      ],
-    })
+  test("messageDeleted marks messages deleted", async () => {
     await render()
-
-    act(() => {
-      emit("whatsappCallClaimedElsewhere", {
-        whatsappCallId: "call-1",
-        wacid: "wacid-1",
-        answeredByUserId: "user-someone-else",
-      })
-    })
-
-    expect(
-      useWhatsappVoipCallStore
-        .getState()
-        .ringingCalls.map((entry) => entry.whatsappCallId),
-    ).toEqual(["call-2"])
+    act(() => emit("messageDeleted", { messageIds: ["m1"] }))
+    expect(chatStoreState.markMessagesDeleted).toHaveBeenCalledWith(["m1"])
   })
 
-  test("whatsappCallTransportEnded removes only the matching basket entry", async () => {
-    useWhatsappVoipCallStore.setState({
-      ringingCalls: [
-        { ...baseVoipCall, whatsappCallId: "call-1" },
-        { ...baseVoipCall, whatsappCallId: "call-2" },
-      ],
-    })
+  test("messageIdAssigned assigns the comment id", async () => {
     await render()
-
-    act(() => {
-      emit("whatsappCallTransportEnded", {
-        whatsappCallId: "call-1",
-        wacid: "wacid-1",
-        status: "completed",
-      })
-    })
-
-    expect(
-      useWhatsappVoipCallStore
-        .getState()
-        .ringingCalls.map((entry) => entry.whatsappCallId),
-    ).toEqual(["call-2"])
-  })
-
-  test("whatsappCallTransportEnded for the engaged slot's own call still lingers as ended (handleEnded), independent of the basket", async () => {
-    useWhatsappVoipCallStore.setState({
-      call: { ...baseVoipCall, phase: "active" },
-      ringingCalls: [{ ...baseVoipCall, whatsappCallId: "call-2" }],
-    })
-    await render()
-
-    act(() => {
-      emit("whatsappCallTransportEnded", {
-        whatsappCallId: "call-1",
-        wacid: "wacid-1",
-        status: "completed",
-      })
-    })
-
-    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe("ended")
-    // The basket is untouched — call-1 was never in it.
-    expect(
-      useWhatsappVoipCallStore
-        .getState()
-        .ringingCalls.map((entry) => entry.whatsappCallId),
-    ).toEqual(["call-2"])
-  })
-
-  test("claimed-by-self (the winning agent) preserves the promoted slot and does not touch the basket", async () => {
-    useWhatsappVoipCallStore.setState({
-      call: { ...baseVoipCall, phase: "answering" },
-      ringingCalls: [{ ...baseVoipCall, whatsappCallId: "call-2" }],
-    })
-    await render()
-
-    act(() => {
-      emit("whatsappCallClaimedElsewhere", {
-        whatsappCallId: "call-1",
-        wacid: "wacid-1",
-        answeredByUserId: "user-winner",
-      })
-    })
-
-    expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
-      "call-1",
-    )
-    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe("answering")
-    expect(
-      useWhatsappVoipCallStore
-        .getState()
-        .ringingCalls.map((entry) => entry.whatsappCallId),
-    ).toEqual(["call-2"])
-  })
-})
-
-const baseOutboundCall = {
-  transport: "voip" as const,
-  whatsappCallId: "out-call-1",
-  wacid: "out-wacid-1",
-  attemptId: "attempt-1",
-  phase: "outboundDialing" as const,
-  direction: "outbound" as const,
-  conversationId: "conversation-1",
-  contactInboxId: "contact-inbox-1",
-  contactName: "Ada Lovelace",
-  deadlineAt: new Date(Date.now() + 60_000).toISOString(),
-  isMuted: false,
-  isRecording: false,
-}
-
-describe("ChatRealtime — outbound VoIP events", () => {
-  let container: HTMLDivElement
-  let root: Root
-
-  beforeEach(() => {
-    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-    vi.clearAllMocks()
-    bubbleConversationToTopMock.mockResolvedValue(undefined)
-    authSessionMock.mockReturnValue({ data: { user: { id: "user-winner" } } })
-    useWhatsappVoipCallStore.setState({
-      call: null,
-      ringingCalls: [],
-      pendingOutboundAnswer: null,
-    })
-    container = document.createElement("div")
-    document.body.appendChild(container)
-    root = createRoot(container)
-  })
-
-  afterEach(() => {
-    act(() => root.unmount())
-    container.remove()
-    capturedOnMessage = null
-  })
-
-  const render = () =>
-    act(() => {
-      root.render(<ChatRealtime />)
-    })
-
-  test("whatsappCallOutboundAnswer sets the pending-answer handoff without logging the SDP", async () => {
-    await render()
-
-    act(() => {
-      emit("whatsappCallOutboundAnswer", {
-        whatsappCallId: "out-call-1",
-        wacid: "out-wacid-1",
-        attemptId: "attempt-1",
-        session: { sdpType: "answer", sdp: "v=0 answer-sdp" },
-      })
-    })
-
-    expect(useWhatsappVoipCallStore.getState().pendingOutboundAnswer).toEqual({
-      whatsappCallId: "out-call-1",
-      sdp: "v=0 answer-sdp",
-    })
-  })
-
-  test("whatsappCallOutboundStatus('ringing') moves an outboundDialing call to outboundRinging", async () => {
-    useWhatsappVoipCallStore.setState({ call: baseOutboundCall })
-    await render()
-
-    act(() => {
-      emit("whatsappCallOutboundStatus", {
-        whatsappCallId: "out-call-1",
-        wacid: "out-wacid-1",
-        attemptId: "attempt-1",
-        status: "ringing",
-      })
-    })
-
-    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
-      "outboundRinging",
+    act(() => emit("messageIdAssigned", { messageId: "m1", commentId: "c1" }))
+    expect(chatStoreState.assignMessageCommentId).toHaveBeenCalledWith(
+      "m1",
+      "c1",
     )
   })
 
-  test("whatsappCallOutboundStatus('accepted') moves the call to active", async () => {
-    useWhatsappVoipCallStore.setState({
-      call: { ...baseOutboundCall, phase: "outboundRinging" },
-    })
+  test("messageFailed marks the message failed", async () => {
     await render()
+    act(() =>
+      emit("messageFailed", {
+        messageId: "m1",
+        clientId: "client-1",
+        error: "boom",
+      }),
+    )
+    expect(chatStoreState.markMessageFailed).toHaveBeenCalledWith(
+      "m1",
+      "client-1",
+      "boom",
+    )
+  })
 
-    act(() => {
-      emit("whatsappCallOutboundStatus", {
-        whatsappCallId: "out-call-1",
-        wacid: "out-wacid-1",
-        attemptId: "attempt-1",
-        status: "accepted",
-      })
+  test("messageUpdated updates the message text/attachment fields", async () => {
+    await render()
+    act(() =>
+      emit("messageUpdated", {
+        messageId: "m1",
+        newText: "hello",
+        newAttachmentPath: "p",
+        newAttachmentPublicUrl: "u",
+        newAttachmentMimeType: "image/png",
+        newAttachmentWidth: 10,
+        newAttachmentHeight: 20,
+        removedAttachment: false,
+      }),
+    )
+    expect(chatStoreState.updateMessageText).toHaveBeenCalledWith(
+      "m1",
+      "hello",
+      {
+        newAttachmentPath: "p",
+        newAttachmentPublicUrl: "u",
+        newAttachmentMimeType: "image/png",
+        newAttachmentWidth: 10,
+        newAttachmentHeight: 20,
+        removedAttachment: false,
+      },
+    )
+  })
+
+  test("messageContentUpdated patches content attributes", async () => {
+    await render()
+    act(() =>
+      emit("messageContentUpdated", {
+        messageId: "m1",
+        contentAttributes: { foo: "bar" },
+      }),
+    )
+    expect(chatStoreState.updateMessageContentAttributes).toHaveBeenCalledWith(
+      "m1",
+      { foo: "bar" },
+    )
+  })
+
+  test("contactBlocked / contactUnblocked update the contact", async () => {
+    await render()
+    act(() => emit("contactBlocked", { contactId: "c1" }))
+    expect(chatStoreState.updateContact).toHaveBeenCalledWith("c1", {
+      blockedAt: expect.any(Date),
     })
+    act(() => emit("contactUnblocked", { contactId: "c1" }))
+    expect(chatStoreState.updateContact).toHaveBeenCalledWith("c1", {
+      blockedAt: null,
+    })
+  })
 
-    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe("active")
+  test("conversationAssigned updates the conversations", async () => {
+    await render()
+    act(() =>
+      emit("conversationAssigned", {
+        conversationIds: ["conv-1"],
+        assignedUserId: "user-1",
+        assignedInboxTeamId: null,
+      }),
+    )
+    expect(chatStoreState.updateConversations).toHaveBeenCalledWith(
+      ["conv-1"],
+      { assignedUserId: "user-1", assignedInboxTeamId: null },
+    )
   })
 })
 
@@ -451,7 +224,6 @@ describe("ChatRealtime — call permission reply invalidates the outbound call m
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
-    authSessionMock.mockReturnValue({ data: { user: { id: "user-winner" } } })
     container = document.createElement("div")
     document.body.appendChild(container)
     root = createRoot(container)
@@ -460,7 +232,7 @@ describe("ChatRealtime — call permission reply invalidates the outbound call m
   afterEach(() => {
     act(() => root.unmount())
     container.remove()
-    capturedOnMessage = null
+    capturedHandlers = null
   })
 
   const render = () =>
@@ -471,17 +243,19 @@ describe("ChatRealtime — call permission reply invalidates the outbound call m
   test("a customer's accept reply refetches the button's call-mode query for that conversation", async () => {
     await render()
 
+    const message = {
+      id: "message-1",
+      conversationId: "conversation-42",
+      contentAttributes: {
+        type: "whatsapp_call_permission_reply",
+        response: "accept",
+      },
+    }
     act(() => {
-      emit("messageCreated", {
-        id: "message-1",
-        conversationId: "conversation-42",
-        contentAttributes: {
-          type: "whatsapp_call_permission_reply",
-          response: "accept",
-        },
-      })
+      emit("messageCreated", message)
     })
 
+    expect(chatStoreState.handleNewMessage).toHaveBeenCalledWith(message)
     expect(invalidateQueriesMock).toHaveBeenCalledWith({
       queryKey: [
         "whatsapp-outbound-call-mode",
@@ -494,35 +268,239 @@ describe("ChatRealtime — call permission reply invalidates the outbound call m
   test("a plain text message does not invalidate the call-mode query", async () => {
     await render()
 
+    const message = {
+      id: "message-2",
+      conversationId: "conversation-42",
+      contentAttributes: { type: "text" },
+    }
     act(() => {
-      emit("messageCreated", {
-        id: "message-2",
-        conversationId: "conversation-42",
-        contentAttributes: { type: "text" },
-      })
+      emit("messageCreated", message)
     })
 
+    expect(chatStoreState.handleNewMessage).toHaveBeenCalledWith(message)
     expect(invalidateQueriesMock).not.toHaveBeenCalled()
   })
+})
 
-  test("a whatsappCallPermissionUpdated event (138017-reconciled grant) refetches the call-mode query for that conversation", async () => {
-    // The 138017 path records a permanent grant with no `call_permission_reply`
-    // message, so the button must be flipped to direct-dial off this dedicated
-    // event instead — see `send-message.ts` and `resolveOutboundCallMode`.
+describe("ChatRealtime — bubble-to-top on ringing", () => {
+  let container: HTMLDivElement
+  let root: Root
+
+  beforeEach(() => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    vi.clearAllMocks()
+    bubbleConversationToTopMock.mockResolvedValue(undefined)
+    useWhatsappVoipCallStore.setState({ call: null, ringingCalls: [] })
+    container = document.createElement("div")
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+    capturedHandlers = null
+  })
+
+  const render = () =>
+    act(() => {
+      root.render(<ChatRealtime />)
+    })
+
+  test("bubbles a conversation the first time its call appears in the ringing basket", async () => {
     await render()
 
     act(() => {
-      emit("whatsappCallPermissionUpdated", {
-        conversationId: "conversation-42",
+      useWhatsappVoipCallStore.getState().enqueueRinging({
+        ...baseVoipCall,
+        whatsappCallId: "call-1",
+        conversationId: "conversation-1",
       })
     })
 
-    expect(invalidateQueriesMock).toHaveBeenCalledWith({
-      queryKey: [
-        "whatsapp-outbound-call-mode",
-        "workspace-1",
-        "conversation-42",
+    expect(bubbleConversationToTopMock).toHaveBeenCalledWith(
+      "workspace-1",
+      "conversation-1",
+    )
+  })
+
+  test("bubbles a call already ringing at mount time (covers the resume-after-refresh path)", async () => {
+    useWhatsappVoipCallStore.setState({
+      ringingCalls: [
+        {
+          ...baseVoipCall,
+          whatsappCallId: "call-1",
+          conversationId: "conversation-1",
+        },
       ],
     })
+
+    await render()
+
+    expect(bubbleConversationToTopMock).toHaveBeenCalledWith(
+      "workspace-1",
+      "conversation-1",
+    )
+  })
+
+  test("never bubbles the same whatsappCallId twice", async () => {
+    await render()
+
+    act(() => {
+      useWhatsappVoipCallStore.getState().enqueueRinging({
+        ...baseVoipCall,
+        whatsappCallId: "call-1",
+        conversationId: "conversation-1",
+      })
+    })
+    act(() => {
+      // A redelivered/duplicate transport-incoming for the same call is a
+      // no-op in the store, but even if the basket entry were touched
+      // again, this component must not re-bubble it.
+      useWhatsappVoipCallStore.setState((state) => ({
+        ringingCalls: [...state.ringingCalls],
+      }))
+    })
+
+    expect(bubbleConversationToTopMock).toHaveBeenCalledTimes(1)
+  })
+
+  test("under React Strict Mode, a call already ringing at mount is bubbled exactly once, not twice per synthetic remount", () => {
+    useWhatsappVoipCallStore.setState({
+      ringingCalls: [
+        {
+          ...baseVoipCall,
+          whatsappCallId: "call-1",
+          conversationId: "conversation-1",
+        },
+      ],
+    })
+
+    act(() => {
+      root.render(
+        <StrictMode>
+          <ChatRealtime />
+        </StrictMode>,
+      )
+    })
+
+    expect(bubbleConversationToTopMock).toHaveBeenCalledWith(
+      "workspace-1",
+      "conversation-1",
+    )
+    expect(bubbleConversationToTopMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("ChatRealtime — pendingConversationOpen bridge (item 5, D6)", () => {
+  let container: HTMLDivElement
+  let root: Root
+
+  beforeEach(() => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    vi.clearAllMocks()
+    openConversationMock.mockResolvedValue(true)
+    useWhatsappVoipCallStore.setState({
+      call: null,
+      ringingCalls: [],
+      pendingConversationOpen: null,
+    })
+    container = document.createElement("div")
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+    capturedHandlers = null
+  })
+
+  const render = () =>
+    act(() => {
+      root.render(<ChatRealtime />)
+    })
+
+  test("opens and clears a pending conversation set before mount", async () => {
+    useWhatsappVoipCallStore
+      .getState()
+      .setPendingConversationOpen("conversation-9")
+
+    await render()
+
+    expect(openConversationMock).toHaveBeenCalledWith(
+      "workspace-1",
+      "conversation-9",
+    )
+    expect(conversationIdParamMock.set).toHaveBeenCalledWith("conversation-9")
+    expect(
+      useWhatsappVoipCallStore.getState().pendingConversationOpen,
+    ).toBeNull()
+  })
+
+  test("opens and clears a pending conversation set after mount", async () => {
+    await render()
+
+    await act(async () => {
+      useWhatsappVoipCallStore
+        .getState()
+        .setPendingConversationOpen("conversation-42")
+      await Promise.resolve()
+    })
+
+    expect(openConversationMock).toHaveBeenCalledWith(
+      "workspace-1",
+      "conversation-42",
+    )
+    expect(conversationIdParamMock.set).toHaveBeenCalledWith("conversation-42")
+    expect(
+      useWhatsappVoipCallStore.getState().pendingConversationOpen,
+    ).toBeNull()
+  })
+
+  // MEDIUM 6: the URL param must never be synced for an `openConversation`
+  // that did NOT actually succeed (e.g. it waited out a concurrent bootstrap
+  // that landed on a DIFFERENT conversation, or the fetch failed) — synced
+  // eagerly (as this used to be), the URL and the real selection disagree.
+  test("does NOT sync the URL param when openConversation resolves unsuccessfully", async () => {
+    openConversationMock.mockResolvedValue(false)
+    useWhatsappVoipCallStore
+      .getState()
+      .setPendingConversationOpen("conversation-9")
+
+    await render()
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(openConversationMock).toHaveBeenCalledWith(
+      "workspace-1",
+      "conversation-9",
+    )
+    expect(conversationIdParamMock.set).not.toHaveBeenCalled()
+  })
+
+  test("does nothing while pendingConversationOpen stays null", async () => {
+    await render()
+
+    expect(openConversationMock).not.toHaveBeenCalled()
+    expect(conversationIdParamMock.set).not.toHaveBeenCalled()
+  })
+
+  test("C: a stale pending request (set long before the inbox mounted) is dropped, not reopened", async () => {
+    useWhatsappVoipCallStore.setState({
+      pendingConversationOpen: {
+        conversationId: "conversation-stale",
+        requestedAt: Date.now() - 60_000,
+      },
+    })
+
+    await render()
+
+    expect(openConversationMock).not.toHaveBeenCalled()
+    expect(conversationIdParamMock.set).not.toHaveBeenCalled()
+    expect(
+      useWhatsappVoipCallStore.getState().pendingConversationOpen,
+    ).toBeNull()
   })
 })

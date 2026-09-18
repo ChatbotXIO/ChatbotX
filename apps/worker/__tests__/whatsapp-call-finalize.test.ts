@@ -374,6 +374,7 @@ describe("finalizeCallSideEffects", () => {
       expect.objectContaining({
         whatsappCallId: "call-1",
         status: "completed",
+        outcome: "completed",
         startedAt: new Date("2026-08-21T09:58:30Z"),
         durationSeconds: 90,
         messageId: "msg-1",
@@ -393,6 +394,54 @@ describe("finalizeCallSideEffects", () => {
     // No control record for this call, so nobody is targeted with the
     // ended event even though the signaling cleanup still runs.
     expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
+  })
+
+  test("a canceled entity persists status failed with outcome canceled — read BEFORE the display collapse", async () => {
+    await finalizeCallSideEffects({
+      call,
+      entity: {
+        type: "whatsapp_call",
+        direction: "businessInitiated",
+        status: "canceled",
+      },
+      endedAt: new Date("2026-08-21T10:00:00Z"),
+    })
+
+    expect(mocks.finalizeById).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failed", outcome: "canceled" }),
+    )
+  })
+
+  test("a rejected entity persists status rejected with outcome rejected", async () => {
+    await finalizeCallSideEffects({
+      call,
+      entity: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "rejected",
+      },
+      endedAt: new Date("2026-08-21T10:00:00Z"),
+    })
+
+    expect(mocks.finalizeById).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "rejected", outcome: "rejected" }),
+    )
+  })
+
+  test("a failed (not canceled) entity persists status failed with outcome failed", async () => {
+    await finalizeCallSideEffects({
+      call,
+      entity: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "failed",
+      },
+      endedAt: new Date("2026-08-21T10:00:00Z"),
+    })
+
+    expect(mocks.finalizeById).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failed", outcome: "failed" }),
+    )
   })
 
   test("stamps answerSeconds (ring wait) = startedAt − row createdAt on the activity message", async () => {

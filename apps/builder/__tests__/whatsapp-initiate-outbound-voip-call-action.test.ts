@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 type ActionHandler = (args: {
   bindArgsParsedInputs: readonly [string]
   parsedInput: Record<string, unknown>
-  ctx: { user: { id: string } }
+  ctx: { user: { id: string }; isSupportSession: boolean }
 }) => Promise<unknown>
 
 const {
@@ -26,12 +26,15 @@ const {
   enqueueOutboundDialExpiryMock,
   endCallMock,
   isCallEndedMock,
+  claimForCallAgentMock,
+  canCallConversationMock,
 } = vi.hoisted(() => ({
   markRecordingArrangementMock: vi.fn(),
   logProviderErrorMock: vi.fn(),
   findByMock: vi.fn(),
   findInboxMock: vi.fn(),
   findContactMock: vi.fn(),
+  canCallConversationMock: vi.fn(),
   findByInboxIdForWorkspaceMock: vi.fn(),
   createOutboundAttemptMock: vi.fn(),
   attachMetaCallIdMock: vi.fn(),
@@ -44,6 +47,7 @@ const {
   enqueueOutboundDialExpiryMock: vi.fn(),
   endCallMock: vi.fn(),
   isCallEndedMock: vi.fn(),
+  claimForCallAgentMock: vi.fn(),
 }))
 
 class InProgressError extends Error {}
@@ -85,7 +89,7 @@ vi.mock("@/lib/safe-action", () => {
   chain.bindArgsSchemas = () => chain
   chain.inputSchema = () => chain
   chain.action = (handler: unknown) => handler
-  return { workspaceActionClient: chain }
+  return { callingActionClient: chain }
 })
 
 vi.mock("@/lib/log", () => ({
@@ -93,11 +97,19 @@ vi.mock("@/lib/log", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  canCallConversation: canCallConversationMock,
   whatsappCallLifecycleService: {
     markRecordingArrangement: markRecordingArrangementMock,
   },
   logProviderErrorForChannel: logProviderErrorMock,
-  conversationService: { findBy: findByMock },
+  conversationService: {
+    findBy: findByMock,
+    claimForCallAgent: claimForCallAgentMock,
+  },
+  CALL_ASSIGNMENT_TRIGGER_HANDLERS: {
+    answered: "whatsappCallAnswered",
+    dialed: "whatsappCallDialed",
+  },
   contactInboxService: { findBy: findInboxMock },
   contactService: { findBy: findContactMock },
   whatsappVoipCallService: {
@@ -121,6 +133,13 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 
 vi.mock("@chatbotx.io/database/partials", () => ({
   channelTypes: { enum: { whatsapp: "whatsapp" } },
+  resolveWhatsappCallOutcome: ({
+    status,
+    canceledByBusiness,
+  }: {
+    status: "completed" | "failed" | "rejected"
+    canceledByBusiness?: boolean
+  }) => (status === "failed" && canceledByBusiness ? "canceled" : status),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -157,9 +176,10 @@ vi.mock("next-intl/server", () => ({
 const { initiateOutboundVoipCallAction } = await import(
   "../src/features/integration-whatsapp/calling/actions/initiate-outbound-voip-call.action"
 )
+const { logger } = await import("@/lib/log")
 const action = initiateOutboundVoipCallAction as unknown as ActionHandler
 
-const ctx = { user: { id: "agent-1" } }
+const ctx = { user: { id: "agent-1" }, isSupportSession: false }
 
 const call = (input: Record<string, unknown> = {}) =>
   action({
@@ -175,6 +195,7 @@ const call = (input: Record<string, unknown> = {}) =>
 describe("initiateOutboundVoipCallAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    canCallConversationMock.mockResolvedValue(true)
     findByMock.mockResolvedValue({
       id: "conversation-1",
       contactId: "contact-1",
@@ -218,6 +239,20 @@ describe("initiateOutboundVoipCallAction", () => {
     isCallEndedMock.mockImplementation(({ status }: { status?: string }) =>
       ["completed", "failed", "rejected"].includes(status ?? ""),
     )
+    claimForCallAgentMock.mockResolvedValue([])
+  })
+
+  test("P2 item 5 (D3) / M1: returns a typed callAccessDenied outcome (never throws) for an assigned-only agent dialing a conversation assigned to someone else, before createOutboundAttempt", async () => {
+    canCallConversationMock.mockResolvedValue(false)
+
+    await expect(call()).resolves.toEqual({ outcome: "callAccessDenied" })
+
+    expect(canCallConversationMock).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      conversationId: "conversation-1",
+      userId: "agent-1",
+    })
+    expect(createOutboundAttemptMock).not.toHaveBeenCalled()
   })
 
   test("returns ineligibleNumber when the business number's country is blocked (VN)", async () => {
@@ -296,6 +331,7 @@ describe("initiateOutboundVoipCallAction", () => {
       expect.objectContaining({
         whatsappCallId: "call-1",
         status: "failed",
+        outcome: "failed",
         lastError: "outbound-setup-failed",
       }),
     )
@@ -365,6 +401,7 @@ describe("initiateOutboundVoipCallAction", () => {
       expect.objectContaining({
         whatsappCallId: "call-1",
         status: "failed",
+        outcome: "failed",
         lastError: "outbound-setup-failed",
       }),
     )
@@ -410,6 +447,12 @@ describe("initiateOutboundVoipCallAction", () => {
         workspaceId: "workspace-1",
       }),
     )
+    expect(claimForCallAgentMock).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      conversationId: "conversation-1",
+      userId: "agent-1",
+      triggerHandler: "whatsappCallDialed",
+    })
     expect(result).toEqual(
       expect.objectContaining({
         outcome: "dialing",
@@ -422,6 +465,52 @@ describe("initiateOutboundVoipCallAction", () => {
         recordingRequested: true,
       }),
     )
+  })
+
+  test("a claimForCallAgent failure is logged with `err` and does not change the dialing outcome", async () => {
+    const claimError = new Error("claim failed")
+    claimForCallAgentMock.mockRejectedValue(claimError)
+
+    const result = await call()
+
+    expect(result).toEqual(
+      expect.objectContaining({ outcome: "dialing", whatsappCallId: "call-1" }),
+    )
+    expect(logger.warn).toHaveBeenCalledWith(
+      { err: claimError, whatsappCallId: "call-1" },
+      "WhatsApp outbound dial: auto-assign failed",
+    )
+  })
+
+  test("does not auto-assign when the post-connect setup fails (call never reached dialing)", async () => {
+    attachMetaCallIdMock.mockRejectedValue(new Error("attach failed"))
+
+    const result = await call()
+
+    expect(result).toEqual({ outcome: "callFailed" })
+    expect(claimForCallAgentMock).not.toHaveBeenCalled()
+  })
+
+  // M2: the auto-assign claim runs as the LAST best-effort step, after the
+  // recording-arrangement bookkeeping, so it never delays anything the
+  // outbound dial depends on.
+  test("claims the conversation after the recording arrangement is recorded", async () => {
+    await call()
+
+    const recordingOrder =
+      markRecordingArrangementMock.mock.invocationCallOrder[0]
+    const claimOrder = claimForCallAgentMock.mock.invocationCallOrder[0]
+    expect(recordingOrder).toBeLessThan(claimOrder)
+  })
+
+  test("skips auto-assign entirely for a support session", async () => {
+    await action({
+      bindArgsParsedInputs: ["workspace-1"],
+      parsedInput: { conversationId: "conversation-1", sdpOffer: "v=0..." },
+      ctx: { user: { id: "agent-1" }, isSupportSession: true },
+    })
+
+    expect(claimForCallAgentMock).not.toHaveBeenCalled()
   })
 
   test("R2: a Username/BSUID-only contact (empty sourceId, known sourceUserId) dials via `recipient`, never `to`", async () => {
@@ -554,6 +643,7 @@ describe("initiateOutboundVoipCallAction", () => {
       expect.objectContaining({
         whatsappCallId: "call-1",
         status: "failed",
+        outcome: "failed",
         lastError: String(code),
       }),
     )

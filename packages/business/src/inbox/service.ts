@@ -12,6 +12,10 @@ import {
   type InboxDisconnectReason,
   inboxStatuses,
 } from "@chatbotx.io/database/partials"
+import {
+  type InboxChannelOption,
+  inboxRepository,
+} from "@chatbotx.io/database/repositories"
 import { inboxModel } from "@chatbotx.io/database/schema"
 import type {
   InboxModel,
@@ -97,6 +101,22 @@ class InboxService extends BaseService {
       },
       with: InboxService.withIntegrations,
     })
+  }
+
+  /**
+   * B-M1 (Fable review) — bounded id/name options for a channel-filtered
+   * select (e.g. the Calls page's inbox filter). Thin pass-through to
+   * `inboxRepository.listOptionsByWorkspaceAndChannel`: no caching here
+   * (matches `find()` above, whose own cache attempt was deliberately left
+   * disabled — nothing in this service currently invalidates an
+   * inbox-scoped cache tag on write, so adding one here would risk silently
+   * stale results instead of fixing the eager-load).
+   */
+  async listChannelOptionsByWorkspace(input: {
+    workspaceId: string
+    channel: ChannelType
+  }): Promise<InboxChannelOption[]> {
+    return await inboxRepository.listOptionsByWorkspaceAndChannel(input)
   }
 
   async find(props: { where: InboxWhere }): Promise<InboxModel | undefined> {

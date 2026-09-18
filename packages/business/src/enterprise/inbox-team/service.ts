@@ -5,6 +5,7 @@ import {
   eq,
   inArray,
 } from "@chatbotx.io/database/client"
+import { inboxTeamMemberRepository } from "@chatbotx.io/database/repositories"
 import {
   inboxTeamMemberModel,
   inboxTeamModel,
@@ -45,6 +46,20 @@ class InboxTeamService extends BaseService {
         }),
       { tags: ["inbox-teams", `inbox-teams:${workspaceId}`] },
     )
+  }
+
+  /**
+   * Bounded, workspace-scoped projection of a single team's member user
+   * ids — the P2 ring-target snapshot's team read
+   * (`whatsappVoipCallService.selectRingTargetsForCall`), only loaded when
+   * a conversation's `assignedInboxTeamId` is set. Never the whole (cached)
+   * `listByWorkspace`, which loads every team with members and users.
+   */
+  listUserIdsByTeamId(props: {
+    workspaceId: string
+    inboxTeamId: string
+  }): Promise<string[]> {
+    return inboxTeamMemberRepository.listUserIdsByTeamId(props)
   }
 
   // ─── Reads (NOT cached — write-path guard) ───────────────────────────────

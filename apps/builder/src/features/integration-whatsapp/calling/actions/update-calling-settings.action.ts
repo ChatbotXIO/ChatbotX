@@ -13,7 +13,7 @@ import { getTranslations } from "next-intl/server"
 import { integrations } from "@/integration"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { logger } from "@/lib/log"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { callingAdminActionClient } from "@/lib/safe-action"
 import { throwWhatsappApiActionError } from "../../libs/whatsapp-api-action-error"
 import { invalidateCallingSettingsCache } from "../lib/calling-settings-cache"
 import {
@@ -21,7 +21,7 @@ import {
   updateWhatsappCallingSettingsSchema,
 } from "../schemas/update-calling-settings-schema"
 
-export const updateWhatsappCallingSettingsAction = workspaceActionClient
+export const updateWhatsappCallingSettingsAction = callingAdminActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(updateWhatsappCallingSettingsSchema)
   .action(

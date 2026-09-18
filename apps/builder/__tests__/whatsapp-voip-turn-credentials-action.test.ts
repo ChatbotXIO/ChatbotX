@@ -8,20 +8,24 @@ type ActionHandler = (args: {
   ctx: { user: { id: string } }
 }) => Promise<unknown>
 
-const { findByIdMock, readControlMock, issueCredentialsMock } = vi.hoisted(
-  () => ({
-    findByIdMock: vi.fn(),
-    readControlMock: vi.fn(),
-    issueCredentialsMock: vi.fn(),
-  }),
-)
+const {
+  findByIdMock,
+  readControlMock,
+  issueCredentialsMock,
+  canCallConversationMock,
+} = vi.hoisted(() => ({
+  findByIdMock: vi.fn(),
+  readControlMock: vi.fn(),
+  issueCredentialsMock: vi.fn(),
+  canCallConversationMock: vi.fn(),
+}))
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
   chain.bindArgsSchemas = () => chain
   chain.inputSchema = () => chain
   chain.action = (handler: unknown) => handler
-  return { workspaceActionClient: chain }
+  return { callingActionClient: chain }
 })
 
 const mockedEnv: { TURN_URL?: string; TURN_STATIC_SECRET?: string } = {
@@ -35,12 +39,25 @@ vi.mock("@/env", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  canCallConversation: canCallConversationMock,
   whatsappVoipCallService: { readControl: readControlMock },
   voipTurnCredentialService: { issueCredentials: issueCredentialsMock },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
-  ChatbotXException: class ChatbotXException extends Error {},
+  ChatbotXException: class ChatbotXException extends Error {
+    code = "systemError"
+    httpStatusCode = 400
+    constructor(message: string, code?: string, httpStatusCode?: number) {
+      super(message)
+      if (code) {
+        this.code = code
+      }
+      if (httpStatusCode) {
+        this.httpStatusCode = httpStatusCode
+      }
+    }
+  },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -72,6 +89,7 @@ describe("getWhatsappVoipTurnCredentialsAction", () => {
       id: "call-1",
       workspaceId: "workspace-1",
       inboxId: "inbox-1",
+      conversationId: "conversation-1",
       wacid: "wacid-1",
     })
     // Ring-all default: the call is still UNCLAIMED while agents fetch ICE.
@@ -79,6 +97,7 @@ describe("getWhatsappVoipTurnCredentialsAction", () => {
       reservedUserId: "",
       phase: "reserved",
     })
+    canCallConversationMock.mockResolvedValue(true)
     issueCredentialsMock.mockResolvedValue({
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
@@ -119,21 +138,82 @@ describe("getWhatsappVoipTurnCredentialsAction", () => {
     expect(issueCredentialsMock).not.toHaveBeenCalled()
   })
 
-  test("allows any rung agent while the call is still unclaimed (ring-all)", async () => {
+  test("allows any D3-eligible rung agent while the call is still unclaimed (ring-all)", async () => {
     // Default control is unclaimed; a not-yet-winner still gets ICE to prepare.
     await expect(call("agent-2")).resolves.toBeDefined()
     expect(issueCredentialsMock).toHaveBeenCalledWith(
       expect.objectContaining({ userId: "agent-2", wacid: "wacid-1" }),
     )
+    expect(canCallConversationMock).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      conversationId: "conversation-1",
+      userId: "agent-2",
+    })
   })
 
-  test("allows the agent who has already claimed the call", async () => {
+  test("P2 item 5 / M1: refuses an ineligible member for a still-unclaimed call with the dedicated call-access-denied message (not voipNotReservedAgent)", async () => {
+    canCallConversationMock.mockResolvedValue(false)
+
+    await expect(call("agent-2")).rejects.toThrow(
+      "whatsapp.calls.errors.voipCallAccessDenied",
+    )
+    expect(issueCredentialsMock).not.toHaveBeenCalled()
+  })
+
+  test("P2 review leftover (b): the access-denied throw carries CALL_ACCESS_DENIED_CODE and a 403 status, like assert-call-access.ts", async () => {
+    canCallConversationMock.mockResolvedValue(false)
+
+    let thrown: { code?: string; httpStatusCode?: number } | undefined
+    try {
+      await call("agent-2")
+    } catch (error) {
+      thrown = error as { code?: string; httpStatusCode?: number }
+    }
+
+    expect(thrown?.code).toBe("callAccessDenied")
+    expect(thrown?.httpStatusCode).toBe(403)
+  })
+
+  test("allows the agent who has already claimed the call while still D3-eligible", async () => {
     readControlMock.mockResolvedValue({
       reservedUserId: "agent-1",
       phase: "answering",
     })
 
     await expect(call("agent-1")).resolves.toBeDefined()
+    expect(canCallConversationMock).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      conversationId: "conversation-1",
+      userId: "agent-1",
+    })
+  })
+
+  test("refuses the agent who claimed the call but was then reassigned away from an onlyAssignedContacts conversation", async () => {
+    readControlMock.mockResolvedValue({
+      reservedUserId: "agent-1",
+      phase: "answering",
+    })
+    canCallConversationMock.mockResolvedValue(false)
+
+    await expect(call("agent-1")).rejects.toThrow(
+      "whatsapp.calls.errors.voipCallAccessDenied",
+    )
+    expect(issueCredentialsMock).not.toHaveBeenCalled()
+  })
+
+  test("allows a superAdmin/contacts-scope agent who has claimed the call (D3 always permits them)", async () => {
+    readControlMock.mockResolvedValue({
+      reservedUserId: "agent-1",
+      phase: "answering",
+    })
+    canCallConversationMock.mockResolvedValue(true)
+
+    await expect(call("agent-1")).resolves.toBeDefined()
+    expect(canCallConversationMock).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      conversationId: "conversation-1",
+      userId: "agent-1",
+    })
   })
 
   test("issues credentials scoped to the caller and the call", async () => {

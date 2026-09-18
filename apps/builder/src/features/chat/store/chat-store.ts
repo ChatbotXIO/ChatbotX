@@ -73,6 +73,32 @@ export type ChatActions = {
   // Conversation actions
   prependConversation: (newConversation: ListConversationItemResource) => void
   initActiveConversationFromUrl: (workspaceId: string) => Promise<void>
+  /**
+   * Opens a conversation by id — selects it if already loaded, otherwise
+   * fetches and prepends it first. Generalizes
+   * `initActiveConversationFromUrl` (URL-driven, only on an empty
+   * selection) for an explicit navigation to a KNOWN id regardless of
+   * current selection, e.g. `WhatsappCallPanel`'s "Go to conversation"
+   * control and the D6 navigate-on-answer flow while already on the inbox
+   * (see `chat-realtime.tsx`'s `pendingConversationOpen` bridge). A no-op
+   * while `conversationId` is already the active selection. If another
+   * bootstrap (this action, or `initActiveConversationFromUrl`) is still in
+   * flight, WAITS for it instead of no-oping — see MEDIUM 6 in the P4
+   * review: a caller that already synced the URL's `conversationId` param
+   * before calling this must not be left with the URL and the actual
+   * selection disagreeing.
+   */
+  /**
+   * Resolves `true` once `conversationId` is genuinely the active
+   * selection, `false` otherwise (the fetch failed, or the target changed
+   * underneath a wait) — lets a caller that must sync something ELSE (e.g.
+   * the URL's `conversationId` param) do so only on real success, instead
+   * of assuming a resolved promise means it worked.
+   */
+  openConversation: (
+    workspaceId: string,
+    conversationId: string,
+  ) => Promise<boolean>
   loadMoreConversations: (
     workspaceId: string,
     options?: LoadMoreConversationsOptions,
@@ -172,6 +198,45 @@ const hasConversationIdInUrl = () =>
     typeof window === "undefined" ? "" : window.location.search,
   ).get("conversationId")
 
+/**
+ * Shared core of `initActiveConversationFromUrl` and `openConversation`:
+ * selects `conversationId` if it is already loaded client-side, otherwise
+ * fetches and prepends it first. Callers own their own guard (which flag to
+ * check, whether to wait for the first conversation page) — this only ever
+ * touches `conversations`/`activeConversationId`. A fetch failure is logged
+ * and swallowed: the URL/explicit-open request itself must never throw.
+ */
+const loadAndSelectConversation = async (
+  get: () => ChatStore,
+  workspaceId: string,
+  conversationId: string,
+): Promise<void> => {
+  const { conversations, prependConversation, setActiveConversationId } = get()
+  const loadedConversation = conversations.find(
+    (conversation) => conversation.id === conversationId,
+  )
+  if (loadedConversation) {
+    prependConversation(loadedConversation)
+    setActiveConversationId(conversationId)
+    return
+  }
+
+  try {
+    const response =
+      await client.conversationsAPI.findConversationAuthenticatedAPI({
+        workspaceId,
+        id: conversationId,
+      })
+    prependConversation(response.data)
+    setActiveConversationId(conversationId)
+  } catch (error) {
+    logger.warn(
+      { err: error, conversationId },
+      "loadAndSelectConversation: failed to load conversation",
+    )
+  }
+}
+
 const shouldAutoSelectConversation = ({
   activeConversationId,
   hasUrlConversationId,
@@ -184,6 +249,14 @@ const shouldAutoSelectConversation = ({
   !(activeConversationId || hasUrlConversationId) && conversations.length > 0
 
 export const createChatStore = () => {
+  // The `conversationId` of the most recently issued `openConversation` call
+  // — lets a call that just finished waiting out an in-flight bootstrap tell
+  // whether a NEWER `openConversation` call superseded it while it waited.
+  // A closure variable rather than `ChatState` (review B2): it is read and
+  // written exclusively inside `openConversation` below, is never rendered
+  // by any consumer, and does not belong on the public store shape.
+  let pendingOpenConversationId: string | null = null
+
   return createStore<ChatStore>((set, get, store) => ({
     // default conversation state
     isFirstLoadConversation: true,
@@ -221,12 +294,7 @@ export const createChatStore = () => {
         return
       }
 
-      const {
-        activeConversationId,
-        isBootstrappingUrlConversation,
-        prependConversation,
-        setActiveConversationId,
-      } = get()
+      const { activeConversationId, isBootstrappingUrlConversation } = get()
       if (activeConversationId || isBootstrappingUrlConversation) {
         return
       }
@@ -247,28 +315,59 @@ export const createChatStore = () => {
           })
         }
 
-        const { conversations: latestConversations } = get()
-        const loadedConversation = latestConversations.find(
-          (conversation) => conversation.id === conversationId,
-        )
-        if (loadedConversation) {
-          prependConversation(loadedConversation)
-          setActiveConversationId(conversationId)
-          return
-        }
-
-        const response =
-          await client.conversationsAPI.findConversationAuthenticatedAPI({
-            workspaceId,
-            id: conversationId,
-          })
-        prependConversation(response.data)
-        setActiveConversationId(conversationId)
-      } catch {
-        //
+        await loadAndSelectConversation(get, workspaceId, conversationId)
       } finally {
         set({ isBootstrappingUrlConversation: false })
       }
+    },
+
+    openConversation: async (workspaceId: string, conversationId: string) => {
+      if (get().activeConversationId === conversationId) {
+        return true
+      }
+
+      // Claims this call as the most recently requested `openConversation` —
+      // checked again below once any wait is over, so that if a NEWER call
+      // for a different id comes in while this one is waiting, this one
+      // steps aside (last requested wins) instead of both racing to load.
+      pendingOpenConversationId = conversationId
+
+      // A concurrent bootstrap (this action, or `initActiveConversationFromUrl`)
+      // is already in flight — WAIT it out instead of silently no-oping.
+      // Callers that already synced the URL's `conversationId` param before
+      // calling this (`chat-realtime.tsx`'s `pendingConversationOpen`
+      // bridge) would otherwise be left with the URL and the actual
+      // selection disagreeing. Same `store.subscribe` wait pattern
+      // `initActiveConversationFromUrl` uses for its own precondition.
+      if (get().isBootstrappingUrlConversation) {
+        await new Promise<void>((resolve) => {
+          const unsubscribe = store.subscribe((state) => {
+            if (!state.isBootstrappingUrlConversation) {
+              unsubscribe()
+              resolve()
+            }
+          })
+        })
+        // The bootstrap we waited out may already have selected this exact
+        // conversation (e.g. it WAS the URL's `conversationId`).
+        if (get().activeConversationId === conversationId) {
+          return true
+        }
+        // A newer `openConversation` call (for a different id) was issued
+        // while this one waited — it now owns the load; this one resolves
+        // false rather than both proceeding and racing each other.
+        if (pendingOpenConversationId !== conversationId) {
+          return false
+        }
+      }
+
+      set({ isBootstrappingUrlConversation: true })
+      try {
+        await loadAndSelectConversation(get, workspaceId, conversationId)
+      } finally {
+        set({ isBootstrappingUrlConversation: false })
+      }
+      return get().activeConversationId === conversationId
     },
 
     loadMoreConversations: async (

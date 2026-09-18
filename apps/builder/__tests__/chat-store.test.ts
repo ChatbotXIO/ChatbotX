@@ -177,6 +177,142 @@ describe("chat store conversation updates", () => {
     expect(store.getState().isBootstrappingUrlConversation).toBe(false)
   })
 
+  test("openConversation selects an already-loaded conversation without fetching it", async () => {
+    const store = createChatStore()
+    const first = makeConversation(
+      "conv-first",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const target = makeConversation(
+      "conv-target",
+      new Date("2026-01-01T01:00:00Z"),
+    )
+    store.setState({ conversations: [first, target] as never })
+
+    await store.getState().openConversation("ws-1", "conv-target")
+
+    expect(mockFindConversationAuthenticatedAPI).not.toHaveBeenCalled()
+    expect(store.getState().activeConversationId).toBe("conv-target")
+    expect(store.getState().conversations).toEqual([target, first])
+    expect(store.getState().isBootstrappingUrlConversation).toBe(false)
+  })
+
+  test("openConversation fetches, prepends, and selects a missing conversation", async () => {
+    const store = createChatStore()
+    const existing = makeConversation(
+      "conv-existing",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const target = makeConversation(
+      "conv-target",
+      new Date("2026-01-02T00:00:00Z"),
+    )
+    store.setState({ conversations: [existing] as never })
+    mockFindConversationAuthenticatedAPI.mockResolvedValue({ data: target })
+
+    await store.getState().openConversation("ws-1", "conv-target")
+
+    expect(mockFindConversationAuthenticatedAPI).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "conv-target",
+    })
+    expect(store.getState().conversations).toEqual([target, existing])
+    expect(store.getState().activeConversationId).toBe("conv-target")
+    expect(store.getState().isBootstrappingUrlConversation).toBe(false)
+  })
+
+  // MEDIUM 6 (P4 review): `openConversation` used to silently no-op while
+  // `isBootstrappingUrlConversation` was true (set by a concurrent
+  // `initActiveConversationFromUrl`) — `chat-realtime.tsx`'s
+  // `pendingConversationOpen` bridge had ALREADY set the `conversationId`
+  // URL param by the time it called this, so the no-op left the URL and the
+  // actual selection disagreeing. It must wait the bootstrap out (the same
+  // `store.subscribe` pattern `initActiveConversationFromUrl` itself uses)
+  // and then proceed, not give up.
+  test("openConversation waits out an in-flight bootstrap instead of no-oping", async () => {
+    const store = createChatStore()
+    const target = makeConversation(
+      "conv-target",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    store.setState({ isBootstrappingUrlConversation: true })
+
+    const openPromise = store.getState().openConversation("ws-1", "conv-target")
+
+    // Still bootstrapping — must not have proceeded yet.
+    expect(mockFindConversationAuthenticatedAPI).not.toHaveBeenCalled()
+
+    mockFindConversationAuthenticatedAPI.mockResolvedValue({ data: target })
+    store.setState({ isBootstrappingUrlConversation: false })
+
+    await openPromise
+
+    expect(mockFindConversationAuthenticatedAPI).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "conv-target",
+    })
+    expect(store.getState().activeConversationId).toBe("conv-target")
+    expect(store.getState().isBootstrappingUrlConversation).toBe(false)
+  })
+
+  // LOW (P4 review, follow-up 4): two `openConversation` calls queued behind
+  // the SAME in-flight bootstrap used to both proceed to load once it
+  // cleared, racing each other for whichever finished last. The last
+  // REQUESTED call must own the load; an earlier, now-superseded call must
+  // resolve `false` without fetching anything.
+  test("openConversation resolves false for an earlier-queued call once a newer one supersedes it", async () => {
+    const store = createChatStore()
+    const convA = makeConversation("conv-a", new Date("2026-01-01T00:00:00Z"))
+    const convB = makeConversation("conv-b", new Date("2026-01-01T01:00:00Z"))
+    mockFindConversationAuthenticatedAPI.mockImplementation(
+      async ({ id }: { id: string }) => ({
+        data: id === "conv-a" ? convA : convB,
+      }),
+    )
+    store.setState({ isBootstrappingUrlConversation: true })
+
+    const openA = store.getState().openConversation("ws-1", "conv-a")
+    const openB = store.getState().openConversation("ws-1", "conv-b")
+
+    store.setState({ isBootstrappingUrlConversation: false })
+
+    const [resultA, resultB] = await Promise.all([openA, openB])
+
+    expect(resultA).toBe(false)
+    expect(resultB).toBe(true)
+    expect(mockFindConversationAuthenticatedAPI).not.toHaveBeenCalledWith(
+      expect.objectContaining({ id: "conv-a" }),
+    )
+    expect(mockFindConversationAuthenticatedAPI).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "conv-b",
+    })
+    expect(store.getState().activeConversationId).toBe("conv-b")
+  })
+
+  test("openConversation is a no-op when the conversation is already active", async () => {
+    const store = createChatStore()
+    store.setState({ activeConversationId: "conv-target" })
+
+    await store.getState().openConversation("ws-1", "conv-target")
+
+    expect(mockFindConversationAuthenticatedAPI).not.toHaveBeenCalled()
+  })
+
+  test("openConversation logs and leaves selection unchanged when the fetch fails", async () => {
+    const store = createChatStore()
+    mockFindConversationAuthenticatedAPI.mockRejectedValue(new Error("missing"))
+
+    await store.getState().openConversation("ws-1", "conv-missing")
+
+    expect(store.getState().activeConversationId).toBeNull()
+    expect(store.getState().isBootstrappingUrlConversation).toBe(false)
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      expect.objectContaining({ conversationId: "conv-missing" }),
+      expect.any(String),
+    )
+  })
+
   test("initActiveConversationFromUrl is a no-op without a conversation id in the URL", async () => {
     const store = createChatStore()
 
