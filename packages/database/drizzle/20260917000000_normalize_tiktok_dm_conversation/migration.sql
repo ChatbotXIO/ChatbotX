@@ -9,6 +9,19 @@
 -- `additionalAttributes.channelConversationId`, read back through
 -- `resolveChannelConversationId` (packages/database/src/partials/channel.ts).
 
+-- `Conversation` carries no inbox or channel column — only `contactId` and
+-- `sourceId` — so "is this a TikTok conversation?" can only be asked of the
+-- contact. A contact that also has a Meta inbox owns comment conversations
+-- keyed by a Facebook/Instagram post id, and those are indistinguishable here
+-- from a TikTok DM. Both steps below therefore restrict themselves to contacts
+-- whose inboxes are ALL TikTok; a cross-channel contact is left untouched and
+-- keeps sending via the `sourceId` fallback in `resolveChannelConversationId`.
+--
+-- Without that restriction step 2 nulls the `sourceId` of a Meta comment thread
+-- (losing the post anchor irreversibly), and a contact holding two such threads
+-- has both rows nulled from the same snapshot — violating
+-- `Conversation_contactId_dm_key` and aborting the migration part-way.
+
 -- Step 1 — additive and always safe: copy the id onto additionalAttributes.
 -- Runs for every TikTok conversation that still carries one, including the
 -- rows step 2 deliberately leaves alone, so the outbound send path can address
@@ -24,6 +37,12 @@ WHERE c."sourceId" IS NOT NULL
     FROM "ContactInbox" ci
     WHERE ci."contactId" = c."contactId"
       AND ci."channel" = 'tiktok'
+  )
+  AND NOT EXISTS (
+    SELECT 1
+    FROM "ContactInbox" ci2
+    WHERE ci2."contactId" = c."contactId"
+      AND ci2."channel" <> 'tiktok'
   );
 --> statement-breakpoint
 
@@ -46,6 +65,12 @@ WHERE c."sourceId" IS NOT NULL
     FROM "ContactInbox" ci
     WHERE ci."contactId" = c."contactId"
       AND ci."channel" = 'tiktok'
+  )
+  AND NOT EXISTS (
+    SELECT 1
+    FROM "ContactInbox" ci2
+    WHERE ci2."contactId" = c."contactId"
+      AND ci2."channel" <> 'tiktok'
   )
   AND NOT EXISTS (
     SELECT 1
