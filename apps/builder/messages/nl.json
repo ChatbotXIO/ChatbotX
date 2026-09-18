@@ -4258,7 +4258,8 @@
     "afterText": "Na"
   },
   "tools": {
-    "title": "Hulpmiddelen"
+    "title": "Hulpmiddelen",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",

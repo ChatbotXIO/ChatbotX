@@ -4985,7 +4985,8 @@
     "title": "TikTok"
   },
   "tools": {
-    "title": "Verktyg"
+    "title": "Verktyg",
+    "beta": "Beta"
   },
   "trigger": {
     "actions": {

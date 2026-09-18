@@ -4985,7 +4985,8 @@
     "title": "TikTok"
   },
   "tools": {
-    "title": "工具"
+    "title": "工具",
+    "beta": "Beta"
   },
   "trigger": {
     "actions": {

@@ -4291,7 +4291,8 @@
     "afterText": "之後"
   },
   "tools": {
-    "title": "工具"
+    "title": "工具",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",

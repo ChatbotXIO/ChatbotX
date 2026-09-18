@@ -4258,7 +4258,8 @@
     "afterText": "După"
   },
   "tools": {
-    "title": "Instrumente"
+    "title": "Instrumente",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",

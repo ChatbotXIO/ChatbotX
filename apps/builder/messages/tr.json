@@ -4258,7 +4258,8 @@
     "afterText": "Sonra"
   },
   "tools": {
-    "title": "Araçlar"
+    "title": "Araçlar",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",

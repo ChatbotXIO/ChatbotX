@@ -4258,7 +4258,8 @@
     "afterText": "Nach"
   },
   "tools": {
-    "title": "Tools"
+    "title": "Tools",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",

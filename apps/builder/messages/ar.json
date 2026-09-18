@@ -4258,7 +4258,8 @@
     "afterText": "بعد"
   },
   "tools": {
-    "title": "الأدوات"
+    "title": "الأدوات",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",

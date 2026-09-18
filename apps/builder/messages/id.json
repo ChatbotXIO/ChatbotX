@@ -4258,7 +4258,8 @@
     "afterText": "Setelah"
   },
   "tools": {
-    "title": "Alat"
+    "title": "Alat",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",

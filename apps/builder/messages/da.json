@@ -4258,7 +4258,8 @@
     "afterText": "Efter"
   },
   "tools": {
-    "title": "Værktøjer"
+    "title": "Værktøjer",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",

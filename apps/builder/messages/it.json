@@ -4258,7 +4258,8 @@
     "afterText": "Dopo"
   },
   "tools": {
-    "title": "Strumenti"
+    "title": "Strumenti",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",

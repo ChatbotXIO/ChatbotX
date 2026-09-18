@@ -2355,7 +2355,8 @@
     "afterText": "אחרי"
   },
   "tools": {
-    "title": "כלים"
+    "title": "כלים",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",

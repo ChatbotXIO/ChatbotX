@@ -4258,7 +4258,8 @@
     "afterText": "Jälkeen"
   },
   "tools": {
-    "title": "Työkalut"
+    "title": "Työkalut",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",

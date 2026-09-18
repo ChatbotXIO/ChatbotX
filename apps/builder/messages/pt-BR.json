@@ -4151,7 +4151,8 @@
     "afterText": "Depois"
   },
   "tools": {
-    "title": "Ferramentas"
+    "title": "Ferramentas",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
