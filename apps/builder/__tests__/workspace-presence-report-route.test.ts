@@ -53,14 +53,30 @@ async function signPresenceTokenWithNoPurposeClaim(input: {
   workspaceId: string
   userIds: string[]
 }): Promise<string> {
-  const { SignJWT } = await import("jose")
-  const bodyHash = await hashPresenceUserIds(input.userIds)
-  return await new SignJWT({ bodyHash })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setAudience(`workspace:${input.workspaceId}`)
-    .setExpirationTime("60s")
-    .sign(new TextEncoder().encode(SECRET))
+  // Signed by hand with Web Crypto rather than `signRealtimeToken`, which
+  // always stamps `purpose` — the one claim this token must lack.
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  const encode = (value: unknown) =>
+    Buffer.from(JSON.stringify(value)).toString("base64url")
+  const signingInput = `${encode({ alg: "HS256" })}.${encode({
+    bodyHash: await hashPresenceUserIds(input.userIds),
+    aud: `workspace:${input.workspaceId}`,
+    iat: nowSeconds,
+    exp: nowSeconds + 60,
+  })}`
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  )
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(signingInput),
+  )
+  return `${signingInput}.${Buffer.from(signature).toString("base64url")}`
 }
 
 function makeRequest(

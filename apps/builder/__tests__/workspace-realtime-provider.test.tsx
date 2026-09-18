@@ -49,9 +49,6 @@ const { WorkspaceRealtimeProvider, useWorkspaceRealtimeContext } = await import(
 const { useWorkspaceRealtimeEvents } = await import(
   "@/features/realtime/use-workspace-realtime-events"
 )
-const { useWorkspaceRealtimeStatus } = await import(
-  "@/features/realtime/use-workspace-realtime-status"
-)
 
 function emit(eventType: string, data: unknown) {
   captured?.onMessage?.({ data: JSON.stringify({ eventType, data }) })
@@ -145,7 +142,8 @@ describe("WorkspaceRealtimeProvider", () => {
     }
     const statuses: { status: string; reconnectCount: number }[] = []
     function StatusReader() {
-      statuses.push(useWorkspaceRealtimeStatus())
+      const { status, reconnectCount } = useWorkspaceRealtimeContext()
+      statuses.push({ status, reconnectCount })
       return null
     }
     await render(
@@ -271,7 +269,8 @@ describe("WorkspaceRealtimeProvider", () => {
   test("reconnectCount only increments after a previous open", async () => {
     const statuses: { status: string; reconnectCount: number }[] = []
     function StatusReader() {
-      statuses.push(useWorkspaceRealtimeStatus())
+      const { status, reconnectCount } = useWorkspaceRealtimeContext()
+      statuses.push({ status, reconnectCount })
       return null
     }
     await render(<StatusReader />)
@@ -474,7 +473,8 @@ describe("WorkspaceRealtimeProvider", () => {
     test("a single onOpen right after a Strict Mode mount is not reported as a reconnect", async () => {
       const statuses: { status: string; reconnectCount: number }[] = []
       function StatusReader() {
-        statuses.push(useWorkspaceRealtimeStatus())
+        const { status, reconnectCount } = useWorkspaceRealtimeContext()
+        statuses.push({ status, reconnectCount })
         return null
       }
       await renderStrict(<StatusReader />)

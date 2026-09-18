@@ -510,6 +510,42 @@ const formatTerminateErrors = (
     .join("; ")
 }
 
+type TerminalStatusFacts = {
+  priorStatus: WhatsappCallModel["status"] | undefined
+  priorLastError: WhatsappCallModel["lastError"] | undefined
+  wasAnswered: boolean
+}
+
+type TerminalStatusRule = {
+  status: MessageWhatsappCallEntity["status"]
+  matches: (facts: TerminalStatusFacts) => boolean
+}
+
+/**
+ * How a terminated call is labelled, first match wins; a call matching none
+ * of them never connected and is `failed`. Order is the whole point — each
+ * rule outranks the ones below it.
+ */
+const TERMINAL_STATUS_RULES: readonly TerminalStatusRule[] = [
+  // A REJECTED status webhook already finalized this call as declined; the
+  // trailing terminate (always COMPLETED on Meta's side) must never upgrade
+  // it back to "completed" — that is what made "Declined voice call"
+  // silently turn into an "Audio call" card.
+  {
+    status: "rejected",
+    matches: ({ priorStatus }) => priorStatus === "rejected",
+  },
+  // The agent hung up an outbound call before the customer answered
+  // (`end-voip-call-as-agent` stamped this marker) — a business cancel, not a
+  // customer "no answer".
+  {
+    status: "canceled",
+    matches: ({ wasAnswered, priorLastError }) =>
+      !wasAnswered && priorLastError === CALL_CANCELED_BY_BUSINESS_LAST_ERROR,
+  },
+  { status: "completed", matches: ({ wasAnswered }) => wasAnswered },
+]
+
 const resolveTerminalEntity = (
   event: Extract<CallEvent, { kind: "terminate" }>,
   priorStatus: WhatsappCallModel["status"] | undefined,
@@ -541,26 +577,10 @@ const resolveTerminalEntity = (
     priorStatus === "accepted" || priorStatus === "completed"
   const wasAnswered = metaReportsAnswered || rowReportsAnswered
 
-  let status: MessageWhatsappCallEntity["status"]
-  if (priorStatus === "rejected") {
-    // A REJECTED status webhook already finalized this call as declined; the
-    // trailing terminate (always COMPLETED on Meta's side) must never upgrade
-    // it back to "completed" — that is what made "Declined voice call"
-    // silently turn into an "Audio call" card.
-    status = "rejected"
-  } else if (
-    !wasAnswered &&
-    priorLastError === CALL_CANCELED_BY_BUSINESS_LAST_ERROR
-  ) {
-    // The agent hung up an outbound call before the customer answered
-    // (`end-voip-call-as-agent` stamped this marker) — a business cancel, not
-    // a customer "no answer".
-    status = "canceled"
-  } else if (wasAnswered) {
-    status = "completed"
-  } else {
-    status = "failed"
-  }
+  const status =
+    TERMINAL_STATUS_RULES.find((rule) =>
+      rule.matches({ priorStatus, priorLastError, wasAnswered }),
+    )?.status ?? "failed"
 
   return {
     type: "whatsapp_call",
