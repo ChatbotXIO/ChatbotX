@@ -10,6 +10,63 @@ const { MessengerTemplatePreview } = await import(
   "@/features/integration-messenger/message-templates/components/template-preview"
 )
 
+describe("MessengerTemplatePreview — URL button suffix", () => {
+  let container: HTMLDivElement
+  let root: Root
+
+  beforeEach(() => {
+    container = document.createElement("div")
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+  })
+
+  const renderUrlButton = (url: string, suffix?: string) => {
+    act(() => {
+      root.render(
+        <MessengerTemplatePreview
+          bodyParams={[]}
+          buttonParams={
+            suffix === undefined
+              ? []
+              : [{ sub_type: "url", index: 0, text: suffix }]
+          }
+          components={[
+            {
+              type: "BUTTONS",
+              buttons: [{ type: "URL", text: "Track Order", url }],
+            },
+          ]}
+          headerParams={[]}
+        />,
+      )
+    })
+    return container.textContent
+  }
+
+  test("fills a positional {{1}} suffix", () => {
+    expect(renderUrlButton("https://x.test/orders/{{1}}", "1234")).toContain(
+      "https://x.test/orders/1234",
+    )
+  })
+
+  test("fills a named {{url_suffix}} suffix (NAMED templates)", () => {
+    expect(
+      renderUrlButton("https://x.test/orders/{{url_suffix}}", "1234"),
+    ).toContain("https://x.test/orders/1234")
+  })
+
+  test("shows a static URL unchanged", () => {
+    expect(renderUrlButton("https://x.test/jobs/")).toContain(
+      "https://x.test/jobs/",
+    )
+  })
+})
+
 describe("MessengerTemplatePreview — IMAGE header", () => {
   let container: HTMLDivElement
   let root: Root

@@ -182,6 +182,23 @@ describe("extractMessengerTemplateParams", () => {
       ])
     })
 
+    // Meta's NAMED templates keep a named URL suffix ({{url_suffix}}); the
+    // send-time URL parameter is still just the suffix value.
+    test("NAMED URL button with {{url_suffix}} — suffix left empty to fill", () => {
+      const component: MessengerTemplateComponent = {
+        type: "BUTTONS",
+        buttons: [
+          {
+            type: "URL",
+            text: "Track Order",
+            url: "http://www.example.com/orders/{{url_suffix}}",
+          },
+        ],
+      }
+      const result = extractMessengerTemplateParams([component], "NAMED")
+      expect(result.button).toEqual([{ sub_type: "url", index: 0, text: "" }])
+    })
+
     test("POSTBACK with fixed payload (no {{) — not added", () => {
       const component: MessengerTemplateComponent = {
         type: "BUTTONS",
@@ -381,6 +398,37 @@ describe("extractMessengerParameterInfos", () => {
           buttonSubType: "url",
         },
       ])
+    })
+
+    test("NAMED URL button with {{url_suffix}} → paramName is the variable name", () => {
+      const component: MessengerTemplateComponent = {
+        type: "BUTTONS",
+        buttons: [
+          {
+            type: "URL",
+            text: "Track Order",
+            url: "http://www.example.com/orders/{{url_suffix}}",
+          },
+        ],
+      }
+      const result = extractMessengerParameterInfos([component], "NAMED")
+      expect(result).toEqual([
+        {
+          type: "button",
+          index: 0,
+          paramName: "url_suffix",
+          buttonIndex: 0,
+          buttonSubType: "url",
+        },
+      ])
+    })
+
+    test("static URL button → no ParameterInfo (nothing for the user to fill)", () => {
+      const component: MessengerTemplateComponent = {
+        type: "BUTTONS",
+        buttons: [{ type: "URL", text: "Go", url: "https://x.com/jobs/" }],
+      }
+      expect(extractMessengerParameterInfos([component], "NAMED")).toEqual([])
     })
 
     test("POSTBACK with fixed payload (no {{) → empty result", () => {

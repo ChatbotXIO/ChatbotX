@@ -20,6 +20,9 @@ type MessengerTemplatePreviewProps = {
 }
 
 const NAMED_PARAMETER_PATTERN = /\{\{[a-zA-Z_]+\}\}/
+// A URL button's suffix placeholder: positional ({{1}}) or, in NAMED
+// templates, named ({{url_suffix}}).
+const URL_SUFFIX_PATTERN = /\{\{(\d+|[a-zA-Z_]+)\}\}/
 
 function renderTemplateText(
   templateText: string,
@@ -195,8 +198,8 @@ export function MessengerTemplatePreview({
                 if (buttonType === "URL") {
                   detail = button.url ?? ""
                   const value = buttonParam?.text
-                  if (detail.includes("{{1}}") && value) {
-                    detail = detail.replace("{{1}}", value)
+                  if (value && URL_SUFFIX_PATTERN.test(detail)) {
+                    detail = detail.replace(URL_SUFFIX_PATTERN, value)
                   } else if (!detail && value) {
                     detail = value
                   }
