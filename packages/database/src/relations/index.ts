@@ -139,6 +139,8 @@ import { userPersistentMenuRelations } from "./user-persistent-menu"
 import { webhookRelations } from "./webhook"
 import { webhookExecutionRelations } from "./webhook-execution"
 import { whatsappBusinessAccountRelations } from "./whatsapp-business-account"
+import { whatsappCallRelations } from "./whatsapp-call"
+import { whatsappCallPermissionRelations } from "./whatsapp-call-permission"
 import { whatsappFlowRelations } from "./whatsapp-flow"
 import { whatsappMessageTemplateRelations } from "./whatsapp-message-template"
 import { whatsappSignupSessionRelations } from "./whatsapp-signup-session"
@@ -217,6 +219,8 @@ export const relations = {
   ...auditLogRelations,
   ...sessionRelations,
   ...spreadsheetRelations,
+  ...whatsappCallRelations,
+  ...whatsappCallPermissionRelations,
   ...whatsappFlowRelations,
   ...whatsappBusinessAccountRelations,
   ...integrationWhatsappRelations,

@@ -3,12 +3,15 @@ import type { AdsConversionJobData } from "@chatbotx.io/worker-config"
 import { describe, expect, test, vi } from "vitest"
 
 // This test boots the real `src/integration/worker.ts` module (it starts
-// itself on import) to assert the TRUE single-queue merge: the integration
-// worker PROCESS boots exactly one BullMQ `Worker`, on the `integration`
-// queue, and the 4 ads-conversion job types route through that worker's
-// switch to the `dispatchAdsConversionJob` sub-registry — there is no
-// second Worker/queue. Every import worker.ts pulls in is mocked below so
-// this stays a fast, isolated unit test.
+// itself on import) to assert the integration worker PROCESS boots exactly
+// three BullMQ `Worker`s: the shared `integration` queue (every job type
+// except call transcription and VoIP signaling routes through its switch to
+// the right handler, including the 4 ads-conversion types via
+// `dispatchAdsConversionJob`), a second, rate-limited `Worker` on the
+// dedicated `callTranscription` queue, and a third `Worker` on the
+// dedicated `whatsappVoipSignaling` queue — no fourth Worker/queue.
+// Every import worker.ts pulls in is mocked below so this stays a fast,
+// isolated unit test.
 
 type CapturedWorker = {
   queueName: unknown
@@ -77,11 +80,14 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     evaluateConversionTrigger: "evaluateConversionTrigger",
     sendConversionEvent: "sendConversionEvent",
     syncRetargetAudience: "syncRetargetAudience",
+    whatsappCallEvent: "whatsappCallEvent",
   },
   integrationQueue: { add: vi.fn() },
   queueNames: {
     enum: {
       integration: "integration",
+      callTranscription: "callTranscription",
+      whatsappVoipSignaling: "whatsappVoipSignaling",
     },
   },
 }))
@@ -92,6 +98,9 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: { ensureActive: vi.fn() },
+  withBlockedOwnerGuard: vi.fn(
+    async (_workspaceId: unknown, fn: () => Promise<unknown>) => await fn(),
+  ),
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({
@@ -107,6 +116,7 @@ vi.mock("../src/env", () => ({
   env: {
     HEAVY_JOB_WAIT_TIMEOUT_MS: 120_000,
     INTEGRATION_WORKER_CONCURRENCY: 10,
+    CALL_TRANSCRIBE_PER_MIN: 10,
   },
 }))
 
@@ -124,6 +134,15 @@ vi.mock("../src/lib/logger", () => ({
 
 vi.mock("../src/lib/resolve-workspace-id", () => ({
   resolveWorkspaceId: vi.fn(async () => undefined),
+}))
+
+// Only needed for the `handleConnect`-payload D8 boot tests below (every
+// other captured-worker test in this file uses job types that carry
+// `workspaceId` directly, per `resolveVoipSignalingWorkspaceId`'s own
+// `"workspaceId" in job.data` branch).
+const identifyInboxAndIntegrationAuthFromIdentifier = vi.fn()
+vi.mock("../src/services/integrations", () => ({
+  integrationService: { identifyInboxAndIntegrationAuthFromIdentifier },
 }))
 
 vi.mock("../src/integration/handlers/ads-automatic-event", () => ({
@@ -204,6 +223,13 @@ vi.mock("../src/integration/handlers/template-flow-response", () => ({
 vi.mock("../src/integration/handlers/wait-resume", () => ({
   runWaitResume: vi.fn(),
 }))
+vi.mock("../src/integration/handlers/whatsapp-call", () => ({
+  handleWhatsappCallEvent: vi.fn(async () => undefined),
+}))
+
+vi.mock("../src/integration/handlers/whatsapp-voip-signaling", () => ({
+  handleWhatsappVoipSignalingJob: vi.fn(),
+}))
 vi.mock("../src/integration/job-context", () => ({
   runIntegrationJobWithWebhookContext: vi.fn(
     async (_job: unknown, callback: () => Promise<unknown>) => callback(),
@@ -217,25 +243,186 @@ vi.mock("../src/integration/utils/message", () => ({
 }))
 
 // Importing the worker module boots it exactly once (ESM module cache) —
-// the single `new Worker(...)` call happens as a side effect of this
-// import, so it must happen once, before any assertions, rather than
-// per-test.
+// the three `new Worker(...)` calls happen as a side effect of this import,
+// so they must happen once, before any assertions, rather than per-test.
 await import("../src/integration/worker")
 await vi.waitFor(() => {
-  expect(workerState.capturedWorkers).toHaveLength(1)
+  expect(workerState.capturedWorkers).toHaveLength(3)
 })
 
-describe("integration worker process boot (single shared queue)", () => {
-  test("boots exactly one Worker, on the integration queue", () => {
-    expect(workerState.capturedWorkers).toHaveLength(1)
+describe("integration worker process boot", () => {
+  test("boots exactly three Workers: the shared integration queue, the dedicated callTranscription queue, and the dedicated whatsappVoipSignaling queue", () => {
+    expect(workerState.capturedWorkers).toHaveLength(3)
     expect(workerState.capturedWorkers[0]?.queueName).toBe("integration")
+    expect(workerState.capturedWorkers[1]?.queueName).toBe("callTranscription")
+    expect(workerState.capturedWorkers[2]?.queueName).toBe(
+      "whatsappVoipSignaling",
+    )
   })
 
-  test("keeps the env-tunable concurrency and long coexist lock", () => {
+  test("keeps the env-tunable concurrency and long coexist lock on the integration worker", () => {
     const [integrationWorker] = workerState.capturedWorkers
 
     expect(integrationWorker?.options.concurrency).toBe(10)
     expect(integrationWorker?.options.lockDuration).toBe(10 * 60 * 1000)
+  })
+
+  test("the callTranscription worker carries the CALL_TRANSCRIBE_PER_MIN limiter", () => {
+    const [, transcriptionWorker] = workerState.capturedWorkers
+
+    expect(transcriptionWorker?.options.limiter).toEqual({
+      max: 10,
+      duration: 60_000,
+    })
+    expect(transcriptionWorker?.options.concurrency).toBe(1)
+  })
+
+  test("the whatsappVoipSignaling worker is a dedicated, non-rate-limited consumer", () => {
+    const [, , voipSignalingWorker] = workerState.capturedWorkers
+
+    expect(voipSignalingWorker?.options.concurrency).toBe(10)
+    expect(voipSignalingWorker?.options.limiter).toBeUndefined()
+  })
+
+  // D8 (plan): call control, including a fresh `handleConnect` ring, is off
+  // for a frozen workspace (scheduled deletion / blocked owner). The
+  // wrapping below applies uniformly to EVERY job type on this worker
+  // (`handleConnect` included) — it does not switch on `job.data.type`
+  // before calling `withBlockedOwnerGuard`, so a test proving the guard
+  // gates the handler for one job type proves it for all of them,
+  // including the ring path.
+  test("D8: withBlockedOwnerGuard deciding a workspace is frozen prevents handleWhatsappVoipSignalingJob (and therefore any ring) from ever running", async () => {
+    const { withBlockedOwnerGuard } = await import("@chatbotx.io/business")
+    const { handleWhatsappVoipSignalingJob } = await import(
+      "../src/integration/handlers/whatsapp-voip-signaling"
+    )
+    vi.mocked(withBlockedOwnerGuard).mockClear()
+    vi.mocked(handleWhatsappVoipSignalingJob).mockClear()
+    // Simulates the guard's own frozen-workspace no-op (see
+    // `with-blocked-owner-guard.ts`): it resolves without ever invoking the
+    // callback it was given.
+    vi.mocked(withBlockedOwnerGuard).mockImplementationOnce(
+      async () => undefined,
+    )
+
+    const [, , voipSignalingWorker] = workerState.capturedWorkers
+    await voipSignalingWorker?.processor({
+      data: {
+        type: "handleOutboundAnswer",
+        data: {
+          workspaceId: "ws-frozen",
+          attemptId: "att-1",
+          whatsappCallId: "call-1",
+        },
+      },
+    })
+
+    expect(withBlockedOwnerGuard).toHaveBeenCalledWith(
+      "ws-frozen",
+      expect.any(Function),
+    )
+    expect(handleWhatsappVoipSignalingJob).not.toHaveBeenCalled()
+  })
+
+  test("D8 (handleConnect payload): resolveVoipSignalingWorkspaceId resolves the workspace via the integration lookup, and the guard receives THAT resolved id", async () => {
+    const { withBlockedOwnerGuard } = await import("@chatbotx.io/business")
+    vi.mocked(withBlockedOwnerGuard).mockClear()
+    identifyInboxAndIntegrationAuthFromIdentifier.mockReset()
+    identifyInboxAndIntegrationAuthFromIdentifier.mockResolvedValue({
+      inbox: { workspaceId: "ws-resolved" },
+    })
+
+    const [, , voipSignalingWorker] = workerState.capturedWorkers
+    await voipSignalingWorker?.processor({
+      data: {
+        type: "handleConnect",
+        data: {
+          wacid: "wacid-1",
+          deadlineAt: Date.now() + 30_000,
+          phoneNumberId: "phone-1",
+          receivedAt: Date.now(),
+        },
+      },
+    })
+
+    expect(withBlockedOwnerGuard).toHaveBeenCalledWith(
+      "ws-resolved",
+      expect.any(Function),
+    )
+  })
+
+  test("D8 (handleConnect payload): a failed integration lookup resolves the workspace as undefined, so the guard runs FAIL-OPEN (existing, documented behaviour — resolveVoipSignalingWorkspaceId's own doc comment; not changed here)", async () => {
+    const { withBlockedOwnerGuard } = await import("@chatbotx.io/business")
+    vi.mocked(withBlockedOwnerGuard).mockClear()
+    identifyInboxAndIntegrationAuthFromIdentifier.mockReset()
+    identifyInboxAndIntegrationAuthFromIdentifier.mockRejectedValue(
+      new Error("no integration for this phoneNumberId"),
+    )
+
+    const [, , voipSignalingWorker] = workerState.capturedWorkers
+    await voipSignalingWorker?.processor({
+      data: {
+        type: "handleConnect",
+        data: {
+          wacid: "wacid-2",
+          deadlineAt: Date.now() + 30_000,
+          phoneNumberId: "phone-unknown",
+          receivedAt: Date.now(),
+        },
+      },
+    })
+
+    // `resolveVoipSignalingWorkspaceId` catches the lookup failure and
+    // returns `undefined` (logging a warning) rather than throwing — the
+    // guard then treats this job as fail-open (per
+    // `with-blocked-owner-guard.ts`'s own "jobs without a workspace
+    // identity remain fail-open" contract) and the mocked guard here
+    // (default passthrough) still calls the handler. This IS today's
+    // behaviour, not a new gap: an unresolvable `phoneNumberId` already
+    // can't be attributed to a frozen workspace, so there's nothing to
+    // gate on.
+    expect(withBlockedOwnerGuard).toHaveBeenCalledWith(
+      undefined,
+      expect.any(Function),
+    )
+  })
+})
+
+describe("M4: whatsappCallEvent (the main integration queue's isBlockedWorkspace gate)", () => {
+  test("a terminate whatsappCallEvent job for a frozen workspace never reaches handleWhatsappCallEvent", async () => {
+    const { isBlockedWorkspace } = await import(
+      "../src/lib/is-blocked-workspace"
+    )
+    const { resolveWorkspaceId } = await import(
+      "../src/lib/resolve-workspace-id"
+    )
+    const { handleWhatsappCallEvent } = await import(
+      "../src/integration/handlers/whatsapp-call"
+    )
+    vi.mocked(isBlockedWorkspace).mockClear()
+    vi.mocked(resolveWorkspaceId).mockClear()
+    vi.mocked(handleWhatsappCallEvent).mockClear()
+    vi.mocked(resolveWorkspaceId).mockResolvedValueOnce("ws-frozen")
+    // Simulates a frozen workspace (scheduled deletion / blocked owner) —
+    // the main integration queue's own guard, distinct from
+    // `withBlockedOwnerGuard` used by the VoIP signaling queue above.
+    vi.mocked(isBlockedWorkspace).mockResolvedValueOnce(true)
+
+    const [integrationWorker] = workerState.capturedWorkers
+    const result = await integrationWorker?.processor({
+      data: {
+        type: "whatsappCallEvent",
+        data: {
+          workspaceId: "ws-frozen",
+          wacid: "wacid-1",
+          event: "terminate",
+        },
+      },
+    })
+
+    expect(isBlockedWorkspace).toHaveBeenCalledWith("ws-frozen")
+    expect(handleWhatsappCallEvent).not.toHaveBeenCalled()
+    expect(result).toBeUndefined()
   })
 })
 

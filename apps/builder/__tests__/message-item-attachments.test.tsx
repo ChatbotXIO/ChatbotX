@@ -19,6 +19,14 @@ vi.mock("@/features/media-library/components/media-library-trigger", () => ({
   MediaLibraryTrigger: () => null,
 }))
 
+// Same rationale (P4 item 3): the real card now also pulls in
+// `useOutboundCallMode`/`useWhatsappCallStarter`, which chain into the same
+// `"use server"` calling actions. This test is about attachment rendering,
+// not the call card's own contents (covered by whatsapp-call-card.test.tsx).
+vi.mock("@/features/messages/components/whatsapp-call-card", () => ({
+  WhatsappCallCard: () => <div data-slot="whatsapp-call-card">audioCall</div>,
+}))
+
 let container: HTMLDivElement | null = null
 let root: Root | null = null
 

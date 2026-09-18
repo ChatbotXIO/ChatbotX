@@ -98,6 +98,11 @@ function createChain(middlewares: unknown[] = []) {
 vi.mock("next-safe-action", () => ({
   DEFAULT_SERVER_ERROR_MESSAGE: "Server error",
   createSafeActionClient: () => createChain(),
+  // P2 item 7's `rejectSupportSession`/`requireContactsAccess` middlewares
+  // are declared with `createMiddleware(...).define(fn)` — this test only
+  // exercises `workspaceActionClient*`, so the mock just needs to make that
+  // call site not throw; the returned middleware fn is never invoked here.
+  createMiddleware: () => ({ define: (fn: unknown) => fn }),
 }))
 
 const activeQuota = {

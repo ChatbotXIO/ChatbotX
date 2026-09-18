@@ -85,7 +85,7 @@ const isPendingOriginPath = (path: string): boolean =>
   path.startsWith("https://") ||
   path.startsWith(WA_MEDIA_PREFIX)
 
-type DownloadedMedia = {
+export type DownloadedMedia = {
   bytes: ArrayBuffer
   mimeType: string
   size: number
@@ -97,8 +97,12 @@ type DownloadedMedia = {
  * aborts as soon as the cumulative size exceeds the cap, so an origin that
  * lies about (or omits) `content-length` cannot OOM the worker by sending an
  * unbounded body.
+ *
+ * Exported for reuse by other Graph-media downloaders (e.g. the Meta-native
+ * call recording/transcript fetchers) that need the same streaming size cap
+ * against a raw lookaside URL.
  */
-const readBodyWithCap = async (
+export const readBodyWithCap = async (
   response: Response,
   label: string,
 ): Promise<ArrayBuffer> => {
@@ -147,7 +151,12 @@ const readBodyWithCap = async (
   return out.buffer
 }
 
-const downloadBearerUrlMedia = async (props: {
+/**
+ * Exported for reuse by the Meta-native call recording/transcript fetchers,
+ * which download from the same kind of short-lived Bearer-authenticated
+ * Graph URL as Messenger/Instagram attachments.
+ */
+export const downloadBearerUrlMedia = async (props: {
   url: string
   accessToken: string
   fallbackMime: string
@@ -173,7 +182,14 @@ const downloadBearerUrlMedia = async (props: {
   }
 }
 
-const downloadWhatsappMedia = async (
+/**
+ * Graph Media API download by media id (retrieve the short-lived `url` via
+ * `retrieveMedia`, then fetch it with the same Bearer token). Exported so
+ * the Meta-native call recording/transcript fetchers
+ * (`whatsapp-call-native-media.ts`) reuse this exact incoming-media
+ * download path instead of re-implementing it.
+ */
+export const downloadWhatsappMedia = async (
   mediaId: string,
   auth: WhatsappAuthValue,
   fallbackMime: string,

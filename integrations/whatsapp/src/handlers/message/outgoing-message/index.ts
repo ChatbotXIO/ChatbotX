@@ -5,11 +5,13 @@ import {
   type SendTextStepSchema,
   type SendWaTemplateMessageStepSchema,
   stepTypes,
+  type WhatsappCallButtonStepSchema,
   type WhatsappFlowStepSchema,
   type WhatsappOptionListStepSchema,
 } from "@chatbotx.io/flow-config"
 import {
   contentTypes,
+  getWhatsappCallPermissionRequest,
   isWhatsappNativeLocationRequest,
   type MessageButtonTemplate,
   type MessageHandlers,
@@ -42,6 +44,7 @@ import {
 } from "./send-image"
 import { convertFlowStepText } from "./send-text"
 import { convertFlowStepWaTemplate } from "./send-wa-template"
+import { convertFlowStepWhatsappCallButton } from "./whatsapp-call-button"
 import { convertFlowStepWhatsappFlow } from "./whatsapp-flow"
 import { convertFlowStepWhatsappOptionList } from "./whatsapp-option-list"
 
@@ -65,6 +68,24 @@ function* convertMessageToWhatsappMessage(
     const bodyText = message.text?.trim()
     if (bodyText) {
       yield buildLocationRequestMessage(bodyText)
+    }
+    return
+  }
+
+  // A permission-request message renders as Meta's call_permission_request
+  // interactive with the message text as its body — never as plain text.
+  if (
+    getWhatsappCallPermissionRequest(message.contentAttributes) &&
+    message.text
+  ) {
+    yield {
+      _type: "interactive_call_permission_request",
+      type: "interactive",
+      interactive: {
+        type: "call_permission_request",
+        body: { text: message.text },
+        action: { name: "call_permission_request" },
+      },
     }
     return
   }
@@ -169,6 +190,16 @@ function* convertFlowStepToWhatsappMessage(
         >[0],
       )
       break
+    case stepTypes.enum.whatsappCallButton:
+      yield* convertFlowStepWhatsappCallButton(
+        props as Parameters<
+          MessageHandlers<
+            WhatsappAuthValue,
+            WhatsappCallButtonStepSchema
+          >["sendFlowStep"]
+        >[0],
+      )
+      break
     case stepTypes.enum.whatsappFlow:
       yield* convertFlowStepWhatsappFlow(
         props as Parameters<
@@ -184,12 +215,14 @@ function* convertFlowStepToWhatsappMessage(
   }
 }
 
-/** `whatsapp-api-js` does not model these payloads, so they are posted as-is. */
+/** `whatsapp-api-js` models none of these payloads, so they're posted as-is. */
 const isRawWhatsappMessage = (
   message: ClientMessage | RawWhatsappMessage,
 ): message is RawWhatsappMessage =>
   message._type === "template" ||
   message._type === "interactive_carousel" ||
+  message._type === "interactive_voice_call" ||
+  message._type === "interactive_call_permission_request" ||
   message._type === "location_request"
 
 /**
@@ -287,6 +320,9 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
           },
           "sendMessage: dispatching outgoing message",
         )
+        // Raw payloads (unmodeled by whatsapp-api-js) must bypass the lib
+        // sender for every recipient, not just BSUID-keyed ones — mirrors
+        // sendFlowStep below.
         const sendResponse =
           isRawWhatsappMessage(whatsappMessage) || isBsuidKeyedRecipient
             ? await postRawMessage({

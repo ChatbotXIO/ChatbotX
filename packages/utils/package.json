@@ -33,6 +33,8 @@
     "./temporal-input": "./src/temporal-input/index.ts",
     "./timezone": "./src/timezone.ts",
     "./variables": "./src/variables.ts",
+    "./whatsapp-call": "./src/whatsapp-call.ts",
+    "./whatsapp-call-hours": "./src/whatsapp-call-hours.ts",
     "./zod": "./src/zod.ts"
   },
   "scripts": {

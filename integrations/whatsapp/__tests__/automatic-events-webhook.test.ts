@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto"
 import { describe, expect, test, vi } from "vitest"
 
 const { mockLogger } = vi.hoisted(() => ({
@@ -37,6 +38,20 @@ vi.mock("whatsapp-api-js/middleware/next", () => ({
 const { extractAutomaticEventPayloads, webhookHandler } = await import(
   "../src/handlers/webhook"
 )
+
+const CLIENT_SECRET = "test-app-secret"
+
+const sign = (rawBody: string): string =>
+  `sha256=${createHmac("sha256", CLIENT_SECRET).update(rawBody, "utf8").digest("hex")}`
+
+const makeSignedPostRequest = (payload: unknown): Request => {
+  const body = JSON.stringify(payload)
+  return new Request("https://example.com/webhook", {
+    method: "POST",
+    headers: { "x-hub-signature-256": sign(body) },
+    body,
+  })
+}
 
 const automaticEvent = (overrides: Record<string, unknown> = {}) => ({
   event_name: "LeadSubmitted",
@@ -241,11 +256,8 @@ describe("webhookHandler automatic events", () => {
 
     await expect(
       webhookHandler({
-        config: { verifyToken: "verify-token" },
-        req: new Request("https://example.com/webhook", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        }),
+        config: { verifyToken: "verify-token", clientSecret: CLIENT_SECRET },
+        req: makeSignedPostRequest(payload),
         queue: { add: queueAdd },
       } as unknown as Parameters<typeof webhookHandler>[0]),
     ).resolves.toBe("ok")
@@ -311,11 +323,8 @@ describe("webhookHandler automatic events", () => {
 
     await expect(
       webhookHandler({
-        config: { verifyToken: "verify-token" },
-        req: new Request("https://example.com/webhook", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        }),
+        config: { verifyToken: "verify-token", clientSecret: CLIENT_SECRET },
+        req: makeSignedPostRequest(payload),
         queue: { add: queueAdd },
       } as unknown as Parameters<typeof webhookHandler>[0]),
     ).resolves.toBe("ok")

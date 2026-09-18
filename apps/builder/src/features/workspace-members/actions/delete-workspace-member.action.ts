@@ -1,6 +1,7 @@
 "use server"
 
 import {
+  revokeWorkspaceMemberConnections,
   workspaceMemberCacheTag,
   workspaceMemberService,
 } from "@chatbotx.io/business"
@@ -55,4 +56,15 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
     await invalidateCacheByTags([
       workspaceMemberCacheTag(workspaceMember.userId),
     ])
+
+    // Close any realtime sockets the removed member already has open in
+    // this workspace room — their next connect attempt is rejected anyway
+    // (the mint endpoint re-checks membership), but an existing socket
+    // would otherwise keep receiving events until it happens to reconnect.
+    // Best-effort: `revokeWorkspaceMemberConnections` swallows its own
+    // network failures, so this never blocks the deletion.
+    await revokeWorkspaceMemberConnections({
+      workspaceId,
+      userId: workspaceMember.userId,
+    })
   })

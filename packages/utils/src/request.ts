@@ -36,7 +36,17 @@ export function getPublicProtocolFromRequest(
   return request.url.startsWith("http://") ? "http" : "https"
 }
 
-export function getPublicHostFromRequest(request: Request): string {
+/**
+ * The same Forwarded → X-Forwarded-Host → Host resolution as
+ * {@link getPublicHostFromRequest}, but WITHOUT that function's
+ * `localhost:3123` fallback — `null` when none of the three headers
+ * resolve to anything. Callers that need a real request feature (e.g. a
+ * same-site/same-origin comparison in `apps/builder/src/lib/http/same-site-request.ts`)
+ * must be able to tell "genuinely unknown" apart from a dev-only invented
+ * default; callers that just need a host to build a URL with (this file's
+ * other exports) use {@link getPublicHostFromRequest} instead.
+ */
+export function getRawPublicHostFromRequest(request: Request): string | null {
   const forwarded = request.headers.get("forwarded")
   const forwardedHost = normalizeHost(extractForwardedValue(forwarded, "host"))
   if (forwardedHost) {
@@ -50,12 +60,11 @@ export function getPublicHostFromRequest(request: Request): string {
     return xForwardedHost
   }
 
-  const host = normalizeHost(request.headers.get("host"))
-  if (host) {
-    return host
-  }
+  return normalizeHost(request.headers.get("host"))
+}
 
-  return "localhost:3123"
+export function getPublicHostFromRequest(request: Request): string {
+  return getRawPublicHostFromRequest(request) ?? "localhost:3123"
 }
 
 function extractForwardedValue(

@@ -3,6 +3,7 @@ import {
   type DatabaseClient,
   db,
   eq,
+  inArray,
   ne,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
@@ -12,6 +13,10 @@ import {
   type InboxDisconnectReason,
   inboxStatuses,
 } from "@chatbotx.io/database/partials"
+import {
+  type InboxChannelOption,
+  inboxRepository,
+} from "@chatbotx.io/database/repositories"
 import { inboxModel } from "@chatbotx.io/database/schema"
 import type {
   InboxModel,
@@ -99,6 +104,22 @@ class InboxService extends BaseService {
     })
   }
 
+  /**
+   * B-M1 (Fable review) — bounded id/name options for a channel-filtered
+   * select (e.g. the Calls page's inbox filter). Thin pass-through to
+   * `inboxRepository.listOptionsByWorkspaceAndChannel`: no caching here
+   * (matches `find()` above, whose own cache attempt was deliberately left
+   * disabled — nothing in this service currently invalidates an
+   * inbox-scoped cache tag on write, so adding one here would risk silently
+   * stale results instead of fixing the eager-load).
+   */
+  async listChannelOptionsByWorkspace(input: {
+    workspaceId: string
+    channel: ChannelType
+  }): Promise<InboxChannelOption[]> {
+    return await inboxRepository.listOptionsByWorkspaceAndChannel(input)
+  }
+
   async find(props: { where: InboxWhere }): Promise<InboxModel | undefined> {
     const { where } = props
     // return await withCache(
@@ -145,6 +166,42 @@ class InboxService extends BaseService {
    * channel from *new* creation — hiding must never make an existing
    * connection disappear from the UI.
    */
+  /**
+   * Whether the workspace has ever connected an inbox on any of `channels`.
+   *
+   * Deliberately ignores `Inbox.status`: this answers "could this workspace
+   * have data from that channel", so a disconnected — but once-connected —
+   * channel still counts. Disconnecting WhatsApp must not hide the call
+   * history it already produced, the same grandfathering rule
+   * `distinctConnectedChannels` applies to the settings accordion (see
+   * AGENTS.md invariant #18).
+   *
+   * Channel-agnostic on purpose: callers pass the list they care about (e.g.
+   * `CALL_CAPABLE_CHANNELS`) so this shared service never names one channel.
+   * `LIMIT 1` keys off `Inbox_workspaceId_idx`, so it stays a cheap existence
+   * probe even on a workspace with many inboxes — it runs once per request on
+   * the workspace layout.
+   */
+  async hasAnyChannel(props: {
+    workspaceId: string
+    channels: readonly ChannelType[]
+  }): Promise<boolean> {
+    if (props.channels.length === 0) {
+      return false
+    }
+    const row = await db
+      .select({ id: inboxModel.id })
+      .from(inboxModel)
+      .where(
+        and(
+          eq(inboxModel.workspaceId, props.workspaceId),
+          inArray(inboxModel.channel, [...props.channels]),
+        ),
+      )
+      .limit(1)
+    return row.length > 0
+  }
+
   async distinctConnectedChannels(workspaceId: string): Promise<ChannelType[]> {
     const rows = await db
       .selectDistinct({ channel: inboxModel.channel })

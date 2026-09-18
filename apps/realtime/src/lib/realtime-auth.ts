@@ -1,5 +1,6 @@
 import {
   extractBearerToken,
+  REALTIME_TOKEN_PURPOSE,
   type RealtimeAudienceKind,
   verifyRealtimeToken,
 } from "@chatbotx.io/partysocket-config/auth"
@@ -12,6 +13,15 @@ const getRoomIdFromUrl = (url: string): string | undefined => {
   return segments[PARTY_PATH_ROOM_INDEX]
 }
 
+/**
+ * Verifies an inbound broadcast request from the builder. Allows a
+ * purpose-less legacy token (BLOCKER-a, round-2 review — see
+ * `VerifyRealtimeTokenOptions.allowLegacyMissingPurpose`): during a deploy
+ * where `apps/realtime` ships before the builder, the builder is still
+ * minting tokens with no `purpose` claim, and without this window EVERY
+ * broadcast request (including call ring/answer/ended events) would 401
+ * for the whole rollout window.
+ */
 export const verifyBroadcastRequest = async (
   req: Party.Request,
   audienceKind: RealtimeAudienceKind,
@@ -28,7 +38,13 @@ export const verifyBroadcastRequest = async (
   }
 
   try {
-    await verifyRealtimeToken(token, { kind: audienceKind, id: roomId }, secret)
+    await verifyRealtimeToken(
+      token,
+      { kind: audienceKind, id: roomId },
+      REALTIME_TOKEN_PURPOSE.broadcast,
+      secret,
+      { allowLegacyMissingPurpose: true },
+    )
   } catch {
     return new Response("Unauthorized", { status: 401 })
   }

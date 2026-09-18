@@ -18,6 +18,12 @@ import {
 } from "@chatbotx.io/ui/components/ui/avatar"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
+import {
   formatCustomFieldValueInTimeZone,
   isTemporalCustomFieldType,
   resolveTemporalCustomFieldFormValue,
@@ -35,7 +41,12 @@ import {
   UserRoundIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { toast } from "sonner"
+import { RequestCallPermissionDialog } from "@/features/integration-whatsapp/calling/request-call-permission-dialog"
+import { useOutboundCallMode } from "@/features/integration-whatsapp/calling/voip/use-outbound-call-mode"
+import { useWhatsappCallStarter } from "@/features/integration-whatsapp/calling/voip/use-whatsapp-call-starter"
+import { useOptionalWhatsappVoipCallContext } from "@/features/integration-whatsapp/calling/voip/whatsapp-voip-call-context"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { getBrowserTimezone } from "../contact-filter/lib/timezone"
@@ -192,6 +203,194 @@ const buildScopedIdentityFields = (
   })
 }
 
+/**
+ * One dialable WhatsApp number of the contact panel's call control (P4 item
+ * 4) — standalone so `useOutboundCallMode`/`useWhatsappCallStarter` only run
+ * for a number the agent has actually committed to, and so N numbers each
+ * resolve/mount independently rather than sharing (and racing) one hook
+ * instance.
+ *
+ * Two modes, both driven by `ContactDetail`:
+ * - Default (single WhatsApp number): renders the always-visible dial
+ *   button, mirroring `WhatsappVoipCallButton`'s resolving/no-permission/
+ *   ready branches.
+ * - `autoTrigger` (several numbers, mounted only AFTER the agent picks a
+ *   row from the picker `DropdownMenu`): renders NO visible control of its
+ *   own — the picker row already WAS the click — and instead fires the
+ *   equivalent action itself once the starter is ready: `handleClick()`
+ *   for a call-eligible number (which already handles the `mode: "none"`
+ *   alert and the manual-integration warning on its own), or auto-opens
+ *   `RequestCallPermissionDialog` for a number that needs permission
+ *   first. This is the fix for HIGH-2/HIGH-3: the picker itself (in
+ *   `ContactDetail`) is a PURE selector — it never renders a starter or its
+ *   dialogs inside the `DropdownMenuContent`, so base-ui's close-on-click +
+ *   portal-unmount can never tear an alert/dialog down mid-click.
+ */
+function ContactPanelCallEntry({
+  autoTrigger,
+  contactInboxId,
+  inboxId,
+  contactName,
+  conversationId,
+}: {
+  autoTrigger?: boolean
+  contactInboxId: string
+  /**
+   * The picked `ContactInbox`'s `inboxId` — pins
+   * `RequestCallPermissionDialog`'s send to the WhatsApp number the agent
+   * actually picked, mirroring `input-menu.tsx`. Without it,
+   * `requestCallPermissionAction` falls back to "any WhatsApp ContactInbox"
+   * of the contact, which can send from the wrong business number when the
+   * contact has several.
+   */
+  inboxId: string
+  contactName?: string | null
+  conversationId: string
+}) {
+  const t = useTranslations()
+  const workspaceId = useWorkspaceId()
+  // Read directly (not via `starter.voipCallContext`, which needs
+  // `outboundCallMode` first) so the mode query itself can be gated on it —
+  // calling disabled for this workspace/member must never fire the action.
+  const voipCallContext = useOptionalWhatsappVoipCallContext()
+  const outboundCallModeQuery = useOutboundCallMode(
+    workspaceId,
+    conversationId,
+    contactInboxId,
+    { enabled: Boolean(voipCallContext) },
+  )
+  const starter = useWhatsappCallStarter({
+    conversationId,
+    contactInboxId,
+    contactName,
+    outboundCallMode: outboundCallModeQuery.data,
+  })
+  const needsPermissionRequest = starter.isVoipMode && !starter.canDialDirectly
+  const hasAutoTriggeredRef = useRef(false)
+
+  useEffect(() => {
+    if (
+      !(autoTrigger && voipCallContext) ||
+      starter.isResolvingMode ||
+      hasAutoTriggeredRef.current
+    ) {
+      return
+    }
+    hasAutoTriggeredRef.current = true
+    // A number needing permission first renders `RequestCallPermissionDialog`
+    // auto-opened below instead — dialing it would only bounce back with a
+    // "needsPermission" alert.
+    if (!needsPermissionRequest) {
+      starter.handleClick()
+    }
+  }, [
+    autoTrigger,
+    voipCallContext,
+    starter.isResolvingMode,
+    starter.handleClick,
+    needsPermissionRequest,
+  ])
+
+  // The mode query never surfaces feedback on its own (retries are off, so
+  // it would otherwise sit "resolving" forever). Access-denial no longer
+  // reaches here as a thrown query error at all — `resolveOutboundCallModeAction`
+  // returns `{ mode: "none", reason: "callAccessDenied" }` as ordinary data
+  // instead of throwing (review B1), and the shared starter's `mode: "none"`
+  // alert path (`starter.handleClick`) covers that uniformly with every
+  // other denial reason. What's left here is the GENERIC failure case only —
+  // a real query error (network failure, unexpected throw) — so this no
+  // longer needs (or is safe doing) a string compare against a translated
+  // message: any resolve error gets the same generic toast. Also no longer
+  // gated on `autoTrigger`: gating it left the header/picker button
+  // permanently disabled with zero feedback on a query error, since
+  // `starter.isResolvingMode` stays `true` forever when `outboundCallMode`
+  // never resolves to a value.
+  useEffect(() => {
+    if (!outboundCallModeQuery.isError) {
+      return
+    }
+    toast.error(t("whatsapp.calls.outbound.callFailed"))
+  }, [outboundCallModeQuery.isError, t])
+
+  // Calling disabled for this workspace/member — no control at all, same as
+  // every other call trigger.
+  if (!voipCallContext) {
+    return null
+  }
+
+  if (starter.isResolvingMode) {
+    if (outboundCallModeQuery.isError) {
+      // A resolve failure never retries (a 403 never succeeds on retry), so
+      // `outboundCallMode` would otherwise stay `undefined` — and the button
+      // disabled — forever. Render it enabled instead: the toast effect
+      // above already surfaced the failure once, and a click here re-shows
+      // it rather than leaving a control that looks broken with no way to
+      // get feedback again.
+      return autoTrigger ? null : (
+        <Button
+          aria-label={t("whatsapp.calls.startCall")}
+          onClick={() => toast.error(t("whatsapp.calls.outbound.callFailed"))}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <PhoneIcon aria-hidden />
+        </Button>
+      )
+    }
+    return autoTrigger ? null : (
+      <Button
+        aria-label={t("whatsapp.calls.startCall")}
+        disabled
+        size="icon"
+        type="button"
+        variant="ghost"
+      >
+        <PhoneIcon aria-hidden />
+      </Button>
+    )
+  }
+
+  if (needsPermissionRequest) {
+    return (
+      <RequestCallPermissionDialog
+        conversationId={conversationId}
+        defaultOpen={autoTrigger}
+        inboxId={inboxId}
+        workspaceId={workspaceId}
+      >
+        <Button
+          aria-label={t("whatsapp.calls.permissionRequestTitle")}
+          className={autoTrigger ? "sr-only" : undefined}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <PhoneIcon aria-hidden />
+        </Button>
+      </RequestCallPermissionDialog>
+    )
+  }
+
+  return (
+    <>
+      {!autoTrigger && (
+        <Button
+          aria-label={t("whatsapp.calls.startCall")}
+          disabled={starter.isDialing || starter.isResolvingMode}
+          onClick={starter.handleClick}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <PhoneIcon aria-hidden />
+        </Button>
+      )}
+      {starter.dialogs}
+    </>
+  )
+}
+
 export const ContactDetail = ({
   activeConversationId,
   contact,
@@ -205,6 +404,54 @@ export const ContactDetail = ({
   const { conversations } = useChatStore((state) => state)
   const avatarUrl = useAvatarUrl(contact)
   const [timezone, setTimezone] = useState("UTC")
+
+  // P4 item 4 — the contact panel's call control: every WhatsApp
+  // `contactInbox` of THIS conversation's contact, in list order (never
+  // hand-rolled — reuses the same `contactInboxes` relation the identity
+  // fields above already read). 0 → no control renders; 1 → a direct-dial
+  // icon button; 2+ → a picker naming each by `inbox.name`.
+  const activeConversationForCall = conversations.find(
+    (conversation) => conversation.id === activeConversationId,
+  )
+  const whatsappContactInboxesForCall =
+    activeConversationForCall?.contactInboxes.filter(
+      (contactInbox) => contactInbox.channel === channelTypes.enum.whatsapp,
+    ) ?? []
+  // Destructured behind the length check above (never `[0]?.id ?? ""`) so a
+  // single-number conversation can never dial an empty-string contactInboxId.
+  const [soleWhatsappContactInboxForCall] =
+    whatsappContactInboxesForCall.length === 1
+      ? whatsappContactInboxesForCall
+      : []
+
+  // The picker's committed selection (2+ numbers only) — a token alongside
+  // the id so re-picking the SAME row still remounts `ContactPanelCallEntry`
+  // (fresh `key`) and re-fires its auto-trigger, instead of silently no-oping
+  // because the id didn't change. `inboxId` (the ContactInbox's OWN inbox,
+  // not its row id) is captured at pick time so `RequestCallPermissionDialog`
+  // pins to the exact number the agent picked instead of re-deriving it from
+  // `whatsappContactInboxesForCall` (which could have changed by the time it
+  // renders).
+  const [callSelection, setCallSelection] = useState<{
+    contactInboxId: string
+    inboxId: string
+    token: number
+  } | null>(null)
+
+  // A stale selection made on a PRIOR conversation must never carry over —
+  // it would resolve a foreign contactInbox against the newly active
+  // conversation's contact, or leave a stray sr-only auto-trigger button
+  // mounted for a conversation the agent already navigated away from. Reset
+  // during render (React's documented "adjusting state when a prop changes"
+  // pattern), not in a `useEffect`, so the stale combination is never even
+  // passed to `ContactPanelCallEntry` for one render — an effect-based reset
+  // would still commit that first, wrong render before cleaning it up.
+  const [callSelectionConversationId, setCallSelectionConversationId] =
+    useState(activeConversationId)
+  if (activeConversationId !== callSelectionConversationId) {
+    setCallSelectionConversationId(activeConversationId)
+    setCallSelection(null)
+  }
 
   const [selectedField, setSelectedField] =
     useState<ContactEditableField | null>(null)
@@ -470,6 +717,67 @@ export const ContactDetail = ({
           <AvatarFallback>NA</AvatarFallback>
         </Avatar>
       </div>
+      {activeConversationForCall && soleWhatsappContactInboxForCall && (
+        <div className="mb-3 flex justify-center">
+          <ContactPanelCallEntry
+            contactInboxId={soleWhatsappContactInboxForCall.id}
+            contactName={contact.fullName}
+            conversationId={activeConversationForCall.id}
+            inboxId={soleWhatsappContactInboxForCall.inboxId}
+          />
+        </div>
+      )}
+      {activeConversationForCall &&
+        whatsappContactInboxesForCall.length > 1 && (
+          <div className="mb-3 flex justify-center">
+            {/* A pure selector — it renders no starter/dialogs of its own,
+             * so base-ui's close-on-click + portal-unmount can never tear
+             * one down mid-click (HIGH-2). Picking a row only commits a
+             * selection; `ContactPanelCallEntry` below (mounted OUTSIDE
+             * this popup, keyed by the selection) owns dialing it. */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    aria-label={t("whatsapp.calls.startCall")}
+                    size="icon"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <PhoneIcon aria-hidden />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="center">
+                {whatsappContactInboxesForCall.map((contactInbox) => (
+                  <DropdownMenuItem
+                    key={contactInbox.id}
+                    onClick={() =>
+                      setCallSelection((previous) => ({
+                        contactInboxId: contactInbox.id,
+                        inboxId: contactInbox.inboxId,
+                        token: (previous?.token ?? 0) + 1,
+                      }))
+                    }
+                  >
+                    <PhoneIcon aria-hidden className="size-3.5" />
+                    {contactInbox.inbox.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {callSelection && (
+              <ContactPanelCallEntry
+                autoTrigger
+                contactInboxId={callSelection.contactInboxId}
+                contactName={contact.fullName}
+                conversationId={activeConversationForCall.id}
+                inboxId={callSelection.inboxId}
+                key={`${callSelection.contactInboxId}-${callSelection.token}`}
+              />
+            )}
+          </div>
+        )}
       <div className="flex flex-col gap-1 font-medium text-[12px] text-gray-600">
         {contactFields.map((editable) => {
           const fieldValue =

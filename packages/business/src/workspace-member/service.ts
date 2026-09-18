@@ -6,6 +6,10 @@ import {
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
 import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
+import {
+  type WorkspaceMemberPermissionsRow,
+  workspaceMemberRepository,
+} from "@chatbotx.io/database/repositories"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import type {
   UserModel,
@@ -242,6 +246,53 @@ export class WorkspaceMemberService extends BaseService {
         ],
       },
     )
+  }
+
+  /**
+   * Bounded, UNCACHED projection over `WorkspaceMember.permissions` for
+   * exactly `userIds` — the P2 ring-target snapshot's permissions read
+   * (`whatsappVoipCallService.selectRingTargetsForCall`), which only needs
+   * permissions for the already-bounded set of ONLINE user ids rather than
+   * the whole cached roster `listByWorkspaceId` loads.
+   */
+  async listPermissionsByUserIds(props: {
+    workspaceId: string
+    userIds: string[]
+    tx?: DatabaseClient
+  }): Promise<WorkspaceMemberPermissionsRow[]> {
+    return await workspaceMemberRepository.listPermissionsByUserIds(props)
+  }
+
+  /**
+   * Persists an offline -> online transition (`onlineSince = now()`) in ONE
+   * bulk UPDATE — called by `workspacePresenceService.heartbeatMany` with
+   * exactly the subset of a presence report that Redis reports was NOT
+   * already live, never with every reported user. A durable "last came
+   * online" stamp for reporting only: Redis (`workspacePresenceService.
+   * listOnlineMembers`) remains the sole source of truth for whether a
+   * member is online RIGHT NOW, so there is no corresponding "mark
+   * offline" write. Silent no-op for a user with no real `WorkspaceMember`
+   * row in this workspace (a synthetic platform-support session, AGENTS.md
+   * invariant #19) — see `workspaceMemberRepository.markOnlineBulk`.
+   *
+   * Side effect (LOW-9): this UPDATE also bumps `WorkspaceMember.updatedAt`
+   * (the column's `.$onUpdate` default), same as any other write to the
+   * row — harmless, but worth knowing if something ever keys off
+   * `updatedAt` to mean "the member's profile changed". It also does NOT
+   * invalidate `listByWorkspaceId`'s cache tag
+   * (`workspaces:${workspaceId}:workspace-members`): a cached roster read
+   * shortly after a presence transition can serve a stale `onlineSince`/
+   * `updatedAt` until that cache entry naturally expires or is invalidated
+   * by an unrelated membership write. Never a correctness issue for
+   * presence itself (Redis is read separately, uncached, for that), only
+   * for anything that reads `onlineSince` off the cached roster.
+   */
+  async markOnlineBulk(props: {
+    workspaceId: string
+    userIds: string[]
+    tx?: DatabaseClient
+  }): Promise<void> {
+    await workspaceMemberRepository.markOnlineBulk(props)
   }
 
   async findByWorkspaceIdAndUserId(input: {

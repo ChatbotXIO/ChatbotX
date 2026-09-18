@@ -50,6 +50,12 @@ type CreateOutgoingInput = (
   replyToMessageId?: string
   replyToMessageCreatedAt?: Date
   isPrivateReply?: boolean
+  /**
+   * Explicit content attributes for the created message row (e.g. the
+   * WhatsApp `call_permission_request` marker read by the outgoing-message
+   * handler). Overrides the `isPrivateReply`-derived default when set.
+   */
+  contentAttributes?: Record<string, unknown> | null
 }
 
 /**
@@ -208,9 +214,9 @@ export const createOutgoing = async (props: {
       ? ("comment" as const)
       : ("message" as const),
     parentId,
-    contentAttributes: parsedInput.isPrivateReply
-      ? { isPrivateReply: true }
-      : null,
+    contentAttributes:
+      parsedInput.contentAttributes ??
+      (parsedInput.isPrivateReply ? { isPrivateReply: true } : null),
   }
 
   const attachmentInputs = uploadedFiles.map((file) => ({
