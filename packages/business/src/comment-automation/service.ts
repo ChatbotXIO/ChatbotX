@@ -50,6 +50,23 @@ type ListFbCommentsResult = {
   pageCount: number
 }
 
+/**
+ * The list input for a channel with no folder support (Threads, TikTok).
+ *
+ * Same request shape the table sends, so pagination and sorting are resolved
+ * here rather than in the app layer — a `.query.ts` file is a request adapter,
+ * not a place for where-builders or page maths. See `.agents/rules/data-access.md`.
+ */
+type ListChannelCommentsInput = {
+  workspaceId: string
+  page?: number | null
+  perPage?: number | null
+  sort?: { id: string; desc: boolean }[] | null
+  name?: string | null
+  isActive?: boolean | null
+  tx?: DatabaseClient
+}
+
 function resolveIsActiveFilter(isActive?: boolean | null): boolean | undefined {
   return isActive !== undefined && isActive !== null ? isActive : undefined
 }
@@ -809,41 +826,25 @@ class CommentAutomationService extends BaseService {
     return record ?? null
   }
 
-  async listTiktokAutomations(props: {
-    workspaceId: string
-    name?: string
-    isActive?: boolean
-    limit: number
-    offset: number
-    orderBy?: Record<string, unknown>
-    tx?: DatabaseClient
-  }) {
-    const {
-      workspaceId,
-      name,
-      isActive,
-      limit,
-      offset,
-      orderBy = { createdAt: "desc" },
-      tx = db,
-    } = props
+  async listTiktokAutomations(
+    input: ListChannelCommentsInput,
+  ): Promise<ListFbCommentsResult> {
+    const { tx = db } = input
     const where = {
-      workspaceId,
+      workspaceId: input.workspaceId,
       type: this.tiktokType,
-      isActive,
-      name: name
-        ? {
-            ilike: `%${name}%`,
-          }
-        : undefined,
+      isActive: resolveIsActiveFilter(input.isActive),
+      name: input.name ? { ilike: likeContains(input.name) } : undefined,
     }
+
+    const pagination = getPaginationWithDefaults(input)
+    const orderBy = parseOrderByAsObject(commentAutomationModel, input)
 
     const [data, total] = await Promise.all([
       tx.query.commentAutomationModel.findMany({
         where,
         orderBy,
-        limit,
-        offset,
+        ...pagination,
       }),
       tx.$count(
         commentAutomationModel,
@@ -851,10 +852,7 @@ class CommentAutomationService extends BaseService {
       ),
     ])
 
-    return {
-      data,
-      total,
-    }
+    return { data, pageCount: Math.ceil(total / pagination.limit) }
   }
 
   getTiktokAutomation(props: {

@@ -1,9 +1,4 @@
 import { commentAutomationService } from "@chatbotx.io/business"
-import { commentAutomationModel } from "@chatbotx.io/database/schema"
-import {
-  getPaginationWithDefaults,
-  parseOrderByAsObject,
-} from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListTiktokCommentsRequest,
@@ -57,20 +52,12 @@ export async function listTiktokComments(
 ): Promise<ListTiktokCommentsResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const pagination = getPaginationWithDefaults(input)
-  const orderBy = parseOrderByAsObject(commentAutomationModel, input)
-  const { data, total } = await commentAutomationService.listTiktokAutomations({
-    workspaceId: input.workspaceId,
-    name: input.name || undefined,
-    isActive: input.isActive ?? undefined,
-    limit: pagination.limit,
-    offset: pagination.offset,
-    orderBy,
-  })
+  const { data, pageCount } =
+    await commentAutomationService.listTiktokAutomations(input)
 
   return {
     data: tiktokCommentResource.array().parse(data.map(toTiktokResource)),
-    pageCount: Math.ceil(total / pagination.limit),
+    pageCount,
   }
 }
 
