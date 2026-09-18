@@ -1,114 +1,78 @@
 /**
- * The presence-reporting pair every component in the flow must agree on —
- * owned in exactly ONE place so the two constants can never drift apart
- * again (that drift was HIGH-1: the report interval equalled the TTL, so
- * the write-to-write gap between two reports always exceeded the TTL and
- * every reported member expired every cycle). Imported by both
+ * The presence-reporting contract, owned in ONE place so its two timing
+ * constants can never drift apart — when the interval once equalled the
+ * TTL, every reported member expired on every cycle. Imported by
  * `apps/realtime` (the `workspaces` room's alarm loop) and
- * `packages/business` (`workspacePresenceService`) — see
- * `docs/whatsapp-calling-parity-plan.md` §9.
+ * `packages/business` (`workspacePresenceService`). See `docs/realtime.md`.
  */
 import { z } from "zod"
 
-/**
- * How long a single presence report keeps a reported user "online" in
- * Redis. Matches a widely used reference presence-tracker's duration —
- * kept at 20s rather than tuned down, per owner decision.
- */
+/** How long one presence report keeps a reported user online in Redis. */
 export const PRESENCE_TTL_MS = 20_000
 
 /**
- * How often the realtime server re-reports a room's connected user ids.
- * Deliberately HALF of {@link PRESENCE_TTL_MS} (not equal to it): the alarm
- * that drives this is rescheduled for `now + PRESENCE_REPORT_INTERVAL_MS`
- * BEFORE awaiting the report POST (fixed cadence, latency-independent — see
- * `apps/realtime/src/parties/workspaces.ts`'s `onAlarm`), so the
- * write-to-write gap between two reports is this constant, with a full
- * report's worth of margin left under the TTL. Precisely what that margin
- * protects: a single SLOW report (high latency, but it still eventually
- * lands) never flaps a still-connected member offline, because the NEXT
- * report is sent on the same fixed cadence regardless of how long the slow
- * one took, so it still renews the TTL well inside the window. A single
- * fully LOST report is NOT protected the same way — a member it would have
- * renewed gets its next renewal exactly `PRESENCE_REPORT_INTERVAL_MS` late
- * (from the following report), which lands right at the TTL boundary,
- * likely after it given normal network jitter/latency: that member's Redis
- * entry expires, it reads as "newly live" again on the next successful
- * report, and the room fires one bulk `UPDATE` for it (and every other
- * member the same lost report would have renewed) — a real, if brief and
- * self-healing, flap.
+ * How often the realtime server re-reports a room's connected user ids —
+ * deliberately HALF the TTL. The alarm reschedules itself BEFORE awaiting
+ * the POST, so the write-to-write gap is this constant regardless of
+ * latency, leaving a full report of margin under the TTL.
+ *
+ * That margin covers a SLOW report: the next one still lands inside the
+ * window. It does not cover a fully LOST one — the members it would have
+ * renewed expire, then read as newly live on the next successful report,
+ * costing one bulk `UPDATE` and a brief, self-healing flap.
  */
 export const PRESENCE_REPORT_INTERVAL_MS = 10_000
 
 if (PRESENCE_REPORT_INTERVAL_MS * 2 > PRESENCE_TTL_MS) {
-  // Fails fast, at import time, in every environment that pulls in this
-  // module — defense in depth alongside the guard test in
-  // `__tests__/presence.test.ts`, which is the primary enforcement.
+  // Import-time failure in every environment that pulls this in — defense in
+  // depth behind the guard test in `__tests__/presence.test.ts`.
   throw new Error(
     "presence config invariant violated: PRESENCE_REPORT_INTERVAL_MS * 2 must be <= PRESENCE_TTL_MS",
   )
 }
 
 /**
- * Bound on how many user ids a single presence report may carry. Shared by
- * both ends of the report: the realtime party truncates to this before
- * ever sending (LOW-7 — a room bigger than this must never turn the whole
- * workspace offline by having its report rejected outright), and the
- * builder's report route truncates the same way rather than 400ing, so it
- * stays tolerant of a batch that somehow arrives over the cap anyway.
+ * Cap on user ids per report. Both ends truncate rather than reject, so an
+ * oversized room reports its first N members instead of going dark.
  */
 export const MAX_PRESENCE_USER_IDS_PER_REPORT = 5000
 
-/**
- * Truncates `userIds` to {@link MAX_PRESENCE_USER_IDS_PER_REPORT}. Never
- * throws and never represents "rejected" — an oversized room simply
- * reports its first N connected members rather than going dark entirely.
- */
+/** Truncates to {@link MAX_PRESENCE_USER_IDS_PER_REPORT}; never throws. */
 export function truncatePresenceUserIds(userIds: readonly string[]): string[] {
   return userIds.slice(0, MAX_PRESENCE_USER_IDS_PER_REPORT)
 }
 
 /**
- * The client→server keep-alive frame sent over the ALREADY-OPEN workspace
- * websocket (a widely used pattern: a heartbeat sent every 20s over the
- * same already-open socket rather than a new connection —
- * see `docs/whatsapp-calling-parity-plan.md`'s Codex release-
- * blocker note). It exists to fix a gap in the server-reported presence
- * design above: `ensureReportLoopArmed` (`apps/realtime/src/parties/
- * workspaces.ts`) is only ever consulted from `onConnect` and inbound
- * `onRequest`. A QUIET room — an already-open tab, no new connections, no
- * broadcasts — has neither trigger, so if the alarm loop silently stops,
- * presence would expire after {@link PRESENCE_TTL_MS} even though tabs are
- * still connected, with no independent liveness signal to notice and
- * recover it.
+ * Client→server keep-alive frame on the ALREADY-OPEN workspace websocket.
  *
- * The ping is deliberately NOT a new HTTP heartbeat (that per-tab design
- * was removed for cost reasons — see this file's other exports' doc
- * comments) — it is one more frame on the socket the tab already holds
- * open, at the SAME cadence as the server's own report loop
- * ({@link PRESENCE_REPORT_INTERVAL_MS}) so the pair can never drift. The
- * party's `onMessage` handler validates it against
- * {@link presencePingMessageSchema} and calls the existing freshness-gated
- * `ensureReportLoopArmed()` — a no-op whenever the marker is already fresh,
- * so a room with N tabs pinging every interval costs no extra storage
- * write or report in the common case; it only matters the one time the
- * loop has actually gone stale.
+ * It closes the one gap in server-reported presence: `ensureReportLoopArmed`
+ * (`apps/realtime/src/parties/workspaces.ts`) only runs from `onConnect` and
+ * `onRequest`, so a quiet room — open tabs, no new connections, no
+ * broadcasts — has no trigger. If the alarm loop stopped there, presence
+ * would expire after {@link PRESENCE_TTL_MS} with still-connected tabs and
+ * nothing to notice it.
+ *
+ * Not an HTTP heartbeat (that per-tab design was dropped on cost): one more
+ * frame on a socket the tab already holds, at the same cadence as the
+ * server's own loop so the two cannot drift. `onMessage` validates it and
+ * calls the freshness-gated `ensureReportLoopArmed()`, a no-op while the
+ * marker is fresh — so N tabs pinging cost nothing until the loop is
+ * actually stale.
  */
 export const PRESENCE_PING_MESSAGE_TYPE = "presence-ping" as const
 
-/** Validates an inbound socket frame as a presence keep-alive ping — the
- * ONLY client→server message this socket carries today. Anything that
- * fails this (malformed JSON, a different shape, a stale/unknown message
- * type) must be ignored by the party, never treated as a liveness signal. */
+/**
+ * Validates an inbound socket frame as a presence ping — the only
+ * client→server message this socket carries. Anything else (malformed JSON,
+ * unknown type) must be ignored, never treated as a liveness signal.
+ */
 export const presencePingMessageSchema = z.object({
   type: z.literal(PRESENCE_PING_MESSAGE_TYPE),
 })
 
 export type PresencePingMessage = z.infer<typeof presencePingMessageSchema>
 
-/** Builds the exact wire frame the builder client sends — the one place
- * that owns the client-side serialization, paired with
- * {@link presencePingMessageSchema} so the two can never drift apart. */
+/** The exact wire frame the client sends, paired with the schema above. */
 export function serializePresencePingMessage(): string {
   return JSON.stringify({
     type: PRESENCE_PING_MESSAGE_TYPE,
@@ -116,15 +80,11 @@ export function serializePresencePingMessage(): string {
 }
 
 /**
- * Deterministic hex SHA-256 digest binding a presence-report token to its
- * body (MEDIUM-3): the realtime side computes this over the exact
- * (already-truncated) `userIds` it is about to POST and carries it as a
- * `bodyHash` claim in the token; the builder route recomputes it over the
- * body it actually received and rejects on mismatch. Sorted first so
- * argument order never matters on either side. Uses the standard Web
- * Crypto API (`crypto.subtle`), available in both the realtime server's
- * Cloudflare-Workers-style runtime and Node — never `node:crypto`, which
- * the realtime runtime does not have.
+ * Binds a presence-report token to its body: the realtime side hashes the
+ * ids it is about to POST into a `bodyHash` claim, and the builder route
+ * recomputes it over what arrived and rejects a mismatch. Sorted first so
+ * argument order never matters. Uses Web Crypto — `node:crypto` does not
+ * exist in the realtime runtime.
  */
 export async function hashPresenceUserIds(
   userIds: readonly string[],

@@ -805,33 +805,21 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   )
 
   /**
-   * Ends the call currently occupying the slot so a basket entry can
-   * replace it — used ONLY by the replacement path inside `answer` below,
-   * never `hangup()`. `hangup()` calls `teardown(); reset()` and only THEN
-   * awaits the hangup action, swallowing any failure in a bare `.catch()` —
-   * so a failed server-side end still looks locally successful there. That
-   * is fine for a plain hangup (nothing else is waiting on it), but reusing
-   * it here would risk leaving the FIRST customer in dead air — their
-   * WhatsApp leg never actually terminated — while the agent is already
-   * talking to the second. This instead AWAITS the action first and only
-   * tears the peer/mic down and clears the slot once the server confirms
-   * `{ hungUp: true }`. On any other outcome (thrown error, `hungUp: false`,
-   * or a falsy result) the existing call is left completely untouched and
-   * this returns `false`, so the caller aborts the replacement without ever
-   * promoting the basket entry.
+   * Ends the call occupying the slot so a basket entry can replace it. Used
+   * ONLY by `answer`'s replacement path, never by `hangup()`.
    *
-   * Takes the whole `WhatsappVoipCall`, not just its id — FIX 5: while
-   * `phase === "preparing"` the call's `whatsappCallId` is the CLIENT
-   * NONCE minted by `crypto.randomUUID()` in `startOutbound`, never a real
-   * server id. `hangupWhatsappVoipCallAction`'s input is
-   * `zodBigintAsString()` (`/^\d+$/`), so posting a UUID there fails
-   * validation, the action resolves with no `data`, `!result?.data?.hungUp`
-   * reads `true`, and the agent would see a false "hangup failed" toast
-   * while the replacement silently aborts — even though there is no live
-   * WhatsApp leg to fail hanging up in the first place. `preparing`
-   * therefore short-circuits into the exact same local-only cancel
-   * `hangup()` already uses (`cancelPreparingAttempt`), never touching the
-   * network, and always reports success.
+   * `hangup()` tears down locally first and swallows a failed action — fine
+   * when nothing waits on it, but here it could leave the FIRST customer in
+   * dead air while the agent talks to the second. So this AWAITS the action
+   * and only tears down once the server confirms `{ hungUp: true }`; on any
+   * other outcome the existing call is untouched and it returns `false`, and
+   * the caller aborts the replacement.
+   *
+   * Takes the whole call, not just an id: while `phase === "preparing"` the
+   * `whatsappCallId` is still the client nonce from `startOutbound`, which
+   * the action's `zodBigintAsString()` input rejects — that would show a
+   * false "hangup failed" toast for a leg that was never dialed. `preparing`
+   * therefore short-circuits to the local-only cancel.
    */
   const endForReplacement = useCallback(
     async (call: WhatsappVoipCall): Promise<boolean> => {
@@ -875,23 +863,15 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
    * basket entry, or the slot's own call) or — with no argument — whatever
    * currently occupies the slot (today's behavior, unchanged).
    *
-   * Race #1 — stale closure: reading `call` from this hook's React state
-   * (the closure captured when THIS render's `answer` was created) would be
-   * stale the instant a basket entry is promoted into the slot, since
-   * `promoteRinging` mutates the store directly rather than going through a
-   * React state update this component has re-rendered from yet. Every
-   * decision below therefore reads `useWhatsappVoipCallStore.getState()`
-   * fresh, never the `call` selector value.
+   * Race #1 — stale closure: `promoteRinging` mutates the store directly, so
+   * this render's captured `call` is stale the moment a basket entry is
+   * promoted. Every decision below reads `getState()` fresh instead.
    *
-   * Race #2 — double click / concurrent answers: `answeringIdRef` is a
-   * synchronous mutex (set before any `await`, like `isDialingRef` in
-   * `WhatsappVoipCallButton`) so a second `answer(...)` call — for the SAME
-   * id or a DIFFERENT one — is a no-op while one is already in flight.
-   * Without this, two rapid clicks on two different rings could both reach
-   * the replacement branch, both decide the slot is free/engaged based on
-   * stale reads, and the second could end up hanging up the very call the
-   * first just promoted and started answering — mistaking a freshly
-   * promoted `incomingRinging` slot for "the old call" that needs replacing.
+   * Race #2 — concurrent answers: `answeringIdRef` is a synchronous mutex
+   * set before any `await`, so a second `answer(...)` is a no-op while one
+   * is in flight. Without it two rapid clicks could both reach the
+   * replacement branch on stale reads, and the second could hang up the very
+   * call the first had just promoted.
    *
    * Replacement: when the slot holds a genuinely ENGAGED call (not free —
    * see `isCallSlotFree`'s rule that a lingering `ended` call IS free) and

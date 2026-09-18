@@ -237,35 +237,24 @@ const contactMatchesIdentity = (
     (itemUserId !== undefined && contact.userId === itemUserId))
 
 /**
- * Resolves the customer's identity for this call — a phone number
- * (`waId`) when one is exposed, and/or a Business-Scoped User ID (`userId`)
- * for a Username/BSUID-only caller with no phone number exposed — together
- * with the ONE `payload.contact` (if any) that is actually THIS party,
- * never a different batched item's contact bleeding in (D2).
+ * Resolves the customer's identity for this call — a phone number (`waId`)
+ * and/or a BSUID (`userId`) for a username-only caller — plus the ONE
+ * `payload.contact` that is actually this party, never another batched
+ * item's contact.
  *
- * The item's OWN `from`/`to`/`from_user_id`/`to_user_id` is authoritative —
- * mirroring the incoming-message resolution (`integrations/whatsapp/src/
- * handlers/message/incomming-message.ts`). `payload.contact` only overrides
- * it when the item carries no identity of its own (a session-less/legacy
- * connect) — the one case where `payload.contact` IS that same fallback
- * identity, so it doubles as the profile source too.
+ * The item's own `from`/`to`/`from_user_id`/`to_user_id` is authoritative,
+ * mirroring incoming-message resolution. `payload.contact` overrides it only
+ * when the item carries no identity at all (a session-less/legacy connect),
+ * the one case where the contact IS that identity.
  *
- * Otherwise `payload.contact` is consulted ONLY when it matches the item's
- * identity on at least one field (`contactMatchesIdentity`) — a mismatched
- * contact belongs to a different batched item (D2) and must never leak in.
- * BUT a real Meta payload for a user-initiated call routinely omits `from`
- * on the item and carries ONLY `from_user_id` — the phone number lives
- * solely in `contacts[]` (see `pickContactForCallItem` in `calls.ts`, which
- * already resolved this exact contact for this exact item upstream). A
- * MATCHED contact is therefore not just a profile source: it is safe — and
- * necessary — to let it fill in whichever identity field the item itself
- * omitted (`itemWaId ?? matchedContact.waId`). This is NOT the same as the
- * unmatched-contact case above: enrichment only ever reads from a contact
- * that already proved itself the same party via the OTHER field, so it
- * cannot reintroduce a wrong `sourceId` — losing this fallback would key
- * every user-initiated call's `ContactInbox` lookup by BSUID instead of the
- * phone number, splitting call history off the existing (message-keyed)
- * contact row.
+ * Otherwise the contact is consulted only when it matches the item on at
+ * least one field — a mismatched one belongs to a different batched item.
+ * A MATCHED contact may also FILL IN the field the item omitted, because a
+ * real user-initiated payload routinely carries only `from_user_id` with the
+ * phone number living in `contacts[]`. That is safe: it already proved
+ * itself the same party via the other field. Without it every such call
+ * would key its `ContactInbox` by BSUID and split call history off the
+ * existing message-keyed contact.
  */
 const resolveCallerIdentity = (
   payload: CallPayload,

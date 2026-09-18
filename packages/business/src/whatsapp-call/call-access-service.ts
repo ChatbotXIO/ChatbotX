@@ -189,34 +189,23 @@ export const CALL_READ_SCOPES = {
 export type CallReadScopeName = keyof typeof CALL_READ_SCOPES
 
 /**
- * Core, non-throwing check for whether the given, ALREADY-RESOLVED
- * `member` may read ONE call under the given {@link CallReadScopeName} —
- * the single entry point for the four artifact actions (`scope:
- * "artifact"`) and any single-call history read (`scope: "history"`).
+ * Non-throwing check for whether an ALREADY-RESOLVED `member` may read one
+ * call under the given {@link CallReadScopeName} — the single entry point
+ * for the artifact actions and any single-call history read.
  *
- * Takes `member: RingMember` rather than resolving it itself from a bare
- * `userId` (C1 fix): the caller (the action layer, via
- * `workspaceActionClientAllowExpired`'s `ctx.workspaceMemberPermissions`)
- * has ALREADY resolved the member through `resolveWorkspaceAccess`, which
- * synthesizes a membership for a platform support session (AGENTS.md
- * invariant #19) that carries no row in `WorkspaceMember` at all. Re-reading
- * the member here via `WorkspaceMember` (as the list path's
- * `whatsappCallHistoryService.list` never did, and as this function used
- * to) would deny every support session — a real WorkspaceMember row can
- * never be found for one. Passing the resolved member keeps this in sync
- * with `whatsappCallHistoryService.list`, which has always taken
- * `member: { userId, permissions }` for exactly this reason.
+ * Takes `member: RingMember` rather than a bare `userId` because the action
+ * layer already resolved it through `resolveWorkspaceAccess`, which
+ * SYNTHESIZES a membership for a platform support session (AGENTS.md
+ * invariant #19) with no `WorkspaceMember` row at all — re-reading the table
+ * here would deny every such session. Matches what
+ * `whatsappCallHistoryService.list` has always taken.
  *
  * The `allCalls` (superAdmin/analytics) branch is checked FIRST, before any
- * DB read — an admin's read never needs the call or conversation row at
- * all; the caller's own artifact/history read (`callRecordingService.
- * getRecordingUrlForCall`, etc.) re-validates the call belongs to
- * `workspaceId` on its own read. Only the per-row rule
- * (`CALL_READ_SCOPES[...].row`) needs `findByIdForWorkspace` (scoped by
- * `workspaceId` — a call from another workspace can never be resolved, so
- * it denies rather than throwing a distinguishable "not found") and the
- * conversation lookup, mirroring {@link canCallConversation}'s
- * "unresolvable call/conversation never falls open" discipline.
+ * DB read: an admin's read needs neither row, and the caller's own read
+ * re-validates the workspace anyway. Only the per-row rule needs
+ * `findByIdForWorkspace` (workspace-scoped, so a foreign call denies rather
+ * than 404s distinguishably) and the conversation lookup — the same
+ * "unresolvable never falls open" rule as {@link canCallConversation}.
  */
 export async function canReadCall(input: {
   workspaceId: string

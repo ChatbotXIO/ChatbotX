@@ -4,17 +4,13 @@ import type {
 } from "@chatbotx.io/database/partials"
 
 /**
- * VoIP-mode (browser WebRTC) call-control phases. Persisted at
- * `voip:ctrl:<wacid>` in Redis (short-TTL — bounded by Meta's 30-60s answer
- * window until `accepted`; a longer safety-net TTL afterward). See
+ * VoIP call-control phases, persisted at `voip:ctrl:<wacid>` in Redis. See
  * `docs/whatsapp-calling-voip.md` "Atomic routing + fenced accept".
  *
- * `dialing`/`ringing` are the outbound (business-initiated) counterparts of
- * `reserved`/`answering`: the SAME control key/namespace is reused for both
- * directions (`voip:ctrl:<wacid>`, never a separate `voip:out:ctrl:`), so
- * every existing wacid-keyed consumer (`endCall`, `endVoipCallAsAgent`,
- * `emitVoipCallEnded`, `handleExpire`, the hangup beacon) keeps working
- * unchanged for outbound calls.
+ * `dialing`/`ringing` are the outbound counterparts of
+ * `reserved`/`answering`, on the SAME key namespace — so every wacid-keyed
+ * consumer (`endCall`, `handleExpire`, the hangup beacon, …) works for both
+ * directions unchanged.
  */
 export type VoipCallPhase =
   | "reserved"
@@ -86,15 +82,12 @@ export const MIN_RESERVATION_TTL_MS = 5000
 export const VOIP_ANSWER_DEADLINE_MS = 55_000
 
 /**
- * Safety-net TTL for the control record once a call reaches `accepted`.
- * The answer-deadline TTL no longer applies once a call is live; the real
- * end-of-call cleanup is a later phase (worker-driven), this only bounds
- * how long an abandoned key can linger in Redis.
+ * Safety-net TTL once a call is `accepted` — the answer deadline no longer
+ * applies, so this only bounds how long an abandoned key lingers.
  *
- * A live call's heartbeat (`heartbeatActiveCall`) renews the control on this
- * same TTL, so a control that vanished early was lost by Redis rather than
- * expired — which is why a missing control is only ever "unknown", never
- * "the call ended", and why the durable DB liveness exists alongside it.
+ * `heartbeatActiveCall` renews on this same TTL, so a control that vanished
+ * early was LOST by Redis, not expired. That is why a missing control reads
+ * as "unknown" rather than "ended", and why durable DB liveness exists too.
  */
 export const ACTIVE_CALL_CONTROL_TTL_MS = 4 * 60 * 60 * 1000
 
@@ -116,13 +109,10 @@ export const STRANDED_CALL_RECOVERED_LAST_ERROR =
   "stranded-accepted-recovered-on-dial"
 
 /**
- * How often an active-call heartbeat ALSO bumps the DB row's `updatedAt`
- * (`whatsappCallRepository.touchLivenessIfStale`). The control record alone is
- * not enough: Redis losing it (flush/eviction/restart) must never look like
- * "the call ended", so recovery needs a durable liveness signal it can trust.
- * Throttled well under {@link ACTIVE_CALL_LIVENESS_STALE_MS} so a live call's
- * row is always fresher than the staleness threshold by a wide margin, while a
- * 20-second heartbeat still costs at most one tiny write every two minutes.
+ * How often a heartbeat ALSO bumps the DB row's `updatedAt`. Redis losing
+ * the control (flush/eviction/restart) must never read as "call ended", so
+ * recovery needs a durable signal. Throttled far under
+ * {@link ACTIVE_CALL_LIVENESS_STALE_MS}: one small write every two minutes.
  */
 export const ACTIVE_CALL_ROW_TOUCH_INTERVAL_MS = 2 * 60 * 1000
 
@@ -136,26 +126,15 @@ export const ACTIVE_CALL_ROW_TOUCH_INTERVAL_MS = 2 * 60 * 1000
 export const VOIP_ANSWER_DEADLINE_SAFETY_MARGIN_MS = 3000
 
 /**
- * Margin that makes a call's control key outlive its own durable expiry job —
- * `expireIfUnanswered` for inbound (`captureConnectOffer` /
- * `reserveIncomingCall`), `expireOutboundDial` for outbound
- * (`startOutboundDial`). Both jobs are scheduled with `delay:
- * Math.max(deadlineAt - Date.now(), 0)` — the SAME formula
- * {@link remainingTtlMs} uses for the control's own TTL. Without this margin
- * the control TTL and the job's firing time race to the SAME instant
- * (`deadlineAt`), and BullMQ's delayed-job promotion has non-zero latency, so
- * the control key usually expires in Redis microseconds before the job is
- * promoted and runs. `handleExpire`/`handleExpireOutboundDial` would then read
- * `null` from `readControl`/`endCall` and silently no-op — no Graph
- * reject/terminate, no finalize — leaving the real Meta leg ringing and the
- * DB row stuck `ringing` until the 5-minute `sweepStaleWhatsappCalls` cron
- * backstop. Adding this margin to every CAS that renews a still-ringing
- * control's TTL (`reserveIncomingCall`, `claimForAnswer`, `releaseClaim`,
- * `startOutboundDial`) keeps the control's absolute Redis expiry anchored at
- * `deadlineAt + VOIP_CONTROL_EXPIRY_MARGIN_MS` for as long as the call stays
- * unaccepted, so the expiry job — which still fires at `deadlineAt`, keeping
- * Meta's own deadline enforcement unchanged — always finds a live control to
- * act on.
+ * Keeps a call's control key alive past its own expiry job. The job's delay
+ * and the control's TTL both derive from `deadlineAt`, so without a margin
+ * they race to the same instant — and BullMQ's promotion latency means the
+ * key usually wins, leaving `handleExpire` with nothing to act on: no Graph
+ * reject/terminate, no finalize, the Meta leg still ringing and the row
+ * stuck at `ringing` until the 5-minute sweep cron.
+ *
+ * Every CAS that renews a still-ringing control adds it, anchoring the Redis
+ * expiry at `deadlineAt + margin` while the job still fires at `deadlineAt`.
  */
 export const VOIP_CONTROL_EXPIRY_MARGIN_MS = 20_000
 
@@ -222,10 +201,8 @@ export type EndVoipCallResult = {
    */
   graphAction: VoipGraphEndAction
   /**
-   * The `WhatsappCall.status` this termination should be persisted as.
-   * Callers read this instead of re-deriving it from `fromPhase`/
-   * `graphAction` with their own if-chain (that pattern was previously
-   * duplicated across callers as a `hangupTerminalStatus` computation).
+   * The `WhatsappCall.status` to persist. Callers read it instead of
+   * re-deriving it from `fromPhase`/`graphAction` themselves.
    */
   terminalStatus: WhatsappCallTerminalStatus
 }

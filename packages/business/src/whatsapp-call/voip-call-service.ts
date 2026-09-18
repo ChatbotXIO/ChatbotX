@@ -146,43 +146,24 @@ class WhatsappVoipCallService {
   }
 
   /**
-   * Re-discovers every still-ringing, still-unclaimed VoIP call for
-   * `workspaceId` so an agent who refreshed their browser (F5) mid-ring can
-   * re-show ALL of them — ring-all means more than one caller can be ringing
-   * this workspace at once, and the one-shot realtime ring event for each is
-   * otherwise gone once the socket reconnects, even though the Redis
-   * offer/control TTL (~55s) means those calls may still be answerable.
+   * Re-discovers every still-ringing, unclaimed VoIP call for `workspaceId`,
+   * so an agent who refreshed mid-ring sees all of them again — ring-all
+   * means several callers can be ringing at once, and each one-shot realtime
+   * ring event is gone after a reconnect even though the ~55s offer/control
+   * TTL may leave the calls answerable.
    *
-   * The DB query (`findRingingByWorkspace`) is only a coarse prefilter;
-   * membership in the ring-all/unclaimed state is decided here, against
-   * Redis, which stays the single source of truth: a row qualifies only when
-   * its control record exists, is still `phase: "reserved"` with
-   * `reservedUserId: ""` (nobody has claimed it — a claimed call is being
-   * answered by someone else and must not be re-shown), AND its offer is
-   * still present. Every qualifying row is returned (bounded by the
-   * repository's small `limit`, so this does at most that many Redis reads
-   * — see {@link resolveResumableCandidate}), never just the first, so a
-   * caller who refreshes mid-ring sees every call still worth answering.
+   * `findRingingByWorkspace` is only a coarse prefilter; Redis decides
+   * membership. A row qualifies when its control exists, is still
+   * `reserved` with an empty `reservedUserId` (a claimed call is being
+   * answered by someone else), and its offer is still there.
    *
-   * Candidates are resolved CONCURRENTLY via one `Promise.all` over every
-   * candidate, never awaited one at a time — but this is NOT the same Redis
-   * cost as before this became plural: the old singular method returned at
-   * the FIRST qualifying candidate, while this resolves EVERY candidate
-   * unconditionally. At the repository's `FIND_RINGING_BY_WORKSPACE_LIMIT`
-   * of 20 that is up to 40 Redis reads (`readControl` + `readOffer` per
-   * candidate) plus up to 20 contact-inbox and 20 contact DB reads (via
-   * `resolveWhatsappCallerName`), all fired concurrently, per agent resume
-   * fetch. This only fires when calls are actually ringing (the DB
-   * prefilter), and the bound stays fixed at the repository's small limit
-   * regardless of how ringing-heavy the workspace gets, which is why the
-   * fan-out is the accepted design rather than a regression to fix. Still,
-   * `Promise.all` over the candidate list resolves in the ORIGINAL array
-   * order regardless of which Redis read finishes first,
-   * so the result stays exactly the order `findRingingByWorkspace` returned
-   * — newest-created-first (its `orderBy(desc(createdAt))`), with
-   * unqualified candidates simply absent rather than reordering the rest.
-   * The caller (the resume action, then the ring basket) can rely on that
-   * order for rendering. Returns `[]`, never `null`, when nothing qualifies.
+   * Every candidate is resolved concurrently in one `Promise.all` — at the
+   * repository's limit of 20 that is up to 40 Redis reads plus the name
+   * lookups, per resume fetch, and only while calls are actually ringing.
+   * The bound is fixed at that limit however busy the workspace gets.
+   * `Promise.all` preserves input order, so results stay
+   * newest-created-first with unqualified rows simply absent. Returns `[]`,
+   * never `null`.
    */
   async listResumableIncoming(input: {
     workspaceId: string
@@ -652,37 +633,25 @@ class WhatsappVoipCallService {
   }
 
   /**
-   * Fenced rollback `answering -> reserved`, deliberately reversing the
-   * `claimForAnswer` transition. Used after a Graph accept attempt fails
-   * (e.g. Meta's `accept` call rejects, or the browser's WebRTC negotiation
-   * never completes) so the call can be re-answered within its original
-   * deadline instead of being stuck `answering` forever or terminated
-   * outright:
+   * Fenced rollback `answering -> reserved`, reversing `claimForAnswer` after
+   * a failed Graph accept or WebRTC negotiation, so the call can be
+   * re-answered inside its original deadline instead of being stuck or
+   * terminated: other rung agents can claim it again, and an agent who
+   * refreshed is picked back up by {@link listResumableIncoming} (which
+   * requires exactly `reserved` + empty `reservedUserId`).
    *
-   * - Other rung agents can `claimForAnswer` again once the control is back
-   *   to `reserved`/`reservedUserId:""`.
-   * - An agent who refreshed their browser mid-attempt is picked back up by
-   *   {@link WhatsappVoipCallService.listResumableIncoming}, which requires
-   *   exactly `phase:"reserved"` + `reservedUserId:""`.
+   * {@link ALLOWED_TRANSITIONS} stays forward-only for everyone else —
+   * allowing `answering -> reserved` there would let other code perform this
+   * rollback without the guards below and re-open a call whose accept
+   * actually succeeded. Hence an explicit, narrow CAS here.
    *
-   * This does NOT loosen {@link ALLOWED_TRANSITIONS}/{@link
-   * isTransitionAllowed} — that table stays forward-only (`reserved ->
-   * answering -> accepted -> terminated`) for every other caller. Loosening
-   * it globally to allow `answering -> reserved` would let unrelated code
-   * paths perform this same rollback without the fence + phase guard below,
-   * silently re-opening a call whose Graph accept actually succeeded. So this
-   * method performs its own explicit, narrowly-guarded CAS instead of
-   * routing through `isTransitionAllowed`.
+   * Applies only while the control is still `answering` AND its `fenceToken`
+   * matches this attempt's, so a slow retry can never roll back a later
+   * claim. `deadlineAt`/`fenceToken` are preserved; only `phase` and
+   * `reservedUserId` revert.
    *
-   * Fenced: applies ONLY when the live control is still `phase:"answering"`
-   * AND its `fenceToken` matches `input.fenceToken` — the exact token minted
-   * for THIS answer attempt, so a stale/duplicate call from a slow retry can
-   * never roll back a different (later) claim. `deadlineAt` and `fenceToken`
-   * are preserved unchanged; only `phase` and `reservedUserId` revert.
-   *
-   * Returns `true` when the rollback wins the CAS, `false` for every other
-   * outcome (no control record, wrong phase, fence mismatch, or a lost CAS
-   * race against a concurrent `commitAccepted`/`endCall`).
+   * Returns `true` when the rollback wins the CAS, `false` otherwise (no
+   * control, wrong phase, fence mismatch, or a lost race).
    */
   async releaseClaim(input: {
     wacid: string
@@ -849,28 +818,24 @@ class WhatsappVoipCallService {
    * over, and it never touches Meta (a call whose media really stopped is
    * dropped by Meta itself, errors 138021/138022).
    *
-   * Three guards, all of which must agree: the row is `accepted`, its Redis
-   * control is gone or already terminated, and it has had no liveness
-   * heartbeat for {@link ACTIVE_CALL_LIVENESS_STALE_MS}. The last two of those
-   * happen as ONE conditional UPDATE
-   * ({@link WhatsappCallRepository.recoverStrandedAccepted}) rather than a
-   * claim followed by a finalize: a claim would bump `updatedAt` itself, so in
-   * the gap before the finalize a heartbeat could no longer prove the call is
-   * live and a live call could be closed. Written as one statement there is no
-   * gap, and a concurrent heartbeat simply makes the UPDATE match nothing.
+   * Three guards must agree: the row is `accepted`, its Redis control is
+   * gone or terminated, and it has had no heartbeat for
+   * {@link ACTIVE_CALL_LIVENESS_STALE_MS}. The last two are ONE conditional
+   * UPDATE, not a claim then a finalize — a claim would bump `updatedAt`
+   * itself, so in the gap a heartbeat could no longer prove liveness and a
+   * live call could be closed. As one statement a concurrent heartbeat just
+   * makes the UPDATE match nothing.
    *
    * Returns true only when this call personally made the transition, or when a
    * re-read shows the row reached a terminal status by itself while we were
    * looking (a real `terminate` landing in the same instant) — which equally
    * means the contact is free. Anything else refuses the dial.
    *
-   * The recovered row is `completed`, not `failed`: reaching `accepted` means
-   * the call did connect. `durationSeconds` and `endedAt` stay null rather
-   * than guessed — we know the call is over, never when it ended, and a
-   * delayed terminate can still fill them in. No activity card, realtime event
-   * or workflow trigger is emitted — those belong to an authoritative terminate, and
-   * inventing them here is exactly the false-terminal-effect problem that
-   * removed the background sweep.
+   * The recovered row is `completed`, not `failed` — reaching `accepted`
+   * means it connected. `durationSeconds`/`endedAt` stay null rather than
+   * guessed; a delayed terminate can still fill them in. No activity card,
+   * realtime event or trigger fires: those belong to an authoritative
+   * terminate, and inventing them is the very problem that killed the sweep.
    */
   private async recoverStrandedAcceptedCall(
     call: WhatsappCallModel,

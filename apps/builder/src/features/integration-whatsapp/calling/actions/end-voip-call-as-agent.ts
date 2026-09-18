@@ -29,38 +29,29 @@ type EndVoipCallAsAgentInput = {
 }
 
 /**
- * The hangup shared body — both agent-initiated VoIP-hangup callers (the
- * server action and the `sendBeacon` unload route) are identical except for
- * the log wording. Verifies the caller is the reserved agent, advances the
- * fenced control to `terminated` (`endCall`, always allowed to end an
- * already-`accepted` call — ending a live call is the whole point of a
- * hangup), best-effort tells Meta with the Graph verb `endCall` reports for
- * the phase, finalizes the DB row with `endCall`'s own `terminalStatus`, and
+ * Shared hangup body for both agent-initiated callers (the server action and
+ * the `sendBeacon` unload route), which differ only in log wording. Checks
+ * the caller is the reserved agent, advances the fenced control to
+ * `terminated`, best-effort tells Meta with the Graph verb `endCall` picked
+ * for the phase, finalizes the row with `endCall`'s `terminalStatus`, and
  * drops the offer.
  *
- * The Graph call is best-effort: our own state (Redis + the DB write) is
- * already terminal and the browser tears its peer down regardless, so a failed
- * Graph action must not surface as an error — Meta reclaims the leg on its own
- * 30-60s timeout.
+ * The Graph call is best-effort: our own state is already terminal and the
+ * browser tears down regardless, so a failure must not surface as an error —
+ * Meta reclaims the leg on its own timeout.
  *
- * Returns `true` when it actually ended a call, `false` when the control record
- * was already terminal (another path won first) — the caller reports the same
- * idempotent success either way, since the outcome the user wanted already holds.
+ * Returns `true` when it ended a call and `false` when the control was
+ * already terminal (another path won); the caller reports success either
+ * way, since the outcome the user wanted already holds.
  *
- * A row that exists in the workspace but has `wacid === null` has not been
- * dialed at Meta yet — either it's in the pre-dial cancel window (row
- * created, `connectCall` not yet attempted/succeeded), or it's the row this
- * same compensating cleanup left behind after `initiateOutboundVoipCallAction`
- * finalized it as `failed` post-connect. Neither case has anything to fence
- * via Redis or tell Meta about (there is no `wacid` to key a control record
- * or a Graph action on), so this finalizes the DB row directly and returns
- * `true` rather than throwing `callNotFound` — the row not having a `wacid`
- * yet is not the same as the row not existing.
- *
- * A row WITH a `wacid` but no control record (Meta's webhook bound the id
- * before the dial created the control, or Redis lost it) is still ended: the
- * row names the owner and decides the Graph action and terminal status, so an
- * explicit hangup never leaves the customer's phone ringing.
+ * Two rows still end without a control record:
+ * - `wacid === null` — never dialed at Meta (pre-dial cancel window, or the
+ *   compensating cleanup after a failed connect). Nothing to fence or tell
+ *   Meta, so the row is finalized directly rather than throwing
+ *   `callNotFound`: no wacid yet is not the same as no row.
+ * - a `wacid` but no control (the webhook bound the id before the dial
+ *   created one, or Redis lost it) — the row names the owner and decides the
+ *   action, so a hangup never leaves the customer's phone ringing.
  */
 export async function endVoipCallAsAgent(
   input: EndVoipCallAsAgentInput,

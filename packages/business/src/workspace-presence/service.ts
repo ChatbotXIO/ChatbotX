@@ -62,33 +62,21 @@ async function withRedisFallback<T>(
 }
 
 /**
- * Workspace-wide, platform-level presence — a user counts as "online" while
- * the realtime server keeps renewing their heartbeat (§3.2 of the parity
- * plan) on their behalf. Generalizes the old WhatsApp-only
- * `voip-presence-service`: channel-agnostic, over the existing generic
- * `presenceStore` (Redis). Any feature that needs "who has this workspace
- * open right now" (today: P2's VoIP ring targets) reads through
- * `listOnlineMembers`.
+ * Workspace-wide presence: a user is "online" while the realtime server
+ * keeps renewing their heartbeat. Channel-agnostic, over the generic Redis
+ * `presenceStore`; anything that needs "who has this workspace open right
+ * now" (today: VoIP ring targets) reads `listOnlineMembers`.
  *
- * Redis is the ONLY source of truth for whether a member is online RIGHT
- * NOW — its TTL ({@link PRESENCE_TTL_MS}) already answers that at read time
- * (`listOnlineMembers`), so there is no sweeper and no "mark offline" write
- * anywhere. On an offline -> online transition, this service also stamps
- * `WorkspaceMember.onlineSince = now()` (see
- * `workspaceMemberService.markOnlineBulk`) as a durable, coarse "when did
- * this member last come online" mirror for reporting — reporting an
- * ALREADY-online user never touches the database. That column is
- * monotonic and can never itself answer "is this member online now"; only
- * Redis can.
+ * Redis is the ONLY source of truth for online-ness — its TTL answers that
+ * at read time, so there is no sweeper and no "mark offline" write. On an
+ * offline -> online transition this also stamps
+ * `WorkspaceMember.onlineSince` as a durable, coarse mirror for reporting;
+ * re-reporting an already-online user never touches the database, and that
+ * column is monotonic so it can never answer "online now" by itself.
  *
- * The caller is the realtime server, not the browser: each `apps/realtime`
- * `workspaces` room POSTs the distinct set of currently-connected user ids
- * for that workspace on its own cadence
- * ({@link import("@chatbotx.io/partysocket-config/presence").PRESENCE_REPORT_INTERVAL_MS},
- * never per-browser-tab), which is what makes `heartbeatMany` a BATCH write
- * from the start — see
- * `apps/builder/src/app/api/workspace-presence/report/route.ts` for the
- * inbound side of that report and `docs/realtime.md` for the full flow.
+ * The caller is the realtime server, not the browser: each room POSTs its
+ * whole connected set on one cadence, which is why `heartbeatMany` is a
+ * batch write. See `docs/realtime.md`.
  */
 class WorkspacePresenceService {
   /**

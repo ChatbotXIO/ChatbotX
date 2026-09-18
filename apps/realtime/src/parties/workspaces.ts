@@ -17,19 +17,9 @@ const REVOKE_CLOSE_CODE = 4001
 const REVOKE_CLOSE_REASON = "Revoked"
 
 /**
- * How often each room reports its connected user ids to the builder — see
- * `reportWorkspacePresence`. Re-exported from `@chatbotx.io/partysocket-
- * config/presence`, which is the ONE place that owns this constant
- * alongside `PRESENCE_TTL_MS` (`packages/business/src/workspace-presence/
- * service.ts` re-exports that one) — HIGH-1: the two used to be equal
- * (both 20s) with the alarm rescheduled only AFTER awaiting the report
- * POST, so the write-to-write gap between two reports always exceeded the
- * TTL and every reported member expired every single cycle. Fixed by
- * halving this to 10s AND rescheduling the alarm BEFORE awaiting the
- * report (`onAlarm` below) — a fixed, latency-independent cadence with a
- * full report interval's worth of margin left under the TTL. Re-exported
- * (rather than only imported) so existing test/consumer imports of this
- * symbol from this module keep working unchanged.
+ * How often each room reports its connected user ids to the builder. Owned
+ * by `@chatbotx.io/partysocket-config/presence` alongside `PRESENCE_TTL_MS`;
+ * re-exported here so existing importers of this module keep working.
  */
 export { PRESENCE_REPORT_INTERVAL_MS } from "@chatbotx.io/partysocket-config/presence"
 
@@ -39,53 +29,32 @@ export { PRESENCE_REPORT_INTERVAL_MS } from "@chatbotx.io/partysocket-config/pre
 const PRESENCE_WORKSPACE_ID_STORAGE_KEY = "presenceWorkspaceId"
 
 /**
- * Durable-storage key holding the epoch-ms timestamp of the last time the
- * report loop was confirmed armed — either by a fresh bootstrap
- * (`ensureReportLoopArmed`) or by `onAlarm` actually firing and
- * rescheduling itself. This is the SELF-HEALING signal described below; it
- * deliberately does NOT reuse `room.storage.getAlarm()` as that signal.
+ * Epoch ms of the last time the report loop was confirmed armed — set by a
+ * bootstrap and refreshed by every `onAlarm` tick. This is the self-healing
+ * signal, and it deliberately does NOT use `room.storage.getAlarm()`.
  *
- * Root cause this replaces (found via live investigation against the local
- * `partykit dev` stack, `docs/whatsapp-calling-parity-plan.md`
- * §9): the previous design used `getAlarm() !== null` as the ONLY proxy for
- * "the report loop is currently running." That conflates two different
- * things — "an alarm is scheduled" and "the alarm will actually fire" — and
- * there is no independent check anywhere that the second one is still
- * true. If the scheduled alarm is ever lost or silently stops firing for
- * ANY reason outside this code's control (process restart timing, a
- * supervisor/child-process handoff that leaves stale state behind, a
- * runtime-specific alarm-delivery gap), `getAlarm()` can keep reporting
- * "armed" forever while nothing is actually driving the loop — and because
- * `bootstrapFirstConnection` only re-bootstraps when it sees `null`, NO
- * later `onConnect` would ever recover it. `PRESENCE_TTL_MS` (20s) would
- * then expire the member's Redis entry and it would never be renewed
- * again, even with a tab open the whole time.
+ * `getAlarm() !== null` only says an alarm is SCHEDULED, not that it will
+ * fire. If delivery is ever lost (restart timing, a supervisor handoff, a
+ * runtime alarm gap) it reports "armed" forever while nothing ticks — and a
+ * bootstrap that only runs on `null` would never recover, so presence would
+ * expire after `PRESENCE_TTL_MS` with tabs still open. Found live against
+ * the local `partykit dev` stack.
  *
- * The fix: track FRESHNESS instead of PRESENCE. `ensureReportLoopArmed`
- * (called from both `onConnect` and, as a second independent recovery
- * path, `onRequest`) re-bootstraps whenever this timestamp is missing or
- * older than {@link REPORT_LOOP_STALE_THRESHOLD_MS} — regardless of what
- * `getAlarm()` currently says. A healthy loop refreshes this on every
- * `onAlarm` tick (every {@link PRESENCE_REPORT_INTERVAL_MS}), so it never
- * goes stale on its own; only a loop that has ACTUALLY stopped ticking
- * does. This makes the loop converge back to reporting on its own within
- * one interval of the next connect or workspace-wide broadcast, without
- * needing to know or reproduce the exact mechanism that broke it.
+ * Tracking freshness instead fixes that: `ensureReportLoopArmed` (from
+ * `onConnect`, `onRequest` and the client ping) re-bootstraps whenever this
+ * is missing or older than {@link REPORT_LOOP_STALE_THRESHOLD_MS}, whatever
+ * `getAlarm()` says. A healthy loop refreshes it every interval, so only a
+ * loop that really stopped goes stale — and it converges back on its own
+ * without needing to know what broke it.
  */
 const PRESENCE_LAST_ARMED_AT_STORAGE_KEY = "presenceLastArmedAt"
 
 /**
  * How long {@link PRESENCE_LAST_ARMED_AT_STORAGE_KEY} may go unrefreshed
- * before `ensureReportLoopArmed` treats the loop as dead and re-bootstraps
- * it. Deliberately a small multiple of {@link PRESENCE_REPORT_INTERVAL_MS}
- * (not equal to it) — a healthy loop refreshes this every single interval,
- * so one full extra interval of slack absorbs ordinary scheduling jitter
- * (GC pause, a slow report POST, a connect landing right between two
- * ticks) without false-positiving into a redundant re-bootstrap on every
- * request. Still comfortably under the 20s presence TTL
- * (`PRESENCE_TTL_MS`, `packages/partysocket-config/src/presence.ts`) so
- * self-healing kicks in before a live member's presence would actually
- * expire in Redis.
+ * before the loop counts as dead. A multiple of the interval, not equal to
+ * it: the half-interval of slack absorbs ordinary jitter (GC pause, slow
+ * POST, a connect between ticks) without re-bootstrapping on every request,
+ * while staying under the presence TTL so healing beats expiry.
  */
 const REPORT_LOOP_STALE_THRESHOLD_MS = PRESENCE_REPORT_INTERVAL_MS * 1.5
 
@@ -179,23 +148,17 @@ export default class WorkspaceParty implements Party.Server {
    * broadcast can land on a workspace with zero current connections, and
    * that must never arm an alarm for a room nothing is driving.
    *
-   * HIGH-2 (kept): reporting happens immediately rather than waiting for
-   * the next `onAlarm` tick — a room's first connection (every realtime
-   * redeploy; every agent opening the inbox as the first tab) would
-   * otherwise leave a blind window of `PRESENCE_REPORT_INTERVAL_MS` with
-   * nobody reported online, during which an inbound call would be
-   * rejected as "nobody online".
+   * Reports IMMEDIATELY rather than waiting for the next tick: a room's
+   * first connection (every redeploy, every agent opening the inbox first)
+   * would otherwise leave a `PRESENCE_REPORT_INTERVAL_MS` window with nobody
+   * online, during which an inbound call is rejected as "nobody online".
    *
-   * MEDIUM-c (kept): the alarm is armed (`setAlarm`) BEFORE awaiting the
-   * report POST — not after — so a real Durable Object's input gate, which
-   * opens during that fetch await, can never let a concurrently-arriving
-   * caller observe a still-unarmed alarm. The report itself covers every
-   * user id already visible on the room (`collectConnectedUserIds()`)
-   * UNIONED with `seedUserId` when given, since — thanks to `onConnect`
-   * setting state before acquiring the lock — other connections may
-   * already be queued with their state set by the time this runs; a
-   * single report reflecting all of them is strictly better than each
-   * racing to send its own.
+   * The alarm is armed BEFORE awaiting the POST, so a Durable Object's input
+   * gate — which opens during that await — can never let a concurrent caller
+   * see an unarmed alarm. The report covers everyone already visible plus
+   * `seedUserId`, since `onConnect` sets state before taking the lock and
+   * other connections may already be queued: one report for all of them
+   * beats each racing to send its own.
    */
   private async ensureReportLoopArmed(seedUserId?: string): Promise<void> {
     const userIds = new Set(this.collectConnectedUserIds())
@@ -264,34 +227,20 @@ export default class WorkspaceParty implements Party.Server {
   }
 
   /**
-   * The room's THIRD independent self-heal trigger for a stalled report
-   * loop, alongside `onConnect` and `onRequest` — see
-   * `@chatbotx.io/partysocket-config/presence`'s
-   * `PRESENCE_PING_MESSAGE_TYPE` doc comment for the gap this closes: a
-   * QUIET room (an already-open tab, no new connect, no inbound broadcast)
-   * has neither of the other two triggers, so a silently-stopped alarm
-   * would otherwise never be noticed until the room's Redis-reported
-   * presence had already expired.
+   * The third self-heal trigger, alongside `onConnect` and `onRequest`: a
+   * QUIET room (open tab, no new connect, no broadcast) has neither of the
+   * others, so a silently-stopped alarm would go unnoticed until presence
+   * had already expired. See `PRESENCE_PING_MESSAGE_TYPE`.
    *
-   * Validates the frame BEFORE doing anything else — this socket carries
-   * no other client→server message today, so anything that isn't exactly
-   * a presence ping (malformed JSON, wrong shape, a non-string frame) is
-   * ignored, never treated as a liveness signal. Equally, a ping from a
-   * connection with no authenticated/tagged state (never completed
-   * `onConnect`'s verified-userId tagging) is ignored rather than trusted
-   * — `armReportLoopSerialized`/`ensureReportLoopArmed` must only ever act
-   * on verified members, exactly like every other path into it.
+   * Validates the frame first — this socket carries no other client→server
+   * message, so anything else is ignored rather than trusted as liveness. A
+   * ping from a connection `onConnect` never tagged with a verified userId
+   * is ignored too; only verified members may reach the arming path.
    *
-   * No `seedUserId` is passed: by the time a connection can send this
-   * frame, `onConnect` has already tagged it with its verified `userId`
-   * and it is already visible to `collectConnectedUserIds()`, so there is
-   * nothing left to seed. Routed through the SAME serialized lock as
-   * `onConnect` (`armReportLoopSerialized`) so a ping storm — many tabs
-   * pinging back-to-back — can still cause at most one re-arm, not one per
-   * ping; on top of that, `ensureReportLoopArmed`'s own freshness gate
-   * already makes every ping after the first a pure no-op (no storage
-   * write, no report) whenever the loop is healthy, which is the common
-   * case for the overwhelming majority of pings sent.
+   * No `seedUserId`: by now the connection is already tagged and visible to
+   * `collectConnectedUserIds()`. Routed through the same serialized lock as
+   * `onConnect`, so a ping storm causes at most one re-arm — and the
+   * freshness gate makes every ping a no-op while the loop is healthy.
    */
   async onMessage(
     message: string | ArrayBuffer | ArrayBufferView,
