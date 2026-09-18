@@ -118,6 +118,12 @@ describe("BroadcastDetailDialog — per-page targets", () => {
     return container.textContent ?? ""
   }
 
+  const flowLinks = () =>
+    Array.from(container.querySelectorAll("a")).map((link) => ({
+      name: link.textContent,
+      href: link.getAttribute("href"),
+    }))
+
   test("lists every target page and the flow each page runs", async () => {
     const text = await renderDialog({
       ...BASE_BROADCAST,
@@ -134,7 +140,12 @@ describe("BroadcastDetailDialog — per-page targets", () => {
     } as BroadcastResourceWithRelations)
 
     expect(text).toContain("Page A, Page B")
-    expect(text).toContain("Page A - Welcome flow, Page B - Promo flow")
+    expect(flowLinks()).toEqual([
+      { name: "Welcome flow", href: "/space/ws-1/flows/flow-1" },
+      { name: "Promo flow", href: "/space/ws-1/flows/flow-2" },
+    ])
+    // A flow broadcast has no template section at all.
+    expect(text).not.toContain("broadcasts.detail.noTemplate")
     expect(mockListTemplateDetails).not.toHaveBeenCalled()
   })
 
@@ -176,6 +187,7 @@ describe("BroadcastDetailDialog — per-page targets", () => {
 
     expect(text).toContain("temp_09 (en)")
     expect(text).not.toContain("messenger-preview")
+    expect(flowLinks()).toEqual([])
 
     const trigger = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent?.includes("flows.fields.preview"),
@@ -198,6 +210,18 @@ describe("BroadcastDetailDialog — per-page targets", () => {
     } as unknown as BroadcastResourceWithRelations)
 
     expect(text).toContain("Legacy page")
-    expect(text).toContain("Legacy flow")
+    expect(flowLinks()).toEqual([
+      { name: "Legacy flow", href: "/space/ws-1/flows/flow-legacy" },
+    ])
+  })
+
+  test("shows a dash when a flow broadcast has no flow picked yet", async () => {
+    const text = await renderDialog({
+      ...BASE_BROADCAST,
+      targets: [target("inbox-a", "Page A")],
+    } as BroadcastResourceWithRelations)
+
+    expect(text).toContain("fields.flow.label")
+    expect(flowLinks()).toEqual([])
   })
 })

@@ -26,7 +26,8 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { format } from "date-fns"
-import { ChevronDownIcon } from "lucide-react"
+import { ChevronDownIcon, ExternalLinkIcon } from "lucide-react"
+import Link from "next/link"
 import { useFormatter, useTranslations } from "next-intl"
 import { type ReactNode, useEffect, useMemo, useState } from "react"
 import { ContactFilterSummary } from "@/features/contact-filter/components/contact-filter-summary"
@@ -187,10 +188,6 @@ export function BroadcastDetailDialog({
                   : formatter.number(broadcast.contactCount)
               }
             />
-            <DetailField
-              label={t("fields.flowId.label")}
-              value={resolveBroadcastFlowNames(broadcast)}
-            />
           </div>
 
           <section className="space-y-2">
@@ -200,19 +197,41 @@ export function BroadcastDetailDialog({
             <ContactFilterSummary contactFilter={contactFilter} />
           </section>
 
-          <section className="space-y-3">
-            <h3 className="font-medium text-sm">
-              {t("broadcasts.detail.template")}
-            </h3>
-            <TemplateSection
-              broadcast={broadcast}
-              loading={loadingTemplateDetail}
-              templateDetails={templateDetails}
-            />
-          </section>
+          {/* A broadcast delivers either templates or flows, never both. */}
+          {sendsTemplate ? (
+            <section className="space-y-3">
+              <h3 className="font-medium text-sm">
+                {t("broadcasts.detail.template")}
+              </h3>
+              <TemplateSection
+                broadcast={broadcast}
+                loading={loadingTemplateDetail}
+                templateDetails={templateDetails}
+              />
+            </section>
+          ) : (
+            <section className="space-y-3">
+              <h3 className="font-medium text-sm">{t("fields.flow.label")}</h3>
+              <PageFlowList
+                pageFlows={resolveBroadcastPageFlows(broadcast)}
+                workspaceId={workspaceId}
+              />
+            </section>
+          )}
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** The page a legacy single-page broadcast sends from, else a dash. */
+function resolveLegacyPageName(
+  broadcast: BroadcastResourceWithRelations,
+): string {
+  return (
+    broadcast.integrationWhatsapp?.name ??
+    broadcast.integrationMessenger?.name ??
+    "-"
   )
 }
 
@@ -229,24 +248,86 @@ function resolveBroadcastPageNames(
   if (targetPageNames.length > 0) {
     return targetPageNames.join(", ")
   }
-  return (
-    broadcast.integrationWhatsapp?.name ??
-    broadcast.integrationMessenger?.name ??
-    "-"
-  )
+  return resolveLegacyPageName(broadcast)
 }
 
-/** The flow(s) a broadcast runs: one per page in targets mode, else the legacy flow. */
-function resolveBroadcastFlowNames(
+type BroadcastPageFlow = {
+  pageId: string
+  pageName: string
+  flowId: string
+  flowName: string
+}
+
+/**
+ * The flow each page runs: one row per target page in targets mode, else the
+ * legacy broadcast-level flow. A flow whose row is gone keeps its id as name.
+ */
+function resolveBroadcastPageFlows(
   broadcast: BroadcastResourceWithRelations,
-): string {
-  const pageFlows = (broadcast.targets ?? []).flatMap((target) =>
-    target.flow ? [`${target.inbox.name} - ${target.flow.name}`] : [],
+): BroadcastPageFlow[] {
+  const targetFlows = (broadcast.targets ?? []).flatMap((target) =>
+    target.flowId
+      ? [
+          {
+            pageId: target.inboxId,
+            pageName: target.inbox.name,
+            flowId: target.flowId,
+            flowName: target.flow?.name ?? target.flowId,
+          },
+        ]
+      : [],
   )
-  if (pageFlows.length > 0) {
-    return pageFlows.join(", ")
+  if (targetFlows.length > 0 || !broadcast.flowId) {
+    return targetFlows
   }
-  return broadcast.flow?.name ?? broadcast.flowId ?? "-"
+  return [
+    {
+      pageId: broadcast.id,
+      pageName: resolveLegacyPageName(broadcast),
+      flowId: broadcast.flowId,
+      flowName: broadcast.flow?.name ?? broadcast.flowId,
+    },
+  ]
+}
+
+function PageFlowList({
+  pageFlows,
+  workspaceId,
+}: {
+  pageFlows: BroadcastPageFlow[]
+  workspaceId: string
+}) {
+  const t = useTranslations()
+
+  if (pageFlows.length === 0) {
+    return <div className="text-muted-foreground text-sm">-</div>
+  }
+
+  return (
+    <div className="divide-y rounded-lg border text-sm">
+      <div className="grid grid-cols-2 gap-3 px-3 py-2 text-muted-foreground">
+        <span>{t("broadcasts.detail.integration")}</span>
+        <span>{t("fields.flow.label")}</span>
+      </div>
+      {pageFlows.map((pageFlow) => (
+        <div
+          className="grid grid-cols-2 gap-3 px-3 py-2"
+          key={`${pageFlow.pageId}-${pageFlow.flowId}`}
+        >
+          <span className="font-medium">{pageFlow.pageName}</span>
+          <Link
+            className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+            href={`/space/${workspaceId}/flows/${pageFlow.flowId}`}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {pageFlow.flowName}
+            <ExternalLinkIcon className="size-3.5 shrink-0" />
+          </Link>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 function DetailField({ label, value }: { label: string; value: ReactNode }) {
