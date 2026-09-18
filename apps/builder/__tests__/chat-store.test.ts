@@ -746,6 +746,111 @@ describe("chat store handleNewMessage read state", () => {
   })
 })
 
+// A WhatsApp call Meta counts as a contact touch opens the 24h window, so the
+// inbox must unlock the reply box the moment its card lands — not only after
+// a reload re-reads the column the finalize moved.
+describe("chat store handleNewMessage messaging window", () => {
+  const PREVIOUS_WINDOW = new Date("2026-09-17T08:00:00Z")
+  const CALL_RANG_AT = "2026-09-18T09:55:00.000Z"
+
+  const makeStore = (lastIncomingMessageAt: Date | null) => {
+    const store = createChatStore()
+    store.setState({
+      conversations: [
+        {
+          ...makeConversation("conv-1", new Date("2026-09-17T08:00:00Z")),
+          contactRepliedAt: null,
+          contactInboxes: [{ id: "ci-1", lastIncomingMessageAt }],
+        },
+      ] as never,
+    })
+    return store
+  }
+
+  const conversationOf = (store: ReturnType<typeof createChatStore>) =>
+    store
+      .getState()
+      .conversations.find((c) => c.id === "conv-1") as unknown as {
+      contactRepliedAt: Date | null
+      contactInboxes: { lastIncomingMessageAt: Date | null }[]
+    }
+
+  const makeCallCard = (customerServiceWindowOpenedAt?: string) =>
+    ({
+      ...makeMessage("conv-1", new Date("2026-09-18T10:00:00Z")),
+      id: "msg-call",
+      messageType: "activity",
+      senderType: "system",
+      contentAttributes: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "failed",
+        ...(customerServiceWindowOpenedAt
+          ? { customerServiceWindowOpenedAt }
+          : {}),
+      },
+    }) as never
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setConversationUrl(null)
+  })
+
+  test("a call card carrying the stamp opens the window from the stamped moment", async () => {
+    const store = makeStore(PREVIOUS_WINDOW)
+
+    await store.getState().handleNewMessage(makeCallCard(CALL_RANG_AT))
+
+    expect(
+      conversationOf(store).contactInboxes[0]?.lastIncomingMessageAt,
+    ).toEqual(new Date(CALL_RANG_AT))
+  })
+
+  test("a call card is not the contact replying — last-seen timestamps stay put", async () => {
+    const store = makeStore(PREVIOUS_WINDOW)
+
+    await store.getState().handleNewMessage(makeCallCard(CALL_RANG_AT))
+
+    expect(conversationOf(store).contactRepliedAt).toBeNull()
+  })
+
+  test("a call card without the stamp leaves the window alone", async () => {
+    const store = makeStore(PREVIOUS_WINDOW)
+
+    await store.getState().handleNewMessage(makeCallCard())
+
+    expect(
+      conversationOf(store).contactInboxes[0]?.lastIncomingMessageAt,
+    ).toEqual(PREVIOUS_WINDOW)
+  })
+
+  test("an older stamp never shrinks a window a newer message already opened", async () => {
+    const newer = new Date("2026-09-18T11:00:00Z")
+    const store = makeStore(newer)
+
+    await store.getState().handleNewMessage(makeCallCard(CALL_RANG_AT))
+
+    expect(
+      conversationOf(store).contactInboxes[0]?.lastIncomingMessageAt,
+    ).toEqual(newer)
+  })
+
+  test("a contact's message still opens the window and marks them as replied", async () => {
+    const store = makeStore(PREVIOUS_WINDOW)
+    const sentAt = new Date("2026-09-18T12:00:00Z")
+
+    await store
+      .getState()
+      .handleNewMessage(makeMessage("conv-1", sentAt) as never)
+
+    const conversation = conversationOf(store)
+    expect(conversation.contactInboxes[0]?.lastIncomingMessageAt).toEqual(
+      sentAt,
+    )
+    expect(conversation.contactRepliedAt).toEqual(sentAt)
+  })
+})
+
 describe("chat store loadMoreMessages", () => {
   test("prepends the older page and advances the message cursor", async () => {
     const store = createChatStore()

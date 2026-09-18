@@ -193,6 +193,13 @@ export type MessageWhatsappCallEntity = {
   answerSeconds?: number
   /** The DB `WhatsappCall.id` — absent only on legacy rows. */
   callId?: string
+  /**
+   * ISO time this call opened (or refreshed) WhatsApp's 24-hour customer
+   * service window, stamped by the finalize; absent when it did not. Meta:
+   * a user's call opens it whether or not it was answered, a business call
+   * only once the user accepts.
+   */
+  customerServiceWindowOpenedAt?: string
   /** `true` once a recording has been uploaded and attached to this message. */
   hasRecording?: boolean
   /**
@@ -321,6 +328,25 @@ export const getWhatsappCallEntity = (
   return attrs.type === "whatsapp_call"
     ? (contentAttributes as MessageWhatsappCallEntity)
     : undefined
+}
+
+/**
+ * When a message opened (or refreshed) its channel's messaging window, or
+ * `null` when it did not. A contact's message always does; an activity card
+ * does only when it carries the moment explicitly — the server decides which
+ * cards those are, so callers never re-derive a channel's window policy.
+ */
+export const resolveMessagingWindowOpenedAt = (message: {
+  messageType: string
+  createdAt: Date | string
+  contentAttributes?: unknown
+}): Date | null => {
+  const openedAt =
+    message.messageType === "incoming"
+      ? message.createdAt
+      : getWhatsappCallEntity(message.contentAttributes)
+          ?.customerServiceWindowOpenedAt
+  return openedAt ? new Date(openedAt) : null
 }
 
 /**

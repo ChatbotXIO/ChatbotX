@@ -268,6 +268,35 @@ const resolveCallAgentSnapshot = async (
   }
 }
 
+type CustomerServiceWindowFacts = {
+  status: MessageWhatsappCallEntity["status"]
+  /** When the call was placed / started ringing (`WhatsappCall.createdAt`). */
+  placedAt: Date
+  /** When the call was answered (`start_time`), when Meta reported it. */
+  answeredAt: Date | null | undefined
+}
+
+/**
+ * When a finished call opened (or refreshed) WhatsApp's 24-hour customer
+ * service window, by direction — `null` when it did not. Meta, Calling API
+ * pricing ("How calling changes the 24 hour customer service window"): the
+ * window starts "when a WhatsApp user calls you, regardless of if you accept
+ * the call or not" and "when a WhatsApp user accepts your call".
+ *
+ * An answered business call with no reported answer time falls back to the
+ * earlier `placedAt`, never the later hangup: anchoring early can only make
+ * the window we show SHORTER than Meta's, never let an agent type into one
+ * Meta has already closed.
+ */
+const CUSTOMER_SERVICE_WINDOW_OPENED_AT: Record<
+  MessageWhatsappCallEntity["direction"],
+  (facts: CustomerServiceWindowFacts) => Date | null
+> = {
+  userInitiated: ({ placedAt }) => placedAt,
+  businessInitiated: ({ status, answeredAt, placedAt }) =>
+    status === "completed" ? (answeredAt ?? placedAt) : null,
+}
+
 export type FinalizeCallSideEffectsInput = {
   call: WhatsappCallModel
   entity: MessageWhatsappCallEntity
@@ -305,6 +334,13 @@ export const finalizeCallSideEffects = async (
   const { recordingRequested, transcriptionRequested, recordingUnavailable } =
     await resolveCallActivityRequestFlags(call)
   const agentSnapshot = await resolveCallAgentSnapshot(call.answeredByUserId)
+  const windowOpenedAt = CUSTOMER_SERVICE_WINDOW_OPENED_AT[
+    partialEntity.direction
+  ]({
+    status: partialEntity.status,
+    placedAt: call.createdAt,
+    answeredAt: input.startedAt,
+  })
 
   // The finalize message IS the single progressive activity card — it carries
   // the full flag set from the start (all false/unknown until the
@@ -322,6 +358,9 @@ export const finalizeCallSideEffects = async (
     recordingExpired: false,
     recordingUnavailable,
     ...agentSnapshot,
+    ...(windowOpenedAt
+      ? { customerServiceWindowOpenedAt: windowOpenedAt.toISOString() }
+      : {}),
     // Surfaces Meta's own terminate diagnosis (e.g. a media-drop code) on
     // the card itself — without this an agent sees an "Audio call" with no
     // audio and no explanation. Only stamped when Meta actually reported one;
@@ -397,7 +436,13 @@ export const finalizeCallSideEffects = async (
       contactInboxId: contactInbox.id,
       contactId: contactInbox.contactId,
       workspaceId: call.workspaceId,
-      data: { lastMessageAt: message.createdAt },
+      data: {
+        lastMessageAt: message.createdAt,
+        // The inbox gates free-form replies on this column, so a call Meta
+        // counts as opening the window has to move it too — otherwise the
+        // agent is locked out of a chat Meta would deliver.
+        ...(windowOpenedAt ? { lastIncomingMessageAt: windowOpenedAt } : {}),
+      },
     })
     if (invalidation) {
       await contactInboxService.invalidateTracking(invalidation)

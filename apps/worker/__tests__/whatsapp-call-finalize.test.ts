@@ -660,6 +660,105 @@ describe("finalizeCallSideEffects", () => {
   })
 })
 
+// Meta, Calling API pricing: the 24h customer service window opens "when a
+// WhatsApp user calls you, regardless of if you accept the call or not" and
+// "when a WhatsApp user accepts your call". The inbox gates free-form replies
+// on `lastIncomingMessageAt`, so the finalize has to move it.
+describe("finalizeCallSideEffects customer service window", () => {
+  const placedAt = new Date("2026-08-21T09:58:00Z")
+  const answeredAt = new Date("2026-08-21T09:58:30Z")
+
+  const trackingData = () =>
+    mocks.updateTracking.mock.calls[0]?.[0]?.data as
+      | { lastIncomingMessageAt?: Date }
+      | undefined
+  const stampedEntity = () =>
+    mocks.createOrUpdate.mock.calls[0]?.[0]?.contentAttributes as {
+      customerServiceWindowOpenedAt?: string
+    }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.createOrUpdate.mockResolvedValue({
+      isNew: true,
+      message: { id: "msg-1", createdAt: new Date("2026-08-21T10:00:00Z") },
+    })
+    mocks.finalizeById.mockResolvedValue({ ...call, status: "completed" })
+    mocks.contactInboxFindBy.mockResolvedValue({
+      id: "ci-1",
+      contactId: "contact-1",
+    })
+    mocks.updateTracking.mockResolvedValue(null)
+    mocks.voipReadControl.mockResolvedValue(null)
+    mocks.voipMarkTerminated.mockResolvedValue(false)
+    mocks.voipDeleteOffer.mockResolvedValue(undefined)
+    mocks.findByInboxIdForWorkspace.mockResolvedValue({
+      callTranscriptionEnabled: false,
+    })
+  })
+
+  test("a customer's call opens the window even when nobody answered — from when it rang", async () => {
+    await finalizeCallSideEffects({
+      call: { ...call, createdAt: placedAt },
+      entity: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "failed",
+      },
+    })
+
+    expect(trackingData()?.lastIncomingMessageAt).toEqual(placedAt)
+    expect(stampedEntity().customerServiceWindowOpenedAt).toBe(
+      placedAt.toISOString(),
+    )
+  })
+
+  test("a business call the customer answered opens it from the answer", async () => {
+    await finalizeCallSideEffects({
+      call: { ...call, direction: "businessInitiated", createdAt: placedAt },
+      entity: {
+        type: "whatsapp_call",
+        direction: "businessInitiated",
+        status: "completed",
+      },
+      startedAt: answeredAt,
+    })
+
+    expect(trackingData()?.lastIncomingMessageAt).toEqual(answeredAt)
+  })
+
+  test("an answered business call with no reported answer time falls back to when it was placed — never later", async () => {
+    await finalizeCallSideEffects({
+      call: { ...call, direction: "businessInitiated", createdAt: placedAt },
+      entity: {
+        type: "whatsapp_call",
+        direction: "businessInitiated",
+        status: "completed",
+      },
+    })
+
+    expect(trackingData()?.lastIncomingMessageAt).toEqual(placedAt)
+  })
+
+  test.each([
+    ["failed"],
+    ["rejected"],
+    ["canceled"],
+  ] as const)("a business call that ended %s does not open it", async (status) => {
+    await finalizeCallSideEffects({
+      call: { ...call, direction: "businessInitiated", createdAt: placedAt },
+      entity: {
+        type: "whatsapp_call",
+        direction: "businessInitiated",
+        status,
+      },
+    })
+
+    expect(trackingData()).not.toHaveProperty("lastIncomingMessageAt")
+    expect(stampedEntity()).not.toHaveProperty("customerServiceWindowOpenedAt")
+  })
+})
+
 describe("finalizeCallSideEffects ended emit", () => {
   const voipCall = call
 

@@ -3,6 +3,7 @@ import type {
   ConversationBotCategory,
   ConversationStatus,
 } from "@chatbotx.io/database/partials"
+import { resolveMessagingWindowOpenedAt } from "@chatbotx.io/sdk"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contact-filter/schema"
 import type { ContactResource } from "@/features/contacts/schema/resource"
@@ -18,6 +19,52 @@ import type {
 } from "@/features/messages/schema/resource"
 import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
+
+/** The later of two timestamps — tolerates the string a realtime payload
+ * delivers in place of a `Date`. */
+const latestDate = (current: Date | string | null, next: Date): Date =>
+  current && new Date(current) > next ? new Date(current) : next
+
+/**
+ * What a newly arrived message changes on its conversation, or `null` for
+ * nothing: a contact's own message marks them as having replied, and any
+ * message that opened the messaging window moves it forward — a WhatsApp call
+ * card included, per `resolveMessagingWindowOpenedAt`. Never backwards, so an
+ * out-of-order older message cannot shrink a window a newer one opened.
+ */
+const conversationPatchForMessage = (
+  conversation: ListConversationsResponse["data"][number] | undefined,
+  message: MessageResourceWithRelations,
+): Partial<ConversationResource> | null => {
+  const repliedPatch =
+    message.messageType === "incoming"
+      ? {
+          contactRepliedAt: message.createdAt,
+          contactLastReadAt: message.createdAt,
+        }
+      : {}
+
+  const windowOpenedAt = resolveMessagingWindowOpenedAt(message)
+  const [primaryInbox, ...otherInboxes] = conversation?.contactInboxes ?? []
+  const windowPatch =
+    windowOpenedAt && primaryInbox
+      ? {
+          contactInboxes: [
+            {
+              ...primaryInbox,
+              lastIncomingMessageAt: latestDate(
+                primaryInbox.lastIncomingMessageAt,
+                windowOpenedAt,
+              ),
+            },
+            ...otherInboxes,
+          ],
+        }
+      : {}
+
+  const patch = { ...repliedPatch, ...windowPatch }
+  return Object.keys(patch).length > 0 ? patch : null
+}
 
 export type ConversationFilters = {
   botCategory?: ConversationBotCategory
@@ -857,22 +904,12 @@ export const createChatStore = () => {
         updateConversation,
       } = get()
 
-      // Update last seen timestamps
-      if (message.messageType === "incoming") {
-        const currentConversation = get().conversations.find(
-          (c) => c.id === message.conversationId,
-        )
-        const updatedContactInboxes = currentConversation?.contactInboxes?.map(
-          (ci, i) =>
-            i === 0 ? { ...ci, lastIncomingMessageAt: message.createdAt } : ci,
-        )
-        updateConversation(message.conversationId, {
-          contactRepliedAt: message.createdAt,
-          contactLastReadAt: message.createdAt,
-          ...(updatedContactInboxes
-            ? { contactInboxes: updatedContactInboxes }
-            : {}),
-        })
+      const conversationPatch = conversationPatchForMessage(
+        get().conversations.find((c) => c.id === message.conversationId),
+        message,
+      )
+      if (conversationPatch) {
+        updateConversation(message.conversationId, conversationPatch)
       }
       // Only an outgoing message that `createOutgoing` itself produced clears
       // the unread state — a bot/system reply (flow step, template, comment
