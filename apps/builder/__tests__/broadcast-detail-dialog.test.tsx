@@ -153,6 +153,41 @@ describe("BroadcastDetailDialog — per-page targets", () => {
     })
   })
 
+  test("collapses each page's template preview until the user expands it", async () => {
+    mockListTemplateDetails.mockResolvedValue([
+      {
+        id: "tmpl-a",
+        channel: "messenger",
+        name: "temp_09",
+        language: "en",
+        category: "UTILITY",
+        status: "APPROVED",
+        parameterFormat: "POSITIONAL",
+        components: [{ type: "BODY", text: "Hello" }],
+        inboxId: "inbox-a",
+        integrationName: "Page A",
+      },
+    ])
+
+    const text = await renderDialog({
+      ...BASE_BROADCAST,
+      targets: [target("inbox-a", "Page A", { templateId: "tmpl-a" })],
+    } as BroadcastResourceWithRelations)
+
+    expect(text).toContain("temp_09 (en)")
+    expect(text).not.toContain("messenger-preview")
+
+    const trigger = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent?.includes("flows.fields.preview"),
+    )
+    await act(async () => {
+      trigger?.click()
+      await Promise.resolve()
+    })
+
+    expect(container.textContent).toContain("messenger-preview")
+  })
+
   test("keeps showing a legacy single-page broadcast from its own columns", async () => {
     const text = await renderDialog({
       ...BASE_BROADCAST,

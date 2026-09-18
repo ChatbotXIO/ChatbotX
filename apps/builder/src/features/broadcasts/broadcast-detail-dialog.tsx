@@ -14,6 +14,11 @@ import type {
   WaTemplateParams,
 } from "@chatbotx.io/flow-config"
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@chatbotx.io/ui/components/ui/collapsible"
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -21,6 +26,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { format } from "date-fns"
+import { ChevronDownIcon } from "lucide-react"
 import { useFormatter, useTranslations } from "next-intl"
 import { type ReactNode, useEffect, useMemo, useState } from "react"
 import { ContactFilterSummary } from "@/features/contact-filter/components/contact-filter-summary"
@@ -120,12 +126,15 @@ export function BroadcastDetailDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="max-h-screen overflow-y-auto sm:max-w-3xl">
+      {/* The header stays put and only the body scrolls, so a broadcast with
+          several page templates never pushes the title and close button off
+          screen. */}
+      <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{t("broadcasts.detail.title")}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto pe-1">
           <div className="grid gap-3 text-sm sm:grid-cols-2">
             <DetailField
               label={t("fields.name.label")}
@@ -332,33 +341,57 @@ function TemplateDetailBlock({
         />
       </div>
 
-      {templateDetail.channel === "whatsapp" ? (
-        <TemplatePreview
-          bodyParams={
-            (templateData as WaTemplateParams | undefined)?.body ?? []
-          }
-          buttonParams={
-            (templateData as WaTemplateParams | undefined)?.button ?? []
-          }
-          components={components as TemplateComponent[]}
-          headerParams={
-            (templateData as WaTemplateParams | undefined)?.header ?? []
-          }
-        />
-      ) : (
-        <MessengerTemplatePreview
-          bodyParams={
-            (templateData as MessengerTemplateParams | undefined)?.body ?? []
-          }
-          buttonParams={
-            (templateData as MessengerTemplateParams | undefined)?.button ?? []
-          }
-          components={components as MessengerTemplateComponent[]}
-          headerParams={
-            (templateData as MessengerTemplateParams | undefined)?.header ?? []
-          }
-        />
-      )}
+      {/* Collapsed by default: a template preview is tall, and a broadcast
+          sent from several pages shows one per page. */}
+      <Collapsible>
+        <CollapsibleTrigger className="group flex items-center gap-1 text-muted-foreground text-sm">
+          <ChevronDownIcon className="size-4 transition-transform group-data-[panel-open]:rotate-180" />
+          {t("flows.fields.preview")}
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-2">
+          <TemplateDetailPreview
+            components={components}
+            templateData={templateData}
+            templateDetail={templateDetail}
+          />
+        </CollapsibleContent>
+      </Collapsible>
     </div>
+  )
+}
+
+function TemplateDetailPreview({
+  components,
+  templateDetail,
+  templateData,
+}: {
+  components: unknown[]
+  templateDetail: BroadcastTemplateDetail
+  templateData: WaTemplateParams | MessengerTemplateParams | null | undefined
+}) {
+  return templateDetail.channel === "whatsapp" ? (
+    <TemplatePreview
+      bodyParams={(templateData as WaTemplateParams | undefined)?.body ?? []}
+      buttonParams={
+        (templateData as WaTemplateParams | undefined)?.button ?? []
+      }
+      components={components as TemplateComponent[]}
+      headerParams={
+        (templateData as WaTemplateParams | undefined)?.header ?? []
+      }
+    />
+  ) : (
+    <MessengerTemplatePreview
+      bodyParams={
+        (templateData as MessengerTemplateParams | undefined)?.body ?? []
+      }
+      buttonParams={
+        (templateData as MessengerTemplateParams | undefined)?.button ?? []
+      }
+      components={components as MessengerTemplateComponent[]}
+      headerParams={
+        (templateData as MessengerTemplateParams | undefined)?.header ?? []
+      }
+    />
   )
 }
