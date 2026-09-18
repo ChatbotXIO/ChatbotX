@@ -593,6 +593,19 @@ const handleTerminate = async (
         // for a BUSINESS_INITIATED terminate.
         return
       }
+    } else if (event.direction === undefined) {
+      // Mirrors `normalizeCallItem`'s connect branch
+      // (`integrations/whatsapp/src/lib/calls.ts`), which skips an event
+      // carrying no direction rather than assuming one. Only the
+      // ROW-CREATING path needs this: a terminate for a call we already have
+      // reads its direction off the row, never off the event. Defaulting
+      // here instead would record a BUSINESS_INITIATED terminate that lost
+      // its direction as an inbound call that never happened.
+      logger.warn(
+        { wacid: event.wacid, phoneNumberId: props.payload.phoneNumberId },
+        "Whatsapp call terminate skipped: missing direction",
+      )
+      return
     } else {
       // Terminate can arrive without a prior connect row (e.g. the connect
       // job failed): upsert directly so the call is still recorded. Only
@@ -608,7 +621,7 @@ const handleTerminate = async (
       }
       const upserted = await whatsappCallLifecycleService.recordIncomingCall({
         wacid: event.wacid,
-        direction: event.direction ?? "userInitiated",
+        direction: event.direction,
         status: "ringing",
         workspaceId: inbox.workspaceId,
         inboxId: inbox.id,

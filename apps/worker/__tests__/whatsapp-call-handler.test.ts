@@ -911,6 +911,52 @@ describe("handleWhatsappCallEvent", () => {
       expect(mocks.finalizeCallSideEffects).toHaveBeenCalled()
     })
 
+    test("no direction and no prior row: skipped, never recorded as an inbound call that never happened", async () => {
+      mocks.findByWacid.mockResolvedValue(undefined)
+
+      await handleWhatsappCallEvent({
+        ...baseData,
+        payload: {
+          phoneNumberId: "phone-1",
+          contact: { waId: "84900000001" },
+          event: {
+            kind: "terminate",
+            wacid: "wacid.NODIR",
+            status: "COMPLETED",
+            from: "84900000001",
+            timestamp: "1755700100",
+          },
+        },
+      })
+
+      expect(mocks.createIfAbsent).not.toHaveBeenCalled()
+      expect(mocks.finalizeCallSideEffects).not.toHaveBeenCalled()
+      expect(mocks.logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ wacid: "wacid.NODIR" }),
+        "Whatsapp call terminate skipped: missing direction",
+      )
+    })
+
+    test("no direction but an EXISTING row still finalizes — direction comes off the row, not the event", async () => {
+      await handleWhatsappCallEvent({
+        ...baseData,
+        payload: {
+          phoneNumberId: "phone-1",
+          contact: { waId: "84900000001" },
+          event: {
+            kind: "terminate",
+            wacid: "wacid.1",
+            status: "COMPLETED",
+            from: "84900000001",
+            timestamp: "1755700100",
+            durationSeconds: 12,
+          },
+        },
+      })
+
+      expect(mocks.finalizeCallSideEffects).toHaveBeenCalled()
+    })
+
     test("R23: businessInitiated without a prior row attaches via the exact attemptId match and finalizes it (no time-window fallback)", async () => {
       mocks.findByWacid.mockResolvedValue(undefined)
       mocks.findByAttemptId.mockResolvedValue(pendingOutboundRow)
