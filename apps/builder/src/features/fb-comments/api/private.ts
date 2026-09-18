@@ -4,8 +4,8 @@ import {
   listCommentAutomationContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
 import {
+  commentAutomationService,
   contactInboxService,
-  fbCommentAutomationService,
 } from "@chatbotx.io/business"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -33,7 +33,7 @@ export const fbCommentsPrivateAPI = {
     .input(listFbCommentsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listFbCommentsResponse)
-    .handler(async ({ input }) => await fbCommentAutomationService.list(input)),
+    .handler(async ({ input }) => await commentAutomationService.list(input)),
 
   createFbCommentAPI: authorizedAPI
     .route({
@@ -47,7 +47,7 @@ export const fbCommentsPrivateAPI = {
     .output(fbCommentResource)
     .handler(async ({ input }) => {
       const { workspaceId, ...rest } = input
-      return await fbCommentAutomationService.createMessenger({
+      return await commentAutomationService.createMessenger({
         workspaceId,
         data: rest,
       })
@@ -69,7 +69,7 @@ export const fbCommentsPrivateAPI = {
     .output(fbCommentResource)
     .handler(async ({ input }) => {
       const { workspaceId, id, ...rest } = input
-      return await fbCommentAutomationService.updateMessenger(
+      return await commentAutomationService.updateMessenger(
         { workspaceId, id },
         rest,
       )
@@ -86,7 +86,7 @@ export const fbCommentsPrivateAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.void())
     .handler(async ({ input }) => {
-      await fbCommentAutomationService.deleteMessenger({
+      await commentAutomationService.deleteMessenger({
         workspaceId: input.workspaceId,
         id: input.id,
       })
@@ -95,7 +95,7 @@ export const fbCommentsPrivateAPI = {
   /**
    * Backs the drill-down dialog behind every Sent/Delivered/Seen/Clicked/Failed
    * column. Deliberately ONE procedure for both the Facebook and the Instagram
-   * list pages: `FBCommentAutomation` is a single table discriminated by its
+   * list pages: `CommentAutomation` is a single table discriminated by its
    * `type` column, and `commentAutomationAnalyticsService` already scopes the
    * automation to the workspace, so a second copy under `ig-comments` would
    * only be a second thing to keep in sync.

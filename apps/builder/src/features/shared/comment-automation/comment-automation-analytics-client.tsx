@@ -4,7 +4,7 @@ import { CommentAutomationAnalytics } from "@chatbotx.io/analytics-nextjs/compon
 
 /**
  * Client shell for the per-automation analytics dashboard, shared by the
- * Facebook and Instagram routes — both feed the same `FBCommentAutomation`
+ * Facebook and Instagram routes — both feed the same `CommentAutomation`
  * table, so there is one page.
  *
  * Its only job beyond mounting the dashboard is reading the browser timezone:

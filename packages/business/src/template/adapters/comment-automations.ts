@@ -1,5 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
-import { fbCommentAutomationModel } from "@chatbotx.io/database/schema"
+import { commentAutomationModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import type {
   PatchTask,
@@ -8,7 +8,7 @@ import type {
   TemplateInstallContext,
 } from "./types"
 
-type TemplateFBCommentPost = {
+type TemplateCommentPost = {
   type: "published" | "ads" | "reels" | "postIds" | "all"
   // External Facebook post ids — copied verbatim, never remapped. Sibling
   // of `privateReply.value`/`publicReply.value`/`includeKeywords.value`,
@@ -19,7 +19,7 @@ type TemplateFBCommentPost = {
   value: string[]
 }
 
-type TemplateFBCommentReply = {
+type TemplateCommentReply = {
   type: "AIAgent" | "text" | "flow" | "none"
   // A `resources.flows`/`aiAgents` sourceId when type is `flow`/`AIAgent`;
   // arbitrary reply text when type is `text`; unused when type is `none`.
@@ -33,9 +33,9 @@ type TemplateFBCommentEntry = {
   isActive: boolean
   startTime: string | null
   endTime: string | null
-  post: TemplateFBCommentPost
-  privateReply: TemplateFBCommentReply
-  publicReply: TemplateFBCommentReply
+  post: TemplateCommentPost
+  privateReply: TemplateCommentReply
+  publicReply: TemplateCommentReply
   includeKeywords: unknown
   excludeKeywords: string[]
   options: unknown
@@ -48,8 +48,8 @@ const resolveReplyValue = (
   ctx: TemplateInstallContext,
   entry: TemplateFBCommentEntry,
   field: "privateReply" | "publicReply",
-  reply: TemplateFBCommentReply,
-): TemplateFBCommentReply => {
+  reply: TemplateCommentReply,
+): TemplateCommentReply => {
   if (reply.type === "text" || reply.type === "none" || !reply.value) {
     return reply
   }
@@ -95,7 +95,7 @@ const resolveFolderRef = (
  * resolved explicitly (`flow` -> `idMaps.flow`, `AIAgent` -> `idMaps.aiAgent`,
  * `text`/`none` passed through) rather than through the generic remapper.
  */
-export const fbCommentAutomationsAdapter: ResourceAdapter = {
+export const commentAutomationsAdapter: ResourceAdapter = {
   category: "fbCommentAutomations",
   providesKinds: [],
   consumesKinds: ["flow", "aiAgent", "folder"],
@@ -122,7 +122,7 @@ export const fbCommentAutomationsAdapter: ResourceAdapter = {
       const folderId = resolveFolderRef(ctx, entry)
 
       const [created] = await ctx.tx
-        .insert(fbCommentAutomationModel)
+        .insert(commentAutomationModel)
         .values({
           id: createId(),
           workspaceId: ctx.workspaceId,
@@ -157,7 +157,7 @@ export const fbCommentAutomationsAdapter: ResourceAdapter = {
 
   collector: {
     async resolveIds(workspaceId) {
-      const rows = await db.query.fbCommentAutomationModel.findMany({
+      const rows = await db.query.commentAutomationModel.findMany({
         where: { workspaceId },
         columns: { id: true },
       })
@@ -169,7 +169,7 @@ export const fbCommentAutomationsAdapter: ResourceAdapter = {
       if (uniqueIds.length === 0) {
         return []
       }
-      const rows = await db.query.fbCommentAutomationModel.findMany({
+      const rows = await db.query.commentAutomationModel.findMany({
         where: { workspaceId, id: { in: uniqueIds } },
         columns: { id: true },
       })
@@ -185,7 +185,7 @@ export const fbCommentAutomationsAdapter: ResourceAdapter = {
           hardDependencies: [],
         }
       }
-      const rows = await db.query.fbCommentAutomationModel.findMany({
+      const rows = await db.query.commentAutomationModel.findMany({
         where: { workspaceId, id: { in: [...ids] } },
       })
       const entries = rows.map((row) => ({

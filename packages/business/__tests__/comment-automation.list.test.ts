@@ -10,7 +10,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   and: (...args: unknown[]) => ({ and: args }),
   db: {
     query: {
-      fbCommentAutomationModel: {
+      commentAutomationModel: {
         findMany: mocks.findMany,
         findFirst: mocks.findFirst,
       },
@@ -25,15 +25,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
-  fbCommentAutomationTypes: { enum: { messenger: "messenger" } },
+  commentAutomationTypes: { enum: { messenger: "messenger" } },
   igCommentAutomationTypes: { options: ["instagram", "instagramFacebook"] },
   rootFolderId: "0",
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactInboxModel: {},
-  fbCommentAutomationModel: { name: "fbCommentAutomation.name" },
-  fbCommentAutomationReplyModel: {},
+  commentAutomationModel: { name: "commentAutomation.name" },
+  commentAutomationReplyModel: {},
 }))
 
 vi.mock("@chatbotx.io/database/utils", () => ({
@@ -53,8 +53,8 @@ vi.mock("date-fns-tz", () => ({
   formatInTimeZone: () => "00:00",
 }))
 
-const { fbCommentAutomationService } = await import(
-  "../src/fb-comment-automation/service"
+const { commentAutomationService } = await import(
+  "../src/comment-automation/service"
 )
 
 beforeEach(() => {
@@ -64,9 +64,9 @@ beforeEach(() => {
   mocks.count.mockResolvedValue(0)
 })
 
-describe("fbCommentAutomationService.list — folder filtering", () => {
+describe("commentAutomationService.list — folder filtering", () => {
   test("scopes to the workspace and the messenger type discriminator", async () => {
-    await fbCommentAutomationService.list({
+    await commentAutomationService.list({
       workspaceId: "ws-1",
       page: 1,
       perPage: 10,
@@ -78,7 +78,7 @@ describe("fbCommentAutomationService.list — folder filtering", () => {
   })
 
   test("no folderId scopes to isNull", async () => {
-    await fbCommentAutomationService.list({
+    await commentAutomationService.list({
       workspaceId: "ws-1",
       page: 1,
       perPage: 10,
@@ -89,7 +89,7 @@ describe("fbCommentAutomationService.list — folder filtering", () => {
   })
 
   test("the root folder id scopes to isNull", async () => {
-    await fbCommentAutomationService.list({
+    await commentAutomationService.list({
       workspaceId: "ws-1",
       page: 1,
       perPage: 10,
@@ -101,7 +101,7 @@ describe("fbCommentAutomationService.list — folder filtering", () => {
   })
 
   test("a real folder id passes through unchanged", async () => {
-    await fbCommentAutomationService.list({
+    await commentAutomationService.list({
       workspaceId: "ws-1",
       page: 1,
       perPage: 10,
@@ -113,7 +113,7 @@ describe("fbCommentAutomationService.list — folder filtering", () => {
   })
 
   test("isActive: false is preserved, not dropped as falsy", async () => {
-    await fbCommentAutomationService.list({
+    await commentAutomationService.list({
       workspaceId: "ws-1",
       page: 1,
       perPage: 10,
@@ -125,7 +125,7 @@ describe("fbCommentAutomationService.list — folder filtering", () => {
   })
 
   test("isActive null or undefined maps to undefined", async () => {
-    await fbCommentAutomationService.list({
+    await commentAutomationService.list({
       workspaceId: "ws-1",
       page: 1,
       perPage: 10,
@@ -137,12 +137,12 @@ describe("fbCommentAutomationService.list — folder filtering", () => {
   })
 })
 
-describe("fbCommentAutomationService.findMessengerOrFail", () => {
+describe("commentAutomationService.findMessengerOrFail", () => {
   test("throws notFound when no row matches", async () => {
     mocks.findFirst.mockResolvedValue(undefined)
 
     await expect(
-      fbCommentAutomationService.findMessengerOrFail({
+      commentAutomationService.findMessengerOrFail({
         workspaceId: "ws-1",
         id: "missing",
       }),
@@ -152,7 +152,7 @@ describe("fbCommentAutomationService.findMessengerOrFail", () => {
   test("returns the row when found", async () => {
     mocks.findFirst.mockResolvedValue({ id: "fb-1" })
 
-    const result = await fbCommentAutomationService.findMessengerOrFail({
+    const result = await commentAutomationService.findMessengerOrFail({
       workspaceId: "ws-1",
       id: "fb-1",
     })
@@ -163,7 +163,7 @@ describe("fbCommentAutomationService.findMessengerOrFail", () => {
   test("scopes the lookup to the workspace and the messenger type discriminator", async () => {
     mocks.findFirst.mockResolvedValue({ id: "fb-1" })
 
-    await fbCommentAutomationService.findMessengerOrFail({
+    await commentAutomationService.findMessengerOrFail({
       workspaceId: "ws-1",
       id: "fb-1",
     })
@@ -178,12 +178,12 @@ describe("fbCommentAutomationService.findMessengerOrFail", () => {
   })
 })
 
-describe("fbCommentAutomationService.findInstagramOrFail", () => {
+describe("commentAutomationService.findInstagramOrFail", () => {
   test("throws notFound when no row matches", async () => {
     mocks.findFirst.mockResolvedValue(undefined)
 
     await expect(
-      fbCommentAutomationService.findInstagramOrFail({
+      commentAutomationService.findInstagramOrFail({
         workspaceId: "ws-1",
         id: "missing",
       }),
@@ -193,7 +193,7 @@ describe("fbCommentAutomationService.findInstagramOrFail", () => {
   test("scopes the lookup to the workspace and the instagram type discriminator", async () => {
     mocks.findFirst.mockResolvedValue({ id: "ig-1" })
 
-    await fbCommentAutomationService.findInstagramOrFail({
+    await commentAutomationService.findInstagramOrFail({
       workspaceId: "ws-1",
       id: "ig-1",
     })
@@ -208,9 +208,9 @@ describe("fbCommentAutomationService.findInstagramOrFail", () => {
   })
 })
 
-describe("fbCommentAutomationService.listIgComments — folder filtering", () => {
+describe("commentAutomationService.listIgComments — folder filtering", () => {
   test("scopes to the workspace and the instagram type discriminator", async () => {
-    await fbCommentAutomationService.listIgComments({
+    await commentAutomationService.listIgComments({
       workspaceId: "ws-1",
       page: 1,
       perPage: 10,
@@ -222,7 +222,7 @@ describe("fbCommentAutomationService.listIgComments — folder filtering", () =>
   })
 
   test("no folderId scopes to isNull", async () => {
-    await fbCommentAutomationService.listIgComments({
+    await commentAutomationService.listIgComments({
       workspaceId: "ws-1",
       page: 1,
       perPage: 10,
@@ -233,7 +233,7 @@ describe("fbCommentAutomationService.listIgComments — folder filtering", () =>
   })
 
   test("the root folder id scopes to isNull", async () => {
-    await fbCommentAutomationService.listIgComments({
+    await commentAutomationService.listIgComments({
       workspaceId: "ws-1",
       page: 1,
       perPage: 10,
@@ -245,7 +245,7 @@ describe("fbCommentAutomationService.listIgComments — folder filtering", () =>
   })
 
   test("a real folder id passes through unchanged", async () => {
-    await fbCommentAutomationService.listIgComments({
+    await commentAutomationService.listIgComments({
       workspaceId: "ws-1",
       page: 1,
       perPage: 10,
@@ -257,7 +257,7 @@ describe("fbCommentAutomationService.listIgComments — folder filtering", () =>
   })
 
   test("isActive: false is preserved, not dropped as falsy", async () => {
-    await fbCommentAutomationService.listIgComments({
+    await commentAutomationService.listIgComments({
       workspaceId: "ws-1",
       page: 1,
       perPage: 10,

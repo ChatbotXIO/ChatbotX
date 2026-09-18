@@ -1,6 +1,6 @@
 import {
+  commentAutomationModel,
   createSelectSchema,
-  fbCommentAutomationModel,
 } from "@chatbotx.io/database/schema"
 import z from "zod"
 
@@ -24,7 +24,7 @@ const tiktokReplySchema = z.discriminatedUnion("type", [
 ])
 
 export const tiktokCommentResource = createSelectSchema(
-  fbCommentAutomationModel,
+  commentAutomationModel,
   {
     id: z.string(),
     workspaceId: z.string(),

@@ -1,4 +1,4 @@
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -36,7 +36,7 @@ export const fbCommentsPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
-        await fbCommentAutomationService.list({
+        await commentAutomationService.list({
           ...input,
           workspaceId: context.workspace.id,
           includeAllFolders: true,
@@ -57,7 +57,7 @@ export const fbCommentsPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(
       async ({ context, input }) =>
-        await fbCommentAutomationService.findMessengerOrFail({
+        await commentAutomationService.findMessengerOrFail({
           workspaceId: context.workspace.id,
           id: input.id,
         }),
@@ -78,7 +78,7 @@ export const fbCommentsPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(
       async ({ context, input }) =>
-        await fbCommentAutomationService.createMessenger({
+        await commentAutomationService.createMessenger({
           workspaceId: context.workspace.id,
           data: input,
         }),
@@ -98,7 +98,7 @@ export const fbCommentsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...data } = input
-      return await fbCommentAutomationService.updateMessenger(
+      return await commentAutomationService.updateMessenger(
         { workspaceId: context.workspace.id, id },
         data,
       )
@@ -117,7 +117,7 @@ export const fbCommentsPublicRouter = {
     .input(deleteFbCommentPublicRequest)
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      await fbCommentAutomationService.deleteMessenger({
+      await commentAutomationService.deleteMessenger({
         workspaceId: context.workspace.id,
         id: input.id,
       })

@@ -9,7 +9,7 @@ import {
 import { z } from "zod"
 
 /**
- * How long a FAILED `FBCommentAutomationEvent` row lives. Matches `ErrorLog`'s
+ * How long a FAILED `CommentAutomationEvent` row lives. Matches `ErrorLog`'s
  * window: both tables back the same Error Logs surface, and a comment failure
  * outliving the error log it pairs with would show a failure the workspace page
  * can no longer explain.
@@ -132,7 +132,7 @@ export const COMMENT_AUTOMATION_MISSED_EVENT = "comment:missed"
  * the repository has no predicate for.
  *
  * `comment:missed` is the odd one out: it is served by
- * `FBCommentAutomationMiss`, a different table, so every read that accepts this
+ * `CommentAutomationMiss`, a different table, so every read that accepts this
  * enum has to route it away from `CommentAutomationStatsRepository` before it
  * reaches `buildEventFilter` (which has no predicate for it).
  */
@@ -211,7 +211,7 @@ export type ListCommentAutomationContactsResponse = z.infer<
 >
 
 /**
- * Which lifetime counter on `FBCommentAutomation` an event type moves. The
+ * Which lifetime counter on `CommentAutomation` an event type moves. The
  * event row's matching timestamp column is what gates the increment.
  */
 export const commentAutomationCounterFields = [
@@ -220,7 +220,7 @@ export const commentAutomationCounterFields = [
   "seenCount",
   "clickedCount",
   "failedCount",
-  // The odd one out: gated by a row existing in `FBCommentAutomationMiss`
+  // The odd one out: gated by a row existing in `CommentAutomationMiss`
   // rather than by a timestamp column, since a miss has no timeline.
   "missedCount",
 ] as const

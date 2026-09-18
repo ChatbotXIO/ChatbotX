@@ -9,25 +9,25 @@ import {
   text,
 } from "drizzle-orm/pg-core"
 import {
-  type FBCommentHideComments,
-  type FBCommentIncludeKeywords,
-  type FBCommentOptions,
-  type FBCommentPost,
-  type FBCommentReply,
-  type FBCommentReplyAfter,
-  fbCommentAutomationTypes,
-} from "../partials/fb-comment-automation"
+  type CommentHideComments,
+  type CommentIncludeKeywords,
+  type CommentOptions,
+  type CommentPost,
+  type CommentReply,
+  type CommentReplyAfter,
+  commentAutomationTypes,
+} from "../partials/comment-automation"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { folderModel } from "./folder"
 import { workspaceModel } from "./workspace"
 
-export const fbCommentAutomationType = pgEnum(
-  "fbCommentAutomationType",
-  fbCommentAutomationTypes.options as [string, ...string[]],
+export const commentAutomationType = pgEnum(
+  "commentAutomationType",
+  commentAutomationTypes.options as [string, ...string[]],
 )
 
-export const fbCommentAutomationModel = pgTable(
-  "FBCommentAutomation",
+export const commentAutomationModel = pgTable(
+  "CommentAutomation",
   {
     ...sharedColumns,
     name: text().notNull(),
@@ -41,14 +41,14 @@ export const fbCommentAutomationModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
-    type: fbCommentAutomationType().notNull().default("messenger"),
+    type: commentAutomationType().notNull().default("messenger"),
     isActive: boolean().notNull().default(true),
     startTime: text(),
     endTime: text(),
     repliesCount: integer().notNull().default(0),
     /**
      * Lifetime delivery counters, deliberately separate from
-     * `FBCommentAutomationEvent`: that table's FAILED rows are purged after
+     * `CommentAutomationEvent`: that table's FAILED rows are purged after
      * `COMMENT_AUTOMATION_ERROR_RETENTION_DAYS`, so aggregating it would make
      * `failedCount` (and the percentages measured against it) silently shrink
      * every night.
@@ -70,7 +70,7 @@ export const fbCommentAutomationModel = pgTable(
     failedCount: integer().notNull().default(0),
     /**
      * Lifetime count of comments this automation was shown and declined to
-     * answer — one per `FBCommentAutomationMiss` row, kept here for the same
+     * answer — one per `CommentAutomationMiss` row, kept here for the same
      * reason as the delivery counters: the column is what the list table
      * renders, so it must not depend on aggregating a table over rows that may
      * one day be purged.
@@ -87,45 +87,45 @@ export const fbCommentAutomationModel = pgTable(
      */
     missedCount: integer().notNull().default(0),
     post: jsonb()
-      .$type<FBCommentPost>()
+      .$type<CommentPost>()
       .notNull()
       .default(sql`'{"type":"all","value":[]}'`),
     privateReply: jsonb()
-      .$type<FBCommentReply>()
+      .$type<CommentReply>()
       .notNull()
       .default(sql`'{"type":"text","value":""}'`),
     publicReply: jsonb()
-      .$type<FBCommentReply>()
+      .$type<CommentReply>()
       .notNull()
       .default(sql`'{"type":"none","value":null}'`),
     includeKeywords: jsonb()
-      .$type<FBCommentIncludeKeywords>()
+      .$type<CommentIncludeKeywords>()
       .notNull()
       .default(sql`'{"type":"all","value":[]}'`),
     excludeKeywords: text().array().notNull().default(sql`ARRAY[]::text[]`),
     options: jsonb()
-      .$type<FBCommentOptions>()
+      .$type<CommentOptions>()
       .notNull()
       .default(
         sql`'{"replyToNewContactsOnly":false,"replyOncePerUserPerPost":false,"likeUserComment":false,"replyToUsersWhoCommentedOnOtherPosts":true,"ignoreCommentReplies":true,"trackUserTags":false}'`,
       ),
     hideComments: jsonb()
-      .$type<FBCommentHideComments>()
+      .$type<CommentHideComments>()
       .notNull()
       .default(
         sql`'{"all":false,"hasPhoneNumber":false,"hasImage":false,"hasVideo":false,"hasLink":false,"hasKeywords":false,"keywords":[],"showCommentsAfter":"none"}'`,
       ),
     replyAfter: jsonb()
-      .$type<FBCommentReplyAfter>()
+      .$type<CommentReplyAfter>()
       .notNull()
       .default(sql`'{"type":"immediately","value":0}'`),
   },
   (table) => [
-    index("FBCommentAutomation_workspaceId_idx").using(
+    index("CommentAutomation_workspaceId_idx").using(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
-    index("FBCommentAutomation_folderId_idx").using(
+    index("CommentAutomation_folderId_idx").using(
       "btree",
       table.folderId.asc().nullsLast(),
     ),

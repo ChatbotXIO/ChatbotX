@@ -1,5 +1,5 @@
-import { fbCommentAutomationService } from "@chatbotx.io/business"
-import { fbCommentAutomationModel } from "@chatbotx.io/database/schema"
+import { commentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
@@ -14,14 +14,14 @@ import { tiktokCommentResource } from "./../schema/resource"
 /**
  * Narrows a stored row to the shape TikTok actually supports.
  *
- * The row is the shared `FBCommentAutomation` one, so it can carry values no
+ * The row is the shared `CommentAutomation` one, so it can carry values no
  * TikTok automation can act on — a `postIds` variant the picker never writes, a
  * private reply. Normalising here keeps the resource schema honest about what
  * the channel does rather than about what the table can hold.
  */
 const toTiktokResource = (
   record: Awaited<
-    ReturnType<typeof fbCommentAutomationService.getTiktokAutomation>
+    ReturnType<typeof commentAutomationService.getTiktokAutomation>
   > &
     object,
 ) => ({
@@ -58,16 +58,15 @@ export async function listTiktokComments(
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const pagination = getPaginationWithDefaults(input)
-  const orderBy = parseOrderByAsObject(fbCommentAutomationModel, input)
-  const { data, total } =
-    await fbCommentAutomationService.listTiktokAutomations({
-      workspaceId: input.workspaceId,
-      name: input.name || undefined,
-      isActive: input.isActive ?? undefined,
-      limit: pagination.limit,
-      offset: pagination.offset,
-      orderBy,
-    })
+  const orderBy = parseOrderByAsObject(commentAutomationModel, input)
+  const { data, total } = await commentAutomationService.listTiktokAutomations({
+    workspaceId: input.workspaceId,
+    name: input.name || undefined,
+    isActive: input.isActive ?? undefined,
+    limit: pagination.limit,
+    offset: pagination.offset,
+    orderBy,
+  })
 
   return {
     data: tiktokCommentResource.array().parse(data.map(toTiktokResource)),
@@ -78,7 +77,7 @@ export async function listTiktokComments(
 export async function getTiktokComment(workspaceId: string, id: string) {
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
-  const record = await fbCommentAutomationService.getTiktokAutomation({
+  const record = await commentAutomationService.getTiktokAutomation({
     workspaceId,
     id,
   })

@@ -14,7 +14,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   and: (...args: unknown[]) => ({ and: args }),
   db: {
     query: {
-      fbCommentAutomationModel: {
+      commentAutomationModel: {
         findMany: mocks.findMany,
         findFirst: mocks.findFirst,
       },
@@ -32,7 +32,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
-  fbCommentAutomationTypes: { enum: { messenger: "messenger" } },
+  commentAutomationTypes: { enum: { messenger: "messenger" } },
   igCommentAutomationTypes: {
     options: ["instagram", "instagramFacebook"],
   },
@@ -41,8 +41,8 @@ vi.mock("@chatbotx.io/database/partials", () => ({
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactInboxModel: {},
-  fbCommentAutomationModel: { name: "fbCommentAutomation.name" },
-  fbCommentAutomationReplyModel: {},
+  commentAutomationModel: { name: "commentAutomation.name" },
+  commentAutomationReplyModel: {},
 }))
 
 vi.mock("@chatbotx.io/database/utils", () => ({
@@ -66,8 +66,8 @@ vi.mock("../src/template/installed-resource.service", () => ({
   assertDeletable: mocks.assertDeletable,
 }))
 
-const { fbCommentAutomationService } = await import(
-  "../src/fb-comment-automation/service"
+const { commentAutomationService } = await import(
+  "../src/comment-automation/service"
 )
 
 beforeEach(() => {
@@ -76,14 +76,14 @@ beforeEach(() => {
   mocks.assertDeletable.mockResolvedValue(undefined)
 })
 
-describe("fbCommentAutomationService — type-scoped writes", () => {
+describe("commentAutomationService — type-scoped writes", () => {
   test("updateMessenger 404s when the row is an instagram automation", async () => {
     // findMessengerOrFail's own query is type-scoped to "messenger", so a
     // real instagram row never surfaces here — findFirst resolves undefined.
     mocks.findFirst.mockResolvedValue(undefined)
 
     await expect(
-      fbCommentAutomationService.updateMessenger(
+      commentAutomationService.updateMessenger(
         { workspaceId: "1", id: "9" },
         { name: "x" },
       ),
@@ -96,7 +96,7 @@ describe("fbCommentAutomationService — type-scoped writes", () => {
     mocks.findFirst.mockResolvedValue(undefined)
 
     await expect(
-      fbCommentAutomationService.deleteMessenger({
+      commentAutomationService.deleteMessenger({
         workspaceId: "1",
         id: "9",
       }),
@@ -109,7 +109,7 @@ describe("fbCommentAutomationService — type-scoped writes", () => {
     mocks.findFirst.mockResolvedValue(undefined)
 
     await expect(
-      fbCommentAutomationService.updateInstagram(
+      commentAutomationService.updateInstagram(
         { workspaceId: "1", id: "9" },
         { name: "x" },
       ),
@@ -125,7 +125,7 @@ describe("fbCommentAutomationService — type-scoped writes", () => {
     mocks.findFirst.mockResolvedValue(undefined)
 
     await expect(
-      fbCommentAutomationService.deleteInstagram({
+      commentAutomationService.deleteInstagram({
         workspaceId: "1",
         id: "9",
       }),
@@ -141,7 +141,7 @@ describe("fbCommentAutomationService — type-scoped writes", () => {
     const set = vi.fn(() => ({ where }))
     mocks.update.mockReturnValue({ set })
 
-    const result = await fbCommentAutomationService.updateMessenger(
+    const result = await commentAutomationService.updateMessenger(
       { workspaceId: "1", id: "9" },
       { name: "x" },
     )
@@ -155,7 +155,7 @@ describe("fbCommentAutomationService — type-scoped writes", () => {
     const where = vi.fn().mockResolvedValue(undefined)
     mocks.delete.mockReturnValue({ where })
 
-    await fbCommentAutomationService.deleteMessenger({
+    await commentAutomationService.deleteMessenger({
       workspaceId: "1",
       id: "9",
     })
@@ -172,7 +172,7 @@ describe("fbCommentAutomationService — type-scoped writes", () => {
     const where = vi.fn().mockResolvedValue(undefined)
     mocks.delete.mockReturnValue({ where })
 
-    await fbCommentAutomationService.deleteMany({
+    await commentAutomationService.deleteMany({
       workspaceId: "1",
       ids: ["1", "2"],
       types: ["instagram", "instagramFacebook"],
@@ -195,7 +195,7 @@ describe("fbCommentAutomationService — type-scoped writes", () => {
     const values = vi.fn(() => ({ returning }))
     mocks.insert.mockReturnValue({ values })
 
-    await fbCommentAutomationService.createMessenger({
+    await commentAutomationService.createMessenger({
       workspaceId: "1",
       data: { name: "hello" },
     })
@@ -210,7 +210,7 @@ describe("fbCommentAutomationService — type-scoped writes", () => {
     const values = vi.fn(() => ({ returning }))
     mocks.insert.mockReturnValue({ values })
 
-    await fbCommentAutomationService.createInstagram({
+    await commentAutomationService.createInstagram({
       workspaceId: "1",
       type: "instagramFacebook",
       data: { name: "hello" },

@@ -31,7 +31,7 @@ type Props = {
 
 /**
  * Facebook and Instagram share this dialog and the procedure behind it: both
- * list pages read the same `FBCommentAutomation` table, discriminated by its
+ * list pages read the same `CommentAutomation` table, discriminated by its
  * `type` column, so there is nothing channel-specific to branch on here.
  */
 export const CommentAutomationContactsDialog = memo(

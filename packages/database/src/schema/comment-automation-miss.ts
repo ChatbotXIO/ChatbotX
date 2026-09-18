@@ -6,15 +6,15 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
-import { commentAutomationMissReasons } from "../partials/fb-comment-automation-miss"
+import { commentAutomationMissReasons } from "../partials/comment-automation-miss"
 import {
   bigintAsString,
   sharedColumns,
   timestampConfig,
 } from "../partials/shared"
+import { commentAutomationModel } from "./comment-automation"
 import { contactModel } from "./contact"
 import { contactInboxModel } from "./contact-inbox"
-import { fbCommentAutomationModel } from "./fb-comment-automation"
 import { workspaceModel } from "./workspace"
 
 export const commentAutomationMissReason = pgEnum(
@@ -26,7 +26,7 @@ export const commentAutomationMissReason = pgEnum(
  * Append-only log of comments an automation was shown and declined to answer —
  * the Misses column and the drill-down behind it.
  *
- * Deliberately NOT `FBCommentAutomationEvent`. Three reasons:
+ * Deliberately NOT `CommentAutomationEvent`. Three reasons:
  *
  * - That table is unique on `(automationId, commentId, replyChannel)` and its
  *   `replyChannel`/`replyType` are `NOT NULL`; a miss has neither, because no
@@ -39,7 +39,7 @@ export const commentAutomationMissReason = pgEnum(
  *   misses outnumber replies by however many automations the workspace runs.
  *   Keeping them out of the analytics table is what keeps that table fast.
  *
- * **These rows are never purged.** `FBCommentAutomationEvent`'s failed rows
+ * **These rows are never purged.** `CommentAutomationEvent`'s failed rows
  * have a 30-day window; misses are kept for the life of the automation by an
  * explicit product decision, so the drill-down can always explain the counter.
  * If that ever has to change, `purgeFailedCommentAutomationEvents` is the
@@ -48,11 +48,11 @@ export const commentAutomationMissReason = pgEnum(
  * One row per `(automationId, commentId)`: an automation sees a given comment
  * once and declines it for exactly one reason (the first gate that rejects it).
  * The unique index makes a BullMQ retry or a redelivered webhook idempotent via
- * `onConflictDoNothing`, which is what keeps `FBCommentAutomation.missedCount`
+ * `onConflictDoNothing`, which is what keeps `CommentAutomation.missedCount`
  * exact — the counter moves per row actually returned, never per call.
  */
-export const fbCommentAutomationMissModel = pgTable(
-  "FBCommentAutomationMiss",
+export const commentAutomationMissModel = pgTable(
+  "CommentAutomationMiss",
   {
     ...sharedColumns,
     workspaceId: bigintAsString()
@@ -63,7 +63,7 @@ export const fbCommentAutomationMissModel = pgTable(
       }),
     automationId: bigintAsString()
       .notNull()
-      .references(() => fbCommentAutomationModel.id, {
+      .references(() => commentAutomationModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
@@ -93,13 +93,13 @@ export const fbCommentAutomationMissModel = pgTable(
   },
   (table) => [
     // Natural key: makes a job retry a no-op via `onConflictDoNothing`.
-    uniqueIndex("FBCommentAutomationMiss_dedup_idx").on(
+    uniqueIndex("CommentAutomationMiss_dedup_idx").on(
       table.automationId,
       table.commentId,
     ),
     // The drill-down: one automation, newest first. Mirrors
-    // `FBCommentAutomationEvent_automation_occurredAt_idx`.
-    index("FBCommentAutomationMiss_automation_occurredAt_idx").using(
+    // `CommentAutomationEvent_automation_occurredAt_idx`.
+    index("CommentAutomationMiss_automation_occurredAt_idx").using(
       "btree",
       table.workspaceId.asc().nullsLast(),
       table.automationId.asc().nullsLast(),
@@ -107,10 +107,8 @@ export const fbCommentAutomationMissModel = pgTable(
     ),
     // Serves the `onDelete: "set null"` FK scan Postgres runs on every
     // `Contact` delete, like every comparable contactId FK in the schema.
-    index("FBCommentAutomationMiss_contactId_idx").on(table.contactId),
+    index("CommentAutomationMiss_contactId_idx").on(table.contactId),
     // Same FK-scan duty for `ContactInbox` deletes.
-    index("FBCommentAutomationMiss_contactInboxId_idx").on(
-      table.contactInboxId,
-    ),
+    index("CommentAutomationMiss_contactInboxId_idx").on(table.contactInboxId),
   ],
 )

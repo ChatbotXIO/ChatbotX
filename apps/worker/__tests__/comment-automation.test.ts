@@ -109,7 +109,7 @@ vi.mock("@chatbotx.io/business", () => ({
     findDMByContact: mockConversationFindDMByContact,
     findOrCreate: mockConversationFindOrCreate,
   },
-  fbCommentAutomationService: {
+  commentAutomationService: {
     findActiveAutomations: mockFindActiveAutomations,
     isWithinSchedule: mockIsWithinSchedule,
     findDedup: mockFindDedup,
@@ -1975,7 +1975,7 @@ describe("processCommentAIReply", () => {
     })
   })
 
-  // A skip is not a failure: `FBCommentAutomationEvent` only counts work the
+  // A skip is not a failure: `CommentAutomationEvent` only counts work the
   // automation actually attempted, so a deliberate decline must leave no row
   // rather than one Error Logs entry per off-hours comment.
   describe("skip vs failure on the analytics event", () => {

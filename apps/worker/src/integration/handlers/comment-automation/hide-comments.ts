@@ -1,4 +1,4 @@
-import type { FBCommentHideComments } from "@chatbotx.io/database/partials"
+import type { CommentHideComments } from "@chatbotx.io/database/partials"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -38,7 +38,7 @@ export function supportsHideComments(
  * when the user actually configured one.
  */
 export function hasHideCommentAction(
-  hideComments: FBCommentHideComments,
+  hideComments: CommentHideComments,
 ): boolean {
   return (
     hideComments.all ||
@@ -86,7 +86,7 @@ const UNHIDE_DELAY_MS: Record<string, number> = {
 }
 
 export async function applyHideComments(
-  hideComments: FBCommentHideComments,
+  hideComments: CommentHideComments,
   commentId: string,
   message: string | undefined,
   ctx: {

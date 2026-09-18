@@ -1,6 +1,6 @@
 "use server"
 
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -22,7 +22,7 @@ export const createTiktokCommentAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateTiktokCommentRequest
     }) => {
-      const record = await fbCommentAutomationService.createTiktokAutomation({
+      const record = await commentAutomationService.createTiktokAutomation({
         workspaceId,
         data: parsedInput,
       })

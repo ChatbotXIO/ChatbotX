@@ -1,5 +1,5 @@
 import { conversationService } from "@chatbotx.io/business"
-import type { FBCommentReply } from "@chatbotx.io/database/partials"
+import type { CommentReply } from "@chatbotx.io/database/partials"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import { COMMENT_AUTOMATION_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
@@ -168,7 +168,7 @@ async function resolveDirectMessageConversationId(ctx: {
  * outcome also carries the text for the analytics event.
  */
 export async function executePrivateReply(
-  privateReply: FBCommentReply,
+  privateReply: CommentReply,
   ctx: {
     auth: PrivateReplyAuth
     integrationType: string

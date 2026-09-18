@@ -1,4 +1,4 @@
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListIgCommentsRequest,
@@ -10,13 +10,13 @@ export async function listIgComments(
 ): Promise<ListIgCommentsResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  return await fbCommentAutomationService.listIgComments(input)
+  return await commentAutomationService.listIgComments(input)
 }
 
 export async function getIgComment(workspaceId: string, id: string) {
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
-  return await fbCommentAutomationService.findInstagramOrFail({
+  return await commentAutomationService.findInstagramOrFail({
     workspaceId,
     id,
   })

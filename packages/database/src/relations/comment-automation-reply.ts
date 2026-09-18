@@ -2,22 +2,22 @@ import { defineRelationsPart } from "drizzle-orm"
 // biome-ignore lint/performance/noNamespaceImport: drizzle schema
 import * as schema from "../schema"
 
-export const fbCommentAutomationReplyRelations = defineRelationsPart(
+export const commentAutomationReplyRelations = defineRelationsPart(
   schema,
   (r) => ({
-    fbCommentAutomationReplyModel: {
-      automation: r.one.fbCommentAutomationModel({
-        from: r.fbCommentAutomationReplyModel.automationId,
-        to: r.fbCommentAutomationModel.id,
+    commentAutomationReplyModel: {
+      automation: r.one.commentAutomationModel({
+        from: r.commentAutomationReplyModel.automationId,
+        to: r.commentAutomationModel.id,
         optional: false,
       }),
       contact: r.one.contactModel({
-        from: r.fbCommentAutomationReplyModel.contactId,
+        from: r.commentAutomationReplyModel.contactId,
         to: r.contactModel.id,
         optional: false,
       }),
       workspace: r.one.workspaceModel({
-        from: r.fbCommentAutomationReplyModel.workspaceId,
+        from: r.commentAutomationReplyModel.workspaceId,
         to: r.workspaceModel.id,
         optional: false,
       }),

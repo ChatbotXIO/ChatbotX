@@ -1,5 +1,5 @@
 ---
-name: fb-comment-automation
+name: comment-automation
 description: >-
   Work on Facebook/Messenger and Instagram comment automation — the feature that
   auto-replies to, likes, or hides comments on Facebook Page and Instagram posts. Use
@@ -11,7 +11,7 @@ description: >-
 
 # Facebook & Instagram Comment Automation
 
-Full reference: [`docs/fb-comment-automation.md`](../../../docs/fb-comment-automation.md).
+Full reference: [`docs/comment-automation.md`](../../../docs/comment-automation.md).
 Read it before non-trivial changes. This skill is the quick map + the traps.
 
 ## Where things live
@@ -26,16 +26,16 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 | Receive comment + enqueue automation | `apps/worker/src/integration/handlers/received-message.ts` (`receiveComment`) |
 | Webhook parse + enqueue | `integrations/messenger/src/handlers/webhook.ts`, `integrations/instagram/src/handlers/webhook.ts`, `integrations/instagram-facebook/src/handlers/webhook.ts` |
 | Webhook value schema | `integrations/messenger/src/schema.ts` (`messengerFeedCommentValueSchema`), `integrations/instagram{,-facebook}/src/schemas.ts` (`instagramCommentEventValueSchema`) |
-| DB queries (match/dedup/schedule) | `packages/business/src/fb-comment-automation/service.ts` |
-| Schema + option/reply Zod partials | `packages/database/src/schema/fb-comment-automation.ts`, `.../partials/fb-comment-automation.ts` |
-| Dedup ledger | `packages/database/src/schema/fb-comment-automation-reply.ts` |
+| DB queries (match/dedup/schedule) | `packages/business/src/comment-automation/service.ts` |
+| Schema + option/reply Zod partials | `packages/database/src/schema/comment-automation.ts`, `.../partials/comment-automation.ts` |
+| Dedup ledger | `packages/database/src/schema/comment-automation-reply.ts` |
 | Job types | `packages/worker-config/src/queues/integration/index.ts` |
 | Builder feature (form, actions) | `apps/builder/src/features/fb-comments/` (Facebook), `apps/builder/src/features/ig-comments/` (Instagram) |
-| Analytics event table | `packages/database/src/schema/fb-comment-automation-event.ts` |
+| Analytics event table | `packages/database/src/schema/comment-automation-event.ts` |
 | Analytics read/write service | `packages/analytics/src/services/comment-automation-analytics.service.ts` |
 | Analytics dashboard | `packages/analytics-nextjs/src/components/comment-automation-analytics.tsx` |
 | Delivery-stat columns + dialog | `apps/builder/src/features/shared/comment-automation/comment-automation-stat-{columns,cell}.tsx`, `comment-automation-contacts-dialog.tsx` |
-| Miss (declined comment) table | `packages/database/src/schema/fb-comment-automation-miss.ts`, `.../partials/fb-comment-automation-miss.ts` |
+| Miss (declined comment) table | `packages/database/src/schema/comment-automation-miss.ts`, `.../partials/comment-automation-miss.ts` |
 | Miss read/write | `packages/analytics/src/repositories/postgres/comment-automation-miss.repository.ts`, `commentAutomationAnalyticsService.recordMisses` |
 | Cross-queue delivery/failure anchor | `apps/worker/src/lib/comment-automation-anchor.ts` |
 | Tests | `apps/worker/__tests__/comment-automation.test.ts` |
@@ -69,10 +69,10 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
    column silently never counts — no compile error, the number is just quietly too low. A
    new filter therefore needs three things landed together: the guard, a new value in
    `commentAutomationMissReasons`
-   (`packages/database/src/partials/fb-comment-automation-miss.ts`, which needs a migration
+   (`packages/database/src/partials/comment-automation-miss.ts`, which needs a migration
    for the pgEnum), and a case in the `gateCases` table in
    `apps/worker/__tests__/comment-automation.test.ts`. Misses go to their OWN table
-   (`FBCommentAutomationMiss`), never `FBCommentAutomationEvent` — see trap 16.
+   (`CommentAutomationMiss`), never `CommentAutomationEvent` — see trap 16.
 
 4. **AIAgent reply ≠ DM auto-responder.** `publicReply`/`privateReply` of type `AIAgent`
    store the **selected agent id** in `value`. Generation uses `generateAIReplyText`
@@ -81,10 +81,10 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
    through `processAutomatedResponse` — it uses the workspace *default* agent and always
    sends a DM.
 
-5. **Dedup ledger is dual-purpose.** `fbCommentAutomationReplyModel` rows
+5. **Dedup ledger is dual-purpose.** `commentAutomationReplyModel` rows
    (`automationId, contactId, postId`) are written after every successful reply and read by
    both `replyOncePerUserPerPost` (same post) and `replyToUsersWhoCommentedOnOtherPosts`
-   (other post). The unique index `FBCommentAutomationReply_dedup_idx` already serves
+   (other post). The unique index `CommentAutomationReply_dedup_idx` already serves
    `(automationId, contactId)` + `postId != ?` queries — no new index needed; use a
    `LIMIT 1` existence check, not `$count`.
 
@@ -169,7 +169,7 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 
 11. **The list columns read counters, the dialog reads events — never swap them.** The
     Sent/Delivered/Seen/Clicked/Failed columns come from lifetime `*Count` columns on
-    `FBCommentAutomation`, NOT from aggregating `FBCommentAutomationEvent` the way
+    `CommentAutomation`, NOT from aggregating `CommentAutomationEvent` the way
     broadcast aggregates `ContactOnBroadcast`: a nightly cron purges the FAILED event rows
     after `COMMENT_AUTOMATION_ERROR_RETENTION_DAYS` (successful rows are kept for the life
     of the automation), so an aggregate would shrink `failedCount` every night. What
@@ -223,7 +223,7 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
     automation, which is what lets the filter offer `lifeTime`. Two things follow. (a) A
     new query that must survive the purge cannot read failed rows — and any new purge
     predicate needs its own partial index, the way
-    `FBCommentAutomationEvent_failed_createdAt_idx` keeps the oldest-first chunk scan off
+    `CommentAutomationEvent_failed_createdAt_idx` keeps the oldest-first chunk scan off
     the kept rows. (b) An unbounded range means the replies series is bucketed by MONTH
     past 60 days: the query and the zero-fill both take the width from
     `resolveRangeGranularity`, so changing one without the other yields one real point
@@ -233,13 +233,13 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
     and renders the previous month west of Greenwich.
 
 14. **A `text` public reply is a LIST, and it is still ONE reply.** `publicReply.values` holds up
-    to `FB_COMMENT_REPLY_MAX_TEXTS` messages, each posted as its own comment reply. Never read
+    to `COMMENT_REPLY_MAX_TEXTS` messages, each posted as its own comment reply. Never read
     `reply.value` directly — `resolveReplyTexts` is the only thing that knows the fallback to the
     legacy single-string shape, and `willSendReply` reads through it too; disagreeing there makes
     an automation go silent with no skip log. Write through `normalizeReplyTexts` so `value` and
     `values` cannot drift (a caller PATCHing only `value` on a row that has `values` is otherwise
     ignored without a word). Bookkeeping treats the set as ONE reply — one analytics event,
-    `repliesCount` +1 — because `FBCommentAutomationEvent` is unique on
+    `repliesCount` +1 — because `CommentAutomationEvent` is unique on
     `(automationId, commentId, replyChannel)` and every settle helper names a row by that triple.
     Sends are staggered by `PUBLIC_REPLY_SPACING_MS`; equal delays let the chat queue's
     `concurrency: 5` reorder them under the comment. Private reply stays single-message on
@@ -251,8 +251,8 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
     text — no error, just wrong content saved over the user's. See
     `features/shared/comment-automation/reply-texts-field.tsx`.
 
-16. **A declined comment goes to `FBCommentAutomationMiss`, never to the event table.**
-    `FBCommentAutomationEvent` only ever holds work the automation *attempted*: it is unique
+16. **A declined comment goes to `CommentAutomationMiss`, never to the event table.**
+    `CommentAutomationEvent` only ever holds work the automation *attempted*: it is unique
     on `(automationId, commentId, replyChannel)` with `replyChannel`/`replyType` `NOT NULL`,
     and a decline has neither; every analytics-page query aggregates it directly, so a row
     type none of them want would have to be excluded from each one forever; and misses
@@ -265,16 +265,16 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
     exactly like the delivery counters, so a retry counts nothing. (c) These rows are
     **never purged**, by product decision — do not add a retention cron without asking, and
     if one is ever added it needs its own partial index the way
-    `FBCommentAutomationEvent_failed_createdAt_idx` does. The percentage on the column
+    `CommentAutomationEvent_failed_createdAt_idx` does. The percentage on the column
     divides by `repliesCount + missedCount`, NOT `sentCount`: a decline is not an attempt,
     and `sentCount` counts private DMs only. A blocked private reply stays a `failed`
     event — it was attempted.
 
 ## Adding a new filter option (recipe)
 
-1. Add the field to `fbCommentOptionsSchema` (partials) + DB default in the schema file
+1. Add the field to `commentOptionsSchema` (partials) + DB default in the schema file
    (`jsonb` default string).
-2. If it needs a DB lookup, add a method to `fbCommentAutomationService` (reuse the dedup
+2. If it needs a DB lookup, add a method to `commentAutomationService` (reuse the dedup
    table + its index where possible; prefer `LIMIT 1` existence checks).
 3. Add the guard inside the loop in `processCommentAutomation`, **with a
    `logAutomationSkipped(..., reason)` AND a `collectMiss(automation.id, <reason>)` before
@@ -287,8 +287,8 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 
 ## Adding a new reply type (recipe)
 
-1. Extend `fbCommentReplyTypes` (partials) — `fbCommentReplySchema.type` and the
-   `commentAutomationReplyType` pgEnum on `FBCommentAutomationEvent` both derive from it,
+1. Extend `commentReplyTypes` (partials) — `commentReplySchema.type` and the
+   `commentAutomationReplyType` pgEnum on `CommentAutomationEvent` both derive from it,
    so a new value needs a database migration too.
 2. Handle it in BOTH `executePublicReply` (`public-reply.ts`) and `executePrivateReply`
    (`private-reply.ts`). Public = message `type:"comment"` + `replyToCommentId` via

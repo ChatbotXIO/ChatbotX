@@ -6,7 +6,7 @@ import { z } from "zod"
  * One value per `continue` in `processCommentAutomation`'s filter chain, in the
  * order the loop evaluates them. This is the whole vocabulary of the Misses
  * column: a comment that passed every gate and then failed to send is NOT a
- * miss — it is an attempt, and it earns a `failed` `FBCommentAutomationEvent`
+ * miss — it is an attempt, and it earns a `failed` `CommentAutomationEvent`
  * row instead (see that partial's docblock for the filtered-out vs.
  * blocked-delivery line).
  *

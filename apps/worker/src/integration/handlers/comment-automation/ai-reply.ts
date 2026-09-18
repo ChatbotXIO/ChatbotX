@@ -57,7 +57,7 @@ const GUARDED_COMMENT_CHANNELS = new Set<CommentAutomationChannelType>([
  *   on the analytics page as a successful reply — the exact class of failure
  *   the Error Logs panel exists to surface.
  * - `skipped` — the automation deliberately declined (outside business hours,
- *   nothing to answer). The row is DELETED. `FBCommentAutomationEvent` only
+ *   nothing to answer). The row is DELETED. `CommentAutomationEvent` only
  *   counts work the automation actually attempted (see the partial's docblock),
  *   so a skip must leave no trace rather than one Error Logs row per off-hours
  *   comment.

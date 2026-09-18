@@ -10,7 +10,7 @@ export type PurgeCommentAutomationEventsOptions = {
 }
 
 /**
- * Deletes FAILED `FBCommentAutomationEvent` rows older than the retention
+ * Deletes FAILED `CommentAutomationEvent` rows older than the retention
  * window, oldest first, in chunks so a long delete never blocks the
  * comment-automation loop writing a new event.
  *
@@ -18,10 +18,10 @@ export type PurgeCommentAutomationEventsOptions = {
  * detail: successful rows are the analytics page's whole history and are kept
  * forever, while a failure is only ever read by the Error Logs panel, which
  * mirrors `ErrorLog`'s 30-day window. Deleting a failed row does NOT disturb
- * the lifetime counters on `FBCommentAutomation` — they are stored columns, not
+ * the lifetime counters on `CommentAutomation` — they are stored columns, not
  * an aggregate over this table.
  *
- * `FBCommentAutomationEvent_failed_createdAt_idx` is the partial index this
+ * `CommentAutomationEvent_failed_createdAt_idx` is the partial index this
  * scan rides; without it the oldest-first select would walk an ever-growing
  * prefix of kept successful rows on every run.
  *
@@ -33,7 +33,7 @@ export function purgeFailedCommentAutomationEvents(
 ): Promise<{ deleted: number; stopReason: ChunkedPurgeStopReason }> {
   const { retentionDays, ...bounds } = options
   return chunkedPurge({
-    table: "FBCommentAutomationEvent",
+    table: "CommentAutomationEvent",
     where: sql`"status" = 'failed' AND "createdAt" < NOW() - make_interval(days => ${retentionDays})`,
     orderBy: "createdAt",
     ...bounds,

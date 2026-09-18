@@ -15,13 +15,13 @@ silent failures. It is the reference for anyone touching the comment-automation 
 
 | Table | File | Role |
 |---|---|---|
-| `fbCommentAutomationModel` | [`packages/database/src/schema/fb-comment-automation.ts`](../packages/database/src/schema/fb-comment-automation.ts) | One automation config per row: post targeting, keyword filters, public/private reply, hide rules, schedule, options. |
-| `fbCommentAutomationReplyModel` | [`packages/database/src/schema/fb-comment-automation-reply.ts`](../packages/database/src/schema/fb-comment-automation-reply.ts) | Dedup ledger: one row per `(automationId, contactId, postId)` written after every successful reply. Unique index `FBCommentAutomationReply_dedup_idx`. |
-| `fbCommentAutomationEventModel` | [`packages/database/src/schema/fb-comment-automation-event.ts`](../packages/database/src/schema/fb-comment-automation-event.ts) | Analytics log: one row per `(automationId, commentId, replyChannel)` — the comment text, the text the bot sent, and `sent`/`failed`. Backs the per-automation **View Analytics** page. Successful rows are kept for the life of the automation; only `status = 'failed'` rows have a 30-day retention, via the `purgeCommentAutomationEvents` cron. |
-| `fbCommentAutomationMissModel` | [`packages/database/src/schema/fb-comment-automation-miss.ts`](../packages/database/src/schema/fb-comment-automation-miss.ts) | The inverse of the event log: one row per `(automationId, commentId)` the automation was shown and **declined** — the comment text, when it was posted, and which filter stopped it. Backs the **Misses** column and its drill-down. Never purged. |
+| `commentAutomationModel` | [`packages/database/src/schema/comment-automation.ts`](../packages/database/src/schema/comment-automation.ts) | One automation config per row: post targeting, keyword filters, public/private reply, hide rules, schedule, options. |
+| `commentAutomationReplyModel` | [`packages/database/src/schema/comment-automation-reply.ts`](../packages/database/src/schema/comment-automation-reply.ts) | Dedup ledger: one row per `(automationId, contactId, postId)` written after every successful reply. Unique index `CommentAutomationReply_dedup_idx`. |
+| `commentAutomationEventModel` | [`packages/database/src/schema/comment-automation-event.ts`](../packages/database/src/schema/comment-automation-event.ts) | Analytics log: one row per `(automationId, commentId, replyChannel)` — the comment text, the text the bot sent, and `sent`/`failed`. Backs the per-automation **View Analytics** page. Successful rows are kept for the life of the automation; only `status = 'failed'` rows have a 30-day retention, via the `purgeCommentAutomationEvents` cron. |
+| `commentAutomationMissModel` | [`packages/database/src/schema/comment-automation-miss.ts`](../packages/database/src/schema/comment-automation-miss.ts) | The inverse of the event log: one row per `(automationId, commentId)` the automation was shown and **declined** — the comment text, when it was posted, and which filter stopped it. Backs the **Misses** column and its drill-down. Never purged. |
 
 Zod partials (option/reply/post/schedule shapes):
-[`packages/database/src/partials/fb-comment-automation.ts`](../packages/database/src/partials/fb-comment-automation.ts).
+[`packages/database/src/partials/comment-automation.ts`](../packages/database/src/partials/comment-automation.ts).
 
 ## End-to-end flow
 
@@ -48,7 +48,7 @@ Key files:
 | Automation loop + filters + dispatch | [`apps/worker/src/integration/handlers/comment-automation/index.ts`](../apps/worker/src/integration/handlers/comment-automation/index.ts) |
 | Per-channel private DM dispatch | [`apps/worker/src/integration/handlers/comment-automation/private-reply.ts`](../apps/worker/src/integration/handlers/comment-automation/private-reply.ts) (`PRIVATE_REPLY_TEXT_SENDERS`) |
 | AI reply generation + delivery | [`apps/worker/src/integration/handlers/comment-automation/ai-reply.ts`](../apps/worker/src/integration/handlers/comment-automation/ai-reply.ts) |
-| DB queries (match/dedup/schedule) | [`packages/business/src/fb-comment-automation/service.ts`](../packages/business/src/fb-comment-automation/service.ts) |
+| DB queries (match/dedup/schedule) | [`packages/business/src/comment-automation/service.ts`](../packages/business/src/comment-automation/service.ts) |
 | Builder form + actions | [`apps/builder/src/features/fb-comments/`](../apps/builder/src/features/fb-comments/) (Facebook), [`apps/builder/src/features/ig-comments/`](../apps/builder/src/features/ig-comments/) (Instagram) |
 | Job types | [`packages/worker-config/src/queues/integration/index.ts`](../packages/worker-config/src/queues/integration/index.ts) |
 
@@ -128,7 +128,7 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 | Type | `value` | Public reply behavior | Private reply behavior |
 |---|---|---|---|
 | `none` | — | no-op | no-op |
-| `text` | the text(s) | Posts a public comment reply per message: `type: "comment"` + `contentAttributes.replyToCommentId`, enqueued as `sendChannelMessage`. **Public may hold up to `FB_COMMENT_REPLY_MAX_TEXTS` messages** — see below. | `PRIVATE_REPLY_TEXT_SENDERS[channelType]` (`private-reply.ts`) → the channel's comment_id-anchored Send API DM. Private stays a single message: Meta accepts one anchored DM per comment. |
+| `text` | the text(s) | Posts a public comment reply per message: `type: "comment"` + `contentAttributes.replyToCommentId`, enqueued as `sendChannelMessage`. **Public may hold up to `COMMENT_REPLY_MAX_TEXTS` messages** — see below. | `PRIVATE_REPLY_TEXT_SENDERS[channelType]` (`private-reply.ts`) → the channel's comment_id-anchored Send API DM. Private stays a single message: Meta accepts one anchored DM per comment. |
 | `flow` | flow id | Enqueues `sendFlow` with `flowId` and a `public` `commentAnchor`, so **every** message step of the run is posted as a comment reply — the anchor is not one-shot (`POST /{comment-id}/replies` can be called repeatedly). Runs on the **comment-anchored** conversation. | Same job with a `private` anchor: the flow's **first** message is sent through the comment_id-anchored Send API (comment window, not the 24-hour messaging window); later messages take the normal window-gated path, because Meta allows only one anchored DM per comment. Runs on the **DM** conversation — see below. |
 
 ### Which conversation a flow reply runs on
@@ -182,7 +182,7 @@ Sends are **staggered by 3s** (`PUBLIC_REPLY_SPACING_MS`). Not cosmetic: the cha
 replies land under the comment in whatever order Facebook accepts them.
 
 **The set is ONE reply, not N.** Exactly the rule a `flow` reply already follows, and it is what
-lets the whole analytics layer stay untouched — `FBCommentAutomationEvent` is unique on
+lets the whole analytics layer stay untouched — `CommentAutomationEvent` is unique on
 `(automationId, commentId, replyChannel)`, and `settleEvent`/`markDelivered`/`deleteEvent` all
 name a row by that triple. So:
 
@@ -204,8 +204,8 @@ Logs table. It is built on the shared reflink-analytics stack: service and repos
 
 Four things to know before touching it:
 
-- **The data starts at deploy.** `FBCommentAutomationEvent` is the only source, and
-  nothing backfills it. `FBCommentAutomationReply` cannot substitute — it holds at most one
+- **The data starts at deploy.** `CommentAutomationEvent` is the only source, and
+  nothing backfills it. `CommentAutomationReply` cannot substitute — it holds at most one
   row per contact per post and carries no text, and `Message` has no `automationId` and no
   row at all for a private DM.
 - **`repliesCount` and the event count differ by design.** `repliesCount` increments once
@@ -216,7 +216,7 @@ Four things to know before touching it:
   `status = 'failed'` rows are purged, after `COMMENT_AUTOMATION_ERROR_RETENTION_DAYS`
   (30, matching `ErrorLog` — the two back the same surface), and that window is spelled out
   on the Error Logs card because that is the one panel it thins. The purge scan rides the
-  partial index `FBCommentAutomationEvent_failed_createdAt_idx`; a plain `createdAt` index
+  partial index `CommentAutomationEvent_failed_createdAt_idx`; a plain `createdAt` index
   would make the cron walk an ever-growing prefix of kept successful rows.
 - **The replies series switches to monthly buckets past 60 days.** An unbounded filter can
   ask for years, so `resolveRangeGranularity` (`packages/analytics/src/lib/time-series.ts`)
@@ -233,9 +233,9 @@ Both list tables carry six clickable columns after `repliesCount` —
 broadcast. Clicking a number opens the shared `StatsContactsDialog` with the contacts
 behind it. **Misses** is the odd one out and has [its own section](#misses).
 
-The numbers are **lifetime counters on `FBCommentAutomation`**
+The numbers are **lifetime counters on `CommentAutomation`**
 (`sentCount`/`deliveredCount`/`seenCount`/`clickedCount`/`failedCount`), not an aggregate:
-a nightly cron purges the **failed** `FBCommentAutomationEvent` rows after 30 days, so
+a nightly cron purges the **failed** `CommentAutomationEvent` rows after 30 days, so
 aggregating would make `failedCount` shrink on its own. The event row's matching `*At`
 timestamp is what makes each counter exact — every increment is driven by the rows a
 conditional `UPDATE ... WHERE <col> IS NULL RETURNING` actually returned, so a redelivered
@@ -247,7 +247,7 @@ lists go back as far as the automation does.
 |---|---|---|
 | **Sent** | An event row is inserted — i.e. a reply was attempted. Includes attempts that failed, the same way broadcast derives `sent = delivered + failed`. | `recordEvent` |
 | **Delivered** | The channel accepted the send. Meta reports **no** delivery receipt for a public comment reply, so this is that channel's only delivery signal; a private DM is acknowledged synchronously by the Send API, long before any webhook (and a private text DM writes no `Message` row for one to match). | `send-message.ts` success path, `send-flow-step.ts` success path, `executePrivateReply`, `processCommentAIReply` |
-| **Seen** | `private` only — a public comment has no reader. The one outcome that cannot be settled at the dispatch site: a read receipt names the inbox, never the reply, so the lookup runs the other way round, off `FBCommentAutomationEvent.contactInboxId`. | `commentAutomationAnalyticsService.onSeen`, on the `message:seen` bus |
+| **Seen** | `private` only — a public comment has no reader. The one outcome that cannot be settled at the dispatch site: a read receipt names the inbox, never the reply, so the lookup runs the other way round, off `CommentAutomationEvent.contactInboxId`. | `commentAutomationAnalyticsService.onSeen`, on the `message:seen` bus |
 | **Clicked** | A link or button in a **`flow`** reply was tapped. Attribution rides in `encodeButtonPayload`'s 7th positional field (`ca`), carried to the encoders by `metadata` (see below), so a plain `text` reply has no click to track. | `commentAutomationAnalyticsService.onClicked`, on the `flow:clicked` bus |
 | **Failed** | The dispatch threw, the async job gave up, or delivery was blocked before it could go out. First failure wins — a second settle is refused. | `recordEvent`, `settleCommentAutomationFailure` |
 
@@ -273,8 +273,8 @@ settle in:
 **declined** to answer. It is the only way a workspace can see what its filters are
 swallowing — before it existed the sole trace was a `logger.info` line.
 
-It is backed by a **separate table**, `FBCommentAutomationMiss`, not by
-`FBCommentAutomationEvent`. That table is unique on `(automationId, commentId,
+It is backed by a **separate table**, `CommentAutomationMiss`, not by
+`CommentAutomationEvent`. That table is unique on `(automationId, commentId,
 replyChannel)` with both `replyChannel` and `replyType` `NOT NULL`, and a decline has
 neither; every analytics-page query aggregates it directly, so a row type none of them want
 would have to be excluded from each one forever after; and misses outnumber replies by
@@ -282,7 +282,7 @@ however many automations the workspace runs. Its own key is `(automationId, comm
 an automation sees a comment once and declines it for the first reason that rejects it.
 
 One value per `continue` in the filter chain
-(`packages/database/src/partials/fb-comment-automation-miss.ts`):
+(`packages/database/src/partials/comment-automation-miss.ts`):
 
 | `reason` | Gate |
 |---|---|
@@ -296,9 +296,9 @@ One value per `continue` in the filter chain
 
 A **blocked private reply** is deliberately NOT a miss. That comment passed every filter
 and the automation tried to answer it; Meta refused the delivery. It stays a `failed`
-`FBCommentAutomationEvent` row, which is what lets the Error Logs panel explain it.
+`CommentAutomationEvent` row, which is what lets the Error Logs panel explain it.
 
-`missedCount` on `FBCommentAutomation` is exact for the same reason the delivery counters
+`missedCount` on `CommentAutomation` is exact for the same reason the delivery counters
 are: the increment counts the rows `INSERT ... ON CONFLICT DO NOTHING RETURNING
 "automationId"` actually returned, so a redelivered webhook or a BullMQ retry writes
 nothing and counts nothing.

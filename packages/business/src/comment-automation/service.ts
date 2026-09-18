@@ -9,19 +9,19 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import {
-  type FBCommentAutomationType,
-  type FBCommentHideComments,
-  fbCommentAutomationTypes,
+  type CommentAutomationType,
+  type CommentHideComments,
+  commentAutomationTypes,
   type IgCommentAutomationType,
   igCommentAutomationTypes,
   normalizeReplyTexts,
 } from "@chatbotx.io/database/partials"
 import {
+  commentAutomationModel,
+  commentAutomationReplyModel,
   contactInboxModel,
-  fbCommentAutomationModel,
-  fbCommentAutomationReplyModel,
 } from "@chatbotx.io/database/schema"
-import type { FBCommentAutomationModel } from "@chatbotx.io/database/types"
+import type { CommentAutomationModel } from "@chatbotx.io/database/types"
 import {
   getPaginationWithDefaults,
   likeContains,
@@ -46,7 +46,7 @@ type ListFbCommentsInput = {
 }
 
 type ListFbCommentsResult = {
-  data: FBCommentAutomationModel[]
+  data: CommentAutomationModel[]
   pageCount: number
 }
 
@@ -55,7 +55,7 @@ function resolveIsActiveFilter(isActive?: boolean | null): boolean | undefined {
 }
 
 type FbCommentAutomationWriteData = Omit<
-  typeof fbCommentAutomationModel.$inferInsert,
+  typeof commentAutomationModel.$inferInsert,
   "id" | "workspaceId" | "type"
 >
 
@@ -140,7 +140,7 @@ type TiktokCommentAutomationHideComments = {
   hasLink: boolean
   hasKeywords: boolean
   keywords: string[]
-  showCommentsAfter: FBCommentHideComments["showCommentsAfter"]
+  showCommentsAfter: CommentHideComments["showCommentsAfter"]
 }
 
 type CreateTiktokCommentAutomationInput = {
@@ -162,8 +162,8 @@ type UpdateTiktokCommentAutomationInput = Partial<
   isActive?: boolean
 }
 
-class FbCommentAutomationService extends BaseService {
-  private readonly threadsType = fbCommentAutomationTypes.enum.threads
+class CommentAutomationService extends BaseService {
+  private readonly threadsType = commentAutomationTypes.enum.threads
 
   private readonly threadsDefaults = {
     privateReply: { type: "none", value: null } as {
@@ -221,7 +221,7 @@ class FbCommentAutomationService extends BaseService {
     }
   }
 
-  private readonly tiktokType = fbCommentAutomationTypes.enum.tiktok
+  private readonly tiktokType = commentAutomationTypes.enum.tiktok
 
   private readonly tiktokDefaults = {
     privateReply: { type: "none", value: null } as {
@@ -237,7 +237,7 @@ class FbCommentAutomationService extends BaseService {
       hasKeywords: false,
       keywords: [] as string[],
       showCommentsAfter: "none",
-    } as FBCommentHideComments,
+    } as CommentHideComments,
     replyAfter: { type: "immediately", value: 0 } as {
       type: "immediately"
       value: number
@@ -268,7 +268,7 @@ class FbCommentAutomationService extends BaseService {
    */
   private buildTiktokHideComments(
     input?: TiktokCommentAutomationHideComments,
-  ): FBCommentHideComments {
+  ): CommentHideComments {
     if (!input) {
       return this.tiktokDefaults.hideComments
     }
@@ -286,9 +286,9 @@ class FbCommentAutomationService extends BaseService {
 
   findActiveAutomations(props: {
     workspaceId: string
-    channelType: FBCommentAutomationType
+    channelType: CommentAutomationType
   }) {
-    return db.query.fbCommentAutomationModel.findMany({
+    return db.query.commentAutomationModel.findMany({
       where: {
         workspaceId: props.workspaceId,
         isActive: true,
@@ -327,7 +327,7 @@ class FbCommentAutomationService extends BaseService {
     contactId: string
     postId: string
   }) {
-    return db.query.fbCommentAutomationReplyModel.findFirst({
+    return db.query.commentAutomationReplyModel.findFirst({
       where: {
         automationId: props.automationId,
         contactId: props.contactId,
@@ -343,7 +343,7 @@ class FbCommentAutomationService extends BaseService {
     workspaceId: string
   }) {
     await db
-      .insert(fbCommentAutomationReplyModel)
+      .insert(commentAutomationReplyModel)
       .values({ id: createId(), ...props })
       .onConflictDoNothing()
   }
@@ -362,12 +362,12 @@ class FbCommentAutomationService extends BaseService {
     postId: string
   }) {
     await db
-      .delete(fbCommentAutomationReplyModel)
+      .delete(commentAutomationReplyModel)
       .where(
         and(
-          eq(fbCommentAutomationReplyModel.automationId, props.automationId),
-          eq(fbCommentAutomationReplyModel.contactId, props.contactId),
-          eq(fbCommentAutomationReplyModel.postId, props.postId),
+          eq(commentAutomationReplyModel.automationId, props.automationId),
+          eq(commentAutomationReplyModel.contactId, props.contactId),
+          eq(commentAutomationReplyModel.postId, props.postId),
         ),
       )
   }
@@ -379,12 +379,12 @@ class FbCommentAutomationService extends BaseService {
   }): Promise<boolean> {
     const rows = await db
       .select({ one: sql`1` })
-      .from(fbCommentAutomationReplyModel)
+      .from(commentAutomationReplyModel)
       .where(
         and(
-          eq(fbCommentAutomationReplyModel.automationId, props.automationId),
-          eq(fbCommentAutomationReplyModel.contactId, props.contactId),
-          ne(fbCommentAutomationReplyModel.postId, props.postId),
+          eq(commentAutomationReplyModel.automationId, props.automationId),
+          eq(commentAutomationReplyModel.contactId, props.contactId),
+          ne(commentAutomationReplyModel.postId, props.postId),
         ),
       )
       .limit(1)
@@ -393,17 +393,17 @@ class FbCommentAutomationService extends BaseService {
 
   async incrementRepliesCount(automationId: string) {
     await db
-      .update(fbCommentAutomationModel)
+      .update(commentAutomationModel)
       .set({
-        repliesCount: sql`${fbCommentAutomationModel.repliesCount} + 1`,
+        repliesCount: sql`${commentAutomationModel.repliesCount} + 1`,
       })
-      .where(eq(fbCommentAutomationModel.id, automationId))
+      .where(eq(commentAutomationModel.id, automationId))
   }
 
   async deleteMany(input: {
     workspaceId: string
     ids: string[]
-    types: FBCommentAutomationType[]
+    types: CommentAutomationType[]
   }): Promise<void> {
     if (input.ids.length === 0) {
       return
@@ -414,12 +414,12 @@ class FbCommentAutomationService extends BaseService {
       resourceIds: input.ids,
     })
     await db
-      .delete(fbCommentAutomationModel)
+      .delete(commentAutomationModel)
       .where(
         and(
-          eq(fbCommentAutomationModel.workspaceId, input.workspaceId),
-          inArray(fbCommentAutomationModel.id, input.ids),
-          inArray(fbCommentAutomationModel.type, input.types),
+          eq(commentAutomationModel.workspaceId, input.workspaceId),
+          inArray(commentAutomationModel.id, input.ids),
+          inArray(commentAutomationModel.type, input.types),
         ),
       )
   }
@@ -431,24 +431,24 @@ class FbCommentAutomationService extends BaseService {
     // it had been moved into.
     const where = {
       workspaceId: input.workspaceId,
-      type: fbCommentAutomationTypes.enum.messenger,
+      type: commentAutomationTypes.enum.messenger,
       folderId: resolveFolderIdFilter(input.folderId, input.includeAllFolders),
       name: input.name ? { ilike: likeContains(input.name) } : undefined,
       isActive: resolveIsActiveFilter(input.isActive),
     }
 
     const pagination = getPaginationWithDefaults(input)
-    const orderBy = parseOrderByAsObject(fbCommentAutomationModel, input)
+    const orderBy = parseOrderByAsObject(commentAutomationModel, input)
 
     const [data, total] = await Promise.all([
-      db.query.fbCommentAutomationModel.findMany({
+      db.query.commentAutomationModel.findMany({
         where,
         orderBy,
         ...pagination,
       }),
       db.$count(
-        fbCommentAutomationModel,
-        relationsFilterToSQL(fbCommentAutomationModel, where),
+        commentAutomationModel,
+        relationsFilterToSQL(commentAutomationModel, where),
       ),
     ])
 
@@ -460,12 +460,12 @@ class FbCommentAutomationService extends BaseService {
   async findMessengerOrFail(input: {
     workspaceId: string
     id: string
-  }): Promise<FBCommentAutomationModel> {
-    const record = await db.query.fbCommentAutomationModel.findFirst({
+  }): Promise<CommentAutomationModel> {
+    const record = await db.query.commentAutomationModel.findFirst({
       where: {
         id: input.id,
         workspaceId: input.workspaceId,
-        type: fbCommentAutomationTypes.enum.messenger,
+        type: commentAutomationTypes.enum.messenger,
       },
     })
 
@@ -498,13 +498,13 @@ class FbCommentAutomationService extends BaseService {
   async createMessenger(input: {
     workspaceId: string
     data: FbCommentAutomationWriteData
-  }): Promise<FBCommentAutomationModel> {
+  }): Promise<CommentAutomationModel> {
     const [created] = await db
-      .insert(fbCommentAutomationModel)
+      .insert(commentAutomationModel)
       .values({
         id: createId(),
         workspaceId: input.workspaceId,
-        type: fbCommentAutomationTypes.enum.messenger,
+        type: commentAutomationTypes.enum.messenger,
         ...this.withNormalizedReplies(input.data),
       })
       .returning()
@@ -514,19 +514,19 @@ class FbCommentAutomationService extends BaseService {
   async updateMessenger(
     ctx: { workspaceId: string; id: string },
     data: Partial<FbCommentAutomationWriteData>,
-  ): Promise<FBCommentAutomationModel> {
+  ): Promise<CommentAutomationModel> {
     await this.findMessengerOrFail(ctx)
 
     const [updated] = await db
-      .update(fbCommentAutomationModel)
+      .update(commentAutomationModel)
       .set(this.withNormalizedReplies(data))
       .where(
         and(
-          eq(fbCommentAutomationModel.id, ctx.id),
-          eq(fbCommentAutomationModel.workspaceId, ctx.workspaceId),
+          eq(commentAutomationModel.id, ctx.id),
+          eq(commentAutomationModel.workspaceId, ctx.workspaceId),
           eq(
-            fbCommentAutomationModel.type,
-            fbCommentAutomationTypes.enum.messenger,
+            commentAutomationModel.type,
+            commentAutomationTypes.enum.messenger,
           ),
         ),
       )
@@ -542,7 +542,7 @@ class FbCommentAutomationService extends BaseService {
     await this.deleteMany({
       workspaceId: input.workspaceId,
       ids: [input.id],
-      types: [fbCommentAutomationTypes.enum.messenger],
+      types: [commentAutomationTypes.enum.messenger],
     })
   }
 
@@ -559,17 +559,17 @@ class FbCommentAutomationService extends BaseService {
     }
 
     const pagination = getPaginationWithDefaults(input)
-    const orderBy = parseOrderByAsObject(fbCommentAutomationModel, input)
+    const orderBy = parseOrderByAsObject(commentAutomationModel, input)
 
     const [data, total] = await Promise.all([
-      db.query.fbCommentAutomationModel.findMany({
+      db.query.commentAutomationModel.findMany({
         where,
         orderBy,
         ...pagination,
       }),
       db.$count(
-        fbCommentAutomationModel,
-        relationsFilterToSQL(fbCommentAutomationModel, where),
+        commentAutomationModel,
+        relationsFilterToSQL(commentAutomationModel, where),
       ),
     ])
 
@@ -581,8 +581,8 @@ class FbCommentAutomationService extends BaseService {
   async findInstagramOrFail(input: {
     workspaceId: string
     id: string
-  }): Promise<FBCommentAutomationModel> {
-    const record = await db.query.fbCommentAutomationModel.findFirst({
+  }): Promise<CommentAutomationModel> {
+    const record = await db.query.commentAutomationModel.findFirst({
       where: {
         id: input.id,
         workspaceId: input.workspaceId,
@@ -601,9 +601,9 @@ class FbCommentAutomationService extends BaseService {
     workspaceId: string
     type: IgCommentAutomationType
     data: FbCommentAutomationWriteData
-  }): Promise<FBCommentAutomationModel> {
+  }): Promise<CommentAutomationModel> {
     const [created] = await db
-      .insert(fbCommentAutomationModel)
+      .insert(commentAutomationModel)
       .values({
         id: createId(),
         workspaceId: input.workspaceId,
@@ -617,18 +617,18 @@ class FbCommentAutomationService extends BaseService {
   async updateInstagram(
     ctx: { workspaceId: string; id: string },
     data: Partial<FbCommentAutomationWriteData>,
-  ): Promise<FBCommentAutomationModel> {
+  ): Promise<CommentAutomationModel> {
     await this.findInstagramOrFail(ctx)
 
     const [updated] = await db
-      .update(fbCommentAutomationModel)
+      .update(commentAutomationModel)
       .set(this.withNormalizedReplies(data))
       .where(
         and(
-          eq(fbCommentAutomationModel.id, ctx.id),
-          eq(fbCommentAutomationModel.workspaceId, ctx.workspaceId),
+          eq(commentAutomationModel.id, ctx.id),
+          eq(commentAutomationModel.workspaceId, ctx.workspaceId),
           inArray(
-            fbCommentAutomationModel.type,
+            commentAutomationModel.type,
             igCommentAutomationTypes.options,
           ),
         ),
@@ -679,15 +679,15 @@ class FbCommentAutomationService extends BaseService {
     }
 
     const [data, total] = await Promise.all([
-      tx.query.fbCommentAutomationModel.findMany({
+      tx.query.commentAutomationModel.findMany({
         where,
         orderBy,
         limit,
         offset,
       }),
       tx.$count(
-        fbCommentAutomationModel,
-        relationsFilterToSQL(fbCommentAutomationModel, where),
+        commentAutomationModel,
+        relationsFilterToSQL(commentAutomationModel, where),
       ),
     ])
 
@@ -703,7 +703,7 @@ class FbCommentAutomationService extends BaseService {
     tx?: DatabaseClient
   }) {
     const { workspaceId, id, tx = db } = props
-    return tx.query.fbCommentAutomationModel.findFirst({
+    return tx.query.commentAutomationModel.findFirst({
       where: {
         workspaceId,
         type: this.threadsType,
@@ -719,7 +719,7 @@ class FbCommentAutomationService extends BaseService {
   }) {
     const { workspaceId, data, tx = db } = props
     const [record] = await tx
-      .insert(fbCommentAutomationModel)
+      .insert(commentAutomationModel)
       .values({
         id: createId(),
         workspaceId,
@@ -775,13 +775,13 @@ class FbCommentAutomationService extends BaseService {
     }
 
     const [record] = await tx
-      .update(fbCommentAutomationModel)
+      .update(commentAutomationModel)
       .set(values)
       .where(
         and(
-          eq(fbCommentAutomationModel.id, id),
-          eq(fbCommentAutomationModel.workspaceId, workspaceId),
-          eq(fbCommentAutomationModel.type, this.threadsType),
+          eq(commentAutomationModel.id, id),
+          eq(commentAutomationModel.workspaceId, workspaceId),
+          eq(commentAutomationModel.type, this.threadsType),
         ),
       )
       .returning()
@@ -796,15 +796,15 @@ class FbCommentAutomationService extends BaseService {
   }) {
     const { workspaceId, id, tx = db } = props
     const [record] = await tx
-      .delete(fbCommentAutomationModel)
+      .delete(commentAutomationModel)
       .where(
         and(
-          eq(fbCommentAutomationModel.id, id),
-          eq(fbCommentAutomationModel.workspaceId, workspaceId),
-          eq(fbCommentAutomationModel.type, this.threadsType),
+          eq(commentAutomationModel.id, id),
+          eq(commentAutomationModel.workspaceId, workspaceId),
+          eq(commentAutomationModel.type, this.threadsType),
         ),
       )
-      .returning({ id: fbCommentAutomationModel.id })
+      .returning({ id: commentAutomationModel.id })
 
     return record ?? null
   }
@@ -839,15 +839,15 @@ class FbCommentAutomationService extends BaseService {
     }
 
     const [data, total] = await Promise.all([
-      tx.query.fbCommentAutomationModel.findMany({
+      tx.query.commentAutomationModel.findMany({
         where,
         orderBy,
         limit,
         offset,
       }),
       tx.$count(
-        fbCommentAutomationModel,
-        relationsFilterToSQL(fbCommentAutomationModel, where),
+        commentAutomationModel,
+        relationsFilterToSQL(commentAutomationModel, where),
       ),
     ])
 
@@ -863,7 +863,7 @@ class FbCommentAutomationService extends BaseService {
     tx?: DatabaseClient
   }) {
     const { workspaceId, id, tx = db } = props
-    return tx.query.fbCommentAutomationModel.findFirst({
+    return tx.query.commentAutomationModel.findFirst({
       where: {
         workspaceId,
         type: this.tiktokType,
@@ -879,7 +879,7 @@ class FbCommentAutomationService extends BaseService {
   }) {
     const { workspaceId, data, tx = db } = props
     const [record] = await tx
-      .insert(fbCommentAutomationModel)
+      .insert(commentAutomationModel)
       .values({
         id: createId(),
         workspaceId,
@@ -938,13 +938,13 @@ class FbCommentAutomationService extends BaseService {
     }
 
     const [record] = await tx
-      .update(fbCommentAutomationModel)
+      .update(commentAutomationModel)
       .set(values)
       .where(
         and(
-          eq(fbCommentAutomationModel.id, id),
-          eq(fbCommentAutomationModel.workspaceId, workspaceId),
-          eq(fbCommentAutomationModel.type, this.tiktokType),
+          eq(commentAutomationModel.id, id),
+          eq(commentAutomationModel.workspaceId, workspaceId),
+          eq(commentAutomationModel.type, this.tiktokType),
         ),
       )
       .returning()
@@ -959,18 +959,18 @@ class FbCommentAutomationService extends BaseService {
   }) {
     const { workspaceId, id, tx = db } = props
     const [record] = await tx
-      .delete(fbCommentAutomationModel)
+      .delete(commentAutomationModel)
       .where(
         and(
-          eq(fbCommentAutomationModel.id, id),
-          eq(fbCommentAutomationModel.workspaceId, workspaceId),
-          eq(fbCommentAutomationModel.type, this.tiktokType),
+          eq(commentAutomationModel.id, id),
+          eq(commentAutomationModel.workspaceId, workspaceId),
+          eq(commentAutomationModel.type, this.tiktokType),
         ),
       )
-      .returning({ id: fbCommentAutomationModel.id })
+      .returning({ id: commentAutomationModel.id })
 
     return record ?? null
   }
 }
 
-export const fbCommentAutomationService = new FbCommentAutomationService()
+export const commentAutomationService = new CommentAutomationService()

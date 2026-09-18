@@ -1,5 +1,5 @@
-import { fbCommentAutomationService } from "@chatbotx.io/business"
-import { fbCommentAutomationModel } from "@chatbotx.io/database/schema"
+import { commentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
@@ -17,16 +17,17 @@ export async function listThreadsComments(
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const pagination = getPaginationWithDefaults(input)
-  const orderBy = parseOrderByAsObject(fbCommentAutomationModel, input)
-  const { data, total } =
-    await fbCommentAutomationService.listThreadsAutomations({
+  const orderBy = parseOrderByAsObject(commentAutomationModel, input)
+  const { data, total } = await commentAutomationService.listThreadsAutomations(
+    {
       workspaceId: input.workspaceId,
       name: input.name || undefined,
       isActive: input.isActive ?? undefined,
       limit: pagination.limit,
       offset: pagination.offset,
       orderBy,
-    })
+    },
+  )
 
   return {
     data: threadsCommentResource.array().parse(
@@ -65,7 +66,7 @@ export async function listThreadsComments(
 export async function getThreadsComment(workspaceId: string, id: string) {
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
-  const record = await fbCommentAutomationService.getThreadsAutomation({
+  const record = await commentAutomationService.getThreadsAutomation({
     workspaceId,
     id,
   })

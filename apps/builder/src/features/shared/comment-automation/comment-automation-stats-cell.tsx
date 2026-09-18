@@ -7,8 +7,8 @@ import { CommentAutomationContactsDialog } from "./comment-automation-contacts-d
 
 /**
  * Which lifetime counter on the automation row backs each column. The counters
- * live on `FBCommentAutomation` rather than being aggregated from
- * `FBCommentAutomationEvent`, which a nightly cron purges after 30 days — so
+ * live on `CommentAutomation` rather than being aggregated from
+ * `CommentAutomationEvent`, which a nightly cron purges after 30 days — so
  * unlike `BroadcastStatsCell` this needs no fetch and no store at all: the
  * numbers arrive with the row.
  */

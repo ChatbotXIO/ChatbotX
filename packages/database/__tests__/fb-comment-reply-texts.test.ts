@@ -1,9 +1,9 @@
 import { describe, expect, test } from "vitest"
 import {
-  type FBCommentReply,
+  type CommentReply,
   normalizeReplyTexts,
   resolveReplyTexts,
-} from "../src/partials/fb-comment-automation"
+} from "../src/partials/comment-automation"
 
 /**
  * These two are the only places that know how a `text` reply's messages are
@@ -69,7 +69,7 @@ describe("normalizeReplyTexts", () => {
   })
 
   test("leaves non-text replies alone — `value` there is a flow or agent id", () => {
-    const flow: FBCommentReply = { type: "flow", value: "flow-1" }
+    const flow: CommentReply = { type: "flow", value: "flow-1" }
     expect(normalizeReplyTexts(flow)).toBe(flow)
   })
 })

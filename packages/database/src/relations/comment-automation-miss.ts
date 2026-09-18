@@ -2,31 +2,31 @@ import { defineRelationsPart } from "drizzle-orm"
 // biome-ignore lint/performance/noNamespaceImport: drizzle schema
 import * as schema from "../schema"
 
-export const fbCommentAutomationMissRelations = defineRelationsPart(
+export const commentAutomationMissRelations = defineRelationsPart(
   schema,
   (r) => ({
-    fbCommentAutomationMissModel: {
-      automation: r.one.fbCommentAutomationModel({
-        from: r.fbCommentAutomationMissModel.automationId,
-        to: r.fbCommentAutomationModel.id,
+    commentAutomationMissModel: {
+      automation: r.one.commentAutomationModel({
+        from: r.commentAutomationMissModel.automationId,
+        to: r.commentAutomationModel.id,
         optional: false,
       }),
       // Nullable: the FK is `onDelete: "set null"` so a miss outlives its
       // contact.
       contact: r.one.contactModel({
-        from: r.fbCommentAutomationMissModel.contactId,
+        from: r.commentAutomationMissModel.contactId,
         to: r.contactModel.id,
         optional: true,
       }),
       // Nullable for the same reason as `contact`: the FK is
       // `onDelete: "set null"`.
       contactInbox: r.one.contactInboxModel({
-        from: r.fbCommentAutomationMissModel.contactInboxId,
+        from: r.commentAutomationMissModel.contactInboxId,
         to: r.contactInboxModel.id,
         optional: true,
       }),
       workspace: r.one.workspaceModel({
-        from: r.fbCommentAutomationMissModel.workspaceId,
+        from: r.commentAutomationMissModel.workspaceId,
         to: r.workspaceModel.id,
         optional: false,
       }),

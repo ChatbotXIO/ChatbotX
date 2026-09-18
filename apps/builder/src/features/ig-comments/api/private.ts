@@ -1,4 +1,4 @@
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
@@ -29,8 +29,7 @@ export const igCommentsPrivateAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listIgCommentsResponse)
     .handler(
-      async ({ input }) =>
-        await fbCommentAutomationService.listIgComments(input),
+      async ({ input }) => await commentAutomationService.listIgComments(input),
     ),
 
   createIgCommentAPI: authorizedAPI
@@ -45,7 +44,7 @@ export const igCommentsPrivateAPI = {
     .output(igCommentResource)
     .handler(async ({ input }) => {
       const { workspaceId, type, ...data } = input
-      return await fbCommentAutomationService.createInstagram({
+      return await commentAutomationService.createInstagram({
         workspaceId,
         type,
         data,
@@ -68,7 +67,7 @@ export const igCommentsPrivateAPI = {
     .output(igCommentResource)
     .handler(async ({ input }) => {
       const { workspaceId, id, type: _type, ...rest } = input
-      return await fbCommentAutomationService.updateInstagram(
+      return await commentAutomationService.updateInstagram(
         { workspaceId, id },
         rest,
       )
@@ -85,7 +84,7 @@ export const igCommentsPrivateAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.void())
     .handler(async ({ input }) => {
-      await fbCommentAutomationService.deleteInstagram({
+      await commentAutomationService.deleteInstagram({
         workspaceId: input.workspaceId,
         id: input.id,
       })

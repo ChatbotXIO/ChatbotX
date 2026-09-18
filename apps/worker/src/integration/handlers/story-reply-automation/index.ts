@@ -1,13 +1,13 @@
 import {
   aiAgentService,
+  commentAutomationService,
   contactInboxService,
-  fbCommentAutomationService,
   igStoryAutomationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { logProviderError } from "@chatbotx.io/business/error-log"
 import type {
-  FBCommentIncludeKeywords,
+  CommentIncludeKeywords,
   IgStoryTarget,
 } from "@chatbotx.io/database/partials"
 import type {
@@ -36,7 +36,7 @@ function matchStory(story: IgStoryTarget, storyId: string): boolean {
 // Only the `includeKeywords` half of `comment-automation/index.ts`'s
 // `matchKeywords` applies here — this feature has no `excludeKeywords` field.
 function matchIncludeKeywords(
-  includeKeywords: FBCommentIncludeKeywords,
+  includeKeywords: CommentIncludeKeywords,
   message: string | undefined,
 ): boolean {
   if (includeKeywords.type === "all") {
@@ -163,7 +163,7 @@ export async function processStoryReplyAutomation(
   for (const automation of automations) {
     try {
       if (
-        !fbCommentAutomationService.isWithinSchedule(
+        !commentAutomationService.isWithinSchedule(
           automation,
           workspace.timezone,
         )

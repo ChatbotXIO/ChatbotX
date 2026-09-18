@@ -1,4 +1,4 @@
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import { logger } from "../../../lib/logger"
 
 /**
@@ -30,7 +30,7 @@ export async function rollbackCommentDedup(props: {
   }
 
   try {
-    await fbCommentAutomationService.deleteDedup(props.dedup)
+    await commentAutomationService.deleteDedup(props.dedup)
   } catch (err) {
     logger.error(
       {

@@ -7,19 +7,19 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
-import { fbCommentReplyTypes } from "../partials/fb-comment-automation"
+import { commentReplyTypes } from "../partials/comment-automation"
 import {
   commentAutomationEventStatuses,
   commentAutomationReplyChannels,
-} from "../partials/fb-comment-automation-event"
+} from "../partials/comment-automation-event"
 import {
   bigintAsString,
   sharedColumns,
   timestampConfig,
 } from "../partials/shared"
+import { commentAutomationModel } from "./comment-automation"
 import { contactModel } from "./contact"
 import { contactInboxModel } from "./contact-inbox"
-import { fbCommentAutomationModel } from "./fb-comment-automation"
 import { workspaceModel } from "./workspace"
 
 export const commentAutomationReplyChannel = pgEnum(
@@ -29,7 +29,7 @@ export const commentAutomationReplyChannel = pgEnum(
 
 export const commentAutomationReplyType = pgEnum(
   "commentAutomationReplyType",
-  fbCommentReplyTypes.options as [string, ...string[]],
+  commentReplyTypes.options as [string, ...string[]],
 )
 
 export const commentAutomationEventStatus = pgEnum(
@@ -41,7 +41,7 @@ export const commentAutomationEventStatus = pgEnum(
  * Append-only log of every reply a comment automation actually attempted — the
  * only source the per-automation analytics page has.
  *
- * `FBCommentAutomationReply` cannot serve this: it is a dedup key, unique on
+ * `CommentAutomationReply` cannot serve this: it is a dedup key, unique on
  * `(automationId, contactId, postId)`, so it holds at most one row per contact
  * per post and carries no text, no reply timestamp and no outcome. `Message`
  * carries the comment and public-reply text but has no `automationId`, and a
@@ -52,8 +52,8 @@ export const commentAutomationEventStatus = pgEnum(
  * unique index makes a BullMQ retry idempotent via `onConflictDoNothing`, so
  * re-delivery never inflates the counts.
  */
-export const fbCommentAutomationEventModel = pgTable(
-  "FBCommentAutomationEvent",
+export const commentAutomationEventModel = pgTable(
+  "CommentAutomationEvent",
   {
     ...sharedColumns,
     workspaceId: bigintAsString()
@@ -64,7 +64,7 @@ export const fbCommentAutomationEventModel = pgTable(
       }),
     automationId: bigintAsString()
       .notNull()
-      .references(() => fbCommentAutomationModel.id, {
+      .references(() => commentAutomationModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
@@ -105,7 +105,7 @@ export const fbCommentAutomationEventModel = pgTable(
      *
      * Each is written with `COALESCE`/`WHERE <col> IS NULL` so the first event
      * wins and a redelivered webhook is a no-op — that is also what keeps the
-     * lifetime counters on `FBCommentAutomation` from double-counting.
+     * lifetime counters on `CommentAutomation` from double-counting.
      *
      * `deliveredAt` means the channel accepted the send (Graph API returned
      * OK); Meta reports no delivery receipt for a public comment reply, so this
@@ -127,13 +127,13 @@ export const fbCommentAutomationEventModel = pgTable(
   },
   (table) => [
     // Natural event key: makes a job retry a no-op via `onConflictDoNothing`.
-    uniqueIndex("FBCommentAutomationEvent_dedup_idx").on(
+    uniqueIndex("CommentAutomationEvent_dedup_idx").on(
       table.automationId,
       table.commentId,
       table.replyChannel,
     ),
     // Serves every analytics query: one automation, date-bounded, newest first.
-    index("FBCommentAutomationEvent_automation_occurredAt_idx").using(
+    index("CommentAutomationEvent_automation_occurredAt_idx").using(
       "btree",
       table.workspaceId.asc().nullsLast(),
       table.automationId.asc().nullsLast(),
@@ -141,16 +141,14 @@ export const fbCommentAutomationEventModel = pgTable(
     ),
     // Serves the `onDelete: "set null"` FK scan Postgres runs on every
     // `Contact` delete, like every comparable contactId FK in the schema.
-    index("FBCommentAutomationEvent_contactId_idx").on(table.contactId),
+    index("CommentAutomationEvent_contactId_idx").on(table.contactId),
     // Same FK-scan duty for `ContactInbox` deletes.
-    index("FBCommentAutomationEvent_contactInboxId_idx").on(
-      table.contactInboxId,
-    ),
+    index("CommentAutomationEvent_contactInboxId_idx").on(table.contactInboxId),
     // The read-receipt lookup, which runs for EVERY `message:seen` event on the
     // platform — a read receipt carries no automation id, so the only way in is
     // the inbox. Partial, like `ContactOnBroadcast_unsent_idx`: the rows that
     // can still be marked seen are a vanishing fraction of the table.
-    index("FBCommentAutomationEvent_private_unseen_idx")
+    index("CommentAutomationEvent_private_unseen_idx")
       .on(table.contactInboxId)
       .where(
         sql`"replyChannel" = 'private' AND "deliveredAt" IS NOT NULL AND "seenAt" IS NULL`,
@@ -160,7 +158,7 @@ export const fbCommentAutomationEventModel = pgTable(
     // successful ones — kept for the life of the automation — would otherwise
     // form an ever-growing prefix the oldest-first select has to walk past on
     // every run.
-    index("FBCommentAutomationEvent_failed_createdAt_idx")
+    index("CommentAutomationEvent_failed_createdAt_idx")
       .using("btree", table.createdAt.asc().nullsLast())
       .where(sql`"status" = 'failed'`),
   ],

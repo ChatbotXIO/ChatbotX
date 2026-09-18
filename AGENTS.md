@@ -203,7 +203,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - White-label tenancy model: `docs/tenancy.md`
 - Workspace API tokens (hashing, scopes, `{{api_key}}` default token): `docs/developer/workspace-api-tokens.md`
 - Ads conversion tracking (CTWA/CTM/CTID, rules vs Trigger actions, CAPI): `docs/ads-conversion-tracking.md`
-- Facebook comment automation: `docs/fb-comment-automation.md` (skill: `.agents/skills/fb-comment-automation/`)
+- Comment automation (all channels): `docs/comment-automation.md` (skill: `.agents/skills/comment-automation/`)
 - Push notifications (Expo Push Service, device tokens): `docs/push-notifications.md`
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`
 - Platform support access (super admin opening any workspace): `docs/support-access.md`

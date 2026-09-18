@@ -1,6 +1,6 @@
 import { broadcastToWorkspaceParty } from "@chatbotx.io/business"
 import {
-  type FBCommentReply,
+  type CommentReply,
   resolveReplyTexts,
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
@@ -141,7 +141,7 @@ export async function postPublicCommentReply(props: {
  * outcome also carries the text for the analytics event.
  */
 export async function executePublicReply(
-  publicReply: FBCommentReply,
+  publicReply: CommentReply,
   ctx: {
     auth: MessengerAuthValue
     integrationType: string

@@ -1,5 +1,5 @@
 import { flowService } from "@chatbotx.io/business"
-import type { FBCommentReplyType } from "@chatbotx.io/database/partials"
+import type { CommentReplyType } from "@chatbotx.io/database/partials"
 import { logger } from "../../../lib/logger"
 
 /**
@@ -16,7 +16,7 @@ import { logger } from "../../../lib/logger"
  *   `processCommentAIReply` fills it in on the same event row
  */
 export type CommentReplyOutcome = {
-  replyType: FBCommentReplyType
+  replyType: CommentReplyType
   replyText: string | null
   /**
    * Set only when the send already completed synchronously (a `text` reply,

@@ -2,7 +2,7 @@ import { PgDialect } from "drizzle-orm/pg-core"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
-// fb-comment-automation-event purge repository. Mocks only `db.execute` (real
+// comment-automation-event purge repository. Mocks only `db.execute` (real
 // `sql` template tag via importOriginal, like broadcast-purge.test.ts) so the
 // rendered SQL text and bound params can be asserted with
 // `PgDialect().sqlToQuery`.
@@ -23,7 +23,7 @@ vi.mock("../src/client", async (importOriginal) => {
 })
 
 const { purgeFailedCommentAutomationEvents } = await import(
-  "../src/repositories/fb-comment-automation-event/repository"
+  "../src/repositories/comment-automation-event/repository"
 )
 
 const dialect = new PgDialect()

@@ -1,8 +1,8 @@
 import {
-  type FBCommentIncludeKeywords,
-  type FBCommentPost,
-  type FBCommentReply,
-  type FBCommentReplyAfter,
+  type CommentIncludeKeywords,
+  type CommentPost,
+  type CommentReply,
+  type CommentReplyAfter,
   resolveReplyTexts,
 } from "@chatbotx.io/database/partials"
 
@@ -34,7 +34,7 @@ function objectIdOf(id: string): string {
   return idx === -1 ? id : id.slice(0, idx)
 }
 
-export function matchPost(post: FBCommentPost, postId: string): boolean {
+export function matchPost(post: CommentPost, postId: string): boolean {
   if (post.type !== "postIds") {
     return true
   }
@@ -43,7 +43,7 @@ export function matchPost(post: FBCommentPost, postId: string): boolean {
 }
 
 export function matchKeywords(
-  includeKeywords: FBCommentIncludeKeywords,
+  includeKeywords: CommentIncludeKeywords,
   excludeKeywords: string[],
   message: string | undefined,
 ): boolean {
@@ -105,7 +105,7 @@ export function isCommentReply(
   return parent !== objectIdOf(commentId)
 }
 
-export function willSendReply(reply: FBCommentReply): boolean {
+export function willSendReply(reply: CommentReply): boolean {
   if (reply.type === "none") {
     return false
   }
@@ -119,7 +119,7 @@ export function willSendReply(reply: FBCommentReply): boolean {
   return Boolean(reply.value)
 }
 
-export function computeDelayMs(replyAfter: FBCommentReplyAfter): number {
+export function computeDelayMs(replyAfter: CommentReplyAfter): number {
   if (replyAfter.type === "immediately") {
     return 0
   }

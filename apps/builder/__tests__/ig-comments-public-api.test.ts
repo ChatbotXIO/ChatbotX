@@ -48,14 +48,14 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
 
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
-const fbCommentAutomationService = {
+const commentAutomationService = {
   listIgComments: vi.fn(),
   findInstagramOrFail: vi.fn(),
   createInstagram: vi.fn(),
   updateInstagram: vi.fn(),
   deleteInstagram: vi.fn(),
 }
-vi.mock("@chatbotx.io/business", () => ({ fbCommentAutomationService }))
+vi.mock("@chatbotx.io/business", () => ({ commentAutomationService }))
 
 const listInstagramLoginMedia = vi.fn()
 const listInstagramFacebookMedia = vi.fn()
@@ -101,7 +101,7 @@ describe("GET /v1/ig-comments", () => {
 
   test("lists workspace-scoped IG comment automations across every folder", async () => {
     const response = { data: [{ id: "ig-comment-1" }], pageCount: 1 }
-    fbCommentAutomationService.listIgComments.mockResolvedValueOnce(response)
+    commentAutomationService.listIgComments.mockResolvedValueOnce(response)
 
     await expect(
       procedure.handler?.({
@@ -117,7 +117,7 @@ describe("GET /v1/ig-comments", () => {
       }),
     ).resolves.toEqual(response)
 
-    expect(fbCommentAutomationService.listIgComments).toHaveBeenCalledWith({
+    expect(commentAutomationService.listIgComments).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       page: 2,
       perPage: 20,
@@ -135,18 +135,16 @@ describe("GET /v1/ig-comments/{id}", () => {
 
   test("gets a single IG comment automation in the token workspace", async () => {
     const record = { id: "ig-comment-1", name: "Welcome" }
-    fbCommentAutomationService.findInstagramOrFail.mockResolvedValueOnce(record)
+    commentAutomationService.findInstagramOrFail.mockResolvedValueOnce(record)
 
     await expect(
       procedure.handler?.({ context, input: { id: "ig-comment-1" } }),
     ).resolves.toEqual(record)
 
-    expect(fbCommentAutomationService.findInstagramOrFail).toHaveBeenCalledWith(
-      {
-        workspaceId: "workspace-1",
-        id: "ig-comment-1",
-      },
-    )
+    expect(commentAutomationService.findInstagramOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "ig-comment-1",
+    })
   })
 })
 
@@ -156,13 +154,13 @@ describe("POST /v1/ig-comments", () => {
   test("creates an IG comment automation in the token workspace", async () => {
     const input = { name: "Welcome", type: "instagram" }
     const created = { id: "ig-comment-1", ...input }
-    fbCommentAutomationService.createInstagram.mockResolvedValueOnce(created)
+    commentAutomationService.createInstagram.mockResolvedValueOnce(created)
 
     await expect(procedure.handler?.({ context, input })).resolves.toEqual(
       created,
     )
 
-    expect(fbCommentAutomationService.createInstagram).toHaveBeenCalledWith({
+    expect(commentAutomationService.createInstagram).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       type: "instagram",
       data: { name: "Welcome" },
@@ -176,13 +174,13 @@ describe("PUT /v1/ig-comments/{id}", () => {
   test("updates an IG comment automation in the token workspace", async () => {
     const input = { id: "ig-comment-1", name: "Updated welcome" }
     const updated = { ...input }
-    fbCommentAutomationService.updateInstagram.mockResolvedValueOnce(updated)
+    commentAutomationService.updateInstagram.mockResolvedValueOnce(updated)
 
     await expect(procedure.handler?.({ context, input })).resolves.toEqual(
       updated,
     )
 
-    expect(fbCommentAutomationService.updateInstagram).toHaveBeenCalledWith(
+    expect(commentAutomationService.updateInstagram).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", id: "ig-comment-1" },
       { name: "Updated welcome" },
     )
@@ -194,13 +192,13 @@ describe("PUT /v1/ig-comments/{id}", () => {
       name: "Updated welcome",
       type: "instagramFacebook",
     }
-    fbCommentAutomationService.updateInstagram.mockResolvedValueOnce({
+    commentAutomationService.updateInstagram.mockResolvedValueOnce({
       ...input,
     })
 
     await procedure.handler?.({ context, input })
 
-    expect(fbCommentAutomationService.updateInstagram).toHaveBeenCalledWith(
+    expect(commentAutomationService.updateInstagram).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", id: "ig-comment-1" },
       { name: "Updated welcome" },
     )
@@ -211,20 +209,20 @@ describe("DELETE /v1/ig-comments/{id}", () => {
   const procedure = findProcedure("DELETE", "/v1/ig-comments/{id}")
 
   test("deletes an IG comment automation in the token workspace", async () => {
-    fbCommentAutomationService.deleteInstagram.mockResolvedValueOnce(undefined)
+    commentAutomationService.deleteInstagram.mockResolvedValueOnce(undefined)
 
     await expect(
       procedure.handler?.({ context, input: { id: "ig-comment-1" } }),
     ).resolves.toBeUndefined()
 
-    expect(fbCommentAutomationService.deleteInstagram).toHaveBeenCalledWith({
+    expect(commentAutomationService.deleteInstagram).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "ig-comment-1",
     })
   })
 
   test("preserves the declared not-found error from the delete action", async () => {
-    fbCommentAutomationService.deleteInstagram.mockRejectedValueOnce(
+    commentAutomationService.deleteInstagram.mockRejectedValueOnce(
       new Error("Instagram Comment Automation not found"),
     )
 
@@ -232,7 +230,7 @@ describe("DELETE /v1/ig-comments/{id}", () => {
       procedure.handler?.({ context, input: { id: "missing" } }),
     ).rejects.toThrow("Instagram Comment Automation not found")
 
-    expect(fbCommentAutomationService.deleteInstagram).toHaveBeenCalledWith({
+    expect(commentAutomationService.deleteInstagram).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "missing",
     })

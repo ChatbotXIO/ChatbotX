@@ -47,7 +47,7 @@ function resolveDenominator(
 
 /**
  * The six stat columns, shared by the Facebook and Instagram list tables — they
- * render the same `FBCommentAutomation` rows and differ only in the URL prefix,
+ * render the same `CommentAutomation` rows and differ only in the URL prefix,
  * so duplicating these definitions would only be two places to drift.
  *
  * Unlike broadcast's equivalent this needs no stats store: the counters are

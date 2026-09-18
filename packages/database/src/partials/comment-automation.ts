@@ -1,13 +1,13 @@
 import { z } from "zod"
 
-export const fbCommentAutomationTypes = z.enum([
+export const commentAutomationTypes = z.enum([
   "messenger",
   "instagram",
   "instagramFacebook",
   "threads",
   "tiktok",
 ])
-export type FBCommentAutomationType = z.infer<typeof fbCommentAutomationTypes>
+export type CommentAutomationType = z.infer<typeof commentAutomationTypes>
 
 export const igCommentAutomationTypes = z.enum([
   "instagram",
@@ -15,20 +15,20 @@ export const igCommentAutomationTypes = z.enum([
 ])
 export type IgCommentAutomationType = z.infer<typeof igCommentAutomationTypes>
 
-export const fbCommentPostSchema = z.object({
+export const commentPostSchema = z.object({
   type: z.enum(["published", "ads", "reels", "postIds", "all"]),
   value: z.array(z.string()),
 })
-export type FBCommentPost = z.infer<typeof fbCommentPostSchema>
+export type CommentPost = z.infer<typeof commentPostSchema>
 
-export const fbCommentReplyTypes = z.enum(["AIAgent", "text", "flow", "none"])
-export type FBCommentReplyType = z.infer<typeof fbCommentReplyTypes>
+export const commentReplyTypes = z.enum(["AIAgent", "text", "flow", "none"])
+export type CommentReplyType = z.infer<typeof commentReplyTypes>
 
 /** Upper bound on a `text` reply's message list, mirrored by the builder form. */
-export const FB_COMMENT_REPLY_MAX_TEXTS = 10
+export const COMMENT_REPLY_MAX_TEXTS = 10
 
-export const fbCommentReplySchema = z.object({
-  type: fbCommentReplyTypes,
+export const commentReplySchema = z.object({
+  type: commentReplyTypes,
   value: z.string().nullable(),
   /**
    * A `text` reply's messages, one public comment reply each. Optional because
@@ -45,10 +45,10 @@ export const fbCommentReplySchema = z.object({
    */
   values: z
     .array(z.object({ value: z.string() }))
-    .max(FB_COMMENT_REPLY_MAX_TEXTS)
+    .max(COMMENT_REPLY_MAX_TEXTS)
     .optional(),
 })
-export type FBCommentReply = z.infer<typeof fbCommentReplySchema>
+export type CommentReply = z.infer<typeof commentReplySchema>
 
 /**
  * The messages a reply will actually send, newest shape first and falling back
@@ -56,7 +56,7 @@ export type FBCommentReply = z.infer<typeof fbCommentReplySchema>
  * `willSendReply` and `executePublicReply` must both read through it or they
  * disagree about whether an automation replies at all.
  */
-export const resolveReplyTexts = (reply: FBCommentReply): string[] =>
+export const resolveReplyTexts = (reply: CommentReply): string[] =>
   (reply.values?.map((item) => item.value) ?? [reply.value ?? ""])
     .map((text) => text.trim())
     .filter(Boolean)
@@ -70,7 +70,7 @@ export const resolveReplyTexts = (reply: FBCommentReply): string[] =>
  * also means anything still reading `value` (template adapter, public API)
  * keeps seeing real content.
  */
-export const normalizeReplyTexts = (reply: FBCommentReply): FBCommentReply => {
+export const normalizeReplyTexts = (reply: CommentReply): CommentReply => {
   if (reply.type !== "text") {
     return reply
   }
@@ -80,15 +80,15 @@ export const normalizeReplyTexts = (reply: FBCommentReply): FBCommentReply => {
   return { ...reply, values: [{ value: reply.value ?? "" }] }
 }
 
-export const fbCommentIncludeKeywordsSchema = z.object({
+export const commentIncludeKeywordsSchema = z.object({
   type: z.enum(["all", "equal", "contain"]),
   value: z.array(z.string()),
 })
-export type FBCommentIncludeKeywords = z.infer<
-  typeof fbCommentIncludeKeywordsSchema
+export type CommentIncludeKeywords = z.infer<
+  typeof commentIncludeKeywordsSchema
 >
 
-export const fbCommentOptionsSchema = z.object({
+export const commentOptionsSchema = z.object({
   replyToNewContactsOnly: z.boolean(),
   replyOncePerUserPerPost: z.boolean(),
   likeUserComment: z.boolean(),
@@ -96,9 +96,9 @@ export const fbCommentOptionsSchema = z.object({
   ignoreCommentReplies: z.boolean(),
   trackUserTags: z.boolean(),
 })
-export type FBCommentOptions = z.infer<typeof fbCommentOptionsSchema>
+export type CommentOptions = z.infer<typeof commentOptionsSchema>
 
-export const fbCommentHideCommentsSchema = z.object({
+export const commentHideCommentsSchema = z.object({
   all: z.boolean(),
   hasPhoneNumber: z.boolean(),
   hasImage: z.boolean(),
@@ -122,9 +122,9 @@ export const fbCommentHideCommentsSchema = z.object({
     "10d",
   ]),
 })
-export type FBCommentHideComments = z.infer<typeof fbCommentHideCommentsSchema>
+export type CommentHideComments = z.infer<typeof commentHideCommentsSchema>
 
-export const fbCommentReplyAfterSchema = z.object({
+export const commentReplyAfterSchema = z.object({
   type: z.enum([
     "immediately",
     "seconds",
@@ -139,4 +139,4 @@ export const fbCommentReplyAfterSchema = z.object({
   ]),
   value: z.coerce.number(),
 })
-export type FBCommentReplyAfter = z.infer<typeof fbCommentReplyAfterSchema>
+export type CommentReplyAfter = z.infer<typeof commentReplyAfterSchema>

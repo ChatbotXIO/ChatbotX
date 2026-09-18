@@ -1,6 +1,6 @@
 "use server"
 
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
@@ -15,7 +15,7 @@ export const deleteTiktokCommentAction = workspaceActionClientAllowExpired
     }: {
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      await fbCommentAutomationService.deleteTiktokAutomation({
+      await commentAutomationService.deleteTiktokAutomation({
         workspaceId,
         id,
       })

@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {
-      fbCommentAutomationModel: {
+      commentAutomationModel: {
         findFirst: mocks.findFirst,
         findMany: mocks.findMany,
       },
@@ -44,7 +44,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
-  fbCommentAutomationTypes: {
+  commentAutomationTypes: {
     enum: {
       threads: "threads",
     },
@@ -53,16 +53,16 @@ vi.mock("@chatbotx.io/database/partials", () => ({
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactInboxModel: { contactId: "ContactInbox.contactId" },
-  fbCommentAutomationModel: {
-    id: "FBCommentAutomation.id",
-    workspaceId: "FBCommentAutomation.workspaceId",
-    type: "FBCommentAutomation.type",
-    createdAt: "FBCommentAutomation.createdAt",
+  commentAutomationModel: {
+    id: "CommentAutomation.id",
+    workspaceId: "CommentAutomation.workspaceId",
+    type: "CommentAutomation.type",
+    createdAt: "CommentAutomation.createdAt",
   },
-  fbCommentAutomationReplyModel: {
-    automationId: "FBCommentAutomationReply.automationId",
-    contactId: "FBCommentAutomationReply.contactId",
-    postId: "FBCommentAutomationReply.postId",
+  commentAutomationReplyModel: {
+    automationId: "CommentAutomationReply.automationId",
+    contactId: "CommentAutomationReply.contactId",
+    postId: "CommentAutomationReply.postId",
   },
 }))
 
@@ -70,11 +70,11 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: () => "generated-id",
 }))
 
-const { fbCommentAutomationService } = await import(
-  "../src/fb-comment-automation/service"
+const { commentAutomationService } = await import(
+  "../src/comment-automation/service"
 )
 
-describe("fbCommentAutomationService threads CRUD", () => {
+describe("commentAutomationService threads CRUD", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.findMany.mockResolvedValue([])
@@ -90,7 +90,7 @@ describe("fbCommentAutomationService threads CRUD", () => {
   })
 
   test("create hardcodes threads-only defaults", async () => {
-    await fbCommentAutomationService.createThreadsAutomation({
+    await commentAutomationService.createThreadsAutomation({
       workspaceId: "workspace-1",
       data: {
         name: "Threads auto reply",
@@ -138,7 +138,7 @@ describe("fbCommentAutomationService threads CRUD", () => {
   })
 
   test("update only allows supported mutable fields", async () => {
-    await fbCommentAutomationService.updateThreadsAutomation({
+    await commentAutomationService.updateThreadsAutomation({
       workspaceId: "workspace-1",
       id: "thread-1",
       data: {
@@ -173,14 +173,14 @@ describe("fbCommentAutomationService threads CRUD", () => {
   })
 
   test("list and get stay scoped to workspace and threads type", async () => {
-    await fbCommentAutomationService.listThreadsAutomations({
+    await commentAutomationService.listThreadsAutomations({
       workspaceId: "workspace-1",
       isActive: true,
       limit: 10,
       offset: 0,
       orderBy: { createdAt: "asc" },
     })
-    await fbCommentAutomationService.getThreadsAutomation({
+    await commentAutomationService.getThreadsAutomation({
       workspaceId: "workspace-1",
       id: "thread-1",
     })
@@ -206,7 +206,7 @@ describe("fbCommentAutomationService threads CRUD", () => {
   })
 
   test("delete stays scoped to workspace and threads type", async () => {
-    await fbCommentAutomationService.deleteThreadsAutomation({
+    await commentAutomationService.deleteThreadsAutomation({
       workspaceId: "workspace-1",
       id: "thread-1",
     })
