@@ -136,19 +136,28 @@ export const ACTIVE_CALL_ROW_TOUCH_INTERVAL_MS = 2 * 60 * 1000
 export const VOIP_ANSWER_DEADLINE_SAFETY_MARGIN_MS = 3000
 
 /**
- * Margin that makes `startOutboundDial`'s control key outlive its own expiry
- * job. Without it the TTL would be exactly `remainingTtlMs(deadlineAt)` — the
- * SAME value `enqueueOutboundDialExpiry` uses as the job's delay — so by the
- * time `expireOutboundDial` ran (at/after `deadlineAt`), the control key would
- * already be gone. `endCall` would read `null`, return `null`, and the worker
- * would do NOTHING: no Graph terminate, no finalize — a silent no-answer no-op
- * leaving the real Meta leg ringing and the DB row stuck `ringing` forever.
- * With the margin, `endCall` can still observe (and terminate) the control
- * when the job runs right at the deadline. Deliberately NOT
- * applied to any INBOUND control TTL (`reserveIncomingCall`) — those are
- * unaffected by this bug and out of scope here.
+ * Margin that makes a call's control key outlive its own durable expiry job —
+ * `expireIfUnanswered` for inbound (`captureConnectOffer` /
+ * `reserveIncomingCall`), `expireOutboundDial` for outbound
+ * (`startOutboundDial`). Both jobs are scheduled with `delay:
+ * Math.max(deadlineAt - Date.now(), 0)` — the SAME formula
+ * {@link remainingTtlMs} uses for the control's own TTL. Without this margin
+ * the control TTL and the job's firing time race to the SAME instant
+ * (`deadlineAt`), and BullMQ's delayed-job promotion has non-zero latency, so
+ * the control key usually expires in Redis microseconds before the job is
+ * promoted and runs. `handleExpire`/`handleExpireOutboundDial` would then read
+ * `null` from `readControl`/`endCall` and silently no-op — no Graph
+ * reject/terminate, no finalize — leaving the real Meta leg ringing and the
+ * DB row stuck `ringing` until the 5-minute `sweepStaleWhatsappCalls` cron
+ * backstop. Adding this margin to every CAS that renews a still-ringing
+ * control's TTL (`reserveIncomingCall`, `claimForAnswer`, `releaseClaim`,
+ * `startOutboundDial`) keeps the control's absolute Redis expiry anchored at
+ * `deadlineAt + VOIP_CONTROL_EXPIRY_MARGIN_MS` for as long as the call stays
+ * unaccepted, so the expiry job — which still fires at `deadlineAt`, keeping
+ * Meta's own deadline enforcement unchanged — always finds a live control to
+ * act on.
  */
-export const OUTBOUND_CONTROL_TTL_MARGIN_MS = 20_000
+export const VOIP_CONTROL_EXPIRY_MARGIN_MS = 20_000
 
 /**
  * Table-driven allowed transitions — the only place phase adjacency is

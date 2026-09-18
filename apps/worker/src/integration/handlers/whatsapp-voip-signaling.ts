@@ -435,6 +435,44 @@ const refuseIncomingCall = async (input: {
   await endReservedCall({ wacid: input.wacid, auth: input.auth })
 }
 
+/**
+ * Bug 2 safety net: a `handleConnect` job that exhausted every
+ * `WHATSAPP_VOIP_SIGNAL_RETRY_OPTIONS` attempt — most commonly
+ * `VoipCallRowNotReadyError` forever, because the sibling `whatsappCallEvent`
+ * job on the shared `integration` queue never created the row — used to just
+ * vanish: `whatsappVoipSignalingJobOptions`' `removeOnFail: true` deletes the
+ * job from Redis the instant the LAST attempt fails, and nothing else was
+ * watching it. The call's control record IS already live at that point
+ * (`reserveIncomingCall` runs BEFORE the retryable row read in
+ * `handleConnect`), so this mirrors `refuseIncomingCall`'s claim-then-reject/
+ * endCall arbitration to finalize the call deterministically instead of
+ * leaving the DB row `ringing` for the 5-minute `sweepStaleWhatsappCalls`
+ * cron to eventually clean up.
+ *
+ * Called from the queue-level `failed` listener in
+ * `apps/worker/src/integration/worker.ts` (`hasExhaustedAttempts(job)`),
+ * never from inside the job processor itself — so unlike every other
+ * handler in this file, this one must NEVER throw: a failure here is only
+ * ever logged, never propagated, since nothing awaits or retries it.
+ */
+export const finalizeExhaustedHandleConnect = async (
+  data: HandleConnectData,
+): Promise<void> => {
+  try {
+    const { auth } = await resolveVoipIntegration(data.phoneNumberId)
+    await refuseIncomingCall({
+      wacid: data.wacid,
+      auth,
+      deadlineAt: data.deadlineAt,
+    })
+  } catch (err) {
+    logger.error(
+      { err, wacid: data.wacid },
+      "Whatsapp VoIP: unable to finalize a call whose handleConnect retries were exhausted; the 5-minute stale-call sweep remains the backstop",
+    )
+  }
+}
+
 const handleConnect = async (data: HandleConnectData): Promise<void> => {
   const { wacid, deadlineAt, phoneNumberId, receivedAt } = data
 
@@ -677,7 +715,7 @@ const handleOutboundAnswer = async (
 /**
  * Fallback for a control record that is already gone. `startOutboundDial`
  * gives the control a TTL margin
- * (see `OUTBOUND_CONTROL_TTL_MARGIN_MS` in the business package) so it
+ * (see `VOIP_CONTROL_EXPIRY_MARGIN_MS` in the business package) so it
  * normally outlives this very job — but a lost CAS race, a Redis flush, or
  * any other reason {@link endReservedCall} no-ops must never silently strand
  * a still-`ringing` outbound dial: the real Meta leg would then ring until

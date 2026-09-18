@@ -23,6 +23,7 @@ import {
   type IntegrationJobData,
   integrationQueue,
   queueNames,
+  WhatsappVoipSignalingJobAction,
   type WhatsappVoipSignalingJobData,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
@@ -74,7 +75,10 @@ import { handleWhatsappCallNativeRecordingFetch } from "./handlers/whatsapp-call
 import { handleWhatsappCallNativeTranscriptFetch } from "./handlers/whatsapp-call-native-transcript"
 import { handleWhatsappCallRecordingReady } from "./handlers/whatsapp-call-recording"
 import { handleWhatsappCallTranscribe } from "./handlers/whatsapp-call-transcribe"
-import { handleWhatsappVoipSignalingJob } from "./handlers/whatsapp-voip-signaling"
+import {
+  finalizeExhaustedHandleConnect,
+  handleWhatsappVoipSignalingJob,
+} from "./handlers/whatsapp-voip-signaling"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
 import { closeChatQueueEvents } from "./utils/message"
@@ -618,6 +622,21 @@ async function startIntegrationWorker() {
       { err, attempts },
       `Whatsapp VoIP signaling job ${job.id} has failed`,
     )
+    // Bug 2 safety net: a `handleConnect` job that exhausted every attempt
+    // (`removeOnFail: true` deletes it from Redis right after this) must not
+    // silently strand the call at `ringing` — finalize it here instead of
+    // leaving it entirely to the 5-minute stale-call sweep. This listener
+    // isn't awaited by BullMQ, so the call is fire-and-forget; `.catch` is
+    // belt-and-suspenders since `finalizeExhaustedHandleConnect` already
+    // logs its own failures internally and never rejects.
+    if (job.data.type === WhatsappVoipSignalingJobAction.handleConnect) {
+      finalizeExhaustedHandleConnect(job.data.data).catch((finalizeErr) => {
+        logger.error(
+          { err: finalizeErr, wacid: job.data.data.wacid },
+          "Whatsapp VoIP signaling: finalizeExhaustedHandleConnect rejected unexpectedly",
+        )
+      })
+    }
   })
 
   let isShuttingDown = false

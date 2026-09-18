@@ -91,9 +91,11 @@ vi.mock("../src/lib/logger", () => ({
   logger: mocks.logger,
 }))
 
-const { handleWhatsappVoipSignalingJob, inboundCallRefusal } = await import(
-  "../src/integration/handlers/whatsapp-voip-signaling"
-)
+const {
+  handleWhatsappVoipSignalingJob,
+  inboundCallRefusal,
+  finalizeExhaustedHandleConnect,
+} = await import("../src/integration/handlers/whatsapp-voip-signaling")
 
 const inbox = { id: "inbox-1", workspaceId: "ws-1", channel: "whatsapp" }
 const integrationRow = {
@@ -764,6 +766,96 @@ describe("handleWhatsappVoipSignalingJob: expireIfUnanswered", () => {
     expect(mocks.rejectCall).not.toHaveBeenCalled()
     expect(mocks.terminateCall).not.toHaveBeenCalled()
     expect(mocks.finalizeCallSideEffects).not.toHaveBeenCalled()
+  })
+})
+
+// Bug 2: a `handleConnect` job that exhausts every `WHATSAPP_VOIP_SIGNAL_
+// RETRY_OPTIONS` attempt (e.g. `VoipCallRowNotReadyError` because the
+// sibling `whatsappCallEvent` job never created the row) used to just vanish
+// — the queue's `removeOnFail: true` deletes it the instant the LAST attempt
+// fails, and nothing else was watching it. `finalizeExhaustedHandleConnect`
+// is the safety net the worker-level `failed` listener calls in that case.
+describe("finalizeExhaustedHandleConnect", () => {
+  test("no control record existed yet: claims unreachable and Meta-rejects, finalizing as rejected", async () => {
+    mocks.claimUnreachable.mockResolvedValue(true)
+
+    await finalizeExhaustedHandleConnect({
+      wacid: "wacid.ABC",
+      deadlineAt: 2000,
+      phoneNumberId: "phone-1",
+    })
+
+    expect(mocks.claimUnreachable).toHaveBeenCalledWith({
+      wacid: "wacid.ABC",
+      deadlineAt: 2000,
+    })
+    expect(mocks.rejectCall).toHaveBeenCalledWith({
+      auth: integrationRow.auth,
+      callId: "wacid.ABC",
+    })
+    expect(mocks.finalizeCallSideEffects).toHaveBeenCalledWith({
+      call: callRow,
+      entity: {
+        type: "whatsapp_call",
+        direction: "userInitiated",
+        status: "rejected",
+      },
+    })
+  })
+
+  test("a control already exists (reservation won a prior attempt before the row read kept failing): defers to endCall instead of double-claiming", async () => {
+    mocks.claimUnreachable.mockResolvedValue(false)
+    mocks.endCall.mockResolvedValue({
+      fromPhase: "reserved",
+      graphAction: "reject",
+      terminalStatus: "rejected",
+    })
+
+    await finalizeExhaustedHandleConnect({
+      wacid: "wacid.ABC",
+      deadlineAt: 2000,
+      phoneNumberId: "phone-1",
+    })
+
+    expect(mocks.endCall).toHaveBeenCalledWith({
+      wacid: "wacid.ABC",
+      allowFromAccepted: false,
+    })
+    expect(mocks.rejectCall).toHaveBeenCalledWith({
+      auth: integrationRow.auth,
+      callId: "wacid.ABC",
+    })
+  })
+
+  test("the call already progressed past reserved (claimed/answered/ended) by the time this ran: no Graph call, no finalize", async () => {
+    mocks.claimUnreachable.mockResolvedValue(false)
+    mocks.endCall.mockResolvedValue(null)
+
+    await finalizeExhaustedHandleConnect({
+      wacid: "wacid.ABC",
+      deadlineAt: 2000,
+      phoneNumberId: "phone-1",
+    })
+
+    expect(mocks.rejectCall).not.toHaveBeenCalled()
+    expect(mocks.terminateCall).not.toHaveBeenCalled()
+    expect(mocks.finalizeCallSideEffects).not.toHaveBeenCalled()
+  })
+
+  test("never throws — an integration lookup failure is logged, not propagated (this runs from a queue event listener, not a job processor)", async () => {
+    mocks.identifyInboxAndIntegrationAuthFromIdentifier.mockRejectedValue(
+      new Error("integration lookup failed"),
+    )
+
+    await expect(
+      finalizeExhaustedHandleConnect({
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.logger.error).toHaveBeenCalled()
   })
 })
 

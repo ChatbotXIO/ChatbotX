@@ -33,10 +33,10 @@ import {
   isTerminableVoipCallPhase,
   isTransitionAllowed,
   LIVE_CALL_PHASE_BY_STATUS,
-  OUTBOUND_CONTROL_TTL_MARGIN_MS,
   remainingTtlMs,
   STRANDED_CALL_RECOVERED_LAST_ERROR,
   TERMINATED_CONTROL_TTL_MS,
+  VOIP_CONTROL_EXPIRY_MARGIN_MS,
   VOIP_END_OUTCOME_BY_PHASE,
   type VoipCallControl,
   type VoipCallPhase,
@@ -331,6 +331,14 @@ class WhatsappVoipCallService {
    * the worker re-runs selection against the CURRENT live set
    * (`selectRingTargetsForCall`). One that already advanced past
    * `reserved` (claimed, answered, terminated) is `alreadyProgressed`.
+   *
+   * The control TTL includes {@link VOIP_CONTROL_EXPIRY_MARGIN_MS} so it
+   * outlives the durable `expireIfUnanswered` job, scheduled (at the webhook
+   * boundary, in `captureConnectOffer`) with a delay derived from the SAME
+   * `deadlineAt` — without the margin, the control would already be gone by
+   * the time that job runs (Bug 1: `handleExpire` reads `null` and silently
+   * no-ops, and the call is only ever recovered by the 5-minute stale-call
+   * sweep).
    */
   async reserveIncomingCall(
     input: ReserveIncomingCallInput,
@@ -352,7 +360,7 @@ class WhatsappVoipCallService {
     const created = await casStore.setIfAbsent(
       key,
       control,
-      remainingTtlMs(input.deadlineAt),
+      remainingTtlMs(input.deadlineAt) + VOIP_CONTROL_EXPIRY_MARGIN_MS,
     )
     if (created) {
       return { status: "reserved" }
@@ -457,11 +465,16 @@ class WhatsappVoipCallService {
       phase: "answering",
       reservedUserId: input.userId,
     }
+    // Preserves the same {@link VOIP_CONTROL_EXPIRY_MARGIN_MS} margin
+    // `reserveIncomingCall` set: `remainingTtlMs` recomputes from "now", so an
+    // unmargined renewal here would collapse the control's absolute Redis
+    // expiry back to bare `deadlineAt` and reopen Bug 1 for any call that gets
+    // claimed before the `expireIfUnanswered` job runs.
     const applied = await casStore.compareAndSwap<VoipCallControl>(
       key,
       current,
       next,
-      remainingTtlMs(current.deadlineAt),
+      remainingTtlMs(current.deadlineAt) + VOIP_CONTROL_EXPIRY_MARGIN_MS,
     )
     return applied ? current.fenceToken : null
   }
@@ -689,11 +702,13 @@ class WhatsappVoipCallService {
       phase: "reserved",
       reservedUserId: "",
     }
+    // Same margin preservation as `claimForAnswer` above — a rollback must
+    // never shrink the control's expiry back to bare `deadlineAt`.
     return await casStore.compareAndSwap<VoipCallControl>(
       key,
       current,
       next,
-      remainingTtlMs(current.deadlineAt),
+      remainingTtlMs(current.deadlineAt) + VOIP_CONTROL_EXPIRY_MARGIN_MS,
     )
   }
 
@@ -707,7 +722,7 @@ class WhatsappVoipCallService {
    * create-only — a retry of the same dial (same wacid) is a no-op that
    * reports `null` rather than resetting an in-flight control.
    *
-   * The control TTL includes {@link OUTBOUND_CONTROL_TTL_MARGIN_MS} so
+   * The control TTL includes {@link VOIP_CONTROL_EXPIRY_MARGIN_MS} so
    * it outlives its own `expireOutboundDial` job, which is scheduled with a
    * delay derived from the SAME `deadlineAt` — without the margin, the
    * control would already be gone by the time that job runs.
@@ -736,7 +751,7 @@ class WhatsappVoipCallService {
     const ttl =
       phase === "accepted"
         ? ACTIVE_CALL_CONTROL_TTL_MS
-        : remainingTtlMs(input.deadlineAt) + OUTBOUND_CONTROL_TTL_MARGIN_MS
+        : remainingTtlMs(input.deadlineAt) + VOIP_CONTROL_EXPIRY_MARGIN_MS
     const created = await casStore.setIfAbsent(
       controlKey(input.wacid),
       control,

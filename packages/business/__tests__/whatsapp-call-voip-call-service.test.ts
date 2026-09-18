@@ -133,9 +133,11 @@ vi.stubGlobal("crypto", {
   randomUUID: mocks.randomUUID,
 })
 
-const { ACTIVE_CALL_LIVENESS_STALE_MS, isAnswerDeadlineExpired } = await import(
-  "../src/whatsapp-call/voip-call-control"
-)
+const {
+  ACTIVE_CALL_LIVENESS_STALE_MS,
+  isAnswerDeadlineExpired,
+  VOIP_CONTROL_EXPIRY_MARGIN_MS,
+} = await import("../src/whatsapp-call/voip-call-control")
 const { whatsappVoipCallService, MAX_VOIP_RING_TARGETS } = await import(
   "../src/whatsapp-call/voip-call-service"
 )
@@ -277,6 +279,13 @@ describe("whatsappVoipCallService.reserveIncomingCall", () => {
     })
 
     expect(result).toEqual({ status: "reserved" })
+    // Bug 1 regression: remainingTtlMs(DEADLINE) alone is 30_000 — EXACTLY
+    // the same delay `captureConnectOffer` gives the durable
+    // `expireIfUnanswered` job for this deadline. Without the margin the
+    // control record and the job's firing time race to the same instant, and
+    // BullMQ's delayed-job promotion latency means the control usually wins,
+    // leaving `handleExpire` reading `null` and silently no-op-ing. The
+    // margin makes the control key outlive the job by a guaranteed window.
     expect(mocks.setIfAbsent).toHaveBeenCalledWith(
       "voip:ctrl:wa1",
       {
@@ -285,7 +294,27 @@ describe("whatsappVoipCallService.reserveIncomingCall", () => {
         deadlineAt: DEADLINE,
         fenceToken: "fence-1",
       },
-      30_000,
+      30_000 + VOIP_CONTROL_EXPIRY_MARGIN_MS,
+    )
+  })
+
+  test("Bug 1 regression: the control TTL outlives the expireIfUnanswered job's delay by at least the safety margin", async () => {
+    mocks.getJson.mockResolvedValueOnce(null)
+    mocks.randomUUID.mockReturnValue("fence-1")
+    mocks.setIfAbsent.mockResolvedValue(true)
+
+    // Mirrors captureConnectOffer's `delay: Math.max(deadlineAt - Date.now(), 0)`
+    // for the SAME deadlineAt/NOW this suite fixes Date.now() to.
+    const expireJobDelayMs = Math.max(DEADLINE - NOW, 0)
+
+    await whatsappVoipCallService.reserveIncomingCall({
+      wacid: "wa1",
+      deadlineAt: DEADLINE,
+    })
+
+    const controlTtlMs = mocks.setIfAbsent.mock.calls[0][2] as number
+    expect(controlTtlMs - expireJobDelayMs).toBeGreaterThanOrEqual(
+      VOIP_CONTROL_EXPIRY_MARGIN_MS,
     )
   })
 
@@ -763,7 +792,7 @@ describe("whatsappVoipCallService.claimForAnswer", () => {
       "voip:ctrl:wa1",
       unclaimed,
       { ...unclaimed, phase: "answering", reservedUserId: "agent-2" },
-      30_000,
+      30_000 + VOIP_CONTROL_EXPIRY_MARGIN_MS,
     )
   })
 
@@ -1238,7 +1267,7 @@ describe("whatsappVoipCallService.releaseClaim", () => {
       "voip:ctrl:wa1",
       answering,
       { ...answering, phase: "reserved", reservedUserId: "" },
-      30_000,
+      30_000 + VOIP_CONTROL_EXPIRY_MARGIN_MS,
     )
   })
 
