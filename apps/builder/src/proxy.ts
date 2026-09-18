@@ -1,6 +1,7 @@
 import {
   getPublicHostFromRequest,
   getPublicOriginFromRequest,
+  getPublicPortFromRequest,
   getPublicProtocolFromRequest,
 } from "@chatbotx.io/utils"
 import { getSessionCookie } from "better-auth/cookies"
@@ -64,7 +65,7 @@ function attachProxyUrl(request: NextRequest): NextResponse {
   const originUrl = new URL(request.url)
   originUrl.host = getPublicHostFromRequest(request)
   originUrl.protocol = getPublicProtocolFromRequest(request)
-  originUrl.port = ""
+  originUrl.port = getPublicPortFromRequest(request)
 
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set("x-url", originUrl.toString())
