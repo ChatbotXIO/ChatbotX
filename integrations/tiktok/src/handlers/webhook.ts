@@ -1,4 +1,5 @@
 import type { HandleRequestProps } from "@chatbotx.io/sdk"
+import { toBullMqSafeIdSegment } from "@chatbotx.io/utils"
 import { TiktokWebhookException } from "../exception"
 import { logger } from "../lib/logger"
 import { hmacSha256Hex, timingSafeStringEqual } from "../lib/webhook"
@@ -100,6 +101,17 @@ export const webhookHandler = async (
     return "ok"
   }
 
+  const sourceMessageId = event.data.message_id ?? event.data.unique_identifier
+  const echoDelayOptions =
+    event.data.event === "im_send_msg" ? { delay: 2000 } : undefined
+  const queueOptions =
+    sourceMessageId === undefined
+      ? echoDelayOptions
+      : {
+          ...echoDelayOptions,
+          jobId: `incoming-tiktok-${toBullMqSafeIdSegment(integrationIdentifier)}-${event.data.event}-${toBullMqSafeIdSegment(sourceMessageId)}`,
+        }
+
   await queue?.add(
     "incomingMessage",
     {
@@ -110,9 +122,7 @@ export const webhookHandler = async (
         payload: event.data,
       },
     },
-    // Add delay for echo events to avoid race condition where echo arrives
-    // before the send message API response completes
-    event.data.event === "im_send_msg" ? { delay: 2000 } : undefined,
+    queueOptions,
   )
 
   return "ok"

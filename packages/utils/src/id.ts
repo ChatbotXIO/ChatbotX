@@ -37,3 +37,6 @@ export const getIdFromParams = <
 const NUMERIC_ID_REGEX = /^\d+$/
 export const isNumericId = (value: string): boolean =>
   NUMERIC_ID_REGEX.test(value)
+
+export const toBullMqSafeIdSegment = (value: string): string =>
+  value.replace(/[^a-zA-Z0-9._-]/g, "_")

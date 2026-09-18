@@ -1,4 +1,5 @@
 import type { ContextQueue, HandleRequestProps } from "@chatbotx.io/sdk"
+import { toBullMqSafeIdSegment } from "@chatbotx.io/utils"
 import z from "zod"
 import { InstagramWebhookException } from "../exception"
 import { logger } from "../lib/logger"
@@ -211,14 +212,25 @@ const handleWebhookEvent = async (
           ? messagingEvent.sender.id
           : messagingEvent.recipient.id
 
-        await queue?.add("incomingMessage", {
-          type: "incomingMessage",
-          data: {
-            integrationType: "instagram",
-            integrationIdentifier,
-            payload: singleEventPayload,
+        const sourceMessageId =
+          messagingEvent.message?.mid ?? messagingEvent.postback?.mid
+
+        await queue?.add(
+          "incomingMessage",
+          {
+            type: "incomingMessage",
+            data: {
+              integrationType: "instagram",
+              integrationIdentifier,
+              payload: singleEventPayload,
+            },
           },
-        })
+          sourceMessageId === undefined
+            ? undefined
+            : {
+                jobId: `incoming-instagram-${toBullMqSafeIdSegment(sourceMessageId)}`,
+              },
+        )
       }
     }
   } catch (error) {

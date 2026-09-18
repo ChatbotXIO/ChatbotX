@@ -23,6 +23,8 @@ export const tiktokWebhookEventSchema = z.object({
   create_time: z.number(),
   user_openid: z.string(),
   content: z.string(),
+  message_id: z.string().optional(),
+  unique_identifier: z.string().optional(),
 })
 export type TiktokWebhookEvent = z.infer<typeof tiktokWebhookEventSchema>
 

@@ -1,4 +1,5 @@
 import type { ContextQueue, HandleRequestProps } from "@chatbotx.io/sdk"
+import { toBullMqSafeIdSegment } from "@chatbotx.io/utils"
 import z from "zod"
 import { MessengerWebhookException } from "../exception"
 import { logger } from "../lib/logger"
@@ -263,16 +264,27 @@ const handleWebhookEvent = async (
           ? messagingEvent.sender.id
           : messagingEvent.recipient.id
 
+        const sourceMessageId =
+          messagingEvent.postback?.mid ?? messagingEvent.message?.mid
+
         if (messagingEvent.postback) {
-          await queue?.add("incomingMessage", {
-            type: "incomingMessage",
-            data: {
-              integrationType: "messenger",
-              integrationIdentifier,
-              payload: singleEventPayload,
-              action: messagingEvent.postback.payload,
+          await queue?.add(
+            "incomingMessage",
+            {
+              type: "incomingMessage",
+              data: {
+                integrationType: "messenger",
+                integrationIdentifier,
+                payload: singleEventPayload,
+                action: messagingEvent.postback.payload,
+              },
             },
-          })
+            sourceMessageId === undefined
+              ? undefined
+              : {
+                  jobId: `incoming-messenger-${toBullMqSafeIdSegment(sourceMessageId)}`,
+                },
+          )
           continue
         }
 
@@ -284,14 +296,22 @@ const handleWebhookEvent = async (
           continue
         }
 
-        await queue?.add("incomingMessage", {
-          type: "incomingMessage",
-          data: {
-            integrationType: "messenger",
-            integrationIdentifier,
-            payload: singleEventPayload,
+        await queue?.add(
+          "incomingMessage",
+          {
+            type: "incomingMessage",
+            data: {
+              integrationType: "messenger",
+              integrationIdentifier,
+              payload: singleEventPayload,
+            },
           },
-        })
+          sourceMessageId === undefined
+            ? undefined
+            : {
+                jobId: `incoming-messenger-${toBullMqSafeIdSegment(sourceMessageId)}`,
+              },
+        )
       }
     }
   } catch (error) {

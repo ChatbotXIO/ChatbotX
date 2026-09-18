@@ -9,6 +9,21 @@ export const env = createEnv({
   server: {
     NEXT_PUBLIC_EDITION: editionRule,
     QUOTA_SYNC_INTERVAL_SECONDS: z.coerce.number().int().min(10).default(60),
+    CHAT_WORKER_CONCURRENCY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(200)
+      .default(20),
+    // BullMQ's own rate limiter is queue-wide, not per-channel/page — a
+    // coarse throughput cap on the whole chat queue, not a substitute for a
+    // per-inbox token bucket in front of each provider API call.
+    CHAT_WORKER_RATE_LIMIT_MAX: z.coerce.number().int().min(1).default(80),
+    CHAT_WORKER_RATE_LIMIT_DURATION_MS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .default(1000),
     WEBHOOK_WORKER_CONCURRENCY: z.coerce
       .number()
       .int()
