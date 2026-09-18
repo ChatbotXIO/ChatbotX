@@ -410,6 +410,22 @@ Two Instagram-only caveats follow from that, and both are expected behaviour:
   each toggle separately: the like switch renders only for `instagramFacebook`, while
   `hasImage`/`hasVideo` are hidden for both Instagram variants. Keep that pattern —
   hide an unsupported toggle rather than rendering a dead one.
+- **A channel whose public reply is not idempotent must never retry the automation job.**
+  `SINGLE_ATTEMPT_COMMENT_AUTOMATION_CHANNELS` (`received-message.ts`) caps `threads` and
+  `tiktok` at `attempts: 1`: Threads' `sendCommentReply` opens a fresh media container per
+  call and TikTok's `business/comment/reply/create/` takes no client-side key, so a retry
+  after a partial failure posts a SECOND visible reply with no id to resume from. It is an
+  allowlist, so a new channel keeps the default retry policy — only add one there once you
+  have checked the channel deduplicates the reply itself.
+- **TikTok's `owner` flag is the only self-authorship check that channel has.**
+  `receiveComment`'s `fromId === integrationIdentifier` guard cannot fire on TikTok: the
+  webhook reports a `unique_identifier` while the integration is keyed by `open_id`. So
+  when `resolveTiktokCommenterIdentity` cannot answer — the enrichment call failed, or the
+  comment is absent from the response — the result means "authorship unknown", not
+  "ordinary commenter". The comment is still ingested (a missing display name must not cost
+  the inbox a comment) but the automation is withheld, because answering a comment that may
+  be the business's own would have the account replying to itself on a channel whose reply
+  no retry policy can retract.
 - **An AI reply records its analytics event in two places.** The dispatcher opens the row
   with `replyText: null` (the text does not exist yet); `processCommentAIReply` settles it
   with the generated text, or marks it `failed` with the bail-out reason. Every

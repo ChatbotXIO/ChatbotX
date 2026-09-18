@@ -967,6 +967,25 @@ async function downloadCommenterAvatar(props: {
   return originPath
 }
 
+/**
+ * Channels whose public comment reply is not idempotent, so the automation job
+ * must never be retried.
+ *
+ * Threads' `sendCommentReply` creates a fresh media container per call, and
+ * TikTok's `business/comment/reply/create/` takes no client-side key — on both,
+ * a retry after a partial failure posts a SECOND visible reply with no id to
+ * resume from. That is also why `waitForReplyContainerReady` must not treat an
+ * unrecognised container status as fatal: nothing retries behind it.
+ *
+ * An allowlist rather than a chain of `===`: a channel added without a decision
+ * here keeps the default retry policy, which is only safe for a reply the
+ * channel deduplicates itself.
+ */
+const SINGLE_ATTEMPT_COMMENT_AUTOMATION_CHANNELS = new Set<string>([
+  "threads",
+  "tiktok",
+])
+
 // Handles a Facebook fanpage comment (enqueued as `incomingComment` by the
 // messenger webhook). Each post maps to one conversation keyed by
 // `Conversation.sourceId = postId`; the comment author's PSID identifies the
@@ -1014,6 +1033,19 @@ export const receiveComment = async (
     )
     return
   }
+
+  // `owner` is the ONLY self-authorship signal TikTok has — the
+  // `fromId === integrationIdentifier` guard above can never fire on this
+  // channel, because the webhook reports a `unique_identifier` while the
+  // integration is keyed by `open_id`. So an unresolved identity means "might
+  // be our own comment", not "an ordinary commenter whose name we missed".
+  //
+  // The comment is still ingested (a missing display name beats a missing
+  // comment), but the automation is withheld further down. Failing open here
+  // would let the account reply to itself — and on TikTok that reply is not
+  // idempotent, so the loop it opens cannot be undone by a retry policy.
+  const tiktokAuthorshipUnknown =
+    integrationType === "tiktok" && !tiktokIdentity
 
   // `from.id` is the commenter's ID (PSID for Messenger, Instagram User ID for Instagram);
   // `fromName` is the fallback firstName.
@@ -1142,6 +1174,14 @@ export const receiveComment = async (
     )
   }
 
+  if (tiktokAuthorshipUnknown) {
+    logger.warn(
+      { commentId: commentData.commentId, integrationIdentifier },
+      "receiveComment: TikTok commenter identity unresolved, withholding automation",
+    )
+    return
+  }
+
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })
   if (!workspaceService.isActiveNow(workspace)) {
     return
@@ -1174,12 +1214,7 @@ export const receiveComment = async (
         createdTime: commentData.createdTime,
       },
     },
-    // Threads gets a single attempt on purpose: `sendCommentReply` creates a
-    // fresh media container per call, so a retry after a partial failure posts
-    // a SECOND visible reply — there is no container id to resume from. That
-    // is also why `waitForReplyContainerReady` must not treat an unrecognised
-    // container status as fatal: nothing retries behind it.
-    integrationType === "threads"
+    SINGLE_ATTEMPT_COMMENT_AUTOMATION_CHANNELS.has(integrationType)
       ? { jobId: processCommentAutomationJobId, attempts: 1 }
       : { jobId: processCommentAutomationJobId },
   )

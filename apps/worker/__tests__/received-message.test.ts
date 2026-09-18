@@ -393,6 +393,11 @@ vi.mock("../src/services/integrations", () => ({
     mockResolveIntegrationContextFromContactInbox,
 }))
 
+const mockResolveTiktokCommenterIdentity = vi.fn()
+vi.mock("../src/integration/handlers/tiktok-comment-identity", () => ({
+  resolveTiktokCommenterIdentity: mockResolveTiktokCommenterIdentity,
+}))
+
 // ---------------------------------------------------------------------------
 // Import after mocks
 // ---------------------------------------------------------------------------
@@ -2919,6 +2924,78 @@ describe("contact source taxonomy", () => {
       },
       { jobId: "comment-auto-comment-threads-1", attempts: 1 },
     )
+  })
+
+  // TikTok's public reply is not idempotent either: a retry posts a second
+  // visible reply under the same comment, with no id to resume from.
+  test("uses attempts=1 when enqueueing TikTok comment automation", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "tiktok" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockResolveTiktokCommenterIdentity.mockResolvedValue({
+      displayName: "Commenter",
+      username: "commenter",
+      isOwner: false,
+    })
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-1",
+        fromId: "+ABc1D2/E0fGhijkl",
+        fromName: "Commenter",
+        message: "hello from tiktok",
+        postId: "video-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "processCommentAutomation",
+      expect.anything(),
+      { jobId: "comment-auto-comment-tiktok-1", attempts: 1 },
+    )
+  })
+
+  // `owner` is the only self-authorship signal TikTok has — `fromId` and the
+  // integration identifier are different id spaces and can never match. An
+  // unresolved lookup therefore means "might be our own comment", and answering
+  // it would have the account replying to itself on a channel where the reply
+  // cannot be retracted by a retry policy.
+  test("ingests the comment but withholds automation when the TikTok identity is unresolved", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "tiktok" },
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockResolveTiktokCommenterIdentity.mockResolvedValue(undefined)
+
+    await receiveComment({
+      integrationType: "tiktok",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-tiktok-2",
+        fromId: "+ABc1D2/E0fGhijkl",
+        fromName: "Commenter",
+        message: "hello from tiktok",
+        postId: "video-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+      "processCommentAutomation",
+      expect.anything(),
+      expect.anything(),
+    )
+    // The comment itself still reaches the inbox — a missing display name must
+    // not cost the workspace a comment.
+    expect(mockCreateMessageRepository).toHaveBeenCalled()
   })
 
   test("downloads and re-hosts a Threads commenter's avatar from the webhook payload", async () => {

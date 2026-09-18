@@ -25,8 +25,12 @@ export type TiktokCommenterIdentity = {
  * they would never match and the account would end up replying to itself.
  *
  * Returns `undefined` when the lookup fails or the comment is not in the
- * response. A missing name is worth degrading over; it must not stop the
- * comment reaching the inbox, so every failure is a warning, never a throw.
+ * response. That return means "authorship unknown", NOT "an ordinary
+ * commenter": `receiveComment` still ingests the comment — a missing display
+ * name must not cost the inbox a comment — but withholds the automation, since
+ * answering a comment that might be the business's own would have the account
+ * replying to itself. Every failure is therefore a warning and never a throw;
+ * the caller decides what an unanswered lookup is worth, not this function.
  */
 export async function resolveTiktokCommenterIdentity(props: {
   auth: TiktokAuthValue
