@@ -1,8 +1,12 @@
 import type {
   ButtonStepProps,
+  MessengerTemplateComponent,
   SendMessengerTemplateMessageStepSchema,
 } from "@chatbotx.io/flow-config"
-import { decodeButtonPayload } from "@chatbotx.io/flow-config"
+import {
+  decodeButtonPayload,
+  extractMessengerTemplateParams,
+} from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { sendFlowStep } from "../src/handlers/message/outgoing-message"
 import {
@@ -136,6 +140,50 @@ describe("buildMessengerTemplateComponents", () => {
         "POSITIONAL",
       )
       expect(components).toEqual([])
+    })
+
+    // Regression for (#100 - 1893029) "Missing one or more header params": a
+    // "text and image" template (IMAGE header whose text is "{{1}}") must send
+    // the header text variable; only the image is fixed at creation.
+    test("image header with a text variable — sends a header text parameter", () => {
+      const templateComponents: MessengerTemplateComponent[] = [
+        {
+          type: "HEADER",
+          format: "IMAGE",
+          text: "{{1}}",
+          example: {
+            header_text: ["The goods is imported"],
+            header_handle: ["https://scontent.example.com/header.png"],
+          },
+        },
+        {
+          type: "BODY",
+          text: "{{1}}\n\n🔴{{2}}\n🔴{{3}}\n🔴{{4}}\n🔴{{5}}",
+        },
+      ]
+      const extracted = extractMessengerTemplateParams(
+        templateComponents,
+        "POSITIONAL",
+      )
+      const params = {
+        header: extracted.header?.map((param) => ({
+          ...param,
+          text: "Header value",
+        })),
+        body: extracted.body?.map((param, idx) => ({
+          ...param,
+          text: `Body ${idx + 1}`,
+        })),
+      }
+
+      const components = buildMessengerTemplateComponents(params, "POSITIONAL")
+
+      expect(components[0]).toEqual({
+        type: "header",
+        parameters: [{ type: "text", text: "Header value" }],
+      })
+      expect(components[1].type).toBe("body")
+      expect(components[1].parameters).toHaveLength(5)
     })
   })
 
