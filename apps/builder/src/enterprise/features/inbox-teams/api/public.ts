@@ -89,7 +89,7 @@ export const inboxTeamsPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/teams/{id}",
       summary: "Update team",
       description:

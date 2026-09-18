@@ -319,8 +319,8 @@ describe("GET /v1/analytics/mac/active-count", () => {
   })
 })
 
-describe("GET /v1/analytics/flows/{flowId}", () => {
-  const procedure = findProcedure("GET", "/v1/analytics/flows/{flowId}")
+describe("GET /v1/analytics/flows/{flowId}/stats", () => {
+  const procedure = findProcedure("GET", "/v1/analytics/flows/{flowId}/stats")
 
   test("sources workspaceId from context and caches by workspace+flow", async () => {
     flowAnalyticsService.getFlowStats.mockResolvedValueOnce({})
@@ -342,8 +342,11 @@ describe("GET /v1/analytics/flows/{flowId}", () => {
   })
 })
 
-describe("DELETE /v1/analytics/flows/{flowId}", () => {
-  const procedure = findProcedure("DELETE", "/v1/analytics/flows/{flowId}")
+describe("DELETE /v1/analytics/flows/{flowId}/stats", () => {
+  const procedure = findProcedure(
+    "DELETE",
+    "/v1/analytics/flows/{flowId}/stats",
+  )
 
   test("resets stats session scoped to context workspace and invalidates cache tags", async () => {
     flowAnalyticsService.resetStatsSession.mockResolvedValueOnce(undefined)
@@ -372,8 +375,8 @@ describe("GET /v1/analytics/magic-links/stats", () => {
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: {
-        startDate: "2026-01-01",
-        endDate: "2026-01-31",
+        from: "2026-01-01",
+        to: "2026-01-31",
         linkId: "link-1",
         timezone: "UTC",
       },
@@ -382,7 +385,11 @@ describe("GET /v1/analytics/magic-links/stats", () => {
     expect(
       magicLinkAnalyticsService.getMagicLinkStatsByDateRange,
     ).toHaveBeenCalledWith(
-      expect.objectContaining({ workspaceId: "workspace-1" }),
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      }),
     )
   })
 })
@@ -445,8 +452,8 @@ describe("GET /v1/analytics/ref-links/stats", () => {
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: {
-        startDate: "2026-01-01",
-        endDate: "2026-01-31",
+        from: "2026-01-01",
+        to: "2026-01-31",
         linkId: "link-1",
         timezone: "UTC",
       },
@@ -455,7 +462,11 @@ describe("GET /v1/analytics/ref-links/stats", () => {
     expect(
       refLinkAnalyticsService.getRefLinkStatsByDateRange,
     ).toHaveBeenCalledWith(
-      expect.objectContaining({ workspaceId: "workspace-1" }),
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+      }),
     )
   })
 })

@@ -182,8 +182,8 @@ describe("POST /v1/ig-stories", () => {
   })
 })
 
-describe("PUT /v1/ig-stories/{id}", () => {
-  const procedure = findProcedure("PUT", "/v1/ig-stories/{id}")
+describe("PATCH /v1/ig-stories/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/ig-stories/{id}")
 
   test("updates an Instagram Story Automation in the token workspace", async () => {
     const updated = { id: "story-1", name: "Renamed" }

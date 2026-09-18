@@ -480,8 +480,8 @@ function isVisibleForScope(
   }
 
   // `readOnlyHint` (method-inferred for GET, or explicit `x-mcp.readOnlyHint`
-  // for a POST that's a read in disguise, e.g. `contacts_search`) is the
-  // single source of truth here — no separate allowlist to keep in sync.
+  // for a POST that's actually a read in disguise) is the single source of
+  // truth here — no separate allowlist to keep in sync.
   if (
     introspection.permission === "read_only" &&
     !tool.annotations.readOnlyHint

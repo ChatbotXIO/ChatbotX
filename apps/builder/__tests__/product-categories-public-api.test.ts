@@ -130,8 +130,8 @@ describe("POST /v1/product-categories", () => {
   })
 })
 
-describe("PATCH /v1/product-categories/{id}", () => {
-  const procedure = findProcedure("PATCH", "/v1/product-categories/{id}")
+describe("PUT /v1/product-categories/{id}", () => {
+  const procedure = findProcedure("PUT", "/v1/product-categories/{id}")
 
   test("updates a category scoped to the token's workspace", async () => {
     productCategoryService.update.mockResolvedValueOnce({ id: "c-1" })

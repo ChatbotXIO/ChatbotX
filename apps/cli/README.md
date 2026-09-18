@@ -146,8 +146,7 @@ chatbotx custom-fields delete <id>
 chatbotx bot-fields list                             # Get all bot fields
 chatbotx bot-fields create --name <name> --type <type> --value <value> --description <description>
                                                      # [--folderId]
-chatbotx bot-fields update --fields <fields>         # Set multiple bot field values (by name)
-chatbotx bot-fields bulk-update --fields <fields>    # Bulk update values by id or name
+chatbotx bot-fields update --fields <fields>         # Set multiple bot field values, by id or name
                                                      # fields: JSON array of {id,value} or {name,value}
 chatbotx bot-fields get <idOrName>                   # Get bot field
 # `bot-fields update <idOrName> --value <value>` (single field, PUT /v1/bot-fields/{idOrName}) is NOT
@@ -171,13 +170,11 @@ The `<identifier>` parameter (`packages/business/src/contact/utils.ts` `parseCon
 # Basic CRUD
 chatbotx contacts list                               # [--page --perPage --sort --keyword --contactFilter]
 chatbotx contacts create --email <email>             # [--phoneNumber --contactId --firstName --lastName]
-chatbotx contacts search                             # Search with filter body [--page --perPage --sort --keyword --contactFilter]
 chatbotx contacts count                              # Count matching filter [--page --perPage --sort --keyword --contactFilter]
 chatbotx contacts get <identifier>
 chatbotx contacts update <identifier>
 chatbotx contacts delete <identifier>
 chatbotx contacts upsert add <identifier>            # Insert or update by identifier
-chatbotx contacts find-by-custom-field --customFieldId <customFieldId> --value <value>
 chatbotx contacts import --fileId <fileId> --channel <channel> --inboxId <inboxId>
                                                      # [--timezone --countryCode]
 chatbotx contacts block <identifier>
@@ -204,9 +201,14 @@ chatbotx contacts by-name add <identifier> --tags <tags>  # Add tags by name (cr
 
 # Custom fields
 chatbotx contacts custom-fields list <identifier>    # Get all custom fields from contact
-chatbotx contacts custom-fields update <identifier> --fields <fields>  # Set multiple values
-chatbotx contacts custom-field get <identifier> <customFieldId>
-chatbotx contacts custom-field add <identifier> <customFieldId> --value <value>
+chatbotx contacts custom-fields update <identifier> --operations <operations>
+                                                     # Batch set/append/prepend/increase/decrease
+                                                     # (applyCustomFieldOperations; wins a naming collision
+                                                     # with the single-field PUT below — see note)
+chatbotx contacts custom-field get <identifier> <idOrName>
+# `contacts custom-field update <identifier> <idOrName> --value <value>` (single field, PUT
+# .../custom-fields/{idOrName}) is NOT reachable — collides with `custom-fields update` above
+# under the same commandName; see Known command-name collisions.
 chatbotx contacts custom-field delete <identifier>   # Clear ALL custom fields (see collision note — the
                                                      # per-field-id delete variant is unreachable)
 
@@ -236,7 +238,7 @@ chatbotx contacts flow add <identifier> --flowId <flowId>  # [--inboxId]
 chatbotx contacts auto-replie add <identifier> --keyword <keyword>  # [--inboxId] (group name is singular — CLI-generated, not a typo)
 
 # Coupons
-chatbotx contacts coupons list <contactId>           # List coupons issued to contact
+chatbotx contacts coupons list <identifier>          # List coupons issued to contact
 ```
 
 ---
@@ -308,10 +310,10 @@ chatbotx saved-replies list
 
 ---
 
-### `template-messages`
+### `whatsapp`
 
 ```bash
-chatbotx template-messages list                      # [--inboxId --integrationWhatsappId --status]
+chatbotx whatsapp templates                          # [--inboxId --integrationWhatsappId --status]
 ```
 
 ---
@@ -374,8 +376,8 @@ chatbotx error-logs list                             # [--page --perPage --sort 
 chatbotx ads conversion-rules                        # List Ads conversion rules
 chatbotx ads conversion-rules --event <event> --conversionType <conversionType>
                                                      # Create Ads conversion rule (name collides with list above, see note)
-chatbotx ads find-by-conversion-rules <id>           # Get/update/delete conversion rule (GET shown; PUT/DELETE collide, see note)
-chatbotx ads conversion-rules-status <id> --enabled <enabled>  # Enable/disable conversion rule
+chatbotx ads find-by-conversion-rules <id>           # Get/update/delete conversion rule (GET shown; PATCH/DELETE collide, see note)
+                                                     # PATCH body also enables/disables via `enabled` (no separate status command)
 chatbotx ads funnel                                  # Get ad conversion funnel
 chatbotx ads funnel-timeseries                       # Get daily ad conversion funnel
 chatbotx ads capi-delivery                           # Get Conversions API delivery status
@@ -389,10 +391,10 @@ chatbotx ads retarget-audiences                      # Sync retarget audience
 
 # Messaging ad campaigns
 chatbotx ads campaigns                               # List (GET) / create (POST) messaging ad (names collide, see note)
-chatbotx ads campaigns-retry <operationId>           # Resume messaging ad creation
-chatbotx ads campaigns-publish <operationId>         # Publish messaging ad
-chatbotx ads campaigns-pause <operationId>           # Pause published messaging ad
-chatbotx ads find-by-campaigns <operationId>         # Delete messaging ad campaign/ad set/ad
+chatbotx ads campaigns-retry <id>                    # Resume messaging ad creation
+chatbotx ads campaigns-publish <id>                  # Publish messaging ad
+chatbotx ads campaigns-pause <id>                    # Pause published messaging ad
+chatbotx ads find-by-campaigns <id>                  # Delete messaging ad campaign/ad set/ad
 chatbotx ads campaigns-insights                      # Get messaging ad insights (POST, adIds up to 500)
 chatbotx ads campaigns-ad-accounts <channel> <integrationId>  # List integration ad accounts
 chatbotx ads find-by-campaigns-ad-accounts <adAccountId>      # Get ad account details
@@ -470,7 +472,7 @@ chatbotx analytics messages-by-sender                  # [--granularity]
 chatbotx analytics broadcasts-stats <broadcastId>       # Get broadcast stats
 chatbotx analytics sequences-steps-stats <sequenceId> <stepId>  # Get sequence step stats
 chatbotx analytics mac-active-count                    # No time range — current billing period
-chatbotx analytics find-by-flows <flowId>              # Get flow analytics (also DELETE resets stats, see note)
+chatbotx analytics flows-stats <flowId>                # Get flow analytics (also DELETE resets stats, see note)
 chatbotx analytics magic-links-stats --linkId <linkId>
 chatbotx analytics magic-links-contacts --linkId <linkId>
 chatbotx analytics ref-links-stats --linkId <linkId>
@@ -680,7 +682,7 @@ chatbotx inboxes list                                 # Connected inboxes; use `
 
 ```bash
 chatbotx media-library folders                        # List (GET) / create (POST) folders (names collide, see note)
-chatbotx media-library find-by-folders <folderId>      # Rename (PATCH) / delete+contents (DELETE), collide, see note
+chatbotx media-library find-by-folders <folderId>      # Rename (PUT) / delete+contents (DELETE), collide, see note
 chatbotx media-library files-upload-url --fileName <fileName> --mimeType <mimeType>  # Get presigned upload URL
 chatbotx media-library files                           # List (GET) / register uploaded file (POST), collide, see note
 chatbotx media-library find-by-files <fileId>          # Get (GET) / delete (DELETE) file, collide, see note
@@ -809,8 +811,8 @@ chatbotx spreadsheets get <id>
 chatbotx spreadsheets create --url <url>               # Connect a Google Sheets spreadsheet
 chatbotx spreadsheets update <id>
 chatbotx spreadsheets delete <id>
-chatbotx spreadsheets worksheets list <spreadsheetId>
-chatbotx spreadsheets headers list <spreadsheetId> <worksheetName>
+chatbotx spreadsheets worksheets list <id>
+chatbotx spreadsheets headers list <id> <worksheetName>
 ```
 
 ---
@@ -859,15 +861,15 @@ chatbotx zalo-channels tag-sync update <id> --enabled <enabled>
 
 Commands are named by `pathAndMethodToCommandName` (`apps/cli/src/openapi-loader.ts`) from `{path, method}` alone, ignoring the router's own action key. When two operations under the same resource reduce to the same name, `toolsToCommands` keeps the first and silently drops the second (a `Warning: duplicate command name "..." — skipping` line on stderr). As of this writing this hits:
 
-- `ads`: `POST /v1/ads/conversion-rules` (create) collides with `GET` (list) under `ads:conversion-rules`; `PUT`/`DELETE /v1/ads/conversion-rules/{id}` both collide under `ads:find-by-conversion-rules`; `GET`/`POST /v1/ads/campaigns` collide under `ads:campaigns`.
-- `analytics`: `DELETE /v1/analytics/flows/{flowId}` (reset stats) collides with `GET` (get stats) under `analytics:find-by-flows`.
-- `media-library`: `POST /v1/media-library/folders` (create) collides with `GET` (list) under `media-library:folders`; `PATCH` (rename) and `DELETE` on `/v1/media-library/folders/{folderId}` collide under `media-library:find-by-folders`; `POST`/`GET /v1/media-library/files` collide under `media-library:files`; `GET`/`DELETE /v1/media-library/files/{fileId}` collide under `media-library:find-by-files`.
+- `ads`: `POST /v1/ads/conversion-rules` (create) collides with `GET` (list) under `ads:conversion-rules`; `PATCH`/`DELETE /v1/ads/conversion-rules/{id}` both collide under `ads:find-by-conversion-rules`; `GET`/`POST /v1/ads/campaigns` collide under `ads:campaigns`.
+- `analytics`: `DELETE /v1/analytics/flows/{flowId}/stats` (reset stats) collides with `GET` (get stats) under `analytics:flows-stats`.
+- `media-library`: `POST /v1/media-library/folders` (create) collides with `GET` (list) under `media-library:folders`; `PUT` (rename) and `DELETE` on `/v1/media-library/folders/{folderId}` collide under `media-library:find-by-folders`; `POST`/`GET /v1/media-library/files` collide under `media-library:files`; `GET`/`DELETE /v1/media-library/files/{fileId}` collide under `media-library:find-by-files`.
 - `minigames`: `PUT` (full update) and `PATCH` (partial update) on `/v1/minigames/{id}` both resolve to `minigames:update` — only one is reachable.
 
 Every one of these was verified against source (not just the stderr warning) in a follow-up pass:
 
 - `bot-fields:update` — `PUT /v1/bot-fields/{idOrName}` (`set`, one field by id/name + `--value`) collides with `PUT /v1/bot-fields` (`setMany`, several fields by name via `--fields`). `set` is dropped; only `setMany`'s shape (`bot-fields update --fields <fields>`) is reachable — the single-field `bot-fields update <idOrName> --value <value>` form documented above does not actually work over the CLI.
-- `contacts:custom-fields:update` — `PUT /v1/contacts/{identifier}/custom-fields` (`setCustomFields`, replace listed fields) collides with `PATCH` on the same path (`applyCustomFieldOperations`, arithmetic/append ops) — `pathAndMethodToCommandName`'s three-segment branch uses `${group}:${subResource}:update` for both PUT and PATCH without distinguishing them. Only `setCustomFields` survives; `applyCustomFieldOperations` (`set`/`append`/`prepend`/`increase`/`decrease`) has no CLI command.
+- `contacts:custom-fields:update` — `PATCH /v1/contacts/{identifier}/custom-fields` (`applyCustomFieldOperations`, batch set/append/prepend/increase/decrease) collides with `PUT /v1/contacts/{identifier}/custom-fields/{idOrName}` (`setCustomField`, one field) — `pathAndMethodToCommandName`'s remainder-branch uses `${group}:${subResource}:update` for PUT and PATCH alike, without folding in whether the last path segment is itself a param (the way the sibling GET/DELETE branches do). `applyCustomFieldOperations` registers first and wins; `setCustomField` has no CLI command — use `contacts custom-fields update <identifier> --operations '[{"customFieldId":"...","operation":"set","value":"..."}]'` for a single field too.
 - `contacts:custom-field:delete` — `DELETE /v1/contacts/{identifier}/custom-fields/{idOrName}` (`clearCustomField`, one field) collides with `DELETE /v1/contacts/{identifier}/custom-fields` (`clearCustomFields`, every field) — the DELETE branch always singularizes `subResource` regardless of whether the last segment is a param, so both reduce to the same name. Confirmed live: `contacts custom-field delete <identifier>` clears **every** custom field (`clearCustomFields` won); the per-field `clearCustomField` (which would need a second `idOrName` positional) is unreachable via CLI — the "Delete by id or name" comment used in an earlier draft of this README was wrong.
 - `integrations:find-by-ai` (×2) — `GET`/`PUT`/`DELETE /v1/integrations/ai/{provider}` (`getAiProvider`/`connectAiProvider`/`disconnectAiProvider`) all reduce to `integrations:find-by-ai` (the two-segment branch ignores `method` when the last segment is a param following a literal). Only `GET` (`integrations find-by-ai --provider <provider>`) is reachable; connecting or disconnecting an AI provider integration has no CLI command.
 

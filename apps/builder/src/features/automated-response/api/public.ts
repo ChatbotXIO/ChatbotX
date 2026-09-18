@@ -125,7 +125,7 @@ export const keywordsPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/keywords/{id}",
       summary: "Update keyword automation",
       description:

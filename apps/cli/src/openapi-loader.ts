@@ -181,7 +181,7 @@ export function pathAndMethodToCommandName(
   const secondIsParam = segments[1].startsWith("{")
 
   if (!secondIsParam) {
-    // Filter/variant on collection: /v1/contacts/find-by-custom-field or /v1/tags/name/{name}
+    // Filter/variant on collection: /v1/integrations/status/token-errors or /v1/tags/name/{name}
     const nonParamTail = segments.slice(1).filter((s) => !s.startsWith("{"))
     const isLastParam = segments.at(-1)?.startsWith("{") ?? false
     const action = nonParamTail.join("-")

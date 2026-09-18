@@ -33,6 +33,7 @@ type JsonSchema = {
   description?: string
   oneOf?: JsonSchema[]
   properties?: Record<string, JsonSchema>
+  required?: string[]
   type?: string
 }
 
@@ -272,6 +273,10 @@ const hasDescribedComposedBranches = (schema: JsonSchema): boolean =>
     )
   })
 
+const PATH_PARAM_ID_SUFFIX_PATTERN = /^[a-z][A-Za-z0-9]*Id$/
+const PATH_PARAM_SHAPE_PATTERN = /^[a-z][A-Za-z0-9]*$/
+const TRAILING_PATH_PARAM_PATTERN = /\{[^}]+\}$/
+
 describe("public API spec — operation naming guard", () => {
   // Pins the MCP tool name / operationId surface. A diff here is a
   // deliberate, breaking rename of the public API surface — update the
@@ -436,13 +441,16 @@ describe("public API spec — operation naming guard", () => {
       "aiAgents.list",
       "contacts.list",
       "contacts.create",
-      "contacts.search",
       "contacts.get",
-      "contacts.findByCustomField",
       "contacts.upsert",
       "contacts.listMessages",
       "contacts.getMessage",
       "contacts.refreshProfile",
+      // Deprecated aliases sharing `contacts.list`'s response schema
+      // (`contactResponse`/`listContactsResponse`/`publicListContactsResponse`)
+      // — same pre-existing leak, not new.
+      "contacts.search",
+      "contacts.findByCustomField",
       "conversations.list",
       "coupons.listTopics",
       "coupons.createTopic",
@@ -557,6 +565,95 @@ describe("public API spec — operation naming guard", () => {
       .map(([operationId]) => operationId)
 
     expect(leaking).toEqual([])
+  })
+
+  // A path parameter name must say what it addresses. `id`/`idOrName` for
+  // the operation's own resource, `identifier` for the flexible
+  // id/email/phone contact address, a handful of domain nouns that are
+  // resources in their own right (`channel`, `provider`, `worksheetName`),
+  // or `<noun>Id` for a parent/related resource addressed by a different
+  // noun than the operation's own (e.g. `conversationId` on a message
+  // route). `operationId` is banned outright: it collides with the
+  // OpenAPI/MCP/CLI concept those same tools use to name the operation
+  // itself, which is exactly how `ads.retryCampaign` et al. used to read as
+  // "retry the operation-id" instead of "retry the messaging ad".
+  const ALLOWED_BARE_PATH_PARAM_NAMES = new Set([
+    "channel",
+    "id",
+    "identifier",
+    "idOrName",
+    "provider",
+    "worksheetName",
+  ])
+
+  test("every path parameter name says what it addresses", () => {
+    const invalidPathParams = operations.flatMap((operation) => {
+      const names = operation.parameters
+        .filter((parameter) => operation.path.includes(`{${parameter.name}}`))
+        .map((parameter) => parameter.name)
+
+      return names
+        .filter(
+          (name) =>
+            name === "operationId" ||
+            !PATH_PARAM_SHAPE_PATTERN.test(name) ||
+            !(
+              ALLOWED_BARE_PATH_PARAM_NAMES.has(name) ||
+              PATH_PARAM_ID_SUFFIX_PATTERN.test(name)
+            ),
+        )
+        .map((name) => `${operation.operationId}.${name}`)
+    })
+
+    expect(invalidPathParams).toEqual([])
+  })
+
+  // House rule (docs/developer/workspace-api-tokens.md, "PUT vs. PATCH on a
+  // resource's own id"): PUT replaces a resource wholesale (body has
+  // required fields — omitting one would leave the resource in an undefined
+  // state), PATCH merges a partial change (every body field optional).
+  // Scoped to routes whose last path segment is the resource's own id/name
+  // placeholder — a sub-resource setter like `/{id}/enabled` or a
+  // collection route like `/v1/bot-fields` doesn't address "the whole
+  // resource" the same way, so the rule doesn't apply there; both are
+  // already excluded by the trailing-path-param check.
+  //
+  // Blind spot this mechanical check cannot see (see the doc section above
+  // for the full explanation): a zod `.default(...)` field drops out of
+  // `required` exactly like a genuinely optional one, so a PUT can pass this
+  // guard while still silently wiping every defaulted field a caller omits.
+  // Checking that requires reading the handler, not the generated schema.
+
+  // Deprecated back-compat aliases for a route that flipped PUT→PATCH
+  // during the public-API consolidation: the alias keeps the OLD method
+  // (PUT) on the SAME merge-style handler as its PATCH canonical sibling —
+  // it never had "replace everything" semantics even when it was the only
+  // spelling, so it fails this house rule by construction, not by mistake.
+  const DEPRECATED_METHOD_FLIP_ALIASES = new Set<string>([
+    "ads.updateRuleLegacy",
+    "contacts.updateLegacy",
+  ])
+
+  test("every PUT/PATCH addressing a resource by its trailing path id matches its body's required-ness", () => {
+    const resourceAddressedMutations = operations.filter(
+      (op) =>
+        (op.method === "PUT" || op.method === "PATCH") &&
+        TRAILING_PATH_PARAM_PATTERN.test(op.path) &&
+        !DEPRECATED_METHOD_FLIP_ALIASES.has(op.operationId),
+    )
+
+    expect(resourceAddressedMutations.length).toBeGreaterThan(0)
+
+    const mismatched = resourceAddressedMutations
+      .filter((op) => {
+        const hasRequiredBodyField = (op.bodySchema?.required?.length ?? 0) > 0
+        return op.method === "PATCH"
+          ? hasRequiredBodyField
+          : !hasRequiredBodyField
+      })
+      .map((op) => op.operationId)
+
+    expect(mismatched).toEqual([])
   })
 })
 
@@ -689,6 +786,45 @@ describe("public API spec — error response coverage", () => {
       .map((op) => op.operationId)
 
     expect(missing422).toEqual([])
+  })
+
+  // oRPC only maps non-path input into query parameters for GET
+  // (@orpc/openapi's `OpenAPIGenerator`); every other method — including
+  // DELETE — gets a `requestBody`. The MCP/CLI clients used to silently
+  // drop the body on DELETE (`NO_BODY_METHODS` in
+  // `execute-tool.ts`/`dynamic-executor.ts` included DELETE), which made
+  // any DELETE operation with declared body fields permanently
+  // uncallable — or, for a field with a default, silently unoverridable —
+  // through either client even though its schema advertised it. That is
+  // fixed now, but a DELETE route should still only carry a body when it
+  // genuinely needs one to address or disambiguate the resource — pin the
+  // exact set so a new one is a deliberate, reviewed addition, not a
+  // silent trap for callers of a client that regresses this fix.
+  //
+  // `contacts.removeTags` (`tagIds`), `contacts.unsubscribeSequences`
+  // (`sequenceIds`), and `inboxTeams.removeMembers` (`userIds`) each remove
+  // a caller-chosen subset of a collection. `keywords.delete` (`type`,
+  // defaulted to "inbound") and `messages.delete` (`createdAt`, required to
+  // locate a message in sharded storage — the comment in
+  // `messages/schema/public.ts` claiming DELETE maps this to a query
+  // parameter was wrong for this oRPC version) turned up only once this
+  // guard's filter ran against the real generated spec, which is exactly
+  // the "signal" this guard exists to catch: both were silently broken (or
+  // silently limited to the default) by the same dropped-DELETE-body bug
+  // this change fixes.
+  test("DELETE operations with a request body are exactly the reviewed set", () => {
+    const deletesWithBody = operations
+      .filter((op) => op.method === "DELETE" && op.bodySchema)
+      .map((op) => op.operationId)
+      .sort()
+
+    expect(deletesWithBody).toEqual([
+      "contacts.removeTags",
+      "contacts.unsubscribeSequences",
+      "inboxTeams.removeMembers",
+      "keywords.delete",
+      "messages.delete",
+    ])
   })
 })
 

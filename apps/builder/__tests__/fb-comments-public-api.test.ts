@@ -148,8 +148,8 @@ describe("POST /v1/fb-comments", () => {
   })
 })
 
-describe("PUT /v1/fb-comments/{id}", () => {
-  const procedure = findProcedure("PUT", "/v1/fb-comments/{id}")
+describe("PATCH /v1/fb-comments/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/fb-comments/{id}")
 
   test("updates an automation in the token workspace", async () => {
     const input = { id: "fb-comment-1", name: "Updated automation" }

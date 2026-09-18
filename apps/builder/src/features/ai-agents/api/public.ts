@@ -90,7 +90,7 @@ export const aiAgentsPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/ai-agents/{id}",
       summary: "Update AI agent",
       description:

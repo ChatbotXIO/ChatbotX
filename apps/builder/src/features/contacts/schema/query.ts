@@ -144,14 +144,11 @@ export const listContactsResponse = z.object({
 })
 export type ListContactsResponse = z.infer<typeof listContactsResponse>
 
+// Back-compat for the deprecated `contacts.findByCustomField` alias — use
+// `contacts.list` with a `contactFilter` instead.
 export const publicListContactsResponse = z.object({
   data: z.array(contactResponse),
 })
-
-export const findContactRequest = contactResource
-  .pick({ id: true, workspaceId: true })
-  .partial()
-export type FindContactRequest = z.infer<typeof findContactRequest>
 
 export const publicListContactsByCustomFieldRequest = z.object({
   customFieldId: z
@@ -167,6 +164,11 @@ export const publicListContactsByCustomFieldRequest = z.object({
 export type PublicListContactsByCustomFieldRequest = z.infer<
   typeof publicListContactsByCustomFieldRequest
 >
+
+export const findContactRequest = contactResource
+  .pick({ id: true, workspaceId: true })
+  .partial()
+export type FindContactRequest = z.infer<typeof findContactRequest>
 
 export const getContactRequest = z.object({
   workspaceId: zodBigintAsString(),

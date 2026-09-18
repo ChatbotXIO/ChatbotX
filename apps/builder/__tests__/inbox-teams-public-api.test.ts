@@ -118,8 +118,8 @@ describe("POST /v1/teams", () => {
   })
 })
 
-describe("PUT /v1/teams/{id}", () => {
-  const procedure = findProcedure("PUT", "/v1/teams/{id}")
+describe("PATCH /v1/teams/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/teams/{id}")
 
   test("delegates to inboxTeamService.update and returns its result", async () => {
     inboxTeamService.update.mockResolvedValueOnce({

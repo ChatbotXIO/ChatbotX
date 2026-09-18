@@ -132,7 +132,7 @@ describe("real router: minigames public API scope wiring", () => {
     [
       "PATCH /v1/minigames/{id}",
       () =>
-        invoke(minigamesPublicRouter.patch, {
+        invoke(minigamesPublicRouter.updatePartial, {
           id: "game-1",
           generalSettings: { name: "Renamed" },
         }),
@@ -230,7 +230,7 @@ describe("real router: minigames public API scope wiring", () => {
         updatedAt: new Date(),
       })
 
-      await invoke(minigamesPublicRouter.patch, {
+      await invoke(minigamesPublicRouter.updatePartial, {
         id: "999999",
         generalSettings: {
           name: "Renamed",

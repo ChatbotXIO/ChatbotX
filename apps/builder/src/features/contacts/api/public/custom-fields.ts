@@ -1,6 +1,7 @@
 import {
   contactCustomFieldService,
   contactService,
+  customFieldService,
 } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
@@ -33,7 +34,7 @@ export const contactsCustomFieldsPublicRouter = {
       path: "/v1/contacts/{identifier}/custom-fields",
       summary: "Get all custom fields from contact",
       description:
-        "Use this to inspect every custom-field value for a contact after resolving its identifier with `contacts.get`. Call `contacts.setCustomField` to change one value or `contacts.setCustomFields` to change several.",
+        "Use this to inspect every custom-field value for a contact after resolving its identifier with `contacts.get`. Call `contacts.setCustomField` to change one value or `contacts.applyCustomFieldOperations` to change several in one call.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -63,7 +64,7 @@ export const contactsCustomFieldsPublicRouter = {
   getCustomField: workspaceTokenAuthAPI
     .route({
       method: "GET",
-      path: "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
+      path: "/v1/contacts/{identifier}/custom-fields/{idOrName}",
       summary: "Get contact custom field value",
       description:
         "Returns one custom field's current value for the contact identified by `identifier`. Use `contacts.listCustomFields` to see every field at once.",
@@ -77,35 +78,93 @@ export const contactsCustomFieldsPublicRouter = {
           .describe(
             "Contact identifier: the numeric contact id, an email address, or a phone number.",
           ),
-        customFieldId: zodBigintAsString().describe(
-          "Custom field id (numeric string). Get it from `customFields.list`.",
-        ),
+        idOrName: z
+          .string()
+          .min(1)
+          .describe(
+            "Custom field id (numeric string) or field name. Get either from `customFields.list`.",
+          ),
       }),
     )
     .output(publicContactCustomFieldResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,
-        workspaceId: context.workspace.id,
+        workspaceId,
+      })
+      const field = await customFieldService.findByKeyOrFail({
+        workspaceId,
+        key: input.idOrName,
       })
       return await findContactCustomField({
         contactId,
-        customFieldId: input.customFieldId,
-        workspaceId: context.workspace.id,
+        customFieldId: field.id,
+        workspaceId,
       })
     }),
 
   setCustomField: workspaceTokenAuthAPI
     .route({
+      method: "PUT",
+      path: "/v1/contacts/{identifier}/custom-fields/{idOrName}",
+      summary: "Set contact custom field value",
+      description:
+        "Changes one custom-field value on a resolved contact without altering its other fields. Use `contacts.listCustomFields` to inspect current values, or `contacts.applyCustomFieldOperations` for several changes.",
+      successStatus: 204,
+      tags: ["Contacts"],
+      spec: mcpSpec({ visibility: "default" }),
+    })
+    .input(
+      z.object({
+        identifier: z
+          .string()
+          .min(1)
+          .describe(
+            "Contact identifier: the numeric contact id, an email address, or a phone number.",
+          ),
+        idOrName: z
+          .string()
+          .min(1)
+          .describe(
+            "Custom field id (numeric string) or field name. Get either from `customFields.list`.",
+          ),
+        value: z.string().trim().describe("New value for the custom field."),
+      }),
+    )
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const workspaceId = context.workspace.id
+      const contactId = await contactService.resolveIdByIdentifier({
+        identifier: input.identifier,
+        workspaceId,
+      })
+      const field = await customFieldService.findByKeyOrFail({
+        workspaceId,
+        key: input.idOrName,
+      })
+      await contactCustomFieldService.setValueForContact({
+        workspaceId,
+        contactId,
+        customFieldId: field.id,
+        value: input.value,
+      })
+    }),
+
+  // Deprecated — use `contacts.setCustomField` instead. Kept for backward
+  // compatibility with the pre-consolidation `POST .../{customFieldId}`
+  // path and method; hidden from MCP/CLI tool listings.
+  setCustomFieldLegacy: workspaceTokenAuthAPI
+    .route({
       method: "POST",
       path: "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
       summary: "Set contact custom field value",
       description:
-        "Changes one custom-field value on a resolved contact without altering its other fields. Use `contacts.listCustomFields` to inspect current values, or `contacts.setCustomFields` for several changes.",
+        "Deprecated — `contacts.setCustomField` now covers this at `PUT .../custom-fields/{idOrName}`, addressed by id or name; this POST route only ever accepted a numeric id.",
       successStatus: 204,
+      deprecated: true,
       tags: ["Contacts"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(
       z.object({
@@ -135,61 +194,13 @@ export const contactsCustomFieldsPublicRouter = {
       })
     }),
 
-  setCustomFields: workspaceTokenAuthAPI
-    .route({
-      method: "PUT",
-      path: "/v1/contacts/{identifier}/custom-fields",
-      summary: "Set multiple custom field values for contact",
-      description:
-        "Sets each given custom field to its value on the contact identified by `identifier`; fields not listed are left unchanged. Use `customFields.list`/`customFields.create` first to resolve names to ids.",
-      successStatus: 204,
-      tags: ["Contacts"],
-    })
-    .input(
-      z.object({
-        identifier: z
-          .string()
-          .min(1)
-          .describe(
-            "Contact identifier: the numeric contact id, an email address, or a phone number.",
-          ),
-        fields: z
-          .array(
-            z.object({
-              customFieldId: zodBigintAsString().describe(
-                "Custom field id (numeric string). Get it from `customFields.list`.",
-              ),
-              value: z
-                .string()
-                .trim()
-                .describe("New value for this custom field."),
-            }),
-          )
-          .min(1)
-          .max(20)
-          .describe("Custom field values to set, up to 20 per request."),
-      }),
-    )
-    .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) => {
-      const contactId = await contactService.resolveIdByIdentifier({
-        identifier: input.identifier,
-        workspaceId: context.workspace.id,
-      })
-      await contactCustomFieldService.setValues({
-        workspaceId: context.workspace.id,
-        contactId,
-        fields: input.fields,
-      })
-    }),
-
   applyCustomFieldOperations: workspaceTokenAuthAPI
     .route({
       method: "PATCH",
       path: "/v1/contacts/{identifier}/custom-fields",
       summary: "Apply arithmetic/append operations to custom field",
       description:
-        'Applies a set of operations to one custom field on the contact, in order. Each operation is one of `set`, `append`, `prepend`, `increase`, `decrease` — `increase`/`decrease` treat the current value as a number (no-op if it is not numeric). Example: `{"operations":[{"customFieldId":"123","operation":"increase","value":"1"}]}` to increment a numeric field.',
+        'Applies a batch of operations to one or more custom fields on the contact, in the given order, each addressed by id or name. Each operation is one of `set`, `append`, `prepend`, `increase`, `decrease`: `set` overwrites the current value, `append`/`prepend` concatenate onto it, and `increase`/`decrease` treat the current value as a number (no-op if it is not numeric). This is the batch equivalent of `contacts.setCustomField` for changing several fields in one call. Example: `{"operations":[{"customFieldId":"123","operation":"increase","value":"1"}]}` to increment a numeric field.',
       successStatus: 204,
       tags: ["Contacts"],
     })
@@ -202,14 +213,28 @@ export const contactsCustomFieldsPublicRouter = {
         workspaceId,
       })
 
+      // Resolved outside `applyOperations`' own transaction — a field
+      // deleted between this lookup and the write already throws
+      // `notFoundException` inside that transaction and rolls back, so a
+      // `tx`-aware lookup here would buy nothing.
+      const operations = await Promise.all(
+        input.operations.map(async (op) => {
+          const field = await customFieldService.findByKeyOrFail({
+            workspaceId,
+            key: op.customFieldId,
+          })
+          return {
+            customFieldId: field.id,
+            operation: publicFieldOperationNameToCode[op.operation],
+            value: op.value,
+          }
+        }),
+      )
+
       await contactCustomFieldService.applyOperations({
         workspaceId,
         contactId,
-        operations: input.operations.map((op) => ({
-          customFieldId: op.customFieldId,
-          operation: publicFieldOperationNameToCode[op.operation],
-          value: op.value,
-        })),
+        operations,
       })
     }),
 

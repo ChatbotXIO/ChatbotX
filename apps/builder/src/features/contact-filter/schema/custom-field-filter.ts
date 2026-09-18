@@ -9,6 +9,22 @@ import {
 import { z } from "zod"
 import { sampleStringSchema } from "./shared"
 
+export const convertCustomFieldTypeToConditionType = (
+  type?: string,
+): FormFieldType => {
+  switch (type) {
+    case "number":
+      return formFieldTypes.enum.number
+    case "date":
+    case "datetime":
+      return formFieldTypes.enum.datetime
+    case "boolean":
+      return formFieldTypes.enum.boolean
+    default:
+      return formFieldTypes.enum.text
+  }
+}
+
 const VALUELESS_OPERATORS = [
   operatorTypes.enum.isNotEmpty,
   operatorTypes.enum.isEmpty,

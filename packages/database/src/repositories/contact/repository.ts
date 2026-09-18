@@ -51,6 +51,8 @@ export const contactRepository = {
       with: PUBLIC_CONTACT_RELATIONS,
     })
   },
+  // Back-compat for the deprecated `contacts.findByCustomField` alias — use
+  // `contacts.list` with a `contactFilter` instead.
   async listPublicByCustomField(
     input: {
       where: Record<string, unknown>

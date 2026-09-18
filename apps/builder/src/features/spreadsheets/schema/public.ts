@@ -41,14 +41,14 @@ export const deleteSpreadsheetPublicRequest = z.object({
 })
 
 export const listWorksheetsPublicRequest = z.object({
-  spreadsheetId: zodBigintAsString().describe(
+  id: zodBigintAsString().describe(
     "Spreadsheet id. Get it from `spreadsheets.list`.",
   ),
 })
 export { listWorksheetsResponse } from "./query"
 
 export const listWorksheetHeadersPublicRequest = z.object({
-  spreadsheetId: zodBigintAsString().describe(
+  id: zodBigintAsString().describe(
     "Spreadsheet id. Get it from `spreadsheets.list`.",
   ),
   worksheetName: z
