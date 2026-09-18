@@ -101,9 +101,10 @@ export function buildMessengerTemplateComponents(
   const components: MessengerTemplateComponent[] = []
 
   if (params.header && params.header.length > 0) {
-    // Messenger utility image headers are fixed at template creation via
-    // header_handle — no image parameter is sent at send-time. Only text
-    // placeholders within the header require a parameter here.
+    // The image of a Messenger utility IMAGE header is fixed at template
+    // creation via header_handle — no image parameter is sent at send-time.
+    // Text placeholders in the header (TEXT or IMAGE format) still require a
+    // parameter here, or Meta rejects the send with (#100 - 1893029).
     const headerParameters: MessengerTemplateComponentParameter[] =
       params.header
         .filter((param) => param.type === "text")
