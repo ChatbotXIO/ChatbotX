@@ -15,6 +15,7 @@ const {
   resolveStatusMock,
   findWorkspaceByIdMock,
   getCallingSettingsMock,
+  getCallPermissionsMock,
   getWhatsappCallingPreflightMock,
   withCacheMock,
   canCallConversationMock,
@@ -25,6 +26,7 @@ const {
   resolveStatusMock: vi.fn(),
   findWorkspaceByIdMock: vi.fn(),
   getCallingSettingsMock: vi.fn(),
+  getCallPermissionsMock: vi.fn(),
   getWhatsappCallingPreflightMock: vi.fn(),
   // Pass through to the wrapped fetcher by default — individual tests
   // override this to assert cache-hit/short-circuit behavior.
@@ -51,6 +53,16 @@ vi.mock(
 
 vi.mock("@chatbotx.io/integration-whatsapp/api/calling", () => ({
   getCallingSettings: getCallingSettingsMock,
+  getCallPermissions: getCallPermissionsMock,
+  // Real implementation — the gate is only as good as the key it reads.
+  canPerformCallAction: (
+    response: {
+      actions?: { action_name: string; can_perform_action?: boolean }[]
+    },
+    actionName: string,
+  ) =>
+    response.actions?.find((candidate) => candidate.action_name === actionName)
+      ?.can_perform_action === true,
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
@@ -58,6 +70,11 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  callPermissionStatuses: {
+    permanent: "permanent",
+    temporary: "temporary",
+    noPermission: "no_permission",
+  },
   canCallConversation: canCallConversationMock,
   conversationService: { findBy: findByMock },
   contactInboxService: { findBy: findInboxMock },
@@ -134,6 +151,10 @@ describe("resolveOutboundCallModeAction", () => {
       },
     })
     resolveStatusMock.mockResolvedValue(undefined)
+    getCallPermissionsMock.mockResolvedValue({
+      permission: { status: "no_permission" },
+      actions: [],
+    })
     findWorkspaceByIdMock.mockResolvedValue({ id: "workspace-1" })
     getCallingSettingsMock.mockResolvedValue({ status: "ENABLED" })
     getWhatsappCallingPreflightMock.mockResolvedValue({
@@ -150,7 +171,7 @@ describe("resolveOutboundCallModeAction", () => {
   test("returns manualCallsSubscriptionUnverified:false for a platform-credential integration", async () => {
     await expect(call()).resolves.toEqual({
       mode: "voip",
-      permissionStatus: undefined,
+      permissionStatus: "no_permission",
       unsignedWebhookWarning: false,
       manualCallsSubscriptionUnverified: false,
       integrationId: "integration-1",
@@ -174,7 +195,7 @@ describe("resolveOutboundCallModeAction", () => {
     })
     await expect(call()).resolves.toEqual({
       mode: "voip",
-      permissionStatus: undefined,
+      permissionStatus: "no_permission",
       unsignedWebhookWarning: false,
       manualCallsSubscriptionUnverified: true,
       integrationId: "integration-1",
@@ -198,7 +219,7 @@ describe("resolveOutboundCallModeAction", () => {
     })
     await expect(call()).resolves.toEqual({
       mode: "voip",
-      permissionStatus: undefined,
+      permissionStatus: "no_permission",
       unsignedWebhookWarning: true,
       manualCallsSubscriptionUnverified: true,
       integrationId: "integration-1",
@@ -273,7 +294,7 @@ describe("resolveOutboundCallModeAction", () => {
     })
     await expect(call()).resolves.toEqual({
       mode: "voip",
-      permissionStatus: undefined,
+      permissionStatus: "no_permission",
       unsignedWebhookWarning: true,
       manualCallsSubscriptionUnverified: true,
       integrationId: "integration-1",
@@ -297,7 +318,7 @@ describe("resolveOutboundCallModeAction", () => {
     })
     await expect(call()).resolves.toEqual({
       mode: "voip",
-      permissionStatus: undefined,
+      permissionStatus: "no_permission",
       unsignedWebhookWarning: false,
       manualCallsSubscriptionUnverified: true,
       integrationId: "integration-1",
@@ -342,6 +363,17 @@ describe("resolveOutboundCallModeAction", () => {
     })
     await expect(call()).resolves.toEqual({
       mode: "voip",
+      permissionStatus: "no_permission",
+      unsignedWebhookWarning: false,
+      manualCallsSubscriptionUnverified: false,
+      integrationId: "integration-1",
+    })
+  })
+
+  test("mirror empty and Meta unreachable: permissionStatus stays undefined rather than being invented", async () => {
+    getCallPermissionsMock.mockRejectedValue(new Error("meta down"))
+    await expect(call()).resolves.toEqual({
+      mode: "voip",
       permissionStatus: undefined,
       unsignedWebhookWarning: false,
       manualCallsSubscriptionUnverified: false,
@@ -349,10 +381,10 @@ describe("resolveOutboundCallModeAction", () => {
     })
   })
 
-  test("returns voip with permissionStatus undefined when no permission row exists", async () => {
+  test("legacy: returns voip with permissionStatus undefined when no permission row exists", async () => {
     await expect(call()).resolves.toEqual({
       mode: "voip",
-      permissionStatus: undefined,
+      permissionStatus: "no_permission",
       unsignedWebhookWarning: false,
       manualCallsSubscriptionUnverified: false,
       integrationId: "integration-1",
@@ -374,10 +406,46 @@ describe("resolveOutboundCallModeAction", () => {
     })
   })
 
-  test("never calls Meta's rate-limited call_permissions GET", async () => {
-    await call()
-    // Permission comes from the local record only.
+  test("a mirror hit answers on its own — Meta is never asked", async () => {
+    resolveStatusMock.mockResolvedValue("permanent")
+
+    await expect(call()).resolves.toMatchObject({
+      permissionStatus: "permanent",
+    })
+
     expect(resolveStatusMock).toHaveBeenCalledWith("contact-inbox-1")
+    expect(getCallPermissionsMock).not.toHaveBeenCalled()
+  })
+
+  test("an empty mirror falls through to Meta, cached per contact inbox", async () => {
+    getCallPermissionsMock.mockResolvedValue({
+      permission: { status: "temporary" },
+      actions: [],
+    })
+
+    await expect(call()).resolves.toMatchObject({
+      permissionStatus: "temporary",
+    })
+
+    expect(getCallPermissionsMock).toHaveBeenCalledWith(expect.anything(), {
+      userWaId: "15551234567",
+    })
+    expect(withCacheMock).toHaveBeenCalledWith(
+      "whatsapp-call-permissions:integration-1:contact-inbox-1",
+      expect.any(Function),
+      expect.objectContaining({ ttl: 60 }),
+    )
+  })
+
+  test("Meta reporting a permanent grant flips the control to direct-dial — the wiped-mirror case", async () => {
+    getCallPermissionsMock.mockResolvedValue({
+      permission: { status: "permanent" },
+      actions: [],
+    })
+
+    await expect(call()).resolves.toMatchObject({
+      permissionStatus: "permanent",
+    })
   })
 
   test("caches the calling-settings GET per integration with a TTL", async () => {
@@ -420,11 +488,18 @@ describe("resolveOutboundCallModeAction", () => {
   })
 
   test("a cache hit skips the live Meta GET entirely", async () => {
-    withCacheMock.mockResolvedValue({ status: "ENABLED" })
+    // Key-aware: this action now caches two different Meta reads, and only
+    // the calling-settings one is under test here.
+    withCacheMock.mockImplementation(
+      async (key: string, fn: () => Promise<unknown>) =>
+        key.startsWith("whatsapp-outbound-call-mode:calling-settings:")
+          ? { status: "ENABLED" }
+          : await fn(),
+    )
 
     await expect(call()).resolves.toEqual({
       mode: "voip",
-      permissionStatus: undefined,
+      permissionStatus: "no_permission",
       unsignedWebhookWarning: false,
       manualCallsSubscriptionUnverified: false,
       integrationId: "integration-1",

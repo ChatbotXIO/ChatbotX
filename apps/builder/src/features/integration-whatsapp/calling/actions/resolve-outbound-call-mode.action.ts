@@ -22,8 +22,16 @@ import { z } from "zod"
 import { getWhatsappCallingPreflight } from "@/features/integration-whatsapp/calling/get-whatsapp-calling-preflight"
 import { callingActionClient } from "@/lib/safe-action"
 import { callingSettingsCacheKey } from "../lib/calling-settings-cache"
+import {
+  readMetaCallPermissions,
+  toCallPermissionStatus,
+} from "../lib/meta-call-permission"
 import { BLOCKED_OUTBOUND_COUNTRIES } from "./blocked-outbound-countries"
-import { resolveContactInbox } from "./outbound-dial-target"
+import {
+  type OutboundDialContactInbox,
+  resolveContactInbox,
+  resolveDialIdentity,
+} from "./outbound-dial-target"
 
 /**
  * `getCallingSettings` is a live Meta GET — without a cache it would fire
@@ -51,6 +59,27 @@ async function getCachedCallingSettings(
     () => getCallingSettings(auth),
     { ttl: CALLING_SETTINGS_CACHE_TTL_SECONDS },
   )
+}
+
+/**
+ * Meta's answer for a contact the local mirror knows nothing about, in the
+ * mirror's own vocabulary. `undefined` on any failure or unmapped status, so
+ * an unreachable Meta leaves the control exactly where an empty mirror
+ * already put it rather than inventing a permission.
+ */
+async function resolveMetaPermissionStatus(props: {
+  auth: WhatsappAuthValue
+  integrationId: string
+  contactInbox: OutboundDialContactInbox
+}): Promise<CallPermissionStatus | undefined> {
+  const { permissionTarget } = resolveDialIdentity(props.contactInbox)
+  const permissions = await readMetaCallPermissions({
+    auth: props.auth,
+    integrationId: props.integrationId,
+    contactInboxId: props.contactInbox.id,
+    target: permissionTarget,
+  })
+  return permissions ? toCallPermissionStatus(permissions) : undefined
 }
 
 const resolveOutboundCallModeSchema = z.object({
@@ -244,8 +273,21 @@ export const resolveOutboundCallModeAction = callingActionClient
         return { mode: "none", reason: "ineligibleNumber" }
       }
 
+      // The local mirror answers first: it costs nothing and, once a
+      // `call_permission_reply` has landed, it is as current as Meta. Only
+      // its ABSENCE — no reply ever recorded for this contact — falls
+      // through to Meta's own answer, because "no record" and "no
+      // permission" are not the same thing and rendering the
+      // request-permission control for the former strands the agent: the
+      // dial path they can no longer reach is the one that would have read
+      // Meta and succeeded. See `meta-call-permission.ts`.
       const permissionStatus =
-        await whatsappCallPermissionService.resolveStatus(contactInbox.id)
+        (await whatsappCallPermissionService.resolveStatus(contactInbox.id)) ??
+        (await resolveMetaPermissionStatus({
+          auth,
+          integrationId: integration.id,
+          contactInbox,
+        }))
 
       const isManualIntegration = auth.metadata.isManual === true
       const unsignedWebhookWarning = isManualIntegration && !auth.clientSecret

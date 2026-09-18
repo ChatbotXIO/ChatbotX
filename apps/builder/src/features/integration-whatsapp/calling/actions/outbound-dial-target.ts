@@ -76,7 +76,9 @@ export type OutboundDialContactInbox = NonNullable<
  * so it is addressed by `recipient` (never digit-stripped — that would
  * corrupt a BSUID); everyone else by `to` plus `user_wa_id`.
  */
-export function resolveDialIdentity(contactInbox: OutboundDialContactInbox): {
+export function resolveDialIdentity(
+  contactInbox: Pick<OutboundDialContactInbox, "sourceId" | "sourceUserId">,
+): {
   to?: string
   recipient?: string
   permissionTarget: { recipient: string } | { userWaId: string }
