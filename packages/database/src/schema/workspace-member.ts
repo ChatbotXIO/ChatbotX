@@ -1,12 +1,16 @@
 import { sql } from "drizzle-orm"
-import { jsonb, pgEnum, pgTable } from "drizzle-orm/pg-core"
+import { jsonb, pgEnum, pgTable, timestamp } from "drizzle-orm/pg-core"
 import {
   type WorkspaceMemberNotificationChannels,
   type WorkspaceMemberNotificationTypes,
   type WorkspaceMemberPermissions,
   workspaceMemberRoles,
 } from "../partials"
-import { bigintAsString, sharedColumns } from "../partials/shared"
+import {
+  bigintAsString,
+  sharedColumns,
+  timestampConfig,
+} from "../partials/shared"
 import { userModel } from "./auth-user"
 import { workspaceModel } from "./workspace"
 
@@ -42,4 +46,10 @@ export const workspaceMemberModel = pgTable("WorkspaceMember", {
     .$type<WorkspaceMemberPermissions>()
     .default(sql`'{}'`)
     .notNull(),
+  /**
+   * Coarse "last came online" stamp for reporting only, written on the
+   * offline->online transition. Not "is online right now" — that's answered
+   * exclusively by Redis (workspacePresenceService.listOnlineMembers).
+   */
+  onlineSince: timestamp(timestampConfig),
 })

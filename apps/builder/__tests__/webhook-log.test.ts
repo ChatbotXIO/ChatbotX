@@ -48,6 +48,39 @@ describe("sanitizeWebhookBody", () => {
     expect(result.user.name).toBe("alice")
   })
 
+  test("redacts the SDP value nested in a WhatsApp calling session (the `sdp` key, not the whole session)", () => {
+    const sentinel = "v=0 SENTINEL-SDP-OFFER-DO-NOT-LOG"
+    const body = JSON.stringify({
+      entry: [
+        {
+          changes: [
+            {
+              field: "calls",
+              value: {
+                calls: [
+                  {
+                    id: "wacid.ABC",
+                    event: "connect",
+                    session: { sdp_type: "offer", sdp: sentinel },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    })
+
+    const result = sanitizeWebhookBody(body)
+
+    // Only the `sdp` value is redacted — the `session` wrapper is kept (adding
+    // `session` to the global key set was too broad a blast radius; the SDP is
+    // the secret). See `packages/logger/src/redact.ts`.
+    expect(result).not.toContain(sentinel)
+    expect(result).toContain('"sdp":"[redacted]"')
+    expect(result).toContain('"sdp_type":"offer"')
+  })
+
   test("omits a non-JSON body instead of logging it raw", () => {
     const body = "access_token=super-secret&foo=bar"
 
@@ -110,6 +143,44 @@ describe("logWebhookRequestBody", () => {
     expect(loggerInfo).toHaveBeenCalledWith(
       expect.objectContaining({ integrationType: "telegram" }),
       "Failed to read webhook request body for logging",
+    )
+  })
+
+  test("never emits a WhatsApp calling SDP offer through the diagnostic payload", async () => {
+    loggerInfo.mockClear()
+    loggerDebug.mockClear()
+    const sentinel = "v=0 SENTINEL-SDP-OFFER-DO-NOT-LOG"
+    const rawBody = JSON.stringify({
+      entry: [
+        {
+          changes: [
+            {
+              field: "calls",
+              value: {
+                calls: [
+                  {
+                    id: "wacid.ABC",
+                    event: "connect",
+                    session: { sdp_type: "offer", sdp: sentinel },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    })
+    const req = {
+      clone: () => ({ text: () => Promise.resolve(rawBody) }),
+    } as unknown as Parameters<typeof logWebhookRequestBody>[1]
+
+    await logWebhookRequestBody("whatsapp", req)
+
+    expect(loggerDebug).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.not.stringContaining(sentinel),
+      }),
+      "Webhook request body payload",
     )
   })
 

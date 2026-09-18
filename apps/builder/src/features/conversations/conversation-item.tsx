@@ -18,6 +18,11 @@ import { formatDistanceToNowStrict, isAfter } from "date-fns"
 import {
   MailIcon,
   MessageCircleMoreIcon,
+  PhoneIcon,
+  PhoneIncomingIcon,
+  PhoneMissedIcon,
+  PhoneOffIcon,
+  PhoneOutgoingIcon,
   StarIcon,
   UsersRoundIcon,
 } from "lucide-react"
@@ -29,10 +34,27 @@ import { useUserAvatarUrl } from "@/lib/auth/avatar"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { useAvatarUrl } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
+import { useWhatsappVoipCallStore } from "../integration-whatsapp/calling/voip/voip-call-store"
+import { useOptionalWhatsappVoipCallContext } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-context"
 import { readConversationAction } from "./actions/read-conversation.action"
-import { resolveLastMessagePreview } from "./queries/resolve-last-message-preview"
+import {
+  type CallPreviewKind,
+  resolveCallPreviewKind,
+  resolveLastMessagePreview,
+} from "./queries/resolve-last-message-preview"
 import type { ListConversationItemResource } from "./schema/resource"
 import { adBadgeLabelKey, selectAdBadge } from "./utils/ad-badge"
+
+// Icon shown next to a call preview snippet. Mirrors whatsapp-call-card.tsx's
+// icon choices so the preview and the card agree per call outcome.
+const CALL_PREVIEW_ICON_BY_KIND: Record<CallPreviewKind, typeof PhoneIcon> = {
+  completedInbound: PhoneIncomingIcon,
+  completedOutbound: PhoneOutgoingIcon,
+  missedVoiceCall: PhoneMissedIcon,
+  unansweredVoiceCall: PhoneOffIcon,
+  declinedVoiceCall: PhoneOffIcon,
+  canceledVoiceCall: PhoneOffIcon,
+}
 
 type ConversationItemProps = {
   conversation: ListConversationItemResource
@@ -144,10 +166,28 @@ export default function ConversationItem({
     (state) => state,
   )
   const isActive = conversation.id === activeConversationId
+  // Narrowed to the matching call's id (not a boolean) so Answer/Reject can
+  // target the right offer, while still only re-rendering this row when its
+  // own match appears or disappears.
+  const ringingCallId = useWhatsappVoipCallStore(
+    (state) =>
+      state.ringingCalls.find(
+        (ringing) => ringing.conversationId === conversation.id,
+      )?.whatsappCallId,
+  )
+  const isRinging = ringingCallId !== undefined
+  // null when calling is disabled for this workspace/member (the provider is
+  // not mounted) — the ringing overlay never renders in that case, since
+  // ringingCallId would never be set either.
+  const voipCallContext = useOptionalWhatsappVoipCallContext()
   const isComment = conversation.messages?.[0]?.type === "comment"
   const avatarUrl = useAvatarUrl(conversation.contact)
   const assignedAvatarUrl = useUserAvatarUrl(conversation.assignedUser?.image)
   const previewText = resolveLastMessagePreview(conversation.messages?.[0], t)
+  const callPreviewKind = resolveCallPreviewKind(conversation.messages?.[0])
+  const CallPreviewIcon = callPreviewKind
+    ? CALL_PREVIEW_ICON_BY_KIND[callPreviewKind]
+    : undefined
   const isUnread = Boolean(
     conversation.agentLastReadAt &&
       conversation.contactLastReadAt &&
@@ -204,7 +244,7 @@ export default function ConversationItem({
   }, [isActive])
 
   return (
-    <div className="w-full">
+    <div className="relative w-full">
       <Button
         className={cn(
           "h-auto w-full justify-center px-3 py-2 font-normal hover:bg-zinc-200 hover:text-foreground dark:hover:bg-muted",
@@ -272,11 +312,14 @@ export default function ConversationItem({
           </div>
           <div
             className={cn(
-              "w-full truncate text-start text-xs",
+              "flex w-full items-center gap-1 truncate text-start text-xs",
               isUnread ? "font-semibold" : "text-gray-500",
             )}
           >
-            {previewText}
+            {CallPreviewIcon && (
+              <CallPreviewIcon aria-hidden className="size-3 shrink-0" />
+            )}
+            <span className="truncate">{previewText}</span>
           </div>
           <div className="flex items-center justify-between gap-1 text-xs">
             {adBadge ? (
@@ -295,6 +338,45 @@ export default function ConversationItem({
           </div>
         </div>
       </Button>
+      {isRinging && voipCallContext && (
+        // Overlay sibling of the row <Button>, never a descendant — a <button>
+        // nested inside another <button> is invalid DOM and trips hydration.
+        // Mirrors the avatar's absolute overlay pattern above, anchored to the
+        // row's end edge instead.
+        <div className="absolute inset-y-0 end-3 z-10 flex items-center gap-1.5">
+          <Badge className="animate-pulse" variant="destructive">
+            {t("whatsapp.calls.ringingBadge")}
+          </Badge>
+          <Button
+            aria-label={t("whatsapp.calls.reject")}
+            className="size-7 rounded-full bg-red-600 text-white hover:bg-red-700"
+            onClick={(event) => {
+              event.stopPropagation()
+              if (ringingCallId) {
+                voipCallContext.dismiss(ringingCallId)
+              }
+            }}
+            size="icon"
+            type="button"
+          >
+            <PhoneOffIcon className="size-3.5" />
+          </Button>
+          <Button
+            aria-label={t("whatsapp.calls.answer")}
+            className="size-7 rounded-full bg-green-600 text-white hover:bg-green-700"
+            onClick={(event) => {
+              event.stopPropagation()
+              if (ringingCallId) {
+                voipCallContext.answer(ringingCallId)
+              }
+            }}
+            size="icon"
+            type="button"
+          >
+            <PhoneIcon className="size-3.5" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

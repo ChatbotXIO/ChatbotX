@@ -1416,7 +1416,8 @@
       "adAccountFilter": {
         "all": "Alla annonskonton",
         "label": "Annonskonto",
-        "unavailable": "Det gick inte att läsa in annonskonton — kontrollera den här integrationens Ads-anslutning, eller arbetsytans Facebook Ads-anslutning, i inställningarna."
+        "unavailable": "Det gick inte att läsa in annonskonton — kontrollera den här integrationens Ads-anslutning, eller arbetsytans Facebook Ads-anslutning, i inställningarna.",
+        "note": "Annonser med konverteringar men noll utgifter eller noll leverans i det valda datumintervallet döljs vid filtrering efter annonskonto."
       },
       "channelFilter": {
         "label": "Kanal",
@@ -3062,6 +3063,16 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "Meta App Secret (valfritt)",
+      "description": "Aktiverar verifiering av webhook-signatur för denna manuella anslutning. Du hittar den i din Meta-apps instrumentpanel under Inställningar > Allmänt."
+    },
+    "lastCallRecorded": {
+      "label": "Senaste samtalsinspelning"
+    },
+    "lastCallTranscript": {
+      "label": "Senaste samtalstranskription"
     }
   },
   "flowAnalytics": {
@@ -3189,7 +3200,9 @@
       "import": "Importera flöde",
       "export": "Exportera",
       "importStarted": "Flödet importeras. Kontrollera importhistoriken för resultat.",
-      "importJsonOnly": "Endast JSON-filer"
+      "importJsonOnly": "Endast JSON-filer",
+      "whatsappCallButton": "Ring på WhatsApp",
+      "metaConversions": "Meta Conversions API"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -3331,6 +3344,10 @@
     "media": {
       "stepUnsupportedOnChannel": "Den här kanalen kan inte skicka den här medietypen – steget hoppas över där. Ta bort det eller byt nodens kanal till en som stöder det.",
       "buttonsSkippedOnChannel": "Den här kanalen kan inte skicka knappar tillsammans med ett mediemeddelande – där hoppas de över. Lägg dem i ett efterföljande textsteg i stället."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "Redigera knapp",
+      "buttonLabel": "Knappetikett"
     }
   },
   "folders": {
@@ -3935,7 +3952,20 @@
     "waTemplateLtoExpirationRequired": "Välj ett utgångsdatum för det tidsbegränsade erbjudandet innan du skickar.",
     "waTemplateMpmIncompleteProducts": "Varje sektion behöver minst en vald produkt — ta bort tomma rader eller välj en produkt.",
     "mediaStepUnsupported": "Den här kanalen kan inte skicka den här medietypen. Ta bort steget eller peka noden mot en kanal som stöder det.",
-    "mediaButtonsUnsupported": "Den här kanalen kan inte skicka knappar tillsammans med ett mediemeddelande. Ta bort knapparna eller flytta dem till ett textsteg efter det här."
+    "mediaButtonsUnsupported": "Den här kanalen kan inte skicka knappar tillsammans med ett mediemeddelande. Ta bort knapparna eller flytta dem till ett textsteg efter det här.",
+    "voiceCall": "Röstsamtal",
+    "voiceCallDuration": "Röstsamtal · {duration}",
+    "missedVoiceCall": "Missat röstsamtal",
+    "declinedVoiceCall": "Avvisat röstsamtal",
+    "voiceCallFailed": "Misslyckat röstsamtal",
+    "unansweredVoiceCall": "Inget svar",
+    "canceledVoiceCall": "Avbrutet samtal",
+    "acceptedCallPermission": "Accepterade begäran om samtalstillstånd",
+    "declinedCallPermission": "Avvisade begäran om samtalstillstånd",
+    "humanAgentWarningDescription": "Du får endast svara på en användares meddelande inom 7 dagar när problemet rimligen inte kan lösas inom 24 timmar. Exempel är helger, högtider eller ärenden som kräver mer än en dag. Använd inte detta alternativ av någon annan anledning, eftersom det kan utsätta din Facebook-sida eller ditt Instagram-konto för risk. Fortsätt inte om du är osäker.",
+    "sendHumanAgentTag": "Skicka ett meddelande med taggen HUMAN_AGENT",
+    "warning": "Varning!",
+    "callFailed": "Samtalsproblem"
   },
   "messenger": {
     "botProfile": "Botprofil",
@@ -4942,7 +4972,9 @@
       "ticketStatusChanged": "Ärendets status har ändrats",
       "ticketValueChanged": "Ärendets värde har ändrats",
       "unsubscribedFromSequence": "Har avregistrerats från en sekvens",
-      "userAskedAboutProduct": "Användaren frågade om en produkt"
+      "userAskedAboutProduct": "Användaren frågade om en produkt",
+      "callRecorded": "Samtal inspelat",
+      "callTranscribed": "Samtal transkriberat"
     },
     "day": "Dag",
     "hour": "Timme",
@@ -5296,7 +5328,8 @@
       "profile": "Profil",
       "usefulLinks": "Användbara länkar",
       "conversionsApi": "Annonsoptimering",
-      "settings": "Inställningar"
+      "settings": "Inställningar",
+      "calls": "Calls"
     },
     "templateFooter": {
       "label": "Mallens sidfot"
@@ -5307,6 +5340,258 @@
     "transferPhoneNumber": "Överför telefonnummer från en annan WhatsApp-leverantör",
     "selectPage": {
       "tryAgain": "Försök återansluta"
+    },
+    "manualAppSecretMissingNotice": "Webhook-signaturer verifieras inte förrän du lägger till din Meta App Secret.",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "WhatsApp tillåter endast 2 förfrågningar om samtalstillstånd per kontakt var sjunde dag. Den här kontakten har nått gränsen – försök igen senare.",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta avvisade ändringen av samtalsinställningarna",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
+        "bicUnavailable": "Företagsinitierade samtal är inte tillgängliga för detta land",
+        "callAlreadyInProgress": "Ett samtal med denna kontakt pågår redan",
+        "hangupFailed": "Kunde inte avsluta samtalet",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "Det gick inte att avvisa WhatsApp-samtalet",
+        "voipHangupFailed": "Det gick inte att avsluta WhatsApp-samtalet",
+        "voipNotReservedAgent": "Du är inte agenten som tilldelats detta samtal",
+        "voipCallAccessDenied": "Du har inte behörighet att hantera detta samtal",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "Det samtalet ringer inte längre",
+        "transcriptionRequiresRecording": "Aktivera samtalsinspelning innan du aktiverar transkribering.",
+        "supportSessionCallingBlocked": "Samtal är inte tillgängliga under en supportsession för plattformen.",
+        "callingAccessDenied": "Du har inte åtkomst till samtal i detta arbetsområde.",
+        "callArtifactAccessDenied": "Du har inte behörighet att visa det här samtalet.",
+        "callHistoryAccessDenied": "Du har inte åtkomst till samtalshistoriken i det här arbetsområdet."
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "Spela in samtal som besvaras eller rings från inkorgen och lägg till inspelningen i konversationen.",
+      "recordingInProgress": "Inspelning begärd",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Meta avvisade ändringen",
+      "callContact": "Ring via WhatsApp",
+      "dialing": "Ringer…",
+      "startCall": "Starta WhatsApp-samtal",
+      "retentionLabel": "Lagring av inspelningar (dagar)",
+      "retentionHelper": "Hur länge samtalsinspelningar sparas innan de raderas permanent.",
+      "transcriptionLabel": "Transkribera samtal",
+      "transcriptionHelper": "Lägg till en transkription av varje inspelat samtal i konversationen.",
+      "preflight": {
+        "title": "Samtalsbehörighet",
+        "appSubscriptionMissing": "Konfigurera först WhatsApp-webhooken för denna app i Meta App Dashboard och försök sedan igen.",
+        "appSubscriptionFailed": "Kunde inte verifiera appens prenumeration på 'calls'-webhooken. Försök igen om en stund.",
+        "callsNotSubscribed": "Denna app prenumererar inte på webhookfältet 'calls', så samtalshändelser kan inte nå ChatbotX (Meta-fel 138018: tekniska förutsättningar är inte uppfyllda — se till att minst en app som prenumererar på WABA:n också har webhookfältet för samtal).",
+        "fixButton": "Åtgärda",
+        "fixSuccess": "Appen prenumererar nu på WhatsApp-samtalswebhooks.",
+        "manualIntegrationNotice": "Detta nummer anslöts manuellt och har inga appuppgifter här. Prenumerera på webhookfältet 'calls' för din app i Meta App Dashboard.",
+        "coexistenceWarning": "Detta nummer använder samexistens med WhatsApp Business-appen, vilket Meta inte stöder för samtal. Flytta det till endast Cloud API.",
+        "messagingLimitTooLow": "Detta nummers meddelandegränsnivå ligger under det minimum Meta kräver för samtal."
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "Visa transkription",
+        "hideTranscript": "Dölj transkription"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "Mikrofonåtkomst nekades. Tillåt mikrofonåtkomst i webbläsarens inställningar och försök igen.",
+        "micNotFound": "Ingen mikrofon hittades. Anslut en mikrofon och försök igen.",
+        "callAccessDenied": "Du har inte behörighet att ringa denna kontakt."
+      },
+      "card": {
+        "audioCall": "Röstsamtal",
+        "recordingUnavailable": "Inspelningen är inte längre tillgänglig",
+        "recordingNotCaptured": "Inspelning inte tillgänglig för det här samtalet",
+        "recordingProcessing": "Bearbetar inspelningen…",
+        "moreOptions": "Fler alternativ",
+        "download": "Ladda ner",
+        "openCallInformation": "Öppna samtalsinformation",
+        "transcript": "Transkript",
+        "aiSummary": "AI-sammanfattning",
+        "transcriptUnavailable": "Transkript inte tillgängligt än",
+        "summaryUnavailable": "AI-sammanfattning inte tillgänglig än",
+        "play": "Spela upp",
+        "pause": "Pausa",
+        "seek": "Sök",
+        "mute": "Ljud av",
+        "unmute": "Ljud på",
+        "playbackFailed": "Uppspelning misslyckades",
+        "answeredBy": "Besvarat av {name}",
+        "calledBy": "Uppringt av {name}",
+        "callFailed": "Samtalsproblem",
+        "callBack": "Ring tillbaka"
+      },
+      "sheet": {
+        "title": "Samtalsinformation",
+        "summaryTab": "AI-sammanfattning",
+        "transcriptTab": "Transkription",
+        "searchLabel": "Sök i transkriptionen",
+        "searchPlaceholder": "Sök i transkriptionen…",
+        "transcriptUnavailable": "Transkription är inte tillgänglig för detta samtals språk",
+        "transcriptError": "Kunde inte läsa in transkriberingen. Kontrollera din anslutning och försök igen.",
+        "noSearchResults": "Inga matchande avsnitt",
+        "playSegment": "Spela upp härifrån",
+        "summaryKeyPoints": "Viktiga punkter",
+        "summaryActionItems": "Åtgärdspunkter",
+        "regenerate": "Skapa igen",
+        "regenerateConfirmTitle": "Skapa AI-sammanfattningen igen?",
+        "regenerateConfirmDescription": "Detta ersätter den aktuella sammanfattningen med en nygenererad.",
+        "summaryEmpty": "Det finns ännu ingen AI-sammanfattning för detta samtal.",
+        "generateSummary": "Skapa sammanfattning"
+      },
+      "summaryDialog": {
+        "title": "Skapa AI-sammanfattning",
+        "description": "Välj en ansluten AI-leverantör för att sammanfatta detta samtal.",
+        "noProviderTitle": "Ingen AI-leverantör ansluten",
+        "noProviderDescription": "Anslut en AI-integration för att skapa samtalssammanfattningar.",
+        "connectLink": "Gå till AI-inställningar",
+        "generate": "Skapa",
+        "generating": "Skapar…",
+        "generateFailed": "Det gick inte att skapa sammanfattningen. Försök igen.",
+        "retry": "Försök igen",
+        "emptyTranscriptTooltip": "Detta samtal har ännu ingen transkription att sammanfatta"
+      },
+      "panel": {
+        "eyebrowCalling": "RINGER…",
+        "eyebrowIncoming": "INKOMMANDE SAMTAL",
+        "eyebrowOnCall": "I SAMTAL",
+        "statusPreparing": "Förbereder…",
+        "statusWaitingForMic": "Väntar på mikrofonåtkomst…",
+        "statusDeclined": "Avböjt",
+        "statusCallFailed": "Samtalet misslyckades",
+        "statusCallEnded": "Samtal avslutat",
+        "end": "Avsluta",
+        "minimize": "Minimera",
+        "goToConversation": "Gå till konversationen",
+        "expand": "Expandera",
+        "dismiss": "Stäng",
+        "statusNoAnswer": "Inget svar",
+        "eyebrowCallEnded": "SAMTAL AVSLUTAT",
+        "statusConnectionLost": "Anslutningen förlorades",
+        "ringingListTitle": "{count, plural, one {# inkommande samtal} other {# inkommande samtal}}"
+      },
+      "capability": {
+        "title": "Samtalsbehörighet",
+        "enableCalling": "Aktivera samtal under Inställningar > Kanaler > WhatsApp > Samtal.",
+        "reconnectChannel": "Gå till Inställningar > Kanaler och återanslut WhatsApp-kanalen.",
+        "ok": "OK",
+        "micPermissionTitle": "Mikrofonbehörighet",
+        "dialFailureTitle": "Samtalet kunde inte kopplas"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "Manuellt anslutet nummer",
+        "callsSubscription": "Det här WhatsApp-numret anslöts manuellt. Se till att din Meta-app prenumererar på webhookfältet calls (Meta App Dashboard → WhatsApp → Configuration → Webhook fields → calls) — annars går utgående samtal inte att koppla upp och inkommande samtal ringer inte.",
+        "unsignedWebhook": "Det här numret har inte heller någon Meta App Secret konfigurerad, så dess inkommande webhooks är inte signaturverifierade.",
+        "callAnyway": "Ring ändå"
+      },
+      "replaceConfirm": {
+        "title": "Avsluta samtalet med {current}?",
+        "description": "Du är i ett samtal med {current}. Om du svarar {incoming} avslutas det samtalet direkt.",
+        "confirm": "Avsluta och svara",
+        "cancel": "Stanna kvar i samtalet"
+      },
+      "answerCaller": "Svara på samtal från {name}",
+      "rejectCaller": "Avvisa samtal från {name}",
+      "hours": {
+        "title": "Samtalstider",
+        "description": "Kunder kan bara ringa det här numret under dessa tider. Utanför dem erbjuder WhatsApp att chatta i stället eller, om återuppringningsförfrågningar är aktiverade, att be om att bli uppringd, och visar när de kan ringa nästa gång.",
+        "enabledLabel": "Ta endast emot samtal under samtalstiderna",
+        "timezoneLabel": "Tidszon",
+        "closed": "Stängt",
+        "openTimeLabel": "{day}: öppnar kl.",
+        "closeTimeLabel": "{day}: stänger kl.",
+        "addRangeLabel": "Lägg till tider för {day}",
+        "removeRangeLabel": "Ta bort tider för {day}",
+        "overnightHint": "Varje dag slutar kl. 23:59. För att ha öppet efter midnatt lägger du till de återstående timmarna på nästa dag.",
+        "days": {
+          "monday": "Måndag",
+          "tuesday": "Tisdag",
+          "wednesday": "Onsdag",
+          "thursday": "Torsdag",
+          "friday": "Fredag",
+          "saturday": "Lördag",
+          "sunday": "Söndag"
+        },
+        "errors": {
+          "rangeOrder": "Stängningstiden måste vara efter öppningstiden.",
+          "rangeOverlap": "Tiderna den här dagen överlappar.",
+          "noOpenHours": "Lägg till tider för minst en dag."
+        }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "Samtal",
+        "subtitle": "Samtalshistorik för detta arbetsområde",
+        "emptyTitle": "Inga samtal ännu",
+        "emptyDescription": "Samtal visas här när ditt team börjar ringa eller ta emot WhatsApp-samtal.",
+        "loadMore": "Ladda fler",
+        "allActivity": "Alla samtal",
+        "filterMissed": "Missade",
+        "filterNoReply": "Inget svar",
+        "allInboxes": "Alla inkorgar",
+        "allAgents": "Alla agenter",
+        "columnContact": "Kontakt",
+        "columnInbox": "Inkorg",
+        "columnDirection": "Riktning",
+        "columnAgent": "Agent",
+        "columnDuration": "Varaktighet",
+        "columnDate": "Datum",
+        "directionInbound": "Inkommande",
+        "directionOutbound": "Utgående",
+        "kindOngoing": "Pågående",
+        "kindAnsweredInbound": "Besvarat",
+        "kindAnsweredOutbound": "Besvarat",
+        "openConversation": "Öppna konversation",
+        "unknownContact": "Okänd kontakt",
+        "emptyFilteredTitle": "Inga samtal matchar detta filter",
+        "emptyFilteredDescription": "Prova ett annat filter eller rensa det för att se alla samtal.",
+        "loadMoreError": "Det gick inte att läsa in fler samtal. Försök igen.",
+        "callInformation": "Samtalsinformation"
+      }
     }
   },
   "workspace": {
@@ -5369,7 +5654,8 @@
       "title": "Taggsynkronisering",
       "toggleSuccess": "Inställningen för taggsynkronisering har uppdaterats."
     },
-    "title": "Zalo OA"
+    "title": "Zalo OA",
+    "refreshPermissions": "Uppdatera behörigheter"
   },
   "bookingWebview": {
     "metadataTitle": "Boka tid",
@@ -5666,7 +5952,8 @@
     "connectViaFacebook": "Anslut via Facebook",
     "unsupportedExplanation": "Det här Instagram-kontot anslöts med Instagram Business Login. Anslut kontot via Facebook för att använda Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "WhatsApp-händelser skickas endast för konversationer som startade från en klicka-till-WhatsApp-annons."
+      "whatsappNote": "WhatsApp-händelser skickas endast för konversationer som startade från en klicka-till-WhatsApp-annons.",
+      "description": "Köa en LeadSubmitted-händelse för Messenger, Instagram eller WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",

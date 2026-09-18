@@ -14,6 +14,7 @@ import {
   dmConversationUsesSourceId,
 } from "@chatbotx.io/database/partials"
 import {
+  assignUserIfUnassigned,
   createMessageRepository,
   getSafeSinceTime,
 } from "@chatbotx.io/database/repositories"
@@ -889,6 +890,7 @@ class ConversationService extends BaseService {
       conversations,
       assignedUserId,
       assignedInboxTeamId,
+      assignedBy,
       triggerContext,
       tx = db,
     } = props
@@ -903,6 +905,46 @@ class ConversationService extends BaseService {
         ),
       )
       .returning()
+
+    await this.publishAssignmentChanges({
+      workspaceId,
+      conversations: updated,
+      assignedUserId,
+      assignedInboxTeamId,
+      assignedBy,
+      triggerContext,
+    })
+
+    return updated
+  }
+
+  /**
+   * Side effects of an assignment write, extracted so claimForCallAgent can
+   * trigger the same publish from its own UPDATE. Built from the rows the
+   * caller's UPDATE actually returned, never intended input; an empty
+   * conversations result is a no-op.
+   */
+  private async publishAssignmentChanges(props: {
+    workspaceId: string
+    conversations: { id: string; contactId: string }[]
+    assignedUserId: string | null
+    assignedInboxTeamId: string | null
+    assignedBy?: string
+    triggerContext: TriggerContext
+  }): Promise<void> {
+    const {
+      workspaceId,
+      conversations,
+      assignedUserId,
+      assignedInboxTeamId,
+      assignedBy,
+      triggerContext,
+    } = props
+    if (conversations.length === 0) {
+      return
+    }
+    const ids = conversations.map((c) => c.id)
+
     await this.invalidate({ workspaceId, ids })
 
     await this.broadcastConversationEvent(workspaceId, {
@@ -917,7 +959,7 @@ class ConversationService extends BaseService {
       data: { conversationIds: ids, assignedUserId, assignedInboxTeamId },
     })
 
-    if (assignedUserId && assignedUserId !== props.assignedBy) {
+    if (assignedUserId && assignedUserId !== assignedBy) {
       try {
         await notificationQueue.addBulk(
           conversations.map((conv) => ({
@@ -945,7 +987,7 @@ class ConversationService extends BaseService {
           conv.contactId,
           conv.id,
           assignedTo,
-          props.assignedBy,
+          assignedBy,
         )
         emit("analytics:dashboard", {
           eventType: "conversation:assigned",
@@ -960,7 +1002,7 @@ class ConversationService extends BaseService {
           workspaceId,
           conv.contactId,
           conv.id,
-          props.assignedBy,
+          assignedBy,
         )
         emit("analytics:dashboard", {
           eventType: "conversation:unassigned",
@@ -971,8 +1013,41 @@ class ConversationService extends BaseService {
         })
       }
     }
+  }
 
-    return updated
+  /**
+   * Auto-assign on call answer/dial. Claims only when unassigned to both a
+   * user and a team — assignUserIfUnassigned's guarded UPDATE is the source
+   * of truth, so a concurrent manual assignment always wins. Never throws on
+   * a losing claim; the call itself must not fail because of this.
+   */
+  async claimForCallAgent(props: {
+    workspaceId: string
+    conversationId: string
+    userId: string
+    triggerHandler: string
+    tx?: DatabaseClient
+  }): Promise<ConversationModel[]> {
+    const { workspaceId, conversationId, userId, triggerHandler, tx } = props
+    const claimed = await assignUserIfUnassigned(
+      { workspaceId, conversationId, userId },
+      tx,
+    )
+
+    await this.publishAssignmentChanges({
+      workspaceId,
+      conversations: claimed,
+      assignedUserId: userId,
+      assignedInboxTeamId: null,
+      assignedBy: userId,
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler,
+        triggerType: "conversation_assigned",
+      },
+    })
+
+    return claimed
   }
 
   async updateBotEnabled(props: {

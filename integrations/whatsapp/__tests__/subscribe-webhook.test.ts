@@ -60,6 +60,30 @@ describe("subscribeWebhook", () => {
     expect(options.headers.Authorization).toBe("Bearer tok-abc")
   })
 
+  // The WABA `subscribed_apps` payload is documented as
+  // taking only `override_callback_uri`/`verify_token` (+ our long-standing
+  // `subscribed_fields`) — `calls` field subscription is app-level
+  // (`/{app-id}/subscriptions`, see `app-subscriptions.ts`) and must never be
+  // folded into this body.
+  it("never sends a 'calls' field or app-subscription params on the WABA payload", async () => {
+    postMock.mockReturnValueOnce(okResponse())
+
+    await subscribeWebhook({
+      auth: buildAuth(),
+      includeAutomaticEvents: true,
+      overrideCallbackUrl: true,
+    })
+
+    const [, options] = postMock.mock.calls[0]
+    expect(options.json.subscribed_fields).not.toContain("calls")
+    expect(options.json.subscribed_fields).not.toContain(
+      "account_settings_update",
+    )
+    expect(Object.keys(options.json).sort()).toEqual(
+      ["override_callback_uri", "subscribed_fields", "verify_token"].sort(),
+    )
+  })
+
   it("posts automatic_events when includeAutomaticEvents=true", async () => {
     postMock.mockReturnValueOnce(okResponse())
 
@@ -110,7 +134,7 @@ describe("subscribeWebhook", () => {
   // H8 — override_callback_uri inverted-logic tests
   // -------------------------------------------------------------------------
 
-  it("H8(1): falls back to env override_callback_uri when overrideCallbackUrl=false and env set", async () => {
+  it("falls back to env override_callback_uri when overrideCallbackUrl=false and env set", async () => {
     // Deployment-level override (WHATSAPP_OVERRIDE_CALLBACK_URI) must apply on
     // the standard connect path where the caller does not pass
     // overrideCallbackUrl — this is how self-hosted/dev/staging route Meta
@@ -136,7 +160,7 @@ describe("subscribeWebhook", () => {
     }
   })
 
-  it("H8(2): uses metadata.webhookUrl when overrideCallbackUrl=true", async () => {
+  it("uses metadata.webhookUrl when overrideCallbackUrl=true", async () => {
     // When the caller explicitly requests an override, the URL comes from
     // auth.metadata.webhookUrl — not from the env var.
     const prev = process.env.WHATSAPP_OVERRIDE_CALLBACK_URI

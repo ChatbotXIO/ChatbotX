@@ -125,6 +125,8 @@ export type IncomingMessage = {
     | MessageTemplateEntity
     | MessageWhatsappFlowResponseEntity
     | MessageStoryReplyEntity
+    | MessageWhatsappCallEntity
+    | MessageWhatsappCallPermissionReplyEntity
     | { [x: string]: unknown }
   attachments?: IncomingAttachment[]
   clientId?: string | null
@@ -153,6 +155,111 @@ export type MessageStoryReplyEntity = {
 }
 
 /**
+ * Written when a WhatsApp call terminates. The single progressive activity message for a
+ * call — recording/transcript/summary handlers enrich it in place via messageContentUpdated
+ * rather than creating a second message. callId is the DB WhatsappCall.id.
+ */
+export type MessageWhatsappCallEntity = {
+  type: "whatsapp_call"
+  direction: "userInitiated" | "businessInitiated"
+  /**
+   * canceled is a display-only refinement of a not-answered outbound call
+   * (agent hung up before pickup, vs failed meaning the customer never
+   * answered). Not a DB WhatsappCall.status value; derived from the business-
+   * cancel marker on the row.
+   */
+  status: "completed" | "failed" | "rejected" | "canceled"
+  /** Billed talk time (Meta duration): answer to hangup. */
+  durationSeconds?: number
+  /**
+   * Time-to-answer (ring wait) from placement to answer. Absent when the answer
+   * timestamp is unknown.
+   */
+  answerSeconds?: number
+  /** DB WhatsappCall.id. */
+  callId?: string
+  /**
+   * ISO time this call opened or refreshed the 24-hour customer service window;
+   * absent when it did not. A user's call always opens it; a business call only
+   * once accepted.
+   */
+  customerServiceWindowOpenedAt?: string
+  hasRecording?: boolean
+  /**
+   * Whether a recording was requested (the number's Record calls setting at
+   * hangup time). Gates the processing placeholder so a call that never
+   * requested recording shows no player row.
+   */
+  recordingRequested?: boolean
+  /** Requested at hangup time, per workspace/integration setting. */
+  transcriptionRequested?: boolean
+  hasTranscript?: boolean
+  hasSummary?: boolean
+  recordingExpired?: boolean
+  /**
+   * True when this call will never have a recording even though the number
+   * records calls (Meta refused the announcement, or capture never started).
+   * Distinct from recordingExpired (existed, then aged out).
+   */
+  recordingUnavailable?: boolean
+  /**
+   * Snapshotted at finalize time, never re-resolved, so a later rename or
+   * deletion can't rewrite history. Also populated for outbound VoIP calls with
+   * the INITIATING agent, not necessarily who answered - the card derives its
+   * label from direction instead.
+   */
+  agentUserId?: string
+  /**
+   * Display-name snapshot paired with agentUserId, resolved once at finalize.
+   * Absent if the id couldn't be resolved - card renders no agent line rather
+   * than an empty label.
+   */
+  agentName?: string
+  /**
+   * Meta's raw diagnosis for why the call ended badly, carried verbatim from
+   * the terminate webhook (e.g. a media-drop code when answered but no audio
+   * was received). May be just an error code with no explanation. Absent when
+   * there was no terminate-reported error.
+   */
+  failureReason?: string
+}
+
+/**
+ * Carried on the message written when a contact answers a business-calling
+ * permission request. Worker persists the grant state; inbox renders a
+ * localized label.
+ */
+export type MessageWhatsappCallPermissionReplyEntity = {
+  type: "whatsapp_call_permission_reply"
+  response: "accept" | "reject"
+  isPermanent?: boolean
+  /** Unix seconds; absent for permanent grants. */
+  expirationTimestamp?: number
+  responseSource?: string
+}
+
+/**
+ * Marks an outgoing message as a business-calling permission request; the
+ * WhatsApp send handler renders it as the call_permission_request interactive
+ * instead of plain text.
+ */
+export type MessageWhatsappCallPermissionRequestEntity = {
+  type: "whatsapp_call_permission_request"
+}
+
+export const getWhatsappCallPermissionRequest = (
+  contentAttributes: unknown,
+): MessageWhatsappCallPermissionRequestEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string }
+  return attrs.type === "whatsapp_call_permission_request"
+    ? (contentAttributes as MessageWhatsappCallPermissionRequestEntity)
+    : undefined
+}
+
+/**
  * Extracts the story-reply payload from a message's contentAttributes,
  * accepting both the current `{ type: "story_reply", story }` shape and the
  * legacy `{ storyReply }` shape some already-persisted rows still carry.
@@ -171,6 +278,89 @@ export const getStoryReply = (
     storyReply?: MessageStoryReplyEntity["story"]
   }
   return attrs.type === "story_reply" ? attrs.story : attrs.storyReply
+}
+
+/**
+ * Centralized so the worker (writer) and inbox renderer (reader) cannot drift
+ * on the shape check.
+ */
+export const getWhatsappCallEntity = (
+  contentAttributes: unknown,
+): MessageWhatsappCallEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string }
+  return attrs.type === "whatsapp_call"
+    ? (contentAttributes as MessageWhatsappCallEntity)
+    : undefined
+}
+
+/**
+ * A contact's message always opens the window; an activity card only when it
+ * explicitly carries the moment - the server decides so callers never re-derive
+ * channel window policy.
+ */
+export const resolveMessagingWindowOpenedAt = (message: {
+  messageType: string
+  createdAt: Date | string
+  contentAttributes?: unknown
+}): Date | null => {
+  const openedAt =
+    message.messageType === "incoming"
+      ? message.createdAt
+      : getWhatsappCallEntity(message.contentAttributes)
+          ?.customerServiceWindowOpenedAt
+  return openedAt ? new Date(openedAt) : null
+}
+
+/**
+ * Sentinel written to WhatsappCall.lastError by the agent-hangup path for an
+ * outbound call that was never answered - distinguishes business-cancelled from
+ * customer-never-picked-up (both otherwise land on status failed). Exact-match
+ * discriminator only, never shown to users.
+ */
+export const CALL_CANCELED_BY_BUSINESS_LAST_ERROR = "canceled_by_business"
+
+export type WhatsappCallActivityLabelKey =
+  | "declinedVoiceCall"
+  | "missedVoiceCall"
+  | "unansweredVoiceCall"
+  | "canceledVoiceCall"
+
+/**
+ * Single source of truth for a non-completed call outcome's label (completed is excluded —
+ * it renders the full player card, not a flat label). Wording is direction-aware: labeling a
+ * not-answered outbound call "missed" would wrongly blame the business.
+ */
+export const resolveWhatsappCallActivityLabelKey = (
+  status: Exclude<MessageWhatsappCallEntity["status"], "completed">,
+  direction: MessageWhatsappCallEntity["direction"],
+): WhatsappCallActivityLabelKey => {
+  if (status === "canceled") {
+    // The agent hung up before the call connected - never "no answer" or
+    // "missed".
+    return "canceledVoiceCall"
+  }
+  if (status === "rejected") {
+    return "declinedVoiceCall"
+  }
+  return direction === "userInitiated"
+    ? "missedVoiceCall"
+    : "unansweredVoiceCall"
+}
+
+export const getWhatsappCallPermissionReply = (
+  contentAttributes: unknown,
+): MessageWhatsappCallPermissionReplyEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as { type?: string; response?: unknown }
+  return attrs.type === "whatsapp_call_permission_reply" &&
+    (attrs.response === "accept" || attrs.response === "reject")
+    ? (contentAttributes as MessageWhatsappCallPermissionReplyEntity)
+    : undefined
 }
 
 export const MessageEntitySchema = z.custom<IncomingMessage>(

@@ -301,11 +301,35 @@ export interface IMessageRepository {
     params: HardDeleteAllByContactInboxParams,
   ): Promise<HardDeleteAllByContactInboxResult>
 
+  /** Whether a message already carries an attachment of this type — lets a
+   * retryable pipeline re-run its attach step without duplicating the file. */
+  hasAttachmentOfType(props: {
+    workspaceId: string
+    messageId: string
+    messageCreatedAt: Date
+    fileType: BulkCreateAttachmentInput["fileType"]
+  }): Promise<boolean>
+
   listByConversation(query: ListMessagesQuery): Promise<PaginatedMessages>
 
   listIncomingTextsByContactInbox(
     params: ListIncomingTextsByContactInboxParams,
   ): Promise<string[]>
+
+  /**
+   * Atomically merges `overlay` into `contentAttributes` via a DB-side `jsonb ||`
+   * UPDATE, never read-modify-write — two webhooks racing on disjoint keys (e.g.
+   * `hasRecording` vs `hasTranscript`) each merge without clobbering the other.
+   * Returns the merged `contentAttributes`, or `null` if no row matched.
+   */
+  mergeContentAttributesBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    overlay: Record<string, unknown>,
+  ): Promise<{
+    id: string
+    contentAttributes: Record<string, unknown> | null
+  } | null>
 
   updateAttachment(params: UpdateAttachmentParams): Promise<void>
 
@@ -319,6 +343,15 @@ export interface IMessageRepository {
     workspaceId: string,
     contentAttributes: Record<string, unknown>,
     createdAt: Date,
+  ): Promise<{ id: string } | null>
+
+  updateContentBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    patch: {
+      text?: string | null
+      contentAttributes?: Record<string, unknown> | null
+    },
   ): Promise<{ id: string } | null>
 
   updateMessageAttributes(

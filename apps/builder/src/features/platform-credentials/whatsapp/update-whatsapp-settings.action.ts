@@ -5,8 +5,43 @@ import {
   type WhatsappCredential,
   whatsappCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
+import { getTranslations } from "next-intl/server"
+import { ensureWhatsappCallsWebhookSubscribed } from "@/features/integration-whatsapp/libs/ensure-calls-webhook-subscribed"
+import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { credentialScopeSchema, resolveCredentialScopedUserId } from "../scope"
+
+/**
+ * Best-effort app-level `calls` webhook field subscription right after the
+ * app credentials are saved. Never fails the settings save
+ * — a failure here only means the Calls-card preflight keeps surfacing
+ * "not subscribed" for a super-admin to retry.
+ */
+async function ensureCallsWebhookSubscribed(
+  config: Pick<WhatsappCredential, "clientId" | "clientSecret" | "verifyToken">,
+): Promise<string | undefined> {
+  const t = await getTranslations()
+
+  try {
+    const result = await ensureWhatsappCallsWebhookSubscribed({
+      appId: config.clientId,
+      appSecret: config.clientSecret,
+      verifyToken: config.verifyToken,
+    })
+
+    if (result.status === "no-subscription") {
+      return t("whatsapp.calls.preflight.appSubscriptionMissing")
+    }
+
+    return
+  } catch (err) {
+    logger.warn(
+      { err, appId: config.clientId },
+      "Unable to subscribe app-level 'calls' webhook field after saving WhatsApp settings",
+    )
+    return t("whatsapp.calls.preflight.appSubscriptionFailed")
+  }
+}
 
 export const updateWhatsappSettingsAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
@@ -30,4 +65,8 @@ export const updateWhatsappSettingsAction = authActionClient
       type: "whatsapp",
       config,
     })
+
+    const callsSubscriptionWarning = await ensureCallsWebhookSubscribed(config)
+
+    return { callsSubscriptionWarning }
   })

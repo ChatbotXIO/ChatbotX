@@ -4,6 +4,7 @@ import {
   isWhatsappNativeLocationRequest,
   type MessageButtonTemplate,
   NATIVE_LOCATION_REQUEST_CHANNELS,
+  resolveMessagingWindowOpenedAt,
   URL_QUICK_REPLY_CAPABLE_CHANNELS,
   WHATSAPP_NATIVE_LOCATION_REQUEST,
 } from "../src"
@@ -93,5 +94,68 @@ describe("isWhatsappNativeLocationRequest", () => {
 
     expect(isWhatsappNativeLocationRequest([button])).toBe(false)
     expect(isWhatsappNativeLocationRequest(undefined)).toBe(false)
+  })
+})
+
+describe("resolveMessagingWindowOpenedAt", () => {
+  const createdAt = new Date("2026-09-18T10:00:00Z")
+
+  test("a contact's message opens the window when it arrived", () => {
+    expect(
+      resolveMessagingWindowOpenedAt({ messageType: "incoming", createdAt }),
+    ).toEqual(createdAt)
+  })
+
+  test("accepts the string form a realtime payload delivers", () => {
+    expect(
+      resolveMessagingWindowOpenedAt({
+        messageType: "incoming",
+        createdAt: createdAt.toISOString(),
+      }),
+    ).toEqual(createdAt)
+  })
+
+  test("a call card opens it at the moment the server stamped, not when the card was written", () => {
+    const openedAt = "2026-09-18T09:55:00.000Z"
+    expect(
+      resolveMessagingWindowOpenedAt({
+        messageType: "activity",
+        createdAt,
+        contentAttributes: {
+          type: "whatsapp_call",
+          direction: "userInitiated",
+          status: "failed",
+          customerServiceWindowOpenedAt: openedAt,
+        },
+      }),
+    ).toEqual(new Date(openedAt))
+  })
+
+  test("a call card without the stamp opens nothing", () => {
+    expect(
+      resolveMessagingWindowOpenedAt({
+        messageType: "activity",
+        createdAt,
+        contentAttributes: {
+          type: "whatsapp_call",
+          direction: "businessInitiated",
+          status: "failed",
+        },
+      }),
+    ).toBeNull()
+  })
+
+  test.each([
+    ["outgoing", undefined],
+    ["activity", { type: "note" }],
+    ["activity", undefined],
+  ])("a %s message with %o opens nothing", (messageType, contentAttributes) => {
+    expect(
+      resolveMessagingWindowOpenedAt({
+        messageType,
+        createdAt,
+        contentAttributes,
+      }),
+    ).toBeNull()
   })
 })

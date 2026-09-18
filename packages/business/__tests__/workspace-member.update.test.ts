@@ -33,6 +33,10 @@ vi.mock("@chatbotx.io/database/utils", () => ({
   likeContains: (value: string) => `%${value}%`,
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  workspaceMemberRepository: { listPermissionsByUserIds: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn(),
   invalidateCacheByTags: mocks.invalidateCacheByTags,

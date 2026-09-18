@@ -14,6 +14,7 @@ const {
   mockInvalidateCacheByTags,
   mockIsCommunity,
   mockQuotaHasReachedLimit,
+  mockRevokeWorkspaceMemberConnections,
   mockUpdateMember,
   mockWorkspaceFindById,
   mockWorkspaceMemberServiceDelete,
@@ -35,6 +36,7 @@ const {
     mockInvalidateCacheByTags: vi.fn(),
     mockIsCommunity: vi.fn(),
     mockQuotaHasReachedLimit: vi.fn(),
+    mockRevokeWorkspaceMemberConnections: vi.fn(),
     mockUpdateMember: vi.fn(),
     mockWorkspaceFindById: vi.fn(),
   }
@@ -65,6 +67,7 @@ vi.mock("@chatbotx.io/business", () => ({
   quotaEnforcementService: {
     hasReachedLimit: mockQuotaHasReachedLimit,
   },
+  revokeWorkspaceMemberConnections: mockRevokeWorkspaceMemberConnections,
   userService: {
     findNameAndEmail: mockFindNameAndEmail,
   },

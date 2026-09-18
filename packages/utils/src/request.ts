@@ -36,7 +36,13 @@ export function getPublicProtocolFromRequest(
   return request.url.startsWith("http://") ? "http" : "https"
 }
 
-export function getPublicHostFromRequest(request: Request): string {
+/**
+ * Same resolution as {@link getPublicHostFromRequest} but without its `localhost:3123`
+ * fallback — `null` when unresolved. Use for checks that must tell "genuinely unknown" apart
+ * from a dev-only invented default (e.g. same-site comparisons); use
+ * {@link getPublicHostFromRequest} for building a URL.
+ */
+export function getRawPublicHostFromRequest(request: Request): string | null {
   const forwarded = request.headers.get("forwarded")
   const forwardedHost = normalizeHost(extractForwardedValue(forwarded, "host"))
   if (forwardedHost) {
@@ -50,12 +56,11 @@ export function getPublicHostFromRequest(request: Request): string {
     return xForwardedHost
   }
 
-  const host = normalizeHost(request.headers.get("host"))
-  if (host) {
-    return host
-  }
+  return normalizeHost(request.headers.get("host"))
+}
 
-  return "localhost:3123"
+export function getPublicHostFromRequest(request: Request): string {
+  return getRawPublicHostFromRequest(request) ?? "localhost:3123"
 }
 
 function extractForwardedValue(

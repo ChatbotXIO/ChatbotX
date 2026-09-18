@@ -2,7 +2,10 @@ import {
   uploader as defaultUploader,
   getStoragePrefix,
 } from "@chatbotx.io/filesystem"
-import { signRealtimeToken } from "@chatbotx.io/partysocket-config/auth"
+import {
+  REALTIME_TOKEN_PURPOSE,
+  signRealtimeToken,
+} from "@chatbotx.io/partysocket-config/auth"
 import type { AuthStore, AuthValue, Context } from "@chatbotx.io/sdk"
 import {
   resolveBroadcastSecret,
@@ -16,7 +19,11 @@ type GetRealtimeAuthHeaders =
 const buildGetRealtimeAuthHeaders =
   (secret: string): GetRealtimeAuthHeaders =>
   async (target) => {
-    const token = await signRealtimeToken(target, secret)
+    const token = await signRealtimeToken(
+      target,
+      REALTIME_TOKEN_PURPOSE.broadcast,
+      secret,
+    )
     return { Authorization: `Bearer ${token}` }
   }
 

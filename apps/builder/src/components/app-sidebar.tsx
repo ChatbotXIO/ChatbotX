@@ -15,6 +15,7 @@ import {
   LightbulbIcon,
   type LucideIcon,
   MessageCircleMoreIcon,
+  PhoneCallIcon,
   RadioIcon,
   SlidersHorizontalIcon,
   UsersIcon,
@@ -46,6 +47,10 @@ type SidebarNavItem = {
   url: string
   icon: LucideIcon
   permission: WorkspacePermissionKey
+  /** Only present for items with an extra visibility rule beyond the
+   * permission check below — computed once in the workspace layout via
+   * `resolveWorkspaceRealtimeGates`. */
+  visible?: boolean
 }
 
 const SETTINGS_GENERAL_URL_SEGMENT = "/settings/general"
@@ -53,6 +58,7 @@ const SETTINGS_GENERAL_URL_SEGMENT = "/settings/general"
 export function AppSidebar({
   workspaceId,
   allWorkspaces,
+  callHistoryNavVisible,
   isSuperAdmin,
   isPlatformAdmin,
   permissions,
@@ -62,6 +68,9 @@ export function AppSidebar({
 }: ComponentProps<typeof Sidebar> & {
   workspaceId: string
   allWorkspaces: WorkspaceResource[]
+  /** Gates the Calls nav item: call-history permission AND a connected
+   * call-capable channel. */
+  callHistoryNavVisible: boolean
   isSuperAdmin?: boolean
   isPlatformAdmin?: boolean
   // Runtime may be a partial object (the jsonb column defaults to `{}`);
@@ -111,6 +120,13 @@ export function AppSidebar({
         permission: PERMISSION_NAV.flows,
       },
       {
+        title: t("whatsapp.calls.page.title"),
+        url: `/space/${workspaceId}/calls`,
+        icon: PhoneCallIcon,
+        permission: PERMISSION_NAV.contacts,
+        visible: callHistoryNavVisible,
+      },
+      {
         title: t("keywords.title"),
         url: `/space/${workspaceId}/automated-responses`,
         icon: AtomIcon,
@@ -155,20 +171,26 @@ export function AppSidebar({
     ] satisfies SidebarNavItem[],
   }
 
-  const navMain = data.navMain
-    .filter((item) =>
-      // Items gated on the `contacts` flag (Contacts, Inbox) use the shared
-      // contacts-access rule, which also admits assigned-only members.
-      item.permission === PERMISSION_NAV.contacts
-        ? hasContactsAccess(permissions)
-        : hasWorkspacePermission(permissions, item.permission),
-    )
-    .map((item) => ({
-      ...item,
-      disabled:
-        scheduledForDeletion &&
-        !item.url.endsWith(SETTINGS_GENERAL_URL_SEGMENT),
-    }))
+  const isNavItemVisible = (item: SidebarNavItem): boolean => {
+    // `visible` overrides the default single-permission gate below for an
+    // item whose rule isn't a plain permission flag (Calls, see
+    // `callHistoryNavVisible`).
+    if (item.visible !== undefined) {
+      return item.visible
+    }
+    // Items gated on the `contacts` flag (Contacts, Inbox) use the shared
+    // contacts-access rule, which also admits assigned-only members.
+    if (item.permission === PERMISSION_NAV.contacts) {
+      return hasContactsAccess(permissions)
+    }
+    return hasWorkspacePermission(permissions, item.permission)
+  }
+
+  const navMain = data.navMain.filter(isNavItemVisible).map((item) => ({
+    ...item,
+    disabled:
+      scheduledForDeletion && !item.url.endsWith(SETTINGS_GENERAL_URL_SEGMENT),
+  }))
 
   return (
     <Sidebar collapsible="icon" {...props}>

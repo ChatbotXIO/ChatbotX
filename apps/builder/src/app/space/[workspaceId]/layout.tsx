@@ -1,4 +1,5 @@
 import {
+  inboxService,
   integrationService,
   isPlatformAdmin,
   isSuperAdmin,
@@ -14,6 +15,7 @@ import {
   SidebarTrigger,
 } from "@chatbotx.io/ui/components/ui/sidebar"
 import { getIdFromParams } from "@chatbotx.io/utils"
+import { CALL_CAPABLE_CHANNELS } from "@chatbotx.io/utils/channel"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
@@ -24,6 +26,7 @@ import { ScheduledDeletionBanner } from "@/components/scheduled-deletion-banner"
 import { SupportAccessBanner } from "@/components/support-access-banner"
 import { TokenRefreshErrorDialog } from "@/components/token-refresh-error-dialog"
 import { WorkspaceDeletionTabSync } from "@/components/workspace-deletion-tab-sync"
+import { WorkspaceRealtimeShell } from "@/components/workspace-realtime-shell"
 import { isCloud } from "@/env"
 import { AnalyticsApiProvider } from "@/features/analytics/components/analytics-api-provider"
 import { CouponTopicStoreProvider } from "@/features/coupons/provider/coupon-topic-store-context"
@@ -33,6 +36,7 @@ import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
 import { buildWorkspaceQuotaMetrics } from "@/lib/quota-metrics"
 import { enforceWorkspaceNotScheduledForDeletionFromRequest } from "@/lib/workspace/require-not-scheduled-for-deletion"
+import { resolveWorkspaceRealtimeGates } from "@/lib/workspace/resolve-workspace-realtime-gates"
 import { resolveWorkspaceBlockState } from "@/lib/workspace-quota"
 
 export default async function WorkspaceLayout({
@@ -82,6 +86,7 @@ export default async function WorkspaceLayout({
     { blocked, blockReason, quota, trialEndsAt },
     usage,
     tokenRefreshErrors,
+    hasCallCapableChannel,
   ] = await Promise.all([
     resolveWorkspaceBlockState(targetWorkspace.ownerId),
     cloud
@@ -91,6 +96,13 @@ export default async function WorkspaceLayout({
         })
       : null,
     integrationService.findTokenRefreshErrorsByWorkspaceId(workspaceId),
+    // Gates the sidebar's Calls entry only (see `callHistoryNavVisible`):
+    // a workspace that has never connected a call-capable channel can never
+    // have call rows, so the entry would lead to a permanently empty page.
+    inboxService.hasAnyChannel({
+      workspaceId,
+      channels: CALL_CAPABLE_CHANNELS,
+    }),
   ])
 
   await enforceWorkspaceNotScheduledForDeletionFromRequest(
@@ -127,6 +139,15 @@ export default async function WorkspaceLayout({
 
   const scheduledForDeletion = isWorkspaceScheduledForDeletion(targetWorkspace)
 
+  const realtimeGates = resolveWorkspaceRealtimeGates({
+    permissions: targetWorkspaceMember.permissions,
+    isSupportSession,
+    scheduledForDeletion,
+    cloud,
+    blocked,
+    hasCallCapableChannel,
+  })
+
   return (
     // `has-data-full-bleed:h-svh` caps the shell at the viewport for pages
     // that own the whole screen (the inbox — see `components/full-bleed.tsx`).
@@ -141,6 +162,7 @@ export default async function WorkspaceLayout({
     >
       <AppSidebar
         allWorkspaces={allWorkspaces}
+        callHistoryNavVisible={realtimeGates.callHistoryNavVisible}
         isPlatformAdmin={platformAdmin}
         isSuperAdmin={isSuperAdmin(user)}
         permissions={targetWorkspaceMember.permissions}
@@ -178,7 +200,13 @@ export default async function WorkspaceLayout({
               autoInitialize={false}
               workspaceId={workspaceId}
             >
-              {children}
+              <WorkspaceRealtimeShell
+                callHistoryEnabled={realtimeGates.callHistoryEnabled}
+                callingEnabled={realtimeGates.callingEnabled}
+                realtimeEnabled={realtimeGates.realtimeEnabled}
+              >
+                {children}
+              </WorkspaceRealtimeShell>
             </CouponTopicStoreProvider>
           </AnalyticsApiProvider>
         </main>
