@@ -89,6 +89,52 @@ class WhatsappCallPermissionService {
     })
   }
 
+  /**
+   * Mirrors a grant the PROVIDER reported (Meta's `call_permissions` GET)
+   * rather than one a consumer replied with, so the next read for this
+   * contact is answered from the record instead of going back to Meta.
+   *
+   * Only a grant is ever mirrored. Writing `noPermission` would give the
+   * record an answer for every contact it was asked about and permanently
+   * silence the provider lookup that feeds it — and that lookup is the only
+   * way to learn about a consumer who granted permission by CALLING the
+   * business, which sends no reply message at all.
+   *
+   * A `temporary` grant is mirrored only when the provider also said when it
+   * expires: without an expiry {@link resolveStatus} reads the record as
+   * `noPermission`, which would cache exactly the negative this method
+   * refuses to write. No expiry, no write — the next read asks again.
+   *
+   * Returns whether anything was written, so callers can log/test the
+   * distinction rather than infer it.
+   */
+  async mirrorProviderGrant(input: {
+    workspaceId: string
+    contactInboxId: string
+    status: CallPermissionStatus
+    /** The provider's expiry for a temporary grant, in Unix seconds. */
+    expirationTimestamp?: number | null
+    observedAt?: Date
+  }): Promise<boolean> {
+    const isPermanent = input.status === callPermissionStatuses.permanent
+    if (!(isPermanent || input.status === callPermissionStatuses.temporary)) {
+      return false
+    }
+    if (!(isPermanent || input.expirationTimestamp)) {
+      return false
+    }
+
+    await this.recordReply({
+      workspaceId: input.workspaceId,
+      contactInboxId: input.contactInboxId,
+      response: "accept",
+      isPermanent,
+      expirationTimestamp: isPermanent ? null : input.expirationTimestamp,
+      respondedAt: input.observedAt ?? new Date(),
+    })
+    return true
+  }
+
   /** Resolves the contact's permission from the local record only — never calls Meta. */
   async resolveStatus(
     contactInboxId: string,

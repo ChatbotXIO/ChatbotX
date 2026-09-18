@@ -111,6 +111,21 @@ export const toCallPermissionStatus = (
 }
 
 /**
+ * Meta's `permission.expiration_time` as Unix seconds, when it sent one. Meta
+ * types the field as number-or-string, and only a temporary grant carries it.
+ */
+export const toPermissionExpirationTimestamp = (
+  response: WhatsappCallPermissionsResponse,
+): number | undefined => {
+  const raw = response.permission?.expiration_time
+  if (raw === undefined || raw === null) {
+    return
+  }
+  const seconds = Number(raw)
+  return Number.isFinite(seconds) ? seconds : undefined
+}
+
+/**
  * Whether Meta will accept another `call_permission_request` for this
  * consumer right now. Meta caps these at 1 per 24 hours and 2 per 7 days and
  * reports the remaining budget on the action itself, so this is the real

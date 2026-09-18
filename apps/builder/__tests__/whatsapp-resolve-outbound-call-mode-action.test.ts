@@ -13,6 +13,7 @@ const {
   findInboxMock,
   findByInboxIdForWorkspaceMock,
   resolveStatusMock,
+  mirrorProviderGrantMock,
   findWorkspaceByIdMock,
   getCallingSettingsMock,
   getCallPermissionsMock,
@@ -24,6 +25,7 @@ const {
   findInboxMock: vi.fn(),
   findByInboxIdForWorkspaceMock: vi.fn(),
   resolveStatusMock: vi.fn(),
+  mirrorProviderGrantMock: vi.fn(),
   findWorkspaceByIdMock: vi.fn(),
   getCallingSettingsMock: vi.fn(),
   getCallPermissionsMock: vi.fn(),
@@ -34,6 +36,10 @@ const {
     async (_key: string, fn: () => Promise<unknown>) => await fn(),
   ),
   canCallConversationMock: vi.fn(),
+}))
+
+vi.mock("@/lib/log", () => ({
+  logger: { warn: vi.fn(), error: vi.fn() },
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -78,7 +84,10 @@ vi.mock("@chatbotx.io/business", () => ({
   canCallConversation: canCallConversationMock,
   conversationService: { findBy: findByMock },
   contactInboxService: { findBy: findInboxMock },
-  whatsappCallPermissionService: { resolveStatus: resolveStatusMock },
+  whatsappCallPermissionService: {
+    resolveStatus: resolveStatusMock,
+    mirrorProviderGrant: mirrorProviderGrantMock,
+  },
   workspaceService: { findById: findWorkspaceByIdMock },
 }))
 
@@ -151,6 +160,7 @@ describe("resolveOutboundCallModeAction", () => {
       },
     })
     resolveStatusMock.mockResolvedValue(undefined)
+    mirrorProviderGrantMock.mockResolvedValue(true)
     getCallPermissionsMock.mockResolvedValue({
       permission: { status: "no_permission" },
       actions: [],
@@ -435,6 +445,42 @@ describe("resolveOutboundCallModeAction", () => {
       expect.any(Function),
       expect.objectContaining({ ttl: 60 }),
     )
+  })
+
+  test("a grant Meta reported is mirrored locally so the next open costs no round trip", async () => {
+    getCallPermissionsMock.mockResolvedValue({
+      permission: { status: "temporary", expiration_time: "1790000000" },
+      actions: [],
+    })
+
+    await call()
+
+    expect(mirrorProviderGrantMock).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactInboxId: "contact-inbox-1",
+      status: "temporary",
+      expirationTimestamp: 1_790_000_000,
+    })
+  })
+
+  test("a failed mirror write never fails the read it rode along with", async () => {
+    getCallPermissionsMock.mockResolvedValue({
+      permission: { status: "permanent" },
+      actions: [],
+    })
+    mirrorProviderGrantMock.mockRejectedValue(new Error("write failed"))
+
+    await expect(call()).resolves.toMatchObject({
+      permissionStatus: "permanent",
+    })
+  })
+
+  test("nothing is mirrored when Meta could not be reached", async () => {
+    getCallPermissionsMock.mockRejectedValue(new Error("meta down"))
+
+    await call()
+
+    expect(mirrorProviderGrantMock).not.toHaveBeenCalled()
   })
 
   test("Meta reporting a permanent grant flips the control to direct-dial — the wiped-mirror case", async () => {

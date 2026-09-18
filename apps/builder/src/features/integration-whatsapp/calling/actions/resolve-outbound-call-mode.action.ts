@@ -20,11 +20,13 @@ import { parsePhoneNumberFromString } from "libphonenumber-js"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { getWhatsappCallingPreflight } from "@/features/integration-whatsapp/calling/get-whatsapp-calling-preflight"
+import { logger } from "@/lib/log"
 import { callingActionClient } from "@/lib/safe-action"
 import { callingSettingsCacheKey } from "../lib/calling-settings-cache"
 import {
   readMetaCallPermissions,
   toCallPermissionStatus,
+  toPermissionExpirationTimestamp,
 } from "../lib/meta-call-permission"
 import { BLOCKED_OUTBOUND_COUNTRIES } from "./blocked-outbound-countries"
 import {
@@ -69,6 +71,7 @@ async function getCachedCallingSettings(
  */
 async function resolveMetaPermissionStatus(props: {
   auth: WhatsappAuthValue
+  workspaceId: string
   integrationId: string
   contactInbox: OutboundDialContactInbox
 }): Promise<CallPermissionStatus | undefined> {
@@ -79,7 +82,36 @@ async function resolveMetaPermissionStatus(props: {
     contactInboxId: props.contactInbox.id,
     target: permissionTarget,
   })
-  return permissions ? toCallPermissionStatus(permissions) : undefined
+  if (!permissions) {
+    return
+  }
+
+  const status = toCallPermissionStatus(permissions)
+  if (!status) {
+    return
+  }
+
+  // Mirror a grant so this contact is answered locally from here on. Without
+  // it the record stays empty forever for everyone who granted permission
+  // before their reply could be recorded — a reply they will never send
+  // again — and every conversation open pays another Meta round trip.
+  // `mirrorProviderGrant` decides what is safe to write; this is a read path,
+  // so a failed write only costs the next read another lookup.
+  try {
+    await whatsappCallPermissionService.mirrorProviderGrant({
+      workspaceId: props.workspaceId,
+      contactInboxId: props.contactInbox.id,
+      status,
+      expirationTimestamp: toPermissionExpirationTimestamp(permissions),
+    })
+  } catch (error) {
+    logger.warn(
+      { err: error, contactInboxId: props.contactInbox.id },
+      "Whatsapp calling: could not mirror the call permission Meta reported",
+    )
+  }
+
+  return status
 }
 
 const resolveOutboundCallModeSchema = z.object({
@@ -285,6 +317,7 @@ export const resolveOutboundCallModeAction = callingActionClient
         (await whatsappCallPermissionService.resolveStatus(contactInbox.id)) ??
         (await resolveMetaPermissionStatus({
           auth,
+          workspaceId,
           integrationId: integration.id,
           contactInbox,
         }))
