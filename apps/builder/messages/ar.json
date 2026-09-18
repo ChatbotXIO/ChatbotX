@@ -2135,6 +2135,7 @@
       "clientId": "معرّف العميل",
       "clientSecret": "سر العميل",
       "displayName": "اسم العرض",
+      "needsReauthorizationForComments": "تم تفويض هذا الاتصال قبل أتمتة التعليقات. أعد الاتصال لبدء تلقي أحداث التعليقات.",
       "connectInstructions": {
         "step1": "أنشئ تطبيق TikTok على <link>developers.tiktok.com</link>.",
         "step2": "امنح حسابك الصلاحية وانسخ <strong>رمز الوصول</strong> و<strong>المعرّف المفتوح</strong> و<strong>سر العميل</strong>.",

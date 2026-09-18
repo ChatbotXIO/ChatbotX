@@ -1810,6 +1810,7 @@
       "clientId": "Client-ID",
       "clientSecret": "Clientgeheim",
       "displayName": "Weergavenaam",
+      "needsReauthorizationForComments": "Deze verbinding is geautoriseerd vóór commentaarautomatisering. Verbind opnieuw om commentaargebeurtenissen te ontvangen.",
       "connectInstructions": {
         "step1": "Maak een TikTok-app aan op <link>developers.tiktok.com</link>.",
         "step2": "Autoriseer je account en kopieer het <strong>toegangstoken</strong>, de <strong>open ID</strong> en het <strong>clientgeheim</strong>.",

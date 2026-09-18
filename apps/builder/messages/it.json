@@ -1270,6 +1270,7 @@
       "clientId": "ID client",
       "clientSecret": "Segreto client",
       "displayName": "Nome visualizzato",
+      "needsReauthorizationForComments": "Questa connessione è stata autorizzata prima dell'automazione dei commenti. Riconnettila per iniziare a ricevere gli eventi dei commenti.",
       "connectInstructions": {
         "step1": "Crea un'app TikTok su <link>developers.tiktok.com</link>.",
         "step2": "Autorizza il tuo account e copia il <strong>token di accesso</strong>, l’<strong>Open ID</strong> e il <strong>segreto client</strong>.",

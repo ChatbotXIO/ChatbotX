@@ -1997,6 +1997,7 @@
       "clientId": "Client-ID",
       "clientSecret": "Client-Secret",
       "displayName": "Anzeigename",
+      "needsReauthorizationForComments": "Diese Verbindung wurde vor der Kommentar-Automatisierung autorisiert. Verbinde sie neu, um Kommentarereignisse zu empfangen.",
       "connectInstructions": {
         "step1": "Erstellen Sie unter <link>developers.tiktok.com</link> eine TikTok-App.",
         "step2": "Autorisieren Sie Ihr Konto und kopieren Sie das <strong>Zugriffstoken</strong>, die <strong>Open ID</strong> und das <strong>Client-Secret</strong>.",

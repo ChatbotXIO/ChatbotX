@@ -2144,6 +2144,7 @@
       "clientId": "Client ID",
       "clientSecret": "Client Secret",
       "displayName": "Display Name",
+      "needsReauthorizationForComments": "This connection was authorized before comment automation. Reconnect it to start receiving comment events.",
       "connectInstructions": {
         "step1": "Create a TikTok app at <link>developers.tiktok.com</link>.",
         "step2": "Authorize your account and copy the <strong>access token</strong>, <strong>open ID</strong>, and <strong>client secret</strong>.",

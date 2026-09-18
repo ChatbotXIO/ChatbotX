@@ -2836,6 +2836,7 @@
         "step3": "粘贴下面的凭证以进行连接。"
       },
       "displayName": "显示名称",
+      "needsReauthorizationForComments": "此连接是在评论自动化之前授权的。请重新连接以开始接收评论事件。",
       "label": "TikTok",
       "openId": "打开ID"
     },

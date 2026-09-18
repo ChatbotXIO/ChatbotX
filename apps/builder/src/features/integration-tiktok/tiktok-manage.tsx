@@ -8,6 +8,12 @@ import {
   TableHeader,
   TableRow,
 } from "@chatbotx.io/ui/components/ui/table"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@chatbotx.io/ui/components/ui/tooltip"
+import { TriangleAlertIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
@@ -72,6 +78,25 @@ export function TiktokManage({
                       <TokenRefreshErrorIcon
                         message={integrationTiktok.tokenRefreshError}
                       />
+                    )}
+                    {/* A connection authorized before comment automation
+                        shipped keeps working for DMs, so nothing else on this
+                        page looks wrong — the comment events simply never
+                        arrive. This is the only place that says so. */}
+                    {integrationTiktok.needsReauthorization && (
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <TriangleAlertIcon
+                            className="text-amber-500"
+                            size={16}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            {t("fields.tiktok.needsReauthorizationForComments")}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                     {integrationTiktok.name}
                   </div>

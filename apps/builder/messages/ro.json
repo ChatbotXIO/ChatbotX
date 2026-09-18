@@ -2816,6 +2816,7 @@
       "clientId": "ID client",
       "clientSecret": "Secret client",
       "displayName": "Nume afișat",
+      "needsReauthorizationForComments": "Această conexiune a fost autorizată înainte de automatizarea comentariilor. Reconectează-o pentru a primi evenimente de comentarii.",
       "connectInstructions": {
         "step1": "Creați o aplicație TikTok la <link>developers.tiktok.com</link>.",
         "step2": "Autorizați-vă contul și copiați <strong>tokenul de acces</strong>, <strong>ID-ul deschis</strong> și <strong>secretul clientului</strong>.",

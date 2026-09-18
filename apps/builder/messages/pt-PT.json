@@ -1997,6 +1997,7 @@
       "clientId": "ID do cliente",
       "clientSecret": "Segredo do cliente",
       "displayName": "Nome a apresentar",
+      "needsReauthorizationForComments": "Esta ligação foi autorizada antes da automação de comentários. Volte a ligar para começar a receber eventos de comentário.",
       "connectInstructions": {
         "step1": "Crie uma aplicação TikTok em <link>developers.tiktok.com</link>.",
         "step2": "Autorize a sua conta e copie o <strong>token de acesso</strong>, o <strong>ID aberto</strong> e o <strong>segredo do cliente</strong>.",

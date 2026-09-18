@@ -1997,6 +1997,7 @@
       "clientId": "Identifiant client",
       "clientSecret": "Secret client",
       "displayName": "Nom affiché",
+      "needsReauthorizationForComments": "Cette connexion a été autorisée avant l'automatisation des commentaires. Reconnectez-la pour recevoir les événements de commentaire.",
       "connectInstructions": {
         "step1": "Créez une application TikTok sur <link>developers.tiktok.com</link>.",
         "step2": "Autorisez votre compte et copiez le <strong>jeton d’accès</strong>, l’<strong>identifiant Open</strong> et le <strong>secret client</strong>.",

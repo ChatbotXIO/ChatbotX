@@ -1270,6 +1270,7 @@
       "clientId": "客戶端ID",
       "clientSecret": "客戶端密碼",
       "displayName": "顯示名稱",
+      "needsReauthorizationForComments": "此連線是在留言自動化之前授權的。請重新連線以開始接收留言事件。",
       "connectInstructions": {
         "step1": "建立TikTok應用程式位於<link>developers.tiktok.com</link>。",
         "step2": "授權您的帳號，並複製 <strong>Access Token</strong>、<strong>Open ID</strong> 與 <strong>Client Secret</strong>。",

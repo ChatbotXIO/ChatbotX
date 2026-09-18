@@ -2135,6 +2135,7 @@
       "clientId": "ID de cliente",
       "clientSecret": "Secreto de cliente",
       "displayName": "Display Nombre",
+      "needsReauthorizationForComments": "Esta conexión se autorizó antes de la automatización de comentarios. Vuelve a conectarla para empezar a recibir eventos de comentarios.",
       "connectInstructions": {
         "step1": "Crea una aplicación de TikTok en <link>developers.tiktok.com</link>.",
         "step2": "Authorize Tu cuenta y copy El <strong>acceder token</strong>, <strong>open ID</strong>, y <strong>client secret</strong>.",

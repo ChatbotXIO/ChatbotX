@@ -2135,6 +2135,7 @@
       "clientId": "İstemci Kimliği",
       "clientSecret": "İstemci Gizli Anahtarı",
       "displayName": "Görünen Ad",
+      "needsReauthorizationForComments": "Bu bağlantı yorum otomasyonundan önce yetkilendirildi. Yorum olaylarını almaya başlamak için yeniden bağlayın.",
       "connectInstructions": {
         "step1": "<link>developers.tiktok.com</link> adresinden bir TikTok uygulaması oluşturun.",
         "step2": "Hesabınızı yetkilendirin ve <strong>erişim anahtarını</strong>, <strong>açık kimliği</strong> ve <strong>istemci gizli anahtarını</strong> kopyalayın.",

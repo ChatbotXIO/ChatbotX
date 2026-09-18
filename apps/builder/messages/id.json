@@ -1997,6 +1997,7 @@
       "clientId": "ID Klien",
       "clientSecret": "Rahasia Klien",
       "displayName": "Nama Tampilan",
+      "needsReauthorizationForComments": "Koneksi ini diotorisasi sebelum otomatisasi komentar. Hubungkan ulang untuk mulai menerima peristiwa komentar.",
       "connectInstructions": {
         "step1": "Buat aplikasi TikTok di <link>developers.tiktok.com</link>.",
         "step2": "Otorisasi akun Anda lalu salin <strong>token akses</strong>, <strong>open ID</strong>, dan <strong>rahasia klien</strong>.",

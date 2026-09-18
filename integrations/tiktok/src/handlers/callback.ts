@@ -2,6 +2,7 @@ import type { HandleRequestProps } from "@chatbotx.io/sdk"
 import { SdkException } from "@chatbotx.io/sdk"
 import { exchangeCodeForToken } from "../apis/auth"
 import { getUserInfo } from "../apis/user"
+import { parseTiktokScopes } from "../lib/scopes"
 import { buildTokenTimestamps } from "../lib/token-utils"
 import type { TiktokAuthValue, TiktokConfig } from "../schema"
 
@@ -47,6 +48,10 @@ export const callbackHandler = async (
       openId: tokenResponse.open_id,
       username: userInfo.username,
       displayName: userInfo.display_name,
+      // Recorded so the settings list can tell an account that authorized
+      // before comment automation shipped from one that carries the scopes
+      // comment events need. See `tiktokNeedsReauthorization`.
+      scopes: parseTiktokScopes(tokenResponse.scope),
     },
   }
 }

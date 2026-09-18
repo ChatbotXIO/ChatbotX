@@ -2138,6 +2138,7 @@
       "clientId": "Client ID",
       "clientSecret": "Client Secret",
       "displayName": "Tên hiển thị",
+      "needsReauthorizationForComments": "Kết nối này được cấp quyền trước khi có tự động hóa bình luận. Hãy kết nối lại để bắt đầu nhận sự kiện bình luận.",
       "connectInstructions": {
         "step1": "Tạo ứng dụng TikTok tại <link>developers.tiktok.com</link>.",
         "step2": "Cấp quyền tài khoản và sao chép <strong>access token</strong>, <strong>open ID</strong> và <strong>client secret</strong>.",

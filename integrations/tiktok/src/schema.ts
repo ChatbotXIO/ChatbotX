@@ -10,6 +10,12 @@ export type TiktokAuthValue = Oauth2AuthValue & {
     openId: string
     username: string
     displayName: string
+    /**
+     * Scopes TikTok actually granted, as reported by the token exchange and
+     * re-stamped on every refresh. Absent on connections made before comment
+     * automation shipped — see `tiktokNeedsReauthorization`.
+     */
+    scopes?: string[]
   }
 }
 

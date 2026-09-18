@@ -4855,6 +4855,7 @@
       "clientId": "מזהה לקוח",
       "clientSecret": "סוד לקוח",
       "displayName": "שם תצוגה",
+      "needsReauthorizationForComments": "החיבור הזה אושר לפני אוטומציית התגובות. חבר מחדש כדי להתחיל לקבל אירועי תגובות.",
       "connectInstructions": {
         "step1": "צרו אפליקציית TikTok בכתובת <link>developers.tiktok.com</link>.",
         "step2": "אשרו את החשבון והעתיקו את <strong>אסימון הגישה</strong>, <strong>המזהה הפתוח</strong> ו<strong>סוד הלקוח</strong>.",

@@ -1997,6 +1997,7 @@
       "clientId": "クライアントID",
       "clientSecret": "クライアントシークレット",
       "displayName": "表示名",
+      "needsReauthorizationForComments": "この接続はコメント自動化の前に承認されました。コメントイベントの受信を開始するには再接続してください。",
       "connectInstructions": {
         "step1": "<link>developers.tiktok.com</link>でTikTokアプリを作成します。",
         "step2": "アカウントを認証し、<strong>アクセストークン</strong>、<strong>Open ID</strong>、<strong>クライアントシークレット</strong>をコピーします。",

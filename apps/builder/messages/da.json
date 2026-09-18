@@ -1997,6 +1997,7 @@
       "clientId": "Client Id",
       "clientSecret": "Client Secret",
       "displayName": "Display Navn",
+      "needsReauthorizationForComments": "Denne forbindelse blev godkendt før kommentarautomatisering. Tilslut igen for at begynde at modtage kommentarhændelser.",
       "connectInstructions": {
         "step1": "Opret a TikTok app at <link>developers.tiktok.com</link>.",
         "step2": "Authorize din account og kopiér den <strong>access token</strong>, <strong>åbn Id</strong>, og <strong>client secret</strong>.",

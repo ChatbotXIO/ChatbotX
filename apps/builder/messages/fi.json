@@ -1997,6 +1997,7 @@
       "clientId": "Asiakastunnus",
       "clientSecret": "Asiakassalaisuus",
       "displayName": "Näyttönimi",
+      "needsReauthorizationForComments": "Tämä yhteys valtuutettiin ennen kommenttiautomaatiota. Yhdistä uudelleen aloittaaksesi kommenttitapahtumien vastaanoton.",
       "connectInstructions": {
         "step1": "Luo TikTok-sovellus osoitteessa <link>developers.tiktok.com</link>.",
         "step2": "Valtuuta tilisi ja kopioi <strong>käyttöoikeustunnus</strong>, <strong>avoin tunnus</strong> ja <strong>asiakassalaisuus</strong>.",

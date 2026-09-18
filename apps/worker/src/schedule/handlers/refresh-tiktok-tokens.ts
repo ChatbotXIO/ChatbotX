@@ -3,6 +3,7 @@ import { auditService } from "@chatbotx.io/business/audit"
 import { logProviderError } from "@chatbotx.io/business/error-log"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { refreshAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
+import { parseTiktokScopes } from "@chatbotx.io/integration-tiktok/lib/scopes"
 import { buildTokenTimestamps } from "@chatbotx.io/integration-tiktok/lib/token-utils"
 import { distributedLock } from "@chatbotx.io/redis"
 import { logger } from "../../lib/logger"
@@ -51,6 +52,13 @@ async function refreshOne(integration: {
                   newTokens.expires_in,
                   newTokens.refresh_expires_in,
                 ),
+              },
+              // A refresh never grants a new scope, but it does report the
+              // current set — which is how a connection made before scopes
+              // were recorded stops being reported as "unknown" on its own.
+              metadata: {
+                ...auth.metadata,
+                scopes: parseTiktokScopes(newTokens.scope),
               },
             })
 
