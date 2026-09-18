@@ -28,6 +28,7 @@ import { purgeBroadcasts } from "./handlers/purge-broadcasts"
 import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
 import { purgeCommentAutomationEvents } from "./handlers/purge-comment-automation-events"
 import { purgeErrorLogs } from "./handlers/purge-error-logs"
+import { purgeOrphanedAttachments } from "./handlers/purge-orphaned-attachments"
 import { purgeWhatsappSignupSessions } from "./handlers/purge-whatsapp-signup-sessions"
 import { purgeWorkspaces } from "./handlers/purge-workspaces"
 import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
@@ -169,6 +170,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.purgeCommentAutomationEvents:
               await purgeCommentAutomationEvents()
+              return
+
+            case ScheduleJobData.purgeOrphanedAttachments:
+              await purgeOrphanedAttachments()
               return
 
             case ScheduleJobData.refreshChannelTokens:

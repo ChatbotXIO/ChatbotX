@@ -269,6 +269,22 @@ export const registerSchedules = async () => {
       },
     },
   )
+  // Orphan cleanup is a reconciliation path for the Message/Attachment
+  // hypertables, which cannot enforce their parent FK. Keep it apart from the
+  // other retention sweeps to avoid concurrent compressed-chunk deletes.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeOrphanedAttachments,
+    {
+      pattern: "30 3 * * *",
+    },
+    {
+      name: ScheduleJobData.purgeOrphanedAttachments,
+      data: {
+        type: ScheduleJobData.purgeOrphanedAttachments,
+        data: {},
+      },
+    },
+  )
 
   // Same "retention applies to every edition" reasoning as `purgeErrorLogs`
   // above; offset 15 minutes so the two chunked deletes do not contend.
