@@ -449,7 +449,6 @@
       "audienceFilter": "Filtro de público",
       "noAudienceFilter": "Sem filtro de público",
       "template": "Modelo",
-      "noTemplate": "Sem modelo",
       "integration": "Integração"
     },
     "filters": {

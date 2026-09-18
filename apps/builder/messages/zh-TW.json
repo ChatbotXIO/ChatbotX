@@ -2079,7 +2079,6 @@
       "audienceFilter": "受眾過濾器",
       "noAudienceFilter": "無受眾過濾器",
       "template": "範本",
-      "noTemplate": "無範本",
       "integration": "整合"
     },
     "filters": {

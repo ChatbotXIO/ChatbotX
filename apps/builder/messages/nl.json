@@ -449,7 +449,6 @@
       "audienceFilter": "Doelgroepfilter",
       "noAudienceFilter": "Geen doelgroepfilter",
       "template": "Sjabloon",
-      "noTemplate": "Geen sjabloon",
       "integration": "Integratie"
     },
     "filters": {

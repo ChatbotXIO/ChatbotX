@@ -449,7 +449,6 @@
       "audienceFilter": "オーディエンスフィルター",
       "noAudienceFilter": "オーディエンスフィルターなし",
       "template": "テンプレート",
-      "noTemplate": "テンプレートなし",
       "integration": "連携"
     },
     "filters": {

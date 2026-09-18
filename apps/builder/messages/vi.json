@@ -449,7 +449,6 @@
       "audienceFilter": "Bộ lọc người nhận",
       "noAudienceFilter": "Không có bộ lọc người nhận",
       "template": "Template",
-      "noTemplate": "Không có template",
       "integration": "Tích hợp"
     },
     "filters": {

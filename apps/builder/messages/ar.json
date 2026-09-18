@@ -449,7 +449,6 @@
       "audienceFilter": "تصفية الجمهور",
       "noAudienceFilter": "لا توجد تصفية للجمهور",
       "template": "القالب",
-      "noTemplate": "لا يوجد قالب",
       "integration": "التكامل"
     },
     "filters": {

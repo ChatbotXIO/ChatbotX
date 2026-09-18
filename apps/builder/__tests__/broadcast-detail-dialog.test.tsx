@@ -46,7 +46,20 @@ vi.mock("@/features/inboxes/components/inbox-icon", () => ({
 
 vi.mock(
   "@/features/integration-messenger/message-templates/components/template-preview",
-  () => ({ MessengerTemplatePreview: () => <div>messenger-preview</div> }),
+  () => ({
+    // A template whose stored components cannot render throws, like a
+    // malformed synced template would.
+    MessengerTemplatePreview: ({
+      components,
+    }: {
+      components: Array<{ type?: string }>
+    }) => {
+      if (components[0]?.type === "BROKEN") {
+        throw new Error("malformed template")
+      }
+      return <div>messenger-preview</div>
+    },
+  }),
 )
 
 vi.mock(
@@ -140,12 +153,14 @@ describe("BroadcastDetailDialog — per-page targets", () => {
     } as BroadcastResourceWithRelations)
 
     expect(text).toContain("Page A, Page B")
+    // Pages are named like the create form's page picker does.
+    expect(text).toContain("fields.messengerChannels.label")
     expect(flowLinks()).toEqual([
       { name: "Welcome flow", href: "/space/ws-1/flows/flow-1" },
       { name: "Promo flow", href: "/space/ws-1/flows/flow-2" },
     ])
     // A flow broadcast has no template section at all.
-    expect(text).not.toContain("broadcasts.detail.noTemplate")
+    expect(text).not.toContain("messages.featureNotFound")
     expect(mockListTemplateDetails).not.toHaveBeenCalled()
   })
 
@@ -198,6 +213,156 @@ describe("BroadcastDetailDialog — per-page targets", () => {
     })
 
     expect(container.textContent).toContain("messenger-preview")
+  })
+
+  test("names WhatsApp pages with the WhatsApp label in the flow list", async () => {
+    const text = await renderDialog({
+      ...BASE_BROADCAST,
+      channel: "whatsapp",
+      targets: [
+        target("inbox-w", "WA number", {
+          flowId: "flow-w",
+          flow: { id: "flow-w", name: "WA flow" },
+        }),
+      ],
+    } as BroadcastResourceWithRelations)
+
+    expect(text).toContain("fields.whatsappChannels.label")
+    expect(text).not.toContain("fields.messengerChannels.label")
+    expect(flowLinks()).toEqual([
+      { name: "WA flow", href: "/space/ws-1/flows/flow-w" },
+    ])
+  })
+
+  test("shows a WhatsApp page's template with the WhatsApp preview", async () => {
+    mockListTemplateDetails.mockResolvedValue([
+      {
+        id: "tmpl-w",
+        channel: "whatsapp",
+        name: "address_update",
+        language: "en",
+        category: "UTILITY",
+        status: "APPROVED",
+        parameterFormat: "POSITIONAL",
+        components: [{ type: "BODY", text: "Hello" }],
+        inboxId: "inbox-w",
+        integrationName: "WA number",
+      },
+    ])
+
+    const text = await renderDialog({
+      ...BASE_BROADCAST,
+      channel: "whatsapp",
+      targets: [target("inbox-w", "WA number", { templateId: "tmpl-w" })],
+    } as BroadcastResourceWithRelations)
+
+    expect(text).toContain("address_update (en)")
+    expect(text).toContain("fields.whatsappChannels.label")
+
+    const trigger = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent?.includes("flows.fields.preview"),
+    )
+    await act(async () => {
+      trigger?.click()
+      await Promise.resolve()
+    })
+
+    expect(container.textContent).toContain("whatsapp-preview")
+    expect(container.textContent).not.toContain("messenger-preview")
+  })
+
+  test("says the template is not found when the chosen template no longer exists", async () => {
+    mockListTemplateDetails.mockResolvedValue([])
+
+    const text = await renderDialog({
+      ...BASE_BROADCAST,
+      channel: "whatsapp",
+      targets: [target("inbox-w", "WA number", { templateId: "deleted" })],
+    } as BroadcastResourceWithRelations)
+
+    expect(text).toContain("messages.featureNotFound")
+    expect(flowLinks()).toEqual([])
+  })
+
+  test("marks only the page whose template was deleted as not found", async () => {
+    mockListTemplateDetails.mockResolvedValue([
+      {
+        id: "tmpl-a",
+        channel: "messenger",
+        name: "temp_09",
+        language: "en",
+        category: "UTILITY",
+        status: "APPROVED",
+        parameterFormat: "POSITIONAL",
+        components: [{ type: "BODY", text: "Hello" }],
+        inboxId: "inbox-a",
+        integrationName: "Page A",
+      },
+    ])
+
+    const text = await renderDialog({
+      ...BASE_BROADCAST,
+      targets: [
+        target("inbox-a", "Page A", { templateId: "tmpl-a" }),
+        target("inbox-b", "Page B", { templateId: "tmpl-deleted" }),
+      ],
+    } as BroadcastResourceWithRelations)
+
+    expect(text).toContain("temp_09 (en)")
+    expect(text).toContain("Page B")
+    expect(text).toContain("messages.featureNotFound")
+  })
+
+  test("shows a load error, not 'not found', when the request fails", async () => {
+    mockListTemplateDetails.mockRejectedValue(new Error("network down"))
+
+    const text = await renderDialog({
+      ...BASE_BROADCAST,
+      targets: [target("inbox-a", "Page A", { templateId: "tmpl-a" })],
+    } as BroadcastResourceWithRelations)
+
+    expect(text).toContain("messages.errorLoadingData")
+    expect(text).not.toContain("messages.featureNotFound")
+    // The rest of the dialog still renders.
+    expect(text).toContain("Launch")
+  })
+
+  test("a template preview that fails to render never breaks the dialog", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined)
+    mockListTemplateDetails.mockResolvedValue([
+      {
+        id: "tmpl-a",
+        channel: "messenger",
+        name: "temp_broken",
+        language: "en",
+        category: "UTILITY",
+        status: "APPROVED",
+        parameterFormat: "POSITIONAL",
+        components: [{ type: "BROKEN" }],
+        inboxId: "inbox-a",
+        integrationName: "Page A",
+      },
+    ])
+
+    await renderDialog({
+      ...BASE_BROADCAST,
+      targets: [target("inbox-a", "Page A", { templateId: "tmpl-a" })],
+    } as BroadcastResourceWithRelations)
+
+    const trigger = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent?.includes("flows.fields.preview"),
+    )
+    await act(async () => {
+      trigger?.click()
+      await Promise.resolve()
+    })
+
+    expect(container.textContent).toContain("messages.errorLoadingData")
+    expect(container.textContent).toContain("temp_broken (en)")
+    expect(container.textContent).toContain("Launch")
+    consoleError.mockRestore()
   })
 
   test("keeps showing a legacy single-page broadcast from its own columns", async () => {

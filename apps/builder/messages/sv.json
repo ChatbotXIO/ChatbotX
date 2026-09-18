@@ -499,7 +499,6 @@
       "audienceFilter": "Målgruppsfilter",
       "integration": "Integration",
       "noAudienceFilter": "Inget målgruppsfilter",
-      "noTemplate": "Ingen mall",
       "subaction": "Underåtgärd",
       "template": "Mall",
       "title": "Utskickningsinformation"
