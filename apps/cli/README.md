@@ -903,3 +903,11 @@ chatbotx contacts --help                 # List actions for a group
 chatbotx contacts message --help         # List subactions
 chatbotx contacts message send --help    # Show options for a specific action
 ```
+
+---
+
+## Releasing (maintainers)
+
+`chatbotx` on npm is published automatically by `.github/workflows/publish-cli.yml` when a `v*` release tag is pushed: tag `v1.9.0` publishes `chatbotx@1.9.0`. A tag with a prerelease suffix (`v2.0.0-rc.1`) publishes under the `next` dist-tag instead of `latest`.
+
+`version` in `apps/cli/package.json` is intentionally the placeholder `0.0.0-dev` — the workflow stamps the tag's version in before building, so it is never committed. Do not publish by hand; use the workflow's `Run workflow` button (with `dry_run` to rehearse) if you need an off-cycle release.

@@ -239,7 +239,7 @@ const main = async (): Promise<void> => {
     .demandCommand(1, "You need at least one command")
     .help()
     .alias("h", "help")
-    .version("0.1.0")
+    .version(packageJson.version)
     .alias("v", "version")
     .parseAsync()
 }
