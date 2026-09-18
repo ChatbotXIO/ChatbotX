@@ -78,11 +78,10 @@ export const updateWhatsappCallingSettingsAction = callingAdminActionClient
       if (parsedInput.inboundCallsEnabled !== undefined) {
         localValues.inboundCallsEnabled = parsedInput.inboundCallsEnabled
       }
-      // Persisting the mirror is one write, and it happens only once the whole
-      // save is known to have succeeded — a partial save that committed the
-      // local toggles and then hit a Meta refusal would leave the database
-      // saying one thing and Meta another, with the card rolled back to a
-      // third.
+      // Persisting the mirror is one write, and happens only once the whole
+      // save is known to have succeeded — a partial save that committed local
+      // toggles and then hit a Meta refusal would leave the database saying one
+      // thing, Meta another, and the card rolled back to a third.
       const persist = async (values: typeof localValues) => {
         try {
           await integrationWhatsappService.updateCallSettings({
@@ -123,7 +122,7 @@ export const updateWhatsappCallingSettingsAction = callingAdminActionClient
         })
       } catch (error) {
         // Meta explains the refusal (messaging tier too low, coexistence
-        // number, …) in `error_user_msg` — surface that instead of a label.
+        // number, ...) in `error_user_msg` — surface that instead of a label.
         throwWhatsappApiActionError(
           error,
           t("whatsapp.calls.errors.updateFailed"),
@@ -144,11 +143,11 @@ export const updateWhatsappCallingSettingsAction = callingAdminActionClient
             : localValues,
         )
       } catch (error) {
-        // Meta already committed, so this is not an ordinary failed save: the
+        // Meta already committed, so this isn't an ordinary failed save: the
         // two sides now disagree, and the dangerous direction is a number Meta
         // has ENABLED whose mirror still says disabled — the gate would refuse
-        // every inbound call. Say so plainly instead of reporting a generic
-        // failure; saving again re-sends the same values and heals it.
+        // every inbound call. Say so plainly instead of a generic failure;
+        // saving again re-sends the same values and heals it.
         if (error instanceof ChatbotXException) {
           throw error
         }

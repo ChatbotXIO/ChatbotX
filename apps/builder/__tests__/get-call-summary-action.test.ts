@@ -89,7 +89,7 @@ describe("getCallSummaryAction", () => {
     expect(result).toEqual({ result: summary })
   })
 
-  test("propagates a denial from the D4 artifact-scope check without calling the service", async () => {
+  test("propagates a denial from the artifact-scope check without calling the service", async () => {
     assertCanReadCallArtifactOrThrowMock.mockRejectedValueOnce(
       new Error("callArtifactAccessDenied"),
     )

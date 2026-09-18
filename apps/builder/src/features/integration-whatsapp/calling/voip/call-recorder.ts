@@ -5,25 +5,16 @@ import {
 import { logger } from "@/lib/log"
 
 /**
- * Where the recorded audio is posted — the upload route
- * (`apps/builder/src/app/api/whatsapp-call-recording/route.ts`). Kept as a
- * constant here rather than threaded through every caller since there is
- * exactly one place this module ever uploads to.
+ * Where the recorded audio is posted — the upload route. Kept as a constant
+ * here rather than threaded through every caller since there's exactly one
+ * place this module ever uploads to.
  */
 const RECORDING_UPLOAD_URL = "/api/whatsapp-call-recording"
 
 /**
- * `MediaRecorder`-supported mime types this module will try, most preferred
- * first, each keyed off `ALLOWED_RECORDING_CONTENT_TYPES` (`@chatbotx.io/sdk`)
- * — the canonical allow-list the server actually persists against
- * (`packages/business/src/whatsapp-call/call-recording-service.ts`). The
- * browser-side candidate ordering (codec preference) lives here since it is
- * a browser-only concern, but the base content type itself always comes
- * from the shared map so the two can never drift. Kept as data instead of
- * an if/else chain so a newly-supported codec is a one-line addition. Only
- * mime types a browser `MediaRecorder` can actually produce are listed here
- * (never `audio/ogg` or `audio/mpeg`, which the server also accepts — Meta's
- * native recordings arrive in those — but no browser emits).
+ * Candidate mime types keyed off `ALLOWED_RECORDING_CONTENT_TYPES` so the two
+ * can't drift. Excludes `audio/ogg`/`audio/mpeg` — server-accepted for Meta's
+ * native recordings, but no browser `MediaRecorder` emits them.
  */
 type RecordingMimeCandidate = {
   mimeType: string
@@ -49,7 +40,7 @@ type IsTypeSupported = (mimeType: string) => boolean
 /**
  * Picks the first candidate `MediaRecorder.isTypeSupported` accepts. Returns
  * `null` when none are supported so the caller can skip recording entirely
- * rather than throw — a browser that can record no allowed format must never
+ * rather than throw — a browser that can't record an allowed format must never
  * block the call itself.
  */
 function resolveSupportedRecordingMime(
@@ -91,13 +82,9 @@ const uploadCallRecording: UploadCallRecording = async ({
 
 export type CallRecorder = {
   /**
-   * Signals the recorder to flush its final chunk and upload. Safe to call
-   * more than once — a second call is a no-op. The upload itself runs
-   * asynchronously in the `MediaRecorder`'s `onstop` handler and is never
-   * awaited by `stop` — callers that tear down the call synchronously
-   * (closing the peer connection, stopping mic tracks) must call `stop`
-   * BEFORE that teardown so the final chunk is still captured, but they never
-   * need to await the upload finishing.
+   * Flushes the final chunk and uploads; a second call is a no-op. The upload
+   * runs async in `onstop` and is never awaited here, so callers must call
+   * `stop` before synchronous teardown but don't need to await it.
    */
   stop: () => void
 }
@@ -113,21 +100,12 @@ export type StartCallRecorderParams = {
 }
 
 /**
- * Starts recording a VoIP call by mixing the local (mic) and remote (party)
- * streams into a single `MediaStreamDestination` — `MediaRecorder` only ever
- * records ONE stream, so capturing both sides of the call requires an
- * `AudioContext` mix rather than recording either stream alone.
- *
- * Returns `null` (never throws) when no candidate mime type is supported —
- * recording is best-effort and must never block or fail the call itself.
- *
- * Lifecycle is deliberately decoupled from the call's own (synchronous)
- * teardown: `stop` only requests the final chunk and triggers `onstop`,
- * which assembles the blob, uploads it, and closes the `AudioContext` — all
- * asynchronous and never awaited by `stop` itself, so a caller's
- * synchronous peer-connection/mic cleanup can safely run immediately after
- * calling `stop` without losing the final chunk (`recorder.stop` flushes
- * the last `dataavailable` before firing `onstop`).
+ * Mixes local and remote streams into one `MediaStreamDestination` since
+ * `MediaRecorder` only records a single stream. Returns `null` (never throws)
+ * if no mime type is supported — recording is best-effort and must never
+ * block the call. `stop` is synchronous; the actual upload/cleanup happens
+ * async in `onstop`, so a caller's synchronous peer-connection teardown can
+ * run right after `stop` without losing the final chunk.
  */
 export function startCallRecorder(
   params: StartCallRecorderParams,

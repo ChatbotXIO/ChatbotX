@@ -148,11 +148,10 @@ describe("whatsapp manual webhook route — POST", () => {
     )
   })
 
-  // This is the actual security fix's regression guard for the manual route:
   // webhookHandler (integrations/whatsapp/src/handlers/webhook.ts) rejects
   // with a 401 SdkException when no clientSecret is configured — manual
   // integrations always have an empty clientSecret (see webhook-url.ts's
-  // buildAuthValue), so this is the path they hit today.
+  // buildAuthValue), so this is the path they hit.
   test("surfaces the SdkException's own status (401) on a rejected signature and never logs the body", async () => {
     findIntegrationWhatsappById.mockResolvedValue(
       manualRow({ webhookVerifiedAt: "2026-01-01T00:00:00.000Z" }),

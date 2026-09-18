@@ -1,6 +1,3 @@
-// A-L3 (Fable review) — a direct unit test for `formatCallDurationSeconds`;
-// it was previously exercised only indirectly, through the audio player and
-// `resolveLastMessagePreview`.
 import { describe, expect, test } from "vitest"
 import { formatCallDurationSeconds } from "../src/features/messages/lib/format-call-duration"
 

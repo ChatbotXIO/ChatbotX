@@ -35,7 +35,7 @@ const renderWithIntl = (node: ReactNode) =>
     </NextIntlClientProvider>,
   )
 
-describe("CallsEmptyState (plan P5 test list: empty state)", () => {
+describe("CallsEmptyState", () => {
   test("renders the unfiltered 'no calls yet' copy when hasActiveFilter is false", () => {
     const html = renderWithIntl(<CallsEmptyState hasActiveFilter={false} />)
 
@@ -45,7 +45,7 @@ describe("CallsEmptyState (plan P5 test list: empty state)", () => {
     )
   })
 
-  // L3: a filtered empty result is a distinct state from "no calls yet".
+  // A filtered empty result is a distinct state from "no calls yet".
   test("renders the FILTERED empty copy (distinct from 'no calls yet') when hasActiveFilter is true", () => {
     const html = renderWithIntl(<CallsEmptyState hasActiveFilter={true} />)
 
@@ -58,8 +58,8 @@ describe("CallsEmptyState (plan P5 test list: empty state)", () => {
 })
 
 // Default filter-bar props for the chip-only assertions below — no
-// inbox/agent options, so neither select renders (item 6 gap closure adds
-// them, dedicated coverage lives in `calls-filter-bar-selects.test.tsx`).
+// inbox/agent options, so neither select renders (dedicated coverage
+// lives in `calls-filter-bar-selects.test.tsx`).
 const noSelectProps = {
   inboxId: undefined,
   onInboxChange: () => undefined,
@@ -70,7 +70,7 @@ const noSelectProps = {
   showAgentFilter: false,
 }
 
-describe("CallsFilterBar (plan D9: base chips Missed and No reply)", () => {
+describe("CallsFilterBar", () => {
   test("renders exactly the three base chips: All calls, Missed, No reply", () => {
     const html = renderWithIntl(
       <CallsFilterBar
@@ -97,7 +97,7 @@ describe("CallsFilterBar (plan D9: base chips Missed and No reply)", () => {
     expect(html).toMatch(SELECTED_MISSED_CHIP_RE)
   })
 
-  // L3: buttons, not a tablist/tab pair with no owning tabpanel.
+  // Buttons, not a tablist/tab pair with no owning tabpanel.
   test("renders plain toggle buttons, not role=tab/tablist", () => {
     const html = renderWithIntl(
       <CallsFilterBar

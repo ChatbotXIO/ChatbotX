@@ -1,10 +1,7 @@
 /**
- * Formats a whole-second call duration as `m:ss` (no hour component — calls
- * never run that long). Shared so the audio player's elapsed/total timer and
- * the inbox last-message preview (`resolveLastMessagePreview`) can never
- * drift on the format — mirrors the worker's own `formatDuration`
- * (`whatsapp-call-finalize.ts`), which builds the English fallback snippet
- * stored on the message row.
+ * Formats a whole-second call duration as `m:ss` (no hour component — calls never run that
+ * long). Mirrors the worker's own `formatDuration` (`whatsapp-call-finalize.ts`) so the format
+ * can't drift between them.
  */
 export const formatCallDurationSeconds = (seconds: number): string => {
   if (!Number.isFinite(seconds) || seconds < 0) {

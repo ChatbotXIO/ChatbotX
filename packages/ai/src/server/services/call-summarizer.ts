@@ -6,12 +6,9 @@ import { type AIProvider, aiProviders } from "../../schemas/ai-model"
 import { createAIModelInstance, getAIIntegrationInDB } from "../factory"
 
 /**
- * WhatsApp calling AI Summary — on-demand, from the
- * workspace's already-connected legacy AI integrations (OpenAI, Gemini,
- * Claude, DeepSeek, OpenRouter). Deliberately excludes `openaiCompatible`
- * (no fixed provider label to show in the picker) and never touches
- * auto-reply scoping — a connection used only for auto-reply is still a
- * valid summarization provider.
+ * Excludes `openaiCompatible` (no fixed provider label for the picker); does
+ * not check auto-reply scoping — a connection used only for auto-reply is
+ * still a valid summarization provider.
  */
 
 export type CallSummaryProviderOption = {

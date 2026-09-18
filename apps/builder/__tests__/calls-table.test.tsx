@@ -66,7 +66,7 @@ const render = (data: WhatsappCallHistoryResource[]) => {
 }
 
 describe("CallsTable", () => {
-  // M3/D9: the kind badge's label must be resolvable through the same
+  // The kind badge's label must be resolvable through the same
   // domain the in-conversation card uses — not a coincidentally-matching
   // second copy. `KIND_BADGE_CONFIG` in `calls-table.tsx` ties the four
   // terminal kinds' label to `WhatsappCallActivityLabelKey` at compile
@@ -117,7 +117,7 @@ describe("CallsTable", () => {
     expect(container.textContent).toContain("—")
   })
 
-  // M3: the recording player renders ONLY when the row actually has a
+  // The recording player renders ONLY when the row actually has a
   // recording — never merely because the call completed.
   test("renders the recording player only when recordingPath is set", () => {
     render([baseRow({ recordingPath: "recordings/call-1.ogg" })])
@@ -133,7 +133,7 @@ describe("CallsTable", () => {
     ).toBeNull()
   })
 
-  // L3: the info button's aria-label must describe the ACTION ("call
+  // The info button's aria-label must describe the ACTION ("call
   // information"), not the page title ("Calls").
   test("the info button's aria-label is callInformation, not the page title", () => {
     render([baseRow()])

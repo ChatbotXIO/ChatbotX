@@ -17,13 +17,10 @@ const incomingData = {
 }
 
 /**
- * Seeds the slot with a ringing inbound call, the way production does it:
- * into the basket first, then promoted (`enqueueRinging` + `promoteRinging`)
- * — replaces the deleted `addIncoming`, which used to write the slot
- * directly and had its own (now-removed) single-slot guard. Throws if
- * promotion did not actually happen, so a mis-migrated test — one that seeds
- * against an already-occupied slot — fails loudly instead of silently
- * asserting against an empty/unchanged slot.
+ * Seeds the slot with a ringing inbound call the way production does:
+ * into the basket first, then promoted (`enqueueRinging` + `promoteRinging`).
+ * Throws if promotion did not happen, so a test seeding against an
+ * already-occupied slot fails loudly instead of silently asserting nothing.
  */
 const seedRingingSlot = (data: WhatsappVoipIncomingData) => {
   const store = useWhatsappVoipCallStore.getState()
@@ -44,20 +41,6 @@ describe("useWhatsappVoipCallStore", () => {
       pendingConversationOpen: null,
     })
   })
-
-  // NOTE: the tests that used to live here for `addIncoming`'s own
-  // single-slot guard — "does NOT replace a different in-progress call",
-  // "for the SAME call id while still ringing is an idempotent refresh",
-  // "does NOT reset the phase once it is in progress", "accepts a new call
-  // once the previous slot is cleared", and "treats a lingering ended call
-  // as FREE and overwrites it" — were deleted along with `addIncoming`
-  // itself. That guard doesn't exist anymore: an inbound offer now always
-  // lands in the `ringingCalls` basket first (see `enqueueRinging`'s own
-  // dedupe/no-op-against-the-slot tests below) and only reaches the slot
-  // through `promoteRinging`, whose free-slot/rejection/ended-is-free
-  // behavior is already fully covered by the "ringing basket" describe
-  // block below. Porting those tests forward would just re-test
-  // `promoteRinging` a second time under an assumed name.
 
   test("setPhase transitions the matching call and ignores a mismatched id", () => {
     seedRingingSlot(incomingData)
@@ -445,13 +428,9 @@ describe("useWhatsappVoipCallStore — outbound", () => {
     )
   })
 
-  // 2a — ordering guards on setOutboundStatus: Meta does not order these
-  // events, so a delayed status must never regress an already-active call
-  // nor resurrect one that has already ended. Each test below would FAIL
-  // against a version of `setOutboundStatus` that applies the status
-  // unconditionally (i.e. before the `phase === active`/`phase === ended`
-  // guards existed) — the assertions pin the phase/startedAt that an
-  // unconditional apply would overwrite.
+  // Ordering guards on setOutboundStatus: Meta does not order these events,
+  // so a delayed status must never regress an active call or resurrect an
+  // ended one.
 
   test("a normal outboundDialing -> outboundRinging -> active progression still works", () => {
     useWhatsappVoipCallStore.getState().addOutbound(outboundData)
@@ -506,14 +485,11 @@ describe("useWhatsappVoipCallStore — outbound", () => {
     expect(call?.startedAt).toBeUndefined()
   })
 
-  // 2b — the buffered early ACCEPTED/RINGING: while an outbound dial is
-  // `preparing`, the slot holds the client nonce rather than the real
-  // server id, so a status Meta emits before `initiateOutboundVoipCallAction`
-  // returns has nowhere to land — `setOutboundStatus` buffers it into
-  // `pendingOutboundStatus`, and `upgradeToDialing` applies it. Each test
-  // would FAIL against a version that drops an unmatched status instead of
-  // buffering it (the call would land in `outboundDialing` with
-  // `startedAt` unset instead of `active`/`outboundRinging`).
+  // Buffered early ACCEPTED/RINGING: while an outbound dial is `preparing`,
+  // the slot holds the client nonce rather than the real server id, so a
+  // status Meta emits before `initiateOutboundVoipCallAction` returns has
+  // nowhere to land — `setOutboundStatus` buffers it into
+  // `pendingOutboundStatus`, and `upgradeToDialing` applies it.
 
   test("a buffered ACCEPTED for an id the slot does not hold yet lands the call directly in active once upgradeToDialing runs", () => {
     useWhatsappVoipCallStore.getState().startPreparing("nonce-1", {
@@ -724,9 +700,8 @@ describe("useWhatsappVoipCallStore — ringing basket", () => {
     expect(useWhatsappVoipCallStore.getState().ringingCalls).toHaveLength(1)
   })
 
-  // L5: `conversationAssigned` reassignment drops every basket entry for a
-  // now-reassigned conversation in one store update, rather than looping
-  // `removeRinging` per entry from the realtime handler.
+  // `conversationAssigned` drops every basket entry for a reassigned
+  // conversation in one store update.
   test("removeRingingByConversationIds drops every entry for the given conversation ids in one update", () => {
     const ringC = {
       ...incomingData,

@@ -2,12 +2,10 @@ import type Redis from "ioredis"
 
 /**
  * Server-side Redis (Lua) script: atomically swaps a JSON record only when
- * every field in `expected` (ARGV[1], a JSON object) matches the CURRENT
- * value at KEYS[1] — read and compared inside Redis itself, so the
- * comparison is always against the live value, never a client-side stale
- * read. `expected === ""` (empty string) means "the key must not currently
- * exist" (a create-only swap). Registered once per client via
- * `defineCommand`, mirroring `distributed-store.ts`'s pattern.
+ * every field in expected matches the CURRENT value at KEYS[1], read and
+ * compared inside Redis itself. expected === "" means the key must not
+ * currently exist (create-only swap). Registered once per client via
+ * defineCommand, mirroring distributed-store.ts's pattern.
  */
 const COMPARE_AND_SWAP_JSON_LUA = `
 local current = redis.call('GET', KEYS[1])
@@ -55,21 +53,17 @@ function withCompareAndSwap(client: Redis): CompareAndSwapClient {
 }
 
 /**
- * Channel-agnostic key + JSON + compare-and-set primitive. Knows nothing
- * about the caller's domain (no call/session/channel concept) — it is a
- * thin, reusable layer over `SET … PX … NX` and a Lua CAS, in the same
- * factory style as {@link import("./bloom-filter").bloomFilterFactory} and
- * {@link import("./distributed-store").distributedStoreFactory}.
- *
- * Callers express a state-machine transition as "apply `next` only if the
- * fields in `expected` still match the stored value" — e.g. a fence token
- * and/or a phase discriminator — via {@link compareAndSwap}.
+ * Channel-agnostic key + JSON + compare-and-set primitive. Knows nothing about
+ * the caller's domain — a thin, reusable layer over SET … PX … NX and a Lua
+ * CAS, in the same factory style as bloom-filter/distributed-store.
+ * Callers express a state-machine transition as "apply next only if the fields
+ * in expected still match the stored value" via compareAndSwap.
  */
 export const casStoreFactory = (getRedisClient: () => Promise<Redis>) => ({
   /**
-   * `SET key value PX ttlMs NX` — writes only if the key is absent. The
-   * first writer wins permanently for the TTL window; a redelivered write
-   * with the same key can neither overwrite the value nor extend the TTL.
+   * SET key value PX ttlMs NX — writes only if the key is absent. The first
+   * writer wins permanently for the TTL window; a redelivered write with the
+   * same key can neither overwrite the value nor extend the TTL.
    */
   async setIfAbsent<T>(key: string, value: T, ttlMs: number): Promise<boolean> {
     const redisClient = await getRedisClient()
@@ -83,7 +77,7 @@ export const casStoreFactory = (getRedisClient: () => Promise<Redis>) => ({
     return result === "OK"
   },
 
-  /** Raw string read — `null` when the key is absent. */
+  /** Raw string read — null when the key is absent. */
   async get(key: string): Promise<string | null> {
     const redisClient = await getRedisClient()
     return await redisClient.get(key)
@@ -94,7 +88,10 @@ export const casStoreFactory = (getRedisClient: () => Promise<Redis>) => ({
     await redisClient.del(key)
   },
 
-  /** JSON-typed read — `null` when absent or when the stored value is not valid JSON. */
+  /**
+   * JSON-typed read — null when absent or when the stored value is not valid
+   * JSON.
+   */
   async getJson<T>(key: string): Promise<T | null> {
     const redisClient = await getRedisClient()
     const raw = await redisClient.get(key)
@@ -109,12 +106,11 @@ export const casStoreFactory = (getRedisClient: () => Promise<Redis>) => ({
   },
 
   /**
-   * Atomically overwrites the JSON record at `key` with `next`, but only if
-   * every field present in `expected` still matches the record CURRENTLY
-   * stored (checked inside a single Redis Lua call, so no other writer can
-   * interleave between the check and the write). Pass `expected: null` to
-   * require the key be absent (a create-only swap). Returns whether the
-   * swap applied.
+   * Atomically overwrites the JSON record at key with next, but only if every
+   * field present in expected still matches the record currently stored
+   * (checked inside a single Redis Lua call, so no other writer can
+   * interleave). Pass expected: null to require the key be absent. Returns
+   * whether the swap applied.
    */
   async compareAndSwap<T extends Record<string, unknown>>(
     key: string,

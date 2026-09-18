@@ -3,16 +3,12 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// B-H1 (Fable review): `?inboxId=abc` / `?agentUserId=abc` used to crash the
-// page with an unhandled RSC 500 — `inboxIdQueryParser`/`agentUserIdQueryParser`
-// were plain `parseAsString`, so a non-numeric value reached
-// `whatsappCallHistoryService.list` unvalidated and Postgres rejected it as
-// bigint input (22P02). Deliberately does NOT mock
-// `@/features/whatsapp-calls/schema/query` — the OTHER Calls-page test file
-// (`calls-page-access-gate.test.tsx`) stubs the whole search-params cache, so
-// a regression in the real parser would pass there even though the page
-// crashes for a real request. This file exercises the REAL
-// `listWhatsappCallsSearchParamsCache`.
+// A non-numeric `inboxId`/`agentUserId` must not reach
+// `whatsappCallHistoryService.list` unvalidated — Postgres rejects it as
+// bigint input (22P02), crashing the page with an unhandled RSC 500.
+// Deliberately does NOT mock `@/features/whatsapp-calls/schema/query` (unlike
+// `calls-page-access-gate.test.tsx`), so a regression in the real parser is
+// actually caught here.
 
 const {
   getCurrentUserAndTargetWorkspaceMock,
@@ -84,7 +80,7 @@ const renderPageStatic = async (
   renderToStaticMarkup(element as never)
 }
 
-describe("Calls page — non-numeric inboxId/agentUserId (B-H1)", () => {
+describe("Calls page — non-numeric inboxId/agentUserId", () => {
   test("a non-numeric inboxId does not crash the page and forwards inboxId: undefined", async () => {
     await expect(renderPageStatic({ inboxId: "abc" })).resolves.toBeUndefined()
 
@@ -127,12 +123,11 @@ describe("Calls page — non-numeric inboxId/agentUserId (B-H1)", () => {
   })
 })
 
-// B-L1 (Fable review): the agent filter is admin-only (D4:
-// `isCallHistoryAdmin`). A non-admin who still has `?agentUserId=…` in the
+// The agent filter is admin-only (`isCallHistoryAdmin`). A non-admin who still has `?agentUserId=…` in the
 // URL (stale link, tampered param) must have it dropped for BOTH the
 // service call and the client props — otherwise `hasActiveFilter`/"Load
 // more" would treat an ignored filter as active.
-describe("Calls page — agentUserId is admin-only (B-L1)", () => {
+describe("Calls page — agentUserId is admin-only", () => {
   test("drops a valid agentUserId for a non-admin (contacts-only) member", async () => {
     getCurrentUserAndTargetWorkspaceMock.mockResolvedValue({
       user: { id: "user-1" },

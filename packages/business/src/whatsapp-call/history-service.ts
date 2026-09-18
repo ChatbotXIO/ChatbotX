@@ -17,20 +17,13 @@ import {
 } from "../workspace-member/permissions"
 import { isCallHistoryAdmin } from "./call-access-service"
 
-/** Reference page size for the call log — see plan P5 item 4. */
+/** Reference page size for the call log. */
 export const CALL_HISTORY_PAGE_SIZE = 25
 
 /**
- * P5 item 5 (plan D9) — the Calls page's six-plus-one kind badge, matched
- * against an already-loaded row (never against SQL) in first-match order.
- * `ongoing` is checked before any outcome read since a non-terminal row has
- * no display outcome at all. The four terminal, non-`completed` kinds share
- * their i18n label with the in-conversation card
- * (`resolveWhatsappCallActivityLabelKey`) — `resolveCallKind` deliberately
- * returns the exact same domain (`WhatsappCallOutcome`, minus `completed`)
- * so a caller can feed it straight into that function; `completed` splits
- * into `answeredInbound`/`answeredOutbound` (the card never needs this
- * split — it always knows its own direction already).
+ * The Calls page's kind badge, matched in first-match order. `ongoing` is
+ * checked first since a non-terminal row has no display outcome; `completed`
+ * splits into answeredInbound/answeredOutbound by direction.
  */
 export type WhatsappCallKind =
   | "ongoing"
@@ -58,9 +51,9 @@ const NON_TERMINAL_STATUSES: readonly WhatsappCallStatus[] = [
 ]
 
 /**
- * Ordered strategy array (`find`), evaluated top to bottom — first match
- * wins, exactly like {@link CALL_ELIGIBILITY_RULES}/`RING_TIERS`. A new kind
- * is a one-line splice here, never an added `if`.
+ * Ordered strategy array, evaluated top to bottom — first match wins, like
+ * CALL_ELIGIBILITY_RULES/RING_TIERS. A new kind is a one-line splice here,
+ * never an added if.
  */
 export const CALL_KIND_RULES: readonly CallKindRule[] = [
   {
@@ -101,17 +94,18 @@ export const CALL_KIND_RULES: readonly CallKindRule[] = [
   },
 ]
 
-/** `null` only when a future status/outcome combination outruns the rule table — never for any value in today's domain. */
+/**
+ * null only when a future status/outcome combination outruns the rule table —
+ * never for any value in today's domain.
+ */
 export function resolveCallKind(row: CallKindRow): WhatsappCallKind | null {
   return CALL_KIND_RULES.find((rule) => rule.matches(row))?.kind ?? null
 }
 
 /**
- * P5 item 5 (plan D9) — the Calls page's base activity chips. Each chip
- * maps to a typed, low-level filter the repository's where-builder
- * understands directly (`WhatsappCallListFilters`) — never a raw SQL
- * fragment, so the chip → filter mapping stays testable in isolation from
- * the query.
+ * The Calls page's base activity chips. Each chip maps to a typed, low-level
+ * filter the repository's where-builder understands directly — never a raw SQL
+ * fragment, so the mapping stays testable in isolation from the query.
  */
 export type WhatsappCallActivityChip = "missed" | "noReply"
 
@@ -129,12 +123,8 @@ type HistoryScopeRule = {
 }
 
 /**
- * Ordered strategy array translating plan D4 into a
- * {@link WhatsappCallHistoryScope} the repository consumes directly — the
- * SAME three-way split `isEligibleForConversationCall` encodes for D3
- * (superAdmin/analytics unrestricted, `contacts` restricted to own calls,
- * `onlyAssignedContacts` further restricted to individually assigned
- * conversations), translated once here instead of duplicated per caller.
+ * First match wins: superAdmin/analytics see all calls, contacts see their own,
+ * onlyAssignedContacts only their assigned conversations.
  */
 const HISTORY_SCOPE_RULES: readonly HistoryScopeRule[] = [
   {
@@ -153,16 +143,9 @@ const HISTORY_SCOPE_RULES: readonly HistoryScopeRule[] = [
 ]
 
 /**
- * A member reaching this service is EXPECTED to have already passed the
- * page-level gate (`hasContactsAccess || analytics`), so one of the three
- * rules should always match. `null` is the defense-in-depth path for when
- * it doesn't (a caller that bypasses the page gate, or a permission that
- * changed mid-session) — L2 fix: this MUST fail closed (an empty result,
- * never touching the repository), not silently fall back to the most
- * restrictive real scope (`assignedOnly: true`), which would still run a
- * real, non-empty query scoped to the member's own `userId` even though
- * they hold none of the four permissions ({@link isCallHistoryAdmin}'s two,
- * plus `contacts`/`onlyAssignedContacts`) that grant ANY read access here.
+ * null is the defense-in-depth path when no rule matches — must fail closed
+ * (empty result, never touching the repository), not fall back to a real
+ * scoped query the member holds no permission for.
  */
 function resolveHistoryScope(member: {
   userId: string
@@ -184,7 +167,10 @@ export type WhatsappCallHistoryListInput = {
   activity?: WhatsappCallActivityChip
   direction?: WhatsappCallDirection
   inboxId?: string
-  /** Ignored unless the resolved scope is `allCalls` (D4: "Agent filter only for superAdmin/analytics"). */
+  /**
+   * Ignored unless the resolved scope is allCalls (agent filter only for
+   * superAdmin/analytics).
+   */
   agentUserId?: string
   cursor?: WhatsappCallListCursor
   limit?: number
@@ -199,8 +185,8 @@ async function list(
   input: WhatsappCallHistoryListInput,
 ): Promise<WhatsappCallHistoryListResult> {
   const scope = resolveHistoryScope(input.member)
-  // L2: fail closed — a member with none of the four scope-granting
-  // permissions gets an empty page, never a repository read.
+  // Fail closed — a member with none of the four scope-granting permissions
+  // gets an empty page, never a repository read.
   if (!scope) {
     return { data: [], nextCursor: null }
   }
@@ -211,16 +197,16 @@ async function list(
 
   const filters: WhatsappCallListFilters = {
     ...chipFilters,
-    // L1: an active chip's direction always wins — an explicit `direction`
-    // input is only applied when NO chip is active. A chip like `missed`
-    // already implies its own direction (`userInitiated`); an explicit
-    // `businessInitiated` alongside it would silently produce an
-    // impossible/empty combination instead of the chip's intended result.
+    // An active chip's direction always wins — an explicit direction input is
+    // only applied when no chip is active. A chip like missed already implies
+    // its own direction; an explicit businessInitiated alongside it would
+    // silently produce an impossible/empty combination instead of the chip's
+    // intended result.
     direction: chipFilters.direction ?? input.direction,
     inboxId: input.inboxId,
-    // `agentUserId` is dropped for a non-admin scope one line down, at the
-    // repository, which only honours it when `scope.allCalls` — never
-    // silently applied twice.
+    // agentUserId is dropped for a non-admin scope one line down, at the
+    // repository, which only honours it when scope.allCalls — never silently
+    // applied twice.
     agentUserId: input.agentUserId,
   }
 
@@ -245,9 +231,9 @@ async function list(
         direction: row.direction,
       }),
     })),
-    // H1: the next cursor's `createdAt` is the row's full-precision TEXT
-    // rendering (`createdAtCursor`), never the JS `Date` on `createdAt`
-    // itself — see `WhatsappCallListCursor`'s doc comment.
+    // The next cursor's createdAt is the row's full-precision TEXT rendering
+    // (createdAtCursor), never the JS Date on createdAt itself — see
+    // WhatsappCallListCursor's doc comment.
     nextCursor:
       hasMore && lastRow
         ? { createdAt: lastRow.createdAtCursor, id: lastRow.id }

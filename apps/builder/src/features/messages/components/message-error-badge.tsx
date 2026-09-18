@@ -17,11 +17,9 @@ type MessageErrorBadgeProps = {
 }
 
 /**
- * The single error affordance shared by an outgoing message's `sendError`
- * and a WhatsApp call's `failureReason`: a small destructive-colored
- * `AlertCircleIcon` that reveals the failure detail in a tooltip on
- * hover/focus. Extracted so both surfaces render the exact same icon,
- * classes, and tooltip shape instead of drifting apart over time.
+ * Shared error affordance for an outgoing message's `sendError` and a
+ * WhatsApp call's `failureReason`, so both render the same icon/tooltip
+ * instead of drifting apart.
  */
 export const MessageErrorBadge = ({
   label,

@@ -1,17 +1,15 @@
 import { mintTurnCredential } from "./turn-credential"
 
 /**
- * Browser WebRTC ICE credentials live only for the answer window plus a
- * short buffer, since a fresh set is minted per call via
- * `getWhatsappVoipTurnCredentialsAction` rather than cached client-side.
+ * Browser WebRTC ICE credentials live only for the answer window plus a short
+ * buffer, since a fresh set is minted per call rather than cached client-side.
  */
 export const VOIP_TURN_CREDENTIAL_TTL_SECONDS = 10 * 60
 
 /**
- * Public STUN fallback used when no TURN server is configured (local dev)
- * — good enough for same-network/NAT-friendly testing, never sufficient in
- * production behind hostile NATs (see `docs/whatsapp-calling-voip.md`
- * "Required infrastructure").
+ * Public STUN fallback used when no TURN server is configured (local dev) —
+ * good enough for same-network testing, never sufficient in production behind
+ * hostile NATs.
  */
 const PUBLIC_STUN_URL = "stun:stun.l.google.com:19302"
 
@@ -24,9 +22,8 @@ export type VoipIceServer = {
 export type VoipTurnCredentials = {
   iceServers: VoipIceServer[]
   /**
-   * `false` when no coturn TURN secret/URL is configured on this
-   * deployment — the UI can still proceed (STUN-only works on
-   * NAT-friendly networks) but should surface that TURN is required for
+   * false when no coturn TURN secret/URL is configured — the UI can still
+   * proceed with STUN-only but should surface that TURN is required for
    * production reliability.
    */
   turnConfigured: boolean
@@ -44,13 +41,10 @@ export type IssueVoipTurnCredentialsInput = {
 
 class VoipTurnCredentialService {
   /**
-   * Short-lived coturn REST credentials (reuses `mintTurnCredential`'s HMAC
-   * scheme), labelled `<userId>:<wacid>`. The label is for log attribution
-   * only — coturn verifies the HMAC and the expiry and nothing else, so a
-   * leaked credential works for any call, from anywhere, until it expires.
-   * The TTL is what bounds it. STUN is always included; TURN is added only when the
-   * deployment has a TURN URL + static secret configured — otherwise
-   * `turnConfigured:false` tells the caller to fall back to STUN-only.
+   * Short-lived coturn REST credentials (mintTurnCredential's HMAC scheme), labelled
+   * <userId>:<wacid> for log attribution only — coturn checks only the HMAC and expiry, so a
+   * leaked credential works for any call until the TTL bounds it. TURN is included only when
+   * the deployment has a URL + static secret; otherwise turnConfigured:false signals STUN-only.
    */
   async issueCredentials(
     input: IssueVoipTurnCredentialsInput,

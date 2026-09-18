@@ -68,7 +68,7 @@ describe("getCallRecordingUrlAction", () => {
     expect(result).toEqual({ url: "https://signed.example/fresh" })
   })
 
-  test("runs the D4 artifact-scope check BEFORE resolving the recording URL", async () => {
+  test("runs the artifact-scope check BEFORE resolving the recording URL", async () => {
     getRecordingUrlForCallMock.mockResolvedValue("https://signed.example/fresh")
 
     await getAction({
@@ -87,7 +87,7 @@ describe("getCallRecordingUrlAction", () => {
     })
   })
 
-  test("propagates a denial from the D4 artifact-scope check without calling the service", async () => {
+  test("propagates a denial from the artifact-scope check without calling the service", async () => {
     assertCanReadCallArtifactOrThrowMock.mockRejectedValueOnce(
       new Error("callArtifactAccessDenied"),
     )

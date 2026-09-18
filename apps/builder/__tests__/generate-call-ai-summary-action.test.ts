@@ -125,7 +125,7 @@ describe("generateCallAiSummaryAction", () => {
     expect(mocks.attachSummary).not.toHaveBeenCalled()
   })
 
-  test("propagates a denial from the D4 artifact-scope check before reading the transcript", async () => {
+  test("propagates a denial from the artifact-scope check before reading the transcript", async () => {
     mocks.assertCanReadCallArtifactOrThrow.mockRejectedValueOnce(
       new Error("callArtifactAccessDenied"),
     )

@@ -17,42 +17,25 @@ import { logger } from "@/lib/log"
 const WORKSPACE_ID_QUERY_PARAM = "workspaceId"
 
 /**
- * No `.max()` bound here — LOW-7: this route must stay tolerant of an
- * over-cap batch (truncating it below, via
- * `truncatePresenceUserIds`/`MAX_PRESENCE_USER_IDS_PER_REPORT`) rather than
- * 400ing the whole report and turning an oversized workspace's presence
- * dark. The realtime party already truncates before ever sending, so this
- * is defense in depth, not the primary enforcement point.
+ * No .max() — an over-cap batch is truncated below rather than rejected with
+ * 400, so an oversized workspace's presence doesn't go dark.
  */
 const presenceReportBodySchema = z.object({
   userIds: z.array(zodBigintAsString()),
 })
 
 /**
- * Server-to-server target for the realtime server's presence report: each
- * `workspaces` room POSTs its distinct connected user ids every
- * `PRESENCE_REPORT_INTERVAL_MS`, and this writes them into Redis in one
- * batch. See `docs/realtime.md`.
+ * Server-to-server target for the realtime server's presence report. See
+ * docs/realtime.md.
  *
- * No session, cookie or CSRF surface — it reuses the bearer secret and JWT
- * scheme the party already uses for inbound broadcasts, in the opposite
- * direction, under its own `purpose` claim so neither can be replayed as
- * the other. The audience binds the `workspaceId`, which travels as a QUERY
- * param so it is known before the body is read.
+ * Uses its own token purpose claim so this direction can't replay a token
+ * from the inbound-broadcast direction. Token is verified before the body is
+ * parsed, so a forged header never reaches req.json(); the parsed/truncated
+ * userIds are then hashed and matched against the token's bodyHash claim so
+ * a captured token can't be replayed with a different member list.
  *
- * Order matters:
- *   1. Read the bearer token and `workspaceId` — no body needed.
- *   2. Verify signature/expiry/audience/purpose. Only then is the body
- *      parsed, so a forged header never reaches `req.json()`.
- *   3. Parse and truncate `userIds`.
- *   4. Recompute `hashPresenceUserIds` over that exact set and compare with
- *      the token's `bodyHash` claim, so a captured token cannot be replayed
- *      with a different member list.
- * Any failure in 2-4 answers 401 before any Redis or database work.
- *
- * A `heartbeatMany` failure still answers 200: the service never throws
- * (it degrades internally), the caller has no retries, and the next report
- * supersedes a lost one — a 5xx would only invite a pointless retry storm.
+ * Always answers 200 even if heartbeatMany fails — the caller has no
+ * retries, and the next report supersedes a lost one.
  */
 export async function POST(req: NextRequest) {
   const token = extractBearerToken(req.headers.get("Authorization"))

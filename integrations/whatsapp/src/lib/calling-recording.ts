@@ -1,10 +1,6 @@
 /**
- * Meta-native call recording/transcription opt-in helpers. VoIP-only:
- * SIP-enabled numbers cannot use these.
- *
- * Reference (verified 2026-09-14):
- * https://developers.facebook.com/documentation/business-messaging/whatsapp/calling/call-recording
- * https://developers.facebook.com/documentation/business-messaging/whatsapp/calling/call-transcription
+ * Meta-native call recording/transcription opt-in helpers. VoIP-only: SIP-
+ * enabled numbers cannot use these.
  */
 import { WhatsappException } from "../exception"
 
@@ -12,10 +8,10 @@ import { WhatsappException } from "../exception"
 export const MAX_CALL_ANNOUNCEMENT_PURPOSE_CHARS = 250
 
 /**
- * Meta's supported `announcement_language` codes for the `recording`/
- * `transcription` objects on `POST /calls` (verified against Meta's
- * call-recording docs, 2026-09-14 — a mixed set of bare-language and
- * region-qualified codes; do NOT derive this by transforming a locale tag).
+ * Meta's supported `announcement_language` codes for the
+ * `recording`/`transcription` objects on `POST /calls` — a mixed set of bare-
+ * language and region-qualified codes; do NOT derive this by transforming a
+ * locale tag.
  */
 export const SUPPORTED_CALL_ANNOUNCEMENT_LANGUAGES = [
   "en",
@@ -48,16 +44,10 @@ const SUPPORTED_ANNOUNCEMENT_LANGUAGE_SET = new Set<string>(
 )
 
 /**
- * Resolves a caller-supplied language/locale to one of Meta's supported
- * announcement codes, falling back to `en_US` on no match (never throws — an
- * invalid/unsupported code degrades gracefully rather than failing the whole
- * `connect`/`accept` call).
- *
- * A contact's stored locale is often region-tagged (`vi_VN`, `vi-VN`,
- * `pt-BR`) while Meta's table lists many languages bare (`vi`, `pt`). Matching
- * only exact strings therefore silently dropped Vietnamese (and others) to the
- * `en_US` default. So: normalize `-` to `_`, try an exact match, then fall
- * back to the base language when Meta supports it bare (`vi_VN` → `vi`).
+ * Falls back to `en_US` on no match, never throws. A contact's locale is
+ * often region-tagged (`vi_VN`) while Meta lists many languages bare (`vi`),
+ * so this normalizes `-` to `_`, tries an exact match, then falls back to the
+ * base language (`vi_VN` -> `vi`).
  */
 export const resolveAnnouncementLanguage = (
   input: string | undefined,
@@ -93,10 +83,9 @@ export type WhatsappCallAnnouncementBody = {
 
 /**
  * Validates `purpose` length and serializes a caller-supplied announcement
- * input into Meta's snake_case wire shape. Throws a typed error (via the
- * `onPurposeTooLong` callback) rather than silently truncating — a bad
- * `purpose` would otherwise make Meta reject the whole `connect`/`accept`
- * call at request time.
+ * input into Meta's snake_case wire shape. Throws a typed error (via
+ * `onPurposeTooLong`) rather than silently truncating — a bad `purpose` would
+ * otherwise make Meta reject the whole `connect`/`accept` call at request time.
  */
 export const buildCallAnnouncementBody = (
   input: WhatsappCallAnnouncementInput,

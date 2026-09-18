@@ -197,8 +197,8 @@ describe("InboxTeamService membership inserts", () => {
   })
 })
 
-// L6: pins the P2 ring-target team-member read as a pure delegation to the
-// repository — no caching, no transformation.
+// Pins listUserIdsByTeamId as a pure delegation to the repository — no
+// caching, no transformation.
 describe("InboxTeamService.listUserIdsByTeamId", () => {
   test("delegates straight to inboxTeamMemberRepository.listUserIdsByTeamId with the same props and returns its result unchanged", async () => {
     const userIds = ["u1", "u2"]

@@ -14,19 +14,18 @@ type CallAudioPlayerProps = {
   resolveUrl: () => Promise<string>
   /**
    * Known call length (from `WhatsappCall.durationSeconds`) shown as the total
-   * before playback starts, so the timer reads `0:00 / 0:20` at rest instead
-   * of `0:00 / 0:00` — without eagerly signing/loading the audio just to read
-   * its metadata.
+   * before playback starts, so the timer reads `0:00 / 0:20` at rest instead of
+   * `0:00 / 0:00`, without eagerly signing/loading the audio just to read its
+   * metadata.
    */
   totalDurationSeconds?: number
 }
 
 /**
- * Minimal, reusable audio player built on the `@chatbotx.io/ui` `Slider` —
- * a plain progress bar with no waveform rendering. Plays
- * against the single shared `callPlaybackStore` audio element so the
- * progressive call card and the (later) Call Information sheet never run
- * two overlapping streams for the same call.
+ * Minimal, reusable audio player built on the `@chatbotx.io/ui` `Slider` — a
+ * plain progress bar, no waveform rendering. Plays against the single shared
+ * `callPlaybackStore` audio element so the progressive call card and the Call
+ * Information sheet never run two overlapping streams for the same call.
  */
 export const CallAudioPlayer = ({
   callId,
@@ -34,10 +33,10 @@ export const CallAudioPlayer = ({
   totalDurationSeconds,
 }: CallAudioPlayerProps) => {
   const t = useTranslations("whatsapp.calls.card")
-  // Per-field selectors (instead of subscribing to the whole store) so a
-  // player only re-renders on ITS OWN call's fields — without this, every
-  // mounted card/sheet player re-renders on every `timeupdate` tick (~4Hz)
-  // for whichever call happens to be playing.
+  // Per-field selectors (instead of subscribing to the whole store) so a player
+  // only re-renders on its own call's fields — otherwise every mounted
+  // card/sheet player re-renders on every `timeupdate` tick (~4Hz) for
+  // whichever call happens to be playing.
   const isActive = useCallPlaybackStore((state) => state.callId === callId)
   const status = useCallPlaybackStore((state) =>
     state.callId === callId ? state.status : "idle",

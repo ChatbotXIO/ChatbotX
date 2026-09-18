@@ -1,12 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// ---------------------------------------------------------------------------
-// inboxService.hasAnyChannel — the existence probe behind the sidebar's Calls
-// entry. Two things matter and neither is visible from the call site: it must
-// NOT filter on `Inbox.status` (a disconnected WhatsApp number still has call
-// history to show), and an empty channel list must short-circuit instead of
-// emitting `IN ()`.
-// ---------------------------------------------------------------------------
+// hasAnyChannel must NOT filter on Inbox.status (a disconnected WhatsApp
+// number still has call history to show) and must short-circuit an empty
+// channel list instead of emitting `IN ()`.
 
 const limitMock = vi.fn()
 const whereMock = vi.fn(() => ({ limit: limitMock }))

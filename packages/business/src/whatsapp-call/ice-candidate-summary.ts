@@ -1,19 +1,14 @@
 /**
- * Counts the ICE candidate types an SDP offers, so a call that connects but
- * stays silent can be diagnosed from the server log alone.
- *
- * Only counts are produced — never an address, a ufrag, a fingerprint or any
- * other SDP content. A relay count of zero on a deployment that has TURN
- * configured is the signal: the browser never obtained a relay address, so
- * Meta has nowhere to send audio when no direct path exists, and the call ends
- * with error 138021 ("no media was received from the business").
+ * Counts ICE candidate types from an SDP so a call that connects but stays
+ * silent can be diagnosed from the server log alone. Only counts — never an
+ * address, ufrag, or fingerprint. Relay count zero with TURN configured means
+ * the browser never got a relay address (call ends with error 138021).
  */
 
 /**
  * The media direction the answer commits to. `sendrecv` is the only value that
- * lets audio flow both ways; `recvonly` means the browser told Meta it will
- * never send RTP, which produces error 138021 ("no media was received from the
- * business") no matter how healthy the relay is.
+ * lets audio flow both ways; `recvonly` produces error 138021 no matter how
+ * healthy the relay is.
  */
 export type SdpMediaDirection =
   | "sendrecv"
@@ -44,7 +39,7 @@ const NEXT_SECTION = /\r?\n(?=m=)/
 /**
  * The lines belonging to the audio media section, or the whole SDP when there
  * is none. Sliced rather than matched with a regex: an `m` flag makes `$` mean
- * end-of-LINE, which silently truncates the section to its own `m=` line.
+ * end-of-line, which silently truncates the section to its own `m=` line.
  */
 function audioSection(sdp: string): string {
   const start = sdp.search(AUDIO_SECTION_START)
@@ -60,8 +55,7 @@ function audioSection(sdp: string): string {
  * Reads the direction of the AUDIO media section only. A direction attribute is
  * also legal at session level and applies as a default to every section, so
  * scanning the whole SDP would let a session-level `sendrecv` mask an
- * `a=recvonly` on the audio line — and this helper exists precisely to name
- * that case correctly.
+ * `a=recvonly` on the audio line.
  */
 function readDirection(sdp: string): SdpMediaDirection {
   const match = DIRECTION_LINE.exec(audioSection(sdp))
@@ -91,7 +85,7 @@ export function summarizeIceCandidates(sdp: string): IceCandidateSummary {
  * Whether the answer commits to sending audio at all. `unspecified` counts as
  * sending: RFC 4566 §6 makes an absent direction attribute mean `sendrecv`, so
  * reporting it as "will never send audio" would name the wrong cause during an
- * incident — the one moment this line has to be trustworthy.
+ * incident.
  */
 export function canSendAudio(summary: IceCandidateSummary): boolean {
   return (
@@ -102,13 +96,9 @@ export function canSendAudio(summary: IceCandidateSummary): boolean {
 }
 
 /**
- * Why a call is about to be silent, or that it should not be. A code rather
- * than a sentence so the log message stays constant and alertable, and so the
- * caller picks the severity.
- *
- * Ordered by how decisive each cause is: a direction that cannot send audio
- * outranks a missing relay, because no relay can carry RTP the browser never
- * emits.
+ * Why a call is about to be silent. A code, not a sentence, so the log message
+ * stays constant and alertable. Ordered by decisiveness: a direction that
+ * can't send audio outranks a missing relay.
  */
 export type AnswerDiagnosis = "cannotSendAudio" | "noRelay" | "healthy"
 

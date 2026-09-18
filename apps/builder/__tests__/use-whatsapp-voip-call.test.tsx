@@ -181,13 +181,11 @@ class MockRTCPeerConnection {
   setRemoteDescription = vi.fn().mockResolvedValue(undefined)
 
   /**
-   * Models the real Chrome behaviour this codebase was bitten by, verified
-   * against Chrome directly: when ANSWERING, a `sendrecv` transceiver created
-   * with `addTransceiver` is NOT reused for the remote offer's m-line — Chrome
-   * makes a second, `recvonly` one and leaves ours unassociated. So the answer
-   * can only promise to send audio when a track was attached with `addTrack`
-   * BEFORE `createAnswer`. A mock that always returned a fixed SDP is why the
-   * `recvonly` regression reached production with the suite green.
+   * Real Chrome behaviour, verified against Chrome directly: when ANSWERING,
+   * Chrome does not reuse a `sendrecv` transceiver from `addTransceiver` for
+   * the remote offer's m-line — it makes a second, `recvonly` one instead.
+   * The answer can only promise to send audio when a track was attached with
+   * `addTrack` BEFORE `createAnswer`.
    */
   createAnswer = vi.fn(() => {
     const canSend = this.addTrackSenders.some((sender) => sender.track !== null)
@@ -199,8 +197,8 @@ class MockRTCPeerConnection {
 
   /**
    * Offering is laxer in real Chrome — a track-less `addTransceiver` still
-   * yields `sendrecv` there — but the app deliberately no longer relies on
-   * that. It attaches the mic with `addTrack` before building the offer, so a
+   * yields `sendrecv` there — but the app deliberately does not rely on that.
+   * It attaches the mic with `addTrack` before building the offer, so a
    * lost ACCEPTED event can never leave the sender track-less on a live call.
    * The mock holds the app to that stricter rule.
    */
@@ -241,10 +239,9 @@ const incomingData = {
 
 /**
  * Seeds the slot with a ringing inbound call, the way production does it:
- * into the basket first, then promoted — replaces the deleted `addIncoming`.
- * Throws if promotion did not actually happen, so a mis-migrated test — one
- * that seeds against an already-occupied slot — fails loudly instead of
- * silently asserting against an empty/unchanged slot.
+ * into the basket first, then promoted. Throws if promotion did not
+ * actually happen, so a test that seeds against an already-occupied slot
+ * fails loudly instead of silently asserting against an unchanged slot.
  */
 const seedRingingSlot = (data: WhatsappVoipIncomingData) => {
   const store = useWhatsappVoipCallStore.getState()
@@ -350,7 +347,7 @@ describe("useWhatsappVoipCall", () => {
     )
   })
 
-  test("M4: unmounting the provider while a call is ACCEPTED/active tears down the peer connection and stops the mic tracks", async () => {
+  test("unmounting the provider while a call is ACCEPTED/active tears down the peer connection and stops the mic tracks", async () => {
     const stream = makeMockStream()
     getUserMediaMock.mockResolvedValue(stream)
     answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
@@ -946,7 +943,7 @@ describe("useWhatsappVoipCall", () => {
     expect(dispatchBeforeUnload()).toBe(true)
   })
 
-  test("D7: beforeunload is NOT cancelled with no call in the slot", async () => {
+  test("beforeunload is NOT cancelled with no call in the slot", async () => {
     await render()
 
     expect(dispatchBeforeUnload()).toBe(true)
@@ -956,7 +953,7 @@ describe("useWhatsappVoipCall", () => {
   // merely-ringing basket blocked navigation for agents who never intended to
   // answer — and guarded nothing, since the resume fetch re-discovers every
   // unanswered offer on the next mount.
-  test("D7: beforeunload is NOT cancelled by a ringing basket alone", async () => {
+  test("beforeunload is NOT cancelled by a ringing basket alone", async () => {
     await render()
     act(() => {
       useWhatsappVoipCallStore.getState().enqueueRinging(incomingData)
@@ -965,7 +962,7 @@ describe("useWhatsappVoipCall", () => {
     expect(dispatchBeforeUnload()).toBe(true)
   })
 
-  test("D7: an engaged call still warns even while the basket is also ringing", async () => {
+  test("an engaged call still warns even while the basket is also ringing", async () => {
     await render()
     act(() => {
       useWhatsappVoipCallStore.setState({
@@ -977,7 +974,7 @@ describe("useWhatsappVoipCall", () => {
     expect(dispatchBeforeUnload()).toBe(false)
   })
 
-  test("R7: answer() attaches the mic with addTrack BEFORE the answer, so the SDP is sendrecv", async () => {
+  test("answer() attaches the mic with addTrack BEFORE the answer, so the SDP is sendrecv", async () => {
     // The regression this pins: a `sendrecv` transceiver with no track makes
     // Chrome answer `recvonly`, no RTP ever leaves the browser, and Meta ends
     // the answered call with 138021. Asserting the SDP — not that
@@ -1031,7 +1028,7 @@ describe("useWhatsappVoipCall", () => {
     expect(pc?.addTrackSenders[0]?.track).not.toBeNull()
   })
 
-  test("R7: the mic track is attached before the remote offer is applied", async () => {
+  test("the mic track is attached before the remote offer is applied", async () => {
     // Order matters, not just presence: addTrack after setRemoteDescription
     // still answers recvonly.
     answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
@@ -1058,7 +1055,7 @@ describe("useWhatsappVoipCall", () => {
     expect(setRemoteOrder).toBeLessThan(createAnswerOrder as number)
   })
 
-  test("R5: pc.connectionState 'failed' tears down and fires a compensating hangup with a translated connection-lost notice", async () => {
+  test("pc.connectionState 'failed' tears down and fires a compensating hangup with a translated connection-lost notice", async () => {
     answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
     seedRingingSlot(incomingData)
     await render()
@@ -1087,7 +1084,7 @@ describe("useWhatsappVoipCall", () => {
     )
   })
 
-  test("R5: answering with a microphone that yields no audio track fails loudly instead of answering silently", async () => {
+  test("answering with a microphone that yields no audio track fails loudly instead of answering silently", async () => {
     // The inbound equivalent of the old failed-replaceTrack path: if nothing
     // can be attached before the answer is created, the SDP would commit to
     // `recvonly` and the call would connect and stay silent. Refuse instead.
@@ -1106,7 +1103,7 @@ describe("useWhatsappVoipCall", () => {
     expect(createdPeerConnections[0]?.close).toHaveBeenCalled()
   })
 
-  test("R5: pc.connectionState 'disconnected' for more than the grace window tears down; recovery cancels the timer", async () => {
+  test("pc.connectionState 'disconnected' for more than the grace window tears down; recovery cancels the timer", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     try {
       answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
@@ -1155,7 +1152,7 @@ describe("useWhatsappVoipCall", () => {
     }
   })
 
-  test("R6: heartbeats every 20s while active, and a ok:false response stops the interval WITHOUT tearing the call down", async () => {
+  test("heartbeats every 20s while active, and a ok:false response stops the interval WITHOUT tearing the call down", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     try {
       answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
@@ -1202,7 +1199,7 @@ describe("useWhatsappVoipCall", () => {
     }
   })
 
-  test("R6: stops heartbeating once the call ends", async () => {
+  test("stops heartbeating once the call ends", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     try {
       answerActionMock.mockResolvedValue({ data: { outcome: "accepted" } })
@@ -1479,7 +1476,7 @@ describe("useWhatsappVoipCall — basket / multi-ring", () => {
 
     // The client nonce is a UUID, not the `/^\d+$/` shape the hangup
     // action's schema demands — sending it would fail validation and
-    // surface a false "hangup failed" toast (FIX 5). It must never be sent.
+    // surface a false "hangup failed" toast. It must never be sent.
     expect(hangupActionMock).not.toHaveBeenCalled()
     expect(toastErrorMock).not.toHaveBeenCalled()
     expect(useWhatsappVoipCallStore.getState().call?.whatsappCallId).toBe(
@@ -2384,14 +2381,13 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     }
   })
 
-  test("R7: the outbound offer attaches the mic before createOffer, so the SDP is sendrecv", async () => {
+  test("the outbound offer attaches the mic before createOffer, so the SDP is sendrecv", async () => {
     initiateOutboundActionMock.mockResolvedValue({
       data: outboundDialingResult,
     })
-    // Regression guard for the outbound half of the 138021 bug. The mic used
-    // to be held back and attached via `replaceTrack` on Meta's ACCEPTED
-    // event, which Meta documents as best-effort — a lost event left the
-    // sender track-less on a live call and Chrome sent zero RTP.
+    // Regression guard for bug 138021: Meta's ACCEPTED event is best-effort,
+    // so attaching the mic there via `replaceTrack` risks a lost event
+    // leaving the sender track-less on a live call with zero RTP.
     await render()
     await act(async () => {
       await hookResult?.startOutbound({ conversationId: "conversation-1" })
@@ -2409,7 +2405,7 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     expect(submitted.sdpOffer).not.toContain("a=recvonly")
   })
 
-  test("R7: the outbound mic is attached before the offer is built, not after", async () => {
+  test("the outbound mic is attached before the offer is built, not after", async () => {
     initiateOutboundActionMock.mockResolvedValue({
       data: outboundDialingResult,
     })
@@ -2429,7 +2425,7 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     expect(addTrackOrder).toBeLessThan(createOfferOrder as number)
   })
 
-  test("R7: reaching ACCEPTED does not re-touch the media path — it was negotiated at offer time", async () => {
+  test("reaching ACCEPTED does not re-touch the media path — it was negotiated at offer time", async () => {
     // The ACCEPTED effect must only start the recorder. If it ever attaches
     // media again, the call's audio depends on that best-effort event once
     // more — the outbound half of the 138021 bug.
@@ -2460,7 +2456,7 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     expect(pc?.addTrackSenders[0]?.replaceTrack).not.toHaveBeenCalled()
   })
 
-  test("R5: an outbound call's pc.connectionState 'failed' tears down and fires a compensating hangup", async () => {
+  test("an outbound call's pc.connectionState 'failed' tears down and fires a compensating hangup", async () => {
     initiateOutboundActionMock.mockResolvedValue({
       data: outboundDialingResult,
     })
@@ -2493,10 +2489,9 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     )
   })
 
-  test("R5: handleConnectionLost is idempotent — two connection failures hang up only once", async () => {
-    // The mic-attach failure that used to race `connectionstatechange` here is
-    // gone (media is negotiated at offer time), but the idempotency it exercised
-    // is still load-bearing: `connectionState` can reach `failed` more than once.
+  test("handleConnectionLost is idempotent — two connection failures hang up only once", async () => {
+    // `connectionState` can reach `failed` more than once, so the handler
+    // must stay idempotent.
     initiateOutboundActionMock.mockResolvedValue({
       data: outboundDialingResult,
     })
@@ -2532,7 +2527,7 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     )
   })
 
-  test("R5: a connection failure while still preparing releases the local slot immediately (before any server call exists)", async () => {
+  test("a connection failure while still preparing releases the local slot immediately (before any server call exists)", async () => {
     let resolveInitiate: ((value: unknown) => void) | undefined
     initiateOutboundActionMock.mockImplementation(
       () =>
@@ -2576,7 +2571,7 @@ describe("useWhatsappVoipCall — startOutbound", () => {
     expect(useWhatsappVoipCallStore.getState().call).toBeNull()
   })
 
-  test("R6: heartbeats an outbound call every 20s once active, keyed by wacid", async () => {
+  test("heartbeats an outbound call every 20s once active, keyed by wacid", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     try {
       initiateOutboundActionMock.mockResolvedValue({

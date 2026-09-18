@@ -16,19 +16,11 @@ export type RealtimeEventName =
   (typeof RealtimeEventType)[keyof typeof RealtimeEventType]
 
 /**
- * The concrete envelope (`{ eventType, data }`) for one event name, picked
- * out of the `RealtimeEventData` discriminated union.
- *
- * NOT a plain `Extract<RealtimeEventData, { eventType: K }>`: a couple of
- * union members (e.g. `RealtimeEventContactCommon`, whose `eventType` is
- * `"contactBlocked" | "contactUnblocked"`) declare a UNION of literals for
- * `eventType` rather than a single one. `Extract` requires the member to be
- * assignable to `{ eventType: K }`, which such a member never is (its
- * `eventType` is wider than the single literal `K`) — it would silently
- * resolve to `never` for those events, exactly like a `switch` on
- * `eventType` still correctly narrows to that member for either of its
- * literals. This distributes over the union and keeps a member whenever `K`
- * is ONE OF its declared `eventType` literals, matching that narrowing.
+ * The concrete envelope ({ eventType, data }) for one event name. Not a plain
+ * Extract<RealtimeEventData, { eventType: K }>: some union members (e.g.
+ * RealtimeEventContactCommon) declare a union of literals for eventType,
+ * which Extract would resolve to never for. This distributes over the union
+ * instead.
  */
 export type RealtimeEvent<K extends RealtimeEventName> =
   RealtimeEventData extends infer Event

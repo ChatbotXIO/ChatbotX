@@ -4,19 +4,17 @@ import {
 } from "../workspace-member/permissions"
 
 /**
- * Cap on how many agents a single inbound VoIP call fans out to — a bounded
- * "ring a bounded set" discipline so a huge workspace can't fork one call to
- * hundreds of browsers. Applied AFTER tier resolution and eligibility
- * filtering (never before), so an ineligible online member can never push
- * an eligible one out of the cap. Re-exported from `voip-call-service.ts`
- * for existing callers/tests.
+ * Cap on how many agents a single inbound VoIP call fans out to. Applied
+ * after tier resolution and eligibility filtering, never before, so an
+ * ineligible online member can never push an eligible one out.
  */
 export const MAX_VOIP_RING_TARGETS = 10
 
-/** A conversation's assignment, as far as ring-eligibility and ring-tier
- * selection cares — `null` when the conversation itself could not be
- * resolved (e.g. deleted between `handleConnect` resolving `conversationId`
- * and this lookup running). */
+/**
+ * A conversation's assignment, as far as ring-eligibility and tier selection
+ * cares — null when the conversation itself couldn't be resolved (e.g. deleted
+ * between handleConnect resolving conversationId and this lookup).
+ */
 export type RingConversation = {
   assignedUserId: string | null
   assignedInboxTeamId: string | null
@@ -33,16 +31,11 @@ type CallEligibilityRule = (
 ) => boolean
 
 /**
- * Ordered rule array (`some`), evaluated top to bottom — encodes plan D3
- * exactly: `superAdmin || contacts || (onlyAssignedContacts && individually
- * assigned to them)`. `onlyAssignedContacts` alone is NEVER enough — a
- * member with only that flag is eligible only when
- * `conversation.assignedUserId` is literally their own id (D2: a
- * team-assigned-but-not-individually-assigned conversation does not count,
- * and neither does an unassigned one — no auto-claim by ringing). Reuses
- * `hasWorkspacePermission` for every permission check rather than a
- * parallel `=== true` read. The single predicate shared by ringing,
- * pickup, resume, TURN and call reads (`call-access-service.ts`, P2 Part B).
+ * Evaluated top to bottom: superAdmin || contacts || (onlyAssignedContacts &&
+ * individually assigned to them). onlyAssignedContacts alone is never
+ * enough — a team-assigned-but-not-individually-assigned or unassigned
+ * conversation never counts (no auto-claim by ringing). Shared by ringing,
+ * pickup, resume, TURN and call reads.
  */
 export const CALL_ELIGIBILITY_RULES: readonly CallEligibilityRule[] = [
   (member) => hasWorkspacePermission(member.permissions, "superAdmin"),
@@ -62,23 +55,27 @@ export function isEligibleForConversationCall(
 export type RingTierName = "assignee" | "assignedTeam" | "eligibleOnline"
 
 /**
- * Everything a tier needs to resolve its candidate user ids — built once
- * per inbound call by the business-layer orchestration
- * (`whatsappVoipCallService.selectRingTargetsForCall`) and passed to every
- * tier in {@link RING_TIERS} unchanged.
+ * Everything a tier needs to resolve its candidate user ids — built once per
+ * inbound call by the business-layer orchestration and passed unchanged to
+ * every tier in RING_TIERS.
  */
 export type RingContext = {
   conversation: RingConversation
-  /** Online member user ids, presence order (most-recently-renewed tab
-   * first), already deduped — see `workspacePresenceService.listOnlineMembers`. */
+  /**
+   * Online member user ids, presence order (most-recently-renewed tab first),
+   * already deduped.
+   */
   onlineUserIds: readonly string[]
-  /** Permissions for online user ids ONLY (bounded projection) — a userId
-   * with no entry (e.g. a synthetic support-session membership, which is
-   * never persisted, or simply not yet loaded) is excluded by construction. */
+  /**
+   * Permissions for online user ids only (bounded projection) — a userId with
+   * no entry (e.g. a synthetic support-session membership, never persisted, or
+   * not yet loaded) is excluded by construction.
+   */
   permissionsByUserId: ReadonlyMap<string, PermissionsInput>
-  /** User ids belonging to `conversation.assignedInboxTeamId` — empty when
-   * the conversation has no assigned team (the orchestration only loads
-   * this projection when `assignedInboxTeamId` is set). */
+  /**
+   * User ids belonging to conversation.assignedInboxTeamId — empty when the
+   * conversation has no assigned team.
+   */
   teamMemberUserIds: readonly string[]
 }
 
@@ -112,9 +109,9 @@ const filterEligibleOnline = (
 }
 
 /**
- * Tier 1 — the conversation's individually assigned agent, ONLY while they
- * are online AND eligible. D1: offline (or ineligible) falls through to the
- * next tier rather than ringing nobody.
+ * Tier 1 — the conversation's individually assigned agent, only while online
+ * and eligible. Offline or ineligible falls through to the next tier rather
+ * than ringing nobody.
  */
 const assigneeTier: RingTier = {
   name: "assignee",
@@ -128,11 +125,10 @@ const assigneeTier: RingTier = {
 }
 
 /**
- * Tier 2 — online, eligible members of the conversation's assigned team.
- * D2: only reached for a team-assigned conversation; a member whose ONLY
- * qualifying permission is `onlyAssignedContacts` is never eligible here
- * (they are not individually assigned), resolved by the shared predicate
- * exactly as it is everywhere else — no parallel rule.
+ * Tier 2 — online, eligible members of the conversation's assigned team. Only
+ * reached for a team-assigned conversation; a member whose only qualifying
+ * permission is onlyAssignedContacts is never eligible here, resolved by the
+ * same shared predicate used everywhere else.
  */
 const assignedTeamTier: RingTier = {
   name: "assignedTeam",
@@ -151,9 +147,9 @@ const eligibleOnlineTier: RingTier = {
 }
 
 /**
- * Ordered ring-tier strategy array — the first tier that resolves at least
- * one candidate wins; later tiers are never consulted. No if-else chain:
- * a new tier is a one-line splice here.
+ * Ordered ring-tier strategy array — the first tier that resolves at least one
+ * candidate wins; later tiers are never consulted. A new tier is a one-line
+ * splice here.
  */
 export const RING_TIERS: readonly RingTier[] = [
   assigneeTier,
@@ -167,13 +163,11 @@ export type RingTargetsSelection = {
 }
 
 /**
- * Pure selection over a pre-built {@link RingContext}: the first non-empty
- * tier in {@link RING_TIERS} wins (presence order preserved within it), then
- * {@link MAX_VOIP_RING_TARGETS} is applied LAST — after tier resolution and
- * eligibility filtering, never before, so a large number of ineligible
+ * Pure selection over a pre-built RingContext: the first non-empty tier in
+ * RING_TIERS wins (presence order preserved), then MAX_VOIP_RING_TARGETS is
+ * applied last, after tier resolution and eligibility filtering, so ineligible
  * online members can never hide an eligible one within the winning tier.
- * Returns `{ tier: null, userIds: [] }` when every tier is empty (nobody to
- * ring).
+ * Returns { tier: null, userIds: [] } when every tier is empty.
  */
 export function selectRingTargets(context: RingContext): RingTargetsSelection {
   for (const tier of RING_TIERS) {

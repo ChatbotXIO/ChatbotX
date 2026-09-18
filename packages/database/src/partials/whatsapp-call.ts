@@ -7,12 +7,11 @@ export const whatsappCallDirections = z.enum([
 export type WhatsappCallDirection = z.infer<typeof whatsappCallDirections>
 
 /**
- * Lifecycle statuses reported by Meta's `calls` webhook field.
- *
- * `ringing`/`accepted`/`rejected` arrive as Call Status webhooks while the
- * call is live; `completed`/`failed` arrive on the terminal Call Terminate
- * webhook. A user-initiated call that was never accepted terminates as
- * `failed` — the UI derives "missed call" from that combination.
+ * Lifecycle statuses from Meta's `calls` webhook field.
+ * `ringing`/`accepted`/`rejected` arrive on Call Status webhooks;
+ * `completed`/`failed` arrive on the terminal Call Terminate webhook. A user-
+ * initiated call never accepted terminates as `failed` — the UI derives "missed
+ * call" from that combination.
  */
 export const whatsappCallStatuses = z.enum([
   "ringing",
@@ -30,12 +29,10 @@ export type WhatsappCallTerminalStatus = Extract<
 >
 
 /**
- * Display outcome persisted alongside every terminal `status` write
- * (`resolveWhatsappCallOutcome`). `canceled` is the same DISPLAY-only
- * refinement `MessageWhatsappCallEntity["status"]` already uses for a
- * business-initiated call the agent hung up before the customer answered —
- * it is a refinement of the DB `status: "failed"`, never a status value of
- * its own.
+ * Display outcome persisted alongside every terminal `status` write. `canceled`
+ * is a DISPLAY-only refinement of DB `status: "failed"` for a business-
+ * initiated call the agent hung up before the customer answered — never a
+ * status value of its own.
  */
 export const whatsappCallOutcomes = z.enum([
   "completed",
@@ -46,10 +43,10 @@ export const whatsappCallOutcomes = z.enum([
 export type WhatsappCallOutcome = z.infer<typeof whatsappCallOutcomes>
 
 /**
- * The outcome value(s) compatible with each terminal status — `failed` is
- * the only status with two possible outcomes. Used to type-narrow every
- * terminal writer's `{ status, outcome }` pair so a mismatched pair (e.g.
- * `rejected` + `completed`) is a compile error, not a runtime bug.
+ * The outcome value(s) compatible with each terminal status — `failed` is the
+ * only status with two possible outcomes. Used to type-narrow every terminal
+ * writer's `{ status, outcome }` pair so a mismatched pair is a compile error,
+ * not a runtime bug.
  */
 export type WhatsappCallOutcomeByFinalStatus = {
   failed: Extract<WhatsappCallOutcome, "failed" | "canceled">
@@ -59,9 +56,8 @@ export type WhatsappCallOutcomeByFinalStatus = {
 
 /**
  * A terminal `{ status, outcome }` pair, distributed over
- * {@link WhatsappCallTerminalStatus} so every terminal writer
- * (`finalizeById`, `finalizeEndedCall`) is rejected at compile time for a
- * mismatched pair or an omitted `outcome`.
+ * `WhatsappCallTerminalStatus` so every terminal writer is rejected at compile
+ * time for a mismatched pair or an omitted `outcome`.
  */
 export type WhatsappCallTerminalStatusOutcomePair = {
   [S in WhatsappCallTerminalStatus]: {
@@ -81,22 +77,8 @@ export const OUTCOME_BY_TERMINAL_STATUS: Record<
 }
 
 /**
- * Pure resolution of the display `outcome` from a terminal `status` — the
- * single place the "agent hung up an outbound call before the customer
- * answered" cancel rule lives, so every writer (the shared finalizer, both
- * `endVoipCallAsAgent` branches, outbound connect/setup failures, the stale
- * sweep, the signaling wrapper, the interim `rejected` branch) derives
- * `outcome` the same way.
- *
- * IMPORTANT for every READER of the persisted `outcome` column: a pod still
- * running the OLD image during the rollout of the migration pair that added
- * this column (`20260917173244_whatsapp_call_outcome_type_column` /
- * `20260917173245_whatsapp_call_outcome_backfill_index`) writes terminal
- * rows with `outcome` left `NULL` — there is no redelivery that would heal
- * them via `fillMissingTerminalFields`. Any reader (P5b's `CALL_KIND_RULES`,
- * list filters, etc.) MUST treat `NULL` as "fall back to `status`" —
- * `coalesce(outcome, status)` semantics — never read `outcome` alone. See
- * `docs/whatsapp-calling-voip.md`'s "Call outcome column" section.
+ * Single place the "agent hung up an outbound call before the customer
+ * answered" cancel rule lives, so every writer derives `outcome` the same way.
  */
 export const resolveWhatsappCallOutcome = <
   S extends WhatsappCallTerminalStatus,
@@ -106,12 +88,11 @@ export const resolveWhatsappCallOutcome = <
     /** True only for a business-initiated call the agent ended before the customer answered. */
     canceledByBusiness?: boolean
   },
-  // Generic over the caller's (often literal) status type so the return
-  // narrows to `WhatsappCallOutcomeByFinalStatus[S]` — e.g. a literal
-  // `status: "completed"` resolves to the single literal `"completed"`, not
-  // the broad `WhatsappCallOutcome` union, which is what lets a caller spread
-  // `{ status, outcome: resolveWhatsappCallOutcome({ status }) }` into a
-  // {@link WhatsappCallTerminalStatusOutcomePair}-typed parameter.
+  // Generic over the caller's (often literal) status type so the return narrows
+  // to `WhatsappCallOutcomeByFinalStatus[S]` — a literal `status: "completed"`
+  // resolves to the single literal `"completed"`, letting a caller spread `{
+  // status, outcome: resolveWhatsappCallOutcome({ status }) }` into a
+  // `WhatsappCallTerminalStatusOutcomePair`-typed parameter.
 ): WhatsappCallOutcomeByFinalStatus[S] =>
   (input.status === "failed" && input.canceledByBusiness
     ? "canceled"
@@ -120,19 +101,10 @@ export const resolveWhatsappCallOutcome = <
       ]) as WhatsappCallOutcomeByFinalStatus[S]
 
 /**
- * {@link resolveWhatsappCallOutcome}, but returning the full `{ status,
- * outcome }` pair rather than just `outcome` — for the one call site
- * (`endVoipCallAsAgent`'s wacid branch) where `status` is itself only known
- * at the broad {@link WhatsappCallTerminalStatus} type (threaded through
- * from `EndVoipCallResult.terminalStatus`). TypeScript is STRICTER here, not
- * looser: building `{ status, outcome }` by hand from a broad (union-typed)
- * `status` and assigning it to {@link WhatsappCallTerminalStatusOutcomePair}
- * is REJECTED at compile time, because with a non-literal discriminant
- * TypeScript cannot pick a single union branch to check the object literal
- * against. The exhaustive switch below sidesteps that by returning a
- * per-branch LITERAL pair from each case (where `status` — and therefore the
- * discriminant — narrows to a literal again), which the type checker CAN
- * verify against the union.
+ * Same as `resolveWhatsappCallOutcome`, but returns the full `{ status, outcome }`
+ * pair — for callers (e.g. `endVoipCallAsAgent`'s wacid branch) where `status` is
+ * only known as the broad `WhatsappCallTerminalStatus`, so building the pair by
+ * hand is a compile error; the exhaustive switch below narrows per-branch instead.
  */
 export const resolveWhatsappCallTerminalOutcomePair = (input: {
   status: WhatsappCallTerminalStatus
@@ -154,20 +126,7 @@ export const resolveWhatsappCallTerminalOutcomePair = (input: {
   }
 }
 
-/**
- * P5 item 4/5 — the ONE reader helper implementing `coalesce(outcome,
- * status)` semantics (the rolling-deploy contract documented on
- * `resolveWhatsappCallOutcome` above): a legacy terminal row written before
- * the backfill/before an outcome-writing pod rolled out has `outcome ===
- * null`, and every reader (the Calls page's `CALL_KIND_RULES` /
- * `CALL_ACTIVITY_FILTERS`, the list repository's SQL where-builder) must
- * fall back to `status` rather than reading `outcome` alone. `status` is
- * only a valid stand-in for a TERMINAL row — `rejected`/`completed`/`failed`
- * are each a literal member of {@link WhatsappCallOutcome} too (`canceled`
- * has no status equivalent, by design: it is a DISPLAY-only refinement of
- * `failed`, never written to `status`). A non-terminal row (`ringing`/
- * `accepted`) has no display outcome at all — `null`.
- */
+/** `coalesce(outcome, status)` for terminal rows; `null` while ringing/accepted. */
 export const resolveDisplayCallOutcome = (row: {
   status: WhatsappCallStatus
   outcome: WhatsappCallOutcome | null
@@ -187,17 +146,10 @@ export type WhatsappCallPermissionResponse = z.infer<
 >
 
 /**
- * Shape of one entry in `WhatsappCall.transcriptSegments` (jsonb array).
- * Single source of truth for the column's `$type<>` in
- * `schema/whatsapp-call.ts`.
- *
- * `speaker`/`channel` are present ONLY for a VoIP call transcribed via
- * Meta-native transcription (`"Business"` / `"Customer"`, `channel` 0/1 per
- * Meta's `call_transcript` document) — a browserWhisper transcript has no
- * diarization, so those segments omit both fields entirely (never `null`,
- * to keep the shape a plain optional-property union rather than a
- * nullable one). `start`/`end` are seconds, matching Meta's
- * `call_transcript.transcript.segments[].start/end` units.
+ * Shape of one entry in `WhatsappCall.transcriptSegments` (jsonb array); source of
+ * truth for the column's `$type<>` in `schema/whatsapp-call.ts`. `speaker`/`channel`
+ * are present only for Meta-native transcription (browserWhisper has no diarization,
+ * so it omits both, never `null`). `start`/`end` are seconds, matching Meta's units.
  */
 export const whatsappCallTranscriptSegmentSchema = z.object({
   speaker: z.string().optional(),
@@ -219,9 +171,8 @@ export type WhatsappCallTranscriptSegments = z.infer<
 
 /**
  * Shape of `WhatsappCall.aiSummary` (jsonb) — an on-demand summary generated
- * from the diarized/flat transcript by a connected AI integration.
- * Single source of truth for the column's `$type<>` in
- * `schema/whatsapp-call.ts`.
+ * from the diarized/flat transcript by a connected AI integration. Single
+ * source of truth for the column's `$type<>` in `schema/whatsapp-call.ts`.
  */
 export const whatsappCallAiSummarySchema = z.object({
   summary: z.string(),

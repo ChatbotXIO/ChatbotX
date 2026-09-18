@@ -15,12 +15,9 @@ const getRoomIdFromUrl = (url: string): string | undefined => {
 
 /**
  * Verifies an inbound broadcast request from the builder. Allows a
- * purpose-less legacy token (BLOCKER-a, round-2 review — see
- * `VerifyRealtimeTokenOptions.allowLegacyMissingPurpose`): during a deploy
- * where `apps/realtime` ships before the builder, the builder is still
- * minting tokens with no `purpose` claim, and without this window EVERY
- * broadcast request (including call ring/answer/ended events) would 401
- * for the whole rollout window.
+ * purpose-less legacy token (`allowLegacyMissingPurpose`) so requests don't
+ * 401 during a rollout where `apps/realtime` ships before the builder starts
+ * minting tokens with a `purpose` claim.
  */
 export const verifyBroadcastRequest = async (
   req: Party.Request,

@@ -1,12 +1,10 @@
 import { describe, expect, test, vi } from "vitest"
 
-// ---------------------------------------------------------------------------
-// conversation repository — `assignUserIfUnassigned` (P3 auto-assign).
+// conversation repository — `assignUserIfUnassigned` (auto-assign).
 // Mocks `db.update(...).set(...).where(...).returning()` at the module
 // boundary, in the tagged-object style used by
 // `conversation.service.test.ts`, so the WHERE clause's guard conditions can
 // be asserted directly rather than inferred from the resolved rows.
-// ---------------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({
   and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),

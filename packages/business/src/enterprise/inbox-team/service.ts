@@ -50,7 +50,7 @@ class InboxTeamService extends BaseService {
 
   /**
    * Bounded, workspace-scoped projection of a single team's member user
-   * ids — the P2 ring-target snapshot's team read
+   * ids — the ring-target snapshot's team read
    * (`whatsappVoipCallService.selectRingTargetsForCall`), only loaded when
    * a conversation's `assignedInboxTeamId` is set. Never the whole (cached)
    * `listByWorkspace`, which loads every team with members and users.

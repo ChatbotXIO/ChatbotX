@@ -139,17 +139,15 @@ export const workspaceActionClientAllowExpired = authActionClient.use(
     }
     const { workspace, member, isSupportSession } = access
 
-    // `permissions` is exposed so actions can gate on it (e.g. superAdmin)
+    // permissions is exposed so actions can gate on it (e.g. superAdmin)
     // without a second user+member round-trip — the same rows are already
-    // loaded here. The `permissions` jsonb defaults to `{}`, so callers must
-    // fail closed on missing keys (see `hasWorkspacePermission`).
-    // The caller's user id is NOT re-exposed as a separate `ctx.userId` —
-    // `ctx.user.id` (from `authActionClient`, deep-merged into `ctx` by
-    // every downstream `next()`) is already the one place every action
-    // reads it, including the P5 call-artifact actions (recording URL,
-    // transcript, summary, generate-summary), which pass
-    // `{ userId: ctx.user.id, permissions: ctx.workspaceMemberPermissions }`
-    // as the already-resolved member to `canReadCall` (M4/C1).
+    // loaded here. The permissions jsonb defaults to {}, so callers must fail
+    // closed on missing keys.
+    // The caller's user id is not re-exposed as a separate ctx.userId —
+    // ctx.user.id is already the one place every action reads it, including the
+    // call-artifact actions, which pass { userId: ctx.user.id, permissions:
+    // ctx.workspaceMemberPermissions } as the already-resolved member to
+    // canReadCall.
     return withAuditContext(
       { ...(getAuditActor() ?? {}), workspaceId: workspace.id },
       () =>
@@ -211,16 +209,9 @@ export const workspaceActionClientAllowScheduledDeletion =
   })
 
 /**
- * P2 item 7 (plan D8): "special workspace states" for calling. Call
- * CONTROL — ringing, answering, dialing, permission requests, and calling
- * configuration — is off during a platform-support session; reading call
- * history and artifacts is unaffected and keeps using
- * `workspaceActionClient`/`workspaceActionClientAllowExpired` as today
- * (`docs/support-access.md`: a support session's synthetic membership
- * otherwise carries full read access to every workspace record). Declared
- * with `createMiddleware` (a standalone, reusable middleware function, not a
- * client) so it composes with `.use()` onto more than one client without
- * redeclaring the whole ctx shape.
+ * Blocks call control (ringing, answering, dialing, permission requests, calling
+ * config) during a platform-support session, since its synthetic membership
+ * otherwise carries full read/write access; reading call history is unaffected.
  */
 export const rejectSupportSession = createMiddleware<{
   ctx: { isSupportSession: boolean }
@@ -237,10 +228,9 @@ export const rejectSupportSession = createMiddleware<{
 })
 
 /**
- * P2 item 7: refuses a member with neither `contacts` nor
- * `onlyAssignedContacts` from any calling action that starts or joins a
- * call. Reuses `hasContactsAccess` (`permission-routes.ts`), which already
- * lets `superAdmin` through, rather than a parallel permission check.
+ * Refuses a member with neither contacts nor onlyAssignedContacts from any
+ * calling action that starts or joins a call. Reuses hasContactsAccess, which
+ * already lets superAdmin through, rather than a parallel permission check.
  */
 export const requireContactsAccess = createMiddleware<{
   ctx: { workspaceMemberPermissions: PermissionsInput }
@@ -257,36 +247,32 @@ export const requireContactsAccess = createMiddleware<{
 })
 
 /**
- * Every calling action that STARTS OR JOINS a call (initiate/mode/
- * permission-request/answer/resume/TURN — see the P2 plan's action→client
- * table). Not used by `hangup-voip-call`/`heartbeat-active-voip-call`
- * (unchanged `workspaceActionClient` — ending or keeping alive a call a
- * workspace freeze already interrupted must keep working exactly as today)
- * nor by the read-only call-artifact actions (`workspaceActionClientAllowExpired`,
- * unaffected by D8).
+ * Every calling action that starts or joins a call (initiate/mode/permission-
+ * request/answer/resume/TURN). Not used by hangup-voip-call/heartbeat-active-
+ * voip-call (unchanged workspaceActionClient — ending or keeping alive a call a
+ * workspace freeze already interrupted must keep working) nor by the read-only
+ * call-artifact actions (unaffected).
  */
 export const callingActionClient = workspaceActionClient
   .use(rejectSupportSession)
   .use(requireContactsAccess)
 
 /**
- * Calling CONFIGURATION actions (settings, call hours, subscription fix) —
- * support-session-gated like every other calling action, but NOT
- * contacts-gated: each of these actions keeps its own
- * `assertWorkspaceSuperAdmin` call, and a synthetic support membership
- * carries `superAdmin: true` so it would pass `requireContactsAccess`
- * anyway — the extra layer would be redundant, not an extra guarantee.
+ * Calling configuration actions (settings, call hours, subscription fix) —
+ * support-session-gated like every other calling action, but not contacts-
+ * gated: each keeps its own assertWorkspaceSuperAdmin call, and a synthetic
+ * support membership carries superAdmin: true so it would pass
+ * requireContactsAccess anyway — the extra layer would be redundant.
  */
 export const callingAdminActionClient =
   workspaceActionClient.use(rejectSupportSession)
 
 /**
- * P5 item 6 (plan D4) — the Calls page's own page-level gate:
- * `hasContactsAccess || analytics`. Distinct from {@link requireContactsAccess}
- * (which admits `contacts`/`onlyAssignedContacts` only) because an
- * `analytics`-only member has NO calling access at all but must still be
- * able to read the workspace's call history/artifacts (D4). A read action —
- * built on `workspaceActionClientAllowExpired`, unaffected by D8.
+ * The Calls page's own page-level gate: hasContactsAccess || analytics.
+ * Distinct from requireContactsAccess (contacts/onlyAssignedContacts only)
+ * because an analytics-only member has no calling access at all but must still
+ * read the workspace's call history/artifacts. A read action, unaffected by the
+ * support-session gate.
  */
 export const requireCallHistoryAccess = createMiddleware<{
   ctx: { workspaceMemberPermissions: PermissionsInput }

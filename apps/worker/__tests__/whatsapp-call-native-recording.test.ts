@@ -65,9 +65,8 @@ vi.mock("../src/integration/handlers/whatsapp-voip-signaling", () => ({
 }))
 
 // `whatsapp-call-recording.ts` (the shared `attachRecordingAndNotify` this
-// handler reuses) also imports the transcription queue for the SIP chaining
-// path — mocked here purely so the real BullMQ queue never gets
-// instantiated in this unit test; this handler never touches it.
+// handler reuses) also imports the transcription queue — mocked here purely
+// so the real BullMQ queue never gets instantiated in this unit test.
 vi.mock("@chatbotx.io/worker-config", () => ({
   callTranscriptionJobId: (callId: string) => `transcribe-${callId}`,
   callTranscriptionQueue: { add: vi.fn() },
@@ -284,7 +283,7 @@ describe("handleWhatsappCallNativeRecordingFetch", () => {
     expect(mocks.emitCallRecorded).not.toHaveBeenCalled()
   })
 
-  test("R8: call row not found yet (neither by id nor by wacid) throws a retryable error instead of dropping the event", async () => {
+  test("call row not found yet (neither by id nor by wacid) throws a retryable error instead of dropping the event", async () => {
     mocks.findById.mockResolvedValue(undefined)
     mocks.findByWacid.mockResolvedValue(undefined)
 
@@ -316,7 +315,7 @@ describe("handleWhatsappCallNativeRecordingFetch", () => {
     expect(isBlockedWorkspaceMock).not.toHaveBeenCalled()
   })
 
-  test("R8: no whatsappCallId in the job data resolves the row by wacid instead", async () => {
+  test("no whatsappCallId in the job data resolves the row by wacid instead", async () => {
     mocks.findByWacid.mockResolvedValue(callRow)
 
     await handleWhatsappCallNativeRecordingFetch({

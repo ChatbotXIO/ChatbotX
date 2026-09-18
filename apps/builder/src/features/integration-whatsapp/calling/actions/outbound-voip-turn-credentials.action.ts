@@ -11,21 +11,14 @@ import { logger } from "@/lib/log"
 import { callingActionClient } from "@/lib/safe-action"
 
 /**
- * Bounds the client-minted pre-dial attempt identifier — never trusted
- * beyond an opaque string used to scope the TURN username (see
- * `outboundVoipTurnCredentialsAction`).
+ * Bounds the client-minted pre-dial attempt identifier — never trusted beyond
+ * an opaque string used to scope the TURN username.
  */
 const MAX_ATTEMPT_ID_CHARS = 200
 
 /**
- * Rate-limit window for minting ephemeral TURN credentials, keyed per caller
- * — this action has no call row or reservation to gate on (it runs BEFORE a
- * `WhatsappCall` exists), so without a limit any workspace member can mint
- * unlimited short-lived relay credentials with no call ever placed. A leaked
- * one is a valid 10-minute TURN relay credential, so this bounds the blast
- * radius of relay-bandwidth abuse rather than trying to prevent it outright.
- * Reuses the same fixed-window `incrWithWindow` primitive as
- * `api-rate-limit.ts`/`guest-rate-limit.ts`.
+ * Rate-limits credential minting per caller since this action runs before a
+ * WhatsappCall row exists, so there is nothing else to gate abuse on.
  */
 const TURN_MINT_WINDOW_SECONDS = 60
 const TURN_MINT_LIMIT_PER_WINDOW = 10
@@ -39,9 +32,9 @@ const buildWindowSuffix = (now: number, windowSeconds: number) =>
   String(Math.floor(now / (windowSeconds * 1000)))
 
 /**
- * Fails OPEN on a store error (Redis unavailable) — a temporary outage
- * should not block agents from placing calls; the risk this guards against
- * is sustained abuse, not a single missed window.
+ * Fails open on a store error (Redis unavailable) — a temporary outage
+ * shouldn't block agents from placing calls; this guards against sustained
+ * abuse, not a single missed window.
  */
 async function assertTurnMintNotRateLimited(
   userId: string,
@@ -73,35 +66,21 @@ async function assertTurnMintNotRateLimited(
 }
 
 const outboundVoipTurnCredentialsSchema = z.object({
-  /**
-   * A client-minted, per-attempt identifier (e.g. a fresh `crypto.
-   * randomUUID`) — NOT the same as `initiateOutboundVoipCallAction`'s
-   * server-generated `attemptId`/`wacid`, because this action runs BEFORE
-   * that call row exists (the browser must `createOffer`/gather ICE before
-   * dialing). Only used to scope the minted TURN credential's username so a
-   * leaked one is usable until it expires — the label only aids log tracing.
-   */
+  /** Client-minted per-attempt identifier, used before the call row (and its wacid) exist. */
   attemptId: z.string().min(1).max(MAX_ATTEMPT_ID_CHARS),
 })
 
 /**
- * Short-lived STUN/TURN ICE servers for the OUTBOUND (business-initiated)
- * VoIP dial's `RTCPeerConnection`, minted BEFORE the `WhatsappCall` row (and
- * `wacid`) exist — the browser must `createOffer` and gather ICE candidates
- * first, then pass the resulting SDP offer to `initiateOutboundVoipCallAction`.
- * Unlike `getWhatsappVoipTurnCredentialsAction` (inbound), this is gated
- * only on workspace membership — there is no call row or reservation to
- * check yet, so no `wacid`/`reservedUserId` gate applies. Scoped to
- * `<userId>:<attemptId>` to aid log tracing; a leaked credential still works for a
- * different agent or a different prepared call. Falls back to STUN-only
- * when no TURN secret is configured (see `voip-turn-credentials.action.ts`).
+ * Short-lived STUN/TURN ICE servers for the outbound dial's RTCPeerConnection,
+ * minted before the WhatsappCall row exists, so this is gated only on
+ * workspace membership rather than a call reservation.
  */
 export const outboundVoipTurnCredentialsAction = callingActionClient
   .bindArgsSchemas([zodBigintAsString()])
   .inputSchema(outboundVoipTurnCredentialsSchema)
-  // The bound workspaceId is used only for the authorization gate on this
-  // action; VoIP TURN credentials are scoped to the caller, not the
-  // workspace, so it is intentionally left unused here.
+  // The bound workspaceId is used only for the authorization gate — VoIP TURN
+  // credentials are scoped to the caller, not the workspace, so it's
+  // intentionally left unused here.
   .action(async ({ parsedInput, ctx }) => {
     const { attemptId } = parsedInput
 

@@ -121,7 +121,7 @@ describe("canCallConversation — fresh, uncached reads", () => {
   })
 })
 
-describe("canCallConversation — H1: unresolvable conversation must fail closed", () => {
+describe("canCallConversation — unresolvable conversation must fail closed", () => {
   test("superAdmin is DENIED when the conversation cannot be resolved (missing conversation) — never fail-open", async () => {
     mocks.findByUncached.mockResolvedValue(undefined)
     mocks.listPermissionsByUserIds.mockResolvedValue([
@@ -177,7 +177,7 @@ describe("canCallConversation — H1: unresolvable conversation must fail closed
   })
 })
 
-describe("canCallConversation — D3 rule table (isEligibleForConversationCall)", () => {
+describe("canCallConversation — rule table (isEligibleForConversationCall)", () => {
   test("contacts permission allowed regardless of assignment (conversation resolves)", async () => {
     mocks.findByUncached.mockResolvedValue({
       id: CONVERSATION_ID,
@@ -274,7 +274,7 @@ describe("canCallConversation — D3 rule table (isEligibleForConversationCall)"
   })
 })
 
-describe("loadCallEligibilityMember + canCallConversationForMember — M3: preload-once path", () => {
+describe("loadCallEligibilityMember + canCallConversationForMember — preload-once path", () => {
   test("loadCallEligibilityMember reads permissions bounded to exactly the requesting user id", async () => {
     mocks.listPermissionsByUserIds.mockResolvedValue([
       { userId: USER_ID, permissions: { superAdmin: true } },
@@ -330,7 +330,7 @@ describe("loadCallEligibilityMember + canCallConversationForMember — M3: prelo
     expect(allowed).toBe(false)
   })
 
-  test("canCallConversationForMember applies the same D3 rule as canCallConversation, without re-fetching permissions", async () => {
+  test("canCallConversationForMember applies the same rule as canCallConversation, without re-fetching permissions", async () => {
     mocks.findByUncached.mockResolvedValue({
       id: CONVERSATION_ID,
       assignedUserId: USER_ID,
@@ -365,7 +365,7 @@ const callRow = (
   ...overrides,
 })
 
-describe("isCallHistoryAdmin (plan D4)", () => {
+describe("isCallHistoryAdmin", () => {
   test("superAdmin is history admin", () => {
     expect(isCallHistoryAdmin({ superAdmin: true })).toBe(true)
   })
@@ -407,15 +407,11 @@ describe("isOwnCall", () => {
   })
 })
 
-describe("canReadCall — scope matrix (plan D4)", () => {
-  // C1 fix: `canReadCall` takes the caller's ALREADY-RESOLVED member
-  // (`{ userId, permissions }`), never a bare `userId` it would re-resolve
-  // via `WorkspaceMember` itself — that re-resolution is exactly what denied
-  // a platform support session (synthetic membership, no real
-  // `WorkspaceMember` row, AGENTS.md invariant #19) for all four artifact
-  // actions. Every test in this describe block therefore asserts
-  // `mocks.listPermissionsByUserIds` is NEVER called by `canReadCall` — the
-  // regression guard.
+describe("canReadCall — scope matrix", () => {
+  // `canReadCall` takes the caller's already-resolved member, never a bare
+  // `userId` to re-resolve — that re-resolution denies a platform support
+  // session (synthetic membership, no real `WorkspaceMember` row). Every
+  // test here asserts `mocks.listPermissionsByUserIds` is never called.
 
   test("denies when the call cannot be resolved in this workspace (non-admin member, row rule needs the call)", async () => {
     mocks.findByIdForWorkspace.mockResolvedValue(undefined)
@@ -568,7 +564,7 @@ describe("canReadCall — scope matrix (plan D4)", () => {
       ).toBe(true)
     })
 
-    test("own call in an UNASSIGNED conversation: denied (D3, no auto-claim)", async () => {
+    test("own call in an UNASSIGNED conversation: denied (no auto-claim)", async () => {
       mocks.findByIdForWorkspace.mockResolvedValue(
         callRow({ answeredByUserId: USER_ID }),
       )
@@ -615,7 +611,7 @@ describe("canReadCall — scope matrix (plan D4)", () => {
     })
   })
 
-  describe("artifact scope — no own-call restriction, only D3 conversation eligibility", () => {
+  describe("artifact scope — no own-call restriction, only conversation eligibility", () => {
     test("contacts agent may read ANY call's artifacts in any conversation", async () => {
       mocks.findByIdForWorkspace.mockResolvedValue(
         callRow({ answeredByUserId: OTHER_USER_ID }),

@@ -317,15 +317,10 @@ export interface IMessageRepository {
   ): Promise<string[]>
 
   /**
-   * Atomically merges `overlay` into the message's CURRENT
-   * `contentAttributes` via a single DB-side `jsonb ||` UPDATE — never a
-   * read-modify-write. Two independent writers racing on disjoint keys
-   * (e.g. a `call_recording_available` webhook setting `hasRecording` and a
-   * `call_transcription_available` webhook setting `hasTranscript`
-   * concurrently) can each merge their own key without clobbering the
-   * other's already-applied flag. Returns the resulting merged
-   * `contentAttributes` (so the caller can broadcast the authoritative
-   * current state) or `null` when no row matched `sourceId`/`workspaceId`.
+   * Atomically merges `overlay` into `contentAttributes` via a DB-side `jsonb ||`
+   * UPDATE, never read-modify-write — two webhooks racing on disjoint keys (e.g.
+   * `hasRecording` vs `hasTranscript`) each merge without clobbering the other.
+   * Returns the merged `contentAttributes`, or `null` if no row matched.
    */
   mergeContentAttributesBySourceId(
     sourceId: string,

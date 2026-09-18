@@ -2,13 +2,9 @@ import { PhoneCallIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 /**
- * Rendered when the Calls page query returns no rows.
- *
- * L3 fix: a FILTERED empty result ("no calls match the Missed/No reply
- * chip") is a distinct state from "no calls yet" (the workspace has never
- * had a call at all) — showing the same "get started" copy for both is
- * misleading when the workspace actually has calls, just none matching the
- * active filter.
+ * A filtered empty result ("no calls match this chip") is a distinct state
+ * from "no calls yet" — the same "get started" copy would mislead a workspace
+ * that has calls, just none matching the active filter.
  */
 export function CallsEmptyState({
   hasActiveFilter,

@@ -221,14 +221,11 @@ describe("chat store conversation updates", () => {
     expect(store.getState().isBootstrappingUrlConversation).toBe(false)
   })
 
-  // MEDIUM 6 (P4 review): `openConversation` used to silently no-op while
-  // `isBootstrappingUrlConversation` was true (set by a concurrent
-  // `initActiveConversationFromUrl`) — `chat-realtime.tsx`'s
-  // `pendingConversationOpen` bridge had ALREADY set the `conversationId`
-  // URL param by the time it called this, so the no-op left the URL and the
-  // actual selection disagreeing. It must wait the bootstrap out (the same
-  // `store.subscribe` pattern `initActiveConversationFromUrl` itself uses)
-  // and then proceed, not give up.
+  // `openConversation` must not silently no-op while
+  // `isBootstrappingUrlConversation` is true: `chat-realtime.tsx`'s bridge has
+  // already set the `conversationId` URL param, so a no-op would leave the
+  // URL and the actual selection disagreeing. It must wait the bootstrap out
+  // and then proceed.
   test("openConversation waits out an in-flight bootstrap instead of no-oping", async () => {
     const store = createChatStore()
     const target = makeConversation(
@@ -255,10 +252,9 @@ describe("chat store conversation updates", () => {
     expect(store.getState().isBootstrappingUrlConversation).toBe(false)
   })
 
-  // LOW (P4 review, follow-up 4): two `openConversation` calls queued behind
-  // the SAME in-flight bootstrap used to both proceed to load once it
-  // cleared, racing each other for whichever finished last. The last
-  // REQUESTED call must own the load; an earlier, now-superseded call must
+  // Two `openConversation` calls queued behind the SAME in-flight bootstrap
+  // must not both proceed once it clears, racing for whichever finishes
+  // last. The last REQUESTED call owns the load; an earlier, now-superseded call must
   // resolve `false` without fetching anything.
   test("openConversation resolves false for an earlier-queued call once a newer one supersedes it", async () => {
     const store = createChatStore()
@@ -612,7 +608,7 @@ describe("chat store conversation updates", () => {
       store.getState().bubbleConversationToTop("ws-1", "conv-missing"),
     ).resolves.toBeUndefined()
     expect(store.getState().conversations).toEqual([existing])
-    // M-ts2 / L4: the failure is logged (not silently swallowed), even
+    // The failure is logged (not silently swallowed), even
     // though it never surfaces as a toast.
     expect(loggerWarnMock).toHaveBeenCalledWith(
       expect.objectContaining({ conversationId: "conv-missing" }),

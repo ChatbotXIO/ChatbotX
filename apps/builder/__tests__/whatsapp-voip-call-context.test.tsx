@@ -31,9 +31,8 @@ vi.mock(
   () => ({ useWhatsappVoipCall: () => useWhatsappVoipCallSpy() }),
 )
 
-// P4 finding M5: `answer()`'s `onAnswered` callback is how a caller learns
-// its OWN answer succeeded, whether immediately or (for a replacement)
-// after `confirmReplacement` resolves — see `onAnsweredLog` below.
+// `onAnswered` fires whether the answer succeeds immediately or (for a
+// replacement) after `confirmReplacement` resolves.
 function ContextConsumerWithOnAnswered({
   onAnswered,
 }: {
@@ -326,11 +325,9 @@ describe("WhatsappVoipCallProvider", () => {
     expect(voipCallMock.toggleMute).toHaveBeenCalledTimes(1)
   })
 
-  // M5: `answer()`'s result/`onAnswered` continuation must fire for BOTH
-  // the immediate-answer path and the delayed replace-confirm path — the
-  // panel's D6 navigation (and any future caller) reuses this instead of
-  // re-deriving "did it succeed" from the store itself.
-  describe("onAnswered continuation (M5)", () => {
+  // `onAnswered` must fire for both the immediate-answer path and the
+  // delayed replace-confirm path.
+  describe("onAnswered continuation", () => {
     test("answer success invokes onAnswered with the conversationId", async () => {
       useWhatsappVoipCallStore.setState({
         call: { ...engagedCall, phase: "incomingRinging" },

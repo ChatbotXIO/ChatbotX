@@ -21,12 +21,10 @@ export const inboxRepository = {
   },
 
   /**
-   * B-M1 (Fable review) — bounded id/name projection for a select-style
-   * filter, scoped by BOTH `workspaceId` and `channel` at the query level.
-   * Used by the Calls page's inbox filter instead of
-   * `inboxService.listWithIntegrationsByWorkspace`, which eager-loads all
-   * nine credential-bearing integration relations just to read id/name and
-   * then discards every non-whatsapp row in memory.
+   * Bounded id/name projection scoped by `workspaceId` and `channel` at the query
+   * level. Used by the Calls page's inbox filter instead of
+   * `inboxService.listWithIntegrationsByWorkspace`, which eager-loads all nine
+   * credential-bearing integration relations just to discard non-whatsapp rows.
    */
   async listOptionsByWorkspaceAndChannel(input: {
     workspaceId: string

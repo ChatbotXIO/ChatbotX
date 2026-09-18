@@ -7,17 +7,10 @@ import {
 } from "../src/partials/whatsapp-call"
 
 /**
- * Type-level coverage for the `{ status, outcome }` pairing contract
- * (design item 2, P5). `expectTypeOf` runs as a real (near) no-op at test
- * runtime — its assertions are only enforced under a real type-checker.
- * Unlike a plain `.test.ts` file, THIS file (`*.test-d.ts`) IS wired into an
- * automated gate: `packages/database/vitest.config.ts` enables
- * `test.typecheck` scoped to `**\/*.test-d.ts`, so `pnpm test` here runs
- * `tsc` over this file as part of the normal run — a regression in the
- * status/outcome pairing contract fails CI, not just a manual `tsc --noEmit`
- * someone has to remember to run (review A3: the describe block used to live
- * in `whatsapp-call-outcome.test.ts`, an ordinary `.test.ts` file vitest
- * never type-checks, so this exact coverage was previously silent).
+ * Type-level coverage for the `{ status, outcome }` pairing contract.
+ * `expectTypeOf` only asserts under a real type-checker; `packages/database/vitest.config.ts`
+ * scopes `test.typecheck` to `**\/*.test-d.ts`, so `pnpm test` runs `tsc` over this file —
+ * a plain `.test.ts` would never get type-checked, so keep this a `.test-d.ts` file.
  */
 describe("finalize status/outcome pairing — type level", () => {
   test("WhatsappCallTerminalStatusOutcomePair only accepts a matched pair", () => {
@@ -46,14 +39,9 @@ describe("finalize status/outcome pairing — type level", () => {
       outcome: "canceled"
     }>().toMatchTypeOf<WhatsappCallTerminalStatusOutcomePair>()
 
-    // Mismatched pairs (both properties given as LITERALS, so TypeScript can
-    // discriminate on `status` and reject an incompatible `outcome`) must NOT
-    // be assignable — asserted via @ts-expect-error below (compile-time only;
-    // see the doc comment above this describe). Verified directly against
-    // this repo's tsconfig: TypeScript attaches a "wrong outcome for this
-    // status" error to the `const … = {` declaration line, but a "status
-    // outside the terminal set" error to that property's OWN line — the
-    // comment placement below matches each, one directive per case.
+    // Mismatched literal pairs must not be assignable. TypeScript attaches a
+    // "wrong outcome" error to the declaration line but a "status outside the
+    // terminal set" error to that property's own line — directives below match each.
 
     // @ts-expect-error rejected can never pair with outcome "completed"
     const mismatched1: WhatsappCallTerminalStatusOutcomePair = {
@@ -86,21 +74,10 @@ describe("finalize status/outcome pairing — type level", () => {
   })
 
   test("resolveWhatsappCallTerminalOutcomePair is safe for a BROAD (non-literal) status — the discriminant TypeScript itself cannot narrow", () => {
-    // `WhatsappCallTerminalStatusOutcomePair`'s compile-time guarantee only
-    // holds when `status` is a LITERAL at the call site: TypeScript picks a
-    // discriminated-union branch from a literal discriminant, but for a
-    // non-literal (union-typed) discriminant it is STRICTER, not looser — it
-    // cannot pick a single branch to structurally check against, so it
-    // REJECTS assigning a hand-built `{ status: <broad>, outcome: <literal> }`
-    // object to the union outright, even for a matched pair (verified
-    // directly against this repo's tsconfig while writing this test — see
-    // the sibling assertion above). `endVoipCallAsAgent`'s wacid branch has
-    // exactly this shape — `EndVoipCallResult.terminalStatus` is only known
-    // as the broad `WhatsappCallTerminalStatus` — which is why it must go
-    // through this helper's exhaustive runtime switch instead of building
-    // the pair by hand. This test pins that the helper's RETURN type is the
-    // correctly narrowed pair, so a caller can safely spread it into a
-    // `WhatsappCallTerminalStatusOutcomePair`-typed parameter.
+    // For a non-literal (union-typed) status, TypeScript can't pick a branch to
+    // check against, so it rejects a hand-built pair object outright even when matched.
+    // `endVoipCallAsAgent`'s wacid branch has exactly this shape, hence the exhaustive
+    // runtime switch below instead of building the pair by hand.
     const broadStatus: WhatsappCallTerminalStatus = "failed"
 
     expectTypeOf(

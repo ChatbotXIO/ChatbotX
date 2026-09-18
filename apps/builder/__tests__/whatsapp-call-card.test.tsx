@@ -40,7 +40,7 @@ vi.mock("@/features/messages/actions/get-call-recording-url.action", () => ({
   getCallRecordingUrlAction: getCallRecordingUrlActionMock,
 }))
 
-// P4 item 3 — the call-back control's own hooks are exercised by
+// The call-back control's own hooks are exercised by
 // `use-whatsapp-call-starter.test.ts` and `whatsapp-voip-call-button.test.tsx`;
 // here they are mocked so `WhatsappCallCard` tests stay focused on
 // VISIBILITY/DISABLED logic, not the dial flow itself.
@@ -576,7 +576,7 @@ describe("WhatsappCallCard", () => {
   })
 })
 
-describe("WhatsappCallCard — Call back (P4 item 3)", () => {
+describe("WhatsappCallCard — Call back", () => {
   const conversationWithWhatsapp = (id: string): MockConversation => ({
     id,
     contact: { fullName: "Ada Lovelace" },
@@ -753,9 +753,9 @@ describe("WhatsappCallCard — Call back (P4 item 3)", () => {
     expect(findCallBackButton(el)).toBeUndefined()
   })
 
-  // LOW 11: the call-back control's dial target must be the SPECIFIC
-  // WhatsApp `contactInboxId` resolved from this message's own conversation
-  // (see the P4 review log's deviation note), not left undefined/omitted.
+  // The call-back control's dial target must be the SPECIFIC WhatsApp
+  // `contactInboxId` resolved from this message's own conversation, not
+  // left undefined/omitted.
   test("forwards the resolved WhatsApp contactInboxId to the shared starter (and on to startOutbound)", () => {
     renderComponent(
       <WhatsappCallCard

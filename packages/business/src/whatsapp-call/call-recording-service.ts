@@ -10,10 +10,9 @@ const RECORDING_SIGNED_URL_TTL_SECONDS = 15 * 60
 const PURGE_BATCH_SIZE_DEFAULT = 500
 
 /**
- * Re-exported for backward compatibility with existing importers of this
- * module — `@chatbotx.io/sdk`'s `recording-content-type.ts` is now the
- * single source of truth (see its docstring); this module never redefines
- * the map.
+ * Re-exported for backward compatibility with existing importers —
+ * @chatbotx.io/sdk's recording-content-type.ts is the single source of truth;
+ * this module never redefines the map.
  */
 export type { RecordingContentType } from "@chatbotx.io/sdk"
 export { ALLOWED_RECORDING_CONTENT_TYPES } from "@chatbotx.io/sdk"
@@ -26,7 +25,10 @@ export const isAllowedRecordingContentType = (
 ): value is RecordingContentType =>
   Object.hasOwn(ALLOWED_RECORDING_CONTENT_TYPES, value)
 
-/** Thrown by `uploadRecording` for a mime type outside {@link ALLOWED_RECORDING_CONTENT_TYPES}. */
+/**
+ * Thrown by uploadRecording for a mime type outside
+ * ALLOWED_RECORDING_CONTENT_TYPES.
+ */
 export class UnsupportedRecordingContentTypeError extends Error {
   constructor(contentType: string) {
     super(`unsupported-recording-content-type: ${contentType}`)
@@ -35,10 +37,10 @@ export class UnsupportedRecordingContentTypeError extends Error {
 }
 
 /**
- * Maps an allowed recording mime type to its object-storage extension.
- * Defense-in-depth: callers (e.g. the browser upload route) are expected to
- * validate with {@link isAllowedRecordingContentType} first, but this throws
- * rather than silently falling back if an unvalidated value slips through.
+ * Maps an allowed recording mime type to its object-storage extension. Defense-
+ * in-depth: callers should validate with isAllowedRecordingContentType first,
+ * but this throws rather than silently falling back if an unvalidated value
+ * slips through.
  */
 export const resolveRecordingExtension = (contentType: string): string => {
   if (!isAllowedRecordingContentType(contentType)) {
@@ -47,7 +49,7 @@ export const resolveRecordingExtension = (contentType: string): string => {
   return ALLOWED_RECORDING_CONTENT_TYPES[contentType]
 }
 
-/** Private object-storage key for a call recording (— never a public path). */
+/** Private object-storage key for a call recording — never a public path. */
 const recordingObjectKey = (props: {
   workspaceId: string
   callId: string
@@ -57,16 +59,10 @@ const recordingObjectKey = (props: {
 
 class CallRecordingService {
   /**
-   * Uploads the recording body — a browser-recorded blob posted to the
-   * upload route, or Meta-native recording bytes fetched by the worker. This
-   * package must stay Edge-Runtime safe, so it never touches a local
-   * filesystem path itself. Writes to the private object-storage key and
-   * returns that key. Callers
-   * stamp it onto the row via `whatsappCallRepository.attachRecording` —
-   * this service only handles the transfer, never the DB write, so retries
-   * stay idempotent at the repository's CAS layer.
-   *
-   * `contentType` defaults to {@link DEFAULT_RECORDING_CONTENT_TYPE}.
+   * Uploads the recording body (browser-recorded blob or Meta-native bytes) to the private
+   * object-storage key and returns it; never touches a local filesystem path (must stay
+   * Edge-Runtime safe). Callers stamp the path via whatsappCallRepository.attachRecording —
+   * this service never writes the DB, keeping retries idempotent at the repository's CAS layer.
    */
   async uploadRecording(props: {
     callId: string
@@ -98,16 +94,10 @@ class CallRecordingService {
   }
 
   /**
-   * Workspace-scoped on-demand refresh for playback in the inbox. The
-   * signed URL embedded in a `messageCreated`/`messageContentUpdated`
-   * realtime broadcast, or one fetched via the initial page load, is only
-   * good for {@link RECORDING_SIGNED_URL_TTL_SECONDS} (15 minutes) — a tab
-   * left open longer than that gets a 403 on `<audio>` playback unless the
-   * caller re-requests a fresh one through here. Re-derives the call row
-   * from `callId` so the caller never has to trust a client-supplied
-   * `recordingPath`, and throws (never silently returns null) when the call
-   * is missing, belongs to a different workspace, or has no recording, so a
-   * cross-workspace request is rejected rather than quietly no-op'd.
+   * On-demand playback URL refresh — the initial signed URL expires after
+   * RECORDING_SIGNED_URL_TTL_SECONDS (15 min), so a tab left open longer 403s unless it
+   * re-requests here. Re-derives the call row from callId (never trusts a client-supplied
+   * recordingPath); throws rather than returning null when missing/wrong-workspace/no-recording.
    */
   async getRecordingUrlForCall(props: {
     callId: string
@@ -127,10 +117,10 @@ class CallRecordingService {
   }
 
   /**
-   * Daily retention sweep: deletes recordings past each
-   * integration's `callRecordingRetentionDays`, then nulls the columns —
-   * the transcript is kept. One batch per call; the caller (schedule job)
-   * re-invokes until a pass returns fewer than `batchSize`.
+   * Daily retention sweep: deletes recordings past each integration's
+   * callRecordingRetentionDays, then nulls the columns — the transcript is
+   * kept. One batch per call; the schedule job re-invokes until a pass returns
+   * fewer than batchSize.
    */
   async purgeExpiredRecordings(props: { batchSize?: number }): Promise<number> {
     const batchSize = props.batchSize ?? PURGE_BATCH_SIZE_DEFAULT
@@ -153,7 +143,7 @@ class CallRecordingService {
   /**
    * Best-effort object delete: a missing object is not a failure — the DB
    * columns are cleared regardless so a retry never re-attempts an object
-   * that is already gone.
+   * that's already gone.
    */
   private async deleteObjectBestEffort(key: string): Promise<void> {
     await uploader.deleteObject(key).catch(() => undefined)

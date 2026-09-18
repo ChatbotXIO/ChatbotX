@@ -32,13 +32,9 @@ import { transcribesCalls } from "@chatbotx.io/utils/whatsapp-call"
 import { logger } from "../../../lib/logger"
 
 /**
- * The per-number "Record calls" / "Transcribe calls" toggles at finalize
- * time. Read fresh from the integration (rather than cached on the call row):
- * the toggles can change between calls, and these only feed the flags stamped
- * on the activity card, never gate the actual pipelines (each enrichment
- * handler re-checks its own conditions). The card uses `recordingRequested`
- * to decide whether to show a "processing…" placeholder at all — a call with
- * recording off shows no player row instead of one that never resolves.
+ * Per-number recording/transcript toggles, read fresh (not cached on the call
+ * row) since they can change between calls. They only feed flags on the
+ * activity card and never gate the actual pipelines.
  */
 export const resolveCallActivityRequestFlags = async (
   call: Pick<
@@ -56,25 +52,21 @@ export const resolveCallActivityRequestFlags = async (
       workspaceId: call.workspaceId,
     })
   const recordsCalls = Boolean(integration?.callRecordingEnabled)
-  // The row records what THIS call actually arranged (Meta only records after
-  // its consent announcement, and refuses an invalid one); the toggle only
-  // says what the number does in general, so it is the fallback for rows
-  // written before that column existed.
+  // The row records what this call actually arranged; the toggle is only a
+  // fallback for rows written before this column existed.
   return {
     recordingRequested: call.recordingRequested ?? recordsCalls,
     transcriptionRequested: integration ? transcribesCalls(integration) : false,
     // Only a number that records calls can have a MISSING recording worth
-    // reporting; with the toggle off there was never one to expect.
+    // reporting.
     recordingUnavailable: call.recordingRequested === false && recordsCalls,
   }
 }
 
 /**
- * Deterministic, id-based sourceId: stable regardless of WHICH path — the
- * Meta `terminate` webhook or the local hangup — reaches a terminal state
- * first, so both converge on exactly one activity message (`createOrUpdate`
- * dedups on `sourceId`; the second caller is a no-op that returns the
- * existing row, `isNew: false`).
+ * Deterministic id-based sourceId so whichever path (Meta terminate webhook or
+ * local hangup) reaches terminal state first, both converge on one activity
+ * message via createOrUpdate dedup.
  */
 export const callActivitySourceId = (callId: string): string =>
   `wacall-${callId}`
@@ -86,11 +78,9 @@ const formatDuration = (durationSeconds: number): string => {
 }
 
 /**
- * Ring wait in whole seconds: answered time (`start_time`) minus placed time
- * (the row's `createdAt`). Returns `undefined` when either timestamp is
- * missing, or when the difference is negative (a never-answered call, or a
- * terminate that raced ahead of the row insert) — the header then simply
- * omits the sub-label rather than show a bogus or total-call duration.
+ * Ring wait in seconds: start_time minus createdAt. Undefined when either
+ * timestamp is missing or negative (never-answered, or a race) — header omits
+ * the sub-label instead of showing a bogus duration.
  */
 const resolveAnswerSeconds = (
   startedAt: Date | null | undefined,
@@ -104,15 +94,8 @@ const resolveAnswerSeconds = (
 }
 
 /**
- * English fallback text stored on the activity message — used by previews
- * and exports. The inbox itself renders a localized label from
- * `contentAttributes` instead (see `RenderContentAttributes`).
- */
-/**
- * English fallbacks keyed by the SAME {@link WhatsappCallActivityLabelKey} the
- * inbox card localizes — the shared key mapping
- * ({@link resolveWhatsappCallActivityLabelKey}) is what keeps the stored
- * snippet text and the rendered card from ever disagreeing.
+ * English fallback for previews/exports, keyed by the label key the inbox
+ * card localizes from contentAttributes.
  */
 const CALL_ACTIVITY_ENGLISH: Record<WhatsappCallActivityLabelKey, string> = {
   declinedVoiceCall: "Declined voice call",
@@ -122,10 +105,9 @@ const CALL_ACTIVITY_ENGLISH: Record<WhatsappCallActivityLabelKey, string> = {
 }
 
 /**
- * Collapses the display-only `canceled` entity status back to the persisted
- * set (DB `WhatsappCall.status` + the realtime ended event): `canceled` is a
- * UI-only refinement of a `failed` outbound call — it lives on the activity
- * message's `contentAttributes`, never in the call row's own status column.
+ * Collapses the display-only canceled entity status back to the persisted set:
+ * canceled is a UI-only refinement of a failed outbound call, living only in
+ * contentAttributes.
  */
 const toPersistedCallStatus = (
   status: MessageWhatsappCallEntity["status"],
@@ -133,14 +115,10 @@ const toPersistedCallStatus = (
   status === "canceled" ? "failed" : status
 
 /**
- * Pairs the display-only entity status with its persisted `{ status,
- * outcome }` write — `entity.status` is read BEFORE
- * {@link toPersistedCallStatus} collapses `canceled` into `failed`, so a
- * `canceled` entity persists `outcome: "canceled"` alongside the DB's
- * `status: "failed"`. Delegates to
- * {@link resolveWhatsappCallTerminalOutcomePair} (the single place the
- * status/outcome pairing switch lives) instead of re-deriving the same
- * `completed`/`rejected`/`failed`/`canceled` branches here.
+ * entity.status is read before canceled collapses into failed, so a canceled
+ * entity persists outcome: canceled alongside DB status: failed. Delegates to
+ * resolveWhatsappCallTerminalOutcomePair as the single place this pairing
+ * lives.
  */
 const toFinalizeStatusOutcome = (
   status: MessageWhatsappCallEntity["status"],
@@ -164,24 +142,10 @@ export const buildCallActivityText = (
 }
 
 /**
- * Tells the agent's browser the call is over and tears down its signaling
- * state.
- *
- * The Redis control record is read BEFORE `endCall` so an agent who claimed
- * the call but never reached `accepted` (rejected, or expired mid-answer)
- * still gets the dismiss signal. Delivery is targeted with
- * `sendToWorkspaceMember` once a single agent has claimed the call
- * (`control.reservedUserId` is set), since the event is only meaningful to
- * the agent holding the offer. An UNCLAIMED call (ring-all,
- * `reservedUserId === ""` — nobody answered yet, e.g. the caller hung up
- * mid-ring or the offer expired) has no single agent to dismiss while every
- * rung agent's dialog is still ringing, so the same event is BROADCAST to
- * the workspace instead; the client's `handleEnded` ignores any call it
- * doesn't recognize as its own, which makes that safe for agents who were
- * never rung. No control record at all means nobody was ever rung, so there
- * is nothing to clear. `endCall`/`deleteOffer` are idempotent no-ops when
- * the signaling consumer already ran them before the Graph call that led
- * here.
+ * Tells the agent's browser the call is over and tears down signaling state.
+ * Reads the Redis control record before endCall so a claimed-but-not-accepted
+ * agent still gets dismissed; targets reservedUserId if set, else broadcasts
+ * (clients ignore calls they don't recognize). No record means nobody was rung.
  */
 const emitCallEndedToAgent = async (
   call: WhatsappCallModel,
@@ -193,13 +157,12 @@ const emitCallEndedToAgent = async (
   const wacid = call.wacid
 
   const control = await whatsappVoipCallService.readControl(wacid)
-  // This is terminal cleanup after the Graph call already ended the call, so
-  // ending from `accepted` is expected here (`allowFromAccepted:true`).
+  // Terminal cleanup after the Graph call already ended it, so ending from
+  // accepted is expected (allowFromAccepted:true).
   await whatsappVoipCallService.endCall({ wacid, allowFromAccepted: true })
   await whatsappVoipSignalingService.deleteOffer(wacid)
 
-  // No control record at all: nobody was ever rung, so there's nothing to
-  // clear.
+  // No control record: nobody was ever rung, nothing to clear.
   if (!control) {
     return
   }
@@ -216,9 +179,8 @@ const emitCallEndedToAgent = async (
   } as const
 
   try {
-    // Unclaimed (still ringing every eligible agent): broadcast so every
-    // rung agent's dialog clears immediately, instead of waiting out each
-    // client's own ~55s deadline timer.
+    // Unclaimed call: broadcast so every rung agent's dialog clears immediately
+    // instead of waiting out its own ~55s deadline timer.
     if (control.reservedUserId === "") {
       await broadcastToWorkspaceParty(call.workspaceId, eventPayload)
       return
@@ -236,16 +198,9 @@ const emitCallEndedToAgent = async (
 }
 
 /**
- * Display-name snapshot for the agent on the call (`WhatsappCall.answeredByUserId`),
- * resolved through the business layer exactly once at finalize time — never
- * re-resolved on read, so a later rename or account deletion cannot rewrite
- * this card's history. Skips the lookup entirely when there is no id: this
- * runs on every call finalize in a high-volume chatbot, and most calls (any
- * legacy row, or an inbound call nobody answered) have none.
- *
- * Never throws: this is bookkeeping on an already-completed call, so a
- * lookup failure or a since-deleted user id just means the id is stamped
- * with no name — the card renders no agent line rather than an empty label.
+ * Agent display-name snapshot, resolved once at finalize time so a later rename
+ * or deletion can't rewrite history. Skips lookup when there's no id.
+ * Never throws: a lookup failure just leaves the id stamped with no name.
  */
 const resolveCallAgentSnapshot = async (
   answeredByUserId: string | null | undefined,
@@ -270,23 +225,18 @@ const resolveCallAgentSnapshot = async (
 
 type CustomerServiceWindowFacts = {
   status: MessageWhatsappCallEntity["status"]
-  /** When the call was placed / started ringing (`WhatsappCall.createdAt`). */
+  /** When the call was placed / started ringing. */
   placedAt: Date
-  /** When the call was answered (`start_time`), when Meta reported it. */
+  /** When the call was answered, per Meta. */
   answeredAt: Date | null | undefined
 }
 
 /**
- * When a finished call opened (or refreshed) WhatsApp's 24-hour customer
- * service window, by direction — `null` when it did not. Meta, Calling API
- * pricing ("How calling changes the 24 hour customer service window"): the
- * window starts "when a WhatsApp user calls you, regardless of if you accept
- * the call or not" and "when a WhatsApp user accepts your call".
- *
- * An answered business call with no reported answer time falls back to the
- * earlier `placedAt`, never the later hangup: anchoring early can only make
- * the window we show SHORTER than Meta's, never let an agent type into one
- * Meta has already closed.
+ * When a finished call opened (or refreshed) WhatsApp's 24h customer service
+ * window, by direction; null when it did not. Per Meta's calling pricing docs,
+ * the window opens on any call attempt or acceptance.
+ * Falls back to placedAt when no answer time is reported, so the shown window
+ * can only be shorter than Meta's, never longer.
  */
 const CUSTOMER_SERVICE_WINDOW_OPENED_AT: Record<
   MessageWhatsappCallEntity["direction"],
@@ -300,25 +250,24 @@ const CUSTOMER_SERVICE_WINDOW_OPENED_AT: Record<
 export type FinalizeCallSideEffectsInput = {
   call: WhatsappCallModel
   entity: MessageWhatsappCallEntity
-  /** Preferred over `new Date()` when a real terminal timestamp is known (Meta's webhook). */
+  /**
+   * Preferred over new Date() when a real terminal timestamp (Meta's webhook)
+   * is known.
+   */
   endedAt?: Date | null
   /** Only written when provided — omitting it never clears an already-set column. */
   startedAt?: Date | null
   /**
-   * Diagnosis string derived from a terminate webhook's `errors[]` (media-drop
-   * codes 138021/138022/138023, etc). Only written when provided — omitting
-   * it never clears an already-set column.
+   * Diagnosis string from a terminate webhook's errors[] (media-drop codes
+   * etc). Only written when provided.
    */
   lastError?: string | null
 }
 
 /**
- * The single terminate side-effect block every terminal path shares: activity
- * message (dedup'd on the id-based `sourceId`), the id-based status write,
- * flow-state/tracking updates, the realtime `messageCreated` broadcast, and
- * the `callEnded`/`missedAudioCall` trigger events — all guarded on the
- * winning message insert (`isNew`) so a redelivery or a second path never
- * re-fires any of them.
+ * The single terminate side-effect block every terminal path shares, all
+ * guarded on the winning message insert (isNew) so a redelivery never re-fires
+ * them.
  */
 export const finalizeCallSideEffects = async (
   input: FinalizeCallSideEffectsInput,
@@ -326,10 +275,8 @@ export const finalizeCallSideEffects = async (
   const { call, entity: partialEntity } = input
   const endedAt = input.endedAt ?? new Date()
 
-  // Time-to-answer (ring wait): the answered timestamp (`start_time`) minus
-  // when the call was placed/started ringing (the row's `createdAt`, stamped
-  // on the `connect` webhook / outbound dial). Shown under the "Audio call"
-  // header — distinct from the talk-time `durationSeconds` in the player.
+  // Time-to-answer (ring wait): start_time minus createdAt. Distinct from talk-
+  // time durationSeconds shown in the player.
   const answerSeconds = resolveAnswerSeconds(input.startedAt, call.createdAt)
   const { recordingRequested, transcriptionRequested, recordingUnavailable } =
     await resolveCallActivityRequestFlags(call)
@@ -342,10 +289,8 @@ export const finalizeCallSideEffects = async (
     answeredAt: input.startedAt,
   })
 
-  // The finalize message IS the single progressive activity card — it carries
-  // the full flag set from the start (all false/unknown until the
-  // recording/transcript/summary handlers enrich it in place via
-  // `enrichCallActivityMessage`), never just direction/status.
+  // The finalize message is the single progressive activity card, carrying the
+  // full flag set from the start until enrichCallActivityMessage fills it in.
   const entity: MessageWhatsappCallEntity = {
     ...partialEntity,
     callId: call.id,
@@ -361,16 +306,13 @@ export const finalizeCallSideEffects = async (
     ...(windowOpenedAt
       ? { customerServiceWindowOpenedAt: windowOpenedAt.toISOString() }
       : {}),
-    // Surfaces Meta's own terminate diagnosis (e.g. a media-drop code) on
-    // the card itself — without this an agent sees an "Audio call" with no
-    // audio and no explanation. Only stamped when Meta actually reported one;
-    // never overwritten with an empty value.
+    // Surfaces Meta's own terminate diagnosis on the card so an agent sees why
+    // there's no audio. Only stamped when Meta reported one.
     ...(input.lastError ? { failureReason: input.lastError } : {}),
   }
 
-  // The card's promise to the agent, in one greppable line: whether a
-  // recording/transcript is expected for this call at all, and whether we
-  // already know none is coming.
+  // The card's promise to the agent: whether a recording/transcript is
+  // expected, and whether we already know none is coming.
   logger.info(
     {
       callId: call.id,
@@ -410,12 +352,8 @@ export const finalizeCallSideEffects = async (
     current: call,
   })
 
-  // Transport cleanup runs on EVERY delivery, not just the first: the card is
-  // inserted before this point, so a run that died after the insert comes
-  // back as `isNew: false`. Gating this on `isNew` would leave the control
-  // claimable, the offer stored and every rung agent ringing a dead call.
-  // Each step is idempotent, and the client drops an ended event for a call
-  // it no longer holds.
+  // Transport cleanup runs on every delivery, not just isNew, since a prior run
+  // may have died after the insert. Each step is idempotent.
   await emitCallEndedToAgent(call, toPersistedCallStatus(entity.status))
 
   if (!isNew) {
@@ -439,8 +377,7 @@ export const finalizeCallSideEffects = async (
       data: {
         lastMessageAt: message.createdAt,
         // The inbox gates free-form replies on this column, so a call Meta
-        // counts as opening the window has to move it too — otherwise the
-        // agent is locked out of a chat Meta would deliver.
+        // counts as opening the window has to move it too.
         ...(windowOpenedAt ? { lastIncomingMessageAt: windowOpenedAt } : {}),
       },
     })
@@ -478,16 +415,11 @@ export const finalizeCallSideEffects = async (
 }
 
 /**
- * Thrown by {@link enrichCallActivityMessage} when the finalize message
- * still hasn't been written after the bounded in-process wait below — a race
- * where a recording/transcript job's webhook reached this pipeline before
- * `finalizeCallSideEffects` finished. Every current caller of this function
- * is invoked from a handler that gates its own re-entry on a one-time CAS
- * column (`WhatsappCall.recordedAt`/`transcript`), so once that CAS has won,
- * a BullMQ-level retry of the OUTER job can never reach this function again
- * — the bounded wait is the only real chance to converge. This is still
- * thrown (rather than silently swallowed) so the failure is observable
- * (logs/dead-letter) instead of vanishing.
+ * Thrown when the finalize message still hasn't been written after the bounded
+ * wait — a race with a recording/transcript webhook. Callers gate re-entry on a
+ * one-time CAS column, so a BullMQ retry of the outer job can't reach this
+ * again; the bounded wait is the only real convergence chance. Thrown rather
+ * than swallowed so it's observable.
  */
 export class WhatsappCallEnrichmentPendingError extends Error {
   constructor(callId: string) {
@@ -498,16 +430,16 @@ export class WhatsappCallEnrichmentPendingError extends Error {
   }
 }
 
-/** Total bounded wait ≈ 3.5s across 4 attempts — long enough to absorb the
- * ordinary webhook-arrival jitter between `finalizeCallSideEffects` and a
- * recording/transcript job, short enough to never stall a worker slot. */
+/**
+ * Total bounded wait ≈3.5s across 4 attempts: enough to absorb webhook jitter,
+ * short enough not to stall a worker slot.
+ */
 const CALL_FINALIZE_WAIT_DELAYS_MS = [500, 1000, 2000]
 
 /**
- * Safety margin subtracted from the call's `createdAt` when computing the
- * `sinceTime` lower bound for the sharded `Message` lookup — absorbs any minor
- * clock skew between the call row and its activity-message write so the shard
- * range can never start just after the message.
+ * Safety margin subtracted from createdAt for the sharded Message lookup's
+ * sinceTime, absorbing clock skew between the call row and its activity-message
+ * write.
  */
 const CALL_MESSAGE_SHARD_LOOKBACK_MS = 5 * 60 * 1000
 
@@ -515,12 +447,10 @@ const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
- * Bounded in-process retry: calls `read` immediately, then again after
- * each delay in `delays`, stopping as soon as `isReady` accepts a value.
- * Returns the LAST value read regardless of readiness — callers decide how
- * to treat a still-not-ready result. Exported so `whatsapp-call-recording.ts`
- * reuses the exact same wait discipline for the sibling
- * "finalize row not stamped yet" race on `WhatsappCall.messageId`.
+ * Bounded in-process retry: reads immediately, then after each delay, stopping
+ * once isReady accepts a value. Returns the last value regardless of readiness.
+ * Exported for reuse by the sibling finalize-row race in whatsapp-call-
+ * recording.ts.
  */
 export const waitUntilReady = async <T>(
   read: () => Promise<T>,
@@ -560,24 +490,10 @@ const defaultCallEntity = (
 })
 
 /**
- * Enriches the SINGLE progressive `whatsapp_call` finalize message in place
- * — the recording/transcript-fetch handlers call this
- * instead of creating a second `whatsapp_call_recording` message.
- *
- * Merges ONLY `overrides` into the message's `contentAttributes` via a
- * single atomic `jsonb ||` UPDATE (`mergeContentAttributesBySourceId`) —
- * never a read-modify-write — so two independent, disjoint-column writers
- * (recording vs transcript, each racing on its own webhook/job) can never
- * clobber the other's already-applied flag.
- *
- * Waits (bounded, see {@link waitUntilReady}) for the finalize message to
- * exist before merging — an unlikely race where enrichment runs before
- * `finalizeCallSideEffects` finished. Throws
- * {@link WhatsappCallEnrichmentPendingError} rather than silently returning
- * when the message still isn't there after the bounded wait (see that
- * error's doc comment for why a caller-level retry cannot help here). The
- * realtime broadcast itself is still best-effort — a failed push must not
- * fail (and retry) an already-successful DB write.
+ * Merges overrides into the finalize message via an atomic jsonb || UPDATE
+ * (never read-modify-write), so racing writers can't clobber each other's
+ * flags. Waits for the message to exist first, throwing
+ * WhatsappCallEnrichmentPendingError if still missing after the bounded wait.
  */
 export const enrichCallActivityMessage = async (props: {
   call: Pick<
@@ -595,11 +511,9 @@ export const enrichCallActivityMessage = async (props: {
   const sourceId = callActivitySourceId(call.id)
   const repository = await createMessageRepository()
 
-  // The sharded `Message` repository needs a `sinceTime` to know which time
-  // shard(s) to scan. The finalize activity message is created at call end
-  // (`createdAt: endedAt`), so the call's own `createdAt` (when it started
-  // ringing) is always at or before it — a valid, tight lower bound. A small
-  // margin absorbs any clock skew between the row and the message write.
+  // The finalize message is created at call end (createdAt: endedAt), so the
+  // call's own createdAt is always at or before it — a valid, tight sinceTime
+  // lower bound; the margin absorbs clock skew.
   const sinceTime = new Date(
     call.createdAt.getTime() - CALL_MESSAGE_SHARD_LOOKBACK_MS,
   )

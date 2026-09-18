@@ -16,7 +16,7 @@ const baseContext = (overrides: Partial<RingContext> = {}): RingContext => ({
   ...overrides,
 })
 
-describe("isEligibleForConversationCall (D3 predicate table)", () => {
+describe("isEligibleForConversationCall", () => {
   test("superAdmin is always eligible, any conversation", () => {
     expect(
       isEligibleForConversationCall(
@@ -127,7 +127,7 @@ describe("selectRingTargets — tier matrix", () => {
     expect(result).toEqual({ tier: "eligibleOnline", userIds: ["other-1"] })
   })
 
-  test("D1: assignee offline falls through to team tier", () => {
+  test("assignee offline falls through to team tier", () => {
     const result = selectRingTargets(
       baseContext({
         conversation: {
@@ -142,7 +142,7 @@ describe("selectRingTargets — tier matrix", () => {
     expect(result).toEqual({ tier: "assignedTeam", userIds: ["team-member-1"] })
   })
 
-  test("D2: team tier rings online+eligible team members", () => {
+  test("team tier rings online+eligible team members", () => {
     const result = selectRingTargets(
       baseContext({
         conversation: { assignedUserId: null, assignedInboxTeamId: "team-1" },

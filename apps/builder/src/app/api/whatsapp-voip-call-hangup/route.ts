@@ -14,24 +14,12 @@ const hangupBeaconSchema = z.object({
 })
 
 /**
- * Best-effort unload target for an ACTIVE VoIP call's `pagehide` handler
- * (`use-whatsapp-voip-call.ts`) — `navigator.sendBeacon` cannot invoke a
- * next-safe-action server action (those expect a multipart action-id
- * encoding a beacon request cannot produce), so this is a tiny dedicated
- * route doing the same `endVoipCallAsAgent` hangup as
- * `hangupWhatsappVoipCallAction`. A same-origin `sendBeacon` POST still
- * carries the session cookie, so auth works exactly like every other
- * authenticated route here.
- *
- * Check order matters: same-site + session (`authorizeWorkspaceBeaconSession`)
- * run BEFORE the body is even parsed, so a cross-site or unauthenticated
- * caller always gets 403/401 regardless of body shape — never a 400 that
- * would imply the request was otherwise on track. Membership is checked
- * last, once `workspaceId` is known.
- *
- * Always best-effort: the browser never reads a beacon's response, unload
- * beacons are inherently unreliable, and Meta's own accept/expiry deadline
- * remains the authoritative backstop for a call this never reaches.
+ * Unload target for the VoIP pagehide handler — navigator.sendBeacon can't
+ * invoke a next-safe-action (needs a multipart action-id), so this dedicated
+ * route does the same hangup. Same-site + session are checked before the
+ * body is parsed, so an unauthorized caller always gets 403/401, never a 400.
+ * Always best-effort: beacons are unreliable and Meta's own call
+ * accept/expiry deadline is the real backstop.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -48,8 +36,8 @@ export async function POST(req: NextRequest) {
     }
     const { workspaceId, whatsappCallId } = parsed.data
 
-    // Membership check, mirroring `api/whatsapp-call-recording` — thrown as
-    // a `ChatbotXException` and mapped to a 4xx by `serverErrorHandler`.
+    // Membership check, mirroring api/whatsapp-call-recording — thrown as a
+    // ChatbotXException and mapped to a 4xx by serverErrorHandler.
     await assertCurrentUserCanAccessChatbot(workspaceId)
 
     await endVoipCallAsAgent({

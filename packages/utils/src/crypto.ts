@@ -55,17 +55,10 @@ export type VerifyHmacSha256SignatureInput = {
 }
 
 /**
- * Edge-safe (Web Crypto) verification of a Meta-style `sha256=<hex>` webhook
- * signature header (commonly `X-Hub-Signature-256`). Channel-agnostic — any
- * inbound webhook signed the same way (WhatsApp, Messenger, Instagram, …) can
- * share this. The HMAC is computed over the exact request bytes (`rawBody`),
- * never a re-encoded string, so the digest matches Meta's. Rejects (returns
- * `false`) on a missing header, wrong prefix, or a value/length mismatch —
- * never throws.
- *
- * Uses Web Crypto (`crypto.subtle`) rather than `node:crypto` so it stays
- * importable from edge-bundled subpaths (e.g. the Next.js edge runtime pulls
- * the oRPC router graph in through instrumentation).
+ * Verifies a Meta-style sha256=<hex> webhook signature (e.g.
+ * X-Hub-Signature-256). HMAC is computed over the exact rawBody bytes, never
+ * a re-encoded string, so the digest matches Meta's. Uses Web Crypto rather
+ * than node:crypto so it stays importable from edge-bundled subpaths.
  */
 export async function verifyHmacSha256Signature(
   input: VerifyHmacSha256SignatureInput,

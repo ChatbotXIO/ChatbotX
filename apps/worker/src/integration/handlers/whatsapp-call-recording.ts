@@ -28,12 +28,9 @@ import {
 const DEFAULT_RECORDING_MIME_TYPE = "audio/ogg"
 
 /**
- * The provider-facing id events/messages should quote externally — never the
- * DB `WhatsappCall.id`: external correlation is exposed as
- * `correlationId = wacid ?? attemptId` in events, never as `callId`.
- *
- * Exported so the Meta-native recording/transcript fetch handlers reuse the
- * exact same correlation rule rather than each keeping their own copy.
+ * External correlation is exposed as correlationId = wacid ?? attemptId in
+ * events, never as callId. Exported so both the browserWhisper and Meta-native
+ * fetch handlers reuse the same rule.
  */
 export const externalCorrelationId = (call: {
   wacid: string | null
@@ -42,34 +39,14 @@ export const externalCorrelationId = (call: {
 }): string => call.wacid ?? call.attemptId ?? call.id
 
 /**
- * Stamps `recordedAt` via the CAS `attachRecording`, attaches the recording
- * as an `audio` attachment on the EXISTING finalize `whatsapp_call` message
- * (never a second message), then enriches that
- * message's flags (`hasRecording: true`) and fires `callRecorded` — the
- * exact pipeline both the browserWhisper (`handleWhatsappCallRecordingReady`)
- * and Meta-native (`handleWhatsappCallNativeRecordingFetch`) paths converge
- * on once the recording bytes are safely in object storage, so neither keeps
- * its own copy of the attach/enrich/emit logic. The CAS on
- * `attachRecording` (`recordedAt IS NULL`) is what makes this idempotent —
- * a redelivery that loses the race returns `undefined` and this is a no-op,
- * since the winning call already did the enrichment/attachment/emit. Never
- * chains transcription — callers decide that themselves (browserWhisper
- * always chains Whisper; Meta-native never does, since its transcript
- * arrives via its own independent webhook/job).
- *
- * `stamped.messageId`/`endedAt` (stamped by `finalizeCallSideEffects`) can
- * still be null right after the CAS wins if this recording webhook's
- * post-processing reached us before that finalize write landed — the race
- * the bounded `waitUntilReady` below exists for.
- *
- * `recordedAt` marks this pipeline FINISHED, not started: the CAS is
- * one-shot, so anything that fails after it — the finalize wait running out,
- * the attachment, the enrichment, the event — would otherwise be lost for
- * good, with every retry short-circuiting on the stamp while the agent sees
- * a call that claims to be recorded and has no audio. So a failure releases
- * the stamp and rethrows, letting BullMQ retry the whole pipeline. The
- * attach step checks for an existing audio attachment first, since that is
- * the one step a retry could otherwise duplicate.
+ * Shared pipeline browserWhisper and Meta-native converge on: CAS
+ * attachRecording (recordedAt IS NULL) makes this idempotent, attaches the
+ * recording on the existing finalize message, enriches flags, fires
+ * callRecorded. stamped.messageId/endedAt can still be null right after the
+ * CAS wins if this webhook beat finalizeCallSideEffects's write - the race
+ * waitUntilReady below waits out. recordedAt marks FINISHED not started, so
+ * a failure after the CAS must release the stamp and rethrow for BullMQ to
+ * retry the whole pipeline rather than short-circuit on an audio-less call.
  */
 export const attachRecordingAndNotify = async (props: {
   call: WhatsappCallModel
@@ -89,8 +66,8 @@ export const attachRecordingAndNotify = async (props: {
     recordedAt: stampedAt,
   })
   if (!stamped) {
-    // Lost the CAS to a concurrent redelivery — the winning call already
-    // did the attachment/enrichment/emit below.
+    // Lost the CAS to a concurrent redelivery - the winning call already did
+    // the attachment/enrichment/emit below.
     return
   }
 
@@ -101,8 +78,8 @@ export const attachRecordingAndNotify = async (props: {
     )
     if (!(finalized?.messageId && finalized.endedAt)) {
       // Retryable on purpose: the finalize write is still in flight, and the
-      // audio belongs on that message. Giving up here is what used to drop
-      // the recording permanently.
+      // audio belongs on that message; giving up here would drop the
+      // recording permanently.
       throw new Error(`whatsapp-call-recording-finalize-not-ready: ${call.id}`)
     }
 
@@ -147,9 +124,9 @@ export const attachRecordingAndNotify = async (props: {
       })
     }
   } catch (error) {
-    // Hand the stamp back so the retry re-enters instead of short-circuiting
-    // on it. Best-effort: if the release itself fails there is nothing more
-    // to do here, and the original failure is the one worth reporting.
+    // Hand the stamp back so the retry re-enters instead of short-circuiting on
+    // it. Best-effort: if release itself fails, the original failure is the one
+    // worth reporting.
     await whatsappCallLifecycleService
       .releaseRecordingStamp({ id: call.id, recordedAt: stampedAt })
       .catch((releaseError: unknown) => {
@@ -163,19 +140,16 @@ export const attachRecordingAndNotify = async (props: {
 }
 
 /**
- * A browser-captured call recording finished uploading to object storage:
- * stamp it onto the call, drop an audio message into the conversation, fire
- * the callRecorded event, and chain transcription. Every step is idempotent
- * against redeliveries (attachRecording no-ops when already set; the audio
- * message dedups on its sourceId). Looked up by the DB `callId` —
- * never by wacid, so an outbound call with no wacid yet still resolves.
+ * A browser-captured recording finished uploading: stamp it onto the call, drop
+ * an audio message into the conversation, fire callRecorded, and chain
+ * transcription. Every step is idempotent against redeliveries. Looked up by DB
+ * callId, never wacid, so an outbound call with no wacid yet still resolves.
  */
 export const handleWhatsappCallRecordingReady = async (
   data: IntegrationJobWhatsappCallRecordingReady["data"],
 ): Promise<void> => {
-  // Channel-originated: without this, the WebhookEventEmitter's
-  // isWebhookContext gate silently drops emitCallRecorded (see the same
-  // override in whatsapp-call.ts).
+  // Channel-originated: without this, WebhookEventEmitter's isWebhookContext
+  // gate silently drops emitCallRecorded (same override in whatsapp-call.ts).
   setWebhookExecutionContext({ source: "webhook" })
   const call = await whatsappCallRepository.findById(data.callId)
   if (!call) {
@@ -186,10 +160,9 @@ export const handleWhatsappCallRecordingReady = async (
     return
   }
 
-  // recordedAt is stamped inside attachRecordingAndNotify: it marks
-  // "post-processing done", so a transient failure mid-pipeline retries the
-  // whole handler instead of being permanently swallowed. Each step is
-  // individually replay-safe.
+  // recordedAt is stamped inside attachRecordingAndNotify - it marks post-
+  // processing done, so a transient failure retries the whole handler instead
+  // of being silently swallowed. Each step is individually replay-safe.
   if (call.recordedAt) {
     logger.info(
       { callId: data.callId },
@@ -205,16 +178,16 @@ export const handleWhatsappCallRecordingReady = async (
   }
 
   // The transcription enqueue always runs last, in both branches: a crash
-  // between the durable `attachRecording` and this enqueue must not strand
-  // the call without a transcript. Deterministic jobId → a duplicate is a
-  // no-op.
+  // between the durable attachRecording and this enqueue must not strand the
+  // call without a transcript. Deterministic jobId means a duplicate is a no-
+  // op.
   await enqueueTranscription(data.callId, call.workspaceId)
 }
 
 /**
- * Deterministic jobId — replay-safe. Dedicated queue so a
- * limiter can bound transcription throughput independent of the shared
- * `integration` queue's traffic.
+ * Deterministic jobId - replay-safe. Dedicated queue so a limiter can bound
+ * transcription throughput independent of the shared integration queue's
+ * traffic.
  */
 const enqueueTranscription = async (
   callId: string,

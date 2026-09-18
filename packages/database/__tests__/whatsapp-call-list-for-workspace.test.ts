@@ -17,7 +17,7 @@ const renderPredicate = (clause: unknown): string => {
       }
       return
     }
-    // A plain `sql` tagged-template interpolation (e.g. the H1 cursor's
+    // A plain `sql` tagged-template interpolation (e.g. the cursor's
     // `::timestamptz`-cast bound text) is stored as a bare JS primitive in
     // `queryChunks` until render time — drizzle still parameterises it via
     // `escapeParam` when the query is actually built (see
@@ -187,8 +187,8 @@ describe("whatsappCallRepository.listForWorkspace — where-builder", () => {
     expect(predicate).not.toContain('"status" = canceled')
   })
 
-  describe("cursor keyset predicate (H1: microsecond precision must survive the round-trip)", () => {
-    // H1 fix: the cursor's `createdAt` is bound as its own TEXT value (never
+  describe("cursor keyset predicate (microsecond precision must survive the round-trip)", () => {
+    // The cursor's `createdAt` is bound as its own TEXT value (never
     // a JS `Date`, which only holds millisecond precision) and compared
     // with an explicit `::timestamptz` cast — this exercises the EXACT
     // shape reaching Postgres, not just "the predicate mentions createdAt".

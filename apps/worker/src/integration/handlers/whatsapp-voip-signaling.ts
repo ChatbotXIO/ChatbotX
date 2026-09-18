@@ -51,10 +51,8 @@ type ExpireOutboundDialData = Extract<
 >["data"]
 
 /**
- * Thrown when this job races the generic `whatsappCallEvent` connect job
- * (same webhook batch, a different queue) that creates the `WhatsappCall`
- * row: BullMQ retries per `WHATSAPP_VOIP_SIGNAL_RETRY_OPTIONS` (short,
- * bounded backoff — never blows the answer deadline) instead of silently
+ * Thrown when this job runs before the `whatsappCallEvent` job has created the
+ * row, so BullMQ retries (short backoff, within the answer deadline) instead of
  * dropping the call.
  */
 class VoipCallRowNotReadyError extends Error {
@@ -73,12 +71,8 @@ const getCallRowOrThrow = async (wacid: string): Promise<WhatsappCallModel> => {
 }
 
 /**
- * Outbound counterpart of {@link getCallRowOrThrow}: the pending
- * `WhatsappCall` row is created pre-dial (`createPendingOutbound`), so
- * `attemptId` is always the primary lookup; `wacid` (once attached) is the
- * fallback for a job that only has it. Throws the same
- * {@link VoipCallRowNotReadyError} so BullMQ retries rather than dropping the
- * answer/expiry — the row should already exist by the time either job runs.
+ * Outbound counterpart of `getCallRowOrThrow`: looks up by `attemptId` (the row
+ * is created pre-dial), then `wacid`.
  */
 const getOutboundCallRowOrThrow = async (input: {
   attemptId: string
@@ -100,15 +94,9 @@ const getOutboundCallRowOrThrow = async (input: {
 }
 
 /**
- * Narrows `endCall`'s `terminalStatus` (the full `WhatsappCallStatus` union)
- * to the two values `finalizeEndedCall` accepts. `endReservedCall` only ever
- * calls `endCall` with `allowFromAccepted:false`, so the phase->outcome table
- * in `whatsappVoipCallService.endCall` can only resolve to `rejected` (from
- * `reserved`), `failed` (from `answering`, or from the outbound `dialing`/
- * `ringing` phases via `expireOutboundDial`) here — `completed`/`ringing`/
- * `accepted` are unreachable at runtime, but the return type can't express
- * that, so this guard makes the narrowing explicit instead of an unchecked
- * cast.
+ * Narrows `endCall`'s status to what `finalizeEndedCall` accepts. With
+ * `allowFromAccepted:false` only `rejected` and `failed` are reachable, but the
+ * type cannot say so.
  */
 const isReservedCallEndStatus = (
   status: WhatsappCallModel["status"],
@@ -118,8 +106,10 @@ const isReservedCallEndStatus = (
 type ResolvedVoipIntegration = {
   workspaceId: string
   auth: WhatsappAuthValue
-  /** Local mirrors of Meta's calling settings — see `refuseInboundCall`. */
-  /** `false` only when explicitly turned off — see `readFlag`. */
+  /** Local mirrors of Meta's calling settings — see `inboundCallRefusal`. */
+  /**
+   * `true` only when an admin enabled calling — see `resolveVoipIntegration`.
+   */
   callingEnabled: boolean
   inboundCallsEnabled: boolean
   callHours: WhatsappCallHoursSnapshot | null
@@ -136,17 +126,11 @@ const resolveVoipIntegration = async (
   return {
     workspaceId: inbox.workspaceId,
     auth: integrationRow.auth as WhatsappAuthValue,
-    // `integrationRow` is the channel-agnostic shape, so these WhatsApp-only
-    // columns arrive untyped — read them defensively rather than casting. Each
-    // falls back to the permissive value: a row we cannot read must never be
-    // the reason a customer cannot get through.
-    // Calling is OFF until an admin turns it on for this number — a null
-    // mirror is "never configured", not "allowed". Our `calls` webhook
-    // subscription is app-wide (`POST /{app-id}/subscriptions`), so every
-    // number under the platform app delivers call events whether or not its
-    // owner asked for calling; this column is the only per-number gate on
-    // the inbound side, and it has to be closed by default or enabling
-    // calling for one workspace enables it for all of them.
+    // Calling is off until an admin turns it on: a null mirror means "never
+    // configured". The `calls` subscription is app-wide, so every number under
+    // the platform app delivers call events — this column is the only per-
+    // number gate on the inbound side. The sub-toggles default open (see
+    // `readFlag`).
     callingEnabled: integrationRow.callingEnabled === true,
     inboundCallsEnabled: readFlag(integrationRow.inboundCallsEnabled),
     callHours: readCallHours(integrationRow.callHours),
@@ -154,10 +138,8 @@ const resolveVoipIntegration = async (
 }
 
 /**
- * `false` only when the column really says so — for the SUB-toggles, which
- * are only ever reached once `callingEnabled` is explicitly on, so an
- * unconfigured one means "not narrowed" rather than "not allowed". The
- * master switch does not use this; see `resolveVoipIntegration`.
+ * `false` only when the column says so. For sub-toggles only, which are reached
+ * once calling is explicitly on.
  */
 const readFlag = (value: unknown): boolean => value !== false
 
@@ -167,16 +149,10 @@ const readCallHours = (value: unknown): WhatsappCallHoursSnapshot | null =>
     : null
 
 /**
- * Why an inbound call must not ring, or `null` when it may.
- *
- * Meta is supposed to stop these at the source, but its own docs say a
- * customer's app can take up to 7 days to pick up a settings change, and a
- * stale client can still place the call. Without this the business has no way
- * to enforce its own setting: every `connect` Meta delivers rings every agent.
- *
- * Closed at the master switch (`callingEnabled`), open at every step after
- * it: a number nobody enabled never rings, and a number someone did enable
- * is only narrowed further by an explicit opt-out or a well-formed schedule.
+ * Why an inbound call must not ring, or `null` when it may. Meta should stop
+ * these itself, but a customer's app can lag a settings change by up to 7 days.
+ * Closed at the master switch; after it, only an explicit opt-out or a valid
+ * schedule refuses.
  */
 export const inboundCallRefusal = (
   integration: ResolvedVoipIntegration,
@@ -194,11 +170,8 @@ export const inboundCallRefusal = (
 }
 
 /**
- * Outbound counterpart of {@link resolveVoipIntegration}: the outbound
- * expiry job (`expireOutboundDial`) has no `phoneNumberId` to resolve the
- * integration from (unlike the inbound signaling jobs), only the
- * `WhatsappCall` row's `inboxId` — so this resolves Graph auth directly from
- * the per-channel integration table by inbox instead.
+ * Outbound counterpart of `resolveVoipIntegration`: the expiry job has no
+ * `phoneNumberId`, only the row's `inboxId`.
  */
 export const resolveVoipAuthByInboxId = async (
   inboxId: string,
@@ -215,7 +188,10 @@ export const resolveVoipAuthByInboxId = async (
   return row.auth as WhatsappAuthValue
 }
 
-/** Best-effort DB finalize for a call ended out-of-band; a not-yet-created row is logged, not fatal. */
+/**
+ * Best-effort DB finalize for a call ended out of band; a missing row is
+ * logged, not fatal.
+ */
 const finalizeEndedCall = async (input: {
   wacid: string
   status: "rejected" | "failed"
@@ -239,9 +215,9 @@ const finalizeEndedCall = async (input: {
 }
 
 /**
- * Best-effort Graph end action (reject/terminate) followed by the DB finalize.
- * A Graph failure is logged, never thrown — our own state is already terminal
- * and Meta reclaims the leg on its own 30-60s timeout.
+ * Best-effort Graph end followed by the DB finalize. A Graph failure is only
+ * logged — our state is already terminal and Meta drops the leg on its own
+ * timeout.
  */
 const graphEndThenFinalize = async (input: {
   wacid: string
@@ -262,11 +238,8 @@ const graphEndThenFinalize = async (input: {
 }
 
 /**
- * Meta-`reject`s a connect that has NO control record — no agent was ever
- * reserved (empty ring set). There is nothing to CAS-terminate, so the Redis
- * transition is skipped entirely; without this the old CAS-terminate-first
- * path returned early on the missing control and the call was NEVER rejected,
- * ringing until Meta's own timeout.
+ * Meta-rejects a connect that has no control record (nobody was ever rung).
+ * There is nothing to CAS, so go straight to Graph.
  */
 const rejectUnreachableCall = (input: {
   wacid: string
@@ -275,23 +248,10 @@ const rejectUnreachableCall = (input: {
   graphEndThenFinalize({ ...input, graphAction: "reject", status: "rejected" })
 
 /**
- * Ends a call that DOES have a control record but never reached `accepted`
- * (offer expired before delivery, or the answer deadline passed). Ordering
- * follows contract #5 (`docs/whatsapp-calling-voip.md`): the Redis CAS to
- * `terminated` — via {@link whatsappVoipCallService.endCall} with
- * `allowFromAccepted:false`, so it can never downgrade a call that reached
- * `accepted` — commits BEFORE the Graph HTTP call. An in-flight browser
- * `accept` racing this always loses the CAS and this becomes a no-op. The
- * Graph action (reject vs terminate) is derived from the phase by `endCall`,
- * not hard-coded here. `finalizeCallSideEffects`'s own transport-tagged
- * cleanup (`endCall`/`deleteOffer`) redundantly no-ops afterward.
- *
- * Returns whether this call actually won the CAS and performed the Graph +
- * finalize side effects (`true`), vs. every no-op outcome (`false`: lost the
- * race, no control record, or an unexpected `terminalStatus`) — exported so
- * other callers (the outbound expiry no-answer fallback, the stale-call
- * sweeper) can tell "handled" apart from "nothing to do here" without
- * duplicating this phase→Graph-action logic.
+ * Ends a call that has a control but never reached `accepted`. The Redis CAS to
+ * `terminated` commits before the Graph call, so a racing browser accept loses;
+ * `endCall` picks reject vs terminate from the phase. Returns whether this call
+ * did the work, so other callers can tell "handled" from "nothing to do".
  */
 export const endReservedCall = async (input: {
   wacid: string
@@ -302,8 +262,7 @@ export const endReservedCall = async (input: {
     allowFromAccepted: false,
   })
   if (!ended) {
-    // Lost the race (browser accept just committed, or already terminated),
-    // or there was no control record at all — nothing left to do.
+    // Lost the race, or no control record — nothing to do.
     return false
   }
   if (!isReservedCallEndStatus(ended.terminalStatus)) {
@@ -323,8 +282,8 @@ export const endReservedCall = async (input: {
 }
 
 /**
- * The terminal status of a call row, shaped as the realtime ended event
- * carries it, or `null` while the call is still live.
+ * The row's terminal status as the ended event carries it, or `null` while
+ * live.
  */
 const endedStatusOf = (
   call: WhatsappCallModel,
@@ -335,10 +294,8 @@ const endedStatusOf = (
     : null
 
 /**
- * Delivers the SDP offer to every rung agent. A per-recipient failure never
- * blocks the rest: `sendToWorkspaceMember` never throws (it catches
- * internally and returns `null` on failure), so a falsy result — not a
- * try/catch — is what surfaces a delivery failure here.
+ * Delivers the offer to every rung agent. `sendToWorkspaceMember` never throws,
+ * so a falsy result is the failure signal.
  */
 const ringAgents = async (input: {
   workspaceId: string
@@ -362,14 +319,9 @@ const ringAgents = async (input: {
 }
 
 /**
- * Closes the last race of a caller hanging up while the offer is on its way:
- * a terminate finalized after `handleConnect` checked the row can emit its
- * ended event BEFORE this job's offer reaches the agents, leaving every
- * dialog ringing a dead call until its own deadline. Re-reading the row
- * after delivery catches it — the finalize writes the terminal status before
- * it emits — and the same ended event is re-sent to the agents this job
- * rang. A duplicate ended event is harmless: the client drops a call it no
- * longer holds.
+ * If the caller hung up while the offer was in flight, the ended event may have
+ * gone out before the ring. Re-read the row after delivery and re-send the
+ * ended event; the client ignores duplicates.
  */
 const notifyRungAgentsIfEnded = async (input: {
   wacid: string
@@ -398,35 +350,10 @@ const notifyRungAgentsIfEnded = async (input: {
 }
 
 /**
- * `handleConnect` — rings EVERY eligible agent (ring-all, the classic
- * telephony fork-dial pattern): resolves the live ring set, then delivers
- * the SDP offer to each one's realtime connections. The fenced CAS in
- * `claimForAnswer` lets only the first to answer win. Rejects when nobody
- * has the inbox open. The durable expiry job is scheduled at the webhook
- * boundary.
- *
- * Meta does not order a call's webhooks, so the caller's `terminate` can be
- * processed before this job runs. A call whose row is already terminal is
- * never rung and never Meta-rejected — it is over on Meta's side too.
- */
-/**
- * Ends an inbound connect this worker has decided NOT to ring, whatever state
- * the call is in. Every refusal in `handleConnect` goes through here.
- *
- * A plain Graph reject is only safe while no agent owns the call, and reading
- * the control first cannot establish that: an agent can claim it in the gap
- * before the reject lands, and the reject would drop a live conversation. So
- * the refusal CLAIMS the call first ({@link
- * whatsappVoipCallService.claimUnreachable}, `SET NX` on the same key
- * `reserveIncomingCall` creates), which leaves exactly two outcomes and no gap
- * between them:
- *
- * - Claim won: nothing owned the call and nothing can start owning it now, so
- *   the Graph reject is safe.
- * - Claim lost: a control already exists, so the fenced CAS in
- *   {@link endReservedCall} arbitrates — it ends a still-`reserved` call with
- *   the same reject+`rejected` outcome, and no-ops on one an agent has
- *   claimed or answered.
+ * Refuses an inbound connect this worker will not ring. Claims the call first
+ * (`claimUnreachable`, `SET NX`) so no agent can claim it between our read and
+ * the reject; if the claim is lost, `endReservedCall`'s fenced CAS ends it if
+ * still `reserved`.
  */
 const refuseIncomingCall = async (input: {
   wacid: string
@@ -445,24 +372,10 @@ const refuseIncomingCall = async (input: {
 }
 
 /**
- * Bug 2 safety net: a `handleConnect` job that exhausted every
- * `WHATSAPP_VOIP_SIGNAL_RETRY_OPTIONS` attempt — most commonly
- * `VoipCallRowNotReadyError` forever, because the sibling `whatsappCallEvent`
- * job on the shared `integration` queue never created the row — used to just
- * vanish: `whatsappVoipSignalingJobOptions`' `removeOnFail: true` deletes the
- * job from Redis the instant the LAST attempt fails, and nothing else was
- * watching it. The call's control record IS already live at that point
- * (`reserveIncomingCall` runs BEFORE the retryable row read in
- * `handleConnect`), so this mirrors `refuseIncomingCall`'s claim-then-reject/
- * endCall arbitration to finalize the call deterministically instead of
- * leaving the DB row `ringing` for the 5-minute `sweepStaleWhatsappCalls`
- * cron to eventually clean up.
- *
- * Called from the queue-level `failed` listener in
- * `apps/worker/src/integration/worker.ts` (`hasExhaustedAttempts(job)`),
- * never from inside the job processor itself — so unlike every other
- * handler in this file, this one must NEVER throw: a failure here is only
- * ever logged, never propagated, since nothing awaits or retries it.
+ * Safety net for a `handleConnect` job that exhausted its retries (usually
+ * because the row never appeared). Its control already exists, so finalize the
+ * call now instead of leaving it `ringing` for the sweeper. Called from the
+ * queue's `failed` listener, so it must never throw.
  */
 export const finalizeExhaustedHandleConnect = async (
   data: HandleConnectData,
@@ -485,8 +398,8 @@ export const finalizeExhaustedHandleConnect = async (
 const handleConnect = async (data: HandleConnectData): Promise<void> => {
   const { wacid, deadlineAt, phoneNumberId, receivedAt } = data
 
-  // Checked before anything else: the terminate that ended this call found
-  // no offer and no control to clean up, so nothing else would stop a ring.
+  // The terminate that ended this call found nothing to clean up — check before
+  // anything else.
   const existing = await whatsappCallRepository.findByWacid(wacid)
   if (existing && whatsappVoipCallService.isCallEnded(existing)) {
     await whatsappVoipSignalingService.deleteOffer(wacid)
@@ -497,13 +410,7 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
     return
   }
 
-  // A redelivered connect for a call that has already been claimed or answered
-  // must do NOTHING: every remaining branch below can reject the call at Meta,
-  // and even though each of them now claims the call before rejecting, doing
-  // that work for a call nobody can answer any more is pure waste — and the
-  // log line below is what explains a redelivery in production. The
-  // `alreadyProgressed` branch further down says the same thing, but only
-  // after the integration lookup and the offer read.
+  // A redelivered connect for a call already claimed or answered does nothing.
   const control = await whatsappVoipCallService.readControl(wacid)
   if (control && control.phase !== "reserved") {
     logger.info(
@@ -516,12 +423,10 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
   const integration = await resolveVoipIntegration(phoneNumberId)
   const { workspaceId, auth } = integration
 
-  // Before the offer is even read, and long before any agent is rung: the
-  // business has turned calling off, muted the inbound side, or the call
-  // arrived outside its own call hours. Rejected rather than dropped so Meta
-  // ends the call and the customer stops hearing ringing. Evaluated against
-  // the moment the webhook arrived, not the moment this job ran, so a queue
-  // backlog can never push a call that arrived in hours out of them.
+  // Refused before the offer is read when calling is off, inbound is muted, or
+  // it is outside call hours — rejected so the customer stops hearing ringing.
+  // Judged against the webhook's arrival time, so a queue backlog cannot push a
+  // call out of hours.
   const refusal = inboundCallRefusal(integration, new Date(receivedAt))
   if (refusal) {
     logger.info(
@@ -532,49 +437,29 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
     return
   }
 
-  // Offer FIRST, before ringing anyone: a connect with no stored offer is
-  // either an unprocessable-SDP connect (deliberately never stored — see
-  // `rejectUnprocessableConnect`) or one whose offer TTL lapsed. Either way it
-  // must be Meta-rejected, and doing it here means no agent is ever rung for a
-  // doomed call.
+  // No stored offer (unprocessable SDP or expired) — reject before ringing
+  // anyone.
   const offer = await whatsappVoipSignalingService.readOffer(wacid)
   if (!offer) {
     await refuseIncomingCall({ wacid, auth, deadlineAt })
     return
   }
 
-  // P2 §4 "reserve-first": the control record is created (or observed, for
-  // a redelivered/retried connect still ringing) BEFORE any further
-  // retryable read — closing the P1 stopgap's residual gap where a row
-  // that never became ready left no control and nothing to reject. `SET
-  // NX`-backed, so retrying the whole job on a race is safe.
+  // Create (or observe) the control before any retryable read, so a retry can
+  // never leave a call without one. `SET NX`, safe to retry.
   const reservation = await whatsappVoipCallService.reserveIncomingCall({
     wacid,
     deadlineAt,
   })
   if (reservation.status === "alreadyProgressed") {
-    // A redelivered/retried connect that landed after the call already
-    // advanced past `reserved` — never re-ring, and never terminate (that
-    // would downgrade a live/accepted call).
+    // Already past `reserved` — never re-ring or terminate.
     return
   }
 
-  // The generic `whatsappCallEvent` connect job (same webhook batch, the
-  // shared `integration` queue) creates this row. Resolved HERE — reusing
-  // `existing` when the early check above already found it, otherwise
-  // fetching it now — and BEFORE `selectRingTargetsForCall`: D3's
-  // eligibility filter needs a real `conversationId` to check
-  // `onlyAssignedContacts` assignment, and on a brand-new inbound call the
-  // row frequently does NOT exist yet at this point (the other job racing
-  // on the shared queue). `getCallRowOrThrow` throws
-  // `VoipCallRowNotReadyError` in that case, and BullMQ retries the WHOLE
-  // job (`WHATSAPP_VOIP_SIGNAL_RETRY_OPTIONS`) — the reservation above
-  // already exists (idempotent SET NX), so the retry keeps the same
-  // control and simply re-resolves the conversation. If the row never
-  // becomes ready at all (retries exhaust), the durable
-  // `expireIfUnanswered` job (scheduled independently at the webhook
-  // boundary) still finds the reserved control and Meta-rejects it — no
-  // call is ever left ringing with no control and no deadline enforcement.
+  // The row comes from the sibling `whatsappCallEvent` job and often does not
+  // exist yet. Target selection needs its `conversationId`, so throw and let
+  // BullMQ retry the whole job; the control above is reused. If retries run
+  // out, the `expireIfUnanswered` job still rejects the call.
   const conversationId =
     existing?.conversationId ?? (await getCallRowOrThrow(wacid)).conversationId
 
@@ -584,30 +469,19 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
   })
 
   if (selection.userIds.length === 0) {
-    // Same observable result as the P1 stopgap's `noEligibleAgent`: nobody
-    // online (or eligible) to ring — end the just-reserved (or
-    // already-reserved, on redelivery) control and Meta-reject. The
-    // reservation above already holds the control record, so
-    // `refuseIncomingCall`'s `claimUnreachable` SET NX would always lose;
-    // go straight to `endReservedCall`, which the fenced CAS makes safe
-    // even against a concurrent claim/answer.
+    // Nobody eligible to ring. The control already exists (so
+    // `claimUnreachable` would lose) — end it via the fenced CAS.
     await endReservedCall({ wacid, auth })
     return
   }
   const targets = [...selection.userIds]
 
-  // Fetched fresh (not reusing the row above) — this is the SEPARATE race
-  // this call is guarding against: a terminate that finalized while the
-  // ring set was being selected (just above), which the row read above
-  // (taken BEFORE that selection ran) cannot reflect.
+  // Re-read: a terminate may have finalized while targets were being selected.
   const call = await getCallRowOrThrow(wacid)
 
   if (whatsappVoipCallService.isCallEnded(call)) {
-    // The terminate finalized while the ring set was being selected. If its
-    // finalize ran before `reserveIncomingCall`, it saw no control and left
-    // the one just created `reserved`, so end it here — without Meta, and
-    // without re-finalizing. Both calls are no-ops when the finalize already
-    // did the same.
+    // Terminated during selection. If that finalize ran before our reservation,
+    // end the control here — no Meta call, no re-finalize.
     await whatsappVoipCallService.endCall({ wacid, allowFromAccepted: false })
     await whatsappVoipSignalingService.deleteOffer(wacid)
     return
@@ -632,20 +506,14 @@ const handleConnect = async (data: HandleConnectData): Promise<void> => {
     },
   })
   await notifyRungAgentsIfEnded({ wacid, workspaceId, targets })
-  // The durable `expireIfUnanswered` job is scheduled at the webhook boundary
-  // (in `captureConnectOffer`), not here — so deadline enforcement never
-  // depends on this consumer running to completion.
+  // `expireIfUnanswered` is scheduled at the webhook boundary, so the deadline
+  // never depends on this job finishing.
 }
 
 /**
- * `expireIfUnanswered` — durable deadline enforcement. A
- * no-op once the call reached `accepted` (or is already `terminated`): the
- * cheap `readControl` guard here avoids the integration lookup for a call
- * that's already live/done, and `endCall({allowFromAccepted:false})` inside
- * {@link endReservedCall} re-checks atomically so a call that reaches
- * `accepted` between this read and the CAS is never downgraded. The Graph
- * action (reject for a never-claimed `reserved`, terminate once a handshake
- * may have started) is derived from the phase by `endCall`.
+ * Durable deadline enforcement. No-op once accepted or terminated;
+ * `endReservedCall` re-checks atomically so a just-accepted call is never
+ * downgraded.
  */
 const handleExpire = async (data: ExpireIfUnansweredData): Promise<void> => {
   const { wacid, phoneNumberId } = data
@@ -663,14 +531,8 @@ const handleExpire = async (data: ExpireIfUnansweredData): Promise<void> => {
 }
 
 /**
- * `handleOutboundAnswer` — forwards the user's SDP ANSWER
- * (webhook-delivered, stashed in Redis by `captureOutboundAnswer`) to the
- * initiating agent's own connections via the targeted, SDP-carrying
- * `whatsappCallOutboundAnswer` event. Never broadcast — this is the live
- * answer for exactly one agent's call. The SDP is read once from Redis and
- * NEVER logged; `deleteOutboundAnswer` runs after the forward attempt so a
- * redelivered job is a no-op (an absent answer here means an earlier
- * delivery already consumed it, not an error).
+ * Forwards the customer's SDP answer to the initiating agent only. Read once,
+ * never logged, then deleted so a redelivery is a no-op.
  */
 const handleOutboundAnswer = async (
   data: HandleOutboundAnswerData,
@@ -722,17 +584,9 @@ const handleOutboundAnswer = async (
 }
 
 /**
- * Fallback for a control record that is already gone. `startOutboundDial`
- * gives the control a TTL margin
- * (see `VOIP_CONTROL_EXPIRY_MARGIN_MS` in the business package) so it
- * normally outlives this very job — but a lost CAS race, a Redis flush, or
- * any other reason {@link endReservedCall} no-ops must never silently strand
- * a still-`ringing` outbound dial: the real Meta leg would then ring until
- * ITS OWN 30-60s timeout with nobody watching, and the agent's dock would
- * never clear. Re-reads the row (the one passed in may be stale by now) and
- * force-terminates ONLY when it is still exactly `ringing` — never `accepted`
- * (a live call) and never an already-terminal status — so this can only ever
- * end a no-answer dial, never downgrade one that answered or already ended.
+ * Fallback when the control is already gone (lost race, Redis flush) so a no-
+ * answer dial is never stranded. Re-reads the row and ends it only if still
+ * exactly `ringing` — never an answered or ended call.
  */
 const forceEndNoAnswerOutboundDial = async (input: {
   wacid: string
@@ -751,19 +605,10 @@ const forceEndNoAnswerOutboundDial = async (input: {
 }
 
 /**
- * `expireOutboundDial` — the outbound
- * counterpart of `expireIfUnanswered`: terminates+finalizes a dial the user
- * never accepted by the deadline. Tries {@link endReservedCall} first —
- * `endCall({allowFromAccepted:false})` already no-ops once the call reached
- * `accepted`/`terminated` (no separate `readControl` pre-check needed), and
- * its phase->outcome table already maps the outbound `dialing`/`ringing`
- * phases to `terminate`/`failed` — the same Graph-then-finalize path
- * `handleExpire` uses for inbound. When that no-ops (the control was already
- * gone — e.g. lost the race, or ran right at the TTL boundary),
- * {@link forceEndNoAnswerOutboundDial} still ends a genuinely no-answer
- * dial from the DB row's own status, so this job is never a silent no-op.
- * Auth is resolved from the call row's `inboxId` (no `phoneNumberId` on this
- * job's payload).
+ * Outbound counterpart of `expireIfUnanswered`: ends a dial not accepted by the
+ * deadline via `endReservedCall`, falling back to
+ * `forceEndNoAnswerOutboundDial` if the control is gone. Auth comes from the
+ * row's `inboxId`.
  */
 const handleExpireOutboundDial = async (
   data: ExpireOutboundDialData,

@@ -11,14 +11,9 @@ import {
 // can parse it.
 
 /**
- * `useVoipRingtone` synthesizes its tones with the raw Web Audio API rather
- * than an audio asset, and every OTHER test in the codebase mocks this hook
- * — so its actual scheduling logic (`TONE_PATTERN_BY_MODE`, the repeat
- * interval, the gain envelope) has never run inside a test before. These
- * stubs record every oscillator/gain node the hook creates and every call
- * made on them, so the assertions below check what the hook ACTUALLY
- * schedules against real numbers read from the hook's own
- * `TONE_PATTERN_BY_MODE` table, not invented ones.
+ * Every other test mocks `useVoipRingtone`, so its Web Audio scheduling
+ * logic has never actually run in a test — these stubs record each
+ * oscillator/gain node so assertions can check real scheduled values.
  */
 
 type RecordedGainCall = {

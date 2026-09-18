@@ -19,12 +19,10 @@ type CallsPageProps = {
 }
 
 /**
- * P5 item 6 (plan D4) — the Calls page. Server component: resolves the
- * caller's member row (permissions gate the page AND scope the list — see
- * `whatsappCallHistoryService.list`), reads the `activity` filter from the
- * URL via `nuqs`, and renders the first page. Subsequent pages are fetched
- * client-side (`CallsPageClient`, "Load more" — plan §5's documented
- * deviation from numbered pages, chosen to avoid an unbounded COUNT(*) per view).
+ * The Calls page. Server component: resolves the caller's member row
+ * (permissions gate the page and scope the list), reads the activity filter
+ * from the URL, and renders the first page. Subsequent pages are fetched
+ * client-side to avoid an unbounded COUNT(*) per view.
  */
 export default async function CallsPage({
   params,
@@ -41,9 +39,8 @@ export default async function CallsPage({
   }
   const { permissions } = userAndWorkspace.targetWorkspaceMember
 
-  // D4 page access: `hasContactsAccess || analytics` — mirrors
-  // `requireCallHistoryAccess` (the action-layer equivalent for
-  // `listWhatsappCallsAction`).
+  // Page access: hasContactsAccess || analytics — mirrors
+  // requireCallHistoryAccess, the action-layer equivalent.
   if (
     !(
       hasContactsAccess(permissions) ||
@@ -57,14 +54,13 @@ export default async function CallsPage({
     listWhatsappCallsSearchParamsCache.parse(await searchParams)
   const t = await getTranslations("whatsapp.calls.page")
 
-  // D4: the agent filter is admin-only — the same rule that lets `history`
-  // scope see every call (`isCallHistoryAdmin`, `@chatbotx.io/business`).
+  // The agent filter is admin-only — the same rule that lets history scope see
+  // every call.
   const showAgentFilter = isCallHistoryAdmin(permissions)
-  // B-L1 (Fable review): a non-admin's `?agentUserId=…` (stale link,
-  // tampered param) must be dropped for BOTH the service call and the
-  // client props — otherwise the service silently ignores it (D4) while
-  // `CallsPageClient`'s `hasActiveFilter`/"Load more" would still treat it
-  // as an active filter the non-admin can never actually see reflected.
+  // A non-admin's ?agentUserId=… (stale link, tampered param) must be dropped
+  // for both the service call and the client props — otherwise the service
+  // silently ignores it while the client's active-filter state would still
+  // treat it as one the non-admin can never actually see reflected.
   const scopedAgentUserId = showAgentFilter
     ? (agentUserId ?? undefined)
     : undefined
@@ -100,11 +96,10 @@ export default async function CallsPage({
         inboxOptions={inboxOptions}
         initialData={data}
         initialNextCursor={nextCursor}
-        // M1 + item 6 gap closure: keyed by EVERY filter (activity, inbox,
-        // agent), not just activity — any filter change REMOUNTS the client
-        // component, so its internal `rows`/`nextCursor` state resets to the
-        // fresh server-rendered first page instead of appending onto rows
-        // left over from the previous filter combination.
+        // Keyed by every filter (activity, inbox, agent), not just activity —
+        // any filter change remounts the client component, so its internal
+        // state resets to the fresh server-rendered first page instead of
+        // appending onto rows from the previous filter combination.
         key={`${activity ?? "all"}:${inboxId ?? "all"}:${scopedAgentUserId ?? "all"}`}
         showAgentFilter={showAgentFilter}
         workspaceId={workspaceId}

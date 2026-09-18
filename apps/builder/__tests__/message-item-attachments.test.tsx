@@ -12,17 +12,16 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
 
-// Same rationale as message-item-avatar.test.tsx: MediaLibraryTrigger imports
-// "use server" query modules at module scope that drag in a live pg Pool
-// under vitest. Stubbing it keeps this test about attachment rendering.
+// MediaLibraryTrigger imports "use server" query modules at module scope
+// that drag in a live pg Pool under vitest; stub it to keep this test about
+// attachment rendering.
 vi.mock("@/features/media-library/components/media-library-trigger", () => ({
   MediaLibraryTrigger: () => null,
 }))
 
-// Same rationale (P4 item 3): the real card now also pulls in
-// `useOutboundCallMode`/`useWhatsappCallStarter`, which chain into the same
-// `"use server"` calling actions. This test is about attachment rendering,
-// not the call card's own contents (covered by whatsapp-call-card.test.tsx).
+// The real call card pulls in useOutboundCallMode/useWhatsappCallStarter,
+// which chain into the same "use server" calling actions — stub it for the
+// same reason (its own contents are covered by whatsapp-call-card.test.tsx).
 vi.mock("@/features/messages/components/whatsapp-call-card", () => ({
   WhatsappCallCard: () => <div data-slot="whatsapp-call-card">audioCall</div>,
 }))

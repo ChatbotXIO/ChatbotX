@@ -37,8 +37,10 @@ type WhatsappCallsCardProps = {
   transcriptionEnabled?: boolean
   /** Local flag: whether an incoming call may ring agents at all. */
   inboundCallsEnabled?: boolean
-  /** Eligibility preflight. `null` when the current user
-   * could not be resolved against the workspace. */
+  /**
+   * Eligibility preflight. null when the current user could not be resolved
+   * against the workspace.
+   */
   preflight?: WhatsappCallingPreflight | null
   isSuperAdmin?: boolean
   /** Seeds the call hours timezone for a number that has none on Meta yet. */
@@ -195,11 +197,11 @@ export function WhatsappCallsCard({
   const [isTranscriptionEnabled, setIsTranscriptionEnabled] =
     useState(transcriptionEnabled)
   // Meta's refusal stays readable in the card after the toast is gone — the
-  // reason (messaging tier, coexistence number, …) is what the operator acts on.
+  // reason is what the operator acts on.
   const [updateError, setUpdateError] = useState<string>()
   // Snapshot for rolling back the optimistic update when Meta rejects the
-  // change — without it the switches would keep showing a state that was
-  // never applied remotely.
+  // change — without it the switches would keep showing a state that was never
+  // applied remotely.
   const previousRef = useRef(current)
   const previousInboundRef = useRef(inboundCallsEnabled)
   const previousRecordingRef = useRef(recordingEnabled)
@@ -228,8 +230,8 @@ export function WhatsappCallsCard({
     },
   )
 
-  // Every save snapshots ALL switches, not just the one it changes: a failed
-  // save restores from these refs, and a ref left over from an earlier,
+  // Every save snapshots all switches, not just the one it changes: a failed
+  // save restores from these refs, and a ref left over from an earlier
   // successful save would roll an unrelated switch back to a stale value.
   const snapshot = () => {
     previousRef.current = current

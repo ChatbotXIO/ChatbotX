@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// B-M1 (Fable review) — `inboxService.listChannelOptionsByWorkspace` is a
+// `inboxService.listChannelOptionsByWorkspace` is a
 // thin pass-through to `inboxRepository.listOptionsByWorkspaceAndChannel`
 // (bounded id/name projection, scoped by workspace AND channel at the query
 // level). Replaces the Calls page's use of

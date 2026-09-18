@@ -29,35 +29,17 @@ import {
 
 /**
  * Upper bound on a browser-recorded VoIP call upload — generous enough for a
- * long call at a modest bitrate, small enough that a single POST can never
- * turn into an unbounded read (bounded-work invariant).
+ * long call at a modest bitrate, small enough a single POST can never turn into
+ * an unbounded read.
  */
 const MAX_RECORDING_UPLOAD_BYTES = 100 * 1024 * 1024
 
 /**
- * Accepts a browser-recorded WhatsApp call audio blob and feeds it into the
- * shared recording pipeline — `callRecordingService.uploadRecording` for the
- * object-storage write, then the `whatsappCallRecordingReady` integration
- * job, so the downstream activity-message/attach/transcribe logic in
- * `handleWhatsappCallRecordingReady` is never duplicated.
- *
- * A route handler (not a next-safe-action server action) because the
- * payload is a large binary multipart body — server actions in this
- * codebase are reserved for typed JSON-ish mutations, and every other
- * binary upload here (`api/presigned-upload`) is already a route handler.
- *
- * Authorization is entirely server-side and never trusts client flags:
- * - the caller must be signed in and a member of the call's workspace
- *   (mirrors `api/presigned-upload`'s `assertCurrentUserCanAccessChatbot`);
- * - only the agent who actually answered this call
- *   (`call.answeredByUserId === ctx.user.id`) may upload its recording —
- *   this is what stops any other workspace member from overwriting the
- *   recording object, or triggering the (paid) transcription pipeline, for
- *   an arbitrary `callId`;
- * - the integration's `callRecordingEnabled` must be true, AND
- *   `callRecordingMode` must be `"browserWhisper"` — under the default
- *   `metaNative` mode Meta already records the call server-side, so a
- *   browser upload here would double-record it.
+ * A route handler, not a server action, because the payload is a large binary
+ * multipart body. Only the agent who answered this call may upload its
+ * recording, and only when callRecordingMode is "browserWhisper" — under the
+ * default metaNative mode Meta already records server-side, so a browser
+ * upload here would double-record it.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -103,21 +85,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Call not found" }, { status: 404 })
     }
 
-    // Membership check, mirroring `api/presigned-upload` — thrown as a
-    // ChatbotXException and mapped to a 4xx by `serverErrorHandler` below.
+    // Membership check, mirroring api/presigned-upload — thrown as a
+    // ChatbotXException and mapped to a 4xx by serverErrorHandler below.
     await assertCurrentUserCanAccessChatbot(call.workspaceId)
 
-    // Apply the same owner-access gate `workspaceActionClient` uses
-    // (scheduled-deletion + blocked-owner/trial-expired), rather than the
-    // `workspaceActionClientAllowExpired` variant that `get-call-recording-
-    // url.action.ts` / `get-call-transcript.action.ts` use. Those actions
-    // only read an already-existing recording/transcript, so they qualify
-    // as "finishing" an in-progress call under the allow-expired
-    // convention (AGENTS.md invariant #14). This route instead performs a
-    // NEW write (uploads the recording object) and enqueues the
-    // Meta-Whisper transcription job, which costs money — so a
-    // trial-expired or otherwise blocked owner must not be able to trigger
-    // it, same as any other paid mutation gated by `workspaceActionClient`.
+    // Apply the same owner-access gate workspaceActionClient uses, rather than
+    // the allow-expired variant the read-only recording/transcript actions use
+    // — this route performs a new write and enqueues the paid Meta-Whisper
+    // transcription job, so a trial-expired or blocked owner must not be able
+    // to trigger it.
     const workspace = await workspaceService.findById({
       id: call.workspaceId,
     })
@@ -136,7 +112,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Pure read with zero business logic — allowed to call the repository
-    // directly from the app layer (AGENTS.md #9).
+    // directly from the app layer.
     const integration =
       await integrationWhatsappRepository.findByInboxIdForWorkspace({
         workspaceId: call.workspaceId,
@@ -149,8 +125,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Never trust a client-supplied workspaceId — every check below is
-    // derived from the call row and the caller's own session.
+    // Never trust a client-supplied workspaceId — every check below is derived
+    // from the call row and the caller's own session.
     if (call.answeredByUserId !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
@@ -162,11 +138,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // U2 defense-in-depth: under `metaNative` mode Meta records the call
-    // server-side and the browser must never ALSO upload a recording — the
-    // client-side gate (the browser's own `shouldRecordRef`) is the primary
-    // defense, but a stray/buggy/old-client upload must still be rejected
-    // here rather than silently accepted and double-processed.
+    // Defense-in-depth: under metaNative mode Meta records server-side and the
+    // browser must never also upload a recording. The client-side gate is the
+    // primary defense, but a stray/buggy/old-client upload must still be
+    // rejected here rather than silently double-processed.
     if (integration.callRecordingMode !== "browserWhisper") {
       return NextResponse.json(
         { error: "Call recording is not in browser-capture mode" },

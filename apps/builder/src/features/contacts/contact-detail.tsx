@@ -205,27 +205,11 @@ const buildScopedIdentityFields = (
 }
 
 /**
- * One dialable WhatsApp number of the contact panel's call control (P4 item
- * 4) — standalone so `useOutboundCallMode`/`useWhatsappCallStarter` only run
- * for a number the agent has actually committed to, and so N numbers each
- * resolve/mount independently rather than sharing (and racing) one hook
- * instance.
- *
- * Two modes, both driven by `ContactDetail`:
- * - Default (single WhatsApp number): renders the always-visible dial
- *   button, mirroring `WhatsappVoipCallButton`'s resolving/no-permission/
- *   ready branches.
- * - `autoTrigger` (several numbers, mounted only AFTER the agent picks a
- *   row from the picker `DropdownMenu`): renders NO visible control of its
- *   own — the picker row already WAS the click — and instead fires the
- *   equivalent action itself once the starter is ready: `handleClick()`
- *   for a call-eligible number (which already handles the `mode: "none"`
- *   alert and the manual-integration warning on its own), or auto-opens
- *   `RequestCallPermissionDialog` for a number that needs permission
- *   first. This is the fix for HIGH-2/HIGH-3: the picker itself (in
- *   `ContactDetail`) is a PURE selector — it never renders a starter or its
- *   dialogs inside the `DropdownMenuContent`, so base-ui's close-on-click +
- *   portal-unmount can never tear an alert/dialog down mid-click.
+ * Standalone per number so resolve/mount hooks only run for a number the
+ * agent committed to. autoTrigger mode mounts only after picker selection
+ * and fires the action with no control of its own. The picker itself never
+ * renders a starter/dialog inside DropdownMenuContent, so close-on-click +
+ * portal-unmount can't tear a dialog down mid-click.
  */
 function ContactPanelCallEntry({
   autoTrigger,
@@ -237,12 +221,10 @@ function ContactPanelCallEntry({
   autoTrigger?: boolean
   contactInboxId: string
   /**
-   * The picked `ContactInbox`'s `inboxId` — pins
-   * `RequestCallPermissionDialog`'s send to the WhatsApp number the agent
-   * actually picked, mirroring `input-menu.tsx`. Without it,
-   * `requestCallPermissionAction` falls back to "any WhatsApp ContactInbox"
-   * of the contact, which can send from the wrong business number when the
-   * contact has several.
+   * The picked ContactInbox's inboxId — pins RequestCallPermissionDialog's send
+   * to the number the agent actually picked. Without it, the action falls back
+   * to any WhatsApp ContactInbox of the contact, which can send from the wrong
+   * business number.
    */
   inboxId: string
   contactName?: string | null
@@ -250,8 +232,8 @@ function ContactPanelCallEntry({
 }) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
-  // Read directly (not via `starter.voipCallContext`, which needs
-  // `outboundCallMode` first) so the mode query itself can be gated on it —
+  // Read directly rather than via starter.voipCallContext (which needs
+  // outboundCallMode first) so the mode query itself can be gated on it —
   // calling disabled for this workspace/member must never fire the action.
   const voipCallContext = useOptionalWhatsappVoipCallContext()
   const outboundCallModeQuery = useOutboundCallMode(
@@ -278,9 +260,9 @@ function ContactPanelCallEntry({
       return
     }
     hasAutoTriggeredRef.current = true
-    // A number needing permission first renders `RequestCallPermissionDialog`
+    // A number needing permission first renders RequestCallPermissionDialog
     // auto-opened below instead — dialing it would only bounce back with a
-    // "needsPermission" alert.
+    // needsPermission alert.
     if (!needsPermissionRequest) {
       starter.handleClick()
     }
@@ -292,20 +274,13 @@ function ContactPanelCallEntry({
     needsPermissionRequest,
   ])
 
-  // The mode query never surfaces feedback on its own (retries are off, so
-  // it would otherwise sit "resolving" forever). Access-denial no longer
-  // reaches here as a thrown query error at all — `resolveOutboundCallModeAction`
-  // returns `{ mode: "none", reason: "callAccessDenied" }` as ordinary data
-  // instead of throwing (review B1), and the shared starter's `mode: "none"`
-  // alert path (`starter.handleClick`) covers that uniformly with every
-  // other denial reason. What's left here is the GENERIC failure case only —
-  // a real query error (network failure, unexpected throw) — so this no
-  // longer needs (or is safe doing) a string compare against a translated
-  // message: any resolve error gets the same generic toast. Also no longer
-  // gated on `autoTrigger`: gating it left the header/picker button
-  // permanently disabled with zero feedback on a query error, since
-  // `starter.isResolvingMode` stays `true` forever when `outboundCallMode`
-  // never resolves to a value.
+  // The mode query never surfaces feedback on its own (retries are off, so it
+  // would sit resolving forever). Access denial no longer reaches here as a
+  // thrown error — it's ordinary data handled by the shared starter's mode:
+  // none path. What's left is the generic failure case (network failure,
+  // unexpected throw), so any resolve error gets the same generic toast without
+  // a string compare. Not gated on autoTrigger either, since that left the
+  // button permanently disabled with no feedback.
   useEffect(() => {
     if (!outboundCallModeQuery.isError) {
       return
@@ -322,11 +297,8 @@ function ContactPanelCallEntry({
   if (starter.isResolvingMode) {
     if (outboundCallModeQuery.isError) {
       // A resolve failure never retries (a 403 never succeeds on retry), so
-      // `outboundCallMode` would otherwise stay `undefined` — and the button
-      // disabled — forever. Render it enabled instead: the toast effect
-      // above already surfaced the failure once, and a click here re-shows
-      // it rather than leaving a control that looks broken with no way to
-      // get feedback again.
+      // outboundCallMode would otherwise stay undefined and the button disabled
+      // forever. Render it enabled instead; a click re-shows the failure toast.
       return autoTrigger ? null : (
         <Button
           aria-label={t("whatsapp.calls.startCall")}
@@ -406,11 +378,9 @@ export const ContactDetail = ({
   const avatarUrl = useAvatarUrl(contact)
   const [timezone, setTimezone] = useState("UTC")
 
-  // The contact panel's call control: every `contactInbox` of THIS
-  // conversation's contact on a channel that can carry calls, in list order.
-  // Which channels those are is `CALL_CAPABLE_CHANNELS`' decision, not this
-  // component's. 0 → no control renders; 1 → a direct-dial icon button;
-  // 2+ → a picker naming each by `inbox.name`.
+  // The contact panel's call control: every contactInbox of this conversation's
+  // contact on a channel that can carry calls, in list order. 0 → no control; 1
+  // → direct-dial button; 2+ → a picker.
   const activeConversationForCall = conversations.find(
     (conversation) => conversation.id === activeConversationId,
   )
@@ -418,33 +388,26 @@ export const ContactDetail = ({
     activeConversationForCall?.contactInboxes.filter((contactInbox) =>
       CALL_CAPABLE_CHANNELS.some((channel) => channel === contactInbox.channel),
     ) ?? []
-  // Destructured behind the length check above (never `[0]?.id ?? ""`) so a
-  // single-number conversation can never dial an empty-string contactInboxId.
+  // Destructured behind the length check above so a single-number conversation
+  // can never dial an empty-string contactInboxId.
   const [soleCallableContactInbox] =
     callableContactInboxes.length === 1 ? callableContactInboxes : []
 
-  // The picker's committed selection (2+ numbers only) — a token alongside
-  // the id so re-picking the SAME row still remounts `ContactPanelCallEntry`
-  // (fresh `key`) and re-fires its auto-trigger, instead of silently no-oping
-  // because the id didn't change. `inboxId` (the ContactInbox's OWN inbox,
-  // not its row id) is captured at pick time so `RequestCallPermissionDialog`
-  // pins to the exact number the agent picked instead of re-deriving it from
-  // `callableContactInboxes` (which could have changed by the time it
-  // renders).
+  // The picker's committed selection — a token alongside the id so re-picking
+  // the same row still remounts ContactPanelCallEntry and re-fires its auto-
+  // trigger. inboxId is captured at pick time so RequestCallPermissionDialog
+  // pins to the exact number picked instead of re-deriving it later.
   const [callSelection, setCallSelection] = useState<{
     contactInboxId: string
     inboxId: string
     token: number
   } | null>(null)
 
-  // A stale selection made on a PRIOR conversation must never carry over —
-  // it would resolve a foreign contactInbox against the newly active
-  // conversation's contact, or leave a stray sr-only auto-trigger button
-  // mounted for a conversation the agent already navigated away from. Reset
-  // during render (React's documented "adjusting state when a prop changes"
-  // pattern), not in a `useEffect`, so the stale combination is never even
-  // passed to `ContactPanelCallEntry` for one render — an effect-based reset
-  // would still commit that first, wrong render before cleaning it up.
+  // A stale selection from a prior conversation must never carry over — it
+  // would resolve a foreign contactInbox against the newly active conversation.
+  // Reset during render (React's "adjusting state when a prop changes"
+  // pattern), not in an effect, so the stale combination is never even passed
+  // down for one render.
   const [callSelectionConversationId, setCallSelectionConversationId] =
     useState(activeConversationId)
   if (activeConversationId !== callSelectionConversationId) {

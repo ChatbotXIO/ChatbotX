@@ -110,13 +110,9 @@ export type ChannelCapability = {
   /** Relative display order in the picker and the settings accordion. */
   order: number
   /**
-   * Whether the channel carries voice calls, i.e. whether connecting it can
-   * ever produce call history. Gates call-only navigation (the Calls page
-   * entry) so a workspace that only runs, say, Telegram is not offered a
-   * page that can never have rows. Only WhatsApp has a calling API today;
-   * being part of this exhaustive record means a future calling channel
-   * fails to compile until it declares its answer here, rather than
-   * silently inheriting `false`.
+   * Whether the channel carries voice calls — gates call-only navigation (the
+   * Calls page entry). Being part of this exhaustive record means a future
+   * calling channel fails to compile until it declares its answer here.
    */
   callable: boolean
 }
@@ -231,9 +227,9 @@ export const MANAGEABLE_CHANNELS: ChannelType[] = channelTypes.options
 
 /**
  * Channels that can produce call history, in display order. Derived from
- * `CHANNEL_CAPABILITIES.callable` rather than hardcoded so nothing outside
- * that registry has to name a specific channel to answer "can this
- * workspace ever have calls?".
+ * CHANNEL_CAPABILITIES.callable rather than hardcoded so nothing outside that
+ * registry has to name a specific channel to answer "can this workspace ever
+ * have calls?".
  */
 export const CALL_CAPABLE_CHANNELS: ChannelType[] = channelTypes.options
   .filter((channel) => CHANNEL_CAPABILITIES[channel].callable)

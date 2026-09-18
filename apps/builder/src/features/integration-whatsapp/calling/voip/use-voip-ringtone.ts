@@ -3,12 +3,11 @@
 import { useEffect } from "react"
 
 /**
- * Which tone an offer should make, chosen by what the agent is doing right
- * now — not by who is calling. Ring-all means an agent who is already
- * mid-conversation gets rung too, and a full repeating phone ring in their
- * ear for the offer's whole ~30-55s deadline makes the call they are ON
- * impossible to hold. Real phone systems solve this with a short, quiet
- * call-waiting beep for the busy party, which is what `callWaiting` is.
+ * Which tone an offer should make, chosen by what the agent is doing right now,
+ * not by who is calling. Ring-all means an already mid-conversation agent gets
+ * rung too, and a full repeating ring for the offer's whole ~30-55s deadline
+ * would make the call they're on impossible to hold. Mirrors phone systems'
+ * call-waiting beep for a busy party.
  */
 export const voipRingtoneModes = {
   /** The agent is free to take the call: a full ring, repeating until the offer ends. */
@@ -23,13 +22,11 @@ export type VoipRingtoneMode =
 type VoipTonePattern = {
   /** Simultaneous frequencies in Hz — two make the classic ring, one is a plain beep. */
   frequencies: readonly number[]
-  /** How long one tone lasts. */
   durationS: number
-  /** Silence between tones. */
   gapS: number
   /** Kept low so the tone is audible but never startling / clipping. */
   gain: number
-  /** How many tones to play; `null` repeats for as long as the offer stands. */
+  /** How many tones to play; null repeats for as long as the offer stands. */
   repeats: number | null
 }
 
@@ -39,7 +36,6 @@ type VoipTonePattern = {
  */
 const TONE_PATTERN_BY_MODE: Record<VoipRingtoneMode, VoipTonePattern> = {
   ring: {
-    // Classic phone-ring pair.
     frequencies: [440, 480],
     durationS: 1,
     gapS: 2,
@@ -62,21 +58,12 @@ type WebkitWindow = Window & {
 }
 
 /**
- * Plays a soft phone tone (synthesized with the Web Audio API — no audio
- * asset to bundle or fetch) for as long as `active` is true, stopping and
- * releasing the audio context when it turns false or the component unmounts.
- * `mode` picks the pattern (see {@link TONE_PATTERN_BY_MODE}).
- *
- * `restartKey` re-arms a finite pattern: `callWaiting` falls silent after its
- * couple of beeps, so without this a SECOND offer arriving while the first
- * still sits in the basket would make no sound at all — `active` never
- * changed, so the effect would never re-run. Callers pass something that
- * varies per arrival (the number of ringing offers).
- *
- * Because the agent is already interacting with the inbox, the audio context
- * resumes without a fresh gesture; if the browser still blocks it (autoplay
- * policy on a brand-new context), the tone is silently skipped rather than
- * throwing.
+ * Plays a synthesized phone tone (Web Audio API, no asset) while active is
+ * true. `restartKey` re-arms a finite pattern: callWaiting falls silent after
+ * its beeps, so a second offer arriving while the first is still pending
+ * needs a changed restartKey to sound again, since `active` alone wouldn't
+ * change. If the browser blocks audio without a fresh gesture, the tone is
+ * silently skipped rather than throwing.
  */
 export function useVoipRingtone(
   active: boolean,

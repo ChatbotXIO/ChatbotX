@@ -13,15 +13,10 @@ export interface BroadcastTarget {
 }
 
 /**
- * Extracts ONLY safe fields from a broadcast failure for logging. A raw `ky`
- * `HTTPError` retains `options.json` (the request body — which for a VoIP
- * offer/answer holds the SDP) and `options.headers` (the bearer token), so
- * handing it straight to the logger would leak both. Never returns the
- * request/response bodies.
- *
- * The `stack` IS kept: every channel's realtime broadcast fails through here,
- * and stripping it would cost on-call the one field that says which call site
- * failed. It is the attached request/response that leaks, never the trace.
+ * Extracts only safe fields for logging — a raw ky HTTPError retains the
+ * request body (VoIP offer/answer SDP) and bearer token header, so logging it
+ * directly would leak both. `stack` is kept since it's the field that says
+ * which call site failed.
  */
 const describeBroadcastError = (error: unknown): Record<string, unknown> => {
   if (error instanceof HTTPError) {
@@ -76,12 +71,10 @@ export async function broadcastToWorkspaceParty(
 }
 
 /**
- * Delivers an event to only one workspace member's tagged connections
- * (server-side `room.getConnections(userTag).send`), instead of the
- * workspace-wide `broadcast` above. The party still authenticates the
- * request the same way (workspace-audience bearer token); targeting is
- * carried out-of-band as a query param so the JSON body — and therefore the
- * existing broadcast wire format — never changes shape.
+ * Delivers an event to only one workspace member's tagged connections, instead
+ * of the workspace-wide broadcast above. The party still authenticates the same
+ * way; targeting is carried out-of-band as a query param so the JSON body never
+ * changes shape.
  */
 export async function sendToWorkspaceMember(
   target: BroadcastTarget,
@@ -111,9 +104,9 @@ export async function sendToWorkspaceMember(
 }
 
 /**
- * Closes every currently-open tagged connection a member holds in a
- * workspace room — used on membership removal so a revoked member cannot
- * keep receiving events over a socket opened before removal.
+ * Closes every currently-open tagged connection a member holds in a workspace
+ * room — used on membership removal so a revoked member can't keep receiving
+ * events over a socket opened before removal.
  */
 export async function revokeWorkspaceMemberConnections(
   target: BroadcastTarget,

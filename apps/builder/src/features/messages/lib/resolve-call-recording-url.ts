@@ -1,15 +1,8 @@
 /**
- * M3 fix (dedup) — the ONE place that resolves a fresh signed playback URL
- * for a WhatsApp call recording. Previously copy-pasted three times
- * (`whatsapp-calls/calls-table.tsx`, `messages/components/
- * whatsapp-call-card.tsx`, `messages/components/whatsapp-call-info-sheet.tsx`)
- * with the exact same dynamic import + null-check + error shape — any future
- * change (a retry, a different error type) had to be applied three times in
- * lockstep or the three callers would silently drift.
- *
- * The action import stays dynamic (`apps/builder/src` allows/prefers it for
- * heavy client islands per `.agents/rules/no-dynamic-import.md`) so a Calls
- * page render that never opens a player never pulls in the action's module
+ * Shared by calls-table.tsx, whatsapp-call-card.tsx and
+ * whatsapp-call-info-sheet.tsx so the dynamic import, null check and error
+ * shape cannot drift between them. The action import stays dynamic so a
+ * Calls page render that never opens a player never pulls in its module
  * graph.
  */
 export function createResolveCallRecordingUrl(input: {

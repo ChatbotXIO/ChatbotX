@@ -36,11 +36,9 @@ export type CaptureConnectOfferInput = {
   /** Resolves the integration (workspace/inbox/Graph auth) in the signaling consumer. */
   phoneNumberId: string
   /**
-   * Epoch ms the call arrived, from Meta's own webhook timestamp. Passing it
-   * rather than reading the clock here keeps the value STABLE across a
-   * redelivery: an enqueue that fails releases the offer claim, and the
-   * redelivery that follows must evaluate call hours against when the customer
-   * actually rang, not when the retry happened.
+   * Epoch ms the call arrived, from Meta's webhook timestamp — passed in rather
+   * than read here so it stays stable across a redelivery (call hours must be
+   * evaluated against when the customer actually rang, not when a retry ran).
    */
   receivedAt?: number
 }
@@ -51,11 +49,9 @@ export type StoreOutboundAnswerInput = {
 }
 
 /**
- * The webhook-boundary entry point for a BUSINESS_INITIATED `connect` event's
- * answer. `attemptId` is Meta's echoed `biz_opaque_callback_data`
- * when present; callers pass `""` when it is absent (an older/edge payload)
- * and rely on the `wacid` fallback lookup in
- * {@link WhatsappVoipCallService.captureOutboundAnswer}.
+ * Webhook entry point for a BUSINESS_INITIATED connect event's answer.
+ * attemptId is Meta's echoed biz_opaque_callback_data; callers pass "" when
+ * absent and rely on the wacid fallback in captureOutboundAnswer.
  */
 export type CaptureOutboundAnswerInput = {
   attemptId: string
@@ -64,32 +60,28 @@ export type CaptureOutboundAnswerInput = {
 }
 
 /**
- * The webhook-boundary entry point for a Meta-native `call_recording_available`
- * event.
- * Mirrors {@link CaptureOutboundAnswerInput}'s shape — the identifiers/URL
- * only, never the audio bytes.
+ * Webhook entry point for a Meta-native call_recording_available event.
+ * Identifiers/URL only, never the audio bytes.
  */
 export type CaptureNativeRecordingAvailableInput = {
   wacid: string
-  /** Graph Media API id for the recording audio (`call_recording.audio.id`). */
+  /** Graph Media API id for the recording audio. */
   audioMediaId: string
-  /** Meta's short-lived (~5-min) download URL (`call_recording.audio.url`). */
+  /** Meta's short-lived (~5-min) download URL. */
   audioUrl: string
-  /** e.g. `audio/ogg; codecs=opus` (`call_recording.audio.mime_type`). */
+  /** e.g. audio/ogg; codecs=opus. */
   mimeType: string
 }
 
 /**
- * The webhook-boundary entry point for a Meta-native `call_transcription_available`
- * event.
- * Mirrors {@link CaptureOutboundAnswerInput}'s shape — the identifiers/URL
- * only, never the transcript document bytes.
+ * Webhook entry point for a Meta-native call_transcription_available event.
+ * Identifiers/URL only, never the transcript bytes.
  */
 export type CaptureNativeTranscriptAvailableInput = {
   wacid: string
-  /** Graph Media API id for the transcript document (`call_transcript.document.id`). */
+  /** Graph Media API id for the transcript document. */
   documentMediaId: string
-  /** Meta's short-lived download URL (`call_transcript.document.url`). */
+  /** Meta's short-lived download URL. */
   documentUrl: string
 }
 
@@ -103,18 +95,15 @@ export type EnqueueOutboundDialExpiryInput = {
 }
 
 /**
- * Webhook- and queue-facing side of VoIP calling: stores the SDP records Meta
- * delivers and hands each call event to the signaling worker. Split from
- * `whatsappVoipCallService` (which owns the call-control state machine) so the
- * webhook entry points stay small and independently testable.
+ * Webhook- and queue-facing side of VoIP calling: stores SDP records and hands
+ * events to the signaling worker. Split from whatsappVoipCallService (owns the
+ * call-control state machine) to keep webhook entry points small and testable.
  */
 class WhatsappVoipSignalingService {
   /**
-   * Immutable first-seen SDP offer store: `SET NX PX=(deadlineAt-now)`, so a
-   * redelivered connect webhook for the same `wacid` can neither overwrite
-   * the offer nor extend its TTL. Returns whether THIS call created the
-   * record (`false` means a redelivery — the caller should treat the
-   * existing offer as authoritative, not retry the write).
+   * Immutable first-seen SDP offer store: SET NX PX=(deadlineAt-now), so a
+   * redelivered connect webhook can't overwrite the offer or extend its TTL.
+   * Returns whether THIS call created the record (false means a redelivery).
    */
   async storeOffer(input: StoreOfferInput): Promise<boolean> {
     const record: VoipOfferRecord = {
@@ -129,17 +118,10 @@ class WhatsappVoipSignalingService {
   }
 
   /**
-   * The webhook-boundary entry point for a VoIP-mode connect:
-   * writes the offer to short-TTL Redis, then enqueues BOTH the slim
-   * `handleConnect` signaling job AND the durable `expireIfUnanswered` job
-   * — the SDP never reaches either. Scheduling the expiry here,
-   * at the boundary, rather than at the end of the `handleConnect` consumer,
-   * decouples deadline enforcement from that consumer succeeding: a
-   * `handleConnect` that keeps failing (e.g. the call row created by the slow
-   * shared queue isn't ready yet) can never leave the call without a deadline.
-   * Deterministic `jobId`s make a Meta redelivery of the same connect event a
-   * dedup no-op on the queue side, on top of `storeOffer`'s `SET NX`
-   * immutability and the early-return above.
+   * Writes the offer to short-TTL Redis, then enqueues both handleConnect and
+   * expireIfUnanswered — SDP never reaches either job. Scheduling expiry here
+   * (not at the end of handleConnect) decouples the deadline from that
+   * consumer succeeding. Deterministic jobIds make redelivery a dedup no-op.
    */
   async captureConnectOffer(input: CaptureConnectOfferInput): Promise<void> {
     const deadlineAt = Date.now() + VOIP_ANSWER_DEADLINE_MS
@@ -149,17 +131,14 @@ class WhatsappVoipSignalingService {
       deadlineAt,
     })
     if (!created) {
-      // Redelivered connect webhook for the same wacid within the offer's
-      // TTL: the first offer and its immutable deadline stand, and a signaling
-      // job is already in flight for it. Re-enqueuing here would re-ring the
-      // agent and reset the deadline off a fresh `now`, so stop.
+      // Redelivered connect webhook within the offer's TTL: the first
+      // offer/deadline stand and a signaling job is already in flight. Re-
+      // enqueuing would re-ring the agent and reset the deadline, so stop.
       return
     }
-    // The offer key is now claimed (SET NX), so a later redelivery early-returns
-    // above and will NOT retry the enqueue. If either enqueue throws (transient
-    // Redis/BullMQ error), that would strand the call — offer stored but never
-    // rung and never expired. So release the claim on failure: the next Meta
-    // redelivery then re-stores the offer and re-enqueues cleanly.
+    // The offer key is claimed (SET NX) so a later redelivery early-returns and
+    // won't retry the enqueue. If either enqueue throws, release the claim so
+    // the next redelivery re-stores and re-enqueues cleanly.
     try {
       await this.enqueueHandleConnect(
         input.wacid,
@@ -190,11 +169,9 @@ class WhatsappVoipSignalingService {
   }
 
   /**
-   * A VoIP-mode connect whose inline SDP was malformed/oversized (see
-   * `parseCallSession`): enqueue the signaling job WITHOUT storing an offer, so
-   * the consumer reads no offer and Meta-`reject`s the call. Never dropped into
-   * the SIP path, which has no leg for a VoIP call. No expiry job is scheduled
-   * — there is nothing to wait for.
+   * Malformed/oversized inline SDP: enqueue the signaling job without storing
+   * an offer, so the consumer reads none and Meta-rejects the call. No expiry
+   * job — nothing to wait for.
    */
   async rejectUnprocessableConnect(input: {
     wacid: string
@@ -209,7 +186,10 @@ class WhatsappVoipSignalingService {
     )
   }
 
-  /** Enqueues the slim (SDP-free) `handleConnect` signaling job, replay-safe by deterministic id. */
+  /**
+   * Enqueues the slim (SDP-free) handleConnect job, replay-safe by
+   * deterministic id.
+   */
   private async enqueueHandleConnect(
     wacid: string,
     deadlineAt: number,
@@ -220,10 +200,9 @@ class WhatsappVoipSignalingService {
       WhatsappVoipSignalingJobAction.handleConnect,
       {
         type: WhatsappVoipSignalingJobAction.handleConnect,
-        // The moment the call arrived, not the moment the consumer runs — it
-        // is what the consumer evaluates the number's call hours against.
-        // Meta's webhook timestamp when we have it (stable across
-        // redeliveries), the clock only as a fallback.
+        // The moment the call arrived, not the moment the consumer runs —
+        // evaluated against the number's call hours. Meta's webhook timestamp
+        // when known (stable across redeliveries), the clock as fallback.
         data: {
           wacid,
           deadlineAt,
@@ -247,12 +226,10 @@ class WhatsappVoipSignalingService {
   }
 
   /**
-   * Immutable first-seen SDP ANSWER store for an outbound call: `SET NX
-   * PX`, keyed by `attemptId` (the only id known before Meta returns a
-   * `wacid`) — the answer-direction counterpart of `storeOffer`. The SDP
-   * never enters a BullMQ payload; this Redis handoff is the only path from
-   * the answer webhook to the signaling consumer. Returns whether THIS call
-   * created the record (`false` means a redelivery).
+   * Immutable first-seen SDP answer store for an outbound call, keyed by
+   * attemptId (the only id known before Meta returns a wacid) — answer-
+   * direction counterpart of storeOffer. Returns whether THIS call created the
+   * record.
    */
   async storeOutboundAnswer(input: StoreOutboundAnswerInput): Promise<boolean> {
     const record: VoipOutboundAnswerRecord = { sdp: input.sdp }
@@ -274,14 +251,11 @@ class WhatsappVoipSignalingService {
   }
 
   /**
-   * The webhook-boundary entry point for a BUSINESS_INITIATED `connect`
-   * event's answer: resolves the pending `WhatsappCall` row — created
-   * pre-dial, so it always exists by the time Meta's answer arrives —
-   * stores the SDP in short-TTL Redis (never a BullMQ payload), then
-   * enqueues the slim `handleOutboundAnswer` signaling job with a
-   * deterministic `jobId` so a webhook redelivery dedups. Never throws into
-   * the webhook: a row that can't be resolved is logged and dropped, since
-   * there is nobody to forward the answer to.
+   * Webhook entry point for a BUSINESS_INITIATED connect answer: resolves the
+   * pending WhatsappCall row (created pre-dial, always exists by now), stores
+   * the SDP in short-TTL Redis, then enqueues the slim handleOutboundAnswer job
+   * with a deterministic jobId. Never throws into the webhook — an unresolvable
+   * row is logged and dropped.
    */
   async captureOutboundAnswer(
     input: CaptureOutboundAnswerInput,
@@ -299,9 +273,9 @@ class WhatsappVoipSignalingService {
       return
     }
 
-    // The row's own `attemptId` is authoritative (it was minted at dial
-    // time and echoed to Meta as `biz_opaque_callback_data`) — prefer it
-    // over the caller's input, which may be "" on the wacid-fallback path.
+    // The row's own attemptId (minted at dial time, echoed to Meta) is
+    // authoritative over the caller's input, which may be "" on the wacid-
+    // fallback path.
     const attemptId = resolved.attemptId || input.attemptId
     if (!attemptId) {
       logger.warn(
@@ -311,15 +285,15 @@ class WhatsappVoipSignalingService {
       return
     }
 
-    // Normalized once here, at the only place an outbound answer enters the
-    // system, so every tab that applies it gets a DTLS role it can accept.
+    // Normalized once here, the only place an outbound answer enters the
+    // system, so every tab gets a DTLS role it can accept.
     const created = await this.storeOutboundAnswer({
       attemptId,
       sdp: pinAnswerDtlsSetup(input.sdp),
     })
     if (!created) {
       // Redelivered answer webhook for the same attemptId: the first answer
-      // stands, and a signaling job is already in flight for it.
+      // stands and a signaling job is already in flight.
       return
     }
     try {
@@ -335,7 +309,10 @@ class WhatsappVoipSignalingService {
     }
   }
 
-  /** Enqueues the slim (SDP-free) `handleOutboundAnswer` signaling job, replay-safe by deterministic id. */
+  /**
+   * Enqueues the slim (SDP-free) handleOutboundAnswer job, replay-safe by
+   * deterministic id.
+   */
   private async enqueueHandleOutboundAnswer(input: {
     attemptId: string
     whatsappCallId: string
@@ -361,16 +338,10 @@ class WhatsappVoipSignalingService {
   }
 
   /**
-   * The webhook-boundary entry point for a Meta-native
-   * `call_recording_available` event (VoIP-only — see
-   * `docs/whatsapp-calling-voip.md`): resolves the `WhatsappCall` row by
-   * `wacid` and enqueues the slim (media id/url/mime-type only, never the
-   * audio bytes)
-   * `whatsappCallNativeRecordingFetch` job, deterministically keyed by
-   * `wacid` so a Meta webhook redelivery dedups on the queue side. Never
-   * throws into the webhook: a row that can't be resolved (e.g. the call was
-   * purged, or the webhook arrived before the row existed) is logged and
-   * dropped rather than failing the whole webhook delivery.
+   * Webhook entry point for a Meta-native call_recording_available event (VoIP-
+   * only): resolves the WhatsappCall row by wacid and enqueues the slim fetch
+   * job (media id/url/mime-type only). Never throws into the webhook — an
+   * unresolvable row is logged and dropped.
    */
   async captureNativeRecordingAvailable(
     input: CaptureNativeRecordingAvailableInput,
@@ -386,10 +357,9 @@ class WhatsappVoipSignalingService {
         "[wa-call-recording] matched call row → enqueuing native fetch job",
       )
     } else {
-      // Never drop the event because the row hasn't been created yet —
-      // the recording webhook can race the row-creating `calls`
-      // webhook/job. Enqueue anyway; the fetch job resolves the row by
-      // `wacid` with bounded retry/backoff instead.
+      // Never drop the event for a not-yet-created row — the recording webhook
+      // can race the row-creating webhook/job. Enqueue anyway; the fetch job
+      // resolves by wacid with bounded retry/backoff.
       logger.warn(
         { wacid: input.wacid },
         "[wa-call-recording] no matching call row for wacid yet; enqueuing native fetch job to retry by wacid",
@@ -414,23 +384,18 @@ class WhatsappVoipSignalingService {
   }
 
   /**
-   * The webhook-boundary entry point for a Meta-native
-   * `call_transcription_available` event (VoIP-only) — the
-   * transcript-direction counterpart of
-   * {@link captureNativeRecordingAvailable}: resolves the `WhatsappCall` row
-   * by `wacid` and enqueues the slim `whatsappCallNativeTranscriptFetch` job
-   * (document id/url only, never the transcript body), deterministically
-   * keyed by `wacid`. Never throws into the webhook: no matching row is
-   * logged and dropped.
+   * Webhook entry point for a Meta-native call_transcription_available event
+   * (VoIP-only), transcript counterpart of captureNativeRecordingAvailable.
+   * Enqueues the slim fetch job (document id/url only). Never throws — no
+   * matching row is logged and dropped.
    */
   async captureNativeTranscriptAvailable(
     input: CaptureNativeTranscriptAvailableInput,
   ): Promise<void> {
     const row = await whatsappCallRepository.findByWacid(input.wacid)
     if (!row) {
-      // Never drop the event because the row hasn't been created yet —
-      // enqueue anyway; the fetch job resolves the row by `wacid` with
-      // bounded retry/backoff instead.
+      // Never drop the event for a not-yet-created row — enqueue anyway; the
+      // fetch job resolves by wacid with bounded retry/backoff.
       logger.warn(
         { wacid: input.wacid },
         "Whatsapp native call transcript: no matching call row found yet; enqueuing native fetch job to retry by wacid",
@@ -454,12 +419,10 @@ class WhatsappVoipSignalingService {
   }
 
   /**
-   * Durable deadline enforcement for the outbound dial/accept window — the
-   * outbound counterpart of the `expireIfUnanswered` job
-   * {@link captureConnectOffer} schedules. Called
-   * by the app layer right after `startOutboundDial` succeeds, so a dial
-   * that never gets an ACCEPTED status is terminated/finalized on schedule
-   * even if every other signal is lost.
+   * Durable deadline enforcement for the outbound dial/accept window,
+   * counterpart of the expireIfUnanswered job. Called right after
+   * startOutboundDial succeeds so a dial that never reaches ACCEPTED still
+   * terminates on schedule.
    */
   async enqueueOutboundDialExpiry(
     input: EnqueueOutboundDialExpiryInput,

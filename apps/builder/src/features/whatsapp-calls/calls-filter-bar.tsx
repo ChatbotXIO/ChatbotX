@@ -17,19 +17,18 @@ type ActivityChip = (typeof CALL_ACTIVITY_CHIPS)[number]
 /** A selectable inbox or agent option — id + display name only (never the raw DB row). */
 export type CallFilterOption = { id: string; name: string }
 
-/** Sentinel the base-ui `Select` needs for "no selection" (it can't hold `undefined`) — never a real id. */
+/**
+ * Sentinel the base-ui Select needs for "no selection" (it can't hold
+ * undefined) — never a real id.
+ */
 const ALL_OPTION_VALUE = ""
 
 /**
- * B-L1 fix (Fable review) — an `inboxId`/`agentUserId` that matches no known
- * option (a stale filter param, a deleted inbox/member, a foreign id) used
- * to fall straight through to the base-ui `Select`'s `value` prop and render
- * a BLANK trigger (no option in `items` matches, so nothing renders as
- * selected) instead of visibly falling back to "All …". Also the single
- * place `value as string` casts (B-L3) used to live — narrows the
- * `Select`'s `onValueChange` callback via `typeof`, never a cast, since the
- * ui-package `Select` wrapper does not preserve base-ui's generic `Value`
- * type parameter (its `onValueChange` value is `unknown`).
+ * An inboxId/agentUserId that matches no known option (a stale filter param, a
+ * deleted inbox/member, a foreign id) must fall back to "All …" rather than
+ * reaching the base-ui Select's value prop and rendering a blank trigger. Also narrows the Select's onValueChange callback via typeof, never a
+ * cast, since the ui-package Select wrapper doesn't preserve base-ui's generic
+ * Value type parameter.
  */
 const resolveSelectValue = (
   value: string | undefined,
@@ -51,21 +50,18 @@ type CallsFilterBarProps = {
   agentUserId: string | undefined
   onAgentChange: (agentUserId: string | undefined) => void
   agentOptions: CallFilterOption[]
-  /** D4: the agent filter is admin-only (`superAdmin || analytics`) — everyone else's list is already scoped to their own calls. */
+  /**
+   * The agent filter is admin-only (superAdmin || analytics) — everyone else's
+   * list is already scoped to their own calls.
+   */
   showAgentFilter: boolean
 }
 
 /**
- * P5 item 6 (plan D9) — the Calls page's base activity chips: "All calls",
- * "Missed", "No reply". A chip maps 1:1 to `CALL_ACTIVITY_FILTERS` in
- * `whatsappCallHistoryService` — this bar owns no filtering logic of its
- * own, only the selected chip.
- *
- * L3 fix: plain toggle BUTTONS with `aria-pressed`, not a `tablist`/`tab`
- * pair — `role="tab"` requires an owning `tablist` to manage exactly one
- * `tabpanel` with roving `tabIndex` focus management, none of which this
- * bar implements (it just re-filters a table in place). `aria-pressed` is
- * the correct semantic for a set of independent toggle filters.
+ * Base activity chips; each maps 1:1 to CALL_ACTIVITY_FILTERS in
+ * whatsappCallHistoryService. Plain toggle buttons with aria-pressed rather
+ * than a tablist/tab pair, since this bar doesn't manage a tabpanel with
+ * roving tabIndex focus.
  */
 export function CallsFilterBar({
   activity,

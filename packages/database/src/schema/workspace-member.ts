@@ -47,21 +47,9 @@ export const workspaceMemberModel = pgTable("WorkspaceMember", {
     .default(sql`'{}'`)
     .notNull(),
   /**
-   * When this member most recently transitioned from offline to online
-   * (their first live heartbeat after having none) in ANY workspace they
-   * belong to's presence set. `null` until their first-ever heartbeat.
-   * A durable, coarse "last came online" stamp for reporting ONLY — it is
-   * monotonic (never cleared back to `null`, and never updated again while
-   * already online), so it can NOT answer "is this member online right
-   * now". That question is answered exclusively by Redis:
-   * `workspacePresenceService.listOnlineMembers`
-   * (`packages/business/src/workspace-presence/service.ts`), whose TTL
-   * (`PRESENCE_TTL_MS`) is the single source of truth for live status.
-   * Written by `workspaceMemberRepository.markOnlineBulk`, called from
-   * `workspacePresenceService.heartbeatMany` only on the offline -> online
-   * transition, never on every heartbeat. No supporting index: nothing
-   * queries by this column yet (YAGNI) — add one alongside whatever report
-   * first reads it.
+   * Coarse "last came online" stamp for reporting only, written on the
+   * offline->online transition. Not "is online right now" — that's answered
+   * exclusively by Redis (workspacePresenceService.listOnlineMembers).
    */
   onlineSince: timestamp(timestampConfig),
 })

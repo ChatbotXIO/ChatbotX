@@ -227,7 +227,7 @@ describe("WhatsappCallPanel", () => {
     expect(contextMock.dismiss).toHaveBeenCalledTimes(1)
   })
 
-  test("D6: a SUCCESSFUL answer while already on the inbox sets the pending-open bridge instead of navigating", async () => {
+  test("a SUCCESSFUL answer while already on the inbox sets the pending-open bridge instead of navigating", async () => {
     mockPathname = "/space/workspace-1/inbox"
     useWhatsappVoipCallStore.setState({ call: incomingCall })
     contextMock.answer.mockImplementation((_id, onAnswered) => {
@@ -250,7 +250,7 @@ describe("WhatsappCallPanel", () => {
     expect(routerPushMock).not.toHaveBeenCalled()
   })
 
-  test("D6: a SUCCESSFUL answer while off the inbox pushes the inbox route with the conversationId", async () => {
+  test("a SUCCESSFUL answer while off the inbox pushes the inbox route with the conversationId", async () => {
     mockPathname = "/space/workspace-1/settings"
     useWhatsappVoipCallStore.setState({ call: incomingCall })
     contextMock.answer.mockImplementation((_id, onAnswered) => {
@@ -274,7 +274,7 @@ describe("WhatsappCallPanel", () => {
     ).toBeNull()
   })
 
-  test("D6: a FAILED answer (call never becomes active) does not navigate — on the inbox", async () => {
+  test("a FAILED answer (call never becomes active) does not navigate — on the inbox", async () => {
     mockPathname = "/space/workspace-1/inbox"
     useWhatsappVoipCallStore.setState({ call: incomingCall })
     contextMock.answer.mockImplementation(() => Promise.resolve("declined"))
@@ -293,7 +293,7 @@ describe("WhatsappCallPanel", () => {
     expect(routerPushMock).not.toHaveBeenCalled()
   })
 
-  test("D6: a FAILED answer (call never becomes active) does not navigate — off the inbox", async () => {
+  test("a FAILED answer (call never becomes active) does not navigate — off the inbox", async () => {
     mockPathname = "/space/workspace-1/settings"
     useWhatsappVoipCallStore.setState({ call: incomingCall })
     contextMock.answer.mockImplementation(() => Promise.resolve("declined"))
@@ -392,7 +392,7 @@ describe("WhatsappCallPanel", () => {
     ).toBeNull()
   })
 
-  test("R5: a connection-lost ended call shows the translated connection-lost notice", async () => {
+  test("a connection-lost ended call shows the translated connection-lost notice", async () => {
     useWhatsappVoipCallStore.setState({ call: connectionLostCall })
     await render()
 
@@ -611,7 +611,7 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
     expect(contextMock.dismiss).toHaveBeenCalledWith("ring-a")
   })
 
-  test("D6: answering the single basket card navigates to its own conversation, off the inbox, only on success", async () => {
+  test("answering the single basket card navigates to its own conversation, off the inbox, only on success", async () => {
     mockPathname = "/space/workspace-1/settings"
     useWhatsappVoipCallStore.setState({ ringingCalls: [ringA] })
     contextMock.answer.mockImplementation((_id, onAnswered) => {
@@ -632,7 +632,7 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
     )
   })
 
-  test("D6: does not navigate when answering the single basket card fails", async () => {
+  test("does not navigate when answering the single basket card fails", async () => {
     mockPathname = "/space/workspace-1/settings"
     useWhatsappVoipCallStore.setState({ ringingCalls: [ringA] })
     // Left ringing (or dismissed) — never promoted to an active call.
@@ -682,7 +682,7 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
     )
   })
 
-  test("D6: answering a ring-list row navigates to that row's own conversation, off the inbox, only on success", async () => {
+  test("answering a ring-list row navigates to that row's own conversation, off the inbox, only on success", async () => {
     mockPathname = "/space/workspace-1/settings"
     useWhatsappVoipCallStore.setState({ ringingCalls: [ringA, ringB] })
     contextMock.answer.mockImplementation((_id, onAnswered) => {
@@ -790,8 +790,8 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
     )
   })
 
-  // An outbound dial no longer refuses to start while an offer sits in the
-  // basket, so both tone conditions can now be true at the same moment. Each
+  // An outbound dial starts even while an offer sits in the basket, so both
+  // tone conditions can be true at the same moment. Each
   // hook opens its own AudioContext at the same 440/480 Hz pair, so running
   // both would play audibly doubled tones — the dial the agent just clicked
   // deliberately wins over an unanswered offer.
@@ -845,7 +845,7 @@ describe("WhatsappCallPanel — basket / multi-ring", () => {
 
   // The full ring already repeats on its own. Varying its re-arm key would
   // tear down and rebuild the AudioContext on every new offer, audibly
-  // restarting a ring that used to play straight through.
+  // restarting a ring that should play straight through.
   test("a second offer does not re-arm — and so does not restart — the full ring", async () => {
     useWhatsappVoipCallStore.setState({ ringingCalls: [ringA] })
     await render()

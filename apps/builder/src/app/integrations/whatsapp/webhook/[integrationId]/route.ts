@@ -70,13 +70,10 @@ const handleGet = async (req: NextRequest, integrationId: string) => {
 }
 
 /**
- * The actual HMAC verification (real cryptographic check, not just a header
- * prefix look) happens inside `integration.handleRequest` — see
- * `webhookHandler`/`verifyPostSignature` in
- * `integrations/whatsapp/src/handlers/webhook.ts`, which rejects before any
- * parse/log/enqueue. This route only checks the orthogonal "has this
- * integration ever completed a GET handshake" gate; it must NOT log the
- * request body before that verification succeeds.
+ * HMAC verification happens inside integration.handleRequest
+ * (verifyPostSignature in integrations/whatsapp/src/handlers/webhook.ts).
+ * This route only checks the orthogonal "completed a GET handshake" gate;
+ * must not log the request body before that verification succeeds.
  */
 const handlePost = async (req: NextRequest, integrationId: string) => {
   const result = await loadManualIntegration(integrationId)
@@ -98,11 +95,10 @@ const handlePost = async (req: NextRequest, integrationId: string) => {
     return json({ message: "Method is not implemented" }, 400)
   }
 
-  // handleRequest consumes `req`'s body (raw bytes, one-shot stream) to
-  // verify the signature — clone BEFORE that read so the post-auth log below
-  // still has an unconsumed body to read from. `NextRequest#clone()` is typed
-  // as returning the base `Request` (unchanged from the Fetch API), even
-  // though it returns a real `NextRequest` at runtime.
+  // handleRequest consumes req's body (raw bytes, one-shot stream) to verify
+  // the signature - clone before that read so the post-auth log below still has
+  // an unconsumed body. NextRequest#clone() is typed as returning the base
+  // Request, even though it returns a real NextRequest at runtime.
   const bodyForLogging = req.clone() as NextRequest
 
   try {

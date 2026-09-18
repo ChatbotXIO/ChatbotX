@@ -662,7 +662,7 @@ describe("extractCallEventPayloads", () => {
     )
   })
 
-  test("R2: normalizes a Username/BSUID-only connect (no wa_id) instead of dropping the whole calls value", () => {
+  test("normalizes a Username/BSUID-only connect (no wa_id) instead of dropping the whole calls value", () => {
     const result = extractCallEventPayloads(
       wrapEntry(
         callsValue({
@@ -708,7 +708,7 @@ describe("extractCallEventPayloads", () => {
     ])
   })
 
-  test("R2: normalizes a status item's recipient_user_id (BSUID recipient)", () => {
+  test("normalizes a status item's recipient_user_id (BSUID recipient)", () => {
     const result = extractCallEventPayloads(
       wrapEntry(
         callsValue({
@@ -739,7 +739,7 @@ describe("extractCallEventPayloads", () => {
     ])
   })
 
-  test("R12: normalizes a terminate status case-insensitively", () => {
+  test("normalizes a terminate status case-insensitively", () => {
     const result = extractCallEventPayloads(
       wrapEntry(
         callsValue({
@@ -760,7 +760,7 @@ describe("extractCallEventPayloads", () => {
     expect((result[0].event as { status?: string }).status).toBe("COMPLETED")
   })
 
-  test("R12: an unrecognized terminate status logs a warning and defaults to FAILED", () => {
+  test("an unrecognized terminate status logs a warning and defaults to FAILED", () => {
     const result = extractCallEventPayloads(
       wrapEntry(
         callsValue({
@@ -783,7 +783,7 @@ describe("extractCallEventPayloads", () => {
     )
   })
 
-  test("D2: two connect items from different users each keep THEIR OWN contact even with a reversed contacts[] and no `from`/only `from_user_id`", () => {
+  test("two connect items from different users each keep THEIR OWN contact even with a reversed contacts[] and no `from`/only `from_user_id`", () => {
     const result = extractCallEventPayloads(
       wrapEntry(
         callsValue({
@@ -836,7 +836,7 @@ describe("extractCallEventPayloads", () => {
     })
   })
 
-  test("D2: a call item whose from_user_id matches no contact carries none when contacts.length > 1", () => {
+  test("a call item whose from_user_id matches no contact carries none when contacts.length > 1", () => {
     const result = extractCallEventPayloads(
       wrapEntry(
         callsValue({
@@ -860,7 +860,7 @@ describe("extractCallEventPayloads", () => {
     expect(result[0].contact).toBeUndefined()
   })
 
-  test("D2: the existing single-contact convenience still resolves when the item carries no identity", () => {
+  test("the existing single-contact convenience still resolves when the item carries no identity", () => {
     const result = extractCallEventPayloads(
       wrapEntry(
         callsValue({
@@ -889,7 +889,7 @@ describe("extractCallEventPayloads", () => {
     })
   })
 
-  test("D2: a business-initiated item selects its contact by to/to_user_id, not from/from_user_id", () => {
+  test("a business-initiated item selects its contact by to/to_user_id, not from/from_user_id", () => {
     const result = extractCallEventPayloads(
       wrapEntry(
         callsValue({
@@ -966,7 +966,7 @@ const wrapMessagesEntry = (value: unknown) => ({
   entry: [{ id: "waba-1", changes: [{ field: "messages", value }] }],
 })
 
-describe("webhookHandler R1: per-change dispatch (mixed batches, multi-message)", () => {
+describe("webhookHandler — per-change dispatch (mixed batches, multi-message)", () => {
   test("a body with 2 messages in one change enqueues both as incomingMessage jobs", async () => {
     const queueAdd = vi.fn()
     const payload = wrapMessagesEntry(
@@ -1176,7 +1176,7 @@ describe("webhookHandler R1: per-change dispatch (mixed batches, multi-message)"
   })
 })
 
-describe("webhookHandler R4: manual-integration phone_number_id binding", () => {
+describe("webhookHandler — manual-integration phone_number_id binding", () => {
   test("a forged POST naming a phone_number_id that does not match the route-pinned integration enqueues nothing", async () => {
     const queueAdd = vi.fn()
     const payload = wrapMessagesEntry(messagesValue())
@@ -1361,7 +1361,7 @@ describe("webhookHandler call events", () => {
     }
   })
 
-  test("R9: an enqueue failure now PROPAGATES — the handler rejects instead of swallowing it, so the route answers non-2xx and Meta redelivers", async () => {
+  test("an enqueue failure PROPAGATES — the handler rejects instead of swallowing it, so the route answers non-2xx and Meta redelivers", async () => {
     const queueAdd = vi
       .fn()
       .mockRejectedValueOnce(new Error("redis down"))
@@ -1403,7 +1403,7 @@ describe("webhookHandler call events", () => {
     )
   })
 
-  test("R9: deterministic jobIds are present on incomingMessage/messageStatus enqueues", async () => {
+  test("deterministic jobIds are present on incomingMessage/messageStatus enqueues", async () => {
     const queueAdd = vi.fn()
     const messagePayload = {
       object: "whatsapp_business_account",
@@ -1646,7 +1646,7 @@ describe("webhookHandler VoIP-mode connect signaling", () => {
     expect(mockCaptureConnectOffer).not.toHaveBeenCalled()
   })
 
-  test("R9: a VoIP signaling failure is logged and PROPAGATES (no longer swallowed)", async () => {
+  test("a VoIP signaling failure is logged and PROPAGATES, never swallowed", async () => {
     mockCaptureConnectOffer.mockRejectedValueOnce(new Error("redis down"))
     const queueAdd = vi.fn()
     const payload = wrapEntry(
@@ -1751,7 +1751,7 @@ describe("webhookHandler VoIP-mode connect signaling", () => {
     )
   })
 
-  test("R9: a captureOutboundAnswer failure is logged and PROPAGATES (no longer swallowed)", async () => {
+  test("a captureOutboundAnswer failure is logged and PROPAGATES, never swallowed", async () => {
     mockCaptureOutboundAnswer.mockRejectedValueOnce(new Error("redis down"))
     const queueAdd = vi.fn()
     const payload = wrapEntry(
@@ -1790,7 +1790,7 @@ describe("webhookHandler VoIP-mode connect signaling", () => {
     // The exact production shape: a business-initiated answer whose contact
     // carries only { wa_id, user_id } and NO `profile`. whatsapp-api-js@6.2.1's
     // `post()` reads `contact?.profile.name`, which throws on this shape and
-    // used to 400 the whole webhook. We must not route a calls webhook through
+    // 400s the whole webhook, so a calls webhook must never be routed through
     // the middleware at all.
     const payload = wrapEntry(
       callsValue({
@@ -1956,7 +1956,7 @@ describe("webhookHandler Meta-native call recording/transcript capture", () => {
     expect(mockCaptureNativeRecordingAvailable).not.toHaveBeenCalled()
   })
 
-  test("R9: a captureNativeRecordingAvailable failure is logged and PROPAGATES (no longer swallowed)", async () => {
+  test("a captureNativeRecordingAvailable failure is logged and PROPAGATES, never swallowed", async () => {
     mockCaptureNativeRecordingAvailable.mockRejectedValueOnce(
       new Error("db down"),
     )
@@ -1996,7 +1996,7 @@ describe("webhookHandler Meta-native call recording/transcript capture", () => {
     )
   })
 
-  test("R9: a captureNativeTranscriptAvailable failure is logged and PROPAGATES (no longer swallowed)", async () => {
+  test("a captureNativeTranscriptAvailable failure is logged and PROPAGATES, never swallowed", async () => {
     mockCaptureNativeTranscriptAvailable.mockRejectedValueOnce(
       new Error("db down"),
     )

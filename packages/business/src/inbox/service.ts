@@ -105,13 +105,10 @@ class InboxService extends BaseService {
   }
 
   /**
-   * B-M1 (Fable review) — bounded id/name options for a channel-filtered
-   * select (e.g. the Calls page's inbox filter). Thin pass-through to
-   * `inboxRepository.listOptionsByWorkspaceAndChannel`: no caching here
-   * (matches `find()` above, whose own cache attempt was deliberately left
-   * disabled — nothing in this service currently invalidates an
-   * inbox-scoped cache tag on write, so adding one here would risk silently
-   * stale results instead of fixing the eager-load).
+   * Bounded id/name options for a channel-filtered select (e.g. the Calls
+   * page's inbox filter). Thin pass-through to the repository — no caching
+   * here, matching find()'s deliberately disabled cache, since nothing in this
+   * service currently invalidates an inbox-scoped cache tag on write.
    */
   async listChannelOptionsByWorkspace(input: {
     workspaceId: string
@@ -160,27 +157,10 @@ class InboxService extends BaseService {
   }
 
   /**
-   * Distinct channel types the workspace has a connected inbox for. Used to
-   * grandfather already-connected channels back into the settings accordion
-   * even when a platform admin / white-label owner has since hidden that
-   * channel from *new* creation — hiding must never make an existing
-   * connection disappear from the UI.
-   */
-  /**
-   * Whether the workspace has ever connected an inbox on any of `channels`.
-   *
-   * Deliberately ignores `Inbox.status`: this answers "could this workspace
-   * have data from that channel", so a disconnected — but once-connected —
-   * channel still counts. Disconnecting WhatsApp must not hide the call
-   * history it already produced, the same grandfathering rule
-   * `distinctConnectedChannels` applies to the settings accordion (see
-   * AGENTS.md invariant #18).
-   *
-   * Channel-agnostic on purpose: callers pass the list they care about (e.g.
-   * `CALL_CAPABLE_CHANNELS`) so this shared service never names one channel.
-   * `LIMIT 1` keys off `Inbox_workspaceId_idx`, so it stays a cheap existence
-   * probe even on a workspace with many inboxes — it runs once per request on
-   * the workspace layout.
+   * Whether the workspace has ever connected an inbox on any of channels.
+   * Deliberately ignores Inbox.status, so a disconnected-but-once-connected
+   * channel still counts, matching the grandfathering rule the settings
+   * accordion applies. LIMIT 1 keys off Inbox_workspaceId_idx.
    */
   async hasAnyChannel(props: {
     workspaceId: string
@@ -202,6 +182,13 @@ class InboxService extends BaseService {
     return row.length > 0
   }
 
+  /**
+   * Distinct channel types the workspace has a connected inbox for. Used to
+   * grandfather already-connected channels back into the settings accordion
+   * even when a platform admin / white-label owner has since hidden that
+   * channel from *new* creation — hiding must never make an existing
+   * connection disappear from the UI.
+   */
   async distinctConnectedChannels(workspaceId: string): Promise<ChannelType[]> {
     const rows = await db
       .selectDistinct({ channel: inboxModel.channel })

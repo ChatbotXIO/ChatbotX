@@ -128,7 +128,7 @@ function mockAccess(input: {
   })
 }
 
-describe("callingActionClient — P2 item 7 gates", () => {
+describe("callingActionClient gates", () => {
   test("rejects a support session even with full permissions, with the translated support-session-blocked message", async () => {
     mockAccess({ isSupportSession: true, permissions: { superAdmin: true } })
 
@@ -169,7 +169,7 @@ describe("callingActionClient — P2 item 7 gates", () => {
   })
 })
 
-describe("callingAdminActionClient — P2 item 7 gates", () => {
+describe("callingAdminActionClient gates", () => {
   test("rejects a support session, with the translated support-session-blocked message", async () => {
     mockAccess({ isSupportSession: true, permissions: { superAdmin: true } })
 

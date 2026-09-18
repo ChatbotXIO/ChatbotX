@@ -261,7 +261,7 @@ describe("ConversationItem", () => {
     ["completedInbound", "svg.lucide-phone-incoming"],
     ["completedOutbound", "svg.lucide-phone-outgoing"],
     ["missedVoiceCall", "svg.lucide-phone-missed"],
-    // A-L1 (Fable review): aligned with `whatsapp-call-card.tsx`'s
+    // Aligned with `whatsapp-call-card.tsx`'s
     // in-conversation card, which uses `PhoneOffIcon` for `unansweredVoiceCall`
     // (only `missedVoiceCall` gets `PhoneMissedIcon` there).
     ["unansweredVoiceCall", "svg.lucide-phone-off"],

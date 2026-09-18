@@ -1,15 +1,9 @@
 /**
- * Cache key factory for `useOutboundCallMode`. Kept dependency-free so
- * realtime code can invalidate without importing the server action behind
- * the hook.
- *
- * `detail(...)` extends `conversation(...)` (same three leading parts, plus
- * `contactInboxId`) so that TanStack Query's default PREFIX matching on
- * `invalidateQueries` means invalidating with `conversation(...)` alone
- * refreshes every `detail(...)` variant for that conversation too — the
- * header button (no `contactInboxId`), a call-back button, and a contact
- * panel dial for one specific WhatsApp number all share one invalidation
- * call. No caller should ever build either key by hand.
+ * Kept dependency-free so realtime code can invalidate without importing the
+ * server action behind `useOutboundCallMode`. `detail(...)` extends
+ * `conversation(...)`'s prefix (plus `contactInboxId`) so TanStack Query's
+ * PREFIX matching lets invalidating `conversation(...)` refresh every
+ * `detail(...)` variant too.
  */
 export const outboundCallModeQueryKeys = {
   conversation: (

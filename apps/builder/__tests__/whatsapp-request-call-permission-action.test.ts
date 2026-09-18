@@ -89,7 +89,7 @@ const call = (text = "May we call you?") =>
     ctx,
   })
 
-describe("requestCallPermissionAction — P2 item 5 (D3) / M1 / M4", () => {
+describe("requestCallPermissionAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     canCallConversationMock.mockResolvedValue(true)
@@ -131,7 +131,7 @@ describe("requestCallPermissionAction — P2 item 5 (D3) / M1 / M4", () => {
     )
   })
 
-  test("D3 denial is translated and thrown with code callAccessDenied — never sends the message", async () => {
+  test("a call-access denial is translated and thrown with code callAccessDenied — never sends the message", async () => {
     canCallConversationMock.mockResolvedValue(false)
 
     await expect(call()).rejects.toMatchObject({

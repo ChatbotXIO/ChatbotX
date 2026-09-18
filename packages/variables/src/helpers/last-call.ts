@@ -3,13 +3,9 @@ import { whatsappCallRepository } from "@chatbotx.io/database/repositories"
 import { logger } from "../logger"
 
 /**
- * Presigned URL of the contact's most recent WhatsApp call recording.
- * Recording objects are private, so this is never a public storage URL —
- * the link is only valid for 15 minutes (matches
- * `RECORDING_SIGNED_URL_TTL_SECONDS` in
- * `packages/business/src/whatsapp-call/call-recording-service.ts`), so a
- * consumer that caches `{{last_call_recording}}` past that window must
- * re-resolve the variable rather than reuse the URL.
+ * Presigned URL of the contact's most recent WhatsApp call recording. Never a public storage
+ * URL — valid for only 15 minutes (RECORDING_SIGNED_URL_TTL_SECONDS), so a consumer caching
+ * `{{last_call_recording}}` past that window must re-resolve rather than reuse it.
  */
 export const getContactLastCallRecording = async (
   contactId: string,

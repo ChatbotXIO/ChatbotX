@@ -4,13 +4,10 @@ import type { ConversationModel } from "../../types"
 
 /**
  * Claims an unassigned conversation for a user — used by the call-answer and
- * outbound-dial auto-assign flows (P3). The `IS NULL` guards on both
- * `assignedUserId` AND `assignedInboxTeamId` are the whole guarantee: a
- * conversation already assigned to a user OR a team is left untouched, so a
- * concurrent manual assignment always wins and a team-assigned conversation
- * is never silently reassigned to the answering/dialing agent (plan D2).
- * `.returning()` empty means the guard didn't match — the caller must treat
- * that as "did not claim", not retry or error.
+ * outbound-dial auto-assign flows. The `IS NULL` guards on both `assignedUserId`
+ * AND `assignedInboxTeamId` ensure a concurrent manual assignment always wins.
+ * An empty `.returning()` means the guard didn't match — treat as "did not
+ * claim", not retry or error.
  */
 export async function assignUserIfUnassigned(
   params: {

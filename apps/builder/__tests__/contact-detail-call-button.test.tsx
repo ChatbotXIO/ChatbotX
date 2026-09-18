@@ -4,9 +4,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import type { GetContactResponse } from "@/features/contacts/schema/query"
 
 /**
- * P4 item 4 — the contact panel's call control (0/1/n WhatsApp numbers).
- * Every unrelated dependency of `ContactDetail` (custom fields, timezone,
- * avatar) is stubbed so these tests stay focused on that one control.
+ * Tests the contact panel's call control (0/1/n WhatsApp numbers). Every
+ * unrelated dependency of `ContactDetail` (custom fields, timezone, avatar)
+ * is stubbed so these tests stay focused on that one control.
  */
 
 // A STABLE function reference — `ContactDetail`'s field-building effect
@@ -199,7 +199,7 @@ afterEach(() => {
   root = null
 })
 
-describe("ContactDetail — call control (P4 item 4)", () => {
+describe("ContactDetail — call control", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     chatStoreState.conversations = []
@@ -290,12 +290,10 @@ describe("ContactDetail — call control (P4 item 4)", () => {
     expect(document.body.textContent).toContain("Support Line")
   })
 
-  // HIGH-2: the OLD design rendered a starter (+ its dialogs) inside every
-  // `DropdownMenuContent` row — base-ui's close-on-click + portal-unmount
-  // destroyed it mid-click before an alert/manual-warning/permission flow
-  // could ever show. The fix: the picker is a pure selector; ONE starter
-  // host mounts OUTSIDE the popup, keyed by the committed selection, and
-  // dials automatically — no second click required.
+  // The picker is a pure selector; one starter host mounts outside the popup,
+  // keyed by the committed selection, and dials automatically — rendering the
+  // starter inside the dropdown row would get it unmounted mid-click by
+  // base-ui's close-on-click before any alert/permission flow could show.
   test("2+ numbers: picking a picker row commits the selection and dials that number via the shared starter with no second click", () => {
     chatStoreState.conversations = [
       {
@@ -331,10 +329,9 @@ describe("ContactDetail — call control (P4 item 4)", () => {
     expect(callStarterMock.handleClick).toHaveBeenCalledTimes(1)
   })
 
-  // HIGH-3: a number that needs permission first must never be blindly
-  // dialed (that would just bounce back with a "needsPermission" alert) —
-  // it gets the SAME `RequestCallPermissionDialog` the header uses,
-  // auto-opened so the picker click doesn't need a second click either.
+  // A number that needs permission first must never be blindly dialed (that
+  // would just bounce back with a "needsPermission" alert) — it gets the
+  // same `RequestCallPermissionDialog` the header uses, auto-opened.
   test("2+ numbers: picking a row that needs permission first opens the request-permission dialog instead of dialing", () => {
     callStarterMock.isVoipMode = true
     callStarterMock.canDialDirectly = false
@@ -410,11 +407,11 @@ describe("ContactDetail — call control (P4 item 4)", () => {
     ).toBeNull()
   })
 
-  // MEDIUM (P4 review, follow-up 1): without the picked contactInbox's OWN
-  // `inboxId`, `requestCallPermissionAction` falls back to "any WhatsApp
-  // ContactInbox" of the contact — which can send the permission request
-  // from the WRONG business number when the contact has several. The dialog
-  // must receive the picked row's `inboxId`, not its `contactInbox.id`.
+  // Without the picked contactInbox's own `inboxId`,
+  // `requestCallPermissionAction` falls back to "any WhatsApp ContactInbox"
+  // of the contact, which can send the request from the wrong business
+  // number when the contact has several. The dialog must receive the picked
+  // row's `inboxId`, not its `contactInbox.id`.
   test("1 WhatsApp number: RequestCallPermissionDialog receives the picked contactInbox's inboxId", () => {
     callStarterMock.isVoipMode = true
     callStarterMock.canDialDirectly = false
@@ -466,10 +463,9 @@ describe("ContactDetail — call control (P4 item 4)", () => {
     )
   })
 
-  // LOW (P4 review, follow-up 2): a picker selection made on a PRIOR
-  // conversation must never carry over to a newly active one — it would
-  // resolve a foreign contactInbox against the new conversation's contact,
-  // or leave a stray sr-only auto-trigger control mounted.
+  // A picker selection made on a prior conversation must never carry over to
+  // a newly active one — it would resolve a foreign contactInbox against
+  // the new conversation's contact.
   test("2+ numbers: picking a row, then switching conversations, clears the stale selection", () => {
     chatStoreState.conversations = [
       {
@@ -519,10 +515,9 @@ describe("ContactDetail — call control (P4 item 4)", () => {
     )
   })
 
-  // LOW (P4 review, follow-up 3): a failed outbound-call-mode resolve in
-  // `autoTrigger` mode has no visible control to show an error state on —
-  // it must surface feedback via toast instead of silently rendering null
-  // forever (the query never retries a 403).
+  // A failed outbound-call-mode resolve in `autoTrigger` mode has no visible
+  // control to show an error state on, so it must surface feedback via toast
+  // instead of silently rendering null forever.
   test("2+ numbers, autoTrigger: an outbound-call-mode resolve error surfaces a toast instead of silently rendering null", () => {
     chatStoreState.conversations = [
       {
@@ -556,13 +551,10 @@ describe("ContactDetail — call control (P4 item 4)", () => {
     )
   })
 
-  // Review B1: `resolveOutboundCallModeAction` no longer THROWS for a D3
-  // access denial — it returns `{ mode: "none", reason: "callAccessDenied" }`
-  // as ordinary query data. That data flows through the shared starter's own
-  // `mode: "none"` alert path (`starter.handleClick`, mocked here), never
-  // through this component's generic-failure toast — a query `isError` never
-  // becomes true for this case, so no string compare is needed (or possible)
-  // to distinguish it.
+  // `resolveOutboundCallModeAction` returns `{ mode: "none", reason:
+  // "callAccessDenied" }` as ordinary query data rather than throwing, so it
+  // flows through the shared starter's `mode: "none"` alert path, never
+  // through this component's generic-failure toast.
   test("2+ numbers, autoTrigger: a mode:none/callAccessDenied resolve routes through the shared starter, not the generic-failure toast", () => {
     chatStoreState.conversations = [
       {
@@ -594,12 +586,10 @@ describe("ContactDetail — call control (P4 item 4)", () => {
     expect(toastErrorMock).not.toHaveBeenCalled()
   })
 
-  // Review B1 (the "permanently disabled button" bug): a thrown mode-query
-  // error used to leave `starter.isResolvingMode` `true` forever (the query
-  // never retries, so `outboundCallMode` never resolves to a value) —
-  // rendering a disabled button with no way to get feedback again. The fix
-  // renders the button ENABLED once the query errors, and a click re-shows
-  // the same generic-failure toast rather than doing nothing.
+  // A mode-query error must still render the button enabled (the query never
+  // retries, so `outboundCallMode` would otherwise never resolve and the
+  // button would stay disabled forever); a click re-shows the generic-
+  // failure toast.
   test("1 WhatsApp number: a mode-query error keeps the call button visible and clickable (not stuck disabled), and clicking it shows feedback", () => {
     chatStoreState.conversations = [
       {

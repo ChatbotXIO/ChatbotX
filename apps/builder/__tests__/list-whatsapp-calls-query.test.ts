@@ -57,8 +57,8 @@ describe("listWhatsappCalls — request adapter", () => {
     })
   })
 
-  // P5 item 6 gap closure (M5) — inboxId/agentUserId flow straight through to
-  // the service, which already scopes/ignores agentUserId per D4.
+  // inboxId/agentUserId flow straight through to the service, which
+  // already scopes/ignores agentUserId.
   test("forwards inboxId and agentUserId to the service", async () => {
     await listWhatsappCalls(
       {
@@ -95,7 +95,7 @@ describe("listWhatsappCalls — request adapter", () => {
     )
   })
 
-  // M2: a provided-but-corrupted cursor must never silently fall back to
+  // A provided-but-corrupted cursor must never silently fall back to
   // page 1 (which would duplicate rows on the client) — it throws instead.
   test("throws InvalidWhatsappCallCursorError for a provided cursor that fails to decode, rather than silently starting from page 1", async () => {
     await expect(

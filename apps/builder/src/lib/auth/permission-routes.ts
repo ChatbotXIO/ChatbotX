@@ -1,11 +1,7 @@
-// Moved to the business layer so packages/business can reuse the same
-// permission rule (see the P1 VoIP ring-target eligibility filter in
-// `whatsapp-call/voip-call-service.ts`) without duplicating it. Imported
-// from the dedicated `workspace-member/permissions` subpath — NOT the
-// top-level `@chatbotx.io/business` barrel, which transitively pulls in
-// `packages/database`'s `db` client (reads `DATABASE_URL`) and breaks in a
-// client-flavored test/bundle environment. Re-exported here unchanged so
-// every existing app-layer caller of this module keeps working.
+// Imported from the `workspace-member/permissions` subpath, NOT the
+// top-level `@chatbotx.io/business` barrel — that barrel transitively pulls
+// in `packages/database`'s `db` client and breaks in a client-flavored
+// test/bundle environment. Re-exported unchanged for existing callers.
 import {
   hasContactsAccess,
   hasWorkspacePermission,

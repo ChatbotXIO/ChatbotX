@@ -77,11 +77,11 @@ describe("WhatsappRingingCallsList", () => {
     ).toHaveLength(2)
   })
 
-  // This component used to render its own backdrop. Nested inside the
-  // caller's positioned `z-50` wrapper, that viewport-wide `fixed z-40`
-  // overlay painted OVER this un-positioned card and, having no
-  // `pointer-events-none`, swallowed every Answer/Reject click in exactly the
-  // two-simultaneous-rings scenario the component exists for. The backdrop is
+  // This component must render no backdrop of its own. Nested inside the
+  // caller's positioned `z-50` wrapper, a viewport-wide `fixed z-40` overlay
+  // paints OVER this un-positioned card and, having no `pointer-events-none`,
+  // swallows every Answer/Reject click in exactly the two-simultaneous-rings
+  // scenario the component exists for. The backdrop is
   // the caller's sibling now; owning one here again would bring the bug back.
   test("renders NO backdrop of its own — the caller owns that, as its sibling", () => {
     render({ calls: [ringA, ringB], onAnswer: vi.fn(), onReject: vi.fn() })

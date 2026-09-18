@@ -19,12 +19,10 @@ import { attachRecordingAndNotify } from "./whatsapp-call-recording"
 import { resolveVoipAuthByInboxId } from "./whatsapp-voip-signaling"
 
 /**
- * `callRecordingService.uploadRecording`'s `contentType` must be one of
- * `ALLOWED_RECORDING_CONTENT_TYPES` — Meta's webhook mime type arrives as a
- * full media-type string (e.g. `audio/ogg; codecs=opus`), so this strips
- * any parameters and falls back to the browserWhisper-path default when the base type
- * isn't in the allow-list rather than throwing and losing an otherwise-good
- * recording.
+ * Meta's webhook mime type arrives as a full media-type string (e.g. audio/ogg;
+ * codecs=opus); strips parameters and falls back to the browserWhisper-path
+ * default when the base type isn't in ALLOWED_RECORDING_CONTENT_TYPES, rather
+ * than throwing and losing an otherwise-good recording.
  */
 const normalizeRecordingContentType = (mimeType: string) => {
   const base = mimeType.split(";")[0]?.trim().toLowerCase() ?? ""
@@ -34,37 +32,22 @@ const normalizeRecordingContentType = (mimeType: string) => {
 }
 
 /**
- * Meta-native call recording fetch: the
- * `call_recording_available` webhook only carries a media id + a ~5-min
- * lookaside URL, never the audio bytes — this handler downloads them
- * (preferring the media id, see `downloadCallMedia`), uploads to our object
- * storage via `callRecordingService`, then converges on the exact
- * create-message/broadcast/`emitCallRecorded` pipeline the browserWhisper
- * path uses (`attachRecordingAndNotify`) so the activity card/message logic
- * is not duplicated. Unlike the browserWhisper path, it never chains
- * transcription — the
- * Meta-native transcript arrives independently via its own
- * `call_transcription_available` webhook/job, racing on a disjoint column.
- *
- * Idempotent: `call.recordedAt` already set (redelivery of the same
- * webhook, or `attachRecording`'s CAS having already won a race) short-
- * circuits before any download. On a genuine download failure within
- * Meta's 7-day retention window this throws so BullMQ retries; when the
- * media itself is gone, it logs and returns instead.
- *
- * The row may not exist yet at the first attempt (this job can race the
- * row-creating `calls` webhook/job) — `data.whatsappCallId` is only a
- * fast-path hint, so this always re-resolves by `data.wacid` and throws
- * {@link WhatsappCallRowNotReadyError} (retryable, bounded ~1h via
- * `NATIVE_CALL_CAPTURE_RETRY_OPTIONS`) while still missing, instead of
- * silently dropping the event.
+ * The call_recording_available webhook carries only a media id and a ~5-min
+ * lookaside URL, never audio bytes — downloads them and feeds the same
+ * create-message/broadcast/emitCallRecorded pipeline browserWhisper uses.
+ * Never chains transcription; that arrives independently on its own webhook.
+ * Idempotent via call.recordedAt CAS. Missing media logs and returns; a
+ * failure within Meta's 7-day retention window throws to let BullMQ retry.
+ * The row may not exist yet (races the row-creating webhook/job) — always
+ * re-resolves by data.wacid and throws WhatsappCallRowNotReadyError
+ * (retryable, ~1h) rather than silently dropping the event.
  */
 export const handleWhatsappCallNativeRecordingFetch = async (
   data: IntegrationJobWhatsappCallNativeRecordingFetch["data"],
 ): Promise<void> => {
-  // Channel-originated: without this, the WebhookEventEmitter's
-  // isWebhookContext gate silently drops emitCallRecorded (see the same
-  // override in whatsapp-call.ts / whatsapp-call-recording.ts).
+  // Channel-originated: without this, WebhookEventEmitter's isWebhookContext
+  // gate silently drops emitCallRecorded (same override in whatsapp-call.ts /
+  // whatsapp-call-recording.ts).
   setWebhookExecutionContext({ source: "webhook" })
 
   const byId = data.whatsappCallId
@@ -78,9 +61,9 @@ export const handleWhatsappCallNativeRecordingFetch = async (
     )
     throw new WhatsappCallRowNotReadyError(data.wacid)
   }
-  // A job enqueued before its row existed carries no `workspaceId`, so the
-  // worker-level blocked-owner gate could not resolve it — apply it here now
-  // that the row (and its workspace) is known.
+  // A job enqueued before its row existed carries no workspaceId, so the
+  // worker-level blocked-owner gate couldn't resolve it - apply it here now
+  // that the row (and workspace) is known.
   if (!data.workspaceId && (await isBlockedWorkspace(call.workspaceId))) {
     logger.info(
       { whatsappCallId: call.id, workspaceId: call.workspaceId },

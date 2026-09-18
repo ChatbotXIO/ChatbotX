@@ -76,7 +76,7 @@ const baseProps = {
   agentOptions,
 }
 
-describe("CallsFilterBar — inbox and agent selects (plan item 6 / D4 gap closure)", () => {
+describe("CallsFilterBar — inbox and agent selects", () => {
   test("renders the inbox select with an 'all inboxes' option plus every inbox", () => {
     act(() => {
       root.render(<CallsFilterBar {...baseProps} showAgentFilter={false} />)
@@ -149,9 +149,8 @@ describe("CallsFilterBar — inbox and agent selects (plan item 6 / D4 gap closu
     expect(onInboxChange).toHaveBeenCalledWith(undefined)
   })
 
-  // B-L1 (Fable review): an `inboxId` that matches no known option (e.g. a
-  // stale/foreign id) used to render the base-ui Select with a blank
-  // trigger — fall back to the "all inboxes" sentinel instead.
+  // An `inboxId` matching no known option (e.g. a stale/foreign id) must
+  // fall back to the "all inboxes" sentinel instead of a blank trigger.
   test("falls back to the 'all inboxes' value when inboxId matches no known option", () => {
     act(() => {
       root.render(

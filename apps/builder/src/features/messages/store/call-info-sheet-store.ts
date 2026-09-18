@@ -3,12 +3,10 @@
 import { create } from "zustand"
 
 /**
- * Which tab the Call Information sheet opens on — set by whichever button
- * on the progressive call card (`WhatsappCallCard`) opened it (Transcript vs
- * AI Summary). The sheet itself is built in a later wave; this store exists
- * now purely so the card's buttons have somewhere to signal "open" — the
- * sheet wave should consume this store as-is rather than re-deriving its
- * shape.
+ * Which tab the Call Information sheet opens on - set by whichever button on
+ * the progressive call card (WhatsappCallCard) opened it (Transcript vs AI
+ * Summary). Exists so the card's buttons have somewhere to signal "open" before
+ * the sheet itself is built.
  */
 export type CallInfoSheetTab = "transcript" | "summary"
 
@@ -18,11 +16,11 @@ export type CallInfoSheetState = {
   whatsappCallId: string | null
   tab: CallInfoSheetTab
   /**
-   * The call's known talk length (`WhatsappCall.durationSeconds`), forwarded
-   * from the card that opened the sheet so the sheet's player shows the total
-   * at rest (`0:00 / 0:18`) without eagerly loading the audio — Ogg/Opus
-   * recordings carry no duration in their header, so the element itself
-   * reports it only after playback probes to the end.
+   * The call's known talk length (WhatsappCall.durationSeconds), forwarded from
+   * the card that opened the sheet so the sheet's player shows the total at
+   * rest (0:00 / 0:18) without eagerly loading the audio - Ogg/Opus recordings
+   * carry no duration in their header, so the element itself only reports it
+   * after playback probes to the end.
    */
   durationSeconds?: number
 }

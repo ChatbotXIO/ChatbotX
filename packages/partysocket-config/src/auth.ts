@@ -7,26 +7,24 @@ const BEARER_SCHEME = "Bearer"
 
 /**
  * Clock-skew tolerance between the realtime server and the builder, which
- * deploy separately and drift by NTP-class amounts. Kept short relative to
- * the 60s token TTL so it absorbs ordinary skew without widening the replay
- * window.
+ * deploy separately and drift by NTP-class amounts. Kept short relative to the
+ * 60s token TTL so it doesn't widen the replay window.
  */
 const CLOCK_TOLERANCE_SECONDS = 5
 
 /**
- * Wall-clock cutoff that closes the rolling-deploy compatibility window
- * below. `exp` already bounds any single purpose-less token to 60s, but a
- * stuck old-format pod could keep MINTING fresh ones indefinitely — so the
- * exception expires on wall time instead, whether or not the cleanup ticket
- * has landed. One week past the change that introduced it; see
- * `docs/realtime.md`.
+ * Wall-clock cutoff that closes the rolling-deploy compatibility window below.
+ * `exp` already bounds a purpose-less token to 60s, but a stuck old-format pod
+ * could keep minting fresh ones indefinitely — so the exception expires on wall
+ * time regardless of the cleanup ticket. One week past the change that
+ * introduced it; see `docs/realtime.md`.
  */
 export const LEGACY_PURPOSE_WINDOW_CUTOFF = new Date("2026-09-25T00:00:00.000Z")
 
 /**
- * Every purpose a realtime token can be minted for. Bound into the payload
- * and checked on verify, so a token minted for one purpose can never be
- * replayed against another — the two workspace purposes share an audience.
+ * Every purpose a realtime token can be minted for. Bound into the payload and
+ * checked on verify, so a token minted for one purpose can never be replayed
+ * against another — the two workspace purposes share an audience.
  */
 export const REALTIME_TOKEN_PURPOSE = {
   /** The existing builder -> party broadcast path (`onBeforeRequest`). */
@@ -54,9 +52,9 @@ const encodeSecret = (secret: string): Uint8Array =>
   new TextEncoder().encode(secret)
 
 /**
- * Extra claims carried in the JWT payload alongside the `aud` room binding.
- * A generic bag so this primitive stays caller-agnostic; each caller defines
- * and validates its own shape (see `memberClaimsSchema`).
+ * Extra claims carried in the JWT payload alongside the `aud` room binding. A
+ * generic bag so this primitive stays caller-agnostic; each caller defines and
+ * validates its own shape.
  */
 export type RealtimeTokenClaims = Record<string, unknown>
 
@@ -73,38 +71,24 @@ export const signRealtimeToken = async (
     .setExpirationTime(`${TOKEN_TTL_SECONDS}s`)
     .sign(encodeSecret(secret))
 
-/**
- * Extra, per-call verification options for {@link verifyRealtimeToken}.
- */
+/** Extra, per-call verification options for `verifyRealtimeToken`. */
 export interface VerifyRealtimeTokenOptions {
   /**
-   * Accepts a token with NO `purpose` claim, for the window of a rolling
-   * deploy in which `apps/realtime` ships before `apps/builder`/`apps/worker`
-   * — the only two processes that mint a `broadcast` token, and which before
-   * this branch minted them without a purpose. `upgrade.sh` restarts all
-   * three as one group, so either order is possible; without this every
-   * broadcast (ring, answer, ended) would 401 for the whole rollout.
-   *
-   * Narrow on purpose:
-   * - Only `verifyBroadcastRequest` opts in. `member-connect` and
-   *   `presence-report` never had purpose-less tokens, and both workspace
-   *   purposes share the `workspace:<id>` audience under one secret — so
-   *   opting either in would let one be replayed as the other.
-   * - Self-closing at {@link LEGACY_PURPOSE_WINDOW_CUTOFF}. A
-   *   PRESENT-but-wrong purpose is always rejected.
-   *
-   * TODO(2026-09-18): delete once no pre-`purpose` process can still be
-   * running — the cutoff is only a backstop. See `docs/realtime.md`.
+   * Accepts a token with no `purpose` claim, for the rolling-deploy window
+   * where an old pod may still mint purpose-less `broadcast` tokens. Only
+   * `verifyBroadcastRequest` opts in — `member-connect`/`presence-report`
+   * share the same audience and never had purpose-less tokens, so opting
+   * them in would allow cross-purpose replay. Self-closes at
+   * `LEGACY_PURPOSE_WINDOW_CUTOFF`.
+   * TODO(2026-09-18): delete once no pre-`purpose` process can be running.
    */
   allowLegacyMissingPurpose?: boolean
 }
 
 /**
- * Verifies signature, expiry, `aud` (the room binding every caller relies
- * on) and `purpose`, then returns the decoded payload so callers can read
- * their own extra claims. `CLOCK_TOLERANCE_SECONDS` absorbs deploy-to-deploy
- * clock drift. See {@link VerifyRealtimeTokenOptions} for the one legacy
- * exception.
+ * Verifies signature, expiry, `aud` (the room binding every caller relies on)
+ * and `purpose`, then returns the decoded payload so callers can read their own
+ * extra claims. `CLOCK_TOLERANCE_SECONDS` absorbs deploy-to-deploy clock drift.
  */
 export const verifyRealtimeToken = async (
   token: string,
@@ -124,9 +108,9 @@ export const verifyRealtimeToken = async (
   const isLegacyMissingPurpose =
     isWithinLegacyWindow && payload.purpose === undefined
   if (!isLegacyMissingPurpose && payload.purpose !== purpose) {
-    // A purpose-less token rejected *because the window has closed* is told
-    // apart from an outright bad one, so an operator reading the log knows a
-    // stuck pre-`purpose` pod — not an attacker — is the cause.
+    // A purpose-less token rejected because the window has closed is told apart
+    // from an outright bad one, so an operator reading the log knows a stuck
+    // pre-`purpose` pod — not an attacker — is the cause.
     throw new Error(
       payload.purpose === undefined && options.allowLegacyMissingPurpose
         ? "Realtime token has no purpose claim and the legacy compatibility window has closed"
@@ -145,10 +129,9 @@ export type RealtimeMemberClaims = z.infer<typeof memberClaimsSchema>
 
 /**
  * Mints a short-lived connect token bound to a member of a workspace room:
- * `aud` carries the workspace room id (verified against `room.id` on
- * connect — see `verifyMemberConnectToken`) and the payload carries the
- * verified `userId`. Only the issuer (Builder, after checking workspace
- * membership) should call this.
+ * `aud` carries the workspace room id (verified against `room.id` on connect)
+ * and the payload carries the verified `userId`. Only the issuer (Builder,
+ * after checking workspace membership) should call this.
  */
 export const signMemberConnectToken = async (
   member: { workspaceId: string; userId: string },
@@ -162,14 +145,12 @@ export const signMemberConnectToken = async (
   )
 
 /**
- * Verifies a room-connect token minted by `signMemberConnectToken`. Throws
- * on a bad/expired signature, an `aud` that doesn't match `workspaceId`
- * (cross-room replay), or a missing/malformed `userId` claim.
- *
- * Never passes `allowLegacyMissingPurpose`: this purpose is new, so no
- * purpose-less token of it has ever existed, and accepting one would let it
- * be replayed as a broadcast token — both bind the same `workspace:<id>`
- * audience under the same secret.
+ * Verifies a room-connect token minted by `signMemberConnectToken`. Throws on a
+ * bad/expired signature, an `aud` that doesn't match `workspaceId`, or a
+ * missing/malformed `userId` claim.
+ * Never passes `allowLegacyMissingPurpose`: no purpose-less token of this kind
+ * has ever existed, and accepting one would let it replay as a broadcast
+ * token — both bind the same `workspace:<id>` audience under the same secret.
  */
 export const verifyMemberConnectToken = async (
   token: string,

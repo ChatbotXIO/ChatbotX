@@ -52,7 +52,7 @@ const rawRequestBody = () =>
     template?: unknown
   }
 
-describe("WhatsApp sendMessage — BSUID recipient routing (D4)", () => {
+describe("WhatsApp sendMessage — BSUID recipient routing", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSendMessage.mockResolvedValue({
@@ -114,7 +114,7 @@ describe("WhatsApp sendMessage — BSUID recipient routing (D4)", () => {
   })
 })
 
-describe("WhatsApp sendFlowStep — BSUID recipient routing (D4)", () => {
+describe("WhatsApp sendFlowStep — BSUID recipient routing", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockApiFetch.mockResolvedValue(

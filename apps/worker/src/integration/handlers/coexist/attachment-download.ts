@@ -93,14 +93,11 @@ export type DownloadedMedia = {
 
 /**
  * Read a response body into an ArrayBuffer while enforcing
- * MAX_ATTACHMENT_BYTES. Unlike `response.arrayBuffer()`, this streams and
- * aborts as soon as the cumulative size exceeds the cap, so an origin that
- * lies about (or omits) `content-length` cannot OOM the worker by sending an
- * unbounded body.
- *
+ * MAX_ATTACHMENT_BYTES. Unlike response.arrayBuffer(), this streams and aborts
+ * as soon as the cumulative size exceeds the cap, so an origin that lies about
+ * (or omits) content-length cannot OOM the worker.
  * Exported for reuse by other Graph-media downloaders (e.g. the Meta-native
- * call recording/transcript fetchers) that need the same streaming size cap
- * against a raw lookaside URL.
+ * call recording/transcript fetchers) needing the same streaming size cap.
  */
 export const readBodyWithCap = async (
   response: Response,
@@ -153,8 +150,8 @@ export const readBodyWithCap = async (
 
 /**
  * Exported for reuse by the Meta-native call recording/transcript fetchers,
- * which download from the same kind of short-lived Bearer-authenticated
- * Graph URL as Messenger/Instagram attachments.
+ * which download from the same kind of short-lived Bearer-authenticated Graph
+ * URL as Messenger/Instagram attachments.
  */
 export const downloadBearerUrlMedia = async (props: {
   url: string
@@ -183,11 +180,10 @@ export const downloadBearerUrlMedia = async (props: {
 }
 
 /**
- * Graph Media API download by media id (retrieve the short-lived `url` via
- * `retrieveMedia`, then fetch it with the same Bearer token). Exported so
- * the Meta-native call recording/transcript fetchers
- * (`whatsapp-call-native-media.ts`) reuse this exact incoming-media
- * download path instead of re-implementing it.
+ * Graph Media API download by media id (retrieve the short-lived url via
+ * retrieveMedia, then fetch it with the same Bearer token). Exported so the
+ * Meta-native call recording/transcript fetchers reuse this exact incoming-
+ * media download path instead of re-implementing it.
  */
 export const downloadWhatsappMedia = async (
   mediaId: string,

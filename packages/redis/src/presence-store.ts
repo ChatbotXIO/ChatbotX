@@ -1,15 +1,10 @@
 import type Redis from "ioredis"
 
 /**
- * Marks every member in ARGV[3..] live in the sorted set at KEYS[1] until
- * `now + ttlMs`, refreshing the whole key's TTL, and prunes every
- * already-expired member first — all in ONE atomic script covering the
- * whole batch (one Redis round-trip regardless of how many members are in
- * it). Reports which of those members were NOT already live immediately
- * before this write (checked AFTER pruning, so an expired member counts as
- * "newly live" same as a never-seen one) — e.g.
- * `workspacePresenceService.heartbeatMany` uses this to decide which users
- * need a durable "went online" write, without a second round-trip.
+ * Atomic Lua script: marks members live until now+ttlMs, refreshes the key's
+ * TTL, prunes expired members first — one round-trip regardless of batch size.
+ * Returns members not already live before this write (checked after pruning),
+ * so heartbeatMany can flag offline->online transitions without a second call.
  */
 const PRESENCE_HEARTBEAT_MANY_LUA = `
 local presenceKey = KEYS[1]
@@ -57,29 +52,17 @@ function withPresenceCommands(client: Redis): PresenceCommandsClient {
 }
 
 /**
- * Generic ephemeral presence set: a member that "heartbeats" within a TTL
- * window counts as live, and drops out on its own once it stops — no sweeper
- * needed. Backed by a Redis sorted set scored by each member's expiry (epoch
- * ms); a read prunes the expired members in the same round-trip, so a crashed
- * or closed client never lingers. Channel-agnostic in the same factory style
- * as {@link import("./cas-store").casStoreFactory}: it knows nothing about
- * calls/agents/workspaces, only `key -> { member, expiresAt }`.
+ * Generic ephemeral presence set: a member heartbeating within a TTL window
+ * counts as live and drops out on its own — no sweeper needed. Backed by a
+ * sorted set scored by expiry, pruned on read. Channel-agnostic: knows nothing
+ * about calls/agents/workspaces.
  */
 export const presenceStoreFactory = (getRedisClient: () => Promise<Redis>) => ({
   /**
-   * Marks every id in `members` live under `key` until `now + ttlMs`, in ONE
-   * Redis round-trip (one Lua script doing the prune + every `ZADD` +
-   * `PEXPIRE`) regardless of batch size — the batched equivalent of calling
-   * a single-member heartbeat once per id, which is what makes this safe to
-   * call at "every online user in a workspace" scale (e.g. the realtime
-   * server's periodic presence report, `workspacePresenceService.
-   * heartbeatMany`). A no-op returning `{ newlyLiveMembers: [] }` when
-   * `members` is empty — no Redis call at all.
-   *
-   * Returns `newlyLiveMembers`: the subset of `members` that had NO
-   * unexpired entry immediately before this call (i.e. their heartbeat is
-   * the first live one — an offline -> online transition — rather than a
-   * renewal).
+   * Marks every id in members live under key, in one round-trip regardless of
+   * batch size. No-op returning { newlyLiveMembers: [] } when members is empty.
+   * newlyLiveMembers is the subset with no unexpired entry before this call —
+   * an offline -> online transition, not a renewal.
    */
   async heartbeatMany(
     key: string,
@@ -101,9 +84,9 @@ export const presenceStoreFactory = (getRedisClient: () => Promise<Redis>) => ({
   },
 
   /**
-   * Live members under `key` (expiry still in the future), most-recently-seen
-   * first, capped at `limit`. Self-cleaning: it drops the already-expired
-   * members before reading, so the returned set never includes a stale entry.
+   * Live members under key (expiry still in the future), most-recently-seen
+   * first, capped at limit. Self-cleaning: drops already-expired members before
+   * reading, so the result never includes a stale entry.
    */
   async liveMembers(key: string, limit: number): Promise<string[]> {
     const redis = await getRedisClient()

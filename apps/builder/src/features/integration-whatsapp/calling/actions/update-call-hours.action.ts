@@ -26,11 +26,11 @@ import {
 } from "../schemas/call-hours-schema"
 
 /**
- * Saves a number's weekly call hours on Meta. Meta replaces `call_hours`
- * wholesale and deletes any holiday schedule the request leaves out, and this
- * form does not edit holidays — so the current holidays are read from Meta at
- * save time and sent back, minus the ones already past (Meta rejects those).
- * If they cannot be read, nothing is written.
+ * Saves a number's weekly call hours on Meta. Meta replaces call_hours
+ * wholesale and deletes any holiday schedule the request leaves out, so the
+ * current holidays are read from Meta at save time and sent back, minus the
+ * ones already past (Meta rejects those). If they can't be read, nothing is
+ * written.
  */
 export const updateWhatsappCallHoursAction = callingAdminActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -89,7 +89,7 @@ export const updateWhatsappCallHoursAction = callingAdminActionClient
         )
       }
 
-      // Mirrored ONLY after Meta accepted the schedule, so the inbound gate can
+      // Mirrored only after Meta accepted the schedule, so the inbound gate can
       // never refuse a call on hours Meta never stored. If this write fails the
       // two sides disagree — Meta enforces the new schedule while the gate
       // still enforces the old one — so the operator is told to save again
@@ -108,7 +108,7 @@ export const updateWhatsappCallHoursAction = callingAdminActionClient
         throw new ChatbotXException(t("whatsapp.calls.errors.savedOnMetaOnly"))
       }
 
-      // Same cache as the calling toggles — see `invalidateCallingSettingsCache`.
+      // Same cache as the calling toggles — see invalidateCallingSettingsCache.
       await invalidateCallingSettingsCache(integrationWhatsappId)
     },
   )

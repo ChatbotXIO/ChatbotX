@@ -31,20 +31,16 @@ import type { WhatsappCallHistoryResource } from "./schema/resource"
 
 type CallKind = NonNullable<WhatsappCallHistoryResource["kind"]>
 type TerminalCallKind = "canceled" | "declined" | "missed" | "unanswered"
-/** The exact input domain `resolveWhatsappCallActivityLabelKey`'s first parameter accepts (non-`completed` outcomes). */
+/**
+ * The exact input domain resolveWhatsappCallActivityLabelKey's first parameter
+ * accepts (non-completed outcomes).
+ */
 type TerminalCallOutcome = "failed" | "rejected" | "canceled"
 
 /**
- * Item 3 fix (Fable review) — the canonical `(outcome, direction)` pair each
- * terminal kind maps to (`resolveCallKind`'s inverse for exactly these four
- * kinds, `CALL_KIND_RULES` in `packages/business/src/whatsapp-call/history-service.ts`).
- * Feeding these straight into `resolveWhatsappCallActivityLabelKey` — the
- * SAME function the in-conversation card calls
- * (`whatsapp-call-card.tsx`) — DERIVES the label instead of restating it as a
- * hand-typed literal that merely happens to match today: a wrong
- * kind→(outcome, direction) association here would also mislabel the card's
- * own matching call, instead of silently drifting into a second,
- * coincidentally-matching copy.
+ * Fed into resolveWhatsappCallActivityLabelKey — the same function the
+ * in-conversation card uses — so a wrong mapping here mislabels the card too
+ * instead of silently drifting from a duplicated hand-typed literal.
  */
 const TERMINAL_KIND_RESOLVER_INPUT: Record<
   TerminalCallKind,
@@ -60,12 +56,10 @@ const TERMINAL_KIND_RESOLVER_INPUT: Record<
 }
 
 /**
- * B-L2 fix (Fable review) — a plain literal `Record`, no `Object.fromEntries`
- * + `as` cast round-trip: each value is still DERIVED by calling
- * `resolveWhatsappCallActivityLabelKey` (never hand-typed), but TypeScript
- * now checks the object shape directly against
- * `Record<TerminalCallKind, WhatsappCallActivityLabelKey>` instead of only
- * after an unchecked cast.
+ * A plain literal Record, no Object.fromEntries + as cast round-trip: each
+ * value is still derived by calling resolveWhatsappCallActivityLabelKey, but
+ * TypeScript checks the object shape directly against Record<TerminalCallKind,
+ * WhatsappCallActivityLabelKey> instead of only after an unchecked cast.
  */
 const TERMINAL_KIND_LABEL_KEY: Record<
   TerminalCallKind,
@@ -89,14 +83,16 @@ const TERMINAL_KIND_LABEL_KEY: Record<
   ),
 }
 
-/** B-L2 fix: the exact key type `useTranslations()`'s returned `t` accepts — `KIND_BADGE_CONFIG.labelKey` below is no longer a bare `string`. */
+/**
+ * The exact key type useTranslations()'s returned t accepts, so
+ * KIND_BADGE_CONFIG.labelKey below is not a bare string.
+ */
 type MessageKey = Parameters<ReturnType<typeof useTranslations>>[0]
 
 /**
- * M3 fix — a single `Record` (no `if`-chain) driving `CallKindBadge`, keyed
- * by EXACTLY {@link CallKind} (TypeScript flags a missing/extra kind the
- * moment the domain changes). The four terminal, non-`completed` kinds'
- * `labelKey` is DERIVED via {@link TERMINAL_KIND_LABEL_KEY} (see above).
+ * A single Record (no if-chain) driving CallKindBadge, keyed by exactly
+ * CallKind so TypeScript flags a missing/extra kind. The four terminal, non-
+ * completed kinds' labelKey is derived via TERMINAL_KIND_LABEL_KEY above.
  */
 const KIND_BADGE_CONFIG: Record<
   CallKind,
@@ -163,9 +159,9 @@ function CallRow({
     context: "Whatsapp calls table",
   })
 
-  // One href for both ways into the call's conversation: the contact cell
-  // (what a reader reaches for first) and the explicit open-conversation
-  // button at the end of the row.
+  // One href for both ways into the call's conversation: the contact cell (what
+  // a reader reaches for first) and the explicit open-conversation button at
+  // the end of the row.
   const conversationHref = `/space/${workspaceId}/inbox?conversationId=${row.conversationId}`
 
   return (

@@ -72,14 +72,9 @@ export const integrationWhatsappModel = pgTable(
     coexistEnabled: boolean().notNull().default(false),
     /**
      * Local mirror of Meta's `calling.status`, written only after Meta accepts
-     * the change. Meta is still the authority for the customer-facing side, but
-     * the webhook path cannot afford a Graph round-trip per `connect`, and Meta
-     * can deliver a call from a client whose cached UI has not caught up yet —
-     * so inbound ringing is gated on this instead.
-     *
-     * NULLABLE on purpose: `null` means "never mirrored yet" and defers to
-     * Meta, so numbers that already had calling working keep working after this
-     * column ships. Only an explicit `false` refuses a call.
+     * the change — the webhook path can't afford a Graph round-trip per
+     * `connect`, so inbound ringing is gated on this instead. NULLABLE:
+     * `null` means never mirrored and defers to Meta; only `false` refuses a call.
      */
     callingEnabled: boolean(),
     /**
@@ -90,7 +85,7 @@ export const integrationWhatsappModel = pgTable(
     inboundCallsEnabled: boolean().notNull().default(true),
     /**
      * Local mirror of Meta's `calling.call_hours`, written only after Meta
-     * accepts the change. `null` means no schedule — calls are accepted at any
+     * accepts the change. `null` means no schedule — calls accepted at any
      * time. Mirrored for the same reason as `callingEnabled`: the webhook path
      * has to decide without a Graph round-trip.
      */
@@ -113,17 +108,16 @@ export const integrationWhatsappModel = pgTable(
       .default("metaNative"),
     /**
      * Meta announcement language code (e.g. `en_US`) played to the customer
-     * when `metaNative` recording/transcription is enabled — a value from
-     * Meta's supported-announcement-languages table. Null until configured;
-     * the caller falls back to `en_US`.
+     * when `metaNative` recording/transcription is enabled — from Meta's
+     * supported-announcement-languages table. Null until configured; the caller
+     * falls back to `en_US`.
      */
     callAnnouncementLanguage: text(),
     /**
-     * The `purpose` string (≤250 chars) sent on Meta's per-call
-     * `recording`/`transcription` opt-in objects. A single shared value
-     * covers both — when both are enabled, Meta plays one combined
-     * announcement built from the `recording` object's `purpose`/
-     * `announcement_language`.
+     * The `purpose` string (<=250 chars) sent on Meta's per-call
+     * `recording`/`transcription` opt-in objects. A single shared value covers
+     * both — when both are enabled, Meta plays one combined announcement built
+     * from the `recording` object's `purpose`/`announcement_language`.
      */
     callRecordingPurpose: text(),
     coexistAiReadsSyncedHistory: boolean().notNull().default(false),

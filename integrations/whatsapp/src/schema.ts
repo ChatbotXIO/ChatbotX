@@ -16,22 +16,19 @@ export type WhatsappConfig = BaseConfig & {
   verifyToken?: string
   clientSecret?: string
   /**
-   * Set by the manual-integration webhook route
-   * (`app/integrations/whatsapp/webhook/[integrationId]/route.ts`). Manual
-   * integrations may or may not carry a `clientSecret` (see
-   * `webhook-url.ts`'s `buildAuthValue` — it's populated only when the owner
-   * supplied a Meta App Secret on manual connect). Combined with an empty
-   * `clientSecret`, this selects the `legacy-unverified` signature policy —
-   * see `lib/signature-policy.ts`.
+   * Set by the manual-integration webhook route. Manual integrations may or may
+   * not carry a clientSecret (populated only when the owner supplied a Meta App
+   * Secret on manual connect). Combined with an empty clientSecret, this
+   * selects the legacy-unverified signature policy.
    */
   manualIntegration?: boolean
   /** Set by the manual-integration webhook route, for log correlation only. */
   integrationId?: string
   /**
-   * Set by the manual-integration webhook route to the loaded integration's
-   * own phone number id. When present, every parsed change whose
-   * `metadata.phone_number_id` differs is dropped before enqueue, so a
-   * manual endpoint can only ever deliver events for its own number.
+   * Set by the manual-integration webhook route to the loaded integration's own
+   * phone number id. When present, every parsed change whose
+   * metadata.phone_number_id differs is dropped before enqueue, so a manual
+   * endpoint can only ever deliver events for its own number.
    */
   phoneNumberId?: string
 }
@@ -263,8 +260,8 @@ export type LocationRequestMessage = {
 }
 
 /**
- * Meta's `voice_call` interactive — body text plus one "Call on WhatsApp"
- * button. Not modeled by whatsapp-api-js, so it's posted raw.
+ * Meta's voice_call interactive — body text plus one "Call on WhatsApp" button.
+ * Not modeled by whatsapp-api-js, so it's posted raw.
  */
 export type InteractiveVoiceCallMessage = {
   _type: "interactive_voice_call"
@@ -284,7 +281,7 @@ export type InteractiveVoiceCallMessage = {
 }
 
 /**
- * Meta's `call_permission_request` interactive — asks the customer to allow
+ * Meta's call_permission_request interactive — asks the customer to allow
  * business-initiated WhatsApp calls. Not modeled by whatsapp-api-js, so it's
  * posted raw.
  */

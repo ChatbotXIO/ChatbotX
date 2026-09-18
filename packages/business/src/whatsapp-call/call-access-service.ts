@@ -9,23 +9,9 @@ import {
 } from "./ring-targets"
 
 /**
- * P2 item 5 (plan D3 + D8): the ONE authorization check every caller that
- * starts, joins, or resumes a call runs — a single, non-throwing core check
- * (reuses `isEligibleForConversationCall`, the exact predicate ring
- * selection already applies) so the D3 rule is never duplicated. Every
- * caller (action boundary or `listResumableIncoming`'s per-candidate filter)
- * treats a denial the same way — `false` covers every reason alike (not a
- * member, ineligible member, unresolvable conversation) so a caller can
- * never distinguish "no such call/conversation" from "not your call" by
- * probing the result. Throwing a translated exception at the action
- * boundary is the app layer's job (business code does not own i18n) — see
- * `apps/builder/.../calling/actions/assert-call-access.ts`.
- *
- * Both reads are FRESH and UNCACHED (`conversationService.findByUncached`,
- * `workspaceMemberService.listPermissionsByUserIds`, never the cached
- * `findBy`/`listByWorkspaceId` ring selection uses) — a reassignment or a
- * permission change between two calls to this service must be seen
- * immediately, not after a cache TTL.
+ * Non-throwing: `false` covers every denial reason alike, so a caller can never
+ * distinguish "no such call" from "not your call". Reads are uncached — a
+ * reassignment or permission change must be seen immediately.
  */
 
 async function loadRingMember(input: {
@@ -55,13 +41,11 @@ async function loadRingConversation(input: {
 }
 
 /**
- * Loads the caller's ring-eligibility member row ONCE — the scaling entry
- * point for a caller that evaluates MANY candidates for the same
- * `workspaceId`/`userId` in one request (e.g.
- * `WhatsappVoipCallService.listResumableIncoming`), so a workspace with N
- * ringing calls does not fire N identical permission reads. Pair with
- * {@link canCallConversationForMember} to evaluate each candidate without
- * re-fetching permissions.
+ * Loads the caller's ring-eligibility member row once — the scaling entry point
+ * for a caller evaluating many candidates for the same workspaceId/userId in
+ * one request, so a workspace with N ringing calls does not fire N identical
+ * permission reads. Pair with canCallConversationForMember to evaluate each
+ * candidate without re-fetching.
  */
 export async function loadCallEligibilityMember(input: {
   workspaceId: string
@@ -71,15 +55,11 @@ export async function loadCallEligibilityMember(input: {
 }
 
 /**
- * Core, non-throwing check for a SINGLE already-loaded member — reused by
- * {@link canCallConversation} (which loads the member itself) and by any
- * caller that preloaded the member via {@link loadCallEligibilityMember} to
- * check several conversations without repeating the permissions read. A
- * missing member or an unresolvable conversation (deleted, or belonging to
- * a different workspace than `workspaceId`) both deny — a conversation that
- * cannot be resolved must never fall open, even for a `superAdmin`/`contacts`
- * member, since it means the caller cannot actually be proven to hold
- * conversation-scoped access.
+ * Core, non-throwing check for a single already-loaded member, reused by
+ * canCallConversation and any caller that preloaded the member to check several
+ * conversations without repeating the permissions read. A missing member or an
+ * unresolvable conversation both deny — an unresolvable conversation must never
+ * fall open, even for a superAdmin/contacts member.
  */
 export async function canCallConversationForMember(input: {
   member: RingMember | null
@@ -100,11 +80,9 @@ export async function canCallConversationForMember(input: {
 }
 
 /**
- * Core, non-throwing check: loads the member and the conversation fresh,
- * then delegates to {@link canCallConversationForMember}. The single entry
- * point for every caller that checks exactly one call/conversation (outbound
- * dial, outbound mode resolution, permission requests, the inbound answer
- * flow, and the inbound TURN gate).
+ * Core, non-throwing check: loads the member and conversation fresh, then
+ * delegates to canCallConversationForMember. The single entry point for every
+ * caller checking exactly one call/conversation.
  */
 export async function canCallConversation(input: {
   workspaceId: string
@@ -122,12 +100,9 @@ export async function canCallConversation(input: {
 }
 
 /**
- * P5 item 3 (plan D4): `superAdmin` or `analytics` see every call in the
- * workspace, both for the Calls page list and for the four artifact
- * actions (recording, transcript, summary, generate-summary) — no `history`/
- * `artifact` divergence on WHO the admin tier covers, only on what a
- * non-admin viewer may additionally see (their own calls vs. any call they
- * can see the conversation for).
+ * superAdmin or analytics see every call in the workspace, for both the Calls
+ * page list and the four artifact actions — no divergence on who the admin tier
+ * covers, only on what a non-admin viewer may additionally see.
  */
 export function isCallHistoryAdmin(
   permissions: RingMember["permissions"],
@@ -150,9 +125,9 @@ export function isOwnCall(
 }
 
 type CallReadScope = {
-  /** Bypasses the per-row rule entirely — `superAdmin`/`analytics`. */
+  /** Bypasses the per-row rule entirely — superAdmin/analytics. */
   allCalls: (permissions: RingMember["permissions"]) => boolean
-  /** Evaluated only when {@link allCalls} is false. */
+  /** Evaluated only when allCalls is false. */
   row: (
     member: RingMember,
     call: { answeredByUserId: string | null; initiatedByUserId: string | null },
@@ -161,16 +136,9 @@ type CallReadScope = {
 }
 
 /**
- * Plan D4's two named read scopes in one object so the Calls page list
- * (`history`) and the four single-call artifact actions (`artifact`) can
- * never drift apart on who counts as an admin. `history` restricts a
- * non-admin to calls they personally answered or placed, AND only within a
- * conversation they are eligible to call (D3) — an `onlyAssignedContacts`
- * member never sees another agent's assigned conversation in their own
- * history, even for a call they happened to answer before reassignment.
- * `artifact` keeps today's in-conversation-card behaviour for every member
- * who can see the conversation (a recording is treated as a
- * conversation attachment), regardless of who answered/placed the call.
+ * `history` restricts a non-admin to calls they personally answered or placed,
+ * within a conversation they're eligible to call. `artifact` allows any member
+ * who can see the conversation, regardless of who answered/placed it.
  */
 export const CALL_READ_SCOPES = {
   history: {
@@ -189,23 +157,10 @@ export const CALL_READ_SCOPES = {
 export type CallReadScopeName = keyof typeof CALL_READ_SCOPES
 
 /**
- * Non-throwing check for whether an ALREADY-RESOLVED `member` may read one
- * call under the given {@link CallReadScopeName} — the single entry point
- * for the artifact actions and any single-call history read.
- *
- * Takes `member: RingMember` rather than a bare `userId` because the action
- * layer already resolved it through `resolveWorkspaceAccess`, which
- * SYNTHESIZES a membership for a platform support session (AGENTS.md
- * invariant #19) with no `WorkspaceMember` row at all — re-reading the table
- * here would deny every such session. Matches what
- * `whatsappCallHistoryService.list` has always taken.
- *
- * The `allCalls` (superAdmin/analytics) branch is checked FIRST, before any
- * DB read: an admin's read needs neither row, and the caller's own read
- * re-validates the workspace anyway. Only the per-row rule needs
- * `findByIdForWorkspace` (workspace-scoped, so a foreign call denies rather
- * than 404s distinguishably) and the conversation lookup — the same
- * "unresolvable never falls open" rule as {@link canCallConversation}.
+ * Takes an already-resolved `member` rather than a userId: a platform support
+ * session synthesizes a membership with no WorkspaceMember row, and re-reading
+ * the table here would deny it. `allCalls` is checked before any DB read; an
+ * unresolvable call/conversation never falls open.
  */
 export async function canReadCall(input: {
   workspaceId: string

@@ -82,7 +82,7 @@ describe("isWithinCallHours — open by default", () => {
     ).toBe(true)
   })
 
-  // The schedule is a jsonb column, so a legacy or hand-edited row can hold
+  // The schedule is a jsonb column, so a hand-edited row can hold
   // shapes the type says are impossible. None of them may throw inside the
   // inbound gate, and none may make the number unreachable.
   test.each([

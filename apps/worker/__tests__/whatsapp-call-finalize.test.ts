@@ -1027,7 +1027,7 @@ describe("enrichCallActivityMessage", () => {
     })
   })
 
-  test("B2: merges ONLY the passed overrides via the atomic jsonb merge — never a full-column overwrite", async () => {
+  test("merges ONLY the passed overrides via the atomic jsonb merge — never a full-column overwrite", async () => {
     mocks.mergeContentAttributesBySourceId.mockResolvedValue({
       id: "msg-1",
       contentAttributes: {
@@ -1062,7 +1062,7 @@ describe("enrichCallActivityMessage", () => {
     })
   })
 
-  test("B2: two concurrent enrichments racing on disjoint flags (recording + transcript) both converge to true", async () => {
+  test("two concurrent enrichments racing on disjoint flags (recording + transcript) both converge to true", async () => {
     // Each writer's atomic merge is independent of the other's — simulate
     // by having the DB-side merge for EACH call already reflect BOTH flags
     // (as a real `jsonb ||` merge would once both UPDATEs have applied),
@@ -1125,7 +1125,7 @@ describe("enrichCallActivityMessage", () => {
   // Real timers — the bounded wait totals ~3.5s, which is cheap enough
   // to run for real rather than fighting fake-timer/monotonic-clock
   // interactions elsewhere in this suite (see whatsapp-call-recording.test.ts).
-  test("B4: throws WhatsappCallEnrichmentPendingError (instead of silently returning) when the finalize message never lands within the bounded wait", async () => {
+  test("throws WhatsappCallEnrichmentPendingError (instead of silently returning) when the finalize message never lands within the bounded wait", async () => {
     mocks.findBySourceId.mockResolvedValue(null)
 
     await expect(
@@ -1139,7 +1139,7 @@ describe("enrichCallActivityMessage", () => {
     expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
   }, 10_000)
 
-  test("B4: converges once the finalize message shows up mid-wait", async () => {
+  test("converges once the finalize message shows up mid-wait", async () => {
     mocks.findBySourceId.mockResolvedValueOnce(null).mockResolvedValueOnce({
       id: "msg-1",
       contentAttributes: {

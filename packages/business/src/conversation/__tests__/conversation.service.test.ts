@@ -405,9 +405,7 @@ describe("ConversationService.updateAssignment", () => {
     })
   })
 
-  // Pins the P3 `publishAssignmentChanges` extraction's NEW contract — this
-  // is not a characterization of pre-existing behavior, it is the changed
-  // behavior the extraction introduces: `updateAssignment` now publishes
+  // `updateAssignment` publishes
   // from the UPDATE's RETURNED rows rather than the caller's `conversations`
   // input (the behavior `claimForCallAgent` requires, since it has no other
   // source of the true row), in the fixed side-effect ORDER (invalidate ->
@@ -518,7 +516,7 @@ describe("ConversationService.updateAssignment", () => {
     ])
   })
 
-  // M1(a): the guarded UPDATE matching no rows (e.g. `updateAssignment`
+  // The guarded UPDATE matching no rows (e.g. `updateAssignment`
   // called with ids that no longer exist/match the workspace) must publish
   // NOTHING — no cache invalidation, no realtime broadcast with an empty
   // `conversationIds: []`, no notification, no domain/analytics event. This
@@ -547,7 +545,7 @@ describe("ConversationService.updateAssignment", () => {
     expect(emit).not.toHaveBeenCalled()
   })
 
-  // L5: the unassign branch (`assignedUserId`/`assignedInboxTeamId` both
+  // The unassign branch (`assignedUserId`/`assignedInboxTeamId` both
   // null) had zero coverage — pin it alongside the assign branch above.
   test("publishes emitConversationUnassigned (not emitConversationAssigned) when unassigning", async () => {
     const { emitConversationUnassigned } = await import("@chatbotx.io/events")

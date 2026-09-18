@@ -14,8 +14,10 @@ import { env } from "@/env"
 import { callingActionClient } from "@/lib/safe-action"
 import { CALL_ACCESS_DENIED_CODE } from "./assert-call-access"
 
-/** Matches `assertCallAccessOrThrow`'s HTTP status for the same denial
- * reason — see `CALL_ACCESS_DENIED_CODE`'s doc comment. */
+/**
+ * Matches assertCallAccessOrThrow's HTTP status for the same denial reason -
+ * see CALL_ACCESS_DENIED_CODE's doc comment.
+ */
 const CALL_ACCESS_DENIED_HTTP_STATUS = 403
 
 const voipTurnCredentialsSchema = z.object({
@@ -23,16 +25,11 @@ const voipTurnCredentialsSchema = z.object({
 })
 
 /**
- * Short-lived STUN/TURN ICE servers for the browser's `RTCPeerConnection`,
- * scoped to the caller AND this specific call. Ring-all: while the call is
- * still UNCLAIMED any rung agent may mint ICE to prepare their answer (the
- * winner is decided later by `claimForAnswer`); once someone has claimed it,
- * only that agent may — a lost racer is refused. The coturn username embeds
- * both ids for log attribution — coturn checks only the HMAC and the expiry,
- * so a leaked credential is usable until it expires. Falls back to
- * STUN-only when no TURN secret is configured (local dev) — good enough on
- * NAT-friendly networks, never sufficient in production (see
- * `docs/whatsapp-calling-voip.md` "Required infrastructure").
+ * Short-lived STUN/TURN ICE credentials, scoped to caller + call. Ring-all:
+ * any rung agent may mint ICE while unclaimed; once claimed only the winner
+ * may (a lost racer is refused). coturn checks only HMAC + expiry, so a
+ * leaked credential works until it expires. Falls back to STUN-only when no
+ * TURN secret is configured (local dev only).
  */
 export const getWhatsappVoipTurnCredentialsAction = callingActionClient
   .bindArgsSchemas([zodBigintAsString()])
@@ -59,17 +56,10 @@ export const getWhatsappVoipTurnCredentialsAction = callingActionClient
       )
     }
 
-    // P2 item 5 (plan D3): reservation alone does not mean an agent is still
-    // allowed to handle this conversation — `callingActionClient`'s
-    // contacts-access gate is workspace-wide, not conversation-scoped, and an
-    // onlyAssignedContacts agent can be reassigned away (or lose eligibility)
-    // AFTER claiming the call. Always re-check, for both the still-unclaimed
-    // (ring-all) case and the already-claimed case — a claimed-but-no-longer-
-    // eligible agent must be refused here too, not just at claim time. Uses
-    // the dedicated `voipCallAccessDenied` message (M1) rather than reusing
-    // `voipNotReservedAgent` — a D3 eligibility denial is a different reason
-    // than "someone else already claimed this call", and the two must not be
-    // conflated in the UI.
+    // Reservation alone isn't enough: the contacts-access gate is
+    // workspace-wide, and an onlyAssignedContacts agent can lose eligibility
+    // after claiming. Re-check always; use voipCallAccessDenied (not
+    // voipNotReservedAgent) since it's a distinct denial reason.
     if (
       !(await canCallConversation({
         workspaceId,

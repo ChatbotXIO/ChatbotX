@@ -1,22 +1,16 @@
 /**
- * coturn `use-auth-secret` time-limited REST credentials — channel-agnostic
- * TURN infrastructure shared by every WebRTC calling transport (today: the
- * WhatsApp VoIP browser path via {@link voipTurnCredentialService}). Kept
- * separate from any one transport's service so removing a transport never
- * removes the shared minter.
- *
- * Web Crypto only (`globalThis.crypto`), never `node:crypto` — this module
- * must stay reachable from an Edge Runtime bundle (see
- * `__tests__/edge-safe-import-graph.test.ts`), the same discipline as
- * `@chatbotx.io/encryption`'s `encryptUtils`.
+ * coturn use-auth-secret time-limited REST credentials, channel-agnostic so
+ * it's shared across WebRTC transports. Web Crypto only (globalThis.crypto),
+ * never node:crypto — must stay reachable from an Edge Runtime bundle, same
+ * as @chatbotx.io/encryption's encryptUtils.
  */
 
 export const TURN_CREDENTIAL_TTL_SECONDS = 60 * 60
 
 /**
- * Mints a coturn REST credential: username is `<unix-expiry>:<userId>`,
- * password is base64(HMAC-SHA1(secret, username)) — the documented coturn
- * REST API scheme.
+ * Mints a coturn REST credential: username is <unix-expiry>:<userId>, password
+ * is base64(HMAC-SHA1(secret, username)) — the documented coturn REST API
+ * scheme.
  */
 export const mintTurnCredential = async (input: {
   secret: string

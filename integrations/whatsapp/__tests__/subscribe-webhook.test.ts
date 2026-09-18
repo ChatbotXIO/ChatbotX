@@ -134,7 +134,7 @@ describe("subscribeWebhook", () => {
   // H8 — override_callback_uri inverted-logic tests
   // -------------------------------------------------------------------------
 
-  it("H8(1): falls back to env override_callback_uri when overrideCallbackUrl=false and env set", async () => {
+  it("falls back to env override_callback_uri when overrideCallbackUrl=false and env set", async () => {
     // Deployment-level override (WHATSAPP_OVERRIDE_CALLBACK_URI) must apply on
     // the standard connect path where the caller does not pass
     // overrideCallbackUrl — this is how self-hosted/dev/staging route Meta
@@ -160,7 +160,7 @@ describe("subscribeWebhook", () => {
     }
   })
 
-  it("H8(2): uses metadata.webhookUrl when overrideCallbackUrl=true", async () => {
+  it("uses metadata.webhookUrl when overrideCallbackUrl=true", async () => {
     // When the caller explicitly requests an override, the URL comes from
     // auth.metadata.webhookUrl — not from the env var.
     const prev = process.env.WHATSAPP_OVERRIDE_CALLBACK_URI

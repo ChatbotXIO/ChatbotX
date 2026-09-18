@@ -13,16 +13,10 @@ import { useWhatsappVoipCallStore } from "../integration-whatsapp/calling/voip/v
 import type { MessageResourceWithRelations } from "../messages/schema/resource"
 import { useChatStore } from "./store/chat-store-provider"
 
-/** Cap for the bubble-to-top dedupe set below — see its comment. */
+/** Cap for the bubble-to-top dedupe set below. */
 const SEEN_WHATSAPP_CALL_IDS_CAPACITY = 500
 
-/**
- * The chat subscriber: registers exactly the chat events this component
- * handled while it owned the workspace socket, now against the single
- * socket owned by `WorkspaceRealtimeProvider`
- * (`app/space/[workspaceId]/layout.tsx`). Logic moved verbatim, no event
- * added or removed.
- */
+/** Registers this component's chat event handlers against the shared workspace realtime socket. */
 export function ChatRealtime() {
   const workspaceId = useWorkspaceId()
   const queryClient = useQueryClient()
@@ -48,43 +42,15 @@ export function ChatRealtime() {
   } = useChatStore((state) => state)
   const conversationIdParam = useConversationIdParam()
 
-  // Bubble-to-top on a newly ringing call — a pure zustand subscription to
-  // the voip store's `ringingCalls` basket, independent of which event (a
-  // live `whatsappCallTransportIncoming` broadcast, or the resume-on-mount
-  // fetch in `useWhatsappVoipCall`) put the entry there. Bubbles once per
-  // `whatsappCallId` the FIRST time this component observes it in the
-  // basket (including entries already present at mount — e.g. a resumed
-  // ring that arrived before the inbox was opened), never again for the
-  // same id.
-  //
-  // `seenWhatsappCallIdsRef` is a ref that OUTLIVES a single effect
-  // invocation on purpose: under React Strict Mode (dev only), this
-  // effect's setup/cleanup/setup runs twice on mount. A set declared
-  // INSIDE the effect body would be recreated empty on the second
-  // synthetic setup, re-bubbling every entry already bubbled by the first
-  // (torn-down) setup. Keeping the set in a ref means both synthetic
-  // setups share the same "already bubbled" memory, so nothing is ever
-  // bubbled twice.
-  //
-  // Bounded (not a plain `Set`): this component stays mounted for the
-  // entire inbox session, and every ringing call — answered, missed,
-  // resumed — adds one more id that would otherwise never be forgotten.
-  // `SEEN_WHATSAPP_CALL_IDS_CAPACITY` is far larger than any realistic
-  // number of calls ringing within one session, so eviction only ever
-  // discards ids old enough that a duplicate bubble for them is moot.
+  // Dedupes newly-ringing calls so each bubbles the conversation to top only
+  // once. Held in a ref (not created inside the effect) so Strict Mode's
+  // double setup/cleanup doesn't reset it and re-bubble already-seen entries;
+  // bounded because this component stays mounted for the whole inbox session.
   const seenWhatsappCallIdsRef = useRef(
     createBoundedSeenSet<string>(SEEN_WHATSAPP_CALL_IDS_CAPACITY),
   )
-  // `bubbleRingingConversationRef` holds the LATEST bubble callback,
-  // refreshed by a small effect below rather than an Effect Event
-  // (`useEffectEvent`): the zustand `subscribe` callback the ring-tracking
-  // effect registers fires from the STORE, not from React's effect commit
-  // phase — an arbitrary `setState` on `useWhatsappVoipCallStore` can
-  // happen at any time, including outside any React render/effect. React's
-  // own guidance restricts Effect Events to calls made synchronously from
-  // inside an Effect; a store subscription callback is exactly the kind of
-  // "called from outside an Effect" site that guidance warns about, so a
-  // ref updated by its own effect is used instead.
+  // Held in a ref rather than useEffectEvent: the zustand subscribe callback
+  // fires from the store, not React's effect commit phase.
   const bubbleRingingConversationRef = useRef((conversationId: string) =>
     bubbleConversationToTop(workspaceId, conversationId).catch(() => undefined),
   )
@@ -114,30 +80,15 @@ export function ChatRealtime() {
     return useWhatsappVoipCallStore.subscribe((state) => {
       bubbleNewEntries(state.ringingCalls)
     })
-    // The ref above always forwards to the latest `workspaceId`/
-    // `bubbleConversationToTop`, so neither needs to be a dependency of
-    // THIS effect. It only ever needs to run once per mount, driven by the
-    // module-level voip store rather than any prop.
+    // Runs once per mount; the ref above always forwards to the latest values.
   }, [])
 
-  // The other direction of the same cross-boundary bridge: `WhatsappCallPanel`
-  // (mounted OUTSIDE `ChatStoreProvider` — see `workspace-realtime-shell.tsx`)
-  // cannot call `chatStore.openConversation` directly, so it sets
-  // `pendingConversationOpen` on the module-level voip store instead — its
-  // "Go to conversation" control, and the D6 navigate-on-answer flow while
-  // already on the inbox. This component (rendered INSIDE
-  // `ChatStoreProvider`) is the one place that can bridge it into a real
-  // selection, syncing the `conversationId` URL param the same way
-  // `ConversationList` does when the agent picks a row, so the panel never
-  // needs a router of its own for the on-inbox case. See `openPendingRef`
-  // below for why the callback is held in a ref rather than a dependency.
-  // MEDIUM 6: the URL param is synced ONLY after `openConversation` actually
-  // succeeds — syncing it eagerly (as this used to) raced a concurrent
-  // `initActiveConversationFromUrl` bootstrap: `openConversation` used to
-  // silently no-op while one was in flight, leaving the URL pointing at a
-  // conversation the store never actually selected. `openConversation` now
-  // waits that bootstrap out instead of no-oping (see `chat-store.ts`), and
-  // resolves `true`/`false` so this can tell.
+  // WhatsappCallPanel (mounted outside ChatStoreProvider) can't call
+  // chatStore.openConversation directly, so it sets pendingConversationOpen on
+  // the module-level voip store; this component bridges that into a real
+  // selection and syncs the conversationId URL param. The param is synced only
+  // after openConversation resolves true, since syncing eagerly can race a
+  // concurrent initActiveConversationFromUrl bootstrap.
   const openPendingRef = useRef((conversationId: string) => {
     openConversation(workspaceId, conversationId)
       .then((succeeded) => {
@@ -160,13 +111,9 @@ export function ChatRealtime() {
   }, [workspaceId, openConversation, conversationIdParam])
 
   useEffect(() => {
-    // `consumePendingConversationOpen` atomically reads-and-clears (so a
-    // duplicate notification, e.g. Strict Mode's synthetic double
-    // setup/subscribe, can never consume the same request twice) and drops
-    // — returns `null` for — a request older than
-    // `PENDING_CONVERSATION_OPEN_MAX_AGE_MS`, so this can never reopen a
-    // stale request left over from a transient routing mismatch (see the
-    // store's doc comment on `pendingConversationOpen`).
+    // consumePendingConversationOpen atomically reads-and-clears (avoids a
+    // duplicate consume under Strict Mode's double setup) and drops requests
+    // older than PENDING_CONVERSATION_OPEN_MAX_AGE_MS.
     const consumeIfPending = () => {
       const conversationId = useWhatsappVoipCallStore
         .getState()
@@ -185,20 +132,18 @@ export function ChatRealtime() {
       }
     })
     // Same reasoning as the ringing-basket effect above: the ref always
-    // forwards to the latest workspaceId/openConversation/conversationIdParam,
-    // so this only ever needs to run once per mount.
+    // forwards to the latest values, so this only needs to run once per mount.
   }, [])
 
   const handlers: RealtimeHandlerMap = {
     messageCreated: (event) => {
       const message = event.data as MessageResourceWithRelations
       handleNewMessage(message)
-      // A customer's call-permission reply (accept/reject) changes what
-      // the VoIP call button should do, but `useOutboundCallMode` caches
-      // its resolution per conversation (staleTime) and would otherwise
-      // keep showing the pre-accept "request permission" affordance until
-      // a remount. Invalidate that query so the button reflects the new
-      // grant on the next render, live.
+      // A customer's call-permission reply changes what the VoIP call button
+      // should do, but useOutboundCallMode caches its resolution per
+      // conversation and would otherwise keep showing the pre-accept affordance
+      // until a remount. Invalidate the query so the button reflects the new
+      // grant live.
       if (getWhatsappCallPermissionReply(message.contentAttributes)) {
         invalidateOutboundCallMode(message.conversationId)
       }

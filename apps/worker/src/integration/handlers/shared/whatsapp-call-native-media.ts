@@ -9,13 +9,11 @@ import {
 } from "../coexist/attachment-download"
 
 /**
- * Thrown when neither the Graph media-id path nor the webhook's lookaside
- * URL can find the media: Meta's 7-day retention window has passed, or the
- * webhook is a stale redelivery for a call whose media has since been
- * purged. Distinct from `AttachmentTooLargeError` (a permanent-but-present
- * condition) and from any other error (transient — the caller retries).
- * Callers log and return rather than retry — re-fetching the same expired
- * id/URL can never succeed.
+ * Thrown when neither the Graph media-id path nor the webhook's lookaside URL
+ * can find the media — Meta's 7-day retention has passed, or the webhook is a
+ * stale redelivery. Distinct from AttachmentTooLargeError (permanent-but-
+ * present) and any other error (transient, retried). Callers log and return
+ * rather than retry — an expired id/URL can never succeed.
  */
 export class WhatsappCallMediaGoneError extends Error {
   constructor(message: string) {
@@ -26,11 +24,9 @@ export class WhatsappCallMediaGoneError extends Error {
 
 /**
  * Thrown by the native recording/transcript fetch handlers when the
- * `WhatsappCall` row can't yet be resolved by `wacid` — the native-media
- * webhook can race the row-creating `calls` webhook/job on the same
- * delivery. Retryable: BullMQ's bounded backoff (see
- * `NATIVE_CALL_CAPTURE_RETRY_OPTIONS` in `@chatbotx.io/worker-config`,
- * ~1h total) gives the row time to land before giving up.
+ * WhatsappCall row can't yet be resolved by wacid — the native-media webhook
+ * can race the row-creating calls webhook. Retryable via
+ * NATIVE_CALL_CAPTURE_RETRY_OPTIONS (~1h total) to give the row time to land.
  */
 export class WhatsappCallRowNotReadyError extends Error {
   constructor(wacid: string) {
@@ -42,10 +38,9 @@ export class WhatsappCallRowNotReadyError extends Error {
 const LOOKASIDE_FETCH_TIMEOUT_MS = 30_000
 
 /**
- * Hosts the webhook-supplied media download URL is allowed to point at.
- * Meta serves call recordings/transcripts from `lookaside.fbsbx.com`
- * (documented on the call-recording/transcription pages) and the Graph host
- * when a fresh URL is minted through the Media API.
+ * Hosts the webhook-supplied media download URL is allowed to point at — Meta
+ * serves recordings/transcripts from lookaside.fbsbx.com and the Graph host
+ * when a fresh URL is minted via the Media API.
  */
 const ALLOWED_MEDIA_HOSTS = new Set([
   "lookaside.fbsbx.com",
@@ -53,13 +48,9 @@ const ALLOWED_MEDIA_HOSTS = new Set([
 ])
 
 /**
- * The media download URL arrives inside a webhook body, and a manual
- * integration configured without an app secret accepts that body unverified
- * (`resolveSignaturePolicy`'s `legacy-unverified` path). Since the download
- * below presents the integration's WhatsApp access token as a bearer header,
- * an unvalidated URL would let a forged webhook redirect that token to an
- * attacker-controlled host. So the URL must be HTTPS and sit on a Meta host
- * (or a subdomain of one) before the token is ever attached.
+ * An unverified webhook body carries this URL, and the download attaches the
+ * integration's access token as a bearer header — so a forged webhook could
+ * redirect the token to an attacker host unless the URL is HTTPS on a Meta host.
  */
 const isTrustedMediaUrl = (url: string): boolean => {
   let parsed: URL
@@ -80,25 +71,19 @@ const isTrustedMediaUrl = (url: string): boolean => {
   return false
 }
 
-/** Mirrors `integrations/whatsapp/src/constants.ts` (not re-exported
- * publicly by `@chatbotx.io/integration-whatsapp`) — duplicated here only
- * for the status-aware authoritative media-id lookup below; the actual
- * media bytes still come from the shared `downloadWhatsappMedia`. */
+/**
+ * Mirrors integrations/whatsapp/src/constants.ts (not re-exported publicly) —
+ * duplicated here only for the status-aware media-id lookup below; the actual
+ * bytes still come from the shared downloadWhatsappMedia.
+ */
 const GRAPH_API_URL = "https://graph.facebook.com"
 const GRAPH_API_VERSION = "v23.0"
 const MEDIA_ID_CLASSIFY_TIMEOUT_MS = 15_000
 
 /**
- * Status-aware Graph Media API lookup (`GET /{media-id}`) used ONLY to
- * classify an id-path download failure as permanently gone vs transient.
- * Unlike the shared `downloadWhatsappMedia` (which resolves via
- * `whatsapp-api-js`'s `getBody`, always calling `response.json`
- * regardless of `response.ok` — so it discards the real HTTP status
- * entirely), this preserves the status so a genuine 404/410 from the
- * AUTHORITATIVE id lookup can be told apart from a transient 5xx/timeout/
- * network failure. See {@link downloadCallMedia}. A failure of this
- * classification call itself (network/timeout) is inconclusive and must
- * never be treated as proof the media is gone.
+ * Classifies an id-path download failure as permanently gone (404/410) vs
+ * transient, unlike the shared downloadWhatsappMedia which discards the real
+ * HTTP status. A failure of this call itself is inconclusive, never gone.
  */
 const isMediaIdGone = async (props: {
   mediaId: string
@@ -140,13 +125,11 @@ const fetchLookasideUrl = async (props: {
     signal: AbortSignal.timeout(LOOKASIDE_FETCH_TIMEOUT_MS),
   })
   if (response.status === 404 || response.status === 410) {
-    // NOT authoritative on its own: the webhook's lookaside URL is only
-    // valid for ~5 minutes, so a 404/410 here is frequently just staleness
-    // on a retried job, never a reliable "gone" signal by itself. Only the
-    // id-path's Graph-authoritative lookup (`isMediaIdGone`, consulted in
-    // `downloadCallMedia` BEFORE this fallback is even reached) may raise
-    // `WhatsappCallMediaGoneError` — this rethrows a plain Error instead so
-    // BullMQ retries.
+    // Not authoritative on its own: the webhook's lookaside URL is only valid
+    // for ~5 minutes, so a 404/410 here is often just staleness on a retried
+    // job, not a reliable gone signal. Only the id-path's Graph-authoritative
+    // lookup may raise WhatsappCallMediaGoneError — this rethrows a plain Error
+    // instead so BullMQ retries.
     throw new Error(
       `[whatsapp-call-native-media] ${props.label} lookaside URL expired or not found (${response.status}); not authoritative for permanent-gone`,
     )
@@ -165,16 +148,9 @@ const fetchLookasideUrl = async (props: {
 }
 
 /**
- * Downloads Meta-native call media (recording audio or transcript document).
- * Prefers the Graph Media API by id, reusing the exact
- * `retrieveMedia` + capped-fetch path the incoming-media pipeline uses
- * (`downloadWhatsappMedia`); falls back to the webhook's short-lived
- * (~5-min) lookaside URL only when the media-id path fails for a reason
- * other than a permanent size violation (an oversized body fails identically
- * on retry, so it is rethrown immediately rather than re-attempted via the
- * URL). A 404/410 from the fallback means the media is genuinely gone —
- * surfaced as {@link WhatsappCallMediaGoneError}. Never logs the downloaded
- * bytes themselves, only metadata.
+ * Downloads Meta-native call media by id, falling back to the webhook's
+ * short-lived (~5-min) lookaside URL unless the id-path failed on a permanent
+ * size violation (rethrown immediately, never retried via the URL).
  */
 export const downloadCallMedia = async (props: {
   mediaId: string
@@ -194,11 +170,10 @@ export const downloadCallMedia = async (props: {
       throw err
     }
 
-    // Classify via the AUTHORITATIVE Graph media lookup BEFORE ever
-    // consulting the webhook's short-lived lookaside URL — see
-    // `isMediaIdGone`'s doc comment for why the shared `downloadWhatsappMedia`
-    // failure alone can't distinguish "genuinely not found" from a
-    // transient 5xx/timeout/network blip.
+    // Classify via the authoritative Graph media lookup before consulting the
+    // webhook's short-lived lookaside URL — see isMediaIdGone's doc comment for
+    // why the shared download failure alone can't distinguish genuinely-not-
+    // found from a transient blip.
     if (
       await isMediaIdGone({
         mediaId: props.mediaId,

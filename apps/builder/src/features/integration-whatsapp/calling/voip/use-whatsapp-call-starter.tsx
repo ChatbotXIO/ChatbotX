@@ -21,10 +21,11 @@ import type {
 import type { StartOutboundOutcome } from "./use-whatsapp-voip-call"
 import { useOptionalWhatsappVoipCallContext } from "./whatsapp-voip-call-context"
 
-/** Every non-"dialing"/"occupied"/"cancelled" outcome maps 1:1 to a
- * `whatsapp.calls.outbound.*` key — see `initiate-outbound-voip-call.action.ts`
- * and `use-whatsapp-voip-call.ts`. `"occupied"`/`"cancelled"` are purely
- * local, silent no-ops, so they are intentionally absent here. */
+/**
+ * Every non-dialing/occupied/cancelled outcome maps 1:1 to a
+ * whatsapp.calls.outbound.* key. occupied/cancelled are purely local silent no-
+ * ops, so they're intentionally absent here.
+ */
 export const OUTCOME_MESSAGE_KEYS: Partial<
   Record<StartOutboundOutcome, string>
 > = {
@@ -43,23 +44,27 @@ export const OUTCOME_MESSAGE_KEYS: Partial<
   callAccessDenied: "whatsapp.calls.outbound.callAccessDenied",
 }
 
-/** Maps a `mode: "none"` reason to the `whatsapp.calls.capability.*`
- * sentence shown in the capability `AlertDialog`. */
+/**
+ * Maps a mode: none reason to the whatsapp.calls.capability.* sentence shown in
+ * the capability AlertDialog.
+ */
 export const NONE_REASON_MESSAGE_KEYS: Record<NoneCallModeReason, string> = {
   callingNotEnabled: "whatsapp.calls.capability.enableCalling",
   webhookNotSubscribed: "whatsapp.calls.capability.reconnectChannel",
   tokenInvalid: "whatsapp.calls.capability.reconnectChannel",
   ineligibleNumber: "whatsapp.calls.outbound.ineligibleNumber",
   notWhatsappConversation: "whatsapp.calls.errors.notWhatsappConversation",
-  // Reuses the same key `OUTCOME_MESSAGE_KEYS.callAccessDenied` maps a
-  // failed dial attempt to — one D3-denial sentence regardless of whether
-  // the denial surfaced from a mode resolve or an actual dial attempt.
+  // Reuses the same key a failed dial attempt maps to — one denial sentence
+  // regardless of whether it surfaced from a mode resolve or an actual dial
+  // attempt.
   callAccessDenied: "whatsapp.calls.outbound.callAccessDenied",
 }
 
-/** Which category of capability `AlertDialog` is showing — drives the
- * dialog's title, so a mic-permission or dial-failure alert is not
- * mislabelled as a calling-eligibility one. */
+/**
+ * Which category of capability AlertDialog is showing — drives the dialog's
+ * title so a mic-permission or dial-failure alert isn't mislabelled as a
+ * calling-eligibility one.
+ */
 export type CapabilityAlertCategory =
   | "eligibility"
   | "micPermission"
@@ -84,47 +89,42 @@ export type UseWhatsappCallStarterParams = {
   contactName?: string | null
   contactInboxId?: string
   /**
-   * The async capability resolution — `undefined` while
-   * `resolveOutboundCallModeAction` is still pending. Never used to gate
-   * whether a call trigger renders (the caller renders it synchronously);
-   * only used to decide what a click does. While still `undefined`,
-   * `isResolvingMode` is `true` so every caller can render its trigger
-   * disabled — a click during this window used to fall through to a direct
-   * dial, while the exact same click a moment later (once resolved to
-   * no-permission) opened the permission dialog, which read as "random".
+   * Undefined while resolveOutboundCallModeAction is pending. Only decides
+   * what a click does, not whether the trigger renders — callers disable the
+   * trigger via isResolvingMode instead to avoid a premature direct dial.
    */
   outboundCallMode: ResolveOutboundCallModeResult | undefined
 }
 
 export type UseWhatsappCallStarterResult = {
-  /** `null` when calling is disabled for this workspace/member (the
-   * provider is not mounted) — every caller must render no call control at
-   * all in that case rather than throwing. */
+  /**
+   * null when calling is disabled for this workspace/member — every caller must
+   * render no call control at all in that case rather than throwing.
+   */
   voipCallContext: ReturnType<typeof useOptionalWhatsappVoipCallContext>
   isResolvingMode: boolean
   isVoipMode: boolean
   canDialDirectly: boolean
   isDialing: boolean
-  /** Starts (or opens the permission-request flow / capability alert for)
-   * an outbound call — the single entry point every call trigger (header
-   * button, call-back, contact panel) wires to its click handler. */
+  /**
+   * Starts (or opens the permission-request flow / capability alert for) an
+   * outbound call — the single entry point every call trigger wires to its
+   * click handler.
+   */
   handleClick: () => Promise<void>
-  /** The two `AlertDialog`s (capability alert, manual-integration warning)
-   * every call trigger renders alongside its own button — kept as one
-   * shared render so their copy/behavior can never drift between callers.
+  /**
+   * The two AlertDialogs (capability alert, manual-integration warning) every
+   * call trigger renders alongside its own button — kept as one shared render
+   * so their copy/behavior can't drift between callers.
    */
   dialogs: ReactNode
 }
 
 /**
- * The starter — everything a WhatsApp outbound-call trigger needs besides
- * its own button markup: capability/permission mode derivation, the manual-
- * integration warning gate, the capability `AlertDialog`s, and
- * `startOutbound` orchestration (dial mutex, outcome → alert mapping).
- * Extracted from `WhatsappVoipCallButton` (P4 item 1) so the header call
- * button, a call-back control on `WhatsappCallCard`, and the contact-panel
- * dial button share exactly one implementation instead of three drifting
- * copies.
+ * The starter — everything a WhatsApp outbound-call trigger needs besides its
+ * own button markup. Extracted so the header call button, a call-back control,
+ * and the contact-panel dial button share exactly one implementation instead of
+ * three drifting copies.
  */
 export function useWhatsappCallStarter({
   conversationId,
@@ -134,33 +134,20 @@ export function useWhatsappCallStarter({
 }: UseWhatsappCallStarterParams): UseWhatsappCallStarterResult {
   const t = useTranslations()
   const [isDialing, setIsDialing] = useState(false)
-  // Synchronous mutex for `dial()`: `isDialing` (React state) only reflects
-  // reality after a re-render, so two activations dispatched in the same
-  // tick (e.g. two rapid clicks on "Call anyway", or a double-click on the
-  // direct-dial button) can both read `isDialing === false` and both call
-  // `startOutbound`. This ref is set synchronously, before the first
-  // `await`, so the second activation's `dial()` call is a guaranteed no-op.
+  // Synchronous mutex for dial(): isDialing (React state) only reflects reality
+  // after a re-render, so two activations in the same tick could both read
+  // false and both call startOutbound. This ref is set synchronously before the
+  // first await, so the second call is a guaranteed no-op.
   const isDialingRef = useRef(false)
   const [alertMessageKey, setAlertMessageKey] = useState<string | null>(null)
   const [alertCategory, setAlertCategory] =
     useState<CapabilityAlertCategory>("eligibility")
-  // + calls-subscription notice: for EVERY manually-connected
-  // integration ChatbotX cannot confirm the customer's own Meta app is
-  // subscribed to the `calls` webhook field (`manualCallsSubscriptionUnverified`),
-  // and a manual integration with no Meta App Secret is additionally never
-  // signature-verified (`unsignedWebhookWarning`; see
-  // `resolve-outbound-call-mode.action.ts` and `signature-policy.ts`). The
-  // agent may still dial, but only after acknowledging the warning once —
-  // scoped to `integrationId` (not a bare boolean) so switching to a
-  // different WhatsApp number/conversation shows the warning again rather
-  // than silently reusing an acknowledgement from an unrelated integration.
-  //
+  // Manually-connected integrations can't be confirmed subscribed to the
+  // calls webhook field (and one with no App Secret is never signature-
+  // verified), so the agent must acknowledge a warning once per integration.
   // The dialog's open state is scoped to the integration AND conversation it
-  // was opened for (rather than a bare boolean) so that if either changes
-  // underneath it — navigating to another conversation (even on the same
-  // number), or the mode query refetching onto a different integration/mode —
-  // the dialog closes itself (and "Call anyway" becomes a no-op) instead of
-  // staying open and dialing whatever conversation is current at click time.
+  // opened for, so either changing underneath it closes it instead of dialing
+  // whatever conversation is current at click time.
   const [manualWarningTarget, setManualWarningTarget] = useState<{
     integrationId: string
     conversationId: string
@@ -186,9 +173,9 @@ export function useWhatsappCallStarter({
     manualWarningTarget?.integrationId === outboundCallMode.integrationId &&
     manualWarningTarget.conversationId === conversationId
 
-  // A target that stopped matching (navigated away, or the mode refetched)
-  // is discarded, not just hidden — otherwise returning to the original
-  // conversation would re-open the old dialog without a new click.
+  // A target that stopped matching is discarded, not just hidden — otherwise
+  // returning to the original conversation would re-open the old dialog without
+  // a new click.
   useEffect(() => {
     if (manualWarningTarget !== null && !manualWarningIsOpen) {
       setManualWarningTarget(null)
@@ -251,15 +238,14 @@ export function useWhatsappCallStarter({
   }
 
   const handleCallAnyway = () => {
-    // The warning may no longer apply to the integration it was opened for
-    // (mode/integration changed underneath the open dialog) — no-op rather
-    // than dialing whatever conversation is now current.
+    // The warning may no longer apply to the integration it opened for — no-op
+    // rather than dialing whatever conversation is now current.
     if (!(manualWarningIsOpen && outboundCallMode?.mode === "voip")) {
       return
     }
     setAcknowledgedIntegrationId(outboundCallMode.integrationId)
     // Close first so the dialog never sits over the call panel while the dial
-    // is preparing; `dial()`'s ref lock makes a second activation a no-op.
+    // is preparing; dial()'s ref lock makes a second activation a no-op.
     setManualWarningTarget(null)
     dial().catch((error: unknown) => {
       logger.error({ err: error }, "WhatsApp VoIP call-anyway dial failed")

@@ -11,20 +11,10 @@ import type { ListWhatsappCallsResponse } from "../schema/resource"
 const INVALID_CURSOR_HTTP_STATUS = 400
 
 /**
- * M2 fix: `decodeCursor` returns `null` for EVERY failure mode (malformed
- * base64, invalid JSON, schema mismatch) — the right behaviour for an
- * OMITTED cursor (first page), but silently treating a corrupted/tampered
- * cursor the caller DID provide as "start from page 1" duplicates rows on
- * the client (`CallsPageClient` appends the page instead of replacing it).
- * Thrown only when `input.cursor` was present but failed to decode — never
- * for a first-page request.
- *
- * LOW fix (Fable review): a `ChatbotXException`, not a bare `Error` — a
- * tampered cursor is an expected client-facing 4xx, so `actionClient`'s
- * `handleServerError` (`@/lib/safe-action`) now warn-logs it and returns the
- * translated-at-the-client `loadMoreError` toast via a real 400 status
- * instead of falling through to the generic 5xx `DEFAULT_SERVER_ERROR_MESSAGE`
- * path.
+ * `decodeCursor` returns null both for an omitted and a corrupted cursor; silently
+ * treating a tampered cursor as "start from page 1" would duplicate rows on the
+ * client (which appends rather than replaces), so this throws only when
+ * `input.cursor` was present but failed to decode.
  */
 export class InvalidWhatsappCallCursorError extends ChatbotXException {
   constructor() {
@@ -38,13 +28,10 @@ export class InvalidWhatsappCallCursorError extends ChatbotXException {
 }
 
 /**
- * P5 item 6 — thin request adapter shared by the RSC page (first page) and
- * `listWhatsappCallsAction` (subsequent "Load more" pages): turns session
- * context + the caller's search params into
- * `whatsappCallHistoryService.list`'s input and shapes the response for the
- * client — no where-builders or scope logic here (that lives in the
- * service/repository), matching the `.query.ts` convention in
- * AGENTS.md invariant #9.
+ * Thin request adapter shared by the RSC page (first page) and
+ * listWhatsappCallsAction (Load more): turns session context + search params
+ * into whatsappCallHistoryService.list's input and shapes the response for
+ * the client.
  */
 export async function listWhatsappCalls(
   input: ListWhatsappCallsRequest,
@@ -60,10 +47,6 @@ export async function listWhatsappCalls(
   const result = await whatsappCallHistoryService.list({
     workspaceId: input.workspaceId,
     member,
-    // L4: no cast needed — `CALL_ACTIVITY_CHIPS` is `satisfies readonly
-    // WhatsappCallActivityChip[]`, so `input.activity` (inferred through
-    // `z.enum(CALL_ACTIVITY_CHIPS)`) already IS `WhatsappCallActivityChip |
-    // undefined` structurally.
     activity: input.activity,
     inboxId: input.inboxId,
     agentUserId: input.agentUserId,

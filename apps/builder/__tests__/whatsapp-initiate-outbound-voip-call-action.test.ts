@@ -242,7 +242,7 @@ describe("initiateOutboundVoipCallAction", () => {
     claimForCallAgentMock.mockResolvedValue([])
   })
 
-  test("P2 item 5 (D3) / M1: returns a typed callAccessDenied outcome (never throws) for an assigned-only agent dialing a conversation assigned to someone else, before createOutboundAttempt", async () => {
+  test("returns a typed callAccessDenied outcome (never throws) for an assigned-only agent dialing a conversation assigned to someone else, before createOutboundAttempt", async () => {
     canCallConversationMock.mockResolvedValue(false)
 
     await expect(call()).resolves.toEqual({ outcome: "callAccessDenied" })
@@ -268,7 +268,7 @@ describe("initiateOutboundVoipCallAction", () => {
 
   // TR is not on Meta's blocked-business-country list (only VN, US, CA,
   // EG, NG) — a TR business number must dial normally, not be blocked.
-  test("does NOT block a TR business number (R11: TR removed from BLOCKED_OUTBOUND_COUNTRIES)", async () => {
+  test("does NOT block a TR business number (TR is not in BLOCKED_OUTBOUND_COUNTRIES)", async () => {
     findByInboxIdForWorkspaceMock.mockResolvedValue({
       id: "integration-1",
       auth: {},
@@ -318,7 +318,7 @@ describe("initiateOutboundVoipCallAction", () => {
     await expect(call()).rejects.toThrow("db down")
   })
 
-  test("C1: compensates when a post-connect write throws after Meta connect succeeded", async () => {
+  test("compensates when a post-connect write throws after Meta connect succeeded", async () => {
     startOutboundDialMock.mockRejectedValue(new Error("redis down"))
 
     const result = await call()
@@ -337,7 +337,7 @@ describe("initiateOutboundVoipCallAction", () => {
     )
   })
 
-  test("C1: a failing best-effort terminateCall never surfaces — still returns callFailed", async () => {
+  test("a failing best-effort terminateCall never surfaces — still returns callFailed", async () => {
     startOutboundDialMock.mockRejectedValue(new Error("redis down"))
     terminateCallMock.mockRejectedValue(new Error("meta down"))
 
@@ -386,7 +386,7 @@ describe("initiateOutboundVoipCallAction", () => {
     expect(enqueueOutboundDialExpiryMock).not.toHaveBeenCalled()
   })
 
-  test("C1: a failing attach after the control exists ends the control, hangs up and finalizes", async () => {
+  test("a failing attach after the control exists ends the control, hangs up and finalizes", async () => {
     attachMetaCallIdMock.mockRejectedValue(new Error("db down"))
 
     await expect(call()).resolves.toEqual({ outcome: "callFailed" })
@@ -407,7 +407,7 @@ describe("initiateOutboundVoipCallAction", () => {
     )
   })
 
-  test("C1: teardown failures never surface — still finalizes and returns callFailed", async () => {
+  test("teardown failures never surface — still finalizes and returns callFailed", async () => {
     startOutboundDialMock.mockRejectedValue(new Error("redis down"))
     endCallMock.mockRejectedValue(new Error("redis still down"))
     terminateCallMock.mockRejectedValue(new Error("meta down"))
@@ -491,7 +491,7 @@ describe("initiateOutboundVoipCallAction", () => {
     expect(claimForCallAgentMock).not.toHaveBeenCalled()
   })
 
-  // M2: the auto-assign claim runs as the LAST best-effort step, after the
+  // The auto-assign claim runs as the LAST best-effort step, after the
   // recording-arrangement bookkeeping, so it never delays anything the
   // outbound dial depends on.
   test("claims the conversation after the recording arrangement is recorded", async () => {
@@ -513,7 +513,7 @@ describe("initiateOutboundVoipCallAction", () => {
     expect(claimForCallAgentMock).not.toHaveBeenCalled()
   })
 
-  test("R2: a Username/BSUID-only contact (empty sourceId, known sourceUserId) dials via `recipient`, never `to`", async () => {
+  test("a Username/BSUID-only contact (empty sourceId, known sourceUserId) dials via `recipient`, never `to`", async () => {
     findInboxMock.mockResolvedValue({
       id: "contact-inbox-1",
       inboxId: "inbox-1",

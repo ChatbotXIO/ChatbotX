@@ -34,40 +34,18 @@ import {
 } from "./voip-call-store"
 
 /**
- * The outcome of an `answer()` call — lets every caller (the call panel's
- * `handleAnswer`, chiefly) decide whether to navigate to the answered
- * conversation WITHOUT re-reading `voip-call-store` itself (see D6 below):
- * - `"answered"` — the call is now active; safe to navigate.
- * - `"declined"` — no target, a lost race, a mic/permission failure, or the
- *   slot's own answer already in flight; never navigate.
- * - `"pendingConfirmation"` — the replacement dialog opened; nothing to do
- *   yet. If the agent confirms, the SAME `onAnswered` callback passed to
- *   this call fires later, once `confirmReplacement` resolves — see
- *   `WhatsappVoipCallProvider`'s `resolveAnswered`.
+ * Lets callers decide whether to navigate without re-reading voip-call-store.
+ * "pendingConfirmation" means the replacement dialog opened; onAnswered fires
+ * later once confirmReplacement resolves.
  */
 export type AnswerOutcome = "answered" | "declined" | "pendingConfirmation"
 
 export type WhatsappVoipCallContextValue = {
   /**
-   * Accepts an offer. With no `whatsappCallId`, targets whatever currently
-   * occupies the single call slot (today's behavior, unchanged). With an
-   * id, targets a specific offer — the slot's own call, or a basket entry
-   * (see `ringingCalls` in `voip-call-store.ts`). Answering a basket entry
-   * while the slot is genuinely ENGAGED with a DIFFERENT call first shows a
-   * confirmation dialog ("End the call with X to answer Y?"); only once the
-   * agent confirms does the actual end-then-promote-then-answer flow (owned
-   * by `useWhatsappVoipCall`) run — see {@link AnswerOutcome}.
-   *
-   * `onAnswered`, when given, fires with the answered call's
-   * `conversationId` the moment the answer actually succeeds — whether
-   * that happens immediately (this call resolves `"answered"`) or later,
-   * after the agent confirms a replacement (this call resolves
-   * `"pendingConfirmation"` and `onAnswered` fires from
-   * `confirmReplacement` instead). D6 (navigate-on-answer) is the ONE
-   * caller of this today, but it is intentionally generic — every caller
-   * that needs "did this specific answer just succeed" continuation logic
-   * shares the same resolution path instead of re-deriving it from the
-   * store.
+   * Accepts an offer (the slot's call, or a basket entry by id). Answering a
+   * basket entry while the slot is engaged with a different call first shows a
+   * confirmation dialog. onAnswered fires with the conversationId once the
+   * answer actually succeeds, immediately or later via confirmReplacement.
    */
   answer: (
     whatsappCallId?: string,
@@ -75,62 +53,50 @@ export type WhatsappVoipCallContextValue = {
   ) => Promise<AnswerOutcome>
   /**
    * Silences an incoming ring locally. With no id, the current slot's ring
-   * (ring-all — does not end the call for others). With an id, drops just
-   * that one basket entry.
+   * (does not end the call for others). With an id, drops just that basket
+   * entry.
    */
   dismiss: (whatsappCallId?: string) => void
-  /** Ends the current active (already-accepted) call, or cancels an
-   * outbound call still preparing/dialing/ringing. */
+  /**
+   * Ends the current active call, or cancels an outbound call still
+   * preparing/dialing/ringing.
+   */
   hangup: () => Promise<void>
-  /** Toggles the local microphone track's `enabled` flag. */
   toggleMute: () => void
-  /** Clears a lingering `ended` call immediately instead of waiting out the
-   * ~2s auto-dismiss. */
+  /**
+   * Clears a lingering ended call immediately instead of waiting out the ~2s
+   * auto-dismiss.
+   */
   dismissEnded: () => void
-  /** Places a business-initiated (outbound) VoIP call. */
   startOutbound: (params: StartOutboundParams) => Promise<StartOutboundOutcome>
 }
 
 const WhatsappVoipCallContext =
   createContext<WhatsappVoipCallContextValue | null>(null)
 
-/** The offer being confirmed for replacement, and the call it would
- * replace — both captured as display snapshots (id + name) at the moment
- * the dialog opens, so the dialog's copy never needs to re-read the store
- * while the agent is deciding. */
+/**
+ * The offer being confirmed for replacement, and the call it would replace —
+ * captured as display snapshots at dialog-open time so the dialog's copy never
+ * needs to re-read the store.
+ */
 type ReplacementTarget = {
   currentCallId: string
   currentContactName: string
   incomingCallId: string
   incomingContactName: string
-  /** The offer's own conversation — needed so `confirmReplacement`, once it
-   * resolves, can report the same `(conversationId)` to `onAnswered` that
-   * an immediate (non-confirmed) answer would have. */
+  /**
+   * The offer's own conversation — needed so confirmReplacement can report the
+   * same conversationId to onAnswered that an immediate answer would have.
+   */
   incomingConversationId: string
-  /** Captured from the `answer()` call that opened this dialog — see
-   * {@link WhatsappVoipCallContextValue.answer}. */
+  /** Captured from the answer() call that opened this dialog. */
   onAnswered?: (conversationId: string) => void
 }
 
 /**
- * The single owner of `useWhatsappVoipCall` — that hook holds the
- * `RTCPeerConnection` and local mic track in refs, so mounting it more than
- * once would open a second peer connection racing the first. This provider
- * calls it exactly once, renders the single `<audio>` element that plays the
- * remote party's media, and exposes `{ answer, dismiss, hangup, toggleMute }`
- * to every consumer (the incoming-call dialog, the floating dock, and the
- * per-conversation inbox-item buttons) via context. Mount it once, high
- * enough in the tree to wrap every consumer — see `ChatLayout`.
- *
- * Also the single owner of the "replace the active call?" confirmation
- * dialog (Workstream 4 of the multi-ring design): every Answer control in
- * the app — the call panel, the ring list, and every inbox row — goes
- * through this context's `answer`, so the confirmation is asked exactly
- * once here rather than duplicated in each caller. The underlying
- * end-then-promote-then-answer flow (including awaiting the server's
- * confirmed hangup before ever promoting the new call) lives in
- * `useWhatsappVoipCall`'s own `answer` — this dialog only gates WHEN that
- * flow is allowed to run.
+ * Single owner of useWhatsappVoipCall — its RTCPeerConnection and mic track
+ * live in refs, so mounting it twice would race two peer connections. Also
+ * owns the "replace the active call?" confirmation dialog.
  */
 export function WhatsappVoipCallProvider({
   children,
@@ -150,12 +116,10 @@ export function WhatsappVoipCallProvider({
   const [replacementTarget, setReplacementTarget] =
     useState<ReplacementTarget | null>(null)
 
-  // Shared by BOTH the immediate-answer path and the delayed
-  // `confirmReplacement` path: reads the store back after `answerCall`
-  // settles and, only if the target call is genuinely `active` for the
-  // conversation it claims, reports success to `onAnswered`. ONE place
-  // decides "did this answer actually succeed" so the two call sites can
-  // never drift on what counts as success.
+  // Shared by both the immediate-answer and delayed confirmReplacement paths:
+  // reads the store back after answerCall settles and reports success to
+  // onAnswered only if the target call is genuinely active for the conversation
+  // it claims, so the two call sites can never drift on what counts as success.
   const resolveAnswered = useCallback(
     (
       conversationId: string,
@@ -191,22 +155,19 @@ export function WhatsappVoipCallProvider({
         : state.ringingCalls.find((entry) => entry.whatsappCallId === targetId)
             ?.conversationId
       // No replacement to confirm: either the slot is free, or the target
-      // already IS the slot's own call (the common path — the panel's
-      // Answer button, or a basket entry taking an already-free slot).
+      // already is the slot's own call — the common path.
       if (!slotIsEngaged || isSlotsOwnCall) {
         await answerCall(targetId)
         return conversationId
           ? resolveAnswered(conversationId, onAnswered)
           : "declined"
       }
-      // FIX 10: don't offer the replacement dialog while the slot's own call
-      // already has an answer in flight — `useWhatsappVoipCall.answer`'s
-      // `answeringIdRef` mutex is held for it the instant `answerIncoming`
-      // starts (the store already reflects this: the call moved to
-      // `answering`). Confirming the dialog would call `answerCall` again
-      // for a DIFFERENT id, which that mutex silently rejects — the dialog
-      // would close with no feedback and nothing would happen. Better to
-      // never offer a confirmation that can only confirm into a no-op.
+      // Don't offer the replacement dialog while the slot's own call already
+      // has an answer in flight — useWhatsappVoipCall.answer's mutex is held
+      // the instant answerIncoming starts. Confirming would call answerCall
+      // again for a different id, which the mutex silently rejects, closing the
+      // dialog with no feedback. Better to never offer a confirmation that can
+      // only confirm into a no-op.
       if (current?.phase === WhatsappVoipCallPhase.answering) {
         return "declined"
       }
@@ -233,11 +194,10 @@ export function WhatsappVoipCallProvider({
     [answerCall, resolveAnswered, t],
   )
 
-  // The offer can lapse on Meta's deadline, or be answered by a colleague,
-  // while the agent is still reading this dialog. Closing it the moment that
-  // happens is the real fix; this second check covers the last few
-  // milliseconds, because without it `answer` returns silently and the agent
-  // is left believing they just took the call.
+  // The offer can lapse or be answered elsewhere while the agent is still
+  // reading this dialog. Closing it immediately is the real fix; this covers
+  // the last few milliseconds, since without it answer returns silently and the
+  // agent believes they took the call.
   const confirmReplacement = useCallback(() => {
     const target = replacementTarget
     setReplacementTarget(null)
@@ -265,9 +225,9 @@ export function WhatsappVoipCallProvider({
       })
   }, [answerCall, replacementTarget, resolveAnswered, t])
 
-  // Auto-close the confirmation when the offer it names stops ringing —
-  // expired on its own deadline, dismissed, or won by another agent. A stale
-  // confirmation on screen can only ever confirm into a no-op.
+  // Auto-close the confirmation when the named offer stops ringing (expired,
+  // dismissed, or won elsewhere) — a stale confirmation can only ever confirm
+  // into a no-op.
   const ringingCalls = useWhatsappVoipCallStore((state) => state.ringingCalls)
   useEffect(() => {
     if (!replacementTarget) {
@@ -282,11 +242,9 @@ export function WhatsappVoipCallProvider({
   }, [ringingCalls, replacementTarget])
 
   // Memoized because this provider re-renders on every store change it
-  // subscribes to (the call slot AND the ringing basket). A fresh object each
-  // time would re-render every consumer — including every virtualized
-  // `ConversationItem` in the inbox — on a mute toggle or a countdown tick,
-  // exactly what that row's own selector is written to avoid. The callbacks
-  // below are already stable.
+  // subscribes to. A fresh object each time would re-render every consumer —
+  // including every virtualized ConversationItem — on a mute toggle or
+  // countdown tick, exactly what each row's selector is written to avoid.
   const contextValue = useMemo(
     () => ({
       answer,
@@ -345,7 +303,10 @@ export function WhatsappVoipCallProvider({
   )
 }
 
-/** Consumes the single `useWhatsappVoipCall` instance owned by `WhatsappVoipCallProvider`. */
+/**
+ * Consumes the single useWhatsappVoipCall instance owned by
+ * WhatsappVoipCallProvider.
+ */
 export function useWhatsappVoipCallContext(): WhatsappVoipCallContextValue {
   const context = useContext(WhatsappVoipCallContext)
   if (!context) {
@@ -357,12 +318,9 @@ export function useWhatsappVoipCallContext(): WhatsappVoipCallContextValue {
 }
 
 /**
- * Optional variant for consumers that render in every workspace page (e.g.
- * every inbox row, or a contact/conversation header button) but must not
- * throw when calling is disabled for this workspace/member
- * (`callingEnabled` — `app/space/[workspaceId]/layout.tsx`) and the
- * provider is therefore not mounted. `null` means "render no ringing
- * overlay / no call control", never a crash.
+ * Optional variant for consumers rendered on every workspace page that must not
+ * throw when calling is disabled for the workspace/member and the provider
+ * isn't mounted. null means render nothing, never a crash.
  */
 export function useOptionalWhatsappVoipCallContext(): WhatsappVoipCallContextValue | null {
   return useContext(WhatsappVoipCallContext)

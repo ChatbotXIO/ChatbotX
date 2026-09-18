@@ -3,13 +3,10 @@
 import { create } from "zustand"
 
 /**
- * A single global `<audio>` element (lazily created on first use, browser-
- * only) — the ONE playback owner shared by the progressive call card
- * (`WhatsappCallCard`) and, in a later wave, the Call Information sheet, so
- * the two surfaces never fight over playback or run two overlapping audio
- * streams for the same call. Module-scoped rather than
- * stored in Zustand state itself: an `HTMLAudioElement` is not serializable/
- * comparable state, only a resource the store's actions drive.
+ * A single global <audio> element (lazily created, browser-only) — the one
+ * playback owner shared by the progressive call card and the Call Information
+ * sheet, so the two never fight over playback. Module-scoped rather than
+ * Zustand state, since an HTMLAudioElement isn't serializable state.
  */
 let sharedAudioElement: HTMLAudioElement | null = null
 
@@ -26,7 +23,9 @@ export type CallPlaybackStatus =
   | "error"
 
 export type CallPlaybackState = {
-  /** The `WhatsappCall.id` currently loaded into the shared audio element, if any. */
+  /**
+   * The WhatsappCall.id currently loaded into the shared audio element, if any.
+   */
   callId: string | null
   status: CallPlaybackStatus
   currentTime: number
@@ -36,12 +35,10 @@ export type CallPlaybackState = {
 
 export type CallPlaybackActions = {
   /**
-   * Plays `callId`'s recording, resolving a (possibly freshly re-signed)
-   * playback URL via `resolveUrl` — called again automatically on retry
-   * after a playback error, matching the "sign lazily on play/error"
-   * contract. Switching to a different `callId` stops whatever the
-   * shared element was playing first, so only one call ever plays at a
-   * time across every open card/sheet.
+   * Plays callId's recording, resolving a (possibly freshly re-signed) playback
+   * URL — called again automatically on retry after a playback error. Switching
+   * to a different callId stops whatever the shared element was playing first,
+   * so only one call ever plays at a time.
    */
   play: (callId: string, resolveUrl: () => Promise<string>) => Promise<void>
   pause: () => void
@@ -49,10 +46,9 @@ export type CallPlaybackActions = {
   seek: (seconds: number) => void
   setVolume: (volume: number) => void
   /**
-   * Stops and detaches the shared `<audio>` element and resets playback
-   * state to idle — called when the inbox itself unmounts (`ChatLayout`)
-   * so a call recording never keeps playing after the user has navigated
-   * away from the inbox entirely.
+   * Stops and detaches the shared <audio> element and resets playback state —
+   * called when the inbox unmounts so a recording never keeps playing after the
+   * user navigates away.
    */
   reset: () => void
 }
@@ -74,13 +70,12 @@ export const useCallPlaybackStore = create<CallPlaybackStore>((set, get) => ({
       audio.pause()
       set({ callId, status: "loading", currentTime: 0, duration: 0 })
 
-      // Ogg/Opus (Meta-native call recordings) and MediaRecorder blobs are
-      // routinely written without a duration in the container header, so the
-      // browser reports `audio.duration === Infinity` at `loadedmetadata`
-      // (the "0:00 / 0:00" bug). Seeking far past the end forces it to scan
-      // to the real end and re-emit `durationchange` with a finite value,
-      // after which we restore the position. `isProbingDuration` suppresses
-      // the transient `timeupdate` spikes the probe seek produces.
+      // Ogg/Opus and MediaRecorder blobs are routinely written without a
+      // duration in the container header, so the browser reports audio.duration
+      // === Infinity at loadedmetadata (the "0:00 / 0:00" bug). Seeking far
+      // past the end forces a scan to the real end and a finite durationchange,
+      // after which we restore the position. isProbingDuration suppresses the
+      // transient timeupdate spikes the probe seek produces.
       let isProbingDuration = false
       const applyDuration = () => {
         if (get().callId !== callId) {

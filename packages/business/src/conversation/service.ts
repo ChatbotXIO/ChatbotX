@@ -919,20 +919,10 @@ class ConversationService extends BaseService {
   }
 
   /**
-   * Every side effect of an assignment write — cache invalidation, realtime
-   * broadcast, agent notification, the domain event and the analytics event
-   * — extracted from `updateAssignment` (P3) so `claimForCallAgent` can
-   * trigger the exact same publish from an UPDATE it ran itself. Always
-   * built from the rows the caller's UPDATE actually returned, never from
-   * input the caller merely intended to update. `conversations` empty (no
-   * rows returned, e.g. a losing `assignUserIfUnassigned` claim, or a
-   * `updateAssignment` call whose ids matched nothing) is a no-op: no
-   * invalidation, no broadcast, no notification, no domain/analytics event
-   * — this is the single guard both callers rely on, so neither call site
-   * duplicates it.
-   * Order: invalidate -> conversationUpdated -> conversationAssigned ->
-   * notification (unless self-assigned) -> emitConversationAssigned/
-   * emitConversationUnassigned -> analytics.
+   * Side effects of an assignment write, extracted so claimForCallAgent can
+   * trigger the same publish from its own UPDATE. Built from the rows the
+   * caller's UPDATE actually returned, never intended input; an empty
+   * conversations result is a no-op.
    */
   private async publishAssignmentChanges(props: {
     workspaceId: string
@@ -1026,15 +1016,10 @@ class ConversationService extends BaseService {
   }
 
   /**
-   * Auto-assign on call answer / outbound dial (P3, plan D2). Claims the
-   * conversation for the agent ONLY when it is currently unassigned to both
-   * a user and a team — `assignUserIfUnassigned`'s guarded UPDATE is the
-   * single source of truth for that, so a team-assigned conversation is
-   * never auto-claimed and a concurrent manual assignment always wins.
-   * `publishAssignmentChanges` itself no-ops on an empty `claimed` (no rows
-   * returned means no publish, full stop) — that guard lives there once,
-   * not duplicated here. Never throws for a losing claim; the call itself
-   * must never fail because of this.
+   * Auto-assign on call answer/dial. Claims only when unassigned to both a
+   * user and a team — assignUserIfUnassigned's guarded UPDATE is the source
+   * of truth, so a concurrent manual assignment always wins. Never throws on
+   * a losing claim; the call itself must not fail because of this.
    */
   async claimForCallAgent(props: {
     workspaceId: string

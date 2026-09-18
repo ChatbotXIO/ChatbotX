@@ -5,11 +5,8 @@ export type WhatsappCallMediaToggles = {
 }
 
 /**
- * Whether a WhatsApp number transcribes its calls. Transcription only runs on
- * a number that also records calls: Meta itself could transcribe a call it
- * does not record, but a transcript with no recording behind it cannot be
- * checked against the audio, so the product ties the two together. Every
- * place that decides whether to transcribe reads it through here, so a stored
+ * Transcription only runs when recording is also on: a transcript with no
+ * recording behind it can't be checked against the audio, so a stored
  * `callTranscriptionEnabled` left on while recording is off stays inert.
  */
 export const transcribesCalls = (toggles: WhatsappCallMediaToggles): boolean =>

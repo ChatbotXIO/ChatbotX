@@ -138,7 +138,7 @@ describe("getWhatsappVoipTurnCredentialsAction", () => {
     expect(issueCredentialsMock).not.toHaveBeenCalled()
   })
 
-  test("allows any D3-eligible rung agent while the call is still unclaimed (ring-all)", async () => {
+  test("allows any eligible rung agent while the call is still unclaimed (ring-all)", async () => {
     // Default control is unclaimed; a not-yet-winner still gets ICE to prepare.
     await expect(call("agent-2")).resolves.toBeDefined()
     expect(issueCredentialsMock).toHaveBeenCalledWith(
@@ -151,7 +151,7 @@ describe("getWhatsappVoipTurnCredentialsAction", () => {
     })
   })
 
-  test("P2 item 5 / M1: refuses an ineligible member for a still-unclaimed call with the dedicated call-access-denied message (not voipNotReservedAgent)", async () => {
+  test("refuses an ineligible member for a still-unclaimed call with the dedicated call-access-denied message (not voipNotReservedAgent)", async () => {
     canCallConversationMock.mockResolvedValue(false)
 
     await expect(call("agent-2")).rejects.toThrow(
@@ -160,7 +160,7 @@ describe("getWhatsappVoipTurnCredentialsAction", () => {
     expect(issueCredentialsMock).not.toHaveBeenCalled()
   })
 
-  test("P2 review leftover (b): the access-denied throw carries CALL_ACCESS_DENIED_CODE and a 403 status, like assert-call-access.ts", async () => {
+  test("the access-denied throw carries CALL_ACCESS_DENIED_CODE and a 403 status, like assert-call-access.ts", async () => {
     canCallConversationMock.mockResolvedValue(false)
 
     let thrown: { code?: string; httpStatusCode?: number } | undefined
@@ -174,7 +174,7 @@ describe("getWhatsappVoipTurnCredentialsAction", () => {
     expect(thrown?.httpStatusCode).toBe(403)
   })
 
-  test("allows the agent who has already claimed the call while still D3-eligible", async () => {
+  test("allows the agent who has already claimed the call while still eligible", async () => {
     readControlMock.mockResolvedValue({
       reservedUserId: "agent-1",
       phase: "answering",
@@ -201,7 +201,7 @@ describe("getWhatsappVoipTurnCredentialsAction", () => {
     expect(issueCredentialsMock).not.toHaveBeenCalled()
   })
 
-  test("allows a superAdmin/contacts-scope agent who has claimed the call (D3 always permits them)", async () => {
+  test("allows a superAdmin/contacts-scope agent who has claimed the call (always permits them)", async () => {
     readControlMock.mockResolvedValue({
       reservedUserId: "agent-1",
       phase: "answering",

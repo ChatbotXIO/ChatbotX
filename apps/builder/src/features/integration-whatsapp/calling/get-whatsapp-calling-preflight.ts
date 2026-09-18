@@ -12,13 +12,10 @@ import { logger } from "@/lib/log"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 
 /**
- * Meta's calling-eligibility error 138015 says "make sure messaging limit on
- * your phone number is 2000 or more". The documented messaging-limit tiers
- * (phone-number reference) are, in order: 250 → 2,000 → 10,000 → 100,000 →
- * Unlimited, i.e. `TIER_250`, `TIER_2K`, `TIER_10K`, `TIER_100K`,
- * `TIER_UNLIMITED` — with `TIER_50` and `TIER_1K` as older/lower tiers below
- * the 2,000 threshold. Anything at or below 1,000/24h fails the "2000 or
- * more" requirement.
+ * Meta's calling-eligibility error 138015 says the messaging limit must be 2000
+ * or more. The documented tiers, in order: 250, 2000, 10000, 100000, Unlimited
+ * - with 50 and 1000 as older tiers below the threshold. Anything at or below
+ * 1000/24h fails the requirement.
  */
 const INSUFFICIENT_MESSAGING_LIMITS = [
   "TIER_50",
@@ -26,9 +23,11 @@ const INSUFFICIENT_MESSAGING_LIMITS = [
   "TIER_1K",
 ] as const
 
-/** The documented tiers at/above the "2000 or more" requirement (error
- * 138015) — used only to tell "unrecognized" apart from "known sufficient"
- * for the warn-log below, never to gate the eligibility result itself. */
+/**
+ * The documented tiers at/above the "2000 or more" requirement - used only to
+ * tell unrecognized apart from known-sufficient for the warn-log below, never
+ * to gate the eligibility result itself.
+ */
 const KNOWN_SUFFICIENT_MESSAGING_LIMITS = [
   "TIER_2K",
   "TIER_10K",
@@ -36,17 +35,17 @@ const KNOWN_SUFFICIENT_MESSAGING_LIMITS = [
   "TIER_UNLIMITED",
 ] as const
 
-/** Meta's Cloud API `platform_type` value that calling requires (i.e. not a
- * WhatsApp Business app coexistence number). */
+/**
+ * Meta's Cloud API platform_type value that calling requires (i.e. not a
+ * WhatsApp Business app coexistence number).
+ */
 const WHATSAPP_CALLING_PLATFORM_TYPE = "CLOUD_API"
 
 /**
- * `messaging_limit_tier` is deprecated — this reads
- * `whatsapp_business_manager_messaging_limit` (reference:
- * https://developers.facebook.com/docs/whatsapp/cloud-api/reference/phone-numbers,
- * example value `"TIER_250"`). A missing or unrecognized value (e.g. a newer
- * tier Meta adds later) counts as sufficient — never block calling on a
- * value we don't recognize — but is logged so it can be added here.
+ * messaging_limit_tier is deprecated - this reads
+ * whatsapp_business_manager_messaging_limit instead. A missing or unrecognized
+ * value (e.g. a newer tier Meta adds later) counts as sufficient, never
+ * blocking calling, but is logged so it can be added here.
  */
 function isMessagingLimitSufficient(limit: string | null): boolean {
   if (!limit) {
@@ -75,15 +74,19 @@ function isMessagingLimitSufficient(limit: string | null): boolean {
 export type WhatsappCallingPreflight = {
   /** Manually connected number: no app credential exists to check/fix. */
   isManual: boolean
-  /** Whether the owning workspace/tenant has a WhatsApp app credential to
-   * run the app-level subscription check against. */
+  /**
+   * Whether the owning workspace/tenant has a WhatsApp app credential to run
+   * the app-level subscription check against.
+   */
   hasAppCredential: boolean
   /** null = could not be determined (no credential, or the GET failed). */
   callsSubscribed: boolean | null
   platformType: string | null
   isCloudApiPlatform: boolean | null
-  /** From `whatsapp_business_manager_messaging_limit` (the field that
-   * replaces the deprecated `messaging_limit_tier`). */
+  /**
+   * From whatsapp_business_manager_messaging_limit (replaces the deprecated
+   * messaging_limit_tier).
+   */
   messagingLimitTier: string | null
   messagingLimitSufficient: boolean
 }
@@ -116,9 +119,9 @@ async function resolveCallsSubscribed(props: {
 }
 
 /**
- * Read-only eligibility check for the WhatsApp Calls card.
- * Never writes anything — the "Fix" action (`fixWhatsappCallsSubscriptionAction`)
- * is the only path that subscribes the app to `calls`.
+ * Read-only eligibility check for the WhatsApp Calls card. Never writes
+ * anything - fixWhatsappCallsSubscriptionAction is the only path that
+ * subscribes the app to calls.
  */
 export async function getWhatsappCallingPreflight(props: {
   workspace: WorkspaceModel

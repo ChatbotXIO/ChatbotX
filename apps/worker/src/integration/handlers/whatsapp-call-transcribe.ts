@@ -31,32 +31,17 @@ const externalCorrelationId = (call: {
   id: string
 }): string => call.wacid ?? call.attemptId ?? call.id
 
-// `enrichRecordingMessageWithTranscript` moved to
-// `shared/whatsapp-call-recording-enrichment.ts` so both this
-// browserWhisper (browser-recorded audio + Whisper) path and the
-// Meta-native transcript fetch handler
-// (`handleWhatsappCallNativeTranscriptFetch`) reuse the exact same
-// message-enrichment + broadcast logic without either file pulling in the
-// other's unrelated dependencies (this file's `ai`/`ky`/AI-integration
-// imports are browserWhisper-only).
-
 /**
- * Speech-to-text over a stored call recording. Opt-in per integration
- * (`transcribesCalls`: transcription on, which also needs recording on) and
- * requires the
- * workspace's OpenAI integration; silently skips (no retry) when either is
- * absent — the recording itself is already saved and usable.
- *
- * Runs on the dedicated `callTranscription` queue, consumed by
- * a second `Worker` inside `apps/worker/src/integration/worker.ts` with a
- * `limiter: { max: env.CALL_TRANSCRIBE_PER_MIN, duration: 60_000 }` so a
- * call spike cannot burn the AI budget — never the shared `integration`
- * queue.
+ * Silently skips (no retry) when transcribesCalls or the workspace's OpenAI
+ * integration is absent — the recording is already saved and usable. Runs
+ * on the dedicated callTranscription queue with a limiter
+ * (CALL_TRANSCRIBE_PER_MIN/60s), not the shared integration queue, so a call
+ * spike can't burn the AI budget.
  */
 export const handleWhatsappCallTranscribe = async (
   data: CallTranscriptionJobTranscribeCall["data"],
 ): Promise<void> => {
-  // See handleWhatsappCallRecordingReady — required for emitCallTranscribed.
+  // Required for emitCallTranscribed — see handleWhatsappCallRecordingReady.
   setWebhookExecutionContext({ source: "webhook" })
   logger.info(
     { callId: data.callId },
@@ -65,8 +50,8 @@ export const handleWhatsappCallTranscribe = async (
   const call: WhatsappCallModel | undefined =
     await whatsappCallRepository.findById(data.callId)
   // This job is only enqueued after the recording finished uploading, so a
-  // present recordingPath is a finished file. recordedAt is deliberately
-  // NOT required — the ready handler stamps it after chaining this job, and
+  // present recordingPath is a finished file. recordedAt is deliberately not
+  // required — the ready handler stamps it after chaining this job, and
   // requiring it here would race that stamp.
   if (!call?.recordingPath) {
     logger.warn(

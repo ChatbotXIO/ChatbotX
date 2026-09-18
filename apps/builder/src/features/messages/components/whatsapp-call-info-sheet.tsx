@@ -90,15 +90,14 @@ const matchesSearch = (
 const escapeRegExp = (value: string): string =>
   value.replace(/[.*+?^${}|[\]\\]/g, "\\$&")
 
-/** Wraps every case-insensitive occurrence of `query` in `text` with `<mark>`. */
+/** Wraps every case-insensitive occurrence of query in text with <mark>. */
 const highlightMatch = (text: string, query: string): ReactNode => {
   const needle = query.trim()
   if (!needle) {
     return text
   }
-  // The capturing group in `split` puts every match at an odd index. Keying
-  // each piece by its character offset (rather than its array index) gives
-  // a key that stays stable if this ever renders alongside other siblings.
+  // The capturing group in split puts every match at an odd index. Keying each
+  // piece by its character offset gives a stable key.
   let offset = 0
   return text
     .split(new RegExp(`(${escapeRegExp(needle)})`, "gi"))
@@ -119,11 +118,8 @@ const highlightMatch = (text: string, query: string): ReactNode => {
 }
 
 /**
- * Memoized so an active-segment change (which flips `isActive` on exactly
- * two rows) never re-renders every other row in a long transcript — the
- * playback actions come from the store as stable references and the play
- * handler is built from primitives only, so props stay referentially
- * comparable across the parent's re-renders.
+ * Memoized so an active-segment change (which flips isActive on exactly two
+ * rows) never re-renders every other row in a long transcript.
  */
 const TranscriptRow = memo(
   ({
@@ -147,7 +143,7 @@ const TranscriptRow = memo(
     const seek = useCallPlaybackStore((state) => state.seek)
 
     useEffect(() => {
-      // jsdom (unit tests) has no `scrollIntoView` implementation.
+      // jsdom (unit tests) has no scrollIntoView implementation.
       if (isActive && typeof rowRef.current?.scrollIntoView === "function") {
         rowRef.current.scrollIntoView({ block: "nearest" })
       }
@@ -199,10 +195,9 @@ type TranscriptData = {
 }
 
 /**
- * Module-level (not a closure over component state) so it is a stable
- * reference — passing `hasSpeakers`/`speakerNames` explicitly instead of
- * capturing them avoids the "recreated every render" hook-dependency
- * problem entirely.
+ * Module-level, not a closure over component state, so it's a stable reference
+ * — passing hasSpeakers/speakerNames explicitly avoids the "recreated every
+ * render" hook-dependency problem.
  */
 const resolveSpeakerName = (
   speaker: string | undefined,
@@ -255,9 +250,8 @@ const TranscriptTab = ({
     )
   }, [segments, search, hasSpeakers, speakerNames])
 
-  // Throttled active-segment tracking: only re-render when the active
-  // segment INDEX actually changes, never on every audio `timeupdate` tick
-  //.
+  // Throttled active-segment tracking: only re-render when the active segment
+  // index actually changes, never on every audio timeupdate tick.
   const currentTime = useCallPlaybackStore((state) =>
     state.callId === whatsappCallId ? state.currentTime : -1,
   )
@@ -287,9 +281,8 @@ const TranscriptTab = ({
   }
 
   // A network/authorization failure is a distinct state from "the transcript
-  // succeeded but came back empty" — showing the "unavailable for this
-  // call's language" copy on an ERROR told the agent the call could never be
-  // transcribed when a Retry might actually work.
+  // succeeded but came back empty" — showing the unavailable copy on an error
+  // told the agent it could never be transcribed when a retry might work.
   if (isError) {
     return (
       <div className="flex flex-col items-center gap-3 p-4 text-center">
@@ -460,10 +453,9 @@ const SummaryTab = ({
       <WhatsappCallAiSummaryDialog
         hasTranscript={hasTranscript}
         onGenerated={(result) => {
-          // Writes straight into the react-query cache (instead of keeping
-          // the freshly generated summary in local state) so reopening the
-          // sheet later reads the new summary immediately rather than
-          // flashing the stale cached value before a refetch lands.
+          // Writes straight into the react-query cache instead of local state,
+          // so reopening the sheet later reads the new summary immediately
+          // rather than flashing stale cache before a refetch lands.
           queryClient.setQueryData(summaryQueryKey, { aiSummary: result })
         }}
         onOpenChange={setDialogOpen}
@@ -475,12 +467,10 @@ const SummaryTab = ({
 }
 
 /**
- * The "Call Information" side sheet — the shared
- * playback owner (`callPlaybackStore`) means the audio player here and on
- * the progressive call card never fight over the one `<audio>` element.
- * Mounted ONCE (see `chat-layout.tsx`) and driven entirely by
- * `callInfoSheetStore` — the card's Transcript/AI Summary buttons call
- * `open({ whatsappCallId, tab })`.
+ * The Call Information side sheet — the shared playback owner
+ * (callPlaybackStore) means the audio player here and on the progressive call
+ * card never fight over the one <audio> element. Mounted once and driven
+ * entirely by callInfoSheetStore.
  */
 export const WhatsappCallInfoSheet = () => {
   const t = useTranslations("whatsapp.calls.sheet")
@@ -499,8 +489,8 @@ export const WhatsappCallInfoSheet = () => {
     if (isOpen) {
       setActiveTab(storeTab)
     }
-    // Re-sync only when a NEW open call happens, never on the user's own
-    // in-sheet tab clicks.
+    // Re-sync only when a new open call happens, never on the user's own in-
+    // sheet tab clicks.
   }, [isOpen, storeTab])
 
   const transcriptQuery = useQuery({

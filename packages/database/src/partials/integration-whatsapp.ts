@@ -47,11 +47,10 @@ export type WhatsappRegistrationError = z.infer<
 
 /**
  * Recording/transcription pipeline mode for WhatsApp calls (VoIP only).
- * `metaNative` (default): Meta's per-call `recording`/`transcription`
- * opt-in objects — diarized transcript, new Meta billing.
- * `browserWhisper`: the pre-existing browser MediaRecorder + OpenAI Whisper
- * pipeline, kept as a selectable fallback (flat/timestamped, no speaker
- * diarization, OpenAI cost).
+ * metaNative (default): Meta's per-call recording/transcription opt-in objects
+ * — diarized transcript, new Meta billing. browserWhisper: the pre-existing
+ * browser MediaRecorder + OpenAI Whisper pipeline, kept as a selectable
+ * fallback (flat/timestamped, no speaker diarization, OpenAI cost).
  */
 export const whatsappCallRecordingModes = z.enum([
   "metaNative",
@@ -70,14 +69,9 @@ export type WhatsappCallTranscriptionMode = z.infer<
 >
 
 /**
- * The subset of Meta's `calling.call_hours` the runtime needs to decide whether
- * a call arriving now is inside the configured schedule. Declared here rather
- * than imported from the WhatsApp integration so the database layer keeps no
- * dependency on a channel package.
- *
- * Times are minutes since midnight in `timezoneId`, matching Meta's own
- * `open_time`/`close_time` encoding. `null` on the column means no schedule at
- * all, which is not the same as a schedule that is currently closed.
+ * Subset of Meta's calling.call_hours, declared here so the database layer
+ * has no dependency on the WhatsApp integration package. Times are minutes
+ * since midnight in timezoneId. null means no schedule, not "closed now".
  */
 export type WhatsappCallHoursSnapshot = {
   status: "ENABLED" | "DISABLED"

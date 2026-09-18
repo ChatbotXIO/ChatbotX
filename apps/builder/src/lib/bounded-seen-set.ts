@@ -1,18 +1,8 @@
 /**
  * Insertion-ordered "have I seen this before" set, bounded to `capacity`
- * entries: once full, the OLDEST entry is evicted to make room for a new
- * one. Exists for long-lived client-side dedupe trackers (e.g. "which
- * whatsappCallIds has this inbox already bubbled to the top") that would
- * otherwise grow for the entire lifetime of a mounted component/tab,
- * unbounded, as more calls ring over a long session.
- *
- * Re-adding a value that was evicted is treated as new again — this is a
- * bounded LRU-by-insertion-order cache, not a permanent record, so the
- * (accepted) tradeoff is that a value could in principle be "forgotten"
- * and re-processed once `capacity` other distinct values have been seen
- * since. For its actual use (deduping a bubble-to-top action per ringing
- * call, capacity in the hundreds) this is far larger than any realistic
- * number of calls ringing within one tab's session.
+ * entries: once full, the oldest entry is evicted. For long-lived client-side
+ * dedupe trackers that would otherwise grow unbounded for a tab's lifetime.
+ * Not a permanent record — a re-added evicted value counts as new again.
  */
 export type BoundedSeenSet<T> = {
   has: (value: T) => boolean

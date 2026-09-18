@@ -8,20 +8,16 @@ export type WorkspaceMemberPermissionsRow = {
 }
 
 /**
- * Bounded projections over `WorkspaceMember` — never the whole (cached)
- * roster `workspaceMemberService.listByWorkspaceId` loads. Used by the P2
- * ring-target snapshot (`whatsappVoipCallService.selectRingTargetsForCall`),
- * which only needs permissions for the already-bounded set of ONLINE user
- * ids, and by the workspace presence "last came online" mirror
- * (`onlineSince`, see `packages/database/src/schema/workspace-member.ts`).
+ * Bounded projections over WorkspaceMember — never the whole cached roster.
+ * Used by the ring-target snapshot (permissions for the already-bounded set of
+ * online user ids) and by the presence "last came online" mirror.
  */
 class WorkspaceMemberRepository {
   /**
-   * Permissions for exactly the requested `userIds`, scoped to
-   * `workspaceId` — an id with no matching row (not a member, e.g. a
-   * synthetic support-session membership, which is never persisted) is
-   * simply absent from the result, never a placeholder entry. Empty
-   * `userIds` short-circuits to `[]` with no query.
+   * Permissions for exactly the requested userIds, scoped to workspaceId — an
+   * id with no matching row (e.g. a synthetic support-session membership, never
+   * persisted) is simply absent from the result. Empty userIds short-circuits
+   * to [] with no query.
    */
   async listPermissionsByUserIds(props: {
     workspaceId: string
@@ -47,21 +43,10 @@ class WorkspaceMemberRepository {
   }
 
   /**
-   * Stamps `onlineSince = now()` (DB server clock) for every id in
-   * `userIds`, scoped to `workspaceId`, in ONE bulk UPDATE — a durable
-   * "when did this member last come online" mirror for reporting. Called
-   * ONLY with the subset of a presence report that just transitioned
-   * offline -> online (see `workspacePresenceService.heartbeatMany`), never
-   * with every reported user. Redis (`workspacePresenceService.
-   * listOnlineMembers`) remains the only source of truth for whether a
-   * member is online RIGHT NOW — this column can never itself answer
-   * that, so there is no corresponding "mark offline" write.
-   *
-   * A plain UPDATE ... WHERE ... IN (...) with no existence check and no
-   * error for an id with no matching row: a synthetic platform-support
-   * "membership" (AGENTS.md invariant #19) has no real `WorkspaceMember`
-   * row, so it must be a silent no-op for exactly that id, not the whole
-   * batch. Empty `userIds` short-circuits to no query.
+   * Stamps onlineSince = now() in one bulk UPDATE for the offline->online
+   * subset only; no "mark offline" write since Redis is the source of truth.
+   * No existence check, so a synthetic support membership (no real row) is a
+   * silent no-op for that id only, not the whole batch.
    */
   async markOnlineBulk(props: {
     workspaceId: string

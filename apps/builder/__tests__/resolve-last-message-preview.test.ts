@@ -96,7 +96,7 @@ describe("resolveLastMessagePreview", () => {
     expect(result).toBe("Voice call · 0:05")
   })
 
-  // A-L3 (Fable review) — the existing "completed WITH a duration" test only
+  // The existing "completed WITH a duration" test only
   // exercised the default (inbound, `userInitiated`) direction; the preview
   // must render the same localized duration label for an outbound
   // (`businessInitiated`) completed call too.

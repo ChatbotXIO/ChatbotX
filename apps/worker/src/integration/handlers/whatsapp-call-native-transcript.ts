@@ -26,17 +26,14 @@ import { resolveVoipAuthByInboxId } from "./whatsapp-voip-signaling"
 const DEFAULT_TRANSCRIPT_DOCUMENT_MIME_TYPE = "application/json"
 
 /**
- * Shape of the transcript document Meta's `call_transcript.document` media
- * id/url resolves to. Validated (never trusted) since
- * it is untrusted content fetched over the network; a segment's
- * `speaker`/`channel` are present only for a diarized Meta-native transcript.
+ * Shape of the transcript document Meta's media id/url resolves to. Validated
+ * since it's untrusted content fetched over the network; speaker/channel are
+ * present only for a diarized Meta-native transcript.
  */
 const metaTranscriptSegmentSchema = z.object({
-  // Meta sends the segment id as an INTEGER (`"id": 1`), not a string —
-  // typing it as `z.string` made the whole document fail `safeParse`, so
-  // EVERY transcript was dropped as "malformed" and the call showed
-  // "Transcript unavailable" regardless of language. Accept both (and it is
-  // dropped by `mapSegments` anyway).
+  // Meta sends the segment id as an integer, not a string — typing it as
+  // z.string made the whole document fail safeParse, dropping every transcript
+  // as malformed. Accept both.
   id: z.union([z.string(), z.number()]).optional(),
   speaker: z.string().optional(),
   channel: z.number().int().optional(),
@@ -54,15 +51,17 @@ const metaTranscriptDocumentSchema = z.object({
     language: z.string().optional(),
     duration: z.number().optional(),
     confidence: z.number().optional(),
-    // Deliberately optional AND possibly empty: Meta fires this webhook even
-    // when the spoken language isn't supported for transcription, in which
-    // case `segments` is an empty array — the "unavailable for this call's
-    // language" case (see `handleWhatsappCallNativeTranscriptFetch`).
+    // Deliberately optional and possibly empty: Meta fires this webhook even
+    // when the spoken language isn't supported for transcription, in which case
+    // segments is an empty array.
     segments: z.array(metaTranscriptSegmentSchema).optional(),
   }),
 })
 
-/** Maps Meta's segment shape onto our `WhatsappCallTranscriptSegments` column shape (drops `id`/`confidence`/`words`). */
+/**
+ * Maps Meta's segment shape onto our WhatsappCallTranscriptSegments column
+ * shape (drops id/confidence/words).
+ */
 const mapSegments = (
   segments: readonly z.infer<typeof metaTranscriptSegmentSchema>[],
 ): WhatsappCallTranscriptSegments =>
@@ -75,12 +74,10 @@ const mapSegments = (
   }))
 
 /**
- * The flat transcript backing `{{last_call_transcript}}`/search: prefer
- * Meta's own flattened `transcript.text` when present, otherwise
- * concatenate the diarized segment texts. When both are empty (the
- * unsupported-language case), this resolves to `""` — deliberately distinct
- * from `null` so `attachTranscript`'s CAS (`transcript IS NULL`) still
- * treats a later redelivery as already-processed instead of re-fetching.
+ * The flat transcript backing {{last_call_transcript}}/search: prefer Meta's
+ * own transcript.text, otherwise concatenate segment texts. When both are empty
+ * (unsupported language), resolves to "" — deliberately distinct from null so
+ * attachTranscript's CAS still treats a later redelivery as already-processed.
  */
 const resolveFlatTranscript = (
   text: string | undefined,
@@ -96,38 +93,20 @@ const resolveFlatTranscript = (
 }
 
 /**
- * Meta-native call transcript fetch: the
- * `call_transcription_available` webhook only carries a document media id +
- * a short-lived lookaside URL, never the transcript body — this downloads
- * the JSON document (preferring the media id, see `downloadCallMedia`),
- * parses + maps it to our diarized `segments` shape, stamps the
- * `WhatsappCall` row via `attachTranscript`, then reuses the exact
- * recording-message enrichment + `emitCallTranscribed` broadcast the
- * browserWhisper path uses so the realtime update-in-place logic isn't duplicated.
- *
- * Handles the empty-segments case (the spoken language wasn't supported for
- * transcription): still persists `segments: []` + a flat `""` transcript —
- * distinct from `null` — so the UI can render "Transcript unavailable for
- * this call's language" rather than treating the call as never processed.
- *
- * Independent of `handleWhatsappCallNativeRecordingFetch`: the two jobs
- * race on disjoint `WhatsappCall` columns and neither waits on the other.
- * Idempotent on redelivery via the `call.transcript !== null` guard below
- * (an explicit null-check, not a truthiness check — an already-persisted
- * `""` must still short-circuit) backed by `attachTranscript`'s own CAS.
- *
- * The row may not exist yet at the first attempt (this job can race the
- * row-creating `calls` webhook/job) — `data.whatsappCallId` is only a
- * fast-path hint, so this always re-resolves by `data.wacid` and throws
- * {@link WhatsappCallRowNotReadyError} (retryable, bounded ~1h via
- * `NATIVE_CALL_CAPTURE_RETRY_OPTIONS`) while still missing, instead of
- * silently dropping the event.
+ * Meta-native call transcript fetch: the webhook only carries a document media
+ * id + short-lived URL, never the body. Empty segments (unsupported language)
+ * still persist segments: [] and a flat "" transcript, distinct from null, so
+ * the UI shows "unavailable" rather than unprocessed. Independent of the
+ * recording fetch job — races on disjoint columns. Idempotent via an explicit
+ * transcript !== null guard (not truthiness, since a persisted "" must still
+ * short-circuit). The row may not exist yet at first attempt, so this always
+ * re-resolves by wacid and throws WhatsappCallRowNotReadyError (retryable,
+ * bounded ~1h) while missing.
  */
 export const handleWhatsappCallNativeTranscriptFetch = async (
   data: IntegrationJobWhatsappCallNativeTranscriptFetch["data"],
 ): Promise<void> => {
-  // Channel-originated: required for emitCallTranscribed (see the analogous
-  // override in whatsapp-call-transcribe.ts).
+  // Channel-originated: required for emitCallTranscribed.
   setWebhookExecutionContext({ source: "webhook" })
 
   logger.info(
@@ -146,8 +125,8 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
     )
     throw new WhatsappCallRowNotReadyError(data.wacid)
   }
-  // See the matching guard in whatsapp-call-native-recording.ts: a job
-  // enqueued before its row existed bypassed the worker-level gate.
+  // See the matching guard in whatsapp-call-native-recording.ts: a job enqueued
+  // before its row existed bypassed the worker-level gate.
   if (!data.workspaceId && (await isBlockedWorkspace(call.workspaceId))) {
     logger.info(
       { whatsappCallId: call.id, workspaceId: call.workspaceId },
@@ -203,8 +182,8 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
     const parsed = metaTranscriptDocumentSchema.safeParse(JSON.parse(text))
     if (!parsed.success) {
       // A malformed document is a permanent condition — the same bytes fail
-      // identically on retry — so this skips rather than throwing (never
-      // logs the document body itself, only the validation issues).
+      // identically on retry — so this skips rather than throwing (never logs
+      // the document body itself).
       logger.error(
         {
           whatsappCallId: call.id,
@@ -233,8 +212,8 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
     segments,
   })
   if (!stamped) {
-    // Lost the CAS to a concurrent redelivery — the winning write already
-    // did the enrichment/emit below.
+    // Lost the CAS to a concurrent redelivery — the winning write already did
+    // the enrichment/emit below.
     return
   }
 

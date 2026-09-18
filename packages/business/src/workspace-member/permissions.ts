@@ -19,13 +19,10 @@ export const FULL_WORKSPACE_MEMBER_PERMISSIONS: WorkspaceMemberPermissions =
   })
 
 /**
- * Moved here from `apps/builder/src/lib/auth/permission-routes.ts` (which
- * re-exports these same names for its existing callers) so the business
- * layer — specifically the P1 VoIP ring-target eligibility filter in
- * `whatsapp-call/voip-call-service.ts` — can reuse the ONE permission rule
- * instead of duplicating it. `permissions` accepts a possibly-partial
- * object (the jsonb column defaults to `{}`) so a missing key fails
- * closed, never open.
+ * Lives in the business layer so `whatsapp-call/voip-call-service.ts` can
+ * reuse the ONE permission rule instead of duplicating it. `permissions`
+ * accepts a possibly-partial object (the jsonb column defaults to `{}`) so a
+ * missing key fails closed, never open.
  */
 export type PermissionsInput =
   | WorkspaceMemberPermissions

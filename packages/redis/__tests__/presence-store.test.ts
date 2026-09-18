@@ -9,12 +9,9 @@ afterEach(() => {
 })
 
 /**
- * `defineCommand` registers a Lua script and ioredis exposes it as a
- * method on the client — vitest can't run real Lua, so this fake
- * reproduces `PRESENCE_HEARTBEAT_MANY_LUA`'s exact semantics in JS against
- * an in-memory map, to verify the store wires the Lua call's arguments and
- * branching correctly (mirrors `cas-store.test.ts`'s
- * `makeFakeRedisWithLuaCas`).
+ * vitest can't run real Lua, so this fake reproduces
+ * `PRESENCE_HEARTBEAT_MANY_LUA`'s exact semantics in JS (mirrors
+ * `cas-store.test.ts`'s `makeFakeRedisWithLuaCas`).
  */
 function makeFakeRedisWithPresenceLua() {
   const scores = new Map<string, Map<string, number>>()

@@ -21,7 +21,7 @@ describe("resolveDisplayCallOutcome — coalesce(outcome, status) reader contrac
   })
 
   test("never fabricates 'canceled' from status alone (no status equivalent exists)", () => {
-    // A legacy failed row with no outcome can never resolve to "canceled" —
+    // A failed row with no outcome can never resolve to "canceled" —
     // only an explicit outcome write can mark a call canceled.
     expect(resolveDisplayCallOutcome({ status: "failed", outcome: null })).toBe(
       "failed",

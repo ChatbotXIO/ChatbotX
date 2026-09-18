@@ -14,12 +14,11 @@ const listWhatsappCallsSchema = z.object({
 })
 
 /**
- * P5 item 6 — backs the Calls page's "Load more" button (subsequent pages
+ * Backs the Calls page's "Load more" button (subsequent pages
  * only; the first page renders server-side in `page.tsx` via the same
  * `listWhatsappCalls` query adapter). Gated by `callHistoryActionClient`
- * (plan D4 page access: `hasContactsAccess || analytics`) — a read action,
- * so it keeps working for an expired/blocked workspace and a support
- * session (D8).
+ * (`hasContactsAccess || analytics`) — a read action, so it keeps working
+ * for an expired/blocked workspace and a support session.
  */
 export const listWhatsappCallsAction = callHistoryActionClient
   .bindArgsSchemas([zodBigintAsString()])

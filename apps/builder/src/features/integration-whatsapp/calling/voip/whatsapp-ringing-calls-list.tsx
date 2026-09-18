@@ -62,24 +62,10 @@ function RingingCallRow({
 }
 
 /**
- * Compact strip/card listing every offer currently in the basket
- * (`ringingCalls`) — one row per caller, each with its own independent
- * countdown (`useCountdownSeconds`, never a second copy of that hook). See
- * the UI table in the multi-ring design spec (Workstream 4). Renders
- * nothing when the basket is empty — callers still decide whether THEY
- * should render at all (e.g. the panel picks the single big card instead
- * for exactly one offer with a free slot), this component only knows how to
- * draw a list.
- *
- * Deliberately renders NO backdrop and NO positioning of its own. It used to
- * render its own `VoipBackdrop` when the slot was free, which put a
- * viewport-wide `fixed z-40` overlay INSIDE the caller's positioned
- * `z-50` wrapper: that wrapper is a stacking context, `z-index` applies only
- * to positioned elements, and this card has no position class — so the
- * backdrop painted OVER the list and, having no `pointer-events-none`,
- * swallowed every Answer/Reject click in the one scenario this whole
- * component exists for. The backdrop is the caller's decision and the
- * caller's sibling now, which makes that class of bug unrepresentable here.
+ * Lists every offer currently in the basket, one row per caller. Deliberately
+ * renders no backdrop or positioning of its own — a fixed overlay here would
+ * paint over the list and swallow Answer/Reject clicks; the backdrop is the
+ * caller's sibling instead.
  */
 export function WhatsappRingingCallsList({
   calls,

@@ -59,7 +59,6 @@ describe("listWhatsappCallsAction", () => {
     )
   })
 
-  // M4: the action reads ctx.user.id, not a separate ctx.userId.
   test("uses ctx.user.id — not a bare ctx.userId — for the member passed downstream", async () => {
     await getAction({
       bindArgsParsedInputs: ["ws-1"],
@@ -76,8 +75,6 @@ describe("listWhatsappCallsAction", () => {
     })
   })
 
-  // P5 item 6 gap closure (M5) — the agent/inbox selects' URL params must
-  // reach the query adapter through the action, same as activity/cursor.
   test("forwards inboxId and agentUserId from parsedInput", async () => {
     await getAction({
       bindArgsParsedInputs: ["ws-1"],

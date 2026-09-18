@@ -273,7 +273,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       },
     })
     expect(mocks.sendToWorkspaceMember).not.toHaveBeenCalled()
-    // L2: the reservation already exists at this point (reserve-first), so
+    // The reservation already exists at this point (reserve-first), so
     // this branch must end it directly via `endReservedCall` rather than
     // going through `refuseIncomingCall`'s `claimUnreachable` SET NX, which
     // can never win here.
@@ -404,7 +404,7 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
       }),
     ).rejects.toThrow(CALL_ROW_NOT_READY_PATTERN)
 
-    // The row genuinely isn't ready — the conversation (needed for D3's
+    // The row genuinely isn't ready — the conversation (needed for the
     // onlyAssignedContacts check) can't be resolved, so this must retry
     // AFTER the reservation (already made, and idempotent on retry) but
     // BEFORE any target is selected, refusal issued, or agent rung.
@@ -772,11 +772,10 @@ describe("handleWhatsappVoipSignalingJob: expireIfUnanswered", () => {
   })
 })
 
-// Bug 2: a `handleConnect` job that exhausts every `WHATSAPP_VOIP_SIGNAL_
-// RETRY_OPTIONS` attempt (e.g. `VoipCallRowNotReadyError` because the
-// sibling `whatsappCallEvent` job never created the row) used to just vanish
-// — the queue's `removeOnFail: true` deletes it the instant the LAST attempt
-// fails, and nothing else was watching it. `finalizeExhaustedHandleConnect`
+// A `handleConnect` job that exhausts every `WHATSAPP_VOIP_SIGNAL_
+// RETRY_OPTIONS` attempt (e.g. `VoipCallRowNotReadyError` because the sibling
+// `whatsappCallEvent` job never created the row) would otherwise vanish: the
+// queue's `removeOnFail: true` deletes it the instant the LAST attempt fails. `finalizeExhaustedHandleConnect`
 // is the safety net the worker-level `failed` listener calls in that case.
 describe("finalizeExhaustedHandleConnect", () => {
   test("no control record existed yet: claims unreachable and Meta-rejects, finalizing as rejected", async () => {
@@ -1416,7 +1415,7 @@ describe("handleConnect — the number's own calling settings", () => {
     expect(mocks.terminateCall).not.toHaveBeenCalled()
   })
 
-  // L2: the "noAgent" refusal runs AFTER `reserveIncomingCall`, so the
+  // The "noAgent" refusal runs AFTER `reserveIncomingCall`, so the
   // control record already exists — it must go straight to
   // `endReservedCall` (the fenced CAS), never through
   // `refuseIncomingCall`'s `claimUnreachable`, which would always lose.

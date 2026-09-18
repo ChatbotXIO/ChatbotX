@@ -605,13 +605,10 @@ describe("WorkspaceParty presence reporting", () => {
   })
 
   /**
-   * Proves the actual bug the live investigation found: the OLD design
-   * gated re-bootstrap on `getAlarm() !== null`, which stays truthy
-   * forever once an alarm is scheduled — even if it silently stops
-   * firing. These tests set up exactly that broken state directly (a
-   * non-null alarm, but a stale/missing `presenceLastArmedAt`) and assert
-   * the loop recovers anyway, from BOTH independent recovery paths
-   * (`onConnect` and `onRequest`) — without relying on `getAlarm()` at all.
+   * Re-bootstrap must not gate on `getAlarm() !== null`: that stays truthy
+   * forever once scheduled, even if it silently stops firing. These tests set
+   * up exactly that broken state and assert recovery via both `onConnect` and
+   * `onRequest`, without relying on `getAlarm()`.
    */
   describe("self-healing a stalled report loop", () => {
     it("onConnect re-arms and re-reports when the freshness marker is stale, even though an alarm is still scheduled", async () => {

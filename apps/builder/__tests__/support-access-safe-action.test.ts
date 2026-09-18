@@ -155,8 +155,8 @@ describe("workspaceActionClientAllowExpired — platform support access", () => 
     expect(result.serverError).toBeDefined()
   })
 
-  // M4: `ctx.userId` was dropped — every consumer (the P5 call-artifact
-  // actions, `listWhatsappCallsAction`) reads `ctx.user.id` instead, the
+  // `ctx.userId` was dropped — every consumer (the call-artifact actions,
+  // `listWhatsappCallsAction`) reads `ctx.user.id` instead, the
   // same field `authActionClient` already exposes to every other action.
   test("does not expose a redundant ctx.userId — ctx.user.id is the one place the caller's id lives", async () => {
     mocks.resolveWorkspaceAccess.mockResolvedValue({
@@ -171,7 +171,7 @@ describe("workspaceActionClientAllowExpired — platform support access", () => 
     expect(result.data?.user).toMatchObject({ id: "user-1" })
   })
 
-  // C1/D8: `workspaceActionClientAllowExpired` is the read client every P5
+  // `workspaceActionClientAllowExpired` is the read client every
   // call-artifact action AND the Calls page/history action are built on —
   // it must never call the owner-quota/expiry gate
   // (`checkWorkspaceOwnerAccess`, which only `workspaceActionClient` layers
@@ -195,11 +195,11 @@ describe("workspaceActionClientAllowExpired — platform support access", () => 
   })
 })
 
-// H2 (plan P5 item 3/6): `callHistoryActionClient` gates the Calls page's
-// list action on `hasContactsAccess || analytics` (D4) — distinct from
+// `callHistoryActionClient` gates the Calls page's
+// list action on `hasContactsAccess || analytics` — distinct from
 // `requireContactsAccess`, which admits only `contacts`/`onlyAssignedContacts`
 // and would wrongly shut out an analytics-only viewer from call history.
-describe("callHistoryActionClient — requireCallHistoryAccess gate (plan D4)", () => {
+describe("callHistoryActionClient — requireCallHistoryAccess gate", () => {
   test("allows a contacts member", async () => {
     mocks.resolveWorkspaceAccess.mockResolvedValue({
       workspace: { id: "123", ownerId: "owner-1" },
@@ -255,7 +255,7 @@ describe("callHistoryActionClient — requireCallHistoryAccess gate (plan D4)", 
     expect(result.serverError).toBeUndefined()
   })
 
-  // C1/D8: built on `workspaceActionClientAllowExpired`, so it must never
+  // Built on `workspaceActionClientAllowExpired`, so it must never
   // run the owner-quota/expiry gate — history stays readable for an
   // expired/owner-blocked workspace.
   test("never runs the owner-quota/expiry gate for an expired/owner-blocked workspace", async () => {

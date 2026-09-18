@@ -438,10 +438,9 @@ export type IntegrationJobCoexistAttachmentDownload = {
 }
 
 /**
- * One normalized event from Meta's `calls` webhook field (WhatsApp Business
- * Calling). Structurally mirrors `WhatsappCallEventPayload` from
- * `@chatbotx.io/integration-whatsapp` (worker-config cannot depend on
- * integration packages — same convention as `adsAutomaticEvent`).
+ * One normalized event from Meta's calls webhook field. Mirrors
+ * WhatsappCallEventPayload from the integration package (worker-config can't
+ * depend on integration packages).
  */
 export type IntegrationJobWhatsappCallEvent = {
   type: typeof IntegrationJobAction.whatsappCallEvent
@@ -466,13 +465,15 @@ export type IntegrationJobWhatsappCallEvent = {
             direction: "userInitiated" | "businessInitiated"
             from?: string
             to?: string
-            /** BSUID counterparts of `from`/`to` (Username/BSUID-only legs). */
+            /** BSUID counterparts of from/to (Username/BSUID-only legs). */
             fromUserId?: string
             toUserId?: string
             fromParentUserId?: string
             toParentUserId?: string
             timestamp?: string
-            /** Meta's `biz_opaque_callback_data` echo (the outbound `attemptId`). */
+            /**
+             * Meta's biz_opaque_callback_data echo (the outbound attemptId).
+             */
             bizOpaqueCallbackData?: string
           }
         | {
@@ -499,7 +500,7 @@ export type IntegrationJobWhatsappCallEvent = {
             wacid: string
             status: "RINGING" | "ACCEPTED" | "REJECTED"
             recipientId?: string
-            /** BSUID counterpart of `recipientId`. */
+            /** BSUID counterpart of recipientId. */
             recipientUserId?: string
             timestamp?: string
             bizOpaqueCallbackData?: string
@@ -510,14 +511,13 @@ export type IntegrationJobWhatsappCallEvent = {
 
 /**
  * A call recording landed in object storage. The handler stamps it onto the
- * WhatsappCall row (looked up by the DB `callId`, never a channel-specific
- * external id), drops an audio message into the conversation,
- * fires the callRecorded event, and chains the transcription job.
+ * WhatsappCall row (by DB callId, never an external id), drops an audio message
+ * into the conversation, fires callRecorded, and chains the transcription job.
  */
 export type IntegrationJobWhatsappCallRecordingReady = {
   type: typeof IntegrationJobAction.whatsappCallRecordingReady
   data: {
-    /** `WhatsappCall.id` (bigint string) — never a wacid/attemptId. */
+    /** WhatsappCall.id (bigint string) — never a wacid/attemptId. */
     callId: string
     /** Enables the worker-level blocked-owner guard. */
     workspaceId: string
@@ -526,109 +526,104 @@ export type IntegrationJobWhatsappCallRecordingReady = {
     mimeType?: string
     sizeBytes?: number
     durationSeconds?: number
-    /** For logs only: `wacid ?? attemptId`, never used to look the row up. */
+    /** For logs only: wacid ?? attemptId, never used to look the row up. */
     correlationId?: string
   }
 }
 
 /**
- * `WhatsappCall.id`-keyed, replay-safe jobId for `whatsappCallRecordingReady`
- * — shared by every enqueuer (the browser-upload route in `apps/builder` and
- * the worker's Meta-native recording fetch) so a duplicate enqueue for the
- * same call is always deduped by BullMQ, regardless of which side of the
- * process boundary uploaded the recording.
+ * WhatsappCall.id-keyed, replay-safe jobId shared by every enqueuer so a
+ * duplicate enqueue for the same call is always deduped by BullMQ.
  */
 export const whatsappCallRecordingReadyJobId = (callId: string): string =>
   `rec-ready-${callId}`
 
 /**
- * Meta-native call recording delivery: the
- * `calls` webhook's `call_recording_available` event carries only a
- * short-lived (~5-min) `audio.url` + `audio.id` — Meta's 7-day retention
- * window means the download must be fetched promptly. This job's payload is
- * deliberately SLIM (media id/url/mime type only, never the audio bytes):
- * the handler downloads from the Graph Media API using `audioMediaId`/
- * `audioUrl`, uploads the bytes to object storage, and stamps the
- * `WhatsappCall` row looked up by `whatsappCallId` — mirroring
- * `whatsappCallRecordingReady`'s "handler resolves by DB id, never a
- * channel-specific external id alone" convention, while keeping `wacid` for
- * idempotent job-id keying (a webhook can be redelivered before `wacid` is
- * durably attached in some races, so both ids travel together).
+ * The webhook's call_recording_available event carries only a short-lived
+ * audio.url + audio.id, so the download must happen promptly. wacid is kept
+ * alongside for idempotent job-id keying since a webhook can be redelivered
+ * before wacid is durably attached.
  */
 export type IntegrationJobWhatsappCallNativeRecordingFetch = {
   type: typeof IntegrationJobAction.whatsappCallNativeRecordingFetch
   data: {
     /**
-     * `WhatsappCall.id` (bigint string) — absent when the webhook raced the
-     * row-creating job/webhook and the row didn't exist yet at enqueue time
-     * (R8). The handler always re-resolves the row by `wacid`, so this is
-     * only a fast-path hint, never load-bearing.
+     * WhatsappCall.id (bigint string) — absent when the webhook raced the row-
+     * creating job and the row didn't exist yet. The handler always re-resolves
+     * by wacid, so this is only a fast-path hint.
      */
     whatsappCallId?: string
-    /** `calls[].id` from the webhook — used for idempotent job-id keying AND to resolve the row when `whatsappCallId` is absent. */
+    /**
+     * calls[].id from the webhook — used for idempotent job-id keying and to
+     * resolve the row when whatsappCallId is absent.
+     */
     wacid: string
-    /** Enables the worker-level blocked-owner guard; absent when the row (and thus its workspace) wasn't resolvable at enqueue time — the guard fails open for those attempts, matching `resolveWorkspaceId`'s documented "cannot attribute" behavior. */
+    /**
+     * Enables the worker-level blocked-owner guard; absent when the row wasn't
+     * resolvable at enqueue time, matching resolveWorkspaceId's fail-open
+     * behavior.
+     */
     workspaceId?: string
-    /** Graph Media API id for the recording audio (`call_recording.audio.id`). */
+    /** Graph Media API id for the recording audio. */
     audioMediaId: string
-    /** Meta's short-lived (~5-min) download URL (`call_recording.audio.url`). */
+    /** Meta's short-lived (~5-min) download URL. */
     audioUrl: string
-    /** e.g. `audio/ogg; codecs=opus` (`call_recording.audio.mime_type`). */
+    /** e.g. audio/ogg; codecs=opus. */
     mimeType: string
   }
 }
 
 /**
- * `wacid`-keyed, replay-safe jobId for `whatsappCallNativeRecordingFetch` —
- * idempotent across webhook redelivery of the same `call_recording_available`
- * event, mirroring `whatsappCallRecordingReadyJobId`'s naming convention.
+ * wacid-keyed, replay-safe jobId for the native recording fetch, idempotent
+ * across webhook redelivery.
  */
 export const whatsappCallNativeRecordingFetchJobId = (wacid: string): string =>
   `native-rec-fetch-${wacid}`
 
 /**
- * Meta-native call transcript delivery: the
- * `calls` webhook's `call_transcription_available` event carries only a
- * transcript-document media id + short-lived url — the JSON body (diarized
- * `segments`) is fetched separately by the handler, never inlined into this
- * payload. Independent of `whatsappCallNativeRecordingFetch`: the two events
- * race and write disjoint columns on the same `WhatsappCall` row, so neither
- * job waits on the other.
+ * Meta-native call transcript delivery: the webhook's
+ * call_transcription_available event carries only a media id + short-lived url
+ * — the diarized JSON body is fetched separately by the handler. Independent of
+ * the recording fetch job: the two events race and write disjoint columns, so
+ * neither waits on the other.
  */
 export type IntegrationJobWhatsappCallNativeTranscriptFetch = {
   type: typeof IntegrationJobAction.whatsappCallNativeTranscriptFetch
   data: {
     /**
-     * `WhatsappCall.id` (bigint string) — absent when the webhook raced the
-     * row-creating job/webhook and the row didn't exist yet at enqueue time
-     * (R8). The handler always re-resolves the row by `wacid`, so this is
-     * only a fast-path hint, never load-bearing.
+     * WhatsappCall.id (bigint string) — absent when the webhook raced the row-
+     * creating job and the row didn't exist yet. The handler always re-resolves
+     * by wacid.
      */
     whatsappCallId?: string
-    /** `calls[].id` from the webhook — used for idempotent job-id keying AND to resolve the row when `whatsappCallId` is absent. */
+    /**
+     * calls[].id from the webhook — used for idempotent job-id keying and to
+     * resolve the row when whatsappCallId is absent.
+     */
     wacid: string
-    /** Enables the worker-level blocked-owner guard; absent when the row (and thus its workspace) wasn't resolvable at enqueue time — the guard fails open for those attempts, matching `resolveWorkspaceId`'s documented "cannot attribute" behavior. */
+    /**
+     * Enables the worker-level blocked-owner guard; absent when the row wasn't
+     * resolvable at enqueue time, matching resolveWorkspaceId's fail-open
+     * behavior.
+     */
     workspaceId?: string
-    /** Graph Media API id for the transcript document (`call_transcript.document.id`). */
+    /** Graph Media API id for the transcript document. */
     documentMediaId: string
-    /** Meta's short-lived download URL (`call_transcript.document.url`). */
+    /** Meta's short-lived download URL. */
     documentUrl: string
   }
 }
 
 /**
- * `wacid`-keyed, replay-safe jobId for `whatsappCallNativeTranscriptFetch` —
- * idempotent across webhook redelivery of the same
- * `call_transcription_available` event, distinct from the recording-fetch
- * job id above so the two never collide for the same call.
+ * wacid-keyed, replay-safe jobId for the native transcript fetch, distinct from
+ * the recording-fetch job id so the two never collide for the same call.
  */
 export const whatsappCallNativeTranscriptFetchJobId = (wacid: string): string =>
   `native-transcript-fetch-${wacid}`
 
-// Speech-to-text over a stored call recording moved to the dedicated
-// `callTranscription` queue (`CallTranscriptionJobTranscribeCall`
-// in `packages/worker-config/src/queues/call-transcription`), so it can carry
-// its own BullMQ `limiter` independent of this shared queue's traffic.
+// Speech-to-text over a stored recording moved to the dedicated
+// callTranscription queue so it can carry its own BullMQ limiter independent of
+// this shared queue's traffic.
 
 export type IntegrationJobAdsAutomaticEvent = {
   type: typeof IntegrationJobAction.adsAutomaticEvent
@@ -692,13 +687,10 @@ export type AdsConversionJobEvaluateTemplateSent = {
 }
 
 /**
- * Generic conversion-trigger evaluation job shared by every trigger type
- * beyond `templateSent` (tagApplied, keywordMatched, contactReplied). The
- * `occurrence` discriminant carries just enough context for
- * `adsConversionService.evaluateConversionTrigger` to match it against each
- * enabled rule's `trigger` — see `packages/business/src/ads-conversion/schema.ts`.
- * `channel`/`integrationId` generalize the previous WhatsApp-only
- * `integrationWhatsappId` field.
+ * Generic conversion-trigger evaluation job shared by every trigger type beyond
+ * templateSent. The occurrence discriminant gives evaluateConversionTrigger
+ * enough context to match each enabled rule's trigger. channel/integrationId
+ * generalize the previous WhatsApp-only field.
  */
 export type AdsConversionJobEvaluateConversionTrigger = {
   type: typeof IntegrationJobAction.evaluateConversionTrigger
@@ -715,11 +707,9 @@ export type AdsConversionJobEvaluateConversionTrigger = {
 }
 
 /**
- * `channel`/`integrationMessengerId`/`integrationInstagramId` widen this
- * beyond WhatsApp — additive next to the
- * pre-existing `integrationWhatsappId` field so an omitted `channel` keeps
- * every pre-Phase-3 caller's WhatsApp-or-any-account behavior unchanged.
- * Mirrors `RetargetAdInput` in `packages/business/src/ads-conversion/schema.ts`.
+ * channel/integrationMessengerId/integrationInstagramId widen this beyond
+ * WhatsApp, additive next to integrationWhatsappId so an omitted channel keeps
+ * prior callers' behavior unchanged.
  */
 export type AdsConversionJobSyncRetargetAudience = {
   type: typeof IntegrationJobAction.syncRetargetAudience
@@ -901,15 +891,12 @@ export const integrationQueue = isNoRedisEnv()
       defaultJobOptions,
     })
 
-// Ads-conversion jobs need a stronger retry policy than the integration
-// queue default (`attempts: 2` / 5s) — CAPI sends and retarget syncs call
-// out to Meta and should ride out transient 5xx/429s over minutes, not
-// seconds. `sendConversionEvent` additionally gets an explicit BullMQ
-// `priority` so it's picked ahead of the other 3 ads actions once queued —
-// note BullMQ processes *unprioritized* (priority 0, the default for the
-// ~30 existing integration actions) jobs before ANY prioritized job, so this
-// only orders ads-conversion jobs relative to each other, not ahead of the
-// rest of the integration queue. See BullMQ `priority` docs.
+// Ads-conversion jobs need a stronger retry policy than the queue default since
+// CAPI sends and retarget syncs call out to Meta and should ride out transient
+// 5xx/429s over minutes. sendConversionEvent also gets a BullMQ priority so
+// it's picked ahead of the other 3 ads actions — note BullMQ processes
+// unprioritized jobs before any prioritized one, so this only orders ads-
+// conversion jobs relative to each other.
 const CAPI_EVENT_PRIORITY = 1
 
 const adsConversionRetryOptions: JobsOptions = {
@@ -921,14 +908,10 @@ const adsConversionRetryOptions: JobsOptions = {
 }
 
 /**
- * `whatsappCallNativeRecordingFetch`/`whatsappCallNativeTranscriptFetch` can
- * be enqueued BEFORE the `WhatsappCall` row exists (the native-media webhook
- * racing the row-creating `calls` webhook/job on the same delivery) — see
- * R8. The handler resolves the row by `wacid` and throws a retryable error
- * while it's still missing; this bounds those retries to roughly an hour (12
- * intervals of 5 minutes) rather than the default short-lived retry policy,
- * so a slow row insert still gets picked up without leaving the job retrying
- * indefinitely.
+ * The native recording/transcript fetch jobs can be enqueued before the
+ * WhatsappCall row exists (racing the row-creating webhook/job). The handler
+ * throws a retryable error while it's missing; this bounds retries to roughly
+ * an hour rather than the default short-lived policy.
  */
 const NATIVE_CALL_CAPTURE_RETRY_OPTIONS: JobsOptions = {
   attempts: 13,

@@ -10,31 +10,20 @@ export const META_RECORDING_ANNOUNCEMENT_REJECTED =
   "meta-rejected-recording-announcement"
 
 /**
- * Writes what a call actually arranged for recording, so the conversation card
- * reports the truth instead of the number's general setting.
- *
- * Meta records a call only after playing its consent announcement, and refuses
- * that announcement outright when the configured purpose or language is
- * invalid. The refusal used to be one warn line while the call went ahead
- * unrecorded — for a workspace that records calls to meet an obligation, that
- * has to be impossible to miss, so it also lands in the workspace error log.
- *
+ * Meta refuses to record when the configured purpose/language is invalid, so
+ * that refusal is also logged to the workspace error log, not just swallowed.
  * Never throws: bookkeeping must not fail a call that is already connected.
  */
 export async function recordCallRecordingArrangement(input: {
   whatsappCallId: string
   workspaceId: string
-  /** Whether a recording is actually coming for this call. */
   recordingRequested: boolean
-  /** Whether this call asked Meta to record in the first place. */
   recordingWasRequested: boolean
-  /** Whether this call asked Meta to transcribe it. */
   transcriptionWasRequested: boolean
   /** The announcement language actually sent, for diagnosing a refusal. */
   announcementLanguage?: string
   /** Length of the announcement purpose — never the text itself. */
   purposeChars?: number
-  /** Whether the browser recorder is capturing this call instead. */
   browserRecordingEnabled: boolean
   /** Meta's refusal, when the announcement was dropped to save the call. */
   announcementError?: unknown

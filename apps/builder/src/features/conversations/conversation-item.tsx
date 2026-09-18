@@ -45,18 +45,8 @@ import {
 import type { ListConversationItemResource } from "./schema/resource"
 import { adBadgeLabelKey, selectAdBadge } from "./utils/ad-badge"
 
-/**
- * Icon shown next to a call preview snippet, keyed by
- * {@link CallPreviewKind} — a lookup instead of an if-else chain so adding a
- * new outcome/direction combination is a one-line addition here, not a new
- * branch. Mirrors `whatsapp-call-card.tsx`'s own icon choices for the
- * non-completed outcomes: `isMissedInbound` (label key ===
- * `"missedVoiceCall"`) → `PhoneMissedIcon`, every other not-answered
- * (`unansweredVoiceCall`, an outbound "no answer")/declined/canceled outcome
- * → `PhoneOffIcon` (A-L1 fix, Fable review — this map previously used
- * `PhoneMissedIcon` for `unansweredVoiceCall` too, disagreeing with the
- * card's own icon for the exact same call).
- */
+// Icon shown next to a call preview snippet. Mirrors whatsapp-call-card.tsx's
+// icon choices so the preview and the card agree per call outcome.
 const CALL_PREVIEW_ICON_BY_KIND: Record<CallPreviewKind, typeof PhoneIcon> = {
   completedInbound: PhoneIncomingIcon,
   completedOutbound: PhoneOutgoingIcon,
@@ -176,17 +166,9 @@ export default function ConversationItem({
     (state) => state,
   )
   const isActive = conversation.id === activeConversationId
-  // Ring-all: several inbox rows can be ringing at once (one basket entry
-  // per offered call), so this reads the BASKET, not the single `call`
-  // slot. Narrowed to the matching entry's id (or `undefined`) — not a bare
-  // boolean — because the Answer/Reject buttons below need that id to
-  // target the right offer. This still preserves the "no re-render on
-  // every VoIP change" property the original boolean selector had: zustand
-  // compares the selector's RETURNED VALUE (a primitive id or undefined),
-  // not the whole `ringingCalls` array, so a row only re-renders when ITS
-  // OWN match appears or disappears — an unrelated basket mutation (another
-  // conversation's ring arriving/expiring, a mute toggle on the slot's
-  // call, a countdown tick) never touches this row.
+  // Narrowed to the matching call's id (not a boolean) so Answer/Reject can
+  // target the right offer, while still only re-rendering this row when its
+  // own match appears or disappears.
   const ringingCallId = useWhatsappVoipCallStore(
     (state) =>
       state.ringingCalls.find(
@@ -194,10 +176,9 @@ export default function ConversationItem({
       )?.whatsappCallId,
   )
   const isRinging = ringingCallId !== undefined
-  // `null` when calling is disabled for this workspace/member (the provider
-  // is not mounted) — the ringing overlay never renders in that case, since
-  // `ringingCallId` would never be set either (nothing populates the
-  // basket without the calling layer mounted).
+  // null when calling is disabled for this workspace/member (the provider is
+  // not mounted) — the ringing overlay never renders in that case, since
+  // ringingCallId would never be set either.
   const voipCallContext = useOptionalWhatsappVoipCallContext()
   const isComment = conversation.messages?.[0]?.type === "comment"
   const avatarUrl = useAvatarUrl(conversation.contact)
@@ -358,10 +339,10 @@ export default function ConversationItem({
         </div>
       </Button>
       {isRinging && voipCallContext && (
-        // Overlay SIBLING of the row `<Button>`, never a descendant — a
-        // `<button>` nested inside another `<button>` is invalid DOM and
-        // trips hydration. Mirrors the avatar's absolute overlay pattern
-        // above, anchored to the row's end edge instead.
+        // Overlay sibling of the row <Button>, never a descendant — a <button>
+        // nested inside another <button> is invalid DOM and trips hydration.
+        // Mirrors the avatar's absolute overlay pattern above, anchored to the
+        // row's end edge instead.
         <div className="absolute inset-y-0 end-3 z-10 flex items-center gap-1.5">
           <Badge className="animate-pulse" variant="destructive">
             {t("whatsapp.calls.ringingBadge")}

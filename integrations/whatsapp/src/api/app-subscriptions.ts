@@ -4,10 +4,8 @@ import { rescue } from "../exception"
 import { logger } from "../lib/logger"
 
 /**
- * App-level webhook subscription object types Meta accepts on
- * `GET|POST /{app-id}/subscriptions`.
- *
- * Reference: https://developers.facebook.com/docs/graph-api/webhooks/getting-started
+ * App-level webhook subscription object types Meta accepts on GET|POST /{app-
+ * id}/subscriptions.
  */
 export const WHATSAPP_APP_SUBSCRIPTION_OBJECT = {
   WHATSAPP_BUSINESS_ACCOUNT: "whatsapp_business_account",
@@ -17,13 +15,10 @@ export type WhatsappAppSubscriptionObject =
   (typeof WHATSAPP_APP_SUBSCRIPTION_OBJECT)[keyof typeof WHATSAPP_APP_SUBSCRIPTION_OBJECT]
 
 /**
- * App-level webhook fields relevant to WhatsApp calling.
- *
- * `CALLS` is required for any call webhook (`call_created`, `terminate`, …)
- * to reach our endpoint (calling overview doc). `ACCOUNT_SETTINGS_UPDATE` is
- * optional — "only changes to calling settings are supported" per the
- * call-settings doc — and is always subscribed in a separate request so a
- * failure there can never block `CALLS`.
+ * App-level webhook fields relevant to WhatsApp calling. CALLS is required for
+ * any call webhook (call_created, terminate, …) to reach our endpoint.
+ * ACCOUNT_SETTINGS_UPDATE is optional and always subscribed in a separate
+ * request so a failure there can never block CALLS.
  */
 export const WHATSAPP_APP_WEBHOOK_FIELDS = {
   CALLS: "calls",
@@ -54,8 +49,8 @@ function buildAppAccessToken(appId: string, appSecret: string): string {
 }
 
 /**
- * `GET /{app-id}/subscriptions` — the app-level webhook subscriptions
- * configured in the App Dashboard, one entry per subscribed object.
+ * GET /{app-id}/subscriptions — the app-level webhook subscriptions configured
+ * in the App Dashboard, one entry per subscribed object.
  */
 export function getAppWebhookSubscriptions({
   appId,
@@ -138,17 +133,10 @@ export type EnsureAppWebhookFieldsResult = {
 }
 
 /**
- * Ensures the app is subscribed to `requiredFields` (and best-effort
- * `optionalFields`) on the given webhook `object`, without ever dropping a
- * field already subscribed by someone else (App Dashboard, another
- * deployment, …).
- *
- * Field subscription is **app-level** (`GET|POST /{app-id}/subscriptions`),
- * distinct from the WABA's `subscribed_apps` endpoint — see
- * `docs/whatsapp-calling.md`. The `callback_url` used on the
- * POST is always the one the GET reports for this `object`; when the GET
- * reports no subscription at all we never invent a callback URL — the
- * caller must show a "configure the webhook in App Dashboard first" message.
+ * Adds requiredFields/optionalFields without dropping fields already
+ * subscribed by someone else. The POST's callback_url always mirrors the
+ * GET's; when GET reports no subscription, this never invents a callback URL
+ * — the caller must direct the user to configure the webhook in App Dashboard.
  */
 export async function ensureAppWebhookFields({
   appId,
@@ -220,11 +208,10 @@ export async function ensureAppWebhookFields({
       fields = fieldsWithOptional
     } catch (error) {
       // Optional field subscription failure must never fail the required
-      // subscription's result — see WHATSAPP_APP_WEBHOOK_FIELDS docstring.
-      // Log only the message, never the raw error: `rescue` attaches the
-      // origin ky HTTPError (request/response, which can carry the
-      // Authorization header) as `originError` on the thrown exception, and
-      // that is an enumerable own property a generic logger would serialize.
+      // subscription's result. Log only the message, never the raw error:
+      // rescue attaches the origin ky HTTPError (which can carry the
+      // Authorization header) as originError, an enumerable own property a
+      // generic logger would serialize.
       logger.warn(
         { message: error instanceof Error ? error.message : String(error) },
         "Optional app webhook field subscription failed",

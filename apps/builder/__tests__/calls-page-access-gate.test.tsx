@@ -86,7 +86,7 @@ const renderPageStatic = async () => {
   renderToStaticMarkup(element as never)
 }
 
-describe("Calls page access gate (plan D4: hasContactsAccess || analytics)", () => {
+describe("Calls page access gate", () => {
   test("renders for a contacts member", async () => {
     getCurrentUserAndTargetWorkspaceMock.mockResolvedValue({
       user: { id: "user-1" },
@@ -122,10 +122,9 @@ describe("Calls page access gate (plan D4: hasContactsAccess || analytics)", () 
   })
 })
 
-// Item 6 gap closure (M5): agent select is admin-only (D4:
-// `superAdmin || analytics`); the inbox select and its options are fetched
-// for everyone with page access.
-describe("Calls page — filter options + admin gating (plan D4/M5)", () => {
+// Agent select is admin-only (superAdmin || analytics); the inbox select
+// and its options are fetched for everyone with page access.
+describe("Calls page — filter options + admin gating", () => {
   test("fetches filter options with includeAgents=true and passes showAgentFilter=true for a superAdmin", async () => {
     getCurrentUserAndTargetWorkspaceMock.mockResolvedValue({
       user: { id: "user-1" },

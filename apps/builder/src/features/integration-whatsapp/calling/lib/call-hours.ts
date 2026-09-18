@@ -48,8 +48,8 @@ export const formatMetaCallTime = (minuteOfDay: number): string => {
 
 /**
  * The form's starting values: Meta's schedule when the number has one, else
- * weekdays 09:00-17:00 in the workspace timezone with call hours switched off.
- * A Meta entry whose times cannot be read is skipped rather than guessed at.
+ * weekdays 09:00-17:00 in the workspace timezone with call hours off. A Meta
+ * entry whose times can't be read is skipped rather than guessed at.
  */
 export const buildCallHoursFormValues = (
   callHours: WhatsappCallHours | undefined,
@@ -145,10 +145,10 @@ const knownTimezone = (...candidates: string[]): string =>
   FALLBACK_TIMEZONE
 
 /**
- * Meta's snake_case `call_hours` in the shape the runtime stores and reads.
+ * Meta's snake_case call_hours in the shape the runtime stores and reads.
  *
- * The timezone carried here is the one chosen in the CALL settings, never the
- * workspace's — a number serving another market keeps its own hours even when
+ * The timezone carried here is the one chosen in Call settings, never the
+ * workspace's - a number serving another market keeps its own hours even when
  * the workspace timezone changes for reporting.
  */
 export const toCallHoursSnapshot = (

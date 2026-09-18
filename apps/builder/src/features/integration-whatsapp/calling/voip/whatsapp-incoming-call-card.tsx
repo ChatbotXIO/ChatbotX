@@ -7,30 +7,29 @@ import { useTranslations } from "next-intl"
 
 export type WhatsappIncomingCallCardProps = {
   contactName: string
-  /** Translation key for the status line under the contact name —
-   * `whatsapp.calls.incomingCall` ("Incoming WhatsApp call…") for a fresh
-   * basket entry, or `whatsapp.calls.voipConnecting` ("Connecting…") for
-   * the slot's call once the agent has clicked Answer and it moved to
-   * `phase: "answering"`. Passed in rather than hardcoded so this one
-   * component covers both. */
+  /**
+   * Translation key for the status line under the contact name —
+   * whatsapp.calls.incomingCall for a fresh basket entry, or
+   * whatsapp.calls.voipConnecting for the slot's call once the agent clicks
+   * Answer and it moves to phase: "answering". Passed in rather than hardcoded
+   * so this one component covers both.
+   */
   statusKey: string
   secondsRemaining: number
-  /** Disables both buttons while an answer/replacement attempt for this
-   * exact call is already in flight — mirrors `answeringIdRef` in
-   * `useWhatsappVoipCall`. */
+  /**
+   * Disables both buttons while an answer/replacement attempt for this exact
+   * call is already in flight — mirrors answeringIdRef in useWhatsappVoipCall.
+   */
   disabled?: boolean
   onAnswer: () => void
   onReject: () => void
 }
 
 /**
- * The big green "incoming call" card: avatar, contact name, status,
- * countdown, and Answer/Reject. Shared between the single call slot
- * (`WhatsappCallPanel`, `phase === incomingRinging | answering`) and a
- * single basket entry rendered directly from `ringingCalls` when the slot
- * is free (`WhatsappRingingCallsList`'s single-ring case in the panel) —
- * see the UI table in the multi-ring design spec (Workstream 4). Never
- * duplicate this markup a second time for either caller.
+ * The big green incoming-call card: avatar, name, status, countdown,
+ * Answer/Reject. Shared between the single call slot and a single basket entry
+ * rendered directly from ringingCalls when the slot is free — never duplicate
+ * this markup for either caller.
  */
 export function WhatsappIncomingCallCard({
   contactName,

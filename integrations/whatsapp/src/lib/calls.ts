@@ -2,34 +2,23 @@ import { z } from "zod"
 import { logger } from "./logger"
 
 /**
- * Parsing for Meta's `calls` webhook field (WhatsApp Business Calling API).
- *
- * The field carries two shapes on `value`:
- *  - `calls[]`    — Call Connect (`event: "connect"`) and Call Terminate
- *                   (`event: "terminate"`) events
- *  - `statuses[]` — interim call status updates (RINGING/ACCEPTED/REJECTED)
- *
- * Reference:
- * https://developers.facebook.com/documentation/business-messaging/whatsapp/calling/reference
+ * Parses Meta's `calls` webhook field (WhatsApp Business Calling API). `value`
+ * carries either `calls[]` (connect/terminate events) or `statuses[]` (interim
+ * status updates).
  */
 
 const callDirectionSchema = z.enum(["USER_INITIATED", "BUSINESS_INITIATED"])
 
-// VoIP-mode connect events carry an SDP offer inline (see
-// docs/whatsapp-calling-voip.md, "Parser boundary"). The offer is bounded so
-// a pathological payload cannot blow up memory/logs before we even decide
-// whether to keep it. The parsed offer stays in memory only; it must never
-// reach logs (see `packages/logger/src/redact.ts`) or a persisted/queued
-// path.
+// VoIP-mode connect events carry an SDP offer inline, bounded so a malformed
+// payload can't blow up memory/logs. Kept in memory only — must never reach
+// logs or a persisted/queued path.
 const MAX_SDP_OFFER_CHARS = 100_000
 
-// Outbound (business-initiated) calling inverts the inbound direction: the
-// business POSTs an `sdp_type:"offer"` to Meta's connect action and Meta
-// later echoes the user's `sdp_type:"answer"` on a `connect` webhook event
-// carrying `direction:"BUSINESS_INITIATED"`. Both shapes are structurally
-// identical ({ sdp_type, sdp }, SDP bounded by MAX_SDP_OFFER_CHARS) — which
-// literal is expected for a given event is a direction concern, enforced by
-// `parseCallSession`'s `expectedSdpType` param, not by this shape schema.
+// Outbound calling inverts direction: the business POSTs an offer and Meta
+// later echoes the user's answer on a `connect` event with
+// `direction:"BUSINESS_INITIATED"`. Both shapes are structurally identical;
+// expected `sdp_type` is enforced by `parseCallSession`'s `expectedSdpType`
+// param.
 const callSessionSchema = z.discriminatedUnion("sdp_type", [
   z.object({
     sdp_type: z.literal("offer"),
@@ -41,9 +30,9 @@ const callSessionSchema = z.discriminatedUnion("sdp_type", [
   }),
 ])
 
-// Bounded, minimal mirror of Meta's terminate-event error objects (dropped-
-// media codes 138021/138022/138023 land here) — enough for diagnosis without
-// letting an unbounded array blow up memory/logs on the hot webhook path.
+// Bounded mirror of Meta's terminate-event error objects (media-drop codes
+// 138021/138022/138023) — keeps an unbounded array from blowing up memory/logs
+// on the hot webhook path.
 const MAX_TERMINATE_ERRORS = 20
 
 const callTerminateErrorSchema = z.object({
@@ -52,11 +41,9 @@ const callTerminateErrorSchema = z.object({
   message: z.string().optional(),
 })
 
-// `wa_id` is OPTIONAL — a Username/BSUID-only caller (no phone number
-// exposed) still carries `user_id`/`parent_user_id`/`profile.username` but
-// never `wa_id`. Requiring `wa_id` here used to fail the WHOLE `calls` value
-// (`callsValueSchema.safeParse`) for such a contact, silently dropping every
-// call/status item in the same webhook — never just the one item.
+// `wa_id` is optional — a Username/BSUID-only caller (no phone number exposed)
+// never carries it; requiring it would fail the whole `calls` value and
+// silently drop every item in the webhook.
 const callContactSchema = z.object({
   wa_id: z.string().optional(),
   user_id: z.string().optional(),
@@ -66,12 +53,9 @@ const callContactSchema = z.object({
     .optional(),
 })
 
-// call_recording_available / call_transcription_available webhook nesting,
-// verified against developers.facebook.com/documentation/business-messaging/
-// whatsapp/calling/{call-recording,call-transcription} (2026-09-14): the
-// recording media sits under `call_recording.audio`, sibling to
-// `call_recording.type:"audio"`; the transcript document sits under
-// `call_transcript.document`. Both objects carry ids/urls only — never bytes.
+// call_recording_available / call_transcription_available nesting: recording
+// media sits under `call_recording.audio`; the transcript document sits under
+// `call_transcript.document`. Both carry ids/urls only, never bytes.
 const callRecordingMediaSchema = z.object({
   id: z.string(),
   sha256: z.string().optional(),
@@ -113,18 +97,13 @@ const callEventItemSchema = z.object({
   end_time: z.union([z.string(), z.number()]).optional(),
   duration: z.union([z.string(), z.number()]).optional(),
   biz_opaque_callback_data: z.string().optional(),
-  // Validated separately (see `parseCallSession`) so a malformed/oversized
-  // session never fails the whole item. A session that is ABSENT means a
-  // session-less connect (what Meta sends when a number is configured for
-  // Meta's SIP signalling, which ChatbotX does not use; falls through to the
-  // existing behavior); a session that is PRESENT but invalid means a VoIP
-  // connect we cannot honor — it is flagged (`sessionInvalid`) so the VoIP
-  // branch Meta-rejects it rather than dropping it into the session-less
-  // path, which has no leg for a VoIP call.
+  // Validated separately so a malformed/oversized session never fails the whole
+  // item. Absent means a session-less connect (Meta's SIP signalling, unused by
+  // ChatbotX). Present but invalid means a VoIP connect that must be Meta-
+  // rejected rather than dropped into the session-less path.
   session: z.unknown().optional(),
-  // Present on `terminate` items when media dropped mid-call (e.g.
-  // 138021/138022/138023) — surfaced so the terminate handler can label the
-  // failure precisely instead of a bare FAILED status.
+  // Present on `terminate` items when media dropped mid-call, so the handler
+  // can label the failure precisely instead of a bare FAILED status.
   errors: z
     .array(callTerminateErrorSchema)
     .max(MAX_TERMINATE_ERRORS)
@@ -140,10 +119,9 @@ const callStatusItemSchema = z.object({
   type: z.string().optional(),
   timestamp: z.union([z.string(), z.number()]).optional(),
   recipient_id: z.string().optional(),
-  // The BSUID a status targets when the recipient has no phone number
-  // exposed (`recipient_id` is empty in that case) — mirrors
-  // `statuses[].recipient_user_id` on the `messages` webhook (see
-  // `lib/raw-identity.ts`).
+  // The BSUID a status targets when the recipient has no phone number exposed
+  // (`recipient_id` is empty then) — mirrors `statuses[].recipient_user_id` on
+  // the `messages` webhook.
   recipient_user_id: z.string().optional(),
   biz_opaque_callback_data: z.string().optional(),
 })
@@ -156,16 +134,10 @@ const callsValueSchema = z.object({
   contacts: z.array(callContactSchema).optional(),
   calls: z.array(callEventItemSchema).optional(),
   statuses: z.array(callStatusItemSchema).optional(),
-  // Meta DOCUMENTS the terminate `errors[]` here, at the value level, as a
-  // sibling of `calls` rather than inside the call item — see the "Call
-  // Terminate webhook" payload in developers.facebook.com/documentation/
-  // business-messaging/whatsapp/calling/{user-initiated,business-initiated}-calls
-  // (checked 2026-09-16). The item-level `errors` on `callEventItemSchema`
-  // is kept as well, because live payloads have carried it there too and the
-  // two shapes cost nothing to accept side by side. Missing this meant a
-  // media-drop failure (138021/138022/138023) reached the terminate handler
-  // with no error at all, so the call was recorded as a bare FAILED with no
-  // diagnosis.
+  // Meta documents the terminate `errors[]` at the value level, sibling of
+  // `calls`, not inside the call item. The item-level `errors` is also accepted
+  // since live payloads carry it there too. Missing either meant a media-drop
+  // failure reached the terminate handler with no diagnosis.
   errors: z
     .array(callTerminateErrorSchema)
     .max(MAX_TERMINATE_ERRORS)
@@ -175,9 +147,8 @@ const callsValueSchema = z.object({
 export type WhatsappCallDirectionPayload = "userInitiated" | "businessInitiated"
 
 /**
- * A validated, bounded SDP session captured from a VoIP-mode connect event.
- * `"offer"` on a USER_INITIATED connect (inbound); `"answer"` on a
- * BUSINESS_INITIATED connect (outbound — the user's answer to our offer).
+ * A validated, bounded SDP session from a VoIP-mode connect event. `offer` on
+ * inbound (USER_INITIATED); `answer` on outbound (BUSINESS_INITIATED).
  */
 export type WhatsappCallSessionPayload = {
   sdpType: "offer" | "answer"
@@ -236,16 +207,15 @@ export type WhatsappCallEventPayload = {
         /** Present only for a validated VoIP-mode (SDP offer) connect. */
         session?: WhatsappCallSessionPayload
         /**
-         * A `session` was present but malformed/oversized: this is a VoIP
-         * connect the app cannot answer, and it must be Meta-rejected rather
-         * than dropped into the session-less path. Mutually exclusive with
-         * `session`.
+         * A `session` was present but malformed/oversized — a VoIP connect that
+         * must be Meta-rejected, not dropped into the session-less path.
+         * Mutually exclusive with `session`.
          */
         sessionInvalid?: boolean
         /**
          * Meta echoes the outbound `connect` action's idempotency key
-         * (`attemptId`) on this field — the only correlation available
-         * before `wacid` is known. Absent on session-less/legacy connects.
+         * (`attemptId`) — the only correlation available before `wacid` is
+         * known. Absent on session-less/legacy connects.
          */
         bizOpaqueCallbackData?: string
       }
@@ -327,28 +297,20 @@ const toContactPayload = (
 }
 
 /**
- * The identity to match a `contacts[]` entry against for ONE `calls[]`/
- * `statuses[]` item. Named after `pickContactsForMessage`'s own `from`/
- * `fromUserId` params (`handlers/webhook.ts`) even though the field it is
- * matched against on the item varies by shape: `statuses[]` supplies
- * `recipient_id`/`recipient_user_id` (no `from`, no direction), and
- * `calls[]` supplies `from`/`from_user_id` for a USER_INITIATED item or
- * `to`/`to_user_id` for a BUSINESS_INITIATED one — the caller picks which
- * pair to pass in.
+ * The identity to match a `contacts[]` entry against for one
+ * `calls[]`/`statuses[]` item. Which fields to pass varies by shape:
+ * `statuses[]` supplies `recipient_id`/`recipient_user_id`; `calls[]` supplies
+ * `from`/`from_user_id` (USER_INITIATED) or `to`/`to_user_id`
+ * (BUSINESS_INITIATED).
  */
 type CallItemIdentity = { from?: string; fromUserId?: string }
 
 /**
- * The `contacts[]` entry belonging to ONE `calls[]`/`statuses[]` item.
- * Matched by identity (`wa_id`/`user_id` vs the item's own fields) rather
- * than by position — mirrors `pickContactsForMessage` (`handlers/
- * webhook.ts`) for the sibling `messages` webhook, which the calling API
- * batches identically (an index-aligned `contacts[]` is not guaranteed).
- * When nothing matches, the contact is omitted (leaving the item's own
- * `from`/`from_user_id`/`to`/`to_user_id` authoritative) — except for the
- * ordinary single-contact change whose item carries no identity of its own
- * (e.g. a `call_recording_available`/`call_transcription_available` item,
- * which never carries `from`/`to`), where that one contact IS the party.
+ * The `contacts[]` entry for one `calls[]`/`statuses[]` item, matched by
+ * identity rather than position (an index-aligned `contacts[]` isn't
+ * guaranteed). When nothing matches, the item's own `from`/`to` fields stay
+ * authoritative — except items with no identity of their own (e.g.
+ * recording/transcript-available), where the one contact IS the party.
  */
 const pickContactForCallItem = (
   contacts: z.infer<typeof callContactSchema>[] | undefined,
@@ -381,24 +343,17 @@ const readWebhookEntries = (rawBody: unknown): unknown[] => {
 }
 
 /**
- * Result of validating a connect event's raw `session` field:
- * - `undefined` — no session at all (a session-less connect — what Meta
- *   sends when a number is configured for Meta's SIP signalling, which
- *   ChatbotX does not use; falls through).
- * - `"invalid"` — a session WAS present but malformed/oversized (a VoIP
- *   connect that must be Meta-rejected, never dropped into the session-less
- *   path).
- * - payload    — a validated, bounded SDP offer.
+ * Result of validating a connect event's raw `session` field: `undefined` = no
+ * session (SIP signalling, unused by ChatbotX); `"invalid"` = present but
+ * malformed/oversized, must be Meta-rejected; otherwise a validated, bounded
+ * SDP offer.
  */
 type ParsedCallSession = WhatsappCallSessionPayload | "invalid" | undefined
 
 /**
- * Which `sdp_type` a connect event's session must carry, by direction: a
- * USER_INITIATED (inbound) connect carries the caller's OFFER; a
- * BUSINESS_INITIATED (outbound) connect carries the user's ANSWER to our
- * own offer. A session whose `sdp_type` doesn't match its direction is
- * treated as invalid — this is what keeps the widened offer|answer schema
- * from silently accepting a mislabeled session.
+ * Which `sdp_type` a connect event's session must carry: USER_INITIATED
+ * (inbound) carries the caller's OFFER; BUSINESS_INITIATED (outbound) carries
+ * the user's ANSWER. A mismatched `sdp_type` is treated as invalid.
  */
 const expectedSdpTypeForDirection = (
   direction: WhatsappCallDirectionPayload,
@@ -406,12 +361,10 @@ const expectedSdpTypeForDirection = (
   direction === "businessInitiated" ? "answer" : "offer"
 
 /**
- * Validates a connect event's raw `session` field (VoIP-mode SDP offer or
- * answer, depending on `expectedSdpType`). Length is checked BEFORE the zod
- * parse so an oversized string never pays for schema validation — this runs
- * on the hot webhook path. A present but malformed/oversized/mismatched
- * session returns `"invalid"` (never thrown) so the caller can Meta-reject
- * it; an absent session returns `undefined`.
+ * Validates a connect event's raw `session` field. Length is checked before the
+ * zod parse so an oversized string never pays for schema validation on the hot
+ * webhook path. Malformed/oversized/mismatched returns `"invalid"` (never
+ * thrown); absent returns `undefined`.
  */
 const parseCallSession = (
   wacid: string,
@@ -455,11 +408,9 @@ const parseCallSession = (
 }
 
 /**
- * Normalizes a terminate item's `status` case-insensitively — Meta
- * documents `COMPLETED`/`FAILED` (uppercase), but nothing on the wire
- * guarantees a sender never varies casing. An unrecognized status (any
- * casing) is logged and defaults to `FAILED` rather than silently comparing
- * unequal and always defaulting there.
+ * Normalizes a terminate item's `status` case-insensitively since nothing on
+ * the wire guarantees consistent casing. An unrecognized status is logged and
+ * defaults to `FAILED`.
  */
 const normalizeTerminateStatus = (
   wacid: string,
@@ -616,8 +567,7 @@ const normalizeStatusItem = (
 
 /**
  * Extracts every call event from a raw webhook body. Malformed entries are
- * logged and skipped so one bad item never blocks the rest of the batch
- * (mirrors the automatic-events extractor).
+ * logged and skipped so one bad item never blocks the rest of the batch.
  */
 export const extractCallEventPayloads = (
   rawBody: unknown,
@@ -655,24 +605,20 @@ export const extractCallEventPayloads = (
 
       const { metadata, contacts, calls, statuses, errors } = parsed.data
 
-      // The value-level `errors[]` (Meta's documented placement — see
-      // `callsValueSchema`) describes ONE call's failure, but sits outside
-      // the `calls` array, so it can only be attributed when the batch holds
-      // a single terminate. With two, there is no way to tell whose failure
-      // it is, and guessing by position would repeat exactly the
-      // `contacts[0]` mistake `pickContactForCallItem` exists to prevent —
-      // so it is dropped rather than misattributed. An item that carries its
-      // own `errors` always wins over this fallback.
+      // The value-level `errors[]` describes one call's failure but sits
+      // outside the `calls` array, so it can only be attributed when the batch
+      // holds a single terminate — with two, guessing by position would repeat
+      // the mistake `pickContactForCallItem` avoids, so it's dropped instead.
+      // An item's own `errors` always wins.
       const terminateItemCount = (calls ?? []).filter(
         (item) => item.event === "terminate",
       ).length
       const sharedTerminateErrors =
         terminateItemCount === 1 ? errors : undefined
 
-      // Interim statuses are pushed (and therefore enqueued) BEFORE call
-      // events: when a batch carries both a REJECTED status and its
-      // terminate, the terminate handler must be able to see the rejection
-      // to label the call "declined" rather than "missed".
+      // Interim statuses are pushed before call events: when a batch carries
+      // both a REJECTED status and its terminate, the terminate handler needs
+      // to see the rejection to label the call "declined" rather than "missed".
       for (const item of statuses ?? []) {
         const event = normalizeStatusItem(item)
         if (event) {

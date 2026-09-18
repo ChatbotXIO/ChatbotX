@@ -1,16 +1,9 @@
 /**
- * Allowed WhatsApp call-recording mime types → their object-storage file
- * extension. Meta-native recordings arrive as `audio/ogg`; the
- * browser-recorded path (call-recorder upload) may post any of the others
- * depending on `MediaRecorder`'s supported mime types. Kept as a single
- * object so a new allowed format is a one-line addition, never a scattered
- * if/else.
- *
- * Canonical source of truth — both `@chatbotx.io/business`'s
- * `call-recording-service.ts` (server-side upload/validation) and the
- * builder's client-side `call-recorder.ts` (which cannot import a
- * business-layer package into a client bundle) read this list from
- * `@chatbotx.io/sdk`, which is client-safe.
+ * Allowed WhatsApp call-recording mime types → object-storage file extension.
+ * Meta-native recordings arrive as `audio/ogg`; the browser-recorded path may post
+ * any of the others depending on `MediaRecorder`'s supported mime types. Lives in
+ * `@chatbotx.io/sdk` (client-safe) so both the server-side `call-recording-service.ts`
+ * and the builder's client-side `call-recorder.ts` share one source of truth.
  */
 export const ALLOWED_RECORDING_CONTENT_TYPES = {
   "audio/ogg": "ogg",

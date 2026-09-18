@@ -167,14 +167,8 @@ describe("WorkspaceRealtimeProvider", () => {
       )
     })
 
-    // The socket connection's own lifecycle is untouched by a
-    // handler-identity change: no new `onOpen`/`onClose` ever fires for
-    // it, so `reconnectCount` cannot have incremented and `status` stays
-    // exactly what it was. (`usePartySocket` itself IS called again here —
-    // it is a hook, called on every render like any other; that is
-    // unrelated to whether the underlying connection reconnects, which is
-    // owned by its own internal effect, not by how many times the hook
-    // function runs.)
+    // A handler-identity change re-renders (and re-calls the hook) but
+    // fires no new onOpen/onClose, so the connection itself is untouched.
     expect(statuses.at(-1)?.reconnectCount).toBe(reconnectCountBefore)
     expect(statuses.at(-1)?.status).toBe(statusBefore)
 
@@ -527,18 +521,10 @@ describe("WorkspaceRealtimeProvider", () => {
     expect(capturedContextValue).toHaveProperty("reconnectCount")
   })
 
-  /**
-   * Codex release-blocker fix (HIGH): a QUIET room — an already-open tab,
-   * no new connect, no inbound broadcast — had no independent liveness
-   * signal, so a silently-stalled realtime-side report loop would never
-   * self-heal until presence had already expired. The client now sends a
-   * tiny keep-alive ping over the ALREADY-OPEN workspace socket on the same
-   * fixed cadence the realtime side reports on
-   * (`PRESENCE_REPORT_INTERVAL_MS`) — a widely used presence pattern
-   * (a heartbeat sent over the existing open socket rather than a new
-   * connection) — so the party's `onMessage` handler always has a chance to notice and
-   * recover a stalled loop, without ever adding a new HTTP round trip.
-   */
+  // A quiet room (open tab, no new connect, no inbound broadcast) has no
+  // liveness signal otherwise, so a stalled report loop would never
+  // self-heal until presence expired — the ping is a heartbeat over the
+  // already-open socket on the same cadence as `PRESENCE_REPORT_INTERVAL_MS`.
   describe("presence keep-alive ping", () => {
     beforeEach(() => {
       vi.useFakeTimers()

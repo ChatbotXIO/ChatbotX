@@ -249,15 +249,11 @@ describe("handleWhatsappCallTranscribe", () => {
       })
     })
 
-    // Behavior change: the shared `enrichCallActivityMessage` used to
-    // silently skip and let the job "succeed" when the finalize message
-    // hadn't landed yet — losing the `hasTranscript` flag forever, since
-    // this handler's own `call.transcript` CAS guard means a caller-level
-    // BullMQ retry never re-reaches this code path. It now throws
-    // `WhatsappCallEnrichmentPendingError` after a bounded in-process wait
-    // so the failure is at least observable, propagating through this
-    // handler's own catch-and-rethrow — `callTranscribed` is never emitted
-    // on this path since enrichment runs before it.
+    // `enrichCallActivityMessage` must not silently skip when the finalize
+    // message hasn't landed — this handler's own `call.transcript` CAS guard
+    // means a BullMQ retry never re-reaches this code, so `hasTranscript`
+    // would be lost forever. It throws `WhatsappCallEnrichmentPendingError`
+    // instead; `callTranscribed` is never emitted on this path.
     test("throws (and never emits callTranscribed) when the finalize message never shows up after the bounded wait", async () => {
       mocks.findBySourceId.mockResolvedValue(null)
 

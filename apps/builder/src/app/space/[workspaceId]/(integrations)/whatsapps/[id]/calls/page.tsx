@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/integration-whatsapp/api/calling"
 import { notFound } from "next/navigation"
 import { getWhatsappCallingPreflight } from "@/features/integration-whatsapp/calling/get-whatsapp-calling-preflight"
+import { resolveEffectiveCallingSettings } from "@/features/integration-whatsapp/calling/lib/effective-calling-settings"
 import { WhatsappCallsCard } from "@/features/integration-whatsapp/calling/whatsapp-calls-card"
 import { findIntegrationWhatsapp } from "@/features/integration-whatsapp/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
@@ -31,7 +32,10 @@ export default async function WhatsappCallsPage(props: {
   let settings: WhatsappCallingSettings | null = null
   let loadError: string | undefined
   try {
-    settings = await getCallingSettings(auth)
+    settings = resolveEffectiveCallingSettings(
+      await getCallingSettings(auth),
+      integrationWhatsapp.callingEnabled,
+    )
   } catch (err) {
     loadError = err instanceof Error ? err.message : "unknown"
   }

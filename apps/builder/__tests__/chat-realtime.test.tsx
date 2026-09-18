@@ -39,11 +39,8 @@ vi.mock("@/features/conversations/hooks/use-conversation-id-param", () => ({
   useConversationIdParam: () => conversationIdParamMock,
 }))
 
-// `ChatRealtime` is a pure subscriber now — it registers handlers against
-// the shared `WorkspaceRealtimeProvider` instead of owning a socket. This
-// mock captures the last handler map passed to
-// `useWorkspaceRealtimeEvents` so `emit` can invoke it directly, exactly
-// mirroring what the real provider would dispatch.
+// Captures the handler map `ChatRealtime` passes to `useWorkspaceRealtimeEvents`
+// so `emit` can invoke it directly, mirroring what the real provider dispatches.
 let capturedHandlers: Record<string, (event: unknown) => void> | null = null
 vi.mock("@/features/realtime/use-workspace-realtime-events", () => ({
   useWorkspaceRealtimeEvents: (
@@ -354,9 +351,7 @@ describe("ChatRealtime — bubble-to-top on ringing", () => {
       })
     })
     act(() => {
-      // A redelivered/duplicate transport-incoming for the same call is a
-      // no-op in the store, but even if the basket entry were touched
-      // again, this component must not re-bubble it.
+      // A store update that re-references the same whatsappCallId must not re-bubble it.
       useWhatsappVoipCallStore.setState((state) => ({
         ringingCalls: [...state.ringingCalls],
       }))
@@ -392,7 +387,7 @@ describe("ChatRealtime — bubble-to-top on ringing", () => {
   })
 })
 
-describe("ChatRealtime — pendingConversationOpen bridge (item 5, D6)", () => {
+describe("ChatRealtime — pendingConversationOpen bridge", () => {
   let container: HTMLDivElement
   let root: Root
 
@@ -458,10 +453,9 @@ describe("ChatRealtime — pendingConversationOpen bridge (item 5, D6)", () => {
     ).toBeNull()
   })
 
-  // MEDIUM 6: the URL param must never be synced for an `openConversation`
-  // that did NOT actually succeed (e.g. it waited out a concurrent bootstrap
-  // that landed on a DIFFERENT conversation, or the fetch failed) — synced
-  // eagerly (as this used to be), the URL and the real selection disagree.
+  // The URL param must never be synced when `openConversation` resolves false
+  // (e.g. a concurrent bootstrap landed on a different conversation, or the
+  // fetch failed) — otherwise the URL and the real selection disagree.
   test("does NOT sync the URL param when openConversation resolves unsuccessfully", async () => {
     openConversationMock.mockResolvedValue(false)
     useWhatsappVoipCallStore

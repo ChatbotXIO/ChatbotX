@@ -2,7 +2,7 @@ import { QueryClient } from "@tanstack/react-query"
 import { describe, expect, test } from "vitest"
 import { outboundCallModeQueryKeys } from "@/features/integration-whatsapp/calling/voip/outbound-call-mode-query-key"
 
-describe("outboundCallModeQueryKeys (P4 item 2)", () => {
+describe("outboundCallModeQueryKeys", () => {
   test("conversation() builds the base key", () => {
     expect(outboundCallModeQueryKeys.conversation("ws-1", "conv-1")).toEqual([
       "whatsapp-outbound-call-mode",

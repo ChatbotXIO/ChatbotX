@@ -18,14 +18,11 @@ const generateCallAiSummarySchema = z.object({
 })
 
 /**
- * On-demand AI Summary for a WhatsApp call: loads the
- * transcript, calls the caller-chosen connected AI provider, persists the
- * result (first write or unconditional "Regenerate" overwrite — decided
- * inside `attachSummary` from the row's current state), and enriches the
- * finalize activity message so any open card/sheet flips `hasSummary` in
- * realtime. Throws when the transcript is empty rather than generating a
- * summary from nothing — the UI disables the trigger for this case, but the
- * server re-validates rather than trusting the client-side check.
+ * Loads the transcript, generates a summary via the chosen AI provider, and
+ * persists it (`attachSummary` decides first-write vs. Regenerate-overwrite
+ * from the row's current state), enriching the finalize activity message so
+ * any open card/sheet flips `hasSummary` in realtime. Throws on an empty
+ * transcript — the UI disables the trigger, but the server re-validates.
  */
 export const generateCallAiSummaryAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString()])

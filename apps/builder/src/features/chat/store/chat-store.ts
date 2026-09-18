@@ -20,17 +20,19 @@ import type {
 import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
 
-/** The later of two timestamps — tolerates the string a realtime payload
- * delivers in place of a `Date`. */
+/**
+ * The later of two timestamps — tolerates the string a realtime payload
+ * delivers in place of a Date.
+ */
 const latestDate = (current: Date | string | null, next: Date): Date =>
   current && new Date(current) > next ? new Date(current) : next
 
 /**
- * What a newly arrived message changes on its conversation, or `null` for
- * nothing: a contact's own message marks them as having replied, and any
- * message that opened the messaging window moves it forward — a WhatsApp call
- * card included, per `resolveMessagingWindowOpenedAt`. Never backwards, so an
- * out-of-order older message cannot shrink a window a newer one opened.
+ * What a newly arrived message changes on its conversation, or null for
+ * nothing: a contact's own message marks them as replied, and any message that
+ * opened the messaging window moves it forward, a call card included. Never
+ * backwards, so an out-of-order older message can't shrink a window a newer one
+ * opened.
  */
 const conversationPatchForMessage = (
   conversation: ListConversationsResponse["data"][number] | undefined,
@@ -121,26 +123,11 @@ export type ChatActions = {
   prependConversation: (newConversation: ListConversationItemResource) => void
   initActiveConversationFromUrl: (workspaceId: string) => Promise<void>
   /**
-   * Opens a conversation by id — selects it if already loaded, otherwise
-   * fetches and prepends it first. Generalizes
-   * `initActiveConversationFromUrl` (URL-driven, only on an empty
-   * selection) for an explicit navigation to a KNOWN id regardless of
-   * current selection, e.g. `WhatsappCallPanel`'s "Go to conversation"
-   * control and the D6 navigate-on-answer flow while already on the inbox
-   * (see `chat-realtime.tsx`'s `pendingConversationOpen` bridge). A no-op
-   * while `conversationId` is already the active selection. If another
-   * bootstrap (this action, or `initActiveConversationFromUrl`) is still in
-   * flight, WAITS for it instead of no-oping — see MEDIUM 6 in the P4
-   * review: a caller that already synced the URL's `conversationId` param
-   * before calling this must not be left with the URL and the actual
-   * selection disagreeing.
-   */
-  /**
-   * Resolves `true` once `conversationId` is genuinely the active
-   * selection, `false` otherwise (the fetch failed, or the target changed
-   * underneath a wait) — lets a caller that must sync something ELSE (e.g.
-   * the URL's `conversationId` param) do so only on real success, instead
-   * of assuming a resolved promise means it worked.
+   * Opens a conversation by id, fetching and prepending it if not loaded. If
+   * another bootstrap is in flight, waits it out instead of no-oping, so the
+   * URL and the actual selection can't disagree.
+   * Resolves true once conversationId is genuinely the active selection,
+   * false otherwise — lets a caller sync something else only on real success.
    */
   openConversation: (
     workspaceId: string,
@@ -161,14 +148,11 @@ export type ChatActions = {
   ) => void
   updateConversationViaMessage: (message: MessageResource) => void
   /**
-   * Moves a conversation to the top of the (already loaded) in-memory list —
-   * a purely visual reorder used to surface a ringing VoIP call. Never
-   * touches `lastActivityAt` or `nextCursorConversation`: it must not corrupt
-   * the server's keyset pagination cursor, and it does not persist across
-   * `loadMore`/`resetState`/a filter change. Fetches and prepends the
-   * conversation when it isn't loaded client-side yet (mirrors
-   * `updateConversationViaMessage`'s not-found branch); a lookup failure
-   * (e.g. filtered out for this agent) is a silent no-op.
+   * Moves a conversation to the top of the loaded list — a visual reorder to
+   * surface a ringing VoIP call. Never touches lastActivityAt or
+   * nextCursorConversation so it can't corrupt the server's pagination cursor,
+   * and doesn't persist across loadMore/resetState/a filter change. Fetches and
+   * prepends when not loaded yet; a lookup failure is a silent no-op.
    */
   bubbleConversationToTop: (
     workspaceId: string,
@@ -246,12 +230,10 @@ const hasConversationIdInUrl = () =>
   ).get("conversationId")
 
 /**
- * Shared core of `initActiveConversationFromUrl` and `openConversation`:
- * selects `conversationId` if it is already loaded client-side, otherwise
- * fetches and prepends it first. Callers own their own guard (which flag to
- * check, whether to wait for the first conversation page) — this only ever
- * touches `conversations`/`activeConversationId`. A fetch failure is logged
- * and swallowed: the URL/explicit-open request itself must never throw.
+ * Shared core of initActiveConversationFromUrl and openConversation: selects
+ * conversationId if already loaded, otherwise fetches and prepends it. Callers
+ * own their own guard; this only touches conversations/activeConversationId. A
+ * fetch failure is logged and swallowed.
  */
 const loadAndSelectConversation = async (
   get: () => ChatStore,
@@ -296,12 +278,10 @@ const shouldAutoSelectConversation = ({
   !(activeConversationId || hasUrlConversationId) && conversations.length > 0
 
 export const createChatStore = () => {
-  // The `conversationId` of the most recently issued `openConversation` call
-  // — lets a call that just finished waiting out an in-flight bootstrap tell
-  // whether a NEWER `openConversation` call superseded it while it waited.
-  // A closure variable rather than `ChatState` (review B2): it is read and
-  // written exclusively inside `openConversation` below, is never rendered
-  // by any consumer, and does not belong on the public store shape.
+  // The conversationId of the most recently issued openConversation call — lets
+  // a call that just finished waiting tell whether a newer call superseded it.
+  // A closure variable rather than store state since it's only read/written
+  // inside openConversation and never rendered.
   let pendingOpenConversationId: string | null = null
 
   return createStore<ChatStore>((set, get, store) => ({
@@ -373,19 +353,15 @@ export const createChatStore = () => {
         return true
       }
 
-      // Claims this call as the most recently requested `openConversation` —
-      // checked again below once any wait is over, so that if a NEWER call
-      // for a different id comes in while this one is waiting, this one
-      // steps aside (last requested wins) instead of both racing to load.
+      // Claims this call as the most recently requested openConversation —
+      // rechecked after any wait so a newer call for a different id makes this
+      // one step aside instead of both racing to load.
       pendingOpenConversationId = conversationId
 
-      // A concurrent bootstrap (this action, or `initActiveConversationFromUrl`)
-      // is already in flight — WAIT it out instead of silently no-oping.
-      // Callers that already synced the URL's `conversationId` param before
-      // calling this (`chat-realtime.tsx`'s `pendingConversationOpen`
-      // bridge) would otherwise be left with the URL and the actual
-      // selection disagreeing. Same `store.subscribe` wait pattern
-      // `initActiveConversationFromUrl` uses for its own precondition.
+      // A concurrent bootstrap is already in flight — wait it out instead of
+      // silently no-oping, so a caller that already synced the URL's
+      // conversationId isn't left disagreeing with the actual selection. Same
+      // wait pattern initActiveConversationFromUrl uses.
       if (get().isBootstrappingUrlConversation) {
         await new Promise<void>((resolve) => {
           const unsubscribe = store.subscribe((state) => {
@@ -396,13 +372,13 @@ export const createChatStore = () => {
           })
         })
         // The bootstrap we waited out may already have selected this exact
-        // conversation (e.g. it WAS the URL's `conversationId`).
+        // conversation.
         if (get().activeConversationId === conversationId) {
           return true
         }
-        // A newer `openConversation` call (for a different id) was issued
-        // while this one waited — it now owns the load; this one resolves
-        // false rather than both proceeding and racing each other.
+        // A newer openConversation call (for a different id) was issued while
+        // this one waited — it now owns the load; this one resolves false
+        // instead of racing.
         if (pendingOpenConversationId !== conversationId) {
           return false
         }
@@ -620,10 +596,10 @@ export const createChatStore = () => {
       }))
     },
 
-    // Merges a `contentAttributes` patch pushed via `messageContentUpdated`
-    // (e.g. a call transcript arriving after the recording message itself)
-    // — a full replace, not a deep merge, matching how the worker always
-    // sends the entity's complete shape rather than a partial diff.
+    // Merges a contentAttributes patch pushed via messageContentUpdated (e.g. a
+    // transcript arriving after the recording message) — a full replace, not a
+    // deep merge, matching how the worker always sends the entity's complete
+    // shape.
     updateMessageContentAttributes: (messageId, contentAttributes) => {
       set((state) => ({
         messages: state.messages.map((message): typeof message =>
@@ -813,10 +789,9 @@ export const createChatStore = () => {
       )
 
       if (conversationIndex > -1) {
-        // Already loaded — splice it out and re-insert at the front, exactly
-        // like `updateConversationViaMessage`, but WITHOUT touching
-        // `lastActivityAt` or `messages`: this is a visual-only reorder, not
-        // a new-message event.
+        // Already loaded — splice it out and re-insert at the front, like
+        // updateConversationViaMessage, but without touching lastActivityAt or
+        // messages since this is a visual-only reorder.
         const updatedConversations = [...conversations]
         const [conversation] = updatedConversations.splice(conversationIndex, 1)
         if (conversation) {
@@ -825,12 +800,10 @@ export const createChatStore = () => {
         return
       }
 
-      // Not loaded client-side (e.g. it was outside the current page or
-      // filter) — fetch and prepend it, mirroring
-      // `updateConversationViaMessage`'s not-found branch. A lookup failure
-      // (not visible to this agent under the active filters) is a no-op:
-      // the ringing state still lives in the VoIP call store, so the dock
-      // and dialog keep working even if the list can't show the row.
+      // Not loaded client-side — fetch and prepend it, mirroring
+      // updateConversationViaMessage's not-found branch. A lookup failure is a
+      // no-op: the ringing state still lives in the VoIP call store, so the
+      // dock and dialog keep working even if the list can't show the row.
       try {
         const response =
           await client.conversationsAPI.findConversationAuthenticatedAPI({
@@ -839,11 +812,9 @@ export const createChatStore = () => {
           })
         prependConversation(response.data)
       } catch (error) {
-        // Not surfaced as a toast — the ringing state still lives in the
-        // VoIP call store, so the dock/dialog keep working even if the list
-        // can't show the row. But a real network/auth/5xx failure must not
-        // be indistinguishable from the documented "filtered out for this
-        // agent" case, so log it (M-ts2 / L4).
+        // Not surfaced as a toast, since the VoIP call store keeps the
+        // dock/dialog working regardless. But a real network/auth/5xx failure
+        // must stay distinguishable from the "filtered out" case, so log it.
         logger.warn(
           { err: error, conversationId },
           "bubbleConversationToTop: failed to fetch conversation to prepend",

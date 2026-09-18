@@ -4,18 +4,11 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 /**
- * CRITICAL 1 (P4 review): `WhatsappCallCard` used to select
- * `{ activeConversationContactName, whatsappContactInboxId,
- * resolvedConversationId }` — a FRESH object literal on every call — from
- * `useChatStore`. Every other `WhatsappCallCard` test mocks `useChatStore`
- * itself (a plain function call, `selector(state)`), which can never
- * reproduce this: zustand v5's REAL `useChatStore` goes through
- * `useSyncExternalStore`, which re-invokes the selector on every store
- * notification and compares the result by reference — a fresh literal each
- * time fails that check, re-triggers a notification, and loops forever
- * ("Maximum update depth exceeded"). This file renders the card inside the
- * REAL `ChatStoreProvider` (no `useChatStore` mock) specifically to catch a
- * regression here.
+ * `WhatsappCallCard` selects a fresh object literal from `useChatStore` on
+ * every call. Under zustand v5's real `useSyncExternalStore`, a selector
+ * result compared by reference triggers an infinite re-render loop — other
+ * tests mock `useChatStore` and can't catch this, so this file renders
+ * against the real `ChatStoreProvider`.
  */
 
 vi.mock("next-intl", () => ({

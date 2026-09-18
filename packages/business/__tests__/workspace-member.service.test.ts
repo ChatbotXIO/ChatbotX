@@ -92,7 +92,7 @@ describe("workspaceMemberService.delete", () => {
   })
 })
 
-// L6: pins the P2 ring-target read as a pure delegation to the repository —
+// Pins the ring-target read as a pure delegation to the repository —
 // no caching, no transformation — so a future change to either layer can't
 // silently drift without a failing test here.
 describe("workspaceMemberService.listPermissionsByUserIds", () => {

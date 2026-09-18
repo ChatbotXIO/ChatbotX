@@ -2,13 +2,9 @@
 
 /**
  * Full-screen dim backdrop shown while nothing else is grabbing the agent's
- * attention — a fresh incoming ring, or the free-slot basket card/list —
- * and never while the call slot is engaged (dimming the screen mid-call
- * would be wrong). Extracted once so the three call sites
- * (`WhatsappCallPanel`'s single-ring and incoming-ring branches, and
- * `WhatsappRingingCallsList`'s free-slot branch) can't drift on the exact
- * z-index/opacity/animation, which is exactly what happened before this was
- * factored out (see FIX 6 in the multi-ring design review).
+ * attention, and never while the call slot is engaged (dimming mid-call would
+ * be wrong). Shared so the multiple call sites can't drift on
+ * z-index/opacity/animation.
  */
 export function VoipBackdrop() {
   return (

@@ -1,70 +1,3 @@
--- Consolidated WhatsApp-calling schema (squash of the original calling
--- migrations). This feature is NOT yet in production, so the calling objects
--- are DROPPED and recreated cleanly rather than guarded with idempotent
--- IF-NOT-EXISTS blocks — those would skip recreation and leave a diverged
--- local table stuck in its stale shape (missing new columns, keeping legacy
--- ones), which then breaks a later index/constraint. The DROPs use IF EXISTS
--- so this is still a no-op-then-create on a fresh database (CI / new dev).
---
--- The FreeSWITCH/SIP transport has been removed: calling now runs on VoIP
--- (WebRTC ↔ Meta) with Meta-native recording/transcription. The former SIP
--- tables (AgentSipPresence, UserSoftphoneCredential, WorkspaceSipNode), the
--- IntegrationWhatsapp `sip*` columns and the `sipProvisioningStatus` enum are
--- DROPPED here and NOT recreated.
---
--- On a fresh database (CI / new dev / production) this runs once and produces
--- the SIP-free schema. A dev database that had ALREADY applied an earlier
--- (SIP-carrying) version of THIS migration keeps that ledger row, so the
--- runner will NOT re-run it — those local SIP objects persist harmlessly
--- (nothing reads them) until the developer refreshes their schema. To clean an
--- existing local dev database, drop the ledger row and re-migrate:
---   DELETE FROM drizzle.__drizzle_migrations
---     WHERE name LIKE '%whatsapp_call%';
---   pnpm --filter @chatbotx.io/database db:migrate
---
--- Calling data is disposable (test-only, pre-production): dropping the tables
--- discards any local call rows, which is intended.
-
--- ── drop existing calling objects (clean slate) ────────────────────────
-DROP TABLE IF EXISTS "WhatsappCall" CASCADE;--> statement-breakpoint
-DROP TABLE IF EXISTS "WhatsappCallPermission" CASCADE;--> statement-breakpoint
--- Retired SIP/softphone tables — dropped, never recreated.
-DROP TABLE IF EXISTS "AgentSipPresence" CASCADE;--> statement-breakpoint
-DROP TABLE IF EXISTS "UserSoftphoneCredential" CASCADE;--> statement-breakpoint
-DROP TABLE IF EXISTS "WorkspaceSipNode" CASCADE;--> statement-breakpoint
--- Calling columns live on the shared IntegrationWhatsapp table (which we must
--- NOT drop) — drop the current + any legacy calling columns, re-added below.
--- The `sip*` columns are dropped and NOT re-added (SIP transport removed).
-ALTER TABLE "IntegrationWhatsapp"
-  DROP COLUMN IF EXISTS "callingEnabled",
-  DROP COLUMN IF EXISTS "inboundCallsEnabled",
-  DROP COLUMN IF EXISTS "callHours",
-  DROP COLUMN IF EXISTS "callRecordingEnabled",
-  DROP COLUMN IF EXISTS "callRecordingRetentionDays",
-  DROP COLUMN IF EXISTS "callTranscriptionEnabled",
-  DROP COLUMN IF EXISTS "callRecordingMode",
-  DROP COLUMN IF EXISTS "callTranscriptionMode",
-  DROP COLUMN IF EXISTS "callAnnouncementLanguage",
-  DROP COLUMN IF EXISTS "callRecordingPurpose",
-  DROP COLUMN IF EXISTS "sipProvisioningStatus",
-  DROP COLUMN IF EXISTS "sipProvisioningClaim",
-  DROP COLUMN IF EXISTS "sipProvisioningLeaseUntil",
-  DROP COLUMN IF EXISTS "sipProvisionedAt",
-  DROP COLUMN IF EXISTS "sipLastError",
-  DROP COLUMN IF EXISTS "sipPasswordEncrypted",
-  DROP COLUMN IF EXISTS "sipGatewayName",
-  DROP COLUMN IF EXISTS "sipNodeId",
-  DROP COLUMN IF EXISTS "callingRestriction";--> statement-breakpoint
-DROP TYPE IF EXISTS "whatsappCallRecordingMode";--> statement-breakpoint
-DROP TYPE IF EXISTS "whatsappCallTranscriptionMode";--> statement-breakpoint
-DROP TYPE IF EXISTS "whatsappCallDirection";--> statement-breakpoint
-DROP TYPE IF EXISTS "whatsappCallStatus";--> statement-breakpoint
-DROP TYPE IF EXISTS "whatsappCallOutcome";--> statement-breakpoint
-DROP TYPE IF EXISTS "whatsappCallPermissionResponse";--> statement-breakpoint
-DROP TYPE IF EXISTS "sipProvisioningStatus";--> statement-breakpoint
---> statement-breakpoint
-
--- ── recreate the calling schema ───────────────────────────────────────
 CREATE TYPE "whatsappCallRecordingMode" AS ENUM('metaNative', 'browserWhisper');--> statement-breakpoint
 CREATE TYPE "whatsappCallTranscriptionMode" AS ENUM('metaNative', 'browserWhisper');--> statement-breakpoint
 CREATE TYPE "whatsappCallDirection" AS ENUM('userInitiated', 'businessInitiated');--> statement-breakpoint
@@ -145,11 +78,5 @@ ALTER TABLE "WhatsappCall" ADD CONSTRAINT "WhatsappCall_inboxId_Inbox_id_fkey" F
 ALTER TABLE "WhatsappCall" ADD CONSTRAINT "WhatsappCall_contactInboxId_ContactInbox_id_fkey" FOREIGN KEY ("contactInboxId") REFERENCES "ContactInbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "WhatsappCall" ADD CONSTRAINT "WhatsappCall_conversationId_Conversation_id_fkey" FOREIGN KEY ("conversationId") REFERENCES "Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "WhatsappCallPermission" ADD CONSTRAINT "WhatsappCallPermission_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
-ALTER TABLE "WhatsappCallPermission" ADD CONSTRAINT "WhatsappCallPermission_contactInboxId_ContactInbox_id_fkey" FOREIGN KEY ("contactInboxId") REFERENCES "ContactInbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- ── workspace presence ────────────────────────────────────────────────
--- `WorkspaceMember` predates this branch and holds real rows, so this is a
--- plain nullable ADD COLUMN (metadata-only, no table rewrite). Ships here
--- rather than in its own migration because presence is part of the same
--- calling feature.
+ALTER TABLE "WhatsappCallPermission" ADD CONSTRAINT "WhatsappCallPermission_contactInboxId_ContactInbox_id_fkey" FOREIGN KEY ("contactInboxId") REFERENCES "ContactInbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "WorkspaceMember" ADD COLUMN "onlineSince" timestamp(6) with time zone;

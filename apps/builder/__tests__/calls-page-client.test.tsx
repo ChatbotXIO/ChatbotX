@@ -156,7 +156,6 @@ describe("CallsPageClient", () => {
         ?.getAttribute("data-row-count"),
     ).toBe("1")
 
-    // Simulate the action succeeding with one more row and a further cursor.
     act(() => {
       useActionMock.lastOptions?.onSuccess?.({
         data: { data: [row("call-2")], nextCursor: "cursor-2" },
@@ -211,7 +210,6 @@ describe("CallsPageClient", () => {
     ).not.toBeNull()
   })
 
-  // M2: Load more previously had no onError handler at all.
   test("shows a translated error toast when the Load more action fails", () => {
     act(() => {
       root.render(
@@ -233,7 +231,7 @@ describe("CallsPageClient", () => {
     expect(toastMock.error).toHaveBeenCalledWith("loadMoreError")
   })
 
-  // M1: chip changes go through nuqs' setter, never window.location.assign.
+  // Chip changes go through nuqs' setter, never window.location.assign.
   test("changing the activity chip calls the nuqs setter, not window.location", () => {
     act(() => {
       root.render(
@@ -255,9 +253,9 @@ describe("CallsPageClient", () => {
     expect(setActivityParamMock).toHaveBeenCalledWith("missed")
   })
 
-  // Item 6 gap closure (M5) — inbox/agent selects go through the same
-  // nuqs-setter navigation contract as the activity chip (`shallow: false`),
-  // so selecting either re-runs `page.tsx` server-side for page 1.
+  // Inbox/agent selects go through the same nuqs-setter navigation contract
+  // as the activity chip (`shallow: false`), so selecting either re-runs
+  // `page.tsx` server-side for page 1.
   test("changing the inbox filter calls the nuqs setter for inboxId", () => {
     act(() => {
       root.render(

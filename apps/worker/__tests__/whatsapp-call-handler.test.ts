@@ -186,7 +186,7 @@ describe("handleWhatsappCallEvent", () => {
       })
     })
 
-    test("R2: a Username/BSUID-only caller (no wa_id, no from) resolves via the BSUID and still rings", async () => {
+    test("a Username/BSUID-only caller (no wa_id, no from) resolves via the BSUID and still rings", async () => {
       await handleWhatsappCallEvent({
         ...baseData,
         payload: {
@@ -216,7 +216,7 @@ describe("handleWhatsappCallEvent", () => {
       expect(mocks.emitIncomingCall).toHaveBeenCalled()
     })
 
-    test("D2: a payload contact that disagrees with the item's from_user_id lets the item's identity decide sourceId", async () => {
+    test("a payload contact that disagrees with the item's from_user_id lets the item's identity decide sourceId", async () => {
       await handleWhatsappCallEvent({
         ...baseData,
         payload: {
@@ -243,7 +243,7 @@ describe("handleWhatsappCallEvent", () => {
       )
     })
 
-    test("D2: a mismatched payload contact's username/name never reach detectContactAndConversation", async () => {
+    test("a mismatched payload contact's username/name never reach detectContactAndConversation", async () => {
       await handleWhatsappCallEvent({
         ...baseData,
         payload: {
@@ -272,7 +272,7 @@ describe("handleWhatsappCallEvent", () => {
       )
     })
 
-    test("D2 regression: a real Meta call item (from_user_id only, no `from`) with a MATCHING contacts[] entry keys by the phone number, not the BSUID", async () => {
+    test("regression: a real Meta call item (from_user_id only, no `from`) with a MATCHING contacts[] entry keys by the phone number, not the BSUID", async () => {
       // The exact production shape: `calls.ts`'s `pickContactForCallItem`
       // already resolved this contact for this item upstream, so it is safe
       // to enrich the identity the item itself omitted.
@@ -305,7 +305,7 @@ describe("handleWhatsappCallEvent", () => {
       )
     })
 
-    test("D2 regression: a genuinely BSUID-only caller (contact has no wa_id) still keys by the BSUID", async () => {
+    test("regression: a genuinely BSUID-only caller (contact has no wa_id) still keys by the BSUID", async () => {
       await handleWhatsappCallEvent({
         ...baseData,
         payload: {
@@ -350,7 +350,7 @@ describe("handleWhatsappCallEvent", () => {
       expect(mocks.emitIncomingCall).not.toHaveBeenCalled()
     })
 
-    test("R23: businessInitiated NEVER creates a row — with no prior wacid and no attemptId echo (SIP-mode/legacy shape), correlation is unmatched and nothing is attached", async () => {
+    test("businessInitiated NEVER creates a row — with no prior wacid and no attemptId echo (SIP-mode/legacy shape), correlation is unmatched and nothing is attached", async () => {
       mocks.findByWacid.mockResolvedValue(undefined)
 
       await handleWhatsappCallEvent({
@@ -377,7 +377,7 @@ describe("handleWhatsappCallEvent", () => {
       )
     })
 
-    test("L1: VoIP outbound connect whose wacid is already attached (attachWacid ran synchronously in the initiate action) resolves directly — never logs outbound-correlation-ambiguous, never re-attaches", async () => {
+    test("VoIP outbound connect whose wacid is already attached (attachWacid ran synchronously in the initiate action) resolves directly — never logs outbound-correlation-ambiguous, never re-attaches", async () => {
       mocks.findByWacid.mockResolvedValue(outboundCallRow)
 
       await handleWhatsappCallEvent({
@@ -404,7 +404,7 @@ describe("handleWhatsappCallEvent", () => {
       )
     })
 
-    test("L1: resolves via findByAttemptId (Meta's echoed biz_opaque_callback_data) before the time-window heuristic", async () => {
+    test("resolves via findByAttemptId (Meta's echoed biz_opaque_callback_data) before the time-window heuristic", async () => {
       mocks.findByWacid.mockResolvedValue(undefined)
       mocks.findByAttemptId.mockResolvedValue(pendingOutboundRow)
 
@@ -435,7 +435,7 @@ describe("handleWhatsappCallEvent", () => {
       )
     })
 
-    test("R23: businessInitiated with an attemptId echo that matches no pending attempt logs unmatched and creates/attaches nothing (no time-window fallback)", async () => {
+    test("businessInitiated with an attemptId echo that matches no pending attempt logs unmatched and creates/attaches nothing (no time-window fallback)", async () => {
       mocks.findByWacid.mockResolvedValue(undefined)
       mocks.findByAttemptId.mockResolvedValue(undefined)
 
@@ -957,7 +957,7 @@ describe("handleWhatsappCallEvent", () => {
       expect(mocks.finalizeCallSideEffects).toHaveBeenCalled()
     })
 
-    test("R23: businessInitiated without a prior row attaches via the exact attemptId match and finalizes it (no time-window fallback)", async () => {
+    test("businessInitiated without a prior row attaches via the exact attemptId match and finalizes it (no time-window fallback)", async () => {
       mocks.findByWacid.mockResolvedValue(undefined)
       mocks.findByAttemptId.mockResolvedValue(pendingOutboundRow)
 
@@ -992,7 +992,7 @@ describe("handleWhatsappCallEvent", () => {
       )
     })
 
-    test("R23: businessInitiated with no prior wacid and no attemptId match: no row, no finalize, unmatched logged (no time-window fallback)", async () => {
+    test("businessInitiated with no prior wacid and no attemptId match: no row, no finalize, unmatched logged (no time-window fallback)", async () => {
       mocks.findByWacid.mockResolvedValue(undefined)
 
       await handleWhatsappCallEvent({

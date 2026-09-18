@@ -712,16 +712,10 @@ class IntegrationWhatsappService extends BaseService {
   }
 
   /**
-   * Persists the calling toggles that are stored locally rather than on
-   * Meta (call recording, its retention window, and transcription). Scoped
-   * by workspace in the UPDATE itself, so a settings write can never reach
-   * another workspace's number.
-   *
-   * Transcription requires recording, enforced in the write itself so two
-   * admins toggling at once cannot store transcription on with recording
-   * off: turning recording off turns transcription off in the same UPDATE,
-   * and turning transcription on alone only matches a number that records
-   * calls — a miss means it does not, and is refused.
+   * Persists the calling toggles stored locally rather than on Meta. The
+   * transcription-requires-recording rule is enforced in the UPDATE itself
+   * (not just validated), so two admins toggling concurrently can't end up
+   * with transcription on and recording off.
    */
   async updateCallSettings(input: {
     id: string

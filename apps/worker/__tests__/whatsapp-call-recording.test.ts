@@ -317,7 +317,7 @@ describe("handleWhatsappCallRecordingReady", () => {
       expect(mocks.emitCallRecorded).toHaveBeenCalled()
     })
 
-    // Used to give up here and still stamp `recordedAt`, which made the
+    // Giving up here while still stamping `recordedAt` would make the
     // recording unreachable forever: the stamp is one-shot, so no retry
     // could ever attach the audio to the finalize message.
     test("the bounded wait running out releases the stamp and rethrows, so the retry can attach the audio", async () => {

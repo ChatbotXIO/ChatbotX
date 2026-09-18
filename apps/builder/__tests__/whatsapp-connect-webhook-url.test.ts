@@ -120,10 +120,8 @@ describe("buildAuthValue", () => {
     expect(input.clientSecret).toBe(whatsappSettings.clientSecret)
   })
 
-  // This is the round-trip the "legacy-unverified" webhook signature policy
-  // depends on: an owner-supplied Meta App Secret must land in `clientSecret`
-  // so `resolveSignaturePolicy` (integrations/whatsapp/src/lib/signature-policy.ts)
-  // selects "enforce" instead of "legacy-unverified" for this integration.
+  // clientSecret feeds resolveSignaturePolicy (integrations/whatsapp/src/lib/signature-policy.ts),
+  // which picks "enforce" over "legacy-unverified" based on it.
   test("manual + a provided app secret stores it as clientSecret instead of clearing it", async () => {
     const auth = await buildAuthValue({
       whatsappSettings: { ...whatsappSettings },

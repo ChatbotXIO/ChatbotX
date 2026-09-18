@@ -11,13 +11,11 @@ const getCallSummarySchema = z.object({
 })
 
 /**
- * The AI Summary tab's read for the Call Information sheet — a companion
- * read to `getCallTranscriptAction`, split out
- * separately so the transcript tab never has to wait on the summary
- * fetch (and vice versa). Returns `undefined` when no summary has been
- * generated yet — a valid state, not an error; the sheet renders the
- * "Generate summary" prompt for it. A read action — allowed even for an
- * expired/owner-blocked workspace (AGENTS.md invariant #14).
+ * The AI Summary tab's read for the Call Information sheet — split from
+ * `getCallTranscriptAction` so the two tabs don't block each other's fetch.
+ * `undefined` means no summary generated yet, not an error (renders the
+ * "Generate summary" prompt). Read-only, so allowed on an expired/blocked
+ * workspace (AGENTS.md invariant #14).
  */
 export const getCallSummaryAction = workspaceActionClientAllowExpired
   .bindArgsSchemas([zodBigintAsString()])

@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { allTimezoneCodes } from "@/features/workspaces/schema/types"
 
-/** Meta's `day_of_week` values, in the order the week is shown and sent. */
+/** Meta's day_of_week values, in the order the week is shown and sent. */
 export const CALL_HOURS_DAYS = [
   "MONDAY",
   "TUESDAY",
@@ -22,7 +22,7 @@ export const LAST_MINUTE_OF_DAY = 23 * 60 + 59
 
 /**
  * The schedule problems Meta would reject, used as issue messages so the form
- * can translate them (`ISSUE_LABEL_KEY` in `whatsapp-call-hours-section.tsx`).
+ * can translate them.
  */
 export const CallHoursIssue = {
   rangeOrder: "rangeOrder",
@@ -43,9 +43,9 @@ const isRuntimeTimezone = (timezone: string): boolean => {
 }
 
 /**
- * The workspace timezone list minus the few `Intl` refuses (it carries
- * `Factory`): the call hours action formats dates in the chosen timezone, so
- * an unusable one would fail every save.
+ * The workspace timezone list minus the few Intl refuses — the call hours
+ * action formats dates in the chosen timezone, so an unusable one would fail
+ * every save.
  */
 export const CALL_HOURS_TIMEZONE_CODES = allTimezoneCodes.filter(
   isRuntimeTimezone,
@@ -64,12 +64,10 @@ const callHoursDaySchema = z.object({
 })
 
 /**
- * The weekly call hours of one number, one entry per day in week order. Every
- * Meta rule is enforced here so a save fails in the form instead of at Meta:
- * a range must close after it opens (so an overnight range is split across
- * two days), ranges on one day must not overlap, and the week needs at least
- * one open range — even with call hours switched off, since Meta requires a
- * non-empty `weekly_operating_hours` whenever `call_hours` is sent.
+ * Enforces Meta's rules here so a save fails in the form, not at Meta: ranges
+ * must not overlap, and the week needs at least one open range even with call
+ * hours off, since Meta requires a non-empty weekly_operating_hours whenever
+ * call_hours is sent.
  */
 export const callHoursFormSchema = z
   .object({

@@ -328,7 +328,7 @@ describe("connectCall", () => {
     ).rejects.toBeInstanceOf(WhatsappException)
   })
 
-  it("R2: posts action:connect with `recipient` (BSUID) instead of `to` for a Username/BSUID-only contact", async () => {
+  it("posts action:connect with `recipient` (BSUID) instead of `to` for a Username/BSUID-only contact", async () => {
     postMock.mockReturnValueOnce(
       okResponse({
         messaging_product: "whatsapp",

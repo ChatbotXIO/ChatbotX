@@ -8,7 +8,6 @@ import type {
 import {
   getWhatsappCallEntity,
   getWhatsappCallPermissionReply,
-  getWhatsappCallRecordingEntity,
 } from "@chatbotx.io/sdk"
 import {
   Avatar,
@@ -49,7 +48,6 @@ import { useState } from "react"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentUrl } from "@/features/attachments/utils"
 import type { MessageResourceWithRelations } from "../schema/resource"
-import { CallRecordingActivity } from "./call-recording-activity"
 import { MessageActions, MessageActionsEditor } from "./message-actions"
 import { MessageBubble } from "./message-bubble"
 import { MessageErrorBadge } from "./message-error-badge"
@@ -128,27 +126,17 @@ export const MessageItem = (props: MessageItemProps) => {
   const isHidden = attributes?.hidden === true
   const hasAttachments = !!message.attachments?.length
   const storyReply = getStoryReplyEntity(message.contentAttributes)
-  // Call-related rows render localized labels from contentAttributes (see
-  // WhatsappCallActivity / WhatsappCallPermissionReply); the stored text is
-  // only an English fallback for previews and must not double-render here.
+  // Call rows render localized labels from contentAttributes; the stored
+  // text is only an English fallback for previews and must not double-render.
   const whatsappCall = getWhatsappCallEntity(message.contentAttributes)
   const callPermissionReply = getWhatsappCallPermissionReply(
     message.contentAttributes,
   )
-  // The recording's own audio attachment is rendered by CallRecordingActivity
-  // below (via RenderContentAttributes) instead of the generic
-  // RenderAttachments path, so it can refresh its own signed URL and show
-  // the transcript once available.
-  const whatsappCallRecording = getWhatsappCallRecordingEntity(
-    message.contentAttributes,
-  )
   const suppressRawText = Boolean(whatsappCall || callPermissionReply)
 
-  // A WhatsApp call card is a system `activity` message (so it defaults to the
-  // centered `full` variant), but a call has a direction: a customer-initiated
-  // call belongs on the incoming (left) side and a business-initiated call on
-  // the outgoing (right) side, mirroring how the two speakers' messages sit —
-  // `guestDisplay` flips both, exactly like `incoming`/`outgoing` above.
+  // A call card defaults to the centered `full` variant, but a call still has
+  // a direction: business-initiated sits right, customer-initiated sits left
+  // (flipped by `guestDisplay`, like `incoming`/`outgoing` above).
   if (whatsappCall) {
     const isBusinessInitiated = whatsappCall.direction === "businessInitiated"
     if (isBusinessInitiated) {
@@ -241,10 +229,9 @@ export const MessageItem = (props: MessageItemProps) => {
                   </pre>
                 </div>
               )}
-            {!isDeleted &&
-              hasAttachments &&
-              !whatsappCallRecording &&
-              !whatsappCall && <RenderAttachments message={message} />}
+            {!isDeleted && hasAttachments && !whatsappCall && (
+              <RenderAttachments message={message} />
+            )}
           </>
         )}
         {RenderContentAttributes(props)}
@@ -257,12 +244,8 @@ export const MessageItem = (props: MessageItemProps) => {
             label={t("sendFailed")}
           />
         )}
-        {/* A call failure sits beside the card, not inside it — the same slot
-            an outgoing message's sendError uses, so every failed item in the
-            thread carries its icon in the same place. Meta can terminate an
-            ANSWERED call with no audio (e.g. 138021), so this is not gated on
-            the call having been missed: an "Audio call" card with a silent
-            failure is exactly the case worth surfacing. */}
+        {/* Meta can terminate an ANSWERED call with no audio (e.g. error
+            138021), so this badge isn't gated on the call having been missed. */}
         {whatsappCall?.failureReason && (
           <MessageErrorBadge
             detail={whatsappCall.failureReason}
@@ -586,18 +569,6 @@ const RenderContentAttributes = (props: MessageItemProps) => {
         contactName={message.contact?.fullName}
         conversationId={message.conversationId}
         hasRecordingAttachment={Boolean(message.attachments?.length)}
-      />
-    )
-  }
-
-  const whatsappCallRecording = getWhatsappCallRecordingEntity(
-    message.contentAttributes,
-  )
-  if (whatsappCallRecording) {
-    return (
-      <CallRecordingActivity
-        attachment={message.attachments?.[0]}
-        recording={whatsappCallRecording}
       />
     )
   }

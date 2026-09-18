@@ -23,7 +23,7 @@ beforeEach(() => {
   mocks.listForWorkspace.mockResolvedValue([])
 })
 
-describe("CALL_KIND_RULES / resolveCallKind — first match wins (plan D9)", () => {
+describe("CALL_KIND_RULES / resolveCallKind — first match wins", () => {
   test("ongoing: a non-terminal status wins regardless of outcome", () => {
     expect(
       resolveCallKind({
@@ -114,7 +114,7 @@ describe("CALL_KIND_RULES / resolveCallKind — first match wins (plan D9)", () 
   })
 })
 
-describe("CALL_ACTIVITY_FILTERS — base chips (plan D9: Missed and No reply)", () => {
+describe("CALL_ACTIVITY_FILTERS — base chips", () => {
   test("missed chip filters failed + userInitiated", () => {
     expect(CALL_ACTIVITY_FILTERS.missed).toEqual({
       outcome: "failed",
@@ -130,7 +130,7 @@ describe("CALL_ACTIVITY_FILTERS — base chips (plan D9: Missed and No reply)", 
   })
 })
 
-describe("whatsappCallHistoryService.list — scope translation (plan D4)", () => {
+describe("whatsappCallHistoryService.list — scope translation", () => {
   test("superAdmin resolves to an unrestricted allCalls scope", async () => {
     await whatsappCallHistoryService.list({
       workspaceId: WORKSPACE_ID,
@@ -178,7 +178,7 @@ describe("whatsappCallHistoryService.list — scope translation (plan D4)", () =
     )
   })
 
-  test("L2: a member with NONE of the four scope-granting permissions fails closed — empty result, no repository read", async () => {
+  test("a member with NONE of the four scope-granting permissions fails closed — empty result, no repository read", async () => {
     const result = await whatsappCallHistoryService.list({
       workspaceId: WORKSPACE_ID,
       member: { userId: USER_ID, permissions: {} },
@@ -201,7 +201,7 @@ describe("whatsappCallHistoryService.list — scope translation (plan D4)", () =
     )
   })
 
-  test("L1: an explicit direction input never overrides an active chip's direction — the chip wins", async () => {
+  test("an explicit direction input never overrides an active chip's direction — the chip wins", async () => {
     // `missed` implies `direction: userInitiated`; an explicit
     // `businessInitiated` must NOT flip it.
     await whatsappCallHistoryService.list({
@@ -217,7 +217,7 @@ describe("whatsappCallHistoryService.list — scope translation (plan D4)", () =
     )
   })
 
-  test("L1: an explicit direction input applies as-is when no chip is active", async () => {
+  test("an explicit direction input applies as-is when no chip is active", async () => {
     await whatsappCallHistoryService.list({
       workspaceId: WORKSPACE_ID,
       member: { userId: USER_ID, permissions: { superAdmin: true } },
@@ -250,7 +250,7 @@ describe("whatsappCallHistoryService.list — scope translation (plan D4)", () =
     const rows = Array.from({ length: 26 }, (_, i) => ({
       id: `call-${i}`,
       createdAt: new Date(2026, 0, 1, 0, 0, i),
-      // H1: the full-precision TEXT form the repository returns alongside
+      // The full-precision TEXT form the repository returns alongside
       // `createdAt` — deliberately carries MORE precision than the `Date`
       // above (microseconds) to prove `nextCursor` is built from THIS
       // field, not from a `Date`-truncated round-trip of `createdAt`.

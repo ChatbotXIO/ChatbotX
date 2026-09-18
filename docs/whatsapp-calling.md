@@ -4,8 +4,7 @@ WhatsApp calling in ChatbotX runs entirely over **VoIP (browser WebRTC ↔ Meta
 Cloud API)**. There is no self-hosted media server: agents place and answer
 calls in the inbox, and Meta records/transcribes server-side.
 
-> The earlier FreeSWITCH/SIP interconnect has been **removed**. This document
-> is the overview; the detailed architecture lives in
+> This document is the overview; the detailed architecture lives in
 > [`whatsapp-calling-voip.md`](./whatsapp-calling-voip.md).
 
 ## Transports & modes

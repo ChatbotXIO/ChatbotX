@@ -16,45 +16,25 @@ const ACTION_QUERY_PARAM = "action"
 const REVOKE_CLOSE_CODE = 4001
 const REVOKE_CLOSE_REASON = "Revoked"
 
-/**
- * How often each room reports its connected user ids to the builder. Owned
- * by `@chatbotx.io/partysocket-config/presence` alongside `PRESENCE_TTL_MS`;
- * re-exported here so existing importers of this module keep working.
- */
+/** Re-exported so existing importers of this module keep working. */
 export { PRESENCE_REPORT_INTERVAL_MS } from "@chatbotx.io/partysocket-config/presence"
 
-/** Durable-storage key this room's own id is cached under, so `onAlarm` never
- * needs to read `room.id` — PartyKit's alarm handler explicitly does NOT
- * have access to `Party.id` (see this file's `onAlarm` doc comment). */
+/**
+ * PartyKit alarms cannot read `room.id`, so the workspace id is cached in
+ * storage.
+ */
 const PRESENCE_WORKSPACE_ID_STORAGE_KEY = "presenceWorkspaceId"
 
 /**
- * Epoch ms of the last time the report loop was confirmed armed — set by a
- * bootstrap and refreshed by every `onAlarm` tick. This is the self-healing
- * signal, and it deliberately does NOT use `room.storage.getAlarm()`.
- *
- * `getAlarm() !== null` only says an alarm is SCHEDULED, not that it will
- * fire. If delivery is ever lost (restart timing, a supervisor handoff, a
- * runtime alarm gap) it reports "armed" forever while nothing ticks — and a
- * bootstrap that only runs on `null` would never recover, so presence would
- * expire after `PRESENCE_TTL_MS` with tabs still open. Found live against
- * the local `partykit dev` stack.
- *
- * Tracking freshness instead fixes that: `ensureReportLoopArmed` (from
- * `onConnect`, `onRequest` and the client ping) re-bootstraps whenever this
- * is missing or older than {@link REPORT_LOOP_STALE_THRESHOLD_MS}, whatever
- * `getAlarm()` says. A healthy loop refreshes it every interval, so only a
- * loop that really stopped goes stale — and it converges back on its own
- * without needing to know what broke it.
+ * Epoch ms of the last confirmed report-loop tick. Freshness is used instead of
+ * `getAlarm()` because a scheduled alarm can silently never fire; a stale
+ * marker triggers a re-bootstrap.
  */
 const PRESENCE_LAST_ARMED_AT_STORAGE_KEY = "presenceLastArmedAt"
 
 /**
- * How long {@link PRESENCE_LAST_ARMED_AT_STORAGE_KEY} may go unrefreshed
- * before the loop counts as dead. A multiple of the interval, not equal to
- * it: the half-interval of slack absorbs ordinary jitter (GC pause, slow
- * POST, a connect between ticks) without re-bootstrapping on every request,
- * while staying under the presence TTL so healing beats expiry.
+ * Half an interval of slack absorbs jitter while staying under the presence
+ * TTL.
  */
 const REPORT_LOOP_STALE_THRESHOLD_MS = PRESENCE_REPORT_INTERVAL_MS * 1.5
 
@@ -65,17 +45,9 @@ export default class WorkspaceParty implements Party.Server {
   constructor(readonly room: Party.Room) {}
 
   /**
-   * Serializes the "arm the report loop" section (`ensureReportLoopArmed`
-   * below) across concurrent `onConnect` calls (MEDIUM-c, round-2 review).
-   * A real Durable Object keeps its input gate closed across storage awaits
-   * but OPENS it across a genuine fetch await (`reportWorkspacePresence`),
-   * so two connections racing in during a reconnect storm (every tab after
-   * a realtime redeploy) could otherwise both observe the loop as
-   * unarmed/stale before either had re-armed it, and both POST. Every
-   * `onConnect` call now awaits the PREVIOUS call's section before running
-   * its own — a harness-independent guarantee, not reliant on exactly how
-   * any given runtime schedules concurrent events — so only one call can
-   * ever act on a given stale/unarmed state at a time.
+   * Serializes `ensureReportLoopArmed`: a Durable Object opens its input gate
+   * across the report fetch, so concurrent callers could both see a stale loop
+   * and both re-arm.
    */
   private bootstrapLock: Promise<void> = Promise.resolve()
 
@@ -89,36 +61,19 @@ export default class WorkspaceParty implements Party.Server {
       return
     }
 
-    // Set BEFORE acquiring the bootstrap lock: whichever concurrent
-    // `onConnect` call ends up running the arm section can then see every
-    // connection's state that was already set, including ones still
-    // queued behind the lock (MEDIUM-c) — see `ensureReportLoopArmed`.
+    // Set before taking the lock so the arming caller sees every queued
+    // connection.
     connection.setState({ userId } satisfies PresenceConnectionState)
 
     await this.armReportLoopSerialized(userId)
   }
 
   /**
-   * Serializes a call to {@link ensureReportLoopArmed} against every other
-   * concurrent caller of this method — `onConnect` (with `seedUserId`) and
-   * `onMessage`'s ping handler (below, no seed — the pinging connection is
-   * already registered on the room by the time it can ping). Extracted out
-   * of `onConnect` so the SAME lock also protects the ping path: a flood of
-   * pings arriving concurrently (e.g. many tabs reconnecting and pinging at
-   * once) must still only ever let ONE caller act on a given stale/unarmed
-   * state, exactly like the original `onConnect`-vs-`onConnect` race this
-   * lock was built for (MEDIUM-c, round-2 review). `ensureReportLoopArmed`
-   * itself stays idempotent via the freshness gate, so serializing merely
-   * removes the window where two concurrent callers could both observe
-   * "stale" before either had re-armed it — it is not the only thing
-   * preventing a double re-arm, but it removes the race entirely rather
-   * than relying on timing.
+   * Shared by `onConnect` and the ping handler so only one caller acts on a
+   * stale loop.
    */
   private async armReportLoopSerialized(seedUserId?: string): Promise<void> {
     const previousLock = this.bootstrapLock
-    // Definite-assignment: the Promise executor below runs SYNCHRONOUSLY
-    // (a JS/spec guarantee), so `releaseLock` is always assigned before
-    // this line finishes executing, well before the `finally` below reads it.
     let releaseLock!: () => void
     this.bootstrapLock = new Promise((resolve) => {
       releaseLock = resolve
@@ -132,33 +87,10 @@ export default class WorkspaceParty implements Party.Server {
   }
 
   /**
-   * Arms (or re-arms) the recurring report loop and reports presence
-   * immediately, but ONLY when it actually needs to — see
-   * {@link PRESENCE_LAST_ARMED_AT_STORAGE_KEY} for why freshness, not
-   * `getAlarm()`, is the gate. Two callers:
-   *  - `onConnect` (with `seedUserId`): the room's first connection (or any
-   *    connection landing after the loop went stale) bootstraps it.
-   *  - `onRequest` (no `seedUserId`): every workspace-wide broadcast/send
-   *    is a second, independent chance to notice and recover a stalled
-   *    loop without waiting for a new connect — see `onRequest`.
-   *
-   * No-ops entirely (never touches storage) when there is nobody to
-   * report: `collectConnectedUserIds()` unioned with `seedUserId` is
-   * empty. This matters for the `onRequest` caller specifically — a
-   * broadcast can land on a workspace with zero current connections, and
-   * that must never arm an alarm for a room nothing is driving.
-   *
-   * Reports IMMEDIATELY rather than waiting for the next tick: a room's
-   * first connection (every redeploy, every agent opening the inbox first)
-   * would otherwise leave a `PRESENCE_REPORT_INTERVAL_MS` window with nobody
-   * online, during which an inbound call is rejected as "nobody online".
-   *
-   * The alarm is armed BEFORE awaiting the POST, so a Durable Object's input
-   * gate — which opens during that await — can never let a concurrent caller
-   * see an unarmed alarm. The report covers everyone already visible plus
-   * `seedUserId`, since `onConnect` sets state before taking the lock and
-   * other connections may already be queued: one report for all of them
-   * beats each racing to send its own.
+   * Re-arms the report loop only when it is stale, and reports immediately so a
+   * fresh room is never seen as "nobody online". No-op when nobody is
+   * connected. The alarm is armed before awaiting the POST so a concurrent
+   * caller never sees it unarmed.
    */
   private async ensureReportLoopArmed(seedUserId?: string): Promise<void> {
     const userIds = new Set(this.collectConnectedUserIds())
@@ -188,33 +120,9 @@ export default class WorkspaceParty implements Party.Server {
   }
 
   /**
-   * Stops the report loop the moment the room goes empty — computed by
-   * excluding `connection` itself (rather than trusting `getConnections()`
-   * to have already dropped it), so this is correct regardless of exactly
-   * when PartyKit removes a closing connection from the room's own
-   * bookkeeping relative to firing `onClose`.
-   *
-   * Deliberately does NOT also send an immediate "went offline" report:
-   * `presenceHeartbeatMany` only ever ADDS/renews members, it never
-   * removes one — there is no explicit sign-off any more (relies purely on
-   * TTL expiry, see `packages/business/src/workspace-presence/service.ts`) — so a
-   * report sent right as the LAST connection closes would report an empty
-   * user list, which `onAlarm` already treats as "skip the POST entirely".
-   * A report sent while OTHER connections remain open would not speed up
-   * detecting the departed user's offline state either, since nothing in
-   * that report can remove them from Redis; only the departed member's own
-   * unrenewed TTL can. There is therefore no report content that would
-   * make "offline" observably faster here, so none is sent — only the
-   * alarm is stopped, promptly, rather than waiting for it to next fire
-   * and silently no-op.
-   *
-   * Also clears {@link PRESENCE_LAST_ARMED_AT_STORAGE_KEY} in the same
-   * case: leaving a recent timestamp behind would make the NEXT connect's
-   * `ensureReportLoopArmed` see the loop as still "fresh" (even though the
-   * alarm was just deleted) and skip re-arming — reintroducing exactly the
-   * silent-forever-dark gap this design exists to prevent, just moved from
-   * `getAlarm()` onto this key instead. Tearing the loop down must always
-   * also reset the freshness marker that vouches for it being alive.
+   * Stops the loop once the room is empty (excluding the closing connection).
+   * No offline report is sent: presence only expires via TTL. The freshness
+   * marker is cleared too, or the next connect would skip re-arming.
    */
   async onClose(connection: Party.Connection) {
     const remaining = [...this.room.getConnections()].filter(
@@ -227,20 +135,8 @@ export default class WorkspaceParty implements Party.Server {
   }
 
   /**
-   * The third self-heal trigger, alongside `onConnect` and `onRequest`: a
-   * QUIET room (open tab, no new connect, no broadcast) has neither of the
-   * others, so a silently-stopped alarm would go unnoticed until presence
-   * had already expired. See `PRESENCE_PING_MESSAGE_TYPE`.
-   *
-   * Validates the frame first — this socket carries no other client→server
-   * message, so anything else is ignored rather than trusted as liveness. A
-   * ping from a connection `onConnect` never tagged with a verified userId
-   * is ignored too; only verified members may reach the arming path.
-   *
-   * No `seedUserId`: by now the connection is already tagged and visible to
-   * `collectConnectedUserIds()`. Routed through the same serialized lock as
-   * `onConnect`, so a ping storm causes at most one re-arm — and the
-   * freshness gate makes every ping a no-op while the loop is healthy.
+   * Self-heal trigger for quiet rooms that get no connect or broadcast. Only
+   * verified connections may reach the arming path.
    */
   async onMessage(
     message: string | ArrayBuffer | ArrayBufferView,
@@ -272,24 +168,9 @@ export default class WorkspaceParty implements Party.Server {
   }
 
   /**
-   * Fires every {@link PRESENCE_REPORT_INTERVAL_MS} while the room has at
-   * least one connection. Alarms have access to `room.storage` and
-   * `room.getConnections()` but NOT `Party.id`/`room.context.parties`
-   * (PartyKit's alarm restriction — see `onConnect`'s doc comment for why
-   * the workspace id is read back from storage instead).
-   *
-   * Skips the POST entirely (and does not reschedule) when the room has no
-   * connections — the loop simply stops; `onConnect` restarts it on the
-   * next connection, and `onClose` above already stops it promptly rather
-   * than waiting for this to notice.
-   *
-   * HIGH-1: whenever there IS at least one connection, the next alarm is
-   * scheduled BEFORE awaiting the report POST — a fixed, latency-
-   * independent cadence, so a slow (or entirely failed) report can never
-   * delay, and never skip, the next one. Rescheduled unconditionally at
-   * that point, even when the cached workspace id below turns out to be
-   * missing from storage (a storage inconsistency must never silently stop
-   * the loop — only an empty room may do that).
+   * Runs while the room has connections; an empty room stops the loop. The next
+   * alarm is scheduled before the POST so a slow or failed report never delays
+   * or skips it.
    */
   async onAlarm() {
     const userIds = this.collectConnectedUserIds()
@@ -298,11 +179,6 @@ export default class WorkspaceParty implements Party.Server {
     }
 
     const now = Date.now()
-    // Refreshes the SAME freshness marker `ensureReportLoopArmed` checks
-    // (`PRESENCE_LAST_ARMED_AT_STORAGE_KEY`) — this is what keeps a
-    // healthy loop looking "fresh" to every future connect/broadcast
-    // forever, without either of them ever needing to re-derive it from
-    // `getAlarm()` (see that key's doc comment for why not).
     await this.room.storage.put(PRESENCE_LAST_ARMED_AT_STORAGE_KEY, now)
     await this.room.storage.setAlarm(now + PRESENCE_REPORT_INTERVAL_MS)
 
@@ -314,9 +190,6 @@ export default class WorkspaceParty implements Party.Server {
     }
   }
 
-  /** Distinct user ids across every currently-connected socket, read off
-   * each connection's own state (set in `onConnect`) — never a second
-   * verification, just the same tag-worthy identity already established. */
   private collectConnectedUserIds(): string[] {
     const userIds = new Set<string>()
     for (const connection of this.room.getConnections<PresenceConnectionState>()) {
@@ -329,28 +202,12 @@ export default class WorkspaceParty implements Party.Server {
   }
 
   /**
-   * Handles both the existing workspace-wide broadcast (unchanged: parse,
-   * re-serialize, `room.broadcast`) and two new privileged control paths
-   * carried entirely via query params so the JSON body — and therefore the
-   * wire format every existing event already relies on — never changes
-   * shape:
-   *   - `?action=revoke&userId=<id>` closes every tagged connection that
-   *     member currently holds open in this room (membership removal).
-   *   - `?userId=<id>` delivers the body to only that member's tagged
-   *     connections via `room.getConnections(tag).send`, never
-   *     `room.broadcast`.
-   * Both remain gated by the same workspace-audience bearer token as the
-   * existing broadcast path (`onBeforeRequest`/`verifyBroadcastRequest`).
+   * Handles workspace-wide broadcast plus two control paths via query params
+   * (the body format stays unchanged): `?action=revoke&userId=` closes that
+   * member's connections, `?userId=` sends only to them.
    */
   async onRequest(req: Party.Request) {
-    // Second, independent recovery path for a stalled report loop — see
-    // `ensureReportLoopArmed`/`PRESENCE_LAST_ARMED_AT_STORAGE_KEY`. Any
-    // workspace-wide broadcast/targeted-send/revoke request is a chance to
-    // notice a room whose loop silently died without waiting for a new
-    // connect, which may not happen again for hours if every tab stays
-    // open. Best-effort and never allowed to block or fail the actual
-    // request this call is for — a failure here is logged and swallowed,
-    // exactly like `reportWorkspacePresence` itself already degrades.
+    // Best-effort recovery for a stalled report loop; never blocks the request.
     try {
       await this.ensureReportLoopArmed()
     } catch (error) {
@@ -375,10 +232,8 @@ export default class WorkspaceParty implements Party.Server {
     const payload = await req.json()
     const message = JSON.stringify(payload)
 
-    // A `userId` param that is PRESENT (even empty) means a targeted send; only
-    // its ABSENCE (`null`) is a deliberate workspace-wide broadcast. An empty
-    // string targets nobody — never fall back to broadcasting a targeted event
-    // to the whole workspace.
+    // A present (even empty) `userId` means a targeted send; never fall back to
+    // broadcasting it.
     if (targetUserId !== null) {
       this.sendToMember(targetUserId, message)
       return new Response("ok", { status: 200 })
@@ -418,15 +273,8 @@ export default class WorkspaceParty implements Party.Server {
   }
 
   /**
-   * Verifies the short-lived (60s) connect token Builder minted for this member
-   * (`signMemberConnectToken`). `verifyMemberConnectToken` rejects — via the
-   * JWT `aud` check — a token whose `workspaceId` claim does not match this
-   * room (`lobby.id`), which is the cross-room replay a stolen/misrouted
-   * token would attempt; it also rejects a token missing the `userId`
-   * claim. Either failure closes the upgrade with 401, never falling back to
-   * trusting an unverified connection. The verified `userId` is threaded
-   * through as a request header so `onConnect`/`getConnectionTags` above can
-   * read it without re-verifying.
+   * Rejects tokens for another workspace or without a `userId`; the verified id
+   * is passed on via a header.
    */
   static async onBeforeConnect(req: Party.Request, lobby: Party.Lobby) {
     const token = new URL(req.url).searchParams.get("token")
@@ -449,10 +297,8 @@ export default class WorkspaceParty implements Party.Server {
   }
 
   /**
-   * Tags every connection with its verified member id (set on the request
-   * headers by `onBeforeConnect` below), so targeted send and revocation can
-   * look connections back up in O(connections-for-user) via
-   * `room.getConnections(tag)` instead of scanning the whole room.
+   * Tags connections by member id so targeted send and revoke can look them up
+   * directly.
    */
   getConnectionTags(
     _connection: Party.Connection,

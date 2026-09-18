@@ -32,57 +32,38 @@ import {
 } from "./voip-peer-connection"
 
 /**
- * Client-only cap on how long an outbound dial may sit in `preparing`
- * (TURN fetch + `getUserMedia` + offer/ICE-gather + the initiate
- * round-trip) before it is treated as failed — bounds a hung TURN fetch or
- * a mic prompt the agent never answers.
+ * Cap on how long an outbound dial may stay `preparing` — bounds a hung TURN
+ * fetch or an unanswered mic prompt.
  */
 const PREPARING_TIMEOUT_MS = 30_000
 
-/**
- * How long the lingering `ended` phase stays visible in the call panel
- * before the store slot auto-clears — see `WhatsappVoipCallPhase.ended`.
- */
+/** How long the `ended` phase stays visible before the slot auto-clears. */
 const ENDED_LINGER_MS = 2000
 
 /**
- * Best-effort beacon on tab close/reload while a VoIP call is `active`, so
- * Meta's leg does not sit in dead air after the agent reloads mid-call.
- * `pagehide` (not `beforeunload`) fires reliably on both a real unload and a
- * back-forward-cache navigation, and — unlike a server action, which needs a
- * special multipart encoding `sendBeacon` cannot produce — this is a tiny
- * dedicated route so a single fire-and-forget POST is enough. Never awaited,
- * never blocks unload, and unreliable by nature (the browser may drop it);
- * the server-side deadline/expiry paths remain the authoritative backstop.
+ * Best-effort hangup beacon on tab close while a call is `active`, so Meta's
+ * leg is not left in dead air. `pagehide` fires on both unload and bfcache; a
+ * plain route because `sendBeacon` cannot post a server action. Unreliable by
+ * nature — the server-side expiry is the real backstop.
  */
 const VOIP_CALL_HANGUP_BEACON_URL = "/api/whatsapp-voip-call-hangup"
 
 /**
- * How often the browser pings the server while a call is `active` (accepted
- * and media flowing, wacid known) so a lost `terminate` webhook can still be
- * swept — see `docs/whatsapp-calling-gap-analysis-plan.md` and
- * `heartbeat-active-voip-call.action.ts`. Mirrors the workspace presence
- * report cadence (`PRESENCE_REPORT_INTERVAL_MS`,
- * `apps/realtime/src/parties/workspaces.ts`).
+ * Heartbeat cadence while a call is `active`, so a lost `terminate` webhook can
+ * still be swept. Matches `PRESENCE_REPORT_INTERVAL_MS`.
  */
 const ACTIVE_CALL_HEARTBEAT_INTERVAL_MS = 20_000
 
 /**
- * Local expiry for a ringing offer whose `deadlineAt` cannot be parsed.
- * Comfortably past Meta's own offer/control TTL (~55s), so it never cuts a
- * still-answerable offer short, while making sure a malformed deadline can
- * never strand a dead ring in the basket forever if the transport-ended
- * event is also lost — the exact case this local backstop exists for.
+ * Fallback expiry for a ringing offer with an unparseable `deadlineAt` — past
+ * Meta's ~55s TTL so it never cuts a live offer short, but a dead ring still
+ * clears if the ended event is lost.
  */
 const RING_FALLBACK_EXPIRY_MS = 90_000
 
 /**
- * Phases in which leaving the tab would drop a call the agent is actively
- * engaged with (answering an offer, dialing out, or already on the call).
- * `incomingRinging` is deliberately excluded: an unanswered offer still lives in the
- * `ringingCalls` basket (or, once promoted, is checked separately below),
- * so the ringing-basket check covers it without double-counting the
- * promoted slot's own `incomingRinging` phase.
+ * Phases where leaving the tab drops a call the agent is engaged in.
+ * `incomingRinging` is excluded: an unanswered offer survives a reload.
  */
 const LEAVE_CONFIRMATION_PHASES = new Set<WhatsappVoipCallPhase>([
   WhatsappVoipCallPhase.answering,
@@ -91,30 +72,17 @@ const LEAVE_CONFIRMATION_PHASES = new Set<WhatsappVoipCallPhase>([
   WhatsappVoipCallPhase.active,
 ])
 
-/**
- * Mic constraints tuned to stop the classic WebRTC "howl" (the mic picking the
- * remote party's voice back up off the speakers and feeding it into a loop):
- * the browser's echo canceller subtracts the played-back audio from the mic
- * signal, noise suppression cuts steady hiss, and auto gain keeps a level
- * output. A bare `audio: true` usually turns these on, but requesting them
- * explicitly makes the behaviour deterministic across devices and browsers.
- */
-/**
- * Outcome an outbound dial attempt resolves to — every
- * {@link InitiateOutboundVoipCallResult} outcome, plus `"occupied"` for the
- * purely-local case where the single call slot is already busy (never
- * reaches the server). The button/UI layer branches on this to decide
- * whether to open the request-permission dialog, toast a mapped
- * `whatsapp.calls.outbound.<outcome>` message, or do nothing.
- */
+/** Explicit echo cancellation, noise suppression and auto gain — `audio: true` doesn't reliably enable them across browsers. */
+/** Result of an outbound dial: every server outcome plus the local-only `"occupied"` (the call slot is busy). */
 export type StartOutboundOutcome =
   | InitiateOutboundVoipCallResult["outcome"]
   | "occupied"
-  /** The agent hit End/cancel while the dial was still `preparing` — silent,
-   * like `"occupied"` (the panel already closed itself). */
+  /**
+   * The agent cancelled while the dial was still `preparing` — silent, the
+   * panel already closed.
+   */
   | "cancelled"
-  /** `getUserMedia` rejected with `NotAllowedError` — the browser/OS denied
-   * microphone access. */
+  /** `getUserMedia` rejected with `NotAllowedError`. */
   | "micPermissionDenied"
   /** `getUserMedia` rejected with `NotFoundError` — no microphone device. */
   | "micNotFound"
@@ -129,54 +97,37 @@ export type UseWhatsappVoipCallResult = {
   /** Attach to an `<audio autoPlay>` element to play the remote party's media. */
   remoteAudioRef: RefObject<HTMLAudioElement | null>
   /**
-   * Accepts an incoming call: gathers a TURN/STUN answer, then calls the
-   * answer action. With no `whatsappCallId`, targets whatever currently
-   * occupies the single call slot (today's behavior, unchanged). With an
-   * id, targets a specific offer — the slot's call (if it matches) or a
-   * basket entry (see `ringingCalls` in `voip-call-store.ts`), which is
-   * first end-the-current-call-then-promoted before being answered. See the
-   * function body for the full race analysis (stale closures, double
-   * clicks, replacement).
+   * Answers an incoming call. With no id, targets the slot's call; with an id,
+   * a specific basket entry, ending the current call first if needed.
    */
   answer: (whatsappCallId?: string) => Promise<void>
   /**
-   * Silences an incoming ring locally. With no id, the current slot's ring
-   * (ring-all — does not end the call for others), exactly as before. With
-   * an id, drops just that one basket entry — never calls `teardown()`,
-   * since a basket entry owns no peer connection or mic to tear down.
+   * Silences a ring locally only (ring-all: it keeps ringing for others). A
+   * basket entry owns no peer or mic, so nothing is torn down.
    */
   dismiss: (whatsappCallId?: string) => void
-  /** Ends the current active (already-accepted) call, cancels an outbound
-   * call still `preparing`/dialing/ringing (a local-only cancel token while
-   * `preparing` — see `startOutbound`), or dismisses a lingering `ended`
-   * call. */
+  /**
+   * Ends an active call, cancels an outbound call that is
+   * preparing/dialing/ringing, or dismisses an `ended` call.
+   */
   hangup: () => Promise<void>
   /** Toggles the local microphone track's `enabled` flag. */
   toggleMute: () => void
-  /** Clears a lingering `ended` call immediately instead of waiting out the
-   * ~2s auto-dismiss. */
+  /** Clears a lingering `ended` call without waiting for the auto-dismiss. */
   dismissEnded: () => void
   /**
-   * Places a business-initiated (outbound) VoIP call: builds the SDP OFFER
-   * locally (`getUserMedia` + `createOffer`), then calls
-   * `initiateOutboundVoipCallAction`. No-op (`"occupied"`) while the single
-   * call slot already holds another call.
+   * Places an outbound call: builds the SDP offer locally, then calls
+   * `initiateOutboundVoipCallAction`. Returns `"occupied"` while the slot holds
+   * another call.
    */
   startOutbound: (params: StartOutboundParams) => Promise<StartOutboundOutcome>
 }
 
 /**
- * Native-`RTCPeerConnection` browser WebRTC peer for WhatsApp calls, with no
- * signaling library in between. Driven entirely by
- * `useWhatsappVoipCallStore`: an incoming offer arrives via the realtime
- * consumer (`ChatRealtime`) calling `enqueueRinging`, landing in the basket
- * (`ringingCalls`) rather than the single `call` slot directly — a basket
- * entry owns no `RTCPeerConnection`, no mic, and no timer of its own (this
- * hook owns the per-entry expiry timers). `answer` promotes one basket
- * entry into the slot, and this hook then answers, rejects, or hangs it up,
- * tearing the peer connection + local mic track down on every exit path
- * (answered-elsewhere, rejected, hung up, remote end, or unmount) so
- * neither ever leaks.
+ * Browser WebRTC peer for WhatsApp calls, driven by `useWhatsappVoipCallStore`.
+ * Incoming offers land in the `ringingCalls` basket; `answer` promotes one into
+ * the single call slot. The peer and mic are torn down on every exit path so
+ * neither leaks.
  */
 export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   const t = useTranslations()
@@ -187,9 +138,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     (state) => state.enqueueRinging,
   )
   const removeRinging = useWhatsappVoipCallStore((state) => state.removeRinging)
-  // `promoteRinging` itself is always invoked via `getState()` (see
-  // `answer` below) rather than a selected reference — every decision in
-  // that function reads fresh state deliberately, never a render-time
+  // Read via `getState()` so every decision sees fresh state, not a render
   // snapshot.
   const clearRinging = useWhatsappVoipCallStore((state) => state.clearRinging)
   const setPhase = useWhatsappVoipCallStore((state) => state.setPhase)
@@ -224,48 +173,31 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
   const resumeFetchedRef = useRef(false)
   const recorderRef = useRef<CallRecorder | null>(null)
-  /** Set once `answer`/`startOutbound` learns `browserRecordingEnabled`
-   * — gates whether the BROWSER MediaRecorder should ever start for this
-   * call. Never true under the default `metaNative` mode (Meta records
-   * server-side there). Read by the `ontrack` handler if the
-   * remote track arrives after the accept/answer round-trip. */
+  /**
+   * Whether the browser recorder may start for this call — never under
+   * `metaNative`, where Meta records server-side.
+   */
   const shouldRecordRef = useRef(false)
-  /** Cancel token for `startOutbound`'s `preparing` phase — set by
-   * `hangup` to the cancelled attempt's nonce; `startOutbound` checks it
-   * after every await and, if the dial still resolves to a real server call
-   * after cancellation, fires a compensating hangup rather than leaving Meta
-   * mid-dial with no local UI. */
+  /**
+   * Cancel token for a `preparing` dial. If the dial still resolves to a real
+   * server call after cancellation, `startOutbound` fires a compensating
+   * hangup.
+   */
   const cancelledAttemptIdRef = useRef<string | null>(null)
-  /** Mutex serializing `answer()` attempts — see the function body. Holds
-   * the `whatsappCallId` currently being answered (slot or basket), `null`
-   * otherwise. */
+  /** Serializes `answer()` — holds the id being answered, `null` otherwise. */
   const answeringIdRef = useRef<string | null>(null)
-  /** Flipped to `false` by the unmount effect below — read after the
-   * resource-creating awaits in `answerIncoming` (the TURN fetch + mic
-   * prompt, and the accept round-trip) so a provider unmount mid-request can
-   * tear down whatever THIS attempt just built, rather than leaving an
-   * orphaned peer connection and a LIVE MICROPHONE with no component left
-   * to ever call `teardown()` again. The existing
-   * `useEffect(() => teardown, [teardown])` safety net only tears down
-   * whatever the refs held AT THE MOMENT OF UNMOUNT — it cannot catch
-   * resources a still-in-flight continuation creates afterwards. */
+  /**
+   * False after unmount. Checked after each await in `answerIncoming`: the
+   * unmount teardown only sees resources that existed at that moment, so a
+   * continuation that builds a peer or mic afterwards must clean up itself.
+   */
   const isMountedRef = useRef(true)
 
-  // Resume-after-refresh: a ring is otherwise delivered exactly once over
-  // realtime, so an agent who hits F5 while calls are still ringing loses
-  // the incoming UI for ALL of them even though the server-side
-  // offer/control TTL (~55s) may still make them answerable. Runs at most
-  // once per mount (guarded by the ref, not by `workspaceId` in the dep
-  // list, so a later socket reconnect or an in-progress answer never
-  // re-triggers it) — never re-fetches on every render.
-  //
-  // Deliberately does NOT early-exit when the slot already holds a call —
-  // ring-all means several offers can be outstanding at once, and every one
-  // of them belongs in the basket regardless of whether this agent is
-  // already engaged with a different call. `enqueueRinging` itself already
-  // no-ops for an id already in the basket or occupying the slot, and each
-  // entry's own expiry timer (see below) dismisses it if it has since
-  // expired.
+  // Resume after refresh: a ring is delivered once over realtime, so an agent
+  // who reloads mid-ring would lose it while it is still answerable. Runs once
+  // per mount. Every outstanding offer goes into the basket even while the slot
+  // is busy — `enqueueRinging` ignores duplicates and each entry's timer drops
+  // it once expired.
   useEffect(() => {
     if (resumeFetchedRef.current || !workspaceId) {
       return
@@ -275,21 +207,11 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     getPendingIncomingVoipCallAction(workspaceId)
       .then((result) => {
         const pending = result?.data ?? []
-        // `listResumableIncoming` orders newest-created-first (the
-        // repository's `findRingingByWorkspace` is `desc(createdAt)`), but
-        // a LIVE realtime ring lands oldest-first relative to whatever is
-        // already ringing (each `whatsappCallTransportIncoming` event
-        // simply appends via `enqueueRinging`) — reversing here keeps the
-        // basket's arrival order consistent between the two paths instead
-        // of depending on which one populated it first.
+        // The server returns newest first; reverse so the basket keeps the same
+        // arrival order as live rings.
         for (const pendingCall of [...pending].reverse()) {
-          // Bubbling the ringing conversation to the top of the inbox list
-          // is now `ChatRealtime`'s job: it subscribes directly to this
-          // store's `ringingCalls` basket (see `chat-realtime.tsx`), which
-          // covers both a live realtime ring AND an entry enqueued here on
-          // resume-after-refresh — this hook no longer needs `ChatStore` at
-          // all (and stays mountable without a `ChatStoreProvider`, e.g. at
-          // the workspace layout level).
+          // Moving the ringing conversation to the top is `ChatRealtime`'s job
+          // (it watches the basket), so this hook needs no `ChatStore`.
           enqueueRinging(pendingCall)
         }
       })
@@ -301,22 +223,9 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
       })
   }, [workspaceId, enqueueRinging])
 
-  // Basket expiry: a `ringingCalls` entry owns no timer of its own (it is
-  // pure data — see `WhatsappVoipRingingCall`), so this hook is the single
-  // owner of "dismiss this offer once its deadline passes" for every entry
-  // currently in the basket. No peer/mic teardown here — a basket entry
-  // never had either.
-  //
-  // Keyed on a fingerprint of `id:deadlineAt` pairs, NOT on `ringingCalls`
-  // itself: the array gets a new identity on every enqueue/remove, so a
-  // naive `[ringingCalls]` dependency would tear down and re-arm every
-  // SURVIVING entry's timer on every unrelated basket mutation (e.g. a
-  // second ring arriving does not change the first ring's deadline, but it
-  // does change the array). Deadlines are absolute (`setTimeout` computed
-  // from `deadlineAt - Date.now()`), so even a spurious re-arm could never
-  // extend a call past its real deadline — but relying on that instead of
-  // fixing the dependency would still mean this effect keeps tearing down
-  // and recreating timers proportional to unrelated basket churn.
+  // Expiry for basket entries (which own no timer). Keyed on an `id:deadlineAt`
+  // fingerprint rather than the array, so unrelated enqueues do not tear down
+  // and re-arm every surviving timer.
   const ringingFingerprint = useMemo(
     () =>
       ringingCalls
@@ -324,19 +233,14 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         .join(","),
     [ringingCalls],
   )
-  // `ringingFingerprint` (not `ringingCalls`) is the intentional re-arm
-  // trigger — see the comment above.
+  // `ringingFingerprint` is the intentional re-arm trigger.
   // biome-ignore lint/correctness/useExhaustiveDependencies: ringingFingerprint substitutes for ringingCalls on purpose
   useEffect(() => {
     const timeoutIds = ringingCalls.flatMap((entry) => {
       const deadlineMs = new Date(entry.deadlineAt).getTime()
-      // An unparseable deadline would make `Math.max(NaN, 0)` NaN, which
-      // `setTimeout` coerces to 0 — the ring would vanish the instant it
-      // arrived, before the agent could ever see it. Arming NO timer is not
-      // the answer either: this backstop exists precisely for a lost
-      // transport-ended event, so skipping it can strand a dead ring in the
-      // basket until the agent reloads. Fall back to a bounded delay past
-      // Meta's own TTL instead, which is wrong in neither direction.
+      // An unparseable deadline would make the delay NaN and fire immediately;
+      // skipping the timer would strand the ring if the ended event is lost.
+      // Use a bounded fallback instead.
       const isDeadlineUsable = Number.isFinite(deadlineMs)
       if (!isDeadlineUsable) {
         logger.warn(
@@ -356,22 +260,13 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     }
   }, [ringingFingerprint, removeRinging])
 
-  // Unmount safety net for the basket, mirroring the peer/mic teardown
-  // effect below: the per-entry expiry timers above die with this effect
-  // anyway (their own cleanup runs on unmount), but the basket ITSELF would
-  // otherwise survive in the store — stale offers with dead timers that can
-  // never self-expire. `WhatsappVoipCallProvider` mounts this hook exactly
-  // once for the app's lifetime in practice, so this mostly matters for
-  // tests and hot-reload.
+  // Clear the basket on unmount — its timers die with the effect, and stale
+  // offers could never expire otherwise.
   useEffect(() => clearRinging, [clearRinging])
 
   const teardown = useCallback(() => {
-    // Stop the recorder BEFORE closing the peer/mic tracks: `stop` only
-    // requests a final `dataavailable` flush and returns synchronously — the
-    // assembled blob's upload runs asynchronously in `onstop`, after this
-    // function returns, so it is unaffected by the mic track stopping right
-    // after. Ordering here is what guarantees the last audio chunk is never
-    // lost on any teardown path (hangup, remote-ended, reject, unmount).
+    // Stop the recorder before the tracks: `stop` flushes the last chunk
+    // synchronously, the upload runs later in `onstop`.
     recorderRef.current?.stop()
     recorderRef.current = null
     shouldRecordRef.current = false
@@ -389,17 +284,11 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     }
   }, [setRecordingInStore])
 
-  /** Shared unrecoverable-connection handler wired onto every peer via
-   * {@link registerConnectionHealthHandlers} — never a bare local teardown:
-   * an already-accepted call still needs a server-side `terminate` (compensating
-   * hangup) so Meta's leg does not linger, while a call still `preparing`
-   * (no server call exists yet) just releases the local slot. Shows the
-   * translated "connection lost" notice via the lingering `ended` phase.
-   *
-   * Idempotent: `connectionState` can reach `failed` more than once for the
-   * same call, so once it is already `ended` this is a no-op beyond the
-   * always-safe `teardown()` — it must never call `handleEnded`/hangup twice
-   * for the same call. */
+  /**
+   * Handles an unrecoverable connection. An accepted call still needs a server-
+   * side hangup so Meta's leg ends; a `preparing` dial only releases the slot.
+   * Idempotent — `failed` can fire more than once.
+   */
   const handleConnectionLost = useCallback(() => {
     const current = useWhatsappVoipCallStore.getState().call
     teardown()
@@ -426,15 +315,12 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     )
   }, [teardown, handleEnded, releasePreparing, reset, workspaceId])
 
-  /** Starts the BROWSER recorder once the local mic track, the remote
-   * party's track, and `browserRecordingEnabled` (never true under
-   * `metaNative`) are all available — whichever of `ontrack` and the
-   * `"accepted"`/`"active"` outcome resolves last calls this. This never
-   * drives the panel's "recording requested" indicator — that reflects
-   * `recordingRequested` and is set directly from the initiate/answer
-   * result regardless of whether a browser recorder actually starts, since
-   * Meta may be recording server-side even when the browser never captures
-   * anything locally. */
+  /**
+   * Starts the browser recorder once the mic, the remote track and
+   * `browserRecordingEnabled` are all present; whichever arrives last calls
+   * this. The panel's recording indicator follows `recordingRequested` instead,
+   * since Meta may record server-side.
+   */
   const maybeStartRecorder = useCallback(
     (whatsappCallId: string) => {
       if (
@@ -458,11 +344,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   )
 
   /**
-   * The peer connection both call directions build, wired identically: health
-   * handlers, the remote stream on the audio element, and the recorder. They
-   * differ only in WHICH call id the recorder starts against — outbound has
-   * no id until the dial is upgraded past `preparing` — so that is the single
-   * parameter.
+   * Builds the peer both directions use. They differ only in which call id the
+   * recorder starts against — outbound has none until it leaves `preparing`.
    */
   const createCallPeerConnection = useCallback(
     (
@@ -491,29 +374,18 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     [handleConnectionLost, maybeStartRecorder],
   )
 
-  // The store's call is cleared either by this hook (reset after
-  // reject/hangup/failure) or externally (the transport-ended realtime
-  // event, via `handleEnded`, on remote hangup or deadline expiry). Only the
-  // external path needs this effect — the internal paths already tear down
-  // before calling reset — but running it unconditionally is a safe no-op
-  // when the peer is already closed, and guarantees a leaked peer can never
-  // survive the store saying the call is over. `ended` is included even
-  // though the call object LINGERS in the store (for the panel's ~2s
-  // message) — the peer/mic themselves must still be released immediately.
+  // Tear the peer down whenever the store says the call is over, including when
+  // an external `handleEnded` cleared it. Includes `ended`: the card lingers,
+  // the media must not.
   useEffect(() => {
     if (!call || call.phase === WhatsappVoipCallPhase.ended) {
       teardown()
     }
   }, [call, teardown])
 
-  // Auto-clears a lingering `ended` call ~2s after it lands, unless the
-  // agent dismisses it sooner (`dismissEnded`) or a new call replaces it
-  // first (in which case the dep-array change clears this stale timeout).
-  // Since `ended` is now treated as a FREE slot — a new incoming ring
-  // or outbound dial can overwrite it well within the 2s linger — this
-  // timeout must only reset if the slot STILL holds the SAME
-  // `whatsappCallId` by the time it fires; otherwise it would clobber the
-  // call that has since taken the slot.
+  // Auto-clear an `ended` call after the linger — but only if the slot still
+  // holds that same call, since `ended` counts as free and may already be
+  // replaced.
   useEffect(() => {
     if (call?.phase !== WhatsappVoipCallPhase.ended) {
       return
@@ -533,10 +405,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   // Unmount safety net — never leak a peer or a live mic track.
   useEffect(() => teardown, [teardown])
 
-  // Companion to the safety net above: flips `isMountedRef` so an
-  // in-flight `answerIncoming` continuation can detect the unmount AFTER it
-  // resumes from an await, not just at the instant of unmount — see FIX 2
-  // in `answerIncoming`'s block comment.
+  // Lets an in-flight `answerIncoming` notice an unmount after it resumes from
+  // an await.
   useEffect(() => {
     isMountedRef.current = true
     return () => {
@@ -544,28 +414,10 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     }
   }, [])
 
-  // Consumes the decoupled outbound-answer handoff (`chat-realtime.tsx` sets
-  // it from the `whatsappCallOutboundAnswer` realtime event): applies the
-  // SDP answer to the live peer once it matches the current outbound call.
-  //
-  // Meta's Call-Connect (answer) webhook is sent right after initiation —
-  // BEFORE pickup — so it can race the tail of `initiateOutboundVoipCallAction`
-  // and land while the store's call slot is still empty (before `addOutbound`
-  // runs). Discarding it there would leave the pc with no remote description
-  // forever, since the worker has already deleted its Redis copy. So:
-  //   - no call yet -> BUFFER (do nothing); `call` is a dep, so this effect
-  //     re-runs and applies the answer once `upgradeToDialing` creates the
-  //     matching call moments later.
-  //   - our own call is still `preparing` (no real `whatsappCallId` minted
-  //     client-side yet, even though the server call — and this answer for
-  //     it — already exist) -> BUFFER; `upgradeToDialing` will replace the
-  //     nonce with the real id and this effect re-runs and matches then.
-  //   - matches the current call but no live peer (e.g. the agent reloaded
-  //     mid-dial) -> drop, it can never be applied.
-  //   - matches the current call and a live peer exists -> apply, then clear.
-  //   - a DIFFERENT, already-resolved call now occupies the slot -> drop;
-  //     this answer's call is gone and can never come back, so keeping it
-  //     would leak indefinitely.
+  // Applies the outbound SDP answer handed over by `chat-realtime.tsx`. Meta
+  // sends it right after initiation, so it can arrive before the call exists
+  // locally (or while it still has its client nonce) — buffer until it matches.
+  // Drop it if the peer is gone or a different call now holds the slot.
   useEffect(() => {
     if (!pendingOutboundAnswer) {
       return
@@ -596,24 +448,15 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     }
 
     if (call && !isPreparing) {
-      // A different, already-resolved call occupies the single-call slot
-      // now — this answer's call is gone for good; drop it rather than
-      // buffer forever.
+      // A different call holds the slot — this answer's call is gone for good.
       clearPendingOutboundAnswer()
     }
-    // else: no call in the store yet, or our own call is still `preparing`
-    // — keep buffering.
+    // No call yet, or still `preparing` — keep buffering.
   }, [pendingOutboundAnswer, call, clearPendingOutboundAnswer])
 
-  // Drives the recorder from the `"active"` phase transition itself (fed by
-  // the `whatsappCallOutboundStatus` realtime event via `setOutboundStatus`)
-  // — NOT `pc.connectionState`. `maybeStartRecorder` is also
-  // called from `ontrack` below; whichever of the two resolves last actually
-  // starts it, since both are idempotent no-ops once a recorder exists.
-  //
-  // Recorder only — this must never touch the media path. The mic is attached
-  // when the offer is built (see `attachMicrophone`), precisely so audio does
-  // not depend on Meta's best-effort ACCEPTED event arriving.
+  // Starts the recorder on the transition to `active` (from Meta's ACCEPTED
+  // status), not `pc.connectionState`. Recorder only — the mic is attached when
+  // the offer is built so audio never depends on that best-effort event.
   useEffect(() => {
     if (
       call?.direction === WhatsappVoipCallDirection.outbound &&
@@ -624,26 +467,17 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   }, [call, maybeStartRecorder])
 
   /**
-   * The actual "gather a TURN/STUN answer, then call the answer action"
-   * flow — extracted so it can run against a call object passed in as a
-   * PARAMETER rather than read from this hook's `call` (the React state
-   * selector's snapshot for the render `answer` was created in). This
-   * matters because `answer` below may `promoteRinging` a basket entry into
-   * the slot and needs to act on that freshly-promoted call in the SAME
-   * tick — the `call` closure is still the pre-promote value (`null`, or a
-   * different call) until React re-renders, so reusing it here would
-   * silently answer nothing (or the wrong call).
+   * The answer flow, taking the call as a parameter: `answer` may promote a
+   * basket entry and must act on it in the same tick, before React re-renders
+   * the `call` closure.
    */
   const answerIncoming = useCallback(
     async (incomingCall: WhatsappVoipCall) => {
       if (
         !workspaceId ||
         incomingCall.phase !== WhatsappVoipCallPhase.incomingRinging ||
-        // Every inbound call carries an offer (`promoteRinging` moves one
-        // in) — `offer` is only optional on the shared
-        // `WhatsappVoipCall` type because an outbound call never has one.
-        // This can never actually be reached for a call still in
-        // `incomingRinging`.
+        // Unreachable for an `incomingRinging` call — every inbound call has an
+        // offer.
         !incomingCall.offer
       ) {
         return
@@ -679,27 +513,16 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         )
         localStreamRef.current = localStream
 
-        // RACE (FIX 2): the provider can unmount while the TURN fetch or the
-        // mic prompt above was in flight. The unmount safety-net effect
-        // (`useEffect(() => teardown, [teardown])`) already ran `teardown()`
-        // at the moment of unmount — but against refs that were still empty,
-        // since THIS continuation had not created its peer/mic yet. Left
-        // unguarded, execution would carry on to build a real
-        // `RTCPeerConnection` and acquire a real microphone track for a
-        // component that no longer exists to ever tear them down — a live
-        // mic with nothing rendering its controls. Check now, once both the
-        // peer and the mic actually exist in the refs, and tear them down
-        // ourselves if the component is gone. Nothing has been accepted
-        // server-side yet at this point, so no compensating hangup is
-        // needed — just a clean, unattached exit.
+        // The provider may have unmounted during the TURN fetch or mic prompt,
+        // after the unmount teardown already ran against empty refs. Nothing is
+        // accepted server-side yet, so tear down locally and stop.
         if (!isMountedRef.current) {
           teardown()
           return
         }
 
-        // Before the answer is built — see `attachMicrophone`. Nothing has been
-        // accepted server-side yet, so this aborts the answer rather than
-        // hanging up, but it must still tell the agent why the ring vanished.
+        // Nothing is accepted yet, so abort — but tell the agent why the ring
+        // vanished.
         if (!attachMicrophone(pc, localStream)) {
           logger.error(
             { whatsappCallId },
@@ -716,10 +539,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         await pc.setLocalDescription(answerDescription)
         await waitForIceGatheringComplete(pc)
 
-        // This exact string is the ONLY answer SDP ever generated for this
-        // call — `answerWhatsappVoipCallAction` submits it unmodified to both
-        // Meta's `pre_accept` and `accept` (see `answer-voip-call.action.ts`),
-        // so the two are byte-identical by construction (never regenerated).
+        // The only answer SDP for this call: the action sends it unchanged to
+        // both `pre_accept` and `accept`.
         const sdpAnswer = pc.localDescription?.sdp
         if (!sdpAnswer) {
           throw new Error("voip-local-description-missing")
@@ -732,27 +553,11 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         const data = result?.data
 
         if (data?.outcome === "accepted") {
-          // RACE #1 (FIX 1): Meta/our DB now say "accepted", but the local
-          // call this was answering may no longer be resurrectable — either
-          // the store's call slot was cleared/overwritten while this await
-          // was in flight (dismissed, or a fresh incoming offer landed), or
-          // Meta ENDED THIS SAME CALL server-side in the meantime: the
-          // realtime `whatsappCallTransportEnded` handler already ran
-          // `handleEnded` for this exact `whatsappCallId`, moving it to the
-          // terminal `ended` phase. Same id, so a bare id-equality check here
-          // would wrongly pass and resurrect an already-dead call — the mic
-          // track would get attached to a call Meta considers over.
-          // `markActive` itself refuses BOTH cases (mismatched id, and phase
-          // `ended` — see `voip-call-store.ts`) and reports failure so both
-          // races share one teardown/compensating-hangup path below instead
-          // of duplicating it per case.
-          //
-          // RACE #2 (FIX 2): the provider can also have unmounted entirely
-          // while this await was in flight — `isMountedRef` catches that even
-          // though the store's call may still (harmlessly) report the id as
-          // matching and not `ended`, since nothing in the store is
-          // unmount-aware. Short-circuited before `markActive` so an
-          // unmounted attempt never flips the store to `active` at all.
+          // Meta has accepted, but the local call may be gone: the slot was
+          // cleared or replaced, Meta already ended it, or the provider
+          // unmounted. `markActive` refuses the first two and `isMountedRef`
+          // catches the last, so all of them share one compensating-hangup
+          // path.
           const activated = isMountedRef.current && markActive(whatsappCallId)
           if (!activated) {
             hangupWhatsappVoipCallAction(workspaceId, { whatsappCallId }).catch(
@@ -767,24 +572,17 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
             return
           }
 
-          // The mic is already attached and negotiated as `sendrecv` (see the
-          // `addTrack` above), so there is nothing to wire up here — accept
-          // simply opens the path Meta will send and receive audio on.
-          // Only the answering agent ever reaches this branch, so a losing
-          // ring-all agent never starts a recorder — no extra gating needed.
-          // `browserRecordingEnabled` gates the BROWSER MediaRecorder only —
-          // never true under `metaNative` mode. `isRecording` is set
-          // directly from `recordingRequested` so the panel's "recording
-          // requested" indicator reflects Meta's server-side recording too,
-          // not just whether the browser itself captured anything.
+          // Media is already negotiated. Only the answering agent reaches this,
+          // so losing ring-all agents never start a recorder. The recording
+          // indicator follows `recordingRequested`, which covers Meta's server-
+          // side recording.
           shouldRecordRef.current = data.browserRecordingEnabled
           setRecordingInStore(data.recordingRequested)
           maybeStartRecorder(whatsappCallId)
           return
         }
 
-        // "cannotAnswer" / "callEnded" (or a thrown/validation error, folded
-        // into the same branch below) — media never flowed; drop the UI.
+        // Could not answer, or the call ended — no media flowed.
         teardown()
         reset()
       } catch (error) {
@@ -810,14 +608,9 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   )
 
   /**
-   * Cancels a dial still `preparing` — no server-side call exists yet (see
-   * `startOutbound`'s client-generated nonce), so there is nothing to hang
-   * up against. Marks the attempt cancelled so `startOutbound`'s
-   * still-in-flight async work fires a compensating hangup itself if Meta
-   * ends up dialing anyway, tears the local peer/mic down, and releases the
-   * slot. Shared by `hangup()` and `endForReplacement()` (see FIX 5 below)
-   * so the exact same three steps never drift into two slightly different
-   * copies.
+   * Cancels a `preparing` dial: no server call exists yet. Marks the attempt
+   * cancelled (so a late server call gets hung up), tears down, and releases
+   * the slot. Shared by `hangup` and `endForReplacement`.
    */
   const cancelPreparingAttempt = useCallback(
     (attemptId: string) => {
@@ -829,21 +622,10 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   )
 
   /**
-   * Ends the call occupying the slot so a basket entry can replace it. Used
-   * ONLY by `answer`'s replacement path, never by `hangup()`.
-   *
-   * `hangup()` tears down locally first and swallows a failed action — fine
-   * when nothing waits on it, but here it could leave the FIRST customer in
-   * dead air while the agent talks to the second. So this AWAITS the action
-   * and only tears down once the server confirms `{ hungUp: true }`; on any
-   * other outcome the existing call is untouched and it returns `false`, and
-   * the caller aborts the replacement.
-   *
-   * Takes the whole call, not just an id: while `phase === "preparing"` the
-   * `whatsappCallId` is still the client nonce from `startOutbound`, which
-   * the action's `zodBigintAsString()` input rejects — that would show a
-   * false "hangup failed" toast for a leg that was never dialed. `preparing`
-   * therefore short-circuits to the local-only cancel.
+   * Ends the slot's call so a basket entry can replace it. Unlike `hangup`,
+   * waits for the server to confirm before tearing down — otherwise a failure
+   * leaves the first customer in dead air. A `preparing` call has only a client
+   * nonce the action would reject, so it is cancelled locally.
    */
   const endForReplacement = useCallback(
     async (call: WhatsappVoipCall): Promise<boolean> => {
@@ -883,26 +665,11 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   )
 
   /**
-   * Resolves and answers ONE offer, targeted either by id (a specific
-   * basket entry, or the slot's own call) or — with no argument — whatever
-   * currently occupies the slot (today's behavior, unchanged).
-   *
-   * Race #1 — stale closure: `promoteRinging` mutates the store directly, so
-   * this render's captured `call` is stale the moment a basket entry is
-   * promoted. Every decision below reads `getState()` fresh instead.
-   *
-   * Race #2 — concurrent answers: `answeringIdRef` is a synchronous mutex
-   * set before any `await`, so a second `answer(...)` is a no-op while one
-   * is in flight. Without it two rapid clicks could both reach the
-   * replacement branch on stale reads, and the second could hang up the very
-   * call the first had just promoted.
-   *
-   * Replacement: when the slot holds a genuinely ENGAGED call (not free —
-   * see `isCallSlotFree`'s rule that a lingering `ended` call IS free) and
-   * the target is a DIFFERENT, basket-resident call, the current call is
-   * ended via `endForReplacement` (awaited, server-confirmed) before the
-   * basket entry is ever promoted. A failed end aborts here: the ring stays
-   * in the basket, nothing is promoted, nothing is torn down.
+   * Answers one offer — by id, or the slot's call. Reads `getState()` fresh
+   * since `promoteRinging` makes this render's `call` stale; `answeringIdRef`
+   * makes a second concurrent click a no-op. An engaged call is ended (and
+   * confirmed) before a different basket entry is promoted; if ending fails,
+   * nothing changes.
    */
   const answer = useCallback(
     async (whatsappCallId?: string) => {
@@ -919,10 +686,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
       try {
         const latest = useWhatsappVoipCallStore.getState()
 
-        // Case 1: the target already IS the slot's call, still ringing —
-        // the common path (the panel's Answer button with no id, or a
-        // basket entry taking an already-free slot after `promoteRinging`
-        // below). Nothing to replace.
+        // The target is already the slot's ringing call — nothing to replace.
         if (
           latest.call?.whatsappCallId === targetId &&
           latest.call.phase === WhatsappVoipCallPhase.incomingRinging
@@ -931,13 +695,12 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           return
         }
 
-        // Case 2: the target must be a basket entry.
+        // Otherwise it must be a basket entry.
         const ringing = latest.ringingCalls.find(
           (entry) => entry.whatsappCallId === targetId,
         )
         if (!ringing) {
-          // Already answered elsewhere, expired, or dismissed between the
-          // click and this point — nothing left to do.
+          // Answered elsewhere, expired or dismissed meanwhile.
           return
         }
 
@@ -956,13 +719,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           .getState()
           .promoteRinging(targetId)
         if (!promoted) {
-          // Another agent won the race, or the slot filled again in the
-          // window above — abort cleanly. A basket entry owns no peer/mic,
-          // so there is nothing to tear down.
-          //
-          // But if we ENDED a live call to get here, the agent just lost a
-          // real conversation for nothing. Failing silently would leave them
-          // staring at an empty panel with no idea why, so say it plainly.
+          // Another agent won or the slot refilled — abort. If we ended a live
+          // call to get here, say so plainly.
           if (endedACallToGetHere) {
             logger.warn(
               { whatsappCallId: targetId },
@@ -983,16 +741,12 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     [answerIncoming, endForReplacement, t],
   )
 
-  // Ring-all: dismissing an incoming call is LOCAL only — the same offer is
-  // rung to every available agent, so declining just silences it here and
-  // leaves it ringing for the others. The call ends for everyone only when
-  // someone answers, the caller hangs up, or the deadline lapses (the worker
-  // then Meta-rejects it as missed). No server action here.
+  // Ring-all: declining is local only; the offer keeps ringing for others until
+  // someone answers, the caller hangs up, or it expires.
   const dismiss = useCallback(
     (whatsappCallId?: string) => {
       if (whatsappCallId) {
-        // A basket entry owns no `RTCPeerConnection` and no mic track —
-        // there is nothing to tear down, just an offer to drop.
+        // A basket entry has no peer or mic to tear down.
         removeRinging(whatsappCallId)
         return
       }
@@ -1002,12 +756,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     [removeRinging, teardown, reset],
   )
 
-  // Extended (beyond the inbound `active`-only gate) so an outbound call can
-  // also be cancelled while still `outboundDialing`/`outboundRinging` — Meta
-  // has no local "cancel before pickup" concept, so this reuses the same
-  // `hangupWhatsappVoipCallAction`, which finalizes via the shared
-  // `voip:ctrl:<wacid>` control regardless of which phase it was ended from
-  //.
+  // Also lets an outbound call be cancelled while dialing or ringing — Meta has
+  // no separate cancel, so this uses the same hangup action.
   const hangup = useCallback(async () => {
     if (!(call && workspaceId)) {
       return
@@ -1019,13 +769,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
       return
     }
 
-    // An outbound call that has been dialed but never answered — cancelling
-    // it here (whether the agent clicks End or the deadline backstop effect
-    // below fires this same function) must show a terminal "No answer"
-    // message rather than vanishing silently, so it routes through
-    // `handleEnded` (which
-    // lingers ~2s) instead of a bare `reset`. An `active` call (answered,
-    // media flowed) keeps the original immediate-reset behavior.
+    // An unanswered outbound call ends with a visible "No answer" via
+    // `handleEnded`; an active call resets immediately.
     const isOutboundDialPhase =
       call.direction === WhatsappVoipCallDirection.outbound &&
       (call.phase === WhatsappVoipCallPhase.outboundDialing ||
@@ -1057,28 +802,11 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     reset()
   }, [reset])
 
-  // Client-side deadline backstop: if an incoming call is never answered by
-  // its deadline, dismiss the ringing UI (and tear the peer down) even if the
-  // server's transport-ended event never arrives — e.g. a dropped socket. Only
-  // armed while the call is still `incomingRinging`: once the agent starts
-  // answering, the `answer` flow owns the peer's lifecycle (it tears down on
-  // failure), so a slow mic prompt / TURN / Graph round-trip near the deadline
-  // must NOT let this timer close the peer out from under an in-flight — and
-  // possibly succeeding — accept. Mirrored for the outbound
-  // `outboundDialing`/`outboundRinging` phases so a dial that is never
-  // accepted also clears its local UI — but for outbound, the deadline routes
-  // through `hangup` (server-side end) rather than a bare local teardown:
-  // Meta notes its `ACCEPTED` status event is "primarily for
-  // auditing" and can arrive late or be lost, in which case the call is
-  // actually established (DB/Redis/Meta all say accepted) even though this
-  // client's phase never advanced past dialing/ringing — a bare local
-  // teardown there would kill only the local peer and leave the customer in
-  // dead air with no server-side hangup. `hangup` itself only acts while
-  // the call is still in a hangupable phase, so it is a safe no-op if the
-  // phase already advanced to `active` by the time the timer fires (in which
-  // case this effect's own re-run — `call` is a dep — would have already
-  // cleared the stale timeout anyway). The server enforces its own
-  // authoritative expiry independently either way.
+  // Client-side deadline backstop, in case the transport-ended event never
+  // arrives. Inbound: only while still ringing, never under an in-flight
+  // answer. Outbound: goes through `hangup` rather than a local teardown,
+  // because Meta's ACCEPTED event can be late or lost and the call may already
+  // be live server-side. The server enforces its own expiry regardless.
   useEffect(() => {
     if (!call) {
       return
@@ -1114,11 +842,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     return () => clearTimeout(timeoutId)
   }, [call, teardown, reset, hangup])
 
-  // Bounds how long a dial may sit `preparing` (TURN fetch + mic prompt +
-  // offer/ICE-gather + the initiate round-trip) — a hung TURN fetch or a mic
-  // prompt the agent never answers must not leave the panel open forever.
-  // Routes through `hangup` so a dial that resolves to a real server call
-  // AFTER this fires still gets a compensating hangup.
+  // Bounds the `preparing` phase. Goes through `hangup` so a dial that still
+  // reaches the server gets a compensating hangup.
   useEffect(() => {
     if (call?.phase !== WhatsappVoipCallPhase.preparing) {
       return
@@ -1134,28 +859,17 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     return () => clearTimeout(timeoutId)
   }, [call, hangup])
 
-  // Places a business-initiated (outbound) VoIP call: the browser generates
-  // the SDP OFFER (inverted from the inbound `answer` flow, which receives
-  // one).: no video track is ever
-  // requested or offered.
+  // Outbound call: the browser generates the SDP offer. Audio only.
   const startOutbound = useCallback(
     async (params: StartOutboundParams): Promise<StartOutboundOutcome> => {
-      // Deliberately checks ONLY the single `call` slot, never the basket
-      // (`ringingCalls`) — an unanswered offer must not lock the agent out
-      // of dialing someone else. This is unchanged from before the basket
-      // existed, and stays unchanged on purpose: do not "fix" this to also
-      // check `ringingCalls.length`. The ring itself remains fully
-      // answerable afterwards regardless of what this dial does (it still
-      // lives in the basket, disjoint from whatever `startOutbound` does to
-      // the slot).
+      // Checks only the call slot, never the basket: an unanswered ring must
+      // not block dialing someone else.
       if (!workspaceId || useWhatsappVoipCallStore.getState().call) {
         return "occupied"
       }
 
-      // Claimed INSTANTLY, before any TURN/getUserMedia/offer/ICE/initiate
-      // work — the call panel renders the moment the agent clicks. Keyed by this local nonce; `upgradeToDialing` replaces it
-      // with the real server id once `initiateOutboundVoipCallAction`
-      // returns `"dialing"`.
+      // Claim the slot immediately so the panel renders on click;
+      // `upgradeToDialing` swaps this nonce for the server id.
       const nonce = crypto.randomUUID()
       startPreparing(nonce, {
         conversationId: params.conversationId,
@@ -1168,25 +882,10 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         cancelledAttemptIdRef.current = null
       }
       /**
-       * Unwinds this attempt after the agent cancelled it: clears the cancel
-       * token and releases the preparing slot (a no-op once
-       * `upgradeToDialing` already moved past it), tearing the peer/mic down
-       * with it.
-       *
-       * `tearDownPeer: false` is required before this attempt has created a
-       * peer: the refs are shared across attempts, so a stale cancelled
-       * attempt must never close a newer attempt's peer/mic.
+       * Unwinds a cancelled attempt; `tearDownPeer: false` before a peer exists, since the
+       * refs are shared and a stale attempt must never close a newer one's peer.
        */
-      // `teardown()` closes the SHARED peer/mic refs, which a DIFFERENT call
-      // may already own by the time a cancelled attempt's async work finally
-      // resolves. An agent can now replace a still-`preparing` dial by
-      // answering an inbound ring (`endForReplacement`): that cancels this
-      // attempt, closes ITS peer right then, and hands the slot to the ring,
-      // which builds its own peer and microphone. A late `finishCancelled`
-      // here would close that replacement's peer and stop its microphone,
-      // leaving the agent connected to Meta with dead media. So tear down
-      // only while this attempt still owns the slot — or while the slot is
-      // empty, where there is nothing of anyone else's to break.
+      // Tear down only while this attempt still owns the shared peer/mic slot (or it's empty).
       const stillOwnsSharedMedia = () => {
         const slotCallId =
           useWhatsappVoipCallStore.getState().call?.whatsappCallId
@@ -1210,11 +909,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
       }
 
       /**
-       * The one way this attempt unwinds after a step failed: release this
-       * attempt's media and slot, then report `outcome` — unless the agent
-       * cancelled in the meantime, in which case the cancel wins. A cancel
-       * that raced a failure is still a cancel, and the caller must not be
-       * shown a failure for a dial the agent abandoned themselves.
+       * Unwinds after a failed step. If the agent cancelled meanwhile, the
+       * result is `"cancelled"` — no failure shown for a dial they abandoned.
        */
       const abandonAttempt = (
         outcome: StartOutboundOutcome,
@@ -1245,8 +941,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         }
 
         if (isCancelled()) {
-          // No peer exists for this attempt yet — tearing down here would hit
-          // a newer attempt's peer/mic through the shared refs.
+          // No peer yet — tearing down would hit a newer attempt's shared refs.
           return finishCancelled({ tearDownPeer: false })
         }
 
@@ -1300,17 +995,12 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
         }
 
         if (data.outcome !== "dialing") {
-          // No live call was created on any of these branches (needs
-          // permission, glare, ineligible, rate-limited, etc.) — the peer
-          // built above is now unused.
+          // No call was created — the peer is unused.
           return abandonAttempt(data.outcome)
         }
 
-        // Meta has now dialed a real server-side call. If the agent cancelled
-        // while this was in flight, there is no local UI left to answer it —
-        // fire a compensating hangup rather than leave the customer's leg
-        // ringing in the void, and tear down this attempt's now-orphaned
-        // peer/mic.
+        // Meta dialed a real call but the agent cancelled — hang it up so the
+        // customer is not left ringing.
         if (isCancelled()) {
           finishCancelled()
           hangupWhatsappVoipCallAction(workspaceId, {
@@ -1324,11 +1014,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           return "cancelled"
         }
 
-        // `browserRecordingEnabled` gates the BROWSER MediaRecorder only —
-        // never true under `metaNative` mode. `upgradeToDialing` sets
-        // the store's `isRecording` directly from `recordingRequested`, so
-        // the panel's "recording requested" indicator reflects Meta's
-        // server-side recording too, not just the browser's own capture.
+        // `browserRecordingEnabled` gates only the browser recorder; the
+        // indicator follows `recordingRequested`.
         shouldRecordRef.current = data.browserRecordingEnabled
         upgradeToDialing(nonce, {
           whatsappCallId: data.whatsappCallId,
@@ -1342,11 +1029,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           recordingRequested: data.recordingRequested,
         })
 
-        // Defence in depth: `upgradeToDialing` only succeeds if the slot
-        // still holds THIS preparing attempt, so this should always match —
-        // but re-check post-upgrade and, if some other caller nulled the
-        // slot in between, fire a best-effort compensating hangup rather
-        // than leaving a live call with no client representation.
+        // Defensive: if another caller cleared the slot between upgrade and
+        // here, hang up rather than leave a live call with no UI.
         if (
           useWhatsappVoipCallStore.getState().call?.whatsappCallId !==
           data.whatsappCallId
@@ -1365,11 +1049,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
 
         return "dialing"
       } catch (error) {
-        // A WebRTC failure surfaces as a `DOMException`, which the structured
-        // logger's `err` serializer stringifies to a useless
-        // `[object DOMException]`. Pull its `name`/`message` out explicitly so
-        // the log names the actual failing step (e.g. an ICE/`setLocalDescription`
-        // failure when no TURN relay is reachable).
+        // A `DOMException` serializes as `[object DOMException]`; log its name
+        // and message so the failing step is visible.
         const named =
           error instanceof DOMException || error instanceof Error ? error : null
         logger.error(
@@ -1406,9 +1087,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     setMutedInStore(nextMuted)
   }, [call, setMutedInStore])
 
-  // Best-effort cleanup on tab close/reload — see
-  // `VOIP_CALL_HANGUP_BEACON_URL`. Armed only while the call is `active`, so
-  // an incoming ring or an in-flight `answer` is never affected by it.
+  // Armed only while `active`, so a ring or an in-flight answer is never
+  // affected.
   useEffect(() => {
     if (!(call && workspaceId) || call.phase !== WhatsappVoipCallPhase.active) {
       return
@@ -1430,17 +1110,9 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     return () => window.removeEventListener("pagehide", onPageHide)
   }, [call, workspaceId])
 
-  // D7 — warn before a navigation/reload/close would silently drop a call
-  // the agent is actively ENGAGED with: answering an offer, dialing out
-  // (ringing or already connecting), or already on an active call.
-  //
-  // Deliberately does NOT cover a merely-ringing basket. Under ring-all an
-  // offer reaches every online agent, so counting the basket made ANY
-  // inbound call block navigation, reload and tab-close for every agent in
-  // the workspace — including the ones with no intention of answering. And
-  // it guarded nothing: the resume-after-refresh fetch above re-discovers
-  // every still-unanswered offer on the next mount, so a reload mid-ring
-  // loses nothing to warn about.
+  // Warn before leaving the page drops a call the agent is engaged in. Not for
+  // a merely ringing basket: under ring-all that would block every agent, and a
+  // reload loses nothing since the resume fetch re-finds the offer.
   useEffect(() => {
     const shouldConfirmLeave =
       call !== null && LEAVE_CONFIRMATION_PHASES.has(call.phase)
@@ -1455,15 +1127,9 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     return () => window.removeEventListener("beforeunload", onBeforeUnload)
   }, [call])
 
-  // Client-driven liveness — while a call is `active` (accepted,
-  // media flowing, wacid known — inbound or outbound), ping the server every
-  // `ACTIVE_CALL_HEARTBEAT_INTERVAL_MS` so a lost `terminate` webhook can
-  // still be swept server-side (see `heartbeat-active-voip-call.action.ts`).
-  // Stops on end/teardown (the effect cleanup) or the moment the server
-  // reports `ok: false` — that only means the server itself has stopped
-  // recognizing this heartbeat as authoritative (e.g. superseded elsewhere);
-  // it must NEVER tear the local call down, since the local WebRTC media may
-  // still be flowing fine.
+  // Heartbeat while `active` so the server can sweep a call whose `terminate`
+  // webhook was lost. `ok: false` only stops the heartbeat — never the local
+  // call, whose media may still be fine.
   useEffect(() => {
     if (
       !(call && workspaceId) ||

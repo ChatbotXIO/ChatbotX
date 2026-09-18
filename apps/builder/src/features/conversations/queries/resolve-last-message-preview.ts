@@ -10,27 +10,28 @@ import type { MessageResourceWithRelations } from "@/features/messages/schema/re
 const EMPTY_PREVIEW = " "
 
 /**
- * The icon-selection discriminator for a call message in the conversation
- * list — the four non-completed outcomes are the label key itself;
- * `completed` splits by direction, since it renders no label at all in the
- * preview (see {@link resolveLastMessagePreview}) but still needs its own
- * icon (`completedInbound`/`completedOutbound`).
+ * The icon-selection discriminator for a call message in the conversation list
+ * — the four non-completed outcomes are the label key itself; `completed`
+ * splits by direction, since it renders no label in the preview but still needs
+ * its own icon (`completedInbound`/`completedOutbound`).
  */
 export type CallPreviewKind =
   | "completedInbound"
   | "completedOutbound"
   | WhatsappCallActivityLabelKey
 
-/** Centralizes the one `getWhatsappCallEntity` guard so
- * {@link resolveLastMessagePreview} and {@link resolveCallPreviewKind} can
- * never check the shape differently. */
+/**
+ * Centralizes the one `getWhatsappCallEntity` guard so
+ * `resolveLastMessagePreview` and `resolveCallPreviewKind` can never check the
+ * shape differently.
+ */
 const resolveCallEntity = (message: MessageResourceWithRelations | undefined) =>
   getWhatsappCallEntity(message?.contentAttributes)
 
 /**
  * Which icon `conversation-item.tsx` should show next to a call preview —
- * `undefined` for any non-call message, so callers can `??` past it into
- * their own icon lookup.
+ * `undefined` for any non-call message, so callers can `??` past it into their
+ * own icon lookup.
  */
 export function resolveCallPreviewKind(
   message: MessageResourceWithRelations | undefined,
@@ -54,11 +55,11 @@ export function resolveLastMessagePreview(
   message: MessageResourceWithRelations | undefined,
   t: ReturnType<typeof useTranslations>,
 ): string {
-  // A call activity message stores its English fallback in `message.text`
-  // (see `buildCallActivityText`) so it can never come out empty for a
-  // legacy client — but the inbox list must localize it via next-intl, not
-  // show that stored English string, so this check runs BEFORE the
-  // `message.text` fallback below.
+  // A call activity message stores its English fallback in `message.text` (see
+  // `buildCallActivityText`) so it can never come out empty for a legacy client
+  // — but the inbox list must localize it via next-intl, not show that stored
+  // English string, so this check runs before the `message.text` fallback
+  // below.
   const callEntity = resolveCallEntity(message)
   if (callEntity) {
     if (callEntity.status !== "completed") {

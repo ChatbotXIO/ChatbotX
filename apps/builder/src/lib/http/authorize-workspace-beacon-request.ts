@@ -7,23 +7,13 @@ export type AuthorizedWorkspaceBeaconSession = {
 }
 
 /**
- * Shared same-site + auth gate for the small, unauthenticated-looking POST
- * routes fed by `navigator.sendBeacon` (which cannot invoke a
- * next-safe-action server action) — `api/whatsapp-voip-call-hangup` and
- * `api/workspace-presence/sign-off` both need the exact same two checks.
- *
- * Deliberately runs BEFORE the caller parses its JSON body: the same-site
- * and session checks depend on nothing in the body, so a request that fails
- * either one must never even reach `req.json()` — a cross-site or
- * unauthenticated caller with a malformed/incomplete body still gets 403 or
- * 401, never a 400 that would leak "your body shape was wrong" to a request
- * that was never going to be authorized anyway.
- *
- * Workspace membership is intentionally NOT part of this helper: it needs
- * the body-derived `workspaceId`, so each caller parses its body first and
- * then calls `assertCurrentUserCanAccessChatbot` itself (throws a
- * `ChatbotXException`, mapped to a 4xx by the caller's
- * `serverErrorHandler`).
+ * Shared same-site + auth gate for POST routes fed by `navigator.sendBeacon`
+ * (which can't invoke a next-safe-action server action). Runs before the
+ * caller parses its JSON body, so a cross-site or unauthenticated request
+ * always gets 403/401, never a 400 that leaks body-shape info. Workspace
+ * membership is intentionally NOT checked here — it needs the body-derived
+ * `workspaceId`, so each caller parses its body first and calls
+ * `assertCurrentUserCanAccessChatbot` itself.
  */
 export async function authorizeWorkspaceBeaconSession(
   req: Request,

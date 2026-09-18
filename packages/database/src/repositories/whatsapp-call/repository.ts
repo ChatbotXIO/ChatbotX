@@ -37,11 +37,8 @@ import {
 type WhatsappCallRow = typeof whatsappCallModel.$inferSelect
 
 /**
- * Every terminal-metadata column `fillMissingTerminalFields` is allowed to
- * fill on a same-status redelivery. Iterated (rather than one copy-pasted
- * `if` per column) so a new column is a one-line addition here, and so every
- * filled column automatically gets its own `IS NULL` guard in the `WHERE`
- * clause — see {@link WhatsappCallRepository.fillMissingTerminalFields}.
+ * Terminal columns a same-status redelivery may fill; each gets its own `IS
+ * NULL` guard (see `fillMissingTerminalFields`).
  */
 const FILLABLE_TERMINAL_FIELDS = [
   "endedAt",
@@ -56,11 +53,8 @@ type WhatsappCallUpsertInput = {
   wacid: string
   direction: WhatsappCallDirection
   /**
-   * `createIfAbsent` only ever inserts a freshly-announced call — its two
-   * (webhook) callers both pass `"ringing"` — so this is narrowed to exclude
-   * every terminal status rather than accepting the full
-   * {@link WhatsappCallStatus} union (review A6): a terminal insert here
-   * would bypass every terminal writer's `outcome`-pairing contract.
+   * Only a freshly announced call is inserted here, so terminal statuses are
+   * excluded — a terminal insert would bypass the status/outcome pairing.
    */
   status: Exclude<WhatsappCallStatus, WhatsappCallTerminalStatus>
   workspaceId: string
@@ -73,17 +67,14 @@ type WhatsappCallUpsertInput = {
 }
 
 /**
- * Small bound on `findRingingByWorkspace` — a resume-after-refresh lookup is
- * expected to find at most a handful of concurrently ringing calls per
- * workspace; this keeps the scan (and the caller's bounded Redis reads)
- * cheap even under an anomalous backlog.
+ * Resume-after-refresh only expects a handful of ringing calls; the bound keeps
+ * the scan and the follow-up Redis reads cheap.
  */
 const FIND_RINGING_BY_WORKSPACE_LIMIT = 20
 
 /**
- * The merge-collision-safe fields `attachWacid` moves onto the surviving
- * (older) row from the row being deleted, keeping the survivor's own value
- * where it is already set.
+ * Fields `attachWacid` moves onto the surviving row when merging, where the
+ * survivor has none.
  */
 const mergeOntoOlderRow = (
   older: WhatsappCallRow,
@@ -106,13 +97,11 @@ const mergeOntoOlderRow = (
 })
 
 /**
- * Lifecycle ordering guard: webhook and signaling jobs are processed
- * concurrently, so a late RINGING/ACCEPTED can land after the terminate for
- * the same call. A status may only advance to a higher rank — with one
- * deliberate exception: `rejected` may overwrite `failed`, because a
- * declined call terminates as FAILED and the interim REJECTED status can
- * arrive after the terminate job already finalized the row. `completed` is
- * always the top rank so it can never be downgraded once reached.
+ * Status may only advance in rank, since webhook and signaling jobs run
+ * concurrently and a late RINGING/ACCEPTED can follow the terminate. Exception:
+ * `rejected` may overwrite `failed` — a declined call terminates as FAILED and
+ * its REJECTED status can arrive afterwards. `completed` is top and never
+ * downgraded.
  */
 const STATUS_RANK: Record<WhatsappCallStatus, number> = {
   ringing: 0,
@@ -123,10 +112,8 @@ const STATUS_RANK: Record<WhatsappCallStatus, number> = {
 }
 
 /**
- * The persisted terminal statuses — a row in any of these can never be
- * resurrected into `accepted`. `missed` is deliberately NOT here: it is
- * UI-derived (a `failed` row that was never `accepted`), never a value
- * written to the column. See {@link WhatsappCallRepository.markAcceptedIfActive}.
+ * Persisted terminal statuses — never resurrected into `accepted`. `missed` is
+ * UI-derived, never stored.
  */
 export const WHATSAPP_CALL_TERMINAL_STATUSES: WhatsappCallStatus[] = [
   "rejected",
@@ -155,10 +142,8 @@ export class WhatsappCallUuidMismatchError extends Error {
 }
 
 /**
- * Thrown by `createPendingOutbound` when `WhatsappCall_pendingOutbound_key`
- * (one live business-initiated attempt per contact-inbox) is already held —
- * `initiateOutboundVoipCallAction` surfaces this as a localized "call already in
- * progress" error instead of dialing a second leg.
+ * Thrown when `WhatsappCall_pendingOutbound_key` (one live outbound attempt per
+ * contact inbox) is taken — shown as "call already in progress".
  */
 export class WhatsappCallPendingOutboundExistsError extends Error {
   constructor(contactInboxId: string) {
@@ -180,56 +165,40 @@ const isUniqueViolation = (error: unknown, constraint: string): boolean => {
 }
 
 /**
- * P5 item 4 — who a `listForWorkspace` caller may see, computed by the
- * business layer (`whatsappCallHistoryService.list`, which alone knows the
- * D3/D4 eligibility rules — `packages/database` never imports
- * `packages/business`) and passed down as plain data. `allCalls: true` is
- * `CALL_READ_SCOPES.history.allCalls` (superAdmin/analytics) — no further
- * restriction, and `filters.agentUserId` is honoured. `allCalls: false` is
- * every other viewer: restricted to calls they answered or placed
- * (`isOwnCall`), and — only for an `onlyAssignedContacts`-only member
- * (`assignedOnly: true`) — further restricted to conversations
- * individually assigned to them (D3), mirroring
- * `isEligibleForConversationCall` translated to SQL.
+ * Which calls a Calls-page viewer may see, resolved by the business layer and
+ * passed in as data. `allCalls` sees everything and may filter by agent;
+ * otherwise only own calls, and an `assignedOnly` member only on conversations
+ * assigned to them.
  */
 export type WhatsappCallHistoryScope =
   | { allCalls: true }
   | { allCalls: false; userId: string; assignedOnly: boolean }
 
 /**
- * Low-level filters the Calls page where-builder understands. `outcome`
- * matches the DISPLAY outcome (`coalesce(outcome, status)`, see
- * `resolveDisplayCallOutcome`), not the raw column — a chip like "missed"
- * must still match a legacy terminal row with `outcome IS NULL`.
- * `agentUserId` is only honoured when {@link WhatsappCallHistoryScope}
- * `allCalls` is true (D4: "Agent filter only for superAdmin/analytics").
+ * Calls-page filters. `outcome` matches `coalesce(outcome, status)`;
+ * `agentUserId` applies only with `allCalls`.
  */
 export type WhatsappCallListFilters = {
   direction?: WhatsappCallDirection
   inboxId?: string
   agentUserId?: string
   outcome?: WhatsappCallOutcome
-  /** Non-terminal rows only ("ongoing" kind) — mutually exclusive with `outcome` in practice, never combined by the service. */
+  /** Non-terminal (ongoing) rows only. */
   ongoing?: boolean
 }
 
 /**
- * H1 fix: `createdAt` is carried as the DB's own TEXT rendering of the
- * `timestamptz(6)` value (microsecond precision), never a JS `Date` — a
- * `Date` only holds millisecond precision, so a cursor built from one and
- * then bound back into `lt(...)`/`eq(...)` on the next page silently
- * truncates the sub-millisecond digits. Two rows created within the same
- * millisecond (a real possibility: `now()` is constant for every statement
- * in one transaction) would then compare equal on the truncated bound and
- * the `id`-tiebreak branch would never fire for the one that actually
- * differs only below a millisecond, skipping it. The text form round-trips
- * losslessly: read back with `::text` in `listForWorkspace`'s SELECT,
- * bound back with an explicit `::timestamptz` cast in the WHERE.
+ * `createdAt` travels as the DB's text form, not a JS `Date`: a `Date` keeps
+ * milliseconds only, so rows created in the same millisecond would be skipped
+ * by the next page. Read with `::text`, bound back with `::timestamptz`.
  */
 export type WhatsappCallListCursor = { createdAt: string; id: string }
 
 export type WhatsappCallListRow = WhatsappCallRow & {
-  /** Full-precision text form of `createdAt` for the NEXT page's cursor — see {@link WhatsappCallListCursor}. `createdAt` itself (inherited from `WhatsappCallRow`) stays a `Date` for display. */
+  /**
+   * Full-precision `createdAt` for the next page's cursor; `createdAt` itself
+   * stays a `Date` for display.
+   */
   createdAtCursor: string
   contact: { id: string; fullName: string | null; avatar: string | null }
   inbox: { id: string; name: string }
@@ -238,11 +207,8 @@ export type WhatsappCallListRow = WhatsappCallRow & {
 }
 
 /**
- * Terminal status values that are ALSO valid {@link WhatsappCallOutcome}
- * literals — the SQL-side half of `coalesce(outcome, status)` (see
- * `resolveDisplayCallOutcome`, the in-memory half). `canceled` has no
- * entry: a legacy `failed` row with no `outcome` can never resolve to
- * `canceled` from `status` alone.
+ * Terminal statuses that are also valid outcomes — the SQL half of
+ * `coalesce(outcome, status)`. No `canceled`: status alone can never imply it.
  */
 const LEGACY_STATUS_FALLBACK_BY_OUTCOME: Partial<
   Record<WhatsappCallOutcome, WhatsappCallStatus>
@@ -268,10 +234,8 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Defense-in-depth (belt and suspenders) on top of a caller's own
-   * app-level `workspaceId` check: scopes the lookup by `workspaceId`
-   * directly in the SQL `WHERE` clause, so a caller that ever forgets its
-   * own check can never read another workspace's call row.
+   * Scoped by `workspaceId` in SQL as well, so a caller that forgets its own
+   * check cannot read another workspace's row.
    */
   async findByIdForWorkspace(
     id: string,
@@ -293,14 +257,9 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Creates the call row if the wacid is new; otherwise returns the existing
-   * row untouched. Safe against duplicate webhook deliveries and races —
-   * `isNew` tells the caller whether ITS insert won, so one-shot side
-   * effects (trigger events, ringing broadcasts) fire exactly once.
-   *
-   * The conflict target is the PARTIAL unique index on `wacid` (nullable
-   * column), so a concurrent insert for the same wacid is absorbed instead
-   * of creating a duplicate row.
+   * Inserts the call if its wacid is new, otherwise returns the existing row.
+   * `isNew` says whether this insert won, so one-shot side effects fire once.
+   * Conflicts on the partial unique index on `wacid`.
    */
   async createIfAbsent(
     input: WhatsappCallUpsertInput,
@@ -328,14 +287,9 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Inserts the row for a business-initiated attempt BEFORE dialing
-   * (outbound flow): `attemptId` minted by the caller and `wacid` still
-   * null (attached by `attachWacid` once Meta reports the call id). The
-   * partial unique index `WhatsappCall_pendingOutbound_key` allows only one
-   * live (`ringing`/`accepted`) business-initiated row per
-   * `(inboxId, contactInboxId)` — a concurrent second dial hits that
-   * constraint and is mapped to {@link WhatsappCallPendingOutboundExistsError}
-   * instead of a raw Postgres error.
+   * Inserts an outbound attempt before dialing (`wacid` attached later).
+   * `WhatsappCall_pendingOutbound_key` allows one live outbound row per contact
+   * inbox; a second dial maps to `WhatsappCallPendingOutboundExistsError`.
    */
   async createPendingOutbound(
     input: {
@@ -345,20 +299,13 @@ class WhatsappCallRepository {
       contactInboxId: string
       conversationId: string
       /**
-       * The agent initiating a VoIP-mode outbound call — stamped onto the
-       * row at dial time (not just on accept, unlike the SIP flow's
-       * `markAcceptedIfActive`) so Meta's async answer webhook can be
-       * targeted at them and the recording upload route's
-       * `answeredByUserId === userId` auth gate passes. Absent for the SIP
-       * outbound flow, which leaves this null.
+       * The agent placing the call, stamped at dial time so Meta's answer
+       * webhook can target them and the recording upload's auth check passes.
        */
       answeredByUserId?: string | null
       /**
-       * The agent who PLACED this outbound call — distinct from
-       * `answeredByUserId` (who ANSWERS, only meaningful for inbound calls).
-       * Used to label the "Business" speaker in the Call Information sheet.
-       * Typically the same agent as `answeredByUserId` for a VoIP outbound
-       * call; left null for the SIP outbound flow like `answeredByUserId`.
+       * The agent who placed the call (labels the "Business" speaker);
+       * `answeredByUserId` is who answered.
        */
       initiatedByUserId?: string | null
     },
@@ -392,13 +339,8 @@ class WhatsappCallRepository {
   }
 
   /**
-   * The glare guard for VoIP-mode outbound dialing: any `ringing`/`accepted`
-   * row for this `(inboxId, contactInboxId)` pair, of EITHER direction — an
-   * inbound call currently ringing/live on this contact must block a new
-   * outbound dial exactly like an already-live outbound attempt does (Meta
-   * itself would reject the second leg with 138003). Ordered newest-first
-   * and bounded to one row; the caller only needs to know whether one
-   * exists, not enumerate them.
+   * Glare guard: any live row for this contact inbox, in either direction —
+   * Meta would reject a second leg with 138003.
    */
   async findActiveByContactInbox(
     input: { inboxId: string; contactInboxId: string },
@@ -420,13 +362,10 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Attaches a Meta-reported `wacid` to a row that was created without one
-   * (an outbound row inserted at dial time, before Meta's webhook lands).
-   * No-op if the row already has this exact wacid. If another row already
-   * owns it (both the dial and the webhook created independent rows for the
-   * same call), the two are merged in one transaction: the OLDER row
-   * survives, the newer row's attempt/recording fields are moved onto it
-   * where the survivor's own value is null, and the newer row is deleted.
+   * Attaches Meta's wacid to a row created without one. If another row already
+   * owns it, merges them: the older row survives, taking the newer row's
+   * attempt/recording fields where its own are null, and the newer row is
+   * deleted.
    */
   async attachWacid(
     props: { id: string; wacid: string },
@@ -459,11 +398,10 @@ class WhatsappCallRepository {
         return updated
       }
 
-      // Lost the race: another row already owns this wacid. Merge.
+      // Another row already owns this wacid — merge.
       const owner = await this.findByWacid(props.wacid, trx)
       if (!owner || owner.id === props.id) {
-        // The conflicting row disappeared/changed under us — surface the
-        // current state rather than guess.
+        // The conflicting row changed under us — return current state.
         return await this.findById(props.id, trx)
       }
 
@@ -487,10 +425,7 @@ class WhatsappCallRepository {
     })
   }
 
-  /**
-   * The contact's most recent call that produced a recording — backs the
-   * `{{last_call_recorded}}` system field.
-   */
+  /** Most recent recorded call — backs `{{last_call_recorded}}`. */
   async findLatestRecordedByContactId(
     contactId: string,
     tx: DatabaseClient = db,
@@ -502,10 +437,7 @@ class WhatsappCallRepository {
     )
   }
 
-  /**
-   * The contact's most recent call that produced a transcript — backs the
-   * `{{last_call_transcript}}` system field.
-   */
+  /** Most recent transcribed call — backs `{{last_call_transcript}}`. */
   async findLatestTranscribedByContactId(
     contactId: string,
     tx: DatabaseClient = db,
@@ -543,15 +475,9 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Coarse DB-side prefilter for "still-ringing, unclaimed calls" in a
-   * workspace — backs the on-mount resume-after-refresh fetch
-   * (`whatsappVoipCallService.listResumableIncoming`). `wacid IS NOT NULL AND
-   * answeredByUserId IS NULL` only narrows to rows that LOOK resumable; the
-   * AUTHORITATIVE check is the Redis offer/control record the service layer
-   * reads for each candidate, since a row can still be `ringing` here after
-   * its offer has already expired. Ordered newest-first and bounded by
-   * {@link FIND_RINGING_BY_WORKSPACE_LIMIT} so a busy workspace never
-   * triggers an unbounded scan or an unbounded number of Redis reads.
+   * Candidates for resume-after-refresh: rows that look resumable. The Redis
+   * offer/control record is authoritative, since a row can still be `ringing`
+   * after its offer expired. Bounded by `FIND_RINGING_BY_WORKSPACE_LIMIT`.
    */
   async findRingingByWorkspace(
     workspaceId: string,
@@ -573,15 +499,9 @@ class WhatsappCallRepository {
   }
 
   /**
-   * `ringing` rows older than `olderThan` that no lifecycle event ever
-   * finalized — the stale-call sweeper's source of candidate rows.
-   *
-   * Bounded by `limit` (oldest first) because the sweeper does per-row work
-   * (a Redis control read, and possibly a Graph terminate) for every
-   * candidate: an unbounded result would turn one backlogged sweep into an
-   * unbounded read plus an unbounded burst of outbound calls. The sweeper
-   * runs on a fixed schedule, so a backlog larger than one page simply
-   * drains across the following runs.
+   * Stale `ringing` rows for the sweeper, oldest first. Bounded because each
+   * costs a Redis read and possibly a Graph call; a backlog drains over later
+   * runs.
    */
   async sweepStaleRinging(
     input: { olderThan: Date; limit: number },
@@ -601,12 +521,8 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Retention sweep candidates (`purgeExpiredCallRecordings`): rows
-   * with a recording older than THEIR OWN integration's
-   * `callRecordingRetentionDays`, joined by `inboxId` (the only path from
-   * `WhatsappCall` to `IntegrationWhatsapp`, same join shape as
-   * `listActiveByIntegrationIds`). Cursor-style via `limit` only — the
-   * caller re-invokes until a pass returns fewer than `limit` rows.
+   * Recordings past their own integration's retention, joined via `inboxId`.
+   * The caller repeats until a page comes back short.
    */
   async listRecordingsPastRetention(
     input: { limit: number; now?: Date },
@@ -631,12 +547,7 @@ class WhatsappCallRepository {
     return rows.map((row) => row.call)
   }
 
-  /**
-   * Clears a purged recording's columns — keeps the transcript (delete
-   * the S3 object → null `recordingPath`/`recordedAt`, keep the
-   * transcript). Idempotent: a redelivered purge of an already-cleared row
-   * is a no-op.
-   */
+  /** Clears a purged recording, keeping the transcript. Idempotent. */
   async clearRecording(
     props: { id: string },
     tx: DatabaseClient = db,
@@ -648,11 +559,8 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Records what this call actually arranged for recording, decided at
-   * accept/connect time: `recordingRequested` false with a
-   * `recordingFailureReason` means no audio is coming, so the card can say so
-   * instead of waiting out a "processing…" window. Last writer wins — the
-   * accept/connect path is the only writer, and it writes once per call.
+   * Records what recording was arranged at accept/connect time, so the card can
+   * say no audio is coming instead of waiting. Written once per call.
    */
   async markRecordingArrangement(
     props: {
@@ -674,10 +582,8 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Finalizes the recording exactly once when the upload lands — the CAS on
-   * `recordedAt IS NULL` makes a redelivered upload a no-op (`undefined`
-   * return). `recordingPath` is overwritten with the actual S3 key, which
-   * is authoritative over the claimed path.
+   * Stamps the recording once — `recordedAt IS NULL` makes a redelivery a no-
+   * op. The actual S3 key overrides the claimed path.
    */
   async attachRecording(
     props: { id: string; recordingPath: string; recordedAt: Date },
@@ -700,15 +606,9 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Undoes an {@link attachRecording} stamp whose post-processing then
-   * failed, so the retry can redo it. Guarded on the exact `recordedAt` this
-   * caller wrote, so a stamp that has since been replaced by another
-   * delivery is never cleared.
-   *
-   * Without this, `recordedAt` marks "started" rather than "finished": the
-   * CAS is one-shot, so any later failure leaves the recording attached to
-   * nothing, the activity card un-enriched and `callRecorded` never fired,
-   * with every retry short-circuiting on the stamp.
+   * Undoes an `attachRecording` stamp whose follow-up failed so the retry can
+   * redo it. Guarded on the exact `recordedAt` written, so a newer stamp is
+   * never cleared.
    */
   async releaseRecordingStamp(
     props: { id: string; recordedAt: Date },
@@ -728,11 +628,8 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Stamps the transcript exactly once (same no-op-on-redelivery contract).
-   * `segments` is optional and additive alongside the flat `transcript`:
-   * a SIP/Whisper writer may pass only the flat text, while a Meta-native
-   * VoIP writer passes both (diarized `segments` + the flattened
-   * `transcript` for `{{last_call_transcript}}`/search).
+   * Stamps the transcript once. `segments` is optional alongside the flat
+   * `transcript`.
    */
   async attachTranscript(
     props: {
@@ -763,13 +660,8 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Persists the on-demand AI summary exactly once, same no-op-on-
-   * redelivery contract as `attachTranscript`/`attachRecording` — a
-   * concurrent second "Generate summary" click for the same call is a
-   * no-op rather than clobbering the first result. A deliberate
-   * "Regenerate" (behind a confirm, per the plan) is a separate,
-   * unconditional write and does not use this method's CAS guard — it
-   * should update the row directly.
+   * Saves the AI summary once — a second concurrent click is a no-op.
+   * "Regenerate" uses `replaceAiSummary` instead.
    */
   async attachAiSummary(
     props: {
@@ -799,12 +691,7 @@ class WhatsappCallRepository {
   }
 
   /**
-   * The "Regenerate" counterpart to {@link attachAiSummary} — an
-   * unconditional overwrite with no `isNull(aiSummarizedAt)` CAS guard, as
-   * called out in that method's docstring. Only reached from the
-   * user-confirmed "Regenerate" action, never from an
-   * automatic/redelivered path, so clobbering the previous summary is the
-   * intended behavior here.
+   * Unconditional overwrite for the user-confirmed "Regenerate" action only.
    */
   async overwriteAiSummary(
     props: {
@@ -829,20 +716,10 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Advances the call to an interim status (`ringing`/`accepted`/`rejected`),
-   * respecting {@link canAdvanceStatus} — a stale or out-of-order status is
-   * a no-op. The WHERE re-checks the observed status so a concurrent writer
-   * cannot be overwritten with stale data.
-   *
-   * Only the terminal branch (`rejected`) writes `outcome` — derived from the
-   * status alone via `resolveWhatsappCallOutcome` (no caller fabricates one
-   * for a non-terminal transition), which is what makes a `failed → rejected`
-   * repair (permitted by `canAdvanceStatus`) rewrite both columns together.
-   *
-   * Returns the status the row transitioned FROM when an update was applied
-   * (`undefined` otherwise), so callers can react to the actual DB
-   * transition rather than their own possibly-stale read — e.g. the
-   * `failed → rejected` repair of the call-activity message.
+   * Advances to an interim status per `canAdvanceStatus`; out-of-order updates
+   * are no-ops and the WHERE re-checks the observed status. Only `rejected`
+   * writes `outcome`. Returns the previous status when an update applied, so
+   * callers react to the real transition.
    */
   async updateInterimStatus(
     props: {
@@ -862,9 +739,7 @@ class WhatsappCallRepository {
         : { status: props.status }
 
     // Retried once: a concurrent writer can invalidate the optimistic WHERE
-    // between the read and the update (e.g. terminate finalizing to `failed`
-    // right before a REJECTED lands). The caller-supplied `current` seeds the
-    // first attempt; the race-retry always re-reads to observe the new status.
+    // between read and update.
     let existing = props.current
     for (let attempt = 0; attempt < 2; attempt++) {
       existing ??= await this.findByWacid(props.wacid, tx)
@@ -887,19 +762,15 @@ class WhatsappCallRepository {
       if (updated) {
         return { previousStatus: existing.status }
       }
-      // Lost the optimistic WHERE — force a fresh read on the retry.
+      // Lost the optimistic WHERE — re-read on retry.
       existing = undefined
     }
     return
   }
 
   /**
-   * Guarded acceptance persistence — the ONLY writer of `accepted` +
-   * `answeredByUserId` for the VoIP flow. One conditional UPDATE (never a
-   * read-then-write) so PostgreSQL re-evaluates the terminal-status
-   * predicate under row lock: a terminal write (rejected/completed/failed)
-   * that landed first wins permanently and this call becomes a no-op,
-   * rather than resurrecting the row into `accepted`.
+   * The only writer of `accepted` + `answeredByUserId`. One conditional UPDATE,
+   * so a terminal status written first always wins.
    */
   async markAcceptedIfActive(
     props: { id: string; answeredByUserId: string },
@@ -919,16 +790,9 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Durable liveness for an `accepted` call: `UPDATE … SET updatedAt = now()
-   * WHERE id = ? AND status = 'accepted' AND updatedAt < olderThan`. The
-   * browser heartbeat calls it with a short `olderThan`, so the throttle is
-   * the DB's own WHERE clause — no caller has to remember when it last wrote,
-   * and concurrent beats cannot double-write.
-   *
-   * Status-guarded, so an already-terminal row is never resurrected — which
-   * is also what makes it race-free against
-   * {@link WhatsappCallRepository.recoverStrandedAccepted}: exactly one of the
-   * two can win, and a heartbeat losing means the row is already terminal.
+   * Heartbeat for an `accepted` call. The `updatedAt < olderThan` WHERE is the
+   * throttle, and the status guard means it can never resurrect a terminal row
+   * — and exactly one of it and `recoverStrandedAccepted` can win.
    */
   async touchLivenessIfStale(
     props: { id: string; olderThan: Date },
@@ -949,31 +813,11 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Dial-time recovery of a call stuck `accepted` because its `terminate`
-   * webhook was lost, as ONE conditional statement:
-   * `UPDATE … SET status = 'completed', endedAt, lastError
-   *  WHERE id = ? AND status = 'accepted' AND updatedAt < olderThan
-   *  RETURNING *`.
-   *
-   * Claiming the stale row and terminalizing it cannot be two statements: in
-   * the gap between them a heartbeat would be unable to signal liveness (its
-   * own throttle predicate would already be satisfied by the claim's write),
-   * so a live call could be closed. Here there is no gap — a heartbeat either
-   * lands first, bumping `updatedAt` so this UPDATE matches nothing, or lands
-   * after, finding a row that is no longer `accepted`.
-   *
-   * Returns the row only when THIS caller performed the transition. An empty
-   * result is never "already done": a real terminate that got there first
-   * also matches nothing, and the caller must re-read rather than assume it
-   * recovered anything.
-   *
-   * `endedAt` is deliberately left NULL. We know the call is over, never when
-   * it ended — "now" would record the moment somebody happened to redial,
-   * often long after the fact. Leaving it null also keeps a delayed terminate
-   * authoritative: {@link WhatsappCallRepository.finalizeById}'s same-status
-   * path fills only fields that are still missing, so a redelivered webhook
-   * can still stamp the real `endedAt` afterwards, but could never correct a
-   * value we had invented.
+   * Recovers a call stuck `accepted` after a lost terminate, in one conditional
+   * UPDATE — two statements would leave a gap where a live call's heartbeat
+   * could not save it. Returns the row only if this caller transitioned it;
+   * empty means re-read, not "done". `endedAt` stays null (the real end time is
+   * unknown), so a late terminate can still fill it.
    */
   async recoverStrandedAccepted(
     props: { id: string; olderThan: Date; lastError: string },
@@ -998,26 +842,10 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Finalizes the call by id — guarded by {@link canAdvanceStatus} so a
-   * `completed` row can never be downgraded (e.g. a delayed `failed` from a
-   * stale hangup-cause map race). The WHERE re-checks the observed status,
-   * same optimistic-lock discipline as `updateInterimStatus`.
-   *
-   * Idempotency gap closed: a terminate arriving after a locally-written
-   * terminal status (same `status`, e.g. two independent `rejected` writes)
-   * used to return early WITHOUT writing `endedAt`/terminal metadata. When
-   * the incoming status exactly matches the current terminal status, this
-   * now fills in ONLY the fields still missing (`endedAt` in particular) via
-   * a `WHERE … endedAt IS NULL`-guarded UPDATE — it never downgrades status
-   * and never overwrites an earlier authoritative `endedAt`.
-   *
-   * `outcome` rides along with every status write: on an advance it is set
-   * from the caller's input (required — `status`/`outcome` are a matched
-   * pair via {@link WhatsappCallTerminalStatusOutcomePair}, so a mismatch is
-   * a compile error, never a runtime bug); on a same-status redelivery it is
-   * only filled when still null ({@link FILLABLE_TERMINAL_FIELDS}), so a
-   * later `failed` webhook can never turn an already-persisted `canceled`
-   * back into `failed`.
+   * Finalizes the call, never downgrading (`canAdvanceStatus`), with the same
+   * optimistic re-check. On a same-status redelivery only still-missing fields
+   * are filled, so an earlier `endedAt` or `outcome` (e.g. `canceled`) is never
+   * overwritten.
    */
   async finalizeById(
     props: {
@@ -1072,18 +900,8 @@ class WhatsappCallRepository {
   }
 
   /**
-   * Same-status terminate redelivery: `existing.status === status` already
-   * (so no rank change), but one or more terminal metadata fields may still
-   * be missing from an earlier write that only set `status` (e.g.
-   * `updateInterimStatus`'s `rejected`-only path). Fills every still-missing
-   * field in {@link FILLABLE_TERMINAL_FIELDS} exactly once.
-   *
-   * EVERY filled column gets its own `IS NULL` guard in the `WHERE` clause
-   * (not just `endedAt`), so a redelivery can only ever fill a column that is
-   * STILL null right now — a concurrent writer that already set, say,
-   * `messageId` or `lastError` between this method's read and its `UPDATE`
-   * is never clobbered by this redelivery's (possibly different/stale)
-   * value for that column.
+   * Same-status redelivery: fills terminal fields still missing, each with its
+   * own `IS NULL` guard so a concurrent writer's value is never clobbered.
    */
   private async fillMissingTerminalFields(
     props: {
@@ -1134,16 +952,9 @@ class WhatsappCallRepository {
   }
 
   /**
-   * P5 item 4 — the Calls page list query. Joins `whatsappCall` →
-   * `contactInbox` → `contact`, `inbox`, `conversation` (for the D3
-   * `assignedOnly` scope condition), and `answeredByUser`/`initiatedByUser`
-   * (aliased `userModel`) — NEVER the sharded `Message` hypertable
-   * (`WhatsappCall.messageId` has no FK by design).
-   *
-   * Cursor pagination is keyset `(createdAt desc, id desc)`, matching the
-   * `WhatsappCall_workspaceId_createdAt_id_idx` composite index — the
-   * caller (`whatsappCallHistoryService.list`) requests `limit + 1` and
-   * trims the extra row itself to detect "more pages" without a `COUNT(*)`.
+   * Calls-page list query. Never joins the sharded `Message` table. Keyset
+   * pagination on `(createdAt desc, id desc)` matching the composite index; the
+   * caller asks for `limit + 1` to detect more pages without `COUNT(*)`.
    */
   async listForWorkspace(
     input: {
@@ -1157,11 +968,8 @@ class WhatsappCallRepository {
   ): Promise<WhatsappCallListRow[]> {
     const { filters = {} } = input
 
-    // Aliased TWICE from the same `userModel` (answered-by / initiated-by —
-    // a plain join can only bind a table once per query). Created here,
-    // not at module scope, so a caller that only mocks part of
-    // `@chatbotx.io/database/schema` (no `userModel`) and never calls this
-    // method never pays for it at import time.
+    // `userModel` aliased twice (answered-by / initiated-by); built here so
+    // partial test mocks without `userModel` never pay for it at import.
     const answeredByUserAlias = alias(userModel, "answeredByUser")
     const initiatedByUserAlias = alias(userModel, "initiatedByUser")
 
@@ -1193,12 +1001,8 @@ class WhatsappCallRepository {
             : undefined,
         )
 
-    // H1 fix: bound as the cursor's own TEXT value, cast to `timestamptz` in
-    // SQL — never `lt(column, jsDate)`, which would serialize through the
-    // driver's millisecond-precision `Date` binding and silently drop the
-    // `timestamptz(6)` column's sub-millisecond digits. Still a fully
-    // parameterised bound value (drizzle's `sql` tag), never string
-    // interpolation.
+    // Bound as the cursor's text cast to `timestamptz` — a JS `Date` would drop
+    // sub-millisecond digits. Still parameterised.
     const cursorCondition = input.cursor
       ? or(
           sql`${whatsappCallModel.createdAt} < ${input.cursor.createdAt}::timestamptz`,
@@ -1234,8 +1038,7 @@ class WhatsappCallRepository {
     const rows = await tx
       .select({
         call: whatsappCallModel,
-        // H1: the raw, full-precision text rendering of `createdAt` — see
-        // {@link WhatsappCallListCursor}'s doc comment.
+        // Full-precision text `createdAt` — see `WhatsappCallListCursor`.
         createdAtCursor: sql<string>`${whatsappCallModel.createdAt}::text`,
         contact: {
           id: contactModel.id,
@@ -1287,12 +1090,7 @@ class WhatsappCallRepository {
     }))
   }
 
-  /**
-   * Runs `fn` inside a transaction unless `tx` is already one (repositories
-   * accept either `db` or an ambient `Transaction`, and nesting
-   * `db.transaction` inside an existing transaction is unnecessary — every
-   * write already commits atomically with the caller's).
-   */
+  /** Runs `fn` in a transaction unless `tx` already is one. */
   private async runInTransaction<T>(
     tx: DatabaseClient,
     fn: (trx: DatabaseClient) => Promise<T>,

@@ -117,10 +117,10 @@ function getFlowExecutionKey(job: Job): string {
 
 /**
  * The workspace a VoIP signaling job belongs to, for the blocked-owner guard.
- * Outbound jobs carry `workspaceId`; inbound jobs only carry the business
- * `phoneNumberId`, resolved through its integration. `undefined` when that
- * lookup fails — the guard then runs the job, and the handler reports the
- * missing integration itself.
+ * Outbound jobs carry workspaceId; inbound jobs only carry the phoneNumberId,
+ * resolved through its integration. undefined when that lookup fails — the
+ * guard then runs the job and the handler reports the missing integration
+ * itself.
  */
 async function resolveVoipSignalingWorkspaceId(
   job: WhatsappVoipSignalingJobData,
@@ -541,10 +541,9 @@ async function startIntegrationWorker() {
     }
   })
 
-  // Dedicated, rate-limited consumer for call transcription:
-  // a second `Worker` instance in this same process, on its own queue, so
-  // its `limiter` bounds transcription throughput independent of the
-  // shared `integration` queue's traffic/concurrency.
+  // Dedicated, rate-limited consumer for call transcription: a second Worker
+  // instance in this process, on its own queue, so its limiter bounds
+  // transcription throughput independent of the shared integration queue.
   const callTranscriptionWorker = new Worker(
     queueNames.enum.callTranscription,
     async (job: Job<CallTranscriptionJobData>) => {
@@ -572,14 +571,11 @@ async function startIntegrationWorker() {
   })
 
   // Dedicated consumer for WhatsApp Business Calling VoIP-mode signaling: a
-  // third `Worker` instance in this same process, on its own queue — the
-  // shared `integration` queue's traffic/concurrency must never starve the
-  // 30-60s Meta answer-deadline window (docs/whatsapp-calling-voip.md
-  // contract #3). `resolveWorkspaceId`'s generic resolvers don't know about
-  // `phoneNumberId`, so the workspace is resolved directly here for the
-  // frozen-workspace guard; the handler resolves the integration again for
-  // its own purposes (auth, inboxId) — same redundant-resolution shape as
-  // the main `worker` processor above and its handlers.
+  // third Worker instance on its own queue, since the shared integration
+  // queue's traffic must never starve the 30-60s Meta answer-deadline window.
+  // resolveWorkspaceId's generic resolvers don't know about phoneNumberId, so
+  // the workspace is resolved directly here for the frozen-workspace guard; the
+  // handler resolves the integration again for its own purposes.
   const whatsappVoipSignalingWorker = new Worker<WhatsappVoipSignalingJobData>(
     queueNames.enum.whatsappVoipSignaling,
     async (job: Job<WhatsappVoipSignalingJobData>) => {
@@ -604,12 +600,11 @@ async function startIntegrationWorker() {
     if (!job) {
       return
     }
-    // Retries here are routine, not incidents: `handleConnect` throws
-    // `VoipCallRowNotReadyError` until the SEPARATE `whatsappCallEvent` job
-    // creates the call row, and this queue's retry window
-    // (`WHATSAPP_VOIP_SIGNAL_RETRY_OPTIONS`) exists precisely to outlast that
-    // lag. Logging every attempt at ERROR made a perfectly healthy race read
-    // as a dropped call. Only an exhausted job actually lost the offer.
+    // Retries here are routine, not incidents: handleConnect throws
+    // VoipCallRowNotReadyError until the separate whatsappCallEvent job creates
+    // the call row, and this queue's retry window exists precisely to outlast
+    // that lag. Logging every attempt at ERROR made a healthy race read as a
+    // dropped call. Only an exhausted job actually lost the offer.
     const attempts = job.opts.attempts ?? 1
     if (!hasExhaustedAttempts(job)) {
       logger.warn(
@@ -622,13 +617,13 @@ async function startIntegrationWorker() {
       { err, attempts },
       `Whatsapp VoIP signaling job ${job.id} has failed`,
     )
-    // Bug 2 safety net: a `handleConnect` job that exhausted every attempt
-    // (`removeOnFail: true` deletes it from Redis right after this) must not
-    // silently strand the call at `ringing` — finalize it here instead of
-    // leaving it entirely to the 5-minute stale-call sweep. This listener
-    // isn't awaited by BullMQ, so the call is fire-and-forget; `.catch` is
-    // belt-and-suspenders since `finalizeExhaustedHandleConnect` already
-    // logs its own failures internally and never rejects.
+    // Safety net: a handleConnect job that exhausted every attempt
+    // (removeOnFail deletes it from Redis right after this) must not silently
+    // strand the call at ringing — finalize it here instead of leaving it
+    // entirely to the 5-minute stale-call sweep. This listener isn't awaited by
+    // BullMQ, so the call is fire-and-forget; .catch is belt-and-suspenders
+    // since finalizeExhaustedHandleConnect already logs its own failures and
+    // never rejects.
     if (job.data.type === WhatsappVoipSignalingJobAction.handleConnect) {
       finalizeExhaustedHandleConnect(job.data.data).catch((finalizeErr) => {
         logger.error(

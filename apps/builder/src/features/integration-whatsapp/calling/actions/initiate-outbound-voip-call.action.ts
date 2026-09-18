@@ -45,37 +45,34 @@ import {
 } from "./outbound-dial-target"
 import { recordCallRecordingArrangement } from "./record-call-recording-arrangement"
 
-/** Same SDP size bound the inbound answer path applies (see `answer-voip-call.action.ts`). */
+/** Same SDP size bound the inbound answer path applies. */
 const MAX_SDP_OFFER_CHARS = 100_000
 
 /**
- * How long the consumer has to accept before the dial is abandoned. Kept
- * strictly under the 90s stale-call sweeper so the sweeper can never
- * finalize a dial that is still legitimately ringing.
- *
- * Not exported: a `"use server"` file may only export async functions, and
- * this constant is used only within this module.
+ * How long the consumer has to accept before the dial is abandoned — kept
+ * strictly under the 90s stale-call sweeper so it can never finalize a still-
+ * ringing dial.
+ * Not exported: a "use server" file may only export async functions, and this
+ * constant is only used within this module.
  */
 const OUTBOUND_DIAL_DEADLINE_MS = 60_000
 
 const initiateOutboundVoipCallSchema = z.object({
   conversationId: zodBigintAsString(),
   /**
-   * Optional pin to a specific WhatsApp number when the contact has more
-   * than one connected `ContactInbox` row — mirrors the optional `inboxId`
-   * narrowing already used by `requestCallPermissionAction`.
+   * Optional pin to a specific WhatsApp number when the contact has more than
+   * one connected ContactInbox row — mirrors requestCallPermissionAction's
+   * optional inboxId.
    */
   contactInboxId: zodBigintAsString().optional(),
   sdpOffer: z.string().min(1).max(MAX_SDP_OFFER_CHARS),
 })
 
 /**
- * Discriminated outcome for the outbound VoIP dial attempt. `dialing` is the
- * only success case; every other member is an expected, non-exceptional
- * eligibility/permission/Meta-error outcome the client UI branches on
- * directly. The
- * SDP answer itself is never returned here — it arrives later via the
- * `whatsappCallOutboundAnswer` realtime event.
+ * Discriminated outcome for the outbound VoIP dial attempt. dialing is the only
+ * success case; every other member is an expected eligibility/permission/Meta-
+ * error outcome the client branches on directly. The SDP answer itself arrives
+ * later via the whatsappCallOutboundAnswer realtime event.
  */
 export type InitiateOutboundVoipCallResult =
   | {
@@ -85,18 +82,15 @@ export type InitiateOutboundVoipCallResult =
       attemptId: string
       deadlineAt: string
       /**
-       * True only when the BROWSER MediaRecorder should capture this call —
-       * `callRecordingEnabled && callRecordingMode === "browserWhisper"`.
-       * Under the default `metaNative` mode, Meta records the call
-       * server-side and the browser must never also record it.
+       * True only when the browser MediaRecorder should capture this call.
+       * Under the default metaNative mode, Meta records server-side and the
+       * browser must never also record.
        */
       browserRecordingEnabled: boolean
       /**
-       * True when recording was requested in ANY form — either Meta-native
-       * (a `recording` announcement object was attached to `connect`) or
-       * browser-side (`browserRecordingEnabled`). Purely a display signal for
-       * the call panel's "recording requested" indicator; it does not by
-       * itself start any capture.
+       * True when recording was requested in any form (Meta-native or browser-
+       * side) — purely a display signal for the call panel; it does not itself
+       * start capture.
        */
       recordingRequested: boolean
     }
@@ -111,20 +105,19 @@ export type InitiateOutboundVoipCallResult =
   | { outcome: "paymentIssue" }
   | { outcome: "callingNotEnabled" }
   | { outcome: "callFailed" }
-  /** P2 item 5 (plan D3): the caller failed the same call-access-conversation
-   * eligibility check every other calling action gates on (see
-   * `packages/business/src/whatsapp-call/call-access-service.ts`) — an
-   * assigned-only agent dialing a conversation assigned to someone else. A
-   * typed outcome rather than a thrown exception so the client can surface
-   * the actual translated reason (`whatsapp.calls.outbound.
-   * callAccessDenied`) instead of the generic `callFailed` toast. */
+  /**
+   * The caller failed the same call-access-conversation eligibility check every
+   * other calling action gates on — an assigned-only agent dialing someone
+   * else's conversation. A typed outcome rather than a thrown exception so the
+   * client can show the actual translated reason instead of a generic toast.
+   */
   | { outcome: "callAccessDenied" }
 
 /**
  * Best-effort teardown of a leg Meta already connected but this dial will not
- * keep: ends the local call control (if it was created) and hangs up at Meta.
- * Never throws — each failure is logged, and Meta also drops an unanswered
- * leg on its own timeout.
+ * keep: ends local call control (if created) and hangs up at Meta. Never throws
+ * — each failure is logged, and Meta also drops an unanswered leg on its own
+ * timeout.
  */
 async function abandonOutboundDial(input: {
   auth: WhatsappAuthValue
@@ -149,13 +142,11 @@ async function abandonOutboundDial(input: {
 }
 
 /**
- * Wraps {@link connectCall} with the announcement-options safeguard: on a 4xx
- * specific to these fields, retry once with the object omitted rather than
- * failing the call. Meta documents no error code for a bad
- * `purpose`/`announcement_language`, so a 4xx qualifies only when it is not
- * one of Meta's documented calling errors (see
- * `isCallAnnouncementValidationError`), and only when announcement options
- * were actually attached.
+ * Wraps connectCall with the announcement-options safeguard: on a 4xx specific
+ * to these fields, retry once with the object omitted rather than failing the
+ * call. Meta documents no error code for a bad purpose/announcement_language,
+ * so a 4xx qualifies only when it isn't one of Meta's documented calling errors
+ * and announcement options were actually attached.
  */
 async function connectCallWithAnnouncementFallback(
   input: WhatsappConnectCallInput,
@@ -186,9 +177,8 @@ async function connectCallWithAnnouncementFallback(
       "WhatsApp outbound connect: retrying without recording/transcription announcement options after a Meta 4xx",
     )
     const connected = await connectCall(withoutAnnouncementOptions)
-    // Meta placed the call WITHOUT recording/transcription: nothing will ever
-    // be recorded for it, so the caller must not advertise one.
-    // Surfaced by the caller: the call is placed but NOT being recorded.
+    // Meta placed the call without recording/transcription: nothing will ever
+    // be recorded, so the caller must not advertise one.
     return {
       ...connected,
       announcementApplied: false,
@@ -198,10 +188,9 @@ async function connectCallWithAnnouncementFallback(
 }
 
 /**
- * Maps a Meta calling error code (`WhatsappException.code`) to the typed
- * outcome the client renders. Codes that only make sense for OTHER call
- * actions (e.g. 138007 connect timeout, or media-drop codes) fall through to
- * the generic `callFailed`.
+ * Maps a Meta calling error code to the typed outcome the client renders. Codes
+ * that only make sense for other call actions (e.g. 138007 connect timeout,
+ * media-drop codes) fall through to the generic callFailed.
  */
 function mapMetaErrorCodeToOutcome(
   code: string | number,
@@ -232,19 +221,10 @@ function mapMetaErrorCodeToOutcome(
 }
 
 /**
- * Initiates a business-initiated (outbound) WhatsApp VoIP call: the browser
- * has already built its SDP OFFER (via `createOffer`/ICE gathering); this
- * action runs the O0 eligibility gate, the O5 glare guard, creates the
- * pending `WhatsappCall` row, places Meta's `connect`, and schedules the
- * durable answer-deadline expiry. Unlike `answerWhatsappVoipCallAction`,
- * this action calls the Graph client directly — the business, not the
- * worker, generates the OFFER, so there is no async webhook round-trip
- * before Meta's `connect` response.
- *
- * Eligibility/permission/glare outcomes are returned as a typed
- * discriminated union rather than thrown — every one of them is an expected
- * branch the client UI renders directly (request-permission dialog, "already
- * in progress" toast, etc.), not an application error.
+ * Unlike answerWhatsappVoipCallAction, this calls the Graph client directly
+ * since the browser already built the SDP offer — no async webhook round-trip
+ * before Meta's connect response. Eligibility/permission/glare outcomes are
+ * typed rather than thrown, since the client renders each branch directly.
  */
 export const initiateOutboundVoipCallAction = callingActionClient
   .bindArgsSchemas([zodBigintAsString()])
@@ -265,12 +245,10 @@ export const initiateOutboundVoipCallAction = callingActionClient
         throw new ChatbotXException(t("whatsapp.calls.errors.callNotFound"))
       }
 
-      // P2 item 5 (plan D3): dialing is gated exactly like picking up an
-      // inbound call — an assigned-only agent must not dial another agent's
-      // conversation. Checked before any Meta call or `createOutboundAttempt`
-      // below. Non-throwing (`canCallConversation`) so a denial is a typed
-      // outcome the client can translate, rather than a generic serverError
-      // toast (`whatsapp.calls.outbound.callAccessDenied`).
+      // Dialing is gated exactly like picking up an inbound call — an assigned-
+      // only agent must not dial another agent's conversation. Checked before
+      // any Meta call or createOutboundAttempt. Non-throwing so a denial is a
+      // typed outcome rather than a generic serverError toast.
       if (
         !(await canCallConversation({
           workspaceId,
@@ -303,16 +281,12 @@ export const initiateOutboundVoipCallAction = callingActionClient
         throw new ChatbotXException(t("whatsapp.calls.errors.notFound"))
       }
 
-      // O0 gate #1: business-number country block. Fails open
-      // on an unparsable number — Meta's 138013 is the backstop.
-      //
-      // TODO O0: `calling.status === "ENABLED"`, the calls-webhook
-      // subscription, and `restrictions_list` are additional Meta-side
-      // eligibility signals backstopped by error codes 138013/138018/138014
-      // respectively. The resolved `integration` row does not currently
-      // carry that data, so this gate intentionally does not fetch it here —
-      // add the check if/when that data becomes available on the row rather
-      // than inventing a new fetch.
+      // Business-number country block. Fails open on an unparsable number —
+      // Meta's 138013 is the backstop.
+      // calling.status, the calls-webhook subscription and restrictions_list
+      // are further Meta-side signals, backstopped by error codes
+      // 138013/138018/138014 — not checked here since the resolved integration
+      // row does not carry them.
       if (
         isBlockedBusinessCallingCountry(
           integration.displayPhoneNumber,
@@ -322,22 +296,19 @@ export const initiateOutboundVoipCallAction = callingActionClient
         return { outcome: "ineligibleNumber" }
       }
 
-      // Addressing (phone number vs BSUID) is the same rule the outbound
-      // message path uses, and the permissions GET takes the same shape.
+      // Addressing (phone number vs BSUID) mirrors the outbound message path,
+      // and the permissions GET takes the same shape.
       const { to, recipient, permissionTarget } =
         resolveDialIdentity(resolvedContactInbox)
       const useRecipient = recipient !== undefined
       const auth = integration.auth as WhatsappAuthValue
 
-      // Best-effort: the contact's locale only feeds the announcement
-      // language fallback (`buildCallAnnouncementOptions`) when the
-      // integration has not configured `callAnnouncementLanguage` — a
-      // missing/unfetchable contact still degrades to Meta's `en_US`
-      // default via `resolveAnnouncementLanguage`, never blocks the dial.
-      // Prefer the per-channel `ContactInbox.language` (what the contact
-      // panel's "Language" field writes) over the auto-derived
-      // `Contact.locale`, so an explicit English choice actually changes the
-      // spoken announcement.
+      // Best-effort: the contact's locale only feeds the announcement language
+      // fallback when the integration has no callAnnouncementLanguage
+      // configured — a missing/unfetchable contact degrades to Meta's en_US
+      // default, never blocks the dial. Prefer ContactInbox.language over the
+      // auto-derived Contact.locale, so an explicit language choice actually
+      // changes the spoken announcement.
       const contact = await contactService.findBy({
         where: { id: conversation.contactId },
       })
@@ -346,12 +317,11 @@ export const initiateOutboundVoipCallAction = callingActionClient
         resolvedContactInbox.language ?? contact?.locale ?? undefined,
       )
 
-      // The permissions GET itself failing (Meta 5xx / 613 rate-limit) is
-      // NOT the same as a successful GET reporting no permission: treating
-      // it as `needsPermission` would open the request-permission dialog and
-      // burn the contact's 1-per-24h permission-request quota on a check
-      // that never actually ran. Fail closed (never dial) without spending
-      // that quota.
+      // A failing permissions GET (Meta 5xx / 613 rate-limit) is not the same
+      // as a successful GET reporting no permission — treating it as
+      // needsPermission would burn the contact's 1-per-24h permission-request
+      // quota on a check that never ran. Fail closed without spending that
+      // quota.
       let permissions: Awaited<ReturnType<typeof getCallPermissions>>
       try {
         permissions = await getCallPermissions(auth, permissionTarget)
@@ -379,13 +349,11 @@ export const initiateOutboundVoipCallAction = callingActionClient
       }
 
       const attemptId = crypto.randomUUID()
-      // `assertNoActiveCallForContact` above is read-then-write: two
-      // simultaneous dials for the same contact can both pass the check and
-      // race here. The loser hits the DB's one-pending-per-contact-inbox
-      // partial unique index and throws
-      // `WhatsappCallPendingOutboundExistsError` — map that to the same
-      // typed outcome as the glare guard rather than letting it surface as a
-      // generic server error (mirrors `start-call.action.ts`).
+      // assertNoActiveCallForContact above is read-then-write: two simultaneous
+      // dials can both pass and race here. The loser hits the DB's one-pending-
+      // per-contact-inbox unique index and throws
+      // WhatsappCallPendingOutboundExistsError — map that to the same typed
+      // outcome as the glare guard rather than a generic server error.
       let pending: { id: string }
       try {
         pending = await whatsappVoipCallService.createOutboundAttempt({
@@ -412,7 +380,7 @@ export const initiateOutboundVoipCallAction = callingActionClient
           sdpOffer,
           attemptId,
           ...announcementOptions,
-          // Exactly one of `to`/`recipient` per `WhatsappConnectCallInput`.
+          // Exactly one of to/recipient per WhatsappConnectCallInput.
           ...(useRecipient ? { recipient: recipient ?? "" } : { to: to ?? "" }),
         })
         wacid = connected.wacid
@@ -447,19 +415,11 @@ export const initiateOutboundVoipCallAction = callingActionClient
         }
       }
 
-      // From this point Meta is already ringing the customer (`connectCall`
-      // succeeded). If any of the following writes throws, the customer's
-      // phone keeps ringing while the client is told the dial failed and our
-      // own state never advances past `pending` — compensate by best-effort
-      // terminating the call at Meta and finalizing the DB row as failed,
-      // then return a typed `callFailed` rather than letting the error
-      // surface raw.
-      //
-      // Order matters for a hangup racing this dial. The call control is
-      // created BEFORE the row carries the wacid, so a hangup that can see
-      // the wacid always finds a control to end. A hangup that lands while
-      // the row still has no wacid closes the row instead — detected below
-      // from the bound row, and never dialed.
+      // Meta is already ringing the customer; a write failure from here is
+      // compensated by best-effort terminate + finalize-as-failed. Call
+      // control is created before the row carries the wacid, so a hangup
+      // racing this dial always finds either a control to end or a row with
+      // no wacid to close.
       const deadlineAt = Date.now() + OUTBOUND_DIAL_DEADLINE_MS
       try {
         await whatsappVoipCallService.startOutboundDial({
@@ -531,12 +491,11 @@ export const initiateOutboundVoipCallAction = callingActionClient
         announcementError,
       })
 
-      // Best-effort auto-assign (P3): last step, after every other
-      // best-effort side effect above, so it never delays anything the
-      // customer-facing dial depends on. Awaited so it completes before the
-      // action returns, but errors are caught and logged inside
-      // `claimConversationForCallAgent` — never allowed to change the dial's
-      // outcome. Skipped for a support session (D8, plan §5 P3).
+      // Best-effort auto-assign: last step, after every other best-effort side
+      // effect, so it never delays the customer-facing dial. Awaited so it
+      // completes before return, but errors are caught and logged inside
+      // claimConversationForCallAgent — never allowed to change the dial's
+      // outcome. Skipped for a support session.
       await claimConversationForCallAgent({
         workspaceId,
         conversationId: conversation.id,

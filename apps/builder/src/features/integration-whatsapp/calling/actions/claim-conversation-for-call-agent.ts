@@ -13,24 +13,12 @@ const AUTO_ASSIGN_FAILURE_LOG_MESSAGE: Record<CallAssignmentTrigger, string> = {
 }
 
 /**
- * Best-effort auto-assign (P3, plan D2), shared by the inbound answer and
- * outbound dial actions: claims the conversation for the agent only when it
- * is currently unassigned to both a user and a team —
- * `conversationService.claimForCallAgent`'s guarded UPDATE is the single
- * source of truth for that, so a team-assigned conversation is never
- * auto-claimed and a concurrent manual assignment always wins.
- *
- * Skipped entirely for a support session (D8): a super admin's synthetic
- * workspace membership (`docs/support-access.md`) has no real
- * `WorkspaceMember` row, so assigning the conversation to that id would
- * write an assignee no membership list, notification, or permission check
- * can resolve.
- *
- * Never throws and never changes the call's outcome — a claim failure is
- * logged (`{ err }`) and dropped. Callers should await this as the LAST
- * best-effort step, after any other best-effort side effect (e.g. the
- * "claimed elsewhere" broadcast) that other agents are waiting on, so a slow
- * or failing claim never delays them.
+ * Best-effort auto-assign, shared by the inbound answer and outbound dial
+ * actions. `conversationService.claimForCallAgent`'s guarded UPDATE ensures a
+ * team-assigned conversation is never auto-claimed and a concurrent manual
+ * assignment always wins. Skipped for a support session, whose synthetic
+ * membership has no real WorkspaceMember row to assign to. Never throws;
+ * await this last so a slow/failing claim never delays other agents.
  */
 export async function claimConversationForCallAgent(input: {
   workspaceId: string

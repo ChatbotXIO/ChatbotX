@@ -2,7 +2,7 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// B-M1 (Fable review) — `listOptionsByWorkspaceAndChannel` is a bounded
+// `listOptionsByWorkspaceAndChannel` is a bounded
 // id/name projection scoped by BOTH workspace and channel at the query
 // level, used by the Calls page's inbox filter select instead of
 // `inboxService.listWithIntegrationsByWorkspace` (which eager-loads all nine

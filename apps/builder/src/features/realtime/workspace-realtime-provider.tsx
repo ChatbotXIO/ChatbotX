@@ -30,43 +30,45 @@ import type {
   RealtimeHandlerMap,
 } from "./types"
 
-/** Connection lifecycle of the single workspace socket — mirrors
- * `PartySocket`'s readyState, collapsed to the three states a subscriber
- * actually needs to react to. */
+/**
+ * Connection lifecycle of the single workspace socket — mirrors `PartySocket`'s
+ * readyState, collapsed to the three states a subscriber actually needs.
+ */
 export type WorkspaceRealtimeConnectionStatus = "connecting" | "open" | "closed"
 
 /**
  * Every event this build's `workspaces` party can emit, as a `Set` for O(1)
- * membership checks — the runtime counterpart of the `RealtimeEventName`
- * type, used to turn an arbitrary parsed string into that type WITHOUT a
- * cast.
+ * membership checks — used to narrow a parsed string into `RealtimeEventName`
+ * without a cast.
  */
 const KNOWN_REALTIME_EVENT_NAMES: ReadonlySet<string> = new Set(
   Object.values(RealtimeEventType),
 )
 
-/** Real type guard (no `as`) — narrows an arbitrary string coming out of a
- * parsed frame to `RealtimeEventName` only when this build actually knows
- * that event. A staggered deploy sending a newer event name this build
- * does not know about falls through here, not through a cast. */
+/**
+ * Real type guard (no `as`) — narrows an arbitrary string from a parsed frame
+ * to `RealtimeEventName` only when this build knows that event. A staggered
+ * deploy sending a newer event name falls through here, not through a cast.
+ */
 function isKnownRealtimeEventName(value: string): value is RealtimeEventName {
   return KNOWN_REALTIME_EVENT_NAMES.has(value)
 }
 
-/** The wire envelope, validated BEFORE any property of the parsed JSON is
- * ever read — a frame that parses as valid JSON but is not an object with
- * these two keys (`null`, `1`, `[]`, `{}`, …) is rejected here rather than
- * risking a property access on a non-object. */
+/**
+ * The wire envelope, validated before any property of the parsed JSON is read —
+ * a frame that parses as JSON but isn't an object with these two keys is
+ * rejected before any property access.
+ */
 const realtimeEnvelopeSchema = z.object({
   eventType: z.string(),
   data: z.unknown(),
 })
 
 /**
- * A listener's real parameter type is `(event: RealtimeEvent<K>) => void`
- * for the specific `K` it registered under (see `subscribe` below). This
- * erased shape is what the registry actually stores, because a single
- * `Map`/`Set` cannot hold a distinct generic instantiation per entry.
+ * A listener's real parameter type is `(event: RealtimeEvent<K>) => void` for
+ * the specific `K` it registered under. This erased shape is what the registry
+ * stores, since a single `Map`/`Set` can't hold a distinct generic
+ * instantiation per entry.
  */
 type ErasedRealtimeListener = (event: RealtimeEventData) => void
 
@@ -77,11 +79,10 @@ export type WorkspaceRealtimeSubscribe = <K extends RealtimeEventName>(
 
 type WorkspaceRealtimeContextValue = {
   /**
-   * Registers one listener per name in `eventTypes`, each of which re-reads
-   * `getHandlers()` on every dispatch — so a caller whose handler
-   * identities change across renders (but not its set of subscribed event
-   * names) always gets the latest handler without re-subscribing. See
-   * `useWorkspaceRealtimeEvents`, the only intended caller.
+   * Registers one listener per name in `eventTypes`, each re-reading
+   * `getHandlers()` on every dispatch — so a caller whose handler identities
+   * change across renders always gets the latest handler without re-
+   * subscribing.
    */
   subscribeHandlers: (
     eventTypes: RealtimeEventName[],
@@ -95,21 +96,9 @@ const WorkspaceRealtimeContext =
   createContext<WorkspaceRealtimeContextValue | null>(null)
 
 /**
- * Calls `handler` (looked up dynamically by `eventType` from a
- * `RealtimeHandlerMap`) with `event`, if `handler` is actually a function.
- *
- * This is one of the two places in `features/realtime/` that erase a
- * listener's specific `RealtimeEvent<K>` parameter type down to the
- * wire-level `RealtimeEventData` (the other is `subscribe`'s own
- * registration below). The erasure itself is sound because every caller
- * of this function looks up `handler` using the exact same `eventType`
- * string that `event` carries — the registration key and the dispatch key
- * are always the same value, so `event`'s `eventType` always matches what
- * `handler` was registered for, even though TypeScript cannot correlate a
- * dynamically-looked-up key with one specific union member at compile
- * time. This says nothing about whether `event.data` itself was validated
- * — see the comment where `dispatchedEvent` is built in `onMessage` for
- * that (only events with an entry in `REALTIME_EVENT_SCHEMAS` are).
+ * Erasure to `RealtimeEventData` is sound because registration and dispatch
+ * always share the same `eventType` string, even though TS can't correlate a
+ * dynamically-looked-up key with one union member.
  */
 function invokeErasedHandler(handler: unknown, event: RealtimeEventData): void {
   if (typeof handler !== "function") {
@@ -120,29 +109,11 @@ function invokeErasedHandler(handler: unknown, event: RealtimeEventData): void {
 }
 
 /**
- * The single owner of the workspace's realtime socket (`party: "workspaces"`)
- * — one connection per tab, mounted once around the whole workspace shell
- * (`app/space/[workspaceId]/layout.tsx`). Every feature subscribes through
- * {@link useWorkspaceRealtimeEvents} instead of opening its own connection;
- * nobody else may call `usePartySocket` for this party.
- *
- * Token minting is unchanged from the previous `ChatRealtime`-owned socket.
- * Dispatch pipeline for an incoming frame:
- * 1. `JSON.parse` — a parse failure is rate-limited-logged and dropped.
- * 2. Validate the wire ENVELOPE (`{ eventType: string, data: unknown }`) —
- *    a frame that isn't a matching object (`null`, `1`, `[]`, `{}`, …) is
- *    rate-limited-logged and dropped before any property is read off it.
- * 3. Narrow `eventType` to `RealtimeEventName` with a real type guard — an
- *    event this build does not know about (forward-compat across staggered
- *    deploys) is silently ignored, no warning.
- * 4. Look up listeners registered for that `eventType` — nobody subscribed
- *    is also silently ignored.
- * 5. Validate `data` against {@link REALTIME_EVENT_SCHEMAS} when a schema
- *    exists for that event — failure is rate-limited-logged and the event
- *    is NOT dispatched.
- * 6. Call every registered listener, each in its own try/catch — one
- *    listener throwing is logged (with `err` + `eventType`) and never
- *    stops the remaining listeners from receiving the event.
+ * Single owner of the workspace's realtime socket — one connection per tab.
+ * Incoming frames: parse -> validate envelope -> narrow `eventType` (unknown
+ * names silently ignored for forward-compat) -> validate `data` against
+ * `REALTIME_EVENT_SCHEMAS` when present -> dispatch to listeners, each in its
+ * own try/catch so one throwing listener doesn't block the rest.
  */
 export function WorkspaceRealtimeProvider({
   children,
@@ -159,14 +130,11 @@ export function WorkspaceRealtimeProvider({
   const [reconnectCount, setReconnectCount] = useState(0)
   const hasOpenedOnceRef = useRef(false)
 
-  // React Strict Mode (dev only) double-invokes mount effects: setup,
-  // cleanup, setup again — including `usePartySocket`'s own internal
-  // effect. Without this, the SECOND synthetic mount's `onOpen` would see
-  // `hasOpenedOnceRef.current` already `true` from the first (already
-  // torn down) mount and misreport it as a reconnect. This cleanup runs
-  // between the two synthetic mounts (and, harmlessly, on a real unmount),
-  // resetting the flag exactly when Strict Mode's simulated remount needs
-  // it reset.
+  // React Strict Mode (dev only) double-invokes mount effects: setup, cleanup,
+  // setup again. Without this, the second synthetic mount's `onOpen` would see
+  // `hasOpenedOnceRef.current` already `true` from the first (torn down) mount
+  // and misreport it as a reconnect. This cleanup resets the flag between the
+  // two synthetic mounts.
   useEffect(
     () => () => {
       hasOpenedOnceRef.current = false
@@ -276,24 +244,9 @@ export function WorkspaceRealtimeProvider({
         }
       }
 
-      // `eventType` has just been checked against every known
-      // `RealtimeEventType` value, so it corresponds to SOME member of
-      // `RealtimeEventData` — but TypeScript cannot correlate that
-      // runtime-narrowed string with one specific union member at compile
-      // time, so constructing the envelope still needs this assertion.
-      // For an event with a schema in `REALTIME_EVENT_SCHEMAS`, `data` was
-      // just validated against it above. For the rest — `messageCreated`
-      // and `conversationCreated` (whose own type declares `data: unknown`
-      // on purpose), plus `messageDeleted`, `messageIdAssigned`,
-      // `messageUpdated`, `messageContentUpdated`, `messageFailed`,
-      // `contactBlocked`/`contactUnblocked`, `conversationAssigned`,
-      // `typing`, and `notifyExportResult` — `data` is typed but NOT
-      // runtime-validated here, exactly as before this refactor (the
-      // previous `ChatRealtime`-owned socket cast the whole parsed JSON to
-      // `RealtimeEventData` with no validation at all). Narrowing every
-      // one of those to a real schema is out of scope for this platform
-      // move; each subscriber is responsible for trusting its own event's
-      // shape, same as it always was.
+      // TS can't correlate this runtime-narrowed string with one union
+      // member, hence the assertion. Only events with a schema in
+      // `REALTIME_EVENT_SCHEMAS` have `data` validated here.
       const dispatchedEvent = {
         eventType,
         data,
@@ -303,10 +256,9 @@ export function WorkspaceRealtimeProvider({
         try {
           listener(dispatchedEvent)
         } catch (error) {
-          // Keyed by `eventType` (already narrowed, so this key space is
-          // bounded by `RealtimeEventType`) — a listener that throws on
-          // every dispatch of one busy event never drowns out warnings
-          // for an unrelated one.
+          // Keyed by `eventType` (already narrowed, bounded by
+          // `RealtimeEventType`) — a listener that throws on every dispatch of
+          // one busy event never drowns out warnings for an unrelated one.
           const decision = decideRealtimeWarnLogging(
             "listener-threw",
             eventType,
@@ -328,23 +280,9 @@ export function WorkspaceRealtimeProvider({
     },
   })
 
-  // Presence keep-alive: a tiny ping frame over the ALREADY-OPEN
-  // socket, on the SAME fixed cadence the realtime party reports presence
-  // on (`PRESENCE_REPORT_INTERVAL_MS`, imported from the one place that
-  // owns the pair so client and server can never drift). This is the
-  // independent liveness signal a QUIET room otherwise lacks: an
-  // already-open tab with no new connection and no inbound broadcast gives
-  // the realtime party's report loop neither of its other two self-heal
-  // triggers (`onConnect`, `onRequest`), so if its alarm silently stopped,
-  // presence would expire even though tabs are still connected. The party's
-  // `onMessage` handler treats this frame as a third trigger and re-arms
-  // the loop only when it has actually gone stale — a no-op the rest of the
-  // time, so this costs nothing beyond one websocket frame per tab per
-  // interval. Deliberately NOT an HTTP request or server action — never
-  // reintroduces the per-tab heartbeat cost this design replaced. Gated on
-  // `status === "open"` so it only ever ticks while the socket is actually
-  // connected, and the effect's cleanup (on close, reconnect, or unmount)
-  // always clears the interval first.
+  // Presence ping frame on the same cadence as the party's report interval —
+  // a quiet room (no new connections, no broadcasts) has no other self-heal
+  // trigger to re-arm the party's presence report loop.
   useEffect(() => {
     if (status !== "open") {
       return
@@ -365,9 +303,9 @@ export function WorkspaceRealtimeProvider({
         listeners = new Set()
         listenersByType.set(eventType, listeners)
       }
-      // Erasure boundary — see the module-level `invokeErasedHandler` doc
-      // comment; the same soundness argument applies here: this listener
-      // is only ever looked up and called under this exact `eventType`.
+      // Erasure boundary — see `invokeErasedHandler`; same soundness argument
+      // applies: this listener is only ever looked up and called under this
+      // exact `eventType`.
       const erased = listener as unknown as ErasedRealtimeListener
       listeners.add(erased)
 
@@ -398,10 +336,10 @@ export function WorkspaceRealtimeProvider({
     [subscribe],
   )
 
-  // `subscribe` itself is intentionally NOT part of the exposed context
-  // value — it is an internal primitive only `subscribeHandlers` (below)
-  // needs; `useWorkspaceRealtimeEvents` (the only intended external
-  // caller) goes through `subscribeHandlers`, never `subscribe` directly.
+  // `subscribe` is intentionally NOT part of the exposed context value — it's
+  // an internal primitive only `subscribeHandlers` needs;
+  // `useWorkspaceRealtimeEvents` goes through `subscribeHandlers`, never
+  // `subscribe` directly.
   const value = useMemo<WorkspaceRealtimeContextValue>(
     () => ({ subscribeHandlers, status, reconnectCount }),
     [subscribeHandlers, status, reconnectCount],

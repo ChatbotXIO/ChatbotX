@@ -8,26 +8,12 @@ export type ListCallFilterOptionsResult = {
 }
 
 /**
- * P5 item 6 gap closure (M5 deviation) — options for the Calls page's inbox
- * and agent selects. A session-free read (no `member`/permission narrowing
- * of its own — the caller already resolved that), so it is called straight
- * from `page.tsx` with no `.query.ts` request adapter needed beyond this
- * (AGENTS.md invariant #9).
- *
- * B-M1 (Fable review) fix: inboxes are narrowed to the `whatsapp` channel AT
- * THE QUERY LEVEL via `inboxService.listChannelOptionsByWorkspace` (a
- * bounded id/name read scoped by workspace + channel) — `WhatsappCall.inboxId`
- * only ever joins a WhatsApp inbox (calling is WhatsApp-only today), so
- * any other channel's
- * inbox could never appear in a filtered result. Previously used
- * `inboxService.listWithIntegrationsByWorkspace`, which eager-loads all nine
- * credential-bearing integration relations on EVERY inbox in the workspace
- * (re-run on every filter change) just to read id/name and discard
- * everything non-whatsapp in memory.
- *
- * `includeAgents` is false for a non-admin caller (D4: the agent filter is
- * admin-only) — skips the workspace member read entirely instead of
- * fetching a list the caller's own `CallsFilterBar` won't render.
+ * Session-free read, called straight from `page.tsx`. Uses
+ * `inboxService.listChannelOptionsByWorkspace` (id/name only, scoped by
+ * channel) rather than `listWithIntegrationsByWorkspace`, which would
+ * eager-load all nine credential-bearing integration relations per inbox
+ * just to discard the non-whatsapp ones. `includeAgents` false skips the
+ * workspace member read entirely for non-admin callers.
  */
 export async function listCallFilterOptions(input: {
   workspaceId: string

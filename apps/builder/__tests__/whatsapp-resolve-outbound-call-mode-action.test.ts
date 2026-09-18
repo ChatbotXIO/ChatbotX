@@ -244,13 +244,9 @@ describe("resolveOutboundCallModeAction", () => {
     await expect(call()).rejects.toThrow("whatsapp.calls.errors.callNotFound")
   })
 
-  // Review B1: this used to THROW (via `assertCallAccessOrThrow`), which left
-  // the client's `isResolvingMode` stuck `true` forever (`outboundCallMode`
-  // never resolves to a value on a query error) — a permanently disabled
-  // call button with no feedback. Returning `{ mode: "none", reason:
-  // "callAccessDenied" }` instead lets the shared starter's `mode: "none"`
-  // alert path handle it the same as every other denial reason.
-  test("P2 item 5 (D3) / M1: resolves mode:none/callAccessDenied for an assigned-only agent for a conversation assigned to someone else", async () => {
+  // Must resolve (not throw), so the shared starter's mode:"none" alert
+  // path can handle it like any other denial reason.
+  test("resolves mode:none/callAccessDenied for an assigned-only agent for a conversation assigned to someone else", async () => {
     canCallConversationMock.mockResolvedValue(false)
 
     await expect(call()).resolves.toEqual({
@@ -369,8 +365,8 @@ describe("resolveOutboundCallModeAction", () => {
     })
   })
 
-  // TR was removed from BLOCKED_OUTBOUND_COUNTRIES —
-  // it is not in Meta's documented business-initiated-calling block list.
+  // TR is not in BLOCKED_OUTBOUND_COUNTRIES: Meta's documented
+  // business-initiated-calling block list does not list it.
   test("returns voip for a TR business number (not in the blocked-country list)", async () => {
     findByInboxIdForWorkspaceMock.mockResolvedValue({
       id: "integration-1",
@@ -546,7 +542,7 @@ describe("resolveOutboundCallModeAction", () => {
     expect(getCallingSettingsMock).toHaveBeenCalledTimes(1)
   })
 
-  test("P4 item 2: contactInboxId is looked up scoped to the conversation's own contact (ownership reused from resolveContactInbox)", async () => {
+  test("contactInboxId is looked up scoped to the conversation's own contact (ownership reused from resolveContactInbox)", async () => {
     await call("conversation-1", "contact-inbox-2")
 
     expect(findInboxMock).toHaveBeenCalledWith({
@@ -558,7 +554,7 @@ describe("resolveOutboundCallModeAction", () => {
     })
   })
 
-  test("P4 item 2: rejects (mode:none) a contactInboxId that does not belong to this conversation's contact", async () => {
+  test("rejects (mode:none) a contactInboxId that does not belong to this conversation's contact", async () => {
     // The ownership-scoped where-clause simply finds nothing for a foreign id.
     findInboxMock.mockResolvedValue(undefined)
 
@@ -567,7 +563,7 @@ describe("resolveOutboundCallModeAction", () => {
     ).resolves.toEqual({ mode: "none", reason: "notWhatsappConversation" })
   })
 
-  test("P4 item 2: mode is identical whether or not contactInboxId is supplied, when it does resolve", async () => {
+  test("mode is identical whether or not contactInboxId is supplied, when it does resolve", async () => {
     const withoutId = await call("conversation-1")
     const withId = await call("conversation-1", "contact-inbox-1")
 

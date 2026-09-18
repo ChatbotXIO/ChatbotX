@@ -36,8 +36,10 @@ function formatElapsed(startedAt: number): string {
   return `${minutes}:${String(seconds).padStart(2, "0")}`
 }
 
-/** NOT wrapped in `aria-live` — a per-second announcement of a ticking timer
- * is disruptive; the surrounding status line is announced instead. */
+/**
+ * Not wrapped in aria-live - a per-second ticking timer announcement is
+ * disruptive; the surrounding status line is announced instead.
+ */
 function CallTimer({ startedAt }: { startedAt: number }) {
   const [, forceTick] = useState(0)
   useEffect(() => {
@@ -65,9 +67,10 @@ function getEyebrowKey(call: WhatsappVoipCall): string {
   }
 }
 
-/** True for an OUTBOUND call that never reached `active` before ending —
- * Meta's "no answer" case. Derived client-side from the absence of
- * `startedAt` rather than a dedicated server status. */
+/**
+ * True for an outbound call that never reached active before ending - Meta's no
+ * answer case, derived client-side from the absence of startedAt.
+ */
 function isNoAnswer(call: WhatsappVoipCall): boolean {
   return (
     call.direction === WhatsappVoipCallDirection.outbound &&
@@ -100,11 +103,9 @@ function getStatusKey(call: WhatsappVoipCall): string {
         case "connectionLost":
           return "whatsapp.calls.panel.statusConnectionLost"
         default:
-          // "completed" (or a status-less handleEnded call): an outbound
-          // dial that never connected is "No answer"; anything else (an
-          // inbound call, or an outbound call that DID connect) is a normal
-          // "Call ended" — the duration suffix is rendered separately below
-          // when `startedAt` is present.
+          // An outbound dial that never connected is No answer; anything else
+          // is a normal Call ended, with the duration suffix rendered
+          // separately when startedAt is present.
           return isNoAnswer(call)
             ? "whatsapp.calls.panel.statusNoAnswer"
             : "whatsapp.calls.panel.statusCallEnded"
@@ -115,25 +116,9 @@ function getStatusKey(call: WhatsappVoipCall): string {
 }
 
 /**
- * ONE prominent call panel for EVERY VoIP phase — `preparing`, outbound
- * dialing/ringing, incoming ringing/answering, `active`, and the lingering
- * `ended` message — PLUS every currently-ringing basket offer
- * (`ringingCalls`). Replaces the earlier small floating dock and the two
- * separate outbound/incoming modals.
- *
- * Presentation follows the UI table from the multi-ring design spec
- * (Workstream 4), not a branch chain:
- *
- * | Slot free? | Basket | Renders |
- * | --- | --- | --- |
- * | free | 0 | today's single-call panel (or nothing) |
- * | free | 1 | the big green card fed from the basket entry + backdrop |
- * | free | 2+ | the compact ring list, same position/gradient/radius + backdrop |
- * | engaged | any | the slot's call panel, no backdrop, with the ring list stacked ABOVE it |
- *
- * The backdrop exists to grab attention when nothing else is happening;
- * dimming the screen while the agent is mid-conversation is wrong, so it is
- * never shown while the slot is engaged.
+ * Renders the call panel plus any currently-ringing basket offers, keyed on
+ * slot-free vs engaged and basket size (0 / 1 / 2+). The backdrop is never
+ * shown while the slot is engaged — dimming mid-conversation is wrong.
  */
 export function WhatsappCallPanel() {
   const t = useTranslations()
@@ -154,17 +139,10 @@ export function WhatsappCallPanel() {
     pathname === inboxPath || pathname.startsWith(`${inboxPath}/`)
 
   /**
-   * "Go to conversation" (the panel's own control) and D6 (navigate the
-   * moment the agent answers) share this: off the inbox, a real route
-   * change is needed — the inbox page's own mount effect
-   * (`ConversationList`'s `initActiveConversationFromUrl`) then picks the
-   * `conversationId` query param up itself. Already on the inbox, a route
-   * change would only rewrite that query param without re-running that
-   * one-shot effect, so the conversation is opened directly instead — via
-   * `pendingConversationOpen`, a module-level bridge `ChatRealtime`
-   * consumes from inside `ChatStoreProvider` (this panel is mounted
-   * OUTSIDE it — see `workspace-realtime-shell.tsx` — so it cannot call
-   * `chatStore.openConversation` itself).
+   * Off the inbox, a route change lets the inbox page's mount effect pick up
+   * conversationId; already on the inbox that param wouldn't re-run, so the
+   * conversation is opened directly via pendingConversationOpen instead, a
+   * module-level bridge ChatRealtime consumes (this panel mounts outside it).
    */
   const goToConversation = useCallback(
     (conversationId: string) => {
@@ -178,15 +156,11 @@ export function WhatsappCallPanel() {
   )
 
   /**
-   * D6: navigates to the conversation ONLY after the answer actually
-   * succeeds — shared by every Answer control below (the slot's own
-   * incoming card, and every basket entry, minimized or not — one helper,
-   * no per-caller if-else on where the offer's `conversationId` comes
-   * from). `answer()` itself now OWNS the "did this succeed" check (see
-   * `AnswerOutcome` / `resolveAnswered` in `whatsapp-voip-call-context.tsx`)
-   * — including the replacement-confirm path, where `goToConversation`
-   * fires later from `confirmReplacement` instead of from here. This panel
-   * no longer reads `voip-call-store` itself to decide.
+   * Navigates to the conversation only after the answer actually succeeds -
+   * shared by every Answer control so there's no per-caller if-else on where
+   * the offer's conversationId comes from. answer() itself owns the "did this
+   * succeed" check, including the replacement-confirm path where
+   * goToConversation fires later from confirmReplacement instead.
    */
   const handleAnswer = useCallback(
     (whatsappCallId?: string) => {
@@ -203,24 +177,11 @@ export function WhatsappCallPanel() {
     call?.phase === WhatsappVoipCallPhase.answering
   const slotFree = isCallSlotFree(call)
 
-  // Audible tones — mounted here, and ONLY here, so nothing else doubles
-  // them up. One ringtone regardless of how many offers are ringing (the
-  // slot's own incoming call, or any number of basket entries) — never
-  // stacked. Never during `preparing`.
-  //
-  // Mutually exclusive with the ringback below: `startOutbound` no longer
-  // refuses to dial while an offer sits in the basket (a deliberate,
-  // approved change), so both conditions can now be true at once. The
-  // agent's own outbound dial is the one they just initiated deliberately —
-  // its ringback wins over any simultaneous incoming ring, rather than
-  // playing two overlapping 440/480Hz tones through two separate
-  // `AudioContext`s. See `use-voip-ringback.ts`'s doc comment.
-  //
-  // The agent who is already mid-conversation gets a short call-waiting beep
-  // instead of the full ring: ring-all rings them too, and a repeating phone
-  // ring in their ear for the offer's whole ~30-55s deadline would make the
-  // call they are ON impossible to hold. An agent whose slot is free — or
-  // who is looking at their own incoming card — still gets the full ring.
+  // Audible tones mounted here only, so nothing doubles them up. An outbound
+  // dial wins over a simultaneous incoming ring (both can be true at once);
+  // an agent already mid-conversation gets a short call-waiting beep instead
+  // of the full ring, since a repeating ring for the offer's whole deadline
+  // would make their current call impossible to hold.
   const isMidConversation = !(
     slotFree || call?.phase === WhatsappVoipCallPhase.incomingRinging
   )
@@ -229,11 +190,10 @@ export function WhatsappCallPanel() {
       (ringingCalls.length > 0 ||
         call?.phase === WhatsappVoipCallPhase.incomingRinging),
     isMidConversation ? voipRingtoneModes.callWaiting : voipRingtoneModes.ring,
-    // Re-arms the FINITE call-waiting beep for each new offer; without it a
-    // second arrival would be silent, since `active` never changed. Held
-    // constant for the full ring, which already repeats on its own: letting
-    // it vary there would tear down and rebuild the `AudioContext` on every
-    // arrival, audibly restarting a ring that used to play through.
+    // Re-arms the finite call-waiting beep for each new offer; without it a
+    // second arrival would be silent since active never changed. Held constant
+    // for the full ring (which already repeats) to avoid tearing down and
+    // rebuilding the AudioContext on every arrival.
     isMidConversation ? ringingCalls.length : 0,
   )
   useVoipRingback(isOutboundDialPhase)
@@ -241,9 +201,9 @@ export function WhatsappCallPanel() {
   const secondsRemaining = useCountdownSeconds(
     isIncomingPending ? call?.deadlineAt : undefined,
   )
-  // The single basket entry's own countdown, for the free-slot "exactly one
-  // ring" case below. Called unconditionally (Rules of Hooks) even when
-  // that case is not the one being rendered.
+  // The single basket entry's own countdown, for the free-slot exactly-one-ring
+  // case. Called unconditionally (Rules of Hooks) even when that case isn't
+  // rendered.
   const singleRingingSecondsRemaining = useCountdownSeconds(
     slotFree && ringingCalls.length === 1
       ? ringingCalls[0]?.deadlineAt
@@ -260,8 +220,8 @@ export function WhatsappCallPanel() {
     setIsMinimized(false)
   }, [call?.whatsappCallId])
 
-  // Free-slot basket rendering: nothing else occupies this corner of the
-  // screen, so the basket itself drives what shows — see the table above.
+  // Free-slot basket rendering: nothing else occupies this corner, so the
+  // basket itself drives what shows.
   if (slotFree && ringingCalls.length > 0) {
     if (ringingCalls.length === 1) {
       const entry = ringingCalls[0]
@@ -315,14 +275,10 @@ export function WhatsappCallPanel() {
 
   const statusKey = getStatusKey(call)
 
-  // An inbound ring must ALWAYS show the full panel + backdrop +
-  // Answer/Reject + ringtone — never honor a stale minimized state left over
-  // from a previous call. The ring list itself IS still shown while
-  // minimized (see the `!slotFree` block below) — an agent on a minimized
-  // active call hears the ringtone via `useVoipRingtone` above, and the
-  // approved design's "engaged slot → ring list stacks above the panel" has
-  // no minimized exception; hiding it here would leave that audible ring
-  // with nowhere on screen to answer it.
+  // An inbound ring must always show the full panel + backdrop + Answer/Reject
+  // + ringtone, never a stale minimized state from a previous call. The ring
+  // list is still shown while minimized - hiding it here would leave an audible
+  // ring with nowhere on screen to answer it.
   if (isMinimized && !isIncoming) {
     return (
       <div className="fixed right-6 bottom-6 z-50 flex max-h-[calc(100vh-3rem)] flex-col-reverse items-end gap-3">

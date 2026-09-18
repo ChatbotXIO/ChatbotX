@@ -256,7 +256,7 @@ describe("handleWhatsappCallNativeTranscriptFetch", () => {
     expect(mocks.attachTranscript).not.toHaveBeenCalled()
   })
 
-  test("R8: call row not found yet (neither by id nor by wacid) throws a retryable error instead of dropping the event", async () => {
+  test("call row not found yet (neither by id nor by wacid) throws a retryable error instead of dropping the event", async () => {
     mocks.findById.mockResolvedValue(undefined)
     mocks.findByWacid.mockResolvedValue(undefined)
 
@@ -281,7 +281,7 @@ describe("handleWhatsappCallNativeTranscriptFetch", () => {
     expect(mocks.downloadCallMedia).not.toHaveBeenCalled()
   })
 
-  test("R8: no whatsappCallId in the job data resolves the row by wacid instead", async () => {
+  test("no whatsappCallId in the job data resolves the row by wacid instead", async () => {
     mocks.findByWacid.mockResolvedValue(callRow)
 
     await handleWhatsappCallNativeTranscriptFetch({

@@ -12,14 +12,9 @@ import {
 } from "./voip-call-store"
 
 /**
- * The calling subscriber: registers the seven WhatsApp VoIP/call-routing
- * realtime events
- * against the single workspace socket (`WorkspaceRealtimeProvider`) instead
- * of opening one of its own. Voip store / query-client side effects only —
- * moved verbatim from the previous `ChatRealtime` `switch`, never rewritten.
- * Mounted globally (workspace layout, under `callingEnabled`), so it has no
- * dependency on `ChatStoreProvider` — see `use-whatsapp-voip-call-context`
- * for the parity tests that assert this.
+ * Registers the WhatsApp VoIP/call-routing realtime events on the shared
+ * workspace socket. Mounted globally under callingEnabled, independent of
+ * ChatStoreProvider.
  */
 export function WhatsappCallRealtime() {
   const workspaceId = useWorkspaceId()
@@ -48,11 +43,8 @@ export function WhatsappCallRealtime() {
   const handlers: RealtimeHandlerMap = {
     whatsappCallTransportIncoming: (event) => {
       const { data } = event
-      // Ring-all: several offers can be outstanding for this agent at
-      // once, so every incoming offer lands in the basket
-      // (`ringingCalls`) rather than the single `call` slot directly —
-      // `enqueueRinging` itself no-ops for an id already in the
-      // basket or occupying the slot (a redelivered offer).
+      // Ring-all: every incoming offer lands in the basket (ringingCalls),
+      // not the single call slot; enqueueRinging no-ops for a redelivered id.
       enqueueRinging({
         whatsappCallId: data.whatsappCallId,
         wacid: data.wacid,
@@ -65,20 +57,16 @@ export function WhatsappCallRealtime() {
     },
     whatsappCallTransportEnded: (event) => {
       const { data } = event
-      // Drop the basket entry (a no-op if this call was never in the
-      // basket — e.g. it was already promoted into the slot) AND
-      // still run the existing slot-side handler, which lingers an
-      // `ended` message for THIS agent if it was the one engaged with
-      // the call.
+      // Drop the basket entry (no-op if already promoted into the slot) and
+      // still run the slot-side handler, which lingers an ended message if
+      // this agent was engaged.
       removeRinging(data.whatsappCallId)
       handleVoipCallEnded(data.whatsappCallId, data.status)
     },
     whatsappCallOutboundAnswer: (event) => {
       const { data } = event
-      // The SDP answer for a call THIS agent initiated — never logged.
-      // Handed off to the hook's own effect via the store rather than
-      // applied here, since this component never touches the peer
-      // connection directly.
+      // The SDP answer for a call this agent initiated; handed off via the
+      // store since this component doesn't touch the peer connection.
       setPendingOutboundAnswer({
         whatsappCallId: data.whatsappCallId,
         sdp: data.session.sdp,
@@ -89,10 +77,9 @@ export function WhatsappCallRealtime() {
       setOutboundStatus(data.whatsappCallId, data.status)
     },
     whatsappCallPermissionUpdated: (event) => {
-      // A 138017-reconciled permanent grant (no `call_permission_reply`
-      // message to piggyback on) — refetch the same query the reply
-      // path invalidates so the header's call control flips to
-      // direct-dial live.
+      // A permanent grant with no call_permission_reply message to piggyback
+      // on - refetch the same query the reply path invalidates so the
+      // header's call control flips to direct-dial live.
       queryClient
         .invalidateQueries({
           queryKey: outboundCallModeQueryKeys.conversation(
@@ -104,24 +91,14 @@ export function WhatsappCallRealtime() {
     },
     whatsappCallClaimedElsewhere: (event) => {
       const { data } = event
-      // Ring-all: broadcast to the whole workspace after another rung
-      // agent's accept succeeds. Drop the basket entry unconditionally
-      // — it is no longer offered to anyone (a no-op if it was never
-      // in this agent's basket, e.g. it had already been promoted).
+      // Ring-all: broadcast workspace-wide once another rung agent's accept
+      // succeeds. Drop the basket entry unconditionally (no-op if absent).
       removeRinging(data.whatsappCallId)
-      // The winning agent already knows it won (it's mid-`answer`)
-      // and must ignore its own event for the SLOT, or this would
-      // clear the dialog out from under its own in-flight accept —
-      // only a losing agent still `incomingRinging` for this exact
-      // call in the slot clears its dialog. Kept as a safety net
-      // alongside the basket removal above (the slot and basket are
-      // disjoint, but a call could in principle still be sitting in
-      // the slot here via an older/redelivered event ordering).
-      // Silent local dismiss, like `dismiss` — losing a ring-all
-      // race is not a terminal call event FROM THIS AGENT's point of
-      // view (the call is still very much alive, just answered by a
-      // colleague), so this bypasses `handleEnded`'s lingering `ended`
-      // panel/message entirely.
+      // Only a losing agent still incomingRinging for this call clears its
+      // dialog - the winner must ignore its own event or this would clear
+      // the dialog out from under its in-flight accept. Silent local dismiss:
+      // losing a ring-all race isn't a terminal call event for this agent, so
+      // it bypasses handleEnded's lingering panel/message.
       const currentCall = useWhatsappVoipCallStore.getState().call
       if (
         currentCall?.whatsappCallId === data.whatsappCallId &&
@@ -131,14 +108,9 @@ export function WhatsappCallRealtime() {
         resetVoipCall()
       }
     },
-    // P2 item 8: a conversation can be
-    // reassigned to someone else WHILE it is still ringing this agent (the
-    // worker's ring set was computed before the reassignment, or the
-    // reassignment happened after delivery). Drop every basket entry for a
-    // now-reassigned conversation so the dialog doesn't keep offering a
-    // call this agent should no longer see. Assigned to THIS agent, or
-    // unassigned (`assignedUserId: null` — no auto-claim by reassignment
-    // either), never drops anything.
+    // A conversation can be reassigned while still ringing this agent (the
+    // worker's ring set predates the reassignment). Drop the basket entries
+    // so the dialog stops offering a call this agent shouldn't see.
     conversationAssigned: (event) => {
       const { data } = event
       const assignedToSomeoneElse =

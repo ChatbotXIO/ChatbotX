@@ -31,7 +31,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   workspaceUsageModel: { workspaceId: "workspaceId-column" },
 }))
 
-// B-M1: `inboxService` now imports `inboxRepository` from the repositories
+// `inboxService` now imports `inboxRepository` from the repositories
 // barrel for `listChannelOptionsByWorkspace` — stubbed here (unused by any
 // test in this file) so the barrel's OTHER, unrelated repositories don't
 // drag in a transitive schema this file's `@chatbotx.io/database/schema`

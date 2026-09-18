@@ -372,8 +372,8 @@ describe('WhatsApp receiveMessage — carousel/template button taps (type: "butt
 })
 
 describe("WhatsApp receiveMessage — call permission replies", () => {
-  // Previously unhandled (fell back to "Received interactive (coming soon)");
-  // now parsed into a typed entity the worker persists as the grant state.
+  // Parsed into a typed entity the worker persists as the grant state, not
+  // the "Received interactive (coming soon)" interactive fallback.
   test("call_permission_reply is parsed into a whatsapp_call_permission_reply entity", async () => {
     const result = await receiveMessage(
       buildProps({

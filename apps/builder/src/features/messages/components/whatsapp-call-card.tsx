@@ -46,11 +46,8 @@ import { useCallInfoSheetStore } from "../store/call-info-sheet-store"
 import { CallAudioPlayer } from "./call-audio-player"
 
 /**
- * Human, locale-aware "time to answer" — e.g. `9s`, `1m 30s`, `2m` in English;
- * `9 giây`, `1 phút 30 giây` in Vietnamese. Uses `Intl.NumberFormat` unit
- * style so the unit words/abbreviations come from the locale data itself,
- * never hardcoded strings. Seconds-only under a minute; minutes-only on an
- * exact minute; both otherwise.
+ * Human, locale-aware duration string (e.g. 1m 30s). Uses Intl.NumberFormat
+ * unit style so units come from locale data rather than hardcoded strings.
  */
 const formatAnswerWait = (locale: string, totalSeconds: number): string => {
   const minutes = Math.floor(totalSeconds / 60)
@@ -72,22 +69,17 @@ const formatAnswerWait = (locale: string, totalSeconds: number): string => {
 }
 
 /**
- * How long after a call ends we keep showing the "recording processing…"
- * placeholder while waiting for the recording to land. Meta delivers the
- * `call_recording_available` webhook within seconds-to-minutes of hangup; if
- * nothing has arrived after this window the recording is not coming (Meta
- * declined it, the call was answered off-platform so we never asked, or the
- * pipeline failed) — the placeholder then clears instead of hanging forever.
+ * How long to show the processing placeholder after a call ends before giving
+ * up on the recording arriving. Meta usually delivers call_recording_available
+ * within minutes; past this window assume it's not coming (declined, answered
+ * off-platform, or a pipeline failure).
  */
 const RECORDING_PROCESSING_GRACE_MS = 10 * 60 * 1000
 
 /**
- * The agent-audit copy is direction-aware because `agentUserId` is NOT
- * "who answered" — `WhatsappCall.answeredByUserId` is also populated for a
- * business-initiated VoIP call with the INITIATING agent (see the field
- * docs on `createPendingOutbound`). A lookup object (not an inline
- * ternary/if-chain) keeps every direction's copy key auditable and makes
- * TypeScript flag a missing entry if `direction` ever grows a member.
+ * agentUserId is not "who answered" - it's also populated with the INITIATING
+ * agent for outbound VoIP calls. Copy is looked up by direction via a keyed
+ * object (not inline conditionals) so TypeScript flags a missing entry.
  */
 const AGENT_LABEL_KEY_BY_DIRECTION = {
   userInitiated: "answeredBy",
@@ -95,13 +87,9 @@ const AGENT_LABEL_KEY_BY_DIRECTION = {
 } as const satisfies Record<MessageWhatsappCallEntity["direction"], string>
 
 /**
- * The agent-audit line shared by both the compact (non-completed) outcome
- * row and the full completed-call card — a call an agent actually answered
- * that then failed/dropped/was terminated must show the SAME audit record a
- * completed call shows, or the audit trail silently disappears for exactly
- * the calls most worth reviewing. Rendered only when `agentName` is
- * present — a call that was never answered (missed/no-answer/rejected) has
- * no `agentName` at all and correctly renders nothing here.
+ * Shared between the compact and full card so a call an agent actually answered
+ * but that then failed/dropped still shows the same audit record. Rendered only
+ * when agentName is present.
  */
 const CallAgentLine = ({
   agentName,
@@ -121,38 +109,27 @@ type WhatsappCallCardProps = {
   call: MessageWhatsappCallEntity
   contactName?: string | null
   /**
-   * Whether the message carries the recording audio attachment. Used as a
-   * fallback to show the player even if the `hasRecording` content-attribute
-   * flag update lagged behind the attachment landing on the message.
+   * Fallback to show the player if the hasRecording flag lags behind the
+   * attachment landing on the message.
    */
   hasRecordingAttachment?: boolean
   /**
-   * When the call ended (the activity message's `createdAt`). Bounds the
-   * "processing…" placeholder to {@link RECORDING_PROCESSING_GRACE_MS} so a
-   * recording that never arrives can't leave the card stuck on "processing".
+   * When the call ended; bounds the processing placeholder to
+   * RECORDING_PROCESSING_GRACE_MS.
    */
   callEndedAt?: string | number | Date | null
   /**
-   * The conversation this activity message belongs to (`message.conversationId`,
-   * passed by `message-item.tsx`) — feeds the "Call back" control (P4 item
-   * 3) below. Falls back to the chat store's `activeConversationId` when
-   * omitted, matching every other caller.
+   * Feeds the Call back control. Falls back to the chat store's
+   * activeConversationId when omitted.
    */
   conversationId?: string
 }
 
 /**
- * Which non-completed call outcomes offer a "Call back" control, keyed by
- * DIRECTION rather than by label name — expressed on the underlying
- * status/direction so it can never silently drift from
- * `resolveWhatsappCallActivityLabelKey`'s own labeling. Matches the
- * reference behaviour: every non-completed INBOUND call (the business
- * missed/declined a customer's call) offers to call back; an outbound call
- * the business itself placed and that failed/was cancelled never does
- * (that case is deliberately not offered a call-back)
- * — `canceled` is display-only anyway (see
- * `MessageWhatsappCallEntity.status`'s doc comment) and is never call-back
- * eligible on either direction.
+ * Keyed by direction (not label) so it can't drift from
+ * resolveWhatsappCallActivityLabelKey. Every non-completed inbound call offers
+ * a call back; an outbound call the business placed never does. canceled is
+ * display-only and never call-back eligible either way.
  */
 export const CALL_BACK_STATUSES_BY_DIRECTION: Record<
   MessageWhatsappCallEntity["direction"],
@@ -163,15 +140,10 @@ export const CALL_BACK_STATUSES_BY_DIRECTION: Record<
 }
 
 /**
- * Standalone so its own hooks (`useOutboundCallMode`, `useWhatsappCallStarter`)
- * only run while a call-back is actually offered — `WhatsappCallCard` itself
- * renders unconditionally for every message, most of which are not a missed
- * call. Disabled while the agent's single call slot or ring-all basket is
- * non-empty (dialing out while already engaged/ringing would either be
- * rejected by `startOutbound`'s own occupied check or confusingly queue
- * behind an active ring), and while calling is disabled for this workspace/
- * member (`voipCallContext` is `null`) it renders nothing at all — mirrors
- * `WhatsappVoipCallButton`.
+ * Standalone so its hooks only run while a call-back is actually offered.
+ * Disabled while the agent's call slot/basket is busy, or while calling is
+ * disabled for the workspace (voipCallContext null) - mirrors
+ * WhatsappVoipCallButton.
  */
 function WhatsappCallBackButton({
   conversationId,
@@ -184,11 +156,9 @@ function WhatsappCallBackButton({
 }) {
   const t = useTranslations("whatsapp.calls.card")
   const workspaceId = useWorkspaceId()
-  // Read directly (not via `useWhatsappCallStarter`, which itself needs
-  // `outboundCallMode`) so the mode query can be gated on it: with calling
-  // disabled for this workspace/member the provider isn't mounted, this
-  // card renders nothing (see the `voipCallContext` check below), and the
-  // query firing anyway would just churn a deterministic 403 on remount.
+  // Read directly rather than via useWhatsappCallStarter so the query stays
+  // gated: with calling disabled the provider isn't mounted, and firing anyway
+  // would just churn a deterministic 403.
   const voipCallContext = useOptionalWhatsappVoipCallContext()
   const outboundCallModeQuery = useOutboundCallMode(
     workspaceId,
@@ -202,10 +172,8 @@ function WhatsappCallBackButton({
     contactName,
     outboundCallMode: outboundCallModeQuery.data,
   })
-  // A single selector returning the derived boolean PRIMITIVE — not the
-  // whole `call` object or `ringingCalls` array — so this button only
-  // re-renders when busy-ness actually flips, not on every unrelated
-  // field change inside an active call (e.g. the countdown ticking).
+  // Selects the derived boolean primitive, not the call object/array, so the
+  // button only re-renders when busy-ness actually flips.
   const isBusy = useWhatsappVoipCallStore(
     (state) => !isCallSlotFree(state.call) || state.ringingCalls.length > 0,
   )
@@ -281,12 +249,10 @@ const CallActionButton = ({
 }
 
 /**
- * The SINGLE progressive call activity card — replaces
- * the old two-message pair (a "Voice call" row + a separate
- * `whatsapp_call_recording` card). Renders directly off the finalize
- * `whatsapp_call` message's `contentAttributes`, which the worker enriches
- * in place (`hasRecording`/`hasTranscript`/`hasSummary`) as each becomes
- * available via `messageContentUpdated` (see `chat-realtime.tsx`).
+ * The single progressive call activity card, replacing the old two-message
+ * pair. Renders off the finalize whatsapp_call message's contentAttributes,
+ * enriched in place by the worker as hasRecording/hasTranscript/hasSummary
+ * become available.
  */
 export const WhatsappCallCard = ({
   call,
@@ -297,26 +263,15 @@ export const WhatsappCallCard = ({
 }: WhatsappCallCardProps) => {
   const t = useTranslations("whatsapp.calls.card")
   const locale = useLocale()
-  // Reuses the existing `messages.*` keys for the missed/declined row so the
-  // old `WhatsappCallActivity` copy (already translated in all 20 locales)
-  // is not duplicated under a second key.
+  // Reuses the existing messages.* keys so the old translated copy isn't
+  // duplicated under a second key.
   const tMessages = useTranslations("messages")
   const workspaceId = useWorkspaceId()
   const openCallInfoSheet = useCallInfoSheetStore((state) => state.open)
-  // The call is always with this message's own conversation (falls back to
-  // whatever is currently active for callers that don't pass one — every
-  // caller today does), so its contact and WhatsApp contact-inbox both come
-  // from the same lookup — feeds both the "caller info" name shown in the
-  // box AND the "Call back" control's dial target (P4 item 3).
-  // Selects only STABLE references (the `conversations` array reference and
-  // the `activeConversationId` primitive) — never an inline object/array
-  // literal. A zustand v5 selector that returns a fresh literal on every
-  // call fails `useSyncExternalStore`'s identity check on every store
-  // notification, which re-triggers the selector, which returns ANOTHER
-  // fresh literal — an infinite "Maximum update depth exceeded" loop for
-  // every `whatsapp_call` message rendered. Everything derived from
-  // `active` below is computed in the component body instead, matching the
-  // established pattern in `message-head.tsx`/`contact-detail.tsx`.
+  // Selects only stable references (array + primitive), never an inline
+  // object/array literal - a zustand v5 selector returning a fresh literal
+  // fails useSyncExternalStore's identity check and loops infinitely.
+  // Everything derived from active is computed in the component body instead.
   const conversations = useChatStore((state) => state.conversations)
   const activeConversationId = useChatStore(
     (state) => state.activeConversationId,
@@ -350,11 +305,9 @@ export const WhatsappCallCard = ({
   }
 
   if (call.status !== "completed") {
-    // Shares ONE outcome→label mapping with the stored snippet text
-    // (`buildCallActivityText`) via `resolveWhatsappCallActivityLabelKey`, so
-    // the card and the inbox preview can never disagree. Direction-aware: a
-    // not-answered INBOUND call is "missed" (the business missed it); a
-    // not-answered OUTBOUND call is "no answer" (the customer didn't pick up).
+    // Shares one outcome-to-label mapping with the stored snippet
+    // (buildCallActivityText) so they can't disagree. Direction-aware: not-
+    // answered inbound is "missed"; not-answered outbound is "no answer".
     const labelKey = resolveWhatsappCallActivityLabelKey(
       call.status,
       call.direction,
@@ -409,9 +362,8 @@ export const WhatsappCallCard = ({
         <div className="flex min-w-0 flex-col">
           <span className="font-medium leading-tight">{t("audioCall")}</span>
           {call.answerSeconds !== undefined && (
-            // Time-to-answer (ring wait) in human "1m 30s" form, NOT the talk
-            // duration — the talk length is shown in the player's timer below.
-            // Matches the reference card, where the two numbers differ.
+            // Ring wait, not talk duration - the talk length is shown in the
+            // player's timer below.
             <span className="text-muted-foreground text-xs leading-tight">
               {formatAnswerWait(locale, call.answerSeconds)}
             </span>
@@ -434,10 +386,9 @@ export const WhatsappCallCard = ({
 
       {call.callId &&
         (() => {
-          // The finalize message arrives before the recording upload
-          // completes, so `callId` alone is true long before a recording
-          // exists — gate the player on an actual recording (flag OR
-          // attachment) so a click before it lands can't hit an empty `src`.
+          // The finalize message arrives before the recording upload completes,
+          // so callId alone doesn't mean a recording exists - gate the player
+          // on flag OR attachment.
           if (call.recordingExpired) {
             return (
               <p className="text-muted-foreground text-xs">
@@ -446,8 +397,8 @@ export const WhatsappCallCard = ({
             )
           }
           if (!hasRecording && call.recordingUnavailable) {
-            // Nothing is coming for this call — say so immediately rather
-            // than showing "processing…" until the grace window lapses.
+            // Nothing is coming - say so immediately instead of waiting out the
+            // grace window.
             return (
               <p className="text-muted-foreground text-xs">
                 {t("recordingNotCaptured")}
@@ -455,18 +406,13 @@ export const WhatsappCallCard = ({
             )
           }
           if (!hasRecording) {
-            // Only a call that actually requested a recording will ever get
-            // one. When recording was off for this call there is nothing to
-            // wait for, so render no player row at all instead of a
-            // "processing…" placeholder that never resolves.
+            // Only a call that requested recording will ever get one; render no
+            // player row when it wasn't requested.
             if (!call.recordingRequested) {
               return null
             }
-            // A recording was requested but hasn't landed. Show "processing…"
-            // only within the grace window after the call ended; past it the
-            // recording is not coming (declined by Meta, answered
-            // off-platform, or a pipeline failure) — clear the placeholder so
-            // it can't hang on "processing" forever.
+            // Show processing only within the grace window; past it assume the
+            // recording isn't coming.
             const endedMs = callEndedAt
               ? new Date(callEndedAt).getTime()
               : Number.NaN
@@ -510,10 +456,8 @@ export const WhatsappCallCard = ({
                       if (!url) {
                         return
                       }
-                      // A plain `window.open` on the signed URL lets the
-                      // browser play the OGG inline instead of downloading
-                      // it. A programmatic `<a download>` click forces a
-                      // real download.
+                      // window.open plays the OGG inline; a programmatic <a
+                      // download> click forces a real download.
                       const link = document.createElement("a")
                       link.href = url
                       link.download = ""
@@ -538,8 +482,8 @@ export const WhatsappCallCard = ({
 
       <div className="flex items-center gap-2 border-t pt-2">
         <CallActionButton
-          // Always shown (like the reference UI): disabled with a tooltip
-          // until a transcript exists, rather than hidden.
+          // Always shown, disabled with a tooltip until a transcript exists,
+          // rather than hidden.
           disabled={!call.hasTranscript}
           icon={<FileTextIcon aria-hidden className="size-3.5" />}
           label={t("transcript")}
@@ -547,12 +491,9 @@ export const WhatsappCallCard = ({
           tooltip={t("transcriptUnavailable")}
         />
         <CallActionButton
-          // The summary is generated on demand from the sheet's "Generate
-          // summary" flow, not eagerly — gating this button on `hasSummary`
-          // made the very first summary unreachable, since there is never a
-          // summary before the user opens the sheet and asks for one.
-          // `hasTranscript` is the real precondition (the sheet needs a
-          // transcript to summarize).
+          // Summary is generated on demand, so gating on hasSummary would make
+          // the first summary unreachable. hasTranscript is the real
+          // precondition.
           disabled={!call.hasTranscript}
           icon={<SparklesIcon aria-hidden className="size-3.5" />}
           label={t("aiSummary")}

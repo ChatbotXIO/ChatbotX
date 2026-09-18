@@ -207,7 +207,7 @@ describe("WhatsappVoipCallButton", () => {
     )
   })
 
-  test("P2 review leftover (a): 'callAccessDenied' maps to whatsapp.calls.outbound.callAccessDenied", async () => {
+  test("'callAccessDenied' maps to whatsapp.calls.outbound.callAccessDenied", async () => {
     startOutboundMock.mockResolvedValue("callAccessDenied")
     await render(voipMode({ permissionStatus: "permanent" }))
     await click()

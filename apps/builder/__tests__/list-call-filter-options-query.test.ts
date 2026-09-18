@@ -22,7 +22,7 @@ const WORKSPACE_ID = "workspace-1"
 
 beforeEach(() => {
   vi.clearAllMocks()
-  // B-M1: the repository/service layer now filters by channel at the query
+  // The repository/service layer now filters by channel at the query
   // level (never returns a non-whatsapp inbox in the first place).
   mocks.listChannelOptionsByWorkspace.mockResolvedValue([
     { id: "inbox-1", name: "Support" },

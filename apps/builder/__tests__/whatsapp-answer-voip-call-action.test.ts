@@ -234,7 +234,7 @@ describe("answerWhatsappVoipCallAction", () => {
     expect(claimForAnswerMock).not.toHaveBeenCalled()
   })
 
-  test("P2 item 5 / M2 (D3): answer refused BEFORE claim when the agent is ineligible — canCallConversation checked directly, no throw/catch dance", async () => {
+  test("answer refused BEFORE claim when the agent is ineligible — canCallConversation checked directly, no throw/catch dance", async () => {
     canCallConversationMock.mockResolvedValueOnce(false)
 
     await expect(call()).resolves.toEqual({ outcome: "cannotAnswer" })
@@ -247,7 +247,7 @@ describe("answerWhatsappVoipCallAction", () => {
     expect(claimForAnswerMock).not.toHaveBeenCalled()
   })
 
-  test("P2 item 5 / M2 (D3): answer refused AFTER a successful claim (reassignment/removal), releases the claim", async () => {
+  test("answer refused AFTER a successful claim (reassignment/removal), releases the claim", async () => {
     // First check (before claim) passes; the second (after claim, before
     // pre_accept) catches a reassignment that happened in between.
     canCallConversationMock
@@ -347,7 +347,7 @@ describe("answerWhatsappVoipCallAction", () => {
     expect(claimForCallAgentMock).not.toHaveBeenCalled()
   })
 
-  // M2: the auto-assign claim must never delay the "claimed elsewhere"
+  // The auto-assign claim must never delay the "claimed elsewhere"
   // broadcast that tells every other rung agent to stop ringing — it runs
   // strictly after both markAcceptedByAgent and that broadcast, as the last
   // best-effort step before the action returns.
@@ -521,7 +521,7 @@ describe("answerWhatsappVoipCallAction", () => {
       expect.objectContaining({ callId: "wacid-1" }),
     )
     expect(markAcceptedByAgentMock).not.toHaveBeenCalled()
-    // L4: a lost commit never reaches the claim at all (not just that
+    // A lost commit never reaches the claim at all (not just that
     // markAcceptedByAgent was skipped).
     expect(claimForCallAgentMock).not.toHaveBeenCalled()
   })
@@ -565,7 +565,7 @@ describe("answerWhatsappVoipCallAction", () => {
     expect(commitAcceptedMock).not.toHaveBeenCalled()
   })
 
-  describe("R16: server-side answer-deadline enforcement", () => {
+  describe("server-side answer-deadline enforcement", () => {
     beforeEach(() => {
       vi.useFakeTimers()
     })

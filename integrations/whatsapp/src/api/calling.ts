@@ -17,11 +17,8 @@ export {
 } from "../lib/calling-recording"
 
 /**
- * WhatsApp Business Calling settings on a phone number
- * (`/{phone-number-id}/settings`, `calling` object).
- *
- * Reference:
- * https://developers.facebook.com/documentation/business-messaging/whatsapp/calling/call-settings
+ * WhatsApp Business Calling settings on a phone number (`/{phone-number-
+ * id}/settings`, `calling` object).
  */
 
 export type WhatsappCallingWeeklyHours = {
@@ -65,10 +62,9 @@ export type WhatsappCallingSettings = {
 }
 
 /**
- * The settings read has been observed in two envelope shapes across Graph
- * API versions/docs: a top-level `calling` object and a `data[0].calling`
- * wrapper (like `whatsapp_business_profile`). Both are accepted so a shape
- * change never silently renders the tab as "disabled".
+ * The settings read has been observed in two envelope shapes across Graph API
+ * versions: a top-level `calling` object and a `data[0].calling` wrapper. Both
+ * are accepted so a shape change never silently renders the tab as "disabled".
  */
 type PhoneNumberSettingsResponse = {
   calling?: WhatsappCallingSettings
@@ -103,29 +99,22 @@ export const getCallingSettings = (
 }
 
 /**
- * Partially updates the `calling` settings object. Meta merges top-level
- * fields, but treats `call_hours` as full-replace — always send the complete
- * hours object when changing it.
+ * Meta merges top-level `calling` fields but treats `call_hours` as
+ * full-replace — always send the complete hours object when changing it.
  */
 /**
- * One entry of `GET /{pnid}/call_permissions?user_wa_id=` (Meta calling
- * permissions API). Meta's live response key is `can_perform_action` (Meta's
- * own reference doc/example, confirmed against the docs during this change)
- * — `can_perform` was this codebase's original (incorrect) assumption. Both
- * are read here, `can_perform_action` preferred, so neither a doc-accurate
- * response nor a hypothetical legacy shape breaks the gate
- * `startWhatsappCallAction`/{@link canPerformCallAction} checks before
- * dialing.
+ * One entry of `GET /{pnid}/call_permissions?user_wa_id=`. Reads both
+ * `can_perform_action` (Meta's live key) and `can_perform` (fallback),
+ * preferring `can_perform_action`.
  */
 export type WhatsappCallPermissionActionName =
   | "start_call"
   | "send_call_permission_request"
 
 /**
- * One rate-limit window reported alongside a permission action (Meta's
- * `time_period`/`max_allowed`/`current_usage`, plus `limit_expiration_time`
- * — present only once `current_usage` has reached `max_allowed` — so the UI
- * can show when the window resets).
+ * One rate-limit window reported alongside a permission action.
+ * `limit_expiration_time` is present only once `current_usage` has reached
+ * `max_allowed`, so the UI can show when the window resets.
  */
 export type WhatsappCallPermissionLimit = {
   time_period?: string
@@ -157,20 +146,18 @@ export type WhatsappCallPermissionsResponse = {
 /**
  * Who the permission lookup is about — Meta's `call_permissions` GET takes
  * EITHER the phone number (`user_wa_id`) OR, for a Username/BSUID-only user
- * with no phone number exposed, the business-scoped id (`recipient`):
- * "The business-scoped user ID (BSUID) or parent BSUID of the WhatsApp user.
- * Use this instead of `user_wa_id`." Passing a BSUID as `user_wa_id` is NOT
- * the documented shape, so the two are modelled as an exclusive union here.
+ * with no phone number exposed, the business-scoped id (`recipient`). Passing a
+ * BSUID as `user_wa_id` is not the documented shape, so the two are modelled as
+ * an exclusive union.
  */
 export type WhatsappCallPermissionsTarget =
   | { userWaId: string }
   | { recipient: string }
 
 /**
- * `GET /{pnid}/call_permissions?user_wa_id=<E164 digits>` (or `?recipient=
- * <BSUID>`) — whether this business number may start a call (or must request
- * permission first) with the given WhatsApp user, per Meta's
- * calling-permissions reference.
+ * `GET /{pnid}/call_permissions?user_wa_id=<E164 digits>` (or
+ * `?recipient=<BSUID>`) — whether this business number may start a call (or
+ * must request permission first) with the given WhatsApp user.
  */
 export const getCallPermissions = (
   auth: WhatsappAuthValue,
@@ -198,10 +185,9 @@ export const getCallPermissions = (
 }
 
 /**
- * Finds a named action's can-perform flag in a call-permissions response.
- * Reads Meta's documented `can_perform_action`, falling back to the legacy
- * `can_perform` key when only that is present — see the field comments on
- * {@link WhatsappCallPermissionAction}.
+ * Finds a named action's can-perform flag in a call-permissions response. Reads
+ * Meta's documented `can_perform_action`, falling back to the legacy
+ * `can_perform` key when only that is present.
  */
 export const canPerformCallAction = (
   response: WhatsappCallPermissionsResponse,
@@ -232,14 +218,8 @@ export const updateCallingSettings = (
 }
 
 /**
- * VoIP call control (`POST /{phone_number_id}/calls`), per Meta's calling
- * spec (`.../whatsapp/calling/user-initiated-calls`). The business answers a
- * SIP-less connect (one carrying `session.sdp_type:"offer"`) by returning an
- * SDP answer: `pre_accept` MUST be sent before `accept` (Meta rejects an
- * `accept` sent first) — `reject`/`terminate` never carry a session.
- *
- * Modeled as a const/enum (not scattered string literals) so every call site
- * and test references the same four values.
+ * VoIP call control (`POST /{phone_number_id}/calls`). `pre_accept` MUST be
+ * sent before `accept` — Meta rejects an `accept` sent first.
  */
 export const WhatsappCallGraphAction = {
   preAccept: "pre_accept",
@@ -247,10 +227,9 @@ export const WhatsappCallGraphAction = {
   reject: "reject",
   terminate: "terminate",
   /**
-   * Outbound (business-initiated) call placement — inverts the SDP
-   * direction of every other action here: the business generates the
-   * OFFER and Meta's response carries only the call id, never an SDP. See
-   * {@link connectCall}.
+   * Outbound (business-initiated) call placement — inverts the SDP direction of
+   * every other action here: the business generates the OFFER and Meta's
+   * response carries only the call id, never an SDP.
    */
   connect: "connect",
 } as const
@@ -277,20 +256,20 @@ type WhatsappCallExistingCallActionBody = {
   call_id: string
   action: Exclude<WhatsappCallGraphAction, "connect">
   session?: WhatsappCallAnswerSession
-  /** Only ever set by {@link acceptCall} — never `pre_accept`/`reject`/`terminate`. */
+  /**
+   * Only ever set by `acceptCall` — never `pre_accept`/`reject`/`terminate`.
+   */
   recording?: WhatsappCallAnnouncementBody
-  /** Only ever set by {@link acceptCall} — never `pre_accept`/`reject`/`terminate`. */
+  /**
+   * Only ever set by `acceptCall` — never `pre_accept`/`reject`/`terminate`.
+   */
   transcription?: WhatsappCallAnnouncementBody
 }
 
 /**
- * `connect` places a NEW outbound call: no `call_id` yet (Meta assigns one
- * in the response), a recipient — `to` (bare digits, no leading `+`) for a
- * phone-number-keyed contact, or `recipient` (a BSUID) for a Username/BSUID-
- * only contact with no phone number exposed — the business's SDP OFFER,
- * and `biz_opaque_callback_data` (the attempt id) so the async
- * answer/status/terminate webhooks can be correlated back to this attempt
- * before the call id is known. Exactly one of `to`/`recipient` is ever sent.
+ * `connect` places a NEW outbound call: no `call_id` yet. `biz_opaque_callback_data`
+ * carries the attempt id so async webhooks can be correlated back before the
+ * call id is known.
  */
 type WhatsappCallConnectActionBody = {
   messaging_product: "whatsapp"
@@ -323,12 +302,11 @@ type CallActionErrorContext = {
 }
 
 /**
- * SDP-safe error path for the calling actions below. The request body these
- * actions send carries the SDP offer/answer, so the raw ky `HTTPError`
- * (whose `.options.json` echoes that body) must never reach a logger or an
- * exception payload — only `parseOriginError`'s already-narrowed fields
- * (Meta's response error, never our request) are logged/thrown. This is
- * deliberately NOT `rescue`, which logs the raw error object.
+ * SDP-safe error path for the calling actions below. The request body carries
+ * the SDP offer/answer, so the raw ky `HTTPError` (whose `.options.json` echoes
+ * that body) must never reach a logger or exception payload — only
+ * `parseOriginError`'s already-narrowed fields are logged/thrown. Deliberately
+ * NOT `rescue`, which logs the raw error object.
  */
 const buildCallActionError = (
   error: unknown,
@@ -394,9 +372,9 @@ export type WhatsappCallSdpAnswerInput = {
 /**
  * Optional Meta-native recording/transcription opt-in on `accept`/`connect`
  * (VoIP-only — NOT accepted by `pre_accept`). When both are provided, Meta
- * plays one combined announcement from `recording`'s `purpose`/
- * `announcementLanguage` — callers should pass the same values to both
- * rather than two different ones.
+ * plays one combined announcement from `recording`'s
+ * `purpose`/`announcementLanguage` — pass the same values to both rather than
+ * two different ones.
  */
 export type WhatsappCallAnnouncementOptions = {
   recording?: WhatsappCallAnnouncementInput
@@ -409,8 +387,8 @@ export type WhatsappCallIdInput = {
 }
 
 /**
- * `action:"pre_accept"` — required before `accept`; carries the SDP answer
- * so Meta can start ICE/DTLS while the business finalizes acceptance.
+ * `action:"pre_accept"` — required before `accept`; carries the SDP answer so
+ * Meta can start ICE/DTLS while the business finalizes acceptance.
  */
 export const preAcceptCall = ({
   auth,
@@ -425,11 +403,11 @@ export const preAcceptCall = ({
   })
 
 /**
- * `action:"accept"` — same SDP answer as `pre_accept`; media flows only
- * after this returns 200. Optionally attaches Meta-native `recording`/
- * `transcription` opt-in objects (VoIP-only; never sent by `pre_accept`).
- * When both `recording` and `transcription` are omitted, the request body
- * is byte-for-byte identical to before this option existed.
+ * `action:"accept"` — same SDP answer as `pre_accept`; media flows only after
+ * this returns 200. Optionally attaches Meta-native `recording`/`transcription`
+ * opt-in objects (VoIP-only; never sent by `pre_accept`). When both are
+ * omitted, the request body is byte-for-byte identical to before this option
+ * existed.
  */
 export const acceptCall = async ({
   auth,
@@ -473,19 +451,17 @@ export const terminateCall = ({
   })
 
 /**
- * A Username/BSUID-only contact (no phone number exposed) has no `to`
- * to dial — Meta's `connect` action accepts a BSUID via `recipient` instead
- * (per the Calling API's `connect` spec: "`to` | `recipient` BSUID"). Exactly
- * one of the two is ever sent.
+ * A Username/BSUID-only contact (no phone number exposed) has no `to` to dial —
+ * Meta's `connect` action accepts a BSUID via `recipient` instead. Exactly one
+ * of the two is ever sent.
  */
 export type WhatsappConnectCallInput = {
   auth: WhatsappAuthValue
   sdpOffer: string
   /**
-   * Round-trips as `biz_opaque_callback_data` so the async answer, status,
-   * and terminate webhooks can be correlated back to this attempt before
-   * `wacid` is known (see `WhatsappCallEventPayload`'s
-   * `bizOpaqueCallbackData`).
+   * Round-trips as `biz_opaque_callback_data` so the async answer, status, and
+   * terminate webhooks can be correlated back to this attempt before `wacid` is
+   * known.
    */
   attemptId: string
 } & WhatsappCallAnnouncementOptions &
@@ -495,11 +471,11 @@ export type WhatsappConnectCallInput = {
   )
 
 /**
- * `action:"connect"` — places a NEW outbound (business-initiated) call.
- * Unlike every other action here, the business generates the SDP OFFER and
- * Meta's response carries ONLY the call id (`calls[0].id`) — never an SDP.
- * The user's SDP ANSWER arrives later, asynchronously, on the `calls`
- * webhook as a `connect` event with `direction:"BUSINESS_INITIATED"`.
+ * `action:"connect"` — places a NEW outbound (business-initiated) call. Unlike
+ * every other action here, the business generates the SDP OFFER and Meta's
+ * response carries ONLY the call id — never an SDP. The user's SDP ANSWER
+ * arrives later on the `calls` webhook as a `connect` event with
+ * `direction:"BUSINESS_INITIATED"`.
  */
 export const connectCall = async ({
   auth,
