@@ -65,6 +65,25 @@ describe("broadcastRepository.listWithRelations", () => {
     expect(call.with.integrationWhatsapp).toBeDefined()
   })
 
+  // The broadcast "view" dialog reads each page's template/flow from
+  // `targets`; without it a multi-page broadcast shows no page, flow or
+  // template at all.
+  test("loads every target page with its page and flow names", async () => {
+    mocks.findMany.mockResolvedValue([])
+
+    await broadcastRepository.listWithRelations({ workspaceId: "ws-1" })
+
+    const call = mocks.findMany.mock.calls[0]?.[0] as {
+      with: { targets: unknown }
+    }
+    expect(call.with.targets).toEqual({
+      with: {
+        inbox: { columns: { id: true, name: true } },
+        flow: { columns: { id: true, name: true } },
+      },
+    })
+  })
+
   test("passes the status filter through to the where clause", async () => {
     mocks.findMany.mockResolvedValue([])
 
