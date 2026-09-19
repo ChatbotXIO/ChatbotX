@@ -3978,8 +3978,7 @@
         "fixButton": "Sửa",
         "fixSuccess": "App đã được đăng ký webhook cuộc gọi WhatsApp.",
         "manualIntegrationNotice": "Số này được kết nối thủ công và không có thông tin app ở đây. Hãy đăng ký trường webhook 'calls' cho app của bạn trong App Dashboard của Meta.",
-        "coexistenceWarning": "Số này đang dùng chế độ coexistence với ứng dụng WhatsApp Business, Meta không hỗ trợ tính năng gọi điện ở chế độ này. Hãy chuyển số này sang chỉ dùng Cloud API.",
-        "messagingLimitTooLow": "Hạn mức tin nhắn của số này thấp hơn mức tối thiểu Meta yêu cầu cho tính năng gọi điện."
+        "coexistenceWarning": "Số này đang dùng chế độ coexistence với ứng dụng WhatsApp Business, Meta không hỗ trợ tính năng gọi điện ở chế độ này. Hãy chuyển số này sang chỉ dùng Cloud API."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {
@@ -3989,6 +3988,7 @@
       "outbound": {
         "needsPermission": "You need permission to call this contact. Request permission first.",
         "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp chưa bật tính năng gọi do doanh nghiệp khởi tạo cho số này. Điều này phụ thuộc vào khu vực và điều kiện tài khoản phía Meta nên không thể bật tại đây.",
         "callAlreadyInProgress": "A call to this contact is already in progress.",
         "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
         "ineligibleNumber": "This number is not eligible for business-initiated calling.",

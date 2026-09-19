@@ -61,7 +61,8 @@ async function getCachedCallingSettings(
 /**
  * Meta's answer for a contact the local mirror knows nothing about. undefined
  * on any failure or unmapped status, so an unreachable Meta leaves the control
- * where an empty mirror already put it.
+ * where an empty mirror already put it - the dial itself reports what Meta
+ * says rather than this resolve second-guessing it.
  */
 async function resolveMetaPermissionStatus(props: {
   auth: WhatsappAuthValue
@@ -70,17 +71,17 @@ async function resolveMetaPermissionStatus(props: {
   contactInbox: OutboundDialContactInbox
 }): Promise<CallPermissionStatus | undefined> {
   const { permissionTarget } = resolveDialIdentity(props.contactInbox)
-  const permissions = await readMetaCallPermissions({
+  const result = await readMetaCallPermissions({
     auth: props.auth,
     integrationId: props.integrationId,
     contactInboxId: props.contactInbox.id,
     target: permissionTarget,
   })
-  if (!permissions) {
+  if (!result.ok) {
     return
   }
 
-  const status = toCallPermissionStatus(permissions)
+  const status = toCallPermissionStatus(result.permissions)
   if (!status) {
     return
   }
@@ -94,7 +95,7 @@ async function resolveMetaPermissionStatus(props: {
       workspaceId: props.workspaceId,
       contactInboxId: props.contactInbox.id,
       status,
-      expirationTimestamp: toPermissionExpirationTimestamp(permissions),
+      expirationTimestamp: toPermissionExpirationTimestamp(result.permissions),
     })
   } catch (error) {
     logger.warn(
@@ -265,6 +266,7 @@ export const resolveOutboundCallModeAction = callingActionClient
       const preflight = await getWhatsappCallingPreflight({
         workspace,
         auth,
+        inboxId: contactInbox.inboxId,
       }).catch(() => null)
       if (preflight?.hasAppCredential && preflight.callsSubscribed === false) {
         return { mode: "none", reason: "webhookNotSubscribed" }

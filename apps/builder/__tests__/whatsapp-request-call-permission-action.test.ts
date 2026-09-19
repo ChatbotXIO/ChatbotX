@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { SdkException } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 type ActionHandler = (args: {
@@ -41,6 +42,10 @@ vi.mock("@chatbotx.io/business", () => ({
   messageService: { createOutgoing: createOutgoingMock },
 }))
 
+const actualErrors = await vi.importActual<
+  typeof import("@chatbotx.io/business/errors")
+>("@chatbotx.io/business/errors")
+
 vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: class ChatbotXException extends Error {
     code: string
@@ -51,6 +56,10 @@ vi.mock("@chatbotx.io/business/errors", () => ({
       this.httpStatusCode = httpStatusCode
     }
   },
+  // The real helper - the point of the 138013 test is that Meta's own sentence
+  // survives all the way to the thrown message, so stubbing it would prove
+  // nothing.
+  toPublicErrorMessage: actualErrors.toPublicErrorMessage,
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
@@ -110,8 +119,8 @@ describe("requestCallPermissionAction", () => {
       auth: { metadata: { phoneNumber: { id: "pnid-1" } } },
     })
     readMetaCallPermissionsMock.mockResolvedValue({
-      permission: { status: "no_permission" },
-      actions: [],
+      ok: true,
+      permissions: { permission: { status: "no_permission" }, actions: [] },
     })
     canSendCallPermissionRequestMock.mockReturnValue(true)
   })
@@ -175,10 +184,35 @@ describe("requestCallPermissionAction", () => {
   })
 
   test("permission lookup unavailable: fails closed rather than spending 1 of 2 weekly requests", async () => {
-    readMetaCallPermissionsMock.mockResolvedValue(undefined)
+    readMetaCallPermissionsMock.mockResolvedValue({
+      ok: false,
+      error: new Error("meta down"),
+    })
 
     await expect(call()).rejects.toMatchObject({
       message: "whatsapp.calls.outbound.permissionCheckFailed",
+    })
+
+    expect(canSendCallPermissionRequestMock).not.toHaveBeenCalled()
+    expect(createOutgoingMock).not.toHaveBeenCalled()
+  })
+
+  test("relays whatever Meta said, never the generic retry prompt", async () => {
+    readMetaCallPermissionsMock.mockResolvedValue({
+      ok: false,
+      error: new SdkException(
+        "Business-initiated calling is not available.",
+        138_013,
+        400,
+        2_593_139,
+        "OAuthException",
+      ),
+    })
+
+    await expect(call()).rejects.toMatchObject({
+      message: expect.stringContaining(
+        "Business-initiated calling is not available",
+      ),
     })
 
     expect(canSendCallPermissionRequestMock).not.toHaveBeenCalled()

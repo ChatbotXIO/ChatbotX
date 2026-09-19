@@ -3978,8 +3978,7 @@
         "fixButton": "Düzelt",
         "fixSuccess": "Uygulama artık WhatsApp arama webhook'larına abone.",
         "manualIntegrationNotice": "Bu numara manuel olarak bağlandı ve burada uygulama kimlik bilgisi yok. Meta Uygulama Panosunda uygulamanız için 'calls' webhook alanına abone olun.",
-        "coexistenceWarning": "Bu numara, Meta'nın aramalar için desteklemediği WhatsApp Business uygulaması birlikte kullanımını kullanıyor. Yalnızca Cloud API'ye taşıyın.",
-        "messagingLimitTooLow": "Bu numaranın mesajlaşma limiti seviyesi, Meta'nın aramalar için gerektirdiği minimumun altında."
+        "coexistenceWarning": "Bu numara, Meta'nın aramalar için desteklemediği WhatsApp Business uygulaması birlikte kullanımını kullanıyor. Yalnızca Cloud API'ye taşıyın."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {
@@ -3989,6 +3988,7 @@
       "outbound": {
         "needsPermission": "You need permission to call this contact. Request permission first.",
         "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp, bu numara için işletme tarafından başlatılan aramaları etkinleştirmedi. Bu, ülkenizdeki kullanılabilirliğe ve Meta'daki hesap uygunluğuna bağlı olduğundan buradan açılamaz.",
         "callAlreadyInProgress": "A call to this contact is already in progress.",
         "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
         "ineligibleNumber": "This number is not eligible for business-initiated calling.",

@@ -60,27 +60,36 @@ export type ReadMetaCallPermissionsInput = {
 }
 
 /**
- * Cached GET /{pnid}/call_permissions. Resolves to undefined, never throws,
- * when Meta is unreachable or rejects the token - every caller is deciding
+ * A failed read carries the error rather than collapsing to `undefined`, so an
+ * acting caller can relay what Meta actually said instead of a sentence of
+ * ours that says less.
+ */
+export type MetaCallPermissionsResult =
+  | { ok: true; permissions: WhatsappCallPermissionsResponse }
+  | { ok: false; error: unknown }
+
+/**
+ * Cached GET /{pnid}/call_permissions. Never throws: callers are deciding
  * which control to render, and a failed lookup must leave that decision alone
  * rather than fail the request. Only a successful response is cached, so a
  * fixed credential shows up on the next read instead of waiting out the TTL.
  */
 export const readMetaCallPermissions = async (
   input: ReadMetaCallPermissionsInput,
-): Promise<WhatsappCallPermissionsResponse | undefined> => {
+): Promise<MetaCallPermissionsResult> => {
   try {
-    return await withCache(
+    const permissions = await withCache(
       metaCallPermissionCacheKey(input.integrationId, input.contactInboxId),
       () => getCallPermissions(input.auth, input.target),
       { ttl: META_CALL_PERMISSION_CACHE_TTL_SECONDS },
     )
+    return { ok: true, permissions }
   } catch (error) {
     logger.warn(
       { err: error, integrationId: input.integrationId },
       "Whatsapp calling: could not read call permissions from Meta",
     )
-    return
+    return { ok: false, error }
   }
 }
 

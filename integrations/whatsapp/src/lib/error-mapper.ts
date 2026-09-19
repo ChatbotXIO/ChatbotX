@@ -4,6 +4,7 @@ import {
   UNKNOWN_ERROR,
 } from "@chatbotx.io/sdk"
 import { formatGraphErrorMessage } from "@chatbotx.io/utils/graph-error"
+import { WHATSAPP_CALLING_ERROR_CODES } from "../constants"
 import {
   type ChannelErrorSource,
   parseOriginError,
@@ -51,6 +52,16 @@ const PERMISSION_DENIED_CODES = new Set([
   133_010, // Phone not registered
   133_015, // Wait before re-registering
 ])
+
+/**
+ * Matched before the generic `OAuthException` branch in `categorize`, which
+ * would otherwise read these as a credential problem. Kept as its own set
+ * rather than reordering that function, since codes like 100 legitimately rely
+ * on the OAuth branch winning over their own set.
+ */
+const CALLING_INELIGIBLE_CODES = new Set<number>(
+  Object.values(WHATSAPP_CALLING_ERROR_CODES),
+)
 
 const RATE_LIMITED_CODES = new Set([
   4, // App API rate limit
@@ -119,6 +130,10 @@ function categorize(
     return type === "OAuthException"
       ? ChannelErrorCategory.AUTH_FAILED
       : ChannelErrorCategory.UNKNOWN
+  }
+
+  if (CALLING_INELIGIBLE_CODES.has(code)) {
+    return ChannelErrorCategory.PERMISSION_DENIED
   }
 
   if (AUTH_FAILED_CODES.has(code) || type === "OAuthException") {

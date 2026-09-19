@@ -3978,8 +3978,7 @@
         "fixButton": "Beheben",
         "fixSuccess": "Die App ist jetzt für WhatsApp-Anruf-Webhooks abonniert.",
         "manualIntegrationNotice": "Diese Nummer wurde manuell verbunden und hat hier keine App-Anmeldedaten. Das 'calls'-Webhook-Feld für die App im Meta App Dashboard abonnieren.",
-        "coexistenceWarning": "Diese Nummer nutzt die Koexistenz mit der WhatsApp Business-App, die von Meta für Anrufe nicht unterstützt wird. In nur Cloud API verschieben.",
-        "messagingLimitTooLow": "Die Nachrichtenlimit-Stufe dieser Nummer liegt unter dem von Meta für Anrufe geforderten Minimum."
+        "coexistenceWarning": "Diese Nummer nutzt die Koexistenz mit der WhatsApp Business-App, die von Meta für Anrufe nicht unterstützt wird. In nur Cloud API verschieben."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {
@@ -3989,6 +3988,7 @@
       "outbound": {
         "needsPermission": "You need permission to call this contact. Request permission first.",
         "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp hat unternehmensinitiierte Anrufe für diese Nummer nicht aktiviert. Das hängt von der Verfügbarkeit im Land und der Kontoberechtigung bei Meta ab und kann hier nicht aktiviert werden.",
         "callAlreadyInProgress": "A call to this contact is already in progress.",
         "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
         "ineligibleNumber": "This number is not eligible for business-initiated calling.",

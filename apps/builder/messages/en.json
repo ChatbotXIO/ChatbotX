@@ -4196,8 +4196,7 @@
         "fixButton": "Fix",
         "fixSuccess": "The app is now subscribed to WhatsApp call webhooks.",
         "manualIntegrationNotice": "This number was connected manually and has no app credentials here. Subscribe the 'calls' webhook field for your app in the Meta App Dashboard.",
-        "coexistenceWarning": "This number uses WhatsApp Business app coexistence, which Meta does not support for calling. Move it to Cloud API only.",
-        "messagingLimitTooLow": "This number's messaging limit tier is below the minimum Meta requires for calling."
+        "coexistenceWarning": "This number uses WhatsApp Business app coexistence, which Meta does not support for calling. Move it to Cloud API only."
       },
       "recordingActivity": {
         "showTranscript": "Show transcript",
@@ -4206,6 +4205,7 @@
       "outbound": {
         "needsPermission": "You need permission to call this contact. Request permission first.",
         "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp has not enabled business-initiated calling for this number. It depends on country availability and account eligibility with Meta, so it cannot be turned on here.",
         "callAlreadyInProgress": "A call to this contact is already in progress.",
         "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
         "ineligibleNumber": "This number is not eligible for business-initiated calling.",

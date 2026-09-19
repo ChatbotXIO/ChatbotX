@@ -3978,8 +3978,7 @@
         "fixButton": "Korjaa",
         "fixSuccess": "Sovellus on nyt tilannut WhatsApp-puheluwebhookit.",
         "manualIntegrationNotice": "Tämä numero yhdistettiin manuaalisesti, ja sillä ei ole sovellustunnuksia tässä. Tilaa 'calls'-webhook-kenttä sovellukselle Meta-sovelluspaneelissa.",
-        "coexistenceWarning": "Tämä numero käyttää rinnakkaiseloa WhatsApp Business -sovelluksen kanssa, jota Meta ei tue puheluissa. Siirrä se käyttämään vain Cloud APIa.",
-        "messagingLimitTooLow": "Tämän numeron viestirajataso on alle Metan puheluille vaatiman vähimmäistason."
+        "coexistenceWarning": "Tämä numero käyttää rinnakkaiseloa WhatsApp Business -sovelluksen kanssa, jota Meta ei tue puheluissa. Siirrä se käyttämään vain Cloud APIa."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {
@@ -3989,6 +3988,7 @@
       "outbound": {
         "needsPermission": "You need permission to call this contact. Request permission first.",
         "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp ei ole ottanut yrityksen aloittamia puheluita käyttöön tälle numerolle. Tämä riippuu maakohtaisesta saatavuudesta ja tilin kelpoisuudesta Metassa, joten sitä ei voi ottaa käyttöön täällä.",
         "callAlreadyInProgress": "A call to this contact is already in progress.",
         "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
         "ineligibleNumber": "This number is not eligible for business-initiated calling.",
