@@ -6,7 +6,7 @@
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/mjml": "^5.0.0",
-    "@types/mjml-core": "^5.0.0",
+    "@types/mjml-core": "^5.1.0",
     "@types/node": "^24.10.4",
     "@types/nodemailer": "^8.0.0",
     "typescript": "^5",
