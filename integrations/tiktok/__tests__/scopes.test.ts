@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest"
+import { generateAuthUrl } from "../src/apis/auth"
 import {
   findMissingTiktokScopes,
   parseTiktokScopes,
   TIKTOK_COMMENT_AUTOMATION_SCOPES,
+  TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL,
   TIKTOK_CORE_SCOPES,
   TIKTOK_OPTIONAL_PROFILE_SCOPES,
   tiktokNeedsReauthorization,
@@ -33,6 +35,46 @@ describe("parseTiktokScopes", () => {
 
   test("treats a missing scope string as no scopes", () => {
     expect(parseTiktokScopes(undefined)).toEqual([])
+  })
+})
+
+describe("the authorize request", () => {
+  const requestedScopes = () =>
+    (
+      new URL(
+        generateAuthUrl({
+          clientId: "client-key",
+          redirectUrl: "https://example.com/integrations/tiktok/callback",
+        }),
+      ).searchParams.get("scope") ?? ""
+    ).split(",")
+
+  // The regression this guards. TikTok answers
+  // `error=invalid_scope&error_type=scope` and refuses the WHOLE request over
+  // one scope the app is not approved for, so an eager entry here does not
+  // weaken comment automation — it stops anyone connecting the channel at all.
+  test("asks for nothing the app is not approved for", () => {
+    const requested = new Set(requestedScopes())
+    for (const scope of TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL) {
+      expect(requested.has(scope)).toBe(false)
+    }
+  })
+
+  test("asks for exactly the approved set", () => {
+    expect([...requestedScopes()].sort()).toEqual(
+      [
+        "comment.list",
+        "comment.list.manage",
+        "message.list.manage",
+        "message.list.read",
+        "message.list.send",
+        "user.account.type",
+        "user.info.basic",
+        "user.info.profile",
+        "user.info.stats",
+        "user.info.username",
+      ].sort(),
+    )
   })
 })
 

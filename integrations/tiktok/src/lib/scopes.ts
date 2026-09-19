@@ -40,22 +40,42 @@ export const TIKTOK_OPTIONAL_PROFILE_SCOPES = [
  *
  * `comment.list` is what makes TikTok deliver `comment.update` webhooks at all,
  * so an account without it receives no comment events — silently, with a
- * connection that otherwise looks healthy. `video.list` backs the post picker.
+ * connection that otherwise looks healthy.
  *
  * Deliberately NOT enforced at connect: DMs work perfectly well without these,
  * and refusing the whole channel would leave a DM-only workspace unable to
  * connect at all. A missing scope here surfaces as the re-authorize warning on
  * the settings list instead — see {@link tiktokNeedsReauthorization}.
  *
- * TODO(tiktok-comments): add the write scope here once its identifier is read
- * off the app's Permissions page in the TikTok developer portal — see
- * `TIKTOK_SCOPES` in `../apis/auth`. Until then this list only detects the
- * accounts that cannot RECEIVE comments, not the ones that cannot reply.
+ * Nothing goes in this list before the app is approved for it. TikTok answers
+ * `error=invalid_scope&error_type=scope` and refuses the ENTIRE authorize
+ * request over one unapproved scope, so an eager entry here does not degrade
+ * comment automation — it stops anyone connecting TikTok at all, DM-only
+ * workspaces included. See {@link TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL}.
  */
 export const TIKTOK_COMMENT_AUTOMATION_SCOPES = [
+  // Delivers the `comment.update` webhook.
   "comment.list",
-  "video.list",
+  // The write half: reply, like, hide, delete. Not named in the public docs —
+  // taken from the live authorize requests of two other platforms on this API,
+  // which pair it with `comment.list` the way `message.list.read` pairs with
+  // `message.list.send`/`message.list.manage`, and since approved on the app.
+  "comment.list.manage",
 ] as const
+
+/**
+ * Comment scopes the app is not approved for yet, so they are NOT requested.
+ *
+ * `video.list` backs the post picker, which is not built — the form takes video
+ * ids by hand and `listTiktokVideos` has no caller. Requesting it broke the
+ * connect flow in production for no gain.
+ *
+ * TODO(tiktok-comments): once approved, move it into
+ * {@link TIKTOK_COMMENT_AUTOMATION_SCOPES}. That one move is the whole switch —
+ * the same list drives the authorize request (`TIKTOK_SCOPES` in `../apis/auth`)
+ * and the re-authorize warning.
+ */
+export const TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL = ["video.list"] as const
 
 /** TikTok returns the granted scopes as one comma-separated string. */
 export const parseTiktokScopes = (scope: string | undefined): string[] =>

@@ -14,11 +14,15 @@ const TIKTOK_AUTH_BASE_URL = "https://www.tiktok.com/v2/auth/authorize/"
 const TIKTOK_TOKEN_URL = `${BUSINESS_API_BASE_URL}tt_user/oauth2/token/`
 const TIKTOK_REFRESH_URL = `${BUSINESS_API_BASE_URL}tt_user/oauth2/refresh_token/`
 
-// The authorize request asks for everything the channel can use; the three
-// lists differ only in what a MISSING grant costs. Core is refused at the
-// callback, comment-automation scopes raise the re-authorize warning, and the
-// optional profile scopes cost nothing — see `../lib/scopes`, which owns all
-// three and the TODO for the comment write scope.
+// The authorize request asks for every scope the app is approved for; the
+// three lists differ only in what a MISSING grant costs. Core is refused at
+// the callback, comment-automation scopes raise the re-authorize warning, and
+// the optional profile scopes cost nothing — see `../lib/scopes`, which owns
+// all three plus the ones still awaiting approval.
+//
+// Never add a scope here before the app carries it: TikTok refuses the WHOLE
+// authorize request over one unapproved scope, which takes the channel down
+// for DM-only workspaces too.
 //
 // Adding a scope does not upgrade an existing connection: every
 // already-connected account has to re-authorize before the new capability can
