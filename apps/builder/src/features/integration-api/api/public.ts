@@ -150,7 +150,17 @@ export const channelsPublicRouter = {
         data: {
           integrationType: "api",
           integrationIdentifier: context.inbox.id,
-          payload: input,
+          // The API integration's messageStatus handler validates
+          // `{ messageSourceId, status }` (integrations/api/src/handlers/
+          // message/outgoing-message.ts); the public contract names the
+          // same id `messageId`. Passing `input` through verbatim made every
+          // accepted (204) status die as a ZodError in the worker.
+          payload: {
+            messageSourceId: input.messageId,
+            status: input.status,
+            timestamp: input.timestamp,
+            error: input.error,
+          },
         },
       })
     }),
