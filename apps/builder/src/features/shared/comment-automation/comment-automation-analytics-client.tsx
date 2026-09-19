@@ -4,8 +4,10 @@ import { CommentAutomationAnalytics } from "@chatbotx.io/analytics-nextjs/compon
 
 /**
  * Client shell for the per-automation analytics dashboard, shared by the
- * Facebook and Instagram routes — both feed the same `CommentAutomation`
- * table, so there is one page.
+ * Facebook, Instagram and TikTok routes — they all feed the same
+ * `CommentAutomation` table, so there is one page. Nothing here is
+ * channel-aware: the dashboard is keyed by `automationId` alone, and
+ * `CommentAutomationAnalyticsService` filters by workspace, not by type.
  *
  * Its only job beyond mounting the dashboard is reading the browser timezone:
  * a server component cannot, and every stat is bucketed by the viewer's
