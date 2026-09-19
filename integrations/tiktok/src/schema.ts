@@ -47,11 +47,34 @@ export const tiktokDmMessageContentSchema = z.object({
     .optional(),
   conversation_id: z.string(),
   message_id: z.string().optional(),
+  /**
+   * The sender's globally unique user id — TikTok documents it as consistent
+   * across its APIs, and it is the same value the `comment.update` webhook
+   * sends for a commenter. Observed equal to `from_user.id` on `im_receive_msg`.
+   *
+   * Deliberately NOT read when resolving the contact: on an `im_send_msg` echo
+   * the roles reverse and TikTok does not document whose id this then holds, so
+   * `from_user`/`to_user` — whose `role` field says which side is the business —
+   * stay the only identity source. See `receiveMessage`.
+   */
   unique_identifier: z.string().optional(),
   timestamp: z.number().optional(),
   type: z.string(),
   text: z.object({ body: z.string() }).optional(),
   media_url: z.string().optional(),
+  /**
+   * Present when `type` is `share_post`: a TikTok video shared into the DM.
+   *
+   * `.catch(undefined)` because this rides along with a real message — a shape
+   * we did not anticipate must cost the link preview, never the message itself.
+   */
+  share_post: z
+    .object({
+      video_id: z.string(),
+      embed_url: z.string().optional(),
+    })
+    .optional()
+    .catch(undefined),
   reply_source_payload: z
     .object({
       reply_source_msg_id: z.string(),

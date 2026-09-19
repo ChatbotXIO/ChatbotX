@@ -135,6 +135,7 @@ export type IncomingMessage = {
     | MessageTemplateEntity
     | MessageWhatsappFlowResponseEntity
     | MessageStoryReplyEntity
+    | MessageSharedPostEntity
     | MessageWhatsappCallEntity
     | MessageWhatsappCallPermissionReplyEntity
     | { [x: string]: unknown }
@@ -160,6 +161,25 @@ export type MessageStoryReplyEntity = {
   type: "story_reply"
   story: {
     id: string
+    url?: string
+  }
+}
+
+/**
+ * Carried on a message whose payload is a shared post rather than text or an
+ * attachment (TikTok's `type: "share_post"` DM). The message's `text` holds the
+ * link so it is readable and clickable in the inbox today; this keeps the ids
+ * intact so a richer preview can be rendered later without re-parsing the text.
+ *
+ * `url` is the channel's own link for the share, verbatim — TikTok sends a
+ * player URL with its own tracking params, and rewriting it into a
+ * `tiktok.com/@user/video/<id>` guess would mean inventing an author handle the
+ * webhook never carries.
+ */
+export type MessageSharedPostEntity = {
+  type: "shared_post"
+  sharedPost: {
+    postId: string
     url?: string
   }
 }
