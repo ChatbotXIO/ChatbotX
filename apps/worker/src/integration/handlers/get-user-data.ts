@@ -526,6 +526,7 @@ async function sendMessage(
     flowVersionId,
     step: promptStep,
     metadata: props.metadata,
+    ...(props.commentAnchor ? { commentAnchor: props.commentAnchor } : {}),
     ...(props.appointmentId ? { appointmentId: props.appointmentId } : {}),
   })
 }

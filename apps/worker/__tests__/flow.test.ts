@@ -587,7 +587,7 @@ describe("seekConnectedNode", () => {
 })
 
 describe("MESSAGE_PRODUCING_STEP_TYPES", () => {
-  test("matches exactly the step types mapped to sendFlowMessage in flowStepHandlers", async () => {
+  test("matches sendFlowMessage steps plus getUserData prompt-production exception", async () => {
     const { MESSAGE_PRODUCING_STEP_TYPES } = await import(
       "../src/integration/handlers/flow-utils"
     )
@@ -602,7 +602,71 @@ describe("MESSAGE_PRODUCING_STEP_TYPES", () => {
     )
 
     expect(new Set(MESSAGE_PRODUCING_STEP_TYPES)).toEqual(
-      actualMessageProducingTypes,
+      new Set([...actualMessageProducingTypes, "getUserData"]),
+    )
+  })
+})
+
+describe("executeMultipleSteps — comment anchor lifecycle", () => {
+  test("getUserData receives unspent anchor and marks it spent for subsequent steps", async () => {
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    const getUserDataSpy = mockSpy(
+      flowStepHandlers,
+      "getUserData",
+    ).mockResolvedValue({
+      status: "success",
+      result: null,
+    })
+    const sendTextSpy = mockSpy(flowStepHandlers, "sendText").mockResolvedValue(
+      undefined,
+    )
+
+    const anchor = {
+      commentId: "comment-1",
+      replyChannel: "private" as const,
+    }
+    const result = await executeMultipleSteps({
+      ...makeBaseProps(),
+      commentAnchor: anchor,
+      steps: [makeStep("getUserData"), makeStep("sendText")],
+    })
+
+    expect(getUserDataSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ commentAnchor: anchor }),
+    )
+    expect(sendTextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ commentAnchor: { ...anchor, spent: true } }),
+    )
+    expect(result?.commentAnchor).toEqual({ ...anchor, spent: true })
+  })
+
+  test("getUserData after sendText receives spent anchor", async () => {
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    mockSpy(flowStepHandlers, "sendText").mockResolvedValue(undefined)
+    const getUserDataSpy = mockSpy(
+      flowStepHandlers,
+      "getUserData",
+    ).mockResolvedValue({
+      status: "wait",
+      result: null,
+    })
+    const anchor = {
+      commentId: "comment-1",
+      replyChannel: "private" as const,
+    }
+
+    await executeMultipleSteps({
+      ...makeBaseProps(),
+      commentAnchor: anchor,
+      steps: [makeStep("sendText"), makeStep("getUserData")],
+    })
+
+    expect(getUserDataSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ commentAnchor: { ...anchor, spent: true } }),
     )
   })
 })
