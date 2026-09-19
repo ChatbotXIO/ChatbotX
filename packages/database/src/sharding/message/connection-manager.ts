@@ -4,6 +4,7 @@ import { logger } from "../../logger"
 import {
   createReadShardPool,
   createShardPool,
+  envBool,
   envInt,
   isConnectionError,
   type ShardConfig,
@@ -39,7 +40,7 @@ interface ShardCountCache {
   count: number
 }
 
-const READ_REPLICAS_ENABLED: boolean = false
+const READ_REPLICAS_ENABLED = envBool("SHARD_READ_REPLICAS_ENABLED", false)
 
 interface MessageShardConnectionManagerOptions {
   readReplicasEnabled?: boolean
