@@ -17,6 +17,7 @@
 | New feature / page | `feature-scaffold` |
 | Builder UI component, form, table, dialog, or any user-facing string | `builder-ui-i18n` |
 | New API endpoint | `orpc-api` |
+| New public API endpoint that should surface in the CLI/MCP, or CLI/MCP docs/skill drift | `cli-mcp-docs` |
 | Business logic, new service method, any DB read/write from app code | `business-data-access` |
 | New DB table or migration | `drizzle-database` |
 | New background job or queue | `worker-development` |
