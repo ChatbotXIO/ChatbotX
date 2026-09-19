@@ -29,6 +29,7 @@
     "./inbox/connect-outcome": "./src/inbox/connect-outcome.ts",
     "./inbox/connect-outcome-types": "./src/inbox/connect-outcome-types.ts",
     "./inbox/schema": "./src/inbox/schema.ts",
+    "./integration-whatsapp/auth-schema": "./src/integration-whatsapp/auth-schema.ts",
     "./license-startup": "./src/enterprise/license/startup.ts",
     "./javascript-execution": "./src/javascript-execution/index.ts",
     "./minigame": "./src/minigame/index.ts",
