@@ -64,6 +64,7 @@ describe("the authorize request", () => {
     expect([...requestedScopes()].sort()).toEqual(
       [
         "comment.list",
+        "comment.list.manage",
         "message.list.manage",
         "message.list.read",
         "message.list.send",
