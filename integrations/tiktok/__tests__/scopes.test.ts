@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest"
+import { generateAuthUrl } from "../src/apis/auth"
 import {
   findMissingTiktokScopes,
   parseTiktokScopes,
   TIKTOK_COMMENT_AUTOMATION_SCOPES,
+  TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL,
   TIKTOK_CORE_SCOPES,
   TIKTOK_OPTIONAL_PROFILE_SCOPES,
   tiktokNeedsReauthorization,
@@ -33,6 +35,47 @@ describe("parseTiktokScopes", () => {
 
   test("treats a missing scope string as no scopes", () => {
     expect(parseTiktokScopes(undefined)).toEqual([])
+  })
+})
+
+describe("the authorize request", () => {
+  const requestedScopes = () => {
+    const url = new URL(
+      generateAuthUrl({
+        clientId: "client-key",
+        redirectUrl: "https://example.com/integrations/tiktok/callback",
+      }),
+    )
+    return (url.searchParams.get("scope") ?? "").split(",")
+  }
+
+  // The regression this guards: adding these two took the channel down.
+  // TikTok answers `error=invalid_scope&error_type=scope` and refuses the
+  // WHOLE request when the app is not approved for one of them, so a workspace
+  // that only wanted DMs could no longer connect either. They go back in only
+  // together with the portal approval.
+  test("asks for no scope the app is not approved for", () => {
+    const requested = new Set(requestedScopes())
+    for (const scope of TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL) {
+      expect(requested.has(scope)).toBe(false)
+    }
+  })
+
+  // Pinned against the set that is known to work in production, so a refactor
+  // of the groups cannot quietly drop or add one.
+  test("asks for exactly the scopes the channel is approved for", () => {
+    expect([...requestedScopes()].sort()).toEqual(
+      [
+        "message.list.manage",
+        "message.list.read",
+        "message.list.send",
+        "user.account.type",
+        "user.info.basic",
+        "user.info.profile",
+        "user.info.stats",
+        "user.info.username",
+      ].sort(),
+    )
   })
 })
 
@@ -106,38 +149,19 @@ describe("findMissingTiktokScopes", () => {
 })
 
 describe("tiktokNeedsReauthorization", () => {
-  test("a connection holding every required scope is not flagged", () => {
-    expect(
-      tiktokNeedsReauthorization(
-        buildAuth([...TIKTOK_COMMENT_AUTOMATION_SCOPES]),
-      ),
-    ).toBe(false)
+  // While no comment scope is requested, nothing can be missing one. Flagging
+  // here would put a permanent warning on every row that re-authorizing could
+  // not clear, because the authorize request never asks for the permission the
+  // warning is about.
+  test.each([
+    ["a full grant", [...TIKTOK_CORE_SCOPES]],
+    ["a partial grant", ["user.info.basic"]],
+    ["an empty recorded list", []],
+  ])("does not flag %s while comment scopes are unrequested", (_label, scopes) => {
+    expect(tiktokNeedsReauthorization(buildAuth(scopes))).toBe(false)
   })
 
-  test("a connection missing a required scope is flagged", () => {
-    expect(
-      tiktokNeedsReauthorization(buildAuth(["user.info.basic", "video.list"])),
-    ).toBe(true)
-  })
-
-  // A DM-only connection is legitimate — it is allowed through the callback on
-  // purpose — but comment automation still cannot run on it, so the settings
-  // list has to say so.
-  test("a core-only connection is flagged for comments", () => {
-    expect(tiktokNeedsReauthorization(buildAuth([...TIKTOK_CORE_SCOPES]))).toBe(
-      true,
-    )
-  })
-
-  // The population this exists for: every account connected before comment
-  // automation shipped carries no recorded scopes at all. Unknown must read as
-  // "needs re-authorization", or the accounts that silently receive no comment
-  // events are exactly the ones the UI stays quiet about.
-  test("a connection with no recorded scopes is flagged", () => {
-    expect(tiktokNeedsReauthorization(buildAuth())).toBe(true)
-  })
-
-  test("an empty recorded scope list is flagged", () => {
-    expect(tiktokNeedsReauthorization(buildAuth([]))).toBe(true)
+  test("does not flag a connection with no recorded scopes either", () => {
+    expect(tiktokNeedsReauthorization(buildAuth())).toBe(false)
   })
 })

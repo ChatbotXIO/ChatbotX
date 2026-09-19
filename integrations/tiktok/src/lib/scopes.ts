@@ -36,26 +36,47 @@ export const TIKTOK_OPTIONAL_PROFILE_SCOPES = [
 ] as const
 
 /**
- * The scopes comment automation needs, on top of the core set.
+ * The scopes comment automation needs — held back until the TikTok app is
+ * approved for them.
  *
- * `comment.list` is what makes TikTok deliver `comment.update` webhooks at all,
- * so an account without it receives no comment events — silently, with a
- * connection that otherwise looks healthy. `video.list` backs the post picker.
+ * `comment.list` is what makes TikTok deliver `comment.update` webhooks at all;
+ * `video.list` backs the post picker. Requesting them before the app carries
+ * the permission took the channel down: TikTok answered
+ * `error=invalid_scope&error_type=scope` and refused the ENTIRE authorize
+ * request rather than dropping the one scope it would not grant, so even a
+ * workspace that only wanted DMs could no longer connect.
  *
- * Deliberately NOT enforced at connect: DMs work perfectly well without these,
- * and refusing the whole channel would leave a DM-only workspace unable to
- * connect at all. A missing scope here surfaces as the re-authorize warning on
- * the settings list instead — see {@link tiktokNeedsReauthorization}.
+ * The names are correct — a different platform's authorize request carries
+ * `comment.list`, `comment.list.manage` and `video.list` and is accepted — so
+ * what is missing is the approval on OUR app, not a better guess at the string.
  *
- * TODO(tiktok-comments): add the write scope here once its identifier is read
- * off the app's Permissions page in the TikTok developer portal — see
- * `TIKTOK_SCOPES` in `../apis/auth`. Until then this list only detects the
- * accounts that cannot RECEIVE comments, not the ones that cannot reply.
+ * `comment.list.manage` is the write half that reply/like/hide/delete needs.
+ * It was read off that working request rather than the public docs, which do
+ * not name it; the read/write pairing matches `message.list.read` against
+ * `message.list.send`/`message.list.manage`. Confirm it on the app's
+ * Permissions page before relying on it.
+ *
+ * TODO(tiktok-comments): once the app's Permissions page in the TikTok
+ * developer portal shows these approved, move them into
+ * {@link TIKTOK_COMMENT_AUTOMATION_SCOPES} below. That one move turns the
+ * feature on: the same list drives both the authorize request (`TIKTOK_SCOPES`
+ * in `../apis/auth`) and the re-authorize warning.
  */
-export const TIKTOK_COMMENT_AUTOMATION_SCOPES = [
+export const TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL = [
   "comment.list",
+  "comment.list.manage",
   "video.list",
 ] as const
+
+/**
+ * The comment scopes actually requested today: none.
+ *
+ * Deliberately NOT part of {@link TIKTOK_CORE_SCOPES} even once populated. DMs
+ * work without them, so refusing the connect over a missing one would leave a
+ * DM-only workspace unable to connect at all; it surfaces as the re-authorize
+ * warning on the settings list instead — see {@link tiktokNeedsReauthorization}.
+ */
+export const TIKTOK_COMMENT_AUTOMATION_SCOPES: readonly string[] = []
 
 /** TikTok returns the granted scopes as one comma-separated string. */
 export const parseTiktokScopes = (scope: string | undefined): string[] =>
@@ -92,6 +113,13 @@ export const findMissingTiktokScopes = (
 export const tiktokNeedsReauthorization = (auth: {
   metadata?: TiktokAuthValue["metadata"] | undefined
 }): boolean => {
+  // Nothing to warn about while no comment scope is requested. A connection
+  // cannot be missing a permission it was never asked to grant, and a warning
+  // that re-authorizing could not clear is noise on every row.
+  if (TIKTOK_COMMENT_AUTOMATION_SCOPES.length === 0) {
+    return false
+  }
+
   const granted = auth.metadata?.scopes
   if (!granted) {
     return true
