@@ -14,4 +14,5 @@ export type CommentAutomationTranslationNamespace =
   | "facebookCommentAutomation"
   | "instagramCommentAutomation"
   | "threadsCommentAutomation"
+  | "tiktokCommentAutomation"
   | "instagramStoryAutomation"

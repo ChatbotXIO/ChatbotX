@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl"
 import { use } from "react"
 import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
-import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
+import { useChannelConnectError } from "@/hooks/use-channel-connect-error"
 import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import { ZaloDisconnect } from "./components/zalo-disconnect"
 import { ZaloReconnect } from "./components/zalo-reconnect"
@@ -34,7 +34,7 @@ export function ZaloManage({
   const [{ data: integrationZalos }] = use(promises)
   const t = useTranslations()
 
-  useChannelDuplicatedError("zalo")
+  useChannelConnectError("zalo")
   useChannelReconnectResult()
 
   if (!isEnabled) {

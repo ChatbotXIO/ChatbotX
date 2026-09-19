@@ -1,22 +1,22 @@
 import { commentAutomationAnalyticsService } from "@chatbotx.io/analytics"
 import {
+  commentAutomationService,
   contactInboxService,
-  fbCommentAutomationService,
   logProviderError,
   workspaceService,
 } from "@chatbotx.io/business"
 import type {
   CommentAutomationMissReason,
   CommentAutomationReplyChannel,
-  FBCommentReply,
-  FBCommentReplyType,
+  CommentReply,
+  CommentReplyType,
   IntegrationType,
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type {
+  CommentAutomationMissInsert,
   ContactInboxModel,
   ConversationModel,
-  FBCommentAutomationMissInsert,
 } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { createId } from "@chatbotx.io/utils"
@@ -82,7 +82,7 @@ async function loadCommentAutomationContext(props: {
     where: { id: props.contactInboxId },
   })
 
-  const automations = await fbCommentAutomationService.findActiveAutomations({
+  const automations = await commentAutomationService.findActiveAutomations({
     workspaceId: props.workspaceId,
     channelType: props.channelType,
   })
@@ -196,7 +196,7 @@ export async function processCommentAutomation(
   // post, so a single comment is shown to every active automation on the
   // channel — writing a row per decline inside the loop would fire one
   // statement per automation per comment on a busy Page.
-  const misses: FBCommentAutomationMissInsert[] = []
+  const misses: CommentAutomationMissInsert[] = []
   const collectMiss = (
     automationId: string,
     reason: CommentAutomationMissReason,
@@ -218,7 +218,7 @@ export async function processCommentAutomation(
   for (const automation of automations) {
     try {
       if (
-        !fbCommentAutomationService.isWithinSchedule(
+        !commentAutomationService.isWithinSchedule(
           automation,
           workspace.timezone,
         )
@@ -283,7 +283,7 @@ export async function processCommentAutomation(
 
       if (automation.options.replyToNewContactsOnly) {
         const priorCount =
-          await fbCommentAutomationService.getPriorContactInboxCount({
+          await commentAutomationService.getPriorContactInboxCount({
             contactId: contactInbox.contactId,
           })
         if (priorCount > 1) {
@@ -300,7 +300,7 @@ export async function processCommentAutomation(
       }
 
       if (automation.options.replyOncePerUserPerPost) {
-        const existing = await fbCommentAutomationService.findDedup({
+        const existing = await commentAutomationService.findDedup({
           automationId: automation.id,
           contactId: contactInbox.contactId,
           postId,
@@ -320,7 +320,7 @@ export async function processCommentAutomation(
 
       if (!automation.options.replyToUsersWhoCommentedOnOtherPosts) {
         const repliedElsewhere =
-          await fbCommentAutomationService.hasRepliedOnOtherPost({
+          await commentAutomationService.hasRepliedOnOtherPost({
             automationId: automation.id,
             contactId: contactInbox.contactId,
             postId,
@@ -469,7 +469,7 @@ export async function processCommentAutomation(
 
       // Built once here and threaded into every async reply job, so a job that
       // gives up without delivering anything can roll the row back — see
-      // `fbCommentAutomationService.deleteDedup`.
+      // `commentAutomationService.deleteDedup`.
       const dedup = {
         automationId: automation.id,
         contactId: contactInbox.contactId,
@@ -662,7 +662,7 @@ export async function processCommentAutomation(
         willSendReply(automation.privateReply)
 
       if (anythingDispatched || !anythingConfigured) {
-        await fbCommentAutomationService.insertDedup(dedup)
+        await commentAutomationService.insertDedup(dedup)
       }
 
       // Replies counts DMs, not comment replies — same scope as the five
@@ -671,7 +671,7 @@ export async function processCommentAutomation(
       // delivery stats under it. `anythingDispatched` above stays as it is:
       // dedup guards against sending twice and has nothing to do with stats.
       if (privateOutcome) {
-        await fbCommentAutomationService.incrementRepliesCount(automation.id)
+        await commentAutomationService.incrementRepliesCount(automation.id)
       }
     } catch (err) {
       logger.error(
@@ -713,6 +713,7 @@ const ERROR_LOG_PROVIDER_BY_CHANNEL: Record<
   instagram: "instagram",
   instagramFacebook: "instagram",
   threads: "threads",
+  tiktok: "tiktok",
 }
 
 type ReplyEventContext = {
@@ -824,7 +825,7 @@ async function recordAndDispatchReply(
 async function recordReplyFailure(
   props: ReplyEventContext & {
     channelType: CommentAutomationChannelType
-    replyType: FBCommentReplyType
+    replyType: CommentReplyType
     error: unknown
   },
 ): Promise<void> {
@@ -877,7 +878,7 @@ async function recordReplyFailure(
  * many automations match it.
  */
 function resolvePrivateReplyBlockedReason(props: {
-  privateReply: FBCommentReply
+  privateReply: CommentReply
   privateReplyClaimed: boolean
   createdTime: number
   delay: number
@@ -920,7 +921,7 @@ function resolvePrivateReplyBlockedReason(props: {
  */
 async function recordBlockedPrivateReply(
   props: ReplyEventContext & {
-    replyType: FBCommentReplyType
+    replyType: CommentReplyType
     errorDetail: string
   },
 ): Promise<void> {
@@ -975,8 +976,8 @@ async function recordBlockedPrivateReply(
  */
 async function recordConfiguredBranchFailures(
   props: Omit<ReplyEventContext, "replyChannel"> & {
-    publicReply: FBCommentReply
-    privateReply: FBCommentReply
+    publicReply: CommentReply
+    privateReply: CommentReply
     error: unknown
   },
 ): Promise<void> {

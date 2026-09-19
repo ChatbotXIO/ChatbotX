@@ -25,7 +25,7 @@ const MAX_CHUNKS_PER_RUN = 10_000
  * analytics history and are kept forever; a failure is read by nothing but the
  * Error Logs panel, which mirrors `ErrorLog`'s 30-day window.
  *
- * `FBCommentAutomationEvent` grows one row per dispatched reply, and a busy
+ * `CommentAutomationEvent` grows one row per dispatched reply, and a busy
  * Page can add tens of thousands a day. Chunked so a long delete never blocks
  * the comment-automation loop writing a new event.
  */

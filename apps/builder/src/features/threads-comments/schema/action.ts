@@ -1,4 +1,4 @@
-import type { FBCommentAutomationModel } from "@chatbotx.io/database/types"
+import type { CommentAutomationModel } from "@chatbotx.io/database/types"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
@@ -201,7 +201,7 @@ export const listThreadsCommentsSearchParamsCache = createSearchParamsCache({
   perPage: parseAsInteger.withDefault(10),
   name: parseAsString.withDefault(""),
   isActive: parseAsBoolean,
-  sort: getSortingStateParser<FBCommentAutomationModel>().withDefault([
+  sort: getSortingStateParser<CommentAutomationModel>().withDefault([
     { id: "createdAt", desc: true },
   ]),
 })

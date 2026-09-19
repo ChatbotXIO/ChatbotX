@@ -3,11 +3,11 @@ import type {
   CommentAutomationEventStatus,
   CommentAutomationMissReason,
   CommentAutomationReplyChannel,
-  FBCommentReplyType,
+  CommentReplyType,
 } from "@chatbotx.io/database/partials"
 import type {
-  FBCommentAutomationEventInsert,
-  FBCommentAutomationMissInsert,
+  CommentAutomationEventInsert,
+  CommentAutomationMissInsert,
 } from "@chatbotx.io/database/types"
 import type {
   FlowClickedPayload,
@@ -50,7 +50,7 @@ export type RecordCommentAutomationEventInput = {
   commentId: string
   commentText?: string | null
   replyChannel: CommentAutomationReplyChannel
-  replyType: FBCommentReplyType
+  replyType: CommentReplyType
   replyText?: string | null
   status: CommentAutomationEventStatus
   errorDetail?: string | null
@@ -101,7 +101,7 @@ const emptyList = (page: number) => ({
  * Folds `[{ automationId }, ...]` rows returned by a conditional write into the
  * counter deltas they earned. Every caller passes rows a `WHERE <col> IS NULL`
  * clause already filtered, so counting them is what makes the lifetime counters
- * on `FBCommentAutomation` immune to webhook redelivery and BullMQ retries.
+ * on `CommentAutomation` immune to webhook redelivery and BullMQ retries.
  */
 function tallyCounters(
   rows: { automationId: string }[],
@@ -185,7 +185,7 @@ export class CommentAutomationAnalyticsService {
     if (!input.automationId) {
       return false
     }
-    const row = await db.query.fbCommentAutomationModel.findFirst({
+    const row = await db.query.commentAutomationModel.findFirst({
       where: { id: input.automationId, workspaceId: input.workspaceId },
       columns: { id: true },
     })
@@ -198,7 +198,7 @@ export class CommentAutomationAnalyticsService {
    */
   async recordEvent(input: RecordCommentAutomationEventInput): Promise<void> {
     try {
-      const row: FBCommentAutomationEventInsert = {
+      const row: CommentAutomationEventInsert = {
         id: createId(),
         workspaceId: input.workspaceId,
         automationId: input.automationId,
@@ -515,7 +515,7 @@ export class CommentAutomationAnalyticsService {
 
       if (marked.length === 0) {
         // The attribution was there but no row answered to it. Means no
-        // `FBCommentAutomationEvent` with this (automationId, contactInboxId)
+        // `CommentAutomationEvent` with this (automationId, contactInboxId)
         // that is `replyChannel = 'private'` and still has `clickedAt IS NULL`.
         logger.warn(
           {
@@ -559,7 +559,7 @@ export class CommentAutomationAnalyticsService {
    * passed in — `onConflictDoNothing` on `(automationId, commentId)` makes a
    * BullMQ retry or a redelivered webhook write nothing and count nothing.
    */
-  async recordMisses(rows: FBCommentAutomationMissInsert[]): Promise<void> {
+  async recordMisses(rows: CommentAutomationMissInsert[]): Promise<void> {
     if (rows.length === 0) {
       return
     }

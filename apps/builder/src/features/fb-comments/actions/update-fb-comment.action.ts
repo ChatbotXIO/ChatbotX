@@ -1,6 +1,6 @@
 "use server"
 
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
@@ -19,7 +19,7 @@ export const updateFbCommentAction = workspaceActionClient
       bindArgsParsedInputs: readonly [string, string]
       parsedInput: UpdateFbCommentRequest
     }) => {
-      await fbCommentAutomationService.updateMessenger(
+      await commentAutomationService.updateMessenger(
         { workspaceId, id },
         parsedInput,
       )

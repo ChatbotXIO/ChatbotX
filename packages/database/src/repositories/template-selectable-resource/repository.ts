@@ -5,8 +5,8 @@ import {
   aiFunctionModel,
   appointmentCalendarModel,
   automatedResponseModel,
+  commentAutomationModel,
   customFieldModel,
-  fbCommentAutomationModel,
   flowModel,
   integrationWebchatModel,
   productModel,
@@ -138,7 +138,7 @@ export const templateSelectableResourceRepository = {
     findAllQuery(tx.query.triggerModel, triggerModel)(input, tx),
 
   listFbCommentAutomations: (input: CategoryInput, tx: DatabaseClient = db) =>
-    findAllQuery(tx.query.fbCommentAutomationModel, fbCommentAutomationModel)(
+    findAllQuery(tx.query.commentAutomationModel, commentAutomationModel)(
       input,
       tx,
     ),

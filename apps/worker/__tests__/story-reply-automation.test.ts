@@ -38,7 +38,7 @@ const {
 vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: { findBy: mockFindContactInboxBy },
   aiAgentService: { findBy: mockAiAgentFindBy },
-  fbCommentAutomationService: { isWithinSchedule: mockIsWithinSchedule },
+  commentAutomationService: { isWithinSchedule: mockIsWithinSchedule },
   igStoryAutomationService: {
     findActiveAutomations: mockFindActiveAutomations,
     incrementRepliesCount: mockIncrementRepliesCount,

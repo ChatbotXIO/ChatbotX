@@ -316,7 +316,6 @@ describe("prepareBroadcast", () => {
     expect(findDMByContactIds).toHaveBeenCalledWith({
       workspaceId: WORKSPACE_ID,
       contactIds: ["contact-1", "contact-2"],
-      channel: "messenger",
     })
     expect(insertRecipients).toHaveBeenCalledTimes(1)
     expect(insertRecipients).toHaveBeenCalledWith({
@@ -352,7 +351,7 @@ describe("prepareBroadcast", () => {
     )
   })
 
-  test("passes the broadcast channel to the DM conversation lookup so TikTok resolves by sourceId", async () => {
+  test("resolves the DM conversation by the null sourceId convention on TikTok too", async () => {
     findScheduledForPrepare.mockResolvedValue({
       ...baseBroadcast(),
       channel: "tiktok",
@@ -376,7 +375,6 @@ describe("prepareBroadcast", () => {
     expect(findDMByContactIds).toHaveBeenCalledWith({
       workspaceId: WORKSPACE_ID,
       contactIds: ["contact-1"],
-      channel: "tiktok",
     })
   })
 

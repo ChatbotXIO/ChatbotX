@@ -777,7 +777,12 @@ export type IntegrationJobCommentAIReply = {
     commentId: string
     agentId: string
     replyChannel: "public" | "private"
-    channelType: "messenger" | "instagram" | "instagramFacebook" | "threads"
+    channelType:
+      | "messenger"
+      | "instagram"
+      | "instagramFacebook"
+      | "threads"
+      | "tiktok"
     message?: string
     parentMessageId?: string | null
     parentMessageCreatedAt?: string | null

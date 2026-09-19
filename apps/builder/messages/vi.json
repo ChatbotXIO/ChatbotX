@@ -737,6 +737,10 @@
       "whatsapp": "Số WhatsApp này đã được kết nối với một workspace khác.",
       "zalo": "Zalo OA này đã được kết nối với một workspace khác."
     },
+    "missingScopes": {
+      "generic": "Đã hủy kết nối: một số quyền chưa được cấp. Hãy kết nối lại và chấp nhận toàn bộ quyền được yêu cầu.",
+      "tiktok": "Đã hủy kết nối TikTok: một số quyền chưa được cấp. Hãy kết nối lại và chấp nhận toàn bộ quyền được yêu cầu."
+    },
     "reconnect": {
       "success": "Kết nối lại kênh thành công.",
       "errors": {
@@ -2137,6 +2141,7 @@
       "clientId": "Client ID",
       "clientSecret": "Client Secret",
       "displayName": "Tên hiển thị",
+      "needsReauthorizationForComments": "Kết nối này được cấp quyền trước khi có tự động hóa bình luận. Hãy kết nối lại để bắt đầu nhận sự kiện bình luận.",
       "connectInstructions": {
         "step1": "Tạo ứng dụng TikTok tại <link>developers.tiktok.com</link>.",
         "step2": "Cấp quyền tài khoản và sao chép <strong>access token</strong>, <strong>open ID</strong> và <strong>client secret</strong>.",
@@ -4579,7 +4584,8 @@
     "title": "Chăm sóc"
   },
   "tools": {
-    "title": "Công cụ"
+    "title": "Công cụ",
+    "beta": "Beta"
   },
   "users": {
     "title": "Người dùng"
@@ -4950,6 +4956,102 @@
       "delayMustBePositive": "Giá trị độ trễ phải lớn hơn 0.",
       "delayMustBeZero": "Giá trị độ trễ phải bằng 0 với tùy chọn thời gian đã chọn.",
       "atLeastOneFieldRequired": "Cần ít nhất một trường để cập nhật."
+    }
+  },
+  "tiktokCommentAutomation": {
+    "title": "Tự động hóa bình luận TikTok",
+    "description": "Tự động trả lời, thích và ẩn bình luận dưới video TikTok của bạn.",
+    "create": "Tạo tự động hóa",
+    "replies": "Lượt trả lời",
+    "empty": "Chưa có tự động hóa bình luận TikTok nào.",
+    "deliveryDelayNote": "TikTok gửi sự kiện bình luận trong vòng năm phút, nên phản hồi không tức thì. Độ trễ bạn đặt sẽ cộng thêm vào khoảng đó.",
+    "trackCommentsOn": "Theo dõi bình luận trên",
+    "publicReply": "Trả lời công khai bình luận",
+    "publicReplyDescription": "Gửi trả lời công khai cho bình luận TikTok khớp điều kiện. TikTok không có tin nhắn riêng gắn với bình luận nên không hỗ trợ trả lời riêng.",
+    "replyMessage": "Nội dung trả lời",
+    "replyFlow": "Kịch bản trả lời",
+    "replyAIAgent": "AI Agent trả lời",
+    "includeKeywordsType": "Trả lời khi",
+    "includeKeywords": "Từ khóa cần khớp",
+    "excludeKeywords": "Bỏ qua bình luận chứa các từ khóa này",
+    "keywordsPlaceholder": "Nhập rồi nhấn Enter...",
+    "replyAfter": "Trả lời sau",
+    "replyAfterValue": "Giá trị",
+    "specificPostIds": "ID video cụ thể",
+    "postIdPlaceholder": "Nhập ID video rồi nhấn Enter...",
+    "hideCommentsDescription": "Bình luận bị ẩn chỉ còn người viết nhìn thấy.",
+    "card": {
+      "targeting": "Phạm vi & Trả lời",
+      "filters": "Bộ lọc & Tùy chọn",
+      "hideComments": "Ẩn bình luận",
+      "replyTiming": "Thời điểm trả lời"
+    },
+    "postType": {
+      "all": "Tất cả video",
+      "specificPosts": "Video cụ thể"
+    },
+    "replyType": {
+      "text": "Tin nhắn văn bản",
+      "flow": "Kịch bản",
+      "AIAgent": "AI Agent",
+      "none": "Không trả lời"
+    },
+    "keywordsType": {
+      "all": "Mọi bình luận",
+      "equal": "Khớp chính xác",
+      "contain": "Có chứa"
+    },
+    "replyAfterType": {
+      "immediately": "Ngay lập tức",
+      "seconds": "Sau X giây",
+      "minutes": "Sau X phút",
+      "hours": "Sau X giờ",
+      "randomWithin3Minutes": "Ngẫu nhiên trong 3 phút",
+      "randomWithin5Minutes": "Ngẫu nhiên trong 5 phút",
+      "randomWithin10Minutes": "Ngẫu nhiên trong 10 phút",
+      "randomWithin20Minutes": "Ngẫu nhiên trong 20 phút",
+      "randomWithin30Minutes": "Ngẫu nhiên trong 30 phút",
+      "randomWithin60Minutes": "Ngẫu nhiên trong 60 phút"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Chỉ trả lời liên hệ mới",
+      "replyOncePerUserPerPost": "Chỉ trả lời mỗi người một lần trên mỗi video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Trả lời người đã bình luận ở video khác",
+      "ignoreCommentReplies": "Không trả lời phản hồi của bình luận",
+      "likeUserComment": "Thích bình luận của người dùng"
+    },
+    "hide": {
+      "all": "Ẩn mọi bình luận",
+      "hasPhoneNumber": "Ẩn bình luận có số điện thoại",
+      "hasLink": "Ẩn bình luận có liên kết",
+      "hasKeywords": "Ẩn bình luận chứa từ khóa",
+      "keywords": "Từ khóa cần ẩn",
+      "showCommentsAfter": "Hiện lại bình luận đã ẩn sau"
+    },
+    "showCommentsAfter": {
+      "none": "Không bao giờ",
+      "6h": "6 giờ",
+      "12h": "12 giờ",
+      "1d": "1 ngày",
+      "2d": "2 ngày",
+      "3d": "3 ngày",
+      "4d": "4 ngày",
+      "5d": "5 ngày",
+      "6d": "6 ngày",
+      "7d": "7 ngày",
+      "8d": "8 ngày",
+      "9d": "9 ngày",
+      "10d": "10 ngày"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Phải để trống ID video khi áp dụng cho tất cả video.",
+      "postIdsRequired": "Chọn ít nhất một ID video khi áp dụng cho video cụ thể.",
+      "keywordsMustBeEmptyForAll": "Phải để trống từ khóa khi áp dụng cho mọi bình luận.",
+      "keywordsRequired": "Nhập ít nhất một từ khóa cho kiểu khớp đã chọn.",
+      "delayMustBePositive": "Giá trị độ trễ phải lớn hơn 0.",
+      "delayMustBeZero": "Giá trị độ trễ phải bằng 0 với tùy chọn thời điểm đã chọn.",
+      "hideKeywordsRequired": "Nhập ít nhất một từ khóa để ẩn bình luận theo từ khóa.",
+      "atLeastOneFieldRequired": "Cần ít nhất một trường."
     }
   },
   "instagramStoryAutomation": {

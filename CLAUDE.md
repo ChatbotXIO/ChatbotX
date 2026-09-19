@@ -22,7 +22,7 @@
 | New background job or queue | `worker-development` |
 | New channel integration | `integration-channel` |
 | Contact filter field/operator, filter SQL, or contact-based audience | `contact-filter` |
-| Facebook/Messenger comment automation (auto-reply/like/hide on Page post comments) | `fb-comment-automation` |
+| Comment automation (auto-reply/like/hide on post comments — Messenger, Instagram, Threads, TikTok) | `comment-automation` |
 | Minigame tool (Jackpot CRUD, prize draw, public play link/token, extending to a new minigame type) | `minigame` |
 | New flow step with states (success/error/skip routing) | `flow-step-development` |
 | Dev/build/lint commands | `turborepo-workflow` |

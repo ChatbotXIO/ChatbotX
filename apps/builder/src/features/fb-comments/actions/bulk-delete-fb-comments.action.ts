@@ -1,6 +1,6 @@
 "use server"
 
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
@@ -20,7 +20,7 @@ export const bulkDeleteFbCommentsAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: { ids: string[] }
     }) => {
-      await fbCommentAutomationService.deleteMany({
+      await commentAutomationService.deleteMany({
         workspaceId,
         ids: parsedInput.ids,
         types: ["messenger"],

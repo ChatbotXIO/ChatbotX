@@ -1,6 +1,6 @@
 "use server"
 
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
@@ -23,9 +23,6 @@ export const updateIgCommentAction = workspaceActionClient
       // `findInstagramOrFail` scopes to, so it must never be forwarded into
       // the update payload even though the request schema still carries it.
       const { type: _type, ...data } = parsedInput
-      await fbCommentAutomationService.updateInstagram(
-        { workspaceId, id },
-        data,
-      )
+      await commentAutomationService.updateInstagram({ workspaceId, id }, data)
     },
   )

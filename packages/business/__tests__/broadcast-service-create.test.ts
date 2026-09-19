@@ -126,7 +126,6 @@ vi.mock("@chatbotx.io/database/partials", () => ({
   ) => ((targets ?? []).length > 0 ? "targets" : "channel"),
   resolveBroadcastTemplateSend: vi.fn(),
   withBroadcastTargets: {},
-  dmConversationUsesSourceId: vi.fn(() => false),
   requiresRecentInteractionWindow: vi.fn(() => false),
 }))
 

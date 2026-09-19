@@ -32,7 +32,7 @@ vi.mock("@chatbotx.io/business", () => ({
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
   qrCodeService,
-  fbCommentAutomationService: {
+  commentAutomationService: {
     list: vi.fn(),
     listIgComments: vi.fn(),
     findMessengerOrFail: vi.fn(),

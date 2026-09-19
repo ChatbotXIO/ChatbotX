@@ -225,31 +225,12 @@ describe("ConversationService.findDMByContactIds", () => {
     expect(mocks.conversationFindMany).not.toHaveBeenCalled()
   })
 
-  test("queries non-null sourceId conversations for TikTok, whose DM is keyed by conversation_id", async () => {
+  test("filters on the null sourceId DM convention, on every channel", async () => {
     mocks.conversationFindMany.mockResolvedValue([])
 
     await conversationService.findDMByContactIds({
       workspaceId: WORKSPACE_ID,
       contactIds: ["contact-1"],
-      channel: "tiktok",
-    })
-
-    expect(mocks.conversationFindMany).toHaveBeenCalledWith({
-      where: {
-        workspaceId: WORKSPACE_ID,
-        contactId: { in: ["contact-1"] },
-        sourceId: { isNotNull: true },
-      },
-    })
-  })
-
-  test("keeps the null sourceId DM filter for non-TikTok channels", async () => {
-    mocks.conversationFindMany.mockResolvedValue([])
-
-    await conversationService.findDMByContactIds({
-      workspaceId: WORKSPACE_ID,
-      contactIds: ["contact-1"],
-      channel: "telegram",
     })
 
     expect(mocks.conversationFindMany).toHaveBeenCalledWith({
@@ -261,7 +242,7 @@ describe("ConversationService.findDMByContactIds", () => {
     })
   })
 
-  test("returns TikTok conversations as-is without post-processing", async () => {
+  test("returns the conversations as-is without post-processing", async () => {
     const rows = [
       { id: "1", contactId: "contact-1" },
       { id: "2", contactId: "contact-2" },
@@ -271,7 +252,6 @@ describe("ConversationService.findDMByContactIds", () => {
     const result = await conversationService.findDMByContactIds({
       workspaceId: WORKSPACE_ID,
       contactIds: ["contact-1", "contact-2"],
-      channel: "tiktok",
     })
 
     expect(result).toEqual(rows)

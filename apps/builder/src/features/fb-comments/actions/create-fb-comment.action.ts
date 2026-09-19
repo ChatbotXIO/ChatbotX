@@ -1,6 +1,6 @@
 "use server"
 
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -22,7 +22,7 @@ export const createFbCommentAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateFbCommentRequest
     }) => {
-      const record = await fbCommentAutomationService.createMessenger({
+      const record = await commentAutomationService.createMessenger({
         workspaceId,
         data: parsedInput,
       })

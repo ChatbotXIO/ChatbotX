@@ -8,11 +8,7 @@ import {
   type SQL,
   sql,
 } from "@chatbotx.io/database/client"
-import {
-  type ChannelType,
-  type ConversationAttributes,
-  dmConversationUsesSourceId,
-} from "@chatbotx.io/database/partials"
+import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import {
   assignUserIfUnassigned,
   createMessageRepository,
@@ -159,18 +155,16 @@ class ConversationService extends BaseService {
   async findDMByContact(props: {
     workspaceId: string
     contactId: string
-    channel?: ChannelType | null
     tx?: DatabaseClient
   }): Promise<ConversationModel | undefined> {
-    const { tx = db, workspaceId, contactId, channel } = props
-    // Read receipts always target the DM conversation (sourceId IS NULL). Only
-    // TikTok and Facebook comment conversations have a non-null sourceId.
-    const usesSourceId = dmConversationUsesSourceId(channel)
+    const { tx = db, workspaceId, contactId } = props
+    // The DM conversation is `sourceId IS NULL` on every channel; a non-null
+    // sourceId is a comment thread, keyed by the post id.
     return await tx.query.conversationModel.findFirst({
       where: {
         workspaceId,
         contactId,
-        sourceId: usesSourceId ? { isNotNull: true } : { isNull: true },
+        sourceId: { isNull: true },
       },
     })
   }
@@ -178,32 +172,24 @@ class ConversationService extends BaseService {
   async findDMByContactIds(props: {
     workspaceId: string
     contactIds: string[]
-    channel?: ChannelType | null
     tx?: DatabaseClient
   }): Promise<ConversationModel[]> {
-    const { tx = db, workspaceId, contactIds, channel } = props
+    const { tx = db, workspaceId, contactIds } = props
     const uniqueContactIds = Array.from(new Set(contactIds))
     if (uniqueContactIds.length === 0) {
       return []
     }
 
-    // Most channels store the DM conversation with a null sourceId. TikTok is
-    // the outlier: its DM is keyed by the channel's conversation_id held in
-    // sourceId, so it must be resolved with sourceId IS NOT NULL.
-    const usesSourceId = dmConversationUsesSourceId(channel)
-
-    const conversations = await tx.query.conversationModel.findMany({
+    // The DM conversation is `sourceId IS NULL` on every channel; a non-null
+    // sourceId is a comment thread, keyed by the post id. At most one row per
+    // contact, via the Conversation_contactId_dm_key unique index.
+    return await tx.query.conversationModel.findMany({
       where: {
         workspaceId,
         contactId: { in: uniqueContactIds },
-        sourceId: usesSourceId ? { isNotNull: true } : { isNull: true },
+        sourceId: { isNull: true },
       },
     })
-
-    // Both DM paths return at most one conversation per contact: the null-sourceId
-    // path via the Conversation_contactId_dm_key unique index, and TikTok's
-    // non-null path because a TikTok contact has a single conversation.
-    return conversations
   }
 
   /**
@@ -226,12 +212,7 @@ class ConversationService extends BaseService {
       return
     }
 
-    return await this.findDMByContact({
-      workspaceId,
-      contactId,
-      channel: contactInbox.channel as ChannelType,
-      tx,
-    })
+    return await this.findDMByContact({ workspaceId, contactId, tx })
   }
 
   async updateChallenge(props: {
@@ -543,13 +524,70 @@ class ConversationService extends BaseService {
 
   // ─── Writes ──────────────────────────────────────────────────────────────
 
+  /**
+   * Persists the channel's own conversation id onto an existing row when the
+   * channel newly reported one, or reported a different one.
+   *
+   * TikTok can rotate `conversation_id` for the same contact, and rows created
+   * before this field existed carry none, so the write has to be idempotent
+   * rather than create-only — otherwise an outbound DM on a pre-existing
+   * conversation has nothing to address.
+   */
+  private async syncChannelConversationId(props: {
+    conversation: ConversationModel
+    channelConversationId: string
+    tx: DatabaseClient
+  }): Promise<ConversationModel> {
+    const { conversation, channelConversationId, tx } = props
+    if (
+      conversation.additionalAttributes?.channelConversationId ===
+      channelConversationId
+    ) {
+      return conversation
+    }
+
+    const updated = await tx
+      .update(conversationModel)
+      .set({
+        additionalAttributes: {
+          ...conversation.additionalAttributes,
+          channelConversationId,
+        },
+      })
+      .where(eq(conversationModel.id, conversation.id))
+      .returning()
+      .then((result) => result[0])
+
+    if (!updated) {
+      return conversation
+    }
+
+    await this.invalidate({
+      workspaceId: conversation.workspaceId,
+      ids: [conversation.id],
+    })
+    return updated
+  }
+
   async findOrCreate(props: {
     workspaceId: string
     contactId: string
     sourceId: string | null
+    /**
+     * The channel's own conversation identifier (TikTok's `conversation_id`),
+     * stored on `additionalAttributes` rather than keying the row. See
+     * `IncomingContact.channelConversationId`.
+     */
+    channelConversationId?: string | null
     tx?: DatabaseClient
   }): Promise<ConversationModel> {
-    const { workspaceId, contactId, sourceId, tx = db } = props
+    const {
+      workspaceId,
+      contactId,
+      sourceId,
+      channelConversationId,
+      tx = db,
+    } = props
 
     const findExisting = () =>
       tx.query.conversationModel.findFirst({
@@ -562,12 +600,26 @@ class ConversationService extends BaseService {
 
     const existing = await findExisting()
     if (existing) {
-      return existing
+      return channelConversationId
+        ? await this.syncChannelConversationId({
+            conversation: existing,
+            channelConversationId,
+            tx,
+          })
+        : existing
     }
 
     const created = await tx
       .insert(conversationModel)
-      .values({ id: createId(), workspaceId, contactId, sourceId })
+      .values({
+        id: createId(),
+        workspaceId,
+        contactId,
+        sourceId,
+        additionalAttributes: channelConversationId
+          ? { channelConversationId }
+          : undefined,
+      })
       .onConflictDoNothing()
       .returning()
       .then((result) => result[0])
@@ -583,7 +635,13 @@ class ConversationService extends BaseService {
       if (!concurrent) {
         throw new Error("Conversation not found")
       }
-      return concurrent
+      return channelConversationId
+        ? await this.syncChannelConversationId({
+            conversation: concurrent,
+            channelConversationId,
+            tx,
+          })
+        : concurrent
     }
 
     await this.broadcastConversationEvent(workspaceId, {

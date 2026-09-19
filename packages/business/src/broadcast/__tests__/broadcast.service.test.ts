@@ -457,7 +457,7 @@ describe("broadcastService.countAudience", () => {
     )
   })
 
-  test("counts non-null sourceId DM conversations for a restricted TikTok scope", async () => {
+  test("counts null sourceId DM conversations for a restricted TikTok scope", async () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-tiktok"])
     mocks.selectRows = [{ count: 3 }]
 
@@ -474,7 +474,7 @@ describe("broadcastService.countAudience", () => {
       {
         __and: [
           { __eq: ["Conversation.contactId", "ContactInbox.contactId"] },
-          { __isNotNull: "Conversation.sourceId" },
+          { __isNull: "Conversation.sourceId" },
         ],
       },
     ])
@@ -550,7 +550,7 @@ describe("broadcastService.listAudiencePreview", () => {
     expect(mocks.selectOffset).toHaveBeenCalledWith(20)
   })
 
-  test("joins the non-null sourceId DM conversation for a TikTok preview", async () => {
+  test("joins the null sourceId DM conversation for a TikTok preview", async () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-tiktok"])
     mocks.selectRows = []
 
@@ -565,7 +565,7 @@ describe("broadcastService.listAudiencePreview", () => {
       {
         __and: [
           { __eq: ["Conversation.contactId", "ContactInbox.contactId"] },
-          { __isNotNull: "Conversation.sourceId" },
+          { __isNull: "Conversation.sourceId" },
         ],
       },
     ])

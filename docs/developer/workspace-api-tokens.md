@@ -250,7 +250,7 @@ an endpoint's scope.
     was widened. Any future trigger route must keep populating both via
     `triggerRepository.findWithConditions` rather than reintroducing a
     hardcoded `[]`.
-  - *FB/IG comment `type` filter* — `FBCommentAutomation` serves fb-comments
+  - *FB/IG comment `type` filter* — `CommentAutomation` serves fb-comments
     (`messenger`) and ig-comments (`instagram`/`instagramFacebook`) off one
     table. Every read and write must go through the `*Messenger`/`*Instagram`
     service methods; a bare `workspaceId` + `id` where-clause lets

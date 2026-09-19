@@ -13,7 +13,7 @@ import { useTranslations } from "next-intl"
 import { use } from "react"
 import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
-import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
+import { useChannelConnectError } from "@/hooks/use-channel-connect-error"
 import { useChannelReconnectResult } from "@/hooks/use-channel-reconnect-result"
 import { ThreadsDisconnect } from "./components/threads-disconnect"
 import { ThreadsReconnect } from "./components/threads-reconnect"
@@ -33,7 +33,7 @@ export function ThreadsManage({
   const [{ data: integrations }] = use(promises)
   const t = useTranslations()
 
-  useChannelDuplicatedError("threads")
+  useChannelConnectError("threads")
   useChannelReconnectResult()
 
   if (!publicConfig?.clientId) {

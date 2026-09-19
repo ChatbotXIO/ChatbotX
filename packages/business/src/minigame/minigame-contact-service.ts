@@ -11,7 +11,6 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import type {
-  ChannelType,
   MinigameOutcomeMessage,
   MinigamePlayerSettings,
   MinigamePrizeSettings,
@@ -857,7 +856,6 @@ class MinigameContactService extends BaseService {
       const conversation = await conversationService.findDMByContact({
         workspaceId,
         contactId,
-        channel: contactInbox.channel as ChannelType,
       })
       if (!conversation) {
         return

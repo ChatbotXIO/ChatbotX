@@ -1,4 +1,4 @@
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -40,7 +40,7 @@ export const igCommentsPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(
       async ({ context, input }) =>
-        await fbCommentAutomationService.listIgComments({
+        await commentAutomationService.listIgComments({
           ...input,
           workspaceId: context.workspace.id,
           includeAllFolders: true,
@@ -61,7 +61,7 @@ export const igCommentsPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(
       async ({ context, input }) =>
-        await fbCommentAutomationService.findInstagramOrFail({
+        await commentAutomationService.findInstagramOrFail({
           workspaceId: context.workspace.id,
           id: input.id,
         }),
@@ -82,7 +82,7 @@ export const igCommentsPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const { type, ...data } = input
-      return await fbCommentAutomationService.createInstagram({
+      return await commentAutomationService.createInstagram({
         workspaceId: context.workspace.id,
         type,
         data,
@@ -103,7 +103,7 @@ export const igCommentsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, type: _type, ...data } = input
-      return await fbCommentAutomationService.updateInstagram(
+      return await commentAutomationService.updateInstagram(
         { workspaceId: context.workspace.id, id },
         data,
       )
@@ -122,7 +122,7 @@ export const igCommentsPublicRouter = {
     .input(deleteIgCommentPublicRequest)
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
-      await fbCommentAutomationService.deleteInstagram({
+      await commentAutomationService.deleteInstagram({
         workspaceId: context.workspace.id,
         id: input.id,
       })

@@ -1,5 +1,5 @@
 import { buildContext } from "@chatbotx.io/business"
-import type { FBCommentHideComments } from "@chatbotx.io/database/partials"
+import type { CommentHideComments } from "@chatbotx.io/database/partials"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { allIntegrations } from "../../../services/integrations"
@@ -11,7 +11,7 @@ export type CommentAttachmentInfo = {
 }
 
 export function needsAttachmentInfo(
-  hideComments: FBCommentHideComments,
+  hideComments: CommentHideComments,
 ): boolean {
   return hideComments.hasImage || hideComments.hasVideo
 }

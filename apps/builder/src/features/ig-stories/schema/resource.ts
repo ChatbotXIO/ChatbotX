@@ -1,6 +1,6 @@
 import {
-  fbCommentIncludeKeywordsSchema,
-  fbCommentReplySchema,
+  commentIncludeKeywordsSchema,
+  commentReplySchema,
   igStoryTargetSchema,
 } from "@chatbotx.io/database/partials"
 import {
@@ -14,7 +14,7 @@ export const igStoryResource = createSelectSchema(igStoryAutomationModel, {
   workspaceId: z.string(),
   folderId: z.string().nullish(),
   story: igStoryTargetSchema,
-  reply: fbCommentReplySchema,
-  includeKeywords: fbCommentIncludeKeywordsSchema,
+  reply: commentReplySchema,
+  includeKeywords: commentIncludeKeywordsSchema,
 })
 export type IgStoryResource = z.infer<typeof igStoryResource>

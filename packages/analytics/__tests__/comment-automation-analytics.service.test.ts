@@ -7,7 +7,7 @@ const findManyContacts = vi.fn()
 
 const db = {
   query: {
-    fbCommentAutomationModel: { findFirst: findFirstAutomation },
+    commentAutomationModel: { findFirst: findFirstAutomation },
     contactModel: { findMany: findManyContacts },
   },
 }
@@ -380,8 +380,8 @@ describe("listErrors", () => {
 
 // ── lifetime counters ────────────────────────────────────────────────────────
 //
-// The FAILED `FBCommentAutomationEvent` rows are purged after 30 days, so the
-// numbers in the list table come from counters on `FBCommentAutomation`
+// The FAILED `CommentAutomationEvent` rows are purged after 30 days, so the
+// numbers in the list table come from counters on `CommentAutomation`
 // instead — an aggregate would walk `failedCount` down every night. Every
 // increment is driven by the rows a conditional write actually returned — that
 // is the only thing standing between these counters and a redelivered webhook.

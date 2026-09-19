@@ -1270,6 +1270,7 @@
       "clientId": "客戶端ID",
       "clientSecret": "客戶端密碼",
       "displayName": "顯示名稱",
+      "needsReauthorizationForComments": "此連線是在留言自動化之前授權的。請重新連線以開始接收留言事件。",
       "connectInstructions": {
         "step1": "建立TikTok應用程式位於<link>developers.tiktok.com</link>。",
         "step2": "授權您的帳號，並複製 <strong>Access Token</strong>、<strong>Open ID</strong> 與 <strong>Client Secret</strong>。",
@@ -2389,6 +2390,10 @@
       "tiktok": "此TikTok帳戶已連接到另一個工作區。",
       "whatsapp": "此 WhatsApp 號碼已連接到另一個工作區。",
       "zalo": "此Zalo OA 已連接到另一個工作區。"
+    },
+    "missingScopes": {
+      "generic": "連線已取消：部分權限未授予。請重新連線並接受所有要求的權限。",
+      "tiktok": "TikTok 連線已取消：部分權限未授予。請重新連線並接受所有要求的權限。"
     },
     "reconnect": {
       "success": "頻道重新連線成功。",
@@ -4576,7 +4581,8 @@
     "afterText": "之後"
   },
   "tools": {
-    "title": "工具"
+    "title": "工具",
+    "beta": "Beta"
   },
   "aiProviders": {
     "openai": "OpenAI",
@@ -4944,6 +4950,102 @@
       "delayMustBePositive": "延遲時間必須大於零。",
       "delayMustBeZero": "所選的時機選項不支援延遲時間，請設為零。",
       "atLeastOneFieldRequired": "請至少填寫一個欄位。"
+    }
+  },
+  "tiktokCommentAutomation": {
+    "title": "TikTok Comment Automation",
+    "description": "Automate replies, likes and hiding on comments under your TikTok videos.",
+    "create": "Create Automation",
+    "replies": "Replies",
+    "empty": "No TikTok comment automations yet.",
+    "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
+    "trackCommentsOn": "Track comments on",
+    "publicReply": "Public reply to comment",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments. TikTok has no comment-anchored direct message, so private replies are not available.",
+    "replyMessage": "Reply message",
+    "replyFlow": "Reply flow",
+    "replyAIAgent": "Reply AI Agent",
+    "includeKeywordsType": "Reply to",
+    "includeKeywords": "Keywords to match",
+    "excludeKeywords": "Exclude comments with these keywords",
+    "keywordsPlaceholder": "Type and press Enter...",
+    "replyAfter": "Reply after",
+    "replyAfterValue": "Value",
+    "specificPostIds": "Specific video IDs",
+    "postIdPlaceholder": "Enter video IDs and press Enter...",
+    "hideCommentsDescription": "Hidden comments stay visible to their author only.",
+    "card": {
+      "targeting": "Targeting & Reply",
+      "filters": "Filters & Options",
+      "hideComments": "Hide Comments",
+      "replyTiming": "Reply Timing"
+    },
+    "postType": {
+      "all": "All videos",
+      "specificPosts": "Specific videos"
+    },
+    "replyType": {
+      "text": "Text message",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "No reply"
+    },
+    "keywordsType": {
+      "all": "All comments",
+      "equal": "Exact match",
+      "contain": "Contains"
+    },
+    "replyAfterType": {
+      "immediately": "Immediately",
+      "seconds": "After X seconds",
+      "minutes": "After X minutes",
+      "hours": "After X hours",
+      "randomWithin3Minutes": "Random within 3 minutes",
+      "randomWithin5Minutes": "Random within 5 minutes",
+      "randomWithin10Minutes": "Random within 10 minutes",
+      "randomWithin20Minutes": "Random within 20 minutes",
+      "randomWithin30Minutes": "Random within 30 minutes",
+      "randomWithin60Minutes": "Random within 60 minutes"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Only reply to new contacts",
+      "replyOncePerUserPerPost": "Reply only once to each user per video",
+      "replyToUsersWhoCommentedOnOtherPosts": "Reply to users who commented on other videos",
+      "ignoreCommentReplies": "Don't reply to replies to comments",
+      "likeUserComment": "Like the user's comment"
+    },
+    "hide": {
+      "all": "Hide every comment",
+      "hasPhoneNumber": "Hide comments containing a phone number",
+      "hasLink": "Hide comments containing a link",
+      "hasKeywords": "Hide comments containing keywords",
+      "keywords": "Keywords to hide",
+      "showCommentsAfter": "Show hidden comments again after"
+    },
+    "showCommentsAfter": {
+      "none": "Never",
+      "6h": "6 hours",
+      "12h": "12 hours",
+      "1d": "1 day",
+      "2d": "2 days",
+      "3d": "3 days",
+      "4d": "4 days",
+      "5d": "5 days",
+      "6d": "6 days",
+      "7d": "7 days",
+      "8d": "8 days",
+      "9d": "9 days",
+      "10d": "10 days"
+    },
+    "validation": {
+      "postIdsMustBeEmptyForAll": "Video IDs must be empty when targeting all videos.",
+      "postIdsRequired": "Select at least one video ID when targeting specific videos.",
+      "keywordsMustBeEmptyForAll": "Keywords must be empty when matching all comments.",
+      "keywordsRequired": "Enter at least one keyword for the selected match type.",
+      "delayMustBePositive": "Delay value must be greater than zero.",
+      "delayMustBeZero": "Delay value must be zero for the selected timing option.",
+      "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
+      "atLeastOneFieldRequired": "At least one field is required."
     }
   },
   "instagramStoryAutomation": {

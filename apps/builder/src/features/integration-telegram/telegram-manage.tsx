@@ -13,7 +13,7 @@ import { PlusCircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
-import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
+import { useChannelConnectError } from "@/hooks/use-channel-connect-error"
 import { TelegramConnect } from "./components/telegram-connect"
 import { TelegramDisconnect } from "./components/telegram-disconnect"
 import type { listIntegrationTelegrams } from "./queries"
@@ -32,7 +32,7 @@ export function TelegramManage({
   const [{ data: integrationTelegrams }] = use(promises)
   const t = useTranslations()
 
-  useChannelDuplicatedError("telegram")
+  useChannelConnectError("telegram")
 
   return (
     <div className="flex flex-col gap-2">

@@ -46,6 +46,7 @@ import {
   exchangeCodeForToken as exchangeThreadsCode,
   getThreadsProfile,
 } from "@chatbotx.io/integration-threads"
+import { TiktokMissingScopesError } from "@chatbotx.io/integration-tiktok"
 import {
   AuthType,
   type AuthValue,
@@ -861,13 +862,39 @@ export const handleCallback = async (
         "/integrations/tiktok/callback",
       )
 
-      await connectTiktokHandler({
-        tiktokSettings: tiktokCredential.config,
-        workspaceId: workspace.id,
-        userId,
-        req,
-        redirectUrl: tiktokCallbackUrl,
-      })
+      try {
+        await connectTiktokHandler({
+          tiktokSettings: tiktokCredential.config,
+          workspaceId: workspace.id,
+          userId,
+          req,
+          redirectUrl: tiktokCallbackUrl,
+        })
+      } catch (error) {
+        // TikTok's consent screen lets a permission be unticked, and a grant
+        // without the Business Messaging scopes yields a channel that cannot
+        // send. `callbackHandler` refuses it before anything is written;
+        // relaying through `safeReferer` keeps the toast on the tenant's own
+        // domain, which a fixed settings path would lose. `redirect()` throws
+        // NEXT_REDIRECT, so it must stay out of the `try` above.
+        if (error instanceof TiktokMissingScopesError) {
+          // The toast tells the user to grant everything; only this line says
+          // WHICH permission they withheld, which is the whole of a support
+          // answer for "I accepted and it still refuses me".
+          logger.warn(
+            {
+              err: error,
+              workspaceId: workspace.id,
+              missingScopes: error.missingScopes,
+            },
+            "Refused TikTok connect: required scopes were not granted",
+          )
+          return redirect(
+            buildChannelErrorRedirectUrl(safeReferer, "missingScopes"),
+          )
+        }
+        throw error
+      }
 
       return redirect(safeReferer)
     }

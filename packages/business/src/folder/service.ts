@@ -15,9 +15,9 @@ import {
 } from "@chatbotx.io/database/partials"
 import {
   automatedResponseModel,
+  commentAutomationModel,
   customFieldModel,
   emailTopicModel,
-  fbCommentAutomationModel,
   flowModel,
   folderModel,
   igStoryAutomationModel,
@@ -264,7 +264,7 @@ class FolderService extends BaseService {
         return emailTopicModel
       case folderTypes.enum.fbComment:
       case folderTypes.enum.igComment:
-        return fbCommentAutomationModel
+        return commentAutomationModel
       case folderTypes.enum.igStory:
         return igStoryAutomationModel
       default:

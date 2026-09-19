@@ -1,4 +1,4 @@
-import type { FBCommentHideComments } from "@chatbotx.io/database/partials"
+import type { CommentHideComments } from "@chatbotx.io/database/partials"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -9,16 +9,26 @@ import type { CommentAutomationChannelType } from "./channel-type"
 /**
  * Whether the channel can hide (and later unhide) a comment.
  *
- * Hiding maps to Meta's `POST /{comment-id}?is_hidden=true`, available for
- * Facebook and Instagram comments. The Threads API exposes no moderation
- * endpoint, so a Threads automation configured to hide comments logs an
- * unsupported-capability line rather than enqueuing a state change the channel
- * would reject.
+ * Hiding maps to Meta's `POST /{comment-id}?is_hidden=true` for Facebook and
+ * Instagram comments, and to `business/comment/hide/` on TikTok. The Threads
+ * API exposes no moderation endpoint, so a Threads automation configured to
+ * hide comments logs an unsupported-capability line rather than enqueuing a
+ * state change the channel would reject.
+ *
+ * An allowlist rather than a chain of `!==`: a channel added without a decision
+ * here should default to "cannot", not inherit the capability by omission.
  */
+const CHANNELS_WITH_HIDE_COMMENTS = new Set<CommentAutomationChannelType>([
+  "messenger",
+  "instagram",
+  "instagramFacebook",
+  "tiktok",
+])
+
 export function supportsHideComments(
   channelType: CommentAutomationChannelType,
 ): boolean {
-  return channelType !== "threads"
+  return CHANNELS_WITH_HIDE_COMMENTS.has(channelType)
 }
 
 /**
@@ -28,7 +38,7 @@ export function supportsHideComments(
  * when the user actually configured one.
  */
 export function hasHideCommentAction(
-  hideComments: FBCommentHideComments,
+  hideComments: CommentHideComments,
 ): boolean {
   return (
     hideComments.all ||
@@ -76,7 +86,7 @@ const UNHIDE_DELAY_MS: Record<string, number> = {
 }
 
 export async function applyHideComments(
-  hideComments: FBCommentHideComments,
+  hideComments: CommentHideComments,
   commentId: string,
   message: string | undefined,
   ctx: {

@@ -1,6 +1,6 @@
 import {
+  commentAutomationModel,
   createSelectSchema,
-  fbCommentAutomationModel,
 } from "@chatbotx.io/database/schema"
 import z from "zod"
 
@@ -24,7 +24,7 @@ const threadsReplySchema = z.discriminatedUnion("type", [
 ])
 
 export const threadsCommentResource = createSelectSchema(
-  fbCommentAutomationModel,
+  commentAutomationModel,
   {
     id: z.string(),
     workspaceId: z.string(),

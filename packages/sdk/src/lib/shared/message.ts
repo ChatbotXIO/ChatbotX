@@ -25,6 +25,16 @@ export type IncomingContact = {
    * Display-only, never used as a matching key.
    */
   sourceUsername?: string
+  /**
+   * The channel's own conversation identifier, for channels that require one to
+   * address an outbound DM (TikTok's `conversation_id`). Stored on
+   * `Conversation.additionalAttributes.channelConversationId` — deliberately NOT
+   * `sourceConversationId`, which keys the conversation row and is reserved for
+   * comment threads (the post id). Keeping the two apart is what lets a channel
+   * have both a DM and comment threads for the same contact; see
+   * `packages/database/src/partials/channel.ts`.
+   */
+  channelConversationId?: string
 }
 
 /** The `{ sourceId, sourceUserId }` slice shared by contact-inbox rows and SDK contacts. */
@@ -125,6 +135,7 @@ export type IncomingMessage = {
     | MessageTemplateEntity
     | MessageWhatsappFlowResponseEntity
     | MessageStoryReplyEntity
+    | MessageSharedPostEntity
     | MessageWhatsappCallEntity
     | MessageWhatsappCallPermissionReplyEntity
     | { [x: string]: unknown }
@@ -150,6 +161,25 @@ export type MessageStoryReplyEntity = {
   type: "story_reply"
   story: {
     id: string
+    url?: string
+  }
+}
+
+/**
+ * Carried on a message whose payload is a shared post rather than text or an
+ * attachment (TikTok's `type: "share_post"` DM). The message's `text` holds the
+ * link so it is readable and clickable in the inbox today; this keeps the ids
+ * intact so a richer preview can be rendered later without re-parsing the text.
+ *
+ * `url` is the channel's own link for the share, verbatim — TikTok sends a
+ * player URL with its own tracking params, and rewriting it into a
+ * `tiktok.com/@user/video/<id>` guess would mean inventing an author handle the
+ * webhook never carries.
+ */
+export type MessageSharedPostEntity = {
+  type: "shared_post"
+  sharedPost: {
+    postId: string
     url?: string
   }
 }

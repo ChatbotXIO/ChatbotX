@@ -57,6 +57,7 @@ import { uploader } from "@chatbotx.io/filesystem"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
+import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
@@ -102,6 +103,7 @@ import {
   refreshExistingContactProfile,
 } from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
+import { resolveTiktokCommenterIdentity } from "./tiktok-comment-identity"
 
 type ContactInboxTracking = ContactInboxTrackingData
 
@@ -965,6 +967,25 @@ async function downloadCommenterAvatar(props: {
   return originPath
 }
 
+/**
+ * Channels whose public comment reply is not idempotent, so the automation job
+ * must never be retried.
+ *
+ * Threads' `sendCommentReply` creates a fresh media container per call, and
+ * TikTok's `business/comment/reply/create/` takes no client-side key — on both,
+ * a retry after a partial failure posts a SECOND visible reply with no id to
+ * resume from. That is also why `waitForReplyContainerReady` must not treat an
+ * unrecognised container status as fatal: nothing retries behind it.
+ *
+ * An allowlist rather than a chain of `===`: a channel added without a decision
+ * here keeps the default retry policy, which is only safe for a reply the
+ * channel deduplicates itself.
+ */
+const SINGLE_ATTEMPT_COMMENT_AUTOMATION_CHANNELS = new Set<string>([
+  "threads",
+  "tiktok",
+])
+
 // Handles a Facebook fanpage comment (enqueued as `incomingComment` by the
 // messenger webhook). Each post maps to one conversation keyed by
 // `Conversation.sourceId = postId`; the comment author's PSID identifies the
@@ -991,17 +1012,55 @@ export const receiveComment = async (
       integrationIdentifier,
     )
 
+  // TikTok's webhook carries no commenter identity at all, so it is fetched
+  // before the contact is built. This also settles whether the business wrote
+  // the comment: the `fromId === integrationIdentifier` check above cannot,
+  // because TikTok reports the commenter as a `unique_identifier` while the
+  // integration is keyed by `open_id`.
+  const tiktokIdentity =
+    integrationType === "tiktok"
+      ? await resolveTiktokCommenterIdentity({
+          auth: integrationRow.auth as TiktokAuthValue,
+          commentId: commentData.commentId,
+          videoId: commentData.postId,
+        })
+      : undefined
+
+  if (tiktokIdentity?.isOwner) {
+    logger.info(
+      { commentId: commentData.commentId, integrationIdentifier },
+      "receiveComment: skipping self-authored comment",
+    )
+    return
+  }
+
+  // `owner` is the ONLY self-authorship signal TikTok has — the
+  // `fromId === integrationIdentifier` guard above can never fire on this
+  // channel, because the webhook reports a `unique_identifier` while the
+  // integration is keyed by `open_id`. So an unresolved identity means "might
+  // be our own comment", not "an ordinary commenter whose name we missed".
+  //
+  // The comment is still ingested (a missing display name beats a missing
+  // comment), but the automation is withheld further down. Failing open here
+  // would let the account reply to itself — and on TikTok that reply is not
+  // idempotent, so the loop it opens cannot be undone by a retry policy.
+  const tiktokAuthorshipUnknown =
+    integrationType === "tiktok" && !tiktokIdentity
+
   // `from.id` is the commenter's ID (PSID for Messenger, Instagram User ID for Instagram);
   // `fromName` is the fallback firstName.
   const incomingContact: IncomingContact = {
     sourceId: commentData.fromId,
     sourceConversationId: commentData.postId,
-    firstName: commentData.fromName,
+    firstName: tiktokIdentity?.displayName ?? commentData.fromName,
     // Instagram only: the handle is the sole way to match an `@mention` in a
     // comment back to a known contact, since its webhook carries no tagged-user
     // ids. Facebook sends no username here and matches on `sourceId` instead.
-    sourceUsername: commentData.fromUsername,
+    sourceUsername: tiktokIdentity?.username ?? commentData.fromUsername,
   }
+
+  const commenterAvatarUrl =
+    tiktokIdentity?.avatarUrl ?? commentData.fromAvatarUrl
 
   const detected = await detectContactAndConversation({
     incomingContact,
@@ -1019,10 +1078,10 @@ export const receiveComment = async (
   // ignores `incomingContact.avatar` entirely — re-hosting on every comment
   // would leave one orphaned public object per comment with nothing pointing
   // at it.
-  if (commentData.fromAvatarUrl && !contact.avatar) {
+  if (commenterAvatarUrl && !contact.avatar) {
     try {
       const avatar = await downloadCommenterAvatar({
-        url: commentData.fromAvatarUrl,
+        url: commenterAvatarUrl,
         workspaceId: inbox.workspaceId,
         accessToken:
           integrationType === "threads"
@@ -1115,6 +1174,14 @@ export const receiveComment = async (
     )
   }
 
+  if (tiktokAuthorshipUnknown) {
+    logger.warn(
+      { commentId: commentData.commentId, integrationIdentifier },
+      "receiveComment: TikTok commenter identity unresolved, withholding automation",
+    )
+    return
+  }
+
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })
   if (!workspaceService.isActiveNow(workspace)) {
     return
@@ -1147,12 +1214,7 @@ export const receiveComment = async (
         createdTime: commentData.createdTime,
       },
     },
-    // Threads gets a single attempt on purpose: `sendCommentReply` creates a
-    // fresh media container per call, so a retry after a partial failure posts
-    // a SECOND visible reply — there is no container id to resume from. That
-    // is also why `waitForReplyContainerReady` must not treat an unrecognised
-    // container status as fatal: nothing retries behind it.
-    integrationType === "threads"
+    SINGLE_ATTEMPT_COMMENT_AUTOMATION_CHANNELS.has(integrationType)
       ? { jobId: processCommentAutomationJobId, attempts: 1 }
       : { jobId: processCommentAutomationJobId },
   )
@@ -1453,6 +1515,7 @@ const buildExistingContactMatch = async (props: {
     workspaceId: inbox.workspaceId,
     contactId: syncedContactInbox.contactId,
     sourceId: conversationSourceId,
+    channelConversationId: incomingContact.channelConversationId,
   })
 
   return {
@@ -1720,6 +1783,7 @@ const createNewContactAndContactInbox = async (props: {
         workspaceId: inbox.workspaceId,
         contactId: newContact.id,
         sourceId: conversationSourceId,
+        channelConversationId: incomingContact.channelConversationId,
         tx,
       })
 

@@ -1,28 +1,28 @@
 import {
-  fbCommentHideCommentsSchema,
-  fbCommentIncludeKeywordsSchema,
-  fbCommentOptionsSchema,
-  fbCommentPostSchema,
-  fbCommentReplyAfterSchema,
-  fbCommentReplySchema,
+  commentHideCommentsSchema,
+  commentIncludeKeywordsSchema,
+  commentOptionsSchema,
+  commentPostSchema,
+  commentReplyAfterSchema,
+  commentReplySchema,
 } from "@chatbotx.io/database/partials"
 import {
+  commentAutomationModel,
   createSelectSchema,
-  fbCommentAutomationModel,
 } from "@chatbotx.io/database/schema"
 import z from "zod"
 
-export const igCommentResource = createSelectSchema(fbCommentAutomationModel, {
+export const igCommentResource = createSelectSchema(commentAutomationModel, {
   id: z.string(),
   workspaceId: z.string(),
   folderId: z.string().nullish(),
-  post: fbCommentPostSchema,
-  privateReply: fbCommentReplySchema,
-  publicReply: fbCommentReplySchema,
-  includeKeywords: fbCommentIncludeKeywordsSchema,
+  post: commentPostSchema,
+  privateReply: commentReplySchema,
+  publicReply: commentReplySchema,
+  includeKeywords: commentIncludeKeywordsSchema,
   excludeKeywords: z.array(z.string()),
-  options: fbCommentOptionsSchema,
-  hideComments: fbCommentHideCommentsSchema,
-  replyAfter: fbCommentReplyAfterSchema,
+  options: commentOptionsSchema,
+  hideComments: commentHideCommentsSchema,
+  replyAfter: commentReplyAfterSchema,
 })
 export type IgCommentResource = z.infer<typeof igCommentResource>

@@ -28,6 +28,10 @@ import { botFieldRelations } from "./bot-field"
 import { broadcastRelations } from "./broadcast"
 import { broadcastTargetRelations } from "./broadcast-target"
 import { coexistSyncRunRelations } from "./coexist-sync-run"
+import { commentAutomationRelations } from "./comment-automation"
+import { commentAutomationEventRelations } from "./comment-automation-event"
+import { commentAutomationMissRelations } from "./comment-automation-miss"
+import { commentAutomationReplyRelations } from "./comment-automation-reply"
 import { contactRelations } from "./contact"
 import { contactCustomFieldRelations } from "./contact-custom-field"
 import { contactInboxRelations } from "./contact-inbox"
@@ -56,10 +60,6 @@ import { facebookLeadAdsAutomationRelations } from "./facebook-lead-ads-automati
 import { facebookLeadAdsLeadRelations } from "./facebook-lead-ads-lead"
 import { facebookMarketingMessageRelations } from "./facebook-marketing-message"
 import { facebookMarketingMessagesAuthRelations } from "./facebook-marketing-messages-auth"
-import { fbCommentAutomationRelations } from "./fb-comment-automation"
-import { fbCommentAutomationEventRelations } from "./fb-comment-automation-event"
-import { fbCommentAutomationMissRelations } from "./fb-comment-automation-miss"
-import { fbCommentAutomationReplyRelations } from "./fb-comment-automation-reply"
 import { fileRelations } from "./file"
 import { flowRelations } from "./flow"
 import { flowAnalyticsSessionRelations } from "./flow-analytics-session"
@@ -212,10 +212,10 @@ export const relations = {
   ...facebookLeadAdsLeadRelations,
   ...facebookMarketingMessageRelations,
   ...facebookMarketingMessagesAuthRelations,
-  ...fbCommentAutomationRelations,
-  ...fbCommentAutomationEventRelations,
-  ...fbCommentAutomationMissRelations,
-  ...fbCommentAutomationReplyRelations,
+  ...commentAutomationRelations,
+  ...commentAutomationEventRelations,
+  ...commentAutomationMissRelations,
+  ...commentAutomationReplyRelations,
   ...auditLogRelations,
   ...sessionRelations,
   ...spreadsheetRelations,

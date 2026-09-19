@@ -1,5 +1,6 @@
 import { contactInboxService, contactService } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
+import { resolveChannelConversationId } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { whatsappFlowModel } from "@chatbotx.io/database/schema"
 import type {
@@ -96,7 +97,7 @@ export async function sendMessageToChannel(
       data: {
         contact: {
           ...contactInbox,
-          sourceConversationId: conversation.sourceId,
+          sourceConversationId: resolveChannelConversationId(conversation),
         },
         message: handlerMessage,
         quickReplies: isComment ? undefined : quickReplies,
@@ -441,7 +442,16 @@ export async function changeMessageStateOnChannel(
     calls.push(
       integration.runChannelHandler("comment", "hideComment", {
         ctx,
-        data: { commentId: found.sourceId, hidden },
+        data: {
+          commentId: found.sourceId,
+          hidden,
+          // TikTok's hide endpoint is addressed by (video_id, comment_id);
+          // Meta's by comment id alone and ignores this.
+          postId:
+            typeof found.contentAttributes?.postId === "string"
+              ? found.contentAttributes.postId
+              : undefined,
+        },
       }),
     )
   }
@@ -610,7 +620,7 @@ export async function sendFlowStepToChannel({
       data: {
         contact: {
           ...contactInbox,
-          sourceConversationId: conversation.sourceId,
+          sourceConversationId: resolveChannelConversationId(conversation),
         },
         flowId,
         flowVersionId,

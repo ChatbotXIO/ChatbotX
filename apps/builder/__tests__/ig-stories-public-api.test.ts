@@ -70,8 +70,8 @@ vi.mock("@/features/ig-stories/lib/instagram-stories", () => ({
 vi.mock("@chatbotx.io/database/partials", async () => {
   const { z } = await import("zod")
   return {
-    fbCommentIncludeKeywordsSchema: z.boolean(),
-    fbCommentReplySchema: z.object({}),
+    commentIncludeKeywordsSchema: z.boolean(),
+    commentReplySchema: z.object({}),
     igStoryAutomationTypes: z.enum(["instagram", "facebook"]),
     igStoryTargetSchema: z.object({}),
   }

@@ -1,5 +1,3 @@
-import type { ChannelType } from "@chatbotx.io/utils/channel"
-
 /**
  * `channelTypes` is defined in `@chatbotx.io/utils/channel` so packages that
  * cannot depend on the database layer (notably `@chatbotx.io/flow-config`, which
@@ -21,21 +19,27 @@ export {
   MANAGEABLE_CHANNELS,
 } from "@chatbotx.io/utils/channel"
 
-// A contact's DM conversation is normally stored with a null `sourceId`
-// (`sourceId` is reserved for comment threads, keyed by the post id). TikTok is
-// the outlier: it has no separate DM concept and stores the channel's
-// `conversation_id` directly in `Conversation.sourceId`, so its DM rows are
-// non-null. Listing the outliers as data keeps the rule in one place and avoids
-// a `Record<ChannelType, ...>` cascade. This set becomes empty once TikTok's
-// write side is normalized to store the DM with a null `sourceId`.
-const CHANNELS_WITH_SOURCE_ID_DM_CONVERSATION = new Set<ChannelType>(["tiktok"])
-
 /**
- * Whether the channel's DM conversation is identified by a non-null `sourceId`
- * (TikTok) instead of the usual `sourceId IS NULL` DM convention. Unknown
- * channels fall back to the null-sourceId convention.
+ * A contact's DM conversation is stored with a null `sourceId` on every
+ * channel; `sourceId` is reserved for comment threads, keyed by the post id.
+ *
+ * TikTok used to be the one exception — it stored the channel's
+ * `conversation_id` directly in `Conversation.sourceId` — which left no room for
+ * TikTok comment threads and made `findDMByContact` ambiguous once a contact had
+ * both. The id now lives on `additionalAttributes.channelConversationId`, read
+ * back through {@link resolveChannelConversationId}, so the convention is
+ * uniform and no channel needs a special case.
  */
-export const dmConversationUsesSourceId = (
-  channel: ChannelType | null | undefined,
-): boolean =>
-  channel != null && CHANNELS_WITH_SOURCE_ID_DM_CONVERSATION.has(channel)
+export const resolveChannelConversationId = (conversation: {
+  sourceId: string | null
+  additionalAttributes: { [x: string]: unknown } | null
+}): string | null => {
+  const stored = conversation.additionalAttributes?.channelConversationId
+  if (typeof stored === "string" && stored) {
+    return stored
+  }
+  // Pre-normalization rows still carry the id in `sourceId`. Kept so an
+  // outbound DM keeps working between the code deploy and the backfill; drop
+  // this fallback once the backfill has run everywhere.
+  return conversation.sourceId
+}

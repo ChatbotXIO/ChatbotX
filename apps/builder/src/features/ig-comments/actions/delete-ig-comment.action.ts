@@ -1,6 +1,6 @@
 "use server"
 
-import { fbCommentAutomationService } from "@chatbotx.io/business"
+import { commentAutomationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -11,5 +11,5 @@ export const deleteIgCommentAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId, id],
     } = props
 
-    await fbCommentAutomationService.deleteInstagram({ workspaceId, id })
+    await commentAutomationService.deleteInstagram({ workspaceId, id })
   })
