@@ -39,7 +39,7 @@ const {
 }))
 
 vi.mock("@/lib/log", () => ({
-  logger: { warn: vi.fn(), error: vi.fn() },
+  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }))
 
 vi.mock("@/lib/safe-action", () => {

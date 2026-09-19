@@ -5,7 +5,10 @@ import {
   conversationService,
   messageService,
 } from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
+import {
+  ChatbotXException,
+  toPublicErrorMessage,
+} from "@chatbotx.io/business/errors"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
@@ -113,17 +116,25 @@ export const requestCallPermissionAction = callingActionClient
         contactInboxId: contactInbox.id,
         target: permissionTarget,
       })
-      // Fail closed on an unreadable lookup, mirroring the dial gate in
+      // Whatever Meta said leads - it names the real reason (eligibility, a
+      // disabled number, a rejected token), and no sentence of ours says more.
+      // The generic line is only for an error carrying no usable text at all,
+      // such as a network failure.
+      //
+      // Still fails closed either way, mirroring the dial gate in
       // `initiate-outbound-voip-call.action.ts`: a GET that never ran is not
       // evidence of remaining budget, and the budget it would spend is two
       // requests per week with no way to get them back. Only successes are
-      // cached, so retrying a minute later re-reads Meta.
-      if (!permissions) {
+      // cached, so retrying re-reads Meta.
+      if (!permissions.ok) {
         throw new ChatbotXException(
-          t("whatsapp.calls.outbound.permissionCheckFailed"),
+          toPublicErrorMessage(
+            permissions.error,
+            t("whatsapp.calls.outbound.permissionCheckFailed"),
+          ),
         )
       }
-      if (!canSendCallPermissionRequest(permissions)) {
+      if (!canSendCallPermissionRequest(permissions.permissions)) {
         throw new ChatbotXException(
           t("whatsapp.calls.errors.permissionRequestLimitReached"),
         )

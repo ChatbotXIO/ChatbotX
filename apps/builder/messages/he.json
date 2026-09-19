@@ -2066,8 +2066,7 @@
         "fixButton": "תיקון",
         "fixSuccess": "האפליקציה רשומה כעת ל-webhooks של שיחות WhatsApp.",
         "manualIntegrationNotice": "מספר זה חובר באופן ידני ואין לו כאן פרטי אפליקציה. יש להירשם לשדה ה-webhook 'calls' עבור האפליקציה שלך בלוח הבקרה של אפליקציות Meta.",
-        "coexistenceWarning": "מספר זה משתמש בשיתוף (coexistence) עם אפליקציית WhatsApp Business, ש-Meta אינה תומכת בו לשיחות. יש להעביר אותו לשימוש ב-Cloud API בלבד.",
-        "messagingLimitTooLow": "רמת מגבלת ההודעות של מספר זה נמוכה מהמינימום הנדרש על ידי Meta לשיחות."
+        "coexistenceWarning": "מספר זה משתמש בשיתוף (coexistence) עם אפליקציית WhatsApp Business, ש-Meta אינה תומכת בו לשיחות. יש להעביר אותו לשימוש ב-Cloud API בלבד."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {
@@ -2077,6 +2076,7 @@
       "outbound": {
         "needsPermission": "You need permission to call this contact. Request permission first.",
         "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "‏WhatsApp לא הפעילה שיחות ביוזמת העסק עבור מספר זה. הדבר תלוי בזמינות במדינה ובזכאות החשבון אצל Meta, ולכן לא ניתן להפעיל זאת כאן.",
         "callAlreadyInProgress": "A call to this contact is already in progress.",
         "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
         "ineligibleNumber": "This number is not eligible for business-initiated calling.",

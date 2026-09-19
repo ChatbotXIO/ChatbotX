@@ -4,15 +4,19 @@ import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import type { WhatsappCallPermissionsResponse } from "@chatbotx.io/integration-whatsapp/api/calling"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { getCallPermissionsMock, withCacheMock, loggerWarnMock } = vi.hoisted(
-  () => ({
-    getCallPermissionsMock: vi.fn(),
-    withCacheMock: vi.fn(
-      async (_key: string, fn: () => Promise<unknown>) => await fn(),
-    ),
-    loggerWarnMock: vi.fn(),
-  }),
-)
+const {
+  getCallPermissionsMock,
+  withCacheMock,
+  loggerWarnMock,
+  loggerInfoMock,
+} = vi.hoisted(() => ({
+  getCallPermissionsMock: vi.fn(),
+  withCacheMock: vi.fn(
+    async (_key: string, fn: () => Promise<unknown>) => await fn(),
+  ),
+  loggerWarnMock: vi.fn(),
+  loggerInfoMock: vi.fn(),
+}))
 
 vi.mock("@chatbotx.io/integration-whatsapp/api/calling", async () => {
   // The real `canPerformCallAction` — this module's whole job is reading the
@@ -36,7 +40,9 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
-vi.mock("@/lib/log", () => ({ logger: { warn: loggerWarnMock } }))
+vi.mock("@/lib/log", () => ({
+  logger: { warn: loggerWarnMock, info: loggerInfoMock },
+}))
 
 const {
   canSendCallPermissionRequest,
@@ -77,11 +83,22 @@ describe("meta-call-permission", () => {
     ).not.toBe(metaCallPermissionCacheKey("integration-1", "contact-inbox-1"))
   })
 
-  test("a failed lookup resolves undefined instead of throwing into the caller's request", async () => {
+  test("a failed lookup resolves lookupFailed instead of throwing into the caller's request", async () => {
     getCallPermissionsMock.mockRejectedValue(new Error("meta down"))
 
-    await expect(read()).resolves.toBeUndefined()
+    await expect(read()).resolves.toMatchObject({ ok: false })
     expect(loggerWarnMock).toHaveBeenCalled()
+  })
+
+  test("a successful read carries the permissions through", async () => {
+    const permissions = {
+      messaging_product: "whatsapp",
+      permission: { status: "temporary" },
+      actions: [],
+    }
+    getCallPermissionsMock.mockResolvedValue(permissions)
+
+    await expect(read()).resolves.toEqual({ ok: true, permissions })
   })
 
   test.each([

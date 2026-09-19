@@ -64,7 +64,7 @@ const basePreflight: WhatsappCallingPreflight = {
   platformType: "CLOUD_API",
   isCloudApiPlatform: true,
   messagingLimitTier: "TIER_2K",
-  messagingLimitSufficient: true,
+  callingIneligibleReason: null,
 }
 
 describe("WhatsappCallsCard calling preflight", () => {
@@ -135,16 +135,12 @@ describe("WhatsappCallsCard calling preflight", () => {
     )
   })
 
-  test("shows the messaging-limit-too-low notice when the limit is below 2000 (Meta error 138015)", async () => {
+  test("reports Meta's tier verbatim without judging it — eligibility is Meta's to decide", async () => {
     await render({
-      preflight: {
-        ...basePreflight,
-        messagingLimitTier: "TIER_250",
-        messagingLimitSufficient: false,
-      },
+      preflight: { ...basePreflight, messagingLimitTier: "TIER_250" },
     })
 
-    expect(container.textContent).toContain(
+    expect(container.textContent).not.toContain(
       "whatsapp.calls.preflight.messagingLimitTooLow",
     )
   })

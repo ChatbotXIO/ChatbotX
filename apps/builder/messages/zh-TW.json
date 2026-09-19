@@ -4011,8 +4011,7 @@
         "fixButton": "修復",
         "fixSuccess": "此應用程式現已訂閱 WhatsApp 通話 webhook。",
         "manualIntegrationNotice": "此號碼是手動連接的，此處沒有應用程式憑證。請在 Meta 應用程式儀表板中為您的應用程式訂閱「calls」webhook 欄位。",
-        "coexistenceWarning": "此號碼使用與 WhatsApp Business 應用程式的共存模式，而 Meta 不支援此模式進行通話。請將其僅移至 Cloud API。",
-        "messagingLimitTooLow": "此號碼的訊息限制等級低於 Meta 進行通話所要求的最低標準。"
+        "coexistenceWarning": "此號碼使用與 WhatsApp Business 應用程式的共存模式，而 Meta 不支援此模式進行通話。請將其僅移至 Cloud API。"
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {
@@ -4022,6 +4021,7 @@
       "outbound": {
         "needsPermission": "You need permission to call this contact. Request permission first.",
         "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp 尚未為此號碼啟用商家發起的通話。這取決於所在國家/地區的可用性以及 Meta 的帳戶資格，因此無法在此處開啟。",
         "callAlreadyInProgress": "A call to this contact is already in progress.",
         "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
         "ineligibleNumber": "This number is not eligible for business-initiated calling.",

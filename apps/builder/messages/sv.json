@@ -5415,8 +5415,7 @@
         "fixButton": "Åtgärda",
         "fixSuccess": "Appen prenumererar nu på WhatsApp-samtalswebhooks.",
         "manualIntegrationNotice": "Detta nummer anslöts manuellt och har inga appuppgifter här. Prenumerera på webhookfältet 'calls' för din app i Meta App Dashboard.",
-        "coexistenceWarning": "Detta nummer använder samexistens med WhatsApp Business-appen, vilket Meta inte stöder för samtal. Flytta det till endast Cloud API.",
-        "messagingLimitTooLow": "Detta nummers meddelandegränsnivå ligger under det minimum Meta kräver för samtal."
+        "coexistenceWarning": "Detta nummer använder samexistens med WhatsApp Business-appen, vilket Meta inte stöder för samtal. Flytta det till endast Cloud API."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {
@@ -5426,6 +5425,7 @@
       "outbound": {
         "needsPermission": "You need permission to call this contact. Request permission first.",
         "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp har inte aktiverat företagsinitierade samtal för det här numret. Det beror på tillgängligheten i ditt land och kontots behörighet hos Meta och kan därför inte aktiveras här.",
         "callAlreadyInProgress": "A call to this contact is already in progress.",
         "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
         "ineligibleNumber": "This number is not eligible for business-initiated calling.",
