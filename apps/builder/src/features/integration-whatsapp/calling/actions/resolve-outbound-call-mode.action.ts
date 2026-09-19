@@ -59,30 +59,42 @@ async function getCachedCallingSettings(
 }
 
 /**
- * Meta's answer for a contact the local mirror knows nothing about. undefined
- * on any failure or unmapped status, so an unreachable Meta leaves the control
- * where an empty mirror already put it.
+ * Meta's answer for a contact the local mirror knows nothing about. An
+ * unreachable Meta or an unmapped status yields no status, leaving the control
+ * where an empty mirror already put it; only Meta's settled "this account
+ * cannot call" is reported separately, since that one has to block it.
  */
 async function resolveMetaPermissionStatus(props: {
   auth: WhatsappAuthValue
   workspaceId: string
   integrationId: string
   contactInbox: OutboundDialContactInbox
-}): Promise<CallPermissionStatus | undefined> {
+}): Promise<
+  | { businessCallingUnavailable: true }
+  | {
+      businessCallingUnavailable: false
+      status: CallPermissionStatus | undefined
+    }
+> {
   const { permissionTarget } = resolveDialIdentity(props.contactInbox)
-  const permissions = await readMetaCallPermissions({
+  const result = await readMetaCallPermissions({
     auth: props.auth,
     integrationId: props.integrationId,
     contactInboxId: props.contactInbox.id,
     target: permissionTarget,
   })
-  if (!permissions) {
-    return
+  if (!result.ok) {
+    // A failed lookup must leave the control alone, but Meta's settled "this
+    // account cannot call" has to reach the caller - otherwise the thread
+    // renders a request-permission button that can never succeed.
+    return result.failure === "businessCallingUnavailable"
+      ? { businessCallingUnavailable: true }
+      : { businessCallingUnavailable: false, status: undefined }
   }
 
-  const status = toCallPermissionStatus(permissions)
+  const status = toCallPermissionStatus(result.permissions)
   if (!status) {
-    return
+    return { businessCallingUnavailable: false, status: undefined }
   }
 
   // Mirror a grant so this contact is answered locally from here on; otherwise
@@ -94,7 +106,7 @@ async function resolveMetaPermissionStatus(props: {
       workspaceId: props.workspaceId,
       contactInboxId: props.contactInbox.id,
       status,
-      expirationTimestamp: toPermissionExpirationTimestamp(permissions),
+      expirationTimestamp: toPermissionExpirationTimestamp(result.permissions),
     })
   } catch (error) {
     logger.warn(
@@ -103,7 +115,7 @@ async function resolveMetaPermissionStatus(props: {
     )
   }
 
-  return status
+  return { businessCallingUnavailable: false, status }
 }
 
 const resolveOutboundCallModeSchema = z.object({
@@ -142,6 +154,12 @@ export type NoneCallModeReason =
    * eligibility.
    */
   | "tokenInvalid"
+  /**
+   * Meta will not let this account place business-initiated calls at all
+   * (Meta error 138013 - country restriction or account eligibility). Distinct
+   * from `callingNotEnabled`, which a workspace admin can fix in Settings.
+   */
+  | "businessCallingUnavailable"
   /**
    * Access denial: canCallConversation returned false. Not distinguishable from
    * "no such conversation" by a probing caller, same non-disclosure as
@@ -281,14 +299,21 @@ export const resolveOutboundCallModeAction = callingActionClient
       // has landed. Only its absence falls through to Meta, because "no record"
       // and "no permission" differ — rendering request-permission for the
       // former would strand an agent who could otherwise dial.
-      const permissionStatus =
-        (await whatsappCallPermissionService.resolveStatus(contactInbox.id)) ??
-        (await resolveMetaPermissionStatus({
-          auth,
-          workspaceId,
-          integrationId: integration.id,
-          contactInbox,
-        }))
+      const mirroredStatus = await whatsappCallPermissionService.resolveStatus(
+        contactInbox.id,
+      )
+      const metaPermission = mirroredStatus
+        ? null
+        : await resolveMetaPermissionStatus({
+            auth,
+            workspaceId,
+            integrationId: integration.id,
+            contactInbox,
+          })
+      if (metaPermission?.businessCallingUnavailable) {
+        return { mode: "none", reason: "businessCallingUnavailable" }
+      }
+      const permissionStatus = mirroredStatus ?? metaPermission?.status
 
       const isManualIntegration = auth.metadata.isManual === true
       const unsignedWebhookWarning = isManualIntegration && !auth.clientSecret

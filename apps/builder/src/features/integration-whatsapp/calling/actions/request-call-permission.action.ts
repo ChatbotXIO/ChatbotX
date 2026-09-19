@@ -5,7 +5,10 @@ import {
   conversationService,
   messageService,
 } from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
+import {
+  ChatbotXException,
+  toPublicErrorMessage,
+} from "@chatbotx.io/business/errors"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
@@ -113,17 +116,28 @@ export const requestCallPermissionAction = callingActionClient
         contactInboxId: contactInbox.id,
         target: permissionTarget,
       })
-      // Fail closed on an unreadable lookup, mirroring the dial gate in
-      // `initiate-outbound-voip-call.action.ts`: a GET that never ran is not
-      // evidence of remaining budget, and the budget it would spend is two
-      // requests per week with no way to get them back. Only successes are
-      // cached, so retrying a minute later re-reads Meta.
-      if (!permissions) {
+      // Meta answering "this account cannot place business-initiated calls"
+      // (138013) is a settled no, not a failed lookup - the same code comes
+      // back from the send itself, so asking the agent to retry would burn
+      // their attention on something no retry can fix. Meta's own sentence
+      // leads (it names the country/eligibility cause and links its docs);
+      // ours is only the fallback for an error carrying no usable text.
+      if (!permissions.ok) {
         throw new ChatbotXException(
-          t("whatsapp.calls.outbound.permissionCheckFailed"),
+          permissions.failure === "businessCallingUnavailable"
+            ? toPublicErrorMessage(
+                permissions.error,
+                t("whatsapp.calls.outbound.businessCallingUnavailable"),
+              )
+            : // Fail closed on an unreadable lookup, mirroring the dial gate in
+              // `initiate-outbound-voip-call.action.ts`: a GET that never ran
+              // is not evidence of remaining budget, and the budget it would
+              // spend is two requests per week with no way to get them back.
+              // Only successes are cached, so retrying re-reads Meta.
+              t("whatsapp.calls.outbound.permissionCheckFailed"),
         )
       }
-      if (!canSendCallPermissionRequest(permissions)) {
+      if (!canSendCallPermissionRequest(permissions.permissions)) {
         throw new ChatbotXException(
           t("whatsapp.calls.errors.permissionRequestLimitReached"),
         )

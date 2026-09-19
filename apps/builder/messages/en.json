@@ -4206,6 +4206,7 @@
       "outbound": {
         "needsPermission": "You need permission to call this contact. Request permission first.",
         "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp has not enabled business-initiated calling for this number. It depends on country availability and account eligibility with Meta, so it cannot be turned on here.",
         "callAlreadyInProgress": "A call to this contact is already in progress.",
         "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
         "ineligibleNumber": "This number is not eligible for business-initiated calling.",

@@ -3989,6 +3989,7 @@
       "outbound": {
         "needsPermission": "You need permission to call this contact. Request permission first.",
         "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "WhatsApp nu a activat apelurile inițiate de companie pentru acest număr. Depinde de disponibilitatea din țara ta și de eligibilitatea contului la Meta, așa că nu poate fi activat aici.",
         "callAlreadyInProgress": "A call to this contact is already in progress.",
         "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
         "ineligibleNumber": "This number is not eligible for business-initiated calling.",

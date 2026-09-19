@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { SdkException } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 type ActionHandler = (args: {
@@ -39,7 +40,7 @@ const {
 }))
 
 vi.mock("@/lib/log", () => ({
-  logger: { warn: vi.fn(), error: vi.fn() },
+  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -391,6 +392,23 @@ describe("resolveOutboundCallModeAction", () => {
       unsignedWebhookWarning: false,
       manualCallsSubscriptionUnverified: false,
       integrationId: "integration-1",
+    })
+  })
+
+  test("Meta's 138013 blocks the control outright — an unreachable Meta must not be treated the same way", async () => {
+    getCallPermissionsMock.mockRejectedValue(
+      new SdkException(
+        "Business-initiated calling is not available.",
+        138_013,
+        400,
+        2_593_139,
+        "OAuthException",
+      ),
+    )
+
+    await expect(call()).resolves.toEqual({
+      mode: "none",
+      reason: "businessCallingUnavailable",
     })
   })
 

@@ -3989,6 +3989,7 @@
       "outbound": {
         "needsPermission": "You need permission to call this contact. Request permission first.",
         "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "لم تفعّل واتساب المكالمات التي تبدأها الشركة لهذا الرقم. يعتمد ذلك على توفّر الخدمة في بلدك وأهلية الحساب لدى Meta، لذا لا يمكن تفعيله من هنا.",
         "callAlreadyInProgress": "A call to this contact is already in progress.",
         "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
         "ineligibleNumber": "This number is not eligible for business-initiated calling.",
