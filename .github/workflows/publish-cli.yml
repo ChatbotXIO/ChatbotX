@@ -14,15 +14,22 @@ name: Publish CLI to npm
 # another workflow file, so it re-runs only the two CLI-scoped tasks, which
 # cost seconds.
 #
-# Auth: NPM_TOKEN (a classic npm automation token, in repo secrets), not OIDC
-# trusted publishing. A prior attempt switched to OIDC-only (id-token: write,
-# no .npmrc) and every run failed with `ENEEDAUTH` — `pnpm publish` shells out
-# to whatever `npm` is on PATH for the OIDC exchange, and that hand-off never
-# requested a token (see pnpm/pnpm#9812, #11513), so npm fell through to
-# classic auth with nothing configured. Revisit OIDC only after confirming a
-# Trusted Publisher is registered for this exact repo/workflow filename under
-# https://www.npmjs.com/package/chatbotx → Settings, and after pnpm's OIDC
-# delegation is verified to actually fire (it currently isn't, in practice).
+# Auth: OIDC trusted publishing (id-token: write), not an NPM_TOKEN secret.
+# Two things had to be true for this to work, in order:
+#   1. `npm publish`, never `pnpm publish` — pnpm shells the OIDC exchange out
+#      to whatever `npm` binary is on PATH, and that hand-off silently drops
+#      the token request (pnpm/pnpm#9812, #11513), failing `ENEEDAUTH` even
+#      with `id-token: write` granted and npm >= 11.5.1 installed.
+#   2. No `NPM_TOKEN`/`.npmrc` at all — npm only attempts the OIDC exchange
+#      when no long-lived auth token is already configured. Writing an
+#      `_authToken` line (however it's sourced) makes npm skip OIDC and
+#      publish with that token instead, which fails `EOTP` here: this
+#      account/package now requires 2FA on every write and no token —
+#      automation or granular — can bypass it (npm is retiring bypass-2FA
+#      tokens entirely through 2026-2027). OIDC is exempt because it isn't a
+#      stored bypass token at all.
+# Requires a Trusted Publisher registered on npmjs.com for `chatbotx` →
+# Settings, matching this exact repo and this exact workflow filename.
 
 on:
   push:
@@ -41,6 +48,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 # cancel-in-progress is deliberately false: a cancelled run between the npm
 # upload and the step summary leaves a published version nobody announced.
@@ -54,24 +62,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Fail early when the npm token is absent
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [[ -z "${NPM_TOKEN}" ]]; then
-            echo "::error::NPM_TOKEN secret is not set — add an npm automation token before releasing the CLI."
-            exit 1
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v7
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6.1.0
 
-      # No `registry-url:` here on purpose — that makes setup-node write its own
-      # npmrc via NPM_CONFIG_USERCONFIG, which pnpm does not reliably honour.
-      # The publish step writes ~/.npmrc itself instead.
+      # OIDC trusted publishing (below) needs npm >= 11.5.1; Node 24's bundled
+      # npm can lag that.
+      - name: Update npm for OIDC trusted publishing
+        run: npm install -g npm@latest
+
+      # No `registry-url:` here on purpose — that makes setup-node write its
+      # own npmrc via NPM_CONFIG_USERCONFIG, which is unnecessary noise: the
+      # publish step below authenticates via OIDC, not a stored npm token.
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
@@ -153,18 +157,14 @@ jobs:
         if: steps.guard.outputs.should_publish != 'false'
         working-directory: apps/cli
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           DIST_TAG: ${{ steps.version.outputs.dist_tag }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          printf '//registry.npmjs.org/:_authToken=%s\n' "${NPM_TOKEN}" > "${HOME}/.npmrc"
-          ARGS=(--access public --no-git-checks --tag "${DIST_TAG}")
-          # --no-git-checks: a tag build is a detached HEAD with a modified
-          # package.json, both of which pnpm otherwise refuses to publish from.
+          ARGS=(--access public --tag "${DIST_TAG}")
           if [[ "${DRY_RUN}" == "true" ]]; then
             ARGS+=(--dry-run)
           fi
-          pnpm publish "${ARGS[@]}"
+          npm publish "${ARGS[@]}"
 
       - name: Summarize
         if: always()
