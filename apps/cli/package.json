@@ -2,6 +2,11 @@
   "name": "chatbotx",
   "version": "0.0.0-dev",
   "description": "ChatbotX CLI - Command line interface for the ChatbotX API",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChatbotXIO/ChatbotX.git",
+    "directory": "apps/cli"
+  },
   "main": "dist/index.cjs",
   "type": "module",
   "files": [

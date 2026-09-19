@@ -74,14 +74,6 @@ chatbotx config set --apiKey <key> --apiUrl <url>
 
 ---
 
-### `workspaces`
-
-```bash
-chatbotx workspaces get                              # Get workspace info
-```
-
----
-
 ### `members`
 
 ```bash
@@ -279,8 +271,25 @@ chatbotx conversations attribute add <conversationId> <messageId> --createdAt <c
 ```bash
 chatbotx broadcasts list
 chatbotx broadcasts get <idOrName>                   # Get broadcast
-chatbotx broadcasts audience get <idOrName>          # Get broadcast audience (contacts)
-                                                     # [--page --perPage]
+chatbotx broadcasts audience list <idOrName>         # Get broadcast audience (contacts) [--page --perPage]
+chatbotx broadcasts contacts list <id> --eventType <eventType>  # Recipients by delivery event
+                                                     # eventType: sent|delivered|read|failed [--page --perPage]
+chatbotx broadcasts create --channel <channel> --subaction <subaction> --schedulesType <schedulesType>
+                                                     #   --schedulesAt <schedulesAt> --contactFilter <contactFilter>
+                                                     #   [--flowId --templateId --integrationWhatsappId --integrationMessengerId
+                                                     #    --templateData --buttons --targets --inboxIds --saveAsDraft]
+                                                     # Either flowId or templateId required (not both); schedulesAt required
+                                                     # when schedulesType is "future" and saveAsDraft is not true
+chatbotx broadcasts update <id> --name <name>        # Rename only — use `draft update` to change the payload
+chatbotx broadcasts draft update <id>                # Replace a draft's full payload — same fields as `create`
+                                                     # (saveAsDraft false schedules it instead of saving as draft)
+chatbotx broadcasts schedule add <id> --schedulesType <schedulesType>  # [--schedulesAt] move draft to scheduled
+chatbotx broadcasts move-to-draft add <id>           # scheduled -> draft (404 unless status is scheduled)
+chatbotx broadcasts stop add <id>                    # Stop a sending broadcast
+chatbotx broadcasts resume add <id>                  # Resume a stopped (cancelled) broadcast
+chatbotx broadcasts resend add <id>                  # Clone a sent/failed broadcast into a new scheduled one
+chatbotx broadcasts duplicate add <id>               # Copy into a new draft, including targets/audience filter
+chatbotx broadcasts delete <id>                      # Soft-delete (fails while status is sending)
 ```
 
 ---
@@ -288,7 +297,20 @@ chatbotx broadcasts audience get <idOrName>          # Get broadcast audience (c
 ### `flows`
 
 ```bash
-chatbotx flows list
+chatbotx flows list                                  # [--page --perPage --active]  active defaults to true
+chatbotx flows get <id>                              # Includes its versions
+chatbotx flows create --name <name>                  # [--folderId --spec --nodes --edges --publish]
+                                                     # spec: flow-spec DSL (see `schemas flow-spec`); nodes/edges: raw
+                                                     # graph (mutually exclusive with spec); publish: create the first
+                                                     # version immediately
+chatbotx flows update <id>                           # [--name --active --enableInInbox]
+chatbotx flows delete <id>
+chatbotx flows duplicate add <id>                    # Copy the draft into a new flow
+chatbotx flows publish add <id>                      # [--spec | --nodes --edges]  create a version from the draft
+chatbotx flows validate --spec <spec>                # Compile/validate a flow-spec DSL without publishing
+chatbotx flows draft update <id>                     # [--spec | --nodes --edges]  overwrite the draft in place
+chatbotx flows versions list <id>                    # List immutable published versions, newest first
+chatbotx flows import --fileId <fileId>              # [--folderId]  queue async import of an uploaded flow-export file
 ```
 
 ---
@@ -297,7 +319,17 @@ chatbotx flows list
 
 ```bash
 chatbotx sequences list                              # [--page --perPage --sort]
-chatbotx sequences get <id>
+chatbotx sequences get <id>                          # Includes its steps
+chatbotx sequences create --name <name>              # [--folderId]  creates an empty sequence
+chatbotx sequences update <id>                       # [--name --active]
+chatbotx sequences delete <id>                       # Deletes the sequence and all of its steps
+chatbotx sequences steps update <id> --order <order>  # Create (omit --stepId) or update (with --stepId) a step
+                                                     # [--stepId --delayDays --delayMinutes --delayUnit
+                                                     #  --specificDateTime --flowId --isActive --anytime
+                                                     #  --sendTimeStart --sendTimeEnd --sendDays]
+chatbotx sequences step delete <id> <stepId>         # Remove one step from the sequence
+chatbotx sequences contacts list <id> <stepId> --eventType <eventType>  # Recipients by lifecycle event
+                                                     # [--page --perPage]
 ```
 
 ---
@@ -306,6 +338,10 @@ chatbotx sequences get <id>
 
 ```bash
 chatbotx saved-replies list
+chatbotx saved-replies get <id>
+chatbotx saved-replies create --shortcut <shortcut> --text <text>
+chatbotx saved-replies update <id> --shortcut <shortcut> --text <text>
+chatbotx saved-replies delete <id>
 ```
 
 ---
@@ -322,6 +358,16 @@ chatbotx whatsapp templates                          # [--inboxId --integrationW
 
 ```bash
 chatbotx ai-agents list
+chatbotx ai-agents get <id>
+chatbotx ai-agents create --name <name> --prompt <prompt> --temperature <temperature>
+                                                     #   --maxOutputTokens <maxOutputTokens> --isDefault <isDefault>
+                                                     #   --messages <messages> --models <models> --tools <tools>
+                                                     # messages: JSON array of {role,content}; models: JSON array of
+                                                     # {provider,model} (or {kind:"openaiCompatible",integrationId,model})
+                                                     # fallback list, first entry preferred; tools: JSON array of tool names
+                                                     # [--webSearchAuthorizedDomains --isRichResponse]
+chatbotx ai-agents update <id>                       # Same fields as create, all optional (partial update)
+chatbotx ai-agents delete <id>
 ```
 
 ---
@@ -341,7 +387,13 @@ chatbotx integrations find-by-ai --provider <provider>  # Get AI provider integr
 ### `keywords`
 
 ```bash
-chatbotx keywords list                               # List keywords (automated responses)
+chatbotx keywords list                               # List keywords (automated responses) [--type]
+chatbotx keywords get <id>                           # [--type]  type: inbound|comment, default inbound
+chatbotx keywords create --keywords <keywords>       # [--type --text --flowId --folderId]
+                                                     # keywords: JSON array of phrases; text or flowId (not both)
+chatbotx keywords update <id>                        # [--type --keywords --text --flowId --folderId]
+chatbotx keywords status update <id> --status <status>  # [--type]  enable/disable without touching other fields
+chatbotx keywords delete <id>                        # [--type]
 ```
 
 ---
@@ -349,7 +401,13 @@ chatbotx keywords list                               # List keywords (automated 
 ### `triggers`
 
 ```bash
-chatbotx triggers list
+chatbotx triggers list                               # [--page --perPage]
+chatbotx triggers get <id>                           # Includes real conditions/actions
+chatbotx triggers create --name <name>               # [--folderId]  creates an empty trigger
+chatbotx triggers update <id> --conditions <conditions> --actions <actions>
+                                                     # Replaces the full condition/action set — JSON arrays
+chatbotx triggers settings update <id>               # [--name --active]  name/active only, conditions untouched
+chatbotx triggers delete <id>
 ```
 
 ---
@@ -358,6 +416,9 @@ chatbotx triggers list
 
 ```bash
 chatbotx webhooks list
+chatbotx webhooks create --name <name> --url <url> --conditions <conditions>
+                                                     # conditions: JSON array of event conditions, at least one required
+chatbotx webhooks delete <id>
 ```
 
 ---
