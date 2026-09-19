@@ -2,8 +2,6 @@
 
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import type { WhatsappCallPermissionsResponse } from "@chatbotx.io/integration-whatsapp/api/calling"
-import { WHATSAPP_CALLING_ERROR_CODES } from "@chatbotx.io/integration-whatsapp/constants"
-import { SdkException } from "@chatbotx.io/sdk"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
@@ -88,30 +86,8 @@ describe("meta-call-permission", () => {
   test("a failed lookup resolves lookupFailed instead of throwing into the caller's request", async () => {
     getCallPermissionsMock.mockRejectedValue(new Error("meta down"))
 
-    await expect(read()).resolves.toMatchObject({
-      ok: false,
-      failure: "lookupFailed",
-    })
+    await expect(read()).resolves.toMatchObject({ ok: false })
     expect(loggerWarnMock).toHaveBeenCalled()
-  })
-
-  test("Meta's 138013 is reported as businessCallingUnavailable, never as a failed lookup", async () => {
-    getCallPermissionsMock.mockRejectedValue(
-      new SdkException(
-        "Business-initiated calling is not available.",
-        WHATSAPP_CALLING_ERROR_CODES.BUSINESS_CALLING_UNAVAILABLE,
-        400,
-        2_593_139,
-        "OAuthException",
-      ),
-    )
-
-    await expect(read()).resolves.toMatchObject({
-      ok: false,
-      failure: "businessCallingUnavailable",
-    })
-    // Not a warning: Meta answered, so there is nothing degraded to alert on.
-    expect(loggerWarnMock).not.toHaveBeenCalled()
   })
 
   test("a successful read carries the permissions through", async () => {

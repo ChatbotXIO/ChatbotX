@@ -2066,8 +2066,7 @@
         "fixButton": "תיקון",
         "fixSuccess": "האפליקציה רשומה כעת ל-webhooks של שיחות WhatsApp.",
         "manualIntegrationNotice": "מספר זה חובר באופן ידני ואין לו כאן פרטי אפליקציה. יש להירשם לשדה ה-webhook 'calls' עבור האפליקציה שלך בלוח הבקרה של אפליקציות Meta.",
-        "coexistenceWarning": "מספר זה משתמש בשיתוף (coexistence) עם אפליקציית WhatsApp Business, ש-Meta אינה תומכת בו לשיחות. יש להעביר אותו לשימוש ב-Cloud API בלבד.",
-        "messagingLimitTooLow": "רמת מגבלת ההודעות של מספר זה נמוכה מהמינימום הנדרש על ידי Meta לשיחות."
+        "coexistenceWarning": "מספר זה משתמש בשיתוף (coexistence) עם אפליקציית WhatsApp Business, ש-Meta אינה תומכת בו לשיחות. יש להעביר אותו לשימוש ב-Cloud API בלבד."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {

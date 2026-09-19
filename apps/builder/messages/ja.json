@@ -3957,8 +3957,7 @@
         "fixButton": "修正",
         "fixSuccess": "アプリはWhatsApp通話Webhookに正常にサブスクライブされました。",
         "manualIntegrationNotice": "この番号は手動で接続されており、ここにはアプリの認証情報がありません。Metaアプリダッシュボードでアプリの「calls」Webhookフィールドをサブスクライブしてください。",
-        "coexistenceWarning": "この番号はWhatsApp Businessアプリの併用（コイグジスタンス）を使用していますが、Metaは通話でこれをサポートしていません。Cloud APIのみに移行してください。",
-        "messagingLimitTooLow": "この番号のメッセージ送信上限レベルは、Metaが通話に必要とする最低限を下回っています。"
+        "coexistenceWarning": "この番号はWhatsApp Businessアプリの併用（コイグジスタンス）を使用していますが、Metaは通話でこれをサポートしていません。Cloud APIのみに移行してください。"
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {

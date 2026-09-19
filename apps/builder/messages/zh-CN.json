@@ -5415,8 +5415,7 @@
         "fixButton": "Fix",
         "fixSuccess": "The app is now subscribed to WhatsApp call webhooks.",
         "manualIntegrationNotice": "This number was connected manually and has no app credentials here. Subscribe the 'calls' webhook field for your app in the Meta App Dashboard.",
-        "coexistenceWarning": "This number uses WhatsApp Business app coexistence, which Meta does not support for calling. Move it to Cloud API only.",
-        "messagingLimitTooLow": "This number's messaging limit tier is below the minimum Meta requires for calling."
+        "coexistenceWarning": "This number uses WhatsApp Business app coexistence, which Meta does not support for calling. Move it to Cloud API only."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {

@@ -52,10 +52,6 @@ export const NONE_REASON_MESSAGE_KEYS: Record<NoneCallModeReason, string> = {
   callingNotEnabled: "whatsapp.calls.capability.enableCalling",
   webhookNotSubscribed: "whatsapp.calls.capability.reconnectChannel",
   tokenInvalid: "whatsapp.calls.capability.reconnectChannel",
-  // Meta's own answer, not a setting anyone here can flip — so it points at
-  // Meta's eligibility requirements rather than at Settings or a reconnect.
-  businessCallingUnavailable:
-    "whatsapp.calls.outbound.businessCallingUnavailable",
   ineligibleNumber: "whatsapp.calls.outbound.ineligibleNumber",
   notWhatsappConversation: "whatsapp.calls.errors.notWhatsappConversation",
   // Reuses the same key a failed dial attempt maps to — one denial sentence

@@ -3978,8 +3978,7 @@
         "fixButton": "Corriger",
         "fixSuccess": "L'application est désormais abonnée aux webhooks d'appel WhatsApp.",
         "manualIntegrationNotice": "Ce numéro a été connecté manuellement et ne dispose d'aucun identifiant d'application ici. Abonnez le champ webhook 'calls' de votre application dans le tableau de bord des applications Meta.",
-        "coexistenceWarning": "Ce numéro utilise la coexistence avec l'application WhatsApp Business, que Meta ne prend pas en charge pour les appels. Basculez-le en Cloud API uniquement.",
-        "messagingLimitTooLow": "Le palier de limite de messagerie de ce numéro est inférieur au minimum requis par Meta pour les appels."
+        "coexistenceWarning": "Ce numéro utilise la coexistence avec l'application WhatsApp Business, que Meta ne prend pas en charge pour les appels. Basculez-le en Cloud API uniquement."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {

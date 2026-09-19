@@ -9,9 +9,7 @@ import {
   type WhatsappCallPermissionsResponse,
   type WhatsappCallPermissionsTarget,
 } from "@chatbotx.io/integration-whatsapp/api/calling"
-import { WHATSAPP_CALLING_ERROR_CODES } from "@chatbotx.io/integration-whatsapp/constants"
 import { withCache } from "@chatbotx.io/redis"
-import { SdkException } from "@chatbotx.io/sdk"
 import { logger } from "@/lib/log"
 
 /**
@@ -62,45 +60,19 @@ export type ReadMetaCallPermissionsInput = {
 }
 
 /**
- * Meta answering "this account may not place business-initiated calls at all"
- * (country restriction or account eligibility). Reported with
- * `is_transient: false`, so it is a settled answer rather than a failed
- * lookup: a retry can never turn it into a yes.
+ * A failed read carries the error rather than collapsing to `undefined`, so an
+ * acting caller can relay what Meta actually said instead of a sentence of
+ * ours that says less.
  */
-const isBusinessCallingUnavailable = (error: unknown): boolean =>
-  error instanceof SdkException &&
-  Number(error.code) ===
-    WHATSAPP_CALLING_ERROR_CODES.BUSINESS_CALLING_UNAVAILABLE
-
-/**
- * Why a permission read produced no answer. `businessCallingUnavailable` is a
- * definitive no from Meta; `lookupFailed` is everything else (unreachable,
- * rejected token, malformed body) and says nothing about the real permission.
- */
-export type MetaCallPermissionsFailure =
-  | "businessCallingUnavailable"
-  | "lookupFailed"
-
 export type MetaCallPermissionsResult =
   | { ok: true; permissions: WhatsappCallPermissionsResponse }
-  | {
-      ok: false
-      failure: MetaCallPermissionsFailure
-      /**
-       * Kept so an acting caller can run it through `toPublicErrorMessage`,
-       * which surfaces Meta's own sentence (and its code) rather than a
-       * sentence of ours that says less.
-       */
-      error: unknown
-    }
+  | { ok: false; error: unknown }
 
 /**
  * Cached GET /{pnid}/call_permissions. Never throws: callers are deciding
- * which control to render or which reason to show, so the outcome is returned
- * as data. The failure is classified rather than collapsed to undefined, so an
- * "account cannot call" answer is not mistaken for "ask again later". Only a
- * successful response is cached, so a fixed credential shows up on the next
- * read instead of waiting out the TTL.
+ * which control to render, and a failed lookup must leave that decision alone
+ * rather than fail the request. Only a successful response is cached, so a
+ * fixed credential shows up on the next read instead of waiting out the TTL.
  */
 export const readMetaCallPermissions = async (
   input: ReadMetaCallPermissionsInput,
@@ -113,18 +85,11 @@ export const readMetaCallPermissions = async (
     )
     return { ok: true, permissions }
   } catch (error) {
-    if (isBusinessCallingUnavailable(error)) {
-      logger.info(
-        { err: error, integrationId: input.integrationId },
-        "Whatsapp calling: Meta reports business-initiated calling unavailable for this number",
-      )
-      return { ok: false, failure: "businessCallingUnavailable", error }
-    }
     logger.warn(
       { err: error, integrationId: input.integrationId },
       "Whatsapp calling: could not read call permissions from Meta",
     )
-    return { ok: false, failure: "lookupFailed", error }
+    return { ok: false, error }
   }
 }
 

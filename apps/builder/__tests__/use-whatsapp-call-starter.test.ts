@@ -68,7 +68,6 @@ describe("use-whatsapp-call-starter — outcome-map parity", () => {
         "ineligibleNumber",
         "notWhatsappConversation",
         "callAccessDenied",
-        "businessCallingUnavailable",
       ].sort(),
     )
   })

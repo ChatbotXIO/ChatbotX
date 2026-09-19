@@ -5415,8 +5415,7 @@
         "fixButton": "Åtgärda",
         "fixSuccess": "Appen prenumererar nu på WhatsApp-samtalswebhooks.",
         "manualIntegrationNotice": "Detta nummer anslöts manuellt och har inga appuppgifter här. Prenumerera på webhookfältet 'calls' för din app i Meta App Dashboard.",
-        "coexistenceWarning": "Detta nummer använder samexistens med WhatsApp Business-appen, vilket Meta inte stöder för samtal. Flytta det till endast Cloud API.",
-        "messagingLimitTooLow": "Detta nummers meddelandegränsnivå ligger under det minimum Meta kräver för samtal."
+        "coexistenceWarning": "Detta nummer använder samexistens med WhatsApp Business-appen, vilket Meta inte stöder för samtal. Flytta det till endast Cloud API."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {

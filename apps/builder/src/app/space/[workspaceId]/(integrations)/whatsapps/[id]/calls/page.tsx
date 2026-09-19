@@ -44,6 +44,8 @@ export default async function WhatsappCallsPage(props: {
     ? await getWhatsappCallingPreflight({
         workspace: currentUserAndWorkspace.targetWorkspace,
         auth,
+        inboxId: integrationWhatsapp.inboxId,
+        probeEligibility: true,
       })
     : null
   const isSuperAdmin = currentUserAndWorkspace

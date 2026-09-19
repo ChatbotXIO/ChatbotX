@@ -3978,8 +3978,7 @@
         "fixButton": "Oplossen",
         "fixSuccess": "De app is nu geabonneerd op WhatsApp-oproepwebhooks.",
         "manualIntegrationNotice": "Dit nummer is handmatig verbonden en heeft hier geen app-gegevens. Abonneer het 'calls'-webhookveld van je app in het Meta App Dashboard.",
-        "coexistenceWarning": "Dit nummer gebruikt coexistentie met de WhatsApp Business-app, wat Meta niet ondersteunt voor bellen. Verplaats het naar alleen Cloud API.",
-        "messagingLimitTooLow": "Het berichtenlimietniveau van dit nummer ligt onder het minimum dat Meta vereist voor bellen."
+        "coexistenceWarning": "Dit nummer gebruikt coexistentie met de WhatsApp Business-app, wat Meta niet ondersteunt voor bellen. Verplaats het naar alleen Cloud API."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {

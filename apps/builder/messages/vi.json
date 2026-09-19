@@ -3978,8 +3978,7 @@
         "fixButton": "Sửa",
         "fixSuccess": "App đã được đăng ký webhook cuộc gọi WhatsApp.",
         "manualIntegrationNotice": "Số này được kết nối thủ công và không có thông tin app ở đây. Hãy đăng ký trường webhook 'calls' cho app của bạn trong App Dashboard của Meta.",
-        "coexistenceWarning": "Số này đang dùng chế độ coexistence với ứng dụng WhatsApp Business, Meta không hỗ trợ tính năng gọi điện ở chế độ này. Hãy chuyển số này sang chỉ dùng Cloud API.",
-        "messagingLimitTooLow": "Hạn mức tin nhắn của số này thấp hơn mức tối thiểu Meta yêu cầu cho tính năng gọi điện."
+        "coexistenceWarning": "Số này đang dùng chế độ coexistence với ứng dụng WhatsApp Business, Meta không hỗ trợ tính năng gọi điện ở chế độ này. Hãy chuyển số này sang chỉ dùng Cloud API."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {

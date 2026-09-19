@@ -3978,8 +3978,7 @@
         "fixButton": "Remediază",
         "fixSuccess": "Aplicația este acum abonată la webhook-urile de apeluri WhatsApp.",
         "manualIntegrationNotice": "Acest număr a fost conectat manual și nu are acreditări de aplicație aici. Abonează câmpul webhook 'calls' pentru aplicația ta în Meta App Dashboard.",
-        "coexistenceWarning": "Acest număr folosește coexistența cu aplicația WhatsApp Business, pe care Meta nu o acceptă pentru apeluri. Mută-l doar pe Cloud API.",
-        "messagingLimitTooLow": "Nivelul limitei de mesagerie al acestui număr este sub minimul cerut de Meta pentru apeluri."
+        "coexistenceWarning": "Acest număr folosește coexistența cu aplicația WhatsApp Business, pe care Meta nu o acceptă pentru apeluri. Mută-l doar pe Cloud API."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {

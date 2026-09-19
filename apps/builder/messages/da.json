@@ -3978,8 +3978,7 @@
         "fixButton": "Ret",
         "fixSuccess": "Appen abonnerer nu på WhatsApp-opkalds-webhooks.",
         "manualIntegrationNotice": "Dette nummer blev forbundet manuelt og har ingen app-legitimationsoplysninger her. Abonnér på 'calls'-webhookfeltet for din app i Meta App Dashboard.",
-        "coexistenceWarning": "Dette nummer bruger coexistence med WhatsApp Business-appen, hvilket Meta ikke understøtter til opkald. Flyt det til kun Cloud API.",
-        "messagingLimitTooLow": "Dette nummers meddelelsesgrænse-niveau er under den minimumsgrænse, Meta kræver for opkald."
+        "coexistenceWarning": "Dette nummer bruger coexistence med WhatsApp Business-appen, hvilket Meta ikke understøtter til opkald. Flyt det til kun Cloud API."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {

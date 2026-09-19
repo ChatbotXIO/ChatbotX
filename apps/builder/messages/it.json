@@ -3978,8 +3978,7 @@
         "fixButton": "Correggi",
         "fixSuccess": "L'app è ora iscritta ai webhook delle chiamate WhatsApp.",
         "manualIntegrationNotice": "Questo numero è stato connesso manualmente e non dispone di credenziali app qui. Iscrivi il campo webhook 'calls' della tua app nella dashboard delle app Meta.",
-        "coexistenceWarning": "Questo numero utilizza la coesistenza con l'app WhatsApp Business, non supportata da Meta per le chiamate. Spostalo su Cloud API soltanto.",
-        "messagingLimitTooLow": "Il livello del limite di messaggistica di questo numero è inferiore al minimo richiesto da Meta per le chiamate."
+        "coexistenceWarning": "Questo numero utilizza la coesistenza con l'app WhatsApp Business, non supportata da Meta per le chiamate. Spostalo su Cloud API soltanto."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {

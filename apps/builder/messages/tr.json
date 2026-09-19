@@ -3978,8 +3978,7 @@
         "fixButton": "Düzelt",
         "fixSuccess": "Uygulama artık WhatsApp arama webhook'larına abone.",
         "manualIntegrationNotice": "Bu numara manuel olarak bağlandı ve burada uygulama kimlik bilgisi yok. Meta Uygulama Panosunda uygulamanız için 'calls' webhook alanına abone olun.",
-        "coexistenceWarning": "Bu numara, Meta'nın aramalar için desteklemediği WhatsApp Business uygulaması birlikte kullanımını kullanıyor. Yalnızca Cloud API'ye taşıyın.",
-        "messagingLimitTooLow": "Bu numaranın mesajlaşma limiti seviyesi, Meta'nın aramalar için gerektirdiği minimumun altında."
+        "coexistenceWarning": "Bu numara, Meta'nın aramalar için desteklemediği WhatsApp Business uygulaması birlikte kullanımını kullanıyor. Yalnızca Cloud API'ye taşıyın."
       },
       "voipConnecting": "Connecting…",
       "recordingActivity": {

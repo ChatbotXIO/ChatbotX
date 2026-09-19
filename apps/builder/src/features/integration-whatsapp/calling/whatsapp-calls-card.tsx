@@ -133,8 +133,11 @@ function WhatsappCallingPreflightNotices({
   if (preflight.isCloudApiPlatform === false) {
     notices.push(t("whatsapp.calls.preflight.coexistenceWarning"))
   }
-  if (preflight.messagingLimitSufficient === false) {
-    notices.push(t("whatsapp.calls.preflight.messagingLimitTooLow"))
+  // Meta's own words, from the real call_permissions request - it names the
+  // actual reason (country restriction, account eligibility) where a rule of
+  // ours could only guess at it.
+  if (preflight.callingIneligibleReason) {
+    notices.push(preflight.callingIneligibleReason)
   }
 
   if (notices.length === 0) {

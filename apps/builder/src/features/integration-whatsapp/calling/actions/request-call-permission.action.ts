@@ -116,25 +116,22 @@ export const requestCallPermissionAction = callingActionClient
         contactInboxId: contactInbox.id,
         target: permissionTarget,
       })
-      // Meta answering "this account cannot place business-initiated calls"
-      // (138013) is a settled no, not a failed lookup - the same code comes
-      // back from the send itself, so asking the agent to retry would burn
-      // their attention on something no retry can fix. Meta's own sentence
-      // leads (it names the country/eligibility cause and links its docs);
-      // ours is only the fallback for an error carrying no usable text.
+      // Whatever Meta said leads - it names the real reason (eligibility, a
+      // disabled number, a rejected token), and no sentence of ours says more.
+      // The generic line is only for an error carrying no usable text at all,
+      // such as a network failure.
+      //
+      // Still fails closed either way, mirroring the dial gate in
+      // `initiate-outbound-voip-call.action.ts`: a GET that never ran is not
+      // evidence of remaining budget, and the budget it would spend is two
+      // requests per week with no way to get them back. Only successes are
+      // cached, so retrying re-reads Meta.
       if (!permissions.ok) {
         throw new ChatbotXException(
-          permissions.failure === "businessCallingUnavailable"
-            ? toPublicErrorMessage(
-                permissions.error,
-                t("whatsapp.calls.outbound.businessCallingUnavailable"),
-              )
-            : // Fail closed on an unreadable lookup, mirroring the dial gate in
-              // `initiate-outbound-voip-call.action.ts`: a GET that never ran
-              // is not evidence of remaining budget, and the budget it would
-              // spend is two requests per week with no way to get them back.
-              // Only successes are cached, so retrying re-reads Meta.
-              t("whatsapp.calls.outbound.permissionCheckFailed"),
+          toPublicErrorMessage(
+            permissions.error,
+            t("whatsapp.calls.outbound.permissionCheckFailed"),
+          ),
         )
       }
       if (!canSendCallPermissionRequest(permissions.permissions)) {

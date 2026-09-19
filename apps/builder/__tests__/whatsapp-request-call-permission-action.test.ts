@@ -186,7 +186,6 @@ describe("requestCallPermissionAction", () => {
   test("permission lookup unavailable: fails closed rather than spending 1 of 2 weekly requests", async () => {
     readMetaCallPermissionsMock.mockResolvedValue({
       ok: false,
-      failure: "lookupFailed",
       error: new Error("meta down"),
     })
 
@@ -198,10 +197,9 @@ describe("requestCallPermissionAction", () => {
     expect(createOutgoingMock).not.toHaveBeenCalled()
   })
 
-  test("Meta says the account cannot call: relays Meta's own sentence, never a retry prompt", async () => {
+  test("relays whatever Meta said, never the generic retry prompt", async () => {
     readMetaCallPermissionsMock.mockResolvedValue({
       ok: false,
-      failure: "businessCallingUnavailable",
       error: new SdkException(
         "Business-initiated calling is not available.",
         138_013,
