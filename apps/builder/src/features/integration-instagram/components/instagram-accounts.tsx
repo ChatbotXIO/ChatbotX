@@ -78,7 +78,11 @@ export function InstagramAccounts({
   return (
     <div className="space-y-6">
       {flow.state.kind === "singleSessionError" && (
-        <ConnectSessionErrorAlert channel="instagram" code={flow.state.code} />
+        <ConnectSessionErrorAlert
+          channel="instagram"
+          code={flow.state.code}
+          workspaceId={workspaceId}
+        />
       )}
 
       <div className="flex items-center gap-3 rounded-lg border p-4">

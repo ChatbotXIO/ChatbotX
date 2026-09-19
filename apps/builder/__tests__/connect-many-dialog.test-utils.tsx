@@ -165,6 +165,7 @@ export function fakeExtraStep(): ConnectDialogExtraStep {
 
 export type RenderConnectManyDialogProps = {
   channel?: "messenger" | "instagram" | "whatsapp"
+  workspaceId?: string
   items: ConnectPickerItem[]
   connectOne: (item: ConnectPickerItem) => Promise<ConnectActionResultWire>
   onFinished?: () => void
@@ -189,7 +190,7 @@ export function renderConnectManyDialog(
         onClose={props.onClose ?? vi.fn()}
         onFinished={props.onFinished ?? vi.fn()}
         resolveCoexistWorkspaceId={props.resolveCoexistWorkspaceId}
-        workspaceId="ws-1"
+        workspaceId={props.workspaceId ?? "ws-1"}
       />,
     )
   })
