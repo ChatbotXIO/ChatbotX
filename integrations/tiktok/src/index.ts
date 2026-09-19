@@ -1,5 +1,10 @@
 export { generateAuthUrl } from "./apis/auth"
-export { subscribeWebhook } from "./apis/webhook"
+export {
+  subscribeTiktokWebhooks,
+  subscribeWebhook,
+  TIKTOK_COMMENT_EVENT_TYPE,
+  TIKTOK_DIRECT_MESSAGE_EVENT_TYPE,
+} from "./apis/webhook"
 export {
   TIKTOK_MISSING_SCOPES_CODE,
   TiktokMissingScopesError,

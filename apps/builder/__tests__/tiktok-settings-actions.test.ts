@@ -13,7 +13,7 @@ const {
 } = vi.hoisted(() => ({
   removeSpy: vi.fn(),
   resolveSpy: vi.fn(),
-  subscribeSpy: vi.fn(),
+  subscribeSpy: vi.fn().mockResolvedValue({ comments: false }),
   upsertSpy: vi.fn(),
   mockFindActiveByTenantId: vi.fn(),
   mockFindByOwner: vi.fn(),
@@ -31,7 +31,10 @@ vi.mock("@chatbotx.io/business", () => ({
   tenantService: { findByOwner: mockFindByOwner },
 }))
 vi.mock("@chatbotx.io/integration-tiktok", () => ({
-  subscribeWebhook: subscribeSpy,
+  subscribeTiktokWebhooks: subscribeSpy,
+}))
+vi.mock("@/lib/log", () => ({
+  logger: { warn: vi.fn(), error: vi.fn() },
 }))
 vi.mock("@/env", () => ({ isCloud: () => true }))
 vi.mock("@/lib/oauth-broker", () => ({
@@ -82,6 +85,7 @@ describe("TikTok credential actions", () => {
     expect(subscribeSpy).toHaveBeenCalledWith(
       { clientId: "id", clientSecret: "secret" },
       `${BROKER_ORIGIN}/integrations/tiktok/webhook`,
+      expect.any(Function),
     )
   })
 
@@ -98,6 +102,7 @@ describe("TikTok credential actions", () => {
     expect(subscribeSpy).toHaveBeenCalledWith(
       { clientId: "id", clientSecret: "secret" },
       "https://chat.acme.com/integrations/tiktok/webhook",
+      expect.any(Function),
     )
   })
 
@@ -113,6 +118,7 @@ describe("TikTok credential actions", () => {
     expect(subscribeSpy).toHaveBeenCalledWith(
       { clientId: "id", clientSecret: "secret" },
       `${BROKER_ORIGIN}/integrations/tiktok/webhook`,
+      expect.any(Function),
     )
     expect(mockFindByOwner).not.toHaveBeenCalled()
   })
