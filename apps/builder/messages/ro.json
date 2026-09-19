@@ -3026,6 +3026,10 @@
       "whatsapp": "Acest număr WhatsApp este deja conectat la un alt spațiu de lucru.",
       "zalo": "Acest OA Zalo este deja conectat la un alt spațiu de lucru."
     },
+    "missingScopes": {
+      "generic": "Conexiune anulată: unele permisiuni nu au fost acordate. Conectează-te din nou și acceptă toate permisiunile solicitate.",
+      "tiktok": "Conexiunea TikTok a fost anulată: unele permisiuni nu au fost acordate. Conectează-te din nou și acceptă toate permisiunile solicitate."
+    },
     "reconnect": {
       "success": "Canal reconectat cu succes.",
       "errors": {

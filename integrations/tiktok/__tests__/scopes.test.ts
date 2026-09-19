@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vitest"
 import {
+  findMissingTiktokScopes,
   parseTiktokScopes,
   TIKTOK_COMMENT_AUTOMATION_SCOPES,
+  TIKTOK_CORE_SCOPES,
+  TIKTOK_OPTIONAL_PROFILE_SCOPES,
   tiktokNeedsReauthorization,
 } from "../src/lib/scopes"
 
@@ -33,11 +36,80 @@ describe("parseTiktokScopes", () => {
   })
 })
 
+describe("scope groups", () => {
+  // The split is the whole safety argument: refusing a connect over a scope
+  // nothing reads would turn a cosmetic choice on TikTok's consent screen into
+  // a hard failure. `getUserInfo` asks only for
+  // `open_id,display_name,avatar_url,username`, so nothing behind the optional
+  // profile scopes is ever read.
+  test("core holds only what the product actually reads", () => {
+    expect([...TIKTOK_CORE_SCOPES]).toEqual([
+      "user.info.basic",
+      "user.info.username",
+      "message.list.read",
+      "message.list.send",
+      "message.list.manage",
+    ])
+  })
+
+  test("the three groups do not overlap", () => {
+    const all = [
+      ...TIKTOK_CORE_SCOPES,
+      ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
+      ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
+    ]
+    expect(new Set(all).size).toBe(all.length)
+  })
+})
+
+describe("findMissingTiktokScopes", () => {
+  test("names what the grant does not contain, in declaration order", () => {
+    expect(
+      findMissingTiktokScopes(["user.info.basic"], TIKTOK_CORE_SCOPES),
+    ).toEqual([
+      "user.info.username",
+      "message.list.read",
+      "message.list.send",
+      "message.list.manage",
+    ])
+  })
+
+  test("a full grant is missing nothing", () => {
+    expect(
+      findMissingTiktokScopes(TIKTOK_CORE_SCOPES, TIKTOK_CORE_SCOPES),
+    ).toEqual([])
+  })
+
+  test("extra granted scopes are not a problem", () => {
+    expect(
+      findMissingTiktokScopes(
+        [...TIKTOK_CORE_SCOPES, "something.else"],
+        TIKTOK_CORE_SCOPES,
+      ),
+    ).toEqual([])
+  })
+
+  // The split that lets a DM-only workspace connect: withholding the comment
+  // scopes must leave the core set intact, so the callback has no reason to
+  // refuse the connection.
+  test("a grant of core scopes alone satisfies core but not comments", () => {
+    expect(
+      findMissingTiktokScopes(TIKTOK_CORE_SCOPES, TIKTOK_CORE_SCOPES),
+    ).toEqual([])
+    expect(
+      findMissingTiktokScopes(
+        TIKTOK_CORE_SCOPES,
+        TIKTOK_COMMENT_AUTOMATION_SCOPES,
+      ),
+    ).toEqual([...TIKTOK_COMMENT_AUTOMATION_SCOPES])
+  })
+})
+
 describe("tiktokNeedsReauthorization", () => {
   test("a connection holding every required scope is not flagged", () => {
     expect(
       tiktokNeedsReauthorization(
-        buildAuth([...TIKTOK_COMMENT_AUTOMATION_SCOPES, "video.list"]),
+        buildAuth([...TIKTOK_COMMENT_AUTOMATION_SCOPES]),
       ),
     ).toBe(false)
   })
@@ -46,6 +118,15 @@ describe("tiktokNeedsReauthorization", () => {
     expect(
       tiktokNeedsReauthorization(buildAuth(["user.info.basic", "video.list"])),
     ).toBe(true)
+  })
+
+  // A DM-only connection is legitimate — it is allowed through the callback on
+  // purpose — but comment automation still cannot run on it, so the settings
+  // list has to say so.
+  test("a core-only connection is flagged for comments", () => {
+    expect(tiktokNeedsReauthorization(buildAuth([...TIKTOK_CORE_SCOPES]))).toBe(
+      true,
+    )
   })
 
   // The population this exists for: every account connected before comment

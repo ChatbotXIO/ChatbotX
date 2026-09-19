@@ -683,6 +683,10 @@
       "whatsapp": "Det här WhatsApp-numret är redan anslutet till en annan arbetsyta.",
       "zalo": "Det här Zalo OA-kontot är redan anslutet till en annan arbetsyta."
     },
+    "missingScopes": {
+      "generic": "Anslutningen avbröts: vissa behörigheter beviljades inte. Anslut igen och godkänn alla begärda behörigheter.",
+      "tiktok": "TikTok-anslutningen avbröts: vissa behörigheter beviljades inte. Anslut igen och godkänn alla begärda behörigheter."
+    },
     "reconnect": {
       "errors": {
         "accountNotFound": "Det auktoriserade kontot matchar inte det anslutna kontot. Logga in med rätt konto.",

@@ -869,6 +869,10 @@
       "whatsapp": "此 WhatsApp 号码已连接到另一个工作区。",
       "zalo": "此Zalo OA 已连接到另一个工作区。"
     },
+    "missingScopes": {
+      "generic": "连接已取消：部分权限未授予。请重新连接并接受所有请求的权限。",
+      "tiktok": "TikTok 连接已取消：部分权限未授予。请重新连接并接受所有请求的权限。"
+    },
     "reconnect": {
       "errors": {
         "accountNotFound": "授权帐户与链接的帐户不符。使用正确的帐号登录。",

@@ -1,6 +1,11 @@
 import ky from "ky"
 import { BUSINESS_API_BASE_URL } from "../constants"
 import { rescue, TiktokAPIException } from "../exception"
+import {
+  TIKTOK_COMMENT_AUTOMATION_SCOPES,
+  TIKTOK_CORE_SCOPES,
+  TIKTOK_OPTIONAL_PROFILE_SCOPES,
+} from "../lib/scopes"
 import type { BusinessApiResponse } from "../schema"
 
 const TIKTOK_AUTH_BASE_URL = "https://www.tiktok.com/v2/auth/authorize/"
@@ -9,30 +14,19 @@ const TIKTOK_AUTH_BASE_URL = "https://www.tiktok.com/v2/auth/authorize/"
 const TIKTOK_TOKEN_URL = `${BUSINESS_API_BASE_URL}tt_user/oauth2/token/`
 const TIKTOK_REFRESH_URL = `${BUSINESS_API_BASE_URL}tt_user/oauth2/refresh_token/`
 
-// `comment.list` is what makes TikTok deliver `comment.update` webhooks at all
-// (documented as a prerequisite on the comment-update event page); `video.list`
-// backs the post picker.
+// The authorize request asks for everything the channel can use; the three
+// lists differ only in what a MISSING grant costs. Core is refused at the
+// callback, comment-automation scopes raise the re-authorize warning, and the
+// optional profile scopes cost nothing — see `../lib/scopes`, which owns all
+// three and the TODO for the comment write scope.
 //
 // Adding a scope does not upgrade an existing connection: every
-// already-connected account has to re-authorize before comment automation can
+// already-connected account has to re-authorize before the new capability can
 // run for it.
-//
-// TODO(tiktok-comments): the write actions — reply, like, hide, delete — need
-// their own scope, whose exact identifier is not in the public docs. Read it off
-// the app's Permissions page in the TikTok developer portal and add it here.
-// Deliberately not guessed: TikTok rejects the whole authorize request on an
-// unknown scope string, which would break connecting the channel at all.
 const TIKTOK_SCOPES = [
-  "user.info.basic",
-  "user.info.username",
-  "user.info.profile",
-  "user.info.stats",
-  "user.account.type",
-  "message.list.read",
-  "message.list.send",
-  "message.list.manage",
-  "video.list",
-  "comment.list",
+  ...TIKTOK_CORE_SCOPES,
+  ...TIKTOK_OPTIONAL_PROFILE_SCOPES,
+  ...TIKTOK_COMMENT_AUTOMATION_SCOPES,
 ].join(",")
 
 export function generateAuthUrl({

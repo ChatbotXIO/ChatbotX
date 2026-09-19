@@ -738,6 +738,10 @@
       "whatsapp": "Bu WhatsApp numarası zaten başka bir çalışma alanına bağlı.",
       "zalo": "Bu Zalo OA zaten başka bir çalışma alanına bağlı."
     },
+    "missingScopes": {
+      "generic": "Bağlantı iptal edildi: bazı izinler verilmedi. Lütfen yeniden bağlanın ve istenen tüm izinleri kabul edin.",
+      "tiktok": "TikTok bağlantısı iptal edildi: bazı izinler verilmedi. Lütfen yeniden bağlanın ve istenen tüm izinleri kabul edin."
+    },
     "reconnect": {
       "success": "Kanal başarıyla yeniden bağlandı.",
       "errors": {

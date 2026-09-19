@@ -2369,6 +2369,10 @@
       "whatsapp": "此 WhatsApp 號碼已連接到另一個工作區。",
       "zalo": "此Zalo OA 已連接到另一個工作區。"
     },
+    "missingScopes": {
+      "generic": "連線已取消：部分權限未授予。請重新連線並接受所有要求的權限。",
+      "tiktok": "TikTok 連線已取消：部分權限未授予。請重新連線並接受所有要求的權限。"
+    },
     "reconnect": {
       "success": "頻道重新連線成功。",
       "errors": {

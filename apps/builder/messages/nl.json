@@ -3026,6 +3026,10 @@
       "whatsapp": "Dit WhatsApp-nummer is al gekoppeld aan een andere workspace.",
       "zalo": "Deze Zalo OA is al gekoppeld aan een andere workspace."
     },
+    "missingScopes": {
+      "generic": "Verbinding geannuleerd: sommige machtigingen zijn niet verleend. Maak opnieuw verbinding en accepteer alle gevraagde machtigingen.",
+      "tiktok": "TikTok-verbinding geannuleerd: sommige machtigingen zijn niet verleend. Maak opnieuw verbinding en accepteer alle gevraagde machtigingen."
+    },
     "reconnect": {
       "success": "Kanaal opnieuw gekoppeld.",
       "errors": {

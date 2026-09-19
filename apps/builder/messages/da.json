@@ -3026,6 +3026,10 @@
       "whatsapp": "Denne WhatsApp nummer er allerede forbundet til another arbejdsområde.",
       "zalo": "Denne Zalo OA er allerede forbundet til another arbejdsområde."
     },
+    "missingScopes": {
+      "generic": "Forbindelsen blev annulleret: nogle tilladelser blev ikke givet. Tilslut igen, og accepter alle anmodede tilladelser.",
+      "tiktok": "TikTok-forbindelsen blev annulleret: nogle tilladelser blev ikke givet. Tilslut igen, og accepter alle anmodede tilladelser."
+    },
     "reconnect": {
       "success": "Kanal reconnected successfully.",
       "errors": {

@@ -738,6 +738,10 @@
       "whatsapp": "Số WhatsApp này đã được kết nối với một workspace khác.",
       "zalo": "Zalo OA này đã được kết nối với một workspace khác."
     },
+    "missingScopes": {
+      "generic": "Đã hủy kết nối: một số quyền chưa được cấp. Hãy kết nối lại và chấp nhận toàn bộ quyền được yêu cầu.",
+      "tiktok": "Đã hủy kết nối TikTok: một số quyền chưa được cấp. Hãy kết nối lại và chấp nhận toàn bộ quyền được yêu cầu."
+    },
     "reconnect": {
       "success": "Kết nối lại kênh thành công.",
       "errors": {

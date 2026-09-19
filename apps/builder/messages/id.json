@@ -3026,6 +3026,10 @@
       "whatsapp": "Nomor WhatsApp ini sudah terhubung ke ruang kerja lain.",
       "zalo": "Zalo OA ini sudah terhubung ke ruang kerja lain."
     },
+    "missingScopes": {
+      "generic": "Koneksi dibatalkan: sebagian izin tidak diberikan. Silakan hubungkan lagi dan setujui semua izin yang diminta.",
+      "tiktok": "Koneksi TikTok dibatalkan: sebagian izin tidak diberikan. Silakan hubungkan lagi dan setujui semua izin yang diminta."
+    },
     "reconnect": {
       "success": "Saluran berhasil dihubungkan kembali.",
       "errors": {

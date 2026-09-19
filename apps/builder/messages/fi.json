@@ -3026,6 +3026,10 @@
       "whatsapp": "Tämä WhatsApp-numero on jo yhdistetty toiseen työtilaan.",
       "zalo": "Tämä Zalo OA on jo yhdistetty toiseen työtilaan."
     },
+    "missingScopes": {
+      "generic": "Yhteys peruutettiin: joitakin käyttöoikeuksia ei myönnetty. Yhdistä uudelleen ja hyväksy kaikki pyydetyt käyttöoikeudet.",
+      "tiktok": "TikTok-yhteys peruutettiin: joitakin käyttöoikeuksia ei myönnetty. Yhdistä uudelleen ja hyväksy kaikki pyydetyt käyttöoikeudet."
+    },
     "reconnect": {
       "success": "Kanava yhdistettiin uudelleen.",
       "errors": {

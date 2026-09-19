@@ -79,6 +79,35 @@ export class TiktokWebhookException extends TiktokException {
 
 export class TiktokAPIException extends TiktokException {}
 
+/** The `code` the OAuth callback matches on to turn this into a toast. */
+export const TIKTOK_MISSING_SCOPES_CODE = "tiktokMissingScopes"
+
+/**
+ * The user completed the authorize flow but withheld a scope the channel
+ * cannot work without.
+ *
+ * TikTok's consent screen lets each permission be unticked individually, so
+ * this is an ordinary outcome, not an attack or a bug — the connection is
+ * refused before anything is persisted and the caller is sent back with a
+ * toast asking them to accept every permission.
+ *
+ * Thrown from `handlers/callback.ts` OUTSIDE `rescue()`, which would otherwise
+ * re-wrap it into a `TiktokAPIException` and lose both the code and the list.
+ */
+export class TiktokMissingScopesError extends TiktokException {
+  readonly missingScopes: string[]
+
+  constructor(missingScopes: string[]) {
+    super(
+      `TikTok authorization is missing required scopes: ${missingScopes.join(", ")}`,
+      FALLBACK_HTTP_STATUS,
+      TIKTOK_MISSING_SCOPES_CODE,
+    )
+    this.name = "TiktokMissingScopesError"
+    this.missingScopes = missingScopes
+  }
+}
+
 export const rescue = async <T>(
   endpoint: string,
   fn: () => Promise<T>,

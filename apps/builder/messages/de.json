@@ -3026,6 +3026,10 @@
       "whatsapp": "Diese WhatsApp-Nummer ist bereits mit einem anderen Arbeitsbereich verbunden.",
       "zalo": "Diese Zalo OA ist bereits mit einem anderen Arbeitsbereich verbunden."
     },
+    "missingScopes": {
+      "generic": "Verbindung abgebrochen: Einige Berechtigungen wurden nicht erteilt. Bitte verbinde erneut und akzeptiere alle angeforderten Berechtigungen.",
+      "tiktok": "TikTok-Verbindung abgebrochen: Einige Berechtigungen wurden nicht erteilt. Bitte verbinde erneut und akzeptiere alle angeforderten Berechtigungen."
+    },
     "reconnect": {
       "success": "Kanal erfolgreich erneut verbunden.",
       "errors": {

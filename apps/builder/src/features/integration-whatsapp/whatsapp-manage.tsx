@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl"
 import { use } from "react"
 import { TokenRefreshErrorIcon } from "@/components/token-refresh-error-icon"
 import { AddChannelButton } from "@/features/inboxes/components/add-channel-button"
-import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
+import { useChannelConnectError } from "@/hooks/use-channel-connect-error"
 import type { listIntegrationWhatsapps } from "./queries"
 import { WhatsappDisconnectDialog } from "./whatsapp-disconnect-dialog"
 
@@ -34,7 +34,7 @@ export function WhatsappManage({
   const [{ data: integrationWhatsapps }] = use(promises)
   const t = useTranslations()
 
-  useChannelDuplicatedError("whatsapp")
+  useChannelConnectError("whatsapp")
 
   if (!isEnabled) {
     return (

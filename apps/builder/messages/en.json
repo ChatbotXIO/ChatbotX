@@ -738,6 +738,10 @@
       "whatsapp": "This WhatsApp number is already connected to another workspace.",
       "zalo": "This Zalo OA is already connected to another workspace."
     },
+    "missingScopes": {
+      "generic": "Connection cancelled: some permissions were not granted. Please connect again and accept every requested permission.",
+      "tiktok": "TikTok connection cancelled: some permissions were not granted. Please connect again and accept every requested permission."
+    },
     "reconnect": {
       "success": "Channel reconnected successfully.",
       "errors": {

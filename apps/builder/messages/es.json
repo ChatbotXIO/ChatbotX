@@ -738,6 +738,10 @@
       "whatsapp": "This WhatsApp number es already connected un another espacio de trabajo.",
       "zalo": "This Zalo OA es already connected un another espacio de trabajo."
     },
+    "missingScopes": {
+      "generic": "Conexión cancelada: no se concedieron algunos permisos. Vuelve a conectar y acepta todos los permisos solicitados.",
+      "tiktok": "Conexión con TikTok cancelada: no se concedieron algunos permisos. Vuelve a conectar y acepta todos los permisos solicitados."
+    },
     "reconnect": {
       "success": "Canal reconnected correctamente.",
       "errors": {

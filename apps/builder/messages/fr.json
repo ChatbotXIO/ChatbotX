@@ -3026,6 +3026,10 @@
       "whatsapp": "Ce numéro WhatsApp est déjà connecté à un autre espace de travail.",
       "zalo": "Ce compte Zalo OA est déjà connecté à un autre espace de travail."
     },
+    "missingScopes": {
+      "generic": "Connexion annulée : certaines autorisations n'ont pas été accordées. Reconnectez-vous et acceptez toutes les autorisations demandées.",
+      "tiktok": "Connexion TikTok annulée : certaines autorisations n'ont pas été accordées. Reconnectez-vous et acceptez toutes les autorisations demandées."
+    },
     "reconnect": {
       "success": "Canal reconnecté.",
       "errors": {
