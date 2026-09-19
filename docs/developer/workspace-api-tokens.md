@@ -125,6 +125,71 @@ permissions and calls the same `contactService.list` method — see
 contacts or contact-derived data, make the intended scope explicit in the
 API contract and tests.
 
+### PUT vs. PATCH on a resource's own id
+
+House rule, enforced by
+`apps/builder/__tests__/public-spec-operations.test.ts` ("every PUT/PATCH
+addressing a resource by its trailing path id matches its body's
+required-ness"): **PUT replaces a resource wholesale** — every body field is
+required, because omitting one would leave the resource in an undefined
+state — **PATCH merges a partial change** — every body field is optional,
+and an omitted field is left untouched. This only applies to a route whose
+last path segment is the resource's own id/name placeholder
+(`/v1/products/{id}`); a sub-resource setter (`/{id}/enabled`) or a
+collection route (`/v1/bot-fields`) doesn't address "the whole resource" the
+same way, and the guard skips both.
+
+Two things the guard's `required.length` check cannot see, so a reviewer has
+to check them by hand:
+
+- **A zod `.default(...)` field is indistinguishable from a genuinely
+  optional one** in the generated JSON Schema — both drop out of `required`.
+  A PUT whose schema has one truly-required field and twenty defaulted ones
+  passes the guard, but if the handler does a full-column overwrite (as
+  opposed to only touching the fields present in the parsed body), every
+  defaulted field the caller omits silently resets to its default. Before
+  adding a `.default()` to a field on a PUT body, confirm the handler
+  actually treats an omitted field as "leave it in its current value," not
+  "have zod fill this in and treat it as an explicit write."
+- **A body having a required field doesn't mean the body represents the
+  whole resource.** A narrow, single-purpose mutation (e.g. a rename
+  endpoint whose body is just `{name}`) can legitimately sit at the
+  resource's own path and pass the guard while still not being a true
+  "replace everything" PUT. That's a naming/semantics call for the route's
+  author, not something the guard enforces.
+
+### Deprecated back-compat aliases
+
+Removing or renaming a released endpoint (path, method, or operation name)
+is a breaking change for any existing API-token caller — the public surface
+is under a compatibility guarantee. Instead of deleting the old route
+outright, add it back as a `deprecated: true` alias that delegates to the
+same handler/service call as its canonical sibling (no duplicated business
+logic): see `inboxes.listChannels`, `contacts.search`,
+`contacts.findByCustomField`, `contacts.setCustomFieldLegacy`,
+`contacts.updateLegacy`, `ads.toggleRuleStatus`, `ads.updateRuleLegacy`,
+`botFields.bulkUpdate`, `templateMessages.list`, and `broadcasts.clone` for
+the pattern.
+
+`apps/mcp-server/src/openapi-loader.ts` skips any operation with
+`deprecated: true` when building MCP tools, so an alias stays callable over
+REST for existing integrations while staying hidden from MCP/CLI tool
+listings — new agent-facing surface stays on the canonical name only.
+
+A method-flip alias (the old route reused the same path with a different
+HTTP method, e.g. `PUT` where the canonical route is now `PATCH`) needs its
+own operationId — `operationId` derives from the router key, and two
+operations can't share a path+method pair under the same key. The
+`<name>Legacy` suffix is the convention (`contacts.updateLegacy`,
+`ads.updateRuleLegacy`).
+
+One specific case worth calling out: `inboxes.listChannels` (`GET
+/v1/channels`) returned the external/platform-side id (e.g. a TikTok
+username) *as* `id`. The canonical `inboxes.list` returns the internal
+inbox id as `id` and exposes that external id as `sourceId` instead — a
+caller migrating off the deprecated route needs to read a different field,
+not just change the URL.
+
 ## Scope notes
 
 The full endpoint-to-scope mapping is generated, not hand-maintained here —
@@ -343,7 +408,7 @@ these.
 | Endpoint | Notes |
 |---|---|
 | `GET/POST /v1/user-persistent-menus`, `GET/PUT/DELETE /v1/user-persistent-menus/{id}` | Full CRUD via `userPersistentMenuService`. |
-| `GET/POST /v1/webchats`, `GET/PUT/DELETE /v1/webchats/{id}` | Full CRUD via `integrationWebchatService`. `DELETE` cascades to disconnecting the webchat's `Inbox`. |
+| `GET/POST /v1/webchats`, `GET/PATCH/DELETE /v1/webchats/{id}` | Full CRUD via `integrationWebchatService`. `DELETE` cascades to disconnecting the webchat's `Inbox`. |
 | `GET/POST /v1/smtp-integrations`, `GET/PUT/DELETE /v1/smtp-integrations/{id}` | Full CRUD via `integrationSmtpService`. `DELETE` cascades to disconnecting the SMTP `Inbox`. The row's `auth` blob (SMTP password) is never returned — every response is hand-picked to `{id, name, fromAddress}`. |
 | `PATCH /v1/messenger-channels/{id}/tag-sync` | Toggles `syncTagEnabledAt` via `messengerIntegrationService.updateTagSync`. |
 | `PATCH /v1/zalo-channels/{id}/tag-sync` | Toggles `syncTagEnabledAt` via `zaloIntegrationService.updateTagSync`. |

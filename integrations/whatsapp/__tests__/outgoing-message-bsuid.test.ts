@@ -52,7 +52,7 @@ const rawRequestBody = () =>
     template?: unknown
   }
 
-describe("WhatsApp sendMessage — BSUID recipient routing (D4)", () => {
+describe("WhatsApp sendMessage — BSUID recipient routing", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSendMessage.mockResolvedValue({
@@ -83,7 +83,7 @@ describe("WhatsApp sendMessage — BSUID recipient routing (D4)", () => {
     expect(mockApiFetch).not.toHaveBeenCalled()
   })
 
-  test("BSUID-keyed contact: routes through the raw poster with `recipient`, never `to` (regression Chatwoot hit)", async () => {
+  test("BSUID-keyed contact: routes through the raw poster with `recipient`, never `to` (known regression on this API)", async () => {
     await sendMessage({
       ctx,
       data: {
@@ -114,7 +114,7 @@ describe("WhatsApp sendMessage — BSUID recipient routing (D4)", () => {
   })
 })
 
-describe("WhatsApp sendFlowStep — BSUID recipient routing (D4)", () => {
+describe("WhatsApp sendFlowStep — BSUID recipient routing", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockApiFetch.mockResolvedValue(

@@ -200,7 +200,7 @@ export const broadcastsPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PATCH",
+      method: "PUT",
       path: "/v1/broadcasts/{id}",
       summary: "Rename broadcast",
       description:
@@ -401,14 +401,46 @@ export const broadcastsPublicRouter = {
         }),
     ),
 
+  duplicate: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/broadcasts/{id}/duplicate",
+      summary: "Duplicate broadcast",
+      description:
+        "Copies the broadcast into a new draft with a deduplicated name, including its targets and audience filter.",
+      successStatus: 201,
+      tags: ["Broadcasts"],
+    })
+    .input(
+      z.object({
+        id: zodBigintAsString().describe(
+          "Broadcast id. Get it from `broadcasts.list`.",
+        ),
+      }),
+    )
+    .output(publicBroadcastResource)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(
+      async ({ context, input }) =>
+        await broadcastService.cloneBroadcast({
+          workspaceId: context.workspace.id,
+          broadcastId: input.id,
+          canViewEmailAndPhone: TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE,
+        }),
+    ),
+
+  // Deprecated — use `broadcasts.duplicate` instead. Kept for backward
+  // compatibility with the pre-consolidation `/clone` path; hidden from
+  // MCP/CLI tool listings.
   clone: workspaceTokenAuthAPI
     .route({
       method: "POST",
       path: "/v1/broadcasts/{id}/clone",
       summary: "Clone broadcast",
       description:
-        "Copies the broadcast into a new draft with a deduplicated name, including its targets and audience filter.",
+        "Deprecated — renamed to `broadcasts.duplicate` at `/duplicate`; this route does the same copy, kept only for callers still on the old path.",
       successStatus: 201,
+      deprecated: true,
       tags: ["Broadcasts"],
     })
     .input(

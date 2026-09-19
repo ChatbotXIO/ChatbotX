@@ -87,7 +87,7 @@ export const qrCodesPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/qr-codes/{id}",
       summary: "Update QR code",
       description:

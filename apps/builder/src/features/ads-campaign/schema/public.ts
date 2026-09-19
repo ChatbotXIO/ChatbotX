@@ -96,8 +96,8 @@ export type CreateMessagingAdPublicRequest = z.infer<
 >
 
 export const operationIdPublicParams = z.object({
-  operationId: zodBigintAsString().describe(
-    "Messaging ad operation id. Get it from `ads.listCampaigns`.",
+  id: zodBigintAsString().describe(
+    "Messaging ad id. Get it from `ads.listCampaigns`.",
   ),
 })
 

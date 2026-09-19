@@ -1,36 +1,33 @@
 "use client"
 
-import type { BroadcastTemplateDetail } from "@chatbotx.io/business"
 import {
   broadcastSendsTemplate,
   broadcastSubactions,
   channelTypes,
-  resolveBroadcastTemplateSend,
 } from "@chatbotx.io/database/partials"
-import type {
-  MessengerTemplateComponent,
-  MessengerTemplateParams,
-  TemplateComponent,
-  WaTemplateParams,
-} from "@chatbotx.io/flow-config"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
-import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { format } from "date-fns"
 import { useFormatter, useTranslations } from "next-intl"
-import { type ReactNode, useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 import { ContactFilterSummary } from "@/features/contact-filter/components/contact-filter-summary"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter/schema"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
-import { MessengerTemplatePreview } from "@/features/integration-messenger/message-templates/components/template-preview"
-import { TemplatePreview } from "@/features/integration-whatsapp/message-templates/components/template-preview"
 import { useWorkspaceId } from "@/hooks/routing"
-import { client } from "@/lib/orpc/orpc"
+import { BroadcastDetailField } from "./components/broadcast-detail-field"
+import { BroadcastDetailFlows } from "./components/broadcast-detail-flows"
+import { BroadcastDetailTemplates } from "./components/broadcast-detail-templates"
 import { BroadcastStatusBadge } from "./components/broadcast-status-badge"
+import { useBroadcastTemplateDetails } from "./hooks/use-broadcast-template-details"
+import {
+  resolveBroadcastPageFlows,
+  resolveBroadcastPageNames,
+} from "./lib/broadcast-detail-pages"
+import { resolveBroadcastInboxLabelKey } from "./lib/broadcast-inbox-label"
 import { resolveBroadcastScheduleTypeMessageKey } from "./lib/schedule-type-options"
 import type { BroadcastResourceWithRelations } from "./schema/resource"
 
@@ -48,49 +45,13 @@ export function BroadcastDetailDialog({
   const t = useTranslations()
   const formatter = useFormatter()
   const workspaceId = useWorkspaceId()
-  const [templateDetails, setTemplateDetails] = useState<
-    BroadcastTemplateDetail[]
-  >([])
-  const [loadingTemplateDetail, setLoadingTemplateDetail] = useState(false)
 
-  const broadcastId = broadcast?.id
   const sendsTemplate = broadcast ? broadcastSendsTemplate(broadcast) : false
-
-  useEffect(() => {
-    if (!(open && broadcastId && sendsTemplate)) {
-      setTemplateDetails([])
-      setLoadingTemplateDetail(false)
-      return
-    }
-
-    let isActive = true
-    setLoadingTemplateDetail(true)
-
-    client.broadcastAPIs
-      .privateListBroadcastTemplateDetailsAPI({
-        workspaceId,
-        broadcastId,
-      })
-      .then((details) => {
-        if (isActive) {
-          setTemplateDetails(details)
-        }
-      })
-      .catch(() => {
-        if (isActive) {
-          setTemplateDetails([])
-        }
-      })
-      .finally(() => {
-        if (isActive) {
-          setLoadingTemplateDetail(false)
-        }
-      })
-
-    return () => {
-      isActive = false
-    }
-  }, [broadcastId, sendsTemplate, open, workspaceId])
+  const templateDetailsState = useBroadcastTemplateDetails({
+    workspaceId,
+    broadcastId: broadcast?.id,
+    enabled: open && sendsTemplate,
+  })
 
   const contactFilter = useMemo(() => {
     const parsed = contactFilterCriteriaSchema.safeParse(
@@ -112,6 +73,8 @@ export function BroadcastDetailDialog({
     ? channel.data
     : channelTypes.enum.omnichannel
   const subaction = broadcastSubactions.safeParse(broadcast.subaction)
+  // Names each page the way the create form's page picker does.
+  const pageLabelKey = resolveBroadcastInboxLabelKey(channelValue)
 
   const integrationValue =
     channelValue === channelTypes.enum.omnichannel
@@ -120,18 +83,21 @@ export function BroadcastDetailDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="max-h-screen overflow-y-auto sm:max-w-3xl">
+      {/* The header stays put and only the body scrolls, so a broadcast with
+          several page templates never pushes the title and close button off
+          screen. */}
+      <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{t("broadcasts.detail.title")}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto pe-1">
           <div className="grid gap-3 text-sm sm:grid-cols-2">
-            <DetailField
+            <BroadcastDetailField
               label={t("fields.name.label")}
               value={broadcast.name}
             />
-            <DetailField
+            <BroadcastDetailField
               label={t("fields.channel.label")}
               value={
                 <InboxIcon
@@ -141,11 +107,11 @@ export function BroadcastDetailDialog({
                 />
               }
             />
-            <DetailField
+            <BroadcastDetailField
               label={t("broadcasts.detail.integration")}
               value={integrationValue}
             />
-            <DetailField
+            <BroadcastDetailField
               label={t("broadcasts.detail.subaction")}
               value={
                 subaction.success
@@ -153,34 +119,30 @@ export function BroadcastDetailDialog({
                   : broadcast.subaction
               }
             />
-            <DetailField
+            <BroadcastDetailField
               label={t("fields.status.label")}
               value={<BroadcastStatusBadge status={broadcast.status} />}
             />
-            <DetailField
+            <BroadcastDetailField
               label={t("fields.schedule.label")}
               value={t(
                 resolveBroadcastScheduleTypeMessageKey(broadcast.schedulesType),
               )}
             />
-            <DetailField
+            <BroadcastDetailField
               label={t("fields.scheduledAt.label")}
               value={format(
                 new Date(broadcast.schedulesAt),
                 "yyyy/MM/dd HH:mm",
               )}
             />
-            <DetailField
+            <BroadcastDetailField
               label={t("fields.estimatedContacts.label")}
               value={
                 broadcast.contactCount == null
                   ? "-"
                   : formatter.number(broadcast.contactCount)
               }
-            />
-            <DetailField
-              label={t("fields.flowId.label")}
-              value={resolveBroadcastFlowNames(broadcast)}
             />
           </div>
 
@@ -191,174 +153,30 @@ export function BroadcastDetailDialog({
             <ContactFilterSummary contactFilter={contactFilter} />
           </section>
 
-          <section className="space-y-3">
-            <h3 className="font-medium text-sm">
-              {t("broadcasts.detail.template")}
-            </h3>
-            <TemplateSection
-              broadcast={broadcast}
-              loading={loadingTemplateDetail}
-              templateDetails={templateDetails}
-            />
-          </section>
+          {/* A broadcast delivers either templates or flows, never both. */}
+          {sendsTemplate ? (
+            <section className="space-y-3">
+              <h3 className="font-medium text-sm">
+                {t("broadcasts.detail.template")}
+              </h3>
+              <BroadcastDetailTemplates
+                broadcast={broadcast}
+                pageLabelKey={pageLabelKey}
+                state={templateDetailsState}
+              />
+            </section>
+          ) : (
+            <section className="space-y-3">
+              <h3 className="font-medium text-sm">{t("fields.flow.label")}</h3>
+              <BroadcastDetailFlows
+                pageFlows={resolveBroadcastPageFlows(broadcast)}
+                pageLabelKey={pageLabelKey}
+                workspaceId={workspaceId}
+              />
+            </section>
+          )}
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
-
-/**
- * The page(s) a broadcast sends from: every target page of a multi-page
- * broadcast, else the legacy integration's page, else a dash.
- */
-function resolveBroadcastPageNames(
-  broadcast: BroadcastResourceWithRelations,
-): string {
-  const targetPageNames = (broadcast.targets ?? []).map(
-    (target) => target.inbox.name,
-  )
-  if (targetPageNames.length > 0) {
-    return targetPageNames.join(", ")
-  }
-  return (
-    broadcast.integrationWhatsapp?.name ??
-    broadcast.integrationMessenger?.name ??
-    "-"
-  )
-}
-
-/** The flow(s) a broadcast runs: one per page in targets mode, else the legacy flow. */
-function resolveBroadcastFlowNames(
-  broadcast: BroadcastResourceWithRelations,
-): string {
-  const pageFlows = (broadcast.targets ?? []).flatMap((target) =>
-    target.flow ? [`${target.inbox.name} - ${target.flow.name}`] : [],
-  )
-  if (pageFlows.length > 0) {
-    return pageFlows.join(", ")
-  }
-  return broadcast.flow?.name ?? broadcast.flowId ?? "-"
-}
-
-function DetailField({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div>
-      <div className="text-muted-foreground">{label}</div>
-      <div className="font-medium">{value}</div>
-    </div>
-  )
-}
-
-function TemplateSection({
-  broadcast,
-  loading,
-  templateDetails,
-}: {
-  broadcast: BroadcastResourceWithRelations
-  loading: boolean
-  templateDetails: BroadcastTemplateDetail[]
-}) {
-  const t = useTranslations()
-
-  if (loading) {
-    return (
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-40" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-    )
-  }
-
-  if (templateDetails.length === 0) {
-    return (
-      <div className="text-muted-foreground text-sm">
-        {t("broadcasts.detail.noTemplate")}
-      </div>
-    )
-  }
-
-  // One block per page: each template is previewed with the params that
-  // page was sent with (a legacy row keeps them on the broadcast itself).
-  return (
-    <div className="space-y-6">
-      {templateDetails.map((templateDetail) => (
-        <TemplateDetailBlock
-          key={`${templateDetail.inboxId}-${templateDetail.id}`}
-          templateData={
-            resolveBroadcastTemplateSend(broadcast, templateDetail.inboxId)
-              ?.templateData as
-              | WaTemplateParams
-              | MessengerTemplateParams
-              | null
-              | undefined
-          }
-          templateDetail={templateDetail}
-        />
-      ))}
-    </div>
-  )
-}
-
-function TemplateDetailBlock({
-  templateDetail,
-  templateData,
-}: {
-  templateDetail: BroadcastTemplateDetail
-  templateData: WaTemplateParams | MessengerTemplateParams | null | undefined
-}) {
-  const t = useTranslations()
-  const components = Array.isArray(templateDetail.components)
-    ? templateDetail.components
-    : []
-
-  return (
-    <div className="space-y-3">
-      <div className="grid gap-3 text-sm sm:grid-cols-2">
-        <DetailField
-          label={t("fields.name.label")}
-          value={`${templateDetail.name} (${templateDetail.language})`}
-        />
-        <DetailField
-          label={t("fields.category.label")}
-          value={templateDetail.category}
-        />
-        <DetailField
-          label={t("fields.status.label")}
-          value={templateDetail.status}
-        />
-        <DetailField
-          label={t("broadcasts.detail.integration")}
-          value={templateDetail.integrationName ?? "-"}
-        />
-      </div>
-
-      {templateDetail.channel === "whatsapp" ? (
-        <TemplatePreview
-          bodyParams={
-            (templateData as WaTemplateParams | undefined)?.body ?? []
-          }
-          buttonParams={
-            (templateData as WaTemplateParams | undefined)?.button ?? []
-          }
-          components={components as TemplateComponent[]}
-          headerParams={
-            (templateData as WaTemplateParams | undefined)?.header ?? []
-          }
-        />
-      ) : (
-        <MessengerTemplatePreview
-          bodyParams={
-            (templateData as MessengerTemplateParams | undefined)?.body ?? []
-          }
-          buttonParams={
-            (templateData as MessengerTemplateParams | undefined)?.button ?? []
-          }
-          components={components as MessengerTemplateComponent[]}
-          headerParams={
-            (templateData as MessengerTemplateParams | undefined)?.header ?? []
-          }
-        />
-      )}
-    </div>
   )
 }

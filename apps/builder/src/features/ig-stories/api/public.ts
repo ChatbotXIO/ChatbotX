@@ -91,7 +91,7 @@ export const igStoriesPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/ig-stories/{id}",
       summary: "Update Instagram Story Automation",
       description:

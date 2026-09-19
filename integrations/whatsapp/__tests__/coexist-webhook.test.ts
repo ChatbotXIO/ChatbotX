@@ -1,4 +1,7 @@
+import { createHmac } from "node:crypto"
+import { sha256Hex } from "@chatbotx.io/utils/crypto"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import type { OnMessageArgs } from "whatsapp-api-js/emitters"
 import { extractCoexistPayloads, webhookHandler } from "../src/handlers/webhook"
 
 // ---------------------------------------------------------------------------
@@ -252,12 +255,15 @@ describe("extractCoexistPayloads", () => {
 })
 
 // ---------------------------------------------------------------------------
-// H2 — setTimeout race: coexist payloads must be enqueued even when
-// handle_post resolves AFTER the 300 ms timeout window.
+// capturePostResult: the SDK middleware's message/status callback must be
+// captured no matter how long handle_post takes to resolve it — there is no
+// internal timeout window any more (see HIGH finding: the old 300 ms guard
+// silently dropped a late result while still ACKing the webhook).
 // ---------------------------------------------------------------------------
 
-const { handlePostMock } = vi.hoisted(() => ({
+const { handlePostMock, middlewareInstances } = vi.hoisted(() => ({
   handlePostMock: vi.fn<() => Promise<number>>(),
+  middlewareInstances: [] as Array<{ on: Record<string, unknown> }>,
 }))
 
 vi.mock("whatsapp-api-js/middleware/next", () => ({
@@ -268,16 +274,42 @@ vi.mock("whatsapp-api-js/middleware/next", () => ({
     on: Record<string, unknown> = { message: null, sent: null, status: null }
     get = vi.fn().mockResolvedValue("ok")
     handle_post = handlePostMock
+    constructor() {
+      middlewareInstances.push(this)
+    }
   },
 }))
 
-/** Build a minimal Request that looks like a WhatsApp POST webhook. */
-const makePostRequest = (body: unknown) =>
-  new Request("https://example.com/webhook", {
+// The tests below exercise the handle_post / callback-capture behavior, not
+// signature verification (that is covered by webhook-hmac.test.ts). Stub the
+// verifier so it settles as a resolved microtask: the real Web Crypto
+// implementation resolves off the libuv threadpool, which
+// vi.advanceTimersByTimeAsync cannot flush. Other exports (incl. `sha256Hex`,
+// used by the coexist jobId tests below) stay real; the extractCoexistPayloads
+// tests above never touch this module.
+vi.mock("@chatbotx.io/utils/crypto", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/utils/crypto")>()),
+  verifyHmacSha256Signature: vi.fn().mockResolvedValue(true),
+}))
+
+/** Matches `baseConfig.clientSecret` below — kept as its own constant so
+ * `makePostRequest` doesn't need to depend on `baseConfig`'s `never` cast. */
+const TEST_CLIENT_SECRET = "secret"
+
+/** Build a minimal Request that looks like a WhatsApp POST webhook, signed
+ * with `TEST_CLIENT_SECRET` so it passes HMAC verification. */
+const makePostRequest = (body: unknown) => {
+  const rawBody = JSON.stringify(body)
+  const signature = `sha256=${createHmac("sha256", TEST_CLIENT_SECRET).update(rawBody, "utf8").digest("hex")}`
+  return new Request("https://example.com/webhook", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers: {
+      "Content-Type": "application/json",
+      "x-hub-signature-256": signature,
+    },
+    body: rawBody,
   })
+}
 
 /** A minimal coexist body envelope with a history payload. */
 const coexistBody = {
@@ -297,12 +329,51 @@ const coexistBody = {
 }
 
 const baseConfig = {
-  clientSecret: "secret",
+  clientSecret: TEST_CLIENT_SECRET,
   verifyToken: "verify",
   version: "v20.0",
 } as never
 
-describe("webhookHandler — H2 setTimeout race", () => {
+/** A minimal webhook body carrying one `messages`-field change, which is the
+ * only field that ever reaches `capturePostResult`/`handle_post` (see
+ * `buildMessagesChangeBuffers` in `webhook.ts`). */
+const messageBody = {
+  entry: [
+    {
+      id: "waba-msg",
+      changes: [
+        {
+          field: "messages",
+          value: {
+            metadata: { phone_number_id: "phone-msg" },
+            messages: [
+              {
+                from: "16315551234",
+                id: "wamid.trigger-1",
+                timestamp: "1755700000",
+                type: "text",
+                text: { body: "hi" },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  ],
+}
+
+/** Fires the mocked middleware's `on.message` callback for the most recently
+ * constructed `Middleware` instance — simulates whatsapp-api-js@6.2.1's
+ * `post()` calling `this.on.message` synchronously inside `handle_post`. */
+const fireOnMessage = (args: OnMessageArgs) => {
+  const instance = middlewareInstances.at(-1)
+  const onMessage = instance?.on.message as
+    | ((value: OnMessageArgs) => void)
+    | undefined
+  onMessage?.(args)
+}
+
+describe("webhookHandler — capturePostResult", () => {
   beforeEach(() => {
     // The WhatsAppAPI mock is a class (see vi.mock above), so it stays
     // constructable across tests; only the per-test handle_post stub needs
@@ -315,78 +386,206 @@ describe("webhookHandler — H2 setTimeout race", () => {
     vi.useRealTimers()
   })
 
-  it("(a) enqueues coexist payloads even when handle_post resolves after the 300 ms window", async () => {
-    // Use a deferred promise so we control exactly when handle_post resolves.
-    // We resolve it AFTER advancing past the 300 ms guard, simulating a slow
-    // handle_post that would have lost the race with the old setTimeout(300).
-    let resolveHandlePost!: (status: number) => void
-    const deferredHandlePost = new Promise<number>((res) => {
-      resolveHandlePost = res
+  it("returns a message result when the SDK callback fires synchronously inside handle_post", async () => {
+    handlePostMock.mockImplementation(() => {
+      fireOnMessage({
+        phoneID: "phone-sync",
+        message: { id: "wamid.sync-1" },
+      } as OnMessageArgs)
+      return Promise.resolve(200)
     })
-    // Suppress the "unhandled rejection" warning while the promise is pending.
-    deferredHandlePost.catch(() => undefined)
-    handlePostMock.mockReturnValue(deferredHandlePost)
+
+    const queueAdd = vi.fn().mockResolvedValue(undefined)
+    const queue = { add: queueAdd } as never
+
+    await webhookHandler({
+      config: baseConfig,
+      req: makePostRequest(messageBody),
+      queue,
+    })
+
+    expect(queueAdd).toHaveBeenCalledWith(
+      "incomingMessage",
+      expect.objectContaining({
+        type: "incomingMessage",
+        data: expect.objectContaining({ integrationIdentifier: "phone-sync" }),
+      }),
+      { jobId: "wa-msg-phone-sync-wamid.sync-1", removeOnFail: true },
+    )
+  })
+
+  it("still returns a message result when the SDK callback fires asynchronously, more than 300 ms into handle_post — the old internal timeout would have dropped this", async () => {
+    handlePostMock.mockImplementation(
+      () =>
+        new Promise<number>((resolve) => {
+          setTimeout(() => {
+            fireOnMessage({
+              phoneID: "phone-late",
+              message: { id: "wamid.late-1" },
+            } as OnMessageArgs)
+            resolve(200)
+          }, 400)
+        }),
+    )
 
     const queueAdd = vi.fn().mockResolvedValue(undefined)
     const queue = { add: queueAdd } as never
 
     const handlerPromise = webhookHandler({
       config: baseConfig,
+      req: makePostRequest(messageBody),
+      queue,
+    })
+
+    // Advance well past the OLD 300 ms guard; handle_post is still pending
+    // and only fires its callback + resolves at 400 ms.
+    await vi.advanceTimersByTimeAsync(400)
+    await handlerPromise
+
+    expect(queueAdd).toHaveBeenCalledWith(
+      "incomingMessage",
+      expect.objectContaining({
+        type: "incomingMessage",
+        data: expect.objectContaining({ integrationIdentifier: "phone-late" }),
+      }),
+      { jobId: "wa-msg-phone-late-wamid.late-1", removeOnFail: true },
+    )
+  })
+
+  it("a non-200 from handle_post skips only that item — the delivery still ACKs so Meta does not loop on a body it can never parse", async () => {
+    handlePostMock.mockResolvedValue(500)
+
+    const queueAdd = vi.fn().mockResolvedValue(undefined)
+    const queue = { add: queueAdd } as never
+
+    await expect(
+      webhookHandler({
+        config: baseConfig,
+        req: makePostRequest(messageBody),
+        queue,
+      }),
+    ).resolves.toBe("ok")
+
+    expect(queueAdd).not.toHaveBeenCalledWith(
+      "incomingMessage",
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+
+  it("a rejected handle_post skips only that item, never an unhandled rejection", async () => {
+    handlePostMock.mockRejectedValue(new Error("unparsable item"))
+
+    const queueAdd = vi.fn().mockResolvedValue(undefined)
+    const queue = { add: queueAdd } as never
+
+    await expect(
+      webhookHandler({
+        config: baseConfig,
+        req: makePostRequest(messageBody),
+        queue,
+      }),
+    ).resolves.toBe("ok")
+
+    expect(queueAdd).not.toHaveBeenCalledWith(
+      "incomingMessage",
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+})
+
+describe("webhookHandler — coexist job dedup", () => {
+  beforeEach(() => {
+    handlePostMock.mockReset()
+    handlePostMock.mockResolvedValue(200)
+  })
+
+  it("gives a coexist job a deterministic jobId derived from phoneNumberId + payload hash", async () => {
+    const queueAdd = vi.fn().mockResolvedValue(undefined)
+    const queue = { add: queueAdd } as never
+
+    await webhookHandler({
+      config: baseConfig,
       req: makePostRequest(coexistBody),
       queue,
     })
 
-    // Advance past the internal 300 ms guard — handle_post is still pending.
-    // In the OLD code the enqueue check would run here with hmacVerified=false.
-    // In the NEW code the handler is waiting for handle_post to resolve.
-    await vi.advanceTimersByTimeAsync(400)
-
-    // Resolve handle_post with 200 (slow but successful HMAC verification).
-    resolveHandlePost(200)
-
-    // Let remaining microtasks and promises settle.
-    await handlerPromise
+    const expectedHash = await sha256Hex(
+      JSON.stringify(coexistBody.entry[0].changes[0].value),
+    )
 
     expect(queueAdd).toHaveBeenCalledWith(
       "coexistWhatsappBuffer",
       expect.objectContaining({ type: "coexistWhatsappBuffer" }),
+      { jobId: `wa-coexist-phone-race-${expectedHash}`, removeOnFail: true },
     )
   })
 
-  it("(b) no unhandled rejection when handle_post rejects after the timeout", async () => {
-    // Use a deferred promise so we can reject AFTER the 300 ms guard fires.
-    let rejectHandlePost!: (err: Error) => void
-    const deferredHandlePost = new Promise<number>((_, rej) => {
-      rejectHandlePost = rej
-    })
-    // Pre-attach a no-op catch so the deferred itself is never "unhandled" at
-    // creation time (the handler will also attach its own catch).
-    deferredHandlePost.catch(() => undefined)
-    handlePostMock.mockReturnValue(deferredHandlePost)
-
-    const queueAdd = vi.fn().mockResolvedValue(undefined)
-    const queue = { add: queueAdd } as never
-
-    const handlerPromise = webhookHandler({
+  it("gives the same coexist payload the same jobId twice, and a different payload a different jobId", async () => {
+    const firstQueueAdd = vi.fn().mockResolvedValue(undefined)
+    await webhookHandler({
       config: baseConfig,
       req: makePostRequest(coexistBody),
-      queue,
+      queue: { add: firstQueueAdd } as never,
     })
+    const firstJobId = firstQueueAdd.mock.calls[0]?.[2]?.jobId
 
-    // Advance past the 300 ms guard; handle_post is still pending.
-    await vi.advanceTimersByTimeAsync(400)
+    const secondQueueAdd = vi.fn().mockResolvedValue(undefined)
+    await webhookHandler({
+      config: baseConfig,
+      req: makePostRequest(coexistBody),
+      queue: { add: secondQueueAdd } as never,
+    })
+    const secondJobId = secondQueueAdd.mock.calls[0]?.[2]?.jobId
 
-    // Now reject handle_post — simulating a late network failure.
-    rejectHandlePost(new Error("network error"))
+    expect(secondJobId).toBe(firstJobId)
 
-    // Handler should surface a controlled SdkException, not an unhandled
-    // process-level rejection.
-    await expect(handlerPromise).rejects.toThrow()
+    const differentBody = {
+      entry: [
+        {
+          changes: [
+            {
+              field: "history",
+              value: {
+                metadata: { phone_number_id: "phone-race" },
+                history: [{ dummy: "different" }],
+              },
+            },
+          ],
+        },
+      ],
+    }
+    const thirdQueueAdd = vi.fn().mockResolvedValue(undefined)
+    await webhookHandler({
+      config: baseConfig,
+      req: makePostRequest(differentBody),
+      queue: { add: thirdQueueAdd } as never,
+    })
+    const thirdJobId = thirdQueueAdd.mock.calls[0]?.[2]?.jobId
 
-    // Coexist payloads must NOT be enqueued (HMAC not verified).
-    expect(queueAdd).not.toHaveBeenCalledWith(
+    expect(thirdJobId).not.toBe(firstJobId)
+  })
+
+  it("a failed coexist enqueue fails the webhook so Meta redelivers — history/echo payloads arrive once and must never be swallowed", async () => {
+    const queueAdd = vi.fn((name: string) =>
+      name === "coexistWhatsappBuffer"
+        ? Promise.reject(new Error("redis down"))
+        : Promise.resolve(undefined),
+    )
+
+    await expect(
+      webhookHandler({
+        config: baseConfig,
+        req: makePostRequest(coexistBody),
+        queue: { add: queueAdd } as never,
+      }),
+    ).rejects.toThrow()
+
+    expect(queueAdd).toHaveBeenCalledWith(
       "coexistWhatsappBuffer",
       expect.anything(),
+      expect.objectContaining({ removeOnFail: true }),
     )
   })
 })

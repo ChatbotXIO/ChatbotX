@@ -2,7 +2,7 @@ import { env } from "../env"
 import { fetchWithTimeout } from "../http"
 import type { DynamicTool } from "../openapi-loader"
 
-const NO_BODY_METHODS: ReadonlySet<string> = new Set(["GET", "HEAD", "DELETE"])
+const NO_BODY_METHODS = new Set(["GET", "HEAD"])
 
 const appendQueryParam = (
   params: URLSearchParams,

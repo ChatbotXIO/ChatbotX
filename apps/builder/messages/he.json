@@ -429,7 +429,9 @@
       "import": "ייבוא זרימה",
       "export": "ייצוא",
       "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
-      "importJsonOnly": "קבצי JSON בלבד"
+      "importJsonOnly": "קבצי JSON בלבד",
+      "whatsappCallButton": "התקשרות בוואטסאפ",
+      "metaConversions": "Meta Conversions API"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -545,6 +547,10 @@
     "media": {
       "stepUnsupportedOnChannel": "ערוץ זה לא יכול לשלוח סוג מדיה זה — השלב ידולג שם. הסר אותו או העבר את הצומת לערוץ שתומך בכך.",
       "buttonsSkippedOnChannel": "ערוץ זה לא יכול לשלוח כפתורים עם הודעת מדיה — הם ידולגו שם. הוסף אותם לשלב טקסט שלאחר מכן."
+    },
+    "whatsappCallButton": {
+      "editButtonTitle": "עריכת כפתור",
+      "buttonLabel": "תווית כפתור"
     }
   },
   "folders": {
@@ -766,7 +772,8 @@
       "adAccountFilter": {
         "all": "כל חשבונות המודעות",
         "label": "חשבון מודעות",
-        "unavailable": "לא ניתן היה לטעון את חשבונות המודעות — בדקו את חיבור המודעות של האינטגרציה הזו, או את חיבור Facebook Ads של סביבת העבודה, בהגדרות."
+        "unavailable": "לא ניתן היה לטעון את חשבונות המודעות — בדקו את חיבור המודעות של האינטגרציה הזו, או את חיבור Facebook Ads של סביבת העבודה, בהגדרות.",
+        "note": "מודעות עם המרות אך עם הוצאה אפסית או אפס הצגות בטווח התאריכים הנבחר מוסתרות בעת סינון לפי חשבון מודעות."
       },
       "channelFilter": {
         "label": "ערוץ",
@@ -1379,7 +1386,20 @@
     "waTemplateLtoExpirationRequired": "בחרו תאריך תפוגה למבצע המוגבל בזמן לפני השליחה.",
     "waTemplateMpmIncompleteProducts": "כל מקטע צריך לפחות מוצר אחד שנבחר — הסירו שורות ריקות או בחרו להן מוצר.",
     "mediaStepUnsupported": "ערוץ זה לא יכול לשלוח סוג מדיה זה. הסר את השלב או הפנה את הצומת לערוץ שתומך בכך.",
-    "mediaButtonsUnsupported": "ערוץ זה לא יכול לשלוח כפתורים עם הודעת מדיה. הסר את הכפתורים או העבר אותם לשלב טקסט שלאחר שלב זה."
+    "mediaButtonsUnsupported": "ערוץ זה לא יכול לשלוח כפתורים עם הודעת מדיה. הסר את הכפתורים או העבר אותם לשלב טקסט שלאחר שלב זה.",
+    "voiceCall": "שיחה קולית",
+    "voiceCallDuration": "שיחה קולית · {duration}",
+    "missedVoiceCall": "שיחה קולית שלא נענתה",
+    "declinedVoiceCall": "שיחה קולית שנדחתה",
+    "voiceCallFailed": "שיחה קולית שנכשלה",
+    "unansweredVoiceCall": "אין תשובה",
+    "canceledVoiceCall": "שיחה שבוטלה",
+    "acceptedCallPermission": "אישר את בקשת ההרשאה לשיחה",
+    "declinedCallPermission": "דחה את בקשת ההרשאה לשיחה",
+    "sendHumanAgentTag": "שליחת הודעה אחת עם תגית HUMAN_AGENT",
+    "warning": "אזהרה!",
+    "humanAgentWarningDescription": "ניתן להשיב להודעת משתמש בתוך 7 ימים רק כאשר לא ניתן לפתור את הבעיה באופן סביר בתוך 24 שעות. דוגמאות כוללות סופי שבוע, חגים או מקרים שדורשים יותר מיום אחד להשלמה. אל תשתמשו באפשרות זו מסיבה אחרת, משום שהיא עלולה לסכן את דף Facebook או חשבון Instagram שלכם. אם אינכם בטוחים, אל תמשיכו.",
+    "callFailed": "בעיה בשיחה"
   },
   "instagram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Instagram.",
@@ -1842,7 +1862,8 @@
       "profile": "פרופיל",
       "usefulLinks": "קישורים שימושיים",
       "conversionsApi": "אופטימיזציית מודעות",
-      "settings": "הגדרות"
+      "settings": "הגדרות",
+      "calls": "Calls"
     },
     "accountHealths": {
       "title": "ניהול חשבון WhatsApp",
@@ -1974,6 +1995,258 @@
     "transferPhoneNumber": "העברת מספר טלפון מספק WhatsApp אחר",
     "selectPage": {
       "tryAgain": "ניסיון חיבור מחדש"
+    },
+    "manualAppSecretMissingNotice": "חתימות ה-webhook לא מאומתות עד שתוסיף את סוד אפליקציית Meta שלך.",
+    "calls": {
+      "title": "WhatsApp Calls",
+      "description": "Let customers call your business on WhatsApp and control how calling works for this number.",
+      "enableLabel": "Enable calling",
+      "enableHelper": "Allow WhatsApp calls to and from this business number.",
+      "iconVisibilityLabel": "Show call icon",
+      "iconVisibilityHelper": "Show the call button in the chat and on your business profile.",
+      "callbackPermissionLabel": "Callback permission requests",
+      "callbackPermissionHelper": "Automatically ask customers for permission to call them back after a missed or completed call.",
+      "propagationNote": "Changes are applied by Meta immediately, but the WhatsApp app of your customers can take up to 7 days to reflect them.",
+      "loadFailed": "Failed to load calling settings from Meta. Check the connection of this number and try again.",
+      "errors": {
+        "notFound": "WhatsApp integration not found",
+        "notWhatsappConversation": "This conversation is not on WhatsApp",
+        "callNotFound": "Call not found",
+        "callNotReady": "The call is not ready to answer yet — try again",
+        "inAppCallingUnavailable": "In-app calling is not configured on this server",
+        "noCallPermission": "The contact has not granted call permission",
+        "permissionRequestLimitReached": "‏WhatsApp מאפשר רק 2 בקשות הרשאת שיחה לכל איש קשר בכל 7 ימים. איש קשר זה הגיע למגבלה — נסה שוב מאוחר יותר.",
+        "audioConnectFailed": "Could not connect call audio",
+        "updateFailed": "Meta דחתה את השינוי בהגדרות השיחות",
+        "savedOnMetaOnly": "Meta saved the change but this workspace did not. Save again to finish.",
+        "bicUnavailable": "שיחות ביוזמת העסק אינן זמינות במדינה זו",
+        "callAlreadyInProgress": "שיחה עם איש קשר זה כבר מתבצעת",
+        "hangupFailed": "לא ניתן היה לסיים את השיחה",
+        "voipCannotAnswer": "This call is no longer available to answer",
+        "voipCallEnded": "The call ended before it could be answered",
+        "voipAnswerFailed": "Could not answer the WhatsApp call",
+        "voipRejectFailed": "לא ניתן היה לדחות את שיחת הוואטסאפ",
+        "voipHangupFailed": "לא ניתן היה לסיים את שיחת הוואטסאפ",
+        "voipNotReservedAgent": "אינך הסוכן המשויך לשיחה זו",
+        "voipCallAccessDenied": "אין לך הרשאה לטפל בשיחה זו",
+        "voipTurnCredentialsRateLimited": "Too many call setup requests. Please wait a moment and try again.",
+        "callNoLongerRinging": "השיחה הזו כבר לא מצלצלת",
+        "transcriptionRequiresRecording": "הפעל הקלטת שיחות לפני הפעלת התמלול.",
+        "supportSessionCallingBlocked": "שיחות אינן זמינות במהלך הפעלת תמיכה של הפלטפורמה.",
+        "callingAccessDenied": "אין לך גישה לשיחות בסביבת עבודה זו.",
+        "callArtifactAccessDenied": "אין לך הרשאה לצפות בשיחה זו.",
+        "callHistoryAccessDenied": "אין לך גישה להיסטוריית השיחות בסביבת עבודה זו."
+      },
+      "permissionRequestTitle": "Request call permission",
+      "permissionRequestDescription": "Ask this customer to allow calls from your business on WhatsApp. Meta limits requests to 1 per 24 hours and 2 per 7 days per customer.",
+      "permissionRequestBodyLabel": "Message",
+      "permissionRequestDefaultBody": "We would like to call you on WhatsApp to help you faster. Do you allow us to call you?",
+      "permissionRequestSent": "Call permission request sent",
+      "inAppCallingLabel": "In-app calling (beta)",
+      "inAppCallingHelper": "Route this number's WhatsApp calls to the inbox so agents can answer them in the browser.",
+      "recordingLabel": "Record calls",
+      "recordingHelper": "הקלט שיחות שנענו או בוצעו מתיבת הדואר הנכנס והוסף את ההקלטה לשיחה.",
+      "recordingInProgress": "התבקש תיעוד",
+      "incomingCall": "Incoming WhatsApp call…",
+      "unknownCaller": "Unknown caller",
+      "incomingCallBanner": "Incoming WhatsApp call",
+      "answer": "Answer",
+      "reject": "Reject",
+      "ringingBadge": "Ringing",
+      "ringingCountdown": "{seconds}s",
+      "updateFailedTitle": "Meta דחתה את השינוי",
+      "callContact": "התקשרות ב-WhatsApp",
+      "dialing": "מתקשר…",
+      "startCall": "התחל שיחת WhatsApp",
+      "retentionLabel": "שמירת הקלטות (ימים)",
+      "retentionHelper": "משך הזמן שבו הקלטות שיחה נשמרות לפני שהן נמחקות לצמיתות.",
+      "transcriptionLabel": "תמלול שיחות",
+      "transcriptionHelper": "הוסף לשיחה תמלול של כל שיחה מוקלטת.",
+      "preflight": {
+        "title": "זכאות לשיחות",
+        "appSubscriptionMissing": "הגדר תחילה את ה-webhook של WhatsApp לאפליקציה זו בלוח הבקרה של אפליקציות Meta, ולאחר מכן נסה שוב.",
+        "appSubscriptionFailed": "לא ניתן היה לאמת את הרשמת ה-webhook של 'calls' עבור האפליקציה. נסה שוב בקרוב.",
+        "callsNotSubscribed": "אפליקציה זו לא רשומה לשדה ה-webhook 'calls', כך שאירועי שיחה לא יכולים להגיע ל-ChatbotX (שגיאת Meta 138018: הדרישות המקדימות הטכניות לא מתקיימות — יש לוודא שלפחות אפליקציה אחת הרשומה ל-WABA כוללת גם את שדה ה-webhook של שיחות).",
+        "fixButton": "תיקון",
+        "fixSuccess": "האפליקציה רשומה כעת ל-webhooks של שיחות WhatsApp.",
+        "manualIntegrationNotice": "מספר זה חובר באופן ידני ואין לו כאן פרטי אפליקציה. יש להירשם לשדה ה-webhook 'calls' עבור האפליקציה שלך בלוח הבקרה של אפליקציות Meta.",
+        "coexistenceWarning": "מספר זה משתמש בשיתוף (coexistence) עם אפליקציית WhatsApp Business, ש-Meta אינה תומכת בו לשיחות. יש להעביר אותו לשימוש ב-Cloud API בלבד."
+      },
+      "voipConnecting": "Connecting…",
+      "recordingActivity": {
+        "showTranscript": "הצג תמלול",
+        "hideTranscript": "הסתר תמלול"
+      },
+      "outbound": {
+        "needsPermission": "You need permission to call this contact. Request permission first.",
+        "permissionCheckFailed": "We could not check your call permission for this contact right now. Please try again in a moment.",
+        "businessCallingUnavailable": "‏WhatsApp לא הפעילה שיחות ביוזמת העסק עבור מספר זה. הדבר תלוי בזמינות במדינה ובזכאות החשבון אצל Meta, ולכן לא ניתן להפעיל זאת כאן.",
+        "callAlreadyInProgress": "A call to this contact is already in progress.",
+        "dailyLimitReached": "You have reached the connected-call limit with this contact for now.",
+        "ineligibleNumber": "This number is not eligible for business-initiated calling.",
+        "recipientUncallable": "This contact cannot be called on WhatsApp right now.",
+        "temporarilyDisabled": "Calling is temporarily disabled for this number due to call quality.",
+        "rateLimited": "Too many call attempts. Please wait a moment and try again.",
+        "paymentIssue": "There is a billing issue with your WhatsApp Business account.",
+        "callingNotEnabled": "Calling is not enabled for this WhatsApp number.",
+        "callFailed": "The call could not be placed. Please try again.",
+        "calling": "Calling…",
+        "ringback": "Ringing…",
+        "micPermissionDenied": "הגישה למיקרופון נדחתה. אפשר גישה בהגדרות הדפדפן וניסה שוב.",
+        "micNotFound": "לא נמצא מיקרופון. חבר מיקרופון וניסה שוב.",
+        "callAccessDenied": "אין לך הרשאה להתקשר לאיש קשר זה."
+      },
+      "card": {
+        "audioCall": "שיחה קולית",
+        "recordingUnavailable": "ההקלטה אינה זמינה יותר",
+        "recordingNotCaptured": "ההקלטה אינה זמינה לשיחה זו",
+        "recordingProcessing": "ההקלטה בעיבוד…",
+        "moreOptions": "אפשרויות נוספות",
+        "download": "הורדה",
+        "openCallInformation": "פתיחת פרטי השיחה",
+        "transcript": "תמלול",
+        "aiSummary": "סיכום AI",
+        "transcriptUnavailable": "התמלול אינו זמין עדיין",
+        "summaryUnavailable": "סיכום ה-AI אינו זמין עדיין",
+        "play": "הפעלה",
+        "pause": "השהיה",
+        "seek": "דילוג למיקום",
+        "mute": "השתקה",
+        "unmute": "ביטול השתקה",
+        "playbackFailed": "ההפעלה נכשלה",
+        "answeredBy": "נענה על ידי {name}",
+        "calledBy": "התקשרות מאת {name}",
+        "callFailed": "בעיה בשיחה",
+        "callBack": "התקשר בחזרה"
+      },
+      "sheet": {
+        "title": "פרטי השיחה",
+        "summaryTab": "סיכום AI",
+        "transcriptTab": "תמלול",
+        "searchLabel": "חיפוש בתמלול",
+        "searchPlaceholder": "חיפוש בתמלול…",
+        "transcriptUnavailable": "התמלול אינו זמין לשפת השיחה הזו",
+        "transcriptError": "לא ניתן לטעון את התמלול. בדוק את החיבור שלך ונסה שוב.",
+        "noSearchResults": "לא נמצאו קטעים תואמים",
+        "playSegment": "נגן מכאן",
+        "summaryKeyPoints": "נקודות עיקריות",
+        "summaryActionItems": "פעולות נדרשות",
+        "regenerate": "צור מחדש",
+        "regenerateConfirmTitle": "ליצור מחדש את סיכום ה-AI?",
+        "regenerateConfirmDescription": "פעולה זו תחליף את הסיכום הנוכחי בסיכום חדש שנוצר.",
+        "summaryEmpty": "אין עדיין סיכום AI לשיחה זו.",
+        "generateSummary": "צור סיכום"
+      },
+      "summaryDialog": {
+        "title": "יצירת סיכום AI",
+        "description": "בחר ספק AI מחובר לסיכום שיחה זו.",
+        "noProviderTitle": "לא מחובר ספק AI",
+        "noProviderDescription": "חבר אינטגרציית AI כדי ליצור סיכומי שיחות.",
+        "connectLink": "עבור להגדרות AI",
+        "generate": "צור",
+        "generating": "יוצר…",
+        "generateFailed": "לא ניתן היה ליצור את הסיכום. נסה שוב.",
+        "retry": "נסה שוב",
+        "emptyTranscriptTooltip": "לשיחה זו אין עדיין תמלול לסיכום"
+      },
+      "panel": {
+        "eyebrowCalling": "מתקשר…",
+        "eyebrowIncoming": "שיחה נכנסת",
+        "eyebrowOnCall": "בשיחה",
+        "statusPreparing": "מתכונן…",
+        "statusWaitingForMic": "מחכה לאישור גישה למיקרופון…",
+        "statusDeclined": "נדחתה",
+        "statusCallFailed": "השיחה נכשלה",
+        "statusCallEnded": "השיחה הסתיימה",
+        "end": "סיום",
+        "minimize": "מזער",
+        "goToConversation": "עבור לשיחה",
+        "expand": "הרחב",
+        "dismiss": "סגור",
+        "statusNoAnswer": "אין מענה",
+        "eyebrowCallEnded": "השיחה הסתיימה",
+        "statusConnectionLost": "החיבור אבד",
+        "ringingListTitle": "{count, plural, one {# שיחה נכנסת} other {# שיחות נכנסות}}"
+      },
+      "capability": {
+        "title": "זכאות לשיחות",
+        "enableCalling": "הפעל שיחות בהגדרות > ערוצים > WhatsApp > שיחות.",
+        "reconnectChannel": "עבור להגדרות > ערוצים וחבר מחדש את ערוץ ה-WhatsApp.",
+        "ok": "אישור",
+        "micPermissionTitle": "הרשאת מיקרופון",
+        "dialFailureTitle": "לא ניתן היה להתחיל את השיחה"
+      },
+      "manualIntegrationCallWarning": {
+        "title": "מספר מחובר ידנית",
+        "callsSubscription": "מספר WhatsApp זה חובר באופן ידני. ודא שהאפליקציה שלך ב-Meta רשומה לשדה ה-webhook calls (לוח הבקרה של אפליקציות Meta ← WhatsApp ← Configuration ← Webhook fields ← calls) — אחרת שיחות יוצאות לא יתחברו ושיחות נכנסות לא יצלצלו.",
+        "unsignedWebhook": "למספר זה גם אין Meta App Secret מוגדר, ולכן ה-webhooks הנכנסים אליו אינם מאומתים בחתימה.",
+        "callAnyway": "התקשר בכל זאת"
+      },
+      "replaceConfirm": {
+        "title": "לסיים את השיחה עם {current}?",
+        "description": "אתה בשיחה עם {current}. מענה ל{incoming} יסיים את השיחה הזו מיד.",
+        "confirm": "סיים וענה",
+        "cancel": "להישאר בשיחה"
+      },
+      "answerCaller": "ענה לשיחה מ{name}",
+      "rejectCaller": "דחה שיחה מ{name}",
+      "hours": {
+        "title": "שעות שיחות",
+        "description": "לקוחות יכולים להתקשר למספר הזה רק בשעות האלה. מחוץ להן, WhatsApp מציע להם לשוחח בצ'אט, או לבקש שיחה חוזרת אם בקשות שיחה חוזרת מופעלות, ומציג מתי אפשר להתקשר בפעם הבאה.",
+        "enabledLabel": "קבל שיחות רק בשעות השיחות",
+        "timezoneLabel": "אזור זמן",
+        "closed": "סגור",
+        "openTimeLabel": "{day}: נפתח ב-",
+        "closeTimeLabel": "{day}: נסגר ב-",
+        "addRangeLabel": "הוסף שעות ביום {day}",
+        "removeRangeLabel": "הסר שעות ביום {day}",
+        "overnightHint": "כל יום מסתיים ב-23:59. כדי להישאר פתוח אחרי חצות, הוסף את השעות הנותרות ליום הבא.",
+        "days": {
+          "monday": "שני",
+          "tuesday": "שלישי",
+          "wednesday": "רביעי",
+          "thursday": "חמישי",
+          "friday": "שישי",
+          "saturday": "שבת",
+          "sunday": "ראשון"
+        },
+        "errors": {
+          "rangeOrder": "שעת הסגירה חייבת להיות אחרי שעת הפתיחה.",
+          "rangeOverlap": "השעות ביום הזה חופפות.",
+          "noOpenHours": "הוסף שעות ליום אחד לפחות."
+        }
+      },
+      "inboundLabel": "Accept incoming calls",
+      "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing.",
+      "page": {
+        "title": "שיחות",
+        "subtitle": "היסטוריית שיחות עבור סביבת עבודה זו",
+        "emptyTitle": "אין עדיין שיחות",
+        "emptyDescription": "שיחות יופיעו כאן ברגע שהצוות שלך יתחיל לבצע או לקבל שיחות וואטסאפ.",
+        "loadMore": "טען עוד",
+        "allActivity": "כל השיחות",
+        "filterMissed": "שיחות שלא נענו",
+        "filterNoReply": "ללא מענה",
+        "allInboxes": "כל תיבות הדואר הנכנס",
+        "allAgents": "כל הנציגים",
+        "columnContact": "איש קשר",
+        "columnInbox": "תיבת דואר נכנס",
+        "columnDirection": "כיוון",
+        "columnAgent": "נציג",
+        "columnDuration": "משך",
+        "columnDate": "תאריך",
+        "directionInbound": "נכנסת",
+        "directionOutbound": "יוצאת",
+        "kindOngoing": "מתבצעת",
+        "kindAnsweredInbound": "נענתה",
+        "kindAnsweredOutbound": "נענתה",
+        "openConversation": "פתח שיחה",
+        "unknownContact": "איש קשר לא ידוע",
+        "emptyFilteredTitle": "אין שיחות התואמות למסנן זה",
+        "emptyFilteredDescription": "נסו מסנן אחר או נקו אותו כדי לראות את כל השיחות.",
+        "loadMoreError": "טעינת שיחות נוספות נכשלה. נסו שוב.",
+        "callInformation": "פרטי השיחה"
+      }
     }
   },
   "zalo": {
@@ -1986,7 +2259,8 @@
       "toggleSuccess": "הגדרת סנכרון התגיות עודכנה.",
       "enabledSince": "מופעל מאז {date}",
       "disabled": "מושבת"
-    }
+    },
+    "refreshPermissions": "רענון הרשאות"
   },
   "telegram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Telegram.",
@@ -2123,7 +2397,9 @@
       "productRemovedFromCart": "מוצר הוסר מהעגלה",
       "productOrdered": "מוצר הוזמן",
       "contactReferredANewContact": "איש קשר הפנה איש קשר חדש",
-      "contactReferredExistingContact": "איש קשר הפנה איש קשר קיים"
+      "contactReferredExistingContact": "איש קשר הפנה איש קשר קיים",
+      "callRecorded": "השיחה הוקלטה",
+      "callTranscribed": "השיחה תומללה"
     },
     "actions": {
       "addTag": "הוספת תגית",
@@ -5055,6 +5331,16 @@
     },
     "adSource": {
       "label": "Ad source"
+    },
+    "manualAppSecret": {
+      "label": "סוד אפליקציית Meta (אופציונלי)",
+      "description": "מפעיל אימות חתימת webhook לחיבור הידני הזה. ניתן למצוא אותו בלוח הבקרה של אפליקציית Meta שלך, בהגדרות > בסיסי."
+    },
+    "lastCallRecorded": {
+      "label": "הקלטת השיחה האחרונה"
+    },
+    "lastCallTranscript": {
+      "label": "תמלול השיחה האחרון"
     }
   },
   "billing": {
@@ -5197,7 +5483,6 @@
       "audienceFilter": "מסנן קהל",
       "noAudienceFilter": "ללא מסנן קהל",
       "template": "תבנית",
-      "noTemplate": "ללא תבנית",
       "integration": "שילוב"
     },
     "filters": {
@@ -5769,7 +6054,8 @@
     "connectViaFacebook": "חיבור דרך Facebook",
     "unsupportedExplanation": "חשבון Instagram זה חובר באמצעות Instagram Business Login. חברו את החשבון דרך Facebook כדי להשתמש ב-Meta Conversions API.",
     "flowStep": {
-      "whatsappNote": "אירועי WhatsApp נשלחים רק עבור שיחות שהתחילו ממודעת click-to-WhatsApp."
+      "whatsappNote": "אירועי WhatsApp נשלחים רק עבור שיחות שהתחילו ממודעת click-to-WhatsApp.",
+      "description": "הוסיפו לתור אירוע LeadSubmitted עבור Messenger, Instagram או WhatsApp."
     },
     "status": {
       "title": "Meta Conversions API",

@@ -10,6 +10,13 @@ type InputMenuProps = {
   setContent: (text: string, insert?: boolean) => void
 }
 
+/**
+ * Deliberately carries no call control. Requesting call permission is a step of
+ * the call flow, so it belongs to the gated controls (`WhatsappVoipCallButton`
+ * in the conversation head, `ContactPanelCallEntry` in the contact panel) that
+ * resolve outbound call mode first. A copy here would render for every WhatsApp
+ * conversation with none of those gates applied.
+ */
 export const InputMenu = ({ setContent }: InputMenuProps) => {
   const t = useTranslations()
   const activePost = useChatStore((state) => state.activePost)

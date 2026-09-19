@@ -138,7 +138,7 @@ export const spreadsheetsPublicRouter = {
   listWorksheets: workspaceTokenAuthAPI
     .route({
       method: "GET",
-      path: "/v1/spreadsheets/{spreadsheetId}/worksheets",
+      path: "/v1/spreadsheets/{id}/worksheets",
       summary: "List worksheets",
       description:
         "Returns the sheet tabs (worksheets) inside a connected spreadsheet. Use `spreadsheets.list` to find the spreadsheet id first.",
@@ -150,7 +150,7 @@ export const spreadsheetsPublicRouter = {
     .handler(
       async ({ context, input }) =>
         await listWorksheets({
-          ...input,
+          spreadsheetId: input.id,
           workspaceId: context.workspace.id,
         }),
     ),
@@ -158,7 +158,7 @@ export const spreadsheetsPublicRouter = {
   listWorksheetHeaders: workspaceTokenAuthAPI
     .route({
       method: "GET",
-      path: "/v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetName}/headers",
+      path: "/v1/spreadsheets/{id}/worksheets/{worksheetName}/headers",
       summary: "List worksheet headers",
       description:
         "Returns the column headers of a worksheet's first row. Use `spreadsheets.listWorksheets` to find the worksheet name first.",
@@ -171,7 +171,7 @@ export const spreadsheetsPublicRouter = {
       async ({ context, input }) =>
         await listWorksheetHeaders({
           workspaceId: context.workspace.id,
-          spreadsheetId: input.spreadsheetId,
+          spreadsheetId: input.id,
           sheetName: input.worksheetName,
         }),
     ),

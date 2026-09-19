@@ -9,7 +9,6 @@ import {
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { describe, expect, test } from "vitest"
 import {
-  convertCustomFieldTypeToConditionType,
   type FieldConfig,
   formatConditionValueDisplay,
   getConditionOptions,
@@ -28,6 +27,7 @@ import {
   getStaticFieldValueInputConfig,
   staticFieldOperatorRequiresArrayValue,
 } from "@/features/contact-filter/components/static-field-filter-config"
+import { convertCustomFieldTypeToConditionType } from "@/features/contact-filter/schema"
 
 const t = (key: string) => key
 const conditionOptions = getConditionOptions(t)

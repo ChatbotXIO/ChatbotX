@@ -3,6 +3,7 @@ import {
   type DatabaseClient,
   db,
   eq,
+  inArray,
   ne,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
@@ -12,6 +13,10 @@ import {
   type InboxDisconnectReason,
   inboxStatuses,
 } from "@chatbotx.io/database/partials"
+import {
+  type InboxChannelOption,
+  inboxRepository,
+} from "@chatbotx.io/database/repositories"
 import { inboxModel } from "@chatbotx.io/database/schema"
 import type {
   InboxModel,
@@ -99,6 +104,19 @@ class InboxService extends BaseService {
     })
   }
 
+  /**
+   * Bounded id/name options for a channel-filtered select (e.g. the Calls
+   * page's inbox filter). Thin pass-through to the repository — no caching
+   * here, matching find()'s deliberately disabled cache, since nothing in this
+   * service currently invalidates an inbox-scoped cache tag on write.
+   */
+  async listChannelOptionsByWorkspace(input: {
+    workspaceId: string
+    channel: ChannelType
+  }): Promise<InboxChannelOption[]> {
+    return await inboxRepository.listOptionsByWorkspaceAndChannel(input)
+  }
+
   async find(props: { where: InboxWhere }): Promise<InboxModel | undefined> {
     const { where } = props
     // return await withCache(
@@ -136,6 +154,32 @@ class InboxService extends BaseService {
       where: { id: props.id },
       with: InboxService.withIntegrations,
     })
+  }
+
+  /**
+   * Whether the workspace has ever connected an inbox on any of channels.
+   * Deliberately ignores Inbox.status, so a disconnected-but-once-connected
+   * channel still counts, matching the grandfathering rule the settings
+   * accordion applies. LIMIT 1 keys off Inbox_workspaceId_idx.
+   */
+  async hasAnyChannel(props: {
+    workspaceId: string
+    channels: readonly ChannelType[]
+  }): Promise<boolean> {
+    if (props.channels.length === 0) {
+      return false
+    }
+    const row = await db
+      .select({ id: inboxModel.id })
+      .from(inboxModel)
+      .where(
+        and(
+          eq(inboxModel.workspaceId, props.workspaceId),
+          inArray(inboxModel.channel, [...props.channels]),
+        ),
+      )
+      .limit(1)
+    return row.length > 0
   }
 
   /**

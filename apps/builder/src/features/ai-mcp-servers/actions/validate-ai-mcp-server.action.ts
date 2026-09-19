@@ -6,7 +6,7 @@ import {
 } from "@ai-sdk/mcp"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { aiMcpServerAuthTypes } from "@chatbotx.io/database/partials"
-import { resolveBotFieldVariableText } from "@chatbotx.io/variables"
+import { resolveBotFieldVariableText } from "@chatbotx.io/variables/bot-field-variable-resolver"
 import type { ValidatePrivateAIMcpServerRequest } from "../schema/action"
 
 export const validateAIMcpServer = async ({

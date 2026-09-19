@@ -33,6 +33,9 @@ export const createAdsConversionRulePublicRequest =
   createAdsConversionRuleRequest
 export const updateAdsConversionRulePublicRequest =
   updateAdsConversionRuleRequest.omit({ id: true })
+
+// Back-compat for the deprecated `ads.toggleRuleStatus` alias — use
+// `ads.updateRule` with just `enabled` instead.
 export const toggleAdsConversionRulePublicRequest =
   toggleAdsConversionRuleRequest.omit({ id: true })
 

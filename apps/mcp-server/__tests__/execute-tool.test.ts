@@ -82,4 +82,43 @@ describe("executeTool", () => {
       ["contactFilter[operator]", "and"],
     ])
   })
+
+  test("sends a JSON body for a DELETE tool that declares body params", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const deleteTool: DynamicTool = {
+      ...tool,
+      bodyParamNames: ["tagIds"],
+      inputSchema: {
+        properties: { tagIds: { items: { type: "string" }, type: "array" } },
+        type: "object",
+      },
+      method: "DELETE",
+      name: "contacts_remove_tags",
+      pathTemplate: "/v1/contacts/{identifier}/tags",
+      pathParamNames: ["identifier"],
+      queryParamNames: [],
+    }
+
+    await executeTool(
+      deleteTool,
+      { identifier: "id:1", tagIds: ["1"] },
+      "api-key",
+    )
+
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect(init.method).toBe("DELETE")
+    expect(init.body).toBe(JSON.stringify({ tagIds: ["1"] }))
+  })
+
+  test("sends no body for a GET tool even when query params are present", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse)
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    await executeTool(tool, { page: 2 }, "api-key")
+
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect(init.body).toBeUndefined()
+  })
 })

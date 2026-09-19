@@ -25,7 +25,11 @@ import {
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
-import { parseSdkError } from "@chatbotx.io/sdk"
+import {
+  ChannelError,
+  ChannelErrorCategory,
+  parseSdkError,
+} from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
 import { contactVariableService } from "@chatbotx.io/variables"
@@ -72,16 +76,15 @@ export interface ProcessMessengerTemplateResult {
   providerMessageId?: string
 }
 
+// Meta's own error for a template send that leaves a header variable out:
+// (#100 - 1893029) "Missing one or more header params". The pre-send guard
+// reuses its code/subcode so error logs group it with the provider error.
+const MISSING_HEADER_PARAMS_ERROR = { code: 100, subCode: 1_893_029 } as const
+
 function mergeMessengerTemplateButtonParams(
   params: MessengerTemplateParams,
-  components: MessengerTemplateComponent[],
-  parameterFormat: "POSITIONAL" | "NAMED",
+  templateButtonParams: MessengerTemplateParams["button"],
 ): MessengerTemplateParams {
-  const templateButtonParams = extractMessengerTemplateParams(
-    components,
-    parameterFormat,
-  ).button
-
   if (!templateButtonParams || templateButtonParams.length === 0) {
     return params
   }
@@ -104,6 +107,33 @@ function mergeMessengerTemplateButtonParams(
       (left, right) => (left.index ?? 0) - (right.index ?? 0),
     ),
   }
+}
+
+/**
+ * Pre-send guard: every header variable (including one inside an IMAGE "text
+ * and image" header) needs a value, or Meta rejects the send. Sends saved
+ * before image-header variables were collected have no `header` entry and
+ * there is no safe value to invent, so fail fast with a permanent error —
+ * before any message row or API call — until the send is re-saved.
+ */
+function assertMessengerHeaderParamsProvided(props: {
+  requiredHeader: MessengerTemplateParams["header"]
+  providedHeader: MessengerTemplateParams["header"]
+  templateName: string
+}): void {
+  const requiredCount = props.requiredHeader?.length ?? 0
+  const providedCount =
+    props.providedHeader?.filter((param) => param.type === "text").length ?? 0
+
+  if (providedCount >= requiredCount) {
+    return
+  }
+
+  throw new ChannelError(
+    `Messenger template "${props.templateName}" is missing a value for a header variable`,
+    ChannelErrorCategory.PAYLOAD_INVALID,
+    MISSING_HEADER_PARAMS_ERROR,
+  )
 }
 
 export async function processMessengerTemplate(
@@ -155,6 +185,18 @@ export async function processMessengerTemplate(
       throw new Error(`Messenger template validation failed: ${template.id}`)
     }
 
+    // Extracted once per send and shared by the header guard and the button
+    // merge below.
+    const requiredParams = extractMessengerTemplateParams(
+      (validated.template.components as MessengerTemplateComponent[]) || [],
+      template.parameterFormat,
+    )
+    assertMessengerHeaderParamsProvided({
+      requiredHeader: requiredParams.header,
+      providedHeader: template.params.header,
+      templateName: template.name,
+    })
+
     const variables = await contactVariableService.getAll({
       contactId: conversation.contactId,
       contactInbox,
@@ -162,8 +204,7 @@ export async function processMessengerTemplate(
     })
     const completeParams = mergeMessengerTemplateButtonParams(
       template.params,
-      (validated.template.components as MessengerTemplateComponent[]) || [],
-      template.parameterFormat,
+      requiredParams.button,
     )
     const replacedParams = await replaceMessengerTemplateVariables({
       templateParams: completeParams,

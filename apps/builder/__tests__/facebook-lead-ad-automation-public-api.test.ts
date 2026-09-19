@@ -193,8 +193,8 @@ describe("POST /v1/facebook-lead-ads", () => {
   })
 })
 
-describe("PUT /v1/facebook-lead-ads/{id}", () => {
-  const procedure = findProcedure("PUT", "/v1/facebook-lead-ads/{id}")
+describe("PATCH /v1/facebook-lead-ads/{id}", () => {
+  const procedure = findProcedure("PATCH", "/v1/facebook-lead-ads/{id}")
 
   test("updates an automation through the shared service", async () => {
     const automation = { id: "lead-ad-1", name: "Renamed" }

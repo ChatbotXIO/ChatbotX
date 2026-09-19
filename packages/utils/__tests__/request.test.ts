@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, test } from "vitest"
 import {
+  getPublicHostFromRequest,
   getPublicProtocolFromRequest,
   getPublicUrlFromRequest,
+  getRawPublicHostFromRequest,
 } from "../src/request"
 
 const originalForcePublicHttps = process.env.FORCE_PUBLIC_HTTPS
@@ -52,6 +54,69 @@ describe("getPublicProtocolFromRequest", () => {
     expect(
       getPublicProtocolFromRequest(new Request("http://internal.test")),
     ).toBe("http")
+  })
+})
+
+describe("getRawPublicHostFromRequest", () => {
+  test("prefers the Forwarded header's host over everything else", () => {
+    const request = new Request("http://internal.test", {
+      headers: {
+        forwarded: "for=192.0.2.1;host=forwarded.example.com;proto=https",
+        "x-forwarded-host": "xfh.example.com",
+        host: "plain.example.com",
+      },
+    })
+
+    expect(getRawPublicHostFromRequest(request)).toBe("forwarded.example.com")
+  })
+
+  test("falls back to X-Forwarded-Host, taking only the first of a comma-separated list", () => {
+    const request = new Request("http://internal.test", {
+      headers: {
+        "x-forwarded-host": "first.example.com, second.example.com",
+        host: "plain.example.com",
+      },
+    })
+
+    expect(getRawPublicHostFromRequest(request)).toBe("first.example.com")
+  })
+
+  test("falls back to the plain Host header when nothing is forwarded", () => {
+    const request = new Request("http://internal.test", {
+      headers: { host: "plain.example.com:8443" },
+    })
+
+    expect(getRawPublicHostFromRequest(request)).toBe("plain.example.com:8443")
+  })
+
+  test("returns null when no host can be resolved at all — no invented default", () => {
+    const request = new Request("http://internal.test")
+
+    expect(getRawPublicHostFromRequest(request)).toBeNull()
+  })
+
+  test("lowercases and trims whatever it resolves", () => {
+    const request = new Request("http://internal.test", {
+      headers: { host: "  Plain.Example.COM  " },
+    })
+
+    expect(getRawPublicHostFromRequest(request)).toBe("plain.example.com")
+  })
+})
+
+describe("getPublicHostFromRequest", () => {
+  test("keeps its existing localhost:3123 default when nothing resolves", () => {
+    const request = new Request("http://internal.test")
+
+    expect(getPublicHostFromRequest(request)).toBe("localhost:3123")
+  })
+
+  test("still resolves a real host the same way it always did", () => {
+    const request = new Request("http://internal.test", {
+      headers: { host: "plain.example.com" },
+    })
+
+    expect(getPublicHostFromRequest(request)).toBe("plain.example.com")
   })
 })
 

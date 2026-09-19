@@ -1,0 +1,199 @@
+name: Publish CLI to npm
+
+# Publishes apps/cli to npmjs.com as `chatbotx`, in lockstep with the product
+# release tag: tag `v1.9.0` publishes `chatbotx@1.9.0`.
+#
+# The version is NOT stored in the repo. `apps/cli/package.json` holds the
+# placeholder `0.0.0-dev` and this workflow stamps the tag's version into it
+# before building, so nothing has to commit a version bump back to `main`
+# (which branch protection forbids) and the repo can never drift from npm.
+# `apps/cli/src/index.ts` reads that stamped value for `chatbotx --version`.
+#
+# Quality gate: ci.yml (PR/push-to-main) and release.yml's `check` job already
+# run the repo-wide lint/types/test. This workflow cannot `needs:` a job in
+# another workflow file, so it re-runs only the two CLI-scoped tasks, which
+# cost seconds.
+#
+# Auth: OIDC trusted publishing (id-token: write), not an NPM_TOKEN secret.
+# Two things had to be true for this to work, in order:
+#   1. `npm publish`, never `pnpm publish` — pnpm shells the OIDC exchange out
+#      to whatever `npm` binary is on PATH, and that hand-off silently drops
+#      the token request (pnpm/pnpm#9812, #11513), failing `ENEEDAUTH` even
+#      with `id-token: write` granted and npm >= 11.5.1 installed.
+#   2. No `NPM_TOKEN`/`.npmrc` at all — npm only attempts the OIDC exchange
+#      when no long-lived auth token is already configured. Writing an
+#      `_authToken` line (however it's sourced) makes npm skip OIDC and
+#      publish with that token instead, which fails `EOTP` here: this
+#      account/package now requires 2FA on every write and no token —
+#      automation or granular — can bypass it (npm is retiring bypass-2FA
+#      tokens entirely through 2026-2027). OIDC is exempt because it isn't a
+#      stored bypass token at all.
+# Requires a Trusted Publisher registered on npmjs.com for `chatbotx` →
+# Settings, matching this exact repo and this exact workflow filename.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, e.g. 1.9.1 (a leading v is stripped)"
+        required: true
+        type: string
+      dry_run:
+        description: "Run publish with --dry-run (nothing is uploaded)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+# cancel-in-progress is deliberately false: a cancelled run between the npm
+# upload and the step summary leaves a published version nobody announced.
+concurrency:
+  group: publish-cli-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish chatbotx
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6.1.0
+
+      # No `registry-url:` here on purpose — that makes setup-node write its
+      # own npmrc via NPM_CONFIG_USERCONFIG, which is unnecessary noise: the
+      # publish step below authenticates via OIDC, not a stored npm token.
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # Must run AFTER setup-node: setup-node prepends its own Node 24
+      # toolcache bin/ (with its own bundled npm) to PATH, so an upgrade
+      # done before this step targets a different npm than the one every
+      # later step actually resolves. OIDC trusted publishing needs
+      # npm >= 11.5.1, which Node 24's bundled npm can lag — assert it
+      # explicitly so a stale npm fails here, not with a confusing
+      # ENEEDAUTH at the publish step.
+      - name: Update npm for OIDC trusted publishing
+        run: |
+          npm install -g npm@11
+          NPM_VERSION="$(npm --version)"
+          MIN_VERSION="11.5.1"
+          if [[ "$(printf '%s\n%s\n' "${NPM_VERSION}" "${MIN_VERSION}" | sort -V | head -n1)" != "${MIN_VERSION}" ]]; then
+            echo "::error::npm ${NPM_VERSION} is too old for OIDC trusted publishing (need >= ${MIN_VERSION})"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve version and dist-tag
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            RAW="${INPUT_VERSION}"
+          else
+            RAW="${GITHUB_REF_NAME}"
+          fi
+          VERSION="${RAW#v}"
+          if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Invalid version '${RAW}' — expected v<major>.<minor>.<patch>[-prerelease]"
+            exit 1
+          fi
+          # A prerelease tag (v2.0.0-rc.1) must never become npm's `latest`.
+          if [[ "${VERSION}" == *-* ]]; then
+            DIST_TAG="next"
+          else
+            DIST_TAG="latest"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "dist_tag=${DIST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Publishing chatbotx@${VERSION} under dist-tag ${DIST_TAG}"
+
+      # Re-running a tag's workflow must not fail on E403 "cannot publish over
+      # an existing version". Only guarded for tag pushes: a manual dispatch is
+      # an explicit human action and should surface the duplicate as an error.
+      - name: Skip when already published
+        id: guard
+        if: github.event_name == 'push'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if npm view "chatbotx@${VERSION}" version >/dev/null 2>&1; then
+            echo "chatbotx@${VERSION} is already on npm — skipping publish."
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # jq ships on ubuntu-latest. Not committed anywhere — the runner's copy of
+      # package.json is the only thing that changes.
+      - name: Stamp version into apps/cli/package.json
+        if: steps.guard.outputs.should_publish != 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          jq --arg v "${VERSION}" '.version = $v' apps/cli/package.json > package.json.tmp
+          mv package.json.tmp apps/cli/package.json
+          node -e "console.log('stamped version:', require('./apps/cli/package.json').version)"
+
+      - name: Type-check and test CLI
+        if: steps.guard.outputs.should_publish != 'false'
+        working-directory: apps/cli
+        run: |
+          pnpm check-types
+          pnpm test
+
+      # Direct `tsdown` rather than `turbo run build`: the stamped package.json
+      # must be inside the bundle, and this sidesteps any turbo cache question
+      # entirely. Never `pnpm --filter chatbotx` — the private root package is
+      # ALSO named `chatbotx`, so that selector matches two projects.
+      - name: Build CLI
+        if: steps.guard.outputs.should_publish != 'false'
+        working-directory: apps/cli
+        run: pnpm build
+
+      - name: Publish to npm
+        id: publish
+        if: steps.guard.outputs.should_publish != 'false'
+        working-directory: apps/cli
+        env:
+          DIST_TAG: ${{ steps.version.outputs.dist_tag }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          ARGS=(--access public --tag "${DIST_TAG}")
+          if [[ "${DRY_RUN}" == "true" ]]; then
+            ARGS+=(--dry-run)
+          fi
+          npm publish "${ARGS[@]}"
+
+      - name: Summarize
+        if: always()
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          DIST_TAG: ${{ steps.version.outputs.dist_tag }}
+          SHOULD_PUBLISH: ${{ steps.guard.outputs.should_publish }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
+        run: |
+          if [[ "${SHOULD_PUBLISH}" == "false" ]]; then
+            echo "chatbotx@${VERSION} already published — skipped." >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "${PUBLISH_OUTCOME}" == "failure" ]]; then
+            echo "Publish failed for chatbotx@${VERSION} — nothing was confirmed uploaded; check the \"Publish to npm\" step log." >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "${DRY_RUN}" == "true" ]]; then
+            echo "Dry run for chatbotx@${VERSION} (${DIST_TAG}) — nothing uploaded." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Published https://www.npmjs.com/package/chatbotx/v/${VERSION} (dist-tag \`${DIST_TAG}\`)" >> "$GITHUB_STEP_SUMMARY"
+          fi

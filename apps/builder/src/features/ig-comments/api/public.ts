@@ -91,7 +91,7 @@ export const igCommentsPublicRouter = {
 
   update: workspaceTokenAuthAPI
     .route({
-      method: "PUT",
+      method: "PATCH",
       path: "/v1/ig-comments/{id}",
       summary: "Update Instagram comment automation",
       description:

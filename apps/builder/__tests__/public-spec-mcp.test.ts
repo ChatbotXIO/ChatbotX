@@ -255,10 +255,3 @@ describe("default tool set", () => {
     ).toMatchSnapshot()
   })
 })
-
-describe("read-only-safe POST operations", () => {
-  test("contacts.search carries x-mcp.readOnlyHint: true so a read_only token still sees it", () => {
-    const op = operations.find((o) => o.operationId === "contacts.search")
-    expect(op?.["x-mcp"]?.readOnlyHint).toBe(true)
-  })
-})

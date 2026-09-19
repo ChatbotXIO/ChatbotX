@@ -9,6 +9,7 @@ import {
   ListIcon,
   MessageSquareIcon,
   PaperclipIcon,
+  PhoneIcon,
   PictureInPicture2Icon,
   TextIcon,
   TimerIcon,
@@ -89,6 +90,11 @@ const ALL_MENU_ITEMS = (
     icon: ListIcon,
     stepType: stepTypes.enum.whatsappOptionList,
   },
+  whatsappCallButton: {
+    label: t("flows.actions.whatsappCallButton"),
+    icon: PhoneIcon,
+    stepType: stepTypes.enum.whatsappCallButton,
+  },
   typing: {
     label: t("flows.actions.typing"),
     icon: TimerIcon,
@@ -145,6 +151,7 @@ const WHATSAPP_MENU_ORDER = [
   "sendTemplateMessage",
   "whatsappFlow",
   "whatsappOptionList",
+  "whatsappCallButton",
   "typing",
   "sendFile",
   "actions",
@@ -180,6 +187,15 @@ const MENU_ORDER_BY_CHANNEL: Record<string, readonly string[]> = {
   [channelTypes.enum.tiktok]: TIKTOK_MENU_ORDER,
 }
 
+/**
+ * WhatsApp-only steps that must not be offered on omnichannel nodes: they
+ * send nothing on other channels, but (unlike the option list) would still
+ * persist a fully-worded outgoing message locally — a convincing phantom
+ * send. The worker guards this too; hiding the menu entry prevents authoring
+ * it in the first place.
+ */
+const OMNICHANNEL_EXCLUDED_ITEMS = new Set(["whatsappCallButton"])
+
 export const sendMessageEditorMenus = (
   t: TranslationFn,
   menuData?: MenuData,
@@ -188,7 +204,9 @@ export const sendMessageEditorMenus = (
   const allMenuItems = ALL_MENU_ITEMS(t, menuData)
 
   if (channel === channelTypes.enum.omnichannel) {
-    return Object.values(allMenuItems)
+    return Object.entries(allMenuItems)
+      .filter(([key]) => !OMNICHANNEL_EXCLUDED_ITEMS.has(key))
+      .map(([, item]) => item)
   }
 
   const menuOrder =

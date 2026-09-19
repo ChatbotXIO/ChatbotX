@@ -13,10 +13,7 @@ import {
   messageEventTypeSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
-import {
-  type RealtimeEventData,
-  RealtimeEventType,
-} from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
   type CommentAnchor,
   type MessageButtonTemplate,
@@ -32,7 +29,6 @@ import type {
   ChatJobSendFlowStep,
   ChatJobSendTyping,
 } from "@chatbotx.io/worker-config"
-import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import {
   settleCommentAutomationDelivered,
   settleCommentAutomationFailure,
@@ -42,17 +38,12 @@ import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
+import { broadcastChatEvent } from "../utils/broadcast-chat-event"
 import {
   shouldSuppressRetryableChannelError,
   willSendRetry,
 } from "../utils/retry"
-
-function broadcastChatEvent(workspaceId: string, event: RealtimeEventData) {
-  return chatQueue.add(ChatJobAction.broadcastEvent, {
-    type: ChatJobAction.broadcastEvent,
-    data: { workspaceId, event },
-  })
-}
+import { reconcileChannelSendError } from "./channel-send-error-reconcilers"
 
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
@@ -253,6 +244,14 @@ export async function sendMessageToChannel(
 
     return { messageIds: result.messageIds }
   } catch (error) {
+    // A reconciled failure is a permanent, known outcome: it is still
+    // recorded below, but never rethrown into a retry.
+    const isReconciledSendError = await reconcileChannelSendError({
+      error,
+      conversation,
+      contactInbox,
+      contentAttributes: message.contentAttributes,
+    })
     logger.error(error, "An error occurred while sending the message")
     const errorData = await parseSdkError(error)
     const willRetry = willSendRetry({
@@ -295,7 +294,10 @@ export async function sendMessageToChannel(
         errorDetail: errorData.message,
       })
     }
-    if (shouldSuppressRetryableChannelError(error, contactInbox.channel)) {
+    if (
+      isReconciledSendError ||
+      shouldSuppressRetryableChannelError(error, contactInbox.channel)
+    ) {
       return { messageIds: [] }
     }
     throw error

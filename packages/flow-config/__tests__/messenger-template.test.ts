@@ -65,6 +65,63 @@ describe("extractMessengerTemplateParams", () => {
         extractMessengerTemplateParams([component], "NAMED").header,
       ).toBeUndefined()
     })
+
+    test("image + static text — no header params", () => {
+      const component: MessengerTemplateComponent = {
+        type: "HEADER",
+        format: "IMAGE",
+        text: "Order update",
+      }
+      expect(
+        extractMessengerTemplateParams([component], "POSITIONAL").header,
+      ).toBeUndefined()
+    })
+
+    // Meta rejects the send with (#100 - 1893029) "Missing one or more header
+    // params" when an image header's text variable is not passed.
+    test("image + text variable POSITIONAL — collects a header text param", () => {
+      const component: MessengerTemplateComponent = {
+        type: "HEADER",
+        format: "IMAGE",
+        text: "{{1}}",
+      }
+      expect(
+        extractMessengerTemplateParams([component], "POSITIONAL").header,
+      ).toEqual([{ type: "text", text: "" }])
+    })
+
+    test("image + text variable NAMED — includes parameter_name", () => {
+      const component: MessengerTemplateComponent = {
+        type: "HEADER",
+        format: "IMAGE",
+        text: "{{order_type}} Update",
+      }
+      expect(
+        extractMessengerTemplateParams([component], "NAMED").header,
+      ).toEqual([{ type: "text", text: "", parameter_name: "order_type" }])
+    })
+  })
+
+  describe("stored param shape", () => {
+    test("POSITIONAL params carry no parameter_name key at all", () => {
+      const result = extractMessengerTemplateParams(
+        [
+          { type: "HEADER", format: "IMAGE", text: "{{1}}" },
+          { type: "BODY", text: "Hi {{1}}" },
+        ],
+        "POSITIONAL",
+      )
+      expect(result.header?.[0]).toStrictEqual({ type: "text", text: "" })
+      expect(result.body?.[0]).toStrictEqual({ text: "" })
+    })
+
+    test("components without text produce no header or body params", () => {
+      const result = extractMessengerTemplateParams(
+        [{ type: "HEADER", format: "IMAGE" }, { type: "BODY" }],
+        "POSITIONAL",
+      )
+      expect(result).toEqual({})
+    })
   })
 
   describe("BODY", () => {
@@ -123,6 +180,23 @@ describe("extractMessengerTemplateParams", () => {
       expect(result.button).toEqual([
         { sub_type: "url", index: 0, text: "https://example.com/fixed" },
       ])
+    })
+
+    // Meta's NAMED templates keep a named URL suffix ({{url_suffix}}); the
+    // send-time URL parameter is still just the suffix value.
+    test("NAMED URL button with {{url_suffix}} — suffix left empty to fill", () => {
+      const component: MessengerTemplateComponent = {
+        type: "BUTTONS",
+        buttons: [
+          {
+            type: "URL",
+            text: "Track Order",
+            url: "http://www.example.com/orders/{{url_suffix}}",
+          },
+        ],
+      }
+      const result = extractMessengerTemplateParams([component], "NAMED")
+      expect(result.button).toEqual([{ sub_type: "url", index: 0, text: "" }])
     })
 
     test("POSTBACK with fixed payload (no {{) — not added", () => {
@@ -241,6 +315,45 @@ describe("extractMessengerParameterInfos", () => {
       const result = extractMessengerParameterInfos([component], "POSITIONAL")
       expect(result).toEqual([])
     })
+
+    test("image + static text — no parameter", () => {
+      const component: MessengerTemplateComponent = {
+        type: "HEADER",
+        format: "IMAGE",
+        text: "Order update",
+      }
+      const result = extractMessengerParameterInfos([component], "POSITIONAL")
+      expect(result).toEqual([])
+    })
+
+    test("image + text variable POSITIONAL — header text param is collected", () => {
+      const component: MessengerTemplateComponent = {
+        type: "HEADER",
+        format: "IMAGE",
+        text: "{{1}}",
+      }
+      const result = extractMessengerParameterInfos([component], "POSITIONAL")
+      expect(result).toEqual([
+        { type: "header", index: 0, paramName: "1", format: "text" },
+      ])
+    })
+
+    test("image + text variable NAMED — paramName is raw variable name", () => {
+      const component: MessengerTemplateComponent = {
+        type: "HEADER",
+        format: "IMAGE",
+        text: "{{order_type}} Update",
+      }
+      const result = extractMessengerParameterInfos([component], "NAMED")
+      expect(result).toEqual([
+        {
+          type: "header",
+          index: 0,
+          paramName: "order_type",
+          format: "text",
+        },
+      ])
+    })
   })
 
   describe("BODY", () => {
@@ -285,6 +398,37 @@ describe("extractMessengerParameterInfos", () => {
           buttonSubType: "url",
         },
       ])
+    })
+
+    test("NAMED URL button with {{url_suffix}} → paramName is the variable name", () => {
+      const component: MessengerTemplateComponent = {
+        type: "BUTTONS",
+        buttons: [
+          {
+            type: "URL",
+            text: "Track Order",
+            url: "http://www.example.com/orders/{{url_suffix}}",
+          },
+        ],
+      }
+      const result = extractMessengerParameterInfos([component], "NAMED")
+      expect(result).toEqual([
+        {
+          type: "button",
+          index: 0,
+          paramName: "url_suffix",
+          buttonIndex: 0,
+          buttonSubType: "url",
+        },
+      ])
+    })
+
+    test("static URL button → no ParameterInfo (nothing for the user to fill)", () => {
+      const component: MessengerTemplateComponent = {
+        type: "BUTTONS",
+        buttons: [{ type: "URL", text: "Go", url: "https://x.com/jobs/" }],
+      }
+      expect(extractMessengerParameterInfos([component], "NAMED")).toEqual([])
     })
 
     test("POSTBACK with fixed payload (no {{) → empty result", () => {

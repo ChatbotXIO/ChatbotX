@@ -119,6 +119,59 @@ describe("buildAuthValue", () => {
     expect(input.clientId).toBe(whatsappSettings.clientId)
     expect(input.clientSecret).toBe(whatsappSettings.clientSecret)
   })
+
+  // clientSecret feeds resolveSignaturePolicy (integrations/whatsapp/src/lib/signature-policy.ts),
+  // which picks "enforce" over "legacy-unverified" based on it.
+  test("manual + a provided app secret stores it as clientSecret instead of clearing it", async () => {
+    const auth = await buildAuthValue({
+      whatsappSettings: { ...whatsappSettings },
+      accessToken: "token",
+      verifyToken: "verify-token",
+      webhookUrl: `${BROKER_ORIGIN}/integrations/whatsapp/webhook/int-42`,
+      originUrl: BROKER_ORIGIN,
+      wabaId: "waba-1",
+      phoneNumber,
+      businessId: "biz-1",
+      isManual: true,
+      manualAppSecret: "owner-supplied-app-secret",
+    })
+
+    expect(auth.clientSecret).toBe("owner-supplied-app-secret")
+  })
+
+  test("manual + a whitespace-only app secret is trimmed to empty (still clears clientSecret)", async () => {
+    const auth = await buildAuthValue({
+      whatsappSettings: { ...whatsappSettings },
+      accessToken: "token",
+      verifyToken: "verify-token",
+      webhookUrl: `${BROKER_ORIGIN}/integrations/whatsapp/webhook/int-42`,
+      originUrl: BROKER_ORIGIN,
+      wabaId: "waba-1",
+      phoneNumber,
+      businessId: "biz-1",
+      isManual: true,
+      manualAppSecret: "   ",
+    })
+
+    expect(auth.clientSecret).toBe("")
+  })
+
+  test("non-manual ignores manualAppSecret entirely, keeping the reseller clientSecret", async () => {
+    const auth = await buildAuthValue({
+      whatsappSettings: { ...whatsappSettings },
+      accessToken: "token",
+      verifyToken: "verify-token",
+      webhookUrl: `${BROKER_ORIGIN}/integrations/whatsapp/webhook`,
+      originUrl: BROKER_ORIGIN,
+      wabaId: "waba-1",
+      phoneNumber,
+      businessId: "biz-1",
+      isManual: false,
+      manualAppSecret: "should-be-ignored",
+    })
+
+    expect(auth.clientSecret).toBe(whatsappSettings.clientSecret)
+  })
 })
 
 describe("buildWabaAuthValue", () => {

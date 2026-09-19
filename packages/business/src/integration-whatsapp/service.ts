@@ -4,7 +4,10 @@ import {
   eq,
   inArray,
 } from "@chatbotx.io/database/client"
-import type { WhatsappRegistrationStatus } from "@chatbotx.io/database/partials"
+import type {
+  WhatsappCallHoursSnapshot,
+  WhatsappRegistrationStatus,
+} from "@chatbotx.io/database/partials"
 import {
   integrationWhatsappRepository,
   LIVE_RUN_STATUSES,
@@ -76,6 +79,21 @@ type RecordRegistrationOutcomeInput = {
   workspaceId: string
   outcome: RegistrationOutcome
 }
+
+/** The calling toggles stored on the number itself rather than on Meta. */
+type CallSettingsValues = Partial<{
+  callRecordingEnabled: boolean
+  callRecordingRetentionDays: number
+  callTranscriptionEnabled: boolean
+  /**
+   * Local mirrors of Meta's calling settings. Callers must write these only
+   * after Meta has accepted the same change, so a number can never report
+   * calling as on while Meta still has it off.
+   */
+  callingEnabled: boolean
+  inboundCallsEnabled: boolean
+  callHours: WhatsappCallHoursSnapshot | null
+}>
 
 type FindWorkspaceIntegrationInput = {
   id: string
@@ -691,6 +709,46 @@ class IntegrationWhatsappService extends BaseService {
       reason: "manual",
       tx,
     })
+  }
+
+  /**
+   * Persists the calling toggles stored locally rather than on Meta. The
+   * transcription-requires-recording rule is enforced in the UPDATE itself
+   * (not just validated), so two admins toggling concurrently can't end up
+   * with transcription on and recording off.
+   */
+  async updateCallSettings(input: {
+    id: string
+    workspaceId: string
+    values: CallSettingsValues
+  }): Promise<void> {
+    const { values } = input
+    if (Object.keys(values).length === 0) {
+      return
+    }
+    const enablesTranscriptionAlone =
+      values.callTranscriptionEnabled === true &&
+      values.callRecordingEnabled !== true
+    const row = await integrationWhatsappRepository.updateCallSettings({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      values:
+        values.callRecordingEnabled === false
+          ? { ...values, callTranscriptionEnabled: false }
+          : values,
+      onlyWhileRecording: enablesTranscriptionAlone,
+    })
+    if (enablesTranscriptionAlone && !row) {
+      throw new WhatsappCallTranscriptionRequiresRecordingError()
+    }
+  }
+}
+
+/** Thrown when transcription is turned on for a number that does not record calls. */
+export class WhatsappCallTranscriptionRequiresRecordingError extends Error {
+  constructor() {
+    super("whatsapp-call-transcription-requires-recording")
+    this.name = "WhatsappCallTranscriptionRequiresRecordingError"
   }
 }
 

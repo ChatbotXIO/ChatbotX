@@ -29,6 +29,7 @@ import {
   type ContactFilterSchemaKind,
   type CtwaRetargetCondition,
   type CtwaRetargetSegment,
+  convertCustomFieldTypeToConditionType,
 } from "../schema"
 
 export type ConditionOption = {
@@ -98,22 +99,6 @@ export type ContactFilterConditionFormDraft = {
   field: string
   operator: string
   value: string | string[]
-}
-
-export const convertCustomFieldTypeToConditionType = (
-  type?: string,
-): FormFieldType => {
-  switch (type) {
-    case "number":
-      return formFieldTypes.enum.number
-    case "date":
-    case "datetime":
-      return formFieldTypes.enum.datetime
-    case "boolean":
-      return formFieldTypes.enum.boolean
-    default:
-      return formFieldTypes.enum.text
-  }
 }
 
 const schemaKindToFormField = (

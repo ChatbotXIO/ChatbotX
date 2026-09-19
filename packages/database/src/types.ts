@@ -187,6 +187,9 @@ export type WhatsappMessageTemplateModel =
 export type MessengerMessageTemplateModel =
   typeof schema.messengerMessageTemplateModel.$inferSelect
 export type WhatsappFlowModel = typeof schema.whatsappFlowModel.$inferSelect
+export type WhatsappCallModel = typeof schema.whatsappCallModel.$inferSelect
+export type WhatsappCallPermissionModel =
+  typeof schema.whatsappCallPermissionModel.$inferSelect
 export type FlowAnalyticsSessionModel =
   typeof schema.flowAnalyticsSessionModel.$inferSelect
 export type FlowNodeStatModel = typeof schema.flowNodeStatModel.$inferSelect

@@ -163,3 +163,46 @@ export async function waitForIntegrationJobCompletion(
     // Best-effort ordering only — never rethrow.
   }
 }
+
+// Strict variant (synchronous ESL API contract).
+// waitForIntegrationJobCompletion above is deliberately best-effort: it
+// swallows timeouts/failures since it only exists to preserve ordering. Callers
+// needing the job's actual result cannot use that semantics — a swallowed
+// timeout would silently return undefined and look like success.
+// waitForJobResult is the strict counterpart: it rejects on timeout or job
+// failure.
+
+const queueEventsByName = new Map<string, QueueEvents>()
+
+/**
+ * Lazily creates (and memoizes per queue name) a QueueEvents instance — the
+ * same lazy-create pattern as getIntegrationQueueEvents, generalized for any
+ * per-name queue. Memoized instances live for the process lifetime; there is no
+ * close-on-shutdown path since the set is bounded by distinct queue names, not
+ * request volume.
+ */
+export function createQueueEvents(queueName: string): QueueEvents {
+  const existing = queueEventsByName.get(queueName)
+  if (existing) {
+    return existing
+  }
+  const queueEvents = new QueueEvents(queueName, {
+    connection: getRedisConnection().duplicate(),
+  })
+  queueEventsByName.set(queueName, queueEvents)
+  return queueEvents
+}
+
+/**
+ * Strict wait: resolves with the job's result, or rejects on timeout or job
+ * failure — unlike waitForIntegrationJobCompletion, callers must handle the
+ * rejection themselves. For a synchronous request/reply job whose reply the
+ * caller must read back.
+ */
+export async function waitForJobResult<T>(
+  job: Job<unknown, T>,
+  queueEvents: QueueEvents,
+  timeoutMs: number,
+): Promise<T> {
+  return await job.waitUntilFinished(queueEvents, timeoutMs)
+}

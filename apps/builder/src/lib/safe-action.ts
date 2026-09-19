@@ -11,11 +11,18 @@ import { userModel } from "@chatbotx.io/database/schema"
 import { SdkException } from "@chatbotx.io/sdk"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { headers } from "next/headers"
+import { getTranslations } from "next-intl/server"
 import {
+  createMiddleware,
   createSafeActionClient,
   DEFAULT_SERVER_ERROR_MESSAGE,
 } from "next-safe-action"
 import { getAllWorkspaceMembers } from "@/features/workspace-members/queries"
+import {
+  hasContactsAccess,
+  hasWorkspacePermission,
+  type PermissionsInput,
+} from "@/lib/auth/permission-routes"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 import {
@@ -132,10 +139,15 @@ export const workspaceActionClientAllowExpired = authActionClient.use(
     }
     const { workspace, member, isSupportSession } = access
 
-    // `permissions` is exposed so actions can gate on it (e.g. superAdmin)
+    // permissions is exposed so actions can gate on it (e.g. superAdmin)
     // without a second user+member round-trip — the same rows are already
-    // loaded here. The `permissions` jsonb defaults to `{}`, so callers must
-    // fail closed on missing keys (see `hasWorkspacePermission`).
+    // loaded here. The permissions jsonb defaults to {}, so callers must fail
+    // closed on missing keys.
+    // The caller's user id is not re-exposed as a separate ctx.userId —
+    // ctx.user.id is already the one place every action reads it, including the
+    // call-artifact actions, which pass { userId: ctx.user.id, permissions:
+    // ctx.workspaceMemberPermissions } as the already-resolved member to
+    // canReadCall.
     return withAuditContext(
       { ...(getAuditActor() ?? {}), workspaceId: workspace.id },
       () =>
@@ -195,3 +207,92 @@ export const workspaceActionClientAllowScheduledDeletion =
 
     return next({ ctx })
   })
+
+/**
+ * Blocks call control (ringing, answering, dialing, permission requests, calling
+ * config) during a platform-support session, since its synthetic membership
+ * otherwise carries full read/write access; reading call history is unaffected.
+ */
+export const rejectSupportSession = createMiddleware<{
+  ctx: { isSupportSession: boolean }
+}>().define(async ({ ctx, next }) => {
+  if (ctx.isSupportSession) {
+    const t = await getTranslations()
+    throw new ChatbotXException(
+      t("whatsapp.calls.errors.supportSessionCallingBlocked"),
+      "supportSessionCallingBlocked",
+      403,
+    )
+  }
+  return await next({ ctx })
+})
+
+/**
+ * Refuses a member with neither contacts nor onlyAssignedContacts from any
+ * calling action that starts or joins a call. Reuses hasContactsAccess, which
+ * already lets superAdmin through, rather than a parallel permission check.
+ */
+export const requireContactsAccess = createMiddleware<{
+  ctx: { workspaceMemberPermissions: PermissionsInput }
+}>().define(async ({ ctx, next }) => {
+  if (!hasContactsAccess(ctx.workspaceMemberPermissions)) {
+    const t = await getTranslations()
+    throw new ChatbotXException(
+      t("whatsapp.calls.errors.callingAccessDenied"),
+      "callingAccessDenied",
+      403,
+    )
+  }
+  return await next({ ctx })
+})
+
+/**
+ * Every calling action that starts or joins a call (initiate/mode/permission-
+ * request/answer/resume/TURN). Not used by hangup-voip-call/heartbeat-active-
+ * voip-call (unchanged workspaceActionClient — ending or keeping alive a call a
+ * workspace freeze already interrupted must keep working) nor by the read-only
+ * call-artifact actions (unaffected).
+ */
+export const callingActionClient = workspaceActionClient
+  .use(rejectSupportSession)
+  .use(requireContactsAccess)
+
+/**
+ * Calling configuration actions (settings, call hours, subscription fix) —
+ * support-session-gated like every other calling action, but not contacts-
+ * gated: each keeps its own assertWorkspaceSuperAdmin call, and a synthetic
+ * support membership carries superAdmin: true so it would pass
+ * requireContactsAccess anyway — the extra layer would be redundant.
+ */
+export const callingAdminActionClient =
+  workspaceActionClient.use(rejectSupportSession)
+
+/**
+ * The Calls page's own page-level gate: hasContactsAccess || analytics.
+ * Distinct from requireContactsAccess (contacts/onlyAssignedContacts only)
+ * because an analytics-only member has no calling access at all but must still
+ * read the workspace's call history/artifacts. A read action, unaffected by the
+ * support-session gate.
+ */
+export const requireCallHistoryAccess = createMiddleware<{
+  ctx: { workspaceMemberPermissions: PermissionsInput }
+}>().define(async ({ ctx, next }) => {
+  if (
+    !(
+      hasContactsAccess(ctx.workspaceMemberPermissions) ||
+      hasWorkspacePermission(ctx.workspaceMemberPermissions, "analytics")
+    )
+  ) {
+    const t = await getTranslations()
+    throw new ChatbotXException(
+      t("whatsapp.calls.errors.callHistoryAccessDenied"),
+      "callHistoryAccessDenied",
+      403,
+    )
+  }
+  return await next({ ctx })
+})
+
+export const callHistoryActionClient = workspaceActionClientAllowExpired.use(
+  requireCallHistoryAccess,
+)

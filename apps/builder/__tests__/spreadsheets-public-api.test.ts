@@ -224,11 +224,8 @@ describe("DELETE /v1/spreadsheets/{id}", () => {
   })
 })
 
-describe("GET /v1/spreadsheets/{spreadsheetId}/worksheets", () => {
-  const procedure = findProcedure(
-    "GET",
-    "/v1/spreadsheets/{spreadsheetId}/worksheets",
-  )
+describe("GET /v1/spreadsheets/{id}/worksheets", () => {
+  const procedure = findProcedure("GET", "/v1/spreadsheets/{id}/worksheets")
 
   test("lists worksheets for a spreadsheet in the token workspace", async () => {
     listWorksheets.mockResolvedValueOnce({ data: ["Sheet1"] })
@@ -236,7 +233,7 @@ describe("GET /v1/spreadsheets/{spreadsheetId}/worksheets", () => {
     await expect(
       procedure.handler?.({
         context,
-        input: { spreadsheetId: "spreadsheet-1" },
+        input: { id: "spreadsheet-1" },
       }),
     ).resolves.toEqual({ data: ["Sheet1"] })
 
@@ -253,17 +250,17 @@ describe("GET /v1/spreadsheets/{spreadsheetId}/worksheets", () => {
     await expect(
       procedure.handler?.({
         context,
-        input: { spreadsheetId: "missing-spreadsheet" },
+        input: { id: "missing-spreadsheet" },
       }),
     ).rejects.toThrow("Spreadsheet not found")
     expect(procedure.errors).toBeDefined()
   })
 })
 
-describe("GET /v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetName}/headers", () => {
+describe("GET /v1/spreadsheets/{id}/worksheets/{worksheetName}/headers", () => {
   const procedure = findProcedure(
     "GET",
-    "/v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetName}/headers",
+    "/v1/spreadsheets/{id}/worksheets/{worksheetName}/headers",
   )
 
   test("lists headers using the worksheet name path segment as the sheet name", async () => {
@@ -273,7 +270,7 @@ describe("GET /v1/spreadsheets/{spreadsheetId}/worksheets/{worksheetName}/header
       procedure.handler?.({
         context,
         input: {
-          spreadsheetId: "spreadsheet-1",
+          id: "spreadsheet-1",
           worksheetName: "Leads",
         },
       }),

@@ -70,6 +70,7 @@ const broadcastService = {
   stopSending: vi.fn(),
   resumeSending: vi.fn(),
   resendWithPruning: vi.fn(),
+  cloneBroadcast: vi.fn(),
   softDeleteBroadcasts: vi.fn(),
 }
 
@@ -122,8 +123,8 @@ describe("POST /v1/broadcasts", () => {
   })
 })
 
-describe("PATCH /v1/broadcasts/{id}", () => {
-  const procedure = findProcedure("PATCH", "/v1/broadcasts/{id}")
+describe("PUT /v1/broadcasts/{id}", () => {
+  const procedure = findProcedure("PUT", "/v1/broadcasts/{id}")
 
   test("renames the broadcast then re-fetches it from context's workspace", async () => {
     broadcastService.update.mockResolvedValueOnce(undefined)
@@ -280,6 +281,49 @@ describe("POST /v1/broadcasts/{id}/resend", () => {
     expect(broadcastService.resendWithPruning).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       id: "b-1",
+      canViewEmailAndPhone: true,
+    })
+    expect(result).toEqual({ id: "b-2" })
+  })
+})
+
+describe("POST /v1/broadcasts/{id}/duplicate", () => {
+  const procedure = findProcedure("POST", "/v1/broadcasts/{id}/duplicate")
+
+  test("delegates to cloneBroadcast treating the token caller as fully privileged", async () => {
+    broadcastService.cloneBroadcast.mockResolvedValueOnce({ id: "b-2" })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: { id: "b-1" },
+    })
+
+    expect(broadcastService.cloneBroadcast).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      canViewEmailAndPhone: true,
+    })
+    expect(result).toEqual({ id: "b-2" })
+  })
+})
+
+// Deprecated back-compat alias for the pre-consolidation `/clone` path —
+// same handler as `broadcasts.duplicate` above, verified here so the two
+// can never silently drift onto different service calls.
+describe("POST /v1/broadcasts/{id}/clone (deprecated alias)", () => {
+  const procedure = findProcedure("POST", "/v1/broadcasts/{id}/clone")
+
+  test("delegates to the same cloneBroadcast call as broadcasts.duplicate", async () => {
+    broadcastService.cloneBroadcast.mockResolvedValueOnce({ id: "b-2" })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: { id: "b-1" },
+    })
+
+    expect(broadcastService.cloneBroadcast).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
       canViewEmailAndPhone: true,
     })
     expect(result).toEqual({ id: "b-2" })

@@ -1,4 +1,5 @@
 import { type DatabaseClient, db, eq, relationsFilterToSQL } from "../../client"
+import { withBroadcastTargets } from "../../partials/broadcast"
 import { broadcastModel, contactsOnBroadcastsModel } from "../../schema"
 import {
   getPaginationWithDefaults,
@@ -27,9 +28,10 @@ const buildWhere = (input: BroadcastListInput) => ({
 
 export const broadcastRepository = {
   /**
-   * Paginated broadcast list with the 3 slim relations the list page shows.
-   * The `with` literal stays inline for Drizzle's type inference to survive
-   * into `BroadcastResourceWithRelations`.
+   * Paginated broadcast list with the slim relations the list page shows,
+   * including each target page (with its flow) that the "view" dialog reads
+   * for a multi-page broadcast. The `with` literal stays inline for Drizzle's
+   * type inference to survive into `BroadcastResourceWithRelations`.
    */
   async listWithRelations(input: BroadcastListInput, tx: DatabaseClient = db) {
     const where = buildWhere(input)
@@ -57,6 +59,7 @@ export const broadcastRepository = {
             name: true,
           },
         },
+        ...withBroadcastTargets,
       },
       ...pagination,
       orderBy,

@@ -19,6 +19,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useConversationIdParam } from "../conversations/hooks/use-conversation-id-param"
 import type { ConversationResource } from "../conversations/schema/resource"
+import { useCallPlaybackStore } from "../messages/store/call-playback-store"
 import {
   ContactDetailPane,
   ConversationListPane,
@@ -55,6 +56,17 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     useState<ConversationResource | null>(null)
   const [isContactSheetOpen, setIsContactSheetOpen] = useState(false)
   const conversationIdParam = useConversationIdParam()
+
+  // The shared call-recording `<audio>` element (`callPlaybackStore`) is a
+  // module singleton with no lifecycle of its own — nothing else stops it
+  // when the inbox unmounts or the route changes, so a playing recording
+  // would otherwise keep audible after the user navigates away entirely.
+  useEffect(
+    () => () => {
+      useCallPlaybackStore.getState().reset()
+    },
+    [],
+  )
 
   // The inbox mounts three heavy, self-fetching panes. Choosing the layout in
   // CSS would mount all of them in both arrangements, so the choice is made in
@@ -103,6 +115,16 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         user goes back to the list, and the realtime socket must not go with it.
       */}
       <ChatRealtime />
+      {/*
+        The VoIP provider (single `useWhatsappVoipCall` peer/hook instance),
+        the call panel and `WhatsappCallInfoSheet` now
+        mount once at the workspace layout level, gated by
+        `callingEnabled`/`callHistoryEnabled` — see
+        `components/workspace-realtime-shell.tsx`. Every consumer here
+        (`ConversationListPane`'s rows render their own Answer/Reject
+        buttons) still reaches the same context because this pane tree is
+        rendered inside that shell's `{children}`.
+      */}
       {isMobile === undefined && (
         <div className="flex min-h-0 flex-1 items-center justify-center">
           <Loader2Icon className="animate-spin" />

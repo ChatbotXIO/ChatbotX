@@ -16,12 +16,12 @@ import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { Controller, useFormContext } from "react-hook-form"
+import { getConditionOptions } from "@/features/contact-filter/components/contact-filter-config"
+import { getBrowserTimezone } from "@/features/contact-filter/lib/timezone"
 import {
   convertCustomFieldTypeToConditionType,
-  getConditionOptions,
-} from "@/features/contact-filter/components/contact-filter-config"
-import { getBrowserTimezone } from "@/features/contact-filter/lib/timezone"
-import { mappingConditions } from "@/features/contact-filter/schema"
+  mappingConditions,
+} from "@/features/contact-filter/schema"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 

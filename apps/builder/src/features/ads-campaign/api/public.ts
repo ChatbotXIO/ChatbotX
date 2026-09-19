@@ -131,10 +131,10 @@ export const adsCampaignPublicRouter = {
   retryCampaign: workspaceTokenAuthAPI
     .route({
       method: "POST",
-      path: "/v1/ads/campaigns/{operationId}/retry",
+      path: "/v1/ads/campaigns/{id}/retry",
       summary: "Resume messaging ad creation",
       description:
-        "Retries a draft messaging ad's creation after a previous attempt failed partway through. Use `ads.listCampaigns` to find its `operationId` first.",
+        "Retries a draft messaging ad's creation after a previous attempt failed partway through. Use `ads.listCampaigns` to find its `id` first.",
       tags: ["Ads"],
     })
     .input(operationIdPublicParams)
@@ -142,7 +142,7 @@ export const adsCampaignPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const record = await messagingAdCampaignService.retryDraft({
-        ...input,
+        operationId: input.id,
         workspaceId: context.workspace.id,
       })
       return toPublicOperationResource({ ...record, effectiveStatus: null })
@@ -151,7 +151,7 @@ export const adsCampaignPublicRouter = {
   publishCampaign: workspaceTokenAuthAPI
     .route({
       method: "POST",
-      path: "/v1/ads/campaigns/{operationId}/publish",
+      path: "/v1/ads/campaigns/{id}/publish",
       summary: "Publish messaging ad",
       description:
         "Publishes a draft messaging ad's campaign/ad set/ad to Meta so it starts delivering. Use `ads.pauseCampaign` to pause it afterward.",
@@ -162,7 +162,7 @@ export const adsCampaignPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const record = await messagingAdCampaignService.publish({
-        ...input,
+        operationId: input.id,
         workspaceId: context.workspace.id,
       })
       return toPublicOperationResource({ ...record, effectiveStatus: null })
@@ -171,7 +171,7 @@ export const adsCampaignPublicRouter = {
   pauseCampaign: workspaceTokenAuthAPI
     .route({
       method: "POST",
-      path: "/v1/ads/campaigns/{operationId}/pause",
+      path: "/v1/ads/campaigns/{id}/pause",
       summary: "Pause published messaging ad on Meta",
       description:
         "Pauses delivery of a published messaging ad without deleting it. There is no dedicated resume operation — publish again or edit via Meta directly.",
@@ -182,7 +182,7 @@ export const adsCampaignPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const record = await messagingAdCampaignService.pause({
-        ...input,
+        operationId: input.id,
         workspaceId: context.workspace.id,
       })
       return toPublicOperationResource({ ...record, effectiveStatus: null })
@@ -191,10 +191,10 @@ export const adsCampaignPublicRouter = {
   deleteCampaign: workspaceTokenAuthAPI
     .route({
       method: "DELETE",
-      path: "/v1/ads/campaigns/{operationId}",
+      path: "/v1/ads/campaigns/{id}",
       summary: "Delete messaging ad campaign/ad set/ad on Meta",
       description:
-        "Permanently removes a messaging ad's campaign/ad set/ad from Meta. Use `ads.listCampaigns` to find its `operationId` first.",
+        "Permanently removes a messaging ad's campaign/ad set/ad from Meta. Use `ads.listCampaigns` to find its `id` first.",
       tags: ["Ads"],
     })
     .input(operationIdPublicParams)
@@ -202,7 +202,7 @@ export const adsCampaignPublicRouter = {
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       const record = await messagingAdCampaignService.deleteOperation({
-        ...input,
+        operationId: input.id,
         workspaceId: context.workspace.id,
       })
       return toPublicOperationResource({ ...record, effectiveStatus: null })
@@ -214,7 +214,7 @@ export const adsCampaignPublicRouter = {
       path: "/v1/ads/campaigns",
       summary: "List messaging ads",
       description:
-        "Use this to find messaging-ad `operationId`s before publishing, pausing, or deleting one. Returns messaging ads created in this workspace.",
+        "Use this to find messaging-ad ids before publishing, pausing, or deleting one. Returns messaging ads created in this workspace.",
       tags: ["Ads"],
     })
     .input(listMessagingAdsPublicRequest)
