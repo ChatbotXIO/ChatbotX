@@ -3017,10 +3017,10 @@
     }
   },
   "home": {
-    "welcomeBack": "Welcome tilbage, {name}",
-    "subtitle": "Pick en arbejdsområde til jump tilbage i, eller opret en ny one.",
-    "noWorkspaces": "Du don't have vilkårlig arbejdsområder yet.",
-    "owner": "Owner"
+    "welcomeBack": "Velkommen tilbage, {name}",
+    "subtitle": "Vælg et arbejdsområde for at fortsætte, eller opret et nyt.",
+    "noWorkspaces": "Du har endnu ingen arbejdsområder.",
+    "owner": "Ejer"
   },
   "notFound": {
     "title": "Siden blev ikke fundet",
