@@ -2,12 +2,17 @@
 name: chatbotx-cli
 description: Manage contacts, conversations, broadcasts, flows, sequences, appointments, minigames, and every other ChatbotX workspace resource from the command line.
 version: 1.0.0
-license: MIT-0
+homepage: https://github.com/ChatbotXIO/ChatbotX/tree/main/apps/cli
+emoji: "🤖"
 metadata:
   openclaw:
     requires:
       bins:
         - chatbotx
+    os:
+      - macos
+      - linux
+      - windows
     primaryEnv: CHATBOTX_API_KEY
     envVars:
       - name: CHATBOTX_API_KEY
@@ -23,8 +28,6 @@ metadata:
       - kind: node
         package: chatbotx
         bins: [chatbotx]
-    homepage: https://github.com/ChatbotXIO/ChatbotX/tree/main/apps/cli
-    emoji: "🤖"
 ---
 
 # ChatbotX CLI
@@ -35,6 +38,9 @@ terminal or an AI agent. Commands are generated at runtime from the ChatbotX Ope
 surface below tracks whatever the connected workspace's API actually exposes.
 
 ## Setup
+
+Requires Node.js ≥ 24. Documented against `chatbotx` ≥ 1.8 (the connected workspace's live
+OpenAPI spec is always the source of truth for available commands, not this document's version).
 
 ```bash
 npm install -g chatbotx
@@ -109,6 +115,7 @@ Every group supports `--help` for its exact flags; the highest-traffic ones are 
 
 ```bash
 chatbotx contacts list                               # [--page --perPage --sort --keyword --contactFilter]
+chatbotx contacts count                               # Count matching filter [--page --perPage --sort --keyword --contactFilter]
 chatbotx contacts create --email <email>              # [--phoneNumber --contactId --firstName --lastName]
 chatbotx contacts get <identifier>
 chatbotx contacts update <identifier>
@@ -337,45 +344,3 @@ workspace's REST API directly rather than guessing at flag combinations.
   `CHATBOTX_SPEC_CACHE_TTL_SECONDS`) after a workspace API upgrade if a new command is missing.
 - Every command returns JSON on success and `{"error": true, "message", "status"}` on failure —
   parse `status`, don't string-match `message`.
-
-## Publishing (maintainers)
-
-This folder is a standalone skill package, distributed to two independent registries. It lives
-at `skills/chatbotx-cli` — the top-level `skills/` directory is a path both registries recognize
-by convention, not an arbitrary choice; moving it elsewhere breaks default discovery on skills.sh
-(see below). Publishing is independent from the npm publish of the `chatbotx` package itself
-(`apps/cli/package.json`, released via `.github/workflows/publish-cli.yml`).
-
-### ClawHub
-
-```bash
-npm i -g clawhub
-clawhub login
-clawhub skill publish skills/chatbotx-cli --slug chatbotx-cli --version <newVersion>
-```
-
-### skills.sh
-
-No submission step — [skills.sh](https://skills.sh) indexes public GitHub repos directly. Once
-this file is committed to `main` on `github.com/ChatbotXIO/ChatbotX`, anyone can install it with:
-
-```bash
-npx skills add ChatbotXIO/ChatbotX --skill chatbotx-cli
-# or, targeting this skill directly:
-npx skills add ChatbotXIO/ChatbotX/skills/chatbotx-cli
-```
-
-`npx skills` only auto-discovers `SKILL.md` files under the repo root, `skills/`, or a
-recognized agent-skill directory (e.g. `.agents/skills/`) — each walked up to three levels
-deep, and it stops at the first root-level `SKILL.md` (the `chatbotx` MCP skill) unless
-`--full-depth` is passed. Keeping this package at `skills/chatbotx-cli` is what makes it show up
-in a plain `npx skills add ChatbotXIO/ChatbotX --list` alongside `chatbotx`, instead of requiring
-`--full-depth` or a direct path. Verify with:
-
-```bash
-npx skills add ChatbotXIO/ChatbotX --list
-```
-
-Bump `version` in this file's frontmatter and in `skill-card.md`'s "Skill Version" section to
-match. Keep the command groups above, and the risk list in `skill-card.md`, in sync with
-`apps/cli/README.md` whenever a command group is added, renamed, or a new collision is discovered.

@@ -68,8 +68,9 @@ function isWorkspaceTokenOperation(operation: McpSpecOperation): boolean {
 const MAX_DEFAULT_VISIBLE_OPERATIONS = 45
 
 const MCP_SERVER_ROOT = join(import.meta.dirname, "..", "..", "mcp-server")
+const SKILLS_ROOT = join(import.meta.dirname, "..", "..", "..", "skills")
 const MCP_README_PATH = join(MCP_SERVER_ROOT, "README.md")
-const MCP_SKILL_PATH = join(MCP_SERVER_ROOT, "SKILL.md")
+const MCP_SKILL_PATH = join(SKILLS_ROOT, "chatbotx", "SKILL.md")
 const MCP_README_TOOLS_HEADING = "## Available tools"
 const MCP_README_PREREQUISITES_HEADING = "## Prerequisites"
 const MCP_SKILL_CATEGORY_TABLE_HEADING = "| Category | Tool |"

@@ -43,7 +43,8 @@ as appropriate.
 
 Risk: The CLI can send real messages and broadcasts to a workspace's actual contacts
 (`contacts message send`, `conversations message send`, `broadcasts create`) — a wrong `--text`,
-`--accounts`/audience filter, or premature schedule reaches live customers.
+`--contactFilter`/`--targets`/`--inboxIds` audience filter, or premature schedule reaches live
+customers.
 Mitigation: Verify recipient count first with `contacts count --contactFilter <filter>` or
 `broadcasts audience list`; use `broadcasts create --saveAsDraft` and review before scheduling or
 sending.
@@ -87,10 +88,6 @@ multi-command batching or transactions.
 Other properties: Write commands mutate live workspace data (contacts, conversations, broadcasts,
 flows, and more) and some trigger outbound messages to real end users or upload media to external
 storage; there is no dry-run mode.
-
-## Skill Version
-
-1.0.0 (matches this skill's `SKILL.md` frontmatter `version`)
 
 ## Ethical Considerations
 

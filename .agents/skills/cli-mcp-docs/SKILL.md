@@ -1,6 +1,6 @@
 ---
 name: cli-mcp-docs
-description: Use after adding, renaming, or removing a public oRPC procedure (packages under `apps/builder/src/routers/public.ts`), or after changing an operation's `mcpSpec`/`x-mcp` visibility. The CLI and MCP server generate their command/tool surface at runtime from the live OpenAPI spec — nothing regenerates automatically — but four hand-maintained files drift: `apps/cli/README.md`, `skills/chatbotx-cli/SKILL.md` + `skill-card.md`, and `apps/mcp-server/SKILL.md`. This skill lists exactly what to check and update in each, plus how to catch a silent CLI command-name collision before it ships.
+description: Use after adding, renaming, or removing a public oRPC procedure, or after changing an operation's MCP visibility. The CLI and MCP server generate their surface at runtime from the live OpenAPI spec, but four hand-maintained doc files drift. This skill lists what to check and update in each, plus how to catch a silent CLI command-name collision before it ships.
 ---
 
 # CLI & MCP docs sync (ChatbotX)
@@ -64,21 +64,23 @@ disagree with each other:
 | `apps/cli/README.md` | Full command reference by resource group, plus the "Known command-name collisions" section | A command group is added/renamed, or step 2 found a new collision |
 | `skills/chatbotx-cli/SKILL.md` | Condensed ClawHub/skills.sh-published mirror of the README (command groups + collision table + tips for agents) | Same triggers as README — keep both in sync |
 | `skills/chatbotx-cli/skill-card.md` | ClawHub skill card — risk list references the collision table | A collision changes the "Known Risks" section's specifics |
-| `apps/mcp-server/SKILL.md` | CLI Commands mirror, "MCP Tools" category table, curated default-tool-set description | A `visibility: "default"` operation is added/removed/recategorized |
+| `skills/chatbotx/SKILL.md` | CLI Commands mirror, "MCP Tools" category table, curated default-tool-set description | A `visibility: "default"` operation is added/removed/recategorized |
 
-Mechanics for the CLI skill package specifically (`skills/chatbotx-cli/`): bump
-`version` in `SKILL.md`'s frontmatter **and** the "Skill Version" line in
-`skill-card.md` together — they must match (see that file's own "Publishing
-(maintainers)" section). This package is versioned and published to both
-ClawHub and skills.sh independently of the `chatbotx` npm release; it must stay
-at `skills/chatbotx-cli` — that path is what makes it default-discoverable via
-`npx skills add ChatbotXIO/ChatbotX`, not an arbitrary location.
+Mechanics for both published packages (`skills/chatbotx-cli/`, `skills/chatbotx/`):
+bump `version` in `SKILL.md`'s frontmatter on every content change; for
+`chatbotx-cli` that's the only version to bump — `skill-card.md` no longer
+carries its own version line. Both packages must stay directly under
+`skills/<name>/SKILL.md` — never add a `SKILL.md` at the repository root, which
+shadows both packages in `npx skills` discovery. See `skills/README.md` for
+the full publishing runbook (skills.sh has no submission step; ClawHub needs
+`clawhub skill publish`).
 
-For `apps/mcp-server/SKILL.md`'s "MCP Tools" table: the tool-count claim
+For `skills/chatbotx/SKILL.md`'s "MCP Tools" table: the tool-count claim
 ("curated default set of N tools") and the per-category tool list must match
 whatever the codebase actually marks `visibility: "default"` — grep for
 `mcpSpec({ visibility: "default"` under `apps/builder/src` if unsure which
-operations currently opt in.
+operations currently opt in. `apps/builder/__tests__/public-spec-mcp.test.ts`
+pins this file against the live default tool set and fails CI on drift.
 
 ## 4. Verify against a live instance, not just the docs
 
