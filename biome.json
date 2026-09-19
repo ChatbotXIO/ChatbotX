@@ -68,8 +68,8 @@
         "noDuplicateCustomProperties": "off"
       },
       "complexity": {
-        "noExcessiveLinesPerFunction": "off",
-        "noExcessiveCognitiveComplexity": "off"
+        "noExcessiveLinesPerFunction": "warn",
+        "noExcessiveCognitiveComplexity": "warn"
       },
       "performance": {
         "noBarrelFile": "off"
