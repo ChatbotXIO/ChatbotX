@@ -3,8 +3,7 @@
   "dialect": "postgres",
   "id": "0a68be0c-0c59-44f9-92b9-13c15d0d8a01",
   "prevIds": [
-    "21def2c6-cbd3-44de-89c7-549a5a65e4b2",
-    "e931e0d8-1a68-4d10-969e-4d125dd20633"
+    "84ad5502-22b8-4f36-83dc-bb3272425023"
   ],
   "ddl": [
     {
@@ -591,6 +590,24 @@
     },
     {
       "values": [
+        "metaNative",
+        "browserWhisper"
+      ],
+      "name": "whatsappCallRecordingMode",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "metaNative",
+        "browserWhisper"
+      ],
+      "name": "whatsappCallTranscriptionMode",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
         "pending_verification",
         "registered",
         "failed"
@@ -827,6 +844,47 @@
         "android"
       ],
       "name": "devicePlatform",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "userInitiated",
+        "businessInitiated"
+      ],
+      "name": "whatsappCallDirection",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "completed",
+        "failed",
+        "rejected",
+        "canceled"
+      ],
+      "name": "whatsappCallOutcome",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "ringing",
+        "accepted",
+        "rejected",
+        "completed",
+        "failed"
+      ],
+      "name": "whatsappCallStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "accept",
+        "reject"
+      ],
+      "name": "whatsappCallPermissionResponse",
       "entityType": "enums",
       "schema": "public"
     },
@@ -1833,6 +1891,18 @@
     {
       "isRlsEnabled": false,
       "name": "WhatsappBusinessAccount",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "WhatsappCall",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "WhatsappCallPermission",
       "entityType": "tables",
       "schema": "public"
     },
@@ -18572,6 +18642,136 @@
     {
       "type": "boolean",
       "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "callingEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "inboundCallsEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "callHours",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "callRecordingEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "90",
+      "generated": null,
+      "identity": null,
+      "name": "callRecordingRetentionDays",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "callTranscriptionEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "whatsappCallRecordingMode",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'metaNative'",
+      "generated": null,
+      "identity": null,
+      "name": "callRecordingMode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "whatsappCallTranscriptionMode",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'metaNative'",
+      "generated": null,
+      "identity": null,
+      "name": "callTranscriptionMode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "callAnnouncementLanguage",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "callRecordingPurpose",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": "false",
@@ -25980,6 +26180,500 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "wacid",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "attemptId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "whatsappCallDirection",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "direction",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "whatsappCallStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'ringing'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "whatsappCallOutcome",
+      "typeSchema": "public",
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "outcome",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "startedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "endedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "durationSeconds",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "messageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastError",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "answeredByUserId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "initiatedByUserId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "recordingRequested",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "recordingFailureReason",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "recordingPath",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "recordedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "transcript",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "transcribedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "transcriptSegments",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "aiSummary",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "aiSummarizedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "aiSummaryProvider",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "conversationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "type": "whatsappCallPermissionResponse",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "response",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "isPermanent",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "respondedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "WhatsappCoexistStaging"
     },
     {
@@ -27161,6 +27855,19 @@
       "generated": null,
       "identity": null,
       "name": "permissions",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceMember"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "onlineSince",
       "entityType": "columns",
       "schema": "public",
       "table": "WorkspaceMember"
@@ -36928,6 +37635,321 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "wacid",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"wacid\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCall_wacid_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "attemptId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"attemptId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCall_attemptId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCall_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "conversationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCall_conversationId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCall_contactInboxId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCall_workspaceId_createdAt_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCall_contactInboxId_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"status\" = 'ringing'",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCall_ringing_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"status\" = 'ringing' AND \"wacid\" IS NOT NULL AND \"answeredByUserId\" IS NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCall_resumableRinging_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "inboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "recordedAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"recordingPath\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCall_recording_inboxId_recordedAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "inboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"direction\" = 'businessInitiated' AND \"status\" IN ('ringing', 'accepted')",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCall_pendingOutbound_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCallPermission_contactInboxId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCallPermission_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "phoneNumberId",
           "isExpression": false,
           "asc": true,
@@ -42816,6 +43838,142 @@
     {
       "nameExplicit": false,
       "columns": [
+        "answeredByUserId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "WhatsappCall_answeredByUserId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "initiatedByUserId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "WhatsappCall_initiatedByUserId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "WhatsappCall_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "inboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Inbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "WhatsappCall_inboxId_Inbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "contactInboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "WhatsappCall_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "conversationId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Conversation",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "WhatsappCall_conversationId_Conversation_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WhatsappCall"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "WhatsappCallPermission_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "contactInboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "WhatsappCallPermission_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WhatsappCallPermission"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "integrationWhatsappId"
       ],
       "schemaTo": "public",
@@ -44632,6 +45790,26 @@
       "name": "WhatsappBusinessAccount_pkey",
       "schema": "public",
       "table": "WhatsappBusinessAccount",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "WhatsappCall_pkey",
+      "schema": "public",
+      "table": "WhatsappCall",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "WhatsappCallPermission_pkey",
+      "schema": "public",
+      "table": "WhatsappCallPermission",
       "entityType": "pks"
     },
     {
