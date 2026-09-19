@@ -31,6 +31,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 # cancel-in-progress is deliberately false: a cancelled run between the npm
 # upload and the step summary leaves a published version nobody announced.
@@ -44,15 +45,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Fail early when the npm token is absent
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [[ -z "${NPM_TOKEN}" ]]; then
-            echo "::error::NPM_TOKEN secret is not set — add an npm automation token before releasing the CLI."
-            exit 1
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v7
 
@@ -67,6 +59,11 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+
+      # OIDC trusted publishing (below) is delegated by `pnpm publish` to the
+      # npm CLI and requires npm >= 11.5.1. Node 24's bundled npm can lag that.
+      - name: Update npm for OIDC trusted publishing
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -143,11 +140,9 @@ jobs:
         if: steps.guard.outputs.should_publish != 'false'
         working-directory: apps/cli
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           DIST_TAG: ${{ steps.version.outputs.dist_tag }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          printf '//registry.npmjs.org/:_authToken=%s\n' "${NPM_TOKEN}" > "${HOME}/.npmrc"
           ARGS=(--access public --no-git-checks --tag "${DIST_TAG}")
           # --no-git-checks: a tag build is a detached HEAD with a modified
           # package.json, both of which pnpm otherwise refuses to publish from.
