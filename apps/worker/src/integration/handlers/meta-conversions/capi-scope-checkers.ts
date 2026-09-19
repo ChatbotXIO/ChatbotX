@@ -21,6 +21,7 @@ import {
   toAppAccessToken as toMessengerAppAccessToken,
 } from "@chatbotx.io/integration-messenger"
 import { debugTokenOrThrow } from "@chatbotx.io/integration-whatsapp/api/auth"
+import { grantedScopesForWaba } from "@chatbotx.io/integration-whatsapp/api/granted-scopes"
 
 /**
  * Shared CAPI dataset resource type + integration resolvers + scope
@@ -108,8 +109,8 @@ type MetaCapiScopeCheckerConfig = {
  * — structurally identical beyond which platform credential/debug-token/
  * scope-check functions to use, driven by the per-channel config below.
  * `checkWhatsappCapiScope` stays a separate function: it debugs the token
- * differently (`debugTokenOrThrow` + `granular_scopes`/`target_ids`, not a
- * `scopes` array + boolean scope-name check).
+ * differently (`debugTokenOrThrow` + `grantedScopesForWaba` over
+ * `granular_scopes`, not a `scopes` array + boolean scope-name check).
  */
 async function checkMetaCapiScope(
   input: CapiScopeCheckInput,
@@ -182,18 +183,10 @@ async function checkWhatsappCapiScope(
 
   const appAccessToken = `${credential.config.clientId}|${credential.config.clientSecret}`
   const token = await debugTokenOrThrow(input.accessToken, appAccessToken)
-  const capiScope = token?.granular_scopes?.find(
-    (scope) => scope.scope === WHATSAPP_CAPI_SCOPE,
-  )
-  if (!capiScope) {
-    return false
-  }
-
-  return (
-    !capiScope.target_ids ||
-    capiScope.target_ids.length === 0 ||
-    capiScope.target_ids.includes(input.resourceId)
-  )
+  return grantedScopesForWaba(
+    token?.granular_scopes,
+    input.resourceId,
+  ).includes(WHATSAPP_CAPI_SCOPE)
 }
 
 const scopeCheckers = {
