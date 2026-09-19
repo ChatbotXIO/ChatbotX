@@ -58,7 +58,7 @@ export default async function MessengerSelectPage() {
   const pendingAuth = await readPendingAuth(FB_MESSENGER_PENDING_AUTH_COOKIE)
 
   if (!pendingAuth) {
-    redirect("/channels/create")
+    redirect("/channels/create?error=sessionExpired")
   }
 
   const { pages, bmLookupFailed } = await getUserPages(
