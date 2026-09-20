@@ -156,6 +156,9 @@ describe("broadcastService.cloneBroadcast", () => {
       integrationWhatsappId: null,
       integrationMessengerId: null,
       contactFilter: CONTACT_FILTER,
+      audienceRangeStart: null,
+      audienceRangeEnd: null,
+      sendRatePerMinute: null,
       schedulesType: "future",
       schedulesAt: source.schedulesAt,
     })

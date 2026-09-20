@@ -128,6 +128,24 @@ vi.mock("@chatbotx.io/database/partials", () => ({
   withBroadcastTargets: {},
   dmConversationUsesSourceId: vi.fn(() => false),
   requiresRecentInteractionWindow: vi.fn(() => false),
+  isAudienceRangeOrdered: (limit: {
+    audienceRangeStart?: number | null
+    audienceRangeEnd?: number | null
+  }) =>
+    limit.audienceRangeStart == null ||
+    limit.audienceRangeEnd == null ||
+    limit.audienceRangeStart <= limit.audienceRangeEnd,
+  normalizeBroadcastSendLimit: (
+    input: Partial<{
+      audienceRangeStart: number | null
+      audienceRangeEnd: number | null
+      sendRatePerMinute: number | null
+    }>,
+  ) => ({
+    audienceRangeStart: input.audienceRangeStart ?? null,
+    audienceRangeEnd: input.audienceRangeEnd ?? null,
+    sendRatePerMinute: input.sendRatePerMinute ?? null,
+  }),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({

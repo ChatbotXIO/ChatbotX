@@ -65,6 +65,17 @@ vi.mock("@chatbotx.io/database/partials", () => ({
       success: value === "email" || value === "fullName",
     }),
   },
+  normalizeBroadcastSendLimit: (
+    input: Partial<{
+      audienceRangeStart: number | null
+      audienceRangeEnd: number | null
+      sendRatePerMinute: number | null
+    }>,
+  ) => ({
+    audienceRangeStart: input.audienceRangeStart ?? null,
+    audienceRangeEnd: input.audienceRangeEnd ?? null,
+    sendRatePerMinute: input.sendRatePerMinute ?? null,
+  }),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({

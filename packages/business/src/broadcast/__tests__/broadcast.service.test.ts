@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => ({
   contactInboxInteractedWithin24hSQL: vi.fn(() => ({
     RAW: "recent-interaction",
   })),
+  setIfAbsent: vi.fn(),
+  loggerError: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -24,6 +26,11 @@ vi.mock("@chatbotx.io/analytics", () => ({
 
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: vi.fn(),
+  casStore: { setIfAbsent: mocks.setIfAbsent },
+}))
+
+vi.mock("../../logger", () => ({
+  logger: { error: mocks.loggerError },
 }))
 
 vi.mock("../../inbox/service", () => ({
@@ -113,7 +120,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
       },
     },
     select: (selection?: Record<string, unknown>) => {
-      const isAudiencePreview = Boolean(selection?.contactId)
       const isCountSelect = Boolean(selection?.count)
       const builder = {
         from: () => builder,
@@ -136,17 +142,18 @@ vi.mock("@chatbotx.io/database/client", () => ({
           mocks.selectOrderBy(orderBy)
           return builder
         },
+        // A real Promise (awaitable directly — the byte-identical,
+        // un-windowed path) with a bonus `.offset(...)` method (the windowed
+        // path). Mirrors real drizzle query builder shape without declaring
+        // a literal `then` property.
         limit: (limit: number) => {
           mocks.selectLimit(limit)
-          if (isAudiencePreview) {
-            return {
-              offset: (offset: number) => {
-                mocks.selectOffset(offset)
-                return Promise.resolve(mocks.selectRows)
-              },
-            }
-          }
-          return Promise.resolve(mocks.selectRows)
+          return Object.assign(Promise.resolve(mocks.selectRows), {
+            offset: (offset: number) => {
+              mocks.selectOffset(offset)
+              return Promise.resolve(mocks.selectRows)
+            },
+          })
         },
       }
 
@@ -226,6 +233,8 @@ beforeEach(() => {
   mocks.chunkById.mockReset()
   mocks.buildContactInboxContactFilterSQL.mockClear()
   mocks.contactInboxInteractedWithin24hSQL.mockClear()
+  mocks.setIfAbsent.mockReset()
+  mocks.loggerError.mockReset()
 })
 
 describe("broadcastService.listOptions", () => {
@@ -479,6 +488,45 @@ describe("broadcastService.countAudience", () => {
       },
     ])
   })
+
+  test("clamps the plain-branch count to the audience range", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    mocks.count.mockResolvedValue(100)
+
+    const total = await broadcastService.countAudience({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      audienceRange: { offset: 10, size: 20 },
+    })
+
+    expect(total).toBe(20)
+  })
+
+  test("does not clamp the plain-branch count when audienceRange is absent", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    mocks.count.mockResolvedValue(100)
+
+    const total = await broadcastService.countAudience({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+    })
+
+    expect(total).toBe(100)
+  })
+
+  test("clamps the restricted-branch count to the audience range", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    mocks.selectRows = [{ count: 100 }]
+
+    const total = await broadcastService.countAudience({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      restrictToAssignedUserId: "user-1",
+      audienceRange: { offset: 90, size: 100 },
+    })
+
+    expect(total).toBe(10)
+  })
 })
 
 describe("broadcastService.listAudiencePreview", () => {
@@ -606,6 +654,53 @@ describe("broadcastService.listAudiencePreview", () => {
         ]),
       }),
     )
+  })
+
+  test("applies the range's offset and caps the page within the window", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    mocks.selectRows = []
+
+    await broadcastService.listAudiencePreview({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      page: 2,
+      perPage: 10,
+      audienceRange: { offset: 100, size: 25 },
+    })
+
+    // page 2 (offset 10 within the window) + the range's own offset (100).
+    expect(mocks.selectLimit).toHaveBeenCalledWith(10)
+    expect(mocks.selectOffset).toHaveBeenCalledWith(110)
+  })
+
+  test("returns an empty page without querying once the page lies past the range", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+
+    const rows = await broadcastService.listAudiencePreview({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      page: 3,
+      perPage: 10,
+      audienceRange: { offset: 0, size: 20 },
+    })
+
+    expect(rows).toEqual([])
+    expect(mocks.selectWhere).not.toHaveBeenCalled()
+  })
+
+  test("keeps the offset/limit byte-identical to today when audienceRange is absent", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    mocks.selectRows = []
+
+    await broadcastService.listAudiencePreview({
+      workspaceId: "ws-1",
+      channels: ["messenger"],
+      page: 3,
+      perPage: 10,
+    })
+
+    expect(mocks.selectLimit).toHaveBeenCalledWith(10)
+    expect(mocks.selectOffset).toHaveBeenCalledWith(20)
   })
 })
 
@@ -1140,6 +1235,139 @@ describe("broadcastService.forEachAudienceChunk", () => {
     )
     expect(onChunk).toHaveBeenCalledWith(rows)
   })
+
+  test("is byte-identical to today when audienceRange is absent: no offset call, plain chunkSize limit", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    const rows = [{ id: "ci-1" }, { id: "ci-2" }]
+    mocks.selectRows = rows
+    mocks.chunkById.mockImplementation(async (queryFn, opts) => {
+      await queryFn(null)
+      await opts.callback(rows)
+    })
+    const onChunk = vi.fn()
+
+    await broadcastService.forEachAudienceChunk(
+      { workspaceId: "ws-1", channels: ["messenger"], chunkSize: 500 },
+      onChunk,
+    )
+
+    expect(mocks.selectLimit).toHaveBeenCalledWith(500)
+    expect(mocks.selectOffset).not.toHaveBeenCalled()
+  })
+
+  // Mirrors the real `chunkById` loop (packages/database/src/utils.ts) but
+  // driven off preset row batches, so a test can assert the query shape
+  // (limit/offset per call) at each step of a multi-chunk walk.
+  const fakeChunkById =
+    (rowBatches: { id: string }[][]) =>
+    async (
+      queryFn: (lastId: string | null) => Promise<unknown>,
+      opts: {
+        chunkSize: number
+        callback: (rows: { id: string }[]) => Promise<boolean | undefined>
+      },
+    ) => {
+      let lastId: string | null = null
+      let hasMore = true
+      let index = 0
+      while (hasMore) {
+        const records = rowBatches[index] ?? []
+        mocks.selectRows = records
+        await queryFn(lastId)
+        if (records.length === 0) {
+          break
+        }
+        const shouldContinue = await opts.callback(records)
+        if (shouldContinue === false) {
+          break
+        }
+        if (records.length < opts.chunkSize) {
+          hasMore = false
+        } else {
+          lastId = records.at(-1)?.id ?? null
+        }
+        index += 1
+      }
+    }
+
+  test("offsets only the first query; keyset queries after it carry no offset", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    const firstBatch = Array.from({ length: 3 }, (_, i) => ({
+      id: `ci-${i + 1}`,
+    }))
+    const secondBatch = [{ id: "ci-4" }]
+    mocks.chunkById.mockImplementation(fakeChunkById([firstBatch, secondBatch]))
+    const onChunk = vi.fn().mockResolvedValue(undefined)
+
+    await broadcastService.forEachAudienceChunk(
+      {
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+        chunkSize: 3,
+        audienceRange: { offset: 50, size: null },
+      },
+      onChunk,
+    )
+
+    expect(mocks.selectOffset).toHaveBeenCalledTimes(1)
+    expect(mocks.selectOffset).toHaveBeenCalledWith(50)
+    expect(onChunk).toHaveBeenCalledTimes(2)
+  })
+
+  test("caps each query's limit by the remaining window size", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    const firstBatch = Array.from({ length: 3 }, (_, i) => ({
+      id: `ci-${i + 1}`,
+    }))
+    const secondBatch = [{ id: "ci-4" }, { id: "ci-5" }]
+    mocks.chunkById.mockImplementation(fakeChunkById([firstBatch, secondBatch]))
+    const onChunk = vi.fn().mockResolvedValue(undefined)
+
+    await broadcastService.forEachAudienceChunk(
+      {
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+        chunkSize: 3,
+        audienceRange: { offset: 0, size: 5 },
+      },
+      onChunk,
+    )
+
+    expect(mocks.selectLimit).toHaveBeenNthCalledWith(1, 3)
+    expect(mocks.selectLimit).toHaveBeenNthCalledWith(2, 2)
+  })
+
+  test("stops exactly at the window end when the window is an exact multiple of chunkSize", async () => {
+    mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
+    const firstBatch = Array.from({ length: 3 }, (_, i) => ({
+      id: `ci-${i + 1}`,
+    }))
+    const secondBatch = Array.from({ length: 3 }, (_, i) => ({
+      id: `ci-${i + 4}`,
+    }))
+    // A third batch that must never be fetched: without the explicit
+    // remaining-based stop, `chunkById`'s own `records.length < chunkSize`
+    // check would keep going past the window (both batches equal chunkSize).
+    const thirdBatch = [{ id: "ci-7" }]
+    mocks.chunkById.mockImplementation(
+      fakeChunkById([firstBatch, secondBatch, thirdBatch]),
+    )
+    const onChunk = vi.fn().mockResolvedValue(undefined)
+
+    await broadcastService.forEachAudienceChunk(
+      {
+        workspaceId: "ws-1",
+        channels: ["messenger"],
+        chunkSize: 3,
+        audienceRange: { offset: 0, size: 6 },
+      },
+      onChunk,
+    )
+
+    expect(onChunk).toHaveBeenCalledTimes(2)
+    expect(onChunk).toHaveBeenNthCalledWith(1, firstBatch)
+    expect(onChunk).toHaveBeenNthCalledWith(2, secondBatch)
+  })
 })
 
 describe("broadcastService.findByIdForResponse", () => {
@@ -1232,5 +1460,89 @@ describe("broadcastService.findByIdForResponse", () => {
         inboxId: "inbox-a",
       }),
     ).resolves.toBeNull()
+  })
+})
+
+describe("broadcastService.claimDispatchWindow", () => {
+  test("returns true and sets the TTL when the lease is free", async () => {
+    mocks.setIfAbsent.mockResolvedValue(true)
+
+    const claimed = await broadcastService.claimDispatchWindow({
+      broadcastId: "broadcast-1",
+    })
+
+    expect(claimed).toBe(true)
+    expect(mocks.setIfAbsent).toHaveBeenCalledWith(
+      "broadcast:broadcast-1:dispatch-window",
+      true,
+      55_000,
+    )
+  })
+
+  test("returns false while the previous batch's lease is still live", async () => {
+    mocks.setIfAbsent.mockResolvedValue(false)
+
+    const claimed = await broadcastService.claimDispatchWindow({
+      broadcastId: "broadcast-1",
+    })
+
+    expect(claimed).toBe(false)
+  })
+
+  test("fails open (true) and logs with the err key when Redis throws", async () => {
+    const error = new Error("redis unavailable")
+    mocks.setIfAbsent.mockRejectedValue(error)
+
+    const claimed = await broadcastService.claimDispatchWindow({
+      broadcastId: "broadcast-1",
+    })
+
+    expect(claimed).toBe(true)
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: error, broadcastId: "broadcast-1" }),
+      expect.any(String),
+    )
+  })
+})
+
+describe("broadcastService.claimDispatchWindow lease timing", () => {
+  test("refuses a claim inside the 55s lease and allows one again once it expires", async () => {
+    vi.useFakeTimers()
+    try {
+      // In-memory `SET NX PX` fake: a key is claimable again only once its
+      // recorded expiry has passed, mirroring casStore.setIfAbsent's TTL
+      // semantics without a real Redis.
+      const leaseExpiryByKey = new Map<string, number>()
+      mocks.setIfAbsent.mockImplementation(
+        (key: string, _value: unknown, ttlMs: number) => {
+          const now = Date.now()
+          const expiresAt = leaseExpiryByKey.get(key)
+          if (expiresAt != null && expiresAt > now) {
+            return Promise.resolve(false)
+          }
+          leaseExpiryByKey.set(key, now + ttlMs)
+          return Promise.resolve(true)
+        },
+      )
+
+      const t0 = await broadcastService.claimDispatchWindow({
+        broadcastId: "broadcast-1",
+      })
+      expect(t0).toBe(true)
+
+      vi.advanceTimersByTime(54_999)
+      const beforeExpiry = await broadcastService.claimDispatchWindow({
+        broadcastId: "broadcast-1",
+      })
+      expect(beforeExpiry).toBe(false)
+
+      vi.advanceTimersByTime(1)
+      const atExpiry = await broadcastService.claimDispatchWindow({
+        broadcastId: "broadcast-1",
+      })
+      expect(atExpiry).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

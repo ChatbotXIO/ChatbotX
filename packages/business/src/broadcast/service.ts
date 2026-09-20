@@ -19,7 +19,9 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import {
+  BROADCAST_DISPATCH_WINDOW_MS,
   type BroadcastScheduleType,
+  type BroadcastSendLimit,
   type BroadcastStatus,
   type BroadcastSubaction,
   type BroadcastTerminalStatus,
@@ -27,15 +29,19 @@ import {
   broadcastSendsTemplate,
   broadcastStatuses,
   type ChannelType,
+  clampAudienceCountToRange,
   contactFilterFields,
   dmConversationUsesSourceId,
   findBroadcastChannelCapability,
   hasDuplicateBroadcastTarget,
   hasFlowAndTemplate,
+  isAudienceRangeOrdered,
   isTargetsFlowSendWithoutFlow,
   isTargetsTemplateSendWithoutTemplate,
   isTemplateSendWithoutPage,
+  normalizeBroadcastSendLimit,
   requiresRecentInteractionWindow,
+  resolveAudiencePageWindow,
   resolveBroadcastTargetMode,
   resolveBroadcastTemplateSend,
   usesBroadcastTargets,
@@ -83,6 +89,7 @@ import {
   stepTypes,
   type WaTemplateParams,
 } from "@chatbotx.io/flow-config"
+import { casStore } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { startOfMinute } from "date-fns"
 import { BaseService } from "../base.service"
@@ -93,6 +100,7 @@ import {
 import { contactInboxService } from "../contact-inbox/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { inboxService } from "../inbox/service"
+import { logger } from "../logger"
 import type {
   BroadcastAudienceInput,
   BroadcastAudiencePreviewRow,
@@ -226,7 +234,7 @@ export type UpdateDraftBroadcastData = {
   schedulesAt: string | null
   contactFilter?: ContactFilterCriteriaInput | null
   saveAsDraft?: boolean
-}
+} & BroadcastSendLimit
 
 export type BroadcastCalendarRow = BroadcastModel & {
   flow: Pick<FlowModel, "id" | "name"> | null
@@ -286,6 +294,7 @@ export type BroadcastValidationField =
   | "targets"
   | "integrationWhatsappId"
   | "integrationMessengerId"
+  | "audienceRangeEnd"
 
 /**
  * A rejected create/edit payload. Carries the offending field so the app
@@ -1205,6 +1214,7 @@ class BroadcastService extends BaseService {
       schedulesType: data.schedulesType,
       // Persist the minute-truncated time the schema validated against.
       schedulesAt: startOfMinute(new Date(data.schedulesAt ?? new Date())),
+      ...normalizeBroadcastSendLimit(data),
     }
   }
 
@@ -1308,6 +1318,7 @@ class BroadcastService extends BaseService {
           integrationWhatsappId: source.integrationWhatsappId,
           integrationMessengerId: source.integrationMessengerId,
           contactFilter,
+          ...normalizeBroadcastSendLimit(source),
           // A draft keeps the source schedule verbatim; a past time is only
           // rejected later, when the draft is scheduled or sent.
           schedulesType: source.schedulesType,
@@ -1485,6 +1496,11 @@ class BroadcastService extends BaseService {
         violated: isTemplateSendWithoutPage(data),
         message: "Select the page the template belongs to",
         field: "targets",
+      },
+      {
+        violated: !isAudienceRangeOrdered(data),
+        message: "The end position must not be before the start position",
+        field: "audienceRangeEnd",
       },
     ]
 
@@ -1847,6 +1863,8 @@ class BroadcastService extends BaseService {
       return 0
     }
 
+    const range = input.audienceRange ?? null
+
     if (input.restrictToAssignedUserId) {
       const [result] = await db
         .select({ count: count() })
@@ -1859,13 +1877,14 @@ class BroadcastService extends BaseService {
           ),
         )
 
-      return result?.count ?? 0
+      return clampAudienceCountToRange(result?.count ?? 0, range)
     }
 
-    return db.$count(
+    const total = await db.$count(
       contactInboxModel,
       this.buildAudienceWhere(inboxIds, input),
     )
+    return clampAudienceCountToRange(total, range)
   }
 
   async listAudiencePreview(
@@ -1884,6 +1903,14 @@ class BroadcastService extends BaseService {
       MAX_PREVIEW_PER_PAGE,
       Math.max(1, input.perPage ?? DEFAULT_PREVIEW_PER_PAGE),
     )
+    const window = resolveAudiencePageWindow({
+      page,
+      perPage,
+      range: input.audienceRange ?? null,
+    })
+    if (!window) {
+      return []
+    }
 
     const rows = await db
       .select({
@@ -1908,8 +1935,8 @@ class BroadcastService extends BaseService {
         ),
       )
       .orderBy(asc(contactInboxModel.id))
-      .limit(perPage)
-      .offset((page - 1) * perPage)
+      .limit(window.limit)
+      .offset(window.offset)
 
     return rows.map((row) => ({
       ...row,
@@ -2139,18 +2166,58 @@ class BroadcastService extends BaseService {
 
     const where = this.buildAudienceWhere(inboxIds, input)
     const chunkSize = input.chunkSize ?? DEFAULT_CHUNK_SIZE
+    const range = input.audienceRange ?? null
+
+    // No range: keep the query and the callback byte-identical to before
+    // this feature — no offset, plain chunkSize limit, `onChunk` passed
+    // straight through.
+    if (!range) {
+      await chunkById<ContactInboxRow>(
+        (lastId) =>
+          db
+            .select()
+            .from(contactInboxModel)
+            .where(
+              and(where, lastId ? gt(contactInboxModel.id, lastId) : undefined),
+            )
+            .orderBy(asc(contactInboxModel.id))
+            .limit(chunkSize),
+        { chunkSize, callback: onChunk },
+      )
+      return
+    }
+
+    // Rows still to take inside the window; null = unbounded (no `end`).
+    let remaining = range.size
+    let isFirstQuery = true
 
     await chunkById<ContactInboxRow>(
-      (lastId) =>
-        db
+      (lastId) => {
+        const limit =
+          remaining == null ? chunkSize : Math.min(chunkSize, remaining)
+        const query = db
           .select()
           .from(contactInboxModel)
           .where(
             and(where, lastId ? gt(contactInboxModel.id, lastId) : undefined),
           )
           .orderBy(asc(contactInboxModel.id))
-          .limit(chunkSize),
-      { chunkSize, callback: onChunk },
+          .limit(limit)
+        const withOffset = isFirstQuery ? query.offset(range.offset) : query
+        isFirstQuery = false
+        return withOffset
+      },
+      {
+        chunkSize,
+        callback: async (rows) => {
+          if (remaining == null) {
+            return onChunk(rows)
+          }
+          remaining -= rows.length
+          const shouldContinue = await onChunk(rows)
+          return remaining <= 0 ? false : shouldContinue
+        },
+      },
     )
   }
 
@@ -2227,6 +2294,7 @@ class BroadcastService extends BaseService {
           schedulesType: "now",
           schedulesAt: new Date(),
           contactFilter,
+          ...normalizeBroadcastSendLimit(broadcast),
           name: `${broadcast.name} (Resend)`,
           id: createId(),
         })
@@ -2381,6 +2449,29 @@ class BroadcastService extends BaseService {
     })
   }
 
+  /**
+   * `process-broadcast-contacts.ts`: SET NX PX (TTL `BROADCAST_DISPATCH_WINDOW_MS`).
+   * `true` when this run may hand off a batch; `false` while the previous
+   * batch's lease is still live, so the caller must wait for the next tick.
+   * A Redis failure fails open (`true`, logged) rather than stalling the
+   * broadcast — today's behaviour for every other Redis-backed guard here.
+   */
+  async claimDispatchWindow(input: { broadcastId: string }): Promise<boolean> {
+    try {
+      return await casStore.setIfAbsent(
+        `broadcast:${input.broadcastId}:dispatch-window`,
+        true,
+        BROADCAST_DISPATCH_WINDOW_MS,
+      )
+    } catch (error) {
+      logger.error(
+        { err: error, broadcastId: input.broadcastId },
+        "Failed to claim broadcast dispatch window lease",
+      )
+      return true
+    }
+  }
+
   /** `process-broadcast-contacts.ts`: the next page of unsent, unfailed recipients. */
   async listPendingRecipients(input: {
     broadcastId: string
@@ -2396,6 +2487,7 @@ class BroadcastService extends BaseService {
         conversation: true,
         contactInbox: true,
       },
+      orderBy: { contactInboxId: "asc" },
       limit: input.limit,
     })) as BroadcastRecipientForSend[]
   }
