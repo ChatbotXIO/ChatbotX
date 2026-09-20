@@ -21,6 +21,7 @@ import {
   createHistoricalIdFactory,
   type HistoricalMessage,
 } from "./bulk-historical-import"
+import { enqueueAttachmentDownloadJobs } from "./enqueue-attachment-downloads"
 import { instagramCoexistAdapter } from "./instagram-adapter"
 import { instagramFacebookCoexistAdapter } from "./instagram-facebook-adapter"
 import { splitDisplayName } from "./instagram-normalize"
@@ -357,29 +358,16 @@ const runInstagramCoexistPull = async <
       skippedTotal += pageSkipped
       failedTotal += pageFailed
 
-      if (attachmentIds.length > 0) {
-        await integrationQueue.addBulk(
-          attachmentIds.map((attachmentId) => ({
-            name: IntegrationJobAction.coexistAttachmentDownload,
-            data: {
-              type: IntegrationJobAction.coexistAttachmentDownload,
-              data: {
-                attachmentId,
-                workspaceId,
-                channel: "instagram" as const,
-                integrationId,
-              },
-            },
-            opts: {
-              jobId: `att-${attachmentId}`,
-              attempts: 5,
-              backoff: { type: "exponential", delay: 30_000 },
-              removeOnComplete: true,
-              removeOnFail: { count: 100 },
-            },
-          })),
-        )
-      }
+      // Not best-effort by design: a failed enqueue propagates so the run is
+      // marked failed and re-driven BEFORE the resume watermark advances past
+      // these attachments (updateProgress below writes lastSyncedAt). This
+      // preserves Instagram's stricter original behavior.
+      await enqueueAttachmentDownloadJobs({
+        workspaceId,
+        integrationId,
+        channel: "instagram",
+        attachmentIds,
+      })
 
       await coexistService.updateProgress({
         runId,

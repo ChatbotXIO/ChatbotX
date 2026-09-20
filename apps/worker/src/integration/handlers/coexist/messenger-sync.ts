@@ -34,6 +34,7 @@ import {
   maxNumericId,
 } from "./bulk-historical-import"
 import { filterConversationWindow } from "./conversation-window"
+import { enqueueAttachmentDownloadJobs } from "./enqueue-attachment-downloads"
 import {
   fetchConvMessages,
   messengerAuthSchema,
@@ -466,38 +467,22 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
       // One UPDATE per table for the whole chunk (not per conv/page in the loop).
       await applyCoexistActivityUpdates(activityUpdates, { workspaceId })
 
-      // Bulk-enqueue per-attachment download jobs. The handler is idempotent
-      // (prefix-checked + jobId-dedup'd), so a retry of this whole chunk
-      // re-enqueues the same jobIds harmlessly.
-      if (pageAttachmentIds.length > 0) {
-        try {
-          await integrationQueue.addBulk(
-            pageAttachmentIds.map((attachmentId) => ({
-              name: IntegrationJobAction.coexistAttachmentDownload,
-              data: {
-                type: IntegrationJobAction.coexistAttachmentDownload,
-                data: {
-                  attachmentId,
-                  workspaceId,
-                  channel: "messenger" as const,
-                  integrationId: ctx.integrationId,
-                },
-              },
-              opts: {
-                jobId: `att-${attachmentId}`,
-                attempts: 5,
-                backoff: { type: "exponential", delay: 30_000 },
-                removeOnComplete: true,
-                removeOnFail: { count: 100 },
-              },
-            })),
-          )
-        } catch (error) {
-          logger.error(
-            { error, runId, pageNumber, count: pageAttachmentIds.length },
-            "[coexist] Messenger attachment download enqueue failed — bytes left as pending",
-          )
-        }
+      // Bulk-enqueue per-attachment download jobs onto the low-priority queue.
+      // The handler is idempotent (prefix-checked + jobId-dedup'd), so a retry
+      // of this whole chunk re-enqueues the same jobIds harmlessly. Best-effort:
+      // a failed enqueue leaves the bytes pending and must not fail the page.
+      try {
+        await enqueueAttachmentDownloadJobs({
+          workspaceId,
+          integrationId: ctx.integrationId,
+          channel: "messenger",
+          attachmentIds: pageAttachmentIds,
+        })
+      } catch (error) {
+        logger.error(
+          { err: error, runId, pageNumber, count: pageAttachmentIds.length },
+          "[coexist] Messenger attachment download enqueue failed — bytes left as pending",
+        )
       }
 
       await coexistService.incrementProgress({

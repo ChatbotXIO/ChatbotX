@@ -17,6 +17,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import { bulkImportHistorical } from "./bulk-historical-import"
+import { enqueueAttachmentDownloadJobs } from "./enqueue-attachment-downloads"
 import {
   abandon,
   type FlushContext,
@@ -78,47 +79,6 @@ const resolveTerminalStatus = (counters: {
     return "failed"
   }
   return "succeeded"
-}
-
-/**
- * Enqueues one download job per Attachment inserted by this batch (inline or
- * post-batch). Never throws: the bytes stay pending and the row is recoverable.
- */
-const enqueueAttachmentDownloads = async (
-  context: FlushContext,
-  attachmentIds: string[],
-): Promise<void> => {
-  if (attachmentIds.length === 0) {
-    return
-  }
-  try {
-    await integrationQueue.addBulk(
-      attachmentIds.map((attachmentId) => ({
-        name: IntegrationJobAction.coexistAttachmentDownload,
-        data: {
-          type: IntegrationJobAction.coexistAttachmentDownload,
-          data: {
-            attachmentId,
-            workspaceId: context.integration.workspaceId,
-            channel: "whatsapp" as const,
-            integrationId: context.integration.id,
-          },
-        },
-        opts: {
-          jobId: `att-${attachmentId}`,
-          attempts: 5,
-          backoff: { type: "exponential", delay: 30_000 },
-          removeOnComplete: true,
-          removeOnFail: { count: 100 },
-        },
-      })),
-    )
-  } catch (error) {
-    logger.error(
-      { error, runId: context.runId, count: attachmentIds.length },
-      "[coexist] WhatsApp attachment download enqueue failed — bytes left as pending",
-    )
-  }
 }
 
 /** Replays carried patches plus this batch's, and re-caps what stays pending. */
@@ -252,10 +212,25 @@ const importAndPatch = async (
 ): Promise<void> => {
   const batchResult = await importBatch(context, state, reduced, stagedRows)
   const patchAttachmentIds = await applyBatchPatches(context, state, reduced)
-  await enqueueAttachmentDownloads(context, [
+  // Best-effort: a failed enqueue leaves the bytes pending and recoverable, so
+  // it must never fail the flush chunk.
+  const attachmentIds = [
     ...batchResult.insertedAttachmentIds,
     ...patchAttachmentIds,
-  ])
+  ]
+  try {
+    await enqueueAttachmentDownloadJobs({
+      workspaceId: context.integration.workspaceId,
+      integrationId: context.integration.id,
+      channel: "whatsapp",
+      attachmentIds,
+    })
+  } catch (error) {
+    logger.error(
+      { err: error, runId: context.runId, count: attachmentIds.length },
+      "[coexist] WhatsApp attachment download enqueue failed — bytes left as pending",
+    )
+  }
 }
 
 /**

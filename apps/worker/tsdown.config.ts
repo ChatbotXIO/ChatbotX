@@ -16,6 +16,7 @@ export default defineConfig({
     "src/schedule/worker.ts",
     "src/events/worker.ts",
     "src/notification/worker.ts",
+    "src/low/worker.ts",
   ],
   dts: false,
   shims: true,
