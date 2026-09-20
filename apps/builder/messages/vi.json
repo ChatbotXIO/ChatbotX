@@ -3386,6 +3386,7 @@
       "noConnectablePagesDescription": "Bạn không phải là Admin của Page này",
       "bmLookupFailedTitle": "Có thể thiếu trang trong Business Manager",
       "bmLookupFailedDescription": "Hãy kết nối lại Messenger và cấp quyền Business Manager để liệt kê các trang được quản lý qua Business Manager.",
+      "loadFailed": "Không tải được danh sách Trang Facebook",
       "alreadyConnectedNote": "Trang này đã được kết nối",
       "notAdminNote": "Bạn không phải là Admin của Page này",
       "tryAgain": "Kết nối lại"

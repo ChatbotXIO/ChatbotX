@@ -4136,6 +4136,7 @@
     "selectPage": {
       "alreadyConnectedNote": "该页面已连接",
       "bmLookupFailedDescription": "重新连接Messenger 并授予商务管理平台访问权限，以便可以列出通过商务管理平台管理的页面。",
+      "loadFailed": "无法加载你的 Facebook 主页",
       "bmLookupFailedTitle": "业务管理平台页面可能遗失",
       "noConnectablePagesDescription": "您不是此页面的管理员",
       "noConnectablePagesTitle": "没有可连接的页面",

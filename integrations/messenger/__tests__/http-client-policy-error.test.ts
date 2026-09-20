@@ -1,6 +1,12 @@
+import { HTTPError, type NormalizedOptions } from "ky"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { MessengerAPIException, rescue } from "../src/exception"
-import { isExpectedPolicyError, logChannelError } from "../src/lib/http-client"
+import {
+  isDataTooLargeGraphError,
+  isExpectedPolicyError,
+  logChannelError,
+  shouldRetryGraphRequest,
+} from "../src/lib/http-client"
 import { logger } from "../src/lib/logger"
 
 vi.mock("../src/lib/logger", () => ({
@@ -33,6 +39,94 @@ describe("isExpectedPolicyError", () => {
   test("genuine errors are not whitelisted", () => {
     expect(isExpectedPolicyError({ code: 190 })).toBe(false)
     expect(isExpectedPolicyError({})).toBe(false)
+  })
+})
+
+describe("isDataTooLargeGraphError", () => {
+  const sentence =
+    "Please reduce the amount of data you're asking for, then retry your request"
+
+  test("code 1, no subcode, with Meta's 'reduce the amount of data' sentence", () => {
+    expect(isDataTooLargeGraphError({ code: 1, message: sentence })).toBe(true)
+    expect(
+      isDataTooLargeGraphError({
+        code: "1",
+        subCode: null,
+        message: `(#1) ${sentence}`,
+      }),
+    ).toBe(true)
+  })
+
+  test("generic code 1 ('API Unknown', documented as transient) is not", () => {
+    expect(
+      isDataTooLargeGraphError({
+        code: 1,
+        message: "An unknown error occurred",
+      }),
+    ).toBe(false)
+    expect(isDataTooLargeGraphError({ code: 1 })).toBe(false)
+  })
+
+  test("a subcode, or any other code, is not", () => {
+    expect(
+      isDataTooLargeGraphError({ code: 1, subCode: 99, message: sentence }),
+    ).toBe(false)
+    expect(isDataTooLargeGraphError({ code: 2, message: sentence })).toBe(false)
+    expect(isDataTooLargeGraphError({})).toBe(false)
+  })
+})
+
+// Meta's "Please reduce the amount of data you're asking for" comes back as a
+// 5xx, which the client would otherwise retry three times — and the same
+// request never succeeds on retry. The only remedy is a smaller page, which
+// the caller (`fetchDirectPages`) handles, so the client must give up at once.
+describe("shouldRetryGraphRequest", () => {
+  const httpError = (status: number, body: unknown) => {
+    const error = new HTTPError(
+      new Response(JSON.stringify(body), { status }),
+      new Request("https://graph.facebook.com/v23.0/me/accounts"),
+      {} as NormalizedOptions,
+    )
+    error.data = body
+    return error
+  }
+
+  test("refuses to retry a code-1 'reduce the amount of data' 500", async () => {
+    const error = httpError(500, {
+      error: {
+        code: 1,
+        message:
+          "Please reduce the amount of data you're asking for, then retry your request",
+      },
+    })
+
+    await expect(
+      shouldRetryGraphRequest({ error, retryCount: 1 }),
+    ).resolves.toBe(false)
+  })
+
+  test("leaves every other failure to ky's default status-code policy", async () => {
+    await expect(
+      shouldRetryGraphRequest({
+        error: httpError(500, { error: { code: 2, message: "Service down" } }),
+        retryCount: 1,
+      }),
+    ).resolves.toBeUndefined()
+    // Generic code 1 is Meta's transient "API Unknown": still retried.
+    await expect(
+      shouldRetryGraphRequest({
+        error: httpError(500, {
+          error: { code: 1, message: "An unknown error occurred" },
+        }),
+        retryCount: 1,
+      }),
+    ).resolves.toBeUndefined()
+    await expect(
+      shouldRetryGraphRequest({
+        error: new Error("socket hang up"),
+        retryCount: 1,
+      }),
+    ).resolves.toBeUndefined()
   })
 })
 

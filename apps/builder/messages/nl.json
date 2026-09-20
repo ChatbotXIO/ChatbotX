@@ -3386,6 +3386,7 @@
       "noConnectablePagesDescription": "U bent geen beheerder van deze pagina",
       "bmLookupFailedTitle": "Pagina's uit Bedrijfsmanager ontbreken mogelijk",
       "bmLookupFailedDescription": "Koppel Messenger opnieuw en verleen toegang tot Bedrijfsmanager zodat pagina's die via Bedrijfsmanager worden beheerd kunnen worden vermeld.",
+      "loadFailed": "Je Facebook-pagina's konden niet worden geladen",
       "alreadyConnectedNote": "Deze pagina is al gekoppeld",
       "notAdminNote": "U bent geen beheerder van deze pagina",
       "tryAgain": "Probeer opnieuw te koppelen"

@@ -3386,6 +3386,7 @@
       "noConnectablePagesDescription": "Sie sind kein Administrator dieser Seite",
       "bmLookupFailedTitle": "Business-Manager-Seiten fehlen möglicherweise",
       "bmLookupFailedDescription": "Verbinden Sie Messenger erneut und gewähren Sie Zugriff auf den Business Manager, damit über ihn verwaltete Seiten aufgelistet werden können.",
+      "loadFailed": "Deine Facebook-Seiten konnten nicht geladen werden",
       "alreadyConnectedNote": "Diese Seite ist bereits verbunden",
       "notAdminNote": "Sie sind kein Administrator dieser Seite",
       "tryAgain": "Erneute Verbindung versuchen"

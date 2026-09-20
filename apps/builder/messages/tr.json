@@ -3386,6 +3386,7 @@
       "noConnectablePagesDescription": "Bu Sayfanın yöneticisi değilsiniz",
       "bmLookupFailedTitle": "İşletme Yöneticisi sayfaları eksik olabilir",
       "bmLookupFailedDescription": "Bir İşletme Yöneticisi üzerinden yönetilen sayfaların listelenebilmesi için Messenger'ı yeniden bağlayın ve İşletme Yöneticisi erişimi verin.",
+      "loadFailed": "Facebook Sayfaların yüklenemedi",
       "alreadyConnectedNote": "Bu sayfa zaten bağlı",
       "notAdminNote": "Bu Sayfanın yöneticisi değilsiniz",
       "tryAgain": "Yeniden bağlanmayı dene"

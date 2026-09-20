@@ -3386,6 +3386,7 @@
       "noConnectablePagesDescription": "No eres administrador de esta página",
       "bmLookupFailedTitle": "Empresa Manager páginas may be missing",
       "bmLookupFailedDescription": "ReConectar Messenger y grant Empresa Manager access so páginas managed through un Empresa Manager puede be listed.",
+      "loadFailed": "No se pudieron cargar tus páginas de Facebook",
       "alreadyConnectedNote": "This página es already connected",
       "notAdminNote": "No eres administrador de esta página",
       "tryAgain": "Intenta volver a conectar"

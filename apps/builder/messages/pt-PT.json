@@ -3386,6 +3386,7 @@
       "noConnectablePagesDescription": "Não é administrador desta Página",
       "bmLookupFailedTitle": "Poderão faltar páginas do Gestor de Negócios",
       "bmLookupFailedDescription": "Volte a ligar o Messenger e conceda acesso ao Gestor de Negócios para que as páginas geridas através dele possam ser apresentadas.",
+      "loadFailed": "Não foi possível carregar as suas Páginas do Facebook",
       "alreadyConnectedNote": "Esta página já está ligada",
       "notAdminNote": "Não é administrador desta Página",
       "tryAgain": "Tentar ligar novamente"

@@ -3386,6 +3386,7 @@
       "noConnectablePagesDescription": "Non sei amministratore di questa Pagina",
       "bmLookupFailedTitle": "Alcune Pagine di Business Manager potrebbero non essere disponibili",
       "bmLookupFailedDescription": "Ricollega Messenger e concedi l'accesso a Business Manager affinché possano essere elencate le Pagine gestite tramite Business Manager.",
+      "loadFailed": "Impossibile caricare le tue Pagine Facebook",
       "alreadyConnectedNote": "Questa Pagina è già collegata",
       "notAdminNote": "Non sei amministratore di questa Pagina",
       "tryAgain": "Prova a ricollegarti"

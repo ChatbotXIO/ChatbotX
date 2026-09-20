@@ -7,12 +7,16 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const {
   mockFindConnectedMessengerPageIds,
   mockGetUserPages,
+  mockLoggerError,
+  mockMapToChannelError,
   mockReadPendingAuth,
   mockRedirect,
   mockSelectPage,
 } = vi.hoisted(() => ({
   mockFindConnectedMessengerPageIds: vi.fn(),
   mockGetUserPages: vi.fn(),
+  mockLoggerError: vi.fn(),
+  mockMapToChannelError: vi.fn(),
   mockReadPendingAuth: vi.fn(),
   mockRedirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`)
@@ -37,6 +41,11 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({
   getUserPages: mockGetUserPages,
+  mapToChannelError: mockMapToChannelError,
+}))
+
+vi.mock("@/lib/log", () => ({
+  logger: { error: mockLoggerError },
 }))
 
 vi.mock("@/lib/facebook-pending-auth", () => ({
@@ -57,6 +66,7 @@ const { default: MessengerSelectPage } = await import(
 )
 
 type SelectPageElementProps = {
+  loadError?: { providerMessage?: string }
   items: Array<{
     id: string
     isAlreadyConnected: boolean
@@ -184,6 +194,69 @@ describe("MessengerSelectPage", () => {
       (item) => item.id === "page-connectable",
     )
     expect(connectable?.secondary).toBe("page-connectable")
+  })
+
+  // Meta answers `/me/accounts` with `{"error":{"code":1,"message":"Please
+  // reduce the amount of data you're asking for…"}}` for some users. That
+  // must render the picker's empty state with the provider's reason, not
+  // the route-level "Something went wrong" boundary.
+  test("renders an empty picker with the channel error message when Graph fails to list pages", async () => {
+    const graphError = new Error("graph exploded")
+    mockGetUserPages.mockRejectedValue(graphError)
+    mockMapToChannelError.mockReturnValue({
+      message: "(#1) Please reduce the amount of data you're asking for",
+      code: 1,
+      category: "unknown",
+    })
+
+    const element = await MessengerSelectPage()
+
+    if (!isValidElement<SelectPageElementProps>(element)) {
+      throw new Error("MessengerSelectPage did not return a valid element")
+    }
+
+    expect(mockMapToChannelError).toHaveBeenCalledWith(graphError)
+    expect(element.props.items).toEqual([])
+    expect(element.props.loadError).toEqual({
+      providerMessage:
+        "(#1) Please reduce the amount of data you're asking for",
+    })
+    expect(mockFindConnectedMessengerPageIds).not.toHaveBeenCalled()
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: graphError }),
+      expect.any(String),
+    )
+  })
+
+  // No Graph body to quote (timeout, DNS, malformed JSON): the mapper reports
+  // UNKNOWN_ERROR's -1 code, so the UI must fall back to its own copy rather
+  // than surface "Unknown error." or a raw network message as Meta's words.
+  test("omits providerMessage when the failure carries no Graph error code", async () => {
+    mockGetUserPages.mockRejectedValue(new Error("fetch failed"))
+    mockMapToChannelError.mockReturnValue({
+      message: "fetch failed",
+      code: -1,
+      category: "unknown",
+    })
+
+    const element = await MessengerSelectPage()
+
+    if (!isValidElement<SelectPageElementProps>(element)) {
+      throw new Error("MessengerSelectPage did not return a valid element")
+    }
+
+    expect(element.props.items).toEqual([])
+    expect(element.props.loadError).toEqual({ providerMessage: undefined })
+  })
+
+  test("passes no loadError when Graph lists pages successfully", async () => {
+    const element = await MessengerSelectPage()
+
+    if (!isValidElement<SelectPageElementProps>(element)) {
+      throw new Error("MessengerSelectPage did not return a valid element")
+    }
+
+    expect(element.props.loadError).toBeUndefined()
   })
 
   test("redirects to channel creation when the pending-auth cookie is missing or invalid", async () => {
