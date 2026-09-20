@@ -4,6 +4,7 @@ import {
   broadcastStatuses,
   broadcastSubactions,
   channelTypes,
+  resolveBroadcastAudienceRange,
   resolveBroadcastTargetInboxIds,
 } from "@chatbotx.io/database/partials"
 import type { ContactFilterCriteriaInput } from "@chatbotx.io/database/queries"
@@ -91,6 +92,7 @@ export const prepareBroadcast = async (broadcastId: string) => {
       contactFilter:
         broadcast.contactFilter as ContactFilterCriteriaInput | null,
       subaction: parsedSubaction.success ? parsedSubaction.data : undefined,
+      audienceRange: resolveBroadcastAudienceRange(broadcast),
     },
     async (contactInboxes): Promise<boolean | undefined> => {
       const conversations = await conversationService.findDMByContactIds({
