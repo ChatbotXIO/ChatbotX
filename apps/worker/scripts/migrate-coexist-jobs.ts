@@ -86,28 +86,33 @@ export async function moveWaitingTargetsToLow(params: {
   targetNames: ReadonlySet<string>
   ids: readonly string[]
   execute: boolean
-  onProgress?: (stats: MoveStats) => void
+  /** Jobs processed concurrently (default 100). Bounds in-flight Redis ops. */
+  concurrency?: number
+  onProgress?: (stats: MoveStats, processed: number) => void
 }): Promise<MoveStats> {
   const { source, target, targetNames, ids, execute, onProgress } = params
+  const concurrency = Math.max(1, Math.min(params.concurrency ?? 100, 1000))
   const stats = newStats()
+  let cursor = 0
+  let processed = 0
 
-  for (const id of ids) {
+  const processOne = async (id: string): Promise<void> => {
     const job = await Job.fromId(source, id)
     if (!job) {
       stats.missing++
-      continue
+      return
     }
     if (!targetNames.has(job.name)) {
       stats.nonTarget++
-      continue
+      return
     }
     if ((await job.getState()) !== "waiting") {
       stats.notWaiting++
-      continue
+      return
     }
     if (!execute) {
       stats.moved++
-      continue
+      return
     }
 
     const destId = job.opts?.jobId ?? job.id
@@ -118,7 +123,7 @@ export async function moveWaitingTargetsToLow(params: {
         if (destState === "completed") {
           await removeQuietly(job)
           stats.alreadyDone++
-          continue
+          return
         }
         if (destState === "failed") {
           await dest.remove() // clear terminal dup so the re-add is runnable
@@ -127,7 +132,7 @@ export async function moveWaitingTargetsToLow(params: {
           // waiting / active / delayed runnable copy already on the target
           await removeQuietly(job)
           stats.dedupedRunnable++
-          continue
+          return
         }
       }
     }
@@ -140,9 +145,29 @@ export async function moveWaitingTargetsToLow(params: {
       // Worker locked the job between getState and remove — safe to leave.
       stats.locked++
     }
-    onProgress?.(stats)
   }
 
+  // Fixed-size worker pool: `concurrency` ids in flight at once. Each id is
+  // independent, so parallelism does not affect correctness (still by-id, still
+  // re-checks state) — it just keeps the Redis pipe busy for large backlogs.
+  const runWorker = async (): Promise<void> => {
+    while (true) {
+      const index = cursor
+      cursor += 1
+      if (index >= ids.length) {
+        return
+      }
+      await processOne(ids[index])
+      processed += 1
+      if (processed % 10_000 === 0) {
+        onProgress?.(stats, processed)
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, ids.length || 1) }, runWorker),
+  )
   return stats
 }
 

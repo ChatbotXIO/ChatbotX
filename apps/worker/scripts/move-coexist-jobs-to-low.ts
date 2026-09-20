@@ -40,6 +40,7 @@ const TARGET_NAMES = new Set<string>([
 ])
 
 const EXECUTE = process.argv.includes("--execute")
+const CONCURRENCY = Number(process.env.MOVE_CONCURRENCY ?? 100)
 
 async function main(): Promise<void> {
   const source = integrationQueue as unknown as Queue
@@ -77,11 +78,9 @@ async function main(): Promise<void> {
     targetNames: TARGET_NAMES,
     ids,
     execute: EXECUTE,
-    onProgress: (s) => {
-      const total = s.moved + s.dedupedRunnable + s.alreadyDone
-      if (total > 0 && total % 5000 === 0) {
-        console.log("progress:", s)
-      }
+    concurrency: CONCURRENCY,
+    onProgress: (s, processed) => {
+      console.log(`progress: processed=${processed}/${ids.length}`, s)
     },
   })
 
