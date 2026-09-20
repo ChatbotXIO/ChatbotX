@@ -322,3 +322,45 @@ describe("InboxService.list", () => {
     expect(mocks.count).toHaveBeenCalledTimes(1)
   })
 })
+
+describe("InboxService.listAllConnectedByWorkspace", () => {
+  test("returns every connected inbox with no page limit and no count query", async () => {
+    mocks.inboxFindMany.mockResolvedValue([
+      { id: "inbox-1" },
+      { id: "inbox-2" },
+    ])
+
+    const result = await inboxService.listAllConnectedByWorkspace({
+      workspaceId: "workspace-1",
+    })
+
+    expect(result).toEqual({ data: [{ id: "inbox-1" }, { id: "inbox-2" }] })
+    expect(mocks.inboxFindMany).toHaveBeenCalledWith({
+      where: {
+        workspaceId: "workspace-1",
+        status: "connected",
+      },
+      with: undefined,
+    })
+    // No pagination: the 50-row `maxLimit` that caps `list` must not apply.
+    const call = mocks.inboxFindMany.mock.calls[0][0]
+    expect(call).not.toHaveProperty("limit")
+    expect(call).not.toHaveProperty("offset")
+    expect(mocks.count).not.toHaveBeenCalled()
+  })
+
+  test("eager-loads integrations when includes asks for them", async () => {
+    mocks.inboxFindMany.mockResolvedValue([])
+
+    await inboxService.listAllConnectedByWorkspace({
+      workspaceId: "workspace-1",
+      includes: ["integration"],
+    })
+
+    expect(mocks.inboxFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        with: expect.objectContaining({ integrationMessenger: true }),
+      }),
+    )
+  })
+})

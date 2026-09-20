@@ -1,8 +1,7 @@
-import type { ListInboxesResponse } from "@chatbotx.io/business"
+import type { ListAllConnectedInboxesResponse } from "@chatbotx.io/business"
 import { createStore } from "zustand/vanilla"
 import { getClientErrorMessage } from "@/lib/orpc/client-error"
 import { client } from "@/lib/orpc/orpc"
-import { maxPerPage } from "@/lib/shared-request"
 
 export type InboxState = {
   error: string | null
@@ -11,7 +10,7 @@ export type InboxState = {
   workspaceId: string
 
   loadingInboxes: boolean
-  inboxes: ListInboxesResponse["data"]
+  inboxes: ListAllConnectedInboxesResponse["data"]
 }
 
 export type InboxActions = {
@@ -59,11 +58,15 @@ export const createInboxStore = (props: Partial<InboxState>) =>
       }
       set({ loadingInboxes: true, error: null })
       try {
-        const { data } = await client.inboxesAPI.listInboxesAuthenticatedAPI({
-          workspaceId,
-          includes: ["integration"],
-          perPage: maxPerPage,
-        })
+        // The unpaginated endpoint: the paginated list caps at 50 rows, which
+        // would hide inboxes from every store consumer (broadcast page
+        // picker, inbox/contacts filters) in a workspace with more than 50.
+        const { data } = await client.inboxesAPI.listAllInboxesAuthenticatedAPI(
+          {
+            workspaceId,
+            includes: ["integration"],
+          },
+        )
 
         set({ inboxes: data })
       } catch (error: unknown) {

@@ -31,7 +31,12 @@ import { channelLimitReachedException } from "../errors"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceUsageService } from "../workspace-usage/service"
-import type { ListInboxesRequest, ListInboxesResponse } from "./schema"
+import type {
+  ListAllConnectedInboxesRequest,
+  ListAllConnectedInboxesResponse,
+  ListInboxesRequest,
+  ListInboxesResponse,
+} from "./schema"
 
 type InboxWhere = Partial<{ id: string; workspaceId: string }>
 
@@ -66,22 +71,33 @@ class InboxService extends BaseService {
     integrationTiktok: true,
   }
 
-  async list(input: ListInboxesRequest): Promise<ListInboxesResponse> {
-    // One `where`, shared by the page query and the count, so the two can
-    // never drift (they previously repeated the same literal side by side).
-    const where = {
-      workspaceId: input.workspaceId,
+  /**
+   * Connected inboxes of a workspace. Shared by `list` and
+   * `listAllConnectedByWorkspace` so the page query, its row count, and the
+   * unpaginated variant can never filter on different criteria.
+   */
+  private static connectedWhere(workspaceId: string) {
+    return {
+      workspaceId,
       status: inboxStatuses.enum.connected,
     }
+  }
+
+  private static integrationsWith(includes: ListInboxesRequest["includes"]) {
+    return includes?.includes("integration")
+      ? InboxService.withIntegrations
+      : undefined
+  }
+
+  async list(input: ListInboxesRequest): Promise<ListInboxesResponse> {
+    const where = InboxService.connectedWhere(input.workspaceId)
 
     const pagination = getPaginationWithDefaults(input)
     const [data, totalRows] = await Promise.all([
       db.query.inboxModel.findMany({
         ...pagination,
         where,
-        with: input.includes?.includes("integration")
-          ? InboxService.withIntegrations
-          : undefined,
+        with: InboxService.integrationsWith(input.includes),
       }),
       db.$count(inboxModel, relationsFilterToSQL(inboxModel, where)),
     ])
@@ -90,6 +106,25 @@ class InboxService extends BaseService {
     const pageCount = Math.ceil(totalRows / limit)
 
     return { data, pageCount }
+  }
+
+  /**
+   * Every connected inbox of a workspace, unpaginated. `list` caps at
+   * `maxLimit` (50) rows; a workspace with more connected inboxes than that
+   * would silently lose the rest, which is why any caller that must see the
+   * complete set (the builder inbox store, and through it the broadcast page
+   * picker) uses this. Eager-loads integrations only when asked, matching
+   * `list`'s `includes` contract.
+   */
+  async listAllConnectedByWorkspace(
+    input: ListAllConnectedInboxesRequest,
+  ): Promise<ListAllConnectedInboxesResponse> {
+    const data = await db.query.inboxModel.findMany({
+      where: InboxService.connectedWhere(input.workspaceId),
+      with: InboxService.integrationsWith(input.includes),
+    })
+
+    return { data }
   }
 
   async listWithIntegrationsByWorkspace(
