@@ -8,8 +8,6 @@ const mocks = vi.hoisted(() => ({
   flowFindFirst: vi.fn(),
   flowFindMany: vi.fn(),
   targetFindMany: vi.fn(),
-  broadcastFindFirst: vi.fn(),
-  findOrFail: vi.fn(),
   selectRows: [] as Record<string, unknown>[],
   insertValues: vi.fn(),
   insertReturning: vi.fn(),
@@ -41,7 +39,6 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     workspaceId: "Broadcast.workspaceId",
     status: "Broadcast.status",
     deletedAt: "Broadcast.deletedAt",
-    name: "Broadcast.name",
   },
   broadcastTargetModel: {
     broadcastId: "BroadcastTarget.broadcastId",
@@ -106,18 +103,11 @@ vi.mock("@chatbotx.io/database/client", () => {
       broadcastTargetModel: { findMany: mocks.targetFindMany },
     },
   }
-  // `where()` returns a real Promise (awaitable directly — supports
-  // `resolveCloneBroadcastName`'s `await db.select()...where()`, which has
-  // no `.limit()`) with a bonus `.limit()` method for the template-lookup
-  // callers that chain one. No literal `then` property, so it isn't flagged
-  // as an accidental thenable.
   const selectBuilder = {
     from: () => selectBuilder,
     innerJoin: () => selectBuilder,
-    where: () =>
-      Object.assign(Promise.resolve(mocks.selectRows), {
-        limit: () => Promise.resolve(mocks.selectRows),
-      }),
+    where: () => selectBuilder,
+    limit: () => Promise.resolve(mocks.selectRows),
   }
   return {
     db: {
@@ -138,17 +128,14 @@ vi.mock("@chatbotx.io/database/client", () => {
           findFirst: mocks.flowFindFirst,
           findMany: mocks.flowFindMany,
         },
-        broadcastModel: { findFirst: mocks.broadcastFindFirst },
       },
     },
-    findOrFail: mocks.findOrFail,
     and: (...args: unknown[]) => ({ __and: args }),
     asc: vi.fn(),
     count: vi.fn(),
     desc: vi.fn(),
     eq: (left: unknown, right: unknown) => ({ __eq: [left, right] }),
     gt: vi.fn(),
-    ilike: vi.fn(),
     inArray: (left: unknown, right: unknown) => ({ __inArray: [left, right] }),
     isNull: (value: unknown) => ({ __isNull: value }),
     isNotNull: vi.fn(),
@@ -166,7 +153,6 @@ vi.mock("@chatbotx.io/database/queries", () => ({
 vi.mock("@chatbotx.io/database/utils", () => ({
   chunkById: vi.fn(),
   likeContains: vi.fn(),
-  escapeLikePattern: (value: string) => value,
 }))
 
 const { broadcastService, resolveBroadcastTargetsToPersist } = await import(
@@ -220,8 +206,6 @@ beforeEach(() => {
   mocks.flowFindFirst.mockReset()
   mocks.flowFindMany.mockReset().mockResolvedValue([])
   mocks.targetFindMany.mockReset()
-  mocks.broadcastFindFirst.mockReset()
-  mocks.findOrFail.mockReset()
   mocks.insertValues.mockReset()
   mocks.insertReturning
     .mockReset()
@@ -1172,118 +1156,5 @@ describe("broadcastService.copyTargets", () => {
       sourceBroadcastId: "old",
       broadcastId: "new",
     })
-  })
-})
-
-const cloneSource = (overrides: Record<string, unknown> = {}) => ({
-  id: "source-1",
-  name: "Original",
-  channel: "whatsapp",
-  subaction: "whatsappTemplateMessage",
-  targetMode: "channel",
-  flowId: null,
-  templateId: "template-1",
-  templateData: null,
-  integrationWhatsappId: "wa-1",
-  integrationMessengerId: null,
-  contactFilter: null,
-  schedulesType: "now",
-  schedulesAt: new Date("2026-01-01T00:00:00.000Z"),
-  audienceRangeStart: null,
-  audienceRangeEnd: null,
-  sendRatePerMinute: null,
-  ...overrides,
-})
-
-describe("broadcastService.cloneBroadcast", () => {
-  test("copies the three send-limit columns onto the clone", async () => {
-    mocks.broadcastFindFirst.mockResolvedValue(
-      cloneSource({
-        audienceRangeStart: 10,
-        audienceRangeEnd: 100,
-        sendRatePerMinute: 750,
-      }),
-    )
-    mocks.targetFindMany.mockResolvedValue([])
-
-    await broadcastService.cloneBroadcast({
-      workspaceId: "ws-1",
-      broadcastId: "source-1",
-      canViewEmailAndPhone: true,
-    })
-
-    expect(mocks.insertValues).toHaveBeenCalledWith(
-      expect.objectContaining({
-        audienceRangeStart: 10,
-        audienceRangeEnd: 100,
-        sendRatePerMinute: 750,
-      }),
-    )
-  })
-
-  test("nulls the send-limit columns when the source has none", async () => {
-    mocks.broadcastFindFirst.mockResolvedValue(cloneSource())
-    mocks.targetFindMany.mockResolvedValue([])
-
-    await broadcastService.cloneBroadcast({
-      workspaceId: "ws-1",
-      broadcastId: "source-1",
-      canViewEmailAndPhone: true,
-    })
-
-    expect(mocks.insertValues).toHaveBeenCalledWith(
-      expect.objectContaining({
-        audienceRangeStart: null,
-        audienceRangeEnd: null,
-        sendRatePerMinute: null,
-      }),
-    )
-  })
-})
-
-describe("broadcastService.resendWithPruning", () => {
-  test("copies the three send-limit columns onto the resend", async () => {
-    mocks.findOrFail.mockResolvedValue(
-      cloneSource({
-        status: "sent",
-        audienceRangeStart: 1,
-        audienceRangeEnd: 500,
-        sendRatePerMinute: 300,
-      }),
-    )
-    mocks.targetFindMany.mockResolvedValue([])
-
-    await broadcastService.resendWithPruning({
-      workspaceId: "ws-1",
-      id: "source-1",
-      canViewEmailAndPhone: true,
-    })
-
-    expect(mocks.insertValues).toHaveBeenCalledWith(
-      expect.objectContaining({
-        audienceRangeStart: 1,
-        audienceRangeEnd: 500,
-        sendRatePerMinute: 300,
-      }),
-    )
-  })
-
-  test("nulls the send-limit columns when the source has none", async () => {
-    mocks.findOrFail.mockResolvedValue(cloneSource({ status: "sent" }))
-    mocks.targetFindMany.mockResolvedValue([])
-
-    await broadcastService.resendWithPruning({
-      workspaceId: "ws-1",
-      id: "source-1",
-      canViewEmailAndPhone: true,
-    })
-
-    expect(mocks.insertValues).toHaveBeenCalledWith(
-      expect.objectContaining({
-        audienceRangeStart: null,
-        audienceRangeEnd: null,
-        sendRatePerMinute: null,
-      }),
-    )
   })
 })

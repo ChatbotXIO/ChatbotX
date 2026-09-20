@@ -12,6 +12,11 @@ const mocks = vi.hoisted(() => ({
   selectOrderBy: vi.fn(),
   selectWhere: vi.fn(),
   chunkById: vi.fn(),
+  // Consumed in order by `limit()` when non-empty (queueing a preset batch
+  // per query), else `limit()` falls back to the single static `selectRows`.
+  // Used together with the real `chunkById` to drive a faithful multi-chunk
+  // walk instead of a hand-rolled loop re-implementation.
+  selectRowsQueue: [] as Record<string, unknown>[][],
   buildContactInboxContactFilterSQL: vi.fn(() => ({ RAW: "contact-filter" })),
   contactInboxInteractedWithin24hSQL: vi.fn(() => ({
     RAW: "recent-interaction",
@@ -148,10 +153,14 @@ vi.mock("@chatbotx.io/database/client", () => ({
         // a literal `then` property.
         limit: (limit: number) => {
           mocks.selectLimit(limit)
-          return Object.assign(Promise.resolve(mocks.selectRows), {
+          const rows =
+            mocks.selectRowsQueue.length > 0
+              ? (mocks.selectRowsQueue.shift() as Record<string, unknown>[])
+              : mocks.selectRows
+          return Object.assign(Promise.resolve(rows), {
             offset: (offset: number) => {
               mocks.selectOffset(offset)
-              return Promise.resolve(mocks.selectRows)
+              return Promise.resolve(rows)
             },
           })
         },
@@ -207,6 +216,12 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 const { broadcastService, broadcastTemplateSelections } = await import(
   "../service"
 )
+// The real loop (packages/database/src/utils.ts), used by the
+// `forEachAudienceChunk` window tests so they prove the actual stop/continue
+// contract instead of a hand-rolled re-implementation of it.
+const { chunkById: actualChunkById } = await vi.importActual<
+  typeof import("@chatbotx.io/database/utils")
+>("@chatbotx.io/database/utils")
 
 const contactFilter = {
   operator: "and" as const,
@@ -224,6 +239,7 @@ beforeEach(() => {
   mocks.count.mockReset()
   mocks.findBroadcast.mockReset()
   mocks.selectRows = []
+  mocks.selectRowsQueue = []
   mocks.selectInnerJoin.mockReset()
   mocks.selectLeftJoin.mockReset()
   mocks.selectLimit.mockReset()
@@ -1255,40 +1271,10 @@ describe("broadcastService.forEachAudienceChunk", () => {
     expect(mocks.selectOffset).not.toHaveBeenCalled()
   })
 
-  // Mirrors the real `chunkById` loop (packages/database/src/utils.ts) but
-  // driven off preset row batches, so a test can assert the query shape
-  // (limit/offset per call) at each step of a multi-chunk walk.
-  const fakeChunkById =
-    (rowBatches: { id: string }[][]) =>
-    async (
-      queryFn: (lastId: string | null) => Promise<unknown>,
-      opts: {
-        chunkSize: number
-        callback: (rows: { id: string }[]) => Promise<boolean | undefined>
-      },
-    ) => {
-      let lastId: string | null = null
-      let hasMore = true
-      let index = 0
-      while (hasMore) {
-        const records = rowBatches[index] ?? []
-        mocks.selectRows = records
-        await queryFn(lastId)
-        if (records.length === 0) {
-          break
-        }
-        const shouldContinue = await opts.callback(records)
-        if (shouldContinue === false) {
-          break
-        }
-        if (records.length < opts.chunkSize) {
-          hasMore = false
-        } else {
-          lastId = records.at(-1)?.id ?? null
-        }
-        index += 1
-      }
-    }
+  // The following three tests use the REAL `chunkById` (via
+  // `vi.importActual`, see `actualChunkById` above), driven off
+  // `mocks.selectRowsQueue` preset batches, so they prove the actual
+  // stop/continue contract rather than a hand-rolled re-implementation of it.
 
   test("offsets only the first query; keyset queries after it carry no offset", async () => {
     mocks.resolveBroadcastInboxIds.mockResolvedValue(["inbox-1"])
@@ -1296,7 +1282,8 @@ describe("broadcastService.forEachAudienceChunk", () => {
       id: `ci-${i + 1}`,
     }))
     const secondBatch = [{ id: "ci-4" }]
-    mocks.chunkById.mockImplementation(fakeChunkById([firstBatch, secondBatch]))
+    mocks.selectRowsQueue = [firstBatch, secondBatch]
+    mocks.chunkById.mockImplementation(actualChunkById)
     const onChunk = vi.fn().mockResolvedValue(undefined)
 
     await broadcastService.forEachAudienceChunk(
@@ -1320,7 +1307,8 @@ describe("broadcastService.forEachAudienceChunk", () => {
       id: `ci-${i + 1}`,
     }))
     const secondBatch = [{ id: "ci-4" }, { id: "ci-5" }]
-    mocks.chunkById.mockImplementation(fakeChunkById([firstBatch, secondBatch]))
+    mocks.selectRowsQueue = [firstBatch, secondBatch]
+    mocks.chunkById.mockImplementation(actualChunkById)
     const onChunk = vi.fn().mockResolvedValue(undefined)
 
     await broadcastService.forEachAudienceChunk(
@@ -1349,9 +1337,8 @@ describe("broadcastService.forEachAudienceChunk", () => {
     // remaining-based stop, `chunkById`'s own `records.length < chunkSize`
     // check would keep going past the window (both batches equal chunkSize).
     const thirdBatch = [{ id: "ci-7" }]
-    mocks.chunkById.mockImplementation(
-      fakeChunkById([firstBatch, secondBatch, thirdBatch]),
-    )
+    mocks.selectRowsQueue = [firstBatch, secondBatch, thirdBatch]
+    mocks.chunkById.mockImplementation(actualChunkById)
     const onChunk = vi.fn().mockResolvedValue(undefined)
 
     await broadcastService.forEachAudienceChunk(

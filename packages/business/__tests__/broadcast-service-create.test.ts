@@ -95,58 +95,52 @@ const sendsTemplateStub = (broadcast: MinimalBroadcastPayload): boolean =>
   Boolean(broadcast.templateId) ||
   (broadcast.targets ?? []).some((target) => Boolean(target.templateId))
 
-vi.mock("@chatbotx.io/database/partials", () => ({
-  broadcastStatuses: { enum: { draft: "draft", scheduled: "scheduled" } },
-  findBroadcastChannelCapability: mockFindCapability,
-  broadcastSendsFlow: sendsFlowStub,
-  broadcastSendsTemplate: sendsTemplateStub,
-  hasFlowAndTemplate: (broadcast: MinimalBroadcastPayload) =>
-    sendsFlowStub(broadcast) && sendsTemplateStub(broadcast),
-  hasDuplicateBroadcastTarget: (broadcast: MinimalBroadcastPayload) => {
-    const targets = broadcast.targets ?? []
-    return (
-      new Set(targets.map((target) => target.inboxId)).size < targets.length
-    )
-  },
-  isTargetsTemplateSendWithoutTemplate: (broadcast: MinimalBroadcastPayload) =>
-    usesBroadcastTargetsStub(broadcast) &&
-    !sendsFlowStub(broadcast) &&
-    !(broadcast.targets ?? []).some((target) => Boolean(target.templateId)),
-  isTargetsFlowSendWithoutFlow: (broadcast: MinimalBroadcastPayload) =>
-    usesBroadcastTargetsStub(broadcast) &&
-    !sendsTemplateStub(broadcast) &&
-    !(broadcast.targets ?? []).some((target) => Boolean(target.flowId)),
-  isTemplateSendWithoutPage: (broadcast: MinimalBroadcastPayload) =>
-    sendsTemplateStub(broadcast) &&
-    !usesBroadcastTargetsStub(broadcast) &&
-    !(broadcast.integrationWhatsappId || broadcast.integrationMessengerId),
-  usesBroadcastTargets: usesBroadcastTargetsStub,
-  resolveBroadcastTargetMode: (
-    targets: readonly { inboxId: string }[] | null | undefined,
-  ) => ((targets ?? []).length > 0 ? "targets" : "channel"),
-  resolveBroadcastTemplateSend: vi.fn(),
-  withBroadcastTargets: {},
-  dmConversationUsesSourceId: vi.fn(() => false),
-  requiresRecentInteractionWindow: vi.fn(() => false),
-  isAudienceRangeOrdered: (limit: {
-    audienceRangeStart?: number | null
-    audienceRangeEnd?: number | null
-  }) =>
-    limit.audienceRangeStart == null ||
-    limit.audienceRangeEnd == null ||
-    limit.audienceRangeStart <= limit.audienceRangeEnd,
-  normalizeBroadcastSendLimit: (
-    input: Partial<{
-      audienceRangeStart: number | null
-      audienceRangeEnd: number | null
-      sendRatePerMinute: number | null
-    }>,
-  ) => ({
-    audienceRangeStart: input.audienceRangeStart ?? null,
-    audienceRangeEnd: input.audienceRangeEnd ?? null,
-    sendRatePerMinute: input.sendRatePerMinute ?? null,
-  }),
-}))
+// `isAudienceRangeOrdered`/`normalizeBroadcastSendLimit` (and every other
+// export this file doesn't stub) come from the real module via
+// `vi.importActual` — pure Phase-1 helpers, so this test can't drift from
+// their actual implementation.
+vi.mock("@chatbotx.io/database/partials", async () => {
+  const actual = await vi.importActual<
+    typeof import("@chatbotx.io/database/partials")
+  >("@chatbotx.io/database/partials")
+  return {
+    ...actual,
+    broadcastStatuses: { enum: { draft: "draft", scheduled: "scheduled" } },
+    findBroadcastChannelCapability: mockFindCapability,
+    broadcastSendsFlow: sendsFlowStub,
+    broadcastSendsTemplate: sendsTemplateStub,
+    hasFlowAndTemplate: (broadcast: MinimalBroadcastPayload) =>
+      sendsFlowStub(broadcast) && sendsTemplateStub(broadcast),
+    hasDuplicateBroadcastTarget: (broadcast: MinimalBroadcastPayload) => {
+      const targets = broadcast.targets ?? []
+      return (
+        new Set(targets.map((target) => target.inboxId)).size < targets.length
+      )
+    },
+    isTargetsTemplateSendWithoutTemplate: (
+      broadcast: MinimalBroadcastPayload,
+    ) =>
+      usesBroadcastTargetsStub(broadcast) &&
+      !sendsFlowStub(broadcast) &&
+      !(broadcast.targets ?? []).some((target) => Boolean(target.templateId)),
+    isTargetsFlowSendWithoutFlow: (broadcast: MinimalBroadcastPayload) =>
+      usesBroadcastTargetsStub(broadcast) &&
+      !sendsTemplateStub(broadcast) &&
+      !(broadcast.targets ?? []).some((target) => Boolean(target.flowId)),
+    isTemplateSendWithoutPage: (broadcast: MinimalBroadcastPayload) =>
+      sendsTemplateStub(broadcast) &&
+      !usesBroadcastTargetsStub(broadcast) &&
+      !(broadcast.integrationWhatsappId || broadcast.integrationMessengerId),
+    usesBroadcastTargets: usesBroadcastTargetsStub,
+    resolveBroadcastTargetMode: (
+      targets: readonly { inboxId: string }[] | null | undefined,
+    ) => ((targets ?? []).length > 0 ? "targets" : "channel"),
+    resolveBroadcastTemplateSend: vi.fn(),
+    withBroadcastTargets: {},
+    dmConversationUsesSourceId: vi.fn(() => false),
+    requiresRecentInteractionWindow: vi.fn(() => false),
+  }
+})
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   broadcastModel: {},
@@ -183,9 +177,20 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: vi.fn(() => "generated-id"),
-}))
+// The real `@chatbotx.io/database/partials` barrel (imported actual above)
+// pulls in other partials (e.g. automated-response.ts) that need real utils
+// exports such as `zodBigintAsString`, so this mock spreads the actual
+// module rather than replacing it outright.
+vi.mock("@chatbotx.io/utils", async () => {
+  const actual =
+    await vi.importActual<typeof import("@chatbotx.io/utils")>(
+      "@chatbotx.io/utils",
+    )
+  return {
+    ...actual,
+    createId: vi.fn(() => "generated-id"),
+  }
+})
 
 vi.mock("@chatbotx.io/flow-config", () => ({
   findTemplateStartStep: vi.fn(),

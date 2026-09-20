@@ -2167,28 +2167,10 @@ class BroadcastService extends BaseService {
     const where = this.buildAudienceWhere(inboxIds, input)
     const chunkSize = input.chunkSize ?? DEFAULT_CHUNK_SIZE
     const range = input.audienceRange ?? null
-
-    // No range: keep the query and the callback byte-identical to before
-    // this feature — no offset, plain chunkSize limit, `onChunk` passed
-    // straight through.
-    if (!range) {
-      await chunkById<ContactInboxRow>(
-        (lastId) =>
-          db
-            .select()
-            .from(contactInboxModel)
-            .where(
-              and(where, lastId ? gt(contactInboxModel.id, lastId) : undefined),
-            )
-            .orderBy(asc(contactInboxModel.id))
-            .limit(chunkSize),
-        { chunkSize, callback: onChunk },
-      )
-      return
-    }
-
-    // Rows still to take inside the window; null = unbounded (no `end`).
-    let remaining = range.size
+    // Rows still to take inside the window; null = unbounded (no `end`, or
+    // no range at all) — the limit is then always `chunkSize`, so the
+    // null-range query is byte-identical to before this feature.
+    let remaining = range?.size ?? null
     let isFirstQuery = true
 
     await chunkById<ContactInboxRow>(
@@ -2203,20 +2185,25 @@ class BroadcastService extends BaseService {
           )
           .orderBy(asc(contactInboxModel.id))
           .limit(limit)
-        const withOffset = isFirstQuery ? query.offset(range.offset) : query
+        const withOffset =
+          range && isFirstQuery ? query.offset(range.offset) : query
         isFirstQuery = false
         return withOffset
       },
       {
         chunkSize,
-        callback: async (rows) => {
-          if (remaining == null) {
-            return onChunk(rows)
-          }
-          remaining -= rows.length
-          const shouldContinue = await onChunk(rows)
-          return remaining <= 0 ? false : shouldContinue
-        },
+        // Only a range needs the remaining-tracking wrapper; without one
+        // `onChunk` is passed straight through, byte-identical to before.
+        callback: range
+          ? async (rows) => {
+              if (remaining == null) {
+                return onChunk(rows)
+              }
+              remaining -= rows.length
+              const shouldContinue = await onChunk(rows)
+              return remaining <= 0 ? false : shouldContinue
+            }
+          : onChunk,
       },
     )
   }

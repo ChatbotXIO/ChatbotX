@@ -53,30 +53,28 @@ vi.mock("@chatbotx.io/database/client", () => ({
   sql: Object.assign(vi.fn(), { raw: vi.fn() }),
 }))
 
-vi.mock("@chatbotx.io/database/partials", () => ({
-  broadcastStatuses: { enum: { draft: "draft", scheduled: "scheduled" } },
-  findBroadcastChannelCapability: vi.fn(),
-  // Mirrors the real `contactFilterFields` zod enum closely enough for
-  // `isContactFilterShape`'s `.safeParse(field).success` check: a known
-  // field name succeeds, anything else (including a renamed/removed field)
-  // fails, matching `z.enum([...]).safeParse` semantics.
-  contactFilterFields: {
-    safeParse: (value: unknown) => ({
-      success: value === "email" || value === "fullName",
-    }),
-  },
-  normalizeBroadcastSendLimit: (
-    input: Partial<{
-      audienceRangeStart: number | null
-      audienceRangeEnd: number | null
-      sendRatePerMinute: number | null
-    }>,
-  ) => ({
-    audienceRangeStart: input.audienceRangeStart ?? null,
-    audienceRangeEnd: input.audienceRangeEnd ?? null,
-    sendRatePerMinute: input.sendRatePerMinute ?? null,
-  }),
-}))
+// `normalizeBroadcastSendLimit` (and every other export this file doesn't
+// stub) comes from the real module via `vi.importActual` — a pure Phase-1
+// helper, so this test can't drift from its actual implementation.
+vi.mock("@chatbotx.io/database/partials", async () => {
+  const actual = await vi.importActual<
+    typeof import("@chatbotx.io/database/partials")
+  >("@chatbotx.io/database/partials")
+  return {
+    ...actual,
+    broadcastStatuses: { enum: { draft: "draft", scheduled: "scheduled" } },
+    findBroadcastChannelCapability: vi.fn(),
+    // Mirrors the real `contactFilterFields` zod enum closely enough for
+    // `isContactFilterShape`'s `.safeParse(field).success` check: a known
+    // field name succeeds, anything else (including a renamed/removed field)
+    // fails, matching `z.enum([...]).safeParse` semantics.
+    contactFilterFields: {
+      safeParse: (value: unknown) => ({
+        success: value === "email" || value === "fullName",
+      }),
+    },
+  }
+})
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   broadcastModel: {},
@@ -113,9 +111,20 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: mockCreateId,
-}))
+// The real `@chatbotx.io/database/partials` barrel (imported actual above)
+// pulls in other partials (e.g. automated-response.ts) that need real utils
+// exports such as `zodBigintAsString`, so this mock spreads the actual
+// module rather than replacing it outright.
+vi.mock("@chatbotx.io/utils", async () => {
+  const actual =
+    await vi.importActual<typeof import("@chatbotx.io/utils")>(
+      "@chatbotx.io/utils",
+    )
+  return {
+    ...actual,
+    createId: mockCreateId,
+  }
+})
 
 vi.mock("@chatbotx.io/flow-config", () => ({
   findTemplateStartStep: vi.fn(),
@@ -416,6 +425,29 @@ describe("broadcastService.resendWithPruning", () => {
       action: "launch",
       detail: "launched a broadcast (#new-broadcast-id)",
     })
+  })
+
+  test("copies a non-null send limit onto the resend", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      audienceRangeStart: 1,
+      audienceRangeEnd: 500,
+      sendRatePerMinute: 300,
+    })
+
+    await broadcastService.resendWithPruning({
+      workspaceId: WS,
+      id: SOURCE_ID,
+      canViewEmailAndPhone: true,
+    })
+
+    expect(mockTxInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audienceRangeStart: 1,
+        audienceRangeEnd: 500,
+        sendRatePerMinute: 300,
+      }),
+    )
   })
 
   test("clones a 'failed' broadcast too", async () => {
