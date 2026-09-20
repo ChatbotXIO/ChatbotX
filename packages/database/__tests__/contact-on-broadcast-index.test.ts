@@ -9,6 +9,11 @@ const MIGRATION_PATH = join(
   "../drizzle/20260902054310_add_broadcast_soft_delete_and_resume/migration.sql",
 )
 
+const SEND_ORDER_INDEXES_MIGRATION_PATH = join(
+  import.meta.dirname,
+  "../drizzle/20260920111706_broadcast_send_order_indexes/migration.sql",
+)
+
 describe("ContactOnBroadcast unsent-batch partial index", () => {
   test("schema declares the ordered partial index the batch scan depends on", () => {
     const config = getTableConfig(contactsOnBroadcastsModel)
@@ -36,6 +41,28 @@ describe("ContactOnBroadcast unsent-batch partial index", () => {
     expect(sql).toContain('ADD COLUMN IF NOT EXISTS "resumeCount"')
     expect(sql).toContain(
       'CREATE INDEX IF NOT EXISTS "Broadcast_deletedAt_idx"',
+    )
+  })
+
+  test("send-order-indexes migration is every statement CONCURRENTLY and self-recovering", () => {
+    const sql = readFileSync(SEND_ORDER_INDEXES_MIGRATION_PATH, "utf8")
+    const statements = sql
+      .split("--> statement-breakpoint")
+      .map((statement) => statement.trim())
+      .filter(Boolean)
+
+    for (const statement of statements) {
+      expect(statement).toContain("CONCURRENTLY")
+      expect(
+        statement.includes("IF NOT EXISTS") || statement.includes("IF EXISTS"),
+      ).toBe(true)
+    }
+
+    // The leading DROP is the self-recovery line: on a re-run after a failed
+    // build, Postgres may have left an INVALID index under the new name that
+    // a bare `IF NOT EXISTS` CREATE would silently keep — this drops it first.
+    expect(statements[0]).toBe(
+      'DROP INDEX CONCURRENTLY IF EXISTS "ContactInbox_inboxId_id_idx";',
     )
   })
 })

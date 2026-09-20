@@ -560,9 +560,20 @@ describe("broadcastSendLimitSchema", () => {
     ).toBe(false)
   })
 
-  test("accepts BROADCAST_MAX_SEND_RATE_PER_MINUTE at 1000", () => {
-    expect(BROADCAST_MAX_SEND_RATE_PER_MINUTE).toBe(1000)
+  test("accepts a rate of exactly BROADCAST_MAX_SEND_RATE_PER_MINUTE (1000)", () => {
+    expect(
+      broadcastSendLimitSchema.parse({
+        sendRatePerMinute: BROADCAST_MAX_SEND_RATE_PER_MINUTE,
+      }),
+    ).toEqual({ sendRatePerMinute: BROADCAST_MAX_SEND_RATE_PER_MINUTE })
+  })
+})
+
+describe("broadcast send limit constants", () => {
+  test("pins the exact values the plan specifies", () => {
     expect(BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE).toBe(500)
+    expect(BROADCAST_MAX_SEND_RATE_PER_MINUTE).toBe(1000)
+    expect(BROADCAST_AUDIENCE_POSITION_MIN).toBe(1)
     expect(BROADCAST_DISPATCH_WINDOW_MS).toBe(55_000)
   })
 })

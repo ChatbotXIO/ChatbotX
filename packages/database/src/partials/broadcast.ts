@@ -466,16 +466,9 @@ export const resolveBroadcastAudienceRange = (
     return null
   }
   const offset = audienceRangeStart == null ? 0 : audienceRangeStart - 1
-  if (audienceRangeEnd == null) {
-    return { offset, size: null }
-  }
-  if (audienceRangeStart == null) {
-    return { offset: 0, size: audienceRangeEnd }
-  }
-  if (!isAudienceRangeOrdered(limit)) {
-    return { offset, size: 0 }
-  }
-  return { offset, size: audienceRangeEnd - audienceRangeStart + 1 }
+  const size =
+    audienceRangeEnd == null ? null : Math.max(0, audienceRangeEnd - offset)
+  return { offset, size }
 }
 
 /** Total audience count clamped to a resolved range; unclamped when `range` is null. */
