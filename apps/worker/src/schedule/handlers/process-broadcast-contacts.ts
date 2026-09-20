@@ -34,9 +34,10 @@ import { logger } from "../../lib/logger"
 
 const BROADCAST_SEND_JOB_RETENTION_SECONDS = 3600
 // Caps the fan-out of one hand-off batch's queue adds + markContactSentIfSending
-// updates against the pg pool (`max: 10`); at up to 1000 recipients an
-// unbounded Promise.all can outrun pool waiters and time out. See
-// worker-development skill and phase-3 brief (3.4).
+// updates. The pg pool is `max: 10` connections; at up to 1000 recipients an
+// unbounded Promise.all can queue far more concurrent connection requests
+// than the pool has slots and a waiter can time out instead of getting a
+// connection. See docs/plans/2026-09-20-broadcast-send-limit.md.
 const BROADCAST_HANDOFF_CONCURRENCY = 100
 
 /** The reasons a recipient cannot be enqueued; stored as the row's `errorContent`. */
@@ -281,11 +282,13 @@ export const processBroadcastContacts = async (broadcastId: string) => {
   let totalProcessed = 0
 
   for (const broadcast of broadcasts) {
-    // The dispatch lease is claimed BEFORE the fetch on purpose: a refused
-    // tick must cost one Redis command and nothing else (see D2 in the
-    // phase-3 brief). A refused claim hands off nothing this tick; the next
-    // reconcileBroadcasts tick (≤ 60s later) retries because
-    // handoffCompletedAt is still null.
+    // Claims a lease that keeps two successful hand-off batches of the same
+    // broadcast at least 55s apart (see docs/plans/2026-09-20-broadcast-send-limit.md).
+    // The claim runs BEFORE the fetch on purpose: a refused tick must cost
+    // one Redis command and nothing else, since most ticks for a
+    // fast-cadenced broadcast will be refused. A refused claim hands off
+    // nothing this tick; the next reconcileBroadcasts tick (≤ 60s later)
+    // retries because handoffCompletedAt is still null.
     const claimed = await broadcastService.claimDispatchWindow({
       broadcastId: broadcast.id,
     })

@@ -1,3 +1,4 @@
+import { broadcastChannelCapabilities } from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ── service spies (replace direct db.* calls in the handler) ─────────────────
@@ -1195,7 +1196,10 @@ describe("processBroadcastContacts", () => {
       expect(result).toEqual({ processed: 1000 })
       expect(markContactSentIfSending).toHaveBeenCalledTimes(1000)
       expect(maxInFlight).toBeLessThanOrEqual(100)
-      expect(maxInFlight).toBeGreaterThan(1)
+      // Deterministic with 1000 recipients and a concurrency cap of 100: the
+      // worker pool always saturates. Pins the exact value so a silent
+      // change to BROADCAST_HANDOFF_CONCURRENCY fails this test.
+      expect(maxInFlight).toBe(100)
     })
 
     test("one rejected recipient still lets the other 999 through before the batch error is re-thrown", async () => {
@@ -1258,15 +1262,13 @@ describe("processBroadcastContacts", () => {
   })
 
   describe("channel coverage (3.9): rate + lease apply before any channel branch", () => {
-    test.each([
-      "omnichannel",
-      "messenger",
-      "whatsapp",
-      "zalo",
-      "instagram",
-      "telegram",
-      "tiktok",
-    ] as const)("applies the batch limit and claims the lease before the %s channel branch", async (channel) => {
+    const broadcastChannels = broadcastChannelCapabilities.map(
+      (capability) => capability.channel,
+    )
+
+    test.each(
+      broadcastChannels,
+    )("applies the batch limit and claims the lease before the %s channel branch", async (channel) => {
       listSendableById.mockResolvedValue([
         makeBroadcast({
           channel,
@@ -1291,18 +1293,9 @@ describe("processBroadcastContacts", () => {
     })
 
     test("a refused lease skips every channel's hand-off identically", async () => {
-      const channels = [
-        "omnichannel",
-        "messenger",
-        "whatsapp",
-        "zalo",
-        "instagram",
-        "telegram",
-        "tiktok",
-      ] as const
       claimDispatchWindow.mockResolvedValue(false)
 
-      for (const channel of channels) {
+      for (const channel of broadcastChannels) {
         listSendableById.mockResolvedValue([
           makeBroadcast({ channel, flowId: "flow-1" }),
         ])
