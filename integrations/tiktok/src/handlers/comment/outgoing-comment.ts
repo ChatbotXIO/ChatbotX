@@ -11,11 +11,12 @@ import type { TiktokAuthValue } from "../../schema"
 /**
  * The video a comment belongs to.
  *
- * Every TikTok comment write except `like` and `delete` needs it, and the SDK's
- * comment contract does not carry a post id of its own — so it is read from the
- * comment conversation, whose `sourceId` IS the post id by the repo-wide
- * convention (`Conversation.sourceId = postId`). `sourceConversationId` is that
- * value as it reaches an integration.
+ * Every TikTok comment write except `like` and `delete` needs it. It is read
+ * from the comment message's own `contentAttributes.postId`, stamped by
+ * `receiveComment` at ingest, with the comment conversation's
+ * `sourceConversationId` as the fallback — that is `Conversation.sourceId`,
+ * which holds the post id by the repo-wide convention but is a slot TikTok
+ * also normalizes for its DM conversations, so it can legitimately be empty.
  */
 export function requirePostId(
   postId: string | null | undefined,
@@ -64,7 +65,18 @@ export const sendComment: CommentHandlers<TiktokAuthValue>["sendComment"] =
       )
     }
 
-    const videoId = requirePostId(contact.sourceConversationId, "reply to")
+    // The parent comment's own post id first: `receiveComment` stamps it on
+    // the comment message at ingest and nothing rewrites it, whereas the
+    // conversation's `sourceId` is a shared slot that normalization can empty.
+    // The conversation stays as the fallback for anything enqueued before the
+    // post id was threaded through.
+    const postIdFromMessage = message.contentAttributes?.postId
+    const videoId = requirePostId(
+      typeof postIdFromMessage === "string" && postIdFromMessage
+        ? postIdFromMessage
+        : contact.sourceConversationId,
+      "reply to",
+    )
 
     try {
       const created = await replyToTiktokComment(ctx.auth.tokens.accessToken, {

@@ -88,6 +88,19 @@ export async function sendMessageToChannel(
             parentMsg?.sourceId ??
             message.contentAttributes?.replyToCommentId ??
             null,
+          // The post the parent comment belongs to, carried the same way
+          // `changeMessageStateOnChannel` carries it for `hideComment`.
+          // TikTok's reply endpoint is addressed by (video_id, comment_id),
+          // and `receiveComment` stamps the video id onto the incoming comment
+          // itself — a stronger source than the conversation, which a channel
+          // that reuses `sourceId` for something else can leave without one.
+          // Meta ignores it.
+          postId:
+            (typeof parentMsg?.contentAttributes?.postId === "string"
+              ? parentMsg.contentAttributes.postId
+              : undefined) ??
+            message.contentAttributes?.postId ??
+            null,
         },
       }
     }
