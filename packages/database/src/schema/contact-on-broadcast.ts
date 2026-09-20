@@ -60,9 +60,12 @@ export const contactsOnBroadcastsModel = pgTable(
     index("idx_contact_on_broadcast_is_read").on(table.isRead),
     // Speeds up the per-batch unsent-recipient scan
     // (broadcastId + sent=false + failedAt IS NULL) so it doesn't walk an
-    // ever-growing sent prefix on million-row broadcasts.
-    index("ContactOnBroadcast_unsent_idx")
-      .on(table.broadcastId)
+    // ever-growing sent prefix on million-row broadcasts. Re-keyed on
+    // (broadcastId, contactInboxId) so a send-limit tick can read unsent
+    // rows in contactInboxId order without a separate sort — an in-order
+    // index range scan whether the broadcast has 1k or 10M recipients.
+    index("ContactOnBroadcast_unsent_order_idx")
+      .on(table.broadcastId, table.contactInboxId)
       .where(sql`"sent" = false AND "failedAt" IS NULL`),
   ],
 )

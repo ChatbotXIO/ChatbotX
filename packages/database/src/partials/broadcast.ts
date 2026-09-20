@@ -399,3 +399,131 @@ const resolveBroadcastSendSlot = (
   usesBroadcastTargets(broadcast)
     ? (broadcast.targets ?? []).find((target) => target.inboxId === inboxId)
     : broadcast
+
+/** Fallback recipients-per-tick when a broadcast sets no `sendRatePerMinute`; moved here from the worker. */
+export const BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE = 500
+/** Product ceiling on `sendRatePerMinute` — 2x today's batch size (see worker hand-off fan-out). */
+export const BROADCAST_MAX_SEND_RATE_PER_MINUTE = 1000
+/** Audience positions are 1-based (`audienceRangeStart`/`audienceRangeEnd`, "contact #N" in the UI). */
+export const BROADCAST_AUDIENCE_POSITION_MIN = 1
+/** Minimum spacing between hand-off batches of one broadcast; shorter than the 60s cron cadence. */
+export const BROADCAST_DISPATCH_WINDOW_MS = 55_000
+
+/** The three optional limit fields; zod so builder request + business type infer one shape. */
+export const broadcastSendLimitSchema = z.object({
+  audienceRangeStart: z
+    .number()
+    .int()
+    .min(BROADCAST_AUDIENCE_POSITION_MIN)
+    .nullish(),
+  audienceRangeEnd: z
+    .number()
+    .int()
+    .min(BROADCAST_AUDIENCE_POSITION_MIN)
+    .nullish(),
+  sendRatePerMinute: z
+    .number()
+    .int()
+    .min(1)
+    .max(BROADCAST_MAX_SEND_RATE_PER_MINUTE)
+    .nullish(),
+})
+export type BroadcastSendLimit = z.infer<typeof broadcastSendLimitSchema>
+
+export const broadcastAudienceRangeSchema = broadcastSendLimitSchema.pick({
+  audienceRangeStart: true,
+  audienceRangeEnd: true,
+})
+export type BroadcastAudienceRangeInput = z.infer<
+  typeof broadcastAudienceRangeSchema
+>
+
+/** Stable issue codes carried as zod messages and mapped to i18n keys in the UI (call-hours pattern). */
+export const broadcastSendLimitIssues = {
+  rangeEndBeforeStart: "broadcastSendLimit.rangeEndBeforeStart",
+} as const
+
+/** Predicate for the zod `.refine` and the service rule list (same pattern as `hasFlowAndTemplate`). */
+export const isAudienceRangeOrdered = (
+  limit: BroadcastAudienceRangeInput,
+): boolean => {
+  const { audienceRangeStart, audienceRangeEnd } = limit
+  if (audienceRangeStart == null || audienceRangeEnd == null) {
+    return true
+  }
+  return audienceRangeStart <= audienceRangeEnd
+}
+
+/** Resolved window: `offset` rows to skip, `size` rows to take (null = to the end). */
+export type BroadcastAudienceRange = { offset: number; size: number | null }
+
+/** null when neither bound is set → callers keep today's query byte-identical. */
+export const resolveBroadcastAudienceRange = (
+  limit: BroadcastAudienceRangeInput,
+): BroadcastAudienceRange | null => {
+  const { audienceRangeStart, audienceRangeEnd } = limit
+  if (audienceRangeStart == null && audienceRangeEnd == null) {
+    return null
+  }
+  const offset = audienceRangeStart == null ? 0 : audienceRangeStart - 1
+  if (audienceRangeEnd == null) {
+    return { offset, size: null }
+  }
+  if (audienceRangeStart == null) {
+    return { offset: 0, size: audienceRangeEnd }
+  }
+  if (!isAudienceRangeOrdered(limit)) {
+    return { offset, size: 0 }
+  }
+  return { offset, size: audienceRangeEnd - audienceRangeStart + 1 }
+}
+
+/** Total audience count clamped to a resolved range; unclamped when `range` is null. */
+export const clampAudienceCountToRange = (
+  total: number,
+  range: BroadcastAudienceRange | null,
+): number => {
+  if (!range) {
+    return total
+  }
+  const remaining = Math.max(0, total - range.offset)
+  return range.size == null ? remaining : Math.min(remaining, range.size)
+}
+
+/** Page window inside the range for the preview dialog; null when the page lies past the range. */
+export const resolveAudiencePageWindow = (input: {
+  page: number
+  perPage: number
+  range: BroadcastAudienceRange | null
+}): { offset: number; limit: number } | null => {
+  const { page, perPage, range } = input
+  const pageOffset = (page - 1) * perPage
+  if (!range) {
+    return { offset: pageOffset, limit: perPage }
+  }
+  if (range.size != null && pageOffset >= range.size) {
+    return null
+  }
+  const limit =
+    range.size == null ? perPage : Math.min(perPage, range.size - pageOffset)
+  return { offset: range.offset + pageOffset, limit }
+}
+
+/** Column-shaped normalisation (undefined → null) used by create/updateDraft/clone/resend. */
+export const normalizeBroadcastSendLimit = (
+  input: Partial<BroadcastSendLimit>,
+): {
+  audienceRangeStart: number | null
+  audienceRangeEnd: number | null
+  sendRatePerMinute: number | null
+} => ({
+  audienceRangeStart: input.audienceRangeStart ?? null,
+  audienceRangeEnd: input.audienceRangeEnd ?? null,
+  sendRatePerMinute: input.sendRatePerMinute ?? null,
+})
+
+/** The recipients-per-tick rate to use: the stored value, else the default. */
+export const resolveBroadcastSendRatePerMinute = (
+  broadcast: Pick<BroadcastSendLimit, "sendRatePerMinute">,
+): number =>
+  broadcast.sendRatePerMinute ?? BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE

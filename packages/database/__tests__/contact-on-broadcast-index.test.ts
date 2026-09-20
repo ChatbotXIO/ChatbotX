@@ -10,16 +10,17 @@ const MIGRATION_PATH = join(
 )
 
 describe("ContactOnBroadcast unsent-batch partial index", () => {
-  test("schema declares the partial index the batch scan depends on", () => {
+  test("schema declares the ordered partial index the batch scan depends on", () => {
     const config = getTableConfig(contactsOnBroadcastsModel)
     const index = config.indexes.find(
-      (candidate) => candidate.config.name === "ContactOnBroadcast_unsent_idx",
+      (candidate) =>
+        candidate.config.name === "ContactOnBroadcast_unsent_order_idx",
     )
     expect(index).toBeDefined()
     const columns = index?.config.columns.map((column) =>
       "name" in column ? column.name : String(column),
     )
-    expect(columns).toEqual(["broadcastId"])
+    expect(columns).toEqual(["broadcastId", "contactInboxId"])
     expect(index?.config.where).toBeDefined()
   })
 
