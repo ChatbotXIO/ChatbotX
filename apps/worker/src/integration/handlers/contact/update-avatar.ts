@@ -1,5 +1,5 @@
 import { contactInboxService, contactService } from "@chatbotx.io/business"
-import type { IntegrationJobUpdateContactAvatar } from "@chatbotx.io/worker-config"
+import type { LowJobUpdateContactAvatar } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import {
   allIntegrations,
@@ -16,7 +16,7 @@ import {
  * overwrites a live-set or previously-mirrored avatar.
  */
 export const updateContactAvatar = async (
-  data: IntegrationJobUpdateContactAvatar["data"],
+  data: LowJobUpdateContactAvatar["data"],
 ): Promise<void> => {
   const { workspaceId, contactInboxId, sourceId } = data
 

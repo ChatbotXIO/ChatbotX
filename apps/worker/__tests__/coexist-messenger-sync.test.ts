@@ -104,6 +104,14 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     add: mockQueueAdd,
     addBulk: vi.fn().mockResolvedValue(undefined),
   },
+  LowJobAction: {
+    coexistAttachmentDownload: "coexistAttachmentDownload",
+    updateContactAvatar: "updateContactAvatar",
+  },
+  lowQueue: {
+    add: vi.fn().mockResolvedValue(undefined),
+    addBulk: vi.fn().mockResolvedValue(undefined),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({

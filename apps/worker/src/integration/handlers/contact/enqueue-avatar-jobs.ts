@@ -1,8 +1,5 @@
 import type { ChannelContactImportLink } from "@chatbotx.io/business"
-import {
-  IntegrationJobAction,
-  integrationQueue,
-} from "@chatbotx.io/worker-config"
+import { LowJobAction, lowQueue } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 
 /**
@@ -40,9 +37,9 @@ export const enqueueContactAvatarJobs = async (input: {
   }
 
   const avatarJobs = Array.from(contactInboxIds, ([sourceId, link]) => ({
-    name: IntegrationJobAction.updateContactAvatar,
+    name: LowJobAction.updateContactAvatar,
     data: {
-      type: IntegrationJobAction.updateContactAvatar,
+      type: LowJobAction.updateContactAvatar,
       data: {
         workspaceId,
         contactInboxId: link.contactInboxId,
@@ -58,7 +55,7 @@ export const enqueueContactAvatarJobs = async (input: {
   }))
 
   try {
-    await integrationQueue.addBulk(avatarJobs)
+    await lowQueue.addBulk(avatarJobs)
   } catch (error) {
     logger.error(
       { err: error, jobCount: avatarJobs.length, ...logContext },
