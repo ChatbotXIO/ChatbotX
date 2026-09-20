@@ -2,25 +2,20 @@ import { commentAutomationAnalyticsService } from "@chatbotx.io/analytics"
 import {
   commentAutomationService,
   contactInboxService,
-  logProviderError,
   workspaceService,
 } from "@chatbotx.io/business"
 import type {
   CommentAutomationMissReason,
-  CommentAutomationReplyChannel,
   CommentReply,
-  CommentReplyType,
   IntegrationType,
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type {
   CommentAutomationMissInsert,
-  ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { createId } from "@chatbotx.io/utils"
-import type { ErrorLogProvider } from "@chatbotx.io/utils/error-log"
 import {
   ChatJobAction,
   chatQueue,
@@ -44,6 +39,7 @@ import {
   needsAttachmentInfo,
 } from "./comment-attachment"
 import { createTagInfoResolver } from "./comment-tags"
+import { enqueueDeferredPrivateReply } from "./deferred-private-reply"
 import {
   applyHideComments,
   hasHideCommentAction,
@@ -51,10 +47,21 @@ import {
 } from "./hide-comments"
 import {
   executePrivateReply,
+  isCommentFlaggedHighIntent,
   isOutsidePrivateReplyWindow,
+  privateReplyRequiresHighIntent,
+  privateReplyWindowLabel,
   supportsPrivateReply,
 } from "./private-reply"
 import { executePublicReply } from "./public-reply"
+import {
+  logAutomationSkipped,
+  logUnsupportedCapability,
+  recordAndDispatchReply,
+  recordBlockedPrivateReply,
+  recordConfiguredBranchFailures,
+  recordReplyFailure,
+} from "./record"
 import type { CommentReplyOutcome } from "./reply-outcome"
 
 export { isCommentReply } from "./automation-matching"
@@ -479,6 +486,11 @@ export async function processCommentAutomation(
 
       let publicOutcome: CommentReplyOutcome | null = null
       let privateOutcome: CommentReplyOutcome | null = null
+      // A DM handed to the deferred job rather than sent here. Counts as
+      // dispatched for the dedup row below — the comment's single private reply
+      // is already spoken for — but not for the replies counter, which only
+      // moves once something actually went out.
+      let privateDeferred = false
 
       try {
         publicOutcome = await executePublicReply(automation.publicReply, {
@@ -534,13 +546,25 @@ export async function processCommentAutomation(
         })
       }
 
-      // A private reply configured on a channel without a private-reply API
-      // (Threads) can never be delivered — same class as the like/hide
-      // capability checks above: logged, not recorded as a failed delivery,
-      // since nothing was attempted.
+      // A private reply the channel cannot carry can never be delivered — same
+      // class as the like/hide capability checks above: logged, not recorded as
+      // a failed delivery, since nothing was attempted.
+      //
+      // Two shapes of that. Threads has no private-reply API at all. And a
+      // `flow` cannot run over a conditional channel's DM: TikTok grants exactly
+      // one comment-anchored message while `sendFlowStep` needs a
+      // `conversation_id` from step 2 onwards, so `executePrivateReply` rejects
+      // it outright. The second is checked HERE as well as in the executor
+      // because the defer branch below runs first — deferring a flow would claim
+      // the comment's single DM budget, blocking another automation's
+      // deliverable `text` DM, and then record nothing when the executor
+      // declined it minutes later. Only a legacy row reaches it: new writes
+      // normalize `flow` away on these channels.
       const privateReplyUnsupported =
         willSendReply(automation.privateReply) &&
-        !supportsPrivateReply(channelType)
+        (!supportsPrivateReply(channelType) ||
+          (automation.privateReply.type === "flow" &&
+            privateReplyRequiresHighIntent(channelType)))
 
       if (privateReplyUnsupported) {
         logUnsupportedCapability({
@@ -558,11 +582,51 @@ export async function processCommentAutomation(
         const privateReplyBlockedReason = resolvePrivateReplyBlockedReason({
           privateReply: automation.privateReply,
           privateReplyClaimed,
+          channelType,
           createdTime,
           delay,
         })
 
-        if (privateReplyBlockedReason) {
+        // On a conditional channel (TikTok) the DM is only permitted once the
+        // channel has flagged the comment high intent, and that verdict rides
+        // a separate webhook with no ordering guarantee. If the flag is not on
+        // the comment row yet, hand the branch to the deferred job rather than
+        // calling the executor: it re-checks on a bounded schedule and either
+        // sends or records one blocked event.
+        //
+        // The comment's single DM is claimed here, not when the deferred job
+        // eventually sends — otherwise a second automation matching the same
+        // comment would queue a second deferral for the same budget.
+        const deferPrivateReply =
+          !privateReplyBlockedReason &&
+          willSendReply(automation.privateReply) &&
+          privateReplyRequiresHighIntent(channelType) &&
+          !isCommentFlaggedHighIntent(dbMessage?.contentAttributes)
+
+        if (deferPrivateReply) {
+          privateReplyClaimed = true
+          privateDeferred = true
+          await enqueueDeferredPrivateReply({
+            integrationType,
+            integrationIdentifier,
+            workspaceId,
+            automationId: automation.id,
+            channelType,
+            commentId,
+            postId,
+            conversationId,
+            contactInboxId,
+            message,
+            createdTime,
+            occurredAtIso: occurredAt.toISOString(),
+            privateReply: automation.privateReply,
+            dedup,
+            // Carried so the deferred job can spend whatever is left of it,
+            // rather than dropping `replyAfter` the moment a DM is deferred.
+            delay,
+            attempt: 0,
+          })
+        } else if (privateReplyBlockedReason) {
           logAutomationSkipped({
             automationId: automation.id,
             commentId,
@@ -655,8 +719,11 @@ export async function processCommentAutomation(
       //    forever. `sendFlow` is the exception: a flow can fail at any step
       //    long after dispatch, and rolling back there would reopen the
       //    duplicate-reply hole.
+      // 4. A deferred DM counts as dispatched: the comment's single private
+      //    reply is already claimed, and without the row the contact's next
+      //    comment would match again and queue a second deferral.
       const anythingDispatched =
-        publicOutcome !== null || privateOutcome !== null
+        publicOutcome !== null || privateOutcome !== null || privateDeferred
       const anythingConfigured =
         willSendReply(automation.publicReply) ||
         willSendReply(automation.privateReply)
@@ -665,12 +732,25 @@ export async function processCommentAutomation(
         await commentAutomationService.insertDedup(dedup)
       }
 
-      // Replies counts DMs, not comment replies — same scope as the five
-      // delivery columns beside it, so a public-only automation reads as zero
-      // across the whole row rather than showing a reply count with no
-      // delivery stats under it. `anythingDispatched` above stays as it is:
-      // dedup guards against sending twice and has nothing to do with stats.
-      if (privateOutcome) {
+      // Replies has the same scope as the delivery columns beside it, and that
+      // scope is per CHANNEL, not per automation: where a comment-anchored DM
+      // exists it counts DMs, so a Messenger automation replying publicly only
+      // reads zero across the whole row rather than showing a reply count with
+      // no delivery stats under it. Where the channel has no DM at all
+      // (Threads) the public reply is the only reply there is, and counting
+      // nothing left every column of a working automation at zero.
+      //
+      // TikTok has a DM, so it counts DMs — but only ones that actually went
+      // out. A deferred branch deliberately does NOT count here; the deferred
+      // job increments this itself if and when it sends.
+      // Mirrors `countsTowardStats` in the analytics service — the two decide
+      // the same question for the same row and must agree.
+      // `anythingDispatched` above stays as it is: dedup guards against sending
+      // twice and has nothing to do with stats.
+      const replyCounts = supportsPrivateReply(channelType)
+        ? privateOutcome !== null
+        : publicOutcome !== null
+      if (replyCounts) {
         await commentAutomationService.incrementRepliesCount(automation.id)
       }
     } catch (err) {
@@ -701,185 +781,17 @@ export async function processCommentAutomation(
 }
 
 /**
- * The `ErrorLog` provider slug for a comment-automation channel. Instagram via
- * either login path is one third party as far as the workspace error log is
- * concerned — `instagramFacebook` is a connection route, not a vendor.
- */
-const ERROR_LOG_PROVIDER_BY_CHANNEL: Record<
-  CommentAutomationChannelType,
-  ErrorLogProvider
-> = {
-  messenger: "messenger",
-  instagram: "instagram",
-  instagramFacebook: "instagram",
-  threads: "threads",
-  tiktok: "tiktok",
-}
-
-type ReplyEventContext = {
-  // The job's `workspaceId`, not `automation.workspaceId`: it is the value
-  // every other write in this handler is keyed by, including the dedup row.
-  workspaceId: string
-  automationId: string
-  contactInbox: ContactInboxModel
-  commentId: string
-  postId: string
-  message?: string
-  occurredAt: Date
-  replyChannel: CommentAutomationReplyChannel
-}
-
-/**
- * One analytics row per dispatched reply. An `AIAgent` reply lands here with a
- * null `replyText` — the text does not exist yet, and `processCommentAIReply`
- * settles the same row once it does.
- *
- * `sent` here means *dispatched*, not delivered, and for a public reply that is
- * provisional: the Graph API call happens later in the chat worker, which flips
- * this row to `failed` through the anchor `postPublicCommentReply` stamped on
- * the message (`settleCommentAutomationFailure`). A private text reply is sent
- * inline, so its failure is caught below instead.
- */
-function recordReplyEvent(
-  props: ReplyEventContext & { outcome: CommentReplyOutcome },
-): Promise<void> {
-  return commentAutomationAnalyticsService.recordEvent({
-    workspaceId: props.workspaceId,
-    automationId: props.automationId,
-    contactId: props.contactInbox.contactId,
-    contactInboxId: props.contactInbox.id,
-    postId: props.postId,
-    commentId: props.commentId,
-    commentText: props.message ?? null,
-    replyChannel: props.replyChannel,
-    replyType: props.outcome.replyType,
-    replyText: props.outcome.replyText,
-    status: "sent",
-    occurredAt: props.occurredAt,
-    // Non-null only for a send that already completed (a `text` reply). Born
-    // delivered, because the `markDelivered` that used to do this ran before
-    // this very row existed and matched nothing.
-    deliveredAt: props.outcome.deliveredAt ?? null,
-  })
-}
-
-/**
- * Writes the reply's analytics row, THEN enqueues whatever async work it stands
- * for.
- *
- * The order is the point. The queued job settles delivery on this very row, and
- * an automation with no `replyAfter` gives it a delay of 0 — so enqueuing first
- * let the worker pick the job up and settle a row that had not been inserted
- * yet, losing `deliveredAt` and, with it, `seenAt`. See `dispatch` on
- * `CommentReplyOutcome`.
- *
- * A dispatch that throws flips the row it just wrote to `failed` rather than
- * recording a fresh failure: the insert is keyed on `(automationId, commentId,
- * replyChannel)`, so a second row would be dropped as a conflict and the
- * failure would go unrecorded. The caller still treats the branch as
- * dispatched, which keeps the dedup row — one missed reply beats replying to
- * the contact's next comment twice.
- */
-async function recordAndDispatchReply(
-  props: ReplyEventContext & { outcome: CommentReplyOutcome },
-): Promise<void> {
-  await recordReplyEvent(props)
-
-  if (!props.outcome.dispatch) {
-    return
-  }
-
-  try {
-    await props.outcome.dispatch()
-  } catch (err) {
-    logger.error(
-      {
-        err,
-        automationId: props.automationId,
-        commentId: props.commentId,
-        replyChannel: props.replyChannel,
-      },
-      "Failed to enqueue comment automation reply",
-    )
-    await commentAutomationAnalyticsService.settleEvent({
-      automationId: props.automationId,
-      commentId: props.commentId,
-      replyChannel: props.replyChannel,
-      status: "failed",
-      errorDetail: err instanceof Error ? err.message : String(err),
-    })
-  }
-}
-
-/**
- * A dispatch that threw is recorded twice on purpose: once on the automation's
- * own analytics timeline, and once on the workspace-wide Error Logs page via
- * `logProviderError` — the same pairing `story-reply-automation` already does.
- *
- * Swallows its own failures. This runs inside the reply branch's catch block,
- * and the code after that block still has to write the dedup row: letting a
- * bookkeeping error escape would skip it, and the contact's next comment would
- * then get the *other* branch's reply a second time. Recording a failure must
- * never be able to cause one.
- */
-async function recordReplyFailure(
-  props: ReplyEventContext & {
-    channelType: CommentAutomationChannelType
-    replyType: CommentReplyType
-    error: unknown
-  },
-): Promise<void> {
-  const detail =
-    props.error instanceof Error ? props.error.message : String(props.error)
-
-  try {
-    await Promise.all([
-      commentAutomationAnalyticsService.recordEvent({
-        workspaceId: props.workspaceId,
-        automationId: props.automationId,
-        contactId: props.contactInbox.contactId,
-        contactInboxId: props.contactInbox.id,
-        postId: props.postId,
-        commentId: props.commentId,
-        commentText: props.message ?? null,
-        replyChannel: props.replyChannel,
-        replyType: props.replyType,
-        replyText: null,
-        status: "failed",
-        errorDetail: detail,
-        occurredAt: props.occurredAt,
-      }),
-      logProviderError({
-        provider: ERROR_LOG_PROVIDER_BY_CHANNEL[props.channelType],
-        workspaceId: props.workspaceId,
-        contactId: props.contactInbox.contactId,
-        error: props.error,
-      }),
-    ])
-  } catch (err) {
-    logger.error(
-      {
-        err,
-        automationId: props.automationId,
-        commentId: props.commentId,
-        replyChannel: props.replyChannel,
-      },
-      "Failed to record a comment automation reply failure",
-    )
-  }
-}
-
-/**
  * Why a configured private reply will not be dispatched at all, or `null` when
  * it can go ahead.
  *
- * Both reasons are Meta's rules, not ours: a comment_id-anchored DM is accepted
- * only within 7 days of the comment, and only once per comment no matter how
- * many automations match it.
+ * Both reasons are the channel's rules, not ours: a comment-anchored DM is
+ * accepted only inside the channel's window (7 days on Meta, 48 hours on
+ * TikTok), and only once per comment no matter how many automations match it.
  */
-function resolvePrivateReplyBlockedReason(props: {
+export function resolvePrivateReplyBlockedReason(props: {
   privateReply: CommentReply
   privateReplyClaimed: boolean
+  channelType: CommentAutomationChannelType
   createdTime: number
   delay: number
 }): { logReason: string; errorDetail: string } | null {
@@ -897,168 +809,17 @@ function resolvePrivateReplyBlockedReason(props: {
 
   if (
     isOutsidePrivateReplyWindow({
+      channelType: props.channelType,
       createdTime: props.createdTime,
       delay: props.delay,
     })
   ) {
+    const window = privateReplyWindowLabel(props.channelType)
     return {
-      logReason: "comment older than the 7-day private reply window",
-      errorDetail:
-        "Private reply not sent: the comment is outside Meta's 7-day private reply window",
+      logReason: `comment older than ${window}`,
+      errorDetail: `Private reply not sent: the comment is outside ${window}`,
     }
   }
 
   return null
-}
-
-/**
- * A configured DM that Meta will not accept. Recorded as `failed` with a
- * human-readable `errorDetail` — the row is the only way the workspace can tell
- * this apart from "the automation never matched".
- *
- * Swallows its own failures: it runs on a path that still has to write the
- * dedup row below.
- */
-async function recordBlockedPrivateReply(
-  props: ReplyEventContext & {
-    replyType: CommentReplyType
-    errorDetail: string
-  },
-): Promise<void> {
-  try {
-    await commentAutomationAnalyticsService.recordEvent({
-      workspaceId: props.workspaceId,
-      automationId: props.automationId,
-      contactId: props.contactInbox.contactId,
-      contactInboxId: props.contactInbox.id,
-      postId: props.postId,
-      commentId: props.commentId,
-      commentText: props.message ?? null,
-      replyChannel: props.replyChannel,
-      replyType: props.replyType,
-      replyText: null,
-      status: "failed",
-      errorDetail: props.errorDetail,
-      occurredAt: props.occurredAt,
-    })
-  } catch (err) {
-    logger.error(
-      { err, automationId: props.automationId, commentId: props.commentId },
-      "Failed to record a blocked comment automation private reply",
-    )
-  }
-}
-
-/**
- * The catch-all for an automation that blew up *before* either reply branch
- * reported an outcome — a DB read for one of the option gates, the message-row
- * lookup, the shard client. Without this the comment left no trace at all: no
- * `sent` row, no `failed` row, and the customer got nothing while the dashboard
- * showed a clean run.
- *
- * Records by *configuration* rather than by outcome, because there is no
- * outcome yet: every branch the automation was set up to send gets a `failed`
- * row. `willSendReply` keeps a `none`/empty branch out of it.
- *
- * Rows already written win — `insertEvents` is `onConflictDoNothing` on
- * `(automationId, commentId, replyChannel)`, so a branch that already
- * dispatched (`sent`) or already failed on send keeps its row and this insert
- * is a no-op. That is what makes it safe to run for a throw from the *post*
- * dispatch bookkeeping (`insertDedup`, `incrementRepliesCount`) too.
- *
- * Deliberately does NOT call `logProviderError`: `ErrorLog.action` names the
- * third party that failed and the UI renders it as a vendor name, but nothing
- * here reached Meta — attributing a shard timeout to "Messenger" would send the
- * workspace chasing a channel that is working fine. The automation's own Error
- * Logs panel is the right surface, and it reads these rows.
- *
- * Swallows its own failures, same reason as `recordReplyFailure`.
- */
-async function recordConfiguredBranchFailures(
-  props: Omit<ReplyEventContext, "replyChannel"> & {
-    publicReply: CommentReply
-    privateReply: CommentReply
-    error: unknown
-  },
-): Promise<void> {
-  const detail =
-    props.error instanceof Error ? props.error.message : String(props.error)
-
-  const configuredBranches = [
-    { channel: "public" as const, reply: props.publicReply },
-    { channel: "private" as const, reply: props.privateReply },
-  ].filter((branch) => willSendReply(branch.reply))
-
-  if (configuredBranches.length === 0) {
-    return
-  }
-
-  try {
-    await Promise.all(
-      configuredBranches.map((branch) =>
-        commentAutomationAnalyticsService.recordEvent({
-          workspaceId: props.workspaceId,
-          automationId: props.automationId,
-          contactId: props.contactInbox.contactId,
-          contactInboxId: props.contactInbox.id,
-          postId: props.postId,
-          commentId: props.commentId,
-          commentText: props.message ?? null,
-          replyChannel: branch.channel,
-          replyType: branch.reply.type,
-          replyText: null,
-          status: "failed",
-          errorDetail: detail,
-          occurredAt: props.occurredAt,
-        }),
-      ),
-    )
-  } catch (err) {
-    logger.error(
-      { err, automationId: props.automationId, commentId: props.commentId },
-      "Failed to record a comment automation pre-dispatch failure",
-    )
-  }
-}
-
-/**
- * A channel-level capability the automation asked for but the channel does not
- * have (Threads has no like/hide/private-reply APIs). Logged per automation so
- * a silently partial run is still traceable, and deliberately not an error:
- * the rest of the automation still runs.
- */
-const logUnsupportedCapability = ({
-  automationId,
-  commentId,
-  capability,
-}: {
-  automationId: string
-  commentId: string
-  capability: string
-}) => {
-  logger.info(
-    { automationId, commentId, capability },
-    "Comment automation capability unsupported",
-  )
-}
-
-const logAutomationSkipped = ({
-  automationId,
-  commentId,
-  postId,
-  workspaceId,
-  parentId,
-  reason,
-}: {
-  automationId: string
-  commentId: string
-  postId: string
-  workspaceId: string
-  parentId?: string
-  reason: string
-}) => {
-  logger.info(
-    { automationId, commentId, postId, workspaceId, parentId, reason },
-    "Comment automation skipped",
-  )
 }

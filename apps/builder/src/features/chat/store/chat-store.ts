@@ -7,7 +7,10 @@ import { resolveMessagingWindowOpenedAt } from "@chatbotx.io/sdk"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contact-filter/schema"
 import type { ContactResource } from "@/features/contacts/schema/resource"
-import type { PostDetails } from "@/features/conversations/schema/query"
+import {
+  type PostDetails,
+  supportsPostDetails,
+} from "@/features/conversations/schema/query"
 import type {
   ConversationResource,
   ListConversationItemResource,
@@ -968,14 +971,11 @@ export const createChatStore = () => {
         (c) => c.id === activeConversationId,
       )
       const contactInbox = conversation?.contactInboxes?.[0]
+      const postId = conversation?.sourceId
+      const inboxId = contactInbox?.inboxId
+      const channel = contactInbox?.channel
 
-      if (
-        !conversation?.sourceId ||
-        (contactInbox?.channel !== "messenger" &&
-          contactInbox?.channel !== "instagram" &&
-          contactInbox?.channel !== "threads") ||
-        !contactInbox?.inboxId
-      ) {
+      if (!(postId && inboxId && supportsPostDetails(channel))) {
         set({ activePost: null })
         return
       }
@@ -984,9 +984,9 @@ export const createChatStore = () => {
         const post =
           await client.conversationsAPI.getPostDetailsAuthenticatedAPI({
             workspaceId,
-            inboxId: contactInbox.inboxId,
-            postId: conversation.sourceId,
-            channel: contactInbox.channel,
+            inboxId,
+            postId,
+            channel,
           })
         set({ activePost: post })
       } catch {

@@ -69,7 +69,14 @@ const PAGED = { ...RANGE, page: 1, perPage: 10 }
 
 beforeEach(() => {
   vi.clearAllMocks()
-  findFirstAutomation.mockResolvedValue({ id: "automation-1" })
+  // `type` matters now: the counters are scoped to the DM on a channel that
+  // has one and to the public comment reply on a channel that does not, so
+  // every counter assertion below is really an assertion about a Messenger
+  // automation. The public-only half is pinned in its own describe block.
+  findFirstAutomation.mockResolvedValue({
+    id: "automation-1",
+    type: "messenger",
+  })
   findManyContacts.mockResolvedValue([])
   commentAutomationStatsRepository.insertEvents.mockResolvedValue([])
   commentAutomationStatsRepository.settleEvent.mockResolvedValue([])
@@ -451,7 +458,7 @@ describe("recordEvent counters", () => {
     )
   })
 
-  test("a public reply writes its row but moves no counter", async () => {
+  test("a public reply on a DM channel writes its row but moves no counter", async () => {
     commentAutomationStatsRepository.insertEvents.mockResolvedValue([
       { automationId: "automation-1", status: "sent", deliveredAt: null },
     ])
@@ -522,7 +529,7 @@ describe("settleEvent counters", () => {
     expect(countersFor("automation-1")).toEqual({ failedCount: 1 })
   })
 
-  test("a public reply flipping to failed writes the row but moves no counter", async () => {
+  test("a public reply on a DM channel flipping to failed writes the row but moves no counter", async () => {
     commentAutomationStatsRepository.settleEvent.mockResolvedValue([
       { automationId: "automation-1" },
     ])
@@ -619,6 +626,245 @@ describe("markDelivered", () => {
       replyChannel: "private",
     })
     expect(countersFor("automation-1")).toBeUndefined()
+  })
+})
+
+// Threads has no comment-anchored DM, so the private-only counter rule left a
+// perfectly working automation reading zero down its whole list row — Replies
+// included — and the Misses column measuring itself against nothing but its own
+// misses. On that channel the public reply IS the reply. (TikTok used to belong
+// here too; Comment-to-Message gave it a DM, so it now counts like Meta — see
+// the block below.)
+describe("a channel with no private reply counts its public reply", () => {
+  const THREADS_EVENT = {
+    ...EVENT,
+    automationId: "automation-threads",
+    replyChannel: "public" as const,
+  }
+
+  // A fresh service per test: the channel-type memo is per instance and keyed
+  // by automation id, so a shared one would carry the first test's answer into
+  // the next and hide a lookup that never happened.
+  let threadsService: InstanceType<typeof CommentAutomationAnalyticsService>
+
+  beforeEach(() => {
+    findFirstAutomation.mockResolvedValue({
+      id: "automation-threads",
+      type: "threads",
+    })
+    threadsService = new CommentAutomationAnalyticsService()
+  })
+
+  test("counts the attempt at dispatch", async () => {
+    commentAutomationStatsRepository.insertEvents.mockResolvedValue([
+      { automationId: "automation-threads", status: "sent", deliveredAt: null },
+    ])
+
+    await threadsService.recordEvent({ ...THREADS_EVENT, status: "sent" })
+
+    expect(countersFor("automation-threads")).toEqual({ sentCount: 1 })
+  })
+
+  test("counts the delivery the channel acknowledged", async () => {
+    commentAutomationStatsRepository.markDelivered.mockResolvedValue([
+      { automationId: "automation-threads" },
+    ])
+
+    await threadsService.markDelivered({
+      automationId: "automation-threads",
+      commentId: "comment-1",
+      replyChannel: "public",
+    })
+
+    expect(countersFor("automation-threads")).toEqual({ deliveredCount: 1 })
+  })
+
+  test("counts a send that terminally failed", async () => {
+    commentAutomationStatsRepository.settleEvent.mockResolvedValue([
+      { automationId: "automation-threads" },
+    ])
+
+    await threadsService.settleEvent({
+      automationId: "automation-threads",
+      commentId: "comment-1",
+      replyChannel: "public",
+      status: "failed",
+    })
+
+    expect(countersFor("automation-threads")).toEqual({ failedCount: 1 })
+  })
+
+  test("unwinds what a discarded row had been counted as", async () => {
+    commentAutomationStatsRepository.deleteEvent.mockResolvedValue([
+      {
+        automationId: "automation-threads",
+        status: "sent",
+        deliveredAt: new Date(),
+        seenAt: null,
+        clickedAt: null,
+        failedAt: null,
+      },
+    ])
+
+    await threadsService.discardEvent({
+      automationId: "automation-threads",
+      commentId: "comment-1",
+      replyChannel: "public",
+    })
+
+    expect(countersFor("automation-threads")).toEqual({
+      sentCount: -1,
+      deliveredCount: -1,
+    })
+  })
+
+  // "Select all" tags the people the dialog listed, so both reads have to name
+  // the same half of the comment as the counter they were opened from.
+  test("drills into the public rows the counters came from", async () => {
+    commentAutomationStatsRepository.getContacts.mockResolvedValue({
+      contactInboxIds: [],
+      events: [],
+      contactTotal: 0,
+    })
+    commentAutomationStatsRepository.getContactIdsPage.mockResolvedValue([])
+
+    await threadsService.getContacts({
+      ...PAGED,
+      automationId: "automation-threads",
+      eventType: "message:delivered",
+    })
+    await threadsService.getContactIdsPage({
+      workspaceId: "workspace-1",
+      automationId: "automation-threads",
+      eventType: "message:delivered",
+      cursor: null,
+      limit: 100,
+    })
+
+    expect(commentAutomationStatsRepository.getContacts).toHaveBeenCalledWith(
+      expect.objectContaining({ replyChannel: "public" }),
+    )
+    expect(
+      commentAutomationStatsRepository.getContactIdsPage,
+    ).toHaveBeenCalledWith(expect.objectContaining({ replyChannel: "public" }))
+  })
+
+  test("a DM channel still drills into its private rows", async () => {
+    commentAutomationStatsRepository.getContacts.mockResolvedValue({
+      contactInboxIds: [],
+      events: [],
+      contactTotal: 0,
+    })
+    findFirstAutomation.mockResolvedValue({
+      id: "automation-1",
+      type: "messenger",
+    })
+
+    await new CommentAutomationAnalyticsService().getContacts({
+      ...PAGED,
+      eventType: "message:delivered",
+    })
+
+    expect(commentAutomationStatsRepository.getContacts).toHaveBeenCalledWith(
+      expect.objectContaining({ replyChannel: "private" }),
+    )
+  })
+
+  // A delete racing an in-flight reply. Counting it as a public-only channel
+  // would be a guess in the direction that invents numbers.
+  test("an automation that no longer exists counts nothing", async () => {
+    findFirstAutomation.mockResolvedValue(undefined)
+    commentAutomationStatsRepository.insertEvents.mockResolvedValue([
+      { automationId: "automation-threads", status: "sent", deliveredAt: null },
+    ])
+
+    await new CommentAutomationAnalyticsService().recordEvent({
+      ...THREADS_EVENT,
+      status: "sent",
+    })
+
+    expect(
+      commentAutomationStatsRepository.incrementCounters,
+    ).not.toHaveBeenCalled()
+  })
+
+  test("resolves the channel once and reuses it", async () => {
+    commentAutomationStatsRepository.insertEvents.mockResolvedValue([])
+
+    await threadsService.recordEvent({ ...THREADS_EVENT, status: "sent" })
+    await threadsService.recordEvent({ ...THREADS_EVENT, status: "sent" })
+
+    expect(findFirstAutomation).toHaveBeenCalledTimes(1)
+  })
+})
+
+// TikTok gained a comment-anchored DM with Comment-to-Message, so it moved out
+// of the public-counting group above and now behaves exactly like the Meta
+// channels. The DM fires only for comments TikTok flags as high intent, which
+// makes it rarer — but it is still the half that carries a delivery receipt,
+// and counting the public reply beside it would dilute every rate on the row.
+describe("TikTok counts its Comment-to-Message DM", () => {
+  const TIKTOK_EVENT = {
+    ...EVENT,
+    automationId: "automation-tiktok",
+  }
+
+  let tiktokService: InstanceType<typeof CommentAutomationAnalyticsService>
+
+  beforeEach(() => {
+    findFirstAutomation.mockResolvedValue({
+      id: "automation-tiktok",
+      type: "tiktok",
+    })
+    tiktokService = new CommentAutomationAnalyticsService()
+  })
+
+  test("counts a private reply", async () => {
+    commentAutomationStatsRepository.insertEvents.mockResolvedValue([
+      { automationId: "automation-tiktok", status: "sent", deliveredAt: null },
+    ])
+
+    await tiktokService.recordEvent({
+      ...TIKTOK_EVENT,
+      replyChannel: "private",
+      status: "sent",
+    })
+
+    expect(countersFor("automation-tiktok")).toEqual({ sentCount: 1 })
+  })
+
+  test("does not count the public reply beside it", async () => {
+    commentAutomationStatsRepository.insertEvents.mockResolvedValue([
+      { automationId: "automation-tiktok", status: "sent", deliveredAt: null },
+    ])
+
+    await tiktokService.recordEvent({
+      ...TIKTOK_EVENT,
+      replyChannel: "public",
+      status: "sent",
+    })
+
+    expect(
+      commentAutomationStatsRepository.incrementCounters,
+    ).not.toHaveBeenCalled()
+  })
+
+  test("drills into the private rows the counters came from", async () => {
+    commentAutomationStatsRepository.getContacts.mockResolvedValue({
+      contactInboxIds: [],
+      events: [],
+      contactTotal: 0,
+    })
+
+    await tiktokService.getContacts({
+      ...PAGED,
+      automationId: "automation-tiktok",
+      eventType: "message:delivered",
+    })
+
+    expect(commentAutomationStatsRepository.getContacts).toHaveBeenCalledWith(
+      expect.objectContaining({ replyChannel: "private" }),
+    )
   })
 })
 

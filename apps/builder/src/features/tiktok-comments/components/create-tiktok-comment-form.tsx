@@ -19,6 +19,7 @@ const defaultValues = {
   name: "",
   post: { type: "all" as const, value: [] },
   publicReply: { type: "none" as const, value: null },
+  privateReply: { type: "none" as const, value: null },
   includeKeywords: { type: "all" as const, value: [] },
   excludeKeywords: [],
   options: {

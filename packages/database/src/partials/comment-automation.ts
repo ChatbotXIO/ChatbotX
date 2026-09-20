@@ -15,6 +15,44 @@ export const igCommentAutomationTypes = z.enum([
 ])
 export type IgCommentAutomationType = z.infer<typeof igCommentAutomationTypes>
 
+/**
+ * The channels that can answer a comment with a comment-anchored DM.
+ *
+ * Kept here rather than next to the dispatch, because it is not only the worker
+ * that needs the answer: the analytics counters are scoped to the DM (see
+ * `countsTowardStats`), so a channel without one has to count its public
+ * comment replies instead or every column on its list row reads zero forever.
+ * `packages/analytics` cannot import the worker's
+ * `PRIVATE_REPLY_TEXT_SENDERS` — that map pulls in every Meta integration — so
+ * the capability lives with the channel enum it keys off, and
+ * `comment-automation.test.ts` asserts the two never drift.
+ *
+ * An allowlist, like `CHANNELS_WITH_COMMENT_LIKE`: a channel added without a
+ * decision here should default to "cannot", not inherit a DM by omission.
+ */
+const COMMENT_AUTOMATION_CHANNELS_WITH_PRIVATE_REPLY =
+  new Set<CommentAutomationType>([
+    "messenger",
+    "instagram",
+    "instagramFacebook",
+    // TikTok Comment-to-Message: `direct_reply` addresses the DM by comment id,
+    // so no conversation has to exist first. It only fires for comments TikTok
+    // itself flags as high intent, which makes the DM rarer here than on Meta —
+    // but it is still the half these counters measure, because it is the half
+    // that carries a delivery receipt.
+    "tiktok",
+  ])
+
+/**
+ * Whether the channel can answer a comment with a private DM. Threads is the
+ * only one that cannot: its API has no DM endpoint of any kind.
+ */
+export function commentAutomationChannelSupportsPrivateReply(
+  type: CommentAutomationType,
+): boolean {
+  return COMMENT_AUTOMATION_CHANNELS_WITH_PRIVATE_REPLY.has(type)
+}
+
 export const commentPostSchema = z.object({
   type: z.enum(["published", "ads", "reels", "postIds", "all"]),
   value: z.array(z.string()),

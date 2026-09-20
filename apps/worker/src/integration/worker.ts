@@ -44,6 +44,7 @@ import { coexistMessengerSync } from "./handlers/coexist/messenger-sync"
 import { coexistWhatsappBuffer } from "./handlers/coexist/whatsapp-buffer"
 import { coexistWhatsappFlush } from "./handlers/coexist/whatsapp-flush"
 import { processCommentAutomation } from "./handlers/comment-automation"
+import { runDeferredCommentPrivateReply } from "./handlers/comment-automation/deferred-private-reply"
 import { updateContactAvatar } from "./handlers/contact/update-avatar"
 import { runContactScan } from "./handlers/contact-scan/engine"
 import { agentMarkAsRead, contactMarkAsRead } from "./handlers/conversation"
@@ -69,6 +70,7 @@ import {
 import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 import { captureTemplateFlowResponse } from "./handlers/template-flow-response"
+import { receiveTiktokHighIntentComment } from "./handlers/tiktok-high-intent-comment"
 import { runWaitResume } from "./handlers/wait-resume"
 import { handleWhatsappCallEvent } from "./handlers/whatsapp-call"
 import { handleWhatsappCallNativeRecordingFetch } from "./handlers/whatsapp-call-native-recording"
@@ -450,6 +452,14 @@ async function startIntegrationWorker() {
               }
               case IntegrationJobAction.processCommentAutomation: {
                 await processCommentAutomation(job.data.data)
+                return
+              }
+              case IntegrationJobAction.tiktokHighIntentComment: {
+                await receiveTiktokHighIntentComment(job.data.data)
+                return
+              }
+              case IntegrationJobAction.deferredCommentPrivateReply: {
+                await runDeferredCommentPrivateReply(job.data.data)
                 return
               }
               case IntegrationJobAction.commentAIReply: {

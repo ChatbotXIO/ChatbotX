@@ -39,7 +39,9 @@ const postDetailsSchema = z.object({
   text: z.string().optional(),
   picture: z.string().optional(),
   from: z.object({ id: z.string(), name: z.string() }).optional(),
-  createdAt: z.string(),
+  // Optional: TikTok can name the author and link the video without being able
+  // to say when it was posted.
+  createdAt: z.string().optional(),
   link: z.string().optional(),
 })
 
@@ -112,7 +114,12 @@ export const conversationsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(postDetailsSchema)
     .handler(async ({ input }) =>
-      getPostDetailsQuery(input.inboxId, input.postId, input.channel),
+      getPostDetailsQuery({
+        workspaceId: input.workspaceId,
+        inboxId: input.inboxId,
+        postId: input.postId,
+        channel: input.channel,
+      }),
     ),
 
   assignConversationsAuthenticatedAPI: authorizedAPI

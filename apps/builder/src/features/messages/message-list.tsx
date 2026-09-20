@@ -13,6 +13,7 @@ import { changeMessageAttributesAction } from "./actions/change-message-attribut
 import { deleteMessageAction } from "./actions/delete-message.action"
 import { editMessageAction } from "./actions/edit-message.action"
 import { MessageItem } from "./components/message-item"
+import { canPrivateReplyToComment } from "./lib/private-reply"
 import type { MessageResourceWithRelations } from "./schema/resource"
 
 const MESSAGE_LIST_PER_PAGE = 20
@@ -23,6 +24,7 @@ export function MessageList() {
   const t = useTranslations()
 
   const {
+    conversations,
     messages,
     loadMoreMessages,
     isLoadMoreMessage,
@@ -34,6 +36,12 @@ export function MessageList() {
     updateMessageText,
     updateMessageAttributes,
   } = useChatStore((state) => state)
+
+  // Which channel this conversation belongs to, for the private-reply gate
+  // below. The same `contactInboxes[0].channel` the store reads elsewhere.
+  const activeChannel = conversations.find(
+    (conversation) => conversation.id === activeConversationId,
+  )?.contactInboxes?.[0]?.channel
 
   const { execute: deleteMessage } = useAction(
     deleteMessageAction.bind(null, workspaceId, activeConversationId ?? ""),
@@ -252,6 +260,12 @@ export function MessageList() {
         initialTopMostItemIndex={{ index: "LAST" }}
         itemContent={(_, message) => (
           <MessageItem
+            canPrivateReply={(comment) =>
+              canPrivateReplyToComment({
+                channel: activeChannel,
+                message: comment,
+              })
+            }
             key={message.id}
             message={message}
             onChangeHide={() => handleChangeHideState(message)}

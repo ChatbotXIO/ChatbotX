@@ -25,6 +25,9 @@ const toResource = (
   needsReauthorization: tiktokNeedsReauthorization(
     integration.auth as TiktokAuthValue,
   ),
+  commentToMessageStatus:
+    (integration.auth as TiktokAuthValue).metadata?.commentToMessage?.status ??
+    null,
 })
 
 export const listIntegrationTiktoks = async ({

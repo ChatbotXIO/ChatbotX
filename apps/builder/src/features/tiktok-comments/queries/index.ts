@@ -25,7 +25,17 @@ const toTiktokResource = (
     type: record.post.type === "postIds" ? "postIds" : "all",
     value: record.post.type === "postIds" ? record.post.value : [],
   },
-  privateReply: { type: "none", value: null },
+  // `flow` is the one private-reply variant TikTok cannot deliver — see the
+  // resource schema — and the shared table can still hold one from a row
+  // written before this channel gained a private branch at all.
+  privateReply:
+    record.privateReply.type === "text" ||
+    record.privateReply.type === "AIAgent"
+      ? {
+          type: record.privateReply.type,
+          value: record.privateReply.value ?? "",
+        }
+      : { type: "none", value: null },
   publicReply:
     record.publicReply.type === "none"
       ? { type: "none", value: null }

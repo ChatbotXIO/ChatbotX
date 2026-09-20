@@ -86,6 +86,25 @@ export function createTiktokCommentRequestSchema(
     }),
   ])
 
+  /**
+   * The DM half. No `flow`: TikTok grants exactly one comment-anchored message
+   * per comment and its flow runner needs a `conversation_id` for every step,
+   * which does not exist until the contact replies — so a flow would deliver
+   * step 1 and then fail every step after it. Text and AIAgent both send a
+   * single message and are fine.
+   */
+  const tiktokPrivateReplySchema = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("none"), value: z.null() }),
+    z.object({
+      type: z.literal("text"),
+      value: z.string().trim().min(1).max(MAX_REPLY_LENGTH),
+    }),
+    z.object({
+      type: z.literal("AIAgent"),
+      value: zodBigintAsString(),
+    }),
+  ])
+
   const tiktokPostSchema = z
     .object({
       type: z.enum(["all", "postIds"]),
@@ -218,6 +237,7 @@ export function createTiktokCommentRequestSchema(
     name: z.string().trim().min(1).max(MAX_NAME_LENGTH),
     post: tiktokPostSchema,
     publicReply: tiktokReplySchema,
+    privateReply: tiktokPrivateReplySchema,
     includeKeywords: tiktokIncludeKeywordsSchema,
     excludeKeywords: trimmedArray(MAX_KEYWORDS, MAX_KEYWORD_LENGTH),
     options: tiktokOptionsSchema,

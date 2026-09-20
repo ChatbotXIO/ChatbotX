@@ -2217,6 +2217,9 @@ importers:
       '@chatbotx.io/integration-google-calendar':
         specifier: workspace:*
         version: link:../../integrations/google-calendar
+      '@chatbotx.io/integration-tiktok':
+        specifier: workspace:*
+        version: link:../../integrations/tiktok
       '@chatbotx.io/javascript-sandbox':
         specifier: workspace:*
         version: link:../javascript-sandbox

@@ -124,6 +124,13 @@ export async function sendMessageToChannel(
 
     let result: Awaited<ReturnType<typeof integration.runChannelHandler>>
     if (isPrivateReply) {
+      // Only offered by the Inbox on a channel that implements the handler —
+      // see `canPrivateReplyToComment` in the builder. Threads has no DM API,
+      // and TikTok accepts one only for a comment it flagged as high intent.
+      //
+      // On TikTok this DM also comes back as an `im_send_msg` echo and is
+      // stored a second time, on the DM conversation rather than the comment
+      // one. Two rows for one send is the expected shape there, not a bug.
       result = await integration.runChannelHandler(
         "comment",
         "sendPrivateReply",
