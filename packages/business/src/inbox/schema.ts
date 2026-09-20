@@ -36,18 +36,41 @@ export const inboxResource = createSelectSchema(inboxModel, {
   id: zodBigintAsString(),
   workspaceId: zodBigintAsString(),
 })
+export const inboxWithIntegrationsResource = inboxResource.extend({
+  integrationWhatsapp: integrationWhatsappResource.nullish(),
+  integrationWebchat: integrationWebchatResource.nullish(),
+  integrationMessenger: integrationMessengerResource.nullish(),
+  integrationZalo: integrationZaloResource.nullish(),
+  integrationTelegram: integrationTelegramResource.nullish(),
+  integrationInstagram: integrationInstagramResource.nullish(),
+  integrationSmtp: integrationSmtpResource.nullish(),
+})
+
 export const listInboxesResponse = z.object({
-  data: z.array(
-    inboxResource.extend({
-      integrationWhatsapp: integrationWhatsappResource.nullish(),
-      integrationWebchat: integrationWebchatResource.nullish(),
-      integrationMessenger: integrationMessengerResource.nullish(),
-      integrationZalo: integrationZaloResource.nullish(),
-      integrationTelegram: integrationTelegramResource.nullish(),
-      integrationInstagram: integrationInstagramResource.nullish(),
-      integrationSmtp: integrationSmtpResource.nullish(),
-    }),
-  ),
+  data: z.array(inboxWithIntegrationsResource),
   pageCount: z.number(),
 })
 export type ListInboxesResponse = z.infer<typeof listInboxesResponse>
+
+/**
+ * Unpaginated companion to `listInboxesRequest`. The paginated `list` is
+ * capped at `maxLimit` (50) rows, which silently truncates a workspace with
+ * more connected inboxes than that — so any client that needs the complete
+ * set (e.g. the builder's inbox store, which the broadcast page picker reads
+ * from) uses this instead. No `page`/`perPage`: the whole connected set is
+ * always returned.
+ */
+export const listAllConnectedInboxesRequest = listInboxesRequest.pick({
+  workspaceId: true,
+  includes: true,
+})
+export type ListAllConnectedInboxesRequest = z.infer<
+  typeof listAllConnectedInboxesRequest
+>
+
+export const listAllConnectedInboxesResponse = z.object({
+  data: z.array(inboxWithIntegrationsResource),
+})
+export type ListAllConnectedInboxesResponse = z.infer<
+  typeof listAllConnectedInboxesResponse
+>

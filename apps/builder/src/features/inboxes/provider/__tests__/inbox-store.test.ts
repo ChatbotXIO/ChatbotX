@@ -2,13 +2,13 @@ import { ORPCError } from "@orpc/client"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  listInboxesAuthenticatedAPI: vi.fn(),
+  listAllInboxesAuthenticatedAPI: vi.fn(),
 }))
 
 vi.mock("@/lib/orpc/orpc", () => ({
   client: {
     inboxesAPI: {
-      listInboxesAuthenticatedAPI: mocks.listInboxesAuthenticatedAPI,
+      listAllInboxesAuthenticatedAPI: mocks.listAllInboxesAuthenticatedAPI,
     },
   },
 }))
@@ -16,12 +16,12 @@ vi.mock("@/lib/orpc/orpc", () => ({
 const { createInboxStore } = await import("../inbox-store")
 
 beforeEach(() => {
-  mocks.listInboxesAuthenticatedAPI.mockReset()
+  mocks.listAllInboxesAuthenticatedAPI.mockReset()
 })
 
 describe("getAllInboxes", () => {
-  test("fetches inboxes for the workspace with includes and maxPerPage", async () => {
-    mocks.listInboxesAuthenticatedAPI.mockResolvedValueOnce({
+  test("fetches every inbox for the workspace with integrations, unpaginated", async () => {
+    mocks.listAllInboxesAuthenticatedAPI.mockResolvedValueOnce({
       data: [{ id: "inbox-1", name: "Support" }],
     })
 
@@ -29,10 +29,9 @@ describe("getAllInboxes", () => {
 
     await store.getState().getAllInboxes()
 
-    expect(mocks.listInboxesAuthenticatedAPI).toHaveBeenCalledWith({
+    expect(mocks.listAllInboxesAuthenticatedAPI).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       includes: ["integration"],
-      perPage: 999_999_999,
     })
     expect(store.getState().inboxes).toEqual([
       { id: "inbox-1", name: "Support" },
@@ -44,7 +43,7 @@ describe("getAllInboxes", () => {
 
     await store.getState().getAllInboxes()
 
-    expect(mocks.listInboxesAuthenticatedAPI).not.toHaveBeenCalled()
+    expect(mocks.listAllInboxesAuthenticatedAPI).not.toHaveBeenCalled()
   })
 
   test("is a no-op while a fetch is already in flight", async () => {
@@ -52,21 +51,21 @@ describe("getAllInboxes", () => {
     const pending = new Promise<{ data: unknown[] }>((resolve) => {
       resolveFetch = resolve
     })
-    mocks.listInboxesAuthenticatedAPI.mockReturnValueOnce(pending)
+    mocks.listAllInboxesAuthenticatedAPI.mockReturnValueOnce(pending)
 
     const store = createInboxStore({ workspaceId: "workspace-1" })
 
     const first = store.getState().getAllInboxes()
     await store.getState().getAllInboxes()
 
-    expect(mocks.listInboxesAuthenticatedAPI).toHaveBeenCalledTimes(1)
+    expect(mocks.listAllInboxesAuthenticatedAPI).toHaveBeenCalledTimes(1)
 
     resolveFetch({ data: [] })
     await first
   })
 
   test("sets the ORPCError message on a rejected request", async () => {
-    mocks.listInboxesAuthenticatedAPI.mockRejectedValueOnce(
+    mocks.listAllInboxesAuthenticatedAPI.mockRejectedValueOnce(
       new ORPCError("INTERNAL_SERVER_ERROR", { message: "HTTP 500" }),
     )
 
@@ -79,7 +78,7 @@ describe("getAllInboxes", () => {
   })
 
   test("falls back to a generic message for a non-ORPCError rejection", async () => {
-    mocks.listInboxesAuthenticatedAPI.mockRejectedValueOnce(
+    mocks.listAllInboxesAuthenticatedAPI.mockRejectedValueOnce(
       new Error("network down"),
     )
 
@@ -93,7 +92,7 @@ describe("getAllInboxes", () => {
 
 describe("initialize", () => {
   test("calls getAllInboxes once and marks the store initialized", async () => {
-    mocks.listInboxesAuthenticatedAPI.mockResolvedValueOnce({
+    mocks.listAllInboxesAuthenticatedAPI.mockResolvedValueOnce({
       data: [{ id: "inbox-1", name: "Support" }],
     })
 
@@ -101,7 +100,7 @@ describe("initialize", () => {
 
     await store.getState().initialize()
 
-    expect(mocks.listInboxesAuthenticatedAPI).toHaveBeenCalledTimes(1)
+    expect(mocks.listAllInboxesAuthenticatedAPI).toHaveBeenCalledTimes(1)
     expect(store.getState().inboxes).toEqual([
       { id: "inbox-1", name: "Support" },
     ])
@@ -109,14 +108,14 @@ describe("initialize", () => {
   })
 
   test("does not fetch again once already initialized", async () => {
-    mocks.listInboxesAuthenticatedAPI.mockResolvedValue({ data: [] })
+    mocks.listAllInboxesAuthenticatedAPI.mockResolvedValue({ data: [] })
 
     const store = createInboxStore({ workspaceId: "workspace-1" })
 
     await store.getState().initialize()
     await store.getState().initialize()
 
-    expect(mocks.listInboxesAuthenticatedAPI).toHaveBeenCalledTimes(1)
+    expect(mocks.listAllInboxesAuthenticatedAPI).toHaveBeenCalledTimes(1)
   })
 
   test("still marks the store initialized when getAllInboxes fails", async () => {
@@ -125,7 +124,7 @@ describe("initialize", () => {
     // failure directly — but its `finally` unconditionally marks
     // `initialized: true` regardless, and getAllInboxes's error is still
     // visible on the shared `error` field.
-    mocks.listInboxesAuthenticatedAPI.mockRejectedValueOnce(
+    mocks.listAllInboxesAuthenticatedAPI.mockRejectedValueOnce(
       new ORPCError("INTERNAL_SERVER_ERROR", { message: "HTTP 500" }),
     )
 
