@@ -33,7 +33,8 @@ type Props = {
    * What this column's rate is measured against. The delivery columns divide by
    * attempts (`sentCount`); Misses divides by the comments the automation
    * engaged with (`repliesCount + missedCount`), because an attempt and a
-   * decline are different events and `sentCount` counts private DMs only.
+   * decline are different events and `sentCount` counts attempts on one half
+   * of the comment only.
    */
   denominator: number
 }
@@ -60,7 +61,8 @@ export const CommentAutomationStatsCell = memo(
     // Sent IS the denominator for the delivery columns, so it has nothing to
     // compare itself to. Misses suppresses its rate whenever the denominator is
     // nothing but the misses themselves — a bare "100%" on an automation that
-    // replies publicly only (which counts zero replies by design) says nothing
+    // has answered nothing its counters measure (a Messenger automation
+    // replying publicly only, which counts zero replies by design) says nothing
     // true about it, while the raw count still does.
     const rateIsMeaningless =
       field === "message:sent" ||

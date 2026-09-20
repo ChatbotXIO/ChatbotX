@@ -5,6 +5,12 @@ export type TiktokConfig = Oauth2Config & {
   openId?: string
 }
 
+/** `operation_status` on `business/message/direct_reply/{get,update}/`. */
+export type TiktokDirectReplyStatus = "ENABLE" | "DISABLE"
+
+export const TIKTOK_DIRECT_REPLY_TYPE_COMMENT_TO_MESSAGE =
+  "COMMENT_TO_MESSAGE" as const
+
 export type TiktokAuthValue = Oauth2AuthValue & {
   metadata: {
     openId: string
@@ -16,6 +22,22 @@ export type TiktokAuthValue = Oauth2AuthValue & {
      * automation shipped — see `tiktokNeedsReauthorization`.
      */
     scopes?: string[]
+    /**
+     * Cached Comment-to-Message setting, the switch that decides whether TikTok
+     * delivers `im_receive_high_intent_comment` for this account at all.
+     *
+     * A cache, never the authority: the owner can flip it inside the TikTok app
+     * and nothing tells us. Absent means "never checked", which every
+     * connection made before this shipped will report — read it as off, and
+     * offer the re-check rather than claiming the feature is disabled.
+     *
+     * Must be preserved across token refresh, which re-stamps `metadata`.
+     */
+    commentToMessage?: {
+      status: TiktokDirectReplyStatus
+      /** ISO-8601; when the status above was last read back from TikTok. */
+      checkedAt: string
+    }
   }
 }
 
@@ -91,6 +113,13 @@ export type TiktokDmMessageContent = z.infer<
 export const TIKTOK_COMMENT_EVENT = "comment.update"
 
 /**
+ * Comment-to-Message. Despite naming a comment, this event rides the
+ * `DIRECT_MESSAGE` subscription, not the `COMMENT` one — see
+ * `TIKTOK_DIRECT_MESSAGE_EVENT_TYPE` in `apis/webhook`.
+ */
+export const TIKTOK_HIGH_INTENT_COMMENT_EVENT = "im_receive_high_intent_comment"
+
+/**
  * What happened to the comment. One event type covers all five, so "a new
  * comment arrived" is `insert` specifically — not merely the event firing.
  */
@@ -117,10 +146,17 @@ export type TiktokCommentAction = z.infer<typeof tiktokCommentActions>
  */
 const SNOWFLAKE_ID_FIELDS = ["comment_id", "video_id", "parent_comment_id"]
 
-const SNOWFLAKE_ID_RE = new RegExp(
-  `"(${SNOWFLAKE_ID_FIELDS.join("|")})"\\s*:\\s*(\\d+)`,
-  "g",
-)
+/**
+ * Quotes the listed numeric ids in a raw JSON string so `JSON.parse` keeps them
+ * intact. Shared by every `content` parser on this channel — each passes the
+ * fields its own payload carries, because a field quoted where it is genuinely
+ * a number would come back as a string and fail its schema.
+ */
+const quoteSnowflakeIds = (json: string, fields: string[]): string =>
+  json.replace(
+    new RegExp(`"(${fields.join("|")})"\\s*:\\s*(\\d+)`, "g"),
+    '"$1":"$2"',
+  )
 
 export const tiktokCommentEventContentSchema = z.object({
   comment_id: z.string(),
@@ -151,12 +187,64 @@ export const parseTiktokCommentEventContent = (
 ): TiktokCommentEventContent | undefined => {
   let parsed: unknown
   try {
-    parsed = JSON.parse(content.replace(SNOWFLAKE_ID_RE, '"$1":"$2"'))
+    parsed = JSON.parse(quoteSnowflakeIds(content, SNOWFLAKE_ID_FIELDS))
   } catch {
     return
   }
 
   const result = tiktokCommentEventContentSchema.safeParse(parsed)
+  return result.success ? result.data : undefined
+}
+
+/**
+ * The `content` of an `im_receive_high_intent_comment` event — TikTok's own
+ * classifier telling us a comment expresses purchase intent, which is the ONLY
+ * way to obtain a `comment_id` that `business/message/send/` will accept as a
+ * `direct_reply`.
+ *
+ * Deliberately narrower than the documented payload. `from_user`/`to_user` are
+ * not modelled: nothing reads them (the commenter is keyed by
+ * `unique_identifier`, the business by `config.openId`), and their nested `id`
+ * is the one field where a snowflake could be rounded without any error to show
+ * for it.
+ *
+ * Note this event carries NO `video_id` — see the high-intent worker handler for
+ * how the comment is correlated back to its post.
+ */
+export const tiktokHighIntentCommentContentSchema = z.object({
+  comment_id: z.string(),
+  comment_text: z.string().optional(),
+  /** Stable per-commenter id, the same namespace `comment.update` reports. */
+  unique_identifier: z.string().optional(),
+  is_follower: z.boolean().optional(),
+  /** Millisecond epoch, unlike the envelope's `create_time` (seconds). */
+  timestamp: z.number().optional(),
+})
+export type TiktokHighIntentCommentContent = z.infer<
+  typeof tiktokHighIntentCommentContentSchema
+>
+
+/**
+ * `comment_id` is documented as a string here but as a NUMBER on
+ * `comment.update`, so it is quoted defensively — the failure mode is a rounded
+ * id addressing a comment that does not exist, with nothing in any log to say
+ * so. `unique_identifier` gets the same treatment for the same reason.
+ *
+ * Returns `undefined` rather than throwing, like its `comment.update` sibling.
+ */
+export const parseTiktokHighIntentCommentContent = (
+  content: string,
+): TiktokHighIntentCommentContent | undefined => {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(
+      quoteSnowflakeIds(content, ["comment_id", "unique_identifier"]),
+    )
+  } catch {
+    return
+  }
+
+  const result = tiktokHighIntentCommentContentSchema.safeParse(parsed)
   return result.success ? result.data : undefined
 }
 
@@ -313,4 +401,19 @@ export type TiktokSendMessageRequest =
       recipient: string
       message_type: "TEMPLATE"
       template: TiktokMessageTemplate
+    }
+  /**
+   * Comment-to-Message: a DM anchored to a comment rather than to a
+   * conversation. `recipient_type`/`recipient` are NOT supported alongside
+   * `direct_reply` — TikTok rejects a request carrying both — which is what
+   * makes this the one send that needs no pre-existing `conversation_id`.
+   */
+  | {
+      business_id: string
+      direct_reply: {
+        reply_type: "COMMENT_REPLY"
+        comment_reply: { comment_id: string }
+      }
+      message_type: "TEXT"
+      text: { body: string }
     }

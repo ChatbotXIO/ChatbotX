@@ -8,6 +8,11 @@ import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
 import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@chatbotx.io/ui/components/ui/alert"
+import {
   Card,
   CardContent,
   CardDescription,
@@ -22,6 +27,7 @@ import {
   FormMessage,
 } from "@chatbotx.io/ui/components/ui/form"
 import { TagsInputField } from "@chatbotx.io/ui/components/ui/muhammada86/tags-input-field"
+import { InfoIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useRef } from "react"
 import type { UseFormReturn } from "react-hook-form"
@@ -83,6 +89,10 @@ export function TiktokCommentForm({
   const replyType = useWatch({
     control: form.control,
     name: "publicReply.type",
+  })
+  const privateReplyType = useWatch({
+    control: form.control,
+    name: "privateReply.type",
   })
   const postType = useWatch({ control: form.control, name: "post.type" })
   const includeKeywordsType = useWatch({
@@ -271,6 +281,63 @@ export function TiktokCommentForm({
               required
             />
           ) : null}
+
+          {/* No `flow` option: Comment-to-Message grants one comment-anchored
+              message per comment, and TikTok's flow runner needs a conversation
+              for every step after the first. */}
+          <RadioGroupField
+            description={t("tiktokCommentAutomation.privateReplyDescription")}
+            descriptionType="tooltip"
+            label={t("tiktokCommentAutomation.privateReply")}
+            name="privateReply.type"
+            options={[
+              {
+                label: t("tiktokCommentAutomation.replyType.text"),
+                value: "text",
+              },
+              {
+                label: t("tiktokCommentAutomation.replyType.AIAgent"),
+                value: "AIAgent",
+              },
+              {
+                label: t("tiktokCommentAutomation.replyType.none"),
+                value: "none",
+              },
+            ]}
+            orientation="horizontal"
+            required
+          />
+
+          {privateReplyType === "text" ? (
+            <TextareaField
+              label={t("tiktokCommentAutomation.privateReplyMessage")}
+              name="privateReply.value"
+              required
+            />
+          ) : null}
+          {privateReplyType === "AIAgent" ? (
+            <ComboboxField
+              label={t("tiktokCommentAutomation.replyAIAgent")}
+              name="privateReply.value"
+              options={aiAgentOptions}
+              required
+            />
+          ) : null}
+
+          {/* Persistent, not a tooltip: TikTok decides which comments may be
+              DM'd, so most matched comments will get the public reply only.
+              Without saying so here, that reads as the automation being broken. */}
+          {privateReplyType === "none" ? null : (
+            <Alert>
+              <InfoIcon />
+              <AlertTitle>
+                {t("tiktokCommentAutomation.privateReplyHighIntentTitle")}
+              </AlertTitle>
+              <AlertDescription>
+                {t("tiktokCommentAutomation.privateReplyHighIntentNotice")}
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 

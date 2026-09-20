@@ -1,6 +1,10 @@
 import { rescue, TiktokAPIException } from "../exception"
 import { createTiktokBusinessClient } from "../lib/http-client"
-import type { BusinessApiResponse, TiktokVideoListResult } from "../schema"
+import type {
+  BusinessApiResponse,
+  TiktokVideo,
+  TiktokVideoListResult,
+} from "../schema"
 
 /**
  * Public video posts on the connected account, newest first, for the comment
@@ -19,6 +23,7 @@ export const listTiktokVideos = (
     fields?: string[]
     cursor?: number
     maxCount?: number
+    filters?: { video_ids: string[] }
   },
 ): Promise<TiktokVideoListResult> =>
   rescue("business/videos/list", async () => {
@@ -42,6 +47,9 @@ export const listTiktokVideos = (
     if (params.maxCount !== undefined) {
       searchParams.max_count = `${params.maxCount}`
     }
+    if (params.filters) {
+      searchParams.filters = JSON.stringify(params.filters)
+    }
 
     const response = await client.get<
       BusinessApiResponse<TiktokVideoListResult>
@@ -54,3 +62,28 @@ export const listTiktokVideos = (
     }
     return response.data ?? {}
   })
+
+/**
+ * One owned video by id, or `null` when the account no longer has it.
+ *
+ * Behind the `video.list` scope. It is approved and requested, but a connection
+ * made before the approval does not carry it until its owner re-authorizes, so
+ * every caller must treat a rejection as "no details available" rather than an
+ * error — a comment conversation has to stay usable without it. The id is
+ * re-checked against `item_id` so a backend that ignores `filters` (the
+ * parameter is undocumented on this endpoint) yields `null` rather than an
+ * unrelated video's caption.
+ */
+export const findTiktokVideo = async (
+  accessToken: string,
+  params: { businessId: string; videoId: string },
+): Promise<TiktokVideo | null> => {
+  const result = await listTiktokVideos(accessToken, {
+    businessId: params.businessId,
+    filters: { video_ids: [params.videoId] },
+    maxCount: 1,
+  })
+  return (
+    result.videos?.find((video) => video.item_id === params.videoId) ?? null
+  )
+}

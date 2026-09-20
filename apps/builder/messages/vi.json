@@ -2146,7 +2146,11 @@
         "step1": "Tạo ứng dụng TikTok tại <link>developers.tiktok.com</link>.",
         "step2": "Cấp quyền tài khoản và sao chép <strong>access token</strong>, <strong>open ID</strong> và <strong>client secret</strong>.",
         "step3": "Dán thông tin xác thực bên dưới để kết nối."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Cho phép tài khoản này trả lời bình luận có ý định mua cao bằng tin nhắn riêng. Bắt buộc với automation bình luận TikTok dùng trả lời riêng.",
+      "commentToMessageEligibility": "Chỉ áp dụng cho Business Account đăng ký tại Việt Nam, Indonesia hoặc Thái Lan, chủ tài khoản trên 18 tuổi, đã đăng ký kinh doanh hoặc đã chạy Messaging Ads, và đặt quyền nhắn tin thành \"Requests\".",
+      "commentToMessageUnknown": "Chưa kiểm tra với TikTok — bấm làm mới để đọc trạng thái hiện tại."
     },
     "drip": {
       "label": "Drip"
@@ -4967,7 +4971,7 @@
     "deliveryDelayNote": "TikTok gửi sự kiện bình luận trong vòng năm phút, nên phản hồi không tức thì. Độ trễ bạn đặt sẽ cộng thêm vào khoảng đó.",
     "trackCommentsOn": "Theo dõi bình luận trên",
     "publicReply": "Trả lời công khai bình luận",
-    "publicReplyDescription": "Gửi trả lời công khai cho bình luận TikTok khớp điều kiện. TikTok không có tin nhắn riêng gắn với bình luận nên không hỗ trợ trả lời riêng.",
+    "publicReplyDescription": "Gửi trả lời công khai cho các bình luận TikTok khớp điều kiện.",
     "replyMessage": "Nội dung trả lời",
     "replyFlow": "Kịch bản trả lời",
     "replyAIAgent": "AI Agent trả lời",
@@ -5052,7 +5056,12 @@
       "delayMustBeZero": "Giá trị độ trễ phải bằng 0 với tùy chọn thời điểm đã chọn.",
       "hideKeywordsRequired": "Nhập ít nhất một từ khóa để ẩn bình luận theo từ khóa.",
       "atLeastOneFieldRequired": "Cần ít nhất một trường."
-    }
+    },
+    "privateReply": "Trả lời riêng (Comment-to-Message)",
+    "privateReplyDescription": "Gửi tin nhắn riêng cho người bình luận. TikTok chỉ cho phép với bình luận được TikTok đánh dấu là có ý định mua cao, nên sẽ không chạy với mọi bình luận khớp điều kiện.",
+    "privateReplyMessage": "Nội dung tin nhắn riêng",
+    "privateReplyHighIntentTitle": "TikTok quyết định bình luận nào được nhắn tin",
+    "privateReplyHighIntentNotice": "Tài khoản TikTok đã kết nối phải bật Comment-to-Message, và phải là Business Account đăng ký tại Việt Nam, Indonesia hoặc Thái Lan. TikTok chỉ gửi tin nhắn riêng cho bình luận cấp 1 mà TikTok đánh dấu là có ý định mua cao, trong vòng 48 giờ, mỗi bình luận một lần, và không gửi nếu người bình luận đã nhắn tin cho bạn trong 24 giờ qua."
   },
   "instagramStoryAutomation": {
     "title": "Tự động hóa trả lời Story Instagram",

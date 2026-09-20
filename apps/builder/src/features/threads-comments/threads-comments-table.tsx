@@ -26,6 +26,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
+import { buildCommentAutomationStatColumns } from "../shared/comment-automation/comment-automation-stat-columns"
 import { DeleteCommentAutomationDialog } from "../shared/comment-automation/delete-comment-automation-dialog"
 import { deleteThreadsCommentAction } from "./actions/delete-threads-comment.action"
 import { updateThreadsCommentAction } from "./actions/update-threads-comment.action"
@@ -131,6 +132,13 @@ export function ThreadsCommentsTable({
         ),
         size: 120,
       },
+      // Threads has no DM of any kind, so its counters measure the public
+      // comment reply — the only reply it can send. Seen and Clicked are
+      // dropped rather than shown empty: a comment reply has no read receipt
+      // and carries no button, so they would read zero forever.
+      ...buildCommentAutomationStatColumns<
+        ListThreadsCommentsResponse["data"][number]
+      >({ workspaceId, t, supportsPrivateReply: false }),
       {
         id: "actions",
         header: () => (

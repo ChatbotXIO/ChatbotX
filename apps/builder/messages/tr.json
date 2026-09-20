@@ -2143,7 +2143,11 @@
         "step1": "<link>developers.tiktok.com</link> adresinden bir TikTok uygulaması oluşturun.",
         "step2": "Hesabınızı yetkilendirin ve <strong>erişim anahtarını</strong>, <strong>açık kimliği</strong> ve <strong>istemci gizli anahtarını</strong> kopyalayın.",
         "step3": "Bağlanmak için kimlik bilgilerini aşağıya yapıştırın."
-      }
+      },
+      "commentToMessage": "Comment-to-Message",
+      "commentToMessageDescription": "Lets this account answer high-intent comments with a direct message. Required for TikTok comment automations that use a private reply.",
+      "commentToMessageEligibility": "Only available to Business Accounts registered in Vietnam, Indonesia or Thailand, owned by someone over 18, that are registered businesses or have run Messaging Ads, with messaging permissions set to \"Requests\".",
+      "commentToMessageUnknown": "Not checked with TikTok yet — refresh to read the current setting."
     },
     "drip": {
       "label": "Damla"
@@ -4928,7 +4932,7 @@
     "deliveryDelayNote": "TikTok delivers comment events within five minutes, so replies are not instant. Any reply delay you set is added on top of that.",
     "trackCommentsOn": "Track comments on",
     "publicReply": "Public reply to comment",
-    "publicReplyDescription": "Send a public reply to matching TikTok comments. TikTok has no comment-anchored direct message, so private replies are not available.",
+    "publicReplyDescription": "Send a public reply to matching TikTok comments.",
     "replyMessage": "Reply message",
     "replyFlow": "Reply flow",
     "replyAIAgent": "Reply AI Agent",
@@ -5013,7 +5017,12 @@
       "delayMustBeZero": "Delay value must be zero for the selected timing option.",
       "hideKeywordsRequired": "Enter at least one keyword to hide comments by keyword.",
       "atLeastOneFieldRequired": "At least one field is required."
-    }
+    },
+    "privateReply": "Private reply (Comment-to-Message)",
+    "privateReplyDescription": "Send a direct message to the commenter. TikTok only allows this for comments it flags as high intent, so it will not fire for every matching comment.",
+    "privateReplyMessage": "Private reply message",
+    "privateReplyHighIntentTitle": "TikTok decides which comments can be messaged",
+    "privateReplyHighIntentNotice": "Comment-to-Message must be enabled on the connected TikTok account, and the account must be a Business Account registered in Vietnam, Indonesia or Thailand. TikTok sends the direct message only for first-level comments it flags as high intent, within 48 hours, once per comment, and not if the commenter already messaged you in the past 24 hours."
   },
   "instagramStoryAutomation": {
     "title": "Instagram Hikaye Yanıt Otomasyonu",

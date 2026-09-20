@@ -22,6 +22,7 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 | AI-agent reply (generate + deliver) | `apps/worker/src/integration/handlers/comment-automation/ai-reply.ts` |
 | Per-channel private DM dispatch | `apps/worker/src/integration/handlers/comment-automation/private-reply.ts` (`PRIVATE_REPLY_TEXT_SENDERS`) |
 | Supported channels union | `apps/worker/src/integration/handlers/comment-automation/channel-type.ts` (`CommentAutomationChannelType`) |
+| Private-reply capability (counter side) | `packages/database/src/partials/comment-automation.ts` (`commentAutomationChannelSupportsPrivateReply`) — mirrors `PRIVATE_REPLY_TEXT_SENDERS`, see trap 11 |
 | Attachment info (image/video for hide) | `apps/worker/src/integration/handlers/comment-automation/comment-attachment.ts` |
 | Receive comment + enqueue automation | `apps/worker/src/integration/handlers/received-message.ts` (`receiveComment`) |
 | Webhook parse + enqueue | `integrations/messenger/src/handlers/webhook.ts`, `integrations/instagram/src/handlers/webhook.ts`, `integrations/instagram-facebook/src/handlers/webhook.ts` |
@@ -97,16 +98,22 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
    | | messenger | instagram | instagramFacebook | threads | tiktok |
    |---|---|---|---|---|---|
    | public reply | ✅ | ✅ | ✅ | ✅ | ✅ |
-   | private DM reply (`PRIVATE_REPLY_TEXT_SENDERS`) | ✅ | ✅ | ✅ | ❌ | ❌ |
+   | private DM reply (`PRIVATE_REPLY_TEXT_SENDERS`) | ✅ | ✅ | ✅ | ❌ | ⚠️ |
    | like (`supportsCommentLike`) | ✅ | ✅ | ✅ | ❌ | ✅ |
    | hide (`supportsHideComments`) | ✅ | ✅ | ✅ | ❌ | ✅ |
    | attachment lookup (`hasImage`/`hasVideo`) | ✅ | ❌ | ❌ | ❌ | ❌ |
    | tag tracking (`trackUserTags`) | ✅ | ✅ | ✅ | ❌ | ❌ |
 
-   Threads and TikTok lack a private DM for different reasons: Threads has no DM API at
-   all, while TikTok's Send API addresses an existing `conversation_id` that only the
-   contact can open. Hide an unsupported toggle in the builder form instead of shipping
-   a dead switch.
+   Threads has no DM API at all. TikTok's ⚠️ is **conditional**, not partial: through
+   Comment-to-Message it CAN answer a comment with a DM addressed by `comment_id` alone,
+   but only for comments TikTok's own classifier flagged as high intent (the
+   `im_receive_high_intent_comment` webhook, which rides the `DIRECT_MESSAGE`
+   subscription and needs the feature enabled per account). Dispatch is therefore
+   deferred, not immediate — see `privateReplyRequiresHighIntent` and
+   `deferred-private-reply.ts`. TikTok also rejects `flow` there (one comment-anchored
+   message per comment; later steps have no `conversation_id`) and its window is 48
+   hours, not Meta's 7 — `PRIVATE_REPLY_WINDOW_MS_BY_CHANNEL`. Hide an unsupported toggle
+   in the builder form instead of shipping a dead switch.
 
 7. **A `private` flow reply runs on the DM conversation; a `public` one does not.** The
    comment conversation is anchored to the post (`sourceId = postId`), but DM replies land
@@ -178,6 +185,23 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
     redelivered webhook or a BullMQ retry returns nothing and moves nothing. If you add
     an outcome, add BOTH the timestamp column (for the drill-down and the guard) and the
     counter, and drive the counter off the returned rows. Never increment on a call count.
+
+    **Which half of the comment they count is a CHANNEL property, decided in one place.**
+    `countsTowardStats` counts the DM where the channel has a comment-anchored one and the
+    **public comment reply** where it does not (Threads) — `repliesCount` in the
+    loop follows the same rule via `supportsPrivateReply`. TikTok counts the DM: it moved
+    into the DM group when Comment-to-Message shipped, so a TikTok automation with no
+    private branch now reads zero across the row. It is never the
+    automation's *config*: a Messenger automation with no private branch still reads zero,
+    deliberately. Three consequences. (a) The capability is duplicated on purpose —
+    `PRIVATE_REPLY_TEXT_SENDERS` (worker, dispatch) and
+    `commentAutomationChannelSupportsPrivateReply` (`packages/database/src/partials`,
+    counters), because `packages/analytics` cannot import the Meta integrations; the
+    parity test in `comment-automation.test.ts` is what stops them drifting. (b) Seen and
+    Clicked cannot exist on a public reply, so `buildCommentAutomationStatColumns({
+    supportsPrivateReply: false })` hides those two rather than showing `----` forever.
+    (c) `getContacts`/`getContactIdsPage` take the one `replyChannel` their counter came
+    from, so "select all" can never tag people the column did not count.
 
 12. **A multi-step `flow` reply is ONE reply — its steps can settle in either order.**
     `sendFlowStep` swallows a step's error and runs the next one, so one event row can
@@ -267,8 +291,9 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
     if one is ever added it needs its own partial index the way
     `CommentAutomationEvent_failed_createdAt_idx` does. The percentage on the column
     divides by `repliesCount + missedCount`, NOT `sentCount`: a decline is not an attempt,
-    and `sentCount` counts private DMs only. A blocked private reply stays a `failed`
-    event — it was attempted.
+    and `sentCount` counts attempts on one half of the comment only (trap 11). A blocked
+    private reply stays a `failed` event — it was attempted. `missedCount` itself is
+    channel-agnostic, unlike the delivery counters — a decline has no reply channel.
 
 ## Adding a new filter option (recipe)
 

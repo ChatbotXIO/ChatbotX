@@ -18,7 +18,16 @@ type WebhookUpdateResponse = {
  * pushes carries `im_receive_msg` / `comment.update`. Subscribing to
  * `"comment.update"` would be rejected.
  */
-/** The subscription kind that delivers DMs. Required — without it no inbox. */
+/**
+ * The subscription kind that delivers DMs. Required — without it no inbox.
+ *
+ * It also delivers `im_receive_high_intent_comment`, the Comment-to-Message
+ * event that carries the only `comment_id` a `direct_reply` DM will accept.
+ * Despite naming a comment it does NOT ride the `COMMENT` subscription below,
+ * so there is no third `event_type` to register: an account receives it once
+ * this subscription exists AND Comment-to-Message is enabled on that account
+ * via `business/message/direct_reply/update/`.
+ */
 export const TIKTOK_DIRECT_MESSAGE_EVENT_TYPE = "DIRECT_MESSAGE"
 
 /**

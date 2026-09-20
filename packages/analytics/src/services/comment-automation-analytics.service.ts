@@ -1,9 +1,12 @@
 import { db } from "@chatbotx.io/database/client"
-import type {
-  CommentAutomationEventStatus,
-  CommentAutomationMissReason,
-  CommentAutomationReplyChannel,
-  CommentReplyType,
+import {
+  type CommentAutomationEventStatus,
+  type CommentAutomationMissReason,
+  type CommentAutomationReplyChannel,
+  type CommentAutomationType,
+  type CommentReplyType,
+  commentAutomationChannelSupportsPrivateReply,
+  commentAutomationTypes,
 } from "@chatbotx.io/database/partials"
 import type {
   CommentAutomationEventInsert,
@@ -41,6 +44,14 @@ import type { ContactEventData } from "../schemas/common"
 /** Matches `MAX_DETAIL_LENGTH` in `packages/business/src/error-log/service.ts`
  * so an error message is truncated the same way wherever it is stored. */
 const MAX_ERROR_DETAIL_LENGTH = 8192
+
+/**
+ * How many automations the channel-type memo holds before it is dropped and
+ * rebuilt. Far above any one workspace's automation count, so the worker
+ * resolves each id once in practice; the cap only exists so a process that has
+ * been up for months cannot grow the map without bound.
+ */
+const CHANNEL_TYPE_CACHE_LIMIT = 5000
 
 export type RecordCommentAutomationEventInput = {
   workspaceId: string
@@ -117,23 +128,45 @@ function tallyCounters(
 }
 
 /**
- * Whether a reply on this channel moves the lifetime counters at all.
+ * Whether a reply moves the lifetime counters at all.
  *
- * The delivery stats measure the DM, not the comment reply: Meta reports no
- * delivery receipt for a public comment reply, it has no reader, and counting
- * it dilutes every rate on the list — they are all measured against
- * `sentCount`, so one comment answered on both channels would halve its own
- * Seen percentage. An automation with no private branch therefore stays at
- * zero across the board, which is exactly what the columns should say.
+ * On a channel that HAS a comment-anchored DM the stats measure the DM, not the
+ * comment reply: Meta reports no delivery receipt for a public comment reply, it
+ * has no reader, and counting it dilutes every rate on the list — they are all
+ * measured against `sentCount`, so one comment answered on both channels would
+ * halve its own Seen percentage.
  *
- * Public rows are still WRITTEN — the per-automation analytics page (Bot
- * replies, Error Logs, the replies chart) reads them. Only the counters and
- * the drill-down dialog behind them are private-only.
+ * On a channel that has NO DM (Threads) that same rule left every
+ * counter — Replies included — pinned at zero for an automation that was
+ * replying perfectly well, and the Misses column measuring itself against
+ * nothing but its own misses. There is no DM to dilute, so the public reply IS
+ * the reply and counts: sent at dispatch, delivered when the channel accepts it,
+ * failed when it does not. Seen and Clicked stay structurally zero there — a
+ * comment reply has no read receipt and carries no button — which is why those
+ * two columns are hidden from those channels' list tables rather than shown
+ * empty.
+ *
+ * Scoped to the channel's capability, never to the individual automation's
+ * configuration: a Messenger automation that happens to reply publicly only
+ * still reads zero, exactly as before. The same now applies to TikTok, which
+ * gained a comment-anchored DM with Comment-to-Message — its counters moved
+ * from the public reply to the DM, so a TikTok automation with no private
+ * branch reads zero where it used to show its public replies.
+ *
+ * Public rows are WRITTEN on every channel regardless — the per-automation
+ * analytics page (Bot replies, Error Logs, the replies chart) reads them.
  */
 function countsTowardStats(
   replyChannel: CommentAutomationReplyChannel,
+  channelType: CommentAutomationType | null,
 ): boolean {
-  return replyChannel === "private"
+  if (replyChannel === "private") {
+    return true
+  }
+  return (
+    channelType !== null &&
+    !commentAutomationChannelSupportsPrivateReply(channelType)
+  )
 }
 
 /**
@@ -173,6 +206,69 @@ function tallyDiscard(
 }
 
 export class CommentAutomationAnalyticsService {
+  /**
+   * `CommentAutomation.id → type`, memoised for the life of the process.
+   *
+   * Every counter write has to know the automation's channel (see
+   * `countsTowardStats`) and most of them cannot be told: `markDelivered` and
+   * `settleEvent` are called from the chat worker through the message anchor,
+   * which names the automation and nothing else. Resolving it here rather than
+   * threading a `channelType` through four queues keeps one mechanism for all
+   * of them, and keeps a legacy in-flight job — whose payload predates any new
+   * field — counting correctly.
+   *
+   * Safe to memoise without invalidation because `type` is written once at
+   * create (`commentAutomationService.create`) and is only ever read as a WHERE
+   * scope afterwards: no code path moves an automation between channels, and
+   * one that did would be changing which feature owns the row. The map is
+   * cleared wholesale past {@link CHANNEL_TYPE_CACHE_LIMIT} rather than kept
+   * exact — it is a lookup saver, not a source of truth.
+   */
+  private readonly channelTypeById = new Map<string, CommentAutomationType>()
+
+  /**
+   * The automation's channel, or `null` when the row is gone — a delete racing
+   * an in-flight reply. A `null` counts as it did before this lookup existed
+   * (a public reply: not at all), which is also why the value is parsed rather
+   * than cast: an unreadable `type` must fall back to the old behaviour, never
+   * to "no DM, so count the public reply".
+   */
+  private async resolveChannelType(
+    automationId: string,
+  ): Promise<CommentAutomationType | null> {
+    const cached = this.channelTypeById.get(automationId)
+    if (cached) {
+      return cached
+    }
+    const row = await db.query.commentAutomationModel.findFirst({
+      where: { id: automationId },
+      columns: { type: true },
+    })
+    const parsed = commentAutomationTypes.safeParse(row?.type)
+    if (!parsed.success) {
+      return null
+    }
+    if (this.channelTypeById.size >= CHANNEL_TYPE_CACHE_LIMIT) {
+      this.channelTypeById.clear()
+    }
+    this.channelTypeById.set(automationId, parsed.data)
+    return parsed.data
+  }
+
+  /** {@link countsTowardStats}, with the channel resolved for the caller. */
+  private async replyCountsTowardStats(input: {
+    automationId: string
+    replyChannel: CommentAutomationReplyChannel
+  }): Promise<boolean> {
+    if (input.replyChannel === "private") {
+      return true
+    }
+    return countsTowardStats(
+      input.replyChannel,
+      await this.resolveChannelType(input.automationId),
+    )
+  }
+
   /**
    * The automation must belong to the workspace before any stat query runs —
    * same guard `listLinkContactStats` applies with `verifyLink`, so an id from
@@ -248,7 +344,12 @@ export class CommentAutomationAnalyticsService {
         }),
         "[analytics:commentAutomation] event row written",
       )
-      if (!countsTowardStats(input.replyChannel)) {
+      if (
+        !(await this.replyCountsTowardStats({
+          automationId: input.automationId,
+          replyChannel: input.replyChannel,
+        }))
+      ) {
         return
       }
       // `sentCount` counts attempts, so every row that actually landed moves
@@ -321,7 +422,13 @@ export class CommentAutomationAnalyticsService {
       // counter — the attempt was already counted at dispatch. A public row
       // still flips to `failed` above so Error Logs can explain it; it just
       // never reaches the counters.
-      if (input.status === "failed" && countsTowardStats(input.replyChannel)) {
+      if (
+        input.status === "failed" &&
+        (await this.replyCountsTowardStats({
+          automationId: input.automationId,
+          replyChannel: input.replyChannel,
+        }))
+      ) {
         await commentAutomationStatsRepository.incrementCounters(
           tallyCounters(settled, "failedCount"),
         )
@@ -352,9 +459,14 @@ export class CommentAutomationAnalyticsService {
   }): Promise<void> {
     try {
       const deleted = await commentAutomationStatsRepository.deleteEvent(input)
-      // A public row is dropped just the same — it simply has nothing counted
-      // to unwind.
-      if (!countsTowardStats(input.replyChannel)) {
+      // A public row on a DM channel is dropped just the same — it simply has
+      // nothing counted to unwind.
+      if (
+        !(await this.replyCountsTowardStats({
+          automationId: input.automationId,
+          replyChannel: input.replyChannel,
+        }))
+      ) {
         return
       }
       await commentAutomationStatsRepository.incrementCounters(
@@ -397,7 +509,12 @@ export class CommentAutomationAnalyticsService {
         replyChannel: input.replyChannel,
         occurredAt: input.occurredAt ?? new Date(),
       })
-      if (!countsTowardStats(input.replyChannel)) {
+      if (
+        !(await this.replyCountsTowardStats({
+          automationId: input.automationId,
+          replyChannel: input.replyChannel,
+        }))
+      ) {
         return
       }
       const deltas = tallyCounters(marked, "deliveredCount")
@@ -623,7 +740,25 @@ export class CommentAutomationAnalyticsService {
     return await commentAutomationStatsRepository.getContacts({
       ...input,
       eventType: input.eventType,
+      replyChannel: await this.resolveCountedReplyChannel(input.automationId),
     })
+  }
+
+  /**
+   * Which half of the comment the counters behind the drill-down were taken
+   * from, so the dialog lists exactly the rows its column counted — the DM on a
+   * channel that has one, the public comment reply on a channel that does not.
+   * Exactly one of the two per automation, because `countsTowardStats` counts
+   * exactly one of them.
+   */
+  private async resolveCountedReplyChannel(
+    automationId: string,
+  ): Promise<CommentAutomationReplyChannel> {
+    const channelType = await this.resolveChannelType(automationId)
+    return channelType &&
+      !commentAutomationChannelSupportsPrivateReply(channelType)
+      ? "public"
+      : "private"
   }
 
   /**
@@ -631,7 +766,7 @@ export class CommentAutomationAnalyticsService {
    * `comment:missed` to its own table for the same reason `getContacts` does,
    * so "select all" in the Misses dialog tags the people it listed.
    */
-  getContactIdsPage(input: {
+  async getContactIdsPage(input: {
     workspaceId: string
     automationId: string
     eventType: CommentAutomationEventType
@@ -640,11 +775,14 @@ export class CommentAutomationAnalyticsService {
     excludeContactIds?: string[]
   }): Promise<{ id: string; contactId: string }[]> {
     if (input.eventType === COMMENT_AUTOMATION_MISSED_EVENT) {
-      return commentAutomationMissRepository.getMissContactIdsPage(input)
+      return await commentAutomationMissRepository.getMissContactIdsPage(input)
     }
-    return commentAutomationStatsRepository.getContactIdsPage({
+    return await commentAutomationStatsRepository.getContactIdsPage({
       ...input,
       eventType: input.eventType,
+      // The same half the dialog listed — "select all" must tag the people it
+      // showed, so this cannot be decided differently from `getContacts`.
+      replyChannel: await this.resolveCountedReplyChannel(input.automationId),
     })
   }
 

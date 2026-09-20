@@ -32,12 +32,14 @@ export const tiktokCommentResource = createSelectSchema(
       type: z.enum(["all", "postIds"]),
       value: z.array(z.string()),
     }),
-    // Pinned: TikTok has no comment-anchored DM, so a private reply can never
-    // be delivered. The service forces this shape on every write.
-    privateReply: z.object({
-      type: z.literal("none"),
-      value: z.null(),
-    }),
+    // No `flow` variant: Comment-to-Message grants one comment-anchored message
+    // per comment, and TikTok's flow runner needs a `conversation_id` for every
+    // step after the first. The service normalizes a stored `flow` away.
+    privateReply: z.discriminatedUnion("type", [
+      z.object({ type: z.literal("none"), value: z.null() }),
+      z.object({ type: z.literal("text"), value: z.string() }),
+      z.object({ type: z.literal("AIAgent"), value: z.string() }),
+    ]),
     publicReply: tiktokReplySchema,
     includeKeywords: z.object({
       type: z.enum(["all", "equal", "contain"]),

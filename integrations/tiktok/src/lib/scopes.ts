@@ -51,7 +51,8 @@ export const TIKTOK_OPTIONAL_PROFILE_SCOPES = [
  * `error=invalid_scope&error_type=scope` and refuses the ENTIRE authorize
  * request over one unapproved scope, so an eager entry here does not degrade
  * comment automation — it stops anyone connecting TikTok at all, DM-only
- * workspaces included. See {@link TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL}.
+ * workspaces included. {@link TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL} is the
+ * holding pen for anything not yet cleared.
  */
 export const TIKTOK_COMMENT_AUTOMATION_SCOPES = [
   // Delivers the `comment.update` webhook.
@@ -61,21 +62,41 @@ export const TIKTOK_COMMENT_AUTOMATION_SCOPES = [
   // which pair it with `comment.list` the way `message.list.read` pairs with
   // `message.list.send`/`message.list.manage`, and since approved on the app.
   "comment.list.manage",
+  // `business/videos/list/`: the caption, thumbnail and share url behind the
+  // post card an Inbox comment conversation sits on, and what a post picker
+  // would read if one is built. Approved after the comment scopes, so every
+  // connection made before then lacks it until its owner re-authorizes —
+  // readers must degrade rather than fail. See {@link tiktokCanListVideos}.
+  "video.list",
 ] as const
 
 /**
  * Comment scopes the app is not approved for yet, so they are NOT requested.
  *
- * `video.list` backs the post picker, which is not built — the form takes video
- * ids by hand and `listTiktokVideos` has no caller. Requesting it broke the
- * connect flow in production for no gain.
+ * Empty today: `video.list`, the one entry this list ever held, has since been
+ * approved and moved into {@link TIKTOK_COMMENT_AUTOMATION_SCOPES}. That one
+ * move was the whole switch — the same list drives the authorize request
+ * (`TIKTOK_SCOPES` in `../apis/auth`) and the re-authorize warning.
  *
- * TODO(tiktok-comments): once approved, move it into
- * {@link TIKTOK_COMMENT_AUTOMATION_SCOPES}. That one move is the whole switch —
- * the same list drives the authorize request (`TIKTOK_SCOPES` in `../apis/auth`)
- * and the re-authorize warning.
+ * Kept rather than deleted because it is the hook the authorize-request test
+ * asserts against: the next scope the product wants goes here first, stays out
+ * of the authorize request, and moves across only once the app carries it.
  */
-export const TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL = ["video.list"] as const
+export const TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL = [] as const
+
+/**
+ * Whether this connection may call `business/videos/list/`.
+ *
+ * The scope is approved and requested, but a grant is per-connection: every
+ * account that authorized before the approval carries a scope list without it —
+ * the same population {@link tiktokNeedsReauthorization} flags — so a caller
+ * still needs a path that works without it. Reading the granted set rather than
+ * the constant is what makes the answer flip on its own once an owner
+ * re-authorizes, with no deploy in between.
+ */
+export const tiktokCanListVideos = (auth: {
+  metadata?: TiktokAuthValue["metadata"] | undefined
+}): boolean => (auth.metadata?.scopes ?? []).includes("video.list")
 
 /** TikTok returns the granted scopes as one comma-separated string. */
 export const parseTiktokScopes = (scope: string | undefined): string[] =>

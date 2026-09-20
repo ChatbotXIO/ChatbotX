@@ -43,12 +43,6 @@ type ErrorEventRow = {
   occurredAt: Date
 }
 
-/**
- * The only channel the delivery counters — and so the drill-down behind them —
- * measure. See `countsTowardStats` in the service for why.
- */
-const PRIVATE_REPLY_CHANNEL = "private"
-
 /** What a discarded row was counted as, so the caller can unwind its counters. */
 type DeletedEventRow = {
   automationId: string
@@ -445,15 +439,18 @@ export class CommentAutomationStatsRepository extends BaseRepository {
    * lost it to a `ContactInbox` delete, and the dialog has nothing to render
    * without one.
    *
-   * `private` only, matching the counters this dialog drills into. Not
-   * cosmetic: leave it out and the dialog lists more rows than the column it
-   * opened from claims, and "select all" tags people who only ever got a
-   * public comment reply.
+   * One `replyChannel`, chosen by the caller to match the counters this dialog
+   * drills into — the DM on a channel that has one, the public comment reply on
+   * a channel that does not (see `countsTowardStats`). Not cosmetic, and never
+   * "both": leave the filter out and the dialog lists more rows than the column
+   * it opened from claims, and "select all" tags people the column never
+   * counted.
    */
   async getContacts(input: {
     workspaceId: string
     automationId: string
     eventType: MessageEventType
+    replyChannel: string
     page: number
     perPage: number
   }): Promise<{
@@ -469,7 +466,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     const scope = and(
       eq(event.workspaceId, workspaceId),
       eq(event.automationId, automationId),
-      eq(event.replyChannel, PRIVATE_REPLY_CHANNEL),
+      eq(event.replyChannel, input.replyChannel),
       isNotNull(event.contactInboxId),
       // Matches `contactTotal` below, which counts DISTINCT contactId and so
       // ignores NULLs, and `getContactIdsPage`, which filters the same way.
@@ -542,12 +539,13 @@ export class CommentAutomationStatsRepository extends BaseRepository {
     }
   }
 
-  /** Keyset page of contact ids for the bulk-tag worker. `private` only, for
-   * the same reason `getContacts` is — this is what "select all" acts on. */
+  /** Keyset page of contact ids for the bulk-tag worker. One `replyChannel`,
+   * the same one `getContacts` listed — this is what "select all" acts on. */
   async getContactIdsPage(input: {
     workspaceId: string
     automationId: string
     eventType: MessageEventType
+    replyChannel: string
     cursor: string | null
     limit: number
     excludeContactIds?: string[]
@@ -562,7 +560,7 @@ export class CommentAutomationStatsRepository extends BaseRepository {
         and(
           eq(event.workspaceId, input.workspaceId),
           eq(event.automationId, input.automationId),
-          eq(event.replyChannel, PRIVATE_REPLY_CHANNEL),
+          eq(event.replyChannel, input.replyChannel),
           isNotNull(event.contactId),
           condition,
           input.cursor ? gt(event.contactId, input.cursor) : undefined,

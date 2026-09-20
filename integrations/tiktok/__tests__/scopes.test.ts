@@ -73,6 +73,7 @@ describe("the authorize request", () => {
         "user.info.profile",
         "user.info.stats",
         "user.info.username",
+        "video.list",
       ].sort(),
     )
   })
@@ -92,6 +93,15 @@ describe("scope groups", () => {
       "message.list.send",
       "message.list.manage",
     ])
+  })
+
+  // `video.list` was approved after the comment scopes and moved out of the
+  // pending list. It has to stay in the requested set or the Inbox post card
+  // silently falls back to the derived link for every connection, forever —
+  // there is no error to notice, which is exactly why it is pinned here.
+  test("the comment set carries video.list, so the authorize request asks for it", () => {
+    expect([...TIKTOK_COMMENT_AUTOMATION_SCOPES]).toContain("video.list")
+    expect([...TIKTOK_COMMENT_SCOPES_PENDING_APPROVAL]).toEqual([])
   })
 
   test("the three groups do not overlap", () => {

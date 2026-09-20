@@ -134,10 +134,11 @@ type UpdateThreadsCommentAutomationInput = Partial<
 
 /**
  * TikTok sits between Threads and the Meta channels: it CAN like and hide a
- * comment (`business/comment/like/`, `business/comment/hide/`), but it has no
- * comment-anchored DM, so `privateReply` is pinned off the way Threads pins it.
- * `trackUserTags` is off too — TikTok's comment payload carries no tagged users
- * in any form, structured or in the text.
+ * comment (`business/comment/like/`, `business/comment/hide/`) and, through
+ * Comment-to-Message, CAN answer one with a DM — but only for comments TikTok
+ * itself flags as high intent, and never with a flow (see
+ * `buildTiktokPrivateReply`). `trackUserTags` is off: TikTok's comment payload
+ * carries no tagged users in any form, structured or in the text.
  */
 type TiktokCommentAutomationOptions = {
   replyToNewContactsOnly: boolean
@@ -147,6 +148,17 @@ type TiktokCommentAutomationOptions = {
   ignoreCommentReplies: boolean
   trackUserTags?: false
 }
+
+/**
+ * The DM half TikTok can actually deliver. `flow` is absent, not optional —
+ * Comment-to-Message grants exactly one comment-anchored message per comment
+ * and TikTok's flow runner needs a `conversation_id` for every step after the
+ * first, which does not exist until the contact replies.
+ */
+type TiktokCommentAutomationPrivateReply =
+  | { type: "none"; value: null }
+  | { type: "text"; value: string }
+  | { type: "AIAgent"; value: string }
 
 type TiktokCommentAutomationHideComments = {
   all: boolean
@@ -164,6 +176,7 @@ type CreateTiktokCommentAutomationInput = {
   name: string
   post: ThreadsCommentAutomationPost
   publicReply: ThreadsCommentAutomationReply
+  privateReply?: TiktokCommentAutomationPrivateReply
   includeKeywords: ThreadsCommentAutomationIncludeKeywords
   excludeKeywords: string[]
   options: TiktokCommentAutomationOptions
@@ -283,6 +296,24 @@ class CommentAutomationService extends BaseService {
    * `comment-attachment.ts`, which only knows how to ask Messenger. Leaving
    * them settable would render a switch that silently never matches.
    */
+  /**
+   * Normalises the DM branch to what TikTok can deliver.
+   *
+   * A stored `flow` — from a row written before this channel had a private
+   * branch, or from a request built by hand — is forced to `none` rather than
+   * rejected: the automation's public half should still run. `executePrivateReply`
+   * refuses the same shape again on the worker side, so the two cannot drift
+   * into a flow that sends its first step and then fails.
+   */
+  private buildTiktokPrivateReply(
+    input?: TiktokCommentAutomationPrivateReply,
+  ): TiktokCommentAutomationPrivateReply {
+    if (input?.type === "text" || input?.type === "AIAgent") {
+      return input
+    }
+    return this.tiktokDefaults.privateReply
+  }
+
   private buildTiktokHideComments(
     input?: TiktokCommentAutomationHideComments,
   ): CommentHideComments {
@@ -885,7 +916,7 @@ class CommentAutomationService extends BaseService {
         isActive: data.isActive ?? true,
         name: data.name,
         post: data.post,
-        privateReply: this.tiktokDefaults.privateReply,
+        privateReply: this.buildTiktokPrivateReply(data.privateReply),
         publicReply: data.publicReply,
         includeKeywords: data.includeKeywords,
         excludeKeywords: data.excludeKeywords,
@@ -918,6 +949,9 @@ class CommentAutomationService extends BaseService {
     }
     if (data.publicReply !== undefined) {
       values.publicReply = data.publicReply
+    }
+    if (data.privateReply !== undefined) {
+      values.privateReply = this.buildTiktokPrivateReply(data.privateReply)
     }
     if (data.includeKeywords !== undefined) {
       values.includeKeywords = data.includeKeywords

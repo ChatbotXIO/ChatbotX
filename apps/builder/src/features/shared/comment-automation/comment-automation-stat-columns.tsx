@@ -28,12 +28,26 @@ const STAT_COLUMNS: { id: string; field: CommentAutomationStatField }[] = [
 ]
 
 /**
+ * The columns a channel without a comment-anchored DM can never fill. Its
+ * counters are taken from the public comment reply instead (see
+ * `countsTowardStats`), and a comment reply has no read receipt and carries no
+ * button, so these two would sit at `----` on every row forever. Hidden rather
+ * than shown empty: a column that cannot have a value reads as a bug in the
+ * automation, not as a property of the channel.
+ */
+const DM_ONLY_STAT_FIELDS = new Set<CommentAutomationStatField>([
+  "message:seen",
+  "flow:clicked",
+])
+
+/**
  * What each column's rate is measured against.
  *
  * The delivery columns divide by attempts. Misses cannot: a decline is not an
- * attempt, and `sentCount` counts private DMs only, so dividing by it would
- * compare two different populations. It divides instead by the comments the
- * automation actually engaged with — answered, or passed on.
+ * attempt, and `sentCount` counts attempts on one half of the comment only —
+ * the DM, or the public reply on a channel with no DM — so dividing by it
+ * would compare two different populations. It divides instead by the comments
+ * the automation actually engaged with — answered, or passed on.
  */
 function resolveDenominator(
   field: CommentAutomationStatField,
@@ -46,9 +60,16 @@ function resolveDenominator(
 }
 
 /**
- * The six stat columns, shared by the Facebook and Instagram list tables — they
- * render the same `CommentAutomation` rows and differ only in the URL prefix,
- * so duplicating these definitions would only be two places to drift.
+ * The stat columns, shared by the Facebook, Instagram, TikTok and Threads list
+ * tables — they render the same `CommentAutomation` rows and differ only in the
+ * URL prefix, so duplicating these definitions would only be places to drift.
+ *
+ * `supportsPrivateReply` says whether the channel has a comment-anchored DM;
+ * pass `false` — Threads is the only such channel — and Seen and Clicked are
+ * dropped, because on such a channel the counters measure the public comment
+ * reply, which has neither. It describes the CHANNEL, not the automation: a
+ * Messenger automation configured with no private branch keeps all six columns
+ * and simply reads zero, the same as it always has.
  *
  * Unlike broadcast's equivalent this needs no stats store: the counters are
  * columns on the row itself, already in hand by the time the table renders.
@@ -58,10 +79,14 @@ export function buildCommentAutomationStatColumns<
 >(props: {
   workspaceId: string
   t: (key: string) => string
+  supportsPrivateReply?: boolean
 }): ColumnDef<TRow>[] {
-  const { workspaceId, t } = props
+  const { workspaceId, t, supportsPrivateReply = true } = props
+  const columns = supportsPrivateReply
+    ? STAT_COLUMNS
+    : STAT_COLUMNS.filter(({ field }) => !DM_ONLY_STAT_FIELDS.has(field))
 
-  return STAT_COLUMNS.map(({ id, field }) => ({
+  return columns.map(({ id, field }) => ({
     id,
     header: ({ column }) => (
       <DataTableColumnHeader

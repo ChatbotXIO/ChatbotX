@@ -39,6 +39,10 @@ export function EditTiktokCommentForm({
         initialData.publicReply.type === "none"
           ? { type: "none", value: null }
           : initialData.publicReply,
+      privateReply:
+        initialData.privateReply.type === "none"
+          ? { type: "none", value: null }
+          : initialData.privateReply,
       includeKeywords: initialData.includeKeywords,
       excludeKeywords: initialData.excludeKeywords,
       options: {

@@ -55,6 +55,7 @@
     "@chatbotx.io/imports": "workspace:*",
     "@chatbotx.io/integration-facebook-ads": "workspace:*",
     "@chatbotx.io/integration-google-calendar": "workspace:*",
+    "@chatbotx.io/integration-tiktok": "workspace:*",
     "@chatbotx.io/javascript-sandbox": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/partysocket-config": "workspace:*",

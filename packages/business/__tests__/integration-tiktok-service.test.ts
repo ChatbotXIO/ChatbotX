@@ -49,7 +49,11 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   integrationTiktokModel: { id: "id", openId: "openId" },
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
+// Partial: the service now pulls in `@chatbotx.io/integration-tiktok` for
+// `getPostDetails`, and that graph reads other helpers (`zodBigintAsString`)
+// from this module. Only `createId` needs to be deterministic here.
+vi.mock("@chatbotx.io/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/utils")>()),
   createId: () => "integration-1",
 }))
 

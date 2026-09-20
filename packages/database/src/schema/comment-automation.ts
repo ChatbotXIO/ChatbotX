@@ -62,6 +62,15 @@ export const commentAutomationModel = pgTable(
      * `deliveredCount + failedCount` in the steady state — the same relation
      * broadcast derives on the fly. It is NOT `repliesCount`: one comment
      * answered both publicly and privately is 1 reply but 2 attempts.
+     *
+     * Which half of the comment they measure is decided by the CHANNEL, not by
+     * the automation's configuration (`countsTowardStats` in
+     * `packages/analytics`): the DM where the channel has a comment-anchored
+     * one, the public comment reply on Threads, which has none. TikTok used to
+     * belong to the second group and moved to the first when Comment-to-Message
+     * shipped. `seenCount`/`clickedCount` stay zero on Threads — a comment
+     * reply has no read receipt and carries no button — so their columns are
+     * hidden from its list table rather than shown empty.
      */
     sentCount: integer().notNull().default(0),
     deliveredCount: integer().notNull().default(0),
@@ -83,7 +92,8 @@ export const commentAutomationModel = pgTable(
      * Deliberately NOT comparable to `sentCount`: an attempt and a decline are
      * different events. The Misses column measures itself against
      * `repliesCount + missedCount` — the comments the automation actually
-     * evaluated — because `sentCount` counts private DMs only.
+     * evaluated — because `sentCount` counts attempts on one half of the
+     * comment only (see above), and one comment can be two of them.
      */
     missedCount: integer().notNull().default(0),
     post: jsonb()

@@ -29,6 +29,7 @@ const {
   mockSendPrivateReply,
   mockSendInstagramPrivateReply,
   mockSendInstagramFacebookPrivateReply,
+  mockSendTiktokPrivateReply,
   mockGenerateAIReplyText,
   mockLoggerInfo,
   mockLoggerWarn,
@@ -63,6 +64,7 @@ const {
   mockSendPrivateReply: vi.fn(),
   mockSendInstagramPrivateReply: vi.fn(),
   mockSendInstagramFacebookPrivateReply: vi.fn(),
+  mockSendTiktokPrivateReply: vi.fn(),
   mockGenerateAIReplyText: vi.fn(),
   mockLoggerInfo: vi.fn(),
   mockLoggerWarn: vi.fn(),
@@ -141,6 +143,10 @@ vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
   sendPrivateReply: mockSendInstagramFacebookPrivateReply,
 }))
 
+vi.mock("@chatbotx.io/integration-tiktok", () => ({
+  sendPrivateReply: mockSendTiktokPrivateReply,
+}))
+
 vi.mock("@chatbotx.io/partysocket-config", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
 }))
@@ -165,6 +171,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   IntegrationJobAction: {
     processCommentAutomation: "processCommentAutomation",
     sendFlow: "sendFlow",
+    deferredCommentPrivateReply: "deferredCommentPrivateReply",
   },
   integrationQueue: { add: mockIntegrationQueueAdd },
 }))
@@ -231,6 +238,13 @@ const { processCommentAIReply } = await import(
 const { IntegrationNotFoundError } = await import(
   "../src/services/orphaned-integration-cleanup"
 )
+// Both halves of the private-reply capability, for the parity test: the
+// dispatch-side map here, the counter-side predicate in the partials.
+const { supportsPrivateReply } = await import(
+  "../src/integration/handlers/comment-automation/private-reply"
+)
+const { commentAutomationChannelSupportsPrivateReply, commentAutomationTypes } =
+  await import("@chatbotx.io/database/partials")
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -563,9 +577,10 @@ describe("processCommentAutomation threads support", () => {
       expect.objectContaining({ type: "sendChannelMessage" }),
       { delay: 0, attempts: 1 },
     )
-    // Replies counts DMs, not comment replies (see index.ts) — a public-only
-    // dispatch must not bump it.
-    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+    // Threads has no DM, so the public reply IS the reply and Replies counts
+    // it (see index.ts). On a channel that has a DM this same dispatch would
+    // move nothing.
+    expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
   })
 
   test("public flow reply still enqueues sendFlow with a public comment anchor", async () => {
@@ -596,9 +611,10 @@ describe("processCommentAutomation threads support", () => {
       }),
       { delay: 0, attempts: 1 },
     )
-    // Replies counts DMs, not comment replies (see index.ts) — a public-only
-    // dispatch must not bump it.
-    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+    // Threads has no DM, so the public reply IS the reply and Replies counts
+    // it (see index.ts). On a channel that has a DM this same dispatch would
+    // move nothing.
+    expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
   })
 
   test("public AI reply still enqueues commentAIReply on the threads channel", async () => {
@@ -630,9 +646,10 @@ describe("processCommentAutomation threads support", () => {
         jobId: `comment-ai-reply-automation-1-${COMMENT_ID}-public`,
       }),
     )
-    // Replies counts DMs, not comment replies (see index.ts) — a public-only
-    // dispatch must not bump it.
-    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+    // Threads has no DM, so the public reply IS the reply and Replies counts
+    // it (see index.ts). On a channel that has a DM this same dispatch would
+    // move nothing.
+    expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
   })
 
   test("unsupported private reply is skipped on threads but public success still dedups", async () => {
@@ -662,9 +679,9 @@ describe("processCommentAutomation threads support", () => {
       postId: POST_ID,
       workspaceId: "workspace-1",
     })
-    // Replies counts DMs, not comment replies (see index.ts) — a public-only
-    // dispatch (private unsupported on this channel) must not bump it.
-    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+    // The public branch dispatched, and on a channel with no DM that is what
+    // Replies counts — the unsupported private branch changes nothing.
+    expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
   })
 
   test("private-only unsupported threads config does not dedup or increment", async () => {
@@ -858,9 +875,11 @@ describe("processCommentAutomation tiktok support", () => {
     )
   })
 
-  // TikTok's Send API addresses an existing conversation_id and a business
-  // cannot open one, so there is nothing to anchor a comment DM to.
-  test("private reply is skipped as an unsupported capability", async () => {
+  // Comment-to-Message gave TikTok a comment-anchored DM, but only for comments
+  // TikTok itself flags as high intent — reported on a separate webhook that may
+  // arrive after this pass, or never. So the branch is handed to the deferred
+  // job rather than sent or declared unsupported.
+  test("defers the private reply when the comment is not flagged high intent", async () => {
     mockFindActiveAutomations.mockResolvedValue([
       buildAutomation({
         publicReply: { type: "none", value: null },
@@ -877,14 +896,272 @@ describe("processCommentAutomation tiktok support", () => {
       buildJobData({ integrationType: "tiktok" }) as any,
     )
 
-    expect(mockLoggerInfo).toHaveBeenCalledWith(
-      {
-        automationId: "automation-1",
-        commentId: COMMENT_ID,
-        capability: "private reply unsupported",
-      },
-      "Comment automation capability unsupported",
+    expect(mockSendTiktokPrivateReply).not.toHaveBeenCalled()
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "deferredCommentPrivateReply",
+      expect.objectContaining({
+        type: "deferredCommentPrivateReply",
+        data: expect.objectContaining({
+          automationId: "automation-1",
+          channelType: "tiktok",
+          commentId: COMMENT_ID,
+          attempt: 0,
+        }),
+      }),
+      expect.objectContaining({ attempts: 1 }),
     )
+    // Nothing was attempted, so no analytics row yet — an event row means the
+    // automation tried, and the deferred job opens it if and when it sends.
+    expect(mockRecordEvent).not.toHaveBeenCalled()
+  })
+
+  // The comment's single DM budget is spoken for the moment it is deferred, so
+  // the contact's next comment must not queue a second one.
+  test("a deferred private reply still writes the dedup row", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "text", value: "psst" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockInsertDedup).toHaveBeenCalled()
+  })
+
+  test("sends inline when the comment is already flagged high intent", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "text", value: "psst" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+        contentAttributes: {
+          postId: POST_ID,
+          tiktokHighIntent: { at: "2026-07-10T00:00:00Z" },
+        },
+      }),
+      create: mockMessageCreate,
+      updateContentAttributes: mockUpdateContentAttributes,
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockSendTiktokPrivateReply).toHaveBeenCalledWith(
+      expect.anything(),
+      COMMENT_ID,
+      "psst",
+    )
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+      "deferredCommentPrivateReply",
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+
+  // A flow needs a conversation for step 2 onwards, and Comment-to-Message
+  // grants exactly one comment-anchored message. Dropping it beats sending
+  // step 1 and then failing every step after it.
+  test("a flow private reply is skipped rather than half-sent", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "flow", value: "flow-1" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      findBySourceId: vi.fn().mockResolvedValue({
+        id: "message-1",
+        createdAt: new Date("2026-07-10T00:00:00Z"),
+        contentAttributes: {
+          postId: POST_ID,
+          tiktokHighIntent: { at: "2026-07-10T00:00:00Z" },
+        },
+      }),
+      create: mockMessageCreate,
+      updateContentAttributes: mockUpdateContentAttributes,
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+      "sendFlow",
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+
+  // TikTok now has a comment-anchored DM, so Replies measures the DM like it
+  // does on Meta. A public-only automation therefore reads zero — the same
+  // answer a Messenger automation with no private branch has always given.
+  test("a public reply alone does not count toward Replies", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ publicReply: { type: "text", value: "Hi TikTok" } }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+  })
+
+  // A deferral has sent nothing yet, so it must not move the counter either —
+  // the deferred job increments it if and when the DM actually goes out.
+  test("a deferred private reply does not count toward Replies", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "text", value: "psst" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+  })
+
+  test("an automation that dispatches nothing still counts nothing", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        options: { likeUserComment: true },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
+  })
+
+  // `executePrivateReply` rejects a flow DM on this channel outright, so the
+  // defer branch must reject it too. Deferring one claims the comment's single
+  // DM budget — blocking another automation's deliverable `text` DM — and then
+  // records nothing when the executor declines it minutes later. Only a legacy
+  // row reaches this: new writes normalize `flow` away.
+  //
+  // Treated as an unsupported capability, like a private reply on Threads: the
+  // channel cannot carry this reply, so nothing was attempted and nothing earns
+  // a `failed` row. Record one and a legacy flow automation reads 100% Failed
+  // for a branch that never left the building.
+  test("a flow private reply is skipped as unsupported, not deferred", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "flow", value: "flow-1" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+      "deferredCommentPrivateReply",
+      expect.anything(),
+      expect.anything(),
+    )
+    expect(mockRecordEvent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ replyChannel: "private" }),
+    )
+  })
+
+  // The budget is claimed by a deferral, so a flow that never defers must leave
+  // it for an automation that can actually use it.
+  test("a flow private reply leaves the comment's DM budget unclaimed", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        id: "automation-flow",
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "flow", value: "flow-1" },
+      }),
+      buildAutomation({
+        id: "automation-text",
+        publicReply: { type: "none", value: null },
+        privateReply: { type: "text", value: "psst" },
+      }),
+    ])
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "tiktok",
+    })
+
+    await processCommentAutomation(
+      buildJobData({ integrationType: "tiktok" }) as any,
+    )
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "deferredCommentPrivateReply",
+      expect.objectContaining({
+        data: expect.objectContaining({ automationId: "automation-text" }),
+      }),
+      expect.anything(),
+    )
+  })
+})
+
+// The analytics counters ask the same question from `packages/analytics`,
+// which cannot import the senders map above without pulling every Meta
+// integration into the analytics package. Let the two drift and a channel's
+// replies are dispatched one way and counted the other.
+describe("private-reply capability parity", () => {
+  test("the shared predicate agrees with the senders map on every channel", () => {
+    for (const channelType of commentAutomationTypes.options) {
+      expect(commentAutomationChannelSupportsPrivateReply(channelType)).toBe(
+        supportsPrivateReply(channelType),
+      )
+    }
   })
 })
 
@@ -1582,7 +1859,7 @@ describe("processCommentAutomation private reply 7-day window", () => {
     // The gate now lives in the caller, so the skip is logged there.
     expect(mockLoggerInfo).toHaveBeenCalledWith(
       expect.objectContaining({
-        reason: "comment older than the 7-day private reply window",
+        reason: "comment older than Meta's 7-day private reply window",
       }),
       "Comment automation skipped",
     )

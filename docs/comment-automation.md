@@ -211,6 +211,11 @@ Four things to know before touching it:
 - **`repliesCount` and the event count differ by design.** `repliesCount` increments once
   per comment even when both a public reply and a private DM went out; the event log has a
   row per channel. Do not "reconcile" them.
+- **The counters measure one half of the comment, chosen by the channel.** Where the
+  channel has a comment-anchored DM they measure the DM; on Threads, which has none, they
+  measure the public comment reply. The event log is unaffected — it always holds both
+  halves, which is why this page shows data for a channel whose list columns once read
+  zero. See [Delivery stats](#delivery-stats-list-columns).
 - **Retention is per outcome, not per table.** Successful rows are kept for the life of the
   automation, so the date filter is deliberately **unbounded** (down to `lifeTime`). Only
   `status = 'failed'` rows are purged, after `COMMENT_AUTOMATION_ERROR_RETENTION_DAYS`
@@ -228,10 +233,44 @@ Four things to know before touching it:
 
 ## Delivery stats (list columns)
 
-Both list tables carry six clickable columns after `repliesCount` —
-**Sent / Delivered / Seen / Clicked / Failed / Misses** — the first five modelled on
-broadcast. Clicking a number opens the shared `StatsContactsDialog` with the contacts
-behind it. **Misses** is the odd one out and has [its own section](#misses).
+The Facebook, Instagram and TikTok list tables carry clickable columns after
+`repliesCount` — **Sent / Delivered / Seen / Clicked / Failed / Misses** — the first five
+modelled on broadcast. Clicking a number opens the shared `StatsContactsDialog` with the
+contacts behind it. **Misses** is the odd one out and has [its own section](#misses).
+Threads carries the same columns minus **Seen** and **Clicked**, which are structurally
+zero there.
+
+**Which half of the comment they count is decided by the channel, not by the automation**
+(`countsTowardStats`, `packages/analytics/src/services/comment-automation-analytics.service.ts`):
+
+- **Channel with a comment-anchored DM** (Messenger, both Instagram logins) — the DM. A
+  public comment reply gets no delivery receipt from Meta and has no reader, and every
+  rate on the list is measured against `sentCount`, so counting it too would halve a
+  comment's own Seen percentage. A Messenger automation configured with no private branch
+  therefore reads zero across the row, which is what those columns should say.
+- **Channel with no DM at all** (Threads) — the public comment reply, because
+  there is nothing to dilute and it is the only reply the automation can send.
+  `repliesCount` follows the same rule (`supportsPrivateReply` in the worker loop). Until
+  #1238 this channel counted neither, so an automation replying to every comment it was
+  shown reported Replies 0, Sent 0 and Misses 100% while working perfectly.
+  **Seen** and **Clicked** stay structurally zero there — a comment reply has no read
+  receipt and carries no button — so `buildCommentAutomationStatColumns({
+  supportsPrivateReply: false })` hides those two columns rather than showing `----`
+  forever. The Threads table therefore renders `repliesCount` plus Sent, Delivered,
+  Failed and Misses.
+- **TikTok moved from the second group to the first** when Comment-to-Message shipped. Its
+  counters now measure the DM, Seen and Clicked included, so a TikTok automation with no
+  private branch configured reads zero across the row exactly as a Messenger one does —
+  a deliberate change from the #1238 behaviour, not a regression. The DM fires only for
+  comments TikTok flags as high intent, so expect Sent to sit well below Replies-worth of
+  matched comments; the comments that were never flagged land as `failed` rows with a
+  readable `errorDetail`, which is what the Failed column and Error Logs show.
+
+The drill-down dialog follows the counter it was opened from: `getContacts` /
+`getContactIdsPage` are handed exactly one `replyChannel`, resolved from the automation's
+channel, so "select all" can only tag people the column actually counted. The channel is
+resolved once per automation and memoised — `CommentAutomation.type` is written at create
+and never changes.
 
 The numbers are **lifetime counters on `CommentAutomation`**
 (`sentCount`/`deliveredCount`/`seenCount`/`clickedCount`/`failedCount`), not an aggregate:
@@ -247,7 +286,7 @@ lists go back as far as the automation does.
 |---|---|---|
 | **Sent** | An event row is inserted — i.e. a reply was attempted. Includes attempts that failed, the same way broadcast derives `sent = delivered + failed`. | `recordEvent` |
 | **Delivered** | The channel accepted the send. Meta reports **no** delivery receipt for a public comment reply, so this is that channel's only delivery signal; a private DM is acknowledged synchronously by the Send API, long before any webhook (and a private text DM writes no `Message` row for one to match). | `send-message.ts` success path, `send-flow-step.ts` success path, `executePrivateReply`, `processCommentAIReply` |
-| **Seen** | `private` only — a public comment has no reader. The one outcome that cannot be settled at the dispatch site: a read receipt names the inbox, never the reply, so the lookup runs the other way round, off `CommentAutomationEvent.contactInboxId`. | `commentAutomationAnalyticsService.onSeen`, on the `message:seen` bus |
+| **Seen** | `private` only on every channel — a public comment has no reader, so this column is hidden where the counters measure the public reply. The one outcome that cannot be settled at the dispatch site: a read receipt names the inbox, never the reply, so the lookup runs the other way round, off `CommentAutomationEvent.contactInboxId`. | `commentAutomationAnalyticsService.onSeen`, on the `message:seen` bus |
 | **Clicked** | A link or button in a **`flow`** reply was tapped. Attribution rides in `encodeButtonPayload`'s 7th positional field (`ca`), carried to the encoders by `metadata` (see below), so a plain `text` reply has no click to track. | `commentAutomationAnalyticsService.onClicked`, on the `flow:clicked` bus |
 | **Failed** | The dispatch threw, the async job gave up, or delivery was blocked before it could go out. First failure wins — a second settle is refused. | `recordEvent`, `settleCommentAutomationFailure` |
 
@@ -305,9 +344,10 @@ nothing and counts nothing.
 
 The column's percentage is measured against `repliesCount + missedCount` — the comments the
 automation actually engaged with — **not** `sentCount`. A decline is not an attempt, and
-`sentCount` counts private DMs only, so dividing by it would compare two different
-populations. When `repliesCount` is 0 the rate would be a bare "100%" that says nothing
-true about an automation replying publicly only, so the cell shows the count alone.
+`sentCount` counts attempts on one half of the comment only, so dividing by it would
+compare two different populations. When `repliesCount` is 0 the rate would be a bare
+"100%" that says nothing true (a Messenger automation replying publicly only counts no
+replies by design), so the cell shows the count alone.
 
 > **Write volume.** `findActiveAutomations` scopes by workspace + channel, **not** by post,
 > so one comment is shown to every active automation on that channel and can produce up to
@@ -398,10 +438,10 @@ Two Instagram-only caveats follow from that, and both are expected behaviour:
   comment when `ignoreCommentReplies` is on.)
 - **Post-id formats differ by picker tab.** Always compare via `normalizePostId`. Reels
   may still need verification that the stored `video_id` equals the webhook `story_id`.
-- **Capabilities differ per channel.** Private DM replies work on the three Meta
-  channels only (`PRIVATE_REPLY_TEXT_SENDERS`): Threads has no DM API, and TikTok's Send
-  API addresses an existing `conversation_id` the business cannot open. Comment liking
-  and hiding exist on the Meta channels and TikTok but not Threads. Among the Meta
+- **Capabilities differ per channel.** Private DM replies work on the three Meta channels
+  and, conditionally, on TikTok (`PRIVATE_REPLY_TEXT_SENDERS`); Threads has no DM API at
+  all. Comment liking and hiding exist on the Meta channels and TikTok but not Threads.
+  Among the Meta
   channels liking exists only on `messenger` and
   `instagramFacebook` — Instagram Login has no like API, so its `likeComment` handler
   is a logged no-op — and the attachment lookup behind `hideComments.hasImage` /
@@ -410,6 +450,24 @@ Two Instagram-only caveats follow from that, and both are expected behaviour:
   each toggle separately: the like switch renders only for `instagramFacebook`, while
   `hasImage`/`hasVideo` are hidden for both Instagram variants. Keep that pattern —
   hide an unsupported toggle rather than rendering a dead one.
+- **TikTok's private reply is conditional, and deferred because of it.**
+  Comment-to-Message (`direct_reply` on `business/message/send/`) addresses the DM by
+  `comment_id`, so no conversation has to exist first — but TikTok accepts only a comment
+  its OWN classifier flagged as high intent, reported on the separate
+  `im_receive_high_intent_comment` webhook. That event rides the `DIRECT_MESSAGE`
+  subscription, not `COMMENT`, and needs the feature enabled per account via
+  `business/message/direct_reply/update/` (Settings → Channels → TikTok). Because the two
+  webhooks are independent and unordered, the flag is stamped onto the comment's own
+  `Message.contentAttributes.tiktokHighIntent` (atomic `jsonb ||` via
+  `mergeContentAttributesBySourceId`) and the automation pass reads it back:
+  flagged → send inline; not flagged → enqueue `deferredCommentPrivateReply`, which
+  re-checks at 45s/3min/10min and then records one `failed` event. The comment's single DM
+  budget is claimed at DEFERRAL time, not at send time, or a second automation would queue
+  a second deferral for the same budget. `flow` is rejected on this channel: TikTok grants
+  one comment-anchored message and its `sendFlowStep` needs a `conversation_id` for every
+  step after the first. The window is 48 hours, not Meta's 7 —
+  `PRIVATE_REPLY_WINDOW_MS_BY_CHANNEL` is per channel and both the caller's gate and
+  `executePrivateReply`'s defence-in-depth check must be passed the same `channelType`.
 - **A channel whose public reply is not idempotent must never retry the automation job.**
   `SINGLE_ATTEMPT_COMMENT_AUTOMATION_CHANNELS` (`received-message.ts`) caps `threads` and
   `tiktok` at `attempts: 1`: Threads' `sendCommentReply` opens a fresh media container per

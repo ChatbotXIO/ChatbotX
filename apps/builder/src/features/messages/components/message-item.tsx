@@ -80,6 +80,13 @@ type MessageItemProps = {
   onPostback?: (button: MessageButtonTemplate) => void
   onReply?: (comment: { commentId: string; text: string }) => void
   onPrivateReply?: (comment: { commentId: string; text: string }) => void
+  /**
+   * Whether THIS comment may be answered with a DM. A predicate rather than a
+   * boolean because TikTok decides per comment, not per channel — see
+   * `canPrivateReplyToComment`. Omitted means "allowed", so the Meta channels
+   * and the guest view keep their existing behaviour.
+   */
+  canPrivateReply?: (message: MessageItemProps["message"]) => boolean
 }
 
 export const MessageItem = (props: MessageItemProps) => {
@@ -91,6 +98,7 @@ export const MessageItem = (props: MessageItemProps) => {
     onChangeHide,
     onReply,
     onPrivateReply,
+    canPrivateReply,
     onDelete,
     onEdit,
   } = props
@@ -288,6 +296,7 @@ export const MessageItem = (props: MessageItemProps) => {
         {isComment &&
           !isEditing &&
           onPrivateReply &&
+          (canPrivateReply?.(message) ?? true) &&
           message.messageType === "incoming" &&
           message.sourceId && (
             <Tooltip>

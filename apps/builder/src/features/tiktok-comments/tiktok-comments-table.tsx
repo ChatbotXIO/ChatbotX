@@ -138,11 +138,13 @@ export function TiktokCommentsTable({
         size: 120,
       },
       // The same six delivery/miss columns the Facebook and Instagram tables
-      // render — they read counters that live on the row, so nothing here is
-      // channel-specific.
+      // render. TikTok gained a comment-anchored DM with Comment-to-Message, so
+      // its counters measure that DM — Seen and Clicked included. An automation
+      // with no private branch configured therefore reads zero across the row,
+      // exactly as a Messenger one does, which is what those columns should say.
       ...buildCommentAutomationStatColumns<
         ListTiktokCommentsResponse["data"][number]
-      >({ workspaceId, t }),
+      >({ workspaceId, t, supportsPrivateReply: true }),
       {
         id: "actions",
         header: () => (

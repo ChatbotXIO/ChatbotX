@@ -3,6 +3,7 @@ import {
   type DatabaseClient,
   db,
   eq,
+  findOrFail,
   sql,
 } from "@chatbotx.io/database/client"
 import { integrationThreadsModel } from "@chatbotx.io/database/schema"
@@ -47,6 +48,26 @@ class IntegrationThreadsService extends BaseService {
   findByInboxId(inboxId: string) {
     return db.query.integrationThreadsModel.findFirst({
       where: { inboxId },
+    })
+  }
+
+  /**
+   * An inbox's connection, scoped to the workspace that claims it. An inbox id
+   * is not a secret, so any caller that already knows the workspace must use
+   * this rather than `findByInboxId` — otherwise one workspace can read
+   * another's connection by passing its inbox id.
+   *
+   * Throws rather than returning null, matching the messenger/instagram/tiktok
+   * equivalents: a caller cannot forget a check that does not exist.
+   */
+  findByInboxIdForWorkspace(props: {
+    inboxId: string
+    workspaceId: string
+  }): Promise<IntegrationThreadsModel> {
+    return findOrFail({
+      table: integrationThreadsModel,
+      where: { inboxId: props.inboxId, workspaceId: props.workspaceId },
+      message: "Threads integration not found",
     })
   }
 

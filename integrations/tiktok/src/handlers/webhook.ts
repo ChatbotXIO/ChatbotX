@@ -5,7 +5,9 @@ import { hmacSha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import type { TiktokConfig, TiktokWebhookEvent } from "../schema"
 import {
   parseTiktokCommentEventContent,
+  parseTiktokHighIntentCommentContent,
   TIKTOK_COMMENT_EVENT,
+  TIKTOK_HIGH_INTENT_COMMENT_EVENT,
   tiktokWebhookEventSchema,
 } from "../schema"
 
@@ -141,6 +143,66 @@ async function handleCommentEvent(props: {
   })
 }
 
+/**
+ * Routes `im_receive_high_intent_comment` — TikTok's classifier reporting that
+ * a comment expresses purchase intent, which is the ONLY way to obtain a
+ * `comment_id` that a `direct_reply` DM will accept.
+ *
+ * The payload carries no `video_id`, so nothing here can decide which
+ * automation the comment belongs to; the worker correlates it against the
+ * comment already ingested from `comment.update`. That means this event can
+ * legitimately arrive before the comment itself exists — the retry policy
+ * below, not this function, is what absorbs that race.
+ *
+ * Never throws, for the same reason `handleCommentEvent` does not: TikTok
+ * retries a non-2xx webhook and an unparseable payload will not improve.
+ */
+async function handleHighIntentCommentEvent(props: {
+  event: TiktokWebhookEvent
+  integrationIdentifier: string
+  queue: HandleRequestProps<TiktokConfig>["queue"]
+}): Promise<void> {
+  const { event, integrationIdentifier, queue } = props
+
+  const content = parseTiktokHighIntentCommentContent(event.content)
+  if (!content) {
+    logger.warn(
+      { integrationIdentifier },
+      "Unrecognized TikTok high-intent comment event content",
+    )
+    return
+  }
+
+  await queue?.add(
+    "tiktokHighIntentComment",
+    {
+      type: "tiktokHighIntentComment",
+      data: {
+        integrationType: "tiktok",
+        integrationIdentifier,
+        commentId: content.comment_id,
+        commentText: content.comment_text,
+        uniqueIdentifier: content.unique_identifier,
+        isFollower: content.is_follower,
+        // Same millisecond-vs-seconds rule as `comment.update`: prefer the
+        // comment's own time so the 48-hour send window is measured from when
+        // it was written, not from when TikTok got round to classifying it.
+        commentedAt: content.timestamp
+          ? Math.floor(content.timestamp / 1000)
+          : event.create_time,
+      },
+    },
+    // The flag this job writes lands on the ingested comment row, which the
+    // `COMMENT` subscription may not have delivered yet — TikTok allows itself
+    // roughly five minutes there. Six attempts on a 30s exponential backoff
+    // covers ~16 minutes, comfortably inside the 48-hour send window.
+    {
+      attempts: 6,
+      backoff: { type: "exponential", delay: 30_000 },
+    },
+  )
+}
+
 export const webhookHandler = async (
   props: HandleRequestProps<TiktokConfig>,
 ): Promise<string> => {
@@ -189,6 +251,15 @@ export const webhookHandler = async (
 
   if (event.data.event === TIKTOK_COMMENT_EVENT) {
     await handleCommentEvent({
+      event: event.data,
+      integrationIdentifier,
+      queue,
+    })
+    return "ok"
+  }
+
+  if (event.data.event === TIKTOK_HIGH_INTENT_COMMENT_EVENT) {
+    await handleHighIntentCommentEvent({
       event: event.data,
       integrationIdentifier,
       queue,
