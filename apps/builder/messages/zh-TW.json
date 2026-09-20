@@ -3419,6 +3419,7 @@
       "noConnectablePagesDescription": "您不是此頁面的管理員",
       "bmLookupFailedTitle": "業務管理平台頁面可能遺失",
       "bmLookupFailedDescription": "重新連接Messenger 並授予商務管理平台存取權限，以便可以列出透過商務管理平台管理的頁面。",
+      "loadFailed": "無法載入你的 Facebook 粉絲專頁",
       "alreadyConnectedNote": "該頁面已連接",
       "notAdminNote": "您不是此頁面的管理員",
       "tryAgain": "嘗試重新連接"

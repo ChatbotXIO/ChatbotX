@@ -3574,6 +3574,7 @@
       "noConnectablePagesDescription": "You are not an admin of this Page",
       "bmLookupFailedTitle": "Business Manager pages may be missing",
       "bmLookupFailedDescription": "Reconnect Messenger and grant Business Manager access so pages managed through a Business Manager can be listed.",
+      "loadFailed": "Couldn't load your Facebook Pages",
       "alreadyConnectedNote": "This page is already connected",
       "notAdminNote": "You are not an admin of this Page",
       "tryAgain": "Try reconnecting"

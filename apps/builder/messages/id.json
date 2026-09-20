@@ -3386,6 +3386,7 @@
       "noConnectablePagesDescription": "Anda bukan admin Halaman ini",
       "bmLookupFailedTitle": "Halaman Business Manager mungkin tidak ditampilkan",
       "bmLookupFailedDescription": "Hubungkan kembali Messenger dan berikan akses Business Manager agar halaman yang dikelola melalui Business Manager dapat ditampilkan.",
+      "loadFailed": "Tidak dapat memuat Halaman Facebook Anda",
       "alreadyConnectedNote": "Halaman ini sudah terhubung",
       "notAdminNote": "Anda bukan admin Halaman ini",
       "tryAgain": "Coba hubungkan kembali"

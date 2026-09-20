@@ -1,7 +1,10 @@
 import { fetchAllCursorPages } from "@chatbotx.io/utils"
 import { DEFAULT_API_VERSION } from "../constants"
-import { rescue } from "../exception"
-import { facebookGraphClient } from "../lib/http-client"
+import { MessengerAPIException, rescue } from "../exception"
+import {
+  facebookGraphClient,
+  isDataTooLargeGraphError,
+} from "../lib/http-client"
 import { logger } from "../lib/logger"
 import type { ConnectableFacebookPage, FacebookPage } from "../schema"
 
@@ -15,6 +18,20 @@ type SourcedFacebookPage = {
 
 const MAX_PAGES = 20
 const GRAPH_PAGE_LIMIT = 100
+/**
+ * Page sizes tried for `/me/accounts`, largest first. Meta rejects a page
+ * whose pages carry too much data with error code 1 ("Please reduce the
+ * amount of data you're asking for, then retry your request"); each retry
+ * asks for less. 10 is the floor — below that the error is reported as-is.
+ */
+const DIRECT_PAGES_PAGE_LIMITS = [50, 25, 10] as const
+/**
+ * Most Facebook Pages one walk of `/me/accounts` will read, whatever the page
+ * size — the same ceiling the previous fixed `limit=100 × 20 pages` gave, so
+ * shrinking the page never shortens the list a user used to see.
+ */
+const DIRECT_PAGES_MAX_ROWS = GRAPH_PAGE_LIMIT * MAX_PAGES
+const DIRECT_PAGES_FIELDS = "id,name,access_token,category,tasks"
 const BUSINESS_PAGE_BATCH_SIZE = 5
 const ADMIN_PAGE_TASKS = [
   "ADVERTISE",
@@ -28,6 +45,10 @@ function fetchAllPages<T>(
   endpoint: string,
   fields: string,
   accessToken: string,
+  pagination: { limit: number; maxPages: number } = {
+    limit: GRAPH_PAGE_LIMIT,
+    maxPages: MAX_PAGES,
+  },
 ): Promise<T[]> {
   return fetchAllCursorPages({
     endpoint,
@@ -37,9 +58,57 @@ function fetchAllPages<T>(
     // method reference directly detaches it and crashes at call time.
     get: (pageEndpoint, options) =>
       facebookGraphClient.get(pageEndpoint, options),
-    limit: GRAPH_PAGE_LIMIT,
-    maxPages: MAX_PAGES,
+    limit: pagination.limit,
+    maxPages: pagination.maxPages,
   })
+}
+
+/**
+ * Error code 1 with no subcode is Meta's "response too large" reply. The
+ * http client deliberately does not retry it (`shouldRetryGraphRequest`) —
+ * the identical request never succeeds — so the only remedy is a smaller page.
+ */
+function isDataTooLargeException(
+  error: unknown,
+): error is MessengerAPIException {
+  return (
+    error instanceof MessengerAPIException && isDataTooLargeGraphError(error)
+  )
+}
+
+/**
+ * Walks `/me/accounts` with progressively smaller pages. A retry always
+ * starts over from the first page: the cursor that came with a failed walk
+ * was minted for the old page size and cannot be resumed, and starting over
+ * is what keeps rows read before the failure from appearing twice.
+ */
+async function fetchDirectPages(
+  endpoint: string,
+  accessToken: string,
+): Promise<FacebookPage[]> {
+  let lastError: unknown
+
+  for (const limit of DIRECT_PAGES_PAGE_LIMITS) {
+    try {
+      return await fetchAllPages<FacebookPage>(
+        endpoint,
+        DIRECT_PAGES_FIELDS,
+        accessToken,
+        { limit, maxPages: Math.ceil(DIRECT_PAGES_MAX_ROWS / limit) },
+      )
+    } catch (error) {
+      if (!isDataTooLargeException(error)) {
+        throw error
+      }
+      lastError = error
+      logger.warn(
+        { limit, code: error.code },
+        "Graph rejected /me/accounts page size, retrying from the first page with a smaller one",
+      )
+    }
+  }
+
+  throw lastError
 }
 
 function getUserBusinesses(
@@ -439,11 +508,7 @@ export async function getUserPages(
 ): Promise<{ pages: ConnectableFacebookPage[]; bmLookupFailed: boolean }> {
   const directPagesEndpoint = `${version}/me/accounts`
   const directPages = await rescue(directPagesEndpoint, () =>
-    fetchAllPages<FacebookPage>(
-      directPagesEndpoint,
-      "id,name,access_token,category,tasks",
-      userAccessToken,
-    ),
+    fetchDirectPages(directPagesEndpoint, userAccessToken),
   )
 
   // const businessPagesResult = await getBusinessManagedPages(

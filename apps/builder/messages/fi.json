@@ -3386,6 +3386,7 @@
       "noConnectablePagesDescription": "Et ole tämän sivun ylläpitäjä",
       "bmLookupFailedTitle": "Business Manager -sivuja saattaa puuttua",
       "bmLookupFailedDescription": "Yhdistä Messenger uudelleen ja myönnä Business Manager -käyttöoikeus, jotta Business Managerin kautta hallinnoidut sivut voidaan näyttää.",
+      "loadFailed": "Facebook-sivujesi lataaminen epäonnistui",
       "alreadyConnectedNote": "Tämä sivu on jo yhdistetty",
       "notAdminNote": "Et ole tämän sivun ylläpitäjä",
       "tryAgain": "Yritä yhdistää uudelleen"

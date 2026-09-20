@@ -3386,6 +3386,7 @@
       "noConnectablePagesDescription": "Du er ikke administrator for denne side",
       "bmLookupFailedTitle": "Business Manager pages may være missing",
       "bmLookupFailedDescription": "Forbind igen Messenger og grant Business Manager access so pages managed through a Business Manager kan være listed.",
+      "loadFailed": "Kunne ikke indlæse dine Facebook-sider",
       "alreadyConnectedNote": "Denne page er allerede forbundet",
       "notAdminNote": "Du er ikke administrator for denne side",
       "tryAgain": "Try reconnecting"

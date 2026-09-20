@@ -4136,6 +4136,7 @@
     "selectPage": {
       "alreadyConnectedNote": "Den här sidan är redan ansluten",
       "bmLookupFailedDescription": "Återanslut Messenger och bevilja åtkomst till Business Manager så att sidor som hanteras där kan visas.",
+      "loadFailed": "Det gick inte att läsa in dina Facebook-sidor",
       "bmLookupFailedTitle": "Business Manager-sidor kan saknas",
       "noConnectablePagesDescription": "Du är inte administratör för den här sidan",
       "noConnectablePagesTitle": "Inga sidor tillgängliga att ansluta",

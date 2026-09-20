@@ -1443,6 +1443,7 @@
       "noConnectablePagesDescription": "אינך מנהל של דף זה",
       "bmLookupFailedTitle": "ייתכן שחסרים דפי Business Manager",
       "bmLookupFailedDescription": "חברו מחדש את Messenger והעניקו גישה ל-Business Manager כדי שניתן יהיה להציג דפים המנוהלים דרכו.",
+      "loadFailed": "לא ניתן לטעון את דפי הפייסבוק שלך",
       "alreadyConnectedNote": "דף זה כבר מחובר",
       "notAdminNote": "אינך מנהל של דף זה",
       "tryAgain": "ניסיון חיבור מחדש"
