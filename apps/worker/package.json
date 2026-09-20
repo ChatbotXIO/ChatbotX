@@ -23,7 +23,8 @@
     "worker:sequence-producer": "dotenv -e ../../.env -- tsx --watch src/sequence-scheduler/worker-producer.ts",
     "worker:sequence-scheduler": "dotenv -e ../../.env -- tsx --watch src/sequence-scheduler/worker.ts",
     "worker:trigger": "dotenv -e ../../.env -- tsx --watch src/trigger/worker.ts",
-    "worker:webhook": "dotenv -e ../../.env -- tsx --watch src/webhook/worker.ts"
+    "worker:webhook": "dotenv -e ../../.env -- tsx --watch src/webhook/worker.ts",
+    "migrate:coexist-to-low": "dotenv -e ../../.env -- tsx scripts/move-coexist-jobs-to-low.ts"
   },
   "keywords": [],
   "license": "ISC",
