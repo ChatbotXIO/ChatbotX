@@ -11,6 +11,14 @@ import { usePathname, useSearchParams } from "next/navigation"
  * stale selection from the URL on the next mount of `ConversationList`,
  * which on the mobile single-pane layout happens every time the user goes
  * back to the list.
+ *
+ * Uses `window.history.replaceState` instead of `router.replace`: Next.js
+ * patches `replaceState`/`pushState` so `usePathname`/`useSearchParams` stay
+ * in sync with the browser URL, but — unlike `router.replace` — it never
+ * triggers an App Router navigation. `router.replace` here re-ran the whole
+ * `InboxContent` RSC tree (the server seed: conversations list, messages,
+ * contact) on every conversation click for no reason, since `ChatStoreProvider`
+ * keeps its store across the re-render and discards the new seed anyway.
  */
 export function useConversationIdParam() {
   const pathname = usePathname()

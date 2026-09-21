@@ -105,7 +105,6 @@ export type ChatState = {
   isLoadingConversation: boolean
   isBootstrappingUrlConversation: boolean
   activeConversationId: string | null
-  hasNextConversationPage: boolean
   filters: ConversationFilters
 
   // message list
@@ -129,6 +128,19 @@ export type ChatState = {
   // active facebook post (for comment conversations)
   activePost: PostDetails | null
 }
+// `messages`/`nextCursorMessage`/`hasNextMessagePage`/`messagesConversationId`
+// must be seeded together or not at all: a `messages` seed without its
+// matching `messagesConversationId` makes `loadInitialMessages` re-fetch and
+// prepend a duplicate page on top of the one already in state. Nesting them
+// makes that split unrepresentable instead of merely undocumented.
+export type ChatStoreMessagesSeed = Pick<
+  ChatState,
+  | "messages"
+  | "nextCursorMessage"
+  | "hasNextMessagePage"
+  | "messagesConversationId"
+>
+
 export type ChatStoreInitialState = Partial<
   Pick<
     ChatState,
@@ -137,13 +149,11 @@ export type ChatStoreInitialState = Partial<
     | "isFirstLoadConversation"
     | "activeConversationId"
     | "activeConversationAutoSelected"
-    | "messages"
-    | "nextCursorMessage"
-    | "hasNextMessagePage"
-    | "messagesConversationId"
     | "seededContact"
   >
->
+> & {
+  messagesSeed?: ChatStoreMessagesSeed
+}
 
 export type ConversationAssignee = {
   id: string | null
@@ -299,6 +309,23 @@ const loadAndSelectConversation = async (
   }
 }
 
+// The message-thread fields that must be cleared together whenever the
+// active conversation changes (or is unset) — otherwise a stale
+// `activeConversationAutoSelected`/`messagesConversationId` etc. from the
+// previous conversation leaks into the next one.
+const messageThreadDefaults = () => ({
+  messages: [],
+  nextCursorMessage: null,
+  isLoadMoreMessage: false,
+  hasNextMessagePage: true,
+  messagesConversationId: null,
+  activeConversationAutoSelected: false,
+  seededContact: null,
+  replyToMessage: null,
+  isPrivateReply: false,
+  activePost: null,
+})
+
 const shouldAutoSelectConversation = ({
   activeConversationId,
   hasUrlConversationId,
@@ -316,6 +343,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   // A closure variable rather than store state since it's only read/written
   // inside openConversation and never rendered.
   let pendingOpenConversationId: string | null = null
+  const { messagesSeed, ...restInitialState } = initialState
 
   return createStore<ChatStore>((set, get, store) => ({
     // default conversation state
@@ -324,24 +352,14 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
     nextCursorConversation: null,
     isLoadingConversation: false,
     isBootstrappingUrlConversation: false,
-    hasNextConversationPage: true,
     activeConversationId: null,
     filters: {},
 
     // default message state
-    messages: [],
-    nextCursorMessage: null,
-    isLoadMoreMessage: false,
-    hasNextMessagePage: true,
-    messagesConversationId: null,
-    activeConversationAutoSelected: false,
-    seededContact: null,
+    ...messageThreadDefaults(),
 
-    ...initialState,
-
-    replyToMessage: null,
-    isPrivateReply: false,
-    activePost: null,
+    ...restInitialState,
+    ...messagesSeed,
 
     prependConversation: (newConversation: ListConversationItemResource) =>
       set((state) => ({
@@ -436,13 +454,19 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       workspaceId: string,
       options: LoadMoreConversationsOptions = {},
     ) => {
-      const { isLoadingConversation, hasNextConversationPage } = get()
+      const { isLoadingConversation, conversations, nextCursorConversation } =
+        get()
+      // Exhausted once a page has loaded and the server returned no further
+      // cursor — before that first load, `conversations` is empty and the
+      // cursor is also `null`, which must not read as "exhausted".
+      const hasNextConversationPage =
+        conversations.length === 0 || nextCursorConversation !== null
       if (isLoadingConversation || !hasNextConversationPage) {
         return
       }
 
       // fetch next conversation list
-      const { nextCursorConversation, activeConversationId, filters } = get()
+      const { activeConversationId, filters } = get()
       const shouldRespectUrlConversationId =
         options.respectUrlConversationId ?? true
       const autoSelectFirst = options.autoSelectFirst ?? true
@@ -504,16 +528,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       if (oldActiveConversationId !== activeConversationId) {
         set({
           activeConversationId,
-          messages: [],
-          nextCursorMessage: null,
-          hasNextMessagePage: true,
-          isLoadMoreMessage: false,
-          replyToMessage: null,
-          isPrivateReply: false,
-          activePost: null,
-          messagesConversationId: null,
-          activeConversationAutoSelected: false,
-          seededContact: null,
+          ...messageThreadDefaults(),
         })
       }
     },
@@ -530,8 +545,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       }
       set({
         conversations: updatedConversations,
-        activeConversationId: newActiveConversationId,
       })
+      if (activeConversationId !== newActiveConversationId) {
+        get().setActiveConversationId(newActiveConversationId)
+      }
     },
 
     readConversation: (conversationId: string) => {
@@ -557,16 +574,9 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         nextCursorConversation: null,
         isLoadingConversation: false,
         isBootstrappingUrlConversation: false,
-        hasNextConversationPage: true,
         activeConversationId: null,
 
-        messages: [],
-        nextCursorMessage: null,
-        isLoadMoreMessage: false,
-        hasNextMessagePage: true,
-        messagesConversationId: null,
-        activeConversationAutoSelected: false,
-        seededContact: null,
+        ...messageThreadDefaults(),
       })
     },
 

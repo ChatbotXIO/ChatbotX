@@ -100,19 +100,17 @@ export async function resolveContactPermissionScope(
 export async function requireContactPermissionScope(
   workspaceId: string,
 ): Promise<ContactPermissionScope> {
+  const scope = await resolveContactPermissionScope(workspaceId)
+  if (scope) {
+    return scope
+  }
+
+  // `resolveContactPermissionScope` returns `null` for two different
+  // reasons — no workspace membership at all, or a member without contacts
+  // access — so re-check membership here only to pick the right message.
   const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
   if (!userAndWorkspace) {
     throw new ChatbotXException("User is not associated with this workspace")
   }
-  const { user, targetWorkspaceMember } = userAndWorkspace
-
-  const scope = buildContactPermissionScope({
-    permissions: targetWorkspaceMember.permissions,
-    userId: user.id,
-  })
-  if (!scope) {
-    throw new ChatbotXException("User is not authorized to access contacts")
-  }
-
-  return scope
+  throw new ChatbotXException("User is not authorized to access contacts")
 }

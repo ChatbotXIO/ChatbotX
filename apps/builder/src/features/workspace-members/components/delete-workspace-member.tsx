@@ -32,6 +32,7 @@ export function DeleteWorkspaceMemberDialog({
   const router = useRouter()
   const invalidateUsers = useInvalidateUsers()
   const { data: session } = authClient.useSession()
+  const invalidateUsers = useInvalidateUsers()
 
   const { execute, isPending } = useAction(
     deleteWorkspaceMemberAction.bind(
@@ -43,6 +44,7 @@ export function DeleteWorkspaceMemberDialog({
       onSuccess: () => {
         invalidateUsers()
         onOpenChange(false)
+        invalidateUsers()
         if (workspaceMember?.userId === session?.user?.id) {
           router.push("/")
         } else {

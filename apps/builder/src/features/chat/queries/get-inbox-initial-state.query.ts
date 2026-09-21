@@ -1,7 +1,10 @@
 import "server-only"
 
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import type { ChatStoreInitialState } from "@/features/chat/store/chat-store"
+import type {
+  ChatStoreInitialState,
+  ChatStoreMessagesSeed,
+} from "@/features/chat/store/chat-store"
 import {
   INBOX_CONVERSATIONS_PER_PAGE,
   INBOX_MESSAGES_PER_PAGE,
@@ -18,6 +21,30 @@ import { logger } from "@/lib/log"
 
 // Balances slow-network tolerance against blocking the page render indefinitely.
 const INBOX_SEED_TIMEOUT_MS = 8000
+
+/**
+ * The three states a URL `conversationId` query param can be in. Kept as a
+ * union — rather than the `conversationId?: string` + `hasUrlConversationId:
+ * boolean` pair this replaces — because that pair could represent a fourth,
+ * impossible combination (`hasUrlConversationId: false` with a `conversationId`
+ * set): the seed would then seed messages/contact for that id but mark
+ * `activeConversationAutoSelected: true` as if no deep link had been
+ * requested, mislabeling a genuine deep link as an auto-selection.
+ */
+type UrlConversation =
+  | { kind: "none" }
+  | { kind: "invalid" }
+  | { kind: "valid"; id: string }
+
+const parseUrlConversation = (conversationId?: string): UrlConversation => {
+  if (!conversationId) {
+    return { kind: "none" }
+  }
+  const parsed = zodBigintAsString().safeParse(conversationId)
+  return parsed.success
+    ? { kind: "valid", id: parsed.data }
+    : { kind: "invalid" }
+}
 
 const withTimeout = <T>(
   promise: Promise<T>,
@@ -42,12 +69,14 @@ const seedMessagesState = async (
     conversationId,
   })
 
-  return {
+  const messagesSeed: ChatStoreMessagesSeed = {
     messages: [...data].reverse(),
     nextCursorMessage: nextCursor,
     hasNextMessagePage: nextCursor !== null,
     messagesConversationId: conversationId,
   }
+
+  return { messagesSeed }
 }
 
 const seedContactState = async (
@@ -72,17 +101,18 @@ const shapeInitialState = ({
   listedConversations,
   nextCursor,
   activeConversation,
-  isUrlConversation,
+  urlConversation,
   messagesResult,
   contactResult,
 }: {
   listedConversations: ListConversationItemResource[]
   nextCursor: string | null
   activeConversation: ListConversationItemResource | null
-  isUrlConversation: boolean
+  urlConversation: UrlConversation
   messagesResult: PromiseSettledResult<ChatStoreInitialState>
   contactResult: PromiseSettledResult<ChatStoreInitialState>
 }): ChatStoreInitialState => {
+  const isUrlConversation = urlConversation.kind !== "none"
   const conversations =
     isUrlConversation && activeConversation
       ? [
@@ -199,7 +229,7 @@ const loadInitialState = async ({
     listedConversations,
     nextCursor,
     activeConversation,
-    isUrlConversation: hasUrlConversationId,
+    urlConversation,
     messagesResult,
     contactResult,
   })

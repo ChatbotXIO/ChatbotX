@@ -12,6 +12,9 @@ vi.mock("next-intl", () => ({
 }))
 
 const getContactMock = vi.fn()
+const couponsMock = vi.fn().mockResolvedValue([])
+const appointmentsMock = vi.fn().mockResolvedValue([])
+const sequencesMock = vi.fn().mockResolvedValue({ data: [] })
 
 vi.mock("@/lib/orpc/query", () => ({
   orpc: {
@@ -42,6 +45,46 @@ vi.mock("@/lib/orpc/query", () => ({
         }) => ({
           queryKey: ["contact-notes", input.workspaceId, input.contactId],
           queryFn: async () => ({ data: [] }),
+        }),
+      },
+    },
+    couponsAPI: {
+      listContactCouponsAPI: {
+        queryOptions: ({
+          input,
+        }: {
+          input: { workspaceId: string; contactId: string }
+        }) => ({
+          queryKey: ["contact-coupons", input.workspaceId, input.contactId],
+          queryFn: () => couponsMock(input),
+        }),
+      },
+    },
+    appointmentsAPI: {
+      listContactAppointmentsAPI: {
+        queryOptions: ({
+          input,
+        }: {
+          input: { workspaceId: string; contactId: string }
+        }) => ({
+          queryKey: [
+            "contact-appointments",
+            input.workspaceId,
+            input.contactId,
+          ],
+          queryFn: () => appointmentsMock(input),
+        }),
+      },
+    },
+    contactSequencesAPI: {
+      listContactSequencesAuthenticatedAPI: {
+        queryOptions: ({
+          input,
+        }: {
+          input: { workspaceId: string; contactId: string }
+        }) => ({
+          queryKey: ["contact-sequences", input.workspaceId, input.contactId],
+          queryFn: () => sequencesMock(input),
         }),
       },
     },
@@ -97,10 +140,19 @@ vi.mock("@/features/contact-sequences/update-contact-sequence-field", () => ({
   default: () => null,
 }))
 
+let latestAccordionOnValueChange: ((value: string[]) => void) | undefined
+
 vi.mock("@chatbotx.io/ui/components/ui/accordion", () => ({
-  Accordion: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  Accordion: ({
+    children,
+    onValueChange,
+  }: {
+    children: React.ReactNode
+    onValueChange: (value: string[]) => void
+  }) => {
+    latestAccordionOnValueChange = onValueChange
+    return <div>{children}</div>
+  },
   AccordionItem: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -155,6 +207,10 @@ describe("ContactInboxPanel", () => {
     root = createRoot(container)
     queryClient = makeQueryClient()
     getContactMock.mockReset()
+    couponsMock.mockClear()
+    appointmentsMock.mockClear()
+    sequencesMock.mockClear()
+    latestAccordionOnValueChange = undefined
     seededContact = undefined
     latestConversations = [firstConversation, secondConversation]
     autoRefreshCapture = {}
@@ -285,5 +341,74 @@ describe("ContactInboxPanel", () => {
     expect(
       container.querySelector('[data-testid="contact-detail"]')?.textContent,
     ).toBe("Patched Jane")
+  })
+
+  test("does not mount or query the coupons/appointments/sequences sections before any accordion item opens", () => {
+    seededContact = makeContact("contact-1", "Jane")
+
+    render()
+
+    expect(couponsMock).not.toHaveBeenCalled()
+    expect(appointmentsMock).not.toHaveBeenCalled()
+    expect(sequencesMock).not.toHaveBeenCalled()
+  })
+
+  test("mounts and queries the coupons section once its accordion item opens", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    couponsMock.mockResolvedValueOnce([
+      {
+        id: "coupon-1",
+        topicName: "Welcome",
+        code: "WELCOME10",
+        usedAt: null,
+      },
+    ])
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["coupons.title"])
+    })
+
+    await vi.waitFor(() => {
+      expect(couponsMock).toHaveBeenCalledWith({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+      })
+      expect(container.textContent).toContain("Welcome")
+    })
+    expect(appointmentsMock).not.toHaveBeenCalled()
+    expect(sequencesMock).not.toHaveBeenCalled()
+  })
+
+  test("mounts and queries the appointments section once its accordion item opens", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["appointments.title"])
+    })
+
+    await vi.waitFor(() => {
+      expect(appointmentsMock).toHaveBeenCalledWith({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+      })
+    })
+  })
+
+  test("mounts and queries the sequences section once its accordion item opens", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["sequences.title"])
+    })
+
+    await vi.waitFor(() => {
+      expect(sequencesMock).toHaveBeenCalledWith({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+      })
+    })
   })
 })

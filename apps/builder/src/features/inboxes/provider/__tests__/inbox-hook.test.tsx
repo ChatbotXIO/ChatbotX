@@ -1,11 +1,23 @@
 // @vitest-environment jsdom
 
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { makeQueryClient } from "../../../../../__tests__/query-test-utils"
-import { useInboxes, useInvalidateInboxes } from "../inbox-hook"
+import {
+  allInboxConfigs,
+  useConfiguredInboxTypeOptions,
+  useInboxes,
+  useInboxOptionsByChannel,
+  useInboxOptionsForChannels,
+  useInvalidateInboxes,
+  useMessengerInboxOptions,
+  useSmtpInboxFromAddressMap,
+  useSmtpInboxOptions,
+  useWhatsappInboxOptions,
+} from "../inbox-hook"
 
 const { mockListInboxes } = vi.hoisted(() => ({
   mockListInboxes: vi.fn(),
@@ -139,21 +151,28 @@ describe("inbox query hooks", () => {
     expect(mockListInboxes).not.toHaveBeenCalled()
   })
 
-  test("invalidates inbox readers", async () => {
+  test("invalidates inbox readers, and a refetch returns fresh data", async () => {
     let invalidate: (() => unknown) | null = null
+    let data: unknown
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries")
 
     act(() => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <InboxesProbe />
+          <InboxesProbe onData={(nextData) => (data = nextData)} />
           <InvalidateProbe onReady={(fn) => (invalidate = fn)} />
         </QueryClientProvider>,
       )
     })
 
     await vi.waitFor(() => {
-      expect(mockListInboxes).toHaveBeenCalledTimes(1)
+      expect(data).toEqual([{ id: "inbox-1", name: "Support" }])
+    })
+
+    // A wrong query key on the invalidator would leave `data` stuck on the
+    // stale value forever, timing the final `waitFor` out below.
+    mockListInboxes.mockResolvedValue({
+      data: [{ id: "inbox-2", name: "Refreshed" }],
     })
 
     await act(async () => {
@@ -161,6 +180,9 @@ describe("inbox query hooks", () => {
     })
 
     expect(invalidateQueries).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => {
+      expect(data).toEqual([{ id: "inbox-2", name: "Refreshed" }])
+    })
   })
 
   test("keeps the invalidator stable across renders", () => {
@@ -189,5 +211,268 @@ describe("inbox query hooks", () => {
 
     expect(invalidators).toHaveLength(2)
     expect(invalidators[1]).toBe(invalidators[0])
+  })
+})
+
+vi.mock("next/navigation", () => ({
+  useParams: () => ({ workspaceId: "workspace-1" }),
+}))
+
+const derivedHookInboxes = [
+  {
+    id: "inbox-messenger",
+    name: "Messenger Inbox",
+    channel: channelTypes.enum.messenger,
+  },
+  {
+    id: "inbox-whatsapp",
+    name: "WhatsApp Inbox",
+    channel: channelTypes.enum.whatsapp,
+  },
+  {
+    id: "inbox-smtp-configured",
+    name: "Support Email",
+    channel: channelTypes.enum.smtp,
+    integrationSmtp: {
+      id: "smtp-integration-1",
+      fromAddress: "support@example.com",
+    },
+  },
+  {
+    // A row for a channel that has never finished setup: present in the
+    // inbox list, but with no linked SMTP integration to send from yet.
+    id: "inbox-smtp-unconfigured",
+    name: "Unconfigured Email",
+    channel: channelTypes.enum.smtp,
+  },
+]
+
+function ConfiguredInboxTypeOptionsProbe({
+  enabled,
+  onData,
+}: {
+  enabled?: boolean
+  onData: (data: unknown) => void
+}) {
+  onData(useConfiguredInboxTypeOptions({ enabled }))
+  return null
+}
+
+function InboxOptionsByChannelProbe({
+  channel,
+  excludeChannels,
+  onData,
+}: {
+  channel?: string
+  excludeChannels?: string[]
+  onData: (data: unknown) => void
+}) {
+  onData(useInboxOptionsByChannel(channel, excludeChannels))
+  return null
+}
+
+function InboxOptionsForChannelsProbe({
+  channels,
+  onData,
+}: {
+  channels: readonly string[]
+  onData: (data: unknown) => void
+}) {
+  onData(useInboxOptionsForChannels(channels))
+  return null
+}
+
+function WhatsappInboxOptionsProbe({
+  onData,
+}: {
+  onData: (data: unknown) => void
+}) {
+  onData(useWhatsappInboxOptions())
+  return null
+}
+
+function MessengerInboxOptionsProbe({
+  onData,
+}: {
+  onData: (data: unknown) => void
+}) {
+  onData(useMessengerInboxOptions())
+  return null
+}
+
+function SmtpInboxOptionsProbe({
+  onData,
+}: {
+  onData: (data: unknown) => void
+}) {
+  onData(useSmtpInboxOptions())
+  return null
+}
+
+function SmtpInboxFromAddressMapProbe({
+  onData,
+}: {
+  onData: (data: unknown) => void
+}) {
+  onData(useSmtpInboxFromAddressMap())
+  return null
+}
+
+describe("derived inbox option hooks", () => {
+  let container: HTMLDivElement
+  let root: Root
+  let queryClient: QueryClient
+  let data: unknown
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockListInboxes.mockResolvedValue({ data: derivedHookInboxes })
+    container = document.createElement("div")
+    document.body.append(container)
+    root = createRoot(container)
+    queryClient = makeQueryClient()
+    data = undefined
+  })
+
+  afterEach(() => {
+    act(() => {
+      root.unmount()
+    })
+    container.remove()
+    queryClient.clear()
+  })
+
+  const renderProbe = (probe: React.ReactNode) => {
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>{probe}</QueryClientProvider>,
+      )
+    })
+  }
+
+  test("useConfiguredInboxTypeOptions always includes omnichannel plus every distinct non-smtp channel present", async () => {
+    renderProbe(
+      <ConfiguredInboxTypeOptionsProbe onData={(next) => (data = next)} />,
+    )
+
+    await vi.waitFor(() => {
+      expect(data).toEqual([
+        allInboxConfigs.omnichannel,
+        allInboxConfigs.messenger,
+        allInboxConfigs.whatsapp,
+      ])
+    })
+  })
+
+  test("useConfiguredInboxTypeOptions skips the fetch and returns only omnichannel when disabled", () => {
+    renderProbe(
+      <ConfiguredInboxTypeOptionsProbe
+        enabled={false}
+        onData={(next) => (data = next)}
+      />,
+    )
+
+    expect(mockListInboxes).not.toHaveBeenCalled()
+    expect(data).toEqual([allInboxConfigs.omnichannel])
+  })
+
+  test("useInboxOptionsByChannel excludes smtp inboxes by default when no channel is given", async () => {
+    renderProbe(<InboxOptionsByChannelProbe onData={(next) => (data = next)} />)
+
+    await vi.waitFor(() => {
+      expect(data).toEqual([
+        { label: "Messenger Inbox", value: "inbox-messenger" },
+        { label: "WhatsApp Inbox", value: "inbox-whatsapp" },
+      ])
+    })
+  })
+
+  test("useInboxOptionsByChannel filters to an exact channel match", async () => {
+    renderProbe(
+      <InboxOptionsByChannelProbe
+        channel={channelTypes.enum.whatsapp}
+        onData={(next) => (data = next)}
+      />,
+    )
+
+    await vi.waitFor(() => {
+      expect(data).toEqual([
+        { label: "WhatsApp Inbox", value: "inbox-whatsapp" },
+      ])
+    })
+  })
+
+  test("useInboxOptionsByChannel honors a caller-supplied exclude list instead of the smtp default", async () => {
+    renderProbe(
+      <InboxOptionsByChannelProbe
+        excludeChannels={[channelTypes.enum.whatsapp]}
+        onData={(next) => (data = next)}
+      />,
+    )
+
+    await vi.waitFor(() => {
+      expect(data).toEqual([
+        { label: "Messenger Inbox", value: "inbox-messenger" },
+        { label: "Support Email", value: "inbox-smtp-configured" },
+        { label: "Unconfigured Email", value: "inbox-smtp-unconfigured" },
+      ])
+    })
+  })
+
+  test("useInboxOptionsForChannels keeps smtp inbox ids as-is, unlike useSmtpInboxOptions", async () => {
+    renderProbe(
+      <InboxOptionsForChannelsProbe
+        channels={[channelTypes.enum.whatsapp, channelTypes.enum.smtp]}
+        onData={(next) => (data = next)}
+      />,
+    )
+
+    await vi.waitFor(() => {
+      expect(data).toEqual([
+        { label: "WhatsApp Inbox", value: "inbox-whatsapp" },
+        { label: "Support Email", value: "inbox-smtp-configured" },
+        { label: "Unconfigured Email", value: "inbox-smtp-unconfigured" },
+      ])
+    })
+  })
+
+  test("useWhatsappInboxOptions returns only whatsapp inboxes", async () => {
+    renderProbe(<WhatsappInboxOptionsProbe onData={(next) => (data = next)} />)
+
+    await vi.waitFor(() => {
+      expect(data).toEqual([
+        { label: "WhatsApp Inbox", value: "inbox-whatsapp" },
+      ])
+    })
+  })
+
+  test("useMessengerInboxOptions returns only messenger inboxes", async () => {
+    renderProbe(<MessengerInboxOptionsProbe onData={(next) => (data = next)} />)
+
+    await vi.waitFor(() => {
+      expect(data).toEqual([
+        { label: "Messenger Inbox", value: "inbox-messenger" },
+      ])
+    })
+  })
+
+  test("useSmtpInboxOptions drops an smtp inbox row with no linked SMTP integration", async () => {
+    renderProbe(<SmtpInboxOptionsProbe onData={(next) => (data = next)} />)
+
+    await vi.waitFor(() => {
+      expect(data).toEqual([
+        { label: "Support Email", value: "smtp-integration-1" },
+      ])
+    })
+  })
+
+  test("useSmtpInboxFromAddressMap keys the from-address by the SMTP integration id", async () => {
+    renderProbe(
+      <SmtpInboxFromAddressMapProbe onData={(next) => (data = next)} />,
+    )
+
+    await vi.waitFor(() => {
+      expect(data).toEqual({ "smtp-integration-1": "support@example.com" })
+    })
   })
 })
