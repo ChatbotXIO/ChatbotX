@@ -45,7 +45,11 @@ export function TiktokCommentToMessage({
     {
       onSuccess: ({ data }) => {
         setStatus(data?.status ?? null)
-        toast.success(t("messages.updatedSuccess"))
+        toast.success(
+          t("messages.updatedSuccess", {
+            feature: t("fields.tiktok.commentToMessage"),
+          }),
+        )
       },
       onError: ({ error }) => {
         // TikTok's own eligibility wording is the only thing that says which
