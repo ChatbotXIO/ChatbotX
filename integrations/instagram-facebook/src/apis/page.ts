@@ -120,6 +120,47 @@ export const unsubscribePageFromInstagramWebhook = (props: {
   })
 }
 
+export const takeThreadControl = async (
+  auth: InstagramAuthValue,
+  recipientId: string,
+): Promise<{ success: boolean }> => {
+  if (!recipientId) {
+    throw new InstagramAPIException(
+      "Cannot take Instagram thread control: no recipient id.",
+    )
+  }
+  if (!auth?.metadata) {
+    throw new InstagramAPIException(
+      "Cannot take Instagram thread control: the integration has no metadata. Reconnect the Instagram account.",
+    )
+  }
+  const version = auth.metadata.version ?? DEFAULT_API_VERSION
+  const pageId = auth.metadata.pageId
+  // Same shape as sendPrivateReplyMessage's pageId guard (comment.ts):
+  // `/undefined/take_thread_control` would surface as a generic Meta error
+  // that hides the real cause. This file's own throws use InstagramAPIException.
+  if (!pageId) {
+    throw new InstagramAPIException(
+      "Cannot take Instagram thread control: the integration has no pageId. Reconnect the Instagram account.",
+    )
+  }
+  const endpoint = `${version}/${pageId}/take_thread_control`
+
+  return await rescue(endpoint, () =>
+    instagramGraphClient.post<{ success: boolean }>(endpoint, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.tokens.accessToken}`,
+      },
+      json: {
+        recipient: { id: recipientId },
+        metadata: "ChatbotX handover: send refused with 2534037",
+      },
+      retry: 0,
+    }),
+  )
+}
+
 export const deleteProfileFields = (props: {
   ctx: Context<InstagramAuthValue>
   fields: string[]

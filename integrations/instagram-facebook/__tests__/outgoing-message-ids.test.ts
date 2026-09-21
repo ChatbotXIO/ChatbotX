@@ -8,6 +8,10 @@ vi.mock("../src/apis/message", () => ({
   sendMessage: mockSendInstagramMessage,
 }))
 
+vi.mock("../src/apis/page", () => ({
+  takeThreadControl: vi.fn(),
+}))
+
 vi.mock("../src/lib/logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
