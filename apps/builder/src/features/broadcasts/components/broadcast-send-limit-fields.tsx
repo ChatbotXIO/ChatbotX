@@ -65,12 +65,17 @@ export function BroadcastSendLimitFields() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <InputNumberField
-          formItemClassName="w-auto"
-          min={BROADCAST_AUDIENCE_POSITION_MIN}
-          name="audienceRangeStart"
-          prefix={t("broadcasts.sendLimit.fromContact")}
-        />
+        <div className="flex items-center gap-2">
+          <span className="shrink-0 whitespace-nowrap text-muted-foreground">
+            {t("broadcasts.sendLimit.fromContact")}
+          </span>
+          <InputNumberField
+            formItemClassName="w-auto"
+            min={BROADCAST_AUDIENCE_POSITION_MIN}
+            name="audienceRangeStart"
+            placeholder={String(BROADCAST_AUDIENCE_POSITION_MIN)}
+          />
+        </div>
         <span className="text-muted-foreground text-sm">
           {t("broadcasts.sendLimit.toContact")}
         </span>
@@ -82,14 +87,18 @@ export function BroadcastSendLimitFields() {
         />
       </div>
 
-      <InputNumberField
-        formItemClassName="w-auto"
-        max={BROADCAST_MAX_SEND_RATE_PER_MINUTE}
-        min={1}
-        name="sendRatePerMinute"
-        placeholder={String(BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE)}
-        prefix={t("fields.sendRatePerMinute.label")}
-      />
+      <div className="flex items-center gap-2">
+        <span className="shrink-0 whitespace-nowrap text-muted-foreground">
+          {t("fields.sendRatePerMinute.label")}
+        </span>
+        <InputNumberField
+          formItemClassName="w-auto"
+          max={BROADCAST_MAX_SEND_RATE_PER_MINUTE}
+          min={1}
+          name="sendRatePerMinute"
+          placeholder={String(BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE)}
+        />
+      </div>
 
       {issueKey && (
         <p className="text-destructive text-sm" role="alert">
