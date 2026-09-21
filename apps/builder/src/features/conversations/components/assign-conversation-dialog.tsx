@@ -43,7 +43,7 @@ export default function AssignConversationDialog({
   const [open, setOpen] = useState(false)
   const workspaceId = useWorkspaceId()
 
-  const contactAssigneeOptions = useContactAssigneeOptions()
+  const contactAssigneeOptions = useContactAssigneeOptions({ enabled: open })
 
   const defaultValues = useMemo(
     () => ({

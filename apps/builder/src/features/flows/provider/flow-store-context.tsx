@@ -4,17 +4,12 @@ import {
   createContext,
   type ReactNode,
   useContext,
-  useEffect,
-  useRef,
+  useMemo,
+  useState,
 } from "react"
-import { useStore } from "zustand"
-import { createFlowStore, type FlowStore } from "./flow-store"
-
-export type FlowStoreApi = ReturnType<typeof createFlowStore>
-
-export const FlowStoreContext = createContext<FlowStoreApi | undefined>(
-  undefined,
-)
+import { useWorkspaceId } from "@/hooks/routing"
+import type { ListFlowsResponse } from "../schema/query"
+import { type FlowStateFilter, useFlows, useInvalidateFlows } from "./flow-hook"
 
 export type FlowStoreProviderProps = {
   workspaceId: string
@@ -22,37 +17,66 @@ export type FlowStoreProviderProps = {
   autoInitialize?: boolean
 }
 
-export const FlowStoreProvider = ({
-  workspaceId,
-  autoInitialize = true,
-  children,
-}: FlowStoreProviderProps) => {
-  const storeRef = useRef<FlowStoreApi>(null)
-  if (!storeRef.current) {
-    storeRef.current = createFlowStore({
-      workspaceId,
-    })
-  }
+type FlowFilterContextValue = {
+  filter: FlowStateFilter
+  setFilter: (filter: FlowStateFilter) => void
+}
 
-  useEffect(() => {
-    if (storeRef.current && autoInitialize) {
-      storeRef.current.getState().initialize()
-    }
-  }, [autoInitialize])
+const FlowFilterContext = createContext<FlowFilterContextValue | null>(null)
+
+export const FlowStoreProvider = ({ children }: FlowStoreProviderProps) => {
+  const [filter, setFilter] = useState<FlowStateFilter>({})
+
+  const value = useMemo(() => ({ filter, setFilter }), [filter])
 
   return (
-    <FlowStoreContext.Provider value={storeRef.current}>
+    <FlowFilterContext.Provider value={value}>
       {children}
-    </FlowStoreContext.Provider>
+    </FlowFilterContext.Provider>
   )
 }
 
-export const useFlowStore = <T,>(selector: (store: FlowStore) => T): T => {
-  const flowStoreContext = useContext(FlowStoreContext)
+type FlowStoreSnapshot = {
+  loading: boolean
+  error: string | null
+  initialized: boolean
+  workspaceId: string
+  filter: FlowStateFilter
+  flows: ListFlowsResponse["data"]
+  initialize: () => Promise<unknown>
+  getAllActiveFlows: () => Promise<unknown>
+  appendFilter: (filter: FlowStateFilter) => void
+  resetFilter: () => void
+}
 
-  if (!flowStoreContext) {
-    throw new Error("useFlowStore must be used within FlowStoreProvider")
-  }
+export const useFlowStore = <T,>(
+  selector: (store: FlowStoreSnapshot) => T,
+): T => {
+  const workspaceId = useWorkspaceId()
+  const filterContext = useContext(FlowFilterContext)
+  const flowQuery = useFlows(workspaceId, { filter: filterContext?.filter })
+  const invalidateFlows = useInvalidateFlows()
 
-  return useStore(flowStoreContext, selector)
+  const snapshot = useMemo<FlowStoreSnapshot>(
+    () => ({
+      loading: flowQuery.isPending,
+      error: flowQuery.error?.message ?? null,
+      initialized: flowQuery.isFetched,
+      workspaceId: workspaceId ?? "",
+      filter: filterContext?.filter ?? {},
+      flows: flowQuery.data ?? [],
+      initialize: invalidateFlows,
+      getAllActiveFlows: invalidateFlows,
+      appendFilter: (nextFilter) => {
+        filterContext?.setFilter({
+          ...(filterContext.filter ?? {}),
+          ...nextFilter,
+        })
+      },
+      resetFilter: () => filterContext?.setFilter({}),
+    }),
+    [filterContext, flowQuery, invalidateFlows, workspaceId],
+  )
+
+  return selector(snapshot)
 }

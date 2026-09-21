@@ -152,7 +152,10 @@ describe("workspaceAuthorizedMidddleware", () => {
 
     expect(next).toHaveBeenCalledWith(
       expect.objectContaining({
-        context: { workspace: membership.workspace },
+        context: {
+          workspace: membership.workspace,
+          workspaceMember: membership,
+        },
       }),
     )
   })

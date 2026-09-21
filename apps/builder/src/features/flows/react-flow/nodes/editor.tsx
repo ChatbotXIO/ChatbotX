@@ -38,7 +38,7 @@ import {
   useWatch,
 } from "react-hook-form"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
-import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
+import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ButtonStepEditor } from "../steps/button/editor"
@@ -162,7 +162,7 @@ const NodeEditorMenu = memo(
     onClick: (menuItem: MenuItem) => void
   }) => {
     const t = useTranslations()
-    const inboxes = useInboxStore((s) => s.inboxes)
+    const inboxes = useInboxList()
     const whatsappTemplates = useFlowTemplate((s) => s.whatsappTemplates)
     const whatsappFlows = useWhatsappFlow((s) => s.whatsappFlows)
     const messengerTemplates = useFlowTemplate((s) => s.messengerTemplates)

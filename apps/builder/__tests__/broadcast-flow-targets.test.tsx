@@ -13,9 +13,8 @@ const inboxes = [
   { id: "inbox-a", name: "Shop A" },
   { id: "inbox-b", name: "Shop B" },
 ]
-vi.mock("@/features/inboxes/provider/inbox-store-context", () => ({
-  useInboxStore: (selector: (state: { inboxes: typeof inboxes }) => unknown) =>
-    selector({ inboxes }),
+vi.mock("@/features/inboxes/provider/inbox-hook", () => ({
+  useInboxList: () => inboxes,
 }))
 
 const flow = (id: string, name: string, templateId: string) => ({

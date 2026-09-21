@@ -70,15 +70,16 @@ export type ListForConversationResult = {
 export async function listForConversation(
   input: ListForConversationInput,
 ): Promise<ListForConversationResult> {
-  const { storageUrl } = await resolveTenantSettings({
-    workspaceId: input.workspaceId,
-  })
-
-  const conversation = input.conversationId
-    ? await conversationService.findBy({
-        where: { id: input.conversationId, workspaceId: input.workspaceId },
-      })
-    : null
+  const [tenantSettings, conversation, repository] = await Promise.all([
+    resolveTenantSettings({ workspaceId: input.workspaceId }),
+    input.conversationId
+      ? conversationService.findBy({
+          where: { id: input.conversationId, workspaceId: input.workspaceId },
+        })
+      : null,
+    createMessageRepository(),
+  ])
+  const { storageUrl } = tenantSettings
 
   let contactInbox: Awaited<
     ReturnType<typeof contactInboxService.findByUncached>
@@ -96,8 +97,6 @@ export async function listForConversation(
           contactId: conversation.contactId,
         })
   }
-
-  const repository = await createMessageRepository()
 
   const result = await repository.listByConversation({
     workspaceId: input.workspaceId,

@@ -6,6 +6,7 @@ import type {
 import { resolveMessagingWindowOpenedAt } from "@chatbotx.io/sdk"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contact-filter/schema"
+import type { GetContactResponse } from "@/features/contacts/schema/query"
 import type { ContactResource } from "@/features/contacts/schema/resource"
 import {
   type PostDetails,
@@ -22,6 +23,7 @@ import type {
 } from "@/features/messages/schema/resource"
 import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
+export const INBOX_CONVERSATIONS_PER_PAGE = 20
 
 /**
  * The later of two timestamps — tolerates the string a realtime payload
@@ -110,6 +112,9 @@ export type ChatState = {
   nextCursorMessage: string | null
   isLoadMoreMessage: boolean
   hasNextMessagePage: boolean
+  messagesConversationId: string | null
+  activeConversationAutoSelected: boolean
+  seededContact: GetContactResponse | null
 
   // message reply selection
   replyToMessage: MessageResourceWithRelations | null
@@ -120,6 +125,21 @@ export type ChatState = {
   // active facebook post (for comment conversations)
   activePost: PostDetails | null
 }
+export type ChatStoreInitialState = Partial<
+  Pick<
+    ChatState,
+    | "conversations"
+    | "nextCursorConversation"
+    | "isFirstLoadConversation"
+    | "activeConversationId"
+    | "activeConversationAutoSelected"
+    | "messages"
+    | "nextCursorMessage"
+    | "hasNextMessagePage"
+    | "messagesConversationId"
+    | "seededContact"
+  >
+>
 
 export type ChatActions = {
   // Conversation actions
@@ -201,6 +221,7 @@ export type ChatActions = {
     },
   ) => void
   loadMoreMessages: (workspaceId: string, perPage: number) => Promise<void>
+  loadInitialMessages: (workspaceId: string, perPage: number) => Promise<void>
   handleNewMessage: (message: MessageResourceWithRelations) => void
   setReplyToMessage: (
     message: MessageResourceWithRelations | null,
@@ -280,7 +301,7 @@ const shouldAutoSelectConversation = ({
 }) =>
   !(activeConversationId || hasUrlConversationId) && conversations.length > 0
 
-export const createChatStore = () => {
+export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   // The conversationId of the most recently issued openConversation call — lets
   // a call that just finished waiting tell whether a newer call superseded it.
   // A closure variable rather than store state since it's only read/written
@@ -303,6 +324,12 @@ export const createChatStore = () => {
     nextCursorMessage: null,
     isLoadMoreMessage: false,
     hasNextMessagePage: true,
+    messagesConversationId: null,
+    activeConversationAutoSelected: false,
+    seededContact: null,
+
+    ...initialState,
+
     replyToMessage: null,
     isPrivateReply: false,
     activePost: null,
@@ -417,7 +444,7 @@ export const createChatStore = () => {
           await client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI(
             {
               workspaceId,
-              perPage: 20,
+              perPage: INBOX_CONVERSATIONS_PER_PAGE,
               cursor: nextCursorConversation ?? "",
               ...filters,
             },
@@ -452,6 +479,7 @@ export const createChatStore = () => {
 
         if (firstConversationToOpen) {
           get().setActiveConversationId(firstConversationToOpen.id)
+          set({ activeConversationAutoSelected: true })
         }
       } catch (error) {
         set({
@@ -474,6 +502,9 @@ export const createChatStore = () => {
           replyToMessage: null,
           isPrivateReply: false,
           activePost: null,
+          messagesConversationId: null,
+          activeConversationAutoSelected: false,
+          seededContact: null,
         })
       }
     },
@@ -524,6 +555,9 @@ export const createChatStore = () => {
         nextCursorMessage: null,
         isLoadMoreMessage: false,
         hasNextMessagePage: true,
+        messagesConversationId: null,
+        activeConversationAutoSelected: false,
+        seededContact: null,
       })
     },
 
@@ -741,6 +775,7 @@ export const createChatStore = () => {
           nextCursorMessage: nextCursor,
           hasNextMessagePage: nextCursor !== null,
           isLoadMoreMessage: false,
+          messagesConversationId: activeConversationId,
         })
       } catch (error) {
         // Reset the in-flight flag or the `isLoadMoreMessage` guard above
@@ -748,6 +783,15 @@ export const createChatStore = () => {
         set({ isLoadMoreMessage: false })
         throw error
       }
+    },
+
+    loadInitialMessages: async (workspaceId: string, perPage: number) => {
+      const { activeConversationId, messagesConversationId, loadMoreMessages } =
+        get()
+      if (messagesConversationId === activeConversationId) {
+        return
+      }
+      await loadMoreMessages(workspaceId, perPage)
     },
 
     updateConversationViaMessage: async (message: MessageResource) => {

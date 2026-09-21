@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { formatBotFieldReference } from "@chatbotx.io/flow-config"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   CalendarClockIcon,
   CalendarDaysIcon,
@@ -17,8 +18,10 @@ import {
   TextIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo } from "react"
-import { useCustomFieldStore } from "./custom-field-store-context"
+import { useMemo } from "react"
+import { useWorkspaceId } from "@/hooks/routing"
+import { orpc } from "@/lib/orpc/query"
+import { maxPerPage } from "@/lib/shared-request"
 
 export const customFieldIconsMap: Record<CustomFieldType, LucideIcon> = {
   shortText: TextIcon,
@@ -204,6 +207,36 @@ export const buildGroupedFieldOptions = (groups: {
       children: group.options,
     }))
 
+export const useCustomFields = (
+  workspaceId: string | undefined,
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    orpc.customFieldsAPI.privateListCustomFieldsAPI.queryOptions({
+      input: { workspaceId: workspaceId ?? "", perPage: maxPerPage },
+      enabled: Boolean(workspaceId) && (options?.enabled ?? true),
+      select: (res) => res.data,
+    }),
+  )
+
+export const useBotFields = (
+  workspaceId: string | undefined,
+  options?: { enabled?: boolean },
+) =>
+  useQuery(
+    orpc.botFieldAPIs.privateListBotFieldsAPI.queryOptions({
+      input: { workspaceId: workspaceId ?? "", perPage: maxPerPage },
+      enabled: Boolean(workspaceId) && (options?.enabled ?? true),
+      select: (res) => res.data,
+    }),
+  )
+
+export const useInvalidateCustomFields = () => {
+  const queryClient = useQueryClient()
+  return () =>
+    queryClient.invalidateQueries({ queryKey: orpc.customFieldsAPI.key() })
+}
+
 export const useCustomFieldSelectOptions = (
   props: {
     customFieldTypes?: CustomFieldType[]
@@ -233,18 +266,11 @@ export const useCustomFieldSelectOptions = (
   } = props
   const t = useTranslations()
 
-  const {
-    customFields: rawCustomFields,
-    botFields: rawBotFields,
-    ensureBotFieldsLoaded,
-  } = useCustomFieldStore((state) => state)
-
-  useEffect(() => {
-    if (includeBotFields) {
-      ensureBotFieldsLoaded()
-    }
-  }, [includeBotFields, ensureBotFieldsLoaded])
-
+  const workspaceId = useWorkspaceId()
+  const { data: rawCustomFields = [] } = useCustomFields(workspaceId)
+  const { data: rawBotFields = [] } = useBotFields(workspaceId, {
+    enabled: includeBotFields,
+  })
   // `channels` still drives the filter below; it no longer prefixes the label.
   const reservedCustomFieldOptions = useMemo(
     () =>

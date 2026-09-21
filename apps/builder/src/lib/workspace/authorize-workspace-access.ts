@@ -139,11 +139,21 @@ export const workspaceAccessDenialOrpcError = (
  * oRPC gates: reads and deletes stay open (invariant #14) while mutations are
  * checked against the owner's quota/trial state.
  */
+const READ_ONLY_POST_PATHS = new Set([
+  "/workspaces/{workspaceId}/conversations/list",
+])
+
 export async function assertWorkspaceOwnerAccessForMethod(props: {
   method: HTTPMethod | undefined
   ownerId: string
+  path?: string
 }): Promise<void> {
-  if (!isWorkspaceMutationMethod(props.method)) {
+  if (
+    !isWorkspaceMutationMethod(props.method) ||
+    (props.method === "POST" &&
+      props.path &&
+      READ_ONLY_POST_PATHS.has(props.path))
+  ) {
     return
   }
 

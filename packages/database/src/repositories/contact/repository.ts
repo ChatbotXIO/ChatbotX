@@ -94,8 +94,6 @@ export const contactRepository = {
       with: {
         tags: true,
         contactCustomFields: { with: { customField: true } },
-        contactNotes: true,
-        contactsOnSequences: { with: { sequence: true } },
         conversation: true,
       },
     })
