@@ -22,6 +22,7 @@ import {
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import { useDebouncedCallback } from "@chatbotx.io/ui/hooks/use-debounced-callback"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
@@ -50,8 +51,10 @@ import { useInboxStore } from "../inboxes/provider/inbox-store-context"
 import { BroadcastFlowTargets } from "./components/broadcast-flow-targets"
 import { BroadcastFlowTypeSelector } from "./components/broadcast-flow-type-selector"
 import { BroadcastInboxMultiSelect } from "./components/broadcast-inbox-multi-select"
+import { BroadcastSendLimitFields } from "./components/broadcast-send-limit-fields"
 import { BroadcastTemplateTargets } from "./components/broadcast-template-targets"
 import { getBroadcastExcludedFilterFields } from "./lib/broadcast-filter-fields"
+import { resolveWindowedReceiversCount } from "./lib/broadcast-send-limit"
 import {
   hasSameTargetReferences,
   resolveAudienceInboxIds,
@@ -458,6 +461,14 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const watchedTargets = (useWatch({ control, name: "targets" }) ??
     []) as BroadcastTargetRequest[]
   const watchedContactFilter = useWatch({ control, name: "contactFilter" })
+  const watchedAudienceRangeStart = useWatch({
+    control,
+    name: "audienceRangeStart",
+  }) as number | undefined
+  const watchedAudienceRangeEnd = useWatch({
+    control,
+    name: "audienceRangeEnd",
+  }) as number | undefined
 
   const isTemplateSubaction = isTemplateBroadcastSubaction(props.subaction)
   const sendsTemplate = watchedTemplateType === broadcastFlowTypes.enum.template
@@ -530,6 +541,19 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const isReceiversCountLoading =
     loadingInboxesCount ||
     completedReceiversCountQueryKey !== receiversCountQueryKey
+
+  // The range fields never change *which* rows match — only how many are
+  // taken — so they are never sent to the (expensive) count route; the
+  // unwindowed total above is fetched exactly as before, and clamped to the
+  // range here. Typing in the range fields costs zero requests.
+  const windowedReceiversCount = useMemo(
+    () =>
+      resolveWindowedReceiversCount(count || 0, {
+        audienceRangeStart: watchedAudienceRangeStart,
+        audienceRangeEnd: watchedAudienceRangeEnd,
+      }),
+    [count, watchedAudienceRangeStart, watchedAudienceRangeEnd],
+  )
 
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -696,13 +720,17 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             inboxChannel={props.channel}
             parentName="contactFilter"
           />
+
+          <Separator />
+
+          <BroadcastSendLimitFields />
         </CardContent>
       </Card>
 
       <div className="flex items-center justify-between">
         <Button
           className="h-auto px-0 text-gray-500 text-sm"
-          disabled={isReceiversCountLoading || !count}
+          disabled={isReceiversCountLoading || !windowedReceiversCount}
           onClick={() => setAudiencePreviewOpen(true)}
           type="button"
           variant="link"
@@ -714,7 +742,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             </span>
           ) : (
             t("broadcasts.receiversCount", {
-              count: count || 0,
+              count: windowedReceiversCount,
             })
           )}
         </Button>
@@ -745,7 +773,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
           </Button>
 
           <BroadcastConfirmDialog
-            count={count || 0}
+            count={windowedReceiversCount}
             isReceiversCountLoading={isReceiversCountLoading}
             isSubmitting={formState.isSubmitting}
             isValid={formState.isValid}
@@ -754,6 +782,8 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             open={confirmOpen}
           />
           <BroadcastAudiencePreviewDialog
+            audienceRangeEnd={watchedAudienceRangeEnd}
+            audienceRangeStart={watchedAudienceRangeStart}
             channel={props.channel}
             contactFilter={watchedContactFilter}
             inboxIds={audienceInboxIds}
@@ -762,7 +792,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             onOpenChange={setAudiencePreviewOpen}
             open={audiencePreviewOpen}
             subaction={props.subaction}
-            total={count || 0}
+            total={windowedReceiversCount}
             workspaceId={workspaceId}
           />
         </div>

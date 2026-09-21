@@ -42,6 +42,9 @@ export type CreateBroadcastDefaultValues = {
   schedulesType: "now"
   schedulesAt: null
   contactFilter: ContactFilterCriteria
+  audienceRangeStart: undefined
+  audienceRangeEnd: undefined
+  sendRatePerMinute: undefined
 }
 
 /**
@@ -71,6 +74,9 @@ export function buildCreateBroadcastDefaultValues(input: {
     schedulesType: "now",
     schedulesAt: null,
     contactFilter: input.initialContactFilter ?? EMPTY_CONTACT_FILTER,
+    audienceRangeStart: undefined,
+    audienceRangeEnd: undefined,
+    sendRatePerMinute: undefined,
   }
 }
 
@@ -91,6 +97,9 @@ export type EditableBroadcastDraft = Pick<
   | "schedulesType"
   | "schedulesAt"
   | "contactFilter"
+  | "audienceRangeStart"
+  | "audienceRangeEnd"
+  | "sendRatePerMinute"
 > & {
   targets: Pick<
     BroadcastTargetModel,
@@ -118,6 +127,9 @@ export type EditBroadcastDefaultValues = {
   schedulesType: BroadcastScheduleType
   schedulesAt: string | null
   contactFilter: ContactFilterCriteria
+  audienceRangeStart: number | undefined
+  audienceRangeEnd: number | undefined
+  sendRatePerMinute: number | undefined
   saveAsDraft: false
 }
 
@@ -272,6 +284,9 @@ export function buildEditBroadcastDefaultValues(
       contactFilter: contactFilter.success
         ? contactFilter.data
         : EMPTY_CONTACT_FILTER,
+      audienceRangeStart: draft.audienceRangeStart ?? undefined,
+      audienceRangeEnd: draft.audienceRangeEnd ?? undefined,
+      sendRatePerMinute: draft.sendRatePerMinute ?? undefined,
       saveAsDraft: false,
     },
   }

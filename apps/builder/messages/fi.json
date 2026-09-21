@@ -449,7 +449,8 @@
       "audienceFilter": "Yleisösuodatin",
       "noAudienceFilter": "Ei yleisösuodatinta",
       "template": "Malli",
-      "integration": "Integraatio"
+      "integration": "Integraatio",
+      "sendLimit": "Raja"
     },
     "filters": {
       "all": "All"
@@ -507,6 +508,18 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "Raja",
+      "hint": "Jätä tyhjäksi lähettääksesi kaikille vastaaville yhteystiedoille.",
+      "rangeLabel": "Yhteystietoväli",
+      "fromLabel": "Alkaen",
+      "toLabel": "Asti",
+      "allPlaceholder": "Kaikki",
+      "rangeEndBeforeStart": "Loppusijainti ei voi olla ennen alkusijaintia",
+      "rangeSummary": "Yhteystiedot #{start} – #{end}",
+      "rangeFromSummary": "Alkaen yhteystiedosta #{start}",
+      "rateSummary": "{rate} viestiä / minuutti"
     }
   },
   "commentAutomation": {
@@ -2206,6 +2219,9 @@
     },
     "lastCallTranscript": {
       "label": "Viimeisin puhelulitterointi"
+    },
+    "sendRatePerMinute": {
+      "label": "Viestejä minuutissa"
     }
   },
   "flows": {

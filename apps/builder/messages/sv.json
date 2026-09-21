@@ -501,7 +501,8 @@
       "noAudienceFilter": "Inget målgruppsfilter",
       "subaction": "Underåtgärd",
       "template": "Mall",
-      "title": "Utskickningsinformation"
+      "title": "Utskickningsinformation",
+      "sendLimit": "Gräns"
     },
     "flowType": {
       "flow": {
@@ -640,6 +641,18 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "Gräns",
+      "hint": "Lämna tomt för att skicka till alla matchande kontakter.",
+      "rangeLabel": "Kontaktintervall",
+      "fromLabel": "Från",
+      "toLabel": "Till",
+      "allPlaceholder": "Alla",
+      "rangeEndBeforeStart": "Slutpositionen får inte vara före startpositionen",
+      "rangeSummary": "Kontakter nr {start} – nr {end}",
+      "rangeFromSummary": "Från kontakt nr {start}",
+      "rateSummary": "{rate} meddelanden / minut"
     }
   },
   "commentAutomation": {
@@ -3082,6 +3095,9 @@
     },
     "lastCallTranscript": {
       "label": "Senaste samtalstranskription"
+    },
+    "sendRatePerMinute": {
+      "label": "Meddelanden per minut"
     }
   },
   "flowAnalytics": {

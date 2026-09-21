@@ -24,6 +24,13 @@ type BroadcastAudiencePreviewDialogProps = {
   integrationWhatsappId?: string | null
   integrationMessengerId?: string | null
   contactFilter?: ContactFilterRequest["contactFilter"] | null
+  /**
+   * 1-based inclusive audience window (see `broadcast-send-limit-fields.tsx`).
+   * Only the preview dialog needs the server-side offset — the receivers
+   * count and the confirm dialog use the already-windowed total instead.
+   */
+  audienceRangeStart?: number | null
+  audienceRangeEnd?: number | null
 }
 
 export const BroadcastAudiencePreviewDialog = memo(
@@ -38,6 +45,8 @@ export const BroadcastAudiencePreviewDialog = memo(
     integrationWhatsappId,
     integrationMessengerId,
     contactFilter,
+    audienceRangeStart,
+    audienceRangeEnd,
   }: BroadcastAudiencePreviewDialogProps) {
     const t = useTranslations()
 
@@ -55,6 +64,8 @@ export const BroadcastAudiencePreviewDialog = memo(
               integrationMessengerId: integrationMessengerId ?? undefined,
               contactFilter: contactFilter ?? undefined,
               subaction,
+              audienceRangeStart: audienceRangeStart ?? undefined,
+              audienceRangeEnd: audienceRangeEnd ?? undefined,
             },
           )
 
@@ -68,6 +79,8 @@ export const BroadcastAudiencePreviewDialog = memo(
         integrationWhatsappId,
         subaction,
         workspaceId,
+        audienceRangeStart,
+        audienceRangeEnd,
       ],
     )
 

@@ -1,4 +1,5 @@
 import {
+  broadcastAudienceRangeSchema,
   broadcastSubactions,
   channelTypes,
 } from "@chatbotx.io/database/partials"
@@ -93,6 +94,7 @@ export type ListContactsRequest = z.infer<typeof listContactsRequest>
 export const listContactInboxesAudiencePreviewRequest =
   listContactsRequest.extend({
     perPage: z.coerce.number().int().min(1).max(50).nullish(),
+    ...broadcastAudienceRangeSchema.shape,
   })
 export type ListContactInboxesAudiencePreviewRequest = z.infer<
   typeof listContactInboxesAudiencePreviewRequest

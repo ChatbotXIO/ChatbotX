@@ -389,4 +389,30 @@ describe("BroadcastDetailDialog — per-page targets", () => {
     expect(text).toContain("fields.flow.label")
     expect(flowLinks()).toEqual([])
   })
+
+  test("omits the send limit detail row when no limit is stored", async () => {
+    const text = await renderDialog({
+      ...BASE_BROADCAST,
+      targets: [target("inbox-a", "Page A")],
+      audienceRangeStart: null,
+      audienceRangeEnd: null,
+      sendRatePerMinute: null,
+    } as BroadcastResourceWithRelations)
+
+    expect(text).not.toContain("broadcasts.detail.sendLimit")
+  })
+
+  test("shows the send limit detail row when a range or rate is stored", async () => {
+    const text = await renderDialog({
+      ...BASE_BROADCAST,
+      targets: [target("inbox-a", "Page A")],
+      audienceRangeStart: 1,
+      audienceRangeEnd: 20_000,
+      sendRatePerMinute: 100,
+    } as BroadcastResourceWithRelations)
+
+    expect(text).toContain("broadcasts.detail.sendLimit")
+    expect(text).toContain("broadcasts.sendLimit.rangeSummary")
+    expect(text).toContain("broadcasts.sendLimit.rateSummary")
+  })
 })

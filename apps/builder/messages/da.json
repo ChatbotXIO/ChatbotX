@@ -449,7 +449,8 @@
       "audienceFilter": "Målgruppefilter",
       "noAudienceFilter": "Intet målgruppefilter",
       "template": "Skabelon",
-      "integration": "Integration"
+      "integration": "Integration",
+      "sendLimit": "Grænse"
     },
     "filters": {
       "all": "All"
@@ -507,6 +508,18 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "Grænse",
+      "hint": "Lad stå tomt for at sende til alle matchende kontakter.",
+      "rangeLabel": "Kontaktinterval",
+      "fromLabel": "Fra",
+      "toLabel": "Til",
+      "allPlaceholder": "Alle",
+      "rangeEndBeforeStart": "Slutpositionen må ikke være før startpositionen",
+      "rangeSummary": "Kontakter #{start} – #{end}",
+      "rangeFromSummary": "Fra kontakt #{start}",
+      "rateSummary": "{rate} beskeder / minut"
     }
   },
   "commentAutomation": {
@@ -2206,6 +2219,9 @@
     },
     "lastCallTranscript": {
       "label": "Seneste opkaldstransskription"
+    },
+    "sendRatePerMinute": {
+      "label": "Beskeder pr. minut"
     }
   },
   "flows": {

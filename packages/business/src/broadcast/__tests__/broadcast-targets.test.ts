@@ -468,6 +468,62 @@ describe("broadcastService.create", () => {
     )
   })
 
+  test("persists the three send-limit columns when the payload carries them", async () => {
+    await broadcastService.create({
+      workspaceId: "ws-1",
+      canViewEmailAndPhone: true,
+      ...baseData,
+      targets: twoTargets,
+      audienceRangeStart: 10,
+      audienceRangeEnd: 60,
+      sendRatePerMinute: 250,
+    })
+
+    expect(mocks.insertValues).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        audienceRangeStart: 10,
+        audienceRangeEnd: 60,
+        sendRatePerMinute: 250,
+      }),
+    )
+  })
+
+  test("nulls the three send-limit columns when the payload carries none", async () => {
+    await broadcastService.create({
+      workspaceId: "ws-1",
+      canViewEmailAndPhone: true,
+      ...baseData,
+      targets: twoTargets,
+    })
+
+    expect(mocks.insertValues).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        audienceRangeStart: null,
+        audienceRangeEnd: null,
+        sendRatePerMinute: null,
+      }),
+    )
+  })
+
+  test("rejects an unordered audience range, pointing at audienceRangeEnd", async () => {
+    await expect(
+      broadcastService.create({
+        workspaceId: "ws-1",
+        canViewEmailAndPhone: true,
+        ...baseData,
+        targets: twoTargets,
+        audienceRangeStart: 50,
+        audienceRangeEnd: 10,
+      }),
+    ).rejects.toMatchObject({
+      message: "The end position must not be before the start position",
+      field: "audienceRangeEnd",
+    })
+    expect(mocks.transaction).not.toHaveBeenCalled()
+  })
+
   test("rejects a template send that names no page at all, pointing at the page picker", async () => {
     await expect(
       broadcastService.create({
@@ -706,6 +762,38 @@ describe("broadcastService.updateDraft", () => {
       expect.objectContaining({ inboxId: "inbox-a", templateId: "template-a" }),
       expect.objectContaining({ inboxId: "inbox-b", templateId: "template-b" }),
     ])
+  })
+
+  test("persists the three send-limit columns on a draft update", async () => {
+    mocks.inboxFindMany.mockResolvedValue([
+      { id: "inbox-a" },
+      { id: "inbox-b" },
+    ])
+    mocks.selectRows = [
+      whatsappTemplateRow("template-a", "inbox-a"),
+      whatsappTemplateRow("template-b", "inbox-b", "welcome"),
+    ]
+
+    await broadcastService.updateDraft({
+      workspaceId: "ws-1",
+      broadcastId: "broadcast-1",
+      canViewEmailAndPhone: true,
+      data: {
+        ...baseData,
+        targets: twoTargets,
+        audienceRangeStart: 5,
+        audienceRangeEnd: null,
+        sendRatePerMinute: 1000,
+      },
+    })
+
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audienceRangeStart: 5,
+        audienceRangeEnd: null,
+        sendRatePerMinute: 1000,
+      }),
+    )
   })
 
   test("rejects when a target's template belongs to another page", async () => {

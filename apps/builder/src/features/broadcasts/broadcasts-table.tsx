@@ -27,6 +27,7 @@ import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { useWorkspaceId } from "@/hooks/routing"
+import { useIntervalRouterRefresh } from "@/hooks/use-interval-router-refresh"
 import { BroadcastDetailDialog } from "./broadcast-detail-dialog"
 import { CloneBroadcastDialog } from "./clone-broadcast-dialog"
 import { BroadcastStatsCell } from "./components/broadcast-stats-cell"
@@ -49,7 +50,13 @@ import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
 import type { BroadcastResourceWithRelations } from "./schema/resource"
 import { shouldShowBroadcastsEmptyState } from "./utils/empty-state"
-import { getEstimatedContactsDisplayState } from "./utils/estimated-contacts-display"
+import {
+  getEstimatedContactsDisplayState,
+  isBroadcastInProgress,
+} from "./utils/estimated-contacts-display"
+
+/** Scheduled/sending rows change on the worker side; poll the list while any is present. */
+const BROADCAST_LIST_REFRESH_INTERVAL_MS = 30_000
 
 type BroadcastsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listBroadcasts>>]>
@@ -70,6 +77,14 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
 
   const workspaceId = useWorkspaceId()
   const broadcastIds = useMemo(() => data.map((b) => b.id), [data])
+  const hasInProgressBroadcast = useMemo(
+    () => data.some((broadcast) => isBroadcastInProgress(broadcast.status)),
+    [data],
+  )
+  useIntervalRouterRefresh({
+    enabled: hasInProgressBroadcast,
+    intervalMs: BROADCAST_LIST_REFRESH_INTERVAL_MS,
+  })
 
   const t = useTranslations()
   const router = useRouter()
