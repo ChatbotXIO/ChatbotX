@@ -42,7 +42,7 @@ export function BroadcastSendLimitFields() {
   // watched values are never read in the body — only used to key the effect.
   // biome-ignore lint/correctness/useExhaustiveDependencies: watchedAudienceRangeStart/End key the effect but trigger() re-reads current form state itself
   useEffect(() => {
-    trigger("audienceRange" as never)
+    trigger("audienceRange")
   }, [watchedAudienceRangeStart, watchedAudienceRangeEnd, trigger])
 
   // The refine's virtual `path: ["audienceRange"]` means no input is bound to

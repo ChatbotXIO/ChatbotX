@@ -294,7 +294,7 @@ export const processBroadcastContacts = async (broadcastId: string) => {
     })
 
     if (!claimed) {
-      logger.info(
+      logger.debug(
         { broadcastId: broadcast.id },
         "processBroadcastContacts: dispatch window lease still held, skipping this tick",
       )

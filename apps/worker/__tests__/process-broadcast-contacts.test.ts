@@ -21,6 +21,7 @@ const scheduleAddSpy = vi.fn()
 // ── logger spy ────────────────────────────────────────────────────────────────
 const loggerErrorSpy = vi.fn()
 const loggerInfoSpy = vi.fn()
+const loggerDebugSpy = vi.fn()
 
 // ── business service spies ───────────────────────────────────────────────────
 const blockedOwnerGuard = vi.fn()
@@ -90,6 +91,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
 vi.mock("../src/lib/logger", () => ({
   logger: {
     info: (...args: unknown[]) => loggerInfoSpy(...args),
+    debug: (...args: unknown[]) => loggerDebugSpy(...args),
     warn: vi.fn(),
     error: (...args: unknown[]) => loggerErrorSpy(...args),
   },
@@ -1132,13 +1134,13 @@ describe("processBroadcastContacts", () => {
       expect(markContactFailedCalls).toHaveLength(0)
     })
 
-    test("logs the refusal at info level", async () => {
+    test("logs the refusal at debug level", async () => {
       listSendableById.mockResolvedValue([makeBroadcast()])
       claimDispatchWindow.mockResolvedValue(false)
 
       await processBroadcastContacts(BROADCAST_ID)
 
-      expect(loggerInfoSpy).toHaveBeenCalledWith(
+      expect(loggerDebugSpy).toHaveBeenCalledWith(
         expect.objectContaining({ broadcastId: BROADCAST_ID }),
         expect.stringContaining("dispatch window"),
       )
