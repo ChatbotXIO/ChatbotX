@@ -9,6 +9,7 @@ import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { generateAuthUrl } from "@chatbotx.io/integration-messenger"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
+import { FACEBOOK_SSO_SCOPES } from "@/lib/auth/upgrade-facebook-account"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { buildProviderCallbackUrl } from "@/lib/provider-origin"
@@ -67,6 +68,11 @@ export const reconnectMessengerAction = workspaceActionClient
           referer,
           reconnectIntegrationId: integrationId,
         },
+        // Same override-aware list the initial connect uses (libs/oauth.ts):
+        // without it the reconnect fell back to the classic MESSENGER_SCOPES
+        // and a Facebook Login for Business app answered "Invalid Scopes:
+        // email, pages_manage_posts, page_events" (fork, s171).
+        scopes: FACEBOOK_SSO_SCOPES,
       })
 
       return redirect(authUrl)
