@@ -11,9 +11,8 @@ import { useEffect } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { resolveSendLimitIssueKey } from "../lib/broadcast-send-limit"
 
-/** Compact widths so "from … to …" stays on one line inside the form card. */
+/** One fixed width for every number input so the rows line up in the label/control grid. */
 const RANGE_FIELD_CLASS_NAME = "w-32 shrink-0"
-const RATE_FIELD_CLASS_NAME = "w-36 shrink-0"
 
 /**
  * The optional "Limit" block rendered under the contact filter for every
@@ -68,33 +67,33 @@ export function BroadcastSendLimitFields() {
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-        <span className="shrink-0 whitespace-nowrap text-muted-foreground text-sm">
+      <div className="grid grid-cols-1 items-center gap-x-4 gap-y-3 sm:grid-cols-[max-content_1fr]">
+        <span className="text-muted-foreground text-sm">
           {t("broadcasts.sendLimit.fromContact")}
         </span>
-        <InputNumberField
-          formItemClassName={RANGE_FIELD_CLASS_NAME}
-          min={BROADCAST_AUDIENCE_POSITION_MIN}
-          name="audienceRangeStart"
-          placeholder={String(BROADCAST_AUDIENCE_POSITION_MIN)}
-        />
-        <span className="shrink-0 text-muted-foreground text-sm">
-          {t("broadcasts.sendLimit.toContact")}
-        </span>
-        <InputNumberField
-          formItemClassName={RANGE_FIELD_CLASS_NAME}
-          min={BROADCAST_AUDIENCE_POSITION_MIN}
-          name="audienceRangeEnd"
-          placeholder={t("broadcasts.sendLimit.allPlaceholder")}
-        />
-      </div>
+        <div className="flex items-center gap-2">
+          <InputNumberField
+            formItemClassName={RANGE_FIELD_CLASS_NAME}
+            min={BROADCAST_AUDIENCE_POSITION_MIN}
+            name="audienceRangeStart"
+            placeholder={String(BROADCAST_AUDIENCE_POSITION_MIN)}
+          />
+          <span className="text-muted-foreground text-sm">
+            {t("broadcasts.sendLimit.toContact")}
+          </span>
+          <InputNumberField
+            formItemClassName={RANGE_FIELD_CLASS_NAME}
+            min={BROADCAST_AUDIENCE_POSITION_MIN}
+            name="audienceRangeEnd"
+            placeholder={t("broadcasts.sendLimit.allPlaceholder")}
+          />
+        </div>
 
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-        <span className="shrink-0 whitespace-nowrap text-muted-foreground text-sm">
+        <span className="text-muted-foreground text-sm">
           {t("fields.sendRatePerMinute.label")}
         </span>
         <InputNumberField
-          formItemClassName={RATE_FIELD_CLASS_NAME}
+          formItemClassName={RANGE_FIELD_CLASS_NAME}
           max={BROADCAST_MAX_SEND_RATE_PER_MINUTE}
           min={1}
           name="sendRatePerMinute"
