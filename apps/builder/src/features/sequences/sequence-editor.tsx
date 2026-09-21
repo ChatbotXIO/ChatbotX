@@ -24,6 +24,7 @@ import { toast } from "sonner"
 import { FlowStoreProvider } from "../flows/provider/flow-store-context"
 import { upsertSequenceStepAction } from "./actions/upsert-sequence-step.action"
 import { SequenceStepCard } from "./components/sequence-step-card"
+import { DEFAULT_NEW_STEP_DELAY } from "./lib/delay"
 
 type SequenceEditorProps = {
   sequence: SequenceModel & {
@@ -49,9 +50,7 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
       const result = await upsertSequenceStepAction(workspaceId, {
         sequenceId: sequence.id,
         order: sequence.steps.length,
-        delayDays: 1,
-        delayMinutes: 0,
-        delayUnit: "days",
+        ...DEFAULT_NEW_STEP_DELAY,
         isActive: false,
         anytime: true,
         sendDays: [
