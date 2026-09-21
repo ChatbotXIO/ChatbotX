@@ -327,6 +327,7 @@ describe("listPendingRecipients", () => {
         failedAt: { isNull: true },
       },
       with: { conversation: true, contactInbox: true },
+      orderBy: { contactInboxId: "asc" },
       limit: 500,
     })
   })

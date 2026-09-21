@@ -15,6 +15,9 @@ describe("buildCreateBroadcastDefaultValues", () => {
       schedulesType: "now",
       schedulesAt: null,
       contactFilter: { operator: "and", conditions: [] },
+      audienceRangeStart: undefined,
+      audienceRangeEnd: undefined,
+      sendRatePerMinute: undefined,
     })
   })
 
@@ -70,6 +73,9 @@ const baseDraft = {
   targets: [],
   integrationWhatsapp: null,
   integrationMessenger: null,
+  audienceRangeStart: null,
+  audienceRangeEnd: null,
+  sendRatePerMinute: null,
 }
 
 describe("buildEditBroadcastDefaultValues", () => {

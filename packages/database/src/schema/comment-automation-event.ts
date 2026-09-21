@@ -146,8 +146,8 @@ export const commentAutomationEventModel = pgTable(
     index("CommentAutomationEvent_contactInboxId_idx").on(table.contactInboxId),
     // The read-receipt lookup, which runs for EVERY `message:seen` event on the
     // platform — a read receipt carries no automation id, so the only way in is
-    // the inbox. Partial, like `ContactOnBroadcast_unsent_idx`: the rows that
-    // can still be marked seen are a vanishing fraction of the table.
+    // the inbox. Partial, like `ContactOnBroadcast_unsent_order_idx`: the rows
+    // that can still be marked seen are a vanishing fraction of the table.
     index("CommentAutomationEvent_private_unseen_idx")
       .on(table.contactInboxId)
       .where(

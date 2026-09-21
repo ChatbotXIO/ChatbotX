@@ -85,6 +85,12 @@ export const broadcastModel = pgTable(
     deletedAt: timestamp(timestampConfig),
     /** Dispatch epoch, incremented by resumeSending AND moveToDraft. Suffixes every downstream PER-CONTACT send jobId (defeats BullMQ's 1-hour completed-job dedup on resume) and pins prepare's promotion UPDATE (defeats stale-prepare re-promotion after a moveToDraft → re-schedule round-trip). The sendBroadcast DRIVER jobId (broadcastSendJobId) deliberately stays epoch-FREE — it enforces the single-driver invariant and its removeOnComplete/Fail: true frees the key at terminal state. */
     resumeCount: integer().notNull().default(0),
+    /** 1-based inclusive start position over the ascending-id audience order; null = from the beginning. See `resolveBroadcastAudienceRange` in partials/broadcast.ts. */
+    audienceRangeStart: integer(),
+    /** 1-based inclusive end position over the ascending-id audience order; null = to the end. */
+    audienceRangeEnd: integer(),
+    /** Recipients handed to channel send jobs per dispatch minute; null = `BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE`. No `.default()` — null is the "unset" state the form/API send. */
+    sendRatePerMinute: integer(),
   },
   (table) => [
     index("Broadcast_workspaceId_idx").using(

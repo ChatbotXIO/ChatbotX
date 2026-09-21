@@ -11,6 +11,18 @@ export type DelayUnit = (typeof DELAY_UNITS)[number]
 export const MINUTES_PER_HOUR = 60
 export const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
 export const MIN_DELAY_VALUE = 1
+
+/** Delay a newly added sequence step starts with: 3 hours after the previous step. */
+export const DEFAULT_NEW_STEP_DELAY_HOURS = 3
+export const DEFAULT_NEW_STEP_DELAY = {
+  delayDays: 0,
+  delayMinutes: DEFAULT_NEW_STEP_DELAY_HOURS * MINUTES_PER_HOUR,
+  delayUnit: "hours",
+} as const satisfies {
+  delayDays: number
+  delayMinutes: number
+  delayUnit: DelayUnit
+}
 export const MAX_DELAY_VALUE = 99_999
 
 export type StoredDelayFields = {

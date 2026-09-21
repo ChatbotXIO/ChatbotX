@@ -43,7 +43,9 @@ export type WhatsappCallingHolidaySchedule = {
 export type WhatsappCallHours = {
   status: "ENABLED" | "DISABLED"
   timezone_id: string
-  weekly_operating_hours: WhatsappCallingWeeklyHours[]
+  // Meta omits this entirely when the number has no weekly schedule set (e.g.
+  // calling enabled with hours never configured), so it is genuinely optional.
+  weekly_operating_hours?: WhatsappCallingWeeklyHours[]
   holiday_schedule?: WhatsappCallingHolidaySchedule[]
 }
 

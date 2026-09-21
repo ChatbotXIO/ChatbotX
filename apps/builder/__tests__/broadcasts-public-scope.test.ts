@@ -183,6 +183,9 @@ describe("real router: broadcasts public API scope wiring", () => {
         schedulesAt: new Date("2026-01-01T00:00:00.000Z"),
         flowId: "flow-1",
         contactCount: 0,
+        audienceRangeStart: null,
+        audienceRangeEnd: null,
+        sendRatePerMinute: null,
       } as never)
 
       await invoke(broadcastsPublicRouter.resend, { id: "999999" })

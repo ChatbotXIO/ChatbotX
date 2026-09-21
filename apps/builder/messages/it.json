@@ -1480,6 +1480,9 @@
     },
     "lastCallTranscript": {
       "label": "Ultima trascrizione chiamata"
+    },
+    "sendRatePerMinute": {
+      "label": "Messaggi al minuto"
     }
   },
   "actions": {
@@ -1932,7 +1935,8 @@
       "audienceFilter": "Filtro del pubblico",
       "noAudienceFilter": "Nessun filtro del pubblico",
       "template": "Modello",
-      "integration": "Integrazione"
+      "integration": "Integrazione",
+      "sendLimit": "Limite"
     },
     "filters": {
       "all": "All"
@@ -1990,6 +1994,18 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "Limite",
+      "hint": "Lascia vuoto per inviare a tutti i contatti corrispondenti.",
+      "rangeLabel": "Intervallo contatti",
+      "fromLabel": "Da",
+      "toLabel": "A",
+      "allPlaceholder": "Tutti",
+      "rangeEndBeforeStart": "La posizione finale non può essere precedente alla posizione iniziale",
+      "rangeSummary": "Contatti n.{start} – n.{end}",
+      "rangeFromSummary": "A partire dal contatto n.{start}",
+      "rateSummary": "{rate} messaggi / minuto"
     }
   },
   "commentAutomation": {

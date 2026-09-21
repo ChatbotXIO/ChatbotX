@@ -449,7 +449,8 @@
       "audienceFilter": "Doelgroepfilter",
       "noAudienceFilter": "Geen doelgroepfilter",
       "template": "Sjabloon",
-      "integration": "Integratie"
+      "integration": "Integratie",
+      "sendLimit": "Limiet"
     },
     "filters": {
       "all": "All"
@@ -507,6 +508,18 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "Limiet",
+      "hint": "Laat leeg om naar alle overeenkomende contacten te verzenden.",
+      "rangeLabel": "Contactbereik",
+      "fromLabel": "Van",
+      "toLabel": "Tot",
+      "allPlaceholder": "Alle",
+      "rangeEndBeforeStart": "De eindpositie mag niet vóór de startpositie liggen",
+      "rangeSummary": "Contacten #{start} – #{end}",
+      "rangeFromSummary": "Vanaf contact #{start}",
+      "rateSummary": "{rate} berichten / minuut"
     }
   },
   "commentAutomation": {
@@ -2019,6 +2032,9 @@
     },
     "lastCallTranscript": {
       "label": "Laatste gesprekstranscript"
+    },
+    "sendRatePerMinute": {
+      "label": "Berichten per minuut"
     }
   },
   "condition": {

@@ -449,7 +449,8 @@
       "audienceFilter": "Filtro de audiencia",
       "noAudienceFilter": "Sin filtro de audiencia",
       "template": "Plantilla",
-      "integration": "Integración"
+      "integration": "Integración",
+      "sendLimit": "Límite"
     },
     "filters": {
       "all": "All"
@@ -507,6 +508,18 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "Límite",
+      "hint": "Déjalo en blanco para enviar a todos los contactos que coincidan.",
+      "rangeLabel": "Rango de contactos",
+      "fromLabel": "Desde",
+      "toLabel": "Hasta",
+      "allPlaceholder": "Todos",
+      "rangeEndBeforeStart": "La posición final no debe ser anterior a la posición inicial",
+      "rangeSummary": "Contactos n.º{start} – n.º{end}",
+      "rangeFromSummary": "Desde el contacto n.º{start}",
+      "rateSummary": "{rate} mensajes / minuto"
     }
   },
   "commentAutomation": {
@@ -2348,6 +2361,9 @@
     },
     "lastCallTranscript": {
       "label": "Última transcripción de llamada"
+    },
+    "sendRatePerMinute": {
+      "label": "Mensajes por minuto"
     }
   },
   "flows": {

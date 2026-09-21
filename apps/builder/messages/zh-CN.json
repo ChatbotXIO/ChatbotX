@@ -688,7 +688,8 @@
       "noAudienceFilter": "无受众过滤器",
       "subaction": "子操作",
       "template": "范本",
-      "title": "广播详细信息"
+      "title": "广播详细信息",
+      "sendLimit": "限制"
     },
     "flowType": {
       "flow": {
@@ -827,6 +828,18 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "限制",
+      "hint": "留空以发送给所有匹配的联系人。",
+      "rangeLabel": "联系人范围",
+      "fromLabel": "从",
+      "toLabel": "到",
+      "allPlaceholder": "全部",
+      "rangeEndBeforeStart": "结束位置不能早于开始位置",
+      "rangeSummary": "联系人 #{start} – #{end}",
+      "rangeFromSummary": "从联系人 #{start} 起",
+      "rateSummary": "每分钟 {rate} 条消息"
     }
   },
   "commentAutomation": {
@@ -3085,6 +3098,9 @@
     },
     "lastCallTranscript": {
       "label": "最近通话转写"
+    },
+    "sendRatePerMinute": {
+      "label": "每分钟发送消息数"
     }
   },
   "flowAnalytics": {

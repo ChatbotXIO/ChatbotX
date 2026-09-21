@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest"
-import { getEstimatedContactsDisplayState } from "../src/features/broadcasts/utils/estimated-contacts-display"
+import {
+  getEstimatedContactsDisplayState,
+  isBroadcastInProgress,
+} from "../src/features/broadcasts/utils/estimated-contacts-display"
 
 describe("getEstimatedContactsDisplayState", () => {
   test("shows a count when contactCount is available", () => {
@@ -51,5 +54,15 @@ describe("getEstimatedContactsDisplayState", () => {
         status: "failed",
       }),
     ).toBe("empty")
+  })
+})
+
+describe("isBroadcastInProgress", () => {
+  test("is true only while the worker still owns the broadcast", () => {
+    expect(isBroadcastInProgress("scheduled")).toBe(true)
+    expect(isBroadcastInProgress("sending")).toBe(true)
+    for (const status of ["draft", "sent", "failed", "cancelled"]) {
+      expect(isBroadcastInProgress(status)).toBe(false)
+    }
   })
 })

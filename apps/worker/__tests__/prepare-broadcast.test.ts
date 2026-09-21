@@ -85,6 +85,8 @@ const baseBroadcast = () => ({
   resumeCount: 0,
   targetMode: "channel" as string,
   targets: [] as { inboxId: string }[],
+  audienceRangeStart: null as number | null,
+  audienceRangeEnd: null as number | null,
 })
 
 beforeEach(() => {
@@ -156,7 +158,37 @@ describe("prepareBroadcast", () => {
         integrationMessengerId: null,
         contactFilter,
         subaction: "whatsappWithin24Hours",
+        audienceRange: null,
       },
+      expect.any(Function),
+    )
+  })
+
+  test("passes the resolved audience range to forEachAudienceChunk when the row has send-limit bounds set", async () => {
+    findScheduledForPrepare.mockResolvedValue({
+      ...baseBroadcast(),
+      channel: "whatsapp",
+      audienceRangeStart: 11,
+      audienceRangeEnd: 30,
+    })
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(forEachAudienceChunk).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audienceRange: { offset: 10, size: 20 },
+      }),
+      expect.any(Function),
+    )
+  })
+
+  test("passes a null audience range when the row has no send-limit bounds set", async () => {
+    findScheduledForPrepare.mockResolvedValue(baseBroadcast())
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(forEachAudienceChunk).toHaveBeenCalledWith(
+      expect.objectContaining({ audienceRange: null }),
       expect.any(Function),
     )
   })
@@ -348,6 +380,55 @@ describe("prepareBroadcast", () => {
         removeOnComplete: true,
         removeOnFail: true,
       },
+    )
+  })
+
+  test("an in-window DM-less contact is skipped while a windowed broadcast still inserts the later in-window contacts (D1)", async () => {
+    findScheduledForPrepare.mockResolvedValue({
+      ...baseBroadcast(),
+      audienceRangeStart: 1,
+      audienceRangeEnd: 3,
+    })
+    findDMByContactIds.mockResolvedValue([
+      { id: "conv-1", contactId: "contact-1" },
+      { id: "conv-3", contactId: "contact-3" },
+    ])
+    forEachAudienceChunk.mockImplementation(
+      async (
+        input: { audienceRange: unknown },
+        onChunk: (
+          rows: Array<{ id: string; contactId: string }>,
+        ) => Promise<unknown>,
+      ) => {
+        expect(input.audienceRange).toEqual({ offset: 0, size: 3 })
+        await onChunk([
+          { id: "ci-1", contactId: "contact-1" },
+          { id: "ci-2", contactId: "contact-2" },
+          { id: "ci-3", contactId: "contact-3" },
+        ])
+      },
+    )
+
+    await prepareBroadcast(BROADCAST_ID)
+
+    expect(insertRecipients).toHaveBeenCalledWith({
+      recipients: [
+        {
+          broadcastId: BROADCAST_ID,
+          contactId: "contact-1",
+          contactInboxId: "ci-1",
+          conversationId: "conv-1",
+        },
+        {
+          broadcastId: BROADCAST_ID,
+          contactId: "contact-3",
+          contactInboxId: "ci-3",
+          conversationId: "conv-3",
+        },
+      ],
+    })
+    expect(promoteAfterPrepare).toHaveBeenCalledWith(
+      expect.objectContaining({ contactCount: 2 }),
     )
   })
 

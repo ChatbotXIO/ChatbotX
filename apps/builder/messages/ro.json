@@ -1275,7 +1275,8 @@
       "audienceFilter": "Filtru de public",
       "noAudienceFilter": "Niciun filtru de public",
       "template": "Șablon",
-      "integration": "Integrare"
+      "integration": "Integrare",
+      "sendLimit": "Limită"
     },
     "filters": {
       "all": "All"
@@ -1333,6 +1334,18 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "Limită",
+      "hint": "Lăsați necompletat pentru a trimite tuturor contactelor care corespund.",
+      "rangeLabel": "Interval de contacte",
+      "fromLabel": "De la",
+      "toLabel": "Până la",
+      "allPlaceholder": "Toate",
+      "rangeEndBeforeStart": "Poziția de final nu poate fi înainte de poziția de start",
+      "rangeSummary": "Contacte nr.{start} – nr.{end}",
+      "rangeFromSummary": "Începând cu contactul nr.{start}",
+      "rateSummary": "{rate} mesaje / minut"
     }
   },
   "commentAutomation": {
@@ -3032,6 +3045,9 @@
     },
     "lastCallTranscript": {
       "label": "Ultima transcriere a apelului"
+    },
+    "sendRatePerMinute": {
+      "label": "Mesaje pe minut"
     }
   },
   "channels": {

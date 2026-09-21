@@ -449,7 +449,8 @@
       "audienceFilter": "Hedef kitle filtresi",
       "noAudienceFilter": "Hedef kitle filtresi yok",
       "template": "Şablon",
-      "integration": "Entegrasyon"
+      "integration": "Entegrasyon",
+      "sendLimit": "Sınır"
     },
     "filters": {
       "all": "All"
@@ -507,6 +508,18 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "Sınır",
+      "hint": "Eşleşen tüm kişilere göndermek için boş bırakın.",
+      "rangeLabel": "Kişi aralığı",
+      "fromLabel": "Başlangıç",
+      "toLabel": "Bitiş",
+      "allPlaceholder": "Tümü",
+      "rangeEndBeforeStart": "Bitiş konumu başlangıç konumundan önce olamaz",
+      "rangeSummary": "Kişiler #{start} – #{end}",
+      "rangeFromSummary": "Kişi #{start}'den itibaren",
+      "rateSummary": "Dakikada {rate} mesaj"
     }
   },
   "commentAutomation": {
@@ -2348,6 +2361,9 @@
     },
     "lastCallTranscript": {
       "label": "Son arama transkripti"
+    },
+    "sendRatePerMinute": {
+      "label": "Dakikadaki mesaj sayısı"
     }
   },
   "flows": {
