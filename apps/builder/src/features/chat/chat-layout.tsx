@@ -16,7 +16,7 @@ import {
 import { useIsMobileState } from "@chatbotx.io/ui/hooks/use-mobile"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useConversationIdParam } from "../conversations/hooks/use-conversation-id-param"
 import type { ConversationResource } from "../conversations/schema/resource"
 import { useCallPlaybackStore } from "../messages/store/call-playback-store"
@@ -74,9 +74,23 @@ export const ChatLayout = (props: ChatLayoutProps) => {
   // JS — and rendering waits for the first measurement rather than guessing
   // desktop and remounting everything a frame later.
   const isMobile = useIsMobileState()
-  // On mobile, suppress an auto-selected first conversation so the list shows first; genuine deep links are never auto-closed.
+  // On mobile, suppress an auto-selected first conversation so the list
+  // shows first; genuine deep links are never auto-closed. Applied only once,
+  // at the first resolved measurement — otherwise a mid-session resize or
+  // tablet rotation across the breakpoint would wipe out a conversation the
+  // user has been actively reading, since `activeConversationAutoSelected`
+  // stays `true` for the rest of the desktop session until another
+  // conversation is picked.
+  const hasAppliedInitialMobileSuppressionRef = useRef(false)
   useEffect(() => {
-    if (isMobile === true && activeConversationAutoSelected) {
+    if (
+      isMobile === undefined ||
+      hasAppliedInitialMobileSuppressionRef.current
+    ) {
+      return
+    }
+    hasAppliedInitialMobileSuppressionRef.current = true
+    if (isMobile && activeConversationAutoSelected) {
       setActiveConversationId(null)
     }
   }, [activeConversationAutoSelected, isMobile, setActiveConversationId])

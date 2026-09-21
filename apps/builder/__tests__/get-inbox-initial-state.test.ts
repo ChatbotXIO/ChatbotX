@@ -76,8 +76,10 @@ describe("getInboxInitialState", () => {
     expect(state).toMatchObject({
       activeConversationAutoSelected: true,
       activeConversationId: "conversation-1",
-      messages: [makeMessage("message-old"), makeMessage("message-new")],
-      messagesConversationId: "conversation-1",
+      messagesSeed: {
+        messages: [makeMessage("message-old"), makeMessage("message-new")],
+        messagesConversationId: "conversation-1",
+      },
       seededContact: { id: "contact-conversation-1" },
     })
   })
@@ -139,8 +141,7 @@ describe("getInboxInitialState", () => {
       activeConversationId: null,
       conversations: [makeConversation("conversation-1")],
     })
-    expect(state?.messages).toBeUndefined()
-    expect(state?.messagesConversationId).toBeUndefined()
+    expect(state?.messagesSeed).toBeUndefined()
     expect(state?.seededContact).toBeUndefined()
   })
 
@@ -156,8 +157,7 @@ describe("getInboxInitialState", () => {
       activeConversationId: "conversation-1",
       seededContact: { id: "contact-conversation-1" },
     })
-    expect(state).not.toHaveProperty("messages")
-    expect(state).not.toHaveProperty("messagesConversationId")
+    expect(state).not.toHaveProperty("messagesSeed")
   })
 
   test("returns null when listing conversations rejects", async () => {

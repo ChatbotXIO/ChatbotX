@@ -3,6 +3,7 @@
 import { ChevronDownIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"
 import { authClient } from "@/lib/auth/auth-client"
 import type { ListConversationItemResource } from "../schema/resource"
 import AssignConversationDialog from "./assign-conversation-dialog"
@@ -29,32 +30,64 @@ export function UpdateConversationAssignee({
     [onChange],
   )
 
-  const agentLabel = useMemo(() => {
+  // The store's `setAssignee` (an optimistic patch applied while the server
+  // confirms an assignment) only ever writes the id fields, never the
+  // `assignedUser`/`assignedInboxTeam` relation objects — so right after an
+  // assignment, or a same-type reassignment (where the relation is left
+  // pointing at the previous assignee), the relation is either missing or
+  // stale. Trust it only when its own id agrees with the current id field;
+  // otherwise fall back to the assignee option list below, which already has
+  // the freshly selected name.
+  const relationLabel = useMemo(() => {
     const assignedUserId = conversation.assignedUserId
-    const assignedUserName = conversation.assignedUser?.name
+    const assignedUser = conversation.assignedUser
     if (
       assignedUserId &&
-      assignedUserName &&
-      selectedId === `u_${assignedUserId}`
+      assignedUser?.id === assignedUserId &&
+      assignedUser.name
     ) {
-      if (selectedId === `u_${session?.user.id}`) {
-        return t("assignAdmin.assignedToMe")
-      }
-
-      return t("assignAdmin.assignedTo", { name: assignedUserName })
+      return assignedUser.name
     }
 
     const assignedInboxTeamId = conversation.assignedInboxTeamId
-    const assignedInboxTeamName = conversation.assignedInboxTeam?.name
+    const assignedInboxTeam = conversation.assignedInboxTeam
     if (
       assignedInboxTeamId &&
-      assignedInboxTeamName &&
-      selectedId === `t_${assignedInboxTeamId}`
+      assignedInboxTeam?.id === assignedInboxTeamId &&
+      assignedInboxTeam.name
     ) {
-      return t("assignAdmin.assignedTo", { name: assignedInboxTeamName })
+      return assignedInboxTeam.name
     }
-    return t("assignAdmin.assignConversation")
-  }, [conversation, selectedId, t, session])
+
+    return null
+  }, [conversation])
+
+  const isSelfAssigned = selectedId === `u_${session?.user.id}`
+  const needsOptionLookup =
+    selectedId !== null && relationLabel === null && !isSelfAssigned
+  const contactAssigneeOptions = useContactAssigneeOptions({
+    autoGroup: false,
+    enabled: needsOptionLookup,
+  })
+
+  const agentLabel = useMemo(() => {
+    if (!selectedId) {
+      return t("assignAdmin.assignConversation")
+    }
+
+    if (isSelfAssigned) {
+      return t("assignAdmin.assignedToMe")
+    }
+
+    const label =
+      relationLabel ??
+      contactAssigneeOptions.find((option) => option.value === selectedId)
+        ?.label
+
+    return label
+      ? t("assignAdmin.assignedTo", { name: label })
+      : t("assignAdmin.assignConversation")
+  }, [contactAssigneeOptions, isSelfAssigned, relationLabel, selectedId, t])
 
   useEffect(() => {
     if (conversation.assignedUserId) {

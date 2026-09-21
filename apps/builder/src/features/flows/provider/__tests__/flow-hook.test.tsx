@@ -141,4 +141,37 @@ describe("flow query hooks", () => {
       queryKey: [["flowsAPI", "privateListFlowsAPI"], {}],
     })
   })
+
+  test("a refetch after invalidation returns the flows query's fresh data", async () => {
+    let latestData: unknown
+    let invalidate: (() => unknown) | null = null
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <FlowsProbe onRender={(data) => (latestData = data)} />
+          <InvalidateProbe onReady={(fn) => (invalidate = fn)} />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(latestData).toEqual([{ id: "flow-1", name: "Welcome" }])
+    })
+
+    // A wrong query key on the invalidator would leave this probe stuck on
+    // the stale data forever, timing this `waitFor` out below.
+    mockPrivateListFlows.mockResolvedValue({
+      data: [{ id: "flow-2", name: "Refreshed" }],
+      pageCount: 1,
+    })
+
+    await act(async () => {
+      await invalidate?.()
+    })
+
+    await vi.waitFor(() => {
+      expect(latestData).toEqual([{ id: "flow-2", name: "Refreshed" }])
+    })
+  })
 })

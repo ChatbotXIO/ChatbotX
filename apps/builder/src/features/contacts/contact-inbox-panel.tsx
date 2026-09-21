@@ -12,7 +12,9 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { orpc } from "@/lib/orpc/query"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
-import UpdateContactSequenceField from "../contact-sequences/update-contact-sequence-field"
+import UpdateContactSequenceField, {
+  type ContactSequence,
+} from "../contact-sequences/update-contact-sequence-field"
 import type { TagResource } from "../tags/schema/resource"
 import { ContactAppointmentsList } from "./components/contact-appointments-list"
 import UpdateContactTagField from "./components/update-contact-tag-field"
@@ -196,12 +198,21 @@ function ContactNotesSection({
   workspaceId: string
   contactId: string
 }) {
+  const t = useTranslations()
   const queryClient = useQueryClient()
   const queryOptions =
     orpc.contactNotesAPI.listContactNotesAuthenticatedAPI.queryOptions({
       input: { workspaceId, contactId },
     })
-  const { data } = useQuery(queryOptions)
+  const { data, isError } = useQuery(queryOptions)
+
+  if (isError) {
+    return (
+      <div className="px-2 text-muted-foreground text-sm">
+        {t("messages.errorLoadingData")}
+      </div>
+    )
+  }
 
   return (
     <ContactNotesManage
@@ -222,13 +233,14 @@ function ContactSequencesSection({
   contactId: string
   contact: GetContactResponse
 }) {
+  const t = useTranslations()
   const queryClient = useQueryClient()
   const queryOptions =
     orpc.contactSequencesAPI.listContactSequencesAuthenticatedAPI.queryOptions({
       input: { workspaceId, contactId },
     })
-  const { data } = useQuery(queryOptions)
-  const sequences = useMemo(
+  const { data, isError } = useQuery(queryOptions)
+  const sequences: ContactSequence[] = useMemo(
     () =>
       (data?.data ?? []).map((sequence) => ({
         sequence: {
@@ -239,10 +251,18 @@ function ContactSequencesSection({
     [data?.data],
   )
 
+  if (isError) {
+    return (
+      <div className="px-2 text-muted-foreground text-sm">
+        {t("messages.errorLoadingData")}
+      </div>
+    )
+  }
+
   return (
     <UpdateContactSequenceField
       contact={contact}
-      onSuccess={(updatedSequences) => {
+      onSuccess={(updatedSequences: ContactSequence[]) => {
         queryClient.setQueryData(queryOptions.queryKey, {
           data: updatedSequences.map((sequence) => ({
             sequenceId: sequence.sequence.id,
@@ -263,11 +283,19 @@ function ContactCouponsSection({
   contactId: string
 }) {
   const t = useTranslations()
-  const { data: coupons = [] } = useQuery(
+  const { data: coupons = [], isError } = useQuery(
     orpc.couponsAPI.listContactCouponsAPI.queryOptions({
       input: { workspaceId, contactId },
     }),
   )
+
+  if (isError) {
+    return (
+      <div className="px-2 text-muted-foreground text-sm">
+        {t("messages.errorLoadingData")}
+      </div>
+    )
+  }
 
   return (
     <div className="grid gap-2 px-2 text-sm">
@@ -299,11 +327,20 @@ function ContactAppointmentsSection({
   workspaceId: string
   contactId: string
 }) {
-  const { data: appointments = [] } = useQuery(
+  const t = useTranslations()
+  const { data: appointments = [], isError } = useQuery(
     orpc.appointmentsAPI.listContactAppointmentsAPI.queryOptions({
       input: { workspaceId, contactId },
     }),
   )
+
+  if (isError) {
+    return (
+      <div className="px-2 text-muted-foreground text-sm">
+        {t("messages.errorLoadingData")}
+      </div>
+    )
+  }
 
   return <ContactAppointmentsList appointments={appointments} />
 }

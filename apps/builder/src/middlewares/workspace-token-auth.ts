@@ -124,6 +124,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     await assertWorkspaceOwnerAccessForMethod({
       method,
       ownerId: workspace.ownerId,
+      path,
     })
 
     const requestApiToken: RequestApiToken = {

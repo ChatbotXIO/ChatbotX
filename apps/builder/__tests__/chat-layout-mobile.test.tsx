@@ -17,11 +17,8 @@ vi.mock("@/features/messages/store/call-playback-store", () => ({
   },
 }))
 
-const mockRouterReplace = vi.fn()
-
 vi.mock("next/navigation", () => ({
   usePathname: () => "/space/w1/inbox",
-  useRouter: () => ({ replace: mockRouterReplace }),
   useSearchParams: () => new URLSearchParams("conversationId=c1"),
 }))
 
@@ -119,7 +116,6 @@ describe("ChatLayout", () => {
     })
     container.remove()
     setViewportWidth(1024)
-    mockRouterReplace.mockClear()
   })
 
   test("shows only the conversation list on mobile with nothing selected", () => {
@@ -163,6 +159,27 @@ describe("ChatLayout", () => {
     expect(storeState.setActiveConversationId).toHaveBeenCalledWith(null)
   })
 
+  test("keeps an auto-selected conversation open across a mid-session resize to mobile", () => {
+    storeState.activeConversationId = "c1"
+    storeState.activeConversationAutoSelected = true
+    setViewportWidth(1440)
+    render()
+
+    // Starts on desktop: the first resolved measurement is not mobile, so
+    // the one-time suppression never applies and the auto-selected
+    // conversation stays open for the rest of the session.
+    expect(find("thread-pane")).not.toBeNull()
+    expect(storeState.setActiveConversationId).not.toHaveBeenCalled()
+
+    act(() => {
+      setViewportWidth(375)
+    })
+
+    // A later resize/rotation across the breakpoint must not retroactively
+    // wipe out a conversation the user has been reading.
+    expect(storeState.setActiveConversationId).not.toHaveBeenCalled()
+  })
+
   test("keeps a deep-linked conversation open on mobile", () => {
     storeState.activeConversationId = "c1"
     storeState.activeConversationAutoSelected = false
@@ -202,13 +219,16 @@ describe("ChatLayout", () => {
     setViewportWidth(375)
     render()
 
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState")
+
     act(() => {
       find("back")?.dispatchEvent(
         new MouseEvent("click", { bubbles: true, cancelable: true }),
       )
     })
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/space/w1/inbox")
+    expect(replaceStateSpy).toHaveBeenCalledWith(null, "", "/space/w1/inbox")
+    replaceStateSpy.mockRestore()
   })
 
   test("offers the contact panel behind a control instead of a third column", () => {

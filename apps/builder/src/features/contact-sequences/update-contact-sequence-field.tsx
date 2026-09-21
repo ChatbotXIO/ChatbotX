@@ -13,7 +13,7 @@ import type { ContactResource } from "../contacts/schema/resource"
 import { updateContactSequenceAction } from "./actions/update-contact-sequence.action"
 import { updateContactSequenceRequest } from "./schema"
 
-type ContactSequence = {
+export type ContactSequence = {
   sequence: {
     id: string
     name: string

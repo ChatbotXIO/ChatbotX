@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { useInvalidateUsers } from "@/features/users/provider/user-hook"
 import { deleteInboxTeamAction } from "./actions/delete-inbox-team.action"
 
 export function DeleteInboxTeamDialog({
@@ -30,6 +31,7 @@ export function DeleteInboxTeamDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateUsers = useInvalidateUsers()
 
   const { execute, isPending } = useAction(
     deleteInboxTeamAction.bind(null, workspaceId),
@@ -41,6 +43,7 @@ export function DeleteInboxTeamDialog({
           }),
         )
         onOpenChange(false)
+        invalidateUsers()
         router.refresh()
       },
       onError: ({ error }) => {

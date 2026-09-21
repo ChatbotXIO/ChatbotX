@@ -147,29 +147,45 @@ describe("user query hooks", () => {
     expect(mockListInboxTeams).not.toHaveBeenCalled()
   })
 
-  test("invalidates both user-backed lists", async () => {
+  test("invalidates both user-backed lists, and a refetch returns fresh data", async () => {
     let invalidate: (() => unknown) | null = null
+    let data: { inboxTeams: unknown; workspaceMembers: unknown } | undefined
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries")
 
     act(() => {
       root.render(
         <QueryClientProvider client={queryClient}>
-          <UsersProbe />
+          <UsersProbe onData={(nextData) => (data = nextData)} />
           <InvalidateProbe onReady={(fn) => (invalidate = fn)} />
         </QueryClientProvider>,
       )
     })
 
     await vi.waitFor(() => {
-      expect(mockListWorkspaceMembers).toHaveBeenCalledTimes(1)
-      expect(mockListInboxTeams).toHaveBeenCalledTimes(1)
+      expect(data).toEqual({ workspaceMembers: [], inboxTeams: [] })
     })
+
+    // A wrong query key on either invalidated entry would leave that half of
+    // `data` stuck on stale values forever, timing the final `waitFor` out.
+    const refreshedMembers = [{ id: "member-2" }]
+    const refreshedTeams = [{ id: "team-2" }]
+    mockListWorkspaceMembers.mockResolvedValue({
+      data: refreshedMembers,
+      pageCount: 1,
+    })
+    mockListInboxTeams.mockResolvedValue({ data: refreshedTeams })
 
     await act(async () => {
       await invalidate?.()
     })
 
     expect(invalidateQueries).toHaveBeenCalledTimes(2)
+    await vi.waitFor(() => {
+      expect(data).toEqual({
+        workspaceMembers: refreshedMembers,
+        inboxTeams: refreshedTeams,
+      })
+    })
   })
 
   test("keeps the invalidator stable across renders", () => {

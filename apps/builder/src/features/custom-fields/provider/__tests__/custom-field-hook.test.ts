@@ -1,14 +1,22 @@
 // @vitest-environment jsdom
 
+import { systemFieldTypes } from "@chatbotx.io/database/partials"
+import { formatBotFieldReference } from "@chatbotx.io/flow-config"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, createElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { buildGroupedFieldOptions, useCustomFields } from "../custom-field-hook"
+import {
+  buildGroupedFieldOptions,
+  customFieldIconsMap,
+  useCustomFieldSelectOptions,
+  useCustomFields,
+} from "../custom-field-hook"
 
-const { mockListCustomFields } = vi.hoisted(() => ({
+const { mockListCustomFields, mockListBotFields } = vi.hoisted(() => ({
   mockListCustomFields: vi.fn(),
+  mockListBotFields: vi.fn(),
 }))
 
 vi.mock("@/lib/orpc/orpc", () => ({
@@ -16,7 +24,18 @@ vi.mock("@/lib/orpc/orpc", () => ({
     customFieldsAPI: {
       privateListCustomFieldsAPI: mockListCustomFields,
     },
+    botFieldAPIs: {
+      privateListBotFieldsAPI: mockListBotFields,
+    },
   },
+}))
+
+vi.mock("next/navigation", () => ({
+  useParams: () => ({ workspaceId: "workspace-1" }),
+}))
+
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => key,
 }))
 
 const makeQueryClient = () =>
@@ -131,6 +150,155 @@ describe("custom field query hooks", () => {
     await vi.waitFor(() => {
       expect(returnedData).toEqual([
         { id: "field-1", name: "Company", type: "shortText" },
+      ])
+    })
+  })
+})
+
+function CustomFieldSelectOptionsProbe({
+  onData,
+  ...props
+}: {
+  onData: (data: SelectOption[]) => void
+} & Parameters<typeof useCustomFieldSelectOptions>[0]) {
+  onData(useCustomFieldSelectOptions(props))
+  return null
+}
+
+describe("useCustomFieldSelectOptions", () => {
+  let container: HTMLDivElement
+  let root: Root
+  let queryClient: QueryClient
+  let data: SelectOption[] | undefined
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockListCustomFields.mockResolvedValue({
+      data: [
+        { id: "field-1", name: "Company", type: "shortText" },
+        { id: "field-2", name: "Revenue", type: "number" },
+      ],
+    })
+    mockListBotFields.mockResolvedValue({
+      data: [{ id: "bot-1", name: "Order Total", type: "number" }],
+    })
+    container = document.createElement("div")
+    document.body.append(container)
+    root = createRoot(container)
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+    data = undefined
+  })
+
+  afterEach(() => {
+    act(() => {
+      root.unmount()
+    })
+    container.remove()
+    queryClient.clear()
+  })
+
+  const render = (
+    props: Parameters<typeof useCustomFieldSelectOptions>[0] = {},
+  ) => {
+    act(() => {
+      root.render(
+        createElement(
+          QueryClientProvider,
+          { client: queryClient },
+          createElement(CustomFieldSelectOptionsProbe, {
+            ...props,
+            onData: (next) => (data = next),
+          }),
+        ),
+      )
+    })
+  }
+
+  test("defaults to a flat list of custom fields only, with no reserved or bot fields", async () => {
+    render()
+
+    await vi.waitFor(() => {
+      expect(data).toEqual([
+        {
+          label: "Company",
+          value: "field-1",
+          icon: customFieldIconsMap.shortText,
+        },
+        {
+          label: "Revenue",
+          value: "field-2",
+          icon: customFieldIconsMap.number,
+        },
+      ])
+    })
+  })
+
+  test("drops a reserved field whose channels do not overlap the requested channels", async () => {
+    render({
+      includeReserved: true,
+      reservedFieldIds: [
+        systemFieldTypes.enum.email,
+        systemFieldTypes.enum.fb_chat_link,
+      ],
+      channels: ["whatsapp"],
+    })
+
+    await vi.waitFor(() => {
+      expect(data?.map((option) => option.label)).toEqual([
+        "fields.email.label",
+        "Company",
+        "Revenue",
+      ])
+    })
+  })
+
+  test("keeps a channel-scoped reserved field when the requested channel matches", async () => {
+    render({
+      includeReserved: true,
+      reservedFieldIds: [systemFieldTypes.enum.fb_chat_link],
+      channels: ["messenger"],
+    })
+
+    await vi.waitFor(() => {
+      expect(data?.map((option) => option.label)).toEqual([
+        "fields.fbChatLink.label",
+        "Company",
+        "Revenue",
+      ])
+    })
+  })
+
+  test("groups system/custom/account fields and formats the bot-field reference when includeBotFields is set", async () => {
+    render({ includeBotFields: true })
+
+    await vi.waitFor(() => {
+      expect(data).toHaveLength(2)
+    })
+    expect(data?.map((group) => group.label)).toEqual([
+      "fields.customField.groupCustomFields",
+      "fields.customField.groupAccountFields",
+    ])
+    expect(data?.[1]?.children).toEqual([
+      {
+        label: "Order Total",
+        value: formatBotFieldReference("bot-1"),
+        icon: customFieldIconsMap.number,
+      },
+    ])
+  })
+
+  test("applies customFieldTypes and prefix together", async () => {
+    render({ customFieldTypes: ["number"], prefix: "field" })
+
+    await vi.waitFor(() => {
+      expect(data).toEqual([
+        {
+          label: "Revenue",
+          value: "field:field-2",
+          icon: customFieldIconsMap.number,
+        },
       ])
     })
   })
