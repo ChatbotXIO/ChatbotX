@@ -1,5 +1,6 @@
 import type { HTTPMethod } from "@orpc/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { CONVERSATIONS_LIST_POST_PATH } from "@/features/conversations/lib/api-paths"
 
 const { getAccessState, isAtLimit, isCloud } = vi.hoisted(() => ({
   getAccessState: vi.fn(),
@@ -28,6 +29,7 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 vi.mock("@/env", () => ({ isCloud }))
 
 const {
+  assertWorkspaceOwnerAccessForMethod,
   checkWorkspaceOwnerAccess,
   isReadOnlyTokenAllowedMethod,
   isWorkspaceMutationMethod,
@@ -114,6 +116,36 @@ describe("checkWorkspaceOwnerAccess", () => {
     const result = await checkWorkspaceOwnerAccess({ ownerId: "owner-1" })
 
     expect(result).toBeNull()
+  })
+})
+
+describe("assertWorkspaceOwnerAccessForMethod", () => {
+  test("allows the conversation list POST but denies other POST routes", async () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({
+      blocked: true,
+      reason: "status",
+      planName: null,
+      status: "expired",
+      trialEndsAt: null,
+    })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        path: CONVERSATIONS_LIST_POST_PATH,
+        ownerId: "owner-1",
+      }),
+    ).resolves.toBeUndefined()
+    expect(getAccessState).not.toHaveBeenCalled()
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        path: "/workspaces/{workspaceId}/conversations/assign",
+        ownerId: "owner-1",
+      }),
+    ).rejects.toMatchObject({ code: "trialExpired" })
   })
 })
 

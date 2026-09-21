@@ -10,8 +10,9 @@ import { useFormContext, useWatch } from "react-hook-form"
 import {
   getFlowNodesOptions,
   useFlowSelectOptions,
+  useFlows,
 } from "@/features/flows/provider/flow-hook"
-import { useFlowStore } from "@/features/flows/provider/flow-store-context"
+import { useWorkspaceId } from "@/hooks/routing"
 
 const BROWSER_SIZES = [40, 70, 100]
 const DEFAULT_BROWSER_SIZE = 100
@@ -51,8 +52,8 @@ export function buttonActionOptions({
 
 /**
  * Canvas-free by construction: unlike the flow builder's
- * `button-editor-dialog.tsx` this never touches react-flow. It only *reads*
- * the flow store to offer flows and their nodes as jump targets.
+ * `button-editor-dialog.tsx` this never touches react-flow. It only reads
+ * flows to offer flows and their nodes as jump targets.
  *
  * `parentName` is optional because a button's action fields sit at the root of
  * the item form inside `ItemEditorDialog`, while a quick reply nests them under
@@ -68,7 +69,7 @@ export function ButtonActionEditor({
   const t = useTranslations()
   const { control, getValues, setValue } = useFormContext()
   const flowOptions = useFlowSelectOptions()
-  const flows = useFlowStore((state) => state.flows)
+  const { data: flows = [] } = useFlows(useWorkspaceId())
 
   // An empty `parentName` must not produce the dead path ".actionType".
   const field = (key: string) => (parentName ? `${parentName}.${key}` : key)

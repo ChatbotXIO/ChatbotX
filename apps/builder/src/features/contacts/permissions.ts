@@ -37,16 +37,13 @@ export function getAssignedContactsUserId(input: {
     : undefined
 }
 
-export async function resolveContactPermissionScope(
-  workspaceId: string,
-): Promise<ContactPermissionScope | null> {
-  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
-  if (!userAndWorkspace) {
-    return null
-  }
-
-  const { user, targetWorkspaceMember } = userAndWorkspace
-  const permissions = targetWorkspaceMember.permissions
+export function buildContactPermissionScope({
+  permissions,
+  userId,
+}: {
+  permissions: Permissions
+  userId: string
+}): ContactPermissionScope | null {
   if (!canAccessContactsSection(permissions)) {
     return null
   }
@@ -55,9 +52,24 @@ export async function resolveContactPermissionScope(
     canViewEmailAndPhone: canViewContactEmailAndPhone(permissions),
     restrictToAssignedUserId: getAssignedContactsUserId({
       permissions,
-      userId: user.id,
+      userId,
     }),
   }
+}
+
+export async function resolveContactPermissionScope(
+  workspaceId: string,
+): Promise<ContactPermissionScope | null> {
+  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
+  if (!userAndWorkspace) {
+    return null
+  }
+  const { user, targetWorkspaceMember } = userAndWorkspace
+
+  return buildContactPermissionScope({
+    permissions: targetWorkspaceMember.permissions,
+    userId: user.id,
+  })
 }
 
 export async function requireContactPermissionScope(
@@ -67,18 +79,15 @@ export async function requireContactPermissionScope(
   if (!userAndWorkspace) {
     throw new ChatbotXException("User is not associated with this workspace")
   }
-
   const { user, targetWorkspaceMember } = userAndWorkspace
-  const permissions = targetWorkspaceMember.permissions
-  if (!canAccessContactsSection(permissions)) {
+
+  const scope = buildContactPermissionScope({
+    permissions: targetWorkspaceMember.permissions,
+    userId: user.id,
+  })
+  if (!scope) {
     throw new ChatbotXException("User is not authorized to access contacts")
   }
 
-  return {
-    canViewEmailAndPhone: canViewContactEmailAndPhone(permissions),
-    restrictToAssignedUserId: getAssignedContactsUserId({
-      permissions,
-      userId: user.id,
-    }),
-  }
+  return scope
 }

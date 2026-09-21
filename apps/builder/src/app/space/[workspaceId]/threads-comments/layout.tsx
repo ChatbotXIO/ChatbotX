@@ -1,6 +1,5 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 
 export default async function ThreadsCommentsLayout({
   children,
@@ -14,9 +13,5 @@ export default async function ThreadsCommentsLayout({
     return notFound()
   }
 
-  return (
-    <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-      {children}
-    </FlowStoreProvider>
-  )
+  return children
 }

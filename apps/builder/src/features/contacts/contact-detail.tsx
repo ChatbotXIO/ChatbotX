@@ -483,19 +483,19 @@ export const ContactDetail = ({
     )
   }
 
-  const handleChooseCustomField = (customFieldId: string) => {
-    const targetCustomField = customFieldMap.get(customFieldId)
-    if (!targetCustomField) {
-      return
-    }
+  const handleChooseCustomField = (field: {
+    id: string
+    name: string
+    type: CustomFieldType
+  }) => {
     setContactFields((previous) => [
       ...previous,
       {
-        key: customFieldId,
-        icon: customFieldIconsMap[targetCustomField.type],
-        label: targetCustomField.name,
+        key: field.id,
+        icon: customFieldIconsMap[field.type],
+        label: field.name,
         value: "",
-        type: targetCustomField.type,
+        type: field.type,
       },
     ])
   }

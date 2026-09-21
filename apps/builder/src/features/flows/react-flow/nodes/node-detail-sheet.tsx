@@ -10,7 +10,8 @@ import {
 import { useReactFlow, useStore } from "@xyflow/react"
 import { LoaderCircleIcon } from "lucide-react"
 import { memo, useEffect, useMemo, useRef, useState } from "react"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import { useCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
+import { useWorkspaceId } from "@/hooks/routing"
 import { NodeEditor } from "./editor"
 import { NodeNameEditor } from "./node-name-editor"
 import {
@@ -82,12 +83,10 @@ export const NodeDetailSheetContent = memo(
   }) => {
     // The editor upgrades legacy spreadsheet steps to variable tokens once, when
     // it seeds its form (and child editors capture their initial value). That
-    // conversion needs the custom-field lookup, so wait until the store has
-    // finished loading before mounting — `initialized` flips true after the
+    // conversion needs the custom-field lookup, so wait until the query has
+    // finished loading before mounting — `isFetched` flips true after the
     // fetch settles (success or failure), so this never deadlocks.
-    const customFieldsInitialized = useCustomFieldStore(
-      (state) => state.initialized,
-    )
+    const customFieldsInitialized = useCustomFields(useWorkspaceId()).isFetched
 
     return (
       <Sheet onOpenChange={onOpenChange} open={open}>

@@ -2,9 +2,8 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { CreateFacebookLeadAdAutomationForm } from "@/features/facebook-lead-ad-automation/components/create-facebook-lead-ad-automation"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 
 export default async function CreateFacebookLeadAdPage({
   params,
@@ -30,11 +29,7 @@ export default async function CreateFacebookLeadAdPage({
           { label: t("facebookLeadAdsAutomation.create"), href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
-        <CustomFieldStoreProvider workspaceId={workspaceId}>
-          <CreateFacebookLeadAdAutomationForm workspaceId={workspaceId} />
-        </CustomFieldStoreProvider>
-      </FlowStoreProvider>
+      <CreateFacebookLeadAdAutomationForm workspaceId={workspaceId} />
     </div>
   )
 }

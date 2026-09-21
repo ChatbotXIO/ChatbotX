@@ -4,8 +4,7 @@ import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+
 import { listReflinks } from "@/features/reflinks/queries"
 import { ReflinksTable } from "@/features/reflinks/reflinks-table"
 import { listReflinksSearchParamsCache } from "@/features/reflinks/schema/query"
@@ -44,13 +43,9 @@ export default async function ReflinksPage({
           { label: t("reflinks.title"), href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
-        <CustomFieldStoreProvider workspaceId={workspaceId}>
-          <Suspense>
-            <ReflinksTable promises={promises} workspaceId={workspaceId} />
-          </Suspense>
-        </CustomFieldStoreProvider>
-      </FlowStoreProvider>
+      <Suspense>
+        <ReflinksTable promises={promises} workspaceId={workspaceId} />
+      </Suspense>
     </div>
   )
 }

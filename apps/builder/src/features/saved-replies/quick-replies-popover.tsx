@@ -12,7 +12,8 @@ import {
   useRef,
   useState,
 } from "react"
-import { useSavedReplyStore } from "./provider/saved-reply-store-context"
+import { useWorkspaceId } from "@/hooks/routing"
+import { useSavedReplies } from "./provider/saved-reply-hook"
 
 type SavedReplySlashPopoverProps = {
   inputValue: string
@@ -30,14 +31,12 @@ export const QuickRepliesPopover = ({
   const [activeIndex, setActiveIndex] = useState(0)
   const anchorRef = useRef<HTMLDivElement>(null)
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([])
-  const {
-    savedReplies,
-    isLoading: isLoadingSavedReplies,
-    getAllSavedReplies,
-  } = useSavedReplyStore((state) => state)
-
+  const workspaceId = useWorkspaceId()
   const normalizedContent = (inputValue ?? "").trimStart()
   const shouldShow = normalizedContent.startsWith("/")
+  const { data: savedReplies = [], isFetching } = useSavedReplies(workspaceId, {
+    enabled: shouldShow,
+  })
   const keyword = shouldShow
     ? normalizedContent.slice(1).trim().toLowerCase()
     : ""
@@ -62,8 +61,7 @@ export const QuickRepliesPopover = ({
     }
 
     setOpen(true)
-    getAllSavedReplies()
-  }, [shouldShow, getAllSavedReplies])
+  }, [shouldShow])
 
   useEffect(() => {
     if (filteredSavedReplies.length === 0) {
@@ -151,19 +149,19 @@ export const QuickRepliesPopover = ({
           initialFocus={false}
           side="top"
         >
-          {isLoadingSavedReplies ? (
+          {isFetching ? (
             <div className="px-2 py-3 text-muted-foreground text-sm">
               {t("messages.loadingData")}
             </div>
           ) : null}
 
-          {!isLoadingSavedReplies && filteredSavedReplies.length === 0 ? (
+          {!isFetching && filteredSavedReplies.length === 0 ? (
             <div className="px-2 py-3 text-muted-foreground text-sm">
               {t("messages.noDataAvailable")}
             </div>
           ) : null}
 
-          {isLoadingSavedReplies
+          {isFetching
             ? null
             : filteredSavedReplies.map((reply, index) => (
                 <Button

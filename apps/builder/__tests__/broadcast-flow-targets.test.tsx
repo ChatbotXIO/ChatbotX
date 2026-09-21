@@ -47,10 +47,6 @@ const flows = [
   flow("fb", "Promo B", "tpl-a"),
   flow("fc", "Promo C", "tpl-b"),
 ]
-vi.mock("@/features/flows/provider/flow-store-context", () => ({
-  useFlowStore: (selector: (state: { flows: typeof flows }) => unknown) =>
-    selector({ flows }),
-}))
 
 const summary = (id: string, inboxId: string) => ({
   id,
@@ -126,7 +122,7 @@ function render(defaultValues: FormValues) {
   act(() => {
     root?.render(
       <Harness defaultValues={defaultValues}>
-        <BroadcastFlowTargets channel="whatsapp" />
+        <BroadcastFlowTargets channel="whatsapp" flows={flows} />
       </Harness>,
     )
   })

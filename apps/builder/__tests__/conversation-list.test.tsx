@@ -41,6 +41,7 @@ const storeState = {
   setFilters: vi.fn(),
   resetState: vi.fn(),
   nextCursorConversation: null as string | null,
+  isFirstLoadConversation: true,
   isLoadingConversation: false,
   setActiveConversationId: vi.fn(),
   initActiveConversationFromUrl: vi.fn().mockResolvedValue(undefined),
@@ -68,6 +69,7 @@ describe("ConversationList", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
+    storeState.isFirstLoadConversation = true
     capturedProps.current = null
     container = document.createElement("div")
     document.body.appendChild(container)
@@ -87,5 +89,23 @@ describe("ConversationList", () => {
     expect(capturedProps.current?.computeItemKey).toBeInstanceOf(Function)
     const item = { id: "conv-42" }
     expect(capturedProps.current?.computeItemKey?.(0, item)).toBe("conv-42")
+  })
+
+  test("loads the first conversation page once when the server did not seed it", () => {
+    act(() => {
+      root.render(<ConversationList workspaceId="ws-1" />)
+    })
+
+    expect(storeState.loadMoreConversations).toHaveBeenCalledTimes(1)
+  })
+
+  test("skips the mount load when the server already seeded the first page", () => {
+    storeState.isFirstLoadConversation = false
+
+    act(() => {
+      root.render(<ConversationList workspaceId="ws-1" />)
+    })
+
+    expect(storeState.loadMoreConversations).not.toHaveBeenCalled()
   })
 })

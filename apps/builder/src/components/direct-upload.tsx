@@ -118,7 +118,7 @@ export function DirectUploadOrInsertLink({
   fileType: FileType
   uploadPath: string
   onSuccess?: (url: string) => void
-  // Requires a mounted CustomFieldStoreProvider (e.g. inside the flow editor).
+  // The variable picker fetches custom fields via TanStack Query when enabled.
   showVariablePicker?: boolean
   // Pick an existing workspace file from the Media Library instead of only
   // uploading a new one from the device.

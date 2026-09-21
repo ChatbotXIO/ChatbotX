@@ -1,67 +1,70 @@
 // @vitest-environment jsdom
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-
-// ---------------------------------------------------------------------------
-// ContactInboxPanel — the "latest request wins" guard around
-// `getContactAuthenticatedAPI`. The panel fires an initial fetch on open AND
-// (via `useAutoRefreshContactProfile`'s `onProfileUpdated` callback) a
-// convergence re-fetch once the auto-refresh applies an update. Those two
-// requests can settle out of order (the initial one is often slower — it
-// races the Graph/Telegram round trip the refresh triggers) — whichever
-// request was issued LAST must win, never whichever RESOLVES last.
-// ---------------------------------------------------------------------------
+import { ContactInboxPanel } from "@/features/contacts/contact-inbox-panel"
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
 
 const getContactMock = vi.fn()
-const listCouponsMock = vi.fn(async (_input: unknown) => [])
-const listAppointmentsMock = vi.fn(async (_input: unknown) => [])
-vi.mock("@/lib/orpc/orpc", () => ({
-  client: {
+
+vi.mock("@/lib/orpc/query", () => ({
+  orpc: {
     contactsAPIs: {
-      getContactAuthenticatedAPI: (input: unknown) => getContactMock(input),
+      getContactAuthenticatedAPI: {
+        queryOptions: ({
+          input,
+          enabled,
+          initialData,
+        }: {
+          input: { workspaceId: string; contactId: string }
+          enabled: boolean
+          initialData: unknown
+        }) => ({
+          queryKey: ["get-contact", input.workspaceId, input.contactId],
+          queryFn: () => getContactMock(input),
+          enabled,
+          initialData,
+        }),
+      },
     },
-    couponsAPI: {
-      listContactCouponsAPI: (input: unknown) => listCouponsMock(input),
-    },
-    appointmentsAPI: {
-      listContactAppointmentsAPI: (input: unknown) =>
-        listAppointmentsMock(input),
+    contactNotesAPI: {
+      listContactNotesAuthenticatedAPI: {
+        queryOptions: ({
+          input,
+        }: {
+          input: { workspaceId: string; contactId: string }
+        }) => ({
+          queryKey: ["contact-notes", input.workspaceId, input.contactId],
+          queryFn: async () => ({ data: [] }),
+        }),
+      },
     },
   },
 }))
 
 let latestConversations: unknown[] = []
+let seededContact: unknown
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
   useChatStore: <T,>(
     selector: (state: {
       conversations: unknown[]
+      seededContact: unknown
       updateContact: () => void
     }) => T,
-  ) => selector({ conversations: latestConversations, updateContact: vi.fn() }),
+  ) =>
+    selector({
+      conversations: latestConversations,
+      seededContact,
+      updateContact: vi.fn(),
+    }),
 }))
-
-// Captures the props `ContactInboxPanel` passes to the hook, including
-// `onProfileUpdated`, so the test can invoke it directly to simulate the
-// hook's own async `.then()` firing without re-driving the whole
-// refreshContactProfileAction plumbing (already covered in
-// use-auto-refresh-contact-profile.test.tsx).
-type CapturedHookProps = {
-  onProfileUpdated?: (contactId: string) => void
-  setContactData?: (
-    updater: (prev: { firstName: string | null } | null) => unknown,
-  ) => void
-}
-const hookCalls: CapturedHookProps[] = []
 vi.mock("@/features/contacts/hooks/use-auto-refresh-contact-profile", () => ({
-  useAutoRefreshContactProfile: (props: CapturedHookProps) => {
-    hookCalls.push(props)
-  },
+  useAutoRefreshContactProfile: () => undefined,
 }))
 
 vi.mock("@/features/contacts/contact-detail", () => ({
@@ -90,11 +93,6 @@ vi.mock("@/features/contact-sequences/update-contact-sequence-field", () => ({
   default: () => null,
 }))
 
-vi.mock("@/features/sequences/provider/sequence-store-context", () => ({
-  SequenceStoreProvider: ({ children }: { children: React.ReactNode }) =>
-    children,
-}))
-
 vi.mock("@chatbotx.io/ui/components/ui/accordion", () => ({
   Accordion: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -110,46 +108,51 @@ vi.mock("@chatbotx.io/ui/components/ui/accordion", () => ({
   ),
 }))
 
-const { ContactInboxPanel } = await import(
-  "@/features/contacts/contact-inbox-panel"
-)
-
-function deferred<T>() {
-  let resolve!: (value: T) => void
-  let reject!: (reason: unknown) => void
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res
-    reject = rej
+const makeQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        staleTime: 30_000,
+      },
+    },
   })
-  // Attach a no-op catch handler so an intentionally-unresolved/rejected
-  // deferred never surfaces as an unhandled rejection warning in tests that
-  // never await this promise directly (the component under test consumes
-  // it via `.then()/.catch()`, which is what's actually under test).
-  promise.catch(() => undefined)
-  return { promise, resolve, reject }
-}
 
-const baseConversation = {
+const makeContact = (id: string, firstName: string | null) => ({
+  id,
+  firstName,
+  lastName: null,
+  tags: [],
+})
+
+const firstConversation = {
   id: "conv-1",
   contactId: "contact-1",
   contact: { id: "contact-1", firstName: null, lastName: null },
   contactInboxes: [],
 }
 
+const secondConversation = {
+  id: "conv-2",
+  contactId: "contact-2",
+  contact: { id: "contact-2", firstName: null, lastName: null },
+  contactInboxes: [],
+}
+
 describe("ContactInboxPanel", () => {
   let container: HTMLDivElement
   let root: Root
+  let queryClient: QueryClient
 
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
+    queryClient = makeQueryClient()
     getContactMock.mockReset()
-    listCouponsMock.mockClear()
-    listAppointmentsMock.mockClear()
-    hookCalls.length = 0
-    latestConversations = [baseConversation]
+    seededContact = undefined
+    latestConversations = [firstConversation, secondConversation]
   })
 
   afterEach(() => {
@@ -157,132 +160,85 @@ describe("ContactInboxPanel", () => {
       root.unmount()
     })
     container.remove()
+    queryClient.clear()
   })
 
-  function render() {
+  const render = (activeConversationId = "conv-1") => {
     act(() => {
       root.render(
-        <ContactInboxPanel activeConversationId="conv-1" workspaceId="ws-1" />,
+        <QueryClientProvider client={queryClient}>
+          <ContactInboxPanel
+            activeConversationId={activeConversationId}
+            workspaceId="ws-1"
+          />
+        </QueryClientProvider>,
       )
     })
   }
 
-  test("normal open (no refresh in flight) applies the fetched contact", async () => {
-    const { promise, resolve } = deferred<{ firstName: string | null }>()
-    getContactMock.mockReturnValueOnce(promise)
+  test("uses the matching seeded contact without calling getContact", () => {
+    seededContact = makeContact("contact-1", "Seeded Jane")
 
     render()
 
-    expect(getContactMock).toHaveBeenCalledTimes(1)
+    expect(getContactMock).not.toHaveBeenCalled()
+    expect(
+      container.querySelector('[data-testid="contact-detail"]')?.textContent,
+    ).toBe("Seeded Jane")
+  })
+
+  test("fetches exactly once when the seeded contact is for another contact", async () => {
+    seededContact = makeContact("contact-2", "Other contact")
+    getContactMock.mockResolvedValue(makeContact("contact-1", "Jane"))
+
+    render()
+
+    await vi.waitFor(() => {
+      expect(getContactMock).toHaveBeenCalledTimes(1)
+    })
     expect(getContactMock).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactId: "contact-1",
     })
-
-    await act(async () => {
-      resolve({ firstName: "Jane" })
-      await Promise.resolve()
-    })
-
-    const detail = container.querySelector('[data-testid="contact-detail"]')
-    expect(detail?.textContent).toBe("Jane")
   })
 
-  test("initial getContact resolves AFTER the refresh-triggered re-fetch → the panel keeps the refreshed data (latest request wins, not latest to resolve)", async () => {
-    const initialFetch = deferred<{ firstName: string | null }>()
-    const refreshFetch = deferred<{ firstName: string | null }>()
+  test("applies fetched contact data", async () => {
+    getContactMock.mockResolvedValue(makeContact("contact-1", "Jane"))
+
+    render()
+
+    await vi.waitFor(() => {
+      expect(
+        container.querySelector('[data-testid="contact-detail"]')?.textContent,
+      ).toBe("Jane")
+    })
+  })
+
+  test("retries a previously failed contact after revisiting it", async () => {
     getContactMock
-      .mockReturnValueOnce(initialFetch.promise) // the panel's own initial fetch on open
-      .mockReturnValueOnce(refreshFetch.promise) // triggered by onProfileUpdated
+      .mockRejectedValueOnce(new Error("network error"))
+      .mockResolvedValueOnce(makeContact("contact-2", "B"))
+      .mockResolvedValueOnce(makeContact("contact-1", "Recovered A"))
 
-    render()
-    expect(getContactMock).toHaveBeenCalledTimes(1)
-
-    // Simulate the auto-refresh hook applying an update and calling back
-    // into the panel — this fires the SECOND (later-issued) fetch while the
-    // first is still in flight.
-    const onProfileUpdated = hookCalls.at(-1)?.onProfileUpdated
-    expect(onProfileUpdated).toBeTypeOf("function")
-    act(() => {
-      onProfileUpdated?.("contact-1")
-    })
-    expect(getContactMock).toHaveBeenCalledTimes(2)
-
-    // The later-issued (refresh) request resolves FIRST with the real name.
-    await act(async () => {
-      refreshFetch.resolve({ firstName: "Jane" })
-      await Promise.resolve()
-    })
-    let detail = container.querySelector('[data-testid="contact-detail"]')
-    expect(detail?.textContent).toBe("Jane")
-
-    // The earlier (initial) request resolves AFTER — stale data must be
-    // discarded, not applied over the refreshed name.
-    await act(async () => {
-      initialFetch.resolve({ firstName: null })
-      await Promise.resolve()
-    })
-    detail = container.querySelector('[data-testid="contact-detail"]')
-    expect(detail?.textContent).toBe("Jane")
-  })
-  test("refresh patch applied, then the convergence re-fetch REJECTS → the panel keeps the patched name (does not wipe to null)", async () => {
-    const initialFetch = deferred<{ firstName: string | null }>()
-    getContactMock.mockReturnValueOnce(initialFetch.promise) // the panel's own initial fetch on open
-
-    render()
-    expect(getContactMock).toHaveBeenCalledTimes(1)
-
-    // Initial fetch resolves with the (nameless) contact — this is what
-    // would have made the contact eligible for auto-refresh in real code.
-    await act(async () => {
-      initialFetch.resolve({ firstName: null })
-      await Promise.resolve()
-    })
-    let detail = container.querySelector('[data-testid="contact-detail"]')
-    expect(detail?.textContent).toBe("no-name")
-
-    const { setContactData, onProfileUpdated } = hookCalls.at(-1) ?? {}
-    expect(setContactData).toBeTypeOf("function")
-    expect(onProfileUpdated).toBeTypeOf("function")
-
-    const convergenceFetch = deferred<{ firstName: string | null }>()
-    getContactMock.mockReturnValueOnce(convergenceFetch.promise)
-
-    // Mirrors what the real (unmocked) hook does: patch `contactData`
-    // locally via `setContactData`, then call `onProfileUpdated` to kick
-    // off the convergence re-fetch.
-    act(() => {
-      setContactData?.((prev) => prev && { ...prev, firstName: "Jane" })
-      onProfileUpdated?.("contact-1")
-    })
-    expect(getContactMock).toHaveBeenCalledTimes(2)
-
-    detail = container.querySelector('[data-testid="contact-detail"]')
-    expect(detail?.textContent).toBe("Jane")
-
-    // The convergence re-fetch fails (network blip / RSC error) — the
-    // already-patched name must survive, not be wiped to null.
-    await act(async () => {
-      convergenceFetch.reject(new Error("network error"))
-      await Promise.resolve()
-    })
-    detail = container.querySelector('[data-testid="contact-detail"]')
-    expect(detail?.textContent).toBe("Jane")
-  })
-
-  test("initial fetch failure still clears the panel (pre-existing behaviour, unchanged)", async () => {
-    const initialFetch = deferred<{ firstName: string | null }>()
-    getContactMock.mockReturnValueOnce(initialFetch.promise)
-
-    render()
-    expect(getContactMock).toHaveBeenCalledTimes(1)
-
-    await act(async () => {
-      initialFetch.reject(new Error("network error"))
-      await Promise.resolve()
+    render("conv-1")
+    await vi.waitFor(() => {
+      expect(getContactMock).toHaveBeenCalledTimes(1)
+      expect(
+        queryClient.getQueryState(["get-contact", "ws-1", "contact-1"])?.status,
+      ).toBe("error")
     })
 
-    const detail = container.querySelector('[data-testid="contact-detail"]')
-    expect(detail?.textContent).toBe("no-name")
+    render("conv-2")
+    await vi.waitFor(() => {
+      expect(getContactMock).toHaveBeenCalledTimes(2)
+    })
+
+    render("conv-1")
+    await vi.waitFor(() => {
+      expect(getContactMock).toHaveBeenCalledTimes(3)
+      expect(
+        container.querySelector('[data-testid="contact-detail"]')?.textContent,
+      ).toBe("Recovered A")
+    })
   })
 })

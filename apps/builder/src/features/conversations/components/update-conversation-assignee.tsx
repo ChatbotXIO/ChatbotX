@@ -30,22 +30,28 @@ export function UpdateConversationAssignee({
   )
 
   const agentLabel = useMemo(() => {
-    if (selectedId) {
+    const assignedUserId = conversation.assignedUserId
+    const assignedUserName = conversation.assignedUser?.name
+    if (
+      assignedUserId &&
+      assignedUserName &&
+      selectedId === `u_${assignedUserId}`
+    ) {
       if (selectedId === `u_${session?.user.id}`) {
         return t("assignAdmin.assignedToMe")
       }
-      const assignedUserId = conversation.assignedUserId
-      if (assignedUserId && selectedId === `u_${assignedUserId}`) {
-        return t("assignAdmin.assignedTo", {
-          name: conversation.assignedUser?.name ?? "--",
-        })
-      }
-      const assignedInboxTeamId = conversation.assignedInboxTeamId
-      if (assignedInboxTeamId && selectedId === `t_${assignedInboxTeamId}`) {
-        return t("assignAdmin.assignedTo", {
-          name: conversation.assignedInboxTeam?.name ?? "--",
-        })
-      }
+
+      return t("assignAdmin.assignedTo", { name: assignedUserName })
+    }
+
+    const assignedInboxTeamId = conversation.assignedInboxTeamId
+    const assignedInboxTeamName = conversation.assignedInboxTeam?.name
+    if (
+      assignedInboxTeamId &&
+      assignedInboxTeamName &&
+      selectedId === `t_${assignedInboxTeamId}`
+    ) {
+      return t("assignAdmin.assignedTo", { name: assignedInboxTeamName })
     }
     return t("assignAdmin.assignConversation")
   }, [conversation, selectedId, t, session])

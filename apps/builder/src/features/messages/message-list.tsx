@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
+import { INBOX_MESSAGES_PER_PAGE } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ConversationInfo } from "../conversations/components/conversation-info"
 import { changeMessageAttributesAction } from "./actions/change-message-attributes.action"
@@ -16,7 +17,6 @@ import { MessageItem } from "./components/message-item"
 import { canPrivateReplyToComment } from "./lib/private-reply"
 import type { MessageResourceWithRelations } from "./schema/resource"
 
-const MESSAGE_LIST_PER_PAGE = 20
 const START_INDEX = 100_000
 
 export function MessageList() {
@@ -199,7 +199,7 @@ export function MessageList() {
     prependPendingRef.current = false
     didAutoSelectCommentRef.current = false
     if (activeConversationId) {
-      loadInitialMessages(workspaceId, MESSAGE_LIST_PER_PAGE)
+      loadInitialMessages(workspaceId, INBOX_MESSAGES_PER_PAGE)
     }
   }, [activeConversationId])
 
@@ -241,7 +241,7 @@ export function MessageList() {
       return
     }
     prependPendingRef.current = true
-    loadMoreMessages(workspaceId, MESSAGE_LIST_PER_PAGE)
+    loadMoreMessages(workspaceId, INBOX_MESSAGES_PER_PAGE)
   }
 
   return (

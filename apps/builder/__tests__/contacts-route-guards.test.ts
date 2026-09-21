@@ -72,10 +72,6 @@ vi.mock("@/features/import/components/import-history-table", () => ({
   ImportHistoryTable: () => null,
 }))
 
-vi.mock("@/features/custom-fields/provider/custom-field-store-context", () => ({
-  CustomFieldStoreProvider: ({ children }: { children: unknown }) => children,
-}))
-
 vi.mock("@/features/inboxes/provider/inbox-store-context", () => ({
   InboxStoreProvider: ({ children }: { children: unknown }) => children,
 }))

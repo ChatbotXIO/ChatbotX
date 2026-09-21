@@ -11,6 +11,12 @@ vi.mock("@/features/chat/chat-realtime", () => ({
   ChatRealtime: () => <div data-testid="realtime" />,
 }))
 
+vi.mock("@/features/messages/store/call-playback-store", () => ({
+  useCallPlaybackStore: {
+    getState: () => ({ reset: vi.fn() }),
+  },
+}))
+
 const mockRouterReplace = vi.fn()
 
 vi.mock("next/navigation", () => ({
@@ -63,6 +69,7 @@ const storeState = {
   isLoadingConversation: false,
   isBootstrappingUrlConversation: false,
   activeConversationId: null as string | null,
+  activeConversationAutoSelected: false,
   setActiveConversationId: vi.fn((id: string | null) => {
     storeState.activeConversationId = id
   }),
@@ -99,6 +106,7 @@ describe("ChatLayout", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     storeState.activeConversationId = null
+    storeState.activeConversationAutoSelected = false
     storeState.setActiveConversationId.mockClear()
     container = document.createElement("div")
     document.body.append(container)
@@ -143,6 +151,26 @@ describe("ChatLayout", () => {
     render()
 
     expect(find("list-pane")?.getAttribute("data-auto-select")).toBe("false")
+  })
+
+  test("suppresses an auto-selected conversation on mobile so the list shows first", () => {
+    storeState.activeConversationId = "c1"
+    storeState.activeConversationAutoSelected = true
+    setViewportWidth(375)
+    render()
+
+    expect(find("list-pane")).not.toBeNull()
+    expect(storeState.setActiveConversationId).toHaveBeenCalledWith(null)
+  })
+
+  test("keeps a deep-linked conversation open on mobile", () => {
+    storeState.activeConversationId = "c1"
+    storeState.activeConversationAutoSelected = false
+    setViewportWidth(375)
+    render()
+
+    expect(find("thread-pane")).not.toBeNull()
+    expect(storeState.setActiveConversationId).not.toHaveBeenCalledWith(null)
   })
 
   test("shows the thread with a back control once a conversation is active", () => {

@@ -92,13 +92,12 @@ vi.mock("@chatbotx.io/ui/components/form/select-field", () => ({
   },
 }))
 
-// The action editor reads the flow store, which these assertions never exercise.
+// The action editor reads query-backed flow data, which these assertions never
+// exercise.
 vi.mock("@/features/flows/provider/flow-hook", () => ({
+  useFlows: () => ({ data: [{ id: "10", flowVersions: [] }] }),
   useFlowSelectOptions: () => [{ value: "10", label: "Flow A" }],
   getFlowNodesOptions: () => [{ value: "20", label: "Node A" }],
-}))
-vi.mock("@/features/flows/provider/flow-store-context", () => ({
-  useFlowStore: () => [{ id: "10", flowVersions: [] }],
 }))
 
 const button = (id: string, title: string) => ({

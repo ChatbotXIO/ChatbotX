@@ -24,6 +24,7 @@ import type {
 import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
 export const INBOX_CONVERSATIONS_PER_PAGE = 20
+export const INBOX_MESSAGES_PER_PAGE = 20
 
 /**
  * The later of two timestamps — tolerates the string a realtime payload
@@ -112,8 +113,11 @@ export type ChatState = {
   nextCursorMessage: string | null
   isLoadMoreMessage: boolean
   hasNextMessagePage: boolean
+  // Which conversation the loaded message page belongs to, so loadInitialMessages can skip a server-seeded page.
   messagesConversationId: string | null
+  // True when the first conversation was auto-selected rather than deep-linked, so mobile can suppress auto-open.
   activeConversationAutoSelected: boolean
+  // The initially active conversation's server-resolved contact, used as initialData to skip a client fetch.
   seededContact: GetContactResponse | null
 
   // message reply selection

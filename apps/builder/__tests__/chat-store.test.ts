@@ -383,6 +383,7 @@ describe("chat store conversation updates", () => {
 
     expect(store.getState().activeConversationId).toBe("conv-1")
     expect(store.getState().messages).toEqual([])
+    expect(store.getState().activeConversationAutoSelected).toBe(true)
   })
 
   test("initActiveConversationFromUrl waits for the first page before fetching a URL conversation", async () => {
@@ -875,6 +876,7 @@ describe("chat store loadMoreMessages", () => {
     expect(store.getState().messages).toEqual([oldest, older, existing])
     expect(store.getState().hasNextMessagePage).toBe(false)
     expect(store.getState().isLoadMoreMessage).toBe(false)
+    expect(store.getState().messagesConversationId).toBe("conv-1")
   })
 
   test("resets the in-flight flag when the request fails so a retry is possible", async () => {
@@ -897,5 +899,92 @@ describe("chat store loadMoreMessages", () => {
     await store.getState().loadMoreMessages("ws-1", 20)
 
     expect(mockListMessagesAuthenticatedAPI).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe("chat store inbox seed state", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("merges the server seed fields into the initial store state", () => {
+    const seededMessage = makeMessage(
+      "conv-seeded",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const seededContact = { id: "contact-seeded" }
+    const store = createChatStore({
+      conversations: [
+        makeConversation("conv-seeded", new Date("2026-01-01T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-seeded",
+      activeConversationAutoSelected: true,
+      messages: [seededMessage] as never,
+      messagesConversationId: "conv-seeded",
+      seededContact: seededContact as never,
+    })
+
+    expect(store.getState()).toMatchObject({
+      activeConversationId: "conv-seeded",
+      activeConversationAutoSelected: true,
+      messages: [seededMessage],
+      messagesConversationId: "conv-seeded",
+      seededContact,
+    })
+  })
+
+  test("loadInitialMessages skips the matching seeded page and fetches a different one", async () => {
+    const store = createChatStore({
+      activeConversationId: "conv-seeded",
+      messagesConversationId: "conv-seeded",
+    })
+
+    await store.getState().loadInitialMessages("ws-1", 20)
+    expect(mockListMessagesAuthenticatedAPI).not.toHaveBeenCalled()
+
+    mockListMessagesAuthenticatedAPI.mockResolvedValue({
+      data: [],
+      nextCursor: null,
+    })
+    store.setState({ messagesConversationId: "conv-other" })
+
+    await store.getState().loadInitialMessages("ws-1", 20)
+
+    expect(mockListMessagesAuthenticatedAPI).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      perPage: 20,
+      cursor: "",
+      conversationId: "conv-seeded",
+    })
+  })
+
+  test("clears the seed fields when changing conversations and resetting state", () => {
+    const store = createChatStore({
+      activeConversationId: "conv-seeded",
+      activeConversationAutoSelected: true,
+      messagesConversationId: "conv-seeded",
+      seededContact: { id: "contact-seeded" } as never,
+    })
+
+    store.getState().setActiveConversationId("conv-other")
+
+    expect(store.getState()).toMatchObject({
+      activeConversationAutoSelected: false,
+      messagesConversationId: null,
+      seededContact: null,
+    })
+
+    store.setState({
+      activeConversationAutoSelected: true,
+      messagesConversationId: "conv-other",
+      seededContact: { id: "contact-other" } as never,
+    })
+    store.getState().resetState()
+
+    expect(store.getState()).toMatchObject({
+      activeConversationAutoSelected: false,
+      messagesConversationId: null,
+      seededContact: null,
+    })
   })
 })

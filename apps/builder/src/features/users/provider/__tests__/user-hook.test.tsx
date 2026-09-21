@@ -34,19 +34,27 @@ const makeQueryClient = () =>
 function UsersProbe({
   workspaceId = "workspace-1",
   enabled = true,
+  onData,
 }: {
   workspaceId?: string
   enabled?: boolean
+  onData?: (data: { inboxTeams: unknown; workspaceMembers: unknown }) => void
 }) {
-  useWorkspaceMembers(workspaceId, { enabled })
-  useInboxTeams(workspaceId, { enabled })
+  const workspaceMembers = useWorkspaceMembers(workspaceId, { enabled })
+  const inboxTeams = useInboxTeams(workspaceId, { enabled })
+  onData?.({
+    workspaceMembers: workspaceMembers.data,
+    inboxTeams: inboxTeams.data,
+  })
   return null
 }
 
 function InvalidateProbe({
   onReady,
+  version: _version = 0,
 }: {
   onReady: (fn: () => unknown) => void
+  version?: number
 }) {
   onReady(useInvalidateUsers())
   return null
@@ -103,6 +111,29 @@ describe("user query hooks", () => {
     )
   })
 
+  test("unwraps workspace member and inbox team response data", async () => {
+    const workspaceMembers = [{ id: "member-1" }]
+    const inboxTeams = [{ id: "team-1" }]
+    let data: { inboxTeams: unknown; workspaceMembers: unknown } | undefined
+    mockListWorkspaceMembers.mockResolvedValue({
+      data: workspaceMembers,
+      pageCount: 1,
+    })
+    mockListInboxTeams.mockResolvedValue({ data: inboxTeams })
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <UsersProbe onData={(nextData) => (data = nextData)} />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(data).toEqual({ workspaceMembers, inboxTeams })
+    })
+  })
+
   test("does not request either list when disabled", () => {
     act(() => {
       root.render(
@@ -139,5 +170,33 @@ describe("user query hooks", () => {
     })
 
     expect(invalidateQueries).toHaveBeenCalledTimes(2)
+  })
+
+  test("keeps the invalidator stable across renders", () => {
+    const invalidators: (() => unknown)[] = []
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <InvalidateProbe
+            onReady={(fn) => invalidators.push(fn)}
+            version={1}
+          />
+        </QueryClientProvider>,
+      )
+    })
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <InvalidateProbe
+            onReady={(fn) => invalidators.push(fn)}
+            version={2}
+          />
+        </QueryClientProvider>,
+      )
+    })
+
+    expect(invalidators).toHaveLength(2)
+    expect(invalidators[1]).toBe(invalidators[0])
   })
 })

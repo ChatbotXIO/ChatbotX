@@ -34,7 +34,7 @@ import {
 } from "react-hook-form"
 import { CreateCustomFieldDialog } from "@/features/custom-fields/create-custom-field"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import { useInvalidateCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
 import type { WhatsappFlowScreenResource } from "@/features/integration-whatsapp/flows/schema/query"
 import { useWorkspaceId } from "@/hooks/routing"
 import { client } from "@/lib/orpc/orpc"
@@ -131,13 +131,11 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
     name: "flow.startScreenId",
   })
 
-  const getAllCustomFields = useCustomFieldStore(
-    (state) => state.getAllCustomFields,
-  )
+  const invalidateCustomFields = useInvalidateCustomFields()
 
   const handleCustomFieldCreated = useCallback(() => {
-    getAllCustomFields()
-  }, [getAllCustomFields])
+    invalidateCustomFields()
+  }, [invalidateCustomFields])
 
   useEffect(() => {
     if (!(open && selectedFlowId)) {

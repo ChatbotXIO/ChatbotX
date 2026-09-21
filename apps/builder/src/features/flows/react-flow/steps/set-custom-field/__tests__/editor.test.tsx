@@ -22,19 +22,17 @@ vi.mock("@/features/contact-filter/lib/timezone", () => ({
   getBrowserTimezone: () => "UTC",
 }))
 
-vi.mock("@/features/custom-fields/provider/custom-field-store-context", () => ({
-  useCustomFieldStore: (
-    selector: (state: {
-      customFields: { id: string; name: string; type: string }[]
-      botFields: never[]
-    }) => unknown,
-  ) =>
-    selector({
-      // `type: "shortText"` so the field-type-driven operation options
-      // (Finding 3) offer append/prepend once this field is selected.
-      customFields: [{ id: "field-1", name: "Field 1", type: "shortText" }],
-      botFields: [],
-    }),
+vi.mock("@/features/custom-fields/provider/custom-field-hook", () => ({
+  useCustomFields: () => ({
+    // `type: "shortText"` so the field-type-driven operation options
+    // (Finding 3) offer append/prepend once this field is selected.
+    data: [{ id: "field-1", name: "Field 1", type: "shortText" }],
+  }),
+  useBotFields: () => ({ data: [] }),
+}))
+
+vi.mock("@/hooks/routing", () => ({
+  useWorkspaceId: () => "workspace-1",
 }))
 
 vi.mock("@/features/custom-fields/custom-field-select", async () => {

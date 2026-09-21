@@ -32,7 +32,7 @@ import { Controller, useFormContext } from "react-hook-form"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { CreateCustomFieldDialog } from "@/features/custom-fields/create-custom-field"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import { useInvalidateCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
 import { useWhatsappFlow } from "@/features/flows/react-flow/stores/whatsapp-flow-store-provider"
 import type { WhatsappFlowScreenResource } from "@/features/integration-whatsapp/flows/schema/query"
 import { useWorkspaceId } from "@/hooks/routing"
@@ -208,9 +208,7 @@ function TemplateFlowFieldMappings({
   const { getValues, setValue, watch } = useFormContext()
   const whatsappFlows = useWhatsappFlow((s) => s.whatsappFlows)
   const loadingWhatsappFlows = useWhatsappFlow((s) => s.loadingWhatsappFlows)
-  const getAllCustomFields = useCustomFieldStore(
-    (state) => state.getAllCustomFields,
-  )
+  const invalidateCustomFields = useInvalidateCustomFields()
   const [screens, setScreens] = useState<WhatsappFlowScreenResource[]>([])
   const [loadingScreens, setLoadingScreens] = useState(false)
   const [screenError, setScreenError] = useState(false)
@@ -228,8 +226,8 @@ function TemplateFlowFieldMappings({
     (watch(`${fieldName}.fieldMappings`) as WhatsappFlowFieldMapping[]) ?? []
 
   const handleCustomFieldCreated = useCallback(() => {
-    getAllCustomFields()
-  }, [getAllCustomFields])
+    invalidateCustomFields()
+  }, [invalidateCustomFields])
 
   useEffect(() => {
     if (!(workspaceId && flow?.id)) {

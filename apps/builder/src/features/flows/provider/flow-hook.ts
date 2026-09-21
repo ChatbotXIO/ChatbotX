@@ -1,6 +1,6 @@
 import type { FlowNode } from "@chatbotx.io/flow-config"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import { useWorkspaceId } from "@/hooks/routing"
 import { orpc } from "@/lib/orpc/query"
@@ -31,10 +31,14 @@ export const useFlows = (
 
 export const useInvalidateFlows = () => {
   const queryClient = useQueryClient()
-  return () =>
-    queryClient.invalidateQueries({
-      queryKey: orpc.flowsAPI.privateListFlowsAPI.key(),
-    })
+
+  return useCallback(
+    () =>
+      queryClient.invalidateQueries({
+        queryKey: orpc.flowsAPI.privateListFlowsAPI.key(),
+      }),
+    [queryClient],
+  )
 }
 
 export const useFlowSelectOptions = (options?: { enabled?: boolean }) => {

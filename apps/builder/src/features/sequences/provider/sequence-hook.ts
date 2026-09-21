@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { orpc } from "@/lib/orpc/query"
 import { maxPerPage } from "@/lib/shared-request"
@@ -22,10 +22,13 @@ export const useSequences = (
 
 export const useInvalidateSequences = () => {
   const queryClient = useQueryClient()
-  return () =>
-    queryClient.invalidateQueries({
-      queryKey: orpc.sequencesAPI.listSequencesWorkspaceAuthAPI.key(),
-    })
+  return useCallback(
+    () =>
+      queryClient.invalidateQueries({
+        queryKey: orpc.sequencesAPI.listSequencesWorkspaceAuthAPI.key(),
+      }),
+    [queryClient],
+  )
 }
 
 export const useSequenceOptions = (options?: {

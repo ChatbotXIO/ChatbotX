@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import { useMemo } from "react"
+import { useBotFields } from "@/features/custom-fields/provider/custom-field-hook"
+import { useWorkspaceId } from "@/hooks/routing"
 import { replaceBotFieldVariableTokensWithLabels } from "./extensions/variable-injection/mention"
 
 const BOT_FIELD_TOKEN_MARKER = "{{bot_field:"
@@ -14,15 +15,8 @@ const BOT_FIELD_TOKEN_MARKER = "{{bot_field:"
  */
 export function useBotFieldTokenLabels(text: string): string {
   const hasBotFieldTokens = text.includes(BOT_FIELD_TOKEN_MARKER)
-  const { botFields, ensureBotFieldsLoaded } = useCustomFieldStore(
-    (state) => state,
-  )
-
-  useEffect(() => {
-    if (hasBotFieldTokens) {
-      ensureBotFieldsLoaded()
-    }
-  }, [hasBotFieldTokens, ensureBotFieldsLoaded])
+  const botFields =
+    useBotFields(useWorkspaceId(), { enabled: hasBotFieldTokens }).data ?? []
 
   const labelById = useMemo(
     () => new Map(botFields.map((field) => [field.id, field.name])),

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { AIToolsStoreProvider } from "@/features/ai-tools/provider/ai-tools-store-context"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { NoAIIntegrationFound } from "@/features/integrations/components/no-ai-integration-found"
 import { hasAIIntegration } from "@/features/integrations/queries/get-ai-integrations"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
@@ -20,10 +20,8 @@ export default async function AILayout({
   }
 
   return (
-    <CustomFieldStoreProvider workspaceId={workspaceId}>
-      <AIToolsStoreProvider workspaceId={workspaceId}>
-        {children}
-      </AIToolsStoreProvider>
-    </CustomFieldStoreProvider>
+    <AIToolsStoreProvider workspaceId={workspaceId}>
+      {children}
+    </AIToolsStoreProvider>
   )
 }
