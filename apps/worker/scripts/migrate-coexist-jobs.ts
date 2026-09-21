@@ -178,3 +178,93 @@ async function removeQuietly(job: Job): Promise<void> {
     // Locked by a worker — it will finish/clean up on its own.
   }
 }
+
+export type DeleteStats = {
+  /** Jobs removed from the queue. */
+  deleted: number
+  /** Snapshotted id no longer present (already drained/removed). */
+  missing: number
+  /** Job left the `waiting` state (active/completed/failed/delayed) — left alone. */
+  notWaiting: number
+  /** Not one of the target names — left alone. */
+  nonTarget: number
+  /** Job locked by a worker mid-delete — left to finish where it is. */
+  locked: number
+}
+
+/**
+ * Permanently remove the `waiting` jobs whose id is in `ids` and whose `name` is
+ * in `targetNames` from `queue`. DESTRUCTIVE — the work those jobs represent is
+ * not done and not moved anywhere.
+ *
+ * Concurrency-safe against a live worker, mirroring moveWaitingTargetsToLow:
+ * operates by id (stable snapshot), re-checks the job still exists and is still
+ * `waiting`, and treats a `remove()` that throws (worker locked it) as skipped.
+ * Only `waiting` jobs are touched; active/delayed/completed/failed are left alone.
+ */
+export async function deleteWaitingTargetsById(params: {
+  queue: Queue
+  targetNames: ReadonlySet<string>
+  ids: readonly string[]
+  execute: boolean
+  concurrency?: number
+  onProgress?: (stats: DeleteStats, processed: number) => void
+}): Promise<DeleteStats> {
+  const { queue, targetNames, ids, execute, onProgress } = params
+  const concurrency = Math.max(1, Math.min(params.concurrency ?? 100, 1000))
+  const stats: DeleteStats = {
+    deleted: 0,
+    missing: 0,
+    notWaiting: 0,
+    nonTarget: 0,
+    locked: 0,
+  }
+  let cursor = 0
+  let processed = 0
+
+  const processOne = async (id: string): Promise<void> => {
+    const job = await Job.fromId(queue, id)
+    if (!job) {
+      stats.missing++
+      return
+    }
+    if (!targetNames.has(job.name)) {
+      stats.nonTarget++
+      return
+    }
+    if ((await job.getState()) !== "waiting") {
+      stats.notWaiting++
+      return
+    }
+    if (!execute) {
+      stats.deleted++
+      return
+    }
+    try {
+      await job.remove()
+      stats.deleted++
+    } catch {
+      stats.locked++
+    }
+  }
+
+  const runWorker = async (): Promise<void> => {
+    while (true) {
+      const index = cursor
+      cursor += 1
+      if (index >= ids.length) {
+        return
+      }
+      await processOne(ids[index])
+      processed += 1
+      if (processed % 10_000 === 0) {
+        onProgress?.(stats, processed)
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, ids.length || 1) }, runWorker),
+  )
+  return stats
+}

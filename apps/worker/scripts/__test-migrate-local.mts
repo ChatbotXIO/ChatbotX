@@ -6,6 +6,7 @@
  */
 import { Queue, Worker } from "bullmq"
 import {
+  deleteWaitingTargetsById,
   moveWaitingTargetsToLow,
   snapshotWaitingIds,
 } from "./migrate-coexist-jobs"
@@ -307,6 +308,56 @@ async function scenarioDestCompleted(integration: Queue, low: Queue) {
   )
 }
 
+async function scenarioDelete(low: Queue) {
+  console.log("\n[E] Delete: remove ONLY coexistAttachmentDownload (waiting)")
+  await low.obliterate({ force: true })
+  const ATT = new Set(["coexistAttachmentDownload"])
+  for (let i = 1; i <= 30; i++) {
+    await low.add(attach(i).name, attach(i).data, attach(i).opts)
+  }
+  for (let i = 1; i <= 15; i++) {
+    await low.add(avatar(i).name, avatar(i).data, avatar(i).opts) // must NOT be deleted
+  }
+
+  // Dry run counts but deletes nothing.
+  const dry = await deleteWaitingTargetsById({
+    queue: low,
+    targetNames: ATT,
+    ids: await snapshotWaitingIds(low),
+    execute: false,
+  })
+  assert(
+    dry.deleted === 30,
+    `dry-run counts 30 attachment jobs (got ${dry.deleted})`,
+  )
+  assert((await low.getWaitingCount()) === 45, "dry-run deletes nothing")
+
+  const run = await deleteWaitingTargetsById({
+    queue: low,
+    targetNames: ATT,
+    ids: await snapshotWaitingIds(low),
+    execute: true,
+  })
+  assert(
+    run.deleted === 30,
+    `deleted all 30 attachment jobs (got ${run.deleted})`,
+  )
+  assert(
+    (await low.getWaitingCount()) === 15,
+    `only 15 avatar jobs remain (got ${await low.getWaitingCount()})`,
+  )
+  assert((await low.getJob("att-10")) == null, "attachment att-10 deleted")
+  assert((await low.getJob("update-avatar-ci-3")) != null, "avatar NOT deleted")
+
+  const rerun = await deleteWaitingTargetsById({
+    queue: low,
+    targetNames: ATT,
+    ids: await snapshotWaitingIds(low),
+    execute: true,
+  })
+  assert(rerun.deleted === 0, "re-run deletes 0 (nothing left)")
+}
+
 async function main() {
   const integration = new Queue("integration", { connection })
   const low = new Queue("low", { connection })
@@ -314,6 +365,7 @@ async function main() {
   await scenarioConcurrency(integration, low)
   await scenarioDestFailed(integration, low)
   await scenarioDestCompleted(integration, low)
+  await scenarioDelete(low)
   await integration.obliterate({ force: true })
   await low.obliterate({ force: true })
   await integration.close()
