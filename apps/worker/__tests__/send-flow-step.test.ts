@@ -385,6 +385,21 @@ describe("sendFlowStep", () => {
       expect.objectContaining({
         appointmentId: "appointment-1",
       }),
+      expect.anything(),
+    )
+  })
+
+  // Only deliverable steps reach this resolve, so every string in them is
+  // author copy — unlike the external-request/JavaScript handlers, which
+  // resolve separately and must leave `{a|b}` alone.
+  test("opts into spintax when resolving a deliverable step", async () => {
+    await sendFlowStep(baseParams)
+
+    expect(mockResolveContactVariables).toHaveBeenCalledWith(
+      "contact-1",
+      sendTextStep,
+      expect.anything(),
+      { spintax: true },
     )
   })
 
@@ -457,6 +472,7 @@ describe("sendFlowStep", () => {
       expect.objectContaining({
         contactInbox: expect.objectContaining({ id: "ci-1" }),
       }),
+      expect.anything(),
     )
   })
 

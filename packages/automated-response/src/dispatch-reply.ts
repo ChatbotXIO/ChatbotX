@@ -8,6 +8,7 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
+import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
   ChatJobAction,
@@ -102,8 +103,10 @@ export const dispatchAutomatedResponseReply = async (props: {
         contactInbox,
         conversation,
       })
+      // Spun before the variable pass: a keyword rule's text is author copy,
+      // while the contact data substituted into it is not and must ship as-is.
       const stepMessage = await contactVariableService.replaceAll({
-        text: rule.text,
+        text: applySpintax(rule.text),
         variables,
       })
       await chatQueue.add(ChatJobAction.sendChatMessage, {

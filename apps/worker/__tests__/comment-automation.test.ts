@@ -1482,6 +1482,70 @@ describe("processCommentAutomation text reply variable resolution", () => {
       expect.objectContaining({ text: "Hi {{contact.firstName}}" }),
     )
   })
+
+  // `applySpintax` draws with Math.random; 0 always selects the first branch.
+  const pickFirstBranch = () => vi.spyOn(Math, "random").mockReturnValue(0)
+
+  test("private reply spintax is resolved before the variable pass", async () => {
+    pickFirstBranch()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        privateReply: {
+          type: "text",
+          value: "{Hi|Hello} {{contact.firstName}}",
+        },
+      }),
+    ])
+    mockContactVariableReplaceAll.mockResolvedValue("Hi Jane")
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockContactVariableReplaceAll).toHaveBeenCalledWith({
+      text: "Hi {{contact.firstName}}",
+      variables: {},
+    })
+  })
+
+  test("public reply spintax is resolved before the variable pass", async () => {
+    pickFirstBranch()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: {
+          type: "text",
+          value: "{Hi|Hello} {{contact.firstName}}",
+        },
+      }),
+    ])
+    mockContactVariableReplaceAll.mockResolvedValue("Hi Jane")
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockContactVariableReplaceAll).toHaveBeenCalledWith({
+      text: "Hi {{contact.firstName}}",
+      variables: {},
+    })
+  })
+
+  // Spintax sits outside the try/catch, so a reply still varies on the path
+  // where contact data could not be loaded and the raw text is what ships.
+  test("public reply still spins when variable resolution fails", async () => {
+    pickFirstBranch()
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({
+        publicReply: {
+          type: "text",
+          value: "{Hi|Hello} {{contact.firstName}}",
+        },
+      }),
+    ])
+    mockContactVariableGetAll.mockRejectedValue(new Error("db down"))
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Hi {{contact.firstName}}" }),
+    )
+  })
 })
 
 describe("processCommentAutomation flow private reply", () => {

@@ -15,6 +15,7 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
+import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
   type AIJobProcessStoryReplyAutomation,
@@ -204,14 +205,18 @@ export async function processStoryReplyAutomation(
       let dispatched = false
 
       if (reply.type === "text" && reply.value) {
-        let text = reply.value
+        // Spun before the variable pass, and outside the try/catch, so a reply
+        // still varies even when contact data fails to load and the raw text
+        // below is what ships.
+        const spunValue = applySpintax(reply.value)
+        let text = spunValue
         try {
           const variables = await contactVariableService.getAll({
             contactId: contactInbox.contactId,
             contactInbox,
           })
           text = await contactVariableService.replaceAll({
-            text: reply.value,
+            text: spunValue,
             variables,
           })
         } catch (err) {

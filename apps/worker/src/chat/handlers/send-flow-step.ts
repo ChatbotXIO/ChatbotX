@@ -507,6 +507,10 @@ export async function sendFlowStep({
     return
   }
 
+  // Spintax is on here because only CHANNEL_DELIVERABLE_STEP_TYPES reach this
+  // point — every string leaf is copy an author wrote for a contact to read.
+  // Code- or data-carrying steps (external request, execute JavaScript) resolve
+  // through their own handlers and deliberately leave it off.
   const resolvedStep = await resolveContactVariablesDeep(
     conversation.contactId,
     step,
@@ -515,6 +519,7 @@ export async function sendFlowStep({
       conversation,
       ...(appointmentId ? { appointmentId } : {}),
     },
+    { spintax: true },
   )
 
   if (isBlankTextCarrierStep(resolvedStep as SendFlowStepData)) {
