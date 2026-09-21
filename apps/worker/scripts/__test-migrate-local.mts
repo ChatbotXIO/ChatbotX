@@ -418,6 +418,50 @@ async function scenarioFastPurge(low: Queue) {
   assert((await low.getWaitingCount()) === 13, "keepers stable after re-run")
 }
 
+async function scenarioPurgePaused(low: Queue) {
+  console.log("\n[G] Fast purge UNDER PAUSE (pause moves wait→paused)")
+  await low.obliterate({ force: true })
+  for (let i = 1; i <= 30; i++) {
+    await low.add(attach(i).name, attach(i).data, attach(i).opts)
+  }
+  for (let i = 1; i <= 10; i++) {
+    await low.add(avatar(i).name, avatar(i).data, avatar(i).opts)
+  }
+  await low.pause()
+  // After pause, `wait` is empty (renamed to `paused`) — purging `wait` would
+  // be a no-op; must target `paused`.
+  const onWait = await fastPurgeWaitingByPrefix({
+    queue: low,
+    deletePrefix: "att-",
+    execute: false,
+    list: "wait",
+  })
+  assert(
+    onWait.scanned === 0,
+    "paused: `wait` list is empty (would purge nothing)",
+  )
+
+  const stats = await fastPurgeWaitingByPrefix({
+    queue: low,
+    deletePrefix: "att-",
+    execute: true,
+    list: "paused",
+  })
+  assert(
+    stats.deletedHashes === 30,
+    `purged 30 att from paused list (got ${stats.deletedHashes})`,
+  )
+
+  await low.resume()
+  assert((await low.isPaused()) === false, "queue resumed (not left paused)")
+  assert(
+    (await low.getWaitingCount()) === 10,
+    `10 avatars back in wait after resume (got ${await low.getWaitingCount()})`,
+  )
+  assert((await low.getJob("att-15")) == null, "att purged")
+  assert((await low.getJob("update-avatar-ci-5")) != null, "avatar kept")
+}
+
 async function main() {
   const integration = new Queue("integration", { connection })
   const low = new Queue("low", { connection })
@@ -427,6 +471,7 @@ async function main() {
   await scenarioDestCompleted(integration, low)
   await scenarioDelete(low)
   await scenarioFastPurge(low)
+  await scenarioPurgePaused(low)
   await integration.obliterate({ force: true })
   await low.obliterate({ force: true })
   await integration.close()

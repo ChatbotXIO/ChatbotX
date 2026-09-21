@@ -295,13 +295,20 @@ export async function fastPurgeWaitingByPrefix(params: {
   queue: Queue
   deletePrefix: string
   execute: boolean
+  /**
+   * Which BullMQ list to operate on. Default `wait`. IMPORTANT: `Queue.pause()`
+   * renames `wait` → `paused`, so a caller that pauses the queue first must pass
+   * `list: "paused"` — otherwise this reads an empty `wait` list and purges
+   * nothing. `resume()` moves `paused` back to `wait`.
+   */
+  list?: "wait" | "paused"
   chunk?: number
   onProgress?: (stats: PurgeStats) => void
 }): Promise<PurgeStats> {
   const { queue, deletePrefix, execute, onProgress } = params
   const chunk = Math.max(1000, Math.min(params.chunk ?? 10_000, 100_000))
   const client = await queue.client
-  const waitKey = queue.toKey("wait")
+  const waitKey = queue.toKey(params.list ?? "wait")
   const rebuildKey = `${waitKey}:purge-rebuild`
   const stats: PurgeStats = {
     scanned: 0,

@@ -49,6 +49,10 @@ async function main(): Promise<void> {
       queue,
       deletePrefix: DELETE_PREFIX,
       execute: EXECUTE,
+      // pause() moved `wait` → `paused`; operate there so we actually see the
+      // jobs. resume() moves the rebuilt list back to `wait`. (Dry run doesn't
+      // pause, so it reads `wait`.)
+      list: EXECUTE ? "paused" : "wait",
       onProgress: (s) => {
         if (s.scanned % 200_000 < 10_000) {
           console.log("progress:", s)
