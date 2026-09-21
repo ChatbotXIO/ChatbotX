@@ -333,6 +333,10 @@ export async function processWhatsappTemplate(
       },
       metadata,
       messageId: newMessage.id,
+      botSentAnalytics: {
+        triggerHandler: "processWhatsappTemplate",
+        triggerType: "message_bot_sent_whatsapp_template",
+      },
     })
 
     await enqueueTemplateSentEvaluation({
@@ -348,29 +352,6 @@ export async function processWhatsappTemplate(
       ...eventLogData,
       action: { messageId: "", flowId: flow?.id || "" },
       occurredAt: new Date(),
-    })
-
-    // Bot-message quota accounting: `chat/worker.ts`'s pre-send gate blocks
-    // `sendWhatsappTemplateMessage` jobs, but nothing previously counted a
-    // successful send here — the quota gate and the quota meter must stay
-    // structurally paired or the gate is enforced against a counter that
-    // never moves.
-    emit("analytics:dashboard", {
-      eventType: "message:bot_sent",
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      senderType: "bot",
-      occurredAt: new Date(),
-      source: contactInbox.source,
-      sourceId: contactInbox.sourceId,
-      channel: contactInbox.channel,
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "processWhatsappTemplate",
-          triggerType: "message_bot_sent_whatsapp_template",
-        },
-      },
     })
 
     const providerMessageId = result?.messageIds?.[0]

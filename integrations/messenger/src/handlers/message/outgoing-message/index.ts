@@ -134,6 +134,7 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
     } = props
 
     const messageIds: string[] = []
+    let sentCount = 0
     try {
       const policy = resolveMessengerMessagingPolicy({ contact, sendFrom })
       const facebookMessages = [...convertMessageToFacebookMessage(message)]
@@ -160,6 +161,7 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
             ctx,
             payload,
           )
+        sentCount += 1
         if (response.message_id) {
           messageIds.push(response.message_id)
         }
@@ -175,6 +177,7 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
     // (coexist) cannot dedup the echo against this row and inserts a duplicate.
     return {
       messageIds,
+      sentCount,
     }
   }
 
@@ -185,6 +188,7 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
       data: { contact, sendFrom, step, commentAnchor },
     } = props
     const messageIds: string[] = []
+    let sentCount = 0
     try {
       // Messenger utility templates must be sent as a complete Send API request
       // using message.template (name/language/components) — they cannot go through
@@ -216,6 +220,7 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
         logger.info(`Messenger template sent for PSID: ${contact.sourceId}`)
         return {
           messageIds: response.message_id ? [response.message_id] : [],
+          sentCount: 1,
         }
       }
 
@@ -267,6 +272,7 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
               }),
             )
         anchorCommentId = undefined
+        sentCount += 1
         if (response.message_id) {
           messageIds.push(response.message_id)
         }
@@ -281,6 +287,7 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
     // as the Message row's sourceId (coexist echo dedup — see sendMessage).
     return {
       messageIds,
+      sentCount,
     }
   }
 

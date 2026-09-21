@@ -83,7 +83,7 @@ describe("instagram sendComment — media is unsupported", () => {
     const result = await sendComment(buildProps({ text: "hello" }))
 
     expect(mockSendComment).toHaveBeenCalledWith(ctx.auth, "comment-1", "hello")
-    expect(result).toEqual({ messageIds: ["reply-1"] })
+    expect(result).toEqual({ messageIds: ["reply-1"], sentCount: 1 })
   })
 
   test("still skips silently when there is nothing at all to send", async () => {
@@ -91,6 +91,6 @@ describe("instagram sendComment — media is unsupported", () => {
 
     expect(mockSendComment).not.toHaveBeenCalled()
     expect(logger.warn).toHaveBeenCalledOnce()
-    expect(result).toEqual({ messageIds: [] })
+    expect(result).toEqual({ messageIds: [], sentCount: 0 })
   })
 })

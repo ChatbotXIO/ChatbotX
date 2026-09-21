@@ -791,6 +791,10 @@ export async function sendFlowStep({
             commentAnchor?.replyChannel === "private"
               ? commentAnchor
               : undefined,
+          botSentAnalytics: {
+            triggerHandler: "sendFlowStep",
+            triggerType: "message_bot_sent_flow",
+          },
         })
 
     const promises: Promise<unknown>[] = [
@@ -840,24 +844,6 @@ export async function sendFlowStep({
       contentAttributes: message.contentAttributes,
     })
 
-    // Send contact tracking event
-    emit("analytics:dashboard", {
-      eventType: "message:bot_sent",
-      workspaceId: conversation.workspaceId,
-      contactId: targetContactInbox.contactId,
-      senderType: "bot",
-      occurredAt: new Date(),
-      source: targetContactInbox.source,
-      sourceId: targetContactInbox.sourceId,
-      channel: targetContactInbox.channel,
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "sendFlowStep",
-          triggerType: "message_bot_sent_flow",
-        },
-      },
-    })
     if (trackingContext) {
       await emit("analytics:dashboard", {
         eventType: "message:bot_received",
@@ -1085,24 +1071,6 @@ export const sendChatMessage = async (
     ]
 
     await Promise.all(promises)
-
-    emit("analytics:dashboard", {
-      eventType: "message:bot_sent",
-      workspaceId: conversation.workspaceId,
-      contactId: contactInbox.contactId,
-      senderType: "bot",
-      occurredAt: new Date(),
-      source: contactInbox.source,
-      sourceId: contactInbox.sourceId,
-      channel: contactInbox.channel,
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "sendChatMessage",
-          triggerType: "message_bot_sent_chat",
-        },
-      },
-    })
 
     if (trackingContext) {
       await emit("analytics:dashboard", {

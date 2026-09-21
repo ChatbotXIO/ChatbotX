@@ -64,7 +64,7 @@ describe("instagram sendMessage — multiple image attachments in one composed m
       },
     ])
     expect(payload.message.attachment).toBeUndefined()
-    expect(result).toEqual({ messageIds: ["ig_provider-1"] })
+    expect(result).toEqual({ messageIds: ["ig_provider-1"], sentCount: 1 })
   })
 
   test("a single image still uses the singular attachment form", async () => {

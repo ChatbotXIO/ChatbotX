@@ -46,6 +46,7 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
     } = props
 
     const messageIds: string[] = []
+    let sentCount = 0
     try {
       const instagramMessages = [...convertMessageToInstagramMessage(message)]
       const lastMessage = instagramMessages.at(-1)
@@ -56,6 +57,7 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
       for (const instagramMessage of instagramMessages) {
         const payload = buildMessagePayload(contact, instagramMessage)
         const response = await sendInstagramMessage(ctx.auth, payload)
+        sentCount += 1
         if (response.message_id) {
           messageIds.push(response.message_id)
         }
@@ -68,6 +70,7 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
 
     return {
       messageIds,
+      sentCount,
     }
   }
 
@@ -230,6 +233,7 @@ export const sendFlowStep = async (
     data: { contact, commentAnchor, quickReplies },
   } = props
   const messageIds: string[] = []
+  let sentCount = 0
   try {
     // Collected up front rather than sent as they stream: Instagram renders
     // the quick replies of the *last* message only, and which message is last
@@ -286,6 +290,7 @@ export const sendFlowStep = async (
             buildMessagePayload(contact, instagramMessage),
           )
       anchorCommentId = undefined
+      sentCount += 1
       if (response.message_id) {
         messageIds.push(response.message_id)
       }
@@ -298,5 +303,6 @@ export const sendFlowStep = async (
 
   return {
     messageIds,
+    sentCount,
   }
 }

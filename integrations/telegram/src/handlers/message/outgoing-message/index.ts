@@ -138,6 +138,7 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
 
     return {
       messageIds,
+      sentCount: messageIds.length,
     }
   }
 
@@ -294,5 +295,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
 
     return {
       messageIds,
+      sentCount: messageIds.length,
     }
   }

@@ -64,7 +64,7 @@ const {
     mockContactVariables: vi.fn().mockResolvedValue([]),
     mockSendFlowStep: vi
       .fn()
-      .mockResolvedValue({ messageIds: ["provider-wa-1"] }),
+      .mockResolvedValue({ messageIds: ["provider-wa-1"], sentCount: 1 }),
     mockConvertButtons: vi.fn().mockReturnValue([]),
     mockParseSdkError: vi.fn().mockResolvedValue({ message: "sdk error" }),
     mockRecordSendFailure: vi.fn().mockResolvedValue(undefined),
@@ -254,7 +254,10 @@ describe("processWhatsappTemplate", () => {
     })
     mockReplaceVariables.mockResolvedValue([])
     mockContactVariables.mockResolvedValue([])
-    mockSendFlowStep.mockResolvedValue({ messageIds: ["provider-wa-1"] })
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["provider-wa-1"],
+      sentCount: 1,
+    })
     mockEmit.mockResolvedValue(undefined)
   })
 
@@ -321,6 +324,18 @@ describe("processWhatsappTemplate", () => {
     expect(mockSendFlowStep).toHaveBeenCalledTimes(1)
     const sentStep = mockSendFlowStep.mock.calls[0][0].step
     expect(sentStep.template.params).toEqual(resolvedParams)
+    expect(mockSendFlowStep).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botSentAnalytics: {
+          triggerHandler: "processWhatsappTemplate",
+          triggerType: "message_bot_sent_whatsapp_template",
+        },
+      }),
+    )
+    expect(mockEmit).not.toHaveBeenCalledWith(
+      "analytics:dashboard",
+      expect.objectContaining({ eventType: "message:bot_sent" }),
+    )
   })
 
   test("throws when validateWhatsappTemplate returns null — repository.create not called", async () => {
@@ -350,7 +365,10 @@ describe("processWhatsappTemplate", () => {
   })
 
   test("calls repository.updateSourceId when provider returns providerMessageId", async () => {
-    mockSendFlowStep.mockResolvedValue({ messageIds: ["prov-123"] })
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["prov-123"],
+      sentCount: 1,
+    })
     const createdAt = new Date("2026-01-01T00:00:00Z")
 
     await processWhatsappTemplate({
@@ -381,7 +399,10 @@ describe("processWhatsappTemplate", () => {
     // Regression: the template was already sent (billable, non-idempotent) —
     // a thrown error here must not propagate, or BullMQ redelivers the job
     // and sends the same template a second time.
-    mockSendFlowStep.mockResolvedValue({ messageIds: ["prov-123"] })
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["prov-123"],
+      sentCount: 1,
+    })
     mockRepositoryUpdateSourceId.mockRejectedValueOnce(
       new Error("shard write failed"),
     )
@@ -532,7 +553,10 @@ describe("sendWhatsappTemplateMessage — stop/resume guard", () => {
     })
     mockReplaceVariables.mockResolvedValue([])
     mockContactVariables.mockResolvedValue([])
-    mockSendFlowStep.mockResolvedValue({ messageIds: ["provider-wa-1"] })
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["provider-wa-1"],
+      sentCount: 1,
+    })
     mockEmit.mockResolvedValue(undefined)
   })
 
@@ -629,7 +653,10 @@ describe("processWhatsappTemplate — template quick-reply flow routing", () => 
     })
     mockReplaceVariables.mockResolvedValue({})
     mockContactVariables.mockResolvedValue([])
-    mockSendFlowStep.mockResolvedValue({ messageIds: ["provider-wa-1"] })
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["provider-wa-1"],
+      sentCount: 1,
+    })
     mockConvertButtons.mockReturnValue(encodedFlowButtons)
     mockEmit.mockResolvedValue(undefined)
   })
@@ -766,7 +793,10 @@ describe("processWhatsappTemplate — BSUID auth-template guard (D5)", () => {
     })
     mockReplaceVariables.mockResolvedValue([])
     mockContactVariables.mockResolvedValue([])
-    mockSendFlowStep.mockResolvedValue({ messageIds: ["provider-wa-1"] })
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["provider-wa-1"],
+      sentCount: 1,
+    })
     mockEmit.mockResolvedValue(undefined)
   })
 

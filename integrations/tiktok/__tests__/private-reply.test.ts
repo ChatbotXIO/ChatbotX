@@ -116,7 +116,7 @@ describe("sendPrivateReply handler", () => {
         text: "thanks!",
         contentAttributes: { replyToCommentId: COMMENT_ID },
       }),
-    ).resolves.toEqual({ messageIds: ["msg-3"] })
+    ).resolves.toEqual({ messageIds: ["msg-3"], sentCount: 1 })
   })
 
   test("refuses when the outgoing message is not linked to a comment", async () => {
@@ -143,7 +143,7 @@ describe("sendPrivateReply handler", () => {
         text: "   ",
         contentAttributes: { replyToCommentId: COMMENT_ID },
       }),
-    ).resolves.toEqual({ messageIds: [] })
+    ).resolves.toEqual({ messageIds: [], sentCount: 0 })
     expect(post).not.toHaveBeenCalled()
   })
 })

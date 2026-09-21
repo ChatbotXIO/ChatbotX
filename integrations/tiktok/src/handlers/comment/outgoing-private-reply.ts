@@ -49,7 +49,7 @@ export const sendPrivateReply: CommentHandlers<TiktokAuthValue>["sendPrivateRepl
         { replyToCommentId },
         "sendPrivateReply: message has no text — skipping API call",
       )
-      return { messageIds: [] }
+      return { messageIds: [], sentCount: 0 }
     }
 
     try {
@@ -61,7 +61,7 @@ export const sendPrivateReply: CommentHandlers<TiktokAuthValue>["sendPrivateRepl
           text,
         },
       )
-      return { messageIds: messageId ? [messageId] : [] }
+      return { messageIds: messageId ? [messageId] : [], sentCount: 1 }
     } catch (error) {
       const channelError = mapToChannelError(error)
       logger.error(

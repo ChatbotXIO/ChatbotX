@@ -64,6 +64,6 @@ describe("instagram-facebook sendMessage — multiple image attachments in one c
       },
     ])
     expect(payload.message.attachment).toBeUndefined()
-    expect(result).toEqual({ messageIds: ["ig_provider-1"] })
+    expect(result).toEqual({ messageIds: ["ig_provider-1"], sentCount: 1 })
   })
 })

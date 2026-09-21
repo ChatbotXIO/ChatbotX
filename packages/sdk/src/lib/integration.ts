@@ -77,6 +77,11 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
     commentAnchor?: CommentAnchor
   }
 }
+export type OutgoingSendResult = {
+  messageIds: string[]
+  /** Number of discrete channel messages accepted by the provider. */
+  sentCount: number
+}
 
 export type MessageHandlers<
   IAuth extends AuthValue,
@@ -93,9 +98,7 @@ export type MessageHandlers<
         sendFrom?: "inbox"
       }
     },
-    {
-      messageIds: string[]
-    }
+    OutgoingSendResult
   >
   receiveMessage: Handler<
     {
@@ -124,9 +127,7 @@ export type MessageHandlers<
         commentAnchor?: CommentAnchor
       }
     },
-    {
-      messageIds: string[]
-    }
+    OutgoingSendResult
   >
   handleMessageStatus?: Handler<
     {
@@ -152,9 +153,7 @@ export type CommentHandlers<IAuth extends AuthValue> = {
         sendFrom?: "inbox"
       }
     },
-    {
-      messageIds: string[]
-    }
+    OutgoingSendResult
   >
   // Sends a comment-anchored private reply DM instead of a public comment
   // reply. Same input/output shape as sendComment — `message.contentAttributes.
@@ -169,9 +168,7 @@ export type CommentHandlers<IAuth extends AuthValue> = {
         sendFrom?: "inbox"
       }
     },
-    {
-      messageIds: string[]
-    }
+    OutgoingSendResult
   >
   deleteComment: Handler<
     {

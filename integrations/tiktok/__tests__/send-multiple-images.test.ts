@@ -70,6 +70,9 @@ describe("tiktok sendFlowStep — sendMultipleImages (fallback)", () => {
       "https://example.com/b.png",
     )
     expect(mockSendTiktokMessage).toHaveBeenCalledTimes(2)
-    expect(result).toEqual({ messageIds: ["msg-media-1", "msg-media-2"] })
+    expect(result).toEqual({
+      messageIds: ["msg-media-1", "msg-media-2"],
+      sentCount: 2,
+    })
   })
 })

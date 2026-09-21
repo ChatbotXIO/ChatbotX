@@ -112,6 +112,7 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
 
     const policy = resolveInstagramMessagingPolicy({ contact, sendFrom })
     const messageIds: string[] = []
+    let sentCount = 0
     try {
       const instagramMessages = [...convertMessageToInstagramMessage(message)]
       const lastMessage = instagramMessages.at(-1)
@@ -122,6 +123,7 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
       for (const instagramMessage of instagramMessages) {
         const payload = buildMessagePayload(contact, instagramMessage, policy)
         const response = await sendInstagramMessage(ctx.auth, payload)
+        sentCount += 1
         if (response.message_id) {
           messageIds.push(response.message_id)
         }
@@ -137,6 +139,7 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
     // against this row instead of inserting a duplicate.
     return {
       messageIds,
+      sentCount,
     }
   }
 
@@ -301,6 +304,7 @@ export const sendFlowStep = async (
     data: { contact, sendFrom, commentAnchor },
   } = props
   const messageIds: string[] = []
+  let sentCount = 0
   try {
     // Resolved lazily (and at most once): an up-front resolve would throw
     // `instagram_response_window_expired` and kill a comment-anchored first
@@ -346,6 +350,7 @@ export const sendFlowStep = async (
             buildMessagePayload(contact, instagramMessage, getPolicy()),
           )
       anchorCommentId = undefined
+      sentCount += 1
       if (response.message_id) {
         messageIds.push(response.message_id)
       }
@@ -360,5 +365,6 @@ export const sendFlowStep = async (
   // as the Message row's sourceId (coexist echo dedup — see sendMessage).
   return {
     messageIds,
+    sentCount,
   }
 }

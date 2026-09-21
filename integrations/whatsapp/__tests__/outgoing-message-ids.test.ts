@@ -43,7 +43,7 @@ describe("whatsapp sendMessage returns provider message ids", () => {
     } as never)
 
     expect(mockSendMessage).toHaveBeenCalledTimes(1)
-    expect(result).toEqual({ messageIds: ["wamid.provider-1"] })
+    expect(result).toEqual({ messageIds: ["wamid.provider-1"], sentCount: 1 })
   })
 
   test("does not block provider sends on local registration status", async () => {

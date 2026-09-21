@@ -24,7 +24,7 @@ export const sendComment: CommentHandlers<MessengerAuthValue>["sendComment"] =
 
     const attachmentUrl = message.attachments?.[0]?.url
     if (!(message.text || attachmentUrl)) {
-      return { messageIds: [] }
+      return { messageIds: [], sentCount: 0 }
     }
 
     try {
@@ -34,7 +34,7 @@ export const sendComment: CommentHandlers<MessengerAuthValue>["sendComment"] =
         message.text,
         attachmentUrl,
       )
-      return { messageIds: result.id ? [result.id] : [] }
+      return { messageIds: result.id ? [result.id] : [], sentCount: 1 }
     } catch (error) {
       throw mapToChannelError(error)
     }

@@ -171,7 +171,10 @@ describe("processMessengerTemplate — sourceId persistence", () => {
 
   test("persists providerMessageId to messageModel.sourceId when send succeeds", async () => {
     const PROVIDER_ID = "mid.ABC123"
-    mockSendFlowStep.mockResolvedValueOnce({ messageIds: [PROVIDER_ID] })
+    mockSendFlowStep.mockResolvedValueOnce({
+      messageIds: [PROVIDER_ID],
+      sentCount: 1,
+    })
 
     await processMessengerTemplate({
       conversation: CONVERSATION as never,
@@ -185,7 +188,10 @@ describe("processMessengerTemplate — sourceId persistence", () => {
   })
 
   test("emits message:sent with inboxId for MAC tracking", async () => {
-    mockSendFlowStep.mockResolvedValueOnce({ messageIds: ["mid.ABC123"] })
+    mockSendFlowStep.mockResolvedValueOnce({
+      messageIds: ["mid.ABC123"],
+      sentCount: 1,
+    })
 
     await processMessengerTemplate({
       conversation: CONVERSATION as never,
@@ -202,10 +208,22 @@ describe("processMessengerTemplate — sourceId persistence", () => {
         }),
       }),
     )
+    expect(mockEmit).not.toHaveBeenCalledWith(
+      "analytics:dashboard",
+      expect.objectContaining({ eventType: "message:bot_sent" }),
+    )
+    expect(mockSendFlowStep).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botSentAnalytics: {
+          triggerHandler: "processMessengerTemplate",
+          triggerType: "message_bot_sent_messenger_template",
+        },
+      }),
+    )
   })
 
   test("does NOT persist sourceId when providerMessageId is undefined", async () => {
-    mockSendFlowStep.mockResolvedValueOnce({ messageIds: [] })
+    mockSendFlowStep.mockResolvedValueOnce({ messageIds: [], sentCount: 0 })
 
     await processMessengerTemplate({
       conversation: CONVERSATION as never,
@@ -225,7 +243,10 @@ describe("processMessengerTemplate — ads conversion template-sent enqueue (Ame
       ({ templateParams }: { templateParams: unknown }) =>
         Promise.resolve(templateParams),
     )
-    mockSendFlowStep.mockResolvedValue({ messageIds: ["mid.ABC123"] })
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["mid.ABC123"],
+      sentCount: 1,
+    })
   })
 
   test("enqueues an evaluateTemplateSent job for the messenger channel after a successful send", async () => {
@@ -296,7 +317,10 @@ describe("processMessengerTemplate — header variable guard", () => {
       ({ templateParams }: { templateParams: unknown }) =>
         Promise.resolve(templateParams),
     )
-    mockSendFlowStep.mockResolvedValue({ messageIds: ["mid.ABC123"] })
+    mockSendFlowStep.mockResolvedValue({
+      messageIds: ["mid.ABC123"],
+      sentCount: 1,
+    })
   })
 
   test.each([

@@ -17,6 +17,7 @@ import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
   type CommentAnchor,
   type MessageButtonTemplate,
+  type OutgoingSendResult,
   parseSdkError,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
@@ -53,7 +54,7 @@ export async function sendMessageToChannel(
   // re-emits. Defaults to terminal, so an unaware caller records the failure
   // rather than losing it.
   willRetryOnThrow = false,
-): Promise<{ messageIds: string[] }> {
+): Promise<OutgoingSendResult> {
   const {
     conversation,
     contactInbox,
@@ -122,7 +123,7 @@ export async function sendMessageToChannel(
     const isPrivateReply =
       isComment && handlerMessage.contentAttributes?.isPrivateReply === true
 
-    let result: Awaited<ReturnType<typeof integration.runChannelHandler>>
+    let result: OutgoingSendResult
     if (isPrivateReply) {
       // Only offered by the Inbox on a channel that implements the handler —
       // see `canPrivateReplyToComment` in the builder. Threads has no DM API,
@@ -243,26 +244,18 @@ export async function sendMessageToChannel(
     // stay structurally paired or the gate is enforced against a counter that
     // never moves. Human-sent messages (senderType !== "bot") are unaffected.
     if (message.senderType === "bot") {
-      emit("analytics:dashboard", {
-        eventType: "message:bot_sent",
+      await emitBotMessageSentEvents({
         workspaceId: conversation.workspaceId,
-        contactId: contactInbox.contactId,
-        senderType: "bot",
-        occurredAt: new Date(),
-        source: contactInbox.source,
-        sourceId: contactInbox.sourceId,
-        channel: contactInbox.channel,
-        metadata: {
-          triggerContext: {
-            triggerSource: "worker",
-            triggerHandler: "sendMessageToChannel",
-            triggerType: "message_bot_sent_channel",
-          },
+        contactInbox,
+        result,
+        trigger: {
+          triggerHandler: "sendMessageToChannel",
+          triggerType: "message_bot_sent_channel",
         },
       })
     }
 
-    return { messageIds: result.messageIds }
+    return result
   } catch (error) {
     // A reconciled failure is a permanent, known outcome: it is still
     // recorded below, but never rethrown into a retry.
@@ -318,7 +311,7 @@ export async function sendMessageToChannel(
       isReconciledSendError ||
       shouldSuppressRetryableChannelError(error, contactInbox.channel)
     ) {
-      return { messageIds: [] }
+      return { messageIds: [], sentCount: 0 }
     }
     throw error
   }
@@ -561,7 +554,7 @@ async function updateMessageSourceId(
   messageId: string | undefined,
   workspaceId: string,
   createdAt: Date | undefined,
-  result: { messageIds: string[] },
+  result: OutgoingSendResult,
 ) {
   try {
     const firstMessageId = result?.messageIds?.[0]
@@ -579,6 +572,67 @@ async function updateMessageSourceId(
   }
 }
 
+type BotSentTrigger = {
+  triggerHandler: string
+  triggerType: string
+}
+
+/**
+ * Fires after the channel has already accepted the send — a rejection here
+ * must never propagate into the caller's catch block, or a delivered message
+ * gets recorded as failed and BullMQ redelivers it, sending it twice.
+ */
+async function emitBotMessageSentEvents(input: {
+  workspaceId: string
+  contactInbox: Pick<
+    ContactInboxModel,
+    "contactId" | "channel" | "source" | "sourceId"
+  >
+  result: OutgoingSendResult
+  trigger: BotSentTrigger
+}) {
+  const { workspaceId, contactInbox, result, trigger } = input
+  const { sentCount, messageIds } = result
+
+  try {
+    await Promise.all(
+      Array.from({ length: sentCount }, (_, index) =>
+        emit("analytics:dashboard", {
+          eventType: "message:bot_sent",
+          workspaceId,
+          contactId: contactInbox.contactId,
+          senderType: "bot",
+          occurredAt: new Date(),
+          source: contactInbox.source,
+          sourceId: contactInbox.sourceId,
+          channel: contactInbox.channel,
+          metadata: {
+            triggerContext: {
+              triggerSource: "worker",
+              triggerHandler: trigger.triggerHandler,
+              triggerType: trigger.triggerType,
+            },
+            ...(messageIds[index]
+              ? {
+                  sentPayload: {
+                    index,
+                    count: sentCount,
+                    providerMessageId: messageIds[index],
+                  },
+                }
+              : {}),
+          },
+        }),
+      ),
+    )
+  } catch (err) {
+    logger.error(
+      { err, workspaceId, contactId: contactInbox.contactId, sentCount },
+      "Failed to emit bot-sent analytics after a successful send",
+    )
+  }
+}
+
 export async function sendFlowStepToChannel({
   conversation,
   contactInbox,
@@ -592,6 +646,7 @@ export async function sendFlowStepToChannel({
   messageCreatedAt,
   sendFrom,
   commentAnchor,
+  botSentAnalytics,
 }: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
@@ -605,7 +660,8 @@ export async function sendFlowStepToChannel({
   messageCreatedAt?: Date
   sendFrom?: "inbox"
   commentAnchor?: CommentAnchor
-}): Promise<{ messageIds: string[] }> {
+  botSentAnalytics: BotSentTrigger
+}): Promise<OutgoingSendResult> {
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
     contactInbox,
@@ -665,6 +721,13 @@ export async function sendFlowStepToChannel({
     contactId: contactInbox.contactId,
     workspaceId: conversation.workspaceId,
     at: new Date(),
+  })
+
+  await emitBotMessageSentEvents({
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+    result,
+    trigger: botSentAnalytics,
   })
 
   return result
