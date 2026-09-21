@@ -109,21 +109,44 @@ ALTER TABLE "Broadcast" ADD COLUMN "sendRatePerMinute" integer;
 
 Migration 2 — `broadcast_send_order_indexes` (non-transactional; every statement re-runnable):
 
+`ContactOnBroadcast` is **HASH-partitioned into 64 child tables**
+(`ContactOnBroadcast_p0` … `ContactOnBroadcast_p63`, see
+`drizzle/20260612235000_partition_contact_on_broadcast/migration.sql`).
+Postgres refuses `CREATE INDEX CONCURRENTLY` / `DROP INDEX CONCURRENTLY`
+directly on a partitioned table or a partitioned index, so — unlike the
+`ContactInbox` pair below — the unsent-order index cannot use the plain
+drop-then-concurrently-create form. Instead:
+
 ```sql
 DROP INDEX CONCURRENTLY IF EXISTS "ContactInbox_inboxId_id_idx";--> statement-breakpoint
 CREATE INDEX CONCURRENTLY IF NOT EXISTS "ContactInbox_inboxId_id_idx" ON "ContactInbox" USING btree ("inboxId","id");--> statement-breakpoint
-DROP INDEX CONCURRENTLY IF EXISTS "ContactOnBroadcast_unsent_order_idx";--> statement-breakpoint
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "ContactOnBroadcast_unsent_order_idx" ON "ContactOnBroadcast" USING btree ("broadcastId","contactInboxId") WHERE "sent" = false AND "failedAt" IS NULL;--> statement-breakpoint
-DROP INDEX CONCURRENTLY IF EXISTS "ContactOnBroadcast_unsent_idx";
+-- self-recovery cleanup for a leftover INVALID, unattached child index --> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "ContactOnBroadcast_unsent_order_idx" ON ONLY "ContactOnBroadcast" USING btree ("broadcastId","contactInboxId") WHERE "sent" = false AND "failedAt" IS NULL;--> statement-breakpoint
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "ContactOnBroadcast_p0_unsent_order_idx" ON "ContactOnBroadcast_p0" USING btree ("broadcastId","contactInboxId") WHERE "sent" = false AND "failedAt" IS NULL;--> statement-breakpoint
+… ×64 (one CONCURRENTLY create per partition p0..p63) …--> statement-breakpoint
+-- DO block: ALTER INDEX "ContactOnBroadcast_unsent_order_idx" ATTACH PARTITION "ContactOnBroadcast_p<N>_unsent_order_idx" for each of the 64, guarded by pg_inherits --> statement-breakpoint
+-- DO block: RAISE EXCEPTION unless pg_index.indisvalid is true for the parent --> statement-breakpoint
+DROP INDEX IF EXISTS "ContactOnBroadcast_unsent_idx";
 ```
 
-The leading `DROP INDEX CONCURRENTLY IF EXISTS <new-name>` makes the
-migration self-recovering: on a first run it is a no-op; on a re-run after a
-failed build (the runner leaves the migration unrecorded and Postgres leaves
-an INVALID index that a bare `IF NOT EXISTS` would silently keep) it removes
-the invalid index and the create rebuilds it. The only cost is a rebuild of
-an index that this same failed run had already completed, which is the
-correct trade for never recording an invalid index.
+The parent index is created `ON ONLY` (no partition locks, marked INVALID
+until every partition is attached); each partition's index is then built
+`CONCURRENTLY` as its own top-level statement (CONCURRENTLY cannot run
+inside a DO block or function, so this is 64 explicit statements); a `DO`
+block attaches each one with `ALTER INDEX ... ATTACH PARTITION`, which
+Postgres uses to mark the parent valid once all 64 are attached; a second
+`DO` block verifies `indisvalid`. The **final** `DROP INDEX IF EXISTS
+"ContactOnBroadcast_unsent_idx"` is a plain (non-concurrent) drop — it is
+metadata-only but takes a brief ACCESS EXCLUSIVE lock on the parent and
+every partition, so it must be the last statement in the migration, run
+only once every `CONCURRENTLY` build has succeeded.
+
+Self-recovery: a `DO` block before the parent create drops (plain
+`DROP INDEX`) any of the 64 child index names that exist, are `NOT
+indisvalid`, and are not yet attached to the parent (`pg_inherits`) — so a
+re-run after a failed build never leaves an INVALID leftover blocking a
+later `IF NOT EXISTS`, and a valid, already-attached child index is never
+rebuilt.
 
 - `ContactInbox_inboxId_id_idx` makes "the N-th contact of **a page** in id
   order" an ordered index range scan for a **single-inbox** audience (3.8).
@@ -141,8 +164,10 @@ correct trade for never recording an invalid index.
   updates) the way a plain `CREATE INDEX` / `DROP INDEX` would on a table
   with hundreds of millions of rows.
 - Generated with `pnpm --filter @chatbotx.io/database make:migration <name>`
-  and hand-edited as in the precedent; **not applied automatically** (repo rule).
-  Re-run safety is handled by the leading `DROP … IF EXISTS` statements above.
+  and hand-edited (the 64-way per-partition expansion is generated once with
+  a throwaway script and the resulting SQL committed); **not applied
+  automatically** (repo rule). Re-run safety is handled by the self-recovery
+  `DO` block plus the `IF NOT EXISTS` / `IF EXISTS` guards above.
 
 ### 3.2 Domain rules — one place, `packages/database/src/partials/broadcast.ts`
 
@@ -517,15 +542,23 @@ Deploy order:
    new schema are unaffected (extra nullable columns are never selected by
    them).
 2. **Apply migration 2 (indexes) from a long-lived session, not from the
-   deploy job**, before or after the binaries. On tables at the scale this
-   plan targets the two `CONCURRENTLY` builds can run for a long time; the
-   runner records the migration only when every statement succeeds, so a
-   pipeline timeout that kills the build leaves it unrecorded and the next
-   run pays the leading `DROP` plus a full rebuild. Timing otherwise free:
-   `CONCURRENTLY` takes no write lock; the new `orderBy contactInboxId` is
-   correct without the index (only slower), and the old code's un-ordered
-   scan is served by the new unsent index (leading `broadcastId`) as well as
-   by the old one, so dropping the old index during a rolling deploy is safe.
+   deploy job**, before or after the binaries. `ContactOnBroadcast` is
+   HASH-partitioned (64 partitions), so at the scale this plan targets the
+   65 `CONCURRENTLY` builds (`ContactInbox_inboxId_id_idx` plus one per
+   `ContactOnBroadcast` partition) can run for a long time; the runner
+   records the migration only when every statement succeeds, so a pipeline
+   timeout that kills the build leaves it unrecorded and the next run pays
+   the self-recovery cleanup plus a rebuild of whatever was left INVALID and
+   unattached. Timing otherwise free: every `CONCURRENTLY` build takes no
+   write lock; the new `orderBy contactInboxId` is correct without the index
+   (only slower), and the old code's un-ordered scan is served by the new
+   unsent index (leading `broadcastId`) as well as by the old one. The
+   migration's **final** statement — the plain `DROP INDEX` of the old
+   parent index — is metadata-only but takes a brief ACCESS EXCLUSIVE lock
+   on `ContactOnBroadcast` and every partition, which is why it runs last,
+   after all 64 partition builds and the attach/verify steps have
+   succeeded; dropping the old index during a rolling deploy is otherwise
+   safe.
 3. **Worker rollout complete before the builder ships.** An old worker never
    reads the three columns: it prepares the full audience and hands off 500
    (`prepare-broadcast.ts:81`, `process-broadcast-contacts.ts:278`). That is

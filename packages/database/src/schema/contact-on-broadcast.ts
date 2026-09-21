@@ -64,6 +64,11 @@ export const contactsOnBroadcastsModel = pgTable(
     // (broadcastId, contactInboxId) so a send-limit tick can read unsent
     // rows in contactInboxId order without a separate sort — an in-order
     // index range scan whether the broadcast has 1k or 10M recipients.
+    // ContactOnBroadcast is HASH-partitioned into 64 tables, so drizzle-kit's
+    // plain `index(...)` here cannot express how the migration actually
+    // builds it: per partition (CREATE INDEX CONCURRENTLY on each of the 64
+    // child tables), then ATTACH PARTITION onto an ON ONLY parent index —
+    // see drizzle/20260920111706_broadcast_send_order_indexes/migration.sql.
     index("ContactOnBroadcast_unsent_order_idx")
       .on(table.broadcastId, table.contactInboxId)
       .where(sql`"sent" = false AND "failedAt" IS NULL`),
