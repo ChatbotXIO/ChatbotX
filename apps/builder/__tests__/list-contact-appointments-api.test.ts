@@ -18,8 +18,13 @@ type ListContactAppointmentsResult = {
 }[]
 
 type WorkspaceMapper = (input: ListContactAppointmentsInput) => string
+type HandlerContext = {
+  workspaceMember: { permissions: Record<string, unknown> }
+  user: { id: string }
+}
 type ProcedureHandler = (args: {
   input: ListContactAppointmentsInput
+  context: HandlerContext
 }) => Promise<ListContactAppointmentsResult>
 
 const { authorizedAPI, mocks, workspaceAuthorizedMidddleware } = vi.hoisted(
@@ -53,6 +58,7 @@ const { authorizedAPI, mocks, workspaceAuthorizedMidddleware } = vi.hoisted(
       authorizedAPI: procedure,
       mocks: {
         listContactAppointments: vi.fn(),
+        findByIdOrFail: vi.fn(),
         state,
       },
       workspaceAuthorizedMidddleware: vi.fn(),
@@ -68,9 +74,20 @@ vi.mock("@/middlewares/auth", () => ({
   workspaceAuthorizedMidddleware,
 }))
 
+vi.mock("@/lib/auth/utils", () => ({
+  getCurrentUserAndTargetWorkspace: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/business/contact-utils", () => ({
+  maskContactEmailAndPhone: vi.fn((contact: unknown) => contact),
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: {
     listContactAppointments: mocks.listContactAppointments,
+  },
+  contactService: {
+    findByIdOrFail: mocks.findByIdOrFail,
   },
 }))
 
@@ -100,6 +117,7 @@ describe("listContactAppointmentsAPI", () => {
   })
 
   test("calls appointmentService.listContactAppointments with validated input", async () => {
+    mocks.findByIdOrFail.mockResolvedValueOnce({ id: "contact-1" })
     mocks.listContactAppointments.mockResolvedValueOnce([
       { id: "appointment-1", calendarName: "Discovery" },
     ])
@@ -107,12 +125,39 @@ describe("listContactAppointmentsAPI", () => {
     await expect(
       mocks.state.handler?.({
         input: { workspaceId: "workspace-1", contactId: "contact-1" },
+        context: {
+          workspaceMember: { permissions: { contacts: true } },
+          user: { id: "user-1" },
+        },
       }),
     ).resolves.toEqual([{ id: "appointment-1", calendarName: "Discovery" }])
 
+    expect(mocks.findByIdOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "contact-1",
+      accessScope: { restrictToAssignedUserId: undefined },
+    })
     expect(mocks.listContactAppointments).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       contactId: "contact-1",
     })
+  })
+
+  test("rejects a caller without contacts-section access", async () => {
+    mocks.findByIdOrFail.mockReset()
+    mocks.listContactAppointments.mockReset()
+
+    await expect(
+      mocks.state.handler?.({
+        input: { workspaceId: "workspace-1", contactId: "contact-1" },
+        context: {
+          workspaceMember: { permissions: {} },
+          user: { id: "user-1" },
+        },
+      }),
+    ).rejects.toThrow()
+
+    expect(mocks.findByIdOrFail).not.toHaveBeenCalled()
+    expect(mocks.listContactAppointments).not.toHaveBeenCalled()
   })
 })

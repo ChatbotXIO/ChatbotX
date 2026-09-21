@@ -5,6 +5,7 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { ContactInboxPanel } from "@/features/contacts/contact-inbox-panel"
+import type { UseAutoRefreshContactProfileProps } from "@/features/contacts/hooks/use-auto-refresh-contact-profile"
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -63,8 +64,11 @@ vi.mock("@/features/chat/store/chat-store-provider", () => ({
       updateContact: vi.fn(),
     }),
 }))
+let autoRefreshCapture: Partial<UseAutoRefreshContactProfileProps> = {}
 vi.mock("@/features/contacts/hooks/use-auto-refresh-contact-profile", () => ({
-  useAutoRefreshContactProfile: () => undefined,
+  useAutoRefreshContactProfile: (props: UseAutoRefreshContactProfileProps) => {
+    autoRefreshCapture = props
+  },
 }))
 
 vi.mock("@/features/contacts/contact-detail", () => ({
@@ -153,6 +157,7 @@ describe("ContactInboxPanel", () => {
     getContactMock.mockReset()
     seededContact = undefined
     latestConversations = [firstConversation, secondConversation]
+    autoRefreshCapture = {}
   })
 
   afterEach(() => {
@@ -240,5 +245,45 @@ describe("ContactInboxPanel", () => {
         container.querySelector('[data-testid="contact-detail"]')?.textContent,
       ).toBe("Recovered A")
     })
+  })
+
+  test("keeps a background-patched contact after a rejected convergence refetch", async () => {
+    getContactMock.mockResolvedValueOnce(makeContact("contact-1", "Jane"))
+
+    render()
+
+    await vi.waitFor(() => {
+      expect(
+        container.querySelector('[data-testid="contact-detail"]')?.textContent,
+      ).toBe("Jane")
+    })
+
+    act(() => {
+      autoRefreshCapture.setContactData?.((previous) =>
+        previous ? { ...previous, firstName: "Patched Jane" } : previous,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        container.querySelector('[data-testid="contact-detail"]')?.textContent,
+      ).toBe("Patched Jane")
+    })
+
+    getContactMock.mockRejectedValueOnce(new Error("network error"))
+
+    await act(async () => {
+      await autoRefreshCapture.onProfileUpdated?.("contact-1")
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        queryClient.getQueryState(["get-contact", "ws-1", "contact-1"])?.status,
+      ).toBe("error")
+    })
+
+    expect(
+      container.querySelector('[data-testid="contact-detail"]')?.textContent,
+    ).toBe("Patched Jane")
   })
 })

@@ -34,6 +34,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
+import { useInvalidateSequences } from "@/features/sequences/provider/sequence-hook"
 import type { listSequences } from "@/features/sequences/queries"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { updateSequenceAction } from "./actions/update-sequence.action"
@@ -50,6 +51,7 @@ type SequencesTableProps = {
 export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateSequences = useInvalidateSequences()
 
   const [{ data, pageCount }] = use(promises)
 
@@ -66,12 +68,13 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
         toast.success(
           t(sequence.active ? "sequences.deactivated" : "sequences.activated"),
         )
+        invalidateSequences()
         router.refresh()
       } catch {
         toast.error(t("messages.unknownError"))
       }
     },
-    [workspaceId, t, router],
+    [workspaceId, t, router, invalidateSequences],
   )
 
   const columns = useMemo<ColumnDef<ListSequencesResponse["data"][number]>[]>(
@@ -276,6 +279,7 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
       <RenameSequenceDialog
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => {
+          invalidateSequences()
           router.refresh()
         }}
         open={rowAction?.variant === "update"}
@@ -294,6 +298,7 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
       <DeleteSequenceDialog
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => {
+          invalidateSequences()
           router.refresh()
         }}
         open={rowAction?.variant === "delete"}

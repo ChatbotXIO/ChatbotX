@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
+import { useInvalidateTags } from "@/features/tags/provider/tag-hook"
 import { createTagAction } from "./actions/create-tag-action"
 import { createTagRequest } from "./schema/action"
 
@@ -36,6 +37,7 @@ export const CreateTagDialog = ({
   const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const invalidateTags = useInvalidateTags()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -50,6 +52,7 @@ export const CreateTagDialog = ({
             setOpen(false)
             resetFormAndAction()
             router.refresh()
+            invalidateTags()
           },
           onError: ({ error }: { error: { serverError?: string } }) => {
             if (error.serverError) {

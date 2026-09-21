@@ -17,6 +17,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createSequenceAction } from "@/features/sequences/actions/create-sequence.action"
+import { useInvalidateSequences } from "@/features/sequences/provider/sequence-hook"
 import { createSequenceRequest } from "@/features/sequences/schema/action"
 
 export function CreateSequenceForm({
@@ -28,6 +29,7 @@ export function CreateSequenceForm({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateSequences = useInvalidateSequences()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -36,6 +38,7 @@ export function CreateSequenceForm({
     {
       actionProps: {
         onSuccess: ({ data }) => {
+          invalidateSequences()
           toast.success(
             t("messages.createdSuccess", {
               feature: t("fields.sequences.label"),

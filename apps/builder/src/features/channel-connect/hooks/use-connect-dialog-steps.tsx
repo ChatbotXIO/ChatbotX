@@ -4,6 +4,7 @@ import { DialogFooter } from "@chatbotx.io/ui/components/ui/dialog"
 import { useTranslations } from "next-intl"
 import type { ReactNode, RefObject } from "react"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import {
   ConnectingStepBody,
   ConnectingStepFooter,
@@ -299,6 +300,7 @@ export function useConnectDialogSteps<TItem extends ConnectPickerItem>({
   resolveCoexistWorkspaceId,
 }: UseConnectDialogStepsOptions<TItem>) {
   const t = useTranslations()
+  const invalidateInboxes = useInvalidateInboxes()
   const afterConnect = useCoexistAfterConnect<TItem>({
     channel,
     resolveCoexistWorkspaceId,
@@ -312,6 +314,13 @@ export function useConnectDialogSteps<TItem extends ConnectPickerItem>({
   })
 
   useAutoStartBatch(batch.run)
+
+  useEffect(() => {
+    if (batch.connectedCount === 0) {
+      return
+    }
+    invalidateInboxes()
+  }, [batch.connectedCount, invalidateInboxes])
 
   // `batch.done` only advances once at least one row has settled, so it
   // already implies the batch has started — no need to also read the

@@ -18,6 +18,7 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
+import { useInvalidateSequences } from "@/features/sequences/provider/sequence-hook"
 import { updateSequenceAction } from "./actions/update-sequence.action"
 import { updateSequenceSchema } from "./schema/action"
 import type { SequenceResource } from "./schema/resource"
@@ -34,6 +35,7 @@ export function RenameSequenceDialog({
   onSuccess?: () => void
 }) {
   const t = useTranslations()
+  const invalidateSequences = useInvalidateSequences()
 
   const {
     form,
@@ -49,6 +51,7 @@ export function RenameSequenceDialog({
     {
       actionProps: {
         onSuccess: () => {
+          invalidateSequences()
           toast.success(
             t("messages.updatedSuccess", {
               feature: t("fields.sequences.label"),

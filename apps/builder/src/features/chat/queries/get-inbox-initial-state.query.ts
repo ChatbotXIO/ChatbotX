@@ -105,9 +105,11 @@ const shapeInitialState = ({
 const loadInitialState = async ({
   workspaceId,
   conversationId,
+  hasUrlConversationId,
 }: {
   workspaceId: string
   conversationId?: string
+  hasUrlConversationId: boolean
 }): Promise<ChatStoreInitialState | null> => {
   const conversationsPromise =
     client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI({
@@ -121,26 +123,37 @@ const loadInitialState = async ({
         id: conversationId,
       })
     : null
-  const messagesPromise = conversationId
-    ? seedMessagesState(workspaceId, conversationId)
-    : conversationsPromise.then(({ data: conversations }) => {
+  let messagesPromise: Promise<ChatStoreInitialState | Record<string, never>>
+  if (conversationId) {
+    messagesPromise = seedMessagesState(workspaceId, conversationId)
+  } else if (hasUrlConversationId) {
+    messagesPromise = Promise.resolve({})
+  } else {
+    messagesPromise = conversationsPromise.then(({ data: conversations }) => {
+      const activeConversation = conversations[0]
+      return activeConversation
+        ? seedMessagesState(workspaceId, activeConversation.id)
+        : {}
+    })
+  }
+
+  let contactPromise: Promise<ChatStoreInitialState | Record<string, never>>
+  if (findConversationPromise) {
+    contactPromise = findConversationPromise
+      .then((result) => seedContactState(workspaceId, result.data))
+      .catch(() => ({}))
+  } else if (hasUrlConversationId) {
+    contactPromise = Promise.resolve({})
+  } else {
+    contactPromise = conversationsPromise
+      .then(({ data: conversations }) => {
         const activeConversation = conversations[0]
         return activeConversation
-          ? seedMessagesState(workspaceId, activeConversation.id)
+          ? seedContactState(workspaceId, activeConversation)
           : {}
       })
-  const contactPromise = findConversationPromise
-    ? findConversationPromise
-        .then((result) => seedContactState(workspaceId, result.data))
-        .catch(() => ({}))
-    : conversationsPromise
-        .then(({ data: conversations }) => {
-          const activeConversation = conversations[0]
-          return activeConversation
-            ? seedContactState(workspaceId, activeConversation)
-            : {}
-        })
-        .catch(() => ({}))
+      .catch(() => ({}))
+  }
 
   const [
     conversationsResult,
@@ -166,14 +179,16 @@ const loadInitialState = async ({
         ? (conversationResult.value?.data ?? null)
         : null
   } else {
-    activeConversation = listedConversations[0] ?? null
+    activeConversation = hasUrlConversationId
+      ? null
+      : (listedConversations[0] ?? null)
   }
 
   return shapeInitialState({
     listedConversations,
     nextCursor,
     activeConversation,
-    isUrlConversation: Boolean(conversationId),
+    isUrlConversation: hasUrlConversationId,
     messagesResult,
     contactResult,
   })
@@ -205,6 +220,7 @@ export const getInboxInitialState = async ({
         conversationId: parsedConversationId?.success
           ? parsedConversationId.data
           : undefined,
+        hasUrlConversationId: Boolean(conversationId),
       }),
       INBOX_SEED_TIMEOUT_MS,
       "Inbox initial state seed timed out",
