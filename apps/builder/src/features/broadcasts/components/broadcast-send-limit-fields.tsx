@@ -1,0 +1,77 @@
+"use client"
+
+import {
+  BROADCAST_AUDIENCE_POSITION_MIN,
+  BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE,
+  BROADCAST_MAX_SEND_RATE_PER_MINUTE,
+} from "@chatbotx.io/database/partials"
+import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
+import { useTranslations } from "next-intl"
+import { useFormContext } from "react-hook-form"
+import { resolveSendLimitIssueKey } from "../lib/broadcast-send-limit"
+
+/**
+ * The optional "Limit" block rendered under the contact filter for every
+ * broadcast channel/subaction (see `create-broadcast-form.tsx`). Takes no
+ * channel prop — it reads only `audienceRangeStart`/`audienceRangeEnd`/
+ * `sendRatePerMinute` from the surrounding form, so it renders identically
+ * regardless of which channel the broadcast targets.
+ */
+export function BroadcastSendLimitFields() {
+  const t = useTranslations()
+  const { formState } = useFormContext()
+
+  // The refine's virtual `path: ["audienceRange"]` means no input is bound to
+  // that key, so react-hook-form never prints it via a plain `FormMessage` —
+  // this is the one place that reads and renders it, mirroring
+  // `whatsapp-call-hours-section.tsx`'s `ISSUE_LABEL_KEY` pattern.
+  const issueKey = resolveSendLimitIssueKey(
+    formState.errors.audienceRange?.message,
+  )
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-0.5">
+        <span className="font-medium text-sm">
+          {t("broadcasts.sendLimit.title")}
+        </span>
+        <span className="text-muted-foreground text-xs">
+          {t("broadcasts.sendLimit.hint")}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <InputNumberField
+          formItemClassName="w-auto"
+          min={BROADCAST_AUDIENCE_POSITION_MIN}
+          name="audienceRangeStart"
+          prefix={t("broadcasts.sendLimit.fromContact")}
+        />
+        <span className="text-muted-foreground text-sm">
+          {t("broadcasts.sendLimit.toContact")}
+        </span>
+        <InputNumberField
+          formItemClassName="w-auto"
+          min={BROADCAST_AUDIENCE_POSITION_MIN}
+          name="audienceRangeEnd"
+          placeholder={t("broadcasts.sendLimit.allPlaceholder")}
+        />
+      </div>
+
+      <InputNumberField
+        formItemClassName="w-auto"
+        max={BROADCAST_MAX_SEND_RATE_PER_MINUTE}
+        min={1}
+        name="sendRatePerMinute"
+        placeholder={String(BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE)}
+        prefix={t("fields.sendRatePerMinute.label")}
+      />
+
+      {issueKey && (
+        <p className="text-destructive text-sm" role="alert">
+          {t(issueKey)}
+        </p>
+      )}
+    </div>
+  )
+}

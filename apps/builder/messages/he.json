@@ -5239,6 +5239,9 @@
     },
     "lastCallTranscript": {
       "label": "תמלול השיחה האחרון"
+    },
+    "sendRatePerMinute": {
+      "label": "הודעות לדקה"
     }
   },
   "billing": {
@@ -5381,7 +5384,8 @@
       "audienceFilter": "מסנן קהל",
       "noAudienceFilter": "ללא מסנן קהל",
       "template": "תבנית",
-      "integration": "שילוב"
+      "integration": "שילוב",
+      "sendLimit": "מגבלה"
     },
     "filters": {
       "all": "All"
@@ -5439,6 +5443,16 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "מגבלה",
+      "hint": "השאר ריק כדי לשלוח לכל אנשי הקשר התואמים.",
+      "fromContact": "שלח החל מאיש קשר מס׳",
+      "toContact": "עד",
+      "allPlaceholder": "הכול",
+      "rangeEndBeforeStart": "מיקום הסיום לא יכול להיות לפני מיקום ההתחלה",
+      "rangeSummary": "אנשי קשר מס׳{start} – מס׳{end}",
+      "rateSummary": "{rate} הודעות / דקה"
     }
   },
   "commentAutomation": {

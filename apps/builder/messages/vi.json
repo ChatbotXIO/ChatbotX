@@ -449,7 +449,8 @@
       "audienceFilter": "Bộ lọc người nhận",
       "noAudienceFilter": "Không có bộ lọc người nhận",
       "template": "Template",
-      "integration": "Tích hợp"
+      "integration": "Tích hợp",
+      "sendLimit": "Giới hạn"
     },
     "filters": {
       "all": "Tất cả"
@@ -507,6 +508,16 @@
     "resumeDialog": {
       "title": "Tiếp tục broadcast",
       "description": "\"{name}\" sẽ tiếp tục gửi đến những người nhận chưa nhận được tin."
+    },
+    "sendLimit": {
+      "title": "Giới hạn",
+      "hint": "Để trống để gửi cho tất cả liên hệ phù hợp.",
+      "fromContact": "Gửi từ liên hệ số",
+      "toContact": "đến",
+      "allPlaceholder": "Tất cả",
+      "rangeEndBeforeStart": "Vị trí kết thúc không được trước vị trí bắt đầu",
+      "rangeSummary": "Liên hệ #{start} – #{end}",
+      "rateSummary": "{rate} tin nhắn / phút"
     }
   },
   "commentAutomation": {
@@ -2339,6 +2350,9 @@
     },
     "lastCallTranscript": {
       "label": "Bản chép lời cuộc gọi gần nhất"
+    },
+    "sendRatePerMinute": {
+      "label": "Số tin nhắn mỗi phút"
     }
   },
   "flows": {

@@ -449,7 +449,8 @@
       "audienceFilter": "Filter audiens",
       "noAudienceFilter": "Tanpa filter audiens",
       "template": "Template",
-      "integration": "Integrasi"
+      "integration": "Integrasi",
+      "sendLimit": "Batas"
     },
     "filters": {
       "all": "All"
@@ -507,6 +508,16 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "Batas",
+      "hint": "Kosongkan untuk mengirim ke semua kontak yang cocok.",
+      "fromContact": "Kirim mulai dari kontak #",
+      "toContact": "sampai",
+      "allPlaceholder": "Semua",
+      "rangeEndBeforeStart": "Posisi akhir tidak boleh sebelum posisi awal",
+      "rangeSummary": "Kontak #{start} – #{end}",
+      "rateSummary": "{rate} pesan / menit"
     }
   },
   "commentAutomation": {
@@ -2201,6 +2212,9 @@
     },
     "lastCallTranscript": {
       "label": "Transkrip panggilan terakhir"
+    },
+    "sendRatePerMinute": {
+      "label": "Pesan per menit"
     }
   },
   "flows": {

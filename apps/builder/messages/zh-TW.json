@@ -1475,6 +1475,9 @@
     },
     "lastCallTranscript": {
       "label": "最近通話轉寫"
+    },
+    "sendRatePerMinute": {
+      "label": "每分鐘傳送訊息數"
     }
   },
   "messages": {
@@ -2102,7 +2105,8 @@
       "audienceFilter": "受眾過濾器",
       "noAudienceFilter": "無受眾過濾器",
       "template": "範本",
-      "integration": "整合"
+      "integration": "整合",
+      "sendLimit": "限制"
     },
     "filters": {
       "all": "All"
@@ -2160,6 +2164,16 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "限制",
+      "hint": "留空以傳送給所有符合的聯絡人。",
+      "fromContact": "從聯絡人 #",
+      "toContact": "到",
+      "allPlaceholder": "全部",
+      "rangeEndBeforeStart": "結束位置不能早於開始位置",
+      "rangeSummary": "聯絡人 #{start} – #{end}",
+      "rateSummary": "每分鐘 {rate} 則訊息"
     }
   },
   "commentAutomation": {

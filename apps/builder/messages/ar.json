@@ -449,7 +449,8 @@
       "audienceFilter": "تصفية الجمهور",
       "noAudienceFilter": "لا توجد تصفية للجمهور",
       "template": "القالب",
-      "integration": "التكامل"
+      "integration": "التكامل",
+      "sendLimit": "الحد"
     },
     "filters": {
       "all": "All"
@@ -507,6 +508,16 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "الحد",
+      "hint": "اتركه فارغًا للإرسال إلى جميع جهات الاتصال المطابقة.",
+      "fromContact": "الإرسال ابتداءً من جهة الاتصال رقم",
+      "toContact": "إلى",
+      "allPlaceholder": "الكل",
+      "rangeEndBeforeStart": "لا يمكن أن يكون موضع النهاية قبل موضع البداية",
+      "rangeSummary": "جهات الاتصال #{start} – #{end}",
+      "rateSummary": "{rate} رسالة / دقيقة"
     }
   },
   "commentAutomation": {
@@ -2339,6 +2350,9 @@
     },
     "lastCallTranscript": {
       "label": "آخر تفريغ مكالمة"
+    },
+    "sendRatePerMinute": {
+      "label": "الرسائل في الدقيقة"
     }
   },
   "flows": {

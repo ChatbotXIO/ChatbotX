@@ -449,7 +449,8 @@
       "audienceFilter": "オーディエンスフィルター",
       "noAudienceFilter": "オーディエンスフィルターなし",
       "template": "テンプレート",
-      "integration": "連携"
+      "integration": "連携",
+      "sendLimit": "上限"
     },
     "filters": {
       "all": "All"
@@ -507,6 +508,16 @@
     "resumeDialog": {
       "title": "Resume broadcast",
       "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+    },
+    "sendLimit": {
+      "title": "上限",
+      "hint": "空欄にすると、条件に一致するすべての連絡先に送信されます。",
+      "fromContact": "連絡先番号",
+      "toContact": "から",
+      "allPlaceholder": "すべて",
+      "rangeEndBeforeStart": "終了位置は開始位置より前にできません",
+      "rangeSummary": "連絡先 #{start} – #{end}",
+      "rateSummary": "{rate} 件 / 分"
     }
   },
   "commentAutomation": {
@@ -2201,6 +2212,9 @@
     },
     "lastCallTranscript": {
       "label": "最後の通話文字起こし"
+    },
+    "sendRatePerMinute": {
+      "label": "1分あたりの送信数"
     }
   },
   "flows": {
