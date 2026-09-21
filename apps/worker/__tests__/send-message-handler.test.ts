@@ -299,6 +299,48 @@ describe("chat send-message handlers", () => {
     expect(mockEmit.mock.calls.filter(isBotSentDashboardCall)).toHaveLength(0)
   })
 
+  test("does not retry the send when the bot-sent analytics emit rejects", async () => {
+    // Regression: the message is already live on the channel at this point —
+    // a rejected analytics emit must be swallowed, not rethrown, or BullMQ
+    // redelivers the job and the channel handler runs again, sending the
+    // same message twice.
+    mockRunChannelHandler.mockResolvedValueOnce({
+      messageIds: ["mid-1"],
+      sentCount: 1,
+    })
+    mockEmit.mockImplementationOnce((type: string) => {
+      if (type === "analytics:dashboard") {
+        return Promise.reject(new Error("redis unavailable"))
+      }
+      return Promise.resolve(undefined)
+    })
+
+    await expect(
+      sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: {
+          id: "msg-bot-1",
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-1",
+          contentType: "text",
+          messageType: "outgoing",
+          senderType: "bot",
+          sourceId: null,
+          text: "automated reply",
+          createdAt: new Date("2026-07-09T08:37:21.108Z"),
+        } as never,
+      }),
+    ).resolves.toEqual({ messageIds: ["mid-1"], sentCount: 1 })
+
+    expect(mockRunChannelHandler).toHaveBeenCalledTimes(1)
+    expect(mockEmit).not.toHaveBeenCalledWith(
+      "message:failed",
+      expect.anything(),
+    )
+  })
+
   test("does not retry the send when persisting a comment reply's sourceId fails", async () => {
     // Regression: the reply is already live on the channel at this point — a
     // thrown error here must be swallowed, not rethrown, or BullMQ redelivers
@@ -420,6 +462,10 @@ describe("chat send-message handlers", () => {
         text: "hello",
       } as never,
       sendFrom: "inbox",
+      botSentAnalytics: {
+        triggerHandler: "sendFlowStepToChannel",
+        triggerType: "message_bot_sent_flow_step_channel",
+      },
     })
 
     expect(mockRunChannelHandler).toHaveBeenCalledWith(
@@ -479,6 +525,40 @@ describe("chat send-message handlers", () => {
         }),
       }),
     )
+  })
+
+  test("still returns the send result when the flow-step bot-sent analytics emit rejects", async () => {
+    // Same regression as sendMessageToChannel: the flow step already landed
+    // on the channel, so a failing analytics emit must not surface as an
+    // error the caller (sendFlowStep) could mistake for a failed send.
+    mockRunChannelHandler.mockResolvedValueOnce({
+      messageIds: ["p1"],
+      sentCount: 1,
+    })
+    mockEmit.mockImplementationOnce((type: string) => {
+      if (type === "analytics:dashboard") {
+        return Promise.reject(new Error("redis unavailable"))
+      }
+      return Promise.resolve(undefined)
+    })
+
+    await expect(
+      sendFlowStepToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        flowId: "flow-1",
+        step: {
+          id: "step-1",
+          nodeId: "node-1",
+          stepType: "sendText",
+          text: "hello",
+        } as never,
+        botSentAnalytics: {
+          triggerHandler: "customFlowHandler",
+          triggerType: "custom_flow_trigger",
+        },
+      }),
+    ).resolves.toEqual({ messageIds: ["p1"], sentCount: 1 })
   })
 
   // `errorData` is whatever `parseSdkError` produced and carries no stack, so
@@ -543,7 +623,7 @@ describe("chat send-message handlers", () => {
           createdAt: new Date("2026-07-09T08:37:21.108Z"),
         } as never,
       }),
-    ).resolves.toEqual({ messageIds: [] })
+    ).resolves.toEqual({ messageIds: [], sentCount: 0 })
 
     expect(mockEmit).toHaveBeenCalledWith(
       "message:failed",
@@ -681,7 +761,7 @@ describe("chat send-message handlers", () => {
           text: "hello",
         } as never,
       }),
-    ).resolves.toEqual({ messageIds: [] })
+    ).resolves.toEqual({ messageIds: [], sentCount: 0 })
 
     expect(mockEmit).toHaveBeenCalledWith(
       "message:failed",
@@ -715,7 +795,7 @@ describe("chat send-message handlers", () => {
           text: "hello",
         } as never,
       }),
-    ).resolves.toEqual({ messageIds: [] })
+    ).resolves.toEqual({ messageIds: [], sentCount: 0 })
   })
 
   test("still throws a retryable ChannelError for channels outside the fix scope", async () => {
@@ -775,7 +855,7 @@ describe("chat send-message handlers", () => {
           text: "hello",
         } as never,
       }),
-    ).resolves.toEqual({ messageIds: [] })
+    ).resolves.toEqual({ messageIds: [], sentCount: 0 })
 
     expect(mockRunChannelHandler).not.toHaveBeenCalled()
     expect(mockEmit).toHaveBeenCalledWith(
@@ -819,7 +899,7 @@ describe("chat send-message handlers", () => {
           createdAt,
         } as never,
       }),
-    ).resolves.toEqual({ messageIds: [] })
+    ).resolves.toEqual({ messageIds: [], sentCount: 0 })
 
     // Grant reconciled + button flipped to direct-dial.
     expect(mockRecordPermanentGrant).toHaveBeenCalledWith({
@@ -888,7 +968,7 @@ describe("chat send-message handlers", () => {
           contactInbox: contactInbox as never,
           message: commentReply as never,
         }),
-      ).resolves.toEqual({ messageIds: [] })
+      ).resolves.toEqual({ messageIds: [], sentCount: 0 })
 
       expect(mockSettleEvent).toHaveBeenCalledWith({
         automationId: "automation-1",
@@ -937,7 +1017,7 @@ describe("chat send-message handlers", () => {
             contentAttributes: { replyToCommentId: "comment-1" },
           } as never,
         }),
-      ).resolves.toEqual({ messageIds: [] })
+      ).resolves.toEqual({ messageIds: [], sentCount: 0 })
 
       expect(mockSettleEvent).not.toHaveBeenCalled()
     })

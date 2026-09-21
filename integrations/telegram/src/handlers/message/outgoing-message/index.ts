@@ -49,7 +49,6 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
     } = props
 
     const messageIds: string[] = []
-    let sentCount = 0
 
     try {
       if (message.contentType === contentTypes.enum.text) {
@@ -66,7 +65,6 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
                 : undefined,
           })
           messageIds.push(String(messageId))
-          sentCount += 1
         }
 
         // Multiple images in one outgoing message batch into a single
@@ -90,14 +88,12 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
             })),
           })
           messageIds.push(...ids.map(String))
-          sentCount += ids.length
         } else if (imageAttachments.length === 1) {
           const messageId = await sendTelegramPhoto(ctx.auth, {
             chat_id: contact.sourceId,
             photo: imageAttachments[0].url as string,
           })
           messageIds.push(String(messageId))
-          sentCount += 1
         }
 
         for (const attachment of otherAttachments) {
@@ -108,7 +104,6 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
                 video: attachment.url as string,
               })
               messageIds.push(String(messageId))
-              sentCount += 1
               break
             }
             case "audio": {
@@ -117,7 +112,6 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
                 audio: attachment.url as string,
               })
               messageIds.push(String(messageId))
-              sentCount += 1
               break
             }
             default: {
@@ -126,7 +120,6 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
                 document: attachment.url as string,
               })
               messageIds.push(String(messageId))
-              sentCount += 1
               break
             }
           }
@@ -137,7 +130,6 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
           text: message.text ?? "not handled yet",
         })
         messageIds.push(String(messageId))
-        sentCount += 1
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
@@ -146,7 +138,7 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
 
     return {
       messageIds,
-      sentCount,
+      sentCount: messageIds.length,
     }
   }
 
@@ -158,7 +150,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
     } = props
 
     const messageIds: string[] = []
-    let sentCount = 0
 
     try {
       switch (step.stepType) {
@@ -173,7 +164,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
           )) {
             const messageId = await sendTelegramMessage(ctx.auth, payload)
             messageIds.push(String(messageId))
-            sentCount += 1
           }
           break
         }
@@ -188,7 +178,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
           )) {
             const messageId = await sendTelegramPhoto(ctx.auth, payload)
             messageIds.push(String(messageId))
-            sentCount += 1
           }
           break
         }
@@ -203,7 +192,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
           )) {
             const ids = await sendTelegramMediaGroup(ctx.auth, payload)
             messageIds.push(...ids.map(String))
-            sentCount += ids.length
           }
           break
         }
@@ -218,7 +206,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
           )) {
             const messageId = await sendTelegramVideo(ctx.auth, payload)
             messageIds.push(String(messageId))
-            sentCount += 1
           }
           break
         }
@@ -233,7 +220,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
           )) {
             const messageId = await sendTelegramAudio(ctx.auth, payload)
             messageIds.push(String(messageId))
-            sentCount += 1
           }
           break
         }
@@ -248,7 +234,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
           )) {
             const messageId = await sendTelegramDocument(ctx.auth, payload)
             messageIds.push(String(messageId))
-            sentCount += 1
           }
           break
         }
@@ -266,7 +251,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
                   : undefined,
             })
             messageIds.push(String(messageId))
-            sentCount += 1
           }
           break
         }
@@ -281,7 +265,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
           )) {
             const messageId = await sendTelegramMessage(ctx.auth, payload)
             messageIds.push(String(messageId))
-            sentCount += 1
           }
           break
         }
@@ -295,11 +278,9 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
             if ("photo" in payload) {
               const messageId = await sendTelegramPhoto(ctx.auth, payload)
               messageIds.push(String(messageId))
-              sentCount += 1
             } else {
               const messageId = await sendTelegramMessage(ctx.auth, payload)
               messageIds.push(String(messageId))
-              sentCount += 1
             }
           }
           break
@@ -314,6 +295,6 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
 
     return {
       messageIds,
-      sentCount,
+      sentCount: messageIds.length,
     }
   }

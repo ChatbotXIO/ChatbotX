@@ -80,7 +80,7 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
 export type OutgoingSendResult = {
   messageIds: string[]
   /** Number of discrete channel messages accepted by the provider. */
-  sentCount?: number
+  sentCount: number
 }
 
 export type MessageHandlers<

@@ -245,12 +245,13 @@ export async function sendMessageToChannel(
     // never moves. Human-sent messages (senderType !== "bot") are unaffected.
     if (message.senderType === "bot") {
       await emitBotMessageSentEvents({
-        conversation,
-        contactId: contactInbox.contactId,
+        workspaceId: conversation.workspaceId,
         contactInbox,
         result,
-        triggerHandler: "sendMessageToChannel",
-        triggerType: "message_bot_sent_channel",
+        trigger: {
+          triggerHandler: "sendMessageToChannel",
+          triggerType: "message_bot_sent_channel",
+        },
       })
     }
 
@@ -310,7 +311,7 @@ export async function sendMessageToChannel(
       isReconciledSendError ||
       shouldSuppressRetryableChannelError(error, contactInbox.channel)
     ) {
-      return { messageIds: [] }
+      return { messageIds: [], sentCount: 0 }
     }
     throw error
   }
@@ -571,48 +572,64 @@ async function updateMessageSourceId(
   }
 }
 
-const resolveSentCount = (result: OutgoingSendResult) =>
-  Math.max(0, result.sentCount ?? result.messageIds.length)
-
-async function emitBotMessageSentEvents(input: {
-  conversation: Pick<ConversationModel, "workspaceId">
-  contactId: string
-  contactInbox: Pick<ContactInboxModel, "channel" | "source" | "sourceId">
-  result: OutgoingSendResult
+type BotSentTrigger = {
   triggerHandler: string
   triggerType: string
+}
+
+/**
+ * Fires after the channel has already accepted the send — a rejection here
+ * must never propagate into the caller's catch block, or a delivered message
+ * gets recorded as failed and BullMQ redelivers it, sending it twice.
+ */
+async function emitBotMessageSentEvents(input: {
+  workspaceId: string
+  contactInbox: Pick<
+    ContactInboxModel,
+    "contactId" | "channel" | "source" | "sourceId"
+  >
+  result: OutgoingSendResult
+  trigger: BotSentTrigger
 }) {
-  const count = resolveSentCount(input.result)
+  const { workspaceId, contactInbox, result, trigger } = input
+  const { sentCount, messageIds } = result
 
-  for (let index = 0; index < count; index++) {
-    const providerMessageId = input.result.messageIds[index]
-
-    await emit("analytics:dashboard", {
-      eventType: "message:bot_sent",
-      workspaceId: input.conversation.workspaceId,
-      contactId: input.contactId,
-      senderType: "bot",
-      occurredAt: new Date(),
-      source: input.contactInbox.source,
-      sourceId: input.contactInbox.sourceId,
-      channel: input.contactInbox.channel,
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: input.triggerHandler,
-          triggerType: input.triggerType,
-        },
-        ...(providerMessageId
-          ? {
-              sentPayload: {
-                index,
-                count,
-                providerMessageId,
-              },
-            }
-          : {}),
-      },
-    })
+  try {
+    await Promise.all(
+      Array.from({ length: sentCount }, (_, index) =>
+        emit("analytics:dashboard", {
+          eventType: "message:bot_sent",
+          workspaceId,
+          contactId: contactInbox.contactId,
+          senderType: "bot",
+          occurredAt: new Date(),
+          source: contactInbox.source,
+          sourceId: contactInbox.sourceId,
+          channel: contactInbox.channel,
+          metadata: {
+            triggerContext: {
+              triggerSource: "worker",
+              triggerHandler: trigger.triggerHandler,
+              triggerType: trigger.triggerType,
+            },
+            ...(messageIds[index]
+              ? {
+                  sentPayload: {
+                    index,
+                    count: sentCount,
+                    providerMessageId: messageIds[index],
+                  },
+                }
+              : {}),
+          },
+        }),
+      ),
+    )
+  } catch (err) {
+    logger.error(
+      { err, workspaceId, contactId: contactInbox.contactId, sentCount },
+      "Failed to emit bot-sent analytics after a successful send",
+    )
   }
 }
 
@@ -643,10 +660,7 @@ export async function sendFlowStepToChannel({
   messageCreatedAt?: Date
   sendFrom?: "inbox"
   commentAnchor?: CommentAnchor
-  botSentAnalytics?: {
-    triggerHandler: string
-    triggerType: string
-  }
+  botSentAnalytics: BotSentTrigger
 }): Promise<OutgoingSendResult> {
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
@@ -710,13 +724,10 @@ export async function sendFlowStepToChannel({
   })
 
   await emitBotMessageSentEvents({
-    conversation,
-    contactId: contactInbox.contactId,
+    workspaceId: conversation.workspaceId,
     contactInbox,
     result,
-    triggerHandler: botSentAnalytics?.triggerHandler ?? "sendFlowStepToChannel",
-    triggerType:
-      botSentAnalytics?.triggerType ?? "message_bot_sent_flow_step_channel",
+    trigger: botSentAnalytics,
   })
 
   return result

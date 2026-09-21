@@ -30,8 +30,11 @@ export const sendMessage: MessageHandlers<WebchatAuthValue>["sendMessage"] =
     }
   }
 
+// Delivered by the worker itself over the guest realtime party
+// (`send-flow-step.ts` → `broadcastToGuestParty`), not by this handler — but
+// that still counts as one accepted outgoing message for quota/analytics.
 export const sendFlowStep: MessageHandlers<WebchatAuthValue>["sendFlowStep"] =
-  () => Promise.resolve({ messageIds: [], sentCount: 0 })
+  () => Promise.resolve({ messageIds: [], sentCount: 1 })
 
 export const messageHandlers = {
   sendMessage,
