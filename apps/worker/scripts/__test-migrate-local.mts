@@ -7,6 +7,7 @@
 import { Queue, Worker } from "bullmq"
 import {
   deleteWaitingTargetsById,
+  fastPurgeWaitingByPrefix,
   moveWaitingTargetsToLow,
   snapshotWaitingIds,
 } from "./migrate-coexist-jobs"
@@ -358,6 +359,65 @@ async function scenarioDelete(low: Queue) {
   assert(rerun.deleted === 0, "re-run deletes 0 (nothing left)")
 }
 
+async function scenarioFastPurge(low: Queue) {
+  console.log("\n[F] Fast purge: O(N) remove att-* by prefix, keep the rest")
+  await low.obliterate({ force: true })
+  for (let i = 1; i <= 40; i++) {
+    await low.add(attach(i).name, attach(i).data, attach(i).opts) // att-*
+  }
+  for (let i = 1; i <= 12; i++) {
+    await low.add(avatar(i).name, avatar(i).data, avatar(i).opts) // update-avatar-*
+  }
+  await low.add(
+    "incomingMessage",
+    { type: "x", data: {} },
+    { jobId: "other-1" },
+  ) // default-keep
+
+  const dry = await fastPurgeWaitingByPrefix({
+    queue: low,
+    deletePrefix: "att-",
+    execute: false,
+  })
+  assert(
+    dry.toDelete === 40 && dry.toKeep === 13,
+    `dry counts del=40 keep=13 (got del=${dry.toDelete} keep=${dry.toKeep})`,
+  )
+  assert((await low.getWaitingCount()) === 53, "dry-run purges nothing")
+
+  const run = await fastPurgeWaitingByPrefix({
+    queue: low,
+    deletePrefix: "att-",
+    execute: true,
+  })
+  assert(
+    run.deletedHashes === 40,
+    `purged 40 att hashes (got ${run.deletedHashes})`,
+  )
+  assert(
+    (await low.getWaitingCount()) === 13,
+    `13 non-att jobs remain (got ${await low.getWaitingCount()})`,
+  )
+  assert((await low.getJob("att-20")) == null, "att-20 hash gone")
+  const kept = await low.getJob("update-avatar-ci-5")
+  assert(
+    kept != null && (await kept.getState()) === "waiting",
+    "avatar kept + still runnable",
+  )
+  assert(
+    (await low.getJob("other-1")) != null,
+    "non-att other job kept (default-keep)",
+  )
+
+  const rerun = await fastPurgeWaitingByPrefix({
+    queue: low,
+    deletePrefix: "att-",
+    execute: true,
+  })
+  assert(rerun.toDelete === 0, "re-run purges 0 (nothing left)")
+  assert((await low.getWaitingCount()) === 13, "keepers stable after re-run")
+}
+
 async function main() {
   const integration = new Queue("integration", { connection })
   const low = new Queue("low", { connection })
@@ -366,6 +426,7 @@ async function main() {
   await scenarioDestFailed(integration, low)
   await scenarioDestCompleted(integration, low)
   await scenarioDelete(low)
+  await scenarioFastPurge(low)
   await integration.obliterate({ force: true })
   await low.obliterate({ force: true })
   await integration.close()

@@ -268,3 +268,96 @@ export async function deleteWaitingTargetsById(params: {
   )
   return stats
 }
+
+export type PurgeStats = {
+  scanned: number
+  toDelete: number
+  toKeep: number
+  deletedHashes: number
+}
+
+/**
+ * FAST, O(N) purge of `waiting` jobs whose jobId starts with `deletePrefix`
+ * (e.g. "att-"), preserving every other waiting job. Built for queues far too
+ * large for per-job `job.remove()` (whose LREM is O(list) → O(N²) at millions).
+ *
+ * MUST run with the queue PAUSED and the producer stopped: it snapshots the
+ * stable `wait` list, rebuilds it into a temp key keeping only non-matching ids,
+ * atomically RENAMEs it back, then UNLINKs the deleted jobs' hashes to reclaim
+ * memory. Jobs pushed between the snapshot and the swap would be lost, which is
+ * why the caller pauses the queue and confirms the producer is off first.
+ *
+ * Classification is by jobId prefix only (no hash reads), and it DEFAULT-KEEPS:
+ * anything not matching `deletePrefix` (avatars, any other type) is preserved.
+ * `active` jobs are not in the `wait` list, so they are never touched.
+ */
+export async function fastPurgeWaitingByPrefix(params: {
+  queue: Queue
+  deletePrefix: string
+  execute: boolean
+  chunk?: number
+  onProgress?: (stats: PurgeStats) => void
+}): Promise<PurgeStats> {
+  const { queue, deletePrefix, execute, onProgress } = params
+  const chunk = Math.max(1000, Math.min(params.chunk ?? 10_000, 100_000))
+  const client = await queue.client
+  const waitKey = queue.toKey("wait")
+  const rebuildKey = `${waitKey}:purge-rebuild`
+  const stats: PurgeStats = {
+    scanned: 0,
+    toDelete: 0,
+    toKeep: 0,
+    deletedHashes: 0,
+  }
+
+  if (execute) {
+    await client.del(rebuildKey) // clear any leftover from a prior run
+  }
+
+  // Stream the (paused, stable) wait list by offset; safe because nothing
+  // mutates it while paused + producer off.
+  let start = 0
+  while (true) {
+    const ids = await client.lrange(waitKey, start, start + chunk - 1)
+    if (ids.length === 0) {
+      break
+    }
+    const keep: string[] = []
+    const del: string[] = []
+    for (const id of ids) {
+      stats.scanned++
+      if (id.startsWith(deletePrefix)) {
+        del.push(id)
+      } else {
+        keep.push(id)
+      }
+    }
+    stats.toDelete += del.length
+    stats.toKeep += keep.length
+
+    if (execute) {
+      if (keep.length > 0) {
+        await client.rpush(rebuildKey, ...keep)
+      }
+      if (del.length > 0) {
+        await client.unlink(...del.map((id) => queue.toKey(id)))
+        stats.deletedHashes += del.length
+      }
+    }
+
+    start += ids.length
+    onProgress?.(stats)
+  }
+
+  if (execute) {
+    // Atomically swap the rebuilt list in. If nothing was kept, just drop it.
+    const rebuilt = await client.exists(rebuildKey)
+    if (rebuilt) {
+      await client.rename(rebuildKey, waitKey)
+    } else {
+      await client.del(waitKey)
+    }
+  }
+
+  return stats
+}
