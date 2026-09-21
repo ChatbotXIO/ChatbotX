@@ -26,6 +26,7 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
+
 const createSavedReply = (id: string, text: string): SavedReplyResource => ({
   id,
   workspaceId: "workspace-1",
@@ -135,7 +136,6 @@ describe("saved reply query hooks", () => {
       expect(isError).toBe(true)
     })
   })
-
   test("updates the saved reply cache", () => {
     const existingSavedReply = createSavedReply("saved-reply-1", "Original")
     const newSavedReply = createSavedReply("saved-reply-2", "New")

@@ -130,7 +130,6 @@ describe("tag query hooks", () => {
       expect(isError).toBe(true)
     })
   })
-
   test("keeps the invalidator stable across renders", () => {
     const invalidators: (() => unknown)[] = []
 

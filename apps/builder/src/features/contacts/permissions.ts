@@ -75,7 +75,6 @@ export function requireContactPermissionScopeForMember({
 
   return scope
 }
-
 export async function resolveContactPermissionScope(
   workspaceId: string,
 ): Promise<ContactPermissionScope | null> {

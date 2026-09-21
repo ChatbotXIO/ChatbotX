@@ -106,6 +106,15 @@ const shapeInitialState = ({
       : {}),
     ...(contactResult.status === "fulfilled" ? contactResult.value : {}),
   }
+
+  return shapeInitialState({
+    listedConversations,
+    nextCursor,
+    activeConversation,
+    isUrlConversation: Boolean(conversationId),
+    messagesResult,
+    contactResult,
+  })
 }
 
 const loadInitialState = async ({

@@ -66,10 +66,12 @@ describe("getInboxInitialState", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useRealTimers()
+
   })
 
   afterEach(() => {
     vi.useRealTimers()
+
   })
 
   test("selects the first conversation, reverses messages, and seeds its contact without a URL id", async () => {

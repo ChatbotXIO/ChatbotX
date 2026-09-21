@@ -132,7 +132,6 @@ describe("flow query hooks", () => {
       expect(isError).toBe(true)
     })
   })
-
   test("invalidates the flows query key with a stable callback", async () => {
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries")
     const invalidators: Array<() => unknown> = []
