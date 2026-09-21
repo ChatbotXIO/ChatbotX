@@ -10,7 +10,6 @@ import { requireContactPermissionScope } from "@/features/contacts/permissions"
 import { listContactsRSC } from "@/features/contacts/queries/list-contacts.queries"
 import { listContactsRequest } from "@/features/contacts/schema/query"
 
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { requireContactsAccess } from "@/lib/auth/require-workspace-permission"
 
 export default async function ContactsPage(props: {
@@ -47,16 +46,12 @@ export default async function ContactsPage(props: {
       </div>
 
       <Suspense>
-        <CustomFieldStoreProvider workspaceId={workspaceId}>
-          <FlowStoreProvider workspaceId={workspaceId}>
-            <ContactsTable
-              canViewEmailAndPhone={contactPermissionScope.canViewEmailAndPhone}
-              initialContactFilter={initialContactFilter}
-              promises={promises}
-              workspaceId={workspaceId}
-            />
-          </FlowStoreProvider>
-        </CustomFieldStoreProvider>
+        <ContactsTable
+          canViewEmailAndPhone={contactPermissionScope.canViewEmailAndPhone}
+          initialContactFilter={initialContactFilter}
+          promises={promises}
+          workspaceId={workspaceId}
+        />
       </Suspense>
     </div>
   )

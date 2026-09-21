@@ -1,10 +1,13 @@
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { formatBotFieldReference } from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import { useCouponTopicOptions } from "@/features/coupons/provider/use-coupon-topic-options"
-import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import {
+  useBotFields,
+  useCustomFieldSelectOptions,
+} from "@/features/custom-fields/provider/custom-field-hook"
+import { useWorkspaceId } from "@/hooks/routing"
 import type { PromptVariableOption } from "./extensions/variable-injection/definition"
 
 type UsePromptVariableOptionsProps = {
@@ -71,14 +74,9 @@ export function usePromptVariableOptions({
       t,
     ],
   )
-  const { botFields, ensureBotFieldsLoaded } = useCustomFieldStore(
-    (state) => state,
-  )
-  useEffect(() => {
-    if (includeBotFieldVariables) {
-      ensureBotFieldsLoaded()
-    }
-  }, [includeBotFieldVariables, ensureBotFieldsLoaded])
+  const botFields =
+    useBotFields(useWorkspaceId(), { enabled: includeBotFieldVariables })
+      .data ?? []
   const botFieldOptions = useMemo(
     () =>
       includeBotFieldVariables

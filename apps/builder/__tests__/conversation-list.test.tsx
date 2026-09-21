@@ -33,9 +33,6 @@ vi.mock("@/features/conversations/conversation-filter", () => ({
 vi.mock("@/features/contacts/create-contact-dialog", () => ({
   CreateContactDialog: () => <div />,
 }))
-vi.mock("@/features/users/provider/user-hook", () => ({
-  useContactAssigneeOptions: () => [],
-}))
 
 const storeState = {
   conversations: [{ id: "conv-2" }, { id: "conv-1" }] as { id: string }[],
@@ -44,10 +41,10 @@ const storeState = {
   setFilters: vi.fn(),
   resetState: vi.fn(),
   nextCursorConversation: null as string | null,
+  isFirstLoadConversation: true,
   isLoadingConversation: false,
   setActiveConversationId: vi.fn(),
   initActiveConversationFromUrl: vi.fn().mockResolvedValue(undefined),
-  isFirstLoadConversation: false,
 }
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
   useChatStore: (selector: (state: typeof storeState) => unknown) =>
@@ -72,11 +69,11 @@ describe("ConversationList", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
+    storeState.isFirstLoadConversation = true
     capturedProps.current = null
     container = document.createElement("div")
     document.body.appendChild(container)
     root = createRoot(container)
-    storeState.isFirstLoadConversation = false
   })
 
   afterEach(() => {
@@ -94,23 +91,21 @@ describe("ConversationList", () => {
     expect(capturedProps.current?.computeItemKey?.(0, item)).toBe("conv-42")
   })
 
-  test("skips loading conversations when the store was seeded", () => {
+  test("loads the first conversation page once when the server did not seed it", () => {
+    act(() => {
+      root.render(<ConversationList workspaceId="ws-1" />)
+    })
+
+    expect(storeState.loadMoreConversations).toHaveBeenCalledTimes(1)
+  })
+
+  test("skips the mount load when the server already seeded the first page", () => {
+    storeState.isFirstLoadConversation = false
+
     act(() => {
       root.render(<ConversationList workspaceId="ws-1" />)
     })
 
     expect(storeState.loadMoreConversations).not.toHaveBeenCalled()
-  })
-
-  test("loads conversations when the store has no seeded state", () => {
-    storeState.isFirstLoadConversation = true
-
-    act(() => {
-      root.render(<ConversationList workspaceId="ws-1" />)
-    })
-
-    expect(storeState.loadMoreConversations).toHaveBeenCalledWith("ws-1", {
-      autoSelectFirst: true,
-    })
   })
 })

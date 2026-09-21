@@ -3,15 +3,13 @@
 import { ChevronDownIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"
 import { authClient } from "@/lib/auth/auth-client"
 import type { ListConversationItemResource } from "../schema/resource"
-import type { ConversationAssignee } from "./assign-conversation-dialog"
 import AssignConversationDialog from "./assign-conversation-dialog"
 
 type UpdateConversationAssigneeProps = {
   conversation: ListConversationItemResource
-  onChange: (assignee: ConversationAssignee) => void
+  onChange: (user: string | null) => void
 }
 
 export function UpdateConversationAssignee({
@@ -22,68 +20,43 @@ export function UpdateConversationAssignee({
 
   const { data: session } = authClient.useSession()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [selectedAssigneeName, setSelectedAssigneeName] = useState<
-    string | null
-  >(null)
-  const contactAssigneeOptions = useContactAssigneeOptions()
-  const selectedAssigneeOptionName = useMemo(
-    () =>
-      contactAssigneeOptions
-        .flatMap((option) => option.children ?? [option])
-        .find((option) => option.value === selectedId)?.label ?? null,
-    [contactAssigneeOptions, selectedId],
-  )
 
   const onSelectAssignee = useCallback(
-    (assignee: ConversationAssignee) => {
-      setSelectedId(assignee.id)
-      setSelectedAssigneeName(assignee.name)
-      onChange(assignee)
+    (value: string | null) => {
+      setSelectedId(value)
+      onChange(value)
     },
     [onChange],
   )
 
   const agentLabel = useMemo(() => {
-    if (selectedId) {
+    const assignedUserId = conversation.assignedUserId
+    const assignedUserName = conversation.assignedUser?.name
+    if (
+      assignedUserId &&
+      assignedUserName &&
+      selectedId === `u_${assignedUserId}`
+    ) {
       if (selectedId === `u_${session?.user.id}`) {
         return t("assignAdmin.assignedToMe")
       }
-      if (selectedAssigneeName) {
-        return t("assignAdmin.assignedTo", {
-          name: selectedAssigneeName,
-        })
-      }
-      const assignedUserId = conversation.assignedUserId
-      if (assignedUserId && selectedId === `u_${assignedUserId}`) {
-        return t("assignAdmin.assignedTo", {
-          name:
-            conversation.assignedUser?.name ??
-            selectedAssigneeOptionName ??
-            "--",
-        })
-      }
-      const assignedInboxTeamId = conversation.assignedInboxTeamId
-      if (assignedInboxTeamId && selectedId === `t_${assignedInboxTeamId}`) {
-        return t("assignAdmin.assignedTo", {
-          name:
-            conversation.assignedInboxTeam?.name ??
-            selectedAssigneeOptionName ??
-            "--",
-        })
-      }
+
+      return t("assignAdmin.assignedTo", { name: assignedUserName })
+    }
+
+    const assignedInboxTeamId = conversation.assignedInboxTeamId
+    const assignedInboxTeamName = conversation.assignedInboxTeam?.name
+    if (
+      assignedInboxTeamId &&
+      assignedInboxTeamName &&
+      selectedId === `t_${assignedInboxTeamId}`
+    ) {
+      return t("assignAdmin.assignedTo", { name: assignedInboxTeamName })
     }
     return t("assignAdmin.assignConversation")
-  }, [
-    conversation,
-    selectedAssigneeName,
-    selectedAssigneeOptionName,
-    selectedId,
-    t,
-    session,
-  ])
+  }, [conversation, selectedId, t, session])
 
   useEffect(() => {
-    setSelectedAssigneeName(null)
     if (conversation.assignedUserId) {
       setSelectedId(`u_${conversation.assignedUserId}`)
     } else if (conversation.assignedInboxTeamId) {

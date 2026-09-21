@@ -26,18 +26,23 @@ const makeQueryClient = () =>
 function InboxesProbe({
   workspaceId = "workspace-1",
   enabled = true,
+  onData,
 }: {
   workspaceId?: string
   enabled?: boolean
+  onData?: (data: unknown) => void
 }) {
-  useInboxes(workspaceId, { enabled })
+  const inboxes = useInboxes(workspaceId, { enabled })
+  onData?.(inboxes.data)
   return null
 }
 
 function InvalidateProbe({
   onReady,
+  version: _version = 0,
 }: {
   onReady: (fn: () => unknown) => void
+  version?: number
 }) {
   onReady(useInvalidateInboxes())
   return null
@@ -88,6 +93,24 @@ describe("inbox query hooks", () => {
     )
   })
 
+  test("unwraps inbox response data", async () => {
+    const inboxes = [{ id: "inbox-2", name: "Sales" }]
+    let data: unknown
+    mockListInboxes.mockResolvedValue({ data: inboxes })
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <InboxesProbe onData={(nextData) => (data = nextData)} />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(data).toEqual(inboxes)
+    })
+  })
+
   test("does not request inboxes when disabled", () => {
     act(() => {
       root.render(
@@ -122,5 +145,33 @@ describe("inbox query hooks", () => {
     })
 
     expect(invalidateQueries).toHaveBeenCalledTimes(1)
+  })
+
+  test("keeps the invalidator stable across renders", () => {
+    const invalidators: (() => unknown)[] = []
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <InvalidateProbe
+            onReady={(fn) => invalidators.push(fn)}
+            version={1}
+          />
+        </QueryClientProvider>,
+      )
+    })
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <InvalidateProbe
+            onReady={(fn) => invalidators.push(fn)}
+            version={2}
+          />
+        </QueryClientProvider>,
+      )
+    })
+
+    expect(invalidators).toHaveLength(2)
+    expect(invalidators[1]).toBe(invalidators[0])
   })
 })

@@ -21,7 +21,6 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
-import { FlowStoreProvider } from "../flows/provider/flow-store-context"
 import { upsertSequenceStepAction } from "./actions/upsert-sequence-step.action"
 import { SequenceStepCard } from "./components/sequence-step-card"
 import { DEFAULT_NEW_STEP_DELAY } from "./lib/delay"
@@ -77,112 +76,108 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
   }
 
   return (
-    <FlowStoreProvider>
-      <div className="@container container mx-auto w-full">
-        <Breadcrumb className="mb-4">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href={`/space/${workspaceId}/sequences`}>
-                {t("fields.sequences.label")}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>
-                <Label className="font-semibold text-sm">{sequence.name}</Label>
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+    <div className="@container container mx-auto w-full">
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href={`/space/${workspaceId}/sequences`}>
+              {t("fields.sequences.label")}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>
+              <Label className="font-semibold text-sm">{sequence.name}</Label>
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
-        <Card className="mx-auto max-w-6xl border-none py-1 shadow-none">
-          <CardHeader />
+      <Card className="mx-auto max-w-6xl border-none py-1 shadow-none">
+        <CardHeader />
 
-          <CardContent>
-            {sequence.steps.length > 0 && (
-              <div>
-                <div className="grid">
-                  <div className="space-y-4 ps-4">
-                    <div className="flex flex-col gap-6 rounded-xl py-2 text-card-foreground shadow-none">
-                      <div className="@6xl:flex hidden items-center gap-4 px-6 ps-4 text-muted-foreground text-xs">
-                        <div className="min-w-55 flex-1" />
-                        <div className="w-70" />
-                        <div className="ms-2 flex w-100 items-center justify-between gap-4 text-xs">
-                          <span className="w-12 text-center">
-                            {t("sequences.stats.sent")}
-                          </span>
-                          <span className="w-12 text-center">
-                            {t("sequences.stats.delivered")}
-                          </span>
-                          <span className="w-12 text-center">
-                            {t("sequences.stats.seen")}
-                          </span>
-                          <span className="w-12 text-center">
-                            {t("sequences.stats.clicked")}
-                          </span>
-                          <span className="w-12 text-center">
-                            {t("sequences.stats.failed")}
-                          </span>
-                        </div>
-                        <div className="w-17" />
+        <CardContent>
+          {sequence.steps.length > 0 && (
+            <div>
+              <div className="grid">
+                <div className="space-y-4 ps-4">
+                  <div className="flex flex-col gap-6 rounded-xl py-2 text-card-foreground shadow-none">
+                    <div className="@6xl:flex hidden items-center gap-4 px-6 ps-4 text-muted-foreground text-xs">
+                      <div className="min-w-55 flex-1" />
+                      <div className="w-70" />
+                      <div className="ms-2 flex w-100 items-center justify-between gap-4 text-xs">
+                        <span className="w-12 text-center">
+                          {t("sequences.stats.sent")}
+                        </span>
+                        <span className="w-12 text-center">
+                          {t("sequences.stats.delivered")}
+                        </span>
+                        <span className="w-12 text-center">
+                          {t("sequences.stats.seen")}
+                        </span>
+                        <span className="w-12 text-center">
+                          {t("sequences.stats.clicked")}
+                        </span>
+                        <span className="w-12 text-center">
+                          {t("sequences.stats.failed")}
+                        </span>
                       </div>
+                      <div className="w-17" />
                     </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {sequence.steps.length === 0 && !isAddingStep && (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-muted-foreground">
-                  {t("sequences.noSteps")}
-                </p>
-                <Button className="mt-4" onClick={handleAddStep}>
-                  <PlusIcon className="h-4 w-4" />
-                  {t("sequences.addFirstStep")}
-                </Button>
-              </div>
-            )}
+          {sequence.steps.length === 0 && !isAddingStep && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-muted-foreground">{t("sequences.noSteps")}</p>
+              <Button className="mt-4" onClick={handleAddStep}>
+                <PlusIcon className="h-4 w-4" />
+                {t("sequences.addFirstStep")}
+              </Button>
+            </div>
+          )}
 
-            {sequence.steps
-              .sort((a, b) => a.order - b.order)
-              .map((step, index) => (
-                <SequenceStepCard
-                  isFirst={index === 0}
-                  key={step.id}
-                  sequenceId={sequence.id}
-                  step={step}
-                  stepNumber={index + 1}
-                  workspaceId={workspaceId}
-                />
-              ))}
-
-            {!isAddingStep && sequence.steps.length > 0 && (
-              <div className="grid">
-                <div className="mt-2 mb-2 space-y-4 ps-4">
-                  <button
-                    className="mt-2 flex h-10 w-full items-center justify-center rounded-md border border-primary/40 border-dashed font-medium text-primary text-sm hover:bg-primary/5"
-                    onClick={handleAddStep}
-                    type="button"
-                  >
-                    + {t("sequences.addStep")}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {isAddingStep && (
+          {sequence.steps
+            .sort((a, b) => a.order - b.order)
+            .map((step, index) => (
               <SequenceStepCard
-                isNew
-                onSaved={() => setIsAddingStep(false)}
+                isFirst={index === 0}
+                key={step.id}
                 sequenceId={sequence.id}
-                stepNumber={sequence.steps.length + 1}
+                step={step}
+                stepNumber={index + 1}
                 workspaceId={workspaceId}
               />
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </FlowStoreProvider>
+            ))}
+
+          {!isAddingStep && sequence.steps.length > 0 && (
+            <div className="grid">
+              <div className="mt-2 mb-2 space-y-4 ps-4">
+                <button
+                  className="mt-2 flex h-10 w-full items-center justify-center rounded-md border border-primary/40 border-dashed font-medium text-primary text-sm hover:bg-primary/5"
+                  onClick={handleAddStep}
+                  type="button"
+                >
+                  + {t("sequences.addStep")}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isAddingStep && (
+            <SequenceStepCard
+              isNew
+              onSaved={() => setIsAddingStep(false)}
+              sequenceId={sequence.id}
+              stepNumber={sequence.steps.length + 1}
+              workspaceId={workspaceId}
+            />
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }

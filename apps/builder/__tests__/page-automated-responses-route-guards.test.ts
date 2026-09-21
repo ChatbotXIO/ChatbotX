@@ -33,10 +33,6 @@ vi.mock("@/features/automated-response/keywords-description", () => ({
   KeywordsDescription: () => null,
 }))
 
-vi.mock("@/features/flows/provider/flow-store-context", () => ({
-  FlowStoreProvider: ({ children }: { children: unknown }) => children,
-}))
-
 vi.mock("@/features/folders/provider/folder-store-context", () => ({
   FolderStoreProvider: ({ children }: { children: unknown }) => children,
 }))

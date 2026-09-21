@@ -31,6 +31,7 @@ export const useFlows = (
 
 export const useInvalidateFlows = () => {
   const queryClient = useQueryClient()
+
   return useCallback(
     () =>
       queryClient.invalidateQueries({

@@ -6,7 +6,6 @@ import { EditAppointmentCalendarForm } from "@/features/appointment-calendars/co
 import { getAppointmentCalendar } from "@/features/appointment-calendars/queries"
 
 import { listExternalCalendarsForSelect } from "@/features/external-calendars/queries"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 
 export default async function EditAppointmentCalendarPage({
   params,
@@ -36,16 +35,14 @@ export default async function EditAppointmentCalendarPage({
           { label: calendar.name, href: "" },
         ]}
       />
-      <FlowStoreProvider>
-        <EditAppointmentCalendarForm
-          calendar={calendar}
-          externalCalendarOptions={externalCalendars.map((connection) => ({
-            label: connection.label,
-            value: connection.id,
-          }))}
-          workspaceId={workspaceId}
-        />
-      </FlowStoreProvider>
+      <EditAppointmentCalendarForm
+        calendar={calendar}
+        externalCalendarOptions={externalCalendars.map((connection) => ({
+          label: connection.label,
+          value: connection.id,
+        }))}
+        workspaceId={workspaceId}
+      />
     </div>
   )
 }

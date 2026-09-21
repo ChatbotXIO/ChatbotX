@@ -1,4 +1,3 @@
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 
 export default async function PageAutomatedResponsesLayout({
@@ -10,5 +9,5 @@ export default async function PageAutomatedResponsesLayout({
 }) {
   await resolveGuardedWorkspaceId(params, "superAdmin")
 
-  return <FlowStoreProvider>{children}</FlowStoreProvider>
+  return children
 }

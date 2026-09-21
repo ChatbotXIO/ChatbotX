@@ -73,7 +73,7 @@ export default function ConversationList({
   const hasNextPage =
     conversations.length === 0 || nextCursorConversation !== null
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: run once on mount; a remount (e.g. the mobile back control) must not refetch or re-auto-select
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once on mount and is skipped entirely when the server seed already loaded the first page (isFirstLoadConversation === false)
   useEffect(() => {
     if (!isFirstLoadConversation) {
       return

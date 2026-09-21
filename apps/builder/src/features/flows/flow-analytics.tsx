@@ -25,8 +25,7 @@ export function FlowAnalytics({
   return (
     <ReactFlowProvider>
       <StepStoreProvider>
-        {/* Step viewers rendered in the analytics canvas read the custom-field
-            store (e.g. WaitStepViewer resolves dynamic-date field names). */}
+        {/* Step viewers rendered in the analytics canvas resolve dynamic-date field names. */}
         <FlowAnalyticsFrame
           flow={flow}
           flowVersion={flowVersion}

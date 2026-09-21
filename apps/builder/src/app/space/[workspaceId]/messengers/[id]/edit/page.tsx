@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
 
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { findIntegrationMessenger } from "@/features/integration-messenger/queries"
 import { UpdateMessengerForm } from "@/features/integration-messenger/update-messenger-form"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
@@ -20,11 +19,9 @@ export default async function UpdateMessengerPage(props: {
   })
 
   return (
-    <FlowStoreProvider>
-      <UpdateMessengerForm
-        integrationMessenger={integrationMessenger}
-        workspaceId={workspaceId}
-      />
-    </FlowStoreProvider>
+    <UpdateMessengerForm
+      integrationMessenger={integrationMessenger}
+      workspaceId={workspaceId}
+    />
   )
 }

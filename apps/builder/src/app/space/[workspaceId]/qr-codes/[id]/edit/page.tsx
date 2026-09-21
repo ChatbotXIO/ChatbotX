@@ -2,7 +2,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+
 import { findQrCode } from "@/features/qr-codes/queries"
 import { UpdateQrCodeForm } from "@/features/qr-codes/update-qr-code-form"
 
@@ -41,9 +41,7 @@ export default async function EditQrCodePage({
           { label: t("actions.edit"), href: "" },
         ]}
       />
-      <FlowStoreProvider>
-        <UpdateQrCodeForm qrCode={qrCode} workspaceId={workspaceId} />
-      </FlowStoreProvider>
+      <UpdateQrCodeForm qrCode={qrCode} workspaceId={workspaceId} />
     </div>
   )
 }

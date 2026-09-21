@@ -2,33 +2,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, describe, expect, test, vi } from "vitest"
-
-const { mockListSavedReplies } = vi.hoisted(() => ({
-  mockListSavedReplies: vi.fn(),
-}))
-
-vi.mock("@/lib/orpc/query", () => ({
-  orpc: {
-    savedRepliesAPI: {
-      listSavedRepliesAuthorizedAPI: {
-        queryOptions: ({ input }: { input: { workspaceId: string } }) => ({
-          queryKey: ["saved-replies", input.workspaceId],
-          queryFn: mockListSavedReplies,
-        }),
-      },
-    },
-  },
-}))
-
-vi.mock("@/hooks/routing", () => ({
-  useWorkspaceId: () => "ws-1",
-}))
-
 import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popover"
 
 /** Echoes the key back so assertions never depend on the English copy. */
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+}))
+
+vi.mock("next/navigation", () => ({
+  useParams: () => ({ workspaceId: "ws-1" }),
 }))
 
 let container: HTMLDivElement | null = null
@@ -50,11 +32,9 @@ function renderPopover(inputValue: string) {
   })
   const el = renderComponent(
     <QueryClientProvider client={queryClient}>
-      <SavedReplyStoreProvider autoInitialize={false} workspaceId="ws-1">
-        <QuickRepliesPopover inputValue={inputValue} onSelect={() => undefined}>
-          <textarea defaultValue={inputValue} />
-        </QuickRepliesPopover>
-      </SavedReplyStoreProvider>
+      <QuickRepliesPopover inputValue={inputValue} onSelect={() => undefined}>
+        <textarea defaultValue={inputValue} />
+      </QuickRepliesPopover>
     </QueryClientProvider>,
   )
 
@@ -75,15 +55,6 @@ afterEach(() => {
 })
 
 describe("QuickRepliesPopover", () => {
-  test("loads saved replies once after the slash popover settles", async () => {
-    mockListSavedReplies.mockResolvedValue({ data: [] })
-
-    renderPopover("/")
-
-    await vi.waitFor(() => {
-      expect(mockListSavedReplies).toHaveBeenCalledTimes(1)
-    })
-  })
   // Regression: the textarea used to be the Popover.Trigger with
   // `nativeButton={false}`, so Base UI's non-native button keyboard handling
   // called preventDefault() on every Space keypress and no space could be typed

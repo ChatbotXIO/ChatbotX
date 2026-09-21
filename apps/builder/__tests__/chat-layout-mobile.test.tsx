@@ -11,8 +11,17 @@ vi.mock("@/features/chat/chat-realtime", () => ({
   ChatRealtime: () => <div data-testid="realtime" />,
 }))
 
+vi.mock("@/features/messages/store/call-playback-store", () => ({
+  useCallPlaybackStore: {
+    getState: () => ({ reset: vi.fn() }),
+  },
+}))
+
+const mockRouterReplace = vi.fn()
+
 vi.mock("next/navigation", () => ({
   usePathname: () => "/space/w1/inbox",
+  useRouter: () => ({ replace: mockRouterReplace }),
   useSearchParams: () => new URLSearchParams("conversationId=c1"),
 }))
 
@@ -60,6 +69,7 @@ const storeState = {
   isLoadingConversation: false,
   isBootstrappingUrlConversation: false,
   activeConversationId: null as string | null,
+  activeConversationAutoSelected: false,
   setActiveConversationId: vi.fn((id: string | null) => {
     storeState.activeConversationId = id
   }),
@@ -96,8 +106,8 @@ describe("ChatLayout", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     storeState.activeConversationId = null
+    storeState.activeConversationAutoSelected = false
     storeState.setActiveConversationId.mockClear()
-    window.history.replaceState(null, "", "/space/w1/inbox?conversationId=c1")
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
@@ -109,6 +119,7 @@ describe("ChatLayout", () => {
     })
     container.remove()
     setViewportWidth(1024)
+    mockRouterReplace.mockClear()
   })
 
   test("shows only the conversation list on mobile with nothing selected", () => {
@@ -140,6 +151,26 @@ describe("ChatLayout", () => {
     render()
 
     expect(find("list-pane")?.getAttribute("data-auto-select")).toBe("false")
+  })
+
+  test("suppresses an auto-selected conversation on mobile so the list shows first", () => {
+    storeState.activeConversationId = "c1"
+    storeState.activeConversationAutoSelected = true
+    setViewportWidth(375)
+    render()
+
+    expect(find("list-pane")).not.toBeNull()
+    expect(storeState.setActiveConversationId).toHaveBeenCalledWith(null)
+  })
+
+  test("keeps a deep-linked conversation open on mobile", () => {
+    storeState.activeConversationId = "c1"
+    storeState.activeConversationAutoSelected = false
+    setViewportWidth(375)
+    render()
+
+    expect(find("thread-pane")).not.toBeNull()
+    expect(storeState.setActiveConversationId).not.toHaveBeenCalledWith(null)
   })
 
   test("shows the thread with a back control once a conversation is active", () => {
@@ -177,9 +208,7 @@ describe("ChatLayout", () => {
       )
     })
 
-    expect(`${window.location.pathname}${window.location.search}`).toBe(
-      "/space/w1/inbox",
-    )
+    expect(mockRouterReplace).toHaveBeenCalledWith("/space/w1/inbox")
   })
 
   test("offers the contact panel behind a control instead of a third column", () => {

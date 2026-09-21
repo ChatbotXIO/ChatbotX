@@ -8,8 +8,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/accordion"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { client } from "@/lib/orpc/orpc"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { orpc } from "@/lib/orpc/query"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
@@ -43,50 +42,38 @@ export const ContactInboxPanel = ({
   )
   const storeContact = activeConversation?.contact ?? null
 
-  const [contactData, setContactData] = useState<GetContactResponse | null>(
-    null,
-  )
+  const contactId = storeContact?.id
+  const contactQueryOptions =
+    orpc.contactsAPIs.getContactAuthenticatedAPI.queryOptions({
+      input: { workspaceId, contactId: contactId ?? "" },
+      enabled: Boolean(activeConversationId && contactId),
+      initialData:
+        seededContact && seededContact.id === contactId
+          ? seededContact
+          : undefined,
+    })
+  const { data: contactData = null } = useQuery(contactQueryOptions)
+  const queryClient = useQueryClient()
 
-  // Guards `getContactAuthenticatedAPI` against out-of-order resolution:
-  // the initial fetch (below) and the auto-refresh convergence re-fetch
-  // (`onProfileUpdated`) can both be in flight for the same contact, and
-  // whichever request was issued LAST must win regardless of which settles
-  // first — otherwise a slow initial fetch resolving after the refresh
-  // patch would silently overwrite the just-applied name/avatar.
-  const requestSeqRef = useRef(0)
-  const issuedForRef = useRef<string | null>(null)
-
-  const fetchContactData = useCallback(
-    (contactId: string, preserveOnError = false) => {
-      const seq = ++requestSeqRef.current
-      client.contactsAPIs
-        .getContactAuthenticatedAPI({ workspaceId, contactId })
-        .then((data) => {
-          if (requestSeqRef.current === seq) {
-            setContactData(data)
-          }
-        })
-        .catch(() => {
-          // On the INITIAL open fetch, a failure must clear stale data from
-          // the previous contact. On the auto-refresh convergence re-fetch
-          // (`preserveOnError: true`), the hook has already patched
-          // `contactData` with the fresh name/avatar — a transport blip on
-          // this re-fetch must not wipe that out; keeping the patched state
-          // is strictly better than showing nothing.
-          if (requestSeqRef.current === seq && !preserveOnError) {
-            setContactData(null)
-          }
-        })
+  const setContactData = useCallback(
+    (
+      updater: (
+        previousContact: GetContactResponse | null,
+      ) => GetContactResponse | null,
+    ) => {
+      queryClient.setQueryData(
+        contactQueryOptions.queryKey,
+        (previousContact) => updater(previousContact ?? null) ?? undefined,
+      )
     },
-    [workspaceId],
+    [contactQueryOptions.queryKey, queryClient],
   )
-
-  // Re-fetch the canonical contact once the auto-refresh applies an update,
-  // so `contactData` converges even if the initial fetch below is still in
-  // flight and resolves afterwards.
   const onProfileUpdated = useCallback(
-    (contactId: string) => fetchContactData(contactId, true),
-    [fetchContactData],
+    () =>
+      queryClient.invalidateQueries({
+        queryKey: contactQueryOptions.queryKey,
+      }),
+    [contactQueryOptions.queryKey, queryClient],
   )
 
   useAutoRefreshContactProfile({
@@ -97,31 +84,10 @@ export const ContactInboxPanel = ({
   })
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: activeConversationId is a trigger-only dependency; the effect resets accordion state on conversation switch without reading the value itself
   useEffect(() => {
-    const contactId = storeContact?.id
-
-    if (!(activeConversationId && contactId)) {
-      requestSeqRef.current += 1
-      issuedForRef.current = null
-      setContactData(null)
-      setOpenAccordionItems([])
-      return
-    }
-
-    const issuedFor = `${activeConversationId}:${contactId}`
-    if (issuedForRef.current === issuedFor) {
-      return
-    }
-    issuedForRef.current = issuedFor
-
-    if (seededContact?.id === contactId) {
-      requestSeqRef.current += 1
-      setContactData(seededContact)
-      return
-    }
-
-    fetchContactData(contactId)
-  }, [activeConversationId, storeContact?.id, seededContact, fetchContactData])
+    setOpenAccordionItems([])
+  }, [activeConversationId])
 
   const accordionModules: AccordionModule[] = useMemo(() => {
     if (!contactData) {
@@ -153,7 +119,11 @@ export const ContactInboxPanel = ({
           <UpdateContactTagField
             contact={contactData}
             onSuccess={(updatedTags: TagResource[]) => {
-              setContactData({ ...contactData, tags: updatedTags })
+              setContactData((previousContact) =>
+                previousContact
+                  ? { ...previousContact, tags: updatedTags }
+                  : null,
+              )
             }}
             tags={contactData.tags}
             workspaceId={workspaceId}
@@ -171,7 +141,7 @@ export const ContactInboxPanel = ({
         ),
       },
     ]
-  }, [contactData, workspaceId, t])
+  }, [contactData, workspaceId, t, setContactData])
 
   if (!storeContact) {
     return null
@@ -182,11 +152,6 @@ export const ContactInboxPanel = ({
       <ContactDetail
         activeConversationId={activeConversationId}
         contact={contactData}
-        onCustomFieldsReset={() =>
-          setContactData((previous) =>
-            previous ? { ...previous, customFields: [] } : previous,
-          )
-        }
       />
 
       {contactData?.id ? (
@@ -265,29 +230,13 @@ function ContactSequencesSection({
   const { data } = useQuery(queryOptions)
   const sequences = useMemo(
     () =>
-<<<<<<< HEAD
       (data?.data ?? []).map((sequence) => ({
-        sequenceId: sequence.sequenceId,
         sequence: {
           id: sequence.sequenceId,
           name: sequence.sequenceName,
         },
       })),
     [data?.data],
-=======
-      (data?.data ?? []).map(
-        (sequence) =>
-          ({
-            contactId,
-            sequenceId: sequence.sequenceId,
-            sequence: {
-              id: sequence.sequenceId,
-              name: sequence.sequenceName,
-            },
-          }) as ContactOnSequenceWithRelations,
-      ),
-    [contactId, data?.data],
->>>>>>> 64ac9d6b6 (perf(inbox): prefetch initial inbox state and replace zustand stores with tanstack query)
   )
 
   return (

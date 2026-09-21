@@ -1,8 +1,12 @@
+import { notFoundException } from "@chatbotx.io/business/errors"
 import z from "zod"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { requireContactPermissionScope } from "../permissions"
+import {
+  buildContactPermissionScope,
+  requireContactPermissionScope,
+} from "../permissions"
 import { getContact } from "../queries/get-contact.query"
 import { getExportFile } from "../queries/get-export-file.query"
 import {
@@ -31,9 +35,17 @@ export const contactsAuthenticatedAPI = {
     .input(getContactRequest)
     .output(getContactResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       const { workspaceId, contactId } = input
-      return await getContact({ workspaceId, contactId })
+      const scope = buildContactPermissionScope({
+        permissions: context.workspaceMember.permissions,
+        userId: context.user.id,
+      })
+      if (!scope) {
+        throw notFoundException("Contact not found")
+      }
+
+      return await getContact({ workspaceId, contactId }, scope)
     }),
 
   listContactsByPOSTAuthenticatedAPI: authorizedAPI

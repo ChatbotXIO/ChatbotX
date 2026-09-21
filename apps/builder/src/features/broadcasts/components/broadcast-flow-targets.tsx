@@ -12,7 +12,6 @@ import {
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
-import { useFlowStore } from "@/features/flows/provider/flow-store-context"
 import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
 import { useBroadcastPageTemplates } from "../hooks/use-broadcast-page-templates"
 import {
@@ -81,10 +80,16 @@ function BroadcastFlowTargetCard({
  * template belongs to that page. A page left without a flow is allowed — it
  * is simply skipped at send and receiver-count time.
  */
-export function BroadcastFlowTargets({ channel }: { channel: ChannelType }) {
+export function BroadcastFlowTargets({
+  channel,
+  flows,
+}: {
+  channel: ChannelType
+  flows: readonly FlowForTargets[]
+}) {
   const { control } = useFormContext()
   const inboxes = useInboxList()
-  const flows = useFlowStore((state) => state.flows)
+
   const { templatesById } = useBroadcastPageTemplates(channel)
 
   const inboxIds = (useWatch({ control, name: "inboxIds" }) ?? []) as string[]

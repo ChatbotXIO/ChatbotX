@@ -13,8 +13,7 @@ import type { ContactResource } from "../contacts/schema/resource"
 import { updateContactSequenceAction } from "./actions/update-contact-sequence.action"
 import { updateContactSequenceRequest } from "./schema"
 
-export type ContactSequenceFieldItem = {
-  sequenceId: string
+type ContactSequence = {
   sequence: {
     id: string
     name: string
@@ -27,8 +26,8 @@ export default function UpdateContactSequenceField({
   onSuccess,
 }: {
   contact: ContactResource
-  sequences: ContactSequenceFieldItem[]
-  onSuccess?: (updatedSequences: ContactSequenceFieldItem[]) => void
+  sequences: ContactSequence[]
+  onSuccess?: (updatedSequences: ContactSequence[]) => void
 }) {
   const workspaceId = useWorkspaceId()
 
@@ -50,15 +49,7 @@ export default function UpdateContactSequenceField({
     {
       actionProps: {
         onSuccess: ({ data: updatedSequences }) => {
-          onSuccess?.(
-            updatedSequences.map((sequence) => ({
-              sequenceId: sequence.sequenceId,
-              sequence: {
-                id: sequence.sequence.id,
-                name: sequence.sequence.name,
-              },
-            })),
-          )
+          onSuccess?.(updatedSequences as ContactSequence[])
         },
         onError: ({ error }) => {
           if (error.serverError) {

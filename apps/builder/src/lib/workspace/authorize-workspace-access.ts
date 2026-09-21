@@ -7,6 +7,7 @@ import type { HTTPMethod } from "@orpc/server"
 import { ORPCError } from "@orpc/server"
 import { isCloud } from "@/env"
 import { ADS_CAMPAIGNS_INSIGHTS_PATH } from "@/features/ads-campaign/lib/api-paths"
+import { CONVERSATIONS_LIST_POST_PATH } from "@/features/conversations/lib/api-paths"
 
 export type WorkspaceAccessDenialReason = "trialExpired" | "macLimitReached"
 
@@ -136,12 +137,11 @@ export const workspaceAccessDenialOrpcError = (
 
 /**
  * Shared by the session (`workspaceAuthorizedMidddleware`) and workspace-token
- * oRPC gates: reads and deletes stay open (invariant #14) while mutations are
- * checked against the owner's quota/trial state.
+ * oRPC gates: reads, deletes, and allow-listed POST-for-read routes (see
+ * `READ_ONLY_POST_PATHS`) stay open; all other mutations are checked against
+ * the owner's quota/trial state.
  */
-const READ_ONLY_POST_PATHS = new Set([
-  "/workspaces/{workspaceId}/conversations/list",
-])
+const READ_ONLY_POST_PATHS = new Set([CONVERSATIONS_LIST_POST_PATH])
 
 export async function assertWorkspaceOwnerAccessForMethod(props: {
   method: HTTPMethod | undefined

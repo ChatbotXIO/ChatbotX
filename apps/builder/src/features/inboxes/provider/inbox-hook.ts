@@ -1,7 +1,7 @@
 import { channelTypes } from "@chatbotx.io/database/partials"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { orpc } from "@/lib/orpc/query"
 
@@ -56,10 +56,13 @@ export const useInboxes = (
 
 export const useInvalidateInboxes = () => {
   const queryClient = useQueryClient()
-  return () =>
-    queryClient.invalidateQueries({
-      queryKey: orpc.inboxesAPI.listAllInboxesAuthenticatedAPI.key(),
-    })
+  return useCallback(
+    () =>
+      queryClient.invalidateQueries({
+        queryKey: orpc.inboxesAPI.listAllInboxesAuthenticatedAPI.key(),
+      }),
+    [queryClient],
+  )
 }
 
 export const useInboxList = (options?: { enabled?: boolean }) => {

@@ -74,6 +74,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
   // JS — and rendering waits for the first measurement rather than guessing
   // desktop and remounting everything a frame later.
   const isMobile = useIsMobileState()
+  // On mobile, suppress an auto-selected first conversation so the list shows first; genuine deep links are never auto-closed.
   useEffect(() => {
     if (isMobile === true && activeConversationAutoSelected) {
       setActiveConversationId(null)

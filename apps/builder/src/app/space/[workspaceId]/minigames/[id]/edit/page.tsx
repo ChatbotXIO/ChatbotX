@@ -1,7 +1,6 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { MinigameForm } from "@/features/minigames/minigame-form"
 import { findMinigame } from "@/features/minigames/queries"
 import { getBrokerOrigin } from "@/lib/oauth-broker"
@@ -27,13 +26,11 @@ export default async function EditMinigamePage({
   const publicUrl = `${getBrokerOrigin()}/minigames?minigameId=${minigame.id}&token={{minigame_play_token}}`
 
   return (
-    <FlowStoreProvider>
-      <MinigameForm
-        minigame={minigame}
-        mode="edit"
-        publicUrl={publicUrl}
-        workspaceId={workspaceId}
-      />
-    </FlowStoreProvider>
+    <MinigameForm
+      minigame={minigame}
+      mode="edit"
+      publicUrl={publicUrl}
+      workspaceId={workspaceId}
+    />
   )
 }

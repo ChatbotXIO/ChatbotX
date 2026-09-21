@@ -7,7 +7,7 @@ import {
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+
 import { UserPersistentMenuForm } from "@/features/user-persistent-menus/components/user-persistent-menu-form"
 import { findUserPersistentMenu } from "@/features/user-persistent-menus/queries"
 
@@ -38,9 +38,7 @@ export default async function EditUserPersistentMenuPage(props: {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <FlowStoreProvider>
-          <UserPersistentMenuForm menu={menu} workspaceId={workspaceId} />
-        </FlowStoreProvider>
+        <UserPersistentMenuForm menu={menu} workspaceId={workspaceId} />
       </CardContent>
     </Card>
   )

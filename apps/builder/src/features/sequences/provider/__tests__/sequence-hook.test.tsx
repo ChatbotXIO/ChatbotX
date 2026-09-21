@@ -26,18 +26,23 @@ const makeQueryClient = () =>
 function SequencesProbe({
   workspaceId = "workspace-1",
   enabled = true,
+  onData,
 }: {
   workspaceId?: string
   enabled?: boolean
+  onData?: (data: unknown) => void
 }) {
-  useSequences(workspaceId, { enabled })
+  const sequences = useSequences(workspaceId, { enabled })
+  onData?.(sequences.data)
   return null
 }
 
 function InvalidateProbe({
   onReady,
+  version: _version = 0,
 }: {
   onReady: (fn: () => unknown) => void
+  version?: number
 }) {
   onReady(useInvalidateSequences())
   return null
@@ -89,6 +94,24 @@ describe("sequence query hooks", () => {
     )
   })
 
+  test("unwraps sequence response data", async () => {
+    const sequences = [{ id: "sequence-1", name: "Welcome" }]
+    let data: unknown
+    mockListSequences.mockResolvedValue({ data: sequences })
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <SequencesProbe onData={(nextData) => (data = nextData)} />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(data).toEqual(sequences)
+    })
+  })
+
   test("does not request sequences when disabled", () => {
     act(() => {
       root.render(
@@ -123,5 +146,33 @@ describe("sequence query hooks", () => {
     })
 
     expect(invalidateQueries).toHaveBeenCalledTimes(1)
+  })
+
+  test("keeps the invalidator stable across renders", () => {
+    const invalidators: (() => unknown)[] = []
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <InvalidateProbe
+            onReady={(fn) => invalidators.push(fn)}
+            version={1}
+          />
+        </QueryClientProvider>,
+      )
+    })
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <InvalidateProbe
+            onReady={(fn) => invalidators.push(fn)}
+            version={2}
+          />
+        </QueryClientProvider>,
+      )
+    })
+
+    expect(invalidators).toHaveLength(2)
+    expect(invalidators[1]).toBe(invalidators[0])
   })
 })

@@ -37,21 +37,23 @@ export function getAssignedContactsUserId(input: {
     : undefined
 }
 
-/**
- * Derives contact access from a workspace member already authenticated by the
- * caller. oRPC handlers use this instead of resolving the session twice.
- */
-export function requireContactPermissionScopeForMember(input: {
+export function buildContactPermissionScope({
+  permissions,
+  userId,
+}: {
   permissions: Permissions
   userId: string
-}): ContactPermissionScope {
-  if (!canAccessContactsSection(input.permissions)) {
-    throw new ChatbotXException("User is not authorized to access contacts")
+}): ContactPermissionScope | null {
+  if (!canAccessContactsSection(permissions)) {
+    return null
   }
 
   return {
-    canViewEmailAndPhone: canViewContactEmailAndPhone(input.permissions),
-    restrictToAssignedUserId: getAssignedContactsUserId(input),
+    canViewEmailAndPhone: canViewContactEmailAndPhone(permissions),
+    restrictToAssignedUserId: getAssignedContactsUserId({
+      permissions,
+      userId,
+    }),
   }
 }
 
@@ -62,20 +64,12 @@ export async function resolveContactPermissionScope(
   if (!userAndWorkspace) {
     return null
   }
-
   const { user, targetWorkspaceMember } = userAndWorkspace
-  const permissions = targetWorkspaceMember.permissions
-  if (!canAccessContactsSection(permissions)) {
-    return null
-  }
 
-  return {
-    canViewEmailAndPhone: canViewContactEmailAndPhone(permissions),
-    restrictToAssignedUserId: getAssignedContactsUserId({
-      permissions,
-      userId: user.id,
-    }),
-  }
+  return buildContactPermissionScope({
+    permissions: targetWorkspaceMember.permissions,
+    userId: user.id,
+  })
 }
 
 export async function requireContactPermissionScope(
@@ -85,10 +79,15 @@ export async function requireContactPermissionScope(
   if (!userAndWorkspace) {
     throw new ChatbotXException("User is not associated with this workspace")
   }
-
   const { user, targetWorkspaceMember } = userAndWorkspace
-  return requireContactPermissionScopeForMember({
+
+  const scope = buildContactPermissionScope({
     permissions: targetWorkspaceMember.permissions,
     userId: user.id,
   })
+  if (!scope) {
+    throw new ChatbotXException("User is not authorized to access contacts")
+  }
+
+  return scope
 }

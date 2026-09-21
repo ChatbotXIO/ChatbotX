@@ -3,7 +3,6 @@ import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { EditQuestionnaireForm } from "@/features/questionnaires/components/edit-questionnaire-form"
 import { getQuestionnaire } from "@/features/questionnaires/queries"
 
@@ -34,12 +33,10 @@ export default async function EditQuestionnairePage({
           { label: questionnaire.name, href: "" },
         ]}
       />
-      <FlowStoreProvider>
-        <EditQuestionnaireForm
-          questionnaire={questionnaire}
-          workspaceId={workspaceId}
-        />
-      </FlowStoreProvider>
+      <EditQuestionnaireForm
+        questionnaire={questionnaire}
+        workspaceId={workspaceId}
+      />
     </div>
   )
 }
