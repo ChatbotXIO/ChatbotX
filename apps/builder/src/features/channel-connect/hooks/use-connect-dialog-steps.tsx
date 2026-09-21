@@ -315,6 +315,13 @@ export function useConnectDialogSteps<TItem extends ConnectPickerItem>({
 
   useAutoStartBatch(batch.run)
 
+  useEffect(() => {
+    if (batch.connectedCount === 0) {
+      return
+    }
+    invalidateInboxes()
+  }, [batch.connectedCount, invalidateInboxes])
+
   // `batch.done` only advances once at least one row has settled, so it
   // already implies the batch has started — no need to also read the
   // mount-guard ref during render.

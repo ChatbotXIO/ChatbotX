@@ -41,6 +41,7 @@ export function FlowsTableToolbarActions({
             onOpenChange={() => setRowAction(null)}
             onSuccess={() => {
               table.toggleAllRowsSelected(false)
+              invalidateFlows()
               router.refresh()
             }}
             workspaceId={workspaceId}

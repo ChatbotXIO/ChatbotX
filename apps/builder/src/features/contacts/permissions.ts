@@ -1,3 +1,4 @@
+import { contactService } from "@chatbotx.io/business"
 import {
   ChatbotXException,
   notFoundException,
@@ -113,4 +114,33 @@ export async function requireContactPermissionScope(
     throw new ChatbotXException("User is not associated with this workspace")
   }
   throw new ChatbotXException("User is not authorized to access contacts")
+}
+
+/**
+ * The gate for private per-contact subresource reads (notes, sequences,
+ * coupons, appointments): the caller must have contacts-section access and
+ * the contact itself must be inside their assigned-contacts scope. Mirrors
+ * what `getContactAuthenticatedAPI` enforces via `findDetailOrFail`.
+ */
+export async function requireContactAccessForMember(input: {
+  permissions: Permissions
+  userId: string
+  workspaceId: string
+  contactId: string
+}): Promise<ContactPermissionScope> {
+  const scope = buildContactPermissionScope({
+    permissions: input.permissions,
+    userId: input.userId,
+  })
+  if (!scope) {
+    throw notFoundException("Contact not found")
+  }
+
+  await contactService.findByIdOrFail({
+    workspaceId: input.workspaceId,
+    id: input.contactId,
+    accessScope: { restrictToAssignedUserId: scope.restrictToAssignedUserId },
+  })
+
+  return scope
 }

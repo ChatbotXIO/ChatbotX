@@ -137,4 +137,27 @@ describe("listContactAppointmentsAPI", () => {
       accessScope: { restrictToAssignedUserId: undefined },
     })
   })
+
+  test("rejects a caller without contacts-section access", async () => {
+    mocks.requireContactPermissionScopeForMember.mockImplementationOnce(() => {
+      throw new Error("Contact not found")
+    })
+    mocks.listContactAppointments.mockReset()
+
+    await expect(
+      mocks.state.handler?.({
+        input: { workspaceId: "workspace-1", contactId: "contact-1" },
+        context: {
+          workspaceMember: { permissions: {} },
+          user: { id: "user-1" },
+        },
+      }),
+    ).rejects.toThrow()
+
+    expect(mocks.requireContactPermissionScopeForMember).toHaveBeenCalledWith({
+      permissions: {},
+      userId: "user-1",
+    })
+    expect(mocks.listContactAppointments).not.toHaveBeenCalled()
+  })
 })
