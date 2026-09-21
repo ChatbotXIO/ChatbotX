@@ -1,0 +1,154 @@
+name: Publish chatbotx-mcp to npm
+
+# Publishes apps/mcp-server to npmjs.com as `chatbotx-mcp`.
+# The agent-distribution repo references this package from Cursor/Grok/Gemini
+# MCP manifests via `npx -y chatbotx-mcp`, so this package must exist
+# before submitting those marketplaces.
+#
+# Auth: OIDC trusted publishing (id-token: write), matching publish-cli.yml.
+
+on:
+  push:
+    tags: ["mcp-v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, e.g. 0.1.0 (a leading v or mcp-v is stripped)"
+        required: true
+        type: string
+      dry_run:
+        description: "Run publish with --dry-run (nothing is uploaded)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-chatbotx-mcp-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish chatbotx-mcp
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6.1.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Update npm for OIDC trusted publishing
+        run: |
+          npm install -g npm@11
+          NPM_VERSION="$(npm --version)"
+          MIN_VERSION="11.5.1"
+          if [[ "$(printf '%s\n%s\n' "${NPM_VERSION}" "${MIN_VERSION}" | sort -V | head -n1)" != "${MIN_VERSION}" ]]; then
+            echo "::error::npm ${NPM_VERSION} is too old for OIDC trusted publishing (need >= ${MIN_VERSION})"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve version and dist-tag
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            RAW="${INPUT_VERSION}"
+          else
+            RAW="${GITHUB_REF_NAME}"
+          fi
+          VERSION="${RAW#mcp-v}"
+          VERSION="${VERSION#v}"
+          if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Invalid version '${RAW}' — expected mcp-v<major>.<minor>.<patch>[-prerelease]"
+            exit 1
+          fi
+          if [[ "${VERSION}" == *-* ]]; then
+            DIST_TAG="next"
+          else
+            DIST_TAG="latest"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "dist_tag=${DIST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Publishing chatbotx-mcp@${VERSION} under dist-tag ${DIST_TAG}"
+
+      - name: Skip when already published
+        id: guard
+        if: github.event_name == 'push'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if npm view "chatbotx-mcp@${VERSION}" version >/dev/null 2>&1; then
+            echo "chatbotx-mcp@${VERSION} is already on npm — skipping publish."
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stamp version into apps/mcp-server/package.json
+        if: steps.guard.outputs.should_publish != 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          jq --arg v "${VERSION}" '.version = $v' apps/mcp-server/package.json > package.json.tmp
+          mv package.json.tmp apps/mcp-server/package.json
+          node -e "console.log('stamped version:', require('./apps/mcp-server/package.json').version)"
+
+      - name: Type-check and test MCP server
+        if: steps.guard.outputs.should_publish != 'false'
+        working-directory: apps/mcp-server
+        run: |
+          pnpm check-types
+          pnpm test
+
+      - name: Build MCP server
+        if: steps.guard.outputs.should_publish != 'false'
+        working-directory: apps/mcp-server
+        run: pnpm build
+
+      - name: Publish to npm
+        id: publish
+        if: steps.guard.outputs.should_publish != 'false'
+        working-directory: apps/mcp-server
+        env:
+          DIST_TAG: ${{ steps.version.outputs.dist_tag }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          ARGS=(--access public --tag "${DIST_TAG}")
+          if [[ "${DRY_RUN}" == "true" ]]; then
+            ARGS+=(--dry-run)
+          fi
+          npm publish "${ARGS[@]}"
+
+      - name: Summarize
+        if: always()
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          DIST_TAG: ${{ steps.version.outputs.dist_tag }}
+          SHOULD_PUBLISH: ${{ steps.guard.outputs.should_publish }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
+        run: |
+          if [[ "${SHOULD_PUBLISH}" == "false" ]]; then
+            echo "chatbotx-mcp@${VERSION} already published — skipped." >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "${PUBLISH_OUTCOME}" == "failure" ]]; then
+            echo "Publish failed for chatbotx-mcp@${VERSION} — nothing was confirmed uploaded; check the \"Publish to npm\" step log." >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "${DRY_RUN}" == "true" ]]; then
+            echo "Dry run for chatbotx-mcp@${VERSION} (${DIST_TAG}) — nothing uploaded." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Published https://www.npmjs.com/package/chatbotx-mcp/v/${VERSION} (dist-tag \`${DIST_TAG}\`)" >> "$GITHUB_STEP_SUMMARY"
+          fi

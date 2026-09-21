@@ -158,8 +158,7 @@ jobs:
 
       # Direct `tsdown` rather than `turbo run build`: the stamped package.json
       # must be inside the bundle, and this sidesteps any turbo cache question
-      # entirely. Never `pnpm --filter chatbotx` — the private root package is
-      # ALSO named `chatbotx`, so that selector matches two projects.
+      # entirely.
       - name: Build CLI
         if: steps.guard.outputs.should_publish != 'false'
         working-directory: apps/cli

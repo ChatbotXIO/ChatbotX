@@ -2,7 +2,7 @@
 
 [Model Context Protocol](https://modelcontextprotocol.io) server for ChatbotX. Gives AI agents (Claude, Cursor, ChatGPT, etc.) access to your ChatbotX workspace through tools that are **automatically generated** from the ChatbotX OpenAPI spec — no manual tool definitions needed.
 
-The published, registry-facing mirror of this doc is [`skills/chatbotx/SKILL.md`](../../skills/chatbotx/SKILL.md) — published to skills.sh and ClawHub. Update both together when the tool surface changes (see the `cli-mcp-docs` skill).
+Published skill/agent distribution docs live in the separate `chatbotx-agent` package; this repo owns the MCP server implementation and README.
 
 ## How it works
 

@@ -1,6 +1,6 @@
 ---
 name: cli-mcp-docs
-description: Use after adding, renaming, or removing a public oRPC procedure, or after changing an operation's MCP visibility. The CLI and MCP server generate their surface at runtime from the live OpenAPI spec, but four hand-maintained doc files drift. This skill lists what to check and update in each, plus how to catch a silent CLI command-name collision before it ships.
+description: Use after adding, renaming, or removing a public oRPC procedure, or after changing an operation's MCP visibility. The CLI and MCP server generate their surface at runtime from the live OpenAPI spec, but repo-local docs still drift. This skill lists what to check and update, plus how to catch a silent CLI command-name collision before it ships.
 ---
 
 # CLI & MCP docs sync (ChatbotX)
@@ -54,39 +54,30 @@ document it (step 3). The MCP server does not have this problem — its tool
 names come from the (test-enforced-unique) `operationId`, not a path/method
 heuristic.
 
-## 3. Update the four hand-maintained files
+## 3. Update repo-local docs
 
 Do all that apply — a partial update is worse than none, because the files
-disagree with each other:
+disagree with the generated surface:
 
 | File | What lives here | Update when |
 |---|---|---|
 | `apps/cli/README.md` | Full command reference by resource group, plus the "Known command-name collisions" section | A command group is added/renamed, or step 2 found a new collision |
-| `skills/chatbotx-cli/SKILL.md` | Condensed ClawHub/skills.sh-published mirror of the README (command groups + collision table + tips for agents) | Same triggers as README — keep both in sync |
-| `skills/chatbotx-cli/skill-card.md` | ClawHub skill card — risk list references the collision table | A collision changes the "Known Risks" section's specifics |
-| `skills/chatbotx/SKILL.md` | CLI Commands mirror, "MCP Tools" category table, curated default-tool-set description | A `visibility: "default"` operation is added/removed/recategorized |
+| `apps/mcp-server/README.md` | MCP default-tool table and runtime/setup notes | A `visibility: "default"` operation is added/removed/recategorized, or MCP runtime behavior changes |
 
-Mechanics for both published packages (`skills/chatbotx-cli/`, `skills/chatbotx/`):
-bump `version` in `SKILL.md`'s frontmatter on every content change; for
-`chatbotx-cli` that's the only version to bump — `skill-card.md` no longer
-carries its own version line. Both packages must stay directly under
-`skills/<name>/SKILL.md` — never add a `SKILL.md` at the repository root, which
-shadows both packages in `npx skills` discovery. See `skills/README.md` for
-the full publishing runbook (skills.sh has no submission step; ClawHub needs
-`clawhub skill publish`).
+Published skill/agent distribution docs live in the separate `chatbotx-agent`
+package, not this repo's `skills/` directory. If the public CLI/MCP surface
+changes, sync the matching docs there in the same product change.
 
-For `skills/chatbotx/SKILL.md`'s "MCP Tools" table: the tool-count claim
-("curated default set of N tools") and the per-category tool list must match
-whatever the codebase actually marks `visibility: "default"` — grep for
-`mcpSpec({ visibility: "default"` under `apps/builder/src` if unsure which
-operations currently opt in. `apps/builder/__tests__/public-spec-mcp.test.ts`
-pins this file against the live default tool set and fails CI on drift.
+For `apps/mcp-server/README.md`'s "Available tools" section: the tool-count
+claim ("current default set has N tools") and the per-category tool list must
+match whatever the codebase marks `visibility: "default"`. `apps/builder/__tests__/public-spec-mcp.test.ts`
+pins this README against the live default tool set and fails CI on drift.
 
 ## 4. Verify against a live instance, not just the docs
 
 ```bash
 pnpm --filter chatbotx dev:cli -- --refresh-spec <new-group> --help
-pnpm --filter chatbotx-mcp-server dev:mcp   # then call tools/list against it
+pnpm --filter chatbotx-mcp dev:mcp   # then call tools/list against it
 ```
 
 Confirm the command/tool you documented actually appears with the flags you
@@ -96,7 +87,6 @@ never the reverse.
 ## Stop condition
 
 New/changed public operation shipped → spec test green, collision check run,
-every applicable file in the step-3 table updated and cross-checked against
-each other, command/tool verified live. Skipping the collision check or
-leaving one of the four files stale is the failure mode this skill exists to
-prevent.
+every applicable repo-local doc updated and cross-checked against the generated
+surface, command/tool verified live. Skipping the collision check or leaving a
+listed file stale is the failure mode this skill exists to prevent.

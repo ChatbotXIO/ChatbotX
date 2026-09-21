@@ -203,8 +203,8 @@ Useful package-level commands:
 pnpm --filter builder dev
 pnpm --filter worker dev
 pnpm --filter realtime dev
-pnpm --filter chatbotx-cli dev:cli
-pnpm --filter chatbotx-mcp-server dev:mcp
+pnpm --filter chatbotx dev:cli
+pnpm --filter chatbotx-mcp dev:mcp
 pnpm --filter @chatbotx.io/database db:studio
 ```
 
