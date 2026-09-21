@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, describe, expect, test, vi } from "vitest"
@@ -23,12 +24,17 @@ function renderComponent(ui: React.ReactElement) {
 }
 
 function renderPopover(inputValue: string) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   const el = renderComponent(
-    <SavedReplyStoreProvider autoInitialize={false} workspaceId="ws-1">
-      <QuickRepliesPopover inputValue={inputValue} onSelect={() => undefined}>
-        <textarea defaultValue={inputValue} />
-      </QuickRepliesPopover>
-    </SavedReplyStoreProvider>,
+    <QueryClientProvider client={queryClient}>
+      <SavedReplyStoreProvider autoInitialize={false} workspaceId="ws-1">
+        <QuickRepliesPopover inputValue={inputValue} onSelect={() => undefined}>
+          <textarea defaultValue={inputValue} />
+        </QuickRepliesPopover>
+      </SavedReplyStoreProvider>
+    </QueryClientProvider>,
   )
 
   const textarea = el.querySelector("textarea")

@@ -53,6 +53,7 @@ export default function ConversationList({
     isLoadingConversation,
     setActiveConversationId,
     initActiveConversationFromUrl,
+    isFirstLoadConversation,
   } = useChatStore((state) => state)
 
   const [showSearchInput, setShowSearchInput] = useState(false)
@@ -63,6 +64,9 @@ export default function ConversationList({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: run once on mount; a remount (e.g. the mobile back control) must not refetch or re-auto-select
   useEffect(() => {
+    if (!isFirstLoadConversation) {
+      return
+    }
     loadMoreConversations(workspaceId, {
       autoSelectFirst: autoSelectFirstConversation,
     }).catch(() => {

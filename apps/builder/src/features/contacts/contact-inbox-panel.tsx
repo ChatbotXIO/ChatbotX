@@ -6,15 +6,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@chatbotx.io/ui/components/ui/accordion"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { client } from "@/lib/orpc/orpc"
-import type { ContactAppointmentResource } from "../appointments/schema/resource"
+import { orpc } from "@/lib/orpc/query"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
 import type { ContactOnSequenceWithRelations } from "../contact-sequences/schema"
 import UpdateContactSequenceField from "../contact-sequences/update-contact-sequence-field"
-import { SequenceStoreProvider } from "../sequences/provider/sequence-store-context"
 import type { TagResource } from "../tags/schema/resource"
 import { ContactAppointmentsList } from "./components/contact-appointments-list"
 import UpdateContactTagField from "./components/update-contact-tag-field"
@@ -36,7 +36,7 @@ export const ContactInboxPanel = ({
 }) => {
   const t = useTranslations()
 
-  const { conversations } = useChatStore((state) => state)
+  const { conversations, seededContact } = useChatStore((state) => state)
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeConversationId) ?? null,
@@ -55,6 +55,7 @@ export const ContactInboxPanel = ({
   // first — otherwise a slow initial fetch resolving after the refresh
   // patch would silently overwrite the just-applied name/avatar.
   const requestSeqRef = useRef(0)
+  const issuedForRef = useRef<string | null>(null)
 
   const fetchContactData = useCallback(
     (contactId: string, preserveOnError = false) => {
@@ -95,36 +96,33 @@ export const ContactInboxPanel = ({
     setContactData,
     onProfileUpdated,
   })
-  const [coupons, setCoupons] = useState<
-    Array<{ id: string; topicName: string; code: string; usedAt: Date | null }>
-  >([])
-  const [appointments, setAppointments] = useState<
-    ContactAppointmentResource[]
-  >([])
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([])
 
   useEffect(() => {
     const contactId = storeContact?.id
 
     if (!(activeConversationId && contactId)) {
       requestSeqRef.current += 1
+      issuedForRef.current = null
       setContactData(null)
-      setCoupons([])
-      setAppointments([])
+      setOpenAccordionItems([])
+      return
+    }
+
+    const issuedFor = `${activeConversationId}:${contactId}`
+    if (issuedForRef.current === issuedFor) {
+      return
+    }
+    issuedForRef.current = issuedFor
+
+    if (seededContact?.id === contactId) {
+      requestSeqRef.current += 1
+      setContactData(seededContact)
       return
     }
 
     fetchContactData(contactId)
-
-    client.couponsAPI
-      .listContactCouponsAPI({ workspaceId, contactId })
-      .then(setCoupons)
-      .catch(() => setCoupons([]))
-
-    client.appointmentsAPI
-      .listContactAppointmentsAPI({ workspaceId, contactId })
-      .then(setAppointments)
-      .catch(() => setAppointments([]))
-  }, [activeConversationId, storeContact?.id, workspaceId, fetchContactData])
+  }, [activeConversationId, storeContact?.id, seededContact, fetchContactData])
 
   const accordionModules: AccordionModule[] = useMemo(() => {
     if (!contactData) {
@@ -135,30 +133,20 @@ export const ContactInboxPanel = ({
       {
         keyName: t("coupons.title"),
         content: (
-          <div className="grid gap-2 px-2 text-sm">
-            {coupons.length > 0 ? (
-              coupons.map((coupon) => (
-                <div className="rounded-md border p-2" key={coupon.id}>
-                  <div className="font-medium">{coupon.topicName}</div>
-                  <div className="font-mono">{coupon.code}</div>
-                  <div className="text-muted-foreground">
-                    {coupon.usedAt
-                      ? t("coupons.usageStatuses.used")
-                      : t("coupons.usageStatuses.notUsed")}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-muted-foreground">
-                {t("coupons.messages.empty")}
-              </div>
-            )}
-          </div>
+          <ContactCouponsSection
+            contactId={contactData.id}
+            workspaceId={workspaceId}
+          />
         ),
       },
       {
         keyName: t("appointments.title"),
-        content: <ContactAppointmentsList appointments={appointments} />,
+        content: (
+          <ContactAppointmentsSection
+            contactId={contactData.id}
+            workspaceId={workspaceId}
+          />
+        ),
       },
       {
         keyName: t("fields.tags.label"),
@@ -176,28 +164,15 @@ export const ContactInboxPanel = ({
       {
         keyName: t("sequences.title"),
         content: (
-          <SequenceStoreProvider
-            autoInitialize={true}
+          <ContactSequencesSection
+            contact={contactData}
+            contactId={contactData.id}
             workspaceId={workspaceId}
-          >
-            <UpdateContactSequenceField
-              contact={contactData}
-              onSuccess={(updatedSequences) => {
-                setContactData({
-                  ...contactData,
-                  contactsOnSequences:
-                    updatedSequences as ContactOnSequenceWithRelations[],
-                })
-              }}
-              sequences={
-                contactData.contactsOnSequences as ContactOnSequenceWithRelations[]
-              }
-            />
-          </SequenceStoreProvider>
+          />
         ),
       },
     ]
-  }, [contactData, workspaceId, t, coupons, appointments])
+  }, [contactData, workspaceId, t])
 
   if (!storeContact) {
     return null
@@ -215,9 +190,18 @@ export const ContactInboxPanel = ({
         }
       />
 
-      <ContactNotesManage contactNotes={contactData?.contactNotes ?? []} />
+      {contactData?.id ? (
+        <ContactNotesSection
+          contactId={contactData.id}
+          workspaceId={workspaceId}
+        />
+      ) : null}
 
-      <Accordion className="w-full">
+      <Accordion
+        className="w-full"
+        onValueChange={(value) => setOpenAccordionItems(value as string[])}
+        value={openAccordionItems}
+      >
         {accordionModules.map((module, index) => (
           <AccordionItem
             className="transition-all hover:data-[state=open]:rounded-none"
@@ -229,10 +213,138 @@ export const ContactInboxPanel = ({
             >
               <div className="flex items-center gap-2">{module.keyName}</div>
             </AccordionTrigger>
-            <AccordionContent>{module.content}</AccordionContent>
+            <AccordionContent>
+              {openAccordionItems.includes(module.keyName)
+                ? module.content
+                : null}
+            </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>
     </div>
   )
+}
+
+function ContactNotesSection({
+  workspaceId,
+  contactId,
+}: {
+  workspaceId: string
+  contactId: string
+}) {
+  const queryClient = useQueryClient()
+  const queryOptions =
+    orpc.contactNotesAPI.listContactNotesAuthenticatedAPI.queryOptions({
+      input: { workspaceId, contactId },
+    })
+  const { data } = useQuery(queryOptions)
+
+  return (
+    <ContactNotesManage
+      contactNotes={data?.data ?? []}
+      onNotesChange={(notes) => {
+        queryClient.setQueryData(queryOptions.queryKey, { data: notes })
+      }}
+    />
+  )
+}
+
+function ContactSequencesSection({
+  workspaceId,
+  contactId,
+  contact,
+}: {
+  workspaceId: string
+  contactId: string
+  contact: GetContactResponse
+}) {
+  const queryClient = useQueryClient()
+  const queryOptions =
+    orpc.contactSequencesAPI.listContactSequencesAuthenticatedAPI.queryOptions({
+      input: { workspaceId, contactId },
+    })
+  const { data } = useQuery(queryOptions)
+  const sequences = useMemo(
+    () =>
+      (data?.data ?? []).map(
+        (sequence) =>
+          ({
+            contactId,
+            sequenceId: sequence.sequenceId,
+            sequence: {
+              id: sequence.sequenceId,
+              name: sequence.sequenceName,
+            },
+          }) as ContactOnSequenceWithRelations,
+      ),
+    [contactId, data?.data],
+  )
+
+  return (
+    <UpdateContactSequenceField
+      contact={contact}
+      onSuccess={(updatedSequences) => {
+        queryClient.setQueryData(queryOptions.queryKey, {
+          data: updatedSequences.map((sequence) => ({
+            sequenceId: sequence.sequence.id,
+            sequenceName: sequence.sequence.name,
+          })),
+        })
+      }}
+      sequences={sequences}
+    />
+  )
+}
+
+function ContactCouponsSection({
+  workspaceId,
+  contactId,
+}: {
+  workspaceId: string
+  contactId: string
+}) {
+  const t = useTranslations()
+  const { data: coupons = [] } = useQuery(
+    orpc.couponsAPI.listContactCouponsAPI.queryOptions({
+      input: { workspaceId, contactId },
+    }),
+  )
+
+  return (
+    <div className="grid gap-2 px-2 text-sm">
+      {coupons.length > 0 ? (
+        coupons.map((coupon) => (
+          <div className="rounded-md border p-2" key={coupon.id}>
+            <div className="font-medium">{coupon.topicName}</div>
+            <div className="font-mono">{coupon.code}</div>
+            <div className="text-muted-foreground">
+              {coupon.usedAt
+                ? t("coupons.usageStatuses.used")
+                : t("coupons.usageStatuses.notUsed")}
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="text-muted-foreground">
+          {t("coupons.messages.empty")}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ContactAppointmentsSection({
+  workspaceId,
+  contactId,
+}: {
+  workspaceId: string
+  contactId: string
+}) {
+  const { data: appointments = [] } = useQuery(
+    orpc.appointmentsAPI.listContactAppointmentsAPI.queryOptions({
+      input: { workspaceId, contactId },
+    }),
+  )
+
+  return <ContactAppointmentsList appointments={appointments} />
 }

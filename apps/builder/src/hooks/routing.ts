@@ -3,5 +3,7 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { useParams } from "next/navigation"
 
-export const useWorkspaceId = () =>
-  getIdFromParams(useParams<{ workspaceId: string }>(), "workspaceId")
+export const useWorkspaceId = () => {
+  const params = useParams<{ workspaceId: string }>()
+  return params ? getIdFromParams(params, "workspaceId") : ""
+}

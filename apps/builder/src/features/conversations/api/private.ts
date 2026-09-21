@@ -4,7 +4,6 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { bulkUpdateIdsRequest, successResponse } from "@/features/common/schema"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
-import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -26,14 +25,9 @@ const workspaceIdAndIdRequest = z.object({
   id: zodBigintAsString(),
 })
 
-const resolveIncludeEmailAndPhone = async (workspaceId: string) => {
-  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
-  return userAndWorkspace
-    ? canViewContactEmailAndPhone(
-        userAndWorkspace.targetWorkspaceMember.permissions,
-      )
-    : false
-}
+const resolveIncludeEmailAndPhone = (
+  permissions: Parameters<typeof canViewContactEmailAndPhone>[0],
+) => canViewContactEmailAndPhone(permissions)
 
 const postDetailsSchema = z.object({
   text: z.string().optional(),
@@ -57,10 +51,10 @@ export const conversationsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listConversationsResponse)
     .handler(
-      async ({ input }) =>
+      async ({ input, context }) =>
         await listConversations(input, {
-          includeEmailAndPhone: await resolveIncludeEmailAndPhone(
-            input.workspaceId,
+          includeEmailAndPhone: resolveIncludeEmailAndPhone(
+            context.workspaceMember.permissions,
           ),
         }),
     ),
@@ -76,10 +70,10 @@ export const conversationsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listConversationsResponse)
     .handler(
-      async ({ input }) =>
+      async ({ input, context }) =>
         await listConversations(input, {
-          includeEmailAndPhone: await resolveIncludeEmailAndPhone(
-            input.workspaceId,
+          includeEmailAndPhone: resolveIncludeEmailAndPhone(
+            context.workspaceMember.permissions,
           ),
         }),
     ),

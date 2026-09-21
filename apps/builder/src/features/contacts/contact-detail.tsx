@@ -55,7 +55,6 @@ import type { ContactInboxResource } from "../contact-inboxes/schema/resource"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
 import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
-import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
 import { EditContactField } from "./edit-contact-field"
 import { ResetContactCustomFieldsDialog } from "./reset-contact-custom-fields-dialog"
 import type { GetContactResponse } from "./schema/query"
@@ -427,9 +426,6 @@ export const ContactDetail = ({
   const [selectedField, setSelectedField] =
     useState<ContactEditableField | null>(null)
 
-  const { customFields, initialized: initializedCustomFields } =
-    useCustomFieldStore((state) => state)
-
   const [contactFields, setContactFields] = useState<ContactEditableField[]>([])
 
   useEffect(() => {
@@ -524,7 +520,7 @@ export const ContactDetail = ({
 
   const customFieldMap = useMemo(() => {
     const map = new Map<string, { name: string; type: CustomFieldType }>()
-    for (const field of customFields) {
+    for (const field of contact?.customFields ?? []) {
       const parsedType = customFieldTypes.safeParse(field.type)
       if (!parsedType.success) {
         continue
@@ -535,10 +531,10 @@ export const ContactDetail = ({
       })
     }
     return map
-  }, [customFields])
+  }, [contact?.customFields])
 
   useEffect(() => {
-    if (activeConversationId && initializedCustomFields) {
+    if (activeConversationId) {
       const conversation = conversations.find(
         (item) => item.id === activeConversationId,
       )
@@ -676,7 +672,6 @@ export const ContactDetail = ({
   }, [
     activeConversationId,
     conversations,
-    initializedCustomFields,
     contact,
     customFieldMap,
     genderOptions,

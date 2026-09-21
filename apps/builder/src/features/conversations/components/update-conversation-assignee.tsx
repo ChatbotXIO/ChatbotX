@@ -4,12 +4,11 @@ import { ChevronDownIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { authClient } from "@/lib/auth/auth-client"
-import { useContactAssigneeOptions } from "../../users/provider/user-hook"
-import type { ConversationResource } from "../schema/resource"
+import type { ListConversationItemResource } from "../schema/resource"
 import AssignConversationDialog from "./assign-conversation-dialog"
 
 type UpdateConversationAssigneeProps = {
-  conversation: ConversationResource
+  conversation: ListConversationItemResource
   onChange: (user: string | null) => void
 }
 
@@ -18,7 +17,6 @@ export function UpdateConversationAssignee({
   onChange,
 }: UpdateConversationAssigneeProps) {
   const t = useTranslations()
-  const options = useContactAssigneeOptions({ autoGroup: false })
 
   const { data: session } = authClient.useSession()
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -36,15 +34,21 @@ export function UpdateConversationAssignee({
       if (selectedId === `u_${session?.user.id}`) {
         return t("assignAdmin.assignedToMe")
       }
-      const selected = options.find((option) => option.value === selectedId)
-      if (selected) {
+      const assignedUserId = conversation.assignedUserId
+      if (assignedUserId && selectedId === `u_${assignedUserId}`) {
         return t("assignAdmin.assignedTo", {
-          name: selected.label,
+          name: conversation.assignedUser?.name ?? "--",
+        })
+      }
+      const assignedInboxTeamId = conversation.assignedInboxTeamId
+      if (assignedInboxTeamId && selectedId === `t_${assignedInboxTeamId}`) {
+        return t("assignAdmin.assignedTo", {
+          name: conversation.assignedInboxTeam?.name ?? "--",
         })
       }
     }
     return t("assignAdmin.assignConversation")
-  }, [options, selectedId, t, session])
+  }, [conversation, selectedId, t, session])
 
   useEffect(() => {
     if (conversation.assignedUserId) {
