@@ -151,6 +151,8 @@ Everything else — deletes, less-common resources (coupons, products, webhooks,
 
 Claude spawns the server process on demand. No server needs to be running. The workspace token is supplied via `CHATBOTX_API_KEY`.
 
+The package is published to npm as [`chatbotx-mcp`](https://www.npmjs.com/package/chatbotx-mcp) — `npx -y chatbotx-mcp` fetches and runs it with no local checkout or build required. Use a local `node /path/to/dist/index.mjs` instead when developing against this repo.
+
 **Claude Code CLI:**
 ```bash
 claude mcp add chatbotx \
@@ -158,7 +160,7 @@ claude mcp add chatbotx \
   -e CHATBOTX_API_URL=https://your-instance.com/api \
   -e CHATBOTX_MCP_TRANSPORT=stdio \
   -s user \
-  -- node /path/to/dist/index.mjs
+  -- npx -y chatbotx-mcp
 ```
 
 **Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
@@ -166,8 +168,8 @@ claude mcp add chatbotx \
 {
   "mcpServers": {
     "chatbotx": {
-      "command": "node",
-      "args": ["/path/to/dist/index.mjs"],
+      "command": "npx",
+      "args": ["-y", "chatbotx-mcp"],
       "env": {
         "CHATBOTX_API_KEY": "<your-token>",
         "CHATBOTX_API_URL": "https://your-instance.com/api",
@@ -177,6 +179,8 @@ claude mcp add chatbotx \
   }
 }
 ```
+
+Running from a local checkout instead (e.g. `node /path/to/dist/index.mjs`) works the same way — swap `command`/`args` accordingly.
 
 ### Option B — SSE (for shared / remote access)
 

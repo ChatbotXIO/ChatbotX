@@ -5,6 +5,19 @@ name: Publish chatbotx-mcp to npm
 # MCP manifests via `npx -y chatbotx-mcp`, so this package must exist
 # before submitting those marketplaces.
 #
+# Bootstrap (one-time, required before this workflow can publish anything):
+# npm's OIDC trusted publishing is configured on an EXISTING package's
+# Settings page, so the very first version cannot go through this workflow.
+# A maintainer with npm 2FA must, once:
+#   1. `cd apps/mcp-server && pnpm build`
+#   2. Manually stamp a real version into package.json (it holds the
+#      `0.0.0-dev` placeholder in the repo, same convention as apps/cli).
+#   3. `npm publish --access public` from apps/mcp-server (interactive 2FA).
+#   4. On npmjs.com → chatbotx-mcp → Settings → Trusted publishing, add a
+#      GitHub Actions publisher for repo `ChatbotXIO/ChatbotX`, workflow
+#      filename `publish-chatbotx-mcp.yml` (exact, case-sensitive).
+# Only after that does a `mcp-v*` tag push or workflow_dispatch succeed.
+#
 # Auth: OIDC trusted publishing (id-token: write), matching publish-cli.yml.
 
 on:
@@ -86,6 +99,9 @@ jobs:
           echo "dist_tag=${DIST_TAG}" >> "$GITHUB_OUTPUT"
           echo "Publishing chatbotx-mcp@${VERSION} under dist-tag ${DIST_TAG}"
 
+      # Re-running a tag's workflow must not fail on E403 "cannot publish over
+      # an existing version". Only guarded for tag pushes: a manual dispatch is
+      # an explicit human action and should surface the duplicate as an error.
       - name: Skip when already published
         id: guard
         if: github.event_name == 'push'
@@ -115,6 +131,9 @@ jobs:
           pnpm check-types
           pnpm test
 
+      # Direct `tsdown` rather than `turbo run build`: the stamped package.json
+      # must be inside the bundle, and this sidesteps any turbo cache question
+      # entirely.
       - name: Build MCP server
         if: steps.guard.outputs.should_publish != 'false'
         working-directory: apps/mcp-server
