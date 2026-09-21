@@ -19,6 +19,7 @@ import {
   sendPrivateReply as sendTiktokPrivateReply,
   type TiktokAuthValue,
 } from "@chatbotx.io/integration-tiktok"
+import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
   AIJobAction,
@@ -326,14 +327,17 @@ export async function executePrivateReply(
   }
 
   if (privateReply.type === "text" && privateReply.value) {
-    let text = privateReply.value
+    // Spun before the variable pass, and outside the try/catch, so a reply
+    // still varies when contact data fails to load and the raw text ships.
+    const spunValue = applySpintax(privateReply.value)
+    let text = spunValue
     try {
       const variables = await contactVariableService.getAll({
         contactId: ctx.contactInbox.contactId,
         contactInbox: ctx.contactInbox,
       })
       text = await contactVariableService.replaceAll({
-        text: privateReply.value,
+        text: spunValue,
         variables,
       })
     } catch (err) {

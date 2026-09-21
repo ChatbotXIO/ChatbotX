@@ -4072,6 +4072,7 @@
     "whatsappCarouselButtonsMismatch": "在 WhatsApp 上，轮播需要在每张卡片上使用相同的按钮：每张卡片上有一个链接按钮，或每张卡片上有相同数量的回应按钮",
     "whatsappCarouselLinkButtonNotAlone": "在 WhatsApp 中，带有链接按钮的轮播卡片不能同时包含其他按钮。请移除此卡片上的其他按钮，或将链接按钮改成其他动作。",
     "tiktokCardTitleTooLong": "TikTok 会截断这条消息：附加按钮后，只会发送前 40 个字符。请缩短消息内容或移除按钮。",
+    "sendTextTooLongForChannel": "这条消息超过了该渠道允许的长度。请缩短内容，或将此节点指向限制更高的渠道。",
     "waTemplateMpmNoProducts": "发布前请至少为此多商品按钮添加一个商品。",
     "waTemplateMpmTooManySections": "多商品按钮最多可包含 10 个版块。请在发布前移除部分版块。",
     "waTemplateMpmTooManyProducts": "多商品按钮总共最多可包含 30 个商品。请在发布前移除部分商品。",

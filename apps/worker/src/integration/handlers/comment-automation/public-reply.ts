@@ -12,6 +12,7 @@ import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import { COMMENT_AUTOMATION_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
   AIJobAction,
@@ -190,11 +191,14 @@ export async function executePublicReply(
 
     const sent: string[] = []
     for (const [index, rawText] of texts.entries()) {
-      let text = rawText
+      // Spun before the variable pass, and outside the `variables` guard, so a
+      // reply still varies when contact data failed to load above.
+      const spunText = applySpintax(rawText)
+      let text = spunText
       if (variables) {
         try {
           text = await contactVariableService.replaceAll({
-            text: rawText,
+            text: spunText,
             variables,
           })
         } catch (err) {

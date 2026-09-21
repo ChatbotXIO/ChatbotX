@@ -3313,6 +3313,7 @@
     "historyDepth": "({count})",
     "none": "Yok",
     "tiktokCardTitleTooLong": "TikTok bu mesajı kısaltacak: butonlar eklendiğinde yalnızca ilk 40 karakter gönderilir. Mesajı kısaltın veya butonları kaldırın.",
+    "sendTextTooLongForChannel": "Bu mesaj, bu kanalın izin verdiğinden daha uzun. Mesajı kısaltın veya bu bloğu daha yüksek sınırı olan bir kanala yönlendirin.",
     "waTemplateMpmNoProducts": "Yayınlamadan önce bu çoklu ürün butonuna en az bir ürün ekleyin.",
     "waTemplateMpmTooManySections": "Çoklu ürün butonunda en fazla 10 bölüm olabilir. Yayınlamadan önce bazı bölümleri kaldırın.",
     "waTemplateMpmTooManyProducts": "Çoklu ürün butonunda toplamda en fazla 30 ürün olabilir. Yayınlamadan önce bazı ürünleri kaldırın.",

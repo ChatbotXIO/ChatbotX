@@ -24,7 +24,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/popover"
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
 import { CodeXml, Smile } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { type ReactNode, useEffect, useRef, useState } from "react"
 import { usePromptVariableOptions } from "./use-prompt-variable-options"
 
 type TiptapEditorProps = {
@@ -37,6 +37,12 @@ type TiptapEditorProps = {
   includeRawCustomFieldVariables?: boolean
   includeBotFieldVariables?: boolean
   onChange?: (content: string) => void
+  /**
+   * Rendered in the editor's toolbar, after the variable picker — the
+   * character counter goes here so it sits with the emoji and custom field
+   * controls rather than below the editor.
+   */
+  toolbarEnd?: ReactNode
 }
 
 export const TiptapEditor = ({
@@ -49,6 +55,7 @@ export const TiptapEditor = ({
   placeholder = "Type a message...",
   showEmojiPicker = true,
   enableEmoji = true,
+  toolbarEnd,
 }: TiptapEditorProps) => {
   const [isOpenEmoji, setIsOpenEmoji] = useState(false)
   const [isEditorFocused, setIsEditorFocused] = useState(false)
@@ -233,6 +240,8 @@ export const TiptapEditor = ({
             )}
           </PopoverContent>
         </Popover>
+
+        {toolbarEnd ? <div className="ps-1 pe-2">{toolbarEnd}</div> : null}
       </div>
     </div>
   )

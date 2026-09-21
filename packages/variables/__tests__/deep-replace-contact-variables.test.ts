@@ -202,3 +202,79 @@ describe("resolveContactVariablesDeep bot fields", () => {
     expect(result.jsonBody).not.toBe(input.jsonBody)
   })
 })
+
+describe("resolveContactVariablesDeep spintax", () => {
+  // `applySpintax` draws with Math.random and takes its picker as an argument
+  // the deep walker does not thread through, so the seam here is Math.random
+  // itself: 0 always selects the first branch.
+  const pickFirstBranch = () => vi.spyOn(Math, "random").mockReturnValue(0)
+
+  test("leaves a {a|b} block alone by default", async () => {
+    pickFirstBranch()
+    mockContactFindFirst.mockResolvedValue(contact)
+    mockBotFieldFindMany.mockResolvedValue([])
+
+    const result = await resolveContactVariablesDeep(
+      "contact-1",
+      { message: "{Chào|Hi} {{first_name}}" },
+      { contactInbox, workspace },
+    )
+
+    expect(result).toEqual({ message: "{Chào|Hi} Ada" })
+  })
+
+  test("picks a branch when the caller opts in", async () => {
+    pickFirstBranch()
+    mockContactFindFirst.mockResolvedValue(contact)
+    mockBotFieldFindMany.mockResolvedValue([])
+
+    const result = await resolveContactVariablesDeep(
+      "contact-1",
+      { message: "{Chào|Hi} {{first_name}}" },
+      { contactInbox, workspace },
+      { spintax: true },
+    )
+
+    expect(result).toEqual({ message: "Chào Ada" })
+  })
+
+  // The `{{`-only short-circuit used to gate the whole walk, so text carrying
+  // spintax and nothing else would have shipped verbatim.
+  test("spins text that has no {{ placeholder, without loading contact data", async () => {
+    pickFirstBranch()
+
+    const result = await resolveContactVariablesDeep(
+      "contact-1",
+      { message: "{Chào|Hi} bạn" },
+      { contactInbox, workspace },
+      { spintax: true },
+    )
+
+    expect(result).toEqual({ message: "Chào bạn" })
+    expect(mockContactFindFirst).not.toHaveBeenCalled()
+    expect(mockBotFieldFindMany).not.toHaveBeenCalled()
+  })
+
+  // Spintax runs before the variable pass precisely so this holds: contact
+  // data is text the contact typed, and a `{a|b}` inside it is content.
+  test("never spins a value substituted from contact data", async () => {
+    pickFirstBranch()
+    mockContactFindFirst.mockResolvedValue(contact)
+    mockBotFieldFindMany.mockResolvedValue([])
+    mockContactCustomFieldFindMany.mockResolvedValue([
+      {
+        value: "Giá {tốt|xấu}",
+        customField: { name: "note", type: "shortText", description: "" },
+      },
+    ])
+
+    const result = await resolveContactVariablesDeep(
+      "contact-1",
+      { message: "{Chào|Hi}: {{note}}" },
+      { contactInbox, workspace },
+      { spintax: true },
+    )
+
+    expect(result).toEqual({ message: "Chào: Giá {tốt|xấu}" })
+  })
+})

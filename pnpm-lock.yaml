@@ -2156,6 +2156,9 @@ importers:
       '@chatbotx.io/redis':
         specifier: workspace:*
         version: link:../redis
+      '@chatbotx.io/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@chatbotx.io/variables':
         specifier: workspace:*
         version: link:../variables

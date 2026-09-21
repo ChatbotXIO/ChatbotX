@@ -3501,6 +3501,7 @@
     "historyDepth": "({count})",
     "none": "None",
     "tiktokCardTitleTooLong": "TikTok will cut this message short: with buttons attached, only the first 40 characters are sent. Shorten the message or remove the buttons.",
+    "sendTextTooLongForChannel": "This message is longer than this channel allows. Shorten it, or point this node at a channel with a higher limit.",
     "waTemplateMpmNoProducts": "Add at least one product to this multi-product button before publishing.",
     "waTemplateMpmTooManySections": "A multi-product button can have at most 10 sections. Remove some sections before publishing.",
     "waTemplateMpmTooManyProducts": "A multi-product button can have at most 30 products in total. Remove some products before publishing.",

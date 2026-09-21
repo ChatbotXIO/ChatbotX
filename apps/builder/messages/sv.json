@@ -4072,6 +4072,7 @@
     "viewPost": "Visa inlägg",
     "none": "Ingen",
     "tiktokCardTitleTooLong": "TikTok kommer att korta ner det här meddelandet: med knappar kopplade skickas bara de första 40 tecknen. Korta ner meddelandet eller ta bort knapparna.",
+    "sendTextTooLongForChannel": "Det här meddelandet är längre än vad kanalen tillåter. Korta ner det eller rikta det här blocket mot en kanal med högre gräns.",
     "waTemplateMpmNoProducts": "Lägg till minst en produkt i den här flerproduktsknappen innan publicering.",
     "waTemplateMpmTooManySections": "En flerproduktsknapp kan ha högst 10 sektioner. Ta bort några sektioner innan publicering.",
     "waTemplateMpmTooManyProducts": "En flerproduktsknapp kan ha högst 30 produkter totalt. Ta bort några produkter innan publicering.",

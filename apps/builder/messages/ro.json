@@ -3313,6 +3313,7 @@
     "historyDepth": "({count})",
     "none": "Niciuna",
     "tiktokCardTitleTooLong": "TikTok va scurta acest mesaj: cu butoane atașate, sunt trimise doar primele 40 de caractere. Scurtează mesajul sau elimină butoanele.",
+    "sendTextTooLongForChannel": "Acest mesaj depășește limita permisă de acest canal. Scurtează-l sau direcționează acest bloc către un canal cu o limită mai mare.",
     "waTemplateMpmNoProducts": "Adaugă cel puțin un produs la acest buton multi-produs înainte de publicare.",
     "waTemplateMpmTooManySections": "Un buton multi-produs poate avea cel mult 10 secțiuni. Elimină câteva secțiuni înainte de publicare.",
     "waTemplateMpmTooManyProducts": "Un buton multi-produs poate avea în total cel mult 30 de produse. Elimină câteva produse înainte de publicare.",

@@ -3313,6 +3313,7 @@
     "historyDepth": "({count})",
     "none": "Nenhum",
     "tiktokCardTitleTooLong": "O TikTok vai cortar esta mensagem: com botões associados, apenas os primeiros 40 caracteres são enviados. Encurte a mensagem ou remova os botões.",
+    "sendTextTooLongForChannel": "Esta mensagem é maior do que este canal permite. Encurte-a ou aponte este bloco para um canal com um limite mais elevado.",
     "waTemplateMpmNoProducts": "Adicione pelo menos um produto a este botão multiproduto antes de publicar.",
     "waTemplateMpmTooManySections": "Um botão multiproduto pode ter no máximo 10 secções. Remova algumas secções antes de publicar.",
     "waTemplateMpmTooManyProducts": "Um botão multiproduto pode ter no máximo 30 produtos no total. Remova alguns produtos antes de publicar.",

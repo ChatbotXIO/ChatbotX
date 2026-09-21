@@ -10,10 +10,11 @@ import {
   lt,
   sql,
 } from "@chatbotx.io/database/client"
-import type {
-  MinigameOutcomeMessage,
-  MinigamePlayerSettings,
-  MinigamePrizeSettings,
+import {
+  MINIGAME_PRIZE_NAME_TOKEN,
+  type MinigameOutcomeMessage,
+  type MinigamePlayerSettings,
+  type MinigamePrizeSettings,
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -32,6 +33,7 @@ import {
   getPaginationWithDefaults,
   likeContains,
 } from "@chatbotx.io/database/utils"
+import { applySpintax } from "@chatbotx.io/utils/spintax"
 import {
   ChatJobAction,
   chatQueue,
@@ -52,6 +54,16 @@ import { minigameService } from "./service"
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
 const MAX_PLAY_RECORDS = 200
+
+/**
+ * Resolves `{{first_name}}`-style contact variables in an outcome message.
+ *
+ * Injected by the app layer rather than imported: `@chatbotx.io/variables`
+ * depends on this package, so importing it here would close a cycle. The one
+ * caller is `playMinigameAction`. Omitting it leaves the placeholders literal
+ * — the behaviour this package had before the resolver existed.
+ */
+export type MinigameContactVariableResolver = (text: string) => Promise<string>
 
 // `winningMessageSettings`/`nonWinningMessageSettings` are unvalidated jsonb
 // columns (no parse-on-read) — a minigame saved before `outcomeMessage` was
@@ -622,11 +634,18 @@ class MinigameContactService extends BaseService {
     contactId: string
     contactInbox: ContactInboxModel
     minigame: MinigameModel
+    resolveContactVariables?: MinigameContactVariableResolver
   }): Promise<{
     contactState: MinigameContactModel
     result: MinigamePlayResult
   }> {
-    const { minigameId, contactId, contactInbox, minigame } = props
+    const {
+      minigameId,
+      contactId,
+      contactInbox,
+      minigame,
+      resolveContactVariables,
+    } = props
 
     const { contactState, result } = await this.recordPlay({
       minigameId,
@@ -676,6 +695,7 @@ class MinigameContactService extends BaseService {
         contactInbox,
         prizeName,
         outcomeMessage: nonWinningOutcomeMessage,
+        resolveContactVariables,
       })
         // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget, already logs internally on failure
         .catch(() => {})
@@ -688,6 +708,7 @@ class MinigameContactService extends BaseService {
         contactInbox,
         prizeName,
         outcomeMessage: winningOutcomeMessage,
+        resolveContactVariables,
       })
         // biome-ignore lint/suspicious/noEmptyBlockStatements: fire-and-forget, already logs internally on failure
         .catch(() => {})
@@ -814,6 +835,7 @@ class MinigameContactService extends BaseService {
     contactInbox: ContactInboxModel
     prizeName: string
     outcomeMessage: MinigameOutcomeMessage
+    resolveContactVariables?: MinigameContactVariableResolver
   }): Promise<void> {
     await this.sendOutcomeMessage({ ...props, logContext: "lose" })
   }
@@ -824,8 +846,52 @@ class MinigameContactService extends BaseService {
     contactInbox: ContactInboxModel
     prizeName: string
     outcomeMessage: MinigameOutcomeMessage
+    resolveContactVariables?: MinigameContactVariableResolver
   }): Promise<void> {
     await this.sendOutcomeMessage({ ...props, logContext: "win" })
+  }
+
+  /**
+   * Renders the author's outcome copy in three passes, in this order:
+   *
+   * 1. `applySpintax` picks one `{a|b|c}` branch. It runs first so it only
+   *    ever sees author copy — a prize name or a contact field carrying a
+   *    `{x|y}` is data and must ship verbatim.
+   * 2. `{{prize_name}}` — minigame-local, and the only token this message
+   *    understood before contact variables were wired up here.
+   * 3. Contact variables, via the injected resolver.
+   */
+  private async renderOutcomeText(props: {
+    text: string
+    prizeName: string
+    workspaceId: string
+    contactId: string
+    resolveContactVariables?: MinigameContactVariableResolver
+  }): Promise<string> {
+    const withPrizeName = applySpintax(props.text).replaceAll(
+      MINIGAME_PRIZE_NAME_TOKEN,
+      props.prizeName,
+    )
+    if (!props.resolveContactVariables) {
+      return withPrizeName
+    }
+
+    try {
+      return await props.resolveContactVariables(withPrizeName)
+    } catch (error) {
+      // Mirrors the comment-automation and story-reply handlers: an
+      // unresolvable variable degrades to the literal placeholder rather than
+      // costing the player the message they just won.
+      logger.warn(
+        {
+          err: normalizeError(error),
+          workspaceId: props.workspaceId,
+          contactId: props.contactId,
+        },
+        "Failed to resolve variables in minigame outcome message, sending raw text",
+      )
+      return withPrizeName
+    }
   }
 
   private async sendOutcomeMessage(props: {
@@ -835,6 +901,7 @@ class MinigameContactService extends BaseService {
     prizeName: string
     outcomeMessage: MinigameOutcomeMessage
     logContext: "win" | "lose"
+    resolveContactVariables?: MinigameContactVariableResolver
   }): Promise<void> {
     const {
       workspaceId,
@@ -843,6 +910,7 @@ class MinigameContactService extends BaseService {
       prizeName,
       outcomeMessage,
       logContext,
+      resolveContactVariables,
     } = props
     if (!outcomeMessage.enabled) {
       return
@@ -884,10 +952,22 @@ class MinigameContactService extends BaseService {
         return
       }
 
+      // Rendered before the row is written, not on the way out: this text is
+      // persisted as the Message and the queue job carries that same row, so
+      // resolving later would leave the inbox showing different words than the
+      // contact received.
+      const text = await this.renderOutcomeText({
+        text: outcomeMessage.text,
+        prizeName,
+        workspaceId,
+        contactId,
+        resolveContactVariables,
+      })
+
       const repository = await createMessageRepository()
       const createdAt = new Date()
       const message = await repository.create({
-        text: outcomeMessage.text.replaceAll("{{prize_name}}", prizeName),
+        text,
         messageType: "outgoing",
         workspaceId,
         conversationId: conversation.id,

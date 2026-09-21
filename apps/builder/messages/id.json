@@ -3313,6 +3313,7 @@
     "historyDepth": "({count})",
     "none": "Tidak ada",
     "tiktokCardTitleTooLong": "TikTok akan memotong pesan ini: saat tombol dilampirkan, hanya 40 karakter pertama yang dikirim. Persingkat pesan atau hapus tombolnya.",
+    "sendTextTooLongForChannel": "Pesan ini lebih panjang dari yang diizinkan saluran ini. Persingkat pesan, atau arahkan blok ini ke saluran dengan batas lebih tinggi.",
     "waTemplateMpmNoProducts": "Tambahkan setidaknya satu produk ke tombol multi-produk ini sebelum memublikasikan.",
     "waTemplateMpmTooManySections": "Tombol multi-produk dapat memiliki maksimal 10 bagian. Hapus beberapa bagian sebelum memublikasikan.",
     "waTemplateMpmTooManyProducts": "Tombol multi-produk dapat memiliki maksimal total 30 produk. Hapus beberapa produk sebelum memublikasikan.",

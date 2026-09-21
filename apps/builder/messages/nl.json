@@ -3313,6 +3313,7 @@
     "historyDepth": "({count})",
     "none": "Geen",
     "tiktokCardTitleTooLong": "TikTok verkort dit bericht: als er knoppen zijn toegevoegd, worden alleen de eerste 40 tekens verzonden. Verkort het bericht of verwijder de knoppen.",
+    "sendTextTooLongForChannel": "Dit bericht is langer dan dit kanaal toestaat. Kort het in of richt dit blok op een kanaal met een hogere limiet.",
     "waTemplateMpmNoProducts": "Voeg minstens één product toe aan deze multi-productknop voordat je publiceert.",
     "waTemplateMpmTooManySections": "Een multi-productknop kan maximaal 10 secties hebben. Verwijder enkele secties voordat je publiceert.",
     "waTemplateMpmTooManyProducts": "Een multi-productknop kan in totaal maximaal 30 producten hebben. Verwijder enkele producten voordat je publiceert.",

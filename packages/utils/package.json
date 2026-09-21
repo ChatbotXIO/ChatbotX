@@ -30,6 +30,7 @@
     "./id": "./src/id.ts",
     "./meta-capi": "./src/meta-capi.ts",
     "./referral": "./src/referral.ts",
+    "./spintax": "./src/spintax.ts",
     "./temporal-input": "./src/temporal-input/index.ts",
     "./timezone": "./src/timezone.ts",
     "./variables": "./src/variables.ts",
