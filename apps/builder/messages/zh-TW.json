@@ -1603,6 +1603,7 @@
     "historyDepth": "({count})",
     "none": "無",
     "tiktokCardTitleTooLong": "TikTok 會截斷這則訊息：附加按鈕後，只會傳送前 40 個字元。請縮短訊息內容或移除按鈕。",
+    "sendTextTooLongForChannel": "這則訊息超過此管道允許的長度。請縮短內容，或將此區塊指向限制較高的管道。",
     "waTemplateMpmNoProducts": "發布前請至少為此多商品按鈕新增一項商品。",
     "waTemplateMpmTooManySections": "多商品按鈕最多可包含 10 個版塊。請在發布前移除部分版塊。",
     "waTemplateMpmTooManyProducts": "多商品按鈕總共最多可包含 30 項商品。請在發布前移除部分商品。",

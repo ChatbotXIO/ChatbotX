@@ -3276,6 +3276,7 @@
     "historyDepth": "（{count}）",
     "none": "なし",
     "tiktokCardTitleTooLong": "TikTokはこのメッセージを短縮します。ボタンが付いている場合、最初の40文字のみ送信されます。メッセージを短くするか、ボタンを削除してください。",
+    "sendTextTooLongForChannel": "このメッセージはこのチャネルの上限を超えています。内容を短くするか、上限がより大きいチャネルにこのブロックを向けてください。",
     "waTemplateMpmNoProducts": "公開前に、このマルチ商品ボタンに少なくとも1つの商品を追加してください。",
     "waTemplateMpmTooManySections": "マルチ商品ボタンには最大10個のセクションを設定できます。公開前にセクションを減らしてください。",
     "waTemplateMpmTooManyProducts": "マルチ商品ボタンには合計最大30個の商品を設定できます。公開前に商品を減らしてください。",

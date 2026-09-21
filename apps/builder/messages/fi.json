@@ -3297,6 +3297,7 @@
     "historyDepth": "({count})",
     "none": "Ei mitään",
     "tiktokCardTitleTooLong": "TikTok lyhentää tätä viestiä: kun painikkeita on liitetty, vain ensimmäiset 40 merkkiä lähetetään. Lyhennä viestiä tai poista painikkeet.",
+    "sendTextTooLongForChannel": "Tämä viesti on pidempi kuin kanava sallii. Lyhennä sitä tai ohjaa tämä lohko kanavalle, jolla on suurempi raja.",
     "waTemplateMpmNoProducts": "Lisää vähintään yksi tuote tähän usean tuotteen painikkeeseen ennen julkaisua.",
     "waTemplateMpmTooManySections": "Usean tuotteen painikkeessa voi olla enintään 10 osiota. Poista osioita ennen julkaisua.",
     "waTemplateMpmTooManyProducts": "Usean tuotteen painikkeessa voi olla yhteensä enintään 30 tuotetta. Poista tuotteita ennen julkaisua.",

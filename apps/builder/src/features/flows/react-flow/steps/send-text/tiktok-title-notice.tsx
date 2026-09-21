@@ -13,21 +13,31 @@ type TiktokTitleNoticeProps = {
 /**
  * Tells the author that TikTok will cut this message short.
  *
- * Confirmed against production: once buttons are attached, TikTok's
+ * Confirmed against production: once the message is sent as a card, TikTok's
  * QA_BUTTON_CARD/QA_LINK_CARD send truncates (integrations/tiktok now clamps
  * to the same 40-char limit instead of failing) rather than sending the full
  * text, so this is the only place the loss is visible before the send.
  *
  * Watches rather than reads the form so the notice follows the step as the
- * text and buttons are edited.
+ * text and buttons are edited. Quick replies are watched at the form root:
+ * they belong to the node, but they build the same card as the step's own
+ * buttons, so a node whose only buttons are quick replies is truncated too.
  */
 export const TiktokTitleNotice = ({ parentName }: TiktokTitleNoticeProps) => {
   const t = useTranslations()
   const channel = useWatch({ name: "beforeStep.channel" })
   const text = useWatch({ name: `${parentName}.text` })
   const buttons = useWatch({ name: `${parentName}.buttons` })
+  const quickReplies = useWatch({ name: "quickReplies" })
 
-  if (!isTiktokCardTitleTruncated({ channel, buttons, text })) {
+  if (
+    !isTiktokCardTitleTruncated({
+      channel,
+      buttons,
+      quickReplyCount: quickReplies?.length ?? 0,
+      text,
+    })
+  ) {
     return null
   }
 

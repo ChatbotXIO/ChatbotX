@@ -3297,6 +3297,7 @@
     "historyDepth": "({count})",
     "none": "Aucun",
     "tiktokCardTitleTooLong": "TikTok raccourcira ce message : avec des boutons ajoutés, seuls les 40 premiers caractères sont envoyés. Raccourcissez le message ou supprimez les boutons.",
+    "sendTextTooLongForChannel": "Ce message dépasse la limite autorisée par ce canal. Raccourcissez-le ou dirigez ce bloc vers un canal dont la limite est plus élevée.",
     "waTemplateMpmNoProducts": "Ajoutez au moins un produit à ce bouton multi-produits avant de publier.",
     "waTemplateMpmTooManySections": "Un bouton multi-produits peut comporter au maximum 10 sections. Supprimez des sections avant de publier.",
     "waTemplateMpmTooManyProducts": "Un bouton multi-produits peut comporter au maximum 30 produits au total. Supprimez des produits avant de publier.",

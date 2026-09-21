@@ -3297,6 +3297,7 @@
     "historyDepth": "({count})",
     "none": "Ingen",
     "tiktokCardTitleTooLong": "TikTok vil forkorte denne besked: når der er tilføjet knapper, sendes kun de første 40 tegn. Forkort beskeden, eller fjern knapperne.",
+    "sendTextTooLongForChannel": "Denne besked er længere, end kanalen tillader. Forkort den, eller peg denne blok mod en kanal med en højere grænse.",
     "waTemplateMpmNoProducts": "Tilføj mindst ét produkt til denne multiprodukt-knap før udgivelse.",
     "waTemplateMpmTooManySections": "En multiprodukt-knap kan højst have 10 sektioner. Fjern nogle sektioner før udgivelse.",
     "waTemplateMpmTooManyProducts": "En multiprodukt-knap kan højst have 30 produkter i alt. Fjern nogle produkter før udgivelse.",

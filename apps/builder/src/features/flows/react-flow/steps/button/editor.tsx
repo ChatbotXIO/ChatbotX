@@ -1,4 +1,7 @@
-import { buttonStepDefaultFn } from "@chatbotx.io/flow-config"
+import {
+  buttonStepDefaultFn,
+  resolveSendTextLengthLimits,
+} from "@chatbotx.io/flow-config"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Sortable,
@@ -7,7 +10,8 @@ import {
 } from "@chatbotx.io/ui/components/ui/sortable"
 import { GripVerticalIcon, PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useFieldArray, useFormContext } from "react-hook-form"
+import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
+import { CharacterCounter } from "@/components/character-counter"
 import type { ButtonEditorConfig } from "../../stores/step-store"
 import { useStepStore } from "../../stores/step-store-provider"
 
@@ -30,11 +34,20 @@ export const ButtonStepEditor = (props: ButtonStepEditorProps) => {
   } = useStepStore((state) => state)
 
   const buttonData = getValues(`${parentName}`)
+  // Watched, not read: the label is edited in a dialog elsewhere, so the
+  // counter would otherwise keep showing the length from before that edit.
+  const label = useWatch({ name: `${parentName}.label` })
+  const channel = useWatch({ name: "beforeStep.channel" })
+
+  const limits = resolveSendTextLengthLimits({ channel })
+  const labelMax = parentName.startsWith("quickReplies")
+    ? limits.quickReplyLabel
+    : limits.buttonLabel
 
   return (
     <div className="w-full flex-1" {...rest}>
       <Button
-        className="w-full hover:text-blue-500"
+        className="w-full justify-between gap-2 hover:text-blue-500"
         onClick={() => {
           setButtonEditorConfig(editorConfig ?? null)
           setButtonPath(`data.details.${parentName}`)
@@ -44,7 +57,8 @@ export const ButtonStepEditor = (props: ButtonStepEditorProps) => {
         type="button"
         variant="secondary"
       >
-        {buttonData.label}
+        <span className="truncate">{label}</span>
+        <CharacterCounter max={labelMax} value={label} />
       </Button>
     </div>
   )
