@@ -191,11 +191,17 @@ const handleWebhookEvent = async (
         continue
       }
 
-      if (!entry.messaging || entry.messaging.length === 0) {
+      // `standby` = the same events for a thread another app owns (Handover
+      // Protocol); dropping them hid every message on such a thread (s171).
+      const messagingEvents = [
+        ...(entry.messaging ?? []),
+        ...(entry.standby ?? []),
+      ]
+      if (messagingEvents.length === 0) {
         continue
       }
 
-      for (const messagingEvent of entry.messaging) {
+      for (const messagingEvent of messagingEvents) {
         // Reshape to a single-entry, single-messaging-event payload so
         // downstream consumers — which only ever read entry[0]/messaging[0] —
         // see exactly the one event this job is for.

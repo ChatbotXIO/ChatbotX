@@ -131,8 +131,10 @@ const handleWebhookEvent = async (
       }
 
       // Handle DM messaging events
-      const messaging = entry.messaging
-      if (!messaging || messaging.length === 0) {
+      // `standby` = the same events for a thread another app owns (Handover
+      // Protocol); dropping them hid every message on such a thread (s171).
+      const messaging = [...(entry.messaging ?? []), ...(entry.standby ?? [])]
+      if (messaging.length === 0) {
         continue
       }
 

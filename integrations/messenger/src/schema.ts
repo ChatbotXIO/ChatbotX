@@ -299,6 +299,9 @@ export const messengerPageEntrySchema = z.object({
   id: z.string(),
   time: z.number(),
   messaging: z.array(messengerMessagingEventSchema).optional(),
+  // Handover Protocol: events on a thread another app owns arrive as `standby`
+  // (same shape). The Page subscription already asks for the field (fork, s171).
+  standby: z.array(messengerMessagingEventSchema).optional(),
   changes: z.array(messengerInboxLabelsChangeSchema).optional(),
 })
 

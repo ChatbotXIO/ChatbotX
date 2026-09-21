@@ -128,8 +128,12 @@ const handleWebhookEvent = async (
       }
 
       // Handle DM messaging events
-      const messaging = entry.messaging
-      if (!messaging || messaging.length === 0) {
+      // A thread owned by another app (Handover Protocol) reaches us as
+      // `standby`; dropping it hid every DM and story reply on such a thread
+      // (s171). The events are identical, and the send side takes the thread
+      // back on 2534037, so treat both lists as incoming.
+      const messaging = [...(entry.messaging ?? []), ...(entry.standby ?? [])]
+      if (messaging.length === 0) {
         continue
       }
 

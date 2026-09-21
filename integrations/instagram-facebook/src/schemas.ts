@@ -175,6 +175,10 @@ export const instagramPageEntrySchema = z.object({
   id: z.string(),
   time: z.number(),
   messaging: z.array(instagramMessagingEventSchema).optional(),
+  // Handover Protocol: while another app (the Instagram inbox after a human
+  // replied there) owns the thread, Meta delivers our copy of every event under
+  // `standby` instead of `messaging`, same shape (fork, s171).
+  standby: z.array(instagramMessagingEventSchema).optional(),
   changes: z
     .array(z.object({ field: z.string(), value: z.unknown() }))
     .optional(),
