@@ -2,7 +2,7 @@
 
 [Model Context Protocol](https://modelcontextprotocol.io) server for ChatbotX. Gives AI agents (Claude, Cursor, ChatGPT, etc.) access to your ChatbotX workspace through tools that are **automatically generated** from the ChatbotX OpenAPI spec — no manual tool definitions needed.
 
-The published, registry-facing mirror of this doc is [`skills/chatbotx/SKILL.md`](../../skills/chatbotx/SKILL.md) — published to skills.sh and ClawHub. Update both together when the tool surface changes (see the `cli-mcp-docs` skill).
+Published skill/agent distribution docs live in the separate `chatbotx-agent` package; this repo owns the MCP server implementation and README.
 
 ## How it works
 
@@ -38,7 +38,7 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 
 ## Available tools
 
-Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 44 tools:
+Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 43 tools:
 
 ### Capabilities
 
@@ -151,6 +151,8 @@ Everything else — deletes, less-common resources (coupons, products, webhooks,
 
 Claude spawns the server process on demand. No server needs to be running. The workspace token is supplied via `CHATBOTX_API_KEY`.
 
+The package is published to npm as [`chatbotx-mcp`](https://www.npmjs.com/package/chatbotx-mcp) — `npx -y chatbotx-mcp` fetches and runs it with no local checkout or build required. Use a local `node /path/to/dist/index.mjs` instead when developing against this repo.
+
 **Claude Code CLI:**
 ```bash
 claude mcp add chatbotx \
@@ -158,7 +160,7 @@ claude mcp add chatbotx \
   -e CHATBOTX_API_URL=https://your-instance.com/api \
   -e CHATBOTX_MCP_TRANSPORT=stdio \
   -s user \
-  -- node /path/to/dist/index.mjs
+  -- npx -y chatbotx-mcp
 ```
 
 **Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
@@ -166,8 +168,8 @@ claude mcp add chatbotx \
 {
   "mcpServers": {
     "chatbotx": {
-      "command": "node",
-      "args": ["/path/to/dist/index.mjs"],
+      "command": "npx",
+      "args": ["-y", "chatbotx-mcp"],
       "env": {
         "CHATBOTX_API_KEY": "<your-token>",
         "CHATBOTX_API_URL": "https://your-instance.com/api",
@@ -177,6 +179,8 @@ claude mcp add chatbotx \
   }
 }
 ```
+
+Running from a local checkout instead (e.g. `node /path/to/dist/index.mjs`) works the same way — swap `command`/`args` accordingly.
 
 ### Option B — SSE (for shared / remote access)
 

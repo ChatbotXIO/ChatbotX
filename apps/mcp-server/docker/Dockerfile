@@ -13,7 +13,7 @@ RUN npm install -g turbo@^2
 # Generate a partial monorepo for a target package
 WORKDIR /app
 COPY . .
-RUN turbo prune chatbotx-mcp-server --docker
+RUN turbo prune chatbotx-mcp --docker
 
 FROM base AS deps
 ENV NODE_OPTIONS="--max-old-space-size=4096"
@@ -24,7 +24,7 @@ COPY --from=pre /app/out/json/ .
 RUN pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
-RUN pnpm turbo run build --filter=chatbotx-mcp-server
+RUN pnpm turbo run build --filter=chatbotx-mcp
 
 FROM base AS release
 RUN apt update && \

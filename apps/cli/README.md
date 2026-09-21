@@ -920,21 +920,27 @@ chatbotx zalo-channels tag-sync update <id> --enabled <enabled>
 
 ## Known command-name collisions
 
-Commands are named by `pathAndMethodToCommandName` (`apps/cli/src/openapi-loader.ts`) from `{path, method}` alone, ignoring the router's own action key. When two operations under the same resource reduce to the same name, `toolsToCommands` keeps the first and silently drops the second (a `Warning: duplicate command name "..." — skipping` line on stderr). As of this writing this hits:
+Commands are named by `pathAndMethodToCommandName` (`apps/cli/src/openapi-loader.ts`) from `{path, method}` alone, ignoring the router's own action key. When two operations under the same resource reduce to the same name, `toolsToCommands` keeps the first and silently drops the second (a `Warning: duplicate command name "..." — skipping` line on stderr). Every entry below was verified against source, not just the stderr warning.
 
-- `ads`: `POST /v1/ads/conversion-rules` (create) collides with `GET` (list) under `ads:conversion-rules`; `PATCH`/`DELETE /v1/ads/conversion-rules/{id}` both collide under `ads:find-by-conversion-rules`; `GET`/`POST /v1/ads/campaigns` collide under `ads:campaigns`.
-- `analytics`: `DELETE /v1/analytics/flows/{flowId}/stats` (reset stats) collides with `GET` (get stats) under `analytics:flows-stats`.
-- `media-library`: `POST /v1/media-library/folders` (create) collides with `GET` (list) under `media-library:folders`; `PUT` (rename) and `DELETE` on `/v1/media-library/folders/{folderId}` collide under `media-library:find-by-folders`; `POST`/`GET /v1/media-library/files` collide under `media-library:files`; `GET`/`DELETE /v1/media-library/files/{fileId}` collide under `media-library:find-by-files`.
-- `minigames`: `PUT` (full update) and `PATCH` (partial update) on `/v1/minigames/{id}` both resolve to `minigames:update` — only one is reachable.
+| Command name | Colliding operations | What's reachable |
+|---|---|---|
+| `ads:conversion-rules` | `POST` (create) vs `GET` (list) `/v1/ads/conversion-rules` | Only `list` |
+| `ads:find-by-conversion-rules` | `PATCH` vs `DELETE` `/v1/ads/conversion-rules/{id}` | Only one (whichever registers first) |
+| `ads:campaigns` | `GET` (list) vs `POST` (create) `/v1/ads/campaigns` | Only `list` |
+| `analytics:flows-stats` | `GET` (get stats) vs `DELETE` (reset stats) `/v1/analytics/flows/{flowId}/stats` | Only `get` |
+| `media-library:folders` | `POST` (create) vs `GET` (list) `/v1/media-library/folders` | Only `list` |
+| `media-library:find-by-folders` | `PUT` (rename) vs `DELETE` (delete+contents) `/v1/media-library/folders/{folderId}` | Only one |
+| `media-library:files` | `POST` (register) vs `GET` (list) `/v1/media-library/files` | Only `list` |
+| `media-library:find-by-files` | `GET` vs `DELETE` `/v1/media-library/files/{fileId}` | Only `get` |
+| `minigames:update` | `PUT` (full) vs `PATCH` (partial) `/v1/minigames/{id}` | Only one |
+| `bot-fields:update` | `PUT /v1/bot-fields/{idOrName}` (`set`, single field) vs `PUT /v1/bot-fields` (`setMany`, several by name) | Only `setMany` — use `bot-fields update --fields <fields>` even for a single field |
+| `contacts:custom-fields:update` | `PATCH /v1/contacts/{identifier}/custom-fields` (`applyCustomFieldOperations`, batch) vs `PUT .../custom-fields/{idOrName}` (`setCustomField`, single field) | Only `applyCustomFieldOperations` — use `contacts custom-fields update <identifier> --operations '[{"customFieldId":"...","operation":"set","value":"..."}]'` for a single field too |
+| `contacts:custom-field:delete` | `DELETE .../custom-fields/{idOrName}` (`clearCustomField`, one field) vs `DELETE .../custom-fields` (`clearCustomFields`, every field) | Only `clearCustomFields` — `contacts custom-field delete <identifier>` clears **every** custom field, not one |
+| `integrations:find-by-ai` | `GET`/`PUT`/`DELETE /v1/integrations/ai/{provider}` (get/connect/disconnect) | Only `GET` — connecting or disconnecting an AI provider has no CLI command |
 
-Every one of these was verified against source (not just the stderr warning) in a follow-up pass:
+Root cause for the `bot-fields`, `contacts:custom-field(s)`, and `integrations:find-by-ai` rows: `pathAndMethodToCommandName`'s remainder branch derives `${group}:${subResource}:update` (or its GET/DELETE equivalents) without folding the HTTP method into the name when a literal second path segment is followed by a param — unlike the sibling GET/DELETE branches, which already do this for the two-segment case.
 
-- `bot-fields:update` — `PUT /v1/bot-fields/{idOrName}` (`set`, one field by id/name + `--value`) collides with `PUT /v1/bot-fields` (`setMany`, several fields by name via `--fields`). `set` is dropped; only `setMany`'s shape (`bot-fields update --fields <fields>`) is reachable — the single-field `bot-fields update <idOrName> --value <value>` form documented above does not actually work over the CLI.
-- `contacts:custom-fields:update` — `PATCH /v1/contacts/{identifier}/custom-fields` (`applyCustomFieldOperations`, batch set/append/prepend/increase/decrease) collides with `PUT /v1/contacts/{identifier}/custom-fields/{idOrName}` (`setCustomField`, one field) — `pathAndMethodToCommandName`'s remainder-branch uses `${group}:${subResource}:update` for PUT and PATCH alike, without folding in whether the last path segment is itself a param (the way the sibling GET/DELETE branches do). `applyCustomFieldOperations` registers first and wins; `setCustomField` has no CLI command — use `contacts custom-fields update <identifier> --operations '[{"customFieldId":"...","operation":"set","value":"..."}]'` for a single field too.
-- `contacts:custom-field:delete` — `DELETE /v1/contacts/{identifier}/custom-fields/{idOrName}` (`clearCustomField`, one field) collides with `DELETE /v1/contacts/{identifier}/custom-fields` (`clearCustomFields`, every field) — the DELETE branch always singularizes `subResource` regardless of whether the last segment is a param, so both reduce to the same name. Confirmed live: `contacts custom-field delete <identifier>` clears **every** custom field (`clearCustomFields` won); the per-field `clearCustomField` (which would need a second `idOrName` positional) is unreachable via CLI — the "Delete by id or name" comment used in an earlier draft of this README was wrong.
-- `integrations:find-by-ai` (×2) — `GET`/`PUT`/`DELETE /v1/integrations/ai/{provider}` (`getAiProvider`/`connectAiProvider`/`disconnectAiProvider`) all reduce to `integrations:find-by-ai` (the two-segment branch ignores `method` when the last segment is a param following a literal). Only `GET` (`integrations find-by-ai --provider <provider>`) is reachable; connecting or disconnecting an AI provider integration has no CLI command.
-
-Affected operations are still reachable over HTTP directly; only the CLI's generated command for the losing operation is missing. Fixing this requires changing `pathAndMethodToCommandName` to fold the HTTP method into the derived name when a literal second path segment is followed by a param (the `find-by-*`/collection branch currently ignores `method` entirely).
+All of these operations remain reachable over HTTP directly; only the CLI's generated command for the losing operation is missing.
 
 ## Caching
 

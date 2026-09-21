@@ -1,6 +1,6 @@
 {
-  "name": "chatbotx-mcp-server",
-  "version": "0.1.0",
+  "name": "chatbotx-mcp",
+  "version": "0.0.0-dev",
   "description": "MCP Server for ChatbotX — gives AI agents access to your ChatbotX workspace via the Model Context Protocol",
   "keywords": [
     "mcp",
@@ -13,7 +13,7 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "bin": {
-    "chatbotx-mcp-server": "./dist/index.mjs"
+    "chatbotx-mcp": "./dist/index.mjs"
   },
   "exports": {
     ".": {
@@ -35,7 +35,7 @@
     "build": "tsdown",
     "check-types": "tsc --noEmit",
     "dev:mcp": "dotenv -e ../../.env -e .env -- tsx --watch src/index.ts",
-    "prepublishOnly": "pnpm build",
+    "prepublishOnly": "node --input-type=commonjs -e \"const v=require('./package.json').version; if (v === '0.0.0-dev') { console.error('chatbotx-mcp: version is the 0.0.0-dev placeholder — publish via .github/workflows/publish-chatbotx-mcp.yml'); process.exit(1) }\"",
     "start": "node dist/index.mjs",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"

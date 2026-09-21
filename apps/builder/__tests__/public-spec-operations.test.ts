@@ -742,7 +742,7 @@ describe("public API spec — error response coverage", () => {
 
   // Mirrors `toSnakeCase` in apps/mcp-server/src/openapi-loader.ts — kept in
   // sync manually rather than imported, since apps/builder has no dependency
-  // on chatbotx-mcp-server. If that implementation changes, update this too.
+  // on chatbotx-mcp. If that implementation changes, update this too.
   const toSnakeCase = (str: string): string =>
     str
       .replace(/([A-Z]{2,})(?=[A-Z][a-z]|$)/g, "_$1")
