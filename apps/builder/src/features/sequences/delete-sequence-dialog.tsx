@@ -14,6 +14,7 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { useInvalidateSequences } from "@/features/sequences/provider/sequence-hook"
 import { deleteSequenceAction } from "./actions/delete-sequence.action"
 import type { SequenceResource } from "./schema/resource"
 
@@ -29,6 +30,7 @@ export function DeleteSequenceDialog({
   onSuccess?: () => void
 }) {
   const t = useTranslations()
+  const invalidateSequences = useInvalidateSequences()
 
   const { execute, isPending } = useAction(
     deleteSequenceAction.bind(
@@ -38,6 +40,7 @@ export function DeleteSequenceDialog({
     ),
     {
       onSuccess: () => {
+        invalidateSequences()
         toast.success(
           t("messages.deletedSuccess", {
             feature: t("fields.sequences.label"),

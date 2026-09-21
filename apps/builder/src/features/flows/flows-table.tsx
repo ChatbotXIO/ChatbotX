@@ -17,6 +17,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { useInvalidateFlows } from "@/features/flows/provider/flow-hook"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { CreateFlowDialog } from "./create-flow-dialog"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
@@ -42,14 +43,15 @@ export function FlowsTable({
   const t = useTranslations()
   const locale = useLocale()
   const router = useRouter()
+  const invalidateFlows = useInvalidateFlows()
 
   const [{ data, pageCount }] = use(promises)
 
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<FlowResource> | null>(null)
   const columns = useMemo(
-    () => getFlowColumns({ t, setRowAction, locale }),
-    [t, locale],
+    () => getFlowColumns({ t, setRowAction, locale, invalidateFlows }),
+    [t, locale, invalidateFlows],
   )
 
   const { table } = useDataTable({
@@ -98,6 +100,7 @@ export function FlowsTable({
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
             rowAction?.row.toggleSelected(false)
+            invalidateFlows()
             router.refresh()
           }}
           open={rowAction?.variant === "delete"}
@@ -108,7 +111,10 @@ export function FlowsTable({
         <DuplicateFlowDialog
           flow={rowAction?.row.original || null}
           onOpenChange={() => setRowAction(null)}
-          onSuccess={() => router.refresh()}
+          onSuccess={() => {
+            invalidateFlows()
+            router.refresh()
+          }}
           open={rowAction?.variant === "duplicate"}
           workspaceId={workspaceId}
         />

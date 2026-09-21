@@ -7,6 +7,7 @@ import { FolderUpIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type Dispatch, type SetStateAction, useState } from "react"
+import { useInvalidateFlows } from "@/features/flows/provider/flow-hook"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
 import type { FlowResource } from "./schema/resource"
@@ -26,6 +27,7 @@ export function FlowsTableToolbarActions({
 }: FlowsTableToolbarActionsProps) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateFlows = useInvalidateFlows()
   const [openChangeFolder, setOpenChangeFolder] = useState(false)
 
   return (
@@ -39,6 +41,7 @@ export function FlowsTableToolbarActions({
             onOpenChange={() => setRowAction(null)}
             onSuccess={() => {
               table.toggleAllRowsSelected(false)
+              invalidateFlows()
               router.refresh()
             }}
             workspaceId={workspaceId}

@@ -106,25 +106,19 @@ const shapeInitialState = ({
       : {}),
     ...(contactResult.status === "fulfilled" ? contactResult.value : {}),
   }
-
-  return shapeInitialState({
-    listedConversations,
-    nextCursor,
-    activeConversation,
-    isUrlConversation: Boolean(conversationId),
-    messagesResult,
-    contactResult,
-  })
 }
+
 
 const loadInitialState = async ({
   workspaceId,
   conversationId,
   contactPermissionScope,
+  hasUrlConversationId,
 }: {
   workspaceId: string
   conversationId?: string
   contactPermissionScope: ContactPermissionScope
+  hasUrlConversationId: boolean
 }): Promise<ChatStoreInitialState | null> => {
   const conversationsPromise = listConversations(
     {
@@ -142,25 +136,39 @@ const loadInitialState = async ({
         id: conversationId,
       })
     : null
-  const activeConversationPromise = findConversationPromise
-    ? findConversationPromise.then((result) => result.data)
-    : conversationsPromise.then(({ data }) => data[0] ?? null)
-  const messagesPromise = conversationId
-    ? seedMessagesState(workspaceId, conversationId)
-    : activeConversationPromise.then((activeConversation) =>
-        activeConversation
-          ? seedMessagesState(workspaceId, activeConversation.id)
-          : {},
+  let messagesPromise: Promise<ChatStoreInitialState | Record<string, never>>
+  if (conversationId) {
+    messagesPromise = seedMessagesState(workspaceId, conversationId)
+  } else if (hasUrlConversationId) {
+    messagesPromise = Promise.resolve({})
+  } else {
+    messagesPromise = conversationsPromise.then(({ data: conversations }) => {
+      const activeConversation = conversations[0]
+      return activeConversation
+        ? seedMessagesState(workspaceId, activeConversation.id)
+        : {}
+    })
+  }
+
+  let contactPromise: Promise<ChatStoreInitialState | Record<string, never>>
+  if (findConversationPromise) {
+    contactPromise = findConversationPromise
+      .then((result) =>
+        seedContactState(workspaceId, result.data, contactPermissionScope),
       )
-  const contactPromise = activeConversationPromise.then((activeConversation) =>
-    activeConversation
-      ? seedContactState(
-          workspaceId,
-          activeConversation,
-          contactPermissionScope,
-        )
-      : {},
-  )
+      .catch(() => ({}))
+  } else if (hasUrlConversationId) {
+    contactPromise = Promise.resolve({})
+  } else {
+    contactPromise = conversationsPromise
+      .then(({ data: conversations }) => {
+        const activeConversation = conversations[0]
+        return activeConversation
+          ? seedContactState(workspaceId, activeConversation, contactPermissionScope)
+          : {}
+      })
+      .catch(() => ({}))
+  }
 
   const [
     conversationsResult,
@@ -194,14 +202,16 @@ const loadInitialState = async ({
       activeConversation = conversationResult.value?.data ?? null
     }
   } else {
-    activeConversation = listedConversations[0] ?? null
+    activeConversation = hasUrlConversationId
+      ? null
+      : (listedConversations[0] ?? null)
   }
 
   return shapeInitialState({
     listedConversations,
     nextCursor,
     activeConversation,
-    isUrlConversation: Boolean(conversationId),
+    isUrlConversation: hasUrlConversationId,
     messagesResult,
     contactResult,
   })
@@ -228,6 +238,7 @@ export const getInboxInitialState = async ({
           ? parsedConversationId.data
           : undefined,
         contactPermissionScope,
+        hasUrlConversationId: Boolean(conversationId),
       }),
       INBOX_SEED_TIMEOUT_MS,
       "Inbox initial state seed timed out",
