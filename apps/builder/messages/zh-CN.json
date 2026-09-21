@@ -837,6 +837,7 @@
       "allPlaceholder": "全部",
       "rangeEndBeforeStart": "结束位置不能早于开始位置",
       "rangeSummary": "联系人 #{start} – #{end}",
+      "rangeFromSummary": "从联系人 #{start} 起",
       "rateSummary": "每分钟 {rate} 条消息"
     }
   },

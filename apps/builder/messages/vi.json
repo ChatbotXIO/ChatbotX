@@ -517,6 +517,7 @@
       "allPlaceholder": "Tất cả",
       "rangeEndBeforeStart": "Vị trí kết thúc không được trước vị trí bắt đầu",
       "rangeSummary": "Liên hệ #{start} – #{end}",
+      "rangeFromSummary": "Từ liên hệ số {start}",
       "rateSummary": "{rate} tin nhắn / phút"
     }
   },

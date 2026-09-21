@@ -517,6 +517,7 @@
       "allPlaceholder": "Semua",
       "rangeEndBeforeStart": "Posisi akhir tidak boleh sebelum posisi awal",
       "rangeSummary": "Kontak #{start} – #{end}",
+      "rangeFromSummary": "Mulai dari kontak #{start}",
       "rateSummary": "{rate} pesan / menit"
     }
   },

@@ -1343,6 +1343,7 @@
       "allPlaceholder": "Toate",
       "rangeEndBeforeStart": "Poziția de final nu poate fi înainte de poziția de start",
       "rangeSummary": "Contacte nr.{start} – nr.{end}",
+      "rangeFromSummary": "Începând cu contactul nr.{start}",
       "rateSummary": "{rate} mesaje / minut"
     }
   },

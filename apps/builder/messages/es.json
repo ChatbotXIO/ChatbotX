@@ -517,6 +517,7 @@
       "allPlaceholder": "Todos",
       "rangeEndBeforeStart": "La posición final no debe ser anterior a la posición inicial",
       "rangeSummary": "Contactos n.º{start} – n.º{end}",
+      "rangeFromSummary": "Desde el contacto n.º{start}",
       "rateSummary": "{rate} mensajes / minuto"
     }
   },

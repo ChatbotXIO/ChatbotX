@@ -2173,6 +2173,7 @@
       "allPlaceholder": "全部",
       "rangeEndBeforeStart": "結束位置不能早於開始位置",
       "rangeSummary": "聯絡人 #{start} – #{end}",
+      "rangeFromSummary": "從聯絡人 #{start} 起",
       "rateSummary": "每分鐘 {rate} 則訊息"
     }
   },

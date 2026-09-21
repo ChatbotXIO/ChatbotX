@@ -517,6 +517,7 @@
       "allPlaceholder": "Alle",
       "rangeEndBeforeStart": "De eindpositie mag niet vóór de startpositie liggen",
       "rangeSummary": "Contacten #{start} – #{end}",
+      "rangeFromSummary": "Vanaf contact #{start}",
       "rateSummary": "{rate} berichten / minuut"
     }
   },

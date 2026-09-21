@@ -517,6 +517,7 @@
       "allPlaceholder": "Tümü",
       "rangeEndBeforeStart": "Bitiş konumu başlangıç konumundan önce olamaz",
       "rangeSummary": "Kişiler #{start} – #{end}",
+      "rangeFromSummary": "Kişi #{start}'den itibaren",
       "rateSummary": "Dakikada {rate} mesaj"
     }
   },

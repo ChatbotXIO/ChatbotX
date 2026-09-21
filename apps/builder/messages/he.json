@@ -5452,6 +5452,7 @@
       "allPlaceholder": "הכול",
       "rangeEndBeforeStart": "מיקום הסיום לא יכול להיות לפני מיקום ההתחלה",
       "rangeSummary": "אנשי קשר מס׳{start} – מס׳{end}",
+      "rangeFromSummary": "החל מאיש קשר מס׳{start}",
       "rateSummary": "{rate} הודעות / דקה"
     }
   },

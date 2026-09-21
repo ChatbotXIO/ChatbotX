@@ -7,7 +7,8 @@ import {
 } from "@chatbotx.io/database/partials"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { useTranslations } from "next-intl"
-import { useFormContext } from "react-hook-form"
+import { useEffect } from "react"
+import { useFormContext, useWatch } from "react-hook-form"
 import { resolveSendLimitIssueKey } from "../lib/broadcast-send-limit"
 
 /**
@@ -19,7 +20,30 @@ import { resolveSendLimitIssueKey } from "../lib/broadcast-send-limit"
  */
 export function BroadcastSendLimitFields() {
   const t = useTranslations()
-  const { formState } = useFormContext()
+  const { formState, control, trigger } = useFormContext()
+
+  const watchedAudienceRangeStart = useWatch({
+    control,
+    name: "audienceRangeStart",
+  })
+  const watchedAudienceRangeEnd = useWatch({
+    control,
+    name: "audienceRangeEnd",
+  })
+
+  // In `mode: "onChange"`, react-hook-form's per-field validation only ever
+  // copies the changed field's OWN error back into `formState.errors`
+  // (`schemaErrorLookup` in react-hook-form's resolver bridge) — a zod
+  // `.refine` issue on the disjoint virtual path `audienceRange` is silently
+  // dropped even though it makes `isValid` false. Re-triggering that one
+  // path explicitly whenever either range bound changes is what actually
+  // populates (or clears) `errors.audienceRange`. `trigger()` re-reads the
+  // current values straight from react-hook-form's own state, so the two
+  // watched values are never read in the body — only used to key the effect.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: watchedAudienceRangeStart/End key the effect but trigger() re-reads current form state itself
+  useEffect(() => {
+    trigger("audienceRange" as never)
+  }, [watchedAudienceRangeStart, watchedAudienceRangeEnd, trigger])
 
   // The refine's virtual `path: ["audienceRange"]` means no input is bound to
   // that key, so react-hook-form never prints it via a plain `FormMessage` —

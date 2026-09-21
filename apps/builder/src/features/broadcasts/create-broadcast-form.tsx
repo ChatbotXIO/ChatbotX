@@ -7,10 +7,8 @@ import {
   broadcastFlowTypes,
   broadcastSubactions,
   type ChannelType,
-  clampAudienceCountToRange,
   findBroadcastChannelCapability,
   isTemplateBroadcastSubaction,
-  resolveBroadcastAudienceRange,
 } from "@chatbotx.io/database/partials"
 import { stepTypes } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
@@ -56,6 +54,7 @@ import { BroadcastInboxMultiSelect } from "./components/broadcast-inbox-multi-se
 import { BroadcastSendLimitFields } from "./components/broadcast-send-limit-fields"
 import { BroadcastTemplateTargets } from "./components/broadcast-template-targets"
 import { getBroadcastExcludedFilterFields } from "./lib/broadcast-filter-fields"
+import { resolveWindowedReceiversCount } from "./lib/broadcast-send-limit"
 import {
   hasSameTargetReferences,
   resolveAudienceInboxIds,
@@ -549,13 +548,10 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   // range here. Typing in the range fields costs zero requests.
   const windowedReceiversCount = useMemo(
     () =>
-      clampAudienceCountToRange(
-        count || 0,
-        resolveBroadcastAudienceRange({
-          audienceRangeStart: watchedAudienceRangeStart,
-          audienceRangeEnd: watchedAudienceRangeEnd,
-        }),
-      ),
+      resolveWindowedReceiversCount(count || 0, {
+        audienceRangeStart: watchedAudienceRangeStart,
+        audienceRangeEnd: watchedAudienceRangeEnd,
+      }),
     [count, watchedAudienceRangeStart, watchedAudienceRangeEnd],
   )
 

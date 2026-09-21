@@ -650,6 +650,7 @@
       "allPlaceholder": "Alla",
       "rangeEndBeforeStart": "Slutpositionen får inte vara före startpositionen",
       "rangeSummary": "Kontakter nr {start} – nr {end}",
+      "rangeFromSummary": "Från kontakt nr {start}",
       "rateSummary": "{rate} meddelanden / minut"
     }
   },

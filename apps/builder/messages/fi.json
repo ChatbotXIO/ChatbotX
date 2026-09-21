@@ -517,6 +517,7 @@
       "allPlaceholder": "Kaikki",
       "rangeEndBeforeStart": "Loppusijainti ei voi olla ennen alkusijaintia",
       "rangeSummary": "Yhteystiedot #{start} – #{end}",
+      "rangeFromSummary": "Alkaen yhteystiedosta #{start}",
       "rateSummary": "{rate} viestiä / minuutti"
     }
   },

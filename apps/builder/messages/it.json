@@ -1998,6 +1998,7 @@
       "allPlaceholder": "Tutti",
       "rangeEndBeforeStart": "La posizione finale non può essere precedente alla posizione iniziale",
       "rangeSummary": "Contatti n.{start} – n.{end}",
+      "rangeFromSummary": "A partire dal contatto n.{start}",
       "rateSummary": "{rate} messaggi / minuto"
     }
   },

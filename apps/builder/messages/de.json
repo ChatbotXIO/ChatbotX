@@ -517,6 +517,7 @@
       "allPlaceholder": "Alle",
       "rangeEndBeforeStart": "Die Endposition darf nicht vor der Startposition liegen",
       "rangeSummary": "Kontakte Nr. {start} – Nr. {end}",
+      "rangeFromSummary": "Ab Kontakt Nr. {start}",
       "rateSummary": "{rate} Nachrichten / Minute"
     }
   },

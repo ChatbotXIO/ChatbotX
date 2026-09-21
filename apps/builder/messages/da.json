@@ -517,6 +517,7 @@
       "allPlaceholder": "Alle",
       "rangeEndBeforeStart": "Slutpositionen må ikke være før startpositionen",
       "rangeSummary": "Kontakter #{start} – #{end}",
+      "rangeFromSummary": "Fra kontakt #{start}",
       "rateSummary": "{rate} beskeder / minut"
     }
   },

@@ -517,6 +517,7 @@
       "allPlaceholder": "すべて",
       "rangeEndBeforeStart": "終了位置は開始位置より前にできません",
       "rangeSummary": "連絡先 #{start} – #{end}",
+      "rangeFromSummary": "連絡先番号 {start} から",
       "rateSummary": "{rate} 件 / 分"
     }
   },

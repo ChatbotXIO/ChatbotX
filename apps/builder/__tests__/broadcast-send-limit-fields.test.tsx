@@ -1,9 +1,13 @@
-import { broadcastChannelCapabilities } from "@chatbotx.io/database/partials"
-import { act, useEffect } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { FormProvider, useForm } from "react-hook-form"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { BroadcastSendLimitFields } from "@/features/broadcasts/components/broadcast-send-limit-fields"
+import {
+  type CreateBroadcastRequest,
+  createBroadcastRequest,
+} from "@/features/broadcasts/schema/action"
 
 /** Echoes the key (and params) back so assertions never depend on copy. */
 vi.mock("next-intl", () => ({
@@ -19,27 +23,53 @@ Object.assign(globalThis, {
   },
 })
 
-function TestForm({
-  defaultValues,
-  withError,
-}: {
-  defaultValues?: Record<string, unknown>
-  withError?: boolean
-}) {
-  const form = useForm({ defaultValues })
-  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once on mount
-  useEffect(() => {
-    if (withError) {
-      form.setError("audienceRange" as never, {
-        message: "broadcastSendLimit.rangeEndBeforeStart",
-      })
-    }
-  }, [withError])
+// A payload that satisfies every OTHER `createBroadcastRequest` refine (flow
+// XOR template, schedule, targets, …) so `mode: "onChange"` validation only
+// ever turns on/off because of the audience-range refine under test.
+const VALID_BASE_VALUES: CreateBroadcastRequest = {
+  channel: "telegram",
+  flowId: "1",
+  subaction: "allContacts",
+  schedulesType: "now",
+  schedulesAt: null,
+  contactFilter: { operator: "and", conditions: [] },
+}
+
+function TestForm() {
+  const form = useForm({
+    resolver: zodResolver(createBroadcastRequest),
+    mode: "onChange",
+    defaultValues: VALID_BASE_VALUES,
+  })
   return (
     <FormProvider {...form}>
       <BroadcastSendLimitFields />
     </FormProvider>
   )
+}
+
+/**
+ * Sets a controlled `<input>`'s value the way a real keystroke would —
+ * through the native value setter (bypassing React's value-tracker) plus a
+ * native `input` event — so `react-number-format`'s own `onChange` wiring
+ * (which the wrapped `NumberInput` relies on) fires exactly as it does for
+ * genuine typing.
+ */
+const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+  HTMLInputElement.prototype,
+  "value",
+)?.set
+
+function typeIntoInput(input: HTMLInputElement, value: string): void {
+  nativeInputValueSetter?.call(input, value)
+  input.dispatchEvent(new Event("input", { bubbles: true }))
+}
+
+/** Lets the async resolver validation (and this component's `trigger()` effect) settle. */
+async function flush(): Promise<void> {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
 }
 
 describe("BroadcastSendLimitFields", () => {
@@ -74,47 +104,43 @@ describe("BroadcastSendLimitFields", () => {
     expect(numberInputs.length).toBeGreaterThanOrEqual(3)
   })
 
-  test("shows no cross-field error message by default", () => {
+  test("shows no cross-field error message by default", async () => {
     act(() => {
       root.render(<TestForm />)
     })
+    await flush()
+
     expect(container.textContent ?? "").not.toContain(
-      "broadcastSendLimit.rangeEndBeforeStart",
+      "broadcasts.sendLimit.rangeEndBeforeStart",
     )
   })
 
-  test("shows the translated cross-field error when errors.audienceRange is set", () => {
-    act(() => {
-      root.render(<TestForm withError={true} />)
-    })
-    expect(container.textContent ?? "").toContain(
-      "broadcastSendLimit.rangeEndBeforeStart",
-    )
-    const alert = container.querySelector('[role="alert"]')
-    expect(alert).not.toBeNull()
-  })
-
-  // The component reads no channel prop and the create form renders it
-  // unconditionally inside the shared contact-filter card (see
-  // create-broadcast-form.tsx), so its rendering is channel-invariant by
-  // construction. This loop asserts that invariant holds for every
-  // broadcast-capable channel rather than rendering the full
-  // `CreateBroadcastForm` per channel (impractical in jsdom — see brief
-  // §3.9 fallback).
-  test.each(
-    broadcastChannelCapabilities.map((c) => c.channel),
-  )("renders all three inputs regardless of channel (%s)", (_channel) => {
+  test("shows the translated cross-field error once end < start, and clears it once fixed", async () => {
     act(() => {
       root.render(<TestForm />)
     })
-    const numberInputs = container.querySelectorAll(
-      'input[inputmode="numeric"], input[type="text"]',
+    await flush()
+
+    const inputs = Array.from(
+      container.querySelectorAll<HTMLInputElement>("input"),
     )
-    expect(numberInputs.length).toBeGreaterThanOrEqual(3)
-    act(() => root.unmount())
-    container.remove()
-    container = document.createElement("div")
-    document.body.appendChild(container)
-    root = createRoot(container)
+    const [startInput, endInput] = inputs
+
+    typeIntoInput(startInput, "10")
+    await flush()
+    typeIntoInput(endInput, "5")
+    await flush()
+
+    expect(container.textContent ?? "").toContain(
+      "broadcasts.sendLimit.rangeEndBeforeStart",
+    )
+    expect(container.querySelector('[role="alert"]')).not.toBeNull()
+
+    typeIntoInput(endInput, "20")
+    await flush()
+
+    expect(container.textContent ?? "").not.toContain(
+      "broadcasts.sendLimit.rangeEndBeforeStart",
+    )
   })
 })

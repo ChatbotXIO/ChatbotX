@@ -1,21 +1,26 @@
 import {
+  type BroadcastAudienceRangeInput,
   type BroadcastSendLimit,
   broadcastSendLimitIssues,
+  clampAudienceCountToRange,
+  resolveBroadcastAudienceRange,
 } from "@chatbotx.io/database/partials"
 
 export type BroadcastSendLimitIssue = keyof typeof broadcastSendLimitIssues
 
 /**
  * Cross-field zod issue code → i18n key, mirroring the call-hours precedent
- * (`whatsapp-call-hours-section.tsx`'s `ISSUE_LABEL_KEY`). The values already
- * equal the zod `.refine` messages in `broadcastSendLimitIssues`; the map
- * exists so the two can diverge later without touching call sites.
+ * (`whatsapp-call-hours-section.tsx`'s `ISSUE_LABEL_KEY`). `broadcastSendLimitIssues`'s
+ * values are stable issue CODES (e.g. `"broadcastSendLimit.rangeEndBeforeStart"`),
+ * not translation keys — the real key lives under the `broadcasts.sendLimit.*`
+ * namespace like every other string in this component, so the two must be
+ * mapped explicitly rather than reused as-is.
  */
 export const SEND_LIMIT_ISSUE_LABEL_KEY: Record<
   BroadcastSendLimitIssue,
   string
 > = {
-  rangeEndBeforeStart: broadcastSendLimitIssues.rangeEndBeforeStart,
+  rangeEndBeforeStart: "broadcasts.sendLimit.rangeEndBeforeStart",
 }
 
 /**
@@ -31,6 +36,18 @@ export const resolveSendLimitIssueKey = (
   ).find((key) => broadcastSendLimitIssues[key] === message)
   return issue ? SEND_LIMIT_ISSUE_LABEL_KEY[issue] : undefined
 }
+
+/**
+ * The receivers count shown in the form: the fetched (unwindowed) total
+ * clamped to the range currently typed into the two range fields. Never
+ * triggers a new count request — the form's `count` state is unaffected by
+ * the range fields, only this derivation is.
+ */
+export const resolveWindowedReceiversCount = (
+  total: number,
+  range: BroadcastAudienceRangeInput,
+): number =>
+  clampAudienceCountToRange(total, resolveBroadcastAudienceRange(range))
 
 type SendLimitFields = Pick<
   BroadcastSendLimit,
@@ -49,11 +66,22 @@ export const describeBroadcastSendLimit = (
   const { audienceRangeStart, audienceRangeEnd, sendRatePerMinute } = broadcast
   const parts: string[] = []
 
-  if (audienceRangeStart != null || audienceRangeEnd != null) {
+  if (audienceRangeStart != null && audienceRangeEnd != null) {
     parts.push(
       t("broadcasts.sendLimit.rangeSummary", {
-        start: audienceRangeStart ?? 1,
-        end: audienceRangeEnd ?? "∞",
+        start: audienceRangeStart,
+        end: audienceRangeEnd,
+      }),
+    )
+  } else if (audienceRangeStart != null) {
+    parts.push(
+      t("broadcasts.sendLimit.rangeFromSummary", { start: audienceRangeStart }),
+    )
+  } else if (audienceRangeEnd != null) {
+    parts.push(
+      t("broadcasts.sendLimit.rangeSummary", {
+        start: 1,
+        end: audienceRangeEnd,
       }),
     )
   }

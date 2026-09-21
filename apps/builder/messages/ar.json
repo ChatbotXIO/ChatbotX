@@ -517,6 +517,7 @@
       "allPlaceholder": "الكل",
       "rangeEndBeforeStart": "لا يمكن أن يكون موضع النهاية قبل موضع البداية",
       "rangeSummary": "جهات الاتصال #{start} – #{end}",
+      "rangeFromSummary": "ابتداءً من جهة الاتصال رقم {start}",
       "rateSummary": "{rate} رسالة / دقيقة"
     }
   },
