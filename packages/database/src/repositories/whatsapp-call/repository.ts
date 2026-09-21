@@ -540,7 +540,10 @@ class WhatsappCallRepository {
         and(
           isNotNull(whatsappCallModel.recordingPath),
           isNotNull(whatsappCallModel.recordedAt),
-          sql`${whatsappCallModel.recordedAt} < ${now} - (${integrationWhatsappModel.callRecordingRetentionDays} || ' days')::interval`,
+          // `${now}` binds as an untyped parameter; without the cast Postgres infers
+          // `interval` for it and answers "operator does not exist: timestamp with
+          // time zone < interval" on every run (measured s170, 2026-09-21).
+          sql`${whatsappCallModel.recordedAt} < ${now}::timestamptz - (${integrationWhatsappModel.callRecordingRetentionDays} || ' days')::interval`,
         ),
       )
       .limit(input.limit)
