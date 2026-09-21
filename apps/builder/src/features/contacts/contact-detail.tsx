@@ -530,6 +530,7 @@ export const ContactDetail = ({
     ])
   }
 
+
   useEffect(() => {
     if (activeConversationId) {
       const conversation = conversations.find(

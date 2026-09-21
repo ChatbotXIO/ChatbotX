@@ -149,7 +149,6 @@ describe("user query hooks", () => {
       expect(isError).toBe(true)
     })
   })
-
   test("does not request either list when disabled", () => {
     act(() => {
       root.render(
