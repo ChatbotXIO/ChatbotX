@@ -51,6 +51,6 @@ describe("instagram sendFlowStep — sendMultipleImages", () => {
       { type: "image", payload: { url: "https://example.com/a.png" } },
       { type: "image", payload: { url: "https://example.com/b.png" } },
     ])
-    expect(result).toEqual({ messageIds: ["ig_provider-1"] })
+    expect(result).toEqual({ messageIds: ["ig_provider-1"], sentCount: 1 })
   })
 })

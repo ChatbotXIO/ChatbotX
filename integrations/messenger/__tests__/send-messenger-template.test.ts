@@ -619,7 +619,7 @@ describe("sendFlowStep", () => {
           sendFrom: "inbox",
         }),
       ),
-    ).resolves.toEqual({ messageIds: [] })
+    ).resolves.toEqual({ messageIds: [], sentCount: 1 })
 
     expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
     const [, payload] = mockSendPageMessage.mock.calls[0]

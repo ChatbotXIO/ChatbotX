@@ -56,6 +56,6 @@ describe("api sendFlowStep — sendMultipleImages", () => {
         { url: "https://example.com/c.png", fileType: "image" },
       ],
     })
-    expect(result).toEqual({ messageIds: ["m_1"] })
+    expect(result).toEqual({ messageIds: ["m_1"], sentCount: 1 })
   })
 })

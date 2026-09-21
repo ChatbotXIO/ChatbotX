@@ -67,7 +67,7 @@ describe("messenger sendFlowStep — sendMultipleImages", () => {
     ])
     expect(payload.message.attachment).toBeUndefined()
     expect(payload.message.quick_replies).toBeUndefined()
-    expect(result).toEqual({ messageIds: ["m_1"] })
+    expect(result).toEqual({ messageIds: ["m_1"], sentCount: 1 })
   })
 
   test("forwards quick replies onto the combined message when the node has any", async () => {

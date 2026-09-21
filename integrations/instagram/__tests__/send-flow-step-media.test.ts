@@ -115,7 +115,7 @@ describe("instagram sendFlowStep — image/video steps", () => {
       payload: { url: IMAGE_URL, is_reusable: true },
     })
     expect(JSON.stringify(payload)).not.toContain("template")
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
   // Instagram cannot attach buttons to a media message: pairing them needs a
@@ -152,7 +152,7 @@ describe("instagram sendFlowStep — image/video steps", () => {
       expect.objectContaining({ stepId: "step-1", buttonCount: 2 }),
       expect.stringContaining("buttons"),
     )
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
   test("keeps quick replies on a media step", async () => {
@@ -203,7 +203,7 @@ describe("instagram sendFlowStep — image/video steps", () => {
       }),
     )
     expect(mockSendInstagramMessage).not.toHaveBeenCalled()
-    expect(result).toEqual({ messageIds: ["m_anchored-1"] })
+    expect(result).toEqual({ messageIds: ["m_anchored-1"], sentCount: 1 })
   })
 
   test("sends a file step by attachment_id from the upload API", async () => {
@@ -229,7 +229,7 @@ describe("instagram sendFlowStep — image/video steps", () => {
       type: "file",
       payload: { attachment_id: "att-1" },
     })
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
   // Used to be swallowed by a try/catch that yielded nothing: the step became

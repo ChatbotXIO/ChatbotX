@@ -49,7 +49,7 @@ export const sendComment: CommentHandlers<InstagramAuthValue>["sendComment"] =
         { replyToCommentId },
         "sendComment: message has no text — skipping API call",
       )
-      return { messageIds: [] }
+      return { messageIds: [], sentCount: 0 }
     }
 
     try {
@@ -58,7 +58,7 @@ export const sendComment: CommentHandlers<InstagramAuthValue>["sendComment"] =
         replyToCommentId,
         message.text,
       )
-      return { messageIds: result.id ? [result.id] : [] }
+      return { messageIds: result.id ? [result.id] : [], sentCount: 1 }
     } catch (error) {
       logger.error(error, "An error occurred while sending the comment reply")
       throw mapToChannelError(error)

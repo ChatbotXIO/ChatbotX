@@ -34,7 +34,7 @@ export const sendComment: CommentHandlers<ThreadsAuthValue>["sendComment"] =
 
     try {
       const result = await sendCommentReply(ctx.auth, replyToCommentId, text)
-      return { messageIds: result.id ? [result.id] : [] }
+      return { messageIds: result.id ? [result.id] : [], sentCount: 1 }
     } catch (error) {
       const channelError = mapToChannelError(error)
       const safeError = getSafeErrorDetails(error)

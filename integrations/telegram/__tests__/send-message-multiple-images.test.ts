@@ -70,7 +70,10 @@ describe("telegram sendMessage — multiple image attachments in one composed me
         { type: "photo", media: "https://example.com/c.png" },
       ],
     })
-    expect(result).toEqual({ messageIds: ["101", "102", "103"] })
+    expect(result).toEqual({
+      messageIds: ["101", "102", "103"],
+      sentCount: 3,
+    })
   })
 
   test("a single image still uses sendPhoto, not sendMediaGroup", async () => {
@@ -95,6 +98,6 @@ describe("telegram sendMessage — multiple image attachments in one composed me
 
     expect(mockSendTelegramMediaGroup).not.toHaveBeenCalled()
     expect(mockSendTelegramPhoto).toHaveBeenCalledTimes(1)
-    expect(result).toEqual({ messageIds: ["200"] })
+    expect(result).toEqual({ messageIds: ["200"], sentCount: 1 })
   })
 })

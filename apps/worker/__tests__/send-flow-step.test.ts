@@ -91,10 +91,10 @@ const {
     }),
     mockSendFlowStepToChannel: vi
       .fn()
-      .mockResolvedValue({ messageIds: ["provider-1"] }),
+      .mockResolvedValue({ messageIds: ["provider-1"], sentCount: 1 }),
     mockSendMessageToChannel: vi
       .fn()
-      .mockResolvedValue({ messageIds: ["provider-comment-1"] }),
+      .mockResolvedValue({ messageIds: ["provider-comment-1"], sentCount: 1 }),
     mockProcessWhatsappTemplate: vi
       .fn()
       .mockResolvedValue({ messageId: "msg-wa" }),
@@ -344,9 +344,13 @@ describe("sendFlowStep", () => {
       fileSize: 12_345,
       fileName: "image.jpg",
     })
-    mockSendFlowStepToChannel.mockResolvedValue({ messageIds: ["provider-1"] })
+    mockSendFlowStepToChannel.mockResolvedValue({
+      messageIds: ["provider-1"],
+      sentCount: 1,
+    })
     mockSendMessageToChannel.mockResolvedValue({
       messageIds: ["provider-comment-1"],
+      sentCount: 1,
     })
     mockEmit.mockResolvedValue(undefined)
     mockFindAppointmentCalendarBySlug.mockResolvedValue(null)
@@ -440,6 +444,10 @@ describe("sendFlowStep", () => {
     )
     expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
       expect.objectContaining({
+        botSentAnalytics: {
+          triggerHandler: "sendFlowStep",
+          triggerType: "message_bot_sent_flow",
+        },
         sendFrom: "inbox",
       }),
     )

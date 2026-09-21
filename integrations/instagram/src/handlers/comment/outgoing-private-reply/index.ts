@@ -33,10 +33,11 @@ export const sendPrivateReply: CommentHandlers<InstagramAuthValue>["sendPrivateR
         { replyToCommentId },
         "sendPrivateReply: message has no text or attachments — skipping API call",
       )
-      return { messageIds: [] }
+      return { messageIds: [], sentCount: 0 }
     }
 
     const messageIds: string[] = []
+    let sentCount = 0
     try {
       for (const instagramMessage of instagramMessages) {
         const result = await sendPrivateReplyMessage(
@@ -44,11 +45,12 @@ export const sendPrivateReply: CommentHandlers<InstagramAuthValue>["sendPrivateR
           replyToCommentId,
           instagramMessage,
         )
+        sentCount += 1
         if (result.message_id) {
           messageIds.push(result.message_id)
         }
       }
-      return { messageIds }
+      return { messageIds, sentCount }
     } catch (error) {
       logger.error(error, "An error occurred while sending the private reply")
       throw mapToChannelError(error)

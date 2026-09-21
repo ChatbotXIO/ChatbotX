@@ -99,7 +99,7 @@ describe("messenger sendFlowStep — comment-anchored private reply", () => {
       undefined,
     )
     expect(mockSendPageMessage).not.toHaveBeenCalled()
-    expect(result).toEqual({ messageIds: ["m_anchored-1"] })
+    expect(result).toEqual({ messageIds: ["m_anchored-1"], sentCount: 1 })
   })
 
   test("uses the normal Send API when commentAnchor.replyChannel is public (defense-in-depth: public replies are never routed here)", async () => {
@@ -120,7 +120,7 @@ describe("messenger sendFlowStep — comment-anchored private reply", () => {
 
     expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
     expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
   test("uses the normal Send API when commentAnchor is absent (regression guard)", async () => {
@@ -140,7 +140,7 @@ describe("messenger sendFlowStep — comment-anchored private reply", () => {
 
     expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
     expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
   // 11 cards chunked by 10 → 2 Facebook messages for this single step.
@@ -172,7 +172,10 @@ describe("messenger sendFlowStep — comment-anchored private reply", () => {
       undefined,
     )
     expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
-    expect(result).toEqual({ messageIds: ["m_anchored-1", "m_normal-1"] })
+    expect(result).toEqual({
+      messageIds: ["m_anchored-1", "m_normal-1"],
+      sentCount: 2,
+    })
   })
 
   test("fails the follow-up message when the commenter has never messaged the Page", async () => {
@@ -214,7 +217,7 @@ describe("messenger sendFlowStep — comment-anchored private reply", () => {
 
     expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
     expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
   test("a spent anchor outside the 24h window reports the one-reply-per-comment limit", async () => {
@@ -282,7 +285,7 @@ describe("messenger sendFlowStep — comment-anchored private reply", () => {
     } as never)
 
     expect(mockSendPageMessage).toHaveBeenCalledTimes(1)
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 })
 
@@ -414,7 +417,7 @@ describe("messenger sendMessage — canonical button template", () => {
       mockEnsureMessengerWhitelistedDomain.mock.invocationCallOrder[0],
     ).toBeLessThan(mockSendPageMessage.mock.invocationCallOrder[0])
     expect(mockSendPageMessage).toHaveBeenCalledTimes(2)
-    expect(result).toEqual({ messageIds: ["m_retry-1"] })
+    expect(result).toEqual({ messageIds: ["m_retry-1"], sentCount: 1 })
   })
 
   test("keeps postback-only canonical buttons as native quick replies", async () => {

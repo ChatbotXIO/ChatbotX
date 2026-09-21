@@ -85,7 +85,10 @@ export const sendComment: CommentHandlers<TiktokAuthValue>["sendComment"] =
         commentId: replyToCommentId,
         text,
       })
-      return { messageIds: created.comment_id ? [created.comment_id] : [] }
+      return {
+        messageIds: created.comment_id ? [created.comment_id] : [],
+        sentCount: 1,
+      }
     } catch (error) {
       const channelError = mapToChannelError(error)
       logger.error(

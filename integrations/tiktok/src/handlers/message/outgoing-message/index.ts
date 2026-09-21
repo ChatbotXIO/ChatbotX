@@ -38,6 +38,7 @@ export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
 
     const businessId = ctx.auth.metadata.openId
     const messageIds: string[] = []
+    let sentCount = 0
 
     try {
       const conversationId = requireConversationId(contact.sourceConversationId)
@@ -50,6 +51,7 @@ export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
           message_type: "TEXT",
           text: { body: message.text },
         })
+        sentCount += 1
         if (messageId) {
           messageIds.push(messageId)
         }
@@ -70,6 +72,7 @@ export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
             ctx.auth.tokens.accessToken,
             payload,
           )
+          sentCount += 1
           if (messageId) {
             messageIds.push(messageId)
           }
@@ -80,7 +83,7 @@ export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
       throw mapToChannelError(error)
     }
 
-    return { messageIds }
+    return { messageIds, sentCount }
   }
 
 export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
@@ -92,6 +95,7 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
 
     const businessId = ctx.auth.metadata.openId
     const messageIds: string[] = []
+    let sentCount = 0
 
     try {
       const conversationId = requireConversationId(contact.sourceConversationId)
@@ -111,6 +115,7 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
               ctx.auth.tokens.accessToken,
               payload,
             )
+            sentCount += 1
             if (messageId) {
               messageIds.push(messageId)
             }
@@ -128,6 +133,7 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
             ctx.auth.tokens.accessToken,
             payload,
           )
+          sentCount += 1
           if (messageId) {
             messageIds.push(messageId)
           }
@@ -145,6 +151,7 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
               ctx.auth.tokens.accessToken,
               payload,
             )
+            sentCount += 1
             if (messageId) {
               messageIds.push(messageId)
             }
@@ -159,5 +166,5 @@ export const sendFlowStep: MessageHandlers<TiktokAuthValue>["sendFlowStep"] =
       throw mapToChannelError(error)
     }
 
-    return { messageIds }
+    return { messageIds, sentCount }
   }

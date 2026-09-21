@@ -25,7 +25,9 @@ const {
   return {
     mockEmit: vi.fn().mockResolvedValue(undefined),
     mockResolveIntegrationContextFromContactInbox: vi.fn(),
-    mockRunChannelHandler: vi.fn().mockResolvedValue({ messageIds: ["mid-1"] }),
+    mockRunChannelHandler: vi
+      .fn()
+      .mockResolvedValue({ messageIds: ["mid-1"], sentCount: 1 }),
     mockDbUpdate: vi.fn().mockReturnValue(updateChain),
     mockUpdateSourceId: updateSourceId,
     mockUpdateSendError: updateSendError,
@@ -122,10 +124,27 @@ const contactInbox = {
   source: "messenger",
 }
 
+const isBotSentDashboardCall = (call: unknown[]) => {
+  if (call[0] !== "analytics:dashboard") {
+    return false
+  }
+
+  const payload = call[1]
+  return (
+    typeof payload === "object" &&
+    payload !== null &&
+    "eventType" in payload &&
+    payload.eventType === "message:bot_sent"
+  )
+}
+
 describe("chat send-message handlers", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockRunChannelHandler.mockResolvedValue({ messageIds: ["mid-1"] })
+    mockRunChannelHandler.mockResolvedValue({
+      messageIds: ["mid-1"],
+      sentCount: 1,
+    })
     mockContactUnblockIfBlocked.mockResolvedValue(null)
     mockResolveIntegrationContextFromContactInbox.mockResolvedValue({
       ctx: { workspaceId: "ws-1" },
@@ -167,6 +186,7 @@ describe("chat send-message handlers", () => {
       workspaceId: "ws-1",
       at: expect.any(Date),
     })
+    expect(mockEmit.mock.calls.filter(isBotSentDashboardCall)).toHaveLength(0)
   })
 
   test("persists provider message id as sourceId for a bot outgoing message", async () => {
@@ -175,6 +195,7 @@ describe("chat send-message handlers", () => {
     // dedup against them and re-inserted a duplicate row during coexist sync.
     mockRunChannelHandler.mockResolvedValueOnce({
       messageIds: ["wamid.echo-1"],
+      sentCount: 1,
     })
 
     const createdAt = new Date("2026-07-09T08:37:21.108Z")
@@ -204,12 +225,87 @@ describe("chat send-message handlers", () => {
     )
   })
 
+  test("emits one bot-sent dashboard event per accepted provider message", async () => {
+    mockRunChannelHandler.mockResolvedValueOnce({
+      messageIds: ["m1", "m2", "m3"],
+      sentCount: 3,
+    })
+
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-bot-multi",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "bot",
+        sourceId: null,
+        text: "automated reply",
+        createdAt: new Date("2026-07-09T08:37:21.108Z"),
+      } as never,
+    })
+
+    const botSentCalls = mockEmit.mock.calls.filter(isBotSentDashboardCall)
+
+    expect(botSentCalls).toHaveLength(3)
+    expect(botSentCalls).toEqual(
+      expect.arrayContaining([
+        [
+          "analytics:dashboard",
+          expect.objectContaining({
+            eventType: "message:bot_sent",
+            metadata: expect.objectContaining({
+              triggerContext: expect.objectContaining({
+                triggerHandler: "sendMessageToChannel",
+                triggerType: "message_bot_sent_channel",
+              }),
+              sentPayload: {
+                index: 0,
+                count: 3,
+                providerMessageId: "m1",
+              },
+            }),
+          }),
+        ],
+      ]),
+    )
+  })
+
+  test("does not emit bot-sent dashboard events for zero-send results", async () => {
+    mockRunChannelHandler.mockResolvedValueOnce({
+      messageIds: [],
+      sentCount: 0,
+    })
+
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-bot-zero",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "bot",
+        sourceId: null,
+        text: "automated reply",
+      } as never,
+    })
+
+    expect(mockEmit.mock.calls.filter(isBotSentDashboardCall)).toHaveLength(0)
+  })
+
   test("does not retry the send when persisting a comment reply's sourceId fails", async () => {
     // Regression: the reply is already live on the channel at this point — a
     // thrown error here must be swallowed, not rethrown, or BullMQ redelivers
     // the job and sendComment fires again, posting a second duplicate reply.
     mockRunChannelHandler.mockResolvedValueOnce({
       messageIds: ["reply-1"],
+      sentCount: 1,
     })
     mockUpdateSourceId.mockRejectedValueOnce(new Error("shard write failed"))
 
@@ -231,7 +327,7 @@ describe("chat send-message handlers", () => {
           createdAt: new Date("2026-07-09T08:37:21.108Z"),
         } as never,
       }),
-    ).resolves.toEqual({ messageIds: ["reply-1"] })
+    ).resolves.toEqual({ messageIds: ["reply-1"], sentCount: 1 })
 
     expect(mockRunChannelHandler).toHaveBeenCalledTimes(1)
   })
@@ -287,7 +383,10 @@ describe("chat send-message handlers", () => {
   })
 
   test("does not update sourceId when the channel returns no provider id", async () => {
-    mockRunChannelHandler.mockResolvedValueOnce({ messageIds: [] })
+    mockRunChannelHandler.mockResolvedValueOnce({
+      messageIds: [],
+      sentCount: 0,
+    })
 
     await sendMessageToChannel({
       conversation: conversation as never,
@@ -306,6 +405,7 @@ describe("chat send-message handlers", () => {
     })
 
     expect(mockUpdateSourceId).not.toHaveBeenCalled()
+    expect(mockEmit.mock.calls.filter(isBotSentDashboardCall)).toHaveLength(0)
   })
 
   test("passes sendFrom to sendFlowStep channel handler", async () => {
@@ -337,6 +437,48 @@ describe("chat send-message handlers", () => {
       workspaceId: "ws-1",
       at: expect.any(Date),
     })
+  })
+
+  test("emits flow-step bot events using supplied trigger metadata", async () => {
+    mockRunChannelHandler.mockResolvedValueOnce({
+      messageIds: ["p1", "p2"],
+      sentCount: 2,
+    })
+
+    await sendFlowStepToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      flowId: "flow-1",
+      step: {
+        id: "step-1",
+        nodeId: "node-1",
+        stepType: "sendText",
+        text: "hello",
+      } as never,
+      botSentAnalytics: {
+        triggerHandler: "customFlowHandler",
+        triggerType: "custom_flow_trigger",
+      },
+    })
+
+    const botSentCalls = mockEmit.mock.calls.filter(isBotSentDashboardCall)
+
+    expect(botSentCalls).toHaveLength(2)
+    expect(botSentCalls[0][1]).toEqual(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          triggerContext: expect.objectContaining({
+            triggerHandler: "customFlowHandler",
+            triggerType: "custom_flow_trigger",
+          }),
+          sentPayload: {
+            index: 0,
+            count: 2,
+            providerMessageId: "p1",
+          },
+        }),
+      }),
+    )
   })
 
   // `errorData` is whatever `parseSdkError` produced and carries no stack, so

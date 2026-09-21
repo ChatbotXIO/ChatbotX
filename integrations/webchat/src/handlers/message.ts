@@ -26,11 +26,12 @@ export const sendMessage: MessageHandlers<WebchatAuthValue>["sendMessage"] =
 
     return {
       messageIds: [],
+      sentCount: 1,
     }
   }
 
 export const sendFlowStep: MessageHandlers<WebchatAuthValue>["sendFlowStep"] =
-  () => Promise.resolve({ messageIds: [] })
+  () => Promise.resolve({ messageIds: [], sentCount: 0 })
 
 export const messageHandlers = {
   sendMessage,

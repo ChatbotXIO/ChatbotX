@@ -81,7 +81,7 @@ describe("instagram-facebook sendFlowStep — comment-anchored private reply", (
       expect.objectContaining({ text: "private reply via flow" }),
     )
     expect(mockSendInstagramMessage).not.toHaveBeenCalled()
-    expect(result).toEqual({ messageIds: ["m_anchored-1"] })
+    expect(result).toEqual({ messageIds: ["m_anchored-1"], sentCount: 1 })
   })
 
   test("uses the normal Send API when commentAnchor.replyChannel is public (defense-in-depth: public replies are never routed here)", async () => {
@@ -96,7 +96,7 @@ describe("instagram-facebook sendFlowStep — comment-anchored private reply", (
 
     expect(mockSendInstagramMessage).toHaveBeenCalledTimes(1)
     expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
   test("uses the normal Send API when commentAnchor is absent (regression guard)", async () => {
@@ -110,7 +110,7 @@ describe("instagram-facebook sendFlowStep — comment-anchored private reply", (
 
     expect(mockSendInstagramMessage).toHaveBeenCalledTimes(1)
     expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
   // 11 cards chunked by 10 → 2 Instagram messages for this single step.
@@ -141,7 +141,10 @@ describe("instagram-facebook sendFlowStep — comment-anchored private reply", (
       expect.anything(),
     )
     expect(mockSendInstagramMessage).toHaveBeenCalledTimes(1)
-    expect(result).toEqual({ messageIds: ["m_anchored-1", "m_normal-1"] })
+    expect(result).toEqual({
+      messageIds: ["m_anchored-1", "m_normal-1"],
+      sentCount: 2,
+    })
   })
 
   test("fails the follow-up message when the commenter has never messaged the account", async () => {
@@ -177,7 +180,7 @@ describe("instagram-facebook sendFlowStep — comment-anchored private reply", (
 
     expect(mockSendPrivateReplyMessage).not.toHaveBeenCalled()
     expect(mockSendInstagramMessage).toHaveBeenCalledTimes(1)
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
   test("a spent anchor outside the 24h window reports the one-reply-per-comment limit", async () => {

@@ -326,6 +326,7 @@ describe("threads sendComment handler", () => {
       } as never),
     ).resolves.toEqual({
       messageIds: ["reply-handler"],
+      sentCount: 1,
     })
   })
 

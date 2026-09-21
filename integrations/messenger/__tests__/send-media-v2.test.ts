@@ -275,7 +275,7 @@ describe("messenger sendFlowStep — sendImage / sendVideo routed through v2", (
       tag: undefined,
       persona_id: undefined,
     })
-    expect(result).toEqual({ messageIds: ["m_1"] })
+    expect(result).toEqual({ messageIds: ["m_1"], sentCount: 1 })
   })
 
   test("sends an inline video in exactly one Send API call", async () => {
@@ -329,7 +329,7 @@ describe("messenger sendFlowStep — sendImage / sendVideo routed through v2", (
       stepProps({ step: imageStep({ buttons: [buyButton] }) }),
     )
 
-    expect(result).toEqual({ messageIds: [] })
+    expect(result).toEqual({ messageIds: [], sentCount: 0 })
     expect(mockSendPageMessage).not.toHaveBeenCalled()
   })
 })

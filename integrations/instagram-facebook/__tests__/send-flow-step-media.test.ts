@@ -111,7 +111,7 @@ describe("instagram-facebook sendFlowStep — image/video steps", () => {
     // Instagram has no media template — it is what produced the original error.
     expect(JSON.stringify(payload)).not.toContain("template")
     expect(mockUploadAttachment).not.toHaveBeenCalled()
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
   // Instagram cannot attach buttons to a media message: pairing them needs a
@@ -148,7 +148,7 @@ describe("instagram-facebook sendFlowStep — image/video steps", () => {
       expect.objectContaining({ stepId: "step-1", buttonCount: 2 }),
       expect.stringContaining("buttons"),
     )
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
   // sendFlowStep used not to read `quickReplies` at all, so the worker's
@@ -201,7 +201,7 @@ describe("instagram-facebook sendFlowStep — image/video steps", () => {
       }),
     )
     expect(mockSendInstagramMessage).not.toHaveBeenCalled()
-    expect(result).toEqual({ messageIds: ["m_anchored-1"] })
+    expect(result).toEqual({ messageIds: ["m_anchored-1"], sentCount: 1 })
   })
 
   test("sends a file step by attachment_id from the upload API", async () => {
@@ -227,7 +227,7 @@ describe("instagram-facebook sendFlowStep — image/video steps", () => {
       type: "file",
       payload: { attachment_id: "att-1" },
     })
-    expect(result).toEqual({ messageIds: ["m_normal-1"] })
+    expect(result).toEqual({ messageIds: ["m_normal-1"], sentCount: 1 })
   })
 
   test("surfaces an upload failure on a file step instead of skipping the step", async () => {
