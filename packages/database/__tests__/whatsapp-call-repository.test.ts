@@ -1209,3 +1209,56 @@ describe("whatsappCallRepository.createPendingOutbound initiatedByUserId", () =>
     )
   })
 })
+
+const RETENTION_CAST_RE =
+  /"recordedAt" < .*::timestamptz - \("callRecordingRetentionDays"/
+const TIMESTAMPTZ_CAST_RE = /::timestamptz/
+
+describe("whatsappCallRepository.listRecordingsPastRetention", () => {
+  const selectChain = (rows: unknown[] = []) => {
+    const captured: { where?: unknown; limit?: number } = {}
+    const limit = vi.fn((n: number) => {
+      captured.limit = n
+      return Promise.resolve(rows)
+    })
+    const where = vi.fn((clause: unknown) => {
+      captured.where = clause
+      return { limit }
+    })
+    const innerJoin = vi.fn(() => ({ where }))
+    const from = vi.fn(() => ({ innerJoin }))
+    const select = vi.fn(() => ({ from }))
+    return { tx: { select }, captured }
+  }
+
+  test("binds `now` as timestamptz so the retention arithmetic types (s170 regression)", async () => {
+    // Without the cast Postgres infers `interval` for the untyped parameter
+    // and the daily purge fails with "operator does not exist: timestamp with
+    // time zone < interval" on every run.
+    const { tx, captured } = selectChain()
+    const now = new Date("2026-09-21T16:38:34.336Z")
+
+    await whatsappCallRepository.listRecordingsPastRetention(
+      { limit: 500, now },
+      tx as never,
+    )
+
+    // The bound value renders between the column and the cast; its exact
+    // spelling is the driver's business, the cast is ours.
+    expect(renderPredicate(captured.where)).toMatch(RETENTION_CAST_RE)
+    expect(captured.limit).toBe(500)
+  })
+
+  test("returns the call rows unwrapped and defaults `now` to the clock", async () => {
+    const call = baseRow({ id: "call-9", recordingPath: "rec/9.ogg" })
+    const { tx, captured } = selectChain([{ call }])
+
+    const rows = await whatsappCallRepository.listRecordingsPastRetention(
+      { limit: 10 },
+      tx as never,
+    )
+
+    expect(rows).toEqual([call])
+    expect(renderPredicate(captured.where)).toMatch(TIMESTAMPTZ_CAST_RE)
+  })
+})
