@@ -512,8 +512,9 @@
     "sendLimit": {
       "title": "Giới hạn",
       "hint": "Để trống để gửi cho tất cả liên hệ phù hợp.",
-      "fromContact": "Gửi từ liên hệ số",
-      "toContact": "đến",
+      "rangeLabel": "Phạm vi liên hệ",
+      "fromLabel": "Từ",
+      "toLabel": "Đến",
       "allPlaceholder": "Tất cả",
       "rangeEndBeforeStart": "Vị trí kết thúc không được trước vị trí bắt đầu",
       "rangeSummary": "Liên hệ #{start} – #{end}",

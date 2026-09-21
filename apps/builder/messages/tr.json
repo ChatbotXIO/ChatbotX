@@ -512,8 +512,9 @@
     "sendLimit": {
       "title": "Sınır",
       "hint": "Eşleşen tüm kişilere göndermek için boş bırakın.",
-      "fromContact": "Kişi #'den gönder",
-      "toContact": "ile",
+      "rangeLabel": "Kişi aralığı",
+      "fromLabel": "Başlangıç",
+      "toLabel": "Bitiş",
       "allPlaceholder": "Tümü",
       "rangeEndBeforeStart": "Bitiş konumu başlangıç konumundan önce olamaz",
       "rangeSummary": "Kişiler #{start} – #{end}",

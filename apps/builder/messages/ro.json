@@ -1338,8 +1338,9 @@
     "sendLimit": {
       "title": "Limită",
       "hint": "Lăsați necompletat pentru a trimite tuturor contactelor care corespund.",
-      "fromContact": "Trimite începând cu contactul nr.",
-      "toContact": "până la",
+      "rangeLabel": "Interval de contacte",
+      "fromLabel": "De la",
+      "toLabel": "Până la",
       "allPlaceholder": "Toate",
       "rangeEndBeforeStart": "Poziția de final nu poate fi înainte de poziția de start",
       "rangeSummary": "Contacte nr.{start} – nr.{end}",

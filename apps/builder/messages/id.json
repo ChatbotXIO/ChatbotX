@@ -512,8 +512,9 @@
     "sendLimit": {
       "title": "Batas",
       "hint": "Kosongkan untuk mengirim ke semua kontak yang cocok.",
-      "fromContact": "Kirim mulai dari kontak #",
-      "toContact": "sampai",
+      "rangeLabel": "Rentang kontak",
+      "fromLabel": "Dari",
+      "toLabel": "Sampai",
       "allPlaceholder": "Semua",
       "rangeEndBeforeStart": "Posisi akhir tidak boleh sebelum posisi awal",
       "rangeSummary": "Kontak #{start} – #{end}",

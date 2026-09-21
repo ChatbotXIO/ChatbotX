@@ -512,8 +512,9 @@
     "sendLimit": {
       "title": "Raja",
       "hint": "Jätä tyhjäksi lähettääksesi kaikille vastaaville yhteystiedoille.",
-      "fromContact": "Lähetä alkaen yhteystiedosta #",
-      "toContact": "asti",
+      "rangeLabel": "Yhteystietoväli",
+      "fromLabel": "Alkaen",
+      "toLabel": "Asti",
       "allPlaceholder": "Kaikki",
       "rangeEndBeforeStart": "Loppusijainti ei voi olla ennen alkusijaintia",
       "rangeSummary": "Yhteystiedot #{start} – #{end}",

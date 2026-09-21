@@ -5447,8 +5447,9 @@
     "sendLimit": {
       "title": "מגבלה",
       "hint": "השאר ריק כדי לשלוח לכל אנשי הקשר התואמים.",
-      "fromContact": "שלח החל מאיש קשר מס׳",
-      "toContact": "עד",
+      "rangeLabel": "טווח אנשי קשר",
+      "fromLabel": "מ",
+      "toLabel": "עד",
       "allPlaceholder": "הכול",
       "rangeEndBeforeStart": "מיקום הסיום לא יכול להיות לפני מיקום ההתחלה",
       "rangeSummary": "אנשי קשר מס׳{start} – מס׳{end}",

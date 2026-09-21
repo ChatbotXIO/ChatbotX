@@ -512,8 +512,9 @@
     "sendLimit": {
       "title": "Límite",
       "hint": "Déjalo en blanco para enviar a todos los contactos que coincidan.",
-      "fromContact": "Enviar desde el contacto n.º",
-      "toContact": "hasta",
+      "rangeLabel": "Rango de contactos",
+      "fromLabel": "Desde",
+      "toLabel": "Hasta",
       "allPlaceholder": "Todos",
       "rangeEndBeforeStart": "La posición final no debe ser anterior a la posición inicial",
       "rangeSummary": "Contactos n.º{start} – n.º{end}",

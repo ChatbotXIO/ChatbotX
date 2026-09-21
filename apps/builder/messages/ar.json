@@ -512,8 +512,9 @@
     "sendLimit": {
       "title": "الحد",
       "hint": "اتركه فارغًا للإرسال إلى جميع جهات الاتصال المطابقة.",
-      "fromContact": "الإرسال ابتداءً من جهة الاتصال رقم",
-      "toContact": "إلى",
+      "rangeLabel": "نطاق جهات الاتصال",
+      "fromLabel": "من",
+      "toLabel": "إلى",
       "allPlaceholder": "الكل",
       "rangeEndBeforeStart": "لا يمكن أن يكون موضع النهاية قبل موضع البداية",
       "rangeSummary": "جهات الاتصال #{start} – #{end}",

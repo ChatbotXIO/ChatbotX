@@ -1993,8 +1993,9 @@
     "sendLimit": {
       "title": "Limite",
       "hint": "Lascia vuoto per inviare a tutti i contatti corrispondenti.",
-      "fromContact": "Invia a partire dal contatto n.",
-      "toContact": "a",
+      "rangeLabel": "Intervallo contatti",
+      "fromLabel": "Da",
+      "toLabel": "A",
       "allPlaceholder": "Tutti",
       "rangeEndBeforeStart": "La posizione finale non può essere precedente alla posizione iniziale",
       "rangeSummary": "Contatti n.{start} – n.{end}",

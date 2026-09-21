@@ -69,9 +69,12 @@ export function BroadcastSendLimitFields() {
 
       <div className="grid grid-cols-1 items-center gap-x-4 gap-y-3 sm:grid-cols-[max-content_1fr]">
         <span className="text-muted-foreground text-sm">
-          {t("broadcasts.sendLimit.fromContact")}
+          {t("broadcasts.sendLimit.rangeLabel")}
         </span>
         <div className="flex items-center gap-2">
+          <span className="text-muted-foreground text-sm">
+            {t("broadcasts.sendLimit.fromLabel")}
+          </span>
           <InputNumberField
             formItemClassName={RANGE_FIELD_CLASS_NAME}
             min={BROADCAST_AUDIENCE_POSITION_MIN}
@@ -79,7 +82,7 @@ export function BroadcastSendLimitFields() {
             placeholder={String(BROADCAST_AUDIENCE_POSITION_MIN)}
           />
           <span className="text-muted-foreground text-sm">
-            {t("broadcasts.sendLimit.toContact")}
+            {t("broadcasts.sendLimit.toLabel")}
           </span>
           <InputNumberField
             formItemClassName={RANGE_FIELD_CLASS_NAME}

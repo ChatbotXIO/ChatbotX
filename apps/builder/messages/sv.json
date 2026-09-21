@@ -645,8 +645,9 @@
     "sendLimit": {
       "title": "Gräns",
       "hint": "Lämna tomt för att skicka till alla matchande kontakter.",
-      "fromContact": "Skicka från kontakt nr",
-      "toContact": "till",
+      "rangeLabel": "Kontaktintervall",
+      "fromLabel": "Från",
+      "toLabel": "Till",
       "allPlaceholder": "Alla",
       "rangeEndBeforeStart": "Slutpositionen får inte vara före startpositionen",
       "rangeSummary": "Kontakter nr {start} – nr {end}",

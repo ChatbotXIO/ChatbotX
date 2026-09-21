@@ -512,8 +512,9 @@
     "sendLimit": {
       "title": "Grænse",
       "hint": "Lad stå tomt for at sende til alle matchende kontakter.",
-      "fromContact": "Send fra kontakt #",
-      "toContact": "til",
+      "rangeLabel": "Kontaktinterval",
+      "fromLabel": "Fra",
+      "toLabel": "Til",
       "allPlaceholder": "Alle",
       "rangeEndBeforeStart": "Slutpositionen må ikke være før startpositionen",
       "rangeSummary": "Kontakter #{start} – #{end}",

@@ -94,8 +94,9 @@ describe("BroadcastSendLimitFields", () => {
     })
 
     const text = container.textContent ?? ""
-    expect(text).toContain("broadcasts.sendLimit.fromContact")
-    expect(text).toContain("broadcasts.sendLimit.toContact")
+    expect(text).toContain("broadcasts.sendLimit.rangeLabel")
+    expect(text).toContain("broadcasts.sendLimit.fromLabel")
+    expect(text).toContain("broadcasts.sendLimit.toLabel")
     expect(text).toContain("fields.sendRatePerMinute.label")
 
     const numberInputs = container.querySelectorAll(

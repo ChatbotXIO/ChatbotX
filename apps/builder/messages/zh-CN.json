@@ -832,8 +832,9 @@
     "sendLimit": {
       "title": "限制",
       "hint": "留空以发送给所有匹配的联系人。",
-      "fromContact": "从联系人 #",
-      "toContact": "到",
+      "rangeLabel": "联系人范围",
+      "fromLabel": "从",
+      "toLabel": "到",
       "allPlaceholder": "全部",
       "rangeEndBeforeStart": "结束位置不能早于开始位置",
       "rangeSummary": "联系人 #{start} – #{end}",

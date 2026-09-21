@@ -512,8 +512,9 @@
     "sendLimit": {
       "title": "Limiet",
       "hint": "Laat leeg om naar alle overeenkomende contacten te verzenden.",
-      "fromContact": "Verzenden vanaf contact #",
-      "toContact": "tot",
+      "rangeLabel": "Contactbereik",
+      "fromLabel": "Van",
+      "toLabel": "Tot",
       "allPlaceholder": "Alle",
       "rangeEndBeforeStart": "De eindpositie mag niet vóór de startpositie liggen",
       "rangeSummary": "Contacten #{start} – #{end}",

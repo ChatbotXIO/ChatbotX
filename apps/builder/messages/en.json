@@ -512,8 +512,9 @@
     "sendLimit": {
       "title": "Limit",
       "hint": "Leave blank to send to every matching contact.",
-      "fromContact": "Send from contact #",
-      "toContact": "to",
+      "rangeLabel": "Contact range",
+      "fromLabel": "From",
+      "toLabel": "To",
       "allPlaceholder": "All",
       "rangeEndBeforeStart": "The end position must not be before the start position",
       "rangeSummary": "Contacts #{start} – #{end}",
