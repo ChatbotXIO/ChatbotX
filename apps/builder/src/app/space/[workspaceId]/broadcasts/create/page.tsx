@@ -52,29 +52,31 @@ export default async function CreateBroadcastPage({
   })
 
   return (
-    <FlowStoreProvider>
-      <IntegrationStoreProvider workspaceId={workspaceId}>
-        <FlowTemplateStoreProvider
-          includeAllTemplateStatuses
-          openaiCompatibleIntegrations={openaiCompatibleIntegrations}
-          workspaceId={workspaceId}
-        >
-          <WhatsappFlowStoreProvider workspaceId={workspaceId}>
-            <ContactStoreProvider
-              autoInitialize={false}
-              workspaceId={workspaceId}
-            >
-              <CreateBroadcastForm
-                canViewEmailAndPhone={canViewEmailAndPhone}
-                initialChannel={prefill.channel}
-                initialContactFilter={prefill.contactFilter}
-                initialInboxIds={initialInboxIds}
+    <FlowStoreProvider workspaceId={workspaceId}>
+      <CustomFieldStoreProvider workspaceId={workspaceId}>
+        <IntegrationStoreProvider workspaceId={workspaceId}>
+          <FlowTemplateStoreProvider
+            includeAllTemplateStatuses
+            openaiCompatibleIntegrations={openaiCompatibleIntegrations}
+            workspaceId={workspaceId}
+          >
+            <WhatsappFlowStoreProvider workspaceId={workspaceId}>
+              <ContactStoreProvider
+                autoInitialize={false}
                 workspaceId={workspaceId}
-              />
-            </ContactStoreProvider>
-          </WhatsappFlowStoreProvider>
-        </FlowTemplateStoreProvider>
-      </IntegrationStoreProvider>
+              >
+                <CreateBroadcastForm
+                  canViewEmailAndPhone={canViewEmailAndPhone}
+                  initialChannel={prefill.channel}
+                  initialContactFilter={prefill.contactFilter}
+                  initialInboxIds={initialInboxIds}
+                  workspaceId={workspaceId}
+                />
+              </ContactStoreProvider>
+            </WhatsappFlowStoreProvider>
+          </FlowTemplateStoreProvider>
+        </IntegrationStoreProvider>
+      </CustomFieldStoreProvider>
     </FlowStoreProvider>
   )
 }

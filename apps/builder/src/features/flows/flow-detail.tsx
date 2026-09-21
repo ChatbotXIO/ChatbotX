@@ -43,22 +43,24 @@ export function FlowDetail({
           workspaceId={flow.workspaceId}
         >
           <WhatsappFlowStoreProvider workspaceId={flow.workspaceId}>
-            <FlowStoreProvider>
+            <FlowStoreProvider workspaceId={flow.workspaceId}>
               <QuestionnaireStoreProvider workspaceId={flow.workspaceId}>
                 <AppointmentCalendarStoreProvider
                   workspaceId={flow.workspaceId}
                 >
                   <EmailTopicStoreProvider workspaceId={flow.workspaceId}>
-                    <AIToolsStoreProvider workspaceId={flow.workspaceId}>
-                      <PlatformCredentialsStoreProvider>
-                        <ReactFlowFrame
-                          canRevertToPublished={canRevertToPublished}
-                          flow={flow}
-                          flowVersion={flowVersion}
-                          hasPublishedVersion={hasPublishedVersion}
-                        />
-                      </PlatformCredentialsStoreProvider>
-                    </AIToolsStoreProvider>
+                    <CustomFieldStoreProvider workspaceId={flow.workspaceId}>
+                      <AIToolsStoreProvider workspaceId={flow.workspaceId}>
+                        <PlatformCredentialsStoreProvider>
+                          <ReactFlowFrame
+                            canRevertToPublished={canRevertToPublished}
+                            flow={flow}
+                            flowVersion={flowVersion}
+                            hasPublishedVersion={hasPublishedVersion}
+                          />
+                        </PlatformCredentialsStoreProvider>
+                      </AIToolsStoreProvider>
+                    </CustomFieldStoreProvider>
                   </EmailTopicStoreProvider>
                 </AppointmentCalendarStoreProvider>
               </QuestionnaireStoreProvider>

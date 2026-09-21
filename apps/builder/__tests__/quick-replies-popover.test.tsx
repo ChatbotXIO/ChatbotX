@@ -50,9 +50,11 @@ function renderPopover(inputValue: string) {
   })
   const el = renderComponent(
     <QueryClientProvider client={queryClient}>
-      <QuickRepliesPopover inputValue={inputValue} onSelect={() => undefined}>
-        <textarea defaultValue={inputValue} />
-      </QuickRepliesPopover>
+      <SavedReplyStoreProvider autoInitialize={false} workspaceId="ws-1">
+        <QuickRepliesPopover inputValue={inputValue} onSelect={() => undefined}>
+          <textarea defaultValue={inputValue} />
+        </QuickRepliesPopover>
+      </SavedReplyStoreProvider>
     </QueryClientProvider>,
   )
 

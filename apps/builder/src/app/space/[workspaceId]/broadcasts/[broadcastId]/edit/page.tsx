@@ -50,28 +50,30 @@ export default async function EditBroadcastPage({
   })
 
   return (
-    <FlowStoreProvider>
-      <IntegrationStoreProvider workspaceId={workspaceId}>
-        <FlowTemplateStoreProvider
-          includeAllTemplateStatuses
-          openaiCompatibleIntegrations={openaiCompatibleIntegrations}
-          workspaceId={workspaceId}
-        >
-          <WhatsappFlowStoreProvider workspaceId={workspaceId}>
-            <ContactStoreProvider
-              autoInitialize={false}
-              workspaceId={workspaceId}
-            >
-              <CreateBroadcastForm
-                canViewEmailAndPhone={canViewEmailAndPhone}
-                editDraft={editDraft}
-                initialChannel={editDraft.channel}
+    <FlowStoreProvider workspaceId={workspaceId}>
+      <CustomFieldStoreProvider workspaceId={workspaceId}>
+        <IntegrationStoreProvider workspaceId={workspaceId}>
+          <FlowTemplateStoreProvider
+            includeAllTemplateStatuses
+            openaiCompatibleIntegrations={openaiCompatibleIntegrations}
+            workspaceId={workspaceId}
+          >
+            <WhatsappFlowStoreProvider workspaceId={workspaceId}>
+              <ContactStoreProvider
+                autoInitialize={false}
                 workspaceId={workspaceId}
-              />
-            </ContactStoreProvider>
-          </WhatsappFlowStoreProvider>
-        </FlowTemplateStoreProvider>
-      </IntegrationStoreProvider>
+              >
+                <CreateBroadcastForm
+                  canViewEmailAndPhone={canViewEmailAndPhone}
+                  editDraft={editDraft}
+                  initialChannel={editDraft.channel}
+                  workspaceId={workspaceId}
+                />
+              </ContactStoreProvider>
+            </WhatsappFlowStoreProvider>
+          </FlowTemplateStoreProvider>
+        </IntegrationStoreProvider>
+      </CustomFieldStoreProvider>
     </FlowStoreProvider>
   )
 }

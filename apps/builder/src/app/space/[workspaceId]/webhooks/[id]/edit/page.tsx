@@ -24,8 +24,10 @@ export default async function UpdateWebhookPage({
   }
 
   return (
-    <FlowStoreProvider>
-      <UpdateWebhookForm webhook={webhook} workspaceId={workspaceId} />
+    <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
+      <CustomFieldStoreProvider autoInitialize={true} workspaceId={workspaceId}>
+        <UpdateWebhookForm webhook={webhook} workspaceId={workspaceId} />
+      </CustomFieldStoreProvider>
     </FlowStoreProvider>
   )
 }

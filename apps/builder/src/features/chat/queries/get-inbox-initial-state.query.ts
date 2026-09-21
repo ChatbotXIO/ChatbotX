@@ -3,43 +3,35 @@ import "server-only"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import type { ChatStoreInitialState } from "@/features/chat/store/chat-store"
 import { INBOX_CONVERSATIONS_PER_PAGE } from "@/features/chat/store/chat-store"
-import type { ContactPermissionScope } from "@/features/contacts/permissions"
-import { getContact } from "@/features/contacts/queries/get-contact.query"
-import {
-  findConversation,
-  listConversations,
-} from "@/features/conversations/queries/list-conversations.query"
 import type { ListConversationItemResource } from "@/features/conversations/schema/resource"
-import { listMessages } from "@/features/messages/queries"
 import { logger } from "@/lib/log"
+import { client } from "@/lib/orpc/orpc"
 
 const INBOX_SEED_TIMEOUT_MS = 8000
 const INBOX_MESSAGES_PER_PAGE = 20
 
-const createSeedTimeout = () => {
-  let timeoutId: NodeJS.Timeout | undefined
-
-  return {
-    promise: new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(
-        () => reject(new Error("Inbox initial state seed timed out")),
-        INBOX_SEED_TIMEOUT_MS,
-      )
-    }),
-    clear: () => clearTimeout(timeoutId),
-  }
-}
+const timeoutSeed = () =>
+  new Promise<never>((_, reject) => {
+    setTimeout(
+      () => reject(new Error("Inbox initial state seed timed out")),
+      INBOX_SEED_TIMEOUT_MS,
+    )
+  })
 
 const seedMessagesState = async (
   workspaceId: string,
   conversationId: string,
 ): Promise<ChatStoreInitialState> => {
-  const { data, nextCursor } = await listMessages({
-    workspaceId,
-    perPage: INBOX_MESSAGES_PER_PAGE,
-    cursor: "",
-    conversationId,
-  })
+  const { data, nextCursor } =
+    await client.messagesAPI.listMessagesAuthenticatedAPI(
+      {
+        workspaceId,
+        perPage: INBOX_MESSAGES_PER_PAGE,
+        cursor: "",
+        conversationId,
+      },
+      { signal: AbortSignal.timeout(INBOX_SEED_TIMEOUT_MS) },
+    )
 
   return {
     messages: [...data].reverse(),
@@ -52,7 +44,7 @@ const seedMessagesState = async (
 const seedContactState = async (
   workspaceId: string,
   conversation: ListConversationItemResource,
-  permissionScope: ContactPermissionScope,
+
 ): Promise<ChatStoreInitialState> => {
   const contactId = conversation.contact?.id
   if (!contactId) {
@@ -60,44 +52,29 @@ const seedContactState = async (
   }
 
   return {
-    seededContact: await getContact(
-      { workspaceId, contactId },
-      permissionScope,
-    ),
+    seededContact: await client.contactsAPIs.getContactAuthenticatedAPI({
+      workspaceId,
+      contactId,
+    }),
   }
 }
-
-const mergeSettledState = (
-  results: PromiseSettledResult<ChatStoreInitialState>[],
-): ChatStoreInitialState =>
-  Object.assign(
-    {},
-    ...results.map((result) =>
-      result.status === "fulfilled" ? result.value : {},
-    ),
-  )
 
 const loadInitialState = async ({
   workspaceId,
   conversationId,
-  canViewEmailAndPhone,
-  contactPermissionScope,
-  seedConversationDetails,
 }: {
   workspaceId: string
   conversationId?: string
-  canViewEmailAndPhone: boolean
-  contactPermissionScope: ContactPermissionScope
-  seedConversationDetails: boolean
 }): Promise<ChatStoreInitialState | null> => {
-  const conversationsPromise = listConversations(
-    {
-      workspaceId,
-      perPage: INBOX_CONVERSATIONS_PER_PAGE,
-      cursor: "",
-    },
-    { includeEmailAndPhone: canViewEmailAndPhone },
-  )
+  const conversationsPromise =
+    client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI(
+      {
+        workspaceId,
+        perPage: INBOX_CONVERSATIONS_PER_PAGE,
+        cursor: "",
+      },
+      { signal: AbortSignal.timeout(INBOX_SEED_TIMEOUT_MS) },
+    )
 
   if (!conversationId) {
     const { data: conversations, nextCursor } = await conversationsPromise
@@ -111,62 +88,35 @@ const loadInitialState = async ({
       activeConversationAutoSelected: Boolean(activeConversation),
     }
 
-    if (!(seedConversationDetails && activeConversation)) {
+    if (!activeConversation) {
       return state
     }
 
     const [messages, contact] = await Promise.allSettled([
       seedMessagesState(workspaceId, activeConversation.id),
-      seedContactState(workspaceId, activeConversation, contactPermissionScope),
+      seedContactState(workspaceId, activeConversation),
     ])
 
     return {
       ...state,
-      ...mergeSettledState([messages, contact]),
+      ...(messages.status === "fulfilled" ? messages.value : {}),
+      ...(contact.status === "fulfilled" ? contact.value : {}),
     }
   }
 
-  const findConversationPromise = findConversation({
-    workspaceId,
-    id: conversationId,
-  })
-  const contactPromise = seedConversationDetails
-    ? findConversationPromise.then(({ data }) =>
-        seedContactState(workspaceId, data, contactPermissionScope),
-      )
-    : Promise.resolve({})
-
-  const messagesPromise = seedConversationDetails
-    ? seedMessagesState(workspaceId, conversationId)
-    : Promise.resolve({})
-
-  const [
-    conversationsResult,
-    conversationResult,
-    messagesResult,
-    contactResult,
-  ] = await Promise.allSettled([
-    conversationsPromise,
-    findConversationPromise,
-    messagesPromise,
-    contactPromise,
-  ])
+  const [conversationsResult, conversationResult, messagesResult] =
+    await Promise.allSettled([
+      conversationsPromise,
+      client.conversationsAPI.findConversationAuthenticatedAPI({
+        workspaceId,
+        id: conversationId,
+      }),
+      seedMessagesState(workspaceId, conversationId),
+    ])
 
   if (conversationsResult.status === "rejected") {
-    logger.warn(
-      { err: conversationsResult.reason, workspaceId, conversationId },
-      "getInboxInitialState: failed to load conversations",
-    )
     return null
   }
-
-  if (conversationResult.status === "rejected") {
-    logger.warn(
-      { err: conversationResult.reason, workspaceId, conversationId },
-      "getInboxInitialState: failed to load deep-linked conversation",
-    )
-  }
-
   const listedConversations = conversationsResult.value.data
   const nextCursor = conversationsResult.value.nextCursor
   const activeConversation =
@@ -182,36 +132,42 @@ const loadInitialState = async ({
       ]
     : listedConversations
 
+  const contact = activeConversation
+    ? await Promise.allSettled([
+        seedContactState(workspaceId, activeConversation),
+      ])
+    : []
   return {
     conversations,
     nextCursorConversation: nextCursor,
     isFirstLoadConversation: false,
     activeConversationId: activeConversation?.id ?? null,
     activeConversationAutoSelected: false,
-    ...mergeSettledState(
-      activeConversation ? [messagesResult, contactResult] : [],
-    ),
+    ...(messagesResult.status === "fulfilled" && activeConversation
+      ? messagesResult.value
+      : {}),
+    ...(contact[0]?.status === "fulfilled" ? contact[0].value : {}),
   }
 }
 
 export const getInboxInitialState = async ({
   workspaceId,
   conversationId,
-  canViewEmailAndPhone,
-  contactPermissionScope,
-  seedConversationDetails = true,
 }: {
   workspaceId: string
   conversationId?: string
-  canViewEmailAndPhone: boolean
-  contactPermissionScope: ContactPermissionScope
-  seedConversationDetails?: boolean
 }): Promise<ChatStoreInitialState | null> => {
+  if (!globalThis.$client) {
+    logger.warn(
+      { workspaceId, conversationId },
+      "getInboxInitialState: server oRPC client is unavailable",
+    )
+    return null
+  }
   const parsedConversationId = conversationId
     ? zodBigintAsString().safeParse(conversationId)
     : null
 
-  const timeout = createSeedTimeout()
 
   try {
     return await Promise.race([
@@ -220,11 +176,8 @@ export const getInboxInitialState = async ({
         conversationId: parsedConversationId?.success
           ? parsedConversationId.data
           : undefined,
-        canViewEmailAndPhone,
-        contactPermissionScope,
-        seedConversationDetails,
       }),
-      timeout.promise,
+      timeoutSeed(),
     ])
   } catch (err) {
     logger.warn(
@@ -232,7 +185,6 @@ export const getInboxInitialState = async ({
       "getInboxInitialState: failed to seed inbox state",
     )
     return null
-  } finally {
-    timeout.clear()
+
   }
 }

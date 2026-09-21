@@ -17,8 +17,10 @@ export default async function ImportContactsPage({
   await requireContactsAccess(workspaceId)
 
   return (
-    <ImportForm>
-      <ImportContactsForm workspaceId={workspaceId} />
-    </ImportForm>
+    <CustomFieldStoreProvider autoInitialize={true} workspaceId={workspaceId}>
+      <ImportForm>
+        <ImportContactsForm workspaceId={workspaceId} />
+      </ImportForm>
+    </CustomFieldStoreProvider>
   )
 }

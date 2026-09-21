@@ -1,15 +1,25 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { useMemo } from "react"
 import type { BotFieldResource } from "@/features/bot-fields/schema/resource"
 import { useWorkspaceId } from "@/hooks/routing"
-import { useEnsureQueryLoaded } from "@/hooks/use-ensure-query-loaded"
 import type { CustomFieldResource } from "../schema/resource"
 import {
   useBotFields,
   useCustomFields,
   useInvalidateCustomFields,
 } from "./custom-field-hook"
+
+export type CustomFieldStoreProviderProps = {
+  workspaceId: string
+  children: ReactNode
+  autoInitialize?: boolean
+}
+
+export const CustomFieldStoreProvider = ({
+  children,
+}: CustomFieldStoreProviderProps) => children
 
 type CustomFieldStoreSnapshot = {
   loading: boolean
@@ -33,8 +43,6 @@ export const useCustomFieldStore = <T,>(
   const botFieldsQuery = useBotFields(workspaceId, { enabled: false })
   const invalidateCustomFields = useInvalidateCustomFields()
 
-  const ensureBotFieldsLoaded = useEnsureQueryLoaded(botFieldsQuery)
-
   const snapshot = useMemo<CustomFieldStoreSnapshot>(
     () => ({
       loading: customFieldsQuery.isPending,
@@ -47,22 +55,10 @@ export const useCustomFieldStore = <T,>(
       botFieldsError: botFieldsQuery.error?.message ?? null,
       botFieldsInitialized: botFieldsQuery.isFetched,
       getAllCustomFields: invalidateCustomFields,
-      ensureBotFieldsLoaded,
+      ensureBotFieldsLoaded: () =>
+        botFieldsQuery.refetch().then((result) => result.data),
     }),
-    [
-      botFieldsQuery.data,
-      botFieldsQuery.error,
-      botFieldsQuery.isFetched,
-      botFieldsQuery.isFetching,
-      customFieldsQuery.data,
-      customFieldsQuery.error,
-      customFieldsQuery.isFetched,
-      customFieldsQuery.isPending,
-      ensureBotFieldsLoaded,
-      invalidateCustomFields,
-      workspaceId,
-    ],
+    [botFieldsQuery, customFieldsQuery, invalidateCustomFields, workspaceId],
   )
-
   return selector(snapshot)
 }

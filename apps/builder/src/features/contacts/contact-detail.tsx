@@ -539,7 +539,7 @@ export const ContactDetail = ({
 
   const customFieldMap = useMemo(() => {
     const map = new Map<string, { name: string; type: CustomFieldType }>()
-    for (const field of customFields) {
+    for (const field of contact?.customFields ?? []) {
       const parsedType = customFieldTypes.safeParse(field.type)
       if (!parsedType.success) {
         continue
@@ -550,7 +550,7 @@ export const ContactDetail = ({
       })
     }
     return map
-  }, [customFields])
+  }, [contact?.customFields])
 
   useEffect(() => {
     if (activeConversationId) {

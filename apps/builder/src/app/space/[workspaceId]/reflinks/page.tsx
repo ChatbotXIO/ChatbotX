@@ -44,10 +44,12 @@ export default async function ReflinksPage({
           { label: t("reflinks.title"), href: "" },
         ]}
       />
-      <FlowStoreProvider>
-        <Suspense>
-          <ReflinksTable promises={promises} workspaceId={workspaceId} />
-        </Suspense>
+      <FlowStoreProvider workspaceId={workspaceId}>
+        <CustomFieldStoreProvider workspaceId={workspaceId}>
+          <Suspense>
+            <ReflinksTable promises={promises} workspaceId={workspaceId} />
+          </Suspense>
+        </CustomFieldStoreProvider>
       </FlowStoreProvider>
     </div>
   )

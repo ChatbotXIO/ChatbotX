@@ -265,6 +265,7 @@ function ContactSequencesSection({
   const { data } = useQuery(queryOptions)
   const sequences = useMemo(
     () =>
+<<<<<<< HEAD
       (data?.data ?? []).map((sequence) => ({
         sequenceId: sequence.sequenceId,
         sequence: {
@@ -273,6 +274,20 @@ function ContactSequencesSection({
         },
       })),
     [data?.data],
+=======
+      (data?.data ?? []).map(
+        (sequence) =>
+          ({
+            contactId,
+            sequenceId: sequence.sequenceId,
+            sequence: {
+              id: sequence.sequenceId,
+              name: sequence.sequenceName,
+            },
+          }) as ContactOnSequenceWithRelations,
+      ),
+    [contactId, data?.data],
+>>>>>>> 64ac9d6b6 (perf(inbox): prefetch initial inbox state and replace zustand stores with tanstack query)
   )
 
   return (

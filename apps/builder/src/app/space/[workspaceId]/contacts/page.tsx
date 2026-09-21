@@ -47,14 +47,16 @@ export default async function ContactsPage(props: {
       </div>
 
       <Suspense>
-        <FlowStoreProvider>
-          <ContactsTable
-            canViewEmailAndPhone={contactPermissionScope.canViewEmailAndPhone}
-            initialContactFilter={initialContactFilter}
-            promises={promises}
-            workspaceId={workspaceId}
-          />
-        </FlowStoreProvider>
+        <CustomFieldStoreProvider workspaceId={workspaceId}>
+          <FlowStoreProvider workspaceId={workspaceId}>
+            <ContactsTable
+              canViewEmailAndPhone={contactPermissionScope.canViewEmailAndPhone}
+              initialContactFilter={initialContactFilter}
+              promises={promises}
+              workspaceId={workspaceId}
+            />
+          </FlowStoreProvider>
+        </CustomFieldStoreProvider>
       </Suspense>
     </div>
   )

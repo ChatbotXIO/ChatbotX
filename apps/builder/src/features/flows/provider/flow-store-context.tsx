@@ -51,7 +51,6 @@ export const FlowStoreProvider = ({ children }: FlowStoreProviderProps) => {
     </FlowFilterContext.Provider>
   )
 }
-
 type FlowStoreSnapshot = {
   loading: boolean
   error: string | null
@@ -93,7 +92,6 @@ export const useFlowStore = <T,>(
       Object.keys(previousFilter).length === 0 ? previousFilter : {},
     )
   }, [setFilter])
-
   const snapshot = useMemo<FlowStoreSnapshot>(
     () => ({
       loading: flowQuery.isPending,
