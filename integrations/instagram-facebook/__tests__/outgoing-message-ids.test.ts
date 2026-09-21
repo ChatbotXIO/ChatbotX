@@ -6,6 +6,7 @@ const { mockSendInstagramMessage } = vi.hoisted(() => ({
 
 vi.mock("../src/apis/page", () => ({
   sendInstagramMessage: mockSendInstagramMessage,
+  takeThreadControl: vi.fn(),
 }))
 
 vi.mock("../src/lib/logger", () => ({

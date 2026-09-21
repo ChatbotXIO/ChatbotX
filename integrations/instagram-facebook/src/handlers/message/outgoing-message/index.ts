@@ -18,8 +18,11 @@ import {
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
 import { sendPrivateReplyMessage } from "../../../apis/comment"
-import { sendInstagramMessage } from "../../../apis/page"
-import { mapToChannelError } from "../../../lib/error-mapper"
+import { sendInstagramMessage, takeThreadControl } from "../../../apis/page"
+import {
+  isNotThreadOwnerError,
+  mapToChannelError,
+} from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
 import {
   INSTAGRAM_MESSAGE_METADATA,
@@ -27,6 +30,7 @@ import {
   type InstagramMessageAttachmentPayload,
   type InstagramSendMessage,
   type InstagramSendMessageRequest,
+  type InstagramSendMessageResponse,
 } from "../../../schemas"
 import { getAttachmentTemplate } from "./send-attachment"
 import { convertFlowStepCarousel } from "./send-carousel"
@@ -37,6 +41,32 @@ import { convertFlowStepMultipleImages } from "./send-multiple-images"
 import { convertCanonicalInstagramQuickReplies } from "./send-quick-replies"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
+
+/**
+ * One Send API call with the Handover Protocol recovery: when Meta refuses the
+ * send because another app owns the thread (2534037), take the thread back for
+ * this IGSID and retry exactly once. Any other error, a second 2534037, or a
+ * failing take_thread_control propagates unchanged. Scoped to ONE message so a
+ * multi-message step never re-sends what already landed (fork, s171).
+ */
+const sendWithHandover = async (
+  auth: InstagramAuthValue,
+  contact: OutgoingContact,
+  payload: InstagramSendMessageRequest,
+): Promise<InstagramSendMessageResponse> => {
+  try {
+    return await sendInstagramMessage(auth, payload)
+  } catch (error) {
+    if (!isNotThreadOwnerError(error)) {
+      throw error
+    }
+    logger.info(
+      `Send refused (2534037): taking thread control for IGSID ${contact.sourceId} and retrying once`,
+    )
+    await takeThreadControl(auth, contact.sourceId)
+    return await sendInstagramMessage(auth, payload)
+  }
+}
 
 export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
   async (props) => {
@@ -56,7 +86,7 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
       }
       for (const instagramMessage of instagramMessages) {
         const payload = buildMessagePayload(contact, instagramMessage)
-        const response = await sendInstagramMessage(ctx.auth, payload)
+        const response = await sendWithHandover(ctx.auth, contact, payload)
         sentCount += 1
         if (response.message_id) {
           messageIds.push(response.message_id)
@@ -285,8 +315,9 @@ export const sendFlowStep = async (
             anchorCommentId,
             instagramMessage,
           )
-        : await sendInstagramMessage(
+        : await sendWithHandover(
             ctx.auth,
+            contact,
             buildMessagePayload(contact, instagramMessage),
           )
       anchorCommentId = undefined

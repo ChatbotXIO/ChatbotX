@@ -198,6 +198,25 @@ export function isRevokedTokenError(error: unknown): boolean {
   )
 }
 
+// === Handover Protocol: "not the thread owner" detection ===
+// Meta refuses a Send API call with code 200 + error_subcode 2534037 when the
+// conversation is owned by another app (the Instagram inbox takes the thread
+// as soon as a human replies from the app). The send is recoverable: take the
+// thread back with POST /<page>/take_thread_control and retry once (s171).
+const NOT_THREAD_OWNER_CODE = 200
+const NOT_THREAD_OWNER_SUBCODE = 2_534_037
+
+export function isNotThreadOwnerError(error: unknown): boolean {
+  if (!(error instanceof InstagramException)) {
+    return false
+  }
+  const mappedError = mapToChannelError(error)
+  return (
+    Number(mappedError.code) === NOT_THREAD_OWNER_CODE &&
+    Number(mappedError.subCode) === NOT_THREAD_OWNER_SUBCODE
+  )
+}
+
 export function mapToChannelError(rawError: unknown): ChannelError {
   if (rawError instanceof ChannelError) {
     return rawError
