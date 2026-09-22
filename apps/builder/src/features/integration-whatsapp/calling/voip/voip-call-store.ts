@@ -205,6 +205,13 @@ type WhatsappVoipCallState = {
   /** Drops a basket entry by id. A no-op when the id is not present. */
   removeRinging: (whatsappCallId: string) => void
   /**
+   * Stops a ring answered somewhere else: drops the basket entry and clears the
+   * slot while it still holds that call in `incomingRinging`. A tab already
+   * past `incomingRinging` is the one answering, so it is left alone. Silent -
+   * losing the race is not a terminal event for this tab.
+   */
+  dismissRinging: (whatsappCallId: string) => void
+  /**
    * Drops every basket entry for the given conversations in one update — used
    * when a ringing conversation is reassigned away.
    */
@@ -315,6 +322,26 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
           return state
         }
         return { ringingCalls: nextRingingCalls }
+      }),
+
+    dismissRinging: (whatsappCallId) =>
+      set((state) => {
+        const nextRingingCalls = state.ringingCalls.filter(
+          (ringing) => ringing.whatsappCallId !== whatsappCallId,
+        )
+        const isSlotRinging =
+          state.call?.whatsappCallId === whatsappCallId &&
+          state.call.phase === WhatsappVoipCallPhase.incomingRinging
+        if (
+          !isSlotRinging &&
+          nextRingingCalls.length === state.ringingCalls.length
+        ) {
+          return state
+        }
+        return {
+          ringingCalls: nextRingingCalls,
+          ...(isSlotRinging && { call: null }),
+        }
       }),
 
     removeRingingByConversationIds: (conversationIds) =>

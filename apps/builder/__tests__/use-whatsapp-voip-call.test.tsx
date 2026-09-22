@@ -487,6 +487,99 @@ describe("useWhatsappVoipCall", () => {
     }
   })
 
+  test("a second tab of the same browser that clicks answer does nothing: no TURN, no mic, no server call", async () => {
+    // Another tab already holds the answer lock for this call.
+    const lockRequestMock = vi.fn(
+      (
+        _name: string,
+        _options: LockOptions,
+        callback: (lock: Lock | null) => Promise<unknown>,
+      ) => callback(null),
+    )
+    vi.stubGlobal("navigator", {
+      ...globalThis.navigator,
+      locks: { request: lockRequestMock },
+    })
+    seedRingingSlot(incomingData)
+    await render()
+
+    await act(async () => {
+      await hookResult?.answer()
+    })
+
+    expect(lockRequestMock).toHaveBeenCalledWith(
+      "whatsapp-voip-answer:call-1",
+      { ifAvailable: true },
+      expect.any(Function),
+    )
+    expect(turnCredentialsActionMock).not.toHaveBeenCalled()
+    expect(getUserMediaMock).not.toHaveBeenCalled()
+    expect(answerActionMock).not.toHaveBeenCalled()
+    expect(createdPeerConnections).toHaveLength(0)
+    // Silent - the tab that won shows the call.
+    expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+  })
+
+  test("the tab that wins the answer lock answers while holding it, and releases it after", async () => {
+    let isLockHeld = false
+    const heldDuringAnswer: boolean[] = []
+    vi.stubGlobal("navigator", {
+      ...globalThis.navigator,
+      locks: {
+        request: async (
+          _name: string,
+          _options: LockOptions,
+          callback: (lock: Lock | null) => Promise<unknown>,
+        ) => {
+          isLockHeld = true
+          try {
+            return await callback({
+              name: "whatsapp-voip-answer:call-1",
+              mode: "exclusive",
+            })
+          } finally {
+            isLockHeld = false
+          }
+        },
+      },
+    })
+    answerActionMock.mockImplementation(() => {
+      heldDuringAnswer.push(isLockHeld)
+      return Promise.resolve({ data: { outcome: "accepted" } })
+    })
+    seedRingingSlot(incomingData)
+    await render()
+
+    await act(async () => {
+      await hookResult?.answer()
+    })
+
+    expect(heldDuringAnswer).toEqual([true])
+    expect(isLockHeld).toBe(false)
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.active,
+    )
+  })
+
+  test("a failing lock request ends on screen instead of leaving the call stuck answering", async () => {
+    vi.stubGlobal("navigator", {
+      ...globalThis.navigator,
+      locks: { request: () => Promise.reject(new Error("SecurityError")) },
+    })
+    seedRingingSlot(incomingData)
+    await render()
+
+    await act(async () => {
+      await hookResult?.answer()
+    })
+
+    expect(answerActionMock).not.toHaveBeenCalled()
+    expect(useWhatsappVoipCallStore.getState().call).toMatchObject({
+      phase: WhatsappVoipCallPhase.ended,
+      endedStatus: "answerFailed",
+    })
+  })
+
   test("dismiss() silences the ring locally: resets the store, no peer, no server action", async () => {
     seedRingingSlot(incomingData)
     await render()
