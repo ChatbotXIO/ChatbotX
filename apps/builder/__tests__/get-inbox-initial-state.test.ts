@@ -2,21 +2,18 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockFindConversationAuthenticatedAPI,
-  mockGetContactAuthenticatedAPI,
+  mockGetContact,
   mockListConversationsByPOSTAuthenticatedAPI,
   mockListMessagesAuthenticatedAPI,
 } = vi.hoisted(() => ({
   mockFindConversationAuthenticatedAPI: vi.fn(),
-  mockGetContactAuthenticatedAPI: vi.fn(),
+  mockGetContact: vi.fn(),
   mockListConversationsByPOSTAuthenticatedAPI: vi.fn(),
   mockListMessagesAuthenticatedAPI: vi.fn(),
 }))
 
 vi.mock("@/lib/orpc/orpc", () => ({
   client: {
-    contactsAPIs: {
-      getContactAuthenticatedAPI: mockGetContactAuthenticatedAPI,
-    },
     conversationsAPI: {
       findConversationAuthenticatedAPI: mockFindConversationAuthenticatedAPI,
       listConversationsByPOSTAuthenticatedAPI:
@@ -26,6 +23,10 @@ vi.mock("@/lib/orpc/orpc", () => ({
       listMessagesAuthenticatedAPI: mockListMessagesAuthenticatedAPI,
     },
   },
+}))
+
+vi.mock("@/features/contacts/queries/get-contact.query", () => ({
+  getContact: mockGetContact,
 }))
 
 const { loggerWarnMock } = vi.hoisted(() => ({ loggerWarnMock: vi.fn() }))
@@ -42,6 +43,15 @@ const makeConversation = (id: string, contactId = `contact-${id}`) =>
 
 const makeMessage = (id: string) => ({ id }) as never
 
+const contactPermissionScope = { canViewEmailAndPhone: true }
+
+const getInitialState = (
+  input: Omit<
+    Parameters<typeof getInboxInitialState>[0],
+    "contactPermissionScope"
+  >,
+) => getInboxInitialState({ ...input, contactPermissionScope })
+
 const mockSeedRequests = () => {
   mockListConversationsByPOSTAuthenticatedAPI.mockResolvedValue({
     data: [makeConversation("conversation-1")],
@@ -51,7 +61,7 @@ const mockSeedRequests = () => {
     data: [makeMessage("message-new"), makeMessage("message-old")],
     nextCursor: null,
   })
-  mockGetContactAuthenticatedAPI.mockResolvedValue({
+  mockGetContact.mockResolvedValue({
     id: "contact-conversation-1",
   })
 }
@@ -71,7 +81,7 @@ describe("getInboxInitialState", () => {
   test("selects the first conversation, reverses messages, and seeds its contact without a URL id", async () => {
     mockSeedRequests()
 
-    const state = await getInboxInitialState({ workspaceId: "workspace-1" })
+    const state = await getInitialState({ workspaceId: "workspace-1" })
 
     expect(state).toMatchObject({
       activeConversationAutoSelected: true,
@@ -93,9 +103,9 @@ describe("getInboxInitialState", () => {
       data: [],
       nextCursor: null,
     })
-    mockGetContactAuthenticatedAPI.mockResolvedValue({ id: "contact-2" })
+    mockGetContact.mockResolvedValue({ id: "contact-2" })
 
-    const state = await getInboxInitialState({
+    const state = await getInitialState({
       workspaceId: "workspace-1",
       conversationId: "2",
     })
@@ -111,7 +121,7 @@ describe("getInboxInitialState", () => {
     mockSeedRequests()
     mockFindConversationAuthenticatedAPI.mockRejectedValue(new Error("missing"))
 
-    const state = await getInboxInitialState({
+    const state = await getInitialState({
       workspaceId: "workspace-1",
       conversationId: "404",
     })
@@ -129,7 +139,7 @@ describe("getInboxInitialState", () => {
       new Error("messages failed"),
     )
 
-    const state = await getInboxInitialState({ workspaceId: "workspace-1" })
+    const state = await getInitialState({ workspaceId: "workspace-1" })
 
     expect(state).toMatchObject({
       activeConversationId: "conversation-1",
@@ -145,7 +155,7 @@ describe("getInboxInitialState", () => {
     )
 
     await expect(
-      getInboxInitialState({ workspaceId: "workspace-1" }),
+      getInitialState({ workspaceId: "workspace-1" }),
     ).resolves.toBeNull()
   })
 
@@ -153,7 +163,7 @@ describe("getInboxInitialState", () => {
     vi.stubGlobal("$client", undefined)
 
     await expect(
-      getInboxInitialState({ workspaceId: "workspace-1" }),
+      getInitialState({ workspaceId: "workspace-1" }),
     ).resolves.toBeNull()
 
     expect(loggerWarnMock).toHaveBeenCalledWith(
@@ -168,7 +178,7 @@ describe("getInboxInitialState", () => {
       () => Promise.withResolvers<never>().promise,
     )
 
-    const seed = getInboxInitialState({ workspaceId: "workspace-1" })
+    const seed = getInitialState({ workspaceId: "workspace-1" })
     await vi.advanceTimersByTimeAsync(8000)
 
     await expect(seed).resolves.toBeNull()
@@ -182,7 +192,7 @@ describe("getInboxInitialState", () => {
     vi.useFakeTimers()
     mockSeedRequests()
 
-    await getInboxInitialState({ workspaceId: "workspace-1" })
+    await getInitialState({ workspaceId: "workspace-1" })
 
     expect(vi.getTimerCount()).toBe(0)
   })

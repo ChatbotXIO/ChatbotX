@@ -6,6 +6,8 @@ import {
   INBOX_CONVERSATIONS_PER_PAGE,
   INBOX_MESSAGES_PER_PAGE,
 } from "@/features/chat/store/chat-store"
+import type { ContactPermissionScope } from "@/features/contacts/permissions"
+import { getContact } from "@/features/contacts/queries/get-contact.query"
 import type { ListConversationItemResource } from "@/features/conversations/schema/resource"
 import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
@@ -48,6 +50,7 @@ const seedMessagesState = async (
 const seedContactState = async (
   workspaceId: string,
   conversation: ListConversationItemResource,
+  contactPermissionScope: ContactPermissionScope,
 ): Promise<ChatStoreInitialState> => {
   const contactId = conversation.contact?.id
   if (!contactId) {
@@ -55,10 +58,10 @@ const seedContactState = async (
   }
 
   return {
-    seededContact: await client.contactsAPIs.getContactAuthenticatedAPI({
-      workspaceId,
-      contactId,
-    }),
+    seededContact: await getContact(
+      { workspaceId, contactId },
+      contactPermissionScope,
+    ),
   }
 }
 
@@ -105,9 +108,11 @@ const shapeInitialState = ({
 const loadInitialState = async ({
   workspaceId,
   conversationId,
+  contactPermissionScope,
 }: {
   workspaceId: string
   conversationId?: string
+  contactPermissionScope: ContactPermissionScope
 }): Promise<ChatStoreInitialState | null> => {
   const conversationsPromise =
     client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI({
@@ -130,14 +135,18 @@ const loadInitialState = async ({
           : {}
       })
   const contactPromise = findConversationPromise
-    ? findConversationPromise
-        .then((result) => seedContactState(workspaceId, result.data))
-        .catch(() => ({}))
+    ? findConversationPromise.then((result) =>
+        seedContactState(workspaceId, result.data, contactPermissionScope),
+      )
     : conversationsPromise
         .then(({ data: conversations }) => {
           const activeConversation = conversations[0]
           return activeConversation
-            ? seedContactState(workspaceId, activeConversation)
+            ? seedContactState(
+                workspaceId,
+                activeConversation,
+                contactPermissionScope,
+              )
             : {}
         })
         .catch(() => ({}))
@@ -182,9 +191,11 @@ const loadInitialState = async ({
 export const getInboxInitialState = async ({
   workspaceId,
   conversationId,
+  contactPermissionScope,
 }: {
   workspaceId: string
   conversationId?: string
+  contactPermissionScope: ContactPermissionScope
 }): Promise<ChatStoreInitialState | null> => {
   if (!globalThis.$client) {
     logger.warn(
@@ -205,6 +216,7 @@ export const getInboxInitialState = async ({
         conversationId: parsedConversationId?.success
           ? parsedConversationId.data
           : undefined,
+        contactPermissionScope,
       }),
       INBOX_SEED_TIMEOUT_MS,
       "Inbox initial state seed timed out",

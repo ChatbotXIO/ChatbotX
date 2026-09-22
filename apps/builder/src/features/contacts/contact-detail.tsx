@@ -59,10 +59,7 @@ import { getBrowserTimezone } from "../contact-filter/lib/timezone"
 import type { ContactInboxResource } from "../contact-inboxes/schema/resource"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
 import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
-import {
-  customFieldIconsMap,
-  useCustomFields,
-} from "../custom-fields/provider/custom-field-hook"
+import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
 import { EditContactField } from "./edit-contact-field"
 import { ResetContactCustomFieldsDialog } from "./reset-contact-custom-fields-dialog"
 import type { GetContactResponse } from "./schema/query"
@@ -375,22 +372,15 @@ function ContactPanelCallEntry({
 export const ContactDetail = ({
   activeConversationId,
   contact,
-  onCustomFieldsReset,
+  onCustomFieldsReset = () => undefined,
 }: {
   activeConversationId: string | null
   contact: GetContactResponse | null
-  /**
-   * The owner of `contact` MUST drop the now-cleared values too: the effect
-   * below re-seeds `contactFields` from `contact.customFields` on every rebuild
-   * (the chat store updates on every inbound message), so a stale prop would
-   * bring the cleared rows straight back.
-   */
-  onCustomFieldsReset: () => void
+  onCustomFieldsReset?: () => void
 }) => {
   const t = useTranslations()
 
   const workspaceId = useWorkspaceId()
-  const { data: customFields = [] } = useCustomFields(workspaceId)
   const { conversations, updateContact } = useChatStore((state) => state)
   const avatarUrl = useAvatarUrl(contact)
   const [timezone, setTimezone] = useState("UTC")

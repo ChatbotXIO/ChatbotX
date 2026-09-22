@@ -5,11 +5,13 @@ import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { authClient } from "@/lib/auth/auth-client"
 import type { ListConversationItemResource } from "../schema/resource"
-import AssignConversationDialog from "./assign-conversation-dialog"
+import AssignConversationDialog, {
+  type ConversationAssignee,
+} from "./assign-conversation-dialog"
 
 type UpdateConversationAssigneeProps = {
   conversation: ListConversationItemResource
-  onChange: (user: string | null) => void
+  onChange: (assignee: ConversationAssignee) => void
 }
 
 export function UpdateConversationAssignee({
@@ -22,9 +24,9 @@ export function UpdateConversationAssignee({
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const onSelectAssignee = useCallback(
-    (value: string | null) => {
-      setSelectedId(value)
-      onChange(value)
+    (assignee: ConversationAssignee) => {
+      setSelectedId(assignee.id)
+      onChange(assignee)
     },
     [onChange],
   )
