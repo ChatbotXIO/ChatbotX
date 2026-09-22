@@ -73,10 +73,12 @@ const POST_FOR_READ_PATHS = {
 type PostForReadPath =
   (typeof POST_FOR_READ_PATHS)[keyof typeof POST_FOR_READ_PATHS]
 
-const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = {
-  [POST_FOR_READ_PATHS.adsCampaignsInsights]: true,
-} as const satisfies Partial<Record<PostForReadPath, true>>
+const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = new Set<PostForReadPath>([
+  POST_FOR_READ_PATHS.adsCampaignsInsights,
+])
 
+const isPostForReadPath = (path: string): path is PostForReadPath =>
+  Object.values(POST_FOR_READ_PATHS).includes(path as PostForReadPath)
 /**
  * Distinct from `isWorkspaceMutationMethod`: that predicate treats DELETE as
  * non-mutation for the trial-expired invariant above, but a read_only
@@ -94,7 +96,8 @@ export const isReadOnlyTokenAllowedMethod = (
   READ_ONLY_TOKEN_ALLOWED_METHODS.has(method ?? "POST") ||
   (method === "POST" &&
     path !== undefined &&
-    path in READ_ONLY_TOKEN_ALLOWED_POST_PATHS)
+    isPostForReadPath(path) &&
+    READ_ONLY_TOKEN_ALLOWED_POST_PATHS.has(path))
 
 async function getWorkspaceOwnerAccessState(ownerId: string) {
   const accessState = await userQuotaService.getAccessState(ownerId)
@@ -168,9 +171,9 @@ export const workspaceAccessDenialOrpcError = (
  * `READ_ONLY_TOKEN_ALLOWED_POST_PATHS` — see the `POST_FOR_READ_PATHS`
  * comment above for why each path opts in independently.
  */
-const READ_ONLY_POST_PATHS = {
-  [POST_FOR_READ_PATHS.conversationsList]: true,
-} as const satisfies Partial<Record<PostForReadPath, true>>
+const READ_ONLY_POST_PATHS = new Set<PostForReadPath>([
+  POST_FOR_READ_PATHS.conversationsList,
+])
 
 export async function assertWorkspaceOwnerAccessForMethod(props: {
   method: HTTPMethod | undefined
@@ -181,7 +184,8 @@ export async function assertWorkspaceOwnerAccessForMethod(props: {
     !isWorkspaceMutationMethod(props.method) ||
     (props.method === "POST" &&
       props.path !== undefined &&
-      props.path in READ_ONLY_POST_PATHS)
+      isPostForReadPath(props.path) &&
+      READ_ONLY_POST_PATHS.has(props.path))
   ) {
     return
   }

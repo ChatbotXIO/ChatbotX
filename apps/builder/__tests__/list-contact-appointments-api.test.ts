@@ -160,4 +160,27 @@ describe("listContactAppointmentsAPI", () => {
     expect(mocks.findByIdOrFail).not.toHaveBeenCalled()
     expect(mocks.listContactAppointments).not.toHaveBeenCalled()
   })
+
+  test("scopes the lookup to an assigned-contacts-only caller and does not list an out-of-scope contact", async () => {
+    mocks.findByIdOrFail.mockReset()
+    mocks.listContactAppointments.mockReset()
+    mocks.findByIdOrFail.mockRejectedValueOnce(new Error("Contact not found"))
+
+    await expect(
+      mocks.state.handler?.({
+        input: { workspaceId: "workspace-1", contactId: "contact-1" },
+        context: {
+          workspaceMember: { permissions: { onlyAssignedContacts: true } },
+          user: { id: "user-9" },
+        },
+      }),
+    ).rejects.toThrow("Contact not found")
+
+    expect(mocks.findByIdOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "contact-1",
+      accessScope: { restrictToAssignedUserId: "user-9" },
+    })
+    expect(mocks.listContactAppointments).not.toHaveBeenCalled()
+  })
 })

@@ -84,6 +84,25 @@ describe("getInboxInitialState", () => {
     })
   })
 
+  test("returns an unseeded empty inbox without requesting messages or contacts", async () => {
+    mockListConversationsByPOSTAuthenticatedAPI.mockResolvedValue({
+      data: [],
+      nextCursor: null,
+    })
+
+    const state = await getInboxInitialState({ workspaceId: "workspace-1" })
+
+    expect(state).toMatchObject({
+      conversations: [],
+      activeConversationAutoSelected: false,
+      activeConversationId: null,
+    })
+    expect(state).not.toHaveProperty("messagesSeed")
+    expect(state).not.toHaveProperty("seededContact")
+    expect(mockListMessagesAuthenticatedAPI).not.toHaveBeenCalled()
+    expect(mockGetContactAuthenticatedAPI).not.toHaveBeenCalled()
+  })
+
   test("moves a found URL conversation to the top without marking it auto-selected", async () => {
     const target = makeConversation("2")
     mockListConversationsByPOSTAuthenticatedAPI.mockResolvedValue({
@@ -123,6 +142,14 @@ describe("getInboxInitialState", () => {
       activeConversationId: null,
       conversations: [makeConversation("conversation-1")],
     })
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: "404",
+        err: expect.any(Error),
+        workspaceId: "workspace-1",
+      }),
+      "getInboxInitialState: failed to seed URL conversation",
+    )
   })
 
   test("does not auto-select a conversation when the URL conversationId is unparseable", async () => {

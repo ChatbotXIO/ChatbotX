@@ -10,6 +10,7 @@ type RouteConfig = {
 }
 
 type HandlerContext = {
+  isSupportSession?: boolean
   workspaceMember: { permissions: Record<string, unknown> }
   user: { id: string }
 }
@@ -58,6 +59,7 @@ const { authorizedAPI, mocks, workspaceAuthorizedMidddleware } = vi.hoisted(
     return {
       authorizedAPI: procedure,
       mocks: {
+        listContactCoupons: vi.fn(),
         listContactNotes: vi.fn(),
         listContactSequences: vi.fn(),
         findByIdOrFail: vi.fn(),
@@ -91,6 +93,9 @@ vi.mock("@chatbotx.io/business", () => ({
   contactService: {
     findByIdOrFail: mocks.findByIdOrFail,
   },
+  couponService: {
+    listIssuedCouponsForContact: mocks.listContactCoupons,
+  },
 }))
 
 vi.mock("@chatbotx.io/business/contact-sequence", () => ({
@@ -101,12 +106,16 @@ vi.mock("@chatbotx.io/business/contact-sequence", () => ({
 
 await import("@/features/contact-notes/api/private")
 await import("@/features/contact-sequences/api/private")
+await import("@/features/coupons/api/private")
 
 const notesHandler = mocks.state.handlers.get(
   "/workspaces/{workspaceId}/contacts/{contactId}/notes",
 )
 const sequencesHandler = mocks.state.handlers.get(
   "/workspaces/{workspaceId}/contacts/{contactId}/sequences",
+)
+const couponsHandler = mocks.state.handlers.get(
+  "/workspaces/{workspaceId}/contacts/{contactId}/coupons",
 )
 
 const baseInput: HandlerInput = {
@@ -117,7 +126,9 @@ const baseInput: HandlerInput = {
 const contextFor = (
   permissions: Record<string, unknown>,
   userId = "user-1",
+  isSupportSession = false,
 ): HandlerContext => ({
+  isSupportSession,
   workspaceMember: { permissions },
   user: { id: userId },
 })
@@ -132,6 +143,11 @@ describe.each([
     name: "listContactSequencesAuthenticatedAPI",
     handler: () => sequencesHandler,
     listServiceMock: () => mocks.listContactSequences,
+  },
+  {
+    name: "listContactCouponsAPI",
+    handler: () => couponsHandler,
+    listServiceMock: () => mocks.listContactCoupons,
   },
 ])("$name", ({ handler, listServiceMock }) => {
   test("registers a handler", () => {
@@ -170,7 +186,7 @@ describe.each([
     expect(listServiceMock()).not.toHaveBeenCalled()
   })
 
-  test("lets a super-admin member reach the list service with no assignment restriction", async () => {
+  test("lets a synthetic support-session super-admin reach the list service without an assignment restriction", async () => {
     mocks.findByIdOrFail.mockReset()
     listServiceMock().mockReset()
     mocks.findByIdOrFail.mockResolvedValueOnce({ id: "contact-1" })
@@ -178,7 +194,7 @@ describe.each([
 
     await handler()?.({
       input: baseInput,
-      context: contextFor({ superAdmin: true }, "user-1"),
+      context: contextFor({ superAdmin: true }, "user-1", true),
     })
 
     expect(mocks.findByIdOrFail).toHaveBeenCalledWith({

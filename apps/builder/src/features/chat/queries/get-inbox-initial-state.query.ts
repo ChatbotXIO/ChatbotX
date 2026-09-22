@@ -240,19 +240,14 @@ const loadInitialState = async ({
       .catch(logContactSeedFailure)
   }
 
-  const [conversationsResult, conversationResult, messagesState, contactState] =
-    await Promise.all([
-      conversationsPromise.then(
-        (value) => ({ status: "fulfilled" as const, value }),
-        (reason) => ({ status: "rejected" as const, reason }),
-      ),
-      (findConversationPromise ?? Promise.resolve(null)).then(
-        (value) => ({ status: "fulfilled" as const, value }),
-        (reason) => ({ status: "rejected" as const, reason }),
-      ),
-      messagesPromise,
-      contactPromise,
-    ])
+  const [conversationsResult, conversationResult] = await Promise.allSettled([
+    conversationsPromise,
+    findConversationPromise ?? Promise.resolve(null),
+  ])
+  const [messagesState, contactState] = await Promise.all([
+    messagesPromise,
+    contactPromise,
+  ])
 
   if (conversationsResult.status === "rejected") {
     logger.warn(
@@ -265,10 +260,14 @@ const loadInitialState = async ({
   const { data: listedConversations, nextCursor } = conversationsResult.value
   let activeConversation: (typeof listedConversations)[number] | null = null
   if (urlConversation.kind === "valid") {
-    activeConversation =
-      conversationResult.status === "fulfilled"
-        ? (conversationResult.value?.data ?? null)
-        : null
+    if (conversationResult.status === "rejected") {
+      logger.warn(
+        { err: conversationResult.reason, workspaceId, conversationId },
+        "getInboxInitialState: failed to seed URL conversation",
+      )
+    } else {
+      activeConversation = conversationResult.value?.data ?? null
+    }
   } else if (urlConversation.kind === "none") {
     activeConversation = listedConversations[0] ?? null
   }
