@@ -5,13 +5,12 @@ import type {
   FlowVersionModel,
 } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
-import {
-  type BaseStepSchema,
-  type ButtonStepProps,
-  type EdgeSchema,
-  type MetadataPayload,
-  type StepType,
-  stepTypes,
+import type {
+  BaseStepSchema,
+  ButtonStepProps,
+  EdgeSchema,
+  MetadataPayload,
+  StepType,
 } from "@chatbotx.io/flow-config"
 import type { CommentAnchor, Variables } from "@chatbotx.io/sdk"
 import type { ErrorLogProvider } from "@chatbotx.io/utils/error-log"
@@ -64,29 +63,182 @@ export type HeavyStepProps<T> = ExecuteStepProps<T> & {
 }
 
 /**
- * Step types that actually send an outgoing message via `sendFlowMessage`
- * (see the `flowStepHandlers` map in `./step.ts` — keep this set in sync with
- * every entry mapped to `sendFlowMessage` there). Used to decide which step
- * "claims" a pending `commentAnchor` (comment-triggered private-reply flow) as
- * its first outgoing message.
+ * Does this step type produce an outgoing message the contact receives?
+ *
+ * Exhaustive over `StepType` on purpose: a new step cannot be added without
+ * answering this here, or the file stops compiling. The previous hand-written
+ * set was defined as "whatever is mapped to `sendFlowMessage`", which silently
+ * excluded every step that sends from its own handler — `getUserData` was
+ * missing for that reason, so a comment-triggered flow whose question came
+ * first never claimed the one comment_id-anchored DM Meta grants per comment,
+ * and a question after a `sendText` reached the channel with no anchor, so
+ * `assertCommentPrivateReplyFollowUpDeliverable` never ran. Both failed
+ * silently. Do not replace this with a derived list again.
+ *
+ * `true` here means the step both RECEIVES the run's `commentAnchor` and may
+ * CLAIM it. A step that sends but cannot carry the anchor must stay `false` —
+ * claiming without forwarding burns the comment's single anchored DM on a send
+ * that never used it.
+ *
+ * A separate list, `CHANNEL_DELIVERABLE_STEP_TYPES` (`chat/handlers/
+ * send-flow-step.ts`), decides which step payloads that handler can actually
+ * hand to a channel. It is not derived from this one and is not exhaustive, so
+ * a new step that sends its own payload needs an entry there too.
  */
-export const MESSAGE_PRODUCING_STEP_TYPES = new Set<StepType>([
-  stepTypes.enum.sendText,
-  stepTypes.enum.sendImage,
-  stepTypes.enum.sendMultipleImages,
-  stepTypes.enum.sendGif,
-  stepTypes.enum.sendFile,
-  stepTypes.enum.sendVideo,
-  stepTypes.enum.sendAudio,
-  stepTypes.enum.sendCard,
-  stepTypes.enum.sendCarousel,
-  stepTypes.enum.sendQuickReply,
-  stepTypes.enum.sendWaTemplateMessage,
-  stepTypes.enum.sendMessengerTemplateMessage,
-  stepTypes.enum.whatsappOptionList,
-  stepTypes.enum.whatsappCallButton,
-  stepTypes.enum.whatsappFlow,
-])
+export const STEP_PRODUCES_MESSAGE: Record<StepType, boolean> = {
+  landingPage: false,
+
+  // Channel (H_)
+  chooseChannel: false,
+
+  // Send Messages (S_)
+  sendText: true,
+  sendImage: true,
+  sendMultipleImages: true,
+  sendCard: true,
+  sendCarousel: true,
+  sendVideo: true,
+  sendGif: true,
+  sendMessengerOtn: false,
+  sendAudio: true,
+  sendFile: true,
+  sendQuickReply: true,
+
+  // Wait/Timing (W_)
+  waitUserReply: false,
+  setDebounce: false,
+  wait: false,
+  followUp: false,
+  getUserData: true,
+  typing: false,
+
+  // Contact Operations (C_)
+  addContactTag: false,
+  removeContactTag: false,
+  deleteContact: false,
+  blockContact: false,
+  addContactNotes: false,
+  setCustomField: false,
+  clearCustomField: false,
+  cancelContactInput: false,
+  // Sends a booking prompt from its own handler, but through
+  // `sendChatMessage`, whose job type has no `commentAnchor` field — so it
+  // cannot forward the anchor yet and must not claim it. Flip to true only
+  // together with that plumbing.
+  appointmentScheduling: false,
+  // Sends its question from its own handler, but through
+  // `sendChatMessage`, whose job type has no `commentAnchor` field — so it
+  // cannot forward the anchor yet and must not claim it. Flip to true only
+  // together with that plumbing.
+  questionnaires: false,
+  setUpCoupon: false,
+  markCouponUsed: false,
+  condition: false,
+
+  // Inbox Operations (I_)
+  disableBot: false,
+  enableBot: false,
+  assignConversation: false,
+  autoAssignConversation: false,
+  unassignConversation: false,
+  followConversation: false,
+  unfollowConversation: false,
+  archiveConversation: false,
+  unarchiveConversation: false,
+  notifyAgent: false,
+
+  // AI/OpenAI Operations (A_)
+  aiGenerateText: false,
+  aiGenerateTextAgent: false,
+  aiAnalyzeImage: false,
+  aiGenerateImage: false,
+  aiEditImage: false,
+  aiSpeechToText: false,
+  aiTextToSpeech: false,
+  aiExtractData: false,
+  aiDeleteMessageHistory: false,
+
+  // Email Operations (E_)
+  markEmailVerified: false,
+  optInEmail: false,
+  optOutEmail: false,
+
+  // Utilities/Tools (U_)
+  getDataFromJson: false,
+  formatDate: false,
+  generateCode: false,
+  countCharacters: false,
+  performAction: false,
+  callApi: false,
+  executeJavascript: false,
+  splitTraffic: false,
+  make: false,
+  triggerN8n: false,
+
+  // Flow Operations (F_)
+  startAnotherNode: false,
+  startExternalFlow: false,
+  startExternalNode: false,
+
+  // External/Others (X_)
+  openWebsite: false,
+  addNotes: false,
+
+  // Broadcast Operations (B_)
+  subscribeBroadcast: false,
+  unsubscribeBroadcast: false,
+
+  // Google Sheets Operations (G_)
+  spreadsheetSendData: false,
+  spreadsheetGetRow: false,
+  spreadsheetGetRandomRow: false,
+  spreadsheetUpdateRow: false,
+  spreadsheetClearRow: false,
+
+  // Mail Marketing Operations (M_)
+  activeCampaignSyncContact: false,
+  getResponseAddContact: false,
+  mailchimpAddMember: false,
+  mailerLiteAddSubscriber: false,
+  moosendCreateContact: false,
+  dripSubscribeSubscriber: false,
+  sendGridAddContact: false,
+  klaviyoSyncProfile: false,
+
+  // Sequence Operations (Q_)
+  subscribeSequence: false,
+  unsubscribeSequence: false,
+
+  // Email
+  email: false,
+
+  // WhatsApp Template Message
+  sendWaTemplateMessage: true,
+  whatsappOptionList: true,
+  whatsappCallButton: true,
+  whatsappFlow: true,
+  sendMessengerTemplateMessage: true,
+
+  // Messenger Operations (N_)
+  facebookCustomAudience: false,
+  sendMetaCapiEvent: false,
+  setMessengerUserPersistentMenu: false,
+  enableMessengerComposer: false,
+  disableMessengerComposer: false,
+  setMessengerPersona: false,
+  updateMessengerContactData: false,
+}
+
+/**
+ * The `true` half of {@link STEP_PRODUCES_MESSAGE}, as a set — used to decide
+ * which step claims a pending `commentAnchor` (comment-triggered private-reply
+ * flow) as its first outgoing message.
+ */
+export const MESSAGE_PRODUCING_STEP_TYPES = new Set<StepType>(
+  Object.entries(STEP_PRODUCES_MESSAGE)
+    .filter(([, producesMessage]) => producesMessage)
+    .map(([stepType]) => stepType as StepType),
+)
 
 export type SuccessErrorStepSchema = BaseStepSchema & {
   successNodeId?: string

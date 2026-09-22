@@ -144,6 +144,31 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
    window it sends as a normal DM, outside it throws
    `comment_private_reply_already_used` → visible `sendError`. Never "restore" the drop;
    that turns the failure back into a Send API rejection swallowed by `sendFlowStep`.
+   **"Message-producing step" is `STEP_PRODUCES_MESSAGE` (`flow-utils.ts`), an exhaustive
+   `Record<StepType, boolean>` — a new step type does not compile until it is classified.**
+   It is NOT "whatever is mapped to `sendFlowMessage`"; that definition silently excluded
+   every step that sends from its own handler. `getUserData` was missing for exactly that
+   reason, which broke the most natural shape of the feature, comment → DM that asks a
+   question: question-first claimed nothing (the one anchored DM went unused, the prompt
+   was rejected as an out-of-window DM), and a question after a `sendText` arrived with no
+   anchor so the guard above never ran. Both fail *silently* — the challenge is written
+   before the send and `sendFlowStep`'s catch swallows the error, so the step still returns
+   `wait` and the answer is still captured; only the question never arrives.
+
+   `true` means the step both RECEIVES and may CLAIM the anchor, so a step that sends but
+   **cannot carry** the anchor stays `false`: claiming without forwarding burns the
+   comment's one anchored DM on a send that never used it. `appointmentScheduling` and
+   `questionnaires` are `false` today for that reason — like `getUserData`'s date/datetime
+   webview and WhatsApp location prompts, they send through `sendChatMessage`, whose job
+   type has no `commentAnchor` field and whose channel path (`sendMessageToChannel`) never
+   reads one. Closing that needs the field plus anchor handling in each Meta channel's
+   outgoing `sendMessage`; Instagram is unaffected either way
+   (`URL_QUICK_REPLY_CAPABLE_CHANNELS` excludes it), Messenger is the exposed one.
+
+   The claim is made **after** the handler returns and never on an `error` result — see
+   `executeMultipleStepsGenerator`. Claiming up front burned the anchor on a step that sent
+   nothing, because a handler can fail before its send and `getUserData` declares only
+   `[success, skip]`, so an error does not branch and the run continues to the next step.
 
 8. **`options.trackUserTags` is the one option that is not a filter, and the two channels
    resolve it by completely different mechanisms.** It never skips — it stamps

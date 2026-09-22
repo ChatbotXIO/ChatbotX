@@ -876,6 +876,83 @@ describe("getUserData — first send (no challenge state)", () => {
   })
 })
 
+// The prompt is this step's outgoing message, so it has to carry the run's
+// comment anchor like any other message-producing step. Dropping it meant a
+// question-first flow never claimed the single comment_id-anchored DM Meta
+// grants per comment, and a question after a `sendText` reached the channel
+// with no anchor — so `assertCommentPrivateReplyFollowUpDeliverable` never ran
+// and a closed 24-hour window surfaced as an opaque Send API rejection.
+describe("getUserData — comment-triggered private reply", () => {
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+  })
+
+  function promptJobData() {
+    return findChatJobCall("sendFlowMessage").data as {
+      commentAnchor?: unknown
+    }
+  }
+
+  test("forwards an unspent anchor, so the channel can send the prompt comment-anchored", async () => {
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+    props.commentAnchor = {
+      commentId: "comment-1",
+      replyChannel: "private",
+    }
+
+    await getUserData(props)
+
+    expect(promptJobData().commentAnchor).toEqual({
+      commentId: "comment-1",
+      replyChannel: "private",
+    })
+  })
+
+  test("forwards a spent anchor too, so the follow-up guard can explain a closed window", async () => {
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+    props.commentAnchor = {
+      commentId: "comment-1",
+      replyChannel: "private",
+      spent: true,
+    }
+
+    await getUserData(props)
+
+    expect(promptJobData().commentAnchor).toEqual({
+      commentId: "comment-1",
+      replyChannel: "private",
+      spent: true,
+    })
+  })
+
+  test("forwards a public anchor, so the prompt posts as a comment reply", async () => {
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+    props.commentAnchor = {
+      commentId: "comment-1",
+      replyChannel: "public",
+    }
+
+    await getUserData(props)
+
+    expect(promptJobData().commentAnchor).toEqual({
+      commentId: "comment-1",
+      replyChannel: "public",
+    })
+  })
+
+  test("sends no commentAnchor key when the run did not start from a comment", async () => {
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+
+    await getUserData(props)
+
+    expect(Object.hasOwn(promptJobData(), "commentAnchor")).toBe(false)
+  })
+})
+
 function findChatJobCall(action: string) {
   const call = chatQueueAdd.mock.calls.find(
     ([callAction]) => callAction === action,

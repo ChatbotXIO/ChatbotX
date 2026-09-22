@@ -160,6 +160,26 @@ Delivery and state are two different things, and a comment splits them:
   this the Send API simply rejected the follow-up and the error was swallowed.
   `replyChannel: "public"` is *not* consumed: it survives every step, node and re-enqueued
   `sendFlow` job of the run, so the whole flow answers on the post.
+
+  **"Message-producing step" means `MESSAGE_PRODUCING_STEP_TYPES` (`flow-utils.ts`), and
+  that set is not just the `sendFlowMessage` handlers.** `getUserData` sends a message too
+  — its prompt, enqueued through `enqueueFlowStepMessage` from its own handler — so it is
+  in the set and forwards the anchor onto that prompt job. This matters because
+  "comment → DM that asks a question" is the most natural shape of the feature: while
+  `getUserData` was left out, a question-first flow claimed nothing (the one anchored DM
+  went unused and the prompt was rejected as an out-of-window DM), and a question after a
+  `sendText` reached the channel with no anchor at all, so `isCommentPrivateRun` was false
+  and the guard above never ran. Both failed silently, because the challenge is written
+  *before* the send and `sendFlowStep`'s catch swallows the channel error — the step still
+  returns `wait` and the contact's answer is still captured; only the question never
+  arrives. Any future step that sends a message from its own handler rather than through
+  `sendFlowMessage` has to be added to the set the same way.
+
+  The claim is made **after** the handler returns and never on an `error` result. Claiming
+  by step type up front burned the comment's single anchored DM on a step that sent
+  nothing: `getUserData` writes its challenge row before sending, and because it declares
+  only `[success, skip]` states an error does not branch — so the run moved on to the next
+  step with a spent anchor and the guard refused a private reply that was never sent.
 - **`conversationId` governs state.** The flow writes `currentStep` and
   `additionalAttributes.challenge` onto that conversation, and `resolveIncomingTextRouting`
   reads the challenge back off whichever conversation the contact's next message lands on.
@@ -530,6 +550,14 @@ Two Instagram-only caveats follow from that, and both are expected behaviour:
   has no column for `commentAnchor` and `buildSendFlowResumeJob` rebuilds the job from that
   row alone, so steps after a wait fall back to a DM send. Documented at `step.ts`'s
   `handleWait`; fixing it needs a schema change.
+- **A `getUserData` prompt that is *not* plain text still loses the anchor.** The date /
+  datetime webview prompt and the WhatsApp native location request go out through
+  `sendChatMessage`, and `ChatJobSendChatMessage` has no `commentAnchor` field
+  (`packages/worker-config/src/queues/chat/index.ts`) — only the plain-text prompt uses
+  `enqueueFlowStepMessage`, which does. This does not reach Instagram, the channel where
+  comment private replies matter most: `URL_QUICK_REPLY_CAPABLE_CHANNELS` excludes it, so
+  an Instagram `getUserData` always falls through to the text prompt. Messenger is the
+  exposed one. Extending that job type is a larger change.
 - **`options.trackUserTags` on Instagram is a text heuristic** — see
   [Tag tracking](#tag-tracking) for the two limitations that do not apply to Facebook.
 - **`getPriorContactInboxCount` counts `ContactInbox` rows**, so a contact who DM'd via
