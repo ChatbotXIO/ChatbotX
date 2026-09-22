@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "Trường bot"
+  },
+  "openLink": {
+    "title": "Mở liên kết",
+    "invalidTitle": "Liên kết không hợp lệ.",
+    "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
+    "openZaloGroup": "Mở nhóm Zalo",
+    "openZalo": "Mở Zalo",
+    "openMessenger": "Mở Messenger"
   }
 }

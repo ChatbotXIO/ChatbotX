@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "Campos do bot"
+  },
+  "openLink": {
+    "title": "Abrir ligação",
+    "invalidTitle": "Ligação inválida.",
+    "invalidDescription": "Esta ligação é inválida ou expirou.",
+    "openZaloGroup": "Abrir grupo do Zalo",
+    "openZalo": "Abrir Zalo",
+    "openMessenger": "Abrir Messenger"
   }
 }

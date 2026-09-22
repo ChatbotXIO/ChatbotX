@@ -177,6 +177,15 @@ vi.mock("@chatbotx.io/encryption", () => ({
   signAppointmentWebviewToken: mockSignAppointmentWebviewToken,
 }))
 
+// Its own subpath, not the barrel: `node:crypto` modules stay out of
+// `@chatbotx.io/encryption`'s index so the builder's Edge bundle can load it.
+// Only the HMAC is stubbed here — `@chatbotx.io/business/open-link` runs for
+// real, so the exemptions it decides (same origin, self channel) stay covered.
+vi.mock("@chatbotx.io/encryption/open-link-token", () => ({
+  signOpenLinkUrl: vi.fn(() => "open-link-signature"),
+  verifyOpenLinkUrl: vi.fn(() => true),
+}))
+
 vi.mock("@chatbotx.io/business/utils", () => ({
   getPublicFileUrl: vi.fn((path: string, base: string) => `${base}/${path}`),
 }))
@@ -642,6 +651,187 @@ describe("sendFlowStep", () => {
         }),
       }),
     )
+  })
+
+  // -------------------------------------------------------------------------
+  // Deep-link interstitial (`/go`)
+  // -------------------------------------------------------------------------
+
+  const openWebsiteStep = (url: string) =>
+    ({
+      ...sendTextStep,
+      buttons: [
+        {
+          id: "button-1",
+          label: "Open",
+          buttonType: "openWebsite",
+          beforeStep: {
+            id: "before-1",
+            stepType: "openWebsite",
+            url,
+            browserSize: 100,
+          },
+          steps: [],
+        },
+      ],
+    }) as unknown as SendFlowStepData["step"]
+
+  const sentButtonUrl = () =>
+    mockSendFlowStepToChannel.mock.calls.at(-1)?.[0]?.step?.buttons?.[0]
+      ?.beforeStep?.url
+
+  const persistedButtonUrl = () =>
+    mockRepositoryCreate.mock.calls.at(-1)?.[0]?.contentAttributes?.payload
+      ?.buttons?.[0]?.url
+
+  const GO_PREFIX = "https://app.example.test/go/ws-1?u="
+
+  test("routes an open-website button through the interstitial, in both sinks", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: openWebsiteStep("https://zalo.me/g/owfqvp123"),
+    })
+
+    // The wire payload and the persisted Message row are encoded separately and
+    // must not drift — that is the whole reason the rewrite happens upstream of
+    // both.
+    expect(sentButtonUrl()).toContain(GO_PREFIX)
+    expect(persistedButtonUrl()).toBe(sentButtonUrl())
+  })
+
+  test("leaves every link outside the deep-link table untouched", async () => {
+    // The detour exists to open a native app. A link it cannot open gains
+    // nothing from it and would only put the builder in the path of a link that
+    // worked fine without it.
+    const url = "https://example.com/promo"
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: openWebsiteStep(url),
+    })
+
+    expect(sentButtonUrl()).toBe(url)
+    expect(persistedButtonUrl()).toBe(url)
+  })
+
+  test("leaves a magic link alone so its click code can still be attached", async () => {
+    // Covered twice over — a magic link is not in the deep-link table, and it is
+    // same-origin. Pinned because the second guard is what stops a future table
+    // entry from breaking attribution: `appendCodeToMagicLink` recognises magic
+    // links by a `^/r/` pathname regex, so wrapping one means `?code=` is never
+    // attached and every click on it goes unattributed.
+    const magicLink = "https://app.example.test/r/ws-1/promo"
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: openWebsiteStep(magicLink),
+    })
+
+    expect(sentButtonUrl()).toBe(magicLink)
+  })
+
+  test("still routes an m.me link sent over Messenger", async () => {
+    // The self-channel exemption must not catch this one: `m.me` inside
+    // Messenger's own iOS webview is exactly the case that does nothing, so the
+    // rule carries no channel and the link takes the detour.
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: openWebsiteStep("https://m.me/9679565075442614"),
+    })
+
+    expect(sentButtonUrl()).toContain(GO_PREFIX)
+  })
+
+  test("leaves a Zalo link alone when the message goes out over Zalo", async () => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "zalo",
+    })
+    const url = "https://zalo.me/g/owfqvp123"
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: openWebsiteStep(url),
+    })
+
+    expect(sentButtonUrl()).toBe(url)
+  })
+
+  test("routes card buttons and quick replies through the interstitial", async () => {
+    const cardStep = {
+      id: "step-1",
+      nodeId: "node-1",
+      stepType: "sendCard",
+      cards: [
+        {
+          id: "card-1",
+          title: "Card",
+          buttons: [
+            {
+              id: "button-1",
+              label: "Open",
+              buttonType: "openWebsite",
+              beforeStep: {
+                id: "before-1",
+                stepType: "openWebsite",
+                url: "https://zalo.me/g/owfqvp123",
+                browserSize: 100,
+              },
+              steps: [],
+            },
+          ],
+        },
+      ],
+      buttons: [],
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: cardStep,
+      quickReplies: [
+        {
+          id: "qr-1",
+          label: "Open",
+          buttonType: "openWebsite",
+          beforeStep: {
+            id: "before-qr-1",
+            stepType: "openWebsite",
+            url: "https://zalo.me/g/quickreply1",
+            browserSize: 100,
+          },
+          steps: [],
+        },
+      ],
+    } as unknown as SendFlowStepData)
+
+    const call = mockSendFlowStepToChannel.mock.calls.at(-1)?.[0]
+    expect(call?.step?.cards?.[0]?.buttons?.[0]?.beforeStep?.url).toContain(
+      GO_PREFIX,
+    )
+    expect(call?.quickReplies?.[0]?.url).toContain(GO_PREFIX)
+  })
+
+  test.each([
+    ["broadcast", { type: "broadcast", broadcastId: "bc-1" }],
+    ["sequence", { type: "sequence_schedule", sequenceStepId: "seq-step-1" }],
+  ])("routes %s buttons through the interstitial as well", async (_label, metadata) => {
+    // Broadcasts and sequences reach the channel through this same handler,
+    // so they are covered by construction — pinned here because that is a
+    // conclusion about a call chain, not something visible in this file.
+    await sendFlowStep({
+      ...baseParams,
+      contactInboxId: "ci-1",
+      step: openWebsiteStep("https://zalo.me/g/owfqvp123"),
+      metadata,
+    } as unknown as SendFlowStepData)
+
+    expect(sentButtonUrl()).toContain(GO_PREFIX)
   })
 
   test("signs latest-version appointment booking links with executed version", async () => {

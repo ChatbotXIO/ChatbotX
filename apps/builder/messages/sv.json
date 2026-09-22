@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "Botfält"
+  },
+  "openLink": {
+    "title": "Öppna länk",
+    "invalidTitle": "Ogiltig länk.",
+    "invalidDescription": "Den här länken är ogiltig eller har upphört att gälla.",
+    "openZaloGroup": "Öppna Zalo-grupp",
+    "openZalo": "Öppna Zalo",
+    "openMessenger": "Öppna Messenger"
   }
 }

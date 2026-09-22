@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "机器人字段"
+  },
+  "openLink": {
+    "title": "打开链接",
+    "invalidTitle": "链接无效。",
+    "invalidDescription": "此链接无效或已过期。",
+    "openZaloGroup": "打开 Zalo 群组",
+    "openZalo": "打开 Zalo",
+    "openMessenger": "打开 Messenger"
   }
 }

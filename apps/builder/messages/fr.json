@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "Champs du bot"
+  },
+  "openLink": {
+    "title": "Ouvrir le lien",
+    "invalidTitle": "Lien invalide.",
+    "invalidDescription": "Ce lien est invalide ou a expiré.",
+    "openZaloGroup": "Ouvrir le groupe Zalo",
+    "openZalo": "Ouvrir Zalo",
+    "openMessenger": "Ouvrir Messenger"
   }
 }

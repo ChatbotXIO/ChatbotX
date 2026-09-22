@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "حقول البوت"
+  },
+  "openLink": {
+    "title": "فتح الرابط",
+    "invalidTitle": "رابط غير صالح.",
+    "invalidDescription": "هذا الرابط غير صالح أو انتهت صلاحيته.",
+    "openZaloGroup": "فتح مجموعة Zalo",
+    "openZalo": "فتح Zalo",
+    "openMessenger": "فتح Messenger"
   }
 }

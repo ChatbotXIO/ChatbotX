@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "Campi del bot"
+  },
+  "openLink": {
+    "title": "Apri link",
+    "invalidTitle": "Link non valido.",
+    "invalidDescription": "Questo link non è valido o è scaduto.",
+    "openZaloGroup": "Apri gruppo Zalo",
+    "openZalo": "Apri Zalo",
+    "openMessenger": "Apri Messenger"
   }
 }

@@ -33,6 +33,7 @@
     "./license-startup": "./src/enterprise/license/startup.ts",
     "./javascript-execution": "./src/javascript-execution/index.ts",
     "./minigame": "./src/minigame/index.ts",
+    "./open-link": "./src/open-link/index.ts",
     "./smart-delay": "./src/smart-delay/index.ts",
     "./errors": "./src/errors.ts",
     "./referral": "./src/referral/index.ts",
