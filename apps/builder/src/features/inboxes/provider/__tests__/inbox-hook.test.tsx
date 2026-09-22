@@ -39,13 +39,16 @@ function InboxesProbe({
   workspaceId = "workspace-1",
   enabled = true,
   onData,
+  onState,
 }: {
   workspaceId?: string
   enabled?: boolean
   onData?: (data: unknown) => void
+  onState?: (state: { isError: boolean; error: unknown }) => void
 }) {
   const inboxes = useInboxes(workspaceId, { enabled })
   onData?.(inboxes.data)
+  onState?.({ isError: inboxes.isError, error: inboxes.error })
   return null
 }
 
@@ -195,6 +198,24 @@ describe("inbox query hooks", () => {
 
     expect(invalidators).toHaveLength(2)
     expect(invalidators[1]).toBe(invalidators[0])
+  })
+
+  test("surfaces isError and the rejection when the request fails", async () => {
+    mockListInboxes.mockRejectedValue(new Error("inboxes failed"))
+    let state: { isError: boolean; error: unknown } | undefined
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <InboxesProbe onState={(nextState) => (state = nextState)} />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(state?.isError).toBe(true)
+    })
+    expect(state?.error).toBeInstanceOf(Error)
   })
 })
 

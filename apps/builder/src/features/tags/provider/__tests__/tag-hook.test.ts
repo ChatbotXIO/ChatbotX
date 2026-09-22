@@ -26,12 +26,15 @@ const makeQueryClient = () =>
 function TagsProbe({
   workspaceId = "workspace-1",
   onData,
+  onState,
 }: {
   workspaceId?: string
   onData?: (data: unknown) => void
+  onState?: (state: { isError: boolean; error: unknown }) => void
 }) {
   const tags = useTags(workspaceId)
   onData?.(tags.data)
+  onState?.({ isError: tags.isError, error: tags.error })
   return null
 }
 
@@ -109,6 +112,30 @@ describe("tag query hooks", () => {
     await vi.waitFor(() => {
       expect(data).toEqual(tags)
     })
+  })
+
+  test("surfaces isError and the rejection when the request fails", async () => {
+    mockListTags.mockRejectedValue(new Error("tags failed"))
+    let state: { isError: boolean; error: unknown } | undefined
+
+    act(() => {
+      root.render(
+        createElement(
+          QueryClientProvider,
+          { client: queryClient },
+          createElement(TagsProbe, {
+            onState: (nextState) => {
+              state = nextState
+            },
+          }),
+        ),
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(state?.isError).toBe(true)
+    })
+    expect(state?.error).toBeInstanceOf(Error)
   })
 
   test("keeps the invalidator stable across renders", () => {

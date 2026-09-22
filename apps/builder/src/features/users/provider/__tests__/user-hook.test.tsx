@@ -35,16 +35,29 @@ function UsersProbe({
   workspaceId = "workspace-1",
   enabled = true,
   onData,
+  onState,
 }: {
   workspaceId?: string
   enabled?: boolean
   onData?: (data: { inboxTeams: unknown; workspaceMembers: unknown }) => void
+  onState?: (state: {
+    workspaceMembersIsError: boolean
+    workspaceMembersError: unknown
+    inboxTeamsIsError: boolean
+    inboxTeamsError: unknown
+  }) => void
 }) {
   const workspaceMembers = useWorkspaceMembers(workspaceId, { enabled })
   const inboxTeams = useInboxTeams(workspaceId, { enabled })
   onData?.({
     workspaceMembers: workspaceMembers.data,
     inboxTeams: inboxTeams.data,
+  })
+  onState?.({
+    workspaceMembersIsError: workspaceMembers.isError,
+    workspaceMembersError: workspaceMembers.error,
+    inboxTeamsIsError: inboxTeams.isError,
+    inboxTeamsError: inboxTeams.error,
   })
   return null
 }
@@ -145,6 +158,34 @@ describe("user query hooks", () => {
 
     expect(mockListWorkspaceMembers).not.toHaveBeenCalled()
     expect(mockListInboxTeams).not.toHaveBeenCalled()
+  })
+
+  test("surfaces isError and the rejection for each list independently when its request fails", async () => {
+    mockListWorkspaceMembers.mockRejectedValue(
+      new Error("workspace members failed"),
+    )
+    let state:
+      | {
+          workspaceMembersIsError: boolean
+          workspaceMembersError: unknown
+          inboxTeamsIsError: boolean
+          inboxTeamsError: unknown
+        }
+      | undefined
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <UsersProbe onState={(nextState) => (state = nextState)} />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(state?.workspaceMembersIsError).toBe(true)
+    })
+    expect(state?.workspaceMembersError).toBeInstanceOf(Error)
+    expect(state?.inboxTeamsIsError).toBe(false)
   })
 
   test("invalidates both user-backed lists, and a refetch returns fresh data", async () => {

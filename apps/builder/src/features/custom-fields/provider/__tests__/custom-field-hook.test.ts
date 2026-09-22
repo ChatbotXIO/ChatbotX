@@ -43,8 +43,16 @@ const makeQueryClient = () =>
     defaultOptions: { queries: { retry: false } },
   })
 
-function CustomFieldsProbe({ onData }: { onData: (data: unknown) => void }) {
-  onData(useCustomFields("workspace-1").data)
+function CustomFieldsProbe({
+  onData,
+  onState,
+}: {
+  onData: (data: unknown) => void
+  onState?: (state: { isError: boolean; error: unknown }) => void
+}) {
+  const query = useCustomFields("workspace-1")
+  onData(query.data)
+  onState?.({ isError: query.isError, error: query.error })
   return null
 }
 
@@ -152,6 +160,33 @@ describe("custom field query hooks", () => {
         { id: "field-1", name: "Company", type: "shortText" },
       ])
     })
+  })
+
+  test("surfaces isError and the rejection when the request fails", async () => {
+    mockListCustomFields.mockRejectedValue(new Error("custom fields failed"))
+    let state: { isError: boolean; error: unknown } | undefined
+
+    act(() => {
+      root.render(
+        createElement(
+          QueryClientProvider,
+          { client: queryClient },
+          createElement(CustomFieldsProbe, {
+            onData: () => {
+              //
+            },
+            onState: (nextState) => {
+              state = nextState
+            },
+          }),
+        ),
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(state?.isError).toBe(true)
+    })
+    expect(state?.error).toBeInstanceOf(Error)
   })
 })
 

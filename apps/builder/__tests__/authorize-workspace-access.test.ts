@@ -191,6 +191,12 @@ describe("isReadOnlyTokenAllowedMethod", () => {
     expect(isReadOnlyTokenAllowedMethod("POST")).toBe(false)
     expect(isReadOnlyTokenAllowedMethod("POST", undefined)).toBe(false)
   })
+
+  test("rejects POST to the conversations list path — it is allow-listed for the trial gate only, not for read_only tokens", () => {
+    expect(
+      isReadOnlyTokenAllowedMethod("POST", CONVERSATIONS_LIST_POST_PATH),
+    ).toBe(false)
+  })
 })
 
 describe("workspaceAccessDenialException", () => {

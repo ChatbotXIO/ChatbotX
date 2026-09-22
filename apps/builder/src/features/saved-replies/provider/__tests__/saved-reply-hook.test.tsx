@@ -43,13 +43,16 @@ function SavedRepliesProbe({
   workspaceId = "workspace-1",
   enabled = true,
   onData,
+  onState,
 }: {
   workspaceId?: string
   enabled?: boolean
   onData: (data: SavedReplyResource[] | undefined) => void
+  onState?: (state: { isError: boolean; error: unknown }) => void
 }) {
-  const { data } = useSavedReplies(workspaceId, { enabled })
-  onData(data)
+  const query = useSavedReplies(workspaceId, { enabled })
+  onData(query.data)
+  onState?.({ isError: query.isError, error: query.error })
   return null
 }
 function SavedReplyCacheProbe({
@@ -115,6 +118,27 @@ describe("saved reply query hooks", () => {
     })
 
     expect(mockListSavedReplies).not.toHaveBeenCalled()
+  })
+
+  test("surfaces isError and the rejection when the request fails", async () => {
+    mockListSavedReplies.mockRejectedValue(new Error("saved replies failed"))
+    let state: { isError: boolean; error: unknown } | undefined
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <SavedRepliesProbe
+            onData={() => undefined}
+            onState={(nextState) => (state = nextState)}
+          />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(state?.isError).toBe(true)
+    })
+    expect(state?.error).toBeInstanceOf(Error)
   })
 
   test("updates the saved reply cache", () => {

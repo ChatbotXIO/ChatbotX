@@ -158,9 +158,34 @@ describe("getInboxInitialState", () => {
       seededContact: { id: "contact-conversation-1" },
     })
     expect(state).not.toHaveProperty("messagesSeed")
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      "getInboxInitialState: failed to seed messages state",
+    )
   })
 
-  test("returns null when listing conversations rejects", async () => {
+  test("returns the remaining seed and logs a warning when seeding the contact rejects", async () => {
+    mockSeedRequests()
+    mockGetContactAuthenticatedAPI.mockRejectedValue(
+      new Error("contact failed"),
+    )
+
+    const state = await getInboxInitialState({ workspaceId: "workspace-1" })
+
+    expect(state).toMatchObject({
+      activeConversationId: "conversation-1",
+      messagesSeed: {
+        messagesConversationId: "conversation-1",
+      },
+    })
+    expect(state).not.toHaveProperty("seededContact")
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      "getInboxInitialState: failed to seed contact state",
+    )
+  })
+
+  test("returns null and logs a warning when listing conversations rejects", async () => {
     mockListConversationsByPOSTAuthenticatedAPI.mockRejectedValue(
       new Error("conversations failed"),
     )
@@ -168,6 +193,10 @@ describe("getInboxInitialState", () => {
     await expect(
       getInboxInitialState({ workspaceId: "workspace-1" }),
     ).resolves.toBeNull()
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      "getInboxInitialState: failed to seed conversations",
+    )
   })
 
   test("returns null and logs a warning when the server oRPC client is unavailable", async () => {
@@ -190,7 +219,7 @@ describe("getInboxInitialState", () => {
     )
 
     const seed = getInboxInitialState({ workspaceId: "workspace-1" })
-    await vi.advanceTimersByTimeAsync(8000)
+    await vi.advanceTimersByTimeAsync(3000)
 
     await expect(seed).resolves.toBeNull()
     expect(loggerWarnMock).toHaveBeenCalledWith(
