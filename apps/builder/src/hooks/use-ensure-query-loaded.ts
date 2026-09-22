@@ -4,26 +4,26 @@ import { useCallback, useRef } from "react"
 
 type LazyQuery<T> = {
   data: T | undefined
-  isFetched: boolean
   isFetching: boolean
+  isSuccess: boolean
   refetch: () => Promise<{ data: T | undefined }>
 }
 
 export const useEnsureQueryLoaded = <T>(query: LazyQuery<T>) => {
   const stateRef = useRef({
     data: query.data,
-    isFetched: query.isFetched,
     isFetching: query.isFetching,
+    isSuccess: query.isSuccess,
   })
   stateRef.current = {
     data: query.data,
-    isFetched: query.isFetched,
     isFetching: query.isFetching,
+    isSuccess: query.isSuccess,
   }
 
   return useCallback(() => {
-    const { data, isFetched, isFetching } = stateRef.current
-    if (isFetched || isFetching) {
+    const { data, isFetching, isSuccess } = stateRef.current
+    if (isSuccess || isFetching) {
       return Promise.resolve(data)
     }
 

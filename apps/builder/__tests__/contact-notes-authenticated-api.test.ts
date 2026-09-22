@@ -103,7 +103,7 @@ describe("contactNotesAuthenticatedAPI — access scoping", () => {
       context: {
         user: { id: "user-1" },
         workspace: { ownerId: "owner-1" },
-        workspaceMember: { permissions: {} },
+        workspaceMember: { permissions: { contacts: true } },
       },
     })
 
@@ -150,5 +150,22 @@ describe("contactNotesAuthenticatedAPI — access scoping", () => {
       contactId: "contact-1",
       accessScope: { restrictToAssignedUserId: undefined },
     })
+  })
+
+  test("rejects a member without contacts access", async () => {
+    const handler = handlersByPath[LIST_PATH]
+
+    await expect(
+      handler?.({
+        input: { workspaceId: "workspace-1", contactId: "contact-1" },
+        context: {
+          user: { id: "user-1" },
+          workspace: { ownerId: "owner-1" },
+          workspaceMember: { permissions: {} },
+        },
+      }),
+    ).rejects.toThrow("User is not authorized to access contacts")
+
+    expect(listByContactId).not.toHaveBeenCalled()
   })
 })

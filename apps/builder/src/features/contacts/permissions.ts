@@ -37,6 +37,24 @@ export function getAssignedContactsUserId(input: {
     : undefined
 }
 
+/**
+ * Derives contact access from a workspace member already authenticated by the
+ * caller. oRPC handlers use this instead of resolving the session twice.
+ */
+export function requireContactPermissionScopeForMember(input: {
+  permissions: Permissions
+  userId: string
+}): ContactPermissionScope {
+  if (!canAccessContactsSection(input.permissions)) {
+    throw new ChatbotXException("User is not authorized to access contacts")
+  }
+
+  return {
+    canViewEmailAndPhone: canViewContactEmailAndPhone(input.permissions),
+    restrictToAssignedUserId: getAssignedContactsUserId(input),
+  }
+}
+
 export async function resolveContactPermissionScope(
   workspaceId: string,
 ): Promise<ContactPermissionScope | null> {
@@ -69,16 +87,8 @@ export async function requireContactPermissionScope(
   }
 
   const { user, targetWorkspaceMember } = userAndWorkspace
-  const permissions = targetWorkspaceMember.permissions
-  if (!canAccessContactsSection(permissions)) {
-    throw new ChatbotXException("User is not authorized to access contacts")
-  }
-
-  return {
-    canViewEmailAndPhone: canViewContactEmailAndPhone(permissions),
-    restrictToAssignedUserId: getAssignedContactsUserId({
-      permissions,
-      userId: user.id,
-    }),
-  }
+  return requireContactPermissionScopeForMember({
+    permissions: targetWorkspaceMember.permissions,
+    userId: user.id,
+  })
 }

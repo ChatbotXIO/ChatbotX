@@ -9,8 +9,13 @@ import {
 import type {
   ChannelType,
   CustomFieldType,
+  FillableContactKey,
 } from "@chatbotx.io/database/partials"
-import { channelTypes, customFieldTypes } from "@chatbotx.io/database/partials"
+import {
+  channelTypes,
+  customFieldTypes,
+  fillableContactKeys,
+} from "@chatbotx.io/database/partials"
 import {
   Avatar,
   AvatarFallback,
@@ -386,7 +391,7 @@ export const ContactDetail = ({
 
   const workspaceId = useWorkspaceId()
   const { data: customFields = [] } = useCustomFields(workspaceId)
-  const { conversations } = useChatStore((state) => state)
+  const { conversations, updateContact } = useChatStore((state) => state)
   const avatarUrl = useAvatarUrl(contact)
   const [timezone, setTimezone] = useState("UTC")
 
@@ -503,6 +508,16 @@ export const ContactDetail = ({
           : field,
       ),
     )
+    // Only fillable columns (name/email/phone/gender/timezone) live on
+    // ContactResource / conversation.contact — arbitrary custom fields are
+    // stored separately and never read from the chat store, so patching it
+    // for those would be a no-op key that never matches.
+    if (
+      contact &&
+      fillableContactKeys.includes(fieldKey as FillableContactKey)
+    ) {
+      updateContact(contact.id, { [fieldKey]: value })
+    }
   }
 
   const handleChooseCustomField = (customFieldId: string) => {
