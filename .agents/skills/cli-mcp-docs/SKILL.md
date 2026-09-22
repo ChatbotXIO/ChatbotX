@@ -68,6 +68,17 @@ Published skill/agent distribution docs live in the separate `chatbotx-agent`
 package, not this repo's `skills/` directory. If the public CLI/MCP surface
 changes, sync the matching docs there in the same product change.
 
+That repo also runs its own automated check
+(`ChatbotXIO/chatbotx-agent/.github/workflows/upstream-drift.yml`): daily, and
+immediately after `publish-cli.yml`/`publish-chatbotx-mcp.yml` here publish a
+new version (via a `repository_dispatch` call those workflows make, gated on
+the `CHATBOTX_AGENT_DISPATCH_TOKEN` secret — see the "Notify chatbotx-agent"
+step in each). It compares the live CLI `--help` output and the live MCP
+default-tool set against `chatbotx-agent`'s docs and opens/updates a GitHub
+issue there on drift. It is a safety net for when this manual sync step is
+missed, not a substitute for doing it in the same PR — the issue only
+surfaces after the surface has already shipped.
+
 For `apps/mcp-server/README.md`'s "Available tools" section: the tool-count
 claim ("current default set has N tools") and the per-category tool list must
 match whatever the codebase marks `visibility: "default"`. `apps/builder/__tests__/public-spec-mcp.test.ts`
