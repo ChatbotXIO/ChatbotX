@@ -5639,6 +5639,7 @@
         "statusNoAnswer": "Inget svar",
         "eyebrowCallEnded": "SAMTAL AVSLUTAT",
         "statusConnectionLost": "Anslutningen förlorades",
+        "answerFailed": "Samtalet kunde inte besvaras. Kontrollera att en mikrofon är ansluten och tillåten i webbläsaren och försök igen.",
         "ringingListTitle": "{count, plural, one {# inkommande samtal} other {# inkommande samtal}}"
       },
       "capability": {

@@ -4100,6 +4100,7 @@
         "statusNoAnswer": "Keine Antwort",
         "eyebrowCallEnded": "ANRUF BEENDET",
         "statusConnectionLost": "Verbindung verloren",
+        "answerFailed": "Der Anruf konnte nicht angenommen werden. Prüfe, ob ein Mikrofon angeschlossen und im Browser erlaubt ist, und versuche es erneut.",
         "ringingListTitle": "{count, plural, one {# eingehender Anruf} other {# eingehende Anrufe}}"
       },
       "capability": {

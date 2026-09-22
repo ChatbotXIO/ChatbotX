@@ -4079,6 +4079,7 @@
         "statusNoAnswer": "応答なし",
         "eyebrowCallEnded": "通話終了",
         "statusConnectionLost": "接続が失われました",
+        "answerFailed": "通話に応答できませんでした。マイクが接続され、ブラウザで許可されていることを確認してから、もう一度お試しください。",
         "ringingListTitle": "{count, plural, one {#件の着信} other {#件の着信}}"
       },
       "capability": {

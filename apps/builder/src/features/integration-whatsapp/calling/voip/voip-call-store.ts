@@ -30,13 +30,39 @@ export type WhatsappVoipCallDirection =
 
 /**
  * Why the call ended, for the panel's final message. `connectionLost` is
- * client-only — set when the peer connection fails.
+ * client-only — set when the peer connection fails. The rest below it are the
+ * ways answering an incoming call can fail, each named so the agent is told
+ * why instead of the ring simply vanishing.
  */
 export type WhatsappVoipEndedStatus =
   | "completed"
   | "rejected"
   | "failed"
   | "connectionLost"
+  /** Another agent answered first, the answer window closed, or access was lost. */
+  | "cannotAnswer"
+  /** The caller hung up before the answer connected. */
+  | "callEnded"
+  /** The browser refused microphone access. */
+  | "micPermissionDenied"
+  /** No microphone device is available. */
+  | "micNotFound"
+  /** Anything else — the agent is pointed at their microphone and connection. */
+  | "answerFailed"
+
+/**
+ * Ended states that explain a failure the agent has to read and act on. They
+ * stay on screen until dismissed; the rest clear after the usual short linger,
+ * which is too brief to read a sentence like "connect a microphone".
+ */
+export const STICKY_ENDED_STATUSES: ReadonlySet<WhatsappVoipEndedStatus> =
+  new Set<WhatsappVoipEndedStatus>([
+    "cannotAnswer",
+    "callEnded",
+    "micPermissionDenied",
+    "micNotFound",
+    "answerFailed",
+  ])
 
 /**
  * Which step of `startOutbound` is in flight, for the preparing status line.
@@ -73,6 +99,11 @@ export type WhatsappVoipCall = {
   startedAt?: number
   /** Which final message to show; set by `handleEnded`. */
   endedStatus?: WhatsappVoipEndedStatus
+  /**
+   * The server's own reason, already localized, when it gave a specific one.
+   * Shown in place of the `endedStatus` sentence.
+   */
+  endedMessage?: string
   /** Set only while `phase === "preparing"`. */
   preparingStage?: WhatsappVoipPreparingStage
 }
@@ -248,6 +279,7 @@ type WhatsappVoipCallState = {
   handleEnded: (
     whatsappCallId: string,
     status?: WhatsappVoipEndedStatus,
+    message?: string,
   ) => void
 }
 
@@ -527,14 +559,15 @@ export const useWhatsappVoipCallStore = create<WhatsappVoipCallState>(
 
     reset: () => set({ call: null }),
 
-    handleEnded: (whatsappCallId, status = "completed") =>
+    handleEnded: (whatsappCallId, status, message) =>
       set((state) =>
         state.call?.whatsappCallId === whatsappCallId
           ? {
               call: {
                 ...state.call,
                 phase: WhatsappVoipCallPhase.ended,
-                endedStatus: status,
+                endedStatus: status ?? "completed",
+                endedMessage: message,
               },
             }
           : state,

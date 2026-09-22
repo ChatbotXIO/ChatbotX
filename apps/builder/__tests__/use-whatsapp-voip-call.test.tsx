@@ -1,3 +1,4 @@
+import { DEFAULT_SERVER_ERROR_MESSAGE } from "next-safe-action"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
@@ -373,30 +374,117 @@ describe("useWhatsappVoipCall", () => {
     expect(track.stop).toHaveBeenCalled()
   })
 
-  test("answer() tears down and resets on a cannotAnswer outcome", async () => {
-    answerActionMock.mockResolvedValue({ data: { outcome: "cannotAnswer" } })
+  /**
+   * Every way answering can fail must end on screen with a reason, never by
+   * clearing the slot — a ring that simply vanishes tells the agent nothing.
+   */
+  const answerAndReadEndedCall = async () => {
     seedRingingSlot(incomingData)
     await render()
-
     await act(async () => {
       await hookResult?.answer()
     })
+    return useWhatsappVoipCallStore.getState().call
+  }
+
+  test.each([
+    ["cannotAnswer", "cannotAnswer"],
+    ["callEnded", "callEnded"],
+  ])("a %s answer outcome tears down and says why instead of clearing the panel", async (outcome, endedStatus) => {
+    answerActionMock.mockResolvedValue({ data: { outcome } })
+
+    const call = await answerAndReadEndedCall()
 
     expect(createdPeerConnections[0]?.close).toHaveBeenCalled()
-    expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+    expect(call?.phase).toBe(WhatsappVoipCallPhase.ended)
+    expect(call?.endedStatus).toBe(endedStatus)
   })
 
-  test("answer() tears down and resets on a callEnded outcome", async () => {
-    answerActionMock.mockResolvedValue({ data: { outcome: "callEnded" } })
-    seedRingingSlot(incomingData)
-    await render()
+  test.each([
+    ["NotFoundError", "micNotFound"],
+    ["NotAllowedError", "micPermissionDenied"],
+  ])("a microphone %s names the device problem and never reaches the answer action", async (errorName, endedStatus) => {
+    getUserMediaMock.mockRejectedValue(new DOMException("mic", errorName))
 
-    await act(async () => {
-      await hookResult?.answer()
+    const call = await answerAndReadEndedCall()
+
+    expect(answerActionMock).not.toHaveBeenCalled()
+    expect(call?.endedStatus).toBe(endedStatus)
+  })
+
+  test("an unrecognised microphone failure points the agent at their device", async () => {
+    getUserMediaMock.mockRejectedValue(new Error("device busy"))
+
+    const call = await answerAndReadEndedCall()
+
+    expect(answerActionMock).not.toHaveBeenCalled()
+    expect(call?.endedStatus).toBe("answerFailed")
+  })
+
+  test("a specific reason from the TURN step is shown to the agent verbatim", async () => {
+    turnCredentialsActionMock.mockResolvedValue({
+      serverError: "This call was answered by another agent",
     })
 
-    expect(createdPeerConnections[0]?.close).toHaveBeenCalled()
-    expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+    const call = await answerAndReadEndedCall()
+
+    expect(getUserMediaMock).not.toHaveBeenCalled()
+    expect(call?.endedStatus).toBe("answerFailed")
+    expect(call?.endedMessage).toBe("This call was answered by another agent")
+  })
+
+  test("the generic server error is replaced by the check-your-microphone sentence", async () => {
+    turnCredentialsActionMock.mockResolvedValue({
+      serverError: DEFAULT_SERVER_ERROR_MESSAGE,
+    })
+
+    const call = await answerAndReadEndedCall()
+
+    expect(call?.endedStatus).toBe("answerFailed")
+    expect(call?.endedMessage).toBeUndefined()
+  })
+
+  test("an answer action that returns no data shows its specific reason", async () => {
+    answerActionMock.mockResolvedValue({ serverError: "Access denied" })
+
+    const call = await answerAndReadEndedCall()
+
+    expect(call?.endedStatus).toBe("answerFailed")
+    expect(call?.endedMessage).toBe("Access denied")
+  })
+
+  test("an error thrown mid-answer ends on screen instead of vanishing", async () => {
+    answerActionMock.mockRejectedValue(new Error("network down"))
+
+    const call = await answerAndReadEndedCall()
+
+    expect(call?.phase).toBe(WhatsappVoipCallPhase.ended)
+    expect(call?.endedStatus).toBe("answerFailed")
+  })
+
+  test("a failed answer stays on screen past the usual linger, until dismissed", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      getUserMediaMock.mockRejectedValue(
+        new DOMException("mic", "NotFoundError"),
+      )
+      await answerAndReadEndedCall()
+
+      act(() => {
+        vi.advanceTimersByTime(10_000)
+      })
+
+      expect(useWhatsappVoipCallStore.getState().call?.endedStatus).toBe(
+        "micNotFound",
+      )
+
+      act(() => {
+        hookResult?.dismissEnded()
+      })
+      expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   test("dismiss() silences the ring locally: resets the store, no peer, no server action", async () => {
@@ -1101,6 +1189,11 @@ describe("useWhatsappVoipCall", () => {
 
     expect(answerActionMock).not.toHaveBeenCalled()
     expect(createdPeerConnections[0]?.close).toHaveBeenCalled()
+    // A stream without an audio track is a device problem, not a lost
+    // connection, so the agent is pointed at their microphone.
+    expect(useWhatsappVoipCallStore.getState().call?.endedStatus).toBe(
+      "answerFailed",
+    )
   })
 
   test("pc.connectionState 'disconnected' for more than the grace window tears down; recovery cancels the timer", async () => {

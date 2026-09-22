@@ -94,16 +94,18 @@ export function WhatsappCallRealtime() {
       // Ring-all: broadcast workspace-wide once another rung agent's accept
       // succeeds. Drop the basket entry unconditionally (no-op if absent).
       removeRinging(data.whatsappCallId)
-      // Only a losing agent still incomingRinging for this call clears its
-      // dialog - the winner must ignore its own event or this would clear
-      // the dialog out from under its in-flight accept. Silent local dismiss:
-      // losing a ring-all race isn't a terminal call event for this agent, so
-      // it bypasses handleEnded's lingering panel/message.
+      // Any tab still incomingRinging for this call clears its dialog. The tab
+      // that won is already past incomingRinging - answerIncoming moves it to
+      // answering before its first await, long before this broadcast can land
+      // - so the phase alone protects its in-flight accept. Filtering on the
+      // user as well would leave the winner's other tabs ringing, since they
+      // share its user id. Silent local dismiss: losing a ring-all race isn't a
+      // terminal call event for this tab, so it bypasses handleEnded's
+      // lingering panel/message.
       const currentCall = useWhatsappVoipCallStore.getState().call
       if (
         currentCall?.whatsappCallId === data.whatsappCallId &&
-        currentCall.phase === WhatsappVoipCallPhase.incomingRinging &&
-        currentUserId !== data.answeredByUserId
+        currentCall.phase === WhatsappVoipCallPhase.incomingRinging
       ) {
         resetVoipCall()
       }

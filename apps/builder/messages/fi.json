@@ -4100,6 +4100,7 @@
         "statusNoAnswer": "Ei vastausta",
         "eyebrowCallEnded": "PUHELU PÄÄTTYI",
         "statusConnectionLost": "Yhteys katkesi",
+        "answerFailed": "Puheluun ei voitu vastata. Tarkista, että mikrofoni on liitetty ja sallittu selaimessa, ja yritä uudelleen.",
         "ringingListTitle": "{count, plural, one {# saapuva puhelu} other {# saapuvaa puhelua}}"
       },
       "capability": {

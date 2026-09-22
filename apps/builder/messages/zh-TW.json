@@ -4133,6 +4133,7 @@
         "statusNoAnswer": "無應答",
         "eyebrowCallEnded": "通話已結束",
         "statusConnectionLost": "連線中斷",
+        "answerFailed": "無法接聽通話。請確認麥克風已連接並已在瀏覽器中授權，然後再試一次。",
         "ringingListTitle": "{count, plural, one {# 通來電} other {# 通來電}}"
       },
       "capability": {

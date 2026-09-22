@@ -4100,6 +4100,7 @@
         "statusNoAnswer": "Fără răspuns",
         "eyebrowCallEnded": "APEL ÎNCHEIAT",
         "statusConnectionLost": "Conexiune pierdută",
+        "answerFailed": "Apelul nu a putut fi preluat. Verifică dacă un microfon este conectat și permis în browser, apoi încearcă din nou.",
         "ringingListTitle": "{count, plural, one {# apel primit} other {# apeluri primite}}"
       },
       "capability": {

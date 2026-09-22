@@ -4100,6 +4100,7 @@
         "statusNoAnswer": "Tidak ada jawaban",
         "eyebrowCallEnded": "PANGGILAN BERAKHIR",
         "statusConnectionLost": "Koneksi terputus",
+        "answerFailed": "Tidak dapat menjawab panggilan. Pastikan mikrofon tersambung dan diizinkan di browser, lalu coba lagi.",
         "ringingListTitle": "{count, plural, one {# panggilan masuk} other {# panggilan masuk}}"
       },
       "capability": {
