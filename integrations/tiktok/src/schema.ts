@@ -161,8 +161,24 @@ const quoteSnowflakeIds = (json: string, fields: string[]): string =>
 export const tiktokCommentEventContentSchema = z.object({
   comment_id: z.string(),
   video_id: z.string(),
-  /** Present on replies only — this is what tells a reply from a comment. */
-  parent_comment_id: z.string().optional(),
+  /**
+   * NOT a "present only on replies" flag. A production `insert` for a
+   * top-level comment (2026-09-21) carries `"parent_comment_id":0` — a sentinel
+   * meaning "no parent", which `quoteSnowflakeIds` then hands on as the string
+   * `"0"`. Treating its presence as "this is a reply" reads every top-level
+   * comment as one; `resolveParentCommentId` (`handlers/webhook.ts`) is the
+   * only thing that may turn this field into a parent id.
+   *
+   * `nullish` rather than `optional`: a `null` here would fail the whole
+   * object, and a payload that cannot be parsed is a comment dropped before it
+   * even reaches the inbox.
+   */
+  parent_comment_id: z.string().nullish(),
+  /**
+   * TikTok's own explicit discriminator, and the only trustworthy one on this
+   * channel — the id-shape heuristic Meta needs cannot work here, where every
+   * id is a bare snowflake.
+   */
   comment_type: z.enum(["comment", "reply"]).optional(),
   comment_action: tiktokCommentActions,
   /** Millisecond epoch, unlike the envelope's `create_time` (seconds). */
@@ -307,8 +323,11 @@ export type TiktokCommentHideAction = "HIDE" | "UNHIDE"
  * which sends the same ids as JSON numbers wide enough to lose precision — so
  * only the webhook needs snowflake-safe parsing, not these responses.
  *
- * `parent_comment_id` is present on replies only; it is what distinguishes a
- * reply from a top-level comment.
+ * `parent_comment_id` is documented as present on replies only. Unverified
+ * against a real response, and the same claim turned out to be false for the
+ * `comment.update` webhook, which sends `0` on a top-level comment — so treat a
+ * truthy value here as "maybe a parent" until a live response settles it.
+ * Nothing reads this field today.
  */
 export type TiktokComment = {
   comment_id: string

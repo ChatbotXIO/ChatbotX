@@ -31,10 +31,16 @@ const rawNumber = (value: string) => `__RAW__${value}__RAW__`
 const toJson = (payload: Record<string, unknown>) =>
   JSON.stringify(payload).replace(/"__RAW__(.+?)__RAW__"/g, "$1")
 
+// Byte-for-byte the shape of a production top-level comment (2026-09-21),
+// sentinel included: TikTok does NOT omit `parent_comment_id` on a comment with
+// no parent, it sends `0`. A fixture without it described a payload TikTok
+// never sends, which is how the suite stayed green while every top-level
+// comment on the channel was being declined as a reply.
 const buildContent = (overrides: Record<string, unknown> = {}) =>
   toJson({
     comment_id: rawNumber(COMMENT_ID),
     video_id: rawNumber(VIDEO_ID),
+    parent_comment_id: 0,
     comment_type: "comment",
     comment_action: "insert",
     unique_identifier: "+ABc1D2/E0fGhijkl",
@@ -162,6 +168,65 @@ describe("webhookHandler comment routing", () => {
 
     expect(queueAdd.mock.calls[0][1].data.commentData.parentId).toBe(
       PARENT_COMMENT_ID,
+    )
+  })
+
+  // The regression, in one line: `parent_comment_id: 0` reached the automation
+  // loop as the string "0", whose shape says "reply" to a matcher written for
+  // Meta's composite ids — so every top-level TikTok comment was declined with
+  // a `commentIsReply` miss and the automation never ran. The default fixture
+  // carries the sentinel, so the assertion above on the very first routing test
+  // guards it too; this states it outright.
+  test("reads TikTok's 0 sentinel as no parent, not as a reply", async () => {
+    await run(buildContent())
+
+    expect(queueAdd.mock.calls[0][1].data.commentData.parentId).toBeUndefined()
+  })
+
+  // `comment_type` is TikTok's own answer to the question, so nothing about the
+  // id's shape gets to overrule it.
+  test("trusts comment_type over a parent id sent on a top-level comment", async () => {
+    await run(
+      buildContent({
+        comment_type: "comment",
+        parent_comment_id: rawNumber(PARENT_COMMENT_ID),
+      }),
+    )
+
+    expect(queueAdd.mock.calls[0][1].data.commentData.parentId).toBeUndefined()
+  })
+
+  test.each([
+    { parent_comment_id: 0, expected: undefined, label: "the 0 sentinel" },
+    {
+      parent_comment_id: rawNumber(PARENT_COMMENT_ID),
+      expected: PARENT_COMMENT_ID,
+      label: "a real parent id",
+    },
+  ])("falls back to the id itself when comment_type is absent: $label", async ({
+    parent_comment_id,
+    expected,
+  }) => {
+    await run(buildContent({ comment_type: undefined, parent_comment_id }))
+
+    expect(queueAdd.mock.calls[0][1].data.commentData.parentId).toBe(expected)
+  })
+
+  // A rejected `content` is a comment that never reaches the inbox at all, so
+  // the schema absorbs a null where it once failed the whole object.
+  test("still ingests a comment whose parent_comment_id is null", async () => {
+    await run(buildContent({ parent_comment_id: null }))
+
+    expect(queueAdd).toHaveBeenCalledWith(
+      "incomingComment",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          commentData: expect.objectContaining({
+            commentId: COMMENT_ID,
+            parentId: undefined,
+          }),
+        }),
+      }),
     )
   })
 

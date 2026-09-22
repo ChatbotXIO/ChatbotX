@@ -2,7 +2,11 @@ import type { HandleRequestProps } from "@chatbotx.io/sdk"
 import { TiktokWebhookException } from "../exception"
 import { logger } from "../lib/logger"
 import { hmacSha256Hex, timingSafeStringEqual } from "../lib/webhook"
-import type { TiktokConfig, TiktokWebhookEvent } from "../schema"
+import type {
+  TiktokCommentEventContent,
+  TiktokConfig,
+  TiktokWebhookEvent,
+} from "../schema"
 import {
   parseTiktokCommentEventContent,
   parseTiktokHighIntentCommentContent,
@@ -49,6 +53,35 @@ async function verifySignature(
   const expected = await hmacSha256Hex(clientSecret, payload)
 
   return timingSafeStringEqual(expected, receivedSig)
+}
+
+/**
+ * The parent comment a comment answers, or `undefined` when it answers none.
+ *
+ * TikTok does not omit `parent_comment_id` on a top-level comment — it sends
+ * the sentinel `0`, which arrives here as the string `"0"` (the ids are quoted
+ * before parsing so snowflakes survive `JSON.parse`). Passing that straight
+ * through is what broke the channel: `isCommentReply` in the shared automation
+ * loop is built for Meta's composite `{objectId}_{storyId}` ids, and against
+ * TikTok's bare snowflakes it reduces to "a parent that is neither the video
+ * nor the comment itself means reply" — which `"0"` satisfies. With
+ * `ignoreCommentReplies` defaulting to on, every top-level TikTok comment was
+ * declined with a `commentIsReply` miss.
+ *
+ * `comment_type` is TikTok's own explicit discriminator, so it decides whenever
+ * it is present; the sentinel check below is the fallback for a payload that
+ * omits it. Normalizing here — at the channel boundary that owns the quirk —
+ * keeps the Meta heuristic untouched for the other four channels.
+ */
+function resolveParentCommentId(
+  content: TiktokCommentEventContent,
+): string | undefined {
+  const parentId = content.parent_comment_id
+  // `0` is "no parent", never an id — a real one is a 19-digit snowflake.
+  if (!parentId || parentId === "0") {
+    return
+  }
+  return content.comment_type === "comment" ? undefined : parentId
 }
 
 /**
@@ -126,7 +159,7 @@ async function handleCommentEvent(props: {
       commentData: {
         commentId: content.comment_id,
         postId: content.video_id,
-        parentId: content.parent_comment_id,
+        parentId: resolveParentCommentId(content),
         // The webhook carries no open id, name or avatar — only this stable
         // per-commenter identifier. `receiveComment` enriches it from
         // `business/comment/list/` before a contact is created.

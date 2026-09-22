@@ -58,6 +58,16 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
    because `comment_id` stays anchored to the story (`{storyId}_{replyId}`) even for a
    reply, so it can never collide with its own `parent_id`'s trailing half.
 
+   **`isCommentReply` is that Meta heuristic and nothing more — normalize a non-Meta
+   parent at the channel boundary first.** Against bare ids it degenerates to "a parent
+   that is neither the post nor the comment means reply", and TikTok sends
+   `parent_comment_id: 0` (a sentinel, arriving as the string `"0"`) on a **top-level**
+   comment — which swallowed every TikTok automation behind a `commentIsReply` miss.
+   `resolveParentCommentId` (`integrations/tiktok/src/handlers/webhook.ts`) resolves it
+   from the payload's own `comment_type` discriminator before the job is enqueued. A new
+   channel gets the same treatment in its own webhook handler; never widen the shared
+   matcher with per-channel sentinels.
+
 2. **Post ids are composite `{pageId}_{storyId}`**; the picker stores 3 different formats
    (published/ads composite, reels bare id, manual free-text). Always compare through
    `normalizePostId` (trailing story id). Never `post.value.includes(rawPostId)`.
