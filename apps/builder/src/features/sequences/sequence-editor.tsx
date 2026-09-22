@@ -77,7 +77,7 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
   }
 
   return (
-    <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
+    <FlowStoreProvider>
       <div className="@container container mx-auto w-full">
         <Breadcrumb className="mb-4">
           <BreadcrumbList>

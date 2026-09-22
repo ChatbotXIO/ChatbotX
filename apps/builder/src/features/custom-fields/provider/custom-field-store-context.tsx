@@ -1,65 +1,68 @@
 "use client"
 
+import { useMemo } from "react"
+import type { BotFieldResource } from "@/features/bot-fields/schema/resource"
+import { useWorkspaceId } from "@/hooks/routing"
+import { useEnsureQueryLoaded } from "@/hooks/use-ensure-query-loaded"
+import type { CustomFieldResource } from "../schema/resource"
 import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useRef,
-} from "react"
-import { useStore } from "zustand"
-import {
-  type CustomFieldStore,
-  createCustomFieldStore,
-} from "./custom-field-store"
+  useBotFields,
+  useCustomFields,
+  useInvalidateCustomFields,
+} from "./custom-field-hook"
 
-export type CustomFieldStoreApi = ReturnType<typeof createCustomFieldStore>
-
-export const CustomFieldStoreContext = createContext<
-  CustomFieldStoreApi | undefined
->(undefined)
-
-export type CustomFieldStoreProviderProps = {
+type CustomFieldStoreSnapshot = {
+  loading: boolean
+  error: string | null
+  initialized: boolean
   workspaceId: string
-  children: ReactNode
-  autoInitialize?: boolean
-}
-
-export const CustomFieldStoreProvider = ({
-  workspaceId,
-  autoInitialize = true,
-  children,
-}: CustomFieldStoreProviderProps) => {
-  const storeRef = useRef<CustomFieldStoreApi>(null)
-  if (!storeRef.current) {
-    storeRef.current = createCustomFieldStore({
-      workspaceId,
-    })
-  }
-
-  useEffect(() => {
-    if (storeRef.current && autoInitialize) {
-      storeRef.current.getState().initialize()
-    }
-  }, [autoInitialize])
-
-  return (
-    <CustomFieldStoreContext.Provider value={storeRef.current}>
-      {children}
-    </CustomFieldStoreContext.Provider>
-  )
+  customFields: CustomFieldResource[]
+  botFields: BotFieldResource[]
+  botFieldsLoading: boolean
+  botFieldsError: string | null
+  botFieldsInitialized: boolean
+  getAllCustomFields: () => Promise<unknown>
+  ensureBotFieldsLoaded: () => Promise<unknown>
 }
 
 export const useCustomFieldStore = <T,>(
-  selector: (store: CustomFieldStore) => T,
+  selector: (store: CustomFieldStoreSnapshot) => T,
 ): T => {
-  const customFieldStoreContext = useContext(CustomFieldStoreContext)
+  const workspaceId = useWorkspaceId()
+  const customFieldsQuery = useCustomFields(workspaceId)
+  const botFieldsQuery = useBotFields(workspaceId, { enabled: false })
+  const invalidateCustomFields = useInvalidateCustomFields()
 
-  if (!customFieldStoreContext) {
-    throw new Error(
-      "useCustomFieldStore must be used within CustomFieldStoreProvider",
-    )
-  }
+  const ensureBotFieldsLoaded = useEnsureQueryLoaded(botFieldsQuery)
 
-  return useStore(customFieldStoreContext, selector)
+  const snapshot = useMemo<CustomFieldStoreSnapshot>(
+    () => ({
+      loading: customFieldsQuery.isPending,
+      error: customFieldsQuery.error?.message ?? null,
+      initialized: customFieldsQuery.isFetched,
+      workspaceId: workspaceId ?? "",
+      customFields: customFieldsQuery.data ?? [],
+      botFields: botFieldsQuery.data ?? [],
+      botFieldsLoading: botFieldsQuery.isFetching,
+      botFieldsError: botFieldsQuery.error?.message ?? null,
+      botFieldsInitialized: botFieldsQuery.isFetched,
+      getAllCustomFields: invalidateCustomFields,
+      ensureBotFieldsLoaded,
+    }),
+    [
+      botFieldsQuery.data,
+      botFieldsQuery.error,
+      botFieldsQuery.isFetched,
+      botFieldsQuery.isFetching,
+      customFieldsQuery.data,
+      customFieldsQuery.error,
+      customFieldsQuery.isFetched,
+      customFieldsQuery.isPending,
+      ensureBotFieldsLoaded,
+      invalidateCustomFields,
+      workspaceId,
+    ],
+  )
+
+  return selector(snapshot)
 }

@@ -36,14 +36,43 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
+vi.mock("@/lib/orpc/query", () => ({
+  orpc: {
+    appointmentsAPI: {
+      listContactAppointmentsAPI: { queryOptions: vi.fn(() => ({})) },
+    },
+    contactNotesAPI: {
+      listContactNotesAuthenticatedAPI: { queryOptions: vi.fn(() => ({})) },
+    },
+    contactSequencesAPI: {
+      listContactSequencesAuthenticatedAPI: { queryOptions: vi.fn(() => ({})) },
+    },
+    couponsAPI: {
+      listContactCouponsAPI: { queryOptions: vi.fn(() => ({})) },
+    },
+  },
+}))
+
+vi.mock("@tanstack/react-query", () => ({
+  useQuery: () => ({ data: undefined }),
+  useQueryClient: () => ({ setQueryData: vi.fn() }),
+}))
+
 let latestConversations: unknown[] = []
+let latestSeededContact: unknown = null
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
   useChatStore: <T,>(
     selector: (state: {
       conversations: unknown[]
+      seededContact: unknown
       updateContact: () => void
     }) => T,
-  ) => selector({ conversations: latestConversations, updateContact: vi.fn() }),
+  ) =>
+    selector({
+      conversations: latestConversations,
+      seededContact: latestSeededContact,
+      updateContact: vi.fn(),
+    }),
 }))
 
 // Captures the props `ContactInboxPanel` passes to the hook, including
@@ -150,6 +179,7 @@ describe("ContactInboxPanel", () => {
     listAppointmentsMock.mockClear()
     hookCalls.length = 0
     latestConversations = [baseConversation]
+    latestSeededContact = null
   })
 
   afterEach(() => {
@@ -284,5 +314,28 @@ describe("ContactInboxPanel", () => {
 
     const detail = container.querySelector('[data-testid="contact-detail"]')
     expect(detail?.textContent).toBe("no-name")
+  })
+
+  test("uses the seeded contact for the active conversation", () => {
+    latestSeededContact = { id: "contact-1", firstName: "Jane" }
+
+    render()
+
+    expect(getContactMock).not.toHaveBeenCalled()
+    expect(
+      container.querySelector('[data-testid="contact-detail"]')?.textContent,
+    ).toBe("Jane")
+  })
+
+  test("fetches when the seeded contact belongs to another conversation", () => {
+    latestSeededContact = { id: "contact-2", firstName: "Jane" }
+    getContactMock.mockResolvedValue({ id: "contact-1", firstName: "John" })
+
+    render()
+
+    expect(getContactMock).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+    })
   })
 })

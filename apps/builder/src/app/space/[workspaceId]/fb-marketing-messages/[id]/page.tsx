@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { Suspense } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { EditMarketingMessage } from "@/features/facebook-marketing-messages/components/edit-marketing-message"
 import { resolveMarketingMessagesGrant } from "@/features/facebook-marketing-messages/lib/grant"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
@@ -54,12 +54,10 @@ export default async function EditFacebookMarketingMessagePage({
           { label: row.name, href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
-        <CustomFieldStoreProvider workspaceId={workspaceId}>
-          <Suspense>
-            <EditMarketingMessage row={row} workspaceId={workspaceId} />
-          </Suspense>
-        </CustomFieldStoreProvider>
+      <FlowStoreProvider>
+        <Suspense>
+          <EditMarketingMessage row={row} workspaceId={workspaceId} />
+        </Suspense>
       </FlowStoreProvider>
     </div>
   )

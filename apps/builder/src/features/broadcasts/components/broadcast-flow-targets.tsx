@@ -13,7 +13,7 @@ import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { useFlowStore } from "@/features/flows/provider/flow-store-context"
-import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
+import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
 import { useBroadcastPageTemplates } from "../hooks/use-broadcast-page-templates"
 import {
   buildTargetFlowOptions,
@@ -83,7 +83,7 @@ function BroadcastFlowTargetCard({
  */
 export function BroadcastFlowTargets({ channel }: { channel: ChannelType }) {
   const { control } = useFormContext()
-  const inboxes = useInboxStore((state) => state.inboxes)
+  const inboxes = useInboxList()
   const flows = useFlowStore((state) => state.flows)
   const { templatesById } = useBroadcastPageTemplates(channel)
 

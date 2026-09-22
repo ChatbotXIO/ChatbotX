@@ -33,6 +33,9 @@ vi.mock("@/features/conversations/conversation-filter", () => ({
 vi.mock("@/features/contacts/create-contact-dialog", () => ({
   CreateContactDialog: () => <div />,
 }))
+vi.mock("@/features/users/provider/user-hook", () => ({
+  useContactAssigneeOptions: () => [],
+}))
 
 const storeState = {
   conversations: [{ id: "conv-2" }, { id: "conv-1" }] as { id: string }[],
@@ -44,6 +47,7 @@ const storeState = {
   isLoadingConversation: false,
   setActiveConversationId: vi.fn(),
   initActiveConversationFromUrl: vi.fn().mockResolvedValue(undefined),
+  isFirstLoadConversation: false,
 }
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
   useChatStore: (selector: (state: typeof storeState) => unknown) =>
@@ -72,6 +76,7 @@ describe("ConversationList", () => {
     container = document.createElement("div")
     document.body.appendChild(container)
     root = createRoot(container)
+    storeState.isFirstLoadConversation = false
   })
 
   afterEach(() => {
@@ -87,5 +92,25 @@ describe("ConversationList", () => {
     expect(capturedProps.current?.computeItemKey).toBeInstanceOf(Function)
     const item = { id: "conv-42" }
     expect(capturedProps.current?.computeItemKey?.(0, item)).toBe("conv-42")
+  })
+
+  test("skips loading conversations when the store was seeded", () => {
+    act(() => {
+      root.render(<ConversationList workspaceId="ws-1" />)
+    })
+
+    expect(storeState.loadMoreConversations).not.toHaveBeenCalled()
+  })
+
+  test("loads conversations when the store has no seeded state", () => {
+    storeState.isFirstLoadConversation = true
+
+    act(() => {
+      root.render(<ConversationList workspaceId="ws-1" />)
+    })
+
+    expect(storeState.loadMoreConversations).toHaveBeenCalledWith("ws-1", {
+      autoSelectFirst: true,
+    })
   })
 })

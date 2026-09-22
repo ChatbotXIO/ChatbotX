@@ -9,8 +9,13 @@ import {
 import type {
   ChannelType,
   CustomFieldType,
+  FillableContactKey,
 } from "@chatbotx.io/database/partials"
-import { channelTypes, customFieldTypes } from "@chatbotx.io/database/partials"
+import {
+  channelTypes,
+  customFieldTypes,
+  fillableContactKeys,
+} from "@chatbotx.io/database/partials"
 import {
   Avatar,
   AvatarFallback,
@@ -54,8 +59,10 @@ import { getBrowserTimezone } from "../contact-filter/lib/timezone"
 import type { ContactInboxResource } from "../contact-inboxes/schema/resource"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
 import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
-import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
-import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
+import {
+  customFieldIconsMap,
+  useCustomFields,
+} from "../custom-fields/provider/custom-field-hook"
 import { EditContactField } from "./edit-contact-field"
 import { ResetContactCustomFieldsDialog } from "./reset-contact-custom-fields-dialog"
 import type { GetContactResponse } from "./schema/query"
@@ -383,7 +390,8 @@ export const ContactDetail = ({
   const t = useTranslations()
 
   const workspaceId = useWorkspaceId()
-  const { conversations } = useChatStore((state) => state)
+  const { data: customFields = [] } = useCustomFields(workspaceId)
+  const { conversations, updateContact } = useChatStore((state) => state)
   const avatarUrl = useAvatarUrl(contact)
   const [timezone, setTimezone] = useState("UTC")
 
@@ -426,9 +434,6 @@ export const ContactDetail = ({
 
   const [selectedField, setSelectedField] =
     useState<ContactEditableField | null>(null)
-
-  const { customFields, initialized: initializedCustomFields } =
-    useCustomFieldStore((state) => state)
 
   const [contactFields, setContactFields] = useState<ContactEditableField[]>([])
 
@@ -503,6 +508,16 @@ export const ContactDetail = ({
           : field,
       ),
     )
+    // Only fillable columns (name/email/phone/gender/timezone) live on
+    // ContactResource / conversation.contact — arbitrary custom fields are
+    // stored separately and never read from the chat store, so patching it
+    // for those would be a no-op key that never matches.
+    if (
+      contact &&
+      fillableContactKeys.includes(fieldKey as FillableContactKey)
+    ) {
+      updateContact(contact.id, { [fieldKey]: value })
+    }
   }
 
   const handleChooseCustomField = (customFieldId: string) => {
@@ -538,7 +553,7 @@ export const ContactDetail = ({
   }, [customFields])
 
   useEffect(() => {
-    if (activeConversationId && initializedCustomFields) {
+    if (activeConversationId) {
       const conversation = conversations.find(
         (item) => item.id === activeConversationId,
       )
@@ -676,7 +691,6 @@ export const ContactDetail = ({
   }, [
     activeConversationId,
     conversations,
-    initializedCustomFields,
     contact,
     customFieldMap,
     genderOptions,

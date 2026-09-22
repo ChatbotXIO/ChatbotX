@@ -32,7 +32,7 @@ import {
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
+import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
 import ArchiveConversationDialog from "../conversations/components/archive-conversation"
 import AssignConversationDialog from "../conversations/components/assign-conversation-dialog"
 import DisableBotDialog from "../conversations/components/disable-bot-dialog"
@@ -65,8 +65,9 @@ export function ContactListAction({
   const rows = table.getFilteredSelectedRowModel().rows
   const exportAll = table.getIsAllPageRowsSelected()
 
-  const hasContactScanInbox = useInboxStore((state) =>
-    state.inboxes.some((inbox) => isContactScanChannel(inbox.channel)),
+  const inboxes = useInboxList()
+  const hasContactScanInbox = inboxes.some((inbox) =>
+    isContactScanChannel(inbox.channel),
   )
 
   return (

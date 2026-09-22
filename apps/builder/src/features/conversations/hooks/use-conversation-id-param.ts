@@ -1,6 +1,6 @@
 "use client"
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 
 /**
  * Reads and writes the `conversationId` query param that deep-links the
@@ -13,14 +13,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
  * back to the list.
  */
 export function useConversationIdParam() {
-  const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
   const set = (conversationId: string) => {
     const params = new URLSearchParams(searchParams.toString())
     params.set("conversationId", conversationId)
-    router.replace(`?${params.toString()}`)
+    window.history.replaceState(null, "", `${pathname}?${params.toString()}`)
   }
 
   const clear = () => {
@@ -30,7 +29,11 @@ export function useConversationIdParam() {
     }
     params.delete("conversationId")
     const queryString = params.toString()
-    router.replace(queryString ? `?${queryString}` : pathname)
+    window.history.replaceState(
+      null,
+      "",
+      queryString ? `${pathname}?${queryString}` : pathname,
+    )
   }
 
   return { set, clear }

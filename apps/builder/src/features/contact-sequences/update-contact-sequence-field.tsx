@@ -1,9 +1,5 @@
 "use client"
 
-import type {
-  ContactsOnSequenceModel,
-  SequenceModel,
-} from "@chatbotx.io/database/types"
 import { SelectTagsInputField } from "@chatbotx.io/ui/components/form/select-tags-input-field"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -15,10 +11,15 @@ import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import { useWorkspaceId } from "@/hooks/routing"
 import type { ContactResource } from "../contacts/schema/resource"
 import { updateContactSequenceAction } from "./actions/update-contact-sequence.action"
-import {
-  type ContactOnSequenceWithRelations,
-  updateContactSequenceRequest,
-} from "./schema"
+import { updateContactSequenceRequest } from "./schema"
+
+export type ContactSequenceFieldItem = {
+  sequenceId: string
+  sequence: {
+    id: string
+    name: string
+  }
+}
 
 export default function UpdateContactSequenceField({
   contact,
@@ -26,8 +27,8 @@ export default function UpdateContactSequenceField({
   onSuccess,
 }: {
   contact: ContactResource
-  sequences: ContactOnSequenceWithRelations[]
-  onSuccess?: (updatedSequences: ContactOnSequenceWithRelations[]) => void
+  sequences: ContactSequenceFieldItem[]
+  onSuccess?: (updatedSequences: ContactSequenceFieldItem[]) => void
 }) {
   const workspaceId = useWorkspaceId()
 
@@ -50,9 +51,13 @@ export default function UpdateContactSequenceField({
       actionProps: {
         onSuccess: ({ data: updatedSequences }) => {
           onSuccess?.(
-            updatedSequences as (ContactsOnSequenceModel & {
-              sequence: SequenceModel
-            })[],
+            updatedSequences.map((sequence) => ({
+              sequenceId: sequence.sequenceId,
+              sequence: {
+                id: sequence.sequence.id,
+                name: sequence.sequence.name,
+              },
+            })),
           )
         },
         onError: ({ error }) => {

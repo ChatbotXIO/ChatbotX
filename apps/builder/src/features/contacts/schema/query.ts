@@ -8,7 +8,6 @@ import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter/schema"
 import { contactInboxResource } from "@/features/contact-inboxes/schema/resource"
-import { contactOnSequenceWithRelations } from "@/features/contact-sequences/schema"
 import { conversationResource } from "@/features/conversations/schema/resource"
 import { inboxResource } from "@/features/inboxes/schema/resource"
 import { tagResource } from "@/features/tags/schema/resource"
@@ -182,8 +181,6 @@ export const getContactResponse = contactResource.and(
   z.object({
     tags: z.array(tagResource),
     customFields: z.array(publicContactCustomFieldResource),
-    contactNotes: z.array(contactNoteResource),
-    contactsOnSequences: z.array(contactOnSequenceWithRelations),
   }),
 )
 export type GetContactResponse = z.infer<typeof getContactResponse>

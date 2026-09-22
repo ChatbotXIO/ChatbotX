@@ -23,7 +23,7 @@ export default async function WebchatEditPage({
   })
 
   return (
-    <FlowStoreProvider workspaceId={data.workspaceId}>
+    <FlowStoreProvider>
       <Suspense fallback={<div>Loading...</div>}>
         <UpdateWebchatForm integrationWebchat={integrationWebchat} />
       </Suspense>

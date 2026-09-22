@@ -25,9 +25,7 @@ export default async function FolderableLayout({
     >
       {folders}
       <Suspense>
-        <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-          {children}
-        </FlowStoreProvider>
+        <FlowStoreProvider>{children}</FlowStoreProvider>
       </Suspense>
     </FolderStoreProvider>
   )

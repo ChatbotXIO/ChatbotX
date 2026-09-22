@@ -26,6 +26,7 @@ export function MessageList() {
   const {
     conversations,
     messages,
+    loadInitialMessages,
     loadMoreMessages,
     isLoadMoreMessage,
     hasNextMessagePage,
@@ -198,7 +199,7 @@ export function MessageList() {
     prependPendingRef.current = false
     didAutoSelectCommentRef.current = false
     if (activeConversationId) {
-      loadMoreMessages(workspaceId, MESSAGE_LIST_PER_PAGE)
+      loadInitialMessages(workspaceId, MESSAGE_LIST_PER_PAGE)
     }
   }, [activeConversationId])
 

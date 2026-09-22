@@ -49,6 +49,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     isLoadingConversation,
     isBootstrappingUrlConversation,
     activeConversationId,
+    activeConversationAutoSelected,
     setActiveConversationId,
   } = useChatStore((state) => state)
 
@@ -73,6 +74,15 @@ export const ChatLayout = (props: ChatLayoutProps) => {
   // JS — and rendering waits for the first measurement rather than guessing
   // desktop and remounting everything a frame later.
   const isMobile = useIsMobileState()
+  useEffect(() => {
+    if (isMobile === true && activeConversationAutoSelected) {
+      setActiveConversationId(null)
+    }
+  }, [activeConversationAutoSelected, isMobile, setActiveConversationId])
+
+  const mobileActiveConversationId = activeConversationAutoSelected
+    ? null
+    : activeConversationId
 
   const isResolvingConversation =
     (isFirstLoadConversation && isLoadingConversation) ||
@@ -134,7 +144,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         // Fills the height `FullBleed` derives from the shell rather than
         // naming a viewport unit of its own — see the desktop group below.
         <div className="flex min-h-0 flex-1 flex-col">
-          {activeConversationId ? (
+          {mobileActiveConversationId ? (
             <MessageThreadPane
               {...paneState}
               onBack={() => {

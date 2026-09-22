@@ -12,7 +12,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { useTranslations } from "next-intl"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
-import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
+import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
 import { ScanQRCodeDialog } from "@/features/qr-codes/scan-qrcode"
 import { useTenantSettings } from "@/features/tenant"
 import { useClipboard } from "@/hooks/use-clipboard"
@@ -27,7 +27,7 @@ export function GetInboxUrlDialog({
   onOpenChange,
   refConfig,
 }: GetInboxUrlDialogProps) {
-  const { inboxes } = useInboxStore((state) => state)
+  const inboxes = useInboxList({ enabled: open })
   const { appUrl } = useTenantSettings()
   const skipChannels: ChannelType[] = ["smtp", "tiktok"]
 

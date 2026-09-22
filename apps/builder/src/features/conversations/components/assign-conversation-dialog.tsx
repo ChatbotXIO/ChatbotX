@@ -24,12 +24,17 @@ import { useWorkspaceId } from "@/hooks/routing"
 import { assignConversationAction } from "../actions/assign-conversation.action"
 import { assignConversationSchema } from "../schema/action"
 
+export type ConversationAssignee = {
+  id: string | null
+  name: string | null
+}
+
 type AssignConversationDialogProps = {
   trigger: ReactElement
   assignedId?: string | null
   contactIds: string[]
   showRemove?: boolean
-  onSuccess?: (value: string | null) => void
+  onSuccess?: (assignee: ConversationAssignee) => void
 }
 
 export default function AssignConversationDialog({
@@ -43,7 +48,7 @@ export default function AssignConversationDialog({
   const [open, setOpen] = useState(false)
   const workspaceId = useWorkspaceId()
 
-  const contactAssigneeOptions = useContactAssigneeOptions()
+  const contactAssigneeOptions = useContactAssigneeOptions({ enabled: open })
 
   const defaultValues = useMemo(
     () => ({
@@ -52,6 +57,19 @@ export default function AssignConversationDialog({
     }),
     [contactIds, assignedId],
   )
+
+  const getSelectedAssignee = (): ConversationAssignee => {
+    const id = form.getValues("assignedId")
+    if (!id) {
+      return { id: null, name: null }
+    }
+
+    const selectedOption = contactAssigneeOptions
+      .flatMap((option) => option.children ?? [option])
+      .find((option) => option.value === id)
+
+    return { id, name: selectedOption?.label ?? null }
+  }
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -65,7 +83,7 @@ export default function AssignConversationDialog({
                 feature: t("fields.conversation.label"),
               }),
             )
-            onSuccess?.(form.getValues("assignedId"))
+            onSuccess?.(getSelectedAssignee())
             resetFormAndAction()
             setOpen(false)
           },

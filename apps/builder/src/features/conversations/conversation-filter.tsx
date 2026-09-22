@@ -49,7 +49,7 @@ export function ConversationFilter({
     | string
     | undefined
 
-  const inboxOptions = useConfiguredInboxTypeOptions()
+  const inboxOptions = useConfiguredInboxTypeOptions({ enabled: open })
 
   const filterCount = filters.contactFilter?.conditions.length ?? 0
   const hasFilter = filterCount > 0
@@ -64,6 +64,7 @@ export function ConversationFilter({
   const contactAssigneeOptions = useContactAssigneeOptions({
     includeAll: true,
     includeUnassigned: true,
+    enabled: open,
   })
 
   const conversationStatusOptions = [

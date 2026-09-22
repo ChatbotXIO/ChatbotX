@@ -27,12 +27,12 @@ features/<feature-name>/
     query.ts            → List/filter params
     action.ts           → Mutation inputs
     resource.ts         → Response shapes
-  provider/             → Zustand store + context (client-only state, if needed)
-    item-store.ts
-    item-store-provider.tsx
+  provider/             → TanStack Query hooks for server data
+    item-hook.ts         → useItems(), useInvalidateItems()
+    item-store.ts        → Zustand store only for client-only state (if needed)
+    item-store-context.tsx → Thin provider for route/workspace scoping, if needed
   components/           → UI components (if many)
-  hooks/                → Feature-specific hooks (if needed);
-                          use-<items>.ts → TanStack Query hooks for server lists
+  hooks/                → Feature-specific non-server-data hooks (if needed)
   item-table.tsx        → Root-level components (if few)
   create-item-dialog.tsx
 ```

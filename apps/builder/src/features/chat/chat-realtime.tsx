@@ -189,6 +189,8 @@ export function ChatRealtime() {
       updateConversations(data.conversationIds, {
         assignedUserId: data.assignedUserId,
         assignedInboxTeamId: data.assignedInboxTeamId,
+        assignedUser: null,
+        assignedInboxTeam: null,
       })
     },
   }

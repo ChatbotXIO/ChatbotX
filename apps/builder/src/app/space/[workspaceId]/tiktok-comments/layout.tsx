@@ -14,9 +14,5 @@ export default async function TiktokCommentsLayout({
     return notFound()
   }
 
-  return (
-    <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-      {children}
-    </FlowStoreProvider>
-  )
+  return <FlowStoreProvider>{children}</FlowStoreProvider>
 }

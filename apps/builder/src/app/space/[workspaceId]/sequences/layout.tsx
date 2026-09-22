@@ -10,11 +10,7 @@ export default async function SequencesLayout({
   params: Promise<{ workspaceId: string }>
   children: React.ReactNode
 }) {
-  const workspaceId = await resolveGuardedWorkspaceId(params, "broadcast")
+  await resolveGuardedWorkspaceId(params, "broadcast")
 
-  return (
-    <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-      {children}
-    </FlowStoreProvider>
-  )
+  return <FlowStoreProvider>{children}</FlowStoreProvider>
 }

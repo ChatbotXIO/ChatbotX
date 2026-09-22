@@ -21,7 +21,7 @@ export default async function FolderableLayout({
       folderType="automatedResponse"
       workspaceId={workspaceId}
     >
-      <FlowStoreProvider workspaceId={workspaceId}>
+      <FlowStoreProvider>
         <KeywordsTab />
         <KeywordsDescription type="inbound" />
         {folders}

@@ -20,9 +20,8 @@ const inboxes = [
   { id: "inbox-b", name: "Shop B" },
   { id: "inbox-c", name: "Shop C" },
 ]
-vi.mock("@/features/inboxes/provider/inbox-store-context", () => ({
-  useInboxStore: (selector: (state: { inboxes: typeof inboxes }) => unknown) =>
-    selector({ inboxes }),
+vi.mock("@/features/inboxes/provider/inbox-hook", () => ({
+  useInboxList: () => inboxes,
 }))
 
 // The card is exercised by its own suite; here it only has to expose which

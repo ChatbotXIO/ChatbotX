@@ -30,7 +30,7 @@ export default async function CreateUserPersistentMenuPage(props: {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <FlowStoreProvider workspaceId={workspaceId}>
+        <FlowStoreProvider>
           <UserPersistentMenuForm workspaceId={workspaceId} />
         </FlowStoreProvider>
       </CardContent>

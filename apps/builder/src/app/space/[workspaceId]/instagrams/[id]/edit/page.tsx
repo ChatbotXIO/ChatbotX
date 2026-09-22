@@ -1,4 +1,3 @@
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { UpdateInstagramForm } from "@/features/integration-instagram/components/update-instagram-form"
 import { findIntegrationInstagram } from "@/features/integration-instagram/queries"
@@ -16,10 +15,8 @@ export default async function UpdateInstagramPage(props: {
   })
 
   return (
-    <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-      <CustomFieldStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-        <UpdateInstagramForm integrationInstagram={integrationInstagram} />
-      </CustomFieldStoreProvider>
+    <FlowStoreProvider>
+      <UpdateInstagramForm integrationInstagram={integrationInstagram} />
     </FlowStoreProvider>
   )
 }

@@ -30,7 +30,7 @@ export function MediaLibraryOrInsertLink({
   parentName: string
   fileType: FileType
   uploadPath?: string
-  // Requires a mounted CustomFieldStoreProvider (e.g. inside the flow editor).
+  // Reads custom fields from the current route workspace.
   showVariablePicker?: boolean
   // See `UrlVariablePicker`'s doc — only opt in when this URL field is
   // actually resolved against contact/bot-field variables at send time.

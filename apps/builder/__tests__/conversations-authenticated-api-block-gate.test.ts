@@ -10,7 +10,11 @@ type RouteConfig = {
 type ArchiveInput = { workspaceId: string; ids: string[] }
 type HandlerContext = {
   input: ArchiveInput
-  context: { user: { id: string }; workspace: { ownerId: string } }
+  context: {
+    user: { id: string }
+    workspace: { ownerId: string }
+    workspaceMember?: { permissions: unknown }
+  }
 }
 type ProcedureHandler = (args: HandlerContext) => Promise<unknown>
 
@@ -63,11 +67,20 @@ vi.mock("@/middlewares/auth", () => ({
   workspaceAuthorizedMidddleware: vi.fn(),
 }))
 
-const { archiveByIds, getAtLimitMap, getForUser, isCloud } = vi.hoisted(() => ({
+const {
+  archiveByIds,
+  canViewContactEmailAndPhone,
+  getAtLimitMap,
+  getForUser,
+  isCloud,
+  listConversations,
+} = vi.hoisted(() => ({
   archiveByIds: vi.fn(),
+  canViewContactEmailAndPhone: vi.fn(),
   getAtLimitMap: vi.fn(),
   getForUser: vi.fn(),
   isCloud: vi.fn(),
+  listConversations: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -104,10 +117,10 @@ vi.mock("@/features/conversations/queries/get-post-details.query", () => ({
 }))
 vi.mock("@/features/conversations/queries/list-conversations.query", () => ({
   findConversation: vi.fn(),
-  listConversations: vi.fn(),
+  listConversations,
 }))
 vi.mock("@/features/contacts/permissions", () => ({
-  canViewContactEmailAndPhone: vi.fn(),
+  canViewContactEmailAndPhone,
 }))
 vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserAndTargetWorkspace: vi.fn().mockResolvedValue(null),
@@ -116,6 +129,7 @@ vi.mock("@/lib/auth/utils", () => ({
 await import("@/features/conversations/api/private")
 
 const ARCHIVE_PATH = "/workspaces/{workspaceId}/conversations/archive"
+const LIST_PATH = "/workspaces/{workspaceId}/conversations"
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -173,5 +187,47 @@ describe("conversationsAuthenticatedAPI — trial-expired/MAC block gate", () =>
         triggerType: "conversation_archived",
       },
     })
+  })
+})
+
+describe("conversationsAuthenticatedAPI — PII permission gate", () => {
+  test("includes email and phone when the workspace member has permission", async () => {
+    canViewContactEmailAndPhone.mockReturnValue(true)
+    listConversations.mockResolvedValue({ data: [], nextCursor: null })
+
+    const handler = handlersByPath[LIST_PATH]
+    await handler?.({
+      input: { workspaceId: "workspace-1", ids: [] },
+      context: {
+        user: { id: "user-1" },
+        workspace: { ownerId: "owner-1" },
+        workspaceMember: { permissions: { contacts: true } },
+      },
+    })
+
+    expect(listConversations).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", ids: [] },
+      { includeEmailAndPhone: true },
+    )
+  })
+
+  test("omits email and phone when the workspace member lacks permission", async () => {
+    canViewContactEmailAndPhone.mockReturnValue(false)
+    listConversations.mockResolvedValue({ data: [], nextCursor: null })
+
+    const handler = handlersByPath[LIST_PATH]
+    await handler?.({
+      input: { workspaceId: "workspace-1", ids: [] },
+      context: {
+        user: { id: "user-1" },
+        workspace: { ownerId: "owner-1" },
+        workspaceMember: { permissions: { contacts: false } },
+      },
+    })
+
+    expect(listConversations).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", ids: [] },
+      { includeEmailAndPhone: false },
+    )
   })
 })

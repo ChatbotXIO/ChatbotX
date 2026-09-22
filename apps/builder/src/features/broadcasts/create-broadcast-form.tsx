@@ -47,7 +47,7 @@ import type { ContactFilterCriteria } from "../contact-filter/schema"
 import { useContactStore } from "../contacts/provider/contact-store-context"
 import { useFlowStore } from "../flows/provider/flow-store-context"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
-import { useInboxStore } from "../inboxes/provider/inbox-store-context"
+import { useInboxList } from "../inboxes/provider/inbox-hook"
 import { BroadcastFlowTargets } from "./components/broadcast-flow-targets"
 import { BroadcastFlowTypeSelector } from "./components/broadcast-flow-type-selector"
 import { BroadcastInboxMultiSelect } from "./components/broadcast-inbox-multi-select"
@@ -264,7 +264,7 @@ export function CreateBroadcastForm({
  * flow-filter effect only re-runs when the selection actually changes.
  */
 function useSelectedWhatsappIntegrationIds(inboxIds: string[]): string[] {
-  const inboxes = useInboxStore((state) => state.inboxes)
+  const inboxes = useInboxList()
   const key = inboxIds.join(",")
   // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands in for `inboxIds` by value
   return useMemo(

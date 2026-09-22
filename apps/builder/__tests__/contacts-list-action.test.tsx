@@ -11,6 +11,7 @@ vi.mock("next-intl", () => ({
 }))
 
 vi.mock("next/navigation", () => ({
+  useParams: () => ({ workspaceId: "ws-1" }),
   useRouter: () => ({ refresh: vi.fn() }),
 }))
 
@@ -30,10 +31,8 @@ vi.mock("next/link", () => ({
 }))
 
 let inboxes: { channel: string }[] = []
-vi.mock("@/features/inboxes/provider/inbox-store-context", () => ({
-  useInboxStore: (
-    selector: (state: { inboxes: { channel: string }[] }) => unknown,
-  ) => selector({ inboxes }),
+vi.mock("@/features/inboxes/provider/inbox-hook", () => ({
+  useInboxList: () => inboxes,
 }))
 
 // No portal/open-state machinery — always renders every menu item, which is

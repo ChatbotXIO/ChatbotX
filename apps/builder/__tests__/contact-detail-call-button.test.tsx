@@ -114,7 +114,19 @@ vi.mock("@/features/contact-filter/lib/timezone", () => ({
 }))
 
 vi.mock("@/features/custom-fields/contact-custom-field-manage", () => ({
-  ContactCustomFieldManage: () => null,
+  ContactCustomFieldManage: ({
+    onChooseCustomField,
+  }: {
+    onChooseCustomField: (id: string) => void
+  }) => (
+    <button
+      data-testid="add-custom-field"
+      onClick={() => onChooseCustomField("field-new")}
+      type="button"
+    >
+      Add custom field
+    </button>
+  ),
 }))
 
 vi.mock("@/features/contacts/edit-contact-field", () => ({
@@ -125,18 +137,13 @@ vi.mock("@/features/contacts/reset-contact-custom-fields-dialog", () => ({
   ResetContactCustomFieldsDialog: () => null,
 }))
 
-// A STABLE object/array — see the `next-intl` mock's comment above for why:
-// `ContactDetail`'s effect depends on `customFieldMap`, itself derived from
-// `customFields` via `useMemo`, so a fresh `[]` on every call loops the same
-// way a fresh `t` does.
-const stableCustomFieldState = {
-  customFields: [] as unknown[],
-  initialized: true,
-}
-vi.mock("@/features/custom-fields/provider/custom-field-store-context", () => ({
-  useCustomFieldStore: (
-    selector: (state: typeof stableCustomFieldState) => unknown,
-  ) => selector(stableCustomFieldState),
+// A STABLE array keeps the contact-fields effect's workspace-wide lookup
+// dependency stable across each test render.
+let customFields: { id: string; name: string; type: string }[] = []
+const CustomFieldIcon = () => null
+vi.mock("@/features/custom-fields/provider/custom-field-hook", () => ({
+  customFieldIconsMap: { shortText: CustomFieldIcon },
+  useCustomFields: () => ({ data: customFields }),
 }))
 
 const { ContactDetail } = await import("@/features/contacts/contact-detail")
@@ -207,6 +214,7 @@ describe("ContactDetail — call control", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     chatStoreState.conversations = []
+    customFields = []
     outboundCallModeMock.data = undefined
     outboundCallModeMock.isError = false
     outboundCallModeMock.error = null
@@ -220,6 +228,28 @@ describe("ContactDetail — call control", () => {
     voipCallContextMock.current = {}
   })
 
+  test("adds a workspace custom field that is not on the contact yet", () => {
+    customFields = [{ id: "field-new", name: "Priority", type: "shortText" }]
+    chatStoreState.conversations = [{ id: "conv-1", contactInboxes: [] }]
+
+    const el = renderComponent(
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by this call-control test.
+        }}
+      />,
+    )
+
+    act(() => {
+      el.querySelector('[data-testid="add-custom-field"]')?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      )
+    })
+
+    expect(el.textContent).toContain("Priority")
+  })
   test("0 WhatsApp numbers: renders no call control", () => {
     chatStoreState.conversations = [{ id: "conv-1", contactInboxes: [] }]
     const el = renderComponent(

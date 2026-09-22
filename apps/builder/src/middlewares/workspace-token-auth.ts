@@ -123,6 +123,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
     // Reads and deletes stay open (invariant #14).
     await assertWorkspaceOwnerAccessForMethod({
       method,
+      path,
       ownerId: workspace.ownerId,
     })
 

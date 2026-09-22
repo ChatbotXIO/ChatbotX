@@ -56,17 +56,18 @@ const callMiddleware = (
   headers: Headers,
   method: string | undefined,
   url?: string,
+  path?: string,
 ) =>
   (
     workspaceTokenAuthMidddleware as unknown as (opts: {
       context: { headers: Headers; url?: string }
       next: typeof next
-      procedure: { "~orpc": { route: { method?: string } } }
+      procedure: { "~orpc": { route: { method?: string; path?: string } } }
     }) => Promise<unknown>
   )({
     context: { headers, url },
     next,
-    procedure: { "~orpc": { route: { method } } },
+    procedure: { "~orpc": { route: { method, path } } },
   })
 
 const authResult = (permission: "full" | "read_only" = "full") => ({
@@ -162,6 +163,22 @@ describe("workspaceTokenAuthMidddleware", () => {
       code: "trialExpired",
       status: 403,
     })
+  })
+
+  test("allows the conversations list POST path for a trial-expired workspace", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult())
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    const headers = new Headers({ Authorization: "Bearer ws1_abc" })
+    await callMiddleware(
+      headers,
+      "POST",
+      undefined,
+      "/workspaces/{workspaceId}/conversations/list",
+    )
+
+    expect(next).toHaveBeenCalled()
+    expect(getAccessState).not.toHaveBeenCalled()
   })
 
   test("DELETE procedure with a blocked owner still passes (invariant #14)", async () => {

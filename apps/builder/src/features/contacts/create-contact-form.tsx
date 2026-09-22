@@ -13,9 +13,9 @@ import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import {
   allInboxConfigs,
+  useInboxList,
   useInboxOptionsByChannel,
 } from "@/features/inboxes/provider/inbox-hook"
-import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
 import { createContactAction } from "./actions/create-contact.action"
 import { createContactRequest } from "./schema/action"
 
@@ -56,7 +56,7 @@ export function CreateContactForm({
 }) {
   const t = useTranslations()
   const [channel, setChannel] = useState<ChannelType | undefined>(undefined)
-  const inboxes = useInboxStore((state) => state.inboxes)
+  const inboxes = useInboxList()
   const channelOptions = useMemo(
     () =>
       [...new Set(inboxes.map((inbox) => inbox.channel))]
