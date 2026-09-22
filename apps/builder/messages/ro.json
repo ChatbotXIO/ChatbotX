@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "Câmpurile botului"
+  },
+  "openLink": {
+    "title": "Deschide linkul",
+    "invalidTitle": "Link invalid.",
+    "invalidDescription": "Acest link este invalid sau a expirat.",
+    "openZaloGroup": "Deschide grupul Zalo",
+    "openZalo": "Deschide Zalo",
+    "openMessenger": "Deschide Messenger"
   }
 }

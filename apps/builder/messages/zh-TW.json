@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "機器人欄位"
+  },
+  "openLink": {
+    "title": "開啟連結",
+    "invalidTitle": "連結無效。",
+    "invalidDescription": "此連結無效或已過期。",
+    "openZaloGroup": "開啟 Zalo 群組",
+    "openZalo": "開啟 Zalo",
+    "openMessenger": "開啟 Messenger"
   }
 }

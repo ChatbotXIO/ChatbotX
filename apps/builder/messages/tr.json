@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "Bot Alanları"
+  },
+  "openLink": {
+    "title": "Bağlantıyı aç",
+    "invalidTitle": "Geçersiz bağlantı.",
+    "invalidDescription": "Bu bağlantı geçersiz veya süresi dolmuş.",
+    "openZaloGroup": "Zalo grubunu aç",
+    "openZalo": "Zalo'yu aç",
+    "openMessenger": "Messenger'ı aç"
   }
 }

@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "שדות בוט"
+  },
+  "openLink": {
+    "title": "פתיחת קישור",
+    "invalidTitle": "קישור לא תקין.",
+    "invalidDescription": "הקישור אינו תקין או שפג תוקפו.",
+    "openZaloGroup": "פתיחת קבוצת Zalo",
+    "openZalo": "פתיחת Zalo",
+    "openMessenger": "פתיחת Messenger"
   }
 }

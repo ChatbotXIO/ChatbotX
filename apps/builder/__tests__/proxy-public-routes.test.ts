@@ -16,6 +16,11 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/api/contacts")).toBe(true)
   })
 
+  test("/go is public so a contact can tap a flow button without a session", () => {
+    expect(isPublicRoute("/go/ws-1")).toBe(true)
+    expect(isPublicRoute("/goals")).toBe(false)
+  })
+
   test("an authenticated app path is not public", () => {
     expect(isPublicRoute("/space/1/inbox")).toBe(false)
     expect(isPublicRoute("/channels/create")).toBe(false)

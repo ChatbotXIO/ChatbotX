@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "Bottikentät"
+  },
+  "openLink": {
+    "title": "Avaa linkki",
+    "invalidTitle": "Virheellinen linkki.",
+    "invalidDescription": "Tämä linkki on virheellinen tai vanhentunut.",
+    "openZaloGroup": "Avaa Zalo-ryhmä",
+    "openZalo": "Avaa Zalo",
+    "openMessenger": "Avaa Messenger"
   }
 }

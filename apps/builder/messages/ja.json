@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "ボットフィールド"
+  },
+  "openLink": {
+    "title": "リンクを開く",
+    "invalidTitle": "無効なリンクです。",
+    "invalidDescription": "このリンクは無効か、有効期限が切れています。",
+    "openZaloGroup": "Zaloグループを開く",
+    "openZalo": "Zaloを開く",
+    "openMessenger": "Messengerを開く"
   }
 }

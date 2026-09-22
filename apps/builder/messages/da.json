@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "Bot Felter"
+  },
+  "openLink": {
+    "title": "Åbn link",
+    "invalidTitle": "Ugyldigt link.",
+    "invalidDescription": "Dette link er ugyldigt eller udløbet.",
+    "openZaloGroup": "Åbn Zalo-gruppe",
+    "openZalo": "Åbn Zalo",
+    "openMessenger": "Åbn Messenger"
   }
 }

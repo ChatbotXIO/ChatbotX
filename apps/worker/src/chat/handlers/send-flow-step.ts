@@ -12,6 +12,7 @@ import {
   conversationService,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
+import { wrapOpenLinkUrl } from "@chatbotx.io/business/open-link"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   channelTypes,
@@ -315,6 +316,90 @@ const signBookingLinksInStep = async (props: {
   return { ...step, cards } as SendFlowStepData
 }
 
+/**
+ * Route an `openWebsite` button's destination through the `/go` interstitial.
+ *
+ * Messenger's `web_url` button always opens Meta's in-app webview, which cannot
+ * follow the custom-scheme handoff a link like `https://zalo.me/g/<id>` relies
+ * on — the contact just gets a blank page. The interstitial carries App Links
+ * meta tags so the button launches the native app instead, and falls back to a
+ * single tappable button when it doesn't. `wrapOpenLinkUrl` decides what is
+ * exempt (our own origin, unresolved variables, an app's own channel).
+ *
+ * Applied at step level, mirroring `signBookingLinksInStep` directly above, and
+ * for the same reason: every channel encoder and `convertButtonsToTemplate`
+ * both read the step this returns, so the wire payload and the persisted
+ * `Message` row cannot drift apart.
+ */
+const wrapOpenLinkButtonIfNeeded = (props: {
+  workspaceId: string
+  appUrl: string
+  channel: string
+  button: ButtonStepProps
+}): ButtonStepProps => {
+  const { button } = props
+  if (button.buttonType !== buttonTypes.enum.openWebsite) {
+    return button
+  }
+
+  const url = wrapOpenLinkUrl({
+    appUrl: props.appUrl,
+    workspaceId: props.workspaceId,
+    url: button.beforeStep.url,
+    channel: props.channel,
+  })
+
+  if (url === button.beforeStep.url) {
+    return button
+  }
+
+  return { ...button, beforeStep: { ...button.beforeStep, url } }
+}
+
+const wrapOpenLinkButtonsIfNeeded = (props: {
+  workspaceId: string
+  appUrl: string
+  channel: string
+  buttons?: ButtonStepProps[]
+}) => {
+  if (!props.buttons?.length) {
+    return props.buttons
+  }
+  return props.buttons.map((button) =>
+    wrapOpenLinkButtonIfNeeded({ ...props, button }),
+  )
+}
+
+const wrapOpenLinksInStep = (props: {
+  workspaceId: string
+  appUrl: string
+  channel: string
+  step: SendFlowStepData
+}): SendFlowStepData => {
+  let step = props.step
+  if ("buttons" in step && step.buttons.length > 0) {
+    const buttons = wrapOpenLinkButtonsIfNeeded({
+      ...props,
+      buttons: step.buttons,
+    })
+    step = { ...step, buttons: buttons ?? [] } as SendFlowStepData
+  }
+  if (!("cards" in step) || step.cards.length === 0) {
+    return step
+  }
+  const cards = step.cards.map((card) => {
+    if (!("buttons" in card) || card.buttons.length === 0) {
+      return card
+    }
+    const buttons = wrapOpenLinkButtonsIfNeeded({
+      ...props,
+      buttons: card.buttons,
+    })
+    return { ...card, buttons: buttons ?? [] } as SendCardStepSchema
+  })
+  return { ...step, cards } as SendFlowStepData
+}
+
 const convertCardsToTemplate = (props: {
   flowId: string
   flowVersionId?: string
@@ -578,6 +663,23 @@ export async function sendFlowStep({
       },
     )
 
+    // Runs after the booking signing, not before: the `/booking/picker` URL
+    // that step just minted is same-origin and therefore exempt here, which is
+    // what keeps its Messenger Extensions webview intact.
+    const openLinkProps = {
+      workspaceId: conversation.workspaceId,
+      appUrl,
+      channel: targetContactInbox.channel,
+    }
+    const stepForSend = wrapOpenLinksInStep({
+      ...openLinkProps,
+      step: stepWithSignedBookingLinks,
+    })
+    const quickRepliesForSend = wrapOpenLinkButtonsIfNeeded({
+      ...openLinkProps,
+      buttons: quickRepliesWithSignedBookingLinks,
+    })
+
     let contentAttributes: (typeof messageModel.$inferInsert)["contentAttributes"] =
       {
         metadata,
@@ -589,24 +691,22 @@ export async function sendFlowStep({
       }
 
     const canonicalQuickReplies =
-      quickRepliesWithSignedBookingLinks &&
-      quickRepliesWithSignedBookingLinks.length > 0
+      quickRepliesForSend && quickRepliesForSend.length > 0
         ? convertButtonsToTemplate({
             flowId,
             flowVersionId,
-            buttons: quickRepliesWithSignedBookingLinks,
+            buttons: quickRepliesForSend,
             metadata,
             contactInboxId: targetContactInbox.id,
           })
         : undefined
 
     const canonicalStepButtons =
-      "buttons" in stepWithSignedBookingLinks &&
-      stepWithSignedBookingLinks.buttons.length > 0
+      "buttons" in stepForSend && stepForSend.buttons.length > 0
         ? convertButtonsToTemplate({
             flowId,
             flowVersionId,
-            buttons: stepWithSignedBookingLinks.buttons,
+            buttons: stepForSend.buttons,
             metadata,
             contactInboxId: targetContactInbox.id,
           })
@@ -627,10 +727,7 @@ export async function sendFlowStep({
         ...contentAttributes,
       }
     }
-    if (
-      "cards" in stepWithSignedBookingLinks &&
-      stepWithSignedBookingLinks.cards.length > 0
-    ) {
+    if ("cards" in stepForSend && stepForSend.cards.length > 0) {
       contentAttributes = {
         type: "template",
         payload: {
@@ -638,7 +735,7 @@ export async function sendFlowStep({
           cards: convertCardsToTemplate({
             flowId,
             flowVersionId,
-            cards: stepWithSignedBookingLinks.cards,
+            cards: stepForSend.cards,
             metadata,
             contactInboxId: targetContactInbox.id,
           }),
@@ -697,9 +794,9 @@ export async function sendFlowStep({
     const attachmentInputs: Parameters<
       typeof repository.createWithAttachments
     >[1][0][] = []
-    if ("url" in stepWithSignedBookingLinks) {
+    if ("url" in stepForSend) {
       const uploadedFile = await uploadFileFromUrl(
-        stepWithSignedBookingLinks.url,
+        stepForSend.url,
         `public/space/${conversation.workspaceId}/conversations/${conversation.id}/${createId()}`,
       )
       attachmentInputs.push({
@@ -707,8 +804,8 @@ export async function sendFlowStep({
         workspaceId: conversation.workspaceId,
         conversationId: conversation.id,
       })
-    } else if ("images" in stepWithSignedBookingLinks) {
-      for (const image of stepWithSignedBookingLinks.images) {
+    } else if ("images" in stepForSend) {
+      for (const image of stepForSend.images) {
         const uploadedFile = await uploadFileFromUrl(
           image.url,
           `public/space/${conversation.workspaceId}/conversations/${conversation.id}/${createId()}`,
@@ -776,7 +873,7 @@ export async function sendFlowStep({
           contactInbox: targetContactInbox,
           flowId,
           flowVersionId,
-          step: stepWithSignedBookingLinks,
+          step: stepForSend,
           metadata,
           richResponse,
           quickReplies: canonicalQuickReplies,

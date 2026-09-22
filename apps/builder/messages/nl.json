@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "Botvelden"
+  },
+  "openLink": {
+    "title": "Link openen",
+    "invalidTitle": "Ongeldige link.",
+    "invalidDescription": "Deze link is ongeldig of verlopen.",
+    "openZaloGroup": "Zalo-groep openen",
+    "openZalo": "Zalo openen",
+    "openMessenger": "Messenger openen"
   }
 }

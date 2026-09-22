@@ -6619,5 +6619,13 @@
   },
   "accountFields": {
     "title": "Kolom Bot"
+  },
+  "openLink": {
+    "title": "Buka tautan",
+    "invalidTitle": "Tautan tidak valid.",
+    "invalidDescription": "Tautan ini tidak valid atau sudah kedaluwarsa.",
+    "openZaloGroup": "Buka grup Zalo",
+    "openZalo": "Buka Zalo",
+    "openMessenger": "Buka Messenger"
   }
 }
