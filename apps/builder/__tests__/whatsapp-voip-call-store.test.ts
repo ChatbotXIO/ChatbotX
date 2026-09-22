@@ -735,6 +735,42 @@ describe("useWhatsappVoipCallStore — ringing basket", () => {
 
   // `conversationAssigned` drops every basket entry for a reassigned
   // conversation in one store update.
+  test("dismissRinging stops a ringing slot and its basket entry", () => {
+    seedRingingSlot(incomingData)
+    useWhatsappVoipCallStore.getState().enqueueRinging({
+      ...incomingData,
+      whatsappCallId: "call-2",
+    })
+
+    useWhatsappVoipCallStore.getState().dismissRinging("call-1")
+    useWhatsappVoipCallStore.getState().dismissRinging("call-2")
+
+    expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+    expect(useWhatsappVoipCallStore.getState().ringingCalls).toEqual([])
+  })
+
+  test("dismissRinging leaves the tab that is answering alone", () => {
+    seedRingingSlot(incomingData)
+    useWhatsappVoipCallStore
+      .getState()
+      .setPhase("call-1", WhatsappVoipCallPhase.answering)
+
+    useWhatsappVoipCallStore.getState().dismissRinging("call-1")
+
+    expect(useWhatsappVoipCallStore.getState().call?.phase).toBe(
+      WhatsappVoipCallPhase.answering,
+    )
+  })
+
+  test("dismissRinging is a no-op for a call this tab does not hold", () => {
+    seedRingingSlot(incomingData)
+    const before = useWhatsappVoipCallStore.getState()
+
+    useWhatsappVoipCallStore.getState().dismissRinging("call-missing")
+
+    expect(useWhatsappVoipCallStore.getState()).toBe(before)
+  })
+
   test("removeRingingByConversationIds drops every entry for the given conversation ids in one update", () => {
     const ringC = {
       ...incomingData,

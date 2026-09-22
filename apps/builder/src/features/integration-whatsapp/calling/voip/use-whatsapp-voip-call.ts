@@ -19,6 +19,7 @@ import { initiateOutboundVoipCallAction } from "../actions/initiate-outbound-voi
 import { outboundVoipTurnCredentialsAction } from "../actions/outbound-voip-turn-credentials.action"
 import { getWhatsappVoipTurnCredentialsAction } from "../actions/voip-turn-credentials.action"
 import { type CallRecorder, startCallRecorder } from "./call-recorder"
+import { type AnswerLockOutcome, runWithAnswerLock } from "./cross-tab-answer"
 import {
   isCallSlotFree,
   STICKY_ENDED_STATUSES,
@@ -526,24 +527,14 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   )
 
   /**
-   * The answer flow, taking the call as a parameter: `answer` may promote a
-   * basket entry and must act on it in the same tick, before React re-renders
-   * the `call` closure.
+   * Everything after this tab wins the answer lock: TURN, mic, SDP, then the
+   * server accept. Every failure ends on screen with its reason.
    */
-  const answerIncoming = useCallback(
-    async (incomingCall: WhatsappVoipCall) => {
-      if (
-        !workspaceId ||
-        incomingCall.phase !== WhatsappVoipCallPhase.incomingRinging ||
-        // Unreachable for an `incomingRinging` call — every inbound call has an
-        // offer.
-        !incomingCall.offer
-      ) {
+  const attemptAnswer = useCallback(
+    async (whatsappCallId: string, offerSdp: string) => {
+      if (!workspaceId) {
         return
       }
-      const { whatsappCallId, offer } = incomingCall
-      setPhase(whatsappCallId, WhatsappVoipCallPhase.answering)
-
       try {
         const turnResult = await getWhatsappVoipTurnCredentialsAction(
           workspaceId,
@@ -609,7 +600,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           return
         }
 
-        await pc.setRemoteDescription({ type: "offer", sdp: offer.sdp })
+        await pc.setRemoteDescription({ type: "offer", sdp: offerSdp })
 
         const answerDescription = await pc.createAnswer()
         await pc.setLocalDescription(answerDescription)
@@ -674,7 +665,6 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     },
     [
       workspaceId,
-      setPhase,
       markActive,
       teardown,
       maybeStartRecorder,
@@ -682,6 +672,55 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
       createCallPeerConnection,
       failAnswer,
     ],
+  )
+
+  /**
+   * The answer flow, taking the call as a parameter: `answer` may promote a
+   * basket entry and must act on it in the same tick, before React re-renders
+   * the `call` closure.
+   */
+  const answerIncoming = useCallback(
+    async (incomingCall: WhatsappVoipCall) => {
+      if (
+        !workspaceId ||
+        incomingCall.phase !== WhatsappVoipCallPhase.incomingRinging ||
+        // Unreachable for an `incomingRinging` call — every inbound call has an
+        // offer.
+        !incomingCall.offer
+      ) {
+        return
+      }
+      const { whatsappCallId, offer } = incomingCall
+      // Synchronous, before the first await: the claimed-elsewhere dismissal
+      // leaves a tab alone once it is past incomingRinging.
+      setPhase(whatsappCallId, WhatsappVoipCallPhase.answering)
+
+      let lock: AnswerLockOutcome<void>
+      try {
+        lock = await runWithAnswerLock(whatsappCallId, () =>
+          attemptAnswer(whatsappCallId, offer.sdp),
+        )
+      } catch (error) {
+        // Only the lock request itself can reject - `attemptAnswer` reports
+        // its own failures.
+        logger.error(
+          { err: error, whatsappCallId },
+          "WhatsApp VoIP answer lock request failed",
+        )
+        failAnswer(whatsappCallId, "answerFailed")
+        return
+      }
+      // Another tab of this browser is answering it - that tab shows the call,
+      // so this one just stops ringing.
+      if (
+        !lock.acquired &&
+        useWhatsappVoipCallStore.getState().call?.whatsappCallId ===
+          whatsappCallId
+      ) {
+        reset()
+      }
+    },
+    [workspaceId, setPhase, attemptAnswer, failAnswer, reset],
   )
 
   /**
