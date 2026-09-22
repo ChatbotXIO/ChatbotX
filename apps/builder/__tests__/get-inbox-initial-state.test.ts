@@ -159,7 +159,10 @@ describe("getInboxInitialState", () => {
     })
     expect(state).not.toHaveProperty("messagesSeed")
     expect(loggerWarnMock).toHaveBeenCalledWith(
-      expect.objectContaining({ err: expect.any(Error) }),
+      expect.objectContaining({
+        conversationId: "conversation-1",
+        err: expect.any(Error),
+      }),
       "getInboxInitialState: failed to seed messages state",
     )
   })
@@ -180,7 +183,10 @@ describe("getInboxInitialState", () => {
     })
     expect(state).not.toHaveProperty("seededContact")
     expect(loggerWarnMock).toHaveBeenCalledWith(
-      expect.objectContaining({ err: expect.any(Error) }),
+      expect.objectContaining({
+        conversationId: "conversation-1",
+        err: expect.any(Error),
+      }),
       "getInboxInitialState: failed to seed contact state",
     )
   })

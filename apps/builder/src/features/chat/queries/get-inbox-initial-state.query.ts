@@ -121,15 +121,15 @@ const shapeInitialState = ({
   nextCursor,
   activeConversation,
   urlConversation,
-  messagesResult,
-  contactResult,
+  messagesState,
+  contactState,
 }: {
   listedConversations: ListConversationItemResource[]
   nextCursor: string | null
   activeConversation: ListConversationItemResource | null
   urlConversation: UrlConversation
-  messagesResult: PromiseSettledResult<ChatStoreInitialState>
-  contactResult: PromiseSettledResult<ChatStoreInitialState>
+  messagesState: ChatStoreInitialState
+  contactState: ChatStoreInitialState
 }): ChatStoreInitialState => {
   const isUrlConversation = urlConversation.kind !== "none"
   const conversations =
@@ -150,10 +150,8 @@ const shapeInitialState = ({
     activeConversationAutoSelected: isUrlConversation
       ? false
       : Boolean(activeConversation),
-    ...(messagesResult.status === "fulfilled" && activeConversation
-      ? messagesResult.value
-      : {}),
-    ...(contactResult.status === "fulfilled" ? contactResult.value : {}),
+    ...messagesState,
+    ...contactState,
   }
 }
 
@@ -184,7 +182,8 @@ const loadInitialState = async ({
         { signal },
       )
     : null
-  let messagesPromise: Promise<ChatStoreInitialState | Record<string, never>>
+  let messagesSeedConversationId = conversationId
+  let messagesPromise: Promise<ChatStoreInitialState>
   if (urlConversation.kind === "valid") {
     messagesPromise = seedMessagesState(workspaceId, urlConversation.id, signal)
   } else if (urlConversation.kind === "invalid") {
@@ -192,33 +191,39 @@ const loadInitialState = async ({
   } else {
     messagesPromise = conversationsPromise.then(({ data: conversations }) => {
       const activeConversation = conversations[0]
-      return activeConversation
-        ? seedMessagesState(workspaceId, activeConversation.id, signal)
-        : {}
+      if (!activeConversation) {
+        return {}
+      }
+      messagesSeedConversationId = activeConversation.id
+      return seedMessagesState(workspaceId, activeConversation.id, signal)
     })
   }
 
   const logMessagesSeedFailure = (err: unknown) => {
     logger.warn(
-      { err, workspaceId, conversationId },
+      { err, workspaceId, conversationId: messagesSeedConversationId },
       "getInboxInitialState: failed to seed messages state",
     )
     return {}
   }
   messagesPromise = messagesPromise.catch(logMessagesSeedFailure)
 
+  let contactSeedConversationId = conversationId
   const logContactSeedFailure = (err: unknown) => {
     logger.warn(
-      { err, workspaceId, conversationId },
+      { err, workspaceId, conversationId: contactSeedConversationId },
       "getInboxInitialState: failed to seed contact state",
     )
     return {}
   }
 
-  let contactPromise: Promise<ChatStoreInitialState | Record<string, never>>
+  let contactPromise: Promise<ChatStoreInitialState>
   if (findConversationPromise) {
     contactPromise = findConversationPromise
-      .then((result) => seedContactState(workspaceId, result.data, signal))
+      .then((result) => {
+        contactSeedConversationId = result.data.id
+        return seedContactState(workspaceId, result.data, signal)
+      })
       .catch(logContactSeedFailure)
   } else if (urlConversation.kind === "invalid") {
     contactPromise = Promise.resolve({})
@@ -226,24 +231,28 @@ const loadInitialState = async ({
     contactPromise = conversationsPromise
       .then(({ data: conversations }) => {
         const activeConversation = conversations[0]
-        return activeConversation
-          ? seedContactState(workspaceId, activeConversation, signal)
-          : {}
+        if (!activeConversation) {
+          return {}
+        }
+        contactSeedConversationId = activeConversation.id
+        return seedContactState(workspaceId, activeConversation, signal)
       })
       .catch(logContactSeedFailure)
   }
 
-  const [
-    conversationsResult,
-    conversationResult,
-    messagesResult,
-    contactResult,
-  ] = await Promise.allSettled([
-    conversationsPromise,
-    findConversationPromise ?? Promise.resolve(null),
-    messagesPromise,
-    contactPromise,
-  ])
+  const [conversationsResult, conversationResult, messagesState, contactState] =
+    await Promise.all([
+      conversationsPromise.then(
+        (value) => ({ status: "fulfilled" as const, value }),
+        (reason) => ({ status: "rejected" as const, reason }),
+      ),
+      (findConversationPromise ?? Promise.resolve(null)).then(
+        (value) => ({ status: "fulfilled" as const, value }),
+        (reason) => ({ status: "rejected" as const, reason }),
+      ),
+      messagesPromise,
+      contactPromise,
+    ])
 
   if (conversationsResult.status === "rejected") {
     logger.warn(
@@ -269,8 +278,8 @@ const loadInitialState = async ({
     nextCursor,
     activeConversation,
     urlConversation,
-    messagesResult,
-    contactResult,
+    messagesState,
+    contactState,
   })
 }
 

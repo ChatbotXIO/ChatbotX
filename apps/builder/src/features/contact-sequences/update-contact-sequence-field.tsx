@@ -49,7 +49,7 @@ export default function UpdateContactSequenceField({
     {
       actionProps: {
         onSuccess: ({ data: updatedSequences }) => {
-          onSuccess?.(updatedSequences as ContactSequence[])
+          onSuccess?.(updatedSequences)
         },
         onError: ({ error }) => {
           if (error.serverError) {

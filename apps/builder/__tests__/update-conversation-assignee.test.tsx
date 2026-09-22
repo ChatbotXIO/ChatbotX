@@ -5,7 +5,12 @@ import type { ListConversationItemResource } from "@/features/conversations/sche
 
 const authSessionMock = vi.fn()
 const contactAssigneeOptionsMock = vi.fn(
-  (_props?: unknown): { label: string; value: string }[] => [],
+  (
+    _props?: unknown,
+  ): {
+    isPending: boolean
+    options: { label: string; value: string }[]
+  } => ({ isPending: false, options: [] }),
 )
 
 vi.mock("next-intl", () => ({
@@ -18,10 +23,13 @@ vi.mock("@/lib/auth/auth-client", () => ({
 }))
 
 vi.mock("@/features/users/provider/user-hook", () => ({
-  useContactAssigneeOptions: (props?: unknown) =>
+  useContactAssigneeOptionsWithStatus: (props?: unknown) =>
     contactAssigneeOptionsMock(props),
 }))
 
+vi.mock("@chatbotx.io/ui/components/ui/skeleton", () => ({
+  Skeleton: () => <span data-testid="assignee-loading" />,
+}))
 vi.mock(
   "@/features/conversations/components/assign-conversation-dialog",
   () => ({
@@ -61,7 +69,10 @@ describe("UpdateConversationAssignee", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
-    contactAssigneeOptionsMock.mockReturnValue([])
+    contactAssigneeOptionsMock.mockReturnValue({
+      isPending: false,
+      options: [],
+    })
     authSessionMock.mockReturnValue({ data: { user: { id: "current-user" } } })
     container = document.createElement("div")
     document.body.appendChild(container)
@@ -126,9 +137,10 @@ describe("UpdateConversationAssignee", () => {
   })
 
   test("falls back to the option list when the relation object is missing (fresh assignment)", async () => {
-    contactAssigneeOptionsMock.mockReturnValue([
-      { label: "Grace Hopper", value: "u_user-2" },
-    ])
+    contactAssigneeOptionsMock.mockReturnValue({
+      isPending: false,
+      options: [{ label: "Grace Hopper", value: "u_user-2" }],
+    })
 
     await render(
       makeConversation({
@@ -146,9 +158,10 @@ describe("UpdateConversationAssignee", () => {
   })
 
   test("falls back to the option list when the relation object is stale after a reassignment", async () => {
-    contactAssigneeOptionsMock.mockReturnValue([
-      { label: "Grace Hopper", value: "u_user-2" },
-    ])
+    contactAssigneeOptionsMock.mockReturnValue({
+      isPending: false,
+      options: [{ label: "Grace Hopper", value: "u_user-2" }],
+    })
 
     await render(
       makeConversation({
@@ -174,5 +187,26 @@ describe("UpdateConversationAssignee", () => {
     )
 
     expect(container.textContent).toContain("assignAdmin.assignConversation")
+  })
+
+  test("shows a skeleton while resolving a missing assignee relation", async () => {
+    contactAssigneeOptionsMock.mockReturnValue({
+      isPending: true,
+      options: [],
+    })
+
+    await render(
+      makeConversation({
+        assignedUserId: "user-2",
+        assignedUser: null,
+      }),
+    )
+
+    expect(
+      container.querySelector('[data-testid="assignee-loading"]'),
+    ).not.toBeNull()
+    expect(container.textContent).not.toContain(
+      "assignAdmin.assignConversation",
+    )
   })
 })

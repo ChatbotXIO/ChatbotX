@@ -70,9 +70,12 @@ const POST_FOR_READ_PATHS = {
   conversationsList: CONVERSATIONS_LIST_POST_PATH,
 } as const
 
-const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = new Set<string>([
-  POST_FOR_READ_PATHS.adsCampaignsInsights,
-])
+type PostForReadPath =
+  (typeof POST_FOR_READ_PATHS)[keyof typeof POST_FOR_READ_PATHS]
+
+const READ_ONLY_TOKEN_ALLOWED_POST_PATHS = {
+  [POST_FOR_READ_PATHS.adsCampaignsInsights]: true,
+} as const satisfies Partial<Record<PostForReadPath, true>>
 
 /**
  * Distinct from `isWorkspaceMutationMethod`: that predicate treats DELETE as
@@ -89,7 +92,9 @@ export const isReadOnlyTokenAllowedMethod = (
   path?: string,
 ) =>
   READ_ONLY_TOKEN_ALLOWED_METHODS.has(method ?? "POST") ||
-  (method === "POST" && READ_ONLY_TOKEN_ALLOWED_POST_PATHS.has(path ?? ""))
+  (method === "POST" &&
+    path !== undefined &&
+    path in READ_ONLY_TOKEN_ALLOWED_POST_PATHS)
 
 async function getWorkspaceOwnerAccessState(ownerId: string) {
   const accessState = await userQuotaService.getAccessState(ownerId)
@@ -163,9 +168,9 @@ export const workspaceAccessDenialOrpcError = (
  * `READ_ONLY_TOKEN_ALLOWED_POST_PATHS` — see the `POST_FOR_READ_PATHS`
  * comment above for why each path opts in independently.
  */
-const READ_ONLY_POST_PATHS = new Set<string>([
-  POST_FOR_READ_PATHS.conversationsList,
-])
+const READ_ONLY_POST_PATHS = {
+  [POST_FOR_READ_PATHS.conversationsList]: true,
+} as const satisfies Partial<Record<PostForReadPath, true>>
 
 export async function assertWorkspaceOwnerAccessForMethod(props: {
   method: HTTPMethod | undefined
@@ -175,8 +180,8 @@ export async function assertWorkspaceOwnerAccessForMethod(props: {
   if (
     !isWorkspaceMutationMethod(props.method) ||
     (props.method === "POST" &&
-      props.path &&
-      READ_ONLY_POST_PATHS.has(props.path))
+      props.path !== undefined &&
+      props.path in READ_ONLY_POST_PATHS)
   ) {
     return
   }

@@ -12,6 +12,7 @@ vi.mock("next-intl", () => ({
 }))
 
 const getContactMock = vi.fn()
+const notesMock = vi.fn().mockResolvedValue({ data: [] })
 const couponsMock = vi.fn().mockResolvedValue([])
 const appointmentsMock = vi.fn().mockResolvedValue([])
 const sequencesMock = vi.fn().mockResolvedValue({ data: [] })
@@ -44,7 +45,7 @@ vi.mock("@/lib/orpc/query", () => ({
           input: { workspaceId: string; contactId: string }
         }) => ({
           queryKey: ["contact-notes", input.workspaceId, input.contactId],
-          queryFn: async () => ({ data: [] }),
+          queryFn: () => notesMock(input),
         }),
       },
     },
@@ -136,8 +137,23 @@ vi.mock("@/features/contacts/components/update-contact-tag-field", () => ({
   default: () => null,
 }))
 
+type SequenceSummary = {
+  sequence: { id: string; name: string }
+}
+
+let latestSequenceOnSuccess:
+  | ((updatedSequences: SequenceSummary[]) => void)
+  | undefined
+
 vi.mock("@/features/contact-sequences/update-contact-sequence-field", () => ({
-  default: () => null,
+  default: ({
+    onSuccess,
+  }: {
+    onSuccess?: (updatedSequences: SequenceSummary[]) => void
+  }) => {
+    latestSequenceOnSuccess = onSuccess
+    return null
+  },
 }))
 
 let latestAccordionOnValueChange: ((value: string[]) => void) | undefined
@@ -208,9 +224,11 @@ describe("ContactInboxPanel", () => {
     queryClient = makeQueryClient()
     getContactMock.mockReset()
     couponsMock.mockClear()
+    notesMock.mockClear()
     appointmentsMock.mockClear()
     sequencesMock.mockClear()
     latestAccordionOnValueChange = undefined
+    latestSequenceOnSuccess = undefined
     seededContact = undefined
     latestConversations = [firstConversation, secondConversation]
     autoRefreshCapture = {}
@@ -343,10 +361,11 @@ describe("ContactInboxPanel", () => {
     ).toBe("Patched Jane")
   })
 
-  test("does not mount or query the coupons/appointments/sequences sections before any accordion item opens", () => {
+  test("does not mount or query the notes/coupons/appointments/sequences sections before any accordion item opens", () => {
     seededContact = makeContact("contact-1", "Jane")
 
     render()
+    expect(notesMock).not.toHaveBeenCalled()
 
     expect(couponsMock).not.toHaveBeenCalled()
     expect(appointmentsMock).not.toHaveBeenCalled()
@@ -437,6 +456,90 @@ describe("ContactInboxPanel", () => {
         workspaceId: "ws-1",
         contactId: "contact-1",
       })
+    })
+  })
+
+  test("mounts and queries the notes section once its accordion item opens", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["fields.notes.label"])
+    })
+
+    await vi.waitFor(() => {
+      expect(notesMock).toHaveBeenCalledWith({
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+      })
+    })
+  })
+
+  test("shows a loader while the notes request is pending", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    const { promise, resolve } = Promise.withResolvers<{ data: [] }>()
+    notesMock.mockReturnValueOnce(promise)
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["fields.notes.label"])
+    })
+
+    await vi.waitFor(() => {
+      expect(notesMock).toHaveBeenCalled()
+    })
+    expect(container.querySelector("svg.animate-spin")).not.toBeNull()
+
+    await act(async () => {
+      resolve({ data: [] })
+      await promise
+    })
+  })
+
+  test("shows a loader while the sequences request is pending", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    const { promise, resolve } = Promise.withResolvers<{ data: [] }>()
+    sequencesMock.mockReturnValueOnce(promise)
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["sequences.title"])
+    })
+
+    await vi.waitFor(() => {
+      expect(sequencesMock).toHaveBeenCalled()
+    })
+    expect(container.querySelector("svg.animate-spin")).not.toBeNull()
+
+    await act(async () => {
+      resolve({ data: [] })
+      await promise
+    })
+  })
+
+  test("updates the sequence cache after saving sequences", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    sequencesMock.mockResolvedValueOnce({ data: [] })
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["sequences.title"])
+    })
+
+    await vi.waitFor(() => {
+      expect(latestSequenceOnSuccess).toBeDefined()
+    })
+
+    act(() => {
+      latestSequenceOnSuccess?.([
+        { sequence: { id: "sequence-1", name: "Welcome sequence" } },
+      ])
+    })
+
+    expect(
+      queryClient.getQueryData(["contact-sequences", "ws-1", "contact-1"]),
+    ).toEqual({
+      data: [{ sequenceId: "sequence-1", sequenceName: "Welcome sequence" }],
     })
   })
 })

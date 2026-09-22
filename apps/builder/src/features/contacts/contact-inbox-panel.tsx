@@ -99,6 +99,15 @@ export const ContactInboxPanel = ({
 
     return [
       {
+        keyName: t("fields.notes.label"),
+        content: (
+          <ContactNotesSection
+            contactId={contactData.id}
+            workspaceId={workspaceId}
+          />
+        ),
+      },
+      {
         keyName: t("coupons.title"),
         content: (
           <ContactCouponsSection
@@ -157,13 +166,6 @@ export const ContactInboxPanel = ({
         contact={contactData}
       />
 
-      {contactData?.id ? (
-        <ContactNotesSection
-          contactId={contactData.id}
-          workspaceId={workspaceId}
-        />
-      ) : null}
-
       <Accordion
         className="w-full"
         onValueChange={(value) => setOpenAccordionItems(value as string[])}
@@ -205,7 +207,15 @@ function ContactNotesSection({
     orpc.contactNotesAPI.listContactNotesAuthenticatedAPI.queryOptions({
       input: { workspaceId, contactId },
     })
-  const { data, isError } = useQuery(queryOptions)
+  const { data, isError, isPending } = useQuery(queryOptions)
+
+  if (isPending) {
+    return (
+      <div className="flex justify-center px-2 py-4">
+        <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   if (isError) {
     return (
@@ -240,7 +250,7 @@ function ContactSequencesSection({
     orpc.contactSequencesAPI.listContactSequencesAuthenticatedAPI.queryOptions({
       input: { workspaceId, contactId },
     })
-  const { data, isError } = useQuery(queryOptions)
+  const { data, isError, isPending } = useQuery(queryOptions)
   const sequences: ContactSequence[] = useMemo(
     () =>
       (data?.data ?? []).map((sequence) => ({
@@ -251,6 +261,14 @@ function ContactSequencesSection({
       })),
     [data?.data],
   )
+
+  if (isPending) {
+    return (
+      <div className="flex justify-center px-2 py-4">
+        <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   if (isError) {
     return (
