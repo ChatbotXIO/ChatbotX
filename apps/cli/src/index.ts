@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import type { Argv } from "yargs"
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
