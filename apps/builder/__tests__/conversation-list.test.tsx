@@ -34,6 +34,10 @@ vi.mock("@/features/contacts/create-contact-dialog", () => ({
   CreateContactDialog: () => <div />,
 }))
 
+vi.mock("@/features/users/provider/user-hook", () => ({
+  useContactAssigneeOptions: () => [],
+}))
+
 const storeState = {
   conversations: [{ id: "conv-2" }, { id: "conv-1" }] as { id: string }[],
   loadMoreConversations: vi.fn().mockResolvedValue(undefined),

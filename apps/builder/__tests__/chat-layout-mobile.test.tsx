@@ -202,13 +202,14 @@ describe("ChatLayout", () => {
     setViewportWidth(375)
     render()
 
+    const replaceState = vi.spyOn(window.history, "replaceState")
     act(() => {
       find("back")?.dispatchEvent(
         new MouseEvent("click", { bubbles: true, cancelable: true }),
       )
     })
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/space/w1/inbox")
+    expect(replaceState).toHaveBeenCalledWith(null, "", "/space/w1/inbox")
   })
 
   test("offers the contact panel behind a control instead of a third column", () => {

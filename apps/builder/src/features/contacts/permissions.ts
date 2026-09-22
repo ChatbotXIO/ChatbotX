@@ -57,6 +57,21 @@ export function buildContactPermissionScope({
   }
 }
 
+export function requireContactPermissionScopeForMember({
+  permissions,
+  userId,
+}: {
+  permissions: Permissions
+  userId: string
+}): ContactPermissionScope {
+  const scope = buildContactPermissionScope({ permissions, userId })
+  if (!scope) {
+    throw new ChatbotXException("User is not authorized to access contacts")
+  }
+
+  return scope
+}
+
 export async function resolveContactPermissionScope(
   workspaceId: string,
 ): Promise<ContactPermissionScope | null> {

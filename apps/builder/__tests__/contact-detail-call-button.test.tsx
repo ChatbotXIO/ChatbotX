@@ -117,6 +117,10 @@ vi.mock("@/features/custom-fields/contact-custom-field-manage", () => ({
   ContactCustomFieldManage: () => null,
 }))
 
+vi.mock("@/features/contacts/reset-contact-custom-fields-dialog", () => ({
+  ResetContactCustomFieldsDialog: () => null,
+}))
+
 vi.mock("@/features/contacts/edit-contact-field", () => ({
   EditContactField: () => null,
 }))
