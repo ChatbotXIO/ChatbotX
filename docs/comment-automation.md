@@ -89,6 +89,17 @@ Only the trailing story id agrees in both. A photo post therefore breaks any
 - **Instagram ids are not composite.** Its `comments` webhook carries a bare comment `id`
   and a bare `media.id` (used as `postId`), and the `ig-comments` picker stores those same
   bare media ids — `normalizePostId` is a no-op there.
+- **TikTok sends a `0` sentinel, and it must never reach `isCommentReply`.** A production
+  top-level `comment.update` (2026-09-21) carries `"parent_comment_id":0` — meaning "no
+  parent", not an id — which the snowflake quoting hands on as the string `"0"`. Against
+  TikTok's bare ids `isCommentReply` reduces to "a parent that is neither the video nor
+  the comment means reply", so `"0"` declined every top-level comment on the channel with
+  a `commentIsReply` miss. `resolveParentCommentId`
+  ([`integrations/tiktok/src/handlers/webhook.ts`](../integrations/tiktok/src/handlers/webhook.ts))
+  normalizes it at the channel boundary: the payload's own `comment_type`
+  (`"comment"`/`"reply"`) decides when present, and `0`/empty is dropped otherwise. A new
+  channel must do the same — `isCommentReply` is a Meta id-shape heuristic, not a general
+  test.
 
 ## Config options — matching & enforcement
 
@@ -435,7 +446,8 @@ Two Instagram-only caveats follow from that, and both are expected behaviour:
 
 - **`parent_id` = `post_id` for top-level comments.** Never treat a truthy `parentId` as
   "reply." (Fixed via `isCommentReply`; regression here silently drops every top-level
-  comment when `ignoreCommentReplies` is on.)
+  comment when `ignoreCommentReplies` is on.) Non-Meta channels need their raw parent
+  normalized *before* that call — TikTok's `0` sentinel is the worked example above.
 - **Post-id formats differ by picker tab.** Always compare via `normalizePostId`. Reels
   may still need verification that the stored `video_id` equals the webhook `story_id`.
 - **Capabilities differ per channel.** Private DM replies work on the three Meta channels
