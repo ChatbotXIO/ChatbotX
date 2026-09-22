@@ -78,11 +78,16 @@ vi.mock("@chatbotx.io/database/client", () => ({
   isNotNull: (a: unknown) => ({ __isNotNull: a }),
   isNull: (a: unknown) => ({ __isNull: a }),
   or: (...args: unknown[]) => ({ __or: args }),
+  sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
+    __sql: strings.join("?"),
+    values,
+  }),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   broadcastModel: {
     id: "broadcast.id",
+    name: "broadcast.name",
     workspaceId: "broadcast.workspaceId",
     status: "broadcast.status",
     handoffCompletedAt: "broadcast.handoffCompletedAt",
@@ -407,7 +412,39 @@ describe("broadcastService.updateDraft", () => {
     saveAsDraft: true,
   }
 
-  test("re-derives the name from the flow and keeps the row a draft", async () => {
+  test("keeps an existing name and only fills a blank one from the flow", async () => {
+    findFirstFlow.mockResolvedValue({ id: "flow-9", name: "Autumn sale" })
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.updateDraft({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      canViewEmailAndPhone: true,
+      data: flowDraftData,
+    })
+
+    const { values } = updateReturning.mock.calls[0][0]
+    expect(values.name).toEqual({
+      __sql: "COALESCE(NULLIF(BTRIM(?), ''), ?)",
+      values: ["broadcast.name", "Autumn sale"],
+    })
+  })
+
+  test("still rejects a missing flow even though the name is kept", async () => {
+    findFirstFlow.mockResolvedValue(undefined)
+
+    await expect(
+      broadcastService.updateDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        canViewEmailAndPhone: true,
+        data: flowDraftData,
+      }),
+    ).rejects.toThrow("Flow not found")
+    expect(updateReturning).not.toHaveBeenCalled()
+  })
+
+  test("updates the flow and keeps the row a draft", async () => {
     findFirstFlow.mockResolvedValue({ id: "flow-9", name: "Autumn sale" })
     updateReturning.mockResolvedValue([{ id: "b-1" }])
 
@@ -428,7 +465,6 @@ describe("broadcastService.updateDraft", () => {
       templateId: null,
       integrationWhatsappId: null,
       integrationMessengerId: null,
-      name: "Autumn sale",
       contactFilter,
       schedulesType: "future",
       status: "draft",

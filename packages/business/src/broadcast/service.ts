@@ -1396,7 +1396,9 @@ class BroadcastService extends BaseService {
       data,
     })
 
-    const name = await this.resolveDraftBroadcastName({
+    // Still resolved on every edit: it is what rejects a missing flow or an
+    // unapproved template.
+    const derivedName = await this.resolveDraftBroadcastName({
       workspaceId,
       data,
       context,
@@ -1409,7 +1411,9 @@ class BroadcastService extends BaseService {
       const [updated] = await tx
         .update(broadcastModel)
         .set({
-          name,
+          // An existing name is the agent's (renamed through `update`) - an
+          // edit only fills it in when it is blank.
+          name: sql`COALESCE(NULLIF(BTRIM(${broadcastModel.name}), ''), ${derivedName})`,
           status,
           ...this.buildBroadcastColumns(data, input.canViewEmailAndPhone),
         })
