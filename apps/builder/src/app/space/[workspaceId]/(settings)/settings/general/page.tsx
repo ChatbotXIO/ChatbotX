@@ -19,7 +19,7 @@ export default async function GeneralPage(props: {
   }
 
   return (
-    <FlowStoreProvider workspaceId={workspaceId}>
+    <FlowStoreProvider>
       <UpdateWorkspaceForm
         canManageSupportAccess={
           hasWorkspacePermission(

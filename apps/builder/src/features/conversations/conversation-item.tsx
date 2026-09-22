@@ -57,6 +57,7 @@ const CALL_PREVIEW_ICON_BY_KIND: Record<CallPreviewKind, typeof PhoneIcon> = {
 }
 
 type ConversationItemProps = {
+  assigneeOptionNameByValue: ReadonlyMap<string, string>
   conversation: ListConversationItemResource
   onSelect: () => void
 }
@@ -64,12 +65,15 @@ type ConversationItemProps = {
 const assignedIcon = (
   conversation: ListConversationItemResource,
   assignedAvatarUrl: string | undefined,
+  assignedUserOptionName: string | null,
+  assignedInboxTeamOptionName: string | null,
   t: ReturnType<typeof useTranslations>,
 ) => {
   if (conversation.assignedUserId) {
     const assignedUserName =
       conversation.assignedUser?.name ||
       conversation.assignedUser?.email ||
+      assignedUserOptionName ||
       t("assignAdmin.user")
 
     return (
@@ -80,7 +84,7 @@ const assignedIcon = (
               <AvatarImage src={assignedAvatarUrl ?? ""} />
 
               <AvatarFallback className="text-[0.5rem]">
-                {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
+                {assignedUserName.slice(0, 2)}
               </AvatarFallback>
             </Avatar>
           }
@@ -104,7 +108,9 @@ const assignedIcon = (
         <TooltipContent align="center" side="bottom">
           {t("assignAdmin.assignedTo", {
             name:
-              conversation.assignedInboxTeam?.name ?? t("fields.team.label"),
+              conversation.assignedInboxTeam?.name ??
+              assignedInboxTeamOptionName ??
+              t("fields.team.label"),
           })}
         </TooltipContent>
       </Tooltip>
@@ -158,6 +164,7 @@ function AdBadgePill({
 }
 
 export default function ConversationItem({
+  assigneeOptionNameByValue,
   conversation,
   onSelect,
 }: ConversationItemProps) {
@@ -183,6 +190,11 @@ export default function ConversationItem({
   const isComment = conversation.messages?.[0]?.type === "comment"
   const avatarUrl = useAvatarUrl(conversation.contact)
   const assignedAvatarUrl = useUserAvatarUrl(conversation.assignedUser?.image)
+  const assignedUserOptionName =
+    assigneeOptionNameByValue.get(`u_${conversation.assignedUserId}`) ?? null
+  const assignedInboxTeamOptionName =
+    assigneeOptionNameByValue.get(`t_${conversation.assignedInboxTeamId}`) ??
+    null
   const previewText = resolveLastMessagePreview(conversation.messages?.[0], t)
   const callPreviewKind = resolveCallPreviewKind(conversation.messages?.[0])
   const CallPreviewIcon = callPreviewKind
@@ -257,7 +269,13 @@ export default function ConversationItem({
         <div className="relative">
           {contactAvatar}
           <div className="absolute start-0 bottom-0 transform">
-            {assignedIcon(conversation, assignedAvatarUrl, t)}
+            {assignedIcon(
+              conversation,
+              assignedAvatarUrl,
+              assignedUserOptionName,
+              assignedInboxTeamOptionName,
+              t,
+            )}
           </div>
           <div className="absolute end-0 bottom-0 transform">
             {conversation.contactInboxes?.map((contactInbox) => (

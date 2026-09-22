@@ -16,8 +16,8 @@ export default async function UpdateInstagramPage(props: {
   })
 
   return (
-    <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-      <CustomFieldStoreProvider autoInitialize={true} workspaceId={workspaceId}>
+    <FlowStoreProvider>
+      <CustomFieldStoreProvider workspaceId={workspaceId}>
         <UpdateInstagramForm integrationInstagram={integrationInstagram} />
       </CustomFieldStoreProvider>
     </FlowStoreProvider>

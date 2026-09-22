@@ -30,7 +30,7 @@ export default async function AIFunctionsPage({
       <AITab />
 
       <Suspense>
-        <FlowStoreProvider workspaceId={workspaceId}>
+        <FlowStoreProvider>
           <CustomFieldStoreProvider workspaceId={workspaceId}>
             <AIFunctionsTable promises={promises} workspaceId={workspaceId} />
           </CustomFieldStoreProvider>

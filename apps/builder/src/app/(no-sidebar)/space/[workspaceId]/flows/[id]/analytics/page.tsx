@@ -61,7 +61,7 @@ export default async function FlowAnalyticsPage({
 
   return (
     <div className="flex h-screen w-screen flex-col">
-      <FlowStoreProvider workspaceId={data.workspaceId}>
+      <FlowStoreProvider>
         <FlowTemplateStoreProvider workspaceId={data.workspaceId}>
           <FlowAnalytics
             flow={flow}

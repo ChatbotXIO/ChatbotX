@@ -24,8 +24,8 @@ export default async function UpdateTriggerPage({
   }
 
   return (
-    <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-      <CustomFieldStoreProvider autoInitialize={true} workspaceId={workspaceId}>
+    <FlowStoreProvider>
+      <CustomFieldStoreProvider workspaceId={workspaceId}>
         <UpdateTriggerForm trigger={trigger} workspaceId={workspaceId} />
       </CustomFieldStoreProvider>
     </FlowStoreProvider>

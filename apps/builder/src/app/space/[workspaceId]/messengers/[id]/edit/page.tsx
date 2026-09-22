@@ -20,8 +20,8 @@ export default async function UpdateMessengerPage(props: {
   })
 
   return (
-    <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-      <CustomFieldStoreProvider autoInitialize={true} workspaceId={workspaceId}>
+    <FlowStoreProvider>
+      <CustomFieldStoreProvider workspaceId={workspaceId}>
         <UpdateMessengerForm
           integrationMessenger={integrationMessenger}
           workspaceId={workspaceId}

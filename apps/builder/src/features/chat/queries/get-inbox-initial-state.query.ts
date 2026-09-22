@@ -10,13 +10,19 @@ import { client } from "@/lib/orpc/orpc"
 const INBOX_SEED_TIMEOUT_MS = 8000
 const INBOX_MESSAGES_PER_PAGE = 20
 
-const timeoutSeed = () =>
-  new Promise<never>((_, reject) => {
-    setTimeout(
-      () => reject(new Error("Inbox initial state seed timed out")),
-      INBOX_SEED_TIMEOUT_MS,
-    )
-  })
+const createSeedTimeout = () => {
+  let timeoutId: NodeJS.Timeout | undefined
+
+  return {
+    promise: new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(
+        () => reject(new Error("Inbox initial state seed timed out")),
+        INBOX_SEED_TIMEOUT_MS,
+      )
+    }),
+    clear: () => clearTimeout(timeoutId),
+  }
+}
 
 const seedMessagesState = async (
   workspaceId: string,
@@ -58,6 +64,16 @@ const seedContactState = async (
   }
 }
 
+const mergeSettledState = (
+  results: PromiseSettledResult<ChatStoreInitialState>[],
+): ChatStoreInitialState =>
+  Object.assign(
+    {},
+    ...results.map((result) =>
+      result.status === "fulfilled" ? result.value : {},
+    ),
+  )
+
 const loadInitialState = async ({
   workspaceId,
   conversationId,
@@ -98,23 +114,40 @@ const loadInitialState = async ({
 
     return {
       ...state,
-      ...(messages.status === "fulfilled" ? messages.value : {}),
-      ...(contact.status === "fulfilled" ? contact.value : {}),
+      ...mergeSettledState([messages, contact]),
     }
   }
 
-  const [conversationsResult, conversationResult, messagesResult] =
-    await Promise.allSettled([
-      conversationsPromise,
-      client.conversationsAPI.findConversationAuthenticatedAPI({
-        workspaceId,
-        id: conversationId,
-      }),
-      seedMessagesState(workspaceId, conversationId),
-    ])
+  const findConversationPromise =
+    client.conversationsAPI.findConversationAuthenticatedAPI({
+      workspaceId,
+      id: conversationId,
+    })
+  const contactPromise = findConversationPromise.then(({ data }) =>
+    seedContactState(workspaceId, data),
+  )
+
+  const [
+    conversationsResult,
+    conversationResult,
+    messagesResult,
+    contactResult,
+  ] = await Promise.allSettled([
+    conversationsPromise,
+    findConversationPromise,
+    seedMessagesState(workspaceId, conversationId),
+    contactPromise,
+  ])
 
   if (conversationsResult.status === "rejected") {
     return null
+  }
+
+  if (conversationResult.status === "rejected") {
+    logger.warn(
+      { err: conversationResult.reason, workspaceId, conversationId },
+      "getInboxInitialState: failed to load deep-linked conversation",
+    )
   }
 
   const listedConversations = conversationsResult.value.data
@@ -132,22 +165,15 @@ const loadInitialState = async ({
       ]
     : listedConversations
 
-  const contact = activeConversation
-    ? await Promise.allSettled([
-        seedContactState(workspaceId, activeConversation),
-      ])
-    : []
-
   return {
     conversations,
     nextCursorConversation: nextCursor,
     isFirstLoadConversation: false,
     activeConversationId: activeConversation?.id ?? null,
     activeConversationAutoSelected: false,
-    ...(messagesResult.status === "fulfilled" && activeConversation
-      ? messagesResult.value
-      : {}),
-    ...(contact[0]?.status === "fulfilled" ? contact[0].value : {}),
+    ...mergeSettledState(
+      activeConversation ? [messagesResult, contactResult] : [],
+    ),
   }
 }
 
@@ -170,6 +196,8 @@ export const getInboxInitialState = async ({
     ? zodBigintAsString().safeParse(conversationId)
     : null
 
+  const timeout = createSeedTimeout()
+
   try {
     return await Promise.race([
       loadInitialState({
@@ -178,7 +206,7 @@ export const getInboxInitialState = async ({
           ? parsedConversationId.data
           : undefined,
       }),
-      timeoutSeed(),
+      timeout.promise,
     ])
   } catch (err) {
     logger.warn(
@@ -186,5 +214,7 @@ export const getInboxInitialState = async ({
       "getInboxInitialState: failed to seed inbox state",
     )
     return null
+  } finally {
+    timeout.clear()
   }
 }

@@ -48,7 +48,7 @@ export default async function ContactsPage(props: {
 
       <Suspense>
         <CustomFieldStoreProvider workspaceId={workspaceId}>
-          <FlowStoreProvider workspaceId={workspaceId}>
+          <FlowStoreProvider>
             <ContactsTable
               canViewEmailAndPhone={contactPermissionScope.canViewEmailAndPhone}
               initialContactFilter={initialContactFilter}

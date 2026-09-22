@@ -2,7 +2,10 @@
 
 import {
   createContext,
+  type Dispatch,
   type ReactNode,
+  type SetStateAction,
+  useCallback,
   useContext,
   useMemo,
   useState,
@@ -12,17 +15,30 @@ import type { ListFlowsResponse } from "../schema/query"
 import { type FlowStateFilter, useFlows, useInvalidateFlows } from "./flow-hook"
 
 export type FlowStoreProviderProps = {
-  workspaceId: string
   children: ReactNode
-  autoInitialize?: boolean
 }
 
 type FlowFilterContextValue = {
   filter: FlowStateFilter
-  setFilter: (filter: FlowStateFilter) => void
+  setFilter: Dispatch<SetStateAction<FlowStateFilter>>
 }
 
 const FlowFilterContext = createContext<FlowFilterContextValue | null>(null)
+
+const hasSameFilterValues = (left: FlowStateFilter, right: FlowStateFilter) => {
+  const leftKeys = Object.keys(left)
+  const rightKeys = Object.keys(right)
+
+  return (
+    leftKeys.length === rightKeys.length &&
+    leftKeys.every(
+      (key) =>
+        Object.hasOwn(right, key) &&
+        left[key as keyof FlowStateFilter] ===
+          right[key as keyof FlowStateFilter],
+    )
+  )
+}
 
 export const FlowStoreProvider = ({ children }: FlowStoreProviderProps) => {
   const [filter, setFilter] = useState<FlowStateFilter>({})
@@ -57,25 +73,51 @@ export const useFlowStore = <T,>(
   const flowQuery = useFlows(workspaceId, { filter: filterContext?.filter })
   const invalidateFlows = useInvalidateFlows()
 
+  const filter = filterContext?.filter
+  const setFilter = filterContext?.setFilter
+
+  const appendFilter = useCallback(
+    (nextFilter: FlowStateFilter) => {
+      setFilter?.((previousFilter) => {
+        const nextFilterState = { ...previousFilter, ...nextFilter }
+        return hasSameFilterValues(previousFilter, nextFilterState)
+          ? previousFilter
+          : nextFilterState
+      })
+    },
+    [setFilter],
+  )
+
+  const resetFilter = useCallback(() => {
+    setFilter?.((previousFilter) =>
+      Object.keys(previousFilter).length === 0 ? previousFilter : {},
+    )
+  }, [setFilter])
+
   const snapshot = useMemo<FlowStoreSnapshot>(
     () => ({
       loading: flowQuery.isPending,
       error: flowQuery.error?.message ?? null,
       initialized: flowQuery.isFetched,
       workspaceId: workspaceId ?? "",
-      filter: filterContext?.filter ?? {},
+      filter: filter ?? {},
       flows: flowQuery.data ?? [],
       initialize: invalidateFlows,
       getAllActiveFlows: invalidateFlows,
-      appendFilter: (nextFilter) => {
-        filterContext?.setFilter({
-          ...(filterContext.filter ?? {}),
-          ...nextFilter,
-        })
-      },
-      resetFilter: () => filterContext?.setFilter({}),
+      appendFilter,
+      resetFilter,
     }),
-    [filterContext, flowQuery, invalidateFlows, workspaceId],
+    [
+      appendFilter,
+      filter,
+      flowQuery.data,
+      flowQuery.error,
+      flowQuery.isFetched,
+      flowQuery.isPending,
+      invalidateFlows,
+      resetFilter,
+      workspaceId,
+    ],
   )
 
   return selector(snapshot)

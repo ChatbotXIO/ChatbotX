@@ -34,7 +34,7 @@ export default async function EditQuestionnairePage({
           { label: questionnaire.name, href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
+      <FlowStoreProvider>
         <CustomFieldStoreProvider workspaceId={workspaceId}>
           <EditQuestionnaireForm
             questionnaire={questionnaire}

@@ -31,7 +31,7 @@ export default async function EditFacebookLeadAdPage(props: {
           { label: automation.name, href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
+      <FlowStoreProvider>
         <CustomFieldStoreProvider workspaceId={workspaceId}>
           <EditFacebookLeadAdAutomationForm
             initialData={{

@@ -43,7 +43,7 @@ export function FlowDetail({
           workspaceId={flow.workspaceId}
         >
           <WhatsappFlowStoreProvider workspaceId={flow.workspaceId}>
-            <FlowStoreProvider workspaceId={flow.workspaceId}>
+            <FlowStoreProvider>
               <QuestionnaireStoreProvider workspaceId={flow.workspaceId}>
                 <AppointmentCalendarStoreProvider
                   workspaceId={flow.workspaceId}

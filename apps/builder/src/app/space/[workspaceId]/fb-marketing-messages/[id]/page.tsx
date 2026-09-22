@@ -54,7 +54,7 @@ export default async function EditFacebookMarketingMessagePage({
           { label: row.name, href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
+      <FlowStoreProvider>
         <CustomFieldStoreProvider workspaceId={workspaceId}>
           <Suspense>
             <EditMarketingMessage row={row} workspaceId={workspaceId} />

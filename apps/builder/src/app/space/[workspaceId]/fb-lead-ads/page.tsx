@@ -37,7 +37,7 @@ export default async function FacebookLeadAdsPage({
           { label: t("facebookLeadAdsAutomation.title"), href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
+      <FlowStoreProvider>
         <CustomFieldStoreProvider workspaceId={workspaceId}>
           <Suspense>
             <FacebookLeadAdsTable

@@ -27,7 +27,7 @@ export default async function EditMinigamePage({
   const publicUrl = `${getBrokerOrigin()}/minigames?minigameId=${minigame.id}&token={{minigame_play_token}}`
 
   return (
-    <FlowStoreProvider workspaceId={workspaceId}>
+    <FlowStoreProvider>
       <CustomFieldStoreProvider workspaceId={workspaceId}>
         <MinigameForm
           minigame={minigame}

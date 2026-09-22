@@ -12,7 +12,7 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { SearchIcon, UserPlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { toast } from "sonner"
@@ -20,6 +20,7 @@ import { useDebouncedCallback } from "use-debounce"
 import type { ConversationFilters } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
+import { useContactAssigneeOptions } from "../users/provider/user-hook"
 import { ConversationFilter } from "./conversation-filter"
 import ConversationItem from "./conversation-item"
 import { useConversationIdParam } from "./hooks/use-conversation-id-param"
@@ -57,6 +58,16 @@ export default function ConversationList({
   } = useChatStore((state) => state)
 
   const [showSearchInput, setShowSearchInput] = useState(false)
+  const contactAssigneeOptions = useContactAssigneeOptions({
+    autoGroup: false,
+  })
+  const assigneeOptionNameByValue = useMemo(
+    () =>
+      new Map(
+        contactAssigneeOptions.map((option) => [option.value, option.label]),
+      ),
+    [contactAssigneeOptions],
+  )
 
   // Check if there are more pages to load
   const hasNextPage =
@@ -191,6 +202,7 @@ export default function ConversationList({
             data={conversations}
             itemContent={(_, item) => (
               <ConversationItem
+                assigneeOptionNameByValue={assigneeOptionNameByValue}
                 conversation={item}
                 onSelect={() => {
                   conversationIdParam.set(item.id.toString())

@@ -28,6 +28,7 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 vi.mock("@/env", () => ({ isCloud }))
 
 const {
+  assertWorkspaceOwnerAccessForMethod,
   checkWorkspaceOwnerAccess,
   isReadOnlyTokenAllowedMethod,
   isWorkspaceMutationMethod,
@@ -158,6 +159,34 @@ describe("isReadOnlyTokenAllowedMethod", () => {
   test("rejects POST with no path at all", () => {
     expect(isReadOnlyTokenAllowedMethod("POST")).toBe(false)
     expect(isReadOnlyTokenAllowedMethod("POST", undefined)).toBe(false)
+  })
+})
+
+describe("assertWorkspaceOwnerAccessForMethod", () => {
+  test("allows the conversations list POST path for a trial-expired workspace", async () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        ownerId: "owner-1",
+        path: "/workspaces/{workspaceId}/conversations/list",
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  test("blocks a different POST path for a trial-expired workspace", async () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({ blocked: true, reason: "status" })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        ownerId: "owner-1",
+        path: "/workspaces/{workspaceId}/conversations/archive",
+      }),
+    ).rejects.toMatchObject({ code: "trialExpired", status: 403 })
   })
 })
 

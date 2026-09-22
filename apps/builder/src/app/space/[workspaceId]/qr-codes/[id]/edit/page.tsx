@@ -41,7 +41,7 @@ export default async function EditQrCodePage({
           { label: t("actions.edit"), href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
+      <FlowStoreProvider>
         <UpdateQrCodeForm qrCode={qrCode} workspaceId={workspaceId} />
       </FlowStoreProvider>
     </div>

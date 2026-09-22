@@ -47,7 +47,7 @@ export default async function CreateFacebookMarketingMessagePage({
       />
       {/* Flow store: the button/quick-reply flow + node pickers.
           Custom field store: MediaLibraryOrInsertLink's variable picker. */}
-      <FlowStoreProvider workspaceId={workspaceId}>
+      <FlowStoreProvider>
         <CustomFieldStoreProvider workspaceId={workspaceId}>
           <Suspense>
             <CreateMarketingMessage workspaceId={workspaceId} />

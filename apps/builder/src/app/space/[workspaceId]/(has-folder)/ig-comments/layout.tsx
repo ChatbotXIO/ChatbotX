@@ -25,7 +25,7 @@ export default async function FolderableLayout({
       folderType={folderTypes.enum.igComment}
       workspaceId={workspaceId}
     >
-      <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
+      <FlowStoreProvider>
         {folders}
         <Suspense>{children}</Suspense>
       </FlowStoreProvider>

@@ -18,7 +18,7 @@ import {
   TextIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { orpc } from "@/lib/orpc/query"
 import { maxPerPage } from "@/lib/shared-request"
@@ -233,8 +233,11 @@ export const useBotFields = (
 
 export const useInvalidateCustomFields = () => {
   const queryClient = useQueryClient()
-  return () =>
-    queryClient.invalidateQueries({ queryKey: orpc.customFieldsAPI.key() })
+  return useCallback(
+    () =>
+      queryClient.invalidateQueries({ queryKey: orpc.customFieldsAPI.key() }),
+    [queryClient],
+  )
 }
 
 export const useCustomFieldSelectOptions = (

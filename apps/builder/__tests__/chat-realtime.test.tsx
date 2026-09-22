@@ -209,7 +209,12 @@ describe("ChatRealtime — chat event parity", () => {
     )
     expect(chatStoreState.updateConversations).toHaveBeenCalledWith(
       ["conv-1"],
-      { assignedUserId: "user-1", assignedInboxTeamId: null },
+      {
+        assignedUserId: "user-1",
+        assignedInboxTeamId: null,
+        assignedUser: null,
+        assignedInboxTeam: null,
+      },
     )
   })
 })

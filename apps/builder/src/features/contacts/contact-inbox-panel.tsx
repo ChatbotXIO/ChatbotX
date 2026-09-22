@@ -13,7 +13,6 @@ import { client } from "@/lib/orpc/orpc"
 import { orpc } from "@/lib/orpc/query"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
-import type { ContactOnSequenceWithRelations } from "../contact-sequences/schema"
 import UpdateContactSequenceField from "../contact-sequences/update-contact-sequence-field"
 import type { TagResource } from "../tags/schema/resource"
 import { ContactAppointmentsList } from "./components/contact-appointments-list"
@@ -266,18 +265,14 @@ function ContactSequencesSection({
   const { data } = useQuery(queryOptions)
   const sequences = useMemo(
     () =>
-      (data?.data ?? []).map(
-        (sequence) =>
-          ({
-            contactId,
-            sequenceId: sequence.sequenceId,
-            sequence: {
-              id: sequence.sequenceId,
-              name: sequence.sequenceName,
-            },
-          }) as ContactOnSequenceWithRelations,
-      ),
-    [contactId, data?.data],
+      (data?.data ?? []).map((sequence) => ({
+        sequenceId: sequence.sequenceId,
+        sequence: {
+          id: sequence.sequenceId,
+          name: sequence.sequenceName,
+        },
+      })),
+    [data?.data],
   )
 
   return (

@@ -32,7 +32,7 @@ export default async function CreateQrCodePage({
           { label: t("actions.create"), href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
+      <FlowStoreProvider>
         <CreateQrCodeForm workspaceId={workspaceId} />
       </FlowStoreProvider>
     </div>

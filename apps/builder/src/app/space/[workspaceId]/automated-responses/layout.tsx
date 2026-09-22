@@ -8,9 +8,7 @@ export default async function AutomatedResponsesLayout({
   params: Promise<{ workspaceId: string }>
   children: React.ReactNode
 }) {
-  const workspaceId = await resolveGuardedWorkspaceId(params, "superAdmin")
+  await resolveGuardedWorkspaceId(params, "superAdmin")
 
-  return (
-    <FlowStoreProvider workspaceId={workspaceId}>{children}</FlowStoreProvider>
-  )
+  return <FlowStoreProvider>{children}</FlowStoreProvider>
 }

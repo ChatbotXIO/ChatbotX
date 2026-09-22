@@ -125,10 +125,17 @@ describe("ConversationItem", () => {
     container.remove()
   })
 
-  const render = (conversation: ListConversationItemResource) =>
+  const render = (
+    conversation: ListConversationItemResource,
+    assigneeOptionNameByValue = new Map<string, string>(),
+  ) =>
     act(() => {
       root.render(
-        <ConversationItem conversation={conversation} onSelect={onSelect} />,
+        <ConversationItem
+          assigneeOptionNameByValue={assigneeOptionNameByValue}
+          conversation={conversation}
+          onSelect={onSelect}
+        />,
       )
     })
 
@@ -142,6 +149,17 @@ describe("ConversationItem", () => {
     expect(
       container.querySelector(`[aria-label="whatsapp.calls.reject"]`),
     ).toBeNull()
+  })
+  test("uses cached assignee initials after a realtime relation reset", async () => {
+    await render(
+      makeConversation({
+        assignedUser: null,
+        assignedUserId: "user-1",
+      }),
+      new Map([["u_user-1", "Grace Hopper"]]),
+    )
+
+    expect(container.textContent).toContain("Gr")
   })
 
   test("renders no ringing overlay when calling is disabled for this workspace (optional context is null)", async () => {

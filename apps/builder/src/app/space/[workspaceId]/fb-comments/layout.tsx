@@ -17,9 +17,7 @@ export default async function FbCommentsLayout({
 
   return (
     <CustomFieldStoreProvider workspaceId={workspaceId}>
-      <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
-        {children}
-      </FlowStoreProvider>
+      <FlowStoreProvider>{children}</FlowStoreProvider>
     </CustomFieldStoreProvider>
   )
 }

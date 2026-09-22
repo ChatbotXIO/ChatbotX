@@ -1,7 +1,6 @@
 "use client"
 
-import type { ReactNode } from "react"
-import { useMemo } from "react"
+import { type ReactNode, useCallback, useMemo, useRef } from "react"
 import type { BotFieldResource } from "@/features/bot-fields/schema/resource"
 import { useWorkspaceId } from "@/hooks/routing"
 import type { CustomFieldResource } from "../schema/resource"
@@ -14,7 +13,6 @@ import {
 export type CustomFieldStoreProviderProps = {
   workspaceId: string
   children: ReactNode
-  autoInitialize?: boolean
 }
 
 export const CustomFieldStoreProvider = ({
@@ -43,6 +41,26 @@ export const useCustomFieldStore = <T,>(
   const botFieldsQuery = useBotFields(workspaceId, { enabled: false })
   const invalidateCustomFields = useInvalidateCustomFields()
 
+  const botFieldsStateRef = useRef({
+    data: botFieldsQuery.data,
+    isFetched: botFieldsQuery.isFetched,
+    isFetching: botFieldsQuery.isFetching,
+  })
+  botFieldsStateRef.current = {
+    data: botFieldsQuery.data,
+    isFetched: botFieldsQuery.isFetched,
+    isFetching: botFieldsQuery.isFetching,
+  }
+
+  const ensureBotFieldsLoaded = useCallback(() => {
+    const { data, isFetched, isFetching } = botFieldsStateRef.current
+    if (isFetched || isFetching) {
+      return Promise.resolve(data)
+    }
+
+    return botFieldsQuery.refetch().then((result) => result.data)
+  }, [botFieldsQuery.refetch])
+
   const snapshot = useMemo<CustomFieldStoreSnapshot>(
     () => ({
       loading: customFieldsQuery.isPending,
@@ -55,10 +73,21 @@ export const useCustomFieldStore = <T,>(
       botFieldsError: botFieldsQuery.error?.message ?? null,
       botFieldsInitialized: botFieldsQuery.isFetched,
       getAllCustomFields: invalidateCustomFields,
-      ensureBotFieldsLoaded: () =>
-        botFieldsQuery.refetch().then((result) => result.data),
+      ensureBotFieldsLoaded,
     }),
-    [botFieldsQuery, customFieldsQuery, invalidateCustomFields, workspaceId],
+    [
+      botFieldsQuery.data,
+      botFieldsQuery.error,
+      botFieldsQuery.isFetched,
+      botFieldsQuery.isFetching,
+      customFieldsQuery.data,
+      customFieldsQuery.error,
+      customFieldsQuery.isFetched,
+      customFieldsQuery.isPending,
+      ensureBotFieldsLoaded,
+      invalidateCustomFields,
+      workspaceId,
+    ],
   )
 
   return selector(snapshot)

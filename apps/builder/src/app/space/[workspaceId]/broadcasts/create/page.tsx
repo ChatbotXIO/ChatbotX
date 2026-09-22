@@ -52,7 +52,7 @@ export default async function CreateBroadcastPage({
   })
 
   return (
-    <FlowStoreProvider workspaceId={workspaceId}>
+    <FlowStoreProvider>
       <CustomFieldStoreProvider workspaceId={workspaceId}>
         <IntegrationStoreProvider workspaceId={workspaceId}>
           <FlowTemplateStoreProvider

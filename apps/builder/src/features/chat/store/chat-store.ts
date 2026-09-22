@@ -141,6 +141,11 @@ export type ChatStoreInitialState = Partial<
   >
 >
 
+export type ConversationAssignee = {
+  id: string | null
+  name: string | null
+}
+
 export type ChatActions = {
   // Conversation actions
   prependConversation: (newConversation: ListConversationItemResource) => void
@@ -163,11 +168,11 @@ export type ChatActions = {
   setActiveConversationId: (activeConversationId: string | null) => void
   updateConversation: (
     conversationId: string,
-    data: Partial<ConversationResource>,
+    data: Partial<ListConversationItemResource>,
   ) => void
   updateConversations: (
     conversationIds: string[],
-    data: Partial<ConversationResource>,
+    data: Partial<ListConversationItemResource>,
   ) => void
   updateConversationViaMessage: (message: MessageResource) => void
   /**
@@ -187,7 +192,7 @@ export type ChatActions = {
 
   // Filter actions
   resetState: () => void
-  setAssignee: (value: string | null) => void
+  setAssignee: (assignee: ConversationAssignee) => void
   setFilters: (filters: ConversationFilters) => void
 
   // Message actions
@@ -565,7 +570,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       set({ filters })
     },
 
-    setAssignee: (value: string | null) => {
+    setAssignee: ({ id }: ConversationAssignee) => {
       const { conversations, activeConversationId } = get()
       const conversationIndex = conversations.findIndex(
         (c) => c.id === activeConversationId,
@@ -575,23 +580,21 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         const updatedConversations = [...conversations]
         const conversation = { ...updatedConversations[conversationIndex] }
 
-        try {
-          if (value === null) {
-            conversation.assignedUser = null
-            conversation.assignedUserId = null
-            conversation.assignedInboxTeam = null
-            conversation.assignedInboxTeamId = null
-          } else if (value.startsWith("u_")) {
-            const userId = value.slice(2)
-            conversation.assignedUserId = userId
-            conversation.assignedInboxTeamId = null
-          } else if (value.startsWith("t_")) {
-            const inboxTeamId = value.slice(2)
-            conversation.assignedInboxTeamId = inboxTeamId
-            conversation.assignedUserId = null
-          }
-        } catch {
-          //
+        if (id === null) {
+          conversation.assignedUser = null
+          conversation.assignedUserId = null
+          conversation.assignedInboxTeam = null
+          conversation.assignedInboxTeamId = null
+        } else if (id.startsWith("u_")) {
+          conversation.assignedUser = null
+          conversation.assignedUserId = id.slice(2)
+          conversation.assignedInboxTeam = null
+          conversation.assignedInboxTeamId = null
+        } else if (id.startsWith("t_")) {
+          conversation.assignedUser = null
+          conversation.assignedUserId = null
+          conversation.assignedInboxTeam = null
+          conversation.assignedInboxTeamId = id.slice(2)
         }
 
         updatedConversations[conversationIndex] = conversation

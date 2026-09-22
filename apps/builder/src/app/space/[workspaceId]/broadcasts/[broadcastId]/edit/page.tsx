@@ -50,7 +50,7 @@ export default async function EditBroadcastPage({
   })
 
   return (
-    <FlowStoreProvider workspaceId={workspaceId}>
+    <FlowStoreProvider>
       <CustomFieldStoreProvider workspaceId={workspaceId}>
         <IntegrationStoreProvider workspaceId={workspaceId}>
           <FlowTemplateStoreProvider

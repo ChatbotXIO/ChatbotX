@@ -30,7 +30,7 @@ export default async function CreateFacebookLeadAdPage({
           { label: t("facebookLeadAdsAutomation.create"), href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
+      <FlowStoreProvider>
         <CustomFieldStoreProvider workspaceId={workspaceId}>
           <CreateFacebookLeadAdAutomationForm workspaceId={workspaceId} />
         </CustomFieldStoreProvider>

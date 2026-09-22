@@ -54,7 +54,10 @@ import { getBrowserTimezone } from "../contact-filter/lib/timezone"
 import type { ContactInboxResource } from "../contact-inboxes/schema/resource"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
 import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
-import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
+import {
+  customFieldIconsMap,
+  useCustomFields,
+} from "../custom-fields/provider/custom-field-hook"
 import { EditContactField } from "./edit-contact-field"
 import { ResetContactCustomFieldsDialog } from "./reset-contact-custom-fields-dialog"
 import type { GetContactResponse } from "./schema/query"
@@ -382,6 +385,7 @@ export const ContactDetail = ({
   const t = useTranslations()
 
   const workspaceId = useWorkspaceId()
+  const { data: customFields = [] } = useCustomFields(workspaceId)
   const { conversations } = useChatStore((state) => state)
   const avatarUrl = useAvatarUrl(contact)
   const [timezone, setTimezone] = useState("UTC")
@@ -520,7 +524,7 @@ export const ContactDetail = ({
 
   const customFieldMap = useMemo(() => {
     const map = new Map<string, { name: string; type: CustomFieldType }>()
-    for (const field of contact?.customFields ?? []) {
+    for (const field of customFields) {
       const parsedType = customFieldTypes.safeParse(field.type)
       if (!parsedType.success) {
         continue
@@ -531,7 +535,7 @@ export const ContactDetail = ({
       })
     }
     return map
-  }, [contact?.customFields])
+  }, [customFields])
 
   useEffect(() => {
     if (activeConversationId) {

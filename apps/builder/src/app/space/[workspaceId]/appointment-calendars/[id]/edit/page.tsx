@@ -37,7 +37,7 @@ export default async function EditAppointmentCalendarPage({
         ]}
       />
       <CustomFieldStoreProvider workspaceId={workspaceId}>
-        <FlowStoreProvider workspaceId={workspaceId}>
+        <FlowStoreProvider>
           <EditAppointmentCalendarForm
             calendar={calendar}
             externalCalendarOptions={externalCalendars.map((connection) => ({

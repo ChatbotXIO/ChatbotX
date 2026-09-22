@@ -1,7 +1,14 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { createContext, type ReactNode, useContext, useMemo } from "react"
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+} from "react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { orpc } from "@/lib/orpc/query"
 import type { ListSavedReplyResponse } from "../schema/mutation"
@@ -10,7 +17,6 @@ import type { SavedReplyResource } from "../schema/resource"
 export type SavedReplyStoreProviderProps = {
   children: ReactNode
   workspaceId: string
-  autoInitialize?: boolean
 }
 
 const SavedReplyWorkspaceContext = createContext<string | null>(null)
@@ -43,12 +49,69 @@ export const useSavedReplyStore = <T,>(
   const routedWorkspaceId = useWorkspaceId()
   const workspaceId = providedWorkspaceId ?? routedWorkspaceId
   const queryClient = useQueryClient()
-  const queryOptions =
-    orpc.savedRepliesAPI.listSavedRepliesAuthorizedAPI.queryOptions({
-      input: { workspaceId: workspaceId ?? "" },
-      enabled: false,
-    })
+  const queryOptions = useMemo(
+    () =>
+      orpc.savedRepliesAPI.listSavedRepliesAuthorizedAPI.queryOptions({
+        input: { workspaceId: workspaceId ?? "" },
+        enabled: false,
+      }),
+    [workspaceId],
+  )
   const savedRepliesQuery = useQuery(queryOptions)
+  const savedRepliesStateRef = useRef({
+    data: savedRepliesQuery.data,
+    isFetched: savedRepliesQuery.isFetched,
+    isFetching: savedRepliesQuery.isFetching,
+  })
+  savedRepliesStateRef.current = {
+    data: savedRepliesQuery.data,
+    isFetched: savedRepliesQuery.isFetched,
+    isFetching: savedRepliesQuery.isFetching,
+  }
+
+  const getAllSavedReplies = useCallback(() => {
+    const { data, isFetched, isFetching } = savedRepliesStateRef.current
+    if (isFetched || isFetching) {
+      return Promise.resolve(data)
+    }
+
+    return savedRepliesQuery.refetch().then((result) => result.data)
+  }, [savedRepliesQuery.refetch])
+
+  const deleteSavedReply = useCallback(
+    (id: string) => {
+      queryClient.setQueryData<ListSavedReplyResponse>(
+        queryOptions.queryKey,
+        (response) => ({
+          data: (response?.data ?? []).filter((item) => item.id !== id),
+        }),
+      )
+    },
+    [queryClient, queryOptions.queryKey],
+  )
+
+  const upsertSavedReply = useCallback(
+    (savedReply: SavedReplyResource) => {
+      queryClient.setQueryData<ListSavedReplyResponse>(
+        queryOptions.queryKey,
+        (response) => {
+          const currentItems = response?.data ?? []
+          const existingIndex = currentItems.findIndex(
+            (item) => item.id === savedReply.id,
+          )
+          if (existingIndex === -1) {
+            return { data: [savedReply, ...currentItems] }
+          }
+          return {
+            data: currentItems.map((item) =>
+              item.id === savedReply.id ? savedReply : item,
+            ),
+          }
+        },
+      )
+    },
+    [queryClient, queryOptions.queryKey],
+  )
 
   const snapshot = useMemo<SavedReplyStoreSnapshot>(
     () => ({
@@ -57,39 +120,21 @@ export const useSavedReplyStore = <T,>(
       workspaceId: workspaceId ?? "",
       savedReplies: savedRepliesQuery.data?.data ?? [],
       error: savedRepliesQuery.error?.message ?? null,
-      initialize: () =>
-        savedRepliesQuery.refetch().then((result) => result.data),
-      getAllSavedReplies: () =>
-        savedRepliesQuery.refetch().then((result) => result.data),
-      deleteSavedReply: (id) => {
-        queryClient.setQueryData<ListSavedReplyResponse>(
-          queryOptions.queryKey,
-          (response) => ({
-            data: (response?.data ?? []).filter((item) => item.id !== id),
-          }),
-        )
-      },
-      upsertSavedReply: (savedReply) => {
-        queryClient.setQueryData<ListSavedReplyResponse>(
-          queryOptions.queryKey,
-          (response) => {
-            const currentItems = response?.data ?? []
-            const existingIndex = currentItems.findIndex(
-              (item) => item.id === savedReply.id,
-            )
-            if (existingIndex === -1) {
-              return { data: [savedReply, ...currentItems] }
-            }
-            return {
-              data: currentItems.map((item) =>
-                item.id === savedReply.id ? savedReply : item,
-              ),
-            }
-          },
-        )
-      },
+      initialize: getAllSavedReplies,
+      getAllSavedReplies,
+      deleteSavedReply,
+      upsertSavedReply,
     }),
-    [queryClient, queryOptions.queryKey, savedRepliesQuery, workspaceId],
+    [
+      deleteSavedReply,
+      getAllSavedReplies,
+      savedRepliesQuery.data,
+      savedRepliesQuery.error,
+      savedRepliesQuery.isFetched,
+      savedRepliesQuery.isFetching,
+      upsertSavedReply,
+      workspaceId,
+    ],
   )
 
   return selector(snapshot)

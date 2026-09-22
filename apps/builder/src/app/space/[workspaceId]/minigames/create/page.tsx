@@ -43,7 +43,7 @@ export default async function CreateMinigamePage({
           { label: t("actions.create"), href: "" },
         ]}
       />
-      <FlowStoreProvider workspaceId={workspaceId}>
+      <FlowStoreProvider>
         <CustomFieldStoreProvider workspaceId={workspaceId}>
           <MinigameForm
             mode="create"
