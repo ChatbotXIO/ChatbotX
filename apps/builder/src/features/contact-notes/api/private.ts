@@ -4,7 +4,7 @@ import { z } from "zod"
 import { requireContactPermissionScopeForMember } from "@/features/contacts/permissions"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { contactNoteResource } from "../schema/resource"
+import { listContactNotesPublicResponse } from "../schema/public"
 
 const listContactNotesRequest = z.object({
   workspaceId: zodBigintAsString(),
@@ -21,7 +21,7 @@ export const contactNotesAuthenticatedAPI = {
     })
     .input(listContactNotesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(z.object({ data: z.array(contactNoteResource) }))
+    .output(listContactNotesPublicResponse)
     .handler(async ({ input, context }) => {
       const accessScope = requireContactPermissionScopeForMember({
         permissions: context.workspaceMember.permissions,

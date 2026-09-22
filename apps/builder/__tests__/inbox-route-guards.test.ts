@@ -39,8 +39,12 @@ vi.mock("@/features/chat/store/chat-store-provider", () => ({
   ChatStoreProvider: ({ children }: { children: unknown }) => children,
 }))
 
-vi.mock("@/features/flows/provider/flow-store-context", () => ({
-  FlowStoreProvider: ({ children }: { children: unknown }) => children,
+vi.mock("@/features/inboxes/provider/inbox-store-context", () => ({
+  InboxStoreProvider: ({ children }: { children: unknown }) => children,
+}))
+
+vi.mock("@/features/users/provider/user-store-context", () => ({
+  UserStoreProvider: ({ children }: { children: unknown }) => children,
 }))
 
 const { default: InboxPage } = await import(

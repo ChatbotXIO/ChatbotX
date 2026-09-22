@@ -8,7 +8,6 @@ import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { FacebookLeadAdsTable } from "@/features/facebook-lead-ad-automation/components/facebook-lead-ads-table"
 import { listFacebookLeadAdsAutomations } from "@/features/facebook-lead-ad-automation/queries"
 import { listFacebookLeadAdsSearchParamsCache } from "@/features/facebook-lead-ad-automation/schema/query"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 
 export default async function FacebookLeadAdsPage({
   params,
@@ -37,11 +36,9 @@ export default async function FacebookLeadAdsPage({
           { label: t("facebookLeadAdsAutomation.title"), href: "" },
         ]}
       />
-      <FlowStoreProvider>
-        <Suspense>
-          <FacebookLeadAdsTable promises={promises} workspaceId={workspaceId} />
-        </Suspense>
-      </FlowStoreProvider>
+      <Suspense>
+        <FacebookLeadAdsTable promises={promises} workspaceId={workspaceId} />
+      </Suspense>
     </div>
   )
 }

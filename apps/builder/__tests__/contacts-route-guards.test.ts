@@ -72,6 +72,14 @@ vi.mock("@/features/import/components/import-history-table", () => ({
   ImportHistoryTable: () => null,
 }))
 
+vi.mock("@/features/inboxes/provider/inbox-store-context", () => ({
+  InboxStoreProvider: ({ children }: { children: unknown }) => children,
+}))
+
+vi.mock("@/features/users/provider/user-store-context", () => ({
+  UserStoreProvider: ({ children }: { children: unknown }) => children,
+}))
+
 const { default: ContactsPage } = await import(
   "../src/app/space/[workspaceId]/contacts/page"
 )

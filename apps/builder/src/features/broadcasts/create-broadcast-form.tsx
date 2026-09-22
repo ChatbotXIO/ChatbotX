@@ -45,7 +45,7 @@ import { useWorkspaceId } from "@/hooks/routing"
 import { ContactFilter } from "../contact-filter"
 import type { ContactFilterCriteria } from "../contact-filter/schema"
 import { useContactStore } from "../contacts/provider/contact-store-context"
-import { useFlowStore } from "../flows/provider/flow-store-context"
+import { type FlowStateFilter, useFlows } from "../flows/provider/flow-hook"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { useInboxList } from "../inboxes/provider/inbox-hook"
 import { BroadcastFlowTargets } from "./components/broadcast-flow-targets"
@@ -54,6 +54,7 @@ import { BroadcastInboxMultiSelect } from "./components/broadcast-inbox-multi-se
 import { BroadcastSendLimitFields } from "./components/broadcast-send-limit-fields"
 import { BroadcastTemplateTargets } from "./components/broadcast-template-targets"
 import { getBroadcastExcludedFilterFields } from "./lib/broadcast-filter-fields"
+import type { FlowForTargets } from "./lib/broadcast-flow-targets"
 import { resolveWindowedReceiversCount } from "./lib/broadcast-send-limit"
 import {
   hasSameTargetReferences,
@@ -74,6 +75,22 @@ type BroadcastConfig = {
     name: string
     description: string
   }[]
+}
+
+export const buildBroadcastFlowFilter = (
+  subaction: BroadcastSubaction | undefined,
+  integrationWhatsappIds: string[],
+): FlowStateFilter => {
+  if (subaction === broadcastSubactions.enum.whatsappTemplateMessage) {
+    return {
+      startType: stepTypes.enum.sendWaTemplateMessage,
+      integrationWhatsappIds,
+    }
+  }
+  if (subaction === broadcastSubactions.enum.messengerTemplateMessage) {
+    return { startType: stepTypes.enum.sendMessengerTemplateMessage }
+  }
+  return {}
 }
 
 const getConfigs = (t: ReturnType<typeof useTranslations>) =>
@@ -123,10 +140,6 @@ export function CreateBroadcastForm({
 }: CreateBroadcastFormProps) {
   const t = useTranslations()
   const router = useRouter()
-
-  const { appendFilter, resetFilter, getAllActiveFlows } = useFlowStore(
-    (state) => state,
-  )
 
   const isEditing = Boolean(editDraft)
 
@@ -201,32 +214,17 @@ export function CreateBroadcastForm({
     watchedInboxIds ?? [],
   )
 
-  useEffect(() => {
-    if (watchedSubAction === broadcastSubactions.enum.whatsappTemplateMessage) {
-      appendFilter({
-        startType: stepTypes.enum.sendWaTemplateMessage,
-        integrationWhatsappIds: selectedWhatsappIntegrationIds,
-      })
-      getAllActiveFlows()
-    } else if (
-      watchedSubAction === broadcastSubactions.enum.messengerTemplateMessage
-    ) {
-      appendFilter({
-        startType: stepTypes.enum.sendMessengerTemplateMessage,
-      })
-      getAllActiveFlows()
-    } else {
-      resetFilter()
-      getAllActiveFlows()
-    }
-    return
-  }, [
-    watchedSubAction,
-    selectedWhatsappIntegrationIds,
-    appendFilter,
-    resetFilter,
-    getAllActiveFlows,
-  ])
+  // Deriving the whole filter replaces the old merge-based store filter:
+  // Messenger must not retain WhatsApp integration ids after a subaction switch.
+  const flowFilter = useMemo(
+    () =>
+      buildBroadcastFlowFilter(
+        watchedSubAction,
+        selectedWhatsappIntegrationIds,
+      ),
+    [watchedSubAction, selectedWhatsappIntegrationIds],
+  )
+  const { data: flows = [] } = useFlows(workspaceId, { filter: flowFilter })
 
   return (
     <div className="flex flex-col items-center overflow-y-auto px-10 py-10">
@@ -246,6 +244,7 @@ export function CreateBroadcastForm({
             <CreateBroadcastChooseFlow
               canViewEmailAndPhone={canViewEmailAndPhone}
               channel={watchedChannel}
+              flows={flows}
               hydrated={
                 editDraft && { targets: editDraft.defaultValues.targets }
               }
@@ -261,7 +260,7 @@ export function CreateBroadcastForm({
 
 /**
  * WhatsApp integration ids of the selected pages, memoised by value so the
- * flow-filter effect only re-runs when the selection actually changes.
+ * derived flow filter only changes when the selection actually changes.
  */
 function useSelectedWhatsappIntegrationIds(inboxIds: string[]): string[] {
   const inboxes = useInboxList()
@@ -404,6 +403,7 @@ function CreateBroadcastChooseSubaction({ channel }: { channel: ChannelType }) {
 type CreateBroadcastChooseFlowProps = {
   canViewEmailAndPhone: boolean
   channel: ChannelType
+  flows: FlowForTargets[]
   /**
    * Targets an edited draft was hydrated with, so each page's template effect
    * can tell a still-hydrated selection from one the user changed. Absent when
@@ -433,8 +433,6 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     () => buildBroadcastScheduleTypeOptions(t),
     [t],
   )
-
-  const { flows } = useFlowStore((state) => state)
   const [subactionInfo, setSubactionInfo] = useState<{
     value: BroadcastSubaction
     name: string
@@ -650,7 +648,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
           )}
 
           {isTemplateSubaction && !sendsTemplate && (
-            <BroadcastFlowTargets channel={props.channel} />
+            <BroadcastFlowTargets channel={props.channel} flows={props.flows} />
           )}
 
           {!(isTemplateSubaction || sendsTemplate) && (
@@ -659,7 +657,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
               key="flowId"
               label={t("fields.flowId.label")}
               name="flowId"
-              options={flows.map((flow) => ({
+              options={props.flows.map((flow) => ({
                 label: flow.name,
                 value: flow.id,
               }))}

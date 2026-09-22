@@ -59,10 +59,7 @@ import { getBrowserTimezone } from "../contact-filter/lib/timezone"
 import type { ContactInboxResource } from "../contact-inboxes/schema/resource"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
 import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
-import {
-  customFieldIconsMap,
-  useCustomFields,
-} from "../custom-fields/provider/custom-field-hook"
+import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
 import { EditContactField } from "./edit-contact-field"
 import { ResetContactCustomFieldsDialog } from "./reset-contact-custom-fields-dialog"
 import type { GetContactResponse } from "./schema/query"
@@ -375,22 +372,15 @@ function ContactPanelCallEntry({
 export const ContactDetail = ({
   activeConversationId,
   contact,
-  onCustomFieldsReset,
+  onCustomFieldsReset = () => undefined,
 }: {
   activeConversationId: string | null
   contact: GetContactResponse | null
-  /**
-   * The owner of `contact` MUST drop the now-cleared values too: the effect
-   * below re-seeds `contactFields` from `contact.customFields` on every rebuild
-   * (the chat store updates on every inbound message), so a stale prop would
-   * bring the cleared rows straight back.
-   */
-  onCustomFieldsReset: () => void
+  onCustomFieldsReset?: () => void
 }) => {
   const t = useTranslations()
 
   const workspaceId = useWorkspaceId()
-  const { data: customFields = [] } = useCustomFields(workspaceId)
   const { conversations, updateContact } = useChatStore((state) => state)
   const avatarUrl = useAvatarUrl(contact)
   const [timezone, setTimezone] = useState("UTC")
@@ -485,11 +475,13 @@ export const ContactDetail = ({
     )
   }
 
-  // Reset clears every custom-field VALUE, so the rows that only exist because
-  // the contact held a value go away — same as deleting them one by one.
+  // Reset clears every custom-field VALUE, so every custom-field row goes away
+  // — same as deleting them one by one. Keyed on the row flag, not on
+  // `contact.customFields`: a field added and saved in this session is not in
+  // the cached contact yet, but its value is in the database and must reset.
   const handleCustomFieldsReset = () => {
     setContactFields((previous) =>
-      previous.filter((field) => !customFieldMap.has(field.key)),
+      previous.filter((field) => !field.isCustomField),
     )
     onCustomFieldsReset()
   }
@@ -520,37 +512,23 @@ export const ContactDetail = ({
     }
   }
 
-  const handleChooseCustomField = (customFieldId: string) => {
-    const targetCustomField = customFieldMap.get(customFieldId)
-    if (!targetCustomField) {
-      return
-    }
+  const handleChooseCustomField = (field: {
+    id: string
+    name: string
+    type: CustomFieldType
+  }) => {
     setContactFields((previous) => [
       ...previous,
       {
-        key: customFieldId,
-        icon: customFieldIconsMap[targetCustomField.type],
-        label: targetCustomField.name,
+        key: field.id,
+        icon: customFieldIconsMap[field.type],
+        label: field.name,
         value: "",
-        type: targetCustomField.type,
+        type: field.type,
+        isCustomField: true,
       },
     ])
   }
-
-  const customFieldMap = useMemo(() => {
-    const map = new Map<string, { name: string; type: CustomFieldType }>()
-    for (const field of customFields) {
-      const parsedType = customFieldTypes.safeParse(field.type)
-      if (!parsedType.success) {
-        continue
-      }
-      map.set(field.id.toString(), {
-        name: field.name,
-        type: parsedType.data,
-      })
-    }
-    return map
-  }, [customFields])
 
   useEffect(() => {
     if (activeConversationId) {
@@ -655,30 +633,33 @@ export const ContactDetail = ({
         ]
 
         for (const contactCustomField of contact?.customFields ?? []) {
-          const targetCustomField = customFieldMap.get(contactCustomField.id)
-          if (targetCustomField) {
-            tmpContactFields.push({
-              key: contactCustomField.id,
-              icon: customFieldIconsMap[targetCustomField.type],
-              label: targetCustomField.name,
-              value: formatCustomFieldDisplayValue(
-                targetCustomField.type,
-                contactCustomField.value,
-                timezone,
-                {
-                  false: t("fields.boolean.false"),
-                  true: t("fields.boolean.true"),
-                },
-              ),
-              formValue: isTemporalCustomFieldType(targetCustomField.type)
-                ? resolveTemporalCustomFieldFormValue(
-                    targetCustomField.type,
-                    contactCustomField.value,
-                  )
-                : contactCustomField.value,
-              type: targetCustomField.type,
-            })
+          const parsedType = customFieldTypes.safeParse(contactCustomField.type)
+          if (!parsedType.success) {
+            continue
           }
+          const type = parsedType.data
+          tmpContactFields.push({
+            key: contactCustomField.id,
+            icon: customFieldIconsMap[type],
+            label: contactCustomField.name,
+            value: formatCustomFieldDisplayValue(
+              type,
+              contactCustomField.value,
+              timezone,
+              {
+                false: t("fields.boolean.false"),
+                true: t("fields.boolean.true"),
+              },
+            ),
+            formValue: isTemporalCustomFieldType(type)
+              ? resolveTemporalCustomFieldFormValue(
+                  type,
+                  contactCustomField.value,
+                )
+              : contactCustomField.value,
+            type,
+            isCustomField: true,
+          })
         }
 
         setContactFields(tmpContactFields)
@@ -692,7 +673,6 @@ export const ContactDetail = ({
     activeConversationId,
     conversations,
     contact,
-    customFieldMap,
     genderOptions,
     languageOptions,
     timezone,
@@ -816,9 +796,7 @@ export const ContactDetail = ({
           />
           <ResetContactCustomFieldsDialog
             contactId={contact.id}
-            disabled={
-              !contactFields.some((field) => customFieldMap.has(field.key))
-            }
+            disabled={!contactFields.some((field) => field.isCustomField)}
             onSuccess={handleCustomFieldsReset}
             workspaceId={workspaceId}
           />

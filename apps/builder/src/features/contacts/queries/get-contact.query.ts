@@ -1,23 +1,17 @@
 import { contactService } from "@chatbotx.io/business"
-import { notFoundException } from "@chatbotx.io/business/errors"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
-import {
-  type ContactPermissionScope,
-  maskContactEmailAndPhone,
-  resolveContactPermissionScope,
-} from "../permissions"
+import type { ContactPermissionScope } from "../permissions"
+import { maskContactEmailAndPhone } from "../permissions"
 import type { GetContactRequest, GetContactResponse } from "../schema/query"
 
+/**
+ * Loads one contact using the caller-resolved scope so assignment and PII
+ * restrictions are applied consistently across every caller.
+ */
 export async function getContact(
   input: GetContactRequest,
-  permissionScope?: ContactPermissionScope,
+  scope: ContactPermissionScope,
 ): Promise<GetContactResponse> {
-  const scope =
-    permissionScope ?? (await resolveContactPermissionScope(input.workspaceId))
-  if (!scope) {
-    throw notFoundException("Contact not found")
-  }
-
   const contact = await contactService.findDetailOrFail({
     workspaceId: input.workspaceId,
     id: input.contactId,

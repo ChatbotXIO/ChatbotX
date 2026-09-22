@@ -30,7 +30,7 @@ export function MediaLibraryOrInsertLink({
   parentName: string
   fileType: FileType
   uploadPath?: string
-  // Reads custom fields from the current route workspace.
+  // The variable picker fetches custom fields via TanStack Query when enabled.
   showVariablePicker?: boolean
   // See `UrlVariablePicker`'s doc — only opt in when this URL field is
   // actually resolved against contact/bot-field variables at send time.

@@ -5,7 +5,7 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { toast } from "sonner"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import { useWorkspaceId } from "@/hooks/routing"
@@ -13,8 +13,7 @@ import type { ContactResource } from "../contacts/schema/resource"
 import { updateContactSequenceAction } from "./actions/update-contact-sequence.action"
 import { updateContactSequenceRequest } from "./schema"
 
-export type ContactSequenceFieldItem = {
-  sequenceId: string
+type ContactSequence = {
   sequence: {
     id: string
     name: string
@@ -27,8 +26,8 @@ export default function UpdateContactSequenceField({
   onSuccess,
 }: {
   contact: ContactResource
-  sequences: ContactSequenceFieldItem[]
-  onSuccess?: (updatedSequences: ContactSequenceFieldItem[]) => void
+  sequences: ContactSequence[]
+  onSuccess?: (updatedSequences: ContactSequence[]) => void
 }) {
   const workspaceId = useWorkspaceId()
 
@@ -40,10 +39,6 @@ export default function UpdateContactSequenceField({
     value: sequence.id,
   }))
 
-  const [currentSequencesIds, setCurrentSequencesIds] = useState<string[]>(
-    () => sequences?.map((cos) => cos.sequence.id).filter(Boolean) ?? [],
-  )
-
   const { form, handleSubmitWithAction } = useHookFormAction(
     updateContactSequenceAction.bind(null, workspaceId),
     zodResolver(updateContactSequenceRequest),
@@ -52,7 +47,6 @@ export default function UpdateContactSequenceField({
         onSuccess: ({ data: updatedSequences }) => {
           onSuccess?.(
             updatedSequences.map((sequence) => ({
-              sequenceId: sequence.sequenceId,
               sequence: {
                 id: sequence.sequence.id,
                 name: sequence.sequence.name,
@@ -70,7 +64,7 @@ export default function UpdateContactSequenceField({
         mode: "onChange",
         defaultValues: {
           contactId: contact?.id ?? "",
-          sequences: currentSequencesIds,
+          sequences: sequences.map((item) => item.sequence.id),
         },
       },
       errorMapProps: {},
@@ -78,10 +72,10 @@ export default function UpdateContactSequenceField({
   )
 
   useEffect(() => {
-    const newSequencesIds =
-      sequences?.map((cos) => cos.sequence.id).filter(Boolean) ?? []
-    setCurrentSequencesIds(newSequencesIds)
-    form.setValue("sequences", newSequencesIds)
+    form.setValue(
+      "sequences",
+      sequences.map((item) => item.sequence.id),
+    )
   }, [sequences, form])
 
   return (
@@ -92,10 +86,13 @@ export default function UpdateContactSequenceField({
           emptyMessage={t("fields.noResults.label")}
           label=""
           name="sequences"
-          onSelect={(selectedTags) => {
+          onSelect={async (selectedTags) => {
             const ids = selectedTags.map((tag) => tag.value)
-            setCurrentSequencesIds(ids)
-            handleSubmitWithAction()
+            form.setValue("sequences", ids, {
+              shouldDirty: true,
+              shouldValidate: true,
+            })
+            await handleSubmitWithAction()
           }}
           options={sequenceSelectOptions}
           placeholder={t("fields.search.placeholder")}

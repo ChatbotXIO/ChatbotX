@@ -6,7 +6,6 @@ import { buildEditBroadcastDefaultValues } from "@/features/broadcasts/lib/creat
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { ContactStoreProvider } from "@/features/contacts/provider/contact-store-context"
 
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { FlowTemplateStoreProvider } from "@/features/flows/react-flow/stores/flow-template-store-provider"
 import { WhatsappFlowStoreProvider } from "@/features/flows/react-flow/stores/whatsapp-flow-store-provider"
 import { listIntegrationOpenaiCompatible } from "@/features/integration-openai-compatible/queries"
@@ -50,28 +49,26 @@ export default async function EditBroadcastPage({
   })
 
   return (
-    <FlowStoreProvider>
-      <IntegrationStoreProvider workspaceId={workspaceId}>
-        <FlowTemplateStoreProvider
-          includeAllTemplateStatuses
-          openaiCompatibleIntegrations={openaiCompatibleIntegrations}
-          workspaceId={workspaceId}
-        >
-          <WhatsappFlowStoreProvider workspaceId={workspaceId}>
-            <ContactStoreProvider
-              autoInitialize={false}
+    <IntegrationStoreProvider workspaceId={workspaceId}>
+      <FlowTemplateStoreProvider
+        includeAllTemplateStatuses
+        openaiCompatibleIntegrations={openaiCompatibleIntegrations}
+        workspaceId={workspaceId}
+      >
+        <WhatsappFlowStoreProvider workspaceId={workspaceId}>
+          <ContactStoreProvider
+            autoInitialize={false}
+            workspaceId={workspaceId}
+          >
+            <CreateBroadcastForm
+              canViewEmailAndPhone={canViewEmailAndPhone}
+              editDraft={editDraft}
+              initialChannel={editDraft.channel}
               workspaceId={workspaceId}
-            >
-              <CreateBroadcastForm
-                canViewEmailAndPhone={canViewEmailAndPhone}
-                editDraft={editDraft}
-                initialChannel={editDraft.channel}
-                workspaceId={workspaceId}
-              />
-            </ContactStoreProvider>
-          </WhatsappFlowStoreProvider>
-        </FlowTemplateStoreProvider>
-      </IntegrationStoreProvider>
-    </FlowStoreProvider>
+            />
+          </ContactStoreProvider>
+        </WhatsappFlowStoreProvider>
+      </FlowTemplateStoreProvider>
+    </IntegrationStoreProvider>
   )
 }

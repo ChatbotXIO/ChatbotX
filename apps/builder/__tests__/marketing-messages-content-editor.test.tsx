@@ -60,14 +60,12 @@ vi.mock(
   () => ({ ButtonListField: () => null }),
 )
 
-// The quick reply's action editor reads the flow store, which this test does
-// not exercise.
+// The quick reply's action editor reads query-backed flow data, which this
+// test does not exercise.
 vi.mock("@/features/flows/provider/flow-hook", () => ({
+  useFlows: () => ({ data: [{ id: "10", flowVersions: [] }] }),
   useFlowSelectOptions: () => [{ value: "10", label: "Flow A" }],
   getFlowNodesOptions: () => [{ value: "20", label: "Node A" }],
-}))
-vi.mock("@/features/flows/provider/flow-store-context", () => ({
-  useFlowStore: () => [{ id: "10", flowVersions: [] }],
 }))
 
 const quickReply = (id: string, title: string) => ({

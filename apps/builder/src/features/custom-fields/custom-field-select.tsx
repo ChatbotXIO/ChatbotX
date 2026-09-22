@@ -17,8 +17,10 @@ import { useTranslations } from "next-intl"
 import { useCallback, useMemo } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { CreateCustomFieldDialog } from "./create-custom-field"
-import { useCustomFieldSelectOptions } from "./provider/custom-field-hook"
-import { useCustomFieldStore } from "./provider/custom-field-store-context"
+import {
+  useCustomFieldSelectOptions,
+  useInvalidateCustomFields,
+} from "./provider/custom-field-hook"
 
 type CustomFieldSelectProps = {
   name: string
@@ -87,13 +89,11 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
     [clearable, customFieldSelectOptions],
   )
 
-  const getAllCustomFields = useCustomFieldStore(
-    (state) => state.getAllCustomFields,
-  )
+  const invalidateCustomFields = useInvalidateCustomFields()
 
   const handleSuccess = useCallback(() => {
-    getAllCustomFields()
-  }, [getAllCustomFields])
+    invalidateCustomFields()
+  }, [invalidateCustomFields])
 
   const showLabel = label && label !== ""
 

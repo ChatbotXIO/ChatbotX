@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+
 import { UpdateWebchatForm } from "@/features/integration-webchat/components/update-webchat-form"
 import { findIntegrationWebchat } from "@/features/integration-webchat/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
@@ -23,10 +23,8 @@ export default async function WebchatEditPage({
   })
 
   return (
-    <FlowStoreProvider>
-      <Suspense fallback={<div>Loading...</div>}>
-        <UpdateWebchatForm integrationWebchat={integrationWebchat} />
-      </Suspense>
-    </FlowStoreProvider>
+    <Suspense fallback={<div>Loading...</div>}>
+      <UpdateWebchatForm integrationWebchat={integrationWebchat} />
+    </Suspense>
   )
 }

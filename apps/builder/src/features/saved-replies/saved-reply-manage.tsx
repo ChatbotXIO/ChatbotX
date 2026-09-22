@@ -8,9 +8,12 @@ import {
 } from "@chatbotx.io/ui/components/ui/popover"
 import { Loader2Icon, MessageSquareMoreIcon, PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
-import { useSavedReplyStore } from "./provider/saved-reply-store-context"
+import {
+  useSavedReplies,
+  useSavedReplyCache,
+} from "./provider/saved-reply-hook"
 import { SavedReplyCreateForm } from "./saved-reply-create-form"
 import { SavedReplyEditForm } from "./saved-reply-edit-form"
 import { SavedReplyItem } from "./saved-reply-item"
@@ -27,14 +30,10 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
 
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<ViewState>({ type: "list" })
-  const {
-    savedReplies,
-    isLoading: isLoadingSavedReplies,
-    getAllSavedReplies,
-    deleteSavedReply: deleteSavedReplyFromStore,
-  } = useSavedReplyStore((state) => state)
-
-  const upsertSavedReply = useSavedReplyStore((state) => state.upsertSavedReply)
+  const { data: savedReplies = [], isFetching: isLoadingSavedReplies } =
+    useSavedReplies(workspaceId, { enabled: open })
+  const { remove: deleteSavedReplyFromStore, upsert: upsertSavedReply } =
+    useSavedReplyCache(workspaceId)
 
   const editingSavedReply = useMemo(
     () => (view.type === "edit" ? view.item : null),
@@ -53,12 +52,6 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
       setView({ type: "list" })
     }
   }
-
-  useEffect(() => {
-    if (open) {
-      getAllSavedReplies()
-    }
-  }, [open, getAllSavedReplies])
 
   return (
     <Popover onOpenChange={setOpen} open={open}>

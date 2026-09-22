@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+
 import { QrCodesTable } from "@/features/qr-codes/qr-codes-table"
 import { listQrCodes } from "@/features/qr-codes/queries"
 import { listQrCodesSearchParamsCache } from "@/features/qr-codes/schema/query"
@@ -43,11 +43,9 @@ export default async function QrCodesPage({
           { label: t("qrCodes.title"), href: "" },
         ]}
       />
-      <FlowStoreProvider>
-        <Suspense fallback={<div>Loading...</div>}>
-          <QrCodesTable promises={promises} workspaceId={workspaceId} />
-        </Suspense>
-      </FlowStoreProvider>
+      <Suspense fallback={<div>Loading...</div>}>
+        <QrCodesTable promises={promises} workspaceId={workspaceId} />
+      </Suspense>
     </div>
   )
 }

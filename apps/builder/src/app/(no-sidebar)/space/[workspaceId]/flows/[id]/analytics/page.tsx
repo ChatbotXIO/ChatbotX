@@ -6,7 +6,7 @@ import { notFound } from "next/navigation"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import { buildSmartDelayNodeStats } from "@/features/flows/analytics/smart-delay-node-stats"
 import { FlowAnalytics } from "@/features/flows/flow-analytics"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+
 import { FlowTemplateStoreProvider } from "@/features/flows/react-flow/stores/flow-template-store-provider"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
@@ -61,16 +61,14 @@ export default async function FlowAnalyticsPage({
 
   return (
     <div className="flex h-screen w-screen flex-col">
-      <FlowStoreProvider>
-        <FlowTemplateStoreProvider workspaceId={data.workspaceId}>
-          <FlowAnalytics
-            flow={flow}
-            flowVersion={draftFlowVersion as FlowVersionResource}
-            smartDelayStats={smartDelayStats}
-            stats={stats}
-          />
-        </FlowTemplateStoreProvider>
-      </FlowStoreProvider>
+      <FlowTemplateStoreProvider workspaceId={data.workspaceId}>
+        <FlowAnalytics
+          flow={flow}
+          flowVersion={draftFlowVersion as FlowVersionResource}
+          smartDelayStats={smartDelayStats}
+          stats={stats}
+        />
+      </FlowTemplateStoreProvider>
     </div>
   )
 }

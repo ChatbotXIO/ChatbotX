@@ -1,7 +1,7 @@
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import type { MultiSelectGroup } from "@chatbotx.io/ui/components/ui/sersavan/multi-select"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { orpc } from "@/lib/orpc/query"
 import { maxPerPage } from "@/lib/shared-request"
@@ -33,16 +33,19 @@ export const useInboxTeams = (
 export const useInvalidateUsers = () => {
   const queryClient = useQueryClient()
 
-  return () =>
-    Promise.all([
-      queryClient.invalidateQueries({
-        queryKey:
-          orpc.workspaceMembersAPI.listWorkspaceMembersAuthenticatedAPI.key(),
-      }),
-      queryClient.invalidateQueries({
-        queryKey: orpc.inboxTeamsAPI.listInboxTeamsAuthenticatedAPI.key(),
-      }),
-    ])
+  return useCallback(
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey:
+            orpc.workspaceMembersAPI.listWorkspaceMembersAuthenticatedAPI.key(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: orpc.inboxTeamsAPI.listInboxTeamsAuthenticatedAPI.key(),
+        }),
+      ]),
+    [queryClient],
+  )
 }
 
 export const useContactAssigneeOptions = (props?: {

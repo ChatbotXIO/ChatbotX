@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
 
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { findTrigger } from "@/features/triggers/queries"
 import UpdateTriggerForm from "@/features/triggers/update-trigger-form"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
@@ -23,9 +22,5 @@ export default async function UpdateTriggerPage({
     return notFound()
   }
 
-  return (
-    <FlowStoreProvider>
-      <UpdateTriggerForm trigger={trigger} workspaceId={workspaceId} />
-    </FlowStoreProvider>
-  )
+  return <UpdateTriggerForm trigger={trigger} workspaceId={workspaceId} />
 }

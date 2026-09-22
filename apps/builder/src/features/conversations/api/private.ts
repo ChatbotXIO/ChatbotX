@@ -7,6 +7,7 @@ import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { assertWorkspaceNotBlocked } from "@/lib/workspace-quota"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import { CONVERSATIONS_LIST_POST_PATH } from "../lib/api-paths"
 import { getPostDetailsQuery } from "../queries/get-post-details.query"
 import {
   findConversation,
@@ -24,10 +25,6 @@ const workspaceIdAndIdRequest = z.object({
   workspaceId: zodBigintAsString(),
   id: zodBigintAsString(),
 })
-
-const resolveIncludeEmailAndPhone = (
-  permissions: Parameters<typeof canViewContactEmailAndPhone>[0],
-) => canViewContactEmailAndPhone(permissions)
 
 const postDetailsSchema = z.object({
   text: z.string().optional(),
@@ -53,7 +50,7 @@ export const conversationsAuthenticatedAPI = {
     .handler(
       async ({ input, context }) =>
         await listConversations(input, {
-          includeEmailAndPhone: resolveIncludeEmailAndPhone(
+          includeEmailAndPhone: canViewContactEmailAndPhone(
             context.workspaceMember.permissions,
           ),
         }),
@@ -62,7 +59,7 @@ export const conversationsAuthenticatedAPI = {
   listConversationsByPOSTAuthenticatedAPI: authorizedAPI
     .route({
       method: "POST",
-      path: "/workspaces/{workspaceId}/conversations/list",
+      path: CONVERSATIONS_LIST_POST_PATH,
       summary: "List conversations by cursor pagination using POST request",
       tags: ["Conversations"],
     })
@@ -72,7 +69,7 @@ export const conversationsAuthenticatedAPI = {
     .handler(
       async ({ input, context }) =>
         await listConversations(input, {
-          includeEmailAndPhone: resolveIncludeEmailAndPhone(
+          includeEmailAndPhone: canViewContactEmailAndPhone(
             context.workspaceMember.permissions,
           ),
         }),

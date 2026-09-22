@@ -118,7 +118,7 @@ export function DirectUploadOrInsertLink({
   fileType: FileType
   uploadPath: string
   onSuccess?: (url: string) => void
-  // Reads custom fields from the current route workspace.
+  // The variable picker fetches custom fields via TanStack Query when enabled.
   showVariablePicker?: boolean
   // Pick an existing workspace file from the Media Library instead of only
   // uploading a new one from the device.

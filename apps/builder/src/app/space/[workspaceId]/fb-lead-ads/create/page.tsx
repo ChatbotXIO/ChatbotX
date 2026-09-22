@@ -4,7 +4,6 @@ import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 
 import { CreateFacebookLeadAdAutomationForm } from "@/features/facebook-lead-ad-automation/components/create-facebook-lead-ad-automation"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 
 export default async function CreateFacebookLeadAdPage({
   params,
@@ -30,9 +29,7 @@ export default async function CreateFacebookLeadAdPage({
           { label: t("facebookLeadAdsAutomation.create"), href: "" },
         ]}
       />
-      <FlowStoreProvider>
-        <CreateFacebookLeadAdAutomationForm workspaceId={workspaceId} />
-      </FlowStoreProvider>
+      <CreateFacebookLeadAdAutomationForm workspaceId={workspaceId} />
     </div>
   )
 }

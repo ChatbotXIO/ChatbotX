@@ -4,7 +4,7 @@ import { AppBreadcrumb } from "@/components/app-breadcrumb"
 
 import { EditFacebookLeadAdAutomationForm } from "@/features/facebook-lead-ad-automation/components/edit-facebook-lead-ad-automation-form"
 import { getFacebookLeadAdAutomation } from "@/features/facebook-lead-ad-automation/queries"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 
 export default async function EditFacebookLeadAdPage(props: {
@@ -31,20 +31,18 @@ export default async function EditFacebookLeadAdPage(props: {
           { label: automation.name, href: "" },
         ]}
       />
-      <FlowStoreProvider>
-        <EditFacebookLeadAdAutomationForm
-          initialData={{
-            id: automation.id,
-            name: automation.name,
-            pageName: automation.pageName,
-            formId: automation.formId,
-            formName: automation.formName,
-            fieldMapping: automation.fieldMapping,
-            flowId: automation.flowId,
-          }}
-          workspaceId={workspaceId}
-        />
-      </FlowStoreProvider>
+      <EditFacebookLeadAdAutomationForm
+        initialData={{
+          id: automation.id,
+          name: automation.name,
+          pageName: automation.pageName,
+          formId: automation.formId,
+          formName: automation.formName,
+          fieldMapping: automation.fieldMapping,
+          flowId: automation.flowId,
+        }}
+        workspaceId={workspaceId}
+      />
     </div>
   )
 }

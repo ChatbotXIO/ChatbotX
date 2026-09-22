@@ -7,7 +7,7 @@ import { AppBreadcrumb } from "@/components/app-breadcrumb"
 
 import { EditMarketingMessage } from "@/features/facebook-marketing-messages/components/edit-marketing-message"
 import { resolveMarketingMessagesGrant } from "@/features/facebook-marketing-messages/lib/grant"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 export default async function EditFacebookMarketingMessagePage({
@@ -54,11 +54,9 @@ export default async function EditFacebookMarketingMessagePage({
           { label: row.name, href: "" },
         ]}
       />
-      <FlowStoreProvider>
-        <Suspense>
-          <EditMarketingMessage row={row} workspaceId={workspaceId} />
-        </Suspense>
-      </FlowStoreProvider>
+      <Suspense>
+        <EditMarketingMessage row={row} workspaceId={workspaceId} />
+      </Suspense>
     </div>
   )
 }

@@ -37,8 +37,9 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form"
-import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
+import { useCustomFields } from "@/features/custom-fields/provider/custom-field-hook"
 import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
+import { useWorkspaceId } from "@/hooks/routing"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ButtonStepEditor } from "../steps/button/editor"
@@ -240,7 +241,7 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
   const t = useTranslations()
   const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
   const validator = nodeConfig?.validator.shape.data.shape.details
-  const customFields = useCustomFieldStore((state) => state.customFields)
+  const customFields = useCustomFields(useWorkspaceId()).data ?? []
   const customFieldLookup = useMemo(() => {
     const customFieldById = new Map(
       customFields.map((field) => [

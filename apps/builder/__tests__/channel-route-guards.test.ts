@@ -152,10 +152,6 @@ vi.mock("@/features/integration-zalo/libs/zalo", () => ({
   generateZaloRedirectUri: vi.fn(async () => ""),
 }))
 
-vi.mock("@/features/flows/provider/flow-store-context", () => ({
-  FlowStoreProvider: ({ children }: { children: unknown }) => children,
-}))
-
 vi.mock(
   "@/features/integration-webchat/components/create-webchat-form",
   () => ({
