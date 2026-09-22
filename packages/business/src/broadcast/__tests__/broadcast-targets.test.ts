@@ -140,7 +140,10 @@ vi.mock("@chatbotx.io/database/client", () => {
     isNull: (value: unknown) => ({ __isNull: value }),
     isNotNull: vi.fn(),
     ne: vi.fn(),
-    sql: vi.fn(),
+    sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
+      __sql: strings.join("?"),
+      values,
+    }),
   }
 })
 
@@ -750,7 +753,10 @@ describe("broadcastService.updateDraft", () => {
     expect(mocks.transaction).toHaveBeenCalledTimes(1)
     expect(mocks.updateSet).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "Page inbox-a - promo / Page inbox-b - welcome",
+        // Fills a blank name only - an existing one is kept.
+        name: expect.objectContaining({
+          values: [undefined, "Page inbox-a - promo / Page inbox-b - welcome"],
+        }),
         templateId: null,
         templateData: null,
       }),
