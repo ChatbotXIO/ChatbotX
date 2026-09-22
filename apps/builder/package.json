@@ -19,7 +19,7 @@
     "@base-ui/react": "^1.6.0",
     "@bull-board/api": "^8.1.2",
     "@bull-board/hono": "^8.1.2",
-    "@bull-board/ui": "^8.1.2",
+    "@bull-board/ui": "^9.10.1",
     "@chatbotx.io/ai": "workspace:*",
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/analytics-nextjs": "workspace:*",
