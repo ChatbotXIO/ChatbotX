@@ -2,7 +2,7 @@
 
 import { ChevronDownIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { authClient } from "@/lib/auth/auth-client"
 import type { ListConversationItemResource } from "../schema/resource"
 import AssignConversationDialog, {
@@ -25,14 +25,16 @@ export function UpdateConversationAssignee({
   const [selectedAssigneeName, setSelectedAssigneeName] = useState<
     string | null
   >(null)
+  const selectedAssignmentKeyRef = useRef<string | null>(null)
 
   const onSelectAssignee = useCallback(
     (assignee: ConversationAssignee) => {
+      selectedAssignmentKeyRef.current = `${conversation.id}:${assignee.id ?? ""}`
       setSelectedId(assignee.id)
       setSelectedAssigneeName(assignee.name)
       onChange(assignee)
     },
-    [onChange],
+    [conversation.id, onChange],
   )
 
   const agentLabel = useMemo(() => {
@@ -52,28 +54,32 @@ export function UpdateConversationAssignee({
   }, [selectedAssigneeName, selectedId, session, t])
 
   useEffect(() => {
+    let nextSelectedId: string | null = null
     if (conversation.assignedUserId) {
-      setSelectedId(`u_${conversation.assignedUserId}`)
-      return
+      nextSelectedId = `u_${conversation.assignedUserId}`
+    } else if (conversation.assignedInboxTeamId) {
+      nextSelectedId = `t_${conversation.assignedInboxTeamId}`
     }
+    const nextAssigneeName =
+      conversation.assignedUser?.name ??
+      conversation.assignedInboxTeam?.name ??
+      null
+    const nextAssignmentKey = `${conversation.id}:${nextSelectedId ?? ""}`
+    const hasOptimisticNameForAssignment =
+      selectedAssignmentKeyRef.current === nextAssignmentKey
 
-    if (conversation.assignedInboxTeamId) {
-      setSelectedId(`t_${conversation.assignedInboxTeamId}`)
-      return
+    selectedAssignmentKeyRef.current = nextAssignmentKey
+    setSelectedId(nextSelectedId)
+    if (!hasOptimisticNameForAssignment || nextAssigneeName) {
+      setSelectedAssigneeName(nextAssigneeName)
     }
-
-    setSelectedId(null)
-    setSelectedAssigneeName(null)
-  }, [conversation.assignedUserId, conversation.assignedInboxTeamId])
-
-  useEffect(() => {
-    const assignedAssigneeName =
-      conversation.assignedUser?.name ?? conversation.assignedInboxTeam?.name
-
-    if (assignedAssigneeName) {
-      setSelectedAssigneeName(assignedAssigneeName)
-    }
-  }, [conversation.assignedInboxTeam?.name, conversation.assignedUser?.name])
+  }, [
+    conversation.assignedInboxTeam?.name,
+    conversation.assignedInboxTeamId,
+    conversation.assignedUser?.name,
+    conversation.assignedUserId,
+    conversation.id,
+  ])
 
   return (
     <AssignConversationDialog
