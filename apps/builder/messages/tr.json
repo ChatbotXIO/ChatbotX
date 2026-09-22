@@ -4101,6 +4101,7 @@
         "statusNoAnswer": "Yanıt yok",
         "eyebrowCallEnded": "ARAMA SONA ERDİ",
         "statusConnectionLost": "Bağlantı kesildi",
+        "answerFailed": "Arama yanıtlanamadı. Bir mikrofonun bağlı olduğunu ve tarayıcıda izin verildiğini kontrol edip tekrar deneyin.",
         "ringingListTitle": "{count, plural, one {# gelen arama} other {# gelen arama}}"
       },
       "capability": {

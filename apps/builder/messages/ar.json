@@ -4101,6 +4101,7 @@
         "statusNoAnswer": "لا يوجد رد",
         "eyebrowCallEnded": "انتهت المكالمة",
         "statusConnectionLost": "انقطع الاتصال",
+        "answerFailed": "تعذّر الرد على المكالمة. تحقق من توصيل الميكروفون والسماح به في المتصفح، ثم حاول مرة أخرى.",
         "ringingListTitle": "{count, plural, one {# مكالمة واردة} other {# مكالمات واردة}}"
       },
       "capability": {

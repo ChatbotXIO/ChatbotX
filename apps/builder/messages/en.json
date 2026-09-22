@@ -4318,6 +4318,7 @@
         "statusNoAnswer": "No answer",
         "eyebrowCallEnded": "CALL ENDED",
         "statusConnectionLost": "Connection lost",
+        "answerFailed": "Could not answer the call. Check that a microphone is connected and allowed in your browser, then try again.",
         "ringingListTitle": "{count, plural, one {# incoming call} other {# incoming calls}}"
       },
       "capability": {

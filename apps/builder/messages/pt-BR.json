@@ -4080,6 +4080,7 @@
         "statusNoAnswer": "Sem resposta",
         "eyebrowCallEnded": "CHAMADA ENCERRADA",
         "statusConnectionLost": "Conexão perdida",
+        "answerFailed": "Não foi possível atender a chamada. Verifique se há um microfone conectado e permitido no navegador e tente novamente.",
         "ringingListTitle": "{count, plural, one {# chamada recebida} other {# chamadas recebidas}}"
       },
       "capability": {

@@ -4101,6 +4101,7 @@
         "statusNoAnswer": "Nessuna risposta",
         "eyebrowCallEnded": "CHIAMATA TERMINATA",
         "statusConnectionLost": "Connessione persa",
+        "answerFailed": "Impossibile rispondere alla chiamata. Verifica che un microfono sia collegato e consentito nel browser, poi riprova.",
         "ringingListTitle": "{count, plural, one {# chiamata in arrivo} other {# chiamate in arrivo}}"
       },
       "capability": {

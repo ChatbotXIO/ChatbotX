@@ -5640,6 +5640,7 @@
         "statusNoAnswer": "无应答",
         "eyebrowCallEnded": "通话已结束",
         "statusConnectionLost": "连接已断开",
+        "answerFailed": "无法接听通话。请确认麦克风已连接并已在浏览器中授权，然后重试。",
         "ringingListTitle": "{count, plural, one {# 个来电} other {# 个来电}}"
       },
       "capability": {

@@ -4101,6 +4101,7 @@
         "statusNoAnswer": "Geen antwoord",
         "eyebrowCallEnded": "OPROEP BEËINDIGD",
         "statusConnectionLost": "Verbinding verbroken",
+        "answerFailed": "De oproep kon niet worden beantwoord. Controleer of een microfoon is aangesloten en toegestaan in je browser en probeer het opnieuw.",
         "ringingListTitle": "{count, plural, one {# inkomende oproep} other {# inkomende oproepen}}"
       },
       "capability": {

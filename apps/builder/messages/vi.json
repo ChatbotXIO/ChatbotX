@@ -4101,6 +4101,7 @@
         "statusNoAnswer": "Không có phản hồi",
         "eyebrowCallEnded": "CUỘC GỌI ĐÃ KẾT THÚC",
         "statusConnectionLost": "Mất kết nối",
+        "answerFailed": "Không nghe được cuộc gọi. Hãy kiểm tra micro đã được kết nối và cho phép trong trình duyệt, rồi thử lại.",
         "ringingListTitle": "{count, plural, one {# cuộc gọi đến} other {# cuộc gọi đến}}"
       },
       "capability": {

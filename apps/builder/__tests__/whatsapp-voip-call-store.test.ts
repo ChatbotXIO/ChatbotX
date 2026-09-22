@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest"
 import {
   PENDING_CONVERSATION_OPEN_MAX_AGE_MS,
+  STICKY_ENDED_STATUSES,
   useWhatsappVoipCallStore,
   WhatsappVoipCallPhase,
   type WhatsappVoipIncomingData,
@@ -140,6 +141,38 @@ describe("useWhatsappVoipCallStore", () => {
     expect(call).not.toBeNull()
     expect(call?.phase).toBe(WhatsappVoipCallPhase.ended)
     expect(call?.endedStatus).toBe("rejected")
+  })
+
+  test("handleEnded keeps the server's own reason alongside the status", () => {
+    seedRingingSlot(incomingData)
+
+    useWhatsappVoipCallStore
+      .getState()
+      .handleEnded("call-1", "answerFailed", "Access denied")
+
+    const call = useWhatsappVoipCallStore.getState().call
+    expect(call?.endedStatus).toBe("answerFailed")
+    expect(call?.endedMessage).toBe("Access denied")
+  })
+
+  test("only answer failures are sticky - normal endings keep the short linger", () => {
+    for (const status of [
+      "cannotAnswer",
+      "callEnded",
+      "micPermissionDenied",
+      "micNotFound",
+      "answerFailed",
+    ] as const) {
+      expect(STICKY_ENDED_STATUSES.has(status)).toBe(true)
+    }
+    for (const status of [
+      "completed",
+      "rejected",
+      "failed",
+      "connectionLost",
+    ] as const) {
+      expect(STICKY_ENDED_STATUSES.has(status)).toBe(false)
+    }
   })
 
   test("handleEnded defaults endedStatus to 'completed' when omitted", () => {

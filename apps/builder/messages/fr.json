@@ -4101,6 +4101,7 @@
         "statusNoAnswer": "Pas de réponse",
         "eyebrowCallEnded": "APPEL TERMINÉ",
         "statusConnectionLost": "Connexion perdue",
+        "answerFailed": "Impossible de répondre à l'appel. Vérifiez qu'un micro est branché et autorisé dans votre navigateur, puis réessayez.",
         "ringingListTitle": "{count, plural, one {# appel entrant} other {# appels entrants}}"
       },
       "capability": {

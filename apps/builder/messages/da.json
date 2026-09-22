@@ -4101,6 +4101,7 @@
         "statusNoAnswer": "Intet svar",
         "eyebrowCallEnded": "OPKALD AFSLUTTET",
         "statusConnectionLost": "Forbindelsen blev afbrudt",
+        "answerFailed": "Opkaldet kunne ikke besvares. Kontrollér, at en mikrofon er tilsluttet og tilladt i din browser, og prøv igen.",
         "ringingListTitle": "{count, plural, one {# indgående opkald} other {# indgående opkald}}"
       },
       "capability": {

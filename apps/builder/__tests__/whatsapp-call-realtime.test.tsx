@@ -308,6 +308,26 @@ describe("WhatsappCallRealtime — call event parity (no ChatStoreProvider)", ()
     expect(useWhatsappVoipCallStore.getState().call).toBeNull()
   })
 
+  test("whatsappCallClaimedElsewhere stops the ring in the winning agent's OTHER tabs", async () => {
+    // The same agent with the inbox open in several tabs: every tab rang, one
+    // answered. The others share the winner's user id, so a user-based filter
+    // would leave them ringing until the deadline - only the phase tells them
+    // apart from the tab that actually answered.
+    authSessionMock.mockReturnValue({ data: { user: { id: "user-winner" } } })
+    useWhatsappVoipCallStore.setState({ call: baseVoipCall })
+    await render()
+
+    act(() => {
+      emit("whatsappCallClaimedElsewhere", {
+        whatsappCallId: "call-1",
+        wacid: "wacid-1",
+        answeredByUserId: "user-winner",
+      })
+    })
+
+    expect(useWhatsappVoipCallStore.getState().call).toBeNull()
+  })
+
   test("whatsappCallClaimedElsewhere is a no-op for the winning agent's own broadcast", async () => {
     authSessionMock.mockReturnValue({ data: { user: { id: "user-winner" } } })
     useWhatsappVoipCallStore.setState({
