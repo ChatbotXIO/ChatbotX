@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { Suspense } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { CreateMarketingMessage } from "@/features/facebook-marketing-messages/components/create-marketing-message"
 import { resolveMarketingMessagesGrant } from "@/features/facebook-marketing-messages/lib/grant"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
@@ -48,11 +48,9 @@ export default async function CreateFacebookMarketingMessagePage({
       {/* Flow store: the button/quick-reply flow + node pickers.
           Custom field store: MediaLibraryOrInsertLink's variable picker. */}
       <FlowStoreProvider>
-        <CustomFieldStoreProvider workspaceId={workspaceId}>
-          <Suspense>
-            <CreateMarketingMessage workspaceId={workspaceId} />
-          </Suspense>
-        </CustomFieldStoreProvider>
+        <Suspense>
+          <CreateMarketingMessage workspaceId={workspaceId} />
+        </Suspense>
       </FlowStoreProvider>
     </div>
   )

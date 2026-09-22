@@ -5,7 +5,7 @@ import { AppointmentCalendarStoreProvider } from "@/features/appointment-calenda
 import { PlatformCredentialsStoreProvider } from "@/features/platform-credentials/provider/platform-credentials-store-context"
 import { QuestionnaireStoreProvider } from "@/features/questionnaires/provider/questionnaire-store-context"
 import { AIToolsStoreProvider } from "../ai-tools/provider/ai-tools-store-context"
-import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field-store-context"
+
 import { EmailTopicStoreProvider } from "../email-topics/provider/email-topic-store-context"
 import type { FlowVersionResource } from "../flow-versions/schema/resource"
 import type { IntegrationOpenaiCompatibleResource } from "../integration-openai-compatible/schema/resource"
@@ -49,18 +49,16 @@ export function FlowDetail({
                   workspaceId={flow.workspaceId}
                 >
                   <EmailTopicStoreProvider workspaceId={flow.workspaceId}>
-                    <CustomFieldStoreProvider workspaceId={flow.workspaceId}>
-                      <AIToolsStoreProvider workspaceId={flow.workspaceId}>
-                        <PlatformCredentialsStoreProvider>
-                          <ReactFlowFrame
-                            canRevertToPublished={canRevertToPublished}
-                            flow={flow}
-                            flowVersion={flowVersion}
-                            hasPublishedVersion={hasPublishedVersion}
-                          />
-                        </PlatformCredentialsStoreProvider>
-                      </AIToolsStoreProvider>
-                    </CustomFieldStoreProvider>
+                    <AIToolsStoreProvider workspaceId={flow.workspaceId}>
+                      <PlatformCredentialsStoreProvider>
+                        <ReactFlowFrame
+                          canRevertToPublished={canRevertToPublished}
+                          flow={flow}
+                          flowVersion={flowVersion}
+                          hasPublishedVersion={hasPublishedVersion}
+                        />
+                      </PlatformCredentialsStoreProvider>
+                    </AIToolsStoreProvider>
                   </EmailTopicStoreProvider>
                 </AppointmentCalendarStoreProvider>
               </QuestionnaireStoreProvider>

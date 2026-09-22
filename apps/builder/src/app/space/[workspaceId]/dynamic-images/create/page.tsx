@@ -2,7 +2,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { CreateDynamicImageForm } from "@/features/dynamic-images/create-dynamic-image-form"
 
 export default async function CreateDynamicImagePage({
@@ -32,9 +32,7 @@ export default async function CreateDynamicImagePage({
           { label: t("actions.create"), href: "" },
         ]}
       />
-      <CustomFieldStoreProvider workspaceId={workspaceId}>
-        <CreateDynamicImageForm workspaceId={workspaceId} />
-      </CustomFieldStoreProvider>
+      <CreateDynamicImageForm workspaceId={workspaceId} />
     </div>
   )
 }

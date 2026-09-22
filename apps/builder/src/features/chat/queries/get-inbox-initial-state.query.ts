@@ -3,9 +3,15 @@ import "server-only"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import type { ChatStoreInitialState } from "@/features/chat/store/chat-store"
 import { INBOX_CONVERSATIONS_PER_PAGE } from "@/features/chat/store/chat-store"
+import type { ContactPermissionScope } from "@/features/contacts/permissions"
+import { getContact } from "@/features/contacts/queries/get-contact.query"
+import {
+  findConversation,
+  listConversations,
+} from "@/features/conversations/queries/list-conversations.query"
 import type { ListConversationItemResource } from "@/features/conversations/schema/resource"
+import { listMessages } from "@/features/messages/queries"
 import { logger } from "@/lib/log"
-import { client } from "@/lib/orpc/orpc"
 
 const INBOX_SEED_TIMEOUT_MS = 8000
 const INBOX_MESSAGES_PER_PAGE = 20
@@ -28,16 +34,12 @@ const seedMessagesState = async (
   workspaceId: string,
   conversationId: string,
 ): Promise<ChatStoreInitialState> => {
-  const { data, nextCursor } =
-    await client.messagesAPI.listMessagesAuthenticatedAPI(
-      {
-        workspaceId,
-        perPage: INBOX_MESSAGES_PER_PAGE,
-        cursor: "",
-        conversationId,
-      },
-      { signal: AbortSignal.timeout(INBOX_SEED_TIMEOUT_MS) },
-    )
+  const { data, nextCursor } = await listMessages({
+    workspaceId,
+    perPage: INBOX_MESSAGES_PER_PAGE,
+    cursor: "",
+    conversationId,
+  })
 
   return {
     messages: [...data].reverse(),
@@ -50,6 +52,7 @@ const seedMessagesState = async (
 const seedContactState = async (
   workspaceId: string,
   conversation: ListConversationItemResource,
+  permissionScope: ContactPermissionScope,
 ): Promise<ChatStoreInitialState> => {
   const contactId = conversation.contact?.id
   if (!contactId) {
@@ -57,10 +60,10 @@ const seedContactState = async (
   }
 
   return {
-    seededContact: await client.contactsAPIs.getContactAuthenticatedAPI({
-      workspaceId,
-      contactId,
-    }),
+    seededContact: await getContact(
+      { workspaceId, contactId },
+      permissionScope,
+    ),
   }
 }
 
@@ -77,19 +80,24 @@ const mergeSettledState = (
 const loadInitialState = async ({
   workspaceId,
   conversationId,
+  canViewEmailAndPhone,
+  contactPermissionScope,
+  seedConversationDetails,
 }: {
   workspaceId: string
   conversationId?: string
+  canViewEmailAndPhone: boolean
+  contactPermissionScope: ContactPermissionScope
+  seedConversationDetails: boolean
 }): Promise<ChatStoreInitialState | null> => {
-  const conversationsPromise =
-    client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI(
-      {
-        workspaceId,
-        perPage: INBOX_CONVERSATIONS_PER_PAGE,
-        cursor: "",
-      },
-      { signal: AbortSignal.timeout(INBOX_SEED_TIMEOUT_MS) },
-    )
+  const conversationsPromise = listConversations(
+    {
+      workspaceId,
+      perPage: INBOX_CONVERSATIONS_PER_PAGE,
+      cursor: "",
+    },
+    { includeEmailAndPhone: canViewEmailAndPhone },
+  )
 
   if (!conversationId) {
     const { data: conversations, nextCursor } = await conversationsPromise
@@ -103,13 +111,13 @@ const loadInitialState = async ({
       activeConversationAutoSelected: Boolean(activeConversation),
     }
 
-    if (!activeConversation) {
+    if (!(seedConversationDetails && activeConversation)) {
       return state
     }
 
     const [messages, contact] = await Promise.allSettled([
       seedMessagesState(workspaceId, activeConversation.id),
-      seedContactState(workspaceId, activeConversation),
+      seedContactState(workspaceId, activeConversation, contactPermissionScope),
     ])
 
     return {
@@ -118,14 +126,19 @@ const loadInitialState = async ({
     }
   }
 
-  const findConversationPromise =
-    client.conversationsAPI.findConversationAuthenticatedAPI({
-      workspaceId,
-      id: conversationId,
-    })
-  const contactPromise = findConversationPromise.then(({ data }) =>
-    seedContactState(workspaceId, data),
-  )
+  const findConversationPromise = findConversation({
+    workspaceId,
+    id: conversationId,
+  })
+  const contactPromise = seedConversationDetails
+    ? findConversationPromise.then(({ data }) =>
+        seedContactState(workspaceId, data, contactPermissionScope),
+      )
+    : Promise.resolve({})
+
+  const messagesPromise = seedConversationDetails
+    ? seedMessagesState(workspaceId, conversationId)
+    : Promise.resolve({})
 
   const [
     conversationsResult,
@@ -135,7 +148,7 @@ const loadInitialState = async ({
   ] = await Promise.allSettled([
     conversationsPromise,
     findConversationPromise,
-    seedMessagesState(workspaceId, conversationId),
+    messagesPromise,
     contactPromise,
   ])
 
@@ -180,18 +193,16 @@ const loadInitialState = async ({
 export const getInboxInitialState = async ({
   workspaceId,
   conversationId,
+  canViewEmailAndPhone,
+  contactPermissionScope,
+  seedConversationDetails = true,
 }: {
   workspaceId: string
   conversationId?: string
+  canViewEmailAndPhone: boolean
+  contactPermissionScope: ContactPermissionScope
+  seedConversationDetails?: boolean
 }): Promise<ChatStoreInitialState | null> => {
-  if (!globalThis.$client) {
-    logger.warn(
-      { workspaceId, conversationId },
-      "getInboxInitialState: server oRPC client is unavailable",
-    )
-    return null
-  }
-
   const parsedConversationId = conversationId
     ? zodBigintAsString().safeParse(conversationId)
     : null
@@ -205,6 +216,9 @@ export const getInboxInitialState = async ({
         conversationId: parsedConversationId?.success
           ? parsedConversationId.data
           : undefined,
+        canViewEmailAndPhone,
+        contactPermissionScope,
+        seedConversationDetails,
       }),
       timeout.promise,
     ])

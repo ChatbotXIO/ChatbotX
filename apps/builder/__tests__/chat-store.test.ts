@@ -899,3 +899,33 @@ describe("chat store loadMoreMessages", () => {
     expect(mockListMessagesAuthenticatedAPI).toHaveBeenCalledTimes(2)
   })
 })
+
+describe("chat store loadInitialMessages", () => {
+  test("does not refetch seeded messages for the active conversation", async () => {
+    const store = createChatStore({
+      activeConversationId: "conv-1",
+      messages: [
+        makeMessage("conv-1", new Date("2026-01-01T02:00:00Z")),
+      ] as never,
+      messagesConversationId: "conv-1",
+    })
+    mockListMessagesAuthenticatedAPI.mockResolvedValue({
+      data: [],
+      nextCursor: null,
+    })
+
+    await store.getState().loadInitialMessages("ws-1", 20)
+
+    expect(mockListMessagesAuthenticatedAPI).not.toHaveBeenCalled()
+
+    store.getState().setActiveConversationId("conv-2")
+    await store.getState().loadInitialMessages("ws-1", 20)
+
+    expect(mockListMessagesAuthenticatedAPI).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      perPage: 20,
+      cursor: "",
+      conversationId: "conv-2",
+    })
+  })
+})

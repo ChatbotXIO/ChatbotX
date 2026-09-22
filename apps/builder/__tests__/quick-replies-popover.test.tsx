@@ -20,7 +20,10 @@ vi.mock("@/lib/orpc/query", () => ({
   },
 }))
 
-import { SavedReplyStoreProvider } from "@/features/saved-replies/provider/saved-reply-store-context"
+vi.mock("@/hooks/routing", () => ({
+  useWorkspaceId: () => "ws-1",
+}))
+
 import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popover"
 
 /** Echoes the key back so assertions never depend on the English copy. */
@@ -47,11 +50,9 @@ function renderPopover(inputValue: string) {
   })
   const el = renderComponent(
     <QueryClientProvider client={queryClient}>
-      <SavedReplyStoreProvider workspaceId="ws-1">
-        <QuickRepliesPopover inputValue={inputValue} onSelect={() => undefined}>
-          <textarea defaultValue={inputValue} />
-        </QuickRepliesPopover>
-      </SavedReplyStoreProvider>
+      <QuickRepliesPopover inputValue={inputValue} onSelect={() => undefined}>
+        <textarea defaultValue={inputValue} />
+      </QuickRepliesPopover>
     </QueryClientProvider>,
   )
 

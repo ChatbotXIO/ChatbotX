@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, test, vi } from "vitest"
+import { beforeEach, expect, test, vi } from "vitest"
 
 const {
   mockFindConversation,
@@ -16,26 +16,18 @@ vi.mock("server-only", () => ({}))
 vi.mock("@/lib/log", () => ({
   logger: { info: vi.fn(), warn: vi.fn() },
 }))
-vi.mock("@/lib/orpc/orpc", () => ({
-  client: {
-    contactsAPIs: { getContactAuthenticatedAPI: mockGetContact },
-    conversationsAPI: {
-      findConversationAuthenticatedAPI: mockFindConversation,
-      listConversationsByPOSTAuthenticatedAPI: mockListConversations,
-    },
-    messagesAPI: { listMessagesAuthenticatedAPI: mockListMessages },
-  },
+vi.mock("@/features/conversations/queries/list-conversations.query", () => ({
+  findConversation: mockFindConversation,
+  listConversations: mockListConversations,
+}))
+vi.mock("@/features/messages/queries", () => ({
+  listMessages: mockListMessages,
+}))
+vi.mock("@/features/contacts/queries/get-contact.query", () => ({
+  getContact: mockGetContact,
 }))
 
 import { getInboxInitialState } from "@/features/chat/queries/get-inbox-initial-state.query"
-
-const serverClientGlobal = globalThis as typeof globalThis & {
-  $client?: unknown
-}
-
-// The query function only checks this server-client sentinel for truthiness;
-// every procedure call is mocked above.
-const availableServerClient = {} as typeof globalThis.$client
 
 const makeConversation = (id: string) =>
   ({
@@ -43,15 +35,14 @@ const makeConversation = (id: string) =>
     contact: { id: `contact-${id}` },
   }) as never
 
+const contactPermissionScope = {
+  canViewEmailAndPhone: true,
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
-  serverClientGlobal.$client = availableServerClient
   mockGetContact.mockResolvedValue({ id: "contact-conversation-1" })
   mockListMessages.mockResolvedValue({ data: [], nextCursor: null })
-})
-
-afterEach(() => {
-  serverClientGlobal.$client = undefined
 })
 
 test("seeds the first listed conversation when no deep link is present", async () => {
@@ -61,7 +52,11 @@ test("seeds the first listed conversation when no deep link is present", async (
     nextCursor: "cursor-2",
   })
 
-  const state = await getInboxInitialState({ workspaceId: "workspace-1" })
+  const state = await getInboxInitialState({
+    workspaceId: "workspace-1",
+    canViewEmailAndPhone: false,
+    contactPermissionScope,
+  })
 
   expect(state).toMatchObject({
     activeConversationId: "conversation-1",
@@ -69,6 +64,14 @@ test("seeds the first listed conversation when no deep link is present", async (
     conversations: [conversation],
     messagesConversationId: "conversation-1",
   })
+  expect(mockListConversations).toHaveBeenCalledWith(
+    {
+      workspaceId: "workspace-1",
+      perPage: 20,
+      cursor: "",
+    },
+    { includeEmailAndPhone: false },
+  )
   expect(mockFindConversation).not.toHaveBeenCalled()
 })
 
@@ -82,7 +85,9 @@ test("moves a deep-linked conversation to the front without duplicating it", asy
 
   const state = await getInboxInitialState({
     workspaceId: "workspace-1",
+    canViewEmailAndPhone: true,
     conversationId: "2",
+    contactPermissionScope,
   })
 
   expect(state?.conversations?.map((conversation) => conversation.id)).toEqual([
@@ -100,18 +105,33 @@ test("ignores an invalid deep-link id and seeds the listed conversation", async 
 
   const state = await getInboxInitialState({
     workspaceId: "workspace-1",
+    canViewEmailAndPhone: true,
     conversationId: "not-a-bigint",
+    contactPermissionScope,
   })
 
   expect(state?.activeConversationId).toBe("conversation-1")
   expect(mockFindConversation).not.toHaveBeenCalled()
 })
 
-test("falls back to client loading when the server oRPC client is unavailable", async () => {
-  serverClientGlobal.$client = undefined
+test("skips conversation details when the mobile layout discards selection", async () => {
+  const conversation = makeConversation("conversation-1")
+  mockListConversations.mockResolvedValue({
+    data: [conversation],
+    nextCursor: null,
+  })
 
-  await expect(
-    getInboxInitialState({ workspaceId: "workspace-1" }),
-  ).resolves.toBeNull()
-  expect(mockListConversations).not.toHaveBeenCalled()
+  const state = await getInboxInitialState({
+    workspaceId: "workspace-1",
+    canViewEmailAndPhone: true,
+    contactPermissionScope,
+    seedConversationDetails: false,
+  })
+
+  expect(state).toMatchObject({
+    activeConversationId: "conversation-1",
+    conversations: [conversation],
+  })
+  expect(mockListMessages).not.toHaveBeenCalled()
+  expect(mockGetContact).not.toHaveBeenCalled()
 })

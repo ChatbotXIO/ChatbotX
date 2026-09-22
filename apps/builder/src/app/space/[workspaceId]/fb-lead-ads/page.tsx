@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { FacebookLeadAdsTable } from "@/features/facebook-lead-ad-automation/components/facebook-lead-ads-table"
 import { listFacebookLeadAdsAutomations } from "@/features/facebook-lead-ad-automation/queries"
 import { listFacebookLeadAdsSearchParamsCache } from "@/features/facebook-lead-ad-automation/schema/query"
@@ -38,14 +38,9 @@ export default async function FacebookLeadAdsPage({
         ]}
       />
       <FlowStoreProvider>
-        <CustomFieldStoreProvider workspaceId={workspaceId}>
-          <Suspense>
-            <FacebookLeadAdsTable
-              promises={promises}
-              workspaceId={workspaceId}
-            />
-          </Suspense>
-        </CustomFieldStoreProvider>
+        <Suspense>
+          <FacebookLeadAdsTable promises={promises} workspaceId={workspaceId} />
+        </Suspense>
       </FlowStoreProvider>
     </div>
   )

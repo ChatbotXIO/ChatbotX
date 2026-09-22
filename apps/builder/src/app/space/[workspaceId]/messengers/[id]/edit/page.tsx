@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { findIntegrationMessenger } from "@/features/integration-messenger/queries"
 import { UpdateMessengerForm } from "@/features/integration-messenger/update-messenger-form"
@@ -21,12 +21,10 @@ export default async function UpdateMessengerPage(props: {
 
   return (
     <FlowStoreProvider>
-      <CustomFieldStoreProvider workspaceId={workspaceId}>
-        <UpdateMessengerForm
-          integrationMessenger={integrationMessenger}
-          workspaceId={workspaceId}
-        />
-      </CustomFieldStoreProvider>
+      <UpdateMessengerForm
+        integrationMessenger={integrationMessenger}
+        workspaceId={workspaceId}
+      />
     </FlowStoreProvider>
   )
 }

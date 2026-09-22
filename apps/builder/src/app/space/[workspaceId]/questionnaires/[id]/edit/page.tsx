@@ -2,7 +2,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { EditQuestionnaireForm } from "@/features/questionnaires/components/edit-questionnaire-form"
 import { getQuestionnaire } from "@/features/questionnaires/queries"
@@ -35,12 +35,10 @@ export default async function EditQuestionnairePage({
         ]}
       />
       <FlowStoreProvider>
-        <CustomFieldStoreProvider workspaceId={workspaceId}>
-          <EditQuestionnaireForm
-            questionnaire={questionnaire}
-            workspaceId={workspaceId}
-          />
-        </CustomFieldStoreProvider>
+        <EditQuestionnaireForm
+          questionnaire={questionnaire}
+          workspaceId={workspaceId}
+        />
       </FlowStoreProvider>
     </div>
   )

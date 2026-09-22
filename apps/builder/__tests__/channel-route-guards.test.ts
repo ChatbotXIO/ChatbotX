@@ -156,10 +156,6 @@ vi.mock("@/features/flows/provider/flow-store-context", () => ({
   FlowStoreProvider: ({ children }: { children: unknown }) => children,
 }))
 
-vi.mock("@/features/custom-fields/provider/custom-field-store-context", () => ({
-  CustomFieldStoreProvider: ({ children }: { children: unknown }) => children,
-}))
-
 vi.mock(
   "@/features/integration-webchat/components/create-webchat-form",
   () => ({

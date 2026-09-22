@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { findWebhook } from "@/features/webhooks/queries"
 import UpdateWebhookForm from "@/features/webhooks/update-webhook-form"
@@ -25,9 +25,7 @@ export default async function UpdateWebhookPage({
 
   return (
     <FlowStoreProvider>
-      <CustomFieldStoreProvider workspaceId={workspaceId}>
-        <UpdateWebhookForm webhook={webhook} workspaceId={workspaceId} />
-      </CustomFieldStoreProvider>
+      <UpdateWebhookForm webhook={webhook} workspaceId={workspaceId} />
     </FlowStoreProvider>
   )
 }

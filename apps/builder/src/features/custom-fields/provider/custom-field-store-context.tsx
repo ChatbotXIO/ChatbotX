@@ -1,23 +1,15 @@
 "use client"
 
-import { type ReactNode, useCallback, useMemo, useRef } from "react"
+import { useMemo } from "react"
 import type { BotFieldResource } from "@/features/bot-fields/schema/resource"
 import { useWorkspaceId } from "@/hooks/routing"
+import { useEnsureQueryLoaded } from "@/hooks/use-ensure-query-loaded"
 import type { CustomFieldResource } from "../schema/resource"
 import {
   useBotFields,
   useCustomFields,
   useInvalidateCustomFields,
 } from "./custom-field-hook"
-
-export type CustomFieldStoreProviderProps = {
-  workspaceId: string
-  children: ReactNode
-}
-
-export const CustomFieldStoreProvider = ({
-  children,
-}: CustomFieldStoreProviderProps) => children
 
 type CustomFieldStoreSnapshot = {
   loading: boolean
@@ -41,25 +33,7 @@ export const useCustomFieldStore = <T,>(
   const botFieldsQuery = useBotFields(workspaceId, { enabled: false })
   const invalidateCustomFields = useInvalidateCustomFields()
 
-  const botFieldsStateRef = useRef({
-    data: botFieldsQuery.data,
-    isFetched: botFieldsQuery.isFetched,
-    isFetching: botFieldsQuery.isFetching,
-  })
-  botFieldsStateRef.current = {
-    data: botFieldsQuery.data,
-    isFetched: botFieldsQuery.isFetched,
-    isFetching: botFieldsQuery.isFetching,
-  }
-
-  const ensureBotFieldsLoaded = useCallback(() => {
-    const { data, isFetched, isFetching } = botFieldsStateRef.current
-    if (isFetched || isFetching) {
-      return Promise.resolve(data)
-    }
-
-    return botFieldsQuery.refetch().then((result) => result.data)
-  }, [botFieldsQuery.refetch])
+  const ensureBotFieldsLoaded = useEnsureQueryLoaded(botFieldsQuery)
 
   const snapshot = useMemo<CustomFieldStoreSnapshot>(
     () => ({

@@ -1,34 +1,12 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-} from "react"
+import { useCallback, useMemo } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
+import { useEnsureQueryLoaded } from "@/hooks/use-ensure-query-loaded"
 import { orpc } from "@/lib/orpc/query"
 import type { ListSavedReplyResponse } from "../schema/mutation"
 import type { SavedReplyResource } from "../schema/resource"
-
-export type SavedReplyStoreProviderProps = {
-  children: ReactNode
-  workspaceId: string
-}
-
-const SavedReplyWorkspaceContext = createContext<string | null>(null)
-
-export const SavedReplyStoreProvider = ({
-  children,
-  workspaceId,
-}: SavedReplyStoreProviderProps) => (
-  <SavedReplyWorkspaceContext.Provider value={workspaceId}>
-    {children}
-  </SavedReplyWorkspaceContext.Provider>
-)
 
 type SavedReplyStoreSnapshot = {
   initialized: boolean
@@ -45,9 +23,7 @@ type SavedReplyStoreSnapshot = {
 export const useSavedReplyStore = <T,>(
   selector: (store: SavedReplyStoreSnapshot) => T,
 ): T => {
-  const providedWorkspaceId = useContext(SavedReplyWorkspaceContext)
-  const routedWorkspaceId = useWorkspaceId()
-  const workspaceId = providedWorkspaceId ?? routedWorkspaceId
+  const workspaceId = useWorkspaceId()
   const queryClient = useQueryClient()
   const queryOptions = useMemo(
     () =>
@@ -58,25 +34,7 @@ export const useSavedReplyStore = <T,>(
     [workspaceId],
   )
   const savedRepliesQuery = useQuery(queryOptions)
-  const savedRepliesStateRef = useRef({
-    data: savedRepliesQuery.data,
-    isFetched: savedRepliesQuery.isFetched,
-    isFetching: savedRepliesQuery.isFetching,
-  })
-  savedRepliesStateRef.current = {
-    data: savedRepliesQuery.data,
-    isFetched: savedRepliesQuery.isFetched,
-    isFetching: savedRepliesQuery.isFetching,
-  }
-
-  const getAllSavedReplies = useCallback(() => {
-    const { data, isFetched, isFetching } = savedRepliesStateRef.current
-    if (isFetched || isFetching) {
-      return Promise.resolve(data)
-    }
-
-    return savedRepliesQuery.refetch().then((result) => result.data)
-  }, [savedRepliesQuery.refetch])
+  const getAllSavedReplies = useEnsureQueryLoaded(savedRepliesQuery)
 
   const deleteSavedReply = useCallback(
     (id: string) => {

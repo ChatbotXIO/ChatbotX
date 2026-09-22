@@ -11,11 +11,8 @@ vi.mock("@/features/chat/chat-realtime", () => ({
   ChatRealtime: () => <div data-testid="realtime" />,
 }))
 
-const mockRouterReplace = vi.fn()
-
 vi.mock("next/navigation", () => ({
   usePathname: () => "/space/w1/inbox",
-  useRouter: () => ({ replace: mockRouterReplace }),
   useSearchParams: () => new URLSearchParams("conversationId=c1"),
 }))
 
@@ -100,6 +97,7 @@ describe("ChatLayout", () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     storeState.activeConversationId = null
     storeState.setActiveConversationId.mockClear()
+    window.history.replaceState(null, "", "/space/w1/inbox?conversationId=c1")
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
@@ -111,7 +109,6 @@ describe("ChatLayout", () => {
     })
     container.remove()
     setViewportWidth(1024)
-    mockRouterReplace.mockClear()
   })
 
   test("shows only the conversation list on mobile with nothing selected", () => {
@@ -180,7 +177,9 @@ describe("ChatLayout", () => {
       )
     })
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/space/w1/inbox")
+    expect(`${window.location.pathname}${window.location.search}`).toBe(
+      "/space/w1/inbox",
+    )
   })
 
   test("offers the contact panel behind a control instead of a third column", () => {

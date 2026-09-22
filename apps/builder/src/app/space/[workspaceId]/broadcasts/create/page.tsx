@@ -6,7 +6,7 @@ import { CreateBroadcastForm } from "@/features/broadcasts/create-broadcast-form
 import { parseCreateBroadcastPrefill } from "@/features/broadcasts/schema/create-broadcast-prefill"
 import { canViewContactEmailAndPhone } from "@/features/contacts/permissions"
 import { ContactStoreProvider } from "@/features/contacts/provider/contact-store-context"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { FlowTemplateStoreProvider } from "@/features/flows/react-flow/stores/flow-template-store-provider"
 import { WhatsappFlowStoreProvider } from "@/features/flows/react-flow/stores/whatsapp-flow-store-provider"
@@ -53,30 +53,28 @@ export default async function CreateBroadcastPage({
 
   return (
     <FlowStoreProvider>
-      <CustomFieldStoreProvider workspaceId={workspaceId}>
-        <IntegrationStoreProvider workspaceId={workspaceId}>
-          <FlowTemplateStoreProvider
-            includeAllTemplateStatuses
-            openaiCompatibleIntegrations={openaiCompatibleIntegrations}
-            workspaceId={workspaceId}
-          >
-            <WhatsappFlowStoreProvider workspaceId={workspaceId}>
-              <ContactStoreProvider
-                autoInitialize={false}
+      <IntegrationStoreProvider workspaceId={workspaceId}>
+        <FlowTemplateStoreProvider
+          includeAllTemplateStatuses
+          openaiCompatibleIntegrations={openaiCompatibleIntegrations}
+          workspaceId={workspaceId}
+        >
+          <WhatsappFlowStoreProvider workspaceId={workspaceId}>
+            <ContactStoreProvider
+              autoInitialize={false}
+              workspaceId={workspaceId}
+            >
+              <CreateBroadcastForm
+                canViewEmailAndPhone={canViewEmailAndPhone}
+                initialChannel={prefill.channel}
+                initialContactFilter={prefill.contactFilter}
+                initialInboxIds={initialInboxIds}
                 workspaceId={workspaceId}
-              >
-                <CreateBroadcastForm
-                  canViewEmailAndPhone={canViewEmailAndPhone}
-                  initialChannel={prefill.channel}
-                  initialContactFilter={prefill.contactFilter}
-                  initialInboxIds={initialInboxIds}
-                  workspaceId={workspaceId}
-                />
-              </ContactStoreProvider>
-            </WhatsappFlowStoreProvider>
-          </FlowTemplateStoreProvider>
-        </IntegrationStoreProvider>
-      </CustomFieldStoreProvider>
+              />
+            </ContactStoreProvider>
+          </WhatsappFlowStoreProvider>
+        </FlowTemplateStoreProvider>
+      </IntegrationStoreProvider>
     </FlowStoreProvider>
   )
 }

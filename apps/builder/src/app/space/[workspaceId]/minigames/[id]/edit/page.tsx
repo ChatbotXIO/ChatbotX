@@ -1,6 +1,6 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { MinigameForm } from "@/features/minigames/minigame-form"
 import { findMinigame } from "@/features/minigames/queries"
@@ -28,14 +28,12 @@ export default async function EditMinigamePage({
 
   return (
     <FlowStoreProvider>
-      <CustomFieldStoreProvider workspaceId={workspaceId}>
-        <MinigameForm
-          minigame={minigame}
-          mode="edit"
-          publicUrl={publicUrl}
-          workspaceId={workspaceId}
-        />
-      </CustomFieldStoreProvider>
+      <MinigameForm
+        minigame={minigame}
+        mode="edit"
+        publicUrl={publicUrl}
+        workspaceId={workspaceId}
+      />
     </FlowStoreProvider>
   )
 }

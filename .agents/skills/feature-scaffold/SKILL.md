@@ -30,7 +30,7 @@ features/<feature-name>/
   provider/             → TanStack Query hooks for server data
     item-hook.ts         → useItems(), useInvalidateItems()
     item-store.ts        → Zustand store only for client-only state (if needed)
-    item-store-context.tsx
+    item-store-context.tsx → Thin provider for route/workspace scoping, if needed
   components/           → UI components (if many)
   hooks/                → Feature-specific non-server-data hooks (if needed)
   item-table.tsx        → Root-level components (if few)
