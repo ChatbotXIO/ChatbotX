@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { type QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, createElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { makeQueryClient } from "../../../../../__tests__/query-test-utils"
 import { buildGroupedFieldOptions, useCustomFields } from "../custom-field-hook"
 
 const { mockListCustomFields } = vi.hoisted(() => ({
@@ -18,11 +19,6 @@ vi.mock("@/lib/orpc/orpc", () => ({
     },
   },
 }))
-
-const makeQueryClient = () =>
-  new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })
 
 function CustomFieldsProbe({ onData }: { onData: (data: unknown) => void }) {
   onData(useCustomFields("workspace-1").data)

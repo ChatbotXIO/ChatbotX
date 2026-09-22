@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { type QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { makeQueryClient } from "../../../../../__tests__/query-test-utils"
 import { useInboxes, useInvalidateInboxes } from "../inbox-hook"
 
 const { mockListInboxes } = vi.hoisted(() => ({
@@ -18,22 +19,20 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
-const makeQueryClient = () =>
-  new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })
-
 function InboxesProbe({
   workspaceId = "workspace-1",
   enabled = true,
   onData,
+  onError,
 }: {
   workspaceId?: string
   enabled?: boolean
   onData?: (data: unknown) => void
+  onError?: (isError: boolean) => void
 }) {
   const inboxes = useInboxes(workspaceId, { enabled })
   onData?.(inboxes.data)
+  onError?.(inboxes.isError)
   return null
 }
 
@@ -108,6 +107,23 @@ describe("inbox query hooks", () => {
 
     await vi.waitFor(() => {
       expect(data).toEqual(inboxes)
+    })
+  })
+
+  test("surfaces a failed inbox request", async () => {
+    let isError = false
+    mockListInboxes.mockRejectedValue(new Error("inboxes failed"))
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <InboxesProbe onError={(nextIsError) => (isError = nextIsError)} />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(isError).toBe(true)
     })
   })
 

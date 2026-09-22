@@ -4,6 +4,10 @@ import type { ContactPermissionScope } from "../permissions"
 import { maskContactEmailAndPhone } from "../permissions"
 import type { GetContactRequest, GetContactResponse } from "../schema/query"
 
+/**
+ * Loads one contact using the caller-resolved scope so assignment and PII
+ * restrictions are applied consistently across every caller.
+ */
 export async function getContact(
   input: GetContactRequest,
   scope: ContactPermissionScope,

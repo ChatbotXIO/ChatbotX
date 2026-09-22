@@ -3,6 +3,10 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import type { ListConversationItemResource } from "@/features/conversations/schema/resource"
 
+const { dialogOnSuccessMock } = vi.hoisted(() => ({
+  dialogOnSuccessMock: vi.fn(),
+}))
+
 const authSessionMock = vi.fn()
 
 vi.mock("next-intl", () => ({
@@ -17,7 +21,18 @@ vi.mock("@/lib/auth/auth-client", () => ({
 vi.mock(
   "@/features/conversations/components/assign-conversation-dialog",
   () => ({
-    default: ({ trigger }: { trigger: ReactElement }) => trigger,
+    default: ({
+      onSuccess,
+      trigger,
+    }: {
+      onSuccess?: (assignee: { id: string | null; name: string | null }) => void
+      trigger: ReactElement
+    }) => {
+      dialogOnSuccessMock.mockImplementation((assignee) =>
+        onSuccess?.(assignee),
+      )
+      return trigger
+    },
   }),
 )
 
@@ -75,6 +90,12 @@ describe("UpdateConversationAssignee", () => {
     })
   }
 
+  const selectAssignee = async (id: string | null, name: string | null) => {
+    await act(() => {
+      dialogOnSuccessMock({ id, name })
+    })
+  }
+
   test("renders the assigned user's name without requesting assignee options", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch")
 
@@ -101,6 +122,32 @@ describe("UpdateConversationAssignee", () => {
     )
 
     expect(container.textContent).toContain("assignAdmin.assignedTo:Support")
+  })
+
+  test("keeps a selected user's name while the optimistic conversation has no relation", async () => {
+    await render(
+      makeConversation({
+        assignedUser: null,
+        assignedUserId: "user-1",
+      }),
+    )
+
+    await selectAssignee("u_user-1", "Ada")
+
+    expect(container.textContent).toContain("assignAdmin.assignedTo:Ada")
+  })
+
+  test("keeps the self-assignment label while the optimistic conversation has no relation", async () => {
+    await render(
+      makeConversation({
+        assignedUser: null,
+        assignedUserId: "current-user",
+      }),
+    )
+
+    await selectAssignee("u_current-user", "Current User")
+
+    expect(container.textContent).toContain("assignAdmin.assignedToMe")
   })
 
   test.each([

@@ -8,9 +8,8 @@ import { ChatLayout } from "@/features/chat/chat-layout"
 import { getInboxInitialState } from "@/features/chat/queries/get-inbox-initial-state.query"
 import { ChatStoreProvider } from "@/features/chat/store/chat-store-provider"
 import {
+  buildContactPermissionScope,
   type ContactPermissionScope,
-  canViewContactEmailAndPhone,
-  getAssignedContactsUserId,
 } from "@/features/contacts/permissions"
 import { requireContactsAccess } from "@/lib/auth/require-workspace-permission"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
@@ -38,15 +37,12 @@ export default async function InboxPage({
     return notFound()
   }
   const { user, targetWorkspaceMember } = userAndWorkspace
-  const canViewEmailAndPhone = canViewContactEmailAndPhone(
-    targetWorkspaceMember.permissions,
-  )
-  const contactPermissionScope: ContactPermissionScope = {
-    canViewEmailAndPhone,
-    restrictToAssignedUserId: getAssignedContactsUserId({
-      permissions: targetWorkspaceMember.permissions,
-      userId: user.id,
-    }),
+  const contactPermissionScope = buildContactPermissionScope({
+    permissions: targetWorkspaceMember.permissions,
+    userId: user.id,
+  })
+  if (!contactPermissionScope) {
+    return notFound()
   }
 
   const conversationId = (await searchParams)?.conversationId
@@ -61,7 +57,7 @@ export default async function InboxPage({
         }
       >
         <InboxContent
-          canViewEmailAndPhone={canViewEmailAndPhone}
+          canViewEmailAndPhone={contactPermissionScope.canViewEmailAndPhone}
           contactPermissionScope={contactPermissionScope}
           conversationId={conversationId}
           layout={savedLayout}

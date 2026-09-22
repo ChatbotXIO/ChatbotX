@@ -22,51 +22,58 @@ export function UpdateConversationAssignee({
 
   const { data: session } = authClient.useSession()
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedAssigneeName, setSelectedAssigneeName] = useState<
+    string | null
+  >(null)
 
   const onSelectAssignee = useCallback(
     (assignee: ConversationAssignee) => {
       setSelectedId(assignee.id)
+      setSelectedAssigneeName(assignee.name)
       onChange(assignee)
     },
     [onChange],
   )
 
   const agentLabel = useMemo(() => {
-    const assignedUserId = conversation.assignedUserId
-    const assignedUserName = conversation.assignedUser?.name
-    if (
-      assignedUserId &&
-      assignedUserName &&
-      selectedId === `u_${assignedUserId}`
-    ) {
+    if (selectedId?.startsWith("u_") && selectedAssigneeName) {
       if (selectedId === `u_${session?.user.id}`) {
         return t("assignAdmin.assignedToMe")
       }
 
-      return t("assignAdmin.assignedTo", { name: assignedUserName })
+      return t("assignAdmin.assignedTo", { name: selectedAssigneeName })
     }
 
-    const assignedInboxTeamId = conversation.assignedInboxTeamId
-    const assignedInboxTeamName = conversation.assignedInboxTeam?.name
-    if (
-      assignedInboxTeamId &&
-      assignedInboxTeamName &&
-      selectedId === `t_${assignedInboxTeamId}`
-    ) {
-      return t("assignAdmin.assignedTo", { name: assignedInboxTeamName })
+    if (selectedId?.startsWith("t_") && selectedAssigneeName) {
+      return t("assignAdmin.assignedTo", { name: selectedAssigneeName })
     }
+
     return t("assignAdmin.assignConversation")
-  }, [conversation, selectedId, t, session])
+  }, [selectedAssigneeName, selectedId, session, t])
 
   useEffect(() => {
     if (conversation.assignedUserId) {
       setSelectedId(`u_${conversation.assignedUserId}`)
-    } else if (conversation.assignedInboxTeamId) {
-      setSelectedId(`t_${conversation.assignedInboxTeamId}`)
-    } else {
-      setSelectedId(null)
+      return
     }
+
+    if (conversation.assignedInboxTeamId) {
+      setSelectedId(`t_${conversation.assignedInboxTeamId}`)
+      return
+    }
+
+    setSelectedId(null)
+    setSelectedAssigneeName(null)
   }, [conversation.assignedUserId, conversation.assignedInboxTeamId])
+
+  useEffect(() => {
+    const assignedAssigneeName =
+      conversation.assignedUser?.name ?? conversation.assignedInboxTeam?.name
+
+    if (assignedAssigneeName) {
+      setSelectedAssigneeName(assignedAssigneeName)
+    }
+  }, [conversation.assignedInboxTeam?.name, conversation.assignedUser?.name])
 
   return (
     <AssignConversationDialog

@@ -8,9 +8,13 @@ import {
 } from "@/features/chat/store/chat-store"
 import type { ContactPermissionScope } from "@/features/contacts/permissions"
 import { getContact } from "@/features/contacts/queries/get-contact.query"
+import {
+  findConversation,
+  listConversations,
+} from "@/features/conversations/queries/list-conversations.query"
 import type { ListConversationItemResource } from "@/features/conversations/schema/resource"
+import { listMessages } from "@/features/messages/queries"
 import { logger } from "@/lib/log"
-import { client } from "@/lib/orpc/orpc"
 
 // Balances slow-network tolerance against blocking the page render indefinitely.
 const INBOX_SEED_TIMEOUT_MS = 8000
@@ -31,13 +35,12 @@ const seedMessagesState = async (
   workspaceId: string,
   conversationId: string,
 ): Promise<ChatStoreInitialState> => {
-  const { data, nextCursor } =
-    await client.messagesAPI.listMessagesAuthenticatedAPI({
-      workspaceId,
-      perPage: INBOX_MESSAGES_PER_PAGE,
-      cursor: "",
-      conversationId,
-    })
+  const { data, nextCursor } = await listMessages({
+    workspaceId,
+    perPage: INBOX_MESSAGES_PER_PAGE,
+    cursor: "",
+    conversationId,
+  })
 
   return {
     messages: [...data].reverse(),
@@ -114,42 +117,41 @@ const loadInitialState = async ({
   conversationId?: string
   contactPermissionScope: ContactPermissionScope
 }): Promise<ChatStoreInitialState | null> => {
-  const conversationsPromise =
-    client.conversationsAPI.listConversationsByPOSTAuthenticatedAPI({
+  const conversationsPromise = listConversations(
+    {
       workspaceId,
       perPage: INBOX_CONVERSATIONS_PER_PAGE,
       cursor: "",
-    })
+    },
+    {
+      includeEmailAndPhone: contactPermissionScope.canViewEmailAndPhone,
+    },
+  )
   const findConversationPromise = conversationId
-    ? client.conversationsAPI.findConversationAuthenticatedAPI({
+    ? findConversation({
         workspaceId,
         id: conversationId,
       })
     : null
+  const activeConversationPromise = findConversationPromise
+    ? findConversationPromise.then((result) => result.data)
+    : conversationsPromise.then(({ data }) => data[0] ?? null)
   const messagesPromise = conversationId
     ? seedMessagesState(workspaceId, conversationId)
-    : conversationsPromise.then(({ data: conversations }) => {
-        const activeConversation = conversations[0]
-        return activeConversation
+    : activeConversationPromise.then((activeConversation) =>
+        activeConversation
           ? seedMessagesState(workspaceId, activeConversation.id)
-          : {}
-      })
-  const contactPromise = findConversationPromise
-    ? findConversationPromise.then((result) =>
-        seedContactState(workspaceId, result.data, contactPermissionScope),
+          : {},
       )
-    : conversationsPromise
-        .then(({ data: conversations }) => {
-          const activeConversation = conversations[0]
-          return activeConversation
-            ? seedContactState(
-                workspaceId,
-                activeConversation,
-                contactPermissionScope,
-              )
-            : {}
-        })
-        .catch(() => ({}))
+  const contactPromise = activeConversationPromise.then((activeConversation) =>
+    activeConversation
+      ? seedContactState(
+          workspaceId,
+          activeConversation,
+          contactPermissionScope,
+        )
+      : {},
+  )
 
   const [
     conversationsResult,
@@ -164,16 +166,24 @@ const loadInitialState = async ({
   ])
 
   if (conversationsResult.status === "rejected") {
+    logger.warn(
+      { err: conversationsResult.reason, workspaceId, conversationId },
+      "getInboxInitialState: failed to list conversations",
+    )
     return null
   }
 
   const { data: listedConversations, nextCursor } = conversationsResult.value
   let activeConversation: (typeof listedConversations)[number] | null = null
   if (conversationId) {
-    activeConversation =
-      conversationResult.status === "fulfilled"
-        ? (conversationResult.value?.data ?? null)
-        : null
+    if (conversationResult.status === "rejected") {
+      logger.warn(
+        { err: conversationResult.reason, workspaceId, conversationId },
+        "getInboxInitialState: failed to find conversation",
+      )
+    } else {
+      activeConversation = conversationResult.value?.data ?? null
+    }
   } else {
     activeConversation = listedConversations[0] ?? null
   }
@@ -197,14 +207,6 @@ export const getInboxInitialState = async ({
   conversationId?: string
   contactPermissionScope: ContactPermissionScope
 }): Promise<ChatStoreInitialState | null> => {
-  if (!globalThis.$client) {
-    logger.warn(
-      { workspaceId, conversationId },
-      "getInboxInitialState: server oRPC client is unavailable",
-    )
-    return null
-  }
-
   const parsedConversationId = conversationId
     ? zodBigintAsString().safeParse(conversationId)
     : null

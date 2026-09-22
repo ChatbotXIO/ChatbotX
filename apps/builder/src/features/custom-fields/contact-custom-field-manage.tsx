@@ -102,7 +102,7 @@ function ContactCustomFieldPickerContent({
     onChooseCustomField({
       id: customField.id,
       name: customField.name,
-      type: customField.type as CustomFieldType,
+      type: customField.type,
     })
     onClose()
   }

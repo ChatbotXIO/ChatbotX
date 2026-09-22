@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { type QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, createElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { makeQueryClient } from "../../../../../__tests__/query-test-utils"
 import { useInvalidateTags, useTags } from "../tag-hook"
 
 const { mockListTags } = vi.hoisted(() => ({
@@ -18,20 +19,18 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
-const makeQueryClient = () =>
-  new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })
-
 function TagsProbe({
   workspaceId = "workspace-1",
   onData,
+  onError,
 }: {
   workspaceId?: string
   onData?: (data: unknown) => void
+  onError?: (isError: boolean) => void
 }) {
   const tags = useTags(workspaceId)
   onData?.(tags.data)
+  onError?.(tags.isError)
   return null
 }
 
@@ -68,7 +67,7 @@ describe("tag query hooks", () => {
     queryClient.clear()
   })
 
-  test("requests tags with the store-compatible input", async () => {
+  test("requests tags with the unpaginated input", async () => {
     act(() => {
       root.render(
         createElement(
@@ -108,6 +107,27 @@ describe("tag query hooks", () => {
 
     await vi.waitFor(() => {
       expect(data).toEqual(tags)
+    })
+  })
+
+  test("surfaces a failed tag request", async () => {
+    let isError = false
+    mockListTags.mockRejectedValue(new Error("tags failed"))
+
+    act(() => {
+      root.render(
+        createElement(
+          QueryClientProvider,
+          { client: queryClient },
+          createElement(TagsProbe, {
+            onError: (nextIsError) => (isError = nextIsError),
+          }),
+        ),
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(isError).toBe(true)
     })
   })
 

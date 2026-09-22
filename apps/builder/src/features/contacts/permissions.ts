@@ -37,6 +37,10 @@ export function getAssignedContactsUserId(input: {
     : undefined
 }
 
+/**
+ * Builds a member's contact access scope, or `null` when contacts access is
+ * denied. Callers must treat `null` as not found to avoid exposing contacts.
+ */
 export function buildContactPermissionScope({
   permissions,
   userId,

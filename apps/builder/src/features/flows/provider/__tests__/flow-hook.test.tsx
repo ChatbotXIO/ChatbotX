@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { type QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { makeQueryClient } from "../../../../../__tests__/query-test-utils"
 import { useFlows, useInvalidateFlows } from "../flow-hook"
 
 const { mockPrivateListFlows } = vi.hoisted(() => ({
@@ -18,19 +19,16 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
-const makeQueryClient = () =>
-  new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })
-
 function FlowsProbe({
   enabled = true,
+  onError,
   onRender,
 }: {
   enabled?: boolean
+  onError?: (isError: boolean) => void
   onRender: (data: unknown) => void
 }) {
-  const { data } = useFlows("workspace-1", {
+  const { data, isError } = useFlows("workspace-1", {
     enabled,
     filter: {
       integrationWhatsappIds: ["whatsapp-1"],
@@ -38,6 +36,7 @@ function FlowsProbe({
     },
   })
 
+  onError?.(isError)
   onRender(data)
   return null
 }
@@ -112,6 +111,26 @@ describe("flow query hooks", () => {
     })
 
     expect(mockPrivateListFlows).not.toHaveBeenCalled()
+  })
+
+  test("surfaces a failed flow request", async () => {
+    let isError = false
+    mockPrivateListFlows.mockRejectedValue(new Error("flows failed"))
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <FlowsProbe
+            onError={(nextIsError) => (isError = nextIsError)}
+            onRender={() => undefined}
+          />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(isError).toBe(true)
+    })
   })
 
   test("invalidates the flows query key with a stable callback", async () => {

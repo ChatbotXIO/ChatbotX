@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { type QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { orpc } from "@/lib/orpc/query"
+import { makeQueryClient } from "../../../../../__tests__/query-test-utils"
 import type { ListSavedReplyResponse } from "../../schema/mutation"
 import type { SavedReplyResource } from "../../schema/resource"
 import {
@@ -25,11 +26,6 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
-const makeQueryClient = () =>
-  new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })
-
 const createSavedReply = (id: string, text: string): SavedReplyResource => ({
   id,
   workspaceId: "workspace-1",
@@ -43,13 +39,16 @@ function SavedRepliesProbe({
   workspaceId = "workspace-1",
   enabled = true,
   onData,
+  onError,
 }: {
   workspaceId?: string
   enabled?: boolean
   onData: (data: SavedReplyResource[] | undefined) => void
+  onError?: (isError: boolean) => void
 }) {
-  const { data } = useSavedReplies(workspaceId, { enabled })
+  const { data, isError } = useSavedReplies(workspaceId, { enabled })
   onData(data)
+  onError?.(isError)
   return null
 }
 function SavedReplyCacheProbe({
@@ -115,6 +114,26 @@ describe("saved reply query hooks", () => {
     })
 
     expect(mockListSavedReplies).not.toHaveBeenCalled()
+  })
+
+  test("surfaces a failed saved reply request", async () => {
+    let isError = false
+    mockListSavedReplies.mockRejectedValue(new Error("saved replies failed"))
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <SavedRepliesProbe
+            onData={() => undefined}
+            onError={(nextIsError) => (isError = nextIsError)}
+          />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(isError).toBe(true)
+    })
   })
 
   test("updates the saved reply cache", () => {
