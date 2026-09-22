@@ -147,6 +147,26 @@ describe("assertWorkspaceOwnerAccessForMethod", () => {
       }),
     ).rejects.toMatchObject({ code: "trialExpired" })
   })
+  test("checks the owner gate for a prototype-key POST path", async () => {
+    isCloud.mockReturnValue(true)
+    getAccessState.mockResolvedValue({
+      blocked: true,
+      reason: "status",
+      planName: null,
+      status: "expired",
+      trialEndsAt: null,
+    })
+
+    await expect(
+      assertWorkspaceOwnerAccessForMethod({
+        method: "POST",
+        path: "constructor",
+        ownerId: "owner-1",
+      }),
+    ).rejects.toMatchObject({ code: "trialExpired" })
+
+    expect(getAccessState).toHaveBeenCalledWith("owner-1")
+  })
 })
 
 describe("isWorkspaceMutationMethod", () => {
@@ -190,6 +210,13 @@ describe("isReadOnlyTokenAllowedMethod", () => {
   test("rejects POST with no path at all", () => {
     expect(isReadOnlyTokenAllowedMethod("POST")).toBe(false)
     expect(isReadOnlyTokenAllowedMethod("POST", undefined)).toBe(false)
+  })
+
+  test.each([
+    "constructor",
+    "toString",
+  ])("rejects POST to the prototype-key path %s", (path) => {
+    expect(isReadOnlyTokenAllowedMethod("POST", path)).toBe(false)
   })
 
   test("rejects POST to the conversations list path — it is allow-listed for the trial gate only, not for read_only tokens", () => {

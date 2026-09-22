@@ -88,6 +88,25 @@ describe("getInboxInitialState", () => {
     })
   })
 
+  test("returns an unseeded empty inbox without requesting messages or contacts", async () => {
+    mockListConversations.mockResolvedValue({
+      data: [],
+      nextCursor: null,
+    })
+
+    const state = await getInitialState({ workspaceId: "workspace-1" })
+
+    expect(state).toMatchObject({
+      conversations: [],
+      activeConversationAutoSelected: false,
+      activeConversationId: null,
+    })
+    expect(state).not.toHaveProperty("messagesSeed")
+    expect(state).not.toHaveProperty("seededContact")
+    expect(mockListMessages).not.toHaveBeenCalled()
+    expect(mockGetContact).not.toHaveBeenCalled()
+  })
+
   test("moves a found URL conversation to the top without marking it auto-selected", async () => {
     const target = makeConversation("2")
     mockListConversations.mockResolvedValue({

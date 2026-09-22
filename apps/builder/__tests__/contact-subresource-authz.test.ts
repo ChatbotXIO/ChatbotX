@@ -10,6 +10,7 @@ type RouteConfig = {
 }
 
 type HandlerContext = {
+  isSupportSession?: boolean
   workspaceMember: { permissions: Record<string, unknown> }
   user: { id: string }
 }
@@ -105,7 +106,9 @@ const baseInput: HandlerInput = {
 const contextFor = (
   permissions: Record<string, unknown>,
   userId = "user-1",
+  isSupportSession = false,
 ): HandlerContext => ({
+  isSupportSession,
   workspaceMember: { permissions },
   user: { id: userId },
 })

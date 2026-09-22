@@ -160,4 +160,28 @@ describe("listContactAppointmentsAPI", () => {
     })
     expect(mocks.listContactAppointments).not.toHaveBeenCalled()
   })
+
+  test("passes the assigned-contact restriction to appointmentService", async () => {
+    mocks.requireContactPermissionScopeForMember.mockReturnValueOnce({
+      canViewEmailAndPhone: false,
+      restrictToAssignedUserId: "user-9",
+    })
+    mocks.listContactAppointments.mockResolvedValueOnce([])
+
+    await expect(
+      mocks.state.handler?.({
+        input: { workspaceId: "workspace-1", contactId: "contact-1" },
+        context: {
+          workspaceMember: { permissions: { onlyAssignedContacts: true } },
+          user: { id: "user-9" },
+        },
+      }),
+    ).resolves.toEqual([])
+
+    expect(mocks.listContactAppointments).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      accessScope: { restrictToAssignedUserId: "user-9" },
+    })
+  })
 })

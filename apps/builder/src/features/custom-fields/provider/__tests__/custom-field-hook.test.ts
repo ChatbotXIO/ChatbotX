@@ -40,13 +40,15 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
 function CustomFieldsProbe({
+  enabled,
   onData,
   onState,
 }: {
+  enabled?: boolean
   onData: (data: unknown) => void
   onState?: (state: { isError: boolean; error: unknown }) => void
 }) {
-  const query = useCustomFields("workspace-1")
+  const query = useCustomFields("workspace-1", { enabled })
   onData(query.data)
   onState?.({ isError: query.isError, error: query.error })
   return null
@@ -191,6 +193,25 @@ describe("custom field query hooks", () => {
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: [["botFieldAPIs", "privateListBotFieldsAPI"], {}],
     })
+  })
+
+  test("does not request custom fields when disabled", () => {
+    act(() => {
+      root.render(
+        createElement(
+          QueryClientProvider,
+          { client: queryClient },
+          createElement(CustomFieldsProbe, {
+            enabled: false,
+            onData: () => {
+              //
+            },
+          }),
+        ),
+      )
+    })
+
+    expect(mockListCustomFields).not.toHaveBeenCalled()
   })
 })
 
