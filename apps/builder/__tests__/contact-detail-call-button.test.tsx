@@ -233,7 +233,13 @@ describe("ContactDetail — call control", () => {
     chatStoreState.conversations = [{ id: "conv-1", contactInboxes: [] }]
 
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by this call-control test.
+        }}
+      />,
     )
 
     act(() => {
