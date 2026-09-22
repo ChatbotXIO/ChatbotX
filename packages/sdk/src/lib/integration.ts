@@ -140,6 +140,15 @@ export type MessageHandlers<
     },
     ReceivedMessageResult | null
   >
+  getMessageMediaUrls: Handler<
+    {
+      ctx: Context<IAuth>
+      data: { graphMessageId: string }
+    },
+    // `sourceId` is the provider attachment id, so hydration can match fresh
+    // media to stored attachments by identity instead of array position.
+    Array<{ sourceId: string; url: string; mimeType: string | null }>
+  >
 }
 
 export type CommentHandlers<IAuth extends AuthValue> = {
@@ -294,6 +303,10 @@ export type ContactHandlers<IAuth extends AuthValue> = {
   getProfile: Handler<
     { ctx: Context<IAuth>; data: { sourceId: string } },
     IncomingContact
+  >
+  getContactProfilePicUrl: Handler<
+    { ctx: Context<IAuth>; data: { sourceId: string } },
+    string | null
   >
   update: Handler<
     // biome-ignore lint/suspicious/noExplicitAny: safe pass any data

@@ -25,6 +25,7 @@ const {
   mockBulkImportContacts,
   mockCreateIdFactory,
   mockQueueAdd,
+  mockLowQueueAddBulk,
   mockConcurrencyForUsage,
   mockApplyCoexistActivityUpdates,
 } = vi.hoisted(() => ({
@@ -48,6 +49,7 @@ const {
   mockBulkImportContacts: vi.fn(),
   mockCreateIdFactory: vi.fn(),
   mockQueueAdd: vi.fn(),
+  mockLowQueueAddBulk: vi.fn(),
   mockConcurrencyForUsage: vi.fn(() => 5),
   mockApplyCoexistActivityUpdates: vi.fn().mockResolvedValue(undefined),
 }))
@@ -110,7 +112,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   },
   lowQueue: {
     add: vi.fn().mockResolvedValue(undefined),
-    addBulk: vi.fn().mockResolvedValue(undefined),
+    addBulk: mockLowQueueAddBulk,
   },
 }))
 
@@ -310,6 +312,7 @@ describe("coexistMessengerSync", () => {
     mockBulkImportContacts.mockResolvedValue(emptyBulkContactsResult())
     mockCreateIdFactory.mockReturnValue(() => "id-factory-result")
     mockQueueAdd.mockResolvedValue(undefined)
+    mockLowQueueAddBulk.mockResolvedValue(undefined)
     mockFindWorkspace.mockResolvedValue({ targetCountry: "VN" })
     mockFindInitState.mockResolvedValue({
       attempts: 0,
@@ -423,6 +426,54 @@ describe("coexistMessengerSync", () => {
     expect(bulkArgs.contactInboxId).toBe("ci-1")
     expect(bulkArgs.messages).toHaveLength(1)
     expect(bulkArgs.messages[0]?.sourceId).toBe("msg-xyz")
+  })
+
+  it("does not eagerly enqueue Messenger attachment downloads after import", async () => {
+    mockFindByIdMessenger.mockResolvedValue(fakeIntegration)
+    mockFindOrFail.mockResolvedValue(fakeInbox)
+    mockListConversations.mockResolvedValueOnce({
+      data: [makeConversation("conv-attachment", "user-999")],
+      after: undefined,
+    })
+    mockListMessages.mockResolvedValueOnce({
+      data: [makeMessage("msg-attachment", "user-999")],
+      after: undefined,
+    })
+    mockBulkImportMessages.mockResolvedValueOnce({
+      ...emptyBulkMessagesResult(),
+      importedMessages: 1,
+      insertedAttachmentIds: ["attachment-1"],
+    })
+
+    await coexistMessengerSync({ runId, integrationId, workspaceId })
+
+    expect(mockLowQueueAddBulk).not.toHaveBeenCalled()
+  })
+
+  it("does not eagerly enqueue Messenger avatars after contact import", async () => {
+    mockFindByIdMessenger.mockResolvedValue(fakeIntegration)
+    mockFindOrFail.mockResolvedValue(fakeInbox)
+    mockFindInitState.mockResolvedValue({
+      attempts: 0,
+      currentError: null,
+      messengerSyncPhase: "contacts",
+    })
+    mockListConversations
+      .mockResolvedValueOnce({
+        data: [makeConversation("conv-contact", "user-999")],
+        after: undefined,
+      })
+      .mockResolvedValueOnce({ data: [], after: undefined })
+    mockBulkImportContacts.mockResolvedValueOnce({
+      importedContacts: 1,
+      skippedContacts: 0,
+      contactInboxIds: new Map([["user-999", defaultContactLink]]),
+      newContactInboxIds: new Map([["user-999", defaultContactLink]]),
+    })
+
+    await coexistMessengerSync({ runId, integrationId, workspaceId })
+
+    expect(mockLowQueueAddBulk).not.toHaveBeenCalled()
   })
 
   it("advances the AI marker by default (coexistAiReadsSyncedHistory off), carrying the newest message id", async () => {

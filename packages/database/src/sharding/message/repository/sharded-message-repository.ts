@@ -67,6 +67,12 @@ export { getSafeSinceTime } from "../../../repositories"
 const SHARD_RANGE_CACHE_TAG = "message-shard-range"
 const SHARD_RANGE_CACHE_TTL_S = 30
 const ATTACHMENT_FALLBACK_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000
+// Half-width of the shard window probed around a token's messageCreatedAt hint.
+// The parent message and its attachment rows share a createdAt, but a slight
+// write lag or an hour-bucket boundary can land them in adjacent shards, so the
+// window is padded a full day on each side to keep the row reachable while still
+// touching only the couple of shards that could hold it.
+const ATTACHMENT_SHARD_WINDOW_MS = 24 * 60 * 60 * 1000
 const RICH_RESPONSE_FALLBACK_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000
 // Echo dedup lookback. An outbound message we save is echoed back by the channel
 // (Instagram/Messenger) seconds later carrying the same sourceId (mid). The dedup
@@ -2055,55 +2061,55 @@ export class ShardedMessageRepository implements IMessageRepository {
     )
   }
 
-  async findAttachmentById({
-    id,
-    workspaceId,
-  }: FindAttachmentByIdParams): Promise<AttachmentLookupRow | null> {
-    const selectAttachment = async (
-      shardClient: MessageShardDatabaseClient,
-    ) => {
-      const [row] = await shardClient
-        .select({
-          id: attachmentModel.id,
-          originPath: attachmentModel.originPath,
-          mimeType: attachmentModel.mimeType,
-          createdAt: attachmentModel.createdAt,
-        })
-        .from(attachmentModel)
-        .where(
-          and(
-            eq(attachmentModel.id, id),
-            eq(attachmentModel.workspaceId, workspaceId),
-          ),
-        )
-        .limit(1)
+  private async queryAttachmentOnShard(
+    shardClient: MessageShardDatabaseClient,
+    id: string,
+    workspaceId: string,
+  ): Promise<AttachmentLookupRow | null> {
+    const [row] = await shardClient
+      .select({
+        id: attachmentModel.id,
+        messageId: attachmentModel.messageId,
+        messageCreatedAt: attachmentModel.messageCreatedAt,
+        sourceId: attachmentModel.sourceId,
+        originPath: attachmentModel.originPath,
+        mimeType: attachmentModel.mimeType,
+        createdAt: attachmentModel.createdAt,
+      })
+      .from(attachmentModel)
+      .where(
+        and(
+          eq(attachmentModel.id, id),
+          eq(attachmentModel.workspaceId, workspaceId),
+        ),
+      )
+      .limit(1)
 
-      return (row as AttachmentLookupRow | undefined) ?? null
-    }
+    return (row as AttachmentLookupRow | undefined) ?? null
+  }
 
-    const writeShardResult = await withShardRetry(async () => {
-      const shardClient = await this.shardManager.getShardForWrite(workspaceId)
-      return selectAttachment(shardClient)
-    })
-    if (writeShardResult) {
-      return writeShardResult
-    }
-
-    const fallbackSinceTime = new Date(
-      Date.now() - ATTACHMENT_FALLBACK_LOOKBACK_MS,
-    )
-    fallbackSinceTime.setMinutes(0, 0, 0)
-    const shards = await this.getConversationReadShards(
-      fallbackSinceTime,
-      workspaceId,
-    )
-
+  private async scanShardsForAttachment(
+    shards: MessageShardTimeRangeInfo[],
+    id: string,
+    workspaceId: string,
+    // Shared across the window and fallback scans so a shard that appears in
+    // both (e.g. a recent shard inside the hint window) is queried only once —
+    // matters on a true miss, where every scan would otherwise re-probe it.
+    probedShardIds: Set<string> = new Set(),
+  ): Promise<AttachmentLookupRow | null> {
     for (const shardInfo of shards) {
+      if (probedShardIds.has(shardInfo.shard.id)) {
+        continue
+      }
       try {
         const found = await this.shardManager.withShardClientForRead(
           shardInfo.shard,
-          selectAttachment,
+          (client) => this.queryAttachmentOnShard(client, id, workspaceId),
         )
+        // Record only after a completed query (a null result still counts): a
+        // shard that threw stays eligible so a later scan can retry it rather
+        // than skip it and return a false miss.
+        probedShardIds.add(shardInfo.shard.id)
         if (found) {
           return found
         }
@@ -2114,8 +2120,68 @@ export class ShardedMessageRepository implements IMessageRepository {
         )
       }
     }
-
     return null
+  }
+
+  async findAttachmentById({
+    id,
+    workspaceId,
+    messageCreatedAt,
+  }: FindAttachmentByIdParams): Promise<AttachmentLookupRow | null> {
+    // Fast path: the workspace's write shard holds every recent write, and is
+    // the single main DB when sharding is disabled — so this alone answers the
+    // common case and every non-sharded lookup.
+    const writeShardResult = await withShardRetry(async () => {
+      const shardClient = await this.shardManager.getShardForWrite(workspaceId)
+      return this.queryAttachmentOnShard(shardClient, id, workspaceId)
+    })
+    if (writeShardResult) {
+      return writeShardResult
+    }
+
+    const probedShardIds = new Set<string>()
+
+    // Targeted path: when the caller knows the parent message's createdAt (from
+    // the signed media token), probe only the shard window around it — reaching
+    // an old attachment the recent-history scan below would miss. (A back-dated
+    // import lives in the current write shard, already probed above, so it is
+    // not additionally reachable here — matching the pre-existing behavior.) A
+    // registry lookup failure falls through to the retained net rather than 500.
+    if (messageCreatedAt) {
+      try {
+        const windowShards = await this.getShardsForRange(
+          new Date(messageCreatedAt.getTime() - ATTACHMENT_SHARD_WINDOW_MS),
+          new Date(messageCreatedAt.getTime() + ATTACHMENT_SHARD_WINDOW_MS),
+        )
+        const windowed = await this.scanShardsForAttachment(
+          windowShards,
+          id,
+          workspaceId,
+          probedShardIds,
+        )
+        if (windowed) {
+          return windowed
+        }
+      } catch (error) {
+        logger.warn(
+          { err: error, workspaceId },
+          "Hinted shard-window lookup failed in findAttachmentById; using fallback",
+        )
+      }
+    }
+
+    // Safety net: scan recent-history shards for callers without a time hint
+    // (or when the hint's window missed).
+    const fallbackSinceTime = new Date(
+      Date.now() - ATTACHMENT_FALLBACK_LOOKBACK_MS,
+    )
+    fallbackSinceTime.setMinutes(0, 0, 0)
+    const shards = await this.getConversationReadShards(
+      fallbackSinceTime,
+      workspaceId,
+    )
+
+    return this.scanShardsForAttachment(shards, id, workspaceId, probedShardIds)
   }
 
   async updateAttachment({

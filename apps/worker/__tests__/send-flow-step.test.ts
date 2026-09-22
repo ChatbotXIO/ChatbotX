@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const HTTP_URL_RE = /^https?:\/\//i
+
 // ---------------------------------------------------------------------------
 // Hoist mock references
 // ---------------------------------------------------------------------------
@@ -14,6 +16,7 @@ const {
   mockEmit,
   mockresolveTenantSettings,
   mockResolveContactVariables,
+  mockResolveMediaUrl,
   mockUploadFileFromUrl,
   mockSendFlowStepToChannel,
   mockSendMessageToChannel,
@@ -83,6 +86,25 @@ const {
         (_contactId: string, step: unknown, _source: unknown) =>
           Promise.resolve(step),
       ),
+    mockResolveMediaUrl: vi.fn(
+      async (
+        ref: {
+          attachmentId: string
+          channel: string
+          kind: "attachment"
+          originPath: string
+        },
+        finalize: (key: string) => string | Promise<string>,
+      ) => {
+        if (ref.originPath.startsWith("failed:")) {
+          return null
+        }
+        return ["messenger", "instagram", "whatsapp"].includes(ref.channel) &&
+          HTTP_URL_RE.test(ref.originPath)
+          ? `https://app.example.com/media/attachment/${ref.attachmentId}`
+          : await finalize(ref.originPath)
+      },
+    ),
     mockUploadFileFromUrl: vi.fn().mockResolvedValue({
       originPath: "public/space/ws-1/conversations/conv-1/file-id",
       fileType: "image/jpeg",
@@ -171,6 +193,7 @@ vi.mock("@chatbotx.io/business", () => ({
     recordOutboundMessageActivity: mockRecordOutboundMessageActivity,
   },
   resolveTenantSettings: mockresolveTenantSettings,
+  resolveMediaUrl: mockResolveMediaUrl,
 }))
 
 vi.mock("@chatbotx.io/encryption", () => ({
@@ -1182,6 +1205,138 @@ describe("sendFlowStep", () => {
     expect(mockRepositoryCreate).not.toHaveBeenCalled()
   })
 
+  test("decorates a mirrored flow attachment without mutating the repository row", async () => {
+    const repositoryMessage = {
+      id: "msg-with-att",
+      contactInboxId: "ci-1",
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      messageType: "outgoing",
+      contentType: "text",
+      senderType: "bot",
+      sourceId: null,
+      text: null,
+      contentAttributes: {},
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      updatedAt: new Date("2026-01-01T00:00:00Z"),
+      attachments: [
+        {
+          id: "att-mirrored",
+          originPath: "public/space/ws-1/conversations/conv-1/mirrored.jpg",
+        },
+      ],
+    }
+    mockRepositoryCreateWithAttachments.mockResolvedValueOnce(repositoryMessage)
+
+    await sendFlowStep({ ...baseParams, step: sendImageStep })
+
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messageId: "msg-with-att",
+      }),
+    )
+    expect(mockBroadcast).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          attachments: [
+            expect.objectContaining({
+              url: "https://storage.example.com/public/space/ws-1/conversations/conv-1/mirrored.jpg",
+            }),
+          ],
+        }),
+      }),
+    )
+    expect(repositoryMessage.attachments[0]).not.toHaveProperty("url")
+  })
+
+  test.each([
+    "tiktok",
+    "api",
+  ])("finalizes a fresh mirrored attachment for the %s channel", async (channel) => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel,
+    })
+    mockRepositoryCreateWithAttachments.mockResolvedValueOnce({
+      id: `msg-${channel}`,
+      contactInboxId: "ci-1",
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      messageType: "outgoing",
+      contentType: "text",
+      senderType: "bot",
+      sourceId: null,
+      text: null,
+      contentAttributes: {},
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      updatedAt: new Date("2026-01-01T00:00:00Z"),
+      attachments: [
+        {
+          id: `att-${channel}`,
+          originPath: `public/space/ws-1/conversations/conv-1/${channel}.jpg`,
+        },
+      ],
+    })
+
+    await sendFlowStep({ ...baseParams, step: sendImageStep })
+
+    expect(mockResolveMediaUrl).toHaveBeenCalledWith(
+      expect.objectContaining({ channel }),
+      expect.any(Function),
+    )
+    expect(mockBroadcast).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          attachments: [
+            expect.objectContaining({
+              url: `https://storage.example.com/public/space/ws-1/conversations/conv-1/${channel}.jpg`,
+            }),
+          ],
+        }),
+      }),
+    )
+  })
+
+  test("keeps a mirrored flow attachment's public URL unchanged", async () => {
+    mockRepositoryCreateWithAttachments.mockResolvedValueOnce({
+      id: "msg-with-att",
+      contactInboxId: "ci-1",
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      messageType: "outgoing",
+      contentType: "text",
+      senderType: "bot",
+      sourceId: null,
+      text: null,
+      contentAttributes: {},
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      updatedAt: new Date("2026-01-01T00:00:00Z"),
+      attachments: [
+        {
+          id: "att-mirrored",
+          originPath: "public/space/ws-1/messages/a.jpg",
+        },
+      ],
+    })
+
+    await sendFlowStep({ ...baseParams, step: sendImageStep })
+
+    expect(mockBroadcast).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          attachments: [
+            expect.objectContaining({
+              url: "https://storage.example.com/public/space/ws-1/messages/a.jpg",
+            }),
+          ],
+        }),
+      }),
+    )
+  })
+
   test("does NOT call db.insert directly for message creation — goes through the message repository", async () => {
     await sendFlowStep({ ...baseParams, step: sendTextStep })
 
@@ -1446,6 +1601,48 @@ describe("sendChatMessage", () => {
     expect(mockRepositoryCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         text: "https://storage.googleapis.com/private/image.png",
+      }),
+    )
+  })
+
+  test("broadcasts a null URL when defensive resolution marks a chat attachment failed", async () => {
+    mockRepositoryCreateWithAttachments.mockResolvedValueOnce({
+      id: "msg-chat-att",
+      contactInboxId: "ci-1",
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      messageType: "outgoing",
+      contentType: "text",
+      senderType: "bot",
+      sourceId: null,
+      text: null,
+      contentAttributes: {},
+      createdAt: new Date("2026-01-02T00:00:00Z"),
+      updatedAt: new Date("2026-01-02T00:00:00Z"),
+      attachments: [
+        {
+          id: "att-chat-failed",
+          originPath: "failed:unresolvable",
+        },
+      ],
+    })
+
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      url: "https://source.example.com/image.jpg",
+    })
+
+    expect(mockBroadcast).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          attachments: [
+            expect.objectContaining({
+              url: null,
+            }),
+          ],
+        }),
       }),
     )
   })

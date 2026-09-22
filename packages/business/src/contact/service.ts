@@ -7,6 +7,7 @@ import {
   findOrFail,
   inArray,
   isNull,
+  or,
   sql,
 } from "@chatbotx.io/database/client"
 import {
@@ -39,6 +40,7 @@ import { BaseService } from "../base.service"
 import { getContactInboxSinceTime } from "../contact-inbox/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
+import { NO_AVATAR_SENTINEL_KEY } from "../media/no-avatar-sentinel"
 import { messageCleanupService } from "../message-cleanup/service"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { userQuotaService } from "../user-quota/service"
@@ -972,7 +974,7 @@ class ContactService extends BaseService {
     tx: DatabaseClient = db,
   ): Promise<void> {
     const { workspaceId, contactId, avatar } = props
-    await tx
+    const [updated] = await tx
       .update(contactModel)
       .set({ avatar, updatedAt: new Date() })
       .where(
@@ -982,6 +984,38 @@ class ContactService extends BaseService {
           isNull(contactModel.avatar),
         ),
       )
+      .returning({ id: contactModel.id })
+    if (updated) {
+      await this.invalidate({ workspaceId, ids: [contactId] })
+    }
+  }
+
+  /**
+   * Conditional avatar write that also permits replacing the negative-cache
+   * sentinel while protecting a real avatar from concurrent refreshes.
+   */
+  async setAvatarIfEmptyOrSentinel(
+    props: { workspaceId: string; contactId: string; avatar: string },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    const { workspaceId, contactId, avatar } = props
+    const [updated] = await tx
+      .update(contactModel)
+      .set({ avatar, updatedAt: new Date() })
+      .where(
+        and(
+          eq(contactModel.id, contactId),
+          eq(contactModel.workspaceId, workspaceId),
+          or(
+            isNull(contactModel.avatar),
+            sql`${contactModel.avatar} LIKE ${`${NO_AVATAR_SENTINEL_KEY.replace(/_/g, "\\_")}?time=%`} ESCAPE '\\'`,
+          ),
+        ),
+      )
+      .returning({ id: contactModel.id })
+    if (updated) {
+      await this.invalidate({ workspaceId, ids: [contactId] })
+    }
   }
 
   /**

@@ -8,6 +8,7 @@ import {
   contactService,
   conversationService,
   hasOnDemandProfileApi,
+  hasRealAvatar,
   messageCleanupService,
   quotaEnforcementService,
   recordProfileRefreshFailure,
@@ -1073,12 +1074,12 @@ export const receiveComment = async (
   }
   const { contactInbox, contact, conversation } = detected
 
-  // Resolved AFTER the contact, and only when it has no avatar yet: a
-  // returning commenter takes the `buildExistingContactMatch` path, which
-  // ignores `incomingContact.avatar` entirely — re-hosting on every comment
-  // would leave one orphaned public object per comment with nothing pointing
-  // at it.
-  if (commenterAvatarUrl && !contact.avatar) {
+  // Resolved AFTER the contact, and only when it has no real avatar yet. A
+  // sentinel remains replaceable, while a returning commenter with a real
+  // avatar skips the download because `buildExistingContactMatch` ignores
+  // `incomingContact.avatar`; re-hosting on every comment would orphan one
+  // public object per comment.
+  if (commenterAvatarUrl && !hasRealAvatar(contact.avatar)) {
     try {
       const avatar = await downloadCommenterAvatar({
         url: commenterAvatarUrl,
@@ -1089,10 +1090,14 @@ export const receiveComment = async (
             : undefined,
       })
       if (avatar) {
-        await contactService.update(
-          { workspaceId: inbox.workspaceId, id: contact.id },
-          { avatar },
-        )
+        // Conditional write: a concurrent on-demand avatar job may have stored
+        // a real avatar between the hasRealAvatar() guard above and here, so
+        // only fill an empty/sentinel avatar and never clobber a real one.
+        await contactService.setAvatarIfEmptyOrSentinel({
+          workspaceId: inbox.workspaceId,
+          contactId: contact.id,
+          avatar,
+        })
       }
     } catch (err) {
       logger.warn(

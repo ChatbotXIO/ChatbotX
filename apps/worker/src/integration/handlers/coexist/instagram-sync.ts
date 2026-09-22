@@ -21,7 +21,6 @@ import {
   createHistoricalIdFactory,
   type HistoricalMessage,
 } from "./bulk-historical-import"
-import { enqueueAttachmentDownloadJobs } from "./enqueue-attachment-downloads"
 import { instagramCoexistAdapter } from "./instagram-adapter"
 import { instagramFacebookCoexistAdapter } from "./instagram-facebook-adapter"
 import { splitDisplayName } from "./instagram-normalize"
@@ -155,7 +154,6 @@ const runInstagramCoexistPull = async <
       pageNumber += 1
 
       const activityUpdates: CoexistActivityUpdate[] = []
-      const attachmentIds: string[] = []
       let pageImportedContacts = 0
       let pageImportedMessages = 0
       let pageSkipped = 0
@@ -304,8 +302,6 @@ const runInstagramCoexistPull = async <
 
                 pageImportedMessages += imported.importedMessages
                 pageSkipped += imported.skippedMessages
-                attachmentIds.push(...imported.insertedAttachmentIds)
-
                 const aiMarkerMessageId = context.integration
                   .coexistAiReadsSyncedHistory
                   ? null
@@ -358,17 +354,9 @@ const runInstagramCoexistPull = async <
       skippedTotal += pageSkipped
       failedTotal += pageFailed
 
-      // Not best-effort by design: a failed enqueue propagates so the run is
-      // marked failed and re-driven BEFORE the resume watermark advances past
-      // these attachments (updateProgress below writes lastSyncedAt). This
-      // preserves Instagram's stricter original behavior.
-      await enqueueAttachmentDownloadJobs({
-        workspaceId,
-        integrationId,
-        channel: "instagram",
-        attachmentIds,
-      })
-
+      // Attachment bytes hydrate lazily through the media proxy. The resume
+      // watermark therefore advances after message/attachment INSERT success,
+      // independently of any later download or mirror attempt.
       await coexistService.updateProgress({
         runId,
         fields: {

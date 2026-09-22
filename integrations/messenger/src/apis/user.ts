@@ -7,6 +7,7 @@ import type {
 } from "@chatbotx.io/sdk"
 import { normalizeGender, normalizeUtcOffset } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { fetchMediaWithLimits } from "@chatbotx.io/utils/media-download"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"
@@ -99,26 +100,28 @@ export const deleteUserPersistentMenu = (props: {
   )
 }
 
+const fetchUserProfile = async (props: {
+  ctx: Context<MessengerAuthValue>
+  sourceId: string
+}): Promise<FacebookUserProfile> =>
+  await facebookGraphClient.get<FacebookUserProfile>(
+    `${props.ctx.auth.metadata.version}/${props.sourceId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${props.ctx.auth.tokens.accessToken}`,
+      },
+      searchParams: {
+        fields: "first_name,last_name,profile_pic,locale,timezone,gender",
+      },
+    },
+  )
+
 export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
-  (props) => {
-    const {
-      data: { sourceId },
-      ctx,
-    } = props
+  ({ data: { sourceId }, ctx }) => {
     const endpoint = `${API_URL}/${ctx.auth.metadata.version}/${sourceId}`
 
     return rescue(endpoint, async () => {
-      const response = await facebookGraphClient.get<FacebookUserProfile>(
-        `${ctx.auth.metadata.version}/${sourceId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-          },
-          searchParams: {
-            fields: "first_name,last_name,profile_pic,locale,timezone,gender",
-          },
-        },
-      )
+      const response = await fetchUserProfile({ ctx, sourceId })
 
       const result: IncomingContact = {
         sourceId,
@@ -144,6 +147,15 @@ export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
     })
   }
 
+export const getContactProfilePicUrl: ContactHandlers<MessengerAuthValue>["getContactProfilePicUrl"] =
+  ({ data: { sourceId }, ctx }) => {
+    const endpoint = `${API_URL}/${ctx.auth.metadata.version}/${sourceId}`
+    return rescue(endpoint, async () => {
+      const response = await fetchUserProfile({ ctx, sourceId })
+      return response.profile_pic ?? null
+    })
+  }
+
 const getContactProfilePicture = async ({
   ctx,
   pictureUrl,
@@ -151,22 +163,20 @@ const getContactProfilePicture = async ({
   ctx: Context<MessengerAuthValue>
   pictureUrl: string
 }): Promise<string | undefined> => {
-  const response = await fetch(pictureUrl, {
+  const media = await fetchMediaWithLimits(pictureUrl, {
     headers: {
       Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
       "User-Agent": "node",
     },
   })
-  if (response.ok && response.body) {
-    const originPath = `public/space/${ctx.storagePrefix}/avatars/${createId()}`
-    const bytes = await response.arrayBuffer()
-    const mimeType = response.headers.get("content-type") ?? "image/png"
-
-    await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
-      ACL: "public-read",
-      ContentType: mimeType,
-    })
-
-    return originPath
+  if (!media) {
+    return
   }
+  const originPath = `public/space/${ctx.storagePrefix}/avatars/${createId()}`
+  await ctx.uploader?.putObject(originPath, Buffer.from(media.bytes), {
+    ACL: "public-read",
+    ContentType: media.mimeType,
+  })
+
+  return originPath
 }

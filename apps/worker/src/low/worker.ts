@@ -48,7 +48,7 @@ async function startLowWorker() {
           async () => {
             switch (job.data.type) {
               case LowJobAction.coexistAttachmentDownload: {
-                await coexistAttachmentDownload(job.data.data)
+                await coexistAttachmentDownload(job, job.data.data)
                 return
               }
               case LowJobAction.updateContactAvatar: {

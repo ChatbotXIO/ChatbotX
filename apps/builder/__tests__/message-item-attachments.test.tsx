@@ -12,6 +12,13 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
 
+vi.mock("next/image", () => ({
+  default: ({ alt, src }: { alt: string; src: string }) => (
+    // biome-ignore lint/performance/noImgElement: test double exposes the src passed to Next Image
+    <img alt={alt} height={120} src={src} width={120} />
+  ),
+}))
+
 // MediaLibraryTrigger imports "use server" query modules at module scope
 // that drag in a live pg Pool under vitest; stub it to keep this test about
 // attachment rendering.
@@ -92,7 +99,82 @@ const makeFileAttachment = (id: string) =>
     originPath: `public/${id}.pdf`,
   }) as unknown as AttachmentResource
 
+const makeProxyAttachment = (
+  id: string,
+  fileType: AttachmentResource["fileType"],
+  mimeType: string,
+) =>
+  ({
+    id,
+    fileType,
+    mimeType,
+    url: `https://builder.example.com/media/attachment/${id}-token`,
+    name: `${id}.${fileType}`,
+    originPath: `pending/${id}`,
+    width: fileType === "image" ? 400 : null,
+    height: fileType === "image" ? 300 : null,
+  }) as unknown as AttachmentResource
+
 describe("MessageItem attachment rendering — multiple images", () => {
+  test("an explicit null server URL renders the existing placeholder instead of rebuilding the origin path", () => {
+    const attachment = {
+      ...makeImageAttachment("failed-image"),
+      originPath: "failed:unresolvable",
+      url: null,
+    } as unknown as AttachmentResource
+
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({
+          attachments: [attachment],
+        })}
+      />,
+    )
+
+    expect(el.querySelector("img")).toBeNull()
+    expect(el.querySelector('a[href*="failed:unresolvable"]')).toBeNull()
+    expect(el.textContent).toContain("failed-image.png")
+  })
+
+  test("image, video, audio, and file render their absolute server URLs unchanged", () => {
+    const image = makeProxyAttachment("image", "image", "image/jpeg")
+    const video = makeProxyAttachment("video", "video", "video/mp4")
+    const audio = makeProxyAttachment("audio", "audio", "audio/mpeg")
+    const file = makeProxyAttachment("file", "file", "application/pdf")
+
+    const el = renderComponent(
+      <MessageItem
+        message={makeMessage({ attachments: [image, video, audio, file] })}
+      />,
+    )
+
+    expect(el.querySelector("img")?.getAttribute("src")).toBe(image.url)
+    expect(el.querySelector("video source")?.getAttribute("src")).toBe(
+      video.url,
+    )
+    expect(el.querySelector("audio source")?.getAttribute("src")).toBe(
+      audio.url,
+    )
+    expect(
+      el.querySelector(`a[href="${file.url}"]`)?.getAttribute("href"),
+    ).toBe(file.url)
+  })
+
+  test("image-grid items render their absolute server URLs unchanged", () => {
+    const first = makeProxyAttachment("image-1", "image", "image/jpeg")
+    const second = makeProxyAttachment("image-2", "image", "image/jpeg")
+
+    const el = renderComponent(
+      <MessageItem message={makeMessage({ attachments: [first, second] })} />,
+    )
+
+    expect(
+      Array.from(el.querySelectorAll("img"), (image) =>
+        image.getAttribute("src"),
+      ),
+    ).toEqual([first.url, second.url])
+  })
+
   test("a single image renders without the grid wrapper", () => {
     const el = renderComponent(
       <MessageItem

@@ -1,573 +1,143 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// ---------------------------------------------------------------------------
-// Hoist mock function references so they are available inside vi.mock factories
-// (vi.mock calls are hoisted to the top of the file by Vitest)
-// ---------------------------------------------------------------------------
-
-const {
-  mockDbSelect,
-  mockDbUpdate,
-  mockDbExecute,
-  mockCreateMessageRepository,
-  mockFindAttachmentById,
-  mockUpdateAttachment,
-  mockEqFn,
-  mockAndFn,
-  mockBuildContext,
-  mockFindIntegrationForCoexist,
-  mockGetWhatsappClient,
-  mockPutObject,
-  mockRetrieveMedia,
-  mockCreateId,
-  mockLoggerWarn,
-  mockLoggerError,
-} = vi.hoisted(() => ({
-  mockDbSelect: vi.fn(),
-  mockDbUpdate: vi.fn(),
-  mockDbExecute: vi.fn(),
-  mockCreateMessageRepository: vi.fn(),
-  mockFindAttachmentById: vi.fn(),
-  mockUpdateAttachment: vi.fn(),
-  mockEqFn: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
-  mockAndFn: vi.fn((...args: unknown[]) => ({ __and: args })),
-  mockBuildContext: vi.fn(),
-  mockFindIntegrationForCoexist: vi.fn(),
-  mockGetWhatsappClient: vi.fn(),
-  mockPutObject: vi.fn(),
-  mockRetrieveMedia: vi.fn(),
-  mockCreateId: vi.fn(() => "new-storage-id"),
-  mockLoggerWarn: vi.fn(),
-  mockLoggerError: vi.fn(),
+const mocks = vi.hoisted(() => ({
+  ensureAttachmentMirrored: vi.fn(),
+  loggerError: vi.fn(),
+  loggerWarn: vi.fn(),
+  markAttachmentUnresolvable: vi.fn(),
 }))
 
-// ---------------------------------------------------------------------------
-// Mocks
-// ---------------------------------------------------------------------------
+class MockTerminalMediaError extends Error {}
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    select: mockDbSelect,
-    update: mockDbUpdate,
-    execute: mockDbExecute,
-  },
-  eq: mockEqFn,
-  and: mockAndFn,
-  sql: Object.assign(
-    (strings: TemplateStringsArray, ...values: unknown[]) => ({
-      strings,
-      values,
-    }),
-    {
-      identifier: (s: string) => ({ __identifier: s }),
-      raw: (s: string) => s,
-    },
-  ),
-}))
-
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  createMessageRepository: mockCreateMessageRepository,
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  attachmentModel: {
-    id: "id",
-    workspaceId: "workspaceId",
-    originPath: "originPath",
-    mimeType: "mimeType",
-  },
-}))
-
-vi.mock("@chatbotx.io/business", () => ({
-  buildContext: mockBuildContext,
-  coexistService: {
-    findIntegrationForCoexist: mockFindIntegrationForCoexist,
-  },
-}))
-
-vi.mock("@chatbotx.io/integration-whatsapp", () => ({
-  getWhatsappClient: mockGetWhatsappClient,
-}))
-
-vi.mock("@chatbotx.io/sdk", () => ({
-  SdkException: class SdkException extends Error {
-    constructor(message: string) {
-      super(message)
-      this.name = "SdkException"
-    }
-  },
-}))
-
-vi.mock("@chatbotx.io/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
-  return {
-    ...actual,
-    createId: mockCreateId,
-  }
-})
-
-vi.mock("image-size", () => ({
-  default: vi.fn(() => ({ width: 100, height: 200 })),
+vi.mock("@chatbotx.io/channel-registry/media-hydration", () => ({
+  AttachmentTooLargeError: class AttachmentTooLargeError extends Error {},
+  downloadBearerUrlMedia: vi.fn(),
+  downloadWhatsappMedia: vi.fn(),
+  ensureAttachmentMirrored: mocks.ensureAttachmentMirrored,
+  markAttachmentUnresolvable: mocks.markAttachmentUnresolvable,
+  MAX_ATTACHMENT_BYTES: 100 * 1024 * 1024,
+  readBodyWithCap: vi.fn(),
+  TerminalMediaError: MockTerminalMediaError,
 }))
 
 vi.mock("../src/lib/logger", () => ({
   logger: {
-    warn: mockLoggerWarn,
-    error: mockLoggerError,
-    info: vi.fn(),
+    error: mocks.loggerError,
+    warn: mocks.loggerWarn,
   },
 }))
 
-// ---------------------------------------------------------------------------
-// Import the handler AFTER mocks
-// ---------------------------------------------------------------------------
+const { coexistAttachmentDownload, markUnresolvableOnFinalAttempt } =
+  await import("../src/integration/handlers/coexist/attachment-download")
 
-import {
-  coexistAttachmentDownload,
-  MAX_ATTACHMENT_BYTES,
-} from "../src/integration/handlers/coexist/attachment-download"
-
-// ---------------------------------------------------------------------------
-// Fixtures
-// ---------------------------------------------------------------------------
-
-const BASE_DATA = {
-  attachmentId: "att-001",
-  workspaceId: "ws-100",
-  channel: "messenger" as const,
-  integrationId: "int-001",
-}
-
-const WA_DATA = {
-  ...BASE_DATA,
+const data = {
+  attachmentId: "attachment-1",
+  workspaceId: "workspace-1",
   channel: "whatsapp" as const,
+  integrationId: "integration-1",
 }
 
-const IG_DATA = {
-  ...BASE_DATA,
-  channel: "instagram" as const,
-}
-
-const FAKE_INTEGRATION_ROW = {
-  id: "int-001",
-  inboxId: "inbox-001",
-  auth: { tokens: { accessToken: "token-abc" } },
-  channel: "messenger",
-}
-
-const fakeCtx = {
-  auth: { tokens: { accessToken: "token-abc" } },
-  storagePrefix: "workspace/ws-100",
-  uploader: { putObject: mockPutObject },
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Wires the repository attachment lookup.
- * Call wireSelectChain(null) to simulate "no row found".
- */
-const wireSelectChain = (row: Record<string, unknown> | null) => {
-  const chain = {
-    from: vi.fn(),
-    where: vi.fn(),
-    limit: vi.fn(),
-  }
-  chain.from.mockReturnValue(chain)
-  chain.where.mockReturnValue(chain)
-  chain.limit.mockResolvedValue(row ? [row] : [])
-  mockDbSelect.mockReturnValue(chain)
-  mockFindAttachmentById.mockResolvedValue(
-    row ? { createdAt: new Date("2026-01-01T00:00:00Z"), ...row } : null,
-  )
-  return chain
-}
-
-/** Wires the repository update used to persist final state. */
-const wireUpdateChain = () => {
-  mockDbUpdate.mockImplementation(() => {
-    const chain = { set: vi.fn() }
-    const whereChain = { where: vi.fn().mockResolvedValue(undefined) }
-    chain.set.mockReturnValue(whereChain)
-    return chain
-  })
-  mockUpdateAttachment.mockResolvedValue(undefined)
-}
-
-/** Wires the business-layer coexist integration lookup. */
-const wireIntegrationLookup = (
-  row: Record<string, unknown> | null = FAKE_INTEGRATION_ROW,
-) => {
-  mockFindIntegrationForCoexist.mockResolvedValue(row)
-}
-
-/**
- * Creates a minimal fetch Response mock with a streaming body. The handler
- * reads `response.body` via a reader and caps cumulative bytes, so the mock
- * emits `totalBytes` across `chunkSize`-sized chunks.
- */
-const makeFetchResponse = (opts: {
-  ok?: boolean
-  hasBody?: boolean
-  contentType?: string
-  contentLength?: string
-  totalBytes?: number
-  chunkSize?: number
-}) => {
-  const total = opts.totalBytes ?? 100
-  const chunkSize = opts.chunkSize ?? 1024 * 1024
-  const hasBody = opts.hasBody ?? true
-  const body = hasBody
-    ? new ReadableStream<Uint8Array>({
-        start(controller) {
-          let emitted = 0
-          while (emitted < total) {
-            const size = Math.min(chunkSize, total - emitted)
-            controller.enqueue(new Uint8Array(size))
-            emitted += size
-          }
-          controller.close()
-        },
-      })
-    : null
-  return {
-    ok: opts.ok ?? true,
-    body,
-    status: 200,
-    statusText: "OK",
-    headers: {
-      get: (key: string) => {
-        if (key === "content-type") {
-          return opts.contentType ?? "image/jpeg"
-        }
-        if (key === "content-length") {
-          return opts.contentLength ?? null
-        }
-        return null
-      },
+const job = (attemptsMade = 0, attempts = 5) =>
+  ({
+    attemptsMade,
+    opts: { attempts },
+    data: {
+      type: "coexistAttachmentDownload" as const,
+      data,
     },
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
+  }) as never
 
 describe("coexistAttachmentDownload", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockCreateMessageRepository.mockResolvedValue({
-      findAttachmentById: mockFindAttachmentById,
-      updateAttachment: mockUpdateAttachment,
+    mocks.ensureAttachmentMirrored.mockResolvedValue({
+      originPath: "workspace/workspace-1/media.jpg",
     })
-    wireUpdateChain()
-    mockPutObject.mockResolvedValue(undefined)
-    mockFindIntegrationForCoexist.mockResolvedValue(FAKE_INTEGRATION_ROW)
-    mockBuildContext.mockResolvedValue(fakeCtx)
-    mockRetrieveMedia.mockResolvedValue({
-      url: "https://example.com/media/123",
-      mime_type: "image/jpeg",
-    })
-    mockGetWhatsappClient.mockReturnValue({ retrieveMedia: mockRetrieveMedia })
+    mocks.markAttachmentUnresolvable.mockResolvedValue(undefined)
   })
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // SECURITY: cross-workspace IDOR
-  // ─────────────────────────────────────────────────────────────────────────
+  test("delegates the existing job payload to shared hydration", async () => {
+    await coexistAttachmentDownload(job(), data)
 
-  it("skips attachment from another workspace (no row returned for mismatched workspaceId)", async () => {
-    // Simulate SELECT returns empty when workspaceId predicate is applied
-    wireSelectChain(null)
-
-    await coexistAttachmentDownload(BASE_DATA)
-
-    expect(mockLoggerWarn).toHaveBeenCalledWith(
-      expect.objectContaining({ attachmentId: BASE_DATA.attachmentId }),
-      expect.stringContaining("row missing — skip"),
-    )
-    // Must NOT download or upload anything
-    expect(mockFindIntegrationForCoexist).not.toHaveBeenCalled()
-    expect(mockPutObject).not.toHaveBeenCalled()
-  })
-
-  it("passes both id and workspaceId to the repository lookup", async () => {
-    wireSelectChain(null) // return empty so handler stops early — we just check lookup args
-
-    await coexistAttachmentDownload(BASE_DATA)
-
-    expect(mockFindAttachmentById).toHaveBeenCalledWith({
-      id: BASE_DATA.attachmentId,
-      workspaceId: BASE_DATA.workspaceId,
+    expect(mocks.ensureAttachmentMirrored).toHaveBeenCalledWith({
+      attachmentId: data.attachmentId,
+      workspaceId: data.workspaceId,
     })
   })
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // SECURITY: timeout
-  // ─────────────────────────────────────────────────────────────────────────
-
-  it("aborts when fetch exceeds timeout — signal is an AbortSignal passed to fetch", async () => {
-    wireSelectChain({
-      id: "att-001",
-      originPath: "https://example.com/media/file.jpg",
-      mimeType: "image/jpeg",
-    })
-    wireIntegrationLookup()
-
-    let capturedSignal: AbortSignal | undefined
-    const fetchMock = vi.fn((_url: unknown, init?: RequestInit) => {
-      capturedSignal = init?.signal as AbortSignal | undefined
-      // Simulate an AbortError (as if AbortSignal.timeout fired)
-      const err = new DOMException("The operation was aborted.", "AbortError")
-      return Promise.reject(err)
-    })
-    vi.stubGlobal("fetch", fetchMock)
-
-    await expect(coexistAttachmentDownload(BASE_DATA)).rejects.toThrow()
-
-    // The signal must be an AbortSignal — proves timeout wiring
-    expect(capturedSignal).toBeDefined()
-    expect(capturedSignal).toBeInstanceOf(AbortSignal)
-    // No upload must have happened
-    expect(mockPutObject).not.toHaveBeenCalled()
-
-    vi.unstubAllGlobals()
-  })
-
-  it("aborts when WhatsApp fetch exceeds timeout — signal is an AbortSignal", async () => {
-    wireSelectChain({
-      id: "att-001",
-      originPath: "wa-media:media-id-xyz",
-      mimeType: "image/jpeg",
-    })
-    wireIntegrationLookup({ ...FAKE_INTEGRATION_ROW, channel: "whatsapp" })
-
-    let capturedSignal: AbortSignal | undefined
-    const fetchMock = vi.fn((_url: unknown, init?: RequestInit) => {
-      capturedSignal = init?.signal as AbortSignal | undefined
-      const err = new DOMException("The operation was aborted.", "AbortError")
-      return Promise.reject(err)
-    })
-    vi.stubGlobal("fetch", fetchMock)
-
-    await expect(coexistAttachmentDownload(WA_DATA)).rejects.toThrow()
-
-    expect(capturedSignal).toBeDefined()
-    expect(capturedSignal).toBeInstanceOf(AbortSignal)
-    expect(mockPutObject).not.toHaveBeenCalled()
-
-    vi.unstubAllGlobals()
-  })
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // SIZE CAP: an oversized attachment is a PERMANENT condition, so the handler
-  // must skip it terminally (log a warning and return) rather than throw —
-  // throwing would burn all BullMQ retry attempts on a job that can never
-  // succeed. See AttachmentTooLargeError.
-  // ─────────────────────────────────────────────────────────────────────────
-
-  it("skips (no throw) a Messenger response whose content-length exceeds the cap", async () => {
-    wireSelectChain({
-      id: "att-001",
-      originPath: "https://example.com/media/huge.mp4",
-      mimeType: "video/mp4",
-    })
-    wireIntegrationLookup()
-
-    const OVER_LIMIT = String(MAX_ATTACHMENT_BYTES + 1)
-    const fetchMock = vi.fn(() =>
-      Promise.resolve(makeFetchResponse({ contentLength: OVER_LIMIT })),
-    )
-    vi.stubGlobal("fetch", fetchMock)
-
-    // Must resolve (terminal skip), never reject — a reject would trigger retry.
-    await expect(coexistAttachmentDownload(BASE_DATA)).resolves.toBeUndefined()
-    expect(mockPutObject).not.toHaveBeenCalled()
-    expect(mockUpdateAttachment).not.toHaveBeenCalled()
-    expect(mockLoggerWarn).toHaveBeenCalledWith(
-      expect.objectContaining({ attachmentId: BASE_DATA.attachmentId }),
-      expect.stringContaining("exceeds size cap"),
-    )
-    // Terminal skip must NOT be logged as an error (that reads as a failure).
-    expect(mockLoggerError).not.toHaveBeenCalled()
-
-    vi.unstubAllGlobals()
-  })
-
-  it("skips (no throw) a Messenger response whose streamed body exceeds the cap (no content-length)", async () => {
-    wireSelectChain({
-      id: "att-001",
-      originPath: "https://example.com/media/huge.mp4",
-      mimeType: "video/mp4",
-    })
-    wireIntegrationLookup()
-
-    const fetchMock = vi.fn(() =>
-      Promise.resolve(
-        makeFetchResponse({
-          contentLength: undefined, // no header — must be caught by streaming cap
-          totalBytes: MAX_ATTACHMENT_BYTES + 1, // one byte past the cap
-          chunkSize: 10 * 1024 * 1024,
-        }),
-      ),
-    )
-    vi.stubGlobal("fetch", fetchMock)
-
-    await expect(coexistAttachmentDownload(BASE_DATA)).resolves.toBeUndefined()
-    expect(mockPutObject).not.toHaveBeenCalled()
-    expect(mockLoggerWarn).toHaveBeenCalledWith(
-      expect.objectContaining({ attachmentId: BASE_DATA.attachmentId }),
-      expect.stringContaining("exceeds size cap"),
+  test("terminates permanent media failures without retrying", async () => {
+    mocks.ensureAttachmentMirrored.mockRejectedValue(
+      new MockTerminalMediaError("too large"),
     )
 
-    vi.unstubAllGlobals()
+    await expect(
+      coexistAttachmentDownload(job(), data),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ attachmentId: data.attachmentId }),
+      expect.stringContaining("terminal media failure"),
+    )
+    expect(mocks.loggerError).not.toHaveBeenCalled()
+    expect(mocks.markAttachmentUnresolvable).not.toHaveBeenCalled()
   })
 
-  it("skips (no throw) a WhatsApp response whose content-length exceeds the cap", async () => {
-    wireSelectChain({
-      id: "att-001",
-      originPath: "wa-media:media-id-xyz",
-      mimeType: "video/mp4",
-    })
-    wireIntegrationLookup({ ...FAKE_INTEGRATION_ROW, channel: "whatsapp" })
+  test("rethrows transient hydration failures before the final attempt", async () => {
+    const err = new Error("storage unavailable")
+    mocks.ensureAttachmentMirrored.mockRejectedValue(err)
 
-    const OVER_LIMIT = String(MAX_ATTACHMENT_BYTES + 1)
-    const fetchMock = vi.fn(() =>
-      Promise.resolve(makeFetchResponse({ contentLength: OVER_LIMIT })),
+    await expect(coexistAttachmentDownload(job(2, 5), data)).rejects.toBe(err)
+
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err, attachmentId: data.attachmentId }),
+      expect.stringContaining("hydration failed"),
     )
-    vi.stubGlobal("fetch", fetchMock)
-
-    await expect(coexistAttachmentDownload(WA_DATA)).resolves.toBeUndefined()
-    expect(mockPutObject).not.toHaveBeenCalled()
-
-    vi.unstubAllGlobals()
+    expect(mocks.markAttachmentUnresolvable).not.toHaveBeenCalled()
   })
 
-  it("still throws (retryable) on a transient download failure — non-size errors keep retrying", async () => {
-    wireSelectChain({
-      id: "att-001",
-      originPath: "https://example.com/media/photo.jpg",
-      mimeType: "image/jpeg",
+  test("marks a retryable failure unresolvable on the final attempt", async () => {
+    const err = new Error("Graph returned fewer attachments")
+    mocks.ensureAttachmentMirrored.mockRejectedValue(err)
+
+    await expect(coexistAttachmentDownload(job(4, 5), data)).rejects.toBe(err)
+
+    expect(mocks.markAttachmentUnresolvable).toHaveBeenCalledWith({
+      attachmentId: data.attachmentId,
+      workspaceId: data.workspaceId,
     })
-    wireIntegrationLookup()
-
-    // A 5xx is transient: the handler must rethrow so BullMQ retries it.
-    const fetchMock = vi.fn(() =>
-      Promise.resolve(makeFetchResponse({ ok: false })),
-    )
-    vi.stubGlobal("fetch", fetchMock)
-
-    await expect(coexistAttachmentDownload(BASE_DATA)).rejects.toThrow()
-    expect(mockPutObject).not.toHaveBeenCalled()
-    expect(mockLoggerError).toHaveBeenCalled()
-
-    vi.unstubAllGlobals()
   })
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // REGRESSION: happy path still works after all fixes
-  // ─────────────────────────────────────────────────────────────────────────
+  test("preserves and logs the hydration error when final marking fails", async () => {
+    const hydrationError = new Error("Graph returned fewer attachments")
+    const markingError = new Error("database unavailable")
+    mocks.ensureAttachmentMirrored.mockRejectedValue(hydrationError)
+    mocks.markAttachmentUnresolvable.mockRejectedValue(markingError)
 
-  it("happy path: Messenger attachment downloads and uploads successfully", async () => {
-    wireSelectChain({
-      id: "att-001",
-      originPath: "https://example.com/media/photo.jpg",
-      mimeType: "image/jpeg",
-    })
-    wireIntegrationLookup()
-
-    const fetchMock = vi.fn(() =>
-      Promise.resolve(
-        makeFetchResponse({
-          contentType: "image/jpeg",
-          contentLength: String(1024),
-          totalBytes: 1024,
-        }),
-      ),
+    await expect(coexistAttachmentDownload(job(4, 5), data)).rejects.toBe(
+      hydrationError,
     )
-    vi.stubGlobal("fetch", fetchMock)
 
-    await coexistAttachmentDownload(BASE_DATA)
-
-    expect(mockPutObject).toHaveBeenCalledOnce()
-    expect(mockUpdateAttachment).toHaveBeenCalled()
-
-    vi.unstubAllGlobals()
-  })
-
-  it("happy path: WhatsApp attachment downloads and uploads successfully", async () => {
-    wireSelectChain({
-      id: "att-001",
-      originPath: "wa-media:media-id-xyz",
-      mimeType: "image/jpeg",
-    })
-    wireIntegrationLookup({ ...FAKE_INTEGRATION_ROW, channel: "whatsapp" })
-
-    const fetchMock = vi.fn(() =>
-      Promise.resolve(
-        makeFetchResponse({
-          contentType: "image/jpeg",
-          contentLength: String(2048),
-          totalBytes: 2048,
-        }),
-      ),
-    )
-    vi.stubGlobal("fetch", fetchMock)
-
-    await coexistAttachmentDownload(WA_DATA)
-
-    expect(mockPutObject).toHaveBeenCalledOnce()
-    expect(mockUpdateAttachment).toHaveBeenCalled()
-
-    vi.unstubAllGlobals()
-  })
-
-  it("happy path: Instagram attachment downloads with bearer token and uploads successfully", async () => {
-    wireSelectChain({
-      id: "att-001",
-      originPath: "https://example.com/instagram/photo.jpg",
-      mimeType: "image/jpeg",
-    })
-    wireIntegrationLookup({ ...FAKE_INTEGRATION_ROW, channel: "instagram" })
-
-    const fetchMock = vi.fn(() =>
-      Promise.resolve(
-        makeFetchResponse({
-          contentType: "image/jpeg",
-          contentLength: String(1024),
-          totalBytes: 1024,
-        }),
-      ),
-    )
-    vi.stubGlobal("fetch", fetchMock)
-
-    await coexistAttachmentDownload(IG_DATA)
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://example.com/instagram/photo.jpg",
+    expect(mocks.loggerError).toHaveBeenCalledWith(
       expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: "Bearer token-abc",
-        }),
+        err: markingError,
+        attachmentId: data.attachmentId,
       }),
+      expect.stringContaining("mark unresolvable"),
     )
-    expect(mockPutObject).toHaveBeenCalledOnce()
-    expect(mockUpdateAttachment).toHaveBeenCalled()
-
-    vi.unstubAllGlobals()
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: hydrationError,
+        attachmentId: data.attachmentId,
+      }),
+      expect.stringContaining("hydration failed"),
+    )
   })
 
-  it("no-op when originPath is already a finalized S3 path", async () => {
-    wireSelectChain({
-      id: "att-001",
-      originPath: "workspace/ws-100/already-uploaded-id",
-      mimeType: "image/jpeg",
-    })
+  test("the final-attempt helper uses BullMQ attempt arithmetic", async () => {
+    await markUnresolvableOnFinalAttempt(job(1, 3), data)
+    expect(mocks.markAttachmentUnresolvable).not.toHaveBeenCalled()
 
-    await coexistAttachmentDownload(BASE_DATA)
-
-    expect(mockFindIntegrationForCoexist).not.toHaveBeenCalled()
-    expect(mockPutObject).not.toHaveBeenCalled()
+    await markUnresolvableOnFinalAttempt(job(2, 3), data)
+    expect(mocks.markAttachmentUnresolvable).toHaveBeenCalledTimes(1)
   })
 })

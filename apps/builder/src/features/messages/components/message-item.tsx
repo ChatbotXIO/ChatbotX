@@ -424,6 +424,7 @@ const RenderImageGridItem = (props: { attachment: AttachmentResource }) => {
           className="h-full w-full object-cover"
           height={120}
           src={attachmentUrl}
+          unoptimized
           width={120}
         />
       </div>
@@ -460,6 +461,7 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
                 className="object-contain"
                 fill
                 src={attachmentUrl}
+                unoptimized
               />
             </div>
           </Link>
@@ -472,6 +474,7 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
             className="max-w-full rounded-xl sm:max-w-80"
             height={attachment.height}
             src={attachmentUrl}
+            unoptimized
             width={attachment.width}
           />
         </Link>

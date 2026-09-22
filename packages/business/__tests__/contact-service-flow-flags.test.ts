@@ -37,6 +37,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   findOrFail: vi.fn(),
   inArray: vi.fn(),
   isNull: vi.fn((column: unknown) => ({ __isNull: column })),
+  or: vi.fn((...args: unknown[]) => ({ __or: args })),
   sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
     __sql: [[...strings], values],
   })),
@@ -81,13 +82,22 @@ vi.mock("../src/workspace-usage/service", () => ({ workspaceUsageService: {} }))
 vi.mock("../src/message-cleanup/service", () => ({ messageCleanupService: {} }))
 
 const { contactService } = await import("../src/contact/service")
-const { isNull: isNullMock } = await import("@chatbotx.io/database/client")
+const { isNull: isNullMock, sql: sqlMock } = await import(
+  "@chatbotx.io/database/client"
+)
 
-const buildUpdateClient = () => {
-  const where = vi.fn().mockResolvedValue(undefined)
+const buildUpdateClient = (returningRows: { id: string }[] = [{ id: "c" }]) => {
+  const returning = vi.fn().mockResolvedValue(returningRows)
+  // The where result must both be awaitable (callers that don't need the row,
+  // e.g. subscribeBroadcastIfUnsubscribed) and expose `.returning()` (the
+  // conditional avatar setters that invalidate cache on a real update). A real
+  // Promise with `.returning` attached is thenable natively (no literal `then`).
+  const where = vi.fn(() =>
+    Object.assign(Promise.resolve(undefined), { returning }),
+  )
   const set = vi.fn(() => ({ where }))
   const update = vi.fn(() => ({ set }))
-  return { set, update, where }
+  return { returning, set, update, where }
 }
 
 beforeEach(() => {
@@ -193,6 +203,80 @@ describe("contactService.setAvatarIfEmpty", () => {
     expect(client.update).toHaveBeenCalledTimes(1)
     expect(select).not.toHaveBeenCalled()
     expect(query.contactModel.findFirst).not.toHaveBeenCalled()
+  })
+})
+
+describe("contactService.setAvatarIfEmptyOrSentinel", () => {
+  test("uses a predicate that accepts null and sentinel avatars only", async () => {
+    const client = buildUpdateClient()
+    mockDbUpdate.mockImplementation(client.update)
+
+    await contactService.setAvatarIfEmptyOrSentinel({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      avatar: "public/avatars/refreshed.jpg",
+    })
+
+    expect(isNullMock).toHaveBeenCalledWith("contact.avatar")
+    expect(sqlMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "contact.avatar",
+      "public/img/no\\_avatar.jpg?time=%",
+    )
+    const [template] = vi.mocked(sqlMock).mock.calls.at(-1) ?? []
+    expect([...template]).toEqual(["", " LIKE ", " ESCAPE '\\'"])
+    expect(client.where).toHaveBeenCalledWith({
+      __and: [
+        { __eq: ["contact.id", "contact-1"] },
+        { __eq: ["contact.workspaceId", "ws-1"] },
+        {
+          __or: [
+            { __isNull: "contact.avatar" },
+            {
+              __sql: [
+                ["", " LIKE ", " ESCAPE '\\'"],
+                ["contact.avatar", "public/img/no\\_avatar.jpg?time=%"],
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  })
+
+  test("invalidates the contact cache after a matching write", async () => {
+    const client = buildUpdateClient([{ id: "contact-1" }])
+    mockDbUpdate.mockImplementation(client.update)
+    const invalidateSpy = vi
+      .spyOn(contactService, "invalidate")
+      .mockResolvedValue(undefined)
+
+    await contactService.setAvatarIfEmptyOrSentinel({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      avatar: "public/avatars/x.jpg",
+    })
+
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["contact-1"],
+    })
+  })
+
+  test("does not invalidate when no row matches the predicate", async () => {
+    const client = buildUpdateClient([])
+    mockDbUpdate.mockImplementation(client.update)
+    const invalidateSpy = vi
+      .spyOn(contactService, "invalidate")
+      .mockResolvedValue(undefined)
+
+    await contactService.setAvatarIfEmptyOrSentinel({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      avatar: "public/avatars/x.jpg",
+    })
+
+    expect(invalidateSpy).not.toHaveBeenCalled()
   })
 })
 

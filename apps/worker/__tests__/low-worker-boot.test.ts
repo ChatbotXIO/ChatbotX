@@ -8,7 +8,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 type CapturedWorker = {
   queueName: unknown
-  processor: (job: { data: unknown; id?: string }) => Promise<unknown>
+  processor: (job: {
+    attemptsMade?: number
+    data: unknown
+    id?: string
+    opts?: { attempts?: number }
+  }) => Promise<unknown>
   options: Record<string, unknown>
 }
 
@@ -112,11 +117,17 @@ describe("low worker process boot", () => {
       integrationId: "int-1",
     }
 
-    await worker?.processor({
+    const job = {
+      attemptsMade: 2,
       data: { type: "coexistAttachmentDownload", data },
-    })
+      opts: { attempts: 5 },
+    }
+    await worker?.processor(job)
 
-    expect(workerState.coexistAttachmentDownload).toHaveBeenCalledWith(data)
+    expect(workerState.coexistAttachmentDownload).toHaveBeenCalledWith(
+      job,
+      data,
+    )
     expect(workerState.updateContactAvatar).not.toHaveBeenCalled()
     expect(workerState.withBlockedOwnerGuard).toHaveBeenCalledWith(
       "ws-1",

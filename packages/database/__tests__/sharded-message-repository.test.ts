@@ -1,4 +1,4 @@
-import { startOfHour } from "date-fns"
+import { endOfHour, startOfHour } from "date-fns"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { MessageShardUnavailableError } from "../src/errors"
 import type {
@@ -391,9 +391,12 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
     ).rejects.toThrow("sinceTime is required")
   })
 
-  test("findAttachmentById falls back from write shard to read shards and returns createdAt", async () => {
+  test("findAttachmentById returns attachment and parent-message lookup fields", async () => {
     const attachment = {
       id: "att-1",
+      messageId: "msg-1",
+      messageCreatedAt: new Date("2026-01-03T00:00:00Z"),
+      sourceId: "source-attachment-1",
       originPath: "wa-media:123",
       mimeType: "image/png",
       createdAt: new Date("2026-01-03T00:00:00Z"),
@@ -418,8 +421,239 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
     })
 
     expect(result).toEqual(attachment)
+    expect(rangeClient.select).toHaveBeenCalledWith({
+      id: attachmentModel.id,
+      messageId: attachmentModel.messageId,
+      messageCreatedAt: attachmentModel.messageCreatedAt,
+      sourceId: attachmentModel.sourceId,
+      originPath: attachmentModel.originPath,
+      mimeType: attachmentModel.mimeType,
+      createdAt: attachmentModel.createdAt,
+    })
     expect(shardManager.getShardForWrite).toHaveBeenCalledWith("ws-1")
     expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(1)
+  })
+
+  test("findAttachmentById targets the shard window around the messageCreatedAt hint", async () => {
+    const messageCreatedAt = new Date("2026-01-03T12:00:00Z")
+    const attachment = {
+      id: "att-1",
+      messageId: "msg-1",
+      messageCreatedAt,
+      sourceId: "source-attachment-1",
+      originPath: "wa-media:123",
+      mimeType: "image/png",
+      createdAt: messageCreatedAt,
+    }
+    const writeClient = makeSelectClient([])
+    const windowClient = makeSelectClient([attachment])
+    const windowShard = makeShardInfo("tr:window", "window")
+    const clients = new Map([["window", windowClient]])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+      getShardsForTimeRange: vi.fn().mockResolvedValue([windowShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findAttachmentById({
+      id: "att-1",
+      workspaceId: "ws-1",
+      messageCreatedAt,
+    })
+
+    expect(result).toEqual(attachment)
+    // Probed the day-padded window around the hint (start bucketed to the hour),
+    // not the 7-day recent-history fallback.
+    expect(shardManager.getShardsForTimeRange).toHaveBeenCalledTimes(1)
+    expect(shardManager.getShardsForTimeRange).toHaveBeenCalledWith(
+      startOfHour(new Date(messageCreatedAt.getTime() - 24 * 60 * 60 * 1000)),
+      endOfHour(new Date(messageCreatedAt.getTime() + 24 * 60 * 60 * 1000)),
+    )
+    // The recent-history fallback (which unions the write shard) never ran.
+    expect(shardManager.getWriteShardInfo).not.toHaveBeenCalled()
+    expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(1)
+  })
+
+  test("findAttachmentById falls back to the recent-history scan when the hint window misses", async () => {
+    const messageCreatedAt = new Date("2026-01-03T12:00:00Z")
+    const attachment = {
+      id: "att-1",
+      messageId: "msg-1",
+      messageCreatedAt,
+      sourceId: "source-attachment-1",
+      originPath: "wa-media:123",
+      mimeType: "image/png",
+      createdAt: messageCreatedAt,
+    }
+    const writeClient = makeSelectClient([])
+    const windowClient = makeSelectClient([])
+    const fallbackClient = makeSelectClient([attachment])
+    const windowShard = makeShardInfo("tr:window", "window")
+    const fallbackShard = makeShardInfo("tr:fallback", "fallback")
+    const clients = new Map([
+      ["window", windowClient],
+      ["fallback", fallbackClient],
+      ["write", writeClient],
+    ])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+      getShardsForTimeRange: vi
+        .fn()
+        .mockResolvedValueOnce([windowShard])
+        .mockResolvedValueOnce([fallbackShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findAttachmentById({
+      id: "att-1",
+      workspaceId: "ws-1",
+      messageCreatedAt,
+    })
+
+    expect(result).toEqual(attachment)
+    // Window probe first (padded hint range), then the recent-history fallback.
+    expect(shardManager.getShardsForTimeRange).toHaveBeenCalledTimes(2)
+    expect(shardManager.getShardsForTimeRange).toHaveBeenNthCalledWith(
+      1,
+      startOfHour(new Date(messageCreatedAt.getTime() - 24 * 60 * 60 * 1000)),
+      endOfHour(new Date(messageCreatedAt.getTime() + 24 * 60 * 60 * 1000)),
+    )
+    // Second call is the recent-history range, a different window than the
+    // hint's — proving order, not just count.
+    const windowStart = startOfHour(
+      new Date(messageCreatedAt.getTime() - 24 * 60 * 60 * 1000),
+    ).getTime()
+    expect(
+      shardManager.getShardsForTimeRange.mock.calls[1][0].getTime(),
+    ).not.toBe(windowStart)
+    expect(shardManager.getWriteShardInfo).toHaveBeenCalledWith("ws-1")
+  })
+
+  test("findAttachmentById uses the fallback when the hint window resolves to no shards", async () => {
+    const messageCreatedAt = new Date("2026-01-03T12:00:00Z")
+    const attachment = {
+      id: "att-1",
+      messageId: "msg-1",
+      messageCreatedAt,
+      sourceId: "source-attachment-1",
+      originPath: "wa-media:123",
+      mimeType: "image/png",
+      createdAt: messageCreatedAt,
+    }
+    const writeClient = makeSelectClient([])
+    const fallbackClient = makeSelectClient([attachment])
+    const fallbackShard = makeShardInfo("tr:fallback", "fallback")
+    const clients = new Map([["fallback", fallbackClient]])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+      getShardsForTimeRange: vi
+        .fn()
+        .mockResolvedValueOnce([]) // hint window: no shard covers it
+        .mockResolvedValueOnce([fallbackShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findAttachmentById({
+      id: "att-1",
+      workspaceId: "ws-1",
+      messageCreatedAt,
+    })
+
+    expect(result).toEqual(attachment)
+    expect(shardManager.getShardsForTimeRange).toHaveBeenCalledTimes(2)
+  })
+
+  test("findAttachmentById queries an overlapping shard only once across window and fallback", async () => {
+    const messageCreatedAt = new Date("2026-01-03T12:00:00Z")
+    const writeClient = makeSelectClient([])
+    // Same physical shard appears in both the window and the fallback set.
+    const sharedClient = makeSelectClient([])
+    const sharedShard = makeShardInfo("tr:shared", "shared")
+    const clients = new Map([["shared", sharedClient]])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+      getShardsForTimeRange: vi
+        .fn()
+        .mockResolvedValueOnce([sharedShard])
+        .mockResolvedValueOnce([sharedShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findAttachmentById({
+      id: "missing",
+      workspaceId: "ws-1",
+      messageCreatedAt,
+    })
+
+    expect(result).toBeNull()
+    // A successful (empty) probe of "shared" in the window is not repeated by
+    // the fallback.
+    expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(1)
+  })
+
+  test("findAttachmentById retries a transiently failed shard in the fallback", async () => {
+    const messageCreatedAt = new Date("2026-01-03T12:00:00Z")
+    const attachment = {
+      id: "att-1",
+      messageId: "msg-1",
+      messageCreatedAt,
+      sourceId: "source-attachment-1",
+      originPath: "wa-media:123",
+      mimeType: "image/png",
+      createdAt: messageCreatedAt,
+    }
+    const writeClient = makeSelectClient([])
+    const flakyShard = makeShardInfo("tr:flaky", "flaky")
+    let reads = 0
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+      getShardsForTimeRange: vi
+        .fn()
+        .mockResolvedValueOnce([flakyShard])
+        .mockResolvedValueOnce([flakyShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      withShardClientForRead: vi.fn(
+        (_shard: { id: string }, fn: (value: unknown) => Promise<unknown>) => {
+          reads += 1
+          if (reads === 1) {
+            // First (window) attempt fails transiently.
+            return Promise.reject(new Error("connection reset"))
+          }
+          return fn(makeSelectClient([attachment]))
+        },
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findAttachmentById({
+      id: "att-1",
+      workspaceId: "ws-1",
+      messageCreatedAt,
+    })
+
+    // The failed shard was NOT marked probed, so the fallback retried it.
+    expect(result).toEqual(attachment)
+    expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(2)
   })
 
   test("updateAttachment fans across read shards and includes createdAt for pruning", async () => {

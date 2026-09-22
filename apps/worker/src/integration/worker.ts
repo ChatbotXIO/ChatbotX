@@ -408,7 +408,7 @@ async function startIntegrationWorker() {
                 return
               }
               case IntegrationJobAction.coexistAttachmentDownload: {
-                await coexistAttachmentDownload(job.data.data)
+                await coexistAttachmentDownload(job, job.data.data)
                 return
               }
               case IntegrationJobAction.adsAutomaticEvent: {

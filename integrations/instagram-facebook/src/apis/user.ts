@@ -1,5 +1,6 @@
 import type { Context, IncomingContact } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { fetchMediaWithLimits } from "@chatbotx.io/utils/media-download"
 import { API_URL } from "../constants"
 import { InstagramAPIException, rescue } from "../exception"
 import { instagramGraphClient } from "../lib/http-client"
@@ -88,6 +89,24 @@ export const getUserProfile = ({
   })
 }
 
+export const getContactProfilePicUrl = ({
+  ctx,
+  psid,
+}: {
+  ctx: Context<InstagramAuthValue>
+  psid: string
+}): Promise<string | null> => {
+  const endpoint = `${API_URL}/${ctx.auth.metadata.version}/${psid}`
+  return rescue(endpoint, async () => {
+    const response = await fetchProfileFields({
+      ctx,
+      psid,
+      includeProfilePic: true,
+    })
+    return response.profile_pic ?? null
+  })
+}
+
 export const getUserProfilePicture = async ({
   ctx,
   pictureUrl,
@@ -95,22 +114,20 @@ export const getUserProfilePicture = async ({
   ctx: Context<InstagramAuthValue>
   pictureUrl: string
 }): Promise<string | undefined> => {
-  const response = await fetch(pictureUrl, {
+  const media = await fetchMediaWithLimits(pictureUrl, {
     headers: {
       Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
       "User-Agent": "node",
     },
   })
-  if (response.ok && response.body) {
-    const originPath = `${ctx.storagePrefix}/avatars/${createId()}`
-    const bytes = await response.arrayBuffer()
-    const mimeType = response.headers.get("content-type") ?? "image/png"
-
-    await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
-      ACL: "public-read",
-      ContentType: mimeType,
-    })
-
-    return originPath
+  if (!media) {
+    return
   }
+  const originPath = `${ctx.storagePrefix}/avatars/${createId()}`
+  await ctx.uploader?.putObject(originPath, Buffer.from(media.bytes), {
+    ACL: "public-read",
+    ContentType: media.mimeType,
+  })
+
+  return originPath
 }

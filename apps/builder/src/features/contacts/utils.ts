@@ -1,4 +1,5 @@
 import { getPublicFileUrl } from "@chatbotx.io/utils"
+import { hasRealAvatar } from "@chatbotx.io/utils/no-avatar-sentinel"
 import { useTenantSettings } from "@/features/tenant"
 import type { ContactResource } from "./schema/resource"
 
@@ -25,7 +26,10 @@ export function useAvatarUrl(
     return
   }
 
-  return contact.avatar
+  // A no-avatar sentinel (`no_avatar.jpg?time=…`) is a "we tried and there is no
+  // avatar" marker, not a real key — finalizing it would render a broken image,
+  // so fall back to the initials avatar instead.
+  return hasRealAvatar(contact.avatar)
     ? getPublicFileUrl(contact.avatar, storageUrl)
     : undefined
 }
