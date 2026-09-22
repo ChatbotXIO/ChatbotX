@@ -34,7 +34,7 @@ export const QuickRepliesPopover = ({
   const workspaceId = useWorkspaceId()
   const normalizedContent = (inputValue ?? "").trimStart()
   const shouldShow = normalizedContent.startsWith("/")
-  const { data: savedReplies = [], isFetching } = useSavedReplies(workspaceId, {
+  const { data: savedReplies = [], isLoading } = useSavedReplies(workspaceId, {
     enabled: shouldShow,
   })
   const keyword = shouldShow
@@ -149,19 +149,19 @@ export const QuickRepliesPopover = ({
           initialFocus={false}
           side="top"
         >
-          {isFetching ? (
+          {isLoading ? (
             <div className="px-2 py-3 text-muted-foreground text-sm">
               {t("messages.loadingData")}
             </div>
           ) : null}
 
-          {!isFetching && filteredSavedReplies.length === 0 ? (
+          {!isLoading && filteredSavedReplies.length === 0 ? (
             <div className="px-2 py-3 text-muted-foreground text-sm">
               {t("messages.noDataAvailable")}
             </div>
           ) : null}
 
-          {isFetching
+          {isLoading
             ? null
             : filteredSavedReplies.map((reply, index) => (
                 <Button

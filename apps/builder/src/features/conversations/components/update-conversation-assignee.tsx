@@ -1,9 +1,10 @@
 "use client"
 
+import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { ChevronDownIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"
+import { useContactAssigneeOptionsWithStatus } from "@/features/users/provider/user-hook"
 import { authClient } from "@/lib/auth/auth-client"
 import type { ListConversationItemResource } from "../schema/resource"
 import AssignConversationDialog, {
@@ -68,7 +69,10 @@ export function UpdateConversationAssignee({
     selectedAssigneeName === null &&
     relationLabel === null &&
     !isSelfAssigned
-  const contactAssigneeOptions = useContactAssigneeOptions({
+  const {
+    options: contactAssigneeOptions,
+    isPending: isContactAssigneeOptionsPending,
+  } = useContactAssigneeOptionsWithStatus({
     autoGroup: false,
     enabled: needsOptionLookup,
   })
@@ -133,7 +137,11 @@ export function UpdateConversationAssignee({
       trigger={
         <div className="flex items-center">
           <span className="cursor-pointer text-gray-500 text-xs">
-            {agentLabel}
+            {needsOptionLookup && isContactAssigneeOptionsPending ? (
+              <Skeleton className="h-3 w-24" />
+            ) : (
+              agentLabel
+            )}
           </span>
           <ChevronDownIcon className="ms-1 inline-block size-4" />
         </div>

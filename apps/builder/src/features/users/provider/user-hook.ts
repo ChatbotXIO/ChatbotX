@@ -48,12 +48,16 @@ export const useInvalidateUsers = () => {
   )
 }
 
-export const useContactAssigneeOptions = (props?: {
+type ContactAssigneeOptionsProps = {
   autoGroup?: boolean
   includeAll?: boolean
   includeUnassigned?: boolean
   enabled?: boolean
-}): SelectOption[] => {
+}
+
+const useContactAssigneeOptionsState = (
+  props?: ContactAssigneeOptionsProps,
+) => {
   const {
     autoGroup = true,
     includeAll = false,
@@ -61,13 +65,15 @@ export const useContactAssigneeOptions = (props?: {
   } = props || {}
 
   const workspaceId = useWorkspaceId()
-  const { data: workspaceMembers = [] } = useWorkspaceMembers(workspaceId, {
-    enabled: props?.enabled,
-  })
-  const { data: inboxTeams = [] } = useInboxTeams(workspaceId, {
-    enabled: props?.enabled,
-  })
-  return useMemo(() => {
+  const { data: workspaceMembers = [], isPending: isWorkspaceMembersPending } =
+    useWorkspaceMembers(workspaceId, {
+      enabled: props?.enabled,
+    })
+  const { data: inboxTeams = [], isPending: isInboxTeamsPending } =
+    useInboxTeams(workspaceId, {
+      enabled: props?.enabled,
+    })
+  const options = useMemo(() => {
     const result: SelectOption[] = [
       {
         label: "Agents",
@@ -108,7 +114,20 @@ export const useContactAssigneeOptions = (props?: {
       .flatMap((v) => v.children ?? [])
       .filter(Boolean) as SelectOption[]
   }, [workspaceMembers, inboxTeams, autoGroup, includeAll, includeUnassigned])
+
+  return {
+    options,
+    isPending: isWorkspaceMembersPending || isInboxTeamsPending,
+  }
 }
+
+export const useContactAssigneeOptionsWithStatus = (
+  props?: ContactAssigneeOptionsProps,
+) => useContactAssigneeOptionsState(props)
+
+export const useContactAssigneeOptions = (
+  props?: ContactAssigneeOptionsProps,
+) => useContactAssigneeOptionsState(props).options
 
 export const useContactAssigneeMultiSelectOptions = (): MultiSelectGroup[] => {
   const workspaceId = useWorkspaceId()

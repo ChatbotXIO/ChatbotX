@@ -125,7 +125,6 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       method,
       path,
       ownerId: workspace.ownerId,
-      path,
     })
 
     const requestApiToken: RequestApiToken = {
