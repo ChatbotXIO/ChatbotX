@@ -1076,3 +1076,40 @@ describe("chat store inbox seed state", () => {
     })
   })
 })
+
+describe("createChatStore seed invariant check", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("warns when activeConversationId is not present in the seeded conversations list", () => {
+    createChatStore({
+      conversations: [
+        makeConversation("conv-listed", new Date("2026-01-01T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-missing",
+    })
+
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      { activeConversationId: "conv-missing" },
+      "createChatStore: activeConversationId in the seeded initial state is not present in the seeded conversations list",
+    )
+  })
+
+  test("does not warn when activeConversationId is present in the seeded conversations list", () => {
+    createChatStore({
+      conversations: [
+        makeConversation("conv-listed", new Date("2026-01-01T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-listed",
+    })
+
+    expect(loggerWarnMock).not.toHaveBeenCalled()
+  })
+
+  test("does not warn when no seed is provided", () => {
+    createChatStore()
+
+    expect(loggerWarnMock).not.toHaveBeenCalled()
+  })
+})

@@ -380,6 +380,34 @@ describe("ContactInboxPanel", () => {
     expect(sequencesMock).not.toHaveBeenCalled()
   })
 
+  test("shows a loader while the coupons request is pending, not the empty state", async () => {
+    seededContact = makeContact("contact-1", "Jane")
+    const { promise, resolve } =
+      Promise.withResolvers<
+        { id: string; topicName: string; code: string; usedAt: Date | null }[]
+      >()
+    couponsMock.mockReturnValueOnce(promise)
+
+    render()
+    act(() => {
+      latestAccordionOnValueChange?.(["coupons.title"])
+    })
+
+    await vi.waitFor(() => {
+      expect(couponsMock).toHaveBeenCalled()
+    })
+    expect(container.textContent).not.toContain("coupons.messages.empty")
+
+    await act(async () => {
+      resolve([])
+      await promise
+    })
+
+    await vi.waitFor(() => {
+      expect(container.textContent).toContain("coupons.messages.empty")
+    })
+  })
+
   test("mounts and queries the appointments section once its accordion item opens", async () => {
     seededContact = makeContact("contact-1", "Jane")
 

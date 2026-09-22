@@ -22,15 +22,15 @@ vi.mock("@/lib/orpc/orpc", () => ({
 function TagsProbe({
   workspaceId = "workspace-1",
   onData,
-  onError,
+  onState,
 }: {
   workspaceId?: string
   onData?: (data: unknown) => void
-  onError?: (isError: boolean) => void
+  onState?: (state: { isError: boolean; error: unknown }) => void
 }) {
   const tags = useTags(workspaceId)
   onData?.(tags.data)
-  onError?.(tags.isError)
+  onState?.({ isError: tags.isError, error: tags.error })
   return null
 }
 
@@ -110,9 +110,9 @@ describe("tag query hooks", () => {
     })
   })
 
-  test("surfaces a failed tag request", async () => {
-    let isError = false
+  test("surfaces isError and the rejection when the request fails", async () => {
     mockListTags.mockRejectedValue(new Error("tags failed"))
+    let state: { isError: boolean; error: unknown } | undefined
 
     act(() => {
       root.render(
@@ -120,15 +120,18 @@ describe("tag query hooks", () => {
           QueryClientProvider,
           { client: queryClient },
           createElement(TagsProbe, {
-            onError: (nextIsError) => (isError = nextIsError),
+            onState: (nextState) => {
+              state = nextState
+            },
           }),
         ),
       )
     })
 
     await vi.waitFor(() => {
-      expect(isError).toBe(true)
+      expect(state?.isError).toBe(true)
     })
+    expect(state?.error).toBeInstanceOf(Error)
   })
 
   test("keeps the invalidator stable across renders", () => {

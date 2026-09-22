@@ -337,7 +337,36 @@ const shouldAutoSelectConversation = ({
 }) =>
   !(activeConversationId || hasUrlConversationId) && conversations.length > 0
 
+/**
+ * `ChatStoreInitialState` is a `Partial` of independently-optional fields, so
+ * nothing in the type stops a producer from setting `activeConversationId` to
+ * an id absent from `conversations` — an invariant `getInboxInitialState`
+ * upholds today only by construction (`shapeInitialState` always prepends
+ * `activeConversation` into `conversations` first), not by the type system.
+ * Selectors elsewhere assume `conversations.find(c => c.id ===
+ * activeConversationId)` resolves, so a mismatch would silently produce
+ * `undefined` rather than an error — logged here so a future second seed
+ * producer that breaks the pairing is caught instead of debugged blind.
+ */
+const assertActiveConversationIsListed = (
+  initialState: ChatStoreInitialState,
+): void => {
+  const { activeConversationId, conversations } = initialState
+  if (!(activeConversationId && conversations)) {
+    return
+  }
+  const isListed = conversations.some((c) => c.id === activeConversationId)
+  if (!isListed) {
+    logger.warn(
+      { activeConversationId },
+      "createChatStore: activeConversationId in the seeded initial state is not present in the seeded conversations list",
+    )
+  }
+}
+
 export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
+  assertActiveConversationIsListed(initialState)
+
   // The conversationId of the most recently issued openConversation call — lets
   // a call that just finished waiting tell whether a newer call superseded it.
   // A closure variable rather than store state since it's only read/written

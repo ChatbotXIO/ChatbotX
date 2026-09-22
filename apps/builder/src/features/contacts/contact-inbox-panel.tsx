@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
 } from "@chatbotx.io/ui/components/ui/accordion"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { orpc } from "@/lib/orpc/query"
@@ -290,11 +291,23 @@ function ContactCouponsSection({
   contactId: string
 }) {
   const t = useTranslations()
-  const { data: coupons = [], isError } = useQuery(
+  const {
+    data: coupons = [],
+    isError,
+    isPending,
+  } = useQuery(
     orpc.couponsAPI.listContactCouponsAPI.queryOptions({
       input: { workspaceId, contactId },
     }),
   )
+
+  if (isPending) {
+    return (
+      <div className="flex justify-center px-2 py-4">
+        <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   if (isError) {
     return (
@@ -335,11 +348,23 @@ function ContactAppointmentsSection({
   contactId: string
 }) {
   const t = useTranslations()
-  const { data: appointments = [], isError } = useQuery(
+  const {
+    data: appointments = [],
+    isError,
+    isPending,
+  } = useQuery(
     orpc.appointmentsAPI.listContactAppointmentsAPI.queryOptions({
       input: { workspaceId, contactId },
     }),
   )
+
+  if (isPending) {
+    return (
+      <div className="flex justify-center px-2 py-4">
+        <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   if (isError) {
     return (

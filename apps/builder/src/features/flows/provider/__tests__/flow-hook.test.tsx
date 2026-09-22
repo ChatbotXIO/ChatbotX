@@ -23,12 +23,14 @@ function FlowsProbe({
   enabled = true,
   onError,
   onRender,
+  onState,
 }: {
   enabled?: boolean
   onError?: (isError: boolean) => void
   onRender: (data: unknown) => void
+  onState?: (state: { isError: boolean; error: unknown }) => void
 }) {
-  const { data, isError } = useFlows("workspace-1", {
+  const query = useFlows("workspace-1", {
     enabled,
     filter: {
       integrationWhatsappIds: ["whatsapp-1"],
@@ -36,8 +38,8 @@ function FlowsProbe({
     },
   })
 
-  onError?.(isError)
-  onRender(data)
+  onRender(query.data)
+  onState?.({ isError: query.isError, error: query.error })
   return null
 }
 
@@ -113,24 +115,25 @@ describe("flow query hooks", () => {
     expect(mockPrivateListFlows).not.toHaveBeenCalled()
   })
 
-  test("surfaces a failed flow request", async () => {
-    let isError = false
+  test("surfaces isError and the rejection when the request fails", async () => {
     mockPrivateListFlows.mockRejectedValue(new Error("flows failed"))
+    let state: { isError: boolean; error: unknown } | undefined
 
     act(() => {
       root.render(
         <QueryClientProvider client={queryClient}>
           <FlowsProbe
-            onError={(nextIsError) => (isError = nextIsError)}
             onRender={() => undefined}
+            onState={(nextState) => (state = nextState)}
           />
         </QueryClientProvider>,
       )
     })
 
     await vi.waitFor(() => {
-      expect(isError).toBe(true)
+      expect(state?.isError).toBe(true)
     })
+    expect(state?.error).toBeInstanceOf(Error)
   })
 
   test("invalidates the flows query key with a stable callback", async () => {

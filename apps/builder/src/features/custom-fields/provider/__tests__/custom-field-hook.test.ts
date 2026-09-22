@@ -39,8 +39,16 @@ vi.mock("next/navigation", () => ({
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
-function CustomFieldsProbe({ onData }: { onData: (data: unknown) => void }) {
-  onData(useCustomFields("workspace-1").data)
+function CustomFieldsProbe({
+  onData,
+  onState,
+}: {
+  onData: (data: unknown) => void
+  onState?: (state: { isError: boolean; error: unknown }) => void
+}) {
+  const query = useCustomFields("workspace-1")
+  onData(query.data)
+  onState?.({ isError: query.isError, error: query.error })
   return null
 }
 

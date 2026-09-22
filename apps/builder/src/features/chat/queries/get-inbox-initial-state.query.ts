@@ -19,8 +19,15 @@ import type { ListConversationItemResource } from "@/features/conversations/sche
 import { listMessages } from "@/features/messages/queries"
 import { logger } from "@/lib/log"
 
-// Balances slow-network tolerance against blocking the page render indefinitely.
-const INBOX_SEED_TIMEOUT_MS = 8000
+// Balances slow-network tolerance against blocking the page render: past this,
+// the client-side fallback (loadMoreConversations/loadInitialMessages) takes
+// over, so a long wait here only delays the first paint without buying
+// anything the client path can't recover on its own. Each seed call also
+// carries this as an AbortSignal (see `loadInitialState`), but that only
+// aborts the *wait* for it here — the in-flight queries are not cancelled,
+// since none of the procedure handlers read `signal` (this client is
+// `createRouterClient`'s in-process call, not a fetch).
+const INBOX_SEED_TIMEOUT_MS = 3000
 
 /**
  * The three states a URL `conversationId` query param can be in. Kept as a
@@ -46,16 +53,29 @@ const parseUrlConversation = (conversationId?: string): UrlConversation => {
     : { kind: "invalid" }
 }
 
-const withTimeout = <T>(
+/**
+ * Races `promise` against `signal` firing, rejecting with `message` if the
+ * signal wins. `signal` is also threaded into every seed call
+ * (`loadInitialState`) as their `AbortSignal`, but a lost race only stops
+ * this function from waiting on `promise` — it does not cancel the
+ * in-flight oRPC calls themselves, which keep running to completion
+ * unobserved (no handler in this router reads `signal`).
+ */
+const withAbortSignal = <T>(
   promise: Promise<T>,
-  ms: number,
+  signal: AbortSignal,
   message: string,
 ): Promise<T> => {
-  let timer: ReturnType<typeof setTimeout>
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(message)), ms)
+    if (signal.aborted) {
+      reject(new Error(message))
+      return
+    }
+    signal.addEventListener("abort", () => reject(new Error(message)), {
+      once: true,
+    })
   })
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
+  return Promise.race([promise, timeout])
 }
 
 const seedMessagesState = async (
@@ -162,8 +182,16 @@ const loadInitialState = async ({
   const findConversationPromise = conversationId
     ? findConversation({
         workspaceId,
-        id: conversationId,
-      })
+        perPage: INBOX_CONVERSATIONS_PER_PAGE,
+        cursor: "",
+      },
+      { signal },
+    )
+  const findConversationPromise = conversationId
+    ? client.conversationsAPI.findConversationAuthenticatedAPI(
+        { workspaceId, id: conversationId },
+        { signal },
+      )
     : null
   let activeConversationPromise: Promise<ListConversationItemResource | null>
   if (findConversationPromise) {
@@ -176,6 +204,37 @@ const loadInitialState = async ({
     activeConversationPromise = conversationsPromise.then(
       ({ data }) => data[0] ?? null,
     )
+  }
+
+  const logMessagesSeedFailure = (err: unknown) => {
+    logger.warn(
+      { err, workspaceId, conversationId },
+      "getInboxInitialState: failed to seed messages state",
+    )
+    return {}
+  }
+  const messagesPromise: Promise<ChatStoreInitialState> = (
+    conversationId
+      ? seedMessagesState(workspaceId, conversationId)
+      : activeConversationPromise.then((conversation) =>
+          conversation ? seedMessagesState(workspaceId, conversation.id) : {},
+        )
+  ).catch(logMessagesSeedFailure)
+
+  const logContactSeedFailure = (err: unknown) => {
+    logger.warn(
+      { err, workspaceId, conversationId },
+      "getInboxInitialState: failed to seed contact state",
+    )
+    return {}
+  }
+  const contactPromise: Promise<ChatStoreInitialState> = activeConversationPromise
+    .then((conversation) =>
+      conversation
+        ? seedContactState(workspaceId, conversation, contactPermissionScope)
+        : {},
+    )
+    .catch(logContactSeedFailure)
   }
   const messagesPromise = conversationId
     ? seedMessagesState(workspaceId, conversationId)
@@ -249,7 +308,8 @@ export const getInboxInitialState = async ({
     : null
 
   try {
-    return await withTimeout(
+    const signal = AbortSignal.timeout(INBOX_SEED_TIMEOUT_MS)
+    return await withAbortSignal(
       loadInitialState({
         workspaceId,
         conversationId: parsedConversationId?.success
@@ -258,7 +318,7 @@ export const getInboxInitialState = async ({
         contactPermissionScope,
         hasUrlConversationId: Boolean(conversationId),
       }),
-      INBOX_SEED_TIMEOUT_MS,
+      signal,
       "Inbox initial state seed timed out",
     )
   } catch (err) {

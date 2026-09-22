@@ -24,15 +24,18 @@ function SequencesProbe({
   enabled = true,
   onData,
   onError,
+  onState,
 }: {
   workspaceId?: string
   enabled?: boolean
   onData?: (data: unknown) => void
   onError?: (isError: boolean) => void
+  onState?: (state: { isError: boolean; error: unknown }) => void
 }) {
   const sequences = useSequences(workspaceId, { enabled })
   onData?.(sequences.data)
   onError?.(sequences.isError)
+  onState?.({ isError: sequences.isError, error: sequences.error })
   return null
 }
 
@@ -138,6 +141,24 @@ describe("sequence query hooks", () => {
     })
 
     expect(mockListSequences).not.toHaveBeenCalled()
+  })
+
+  test("surfaces isError and the rejection when the request fails", async () => {
+    mockListSequences.mockRejectedValue(new Error("sequences failed"))
+    let state: { isError: boolean; error: unknown } | undefined
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <SequencesProbe onState={(nextState) => (state = nextState)} />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(state?.isError).toBe(true)
+    })
+    expect(state?.error).toBeInstanceOf(Error)
   })
 
   test("invalidates sequence readers, and a refetch returns fresh data", async () => {
