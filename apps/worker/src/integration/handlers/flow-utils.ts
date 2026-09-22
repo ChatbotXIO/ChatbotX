@@ -66,11 +66,13 @@ export type HeavyStepProps<T> = ExecuteStepProps<T> & {
 /**
  * Step types that actually send an outgoing message via `sendFlowMessage`
  * (see the `flowStepHandlers` map in `./step.ts` — keep this set in sync with
- * every entry mapped to `sendFlowMessage` there). Used to decide which step
+ * every entry mapped to `sendFlowMessage` there, plus prompt-producing
+ * `getUserData`). Used to decide which step
  * "claims" a pending `commentAnchor` (comment-triggered private-reply flow) as
  * its first outgoing message.
  */
 export const MESSAGE_PRODUCING_STEP_TYPES = new Set<StepType>([
+  stepTypes.enum.getUserData,
   stepTypes.enum.sendText,
   stepTypes.enum.sendImage,
   stepTypes.enum.sendMultipleImages,
