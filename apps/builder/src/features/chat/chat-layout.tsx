@@ -95,7 +95,14 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     }
   }, [activeConversationAutoSelected, isMobile, setActiveConversationId])
 
-  const mobileActiveConversationId = activeConversationAutoSelected
+  // Hide the auto-selected thread only while initial mobile suppression is
+  // still pending. Once the first viewport is resolved, an existing selection
+  // must remain visible across desktop-to-mobile resizes.
+  const shouldHideInitialMobileAutoSelection =
+    isMobile &&
+    !hasAppliedInitialMobileSuppressionRef.current &&
+    activeConversationAutoSelected
+  const mobileActiveConversationId = shouldHideInitialMobileAutoSelection
     ? null
     : activeConversationId
 

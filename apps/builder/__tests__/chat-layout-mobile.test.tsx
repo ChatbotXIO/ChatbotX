@@ -175,9 +175,10 @@ describe("ChatLayout", () => {
       setViewportWidth(375)
     })
 
-    // A later resize/rotation across the breakpoint must not retroactively
-    // wipe out a conversation the user has been reading.
-    expect(storeState.setActiveConversationId).not.toHaveBeenCalled()
+    // The selected thread remains visible; preserving store state but hiding
+    // the pane would strand the user on the list after the resize.
+    expect(find("thread-pane")).not.toBeNull()
+    expect(find("list-pane")).toBeNull()
   })
 
   test("keeps a deep-linked conversation open on mobile", () => {

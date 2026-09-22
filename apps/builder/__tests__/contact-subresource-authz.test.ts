@@ -10,7 +10,6 @@ type RouteConfig = {
 }
 
 type HandlerContext = {
-  isSupportSession?: boolean
   workspaceMember: { permissions: Record<string, unknown> }
   user: { id: string }
 }
@@ -126,9 +125,7 @@ const baseInput: HandlerInput = {
 const contextFor = (
   permissions: Record<string, unknown>,
   userId = "user-1",
-  isSupportSession = false,
 ): HandlerContext => ({
-  isSupportSession,
   workspaceMember: { permissions },
   user: { id: userId },
 })
@@ -186,7 +183,11 @@ describe.each([
     expect(listServiceMock()).not.toHaveBeenCalled()
   })
 
-  test("lets a synthetic support-session super-admin reach the list service without an assignment restriction", async () => {
+  // A platform support session (invariant #19) reaches these handlers as an
+  // in-memory member carrying `superAdmin: true`; that synthesis is pinned in
+  // packages/business/__tests__/workspace-member-synthetic.test.ts, so this
+  // case only needs the permission flag.
+  test("lets a super-admin member reach the list service with no assignment restriction", async () => {
     mocks.findByIdOrFail.mockReset()
     listServiceMock().mockReset()
     mocks.findByIdOrFail.mockResolvedValueOnce({ id: "contact-1" })
@@ -194,7 +195,7 @@ describe.each([
 
     await handler()?.({
       input: baseInput,
-      context: contextFor({ superAdmin: true }, "user-1", true),
+      context: contextFor({ superAdmin: true }, "user-1"),
     })
 
     expect(mocks.findByIdOrFail).toHaveBeenCalledWith({
