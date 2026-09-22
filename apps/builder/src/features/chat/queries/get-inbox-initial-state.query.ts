@@ -153,6 +153,10 @@ const loadInitialState = async ({
   ])
 
   if (conversationsResult.status === "rejected") {
+    logger.warn(
+      { err: conversationsResult.reason, workspaceId, conversationId },
+      "getInboxInitialState: failed to load conversations",
+    )
     return null
   }
 

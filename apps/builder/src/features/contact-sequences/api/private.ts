@@ -1,6 +1,7 @@
 import { contactSequenceService } from "@chatbotx.io/business/contact-sequence"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { getAssignedContactsUserId } from "@/features/contacts/permissions"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listContactSequencesPublicResponse } from "../schema/public"
@@ -21,10 +22,16 @@ export const contactSequencesAuthenticatedAPI = {
     .input(listContactSequencesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listContactSequencesPublicResponse)
-    .handler(async ({ input }) => ({
+    .handler(async ({ input, context }) => ({
       data: await contactSequenceService.listByContactId({
         workspaceId: input.workspaceId,
         contactId: input.contactId,
+        accessScope: {
+          restrictToAssignedUserId: getAssignedContactsUserId({
+            permissions: context.workspaceMember.permissions,
+            userId: context.user.id,
+          }),
+        },
       }),
     })),
 }

@@ -1,6 +1,7 @@
 import { contactNoteService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { getAssignedContactsUserId } from "@/features/contacts/permissions"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { contactNoteResource } from "../schema/resource"
@@ -21,10 +22,16 @@ export const contactNotesAuthenticatedAPI = {
     .input(listContactNotesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.object({ data: z.array(contactNoteResource) }))
-    .handler(async ({ input }) => ({
+    .handler(async ({ input, context }) => ({
       data: await contactNoteService.listByContactId({
         workspaceId: input.workspaceId,
         contactId: input.contactId,
+        accessScope: {
+          restrictToAssignedUserId: getAssignedContactsUserId({
+            permissions: context.workspaceMember.permissions,
+            userId: context.user.id,
+          }),
+        },
       }),
     })),
 }
