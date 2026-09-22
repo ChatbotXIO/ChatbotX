@@ -3262,6 +3262,7 @@
     "deleteFeature": "حذف {feature}",
     "resetFeature": "إعادة تعيين {feature}",
     "resetConfirmation": "سيؤدي هذا إلى مسح قيم {feature} المحددة وإعادتها فارغة.\nلا يمكن التراجع عن هذا الإجراء.",
+    "resetAllConfirmation": "سيؤدي هذا إلى مسح جميع قيم {feature} لجهة الاتصال هذه وإعادتها فارغة.\nلا يمكن التراجع عن هذا الإجراء.",
     "resetSuccess": "تمت إعادة تعيين {feature} بنجاح",
     "deleteConfirmation": "هل أنت متأكد تمامًا؟\nلا يمكن التراجع عن هذا الإجراء.\nسيؤدي هذا إلى حذف {feature} نهائيًا من خوادمنا.",
     "addFeature": "إضافة {feature}",

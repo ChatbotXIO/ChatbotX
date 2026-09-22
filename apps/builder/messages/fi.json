@@ -3262,6 +3262,7 @@
     "deleteFeature": "Poista {feature}",
     "resetFeature": "Nollaa {feature}",
     "resetConfirmation": "Tämä tyhjentää valittujen {feature} arvot.\nTätä toimintoa ei voi kumota.",
+    "resetAllConfirmation": "Tämä tyhjentää tämän yhteystiedon kaikkien {feature} arvot.\nTätä toimintoa ei voi kumota.",
     "resetSuccess": "{feature} nollattu onnistuneesti",
     "deleteConfirmation": "Oletko aivan varma?\nTätä toimintoa ei voi kumota.\nTämä poistaa kohteen {feature} pysyvästi palvelimiltamme.",
     "addFeature": "Lisää {feature}",

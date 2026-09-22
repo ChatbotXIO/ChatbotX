@@ -121,6 +121,10 @@ vi.mock("@/features/contacts/edit-contact-field", () => ({
   EditContactField: () => null,
 }))
 
+vi.mock("@/features/contacts/reset-contact-custom-fields-dialog", () => ({
+  ResetContactCustomFieldsDialog: () => null,
+}))
+
 // A STABLE object/array — see the `next-intl` mock's comment above for why:
 // `ContactDetail`'s effect depends on `customFieldMap`, itself derived from
 // `customFields` via `useMemo`, so a fresh `[]` on every call loops the same
@@ -219,7 +223,13 @@ describe("ContactDetail — call control", () => {
   test("0 WhatsApp numbers: renders no call control", () => {
     chatStoreState.conversations = [{ id: "conv-1", contactInboxes: [] }]
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
     expect(
       el.querySelector(`[aria-label="whatsapp.calls.startCall"]`),
@@ -234,7 +244,13 @@ describe("ContactDetail — call control", () => {
       },
     ]
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
     const button = el.querySelector(`[aria-label="whatsapp.calls.startCall"]`)
     expect(button).not.toBeNull()
@@ -250,7 +266,13 @@ describe("ContactDetail — call control", () => {
       },
     ]
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
     act(() => {
       el.querySelector(
@@ -277,7 +299,13 @@ describe("ContactDetail — call control", () => {
       },
     ]
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
     const trigger = el.querySelector(`[aria-label="whatsapp.calls.startCall"]`)
     expect(trigger).not.toBeNull()
@@ -305,7 +333,13 @@ describe("ContactDetail — call control", () => {
       },
     ]
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
     act(() => {
       el.querySelector(
@@ -345,7 +379,13 @@ describe("ContactDetail — call control", () => {
       },
     ]
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
     act(() => {
       el.querySelector(
@@ -378,7 +418,13 @@ describe("ContactDetail — call control", () => {
       },
     ]
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
     expect(
       el.querySelector(`[aria-label="whatsapp.calls.startCall"]`),
@@ -400,7 +446,13 @@ describe("ContactDetail — call control", () => {
       },
     ]
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
     expect(
       el.querySelector(`[aria-label="whatsapp.calls.startCall"]`),
@@ -422,7 +474,13 @@ describe("ContactDetail — call control", () => {
       },
     ]
     renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
 
     expect(requestCallPermissionDialogMock).toHaveBeenCalledWith(
@@ -443,7 +501,13 @@ describe("ContactDetail — call control", () => {
       },
     ]
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
     act(() => {
       el.querySelector(
@@ -484,7 +548,13 @@ describe("ContactDetail — call control", () => {
       },
     ]
     renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
     const trigger = () =>
       container?.querySelector(`[aria-label="whatsapp.calls.startCall"]`)
@@ -502,7 +572,13 @@ describe("ContactDetail — call control", () => {
     )
 
     rerenderComponent(
-      <ContactDetail activeConversationId="conv-2" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-2"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
 
     // The stale `ci-2` selection from `conv-1` must not resolve against
@@ -529,7 +605,13 @@ describe("ContactDetail — call control", () => {
       },
     ]
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
     act(() => {
       el.querySelector(
@@ -566,7 +648,13 @@ describe("ContactDetail — call control", () => {
       },
     ]
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
     act(() => {
       el.querySelector(
@@ -601,7 +689,13 @@ describe("ContactDetail — call control", () => {
     outboundCallModeMock.isError = true
     outboundCallModeMock.error = new Error("network error")
     const el = renderComponent(
-      <ContactDetail activeConversationId="conv-1" contact={baseContact} />,
+      <ContactDetail
+        activeConversationId="conv-1"
+        contact={baseContact}
+        onCustomFieldsReset={() => {
+          // Not exercised by these call-control tests.
+        }}
+      />,
     )
 
     const button = el.querySelector(`[aria-label="whatsapp.calls.startCall"]`)

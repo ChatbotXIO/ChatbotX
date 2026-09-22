@@ -3241,6 +3241,7 @@
     "deleteFeature": "Excluir {feature}",
     "resetFeature": "Redefinir {feature}",
     "resetConfirmation": "Isso limpará os valores dos {feature} selecionados.\nEsta ação não pode ser desfeita.",
+    "resetAllConfirmation": "Isso limpará os valores de todos os {feature} deste contato.\nEsta ação não pode ser desfeita.",
     "resetSuccess": "{feature} redefinido com sucesso",
     "deleteConfirmation": "Você tem certeza absoluta?\nEsta ação não pode ser desfeita.\nIsso excluirá permanentemente {feature} dos nossos servidores.",
     "addFeature": "Adicionar {feature}",

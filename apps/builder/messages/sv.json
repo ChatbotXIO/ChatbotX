@@ -3981,6 +3981,7 @@
     "deleteFeature": "Ta bort {feature}",
     "resetFeature": "Återställ {feature}",
     "resetConfirmation": "Detta rensar värdena för de valda {feature}.\nDenna åtgärd kan inte ångras.",
+    "resetAllConfirmation": "Detta rensar värdena för alla {feature} för denna kontakt.\nDenna åtgärd kan inte ångras.",
     "resetSuccess": "{feature} återställdes",
     "deleteFileComingSoon": "Funktionen för att ta bort filer kommer snart",
     "deleteMessageSuccess": "Meddelandet har tagits bort",

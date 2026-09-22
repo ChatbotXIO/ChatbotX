@@ -3981,6 +3981,7 @@
     "deleteFeature": "删除 {feature}",
     "resetFeature": "重置{feature}",
     "resetConfirmation": "这将清空所选{feature}的值。\n此操作无法撤销。",
+    "resetAllConfirmation": "这将清空该联系人所有{feature}的值。\n此操作无法撤销。",
     "resetSuccess": "{feature}重置成功",
     "deleteFileComingSoon": "删除文件功能即将推出",
     "deleteMessageSuccess": "消息已删除",

@@ -3262,6 +3262,7 @@
     "deleteFeature": "Eliminar {feature}",
     "resetFeature": "Restablecer {feature}",
     "resetConfirmation": "Esto borrará los valores de los {feature} seleccionados dejándolos vacíos.\nEsta acción no se puede deshacer.",
+    "resetAllConfirmation": "Esto borrará los valores de todos los {feature} de este contacto dejándolos vacíos.\nEsta acción no se puede deshacer.",
     "resetSuccess": "{feature} restablecido correctamente",
     "deleteConfirmation": "Are tú absolutely sure?\nThis action cannot be undone.\nThis se permanently Eliminar tu {feature} desde our servers.",
     "addFeature": "Añadir {feature}",

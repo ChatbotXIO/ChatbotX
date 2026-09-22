@@ -208,6 +208,11 @@ export const ContactInboxPanel = ({
       <ContactDetail
         activeConversationId={activeConversationId}
         contact={contactData}
+        onCustomFieldsReset={() =>
+          setContactData((previous) =>
+            previous ? { ...previous, customFields: [] } : previous,
+          )
+        }
       />
 
       <ContactNotesManage contactNotes={contactData?.contactNotes ?? []} />

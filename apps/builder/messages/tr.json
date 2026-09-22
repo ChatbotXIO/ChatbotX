@@ -3262,6 +3262,7 @@
     "deleteFeature": "{feature} Sil",
     "resetFeature": "{feature} sıfırla",
     "resetConfirmation": "Bu, seçilen {feature} değerlerini boşaltacaktır.\nBu işlem geri alınamaz.",
+    "resetAllConfirmation": "Bu, bu kişiye ait tüm {feature} değerlerini boşaltacaktır.\nBu işlem geri alınamaz.",
     "resetSuccess": "{feature} başarıyla sıfırlandı",
     "deleteConfirmation": "Kesinlikle emin misiniz?\nBu işlem geri alınamaz.\nBu, {feature} öğenizi sunucularımızdan kalıcı olarak silecektir.",
     "addFeature": "{feature} Ekle",

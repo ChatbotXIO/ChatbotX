@@ -3262,6 +3262,7 @@
     "deleteFeature": "Slet {feature}",
     "resetFeature": "Nulstil {feature}",
     "resetConfirmation": "Dette vil rydde værdierne for de valgte {feature}, så de bliver tomme.\nDenne handling kan ikke fortrydes.",
+    "resetAllConfirmation": "Dette vil rydde værdierne for alle {feature} for denne kontakt, så de bliver tomme.\nDenne handling kan ikke fortrydes.",
     "resetSuccess": "{feature} nulstillet",
     "deleteConfirmation": "Er du absolutely sure?\nDenne action kan ikke være undone.\nDenne vil permanently slet din {feature} fra our servers.",
     "addFeature": "Tilføj {feature}",

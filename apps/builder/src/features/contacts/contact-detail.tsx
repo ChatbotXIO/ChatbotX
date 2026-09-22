@@ -57,6 +57,7 @@ import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custo
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
 import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
 import { EditContactField } from "./edit-contact-field"
+import { ResetContactCustomFieldsDialog } from "./reset-contact-custom-fields-dialog"
 import type { GetContactResponse } from "./schema/query"
 import type { ContactEditableField } from "./schema/resource"
 import { useAvatarUrl } from "./utils"
@@ -367,9 +368,17 @@ function ContactPanelCallEntry({
 export const ContactDetail = ({
   activeConversationId,
   contact,
+  onCustomFieldsReset,
 }: {
   activeConversationId: string | null
   contact: GetContactResponse | null
+  /**
+   * The owner of `contact` MUST drop the now-cleared values too: the effect
+   * below re-seeds `contactFields` from `contact.customFields` on every rebuild
+   * (the chat store updates on every inbound message), so a stale prop would
+   * bring the cleared rows straight back.
+   */
+  onCustomFieldsReset: () => void
 }) => {
   const t = useTranslations()
 
@@ -469,6 +478,15 @@ export const ContactDetail = ({
     setContactFields((previous) =>
       previous.filter((field) => field.key !== customFieldId),
     )
+  }
+
+  // Reset clears every custom-field VALUE, so the rows that only exist because
+  // the contact held a value go away — same as deleting them one by one.
+  const handleCustomFieldsReset = () => {
+    setContactFields((previous) =>
+      previous.filter((field) => !customFieldMap.has(field.key)),
+    )
+    onCustomFieldsReset()
   }
 
   const handleCustomFieldUpdated = (fieldKey: string, value: string) => {
@@ -776,11 +794,21 @@ export const ContactDetail = ({
             </div>
           )
         })}
-        <ContactCustomFieldManage
-          disabledIds={contactFields.map((field) => field.key)}
-          onChooseCustomField={handleChooseCustomField}
-          workspaceId={workspaceId}
-        />
+        <div className="flex items-center justify-between gap-6">
+          <ContactCustomFieldManage
+            disabledIds={contactFields.map((field) => field.key)}
+            onChooseCustomField={handleChooseCustomField}
+            workspaceId={workspaceId}
+          />
+          <ResetContactCustomFieldsDialog
+            contactId={contact.id}
+            disabled={
+              !contactFields.some((field) => customFieldMap.has(field.key))
+            }
+            onSuccess={handleCustomFieldsReset}
+            workspaceId={workspaceId}
+          />
+        </div>
       </div>
 
       <EditContactField
