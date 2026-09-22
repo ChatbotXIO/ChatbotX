@@ -3261,6 +3261,7 @@
     "deleteFeature": "Xóa {feature}",
     "resetFeature": "Đặt lại {feature}",
     "resetConfirmation": "Thao tác này sẽ xóa giá trị của {feature} đã chọn về rỗng.\nHành động này không thể hoàn tác.",
+    "resetAllConfirmation": "Thao tác này sẽ xóa toàn bộ giá trị {feature} của liên hệ này về rỗng.\nHành động này không thể hoàn tác.",
     "resetSuccess": "Đã đặt lại {feature} thành công",
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi.",
     "addFeature": "Thêm {feature}",

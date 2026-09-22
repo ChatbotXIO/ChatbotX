@@ -3262,6 +3262,7 @@
     "deleteFeature": "{feature} verwijderen",
     "resetFeature": "{feature} resetten",
     "resetConfirmation": "Hiermee worden de waarden van de geselecteerde {feature} leeggemaakt.\nDeze actie kan niet ongedaan worden gemaakt.",
+    "resetAllConfirmation": "Hiermee worden de waarden van alle {feature} van dit contact leeggemaakt.\nDeze actie kan niet ongedaan worden gemaakt.",
     "resetSuccess": "{feature} succesvol gereset",
     "deleteConfirmation": "Weet je het absoluut zeker?\nDeze actie kan niet ongedaan worden gemaakt.\nHiermee wordt je {feature} permanent van onze servers verwijderd.",
     "addFeature": "{feature} toevoegen",

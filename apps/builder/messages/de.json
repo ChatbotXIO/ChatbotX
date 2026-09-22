@@ -3262,6 +3262,7 @@
     "deleteFeature": "{feature} löschen",
     "resetFeature": "{feature} zurücksetzen",
     "resetConfirmation": "Dadurch werden die Werte der ausgewählten {feature} geleert.\nDiese Aktion kann nicht rückgängig gemacht werden.",
+    "resetAllConfirmation": "Dadurch werden die Werte aller {feature} dieses Kontakts geleert.\nDiese Aktion kann nicht rückgängig gemacht werden.",
     "resetSuccess": "{feature} erfolgreich zurückgesetzt",
     "deleteConfirmation": "Sind Sie sich ganz sicher?\nDiese Aktion kann nicht rückgängig gemacht werden.\nDadurch wird {feature} dauerhaft von unseren Servern gelöscht.",
     "addFeature": "{feature} hinzufügen",

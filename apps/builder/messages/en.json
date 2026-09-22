@@ -3450,6 +3450,7 @@
     "deleteFeature": "Delete {feature}",
     "resetFeature": "Reset {feature}",
     "resetConfirmation": "This will clear the values of the selected {feature} back to empty.\nThis action cannot be undone.",
+    "resetAllConfirmation": "This will clear the values of all {feature} of this contact back to empty.\nThis action cannot be undone.",
     "resetSuccess": "{feature} reset successfully",
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
     "addFeature": "Add {feature}",

@@ -3262,6 +3262,7 @@
     "deleteFeature": "Supprimer {feature}",
     "resetFeature": "Réinitialiser {feature}",
     "resetConfirmation": "Cela effacera les valeurs des {feature} sélectionnés.\nCette action est irréversible.",
+    "resetAllConfirmation": "Cela effacera les valeurs de tous les {feature} de ce contact.\nCette action est irréversible.",
     "resetSuccess": "{feature} réinitialisé avec succès",
     "deleteConfirmation": "Êtes-vous absolument sûr ?\nCette action est irréversible.\nVotre {feature} sera définitivement supprimé de nos serveurs.",
     "addFeature": "Ajouter {feature}",
