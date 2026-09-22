@@ -527,6 +527,17 @@ async function sendMessage(
     step: promptStep,
     metadata: props.metadata,
     ...(props.appointmentId ? { appointmentId: props.appointmentId } : {}),
+    // The prompt is this step's outgoing message, so it carries the run's
+    // comment anchor like any other message-producing step (see
+    // MESSAGE_PRODUCING_STEP_TYPES). Unspent + `private`: the channel sends it
+    // through the comment_id-anchored Send API, which is the only way a
+    // question-first flow reaches a brand-new commenter. Spent: the channel
+    // still needs it to recognise a comment-triggered run and fail with a
+    // readable reason outside the 24-hour window. `public`: the prompt is
+    // posted as a comment reply, where the contact's next comment resolves
+    // back to this same conversation. Spread conditionally so a run that did
+    // not start from a comment sends no `commentAnchor` key at all.
+    ...(props.commentAnchor ? { commentAnchor: props.commentAnchor } : {}),
   })
 }
 

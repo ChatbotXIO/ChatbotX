@@ -74,6 +74,20 @@ import {
 import { processMessengerTemplate } from "./send-messenger-template"
 import { processWhatsappTemplate } from "./send-whatsapp-template"
 
+/**
+ * Step payloads `sendFlowStep` knows how to hand to a channel. A step outside
+ * this set is dropped with a "Skipping non-deliverable flow step" log and no
+ * error, so an omission here fails silently.
+ *
+ * Related but NOT the same list as `STEP_PRODUCES_MESSAGE`
+ * (`integration/handlers/flow-utils.ts`), which answers "may this step claim
+ * the comment anchor". The two coincide today except for `getUserData`, which
+ * is absent here only because its prompt is synthesized as a `sendText` step
+ * before being enqueued (see `promptStep` in `integration/handlers/
+ * get-user-data.ts`). Keep them in sync by hand: a new step type that sends a
+ * payload of its own needs an entry in both, and neither list is exhaustive
+ * enough for the compiler to catch the omission here.
+ */
 const CHANNEL_DELIVERABLE_STEP_TYPES = new Set<string>([
   stepTypes.enum.sendAudio,
   stepTypes.enum.sendCard,
