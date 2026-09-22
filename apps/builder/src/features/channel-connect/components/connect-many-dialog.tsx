@@ -56,6 +56,7 @@ export function ConnectManyDialog<TItem extends ConnectPickerItem>({
     items,
     onClose,
     onFinished,
+    workspaceId,
     resolveCoexistWorkspaceId: resolveCoexistWorkspaceId ?? (() => workspaceId),
   })
 
