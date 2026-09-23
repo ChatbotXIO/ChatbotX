@@ -27,16 +27,17 @@ const REFLINK_CONTACTS_PER_PAGE = 10
 const COMMENT_AUTOMATION_PER_PAGE = 10
 
 export type AnalysisDashboardType =
-  | "dashboard"
+  | "contacts"
+  | "conversations"
   | "reflinks"
   | "magic-links"
   | "comment-automation"
-
 export type AnalysisState = {
   api: AnalyticsApi
   type: AnalysisDashboardType
   loading: boolean
   errors: Map<string, string>
+  dashboardLoadStatus: Partial<Record<DashboardLoadAction, DashboardLoadStatus>>
 
   // `linkId`/`timezone` are only guaranteed by the reflink/magic-link
   // dashboards (see `ReflinkAnalytics`/`MagicLinkAnalytics`); named here as
@@ -161,18 +162,53 @@ export type AnalysisActions = {
   setCommentAutomationErrorsKeyword: (keyword: string) => Promise<void>
 }
 
+type DashboardLoadStatus = "queued" | "loading" | "success" | "error"
+
+type AsyncAnalysisAction = {
+  [Action in keyof AnalysisActions]: AnalysisActions[Action] extends () => Promise<void>
+    ? Action
+    : never
+}[keyof AnalysisActions]
+
+const DASHBOARD_LOAD_BATCHES = {
+  contacts: [
+    ["getInboxTotalContacts", "getInboxNewContacts", "getInboxActiveContacts"],
+    ["getContactCounts", "getNewContactCounts"],
+    ["getContactsByChannel"],
+    ["getContactsBySource", "getContactsByCountry"],
+    ["getBlockedContactCounts"],
+  ],
+  conversations: [
+    ["getBotMessagesByResult", "getMessagesBySender"],
+    ["getConversationHandoffs"],
+    ["getHumanAgentStats"],
+    ["getUniqueConversationsByAdmin", "getMessagesByAdmin"],
+    ["getConversationAssignedByAdmin", "getConversationAssigned"],
+    ["getConversationFollowUps", "getConversationArchived"],
+  ],
+} as const satisfies Record<
+  "contacts" | "conversations",
+  readonly (readonly AsyncAnalysisAction[])[]
+>
+
+export type DashboardLoadAction =
+  (typeof DASHBOARD_LOAD_BATCHES)[keyof typeof DASHBOARD_LOAD_BATCHES][number][number]
+
 export type AnalysisStore = AnalysisState & AnalysisActions
 
 export const createAnalysisStore = (
   props: Partial<AnalysisState> & {
     api: AnalyticsApi
+    type: AnalysisDashboardType
     defaultSearchParams: AnalysisState["defaultSearchParams"]
   },
-) =>
-  createStore<AnalysisStore>((set, get) => ({
-    type: "dashboard",
+) => {
+  let dashboardLoadGeneration = 0
+
+  return createStore<AnalysisStore>((set, get) => ({
     loading: false,
     errors: new Map<string, string>(),
+    dashboardLoadStatus: {},
 
     // Default option is last 7 days
     from: subDays(startOfToday(), 7),
@@ -241,17 +277,12 @@ export const createAnalysisStore = (
     },
 
     handleError: (action: string, error: unknown) => {
-      const { errors } = get()
-      if (error instanceof ORPCError) {
-        set({ errors: errors.set(action, error.message) })
-      } else {
-        set({
-          errors: errors.set(
-            action,
-            "An unexpected error occurred. Please contact admin",
-          ),
-        })
-      }
+      const message =
+        error instanceof ORPCError
+          ? error.message
+          : "An unexpected error occurred. Please contact admin"
+
+      set((state) => ({ errors: new Map(state.errors).set(action, message) }))
     },
 
     loadAnalysisData: async () => {
@@ -291,59 +322,58 @@ export const createAnalysisStore = (
         return
       }
 
-      const {
-        getContactCounts,
-        getNewContactCounts,
-        getBlockedContactCounts,
-        getInboxTotalContacts,
-        getInboxNewContacts,
-        getInboxActiveContacts,
-        getInboxBlockedContacts,
-        getBotMessagesByResult,
-        getBotMessagesAIProviders,
-        getMessagesBySender,
-        getContactsByChannel,
-        getContactsByCountry,
-        getContactsBySource,
-        getConversationHandoffs,
-        getConversationFollowUps,
-        getConversationArchived,
-        getConversationAssigned,
-        getConversationAssignedByAdmin,
-        getUniqueConversationsByAdmin,
-        getMessagesByAdmin,
-        getBotMessagesWithResponse,
-        getBotMessagesNoResponse,
-        getHumanAgentStats,
-      } = get()
-      set({ loading: true, errors: new Map<string, string>() })
+      if (type !== "contacts" && type !== "conversations") {
+        return
+      }
 
-      await Promise.all([
-        getContactCounts(),
-        getNewContactCounts(),
-        getBlockedContactCounts(),
-        getInboxTotalContacts(),
-        getInboxNewContacts(),
-        getInboxActiveContacts(),
-        getInboxBlockedContacts(),
-        getBotMessagesByResult(),
-        getBotMessagesAIProviders(),
-        getMessagesBySender(),
-        getContactsByChannel(),
-        getContactsByCountry(),
-        getContactsBySource(),
-        getConversationHandoffs(),
-        getConversationFollowUps(),
-        getConversationArchived(),
-        getConversationAssigned(),
-        getConversationAssignedByAdmin(),
-        getUniqueConversationsByAdmin(),
-        getMessagesByAdmin(),
-        getBotMessagesWithResponse(),
-        getBotMessagesNoResponse(),
-        getHumanAgentStats(),
-      ])
-      set({ loading: false })
+      const generation = ++dashboardLoadGeneration
+      const batches = DASHBOARD_LOAD_BATCHES[type]
+      const dashboardLoadStatus = Object.fromEntries(
+        batches.flat().map((action) => [action, "queued"]),
+      ) as Partial<Record<DashboardLoadAction, DashboardLoadStatus>>
+      set({
+        loading: true,
+        errors: new Map<string, string>(),
+        dashboardLoadStatus,
+      })
+
+      try {
+        for (const batch of batches) {
+          if (generation !== dashboardLoadGeneration) {
+            return
+          }
+
+          set((state) => ({
+            dashboardLoadStatus: {
+              ...state.dashboardLoadStatus,
+              ...Object.fromEntries(
+                batch.map((action) => [action, "loading"] as const),
+              ),
+            },
+          }))
+
+          await Promise.all(
+            batch.map(async (action) => {
+              await get()[action]()
+
+              if (generation !== dashboardLoadGeneration) {
+                return
+              }
+
+              set((state) => ({
+                dashboardLoadStatus: {
+                  ...state.dashboardLoadStatus,
+                  [action]: state.errors.has(action) ? "error" : "success",
+                },
+              }))
+            }),
+          )
+        }
+      } finally {
+        if (generation === dashboardLoadGeneration) {
+          set({ loading: false })
+        }
+      }
     },
 
     setRange: async (props: { from: Date; to: Date }) => {
@@ -361,6 +391,7 @@ export const createAnalysisStore = (
     },
 
     getContactCounts: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -371,13 +402,22 @@ export const createAnalysisStore = (
             to: to.toISOString(),
           })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ contactCounts })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getContactCounts", error)
       }
     },
 
     getNewContactCounts: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -388,13 +428,22 @@ export const createAnalysisStore = (
             to: to.toISOString(),
           })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ newContactCounts })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getNewContactCounts", error)
       }
     },
 
     getBlockedContactCounts: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -405,8 +454,16 @@ export const createAnalysisStore = (
             to: to.toISOString(),
           })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ blockedContactCounts })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getBlockedContactCounts", error)
       }
     },
@@ -429,6 +486,7 @@ export const createAnalysisStore = (
     },
 
     getInboxTotalContacts: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -438,14 +496,23 @@ export const createAnalysisStore = (
           to: to.toISOString(),
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ inboxTotalContacts: result.data.count })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getInboxTotalContacts", error)
         set({ inboxTotalContacts: 0 })
       }
     },
 
     getInboxNewContacts: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -455,14 +522,23 @@ export const createAnalysisStore = (
           to: to.toISOString(),
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ inboxNewContacts: result.data.count })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getInboxNewContacts", error)
         set({ inboxNewContacts: 0 })
       }
     },
 
     getInboxActiveContacts: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -472,14 +548,23 @@ export const createAnalysisStore = (
           to: to.toISOString(),
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ inboxActiveContacts: result.data.count })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getInboxActiveContacts", error)
         set({ inboxActiveContacts: 0 })
       }
     },
 
     getBotMessagesByResult: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -491,8 +576,16 @@ export const createAnalysisStore = (
             granularity: "day",
           })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ botMessagesByResult })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getBotMessagesByResult", error)
       }
     },
@@ -514,7 +607,9 @@ export const createAnalysisStore = (
     },
 
     getMessagesBySender: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
+
       try {
         const result = await api.messagesBySenderAnalyticsAPI({
           ...defaultSearchParams,
@@ -522,13 +617,22 @@ export const createAnalysisStore = (
           to: to.toISOString(),
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ messagesBySender: result.data })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getMessagesBySender", error)
       }
     },
 
     getContactsByChannel: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -539,13 +643,22 @@ export const createAnalysisStore = (
           dimension: "channel",
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ contactsByChannel: result.data })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getContactsByChannel", error)
       }
     },
 
     getContactsByCountry: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -556,13 +669,22 @@ export const createAnalysisStore = (
           dimension: "country",
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ contactsByCountry: result.data })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getContactsByCountry", error)
       }
     },
 
     getContactsBySource: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -573,13 +695,22 @@ export const createAnalysisStore = (
           dimension: "source",
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ contactsBySource: result.data })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getContactsBySource", error)
       }
     },
 
     getConversationHandoffs: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -589,13 +720,22 @@ export const createAnalysisStore = (
           to: to.toISOString(),
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ conversationHandoffs: result.data })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getConversationHandoffs", error)
       }
     },
 
     getConversationFollowUps: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -605,13 +745,22 @@ export const createAnalysisStore = (
           to: to.toISOString(),
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ conversationFollowUps: result.data })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getConversationFollowUps", error)
       }
     },
 
     getConversationArchived: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -621,13 +770,22 @@ export const createAnalysisStore = (
           to: to.toISOString(),
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ conversationArchived: result.data })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getConversationArchived", error)
       }
     },
 
     getConversationAssigned: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -637,13 +795,22 @@ export const createAnalysisStore = (
           to: to.toISOString(),
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ conversationAssigned: result.data })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getConversationAssigned", error)
       }
     },
 
     getConversationAssignedByAdmin: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -653,13 +820,22 @@ export const createAnalysisStore = (
           to: to.toISOString(),
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ conversationAssignedByAdmin: result.data })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getConversationAssignedByAdmin", error)
       }
     },
 
     getUniqueConversationsByAdmin: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -669,13 +845,22 @@ export const createAnalysisStore = (
           to: to.toISOString(),
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ uniqueConversationsByAdmin: result.data })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getUniqueConversationsByAdmin", error)
       }
     },
 
     getMessagesByAdmin: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -685,8 +870,16 @@ export const createAnalysisStore = (
           to: to.toISOString(),
         })
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ messagesByAdmin: result.data })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getMessagesByAdmin", error)
       }
     },
@@ -728,6 +921,7 @@ export const createAnalysisStore = (
     },
 
     getHumanAgentStats: async () => {
+      const generation = dashboardLoadGeneration
       const { api, defaultSearchParams, from, to } = get()
 
       try {
@@ -739,8 +933,16 @@ export const createAnalysisStore = (
           },
         )
 
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         set({ humanAgentStats })
       } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
+
         get().handleError("getHumanAgentStats", error)
       }
     },
@@ -1035,3 +1237,4 @@ export const createAnalysisStore = (
       await getCommentAutomationErrors()
     },
   }))
+}

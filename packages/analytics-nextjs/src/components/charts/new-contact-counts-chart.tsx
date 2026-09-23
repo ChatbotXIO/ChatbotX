@@ -8,7 +8,9 @@ import { formatTimeRangeDate } from "../../utils/date-format"
 export function NewContactCountsChart() {
   const t = useTranslations()
   const locale = useLocale()
-  const { newContactCounts, from, to } = useAnalysisStore((state) => state)
+  const newContactCounts = useAnalysisStore((state) => state.newContactCounts)
+  const from = useAnalysisStore((state) => state.from)
+  const to = useAnalysisStore((state) => state.to)
 
   return (
     <BarChart
