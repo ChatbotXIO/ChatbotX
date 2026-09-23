@@ -10,6 +10,7 @@ import {
   jsonResult,
   type ToolCallResult,
 } from "./execute-tool"
+import { containsNonLatinScript } from "./search/normalize"
 import { distinctResourceGroups, rankTools } from "./search/rank"
 
 /**
@@ -22,14 +23,14 @@ export const META_TOOLS = [
   {
     name: "search_tools",
     description:
-      "Search the full ChatbotX tool catalog for tool definitions, not workspace records, and never execute a tool. Use one action plus one resource in Vietnamese, English, or an exact tool name. Each match includes its full inputSchema; read it, then call the exact returned name with call_tool.",
+      "Search the full ChatbotX tool catalog for tool definitions, not workspace records, and never execute a tool. The catalog is English: use one action plus one resource written in English, or an exact tool name, translating the user's intent first if needed. Each match includes its full inputSchema; read it, then call the exact returned name with call_tool.",
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
           description:
-            "Short business intent: one action plus one resource, in Vietnamese, English, or an exact tool name. Do not combine independent tasks.",
+            'Short business intent written in English: one action plus one resource (e.g. "add tag to contact"), or an exact tool name. Translate the user\'s intent into English first. Do not combine independent tasks.',
         },
         limit: {
           type: "number",
@@ -84,12 +85,25 @@ export function searchTools(query: string, limit?: number): DynamicTool[] {
 }
 
 /**
+ * Builds the resource-group suffix shared by every zero/weak-match hint, or
+ * an empty string when the catalog hasn't loaded any tags yet.
+ */
+function resourceGroupSuffix(): string {
+  const groups = distinctResourceGroups(getCachedTools())
+  return groups.length > 0 ? ` Resource groups: ${groups.join(", ")}.` : ""
+}
+
+/**
  * `search_tools` handler — validates the raw MCP `arguments` object and
  * returns each match's name/description/inputSchema as JSON text, the same
  * shape a `tools/list` entry has, so an agent can go straight from a match
- * to a `call_tool` invocation. An empty result set includes a hint listing
+ * to a `call_tool` invocation. A zero-match result includes a hint listing
  * the catalog's resource groups (OpenAPI tags) instead of nothing, so a
- * model can rephrase around a known group rather than giving up.
+ * model can rephrase around a known group rather than giving up; a
+ * non-Latin-script query (Arabic, CJK, Cyrillic, Thai, Korean, ...) gets a
+ * hint naming the real cause -- the catalog is English-only -- and asking
+ * for a translated retry, both when it scored zero and, more weakly, when
+ * it still produced matches (e.g. by mixing in an English word).
  */
 export function handleSearchTools(
   args: Record<string, unknown>,
@@ -99,6 +113,7 @@ export function handleSearchTools(
     return errorResult("search_tools requires a non-empty 'query' string.")
   }
   const limit = typeof args.limit === "number" ? args.limit : undefined
+  const isNonLatinQuery = containsNonLatinScript(query)
 
   const matches = searchTools(query, limit).map((tool) => ({
     name: tool.name,
@@ -107,13 +122,21 @@ export function handleSearchTools(
   }))
 
   if (matches.length === 0) {
-    const groups = distinctResourceGroups(getCachedTools())
+    const hint = isNonLatinQuery
+      ? `The tool catalog is English-only and "${query}" contains no English words. Translate the request into one English action plus one resource (e.g. "add tag to contact") and call search_tools again.${resourceGroupSuffix()}`
+      : `No tool matched "${query}". Rephrase in English with one action and one resource.${resourceGroupSuffix()}`
+    return jsonResult({ matches: [], hint })
+  }
+
+  // A non-Latin query that still scored > 0 (e.g. it mixed in an English
+  // word) got ranked against an English catalog rather than translated —
+  // matches may be present but weaker than a fully-English query would
+  // produce, so nudge the caller toward the higher-quality path without
+  // withholding the matches it already found.
+  if (isNonLatinQuery) {
     return jsonResult({
-      matches: [],
-      hint:
-        groups.length > 0
-          ? `No tool matched "${query}". Rephrase with one action and one resource. Resource groups: ${groups.join(", ")}.`
-          : `No tool matched "${query}". Rephrase with one action and one resource.`,
+      matches,
+      hint: `Matches were ranked from a non-English query; translating "${query}" into English (one action plus one resource) before calling search_tools again usually ranks better.`,
     })
   }
 

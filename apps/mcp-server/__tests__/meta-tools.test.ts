@@ -523,5 +523,68 @@ describe("handleSearchTools empty result", () => {
     const parsed = JSON.parse(result.content[0]?.text ?? "{}")
     expect(parsed.matches).toEqual([])
     expect(parsed.hint).toContain("Contacts")
+    expect(parsed.hint).toContain("Rephrase in English")
+  })
+
+  test("tells a non-Latin-script zero-match query to translate to English", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/contacts": {
+            get: {
+              operationId: "contacts.list",
+              summary: "List contacts",
+              tags: ["Contacts"],
+            },
+          },
+        },
+      }),
+    }) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { handleSearchTools } = await import("../src/server/meta-tools")
+
+    const result = handleSearchTools({ query: "发射火箭" })
+    const parsed = JSON.parse(result.content[0]?.text ?? "{}")
+    expect(parsed.matches).toEqual([])
+    expect(parsed.hint).toContain("English-only")
+    expect(parsed.hint).toContain("Translate the request into one English")
+    expect(parsed.hint).toContain("Contacts")
+  })
+
+  test("adds a translate-to-English nudge when a non-Latin query still matches", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      json: async () => ({
+        servers: [{ url: "https://api.example.com" }],
+        paths: {
+          "/v1/contacts/tags": {
+            post: {
+              operationId: "contacts.addTag",
+              summary: "Add tag to contact",
+              tags: ["Contacts"],
+            },
+          },
+        },
+      }),
+    }) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { handleSearchTools } = await import("../src/server/meta-tools")
+
+    // Mixes an English "tag" token into an otherwise-Chinese query, so the
+    // deterministic ranker still scores > 0 even though translation would
+    // rank higher.
+    const result = handleSearchTools({ query: "给联系人加 tag" })
+    const parsed = JSON.parse(result.content[0]?.text ?? "{}")
+    expect(parsed.matches.length).toBeGreaterThan(0)
+    expect(parsed.hint).toContain("translating")
+    expect(parsed.hint).toContain("into English")
   })
 })

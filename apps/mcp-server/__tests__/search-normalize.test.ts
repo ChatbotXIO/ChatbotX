@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 import {
+  containsNonLatinScript,
   normalizeSearchText,
   stem,
   stripLiterals,
@@ -53,5 +54,47 @@ describe("stem", () => {
 describe("tokenize", () => {
   test("deduplicates and lowercases tokens", () => {
     expect(tokenize("Tags tags TAGS")).toEqual(["tags"])
+  })
+})
+
+describe("containsNonLatinScript", () => {
+  test("returns false for plain English", () => {
+    expect(containsNonLatinScript("add tag to contact")).toBe(false)
+  })
+
+  test("returns false for Vietnamese with precomposed diacritics", () => {
+    expect(containsNonLatinScript("gắn nhãn cho khách hàng")).toBe(false)
+  })
+
+  test("returns false for Vietnamese written without diacritics", () => {
+    expect(containsNonLatinScript("Dang ky sequence cho khach")).toBe(false)
+  })
+
+  test("returns false for emoji/symbols with no letters", () => {
+    expect(containsNonLatinScript("😀🎉 #1")).toBe(false)
+  })
+
+  test("returns true for Arabic script", () => {
+    expect(containsNonLatinScript("أضف علامة إلى جهة الاتصال")).toBe(true)
+  })
+
+  test("returns true for Chinese script", () => {
+    expect(containsNonLatinScript("给联系人打标签")).toBe(true)
+  })
+
+  test("returns true for Cyrillic script", () => {
+    expect(containsNonLatinScript("добавить тег контакту")).toBe(true)
+  })
+
+  test("returns true for Thai script", () => {
+    expect(containsNonLatinScript("ติดแท็กผู้ติดต่อ")).toBe(true)
+  })
+
+  test("returns true for Korean script", () => {
+    expect(containsNonLatinScript("연락처에 태그 추가")).toBe(true)
+  })
+
+  test("returns true when a non-Latin query mixes in an English word", () => {
+    expect(containsNonLatinScript("给联系人加 tag")).toBe(true)
   })
 })
