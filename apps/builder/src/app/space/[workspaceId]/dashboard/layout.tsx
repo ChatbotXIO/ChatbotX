@@ -5,6 +5,7 @@ import { isCloud } from "@/env"
 import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
 import { listInboxes } from "@/features/inboxes/queries"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
+import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { getWorkspaceBlockStateForRender } from "@/lib/workspace-quota"
 
@@ -34,6 +35,7 @@ export default async function DashboardLayout({
   ) {
     return notFound()
   }
+  enforcePasswordCurrent(userAndWorkspace.user)
 
   const cloud = isCloud()
   const { targetWorkspace } = userAndWorkspace
