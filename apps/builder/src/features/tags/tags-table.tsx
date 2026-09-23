@@ -18,6 +18,7 @@ import { useCopyToClipboard } from "usehooks-ts"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { CreateTagDialog } from "./create-tag-dialog"
 import { DeleteTagsDialog } from "./delete-tag-dialog"
+import { useInvalidateTags } from "./provider/tag-hook"
 import type { listTags } from "./queries"
 import { getTagColumns } from "./tags-table-columns"
 import { TagsTableToolbarActions } from "./tags-table-toolbar-actions"
@@ -35,6 +36,7 @@ export function TagsTable({ promises, workspaceId, folderId }: TagsTableProps) {
     React.useState<DataTableRowAction<TagModel> | null>(null)
   const [_, copy] = useCopyToClipboard()
   const t = useTranslations()
+  const invalidateTags = useInvalidateTags()
 
   const handleCopy = (id: string) => {
     copy(id)
@@ -101,6 +103,7 @@ export function TagsTable({ promises, workspaceId, folderId }: TagsTableProps) {
             rowAction?.row.original ? [rowAction?.row.original.id] : null
           }
           onOpenChange={() => setRowAction(null)}
+          onSuccess={invalidateTags}
           open={rowAction?.variant === "move"}
           workspaceId={workspaceId}
         />

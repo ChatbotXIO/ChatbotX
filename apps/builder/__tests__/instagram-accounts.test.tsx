@@ -1,4 +1,5 @@
 import type { InstagramAccount } from "@chatbotx.io/integration-instagram"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
@@ -79,9 +80,13 @@ const account: InstagramAccount = {
 describe("InstagramAccounts", () => {
   let container: HTMLDivElement
   let root: Root
+  let queryClient: QueryClient
 
   beforeEach(() => {
     vi.clearAllMocks()
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     container = document.createElement("div")
     document.body.append(container)
@@ -97,7 +102,11 @@ describe("InstagramAccounts", () => {
 
   function renderAccount() {
     act(() => {
-      root.render(<InstagramAccounts account={account} workspaceId="ws-1" />)
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <InstagramAccounts account={account} workspaceId="ws-1" />
+        </QueryClientProvider>,
+      )
     })
   }
 
