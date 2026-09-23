@@ -301,6 +301,7 @@ export async function processAutomatedResponse(
         summary,
         defaultReplyFlowId: workspace.defaultReply,
         defaultReplyFrequency,
+        workspaceTimezone: workspace.timezone ?? undefined,
       })
     } finally {
       clearInterval(typingIntervalId)

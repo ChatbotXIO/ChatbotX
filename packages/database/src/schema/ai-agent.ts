@@ -20,6 +20,8 @@ export const aiAgentModel = pgTable("AIAgent", {
     }),
   name: text().notNull(),
   prompt: text(),
+  actionPrompt: text(),
+  actionRules: jsonb().array().notNull(),
   messages: jsonb().array().notNull().default(sql`[]`),
   isDefault: boolean().default(false).notNull(),
   isRichResponse: boolean().default(false).notNull(),

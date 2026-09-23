@@ -32,7 +32,14 @@ export function TextareaField<T extends FieldValues>(
       name={name}
       required={required}
     >
-      {(field) => <Textarea placeholder={placeholder} {...rest} {...field} />}
+      {(field) => (
+        <Textarea
+          className={className}
+          placeholder={placeholder}
+          {...rest}
+          {...field}
+        />
+      )}
     </FormFieldWrapper>
   )
 }

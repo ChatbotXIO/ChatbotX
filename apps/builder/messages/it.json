@@ -6622,6 +6622,48 @@
   "accountFields": {
     "title": "Campi del bot"
   },
+  "aiAgentActions": {
+    "title": "AI Actions",
+    "description": "Let the AI automatically take actions while talking to customers.",
+    "when": "When",
+    "whenPlaceholder": "Describe when the AI should do this...",
+    "whatShouldAIDo": "What should the AI do?",
+    "action": "Action {number}",
+    "actionType": "Action type",
+    "addRule": "Add action rule",
+    "addAction": "Add action",
+    "duplicateRule": "Duplicate rule",
+    "removeRule": "Remove rule",
+    "removeAction": "Remove action",
+    "moveUp": "Move action up",
+    "moveDown": "Move action down",
+    "flow": "Flow",
+    "admin": "Admin",
+    "tag": "Tag",
+    "customField": "Custom field",
+    "actionPrompt": {
+      "label": "Action prompt",
+      "description": "Private instructions used only when the AI evaluates action rules.",
+      "placeholder": "Add optional instructions for matching action rules...",
+      "open": "Configure action prompt",
+      "reset": "Reset"
+    },
+    "actionTypes": {
+      "sendFlow": "Invia flusso",
+      "assignConversation": "Assegna conversazione",
+      "removeAssignment": "Rimuovi assegnazione",
+      "transferToHuman": "Trasferisci a un operatore",
+      "addTag": "Aggiungi tag",
+      "removeTag": "Rimuovi tag",
+      "setCustomField": "Imposta campo personalizzato",
+      "clearCustomField": "Cancella campo personalizzato",
+      "markFollowUp": "Follow-up",
+      "removeFollowUp": "Rimuovi follow-up",
+      "transferToBot": "Trasferisci conversazione al bot",
+      "archive": "Archivia",
+      "blockContact": "Blocca contatto"
+    }
+  },
   "openLink": {
     "title": "Apri link",
     "invalidTitle": "Link non valido.",

@@ -7,6 +7,10 @@ import {
   type RelationsFieldFilter,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
+import {
+  type AIAgentActionRule,
+  aiAgentActionRulesSchema,
+} from "@chatbotx.io/database/partials"
 import { aiAgentModel } from "@chatbotx.io/database/schema"
 import type { AIAgentModel } from "@chatbotx.io/database/types"
 import {
@@ -18,9 +22,15 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { isSameJsonValue } from "../audit/diff"
 import { BaseService } from "../base.service"
-import { notFoundException } from "../errors"
+import { customFieldService } from "../custom-field/service"
+import { inboxTeamService } from "../enterprise/inbox-team/service"
+import { notFoundException, validationException } from "../errors"
+import { flowService } from "../flow/service"
+import { tagService } from "../tag/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import type { PaginatedResult } from "../types"
+import { isWorkspaceAdminMember } from "../workspace-member/predicates"
+import { workspaceMemberService } from "../workspace-member/service"
 
 const AI_AGENT_CACHE_TTL_SECONDS = 5 * 60
 const FILE_TOOL_PREFIX = "file:"
@@ -104,6 +114,18 @@ function hasOtherFieldChanges(
   ) {
     return true
   }
+  if (
+    data.actionPrompt !== undefined &&
+    data.actionPrompt !== aiAgent.actionPrompt
+  ) {
+    return true
+  }
+  if (
+    data.actionRules !== undefined &&
+    !isSameJsonValue(data.actionRules, aiAgent.actionRules)
+  ) {
+    return true
+  }
   return false
 }
 
@@ -146,6 +168,8 @@ export type CreateAIAgentRequest = {
   isDefault: boolean
   isRichResponse: boolean
   webSearchAuthorizedDomains?: WebSearchAuthorizedDomain[] | null
+  actionPrompt?: string | null
+  actionRules?: AIAgentActionRule[]
 }
 
 export type UpdateAIAgentRequest = Partial<CreateAIAgentRequest>
@@ -181,6 +205,100 @@ class AiAgentService extends BaseService {
 
   private getDefaultCacheKey(workspaceId: string): string {
     return `ai-agents:default:${workspaceId}`
+  }
+
+  /** Validate referenced targets at the write boundary, never trusting UI IDs. */
+  private async validateActionRules(
+    workspaceId: string,
+    actionRules: AIAgentActionRule[] | undefined,
+  ): Promise<AIAgentActionRule[]> {
+    const rules = aiAgentActionRulesSchema.parse(actionRules ?? [])
+    const actions = rules.flatMap((rule) => rule.actions)
+    const flowIds = actions
+      .filter((action) => action.type === "send_flow")
+      .map((action) => action.flowId)
+    const tagIds = actions
+      .filter(
+        (action): action is Extract<typeof action, { tagId: string }> =>
+          action.type === "add_tag" || action.type === "remove_tag",
+      )
+      .map((action) => action.tagId)
+    const customFieldIds = actions
+      .filter(
+        (action): action is Extract<typeof action, { customFieldId: string }> =>
+          action.type === "set_custom_field" ||
+          action.type === "clear_custom_field",
+      )
+      .map((action) => action.customFieldId)
+    const assignedIds = actions
+      .filter((action) => action.type === "assign_conversation")
+      .map((action) =>
+        "assignedId" in action ? action.assignedId : `u_${action.adminId}`,
+      )
+    const adminIds = assignedIds
+      .filter((assignedId) => assignedId.startsWith("u_"))
+      .map((assignedId) => assignedId.slice(2))
+    const inboxTeamIds = assignedIds
+      .filter((assignedId) => assignedId.startsWith("t_"))
+      .map((assignedId) => assignedId.slice(2))
+
+    const [flows, tags, fields, members, inboxTeams] = await Promise.all([
+      Promise.all(
+        [...new Set(flowIds)].map((id) =>
+          flowService.findActiveById({ id, workspaceId }),
+        ),
+      ),
+      tagService.findManyByIds({
+        workspaceId,
+        ids: [...new Set(tagIds)],
+      }),
+      customFieldService.findManyByIds({
+        workspaceId,
+        ids: [...new Set(customFieldIds)],
+      }),
+      Promise.all(
+        [...new Set(adminIds)].map((userId) =>
+          workspaceMemberService.findByWorkspaceIdAndUserId({
+            workspaceId,
+            userId,
+          }),
+        ),
+      ),
+      inboxTeamService.listExistingIds({
+        workspaceId,
+        ids: [...new Set(inboxTeamIds)],
+      }),
+    ])
+
+    if (flows.some((flow) => !flow?.currentVersionId)) {
+      throw validationException(
+        "actionRules",
+        "A selected flow must be active and published.",
+      )
+    }
+    if (tags.length !== new Set(tagIds).size) {
+      throw validationException("actionRules", "A selected tag is unavailable.")
+    }
+    if (fields.length !== new Set(customFieldIds).size) {
+      throw validationException(
+        "actionRules",
+        "A selected custom field is unavailable.",
+      )
+    }
+    if (members.some((member) => !(member && isWorkspaceAdminMember(member)))) {
+      throw validationException(
+        "actionRules",
+        "Conversation assignees must be workspace administrators.",
+      )
+    }
+    if (inboxTeams.length !== new Set(inboxTeamIds).size) {
+      throw validationException(
+        "actionRules",
+        "A selected inbox team is unavailable.",
+      )
+    }
+
+    return rules
   }
 
   async listAIAgents(
@@ -253,6 +371,10 @@ class AiAgentService extends BaseService {
     tx?: DatabaseClient,
   ): Promise<AIAgentModel> {
     const id = createId()
+    const actionRules = await this.validateActionRules(
+      workspaceId,
+      data.actionRules,
+    )
 
     const execute = async (client: DatabaseClient) => {
       if (data.isDefault) {
@@ -261,11 +383,16 @@ class AiAgentService extends BaseService {
           .set({ isDefault: false })
           .where(eq(aiAgentModel.workspaceId, workspaceId))
       }
-      const { webSearchAuthorizedDomains, ...rest } = data
+      const {
+        webSearchAuthorizedDomains,
+        actionRules: _actionRules,
+        ...rest
+      } = data
       const [inserted] = await client
         .insert(aiAgentModel)
         .values({
           ...rest,
+          actionRules,
           webSearchAuthorizedDomains: normalizeWebSearchDomains(
             webSearchAuthorizedDomains,
           ),
@@ -304,6 +431,11 @@ class AiAgentService extends BaseService {
       return aiAgent
     }
 
+    const actionRules =
+      data.actionRules === undefined
+        ? undefined
+        : await this.validateActionRules(ctx.workspaceId, data.actionRules)
+
     await db.transaction(async (tx) => {
       if (data.isDefault) {
         await tx
@@ -311,11 +443,16 @@ class AiAgentService extends BaseService {
           .set({ isDefault: false })
           .where(eq(aiAgentModel.workspaceId, ctx.workspaceId))
       }
-      const { webSearchAuthorizedDomains, ...rest } = data
+      const {
+        webSearchAuthorizedDomains,
+        actionRules: _actionRules,
+        ...rest
+      } = data
       await tx
         .update(aiAgentModel)
         .set({
           ...rest,
+          ...(actionRules !== undefined && { actionRules }),
           ...(webSearchAuthorizedDomains !== undefined && {
             webSearchAuthorizedDomains: normalizeWebSearchDomains(
               webSearchAuthorizedDomains,

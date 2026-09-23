@@ -6622,6 +6622,48 @@
   "accountFields": {
     "title": "ボットフィールド"
   },
+  "aiAgentActions": {
+    "title": "AI Actions",
+    "description": "Let the AI automatically take actions while talking to customers.",
+    "when": "When",
+    "whenPlaceholder": "Describe when the AI should do this...",
+    "whatShouldAIDo": "What should the AI do?",
+    "action": "Action {number}",
+    "actionType": "Action type",
+    "addRule": "Add action rule",
+    "addAction": "Add action",
+    "duplicateRule": "Duplicate rule",
+    "removeRule": "Remove rule",
+    "removeAction": "Remove action",
+    "moveUp": "Move action up",
+    "moveDown": "Move action down",
+    "flow": "Flow",
+    "admin": "Admin",
+    "tag": "Tag",
+    "customField": "Custom field",
+    "actionPrompt": {
+      "label": "Action prompt",
+      "description": "Private instructions used only when the AI evaluates action rules.",
+      "placeholder": "Add optional instructions for matching action rules...",
+      "open": "Configure action prompt",
+      "reset": "Reset"
+    },
+    "actionTypes": {
+      "sendFlow": "フローを送信",
+      "assignConversation": "会話を割り当て",
+      "removeAssignment": "割り当てを解除",
+      "transferToHuman": "担当者に転送",
+      "addTag": "タグを追加",
+      "removeTag": "タグを削除",
+      "setCustomField": "カスタムフィールドを設定",
+      "clearCustomField": "カスタムフィールドをクリア",
+      "markFollowUp": "フォローアップ",
+      "removeFollowUp": "フォローアップを解除",
+      "transferToBot": "会話をボットに転送",
+      "archive": "アーカイブ",
+      "blockContact": "連絡先をブロック"
+    }
+  },
   "openLink": {
     "title": "リンクを開く",
     "invalidTitle": "無効なリンクです。",

@@ -103,6 +103,7 @@ export const aiAgentsAdapter: ResourceAdapter = {
         isDefault: false,
         isRichResponse: entry.isRichResponse,
         webSearchAuthorizedDomains: entry.webSearchAuthorizedDomains ?? [],
+        actionRules: [],
       })
 
       idMap.set(entry.sourceId, id)

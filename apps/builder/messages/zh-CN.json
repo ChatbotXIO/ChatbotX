@@ -6622,6 +6622,48 @@
   "accountFields": {
     "title": "机器人字段"
   },
+  "aiAgentActions": {
+    "title": "AI Actions",
+    "description": "Let the AI automatically take actions while talking to customers.",
+    "when": "When",
+    "whenPlaceholder": "Describe when the AI should do this...",
+    "whatShouldAIDo": "What should the AI do?",
+    "action": "Action {number}",
+    "actionType": "Action type",
+    "addRule": "Add action rule",
+    "addAction": "Add action",
+    "duplicateRule": "Duplicate rule",
+    "removeRule": "Remove rule",
+    "removeAction": "Remove action",
+    "moveUp": "Move action up",
+    "moveDown": "Move action down",
+    "flow": "Flow",
+    "admin": "Admin",
+    "tag": "Tag",
+    "customField": "Custom field",
+    "actionPrompt": {
+      "label": "Action prompt",
+      "description": "Private instructions used only when the AI evaluates action rules.",
+      "placeholder": "Add optional instructions for matching action rules...",
+      "open": "Configure action prompt",
+      "reset": "Reset"
+    },
+    "actionTypes": {
+      "sendFlow": "发送流程",
+      "assignConversation": "指派对话",
+      "removeAssignment": "移除分配",
+      "transferToHuman": "转接给人工",
+      "addTag": "添加标签",
+      "removeTag": "移除标签",
+      "setCustomField": "设置自订字段",
+      "clearCustomField": "清除自订字段",
+      "markFollowUp": "跟进",
+      "removeFollowUp": "取消跟进",
+      "transferToBot": "将对话转移到机器人",
+      "archive": "封存",
+      "blockContact": "封锁联系人"
+    }
+  },
   "openLink": {
     "title": "打开链接",
     "invalidTitle": "链接无效。",

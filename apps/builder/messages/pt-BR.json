@@ -6622,6 +6622,48 @@
   "accountFields": {
     "title": "Campos do bot"
   },
+  "aiAgentActions": {
+    "title": "AI Actions",
+    "description": "Let the AI automatically take actions while talking to customers.",
+    "when": "When",
+    "whenPlaceholder": "Describe when the AI should do this...",
+    "whatShouldAIDo": "What should the AI do?",
+    "action": "Action {number}",
+    "actionType": "Action type",
+    "addRule": "Add action rule",
+    "addAction": "Add action",
+    "duplicateRule": "Duplicate rule",
+    "removeRule": "Remove rule",
+    "removeAction": "Remove action",
+    "moveUp": "Move action up",
+    "moveDown": "Move action down",
+    "flow": "Flow",
+    "admin": "Admin",
+    "tag": "Tag",
+    "customField": "Custom field",
+    "actionPrompt": {
+      "label": "Action prompt",
+      "description": "Private instructions used only when the AI evaluates action rules.",
+      "placeholder": "Add optional instructions for matching action rules...",
+      "open": "Configure action prompt",
+      "reset": "Reset"
+    },
+    "actionTypes": {
+      "sendFlow": "Enviar fluxo",
+      "assignConversation": "Atribuir conversa",
+      "removeAssignment": "Remover atribuição",
+      "transferToHuman": "Transferir para atendente",
+      "addTag": "Adicionar tag",
+      "removeTag": "Remover tag",
+      "setCustomField": "Definir campo personalizado",
+      "clearCustomField": "Limpar campo personalizado",
+      "markFollowUp": "Acompanhamento",
+      "removeFollowUp": "Remover acompanhamento",
+      "transferToBot": "Transferir conversa para o bot",
+      "archive": "Arquivar",
+      "blockContact": "Bloquear contato"
+    }
+  },
   "openLink": {
     "title": "Abrir link",
     "invalidTitle": "Link inválido.",

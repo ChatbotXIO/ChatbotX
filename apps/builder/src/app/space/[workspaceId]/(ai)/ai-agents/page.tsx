@@ -1,4 +1,12 @@
-import { workspaceService } from "@chatbotx.io/business"
+import {
+  customFieldService,
+  flowService,
+  inboxTeamService,
+  tagService,
+  workspaceMemberService,
+  workspaceService,
+} from "@chatbotx.io/business"
+import { isWorkspaceAdminMember } from "@chatbotx.io/business/workspace-member/predicates"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
@@ -29,6 +37,29 @@ export default async function AIAgentsPage(props: AIAgentsPageProps) {
     }),
     listIntegrationOpenaiCompatible({ workspaceId }),
     workspaceService.findById({ id: workspaceId }),
+    Promise.all([
+      flowService.list({ workspaceId, page: 1, perPage: 100 }),
+      tagService.list({ workspaceId, page: 1, perPage: 100 }),
+      customFieldService.list({ workspaceId, page: 1, perPage: 100 }),
+      workspaceMemberService.listByWorkspaceId({ workspaceId }),
+      inboxTeamService.listByWorkspace({ workspaceId }),
+    ]).then(([flows, tags, customFields, members, inboxTeams]) => ({
+      flows: flows.data.map((flow) => ({ label: flow.name, value: flow.id })),
+      tags: tags.data.map((tag) => ({ label: tag.name, value: tag.id })),
+      customFields: customFields.data.map((field) => ({
+        label: field.name,
+        type: field.type,
+        value: field.id,
+      })),
+      admins: members.filter(isWorkspaceAdminMember).map((member) => ({
+        label: member.user.name ?? member.user.email,
+        value: member.userId,
+      })),
+      inboxTeams: inboxTeams.map((team) => ({
+        label: team.name,
+        value: team.id,
+      })),
+    })),
   ])
 
   return (

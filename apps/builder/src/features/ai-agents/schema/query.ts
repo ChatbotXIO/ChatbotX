@@ -1,5 +1,5 @@
 import z from "zod"
-import { aiAgentResourceSchema } from "./resource"
+import { aiAgentResourceSchema, publicAIAgentResourceSchema } from "./resource"
 
 export const listAIAgentsRequest = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -16,6 +16,11 @@ export type ListAIAgentsRequest = z.infer<typeof listAIAgentsRequest> & {
 
 export const listAIAgentsResponse = z.object({
   data: z.array(aiAgentResourceSchema),
+  pageCount: z.number().int(),
+})
+
+export const publicListAIAgentsResponse = z.object({
+  data: z.array(publicAIAgentResourceSchema),
   pageCount: z.number().int(),
 })
 

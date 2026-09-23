@@ -6622,6 +6622,48 @@
   "accountFields": {
     "title": "Bottikentät"
   },
+  "aiAgentActions": {
+    "title": "AI Actions",
+    "description": "Let the AI automatically take actions while talking to customers.",
+    "when": "When",
+    "whenPlaceholder": "Describe when the AI should do this...",
+    "whatShouldAIDo": "What should the AI do?",
+    "action": "Action {number}",
+    "actionType": "Action type",
+    "addRule": "Add action rule",
+    "addAction": "Add action",
+    "duplicateRule": "Duplicate rule",
+    "removeRule": "Remove rule",
+    "removeAction": "Remove action",
+    "moveUp": "Move action up",
+    "moveDown": "Move action down",
+    "flow": "Flow",
+    "admin": "Admin",
+    "tag": "Tag",
+    "customField": "Custom field",
+    "actionPrompt": {
+      "label": "Action prompt",
+      "description": "Private instructions used only when the AI evaluates action rules.",
+      "placeholder": "Add optional instructions for matching action rules...",
+      "open": "Configure action prompt",
+      "reset": "Reset"
+    },
+    "actionTypes": {
+      "sendFlow": "Lähetä flow",
+      "assignConversation": "Määritä keskustelu",
+      "removeAssignment": "Poista määritys",
+      "transferToHuman": "Siirrä henkilölle",
+      "addTag": "Lisää tunniste",
+      "removeTag": "Poista tunniste",
+      "setCustomField": "Aseta mukautettu kenttä",
+      "clearCustomField": "Tyhjennä mukautettu kenttä",
+      "markFollowUp": "Seuranta",
+      "removeFollowUp": "Poista seuranta",
+      "transferToBot": "Siirrä keskustelu botille",
+      "archive": "Arkistoi",
+      "blockContact": "Estä yhteystieto"
+    }
+  },
   "openLink": {
     "title": "Avaa linkki",
     "invalidTitle": "Virheellinen linkki.",
