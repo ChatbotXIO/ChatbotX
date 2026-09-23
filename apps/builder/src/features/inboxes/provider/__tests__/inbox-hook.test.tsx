@@ -2,7 +2,7 @@
 
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { act } from "react"
+import { act, useEffect, useRef, useState } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { makeQueryClient } from "../../../../../__tests__/query-test-utils"
@@ -10,6 +10,7 @@ import {
   allInboxConfigs,
   useConfiguredInboxTypeOptions,
   useInboxes,
+  useInboxList,
   useInboxOptionsByChannel,
   useInboxOptionsForChannels,
   useInvalidateInboxes,
@@ -495,5 +496,125 @@ describe("derived inbox option hooks", () => {
     await vi.waitFor(() => {
       expect(data).toEqual({ "smtp-integration-1": "support@example.com" })
     })
+  })
+})
+
+// Past this many renders it is a loop, not a few extra renders. The probe
+// polices its own ceiling instead of waiting for React's "Maximum update depth
+// exceeded": under this harness a passive-effect loop does not throw, it keeps
+// allocating until the worker runs out of heap.
+const RENDER_LIMIT = 20
+
+// Same shape as `NodeEditorMenu` in `flows/react-flow/nodes/editor.tsx`: an
+// effect keyed on `useInboxList()` that unconditionally sets derived state.
+function InboxListEffectProbe({
+  onRenderLimitExceeded,
+}: {
+  onRenderLimitExceeded: () => void
+}) {
+  const inboxes = useInboxList()
+  const renderCount = useRef(0)
+  const [, setMenus] = useState<unknown[]>([])
+  renderCount.current += 1
+
+  useEffect(() => {
+    if (renderCount.current > RENDER_LIMIT) {
+      onRenderLimitExceeded()
+      return
+    }
+    setMenus(inboxes.map((inbox) => inbox))
+  }, [inboxes, onRenderLimitExceeded])
+
+  return null
+}
+
+describe("useInboxList", () => {
+  let container: HTMLDivElement
+  let root: Root
+  let queryClient: QueryClient
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    container = document.createElement("div")
+    document.body.append(container)
+    root = createRoot(container)
+    queryClient = makeQueryClient()
+  })
+
+  afterEach(() => {
+    act(() => {
+      root.unmount()
+    })
+    container.remove()
+    queryClient.clear()
+  })
+
+  const neverSettles = () =>
+    new Promise(() => {
+      // Keeps the query pending for the whole test.
+    })
+
+  test("returns the same empty array across renders while the request is pending", () => {
+    mockListInboxes.mockReturnValue(neverSettles())
+    const seen: unknown[] = []
+    const Probe = () => {
+      seen.push(useInboxList())
+      return null
+    }
+    const renderTree = () => {
+      act(() => {
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <Probe />
+          </QueryClientProvider>,
+        )
+      })
+    }
+
+    renderTree()
+    renderTree()
+    renderTree()
+
+    expect(seen.length).toBeGreaterThanOrEqual(3)
+    expect(seen.every((inboxes) => inboxes === seen[0])).toBe(true)
+  })
+
+  test("a consumer effect keyed on the list settles while the request is pending", () => {
+    mockListInboxes.mockReturnValue(neverSettles())
+    const onRenderLimitExceeded = vi.fn()
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <InboxListEffectProbe onRenderLimitExceeded={onRenderLimitExceeded} />
+        </QueryClientProvider>,
+      )
+    })
+
+    expect(onRenderLimitExceeded).not.toHaveBeenCalled()
+  })
+
+  test("a consumer effect keyed on the list settles after the request fails", async () => {
+    mockListInboxes.mockRejectedValue(new Error("inboxes unavailable"))
+    const onRenderLimitExceeded = vi.fn()
+    let failed = false
+    const FailureProbe = () => {
+      failed = useInboxes("workspace-1").isError
+      return null
+    }
+
+    act(() => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <FailureProbe />
+          <InboxListEffectProbe onRenderLimitExceeded={onRenderLimitExceeded} />
+        </QueryClientProvider>,
+      )
+    })
+
+    await vi.waitFor(() => {
+      expect(failed).toBe(true)
+    })
+    expect(onRenderLimitExceeded).not.toHaveBeenCalled()
   })
 })
