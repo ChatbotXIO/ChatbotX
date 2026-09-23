@@ -31,7 +31,10 @@ import { CouponTopicStoreProvider } from "@/features/coupons/provider/coupon-top
 import { getTenantSettings } from "@/features/tenant/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
-import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
+import {
+  getCurrentUserAndAllLinkedWorkspaces,
+  getCurrentUserAndTargetWorkspace,
+} from "@/lib/auth/utils"
 import { buildWorkspaceQuotaMetrics } from "@/lib/quota-metrics"
 import { enforceWorkspaceNotScheduledForDeletionFromRequest } from "@/lib/workspace/require-not-scheduled-for-deletion"
 import { resolveWorkspaceRealtimeGates } from "@/lib/workspace/resolve-workspace-realtime-gates"
@@ -49,6 +52,12 @@ export default async function WorkspaceLayout({
     return notFound()
   }
 
+  const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
+  if (!userAndWorkspaces) {
+    return notFound()
+  }
+  enforcePasswordCurrent(userAndWorkspaces.user)
+
   const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
   if (!userAndWorkspace) {
     return notFound()
@@ -61,7 +70,6 @@ export default async function WorkspaceLayout({
     isSupportSession,
     allWorkspaces: memberWorkspaces,
   } = userAndWorkspace
-  enforcePasswordCurrent(user)
 
   // Plan + usage limits only apply to the hosted cloud edition. Self-hosted
   // community/enterprise installs use every feature freely — no quota gating.
