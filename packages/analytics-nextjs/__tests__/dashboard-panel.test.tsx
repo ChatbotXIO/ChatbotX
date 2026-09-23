@@ -7,6 +7,7 @@ import { DashboardPanel } from "../src/components/dashboard-panel"
 import {
   type AnalysisStore,
   createAnalysisStore,
+  type DashboardLoadStatus,
 } from "../src/provider/analysis-store"
 import { AnalysisStoreContext } from "../src/provider/analysis-store-context"
 import type { AnalyticsApi } from "../src/provider/analytics-api-context"
@@ -21,7 +22,7 @@ const messages = {
 
 const renderPanel = (
   store: StoreApi<AnalysisStore>,
-  status: "queued" | "loading" | "success" | "error" | undefined,
+  status: DashboardLoadStatus | undefined,
   className?: string,
 ) => {
   store.setState({
@@ -56,7 +57,7 @@ afterEach(() => {
 })
 
 describe("DashboardPanel", () => {
-  test("reveals a successful chart while global loading remains true", () => {
+  test("reveals successful and refreshing charts while global loading remains true", () => {
     const store = createAnalysisStore({
       api: {} as AnalyticsApi,
       type: "contacts",
@@ -70,6 +71,10 @@ describe("DashboardPanel", () => {
     renderPanel(store, "success")
     expect(container.querySelector("[data-testid='chart']")).not.toBeNull()
     expect(store.getState().loading).toBe(true)
+
+    renderPanel(store, "refreshing")
+    expect(container.querySelector("[data-testid='chart']")).not.toBeNull()
+    expect(container.querySelector("[aria-busy='true']")).toBeNull()
   })
 
   test("hides failed content and returns to a skeleton for the next load", () => {
@@ -88,7 +93,7 @@ describe("DashboardPanel", () => {
     expect(container.querySelector("[data-testid='chart']")).toBeNull()
   })
 
-  test("preserves grid span while pending and adds no wrapper after success", () => {
+  test("preserves the panel wrapper and grid span in every state", () => {
     const store = createAnalysisStore({
       api: {} as AnalyticsApi,
       type: "conversations",
@@ -99,8 +104,7 @@ describe("DashboardPanel", () => {
     expect(container.firstElementChild?.classList).toContain("md:col-span-2")
 
     renderPanel(store, "success", "w-full md:col-span-2")
-    expect(container.firstElementChild?.getAttribute("data-testid")).toBe(
-      "chart",
-    )
+    expect(container.firstElementChild?.classList).toContain("md:col-span-2")
+    expect(container.querySelector("[data-testid='chart']")).not.toBeNull()
   })
 })

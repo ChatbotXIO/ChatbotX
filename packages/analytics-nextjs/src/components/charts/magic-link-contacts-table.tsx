@@ -39,13 +39,15 @@ function getInitial(contact: FlowNodeContactData): string {
 export function MagicLinkContactsTable() {
   const t = useTranslations()
   const locale = useLocale()
-  const {
-    magicLinkContacts: contacts,
-    magicLinkContactsPage: page,
-    magicLinkContactsPageCount: pageCount,
-    setMagicLinkContactsPage,
-    loading,
-  } = useAnalysisStore((state) => state)
+  const contacts = useAnalysisStore((state) => state.magicLinkContacts)
+  const page = useAnalysisStore((state) => state.magicLinkContactsPage)
+  const pageCount = useAnalysisStore(
+    (state) => state.magicLinkContactsPageCount,
+  )
+  const setMagicLinkContactsPage = useAnalysisStore(
+    (state) => state.setMagicLinkContactsPage,
+  )
+  const loading = useAnalysisStore((state) => state.loading)
 
   return (
     <div className="flex flex-col gap-2">

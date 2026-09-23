@@ -1,13 +1,15 @@
 "use client"
 
+import type { DashboardLoadStatus } from "@chatbotx.io/analytics-nextjs/provider/analysis-store"
 import { useAnalysisStore } from "@chatbotx.io/analytics-nextjs/provider/analysis-store-context"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { useTranslations } from "next-intl"
 
-type DashboardKpiStatus = "queued" | "loading" | "success" | "error" | undefined
+const isPending = (status: DashboardLoadStatus | undefined) =>
+  status !== "success" && status !== "refreshing" && status !== "error"
 
 const getKpiValue = (
-  status: DashboardKpiStatus,
+  status: DashboardLoadStatus | undefined,
   value: number,
   errorMessage: string,
 ) => {
@@ -15,11 +17,11 @@ const getKpiValue = (
     return errorMessage
   }
 
-  if (status !== "success") {
-    return "..."
+  if (status === "success" || status === "refreshing") {
+    return value.toLocaleString()
   }
 
-  return value.toLocaleString()
+  return "..."
 }
 
 export default function InboxStatsList() {
@@ -37,56 +39,41 @@ export default function InboxStatsList() {
   const newContacts = useAnalysisStore((s) => s.inboxNewContacts)
   const activeContacts = useAnalysisStore((s) => s.inboxActiveContacts)
 
-  const totalContactsPending =
-    totalContactsStatus !== "success" && totalContactsStatus !== "error"
-  const newContactsPending =
-    newContactsStatus !== "success" && newContactsStatus !== "error"
-  const activeContactsPending =
-    activeContactsStatus !== "success" && activeContactsStatus !== "error"
   const errorMessage = t("states.error")
+  const cards = [
+    {
+      labelKey: "analytics.contacts" as const,
+      status: totalContactsStatus,
+      value: totalContacts,
+    },
+    {
+      labelKey: "analytics.newContacts" as const,
+      status: newContactsStatus,
+      value: newContacts,
+    },
+    {
+      labelKey: "analytics.activeContacts" as const,
+      status: activeContactsStatus,
+      value: activeContacts,
+    },
+  ]
 
   return (
     <div className="flex flex-wrap gap-4">
-      <Card aria-busy={totalContactsPending} className="flex-1 py-4">
-        <CardContent className="flex flex-col items-center justify-center gap-2 px-4">
-          <h3 className="text-sm">{t("analytics.contacts")}</h3>
-          <p aria-busy={totalContactsPending} className="font-bold text-sm">
-            {getKpiValue(totalContactsStatus, totalContacts, errorMessage)}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card aria-busy={newContactsPending} className="flex-1 py-4">
-        <CardContent className="flex flex-col items-center justify-center gap-2 px-4">
-          <h3 className="text-sm">{t("analytics.newContacts")}</h3>
-          <p aria-busy={newContactsPending} className="font-bold text-sm">
-            {getKpiValue(newContactsStatus, newContacts, errorMessage)}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card aria-busy={activeContactsPending} className="flex-1 py-4">
-        <CardContent className="flex flex-col items-center justify-center gap-2 px-4">
-          <h3 className="text-sm">{t("analytics.activeContacts")}</h3>
-          <p aria-busy={activeContactsPending} className="font-bold text-sm">
-            {getKpiValue(activeContactsStatus, activeContacts, errorMessage)}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* <Card className="flex-1 py-4">
-        <CardContent className="flex flex-col items-center justify-center gap-2 px-4">
-          <h3 className="text-sm">{t("analytics.responseTime")}</h3>
-          <p className="font-bold text-sm">{t("analytics.comingSoon")}</p>
-        </CardContent>
-      </Card>
-
-      <Card className="flex-1 py-4">
-        <CardContent className="flex flex-col items-center justify-center gap-2 px-4">
-          <h3 className="text-sm">{t("analytics.firstResponseTime")}</h3>
-          <p className="font-bold text-sm">{t("analytics.comingSoon")}</p>
-        </CardContent>
-      </Card> */}
+      {cards.map(({ labelKey, status, value }) => (
+        <Card
+          aria-busy={isPending(status)}
+          className="flex-1 py-4"
+          key={labelKey}
+        >
+          <CardContent className="flex flex-col items-center justify-center gap-2 px-4">
+            <h3 className="text-sm">{t(labelKey)}</h3>
+            <p className="font-bold text-sm">
+              {getKpiValue(status, value, errorMessage)}
+            </p>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   )
 }
