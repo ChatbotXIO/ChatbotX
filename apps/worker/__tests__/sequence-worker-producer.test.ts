@@ -24,8 +24,7 @@ const {
   const producerCloseSpy = vi.fn()
   const createProducerSpy = vi
     .fn()
-    .mockResolvedValue({ send: producerSendSpy, close: producerCloseSpy })
-
+    .mockReturnValue({ send: producerSendSpy, close: producerCloseSpy })
   return {
     getDueSpy: vi.fn(),
     getScheduleKeySpy: vi.fn((b: number) => `schedule:${b}`),
@@ -181,7 +180,6 @@ describe("start()", () => {
     expect(useExistingSpy).toHaveBeenCalledOnce()
     expect(createProducerSpy).toHaveBeenCalledWith({
       topic: "sequence-scheduler",
-      clientId: "sequence-scheduler",
     })
 
     await w.stop()
@@ -474,6 +472,34 @@ describe("processBucket()", () => {
       expect.any(String),
     )
   })
+
+  test("logs only dispatches whose reinsertion fails and does not throw", async () => {
+    getDueSpy
+      .mockResolvedValueOnce(["sched-1"])
+      .mockResolvedValueOnce(["retry-1"])
+    mockLockAcquired()
+    findManySpy.mockResolvedValue([
+      { id: "sched-1", workspaceId: "ws-1" },
+      { id: "retry-1", workspaceId: "ws-1" },
+    ])
+    producerSendSpy.mockRejectedValueOnce(new Error("broker unavailable"))
+    const reinsertionError = new Error("schedule unavailable")
+    batchAddToScheduleSpy.mockRejectedValueOnce(reinsertionError)
+
+    const worker = makeReadyWorker()
+
+    await expect(worker.processBucket(0)).resolves.toBeUndefined()
+
+    expect(addToRetrySpy).toHaveBeenCalledWith(0, "retry-1", expect.any(Number))
+    expect(loggerErrorSpy).toHaveBeenLastCalledWith(
+      {
+        err: reinsertionError,
+        bucket: 0,
+        dispatchIds: ["sched-1"],
+      },
+      expect.stringContaining("Failed to re-insert"),
+    )
+  })
 })
 
 // =============================================================================
@@ -485,10 +511,7 @@ describe("publishDispatches()", () => {
     findManySpy.mockResolvedValue([])
     const w = makeReadyWorker()
 
-    await w.publishDispatches([
-      { dispatchId: "d1", bucket: 0 },
-      { dispatchId: "d2", bucket: 1 },
-    ])
+    await w.publishDispatches(0, [{ dispatchId: "d1" }, { dispatchId: "d2" }])
 
     expect(findManySpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -505,7 +528,7 @@ describe("publishDispatches()", () => {
     const w = makeReadyWorker()
 
     const before = Date.now()
-    await w.publishDispatches([{ dispatchId: "d1", bucket: 5 }])
+    await w.publishDispatches(5, [{ dispatchId: "d1" }])
     const after = Date.now()
 
     const [msg] = producerSendSpy.mock.calls[0][0] as {
@@ -525,7 +548,7 @@ describe("publishDispatches()", () => {
     findManySpy.mockResolvedValue([{ id: "d1", workspaceId: "ws-1" }])
     const w = makeReadyWorker()
 
-    await w.publishDispatches([{ dispatchId: "d1", bucket: 0 }])
+    await w.publishDispatches(0, [{ dispatchId: "d1" }])
 
     const [msg] = producerSendSpy.mock.calls[0][0] as { key: string }[]
     expect(msg.key).toBe("d1")
@@ -535,9 +558,9 @@ describe("publishDispatches()", () => {
     findManySpy.mockResolvedValue([{ id: "d1", workspaceId: "ws-1" }])
     const w = makeReadyWorker()
 
-    await w.publishDispatches([
-      { dispatchId: "d1", bucket: 0 },
-      { dispatchId: "ghost", bucket: 0 },
+    await w.publishDispatches(0, [
+      { dispatchId: "d1" },
+      { dispatchId: "ghost" },
     ])
 
     const sent = producerSendSpy.mock.calls[0][0] as { key: string }[]
@@ -549,7 +572,7 @@ describe("publishDispatches()", () => {
     findManySpy.mockResolvedValue([]) // nothing pending
     const w = makeReadyWorker()
 
-    await w.publishDispatches([{ dispatchId: "d1", bucket: 0 }])
+    await w.publishDispatches(0, [{ dispatchId: "d1" }])
 
     expect(producerSendSpy).not.toHaveBeenCalled()
   })
@@ -562,34 +585,32 @@ describe("publishDispatches()", () => {
     ])
     const w = makeReadyWorker()
 
-    await w.publishDispatches([
-      { dispatchId: "d1", bucket: 0 },
-      { dispatchId: "d2", bucket: 0 },
-      { dispatchId: "d3", bucket: 0 },
+    await w.publishDispatches(0, [
+      { dispatchId: "d1" },
+      { dispatchId: "d2" },
+      { dispatchId: "d3" },
     ])
 
     expect(producerSendSpy).toHaveBeenCalledOnce()
     expect((producerSendSpy.mock.calls[0][0] as unknown[]).length).toBe(3)
   })
 
-  test("preserves per-dispatch bucket in message payload", async () => {
+  test("uses the process bucket in every message payload", async () => {
     findManySpy.mockResolvedValue([
       { id: "d1", workspaceId: "ws-1" },
       { id: "d2", workspaceId: "ws-2" },
     ])
     const w = makeReadyWorker()
 
-    await w.publishDispatches([
-      { dispatchId: "d1", bucket: 10 },
-      { dispatchId: "d2", bucket: 20 },
-    ])
+    await w.publishDispatches(10, [{ dispatchId: "d1" }, { dispatchId: "d2" }])
 
     const sent = producerSendSpy.mock.calls[0][0] as {
       key: string
       value: string
     }[]
-    const buckets = sent.map((m) => JSON.parse(m.value).bucket)
-    expect(buckets).toEqual(expect.arrayContaining([10, 20]))
+    expect(sent.map((message) => JSON.parse(message.value).bucket)).toEqual([
+      10, 10,
+    ])
   })
 })
 

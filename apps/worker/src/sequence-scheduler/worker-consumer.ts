@@ -64,10 +64,8 @@ class DispatchConsumer {
     const redisClient = await sequenceConnections.useExisting()
     this._scheduler = new SchedulerClient(redisClient)
 
-    this.consumer = await createConsumer({
+    this.consumer = createConsumer({
       topic: SEQUENCE_SCHEDULER_QUEUE_NAME,
-      clientId: "sequence-dispatch-consumer",
-      groupId: "sequence-dispatch-consumer",
     })
 
     this.running = true
