@@ -15,10 +15,10 @@
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/partysocket-config": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
-    "jose": "^6.2.3",
-    "ky": "^2.0.2",
+    "jose": "^6.2.12",
+    "ky": "^2.1.0",
     "partykit": "0.0.115",
-    "zod": "^4.3.6"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",

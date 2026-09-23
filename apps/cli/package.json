@@ -36,8 +36,8 @@
   ],
   "dependencies": {
     "@t3-oss/env-core": "^0.13.11",
-    "yargs": "^18.0.0",
-    "zod": "^4.3.6"
+    "yargs": "^18.1.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "~24.12.2",

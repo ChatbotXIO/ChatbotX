@@ -16,7 +16,7 @@
     "csv-parse": "^7.0.2",
     "exceljs": "^4.4.0",
     "unzipper": "^0.12.5",
-    "zod": "^4.3.6"
+    "zod": "^4.6.5"
   },
   "exports": {
     ".": "./src/index.ts",

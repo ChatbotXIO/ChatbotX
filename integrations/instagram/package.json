@@ -10,10 +10,10 @@
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "cross-fetch": "^4.1.0",
-    "image-size": "^2.0.2",
-    "ky": "^2.0.2",
-    "remeda": "^2.34.0",
-    "zod": "^4.3.6"
+    "image-size": "^2.0.4",
+    "ky": "^2.1.0",
+    "remeda": "^2.50.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",

@@ -27,7 +27,7 @@
     "typescript": "^5",
     "ultracite": "7.8.3",
     "vitest": "^4.1.0",
-    "zod": "^4.3.6"
+    "zod": "^4.6.5"
   },
   "packageManager": "pnpm@10.34.5+sha512.a4ee05f2f73658255bd6a89859c065a45c28a57daefae2c893a168ee2b73168c37b91e83e57ea67654ad03f03031746430e8bce38e362e042605fb8abc80192e",
   "engines": {
@@ -36,7 +36,7 @@
   "overrides": {
     "@types/node": "$@types/node",
     "typescript": "^5",
-    "zod": "^4.3.6",
+    "zod": "^4.6.5",
     "@codemirror/state": "6.7.0"
   },
   "workspaces": [
@@ -48,7 +48,7 @@
       "typescript": "^5",
       "@types/node": "24.x",
       "kysely": "0.28.17",
-      "zod": "^4.3.6",
+      "zod": "^4.6.5",
       "miniflare>zod": "^3.22.3",
       "google-auth-library": "^10.7.0",
       "@codemirror/state": "6.7.0"
