@@ -8,12 +8,10 @@ const buildApi = (): AnalyticsApi =>
     contactCountsPerDayAnalyticsAPI: vi.fn(),
     newContactCountsPerDayAnalyticsAPI: vi.fn(),
     blockedContactsPerDayAnalyticsAPI: vi.fn(),
-    blockedContactsCountAnalyticsAPI: vi.fn(),
     contactsCountAnalyticsAPI: vi.fn(),
     newContactsCountAnalyticsAPI: vi.fn(),
     activeContactsCountAnalyticsAPI: vi.fn(),
     botMessagesByResultAnalyticsAPI: vi.fn(),
-    botMessagesAIProvidersAnalyticsAPI: vi.fn(),
     messagesBySenderAnalyticsAPI: vi.fn(),
     contactsByDimensionAnalyticsAPI: vi.fn(),
     conversationHandoffsAnalyticsAPI: vi.fn(),
@@ -23,8 +21,6 @@ const buildApi = (): AnalyticsApi =>
     conversationAssignedByAdminAnalyticsAPI: vi.fn(),
     uniqueConversationsByAdminAnalyticsAPI: vi.fn(),
     messagesByAdminAnalyticsAPI: vi.fn(),
-    botMessagesWithResponseAnalyticsAPI: vi.fn(),
-    botMessagesNoResponseAnalyticsAPI: vi.fn(),
     humanAgentStatsAnalyticsAPI: vi.fn(),
     refLinkStats: vi.fn(),
     refLinkContacts: vi.fn(),
@@ -125,46 +121,6 @@ describe("analysis store", () => {
       expect(store.getState().errors.get("getContactCounts")).toBe(
         "An unexpected error occurred. Please contact admin",
       )
-    })
-  })
-
-  describe("date-range stats — scalar count response shape", () => {
-    test("getInboxBlockedContacts reads result.data.count and resets to 0 on error", async () => {
-      const store = createAnalysisStore({
-        api,
-        type: "contacts",
-        defaultSearchParams: baseSearchParams,
-        from,
-        to,
-      })
-
-      ;(
-        api.blockedContactsCountAnalyticsAPI as ReturnType<typeof vi.fn>
-      ).mockResolvedValue({
-        data: { count: 42 },
-      })
-      await store.getState().getInboxBlockedContacts()
-
-      expect(api.blockedContactsCountAnalyticsAPI).toHaveBeenCalledWith({
-        workspaceId: "ws-1",
-        from: from.toISOString(),
-        to: to.toISOString(),
-      })
-      expect(store.getState().inboxBlockedContacts).toBe(42)
-
-      ;(
-        api.blockedContactsCountAnalyticsAPI as ReturnType<typeof vi.fn>
-      ).mockRejectedValue(
-        new ORPCError("INTERNAL_SERVER_ERROR", { message: "boom" }),
-      )
-      await store.getState().getInboxBlockedContacts()
-
-      expect(store.getState().errors.get("getInboxBlockedContacts")).toBe(
-        "boom",
-      )
-      // Unlike the array-shaped stats, the scalar count is explicitly reset
-      // to 0 on error rather than left at its last successful value.
-      expect(store.getState().inboxBlockedContacts).toBe(0)
     })
   })
 
@@ -515,10 +471,6 @@ describe("analysis store", () => {
       for (const key of selectedConversationApiKeys) {
         expect(api[key]).not.toHaveBeenCalled()
       }
-      expect(api.blockedContactsCountAnalyticsAPI).not.toHaveBeenCalled()
-      expect(api.botMessagesAIProvidersAnalyticsAPI).not.toHaveBeenCalled()
-      expect(api.botMessagesWithResponseAnalyticsAPI).not.toHaveBeenCalled()
-      expect(api.botMessagesNoResponseAnalyticsAPI).not.toHaveBeenCalled()
     })
 
     test("loads only the ten visible conversation datasets until their required work settles", async () => {
@@ -561,9 +513,6 @@ describe("analysis store", () => {
       for (const key of selectedContactApiKeys) {
         expect(api[key]).not.toHaveBeenCalled()
       }
-      expect(api.botMessagesAIProvidersAnalyticsAPI).not.toHaveBeenCalled()
-      expect(api.botMessagesWithResponseAnalyticsAPI).not.toHaveBeenCalled()
-      expect(api.botMessagesNoResponseAnalyticsAPI).not.toHaveBeenCalled()
     })
 
     test.each([
@@ -653,7 +602,7 @@ describe("analysis store", () => {
       await new Promise<void>((resolve) => queueMicrotask(resolve))
     }
 
-    test("loads contact dashboards in UI-order batches and publishes KPI status before charts", async () => {
+    test("issues every dashboard request immediately in UI order and flips each panel independently", async () => {
       stubContactsApi()
       const totalContacts = Promise.withResolvers<{ data: { count: number } }>()
       const newContacts = Promise.withResolvers<{ data: { count: number } }>()
@@ -679,33 +628,15 @@ describe("analysis store", () => {
       })
       const loadPromise = store.getState().loadAnalysisData()
 
-      expect(api.contactCountsPerDayAnalyticsAPI).not.toHaveBeenCalled()
-      expect(api.contactsByDimensionAnalyticsAPI).not.toHaveBeenCalled()
       expect(store.getState().dashboardLoadStatus).toMatchObject({
         getInboxTotalContacts: "loading",
         getInboxNewContacts: "loading",
         getInboxActiveContacts: "loading",
-        getContactCounts: "queued",
+        getContactCounts: "loading",
+        getContactsByChannel: "loading",
+        getBlockedContactCounts: "loading",
       })
-
-      totalContacts.resolve({ data: { count: 4 } })
-      newContacts.resolve({ data: { count: 5 } })
-      activeContacts.resolve({ data: { count: 6 } })
-      await flushMicrotasks()
-
-      expect(store.getState().inboxTotalContacts).toBe(4)
-      expect(store.getState().dashboardLoadStatus).toMatchObject({
-        getInboxTotalContacts: "success",
-        getInboxNewContacts: "success",
-        getInboxActiveContacts: "success",
-      })
-      expect(store.getState().loading).toBe(true)
       expect(api.contactCountsPerDayAnalyticsAPI).toHaveBeenCalledTimes(1)
-      expect(api.newContactCountsPerDayAnalyticsAPI).toHaveBeenCalledTimes(1)
-      expect(api.contactsByDimensionAnalyticsAPI).not.toHaveBeenCalled()
-
-      await loadPromise
-
       expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(3)
       expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenNthCalledWith(
         1,
@@ -719,73 +650,72 @@ describe("analysis store", () => {
         3,
         expect.objectContaining({ dimension: "country" }),
       )
-      expect(store.getState().dashboardLoadStatus.getBlockedContactCounts).toBe(
-        "success",
-      )
+
+      totalContacts.resolve({ data: { count: 4 } })
+      newContacts.resolve({ data: { count: 5 } })
+      activeContacts.resolve({ data: { count: 6 } })
+      await flushMicrotasks()
+
+      expect(store.getState().dashboardLoadStatus).toMatchObject({
+        getInboxTotalContacts: "success",
+        getInboxNewContacts: "success",
+        getInboxActiveContacts: "success",
+      })
+
+      await loadPromise
     })
 
-    test("loads conversation dashboards in desktop-row batches", async () => {
-      stubConversationsApi()
-      const botMessages = Promise.withResolvers<{ data: [{ id: string }] }>()
-      const messagesBySender = Promise.withResolvers<{
-        data: [{ id: string }]
-      }>()
-      const handoffs = Promise.withResolvers<{ data: [{ id: string }] }>()
-      const humanAgentStats = Promise.withResolvers<{
-        data: [{ id: string }]
-      }>()
-      ;(
-        api.botMessagesByResultAnalyticsAPI as ReturnType<typeof vi.fn>
-      ).mockImplementation(() => botMessages.promise)
-      ;(
-        api.messagesBySenderAnalyticsAPI as ReturnType<typeof vi.fn>
-      ).mockImplementation(() => messagesBySender.promise)
-      ;(
-        api.conversationHandoffsAnalyticsAPI as ReturnType<typeof vi.fn>
-      ).mockImplementation(() => handoffs.promise)
-      ;(
-        api.humanAgentStatsAnalyticsAPI as ReturnType<typeof vi.fn>
-      ).mockImplementation(() => humanAgentStats.promise)
-
+    test("a second load keeps successful panels as refreshing", async () => {
+      stubContactsApi()
       const store = createAnalysisStore({
         api,
-        type: "conversations",
+        type: "contacts",
         defaultSearchParams: baseSearchParams,
         from,
         to,
       })
-      const loadPromise = store.getState().loadAnalysisData()
+      await store.getState().loadAnalysisData()
 
-      expect(api.conversationHandoffsAnalyticsAPI).not.toHaveBeenCalled()
-      expect(api.humanAgentStatsAnalyticsAPI).not.toHaveBeenCalled()
+      const refreshedTotal = Promise.withResolvers<{
+        data: { count: number }
+      }>()
+      ;(
+        api.contactsCountAnalyticsAPI as ReturnType<typeof vi.fn>
+      ).mockImplementation(() => refreshedTotal.promise)
+      const refresh = store.getState().loadAnalysisData()
 
-      botMessages.resolve({ data: [{ id: "bot" }] })
-      messagesBySender.resolve({ data: [{ id: "sender" }] })
-      await flushMicrotasks()
-      expect(api.conversationHandoffsAnalyticsAPI).toHaveBeenCalledTimes(1)
-      expect(api.humanAgentStatsAnalyticsAPI).not.toHaveBeenCalled()
-
-      handoffs.resolve({ data: [{ id: "handoff" }] })
-      await flushMicrotasks()
-      expect(api.humanAgentStatsAnalyticsAPI).toHaveBeenCalledTimes(1)
-      expect(api.uniqueConversationsByAdminAnalyticsAPI).not.toHaveBeenCalled()
-
-      humanAgentStats.resolve({ data: [{ id: "human" }] })
-      await loadPromise
-
-      expect(api.uniqueConversationsByAdminAnalyticsAPI).toHaveBeenCalledTimes(
-        1,
+      expect(store.getState().dashboardLoadStatus.getInboxTotalContacts).toBe(
+        "refreshing",
       )
-      expect(api.messagesByAdminAnalyticsAPI).toHaveBeenCalledTimes(1)
-      expect(api.conversationAssignedByAdminAnalyticsAPI).toHaveBeenCalledTimes(
-        1,
-      )
-      expect(api.conversationAssignedAnalyticsAPI).toHaveBeenCalledTimes(1)
-      expect(api.conversationFollowUpsAnalyticsAPI).toHaveBeenCalledTimes(1)
-      expect(api.conversationArchivedAnalyticsAPI).toHaveBeenCalledTimes(1)
+
+      refreshedTotal.resolve({ data: { count: 4 } })
+      await refresh
     })
 
-    test("keeps the newest range data, errors, and unstarted batches when an older load settles", async () => {
+    test("a throwing action marks only itself error while siblings settle", async () => {
+      stubContactsApi()
+      const store = createAnalysisStore({
+        api,
+        type: "contacts",
+        defaultSearchParams: baseSearchParams,
+        from,
+        to,
+      })
+      store.setState({
+        getContactCounts: () => Promise.reject(new Error("broken chart")),
+      })
+
+      await store.getState().loadAnalysisData()
+
+      expect(store.getState().dashboardLoadStatus.getContactCounts).toBe(
+        "error",
+      )
+      expect(store.getState().dashboardLoadStatus.getInboxTotalContacts).toBe(
+        "success",
+      )
+    })
+
+    test("keeps the newest range data and errors when an older load settles", async () => {
       stubContactsApi()
       const olderTotal = Promise.withResolvers<{ data: { count: number } }>()
       let contactsCountCall = 0
@@ -811,7 +741,7 @@ describe("analysis store", () => {
       await store.getState().setRange({ from: newerFrom, to: newerTo })
       expect(store.getState().inboxTotalContacts).toBe(99)
       expect(store.getState().errors.size).toBe(0)
-      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(3)
+      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(6)
 
       olderTotal.reject(new ORPCError("BAD_REQUEST", { message: "old range" }))
       await olderLoad
@@ -822,7 +752,7 @@ describe("analysis store", () => {
         "success",
       )
       expect(store.getState().loading).toBe(false)
-      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(3)
+      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(6)
     })
 
     test("keeps the newest same-range refresh when an older request settles", async () => {
@@ -856,7 +786,7 @@ describe("analysis store", () => {
         "success",
       )
       expect(store.getState().loading).toBe(false)
-      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(3)
+      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(6)
     })
 
     test("loads only the reflink batch for type: reflinks", async () => {

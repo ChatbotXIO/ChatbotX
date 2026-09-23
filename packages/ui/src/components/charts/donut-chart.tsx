@@ -8,6 +8,7 @@ import {
   ChartTooltipContent,
 } from "@chatbotx.io/ui/components/ui/chart"
 import { Cell, PieChart as PC, Pie, ResponsiveContainer } from "recharts"
+import { useChartCardProvider } from "./chart-card-context"
 import ChartHeader from "./chart-header"
 import { COLORS } from "./constants"
 
@@ -26,13 +27,13 @@ export function DonutChart({
   helpText,
   noDataLabel = "No data",
 }: DonutChartProps) {
+  const hasCardProvider = useChartCardProvider()
   const chartData =
     data.length === 0
       ? [{ name: noDataLabel, value: 0, color: "#e5e7eb" }]
       : data
-
-  return (
-    <Card className="flex-1">
+  const content = (
+    <>
       <ChartHeader helpText={helpText} title={title} />
       <CardContent>
         <ChartContainer config={{ value: { label: valueLabel } }}>
@@ -63,6 +64,8 @@ export function DonutChart({
           </ResponsiveContainer>
         </ChartContainer>
       </CardContent>
-    </Card>
+    </>
   )
+
+  return hasCardProvider ? content : <Card className="flex-1">{content}</Card>
 }

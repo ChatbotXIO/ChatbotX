@@ -1,5 +1,6 @@
 "use client"
 
+import { ChartCardProvider } from "@chatbotx.io/ui/components/charts/chart-card-context"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { useTranslations } from "next-intl"
@@ -21,16 +22,20 @@ export const DashboardPanel = ({
   const t = useTranslations()
   const status = useAnalysisStore((state) => state.dashboardLoadStatus[action])
 
-  if (status === "success") {
-    return <>{children}</>
-  }
-
   if (status === "error") {
     return (
       <Card className={className} role="status">
         <CardContent className="flex min-h-80 items-center justify-center">
           {t("states.error")}
         </CardContent>
+      </Card>
+    )
+  }
+
+  if (status === "success" || status === "refreshing") {
+    return (
+      <Card className={className}>
+        <ChartCardProvider>{children}</ChartCardProvider>
       </Card>
     )
   }

@@ -37,10 +37,6 @@ export function ConversationsDashboard({
       <div className="flex flex-col gap-4 md:flex-row md:gap-6">
         {nav}
         <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 md:grid-cols-2">
-          {/* <AvgResponseMinutesChart /> */}
-          {/* <AvgFirstResponseMinutesByAdminChart /> */}
-          {/* <AvgResponseMinutesByAdminChart /> */}
-          {/* <AvgConversationDurationChart /> */}
           <DashboardPanel action="getBotMessagesByResult">
             <BotMessagesByResultChart />
           </DashboardPanel>
