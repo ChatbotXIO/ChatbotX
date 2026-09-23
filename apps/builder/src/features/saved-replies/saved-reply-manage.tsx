@@ -30,8 +30,9 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
 
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<ViewState>({ type: "list" })
-  const { data: savedReplies = [], isFetching: isLoadingSavedReplies } =
-    useSavedReplies(workspaceId, { enabled: open })
+  const { data: savedReplies = [], isLoading } = useSavedReplies(workspaceId, {
+    enabled: open,
+  })
   const { remove: deleteSavedReplyFromStore, upsert: upsertSavedReply } =
     useSavedReplyCache(workspaceId)
 
@@ -97,19 +98,19 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
             </div>
 
             <div className="max-h-75 overflow-y-auto">
-              {isLoadingSavedReplies ? (
+              {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2Icon className="animate-spin" />
                 </div>
               ) : null}
 
-              {!isLoadingSavedReplies && savedReplies.length === 0 ? (
+              {!isLoading && savedReplies.length === 0 ? (
                 <div className="px-4 py-8 text-center text-muted-foreground text-sm">
                   {t("messages.noDataAvailable")}
                 </div>
               ) : null}
 
-              {isLoadingSavedReplies
+              {isLoading
                 ? null
                 : savedReplies.map((item, index) => (
                     <SavedReplyItem

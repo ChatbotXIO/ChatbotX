@@ -23,9 +23,17 @@ export const updateContactSequenceAction = workspaceActionClient
       accessScope,
     })
 
-    return await contactSequenceService.updateContactSequences({
-      workspaceId,
-      contactId: contact.id,
-      sequenceIds: parsedInput.sequences,
-    })
+    const updatedSequences =
+      await contactSequenceService.updateContactSequences({
+        workspaceId,
+        contactId: contact.id,
+        sequenceIds: parsedInput.sequences,
+      })
+
+    return updatedSequences.map(({ sequence }) => ({
+      sequence: {
+        id: sequence.id,
+        name: sequence.name,
+      },
+    }))
   })
