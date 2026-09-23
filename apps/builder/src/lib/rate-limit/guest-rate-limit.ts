@@ -15,6 +15,8 @@ type GuestRateLimitInput = {
   webchatId: string
   clientIp: string
   guestConversationId?: string | null
+  ipLimit?: number
+  sessionLimit?: number
   store?: RateLimitStore
   now?: number
 }
@@ -74,6 +76,8 @@ export const checkGuestRateLimit = async ({
   webchatId,
   clientIp,
   guestConversationId,
+  ipLimit = IP_LIMIT,
+  sessionLimit = SESSION_LIMIT,
   store = distributedStore,
   now = Date.now(),
 }: GuestRateLimitInput): Promise<GuestRateLimitResult> => {
@@ -86,7 +90,7 @@ export const checkGuestRateLimit = async ({
 
   try {
     const ipCount = await incrementWindowCounter(store, ipKey, WINDOW_SECONDS)
-    if (ipCount > IP_LIMIT) {
+    if (ipCount > ipLimit) {
       return { limited: true, retryAfter }
     }
 
@@ -96,7 +100,7 @@ export const checkGuestRateLimit = async ({
         sessionKey,
         WINDOW_SECONDS,
       )
-      if (sessionCount > SESSION_LIMIT) {
+      if (sessionCount > sessionLimit) {
         return { limited: true, retryAfter }
       }
     }
@@ -108,7 +112,7 @@ export const checkGuestRateLimit = async ({
       "Guest rate limit store failed, using local fallback",
     )
     const ipCount = incrementMemoryWindowCounter(ipKey, WINDOW_SECONDS)
-    if (ipCount > IP_LIMIT) {
+    if (ipCount > ipLimit) {
       return { limited: true, retryAfter }
     }
 
@@ -117,7 +121,7 @@ export const checkGuestRateLimit = async ({
         sessionKey,
         WINDOW_SECONDS,
       )
-      if (sessionCount > SESSION_LIMIT) {
+      if (sessionCount > sessionLimit) {
         return { limited: true, retryAfter }
       }
     }

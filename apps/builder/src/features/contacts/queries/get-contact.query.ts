@@ -3,6 +3,7 @@ import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import type { ContactPermissionScope } from "../permissions"
 import { maskContactEmailAndPhone } from "../permissions"
 import type { GetContactRequest, GetContactResponse } from "../schema/query"
+import { resolveContactAvatars } from "./resolve-contact-avatars"
 
 /**
  * Loads one contact using the caller-resolved scope so assignment and PII
@@ -17,12 +18,16 @@ export async function getContact(
     id: input.contactId,
     accessScope: { restrictToAssignedUserId: scope.restrictToAssignedUserId },
   })
+  const [contactWithResolvedAvatar] = await resolveContactAvatars(
+    [contact],
+    input.workspaceId,
+  )
 
   const {
     contactCustomFields,
     conversation: _conversation,
     ...contactFields
-  } = contact
+  } = contactWithResolvedAvatar
   const visibleContactFields = scope.canViewEmailAndPhone
     ? contactFields
     : maskContactEmailAndPhone(contactFields)

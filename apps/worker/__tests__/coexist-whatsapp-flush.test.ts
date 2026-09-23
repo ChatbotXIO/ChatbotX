@@ -19,6 +19,7 @@ const {
   mockOrderByFn,
   mockBulkImport,
   mockQueueAdd,
+  mockLowQueueAddBulk,
 } = vi.hoisted(() => ({
   mockClaimRun: vi.fn(),
   mockFindLiveRun: vi.fn(),
@@ -63,6 +64,7 @@ const {
   mockOrderByFn: vi.fn((col: unknown) => ({ __orderBy: col })),
   mockBulkImport: vi.fn(),
   mockQueueAdd: vi.fn(),
+  mockLowQueueAddBulk: vi.fn(),
 }))
 
 // ---------------------------------------------------------------------------
@@ -194,7 +196,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     coexistAttachmentDownload: "coexistAttachmentDownload",
     updateContactAvatar: "updateContactAvatar",
   },
-  lowQueue: { add: vi.fn(), addBulk: vi.fn() },
+  lowQueue: { add: vi.fn(), addBulk: mockLowQueueAddBulk },
 }))
 
 // Carries the real schema forward and overrides only the models these tests
@@ -288,6 +290,7 @@ describe("coexistWhatsappFlush", () => {
     wireUpdateChain()
     mockBulkImport.mockResolvedValue(emptyBulkResult())
     mockQueueAdd.mockResolvedValue(undefined)
+    mockLowQueueAddBulk.mockResolvedValue(undefined)
   })
 
   it("is a no-op when integration is not found", async () => {
@@ -376,6 +379,29 @@ describe("coexistWhatsappFlush", () => {
     expect(bulkArgs.runId).toBe(runId)
     expect(bulkArgs.batch[0]?.contact.sourceId).toBe("601234567890")
     expect(bulkArgs.batch[0]?.messages[0]?.sourceId).toBe("msg-row-1")
+  })
+
+  it("keeps WhatsApp attachment downloads eager after import", async () => {
+    setIntegration(fakeIntegration)
+    mockFindInboxById.mockResolvedValue(fakeInbox)
+    wireSelect(defaultRunRow(), [makeStagedRow("row-media")])
+    mockBulkImport.mockResolvedValueOnce(
+      emptyBulkResult({ insertedAttachmentIds: ["attachment-wa-1"] }),
+    )
+
+    await coexistWhatsappFlush({ runId, phoneNumberId })
+
+    expect(mockLowQueueAddBulk).toHaveBeenCalledWith([
+      expect.objectContaining({
+        data: {
+          type: "coexistAttachmentDownload",
+          data: expect.objectContaining({
+            attachmentId: "attachment-wa-1",
+            channel: "whatsapp",
+          }),
+        },
+      }),
+    ])
   })
 
   it("passes aiReadsSyncedHistory=false through to bulkImportHistorical when coexistAiReadsSyncedHistory is off", async () => {

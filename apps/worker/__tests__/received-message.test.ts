@@ -27,6 +27,7 @@ const {
   mockWorkspaceFind,
   mockQuotaIncrement,
   mockContactUpdate,
+  mockSetAvatarIfEmptyOrSentinel,
   mockUpdateTracking,
   mockInvalidateTracking,
   mockRecordInboundActivity,
@@ -72,6 +73,7 @@ const {
     mockUpdateContactFromMessage: vi.fn().mockResolvedValue(undefined),
     mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
     mockContactUpdate: vi.fn().mockResolvedValue({}),
+    mockSetAvatarIfEmptyOrSentinel: vi.fn().mockResolvedValue(undefined),
     mockConversationFindOrCreate: vi.fn(),
     mockAutomatedResponseEnqueueFlowAction: vi
       .fn()
@@ -211,6 +213,8 @@ vi.mock("@chatbotx.io/business", () => ({
   updateContactFromMessage: mockUpdateContactFromMessage,
   hasOnDemandProfileApi: (channel: string) =>
     CONTACT_PROFILE_NAME_CAPABILITIES[channel]?.onDemand ?? false,
+  hasRealAvatar: (avatar: string | null | undefined) =>
+    !!avatar && !avatar.startsWith("public/img/no_avatar.jpg?time="),
   resolveInboundProfileNameSource: (channel: string) =>
     CONTACT_PROFILE_NAME_CAPABILITIES[channel]?.inbound ?? null,
   hasEmptyProfileName: (contact: {
@@ -227,6 +231,7 @@ vi.mock("@chatbotx.io/business", () => ({
   contactService: {
     unblockIfBlocked: mockContactUnblockIfBlocked,
     update: mockContactUpdate,
+    setAvatarIfEmptyOrSentinel: mockSetAvatarIfEmptyOrSentinel,
   },
   conversationService: {
     findOrCreate: mockConversationFindOrCreate,
@@ -3041,9 +3046,9 @@ describe("contact source taxonomy", () => {
       expect.anything(),
       { ACL: "public-read", ContentType: "image/jpeg" },
     )
-    expect(mockContactUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ workspaceId: "ws-1" }),
+    expect(mockSetAvatarIfEmptyOrSentinel).toHaveBeenCalledWith(
       expect.objectContaining({
+        workspaceId: "ws-1",
         avatar: expect.stringMatching(AVATAR_STORAGE_PATH_PATTERN),
       }),
     )
@@ -3084,6 +3089,57 @@ describe("contact source taxonomy", () => {
 
     expect(fetch).not.toHaveBeenCalled()
     expect(mockUploaderPutObject).not.toHaveBeenCalled()
+  })
+
+  test("re-hosts the avatar when the contact has a no-avatar sentinel", async () => {
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: { ...fakeInbox, channel: "threads" },
+      integrationRow: {
+        ...fakeIntegrationRow,
+        auth: { tokens: { accessToken: "threads-token" } },
+      },
+    } as never)
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      contact: {
+        ...fakeContact,
+        avatar: "public/img/no_avatar.jpg?time=1234",
+      },
+    })
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(new Uint8Array([1, 2, 3]), {
+          status: 200,
+          headers: { "content-type": "image/jpeg" },
+        }),
+      ),
+    )
+
+    await receiveComment({
+      integrationType: "threads",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "comment-threads-avatar-sentinel",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        fromAvatarUrl: "https://scontent.cdninstagram.com/avatar.jpg",
+        message: "hello again",
+        postId: "post-1",
+        createdTime: 1_783_674_105,
+      },
+    })
+
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(mockUploaderPutObject).toHaveBeenCalledTimes(1)
+    expect(mockSetAvatarIfEmptyOrSentinel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        avatar: expect.stringMatching(AVATAR_STORAGE_PATH_PATTERN),
+      }),
+    )
   })
 })
 

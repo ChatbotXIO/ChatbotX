@@ -10,6 +10,7 @@ import {
   broadcastToWorkspaceParty,
   contactInboxService,
   conversationService,
+  resolveMediaUrl,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
 import { wrapOpenLinkUrl } from "@chatbotx.io/business/open-link"
@@ -105,6 +106,41 @@ const CHANNEL_DELIVERABLE_STEP_TYPES = new Set<string>([
   stepTypes.enum.whatsappFlow,
   stepTypes.enum.whatsappOptionList,
 ])
+
+type MessageWithResolvedAttachmentUrls = MessageModel & {
+  attachments: (AttachmentModel & { url: string | null })[]
+}
+
+const resolveMessageAttachmentUrls = async (
+  message: MessageModel | MessageWithAttachments,
+  context: { channel: string; storageUrl: string; workspaceId: string },
+): Promise<MessageModel | MessageWithResolvedAttachmentUrls> => {
+  if (!("attachments" in message && Array.isArray(message.attachments))) {
+    return message
+  }
+
+  return {
+    ...message,
+    attachments: await Promise.all(
+      message.attachments.map(async (attachment) => {
+        // Outbound attachments are freshly uploaded/copied storage keys. Proxy
+        // and failed-origin handling remains defensive for legacy row shapes.
+        const url = await resolveMediaUrl(
+          {
+            kind: "attachment",
+            workspaceId: context.workspaceId,
+            attachmentId: attachment.id,
+            originPath: attachment.originPath,
+            channel: context.channel,
+            messageCreatedAt: message.createdAt,
+          },
+          (key) => getPublicFileUrl(key, context.storageUrl),
+        )
+        return { ...attachment, url }
+      }),
+    ),
+  }
+}
 
 /**
  * Steps whose payload only exists on one channel. On any other channel they
@@ -836,14 +872,11 @@ export async function sendFlowStep({
       ? await repository.createWithAttachments(messageInput, attachmentInputs)
       : await repository.create(messageInput)
 
-    // Add url to attachments for response
-    if ("attachments" in message && Array.isArray(message.attachments)) {
-      ;(message as { attachments: AttachmentModel[] }).attachments =
-        message.attachments.map((att) => ({
-          ...att,
-          url: getPublicFileUrl(att.originPath, storageUrl),
-        }))
-    }
+    message = await resolveMessageAttachmentUrls(message, {
+      workspaceId: conversation.workspaceId,
+      channel: targetContactInbox.channel,
+      storageUrl,
+    })
 
     const createdMessage = message
     const trackingInvalidation =
@@ -1143,18 +1176,15 @@ export const sendChatMessage = async (
       createdAt: new Date(),
     }
 
-    const message = attachmentInput
+    const persistedMessage = attachmentInput
       ? await repository.createWithAttachments(messageInput, [attachmentInput])
       : await repository.create(messageInput)
 
-    // Add url to attachments for response
-    if ("attachments" in message && Array.isArray(message.attachments)) {
-      ;(message as { attachments: AttachmentModel[] }).attachments =
-        message.attachments.map((att) => ({
-          ...att,
-          url: getPublicFileUrl(att.originPath, storageUrl),
-        }))
-    }
+    const message = await resolveMessageAttachmentUrls(persistedMessage, {
+      workspaceId: conversation.workspaceId,
+      channel: contactInbox.channel,
+      storageUrl,
+    })
 
     const trackingInvalidation =
       await conversationService.recordOutboundMessageActivity({

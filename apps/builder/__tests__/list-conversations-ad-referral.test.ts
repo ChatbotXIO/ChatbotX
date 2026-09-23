@@ -14,15 +14,42 @@ const mocks = vi.hoisted(() => {
     findWithFullRelations: vi.fn().mockResolvedValue(null),
     getSafeSinceTime: vi.fn((value: Date | undefined) => value),
     notFoundException: (message: string) => new Error(message),
+    resolveMediaUrl: vi.fn(
+      async (
+        ref: {
+          avatar?: string | null
+          channel?: string
+          contactInboxId?: string
+          kind: "attachment" | "avatar"
+        },
+        finalize: (key: string) => string | Promise<string>,
+      ) => {
+        if (ref.kind !== "avatar") {
+          return null
+        }
+        if (ref.avatar) {
+          return await finalize(ref.avatar)
+        }
+        return ref.channel && ["messenger", "instagram"].includes(ref.channel)
+          ? `https://app.example.com/media/avatar/${ref.contactInboxId}`
+          : null
+      },
+    ),
+    resolveTenantSettings: vi
+      .fn()
+      .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
     repo,
   }
 })
 
 vi.mock("@chatbotx.io/business", () => ({
+  AVATAR_HYDRATION_CHANNELS: new Set(["messenger", "instagram"]),
   conversationService: {
     findManyQuery: mocks.findManyQuery,
     findWithFullRelations: mocks.findWithFullRelations,
   },
+  resolveMediaUrl: mocks.resolveMediaUrl,
+  resolveTenantSettings: mocks.resolveTenantSettings,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({

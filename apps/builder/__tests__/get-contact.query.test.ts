@@ -18,6 +18,10 @@ vi.mock("@/features/contacts/permissions", () => ({
   maskContactEmailAndPhone: mockMaskContactEmailAndPhone,
 }))
 
+vi.mock("@/features/contacts/queries/resolve-contact-avatars", () => ({
+  resolveContactAvatars: vi.fn(async (contacts) => contacts),
+}))
+
 describe("getContact", () => {
   beforeEach(() => {
     vi.clearAllMocks()

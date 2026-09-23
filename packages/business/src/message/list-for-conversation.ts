@@ -9,39 +9,66 @@ import { endOfHour } from "date-fns"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { notFoundException } from "../errors"
-import { resolveTenantSettings } from "../platform/settings"
-import { getPublicFileUrl } from "../utils"
+import { logger } from "../logger"
+import { resolveMediaUrl } from "../media"
+import { HTTP_URL_RE } from "../utils"
 
-/**
- * Coexist historical attachments stash a Graph URL or `wa-media:` sentinel in
- * `originPath` until the follow-up `coexistAttachmentDownload` job mirrors the
- * bytes to S3. Treat those as not-yet-downloaded and return `url=null` so the
- * UI shows a loading placeholder instead of a broken concatenated URL.
- */
-const isPendingOriginPath = (originPath: string): boolean =>
-  originPath.startsWith("http://") ||
-  originPath.startsWith("https://") ||
-  originPath.startsWith("wa-media:")
-
-const resolveAttachmentUrl = (
-  originPath: string,
-  storageUrl: string,
-): string | null =>
-  isPendingOriginPath(originPath)
-    ? null
-    : getPublicFileUrl(originPath, storageUrl)
-
-async function presignAttachments<T extends { originPath: string }>(
+async function presignAttachments<T extends { id: string; originPath: string }>(
   attachments: T[],
-  storageUrl: string,
+  context: { channel: string; workspaceId: string; messageCreatedAt: Date },
 ): Promise<Array<T & { url: string | null }>> {
   return await Promise.all(
-    attachments.map(async (attachment) => ({
-      ...attachment,
-      url: resolveAttachmentUrl(attachment.originPath, storageUrl)
-        ? await uploader.getPresignedDownload(attachment.originPath)
-        : attachment.originPath,
-    })),
+    attachments.map(async (attachment) => {
+      let url: string | null = null
+      try {
+        url = await resolveMediaUrl(
+          {
+            kind: "attachment",
+            workspaceId: context.workspaceId,
+            attachmentId: attachment.id,
+            originPath: attachment.originPath,
+            channel: context.channel,
+            messageCreatedAt: context.messageCreatedAt,
+          },
+          (key) =>
+            HTTP_URL_RE.test(key) ? key : uploader.getPresignedDownload(key),
+        )
+      } catch (err) {
+        // One unresolvable attachment (bad key, signer/host failure) must not
+        // reject the whole page; drop just this attachment's URL.
+        logger.warn(
+          {
+            err,
+            attachmentId: attachment.id,
+            workspaceId: context.workspaceId,
+          },
+          "Failed to resolve attachment media URL; omitting",
+        )
+      }
+      return { ...attachment, url }
+    }),
+  )
+}
+
+const loadContactInboxChannels = async (
+  messages: readonly Pick<MessageWithAttachments, "contactInboxId">[],
+  workspaceId: string,
+): Promise<Map<string, string>> => {
+  const contactInboxIds = [
+    ...new Set(messages.map((message) => message.contactInboxId)),
+  ]
+  if (contactInboxIds.length === 0) {
+    return new Map()
+  }
+  const contactInboxes = await contactInboxService.findManyByIds({
+    workspaceId,
+    ids: contactInboxIds,
+  })
+  return new Map(
+    contactInboxes.map((contactInbox) => [
+      contactInbox.id,
+      contactInbox.channel,
+    ]),
   )
 }
 
@@ -70,8 +97,7 @@ export type ListForConversationResult = {
 export async function listForConversation(
   input: ListForConversationInput,
 ): Promise<ListForConversationResult> {
-  const [tenantSettings, conversation, repository] = await Promise.all([
-    resolveTenantSettings({ workspaceId: input.workspaceId }),
+  const [conversation, repository] = await Promise.all([
     input.conversationId
       ? conversationService.findBy({
           where: { id: input.conversationId, workspaceId: input.workspaceId },
@@ -79,7 +105,6 @@ export async function listForConversation(
       : null,
     createMessageRepository(),
   ])
-  const { storageUrl } = tenantSettings
 
   let contactInbox: Awaited<
     ReturnType<typeof contactInboxService.findByUncached>
@@ -116,10 +141,18 @@ export async function listForConversation(
     return { data: [], nextCursor: null }
   }
 
+  const channelByContactInboxId = await loadContactInboxChannels(
+    result.data,
+    input.workspaceId,
+  )
   const data = await Promise.all(
     result.data.map(async (message) => ({
       ...message,
-      attachments: await presignAttachments(message.attachments, storageUrl),
+      attachments: await presignAttachments(message.attachments, {
+        workspaceId: input.workspaceId,
+        channel: channelByContactInboxId.get(message.contactInboxId) ?? "",
+        messageCreatedAt: message.createdAt,
+      }),
     })),
   )
 
@@ -132,7 +165,6 @@ export async function findForContact(input: {
   workspaceId: string
 }): Promise<MessageWithPresignedAttachments> {
   const { messageId, conversationId, workspaceId } = input
-  const { storageUrl } = await resolveTenantSettings({ workspaceId })
   const repository = await createMessageRepository()
   const conversation = await conversationService.findBy({
     where: { id: conversationId, workspaceId },
@@ -152,10 +184,18 @@ export async function findForContact(input: {
   if (!message || message.conversationId !== conversationId) {
     throw notFoundException("Message not found")
   }
+  const channelByContactInboxId = await loadContactInboxChannels(
+    [message],
+    workspaceId,
+  )
 
   return {
     ...message,
-    attachments: await presignAttachments(message.attachments, storageUrl),
+    attachments: await presignAttachments(message.attachments, {
+      workspaceId,
+      channel: channelByContactInboxId.get(message.contactInboxId) ?? "",
+      messageCreatedAt: message.createdAt,
+    }),
   }
 }
 
@@ -164,10 +204,6 @@ export async function findByIdWithUrls(input: {
   id: string
   createdAt: Date
 }): Promise<MessageWithPresignedAttachments> {
-  const { storageUrl } = await resolveTenantSettings({
-    workspaceId: input.workspaceId,
-  })
-
   const repository = await createMessageRepository()
   const message = await repository.findById({
     id: input.id,
@@ -178,9 +214,17 @@ export async function findByIdWithUrls(input: {
   if (!message) {
     throw notFoundException("Message not found")
   }
+  const channelByContactInboxId = await loadContactInboxChannels(
+    [message],
+    input.workspaceId,
+  )
 
   return {
     ...message,
-    attachments: await presignAttachments(message.attachments, storageUrl),
+    attachments: await presignAttachments(message.attachments, {
+      workspaceId: input.workspaceId,
+      channel: channelByContactInboxId.get(message.contactInboxId) ?? "",
+      messageCreatedAt: message.createdAt,
+    }),
   }
 }

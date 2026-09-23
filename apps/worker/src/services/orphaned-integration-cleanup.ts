@@ -3,6 +3,7 @@ import {
   type MetaAppCredentialType,
   platformCredentialService,
 } from "@chatbotx.io/business"
+import type { IntegrationNotFoundError } from "@chatbotx.io/channel-registry/errors"
 import {
   type IntegrationType,
   integrationTypes,
@@ -17,17 +18,7 @@ import { logger } from "../lib/logger"
  * subscription can be cleaned up (see `handleOrphanedIntegration`). Both fields
  * are public ids — safe to log.
  */
-export class IntegrationNotFoundError extends Error {
-  readonly channel: IntegrationType
-  readonly identifier: string
-
-  constructor(channel: IntegrationType, identifier: string) {
-    super(`Integration not found: ${channel} ${identifier}`)
-    this.name = "IntegrationNotFoundError"
-    this.channel = channel
-    this.identifier = identifier
-  }
-}
+export { IntegrationNotFoundError } from "@chatbotx.io/channel-registry/errors"
 
 type OrphanUnsubscribe = (props: {
   identifier: string

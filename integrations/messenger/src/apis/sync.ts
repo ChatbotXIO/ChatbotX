@@ -1,6 +1,9 @@
 import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
-import { facebookCoexistGraphClient } from "../lib/http-client"
+import {
+  facebookCoexistGraphClient,
+  facebookGraphClient,
+} from "../lib/http-client"
 import { type BucUsage, parseBucHeader } from "./usage"
 
 /** A Messenger participant as returned by the Graph conversations edge. */
@@ -82,10 +85,50 @@ type PaginatedResult<T> = {
 }
 
 const PAGE_LIMIT = 499
+const MESSAGE_MEDIA_FIELDS =
+  "attachments{id,name,mime_type,size,image_data,video_data,file_url}"
 
 const nextCursor = (
   paging: GraphPage<unknown>["paging"],
 ): string | undefined => (paging?.next ? paging.cursors?.after : undefined)
+
+export const getMessageMediaUrls = (props: {
+  graphMessageId: string
+  accessToken: string
+  version?: string
+}): Promise<
+  Array<{ sourceId: string; url: string; mimeType: string | null }>
+> => {
+  const { graphMessageId, accessToken, version = DEFAULT_API_VERSION } = props
+  const endpoint = `${version}/${graphMessageId}`
+
+  return rescue(endpoint, async () => {
+    const response = await facebookGraphClient.get<{
+      attachments?: { data?: MessengerHistoryAttachment[] }
+    }>(endpoint, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      searchParams: { fields: MESSAGE_MEDIA_FIELDS },
+    })
+
+    return (response.attachments?.data ?? []).flatMap((attachment) => {
+      const url =
+        attachment.image_data?.url ??
+        attachment.video_data?.url ??
+        attachment.file_url
+      // Require the provider id: hydration matches fresh media to stored
+      // attachments by it, so an id-less entry cannot be paired anyway.
+      return url && attachment.id
+        ? [
+            {
+              sourceId: attachment.id,
+              url,
+              mimeType: attachment.mime_type ?? null,
+            },
+          ]
+        : []
+    })
+  })
+}
 
 /**
  * Lists conversation threads for a Page, one Graph page at a time. The caller

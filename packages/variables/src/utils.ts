@@ -3,6 +3,7 @@ import {
   buildAppointmentUrl,
   conversationService,
   messageService,
+  resolveContactAvatarUrl,
   resolveTenantSettings,
   workspaceApiTokenService,
 } from "@chatbotx.io/business"
@@ -13,6 +14,7 @@ import {
 } from "@chatbotx.io/business/contact-locale"
 import { resolveGenderLabel } from "@chatbotx.io/business/system-field"
 import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
+import { ensureContactAvatarMirrored } from "@chatbotx.io/channel-registry/media-hydration"
 import {
   type ContactSource,
   contactSources,
@@ -216,6 +218,21 @@ const getWorkspaceLogo = ({
   return workspace.logo
 }
 
+const resolveVariableContactAvatarUrl = async (
+  context: ContactVariableContext,
+): Promise<string | null> => {
+  const { contact, contactInbox } = context
+  return await resolveContactAvatarUrl(
+    {
+      workspaceId: contact.workspaceId,
+      contact,
+      contactInbox,
+    },
+    (key) => toPublicStorageUrl(key, contact.workspaceId),
+    ensureContactAvatarMirrored,
+  )
+}
+
 const getContactLocationValue = (
   contact: ContactVariableContext["contact"],
   key: "latitude" | "longitude",
@@ -335,7 +352,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.full_name:
       return [contact.firstName, contact.lastName].filter(Boolean).join(" ")
     case systemFieldTypes.enum.profile_pic:
-      return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
+      return await resolveVariableContactAvatarUrl(context)
     case systemFieldTypes.enum.gender:
       // Salutation follows the workspace language, not the contact's own
       // locale: a Vietnamese workspace greets every contact as Anh/Chị, and
@@ -426,7 +443,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.user_notes:
       return await listContactNotesString(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.avatar:
-      return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
+      return await resolveVariableContactAvatarUrl(context)
     case systemFieldTypes.enum.current_time:
       return formatWithFallback(new Date(), timezone, DATE_TIME_FORMAT)
     case systemFieldTypes.enum.workspace_name:

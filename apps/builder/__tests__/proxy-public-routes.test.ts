@@ -21,6 +21,12 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/goals")).toBe(false)
   })
 
+  test("signed media proxy route families are public", () => {
+    expect(isPublicRoute("/media/attachment/signed-token")).toBe(true)
+    expect(isPublicRoute("/media/avatar/signed-token")).toBe(true)
+    expect(isPublicRoute("/mediator")).toBe(false)
+  })
+
   test("an authenticated app path is not public", () => {
     expect(isPublicRoute("/space/1/inbox")).toBe(false)
     expect(isPublicRoute("/channels/create")).toBe(false)

@@ -23,7 +23,6 @@ import {
 } from "@chatbotx.io/worker-config"
 import pLimit from "p-limit"
 import { logger } from "../../../lib/logger"
-import { enqueueContactAvatarJobs } from "../contact/enqueue-avatar-jobs"
 import {
   applyCoexistActivityUpdates,
   bulkImportContacts,
@@ -34,7 +33,6 @@ import {
   maxNumericId,
 } from "./bulk-historical-import"
 import { filterConversationWindow } from "./conversation-window"
-import { enqueueAttachmentDownloadJobs } from "./enqueue-attachment-downloads"
 import {
   fetchConvMessages,
   messengerAuthSchema,
@@ -201,7 +199,7 @@ async function walkConversationsPages(
 
 /**
  * Phase 1 — walk `/me/conversations` DESC, dedup participants, bulk upsert
- * Contacts, dispatch avatar fetch jobs. Messages are NOT fetched here.
+ * Contacts. Messages are NOT fetched here; avatars hydrate lazily on view.
  */
 async function runContactsPhase(ctx: SyncContext): Promise<PhaseResult> {
   const { runId, workspaceId, pageId, inbox } = ctx
@@ -253,13 +251,6 @@ async function runContactsPhase(ctx: SyncContext): Promise<PhaseResult> {
         }
         ctx.errorRef.current = `phase=contacts page ${pageNumber} bulk import failed: ${errMsg}`
       }
-
-      // Bulk-enqueue one avatar-mirror job per resolved contact.
-      await enqueueContactAvatarJobs({
-        workspaceId,
-        contactInboxIds: pageResult.contactInboxIds,
-        logContext: { runId, pageNumber },
-      })
 
       if (pageResult.failureReason) {
         ctx.errorRef.current = `phase=contacts page ${pageNumber}: ${pageResult.failureReason}`
@@ -346,7 +337,6 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
       let pageSkipped = 0
       let pageFailed = 0
       let pageOldest: Date | null = currentOldest
-      const pageAttachmentIds: string[] = []
       // Collected across all convs in this chunk, then flushed once per table
       // after the barrier — keeps the activity bumps out of the per-page loop.
       const activityUpdates: CoexistActivityUpdate[] = []
@@ -401,9 +391,6 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
                   })
                   pageImported += result.importedMessages
                   pageSkipped += result.skippedMessages
-                  for (const id of result.insertedAttachmentIds) {
-                    pageAttachmentIds.push(id)
-                  }
                   if (
                     result.newestMessageAt &&
                     (!convNewest || convNewest < result.newestMessageAt)
@@ -467,24 +454,6 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
       // One UPDATE per table for the whole chunk (not per conv/page in the loop).
       await applyCoexistActivityUpdates(activityUpdates, { workspaceId })
 
-      // Bulk-enqueue per-attachment download jobs onto the low-priority queue.
-      // The handler is idempotent (prefix-checked + jobId-dedup'd), so a retry
-      // of this whole chunk re-enqueues the same jobIds harmlessly. Best-effort:
-      // a failed enqueue leaves the bytes pending and must not fail the page.
-      try {
-        await enqueueAttachmentDownloadJobs({
-          workspaceId,
-          integrationId: ctx.integrationId,
-          channel: "messenger",
-          attachmentIds: pageAttachmentIds,
-        })
-      } catch (error) {
-        logger.error(
-          { err: error, runId, pageNumber, count: pageAttachmentIds.length },
-          "[coexist] Messenger attachment download enqueue failed — bytes left as pending",
-        )
-      }
-
       await coexistService.incrementProgress({
         runId,
         increments: {
@@ -508,8 +477,8 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
 /**
  * Page-per-job historical Messenger sync. Splits into two sequential phases:
  *
- *  - **contacts** — walk `/me/conversations` DESC, dedup participants, bulk
- *    upsert Contacts, dispatch avatar fetch jobs. No `/messages` calls.
+ *  - **contacts** — walk `/me/conversations` DESC and bulk-upsert Contacts.
+ *    No `/messages` calls; avatars hydrate lazily on view.
  *  - **messages** — re-walk `/me/conversations` DESC; per conv, fetch
  *    `/messages`, run discovery, bulk-insert into the resolved contact.
  *

@@ -169,12 +169,25 @@ export interface BulkPatchContentAttributesParams {
 
 export interface FindAttachmentByIdParams {
   id: string
+  /**
+   * Parent message createdAt. On a sharded deployment it lets the lookup target
+   * the shard time-window that holds the row instead of scanning a fixed
+   * recent-history range, so attachments older than that range stay reachable.
+   * Ignored when sharding is disabled (the single main DB holds every row).
+   */
+  messageCreatedAt?: Date
   workspaceId: string
 }
 
 export type AttachmentLookupRow = Pick<
   AttachmentModel,
-  "id" | "originPath" | "mimeType" | "createdAt"
+  | "id"
+  | "messageId"
+  | "messageCreatedAt"
+  | "sourceId"
+  | "originPath"
+  | "mimeType"
+  | "createdAt"
 >
 
 export interface UpdateAttachmentParams {

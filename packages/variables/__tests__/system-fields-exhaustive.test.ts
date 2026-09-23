@@ -9,11 +9,29 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // Every helper is stubbed: this suite is about the resolver's own switch, not
 // about what the helpers return. `system-fields.test.ts` covers the helpers.
-const { mockLoggerError, testEncryptionKey } = vi.hoisted(() => ({
-  mockLoggerError: vi.fn(),
-  testEncryptionKey:
-    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-}))
+const { mockLoggerError, mockResolveContactAvatarUrl, testEncryptionKey } =
+  vi.hoisted(() => ({
+    mockLoggerError: vi.fn(),
+    mockResolveContactAvatarUrl: vi.fn(
+      async (
+        input: {
+          contact: { avatar: string | null }
+          contactInbox: { channel: string; id: string } | null
+        },
+        finalize: (key: string) => string | Promise<string>,
+      ) => {
+        if (input.contact.avatar) {
+          return await finalize(input.contact.avatar)
+        }
+        return input.contactInbox &&
+          ["messenger", "instagram"].includes(input.contactInbox.channel)
+          ? `https://app.example.com/media/avatar/${input.contactInbox.id}`
+          : null
+      },
+    ),
+    testEncryptionKey:
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  }))
 
 vi.mock("../src/logger", () => ({
   logger: {
@@ -68,6 +86,7 @@ vi.mock("@chatbotx.io/business", () => ({
       contentAttributes: { postId: "post-1" },
     }),
   },
+  resolveContactAvatarUrl: mockResolveContactAvatarUrl,
   workspaceApiTokenService: {
     resolveDefaultTokenPlaintext: vi.fn().mockResolvedValue("cbx_ws_plaintext"),
   },
