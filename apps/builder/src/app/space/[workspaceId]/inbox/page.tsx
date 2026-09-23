@@ -47,7 +47,6 @@ export default async function InboxPage({
 
   const conversationId = (await searchParams)?.conversationId
 
-
   return (
     <FullBleed>
       <Suspense

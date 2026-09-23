@@ -26,7 +26,6 @@ const workspaceIdAndIdRequest = z.object({
   id: zodBigintAsString(),
 })
 
-
 const postDetailsSchema = z.object({
   text: z.string().optional(),
   picture: z.string().optional(),

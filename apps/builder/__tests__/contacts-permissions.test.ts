@@ -10,11 +10,13 @@ vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserAndTargetWorkspace: vi.fn(),
 }))
 
+// The module needs mocked server-only dependencies before evaluation.
 const {
   canAccessContactsSection,
   canViewContactEmailAndPhone,
   getAssignedContactsUserId,
   requireContactPermissionScope,
+  requireContactPermissionScopeForMember,
   resolveContactPermissionScope,
   stripContactPIIFields,
 } = await import("../src/features/contacts/permissions")
@@ -90,6 +92,15 @@ describe("contact permission helpers", () => {
         false,
       ),
     ).toEqual(["sys:firstName", "tag:t1"])
+  })
+
+  test("returns not-found for member reads without contact access", () => {
+    expect(() =>
+      requireContactPermissionScopeForMember({
+        permissions: { ...basePermissions, contacts: false },
+        userId: "user-1",
+      }),
+    ).toThrow("Contact not found")
   })
 
   test("requires contacts access for mutation scopes", async () => {

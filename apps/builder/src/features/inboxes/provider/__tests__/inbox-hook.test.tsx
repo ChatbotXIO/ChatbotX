@@ -126,6 +126,7 @@ describe("inbox query hooks", () => {
       expect(isError).toBe(true)
     })
   })
+
   test("does not request inboxes when disabled", () => {
     act(() => {
       root.render(

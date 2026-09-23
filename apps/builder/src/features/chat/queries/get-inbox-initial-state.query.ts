@@ -108,7 +108,6 @@ const shapeInitialState = ({
   }
 }
 
-
 const loadInitialState = async ({
   workspaceId,
   conversationId,
@@ -136,39 +135,28 @@ const loadInitialState = async ({
         id: conversationId,
       })
     : null
-  let messagesPromise: Promise<ChatStoreInitialState | Record<string, never>>
-  if (conversationId) {
-    messagesPromise = seedMessagesState(workspaceId, conversationId)
-  } else if (hasUrlConversationId) {
-    messagesPromise = Promise.resolve({})
-  } else {
-    messagesPromise = conversationsPromise.then(({ data: conversations }) => {
-      const activeConversation = conversations[0]
-      return activeConversation
-        ? seedMessagesState(workspaceId, activeConversation.id)
-        : {}
-    })
-  }
-
-  let contactPromise: Promise<ChatStoreInitialState | Record<string, never>>
+  let activeConversationPromise: Promise<ListConversationItemResource | null>
   if (findConversationPromise) {
-    contactPromise = findConversationPromise
-      .then((result) =>
-        seedContactState(workspaceId, result.data, contactPermissionScope),
-      )
-      .catch(() => ({}))
+    activeConversationPromise = findConversationPromise.then(
+      (result) => result.data,
+    )
   } else if (hasUrlConversationId) {
-    contactPromise = Promise.resolve({})
+    activeConversationPromise = Promise.resolve(null)
   } else {
-    contactPromise = conversationsPromise
-      .then(({ data: conversations }) => {
-        const activeConversation = conversations[0]
-        return activeConversation
-          ? seedContactState(workspaceId, activeConversation, contactPermissionScope)
-          : {}
-      })
-      .catch(() => ({}))
+    activeConversationPromise = conversationsPromise.then(
+      ({ data }) => data[0] ?? null,
+    )
   }
+  const messagesPromise = conversationId
+    ? seedMessagesState(workspaceId, conversationId)
+    : activeConversationPromise.then((conversation) =>
+        conversation ? seedMessagesState(workspaceId, conversation.id) : {},
+      )
+  const contactPromise = activeConversationPromise.then((conversation) =>
+    conversation
+      ? seedContactState(workspaceId, conversation, contactPermissionScope)
+      : {},
+  )
 
   const [
     conversationsResult,

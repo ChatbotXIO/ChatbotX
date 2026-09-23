@@ -278,10 +278,7 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
 
       <RenameSequenceDialog
         onOpenChange={() => setRowAction(null)}
-        onSuccess={() => {
-          invalidateSequences()
-          router.refresh()
-        }}
+        onSuccess={() => router.refresh()}
         open={rowAction?.variant === "update"}
         sequence={rowAction?.row.original || null}
       />
@@ -297,10 +294,7 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
 
       <DeleteSequenceDialog
         onOpenChange={() => setRowAction(null)}
-        onSuccess={() => {
-          invalidateSequences()
-          router.refresh()
-        }}
+        onSuccess={() => router.refresh()}
         open={rowAction?.variant === "delete"}
         sequence={rowAction?.row.original || null}
       />

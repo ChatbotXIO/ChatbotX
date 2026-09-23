@@ -1,5 +1,5 @@
 import { appointmentService } from "@chatbotx.io/business"
-import { requireContactAccessForMember } from "@/features/contacts/permissions"
+import { requireContactPermissionScopeForMember } from "@/features/contacts/permissions"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import {
@@ -21,13 +21,17 @@ export const appointmentsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listContactAppointmentsResponse)
     .handler(async ({ input, context }) => {
-      await requireContactAccessForMember({
+      const scope = requireContactPermissionScopeForMember({
         permissions: context.workspaceMember.permissions,
         userId: context.user.id,
-        workspaceId: input.workspaceId,
-        contactId: input.contactId,
       })
 
-      return await appointmentService.listContactAppointments(input)
+      return await appointmentService.listContactAppointments({
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+        accessScope: {
+          restrictToAssignedUserId: scope.restrictToAssignedUserId,
+        },
+      })
     }),
 }

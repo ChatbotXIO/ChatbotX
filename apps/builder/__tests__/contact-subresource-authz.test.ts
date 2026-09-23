@@ -58,9 +58,10 @@ const { authorizedAPI, mocks, workspaceAuthorizedMidddleware } = vi.hoisted(
     return {
       authorizedAPI: procedure,
       mocks: {
+        listContactAppointments: vi.fn(),
+        listContactCoupons: vi.fn(),
         listContactNotes: vi.fn(),
         listContactSequences: vi.fn(),
-        findByIdOrFail: vi.fn(),
         state,
       },
       workspaceAuthorizedMidddleware: vi.fn(),
@@ -68,46 +69,33 @@ const { authorizedAPI, mocks, workspaceAuthorizedMidddleware } = vi.hoisted(
   },
 )
 
-vi.mock("@/orpc", () => ({
-  authorizedAPI,
-}))
-
-vi.mock("@/middlewares/auth", () => ({
-  workspaceAuthorizedMidddleware,
-}))
-
+vi.mock("@/orpc", () => ({ authorizedAPI }))
+vi.mock("@/middlewares/auth", () => ({ workspaceAuthorizedMidddleware }))
 vi.mock("@/lib/auth/utils", () => ({
   getCurrentUserAndTargetWorkspace: vi.fn(),
 }))
-
 vi.mock("@chatbotx.io/business/contact-utils", () => ({
   maskContactEmailAndPhone: vi.fn((contact: unknown) => contact),
 }))
-
 vi.mock("@chatbotx.io/business", () => ({
-  contactNoteService: {
-    listByContactId: mocks.listContactNotes,
+  appointmentService: {
+    listContactAppointments: mocks.listContactAppointments,
   },
-  contactService: {
-    findByIdOrFail: mocks.findByIdOrFail,
-  },
+  contactNoteService: { listByContactId: mocks.listContactNotes },
+  couponService: { listIssuedCouponsForContact: mocks.listContactCoupons },
 }))
-
 vi.mock("@chatbotx.io/business/contact-sequence", () => ({
   contactSequenceService: {
     listByContactId: mocks.listContactSequences,
   },
 }))
 
+// These handlers must load after their mocks; static imports resolve real
+// server dependencies before the test modules can install their substitutes.
+await import("@/features/appointments/api/private")
 await import("@/features/contact-notes/api/private")
 await import("@/features/contact-sequences/api/private")
-
-const notesHandler = mocks.state.handlers.get(
-  "/workspaces/{workspaceId}/contacts/{contactId}/notes",
-)
-const sequencesHandler = mocks.state.handlers.get(
-  "/workspaces/{workspaceId}/contacts/{contactId}/sequences",
-)
+await import("@/features/coupons/api/private")
 
 const baseInput: HandlerInput = {
   workspaceId: "workspace-1",
@@ -122,73 +110,86 @@ const contextFor = (
   user: { id: userId },
 })
 
-describe.each([
+const handlers = [
   {
-    name: "listContactNotesAuthenticatedAPI",
-    handler: () => notesHandler,
+    handler: () =>
+      mocks.state.handlers.get(
+        "/workspaces/{workspaceId}/contacts/{contactId}/notes",
+      ),
     listServiceMock: () => mocks.listContactNotes,
+    name: "listContactNotesAuthenticatedAPI",
   },
   {
-    name: "listContactSequencesAuthenticatedAPI",
-    handler: () => sequencesHandler,
+    handler: () =>
+      mocks.state.handlers.get(
+        "/workspaces/{workspaceId}/contacts/{contactId}/sequences",
+      ),
     listServiceMock: () => mocks.listContactSequences,
+    name: "listContactSequencesAuthenticatedAPI",
   },
-])("$name", ({ handler, listServiceMock }) => {
+  {
+    handler: () =>
+      mocks.state.handlers.get(
+        "/workspaces/{workspaceId}/contacts/{contactId}/appointments",
+      ),
+    listServiceMock: () => mocks.listContactAppointments,
+    name: "listContactAppointmentsAPI",
+  },
+  {
+    handler: () =>
+      mocks.state.handlers.get(
+        "/workspaces/{workspaceId}/contacts/{contactId}/coupons",
+      ),
+    listServiceMock: () => mocks.listContactCoupons,
+    name: "listContactCouponsAPI",
+  },
+]
+
+describe.each(handlers)("$name", ({ handler, listServiceMock }) => {
   test("registers a handler", () => {
     expect(handler()).toBeDefined()
   })
 
-  test("rejects a caller without contacts-section access and never reaches the list service", async () => {
-    mocks.findByIdOrFail.mockReset()
+  test("returns not-found without contacts-section access", async () => {
     listServiceMock().mockReset()
 
     await expect(
       handler()?.({ input: baseInput, context: contextFor({}) }),
-    ).rejects.toThrow()
-
-    expect(mocks.findByIdOrFail).not.toHaveBeenCalled()
-    expect(listServiceMock()).not.toHaveBeenCalled()
-  })
-
-  test("scopes the contact lookup to the caller's assigned contacts and rejects when out of scope", async () => {
-    mocks.findByIdOrFail.mockReset()
-    listServiceMock().mockReset()
-    mocks.findByIdOrFail.mockRejectedValueOnce(new Error("Contact not found"))
-
-    await expect(
-      handler()?.({
-        input: baseInput,
-        context: contextFor({ onlyAssignedContacts: true }, "user-9"),
-      }),
     ).rejects.toThrow("Contact not found")
 
-    expect(mocks.findByIdOrFail).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
-      id: "contact-1",
-      accessScope: { restrictToAssignedUserId: "user-9" },
-    })
     expect(listServiceMock()).not.toHaveBeenCalled()
   })
 
-  test("lets a super-admin member reach the list service with no assignment restriction", async () => {
-    mocks.findByIdOrFail.mockReset()
+  test("passes an assigned-contact scope to the list service", async () => {
     listServiceMock().mockReset()
-    mocks.findByIdOrFail.mockResolvedValueOnce({ id: "contact-1" })
     listServiceMock().mockResolvedValueOnce([])
 
     await handler()?.({
       input: baseInput,
-      context: contextFor({ superAdmin: true }, "user-1"),
+      context: contextFor({ onlyAssignedContacts: true }, "user-9"),
     })
 
-    expect(mocks.findByIdOrFail).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
-      id: "contact-1",
-      accessScope: { restrictToAssignedUserId: undefined },
-    })
     expect(listServiceMock()).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
-      contactId: "contact-1",
+      ...baseInput,
+      accessScope: { restrictToAssignedUserId: "user-9" },
+    })
+  })
+
+  test("does not restrict super admins with assigned-contact permission", async () => {
+    listServiceMock().mockReset()
+    listServiceMock().mockResolvedValueOnce([])
+
+    await handler()?.({
+      input: baseInput,
+      context: contextFor(
+        { onlyAssignedContacts: true, superAdmin: true },
+        "user-9",
+      ),
+    })
+
+    expect(listServiceMock()).toHaveBeenCalledWith({
+      ...baseInput,
+      accessScope: { restrictToAssignedUserId: undefined },
     })
   })
 })

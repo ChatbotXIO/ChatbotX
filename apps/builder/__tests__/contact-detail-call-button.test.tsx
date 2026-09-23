@@ -124,6 +124,7 @@ vi.mock("@/features/contacts/reset-contact-custom-fields-dialog", () => ({
 vi.mock("@/features/contacts/edit-contact-field", () => ({
   EditContactField: () => null,
 }))
+
 const { ContactDetail } = await import("@/features/contacts/contact-detail")
 
 const whatsappInbox = (

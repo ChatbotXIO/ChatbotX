@@ -36,7 +36,6 @@ export function SequencesTableToolbarActions({
             onOpenChange={() => setRowAction(null)}
             onSuccess={() => {
               table.toggleAllRowsSelected(false)
-              invalidateSequences()
               router.refresh()
             }}
             sequences={table

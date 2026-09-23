@@ -127,6 +127,7 @@ describe("sequence query hooks", () => {
       expect(isError).toBe(true)
     })
   })
+
   test("does not request sequences when disabled", () => {
     act(() => {
       root.render(

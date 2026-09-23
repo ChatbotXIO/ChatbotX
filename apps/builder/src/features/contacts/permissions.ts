@@ -1,4 +1,3 @@
-import { contactService } from "@chatbotx.io/business"
 import {
   ChatbotXException,
   notFoundException,
@@ -65,6 +64,10 @@ export function buildContactPermissionScope({
   }
 }
 
+/**
+ * Gate for private per-contact reads; null scope is not-found so contact
+ * existence is never exposed.
+ */
 export function requireContactPermissionScopeForMember({
   permissions,
   userId,
@@ -74,7 +77,7 @@ export function requireContactPermissionScopeForMember({
 }): ContactPermissionScope {
   const scope = buildContactPermissionScope({ permissions, userId })
   if (!scope) {
-    throw new ChatbotXException("User is not authorized to access contacts")
+    throw notFoundException("Contact not found")
   }
 
   return scope
@@ -110,35 +113,6 @@ export async function requireContactPermissionScope(
   if (!scope) {
     throw new ChatbotXException("User is not authorized to access contacts")
   }
-
-  return scope
-}
-
-/**
- * The gate for private per-contact subresource reads (notes, sequences,
- * coupons, appointments): the caller must have contacts-section access and
- * the contact itself must be inside their assigned-contacts scope. Mirrors
- * what `getContactAuthenticatedAPI` enforces via `findDetailOrFail`.
- */
-export async function requireContactAccessForMember(input: {
-  permissions: Permissions
-  userId: string
-  workspaceId: string
-  contactId: string
-}): Promise<ContactPermissionScope> {
-  const scope = buildContactPermissionScope({
-    permissions: input.permissions,
-    userId: input.userId,
-  })
-  if (!scope) {
-    throw notFoundException("Contact not found")
-  }
-
-  await contactService.findByIdOrFail({
-    workspaceId: input.workspaceId,
-    id: input.contactId,
-    accessScope: { restrictToAssignedUserId: scope.restrictToAssignedUserId },
-  })
 
   return scope
 }

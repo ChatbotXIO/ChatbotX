@@ -100,7 +100,6 @@ export function FlowsTable({
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
             rowAction?.row.toggleSelected(false)
-            invalidateFlows()
             router.refresh()
           }}
           open={rowAction?.variant === "delete"}
@@ -111,10 +110,7 @@ export function FlowsTable({
         <DuplicateFlowDialog
           flow={rowAction?.row.original || null}
           onOpenChange={() => setRowAction(null)}
-          onSuccess={() => {
-            invalidateFlows()
-            router.refresh()
-          }}
+          onSuccess={() => router.refresh()}
           open={rowAction?.variant === "duplicate"}
           workspaceId={workspaceId}
         />

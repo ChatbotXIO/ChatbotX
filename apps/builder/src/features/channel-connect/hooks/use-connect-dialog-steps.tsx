@@ -315,17 +315,16 @@ export function useConnectDialogSteps<TItem extends ConnectPickerItem>({
 
   useAutoStartBatch(batch.run)
 
-  useEffect(() => {
-    if (batch.connectedCount === 0) {
-      return
-    }
-    invalidateInboxes()
-  }, [batch.connectedCount, invalidateInboxes])
-
   // `batch.done` only advances once at least one row has settled, so it
   // already implies the batch has started — no need to also read the
   // mount-guard ref during render.
   const finished = !batch.isRunning && batch.done > 0
+
+  useEffect(() => {
+    if (finished && batch.connectedCount > 0) {
+      invalidateInboxes()
+    }
+  }, [finished, batch.connectedCount, invalidateInboxes])
   // `batch.outcomes` is itself one stable array per settle (useConnectBatch
   // memoizes it), so this derivation needs no memo of its own to avoid a
   // fresh identity on every unrelated re-render.

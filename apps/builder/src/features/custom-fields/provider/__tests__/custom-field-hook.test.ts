@@ -20,7 +20,6 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
-
 function CustomFieldsProbe({ onData }: { onData: (data: unknown) => void }) {
   onData(useCustomFields("workspace-1").data)
   return null

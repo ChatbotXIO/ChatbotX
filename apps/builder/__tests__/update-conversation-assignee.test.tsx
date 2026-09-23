@@ -6,6 +6,7 @@ import type { ListConversationItemResource } from "@/features/conversations/sche
 const { dialogOnSuccessMock } = vi.hoisted(() => ({
   dialogOnSuccessMock: vi.fn(),
 }))
+
 const authSessionMock = vi.fn()
 
 vi.mock("next-intl", () => ({
@@ -94,6 +95,7 @@ describe("UpdateConversationAssignee", () => {
       dialogOnSuccessMock({ id, name })
     })
   }
+
   test("renders the assigned user's name without requesting assignee options", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch")
 
@@ -147,6 +149,7 @@ describe("UpdateConversationAssignee", () => {
 
     expect(container.textContent).toContain("assignAdmin.assignedToMe")
   })
+
   test.each([
     {
       assignedUser: { name: null },
