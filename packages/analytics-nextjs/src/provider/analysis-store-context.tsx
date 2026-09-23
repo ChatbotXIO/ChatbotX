@@ -23,7 +23,7 @@ export const AnalysisStoreContext = createContext<AnalysisStoreApi | undefined>(
 )
 
 export type AnalysisStoreProviderProps = {
-  type?: AnalysisDashboardType
+  type: AnalysisDashboardType
   defaultSearchParams: AnalysisState["defaultSearchParams"]
   children: ReactNode
   autoInitialize?: boolean
@@ -32,7 +32,7 @@ export type AnalysisStoreProviderProps = {
 export const AnalysisStoreProvider = ({
   children,
   autoInitialize = true,
-  type = "dashboard",
+  type,
   defaultSearchParams,
 }: AnalysisStoreProviderProps) => {
   const api = useAnalyticsApi()

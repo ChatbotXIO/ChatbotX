@@ -8,6 +8,7 @@ import {
   ChartTooltipContent,
 } from "@chatbotx.io/ui/components/ui/chart"
 import { Bar, BarChart as BC, CartesianGrid, XAxis, YAxis } from "recharts"
+import { useChartCardProvider } from "./chart-card-context"
 import ChartHeader from "./chart-header"
 import { COLORS } from "./constants"
 
@@ -28,6 +29,7 @@ type BarChartProps = {
 }
 
 export default function BarChart({ title, data, helpText }: BarChartProps) {
+  const hasCardProvider = useChartCardProvider()
   const barLabels = Array.from(
     new Set(data.flatMap((item) => item.value.map((v) => v.label))),
   )
@@ -38,9 +40,8 @@ export default function BarChart({ title, data, helpText }: BarChartProps) {
     }
     return obj
   })
-
-  return (
-    <Card className="flex-1">
+  const content = (
+    <>
       <ChartHeader helpText={helpText} title={title} />
 
       <CardContent>
@@ -63,6 +64,8 @@ export default function BarChart({ title, data, helpText }: BarChartProps) {
           </BC>
         </ChartContainer>
       </CardContent>
-    </Card>
+    </>
   )
+
+  return hasCardProvider ? content : <Card className="flex-1">{content}</Card>
 }

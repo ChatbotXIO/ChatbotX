@@ -1,5 +1,4 @@
 import type {
-  BotMessageAIProviderStats,
   BotMessageStats,
   CommentAutomationTimeseriesRow,
   ContactCountsSchema,
@@ -27,16 +26,17 @@ const REFLINK_CONTACTS_PER_PAGE = 10
 const COMMENT_AUTOMATION_PER_PAGE = 10
 
 export type AnalysisDashboardType =
-  | "dashboard"
+  | "contacts"
+  | "conversations"
   | "reflinks"
   | "magic-links"
   | "comment-automation"
-
 export type AnalysisState = {
   api: AnalyticsApi
   type: AnalysisDashboardType
   loading: boolean
   errors: Map<string, string>
+  dashboardLoadStatus: Partial<Record<DashboardLoadAction, DashboardLoadStatus>>
 
   // `linkId`/`timezone` are only guaranteed by the reflink/magic-link
   // dashboards (see `ReflinkAnalytics`/`MagicLinkAnalytics`); named here as
@@ -58,9 +58,7 @@ export type AnalysisState = {
   inboxTotalContacts: number
   inboxNewContacts: number
   inboxActiveContacts: number
-  inboxBlockedContacts: number
   botMessagesByResult: BotMessageStats[]
-  botMessagesAIProviders: BotMessageAIProviderStats[]
   messagesBySender: MessagesBySenderStats[]
   contactsByChannel: ContactsByDimension[]
   contactsByCountry: ContactsByDimension[]
@@ -72,8 +70,6 @@ export type AnalysisState = {
   conversationAssignedByAdmin: ConversationAssignedByAdminStats[]
   uniqueConversationsByAdmin: UniqueConversationsByAdminStats[]
   messagesByAdmin: MessagesByAdminStats[]
-  botMessagesWithResponse: BotMessageStats[]
-  botMessagesNoResponse: BotMessageStats[]
   humanAgentStats: HumanAgentStats[]
 
   // reflink stats
@@ -122,9 +118,7 @@ export type AnalysisActions = {
   getInboxTotalContacts: () => Promise<void>
   getInboxNewContacts: () => Promise<void>
   getInboxActiveContacts: () => Promise<void>
-  getInboxBlockedContacts: () => Promise<void>
   getBotMessagesByResult: () => Promise<void>
-  getBotMessagesAIProviders: () => Promise<void>
   getMessagesBySender: () => Promise<void>
   getContactsByChannel: () => Promise<void>
   getContactsByCountry: () => Promise<void>
@@ -136,8 +130,6 @@ export type AnalysisActions = {
   getConversationAssignedByAdmin: () => Promise<void>
   getUniqueConversationsByAdmin: () => Promise<void>
   getMessagesByAdmin: () => Promise<void>
-  getBotMessagesWithResponse: () => Promise<void>
-  getBotMessagesNoResponse: () => Promise<void>
   getHumanAgentStats: () => Promise<void>
 
   getRefLinkStats: () => Promise<void>
@@ -161,877 +153,734 @@ export type AnalysisActions = {
   setCommentAutomationErrorsKeyword: (keyword: string) => Promise<void>
 }
 
+export type DashboardLoadStatus =
+  | "queued"
+  | "loading"
+  | "refreshing"
+  | "success"
+  | "error"
+
+type AsyncAnalysisAction = {
+  [Action in keyof AnalysisActions]: AnalysisActions[Action] extends () => Promise<void>
+    ? Action
+    : never
+}[keyof AnalysisActions]
+
+const DASHBOARD_LOAD_ACTIONS = {
+  contacts: [
+    "getInboxTotalContacts",
+    "getInboxNewContacts",
+    "getInboxActiveContacts",
+    "getContactCounts",
+    "getNewContactCounts",
+    "getContactsByChannel",
+    "getContactsBySource",
+    "getContactsByCountry",
+    "getBlockedContactCounts",
+  ],
+  conversations: [
+    "getBotMessagesByResult",
+    "getMessagesBySender",
+    "getConversationHandoffs",
+    "getHumanAgentStats",
+    "getUniqueConversationsByAdmin",
+    "getMessagesByAdmin",
+    "getConversationAssignedByAdmin",
+    "getConversationAssigned",
+    "getConversationFollowUps",
+    "getConversationArchived",
+  ],
+} as const satisfies Record<
+  "contacts" | "conversations",
+  readonly AsyncAnalysisAction[]
+>
+
+export type DashboardLoadAction =
+  (typeof DASHBOARD_LOAD_ACTIONS)[keyof typeof DASHBOARD_LOAD_ACTIONS][number]
+
 export type AnalysisStore = AnalysisState & AnalysisActions
 
 export const createAnalysisStore = (
   props: Partial<AnalysisState> & {
     api: AnalyticsApi
+    type: AnalysisDashboardType
     defaultSearchParams: AnalysisState["defaultSearchParams"]
   },
-) =>
-  createStore<AnalysisStore>((set, get) => ({
-    type: "dashboard",
-    loading: false,
-    errors: new Map<string, string>(),
+) => {
+  let dashboardLoadGeneration = 0
 
-    // Default option is last 7 days
-    from: subDays(startOfToday(), 7),
-    to: endOfToday(),
-    ...props,
+  return createStore<AnalysisStore>((set, get) => {
+    const rangeParams = () => {
+      const { defaultSearchParams, from, to } = get()
+      return {
+        ...defaultSearchParams,
+        from: from.toISOString(),
+        to: to.toISOString(),
+      }
+    }
 
-    // Default stats
-    contactCounts: [],
-    newContactCounts: [],
-    blockedContactCounts: [],
-    inboxTotalContacts: 0,
-    inboxNewContacts: 0,
-    inboxActiveContacts: 0,
-    inboxBlockedContacts: 0,
-    botMessagesByResult: [],
-    botMessagesAIProviders: [],
-    messagesBySender: [],
-    contactsByChannel: [],
-    contactsByCountry: [],
-    contactsBySource: [],
-    conversationHandoffs: [],
-    conversationFollowUps: [],
-    conversationArchived: [],
-    conversationAssigned: [],
-    conversationAssignedByAdmin: [],
-    uniqueConversationsByAdmin: [],
-    messagesByAdmin: [],
-    botMessagesWithResponse: [],
-    botMessagesNoResponse: [],
-    humanAgentStats: [],
+    const runGuarded = async <T>(
+      action: DashboardLoadAction,
+      fetch: () => Promise<T>,
+      apply: (result: T) => Partial<AnalysisState>,
+      onError?: Partial<AnalysisState>,
+    ) => {
+      const generation = dashboardLoadGeneration
 
-    // Default reflink stats
-    refLinkStats: [],
-    reflinkContacts: [],
-    reflinkContactsPage: 1,
-    reflinkContactsPageCount: 0,
+      try {
+        const result = await fetch()
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
 
-    // Default magic-link stats
-    magicLinkStats: [],
-    magicLinkContacts: [],
-    magicLinkContactsPage: 1,
-    magicLinkContactsPageCount: 0,
+        set(apply(result))
+      } catch (error: unknown) {
+        if (generation !== dashboardLoadGeneration) {
+          return
+        }
 
-    // Default comment-automation stats
-    commentAutomationReplyStats: [],
-    commentAutomationUserComments: [],
-    commentAutomationUserCommentsPage: 1,
-    commentAutomationUserCommentsPerPage: COMMENT_AUTOMATION_PER_PAGE,
-    commentAutomationUserCommentsPageCount: 0,
-    commentAutomationUserCommentsTotal: 0,
-    commentAutomationBotReplies: [],
-    commentAutomationBotRepliesPage: 1,
-    commentAutomationBotRepliesPerPage: COMMENT_AUTOMATION_PER_PAGE,
-    commentAutomationBotRepliesPageCount: 0,
-    commentAutomationBotRepliesTotal: 0,
-    commentAutomationErrors: [],
-    commentAutomationErrorsPage: 1,
-    commentAutomationErrorsPerPage: COMMENT_AUTOMATION_PER_PAGE,
-    commentAutomationErrorsPageCount: 0,
-    commentAutomationErrorsTotal: 0,
-    commentAutomationErrorsKeyword: "",
+        get().handleError(action, error)
+        if (onError) {
+          set(onError)
+        }
+      }
+    }
 
-    initialize: async () => {
-      const { loadAnalysisData } = get()
-      await loadAnalysisData()
-    },
+    return {
+      loading: false,
+      errors: new Map<string, string>(),
+      dashboardLoadStatus: {},
 
-    handleError: (action: string, error: unknown) => {
-      const { errors } = get()
-      if (error instanceof ORPCError) {
-        set({ errors: errors.set(action, error.message) })
-      } else {
-        set({
-          errors: errors.set(
+      // Default option is last 7 days
+      from: subDays(startOfToday(), 7),
+      to: endOfToday(),
+      ...props,
+
+      // Default stats
+      contactCounts: [],
+      newContactCounts: [],
+      blockedContactCounts: [],
+      inboxTotalContacts: 0,
+      inboxNewContacts: 0,
+      inboxActiveContacts: 0,
+      botMessagesByResult: [],
+      messagesBySender: [],
+      contactsByChannel: [],
+      contactsByCountry: [],
+      contactsBySource: [],
+      conversationHandoffs: [],
+      conversationFollowUps: [],
+      conversationArchived: [],
+      conversationAssigned: [],
+      conversationAssignedByAdmin: [],
+      uniqueConversationsByAdmin: [],
+      messagesByAdmin: [],
+      humanAgentStats: [],
+
+      // Default reflink stats
+      refLinkStats: [],
+      reflinkContacts: [],
+      reflinkContactsPage: 1,
+      reflinkContactsPageCount: 0,
+
+      // Default magic-link stats
+      magicLinkStats: [],
+      magicLinkContacts: [],
+      magicLinkContactsPage: 1,
+      magicLinkContactsPageCount: 0,
+
+      // Default comment-automation stats
+      commentAutomationReplyStats: [],
+      commentAutomationUserComments: [],
+      commentAutomationUserCommentsPage: 1,
+      commentAutomationUserCommentsPerPage: COMMENT_AUTOMATION_PER_PAGE,
+      commentAutomationUserCommentsPageCount: 0,
+      commentAutomationUserCommentsTotal: 0,
+      commentAutomationBotReplies: [],
+      commentAutomationBotRepliesPage: 1,
+      commentAutomationBotRepliesPerPage: COMMENT_AUTOMATION_PER_PAGE,
+      commentAutomationBotRepliesPageCount: 0,
+      commentAutomationBotRepliesTotal: 0,
+      commentAutomationErrors: [],
+      commentAutomationErrorsPage: 1,
+      commentAutomationErrorsPerPage: COMMENT_AUTOMATION_PER_PAGE,
+      commentAutomationErrorsPageCount: 0,
+      commentAutomationErrorsTotal: 0,
+      commentAutomationErrorsKeyword: "",
+
+      initialize: async () => {
+        const { loadAnalysisData } = get()
+        await loadAnalysisData()
+      },
+
+      handleError: (action: string, error: unknown) => {
+        const message =
+          error instanceof ORPCError
+            ? error.message
+            : "An unexpected error occurred. Please contact admin"
+
+        set((state) => ({ errors: new Map(state.errors).set(action, message) }))
+      },
+
+      loadAnalysisData: async () => {
+        const { type } = get()
+
+        if (type === "reflinks") {
+          const { getRefLinkStats, getReflinkContacts } = get()
+          set({ loading: true, errors: new Map<string, string>() })
+          await Promise.all([getRefLinkStats(), getReflinkContacts()])
+          set({ loading: false })
+          return
+        }
+
+        if (type === "comment-automation") {
+          const {
+            getCommentAutomationReplyStats,
+            getCommentAutomationUserComments,
+            getCommentAutomationBotReplies,
+            getCommentAutomationErrors,
+          } = get()
+          set({ loading: true, errors: new Map<string, string>() })
+          await Promise.all([
+            getCommentAutomationReplyStats(),
+            getCommentAutomationUserComments(),
+            getCommentAutomationBotReplies(),
+            getCommentAutomationErrors(),
+          ])
+          set({ loading: false })
+          return
+        }
+
+        if (type === "magic-links") {
+          const { getMagicLinkStats, getMagicLinkContacts } = get()
+          set({ loading: true, errors: new Map<string, string>() })
+          await Promise.all([getMagicLinkStats(), getMagicLinkContacts()])
+          set({ loading: false })
+          return
+        }
+
+        if (type !== "contacts" && type !== "conversations") {
+          return
+        }
+
+        const generation = ++dashboardLoadGeneration
+        const actions = DASHBOARD_LOAD_ACTIONS[type]
+        const dashboardLoadStatus = Object.fromEntries(
+          actions.map((action) => [
             action,
-            "An unexpected error occurred. Please contact admin",
-          ),
+            get().dashboardLoadStatus[action] === "success" ||
+            get().dashboardLoadStatus[action] === "refreshing"
+              ? "refreshing"
+              : "queued",
+          ]),
+        ) as Partial<Record<DashboardLoadAction, DashboardLoadStatus>>
+        set({
+          loading: true,
+          errors: new Map<string, string>(),
+          dashboardLoadStatus,
         })
-      }
-    },
 
-    loadAnalysisData: async () => {
-      const { type } = get()
+        const runAction = async (action: DashboardLoadAction) => {
+          set((state) => ({
+            dashboardLoadStatus: {
+              ...state.dashboardLoadStatus,
+              [action]:
+                state.dashboardLoadStatus[action] === "refreshing"
+                  ? "refreshing"
+                  : "loading",
+            },
+          }))
 
-      if (type === "reflinks") {
-        const { getRefLinkStats, getReflinkContacts } = get()
-        set({ loading: true, errors: new Map<string, string>() })
-        await Promise.all([getRefLinkStats(), getReflinkContacts()])
-        set({ loading: false })
-        return
-      }
+          try {
+            await get()[action]()
+          } catch (error: unknown) {
+            if (generation !== dashboardLoadGeneration) {
+              return
+            }
 
-      if (type === "comment-automation") {
+            get().handleError(action, error)
+          }
+
+          if (generation !== dashboardLoadGeneration) {
+            return
+          }
+
+          set((state) => ({
+            dashboardLoadStatus: {
+              ...state.dashboardLoadStatus,
+              [action]: state.errors.has(action) ? "error" : "success",
+            },
+          }))
+        }
+
+        await Promise.all(actions.map((action) => runAction(action)))
+
+        if (generation === dashboardLoadGeneration) {
+          set({ loading: false })
+        }
+      },
+
+      setRange: async (props: { from: Date; to: Date }) => {
+        // Every paginated panel goes back to page 1: a new range is a new result
+        // set, and staying on page 3 of the old one shows an empty table.
+        set({
+          ...props,
+          commentAutomationUserCommentsPage: 1,
+          commentAutomationBotRepliesPage: 1,
+          commentAutomationErrorsPage: 1,
+        })
+
+        const { loadAnalysisData } = get()
+        await loadAnalysisData()
+      },
+
+      getContactCounts: () =>
+        runGuarded(
+          "getContactCounts",
+          () => get().api.contactCountsPerDayAnalyticsAPI(rangeParams()),
+          ({ data: contactCounts }) => ({ contactCounts }),
+        ),
+
+      getNewContactCounts: () =>
+        runGuarded(
+          "getNewContactCounts",
+          () => get().api.newContactCountsPerDayAnalyticsAPI(rangeParams()),
+          ({ data: newContactCounts }) => ({ newContactCounts }),
+        ),
+
+      getBlockedContactCounts: () =>
+        runGuarded(
+          "getBlockedContactCounts",
+          () => get().api.blockedContactsPerDayAnalyticsAPI(rangeParams()),
+          ({ data: blockedContactCounts }) => ({ blockedContactCounts }),
+        ),
+
+      getInboxTotalContacts: () =>
+        runGuarded(
+          "getInboxTotalContacts",
+          () => get().api.contactsCountAnalyticsAPI(rangeParams()),
+          (result) => ({ inboxTotalContacts: result.data.count }),
+          { inboxTotalContacts: 0 },
+        ),
+
+      getInboxNewContacts: () =>
+        runGuarded(
+          "getInboxNewContacts",
+          () => get().api.newContactsCountAnalyticsAPI(rangeParams()),
+          (result) => ({ inboxNewContacts: result.data.count }),
+          { inboxNewContacts: 0 },
+        ),
+
+      getInboxActiveContacts: () =>
+        runGuarded(
+          "getInboxActiveContacts",
+          () => get().api.activeContactsCountAnalyticsAPI(rangeParams()),
+          (result) => ({ inboxActiveContacts: result.data.count }),
+          { inboxActiveContacts: 0 },
+        ),
+
+      getBotMessagesByResult: () =>
+        runGuarded(
+          "getBotMessagesByResult",
+          () =>
+            get().api.botMessagesByResultAnalyticsAPI({
+              ...rangeParams(),
+              granularity: "day",
+            }),
+          ({ data: botMessagesByResult }) => ({ botMessagesByResult }),
+        ),
+
+      getMessagesBySender: () =>
+        runGuarded(
+          "getMessagesBySender",
+          () => get().api.messagesBySenderAnalyticsAPI(rangeParams()),
+          ({ data: messagesBySender }) => ({ messagesBySender }),
+        ),
+
+      getContactsByChannel: () =>
+        runGuarded(
+          "getContactsByChannel",
+          () =>
+            get().api.contactsByDimensionAnalyticsAPI({
+              ...rangeParams(),
+              dimension: "channel",
+            }),
+          ({ data: contactsByChannel }) => ({ contactsByChannel }),
+        ),
+
+      getContactsByCountry: () =>
+        runGuarded(
+          "getContactsByCountry",
+          () =>
+            get().api.contactsByDimensionAnalyticsAPI({
+              ...rangeParams(),
+              dimension: "country",
+            }),
+          ({ data: contactsByCountry }) => ({ contactsByCountry }),
+        ),
+
+      getContactsBySource: () =>
+        runGuarded(
+          "getContactsBySource",
+          () =>
+            get().api.contactsByDimensionAnalyticsAPI({
+              ...rangeParams(),
+              dimension: "source",
+            }),
+          ({ data: contactsBySource }) => ({ contactsBySource }),
+        ),
+
+      getConversationHandoffs: () =>
+        runGuarded(
+          "getConversationHandoffs",
+          () => get().api.conversationHandoffsAnalyticsAPI(rangeParams()),
+          ({ data: conversationHandoffs }) => ({ conversationHandoffs }),
+        ),
+
+      getConversationFollowUps: () =>
+        runGuarded(
+          "getConversationFollowUps",
+          () => get().api.conversationFollowUpsAnalyticsAPI(rangeParams()),
+          ({ data: conversationFollowUps }) => ({ conversationFollowUps }),
+        ),
+
+      getConversationArchived: () =>
+        runGuarded(
+          "getConversationArchived",
+          () => get().api.conversationArchivedAnalyticsAPI(rangeParams()),
+          ({ data: conversationArchived }) => ({ conversationArchived }),
+        ),
+
+      getConversationAssigned: () =>
+        runGuarded(
+          "getConversationAssigned",
+          () => get().api.conversationAssignedAnalyticsAPI(rangeParams()),
+          ({ data: conversationAssigned }) => ({ conversationAssigned }),
+        ),
+
+      getConversationAssignedByAdmin: () =>
+        runGuarded(
+          "getConversationAssignedByAdmin",
+          () =>
+            get().api.conversationAssignedByAdminAnalyticsAPI(rangeParams()),
+          ({ data: conversationAssignedByAdmin }) => ({
+            conversationAssignedByAdmin,
+          }),
+        ),
+
+      getUniqueConversationsByAdmin: () =>
+        runGuarded(
+          "getUniqueConversationsByAdmin",
+          () => get().api.uniqueConversationsByAdminAnalyticsAPI(rangeParams()),
+          ({ data: uniqueConversationsByAdmin }) => ({
+            uniqueConversationsByAdmin,
+          }),
+        ),
+
+      getMessagesByAdmin: () =>
+        runGuarded(
+          "getMessagesByAdmin",
+          () => get().api.messagesByAdminAnalyticsAPI(rangeParams()),
+          ({ data: messagesByAdmin }) => ({ messagesByAdmin }),
+        ),
+
+      getHumanAgentStats: () =>
+        runGuarded(
+          "getHumanAgentStats",
+          () => get().api.humanAgentStatsAnalyticsAPI(rangeParams()),
+          ({ data: humanAgentStats }) => ({ humanAgentStats }),
+        ),
+
+      // `linkId`/`timezone` are only present in `defaultSearchParams` when the
+      // reflink dashboard mounted the store (see `ReflinkAnalytics`), the only
+      // place these two actions are wired up — the `as string` assertions
+      // below reflect that runtime contract, which the shared
+      // `defaultSearchParams` type can't express.
+      getRefLinkStats: async () => {
+        const { api, defaultSearchParams, from, to } = get()
+
+        try {
+          const { data: refLinkStats } = await api.refLinkStats({
+            ...defaultSearchParams,
+            linkId: defaultSearchParams.linkId as string,
+            timezone: defaultSearchParams.timezone as string,
+            startDate: from.toISOString(),
+            endDate: to.toISOString(),
+          })
+
+          set({ refLinkStats })
+        } catch (error: unknown) {
+          get().handleError("getRefLinkStats", error)
+        }
+      },
+
+      // Same reflink-only runtime contract as `getRefLinkStats` above — the
+      // `as string` assertion on `linkId` reflects that, not a type gap.
+      getReflinkContacts: async () => {
+        const { api, defaultSearchParams, reflinkContactsPage, from, to } =
+          get()
+
+        try {
+          const result = await api.refLinkContacts({
+            ...defaultSearchParams,
+            linkId: defaultSearchParams.linkId as string,
+            page: reflinkContactsPage,
+            perPage: REFLINK_CONTACTS_PER_PAGE,
+            startDate: from.toISOString(),
+            endDate: to.toISOString(),
+          })
+
+          set({
+            reflinkContacts: result.data,
+            reflinkContactsPageCount: result.pageCount,
+          })
+        } catch (error: unknown) {
+          get().handleError("getReflinkContacts", error)
+        }
+      },
+
+      setReflinkContactsPage: async (page: number) => {
+        set({ reflinkContactsPage: page })
+
+        const { getReflinkContacts } = get()
+        await getReflinkContacts()
+      },
+
+      // `linkId`/`timezone` are only present in `defaultSearchParams` when the
+      // magic-link dashboard mounted the store (see `MagicLinkAnalytics`), the
+      // only place these two actions are wired up — the `as string` assertions
+      // below reflect that runtime contract, which the shared
+      // `defaultSearchParams` type can't express.
+      getMagicLinkStats: async () => {
+        const { api, defaultSearchParams, from, to } = get()
+
+        try {
+          const { data: magicLinkStats } = await api.magicLinkStats({
+            ...defaultSearchParams,
+            linkId: defaultSearchParams.linkId as string,
+            timezone: defaultSearchParams.timezone as string,
+            startDate: from.toISOString(),
+            endDate: to.toISOString(),
+          })
+
+          set({ magicLinkStats })
+        } catch (error: unknown) {
+          get().handleError("getMagicLinkStats", error)
+        }
+      },
+
+      getMagicLinkContacts: async () => {
+        const { api, defaultSearchParams, magicLinkContactsPage, from, to } =
+          get()
+
+        try {
+          const result = await api.magicLinkContacts({
+            ...defaultSearchParams,
+            linkId: defaultSearchParams.linkId as string,
+            page: magicLinkContactsPage,
+            perPage: REFLINK_CONTACTS_PER_PAGE,
+            startDate: from.toISOString(),
+            endDate: to.toISOString(),
+          })
+
+          set({
+            magicLinkContacts: result.data,
+            magicLinkContactsPageCount: result.pageCount,
+          })
+        } catch (error: unknown) {
+          get().handleError("getMagicLinkContacts", error)
+        }
+      },
+
+      setMagicLinkContactsPage: async (page: number) => {
+        set({ magicLinkContactsPage: page })
+
+        const { getMagicLinkContacts } = get()
+        await getMagicLinkContacts()
+      },
+
+      // `automationId`/`timezone` are only present in `defaultSearchParams` when
+      // the comment-automation dashboard mounted the store (see
+      // `CommentAutomationAnalytics`), the only place these actions are wired up
+      // — the `as string` assertions below reflect that runtime contract, the
+      // same way the reflink actions above do.
+      getCommentAutomationReplyStats: async () => {
+        const { api, defaultSearchParams, from, to } = get()
+
+        try {
+          const { data } = await api.commentAutomationReplyStats({
+            workspaceId: defaultSearchParams.workspaceId,
+            automationId: defaultSearchParams.automationId as string,
+            timezone: defaultSearchParams.timezone as string,
+            startDate: from.toISOString(),
+            endDate: to.toISOString(),
+          })
+
+          set({ commentAutomationReplyStats: data })
+        } catch (error: unknown) {
+          get().handleError("getCommentAutomationReplyStats", error)
+        }
+      },
+
+      getCommentAutomationUserComments: async () => {
         const {
-          getCommentAutomationReplyStats,
-          getCommentAutomationUserComments,
-          getCommentAutomationBotReplies,
-          getCommentAutomationErrors,
+          api,
+          defaultSearchParams,
+          commentAutomationUserCommentsPage,
+          commentAutomationUserCommentsPerPage,
+          from,
+          to,
         } = get()
-        set({ loading: true, errors: new Map<string, string>() })
-        await Promise.all([
-          getCommentAutomationReplyStats(),
-          getCommentAutomationUserComments(),
-          getCommentAutomationBotReplies(),
-          getCommentAutomationErrors(),
-        ])
-        set({ loading: false })
-        return
-      }
 
-      if (type === "magic-links") {
-        const { getMagicLinkStats, getMagicLinkContacts } = get()
-        set({ loading: true, errors: new Map<string, string>() })
-        await Promise.all([getMagicLinkStats(), getMagicLinkContacts()])
-        set({ loading: false })
-        return
-      }
-
-      const {
-        getContactCounts,
-        getNewContactCounts,
-        getBlockedContactCounts,
-        getInboxTotalContacts,
-        getInboxNewContacts,
-        getInboxActiveContacts,
-        getInboxBlockedContacts,
-        getBotMessagesByResult,
-        getBotMessagesAIProviders,
-        getMessagesBySender,
-        getContactsByChannel,
-        getContactsByCountry,
-        getContactsBySource,
-        getConversationHandoffs,
-        getConversationFollowUps,
-        getConversationArchived,
-        getConversationAssigned,
-        getConversationAssignedByAdmin,
-        getUniqueConversationsByAdmin,
-        getMessagesByAdmin,
-        getBotMessagesWithResponse,
-        getBotMessagesNoResponse,
-        getHumanAgentStats,
-      } = get()
-      set({ loading: true, errors: new Map<string, string>() })
-
-      await Promise.all([
-        getContactCounts(),
-        getNewContactCounts(),
-        getBlockedContactCounts(),
-        getInboxTotalContacts(),
-        getInboxNewContacts(),
-        getInboxActiveContacts(),
-        getInboxBlockedContacts(),
-        getBotMessagesByResult(),
-        getBotMessagesAIProviders(),
-        getMessagesBySender(),
-        getContactsByChannel(),
-        getContactsByCountry(),
-        getContactsBySource(),
-        getConversationHandoffs(),
-        getConversationFollowUps(),
-        getConversationArchived(),
-        getConversationAssigned(),
-        getConversationAssignedByAdmin(),
-        getUniqueConversationsByAdmin(),
-        getMessagesByAdmin(),
-        getBotMessagesWithResponse(),
-        getBotMessagesNoResponse(),
-        getHumanAgentStats(),
-      ])
-      set({ loading: false })
-    },
-
-    setRange: async (props: { from: Date; to: Date }) => {
-      // Every paginated panel goes back to page 1: a new range is a new result
-      // set, and staying on page 3 of the old one shows an empty table.
-      set({
-        ...props,
-        commentAutomationUserCommentsPage: 1,
-        commentAutomationBotRepliesPage: 1,
-        commentAutomationErrorsPage: 1,
-      })
-
-      const { loadAnalysisData } = get()
-      await loadAnalysisData()
-    },
-
-    getContactCounts: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const { data: contactCounts } =
-          await api.contactCountsPerDayAnalyticsAPI({
-            ...defaultSearchParams,
-            from: from.toISOString(),
-            to: to.toISOString(),
+        try {
+          const result = await api.commentAutomationUserComments({
+            workspaceId: defaultSearchParams.workspaceId,
+            automationId: defaultSearchParams.automationId as string,
+            timezone: defaultSearchParams.timezone as string,
+            page: commentAutomationUserCommentsPage,
+            perPage: commentAutomationUserCommentsPerPage,
+            startDate: from.toISOString(),
+            endDate: to.toISOString(),
           })
 
-        set({ contactCounts })
-      } catch (error: unknown) {
-        get().handleError("getContactCounts", error)
-      }
-    },
+          set({
+            commentAutomationUserComments: result.data,
+            commentAutomationUserCommentsPageCount: result.pageCount,
+            commentAutomationUserCommentsTotal: result.total,
+          })
+        } catch (error: unknown) {
+          get().handleError("getCommentAutomationUserComments", error)
+        }
+      },
 
-    getNewContactCounts: async () => {
-      const { api, defaultSearchParams, from, to } = get()
+      getCommentAutomationBotReplies: async () => {
+        const {
+          api,
+          defaultSearchParams,
+          commentAutomationBotRepliesPage,
+          commentAutomationBotRepliesPerPage,
+          from,
+          to,
+        } = get()
 
-      try {
-        const { data: newContactCounts } =
-          await api.newContactCountsPerDayAnalyticsAPI({
-            ...defaultSearchParams,
-            from: from.toISOString(),
-            to: to.toISOString(),
+        try {
+          const result = await api.commentAutomationBotReplies({
+            workspaceId: defaultSearchParams.workspaceId,
+            automationId: defaultSearchParams.automationId as string,
+            timezone: defaultSearchParams.timezone as string,
+            page: commentAutomationBotRepliesPage,
+            perPage: commentAutomationBotRepliesPerPage,
+            startDate: from.toISOString(),
+            endDate: to.toISOString(),
           })
 
-        set({ newContactCounts })
-      } catch (error: unknown) {
-        get().handleError("getNewContactCounts", error)
-      }
-    },
+          set({
+            commentAutomationBotReplies: result.data,
+            commentAutomationBotRepliesPageCount: result.pageCount,
+            commentAutomationBotRepliesTotal: result.total,
+          })
+        } catch (error: unknown) {
+          get().handleError("getCommentAutomationBotReplies", error)
+        }
+      },
 
-    getBlockedContactCounts: async () => {
-      const { api, defaultSearchParams, from, to } = get()
+      getCommentAutomationErrors: async () => {
+        const {
+          api,
+          defaultSearchParams,
+          commentAutomationErrorsPage,
+          commentAutomationErrorsPerPage,
+          commentAutomationErrorsKeyword,
+          from,
+          to,
+        } = get()
 
-      try {
-        const { data: blockedContactCounts } =
-          await api.blockedContactsPerDayAnalyticsAPI({
-            ...defaultSearchParams,
-            from: from.toISOString(),
-            to: to.toISOString(),
+        try {
+          const result = await api.commentAutomationErrors({
+            workspaceId: defaultSearchParams.workspaceId,
+            automationId: defaultSearchParams.automationId as string,
+            timezone: defaultSearchParams.timezone as string,
+            page: commentAutomationErrorsPage,
+            perPage: commentAutomationErrorsPerPage,
+            keyword: commentAutomationErrorsKeyword || undefined,
+            startDate: from.toISOString(),
+            endDate: to.toISOString(),
           })
 
-        set({ blockedContactCounts })
-      } catch (error: unknown) {
-        get().handleError("getBlockedContactCounts", error)
-      }
-    },
-
-    getInboxBlockedContacts: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.blockedContactsCountAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ inboxBlockedContacts: result.data.count })
-      } catch (error: unknown) {
-        get().handleError("getInboxBlockedContacts", error)
-        set({ inboxBlockedContacts: 0 })
-      }
-    },
-
-    getInboxTotalContacts: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.contactsCountAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ inboxTotalContacts: result.data.count })
-      } catch (error: unknown) {
-        get().handleError("getInboxTotalContacts", error)
-        set({ inboxTotalContacts: 0 })
-      }
-    },
-
-    getInboxNewContacts: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.newContactsCountAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ inboxNewContacts: result.data.count })
-      } catch (error: unknown) {
-        get().handleError("getInboxNewContacts", error)
-        set({ inboxNewContacts: 0 })
-      }
-    },
-
-    getInboxActiveContacts: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.activeContactsCountAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ inboxActiveContacts: result.data.count })
-      } catch (error: unknown) {
-        get().handleError("getInboxActiveContacts", error)
-        set({ inboxActiveContacts: 0 })
-      }
-    },
-
-    getBotMessagesByResult: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const { data: botMessagesByResult } =
-          await api.botMessagesByResultAnalyticsAPI({
-            ...defaultSearchParams,
-            from: from.toISOString(),
-            to: to.toISOString(),
-            granularity: "day",
+          set({
+            commentAutomationErrors: result.data,
+            commentAutomationErrorsPageCount: result.pageCount,
+            commentAutomationErrorsTotal: result.total,
           })
+        } catch (error: unknown) {
+          get().handleError("getCommentAutomationErrors", error)
+        }
+      },
 
-        set({ botMessagesByResult })
-      } catch (error: unknown) {
-        get().handleError("getBotMessagesByResult", error)
-      }
-    },
+      setCommentAutomationUserCommentsPage: async (page: number) => {
+        set({ commentAutomationUserCommentsPage: page })
 
-    getBotMessagesAIProviders: async () => {
-      const { api, defaultSearchParams, from, to } = get()
+        const { getCommentAutomationUserComments } = get()
+        await getCommentAutomationUserComments()
+      },
 
-      try {
-        const result = await api.botMessagesAIProvidersAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ botMessagesAIProviders: result.data })
-      } catch (error: unknown) {
-        get().handleError("getBotMessagesAIProviders", error)
-      }
-    },
-
-    getMessagesBySender: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-      try {
-        const result = await api.messagesBySenderAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ messagesBySender: result.data })
-      } catch (error: unknown) {
-        get().handleError("getMessagesBySender", error)
-      }
-    },
-
-    getContactsByChannel: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.contactsByDimensionAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-          dimension: "channel",
-        })
-
-        set({ contactsByChannel: result.data })
-      } catch (error: unknown) {
-        get().handleError("getContactsByChannel", error)
-      }
-    },
-
-    getContactsByCountry: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.contactsByDimensionAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-          dimension: "country",
-        })
-
-        set({ contactsByCountry: result.data })
-      } catch (error: unknown) {
-        get().handleError("getContactsByCountry", error)
-      }
-    },
-
-    getContactsBySource: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.contactsByDimensionAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-          dimension: "source",
-        })
-
-        set({ contactsBySource: result.data })
-      } catch (error: unknown) {
-        get().handleError("getContactsBySource", error)
-      }
-    },
-
-    getConversationHandoffs: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.conversationHandoffsAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ conversationHandoffs: result.data })
-      } catch (error: unknown) {
-        get().handleError("getConversationHandoffs", error)
-      }
-    },
-
-    getConversationFollowUps: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.conversationFollowUpsAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ conversationFollowUps: result.data })
-      } catch (error: unknown) {
-        get().handleError("getConversationFollowUps", error)
-      }
-    },
-
-    getConversationArchived: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.conversationArchivedAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ conversationArchived: result.data })
-      } catch (error: unknown) {
-        get().handleError("getConversationArchived", error)
-      }
-    },
-
-    getConversationAssigned: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.conversationAssignedAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ conversationAssigned: result.data })
-      } catch (error: unknown) {
-        get().handleError("getConversationAssigned", error)
-      }
-    },
-
-    getConversationAssignedByAdmin: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.conversationAssignedByAdminAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ conversationAssignedByAdmin: result.data })
-      } catch (error: unknown) {
-        get().handleError("getConversationAssignedByAdmin", error)
-      }
-    },
-
-    getUniqueConversationsByAdmin: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.uniqueConversationsByAdminAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ uniqueConversationsByAdmin: result.data })
-      } catch (error: unknown) {
-        get().handleError("getUniqueConversationsByAdmin", error)
-      }
-    },
-
-    getMessagesByAdmin: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const result = await api.messagesByAdminAnalyticsAPI({
-          ...defaultSearchParams,
-          from: from.toISOString(),
-          to: to.toISOString(),
-        })
-
-        set({ messagesByAdmin: result.data })
-      } catch (error: unknown) {
-        get().handleError("getMessagesByAdmin", error)
-      }
-    },
-
-    getBotMessagesWithResponse: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const { data: botMessagesWithResponse } =
-          await api.botMessagesWithResponseAnalyticsAPI({
-            ...defaultSearchParams,
-            from: from.toISOString(),
-            to: to.toISOString(),
-            granularity: "day",
-          })
-
-        set({ botMessagesWithResponse })
-      } catch (error: unknown) {
-        get().handleError("getBotMessagesWithResponse", error)
-      }
-    },
-
-    getBotMessagesNoResponse: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const { data: botMessagesNoResponse } =
-          await api.botMessagesNoResponseAnalyticsAPI({
-            ...defaultSearchParams,
-            from: from.toISOString(),
-            to: to.toISOString(),
-            granularity: "day",
-          })
-
-        set({ botMessagesNoResponse })
-      } catch (error: unknown) {
-        get().handleError("getBotMessagesNoResponse", error)
-      }
-    },
-
-    getHumanAgentStats: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const { data: humanAgentStats } = await api.humanAgentStatsAnalyticsAPI(
-          {
-            ...defaultSearchParams,
-            from: from.toISOString(),
-            to: to.toISOString(),
-          },
-        )
-
-        set({ humanAgentStats })
-      } catch (error: unknown) {
-        get().handleError("getHumanAgentStats", error)
-      }
-    },
-
-    // `linkId`/`timezone` are only present in `defaultSearchParams` when the
-    // reflink dashboard mounted the store (see `ReflinkAnalytics`), the only
-    // place these two actions are wired up — the `as string` assertions
-    // below reflect that runtime contract, which the shared
-    // `defaultSearchParams` type can't express.
-    getRefLinkStats: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const { data: refLinkStats } = await api.refLinkStats({
-          ...defaultSearchParams,
-          linkId: defaultSearchParams.linkId as string,
-          timezone: defaultSearchParams.timezone as string,
-          startDate: from.toISOString(),
-          endDate: to.toISOString(),
-        })
-
-        set({ refLinkStats })
-      } catch (error: unknown) {
-        get().handleError("getRefLinkStats", error)
-      }
-    },
-
-    // Same reflink-only runtime contract as `getRefLinkStats` above — the
-    // `as string` assertion on `linkId` reflects that, not a type gap.
-    getReflinkContacts: async () => {
-      const { api, defaultSearchParams, reflinkContactsPage, from, to } = get()
-
-      try {
-        const result = await api.refLinkContacts({
-          ...defaultSearchParams,
-          linkId: defaultSearchParams.linkId as string,
-          page: reflinkContactsPage,
-          perPage: REFLINK_CONTACTS_PER_PAGE,
-          startDate: from.toISOString(),
-          endDate: to.toISOString(),
-        })
-
+      // A new page size re-slices the whole result set, so page 1 — otherwise
+      // "50 per page" from page 4 of a 10-per-page list lands past the end.
+      setCommentAutomationUserCommentsPerPage: async (perPage: number) => {
         set({
-          reflinkContacts: result.data,
-          reflinkContactsPageCount: result.pageCount,
-        })
-      } catch (error: unknown) {
-        get().handleError("getReflinkContacts", error)
-      }
-    },
-
-    setReflinkContactsPage: async (page: number) => {
-      set({ reflinkContactsPage: page })
-
-      const { getReflinkContacts } = get()
-      await getReflinkContacts()
-    },
-
-    // `linkId`/`timezone` are only present in `defaultSearchParams` when the
-    // magic-link dashboard mounted the store (see `MagicLinkAnalytics`), the
-    // only place these two actions are wired up — the `as string` assertions
-    // below reflect that runtime contract, which the shared
-    // `defaultSearchParams` type can't express.
-    getMagicLinkStats: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const { data: magicLinkStats } = await api.magicLinkStats({
-          ...defaultSearchParams,
-          linkId: defaultSearchParams.linkId as string,
-          timezone: defaultSearchParams.timezone as string,
-          startDate: from.toISOString(),
-          endDate: to.toISOString(),
+          commentAutomationUserCommentsPerPage: perPage,
+          commentAutomationUserCommentsPage: 1,
         })
 
-        set({ magicLinkStats })
-      } catch (error: unknown) {
-        get().handleError("getMagicLinkStats", error)
-      }
-    },
+        const { getCommentAutomationUserComments } = get()
+        await getCommentAutomationUserComments()
+      },
 
-    getMagicLinkContacts: async () => {
-      const { api, defaultSearchParams, magicLinkContactsPage, from, to } =
-        get()
+      setCommentAutomationBotRepliesPage: async (page: number) => {
+        set({ commentAutomationBotRepliesPage: page })
 
-      try {
-        const result = await api.magicLinkContacts({
-          ...defaultSearchParams,
-          linkId: defaultSearchParams.linkId as string,
-          page: magicLinkContactsPage,
-          perPage: REFLINK_CONTACTS_PER_PAGE,
-          startDate: from.toISOString(),
-          endDate: to.toISOString(),
-        })
+        const { getCommentAutomationBotReplies } = get()
+        await getCommentAutomationBotReplies()
+      },
 
+      setCommentAutomationBotRepliesPerPage: async (perPage: number) => {
         set({
-          magicLinkContacts: result.data,
-          magicLinkContactsPageCount: result.pageCount,
-        })
-      } catch (error: unknown) {
-        get().handleError("getMagicLinkContacts", error)
-      }
-    },
-
-    setMagicLinkContactsPage: async (page: number) => {
-      set({ magicLinkContactsPage: page })
-
-      const { getMagicLinkContacts } = get()
-      await getMagicLinkContacts()
-    },
-
-    // `automationId`/`timezone` are only present in `defaultSearchParams` when
-    // the comment-automation dashboard mounted the store (see
-    // `CommentAutomationAnalytics`), the only place these actions are wired up
-    // — the `as string` assertions below reflect that runtime contract, the
-    // same way the reflink actions above do.
-    getCommentAutomationReplyStats: async () => {
-      const { api, defaultSearchParams, from, to } = get()
-
-      try {
-        const { data } = await api.commentAutomationReplyStats({
-          workspaceId: defaultSearchParams.workspaceId,
-          automationId: defaultSearchParams.automationId as string,
-          timezone: defaultSearchParams.timezone as string,
-          startDate: from.toISOString(),
-          endDate: to.toISOString(),
+          commentAutomationBotRepliesPerPage: perPage,
+          commentAutomationBotRepliesPage: 1,
         })
 
-        set({ commentAutomationReplyStats: data })
-      } catch (error: unknown) {
-        get().handleError("getCommentAutomationReplyStats", error)
-      }
-    },
+        const { getCommentAutomationBotReplies } = get()
+        await getCommentAutomationBotReplies()
+      },
 
-    getCommentAutomationUserComments: async () => {
-      const {
-        api,
-        defaultSearchParams,
-        commentAutomationUserCommentsPage,
-        commentAutomationUserCommentsPerPage,
-        from,
-        to,
-      } = get()
+      setCommentAutomationErrorsPage: async (page: number) => {
+        set({ commentAutomationErrorsPage: page })
 
-      try {
-        const result = await api.commentAutomationUserComments({
-          workspaceId: defaultSearchParams.workspaceId,
-          automationId: defaultSearchParams.automationId as string,
-          timezone: defaultSearchParams.timezone as string,
-          page: commentAutomationUserCommentsPage,
-          perPage: commentAutomationUserCommentsPerPage,
-          startDate: from.toISOString(),
-          endDate: to.toISOString(),
-        })
+        const { getCommentAutomationErrors } = get()
+        await getCommentAutomationErrors()
+      },
 
+      setCommentAutomationErrorsPerPage: async (perPage: number) => {
         set({
-          commentAutomationUserComments: result.data,
-          commentAutomationUserCommentsPageCount: result.pageCount,
-          commentAutomationUserCommentsTotal: result.total,
-        })
-      } catch (error: unknown) {
-        get().handleError("getCommentAutomationUserComments", error)
-      }
-    },
-
-    getCommentAutomationBotReplies: async () => {
-      const {
-        api,
-        defaultSearchParams,
-        commentAutomationBotRepliesPage,
-        commentAutomationBotRepliesPerPage,
-        from,
-        to,
-      } = get()
-
-      try {
-        const result = await api.commentAutomationBotReplies({
-          workspaceId: defaultSearchParams.workspaceId,
-          automationId: defaultSearchParams.automationId as string,
-          timezone: defaultSearchParams.timezone as string,
-          page: commentAutomationBotRepliesPage,
-          perPage: commentAutomationBotRepliesPerPage,
-          startDate: from.toISOString(),
-          endDate: to.toISOString(),
+          commentAutomationErrorsPerPage: perPage,
+          commentAutomationErrorsPage: 1,
         })
 
+        const { getCommentAutomationErrors } = get()
+        await getCommentAutomationErrors()
+      },
+
+      setCommentAutomationErrorsKeyword: async (keyword: string) => {
+        // A new filter is a new result set, so page 1 — otherwise a search from
+        // page 3 lands on an empty table.
         set({
-          commentAutomationBotReplies: result.data,
-          commentAutomationBotRepliesPageCount: result.pageCount,
-          commentAutomationBotRepliesTotal: result.total,
-        })
-      } catch (error: unknown) {
-        get().handleError("getCommentAutomationBotReplies", error)
-      }
-    },
-
-    getCommentAutomationErrors: async () => {
-      const {
-        api,
-        defaultSearchParams,
-        commentAutomationErrorsPage,
-        commentAutomationErrorsPerPage,
-        commentAutomationErrorsKeyword,
-        from,
-        to,
-      } = get()
-
-      try {
-        const result = await api.commentAutomationErrors({
-          workspaceId: defaultSearchParams.workspaceId,
-          automationId: defaultSearchParams.automationId as string,
-          timezone: defaultSearchParams.timezone as string,
-          page: commentAutomationErrorsPage,
-          perPage: commentAutomationErrorsPerPage,
-          keyword: commentAutomationErrorsKeyword || undefined,
-          startDate: from.toISOString(),
-          endDate: to.toISOString(),
+          commentAutomationErrorsKeyword: keyword,
+          commentAutomationErrorsPage: 1,
         })
 
-        set({
-          commentAutomationErrors: result.data,
-          commentAutomationErrorsPageCount: result.pageCount,
-          commentAutomationErrorsTotal: result.total,
-        })
-      } catch (error: unknown) {
-        get().handleError("getCommentAutomationErrors", error)
-      }
-    },
-
-    setCommentAutomationUserCommentsPage: async (page: number) => {
-      set({ commentAutomationUserCommentsPage: page })
-
-      const { getCommentAutomationUserComments } = get()
-      await getCommentAutomationUserComments()
-    },
-
-    // A new page size re-slices the whole result set, so page 1 — otherwise
-    // "50 per page" from page 4 of a 10-per-page list lands past the end.
-    setCommentAutomationUserCommentsPerPage: async (perPage: number) => {
-      set({
-        commentAutomationUserCommentsPerPage: perPage,
-        commentAutomationUserCommentsPage: 1,
-      })
-
-      const { getCommentAutomationUserComments } = get()
-      await getCommentAutomationUserComments()
-    },
-
-    setCommentAutomationBotRepliesPage: async (page: number) => {
-      set({ commentAutomationBotRepliesPage: page })
-
-      const { getCommentAutomationBotReplies } = get()
-      await getCommentAutomationBotReplies()
-    },
-
-    setCommentAutomationBotRepliesPerPage: async (perPage: number) => {
-      set({
-        commentAutomationBotRepliesPerPage: perPage,
-        commentAutomationBotRepliesPage: 1,
-      })
-
-      const { getCommentAutomationBotReplies } = get()
-      await getCommentAutomationBotReplies()
-    },
-
-    setCommentAutomationErrorsPage: async (page: number) => {
-      set({ commentAutomationErrorsPage: page })
-
-      const { getCommentAutomationErrors } = get()
-      await getCommentAutomationErrors()
-    },
-
-    setCommentAutomationErrorsPerPage: async (perPage: number) => {
-      set({
-        commentAutomationErrorsPerPage: perPage,
-        commentAutomationErrorsPage: 1,
-      })
-
-      const { getCommentAutomationErrors } = get()
-      await getCommentAutomationErrors()
-    },
-
-    setCommentAutomationErrorsKeyword: async (keyword: string) => {
-      // A new filter is a new result set, so page 1 — otherwise a search from
-      // page 3 lands on an empty table.
-      set({
-        commentAutomationErrorsKeyword: keyword,
-        commentAutomationErrorsPage: 1,
-      })
-
-      const { getCommentAutomationErrors } = get()
-      await getCommentAutomationErrors()
-    },
-  }))
+        const { getCommentAutomationErrors } = get()
+        await getCommentAutomationErrors()
+      },
+    }
+  })
+}

@@ -5,8 +5,6 @@ import {
   isSuperAdmin,
   isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
-  resolveWorkspaceAccess,
-  workspaceMemberService,
 } from "@chatbotx.io/business"
 import {
   SidebarInset,
@@ -33,11 +31,14 @@ import { CouponTopicStoreProvider } from "@/features/coupons/provider/coupon-top
 import { getTenantSettings } from "@/features/tenant/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
-import { getCurrentUser } from "@/lib/auth/utils"
+import {
+  getCurrentUserAndAllLinkedWorkspaces,
+  getCurrentUserAndTargetWorkspace,
+} from "@/lib/auth/utils"
 import { buildWorkspaceQuotaMetrics } from "@/lib/quota-metrics"
 import { enforceWorkspaceNotScheduledForDeletionFromRequest } from "@/lib/workspace/require-not-scheduled-for-deletion"
 import { resolveWorkspaceRealtimeGates } from "@/lib/workspace/resolve-workspace-realtime-gates"
-import { resolveWorkspaceBlockState } from "@/lib/workspace-quota"
+import { getWorkspaceBlockStateForRender } from "@/lib/workspace-quota"
 
 export default async function WorkspaceLayout({
   children,
@@ -51,36 +52,33 @@ export default async function WorkspaceLayout({
     return notFound()
   }
 
-  const user = await getCurrentUser()
-  if (!user) {
+  const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
+  if (!userAndWorkspaces) {
+    return notFound()
+  }
+  enforcePasswordCurrent(userAndWorkspaces.user)
+
+  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
+  if (!userAndWorkspace) {
     return notFound()
   }
 
-  enforcePasswordCurrent(user)
+  const {
+    user,
+    targetWorkspace,
+    targetWorkspaceMember,
+    isSupportSession,
+    allWorkspaces: memberWorkspaces,
+  } = userAndWorkspace
 
   // Plan + usage limits only apply to the hosted cloud edition. Self-hosted
   // community/enterprise installs use every feature freely — no quota gating.
   const cloud = isCloud()
 
-  // Check if user is a member of the workspace
-  const [allWorkspaceMembers, { storageUrl }, platformAdmin] =
-    await Promise.all([
-      workspaceMemberService.listByUserId({ userId: user.id }),
-      getTenantSettings(),
-      isPlatformAdmin(user),
-    ])
-  const realMember = allWorkspaceMembers.find(
-    (workspaceMember) => workspaceMember.workspace.id === workspaceId,
-  )
-  const access = await resolveWorkspaceAccess({ realMember, workspaceId, user })
-  if (!access) {
-    return notFound()
-  }
-  const {
-    workspace: targetWorkspace,
-    member: targetWorkspaceMember,
-    isSupportSession,
-  } = access
+  const [{ storageUrl }, platformAdmin] = await Promise.all([
+    getTenantSettings(),
+    isPlatformAdmin(user),
+  ])
 
   const [
     { blocked, blockReason, quota, trialEndsAt },
@@ -88,7 +86,7 @@ export default async function WorkspaceLayout({
     tokenRefreshErrors,
     hasCallCapableChannel,
   ] = await Promise.all([
-    resolveWorkspaceBlockState(targetWorkspace.ownerId),
+    getWorkspaceBlockStateForRender(targetWorkspace.ownerId),
     cloud
       ? quotaEnforcementService.getWorkspaceUsageSummary({
           userId: targetWorkspace.ownerId,
@@ -110,20 +108,18 @@ export default async function WorkspaceLayout({
     hasWorkspacePermission(targetWorkspaceMember.permissions, "superAdmin"),
   )
 
-  const resolveLogoUrl = (logo: string | null) =>
-    logo ? new URL(logo, storageUrl).toString() : null
-
-  const memberWorkspaces = allWorkspaceMembers.map((workspaceMember) => ({
-    ...workspaceMember.workspace,
-    logo: resolveLogoUrl(workspaceMember.workspace.logo),
-  }))
   // A support session's workspace has no real membership row, so it is never
-  // in `allWorkspaceMembers` — append it so the sidebar switcher still shows
-  // the workspace currently being viewed.
+  // in the canonical workspace list — append it so the sidebar switcher still
+  // shows the workspace currently being viewed.
   const allWorkspaces = isSupportSession
     ? [
         ...memberWorkspaces,
-        { ...targetWorkspace, logo: resolveLogoUrl(targetWorkspace.logo) },
+        {
+          ...targetWorkspace,
+          logo: targetWorkspace.logo
+            ? new URL(targetWorkspace.logo, storageUrl).toString()
+            : null,
+        },
       ]
     : memberWorkspaces
 

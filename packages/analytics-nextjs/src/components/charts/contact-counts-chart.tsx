@@ -9,7 +9,9 @@ export function ContactCountsChart() {
   const t = useTranslations()
   const locale = useLocale()
 
-  const { contactCounts, from, to } = useAnalysisStore((state) => state)
+  const contactCounts = useAnalysisStore((state) => state.contactCounts)
+  const from = useAnalysisStore((state) => state.from)
+  const to = useAnalysisStore((state) => state.to)
 
   return (
     <AreaChart
