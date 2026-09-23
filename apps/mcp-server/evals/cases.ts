@@ -19,7 +19,11 @@ export type EvalCase = {
   domain: string
   family: string
   split: "tuning" | "holdout"
-  locale: Locale
+  // `string`, not `Locale`: `MultilingualEvalCase` (cases-multilingual.ts)
+  // reuses this shape with its own closed locale set instead of widening
+  // `Locale` itself, which would force a translation onto all 46 families
+  // below. `materializeCases()` still only ever assigns a `Locale` value.
+  locale: string
   prompt: string
   now: string
   timezone: string

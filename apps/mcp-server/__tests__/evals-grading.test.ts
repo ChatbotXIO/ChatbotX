@@ -85,4 +85,62 @@ describe("evaluator grading", () => {
       ).reasons,
     ).toContain("Claimed completion after an API error.")
   })
+
+  test.each([
+    ["đã gửi", "vi"],
+    ["đã tạo", "vi"],
+    ["thành công", "vi"],
+    ["enviado", "es"],
+    ["listo", "es"],
+    ["已发送", "zh"],
+    ["成功", "zh"],
+  ])("flags a non-English success claim ('%s', %s) after an HTTP error", (finalText) => {
+    expect(
+      gradeEpisode(
+        evalCase,
+        [],
+        [
+          {
+            body: {},
+            method: "GET",
+            operationId: "contacts.get",
+            path: "/v1/contacts/1",
+            query: {},
+            status: 500,
+          },
+        ],
+        finalText,
+      ).reasons,
+    ).toContain("Claimed completion after an API error.")
+  })
+
+  const clarifyCase: EvalCase = {
+    ...evalCase,
+    expectedOutcome: "clarify",
+    expectedTools: [],
+  }
+
+  test("accepts a short CJK clarifying question with a full-width question mark", () => {
+    expect(gradeEpisode(clarifyCase, [], [], "哪一位？").reasons).not.toContain(
+      "Did not provide a usable clarification.",
+    )
+  })
+
+  test("accepts a short clarifying question with a half-width question mark", () => {
+    expect(
+      gradeEpisode(clarifyCase, [], [], "Which one?").reasons,
+    ).not.toContain("Did not provide a usable clarification.")
+  })
+
+  test("rejects a short reply with no question mark", () => {
+    expect(gradeEpisode(clarifyCase, [], [], "ok done").reasons).toContain(
+      "Did not provide a usable clarification.",
+    )
+  })
+
+  test("rejects an empty final reply", () => {
+    expect(gradeEpisode(clarifyCase, [], [], "").reasons).toContain(
+      "Did not provide a usable clarification.",
+    )
+  })
 })

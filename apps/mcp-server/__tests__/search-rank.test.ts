@@ -118,3 +118,42 @@ describe("rankTools via searchTools", () => {
     expect(searchTools("contacts")[0]?.name).toBe("contacts_refresh_profile")
   })
 })
+
+describe("CJK tokenization", () => {
+  const originalFetch = globalThis.fetch
+
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+  })
+
+  // Regression for the Han-character tokenizer fix in `normalize.ts`: before
+  // it, `[\p{L}\p{N}]+` had no word boundary inside a whitespace-free CJK
+  // run, so an entire Chinese phrase collapsed into one opaque multi-
+  // character token instead of one token per character -- silently
+  // preventing any partial/per-character match against the catalog.
+  test("a Chinese query matches on a shared substring, not just full-string equality", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      specWithTools([
+        {
+          name: "contacts.addTag",
+          summary: "Add tag to contact",
+          description: "给联系人加标签",
+        },
+        { name: "flows.list", summary: "List flows" },
+      ]),
+    ) as unknown as typeof fetch
+
+    const { loadOpenApiSpec } = await import("../src/openapi-loader")
+    await loadOpenApiSpec()
+    const { searchTools } = await import("../src/server/meta-tools")
+
+    // Query shares only some Han characters with the tool's description
+    // ("给...加标签" vs "给联系人打标签") -- without character-level
+    // tokenization these two strings share zero tokens and score 0.
+    expect(searchTools("给联系人打标签")[0]?.name).toBe("contacts_add_tag")
+  })
+})

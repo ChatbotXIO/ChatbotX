@@ -4,6 +4,7 @@ import {
   STOPWORDS,
   stem,
   stripLiterals,
+  tokenize,
 } from "./normalize"
 import { expandSynonyms } from "./synonyms"
 
@@ -45,9 +46,7 @@ let idfCorpus: DynamicTool[] | null = null
 let documentFrequency = new Map<string, number>()
 
 function tokenSet(text: string): Set<string> {
-  return new Set(
-    (normalizeSearchText(text).match(/[\p{L}\p{N}]+/gu) ?? []).map(stem),
-  )
+  return new Set(tokenize(text).map(stem))
 }
 
 /**

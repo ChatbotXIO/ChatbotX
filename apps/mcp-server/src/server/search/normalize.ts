@@ -102,3 +102,28 @@ const NON_LATIN_LETTER = /[^\p{Script=Latin}\p{N}\p{P}\p{S}\s]/u
 export function containsNonLatinScript(text: string): boolean {
   return NON_LATIN_LETTER.test(normalizeSearchText(text))
 }
+
+// CJK ideographs (Han) carry no whitespace between words, so the
+// space/punctuation-delimited tokenizer in `rank.ts` would otherwise fold
+// an entire Chinese phrase into a single multi-character "word" -- one
+// token instead of several -- silently breaking any token-count-based
+// signal (matching against the English catalog, `isVocabularyMismatch`).
+// A single Han character is already a meaningful unit (most carry their own
+// dictionary meaning), so treating each one as its own token is a workable
+// language-agnostic approximation without pulling in a real segmenter
+// (jieba, etc.) for a tool-search ranker.
+const HAN_CHARACTER = /\p{Script=Han}/gu
+
+/**
+ * Tokenizes free text into word-level units, splitting CJK ideographs one
+ * character at a time so they don't collapse into a single opaque token.
+ * Used by `rank.ts` for both catalog and query tokenization so the two
+ * sides tokenize identically.
+ */
+export function tokenize(text: string): string[] {
+  const normalized = normalizeSearchText(text)
+  const hanCharacters = normalized.match(HAN_CHARACTER) ?? []
+  const otherTokens =
+    normalized.replace(HAN_CHARACTER, " ").match(/[\p{L}\p{N}]+/gu) ?? []
+  return [...hanCharacters, ...otherTokens]
+}

@@ -180,6 +180,11 @@ export const SYNONYMS: ReadonlyArray<readonly [string, readonly string[]]> = [
  */
 const SORTED_SYNONYMS = [...SYNONYMS].sort((a, b) => b[0].length - a[0].length)
 
+// CJK ideographs carry no whitespace, so a leftover Han run must be split
+// one character at a time (see `tokenize` in `normalize.ts`) instead of
+// collapsing into one opaque multi-character token.
+const HAN_CHARACTER = /\p{Script=Han}/gu
+
 export function expandSynonyms(normalizedText: string): string[] {
   let remaining = ` ${normalizedText} `
   const expanded: string[] = []
@@ -192,5 +197,8 @@ export function expandSynonyms(normalizedText: string): string[] {
     }
   }
 
-  return [...expanded, ...(remaining.match(/[\p{L}\p{N}]+/gu) ?? [])]
+  const hanCharacters = remaining.match(HAN_CHARACTER) ?? []
+  const otherWords =
+    remaining.replace(HAN_CHARACTER, " ").match(/[\p{L}\p{N}]+/gu) ?? []
+  return [...expanded, ...hanCharacters, ...otherWords]
 }

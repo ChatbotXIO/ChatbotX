@@ -15,7 +15,33 @@ export type EpisodeGrading = {
   status: "pass" | "fail" | "infrastructure"
 }
 
-const finalSuccessPattern = /(?:done|sent|created|booked|cancelled|success)/i
+// English-only originally; a Vietnamese/Spanish/Chinese reply claiming
+// success after an API error was never flagged, making non-English runs
+// look artificially better in cross-locale comparisons. Extended with the
+// equivalent completion words per locale used by the multilingual probe
+// corpus (`cases-multilingual.ts`).
+const finalSuccessPattern =
+  /(?:done|sent|created|booked|cancelled|success|đã gửi|đã tạo|đã đặt|đã hủy|thành công|enviado|creado|reservado|cancelado|listo|已发送|已创建|成功|已取消)/iu
+
+// A character-count minimum is biased against CJK, where a short reply
+// carries far more meaning per character than the same length in English
+// or an accented Latin script. A clarifying question mark (half- or
+// full-width) is a script-independent signal instead; the length check
+// remains as a fallback for scripts that ask without "?" (rare, but a
+// non-empty short reply with no question mark is still a red flag).
+const CLARIFYING_QUESTION_MARK = /[?？]/u
+const MIN_CLARIFICATION_LENGTH = 8
+
+const isUsableClarification = (final: string): boolean => {
+  const trimmed = final.trim()
+  if (trimmed.length === 0) {
+    return false
+  }
+  return (
+    CLARIFYING_QUESTION_MARK.test(trimmed) ||
+    trimmed.length >= MIN_CLARIFICATION_LENGTH
+  )
+}
 
 const flatten = (value: unknown): string =>
   typeof value === "string" ? value : JSON.stringify(value)
@@ -92,7 +118,7 @@ export const gradeEpisode = (
   ) {
     reasons.push("Claimed completion after an API error.")
   }
-  if (evalCase.expectedOutcome === "clarify" && final.trim().length < 8) {
+  if (evalCase.expectedOutcome === "clarify" && !isUsableClarification(final)) {
     reasons.push("Did not provide a usable clarification.")
   }
   return { status: reasons.length === 0 ? "pass" : "fail", reasons }

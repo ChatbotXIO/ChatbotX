@@ -21,6 +21,7 @@ import {
   materializeCases,
   safetyCases,
 } from "./cases"
+import { materializeMultilingualCases } from "./cases-multilingual"
 import {
   type EpisodeGrading,
   firstSearchRank,
@@ -30,6 +31,7 @@ import {
 import { createSandbox, type HttpTrace } from "./sandbox"
 
 type ExposurePlan = ExposureMode | "both"
+type CorpusName = "business" | "multilingual"
 
 type RunOptions = {
   mode: "run"
@@ -39,6 +41,7 @@ type RunOptions = {
   models: string[]
   seed: number
   exposure: ExposurePlan
+  corpus: CorpusName
   caseIds?: string[]
   serverSource?: string
 }
@@ -95,11 +98,12 @@ type Manifest = {
 }
 
 const usage =
-  "Usage:\n  pnpm --filter chatbotx-mcp eval:business --spec <absolute-json-path> --out <absolute-directory> --phase baseline|candidate|smoke --seed 20260923 --models gpt-4o-mini,gpt-4.1-mini [--cases family-a,family-b] [--server-source <absolute-directory>] [--exposure default|meta-only|both]\n  pnpm --filter chatbotx-mcp eval:business --compare <baseline-directory> <candidate-directory>"
+  "Usage:\n  pnpm --filter chatbotx-mcp eval:business --spec <absolute-json-path> --out <absolute-directory> --phase baseline|candidate|smoke --seed 20260923 --models gpt-4o-mini,gpt-4.1-mini [--cases family-a,family-b] [--server-source <absolute-directory>] [--exposure default|meta-only|both] [--corpus business|multilingual]\n  pnpm --filter chatbotx-mcp eval:business --compare <baseline-directory> <candidate-directory>"
 
 const parseArgs = (args: string[]): CliOptions => {
   let compare: CompareOptions | undefined
   const options: ParsedRunOptions = {
+    corpus: "business",
     exposure: "both",
     models: [],
     seed: EVAL_SEED,
@@ -146,6 +150,11 @@ const parseArgs = (args: string[]): CliOptions => {
         throw new Error(`${usage}\nInvalid --exposure ${value}.`)
       }
       options.exposure = value
+    } else if (argument === "--corpus") {
+      if (value !== "business" && value !== "multilingual") {
+        throw new Error(`${usage}\nInvalid --corpus ${value}.`)
+      }
+      options.corpus = value
     } else {
       throw new Error(`${usage}\nUnknown flag ${argument}.`)
     }
@@ -168,6 +177,7 @@ const parseArgs = (args: string[]): CliOptions => {
   }
   return {
     caseIds: options.caseIds,
+    corpus: options.corpus,
     exposure: options.exposure,
     mode: "run",
     models: options.models,
@@ -566,7 +576,10 @@ const main = async (): Promise<void> => {
   }
   const specText = await readFile(options.spec, "utf8")
   const originalSpec = JSON.parse(specText) as Record<string, unknown>
-  const cases = materializeCases()
+  const cases =
+    options.corpus === "multilingual"
+      ? materializeMultilingualCases()
+      : materializeCases()
   const selected = options.caseIds
     ? cases.filter((evalCase) => options.caseIds?.includes(evalCase.family))
     : cases
@@ -608,7 +621,13 @@ const main = async (): Promise<void> => {
         )
       }
     }
-    for (const evalCase of safetyCases(selected)) {
+    // `safetyCases` targets `cases.ts`'s "vi" locale specifically; the
+    // multilingual probe corpus (`cases-multilingual.ts`) has no such
+    // locale and exists purely for the per-locale search/tool-selection
+    // comparison, not the repeated-safety-case check.
+    const safety =
+      options.corpus === "multilingual" ? [] : safetyCases(selected)
+    for (const evalCase of safety) {
       for (let repeat = 0; repeat < 3; repeat += 1) {
         episodes.push(
           await evaluateCase({
